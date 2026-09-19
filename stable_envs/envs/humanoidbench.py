@@ -209,6 +209,7 @@ stays green and ``stable_envs.envs.import_errors()`` says why in one line. Every
 the model surgery, the measured ``FIDELITY`` table, the 49-scene survey behind it -- is finished work
 and is what the opt-in gets you. ``docs/research/humanoidbench.md`` is the full investigation.
 """
+
 from __future__ import annotations
 
 import os
@@ -233,20 +234,20 @@ import mujoco as _mj
 #: dependency uses (``ImportError`` at module scope, surfaced by ``stable_envs.envs.import_errors()``)
 #: rather than a quietly weaker tier: the registry's contract includes "the same state gives the same
 #: frame", and an env that cannot say that should not be in it.
-if os.environ.get("STABLE_ENVS_HUMANOIDBENCH", "") != "1":                    # pragma: no cover
+if os.environ.get("STABLE_ENVS_HUMANOIDBENCH", "") != "1":  # pragma: no cover
     raise ImportError(
         "the HumanoidBench family is measured and complete on fidelity (17 cells, VISUAL tier, mean "
         "2.6-8.4/255, SSIM 0.845-0.931, 437x the official renderer at batch 64) but is NOT registered "
         "by default: mujoco_warp's batched render is not bit-reproducible inside a long conformance "
         "session, so 2-3 of ~660 tests fail every run on test_determinism and "
         "test_frame_i_is_independent_of_batch_size, by 1-2/255, on a different cell each time. Set "
-        "STABLE_ENVS_HUMANOIDBENCH=1 to register it anyway. See docs/research/humanoidbench.md")
+        "STABLE_ENVS_HUMANOIDBENCH=1 to register it anyway. See docs/research/humanoidbench.md"
+    )
 
 _VENV = "/mnt/vast/home/randall.balestriero/venvs/se-hb"
-_missing = [_m for _m in ("warp", "mujoco_warp", "humanoid_bench")
-            if _ilu.find_spec(_m) is None]
+_missing = [_m for _m in ("warp", "mujoco_warp", "humanoid_bench") if _ilu.find_spec(_m) is None]
 _mjver = tuple(int(x) for x in str(_mj.__version__).split(".")[:2])
-if _missing or _mjver < (3, 11):                                             # pragma: no cover
+if _missing or _mjver < (3, 11):  # pragma: no cover
     raise ImportError(
         "the HumanoidBench family raytraces 21-50 H1 meshes with mujoco_warp, and reads its scenes "
         "from the humanoid_bench package: "
@@ -255,7 +256,8 @@ if _missing or _mjver < (3, 11):                                             # p
         f"itself pins mujoco == 3.1.6 and gymnasium == 0.29.1, so it must be installed with "
         f"`pip install --no-deps -e .` beside a newer mujoco; `pip install stable-envs[humanoidbench]`"
         f" pulls the renderer half. The envs were measured in {_VENV}. See "
-        f"docs/research/humanoidbench.md")
+        f"docs/research/humanoidbench.md"
+    )
 
 from ..env import Env
 from ..registry import register
@@ -294,6 +296,7 @@ _POOL_CACHE: dict = {}
 
 # --------------------------------------------------------------------------- the reference shims
 
+
 def _hb_compat() -> list:
     """Make HumanoidBench constructible and renderable on ``mujoco>=3.11`` / ``gymnasium>=1.0``.
 
@@ -314,19 +317,20 @@ def _hb_compat() -> list:
     Returns the model/data field names it shimmed, so a caller can report them instead of trusting
     this. Idempotent.
     """
-    import mujoco
-
     import humanoid_bench.dmc_deps.dmc_wrapper as W
+    import mujoco
     from humanoid_bench.dmc_deps import dmc_sizes as S
     from humanoid_bench.tasks import Task
 
     probe_m = mujoco.MjModel.from_xml_string(
-        "<mujoco><worldbody><body><geom size='.1'/><freejoint/></body></worldbody></mujoco>")
+        "<mujoco><worldbody><body><geom size='.1'/><freejoint/></body></worldbody></mujoco>"
+    )
     probe_d = mujoco.MjData(probe_m)
-    absent = {"mjmodel": frozenset(f for f in S.array_sizes["mjmodel"] if not hasattr(probe_m, f)),
-              "mjdata": frozenset(f for f in S.array_sizes["mjdata"] if not hasattr(probe_d, f))}
-    for cls, slot, key in ((W.MjModelWrapper, "_model", "mjmodel"),
-                           (W.MjDataWrapper, "_data", "mjdata")):
+    absent = {
+        "mjmodel": frozenset(f for f in S.array_sizes["mjmodel"] if not hasattr(probe_m, f)),
+        "mjdata": frozenset(f for f in S.array_sizes["mjdata"] if not hasattr(probe_d, f)),
+    }
+    for cls, slot, key in ((W.MjModelWrapper, "_model", "mjmodel"), (W.MjDataWrapper, "_data", "mjdata")):
         if getattr(cls, "_se_mj311_shim", False):
             continue
 
@@ -347,6 +351,7 @@ def _hb_compat() -> list:
 
 def _asset_dir() -> str:
     import humanoid_bench
+
     return os.path.join(os.path.dirname(humanoid_bench.__file__), "assets")
 
 
@@ -358,10 +363,12 @@ def _scene_xml(robot: str, task: str) -> str:
 def _camera_name(task: str) -> str:
     """The model camera HumanoidBench renders this task through, read off the Task class."""
     from humanoid_bench.env import TASKS
+
     return TASKS[task].camera_name
 
 
 # --------------------------------------------------------------------------- model surgery
+
 
 class _Bundle:
     __slots__ = ("model", "data", "info", "pristine", "state_names", "nq", "robot", "task")
@@ -423,9 +430,10 @@ def _build_bundle(robot: str, task: str) -> _Bundle:
             floor = g
         if matname(old) == "black" and int(base.body_weldid[base.geom_bodyid[g]]) != 0:
             robot_geoms.append(g)
-        if (int(base.geom_type[g]) not in (int(mujoco.mjtGeom.mjGEOM_PLANE),
-                                           int(mujoco.mjtGeom.mjGEOM_MESH))
-                and int(m.geom_group[g]) in VISIBLE_GROUPS):
+        if (
+            int(base.geom_type[g]) not in (int(mujoco.mjtGeom.mjGEOM_PLANE), int(mujoco.mjtGeom.mjGEOM_MESH))
+            and int(m.geom_group[g]) in VISIBLE_GROUPS
+        ):
             t = m.mat_texid[k]
             t = int(np.max(t)) if np.ndim(t) else int(t)
             if t >= 0:
@@ -444,7 +452,7 @@ def _build_bundle(robot: str, task: str) -> _Bundle:
     if ftex >= 0:
         w, h, c = int(m.tex_width[ftex]), int(m.tex_height[ftex]), int(m.tex_nchannel[ftex])
         adr = int(m.tex_adr[ftex])
-        px = np.asarray(m.tex_data[adr:adr + w * h * c], np.uint8).reshape(-1, c)
+        px = np.asarray(m.tex_data[adr : adr + w * h * c], np.uint8).reshape(-1, c)
         vals, cnt = np.unique(px, axis=0, return_counts=True)
         dominant = np.asarray(vals[int(cnt.argmax())], np.float64)[:3] / 255.0
         if np.ndim(m.mat_texid[mat0 + floor]):
@@ -466,10 +474,8 @@ def _build_bundle(robot: str, task: str) -> _Bundle:
     m.geom_contype[:] = 0
     m.geom_conaffinity[:] = 0
     m.vis.quality.offsamples = int(base.vis.quality.offsamples)
-    m.vis.global_.offwidth = max(int(m.vis.global_.offwidth),
-                                 4 * HumanoidBenchBase.default_size)
-    m.vis.global_.offheight = max(int(m.vis.global_.offheight),
-                                  4 * HumanoidBenchBase.default_size)
+    m.vis.global_.offwidth = max(int(m.vis.global_.offwidth), 4 * HumanoidBenchBase.default_size)
+    m.vis.global_.offheight = max(int(m.vis.global_.offheight), 4 * HumanoidBenchBase.default_size)
 
     cam = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_CAMERA, _camera_name(task))
     assert cam >= 0, f"{robot}-{task}: camera {_camera_name(task)!r} is not in the model"
@@ -484,25 +490,29 @@ def _build_bundle(robot: str, task: str) -> _Bundle:
             names += [f"{nm}_{s}" for s in ("qw", "qx", "qy", "qz")]
         else:
             names.append(nm)
-    assert len(names) == int(m.nq), (
-        f"{robot}-{task}: derived {len(names)} state names for nq={m.nq}")
+    assert len(names) == int(m.nq), f"{robot}-{task}: derived {len(names)} state names for nq={m.nq}"
 
     b = _Bundle()
     b.model, b.data = m, mujoco.MjData(m)
     b.nq, b.robot, b.task = int(m.nq), robot, task
     b.state_names = tuple(names)
-    b.info = dict(cam=cam, mat0=mat0, floor=floor, robot=robot_geoms,
-                  textured_prims=textured_prims,
-                  hidden=len(prepared.hidden_geoms) + len(prepared.hidden_sites),
-                  floor_color=floor_color,
-                  robot_color=np.array(m.mat_rgba[mat0 + robot_geoms[0], :3], copy=True))
-    b.pristine = dict(mat_rgba=np.array(m.mat_rgba, copy=True),
-                      light_diffuse=np.array(m.light_diffuse, copy=True))
+    b.info = dict(
+        cam=cam,
+        mat0=mat0,
+        floor=floor,
+        robot=robot_geoms,
+        textured_prims=textured_prims,
+        hidden=len(prepared.hidden_geoms) + len(prepared.hidden_sites),
+        floor_color=floor_color,
+        robot_color=np.array(m.mat_rgba[mat0 + robot_geoms[0], :3], copy=True),
+    )
+    b.pristine = dict(mat_rgba=np.array(m.mat_rgba, copy=True), light_diffuse=np.array(m.light_diffuse, copy=True))
     _MODEL_CACHE[key] = b
     return b
 
 
 # --------------------------------------------------------------------------- MJWarp context
+
 
 class _Ctx:
     __slots__ = ("wm", "wd", "rc", "bgra", "graph", "nworld", "res", "wp", "mjw", "needs_com")
@@ -510,9 +520,8 @@ class _Ctx:
 
 def _context(robot: str, task: str, res: int, nworld: int) -> _Ctx:
     import mujoco
-    import warp as wp
-
     import mujoco_warp as mjw
+    import warp as wp
 
     key = (robot, task, int(res), int(nworld))
     hit = _CTX_CACHE.get(key)
@@ -525,8 +534,7 @@ def _context(robot: str, task: str, res: int, nworld: int) -> _Ctx:
     c = _Ctx()
     c.wp, c.mjw, c.nworld, c.res = wp, mjw, int(nworld), int(res)
     c.needs_com = MW.needs_com_pos(m)
-    batched = {k: int(nworld) for k in
-               ("mat_rgba", "light_diffuse", "cam_poscom0", "cam_mat0")}
+    batched = {k: int(nworld) for k in ("mat_rgba", "light_diffuse", "cam_poscom0", "cam_mat0")}
     c.wm = mjw.put_model(m, batch_sizes=batched)
     c.wd = mjw.put_data(m, d0, nworld=int(nworld))
     # THIS FAMILY DOES NOT APPLY ``gl_rounding``, AND THAT IS A MEASUREMENT RATHER THAN AN OVERSIGHT.
@@ -557,19 +565,27 @@ def _context(robot: str, task: str, res: int, nworld: int) -> _Ctx:
     # mesh intersections, not by the register budget, so there is nothing for it to recover. It is on
     # because it is exact and free, and so that the three families share one code path.
     from ..render import mjwarp_lightspec as LS
+
     with LS.specialised_lights():
         c.rc = MW.create_render_context(
-            m, nworld=int(nworld), cam_res=(int(res), int(res)), render_rgb=True, render_seg=False,
+            m,
+            nworld=int(nworld),
+            cam_res=(int(res), int(res)),
+            render_rgb=True,
+            render_seg=False,
             cam_active=[i == b.info["cam"] for i in range(m.ncam)],
-            enabled_geom_groups=list(VISIBLE_GROUPS), use_textures=True, use_shadows=True,
-            render_skybox=True, enable_specular=True)
+            enabled_geom_groups=list(VISIBLE_GROUPS),
+            use_textures=True,
+            use_shadows=True,
+            render_skybox=True,
+            enable_specular=True,
+        )
         _frame(c)
         wp.synchronize()
         # A VIEW of the warp buffer. ``[..., [2,1,0]]`` here would be advanced indexing, i.e. a COPY,
         # and the object would hold one frozen frame while every later render wrote into the buffer
         # behind it.
-        c.bgra = wp.to_torch(c.rc.rgb_data).view(torch.uint8).reshape(
-            int(nworld), int(res), int(res), 4)
+        c.bgra = wp.to_torch(c.rc.rgb_data).view(torch.uint8).reshape(int(nworld), int(res), int(res), 4)
         with wp.ScopedCapture() as cap:
             _frame(c)
         c.graph = cap.graph
@@ -592,17 +608,25 @@ def _frame(c: _Ctx) -> None:
 
 # --------------------------------------------------------------------------- the env
 
+
 class HumanoidBenchBase(Env):
     """Base for the registered cells. ``ROBOT`` and ``TASK`` are set by the generated subclasses."""
 
     ROBOT: str = ""
     TASK: str = ""
-    default_size = 256                       # HumanoidBench's own default width/height
+    default_size = 256  # HumanoidBench's own default width/height
     fidelity_tier = "visual"
     parity_interior_min = None
 
-    def __init__(self, num_envs: int = 1, size: int | None = None, supersample: int = 1,
-                 device: str = "cuda", backend: str = "auto", seed: int = 0):
+    def __init__(
+        self,
+        num_envs: int = 1,
+        size: int | None = None,
+        supersample: int = 1,
+        device: str = "cuda",
+        backend: str = "auto",
+        seed: int = 0,
+    ):
         b = _build_bundle(self.ROBOT, self.TASK)
         self.state_dim = b.nq
         self.state_names = b.state_names
@@ -611,8 +635,9 @@ class HumanoidBenchBase(Env):
         # compiled model. Nothing is hidden (every column is covered, no offset is ``None``) and
         # there is no ``_live_state``: the packed row is this family's live state.
         self.state_layout = ((("qpos",), self.state_dim, 0),)
-        super().__init__(num_envs=num_envs, size=size, supersample=supersample,
-                         device=device, backend=backend, seed=seed)
+        super().__init__(
+            num_envs=num_envs, size=size, supersample=supersample, device=device, backend=backend, seed=seed
+        )
         self._b = b
 
     # ---- variation ------------------------------------------------------------------------
@@ -629,31 +654,43 @@ class HumanoidBenchBase(Env):
         value -- which is the one thing this repo's MJWarp rule forbids.
         """
         b = _build_bundle(self.ROBOT, self.TASK)
-        return Dict({
-            "floor": Dict({"color": Box(low=0.0, high=1.0, shape=(3,),
-                                        init_value=b.info["floor_color"].tolist())}),
-            "robot": Dict({"color": Box(low=0.0, high=1.0, shape=(3,),
-                                        init_value=b.info["robot_color"].tolist())}),
-            "light": Dict({"diffuse": Box(low=0.2, high=2.0, shape=(1,), init_value=[1.0])}),
-            "camera": Dict({
-                "distance_scale": Box(low=0.6, high=1.6, shape=(1,), init_value=[1.0]),
-                "azimuth_delta": Box(low=-40.0, high=40.0, shape=(1,), init_value=[0.0]),
-                "elevation_delta": Box(low=-20.0, high=20.0, shape=(1,), init_value=[0.0]),
-            }),
-        })
+        return Dict(
+            {
+                "floor": Dict(
+                    {"color": Box(low=0.0, high=1.0, shape=(3,), init_value=b.info["floor_color"].tolist())}
+                ),
+                "robot": Dict(
+                    {"color": Box(low=0.0, high=1.0, shape=(3,), init_value=b.info["robot_color"].tolist())}
+                ),
+                "light": Dict({"diffuse": Box(low=0.2, high=2.0, shape=(1,), init_value=[1.0])}),
+                "camera": Dict(
+                    {
+                        "distance_scale": Box(low=0.6, high=1.6, shape=(1,), init_value=[1.0]),
+                        "azimuth_delta": Box(low=-40.0, high=40.0, shape=(1,), init_value=[0.0]),
+                        "elevation_delta": Box(low=-20.0, high=20.0, shape=(1,), init_value=[0.0]),
+                    }
+                ),
+            }
+        )
 
     # ---- render ---------------------------------------------------------------------------
 
     @torch.no_grad()
-    def render(self, states=None, size: int | None = None, supersample: int | None = None,
-               variation: dict | None = None, style=None, out=None) -> torch.Tensor:
+    def render(
+        self,
+        states=None,
+        size: int | None = None,
+        supersample: int | None = None,
+        variation: dict | None = None,
+        style=None,
+        out=None,
+    ) -> torch.Tensor:
         """``(...,nq)`` -> ``(...,H,W,3)`` uint8 on device. Style may differ per environment.
 
         One MJWarp launch per chunk for the whole batch: colours, light and camera are per-world model
         fields, so nothing about a per-environment appearance splits it.
         """
-        s = self._state if states is None else torch.as_tensor(states, device=self.device,
-                                                               dtype=torch.float32)
+        s = self._state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
         lead = tuple(s.shape[:-1])
         s = s.reshape(-1, self.state_dim).to(torch.float32)
         B = int(s.shape[0])
@@ -709,13 +746,19 @@ class HumanoidBenchBase(Env):
             if ss == 1:
                 buf[lo:hi] = rgb
             else:
-                buf[lo:hi] = (rgb.to(torch.float32)
-                              .reshape(n, size, ss, size, ss, 3).mean((2, 4)).round_()
-                              .clamp_(0, 255).to(torch.uint8))
+                buf[lo:hi] = (
+                    rgb.to(torch.float32)
+                    .reshape(n, size, ss, size, ss, 3)
+                    .mean((2, 4))
+                    .round_()
+                    .clamp_(0, 255)
+                    .to(torch.uint8)
+                )
         return buf.view(*lead, size, size, 3) if lead else buf
 
-    def _upload(self, c: _Ctx, s: torch.Tensor, sty, lo: int, hi: int,
-                campos: torch.Tensor, cammat: torch.Tensor) -> None:
+    def _upload(
+        self, c: _Ctx, s: torch.Tensor, sty, lo: int, hi: int, campos: torch.Tensor, cammat: torch.Tensor
+    ) -> None:
         """Write EVERY world of the context, not only the ``n`` a caller asked for.
 
         The unused tail is filled with a copy of the last requested row, and that is a correctness
@@ -759,10 +802,12 @@ class HumanoidBenchBase(Env):
         mat[:, m0 + info["floor"], :3] = pad(sty["floor.color"][lo:hi])
         # ONE indexed write for the robot's materials rather than one kernel per material: h1hand wears
         # 47 of them, so the loop issued 47 broadcasts of the same colour per chunk.
-        mat[:, self._idx("robot.mats", m0 + np.asarray(info["robot"], np.int64)), :3] = (
-            pad(sty["robot.color"][lo:hi]).unsqueeze(1))
-        wp.to_torch(c.wm.light_diffuse)[:] = (
-            self._light0().unsqueeze(0) * pad(sty["light.diffuse"][lo:hi].reshape(n, 1, 1)))
+        mat[:, self._idx("robot.mats", m0 + np.asarray(info["robot"], np.int64)), :3] = pad(
+            sty["robot.color"][lo:hi]
+        ).unsqueeze(1)
+        wp.to_torch(c.wm.light_diffuse)[:] = self._light0().unsqueeze(0) * pad(
+            sty["light.diffuse"][lo:hi].reshape(n, 1, 1)
+        )
         wp.to_torch(c.wm.cam_poscom0)[:, info["cam"]] = pad(campos)
         wp.to_torch(c.wm.cam_mat0)[:, info["cam"]] = pad(cammat)
 
@@ -778,8 +823,9 @@ class HumanoidBenchBase(Env):
         cache = self.__dict__.setdefault("_idx_cache", {})
         hit = cache.get("light0")
         if hit is None:
-            hit = cache["light0"] = torch.as_tensor(self._b.pristine["light_diffuse"],
-                                                    device=self.device, dtype=torch.float32)
+            hit = cache["light0"] = torch.as_tensor(
+                self._b.pristine["light_diffuse"], device=self.device, dtype=torch.float32
+            )
         return hit
 
     def _camera(self, sty, lo: int, hi: int):
@@ -794,15 +840,23 @@ class HumanoidBenchBase(Env):
         m = b.model
         base_pos = np.asarray(m.cam_poscom0[info["cam"]], np.float64)
         base_mat = np.asarray(m.cam_mat0[info["cam"]], np.float64).reshape(3, 3)
-        key = torch.stack([sty[p][lo:hi].reshape(-1) for p in
-                           ("camera.distance_scale", "camera.azimuth_delta",
-                            "camera.elevation_delta")], 1).cpu().numpy()
+        key = (
+            torch.stack(
+                [
+                    sty[p][lo:hi].reshape(-1)
+                    for p in ("camera.distance_scale", "camera.azimuth_delta", "camera.elevation_delta")
+                ],
+                1,
+            )
+            .cpu()
+            .numpy()
+        )
         uniq, inv = np.unique(np.round(key.astype(np.float64), 6), axis=0, return_inverse=True)
         poses, mats = [], []
         for scale, az, el in uniq:
             a = np.deg2rad(float(az))
             Rz = np.array([[np.cos(a), -np.sin(a), 0.0], [np.sin(a), np.cos(a), 0.0], [0, 0, 1.0]])
-            right = Rz @ base_mat[:, 0]                       # the camera's own x axis, after azimuth
+            right = Rz @ base_mat[:, 0]  # the camera's own x axis, after azimuth
             e = np.deg2rad(float(el))
             k = right / max(np.linalg.norm(right), 1e-12)
             K = np.array([[0, -k[2], k[1]], [k[2], 0, -k[0]], [-k[1], k[0], 0]])
@@ -836,12 +890,11 @@ class HumanoidBenchBase(Env):
     def reference_env(cls, size: int = 256):
         """A FRESH official env. Never closed: releasing an EGL context corrupts every other live one."""
         import gymnasium
-
         import humanoid_bench  # noqa: F401  (registers the ids)
+
         _hb_compat()
         np.random.seed(0)
-        env = gymnasium.make(f"{cls.ROBOT}-{cls.TASK}-v0", render_mode="rgb_array",
-                             width=int(size), height=int(size))
+        env = gymnasium.make(f"{cls.ROBOT}-{cls.TASK}-v0", render_mode="rgb_array", width=int(size), height=int(size))
         u = env.unwrapped
         u.model.vis.global_.offwidth = max(int(u.model.vis.global_.offwidth), int(size))
         u.model.vis.global_.offheight = max(int(u.model.vis.global_.offheight), int(size))
@@ -858,6 +911,7 @@ class HumanoidBenchBase(Env):
         renormalises a free joint's quaternion in place, which is the only thing the assert tolerates.
         """
         import mujoco
+
         u = env.unwrapped
         m, d = u.model, u.data
         nq = int(m.nq)
@@ -870,7 +924,8 @@ class HumanoidBenchBase(Env):
             if err > 1e-5:
                 raise AssertionError(
                     f"{cls.__name__}: the reference env did not reach the requested state (max "
-                    f"{err:.3e}); every number computed from it would compare two different scenes")
+                    f"{err:.3e}); every number computed from it would compare two different scenes"
+                )
             u.mujoco_renderer.viewer.make_context_current()
             out.append(np.ascontiguousarray(u.render()))
         return np.stack(out)
@@ -888,8 +943,8 @@ def _state_pool(robot: str, task: str, nq: int, n: int = 512) -> np.ndarray:
     if hit is not None:
         return hit
     import gymnasium
-
     import humanoid_bench  # noqa: F401
+
     _hb_compat()
     np.random.seed(0)
     env = gymnasium.make(f"{robot}-{task}-v0", render_mode=None)
@@ -900,11 +955,11 @@ def _state_pool(robot: str, task: str, nq: int, n: int = 512) -> np.ndarray:
     hi = np.asarray(env.action_space.high, np.float64)
     out = np.empty((int(n), int(nq)), np.float32)
     for i in range(int(n)):
-        env.reset(seed=int(rng.integers(0, 2 ** 31 - 1)))
+        env.reset(seed=int(rng.integers(0, 2**31 - 1)))
         for _ in range(int(rng.integers(0, 61))):
             _, _, term, trunc, _ = env.step(rng.uniform(lo, hi).astype(np.float32))
             if term or trunc:
-                env.reset(seed=int(rng.integers(0, 2 ** 31 - 1)))
+                env.reset(seed=int(rng.integers(0, 2**31 - 1)))
         out[i] = np.asarray(u.data.qpos, np.float64)
     env.close()
     _POOL_CACHE[(robot, task)] = out
@@ -913,8 +968,10 @@ def _state_pool(robot: str, task: str, nq: int, n: int = 512) -> np.ndarray:
 
 # --------------------------------------------------------------------------- the registered cells
 
-_AT = ("256 px, 64 states x 4 independent draws from sample_states, one NVIDIA H200, "
-       "mujoco 3.11.0 / mujoco-warp 3.11.0 / warp 1.16.0, humanoid_bench 0.2 (~/venvs/se-hb)")
+_AT = (
+    "256 px, 64 states x 4 independent draws from sample_states, one NVIDIA H200, "
+    "mujoco 3.11.0 / mujoco-warp 3.11.0 / warp 1.16.0, humanoid_bench 0.2 (~/venvs/se-hb)"
+)
 
 VISUAL_NOTE = (
     "THREE RESIDUALS, all structural to the backend rather than to any one scene, in the order they "
@@ -944,113 +1001,216 @@ VISUAL_NOTE = (
     "is NOT in these numbers because it was found and fixed: com_pos in the frame loop (without it a "
     "TRACKCOM camera never leaves its put_data pose), one material per geom carrying MuJoCo's "
     "resolved colour, and the zero-alpha pre-pass. WHAT THIS TIER DOES NOT LICENSE: training here and "
-    "evaluating on official HumanoidBench pixels.")
+    "evaluating on official HumanoidBench pixels."
+)
 
 #: MEASURED per cell. Keys are ``(robot, task)``; ``mean_abs``/``within8_frac``/``ssim`` are the
 #: conformance suite's own numbers on this env's own state distribution, and the three ``*_max`` /
 #: ``*_min`` thresholds are set clear of the SPREAD over independent draws, not of one draw.
 FIDELITY: dict[tuple[str, str], dict] = {
     ("h1", "balance_simple"): {
-        "mean_abs": 5.27, "within8_frac": 0.910, "ssim": 0.862,
-        "interior_mean_abs": 1.77, "interior_exact_frac": 0.931,
+        "mean_abs": 5.27,
+        "within8_frac": 0.910,
+        "ssim": 0.862,
+        "interior_mean_abs": 1.77,
+        "interior_exact_frac": 0.931,
         "draw_spread": {"mean_abs": [5.20, 5.46], "within8_frac": [0.910, 0.911], "ssim": [0.853, 0.862]},
-        "mean_abs_max": 6.5, "within8_min": 0.87, "ssim_min": 0.81, "measured_at": _AT,
+        "mean_abs_max": 6.5,
+        "within8_min": 0.87,
+        "ssim_min": 0.81,
+        "measured_at": _AT,
     },
     ("h1", "run"): {
-        "mean_abs": 2.86, "within8_frac": 0.934, "ssim": 0.849,
-        "interior_mean_abs": 0.34, "interior_exact_frac": 0.932,
+        "mean_abs": 2.86,
+        "within8_frac": 0.934,
+        "ssim": 0.849,
+        "interior_mean_abs": 0.34,
+        "interior_exact_frac": 0.932,
         "draw_spread": {"mean_abs": [2.81, 2.87], "within8_frac": [0.934, 0.935], "ssim": [0.845, 0.850]},
-        "mean_abs_max": 3.4, "within8_min": 0.89, "ssim_min": 0.8, "measured_at": _AT,
+        "mean_abs_max": 3.4,
+        "within8_min": 0.89,
+        "ssim_min": 0.8,
+        "measured_at": _AT,
     },
     ("h1", "sit_hard"): {
-        "mean_abs": 3.46, "within8_frac": 0.919, "ssim": 0.868,
-        "interior_mean_abs": 0.56, "interior_exact_frac": 0.937,
+        "mean_abs": 3.46,
+        "within8_frac": 0.919,
+        "ssim": 0.868,
+        "interior_mean_abs": 0.56,
+        "interior_exact_frac": 0.937,
         "draw_spread": {"mean_abs": [3.40, 3.46], "within8_frac": [0.919, 0.920], "ssim": [0.859, 0.868]},
-        "mean_abs_max": 4.2, "within8_min": 0.88, "ssim_min": 0.82, "measured_at": _AT,
+        "mean_abs_max": 4.2,
+        "within8_min": 0.88,
+        "ssim_min": 0.82,
+        "measured_at": _AT,
     },
     ("h1", "sit_simple"): {
-        "mean_abs": 3.44, "within8_frac": 0.917, "ssim": 0.851,
-        "interior_mean_abs": 0.49, "interior_exact_frac": 0.942,
+        "mean_abs": 3.44,
+        "within8_frac": 0.917,
+        "ssim": 0.851,
+        "interior_mean_abs": 0.49,
+        "interior_exact_frac": 0.942,
         "draw_spread": {"mean_abs": [3.44, 3.50], "within8_frac": [0.916, 0.917], "ssim": [0.843, 0.855]},
-        "mean_abs_max": 4.2, "within8_min": 0.88, "ssim_min": 0.8, "measured_at": _AT,
+        "mean_abs_max": 4.2,
+        "within8_min": 0.88,
+        "ssim_min": 0.8,
+        "measured_at": _AT,
     },
     ("h1", "slide"): {
-        "mean_abs": 3.35, "within8_frac": 0.954, "ssim": 0.931,
-        "interior_mean_abs": 1.51, "interior_exact_frac": 0.620,
+        "mean_abs": 3.35,
+        "within8_frac": 0.954,
+        "ssim": 0.931,
+        "interior_mean_abs": 1.51,
+        "interior_exact_frac": 0.620,
         "draw_spread": {"mean_abs": [3.33, 3.39], "within8_frac": [0.952, 0.954], "ssim": [0.919, 0.931]},
-        "mean_abs_max": 4.1, "within8_min": 0.91, "ssim_min": 0.88, "measured_at": _AT,
+        "mean_abs_max": 4.1,
+        "within8_min": 0.91,
+        "ssim_min": 0.88,
+        "measured_at": _AT,
     },
     ("h1", "stair"): {
-        "mean_abs": 2.62, "within8_frac": 0.958, "ssim": 0.929,
-        "interior_mean_abs": 0.54, "interior_exact_frac": 0.853,
+        "mean_abs": 2.62,
+        "within8_frac": 0.958,
+        "ssim": 0.929,
+        "interior_mean_abs": 0.54,
+        "interior_exact_frac": 0.853,
         "draw_spread": {"mean_abs": [2.61, 2.67], "within8_frac": [0.956, 0.958], "ssim": [0.928, 0.932]},
-        "mean_abs_max": 3.2, "within8_min": 0.92, "ssim_min": 0.89, "measured_at": _AT,
+        "mean_abs_max": 3.2,
+        "within8_min": 0.92,
+        "ssim_min": 0.89,
+        "measured_at": _AT,
     },
     ("h1", "stand"): {
-        "mean_abs": 2.86, "within8_frac": 0.934, "ssim": 0.849,
-        "interior_mean_abs": 0.34, "interior_exact_frac": 0.932,
+        "mean_abs": 2.86,
+        "within8_frac": 0.934,
+        "ssim": 0.849,
+        "interior_mean_abs": 0.34,
+        "interior_exact_frac": 0.932,
         "draw_spread": {"mean_abs": [2.81, 2.87], "within8_frac": [0.934, 0.935], "ssim": [0.845, 0.850]},
-        "mean_abs_max": 3.4, "within8_min": 0.89, "ssim_min": 0.8, "measured_at": _AT,
+        "mean_abs_max": 3.4,
+        "within8_min": 0.89,
+        "ssim_min": 0.8,
+        "measured_at": _AT,
     },
     ("h1", "walk"): {
-        "mean_abs": 2.86, "within8_frac": 0.934, "ssim": 0.849,
-        "interior_mean_abs": 0.34, "interior_exact_frac": 0.932,
+        "mean_abs": 2.86,
+        "within8_frac": 0.934,
+        "ssim": 0.849,
+        "interior_mean_abs": 0.34,
+        "interior_exact_frac": 0.932,
         "draw_spread": {"mean_abs": [2.81, 2.87], "within8_frac": [0.934, 0.935], "ssim": [0.845, 0.850]},
-        "mean_abs_max": 3.4, "within8_min": 0.89, "ssim_min": 0.8, "measured_at": _AT,
+        "mean_abs_max": 3.4,
+        "within8_min": 0.89,
+        "ssim_min": 0.8,
+        "measured_at": _AT,
     },
     ("h1hand", "balance_simple"): {
-        "mean_abs": 5.40, "within8_frac": 0.908, "ssim": 0.861,
-        "interior_mean_abs": 1.71, "interior_exact_frac": 0.930,
+        "mean_abs": 5.40,
+        "within8_frac": 0.908,
+        "ssim": 0.861,
+        "interior_mean_abs": 1.71,
+        "interior_exact_frac": 0.930,
         "draw_spread": {"mean_abs": [5.13, 5.40], "within8_frac": [0.908, 0.909], "ssim": [0.861, 0.866]},
-        "mean_abs_max": 6.5, "within8_min": 0.87, "ssim_min": 0.82, "measured_at": _AT,
+        "mean_abs_max": 6.5,
+        "within8_min": 0.87,
+        "ssim_min": 0.82,
+        "measured_at": _AT,
     },
     ("h1hand", "run"): {
-        "mean_abs": 3.00, "within8_frac": 0.932, "ssim": 0.852,
-        "interior_mean_abs": 0.34, "interior_exact_frac": 0.931,
+        "mean_abs": 3.00,
+        "within8_frac": 0.932,
+        "ssim": 0.852,
+        "interior_mean_abs": 0.34,
+        "interior_exact_frac": 0.931,
         "draw_spread": {"mean_abs": [3.00, 3.01], "within8_frac": [0.931, 0.932], "ssim": [0.846, 0.852]},
-        "mean_abs_max": 3.6, "within8_min": 0.89, "ssim_min": 0.81, "measured_at": _AT,
+        "mean_abs_max": 3.6,
+        "within8_min": 0.89,
+        "ssim_min": 0.81,
+        "measured_at": _AT,
     },
     ("h1hand", "sit_hard"): {
-        "mean_abs": 3.56, "within8_frac": 0.918, "ssim": 0.868,
-        "interior_mean_abs": 0.54, "interior_exact_frac": 0.943,
+        "mean_abs": 3.56,
+        "within8_frac": 0.918,
+        "ssim": 0.868,
+        "interior_mean_abs": 0.54,
+        "interior_exact_frac": 0.943,
         "draw_spread": {"mean_abs": [3.56, 3.60], "within8_frac": [0.917, 0.918], "ssim": [0.858, 0.868]},
-        "mean_abs_max": 4.3, "within8_min": 0.88, "ssim_min": 0.82, "measured_at": _AT,
+        "mean_abs_max": 4.3,
+        "within8_min": 0.88,
+        "ssim_min": 0.82,
+        "measured_at": _AT,
     },
     ("h1hand", "sit_simple"): {
-        "mean_abs": 3.61, "within8_frac": 0.915, "ssim": 0.859,
-        "interior_mean_abs": 0.50, "interior_exact_frac": 0.937,
+        "mean_abs": 3.61,
+        "within8_frac": 0.915,
+        "ssim": 0.859,
+        "interior_mean_abs": 0.50,
+        "interior_exact_frac": 0.937,
         "draw_spread": {"mean_abs": [3.61, 3.66], "within8_frac": [0.914, 0.915], "ssim": [0.851, 0.860]},
-        "mean_abs_max": 4.4, "within8_min": 0.87, "ssim_min": 0.81, "measured_at": _AT,
+        "mean_abs_max": 4.4,
+        "within8_min": 0.87,
+        "ssim_min": 0.81,
+        "measured_at": _AT,
     },
     ("h1hand", "slide"): {
-        "mean_abs": 3.69, "within8_frac": 0.946, "ssim": 0.906,
-        "interior_mean_abs": 1.84, "interior_exact_frac": 0.607,
+        "mean_abs": 3.69,
+        "within8_frac": 0.946,
+        "ssim": 0.906,
+        "interior_mean_abs": 1.84,
+        "interior_exact_frac": 0.607,
         "draw_spread": {"mean_abs": [3.50, 3.69], "within8_frac": [0.946, 0.951], "ssim": [0.906, 0.926]},
-        "mean_abs_max": 4.4, "within8_min": 0.91, "ssim_min": 0.87, "measured_at": _AT,
+        "mean_abs_max": 4.4,
+        "within8_min": 0.91,
+        "ssim_min": 0.87,
+        "measured_at": _AT,
     },
     ("h1hand", "spoon"): {
-        "mean_abs": 8.40, "within8_frac": 0.795, "ssim": 0.899,
-        "interior_mean_abs": 4.21, "interior_exact_frac": 0.923,
+        "mean_abs": 8.40,
+        "within8_frac": 0.795,
+        "ssim": 0.899,
+        "interior_mean_abs": 4.21,
+        "interior_exact_frac": 0.923,
         "draw_spread": {"mean_abs": [8.35, 8.40], "within8_frac": [0.795, 0.796], "ssim": [0.898, 0.901]},
-        "mean_abs_max": 10.1, "within8_min": 0.75, "ssim_min": 0.86, "measured_at": _AT,
+        "mean_abs_max": 10.1,
+        "within8_min": 0.75,
+        "ssim_min": 0.86,
+        "measured_at": _AT,
     },
     ("h1hand", "stair"): {
-        "mean_abs": 2.76, "within8_frac": 0.956, "ssim": 0.931,
-        "interior_mean_abs": 0.56, "interior_exact_frac": 0.845,
+        "mean_abs": 2.76,
+        "within8_frac": 0.956,
+        "ssim": 0.931,
+        "interior_mean_abs": 0.56,
+        "interior_exact_frac": 0.845,
         "draw_spread": {"mean_abs": [2.74, 2.81], "within8_frac": [0.954, 0.956], "ssim": [0.927, 0.931]},
-        "mean_abs_max": 3.4, "within8_min": 0.91, "ssim_min": 0.89, "measured_at": _AT,
+        "mean_abs_max": 3.4,
+        "within8_min": 0.91,
+        "ssim_min": 0.89,
+        "measured_at": _AT,
     },
     ("h1hand", "stand"): {
-        "mean_abs": 3.00, "within8_frac": 0.932, "ssim": 0.852,
-        "interior_mean_abs": 0.34, "interior_exact_frac": 0.931,
+        "mean_abs": 3.00,
+        "within8_frac": 0.932,
+        "ssim": 0.852,
+        "interior_mean_abs": 0.34,
+        "interior_exact_frac": 0.931,
         "draw_spread": {"mean_abs": [3.00, 3.01], "within8_frac": [0.931, 0.932], "ssim": [0.846, 0.852]},
-        "mean_abs_max": 3.6, "within8_min": 0.89, "ssim_min": 0.81, "measured_at": _AT,
+        "mean_abs_max": 3.6,
+        "within8_min": 0.89,
+        "ssim_min": 0.81,
+        "measured_at": _AT,
     },
     ("h1hand", "walk"): {
-        "mean_abs": 3.00, "within8_frac": 0.932, "ssim": 0.852,
-        "interior_mean_abs": 0.34, "interior_exact_frac": 0.931,
+        "mean_abs": 3.00,
+        "within8_frac": 0.932,
+        "ssim": 0.852,
+        "interior_mean_abs": 0.34,
+        "interior_exact_frac": 0.931,
         "draw_spread": {"mean_abs": [3.00, 3.01], "within8_frac": [0.931, 0.932], "ssim": [0.846, 0.852]},
-        "mean_abs_max": 3.6, "within8_min": 0.89, "ssim_min": 0.81, "measured_at": _AT,
+        "mean_abs_max": 3.6,
+        "within8_min": 0.89,
+        "ssim_min": 0.81,
+        "measured_at": _AT,
     },
 }
 
@@ -1067,13 +1227,18 @@ FIDELITY: dict[tuple[str, str], dict] = {
 #: the renderer provably ignores; RoboCasa solves the same problem by measuring and pinning a live
 #: subset, and that is deliberately NOT done here because it makes the state no longer be ``qpos``.
 CELLS = tuple(
-    (f"HumanoidBench{'H1Hand' if robot == 'h1hand' else 'H1'}"
-     f"{''.join(p.capitalize() for p in task.split('_'))}", robot, task)
-    for robot, task in
-    [("h1", t) for t in ("walk", "run", "stand", "stair", "slide", "sit_simple", "sit_hard",
-                         "balance_simple")]
-    + [("h1hand", t) for t in ("walk", "run", "stand", "stair", "slide", "sit_simple", "sit_hard",
-                               "balance_simple", "spoon")]
+    (
+        f"HumanoidBench{'H1Hand' if robot == 'h1hand' else 'H1'}{''.join(p.capitalize() for p in task.split('_'))}",
+        robot,
+        task,
+    )
+    for robot, task in [
+        ("h1", t) for t in ("walk", "run", "stand", "stair", "slide", "sit_simple", "sit_hard", "balance_simple")
+    ]
+    + [
+        ("h1hand", t)
+        for t in ("walk", "run", "stand", "stair", "slide", "sit_simple", "sit_hard", "balance_simple", "spoon")
+    ]
 )
 
 
@@ -1081,28 +1246,36 @@ def _make_classes():
     made = {}
     for cname, robot, task in CELLS:
         vf = FIDELITY.get((robot, task))
-        if vf is None:                                    # not measured -> not registered
+        if vf is None:  # not measured -> not registered
             continue
-        made[cname] = register(type(cname, (HumanoidBenchBase,), dict(
-            ROBOT=robot, TASK=task,
-            name=f"humanoidbench-{robot}-{task.replace('_', '-')}",
-            reference_id=f"{robot}-{task}-v0",
-            visual_fidelity=vf,
-            visual_note=VISUAL_NOTE,
-            __doc__=(
-                f"HumanoidBench {robot}-{task}-v0, through its own model camera "
-                f"{_camera_name(task)!r}.\n\n"
-                f"VISUAL TIER — these are NOT the official pixels. The frame is MJWarp's raytrace of "
-                f"HumanoidBench's own compiled scene from the same qpos: same geometry, same camera, "
-                f"same lights, a different rasterizer, and the floor's 2 cm grid replaced by the "
-                f"floor's dominant colour. Measured against MuJoCo's own raster over 64 states x 4 "
-                f"draws at 256 px: mean |diff| {vf['mean_abs']:.2f}/255, "
-                f"{100 * vf['within8_frac']:.1f}% of pixels within 8/255, SSIM {vf['ssim']:.3f}, and "
-                f"{100 * vf['interior_exact_frac']:.1f}% of interior pixels bit-exact against the "
-                f"100% every parity env in this registry declares.\n\n"
-                f"Suitable for generating training frames live. NOT a substitute for a stored dataset "
-                f"when a policy will be evaluated on official HumanoidBench pixels. See visual_note."),
-        )))
+        made[cname] = register(
+            type(
+                cname,
+                (HumanoidBenchBase,),
+                dict(
+                    ROBOT=robot,
+                    TASK=task,
+                    name=f"humanoidbench-{robot}-{task.replace('_', '-')}",
+                    reference_id=f"{robot}-{task}-v0",
+                    visual_fidelity=vf,
+                    visual_note=VISUAL_NOTE,
+                    __doc__=(
+                        f"HumanoidBench {robot}-{task}-v0, through its own model camera "
+                        f"{_camera_name(task)!r}.\n\n"
+                        f"VISUAL TIER — these are NOT the official pixels. The frame is MJWarp's raytrace of "
+                        f"HumanoidBench's own compiled scene from the same qpos: same geometry, same camera, "
+                        f"same lights, a different rasterizer, and the floor's 2 cm grid replaced by the "
+                        f"floor's dominant colour. Measured against MuJoCo's own raster over 64 states x 4 "
+                        f"draws at 256 px: mean |diff| {vf['mean_abs']:.2f}/255, "
+                        f"{100 * vf['within8_frac']:.1f}% of pixels within 8/255, SSIM {vf['ssim']:.3f}, and "
+                        f"{100 * vf['interior_exact_frac']:.1f}% of interior pixels bit-exact against the "
+                        f"100% every parity env in this registry declares.\n\n"
+                        f"Suitable for generating training frames live. NOT a substitute for a stored dataset "
+                        f"when a policy will be evaluated on official HumanoidBench pixels. See visual_note."
+                    ),
+                ),
+            )
+        )
     return made
 
 

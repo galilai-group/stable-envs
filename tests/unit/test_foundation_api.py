@@ -4,6 +4,7 @@ Every assertion here is about the PROMISE rather than about an implementation: `
 P0 contract, closing is explicit and idempotent, and a closed env refuses to draw rather than
 handing back a frame through a backend that may no longer exist.
 """
+
 from __future__ import annotations
 
 import pytest
@@ -27,9 +28,9 @@ def records():
     what stable-envs EMITS, not which file descriptor it lands on.
     """
     from stable_envs._config import logger
+
     got: list[str] = []
-    sink = logger.add(got.append, level="TRACE",
-                      filter=lambda r: r["extra"].get("package") == "stable_envs")
+    sink = logger.add(got.append, level="TRACE", filter=lambda r: r["extra"].get("package") == "stable_envs")
     yield got
     logger.remove(sink)
 
@@ -49,8 +50,18 @@ def test_dir_advertises_the_documented_namespace_and_the_environments_only():
     """Contract §1: the top level exposes the happy path, not backend machinery."""
     listed = set(dir(snv))
     assert {"Env", "State", "StepResult", "make", "spec", "PushT"} <= listed
-    assert not listed & {"Scene2D", "raster2d", "raycast3d", "render", "testing", "StyleTensor",
-                         "render_states", "StableEnv", "REGISTRY", "register"}
+    assert not listed & {
+        "Scene2D",
+        "raster2d",
+        "raycast3d",
+        "render",
+        "testing",
+        "StyleTensor",
+        "render_states",
+        "StableEnv",
+        "REGISTRY",
+        "register",
+    }
     for name in ("Scene2D", "StyleTensor", "render_states"):
         assert getattr(snv, name) is not None, f"snv.{name} must still resolve, just not be listed"
 
@@ -62,8 +73,20 @@ def test_unpublished_step8_names_do_not_resolve():
 
 
 def test_the_public_namespace_is_the_contract():
-    for name in ("Env", "State", "Spec", "CompositeSpec", "make", "spec", "list_envs", "set",
-                 "get_config", "import_errors", "StepResult", "__version__"):
+    for name in (
+        "Env",
+        "State",
+        "Spec",
+        "CompositeSpec",
+        "make",
+        "spec",
+        "list_envs",
+        "set",
+        "get_config",
+        "import_errors",
+        "StepResult",
+        "__version__",
+    ):
         assert hasattr(snv, name), f"snv.{name} is part of the Step-9 public namespace"
     assert snv.__version__ == __import__("stable_envs.__about__", fromlist=["x"]).__version__
 
@@ -82,10 +105,13 @@ def test_an_unknown_attribute_says_how_to_find_the_environments():
 
 def test_state_and_stepresult_are_the_tensordict_type_and_not_private_subclasses():
     from tensordict import TensorDict
+
     assert snv.State is TensorDict and snv.StepResult is TensorDict
-    assert "StepResult" in snv.__all__, ("`StepResult` is the name five docstrings and the contract "
-                                         "use for what step returns; it must be exported so cells do "
-                                         "not each hand-roll the TensorDict call")
+    assert "StepResult" in snv.__all__, (
+        "`StepResult` is the name five docstrings and the contract "
+        "use for what step returns; it must be exported so cells do "
+        "not each hand-roll the TensorDict call"
+    )
 
 
 # ------------------------------------------------------------------ constructor
@@ -95,16 +121,20 @@ def test_make_takes_num_envs():
     env = snv.make("PushT", num_envs=4, device="cpu")
     env2 = snv.make("PushT", num_envs=2, device="cpu")
     assert env.num_envs == 4 == env.B and env2.num_envs == 2
-    env.close(); env2.close()
+    env.close()
+    env2.close()
 
 
 def test_no_registered_class_declares_batch_as_the_constructor_spelling():
     """``batch=`` was never a tagged-release spelling of ``num_envs=``."""
     import inspect
 
-    holdouts = sorted(n for n, c in R.REGISTRY.items()
-                      if "batch" in inspect.signature(c.__init__).parameters
-                      and "num_envs" not in inspect.signature(c.__init__).parameters)
+    holdouts = sorted(
+        n
+        for n, c in R.REGISTRY.items()
+        if "batch" in inspect.signature(c.__init__).parameters
+        and "num_envs" not in inspect.signature(c.__init__).parameters
+    )
     assert holdouts == [], f"registered classes still take batch= as the constructor: {holdouts}"
 
 
@@ -150,9 +180,12 @@ def test_close_is_idempotent_and_a_closed_env_refuses_to_render():
     env.close()
     env.close()
     assert env.closed
-    for call, what in ((lambda: env.render(st), "render"), (lambda: env.render(), "render"),
-                       (lambda: env.reset(seed=0), "reset"),
-                       (lambda: env.step(torch.zeros(2, 2)), "step")):
+    for call, what in (
+        (lambda: env.render(st), "render"),
+        (lambda: env.render(), "render"),
+        (lambda: env.reset(seed=0), "reset"),
+        (lambda: env.step(torch.zeros(2, 2)), "step"),
+    ):
         with pytest.raises(RuntimeError) as e:
             call()
         assert "closed" in str(e.value) and f"PushT.{what}" in str(e.value)
@@ -173,8 +206,13 @@ def test_the_context_manager_closes_and_does_not_swallow_exceptions():
 def test_testing_harness_asks_has_dynamics_not_hasattr_step():
     """Wave 0 gave every Env a ``step``; a ``hasattr(env, "step")`` guard is therefore always true and
     sends renderer-only cells into ``env.sample``, which refuses them (Workstream A, R9)."""
-    import pathlib, re
+    import pathlib
+    import re
+
     root = pathlib.Path(__file__).resolve().parents[2] / "stable_envs"
-    offenders = [str(p.relative_to(root.parent)) for p in root.rglob("*.py")
-                 if p.name != "dynamics.py" and re.search(r'hasattr\(\s*\w+\s*,\s*"step"\s*\)', p.read_text())]
+    offenders = [
+        str(p.relative_to(root.parent))
+        for p in root.rglob("*.py")
+        if p.name != "dynamics.py" and re.search(r'hasattr\(\s*\w+\s*,\s*"step"\s*\)', p.read_text())
+    ]
     assert offenders == [], offenders

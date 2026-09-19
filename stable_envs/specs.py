@@ -13,10 +13,12 @@ Sampling takes a ``numpy.random.Generator`` rather than a torch generator on pur
 reset distributions (``sample_states``) are numpy and seeded from ``env.rng``, so a spec that sampled
 from torch would make "the same seed" mean two different things in one env.
 """
+
 from __future__ import annotations
 
+from collections.abc import Iterator
 from dataclasses import dataclass, field, replace
-from typing import Any, Iterator
+from typing import Any
 
 import numpy as np
 import torch
@@ -51,7 +53,8 @@ class Spec:
         if self.names and (len(self.shape) != 1 or len(self.names) != self.shape[0]):
             raise ValueError(
                 f"Spec(shape={self.shape}, names={self.names}): names label the elements of a 1-D "
-                f"spec, one each, so there must be exactly {self.shape} of them.")
+                f"spec, one each, so there must be exactly {self.shape} of them."
+            )
 
     # ---------------------------------------------------------------- introspection
 
@@ -71,15 +74,15 @@ class Spec:
 
     # ---------------------------------------------------------------- construction
 
-    def to(self, device) -> "Spec":
+    def to(self, device) -> Spec:
         return replace(self, device=torch.device(device))
 
     def zeros(self, num_envs: int, device=None) -> torch.Tensor:
-        return torch.zeros(self.batch_shape(num_envs), dtype=self.dtype,
-                           device=device if device is not None else self.device)
+        return torch.zeros(
+            self.batch_shape(num_envs), dtype=self.dtype, device=device if device is not None else self.device
+        )
 
-    def sample(self, num_envs: int, rng: np.random.Generator | None = None,
-               device=None) -> torch.Tensor:
+    def sample(self, num_envs: int, rng: np.random.Generator | None = None, device=None) -> torch.Tensor:
         """``(num_envs, *shape)`` drawn uniformly inside the bounds.
 
         An UNBOUNDED continuous spec refuses rather than inventing a distribution: a state spec with no
@@ -99,7 +102,8 @@ class Spec:
             raise ValueError(
                 f"Spec(shape={self.shape}) declares no bounds, so it cannot be sampled from. Whatever "
                 f"this describes, the distribution lives with whoever knows the reachable set — for a "
-                f"state that is the environment's own reset distribution, env.sample_states(n).")
+                f"state that is the environment's own reset distribution, env.sample_states(n)."
+            )
         return torch.as_tensor(np.asarray(v), dtype=self.dtype, device=dev)
 
     # ---------------------------------------------------------------- checking
@@ -114,7 +118,8 @@ class Spec:
             raise ValueError(
                 f"{owner}: expected (batch, {', '.join(str(s) for s in self.shape) or ''}) and got "
                 f"{tuple(t.shape)}"
-                + (f"; the {len(self.names)} column(s) are {list(self.names)}" if self.names else ""))
+                + (f"; the {len(self.names)} column(s) are {list(self.names)}" if self.names else "")
+            )
         t = t.to(self.dtype)
         if t.is_floating_point() and not bool(torch.isfinite(t).all()):
             raise ValueError(f"{owner}: holds NaN or inf.")
@@ -126,9 +131,11 @@ class Spec:
             hi = torch.as_tensor(_as_np(self.high, self.shape), dtype=torch.float64, device=t.device)
             v = t.to(torch.float64)
             if bool((v < lo).any() or (v > hi).any()):
-                raise ValueError(f"{owner}: values outside the declared bounds "
-                                 f"[{np.min(_as_np(self.low, self.shape))}, "
-                                 f"{np.max(_as_np(self.high, self.shape))}].")
+                raise ValueError(
+                    f"{owner}: values outside the declared bounds "
+                    f"[{np.min(_as_np(self.low, self.shape))}, "
+                    f"{np.max(_as_np(self.high, self.shape))}]."
+                )
         return t
 
     def contains(self, x) -> bool:
@@ -143,8 +150,9 @@ class Spec:
         if self.discrete_n is not None:
             bits.append(f"n={self.discrete_n}")
         elif self.bounded:
-            bits.append(f"bounds=[{np.min(_as_np(self.low, self.shape)):g}, "
-                        f"{np.max(_as_np(self.high, self.shape)):g}]")
+            bits.append(
+                f"bounds=[{np.min(_as_np(self.low, self.shape)):g}, {np.max(_as_np(self.high, self.shape)):g}]"
+            )
         if self.names:
             bits.append(f"names={list(self.names)}")
         return f"Spec({', '.join(bits)})"
@@ -154,19 +162,18 @@ class Spec:
 class CompositeSpec:
     """A nested dict of ``Spec``s mirroring a ``TensorDict``'s keys. ``spec["agent", "position"]``."""
 
-    specs: dict[str, "Spec | CompositeSpec"] = field(default_factory=dict)
+    specs: dict[str, Spec | CompositeSpec] = field(default_factory=dict)
     device: torch.device | None = None
 
     def __init__(self, specs: dict | None = None, device=None, **kw):
         merged = dict(specs or {})
         merged.update(kw)
-        self.specs = {k: (v if isinstance(v, (Spec, CompositeSpec)) else CompositeSpec(v))
-                      for k, v in merged.items()}
+        self.specs = {k: (v if isinstance(v, (Spec, CompositeSpec)) else CompositeSpec(v)) for k, v in merged.items()}
         self.device = torch.device(device) if device is not None else None
 
     # ---------------------------------------------------------------- mapping protocol
 
-    def __getitem__(self, key) -> "Spec | CompositeSpec":
+    def __getitem__(self, key) -> Spec | CompositeSpec:
         if isinstance(key, tuple):
             node: Any = self
             for part in key:
@@ -207,33 +214,39 @@ class CompositeSpec:
 
     # ---------------------------------------------------------------- construction
 
-    def to(self, device) -> "CompositeSpec":
+    def to(self, device) -> CompositeSpec:
         return CompositeSpec({k: v.to(device) for k, v in self.specs.items()}, device=device)
 
     def zeros(self, num_envs: int, device=None) -> TensorDict:
         dev = device if device is not None else self.device
-        return TensorDict({k: v.zeros(num_envs, device=dev) for k, v in self.specs.items()},
-                          batch_size=[int(num_envs)], device=dev)
+        return TensorDict(
+            {k: v.zeros(num_envs, device=dev) for k, v in self.specs.items()}, batch_size=[int(num_envs)], device=dev
+        )
 
-    def sample(self, num_envs: int, rng: np.random.Generator | None = None,
-               device=None) -> TensorDict:
+    def sample(self, num_envs: int, rng: np.random.Generator | None = None, device=None) -> TensorDict:
         dev = device if device is not None else self.device
         rng = rng if rng is not None else np.random.default_rng()
-        return TensorDict({k: v.sample(num_envs, rng, device=dev) for k, v in self.specs.items()},
-                          batch_size=[int(num_envs)], device=dev)
+        return TensorDict(
+            {k: v.sample(num_envs, rng, device=dev) for k, v in self.specs.items()},
+            batch_size=[int(num_envs)],
+            device=dev,
+        )
 
     def validate(self, x, owner: str = "value") -> TensorDict:
         """Every key present, every leaf valid, no extra keys. Returns the validated TensorDict."""
         if not hasattr(x, "keys"):
-            raise TypeError(f"{owner}: expected a TensorDict/mapping with keys {sorted(self.specs)}, "
-                            f"got {type(x).__name__}.")
+            raise TypeError(
+                f"{owner}: expected a TensorDict/mapping with keys {sorted(self.specs)}, got {type(x).__name__}."
+            )
         have = set(x.keys())
         want = set(self.specs)
         if have != want:
             missing, extra = sorted(want - have), sorted(have - want)
-            raise ValueError(f"{owner}: keys do not match the spec"
-                             + (f"; missing {missing}" if missing else "")
-                             + (f"; unexpected {extra}" if extra else ""))
+            raise ValueError(
+                f"{owner}: keys do not match the spec"
+                + (f"; missing {missing}" if missing else "")
+                + (f"; unexpected {extra}" if extra else "")
+            )
         for k, v in self.specs.items():
             v.validate(x[k], owner=f"{owner}[{k!r}]")
         return x

@@ -23,6 +23,7 @@ This probe therefore answers three questions with pixels rather than with reason
 
     python examples/downstream_step5/reacher/parity_probe.py --n 32 --out examples/results/step5/reacher
 """
+
 from __future__ import annotations
 
 import argparse
@@ -62,8 +63,7 @@ def rollout(swm_env, n: int, seed: int, steps_between: int = 5) -> list[dict]:
         for _ in range(int(rng.integers(1, steps_between + 1))):
             swm_env.step(rng.uniform(lo, hi).astype(swm_env.action_spec_dtype))
         p = swm_env.env.physics
-        out.append({"qpos": np.array(p.data.qpos, np.float64),
-                    "qvel": np.array(p.data.qvel, np.float64)})
+        out.append({"qpos": np.array(p.data.qpos, np.float64), "qvel": np.array(p.data.qvel, np.float64)})
     return out
 
 
@@ -77,14 +77,15 @@ def main() -> None:
     args = ap.parse_args()
 
     os.environ.setdefault("MUJOCO_GL", "egl")
+    import sys
+
     import mujoco
     import torch  # noqa: F401  -- imported for the side effect of loading before dm_control's GL
+    from stable_worldmodel.envs.dmcontrol.reacher import ReacherDMControlWrapper
 
     import stable_envs as se
     from stable_envs.testing import conformance as C
-    from stable_worldmodel.envs.dmcontrol.reacher import ReacherDMControlWrapper
 
-    import sys
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     from state_bridge import read_state, slot_names
 
@@ -113,23 +114,31 @@ def main() -> None:
         p.forward()
     moved_delta = int(np.abs(np.stack(frames_here).astype(int) - np.stack(frames_moved).astype(int)).max())
     target_drawn = moved_delta > 0
-    print(f"reference target visibility: moving the target changes at most {moved_delta}/255 -> "
-          f"{'DRAWN' if target_drawn else 'NOT DRAWN'}")
+    print(
+        f"reference target visibility: moving the target changes at most {moved_delta}/255 -> "
+        f"{'DRAWN' if target_drawn else 'NOT DRAWN'}"
+    )
 
     states = rollout(swm_env, args.n, PROBE_SEED)
     # ``(state override, style override)`` per mode. ``hidden`` is Step 6's representation -- the
     # state keeps the target position the episode drew and the env's own ``visibility.target`` leaf
     # says it is not painted; ``offscreen`` is Step 5's mechanism, kept so the recorded arm stays
     # reproducible and so the two can be compared on the same states in one run.
-    modes = {"as_placed": (None, None),
-             "hidden": (None, {VISIBILITY: 0}),
-             "offscreen": ({"target": (*OFFSCREEN, 0.01)}, None)}
-    res = {"task": args.task, "size": args.size, "n": args.n,
-           "reference_target_drawn": bool(target_drawn),
-           "reference_target_move_delta": moved_delta,
-           "our_state_names": list(ours.state_names),
-           "slots": [list(s) for s in slots],
-           "modes": {}}
+    modes = {
+        "as_placed": (None, None),
+        "hidden": (None, {VISIBILITY: 0}),
+        "offscreen": ({"target": (*OFFSCREEN, 0.01)}, None),
+    }
+    res = {
+        "task": args.task,
+        "size": args.size,
+        "n": args.n,
+        "reference_target_drawn": bool(target_drawn),
+        "reference_target_move_delta": moved_delta,
+        "our_state_names": list(ours.state_names),
+        "slots": [list(s) for s in slots],
+        "modes": {},
+    }
     keep_frames = {}
 
     for mode, (override, variation) in modes.items():
@@ -149,16 +158,19 @@ def main() -> None:
         ssim = C.ssim(our_a, off_a)
         res["modes"][mode] = {
             "exact_frac": float(agree["exact_frac"]),
-            "interior_exact_frac": (None if agree["interior_exact_frac"] is None
-                                    else float(agree["interior_exact_frac"])),
+            "interior_exact_frac": (
+                None if agree["interior_exact_frac"] is None else float(agree["interior_exact_frac"])
+            ),
             "interior_px": int(agree["interior_px"]),
             "mean_abs": float(agree["mean_abs"]),
             "max_abs": int(agree["max_abs"]),
             "within8_frac": float(agree["within8_frac"]),
             "ssim": float(ssim),
         }
-        print(f"{mode:>10}: exact {agree['exact_frac']:.4f}  mean|d| {agree['mean_abs']:.3f}  "
-              f"max {agree['max_abs']}  ssim {ssim:.4f}")
+        print(
+            f"{mode:>10}: exact {agree['exact_frac']:.4f}  mean|d| {agree['mean_abs']:.3f}  "
+            f"max {agree['max_abs']}  ssim {ssim:.4f}"
+        )
 
     args.out.mkdir(parents=True, exist_ok=True)
     best = min(res["modes"], key=lambda k: res["modes"][k]["mean_abs"])
@@ -167,11 +179,20 @@ def main() -> None:
 
     try:
         import imageio.v2 as imageio
+
         off_a, our_a = keep_frames[best]
         k = min(4, len(off_a))
-        rows = [np.concatenate([off_a[i], our_a[i],
-                                np.clip(4 * np.abs(off_a[i].astype(int) - our_a[i].astype(int)), 0, 255
-                                        ).astype(np.uint8)], axis=1) for i in range(k)]
+        rows = [
+            np.concatenate(
+                [
+                    off_a[i],
+                    our_a[i],
+                    np.clip(4 * np.abs(off_a[i].astype(int) - our_a[i].astype(int)), 0, 255).astype(np.uint8),
+                ],
+                axis=1,
+            )
+            for i in range(k)
+        ]
         imageio.imwrite(args.out / "parity_probe.png", np.concatenate(rows, axis=0))
         print(f"wrote {args.out / 'parity_probe.png'} (official | ours | 4x|diff|, mode={best})")
     except Exception as e:  # a missing imageio is not a reason to lose the numbers

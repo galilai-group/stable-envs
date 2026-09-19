@@ -10,6 +10,7 @@ The parity number itself lives in ``examples/results/step7/craftax-full/certify/
 ``scratch/step7/craftax-full/certify.py`` in the jax venv; what is asserted here is everything that
 can be checked against the frozen facts and against the renderer's own internal invariants.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -23,8 +24,7 @@ import torch
 from stable_envs.envs import _craftax_full as CF
 from stable_envs.envs._craftax_full import CraftaxFull
 
-GOLDEN = json.loads((Path(__file__).resolve().parents[1] / "fixtures"
-                     / "craftax_full_golden.json").read_text())
+GOLDEN = json.loads((Path(__file__).resolve().parents[1] / "fixtures" / "craftax_full_golden.json").read_text())
 
 
 @pytest.fixture(scope="module")
@@ -38,6 +38,7 @@ def states(n=8, seed=0):
 
 
 # ------------------------------------------------------------------ shape and contract
+
 
 def test_the_state_window_is_the_size_it_says_it_is():
     assert CraftaxFull.state_dim == 544
@@ -64,7 +65,7 @@ def test_counts_are_capped_at_99_not_at_9():
     """Classic's strip counts stop at 9; ``clip_inventory_and_intrinsics`` stops these at 99, so a
     cell renders a two-digit number and the decode must wrap at 100 rather than at 10."""
     assert CF.STRIP_MOD[CF._SLOT["wood"]] == 100
-    assert CF.STRIP_MOD[CF._SLOT["xp"]] == 10          # an attribute digit is a 10-entry gather
+    assert CF.STRIP_MOD[CF._SLOT["xp"]] == 10  # an attribute digit is a 10-entry gather
     e, st = states(2)
     j = 5 * CF.N_TILE + 4 + CF.N_KEY_HALVES
     a, b = st.copy(), st.copy()
@@ -74,25 +75,27 @@ def test_counts_are_capped_at_99_not_at_9():
 
 # ------------------------------------------------------------------ the two traps
 
+
 def test_the_vignette_is_a_reciprocal_multiply_and_not_a_divide():
     """XLA lowers ``x / scalar`` in float32 as ``x * (1/scalar)``, and against a true divide that is
     one ULP out on thousands of elements -- enough to move a uint8 pixel through the night mask."""
     for t in (10, 16):
         h, w = CF.OBS_H * t, CF.OBS_W * t
         v = CF.night_vignette(torch.device("cpu"), h, w)[..., 0].numpy()
-        assert hashlib.sha256(np.ascontiguousarray(v).tobytes()).hexdigest() \
-            == GOLDEN["vignette_sha256"][str(t)], f"vignette is not craftax's at {t} px"
+        assert hashlib.sha256(np.ascontiguousarray(v).tobytes()).hexdigest() == GOLDEN["vignette_sha256"][str(t)], (
+            f"vignette is not craftax's at {t} px"
+        )
         for key, want in GOLDEN["vignette_probe"][str(t)].items():
             r, c = (int(z) for z in key.split(","))
             assert float(v[r, c]) == want
         x = (np.arange(h, dtype=np.float32) - (h // 2))[:, None]
         y = (np.arange(w, dtype=np.float32) - (w // 2))[None, :]
-        raw = np.sqrt(x ** 2 + y ** 2).astype(np.float32)
+        raw = np.sqrt(x**2 + y**2).astype(np.float32)
         naive = (raw / raw.max()).astype(np.float32)
         n_bad = int((naive != v).sum())
         assert n_bad == GOLDEN["naive_divide_differs"][str(t)] and n_bad > 0, (
-            "the naive divide must still be wrong; if it stopped being wrong the test stopped "
-            "testing anything")
+            "the naive divide must still be wrong; if it stopped being wrong the test stopped testing anything"
+        )
 
 
 def test_item_slot_zero_is_never_drawn():
@@ -117,16 +120,17 @@ def test_every_overlay_alpha_is_binary():
 
 # ------------------------------------------------------------------ the fast paths are the identity
 
+
 def test_the_uint8_gather_and_the_float_chain_agree_bit_for_bit():
     """A fully lit, awake, unit-gain batch takes the uint8 tables. It must be the same picture the
     float path draws, or the fast path is a second renderer."""
     e, st = states(8, seed=3)
-    st[:, 4 * CF.N_TILE:5 * CF.N_TILE] = 1.0                  # light_map all 1
-    st[:, 5 * CF.N_TILE + 1] = 0.0                            # awake
-    st[:, 5 * CF.N_TILE + 3] = 1.0                            # full daylight
+    st[:, 4 * CF.N_TILE : 5 * CF.N_TILE] = 1.0  # light_map all 1
+    st[:, 5 * CF.N_TILE + 1] = 0.0  # awake
+    st[:, 5 * CF.N_TILE + 3] = 1.0  # full daylight
     fast = e.render(st).numpy()
     forced = st.copy()
-    forced[0, 5 * CF.N_TILE + 1] = 1.0                        # one sleeper forces the float path
+    forced[0, 5 * CF.N_TILE + 1] = 1.0  # one sleeper forces the float path
     slow = e.render(forced).numpy()
     assert np.array_equal(fast[1:], slow[1:]), "the float path disagrees with the uint8 gather"
 
@@ -144,6 +148,7 @@ def test_the_night_skip_changes_no_bits():
     got = CF.light_night_and_sleep(world.clone(), lm, day, sleep, keys)
 
     from stable_envs.render import prng
+
     px = world * lm
     noise = (prng.uniform(keys, (h, w)) * 95 + 32).unsqueeze(-1)
     dl = day.view(n, 1, 1, 1)
@@ -167,18 +172,20 @@ def test_the_daylight_override_makes_eight_of_nine_levels_noise_free():
         b[:, j + 3] = 1.0
         assert np.array_equal(e.render(a).numpy(), e.render(b).numpy())
         c = a.copy()
-        c[:, j + 4:j + 8] = (a[:, j + 4:j + 8] + 137) % 65536
+        c[:, j + 4 : j + 8] = (a[:, j + 4 : j + 8] + 137) % 65536
         assert np.array_equal(e.render(a).numpy(), e.render(c).numpy())
     a = st.copy()
     a[:, j + 2] = 0
     a[:, j + 3] = 0.2
     c = a.copy()
-    c[:, j + 4:j + 8] = (a[:, j + 4:j + 8] + 137) % 65536
-    assert not np.array_equal(e.render(a).numpy(), e.render(c).numpy()), \
+    c[:, j + 4 : j + 8] = (a[:, j + 4 : j + 8] + 137) % 65536
+    assert not np.array_equal(e.render(a).numpy(), e.render(c).numpy()), (
         "on level 0 at night the key MUST reach pixels, or the state window is wrong"
+    )
 
 
 # ------------------------------------------------------------------ the strip
+
 
 def test_the_level_digit_is_the_one_thing_the_strip_reads_from_the_world():
     e, st = states(4, seed=7)
@@ -201,12 +208,13 @@ def test_the_strip_is_not_lit():
     # DOES read, because the level digit is drawn in cell (6, 0).
     for lm, light, sleep in ((1.0, 1.0, 0), (0.2, 0.05, 1), (0.0, 0.5, 1), (0.7, 0.9, 0)):
         a = st.copy()
-        a[:, 4 * CF.N_TILE:5 * CF.N_TILE] = lm
+        a[:, 4 * CF.N_TILE : 5 * CF.N_TILE] = lm
         a[:, j + 1], a[:, j + 3] = sleep, light
-        assert np.array_equal(e.render(a).numpy()[:, wh:], base), \
+        assert np.array_equal(e.render(a).numpy()[:, wh:], base), (
             f"the strip moved at light_map={lm} light={light} sleeping={sleep}"
+        )
     a = st.copy()
-    a[:, j + 4:j + 8] = (st[:, j + 4:j + 8] + 999) % 65536
+    a[:, j + 4 : j + 8] = (st[:, j + 4 : j + 8] + 999) % 65536
     assert np.array_equal(e.render(a).numpy()[:, wh:], base)
 
 
@@ -219,7 +227,7 @@ def test_the_eight_unwritten_strip_cells_stay_black():
     assert len(blanks) == 8
     for x, y in blanks:
         r0 = CF.OBS_H * t + y * t
-        assert img[:, r0:r0 + t, x * t:(x + 1) * t].max() == 0, f"cell ({x},{y}) is not black"
+        assert img[:, r0 : r0 + t, x * t : (x + 1) * t].max() == 0, f"cell ({x},{y}) is not black"
 
 
 def test_the_strip_cell_table_is_the_size_the_spec_says():
@@ -232,6 +240,7 @@ def test_the_strip_cell_table_is_the_size_the_spec_says():
 
 # ------------------------------------------------------------------ resampling and consistency
 
+
 def test_a_render_at_twice_the_size_resamples_from_the_size_that_divides_it():
     """20 px comes from the 10 px art, not from the nearer 16 px art. This is what makes the world
     rows exactly 2x-consistent where craftax -- which re-resamples every PNG at every size with
@@ -240,7 +249,7 @@ def test_a_render_at_twice_the_size_resamples_from_the_size_that_divides_it():
     assert CF._source_size(32) == 16
     assert CF._source_size(10) == 10 and CF._source_size(16) == 16
     e, st = states(4, seed=9)
-    st[:, 4 * CF.N_TILE:5 * CF.N_TILE] = 1.0
+    st[:, 4 * CF.N_TILE : 5 * CF.N_TILE] = 1.0
     st[:, 5 * CF.N_TILE + 1] = 0.0
     st[:, 5 * CF.N_TILE + 3] = 1.0
     small = e.render(st, size=10).numpy()
@@ -258,8 +267,10 @@ def test_exactly_one_mob_sprite_is_fully_opaque_and_the_sampler_knows():
 
 # ------------------------------------------------------------------ the sampler's stratification
 
+
 def test_the_sampler_stratifies_so_a_batch_of_one_still_has_every_dimension_live():
     from stable_envs.testing.conformance import check_state_dims_matter
+
     for b in (1, 2, 3, 4, 8):
         for seed in range(3):
             e = CraftaxFull(num_envs=b, device="cpu")
@@ -276,7 +287,7 @@ def test_the_declared_certification_distribution_matches_the_sampler():
     lvl = np.round(st[:, j + 2]).astype(int) % CF.N_LEVEL
     light = CF._tent_np(st[:, j + 3])
     day = np.where(lvl == 0, light, 1.0)
-    lit = (CF._tent_np(st[:, 4 * CF.N_TILE:5 * CF.N_TILE]) == 1.0).all(1)
+    lit = (CF._tent_np(st[:, 4 * CF.N_TILE : 5 * CF.N_TILE]) == 1.0).all(1)
     # a row stays on the uint8 gather only if it is fully lit AND awake: the lighting bands give 2/6
     # and the independent i % 4 sleeping stratification takes a quarter of them away, so the answer
     # is exactly 0.25 at a batch of 64. The tolerance is ONE ROW, not 0.1 -- a 0.1 slack is what let
@@ -296,8 +307,8 @@ def test_the_sampler_respects_the_simulators_mob_budgets():
     st = CraftaxFull.sample_states(e, 32, np.random.default_rng(1))
     k = CF.N_TILE
     centre = (CF.OBS_H // 2) * CF.OBS_W + (CF.OBS_W // 2)
-    mob = np.round(st[:, 2 * k:3 * k]).astype(int)
-    prj = np.round(st[:, 3 * k:4 * k]).astype(int)
+    mob = np.round(st[:, 2 * k : 3 * k]).astype(int)
+    prj = np.round(st[:, 3 * k : 4 * k]).astype(int)
     for i in range(32):
         m = mob[i]
         assert m[centre] == 0 and prj[i][centre] == 0, "an entity on the player's tile"
@@ -309,6 +320,7 @@ def test_the_sampler_respects_the_simulators_mob_budgets():
 
 
 # ------------------------------------------------------------------ decode rules
+
 
 def test_out_of_range_ids_wrap_rather_than_clamp():
     """A clamping decoder makes a slot that already holds the last class insensitive to the
@@ -341,6 +353,7 @@ def test_the_health_slot_is_lifted_to_one_the_way_the_reference_lifts_it():
 
 # ------------------------------------------------------------------ declarations
 
+
 def test_the_declaration_names_what_the_parity_claim_depends_on():
     assert CraftaxFull.reference_versions == {"craftax": "1.6.1", "jax": "0.11.1"}
     assert CraftaxFull.parity_all_exact_min == 1.0
@@ -367,6 +380,7 @@ def test_reference_env_refuses_a_size_craftax_does_not_draw():
 
 # ------------------------------------------------------------------ the representable boundary
 
+
 def test_a_window_carrying_more_projectiles_than_the_simulator_can_hold_is_not_representable():
     """The render window has room for a projectile on every one of its 99 tiles; an ``EnvState`` has
     room for ``MAX_MOB_PROJ + MAX_PLAYER_PROJ`` of them. A row beyond that budget renders here and
@@ -381,23 +395,23 @@ def test_a_window_carrying_more_projectiles_than_the_simulator_can_hold_is_not_r
     assert CF.MAX_MOB_PROJ + CF.MAX_PLAYER_PROJ == 6
     e = CraftaxFull(num_envs=32, device="cpu")
     st = CraftaxFull.sample_states(e, 32, np.random.default_rng(3))
-    n_proj = (np.round(st[:, 3 * CF.N_TILE:4 * CF.N_TILE]) != 0).sum(1)
+    n_proj = (np.round(st[:, 3 * CF.N_TILE : 4 * CF.N_TILE]) != 0).sum(1)
     assert n_proj.max() <= CF.MAX_MOB_PROJ + CF.MAX_PLAYER_PROJ, n_proj.max()
     # and the renderer itself DOES draw the seventh and eighth -- it is the BRIDGE that cannot carry
     # them. Compared against the same row holding only the first six, so the difference is exactly
     # the two projectiles the reference would drop, not an all-zero straw man.
     six = st[:1].copy()
-    six[0, 3 * CF.N_TILE:3 * CF.N_TILE + 99] = 0
-    six[0, 3 * CF.N_TILE:3 * CF.N_TILE + 6] = 1 + np.arange(6) % 4
+    six[0, 3 * CF.N_TILE : 3 * CF.N_TILE + 99] = 0
+    six[0, 3 * CF.N_TILE : 3 * CF.N_TILE + 6] = 1 + np.arange(6) % 4
     eight = six.copy()
-    eight[0, 3 * CF.N_TILE + 6:3 * CF.N_TILE + 8] = 1 + np.arange(6, 8) % 4
+    eight[0, 3 * CF.N_TILE + 6 : 3 * CF.N_TILE + 8] = 1 + np.arange(6, 8) % 4
     a, b = e.render(six).numpy(), e.render(eight).numpy()
     assert not np.array_equal(a, b), "the renderer drops a projectile the state asked for"
     t = e.size
-    moved = (a[0] != b[0]).any(-1)          # [0]: the batch axis, or the tile scan below slices it
+    moved = (a[0] != b[0]).any(-1)  # [0]: the batch axis, or the tile scan below slices it
     for p in range(CF.N_TILE):
         r0, c0 = (p // CF.OBS_W) * t, (p % CF.OBS_W) * t
-        if moved[r0:r0 + t, c0:c0 + t].any():
+        if moved[r0 : r0 + t, c0 : c0 + t].any():
             assert p in (6, 7), f"tile {p} moved, but only the 7th and 8th projectile were added"
 
 
@@ -412,8 +426,18 @@ def test_the_arrow_guard_leaves_the_frozen_corpus_untouched():
     """
     import hashlib
     import json as _json
-    rec = _json.loads((Path(__file__).resolve().parents[2] / "examples" / "results" / "step7"
-                       / "craftax-full" / "corpus" / "corpus.json").read_text())
+
+    rec = _json.loads(
+        (
+            Path(__file__).resolve().parents[2]
+            / "examples"
+            / "results"
+            / "step7"
+            / "craftax-full"
+            / "corpus"
+            / "corpus.json"
+        ).read_text()
+    )
     e = CraftaxFull(num_envs=rec["kept"], device="cpu")
     pool = CraftaxFull.sample_states(e, rec["pool"], np.random.default_rng(rec["seed"]))
     assert hashlib.sha256(np.ascontiguousarray(pool).tobytes()).hexdigest() == rec["pool_sha256"]
@@ -427,6 +451,7 @@ def test_the_arrow_guard_leaves_the_frozen_corpus_untouched():
 
 # ------------------------------------------------------------------ the performance record
 
+
 def test_the_declared_tiers_are_what_the_frozen_ladder_says_they_are():
     """The tier in the record must follow from its own S_cpu / R and cores through the FROZEN ladder,
     not be typed in beside them.
@@ -437,8 +462,8 @@ def test_the_declared_tiers_are_what_the_frozen_ladder_says_they_are():
     is edited later.
     """
     import json as _json
-    spec = _json.loads((Path(__file__).resolve().parents[2] / "scratch"
-                        / "certification.json").read_text())
+
+    spec = _json.loads((Path(__file__).resolve().parents[2] / "scratch" / "certification.json").read_text())
 
     def walk(rungs, order, ratio, cores, rkey, ckey):
         def holds(cond, keys, val):
@@ -450,6 +475,7 @@ def test_the_declared_tiers_are_what_the_frozen_ladder_says_they_are():
                 if k.endswith("_lt") and not val < cond[k]:
                     return False
             return True
+
         rk = {k for c in rungs.values() for k in c if k.startswith(rkey)}
         ck = {k for c in rungs.values() for k in c if k.startswith(ckey)}
         start = next(i for i, n in enumerate(order) if holds(rungs.get(n, {}), rk, ratio))
@@ -459,17 +485,28 @@ def test_the_declared_tiers_are_what_the_frozen_ladder_says_they_are():
         return order[-1]
 
     cpu = CraftaxFull.performance_record_cpu
-    got = walk(spec["cpu"]["tiers"],
-               ["CPU_EXCEPTIONAL", "CPU_FAST", "CPU_FASTER", "CPU_PARITY", "CPU_REGRESSION"],
-               cpu["s_cpu"], cpu["cores_cpu"], "S_cpu", "cores_cpu")
+    got = walk(
+        spec["cpu"]["tiers"],
+        ["CPU_EXCEPTIONAL", "CPU_FAST", "CPU_FASTER", "CPU_PARITY", "CPU_REGRESSION"],
+        cpu["s_cpu"],
+        cpu["cores_cpu"],
+        "S_cpu",
+        "cores_cpu",
+    )
     assert got == cpu["tier"], (got, cpu["tier"])
     # and the qualifier is not decorative: BELOW_G4 means exactly cores < 1
     assert ("BELOW_G4" in cpu["qualifiers"]) == (cpu["cores_cpu"] < 1)
 
     gpu = CraftaxFull.performance_record_gpu
     rungs = spec["gpu"]["tiers"][gpu["backend_class"]]
-    got = walk(rungs, ["GPU_EXCEPTIONAL", "GPU_FAST", "GPU_FASTER", "GPU_PARITY", "GPU_REGRESSION"],
-               gpu["R"], gpu["cores"], "R", "cores")
+    got = walk(
+        rungs,
+        ["GPU_EXCEPTIONAL", "GPU_FAST", "GPU_FASTER", "GPU_PARITY", "GPU_REGRESSION"],
+        gpu["R"],
+        gpu["cores"],
+        "R",
+        "cores",
+    )
     assert got == gpu["tier"], (got, gpu["tier"])
     # the ratio is the one the record says it is
     assert abs(gpu["mixed_fps"] / gpu["official_jitted_fps"] - gpu["R"]) < 0.05
@@ -482,6 +519,9 @@ def test_the_two_references_are_declared_apart():
     r = CraftaxFull.reference_labels
     assert "UN-JITTED" in r["parity"] and "JITTED" in r["speed"]
     assert r["ratio_between_the_two_references"] > 100
-    assert abs(r["official_jitted_fps_cpu"] / r["official_unjitted_fps_cpu"]
-               - r["ratio_between_the_two_references"]) / r["ratio_between_the_two_references"] < 0.05
+    assert (
+        abs(r["official_jitted_fps_cpu"] / r["official_unjitted_fps_cpu"] - r["ratio_between_the_two_references"])
+        / r["ratio_between_the_two_references"]
+        < 0.05
+    )
     assert "un-jitted" in CraftaxFull.parity_note

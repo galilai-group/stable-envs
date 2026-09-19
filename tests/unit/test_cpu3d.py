@@ -9,6 +9,7 @@ texture-fidelity workstream's stacks rendered in ``se-step5`` on an RTX 3090); t
 the one the design makes -- the same picture to within a level -- not bit-identity, which a different
 renderer cannot promise and MJWarp does not keep against itself.
 """
+
 from __future__ import annotations
 
 import os
@@ -31,6 +32,7 @@ torch = pytest.importorskip("torch")
 @pytest.fixture(scope="module")
 def se():
     import stable_envs as se
+
     if not all(c in se.registry.REGISTRY for c in CELLS):
         pytest.skip("DM Control trackcom cells are not registered in this interpreter")
     return se
@@ -43,6 +45,7 @@ def _states(cell: str, n: int) -> np.ndarray:
 def test_cpu3d_imports_no_gpu_runtime():
     """The CPU backend has no GPU runtime behind it: no warp, no mujoco_warp, no torch.cuda call."""
     import re
+
     src = (ROOT / "stable_envs/render/cpu3d.py").read_text()
     code = "\n".join(l for l in src.splitlines() if not l.lstrip().startswith("#"))
     assert not re.search(r"^\s*(import|from)\s+(warp|mujoco_warp)\b", code, re.M)
@@ -53,9 +56,10 @@ def test_cpu3d_imports_no_gpu_runtime():
 def test_cpu_device_builds_the_cpu_backend_and_no_mjwarp_context(se, cell):
     env = se.make(cell, num_envs=2, device="cpu")
     assert env.device.type == "cpu"
-    assert int(env.size) in env._cpu_scenes                    # the CPU scene was built at init
+    assert int(env.size) in env._cpu_scenes  # the CPU scene was built at init
     from stable_envs.envs import dmcontrol as D
-    assert not any(k[0] == env.DOMAIN for k in D._TC_CACHE)     # and no MJWarp context was
+
+    assert not any(k[0] == env.DOMAIN for k in D._TC_CACHE)  # and no MJWarp context was
     f = env.render(_states(cell, 2))
     assert f.shape == (2, env.size, env.size, 3) and f.dtype == torch.uint8 and f.device.type == "cpu"
 
@@ -93,6 +97,7 @@ def test_trackcom_material_knobs_are_geom_wearers_only(se):
     cells (sites hidden) the list is IDENTICAL to the base class's -- their declared variation space
     does not move -- and on quadruped it drops ``eye``, worn by the two pupil sites alone."""
     from stable_envs.envs import dmcontrol as D
+
     for name in CELLS:
         cls = se.registry.REGISTRY[name]
         assert cls._used_materials() == D._DMCModel._used_materials.__func__(cls), name
@@ -101,7 +106,7 @@ def test_trackcom_material_knobs_are_geom_wearers_only(se):
         base = D._DMCModel._used_materials.__func__(cls)
         ours = cls._used_materials()
         assert "eye" in base and "eye" not in ours and ours == [m for m in base if m != "eye"]
-        assert cls.CAMERA == 2 and cls.default_size == 224                # the registered SWM default
+        assert cls.CAMERA == 2 and cls.default_size == 224  # the registered SWM default
 
 
 def test_the_swm_quadruped_mixin_overrides_only_the_loader_hook_and_the_size(se):
@@ -110,7 +115,9 @@ def test_the_swm_quadruped_mixin_overrides_only_the_loader_hook_and_the_size(se)
     ``reference_env`` are the base class's and cannot drift from it (INTEG-1: a copied ``_bundle``
     drifted the moment W3 changed the base one). Every loader in the base goes through the hook."""
     import inspect
+
     from stable_envs.envs import dmcontrol as D
+
     own = {k for k in vars(D._SWMQuadrupedModel) if not k.startswith("__")}
     assert own == {"default_size", "_load_env"}, own
     cls = se.registry.REGISTRY["DMCQuadrupedWalk"]
@@ -136,6 +143,7 @@ def test_window_and_footprint_bounds_are_exact(se, cell, size):
     """The mover window and the shadow footprint are conservative BOUNDS: casting every ray and
     shadow-testing every lit hit must give the identical frame, byte for byte, at every size."""
     from stable_envs.render import cpu3d
+
     st = _states(cell, 6)
     env = se.make(cell, num_envs=6, device="cpu")
     ref = env.render(st, size=size).numpy()
@@ -155,14 +163,15 @@ def test_window_and_footprint_bounds_are_exact(se, cell, size):
 @pytest.mark.parametrize("cell", CELLS)
 def test_batch_chunk_and_order_invariance(se, cell):
     from stable_envs.render import cpu3d
-    n = cpu3d.CPU_CHUNK + 3                                     # straddles a chunk boundary
+
+    n = cpu3d.CPU_CHUNK + 3  # straddles a chunk boundary
     st = _states(cell, n)
     env = se.make(cell, num_envs=n, device="cpu")
     a = env.render(st).numpy()
     b = env.render(st).numpy()
     assert np.array_equal(a, b), "not deterministic"
     for i in (0, cpu3d.CPU_CHUNK - 1, cpu3d.CPU_CHUNK, n - 1):
-        one = env.render(st[i:i + 1]).numpy()[0]
+        one = env.render(st[i : i + 1]).numpy()[0]
         assert np.array_equal(one, a[i]), f"frame {i} depends on its batch"
     perm = np.random.default_rng(0).permutation(n)
     c = env.render(st[perm]).numpy()
@@ -172,8 +181,9 @@ def test_batch_chunk_and_order_invariance(se, cell):
     d1 = env.render(st, style=sty).numpy()
     assert np.array_equal(d1, env.render(st, style=sty).numpy())
     for i in (0, cpu3d.CPU_CHUNK, n - 1):
-        assert np.array_equal(env.render(st[i:i + 1], style=sty[i:i + 1]).numpy()[0], d1[i]), \
+        assert np.array_equal(env.render(st[i : i + 1], style=sty[i : i + 1]).numpy()[0], d1[i]), (
             f"frame {i} with a per-row style depends on its batch"
+        )
     assert np.array_equal(env.render(st[perm], style=sty[perm]).numpy(), d1[perm])
     assert not np.array_equal(d1, a), "the per-row styles should have changed the picture"
 

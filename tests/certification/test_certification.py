@@ -12,6 +12,7 @@ cheap checks whose only job is to make an edit to one file fail until the other 
 
 Nothing here runs a benchmark or imports stable_envs; it is a documentation contract.
 """
+
 from __future__ import annotations
 
 import json
@@ -48,55 +49,56 @@ def test_every_frozen_threshold_appears_in_the_prose(spec, doc):
     gpu, cpu = spec["gpu"], spec["cpu"]
     tokens = {
         # GPU tiers, class S
-        "gpu.S.GPU_PARITY":       "`1 ≤ R < 2`",
-        "gpu.S.GPU_FASTER":       "`2 ≤ R < 4`",
-        "gpu.S.GPU_FAST":         "`R ≥ 4`",
-        "gpu.S.GPU_EXCEPTIONAL":  "`R ≥ 40`",
+        "gpu.S.GPU_PARITY": "`1 ≤ R < 2`",
+        "gpu.S.GPU_FASTER": "`2 ≤ R < 4`",
+        "gpu.S.GPU_FAST": "`R ≥ 4`",
+        "gpu.S.GPU_EXCEPTIONAL": "`R ≥ 40`",
         # GPU tiers, class R
-        "gpu.R.GPU_PARITY":       "`1 ≤ R < 10`",
-        "gpu.R.GPU_FASTER":       "`10 ≤ R < 500`",
-        "gpu.R.GPU_FAST":         "`R ≥ 500`",
-        "gpu.R.GPU_EXCEPTIONAL":  "`R ≥ 5000`",
+        "gpu.R.GPU_PARITY": "`1 ≤ R < 10`",
+        "gpu.R.GPU_FASTER": "`10 ≤ R < 500`",
+        "gpu.R.GPU_FAST": "`R ≥ 500`",
+        "gpu.R.GPU_EXCEPTIONAL": "`R ≥ 5000`",
         # CPU tiers
-        "cpu.CPU_REGRESSION":     "`S_cpu < 1`",
-        "cpu.CPU_PARITY":         "`1 ≤ S_cpu < 2`",
-        "cpu.CPU_FASTER":         "`2 ≤ S_cpu < 5`",
-        "cpu.CPU_FAST":           "`S_cpu ≥ 5`",
-        "cpu.CPU_EXCEPTIONAL":    "`S_cpu ≥ 20`",
+        "cpu.CPU_REGRESSION": "`S_cpu < 1`",
+        "cpu.CPU_PARITY": "`1 ≤ S_cpu < 2`",
+        "cpu.CPU_FASTER": "`2 ≤ S_cpu < 5`",
+        "cpu.CPU_FAST": "`S_cpu ≥ 5`",
+        "cpu.CPU_EXCEPTIONAL": "`S_cpu ≥ 20`",
         # qualifiers
-        "gpu.BATCH_SCALES":       "`fps(4096) ≥ 20 × fps(1)`",
-        "gpu.NO_LARGE_REGRESS":   "`fps(4096) ≥ 0.9 × fps(256)`",
-        "gpu.HOST_BOUND":         "`cpu_frac ≥ 1.5`",
+        "gpu.BATCH_SCALES": "`fps(4096) ≥ 20 × fps(1)`",
+        "gpu.NO_LARGE_REGRESS": "`fps(4096) ≥ 0.9 × fps(256)`",
+        "gpu.HOST_BOUND": "`cpu_frac ≥ 1.5`",
         # device scaling
-        "device_factor":          "5.13",
+        "device_factor": "5.13",
         # representation tripwire
-        "repr.parity":            "`A ≤ 0.10`",
-        "repr.visual":            "`A ≤ 0.25`",
+        "repr.parity": "`A ≤ 0.10`",
+        "repr.visual": "`A ≤ 0.25`",
         # physics
-        "phys.near_exact.first":  "`first_step_max_err ≤ 1e-12`",
-        "phys.near_exact.max":    "`max_err ≤ 1e-9`",
-        "phys.approx.control":    "`control_max_err < 1e-3`",
-        "phys.approx.gate":       "`block_median_err < 2.0`",
-        "phys.approx.touched":    "75 %",
+        "phys.near_exact.first": "`first_step_max_err ≤ 1e-12`",
+        "phys.near_exact.max": "`max_err ≤ 1e-9`",
+        "phys.approx.control": "`control_max_err < 1e-3`",
+        "phys.approx.gate": "`block_median_err < 2.0`",
+        "phys.approx.touched": "75 %",
         # downstream
-        "down.n":                 "`n ≥ 300`",
-        "down.margin":            "±5 points",
-        "down.control_delta":     "`Δ ≤ −20`",
-        "down.control_p":         "`p < 0.01`",
-        "down.discordance":       "0.19",
+        "down.n": "`n ≥ 300`",
+        "down.margin": "±5 points",
+        "down.control_delta": "`Δ ≤ −20`",
+        "down.control_p": "`p < 0.01`",
+        "down.discordance": "0.19",
         # NO_REFERENCE fallbacks -- both devices, since CPU_FAST is mandatory for ENVIRONMENT_DONE
-        "gpu.noref.FASTER":       "`cores ≥ 1`",
-        "gpu.noref.FAST":         "`cores ≥ 10`",
-        "gpu.noref.EXCEPTIONAL":  "`cores ≥ 100`",
-        "cpu.noref.FASTER":       "`cores_cpu ≥ 1`",
-        "cpu.noref.FAST":         "`cores_cpu ≥ 3`",
-        "cpu.noref.EXCEPTIONAL":  "`cores_cpu ≥ 10`",
+        "gpu.noref.FASTER": "`cores ≥ 1`",
+        "gpu.noref.FAST": "`cores ≥ 10`",
+        "gpu.noref.EXCEPTIONAL": "`cores ≥ 100`",
+        "cpu.noref.FASTER": "`cores_cpu ≥ 1`",
+        "cpu.noref.FAST": "`cores_cpu ≥ 3`",
+        "cpu.noref.EXCEPTIONAL": "`cores_cpu ≥ 10`",
     }
     missing = sorted(k for k, tok in tokens.items() if tok not in doc)
     assert not missing, (
         "threshold(s) present in scratch/certification.json but not quoted verbatim in "
         "docs/research/certification.md — the two copies have drifted:\n  "
-        + "\n  ".join(f"{k}: expected {tokens[k]!r}" for k in missing))
+        + "\n  ".join(f"{k}: expected {tokens[k]!r}" for k in missing)
+    )
 
     # and the tokens above must actually match the JSON they claim to mirror
     assert gpu["tiers"]["S"]["GPU_FAST"]["R_gte"] == 4
@@ -124,24 +126,28 @@ def test_both_devices_have_a_no_reference_escape(spec):
     "this env can never be finished" -- a conclusion about packaging masquerading as one about the
     renderer.
     """
-    for dev, key, floors in (("gpu", "cores_gte", (1, 10, 100)),
-                             ("cpu", "cores_cpu_gte", (1, 3, 10))):
+    for dev, key, floors in (("gpu", "cores_gte", (1, 10, 100)), ("cpu", "cores_cpu_gte", (1, 3, 10))):
         fb = spec[dev]["no_reference_fallback"]
         assert fb["may_contribute_to_parity_claim"] is False
-        got = tuple(fb[t][key] for t in
-                    (f"{dev.upper()}_FASTER", f"{dev.upper()}_FAST", f"{dev.upper()}_EXCEPTIONAL"))
+        got = tuple(fb[t][key] for t in (f"{dev.upper()}_FASTER", f"{dev.upper()}_FAST", f"{dev.upper()}_EXCEPTIONAL"))
         assert got == floors, f"{dev} NO_REFERENCE floors moved: {got} != {floors}"
     # the CPU ladder must be the gentler one: one core against one core, not a device against a core
-    assert (spec["cpu"]["no_reference_fallback"]["CPU_FAST"]["cores_cpu_gte"]
-            < spec["gpu"]["no_reference_fallback"]["GPU_FAST"]["cores_gte"])
+    assert (
+        spec["cpu"]["no_reference_fallback"]["CPU_FAST"]["cores_cpu_gte"]
+        < spec["gpu"]["no_reference_fallback"]["GPU_FAST"]["cores_gte"]
+    )
 
 
 @pytest.mark.parametrize("cls", ["S", "R"])
 def test_gpu_tiers_are_monotonic(spec, cls):
     """A ladder whose rungs overlap or invert cannot produce a deterministic label."""
     t = spec["gpu"]["tiers"][cls]
-    floors = [t["GPU_PARITY"]["R_gte"], t["GPU_FASTER"]["R_gte"],
-              t["GPU_FAST"]["R_gte"], t["GPU_EXCEPTIONAL"]["R_gte"]]
+    floors = [
+        t["GPU_PARITY"]["R_gte"],
+        t["GPU_FASTER"]["R_gte"],
+        t["GPU_FAST"]["R_gte"],
+        t["GPU_EXCEPTIONAL"]["R_gte"],
+    ]
     assert floors == sorted(floors) and len(set(floors)) == len(floors), floors
     assert t["GPU_PARITY"]["R_lt"] == t["GPU_FASTER"]["R_gte"], "a gap between PARITY and FASTER"
     assert t["GPU_FASTER"]["R_lt"] == t["GPU_FAST"]["R_gte"], "a gap between FASTER and FAST"
@@ -150,8 +156,12 @@ def test_gpu_tiers_are_monotonic(spec, cls):
 
 def test_cpu_tiers_are_monotonic(spec):
     t = spec["cpu"]["tiers"]
-    floors = [t["CPU_PARITY"]["S_cpu_gte"], t["CPU_FASTER"]["S_cpu_gte"],
-              t["CPU_FAST"]["S_cpu_gte"], t["CPU_EXCEPTIONAL"]["S_cpu_gte"]]
+    floors = [
+        t["CPU_PARITY"]["S_cpu_gte"],
+        t["CPU_FASTER"]["S_cpu_gte"],
+        t["CPU_FAST"]["S_cpu_gte"],
+        t["CPU_EXCEPTIONAL"]["S_cpu_gte"],
+    ]
     assert floors == sorted(floors) and len(set(floors)) == len(floors), floors
     assert t["CPU_PARITY"]["S_cpu_lt"] == t["CPU_FASTER"]["S_cpu_gte"]
     assert t["CPU_FASTER"]["S_cpu_lt"] == t["CPU_FAST"]["S_cpu_gte"]
@@ -210,8 +220,12 @@ def test_environment_done_requires_both_devices_at_their_fast_bar(spec, doc):
     assert "CPU_REGRESSION" in lad["legal_example"] and "BACKEND_CERTIFIED(gpu)" in lad["legal_example"]
     assert "ENVIRONMENT_DONE" not in lad["legal_example"]
 
-    for tok in ("`ENVIRONMENT_DONE`", "`BACKEND_CERTIFIED(cpu)`", "`BACKEND_CERTIFIED(gpu)`",
-                "No advertised-target exemption"):
+    for tok in (
+        "`ENVIRONMENT_DONE`",
+        "`BACKEND_CERTIFIED(cpu)`",
+        "`BACKEND_CERTIFIED(gpu)`",
+        "No advertised-target exemption",
+    ):
         assert tok in doc or tok.strip("`") in doc, f"{tok!r} is not stated in the prose"
 
 
@@ -236,16 +250,19 @@ def test_partial_coverage_can_never_reach_environment_done(spec, doc):
         assert "registered_default_coverage == partial" in part
         assert "registered_default_coverage == full" not in part
         # the only difference between the two states is coverage -- everything else must match
-        assert ([x for x in lad["backend_certified_requires"][dev] if "coverage" not in x]
-                == [x for x in part if "coverage" not in x]), (
-            f"{dev}: the PARTIAL state has drifted from BACKEND_CERTIFIED on something other than coverage")
+        assert [x for x in lad["backend_certified_requires"][dev] if "coverage" not in x] == [
+            x for x in part if "coverage" not in x
+        ], f"{dev}: the PARTIAL state has drifted from BACKEND_CERTIFIED on something other than coverage"
 
     # it is a PASSING state, and it is terminal
     p = lad["backend_certified_partial_requires"]
     assert p["is_a_passing_state"] is True and p["is_terminal"] is True
 
-    for tok in ("Gate A = `partial` can never produce `ENVIRONMENT_DONE`",
-                "`BACKEND_CERTIFIED_PARTIAL(device)`", "No partial-coverage exemption"):
+    for tok in (
+        "Gate A = `partial` can never produce `ENVIRONMENT_DONE`",
+        "`BACKEND_CERTIFIED_PARTIAL(device)`",
+        "No partial-coverage exemption",
+    ):
         assert tok in doc, f"{tok!r} is not stated in the prose"
 
 
@@ -291,6 +308,7 @@ def test_cpu_support_is_only_claimed_for_rows_that_have_a_renderer(spec, doc):
     matched = [r for r in rows if r["stable_envs"]["envs"]]
     assert len(matched) == 34
     from collections import Counter
+
     got = Counter(r["axes"]["cpu_support"]["render_executes"] for r in matched)
     assert got == {"yes": 18, "unknown": 12, "unknown_dependency_absent_here": 4}, got
     for n, v in got.items():
@@ -302,14 +320,17 @@ def test_cpu_support_is_only_claimed_for_rows_that_have_a_renderer(spec, doc):
     unmatched = [r for r in rows if not r["stable_envs"]["envs"]]
     assert len(unmatched) == 8
     assert all(not r["speed"]["per_env"] for r in unmatched), (
-        "an unmatched row grew a speed entry; the n/a wording in the doc would become wrong")
+        "an unmatched row grew a speed entry; the n/a wording in the doc would become wrong"
+    )
 
     # and no passage may re-widen the CPU-throughput population back to all 42 rows
     import re
+
     for m in re.finditer(r"(?:all )?42 (?:Step 1 )?rows", doc):
         raise AssertionError(
             f"docs/research/certification.md claims a CPU/throughput fact over 42 rows near "
-            f"{doc[max(0, m.start() - 120):m.end() + 40]!r}; only 34 carry a renderer")
+            f"{doc[max(0, m.start() - 120) : m.end() + 40]!r}; only 34 carry a renderer"
+        )
 
 
 def test_the_spec_assigns_no_work_to_an_unbriefed_step(spec, doc):
@@ -321,14 +342,20 @@ def test_the_spec_assigns_no_work_to_an_unbriefed_step(spec, doc):
     for n in (4, 5, 6):
         assert f"Step {n}" not in doc, (
             f"docs/research/certification.md assigns work to 'Step {n}', which this specification has "
-            f"no standing to define; list it as unscheduled required evidence instead")
+            f"no standing to define; list it as unscheduled required evidence instead"
+        )
 
 
 def test_reference_only_physics_is_certifiable(spec):
     assert spec["physics"]["classes"]["reference_only"]["certifiable"] is True
     assert spec["physics"]["renderer_certification_never_waits_on_a_fast_step"] is True
     assert set(spec["physics"]["classes"]) == {
-        "n/a", "reference_only", "exact_fast_step", "near_exact_fast_step", "approximate_fast_step"}
+        "n/a",
+        "reference_only",
+        "exact_fast_step",
+        "near_exact_fast_step",
+        "approximate_fast_step",
+    }
 
 
 def test_the_downstream_rule_passes_the_evidence_that_already_exists(spec):
@@ -338,6 +365,7 @@ def test_the_downstream_rule_passes_the_evidence_that_already_exists(spec):
     arithmetic it claims.
     """
     import math
+
     d = spec["downstream"]
     v = d["validated_against_existing_evidence"]
     b, c, n = v["b"], v["c"], v["n"]
@@ -355,6 +383,7 @@ def test_the_downstream_rule_passes_the_evidence_that_already_exists(spec):
 def test_the_power_guard_is_consistent_with_the_margin(spec):
     """The largest discordance at which the +/-5 CI can still close at n=300."""
     import math
+
     d = spec["downstream"]
     n, m, z = d["min_paired_episodes"], d["equivalence_margin_points"], d["ci_z"]
     worst = d["power_guard"]["max_discordance_at_n300"]
@@ -382,4 +411,5 @@ def test_the_document_states_that_no_benchmark_was_run(spec, doc):
     assert spec["no_benchmark_was_run"] is True
     assert re.search(r"No benchmark was run", doc), (
         "docs/research/certification.md must say, in the document, that its thresholds were chosen "
-        "without running a fresh benchmark")
+        "without running a fresh benchmark"
+    )

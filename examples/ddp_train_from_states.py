@@ -36,6 +36,7 @@ batch rather than refusing it.
     torchrun --nproc_per_node=2 examples/ddp_train_from_states.py
     torchrun --nproc_per_node=2 examples/ddp_train_from_states.py --env PushT --steps 200
 """
+
 from __future__ import annotations
 
 import argparse
@@ -67,10 +68,16 @@ class TinyNet(nn.Module):
     def __init__(self, out_dim: int):
         super().__init__()
         self.body = nn.Sequential(
-            nn.Conv2d(3, 32, 5, 2, 2), nn.ReLU(),
-            nn.Conv2d(32, 64, 3, 2, 1), nn.ReLU(),
-            nn.Conv2d(64, 64, 3, 2, 1), nn.ReLU(),
-            nn.AdaptiveAvgPool2d(4), nn.Flatten(), nn.Linear(64 * 16, out_dim))
+            nn.Conv2d(3, 32, 5, 2, 2),
+            nn.ReLU(),
+            nn.Conv2d(32, 64, 3, 2, 1),
+            nn.ReLU(),
+            nn.Conv2d(64, 64, 3, 2, 1),
+            nn.ReLU(),
+            nn.AdaptiveAvgPool2d(4),
+            nn.Flatten(),
+            nn.Linear(64 * 16, out_dim),
+        )
 
     def forward(self, frames):
         x = frames.permute(0, 3, 1, 2).float().div_(255.0)
@@ -107,8 +114,7 @@ def main() -> None:
     # point -- and it is also why the render cost below can be timed at all, since it is not hidden
     # inside a __getitems__ the loader calls.
     ds = TensorDataset(torch.as_tensor(np.asarray(states, np.float32)))
-    sampler = DistributedSampler(ds, num_replicas=world, rank=rank, shuffle=True, seed=0,
-                                 drop_last=False)
+    sampler = DistributedSampler(ds, num_replicas=world, rank=rank, shuffle=True, seed=0, drop_last=False)
     loader = DataLoader(ds, batch_size=a.batch, sampler=sampler, drop_last=False, num_workers=0)
 
     env = se.make(a.env, num_envs=a.batch, device=dev, **({"size": a.size} if a.size else {}))
@@ -125,7 +131,7 @@ def main() -> None:
     t_render = t_step = 0.0
     seen, step, losses = 0, 0, []
     for epoch in range(1000):
-        sampler.set_epoch(epoch)                       # without this every epoch is the same order
+        sampler.set_epoch(epoch)  # without this every epoch is the same order
         for (batch_states,) in loader:
             torch.cuda.synchronize(dev)
             t0 = time.perf_counter()
@@ -153,8 +159,7 @@ def main() -> None:
 
     peak = torch.cuda.max_memory_allocated(dev) / 1e9
     first, last = float(np.mean(losses[:5])), float(np.mean(losses[-5:]))
-    local = torch.tensor([seen, t_render, t_step, peak, first, last], device=dev,
-                         dtype=torch.float64)
+    local = torch.tensor([seen, t_render, t_step, peak, first, last], device=dev, dtype=torch.float64)
     gathered = [torch.zeros_like(local) for _ in range(world)]
     dist.all_gather(gathered, local)
 
@@ -163,16 +168,23 @@ def main() -> None:
         total_frames = sum(r[0] for r in rows)
         wall = max(r[1] + r[2] for r in rows)
         summary = {
-            "env": a.env, "world_size": world, "batch_per_rank": a.batch, "steps": step,
-            "frames_total": total_frames, "frames_per_s": total_frames / wall,
+            "env": a.env,
+            "world_size": world,
+            "batch_per_rank": a.batch,
+            "steps": step,
+            "frames_total": total_frames,
+            "frames_per_s": total_frames / wall,
             # The render's share of a training step is the number that says whether generating pixels
             # still matters. Reported rather than argued: on a small net it is large because the net is
             # small, and that is the honest reading rather than a flattering one.
             "render_frac_of_step": sum(r[1] for r in rows) / sum(r[1] + r[2] for r in rows),
             "render_fps_per_rank": [r[0] / r[1] for r in rows],
-            "loss_first5": [r[4] for r in rows], "loss_last5": [r[5] for r in rows],
-            "per_rank": [{"rank": i, "frames": r[0], "render_s": r[1], "step_s": r[2],
-                          "peak_gb": r[3]} for i, r in enumerate(rows)],
+            "loss_first5": [r[4] for r in rows],
+            "loss_last5": [r[5] for r in rows],
+            "per_rank": [
+                {"rank": i, "frames": r[0], "render_s": r[1], "step_s": r[2], "peak_gb": r[3]}
+                for i, r in enumerate(rows)
+            ],
         }
         print(json.dumps(summary, indent=2))
         Path(a.out).mkdir(parents=True, exist_ok=True)

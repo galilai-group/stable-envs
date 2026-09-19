@@ -15,6 +15,7 @@ mismatch recorded, and never ``fail``.
 Library code so the certifier (``scratch/step4/certify.py``) and anything else that judges a bound
 share one definition of "mismatch".
 """
+
 from __future__ import annotations
 
 #: ``reference_packages`` values that mean "installed, version unknown" (``fidelity_step4.provenance``
@@ -24,8 +25,11 @@ UNKNOWN = (None, "", "present")
 #: The checks whose bound is a claim about OUR frame against the OFFICIAL one, and so about the
 #: reference's version. Self-consistency checks (determinism, batch invariance, the 2x downsample)
 #: never read the reference and are judged regardless.
-REFERENCE_JUDGED_CHECKS = ("render_parity_with_official_renderer", "check_visual_fidelity",
-                           "check_visual_fidelity_under_variation")
+REFERENCE_JUDGED_CHECKS = (
+    "render_parity_with_official_renderer",
+    "check_visual_fidelity",
+    "check_visual_fidelity_under_variation",
+)
 
 
 def normalize_package(name: str) -> str:
@@ -69,13 +73,15 @@ def block_on_reference_mismatch(check: str, declared: dict | None, recorded: dic
     if not bad:
         return None
     rec_norm = {normalize_package(k): v for k, v in (recorded or {}).items()}
-    return {"status": "blocked_environment",
-            "why": ("reference version mismatch: the bound was measured against "
-                    + ", ".join(f"{k} {v}" for k, v in sorted((declared or {}).items()))
-                    + "; this interpreter's reference is not that version, so the measurement is a "
-                      "different comparison and cannot pass or fail the declaration ("
-                    + "; ".join(bad) + ")"),
-            "reference_version_mismatch": bad,
-            "declared_reference_versions": dict(declared or {}),
-            "recorded_reference_packages": {k: rec_norm.get(normalize_package(k))
-                                            for k in (declared or {})}}
+    return {
+        "status": "blocked_environment",
+        "why": (
+            "reference version mismatch: the bound was measured against "
+            + ", ".join(f"{k} {v}" for k, v in sorted((declared or {}).items()))
+            + "; this interpreter's reference is not that version, so the measurement is a "
+            "different comparison and cannot pass or fail the declaration (" + "; ".join(bad) + ")"
+        ),
+        "reference_version_mismatch": bad,
+        "declared_reference_versions": dict(declared or {}),
+        "recorded_reference_packages": {k: rec_norm.get(normalize_package(k)) for k in (declared or {})},
+    }

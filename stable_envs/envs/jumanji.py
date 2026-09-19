@@ -235,6 +235,7 @@ result, not a missing measurement.
 See ``docs/research/jumanji.md`` for the full five-batch table, the per-id atlas build times, and the
 id-by-id account of the twenty ids not ported.
 """
+
 from __future__ import annotations
 
 import importlib.metadata as _md
@@ -260,15 +261,16 @@ os.environ.setdefault("XLA_PYTHON_CLIENT_PREALLOCATE", "false")
 # ``matplotlib.pyplot`` mutates global state, neither of which belongs in ``import stable_envs``.
 _VENV = "/mnt/vast/home/randall.balestriero/venvs/se-jumanji"
 _missing = [m for m in ("jumanji", "jax", "matplotlib") if _ilu.find_spec(m) is None]
-if _missing:                                                                  # pragma: no cover
+if _missing:  # pragma: no cover
     raise ImportError(
         f"the Jumanji family builds its per-pixel atlas by CALLING the official matplotlib viewer, so "
         f"it cannot render without the reference package: missing {', '.join(_missing)}. The envs were "
         f"measured in {_VENV}, built with a CLEAN `python -m venv` — a --system-site-packages venv "
-        f"breaks jax's CUDA plugin discovery. See docs/research/jumanji.md")
+        f"breaks jax's CUDA plugin discovery. See docs/research/jumanji.md"
+    )
 try:
     _JVER = _md.version("jumanji")
-except Exception:                                                             # pragma: no cover
+except Exception:  # pragma: no cover
     _JVER = "unknown"
 
 import numpy as np
@@ -307,7 +309,7 @@ def _rgb(a) -> np.ndarray:
     return a[..., :3] if a.shape[-1] == 4 else a
 
 
-def _official_frame(spec: "_Spec", size: int, grid) -> np.ndarray:
+def _official_frame(spec: _Spec, size: int, grid) -> np.ndarray:
     """THE one path to an official frame: the viewer for ``spec``, drawn at ``size`` px.
 
     Two things are load-bearing here and one of them was learned the expensive way.
@@ -329,19 +331,21 @@ def _official_frame(spec: "_Spec", size: int, grid) -> np.ndarray:
     a single pixel of what the reference draws.
     """
     import matplotlib.pyplot as plt
+
     v = _viewer(spec)
     want = float(size) / 10.0
     if getattr(v, "_se_dpi", None) != want:
-        spec.render(v, spec.base())                     # ensure the figure exists
+        spec.render(v, spec.base())  # ensure the figure exists
         plt.figure(v._name).set_dpi(want)
-        spec.render(v, spec.base())                     # let the layout settle at the new dpi
+        spec.render(v, spec.base())  # let the layout settle at the new dpi
         v._se_dpi = want
     out = spec.render(v, grid)
     if out.shape != (int(size), int(size), 3):
         raise RuntimeError(
             f"{spec.env_id}: the official viewer produced {out.shape}, not "
             f"{(int(size), int(size), 3)} — the figure dpi is not being honoured, and every number "
-            f"measured against it would be a resample rather than the reference")
+            f"measured against it would be a resample rather than the reference"
+        )
     return out
 
 
@@ -402,18 +406,22 @@ class _Maze(_Spec):
     rows = cols = 10
     n_values = 4
     value_names = ("empty", "wall", "agent", "target")
-    doc = ("Jumanji's 10x10 Maze. The render state is the OVERLAID grid — "
-           "``MazeEnvViewer.render`` is ``MazeViewer.render(overlay(state))``, so the agent and the "
-           "target are cell symbols rather than coordinates.")
+    doc = (
+        "Jumanji's 10x10 Maze. The render state is the OVERLAID grid — "
+        "``MazeEnvViewer.render`` is ``MazeViewer.render(overlay(state))``, so the agent and the "
+        "target are cell symbols rather than coordinates."
+    )
 
     def viewer(self):
         from jumanji.environments.routing.maze.viewer import MazeEnvViewer
+
         v = MazeEnvViewer("Maze", render_mode="rgb_array")
         return v
 
     def render(self, viewer, grid):
         import jax.numpy as jnp
         from jumanji.environments.commons.maze_utils.maze_rendering import MazeViewer
+
         g = np.asarray(grid, np.int32).reshape(self.rows, self.cols)
         return _rgb(MazeViewer.render(viewer, jnp.asarray(g)))
 
@@ -429,21 +437,27 @@ class _RubiksCube(_Spec):
     rows, cols = 6, 9
     n_values = 6
     value_names = ("white", "yellow", "green", "blue", "red", "orange")
-    doc = ("Jumanji's 3x3x3 Rubik's Cube, drawn as six 3x3 ``imshow`` panels through one "
-           "``ListedColormap``. The state is the 54 stickers.")
+    doc = (
+        "Jumanji's 3x3x3 Rubik's Cube, drawn as six 3x3 ``imshow`` panels through one "
+        "``ListedColormap``. The state is the 54 stickers."
+    )
 
     def viewer(self):
         from jumanji.environments.logic.rubiks_cube.constants import DEFAULT_STICKER_COLORS
         from jumanji.environments.logic.rubiks_cube.viewer import RubiksCubeViewer
-        v = RubiksCubeViewer(sticker_colors=DEFAULT_STICKER_COLORS, cube_size=3,
-                             render_mode="rgb_array")
+
+        v = RubiksCubeViewer(sticker_colors=DEFAULT_STICKER_COLORS, cube_size=3, render_mode="rgb_array")
         return v
 
     def _state(self, grid):
         import jax.numpy as jnp
         from jumanji.environments.logic.rubiks_cube.types import State
-        return State(cube=jnp.asarray(np.asarray(grid, np.int8).reshape(6, 3, 3)),
-                     step_count=jnp.int32(0), key=jnp.zeros(2, jnp.uint32))
+
+        return State(
+            cube=jnp.asarray(np.asarray(grid, np.int8).reshape(6, 3, 3)),
+            step_count=jnp.int32(0),
+            key=jnp.zeros(2, jnp.uint32),
+        )
 
     def render(self, viewer, grid):
         return _rgb(viewer.render(self._state(grid)))
@@ -464,11 +478,14 @@ class _Sudoku(_Spec):
     rows = cols = 9
     n_values = 10
     value_names = ("empty",) + tuple(str(d) for d in range(1, 10))
-    doc = ("Jumanji's Sudoku, drawn as 81 ``Text`` artists and nothing else — the viewer's "
-           "``_draw_board`` only turns the axis off, so 2.4% of the frame carries the whole board.")
+    doc = (
+        "Jumanji's Sudoku, drawn as 81 ``Text`` artists and nothing else — the viewer's "
+        "``_draw_board`` only turns the axis off, so 2.4% of the frame carries the whole board."
+    )
 
     def viewer(self):
         from jumanji.environments.logic.sudoku.viewer import SudokuViewer
+
         v = SudokuViewer("Sudoku", render_mode="rgb_array")
         v._display = v._display_rgb_array
         return v
@@ -476,8 +493,12 @@ class _Sudoku(_Spec):
     def _state(self, grid):
         import jax.numpy as jnp
         from jumanji.environments.logic.sudoku.types import State
-        return State(board=jnp.asarray(np.asarray(grid, np.int32).reshape(9, 9) - 1),
-                     action_mask=jnp.zeros((9, 9, 9), bool), key=jnp.zeros(2, jnp.uint32))
+
+        return State(
+            board=jnp.asarray(np.asarray(grid, np.int32).reshape(9, 9) - 1),
+            action_mask=jnp.zeros((9, 9, 9), bool),
+            key=jnp.zeros(2, jnp.uint32),
+        )
 
     def render(self, viewer, grid):
         return _rgb(viewer.render(self._state(grid)))
@@ -490,11 +511,12 @@ class _Connector(_Spec):
     env_id, cls_name, ds_name = "Connector-v3", "JumanjiConnector", "jumanji-connector"
     rows = cols = 10
     n_values = 31
-    value_names = ("empty",) + tuple(
-        f"agent{i}_{k}" for i in range(10) for k in ("path", "position", "target"))
-    doc = ("Jumanji's Connector, 10 agents on a 10x10 grid. Its cells are alpha-0.25 rectangles with "
-           "shared black borders drawn against a live canvas, and at 200 px they separate exactly "
-           "anyway — but only at 200 px.")
+    value_names = ("empty",) + tuple(f"agent{i}_{k}" for i in range(10) for k in ("path", "position", "target"))
+    doc = (
+        "Jumanji's Connector, 10 agents on a 10x10 grid. Its cells are alpha-0.25 rectangles with "
+        "shared black borders drawn against a live canvas, and at 200 px they separate exactly "
+        "anyway — but only at 200 px."
+    )
     #: 200 ONLY, and this is measured rather than cautious. ``_draw_grid_cell`` gives every cell a
     #: ``linewidth=1`` black edge, and a linewidth is in POINTS: at dpi 20 (200 px) one point is 0.28
     #: px and the shared border quantises to fully-black pixels that no neighbour's colour reaches, so
@@ -507,12 +529,14 @@ class _Connector(_Spec):
 
     def viewer(self):
         from jumanji.environments.routing.connector.viewer import ConnectorViewer
+
         v = ConnectorViewer("Connector", num_agents=10, render_mode="rgb_array")
         v._display = v._display_rgb_array
         return v
 
     def render(self, viewer, grid):
         import jax.numpy as jnp
+
         return _rgb(viewer.render(jnp.asarray(np.asarray(grid, np.int32).reshape(10, 10))))
 
     def grid_of(self, state):
@@ -524,11 +548,14 @@ class _Sokoban(_Spec):
     rows = cols = 10
     n_values = 5
     value_names = ("empty", "wall", "target", "box", "agent")
-    doc = ("Jumanji's Sokoban (Boxoban levels), drawn as one PNG sprite per cell. The state is the "
-           "COMBINED grid the viewer consumes, i.e. ``grid_combine(variable, fixed)``.")
+    doc = (
+        "Jumanji's Sokoban (Boxoban levels), drawn as one PNG sprite per cell. The state is the "
+        "COMBINED grid the viewer consumes, i.e. ``grid_combine(variable, fixed)``."
+    )
 
     def viewer(self):
         import jumanji
+
         env = jumanji.make("Sokoban-v0")
         v = env._viewer
         v._display = v._display_rgb_array
@@ -537,6 +564,7 @@ class _Sokoban(_Spec):
 
     def render(self, viewer, grid):
         import jax.numpy as jnp
+
         g = jnp.asarray(np.asarray(grid, np.uint8).reshape(10, 10))
         return _rgb(viewer.render(_CombinedGrid(g)))
 
@@ -544,9 +572,9 @@ class _Sokoban(_Spec):
         env = getattr(self, "_env", None)
         if env is None:
             import jumanji
+
             env = self._env = jumanji.make("Sokoban-v0")
-        return np.asarray(env.grid_combine(state.variable_grid,
-                                           state.fixed_grid)).astype(np.int32).reshape(-1)
+        return np.asarray(env.grid_combine(state.variable_grid, state.fixed_grid)).astype(np.int32).reshape(-1)
 
 
 class _CombinedGrid:
@@ -563,11 +591,14 @@ class _Minesweeper(_Spec):
     rows = cols = 10
     n_values = 10
     value_names = ("hidden",) + tuple(str(d) for d in range(9))
-    doc = ("Jumanji's 10x10 Minesweeper. ``-1`` is an unexplored square and ``0-8`` the neighbouring "
-           "mine count; ``flat_mine_locations`` reaches no pixel and is not in the state.")
+    doc = (
+        "Jumanji's 10x10 Minesweeper. ``-1`` is an unexplored square and ``0-8`` the neighbouring "
+        "mine count; ``flat_mine_locations`` reaches no pixel and is not in the state."
+    )
 
     def viewer(self):
         from jumanji.environments.logic.minesweeper.viewer import MinesweeperViewer
+
         v = MinesweeperViewer(num_rows=10, num_cols=10, render_mode="rgb_array")
         v._display = v._display_rgb_array
         return v
@@ -575,11 +606,13 @@ class _Minesweeper(_Spec):
     def _state(self, grid, mines=None):
         import jax.numpy as jnp
         from jumanji.environments.logic.minesweeper.types import State
-        return State(board=jnp.asarray(np.asarray(grid, np.int32).reshape(10, 10) - 1),
-                     step_count=jnp.int32(0),
-                     flat_mine_locations=jnp.asarray(
-                         np.zeros(10, np.int32) if mines is None else mines, jnp.int32),
-                     key=jnp.zeros(2, jnp.uint32))
+
+        return State(
+            board=jnp.asarray(np.asarray(grid, np.int32).reshape(10, 10) - 1),
+            step_count=jnp.int32(0),
+            flat_mine_locations=jnp.asarray(np.zeros(10, np.int32) if mines is None else mines, jnp.int32),
+            key=jnp.zeros(2, jnp.uint32),
+        )
 
     def render(self, viewer, grid):
         return _rgb(viewer.render(self._state(grid)))
@@ -612,13 +645,22 @@ class _SudokuVeryEasy(_Sudoku):
     atlas_id = "Sudoku-v0"
 
 
-SPECS = [_Maze(), _RubiksCube(), _Sudoku(), _Connector(), _Sokoban(), _Minesweeper(),
-         _RubiksCubePartlyScrambled(), _SudokuVeryEasy()]
+SPECS = [
+    _Maze(),
+    _RubiksCube(),
+    _Sudoku(),
+    _Connector(),
+    _Sokoban(),
+    _Minesweeper(),
+    _RubiksCubePartlyScrambled(),
+    _SudokuVeryEasy(),
+]
 
 
 # ===================================================================== the atlas
 
-def _viewer(spec: "_Spec"):
+
+def _viewer(spec: _Spec):
     """The one official viewer for ``spec``. See ``_VIEWERS`` for why there is exactly one.
 
     Keyed by id and NOT by size: the size is a per-render property of the figure's dpi (see
@@ -662,10 +704,11 @@ def _build_atlas(spec: _Spec, size: int) -> dict:
         raise RuntimeError(
             f"{spec.env_id}: {conflicts} pixels are moved by MORE THAN ONE cell, so the frame is not a "
             f"per-cell lookup and this construction is unsound for it. See docs/research/jumanji.md "
-            f"for the two ids where this fires and why")
+            f"for the two ids where this fires and why"
+        )
     owner = np.where(n_own == 1, changed.argmax(0), -1).astype(np.int32)
     ys, xs = np.nonzero(owner >= 0)
-    lut = frames[owner[ys, xs], :, ys, xs]                      # (K, V, 3) uint8
+    lut = frames[owner[ys, xs], :, ys, xs]  # (K, V, 3) uint8
 
     # Which of a symbol's colours is its FLAT one, so a palette knob can be exact where one exists.
     # ``colors_per_symbol == 1`` (Maze) means the symbol paints a single colour and recolouring is
@@ -680,10 +723,16 @@ def _build_atlas(spec: _Spec, size: int) -> dict:
         label[:, val] = np.where((lut[:, val] == palette[val]).all(-1), val, RAW)
     # ``bg`` is NOT stored: it is derived in ``_load_atlas`` from the plate and the owned set, so there
     # is one definition rather than two that can drift.
-    return {"plate": f0, "ys": ys.astype(np.int32), "xs": xs.astype(np.int32),
-            "cells": owner[ys, xs].astype(np.int32), "lut": lut, "label": label,
-            "palette": palette,
-            "meta": np.array([P, V, size, len(ys)], np.int64)}
+    return {
+        "plate": f0,
+        "ys": ys.astype(np.int32),
+        "xs": xs.astype(np.int32),
+        "cells": owner[ys, xs].astype(np.int32),
+        "lut": lut,
+        "label": label,
+        "palette": palette,
+        "meta": np.array([P, V, size, len(ys)], np.int64),
+    }
 
 
 def _background(plate: np.ndarray, ys: np.ndarray, xs: np.ndarray) -> tuple:
@@ -714,13 +763,13 @@ def _load_atlas(spec: _Spec, size: int, device) -> dict:
     if os.path.exists(path):
         try:
             data = {k: v for k, v in np.load(path).items()}
-        except Exception:                                        # noqa: BLE001  partial/corrupt cache
+        except Exception:  # noqa: BLE001  partial/corrupt cache
             data = None
     if data is None:
         data = _build_atlas(spec, size)
         os.makedirs(os.path.dirname(path), exist_ok=True)
         tmp = f"{path}.{os.getpid()}.tmp"
-        with open(tmp, "wb") as fh:            # a handle, not a name: savez appends .npz to names
+        with open(tmp, "wb") as fh:  # a handle, not a name: savez appends .npz to names
             np.savez_compressed(fh, **data)
         os.replace(tmp, path)
 
@@ -729,24 +778,26 @@ def _load_atlas(spec: _Spec, size: int, device) -> dict:
     K = int(data["meta"][3])
     bg, bg_mask = _background(data["plate"], data["ys"], data["xs"])
     out = {
-        "plate": t(data["plate"]),                                  # (H,W,3) uint8
+        "plate": t(data["plate"]),  # (H,W,3) uint8
         "pix": t(data["ys"].astype(np.int64)) * int(size) + t(data["xs"].astype(np.int64)),
-        "cells": t(data["cells"].astype(np.int64)),                 # (K,)
-        "lut": t(data["lut"]).reshape(-1, 3),                       # (K*V, 3) uint8
-        "label": t(data["label"]).reshape(-1),                      # (K*V,) uint8
+        "cells": t(data["cells"].astype(np.int64)),  # (K,)
+        "lut": t(data["lut"]).reshape(-1, 3),  # (K*V, 3) uint8
+        "label": t(data["label"]).reshape(-1),  # (K*V,) uint8
         "palette": data["palette"],
         "bg": bg,
-        "K": K, "V": int(data["meta"][1]),
+        "K": K,
+        "V": int(data["meta"][1]),
     }
     # ``k * V`` for every owned pixel, precomputed: the render adds the symbol to it and indexes the
     # flat LUT once. Built here so the hot path allocates nothing per call.
     out["kbase"] = torch.arange(K, device=dev, dtype=torch.long) * out["V"]
-    out["bg_mask"] = t(bg_mask)                                      # (H,W) bool
+    out["bg_mask"] = t(bg_mask)  # (H,W) bool
     _ATLAS[key] = out
     return out
 
 
 # ===================================================================== the env
+
 
 class JumanjiGrid(Env):
     """A Jumanji id whose frame is a per-pixel lookup indexed by one cell's symbol."""
@@ -759,13 +810,21 @@ class JumanjiGrid(Env):
     default_size = 200
     parity_interior_min = 1.0
 
-    def __init__(self, num_envs: int = 1, size: int | None = None, supersample: int = 1,
-                 device: str = "cuda", backend: str = "auto", seed: int = 0):
+    def __init__(
+        self,
+        num_envs: int = 1,
+        size: int | None = None,
+        supersample: int = 1,
+        device: str = "cuda",
+        backend: str = "auto",
+        seed: int = 0,
+    ):
         spec = self.SPEC
         self.state_dim = spec.P
         self.state_names = spec.cell_names()
-        super().__init__(num_envs=num_envs, size=size, supersample=supersample,
-                         device=device, backend=backend, seed=seed)
+        super().__init__(
+            num_envs=num_envs, size=size, supersample=supersample, device=device, backend=backend, seed=seed
+        )
         self._check_size(self.size)
         self._a = _load_atlas(spec, self.size, self.device)
 
@@ -783,7 +842,8 @@ class JumanjiGrid(Env):
                 f"{type(self).__name__} renders at {self.SPEC.verified_sizes} px, not {int(size)}. The "
                 f"atlas is exact only where the official viewer's cells provably separate, and that was "
                 f"measured per size rather than assumed — at an unverified size there is no atlas that "
-                f"is right, only one that would be silently wrong. See docs/research/jumanji.md")
+                f"is right, only one that would be silently wrong. See docs/research/jumanji.md"
+            )
 
     # ---- variation ------------------------------------------------------------------
 
@@ -807,20 +867,29 @@ class JumanjiGrid(Env):
         # It is deliberately ONE leaf and not V of them (see the docstring above), which also means
         # check_colors_apply_exactly skips it -- ``background`` is the (3,)-wide leaf that check bites
         # on, and it is the one whose colour must land in the frame literally.
-        return Dict({
-            "palette": Box(low=0, high=255, shape=(spec.n_values, 3), dtype=np.uint8,
-                           init_value=a["palette"].astype(np.uint8)),
-            "background": RGBBox(init_value=a["bg"].astype(np.uint8)),
-        })
+        return Dict(
+            {
+                "palette": Box(
+                    low=0, high=255, shape=(spec.n_values, 3), dtype=np.uint8, init_value=a["palette"].astype(np.uint8)
+                ),
+                "background": RGBBox(init_value=a["bg"].astype(np.uint8)),
+            }
+        )
 
     # ---- render ---------------------------------------------------------------------
 
     @torch.no_grad()
-    def render(self, states=None, size: int | None = None, supersample: int | None = None,
-               variation: dict | None = None, style=None, out=None) -> torch.Tensor:
+    def render(
+        self,
+        states=None,
+        size: int | None = None,
+        supersample: int | None = None,
+        variation: dict | None = None,
+        style=None,
+        out=None,
+    ) -> torch.Tensor:
         """``(...,P)`` -> ``(...,H,W,3)`` uint8 on device: the plate, with one gather scattered in."""
-        s = self._state if states is None else torch.as_tensor(states, device=self.device,
-                                                               dtype=torch.float32)
+        s = self._state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
         lead = tuple(s.shape[:-1])
         s = s.reshape(-1, self.state_dim)
         B = int(s.shape[0])
@@ -841,7 +910,7 @@ class JumanjiGrid(Env):
         pal = sty["palette"].reshape(B, a["V"], 3).round().clamp(0, 255).to(torch.uint8)
         bg = sty["background"].reshape(B, 1, 3).round().clamp(0, 255).to(torch.uint8)
         buf.copy_(a["plate"].unsqueeze(0).expand(B, size, size, 3))
-        buf[:, a["bg_mask"]] = bg                       # (B,1,3) broadcasts over the masked pixels
+        buf[:, a["bg_mask"]] = bg  # (B,1,3) broadcasts over the masked pixels
 
         # ...then the owned pixels. ``sym`` is the symbol of each owned pixel's owning cell; the LUT is
         # flat so one gather serves the whole batch.
@@ -857,13 +926,13 @@ class JumanjiGrid(Env):
         # enough that throughput is unaffected — the kernel is bandwidth-bound well below this width.
         flatbuf = buf.view(B, -1, 3)
         rows = max(1, int(_SCRATCH_BUDGET // max(1, a["K"] * 8)))
-        codes = s.round().long() % a["V"]                                        # (B, P)
+        codes = s.round().long() % a["V"]  # (B, P)
         for lo in range(0, B, rows):
             hi = min(lo + rows, B)
-            sym = codes[lo:hi][:, a["cells"]]                                    # (n, K)
+            sym = codes[lo:hi][:, a["cells"]]  # (n, K)
             flat = a["kbase"].unsqueeze(0) + sym
-            col = a["lut"][flat]                                                 # (n, K, 3)
-            lab = a["label"][flat]                                               # (n, K) uint8
+            col = a["lut"][flat]  # (n, K, 3)
+            lab = a["label"][flat]  # (n, K) uint8
             # ``gather`` demands an int64 index, and ``label`` is uint8 to keep the atlas small; the
             # clamp only matters for the RAW sentinel, whose column ``keep`` discards anyway.
             idx = lab.long().clamp_(max=a["V"] - 1).unsqueeze(-1).expand(-1, -1, 3)
@@ -922,8 +991,8 @@ def _state_pool(spec: _Spec, n: int = 256) -> np.ndarray:
     if hit is not None:
         return hit
     import jax
-
     import jumanji
+
     env = jumanji.make(spec.env_id)
     # jitted, because these run eagerly otherwise: 256 resets plus up to 12 steps each is ~3,300
     # op-by-op JAX dispatches per id, which dominated the first test that touched an env.
@@ -950,7 +1019,7 @@ def _state_pool(spec: _Spec, n: int = 256) -> np.ndarray:
                     nv = np.asarray(getattr(spc, "num_values", 4))
                     a = jax.numpy.asarray(rng.integers(0, np.maximum(nv, 1)))
                 state, _ = step(state, a)
-            except Exception:                                    # noqa: BLE001  terminal / bad action
+            except Exception:  # noqa: BLE001  terminal / bad action
                 break
         out[i] = spec.grid_of(state)
     _POOL[spec.env_id] = out
@@ -960,10 +1029,19 @@ def _state_pool(spec: _Spec, n: int = 256) -> np.ndarray:
 def _make_classes() -> dict:
     made = {}
     for spec in SPECS:
-        made[spec.cls_name] = register(type(spec.cls_name, (JumanjiGrid,), dict(
-            SPEC=spec, name=spec.ds_name, reference_id=spec.env_id,
-            __doc__=f"{spec.doc}\n\nOfficial id ``{spec.env_id}`` (jumanji {_JVER}); the frame is a "
-                    f"per-pixel lookup over {spec.P} cells and {spec.n_values} symbols.")))
+        made[spec.cls_name] = register(
+            type(
+                spec.cls_name,
+                (JumanjiGrid,),
+                dict(
+                    SPEC=spec,
+                    name=spec.ds_name,
+                    reference_id=spec.env_id,
+                    __doc__=f"{spec.doc}\n\nOfficial id ``{spec.env_id}`` (jumanji {_JVER}); the frame is a "
+                    f"per-pixel lookup over {spec.P} cells and {spec.n_values} symbols.",
+                ),
+            )
+        )
     return made
 
 

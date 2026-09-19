@@ -13,6 +13,7 @@ later. The rules:
     drawing.
   * nothing outside ``interop`` imports ``stable_worldmodel`` at module scope.
 """
+
 from __future__ import annotations
 
 import ast
@@ -39,7 +40,7 @@ def _imports(path: Path, top_level_only: bool) -> list[str]:
             out.extend(a.name for a in node.names)
         elif isinstance(node, ast.ImportFrom):
             if node.level:
-                base = pkg_parts[:len(pkg_parts) - node.level + 1]
+                base = pkg_parts[: len(pkg_parts) - node.level + 1]
                 out.append(".".join([*base, node.module] if node.module else base))
             elif node.module:
                 out.append(node.module)
@@ -48,21 +49,45 @@ def _imports(path: Path, top_level_only: bool) -> list[str]:
 
 @pytest.mark.parametrize("name", CORE)
 def test_a_core_module_imports_no_backend_and_no_environment(name):
-    bad = [m for m in _imports(PKG / name, top_level_only=True)
-           if m.startswith(("stable_envs.render", "stable_envs.envs", "stable_envs.interop",
-                            "stable_envs._interop", "stable_envs.compat", "stable_envs.testing",
-                            "stable_envs.data", "stable_envs.rollout", "stable_worldmodel"))]
+    bad = [
+        m
+        for m in _imports(PKG / name, top_level_only=True)
+        if m.startswith(
+            (
+                "stable_envs.render",
+                "stable_envs.envs",
+                "stable_envs.interop",
+                "stable_envs._interop",
+                "stable_envs.compat",
+                "stable_envs.testing",
+                "stable_envs.data",
+                "stable_envs.rollout",
+                "stable_worldmodel",
+            )
+        )
+    ]
     assert bad == [], (
         f"stable_envs/{name} imports {bad} at module scope. The core vocabulary of the package must "
         f"not depend on a backend, an environment or an interop target — that arrow points the other "
-        f"way, and a cycle here is a review BLOCK (contract §8).")
+        f"way, and a cycle here is a review BLOCK (contract §8)."
+    )
 
 
 @pytest.mark.parametrize("path", sorted((PKG / "render").glob("*.py")), ids=lambda p: p.name)
 def test_a_renderer_knows_nothing_about_environments_or_stable_worldmodel(path):
-    bad = [m for m in _imports(path, top_level_only=False)
-           if m.startswith(("stable_envs.envs", "stable_worldmodel", "stable_envs.interop",
-                            "stable_envs._interop", "stable_envs.compat"))]
+    bad = [
+        m
+        for m in _imports(path, top_level_only=False)
+        if m.startswith(
+            (
+                "stable_envs.envs",
+                "stable_worldmodel",
+                "stable_envs.interop",
+                "stable_envs._interop",
+                "stable_envs.compat",
+            )
+        )
+    ]
     assert bad == [], f"stable_envs/render/{path.name} imports {bad}"
 
 
@@ -76,26 +101,28 @@ def test_only_interop_reaches_for_stable_worldmodel():
             offenders[str(path.relative_to(ROOT))] = hits
     assert offenders == {}, (
         f"{offenders} import stable_worldmodel at module scope; the dependency is optional and lives "
-        f"in interop, which imports it lazily.")
+        f"in interop, which imports it lazily."
+    )
 
 
 def test_the_core_modules_have_no_cycle_among_themselves():
     """``env`` may import ``dynamics``; ``dynamics`` may not import ``env``."""
-    edges = {name: {m for m in _imports(PKG / name, top_level_only=True)
-                    if m.startswith("stable_envs.")} for name in CORE}
+    edges = {
+        name: {m for m in _imports(PKG / name, top_level_only=True) if m.startswith("stable_envs.")} for name in CORE
+    }
     assert "stable_envs.env" not in edges["dynamics.py"], (
         "dynamics must not import env: env imports dynamics, and the reverse arrow is how the pair "
-        "becomes unimportable in the wrong order. Env sets `_se_dynamics_base` on itself instead.")
-    assert not (edges["specs.py"] | edges["_config.py"]) & {"stable_envs.env",
-                                                            "stable_envs.registry"}
+        "becomes unimportable in the wrong order. Env sets `_se_dynamics_base` on itself instead."
+    )
+    assert not (edges["specs.py"] | edges["_config.py"]) & {"stable_envs.env", "stable_envs.registry"}
 
 
 def test_the_package_imports_with_no_environment_family_available(tmp_path):
     """Importing ``stable_envs`` must not require any optional dependency."""
     import subprocess
     import sys
-    code = ("import sys; sys.modules['gym_pusht'] = None;"
-            "import stable_envs as snv; print(snv.__version__)")
+
+    code = "import sys; sys.modules['gym_pusht'] = None;import stable_envs as snv; print(snv.__version__)"
     r = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, cwd=str(ROOT))
     assert r.returncode == 0, r.stderr[-2000:]
 

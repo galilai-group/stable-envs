@@ -9,11 +9,12 @@ an asset and is built at runtime by :func:`stable_envs.envs._craftax_full.night_
 
 Do not hand-edit. Re-run the generator against a new craftax and re-measure parity.
 """
+
 from __future__ import annotations
 
 CRAFTAX_VERSION = "1.6.1"
 SIZES = (10, 16)
-MOB_BASE = {'melee': 1, 'passive': 9, 'ranged': 12}
+MOB_BASE = {"melee": 1, "passive": 9, "ranged": 12}
 N_MOB_SLOT = 20
 N_PROJ_SLOT = 33
 
@@ -23,25 +24,22 @@ TABLES = {
         "armour": (
             "eNrtkjEOgCAMRbmAF/UyTMYDcR12BwdtaPIxpUWJJDrww9A8SPtsdG5kZMTFGEMIJUHAqfbeiyt67FNQ1HnHsA+moD+7ATIX5vxA5fBv4pirrs"
             "7yb+rzpC738J7/4c+8yljc2kk987a5/VAIDrIf07KKK3pMkA6KOu+Z5IMpuX9yyzBxac7fonH4N3HM1Vdn+Lf1eVCXe+jAP4p0u+PmfrScZqrh"
-            "6Q=="
-        , (3, 4, 8, 8, 3)),
+            "6Q==",
+            (3, 4, 8, 8, 3),
+        ),
         "armour_ench_a": (
-            "eNpjYBjpgBGMYGxGDEkIDQXYdKPQOIQR5jAgmwiXYESiYRhdHIVGUYXVW0iGQxmMUBYjxHqo/pHtfwBz0gB3"
-        , (3, 4, 8, 8)),
+            "eNpjYBjpgBGMYGxGDEkIDQXYdKPQOIQR5jAgmwiXYESiYRhdHIVGUYXVW0iGQxmMUBYjxHqo/pHtfwBz0gB3",
+            (3, 4, 8, 8),
+        ),
         "armour_ench_rgb": (
             "eNrtUssVhCAMtAi5W5BV0Y2NeN4mljY0mP1MhEF0ua28HPLIZDIZ6Lr73Offz+KdJs/+ALPM7gQtAcsUKUmYxLtflFeOPgWm5J7vxbeQkgJizC"
             "XDFVPmV98+93kewNTwo7DUH2TTJ2v8CS0/lZEox5+JjSa3tsdZwDNM4ZWMgclTzBAe9RsxsEyRUgxMpnDBNNbVRicjZ/fFLaSkgBjviVnDFVPm"
-            "V9++91kewFTxg7DUHzNxe7K2/3/HT2UkyvFnYqPJd7bLrK1rBaM0wXM="
-        , (3, 4, 8, 8, 3)),
-        "arrow_ench_a": (
-            "eNpjYKAWYARC+usHAAIUAAU="
-        , (3, 8, 8)),
-        "arrow_ench_rgb": (
-            "eNpjYBjO4H+TKJwcikBh5TM4OTgBAG0OBos="
-        , (3, 8, 8, 3)),
-        "arrow_icon": (
-            "eNpjYICCw4cPM2ADuMT7ix2oIl4cY4hV/P///wxEAABZ0AxW"
-        , (8, 8, 3)),
+            "V9++91kewFTxg7DUHzNxe7K2/3/HT2UkyvFnYqPJd7bLrK1rBaM0wXM=",
+            (3, 4, 8, 8, 3),
+        ),
+        "arrow_ench_a": ("eNpjYKAWYARC+usHAAIUAAU=", (3, 8, 8)),
+        "arrow_ench_rgb": ("eNpjYBjO4H+TKJwcikBh5TM4OTgBAG0OBos=", (3, 8, 8, 3)),
+        "arrow_icon": ("eNpjYICCw4cPM2ADuMT7ix2oIl4cY4hV/P///wxEAABZ0AxW", (8, 8, 3)),
         "block": (
             "eNrtWltsXFcVvdMqfWBZI7dOqyQCIvig/bBUqKmEiauguI0HGzf22Mbvx0xmHDsx9uBge/yI7di14zaN4wRPakUOrhoMVlPlpz8tiSitoColMi"
             "AVtbJAlEKkgio+AggB0rDuXZ7tzT0znokYBT5ytHW0z1r7dU/OuXPPceJWPH5bMpPx2y3jdv937qPsumJtn74DohH0GpEhemFNs1Ssqd8sK4Xp"
@@ -73,11 +71,10 @@ TABLES = {
             "dwhAELAwXB9xUM9PeVZvGM8JXvK01Bxo+Ug5W5Yp3C2vbwzdK6Ki0txXfdoUOHoLjWFZDW1taGhgac06FgqL9FW1pagsFgfX093KHj9K2/RTHE"
             "D1Cn06C3tbXpb9HKysqqqqqamhqmho3+FoU9cPRIihM0jPW3KA7O1dXVoVAILIIgi/4W7XIaYiICwqLCLO7B/36u7gzk38q5Qjqr2itzhaFn7E"
             "HOFXQO9VzBOFtzla3/z+CaK7CYK6beYq7A3vp1tWw9ADHn6jnPJ4HfuNQNoc25zgdWw49yrjD815VpsjS44Pd+L1jAuaK99v3uI3fLXMERwePv"
-            "vQehGViZKwyFXbRyyHKu4AgDFgZq0XlfwUC/rzSLZ4SvzJWmFp33FViZK9YpLOxt39CefwO/3jqU"
-        , (37, 10, 10, 3)),
-        "bow_textures": (
-            "eNpjYBg+YHFHaH+xA5Cxf/9+uCBEhBhBoHZMQbhiNEGIYjRBiGJMQawqIQAA6NIcsw=="
-        , (2, 8, 8, 3)),
+            "vQehGViZKwyFXbRyyHKu4AgDFgZq0XlfwUC/rzSLZ4SvzJWmFp33FViZK9YpLOxt39CefwO/3jqU",
+            (37, 10, 10, 3),
+        ),
+        "bow_textures": ("eNpjYBg+YHFHaH+xA5Cxf/9+uCBEhBhBoHZMQbhiNEGIYjRBiGJMQawqIQAA6NIcsw==", (2, 8, 8, 3)),
         "icons": (
             "eNpjYGD49+jRrytXGMDg15kzEMa/y5f/HTjwe8uW7xs2/N68+fvChU9qaoDifzdu/NvT87e5+U9z8++Ski8JCXdcXTdpaf3q7v4TH//Hx+ePh8"
             "d3G5sXBgbHFRVnCgsDtfy0tf2hrv5dQeGtlNQlEZF1fHwMMPBKUPAFN/d1Do4d7OwMqOAkM/NOJiYGUsCykqA1leHra6ORBbsTXDvjnaakeywp"
@@ -88,21 +85,22 @@ TABLES = {
             "OFWArRo3MkIWnBsrBkSd/nyY4kBBIIkpbirPBkREmoPV3suLc+EILo7LnfjB/ybRpyJYBP8fAyE0KSAXJN4kSqQ5QBFMQeoChZXPFHyeYRF8dg"
             "GEUKWAXJDgymfEmuODRZBUkHY/HI2BzAWSmOJAJHaYAYiQpSCCvCUMojNYgQxkcaAIUByIkMXhUmiCWB1DNmhxZEg2ZESpLAwZ040YEw0YkwwZ"
             "MaWA4nH6IHFMqUgdxjg9FHGg4UBDgMhUCsVGoCHJqIIQkIRNkBjwbFsoQXEgG4i+3l2DVRyCLs5QRxYHciGIRon/6cQbzyuv3Ss8CyThIk/KLj"
-            "8oOn8oaMOllAN3809DpIDi9wrOXkzefzBw/TqL2Y9KLh4NQzRjgGru5J9+XHppm/Oi27mn0GzZ5bkCaOZ216WYDgCawzCsAQDV0J+B"
-        , (15, 8, 8, 3)),
-        "item_a": (
-            "eNpjYKA3YGQkn0W0FVAtjIxQJiMjjEksC6EXpxXospSI0dMfAGJWAJU="
-        , (5, 10, 10)),
+            "8oOn8oaMOllAN3809DpIDi9wrOXkzefzBw/TqL2Y9KLh4NQzRjgGru5J9+XHppm/Oi27mn0GzZ5bkCaOZ216WYDgCawzCsAQDV0J+B",
+            (15, 8, 8, 3),
+        ),
+        "item_a": ("eNpjYKA3YGQkn0W0FVAtjIxQJiMjjEksC6EXpxXospSI0dMfAGJWAJU=", (5, 10, 10)),
         "item_rgb": (
             "eNrNkDsOgkAURafUwhg7GxdAY28HyncYoHULbsIVuScrC1eBxxkhEwgKUdGbl8nknnfffIS4qxRlo0SlNqobutA/1/MXiVe/0VMXZ3E9Ol30fF"
             "pTXfSwmVPj0x9qptUw96uJ3eAvpw1qCt+UPcHOoja1g9/LflDt9w7N2nceLWsHB2XfVKFkkUvWNE0bKEmSKIq2WkEQSClrRDMOvud5ruuyp1kp"
-            "ZehOi2wcxzSEYcimpqSgmKYHEa8pc3wtTLIcipNnD8occy6rmclNsooi00+csUqrzyfcACQO/+4="
-        , (5, 10, 10, 3)),
+            "ZehOi2wcxzSEYcimpqSgmKYHEa8pc3wtTLIcipNnD8occy6rmclNsooi00+csUqrzyfcACQO/+4=",
+            (5, 10, 10, 3),
+        ),
         "mob_a": (
             "eNq9VNESwzAIkv//6e3aBtGwptvdkpeyLhUVMWLPATrCcQrCAd+PBYrz55rDIkYBNIdIZGIbsuu6oMHBuMIAjZy5kGtmhWZMgoYKP4Q4Bjrjwv"
             "fKZt/rOBs2nqpC1QOje3ikjNZJ9WU2UiNyRHLs12NPHVZ9Jm0qoWiCvnYju4F2JI9fjY+mEA0PobO1qUFNSLGsa1BUa1/vgmOSm+jJxBp/gLNW"
-            "1XDf3qkwpb9C1oNu1iQbqBdaRfqy7GJtOHrtAbtZa+S8P0st2eNul2DDmebTrJfeQPn3w8WFB/7A8QKTCQMM"
-        , (20, 10, 10)),
+            "1XDf3qkwpb9C1oNu1iQbqBdaRfqy7GJtOHrtAbtZa+S8P0st2eNul2DDmebTrJfeQPn3w8WFB/7A8QKTCQMM",
+            (20, 10, 10),
+        ),
         "mob_rgb": (
             "eNrtl09IVHEQx5+GgZGwFpEVZEakhxSD6tDBkmLZsA4lLoLmSqFgtMhiCREFQUSnLPEilBB1CYRuFWFUYCBFh8DDnqLLduhWdF+/b7/uOP3+PH"
             "e3jA4Nw2PefOY7v9nH7mMnCP5bJTbx5v6B8biPAjkpVA3H95AytlVIsgYFWiiHsga3IhdKrY9qrYzHwKfVHex8ifauvX3eT+cL7rOfnx9/X7zl"
@@ -115,49 +113,57 @@ TABLES = {
             "O450wINybjG2OamWV2zVwSm4441RP4Q8twnW4OutVXpVwW3v4Rqjp9ZqCiGbS5mmuPVR7iCa2vuIQXVnjWyqkU0zmYzEzn+qmYKNW4/x2+wygt"
             "kqUJE7//1qrfNQJPXVGJgqPbwtF5XRX+dt5FNF7zjOfcH+lTl3nIjnj1+Z7mlsMdLWt+PQfDsO5X9+xzk923r1deedr3TEdOThyOCK98m2uztZ"
             "yVhqUIBb0g2JCYmlJzOsR1B3rl6fIhlWIpbOQjmJUB6E+uaxD1IvfYCopXN+XNmHBWH90KsdZ5+wAFe04imi0kNKLA/zR9HnXF8MQXNlvgO1cM"
-            "5DK+uc71u9gP4+EbpJ3y67WxtJ266/wH97erk0wiCM0GpUbuetyZulLGXeLYm7j2+FcdElPc0U9g=="
-        , (20, 10, 10, 3)),
+            "5DK+uc71u9gP4+EbpJ3y67WxtJ266/wH97erk0wiCM0GpUbuetyZulLGXeLYm7j2+FcdElPc0U9g==",
+            (20, 10, 10, 3),
+        ),
         "number_textures": (
-            "eNpjYCAZ/AcDZC4m+z8MoLGRtWMK4lePqRerS3ApwGMXmu8Iug2XdZjqsWrBGmiYfscjjlUN1rAFABt76Rc="
-        , (10, 4, 4, 3)),
-        "number_textures_a": (
-            "eNpjYEADjIwgAoIZgRwQZgDTqHyIGFQ1jAlXwwARRuIzIvEZYGoRmhE0lA21EwAWfABP"
-        , (10, 4, 4)),
+            "eNpjYCAZ/AcDZC4m+z8MoLGRtWMK4lePqRerS3ApwGMXmu8Iug2XdZjqsWrBGmiYfscjjlUN1rAFABt76Rc=",
+            (10, 4, 4, 3),
+        ),
+        "number_textures_a": ("eNpjYEADjIwgAoIZgRwQZgDTqHyIGFQ1jAlXwwARRuIzIvEZYGoRmhE0lA21EwAWfABP", (10, 4, 4)),
         "number_textures_with_zero": (
-            "eNqNkEkKADAMAv3/p1vwEKQaqacgTjYAhwILUOOM+ThTK+UdlHXczZ53Nm6yBcosiH5228Z5PiLxaX578WMm/vYCvyUBDg=="
-        , (10, 4, 4, 3)),
+            "eNqNkEkKADAMAv3/p1vwEKQaqacgTjYAhwILUOOM+ThTK+UdlHXczZ53Nm6yBcosiH5228Z5PiLxaX578WMm/vYCvyUBDg==",
+            (10, 4, 4, 3),
+        ),
         "number_textures_with_zero_a": (
-            "eNpdjUEOADAIwtr/f3ozQ012QBERUQQLr14QWMuIfvPT4m46Htg8O31m2rvH28Pz8wAbQABX"
-        , (10, 4, 4)),
+            "eNpdjUEOADAIwtr/f3ozQ012QBERUQQLr14QWMuIfvPT4m46Htg8O31m2rvH28Pz8wAbQABX",
+            (10, 4, 4),
+        ),
         "pickaxe_textures": (
             "eNpjYBgOYHFHKARhlS2OMcQqBRTElIIIAhn9xQ6YghDTMAWxqiQeTIUBrLKJiYlYpSB2oUnBHVBRUYHVVUDTqO7+NzCAVba/vx+rFMQuNCm4Aw"
-            "4fPozVVUDTqO7+rO/fIQirrND1W1ilIHahSSEc8Ps/VlcBTaOi+wGMOm3b"
-        , (5, 8, 8, 3)),
+            "4fPozVVUDTqO7+rO/fIQirrND1W1ilIHahSSEc8Ps/VlcBTaOi+wGMOm3b",
+            (5, 8, 8, 3),
+        ),
         "player_a": (
-            "eNqdkUEKACAIBGf//+lA0sokIU8T1Y4WgMQsJ1kFaIE2oiJsOWOCXo5NUmrybu/wU5cDT0Edfc/RO3ReST1XiUofwuut2jkG958BAA=="
-        , (5, 10, 10)),
+            "eNqdkUEKACAIBGf//+lA0sokIU8T1Y4WgMQsJ1kFaIE2oiJsOWOCXo5NUmrybu/wU5cDT0Edfc/RO3ReST1XiUofwuut2jkG958BAA==",
+            (5, 10, 10),
+        ),
         "player_rgb": (
             "eNrNlDEKAjEQRecUVtb2HsB6T2CrnbZ7AMELxEawEyzFQvACWlpaWG3nHayF+Je/zM4mbgoRNQxLyEvYycskInUbDnoIaWm3bY6Ix/djmV+K7u"
             "aAQKeTzxQ9/BqUyAaR9421XMivd5KgnAB63q2WkwwxzfrMkPRenDABFOMMDB4XI5s2KDukQVMPbULec4XtWFfYgrbYEigs6UJ+1QYoFHFCG4UE"
             "2uB+1VVJnagrUnUF9FlX5Vk7aUW+TjWoqyASrrSuXtqwlZOmsaugrgJX/1lX9g7+0FVwfHFdJU6fKlg5CVeYYCNwVT4jrnpM9BfWVZWAq/Oxik"
-            "p0FX2veGG5FuONcGJpXLe08eX36gmaxZ4W"
-        , (5, 10, 10, 3)),
+            "p0FX2veGG5FuONcGJpXLe08eX36gmaxZ4W",
+            (5, 10, 10, 3),
+        ),
         "potion_textures": (
             "eNrNjiEOwkAQRSepqMA15Qg4DjDhoiDRiLVoFEGtLAKHQ3EEXjPJZDICKhD788Tu/9v0ifyIqtZal/RcNSS+JK+us4N/RWOc+h685+ATpF9YZH"
-            "H+5T/exuRPY8hBIPr7NK9t+G92z+RPY8hwhOjv07y24X/Z3pM/jbGXAtHfJ2jEf/1+JH8aY3U9Q/T3CRrxnyZN/jRGKQNEf5/gu/8HgvP8Uw=="
-        , (6, 8, 8, 3)),
+            "H+5T/exuRPY8hBIPr7NK9t+G92z+RPY8hwhOjv07y24X/Z3pM/jbGXAtHfJ2jEf/1+JH8aY3U9Q/T3CRrxnyZN/jRGKQNEf5/gu/8HgvP8Uw==",
+            (6, 8, 8, 3),
+        ),
         "proj_a": (
             "eNrtlcESgCAIRNn//+maaRIo0wRqOOCJCwvPBSX6+wCdiJYjmMsfp0nAz+HoPoLDJyQ1hx4hsPsbCSN9NGHj7hGI4eRomT09FhYlZIbd8T0XPF"
-            "cqUsUsF/PMNqFcmLBzm/U0XUCk9EuU8iOpH/V/pPg/aj/qvSo/yo+8fmycqwJ5"
-        , (33, 10, 10)),
+            "cqUsUsF/PMNqFcmLBzm/U0XUCk9EuU8iOpH/V/pPg/aj/qvSo/yo+8fmycqwJ5",
+            (33, 10, 10),
+        ),
         "proj_rgb": (
             "eNrtWEFOw0AM7JkDJ6JKnPoFpAjELQ/oEyrxiP6gH8iVL+QdkTgj8QbyBm7FYYkT1utpAizbRbZ8SDvejWc8uXi1svj9aNu2rmsN3e9uqEBD63"
             "0Fbo6HUlcAPX5ELuITFyLLST+5eZqLFD8XangKeIIJfQXcjr+UcxNf+oqpyblkRO1kVFUFoLIsY6DbzeXd+uJ7aI4KuyBelFIlF0T537D+yXzj"
             "uQ67PTuFKdlaHuq8xNbKiPXrVZ8adHwqKGVBDx0Kh9JDuEA5Ox4/FODVGNLQhDICyDF1NdNKVollnI/Kmxd1ldxyWDHkSd058RyLu0piMLYT20"
             "B2O1L+ygujXg2e1B/HZttRqlD33Kco6KFmQJsuXKCcHY838NUQ0tBUAfr5JDv0PK0cVRpknI/Kmxd1lVYrPMET09edE8+xuKskBmM7sQ0CIjcT"
             "C3nW0lG/Bk7K9le2v7L9le2vbH8VjOvHNaUGPbztKGUB/XP/cutQeggWaGf5ePDgnK4AmlBGADmmrmZaySqxjPNRefOirpJbDisGGAHnxHMs7i"
-            "qJwdhObAPZLVP2eGHUq8GTsv2V7a9sf2X7K9tf2f7K9le2v7L91Rnur94BSTVM4g=="
-        , (33, 10, 10, 3)),
+            "qJwdhObAPZLVP2eGHUq8GTsv2V7a9sf2X7K9tf2f7K9le2v7L91Rnur94BSTVM4g==",
+            (33, 10, 10, 3),
+        ),
         "small_block": (
             "eNrtWGtsk1UY/ioK4jLnZUDGohL9AfyoTplGJxgMg20ZjpV2g92v7ezYhdplN8a6ssk23YVFVmhwgHHMLELQnyrES6J/gKAmGpbFC1EXiKIm/l"
             "OT+nzf074ev9JCXIgh8eTNyXOe93nf8+b09PveNqSFQv/bf2epp7R7j9xDEwwgeMneW4gJVN4EYvHxlUyolqFuJFubChPm2ZE52B3Zo5itu97X"
@@ -181,44 +187,42 @@ TABLES = {
             "wD+fxRmbB+Hs/P+de/Yu5TYM5q/Sozz/q3W1Zs0lJgwKWtTxZ4n2D9v399+MoZf6GmwaXtTin2Psz6sQQ/83YRwPaM26T/QZ6QMeAFz/p1bOS/"
             "X0sAhsnzX3jIoJfnP0lYT8Nm8KxfxDDUr+uv4/yzjWE6/4qKiuLi4vz8fLjk/IFramqKioqcTidaLHl/gcdrqLy8HK8kdGvy/gIPBkq3222z2e"
             "T9Bd7hcCBJXl4eHjLy/gKP8OeNgY2u8/4gyuJbdtX6NUfSDaofmVn/gupk7M76AWBSPzTz6R/i//+p1s/+4Yae/7DlvqPaUhjwGzWPTFZaWf+f"
-            "p/b+drzxmHYrXAfcS6cqV7J+LMHPBXIBjqUtkvqRJ3ThAkyPSlvE+oGZP6glAMPk/gsPGfRy/0kGjfsPnvWLOGjcf13vXPsXHX2kTg=="
-        , (37, 8, 8, 3)),
-        "sword_ench_a": (
-            "eNpjYKAcMDJioRgY6aIfAAVCAA8="
-        , (3, 8, 8)),
-        "sword_ench_rgb": (
-            "eNpjYBg+4KkIw/9jomQLQsQHECj4PFN4doFsQYg4nd0MAA6wFD0="
-        , (3, 8, 8, 3)),
+            "p/b+drzxmHYrXAfcS6cqV7J+LMHPBXIBjqUtkvqRJ3ThAkyPSlvE+oGZP6glAMPk/gsPGfRy/0kGjfsPnvWLOGjcf13vXPsXHX2kTg==",
+            (37, 8, 8, 3),
+        ),
+        "sword_ench_a": ("eNpjYKAcMDJioRgY6aIfAAVCAA8=", (3, 8, 8)),
+        "sword_ench_rgb": ("eNpjYBg+4KkIw/9jomQLQsQHECj4PFN4doFsQYg4nd0MAA6wFD0=", (3, 8, 8, 3)),
         "sword_textures": (
             "eNpjYBhuYHFHKKZgf7EDEOEXhLAxVRbHGGLVDrQIIoUpCNdIhvunTp2KKVgBBvgFIWxMlYmJiVi1Q5yKJg60He5soEYy3P/mzRtMwcNggF8Qws"
-            "ZU2d/fj1U7xP1o4kDb4e4HaiTD/Vnfv2MR/f0fhPALQtgYKoWu38KqHeh+qBSq7SBBuEZCAAAAy3Cl"
-        , (5, 8, 8, 3)),
+            "ZU2d/fj1U7xP1o4kDb4e4HaiTD/Vnfv2MR/f0fhPALQtgYKoWu38KqHeh+qBSq7SBBuEZCAAAAy3Cl",
+            (5, 8, 8, 3),
+        ),
     },
     16: {
         "armour": (
             "eNrtlDEOgzAMRXOBXrSXyVT1QFynOwMDpURybCc2RkoEFD95gJ8nRbEDITiO4zjOn/NZGRClMNTYFKpOjJE9gJPCRPLhFbS9DqM83bUmBY3FHZ"
             "BmAUdmDg4Zy5LdUeZucfDcFdo6itZ1XtJ2PRx7gsNzOvjjxReYJTf/gVe7eohjuZlteY7jUmGacxUCWS00Uag5j9ebPeSd1jBV8uE1azsdVuXp"
-            "LgTuM+6ANIt8ZOqQkNZvyewoc7c4eO5atXUUree8pO26OOaEhKd0yMeLLjBL7ozY1UMcw83c5Asw2WVa"
-        , (3, 4, 12, 12, 3)),
+            "LgTuM+6ANIt8ZOqQkNZvyewoc7c4eO5atXUUree8pO26OOaEhKd0yMeLLjBL7ozY1UMcw83c5Asw2WVa",
+            (3, 4, 12, 12, 3),
+        ),
         "armour_ench_a": (
             "eNrtkkkKACAMA53/f1pBSl2KWHJtLkYIddS0ViqJAjO+EAY3TzDh9GNn+mUJ4vlzSXNGECvPA+j0M7s+quYdRf5obAzft7ktNofqT/VH6k8H/s"
-            "cA4Q=="
-        , (3, 4, 12, 12)),
+            "cA4Q==",
+            (3, 4, 12, 12),
+        ),
         "armour_ench_rgb": (
             "eNrtVNsNgzAMZIjyz0BMxTZdhO8u0azRhtgY8rB8kpFopVh8JOHk+O4cD0OPHj169Ojx9/FZx/hpvxqHy3H4fviuXkakPAS5sbAwsVqzYALEVD"
             "Eh4SkzbbcFUPP1HqV7uYDkF21B/TV/ay9snQEFEC/MPOz7anuK+I7UAzYkwbg3xI6cMrfN3jnFArkCcRbB1ALW713Lcy4VGREatdswewuJ/oUI"
             "zvH1E6P7xEuGlbNDPAPEk0TeoDyWgleTzhRe8WsmbJ5Pz3Cs5+DR/5xKxaQaTOTGwsTMwSyYADHVljDhKTNvnwGp+fKge7mA5BdvMf01f2svbA"
-            "0BBSAvrDzsu1U5aXIBBqN/FD/nduSUuW2kc/IFdAXgLISpBKzfu5YnYwSMCI3abZi9hUT/QgTn+Lo9Cl4yrJwd4hkgniTyBuWxFLyIzhc7W2tv"
-        , (3, 4, 12, 12, 3)),
-        "arrow_ench_a": (
-            "eNpjYBiEgBErEycbnTec3QMACQIACw=="
-        , (3, 12, 12)),
+            "0BBSAvrDzsu1U5aXIBBqN/FD/nduSUuW2kc/IFdAXgLISpBKzfu5YnYwSMCI3abZi9hUT/QgTn+Lo9Cl4yrJwd4hkgniTyBuWxFLyIzhc7W2tv",
+            (3, 4, 12, 12, 3),
+        ),
+        "arrow_ench_a": ("eNpjYBiEgBErEycbnTec3QMACQIACw==", (3, 12, 12)),
         "arrow_ench_rgb": (
-            "eNpjYBgFQxj8PyZKQEGTKGFDqKQGAp6KjEYLTqDw7AIBBSufETaESmqgKn2ejcYLHAAAhacPyw=="
-        , (3, 12, 12, 3)),
-        "arrow_icon": (
-            "eNpjYCAZHD58uL+/n3I1xTGGQGX41fQXOxB0Dz3VAN1MUM1/MCBGGelhzwAAn28aNQ=="
-        , (12, 12, 3)),
+            "eNpjYBgFQxj8PyZKQEGTKGFDqKQGAp6KjEYLTqDw7AIBBSufETaESmqgKn2ejcYLHAAAhacPyw==",
+            (3, 12, 12, 3),
+        ),
+        "arrow_icon": ("eNpjYCAZHD58uL+/n3I1xTGGQGX41fQXOxB0Dz3VAN1MUM1/MCBGGelhzwAAn28aNQ==", (12, 12, 3)),
         "block": (
             "eNrtnG1wHVd5x1eBEMAINWBgEk9bhnwIfBCkiWGoG9O0UWIpVmzJkm4kXUmWrqQrS7b1Yjl6s2VZlrBs4pc4QUpU18EU49bTFNMO05nSZAp02g"
             "BJJsAMIa6HtGlAEBKHTtN2OqUz6n/3v3r03HPO7l1pGBcRnXlm5+xzfud5Oyfrzb1Hd96bn1+VVXmzysHVttrexO29n3uPlnVPeLi+7/A1EPbt"
@@ -279,11 +283,13 @@ TABLES = {
             "b8msTb7/Cf/a73+kCUm4/0GijMb+h5Jrbe9/wNAb+588rnr/4xYkr5hl7H/6XUHv/yv69z9Ref37n/7vgUeff+b+l9//jNn/cv6B+58HFWL2Pz"
             "zq/U+nq89/e/8fL/jNs977KXn3P2DNQ6A/13zzn7Z+DHKuuVjvf5L/+8ThNx7fTeEUYI90vv+RO959IXub3v/gAX/ReythdsCfz3yM/Pnmm/X+"
             "N4yLC0TyWFVREFWx3v/0PjezmSQ61KAgX7zlOuf+x+j8Cy+AhKDDfFEH8Pb+RzBIAZgIeDgCAN7Y/4ycJRJ41lsT5h7wsv8lTSk+eMDCQ/T+Jw"
-            "8LwhOeDd7/hbff/22eux3xON//bZ7v/+Dt938bnl14/2c9jfd/J8/3f9ZH738nPLvw/h/G0377/wFIGHU3"
-        , (37, 16, 16, 3)),
+            "8LwhOeDd7/hbff/22eux3xON//bZ7v/+Dt938bnl14/2c9jfd/J8/3f9ZH738nPLvw/h/G0377/wFIGHU3",
+            (37, 16, 16, 3),
+        ),
         "bow_textures": (
-            "eNpjYBgFwwH0FzvAEZrU4o5QIIKL79+/f/v6FVi1w7mYCpBNgBhCUAGaIWgKyLAC4k48JqCpwWoCxCI8QQFXg0cWrga/AiAAAFj3PfY="
-        , (2, 12, 12, 3)),
+            "eNpjYBgFwwH0FzvAEZrU4o5QIIKL79+/f/v6FVi1w7mYCpBNgBhCUAGaIWgKyLAC4k48JqCpwWoCxCI8QQFXg0cWrga/AiAAAFj3PfY=",
+            (2, 12, 12, 3),
+        ),
         "icons": (
             "eNrtlglQk0cUx0k0XhAICZFiqjIDBYMDBi0gYqQUY6mEqgiiBjFcHihSwQNHFEXrVbRqmTbagI2KLYhAI2oci1CPACooDbEaiijVeLQy2mrVJE"
             "A3rv1Iv3zfJrWtx0zf/GfnZd9v//v2zSQTGxurolOj6WxqMpw7pzt9Gu7olcrHx479WlzczdTVdVZXdygU+oqKR+XlTw4e1JWUPJLJ7m3ffjE5"
@@ -303,26 +309,30 @@ TABLES = {
             "UhloEEX0qiL4WwBAWqsd6UBCIm8enZ2cMp8TwjQGYFScDMHGa0SiTHADPd24iJvClxPsSMmEeJ9Xlm4jeA9FHiYc8AcwZ7FAJIfvoowioWSU+f"
             "jACeI7SHo4FeFvOwpQRuAoHcImMqc2dMjRJPKMIGsKo5AANRepn/57ddArq57CK62rqwAaw4rLua3tC2uBEk6jmntMvUphgAri9RtS1qvJp+/k"
             "RkefOCM5fn1bakndVmqruZpU1XPqw/I1I0JlZ9N6kMuDWnngFHfkw7i1nB28Gp60tVmvm1l+fXHhEUgo/KmArC5iHfmFQFVkACkU3g7IyjoEME"
-            "AOJqegMawC61Bvs/XtP4A08VvqU="
-        , (15, 12, 12, 3)),
+            "AOJqegMawC61Bvs/XtP4A08VvqU=",
+            (15, 12, 12, 3),
+        ),
         "item_a": (
-            "eNpjYBgF2AAjGneQ8ekcGGCAykMIMKIKMDKiCDDi4zOSzkc3nwGNi+k+dPfjjGpGHHx084eY+tH4xxP/AE6XAXA="
-        , (5, 16, 16)),
+            "eNpjYBgF2AAjGneQ8ekcGGCAykMIMKIKMDKiCDDi4zOSzkc3nwGNi+k+dPfjjGpGHHx084eY+tH4xxP/AE6XAXA=",
+            (5, 16, 16),
+        ),
         "item_rgb": (
             "eNrtkj9OwzAUhzPCgBAbCwfows5CAiRt4zhpEQxcgY0TMHEc7sTEwCnKlzxiqtiOnJQqEupPT5b1/L3nn/9E0a820cYZkSUf6awKgbdLBvHh8C"
             "H2Eft+3xH/bcR/3l2fs7NB8NfrLJwH/ni/DOeBB/HPV6fEgT9oR729VIHkSase5uniyC5Jz48DeSmB9+0CbwLMhM9YT/9AHhneLnGa6eeH9h/h"
             "p2NG7n/QecPfa0L1mHEeYQTv+29/1X+0H+cTT+XHNjOhH6eZSfz8D620qqOqx0Kpoih8pNaaVaXUcrmcz+d3jRaLha+EfJ7nAFmW3bZiTod1pW"
             "3YkDeNkiQRnialrrXtGYAlDMCoxjYjSYxhT1s8ZJqmYliOILDwUvJ4rw0vW8MDyIRC5mJS+If1Dw8srWQLAEOyhH/y8Kv21HkjVtNWzPFDLd5Y"
-            "on9VasIcgYxpKFuQ4dTyKKgstX35MDSXy7xuRFKqnO8ru8dxTJW8bOcmnVUd7fghvwHih3mS"
-        , (5, 16, 16, 3)),
+            "on9VasIcgYxpKFuQ4dTyKKgstX35MDSXy7xuRFKqnO8ru8dxTJW8bOcmnVUd7fghvwHih3mS",
+            (5, 16, 16, 3),
+        ),
         "mob_a": (
             "eNrtV0FuwzAMI///6fWQ2iIl2UkzYAMaYyvCJnEtipJp4BkAX+MKhkAew+DxBalfvD4P8Dv4WE1c0Q5XBITrjGP8NIwT2OYb66cTxBkgBkaNx/"
             "vvPxCK5+/t4jc2xsd79TOghJkxRA3pvqohySPEr3zHHCz1eV8Prm4Xe41bblw7C3IQ2KDgIQ9nELMyDPN6/Z/J7y7fnipqTD6g12gwwm86futK"
             "89v0h1g8p/lZSKKYLD8eGDnep7QLzvIdocfbnDXuOHaG9A+7nil76v/J/32vwApruyoyHEPMGLK/W2vZ4r/1R5zsWmtbDKmS+b7p6N9aRfZiF3"
             "dI2P4mmEh6ILsW0VjM/Hh6eB/V2vDRyodoF0exbsOHzfkMK0nh96RhOS4M3uWGl/oXb9EjfoJao5OO9nSAWf5CDxp6pFL4gf8tNZwVbGvOGCWW"
             "ys73N+ouzzsyXzN/h5mwt1FWBDSnvYy3+2UzgRmEsa6mx0D8nfJjKd3uf8v8E3a8NT+z1XtjdUPX6zFo50VpJ5R2MM6DF/wvv3xsz3QVxn4zMf"
-            "WJJzy1G92ZwFfrjrTcw78z/h96NQfh"
-        , (20, 16, 16)),
+            "WJJzy1G92ZwFfrjrTcw78z/h96NQfh",
+            (20, 16, 16),
+        ),
         "mob_rgb": (
             "eNrtmkFonEUUx6eVCBELaYvaKjZW1EixsaLtwUNqMYTVKqKlodC6W5QEKi6hVCsiCoIUT0Yll4IWxF4KBW8qkmAFhVLxIBTJSbzEgzer9/Xt/n"
             "df3r6ZefN2TbeCeTw+Zmd+781/5psv/cr3Qli3dVu3VZu/9An5Y6entk3e5+QJ9vOA/TxCPDApIYz1kKPHlo3k8FwIbwhflasQTpIUE0+hhlhM"
@@ -345,49 +355,59 @@ TABLES = {
             "dQIGsP3DHeSbXtpMzj34SY4owNtnlqjdaBkYDMkeOVe70bplGEX+uAf8LZV51sP5qVP1SPHkDMjZ1YpYEsFyNOZ5i+S+xdlkBuSU+x9nUzMyjC"
             "2Vo82fM0uyh5fZvjszS2Onfszpx80lmDeKvb35HUmsEENyS+Xtbm4v6ZlZYgEA6Gd7M1ujd714gWdBg0QiAxaFqalH3pH4oKo2JlInWR6A1c5u"
             "u9bti6W//9dEVPDxnHnRwYdufm0tFrNYWmlsi478Pa23J2sc7fIrlaYbcNLsEJX8ypqW0DS+W3UPbPz89/nJxt/5mhwf+uFFPnQKA0L3p+0cL5"
-            "MXeU7uhHsyLNa5Xqw0Kc+/2DVfwh3T75E7SzKITPYbISpzr4UlZeNKCU9lgmKcIWb+fwAl+vmz"
-        , (20, 16, 16, 3)),
+            "MXeU7uhHsyLNa5Xqw0Kc+/2DVfwh3T75E7SzKITPYbISpzr4UlZeNKCU9lgmKcIWb+fwAl+vmz",
+            (20, 16, 16, 3),
+        ),
         "number_textures": (
             "eNq9kjEOACAIA/3/p3XSKBwVHGQSUlsKtPY7+gyTrspez1f6GVjBBpA8k0Za6PeqFWFQSyB3QESCUZoqLrTkXe/dW4i0zBsHoq+uenilFNv2PQ"
-            "trz7/EeWR4DJUBDFbEBRg="
-        , (10, 6, 6, 3)),
+            "trz7/EeWR4DJUBDFbEBRg=",
+            (10, 6, 6, 3),
+        ),
         "number_textures_a": (
-            "eNqNj8EOACAIQnn//9NtRWrWIQ9sIiJKPwVMYDUnMgd4XEUVtkbNIvXWRCeSdrWLjtY8MyflujdtnR9x5TnAy2s3jB5MhK684usBbRAArg=="
-        , (10, 6, 6)),
+            "eNqNj8EOACAIQnn//9NtRWrWIQ9sIiJKPwVMYDUnMgd4XEUVtkbNIvXWRCeSdrWLjtY8MyflujdtnR9x5TnAy2s3jB5MhK684usBbRAArg==",
+            (10, 6, 6),
+        ),
         "number_textures_with_zero": (
             "eNqdU0kOACEI6/8/7SQejNoldnqSBiggABgbMHE9lrlIZjgKKvNOBh+nEphxQjKyAJn8xXRaOPGo5XykVvDk+XMSiWqqXEDbe/53bsFp8d7KUs"
-            "PWtYtXmbJsd2v5NNqosB4/TvVy+AAZjDTo"
-        , (10, 6, 6, 3)),
+            "PWtYtXmbJsd2v5NNqosB4/TvVy+AAZjDTo",
+            (10, 6, 6, 3),
+        ),
         "number_textures_with_zero_a": (
             "eNptUAkOACAIgv9/OqekdLiGJXgkGAbkCQhXCAWTRWlIVzQyCbpUtMPW4Coxemn6Vf0rLLs6AvjUnDlp3ZWp0vMjPvMcoGT6Or6RHvpZXF4Xgn"
-            "gAvg=="
-        , (10, 6, 6)),
+            "gAvg==",
+            (10, 6, 6),
+        ),
         "pickaxe_textures": (
             "eNpjYBgFwxwUxxj2Fzss7ggFIsqVAdVAlOFXAzENqyxQL1wKqAyrURATkLXgMgFZC5oCZBOwugGPAojbBiS+EhMTKyoqpoIB5cqA3oQoIxhfQG"
             "UE4wtoKVaj0AITTQ3W+EK2bkjHV39//+HDh9+AARWUFTtAlBGML6AygvEFtBSrUWiBiaYGa3whWzek40vo+i2G3/+zvn8HIsqVgQIKrIxgfAGV"
-            "EYwvoKVYjUILTDQ1WOML2brBE18AfSm9EA=="
-        , (5, 12, 12, 3)),
+            "EYwvoKVYjUILTDQ1WOML2brBE18AfSm9EA==",
+            (5, 12, 12, 3),
+        ),
         "player_a": (
             "eNrNk9sKwDAIQ5P//+mt3U2tVkpBlrcjQo2xQBNPQShjSOQjg1eBVAUJHsMyMr6n0ROt8Z7/tQWgD642MmHTD4cL/KvHPkcBa/vgsA+YPPf4P/"
-            "lX+WdwcFFeKYPhCfv8ft254cF/eu+szv8ABhsCdQ=="
-        , (5, 16, 16)),
+            "lX+WdwcFFeKYPhCfv8ft254cF/eu+szv8ABhsCdQ==",
+            (5, 16, 16),
+        ),
         "player_rgb": (
             "eNrtlj1OAzEQhX0KKmp6DkCdE9BCB20OgMQFTINEh0SJKJC4AJSUFKnS5Q7USOat3mpizc+uXaQIxBpFq+SblbPz5cUp6XV+diKVGtb3+mPzvE"
             "S9313sgsdqgUtJr5fp9muNOn56Q/H6aHlj4Z/ySJ6kKrTgVcFy/6hFwZaXzdS7Kjl18XUL+PurRV3Xi1PLSwv4z5cHgXFNnhNRMxpaciLDqvlo"
             "HMKo62jtmq81blR6T/3n3K3/GDpGrxY/dU0mD43VnSm57SKvWmp1lc/C1y2NPISU/ZO3/m/5rJ85nVH+j3zWM+IDt/7zd/G3/R9CLKdG/7eJl3"
             "vghhYNz7VglG7ZNeG/zf9p/1X+z/rs5nMvP+G/y0/4H+V/5P8h//cr/93zz8H/Fv/dMEH+RP47YdUbcXMRij3Xedvov+R5u/9ocSvy2c/qVeg/"
-            "/0ZZY+8q/Pq1/xGMN63/EYz3rck1rM7/1n//+5Zxe3J0EX64rVs5ufzEfxm3R77L/67zPx74fzj//wIhuAhq"
-        , (5, 16, 16, 3)),
+            "/0ZZY+8q/Pq1/xGMN63/EYz3rck1rM7/1n//+5Zxe3J0EX64rVs5ufzEfxm3R77L/67zPx74fzj//wIhuAhq",
+            (5, 16, 16, 3),
+        ),
         "potion_textures": (
             "eNrtkSEOAjEQRZusWIHbLEfAcYANFwWJRtSiUQSFXAQOh+II/N2/TCZMaZjgSJsnJjNvmqY/BN85q5PRuvHkr/rRwQM6c/SrrHCvqrcL4aAp7O"
             "qaoHY5WuOIjv0ldGQdfPrGL//5v/NqT63NC00hbAIZao+jtWk0Osm8ZB2UvDLCYnWzeaEphGZLhtrjaG0ajU46r9c6KHllhMPyYvNCU1iHSFC7"
-            "HK1xRCeZl6yDkldGmD+uNi80hdlxT1C7HK1xRCeZl6yDkldG6PvO5oWmEGNDULscrXFEJ5mXrANvXk+f8BH3"
-        , (6, 12, 12, 3)),
+            "HK1xRCeZl6yDkldGmD+uNi80hdlxT1C7HK1xRCeZl6yDkldG6PvO5oWmEGNDULscrXFEJ5mXrANvXk+f8BH3",
+            (6, 12, 12, 3),
+        ),
         "proj_a": (
             "eNrtl+EOwyAIhL33f+klyzIrqNR0a+n2+avUaoC7g1IKq7NkTGnJtue/bYf+uQtOTOXbl+eTtquznwT+m+Md+XcZ/I4AGeFfLxAeoCN2Fcfe8/"
             "dKkJoAm2qwWxHJov0wniHeudMz987C7QmQLjpfXzXG14ajfsATfni6tNs9fihVdlRB00DurzfWHqRrywJl4IMmeET4zfFf5k/x1VMXckAVsl4A"
-            "IQHs98Xed36E6B/9o///0T/zP/M/8z/zP/2f/k//5/8f/aN/9I/+0T/6R/8/pP8Hay4FUQ=="
-        , (33, 16, 16)),
+            "IQHs98Xed36E6B/9o///0T/zP/M/8z/zP/2f/k//5/8f/aN/9I/+0T/6R/8/pP8Hay4FUQ==",
+            (33, 16, 16),
+        ),
         "proj_rgb": (
             "eNrtWkFO40AQzJkDJxASJ76AFIH25gfwBKR9RH6wH/B1v+B3ROKMtG9YTnnA3mDIkNm2E4+rxhk7Q6rU4oCqzMx0dTeHXiwEQRiF9XqNkzebje"
             "PXdZ2J78ir53vqSPWqou57bnz3njj5fYd8/PBTmAabLfpqqpPB9Q7ONs5pnXC/3E93vQX4feGkwNZj7v7A9iv1/+PO09zznf1/Qxhf4JECdLnw"
@@ -397,8 +417,9 @@ TABLES = {
             "iT+scHU+A5VL4sn1IJM1ZWUPXJu05uYhY6XClNr/FYPnueyH3jLmWdL2R1NdI/U6oA7oeJ8wju56XPr4R5pCqbaxbYng9mrcWMuuJ/WTWQ61h+"
             "wnkOq+TS0dD+//fma///zKH9f+FY9aj9/7L42v9XgWv/Xzgibn/fuMDJP/48uEAknvzz37OLQYklIxKWz57HXpa9MkgOjw+mwHOofFk+pRJmrK"
             "yg6pN3nNxRIZUSJPsqls+eJ3LfuEtZ5wtZXY30z4QqwPth2jzC+3np8ythHqnK5poFtueDWbPMuCtCTVlyRMLyE85zUCWXTg/t/w9eVvv/wpSV"
-            "pf3/8e8p5Ha19v9PfH4ttP9fzizQ/r9cOgu0/z98We3/CxNWlvb/x7+nkNvV2v8/8fm10P5/ObNA+/9y6QfR667C"
-        , (33, 16, 16, 3)),
+            "pf3/8e8p5Ha19v9PfH4ttP9fzizQ/r9cOgu0/z98We3/CxNWlvb/x7+nkNvV2v8/8fm10P5/ObNA+/9y6QfR667C",
+            (33, 16, 16, 3),
+        ),
         "small_block": (
             "eNrtW2tsVMcVvk6UtCmlFgk0AtQqan4k+eEkBRqlFCoqnBgHB78XP/Brba8fPGxj8BNjjB0bB2JjiCEWInUaRGqVlv6IKjUFNaVKaJog2kpJg1"
             "BRKQ1VFJH+QK2qptL22/vtHh9m7r1sojpNEKOj0ZlvvvnOmTu+c3fnrqNONHrTbtpNmxm76/t3ii084cwbvAVmgKgNUBD22hz6fhybH8zRvbbj"
@@ -438,18 +459,19 @@ TABLES = {
             "6GFPxIJAJQrxeaAPEpq8Et8CsrK8mR78to5ubm5uXlFRYWMiUwAer1og56USOZxsZGDAGo14v5kFNbW5udnQ1BgHq9OOuamhp8my4qKkJiGMJ8"
             "ZL3Q5H+aIBOQkQzmGNe5Udbr1vDcz8h6IZPg9XIKUlN675b1Al+vF5roZa3XC8iMrtf/5ffzsf/f8XqfgsvCuJ7rhXCyXsA/X/fXpPNVmN96PZ"
             "PyNfRePbYRRuaRyrSDK74yFVks6wXOf04MkkPa0fBD4BytvE/WC6DBean6oSOV971UnSbrRX0dy14viCBc9N13YSQb68UowplwZlFQ1osENDk1"
-            "ECbc5xdA+/mlOX7PL83xfH5pwoTX84sEzdHPr/8CnExlFA=="
-        , (37, 12, 12, 3)),
-        "sword_ench_a": (
-            "eNpjYBiUgJGREZPFAGciCzMgCzMwDnP3AAAXcAAf"
-        , (3, 12, 12)),
+            "ECbc5xdA+/mlOX7PL83xfH5pwoTX84sEzdHPr/8CnExlFA==",
+            (37, 12, 12, 3),
+        ),
+        "sword_ench_a": ("eNpjYBiUgJGREZPFAGciCzMgCzMwDnP3AAAXcAAf", (3, 12, 12)),
         "sword_ench_rgb": (
-            "eNpjYBgFQx48FWH43yQKRLhkQQqO4ZSFm0DYimOE1OBVALduhAMFn2cKK0EIpywQPbuASxZuAmErcBiCUINXAdy6kQMAqVsqfQ=="
-        , (3, 12, 12, 3)),
+            "eNpjYBgFQx48FWH43yQKRLhkQQqO4ZSFm0DYimOE1OBVALduhAMFn2cKK0EIpywQPbuASxZuAmErcBiCUINXAdy6kQMAqVsqfQ==",
+            (3, 12, 12, 3),
+        ),
         "sword_textures": (
             "eNrtlLENwyAQRZkhm2SDLJEuDW1aN4yQjooJMgpDRMoM7l24cD5CXCi4b9PQJF8UJ/7XuzMn2Zi/fkXPx9VPl+l25gGeyQGcLghq3MASQrOFWE"
             "da7H4I4dQELUP4YxRCcM5Za3mAZ1xRFwQ1bmAJodlCLN4Cr82HlHVonHpfWobwx2ie5xij954HeCYWdUFQ4waWEJotxOIt8Np8SFmHxqn3pWUI"
-            "f4zuy2LW7fR68wDP5EA6PZBUr1uyCqHdQizaIv1X6ZB5HYSDSb5/VCXDHuGwPm5d/jQ="
-        , (5, 12, 12, 3)),
+            "f4zuy2LW7fR68wDP5EA6PZBUr1uyCqHdQizaIv1X6ZB5HYSDSb5/VCXDHuGwPm5d/jQ=",
+            (5, 12, 12, 3),
+        ),
     },
 }

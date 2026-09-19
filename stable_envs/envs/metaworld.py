@@ -175,7 +175,7 @@ quantity                     median        min        max
 =========================  =========  =========  =========
 interior-exact              0.999700   0.980766   0.999830
 all-pixel exact             0.879925   0.815260   0.883819
-mean \|diff\| /255            0.7971     0.4816     1.1091
+mean |diff| /255            0.7971     0.4816     1.1091
 within 8/255                0.978300   0.961600   0.980700
 f/s at batch 256               2,313      1,027      2,542
 =========================  =========  =========  =========
@@ -188,6 +188,7 @@ measures interior min 0.988731 / median 0.999936 and **21.4x** at batch 256, bec
 is nearly resolution-independent at these sizes (302 f/s at 224 against 251 at 480) while a
 ray-caster is linear in pixels. The per-task table is in ``docs/research/metaworld.md`` §9.
 """
+
 from __future__ import annotations
 
 import os
@@ -220,14 +221,15 @@ import mujoco as _mj
 _VENV = "/mnt/vast/home/randall.balestriero/venvs/se-fetch"
 _missing = [_m for _m in ("metaworld", "warp", "mujoco_warp") if _ilu.find_spec(_m) is None]
 _mjver = tuple(int(x) for x in str(_mj.__version__).split(".")[:2])
-if _missing or _mjver < (3, 11):                                             # pragma: no cover
+if _missing or _mjver < (3, 11):  # pragma: no cover
     raise ImportError(
-        f"the Meta-World family ray-casts the Sawyer's meshes with mujoco_warp's batch raytracer, "
-        f"which this interpreter cannot run: "
+        "the Meta-World family ray-casts the Sawyer's meshes with mujoco_warp's batch raytracer, "
+        "which this interpreter cannot run: "
         + (f"missing {', '.join(_missing)}; " if _missing else "")
         + f"mujoco is {_mj.__version__} and mujoco_warp requires >= 3.11 (metaworld itself pins "
         f"mujoco==3.3.0, which is why it is installed with --no-deps). The envs were measured in "
-        f"{_VENV}; see docs/research/metaworld.md and the `metaworld` extra in pyproject.toml")
+        f"{_VENV}; see docs/research/metaworld.md and the `metaworld` extra in pyproject.toml"
+    )
 
 from ..env import Env
 from ..registry import register
@@ -240,36 +242,99 @@ from ..spaces import Box, Dict
 #: the package's own dict the first time any task is built, so a Meta-World release that adds or
 #: renames a task is an error here rather than a silently missing env.
 TASKS = (
-    "assembly-v3", "basketball-v3", "bin-picking-v3", "box-close-v3", "button-press-topdown-v3",
-    "button-press-topdown-wall-v3", "button-press-v3", "button-press-wall-v3", "coffee-button-v3",
-    "coffee-pull-v3", "coffee-push-v3", "dial-turn-v3", "disassemble-v3", "door-close-v3",
-    "door-lock-v3", "door-open-v3", "door-unlock-v3", "drawer-close-v3", "drawer-open-v3",
-    "faucet-close-v3", "faucet-open-v3", "hammer-v3", "hand-insert-v3", "handle-press-side-v3",
-    "handle-press-v3", "handle-pull-side-v3", "handle-pull-v3", "lever-pull-v3",
-    "peg-insert-side-v3", "peg-unplug-side-v3", "pick-out-of-hole-v3", "pick-place-v3",
-    "pick-place-wall-v3", "plate-slide-back-side-v3", "plate-slide-back-v3", "plate-slide-side-v3",
-    "plate-slide-v3", "push-back-v3", "push-v3", "push-wall-v3", "reach-v3", "reach-wall-v3",
-    "shelf-place-v3", "soccer-v3", "stick-pull-v3", "stick-push-v3", "sweep-into-v3", "sweep-v3",
-    "window-close-v3", "window-open-v3",
+    "assembly-v3",
+    "basketball-v3",
+    "bin-picking-v3",
+    "box-close-v3",
+    "button-press-topdown-v3",
+    "button-press-topdown-wall-v3",
+    "button-press-v3",
+    "button-press-wall-v3",
+    "coffee-button-v3",
+    "coffee-pull-v3",
+    "coffee-push-v3",
+    "dial-turn-v3",
+    "disassemble-v3",
+    "door-close-v3",
+    "door-lock-v3",
+    "door-open-v3",
+    "door-unlock-v3",
+    "drawer-close-v3",
+    "drawer-open-v3",
+    "faucet-close-v3",
+    "faucet-open-v3",
+    "hammer-v3",
+    "hand-insert-v3",
+    "handle-press-side-v3",
+    "handle-press-v3",
+    "handle-pull-side-v3",
+    "handle-pull-v3",
+    "lever-pull-v3",
+    "peg-insert-side-v3",
+    "peg-unplug-side-v3",
+    "pick-out-of-hole-v3",
+    "pick-place-v3",
+    "pick-place-wall-v3",
+    "plate-slide-back-side-v3",
+    "plate-slide-back-v3",
+    "plate-slide-side-v3",
+    "plate-slide-v3",
+    "push-back-v3",
+    "push-v3",
+    "push-wall-v3",
+    "reach-v3",
+    "reach-wall-v3",
+    "shelf-place-v3",
+    "soccer-v3",
+    "stick-pull-v3",
+    "stick-push-v3",
+    "sweep-into-v3",
+    "sweep-v3",
+    "window-close-v3",
+    "window-open-v3",
 )
 
 #: The model camera every task ships, ``mode="fixed"``, from ``xyz_base.xml``.
 CAMERA = "corner"
 #: The 14 model arrays R2 restores (``docs/research/metaworld.md`` §1). The state's model slice is a
 #: subset of their ELEMENTS — the ones a reset moves AND that reach a pixel.
-MODEL_ARRAYS = ("body_pos", "body_quat", "site_pos", "site_quat", "geom_pos", "geom_quat",
-                "geom_size", "geom_rgba", "site_rgba", "mat_rgba", "light_pos", "cam_pos",
-                "geom_matid", "site_matid")
+MODEL_ARRAYS = (
+    "body_pos",
+    "body_quat",
+    "site_pos",
+    "site_quat",
+    "geom_pos",
+    "geom_quat",
+    "geom_size",
+    "geom_rgba",
+    "site_rgba",
+    "mat_rgba",
+    "light_pos",
+    "cam_pos",
+    "geom_matid",
+    "site_matid",
+)
 #: Of those, the ones ``mujoco_warp`` exposes as per-world batched ``Model`` fields (spec ``("*", ...)``).
 #: ``site_rgba``/``site_matid`` are absent from its Model entirely, which costs nothing: MJWarp draws
 #: no sites, so a site array is a plate-only quantity by construction.
-BATCHABLE = ("body_pos", "body_quat", "site_pos", "site_quat", "geom_pos", "geom_quat", "geom_size",
-             "geom_rgba", "mat_rgba", "light_pos", "cam_pos", "geom_matid")
+BATCHABLE = (
+    "body_pos",
+    "body_quat",
+    "site_pos",
+    "site_quat",
+    "geom_pos",
+    "geom_quat",
+    "geom_size",
+    "geom_rgba",
+    "mat_rgba",
+    "light_pos",
+    "cam_pos",
+    "geom_matid",
+)
 #: Always given a per-world row, whether or not the episode writes them: ``body_pos``/``body_quat``
 #: carry the per-episode placement of the MOVING scenery (a door's hinge body, a drawer's slide body),
 #: and the rest are what a style leaf writes.
-ALWAYS_BATCHED = ("body_pos", "body_quat", "geom_rgba", "mat_rgba", "light_diffuse", "cam_pos",
-                  "cam_quat")
+ALWAYS_BATCHED = ("body_pos", "body_quat", "geom_rgba", "mat_rgba", "light_diffuse", "cam_pos", "cam_quat")
 
 HIDDEN_GROUP = MW.HIDDEN_GROUP
 VISIBLE_GROUPS = MW.DEFAULT_GROUPS
@@ -304,6 +369,7 @@ _POOL_CACHE: dict = {}
 
 # --------------------------------------------------------------------------- constructing a task
 
+
 def _make_task_env(task: str, size: int | None = None):
     """One Meta-World task, configured the way its benchmark wrapper configures it.
 
@@ -314,6 +380,7 @@ def _make_task_env(task: str, size: int | None = None):
     context — the only construction that costs one is ``reference_env``.
     """
     from metaworld.env_dict import ALL_V3_ENVIRONMENTS
+
     kw: dict = {"camera_name": CAMERA}
     if size is not None:
         kw.update(render_mode="rgb_array", width=int(size), height=int(size))
@@ -354,6 +421,7 @@ def _raster(task: str, res: int, m):
     the bundle exists.
     """
     import mujoco
+
     # The model's identity is in the key. A ``mujoco.Renderer`` binds to ONE ``MjModel``, and this
     # cache outlives ``_MODEL_CACHE``; keyed on the task alone, anything that rebuilt a bundle (a probe
     # clearing the caches, a second interpreter-level import) would silently keep rendering the old
@@ -370,13 +438,37 @@ def _raster(task: str, res: int, m):
 
 # --------------------------------------------------------------------------- the model bundle
 
+
 class _Bundle:
     """Everything a task needs that depends on neither the state, the resolution nor the appearance."""
 
-    __slots__ = ("task", "env", "model", "data", "cam", "nq", "qpos0", "pristine", "slots",
-                 "state_names", "movers", "mover_sites", "static_geoms", "plate_static", "casting",
-                 "knobs", "pivot", "cam_pos0", "cam_quat0", "light0", "batched", "info",
-                 "mat_tex_mean", "alpha", "translucent")
+    __slots__ = (
+        "task",
+        "env",
+        "model",
+        "data",
+        "cam",
+        "nq",
+        "qpos0",
+        "pristine",
+        "slots",
+        "state_names",
+        "movers",
+        "mover_sites",
+        "static_geoms",
+        "plate_static",
+        "casting",
+        "knobs",
+        "pivot",
+        "cam_pos0",
+        "cam_quat0",
+        "light0",
+        "batched",
+        "info",
+        "mat_tex_mean",
+        "alpha",
+        "translucent",
+    )
 
 
 def _effective_rgb(m, g) -> np.ndarray:
@@ -407,13 +499,19 @@ _COLS = {"pos": "xyz", "quat": "wxyz", "size": "xyz", "rgba": "rgba", "matid": (
 def _slot_name(m, arr: str, f: int) -> str:
     """``body_pos.drawer.y`` — the array, the element it belongs to, and which number of it."""
     import mujoco
+
     kind, field = arr.split("_", 1)
     a = np.asarray(getattr(m, arr))
     w = int(a.reshape(a.shape[0], -1).shape[1])
     row, col = divmod(int(f), w)
-    obj = {"body": mujoco.mjtObj.mjOBJ_BODY, "site": mujoco.mjtObj.mjOBJ_SITE,
-           "geom": mujoco.mjtObj.mjOBJ_GEOM, "mat": mujoco.mjtObj.mjOBJ_MATERIAL,
-           "light": mujoco.mjtObj.mjOBJ_LIGHT, "cam": mujoco.mjtObj.mjOBJ_CAMERA}[kind]
+    obj = {
+        "body": mujoco.mjtObj.mjOBJ_BODY,
+        "site": mujoco.mjtObj.mjOBJ_SITE,
+        "geom": mujoco.mjtObj.mjOBJ_GEOM,
+        "mat": mujoco.mjtObj.mjOBJ_MATERIAL,
+        "light": mujoco.mjtObj.mjOBJ_LIGHT,
+        "cam": mujoco.mjtObj.mjOBJ_CAMERA,
+    }[kind]
     nm = mujoco.mj_id2name(m, obj, row) or f"{kind}{row}"
     labels = _COLS.get(field, "")
     tag = labels[col] if col < len(labels) and labels[col] else str(col)
@@ -433,21 +531,24 @@ def _build_bundle(task: str) -> _Bundle:
         return hit
 
     from metaworld.env_dict import ALL_V3_ENVIRONMENTS
+
     if set(ALL_V3_ENVIRONMENTS) != set(TASKS):
         extra = sorted(set(ALL_V3_ENVIRONMENTS) - set(TASKS))
         gone = sorted(set(TASKS) - set(ALL_V3_ENVIRONMENTS))
         raise RuntimeError(
             f"metaworld's ALL_V3_ENVIRONMENTS no longer matches this module's TASKS table "
             f"(added {extra}, removed {gone}); the registry would silently be measuring a different "
-            f"benchmark from the one docs/research/metaworld.md reports")
+            f"benchmark from the one docs/research/metaworld.md reports"
+        )
 
     env = _make_task_env(task)
     u = env.unwrapped
     m, d = u.model, u.data
     cam = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_CAMERA, CAMERA)
     if cam < 0:
-        raise RuntimeError(f"{task}: no model camera {CAMERA!r}; the free camera is history-dependent "
-                           f"and is not a reference")
+        raise RuntimeError(
+            f"{task}: no model camera {CAMERA!r}; the free camera is history-dependent and is not a reference"
+        )
 
     b = _Bundle()
     b.task, b.env, b.model, b.data, b.cam = task, env, m, d, cam
@@ -457,9 +558,10 @@ def _build_bundle(task: str) -> _Bundle:
     draws = []
     for k in range(N_DRAWS):
         _seeded_reset(env, k)
-        mujoco.mj_forward(m, d)          # never read a frame, or a model, straight out of reset
-        draws.append({a: np.array(getattr(m, a), copy=True) for a in MODEL_ARRAYS}
-                     | {"qpos": np.array(d.qpos, copy=True)})
+        mujoco.mj_forward(m, d)  # never read a frame, or a model, straight out of reset
+        draws.append(
+            {a: np.array(getattr(m, a), copy=True) for a in MODEL_ARRAYS} | {"qpos": np.array(d.qpos, copy=True)}
+        )
     b.pristine = {a: np.array(draws[-1][a], copy=True) for a in MODEL_ARRAYS}
     b.qpos0 = np.array(draws[-1]["qpos"], np.float64)
 
@@ -489,8 +591,9 @@ def _build_bundle(task: str) -> _Bundle:
     b.static_geoms = np.flatnonzero(~is_mover).astype(np.int64)
     # EXACTLY mujoco_warp's own early-out in ``_geom_local_to_global``: these are the geoms whose
     # world transform it never recomputes, so these are the rows that have to be uploaded per world.
-    b.plate_static = np.array([g for g in range(m.ngeom)
-                               if weld[gbody[g]] == 0 and mocapid[root[gbody[g]]] == -1], np.int64)
+    b.plate_static = np.array(
+        [g for g in range(m.ngeom) if weld[gbody[g]] == 0 and mocapid[root[gbody[g]]] == -1], np.int64
+    )
 
     # ---- the state's names ----------------------------------------------------------------------
     names = list(_qpos_names(m))
@@ -507,8 +610,7 @@ def _build_bundle(task: str) -> _Bundle:
     b.light0 = np.array(m.light_diffuse, np.float64)
     b.casting = np.flatnonzero(np.asarray(m.light_castshadow, np.int64) != 0).astype(np.int64)
     tb = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_BODY, "tablelink")
-    b.pivot = (np.array(m.body_pos[tb], np.float64) if tb >= 0
-               else np.array([0.0, 0.6, 0.0], np.float64))
+    b.pivot = np.array(m.body_pos[tb], np.float64) if tb >= 0 else np.array([0.0, 0.6, 0.0], np.float64)
     b.knobs = _colour_knobs(task, b)
     b.mat_tex_mean = _mover_texture_means(m, b)
 
@@ -520,16 +622,20 @@ def _build_bundle(task: str) -> _Bundle:
         if bad:
             raise RuntimeError(
                 f"{task}: the episode writes {a}[{bad}] on MOVING geometry, and mujoco_warp has no "
-                f"per-world {a}; the ray-cast pass would draw every episode with the first one's value")
+                f"per-world {a}; the ray-cast pass would draw every episode with the first one's value"
+            )
     b.batched = tuple(sorted(set(ALWAYS_BATCHED) | (slot_arrays & set(BATCHABLE))))
     # The candidates and what the liveness filter dropped, kept because they are the one claim in this
     # env that no downstream test can check: both sides pin the dropped elements to the same snapshot,
     # so an element wrongly called dead would be consistently wrong on OUR side and on the REFERENCE's
     # and would show up in neither the parity number nor the state-sufficiency check. It shows up here.
-    b.info = {"n_movers": int(len(b.movers)), "n_static": int(len(b.static_geoms)),
-              "n_slots": len(b.slots),
-              "candidates": [f"{a}[{f}]" for a, f in cand],
-              "dropped_as_unseen": [f"{a}[{f}]" for a, f in cand if (a, f) not in set(b.slots)]}
+    b.info = {
+        "n_movers": int(len(b.movers)),
+        "n_static": int(len(b.static_geoms)),
+        "n_slots": len(b.slots),
+        "candidates": [f"{a}[{f}]" for a, f in cand],
+        "dropped_as_unseen": [f"{a}[{f}]" for a, f in cand if (a, f) not in set(b.slots)],
+    }
     _MODEL_CACHE[task] = b
     return b
 
@@ -537,6 +643,7 @@ def _build_bundle(task: str) -> _Bundle:
 def _qpos_names(m) -> list[str]:
     """One label per ``qpos`` entry, from the model's own joint table."""
     import mujoco
+
     out: list[str] = []
     for j in range(m.njnt):
         nm = mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_JOINT, j) or f"joint{j}"
@@ -558,14 +665,14 @@ def _slot_touches_a_mover(m, arr: str, f: int) -> bool:
     w = int(np.asarray(getattr(m, arr)).reshape(np.asarray(getattr(m, arr)).shape[0], -1).shape[1])
     row = f // w
     if kind == "site":
-        return False                                   # MJWarp draws no sites at all
+        return False  # MJWarp draws no sites at all
     if kind == "geom":
         return bool(weld[gbody[row]] != 0)
     if kind == "body":
         return any(weld[bb] != 0 for bb in _subtree(m, row))
     if kind == "mat":
         return any(weld[gbody[g]] != 0 for g in range(m.ngeom) if int(m.geom_matid[g]) == row)
-    return True                                        # lights and cameras reach every mover pixel
+    return True  # lights and cameras reach every mover pixel
 
 
 def _live_slots(task: str, b: _Bundle, draws, cand) -> tuple[tuple[str, int], ...]:
@@ -582,6 +689,7 @@ def _live_slots(task: str, b: _Bundle, draws, cand) -> tuple[tuple[str, int], ..
     own frame moved.
     """
     import mujoco
+
     if not cand:
         return ()
     m, d = b.model, b.data
@@ -615,7 +723,7 @@ def _live_slots(task: str, b: _Bundle, draws, cand) -> tuple[tuple[str, int], ..
             if moved:
                 live.append((a, f))
                 break
-    for a in MODEL_ARRAYS:                                     # leave the model on the snapshot
+    for a in MODEL_ARRAYS:  # leave the model on the snapshot
         getattr(m, a)[:] = b.pristine[a]
     return tuple(live)
 
@@ -668,6 +776,7 @@ def _colour_knobs(task: str, b: _Bundle) -> dict:
       not the ray-cast.
     """
     import mujoco
+
     m, d = b.model, b.data
     for a in MODEL_ARRAYS:
         getattr(m, a)[:] = b.pristine[a]
@@ -679,8 +788,7 @@ def _colour_knobs(task: str, b: _Bundle) -> dict:
     r.update_scene(d, camera=b.cam)
     seg = r.render().copy()
     r.disable_segmentation_rendering()
-    ids = np.where(seg[..., 1].astype(np.int64) == int(mujoco.mjtObj.mjOBJ_GEOM),
-                   seg[..., 0].astype(np.int64), -1)
+    ids = np.where(seg[..., 1].astype(np.int64) == int(mujoco.mjtObj.mjOBJ_GEOM), seg[..., 0].astype(np.int64), -1)
     px = np.bincount(ids[ids >= 0].reshape(-1), minlength=m.ngeom)
 
     weld = np.asarray(m.body_weldid, np.int64)
@@ -715,9 +823,11 @@ def _colour_knobs(task: str, b: _Bundle) -> dict:
                 geoms.append(g)
                 mats.append(mid)
         if geoms:
-            knobs[name] = {"geoms": np.array(sorted(geoms), np.int64),
-                           "mats": np.array(sorted(set(mats)), np.int64),
-                           "init": np.asarray(col, np.float64)}
+            knobs[name] = {
+                "geoms": np.array(sorted(geoms), np.int64),
+                "mats": np.array(sorted(set(mats)), np.int64),
+                "init": np.asarray(col, np.float64),
+            }
     # The two named materials every scene file shares (basic_scene{,_b,_c}.xml). Named rather than
     # inferred because "the biggest static colour class" is the table in 50/50 tasks and saying
     # ``table`` is only honest if it IS the table.
@@ -728,18 +838,37 @@ def _colour_knobs(task: str, b: _Bundle) -> dict:
         gs = [g for g in wearers.get(mid, []) if int(m.geom_group[g]) in VISIBLE_GROUPS]
         if not gs:
             continue
-        knobs[name] = {"geoms": np.array(sorted(gs), np.int64), "mats": np.array([mid], np.int64),
-                       "init": np.asarray(m.mat_rgba[mid], np.float64)[:3]}
+        knobs[name] = {
+            "geoms": np.array(sorted(gs), np.int64),
+            "mats": np.array([mid], np.int64),
+            "init": np.asarray(m.mat_rgba[mid], np.float64)[:3],
+        }
     return knobs
 
 
 # --------------------------------------------------------------------------- the MJWarp context
 
+
 class _Ctx:
     """An MJWarp render context plus the device views a render writes through."""
 
-    __slots__ = ("wm", "wd", "rc", "bgra", "seg", "graph", "nworld", "res", "wp", "mjw",
-                 "bvh_ids", "bvh_ids0", "bvh_mover_slots", "bvh_tr_slots", "bvh_substitute")
+    __slots__ = (
+        "wm",
+        "wd",
+        "rc",
+        "bgra",
+        "seg",
+        "graph",
+        "nworld",
+        "res",
+        "wp",
+        "mjw",
+        "bvh_ids",
+        "bvh_ids0",
+        "bvh_mover_slots",
+        "bvh_tr_slots",
+        "bvh_substitute",
+    )
 
 
 def _context(task: str, res: int, nworld: int) -> _Ctx:
@@ -750,9 +879,8 @@ def _context(task: str, res: int, nworld: int) -> _Ctx:
     number near 1.4x means the capture is not happening, not that the GPU is slow.
     """
     import mujoco
-    import warp as wp
-
     import mujoco_warp as mjw
+    import warp as wp
 
     key = (task, int(res), int(nworld))
     hit = _CTX_CACHE.get(key)
@@ -760,15 +888,17 @@ def _context(task: str, res: int, nworld: int) -> _Ctx:
         return hit
     b = _build_bundle(task)
     m, d = b.model, b.data
-    for a in MODEL_ARRAYS:                                  # a canonical model, so the context is a
-        getattr(m, a)[:] = b.pristine[a]                    # function of the task and nothing else
+    for a in MODEL_ARRAYS:  # a canonical model, so the context is a
+        getattr(m, a)[:] = b.pristine[a]  # function of the task and nothing else
     d.qpos[:] = b.qpos0
     d.qvel[:] = 0.0
     mujoco.mj_forward(m, d)
 
-    if MW.needs_com_pos(m):                                 # ``corner`` is mode="fixed"; assert it
-        raise RuntimeError(f"{task}: a camera or light tracks subtree_com, which kinematics does not "
-                           f"write; the frame loop here would render every state from one pose")
+    if MW.needs_com_pos(m):  # ``corner`` is mode="fixed"; assert it
+        raise RuntimeError(
+            f"{task}: a camera or light tracks subtree_com, which kinematics does not "
+            f"write; the frame loop here would render every state from one pose"
+        )
 
     margin0 = np.array(m.geom_margin, copy=True), np.array(m.pair_margin, copy=True)
     tex0 = np.array(m.mat_texid, copy=True)
@@ -808,19 +938,27 @@ def _context(task: str, res: int, nworld: int) -> _Ctx:
         # wants the 1.08x; RoboCasa and HumanoidBench, where the same elision is bit-identical on
         # every cell measured, take it by default.
         from ..render import mjwarp_lightspec as LS
+
         with MW.gl_rounding(), LS.specialised_lights(enabled=False):
             c.rc = MW.create_render_context(
-                m, nworld=int(nworld), cam_res=(int(res), int(res)), render_rgb=True, render_seg=True,
+                m,
+                nworld=int(nworld),
+                cam_res=(int(res), int(res)),
+                render_rgb=True,
+                render_seg=True,
                 cam_active=[i == b.cam for i in range(m.ncam)],
-                enabled_geom_groups=list(VISIBLE_GROUPS), use_textures=True, use_shadows=True,
-                render_skybox=True, enable_specular=True)
+                enabled_geom_groups=list(VISIBLE_GROUPS),
+                use_textures=True,
+                use_shadows=True,
+                render_skybox=True,
+                enable_specular=True,
+            )
             _frame(c)
             wp.synchronize()
             # VIEWS of the warp buffers. The channel swap is applied per render rather than here: doing
             # ``[..., [2,1,0]]`` at construction is advanced indexing, which COPIES, and the object
             # would then hold one frozen frame while every later render wrote into the buffer behind it.
-            c.bgra = wp.to_torch(c.rc.rgb_data).view(torch.uint8).reshape(
-                int(nworld), int(res), int(res), 4)
+            c.bgra = wp.to_torch(c.rc.rgb_data).view(torch.uint8).reshape(int(nworld), int(res), int(res), 4)
             c.seg = wp.to_torch(c.rc.seg_data).reshape(int(nworld), int(res), int(res), 2)[..., 0]
             with wp.ScopedCapture() as cap:
                 _frame(c)
@@ -838,10 +976,11 @@ def _context(task: str, res: int, nworld: int) -> _Ctx:
         mover_set = set(int(g) for g in b.movers)
         c.bvh_mover_slots = torch.as_tensor(
             [i for i, g in enumerate(c.bvh_ids0.tolist()) if int(g) in mover_set],
-            dtype=torch.long, device=c.bvh_ids.device)
+            dtype=torch.long,
+            device=c.bvh_ids.device,
+        )
         tr_set = set(int(g) for g in b.translucent)
-        c.bvh_tr_slots = np.array([i for i, g in enumerate(c.bvh_ids0.tolist())
-                                   if int(g) in tr_set], np.int64)
+        c.bvh_tr_slots = np.array([i for i, g in enumerate(c.bvh_ids0.tolist()) if int(g) in tr_set], np.int64)
         rest = [int(g) for g in c.bvh_ids0.tolist() if int(g) not in mover_set]
         c.bvh_substitute = rest[0] if rest else -1
     finally:
@@ -862,6 +1001,7 @@ def _neutralise_cube_textures(m) -> int:
     colour. Measured cost to the composite: none (§5).
     """
     import mujoco
+
     ttype = np.asarray(m.tex_type, np.int64)
     flat = m.mat_texid.reshape(m.nmat, -1) if m.mat_texid.ndim > 1 else m.mat_texid.reshape(-1, 1)
     n = 0
@@ -898,18 +1038,27 @@ class _Plate:
 
 # --------------------------------------------------------------------------- the env
 
+
 class MetaWorldBase(Env):
     """Base for the 50 ids. ``TASK`` is set by the generated subclasses."""
 
     TASK: str = ""
-    default_size = 480                          # metaworld's own SawyerXYZEnv default
+    default_size = 480  # metaworld's own SawyerXYZEnv default
     default_supersample = 1
     #: EVERY variation leaf, not just the static ones. The plate is already keyed on the episode (see
     #: the module docstring), so an extra column in the key costs a cache slot and removes the whole
     #: "is this knob static?" question — which for a family of 50 differently-built scenes is a
     #: question with 50 different answers.
-    PLATE_PATHS = ("table.color", "floor.color", "robot.color", "object.color", "light.diffuse",
-                   "camera.distance_scale", "camera.azimuth_delta", "camera.elevation_delta")
+    PLATE_PATHS = (
+        "table.color",
+        "floor.color",
+        "robot.color",
+        "object.color",
+        "light.diffuse",
+        "camera.distance_scale",
+        "camera.azimuth_delta",
+        "camera.elevation_delta",
+    )
     #: MEASURED over all 50 tasks, 64 states each from the env's own pool, 480 px: interior-exact
     #: median 0.999700, min 0.980766 (``window-open-v3``), 48/50 above 0.99 and 50/50 above 0.98. The
     #: floor sits just below the WORST TASK rather than at a round number, so a state draw cannot flake
@@ -958,10 +1107,18 @@ class MetaWorldBase(Env):
         "goal marker in the picture -- while the Sawyer's own headsite is 0.0004-0.0014 of the frame "
         "and is missing. The static ~64% of the frame (table, wall, floor, skybox, the Sawyer's "
         "pedestal, and every per-episode placement) is exact BY CONSTRUCTION, because it is baked "
-        "through MuJoCo itself.")
+        "through MuJoCo itself."
+    )
 
-    def __init__(self, num_envs: int = 1, size: int | None = None, supersample: int | None = None,
-                 device: str = "cuda", backend: str = "auto", seed: int = 0):
+    def __init__(
+        self,
+        num_envs: int = 1,
+        size: int | None = None,
+        supersample: int | None = None,
+        device: str = "cuda",
+        backend: str = "auto",
+        seed: int = 0,
+    ):
         b = _build_bundle(self.TASK)
         self.state_dim = len(b.state_names)
         self.state_names = b.state_names
@@ -974,9 +1131,14 @@ class MetaWorldBase(Env):
         # ``pack``/``unpack`` round-trip the frozen corpus bit for bit.
         k = self.state_dim - b.nq
         self.state_layout = ((("qpos",), b.nq, 0),) + ((((("episode",), k, b.nq)),) if k else ())
-        super().__init__(num_envs=num_envs, size=size,
-                         supersample=self.default_supersample if supersample is None else supersample,
-                         device=device, backend=backend, seed=seed)
+        super().__init__(
+            num_envs=num_envs,
+            size=size,
+            supersample=self.default_supersample if supersample is None else supersample,
+            device=device,
+            backend=backend,
+            seed=seed,
+        )
         self._b = b
         self._check_plate_is_constant()
 
@@ -993,7 +1155,7 @@ class MetaWorldBase(Env):
         composite would carry it twice.
         """
         pool = _state_pool(self.TASK)
-        st = pool[:2] if POOL_PER_EPISODE > 1 else pool[:1]      # consecutive rows share an episode
+        st = pool[:2] if POOL_PER_EPISODE > 1 else pool[:1]  # consecutive rows share an episode
         if len(st) < 2:
             return
         a = self._bake(int(self.size), None, st[0])
@@ -1009,7 +1171,8 @@ class MetaWorldBase(Env):
             f"deterministic at all — and it has caught two hosts doing exactly that during this "
             f"family's calibration (6 of 50 tasks on one, 5 of 50 on another, every one of them "
             f"passing elsewhere within minutes). See the EGL note in "
-            f"stable_envs/testing/conformance.py.")
+            f"stable_envs/testing/conformance.py."
+        )
 
     # ---- variation --------------------------------------------------------------------------
 
@@ -1031,14 +1194,15 @@ class MetaWorldBase(Env):
         for name in ("table", "floor", "robot", "object"):
             k = b.knobs.get(name)
             if k is not None:
-                space[name] = Dict({"color": Box(low=0.0, high=1.0, shape=(3,),
-                                                 init_value=k["init"].tolist())})
+                space[name] = Dict({"color": Box(low=0.0, high=1.0, shape=(3,), init_value=k["init"].tolist())})
         space["light"] = Dict({"diffuse": Box(low=0.0, high=2.0, shape=(1,), init_value=[1.0])})
-        space["camera"] = Dict({
-            "distance_scale": Box(low=0.6, high=1.6, shape=(1,), init_value=[1.0]),
-            "azimuth_delta": Box(low=-25.0, high=25.0, shape=(1,), init_value=[0.0]),
-            "elevation_delta": Box(low=-20.0, high=20.0, shape=(1,), init_value=[0.0]),
-        })
+        space["camera"] = Dict(
+            {
+                "distance_scale": Box(low=0.6, high=1.6, shape=(1,), init_value=[1.0]),
+                "azimuth_delta": Box(low=-25.0, high=25.0, shape=(1,), init_value=[0.0]),
+                "elevation_delta": Box(low=-20.0, high=20.0, shape=(1,), init_value=[0.0]),
+            }
+        )
         return Dict(space)
 
     def _var(self, variation, path) -> np.ndarray:
@@ -1063,6 +1227,7 @@ class MetaWorldBase(Env):
         bit, which is what makes "the default appearance IS the official frame" an identity.
         """
         import mujoco
+
         b = self._b if hasattr(self, "_b") else _build_bundle(self.TASK)
         s = float(self._var(variation, "camera.distance_scale")[0])
         az = np.deg2rad(float(self._var(variation, "camera.azimuth_delta")[0]))
@@ -1076,8 +1241,7 @@ class MetaWorldBase(Env):
             re = np.eye(3)
         else:
             axis = axis / n
-            k = np.array([[0.0, -axis[2], axis[1]], [axis[2], 0.0, -axis[0]],
-                          [-axis[1], axis[0], 0.0]])
+            k = np.array([[0.0, -axis[2], axis[1]], [axis[2], 0.0, -axis[0]], [-axis[1], axis[0], 0.0]])
             re = np.eye(3) + np.sin(el) * k + (1.0 - np.cos(el)) * (k @ k)
         r = rz @ re
         pos = b.pivot + s * (r @ v)
@@ -1101,9 +1265,13 @@ class MetaWorldBase(Env):
         placements differ in the last bit must not share a bake, or which of them baked it would depend
         on the order the batch arrived in.
         """
-        key = (self.TASK, int(res), str(self.device),
-               tuple(np.asarray(state_row, np.float32)[self._b.nq:].tolist()),
-               tuple(float(v) for p in self._paths() for v in self._var(over, p)))
+        key = (
+            self.TASK,
+            int(res),
+            str(self.device),
+            tuple(np.asarray(state_row, np.float32)[self._b.nq :].tolist()),
+            tuple(float(v) for p in self._paths() for v in self._var(over, p)),
+        )
         hit = _PLATE_CACHE.get(key)
         if hit is not None:
             return hit
@@ -1117,6 +1285,7 @@ class MetaWorldBase(Env):
         is a MULTIPLIER and would otherwise compound.
         """
         import mujoco
+
         b = self._b
         m, d = b.model, b.data
         _apply_state(b, m, d, np.asarray(state_row, np.float64), forward=False)
@@ -1162,19 +1331,21 @@ class MetaWorldBase(Env):
         p.off = None
         p.body_pos = torch.as_tensor(np.array(m.body_pos, np.float32), device=self.device)
         p.body_quat = torch.as_tensor(np.array(m.body_quat, np.float32), device=self.device)
-        p.gxpos = torch.as_tensor(np.array(d.geom_xpos[b.plate_static], np.float32),
-                                  device=self.device)
-        p.gxmat = torch.as_tensor(np.array(d.geom_xmat[b.plate_static], np.float32).reshape(-1, 3, 3),
-                                  device=self.device)
-        p.model = {a: torch.as_tensor(np.array(getattr(m, a), np.float32), device=self.device)
-                   for a in b.batched if a in MODEL_ARRAYS and a not in ("body_pos", "body_quat")}
+        p.gxpos = torch.as_tensor(np.array(d.geom_xpos[b.plate_static], np.float32), device=self.device)
+        p.gxmat = torch.as_tensor(
+            np.array(d.geom_xmat[b.plate_static], np.float32).reshape(-1, 3, 3), device=self.device
+        )
+        p.model = {
+            a: torch.as_tensor(np.array(getattr(m, a), np.float32), device=self.device)
+            for a in b.batched
+            if a in MODEL_ARRAYS and a not in ("body_pos", "body_quat")
+        }
         # THE MOVER COLOURS MJWarp READS COME FROM HERE, not from the context's model: the render
         # uploads this snapshot per world. So the texture-mean correction is applied here, where it
         # reaches the ray-cast and cannot reach the plate — the plate was drawn by MuJoCo above, with
         # its textures intact.
         if "mat_rgba" in p.model:
-            p.model["mat_rgba"][:, :3] *= torch.as_tensor(b.mat_tex_mean, dtype=torch.float32,
-                                                          device=self.device)
+            p.model["mat_rgba"][:, :3] *= torch.as_tensor(b.mat_tex_mean, dtype=torch.float32, device=self.device)
         for a in MODEL_ARRAYS:
             getattr(m, a)[:] = b.pristine[a]
         return p
@@ -1182,8 +1353,15 @@ class MetaWorldBase(Env):
     # ---- render -----------------------------------------------------------------------------
 
     @torch.no_grad()
-    def render(self, states=None, size: int | None = None, supersample: int | None = None,
-               variation: dict | None = None, style=None, out=None) -> torch.Tensor:
+    def render(
+        self,
+        states=None,
+        size: int | None = None,
+        supersample: int | None = None,
+        variation: dict | None = None,
+        style=None,
+        out=None,
+    ) -> torch.Tensor:
         """``(...,state_dim)`` -> ``(...,H,W,3)`` uint8 on device. Style may differ per environment.
 
         The MJWarp pass is ONE call per chunk — colours, light, camera and the per-episode placement
@@ -1191,8 +1369,7 @@ class MetaWorldBase(Env):
         EPISODE splits it. Only the baked plate is shared per (appearance, episode), and it is gathered
         per row afterwards.
         """
-        s = self._state if states is None else torch.as_tensor(states, device=self.device,
-                                                               dtype=torch.float32)
+        s = self._state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
         lead = tuple(s.shape[:-1])
         s = s.reshape(-1, self.state_dim).to(torch.float32)
         B = int(s.shape[0])
@@ -1210,7 +1387,7 @@ class MetaWorldBase(Env):
         # THE PLATE KEY IS THE APPEARANCE AND THE EPISODE. The model slice is part of the state, so
         # grouping on it is grouping on the episode; states from one episode share a bake. Exact
         # float32 equality, not a rounded key — see ``_plate``.
-        skey = torch.cat([sty[p].reshape(B, -1) for p in paths] + [s[:, b.nq:]], 1).cpu().numpy()
+        skey = torch.cat([sty[p].reshape(B, -1) for p in paths] + [s[:, b.nq :]], 1).cpu().numpy()
         uniq, inv = np.unique(skey, axis=0, return_inverse=True)
         offs, o = [], 0
         for p in paths:
@@ -1219,11 +1396,11 @@ class MetaWorldBase(Env):
             o += w
         plates, plates1 = [], []
         for row in uniq:
-            over = {p: row[a:a + w] for p, (a, w) in zip(paths, offs)}
+            over = {p: row[a : a + w] for p, (a, w) in zip(paths, offs)}
             # The plate is baked at a CANONICAL qpos, which is the invariant ``_check_plate_is_constant``
             # asserts: with every mover hidden the frame is a function of the episode and the
             # appearance, and of no joint angle.
-            st_row = np.concatenate([b.qpos0[:b.nq], row[o:]]).astype(np.float32)
+            st_row = np.concatenate([b.qpos0[: b.nq], row[o:]]).astype(np.float32)
             plates.append(self._plate(res, over, st_row))
             plates1.append(plates[-1] if ss == 1 else self._plate(size, over, st_row))
         img = torch.stack([p.img for p in plates])
@@ -1259,23 +1436,28 @@ class MetaWorldBase(Env):
             # in which the very geometry it is asking about has been removed. That is not a crash: the
             # alpha lookup silently returns 1.0 everywhere and the blend becomes a bit-identical no-op,
             # which is exactly how it read on first measurement.
-            rgb = c.bgra[:n][..., [2, 1, 0]]              # advanced indexing: a COPY
+            rgb = c.bgra[:n][..., [2, 1, 0]]  # advanced indexing: a COPY
             seg = c.seg[:n]
-            segp = (seg + 1).reshape(-1)                  # -1 (a miss) becomes row 0 of both tables
+            segp = (seg + 1).reshape(-1)  # -1 (a miss) becomes row 0 of both tables
             mv = lut.index_select(0, segp).view(seg.shape)
-            alpha = (self._blend_lut().index_select(0, segp).view(seg.shape).unsqueeze(-1)
-                     if len(b.translucent) else None)
+            alpha = (
+                self._blend_lut().index_select(0, segp).view(seg.shape).unsqueeze(-1) if len(b.translucent) else None
+            )
             g = grp[lo:hi]
             off = off_all[g] if off_all is not None else self._movers_off(c, n, plates, g)
-            pl = torch.where((rgb != off).any(-1, keepdim=True) & ~mv.unsqueeze(-1),
-                             dark[g], img[g])
+            pl = torch.where((rgb != off).any(-1, keepdim=True) & ~mv.unsqueeze(-1), dark[g], img[g])
             comp = torch.where(mv.unsqueeze(-1), self._blend(c, rgb, pl, n, alpha), pl)
             if ss == 1:
                 buf[lo:hi] = comp
             else:
-                small = (comp.to(torch.float32)
-                         .reshape(n, size, ss, size, ss, 3).mean((2, 4)).round_()
-                         .clamp_(0, 255).to(torch.uint8))
+                small = (
+                    comp.to(torch.float32)
+                    .reshape(n, size, ss, size, ss, 3)
+                    .mean((2, 4))
+                    .round_()
+                    .clamp_(0, 255)
+                    .to(torch.uint8)
+                )
                 any_mv = mv.reshape(n, size, ss, size, ss).any(4).any(2)
                 # A supersampled output pixel is shadowed only where EVERY subsample is: a partly
                 # shadowed pixel is a shadow boundary, which is the one place the two shadow models
@@ -1285,8 +1467,9 @@ class MetaWorldBase(Env):
                 buf[lo:hi] = torch.where(any_mv.unsqueeze(-1), small, pl1)
         return buf.view(*lead, size, size, 3) if lead else buf
 
-    def _blend(self, c: _Ctx, rgb: torch.Tensor, plate: torch.Tensor, n: int,
-               alpha: torch.Tensor | None) -> torch.Tensor:
+    def _blend(
+        self, c: _Ctx, rgb: torch.Tensor, plate: torch.Tensor, n: int, alpha: torch.Tensor | None
+    ) -> torch.Tensor:
         """MuJoCo's own blend for a TRANSLUCENT mover: ``a * pane + (1-a) * WHAT IS BEHIND THE PANE``.
 
         ``mujoco_warp``'s shader takes ``base_color = vec3(color[0], color[1], color[2])`` and packs a
@@ -1350,18 +1533,18 @@ class MetaWorldBase(Env):
         camkey = torch.cat([sty[p].reshape(-1, 1) for p in keys], 1)[:B].cpu().numpy()
         uniq, inv = np.unique(np.round(camkey.astype(np.float64), 6), axis=0, return_inverse=True)
         poses = [self._camera({keys[0]: r[0:1], keys[1]: r[1:2], keys[2]: r[2:3]}) for r in uniq]
-        pos = torch.as_tensor(np.stack([p for p, _ in poses])[inv], device=self.device,
-                              dtype=torch.float32)
-        quat = torch.as_tensor(np.stack([q for _, q in poses])[inv], device=self.device,
-                               dtype=torch.float32)
+        pos = torch.as_tensor(np.stack([p for p, _ in poses])[inv], device=self.device, dtype=torch.float32)
+        quat = torch.as_tensor(np.stack([q for _, q in poses])[inv], device=self.device, dtype=torch.float32)
         return pos, quat
 
     def _plate_stacks(self, plates) -> dict:
         """``(G, ...)`` stacks of everything ``_upload`` gathers per row, built once per render."""
-        out = {"body_pos": torch.stack([p.body_pos for p in plates]),
-               "body_quat": torch.stack([p.body_quat for p in plates]),
-               "gxpos": torch.stack([p.gxpos for p in plates]),
-               "gxmat": torch.stack([p.gxmat for p in plates])}
+        out = {
+            "body_pos": torch.stack([p.body_pos for p in plates]),
+            "body_quat": torch.stack([p.body_quat for p in plates]),
+            "gxpos": torch.stack([p.gxpos for p in plates]),
+            "gxmat": torch.stack([p.gxmat for p in plates]),
+        }
         out["model"] = {a: torch.stack([p.model[a] for p in plates]) for a in plates[0].model}
         return out
 
@@ -1411,7 +1594,7 @@ class MetaWorldBase(Env):
         qpos, so it is cached on the plate. A rollout of 500 states through one episode pays it once.
         """
         if c.bvh_substitute < 0 or not len(self._b.casting):
-            return c.bgra[:n][..., [2, 1, 0]]           # nothing casts: no pixel can be shadowed
+            return c.bgra[:n][..., [2, 1, 0]]  # nothing casts: no pixel can be shadowed
         # Only the groups THIS chunk holds: a plate the chunk does not touch has no movers-off frame
         # and must not be stacked into the gather.
         here = sorted({int(k) for k in g.tolist()})
@@ -1422,8 +1605,7 @@ class MetaWorldBase(Env):
             for k in want:
                 plates[k].off = frames[first[k]].clone()
         pos = torch.full((len(plates),), -1, dtype=torch.long, device=g.device)
-        pos[torch.as_tensor(here, dtype=torch.long, device=g.device)] = torch.arange(
-            len(here), device=g.device)
+        pos[torch.as_tensor(here, dtype=torch.long, device=g.device)] = torch.arange(len(here), device=g.device)
         return torch.stack([plates[k].off for k in here])[pos[g]]
 
     def _scale(self, name: str, mats) -> torch.Tensor:
@@ -1432,8 +1614,8 @@ class MetaWorldBase(Env):
         hit = cache.get(name)
         if hit is None:
             hit = cache[name] = torch.as_tensor(
-                self._b.mat_tex_mean[np.asarray(mats, np.int64)], dtype=torch.float32,
-                device=self.device).reshape(1, -1, 3)
+                self._b.mat_tex_mean[np.asarray(mats, np.int64)], dtype=torch.float32, device=self.device
+            ).reshape(1, -1, 3)
         return hit
 
     def _idx(self, key: str, values) -> torch.Tensor:
@@ -1444,13 +1626,23 @@ class MetaWorldBase(Env):
             hit = cache[key] = torch.as_tensor(np.asarray(values, np.int64), device=self.device)
         return hit
 
-    def _upload(self, c: _Ctx, s: torch.Tensor, sty, lo: int, hi: int, stacked: dict, grp,
-                campos: torch.Tensor, camquat: torch.Tensor) -> None:
+    def _upload(
+        self,
+        c: _Ctx,
+        s: torch.Tensor,
+        sty,
+        lo: int,
+        hi: int,
+        stacked: dict,
+        grp,
+        campos: torch.Tensor,
+        camquat: torch.Tensor,
+    ) -> None:
         """Write the chunk's state, episode and appearance into the context's per-world arrays."""
         b = self._b
         wp = c.wp
         n = hi - lo
-        wp.to_torch(c.wd.qpos)[:n] = s[:, :b.nq]
+        wp.to_torch(c.wd.qpos)[:n] = s[:, : b.nq]
 
         # The episode. body_pos/body_quat reach every body's ``xpos`` (a kinematics branch is an
         # ancestor chain, so static bodies are walked too); the geoms of a WELDED body are the ones
@@ -1462,7 +1654,7 @@ class MetaWorldBase(Env):
             wp.to_torch(c.wd.geom_xpos)[:n, st] = stacked["gxpos"][grp]
             wp.to_torch(c.wd.geom_xmat)[:n, st] = stacked["gxmat"][grp]
         for a, t in stacked["model"].items():
-            if a == "cam_pos":                          # written from the camera knobs below
+            if a == "cam_pos":  # written from the camera knobs below
                 continue
             wp.to_torch(getattr(c.wm, a))[:n] = t[grp]
 
@@ -1477,10 +1669,10 @@ class MetaWorldBase(Env):
                 # ``_bake``: a knob whose material MJWarp cannot texture must write the MODULATED
                 # colour here, or its default would stop reproducing the official appearance on the
                 # movers while still reproducing it on the plate.
-                mr[:n, self._idx(f"{name}.mats", k["mats"]), :3] = (
-                    col.unsqueeze(1) * self._scale(name, k["mats"]))
-        wp.to_torch(c.wm.light_diffuse)[:n] = (
-            self._light0().unsqueeze(0) * sty["light.diffuse"][lo:hi].reshape(n, 1, 1))
+                mr[:n, self._idx(f"{name}.mats", k["mats"]), :3] = col.unsqueeze(1) * self._scale(name, k["mats"])
+        wp.to_torch(c.wm.light_diffuse)[:n] = self._light0().unsqueeze(0) * sty["light.diffuse"][lo:hi].reshape(
+            n, 1, 1
+        )
         wp.to_torch(c.wm.cam_pos)[:n, b.cam] = campos[lo:hi]
         wp.to_torch(c.wm.cam_quat)[:n, b.cam] = camquat[lo:hi]
 
@@ -1488,8 +1680,7 @@ class MetaWorldBase(Env):
         cache = self.__dict__.setdefault("_idx_cache", {})
         hit = cache.get("light0")
         if hit is None:
-            hit = cache["light0"] = torch.as_tensor(self._b.light0, device=self.device,
-                                                    dtype=torch.float32)
+            hit = cache["light0"] = torch.as_tensor(self._b.light0, device=self.device, dtype=torch.float32)
         return hit
 
     # ---- states -----------------------------------------------------------------------------
@@ -1530,7 +1721,6 @@ class MetaWorldBase(Env):
         * it asserts the round trip. If the reference did not reach the requested state, every parity
           number computed from it is comparing two different scenes.
         """
-        import mujoco
         b = _build_bundle(cls.TASK)
         u = env.unwrapped
         m, d = u.model, u.data
@@ -1543,7 +1733,8 @@ class MetaWorldBase(Env):
                 raise AssertionError(
                     f"{cls.__name__}: the reference env did not reach the requested state (max "
                     f"{err:.3e}); every parity number computed from it would be comparing two "
-                    f"different scenes")
+                    f"different scenes"
+                )
             out.append(np.ascontiguousarray(u.render()))
         return np.stack(out)
 
@@ -1551,21 +1742,23 @@ class MetaWorldBase(Env):
 def _apply_state(b: _Bundle, m, d, st, forward: bool = True) -> None:
     """Put ``(qpos, model slice)`` into a model/data pair, pinning everything the state does not name."""
     import mujoco
+
     for a in MODEL_ARRAYS:
         getattr(m, a)[:] = b.pristine[a]
     for i, (a, f) in enumerate(b.slots):
         arr = getattr(m, a)
         v = st[b.nq + i]
         arr.reshape(-1)[f] = np.rint(v) if arr.dtype.kind in "iu" else v
-    d.qpos[:] = st[:b.nq]
+    d.qpos[:] = st[: b.nq]
     d.qvel[:] = 0.0
     if forward:
         mujoco.mj_forward(m, d)
 
 
 def _read_state(b: _Bundle, m, d) -> np.ndarray:
-    return np.concatenate([np.asarray(d.qpos, np.float64),
-                           np.array([float(getattr(m, a).reshape(-1)[f]) for a, f in b.slots])])
+    return np.concatenate(
+        [np.asarray(d.qpos, np.float64), np.array([float(getattr(m, a).reshape(-1)[f]) for a, f in b.slots])]
+    )
 
 
 def _state_pool(task: str) -> np.ndarray:
@@ -1584,12 +1777,12 @@ def _state_pool(task: str) -> np.ndarray:
     if hit is not None:
         return hit
     import mujoco
+
     b = _build_bundle(task)
     env = b.env
     u = env.unwrapped
     m, d = b.model, b.data
-    free = [int(m.jnt_qposadr[j]) for j in range(m.njnt)
-            if int(m.jnt_type[j]) == int(mujoco.mjtJoint.mjJNT_FREE)]
+    free = [int(m.jnt_qposadr[j]) for j in range(m.njnt) if int(m.jnt_type[j]) == int(mujoco.mjtJoint.mjJNT_FREE)]
     rng = np.random.default_rng(0)
     dim = b.nq + len(b.slots)
     out = np.empty((POOL_EPISODES * POOL_PER_EPISODE, dim), np.float32)
@@ -1603,9 +1796,9 @@ def _state_pool(task: str) -> np.ndarray:
             q = np.array(d.qpos, np.float64)
             for adr in free:
                 yaw = float(rng.uniform(-np.pi, np.pi))
-                q[adr + 3:adr + 7] = [np.cos(yaw / 2), 0.0, 0.0, np.sin(yaw / 2)]
-            out[i, :b.nq] = q
-            out[i, b.nq:] = slice_vals
+                q[adr + 3 : adr + 7] = [np.cos(yaw / 2), 0.0, 0.0, np.sin(yaw / 2)]
+            out[i, : b.nq] = q
+            out[i, b.nq :] = slice_vals
             i += 1
     for a in MODEL_ARRAYS:
         getattr(m, a)[:] = b.pristine[a]
@@ -1621,18 +1814,26 @@ def _make_classes():
     made = {}
     for task in TASKS:
         cname = _class_name(task)
-        made[cname] = register(type(cname, (MetaWorldBase,), dict(
-            TASK=task,
-            name=f"metaworld-{task}",
-            reference_id=f"metaworld/{task}",
-            __doc__=(f"Meta-World {task} through the model camera 'corner'. State is qpos plus the "
-                     f"episode's model slice (the placement Meta-World writes into body_pos/site_pos "
-                     f"at reset); the picture is MuJoCo's bake of that episode's static scene with "
-                     f"mujoco_warp's ray-cast movers composited over it by the segmentation buffer. "
-                     f"The reference is ALL_V3_ENVIRONMENTS[{task!r}](render_mode='rgb_array', "
-                     f"camera_name='corner'), which is what Meta-World's own benchmark wrappers "
-                     f"instantiate — its gymnasium ids are vector envs over task SETS."),
-        )))
+        made[cname] = register(
+            type(
+                cname,
+                (MetaWorldBase,),
+                dict(
+                    TASK=task,
+                    name=f"metaworld-{task}",
+                    reference_id=f"metaworld/{task}",
+                    __doc__=(
+                        f"Meta-World {task} through the model camera 'corner'. State is qpos plus the "
+                        f"episode's model slice (the placement Meta-World writes into body_pos/site_pos "
+                        f"at reset); the picture is MuJoCo's bake of that episode's static scene with "
+                        f"mujoco_warp's ray-cast movers composited over it by the segmentation buffer. "
+                        f"The reference is ALL_V3_ENVIRONMENTS[{task!r}](render_mode='rgb_array', "
+                        f"camera_name='corner'), which is what Meta-World's own benchmark wrappers "
+                        f"instantiate — its gymnasium ids are vector envs over task SETS."
+                    ),
+                ),
+            )
+        )
     return made
 
 

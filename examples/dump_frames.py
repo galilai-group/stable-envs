@@ -9,12 +9,12 @@ RGB. Quality is not a detail to round off — it sets both the bytes a dataset o
 decoder does, and q90 (this repo's earlier default) is measurably cheaper than the q95 a real corpus
 was written at, in the stored path's favour.
 """
+
 from __future__ import annotations
 
 import argparse
 import io
 import json
-import os
 from pathlib import Path
 
 import numpy as np
@@ -83,8 +83,10 @@ def main() -> None:
         # reads ``size`` as something other than the output edge (Craftax: per tile). Re-render at
         # native so the stored-side measurement is of the same picture the GPU side is timed on.
         if note is None and max(frames.shape[1], frames.shape[2]) > 2 * a.size:
-            note = (f"size={a.size} produced a {frames.shape[1]}x{frames.shape[2]} frame: this env "
-                    f"reads size per tile; dumped at its native size instead")
+            note = (
+                f"size={a.size} produced a {frames.shape[1]}x{frames.shape[2]} frame: this env "
+                f"reads size per tile; dumped at its native size instead"
+            )
             env = se.make(name, num_envs=1, device="cuda")
             size = env.size
             pool = env.sample_states(a.frames)
@@ -97,18 +99,28 @@ def main() -> None:
             buf = io.BytesIO()
             Image.fromarray(f).save(buf, format="JPEG", quality=a.jpeg_quality)
             blobs.append(buf.getvalue())
-        meta = {"env": name, "size": size, "requested_size": a.size, "size_note": note,
-                "h": int(frames.shape[1]), "w": int(frames.shape[2]),
-                "n": len(blobs), "jpeg_quality": a.jpeg_quality,
-                "state_bytes": int(np.asarray(pool[:1]).nbytes),
-                "state_dim": int(np.asarray(pool).shape[1]),
-                "jpeg_bytes_total": sum(len(b) for b in blobs),
-                "raw_bytes_per_frame": int(frames.shape[1] * frames.shape[2] * 3)}
+        meta = {
+            "env": name,
+            "size": size,
+            "requested_size": a.size,
+            "size_note": note,
+            "h": int(frames.shape[1]),
+            "w": int(frames.shape[2]),
+            "n": len(blobs),
+            "jpeg_quality": a.jpeg_quality,
+            "state_bytes": int(np.asarray(pool[:1]).nbytes),
+            "state_dim": int(np.asarray(pool).shape[1]),
+            "jpeg_bytes_total": sum(len(b) for b in blobs),
+            "raw_bytes_per_frame": int(frames.shape[1] * frames.shape[2] * 3),
+        }
         np.savez(dest, blobs=np.array(blobs, dtype=object), meta=json.dumps(meta))
-        print(f"[{name}] {meta['h']}x{meta['w']}{'*' if note else ''}  {len(blobs)} frames  "
-              f"{meta['jpeg_bytes_total'] / 1e6:.1f} MB jpeg  "
-              f"({meta['jpeg_bytes_total'] / len(blobs):,.0f} B/frame vs "
-              f"{meta['raw_bytes_per_frame']:,} raw)", flush=True)
+        print(
+            f"[{name}] {meta['h']}x{meta['w']}{'*' if note else ''}  {len(blobs)} frames  "
+            f"{meta['jpeg_bytes_total'] / 1e6:.1f} MB jpeg  "
+            f"({meta['jpeg_bytes_total'] / len(blobs):,.0f} B/frame vs "
+            f"{meta['raw_bytes_per_frame']:,} raw)",
+            flush=True,
+        )
 
 
 if __name__ == "__main__":

@@ -111,9 +111,37 @@ version = { attr = "stable_envs.__about__.__version__" }
 [tool.ruff]
 target-version = "py310"
 line-length = 119
+extend-exclude = ["scratch", "examples/results", "examples/paper", "docs/assets"]
 
 [tool.ruff.lint]
-select = ["E9", "F63", "F7"]
+select = ["E4", "E7", "E9", "F", "I", "UP"]
+# E402: late imports are load-bearing (importorskip, optional deps, sys.path, env vars).
+# E702: compact `;` unpack/index bumps; splitting them is a rewrite, not a safe auto-fix.
+# E731: lambda -> def changes __name__ / pickle.
+# E741: renaming `l`/`O` is an identifier change, not formatting.
+# F841: unused locals include side-effect bindings (e.g. reset) and unpack leftovers.
+ignore = ["E402", "E702", "E731", "E741", "F841"]
+
+[tool.ruff.lint.per-file-ignores]
+# Re-exports and registration side-effect imports.
+"**/__init__.py" = ["F401"]
+# Generated MJWarp kernels: unused typing imports and `int()` casts are load-bearing for Warp.
+"stable_envs/render/mjwarp_lightspec.py" = ["F401", "UP006", "UP018", "UP035"]
+"stable_envs/render/mjwarp.py" = ["UP018"]
+# Forward references kept unimported to avoid cycles; annotations are not evaluated.
+"stable_envs/env.py" = ["F821"]
+"stable_envs/envs/dmcontrol/suite.py" = ["F821"]
+"stable_envs/render/nvdiff.py" = ["F821"]
+# Public `Union[...]` alias; `|` would change the runtime type object.
+"stable_envs/render/scene.py" = ["UP007"]
+# Measured `"%04i" % reward` atlas keys / pygame font contract.
+"stable_envs/envs/carracing.py" = ["UP031"]
+"examples/robocasa_visual/calibrate_tier.py" = ["UP031"]
+# Lambdas close over names `del`'d in the same function; ruff treats them as unbound.
+"examples/bench_gpu_vs_cpu.py" = ["F821"]
+"examples/domain_randomization.py" = ["F821"]
+# Availability probe: `import torch` inside try/except ImportError.
+"examples/render.py" = ["F401"]
 
 [tool.pytest.ini_options]
 addopts = ["-p", "no:randomly"]

@@ -11,6 +11,7 @@ The four backend classes are checked separately, by their SHAPE (they honour the
 what they own) rather than by construction, which needs a GPU. The GPU arm asserts the counters
 across repeated create/close cycles; see ``scratch/step9/render-mjwarp-nvdiff/gpu_oracle.sbatch``.
 """
+
 from __future__ import annotations
 
 import gc
@@ -21,8 +22,8 @@ import pytest
 
 from stable_envs.render import _resources as RES
 
-
 # --------------------------------------------------------------------------- a fake backend object
+
 
 class FakeBackend(RES.Closeable):
     """What a real backend does, with the frees replaced by an observable list."""
@@ -45,6 +46,7 @@ class FakeBackend(RES.Closeable):
 
 
 # --------------------------------------------------------------------------- the close protocol
+
 
 @pytest.mark.unit
 def test_close_releases_once_and_is_idempotent():
@@ -94,7 +96,7 @@ def test_correctness_never_depends_on_del():
     countably, rather than being tidied up invisibly.
     """
     log = []
-    FakeBackend(log)                                   # no reference kept
+    FakeBackend(log)  # no reference kept
     gc.collect()
     gc.collect()
     assert log == [], "a backend object released itself from __del__ / GC"
@@ -108,7 +110,7 @@ def test_a_half_built_object_is_not_open():
     assert b.closed
     with pytest.raises(RES.UseAfterCloseError):
         b.use()
-    b.close()                                          # and closing it is a no-op, not a double free
+    b.close()  # and closing it is a no-op, not a double free
 
 
 @pytest.mark.unit
@@ -119,7 +121,7 @@ def test_the_counters_track_create_and_close_cycles():
     assert RES.live("test.FakeBackend") == live0 + 5
     for o in objs:
         o.close()
-        o.close()                                      # idempotent: must not count twice
+        o.close()  # idempotent: must not count twice
     assert RES.live("test.FakeBackend") == live0
     d = RES.delta(before)
     assert d["created"]["test.FakeBackend"] == 5
@@ -162,13 +164,13 @@ def test_a_failed_release_is_observable_and_not_counted_as_closed():
     assert change["created"]["test.Boom"] == 1
     assert change["release_failed"]["test.Boom"] == 1
     assert "test.Boom" not in change["closed"]
-    assert RES.release_failures()[-1] == {
-        "kind": "test.Boom", "error": "RuntimeError", "message": "the free failed"}
+    assert RES.release_failures()[-1] == {"kind": "test.Boom", "error": "RuntimeError", "message": "the free failed"}
     b.close()
     assert b.calls == 1
 
 
 # --------------------------------------------------------------------------- the bounded cache
+
 
 @pytest.mark.unit
 def test_the_cache_is_bounded():
@@ -185,8 +187,8 @@ def test_eviction_is_least_recently_used_and_one_entry_at_a_time():
     c.put("a", 1)
     c.put("b", 2)
     c.put("c", 3)
-    assert c.get("a") == 1                              # a is now the most recently USED
-    c.put("d", 4)                                       # so b, the coldest, is what goes
+    assert c.get("a") == 1  # a is now the most recently USED
+    c.put("d", 4)  # so b, the coldest, is what goes
     assert sorted(c.keys()) == ["a", "c", "d"]
     assert c.get("b") is None
     assert c.evictions == 1, "one insertion must evict one entry, not empty the cache"
@@ -216,9 +218,9 @@ def test_eviction_can_release_what_it_drops_and_a_replacement_counts_as_a_drop()
     a, b, d = FakeBackend(log), FakeBackend(log), FakeBackend(log)
     c.put("a", a)
     c.put("b", b)
-    c.put("c", d)                                       # evicts a
+    c.put("c", d)  # evicts a
     assert a.closed and not b.closed and not d.closed
-    c.put("b", FakeBackend(log))                        # replacing b is as much a drop as evicting it
+    c.put("b", FakeBackend(log))  # replacing b is as much a drop as evicting it
     assert b.closed
 
 
@@ -248,15 +250,19 @@ def test_clear_releases_everything():
 def test_a_failing_release_does_not_fail_the_insertion_that_triggered_it():
     def boom(_):
         raise RuntimeError("release failed")
+
     before = RES.counts()
     failures0 = len(RES.release_failures())
     c = RES.BoundedCache(1, name="t", on_evict=boom)
     c.put("a", 1)
-    c.put("b", 2)                                       # must not raise: an eviction happens far from
-    assert c.get("b") == 2                              # anything the caller is thinking about
+    c.put("b", 2)  # must not raise: an eviction happens far from
+    assert c.get("b") == 2  # anything the caller is thinking about
     assert RES.delta(before)["release_failed"]["cache:t"] == 1
     assert RES.release_failures()[failures0] == {
-        "kind": "cache:t", "error": "RuntimeError", "message": "release failed"}
+        "kind": "cache:t",
+        "error": "RuntimeError",
+        "message": "release failed",
+    }
 
 
 @pytest.mark.unit
@@ -266,6 +272,7 @@ def test_a_zero_capacity_cache_is_refused():
 
 
 # --------------------------------------------------------------------------- the deliberate leak
+
 
 @pytest.mark.unit
 def test_process_lifetime_retention_records_its_reason_and_is_capped():
@@ -293,17 +300,22 @@ def test_a_foreign_keepalive_fallback_warns_and_retains_past_the_cap(monkeypatch
 
 # --------------------------------------------------------------------------- the backends' shape
 
+
 @pytest.mark.unit
-@pytest.mark.parametrize("module,cls", [
-    ("stable_envs.render.mjwarp", "BatchRenderer"),
-    ("stable_envs.render.nvdiff", "BatchRenderer"),
-    ("stable_envs.render.nvdiff", "Scene"),
-    ("stable_envs.render.rendernet", "LoadedCorrector"),
-    ("stable_envs.render.rendernet", "_Runner"),
-])
+@pytest.mark.parametrize(
+    "module,cls",
+    [
+        ("stable_envs.render.mjwarp", "BatchRenderer"),
+        ("stable_envs.render.nvdiff", "BatchRenderer"),
+        ("stable_envs.render.nvdiff", "Scene"),
+        ("stable_envs.render.rendernet", "LoadedCorrector"),
+        ("stable_envs.render.rendernet", "_Runner"),
+    ],
+)
 def test_every_backend_object_honours_the_close_protocol(module, cls):
     """Every backend declares the protocol; actual CPU construction is checked where available."""
     import importlib
+
     c = getattr(importlib.import_module(module), cls)
     assert issubclass(c, RES.Closeable), f"{module}.{cls} must be Closeable"
     assert c.resource_kind != RES.Closeable.resource_kind, f"{module}.{cls} needs its own kind"
@@ -340,10 +352,26 @@ def test_a_cpu_scene_releases_every_owned_tensor_and_refuses_reuse():
     before = RES.counts()
     live0 = RES.live("nvdiff.Scene")
     scene = ND.Scene.from_triangles(
-        vert, norm, face, np.zeros(len(vert), np.int64),
-        rgba=[[1.0, 1.0, 1.0, 1.0]], device="cpu")
-    owned = ("vert", "norm", "uv", "vgeom", "face", "fgeom", "mjgeom", "S3", "S4", "S3p",
-             "mat_rgb", "alpha", "spec", "shininess", "emission", "texid")
+        vert, norm, face, np.zeros(len(vert), np.int64), rgba=[[1.0, 1.0, 1.0, 1.0]], device="cpu"
+    )
+    owned = (
+        "vert",
+        "norm",
+        "uv",
+        "vgeom",
+        "face",
+        "fgeom",
+        "mjgeom",
+        "S3",
+        "S4",
+        "S3p",
+        "mat_rgb",
+        "alpha",
+        "spec",
+        "shininess",
+        "emission",
+        "texid",
+    )
     assert all(isinstance(getattr(scene, name), torch.Tensor) for name in owned)
     assert RES.live("nvdiff.Scene") == live0 + 1
     scene.close()
@@ -363,6 +391,7 @@ def test_the_module_level_cast_memo_is_bounded():
     """``mjwarp_lightspec._CASTS_CACHE`` was an unbounded dict, i.e. one entry per model, forever."""
     pytest.importorskip("mujoco_warp")
     import stable_envs.render.mjwarp_lightspec as LS
+
     assert isinstance(LS._CASTS_CACHE, RES.BoundedCache)
     assert LS._CASTS_CACHE.capacity == LS.CASTS_CACHE_MAX
 
@@ -371,6 +400,7 @@ def test_the_module_level_cast_memo_is_bounded():
 def test_the_per_renderer_ray_cache_is_bounded():
     """``nvdiff.BatchRenderer._ray_cache``, checked without building a renderer (it needs CUDA)."""
     import stable_envs.render.nvdiff as ND
+
     assert ND.RAY_CACHE_MAX == 8, "the bound is the one the uncapped dict already used"
     src = _code_of("nvdiff.py")
     assert "_ray_cache = _resources . BoundedCache" in src
@@ -384,9 +414,9 @@ def _code_of(name: str) -> str:
     EGL context is never freed — so the check has to look at code. ``tokenize`` is enough and needs no
     import of the module, which matters because three of the five need CUDA to import.
     """
-    import io
     import pathlib
     import tokenize
+
     path = pathlib.Path(RES.__file__).parent / name
     out = []
     with open(path, "rb") as fh:
@@ -398,8 +428,7 @@ def _code_of(name: str) -> str:
 
 
 @pytest.mark.unit
-@pytest.mark.parametrize("name", ["mjwarp.py", "mjwarp_lightspec.py", "nvdiff.py", "rendernet.py",
-                                  "_resources.py"])
+@pytest.mark.parametrize("name", ["mjwarp.py", "mjwarp_lightspec.py", "nvdiff.py", "rendernet.py", "_resources.py"])
 def test_nothing_in_the_render_backends_releases_an_egl_context(name):
     """The rule ``testing/resource_guard.py`` enforces at zero tolerance, checked at the source.
 
@@ -418,28 +447,23 @@ def test_nothing_in_the_render_backends_releases_an_egl_context(name):
 def test_family_device_caches_release_on_eviction():
     """Workstream I's consumer list: overflow must call close/release, not drop to the collector."""
     import pathlib
+
     root = pathlib.Path(__file__).resolve().parents[2] / "stable_envs"
     checks = [
-        (root / "envs" / "fetch.py",
-         'BoundedCache(6, name="fetch.ctx"', "release_cached_ctx"),
-        (root / "envs" / "ogbench" / "manipulation.py",
-         'BoundedCache(4, name="ogbench.ctx"', "release_cached_ctx"),
-        (root / "envs" / "robocasa.py",
-         'BoundedCache(4, name="robocasa.ctx"', "release_cached_ctx"),
-        (root / "envs" / "robocasa.py",
-         'BoundedCache(', "robocasa.correctors"),
-        (root / "envs" / "humanoidbench.py",
-         'BoundedCache(32, name="humanoidbench.ctx"', "release_cached_ctx"),
-        (root / "envs" / "metaworld.py",
-         'BoundedCache(3, name="metaworld.ctx"', "release_cached_ctx"),
-        (root / "envs" / "dmcontrol" / "_model.py",
-         'BoundedCache(3, name="dmcontrol.tc"', "release_cached_ctx"),
-        (root / "envs" / "mujoco_locomotion.py",
-         'BoundedCache(16, name="mujoco_locomotion.nvd"', "close_cached_renderer"),
-        (root / "envs" / "rocket_landing.py",
-         'BoundedCache(8, name="rocket.nvd"', "close_cached_renderer"),
-        (root / "envs" / "rocket_landing.py",
-         "owns_scene = True", "owns_scene"),
+        (root / "envs" / "fetch.py", 'BoundedCache(6, name="fetch.ctx"', "release_cached_ctx"),
+        (root / "envs" / "ogbench" / "manipulation.py", 'BoundedCache(4, name="ogbench.ctx"', "release_cached_ctx"),
+        (root / "envs" / "robocasa.py", 'BoundedCache(4, name="robocasa.ctx"', "release_cached_ctx"),
+        (root / "envs" / "robocasa.py", "BoundedCache(", "robocasa.correctors"),
+        (root / "envs" / "humanoidbench.py", 'BoundedCache(32, name="humanoidbench.ctx"', "release_cached_ctx"),
+        (root / "envs" / "metaworld.py", 'BoundedCache(3, name="metaworld.ctx"', "release_cached_ctx"),
+        (root / "envs" / "dmcontrol" / "_model.py", 'BoundedCache(3, name="dmcontrol.tc"', "release_cached_ctx"),
+        (
+            root / "envs" / "mujoco_locomotion.py",
+            'BoundedCache(16, name="mujoco_locomotion.nvd"',
+            "close_cached_renderer",
+        ),
+        (root / "envs" / "rocket_landing.py", 'BoundedCache(8, name="rocket.nvd"', "close_cached_renderer"),
+        (root / "envs" / "rocket_landing.py", "owns_scene = True", "owns_scene"),
     ]
     for path, needle, label in checks:
         src = path.read_text(encoding="utf-8")

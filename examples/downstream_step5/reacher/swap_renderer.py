@@ -23,6 +23,7 @@ the success criterion is touched. Success for ``qpos_match`` is decided by
 renderer can only move the metric through the planner's decisions -- which is the channel under
 test.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -52,9 +53,15 @@ TARGET_MODES = ("hidden", "offscreen", "as_placed")
 class Renderer:
     """stable-envs ``DMCReacherHard``, answering the two shapes the swm eval asks for."""
 
-    def __init__(self, size: int = 224, mode: str = "stable_envs", device: str = "cuda",
-                 target_mode: str = "hidden", dataset_target_mode: str | None = None,
-                 env_name: str = "DMCReacherHard"):
+    def __init__(
+        self,
+        size: int = 224,
+        mode: str = "stable_envs",
+        device: str = "cuda",
+        target_mode: str = "hidden",
+        dataset_target_mode: str | None = None,
+        env_name: str = "DMCReacherHard",
+    ):
         if mode not in MODES:
             raise ValueError(f"mode must be one of {MODES}, got {mode!r}")
         # PER SURFACE, because the two surfaces do not contain the same picture. The live env hides
@@ -80,11 +87,14 @@ class Renderer:
             # mode regenerates the stored frames with the OFFICIAL renderer, so an arm that drops
             # here drops for reasons that have nothing to do with stable-envs.
             from stable_worldmodel.envs.dmcontrol.reacher import ReacherDMControlWrapper
+
             self.official = ReacherDMControlWrapper(task="qpos_match", seed=0)
             self.official.reset(seed=0)
         elif mode != "blank":
-            import stable_envs as se
             from state_bridge import slot_names
+
+            import stable_envs as se
+
             self.env = se.make(env_name, num_envs=1, size=self.size, device=device)
             self.slots = slot_names(self.env)
             self.nq = self.env.nq
@@ -93,7 +103,8 @@ class Renderer:
                     f"{env_name} declares no {VISIBILITY!r} leaf ({self.env.style_names}), so "
                     f"'the reference does not draw its target' has no representation here. Either "
                     f"this checkout predates that knob or the env is not a DM Control reacher; "
-                    f"target_mode='offscreen' is the Step-5 fallback and says so in the arm.")
+                    f"target_mode='offscreen' is the Step-5 fallback and says so in the arm."
+                )
 
     # ---- the one place a hidden target is expressed -----------------------
 
@@ -118,13 +129,13 @@ class Renderer:
         if self.mode == "blank":
             return self.blank(1)[0]
         from state_bridge import read_state
+
         # Under "hidden" the state is read STRAIGHT off the official env -- the target keeps the
         # position the episode drew, and only the appearance says it is not painted. Under the Step-5
         # "offscreen" mechanism the position itself was overwritten, which is the thing this replaces.
         override = {"target": OFFSCREEN} if self.target_mode == "offscreen" else None
         st = read_state(self.env, swm_env, slots=self.slots, target_override=override)
-        return self.env.render(st.reshape(1, -1),
-                               variation=self._variation(self.target_mode))[0].cpu().numpy()
+        return self.env.render(st.reshape(1, -1), variation=self._variation(self.target_mode))[0].cpu().numpy()
 
     def from_state(self, qpos, target_pos=None) -> np.ndarray:
         """``(N, nq)`` stored joint positions (and the episode's target) -> ``(N, size, size, 3)``.
@@ -150,18 +161,18 @@ class Renderer:
                     raise KeyError(
                         "the corpus has no target_pos column, so a stored frame cannot be "
                         "regenerated with the target where the episode put it; the arms would not "
-                        "be comparable")
+                        "be comparable"
+                    )
             else:
                 t = np.asarray(target_pos, np.float64).reshape(len(q), -1)
         st = np.zeros((len(q), self.env.state_dim), np.float32)
-        st[:, :self.nq] = q[:, :self.nq]
+        st[:, : self.nq] = q[:, : self.nq]
         for j, (_arr, name, comp) in enumerate(self.slots):
             if self.dataset_target_mode == "offscreen":
                 st[:, self.nq + j] = OFFSCREEN[comp] if name == "target" else 0.0
             elif t is not None:
                 st[:, self.nq + j] = t[:, comp] if comp < t.shape[1] else 0.0
         return self.env.render(st, variation=self._variation(self.dataset_target_mode)).cpu().numpy()
-
 
     def _official_frames(self, q, target_pos) -> np.ndarray:
         """Stored frames re-rendered by MuJoCo from the same state our renderer would use."""
@@ -177,23 +188,29 @@ class Renderer:
             if t is not None and tid >= 0:
                 m.geom_pos[tid, :2] = t[i]
             with p.reset_context():
-                p.data.qpos[:] = q[i, :p.model.nq]
+                p.data.qpos[:] = q[i, : p.model.nq]
                 p.data.qvel[:] = 0
             out.append(env.render(self.size, self.size).copy())
         return np.stack(out)
 
 
-def install(mode: str = "stable_envs", size: int = 224, device: str = "cuda",
-            target_mode: str = "offscreen", dataset_target_mode: str | None = None,
-            swap_live: bool = True, swap_dataset: bool = True) -> Renderer:
+def install(
+    mode: str = "stable_envs",
+    size: int = 224,
+    device: str = "cuda",
+    target_mode: str = "offscreen",
+    dataset_target_mode: str | None = None,
+    swap_live: bool = True,
+    swap_dataset: bool = True,
+) -> Renderer:
     """Monkeypatch the three pixel sources. Returns the renderer, for call counting."""
     import stable_worldmodel.world.world as swm_world
     from stable_worldmodel.envs.dmcontrol.dmcontrol import DMControlWrapper
 
-    r = Renderer(size=size, mode=mode, device=device, target_mode=target_mode,
-                 dataset_target_mode=dataset_target_mode)
+    r = Renderer(size=size, mode=mode, device=device, target_mode=target_mode, dataset_target_mode=dataset_target_mode)
 
     if swap_live:
+
         def render(self, width=224, height=224, camera_id=None):  # noqa: ARG001 -- caller's signature
             return r.from_live_env(self)
 
@@ -206,13 +223,13 @@ def install(mode: str = "stable_envs", size: int = 224, device: str = "cuda",
             init_state, goal_state, videos = _orig(dataset, episodes_idx, start_steps, goal_offset)
             if "pixels" in init_state:
                 if "qpos" not in init_state:
-                    raise KeyError("the dataset has no qpos column; the stored frames cannot be "
-                                   "regenerated from state and the arms would not be comparable")
-                init_state["pixels"] = r.from_state(init_state["qpos"],
-                                                    init_state.get("target_pos"))
+                    raise KeyError(
+                        "the dataset has no qpos column; the stored frames cannot be "
+                        "regenerated from state and the arms would not be comparable"
+                    )
+                init_state["pixels"] = r.from_state(init_state["qpos"], init_state.get("target_pos"))
             if "goal" in goal_state:
-                goal_state["goal"] = r.from_state(goal_state["goal_qpos"],
-                                                  goal_state.get("goal_target_pos"))
+                goal_state["goal"] = r.from_state(goal_state["goal_qpos"], goal_state.get("goal_target_pos"))
             return init_state, goal_state, videos
 
         swm_world._extract_init_goal = _extract_init_goal

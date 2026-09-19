@@ -26,18 +26,19 @@ Public surface::
 ``stable_envs.interop`` are package imports: they resolve, and they are not advertised in
 ``dir(snv)``. ``Env.sample`` / ``rollout.py`` stay in the package and are not first-class.
 """
+
 from __future__ import annotations
 
 from typing import Any
 
+from . import registry as _registry
 from .__about__ import __version__  # noqa: F401
 from ._config import get_config, set  # noqa: A004,F401
 from .dynamics import Dynamics  # noqa: F401
 from .env import Env, State, StepResult  # noqa: F401
-from .registry import (SWM_IDS, import_errors, list_envs, list_families,  # noqa: F401
-                       make as _make, spec)
+from .registry import SWM_IDS, import_errors, list_envs, list_families, spec  # noqa: F401
+from .registry import make as _make
 from .specs import CompositeSpec, Spec  # noqa: F401
-from . import registry as _registry
 
 # Auto-discovery runs at import: ``import stable_envs`` gives you a populated registry and
 # ``snv.PushT``, and a family whose optional dependency is missing costs that family alone
@@ -91,7 +92,8 @@ def __getattr__(name: str) -> Any:
     raise AttributeError(
         f"module 'stable_envs' has no attribute {name!r}. Environments are looked up by their class "
         f"name — snv.list_envs() shows the {len(_registry.REGISTRY)} registered; "
-        f"snv.import_errors() shows the families whose optional dependency is missing.")
+        f"snv.import_errors() shows the families whose optional dependency is missing."
+    )
 
 
 def __dir__() -> list[str]:
@@ -106,6 +108,20 @@ def __dir__() -> list[str]:
     return sorted({*__all__, *_registry.REGISTRY})
 
 
-__all__ = ["Env", "State", "StepResult", "Spec", "CompositeSpec", "Dynamics", "make", "spec",
-           "list_envs", "list_families", "import_errors", "set", "get_config", "SWM_IDS",
-           "__version__"]
+__all__ = [
+    "Env",
+    "State",
+    "StepResult",
+    "Spec",
+    "CompositeSpec",
+    "Dynamics",
+    "make",
+    "spec",
+    "list_envs",
+    "list_families",
+    "import_errors",
+    "set",
+    "get_config",
+    "SWM_IDS",
+    "__version__",
+]

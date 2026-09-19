@@ -104,6 +104,7 @@ checkerboard floor with reflectance, a headlight plus shadow mapping, and a pers
 camera at an oblique position. There is no world-to-pixel map a polygon rasterizer can use. See
 ``docs/research/classic_control.md`` §6.
 """
+
 from __future__ import annotations
 
 import math
@@ -136,8 +137,7 @@ def _poly(cv, verts, color, bidx, kmax, win=None) -> None:
 def _circ(cv, cx, cy, r, color, bidx, gfx) -> None:
     """``aacircle`` + ``filled_circle``. The fill is the disc's own offset stencil, so it costs its
     own pixels and needs no window: every disc in this family is under 45 px across."""
-    G.circle(cv.use(color), cx, cy, r, None, None, bidx, gfx.hw(r), gfx.stencil(r), True,
-             disc=gfx.disc(r))
+    G.circle(cv.use(color), cx, cy, r, None, None, bidx, gfx.hw(r), gfx.stencil(r), True, disc=gfx.disc(r))
 
 
 def _row(cv, y: int, color) -> None:
@@ -158,8 +158,7 @@ def _box(H: int, W: int, y0, y1, x0, x1, m: int = 2):
     The margin is slack for the truncation that turns a float coordinate into a Sint16 one, where a
     vertex sitting on an integer can land either side of it. It costs rows, never pixels.
     """
-    return (max(0, int(y0) - m), min(H, int(y1) + 1 + m),
-            max(0, int(x0) - m), min(W, int(x1) + 1 + m))
+    return (max(0, int(y0) - m), min(H, int(y1) + 1 + m), max(0, int(x0) - m), min(W, int(x1) + 1 + m))
 
 
 class _Classic(Env):
@@ -228,7 +227,7 @@ class _Classic(Env):
         self._step_graph_error = ""
         self._disc_tables = None
 
-    def set_state(self, states, style=None) -> "_Classic":
+    def set_state(self, states, style=None) -> _Classic:
         """As the base class, and put the velocities the compact state does not carry back at rest.
 
         The alternative — keeping whatever the env was doing before — would make ``set_state(s)`` depend
@@ -245,9 +244,10 @@ class _Classic(Env):
         """``(B, len(sim_state_names))`` float64 — the full dynamical state, velocities included."""
         return self._sim
 
-    def set_sim_state(self, v) -> "_Classic":
-        self._sim.copy_(torch.as_tensor(v, device=self.device, dtype=torch.float64
-                                        ).reshape(self.B, self._sim.shape[1]))
+    def set_sim_state(self, v) -> _Classic:
+        self._sim.copy_(
+            torch.as_tensor(v, device=self.device, dtype=torch.float64).reshape(self.B, self._sim.shape[1])
+        )
         self._state.copy_(self._sim.index_select(1, self._cols).to(torch.float32))
         return self
 
@@ -284,31 +284,36 @@ class _Classic(Env):
             # this family's claim is near-bit-exactness against a float64 reference and a float32
             # State would make ``transition`` a lower-precision simulator. ``pack`` still writes the
             # unchanged float32 row, so no digest and no frozen corpus moves.
-            cls.state_layout = tuple(((nm,), 1, col.get(i), torch.float64)
-                                     for i, nm in enumerate(cls.sim_state_names))
+            cls.state_layout = tuple(((nm,), 1, col.get(i), torch.float64) for i, nm in enumerate(cls.sim_state_names))
             cls._check_state_layout_is_complete()
 
     @classmethod
     def _check_state_layout_is_complete(cls) -> None:
         """At CLASS CREATION: the derived layout covers the packed row and names every variable once.
 
-``state_layout``, ``_hidden_state`` and ``_live_state`` are three views of one generated
-        fact, and this is where the generation is checked — once, for every class that will ever
-        exist, rather than on every ``step``. A cell that declared four ``sim_state_names`` and a
-        ``render_from_sim`` pointing at a two-column packed row would fail to IMPORT rather than
-        report zeros at run time.
+        ``state_layout``, ``_hidden_state`` and ``_live_state`` are three views of one generated
+                fact, and this is where the generation is checked — once, for every class that will ever
+                exist, rather than on every ``step``. A cell that declared four ``sim_state_names`` and a
+                ``render_from_sim`` pointing at a two-column packed row would fail to IMPORT rather than
+                report zeros at run time.
         """
         drawn = tuple(cls.render_from_sim)
         if len(set(drawn)) != len(drawn) or any(i >= len(cls.sim_state_names) for i in drawn):
-            raise TypeError(f"{cls.__name__}.render_from_sim={drawn} must index distinct entries of "
-                            f"sim_state_names={cls.sim_state_names}")
+            raise TypeError(
+                f"{cls.__name__}.render_from_sim={drawn} must index distinct entries of "
+                f"sim_state_names={cls.sim_state_names}"
+            )
         if len(drawn) != int(cls.state_dim):
-            raise TypeError(f"{cls.__name__}: render_from_sim names {len(drawn)} of the "
-                            f"{cls.state_dim} packed column(s); every column of the frozen row "
-                            f"belongs to exactly one dynamical variable")
+            raise TypeError(
+                f"{cls.__name__}: render_from_sim names {len(drawn)} of the "
+                f"{cls.state_dim} packed column(s); every column of the frozen row "
+                f"belongs to exactly one dynamical variable"
+            )
         if len(set(cls.sim_state_names)) != len(cls.sim_state_names):
-            raise TypeError(f"{cls.__name__}.sim_state_names={cls.sim_state_names} has a duplicate; "
-                            f"they become the public state's keys and must be distinct")
+            raise TypeError(
+                f"{cls.__name__}.sim_state_names={cls.sim_state_names} has a duplicate; "
+                f"they become the public state's keys and must be distinct"
+            )
 
     def _sim_columns(self, drawn: bool) -> dict:
         """The live float64 columns of ``_sim``, split by whether the packed row carries them.
@@ -319,8 +324,11 @@ class _Classic(Env):
         """
         want = set(self.render_from_sim)
         n = self._live_rows
-        return {(nm,): self._sim[:n, i:i + 1].clone()
-                for i, nm in enumerate(self.sim_state_names) if (i in want) == drawn}
+        return {
+            (nm,): self._sim[:n, i : i + 1].clone()
+            for i, nm in enumerate(self.sim_state_names)
+            if (i in want) == drawn
+        }
 
     def _hidden_state(self) -> dict:
         """The velocities: dynamical variables the packed row does not carry (offset ``None``)."""
@@ -353,9 +361,11 @@ class _Classic(Env):
         ``unroll`` equal repeated ``transition`` for any number of steps.
         """
         n = int(sim.shape[0])
-        return TensorDict({nm: sim[:, i:i + 1].clone()
-                           for i, nm in enumerate(self.sim_state_names)},
-                          batch_size=[n], device=self.device)
+        return TensorDict(
+            {nm: sim[:, i : i + 1].clone() for i, nm in enumerate(self.sim_state_names)},
+            batch_size=[n],
+            device=self.device,
+        )
 
     def _sim_from_state(self, state) -> torch.Tensor:
         """A :data:`State` (or packed rows) -> the ``(n, sim_dim)`` float64 vector ``_dynamics`` takes.
@@ -367,18 +377,18 @@ class _Classic(Env):
         """
         names = self.sim_state_names
         if not isinstance(state, TensorDict):
-            rows = check_states(self, state, f"{type(self).__name__}.transition"
-                                ).reshape(-1, self.state_dim)
+            rows = check_states(self, state, f"{type(self).__name__}.transition").reshape(-1, self.state_dim)
             sim = torch.zeros(rows.shape[0], len(names), device=self.device, dtype=torch.float64)
             sim[:, self._cols] = rows.to(torch.float64)
             return sim
         n = int(state.batch_size[0]) if state.batch_size else 1
         try:
-            cols = [torch.as_tensor(state[nm], device=self.device,
-                                    dtype=torch.float64).reshape(n, 1) for nm in names]
+            cols = [torch.as_tensor(state[nm], device=self.device, dtype=torch.float64).reshape(n, 1) for nm in names]
         except KeyError as e:
-            raise KeyError(f"{type(self).__name__}.transition: the state is missing {e.args[0]!r}. "
-                           f"This env's state keys are {list(names)}.") from e
+            raise KeyError(
+                f"{type(self).__name__}.transition: the state is missing {e.args[0]!r}. "
+                f"This env's state keys are {list(names)}."
+            ) from e
         return torch.cat(cols, dim=1)
 
     @torch.no_grad()
@@ -390,8 +400,7 @@ class _Classic(Env):
         and this call may not write them.
         """
         sim = self._sim_from_state(state)
-        act = torch.as_tensor(action, device=self.device, dtype=torch.float32
-                              ).reshape(-1, self.action_dim)
+        act = torch.as_tensor(action, device=self.device, dtype=torch.float32).reshape(-1, self.action_dim)
         return self._state_td(self._dynamics(sim, act))
 
     @torch.no_grad()
@@ -406,13 +415,13 @@ class _Classic(Env):
         measured one (contract §5). Apply the published predicate to the returned states.
         """
         self._check_open("step")
-        self._act.copy_(torch.as_tensor(action, device=self.device, dtype=torch.float32
-                                        ).reshape(self.B, self.action_dim))
+        self._act.copy_(
+            torch.as_tensor(action, device=self.device, dtype=torch.float32).reshape(self.B, self.action_dim)
+        )
         replayed = False
         if self.use_step_graph and self.device.type == "cuda":
             if self._step_graph is None and not self._step_graph_error:
-                self._step_graph, self._step_graph_error = _stepgraph.capture(
-                    self._advance, (self._sim, self._state))
+                self._step_graph, self._step_graph_error = _stepgraph.capture(self._advance, (self._sim, self._state))
                 if self._step_graph is None:
                     self.use_step_graph = False
             if self._step_graph is not None:
@@ -426,7 +435,7 @@ class _Classic(Env):
         # the property round-trips the packed row through ``unpack`` (a copy, a TensorDict, then two
         # splices) to arrive back where ``_sim`` already is. On the cheapest step in the repository
         # that doubled the cost of ``step``: measured 0.063 ms against 0.037 ms at 64 environments.
-        return self._step_result(self._state_td(self._sim[:self._live_rows]))
+        return self._step_result(self._state_td(self._sim[: self._live_rows]))
 
     def _close(self) -> None:
         """Drop the captured step graph. ``Env.close`` calls this once and is idempotent."""
@@ -435,8 +444,15 @@ class _Classic(Env):
     # --- contract ---------------------------------------------------------------------------
 
     @torch.no_grad()
-    def render(self, states=None, size: int | None = None, supersample: int | None = None,
-               variation: dict | None = None, style=None, out=None) -> torch.Tensor:
+    def render(
+        self,
+        states=None,
+        size: int | None = None,
+        supersample: int | None = None,
+        variation: dict | None = None,
+        style=None,
+        out=None,
+    ) -> torch.Tensor:
         """``(...,state_dim)`` -> ``(...,H,W,3)`` uint8 on device, for arbitrary leading dims."""
         H, W = self.native
         want = int(self.size if size is None else size)
@@ -445,14 +461,15 @@ class _Classic(Env):
                 f"{type(self).__name__} renders at its reference's native {H}x{W} and nothing else "
                 f"(got size={want}). The official renderer hardcodes every primitive in pixels, so a "
                 f"resized frame has no reference to be exact against; resample the output if you want "
-                f"one.")
+                f"one."
+            )
         if supersample not in (None, 1):
             raise ValueError(
                 f"{type(self).__name__}: supersample={supersample} is not available. gfxdraw's "
                 f"geometry is integer and its anti-aliasing is Wu weights, not coverage — "
-                f"supersampling would average a picture the reference never draws.")
-        s = self._state if states is None else torch.as_tensor(states, device=self.device,
-                                                               dtype=torch.float32)
+                f"supersampling would average a picture the reference never draws."
+            )
+        s = self._state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
         lead = tuple(s.shape[:-1])
         # float64 from here on: the frame depends on trunc() of the vertex coordinates, so float32
         # arithmetic lands on the wrong integer whenever a vertex falls within ~1e-5 of one.
@@ -462,6 +479,7 @@ class _Classic(Env):
         o = None if out is None else out.reshape(-1, H, W, 3)
         if self._use_fused():
             from ..render import gfxdraw_classic as F
+
             img = F.render_classic(self._ops(s, sty).finish(), out=o)
         else:
             cv = _StyleCanvas(self.gfx, n, sty["background.color"])
@@ -487,6 +505,7 @@ class _Classic(Env):
         if not (self.fused_capable and self.use_fused_render and self.device.type == "cuda"):
             return False
         from ..render import gfxdraw_classic as F
+
         return F.HAVE_TRITON
 
     def _draw(self, cv, s, sty) -> None:
@@ -511,6 +530,7 @@ class _Classic(Env):
 
     def _ops_begin(self, s, sty):
         from ..render import gfxdraw_classic as F
+
         H, W = self.native
         ops = F.Ops(s.shape[0], H, W, self.device)
         if self._disc_tables is None and self.disc_radii:
@@ -545,6 +565,7 @@ class _Classic(Env):
     def reference_env(cls, size: int | None = None):
         """The official gymnasium env. ``size`` is ignored — the canvas is not configurable."""
         import gymnasium
+
         return gymnasium.make(cls.reference_id, render_mode="rgb_array").unwrapped
 
     @classmethod
@@ -602,11 +623,11 @@ class CartPole(_Classic):
     default_size = 600
     reference_id = "CartPole-v1"
 
-    SCALE = 600 / 4.8                      # screen_width / (2 * x_threshold)
-    POLELEN = 125.0                        # scale * 2 * length
+    SCALE = 600 / 4.8  # screen_width / (2 * x_threshold)
+    POLELEN = 125.0  # scale * 2 * length
     CARTY = 100.0
     AXLEOFF = 30.0 / 4.0
-    AXLE_R = 5                             # int(polewidth / 2)
+    AXLE_R = 5  # int(polewidth / 2)
 
     #: Physics, from ``CartPoleEnv.__init__``. Written as the same expressions, not as their decimal
     #: values: ``masspole + masscart`` and ``0.1 * 0.5`` are float64 results and a transcribed literal
@@ -619,14 +640,18 @@ class CartPole(_Classic):
     MASSCART = 1.0
     MASSPOLE = 0.1
     TOTAL_MASS = MASSPOLE + MASSCART
-    LENGTH = 0.5                           # actually half the pole's length
+    LENGTH = 0.5  # actually half the pole's length
     POLEMASS_LENGTH = MASSPOLE * LENGTH
     FORCE_MAG = 10.0
     TAU = 0.02
     #: theta is unwrapped in the reference (the pole is allowed to go round), so 'abs' and not 'angle';
     #: measuring it wrapped would quietly forgive a full-turn disagreement.
-    step_reference_groups = (("x", (0,), "abs"), ("x_dot", (1,), "abs"),
-                             ("theta", (2,), "abs"), ("theta_dot", (3,), "abs"))
+    step_reference_groups = (
+        ("x", (0,), "abs"),
+        ("x_dot", (1,), "abs"),
+        ("theta", (2,), "abs"),
+        ("theta_dot", (3,), "abs"),
+    )
 
     def _dynamics(self, s, a):
         """``CartPoleEnv.step``, term for term, in the same association order, in float64.
@@ -636,25 +661,30 @@ class CartPole(_Classic):
         visibly different trajectory, which is the sort of difference that survives every eyeball test.
         """
         x, x_dot, th, th_dot = s[:, 0], s[:, 1], s[:, 2], s[:, 3]
-        force = torch.where(self._discrete(a) == 1,
-                            torch.full_like(x, self.FORCE_MAG), torch.full_like(x, -self.FORCE_MAG))
+        force = torch.where(
+            self._discrete(a) == 1, torch.full_like(x, self.FORCE_MAG), torch.full_like(x, -self.FORCE_MAG)
+        )
         costheta, sintheta = torch.cos(th), torch.sin(th)
         temp = (force + self.POLEMASS_LENGTH * th_dot.square() * sintheta) / self.TOTAL_MASS
         thetaacc = (self.GRAVITY * sintheta - costheta * temp) / (
-            self.LENGTH * (4.0 / 3.0 - self.MASSPOLE * costheta.square() / self.TOTAL_MASS))
+            self.LENGTH * (4.0 / 3.0 - self.MASSPOLE * costheta.square() / self.TOTAL_MASS)
+        )
         xacc = temp - self.POLEMASS_LENGTH * thetaacc * costheta / self.TOTAL_MASS
-        return torch.stack([x + self.TAU * x_dot, x_dot + self.TAU * xacc,
-                            th + self.TAU * th_dot, th_dot + self.TAU * thetaacc], 1)
+        return torch.stack(
+            [x + self.TAU * x_dot, x_dot + self.TAU * xacc, th + self.TAU * th_dot, th_dot + self.TAU * thetaacc], 1
+        )
 
     def make_variation_space(self) -> Dict:
-        return Dict({
-            "cart": Dict(self._colors(color=(0, 0, 0))),
-            "pole": Dict(self._colors(color=(202, 152, 101))),
-            "axle": Dict(self._colors(color=(129, 132, 203))),
-            "track": Dict(self._colors(color=(0, 0, 0))),
-            "background": Dict(self._colors(color=WHITE)),
-            "rendering": self._aa_space(),
-        })
+        return Dict(
+            {
+                "cart": Dict(self._colors(color=(0, 0, 0))),
+                "pole": Dict(self._colors(color=(202, 152, 101))),
+                "axle": Dict(self._colors(color=(129, 132, 203))),
+                "track": Dict(self._colors(color=(0, 0, 0))),
+                "background": Dict(self._colors(color=WHITE)),
+                "rendering": self._aa_space(),
+            }
+        )
 
     #: Row windows. ``x`` moves the cart along the track and ``theta`` only rotates the pole, so the
     #: ROW extent of all three primitives is a constant of the environment for every state: the cart
@@ -662,8 +692,10 @@ class CartPole(_Classic):
     #: whatever its angle. The column extent is not bounded -- the cart really does visit every
     #: column -- so these windows are rows only.
     WIN_CART = (85, 115)
-    WIN_POLE = (int(CARTY + AXLEOFF - math.hypot(5.0, POLELEN - 5.0)),
-                int(CARTY + AXLEOFF + math.hypot(5.0, POLELEN - 5.0)))
+    WIN_POLE = (
+        int(CARTY + AXLEOFF - math.hypot(5.0, POLELEN - 5.0)),
+        int(CARTY + AXLEOFF + math.hypot(5.0, POLELEN - 5.0)),
+    )
     #: Per EDGE, because a 50x30 quad and a 10x125 one both have two long sides and two short ones,
     #: and the Wu pass costs its bound in steps whether the edge is that long or not.
     KMAX_CART = (32, 52, 32, 52)
@@ -678,15 +710,15 @@ class CartPole(_Classic):
 
         ctr = torch.stack([cartx, carty], -1).view(B, 1, 2)
         cart = g.verts([(-25.0, -15.0), (-25.0, 15.0), (25.0, 15.0), (25.0, -15.0)]).view(1, 4, 2) + ctr
-        _poly(cv, cart, sty["cart.color"], bi, self.KMAX_CART,
-              _box(H, W, *self.WIN_CART, 0, W - 1))
+        _poly(cv, cart, sty["cart.color"], bi, self.KMAX_CART, _box(H, W, *self.WIN_CART, 0, W - 1))
 
-        ploc = g.verts([(-5.0, -5.0), (-5.0, self.POLELEN - 5.0),
-                        (5.0, self.POLELEN - 5.0), (5.0, -5.0)]).view(1, 4, 2).expand(B, 4, 2)
-        pole = G.rotate(ploc, (-s[:, 1]).view(B, 1)) + torch.stack(
-            [cartx, carty + self.AXLEOFF], -1).view(B, 1, 2)
-        _poly(cv, pole, sty["pole.color"], bi, self.KMAX_POLE,
-              _box(H, W, *self.WIN_POLE, 0, W - 1))
+        ploc = (
+            g.verts([(-5.0, -5.0), (-5.0, self.POLELEN - 5.0), (5.0, self.POLELEN - 5.0), (5.0, -5.0)])
+            .view(1, 4, 2)
+            .expand(B, 4, 2)
+        )
+        pole = G.rotate(ploc, (-s[:, 1]).view(B, 1)) + torch.stack([cartx, carty + self.AXLEOFF], -1).view(B, 1, 2)
+        _poly(cv, pole, sty["pole.color"], bi, self.KMAX_POLE, _box(H, W, *self.WIN_POLE, 0, W - 1))
 
         cxi = torch.trunc(cartx).to(torch.int64)
         cyi = torch.full_like(cxi, int(self.CARTY + self.AXLEOFF))
@@ -704,16 +736,21 @@ class CartPole(_Classic):
         cartx = s[:, 0] * self.SCALE + 300.0
         carty = torch.full_like(cartx, self.CARTY)
         ctr = torch.stack([cartx, carty], -1).view(B, 1, 2)
-        ops.polygon(g.verts([(-25.0, -15.0), (-25.0, 15.0), (25.0, 15.0),
-                             (25.0, -15.0)]).view(1, 4, 2) + ctr, sty["cart.color"])
-        ploc = g.verts([(-5.0, -5.0), (-5.0, self.POLELEN - 5.0),
-                        (5.0, self.POLELEN - 5.0), (5.0, -5.0)]).view(1, 4, 2).expand(B, 4, 2)
-        ops.polygon(G.rotate(ploc, (-s[:, 1]).view(B, 1))
-                    + torch.stack([cartx, carty + self.AXLEOFF], -1).view(B, 1, 2),
-                    sty["pole.color"])
+        ops.polygon(
+            g.verts([(-25.0, -15.0), (-25.0, 15.0), (25.0, 15.0), (25.0, -15.0)]).view(1, 4, 2) + ctr,
+            sty["cart.color"],
+        )
+        ploc = (
+            g.verts([(-5.0, -5.0), (-5.0, self.POLELEN - 5.0), (5.0, self.POLELEN - 5.0), (5.0, -5.0)])
+            .view(1, 4, 2)
+            .expand(B, 4, 2)
+        )
+        ops.polygon(
+            G.rotate(ploc, (-s[:, 1]).view(B, 1)) + torch.stack([cartx, carty + self.AXLEOFF], -1).view(B, 1, 2),
+            sty["pole.color"],
+        )
         cxi = torch.trunc(cartx).to(torch.int64)
-        ops.disc(cxi, torch.full_like(cxi, int(self.CARTY + self.AXLEOFF)), self.AXLE_R,
-                 sty["axle.color"])
+        ops.disc(cxi, torch.full_like(cxi, int(self.CARTY + self.AXLEOFF)), self.AXLE_R, sty["axle.color"])
         ops.hline(int(self.CARTY), sty["track.color"])
         return ops
 
@@ -726,8 +763,7 @@ class CartPole(_Classic):
         engages. The termination bounds are the states the env actually visits.
         """
         rng = rng or self.rng
-        return np.stack([rng.uniform(-2.4, 2.4, batch),
-                         rng.uniform(-0.2095, 0.2095, batch)], 1).astype(np.float32)
+        return np.stack([rng.uniform(-2.4, 2.4, batch), rng.uniform(-0.2095, 0.2095, batch)], 1).astype(np.float32)
 
     def step(self, action) -> TensorDict:
         """One control step. ``action`` is ``(B,1)``: **0 push left, 1 push right**, floored.
@@ -780,10 +816,10 @@ class Pendulum(_Classic):
 
     SCALE = 500 / 4.4
     OFF = 250
-    ROD_R = 11                              # int(0.2 * scale / 2)
-    AXLE_R = 5                              # int(0.05 * scale)
-    MAX_SPRITE = 113                        # int(scale * max_torque / 2), max_torque = 2
-    WIN = 113                               # sprite window: every size fits rows/cols 194..306
+    ROD_R = 11  # int(0.2 * scale / 2)
+    AXLE_R = 5  # int(0.05 * scale)
+    MAX_SPRITE = 113  # int(scale * max_torque / 2), max_torque = 2
+    WIN = 113  # sprite window: every size fits rows/cols 194..306
 
     #: Physics, from ``PendulumEnv.__init__``. ``g`` is 10.0 here, not 9.8: Pendulum is the one member
     #: of the family that does not use Earth gravity, and it is a constructor default rather than a
@@ -792,14 +828,13 @@ class Pendulum(_Classic):
     #: ``last_u``, which the reference draws — so ``render_from_sim`` is (0, 2) and not (0, 1).
     sim_state_names = ("theta", "theta_dot", "torque")
     render_from_sim = (0, 2)
-    n_actions = 0                           # continuous: one torque in [-2, 2]
+    n_actions = 0  # continuous: one torque in [-2, 2]
     action_low, action_high = -2.0, 2.0
     G, M, L, DT = 10.0, 1.0, 1.0, 0.05
     MAX_SPEED, MAX_TORQUE = 8, 2.0
     #: theta is NOT wrapped by the reference — it accumulates, and the render is periodic in it — so
     #: the error is measured unwrapped. Wrapping it here would forgive a whole-turn disagreement.
-    step_reference_groups = (("theta", (0,), "abs"), ("theta_dot", (1,), "abs"),
-                             ("torque", (2,), "abs"))
+    step_reference_groups = (("theta", (0,), "abs"), ("theta_dot", (1,), "abs"), ("torque", (2,), "abs"))
 
     def _dynamics(self, s, a):
         """``PendulumEnv.step``, in float64 — except for one term, which the reference computes in
@@ -812,8 +847,8 @@ class Pendulum(_Classic):
         the margin this env is claiming.
         """
         th, thdot = s[:, 0], s[:, 1]
-        u = a[:, 0].clamp(-self.MAX_TORQUE, self.MAX_TORQUE)                  # float32, as the ref
-        drive = (3.0 / (self.M * self.L ** 2) * u).to(torch.float64)          # float32 mul, then widen
+        u = a[:, 0].clamp(-self.MAX_TORQUE, self.MAX_TORQUE)  # float32, as the ref
+        drive = (3.0 / (self.M * self.L**2) * u).to(torch.float64)  # float32 mul, then widen
         newthdot = thdot + (3 * self.G / (2 * self.L) * torch.sin(th) + drive) * self.DT
         newthdot = newthdot.clamp(-self.MAX_SPEED, self.MAX_SPEED)
         return torch.stack([th + newthdot * self.DT, newthdot, u.to(torch.float64)], 1)
@@ -823,19 +858,21 @@ class Pendulum(_Classic):
         self._sprite = _torque_sprites(self.device)
 
     def make_variation_space(self) -> Dict:
-        return Dict({
-            "rod": Dict(self._colors(color=(204, 77, 77))),
-            "axle": Dict(self._colors(color=(0, 0, 0))),
-            "background": Dict(self._colors(color=WHITE)),
-            "rendering": self._aa_space(),
-        })
+        return Dict(
+            {
+                "rod": Dict(self._colors(color=(204, 77, 77))),
+                "axle": Dict(self._colors(color=(0, 0, 0))),
+                "background": Dict(self._colors(color=WHITE)),
+                "rendering": self._aa_space(),
+            }
+        )
 
     #: Windows, both axes: the rod pivots about the centre, so it reaches ``hypot(SCALE, 0.1*SCALE)``
     #: from it at any angle and its far cap is ``SCALE`` from it at any angle. Bounds on a rotation,
     #: so they hold for every state.
     _REACH = math.hypot(SCALE, 0.1 * SCALE)
     WIN_ROD = (int(OFF - _REACH), int(OFF + _REACH))
-    KMAX_ROD = (28, 120, 28, 120)       # the quad starts on its short side
+    KMAX_ROD = (28, 120, 28, 120)  # the quad starts on its short side
 
     def _draw(self, cv, s, sty) -> None:
         g, B = self.gfx, s.shape[0]
@@ -846,16 +883,15 @@ class Pendulum(_Classic):
         ang = (th + math.pi / 2).view(B, 1)
         rod = sty["rod.color"]
 
-        loc = g.verts([(0.0, -rw / 2), (0.0, rw / 2), (rl, rw / 2),
-                       (rl, -rw / 2)]).view(1, 4, 2).expand(B, 4, 2)
-        _poly(cv, G.rotate(loc, ang) + off, rod, bi, self.KMAX_ROD,
-              _box(H, W, *self.WIN_ROD, *self.WIN_ROD))
+        loc = g.verts([(0.0, -rw / 2), (0.0, rw / 2), (rl, rw / 2), (rl, -rw / 2)]).view(1, 4, 2).expand(B, 4, 2)
+        _poly(cv, G.rotate(loc, ang) + off, rod, bi, self.KMAX_ROD, _box(H, W, *self.WIN_ROD, *self.WIN_ROD))
 
         ctr = torch.full((B,), off, dtype=torch.int64, device=self.device)
         _circ(cv, ctr, ctr, self.ROD_R, rod, bi, g)
         end = G.rotate(g.verts([(rl, 0.0)]).view(1, 1, 2).expand(B, 1, 2), ang)[:, 0, :] + off
-        _circ(cv, torch.trunc(end[:, 0]).to(torch.int64), torch.trunc(end[:, 1]).to(torch.int64),
-              self.ROD_R, rod, bi, g)
+        _circ(
+            cv, torch.trunc(end[:, 0]).to(torch.int64), torch.trunc(end[:, 1]).to(torch.int64), self.ROD_R, rod, bi, g
+        )
 
         self._blit_torque(cv, s[:, 1])
         _circ(cv, ctr, ctr, self.AXLE_R, sty["axle.color"], bi, g)
@@ -871,18 +907,15 @@ class Pendulum(_Classic):
         rl, rw = 1.0 * self.SCALE, 0.2 * self.SCALE
         ang = (th + math.pi / 2).view(B, 1)
         rod = sty["rod.color"]
-        loc = g.verts([(0.0, -rw / 2), (0.0, rw / 2), (rl, rw / 2),
-                       (rl, -rw / 2)]).view(1, 4, 2).expand(B, 4, 2)
+        loc = g.verts([(0.0, -rw / 2), (0.0, rw / 2), (rl, rw / 2), (rl, -rw / 2)]).view(1, 4, 2).expand(B, 4, 2)
         ops.polygon(G.rotate(loc, ang) + off, rod)
         ctr = torch.full((B,), off, dtype=torch.int64, device=self.device)
         ops.disc(ctr, ctr, self.ROD_R, rod)
         end = G.rotate(g.verts([(rl, 0.0)]).view(1, 1, 2).expand(B, 1, 2), ang)[:, 0, :] + off
-        ops.disc(torch.trunc(end[:, 0]).to(torch.int64), torch.trunc(end[:, 1]).to(torch.int64),
-                 self.ROD_R, rod)
+        ops.disc(torch.trunc(end[:, 0]).to(torch.int64), torch.trunc(end[:, 1]).to(torch.int64), self.ROD_R, rod)
         u = s[:, 1]
         n = torch.trunc(self.SCALE * u.abs() / 2).to(torch.int64).clamp(0, self.MAX_SPRITE)
-        ops.blit(250 - self.WIN // 2, self.WIN, (u > 0).to(torch.int64), n,
-                 sty["background.color"])
+        ops.blit(250 - self.WIN // 2, self.WIN, (u > 0).to(torch.int64), n, sty["background.color"])
         ops.disc(ctr, ctr, self.AXLE_R, sty["axle.color"])
         return ops
 
@@ -898,25 +931,26 @@ class Pendulum(_Classic):
         flip = (u > 0).to(torch.int64)
         w = self.WIN
         i = torch.arange(w, device=self.device)
-        off = (w // 2) - torch.div(n, 2, rounding_mode="floor")          # 56 - n//2
-        ly = (i.view(1, -1) - off.view(-1, 1))                            # (B,w)
+        off = (w // 2) - torch.div(n, 2, rounding_mode="floor")  # 56 - n//2
+        ly = i.view(1, -1) - off.view(-1, 1)  # (B,w)
         lx = ly
-        valid = ((ly >= 0) & (ly < n.view(-1, 1))).view(B, w, 1) & \
-                ((lx >= 0) & (lx < n.view(-1, 1))).view(B, 1, w)
-        rgba = self._sprite[flip.view(B, 1, 1), n.view(B, 1, 1),
-                            ly.clamp(0, self.MAX_SPRITE - 1).view(B, w, 1),
-                            lx.clamp(0, self.MAX_SPRITE - 1).view(B, 1, w)].to(torch.int32)
+        valid = ((ly >= 0) & (ly < n.view(-1, 1))).view(B, w, 1) & ((lx >= 0) & (lx < n.view(-1, 1))).view(B, 1, w)
+        rgba = self._sprite[
+            flip.view(B, 1, 1),
+            n.view(B, 1, 1),
+            ly.clamp(0, self.MAX_SPRITE - 1).view(B, w, 1),
+            lx.clamp(0, self.MAX_SPRITE - 1).view(B, 1, w),
+        ].to(torch.int32)
         y0 = 250 - w // 2
-        dst = cv.buf[:, :, y0:y0 + w, y0:y0 + w].to(torch.int32)          # (3,B,w,w)
+        dst = cv.buf[:, :, y0 : y0 + w, y0 : y0 + w].to(torch.int32)  # (3,B,w,w)
         a = torch.where(valid, rgba[..., 3], torch.zeros_like(rgba[..., 3])).unsqueeze(0)
         src = rgba[..., :3].permute(3, 0, 1, 2)
-        cv.buf[:, :, y0:y0 + w, y0:y0 + w] = G.blit_over(dst, src, a).to(torch.uint8)
+        cv.buf[:, :, y0 : y0 + w, y0 : y0 + w] = G.blit_over(dst, src, a).to(torch.uint8)
 
     def sample_states(self, batch: int, rng: np.random.Generator | None = None) -> np.ndarray:
         """``theta`` over a full turn (the render is periodic in it), ``torque`` over the action space."""
         rng = rng or self.rng
-        return np.stack([rng.uniform(-np.pi, np.pi, batch),
-                         rng.uniform(-2.0, 2.0, batch)], 1).astype(np.float32)
+        return np.stack([rng.uniform(-np.pi, np.pi, batch), rng.uniform(-2.0, 2.0, batch)], 1).astype(np.float32)
 
     def step(self, action) -> TensorDict:
         """One control step. ``action`` is ``(B,1)``: **a continuous torque, clipped to [-2, 2]** —
@@ -967,7 +1001,7 @@ class Acrobot(_Classic):
 
     SCALE = 500 / 4.4
     OFF = 250.0
-    JOINT_R = 11                            # int(0.1 * scale)
+    JOINT_R = 11  # int(0.1 * scale)
 
     #: Physics, from ``AcrobotEnv``. ``book_or_nips == 'book'``, which selects the second of the two
     #: ``ddtheta2`` expressions in ``_dsdt`` — they differ by a real term and the paper version is
@@ -992,11 +1026,16 @@ class Acrobot(_Classic):
         #: device copy in the hot path, and under CUDA-graph capture it recorded NOTHING: the graph
         #: came back empty and every replay was a silent no-op. Constants belong in ``__init__``.
         self._torque = torch.tensor(self.AVAIL_TORQUE, dtype=torch.float64, device=self.device)
+
     #: theta1 and theta2 ARE wrapped to [-pi, pi] by the reference, so a hair's difference either side
     #: of pi is a 2*pi difference in the stored number and nothing at all in the physics. Measuring
     #: them wrapped is what separates "the integrator diverged" from "the representation flipped".
-    step_reference_groups = (("theta1", (0,), "angle"), ("theta2", (1,), "angle"),
-                             ("dtheta1", (2,), "abs"), ("dtheta2", (3,), "abs"))
+    step_reference_groups = (
+        ("theta1", (0,), "angle"),
+        ("theta2", (1,), "angle"),
+        ("dtheta1", (2,), "abs"),
+        ("dtheta2", (3,), "abs"),
+    )
 
     def _dsdt(self, y):
         """``AcrobotEnv._dsdt``: ``(B,5)`` (theta1, theta2, dtheta1, dtheta2, torque) -> its derivative.
@@ -1005,19 +1044,21 @@ class Acrobot(_Classic):
         every one of ``m1*lc1**2``, ``2*l1*lc2`` and ``m2*lc2*g`` is a float64 product whose decimal
         form is not the same double.
         """
-        m1, m2, l1, lc1, lc2, i1, i2, g = (self.M1, self.M2, self.L1, self.LC1, self.LC2,
-                                           self.I1, self.I2, self.G)
+        m1, m2, l1, lc1, lc2, i1, i2, g = (self.M1, self.M2, self.L1, self.LC1, self.LC2, self.I1, self.I2, self.G)
         theta1, theta2, dtheta1, dtheta2, a = (y[:, 0], y[:, 1], y[:, 2], y[:, 3], y[:, 4])
         cos2, sin2 = torch.cos(theta2), torch.sin(theta2)
-        d1 = m1 * lc1 ** 2 + m2 * (l1 ** 2 + lc2 ** 2 + 2 * l1 * lc2 * cos2) + i1 + i2
-        d2 = m2 * (lc2 ** 2 + l1 * lc2 * cos2) + i2
+        d1 = m1 * lc1**2 + m2 * (l1**2 + lc2**2 + 2 * l1 * lc2 * cos2) + i1 + i2
+        d2 = m2 * (lc2**2 + l1 * lc2 * cos2) + i2
         phi2 = m2 * lc2 * g * torch.cos(theta1 + theta2 - math.pi / 2.0)
-        phi1 = (-m2 * l1 * lc2 * dtheta2.square() * sin2
-                - 2 * m2 * l1 * lc2 * dtheta2 * dtheta1 * sin2
-                + (m1 * lc1 + m2 * l1) * g * torch.cos(theta1 - math.pi / 2)
-                + phi2)
-        ddtheta2 = ((a + d2 / d1 * phi1 - m2 * l1 * lc2 * dtheta1.square() * sin2 - phi2)
-                    / (m2 * lc2 ** 2 + i2 - d2 ** 2 / d1))
+        phi1 = (
+            -m2 * l1 * lc2 * dtheta2.square() * sin2
+            - 2 * m2 * l1 * lc2 * dtheta2 * dtheta1 * sin2
+            + (m1 * lc1 + m2 * l1) * g * torch.cos(theta1 - math.pi / 2)
+            + phi2
+        )
+        ddtheta2 = (a + d2 / d1 * phi1 - m2 * l1 * lc2 * dtheta1.square() * sin2 - phi2) / (
+            m2 * lc2**2 + i2 - d2**2 / d1
+        )
         ddtheta1 = -(d2 * ddtheta2 + phi1) / d1
         return torch.stack([dtheta1, dtheta2, ddtheta1, ddtheta2, torch.zeros_like(a)], 1)
 
@@ -1047,28 +1088,34 @@ class Acrobot(_Classic):
         k3 = self._dsdt(y0 + dt2 * k2)
         k4 = self._dsdt(y0 + dt * k3)
         ns = y0 + dt / 6.0 * (k1 + 2 * k2 + 2 * k3 + k4)
-        return torch.stack([self._wrap(ns[:, 0], -math.pi, math.pi),
-                            self._wrap(ns[:, 1], -math.pi, math.pi),
-                            ns[:, 2].clamp(-self.MAX_VEL_1, self.MAX_VEL_1),
-                            ns[:, 3].clamp(-self.MAX_VEL_2, self.MAX_VEL_2)], 1)
+        return torch.stack(
+            [
+                self._wrap(ns[:, 0], -math.pi, math.pi),
+                self._wrap(ns[:, 1], -math.pi, math.pi),
+                ns[:, 2].clamp(-self.MAX_VEL_1, self.MAX_VEL_1),
+                ns[:, 3].clamp(-self.MAX_VEL_2, self.MAX_VEL_2),
+            ],
+            1,
+        )
 
     def make_variation_space(self) -> Dict:
-        return Dict({
-            "link": Dict(self._colors(color=(0, 204, 204))),
-            "joint": Dict(self._colors(color=(204, 204, 0))),
-            "ground": Dict(self._colors(color=(0, 0, 0))),
-            "background": Dict(self._colors(color=WHITE)),
-            "rendering": self._aa_space(),
-        })
+        return Dict(
+            {
+                "link": Dict(self._colors(color=(0, 204, 204))),
+                "joint": Dict(self._colors(color=(204, 204, 0))),
+                "ground": Dict(self._colors(color=(0, 0, 0))),
+                "background": Dict(self._colors(color=WHITE)),
+                "rendering": self._aa_space(),
+            }
+        )
 
     #: Windows, per LINK, both axes. The first joint is pinned at the centre and the second is one
     #: link length from it in some direction, so ``|centre - OFF| <= i * SCALE`` for link ``i``
     #: whatever the angles are; a link then reaches ``hypot(SCALE, 0.1*SCALE)`` further. Both bounds
     #: hold for every state because they are bounds on a sine and a cosine.
     _REACH = math.hypot(SCALE, 0.1 * SCALE)
-    WIN_LINK = ((int(OFF - _REACH), int(OFF + _REACH)),
-                (int(OFF - SCALE - _REACH), int(OFF + SCALE + _REACH)))
-    KMAX_LINK = (28, 120, 28, 120)      # the quad starts on its short side
+    WIN_LINK = ((int(OFF - _REACH), int(OFF + _REACH)), (int(OFF - SCALE - _REACH), int(OFF + SCALE + _REACH)))
+    KMAX_LINK = (28, 120, 28, 120)  # the quad starts on its short side
 
     def _draw(self, cv, s, sty) -> None:
         g, B = self.gfx, s.shape[0]
@@ -1081,15 +1128,29 @@ class Acrobot(_Classic):
 
         jx = [torch.zeros_like(t1), torch.sin(t1) * sc]
         jy = [torch.zeros_like(t1), -torch.cos(t1) * sc]
-        loc = g.verts([(0.0, -0.1 * sc), (0.0, 0.1 * sc), (sc, 0.1 * sc),
-                       (sc, -0.1 * sc)]).view(1, 4, 2).expand(B, 4, 2)
+        loc = (
+            g.verts([(0.0, -0.1 * sc), (0.0, 0.1 * sc), (sc, 0.1 * sc), (sc, -0.1 * sc)]).view(1, 4, 2).expand(B, 4, 2)
+        )
         lc, jc = sty["link.color"], sty["joint.color"]
         for i, th in enumerate([t1 - math.pi / 2, t1 + t2 - math.pi / 2]):
             ctr = torch.stack([jx[i] + off, jy[i] + off], -1).view(B, 1, 2)
-            _poly(cv, G.rotate(loc, th.view(B, 1)) + ctr, lc, bi, self.KMAX_LINK,
-                  _box(H, W, *self.WIN_LINK[i], *self.WIN_LINK[i]))
-            _circ(cv, torch.trunc(jx[i] + off).to(torch.int64),
-                  torch.trunc(jy[i] + off).to(torch.int64), self.JOINT_R, jc, bi, g)
+            _poly(
+                cv,
+                G.rotate(loc, th.view(B, 1)) + ctr,
+                lc,
+                bi,
+                self.KMAX_LINK,
+                _box(H, W, *self.WIN_LINK[i], *self.WIN_LINK[i]),
+            )
+            _circ(
+                cv,
+                torch.trunc(jx[i] + off).to(torch.int64),
+                torch.trunc(jy[i] + off).to(torch.int64),
+                self.JOINT_R,
+                jc,
+                bi,
+                g,
+            )
 
     disc_radii = (JOINT_R,)
     fused_capable = True
@@ -1102,14 +1163,16 @@ class Acrobot(_Classic):
         ops.hline(int(1 * sc + off), sty["ground.color"])
         jx = [torch.zeros_like(t1), torch.sin(t1) * sc]
         jy = [torch.zeros_like(t1), -torch.cos(t1) * sc]
-        loc = g.verts([(0.0, -0.1 * sc), (0.0, 0.1 * sc), (sc, 0.1 * sc),
-                       (sc, -0.1 * sc)]).view(1, 4, 2).expand(B, 4, 2)
+        loc = (
+            g.verts([(0.0, -0.1 * sc), (0.0, 0.1 * sc), (sc, 0.1 * sc), (sc, -0.1 * sc)]).view(1, 4, 2).expand(B, 4, 2)
+        )
         lc, jc = sty["link.color"], sty["joint.color"]
         for i, th in enumerate([t1 - math.pi / 2, t1 + t2 - math.pi / 2]):
             ctr = torch.stack([jx[i] + off, jy[i] + off], -1).view(B, 1, 2)
             ops.polygon(G.rotate(loc, th.view(B, 1)) + ctr, lc)
-            ops.disc(torch.trunc(jx[i] + off).to(torch.int64),
-                     torch.trunc(jy[i] + off).to(torch.int64), self.JOINT_R, jc)
+            ops.disc(
+                torch.trunc(jx[i] + off).to(torch.int64), torch.trunc(jy[i] + off).to(torch.int64), self.JOINT_R, jc
+            )
         return ops
 
     def sample_states(self, batch: int, rng: np.random.Generator | None = None) -> np.ndarray:
@@ -1164,7 +1227,7 @@ class MountainCar(_Classic):
     #: a different column and the frame is off by ~35,800 px over 256 states -- entirely on edges, so
     #: interior parity stays at 100% and only an all-pixel diff catches it.
     SCALE = 600 / (0.6 - (-1.2))
-    WHEEL_R = 8                             # int(carheight / 2.5)
+    WHEEL_R = 8  # int(carheight / 2.5)
     #: where the flag stands. The ONLY thing that differs between the two mountain cars, and it is not
     #: in either render() -- see MountainCarContinuous below.
     GOALP = 0.5
@@ -1173,7 +1236,7 @@ class MountainCar(_Classic):
     #: velocity moves the car and never reaches the screen.
     sim_state_names = ("position", "velocity")
     render_from_sim = (0,)
-    n_actions = 3                           # 0 push left, 1 do nothing, 2 push right
+    n_actions = 3  # 0 push left, 1 do nothing, 2 push right
     action_low, action_high = 0.0, 3.0
     FORCE = 0.001
     GRAVITY = 0.0025
@@ -1204,14 +1267,16 @@ class MountainCar(_Classic):
         self.flagy2 = self.flagy1 + 50
 
     def make_variation_space(self) -> Dict:
-        return Dict({
-            "car": Dict(self._colors(color=(0, 0, 0))),
-            "wheel": Dict(self._colors(color=(128, 128, 128))),
-            "terrain": Dict(self._colors(color=(0, 0, 0))),
-            "flag": Dict(self._colors(color=(204, 204, 0), pole_color=(0, 0, 0))),
-            "background": Dict(self._colors(color=WHITE)),
-            "rendering": self._aa_space(),
-        })
+        return Dict(
+            {
+                "car": Dict(self._colors(color=(0, 0, 0))),
+                "wheel": Dict(self._colors(color=(128, 128, 128))),
+                "terrain": Dict(self._colors(color=(0, 0, 0))),
+                "flag": Dict(self._colors(color=(204, 204, 0), pole_color=(0, 0, 0))),
+                "background": Dict(self._colors(color=WHITE)),
+                "rendering": self._aa_space(),
+            }
+        )
 
     def _terrain_base(self, bg, terrain) -> torch.Tensor:
         """``(B,400,600,3)`` static layer, one bake per DISTINCT (background, terrain) pair.
@@ -1232,14 +1297,19 @@ class MountainCar(_Classic):
         # PLANAR, to match the canvas: the layer is the starting surface, so handing it over as
         # ``(3,H,W)`` makes the per-frame cost a broadcast copy when the batch shares one appearance
         # (which is every default render) instead of a transpose of the whole batch.
-        imgs = torch.stack([torch.as_tensor(_bake_terrain(tuple(int(c) for c in u[:3]),
-                                                          tuple(int(c) for c in u[3:])),
-                                            dtype=torch.uint8, device=self.device).permute(2, 0, 1)
-                            for u in uniq])                                       # (U,3,H,W)
+        imgs = torch.stack(
+            [
+                torch.as_tensor(
+                    _bake_terrain(tuple(int(c) for c in u[:3]), tuple(int(c) for c in u[3:])),
+                    dtype=torch.uint8,
+                    device=self.device,
+                ).permute(2, 0, 1)
+                for u in uniq
+            ]
+        )  # (U,3,H,W)
         if len(uniq) == 1:
-            return imgs[0].unsqueeze(1)                                           # (3,1,H,W)
-        return imgs.index_select(0, torch.as_tensor(
-            inv, device=self.device).reshape(-1)).transpose(0, 1)                 # (3,B,H,W)
+            return imgs[0].unsqueeze(1)  # (3,1,H,W)
+        return imgs.index_select(0, torch.as_tensor(inv, device=self.device).reshape(-1)).transpose(0, 1)  # (3,B,H,W)
 
     #: The car's ROW window. ``position`` moves the car along the whole track, so
     #: its columns are unbounded -- but its row is ``10 + (sin(3p)*0.45 + 0.55) * SCALE``, which is
@@ -1258,29 +1328,48 @@ class MountainCar(_Classic):
         cv.fill_from(self._terrain_base(sty["background.color"], sty["terrain.color"]))
 
         pos = s[:, 0]
-        ang = torch.cos(3 * pos).view(B, 1)       # the source rotates by cos(3*pos) IN RADIANS
-        ctr = torch.stack([(pos - self.MINP) * self.SCALE,
-                           10.0 + (torch.sin(3 * pos) * 0.45 + 0.55) * self.SCALE], -1).view(B, 1, 2)
-        loc = g.verts([(-20.0, 0.0), (-20.0, 20.0), (20.0, 20.0),
-                       (20.0, 0.0)]).view(1, 4, 2).expand(B, 4, 2)
-        _poly(cv, G.rotate(loc, ang) + ctr, sty["car.color"], bi, self.KMAX_CAR,
-              _box(H, W, *self.WIN_CAR, 0, W - 1))
+        ang = torch.cos(3 * pos).view(B, 1)  # the source rotates by cos(3*pos) IN RADIANS
+        ctr = torch.stack(
+            [(pos - self.MINP) * self.SCALE, 10.0 + (torch.sin(3 * pos) * 0.45 + 0.55) * self.SCALE], -1
+        ).view(B, 1, 2)
+        loc = g.verts([(-20.0, 0.0), (-20.0, 20.0), (20.0, 20.0), (20.0, 0.0)]).view(1, 4, 2).expand(B, 4, 2)
+        _poly(cv, G.rotate(loc, ang) + ctr, sty["car.color"], bi, self.KMAX_CAR, _box(H, W, *self.WIN_CAR, 0, W - 1))
 
         wl = g.verts([(10.0, 0.0), (-10.0, 0.0)]).view(1, 2, 2).expand(B, 2, 2)
         wr = G.rotate(wl, ang) + ctr
         wc = sty["wheel.color"]
         for j in range(2):
-            _circ(cv, torch.trunc(wr[:, j, 0]).to(torch.int64),
-                  torch.trunc(wr[:, j, 1]).to(torch.int64), self.WHEEL_R, wc, bi, g)
+            _circ(
+                cv,
+                torch.trunc(wr[:, j, 0]).to(torch.int64),
+                torch.trunc(wr[:, j, 1]).to(torch.int64),
+                self.WHEEL_R,
+                wc,
+                bi,
+                g,
+            )
 
         # gfxdraw.vline, the flag pole
-        cv.buf[:, :, self.flagy1:self.flagy2 + 1, self.flagx] = \
-            _u8(sty["flag.pole_color"]).t().unsqueeze(-1)
-        tri = g.verts([(float(self.flagx), float(self.flagy2)),
-                       (float(self.flagx), float(self.flagy2 - 10)),
-                       (float(self.flagx + 25), float(self.flagy2 - 5))]).view(1, 3, 2).expand(B, 3, 2)
-        _poly(cv, tri, sty["flag.color"], bi, self.KMAX_FLAG,
-              _box(H, W, self.flagy2 - 10, self.flagy2, self.flagx, self.flagx + 25))
+        cv.buf[:, :, self.flagy1 : self.flagy2 + 1, self.flagx] = _u8(sty["flag.pole_color"]).t().unsqueeze(-1)
+        tri = (
+            g.verts(
+                [
+                    (float(self.flagx), float(self.flagy2)),
+                    (float(self.flagx), float(self.flagy2 - 10)),
+                    (float(self.flagx + 25), float(self.flagy2 - 5)),
+                ]
+            )
+            .view(1, 3, 2)
+            .expand(B, 3, 2)
+        )
+        _poly(
+            cv,
+            tri,
+            sty["flag.color"],
+            bi,
+            self.KMAX_FLAG,
+            _box(H, W, self.flagy2 - 10, self.flagy2, self.flagx, self.flagx + 25),
+        )
 
     disc_radii = (WHEEL_R,)
     fused_capable = True
@@ -1291,22 +1380,31 @@ class MountainCar(_Classic):
         ops.plate = self._terrain_base(sty["background.color"], sty["terrain.color"])
         pos = s[:, 0]
         ang = torch.cos(3 * pos).view(B, 1)
-        ctr = torch.stack([(pos - self.MINP) * self.SCALE,
-                           10.0 + (torch.sin(3 * pos) * 0.45 + 0.55) * self.SCALE], -1).view(B, 1, 2)
-        loc = g.verts([(-20.0, 0.0), (-20.0, 20.0), (20.0, 20.0),
-                       (20.0, 0.0)]).view(1, 4, 2).expand(B, 4, 2)
+        ctr = torch.stack(
+            [(pos - self.MINP) * self.SCALE, 10.0 + (torch.sin(3 * pos) * 0.45 + 0.55) * self.SCALE], -1
+        ).view(B, 1, 2)
+        loc = g.verts([(-20.0, 0.0), (-20.0, 20.0), (20.0, 20.0), (20.0, 0.0)]).view(1, 4, 2).expand(B, 4, 2)
         ops.polygon(G.rotate(loc, ang) + ctr, sty["car.color"])
         wl = g.verts([(10.0, 0.0), (-10.0, 0.0)]).view(1, 2, 2).expand(B, 2, 2)
         wr = G.rotate(wl, ang) + ctr
         wc = sty["wheel.color"]
         for j in range(2):
-            ops.disc(torch.trunc(wr[:, j, 0]).to(torch.int64),
-                     torch.trunc(wr[:, j, 1]).to(torch.int64), self.WHEEL_R, wc)
+            ops.disc(
+                torch.trunc(wr[:, j, 0]).to(torch.int64), torch.trunc(wr[:, j, 1]).to(torch.int64), self.WHEEL_R, wc
+            )
         ops.vline(self.flagx, self.flagy1, self.flagy2, sty["flag.pole_color"])
-        ops.polygon(g.verts([(float(self.flagx), float(self.flagy2)),
-                             (float(self.flagx), float(self.flagy2 - 10)),
-                             (float(self.flagx + 25), float(self.flagy2 - 5))]
-                            ).view(1, 3, 2).expand(B, 3, 2), sty["flag.color"])
+        ops.polygon(
+            g.verts(
+                [
+                    (float(self.flagx), float(self.flagy2)),
+                    (float(self.flagx), float(self.flagy2 - 10)),
+                    (float(self.flagx + 25), float(self.flagy2 - 5)),
+                ]
+            )
+            .view(1, 3, 2)
+            .expand(B, 3, 2),
+            sty["flag.color"],
+        )
         return ops
 
     def sample_states(self, batch: int, rng: np.random.Generator | None = None) -> np.ndarray:
@@ -1374,9 +1472,9 @@ class MountainCarContinuous(MountainCar):
         float64 state can differ in the last bits; every step from a state the reference has already
         stored is bit-identical.
         """
-        force = a[:, 0].clamp(self.action_low, self.action_high)               # float32
+        force = a[:, 0].clamp(self.action_low, self.action_high)  # float32
         pos, vel = s[:, 0].to(torch.float32), s[:, 1].to(torch.float32)
-        cos = torch.cos((3 * pos).to(torch.float64))                           # float64 cos, f32 arg
+        cos = torch.cos((3 * pos).to(torch.float64))  # float64 cos, f32 arg
         vel = vel + (force * self.POWER - (self.GRAVITY * cos).to(torch.float32))
         vel = vel.clamp(-self.MAX_SPEED, self.MAX_SPEED)
         pos = (pos + vel).clamp(self.MINP, self.MAXP)
@@ -1410,18 +1508,20 @@ def _bake_terrain(bg, terrain) -> np.ndarray:
     if hit is not None:
         return hit
     import os
+
     os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
     import pygame
+
     pygame.init()
     surf = pygame.Surface((600, 400))
     surf.fill(tuple(bg))
     sc = MountainCar.SCALE
     xs = np.linspace(MountainCar.MINP, MountainCar.MAXP, 100)
     ys = np.sin(3 * xs) * 0.45 + 0.55
-    pygame.draw.aalines(surf, points=list(zip((xs - MountainCar.MINP) * sc, ys * sc)),
-                        closed=False, color=tuple(terrain))
-    return _TERRAIN_CACHE.put(key, np.transpose(np.array(pygame.surfarray.pixels3d(surf)),
-                                                (1, 0, 2)).copy())
+    pygame.draw.aalines(
+        surf, points=list(zip((xs - MountainCar.MINP) * sc, ys * sc)), closed=False, color=tuple(terrain)
+    )
+    return _TERRAIN_CACHE.put(key, np.transpose(np.array(pygame.surfarray.pixels3d(surf)), (1, 0, 2)).copy())
 
 
 def _torque_sprites(device) -> torch.Tensor:
@@ -1434,11 +1534,13 @@ def _torque_sprites(device) -> torch.Tensor:
     key = str(device)
     if key not in _SPRITE_CACHE:
         import os
+
         os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
         from os import path
 
-        import pygame
         import gymnasium.envs.classic_control as cc
+        import pygame
+
         pygame.init()
         img = pygame.image.load(path.join(path.dirname(cc.__file__), "assets/clockwise.png"))
         m = Pendulum.MAX_SPRITE
@@ -1446,9 +1548,7 @@ def _torque_sprites(device) -> torch.Tensor:
         for n in range(1, m + 1):
             for fl in (0, 1):
                 spr = pygame.transform.flip(pygame.transform.smoothscale(img, (n, n)), bool(fl), True)
-                buf[fl, n, :n, :n, :3] = np.transpose(np.array(pygame.surfarray.pixels3d(spr)),
-                                                      (1, 0, 2))
-                buf[fl, n, :n, :n, 3] = np.transpose(np.array(pygame.surfarray.pixels_alpha(spr)),
-                                                     (1, 0))
+                buf[fl, n, :n, :n, :3] = np.transpose(np.array(pygame.surfarray.pixels3d(spr)), (1, 0, 2))
+                buf[fl, n, :n, :n, 3] = np.transpose(np.array(pygame.surfarray.pixels_alpha(spr)), (1, 0))
         _SPRITE_CACHE[key] = torch.as_tensor(buf, device=device)
     return _SPRITE_CACHE[key]

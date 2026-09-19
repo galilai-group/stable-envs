@@ -116,6 +116,7 @@ official figure is step+render because procgen exposes no render-only entry poin
 sprite — so the render state folds them together. The frame is unaffected by construction; the
 *dynamics* are not, and this module claims only the frame.
 """
+
 from __future__ import annotations
 
 import importlib.util
@@ -129,28 +130,32 @@ from ..registry import register
 from ..spaces import Box, Dict, Discrete
 
 _SPEC = importlib.util.find_spec("procgen")
-if _SPEC is None or _SPEC.origin is None:                      # optional dependency: lose this env only
-    raise ImportError("procgen is not installed; `pip install procgen` provides both the assets this "
-                      "renderer packs and the reference env parity is measured against")
+if _SPEC is None or _SPEC.origin is None:  # optional dependency: lose this env only
+    raise ImportError(
+        "procgen is not installed; `pip install procgen` provides both the assets this "
+        "renderer packs and the reference env parity is measured against"
+    )
 ASSET_ROOT = os.path.join(os.path.dirname(_SPEC.origin), "data", "assets")
 if not os.path.isdir(ASSET_ROOT):
     raise ImportError(f"procgen is importable but its asset tree is missing at {ASSET_ROOT}")
 
-try:                                       # triton is optional; the torch path is the readable one
+try:  # triton is optional; the torch path is the readable one
     import triton
     import triton.language as tl
+
     HAVE_TRITON = True
-except Exception:                          # noqa: BLE001
+except Exception:  # noqa: BLE001
     HAVE_TRITON = False
 
 F = np.float32
-PI_F = F(3.14159265358979323846264338327950288)          # cpp-utils.h's `const float PI`
-DEG2RAD = 0.017453292519943295769                        # QTransform::rotate's own constant
-RENDER_EPS = 0.02                                        # basic-abstract-game.cpp
-P_SPACE, P_WALL = 100, 51                                # object-ids.h
+PI_F = F(3.14159265358979323846264338327950288)  # cpp-utils.h's `const float PI`
+DEG2RAD = 0.017453292519943295769  # QTransform::rotate's own constant
+RENDER_EPS = 0.02  # basic-abstract-game.cpp
+P_SPACE, P_WALL = 100, 51  # object-ids.h
 
 
 # ===================================================================== Qt, in closed form
+
 
 def _qround(v):
     """``qRound(qreal)``: ``int(v + 0.5)`` for v >= 0, ``int(v - 0.5)`` below."""
@@ -184,10 +189,12 @@ def _screen_rect(x, y, dx, dy, g, eps=0.0):
     """``get_screen_rect``. ``g`` is ``(unit, view_dim, x_off, y_off)``; every operand is float32."""
     unit, view_dim, x_off, y_off = g
     e = F(eps)
-    return (float(F(F(F(x) - e) * unit - x_off)),
-            float(F(F(F(view_dim) - F(y) - e) * unit + y_off)),
-            float(F(F(F(dx) + F(2) * e) * unit)),
-            float(F(F(F(dy) + F(2) * e) * unit)))
+    return (
+        float(F(F(F(x) - e) * unit - x_off)),
+        float(F(F(F(view_dim) - F(y) - e) * unit + y_off)),
+        float(F(F(F(dx) + F(2) * e) * unit)),
+        float(F(F(F(dy) + F(2) * e) * unit)),
+    )
 
 
 def _premultiply(rgba: np.ndarray) -> np.ndarray:
@@ -226,21 +233,32 @@ def _qt_sincos(deg: np.ndarray):
     """
     deg = np.asarray(deg, np.float64)
     rad = deg * DEG2RAD
-    sina = np.where(deg == 90.0, 1.0, np.where(deg == -270.0, 1.0,
-                    np.where((deg == 270.0) | (deg == -90.0), -1.0,
-                             np.where(deg == 180.0, 0.0, np.sin(rad)))))
-    cosa = np.where((deg == 90.0) | (deg == -270.0) | (deg == 270.0) | (deg == -90.0), 0.0,
-                    np.where(deg == 180.0, -1.0, np.cos(rad)))
+    sina = np.where(
+        deg == 90.0,
+        1.0,
+        np.where(
+            deg == -270.0,
+            1.0,
+            np.where((deg == 270.0) | (deg == -90.0), -1.0, np.where(deg == 180.0, 0.0, np.sin(rad))),
+        ),
+    )
+    cosa = np.where(
+        (deg == 90.0) | (deg == -270.0) | (deg == 270.0) | (deg == -90.0),
+        0.0,
+        np.where(deg == 180.0, -1.0, np.cos(rad)),
+    )
     return sina, cosa
 
 
 # ===================================================================== per-game description
 
+
 class _EntSlot:
     """One entity the frame can contain. Everything except position is a measured constant."""
 
-    def __init__(self, key, sprite, rx, ry, z, rotated=False, reflect=False, abs_coords=False,
-                 fixed_xy=None, rotation=None):
+    def __init__(
+        self, key, sprite, rx, ry, z, rotated=False, reflect=False, abs_coords=False, fixed_xy=None, rotation=None
+    ):
         self.key, self.sprite = key, sprite
         self.rx, self.ry, self.z = F(rx), F(ry), z
         self.rotated, self.reflect, self.abs_coords = rotated, reflect, abs_coords
@@ -279,127 +297,216 @@ TOPDOWN_SIMPLE_BG = ["topdown_backgrounds/floortiles.png"]
 #: state for any game that uses them — the same call miner's non-square platform backgrounds force.
 #: Kept here rather than in `scratch/procgen/bigfish_env.py` (its only consumer today) because it is
 #: a transcription of `resources.cpp`, not a property of that experiment.
-WATER_BG = [f"water_backgrounds/{n}" for n in
-            ["water1.png", "water2.png", "water3.png", "water4.png",
-             "underwater1.png", "underwater2.png", "underwater3.png"]]
-TOPDOWN_BG = [f"topdown_backgrounds/{n}" for n in
-              ["floortiles.png", "backgrounddetailed1.png", "backgrounddetailed2.png",
-               "backgrounddetailed3.png", "backgrounddetailed4.png", "backgrounddetailed5.png",
-               "backgrounddetailed6.png", "backgrounddetailed7.png", "backgrounddetailed8.png"]]
+WATER_BG = [
+    f"water_backgrounds/{n}"
+    for n in [
+        "water1.png",
+        "water2.png",
+        "water3.png",
+        "water4.png",
+        "underwater1.png",
+        "underwater2.png",
+        "underwater3.png",
+    ]
+]
+TOPDOWN_BG = [
+    f"topdown_backgrounds/{n}"
+    for n in [
+        "floortiles.png",
+        "backgrounddetailed1.png",
+        "backgrounddetailed2.png",
+        "backgrounddetailed3.png",
+        "backgrounddetailed4.png",
+        "backgrounddetailed5.png",
+        "backgrounddetailed6.png",
+        "backgrounddetailed7.png",
+        "backgrounddetailed8.png",
+    ]
+]
 #: `platform_backgrounds` in `resources.cpp` order, then every space background appended -- which is
 #: what `images_load` does at the bottom of the file, and what makes miner's index reach 61.
 PLATFORM_BG = [
-    "platform_backgrounds/alien_bg.png", "platform_backgrounds/another_world_bg.png",
-    "platform_backgrounds/back_cave.png", "platform_backgrounds/caverns.png",
-    "platform_backgrounds/cyberpunk_bg.png", "platform_backgrounds/parallax_forest.png",
-    "platform_backgrounds/scifi_bg.png", "platform_backgrounds/scifi2_bg.png",
-    "platform_backgrounds/living_tissue_bg.png", "platform_backgrounds/airadventurelevel1.png",
-    "platform_backgrounds/airadventurelevel2.png", "platform_backgrounds/airadventurelevel3.png",
-    "platform_backgrounds/airadventurelevel4.png", "platform_backgrounds/cave_background.png",
-    "platform_backgrounds/blue_desert.png", "platform_backgrounds/blue_grass.png",
-    "platform_backgrounds/blue_land.png", "platform_backgrounds/blue_shroom.png",
-    "platform_backgrounds/colored_desert.png", "platform_backgrounds/colored_grass.png",
-    "platform_backgrounds/colored_land.png", "platform_backgrounds/colored_shroom.png",
-    "platform_backgrounds/landscape1.png", "platform_backgrounds/landscape2.png",
-    "platform_backgrounds/landscape3.png", "platform_backgrounds/landscape4.png",
-    "platform_backgrounds/battleback1.png", "platform_backgrounds/battleback2.png",
-    "platform_backgrounds/battleback3.png", "platform_backgrounds/battleback4.png",
-    "platform_backgrounds/battleback5.png", "platform_backgrounds/battleback6.png",
-    "platform_backgrounds/battleback7.png", "platform_backgrounds/battleback8.png",
-    "platform_backgrounds/battleback9.png", "platform_backgrounds/battleback10.png",
+    "platform_backgrounds/alien_bg.png",
+    "platform_backgrounds/another_world_bg.png",
+    "platform_backgrounds/back_cave.png",
+    "platform_backgrounds/caverns.png",
+    "platform_backgrounds/cyberpunk_bg.png",
+    "platform_backgrounds/parallax_forest.png",
+    "platform_backgrounds/scifi_bg.png",
+    "platform_backgrounds/scifi2_bg.png",
+    "platform_backgrounds/living_tissue_bg.png",
+    "platform_backgrounds/airadventurelevel1.png",
+    "platform_backgrounds/airadventurelevel2.png",
+    "platform_backgrounds/airadventurelevel3.png",
+    "platform_backgrounds/airadventurelevel4.png",
+    "platform_backgrounds/cave_background.png",
+    "platform_backgrounds/blue_desert.png",
+    "platform_backgrounds/blue_grass.png",
+    "platform_backgrounds/blue_land.png",
+    "platform_backgrounds/blue_shroom.png",
+    "platform_backgrounds/colored_desert.png",
+    "platform_backgrounds/colored_grass.png",
+    "platform_backgrounds/colored_land.png",
+    "platform_backgrounds/colored_shroom.png",
+    "platform_backgrounds/landscape1.png",
+    "platform_backgrounds/landscape2.png",
+    "platform_backgrounds/landscape3.png",
+    "platform_backgrounds/landscape4.png",
+    "platform_backgrounds/battleback1.png",
+    "platform_backgrounds/battleback2.png",
+    "platform_backgrounds/battleback3.png",
+    "platform_backgrounds/battleback4.png",
+    "platform_backgrounds/battleback5.png",
+    "platform_backgrounds/battleback6.png",
+    "platform_backgrounds/battleback7.png",
+    "platform_backgrounds/battleback8.png",
+    "platform_backgrounds/battleback9.png",
+    "platform_backgrounds/battleback10.png",
     "platform_backgrounds/sunrise.png",
-    "platform_backgrounds_2/beach1.png", "platform_backgrounds_2/beach2.png",
-    "platform_backgrounds_2/beach3.png", "platform_backgrounds_2/beach4.png",
-    "platform_backgrounds_2/fantasy1.png", "platform_backgrounds_2/fantasy2.png",
-    "platform_backgrounds_2/fantasy3.png", "platform_backgrounds_2/fantasy4.png",
-    "platform_backgrounds_2/candy1.png", "platform_backgrounds_2/candy2.png",
-    "platform_backgrounds_2/candy3.png", "platform_backgrounds_2/candy4.png",
-    "space_backgrounds/deep_space_01.png", "space_backgrounds/spacegen_01.png",
-    "space_backgrounds/milky_way_01.png", "space_backgrounds/ez_space_lite_01.png",
-    "space_backgrounds/meyespace_v1_01.png", "space_backgrounds/eye_nebula_01.png",
-    "space_backgrounds/deep_sky_01.png", "space_backgrounds/space_nebula_01.png",
-    "space_backgrounds/Background-1.png", "space_backgrounds/Background-2.png",
-    "space_backgrounds/Background-3.png", "space_backgrounds/Background-4.png",
+    "platform_backgrounds_2/beach1.png",
+    "platform_backgrounds_2/beach2.png",
+    "platform_backgrounds_2/beach3.png",
+    "platform_backgrounds_2/beach4.png",
+    "platform_backgrounds_2/fantasy1.png",
+    "platform_backgrounds_2/fantasy2.png",
+    "platform_backgrounds_2/fantasy3.png",
+    "platform_backgrounds_2/fantasy4.png",
+    "platform_backgrounds_2/candy1.png",
+    "platform_backgrounds_2/candy2.png",
+    "platform_backgrounds_2/candy3.png",
+    "platform_backgrounds_2/candy4.png",
+    "space_backgrounds/deep_space_01.png",
+    "space_backgrounds/spacegen_01.png",
+    "space_backgrounds/milky_way_01.png",
+    "space_backgrounds/ez_space_lite_01.png",
+    "space_backgrounds/meyespace_v1_01.png",
+    "space_backgrounds/eye_nebula_01.png",
+    "space_backgrounds/deep_sky_01.png",
+    "space_backgrounds/space_nebula_01.png",
+    "space_backgrounds/Background-1.png",
+    "space_backgrounds/Background-2.png",
+    "space_backgrounds/Background-3.png",
+    "space_backgrounds/Background-4.png",
     "space_backgrounds/parallax-space-backgound.png",
 ]
 
-_KEY_RY, _RING_RY, _EXIT_RY = _aspect_ry(0.375, 84, 52), _aspect_ry(0.03, 84, 52), \
-    _aspect_ry(0.375, 70, 48)
+_KEY_RY, _RING_RY, _EXIT_RY = _aspect_ry(0.375, 84, 52), _aspect_ry(0.03, 84, 52), _aspect_ry(0.375, 70, 48)
 #: `add_entity(1 - r*(2i + 1.25), r*.75, ...)` with `ring_key_r = 0.03f`, evaluated in float32
-_RING_XY = [(float(F(F(1) - F(0.03) * F(2 * i + 1.25))), float(F(F(0.03) * F(0.75))))
-            for i in range(3)]
+_RING_XY = [(float(F(F(1) - F(0.03) * F(2 * i + 1.25))), float(F(F(0.03) * F(0.75)))) for i in range(3)]
 _RING_ROT = float(PI_F / F(2))
 
 SPECS = {
     "maze": _Spec(
-        "maze", 25, ("space", "wall", "goal"),
-        ["kenney/Ground/Sand/sandCenter.png", "misc_assets/cheese.png",
-         "kenney/Enemies/mouse_move.png"],
+        "maze",
+        25,
+        ("space", "wall", "goal"),
+        ["kenney/Ground/Sand/sandCenter.png", "misc_assets/cheese.png", "kenney/Enemies/mouse_move.png"],
         TOPDOWN_BG,
         [_EntSlot("agent", 2, 0.5, 0.5, z=1, reflect=True)],
-        [-1, 0, 1]),
+        [-1, 0, 1],
+    ),
     "heist": _Spec(
-        "heist", 13, ("space", "wall"),
-        ["kenney/Ground/Dirt/dirtCenter.png", "misc_assets/gemYellow.png",
-         "misc_assets/spaceAstronauts_008.png",
-         "misc_assets/keyBlue.png", "misc_assets/keyGreen.png", "misc_assets/keyRed.png",
-         "misc_assets/lock_blue.png", "misc_assets/lock_green.png", "misc_assets/lock_red.png"],
+        "heist",
+        13,
+        ("space", "wall"),
+        [
+            "kenney/Ground/Dirt/dirtCenter.png",
+            "misc_assets/gemYellow.png",
+            "misc_assets/spaceAstronauts_008.png",
+            "misc_assets/keyBlue.png",
+            "misc_assets/keyGreen.png",
+            "misc_assets/keyRed.png",
+            "misc_assets/lock_blue.png",
+            "misc_assets/lock_green.png",
+            "misc_assets/lock_red.png",
+        ],
         TOPDOWN_BG,
         [_EntSlot(f"lock{i}", 6 + i, 0.5, 0.5, z=0) for i in range(3)]
         + [_EntSlot(f"key{i}", 3 + i, 0.375, _KEY_RY, z=0) for i in range(3)]
-        + [_EntSlot("exit", 1, 0.375, _EXIT_RY, z=0),
-           _EntSlot("agent", 2, 0.375, 0.375, z=1, rotated=True)]
-        + [_EntSlot(f"ring{i}", 3 + i, 0.03, _RING_RY, z=1, rotated=True, abs_coords=True,
-                    fixed_xy=_RING_XY[i], rotation=_RING_ROT) for i in range(3)],
-        [-1, 0]),
+        + [_EntSlot("exit", 1, 0.375, _EXIT_RY, z=0), _EntSlot("agent", 2, 0.375, 0.375, z=1, rotated=True)]
+        + [
+            _EntSlot(
+                f"ring{i}",
+                3 + i,
+                0.03,
+                _RING_RY,
+                z=1,
+                rotated=True,
+                abs_coords=True,
+                fixed_xy=_RING_XY[i],
+                rotation=_RING_ROT,
+            )
+            for i in range(3)
+        ],
+        [-1, 0],
+    ),
     "miner": _Spec(
-        "miner", 20, ("space", "boulder", "diamond", "dirt"),
-        ["misc_assets/robot_greenDrive1.png", "misc_assets/elementStone007.png",
-         "misc_assets/gemBlue.png", "misc_assets/window.png", "misc_assets/dirt.png"],
+        "miner",
+        20,
+        ("space", "boulder", "diamond", "dirt"),
+        [
+            "misc_assets/robot_greenDrive1.png",
+            "misc_assets/elementStone007.png",
+            "misc_assets/gemBlue.png",
+            "misc_assets/window.png",
+            "misc_assets/dirt.png",
+        ],
         PLATFORM_BG,
-        [_EntSlot("exit", 3, 0.5, 0.5, z=-1),
-         _EntSlot("agent", 0, 0.5, 0.5, z=1, reflect=True)],
-        [-1, 1, 2, 4]),
+        [_EntSlot("exit", 3, 0.5, 0.5, z=-1), _EntSlot("agent", 0, 0.5, 0.5, z=1, reflect=True)],
+        [-1, 1, 2, 4],
+    ),
     #: chaser: 13x13 maze (`maze_dim = 13` in HardMode), 3 enemies, 3 large orbs (one per quadrant
     #: with one quadrant losing one, `extra_orb_sign = -1`). The ORB grid value is a fillRect, not a
     #: sprite, so it is a `fills` entry and its class maps to slot -1 in the gather.
     "chaser": _Spec(
-        "chaser", 13, ("space", "wall", "orb"),
-        ["misc_assets/enemyFloating_1b.png",       # 0  PLAYER
-         "misc_assets/yellowCrystal.png",          # 1  LARGE_ORB
-         "misc_assets/enemyWalking_1b.png",        # 2  ENEMY_WEAK   (48x48)
-         "misc_assets/enemySpikey_1b.png",         # 3  ENEMY_EGG
-         "misc_assets/tileStone_slope.png",        # 4  MAZE_WALL
-         "misc_assets/enemyFlying_1.png",          # 5  ENEMY        (64x64)
-         "misc_assets/enemyFlying_2.png",          # 6  ENEMY2       (64x64)
-         "misc_assets/enemyFlying_3.png"],         # 7  ENEMY3       (64x64)
+        "chaser",
+        13,
+        ("space", "wall", "orb"),
+        [
+            "misc_assets/enemyFloating_1b.png",  # 0  PLAYER
+            "misc_assets/yellowCrystal.png",  # 1  LARGE_ORB
+            "misc_assets/enemyWalking_1b.png",  # 2  ENEMY_WEAK   (48x48)
+            "misc_assets/enemySpikey_1b.png",  # 3  ENEMY_EGG
+            "misc_assets/tileStone_slope.png",  # 4  MAZE_WALL
+            "misc_assets/enemyFlying_1.png",  # 5  ENEMY        (64x64)
+            "misc_assets/enemyFlying_2.png",  # 6  ENEMY2       (64x64)
+            "misc_assets/enemyFlying_3.png",
+        ],  # 7  ENEMY3       (64x64)
         TOPDOWN_SIMPLE_BG,
         [_EntSlot(f"orb{i}", 1, 0.4, 0.4, z=0) for i in range(3)]
         + [_EntSlot(f"egg{i}", 3, 0.5, 0.5, z=0) for i in range(3)]
         + [_EntSlot(f"enemy{i}", 5, 0.5, 0.5, z=0) for i in range(3)]
         + [_EntSlot("agent", 0, 0.5, 0.5, z=1)],
         [-1, 4, -1],
-        fills=[(2, (0, 255, 0), 0.3)]),
+        fills=[(2, (0, 255, 0), 0.3)],
+    ),
 }
 #: `image_for_type(ENEMY)` in chaser, as a table over the one shared state dimension it collapses to.
 #: `can_eat_enemies()` gives ENEMY_WEAK; otherwise `rem = (cur_time / 2) % 4` with `3 -> 1`, so the
 #: reachable image ids are {3, 6, 7, 8} and nothing else -- enumerated over 32 (cur_time, eat_time)
 #: pairs in `scratch/procgen/probe14_chaser.py`, 0 unmatched.
-_CHASER_ENEMY_SPRITE = (2, 5, 6, 7)          # atlas slots for image ids 3, 6, 7, 8
+_CHASER_ENEMY_SPRITE = (2, 5, 6, 7)  # atlas slots for image ids 3, 6, 7, 8
 #: procgen grid object id -> render class. miner folds MOVING_BOULDER/MOVING_DIAMOND into their
 #: stationary forms because `image_for_type` gives them the same sprite.
-_CLASS_OF = {"maze": {P_SPACE: 0, P_WALL: 1, 2: 2},
-             "heist": {P_SPACE: 0, P_WALL: 1},
-             "miner": {P_SPACE: 0, 1: 1, 3: 1, 2: 2, 4: 2, 9: 3},
-             # chaser's MAZE_WALL is 5 and its ORB is 1002; MARKER (1001) is a level-generation
-             # scratch value that `game_reset` clears before the first frame, and 5,376 harvested
-             # states hold only {5, 100, 1002} (`scratch/procgen/probe13_recon.py`).
-             "chaser": {P_SPACE: 0, 5: 1, 1002: 2}}
-_PROCGEN_ID = {"maze": [P_SPACE, P_WALL, 2], "heist": [P_SPACE, P_WALL],
-               "miner": [P_SPACE, 1, 2, 9], "chaser": [P_SPACE, 5, 1002]}
+_CLASS_OF = {
+    "maze": {P_SPACE: 0, P_WALL: 1, 2: 2},
+    "heist": {P_SPACE: 0, P_WALL: 1},
+    "miner": {P_SPACE: 0, 1: 1, 3: 1, 2: 2, 4: 2, 9: 3},
+    # chaser's MAZE_WALL is 5 and its ORB is 1002; MARKER (1001) is a level-generation
+    # scratch value that `game_reset` clears before the first frame, and 5,376 harvested
+    # states hold only {5, 100, 1002} (`scratch/procgen/probe13_recon.py`).
+    "chaser": {P_SPACE: 0, 5: 1, 1002: 2},
+}
+_PROCGEN_ID = {
+    "maze": [P_SPACE, P_WALL, 2],
+    "heist": [P_SPACE, P_WALL],
+    "miner": [P_SPACE, 1, 2, 9],
+    "chaser": [P_SPACE, 5, 1002],
+}
 
 
 # ===================================================================== assets
+
 
 def _cache_dir() -> str:
     root = os.environ.get("STABLE_ENVS_CACHE") or os.path.expanduser("~/.cache/stable-envs")
@@ -425,18 +532,20 @@ class _Assets:
             try:
                 z = np.load(path)
                 packed, wh = z["packed"], z["wh"]
-            except Exception:                                   # noqa: BLE001 partial/corrupt cache
+            except Exception:  # noqa: BLE001 partial/corrupt cache
                 packed = None
         if packed is None:
             from PIL import Image
-            imgs = [_premultiply(np.asarray(Image.open(os.path.join(ASSET_ROOT, p))
-                                            .convert("RGBA"), np.uint8).copy())
-                    for p in SPECS[game].sprites]
+
+            imgs = [
+                _premultiply(np.asarray(Image.open(os.path.join(ASSET_ROOT, p)).convert("RGBA"), np.uint8).copy())
+                for p in SPECS[game].sprites
+            ]
             wh = np.array([[im.shape[1], im.shape[0]] for im in imgs], np.int64)
             H, W = int(wh[:, 1].max()), int(wh[:, 0].max())
             packed = np.zeros((len(imgs), H, W, 4), np.uint8)
             for i, im in enumerate(imgs):
-                packed[i, :im.shape[0], :im.shape[1]] = im
+                packed[i, : im.shape[0], : im.shape[1]] = im
             tmp = f"{path}.{os.getpid()}.tmp"
             with open(tmp, "wb") as fh:
                 np.savez_compressed(fh, packed=packed, wh=wh)
@@ -466,10 +575,11 @@ class _Assets:
             try:
                 z = np.load(path)
                 tab, bw, bh = z["tab"], z["bw"], z["bh"]
-            except Exception:                                   # noqa: BLE001 partial/corrupt cache
+            except Exception:  # noqa: BLE001 partial/corrupt cache
                 tab = None
         if tab is None:
             from PIL import Image
+
             mr = _screen_rect(0, d, d, d, g)
             rows_img, bw, bh = [], [], []
             for p in SPECS[game].backgrounds:
@@ -481,20 +591,23 @@ class _Assets:
             bw, bh = np.asarray(bw, np.int64), np.asarray(bh, np.int64)
             tab = np.zeros((len(rows_img), size, int(bw.max()), 3), np.uint8)
             for i, im in enumerate(rows_img):
-                tab[i, :, :im.shape[1]] = im
+                tab[i, :, : im.shape[1]] = im
             tmp = f"{path}.{os.getpid()}.tmp"
             with open(tmp, "wb") as fh:
                 np.savez_compressed(fh, tab=tab, bw=bw, bh=bh)
             os.replace(tmp, path)
-        out = (torch.from_numpy(np.ascontiguousarray(tab).reshape(-1, 3)).to(device),
-               int(tab.shape[2]),
-               torch.from_numpy(np.asarray(bw)).to(device),
-               torch.from_numpy(np.asarray(bh)).to(device))
+        out = (
+            torch.from_numpy(np.ascontiguousarray(tab).reshape(-1, 3)).to(device),
+            int(tab.shape[2]),
+            torch.from_numpy(np.asarray(bw)).to(device),
+            torch.from_numpy(np.asarray(bh)).to(device),
+        )
         cls._bgatlas[key] = out
         return out
 
 
 # ===================================================================== precomputed geometry
+
 
 def _blit_axis(pos, extent, src_extent, size):
     """One axis of ``qt_scale_image``: device index -> source index, as a length-``size`` array.
@@ -522,8 +635,7 @@ def _rot_matrix(rect, deg, sw, sh):
     sina, cosa = (float(np.asarray(v).reshape(-1)[0]) for v in _qt_sincos(np.float64(deg)))
     dx = rx + rw / 2.0 - rw / 2.0 * cosa + rh / 2.0 * sina
     dy = ry + rh / 2.0 - rw / 2.0 * sina - rh / 2.0 * cosa
-    M = np.array([[cosa * (rw / sw), sina * (rw / sw)],
-                  [-sina * (rh / sh), cosa * (rh / sh)]], np.float64)
+    M = np.array([[cosa * (rw / sw), sina * (rw / sw)], [-sina * (rh / sh), cosa * (rh / sh)]], np.float64)
     return M, np.array([dx, dy], np.float64)
 
 
@@ -586,8 +698,10 @@ class _Geom:
             for c in range(xa[0][1], xa[0][2]):
                 k = ncol[c]
                 if k >= K:
-                    raise AssertionError(f"{game}@{size}: device column {c} is covered by more than "
-                                         f"{K} grid cells; the layer count is wrong")
+                    raise AssertionError(
+                        f"{game}@{size}: device column {c} is covered by more than "
+                        f"{K} grid cells; the layer count is wrong"
+                    )
                 cx[c, k] = i
                 for s in range(S):
                     sxi[s, c, k] = xa[s][0][c]
@@ -595,8 +709,10 @@ class _Geom:
             for r in range(ya[0][1], ya[0][2]):
                 k = nrow[r]
                 if k >= K:
-                    raise AssertionError(f"{game}@{size}: device row {r} is covered by more than {K} "
-                                         f"grid cells; the layer count is wrong")
+                    raise AssertionError(
+                        f"{game}@{size}: device row {r} is covered by more than {K} "
+                        f"grid cells; the layer count is wrong"
+                    )
                 cy[r, k] = i
                 for s in range(S):
                     syi[s, r, k] = ya[s][0][r]
@@ -609,14 +725,19 @@ class _Geom:
         for kx in range(K):
             for ky in range(K):
                 mask = (cx[:, kx] >= 0)[None, :] & (cy[:, ky] >= 0)[:, None]
-                cell = (np.clip(cy[:, ky], 0, None)[:, None] * d
-                        + np.clip(cx[:, kx], 0, None)[None, :]).astype(np.int32)
-                idx = ((np.arange(S)[:, None, None] * Hs + syi[:, :, ky][:, :, None]) * Ws
-                       + sxi[:, :, kx][:, None, :]).astype(np.int32)
-                self.layers.append((
-                    torch.from_numpy(cell.reshape(-1)).to(device),
-                    torch.from_numpy(mask.reshape(-1).astype(np.int8)).to(device),
-                    torch.from_numpy(idx.reshape(-1)).to(device)))
+                cell = (np.clip(cy[:, ky], 0, None)[:, None] * d + np.clip(cx[:, kx], 0, None)[None, :]).astype(
+                    np.int32
+                )
+                idx = (
+                    (np.arange(S)[:, None, None] * Hs + syi[:, :, ky][:, :, None]) * Ws + sxi[:, :, kx][:, None, :]
+                ).astype(np.int32)
+                self.layers.append(
+                    (
+                        torch.from_numpy(cell.reshape(-1)).to(device),
+                        torch.from_numpy(mask.reshape(-1).astype(np.int8)).to(device),
+                        torch.from_numpy(idx.reshape(-1)).to(device),
+                    )
+                )
         # `draw_grid_obj` overrides: a solid colour over a centred sub-rect of the cell. There is no
         # source image, so this is a coverage table rather than a gather: `cellof[p]` is the cell
         # whose sub-rect covers device pixel `p`, or -1. One table is enough because a sub-rect at
@@ -628,8 +749,7 @@ class _Geom:
             for i in range(d):
                 for j in range(d):
                     rx, ry, rw, rh = _screen_rect(i, j + 1, 1, 1, self.g, eps=RENDER_EPS)
-                    l, t, w, h = _to_rect(rx + rw * (1 - frac) / 2, ry + rh * (1 - frac) / 2,
-                                          rw * frac, rh * frac)
+                    l, t, w, h = _to_rect(rx + rw * (1 - frac) / 2, ry + rh * (1 - frac) / 2, rw * frac, rh * frac)
                     x0, x1 = max(int(l), 0), min(int(l) + int(w), size)
                     y0, y1 = max(int(t), 0), min(int(t) + int(h), size)
                     if x1 <= x0 or y1 <= y0:
@@ -638,12 +758,16 @@ class _Geom:
                     if (sub >= 0).any():
                         raise AssertionError(
                             f"{game}@{size}: two grid fill sub-rects share a device pixel; the "
-                            f"single-table fill layer is wrong for this game")
+                            f"single-table fill layer is wrong for this game"
+                        )
                     sub[:] = j * d + i
-            self.fills.append((
-                int(cls_idx),
-                torch.from_numpy(cellof.astype(np.int32)).to(device),
-                torch.tensor(rgb, dtype=torch.uint8, device=device)))
+            self.fills.append(
+                (
+                    int(cls_idx),
+                    torch.from_numpy(cellof.astype(np.int32)).to(device),
+                    torch.tensor(rgb, dtype=torch.uint8, device=device),
+                )
+            )
         self.slot_lut = torch.from_numpy(spec.grid_slot.astype(np.int32)).to(device)
         #: the (n_sprite, 2) size table on the device, for the slots whose sprite is state and whose
         #: source extent is therefore per environment. Hoisted out of `_draw_entities` because a
@@ -661,31 +785,41 @@ class _Geom:
         for si, sl in enumerate(spec.ent_slots):
             if sl.fixed_xy is None:
                 continue
-            m, fx, fy = _rot_index_np(self._abs_rect(sl),
-                                      float(F(F(sl.rotation) * F(180)) / PI_F),
-                                      int(wh[sl.sprite, 0]), int(wh[sl.sprite, 1]), size)
-            self.fixed[si] = (torch.from_numpy(np.ascontiguousarray(m)).to(device),
-                              torch.from_numpy(fx.astype(np.int32)).to(device),
-                              torch.from_numpy(fy.astype(np.int32)).to(device))
+            m, fx, fy = _rot_index_np(
+                self._abs_rect(sl),
+                float(F(F(sl.rotation) * F(180)) / PI_F),
+                int(wh[sl.sprite, 0]),
+                int(wh[sl.sprite, 1]),
+                size,
+            )
+            self.fixed[si] = (
+                torch.from_numpy(np.ascontiguousarray(m)).to(device),
+                torch.from_numpy(fx.astype(np.int32)).to(device),
+                torch.from_numpy(fy.astype(np.int32)).to(device),
+            )
 
     @property
     def bg(self):
         """``(flat (N,3) uint8, Wmax, widths (n_bg,), heights (n_bg,))``. Built on first use."""
         if self._bg is None:
-            self._bg = _Assets.bg_atlas(self.spec.name, self.size, self.g, self.spec.dim,
-                                        self.device)
+            self._bg = _Assets.bg_atlas(self.spec.name, self.size, self.g, self.spec.dim, self.device)
         return self._bg
 
     def _abs_rect(self, sl):
         """``get_abs_rect(view_dim*(x-rx), view_dim*(y+ry), 2*view_dim*rx, 2*view_dim*ry)``."""
         unit, view_dim = self.g[0], self.g[1]
         x, y = sl.fixed_xy
-        vals = (F(view_dim * F(F(x) - sl.rx)), F(view_dim * F(F(y) + sl.ry)),
-                F(F(2) * view_dim * sl.rx), F(F(2) * view_dim * sl.ry))
+        vals = (
+            F(view_dim * F(F(x) - sl.rx)),
+            F(view_dim * F(F(y) + sl.ry)),
+            F(F(2) * view_dim * sl.rx),
+            F(F(2) * view_dim * sl.ry),
+        )
         return tuple(float(F(v * unit)) for v in vals)
 
 
 # ===================================================================== batched blit maps
+
 
 def _t_qround(v):
     return torch.where(v >= 0, torch.floor(v + 0.5), torch.ceil(v - 0.5))
@@ -705,18 +839,19 @@ def _axis_map(pos, extent, src_extent, S: int, cols):
     w = _t_qround(pos + extent).long() - l
     lo = l.clamp_min(0)
     hi = torch.minimum(l + w, torch.full_like(l, S))
-    se = (torch.as_tensor(src_extent, device=pos.device, dtype=torch.float64)
-          if not isinstance(src_extent, int) else float(src_extent))
+    se = (
+        torch.as_tensor(src_extent, device=pos.device, dtype=torch.float64)
+        if not isinstance(src_extent, int)
+        else float(src_extent)
+    )
     sf = se / extent
     step = torch.trunc(65536.0 * sf).long()
     base = (torch.ceil((lo.double() + 0.5 - pos) * sf * 65536.0).long() - 1) & 0xFFFFFFFF
-    idx = ((base.view(B, 1) + (cols.view(1, S) - lo.view(B, 1)) * step.view(B, 1))
-           & 0xFFFFFFFF) >> 16
+    idx = ((base.view(B, 1) + (cols.view(1, S) - lo.view(B, 1)) * step.view(B, 1)) & 0xFFFFFFFF) >> 16
     ok = (cols.view(1, S) >= lo.view(B, 1)) & (cols.view(1, S) < hi.view(B, 1))
     if isinstance(src_extent, int):
         return ok, idx.clamp_(0, src_extent - 1)
-    return ok, torch.minimum(idx.clamp_min_(0),
-                             torch.as_tensor(src_extent, device=pos.device).long().view(B, 1) - 1)
+    return ok, torch.minimum(idx.clamp_min_(0), torch.as_tensor(src_extent, device=pos.device).long().view(B, 1) - 1)
 
 
 def _rot_maps(rx, ry, rw, rh, rot, sw, sh, S):
@@ -742,17 +877,14 @@ def _rot_maps(rx, ry, rw, rh, rot, sw, sh, S):
         j = (i + 1) % 4
         ex = (cxs[:, j] - cxs[:, i]).view(B, 1, 1)
         ey = (cys[:, j] - cys[:, i]).view(B, 1, 1)
-        inside &= (ex * (ys - cys[:, i].view(B, 1, 1))
-                   - ey * (xs - cxs[:, i].view(B, 1, 1))) >= 0
+        inside &= (ex * (ys - cys[:, i].view(B, 1, 1)) - ey * (xs - cxs[:, i].view(B, 1, 1))) >= 0
 
     det = m11 * m22 - m12 * m21
     i00, i01, i10, i11 = m22 / det, -m12 / det, -m21 / det, m11 / det
     it0 = -(dx * i00 + dy * i10)
     it1 = -(dx * i01 + dy * i11)
-    fx = (((i10.view(B, 1, 1) * ys + i00.view(B, 1, 1) * xs + it0.view(B, 1, 1)) * 65536)
-          .to(torch.int64) >> 16)
-    fy = (((i11.view(B, 1, 1) * ys + i01.view(B, 1, 1) * xs + it1.view(B, 1, 1)) * 65536)
-          .to(torch.int64) >> 16)
+    fx = ((i10.view(B, 1, 1) * ys + i00.view(B, 1, 1) * xs + it0.view(B, 1, 1)) * 65536).to(torch.int64) >> 16
+    fy = ((i11.view(B, 1, 1) * ys + i01.view(B, 1, 1) * xs + it1.view(B, 1, 1)) * 65536).to(torch.int64) >> 16
     ok = inside & (fx >= 0) & (fx < sw) & (fy >= 0) & (fy < sh)
     return ok, fx.clamp_(0, sw - 1).int(), fy.clamp_(0, sh - 1).int()
 
@@ -766,9 +898,11 @@ def _rot_maps(rx, ry, rw, rh, rot, sw, sh, S):
 # the canvas once and writes it once.
 
 if HAVE_TRITON:
+
     @triton.jit
-    def _blend_kernel(canvas, atlas, idx, mask, gain, n,
-                      SS: tl.constexpr, HAS_GAIN: tl.constexpr, BLOCK: tl.constexpr):
+    def _blend_kernel(
+        canvas, atlas, idx, mask, gain, n, SS: tl.constexpr, HAS_GAIN: tl.constexpr, BLOCK: tl.constexpr
+    ):
         """One primitive's blend, from a per-pixel atlas offset and coverage mask."""
         off = tl.program_id(0) * BLOCK + tl.arange(0, BLOCK)
         ok = off < n
@@ -787,9 +921,21 @@ if HAVE_TRITON:
             tl.store(canvas + off * 3 + c, tl.minimum(s + (t & 255), 255).to(tl.uint8), mask=ok)
 
     @triton.jit
-    def _grid_kernel(canvas, atlas, grid, cell_tab, mask_tab, idx_tab, slot_lut, gain, n,
-                     NCELL: tl.constexpr, SS: tl.constexpr, HAS_GAIN: tl.constexpr,
-                     BLOCK: tl.constexpr):
+    def _grid_kernel(
+        canvas,
+        atlas,
+        grid,
+        cell_tab,
+        mask_tab,
+        idx_tab,
+        slot_lut,
+        gain,
+        n,
+        NCELL: tl.constexpr,
+        SS: tl.constexpr,
+        HAS_GAIN: tl.constexpr,
+        BLOCK: tl.constexpr,
+    ):
         """One of the four grid layers, index computation and blend fused."""
         off = tl.program_id(0) * BLOCK + tl.arange(0, BLOCK)
         ok = off < n
@@ -814,9 +960,11 @@ if HAVE_TRITON:
 
 
 if HAVE_TRITON:
+
     @triton.jit
-    def _fill_kernel(canvas, grid, cell_tab, colour, cls, n,
-                     NCELL: tl.constexpr, SS: tl.constexpr, BLOCK: tl.constexpr):
+    def _fill_kernel(
+        canvas, grid, cell_tab, colour, cls, n, NCELL: tl.constexpr, SS: tl.constexpr, BLOCK: tl.constexpr
+    ):
         """A `draw_grid_obj` solid fill: write ``colour`` where this pixel's cell holds ``cls``.
 
         No blend, and that is exact rather than a shortcut: ``fillRect`` with an opaque ``QColor``
@@ -856,6 +1004,7 @@ def _blend_torch(canvas, atlas, idx, mask, gain):
 
 # ===================================================================== the env
 
+
 class _ProcgenEnv(Env):
     """Shared renderer. Subclasses declare only which game they are and how the state is laid out."""
 
@@ -872,10 +1021,10 @@ class _ProcgenEnv(Env):
     #: enemy-sprite dimension dead.
     pool_warmup = 48
 
-    def __init__(self, num_envs: int = 1, size=None, supersample=1, device="cuda",
-                 backend="auto", seed=0):
-        super().__init__(num_envs=num_envs, size=size, supersample=supersample,
-                         device=device, backend=backend, seed=seed)
+    def __init__(self, num_envs: int = 1, size=None, supersample=1, device="cuda", backend="auto", seed=0):
+        super().__init__(
+            num_envs=num_envs, size=size, supersample=supersample, device=device, backend=backend, seed=seed
+        )
         # Step-9 state (contract §3): the tile grid and the entity slots, which is the division this
         # class is already built around (``n_cells``, ``has_grid``, ``_unpack``) rather than a new
         # one. Per instance because ``n_cells`` is a per-game property, and the ``grid`` key is
@@ -885,7 +1034,8 @@ class _ProcgenEnv(Env):
         # ``state_names``, and inventing a per-game nest would be four vocabularies for one row.
         n = int(self.n_cells)
         self.state_layout = (((("grid",), n, 0),) if n else ()) + (
-            ((("entities",), int(self.state_dim) - n, n),) if int(self.state_dim) > n else ())
+            ((("entities",), int(self.state_dim) - n, n),) if int(self.state_dim) > n else ()
+        )
         self._pool = None
 
     def _close(self) -> None:
@@ -910,7 +1060,7 @@ class _ProcgenEnv(Env):
 
     @property
     def n_cells(self) -> int:
-        return self.spec.dim ** 2 if self.has_grid else 0
+        return self.spec.dim**2 if self.has_grid else 0
 
     def make_variation_space(self) -> Dict:
         """Knobs that are EXACTLY the identity at their defaults.
@@ -923,23 +1073,29 @@ class _ProcgenEnv(Env):
         ``check_colors_apply_exactly`` for the right reason, and declaring a knob that cannot honour
         its own contract is worse than not declaring it.
         """
-        return Dict({
-            "rendering": Dict({"use_backgrounds": Discrete(2, init_value=1)}),
-            "sprite_gain": Box(low=0.0, high=2.0, shape=(3,), dtype=np.float32,
-                               init_value=[1.0, 1.0, 1.0]),
-            "background_gain": Box(low=0.0, high=2.0, shape=(3,), dtype=np.float32,
-                                   init_value=[1.0, 1.0, 1.0]),
-        })
+        return Dict(
+            {
+                "rendering": Dict({"use_backgrounds": Discrete(2, init_value=1)}),
+                "sprite_gain": Box(low=0.0, high=2.0, shape=(3,), dtype=np.float32, init_value=[1.0, 1.0, 1.0]),
+                "background_gain": Box(low=0.0, high=2.0, shape=(3,), dtype=np.float32, init_value=[1.0, 1.0, 1.0]),
+            }
+        )
 
     # ---------------------------------------------------------------- render
 
     def _unpack(self, s: torch.Tensor) -> dict:
         d = self.spec.dim
         n = self.n_cells
-        bg = (s[:, n].round().long().clamp_(0, len(self.spec.backgrounds) - 1) if self.n_bg_state
-              else torch.zeros(s.shape[0], dtype=torch.long, device=s.device))
-        grid = (s[:, :n].round().clamp_(0, len(self.spec.classes) - 1).to(torch.int32).view(-1, d, d)
-                if self.has_grid else None)
+        bg = (
+            s[:, n].round().long().clamp_(0, len(self.spec.backgrounds) - 1)
+            if self.n_bg_state
+            else torch.zeros(s.shape[0], dtype=torch.long, device=s.device)
+        )
+        grid = (
+            s[:, :n].round().clamp_(0, len(self.spec.classes) - 1).to(torch.int32).view(-1, d, d)
+            if self.has_grid
+            else None
+        )
         return {"grid": grid, "bg_index": bg}
 
     def _slot_fields(self, f, sl, B):
@@ -958,34 +1114,32 @@ class _ProcgenEnv(Env):
         return None
 
     @torch.no_grad()
-    def render(self, states=None, size=None, supersample=None, variation=None, style=None,
-               out=None) -> torch.Tensor:
+    def render(self, states=None, size=None, supersample=None, variation=None, style=None, out=None) -> torch.Tensor:
         """``(...,state_dim)`` -> ``(...,S,S,3)`` uint8, in ``game_draw``'s order.
 
         There is no ``scene()``. The frame is a sequence of nearest-neighbour blits from a sprite
         atlas composited with Qt's integer SourceOver, which is exact by construction; pushing that
         through a polygon IR would trade an exact answer for an approximate one.
         """
-        s = self._state if states is None else torch.as_tensor(states, device=self.device,
-                                                               dtype=torch.float32)
+        s = self._state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
         lead = tuple(s.shape[:-1])
         s = s.reshape(-1, self.state_dim)
         B = s.shape[0]
         S = int(size or self.size)
         if supersample not in (None, 1):
-            raise ValueError(f"{type(self).__name__}.render: supersample={supersample} is meaningless "
-                             f"— the frame is a nearest-neighbour gather from a bitmap atlas, so "
-                             f"there is no sub-pixel coverage to estimate.")
+            raise ValueError(
+                f"{type(self).__name__}.render: supersample={supersample} is meaningless "
+                f"— the frame is a nearest-neighbour gather from a bitmap atlas, so "
+                f"there is no sub-pixel coverage to estimate."
+            )
         gm = _Geom.get(self.game, S, self.device)
         atlas, wh, flat = _Assets.atlas(self.game, self.device)
         sty = self.resolve_style(style, variation, batch=B)
         f = self._unpack(s)
 
-        direct = (out is not None and torch.is_tensor(out) and out.dtype == torch.uint8
-                  and out.device == self.device)
+        direct = out is not None and torch.is_tensor(out) and out.dtype == torch.uint8 and out.device == self.device
         # no zero_(): `_draw_background` writes every pixel (the black `fillRect` is `use_bg == 0`)
-        canvas = (out.view(B, S, S, 3) if direct else
-                  torch.empty(B, S, S, 3, dtype=torch.uint8, device=self.device))
+        canvas = out.view(B, S, S, 3) if direct else torch.empty(B, S, S, 3, dtype=torch.uint8, device=self.device)
         use_bg = sty["rendering.use_backgrounds"].reshape(B) > 0.5
         # .contiguous() is load-bearing, not hygiene. `StyleTensor.__getitem__` returns a COLUMN
         # SLICE of the (B, style_dim) buffer, so its row stride is style_dim rather than 3, and the
@@ -1021,8 +1175,8 @@ class _ProcgenEnv(Env):
         mr = _screen_rect(0, d, d, d, gm.g)
         idx = f["bg_index"]
         flat, Wmax, bw, bh = gm.bg
-        bwi, bhi = bw[idx], bh[idx]                                        # (B,) int64
-        bg_ar = (bwi.float() / bhi.float())
+        bwi, bhi = bw[idx], bh[idx]  # (B,) int64
+        bg_ar = bwi.float() / bhi.float()
         world_ar = F(d * 1.0 / d)
         pct = f.get("bg_pct_x")
         p32 = torch.zeros(B, device=canvas.device) if pct is None else pct.float()
@@ -1030,8 +1184,7 @@ class _ProcgenEnv(Env):
         x = mr[0] + mr[2] * (-off)
         w = mr[2] * (bg_ar / float(world_ar)).double()
         _, cols = _axis_map(x, w, bwi, S, gm.cols)
-        lin = ((idx.view(B, 1, 1) * S + gm.cols.view(1, S, 1)) * Wmax
-               + cols.view(B, 1, S)).to(torch.int32)
+        lin = ((idx.view(B, 1, 1) * S + gm.cols.view(1, S, 1)) * Wmax + cols.view(B, 1, S)).to(torch.int32)
         px = flat.index_select(0, lin.reshape(-1)).view(B, S, S, 3)
         if not bool((gain == 1).all()):
             px = (px.float() * gain.view(B, 1, 1, 3)).trunc_().clamp_(0, 255).to(torch.uint8)
@@ -1044,10 +1197,21 @@ class _ProcgenEnv(Env):
         for cell, mask, idx in gm.layers:
             if HAVE_TRITON:
                 _grid_kernel[(triton.cdiv(n, 512),)](
-                    canvas, flat, grid, cell, mask, idx, gm.slot_lut,
-                    gain if gain is not None else gm.dummy_gain, n,
-                    NCELL=grid.shape[1], SS=gm.SS, HAS_GAIN=gain is not None, BLOCK=512,
-                    num_warps=4)
+                    canvas,
+                    flat,
+                    grid,
+                    cell,
+                    mask,
+                    idx,
+                    gm.slot_lut,
+                    gain if gain is not None else gm.dummy_gain,
+                    n,
+                    NCELL=grid.shape[1],
+                    SS=gm.SS,
+                    HAS_GAIN=gain is not None,
+                    BLOCK=512,
+                    num_warps=4,
+                )
                 continue
             cls = grid.index_select(1, cell)
             slot = gm.slot_lut.index_select(0, cls.reshape(-1)).view(B, -1)
@@ -1060,14 +1224,13 @@ class _ProcgenEnv(Env):
             # unobservable -- measured for chaser at 0 interactions (`probe14_chaser.py`).
             if HAVE_TRITON:
                 _fill_kernel[(triton.cdiv(n, 512),)](
-                    canvas, grid, cellof, colour, cls_idx, n,
-                    NCELL=grid.shape[1], SS=gm.SS, BLOCK=512, num_warps=4)
+                    canvas, grid, cellof, colour, cls_idx, n, NCELL=grid.shape[1], SS=gm.SS, BLOCK=512, num_warps=4
+                )
                 continue
             hit = cellof.view(1, -1) >= 0
             g = grid.gather(1, cellof.clamp_min(0).long().view(1, -1).expand(B, -1))
             hit = hit & (g == cls_idx)
-            canvas.view(B, -1, 3).copy_(
-                torch.where(hit.unsqueeze(-1), colour.view(1, 1, 3), canvas.view(B, -1, 3)))
+            canvas.view(B, -1, 3).copy_(torch.where(hit.unsqueeze(-1), colour.view(1, 1, 3), canvas.view(B, -1, 3)))
 
     def _draw_entities(self, canvas, f, gm, flat, shape, wh, z, gain):
         B, S = canvas.shape[0], canvas.shape[1]
@@ -1102,10 +1265,17 @@ class _ProcgenEnv(Env):
         n = canvas.shape[0] * canvas.shape[1] * canvas.shape[2]
         if HAVE_TRITON:
             _blend_kernel[(triton.cdiv(n, 512),)](
-                canvas, flat, lin, m.to(torch.int8),
-                gain if gain is not None else gm.dummy_gain, n,
-                SS=canvas.shape[1] * canvas.shape[2], HAS_GAIN=gain is not None, BLOCK=512,
-                num_warps=4)
+                canvas,
+                flat,
+                lin,
+                m.to(torch.int8),
+                gain if gain is not None else gm.dummy_gain,
+                n,
+                SS=canvas.shape[1] * canvas.shape[2],
+                HAS_GAIN=gain is not None,
+                BLOCK=512,
+                num_warps=4,
+            )
         else:
             _blend_torch(canvas, flat, lin, m, gain)
 
@@ -1187,7 +1357,7 @@ class _ProcgenEnv(Env):
         if os.path.exists(path):
             try:
                 return np.load(path)
-            except Exception:                                       # noqa: BLE001 partial write
+            except Exception:  # noqa: BLE001 partial write
                 pass
         pool = self._build_pool(n)
         tmp = f"{path}.{os.getpid()}.tmp"
@@ -1205,9 +1375,17 @@ class _ProcgenEnv(Env):
         dead state dimensions, which is a property of the pool and not of the renderer.
         """
         from procgen import ProcgenGym3Env
+
         num = 16
-        env = ProcgenGym3Env(num=num, env_name=self.game, distribution_mode="hard", rand_seed=0,
-                             start_level=0, num_levels=0, use_backgrounds=True)
+        env = ProcgenGym3Env(
+            num=num,
+            env_name=self.game,
+            distribution_mode="hard",
+            rand_seed=0,
+            start_level=0,
+            num_levels=0,
+            use_backgrounds=True,
+        )
         rng = np.random.default_rng(0)
         rows = []
         for step in range(n // num + self.pool_warmup):
@@ -1227,8 +1405,16 @@ class _ProcgenEnv(Env):
         if int(size) != 64:
             raise ValueError(f"{cls.__name__}: procgen's observation is 64x64 only; asked for {size}")
         from procgen import ProcgenGym3Env
-        env = ProcgenGym3Env(num=1, env_name=cls.game, distribution_mode="hard", rand_seed=0,
-                             start_level=0, num_levels=0, use_backgrounds=True)
+
+        env = ProcgenGym3Env(
+            num=1,
+            env_name=cls.game,
+            distribution_mode="hard",
+            rand_seed=0,
+            start_level=0,
+            num_levels=0,
+            use_backgrounds=True,
+        )
         env.act(np.array([4], np.int32))
         return _Reference(env, _parse(env.get_state()[0]))
 
@@ -1249,7 +1435,8 @@ class _ProcgenEnv(Env):
                 i = int(np.argmax(d))
                 raise AssertionError(
                     f"{cls.__name__}: the reference env did not reach the requested state — "
-                    f"'{cls.state_names[i]}' came back {back[i]} for {st[i]} (max |diff| {d.max()}).")
+                    f"'{cls.state_names[i]}' came back {back[i]} for {st[i]} (max |diff| {d.max()})."
+                )
             _, obs, _ = ref.env.observe()
             out.append(np.asarray(obs["rgb"][0]).copy())
         return np.stack(out)
@@ -1276,60 +1463,137 @@ class _Reference:
 # `RandGen::serialize`, in order. Verified by re-serialising: 24/24 states per game, byte for byte.
 
 _HEAD = [
-    ("serialize_version", "i"), ("game_name", "s"),
-    ("paint_vel_info", "i"), ("use_generated_assets", "i"), ("use_monochrome_assets", "i"),
-    ("restrict_themes", "i"), ("use_backgrounds", "i"), ("center_agent", "i"),
-    ("debug_mode", "i"), ("distribution_mode", "i"), ("use_sequential_levels", "i"),
-    ("use_easy_jump", "i"), ("plain_assets", "i"), ("physics_mode", "i"),
-    ("grid_step", "i"), ("level_seed_low", "i"), ("level_seed_high", "i"),
-    ("game_type", "i"), ("game_n", "i"),
-    ("lsrg_seeded", "i"), ("lsrg", "s"), ("rg_seeded", "i"), ("rg", "s"),
-    ("reward", "f"), ("done", "i"), ("level_complete", "i"),
-    ("action", "i"), ("timeout", "i"), ("current_level_seed", "i"), ("prev_level_seed", "i"),
-    ("episodes_remaining", "i"), ("episode_done", "i"),
-    ("last_reward_timer", "i"), ("last_reward", "f"), ("default_action", "i"),
-    ("fixed_asset_seed", "i"), ("cur_time", "i"), ("is_waiting_for_step", "i"),
+    ("serialize_version", "i"),
+    ("game_name", "s"),
+    ("paint_vel_info", "i"),
+    ("use_generated_assets", "i"),
+    ("use_monochrome_assets", "i"),
+    ("restrict_themes", "i"),
+    ("use_backgrounds", "i"),
+    ("center_agent", "i"),
+    ("debug_mode", "i"),
+    ("distribution_mode", "i"),
+    ("use_sequential_levels", "i"),
+    ("use_easy_jump", "i"),
+    ("plain_assets", "i"),
+    ("physics_mode", "i"),
+    ("grid_step", "i"),
+    ("level_seed_low", "i"),
+    ("level_seed_high", "i"),
+    ("game_type", "i"),
+    ("game_n", "i"),
+    ("lsrg_seeded", "i"),
+    ("lsrg", "s"),
+    ("rg_seeded", "i"),
+    ("rg", "s"),
+    ("reward", "f"),
+    ("done", "i"),
+    ("level_complete", "i"),
+    ("action", "i"),
+    ("timeout", "i"),
+    ("current_level_seed", "i"),
+    ("prev_level_seed", "i"),
+    ("episodes_remaining", "i"),
+    ("episode_done", "i"),
+    ("last_reward_timer", "i"),
+    ("last_reward", "f"),
+    ("default_action", "i"),
+    ("fixed_asset_seed", "i"),
+    ("cur_time", "i"),
+    ("is_waiting_for_step", "i"),
 ]
 _ENTITY = [
-    ("x", "f"), ("y", "f"), ("vx", "f"), ("vy", "f"), ("rx", "f"), ("ry", "f"),
-    ("type", "i"), ("image_type", "i"), ("image_theme", "i"), ("render_z", "i"),
-    ("will_erase", "i"), ("collides_with_entities", "i"),
-    ("collision_margin", "f"), ("rotation", "f"), ("vrot", "f"),
-    ("is_reflected", "i"), ("fire_time", "i"), ("spawn_time", "i"), ("life_time", "i"),
-    ("expire_time", "i"), ("use_abs_coords", "i"),
-    ("friction", "f"), ("smart_step", "i"), ("avoids_collisions", "i"), ("auto_erase", "i"),
-    ("alpha", "f"), ("health", "f"), ("theta", "f"), ("grow_rate", "f"),
-    ("alpha_decay", "f"), ("climber_spawn_x", "f"),
+    ("x", "f"),
+    ("y", "f"),
+    ("vx", "f"),
+    ("vy", "f"),
+    ("rx", "f"),
+    ("ry", "f"),
+    ("type", "i"),
+    ("image_type", "i"),
+    ("image_theme", "i"),
+    ("render_z", "i"),
+    ("will_erase", "i"),
+    ("collides_with_entities", "i"),
+    ("collision_margin", "f"),
+    ("rotation", "f"),
+    ("vrot", "f"),
+    ("is_reflected", "i"),
+    ("fire_time", "i"),
+    ("spawn_time", "i"),
+    ("life_time", "i"),
+    ("expire_time", "i"),
+    ("use_abs_coords", "i"),
+    ("friction", "f"),
+    ("smart_step", "i"),
+    ("avoids_collisions", "i"),
+    ("auto_erase", "i"),
+    ("alpha", "f"),
+    ("health", "f"),
+    ("theta", "f"),
+    ("grow_rate", "f"),
+    ("alpha_decay", "f"),
+    ("climber_spawn_x", "f"),
 ]
 _MID = [
-    ("use_procgen_background", "i"), ("background_index", "i"),
-    ("bg_tile_ratio", "f"), ("bg_pct_x", "f"),
-    ("char_dim", "f"), ("last_move_action", "i"), ("move_action", "i"), ("special_action", "i"),
-    ("mixrate", "f"), ("maxspeed", "f"), ("max_jump", "f"),
-    ("action_vx", "f"), ("action_vy", "f"), ("action_vrot", "f"),
-    ("center_x", "f"), ("center_y", "f"),
-    ("random_agent_start", "i"), ("has_useful_vel_info", "i"), ("step_rand_int", "i"),
-    ("arg_seeded", "i"), ("arg", "s"),
-    ("main_width", "i"), ("main_height", "i"), ("out_of_bounds_object", "i"),
-    ("unit", "f"), ("view_dim", "f"), ("x_off", "f"), ("y_off", "f"),
-    ("visibility", "f"), ("min_visibility", "f"),
+    ("use_procgen_background", "i"),
+    ("background_index", "i"),
+    ("bg_tile_ratio", "f"),
+    ("bg_pct_x", "f"),
+    ("char_dim", "f"),
+    ("last_move_action", "i"),
+    ("move_action", "i"),
+    ("special_action", "i"),
+    ("mixrate", "f"),
+    ("maxspeed", "f"),
+    ("max_jump", "f"),
+    ("action_vx", "f"),
+    ("action_vy", "f"),
+    ("action_vrot", "f"),
+    ("center_x", "f"),
+    ("center_y", "f"),
+    ("random_agent_start", "i"),
+    ("has_useful_vel_info", "i"),
+    ("step_rand_int", "i"),
+    ("arg_seeded", "i"),
+    ("arg", "s"),
+    ("main_width", "i"),
+    ("main_height", "i"),
+    ("out_of_bounds_object", "i"),
+    ("unit", "f"),
+    ("view_dim", "f"),
+    ("x_off", "f"),
+    ("y_off", "f"),
+    ("visibility", "f"),
+    ("min_visibility", "f"),
 ]
-_TAIL = {"maze": [("maze_dim", "i"), ("world_dim", "i")],
-         "heist": [("num_keys", "i"), ("world_dim", "i"), ("has_keys", "vb")],
-         "miner": [("diamonds_remaining", "i")],
-         # chaser's tail carries two derived vectors before its scalars. Neither reaches a pixel
-         # (`free_cells` and `is_space_vec` are pathfinding caches), but both have to be READ to find
-         # `eat_time`, which does: it is half of `image_for_type(ENEMY)`.
-         "chaser": [("free_cells", "vi"), ("is_space_vec", "vb"), ("eat_timeout", "i"),
-                    ("egg_timeout", "i"), ("eat_time", "i"), ("total_enemies", "i"),
-                    ("total_orbs", "i"), ("orbs_collected", "i"), ("maze_dim", "i")],
-         # bigfish is NOT a shipped env (see docs/research/pixel_native.md 2.9); its tail stays here
-         # because `scratch/procgen/bigfish_env.py` drives the reference through this parser.
-         "bigfish": [("fish_eaten", "i"), ("r_inc", "f")]}
+_TAIL = {
+    "maze": [("maze_dim", "i"), ("world_dim", "i")],
+    "heist": [("num_keys", "i"), ("world_dim", "i"), ("has_keys", "vb")],
+    "miner": [("diamonds_remaining", "i")],
+    # chaser's tail carries two derived vectors before its scalars. Neither reaches a pixel
+    # (`free_cells` and `is_space_vec` are pathfinding caches), but both have to be READ to find
+    # `eat_time`, which does: it is half of `image_for_type(ENEMY)`.
+    "chaser": [
+        ("free_cells", "vi"),
+        ("is_space_vec", "vb"),
+        ("eat_timeout", "i"),
+        ("egg_timeout", "i"),
+        ("eat_time", "i"),
+        ("total_enemies", "i"),
+        ("total_orbs", "i"),
+        ("orbs_collected", "i"),
+        ("maze_dim", "i"),
+    ],
+    # bigfish is NOT a shipped env (see docs/research/pixel_native.md 2.9); its tail stays here
+    # because `scratch/procgen/bigfish_env.py` drives the reference through this parser.
+    "bigfish": [("fish_eaten", "i"), ("r_inc", "f")],
+}
 
 
 def _parse(buf: bytes) -> dict:
     import struct
+
     o = [0]
 
     def i():
@@ -1344,12 +1608,17 @@ def _parse(buf: bytes) -> dict:
 
     def sb():
         n = i()
-        v = buf[o[0]:o[0] + n]
+        v = buf[o[0] : o[0] + n]
         o[0] += n
         return v
 
-    rd = {"i": i, "f": fl, "s": sb, "vb": lambda: [i() > 0 for _ in range(i())],
-          "vi": lambda: [i() for _ in range(i())]}
+    rd = {
+        "i": i,
+        "f": fl,
+        "s": sb,
+        "vb": lambda: [i() > 0 for _ in range(i())],
+        "vi": lambda: [i() for _ in range(i())],
+    }
     st = {k: rd[t]() for k, t in _HEAD}
     st["grid_size"] = i()
     st["entities"] = [{k: rd[t]() for k, t in _ENTITY} for _ in range(i())]
@@ -1359,12 +1628,13 @@ def _parse(buf: bytes) -> dict:
     st["grid"] = np.asarray([i() for _ in range(i())], np.int32).reshape(gh, gw)
     st["_tail"] = _TAIL[st["game_name"].decode()]
     st.update({k: rd[t]() for k, t in st["_tail"]})
-    st["_rest"] = buf[o[0]:]                      # vecgame.cpp's END_OF_BUFFER sentinel
+    st["_rest"] = buf[o[0] :]  # vecgame.cpp's END_OF_BUFFER sentinel
     return st
 
 
 def _dump(st: dict) -> bytes:
     import struct
+
     p = []
 
     def wi(v):
@@ -1410,10 +1680,22 @@ def _dump(st: dict) -> bytes:
 
 def _make_entity(sl, x, y, theme, type_, image_type, rot=0.0, refl=0, agent=False) -> dict:
     e = {k: (0 if t == "i" else 0.0) for k, t in _ENTITY}
-    e.update(alpha=1.0, alpha_decay=1.0, x=float(x), y=float(y),
-             rx=float(sl.rx), ry=float(sl.ry), type=int(type_), image_type=int(image_type),
-             image_theme=int(theme), render_z=int(sl.z), rotation=float(rot),
-             is_reflected=int(refl), use_abs_coords=int(sl.abs_coords), smart_step=int(agent))
+    e.update(
+        alpha=1.0,
+        alpha_decay=1.0,
+        x=float(x),
+        y=float(y),
+        rx=float(sl.rx),
+        ry=float(sl.ry),
+        type=int(type_),
+        image_type=int(image_type),
+        image_theme=int(theme),
+        render_z=int(sl.z),
+        rotation=float(rot),
+        is_reflected=int(refl),
+        use_abs_coords=int(sl.abs_coords),
+        smart_step=int(agent),
+    )
     return e
 
 
@@ -1433,6 +1715,7 @@ def _classes_to_grid(game, cls, dim):
 
 # ===================================================================== the four games
 
+
 @register
 class ProcgenMaze(_ProcgenEnv):
     """25x25 topdown maze: sand walls, one cheese, a mouse that mirrors with its heading.
@@ -1446,7 +1729,11 @@ class ProcgenMaze(_ProcgenEnv):
     reference_id = "procgen-maze-v0"
     state_dim = 25 * 25 + 4
     state_names = tuple(f"cell_{y}_{x}" for y in range(25) for x in range(25)) + (
-        "bg_index", "agent_x", "agent_y", "agent_reflected")
+        "bg_index",
+        "agent_x",
+        "agent_y",
+        "agent_reflected",
+    )
 
     def _unpack(self, s):
         f = super()._unpack(s)
@@ -1461,9 +1748,12 @@ class ProcgenMaze(_ProcgenEnv):
     @classmethod
     def state_from_blob(cls, b):
         a = [e for e in b["entities"] if e["type"] == 0][0]
-        return np.concatenate([_grid_to_classes("maze", b["grid"]).reshape(-1),
-                               [b["background_index"], a["x"], a["y"], a["is_reflected"]]]
-                              ).astype(np.float32)
+        return np.concatenate(
+            [
+                _grid_to_classes("maze", b["grid"]).reshape(-1),
+                [b["background_index"], a["x"], a["y"], a["is_reflected"]],
+            ]
+        ).astype(np.float32)
 
     @classmethod
     def blob_from_state(cls, template, st):
@@ -1474,8 +1764,9 @@ class ProcgenMaze(_ProcgenEnv):
         b["grid_size"] = n
         b["background_index"] = int(round(float(st[n])))
         sl = SPECS["maze"].ent_slots[0]
-        b["entities"] = [_make_entity(sl, st[n + 1], st[n + 2], 0, 0, 0,
-                                      refl=int(round(float(st[n + 3]))), agent=True)]
+        b["entities"] = [
+            _make_entity(sl, st[n + 1], st[n + 2], 0, 0, 0, refl=int(round(float(st[n + 3]))), agent=True)
+        ]
         return b
 
 
@@ -1493,10 +1784,12 @@ class ProcgenHeist(_ProcgenEnv):
     name = "procgen-heist"
     reference_id = "procgen-heist-v0"
     state_dim = 13 * 13 + 1 + 3 + 2 + 9 + 9 + 3
-    state_names = tuple(f"cell_{y}_{x}" for y in range(13) for x in range(13)) + (
-        "bg_index", "agent_x", "agent_y", "agent_rotation", "exit_x", "exit_y") + tuple(
-        f"{k}{i}_{c}" for k in ("lock", "key") for i in range(3) for c in ("x", "y", "present")
-    ) + ("has_key0", "has_key1", "has_key2")
+    state_names = (
+        tuple(f"cell_{y}_{x}" for y in range(13) for x in range(13))
+        + ("bg_index", "agent_x", "agent_y", "agent_rotation", "exit_x", "exit_y")
+        + tuple(f"{k}{i}_{c}" for k in ("lock", "key") for i in range(3) for c in ("x", "y", "present"))
+        + ("has_key0", "has_key1", "has_key2")
+    )
     _BASE = 13 * 13 + 6
 
     def _unpack(self, s):
@@ -1506,9 +1799,8 @@ class ProcgenHeist(_ProcgenEnv):
         f["agent"] = (s[:, n + 1], s[:, n + 2], s[:, n + 3])
         f["exit"] = (s[:, n + 4], s[:, n + 5])
         f["lock"] = [(s[:, b + 3 * i], s[:, b + 3 * i + 1], s[:, b + 3 * i + 2]) for i in range(3)]
-        f["key"] = [(s[:, b + 9 + 3 * i], s[:, b + 9 + 3 * i + 1], s[:, b + 9 + 3 * i + 2])
-                    for i in range(3)]
-        f["has_key"] = s[:, b + 18:b + 21]
+        f["key"] = [(s[:, b + 9 + 3 * i], s[:, b + 9 + 3 * i + 1], s[:, b + 9 + 3 * i + 2]) for i in range(3)]
+        f["has_key"] = s[:, b + 18 : b + 21]
         return f
 
     def _slot_fields(self, f, sl, B):
@@ -1532,15 +1824,20 @@ class ProcgenHeist(_ProcgenEnv):
         locks = {e["image_theme"]: e for e in ents if e["type"] == 1}
         keys = {e["image_theme"]: e for e in ents if e["type"] == 2}
         hk = list(b["has_keys"]) + [False] * 3
-        row = [b["background_index"], a["x"], a["y"], a["rotation"],
-               ex[0]["x"] if ex else 0.0, ex[0]["y"] if ex else 0.0]
+        row = [
+            b["background_index"],
+            a["x"],
+            a["y"],
+            a["rotation"],
+            ex[0]["x"] if ex else 0.0,
+            ex[0]["y"] if ex else 0.0,
+        ]
         for tbl in (locks, keys):
             for i in range(3):
                 e = tbl.get(i)
                 row += [e["x"] if e else 0.0, e["y"] if e else 0.0, 1.0 if e else 0.0]
         row += [1.0 if hk[i] else 0.0 for i in range(3)]
-        return np.concatenate([_grid_to_classes("heist", b["grid"]).reshape(-1), row]
-                              ).astype(np.float32)
+        return np.concatenate([_grid_to_classes("heist", b["grid"]).reshape(-1), row]).astype(np.float32)
 
     @classmethod
     def blob_from_state(cls, template, st):
@@ -1554,12 +1851,11 @@ class ProcgenHeist(_ProcgenEnv):
         ents = []
         for kind, off, ty in (("lock", 0, 1), ("key", 9, 2)):
             for i in range(3):
-                x, y, on = st[base + off + 3 * i:base + off + 3 * i + 3]
+                x, y, on = st[base + off + 3 * i : base + off + 3 * i + 3]
                 if on > 0.5:
                     ents.append(_make_entity(S[f"{kind}{i}"], x, y, i, ty, ty))
         ents.append(_make_entity(S["exit"], st[n + 4], st[n + 5], 0, 9, 9))
-        ents.append(_make_entity(S["agent"], st[n + 1], st[n + 2], 0, 0, 0,
-                                 rot=float(st[n + 3]), agent=True))
+        ents.append(_make_entity(S["agent"], st[n + 1], st[n + 2], 0, 0, 0, rot=float(st[n + 3]), agent=True))
         for i in range(3):
             sl = S[f"ring{i}"]
             ents.append(_make_entity(sl, *sl.fixed_xy, i, 11, 2, rot=sl.rotation))
@@ -1604,10 +1900,12 @@ class ProcgenChaser(_ProcgenEnv):
     n_bg_state = 0
     pool_warmup = 128
     state_dim = 13 * 13 + 2 + 9 + 9 + 9 + 1
-    state_names = tuple(f"cell_{y}_{x}" for y in range(13) for x in range(13)) + (
-        "agent_x", "agent_y") + tuple(
-        f"{k}{i}_{c}" for k in ("orb", "egg", "enemy") for i in range(3)
-        for c in ("x", "y", "present")) + ("enemy_sprite",)
+    state_names = (
+        tuple(f"cell_{y}_{x}" for y in range(13) for x in range(13))
+        + ("agent_x", "agent_y")
+        + tuple(f"{k}{i}_{c}" for k in ("orb", "egg", "enemy") for i in range(3) for c in ("x", "y", "present"))
+        + ("enemy_sprite",)
+    )
     _BASE = 13 * 13 + 2
 
     def _unpack(self, s):
@@ -1643,14 +1941,13 @@ class ProcgenChaser(_ProcgenEnv):
         ents = b["entities"]
         a = [e for e in ents if e["type"] == 0][0]
         row = [a["x"], a["y"]]
-        for ty in (2, 4, 6):                                   # LARGE_ORB, ENEMY_EGG, ENEMY
+        for ty in (2, 4, 6):  # LARGE_ORB, ENEMY_EGG, ENEMY
             got = [e for e in ents if e["type"] == ty][:3]
             for i in range(3):
                 e = got[i] if i < len(got) else None
                 row += [e["x"] if e else 0.0, e["y"] if e else 0.0, 1.0 if e else 0.0]
         row.append(cls._enemy_sprite(b))
-        return np.concatenate([_grid_to_classes("chaser", b["grid"]).reshape(-1), row]
-                              ).astype(np.float32)
+        return np.concatenate([_grid_to_classes("chaser", b["grid"]).reshape(-1), row]).astype(np.float32)
 
     @staticmethod
     def _enemy_sprite(b) -> int:
@@ -1671,7 +1968,7 @@ class ProcgenChaser(_ProcgenEnv):
         ents = []
         for j, (k, ty) in enumerate((("orb", 2), ("egg", 4), ("enemy", 6))):
             for i in range(3):
-                x, y, on = st[base + 9 * j + 3 * i:base + 9 * j + 3 * i + 3]
+                x, y, on = st[base + 9 * j + 3 * i : base + 9 * j + 3 * i + 3]
                 if on > 0.5:
                     ents.append(_make_entity(S[f"{k}{i}"], x, y, 0, ty, ty))
         ents.append(_make_entity(S["agent"], st[base - 2], st[base - 1], 0, 0, 0, agent=True))
@@ -1702,7 +1999,14 @@ class ProcgenMiner(_ProcgenEnv):
     reference_id = "procgen-miner-v0"
     state_dim = 20 * 20 + 7
     state_names = tuple(f"cell_{y}_{x}" for y in range(20) for x in range(20)) + (
-        "bg_index", "bg_pct_x", "agent_x", "agent_y", "agent_reflected", "exit_x", "exit_y")
+        "bg_index",
+        "bg_pct_x",
+        "agent_x",
+        "agent_y",
+        "agent_reflected",
+        "exit_x",
+        "exit_y",
+    )
 
     def _unpack(self, s):
         f = super()._unpack(s)
@@ -1723,10 +2027,20 @@ class ProcgenMiner(_ProcgenEnv):
         ents = b["entities"]
         a = [e for e in ents if e["type"] == 0][0]
         x = [e for e in ents if e["type"] == 6]
-        return np.concatenate([_grid_to_classes("miner", b["grid"]).reshape(-1),
-                               [b["background_index"], b["bg_pct_x"], a["x"], a["y"],
-                                a["is_reflected"], x[0]["x"] if x else 0.0,
-                                x[0]["y"] if x else 0.0]]).astype(np.float32)
+        return np.concatenate(
+            [
+                _grid_to_classes("miner", b["grid"]).reshape(-1),
+                [
+                    b["background_index"],
+                    b["bg_pct_x"],
+                    a["x"],
+                    a["y"],
+                    a["is_reflected"],
+                    x[0]["x"] if x else 0.0,
+                    x[0]["y"] if x else 0.0,
+                ],
+            ]
+        ).astype(np.float32)
 
     @classmethod
     def blob_from_state(cls, template, st):
@@ -1740,6 +2054,6 @@ class ProcgenMiner(_ProcgenEnv):
         S = {s.key: s for s in SPECS["miner"].ent_slots}
         b["entities"] = [
             _make_entity(S["exit"], st[n + 5], st[n + 6], 0, 6, 6),
-            _make_entity(S["agent"], st[n + 2], st[n + 3], 0, 0, 0,
-                         refl=int(round(float(st[n + 4]))), agent=True)]
+            _make_entity(S["agent"], st[n + 2], st[n + 3], 0, 0, 0, refl=int(round(float(st[n + 4]))), agent=True),
+        ]
         return b

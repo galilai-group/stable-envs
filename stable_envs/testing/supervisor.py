@@ -43,6 +43,7 @@ supervisor itself could not proceed.
     python -m stable_envs.testing.supervisor -- tests/ -v -rs
     python -m stable_envs.testing.supervisor --smoke
 """
+
 from __future__ import annotations
 
 import argparse
@@ -78,7 +79,7 @@ def _read_events(path: Path) -> list[dict]:
             try:
                 out.append(json.loads(ln))
             except json.JSONDecodeError:
-                continue                      # a line half-written when the process died
+                continue  # a line half-written when the process died
     return out
 
 
@@ -107,8 +108,7 @@ def _signal_name(rc: int) -> str:
     return f"exit {rc}"
 
 
-def _run_segment(cmd: list[str], env: dict, events: Path, stall: float,
-                 max_wall: float) -> tuple[int, str]:
+def _run_segment(cmd: list[str], env: dict, events: Path, stall: float, max_wall: float) -> tuple[int, str]:
     """Launch one pytest process, watching the events file for a stall. Returns (rc, note)."""
     started = time.time()
     p = subprocess.Popen(cmd, env=env, start_new_session=True)
@@ -125,9 +125,11 @@ def _run_segment(cmd: list[str], env: dict, events: Path, stall: float,
         if size != last_size:
             last_size, last_change = size, now
         if now - last_change > stall:
-            note = (f"no test started or finished for {stall:.0f}s — killed as a stall. Nothing "
-                    f"in-process can interrupt a thread blocked in a driver call, which is why this "
-                    f"watchdog exists alongside the per-test timeout")
+            note = (
+                f"no test started or finished for {stall:.0f}s — killed as a stall. Nothing "
+                f"in-process can interrupt a thread blocked in a driver call, which is why this "
+                f"watchdog exists alongside the per-test timeout"
+            )
             _kill_tree(p)
             return p.wait(), note
         if max_wall and now - started > max_wall:
@@ -153,12 +155,15 @@ def _kill_tree(p: subprocess.Popen) -> None:
 
 
 def main(argv=None) -> int:
-    ap = argparse.ArgumentParser(description=__doc__,
-                                 formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--rundir", default="", help="where events/deselect land; default a temp dir")
     ap.add_argument("--smoke", action="store_true", help="shorthand for -m smoke")
-    ap.add_argument("--stall-timeout", type=float, default=900.0,
-                    help="seconds with no test starting or finishing before the segment is killed")
+    ap.add_argument(
+        "--stall-timeout",
+        type=float,
+        default=900.0,
+        help="seconds with no test starting or finishing before the segment is killed",
+    )
     ap.add_argument("--max-wall", type=float, default=0.0, help="0 disables")
     ap.add_argument("--max-segments", type=int, default=MAX_SEGMENTS)
     ap.add_argument("--json", default="", help="also write the aggregated result here")
@@ -175,8 +180,7 @@ def main(argv=None) -> int:
     if a.smoke and "-m" not in args:
         args = ["-m", "smoke"] + args
 
-    rundir = Path(a.rundir) if a.rundir else Path(
-        os.environ.get("TMPDIR", "/tmp")) / f"se-tests-{os.getpid()}"
+    rundir = Path(a.rundir) if a.rundir else Path(os.environ.get("TMPDIR", "/tmp")) / f"se-tests-{os.getpid()}"
     rundir.mkdir(parents=True, exist_ok=True)
     deselect = rundir / "deselect.txt"
     deselect.write_text("")
@@ -194,8 +198,9 @@ def main(argv=None) -> int:
     # that is already having a bad day. Children inherit the limit.
     try:
         import resource as _rlimit
+
         _rlimit.setrlimit(_rlimit.RLIMIT_CORE, (0, 0))
-    except Exception:                                                    # noqa: BLE001
+    except Exception:  # noqa: BLE001
         pass
 
     crashed: list[tuple[str, str]] = []
@@ -227,9 +232,12 @@ def main(argv=None) -> int:
             # 0 passed, 1 tests failed, 2 interrupted, 3 internal error, 4 usage error, 5 no tests
             if 0 <= rc <= 5:
                 break
-            print(f"\nSUPERVISOR: the run died with {_signal_name(rc)} and no test was in flight — "
-                  f"this is a collection/import/session-level crash, which no per-test isolation can "
-                  f"survive. Nothing to resume past.", flush=True)
+            print(
+                f"\nSUPERVISOR: the run died with {_signal_name(rc)} and no test was in flight — "
+                f"this is a collection/import/session-level crash, which no per-test isolation can "
+                f"survive. Nothing to resume past.",
+                flush=True,
+            )
             rc = 1
             break
         why = note or f"the interpreter died mid-test: {_signal_name(rc)}"
@@ -246,8 +254,9 @@ def main(argv=None) -> int:
 
 def _all_events(rundir: Path) -> list[dict]:
     """Every segment's records, in segment order. Numeric sort: ``events.10`` follows ``events.9``."""
-    files = sorted(rundir.glob("events.*.jsonl"),
-                   key=lambda p: int(p.name.split(".")[1]) if p.name.split(".")[1].isdigit() else 0)
+    files = sorted(
+        rundir.glob("events.*.jsonl"), key=lambda p: int(p.name.split(".")[1]) if p.name.split(".")[1].isdigit() else 0
+    )
     return [e for f in files for e in _read_events(f)]
 
 
@@ -267,10 +276,11 @@ def _summarise(rundir: Path, crashed, wall: float, rc: int, json_out: str) -> in
     # records and the interesting number is what the whole run did. Peak live is a max for the same
     # reason -- each segment starts from zero live contexts, so the peak is per-segment by construction.
     ends = [e for e in ev if e.get("kind") == "session_end"]
-    totals = {k: sum(int(e.get(k, 0) or 0) for e in ends)
-              for k in ("context_created", "context_freed", "renderer_created", "renderer_closed")}
-    totals["context_peak_live"] = max((int(e.get("context_peak_live", 0) or 0) for e in ends),
-                                      default=0)
+    totals = {
+        k: sum(int(e.get(k, 0) or 0) for e in ends)
+        for k in ("context_created", "context_freed", "renderer_created", "renderer_closed")
+    }
+    totals["context_peak_live"] = max((int(e.get("context_peak_live", 0) or 0) for e in ends), default=0)
     gate = next((e for e in reversed(ev) if e.get("kind") == "node_gate"), {})
     segs = sum(1 for e in ev if e.get("kind") == "session_start")
     slowest.sort(reverse=True)
@@ -283,12 +293,14 @@ def _summarise(rundir: Path, crashed, wall: float, rc: int, json_out: str) -> in
         print("=" * 100, flush=True)
         return NODE_FAULT_RC
     parts = [f"{res[k]} {k}" for k in _OUTCOME_ORDER if res[k]] or ["0 tests"]
-    print(f"SUMMARY: {', '.join(parts)}"
-          f" | {segs} segment(s) | {wall/60:.1f} min"
-          f" | EGL contexts {totals.get('context_created', '?')} created /"
-          f" {totals.get('context_freed', '?')} released, peak live"
-          f" {totals.get('context_peak_live', '?')}"
-          f" | node {gate.get('host', '?')} {gate.get('scheduler', {}).get('state', '?')}")
+    print(
+        f"SUMMARY: {', '.join(parts)}"
+        f" | {segs} segment(s) | {wall / 60:.1f} min"
+        f" | EGL contexts {totals.get('context_created', '?')} created /"
+        f" {totals.get('context_freed', '?')} released, peak live"
+        f" {totals.get('context_peak_live', '?')}"
+        f" | node {gate.get('host', '?')} {gate.get('scheduler', {}).get('state', '?')}"
+    )
     if slowest:
         print("slowest: " + ", ".join(f"{d:.0f}s {n.split('::')[-1]}" for d, n in slowest[:5]))
     for who, why in crashed:
@@ -297,10 +309,20 @@ def _summarise(rundir: Path, crashed, wall: float, rc: int, json_out: str) -> in
     print("=" * 100, flush=True)
 
     if json_out:
-        Path(json_out).write_text(json.dumps(
-            {"counts": res, "segments": segs, "wall_s": wall, "crashed": crashed,
-             "resources": totals, "node": gate,
-             "slowest": [{"dur": d, "nodeid": n} for d, n in slowest[:50]]}, indent=2))
+        Path(json_out).write_text(
+            json.dumps(
+                {
+                    "counts": res,
+                    "segments": segs,
+                    "wall_s": wall,
+                    "crashed": crashed,
+                    "resources": totals,
+                    "node": gate,
+                    "slowest": [{"dur": d, "nodeid": n} for d, n in slowest[:50]],
+                },
+                indent=2,
+            )
+        )
     # xpassed is NOT counted as bad here: every xfail in this repo is strict, and a strict XPASS is
     # already reported by pytest as a failure. Adding it again would make the supervisor's verdict
     # differ from pytest's on a non-strict xpass for no reason a reader could predict.

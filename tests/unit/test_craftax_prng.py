@@ -10,6 +10,7 @@ floats by randomising the mantissa of an exponent-1 float, so every value is exa
 and a one-bit difference in the hash shows up as a completely different number rather than as a
 small error. There is no tolerance to choose.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -33,8 +34,9 @@ def golden():
 
 
 def _keys(rows):
-    return torch.tensor([[np.int64(k).astype(np.int64) for k in r["key"]] for r in rows],
-                        dtype=torch.int64).to(torch.int32)
+    return torch.tensor([[np.int64(k).astype(np.int64) for k in r["key"]] for r in rows], dtype=torch.int64).to(
+        torch.int32
+    )
 
 
 def test_the_golden_file_says_which_jax_path_it_froze(golden):
@@ -55,8 +57,7 @@ def test_uniform_matches_jax_bit_for_bit_on_small_shapes(golden):
         keys = _keys([r])
         got = prng.uniform(keys, tuple(r["shape"]))[0].numpy()
         want = np.asarray(r["uniform_bits"], np.uint32).reshape(tuple(r["shape"]))
-        assert np.array_equal(np.ascontiguousarray(got).view(np.uint32), want), (
-            f"key={r['key']} shape={r['shape']}")
+        assert np.array_equal(np.ascontiguousarray(got).view(np.uint32), want), f"key={r['key']} shape={r['shape']}"
 
 
 def test_uniform_matches_jax_on_the_render_sized_fields(golden):
@@ -64,8 +65,7 @@ def test_uniform_matches_jax_on_the_render_sized_fields(golden):
     for r in golden["digest"]:
         got = prng.uniform(_keys([r]), tuple(r["shape"]))[0].numpy()
         b = np.ascontiguousarray(got).view(np.uint32).ravel()
-        assert hashlib.sha256(b.tobytes()).hexdigest() == r["sha256"], (
-            f"key={r['key']} shape={r['shape']}")
+        assert hashlib.sha256(b.tobytes()).hexdigest() == r["sha256"], f"key={r['key']} shape={r['shape']}"
         assert [int(v) for v in b[:8]] == r["first8"]
         assert [int(v) for v in b[-8:]] == r["last8"]
 
@@ -75,8 +75,7 @@ def test_the_scaled_night_field_matches(golden):
     for r in golden["scaled"]:
         got = prng.uniform(_keys([r]), tuple(r["shape"]))[0] * 95 + 32
         b = np.ascontiguousarray(got.numpy()).view(np.uint32).ravel()
-        assert hashlib.sha256(b.tobytes()).hexdigest() == r["sha256"], (
-            f"key={r['key']} shape={r['shape']}")
+        assert hashlib.sha256(b.tobytes()).hexdigest() == r["sha256"], f"key={r['key']} shape={r['shape']}"
 
 
 def test_a_batch_of_keys_is_the_same_as_the_keys_one_at_a_time(golden):
@@ -126,10 +125,14 @@ def test_key_halves_round_trip_exactly_through_float32():
     the state encoding depends on, on the worst cases and on a large random sample.
     """
     rng = np.random.default_rng(0)
-    raw = np.concatenate([
-        np.array([[0, 0], [0xFFFFFFFF, 0xFFFFFFFF], [0x80000000, 0x7FFFFFFF],
-                  [0x00010000, 0x0000FFFF]], np.uint32),
-        rng.integers(0, 2 ** 32, size=(20000, 2), dtype=np.uint64).astype(np.uint32)])
+    raw = np.concatenate(
+        [
+            np.array(
+                [[0, 0], [0xFFFFFFFF, 0xFFFFFFFF], [0x80000000, 0x7FFFFFFF], [0x00010000, 0x0000FFFF]], np.uint32
+            ),
+            rng.integers(0, 2**32, size=(20000, 2), dtype=np.uint64).astype(np.uint32),
+        ]
+    )
     keys = torch.tensor(raw.astype(np.int64), dtype=torch.int64).to(torch.int32)
     halves = prng.key_to_halves(keys)
     assert int(halves.max()) <= 0xFFFF and int(halves.min()) >= 0
@@ -162,12 +165,15 @@ def test_rotation_mask_is_the_one_that_is_easy_to_get_wrong():
     rotation computed in python ints.
     """
     rng = np.random.default_rng(7)
-    vals = np.concatenate([np.array([0, 1, 0xFFFFFFFF, 0x80000000, 0x7FFFFFFF], np.uint32),
-                           rng.integers(0, 2 ** 32, size=512, dtype=np.uint64).astype(np.uint32)])
+    vals = np.concatenate(
+        [
+            np.array([0, 1, 0xFFFFFFFF, 0x80000000, 0x7FFFFFFF], np.uint32),
+            rng.integers(0, 2**32, size=512, dtype=np.uint64).astype(np.uint32),
+        ]
+    )
     x = torch.tensor(vals.astype(np.int64), dtype=torch.int64).to(torch.int32)
     for d in (13, 15, 26, 6, 17, 29, 16, 24):
-        want = np.array([((int(v) << d) | (int(v) >> (32 - d))) & 0xFFFFFFFF for v in vals],
-                        np.uint32)
+        want = np.array([((int(v) << d) | (int(v) >> (32 - d))) & 0xFFFFFFFF for v in vals], np.uint32)
         got = prng._rotl32(x, d).numpy().astype(np.int64) & 0xFFFFFFFF
         assert np.array_equal(got.astype(np.uint32), want), d
 
@@ -196,16 +202,23 @@ def test_uniform_takes_no_range_arguments(golden):
     jax-generated values.
     """
     import inspect
+
     p = inspect.signature(prng.uniform).parameters
     assert "minval" not in p and "maxval" not in p, (
-        "prng.uniform grew a range argument; see this test's docstring for why it must not have one")
+        "prng.uniform grew a range argument; see this test's docstring for why it must not have one"
+    )
     assert [n for n in p] == ["keys", "shape", "offset"]
 
 
 def test_render_module_exports_are_the_minimal_interface():
     """W2 consumes this module verbatim; keep the surface small and named."""
     assert set(n for n in dir(prng) if not n.startswith("_")) >= {
-        "threefry2x32", "random_bits", "uniform", "key_from_halves", "key_to_halves"}
+        "threefry2x32",
+        "random_bits",
+        "uniform",
+        "key_from_halves",
+        "key_to_halves",
+    }
 
 
 @pytest.mark.parametrize("shape", [(1, 1), (3, 5), (49, 63)])

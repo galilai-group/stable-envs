@@ -4,6 +4,7 @@
 this file, which is the arrangement the sibling ``stable-*`` repositories use: a build backend can read
 a literal out of a two-line module without importing torch.
 """
+
 from __future__ import annotations
 
 __title__ = "stable-envs"

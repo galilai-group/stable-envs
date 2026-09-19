@@ -46,6 +46,7 @@ Two measured details that shaped the code:
     resamples the atlas by nearest neighbour, which is a convenience, not a claim: only ``size=16`` is
     bit-exact against MiniHack.
 """
+
 from __future__ import annotations
 
 import base64
@@ -735,10 +736,8 @@ class _Assets:
     def get(cls, device: torch.device):
         key = str(device)
         if key not in cls._cache:
-            atlas = torch.as_tensor(
-                _unpack(_ATLAS_B64, np.uint8, (N_TILE, TILE_PX, TILE_PX, 3)).copy(), device=device)
-            g2t = torch.as_tensor(
-                _unpack(_GLYPH2TILE_B64, np.int16, (N_GLYPH,)).astype(np.int64), device=device)
+            atlas = torch.as_tensor(_unpack(_ATLAS_B64, np.uint8, (N_TILE, TILE_PX, TILE_PX, 3)).copy(), device=device)
+            g2t = torch.as_tensor(_unpack(_GLYPH2TILE_B64, np.int16, (N_GLYPH,)).astype(np.int64), device=device)
             cls._cache[key] = (atlas, g2t)
         return cls._cache[key]
 
@@ -758,6 +757,7 @@ class MiniHack(Env):
         square; without this the spec would describe a 16x16 buffer. ``size`` is the TILE size for
         this env, which is what ``default_size = TILE_PX`` says."""
         return GRID_H * int(self.size), GRID_W * int(self.size)
+
     #: tile edge in pixels, NOT the output resolution: the frame is (21*size, 79*size, 3)
     default_size = TILE_PX
     reference_id = "minihack.tiles.glyph_mapper.GlyphMapper"
@@ -792,11 +792,12 @@ class MiniHack(Env):
         compute the same thing: the recolouring is a per-pixel function of the pixel, so applying it
         before or after the gather is the same arithmetic.
         """
-        return Dict({
-            "background_color": RGBBox(init_value=(0, 0, 0)),
-            "channel_gain": Box(low=0.0, high=2.0, shape=(3,), dtype=np.float32,
-                                init_value=[1.0, 1.0, 1.0]),
-        })
+        return Dict(
+            {
+                "background_color": RGBBox(init_value=(0, 0, 0)),
+                "channel_gain": Box(low=0.0, high=2.0, shape=(3,), dtype=np.float32, init_value=[1.0, 1.0, 1.0]),
+            }
+        )
 
     def _base_atlas(self, size: int) -> torch.Tensor:
         """The shipped atlas, resampled to ``size`` px per tile and otherwise untouched."""
@@ -805,8 +806,11 @@ class MiniHack(Env):
         # nearest neighbour on tile-local coordinates. Only size == TILE_PX is bit-exact against
         # MiniHack, which has exactly one tile size; other sizes are a convenience for training at
         # a cheaper resolution and are documented as such.
-        ix = ((torch.arange(size, device=self.device, dtype=torch.float32) + 0.5)
-              * TILE_PX / size).long().clamp_(0, TILE_PX - 1)
+        ix = (
+            ((torch.arange(size, device=self.device, dtype=torch.float32) + 0.5) * TILE_PX / size)
+            .long()
+            .clamp_(0, TILE_PX - 1)
+        )
         return self.atlas[:, ix][:, :, ix]
 
     def _atlas_for(self, bg: np.ndarray, gain: np.ndarray, size: int) -> torch.Tensor:
@@ -843,16 +847,22 @@ class MiniHack(Env):
     # render
 
     @torch.no_grad()
-    def render(self, states=None, size: int | None = None, supersample: int | None = None,
-               variation: dict | None = None, style=None, out=None) -> torch.Tensor:
+    def render(
+        self,
+        states=None,
+        size: int | None = None,
+        supersample: int | None = None,
+        variation: dict | None = None,
+        style=None,
+        out=None,
+    ) -> torch.Tensor:
         """``(...,1659)`` glyph ids -> ``(...,21*size,79*size,3)`` uint8 on device.
 
         There is no ``scene()``: a Scene2D describes vector primitives to be rasterised, and this frame
         is not rasterised at all. Forcing 1659 textured quads through a polygon IR would re-derive, per
         frame, an image the tileset already holds.
         """
-        s = self._state if states is None else torch.as_tensor(states, device=self.device,
-                                                               dtype=torch.float32)
+        s = self._state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
         lead = tuple(s.shape[:-1])
         s = s.reshape(-1, self.state_dim)
         n = s.shape[0]
@@ -862,7 +872,8 @@ class MiniHack(Env):
                 f"MiniHack.render: supersample={supersample} is meaningless here. Supersampling exists "
                 f"to estimate sub-pixel coverage of analytic geometry; this frame is an exact gather "
                 f"from a bitmap atlas, so there is no coverage to estimate and averaging copies of the "
-                f"same tile would only blur the reference.")
+                f"same tile would only blur the reference."
+            )
 
         sty = self.resolve_style(style, variation, batch=n)
         # asked on the device and read back as one value: copying the whole style tensor to the host
@@ -872,11 +883,14 @@ class MiniHack(Env):
         glyph = s.round().long().clamp_(0, N_GLYPH - 1).view(n, GRID_H, GRID_W)
         if shared:
             v0 = self.variation_space.unpack(v[0].detach().cpu().numpy())
-            atlas = self._atlas_for(np.asarray(v0["background_color"], np.float64).astype(np.int64),
-                                    np.asarray(v0["channel_gain"], np.float32), t)
+            atlas = self._atlas_for(
+                np.asarray(v0["background_color"], np.float64).astype(np.int64),
+                np.asarray(v0["channel_gain"], np.float32),
+                t,
+            )
         else:
             atlas = self._base_atlas(t)
-        tiles = atlas[self.glyph2tile[glyph]]                       # (n,H,W,t,t,3)
+        tiles = atlas[self.glyph2tile[glyph]]  # (n,H,W,t,t,3)
         if out is not None and shared:
             # write straight into the caller's buffer: out.view(...) is contiguous and the permuted
             # gather is a strided view, so copy_ is the only traffic and nothing is allocated.
@@ -885,8 +899,7 @@ class MiniHack(Env):
         else:
             img = tiles.permute(0, 1, 3, 2, 4, 5).reshape(n, GRID_H * t, GRID_W * t, 3)
             if not shared:
-                img = self._recolour_frames(
-                    img, sty, None if out is None else out.view(n, GRID_H * t, GRID_W * t, 3))
+                img = self._recolour_frames(img, sty, None if out is None else out.view(n, GRID_H * t, GRID_W * t, 3))
         return img.view(*lead, *img.shape[1:]) if lead else img
 
     # states
@@ -908,13 +921,13 @@ class MiniHack(Env):
             r0 = int(rng.integers(1, GRID_H - h - 1))
             c0 = int(rng.integers(1, GRID_W - w - 1))
             r1, c1 = r0 + h, c0 + w
-            g[b, r0:r1 + 1, c0] = G_VWALL
-            g[b, r0:r1 + 1, c1] = G_VWALL
-            g[b, r0, c0:c1 + 1] = G_HWALL
-            g[b, r1, c0:c1 + 1] = G_HWALL
+            g[b, r0 : r1 + 1, c0] = G_VWALL
+            g[b, r0 : r1 + 1, c1] = G_VWALL
+            g[b, r0, c0 : c1 + 1] = G_HWALL
+            g[b, r1, c0 : c1 + 1] = G_HWALL
             g[b, r0, c0], g[b, r0, c1] = G_TLCORN, G_TRCORN
             g[b, r1, c0], g[b, r1, c1] = G_BLCORN, G_BRCORN
-            g[b, r0 + 1:r1, c0 + 1:c1] = G_ROOM
+            g[b, r0 + 1 : r1, c0 + 1 : c1] = G_ROOM
             # a door on one of the four walls
             if rng.random() < 0.5:
                 g[b, int(rng.integers(r0 + 1, r1)), c0 if rng.random() < 0.5 else c1] = G_DOOR_VERT
@@ -946,8 +959,10 @@ class MiniHack(Env):
         if int(size) != TILE_PX:
             raise ValueError(
                 f"the official MiniHack renderer has exactly one tile size ({TILE_PX} px); there is no "
-                f"reference to compare a {size} px render against")
+                f"reference to compare a {size} px render against"
+            )
         from minihack.tiles.glyph_mapper import GlyphMapper
+
         return GlyphMapper()
 
     @staticmethod

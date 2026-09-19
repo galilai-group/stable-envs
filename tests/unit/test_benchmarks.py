@@ -28,6 +28,7 @@ The four guards asserted here each replaced such a number.
 CPU-only and reference-free: the scripts are imported and their decision functions are driven with
 fakes, so this costs a second and runs anywhere rather than being a thing to remember on a GPU node.
 """
+
 from __future__ import annotations
 
 import importlib.util
@@ -73,6 +74,7 @@ def storage():
 
 # --------------------------------------------------------------------- supersample
 
+
 def test_native_supersample_is_not_passed_as_one(bench, monkeypatch):
     """``ss=None`` must leave the env to its own ``default_supersample``.
 
@@ -90,7 +92,8 @@ def test_native_supersample_is_not_passed_as_one(bench, monkeypatch):
     bench.make_env("Whatever", 8, 84, None)
     assert "supersample" not in seen, (
         f"ss=None must not reach se.make at all, got {seen} — passing supersample=1 measures a "
-        f"different picture than se.make(name) produces for the 44 classes declaring 2")
+        f"different picture than se.make(name) produces for the 44 classes declaring 2"
+    )
     assert seen["batch"] == 8 and seen["size"] == 84 and seen["device"] == "cuda"
 
     seen.clear()
@@ -98,8 +101,10 @@ def test_native_supersample_is_not_passed_as_one(bench, monkeypatch):
     assert seen["supersample"] == 2, "an explicitly requested supersample must still be honoured"
 
 
-@pytest.mark.parametrize("tok,want", [("native", None), ("default", None), ("env", None),
-                                      ("none", None), ("NATIVE", None), ("1", 1), ("2", 2)])
+@pytest.mark.parametrize(
+    "tok,want",
+    [("native", None), ("default", None), ("env", None), ("none", None), ("NATIVE", None), ("1", 1), ("2", 2)],
+)
 def test_parse_ss(bench, tok, want):
     assert bench.parse_ss(tok) == want
 
@@ -110,21 +115,26 @@ def test_ss_flag_defaults_to_native(bench):
         src = (EXAMPLES / f"{script}.py").read_text()
         assert '"--ss", default="native"' in src, (
             f"{script}.py must default --ss to the env's own supersample; a numeric default silently "
-            f"overrides default_supersample for 44 classes")
+            f"overrides default_supersample for 44 classes"
+        )
 
 
 # --------------------------------------------------------------------- size guards
 
-@pytest.mark.parametrize("hw,requested,tripped", [
-    # Every shape here is one this sweep has actually produced; see examples/results/storage/*.json.
-    ((1792, 2304), 256, True),      # CraftaxClassic: size is a PER-TILE edge
-    ((256, 1024), 256, False),      # Highway, Merge: 1:4 and the requested 256 IS the short edge
-    ((256, 512), 256, False),       # Parking
-    ((256, 256), 256, False),
-    ((512, 512), 256, False),       # exactly 2x is NOT over the bar
-    ((513, 513), 256, True),
-    ((224, 352), 224, False),       # OvercookedAsymmAdvantages at its own tile-aligned size
-])
+
+@pytest.mark.parametrize(
+    "hw,requested,tripped",
+    [
+        # Every shape here is one this sweep has actually produced; see examples/results/storage/*.json.
+        ((1792, 2304), 256, True),  # CraftaxClassic: size is a PER-TILE edge
+        ((256, 1024), 256, False),  # Highway, Merge: 1:4 and the requested 256 IS the short edge
+        ((256, 512), 256, False),  # Parking
+        ((256, 256), 256, False),
+        ((512, 512), 256, False),  # exactly 2x is NOT over the bar
+        ((513, 513), 256, True),
+        ((224, 352), 224, False),  # OvercookedAsymmAdvantages at its own tile-aligned size
+    ],
+)
 def test_per_tile_note(storage, hw, requested, tripped):
     note = storage.per_tile_note(hw, requested)
     assert (note is not None) == tripped, f"{hw} at size={requested}: got {note!r}"
@@ -157,16 +167,19 @@ class _FakeEnv:
 
     def render(self, states, **kw):
         import torch
+
         return torch.zeros((len(states), *self._hw, 3), dtype=torch.uint8)
 
 
 def _fake_registry(monkeypatch, storage, table):
     """``table`` maps the requested size (or None for native) to an env or an exception."""
+
     def fake_make(name, num_envs=1, device="cuda", size=None, **kw):
         got = table[size]
         if isinstance(got, Exception):
             raise got
         return got
+
     monkeypatch.setattr(storage.se, "make", fake_make)
 
 
@@ -178,15 +191,20 @@ def test_probe_frames_happy_path(storage, monkeypatch):
 
 
 def test_probe_frames_env_refuses_the_size_at_construction(storage, monkeypatch):
-    _fake_registry(monkeypatch, storage, {
-        256: ValueError("renders at 224px only"),
-        None: _FakeEnv(224, (224, 224)),
-    })
+    _fake_registry(
+        monkeypatch,
+        storage,
+        {
+            256: ValueError("renders at 224px only"),
+            None: _FakeEnv(224, (224, 224)),
+        },
+    )
     pool, frames, hw, size, note = storage.probe_frames("X", 256, 8, 64)
     assert size == 224 and hw == (224, 224)
     assert note and "renders at 224px only" in note, (
         "an env pinned to its reference's output size must be measured at that size WITH the reason "
-        "recorded, not dropped from the table as an error")
+        "recorded, not dropped from the table as an error"
+    )
 
 
 def test_probe_frames_env_refuses_the_size_at_render(storage, monkeypatch):
@@ -194,10 +212,14 @@ def test_probe_frames_env_refuses_the_size_at_render(storage, monkeypatch):
         def render(self, states, **kw):
             raise RuntimeError("needs a whole number of tiles")
 
-    _fake_registry(monkeypatch, storage, {
-        256: _RefusesAtRender(256, (256, 256)),
-        None: _FakeEnv(64, (64, 64)),
-    })
+    _fake_registry(
+        monkeypatch,
+        storage,
+        {
+            256: _RefusesAtRender(256, (256, 256)),
+            None: _FakeEnv(64, (64, 64)),
+        },
+    )
     pool, frames, hw, size, note = storage.probe_frames("X", 256, 8, 64)
     assert size == 64 and hw == (64, 64)
     assert note and "whole number of tiles" in note
@@ -205,10 +227,14 @@ def test_probe_frames_env_refuses_the_size_at_render(storage, monkeypatch):
 
 def test_probe_frames_size_means_per_tile(storage, monkeypatch):
     """Craftax: the size was accepted and meant something else. Fall back and say which."""
-    _fake_registry(monkeypatch, storage, {
-        256: _FakeEnv(256, (1792, 2304)),
-        None: _FakeEnv(16, (112, 144)),
-    })
+    _fake_registry(
+        monkeypatch,
+        storage,
+        {
+            256: _FakeEnv(256, (1792, 2304)),
+            None: _FakeEnv(16, (112, 144)),
+        },
+    )
     pool, frames, hw, size, note = storage.probe_frames("X", 256, 4, 64)
     assert hw == (112, 144) and size == 16
     assert note and "per tile" in note
@@ -216,15 +242,20 @@ def test_probe_frames_size_means_per_tile(storage, monkeypatch):
 
 def test_probe_frames_reraises_when_native_also_fails(storage, monkeypatch):
     """A failure at the env's OWN size is a real error and must not be swallowed into a note."""
-    _fake_registry(monkeypatch, storage, {
-        256: ValueError("no"),
-        None: RuntimeError("cannot instantiate at all"),
-    })
+    _fake_registry(
+        monkeypatch,
+        storage,
+        {
+            256: ValueError("no"),
+            None: RuntimeError("cannot instantiate at all"),
+        },
+    )
     with pytest.raises(RuntimeError, match="cannot instantiate at all"):
         storage.probe_frames("X", 256, 4, 64)
 
 
 # --------------------------------------------------------------------- cpu_throughput
+
 
 class _Ref:
     """A reference object that is NOT a gymnasium env: no ``unwrapped``, like dm_control's."""
@@ -239,6 +270,7 @@ class _GymLikeRef(_Ref):
     class _U:
         def _render(self, visualize=False):
             return None
+
     unwrapped = _U()
 
 
@@ -258,6 +290,7 @@ def _cls_for(ref_obj, calls):
         @classmethod
         def reference_set_state(cls, u, st):
             return None
+
     return _Cls
 
 
@@ -282,4 +315,5 @@ def test_cpu_throughput_keeps_the_timing_it_already_took(bench, ref, expect_draw
 def test_cpu_throughput_returns_none_without_a_reference(bench):
     class _NoRef:
         reference_id = None
+
     assert bench.cpu_throughput(_NoRef, "X", 8, 8, np.zeros((4, 2), np.float32)) is None

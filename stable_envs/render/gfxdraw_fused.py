@@ -40,6 +40,7 @@ and an edge whose bounding box misses the tile cannot blend into it. Both are ex
 polygons rather than reasoning about the equivalence, and CarRacing's own parity test then diffs the
 whole pipeline against pygame.
 """
+
 from __future__ import annotations
 
 import torch
@@ -49,6 +50,7 @@ from . import gfxdraw as G
 try:
     import triton
     import triton.language as tl
+
     HAVE_TRITON = True
 except ImportError:
     HAVE_TRITON = False
@@ -57,8 +59,24 @@ except ImportError:
 PM_NV, PM_R, PM_G, PM_B, PM_X0, PM_Y0, PM_X1, PM_Y1 = range(8)
 PM_W = 8
 #: per-edge columns of the Wu/clip pre-pass
-(EG_DRAW, EG_SX, EG_SY, EG_X0, EG_Y0, EG_DX, EG_DY, EG_XDIR, EG_KIND, EG_MAJOR, EG_E, EG_LO,
- EG_BX0, EG_BY0, EG_BX1, EG_BY1) = range(16)
+(
+    EG_DRAW,
+    EG_SX,
+    EG_SY,
+    EG_X0,
+    EG_Y0,
+    EG_DX,
+    EG_DY,
+    EG_XDIR,
+    EG_KIND,
+    EG_MAJOR,
+    EG_E,
+    EG_LO,
+    EG_BX0,
+    EG_BY0,
+    EG_BX1,
+    EG_BY1,
+) = range(16)
 EG_W = 16
 #: ``kind``: which of ``aalineColor``'s three cases this edge takes
 K_GEN, K_VERT, K_HORIZ = 0, 1, 2
@@ -85,8 +103,7 @@ def edge_table(vx: torch.Tensor, vy: torch.Tensor, H: int, W: int) -> torch.Tens
     # transcription of them here: the per-primitive path this kernel is diffed against computes the
     # same sixteen quantities, and two copies of the same integer arithmetic in two modules that
     # must agree pixel for pixel is one edit away from a fringe that moves in one path only.
-    (draw, x1, y1, x2, y2, xx0, yy0, dx, dy, xdir, vert, horiz, ymaj, major,
-     E, lo) = G.edge_geometry(a, b, c, d, W, H)
+    (draw, x1, y1, x2, y2, xx0, yy0, dx, dy, xdir, vert, horiz, ymaj, major, E, lo) = G.edge_geometry(a, b, c, d, W, H)
     kind = torch.where(vert, K_VERT, torch.where(horiz, K_HORIZ, K_GEN))
     # ``kind`` already says which axis is major for the two degenerate cases; for a general edge the
     # kernel needs it, and it is exactly ``dy > dx``. Folded into ``kind`` as a third bit rather than
@@ -100,14 +117,14 @@ def edge_table(vx: torch.Tensor, vy: torch.Tensor, H: int, W: int) -> torch.Tens
     ex1 = torch.maximum(x1, x2) + 1
     ey0 = torch.minimum(y1, y2) - 1
     ey1 = torch.maximum(y1, y2) + 1
-    cols = [draw.to(torch.int64), x1, y1, xx0, yy0, dx, dy, xdir, kind, major, E, lo,
-            ex0, ey0, ex1, ey1]
+    cols = [draw.to(torch.int64), x1, y1, xx0, yy0, dx, dy, xdir, kind, major, E, lo, ex0, ey0, ex1, ey1]
     return torch.stack(cols, -1).to(torch.int32).reshape(M, 4, EG_W)
 
 
 @torch.no_grad()
-def bin_primitives(box: torch.Tensor, H: int, W: int, bin_h: int,
-                   bin_w: int) -> tuple[torch.Tensor, torch.Tensor, int]:
+def bin_primitives(
+    box: torch.Tensor, H: int, W: int, bin_h: int, bin_w: int
+) -> tuple[torch.Tensor, torch.Tensor, int]:
     """Per screen-bin lists of the primitives whose box reaches them, in DRAW ORDER.
 
     ``box`` is ``(B,P,4)`` int32 ``x0,y0,x1,y1`` in output coordinates, with an empty box for a
@@ -122,12 +139,12 @@ def bin_primitives(box: torch.Tensor, H: int, W: int, bin_h: int,
     dev = box.device
     by = torch.arange(nby, device=dev, dtype=torch.int32) * bin_h
     bx = torch.arange(nbx, device=dev, dtype=torch.int32) * bin_w
-    oy = (box[..., 1:2] <= (by + bin_h - 1)) & (box[..., 3:4] >= by)            # (B,P,nby)
-    ox = (box[..., 0:1] <= (bx + bin_w - 1)) & (box[..., 2:3] >= bx)            # (B,P,nbx)
+    oy = (box[..., 1:2] <= (by + bin_h - 1)) & (box[..., 3:4] >= by)  # (B,P,nby)
+    ox = (box[..., 0:1] <= (bx + bin_w - 1)) & (box[..., 2:3] >= bx)  # (B,P,nbx)
     ov = (oy.unsqueeze(-1) & ox.unsqueeze(-2)).permute(0, 2, 3, 1).reshape(B, nby * nbx, P)
     ai = ov.to(torch.int32)
     cnt = ai.sum(-1)
-    K = max(int(cnt.max().item()), 1)                        # the one synchronisation per frame
+    K = max(int(cnt.max().item()), 1)  # the one synchronisation per frame
     pos = ai.cumsum(-1) - ai
     slot = torch.where(ov, pos, torch.full_like(pos, K)).to(torch.int64)
     lst = torch.zeros((B, nby * nbx, K + 1), dtype=torch.int32, device=dev)
@@ -137,7 +154,6 @@ def bin_primitives(box: torch.Tensor, H: int, W: int, bin_h: int,
 
 
 if HAVE_TRITON:
-
     # A kernel may only read a global that IS a ``tl.constexpr`` object, and the column names above
     # have to stay plain ints because the host side indexes tensors with them. So each one gets a
     # constexpr twin rather than being duplicated as a literal in the kernel, where it would drift
@@ -147,8 +163,7 @@ if HAVE_TRITON:
     cPM_X0, cPM_Y0, cPM_X1, cPM_Y1 = _c(PM_X0), _c(PM_Y0), _c(PM_X1), _c(PM_Y1)
     cEG_W, cEG_DRAW, cEG_SX, cEG_SY = _c(EG_W), _c(EG_DRAW), _c(EG_SX), _c(EG_SY)
     cEG_X0, cEG_Y0, cEG_DX, cEG_DY = _c(EG_X0), _c(EG_Y0), _c(EG_DX), _c(EG_DY)
-    cEG_XDIR, cEG_KIND, cEG_MAJOR, cEG_E, cEG_LO = (_c(EG_XDIR), _c(EG_KIND), _c(EG_MAJOR),
-                                                    _c(EG_E), _c(EG_LO))
+    cEG_XDIR, cEG_KIND, cEG_MAJOR, cEG_E, cEG_LO = (_c(EG_XDIR), _c(EG_KIND), _c(EG_MAJOR), _c(EG_E), _c(EG_LO))
     cEG_BX0, cEG_BY0, cEG_BX1, cEG_BY1 = _c(EG_BX0), _c(EG_BY0), _c(EG_BX1), _c(EG_BY1)
     cK_VERT, cK_HORIZ, cK_GEN, cK_YMAJ = _c(K_VERT), _c(K_HORIZ), _c(K_GEN), _c(K_GEN + 4)
     cM32 = _c(M32)
@@ -169,18 +184,36 @@ if HAVE_TRITON:
         d6 = d.to(tl.int64)
         diff = ((s6 - d6) << sh) & cM32
         v = ((diff * a.to(tl.int64)) & cM32) >> 8
-        return (((((d6 << sh) + v) & (255 << sh)) >> sh)).to(tl.int32)
+        return ((((d6 << sh) + v) & (255 << sh)) >> sh).to(tl.int32)
 
     @triton.jit
     def _round16(v):
         return (v >> 16) + ((v & 32768) >> 15)
 
     @triton.jit
-    def _surface_kernel(pv_ptr, pm_ptr, pe_ptr, lst_ptr, cnt_ptr, aa_ptr, out_ptr,
-                        P, PG, PPOST, K, NB,
-                        H: tl.constexpr, W: tl.constexpr, VMAX: tl.constexpr,
-                        BINH: tl.constexpr, BINW: tl.constexpr, NBX: tl.constexpr,
-                        NTX: tl.constexpr, BH: tl.constexpr, BW: tl.constexpr):
+    def _surface_kernel(
+        pv_ptr,
+        pm_ptr,
+        pe_ptr,
+        lst_ptr,
+        cnt_ptr,
+        aa_ptr,
+        out_ptr,
+        P,
+        PG,
+        PPOST,
+        K,
+        NB,
+        H: tl.constexpr,
+        W: tl.constexpr,
+        VMAX: tl.constexpr,
+        BINH: tl.constexpr,
+        BINW: tl.constexpr,
+        NBX: tl.constexpr,
+        NTX: tl.constexpr,
+        BH: tl.constexpr,
+        BW: tl.constexpr,
+    ):
         b = tl.program_id(0)
         tid = tl.program_id(1)
         tiy = tid // NTX
@@ -262,8 +295,7 @@ if HAVE_TRITON:
                                     #    short-circuits to a solid hline/vline with no AA at all
                                     hit = (Y == sy) & (X == sx)
                                     if kind == cK_VERT:
-                                        hit = hit | ((dy > 0) & (X == xx0) & (Y >= yy0)
-                                                     & (Y <= yy0 + dy))
+                                        hit = hit | ((dy > 0) & (X == xx0) & (Y >= yy0) & (Y <= yy0 + dy))
                                     if kind == cK_HORIZ:
                                         hit = hit | ((Y == yy0) & (X >= lo) & (X <= lo + dx))
                                     cr = tl.where(hit, fr, cr)
@@ -271,7 +303,7 @@ if HAVE_TRITON:
                                     cb = tl.where(hit, fb, cb)
 
                                     # 2. the Wu pair that lands on this pixel, if any
-                                    if kind == cK_YMAJ:                     # y-major
+                                    if kind == cK_YMAJ:  # y-major
                                         kk = Y - yy0
                                         acc = kk * Ec
                                         wraps = acc >> 16
@@ -321,8 +353,7 @@ if HAVE_TRITON:
                         yhi = tl.maximum(ay, byv)
                         xl = tl.where(sw, bxv, ax)
                         xh = tl.where(sw, ax, bxv)
-                        act = (ay != byv) & (((Y6 >= ylo) & (Y6 < yhi))
-                                             | ((Y6 == my) & (Y6 > ylo) & (Y6 <= yhi)))
+                        act = (ay != byv) & (((Y6 >= ylo) & (Y6 < yhi)) | ((Y6 == my) & (Y6 > ylo) & (Y6 <= yhi)))
                         den = tl.maximum(yhi - ylo, 1)
                         Xv = ((65536 * (Y6 - ylo)) // den) * (xh - xl) + 65536 * xl
                         xlo_a = tl.minimum(xlo_a, tl.where(act, Xv, BIG))
@@ -347,7 +378,7 @@ if HAVE_TRITON:
                     lt = tl.zeros([BH, BW], dtype=tl.int32)
                     le = tl.zeros([BH, BW], dtype=tl.int32)
                     nact = tl.zeros([BH, BW], dtype=tl.int32)
-                    extra = X < 0                              # an all-false tile-shaped mask
+                    extra = X < 0  # an all-false tile-shaped mask
                     for e in range(0, nv):
                         j = (e + nv - 1) % nv
                         ax = tl.load(vb + 2 * j + 0)
@@ -372,7 +403,8 @@ if HAVE_TRITON:
                         # to cross exactly on a pixel centre is worth.
                         q = tl.math.div_rn(
                             ((Y - y1).to(tl.int64) * (x2 - x1).to(tl.int64)).to(tl.float32),
-                            tl.maximum(y2 - y1, 1).to(tl.float32))
+                            tl.maximum(y2 - y1, 1).to(tl.float32),
+                        )
                         xc = tl.where(nact % 2 == 0, tl.floor(q), tl.ceil(q)).to(tl.int32) + x1
                         lt += (act & (xc < X)).to(tl.int32)
                         le += (act & (xc <= X)).to(tl.int32)
@@ -380,15 +412,15 @@ if HAVE_TRITON:
                         # a horizontal edge strictly inside the polygon gets one span of its own
                         if ay == byv:
                             inside = (ay > miny) & (ay < maxy)
-                            extra = extra | (inside & (Y == ay)
-                                             & (X >= tl.minimum(ax, bxv))
-                                             & (X <= tl.maximum(ax, bxv)))
+                            extra = extra | (
+                                inside & (Y == ay) & (X >= tl.minimum(ax, bxv)) & (X <= tl.maximum(ax, bxv))
+                            )
                     # x is covered iff some EVEN k has srt[k] <= x <= srt[k+1]; with lt and le that
                     # is a range test on k and needs no sort
                     ka = tl.maximum(lt - 1, 0)
                     kb = tl.minimum(le - 1, nact - 2)
                     hit = (ka <= kb) & ((ka % 2 == 0) | (ka + 1 <= kb))
-                    if miny == maxy:                        # a quad one row high: min x to max x
+                    if miny == maxy:  # a quad one row high: min x to max x
                         lox = tl.load(vb + 0)
                         hix = lox
                         for e in range(1, nv):
@@ -407,8 +439,7 @@ if HAVE_TRITON:
         tl.store(o + 2, cb.to(tl.uint8), mask=m)
 
     @triton.jit
-    def _shrink_kernel(in_ptr, out_ptr, idx_ptr, w_ptr, N, MOUT, C, recip,
-                       K: tl.constexpr, BLOCK: tl.constexpr):
+    def _shrink_kernel(in_ptr, out_ptr, idx_ptr, w_ptr, N, MOUT, C, recip, K: tl.constexpr, BLOCK: tl.constexpr):
         """One axis of ``pygame.transform.smoothscale``'s shrink: a fixed gather, not a filter.
 
         ``(A, N, C)`` -> ``(A, MOUT, C)`` uint8. The unit is 2^14 and a WHOLE tap takes the sample
@@ -455,9 +486,17 @@ WARPS = 1
 
 
 @torch.no_grad()
-def render_surface(vert: torch.Tensor, meta: torch.Tensor, edge: torch.Tensor, aa: torch.Tensor,
-                   H: int, W: int, PG: int, PPOST: int,
-                   out: torch.Tensor | None = None) -> torch.Tensor:
+def render_surface(
+    vert: torch.Tensor,
+    meta: torch.Tensor,
+    edge: torch.Tensor,
+    aa: torch.Tensor,
+    H: int,
+    W: int,
+    PG: int,
+    PPOST: int,
+    out: torch.Tensor | None = None,
+) -> torch.Tensor:
     """Rasterize a batch of polygon lists to ``(B,H,W,3)`` uint8, already flipped.
 
     ``vert`` ``(B,P,VMAX,2)`` int32 truncated screen vertices, ``meta`` ``(B,P,PM_W)`` int32,
@@ -471,15 +510,34 @@ def render_surface(vert: torch.Tensor, meta: torch.Tensor, edge: torch.Tensor, a
     dev = vert.device
     if out is None:
         out = torch.empty((B, H, W, 3), dtype=torch.uint8, device=dev)
-    lst, cnt, nbx = bin_primitives(meta[..., cPM_X0:cPM_Y1 + 1], H, W, *BINS)
+    lst, cnt, nbx = bin_primitives(meta[..., cPM_X0 : cPM_Y1 + 1], H, W, *BINS)
     bh, bw = TILE
     ntx = -(-W // bw)
     with torch.cuda.device(dev):
         _surface_kernel[(B, ntx * -(-H // bh))](
-            vert, meta, edge, lst, cnt, aa, out,
-            P, PG, PPOST, lst.shape[2], lst.shape[1],
-            H=H, W=W, VMAX=VMAX, BINH=BINS[0], BINW=BINS[1], NBX=nbx,
-            NTX=ntx, BH=bh, BW=bw, num_warps=WARPS)
+            vert,
+            meta,
+            edge,
+            lst,
+            cnt,
+            aa,
+            out,
+            P,
+            PG,
+            PPOST,
+            lst.shape[2],
+            lst.shape[1],
+            H=H,
+            W=W,
+            VMAX=VMAX,
+            BINH=BINS[0],
+            BINW=BINS[1],
+            NBX=nbx,
+            NTX=ntx,
+            BH=bh,
+            BW=bw,
+            num_warps=WARPS,
+        )
     return out
 
 
@@ -492,5 +550,6 @@ def shrink(x: torch.Tensor, plan, out: torch.Tensor | None = None) -> torch.Tens
     blk = 512
     with torch.cuda.device(x.device):
         _shrink_kernel[(A, -(-(plan.m * C) // blk))](
-            x, out, plan.idx32, plan.w32, N, plan.m, C, plan.recip, K=plan.K, BLOCK=blk)
+            x, out, plan.idx32, plan.w32, N, plan.m, C, plan.recip, K=plan.K, BLOCK=blk
+        )
     return out

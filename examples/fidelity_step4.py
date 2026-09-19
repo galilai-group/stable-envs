@@ -37,6 +37,7 @@ convenient is not frozen.
 
     python examples/fidelity_step4.py --shard dmc --out examples/results/step4/conformance/dmc.json
 """
+
 from __future__ import annotations
 
 import argparse
@@ -82,6 +83,7 @@ DEFAULT_CHECK_BUDGET_S = 900.0
 
 # ------------------------------------------------------------------ the frozen state corpus
 
+
 def select(pool: np.ndarray, n: int) -> tuple[np.ndarray, dict]:
     """``n`` rows of ``pool``: the most typical state, then every per-dimension extreme, then spread.
 
@@ -126,9 +128,14 @@ def select(pool: np.ndarray, n: int) -> tuple[np.ndarray, dict]:
             picks.append(i)
             d2 = np.minimum(d2, ((z - z[i]) ** 2).sum(-1))
     idx = np.array(picks[:n], int)
-    return pool[idx], {"pool": int(len(pool)), "kept": int(len(idx)),
-                       "n_typical": 1, "n_extreme": int(n_extreme - 1),
-                       "n_spread": int(len(idx) - n_extreme), "indices": idx.tolist()}
+    return pool[idx], {
+        "pool": int(len(pool)),
+        "kept": int(len(idx)),
+        "n_typical": 1,
+        "n_extreme": int(n_extreme - 1),
+        "n_spread": int(len(idx) - n_extreme),
+        "indices": idx.tolist(),
+    }
 
 
 #: A frozen corpus whose ``.npz`` carries no ``meta`` key may carry it BESIDE the array instead, in
@@ -159,7 +166,8 @@ def _corpus_meta(p: Path, z) -> dict:
         f"{p} carries no 'meta' key and no metadata sidecar beside it (tried {tried}). A corpus "
         f"without provenance is not a frozen corpus: it cannot say which pool it came from, which "
         f"seed drew it, or what its array digest is, so a later run cannot show it measured the same "
-        f"states. Write the sidecar rather than redrawing -- redrawing gives a different corpus.")
+        f"states. Write the sidecar rather than redrawing -- redrawing gives a different corpus."
+    )
 
 
 def corpus_for(env, config_id: str, states_dir: Path, n: int, pool: int) -> tuple[np.ndarray, dict]:
@@ -173,9 +181,15 @@ def corpus_for(env, config_id: str, states_dir: Path, n: int, pool: int) -> tupl
     raw = env.sample_states(int(pool), rng=np.random.default_rng(STATE_SEED))
     states, how = select(np.asarray(raw, np.float32), int(n))
     states = np.ascontiguousarray(states, np.float32)
-    meta = {"seed": STATE_SEED, "selection": "typical + per-dim extremes + farthest-point spread",
-            "state_dim": int(states.shape[1]), "state_names": list(env.state_names or []),
-            "env": config_id, "sha256": C.frames_digest(states), **how}
+    meta = {
+        "seed": STATE_SEED,
+        "selection": "typical + per-dim extremes + farthest-point spread",
+        "state_dim": int(states.shape[1]),
+        "state_names": list(env.state_names or []),
+        "env": config_id,
+        "sha256": C.frames_digest(states),
+        **how,
+    }
     states_dir.mkdir(parents=True, exist_ok=True)
     np.savez(p, states=states, meta=np.array(json.dumps(meta, sort_keys=True)))
     meta["written_to"] = str(p.relative_to(ROOT)) if p.is_relative_to(ROOT) else str(p)
@@ -195,15 +209,24 @@ def run(fn, *a, budget: float = DEFAULT_CHECK_BUDGET_S, **kw) -> dict:
     try:
         r = fn(*a, **kw)
     except BLOCKING as e:
-        return {"status": "blocked_environment", "why": f"{type(e).__name__}: {str(e)[:300]}",
-                "seconds": round(time.perf_counter() - t0, 2)}
+        return {
+            "status": "blocked_environment",
+            "why": f"{type(e).__name__}: {str(e)[:300]}",
+            "seconds": round(time.perf_counter() - t0, 2),
+        }
     except NotImplementedError as e:
-        return {"status": "not_applicable", "why": f"{type(e).__name__}: {str(e)[:300]}",
-                "seconds": round(time.perf_counter() - t0, 2)}
-    except BaseException as e:                                              # noqa: BLE001
-        return {"status": "error", "why": f"{type(e).__name__}: {str(e)[:600]}",
-                "traceback": traceback.format_exc()[-1200:],
-                "seconds": round(time.perf_counter() - t0, 2)}
+        return {
+            "status": "not_applicable",
+            "why": f"{type(e).__name__}: {str(e)[:300]}",
+            "seconds": round(time.perf_counter() - t0, 2),
+        }
+    except BaseException as e:  # noqa: BLE001
+        return {
+            "status": "error",
+            "why": f"{type(e).__name__}: {str(e)[:600]}",
+            "traceback": traceback.format_exc()[-1200:],
+            "seconds": round(time.perf_counter() - t0, 2),
+        }
     dt = round(time.perf_counter() - t0, 2)
     if isinstance(r, dict) and "skipped" in r:
         return {"status": "not_applicable", "why": r["skipped"], "seconds": dt}
@@ -245,6 +268,7 @@ def reseed(env) -> None:
 
 # ------------------------------------------------------------------ the check battery
 
+
 def mandatory(env, states, style) -> dict:
     """Section 4.1's mandatory list, in a fixed order. Every certified env, both tiers, no exceptions."""
     out = {}
@@ -273,20 +297,24 @@ def _fidelity_declaration(env) -> dict:
     """``register``'s own enforcement, re-run on the live class. Raises if the tier is half-declared."""
     from stable_envs.env import reference_versions_of
     from stable_envs.registry import check_fidelity_declaration
+
     check_fidelity_declaration(type(env))
     d = env.describe()
-    return {"tier": env.fidelity_tier, "describe_reports_tier": d.get("fidelity_tier"),
-            "agrees": d.get("fidelity_tier") == env.fidelity_tier,
-            "parity_interior_min": _jsonable(getattr(env, "parity_interior_min", None)),
-            "parity_all_exact_min": _jsonable(getattr(env, "parity_all_exact_min", None)),
-            "visual_fidelity": _jsonable(getattr(env, "visual_fidelity", None) or None),
-            # Recorded separately and never defaulted from visual_fidelity: they are different
-            # declarations with different numbers, and only a LEARNED decoder carries this one.
-            "variation_fidelity": _jsonable(getattr(env, "variation_fidelity", None) or None),
-            # The reference versions the declaration names, for either tier. The certifier compares
-            # them with this run's ``reference_packages`` and blocks a mismatch rather than failing it.
-            "reference_versions": _jsonable(reference_versions_of(type(env)) or None),
-            "render_decoder": getattr(env, "render_decoder", "renderer")}
+    return {
+        "tier": env.fidelity_tier,
+        "describe_reports_tier": d.get("fidelity_tier"),
+        "agrees": d.get("fidelity_tier") == env.fidelity_tier,
+        "parity_interior_min": _jsonable(getattr(env, "parity_interior_min", None)),
+        "parity_all_exact_min": _jsonable(getattr(env, "parity_all_exact_min", None)),
+        "visual_fidelity": _jsonable(getattr(env, "visual_fidelity", None) or None),
+        # Recorded separately and never defaulted from visual_fidelity: they are different
+        # declarations with different numbers, and only a LEARNED decoder carries this one.
+        "variation_fidelity": _jsonable(getattr(env, "variation_fidelity", None) or None),
+        # The reference versions the declaration names, for either tier. The certifier compares
+        # them with this run's ``reference_packages`` and blocks a mismatch rather than failing it.
+        "reference_versions": _jsonable(reference_versions_of(type(env)) or None),
+        "render_decoder": getattr(env, "render_decoder", "renderer"),
+    }
 
 
 def family_specific(env, states, style) -> dict:
@@ -306,19 +334,26 @@ def family_specific(env, states, style) -> dict:
         reseed(env)
         out["render_parity_with_official_renderer"] = run(_parity, env, states, style)
     else:
-        na("render_parity_with_official_renderer",
-           "declares the VISUAL tier; asserted against its own numbers instead" if tier == "visual"
-           else "no official reference renderer is declared")
+        na(
+            "render_parity_with_official_renderer",
+            "declares the VISUAL tier; asserted against its own numbers instead"
+            if tier == "visual"
+            else "no official reference renderer is declared",
+        )
 
     if tier == "visual" and has_ref:
         reseed(env)
         out["check_visual_fidelity"] = run(C.check_visual_fidelity, env, n=len(states))
         reseed(env)
         out["check_visual_fidelity_under_variation"] = run(
-            C.check_visual_fidelity_under_variation, env, n=len(states), seed=0)
+            C.check_visual_fidelity_under_variation, env, n=len(states), seed=0
+        )
     else:
-        why = ("declares the PARITY tier; held to interior-pixel exactness instead" if tier == "parity"
-               else "no official reference renderer is declared")
+        why = (
+            "declares the PARITY tier; held to interior-pixel exactness instead"
+            if tier == "parity"
+            else "no official reference renderer is declared"
+        )
         na("check_visual_fidelity", why)
         na("check_visual_fidelity_under_variation", why)
 
@@ -376,9 +411,12 @@ def _resolution(env, states) -> dict:
         proto = C.downsample_protocol_states(env)
     except BLOCKING as e:
         return {"status": "blocked_environment", "why": f"{type(e).__name__}: {str(e)[:300]}"}
-    except BaseException as e:                                              # noqa: BLE001
-        return {"status": "error", "why": f"protocol draw: {type(e).__name__}: {str(e)[:400]}",
-                "traceback": traceback.format_exc()[-1200:]}
+    except BaseException as e:  # noqa: BLE001
+        return {
+            "status": "error",
+            "why": f"protocol draw: {type(e).__name__}: {str(e)[:400]}",
+            "traceback": traceback.format_exc()[-1200:],
+        }
     # Step 8: the class may declare, with the official renderer's own oracle result beside it, that
     # the RELATION does not hold in some or all of its state space. Two Step-7 cells do. Judging a
     # renderer against a relation its own reference does not satisfy measures the reference, so the
@@ -389,10 +427,16 @@ def _resolution(env, states) -> dict:
     # against a frozen floor of 1.000000 recorded before the night band existed.
     app = C.resolution_consistency_applicability(env, proto)
     if not app["applicable"]:
-        return {"status": "not_applicable", "why": app["why"],
-                "applicability": {k: app[k] for k in ("bands", "declaration", "indices")}}
-    judged = proto if app["indices"] is None else np.ascontiguousarray(
-        np.asarray(proto)[np.asarray(app["indices"], int)], np.float32)
+        return {
+            "status": "not_applicable",
+            "why": app["why"],
+            "applicability": {k: app[k] for k in ("bands", "declaration", "indices")},
+        }
+    judged = (
+        proto
+        if app["indices"] is None
+        else np.ascontiguousarray(np.asarray(proto)[np.asarray(app["indices"], int)], np.float32)
+    )
     try:
         r = C.check_resolution_consistency(env, judged)
         r["protocol"] = C.downsample_protocol(proto)
@@ -411,9 +455,12 @@ def _resolution(env, states) -> dict:
         return {"status": "not_applicable", "why": f"{type(e).__name__}: {str(e)[:300]}"}
     except BLOCKING as e:
         return {"status": "blocked_environment", "why": f"{type(e).__name__}: {str(e)[:300]}"}
-    except BaseException as e:                                              # noqa: BLE001
-        return {"status": "error", "why": f"{type(e).__name__}: {str(e)[:400]}",
-                "traceback": traceback.format_exc()[-1200:]}
+    except BaseException as e:  # noqa: BLE001
+        return {
+            "status": "error",
+            "why": f"{type(e).__name__}: {str(e)[:400]}",
+            "traceback": traceback.format_exc()[-1200:],
+        }
     if isinstance(r, dict) and "skipped" in r:
         return {"status": "not_applicable", "why": r["skipped"]}
     return {"status": "measured", "evidence": _jsonable(r)}
@@ -446,14 +493,17 @@ def physics(env) -> dict:
     """Gate E, kept on its own axis. A ``reference_only`` env is not a renderer failure -- section 3."""
     cls = type(env)
     if "step" not in cls.__dict__ or not getattr(cls, "step_reference_checkable", False):
-        return {"status": "not_applicable",
-                "why": "no batched simulator declared checkable against a reference "
-                       "(step_reference_checkable is unset), so this env's physics is reference_only"}
+        return {
+            "status": "not_applicable",
+            "why": "no batched simulator declared checkable against a reference "
+            "(step_reference_checkable is unset), so this env's physics is reference_only",
+        }
     reseed(env)
     return run(C.check_step_matches_reference, env)
 
 
 # ------------------------------------------------------------------ the regression oracle
+
 
 def oracle(env, config: dict, states, style) -> dict:
     """What Step 6 replays against: our frames, the official frames, and digests of both.
@@ -463,15 +513,25 @@ def oracle(env, config: dict, states, style) -> dict:
     prove it produced the same thing, and the metrics beside them are what it needs when it did not.
     """
     cls = type(env)
-    out = {"size": int(env.size), "supersample": int(env.ss), "batch": int(env.B),
-           "state_dim": int(env.state_dim), "style_dim": int(env.style_dim),
-           "device": str(env.device), "n_states": int(len(states))}
+    out = {
+        "size": int(env.size),
+        "supersample": int(env.ss),
+        "batch": int(env.B),
+        "state_dim": int(env.state_dim),
+        "style_dim": int(env.style_dim),
+        "device": str(env.device),
+        "n_states": int(len(states)),
+    }
     ours = env.render(states).cpu().numpy()
     out["frames_shape"] = list(ours.shape)
     out["digest_ours"] = C.frames_digest(ours)
-    out["digest_ours_default_style"] = C.frames_digest(
-        env.render(states, style=np.tile(np.asarray(env.default_style(), np.float32), (len(states), 1)))
-    ) if env.style_dim else out["digest_ours"]
+    out["digest_ours_default_style"] = (
+        C.frames_digest(
+            env.render(states, style=np.tile(np.asarray(env.default_style(), np.float32), (len(states), 1)))
+        )
+        if env.style_dim
+        else out["digest_ours"]
+    )
     out["mean_pixel"] = float(ours.mean())
     out["distinct_colors"] = int(len(np.unique(ours.reshape(-1, 3), axis=0)))
     if style is not None:
@@ -484,7 +544,7 @@ def oracle(env, config: dict, states, style) -> dict:
         out["reference_id"] = cls.reference_id
     except BLOCKING as e:
         out["reference"] = {"status": "blocked_environment", "why": f"{type(e).__name__}: {str(e)[:200]}"}
-    except BaseException as e:                                              # noqa: BLE001
+    except BaseException as e:  # noqa: BLE001
         out["reference"] = {"status": "error", "why": f"{type(e).__name__}: {str(e)[:300]}"}
     # Its own wrapper, deliberately after the digest. This is section 4.1's DIAGNOSTIC -- a property of
     # the node's rasterizer, never of our renderer -- and it builds its own env, so letting it share the
@@ -503,16 +563,28 @@ def signature(env) -> dict:
     is a function of for a renderer that has no MuJoCo model behind it.
     """
     import hashlib
+
     d = env.describe()
-    keys = ("name", "state_dim", "state_names", "size", "style_dim", "style_names", "reference_id",
-            "fidelity_tier", "variations", "parity_interior_min")
+    keys = (
+        "name",
+        "state_dim",
+        "state_names",
+        "size",
+        "style_dim",
+        "style_names",
+        "reference_id",
+        "fidelity_tier",
+        "variations",
+        "parity_interior_min",
+    )
     payload = json.dumps({k: _jsonable(d.get(k)) for k in keys}, sort_keys=True)
-    out = {"describe_digest": hashlib.sha256(payload.encode()).hexdigest()[:16],
-           "describe": _jsonable({k: d.get(k) for k in keys})}
+    out = {
+        "describe_digest": hashlib.sha256(payload.encode()).hexdigest()[:16],
+        "describe": _jsonable({k: d.get(k) for k in keys}),
+    }
     dom, task = getattr(type(env), "DOMAIN", ""), getattr(type(env), "TASK", "")
     if dom and task:
-        out["dm_control"] = {"domain": dom, "task": task,
-                             "model_digest": _dmc_model_digest(dom, task)}
+        out["dm_control"] = {"domain": dom, "task": task, "model_digest": _dmc_model_digest(dom, task)}
     return out
 
 
@@ -525,13 +597,15 @@ def _dmc_model_digest(domain: str, task: str) -> str | None:
         try:
             sys.path.insert(0, str(ROOT))
             from scratch.swm_matrix import _dmc_appearance_groups
+
             _DMC_DIGESTS.update(_dmc_appearance_groups() or {"__none__": {}})
-        except BaseException:                                               # noqa: BLE001
+        except BaseException:  # noqa: BLE001
             _DMC_DIGESTS["__none__"] = {}
     return (_DMC_DIGESTS.get(domain) or {}).get(task)
 
 
 # ------------------------------------------------------------------ shard driver
+
 
 def _run(cmd: list[str]) -> str:
     try:
@@ -555,22 +629,32 @@ def provenance(device: str) -> dict:
         commit, source = os.environ["STABLE_ENVS_GIT_COMMIT"].strip(), "env:STABLE_ENVS_GIT_COMMIT"
     elif not commit and (ROOT / "GIT_COMMIT").is_file():
         commit, source = (ROOT / "GIT_COMMIT").read_text().strip() or None, "file:GIT_COMMIT"
-    p = {"timestamp": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
-         "git_commit": commit, "git_commit_source": source if commit else None,
-         "git_dirty": dirty,
-         "host": platform.node(), "os": f"{platform.system()} {platform.release()}",
-         "cpu": cpu, "python": platform.python_version(), "torch": torch.__version__,
-         "device": device, "state_seed": STATE_SEED, "check_seed": CHECK_SEED,
-         "n_states": N_STATES, "pool": POOL,
-         "slurm_job_id": os.environ.get("SLURM_JOB_ID"),
-         "slurm_nodelist": os.environ.get("SLURM_JOB_NODELIST"),
-         "mujoco_gl": os.environ.get("MUJOCO_GL"),
-         "registry_here": sorted(se.registry.REGISTRY), "import_errors": _jsonable(se.import_errors())}
+    p = {
+        "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
+        "git_commit": commit,
+        "git_commit_source": source if commit else None,
+        "git_dirty": dirty,
+        "host": platform.node(),
+        "os": f"{platform.system()} {platform.release()}",
+        "cpu": cpu,
+        "python": platform.python_version(),
+        "torch": torch.__version__,
+        "device": device,
+        "state_seed": STATE_SEED,
+        "check_seed": CHECK_SEED,
+        "n_states": N_STATES,
+        "pool": POOL,
+        "slurm_job_id": os.environ.get("SLURM_JOB_ID"),
+        "slurm_nodelist": os.environ.get("SLURM_JOB_NODELIST"),
+        "mujoco_gl": os.environ.get("MUJOCO_GL"),
+        "registry_here": sorted(se.registry.REGISTRY),
+        "import_errors": _jsonable(se.import_errors()),
+    }
     if device == "cuda" and torch.cuda.is_available():
         p["gpu"] = torch.cuda.get_device_name(0)
-        p["driver"] = _run(["bash", "-c",
-                            "nvidia-smi --query-gpu=driver_version --format=csv,noheader | head -1"])
+        p["driver"] = _run(["bash", "-c", "nvidia-smi --query-gpu=driver_version --format=csv,noheader | head -1"])
     import importlib.metadata as md
+
     # ``jax`` is here because CraftaxClassic declares it as a REFERENCE version: craftax's renderer
     # draws its night noise with jax's threefry PRNG, and jax_threefry_partitionable selects between
     # two counter layouts that agree on 0 of 448 draws. Without recording it, that declaration could
@@ -581,19 +665,31 @@ def provenance(device: str) -> dict:
     # checks on "version not recorded by the measuring interpreter" -- forever, until a run records
     # them. That block is correct and is reported as UNMEASURED; this is what lets the next run on a
     # PyFlyt interpreter clear it. It changes no historical artifact.
-    for m in ("mujoco", "mujoco_warp", "dm_control", "ogbench", "gym_pusht", "gymnasium",
-              "gymnasium_robotics", "craftax", "jax", "stable_worldmodel", "warp",
-              "PyFlyt", "pybullet"):
+    for m in (
+        "mujoco",
+        "mujoco_warp",
+        "dm_control",
+        "ogbench",
+        "gym_pusht",
+        "gymnasium",
+        "gymnasium_robotics",
+        "craftax",
+        "jax",
+        "stable_worldmodel",
+        "warp",
+        "PyFlyt",
+        "pybullet",
+    ):
         # The distribution's version first: ``dm_control`` has no ``__version__`` and was recorded as
         # "present", which the certifier cannot compare with a declared reference version.
         try:
             p.setdefault("reference_packages", {})[m] = md.version(m)
             continue
-        except BaseException:                                               # noqa: BLE001
+        except BaseException:  # noqa: BLE001
             pass
         try:
             p.setdefault("reference_packages", {})[m] = getattr(__import__(m), "__version__", "present")
-        except BaseException:                                               # noqa: BLE001
+        except BaseException:  # noqa: BLE001
             p.setdefault("reference_packages", {})[m] = None
     return p
 
@@ -601,20 +697,25 @@ def provenance(device: str) -> dict:
 def measure(config: dict, states_dir: Path, n: int, pool: int, device: str, images: Path | None) -> dict:
     """One configuration, end to end. Any failure to even build it is recorded, never raised."""
     name = config["config_id"]
-    row = {"config_id": name, "env": config["env"], "swm_ids": config["swm_ids"],
-           "role": config["role"], "siblings": config["siblings"],
-           "registered_default_coverage": config["registered_default_coverage"],
-           "declared_tier": config["fidelity_tier"], "backends": config["backends"]}
+    row = {
+        "config_id": name,
+        "env": config["env"],
+        "swm_ids": config["swm_ids"],
+        "role": config["role"],
+        "siblings": config["siblings"],
+        "registered_default_coverage": config["registered_default_coverage"],
+        "declared_tier": config["fidelity_tier"],
+        "backends": config["backends"],
+    }
     t0 = time.perf_counter()
     if name not in se.registry.REGISTRY:
         row["status"] = "blocked_environment"
-        row["why"] = (f"{name} is not registered in this interpreter; env-module import errors: "
-                      f"{se.import_errors()}")
+        row["why"] = f"{name} is not registered in this interpreter; env-module import errors: {se.import_errors()}"
         return row
     try:
         env = se.make(name, num_envs=n, device=device)
-    except BaseException as e:                                              # noqa: BLE001
-        row["status"] = ("blocked_environment" if isinstance(e, BLOCKING) else "error")
+    except BaseException as e:  # noqa: BLE001
+        row["status"] = "blocked_environment" if isinstance(e, BLOCKING) else "error"
         row["why"] = f"{type(e).__name__}: {str(e)[:400]}"
         row["traceback"] = traceback.format_exc()[-1200:]
         return row
@@ -656,14 +757,18 @@ def siblings(env, config: dict, states) -> dict:
         try:
             other = se.make(s, num_envs=len(states), size=env.size, device=str(env.device))
             if other.state_dim != env.state_dim:
-                out[s] = {"status": "not_comparable",
-                          "why": f"state_dim {other.state_dim} vs {env.state_dim}: not the same corpus"}
+                out[s] = {
+                    "status": "not_comparable",
+                    "why": f"state_dim {other.state_dim} vs {env.state_dim}: not the same corpus",
+                }
                 continue
             d = C.frames_digest(other.render(states))
             out[s] = {"status": "measured", "identical": d == mine, "digest": d}
-        except BaseException as e:                                          # noqa: BLE001
-            out[s] = {"status": ("blocked_environment" if isinstance(e, BLOCKING) else "error"),
-                      "why": f"{type(e).__name__}: {str(e)[:200]}"}
+        except BaseException as e:  # noqa: BLE001
+            out[s] = {
+                "status": ("blocked_environment" if isinstance(e, BLOCKING) else "error"),
+                "why": f"{type(e).__name__}: {str(e)[:200]}",
+            }
     out["_digest_this_config"] = mine
     return out
 
@@ -676,6 +781,7 @@ def contact_sheet(env, name: str, states, outdir: Path, rows: int = 4) -> dict:
     of 5/255 is invisible at 1x and the point of the sheet is to see WHERE the renderers disagree.
     """
     from PIL import Image
+
     cls = type(env)
     idx = np.linspace(0, len(states) - 1, rows).astype(int)
     sub = states[idx]
@@ -685,7 +791,7 @@ def contact_sheet(env, name: str, states, outdir: Path, rows: int = 4) -> dict:
     ours = env.render(sub, style=sty).cpu().numpy()
     try:
         official = cls.reference_render(C.reference_env(cls, env.size), sub)
-    except BaseException as e:                                              # noqa: BLE001
+    except BaseException as e:  # noqa: BLE001
         official = None
         why = f"{type(e).__name__}: {str(e)[:200]}"
     outdir.mkdir(parents=True, exist_ok=True)
@@ -696,14 +802,22 @@ def contact_sheet(env, name: str, states, outdir: Path, rows: int = 4) -> dict:
         d = np.abs(ours.astype(np.int16) - official.astype(np.int16))
         amp = np.clip(d * 4, 0, 255).astype(np.uint8)
         panels = np.concatenate([official, ours, amp], axis=2)
-        meta = {"panels": ["official", "stable-envs", "|difference| x4"],
-                "max_abs": int(d.max()), "mean_abs": float(d.mean())}
+        meta = {
+            "panels": ["official", "stable-envs", "|difference| x4"],
+            "max_abs": int(d.max()),
+            "mean_abs": float(d.mean()),
+        }
     sheet = np.concatenate(list(panels), axis=0)
     p = outdir / f"{name}.png"
     Image.fromarray(sheet).save(p)
-    meta.update({"path": str(p.relative_to(ROOT)) if p.is_relative_to(ROOT) else str(p),
-                 "state_indices": idx.tolist(), "rows": int(rows),
-                 "sha256": C.frames_digest(sheet)})
+    meta.update(
+        {
+            "path": str(p.relative_to(ROOT)) if p.is_relative_to(ROOT) else str(p),
+            "state_indices": idx.tolist(),
+            "rows": int(rows),
+            "sha256": C.frames_digest(sheet),
+        }
+    )
     return meta
 
 
@@ -715,11 +829,14 @@ def main() -> None:
     ap.add_argument("--out", required=True)
     ap.add_argument("--states-dir", default=str(ROOT / "examples" / "results" / "step4" / "states"))
     ap.add_argument("--images", default="", help="write contact sheets here; off when empty")
-    ap.add_argument("--image-configs", default="",
-                    help="comma-separated config ids to sheet; empty means every config in the shard. "
-                         "Section 11 asks for a REPRESENTATIVE set, and a sheet per configuration "
-                         "would put ~40 MB of PNG in a repository whose thesis is that frames are "
-                         "cheap to regenerate.")
+    ap.add_argument(
+        "--image-configs",
+        default="",
+        help="comma-separated config ids to sheet; empty means every config in the shard. "
+        "Section 11 asks for a REPRESENTATIVE set, and a sheet per configuration "
+        "would put ~40 MB of PNG in a repository whose thesis is that frames are "
+        "cheap to regenerate.",
+    )
     ap.add_argument("--n-states", type=int, default=N_STATES)
     ap.add_argument("--pool", type=int, default=POOL)
     ap.add_argument("--resume", action="store_true", help="keep configs already in --out")
@@ -735,33 +852,46 @@ def main() -> None:
 
     out = Path(a.out)
     out.parent.mkdir(parents=True, exist_ok=True)
-    doc = {"schema_version": 1, "step": 4, "shard": a.shard or "adhoc",
-           "what_this_is": "raw Step 4 conformance/fidelity measurements for one interpreter. No "
-                           "threshold is applied here; scratch/step4/certify.py does that from the "
-                           "frozen Step 2 spec.",
-           "provenance": provenance(a.device), "configs": {}}
+    doc = {
+        "schema_version": 1,
+        "step": 4,
+        "shard": a.shard or "adhoc",
+        "what_this_is": "raw Step 4 conformance/fidelity measurements for one interpreter. No "
+        "threshold is applied here; scratch/step4/certify.py does that from the "
+        "frozen Step 2 spec.",
+        "provenance": provenance(a.device),
+        "configs": {},
+    }
     if a.resume and out.exists():
         prev = json.loads(out.read_text())
-        doc["configs"] = {k: v for k, v in prev.get("configs", {}).items()
-                          if v.get("status") == "measured"}
+        doc["configs"] = {k: v for k, v in prev.get("configs", {}).items() if v.get("status") == "measured"}
         print(f"resuming: {len(doc['configs'])} config(s) already measured", flush=True)
 
     states_dir = Path(a.states_dir)
     images = Path(a.images) if a.images else None
-    print(f"{len(want)} configuration(s) on {a.device}; corpus {a.n_states} of {a.pool} "
-          f"@ seed {STATE_SEED}", flush=True)
+    print(
+        f"{len(want)} configuration(s) on {a.device}; corpus {a.n_states} of {a.pool} @ seed {STATE_SEED}", flush=True
+    )
     for c in want:
         if c["config_id"] in doc["configs"]:
             continue
-        want_img = images if (images and (not a.image_configs
-                                          or c["config_id"] in a.image_configs.split(","))) else None
+        want_img = (
+            images if (images and (not a.image_configs or c["config_id"] in a.image_configs.split(","))) else None
+        )
         r = measure(c, states_dir, a.n_states, a.pool, a.device, want_img)
         doc["configs"][c["config_id"]] = r
-        n_bad = sum(1 for g in ("mandatory", "family_specific")
-                    for v in (r.get(g) or {}).values() if v.get("status") == "error")
-        print(f"[{c['config_id']:26s}] {r['status']:20s} {r.get('seconds', 0)}s"
-              + (f"  {n_bad} check error(s)" if n_bad else "")
-              + (f"  {r.get('why', '')[:120]}" if r["status"] != "measured" else ""), flush=True)
+        n_bad = sum(
+            1
+            for g in ("mandatory", "family_specific")
+            for v in (r.get(g) or {}).values()
+            if v.get("status") == "error"
+        )
+        print(
+            f"[{c['config_id']:26s}] {r['status']:20s} {r.get('seconds', 0)}s"
+            + (f"  {n_bad} check error(s)" if n_bad else "")
+            + (f"  {r.get('why', '')[:120]}" if r["status"] != "measured" else ""),
+            flush=True,
+        )
         out.write_text(json.dumps(doc, indent=1, sort_keys=True))
     out.write_text(json.dumps(doc, indent=1, sort_keys=True))
     print(f"\nwrote {out}  ({len(doc['configs'])} configs)")

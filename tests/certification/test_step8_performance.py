@@ -11,6 +11,7 @@ Two things are asserted and they are different things:
 
 The test runs on CPU, imports no renderer and reaches no network.
 """
+
 from __future__ import annotations
 
 import importlib.util
@@ -45,7 +46,8 @@ def test_tiers_json_is_byte_identical_to_a_regeneration(builder):
     regenerated = json.dumps(builder.build(), indent=1, sort_keys=True, ensure_ascii=False) + "\n"
     assert TIERS.read_text() == regenerated, (
         "examples/results/step8/performance/tiers.json differs from a regeneration; re-run "
-        "scratch/step8/perf/build_performance.py instead of editing the artifact")
+        "scratch/step8/perf/build_performance.py instead of editing the artifact"
+    )
 
 
 def test_every_registered_id_has_a_cpu_and_gpu_status(doc):
@@ -90,13 +92,15 @@ def test_unmeasured_and_missing_rows_make_no_throughput_claim(doc):
             if entry["status"] == "MEASURED":
                 continue
             assert not entry["numbers"].get("fps_best"), (row["swm_id"], dev)
-            assert entry.get("blocked") or entry["status"] == "UNSUPPORTED_BY_DESIGN", \
-                (row["swm_id"], dev, "an unmeasured row must say what blocked it")
+            assert entry.get("blocked") or entry["status"] == "UNSUPPORTED_BY_DESIGN", (
+                row["swm_id"],
+                dev,
+                "an unmeasured row must say what blocked it",
+            )
 
 
 def test_cpu_raises_by_design_rows_are_named_and_flagged(doc):
-    raises = {r["swm_id"] for r in doc["rows"]
-              if r["cpu"]["status"] == "MISSING-UNSUPPORTED_BY_DESIGN"}
+    raises = {r["swm_id"] for r in doc["rows"] if r["cpu"]["status"] == "MISSING-UNSUPPORTED_BY_DESIGN"}
     assert raises == {"swm/OGBCube-v0", "swm/OGBScene-v0", "swm/PFRocketLanding-v0"}
     for row in doc["rows"]:
         if row["swm_id"] in raises:
@@ -113,8 +117,7 @@ def test_quadruped_cpu_stays_load_quarantined(doc):
 
 def test_batch_scales_failures_are_kept_not_relabelled(doc):
     """The frozen 20x bar is applied as Step 2 froze it; Rocket and Fetch keep GPU_PARITY."""
-    for sid in ("swm/PFRocketLanding-v0", "swm/FetchPickAndPlace-v3",
-                "swm/OGBCube-v0", "swm/OGBScene-v0"):
+    for sid in ("swm/PFRocketLanding-v0", "swm/FetchPickAndPlace-v3", "swm/OGBCube-v0", "swm/OGBScene-v0"):
         row = next(r for r in doc["rows"] if r["swm_id"] == sid)
         assert "BATCH_SCALES_FAIL" in row["gpu"]["flags"], sid
         assert row["gpu"]["tier"] == "GPU_PARITY", sid

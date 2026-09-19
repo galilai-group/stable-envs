@@ -8,12 +8,12 @@ reference renders. The suite's own appearance is one ``material.self`` knob away
 
 The torso is an ELLIPSOID, drawn by ``raycast3d._ellipsoid`` on CPU.
 """
+
 from __future__ import annotations
 
 import numpy as np
 
 from ._cells import _AT_VERSIONS, trackcom_cell
-
 
 #: Quadruped (Step 7): the family's convention -- three independent MJWarp draws through the shipped
 #: env -- at the REGISTERED default (camera 2, 224 px, SWM's appearance; Step 2 S4.2), under the
@@ -21,16 +21,19 @@ from ._cells import _AT_VERSIONS, trackcom_cell
 #: overwritten by it and are not what the numbers rest on). The CPU backend
 #: measured the same picture locally first (3.42 / 0.902 / 0.957 on one draw, Apple M5) and is
 #: certified against this entry, not its own.
-_QUADRUPED_AT = ("224 px, camera 2 ('y', trackcom), 64 states x 3 independent draws from sample_states "
-                 "(SWM's model and default appearance: material self rgba .6 .3 .3, foot_back_left "
-                 "density 1000), RTX 3090 / driver 575.57.08 / MUJOCO_GL=egl, mujoco 3.11.0 + "
-                 "mujoco-warp 3.11.0, against dm_control's physics.render at camera 2 "
-                 "(scratch/dmcontrol/visual_calib.py --env DMCQuadrupedWalk --size 224 --draws 3)")
+_QUADRUPED_AT = (
+    "224 px, camera 2 ('y', trackcom), 64 states x 3 independent draws from sample_states "
+    "(SWM's model and default appearance: material self rgba .6 .3 .3, foot_back_left "
+    "density 1000), RTX 3090 / driver 575.57.08 / MUJOCO_GL=egl, mujoco 3.11.0 + "
+    "mujoco-warp 3.11.0, against dm_control's physics.render at camera 2 "
+    "(scratch/dmcontrol/visual_calib.py --env DMCQuadrupedWalk --size 224 --draws 3)"
+)
 _QUADRUPED_AT_MEASURED_WITH = {"mujoco_warp": "3.11.0"}
 
 #: MEASURED per domain, then the thresholds the conformance suite asserts. The thresholds are set from
 #: the SPREAD over independent state draws rather than from one, which is why they are not the
 #: measurements: ``scratch/dmcontrol/visual_calib.py`` re-draws three times and the ceiling sits clear
+
 
 def _swm_quadruped_env(seed: int):
     """The env ``swm/QuadrupedDMControl-v0`` registers, built the way ``stable_worldmodel`` builds it.
@@ -57,17 +60,21 @@ def _swm_quadruped_env(seed: int):
     from dm_control.suite import quadruped
     from dm_control.suite.wrappers import action_scale
 
-    speed = 0.5                                                    # _TASK_SPEEDS["walk"]
+    speed = 0.5  # _TASK_SPEEDS["walk"]
     xml = quadruped.make_model(floor_size=20 * speed).replace(b'file="./common/', b'file="common/')
-    model = mjcf.from_xml_string(xml, model_dir=os.path.dirname(quadruped.__file__),
-                                 assets=quadruped.common.ASSETS or {})
+    model = mjcf.from_xml_string(
+        xml, model_dir=os.path.dirname(quadruped.__file__), assets=quadruped.common.ASSETS or {}
+    )
     grid = model.find("texture", "grid")
     grid.rgb1 = np.array([0.1, 0.2, 0.3])
     grid.rgb2 = np.array([0.2, 0.3, 0.4])
     model.find("material", "self").rgba = np.array([0.6, 0.3, 0.3, 1.0], np.float32)
     floor = model.find("geom", "floor")
-    fr = (np.array([1.0, 0.005, 0.0001], np.float32) if floor.friction is None
-          else np.asarray(floor.friction, np.float32).copy())
+    fr = (
+        np.array([1.0, 0.005, 0.0001], np.float32)
+        if floor.friction is None
+        else np.asarray(floor.friction, np.float32).copy()
+    )
     fr[0] = 1.0
     floor.friction = fr
     model.find("geom", "torso").density = 1000.0
@@ -98,8 +105,6 @@ class _SWMQuadrupedModel:
         return _swm_quadruped_env(seed)
 
 
-
-
 #: The quadruped's third residual, named as the other trackcom cells name theirs. Not an
 #: approximation this cell introduced: no backend here draws reflections, and that is a statement of
 #: the renderer's semantics on every trackcom cell (the others' floors reflect too; the quadruped's
@@ -114,7 +119,8 @@ QUADRUPED_NOTE = (
     "two pupil spheres (material eye) and the red torso site -- up to ~50 of the 50,176 px of a 224 "
     "px frame (0.01-0.1 %), max 186/255, 0.5 % of the residual; the eye material is therefore not "
     "an appearance knob here. The cell draws SWM's default appearance (material self .6 .3 .3); the "
-    "suite's own (.7 .5 .3) is the material.self knob.")
+    "suite's own (.7 .5 .3) is the material.self knob."
+)
 
 
 VISUAL_FIDELITY: dict[str, dict] = {
@@ -124,17 +130,30 @@ VISUAL_FIDELITY: dict[str, dict] = {
     # it; the far checker and the one-tap skybox the rest; the ellipsoid itself is 1.2 % of the frame
     # at mean ~4/255. Thresholds by the family's margin convention (ceiling ~1.3x, floors ~0.93x).
     "DMCQuadrupedWalk": {
-        "mean_abs": 3.52, "within8_frac": 0.897, "ssim": 0.955,
-        "interior_exact_frac": 0.206, "interior_frac": 0.0284, "all_exact_frac": 0.171,
-        "skybox_share": 0.148, "floor_share": 0.806,
-        "draw_spread": {"mean_abs": [3.520, 3.527], "within8_frac": [0.8964, 0.8987],
-                        "ssim": [0.9536, 0.9557]},
-        "mean_abs_max": 4.6, "within8_min": 0.85, "ssim_min": 0.90, "measured_at": _QUADRUPED_AT,
-        "reference_versions": _AT_VERSIONS, "measured_with": _QUADRUPED_AT_MEASURED_WITH},
+        "mean_abs": 3.52,
+        "within8_frac": 0.897,
+        "ssim": 0.955,
+        "interior_exact_frac": 0.206,
+        "interior_frac": 0.0284,
+        "all_exact_frac": 0.171,
+        "skybox_share": 0.148,
+        "floor_share": 0.806,
+        "draw_spread": {"mean_abs": [3.520, 3.527], "within8_frac": [0.8964, 0.8987], "ssim": [0.9536, 0.9557]},
+        "mean_abs_max": 4.6,
+        "within8_min": 0.85,
+        "ssim_min": 0.90,
+        "measured_at": _QUADRUPED_AT,
+        "reference_versions": _AT_VERSIONS,
+        "measured_with": _QUADRUPED_AT_MEASURED_WITH,
+    },
 }
 
 DMCQuadrupedWalk = trackcom_cell(
-    "DMCQuadrupedWalk", "quadruped", "walk", 2,
+    "DMCQuadrupedWalk",
+    "quadruped",
+    "walk",
+    2,
     VISUAL_FIDELITY["DMCQuadrupedWalk"],
     note_suffix=QUADRUPED_NOTE,
-    bases=(_SWMQuadrupedModel,))
+    bases=(_SWMQuadrupedModel,),
+)

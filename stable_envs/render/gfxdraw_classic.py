@@ -46,15 +46,32 @@ readable and slow. ``tests/gpu/test_gfxdraw_classic.py`` diffs the Triton kernel
 diffs IT against ``gfxdraw.py``'s per-primitive path, so the chain from the six measured rules to
 the kernel is checked at both joints rather than asserted at either.
 """
+
 from __future__ import annotations
 
 import numpy as np
 import torch
 
 from . import gfxdraw as G
-from .gfxdraw_fused import (EG_DRAW, EG_DX, EG_DY, EG_E, EG_KIND, EG_LO, EG_MAJOR, EG_SX, EG_SY,
-                            EG_W, EG_X0, EG_XDIR, EG_Y0, HAVE_TRITON, K_GEN, K_HORIZ, K_VERT,
-                            edge_table)
+from .gfxdraw_fused import (
+    EG_DRAW,
+    EG_DX,
+    EG_DY,
+    EG_E,
+    EG_KIND,
+    EG_LO,
+    EG_MAJOR,
+    EG_SX,
+    EG_SY,
+    EG_X0,
+    EG_XDIR,
+    EG_Y0,
+    HAVE_TRITON,
+    K_GEN,
+    K_HORIZ,
+    K_VERT,
+    edge_table,
+)
 
 if HAVE_TRITON:
     import triton
@@ -94,14 +111,15 @@ def disc_table(r: int) -> np.ndarray:
     # (``scratch/classic_control/gen_stencils.py``) and a regenerated one must fail loudly here
     # instead of quietly losing pixels only on the radii that grew one.
     seen: dict[tuple[int, int, int], int] = {}
-    for (dy, dx, wt, pas) in G.AACIRCLE_FRINGE[r]:
+    for dy, dx, wt, pas in G.AACIRCLE_FRINGE[r]:
         key = (pas, dy, dx)
         assert key not in seen, (
             f"aacircle fringe for r={r} has two pass-{pas} writes at (dy={dy}, dx={dx}) "
             f"(weights {seen[key]} and {wt}); a dense per-pass map can only hold one, so the "
-            f"fused path would drop the second while the per-primitive path makes both")
+            f"fused path would drop the second while the per-primitive path makes both"
+        )
         seen[key] = wt
-    for (dy, dx, wt, pas) in G.AACIRCLE_FRINGE[r]:
+    for dy, dx, wt, pas in G.AACIRCLE_FRINGE[r]:
         # A fringe weight of SOLID would mean pixelColor -- write the colour outright rather than
         # blend -- and neither this table nor the kernel implements that case for a disc. No radius
         # in AACIRCLE_FRINGE uses it; checked here so it cannot appear silently in a regenerated
@@ -122,8 +140,9 @@ class DiscTables:
             b = disc_table(r)
             blocks.append(b)
             at += len(b)
-        self.flat = torch.as_tensor(np.concatenate(blocks) if blocks else np.zeros(1, np.int32),
-                                    dtype=torch.int32, device=device)
+        self.flat = torch.as_tensor(
+            np.concatenate(blocks) if blocks else np.zeros(1, np.int32), dtype=torch.int32, device=device
+        )
 
 
 # ------------------------------------------------------------------ the op list
@@ -150,32 +169,56 @@ class Ops:
 
         def f(v):
             return (v.to(torch.int32) if torch.is_tensor(v) else one * int(v)).reshape(B)
+
         yo0 = (self.H - 1) - f(y1)
         yo1 = (self.H - 1) - f(y0)
-        self.meta.append(torch.stack(
-            [one * int(op), col[:, 0], col[:, 1], col[:, 2],
-             f(x0).clamp(0, self.W - 1), yo0.clamp(0, self.H - 1),
-             f(x1).clamp(0, self.W - 1), yo1.clamp(0, self.H - 1),
-             f(a), f(b), f(c), f(d)], -1).to(torch.int32))
+        self.meta.append(
+            torch.stack(
+                [
+                    one * int(op),
+                    col[:, 0],
+                    col[:, 1],
+                    col[:, 2],
+                    f(x0).clamp(0, self.W - 1),
+                    yo0.clamp(0, self.H - 1),
+                    f(x1).clamp(0, self.W - 1),
+                    yo1.clamp(0, self.H - 1),
+                    f(a),
+                    f(b),
+                    f(c),
+                    f(d),
+                ],
+                -1,
+            ).to(torch.int32)
+        )
 
     def polygon(self, verts, color, nv=None):
         """``aapolygon`` then ``filled_polygon`` over float64 vertices, as the env supplies them."""
-        vi = torch.trunc(verts).to(torch.int64)                       # (B, n, 2)
+        vi = torch.trunc(verts).to(torch.int64)  # (B, n, 2)
         n = int(vi.shape[1]) if nv is None else int(nv)
-        pad = vi if n == 4 else torch.cat([vi, vi[:, :1]], 1)         # [v0..v_{n-1}, v0]
+        pad = vi if n == 4 else torch.cat([vi, vi[:, :1]], 1)  # [v0..v_{n-1}, v0]
         slot = len(self.verts)
         self.verts.append(pad[:, :4])
         vx, vy = pad[..., 0], pad[..., 1]
         # the box is the vertices grown by one: the fill's span is round16(X +/- 1) and the fringe
         # steps one pixel off the line, so nothing this primitive writes lies outside it
-        self._row(OP_POLY, color, vx[:, :n].amin(1) - 1, vy[:, :n].amin(1) - 1,
-                  vx[:, :n].amax(1) + 1, vy[:, :n].amax(1) + 1, a=n, b=slot)
+        self._row(
+            OP_POLY,
+            color,
+            vx[:, :n].amin(1) - 1,
+            vy[:, :n].amin(1) - 1,
+            vx[:, :n].amax(1) + 1,
+            vy[:, :n].amax(1) + 1,
+            a=n,
+            b=slot,
+        )
 
     def disc(self, cx, cy, r, color):
         """``aacircle`` then ``filled_circle``. ``r`` is a constant of the environment."""
         r = int(r)
-        self._row(OP_DISC, color, cx - r - 1, cy - r - 1, cx + r + 1, cy + r + 1,
-                  a=cx, b=cy, c=self.discs.offset[r], d=r)
+        self._row(
+            OP_DISC, color, cx - r - 1, cy - r - 1, cx + r + 1, cy + r + 1, a=cx, b=cy, c=self.discs.offset[r], d=r
+        )
 
     def hline(self, y, color):
         self._row(OP_HLINE, color, 0, y, self.W - 1, y, a=y)
@@ -185,15 +228,16 @@ class Ops:
 
     def blit(self, origin, win, flip, n, color):
         """Pendulum's torque arrow: a pre-scaled RGBA sprite composited with SDL's own blit rule."""
-        self._row(OP_BLIT, color, origin, origin, origin + win - 1, origin + win - 1,
-                  a=flip, b=n, c=origin, d=win)
+        self._row(OP_BLIT, color, origin, origin, origin + win - 1, origin + win - 1, a=flip, b=n, c=origin, d=win)
 
     # --- finish ------------------------------------------------------------------------------
     def finish(self):
-        self.meta_t = torch.stack(self.meta, 1).contiguous()                      # (B,P,CM_W)
-        self.vert_t = (torch.stack(self.verts, 1).to(torch.int32).contiguous()
-                       if self.verts else torch.zeros((self.B, 1, 4, 2), dtype=torch.int32,
-                                                      device=self.device))        # (B,PG,4,2)
+        self.meta_t = torch.stack(self.meta, 1).contiguous()  # (B,P,CM_W)
+        self.vert_t = (
+            torch.stack(self.verts, 1).to(torch.int32).contiguous()
+            if self.verts
+            else torch.zeros((self.B, 1, 4, 2), dtype=torch.int32, device=self.device)
+        )  # (B,PG,4,2)
         PG = self.vert_t.shape[1]
         ex = self.vert_t[..., 0].reshape(-1, 4).to(torch.int64)
         ey = self.vert_t[..., 1].reshape(-1, 4).to(torch.int64)
@@ -215,29 +259,37 @@ def render_classic_torch(ops: Ops, out: torch.Tensor | None = None) -> torch.Ten
     sh = torch.tensor(G.SHIFT, dtype=torch.int64, device=dev)
     ys = torch.arange(H, device=dev).view(1, -1, 1)
     xs = torch.arange(W, device=dev).view(1, 1, -1)
-    ypre = (H - 1) - ys                                              # (1,H,1) pre-flip row
+    ypre = (H - 1) - ys  # (1,H,1) pre-flip row
     aa = (ops.aa != 0).view(-1, 1, 1)
 
     if ops.plate is not None:
-        p = ops.plate                                                # (3, 1 or B, H, W) pre-flip
-        col = p[:, :, :, :].permute(1, 2, 3, 0).to(torch.int64)      # (1 or B, H, W, 3)
+        p = ops.plate  # (3, 1 or B, H, W) pre-flip
+        col = p[:, :, :, :].permute(1, 2, 3, 0).to(torch.int64)  # (1 or B, H, W, 3)
         col = col.flip(1).expand(B, H, W, 3).clone()
     else:
         col = ops.bg.to(torch.int64).view(B, 1, 1, 3).expand(B, H, W, 3).clone()
 
     meta = ops.meta_t.to(torch.int64)
     for i in range(meta.shape[1]):
-        m = meta[:, i]                                               # (B, CM_W)
+        m = meta[:, i]  # (B, CM_W)
         op = int(m[0, CM_OP])
-        c3 = m[:, CM_R:CM_B + 1].view(B, 1, 1, 3)
-        box = ((ys >= m[:, CM_Y0].view(-1, 1, 1)) & (ys <= m[:, CM_Y1].view(-1, 1, 1))
-               & (xs >= m[:, CM_X0].view(-1, 1, 1)) & (xs <= m[:, CM_X1].view(-1, 1, 1)))
+        c3 = m[:, CM_R : CM_B + 1].view(B, 1, 1, 3)
+        box = (
+            (ys >= m[:, CM_Y0].view(-1, 1, 1))
+            & (ys <= m[:, CM_Y1].view(-1, 1, 1))
+            & (xs >= m[:, CM_X0].view(-1, 1, 1))
+            & (xs <= m[:, CM_X1].view(-1, 1, 1))
+        )
         if op == OP_HLINE:
             hit = box & (ypre == m[:, CM_A].view(-1, 1, 1))
             col = torch.where(hit.unsqueeze(-1), c3, col)
         elif op == OP_VLINE:
-            hit = (box & (xs == m[:, CM_A].view(-1, 1, 1))
-                   & (ypre >= m[:, CM_B2].view(-1, 1, 1)) & (ypre <= m[:, CM_C].view(-1, 1, 1)))
+            hit = (
+                box
+                & (xs == m[:, CM_A].view(-1, 1, 1))
+                & (ypre >= m[:, CM_B2].view(-1, 1, 1))
+                & (ypre <= m[:, CM_C].view(-1, 1, 1))
+            )
             col = torch.where(hit.unsqueeze(-1), c3, col)
         elif op == OP_BLIT:
             col = _blit_torch(ops, m, col, ypre, xs, box)
@@ -245,7 +297,7 @@ def render_classic_torch(ops: Ops, out: torch.Tensor | None = None) -> torch.Ten
             col = _disc_torch(ops, m, col, ypre, xs, box, aa, sh, c3)
         elif op == OP_POLY:
             col = _poly_torch(ops, m, col, ypre, xs, box, aa, sh, c3, int(m[0, CM_B2]))
-        else:                                                        # pragma: no cover
+        else:  # pragma: no cover
             raise ValueError(f"unknown op {op}")
 
     frame = col.to(torch.uint8)
@@ -265,8 +317,9 @@ def _blit_torch(ops, m, col, ypre, xs, box):
     ok = box & (ly >= 0) & (ly < n) & (lx >= 0) & (lx < n)
     S = ops.sprite.shape[-2]
     b = torch.arange(B, device=dev).view(-1, 1, 1)
-    rgba = ops.sprite[m[:, CM_A].view(-1, 1, 1).expand_as(ly), n.expand_as(ly),
-                      ly.clamp(0, S - 1), lx.clamp(0, S - 1)].to(torch.int64)
+    rgba = ops.sprite[
+        m[:, CM_A].view(-1, 1, 1).expand_as(ly), n.expand_as(ly), ly.clamp(0, S - 1), lx.clamp(0, S - 1)
+    ].to(torch.int64)
     a = torch.where(ok, rgba[..., 3], torch.zeros_like(rgba[..., 3])).unsqueeze(-1)
     return col + (((rgba[..., :3] - col) * a) >> 8)
 
@@ -275,9 +328,9 @@ def _disc_torch(ops, m, col, ypre, xs, box, aa, sh, c3):
     r = int(m[0, CM_D])
     d = 2 * r + 1
     base = int(m[0, CM_C])
-    hw = ops.discs.flat[base:base + r + 1].to(torch.int64)
-    w0 = ops.discs.flat[base + r + 1:base + r + 1 + d * d].to(torch.int64).view(d, d)
-    w1 = ops.discs.flat[base + r + 1 + d * d:base + r + 1 + 2 * d * d].to(torch.int64).view(d, d)
+    hw = ops.discs.flat[base : base + r + 1].to(torch.int64)
+    w0 = ops.discs.flat[base + r + 1 : base + r + 1 + d * d].to(torch.int64).view(d, d)
+    w1 = ops.discs.flat[base + r + 1 + d * d : base + r + 1 + 2 * d * d].to(torch.int64).view(d, d)
     dy = ypre - m[:, CM_B2].view(-1, 1, 1)
     dx = xs - m[:, CM_A].view(-1, 1, 1)
     near = box & (dy.abs() <= r) & (dx.abs() <= r)
@@ -286,8 +339,7 @@ def _disc_torch(ops, m, col, ypre, xs, box, aa, sh, c3):
     for wmap in (w0, w1):
         w = torch.where(near, wmap[iy, ix], torch.zeros_like(iy))
         live = (w > 0) & aa
-        col = torch.where(live.unsqueeze(-1),
-                          G.blend(c3, col, w.unsqueeze(-1), sh), col)
+        col = torch.where(live.unsqueeze(-1), G.blend(c3, col, w.unsqueeze(-1), sh), col)
     h = torch.where(dy.abs() <= r, hw[dy.abs().clamp(0, r)], torch.full_like(dy, -1))
     return torch.where((box & (dx.abs() <= h)).unsqueeze(-1), c3, col)
 
@@ -295,13 +347,14 @@ def _disc_torch(ops, m, col, ypre, xs, box, aa, sh, c3):
 def _poly_torch(ops, m, col, ypre, xs, box, aa, sh, c3, slot):
     B, W = ops.B, ops.W
     nv = int(m[0, CM_A])
-    eg = ops.edge_t[:, slot].to(torch.int64)                          # (B,4,EG_W)
+    eg = ops.edge_t[:, slot].to(torch.int64)  # (B,4,EG_W)
     Y, X = ypre, xs
     for e in range(nv):
         E = eg[:, e]
 
         def g(c):
             return E[:, c].view(-1, 1, 1)
+
         draw = g(EG_DRAW) != 0
         kind = g(EG_KIND)
         xx0, yy0, dx, dy, xdir = g(EG_X0), g(EG_Y0), g(EG_DX), g(EG_DY), g(EG_XDIR)
@@ -323,7 +376,7 @@ def _poly_torch(ops, m, col, ypre, xs, box, aa, sh, c3, slot):
         live = (ha | hb) & aa
         col = torch.where(live.unsqueeze(-1), G.blend(c3, col, w.unsqueeze(-1), sh), col)
 
-    v = ops.vert_t[:, slot].to(torch.int64)                           # (B,4,2)
+    v = ops.vert_t[:, slot].to(torch.int64)  # (B,4,2)
     maxy = v[:, :nv, 1].amax(1).view(-1, 1, 1)
     BIG = 1 << 40
     xlo = torch.full_like(Y + X * 0, BIG).expand(B, ops.H, W).clone()
@@ -354,10 +407,27 @@ if HAVE_TRITON:
     # The edge layout's constexpr twins, the Wu blend and the 16.16 rounding come from
     # ``gfxdraw_fused``: this kernel reads the table THAT module writes, so a second set of column
     # constexprs here would be a second thing to keep in step with the layout they name.
-    from .gfxdraw_fused import (cEG_DRAW, cEG_DX, cEG_DY, cEG_E, cEG_KIND, cEG_LO, cEG_MAJOR,
-                                cEG_SX, cEG_SY, cEG_W, cEG_X0, cEG_XDIR, cEG_Y0, cK_GEN, cK_HORIZ,
-                                cK_VERT, cK_YMAJ)
-    from .gfxdraw_fused import _blend, _round16
+    from .gfxdraw_fused import (
+        _blend,
+        _round16,
+        cEG_DRAW,
+        cEG_DX,
+        cEG_DY,
+        cEG_E,
+        cEG_KIND,
+        cEG_LO,
+        cEG_MAJOR,
+        cEG_SX,
+        cEG_SY,
+        cEG_W,
+        cEG_X0,
+        cEG_XDIR,
+        cEG_Y0,
+        cK_GEN,
+        cK_HORIZ,
+        cK_VERT,
+        cK_YMAJ,
+    )
 
     # A kernel may only read a global that IS a ``tl.constexpr`` object, and the column names have
     # to stay plain ints because the host side indexes tensors with them -- so each gets a
@@ -367,17 +437,38 @@ if HAVE_TRITON:
     cCM_W, cCM_OP, cCM_R, cCM_G, cCM_B = _c(CM_W), _c(CM_OP), _c(CM_R), _c(CM_G), _c(CM_B)
     cCM_X0, cCM_Y0, cCM_X1, cCM_Y1 = _c(CM_X0), _c(CM_Y0), _c(CM_X1), _c(CM_Y1)
     cCM_A, cCM_B2, cCM_C, cCM_D = _c(CM_A), _c(CM_B2), _c(CM_C), _c(CM_D)
-    cOP_POLY, cOP_DISC, cOP_HLINE, cOP_VLINE, cOP_BLIT = (_c(OP_POLY), _c(OP_DISC), _c(OP_HLINE),
-                                                          _c(OP_VLINE), _c(OP_BLIT))
+    cOP_POLY, cOP_DISC, cOP_HLINE, cOP_VLINE, cOP_BLIT = (
+        _c(OP_POLY),
+        _c(OP_DISC),
+        _c(OP_HLINE),
+        _c(OP_VLINE),
+        _c(OP_BLIT),
+    )
 
     @triton.jit
-    def _classic_kernel(meta_ptr, vert_ptr, edge_ptr, disc_ptr, bg_ptr, plate_ptr, sprite_ptr,
-                        aa_ptr, out_ptr,
-                        P, PG,
-                        H: tl.constexpr, W: tl.constexpr, PLATE_B: tl.constexpr,
-                        HAS_PLATE: tl.constexpr,
-                        HAS_SPRITE: tl.constexpr, SPR_N: tl.constexpr, SPR_S: tl.constexpr,
-                        NTX: tl.constexpr, BH: tl.constexpr, BW: tl.constexpr):
+    def _classic_kernel(
+        meta_ptr,
+        vert_ptr,
+        edge_ptr,
+        disc_ptr,
+        bg_ptr,
+        plate_ptr,
+        sprite_ptr,
+        aa_ptr,
+        out_ptr,
+        P,
+        PG,
+        H: tl.constexpr,
+        W: tl.constexpr,
+        PLATE_B: tl.constexpr,
+        HAS_PLATE: tl.constexpr,
+        HAS_SPRITE: tl.constexpr,
+        SPR_N: tl.constexpr,
+        SPR_S: tl.constexpr,
+        NTX: tl.constexpr,
+        BH: tl.constexpr,
+        BW: tl.constexpr,
+    ):
         b = tl.program_id(0)
         tid = tl.program_id(1)
         tiy = tid // NTX
@@ -408,7 +499,7 @@ if HAVE_TRITON:
             # the plate is (3, 1, H, W) when the batch shares one appearance and (3, B, H, W)
             # when it does not; b % PLATE_B is that choice without a branch
             pb = b64 % PLATE_B
-            po = ((pb * H + Y.to(tl.int64)) * W + X.to(tl.int64))
+            po = (pb * H + Y.to(tl.int64)) * W + X.to(tl.int64)
             pl = H * PLATE_B * W
             cr = tl.load(plate_ptr + po, mask=m, other=0).to(tl.int32)
             cg = tl.load(plate_ptr + pl + po, mask=m, other=0).to(tl.int32)
@@ -454,8 +545,7 @@ if HAVE_TRITON:
                         ok = (ly >= 0) & (ly < pb2) & (lx >= 0) & (lx < pb2)
                         lyc = tl.minimum(tl.maximum(ly, 0), SPR_S - 1).to(tl.int64)
                         lxc = tl.minimum(tl.maximum(lx, 0), SPR_S - 1).to(tl.int64)
-                        so = ((((pa.to(tl.int64) * SPR_N + pb2.to(tl.int64)) * SPR_S + lyc)
-                               * SPR_S) + lxc) * 4
+                        so = ((((pa.to(tl.int64) * SPR_N + pb2.to(tl.int64)) * SPR_S + lyc) * SPR_S) + lxc) * 4
                         sa = tl.load(sprite_ptr + so + 3, mask=m, other=0).to(tl.int32)
                         sa = tl.where(ok, sa, 0)
                         sr = tl.load(sprite_ptr + so + 0, mask=m, other=0).to(tl.int32)
@@ -524,8 +614,7 @@ if HAVE_TRITON:
                                     # SDL_gfx short-circuits to a solid hline/vline with no AA
                                     hit = (Y == sy) & (X == sx)
                                     if kind == cK_VERT:
-                                        hit = hit | ((dye > 0) & (X == xx0) & (Y >= yy0)
-                                                     & (Y <= yy0 + dye))
+                                        hit = hit | ((dye > 0) & (X == xx0) & (Y >= yy0) & (Y <= yy0 + dye))
                                     if kind == cK_HORIZ:
                                         hit = hit | ((Y == yy0) & (X >= lo) & (X <= lo + dxe))
                                     cr = tl.where(hit, fr, cr)
@@ -583,8 +672,9 @@ if HAVE_TRITON:
                             yhi = tl.maximum(ay, byv)
                             xl = tl.where(sw, bxv, ax)
                             xh = tl.where(sw, ax, bxv)
-                            act = (ay != byv) & (((Y6 >= ylo) & (Y6 < yhi))
-                                                 | ((Y6 == maxy) & (Y6 > ylo) & (Y6 <= yhi)))
+                            act = (ay != byv) & (
+                                ((Y6 >= ylo) & (Y6 < yhi)) | ((Y6 == maxy) & (Y6 > ylo) & (Y6 <= yhi))
+                            )
                             den = tl.maximum(yhi - ylo, 1)
                             Xv = ((65536 * (Y6 - ylo)) // den) * (xh - xl) + 65536 * xl
                             xlo_a = tl.minimum(xlo_a, tl.where(act, Xv, BIG))
@@ -627,15 +717,27 @@ def render_classic(ops: Ops, out: torch.Tensor | None = None) -> torch.Tensor:
     empty8 = torch.empty(1, dtype=torch.uint8, device=dev)
     with torch.cuda.device(dev):
         _classic_kernel[(B, ntx * -(-H // bh))](
-            ops.meta_t, ops.vert_t, ops.edge_t, ops.discs.flat,
+            ops.meta_t,
+            ops.vert_t,
+            ops.edge_t,
+            ops.discs.flat,
             ops.bg if ops.bg is not None else torch.zeros((B, 3), dtype=torch.int32, device=dev),
             plate.contiguous() if plate is not None else empty8,
             spr.contiguous() if spr is not None else empty8,
-            ops.aa, out,
-            P, PG,
-            H=H, W=W, PLATE_B=int(plate.shape[1]) if plate is not None else 1,
-            HAS_PLATE=plate is not None, HAS_SPRITE=spr is not None,
+            ops.aa,
+            out,
+            P,
+            PG,
+            H=H,
+            W=W,
+            PLATE_B=int(plate.shape[1]) if plate is not None else 1,
+            HAS_PLATE=plate is not None,
+            HAS_SPRITE=spr is not None,
             SPR_N=int(spr.shape[1]) if spr is not None else 1,
             SPR_S=int(spr.shape[2]) if spr is not None else 1,
-            NTX=ntx, BH=bh, BW=bw, num_warps=WARPS)
+            NTX=ntx,
+            BH=bh,
+            BW=bw,
+            num_warps=WARPS,
+        )
     return out

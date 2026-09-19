@@ -92,6 +92,7 @@ The 18 registered ``PointMaze_*`` ids collapse to these four scenes. ``Dense`` c
 ``_Diverse_G`` / ``_Diverse_GR`` change which cells goals and resets are drawn from; none of the three
 reaches the renderer, and the sampler here draws from every free cell, which is the union of them.
 """
+
 from __future__ import annotations
 
 import os
@@ -145,8 +146,20 @@ def _offsets(paths, sty):
 class _Scene:
     """Everything a render needs that does not depend on the state."""
 
-    __slots__ = ("plate", "plate_t", "cam", "lights", "size", "free_xy", "target_z", "scaling",
-                 "prims_ball", "prims_target", "prims_both", "radius")
+    __slots__ = (
+        "plate",
+        "plate_t",
+        "cam",
+        "lights",
+        "size",
+        "free_xy",
+        "target_z",
+        "scaling",
+        "prims_ball",
+        "prims_target",
+        "prims_both",
+        "radius",
+    )
 
 
 def _build_reference(maze: str, size: int):
@@ -176,15 +189,17 @@ def _build_reference(maze: str, size: int):
     import gymnasium
     import gymnasium_robotics  # noqa: F401
     import mujoco
+
     gymnasium.register_envs(gymnasium_robotics)
-    env = gymnasium.make(f"PointMaze_{maze}-v3", render_mode="rgb_array",
-                         width=int(size), height=int(size), continuing_task=False)
+    env = gymnasium.make(
+        f"PointMaze_{maze}-v3", render_mode="rgb_array", width=int(size), height=int(size), continuing_task=False
+    )
     env.reset(seed=0)
     u = env.unwrapped
     u.data.qpos[:] = 0.0
     u.data.qvel[:] = 0.0
     mujoco.mj_forward(u.model, u.data)
-    u.point_env.mujoco_renderer._get_viewer("rgb_array")     # freezes lookat at the pinned state
+    u.point_env.mujoco_renderer._get_viewer("rgb_array")  # freezes lookat at the pinned state
     return env
 
 
@@ -202,12 +217,14 @@ def _scene_env(maze: str, size: int):
     env = _build_reference(maze, size)
     u = env.unwrapped
     m = u.model
-    m.vis.quality.offsamples = 4                      # MuJoCo's default; what the datasets hold
-    pristine = dict(site_rgba=np.array(m.site_rgba, copy=True),
-                    geom_rgba=np.array(m.geom_rgba, copy=True),
-                    mat_rgba=np.array(m.mat_rgba, copy=True),
-                    geom_matid=np.array(m.geom_matid, copy=True),
-                    cam_distance=float(u.point_env.mujoco_renderer.default_cam_config["distance"]))
+    m.vis.quality.offsamples = 4  # MuJoCo's default; what the datasets hold
+    pristine = dict(
+        site_rgba=np.array(m.site_rgba, copy=True),
+        geom_rgba=np.array(m.geom_rgba, copy=True),
+        mat_rgba=np.array(m.mat_rgba, copy=True),
+        geom_matid=np.array(m.geom_matid, copy=True),
+        cam_distance=float(u.point_env.mujoco_renderer.default_cam_config["distance"]),
+    )
     _ENV_CACHE[key] = (env, u, pristine)
     return _ENV_CACHE[key]
 
@@ -248,7 +265,7 @@ def _mat_and_tex(m, g):
             buf = getattr(m, attr)
             a0 = int(m.tex_adr[tid])
             h, w = int(m.tex_height[tid]), int(m.tex_width[tid])
-            reg = np.asarray(buf[a0:a0 + 3 * h * w], np.float64).reshape(h, w, 3) / 255.0
+            reg = np.asarray(buf[a0 : a0 + 3 * h * w], np.float64).reshape(h, w, 3) / 255.0
             uq = np.unique(reg.reshape(-1, 3), axis=0)
             tex = uq[0] if len(uq) == 1 else reg.reshape(-1, 3).mean(0)
     return mat, tex
@@ -266,8 +283,7 @@ class PointMaze(Env):
     #: ``_hidden_state`` is never consulted and the frozen layout does not move. The ball's velocity
     #: is deliberately NOT here: the official env integrates it, this package renders from a pose,
     #: and a column the frame never reads would be a dimension the conformance suite reports as dead.
-    state_layout = ((("ball", "position"), 2, 0),
-                    (("goal", "position"), 2, 2))
+    state_layout = ((("ball", "position"), 2, 0), (("goal", "position"), 2, 2))
     default_size = 224
     #: The reference is multisampled at 4 samples; a hard silhouette is the wrong answer at the edge
     #: of a 12-pixel sphere. As ``ogbench``, and for the same reason.
@@ -291,13 +307,26 @@ class PointMaze(Env):
         "i.e. by less than the multisampling costs, so the DECLARED headlight constants are used "
         "rather than fitted ones. INTERIOR agreement, which is what parity_interior_min measures, is "
         "1.000000: the interior mask keeps only pixels whose 3x3 neighbourhood in the reference is "
-        "one flat colour, and a shaded 12-pixel sphere has none.")
+        "one flat colour, and a shaded 12-pixel sphere has none."
+    )
 
-    def __init__(self, num_envs: int = 1, size: int | None = None, supersample: int | None = None,
-                 device: str = "cuda", backend: str = "auto", seed: int = 0):
-        super().__init__(num_envs=num_envs, size=size,
-                         supersample=self.default_supersample if supersample is None else supersample,
-                         device=device, backend=backend, seed=seed)
+    def __init__(
+        self,
+        num_envs: int = 1,
+        size: int | None = None,
+        supersample: int | None = None,
+        device: str = "cuda",
+        backend: str = "auto",
+        seed: int = 0,
+    ):
+        super().__init__(
+            num_envs=num_envs,
+            size=size,
+            supersample=self.default_supersample if supersample is None else supersample,
+            device=device,
+            backend=backend,
+            seed=seed,
+        )
         sc = self._scene()
         assert sc.radius > 0, f"{type(self).__name__}: the particle site has no radius"
 
@@ -314,30 +343,44 @@ class PointMaze(Env):
         function of it, and because a leak-free variant of this env (goal hidden from the pixels) is
         exactly ``alpha = 0``.
         """
-        return Dict({
-            "agent": Dict({
-                "color": Box(low=0.0, high=1.0, shape=(3,), init_value=list(BALL_RGB)),
-                "scale": Box(low=0.25, high=4.0, shape=(1,), init_value=[1.0]),
-            }),
-            "target": Dict({
-                "color": Box(low=0.0, high=1.0, shape=(3,), init_value=list(TARGET_RGB)),
-                "alpha": Box(low=0.0, high=1.0, shape=(1,), init_value=[TARGET_ALPHA]),
-            }),
-            "floor": Dict({"tint": Box(low=0.0, high=1.0, shape=(3,), init_value=[1.0, 1.0, 1.0])}),
-            "walls": Dict({"color": Box(low=0.0, high=1.0, shape=(3,), init_value=list(WALL_RGB))}),
-            "camera": Dict({
-                "distance_scale": Box(low=0.6, high=1.8, shape=(1,), init_value=[1.0]),
-                "elevation": Box(low=-90.0, high=-20.0, shape=(1,), init_value=[-45.0]),
-                "azimuth": Box(low=0.0, high=360.0, shape=(1,), init_value=[90.0]),
-            }),
-            # the checkerboard is what lets a pixel agent read its own position off the floor; flat
-            # slate is the leak-free condition. 0 is the official appearance.
-            "rendering": Dict({"decolor_floor": Discrete(2, init_value=0)}),
-        })
+        return Dict(
+            {
+                "agent": Dict(
+                    {
+                        "color": Box(low=0.0, high=1.0, shape=(3,), init_value=list(BALL_RGB)),
+                        "scale": Box(low=0.25, high=4.0, shape=(1,), init_value=[1.0]),
+                    }
+                ),
+                "target": Dict(
+                    {
+                        "color": Box(low=0.0, high=1.0, shape=(3,), init_value=list(TARGET_RGB)),
+                        "alpha": Box(low=0.0, high=1.0, shape=(1,), init_value=[TARGET_ALPHA]),
+                    }
+                ),
+                "floor": Dict({"tint": Box(low=0.0, high=1.0, shape=(3,), init_value=[1.0, 1.0, 1.0])}),
+                "walls": Dict({"color": Box(low=0.0, high=1.0, shape=(3,), init_value=list(WALL_RGB))}),
+                "camera": Dict(
+                    {
+                        "distance_scale": Box(low=0.6, high=1.8, shape=(1,), init_value=[1.0]),
+                        "elevation": Box(low=-90.0, high=-20.0, shape=(1,), init_value=[-45.0]),
+                        "azimuth": Box(low=0.0, high=360.0, shape=(1,), init_value=[90.0]),
+                    }
+                ),
+                # the checkerboard is what lets a pixel agent read its own position off the floor; flat
+                # slate is the leak-free condition. 0 is the official appearance.
+                "rendering": Dict({"decolor_floor": Discrete(2, init_value=0)}),
+            }
+        )
 
     #: Style leaves that change the STATIC scene and therefore the baked plate.
-    PLATE_PATHS = ("floor.tint", "walls.color", "camera.distance_scale", "camera.elevation",
-                   "camera.azimuth", "rendering.decolor_floor")
+    PLATE_PATHS = (
+        "floor.tint",
+        "walls.color",
+        "camera.distance_scale",
+        "camera.elevation",
+        "camera.azimuth",
+        "rendering.decolor_floor",
+    )
 
     def _var(self, variation, path):
         if variation is not None and path in variation:
@@ -350,8 +393,12 @@ class PointMaze(Env):
     # ---- scene -----------------------------------------------------------
 
     def _plate_key(self, size, variation):
-        return (self.MAZE, int(size), str(self.device),
-                *(tuple(np.round(self._var(variation, p), 6)) for p in self.PLATE_PATHS))
+        return (
+            self.MAZE,
+            int(size),
+            str(self.device),
+            *(tuple(np.round(self._var(variation, p), 6)) for p in self.PLATE_PATHS),
+        )
 
     def _scene(self, size=None, variation=None) -> _Scene:
         size = int(size or self.size)
@@ -369,6 +416,7 @@ class PointMaze(Env):
         distance is a MULTIPLIER and would otherwise compound.
         """
         import mujoco
+
         env, u, pr = _scene_env(self.MAZE, size)
         m, d = u.model, u.data
         m.site_rgba[:] = pr["site_rgba"]
@@ -414,7 +462,7 @@ class PointMaze(Env):
         # identically afterwards; the renderer is reused because the bytes it uploads are the same.
         plate = _official_frame(u)
         m.site_rgba[:, 3] = keep
-        _official_frame(u)                       # repopulate scn with the real appearance
+        _official_frame(u)  # repopulate scn with the real appearance
 
         sc = _Scene()
         sc.size = size
@@ -425,8 +473,9 @@ class PointMaze(Env):
         sc.radius = float(m.site_size[pid][0])
         sc.scaling = float(u.maze.maze_size_scaling)
         sc.target_z = float(u.maze.maze_height / 2 * sc.scaling)
-        sc.free_xy = np.stack([np.asarray(p, np.float64) for p in
-                               (u.maze.unique_goal_locations or u.maze.combined_locations)])
+        sc.free_xy = np.stack(
+            [np.asarray(p, np.float64) for p in (u.maze.unique_goal_locations or u.maze.combined_locations)]
+        )
 
         names = [mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_GEOM, g) for g in range(m.ngeom)]
         static = [g for g, n in enumerate(names) if n != "particle_geom"]
@@ -435,40 +484,60 @@ class PointMaze(Env):
             size=np.stack([m.geom_size[g] for g in static]),
             mat_rgb=np.stack([_mat_and_tex(m, g)[0] for g in static]),
             tex_rgb=np.stack([_mat_and_tex(m, g)[1] for g in static]),
-            spec=np.full(len(static), MAT_SPECULAR))
-        sc.plate_t = R3.static_depth(sc.cam, sprims,
-                                     np.stack([d.geom_xpos[g] for g in static]),
-                                     np.stack([d.geom_xmat[g] for g in static]),
-                                     size, size, self.device)
+            spec=np.full(len(static), MAT_SPECULAR),
+        )
+        sc.plate_t = R3.static_depth(
+            sc.cam,
+            sprims,
+            np.stack([d.geom_xpos[g] for g in static]),
+            np.stack([d.geom_xmat[g] for g in static]),
+            size,
+            size,
+            self.device,
+        )
 
         def prim(n):
-            return R3.Primitives(kind=np.full(n, R3.SPHERE),
-                                 size=np.tile([sc.radius, 0.0, 0.0], (n, 1)),
-                                 mat_rgb=np.zeros((n, 3)), tex_rgb=np.ones((n, 3)),
-                                 spec=np.full(n, MAT_SPECULAR))
+            return R3.Primitives(
+                kind=np.full(n, R3.SPHERE),
+                size=np.tile([sc.radius, 0.0, 0.0], (n, 1)),
+                mat_rgb=np.zeros((n, 3)),
+                tex_rgb=np.ones((n, 3)),
+                spec=np.full(n, MAT_SPECULAR),
+            )
+
         sc.prims_ball, sc.prims_target, sc.prims_both = prim(1), prim(1), prim(2)
 
         L = int(viewer.scn.nlight)
         ldir = np.stack([-np.asarray(viewer.scn.lights[i].dir, np.float64) for i in range(L)])
         ldir = ldir / np.linalg.norm(ldir, axis=1, keepdims=True)
-        sc.lights = R3.Lights(dirs=ldir, ambient=np.full(L, SHADE_AMBIENT),
-                              diffuse=np.full(L, SHADE_DIFFUSE),
-                              specular=np.full(L, SHADE_SPECULAR), exponent=SHADE_EXPONENT)
+        sc.lights = R3.Lights(
+            dirs=ldir,
+            ambient=np.full(L, SHADE_AMBIENT),
+            diffuse=np.full(L, SHADE_DIFFUSE),
+            specular=np.full(L, SHADE_SPECULAR),
+            exponent=SHADE_EXPONENT,
+        )
         return sc
 
     # ---- rendering -------------------------------------------------------
 
     @torch.no_grad()
-    def render(self, states=None, size: int | None = None, supersample: int | None = None,
-               variation: dict | None = None, style=None, out=None) -> torch.Tensor:
+    def render(
+        self,
+        states=None,
+        size: int | None = None,
+        supersample: int | None = None,
+        variation: dict | None = None,
+        style=None,
+        out=None,
+    ) -> torch.Tensor:
         """``(...,4)`` -> ``(...,H,W,3)`` uint8. Style may differ per environment.
 
         The batch is grouped by the plate-affecting half of the style, as ``ogbench`` does, so
         randomising the ball's colour never splits the batch and randomising the camera splits it once
         per distinct camera.
         """
-        s = self._state if states is None else torch.as_tensor(states, device=self.device,
-                                                               dtype=torch.float32)
+        s = self._state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
         lead = tuple(s.shape[:-1])
         s = s.reshape(-1, self.state_dim)
         B = s.shape[0]
@@ -484,12 +553,10 @@ class PointMaze(Env):
         uniq, inv = np.unique(np.round(key.astype(np.float64), 6), axis=0, return_inverse=True)
         for gi in range(len(uniq)):
             idx = np.flatnonzero(inv == gi)
-            over = {p: uniq[gi][o:o + w] for p, (o, w) in
-                    zip(self.PLATE_PATHS, _offsets(self.PLATE_PATHS, sty))}
+            over = {p: uniq[gi][o : o + w] for p, (o, w) in zip(self.PLATE_PATHS, _offsets(self.PLATE_PATHS, sty))}
             sc = self._scene(size, over)
             sub = torch.as_tensor(idx, device=self.device, dtype=torch.long)
-            got = self._render_group(sc, s[sub], sty, sub, size, ss,
-                                     buf if len(uniq) == 1 else None)
+            got = self._render_group(sc, s[sub], sty, sub, size, ss, buf if len(uniq) == 1 else None)
             if len(uniq) != 1:
                 buf[sub] = got
         return buf.view(*lead, size, size, 3) if lead else buf
@@ -512,18 +579,42 @@ class PointMaze(Env):
 
         # the ball over the plate, written straight into the caller's buffer: it is the base image and
         # the blend below only edits the handful of pixels the target covers
-        base = R3.composite(sc.plate, sc.plate_t, sc.cam, sc.prims_ball, xb,
-                            eye.expand(b, 1, 3, 3).contiguous(), sc.lights, size, size,
-                            supersample=ss, tile=self.TILE, mat_rgb=acol, size_scale=scale,
-                            out=dst)
-        with_t = R3.composite(sc.plate, sc.plate_t, sc.cam, sc.prims_target, xt,
-                              eye.expand(b, 1, 3, 3).contiguous(), sc.lights, size, size,
-                              supersample=ss, tile=self.TILE, mat_rgb=tcol, size_scale=scale)
+        base = R3.composite(
+            sc.plate,
+            sc.plate_t,
+            sc.cam,
+            sc.prims_ball,
+            xb,
+            eye.expand(b, 1, 3, 3).contiguous(),
+            sc.lights,
+            size,
+            size,
+            supersample=ss,
+            tile=self.TILE,
+            mat_rgb=acol,
+            size_scale=scale,
+            out=dst,
+        )
+        with_t = R3.composite(
+            sc.plate,
+            sc.plate_t,
+            sc.cam,
+            sc.prims_target,
+            xt,
+            eye.expand(b, 1, 3, 3).contiguous(),
+            sc.lights,
+            size,
+            size,
+            supersample=ss,
+            tile=self.TILE,
+            mat_rgb=tcol,
+            size_scale=scale,
+        )
         # ``with_t`` is the target over the PLATE alone, so it differs from the plate exactly where the
         # target is drawn. The environments where the ball stands in front of the target are excluded
         # here and redone below, because two independent casts cannot resolve depth between them.
         occl = self._ball_occludes_target(sc, xb, xt, scale)
-        mask = ((with_t != sc.plate.view(1, size, size, 3)).any(-1) & ~occl.view(b, 1, 1))
+        mask = (with_t != sc.plate.view(1, size, size, 3)).any(-1) & ~occl.view(b, 1, 1)
         self._blend(base, with_t, mask, alpha)
 
         # Excluding the occluded environments per ROW rather than per BATCH is what makes the
@@ -534,18 +625,27 @@ class PointMaze(Env):
         j = occl.nonzero(as_tuple=True)[0]
         if j.numel():
             sel = base[j]
-            joint = R3.composite(sc.plate, sc.plate_t, sc.cam, sc.prims_both,
-                                 torch.cat([xb[j], xt[j]], 1),
-                                 eye.expand(len(j), 2, 3, 3).contiguous(), sc.lights, size, size,
-                                 supersample=ss, tile=self.TILE,
-                                 mat_rgb=torch.cat([acol[j], tcol[j]], 1), size_scale=scale[j])
+            joint = R3.composite(
+                sc.plate,
+                sc.plate_t,
+                sc.cam,
+                sc.prims_both,
+                torch.cat([xb[j], xt[j]], 1),
+                eye.expand(len(j), 2, 3, 3).contiguous(),
+                sc.lights,
+                size,
+                size,
+                supersample=ss,
+                tile=self.TILE,
+                mat_rgb=torch.cat([acol[j], tcol[j]], 1),
+                size_scale=scale[j],
+            )
             self._blend(sel, joint, (joint != sel).any(-1), alpha[j])
             base[j] = sel
         return base
 
     @staticmethod
-    def _blend(base: torch.Tensor, over: torch.Tensor, mask: torch.Tensor,
-               alpha: torch.Tensor) -> None:
+    def _blend(base: torch.Tensor, over: torch.Tensor, mask: torch.Tensor, alpha: torch.Tensor) -> None:
         """``base[mask] = (2a - a^2) * over[mask] + (1 - a)^2 * base[mask]``, in place.
 
         Masked rather than whole-frame. The formula is a convex combination and is the identity
@@ -590,7 +690,7 @@ class PointMaze(Env):
         rng = rng or self.rng
         sc = self._scene()
         cells = sc.free_xy
-        pick = cells[rng.integers(0, len(cells), (batch, 2))]                  # (batch, 2, 2)
+        pick = cells[rng.integers(0, len(cells), (batch, 2))]  # (batch, 2, 2)
         noise = rng.uniform(-POSITION_NOISE, POSITION_NOISE, (batch, 2, 2)) * sc.scaling
         return (pick + noise).reshape(batch, 4).astype(np.float32)
 
@@ -605,6 +705,7 @@ class PointMaze(Env):
     def reference_render(cls, env, states) -> np.ndarray:
         """Official frames for the given (ball, goal). ``qvel`` is zero and provably irrelevant."""
         import mujoco
+
         u = env.unwrapped
         m, d = u.model, u.data
         out = []
@@ -617,8 +718,8 @@ class PointMaze(Env):
             got = np.array(d.qpos[:2], np.float64)
             if np.abs(got - st[:2]).max() > 1e-9:
                 raise AssertionError(
-                    f"PointMaze reference did not reach the requested ball position: asked "
-                    f"{st[:2]}, got {got}")
+                    f"PointMaze reference did not reach the requested ball position: asked {st[:2]}, got {got}"
+                )
             out.append(_official_frame(u))
         return np.stack(out)
 
@@ -634,14 +735,22 @@ def _make_classes():
     made = {}
     for maze in ("UMaze", "Open", "Medium", "Large"):
         cname = f"PointMaze{maze}"
-        cls = register(type(cname, (PointMaze,), dict(
-            MAZE=maze,
-            name=f"pointmaze-{maze.lower()}",
-            reference_id=f"PointMaze_{maze}-v3",
-            __doc__=(f"gymnasium-robotics PointMaze_{maze}-v3 (D4RL maze2d-{maze.lower()}). State is "
-                     f"the ball's (x, y) and the goal's (x, y); the Dense and Diverse variants of "
-                     f"this id differ only in reward and goal sampling and share this renderer."),
-        )))
+        cls = register(
+            type(
+                cname,
+                (PointMaze,),
+                dict(
+                    MAZE=maze,
+                    name=f"pointmaze-{maze.lower()}",
+                    reference_id=f"PointMaze_{maze}-v3",
+                    __doc__=(
+                        f"gymnasium-robotics PointMaze_{maze}-v3 (D4RL maze2d-{maze.lower()}). State is "
+                        f"the ball's (x, y) and the goal's (x, y); the Dense and Diverse variants of "
+                        f"this id differ only in reward and goal sampling and share this renderer."
+                    ),
+                ),
+            )
+        )
         made[cname] = cls
     return made
 

@@ -13,6 +13,7 @@ experiment produces one for free. The claim is that the 95% confidence interval 
 difference lies entirely inside the equivalence margin, which is a statement an underpowered
 experiment cannot make.
 """
+
 from __future__ import annotations
 
 import json
@@ -53,7 +54,7 @@ def mcnemar_exact(b: int, c: int) -> float:
     if n == 0:
         return 1.0
     lo = min(b, c)
-    tail = sum(math.comb(n, i) for i in range(lo + 1)) * (0.5 ** n)
+    tail = sum(math.comb(n, i) for i in range(lo + 1)) * (0.5**n)
     return min(1.0, 2 * tail)
 
 
@@ -75,7 +76,9 @@ def paired(off: list[int], ours: list[int]) -> dict:
     disc = (b + c) / n if n else 0.0
     margin = SPEC["equivalence_margin_points"]
     return {
-        "n": n, "b": b, "c": c,
+        "n": n,
+        "b": b,
+        "c": c,
         "delta_points": delta,
         "ci": [delta - half, delta + half],
         "half_width_points": half,
@@ -92,8 +95,13 @@ def arm(successes: list[int]) -> dict:
     return {"successes": k, "n": n, "success_rate": 100.0 * k / n if n else 0.0, "wilson_ci": [lo, hi]}
 
 
-def gate_h(official: list[int], ours: list[int], control: list[int] | None,
-           seeds: list[int] | None = None, per_seed_n: list[int] | None = None) -> dict:
+def gate_h(
+    official: list[int],
+    ours: list[int],
+    control: list[int] | None,
+    seeds: list[int] | None = None,
+    per_seed_n: list[int] | None = None,
+) -> dict:
     """The whole verdict, including the parts that make a null result mean something.
 
     Three ways to not be a PASS, kept distinct because they call for different work:
@@ -124,18 +132,18 @@ def gate_h(official: list[int], ours: list[int], control: list[int] | None,
     )
 
     if control is None:
-        out["control"] = {"present": False, "degraded": False,
-                          "note": "no destructive control arm was run"}
+        out["control"] = {"present": False, "degraded": False, "note": "no destructive control arm was run"}
     else:
-        cp = paired(official[:len(control)], control)
+        cp = paired(official[: len(control)], control)
         out["control"] = {
             "present": True,
             "arm": arm(control),
             "paired": cp,
             "max_delta_points": SPEC["control_max_delta_points"],
             "max_p": SPEC["control_max_p"],
-            "degraded": bool(cp["delta_points"] <= SPEC["control_max_delta_points"]
-                             and cp["mcnemar_p"] < SPEC["control_max_p"]),
+            "degraded": bool(
+                cp["delta_points"] <= SPEC["control_max_delta_points"] and cp["mcnemar_p"] < SPEC["control_max_p"]
+            ),
         }
 
     # The guard is about whether THIS n can resolve the margin at THIS discordance, which is what
@@ -154,23 +162,39 @@ def gate_h(official: list[int], ours: list[int], control: list[int] | None,
     }
 
     if not out["control"]["degraded"]:
-        verdict, why = "INCONCLUSIVE", SPEC["outcome_without_control_degradation"] + \
-            ": the evaluation was not shown to depend on the pixels"
+        verdict, why = (
+            "INCONCLUSIVE",
+            SPEC["outcome_without_control_degradation"] + ": the evaluation was not shown to depend on the pixels",
+        )
     elif not out["design"]["met"]:
-        verdict, why = "DESIGN_SHORTFALL", (
-            f"{eq['n']} paired episodes against a required {SPEC['min_paired_episodes']}")
+        verdict, why = (
+            "DESIGN_SHORTFALL",
+            (f"{eq['n']} paired episodes against a required {SPEC['min_paired_episodes']}"),
+        )
     elif eq["inside_margin"]:
-        verdict, why = "PASS", (
-            f"95% CI [{eq['ci'][0]:.2f}, {eq['ci'][1]:.2f}] lies inside "
-            f"+/-{SPEC['equivalence_margin_points']} points")
+        verdict, why = (
+            "PASS",
+            (
+                f"95% CI [{eq['ci'][0]:.2f}, {eq['ci'][1]:.2f}] lies inside "
+                f"+/-{SPEC['equivalence_margin_points']} points"
+            ),
+        )
     elif underpowered:
-        verdict, why = "INCONCLUSIVE", (
-            f"discordance {eq['discordance']:.3f} needs {required} paired episodes to resolve a "
-            f"+/-{SPEC['equivalence_margin_points']} point margin and {eq['n']} were run")
+        verdict, why = (
+            "INCONCLUSIVE",
+            (
+                f"discordance {eq['discordance']:.3f} needs {required} paired episodes to resolve a "
+                f"+/-{SPEC['equivalence_margin_points']} point margin and {eq['n']} were run"
+            ),
+        )
     else:
-        verdict, why = "FAIL", (
-            f"95% CI [{eq['ci'][0]:.2f}, {eq['ci'][1]:.2f}] is not inside "
-            f"+/-{SPEC['equivalence_margin_points']} points, at {eq['n']} paired episodes against "
-            f"the {required} this discordance requires")
+        verdict, why = (
+            "FAIL",
+            (
+                f"95% CI [{eq['ci'][0]:.2f}, {eq['ci'][1]:.2f}] is not inside "
+                f"+/-{SPEC['equivalence_margin_points']} points, at {eq['n']} paired episodes against "
+                f"the {required} this discordance requires"
+            ),
+        )
     out["verdict"], out["verdict_reason"] = verdict, why
     return out

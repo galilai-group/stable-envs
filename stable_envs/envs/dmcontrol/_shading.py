@@ -9,6 +9,7 @@ measured off the reference's own quantised colours rather than taken from the ma
 Shared by both tiers: ``suite`` calls ``_shade`` for the mover pass and the reflection pass, and the
 CPU trackcom backend evaluates the same law inside ``stable_envs.render.cpu3d``.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -27,47 +28,90 @@ class _Lights:
     spotlight falloff that IS the picture in point_mass.
     """
 
-    __slots__ = ("kind", "pos", "dir", "ambient", "diffuse", "specular", "attenuation", "cutoff",
-                 "exponent", "castshadow")
+    __slots__ = (
+        "kind",
+        "pos",
+        "dir",
+        "ambient",
+        "diffuse",
+        "specular",
+        "attenuation",
+        "cutoff",
+        "exponent",
+        "castshadow",
+    )
 
     def __init__(self, scene):
         n = int(scene.nlight)
-        g = lambda f: np.stack([np.asarray(getattr(scene.lights[i], f), np.float64)  # noqa: E731
-                                for i in range(n)])
+        g = lambda f: np.stack(
+            [
+                np.asarray(getattr(scene.lights[i], f), np.float64)  # noqa: E731
+                for i in range(n)
+            ]
+        )
         self.pos, self.dir = g("pos"), g("dir")
         self.ambient, self.diffuse, self.specular = g("ambient"), g("diffuse"), g("specular")
         self.attenuation = g("attenuation")
         self.cutoff = np.array([float(scene.lights[i].cutoff) for i in range(n)])
         self.exponent = np.array([float(scene.lights[i].exponent) for i in range(n)])
         self.castshadow = np.array([int(scene.lights[i].castshadow) for i in range(n)])
-        self.kind = np.array([int(getattr(scene.lights[i], "type",
-                                          getattr(scene.lights[i], "directional", 1)))
-                              for i in range(n)])
+        self.kind = np.array(
+            [int(getattr(scene.lights[i], "type", getattr(scene.lights[i], "directional", 1))) for i in range(n)]
+        )
 
     def shadow_light(self) -> int:
         idx = np.flatnonzero(self.castshadow > 0)
         return int(idx[0]) if len(idx) else -1
 
     def to(self, device) -> dict:
-        t = lambda x: torch.tensor(np.asarray(x, np.float64), device=device,          # noqa: E731
-                                   dtype=torch.float32)
-        return dict(pos=t(self.pos), dir=t(self.dir), ambient=t(self.ambient),
-                    diffuse=t(self.diffuse), specular=t(self.specular),
-                    attenuation=t(self.attenuation), cutoff=[float(c) for c in self.cutoff],
-                    exponent=[float(e) for e in self.exponent],
-                    kind=[int(k) for k in self.kind],
-                    castshadow=[bool(c) for c in self.castshadow])
+        t = lambda x: torch.tensor(
+            np.asarray(x, np.float64),
+            device=device,  # noqa: E731
+            dtype=torch.float32,
+        )
+        return dict(
+            pos=t(self.pos),
+            dir=t(self.dir),
+            ambient=t(self.ambient),
+            diffuse=t(self.diffuse),
+            specular=t(self.specular),
+            attenuation=t(self.attenuation),
+            cutoff=[float(c) for c in self.cutoff],
+            exponent=[float(e) for e in self.exponent],
+            kind=[int(k) for k in self.kind],
+            castshadow=[bool(c) for c in self.castshadow],
+        )
 
 
 class _Scene:
     """Everything a render needs that does not depend on the state."""
 
-    __slots__ = ("plate", "plate_shadow", "plate_norefl", "reflectance", "static_t", "cam", "model",
-                 "data", "movers", "statics", "size", "lights", "prims", "shadow_light", "floor",
-                 "eps", "tendon", "shadow_candidates", "rays", "const")
+    __slots__ = (
+        "plate",
+        "plate_shadow",
+        "plate_norefl",
+        "reflectance",
+        "static_t",
+        "cam",
+        "model",
+        "data",
+        "movers",
+        "statics",
+        "size",
+        "lights",
+        "prims",
+        "shadow_light",
+        "floor",
+        "eps",
+        "tendon",
+        "shadow_candidates",
+        "rays",
+        "const",
+    )
 
 
 # --------------------------------------------------------------------------- shading
+
 
 def _norm(v):
     return v / torch.clamp(torch.sqrt((v * v).sum(-1, keepdim=True)), min=1e-12)
@@ -99,8 +143,7 @@ def _light_geometry(L: dict, i: int, p: torch.Tensor):
     if cut < 180.0:
         se = _dot(_norm(L["dir"][i].view(shape)).expand_as(l), -l)
         inside = se >= float(np.cos(np.deg2rad(cut)))
-        att = torch.where(inside, att * torch.clamp(se, min=0) ** L["exponent"][i],
-                          torch.zeros_like(att))
+        att = torch.where(inside, att * torch.clamp(se, min=0) ** L["exponent"][i], torch.zeros_like(att))
     return l, att
 
 
@@ -126,7 +169,7 @@ def _shade(p, n, v, L, mat, spec, shininess, unlit=None):
         ndh = torch.clamp(_dot(n, h), min=0)
         out = out + mat * (att * L["ambient"][i][0]).unsqueeze(-1)
         out = out + mat * (lit * ndl * L["diffuse"][i][0]).unsqueeze(-1)
-        highlight = highlight + lit * L["specular"][i][0] * ndh ** exponent
+        highlight = highlight + lit * L["specular"][i][0] * ndh**exponent
     return torch.clamp(out + (highlight * spec * SPECULAR_SCALE).unsqueeze(-1), 0, 1)
 
 
@@ -136,4 +179,3 @@ def _upsample_rgb(img: torch.Tensor, ss: int) -> torch.Tensor:
     mean is that integer and ``round`` returns it. The plate is exact by construction, not
     approximately preserved."""
     return img if ss == 1 else img.repeat_interleave(ss, 0).repeat_interleave(ss, 1)
-

@@ -15,6 +15,7 @@ loop over envs.
 ``batch_sample`` exists for exactly that: it draws B independent values for a subtree and returns them
 stacked, which is the form the scene builder consumes.
 """
+
 from __future__ import annotations
 
 from collections.abc import Callable, Iterable, Sequence
@@ -77,8 +78,7 @@ class Discrete(_Valued, gspaces.Discrete):
 
 
 class Box(_Valued, gspaces.Box):
-    def __init__(self, low, high, shape=None, dtype=np.float32, init_value=None,
-                 constrain_fn=None, **kw):
+    def __init__(self, low, high, shape=None, dtype=np.float32, init_value=None, constrain_fn=None, **kw):
         gspaces.Box.__init__(self, low, high, shape=shape, dtype=dtype, **kw)
         if init_value is None:
             init_value = np.zeros(self.shape, dtype=self.dtype)
@@ -122,8 +122,9 @@ class RGBBox(Box):
     """A colour, as 3 channels in 0-255. Separate from ``Box`` so a renderer can recognise it."""
 
     def __init__(self, init_value=(0, 0, 0), low=0, high=255, **kw):
-        super().__init__(low=low, high=high, shape=(3,), dtype=np.uint8,
-                         init_value=np.asarray(init_value, dtype=np.uint8), **kw)
+        super().__init__(
+            low=low, high=high, shape=(3,), dtype=np.uint8, init_value=np.asarray(init_value, dtype=np.uint8), **kw
+        )
 
 
 class Dict(gspaces.Dict):
@@ -212,13 +213,13 @@ class Dict(gspaces.Dict):
         vec = np.zeros(self.flat_dim, np.float32)
         for path, off, w in self.flat_layout():
             v = values[path] if values is not None and path in values else self._walk(path).value
-            vec[off:off + w] = np.asarray(v, np.float32).reshape(-1)[:w]
+            vec[off : off + w] = np.asarray(v, np.float32).reshape(-1)[:w]
         return vec
 
     def unpack(self, vec) -> dict:
         """Flat vector -> ``{path: value}``. Inverse of ``pack``."""
         vec = np.asarray(vec, np.float32).reshape(-1)
-        return {p: (vec[o] if w == 1 else vec[o:o + w]) for p, o, w in self.flat_layout()}
+        return {p: (vec[o] if w == 1 else vec[o : o + w]) for p, o, w in self.flat_layout()}
 
     def to_str(self, indent: int = 0) -> str:
         lines = []
@@ -232,8 +233,12 @@ class Dict(gspaces.Dict):
         return "\n".join(lines)
 
 
-def reset_variation_space(variation_space: Dict, seed: int | None = None, options: dict | None = None,
-                          default_variations: Sequence[str] | None = None) -> None:
+def reset_variation_space(
+    variation_space: Dict,
+    seed: int | None = None,
+    options: dict | None = None,
+    default_variations: Sequence[str] | None = None,
+) -> None:
     """Reset, then resample the requested leaves, then apply explicit overrides. swm-compatible."""
     variation_space.seed(seed)
     variation_space.reset()

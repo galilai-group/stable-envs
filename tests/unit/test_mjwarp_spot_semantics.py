@@ -18,6 +18,7 @@ the MuJoCo side a POINT light is NOT equivalent to "spot with the cutoff discard
 identically to the light being switched off. That asymmetry is why the correction touches only what
 MJWarp reads, and a test that silently allowed re-typing would invite it back.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -25,8 +26,13 @@ import pytest
 
 mujoco = pytest.importorskip("mujoco")
 
-from stable_envs.render.mjwarp import (GL_SPOT_CUTOFF_MAX, GL_SPOT_CUTOFF_OFF,
-                                       neutralise_illegal_spots, prepare_model, restore_model)
+from stable_envs.render.mjwarp import (
+    GL_SPOT_CUTOFF_MAX,
+    GL_SPOT_CUTOFF_OFF,
+    neutralise_illegal_spots,
+    prepare_model,
+    restore_model,
+)
 
 _XML = """<mujoco><worldbody>
   <light name="bad"  type="spot" pos="0 0 1" dir="0 0 -1" cutoff="{bad}" exponent="10"/>
@@ -153,7 +159,6 @@ def test_prepare_model_can_opt_out():
 
 
 def test_a_model_with_no_lights_is_fine():
-    m = mujoco.MjModel.from_xml_string(
-        '<mujoco><worldbody><geom type="plane" size="1 1 .1"/></worldbody></mujoco>')
+    m = mujoco.MjModel.from_xml_string('<mujoco><worldbody><geom type="plane" size="1 1 .1"/></worldbody></mujoco>')
     assert neutralise_illegal_spots(m)[0] == []
     assert prepare_model(m).neutralised_spots == []

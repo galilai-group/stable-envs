@@ -11,6 +11,7 @@ facts rather than choices this migration made: the registered default size (224 
 ``stable_worldmodel``'s ``DMControlWrapper.render(width=224, height=224)``), the one ``SHAPE_KNOBS``
 entry, and the task-specific state exclusions ``check_state_dims_matter`` is OFFERED.
 """
+
 from __future__ import annotations
 
 from ...render import raycast3d as R3
@@ -38,9 +39,11 @@ _SWM_SMALL_TARGET = 0.015
 #: assertion in ``make_variation_space`` is what covers that, and it is why the assertion exists.
 SHAPE_KNOB_SPECS: dict[str, dict] = {
     "DMCManipulatorBringBall": {
-        "target_ball": ((R3.BOX, (_SWM_SMALL_TARGET,) * 3),            # swm target.shape = 0
-                        (R3.SPHERE, (_SWM_SMALL_TARGET, 0.0, 0.0)),    # swm target.shape = 1
-                        (R3.SPHERE, (0.02, 0.0, 0.0))),                # dm_control's own, the default
+        "target_ball": (
+            (R3.BOX, (_SWM_SMALL_TARGET,) * 3),  # swm target.shape = 0
+            (R3.SPHERE, (_SWM_SMALL_TARGET, 0.0, 0.0)),  # swm target.shape = 1
+            (R3.SPHERE, (0.02, 0.0, 0.0)),
+        ),  # dm_control's own, the default
     },
 }
 
@@ -84,12 +87,15 @@ STATE_DIMS_NOTE: dict[str, str] = {
         "validation refuses both quaternion dimensions because they now rotate a non-sphere, and they "
         "measure 201 px (max 145/255) at 224 px and 28 px at 84 px. ball_y stays excluded there, "
         "correctly -- it orients the `ball` prop, which is a sphere in both styles. "
-        "tests/unit/test_dmcontrol_episode_quat.py asserts every clause of this."),
+        "tests/unit/test_dmcontrol_episode_quat.py asserts every clause of this."
+    ),
 }
 
 
 DMCManipulatorBringBall = parity_cell(
-    "DMCManipulatorBringBall", "manipulator", "bring_ball",
+    "DMCManipulatorBringBall",
+    "manipulator",
+    "bring_ball",
     default_size=DEFAULT_SIZE,
     SHAPE_KNOBS=SHAPE_KNOB_SPECS["DMCManipulatorBringBall"],
     RENDER_INVARIANT_DIMS=RENDER_INVARIANT_DIMS["DMCManipulatorBringBall"],

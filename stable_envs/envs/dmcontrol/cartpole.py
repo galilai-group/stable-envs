@@ -5,6 +5,7 @@ cart, the pole and their shadow and reflection. The cart's front face is a BOX a
 incidence, which is the one surface in this family where a shading constant can be read straight
 off the reference — ``SPECULAR_SCALE`` in ``_model`` was measured on it.
 """
+
 from __future__ import annotations
 
 from ._cells import parity_cell

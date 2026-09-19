@@ -15,6 +15,7 @@ would try to import the package before the line above has run. So the order is n
 
 See ``stable_envs/testing/safety_plugin.py`` for what the plugin does and why each part of it exists.
 """
+
 from __future__ import annotations
 
 import sys

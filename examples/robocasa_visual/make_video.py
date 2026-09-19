@@ -15,6 +15,7 @@ rather than as a codec choice. Encoding goes through ffmpeg with ``-c:v libx264 
 -profile:v baseline -movflags +faststart``, and the resulting stream is PROBED and the probe recorded,
 so "it is H.264" is a measurement.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -45,11 +46,11 @@ def interior_mask(frames: np.ndarray) -> np.ndarray:
     conformance suite prints are the same quantity.
     """
     import scipy.ndimage as ndi
+
     out = []
     for f in frames:
         g = f.astype(np.int16)
-        flat = (np.abs(np.diff(g, axis=0)).sum(-1)[:, :-1]
-                + np.abs(np.diff(g, axis=1)).sum(-1)[:-1]) == 0
+        flat = (np.abs(np.diff(g, axis=0)).sum(-1)[:, :-1] + np.abs(np.diff(g, axis=1)).sum(-1)[:-1]) == 0
         out.append(ndi.minimum_filter(flat, size=3))
     return np.stack(out)
 
@@ -62,14 +63,15 @@ def ssim(a: np.ndarray, b: np.ndarray, win: int = 7) -> float:
     is a colour-and-texture error that shows in luma, and a per-channel mean would triple-count it.
     """
     import scipy.ndimage as ndi
+
     f = lambda x: ndi.uniform_filter(x, size=win, mode="nearest")
-    x = (a.astype(np.float64) @ [0.299, 0.587, 0.114])
-    y = (b.astype(np.float64) @ [0.299, 0.587, 0.114])
+    x = a.astype(np.float64) @ [0.299, 0.587, 0.114]
+    y = b.astype(np.float64) @ [0.299, 0.587, 0.114]
     c1, c2 = (0.01 * 255) ** 2, (0.03 * 255) ** 2
     ux, uy = f(x), f(y)
     vx, vy = f(x * x) - ux * ux, f(y * y) - uy * uy
     vxy = f(x * y) - ux * uy
-    s = ((2 * ux * uy + c1) * (2 * vxy + c2)) / ((ux ** 2 + uy ** 2 + c1) * (vx + vy + c2))
+    s = ((2 * ux * uy + c1) * (2 * vxy + c2)) / ((ux**2 + uy**2 + c1) * (vx + vy + c2))
     return float(s.mean())
 
 
@@ -79,13 +81,17 @@ def fidelity(official: np.ndarray, ours: np.ndarray) -> dict:
     im = interior_mask(official)
     di = d[:, :-1, :-1]
     inter = di[im]
-    per = [{"mean_abs": float(x.mean()), "within8": float((x <= 8).mean()),
-            "exact": float((x == 0).mean())} for x in d]
+    per = [
+        {"mean_abs": float(x.mean()), "within8": float((x <= 8).mean()), "exact": float((x == 0).mean())} for x in d
+    ]
     return {
         "frames": int(len(d)),
-        "mean_abs": float(d.mean()), "within8_frac": float((d <= 8).mean()),
-        "within16_frac": float((d <= 16).mean()), "within32_frac": float((d <= 32).mean()),
-        "exact_frac": float((d == 0).mean()), "max_abs": int(d.max()),
+        "mean_abs": float(d.mean()),
+        "within8_frac": float((d <= 8).mean()),
+        "within16_frac": float((d <= 16).mean()),
+        "within32_frac": float((d <= 32).mean()),
+        "exact_frac": float((d == 0).mean()),
+        "max_abs": int(d.max()),
         "p95_abs": float(np.percentile(d, 95)),
         "interior_frac": float(im.mean()),
         "interior_mean_abs": float(inter.mean()) if inter.size else None,
@@ -112,8 +118,7 @@ def label(img: np.ndarray, text: str) -> np.ndarray:
         if tw <= img.shape[1] - 6:
             break
         scale -= 0.02
-    cv2.putText(band, text, (3, LABEL_H - 7), cv2.FONT_HERSHEY_SIMPLEX, scale, (20, 20, 20), 1,
-                cv2.LINE_AA)
+    cv2.putText(band, text, (3, LABEL_H - 7), cv2.FONT_HERSHEY_SIMPLEX, scale, (20, 20, 20), 1, cv2.LINE_AA)
     return np.concatenate([band, img], 0)
 
 
@@ -134,27 +139,45 @@ def even(v: np.ndarray) -> np.ndarray:
 def compose(official, ours, fid, kitchen, camera, amp=4, k=2):
     """(T,H,W,3) x2 -> (T,H',W',3) triptych with labels and a per-frame footer."""
     t = len(official)
-    diff = np.clip(np.abs(official.astype(np.int16) - ours.astype(np.int16)) * amp, 0, 255
-                   ).astype(np.uint8)
+    diff = np.clip(np.abs(official.astype(np.int16) - ours.astype(np.int16)) * amp, 0, 255).astype(np.uint8)
     o, m, d = (upscale(x, k) for x in (official, ours, diff))
     h, w = o.shape[1:3]
     out = []
     for i in range(t):
-        row = np.concatenate([
-            label(o[i], "official: MuJoCo EGL (robosuite, geom group 1)"),
-            np.full((h + LABEL_H, GAP, 3), BG, np.uint8),
-            label(m[i], "MJWarp batch raytracer (visual tier)"),
-            np.full((h + LABEL_H, GAP, 3), BG, np.uint8),
-            label(d[i], f"|difference| x{amp}"),
-        ], 1)
+        row = np.concatenate(
+            [
+                label(o[i], "official: MuJoCo EGL (robosuite, geom group 1)"),
+                np.full((h + LABEL_H, GAP, 3), BG, np.uint8),
+                label(m[i], "MJWarp batch raytracer (visual tier)"),
+                np.full((h + LABEL_H, GAP, 3), BG, np.uint8),
+                label(d[i], f"|difference| x{amp}"),
+            ],
+            1,
+        )
         foot = np.full((2 * LABEL_H, row.shape[1], 3), BG, np.uint8)
         p = fid["per_frame"][i]
-        cv2.putText(foot, f"{kitchen}  {camera}  frame {i+1}/{t}", (6, LABEL_H - 7),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.42, (20, 20, 20), 1, cv2.LINE_AA)
-        cv2.putText(foot, f"this frame: mean |diff| {p['mean_abs']:.2f}/255   "
-                          f"within 8/255 {100*p['within8']:.1f}%   "
-                          f"whole clip SSIM {fid['ssim']:.4f}", (6, 2 * LABEL_H - 7),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.42, (20, 20, 20), 1, cv2.LINE_AA)
+        cv2.putText(
+            foot,
+            f"{kitchen}  {camera}  frame {i + 1}/{t}",
+            (6, LABEL_H - 7),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.42,
+            (20, 20, 20),
+            1,
+            cv2.LINE_AA,
+        )
+        cv2.putText(
+            foot,
+            f"this frame: mean |diff| {p['mean_abs']:.2f}/255   "
+            f"within 8/255 {100 * p['within8']:.1f}%   "
+            f"whole clip SSIM {fid['ssim']:.4f}",
+            (6, 2 * LABEL_H - 7),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.42,
+            (20, 20, 20),
+            1,
+            cv2.LINE_AA,
+        )
         out.append(np.concatenate([row, foot], 0))
     return even(np.stack(out))
 
@@ -162,23 +185,41 @@ def compose(official, ours, fid, kitchen, camera, amp=4, k=2):
 def contact_sheet(official, ours, fid, kitchen, camera, n=6, amp=4, k=2):
     """Rows official / MJWarp / 4x|diff| at evenly spaced frames — the video as one still."""
     idx = np.linspace(0, len(official) - 1, n).astype(int)
-    diff = np.clip(np.abs(official.astype(np.int16) - ours.astype(np.int16)) * amp, 0, 255
-                   ).astype(np.uint8)
+    diff = np.clip(np.abs(official.astype(np.int16) - ours.astype(np.int16)) * amp, 0, 255).astype(np.uint8)
     rows = []
-    for name, stack in (("official MuJoCo EGL", official), ("MJWarp visual tier", ours),
-                        (f"|difference| x{amp}", diff)):
+    for name, stack in (
+        ("official MuJoCo EGL", official),
+        ("MJWarp visual tier", ours),
+        (f"|difference| x{amp}", diff),
+    ):
         cells = [label(upscale(stack[i], k), f"{name}  t={i}") for i in idx]
-        rows.append(np.concatenate([np.concatenate([c, np.full((c.shape[0], GAP, 3), BG, np.uint8)], 1)
-                                    for c in cells], 1))
-    sheet = np.concatenate([np.concatenate([r, np.full((GAP, r.shape[1], 3), BG, np.uint8)], 0)
-                            for r in rows], 0)
+        rows.append(
+            np.concatenate([np.concatenate([c, np.full((c.shape[0], GAP, 3), BG, np.uint8)], 1) for c in cells], 1)
+        )
+    sheet = np.concatenate([np.concatenate([r, np.full((GAP, r.shape[1], 3), BG, np.uint8)], 0) for r in rows], 0)
     cap = np.full((2 * LABEL_H, sheet.shape[1], 3), BG, np.uint8)
-    cv2.putText(cap, f"RoboCasa {kitchen} / {camera}: same qpos, two renderers", (6, LABEL_H - 7),
-                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (20, 20, 20), 1, cv2.LINE_AA)
-    cv2.putText(cap, f"mean |diff| {fid['mean_abs']:.2f}/255, {100*fid['within8_frac']:.1f}% within "
-                     f"8/255, SSIM {fid['ssim']:.4f}, interior exact "
-                     f"{100*(fid['interior_exact_frac'] or 0):.1f}%", (6, 2 * LABEL_H - 7),
-                cv2.FONT_HERSHEY_SIMPLEX, 0.44, (20, 20, 20), 1, cv2.LINE_AA)
+    cv2.putText(
+        cap,
+        f"RoboCasa {kitchen} / {camera}: same qpos, two renderers",
+        (6, LABEL_H - 7),
+        cv2.FONT_HERSHEY_SIMPLEX,
+        0.5,
+        (20, 20, 20),
+        1,
+        cv2.LINE_AA,
+    )
+    cv2.putText(
+        cap,
+        f"mean |diff| {fid['mean_abs']:.2f}/255, {100 * fid['within8_frac']:.1f}% within "
+        f"8/255, SSIM {fid['ssim']:.4f}, interior exact "
+        f"{100 * (fid['interior_exact_frac'] or 0):.1f}%",
+        (6, 2 * LABEL_H - 7),
+        cv2.FONT_HERSHEY_SIMPLEX,
+        0.44,
+        (20, 20, 20),
+        1,
+        cv2.LINE_AA,
+    )
     return np.concatenate([cap, sheet], 0)
 
 
@@ -190,8 +231,7 @@ def tile(frames, cols, labels=None, pad=3, k=1):
     canvas = np.full((rows * (h + pad) + pad, cols * (w + pad) + pad, 3), BG, np.uint8)
     for i, c in enumerate(cells):
         r, cc = divmod(i, cols)
-        canvas[pad + r * (h + pad):pad + r * (h + pad) + h,
-               pad + cc * (w + pad):pad + cc * (w + pad) + w] = c
+        canvas[pad + r * (h + pad) : pad + r * (h + pad) + h, pad + cc * (w + pad) : pad + cc * (w + pad) + w] = c
     return canvas
 
 
@@ -201,15 +241,28 @@ def tile(frames, cols, labels=None, pad=3, k=1):
 def probe_codec(path: str) -> str:
     """The stream line, from ffprobe if present, else parsed out of ffmpeg's own report."""
     import imageio_ffmpeg
+
     ffprobe = shutil.which("ffprobe")
     if ffprobe:
-        p = subprocess.run([ffprobe, "-v", "error", "-select_streams", "v:0", "-show_entries",
-                            "stream=codec_name,profile,codec_tag_string", "-of", "default=nw=1",
-                            path], capture_output=True, text=True)
+        p = subprocess.run(
+            [
+                ffprobe,
+                "-v",
+                "error",
+                "-select_streams",
+                "v:0",
+                "-show_entries",
+                "stream=codec_name,profile,codec_tag_string",
+                "-of",
+                "default=nw=1",
+                path,
+            ],
+            capture_output=True,
+            text=True,
+        )
         if p.returncode == 0 and p.stdout.strip():
             return " ".join(p.stdout.split())
-    p = subprocess.run([imageio_ffmpeg.get_ffmpeg_exe(), "-hide_banner", "-i", path],
-                       capture_output=True, text=True)
+    p = subprocess.run([imageio_ffmpeg.get_ffmpeg_exe(), "-hide_banner", "-i", path], capture_output=True, text=True)
     for line in p.stderr.splitlines():
         if "Stream #" in line and "Video:" in line:
             return line.strip()
@@ -218,23 +271,54 @@ def probe_codec(path: str) -> str:
 
 def write_h264(path: str, frames: np.ndarray, fps: int = 20) -> dict:
     import imageio_ffmpeg
+
     t, h, w, _ = frames.shape
     assert h % 2 == 0 and w % 2 == 0, f"yuv420p needs even dimensions, got {h}x{w}"
-    cmd = [imageio_ffmpeg.get_ffmpeg_exe(), "-y", "-loglevel", "error", "-f", "rawvideo",
-           "-pix_fmt", "rgb24", "-s", f"{w}x{h}", "-r", str(fps), "-i", "-",
-           "-c:v", "libx264", "-pix_fmt", "yuv420p", "-profile:v", "baseline",
-           "-movflags", "+faststart", "-crf", "17", path]
+    cmd = [
+        imageio_ffmpeg.get_ffmpeg_exe(),
+        "-y",
+        "-loglevel",
+        "error",
+        "-f",
+        "rawvideo",
+        "-pix_fmt",
+        "rgb24",
+        "-s",
+        f"{w}x{h}",
+        "-r",
+        str(fps),
+        "-i",
+        "-",
+        "-c:v",
+        "libx264",
+        "-pix_fmt",
+        "yuv420p",
+        "-profile:v",
+        "baseline",
+        "-movflags",
+        "+faststart",
+        "-crf",
+        "17",
+        path,
+    ]
     p = subprocess.run(cmd, input=np.ascontiguousarray(frames).tobytes(), capture_output=True)
     if p.returncode != 0:
         raise RuntimeError(f"ffmpeg failed: {p.stderr.decode()[-2000:]}")
     codec = probe_codec(path)
     assert "h264" in codec, f"{path} is not H.264 -- browsers will show a blank player: {codec}"
-    return {"path": path, "bytes": os.path.getsize(path), "frames": int(t), "fps": fps,
-            "size": [int(h), int(w)], "codec": codec}
+    return {
+        "path": path,
+        "bytes": os.path.getsize(path),
+        "frames": int(t),
+        "fps": fps,
+        "size": [int(h), int(w)],
+        "codec": codec,
+    }
 
 
 def write_gif(path: str, frames: np.ndarray, fps: int = 10, max_frames: int = 80) -> dict:
     import imageio.v2 as imageio
+
     step = max(1, len(frames) // max_frames)
     sub = list(frames[::step])
     imageio.mimsave(path, sub, duration=1.0 / fps, loop=0)
@@ -254,8 +338,7 @@ def main() -> None:
     ap.add_argument("--kitchens", nargs="+", default=["L52S03"])
     ap.add_argument("--camera", default="robot0_agentview_left")
     ap.add_argument("--work", default=DEFAULT_OUT)
-    ap.add_argument("--out", default=os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), "media"))
+    ap.add_argument("--out", default=os.path.join(os.path.dirname(os.path.abspath(__file__)), "media"))
     ap.add_argument("--upscale", type=int, default=2)
     ap.add_argument("--fps", type=int, default=20)
     args = ap.parse_args()
@@ -265,10 +348,24 @@ def main() -> None:
     for kitchen in args.kitchens:
         d = os.path.join(args.work, kitchen)
         meta = json.load(open(os.path.join(d, "meta.json")))
-        entry = {"meta": {k: meta.get(k) for k in
-                          ("task", "layout", "style", "steps", "res", "seed", "reset_s",
-                           "official_render_fps", "official_restore_render_fps", "mujoco")},
-                 "cameras": {}}
+        entry = {
+            "meta": {
+                k: meta.get(k)
+                for k in (
+                    "task",
+                    "layout",
+                    "style",
+                    "steps",
+                    "res",
+                    "seed",
+                    "reset_s",
+                    "official_render_fps",
+                    "official_restore_render_fps",
+                    "mujoco",
+                )
+            },
+            "cameras": {},
+        }
         entry["model"] = {k: meta["model"][k] for k in ("nq", "ngeom", "nmesh", "ntex", "nmeshface")}
         for cam in meta["cameras"]:
             o = np.load(os.path.join(d, f"official_{cam}.npy"))
@@ -282,24 +379,41 @@ def main() -> None:
             if os.path.exists(bp):
                 bf = fidelity(o, np.load(bp))
                 entry["cameras"][cam]["ablation_primitive_texture_bake"] = {
-                    k: bf[k] for k in ("mean_abs", "within8_frac", "exact_frac",
-                                       "interior_mean_abs", "interior_exact_frac", "ssim")}
+                    k: bf[k]
+                    for k in (
+                        "mean_abs",
+                        "within8_frac",
+                        "exact_frac",
+                        "interior_mean_abs",
+                        "interior_exact_frac",
+                        "ssim",
+                    )
+                }
             if cam != args.camera:
                 continue
             vid = compose(o, w, fid, kitchen, cam, k=args.upscale)
-            entry["video"] = write_h264(os.path.join(args.out, f"sidebyside_{kitchen}.mp4"),
-                                        vid, fps=args.fps)
+            entry["video"] = write_h264(os.path.join(args.out, f"sidebyside_{kitchen}.mp4"), vid, fps=args.fps)
             # Half size and every fourth frame: a GIF of photographic content is 5x the mp4 for the
             # same clip, and this one exists only for viewers that will not run a <video> element.
-            entry["gif"] = write_gif(os.path.join(args.out, f"sidebyside_{kitchen}.gif"),
-                                     vid[:, ::2, ::2], max_frames=50)
+            entry["gif"] = write_gif(
+                os.path.join(args.out, f"sidebyside_{kitchen}.gif"), vid[:, ::2, ::2], max_frames=50
+            )
             entry["contact_sheet"] = png(
                 os.path.join(args.out, f"contact_{kitchen}.png"),
-                contact_sheet(o, w, fid, kitchen, cam, k=args.upscale))
+                contact_sheet(o, w, fid, kitchen, cam, k=args.upscale),
+            )
         manifest["kitchens"][kitchen] = entry
-        print(f"{kitchen}: " + json.dumps(
-            {c: {k: round(v, 4) for k, v in s.items() if isinstance(v, float)}
-             for c, s in entry["cameras"].items()}, indent=1), flush=True)
+        print(
+            f"{kitchen}: "
+            + json.dumps(
+                {
+                    c: {k: round(v, 4) for k, v in s.items() if isinstance(v, float)}
+                    for c, s in entry["cameras"].items()
+                },
+                indent=1,
+            ),
+            flush=True,
+        )
 
     labels = {}
     lp = os.path.join(args.work, "grid_labels.json")
@@ -310,14 +424,19 @@ def main() -> None:
         f = np.load(g)
         manifest["grids"]["dr_one_batch"] = png(
             os.path.join(args.out, "dr_one_batch.png"),
-            tile(f, 4, [f"world {i}: camera + light randomised" if i else "world 0: official"
-                        for i in range(len(f))], k=args.upscale))
+            tile(
+                f,
+                4,
+                [f"world {i}: camera + light randomised" if i else "world 0: official" for i in range(len(f))],
+                k=args.upscale,
+            ),
+        )
     g = os.path.join(args.work, "kitchen_grid.npy")
     if os.path.exists(g):
         f = np.load(g)
         manifest["grids"]["kitchen_grid"] = png(
-            os.path.join(args.out, "kitchen_grid.png"),
-            tile(f, 4, labels.get("kitchen_grid"), k=args.upscale))
+            os.path.join(args.out, "kitchen_grid.png"), tile(f, 4, labels.get("kitchen_grid"), k=args.upscale)
+        )
 
     for name in os.listdir(args.work):
         if name.startswith("mjwarp_") and name.endswith(".json"):

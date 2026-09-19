@@ -10,6 +10,7 @@ random anisotropic rotated scenes; (3) with three equal semi-axes it is ``_spher
 bound helpers know the kind. The bit-identity of the torch and Triton twins is
 ``tests/gpu/test_fast_paths.py::test_the_ellipsoid_twins_are_bit_identical_on_both_casts``.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -21,17 +22,20 @@ R3 = pytest.importorskip("stable_envs.render.raycast3d")
 
 def _rot(axis: str, deg: float) -> torch.Tensor:
     c, s = np.cos(np.radians(deg)), np.sin(np.radians(deg))
-    m = {"x": [[1, 0, 0], [0, c, -s], [0, s, c]],
-         "y": [[c, 0, s], [0, 1, 0], [-s, 0, c]],
-         "z": [[c, -s, 0], [s, c, 0], [0, 0, 1]]}[axis]
+    m = {
+        "x": [[1, 0, 0], [0, c, -s], [0, s, c]],
+        "y": [[c, 0, s], [0, 1, 0], [-s, 0, c]],
+        "z": [[c, -s, 0], [s, c, 0], [0, 0, 1]],
+    }[axis]
     return torch.tensor(m, dtype=torch.float32)
 
 
 def _cast(o, d, pos, R, size):
     """One ellipsoid against ``(N,3)`` rays through the public dispatch."""
     N = o.shape[0]
-    t, n = R3.intersect(R3.ELLIPSOID, size.view(1, 3).expand(N, 3), pos.view(1, 3).expand(N, 3),
-                        R.view(1, 3, 3).expand(N, 3, 3), o, d)
+    t, n = R3.intersect(
+        R3.ELLIPSOID, size.view(1, 3).expand(N, 3), pos.view(1, 3).expand(N, 3), R.view(1, 3, 3).expand(N, 3, 3), o, d
+    )
     return t, n
 
 
@@ -43,7 +47,7 @@ def test_axis_aligned_rays_hit_where_the_semi_axes_say():
     d = torch.tensor([[-1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, -1.0], [1.0, 0.0, 0.0]])
     t, n = _cast(o, d, pos, R, size)
     want_t = torch.tensor([2.0 - 0.3, 2.0 - 0.27, 3.0 - 0.2, 1.5 - 0.3])
-    want_n = -d                                   # the outward normal faces the ray back
+    want_n = -d  # the outward normal faces the ray back
     assert torch.allclose(t, want_t, atol=1e-6), t
     assert torch.allclose(n, want_n, atol=1e-6), n
 
@@ -68,9 +72,9 @@ def test_an_origin_inside_takes_the_far_root_and_a_miss_is_INF():
     d = torch.tensor([[1.0, 0.0, 0.0], [0.0, 0.0, 1.0], [1.0, 0.0, 0.0], [0.0, 0.0, -1.0]])
     t, n = _cast(o, d, pos, R, size)
     assert torch.allclose(t[[0, 1, 3]], torch.tensor([0.3, 0.2, 0.2]), atol=1e-6), t
-    assert torch.allclose(n[0], torch.tensor([1.0, 0.0, 0.0]), atol=1e-6)      # outward, at the exit
+    assert torch.allclose(n[0], torch.tensor([1.0, 0.0, 0.0]), atol=1e-6)  # outward, at the exit
     assert torch.allclose(n[3], torch.tensor([0.0, 0.0, -1.0]), atol=1e-6)
-    assert t[2] == R3.INF                                                         # passes beside it
+    assert t[2] == R3.INF  # passes beside it
     assert torch.isfinite(n).all()
 
 
@@ -80,7 +84,7 @@ def _reference(o, d, pos, R, size):
     p64, s64 = pos.double().numpy(), size.double().numpy()
     lp = (o64 - p64) @ R64
     lv = d64 @ R64
-    w = 1.0 / s64 ** 2
+    w = 1.0 / s64**2
     a = (lv * lv * w).sum(-1)
     b = (lv * lp * w).sum(-1)
     c = (lp * lp * w).sum(-1) - 1.0
@@ -106,15 +110,26 @@ def test_fuzz_against_the_float64_reference(seed):
     q = torch.randn(4, generator=g)
     q = q / q.norm()
     w, x, y, z = q.unbind(-1)
-    R = torch.stack([1 - 2 * (y * y + z * z), 2 * (x * y - w * z), 2 * (x * z + w * y),
-                     2 * (x * y + w * z), 1 - 2 * (x * x + z * z), 2 * (y * z - w * x),
-                     2 * (x * z - w * y), 2 * (y * z + w * x), 1 - 2 * (x * x + y * y)]).view(3, 3)
+    R = torch.stack(
+        [
+            1 - 2 * (y * y + z * z),
+            2 * (x * y - w * z),
+            2 * (x * z + w * y),
+            2 * (x * y + w * z),
+            1 - 2 * (x * x + z * z),
+            2 * (y * z - w * x),
+            2 * (x * z - w * y),
+            2 * (y * z + w * x),
+            1 - 2 * (x * x + y * y),
+        ]
+    ).view(3, 3)
     N = 20000
     o = (r(N, 3) - 0.5) * 0.4 + torch.tensor([0.0, -2.0, 0.4])
     # a third of the rays aimed at the ellipsoid's neighbourhood so the hit set is not empty
     aim = pos + (r(N, 3) - 0.5) * 2 * size.max()
-    d = torch.nn.functional.normalize(torch.where(r(N, 1) < 0.34, aim - o, r(N, 3) - 0.5
-                                                  + torch.tensor([0.0, 1.0, 0.0])), dim=-1)
+    d = torch.nn.functional.normalize(
+        torch.where(r(N, 1) < 0.34, aim - o, r(N, 3) - 0.5 + torch.tensor([0.0, 1.0, 0.0])), dim=-1
+    )
     t, n = _cast(o, d, pos, R, size)
     hit_ref, t_ref, n_ref = _reference(o, d, pos, R, size)
     hit = (t < R3.INF).numpy()
@@ -129,7 +144,7 @@ def test_fuzz_against_the_float64_reference(seed):
     # reached here by a 2 cm semi-axis at 2.5 m -- so the relative error in ``t`` is ``~eps * |ol'|^2``
     # (measured 0.2-2.1x of eps/2 over these seeds). The bound is 16 ulp of that, the module's own
     # resolution term (``_BOUND_SLACK_NOISE``); it is 30x the worst measured error, not tight.
-    cond = 16.0 * 2.0 ** -23 * float(((o - pos).norm(dim=-1).max() / size.min()) ** 2)
+    cond = 16.0 * 2.0**-23 * float(((o - pos).norm(dim=-1).max() / size.min()) ** 2)
     rel = np.abs(t.numpy()[both] - t_ref[both]) / t_ref[both]
     assert rel.max() <= cond, (rel.max(), cond)
     # the normal is checked AT THE RETURNED POINT, so the check is of the normal formula and not of
@@ -139,7 +154,7 @@ def test_fuzz_against_the_float64_reference(seed):
     n_at_p = lp / size.double().numpy() ** 2
     n_at_p = (n_at_p / np.linalg.norm(n_at_p, axis=-1, keepdims=True)) @ R.double().numpy().T
     assert np.abs(n.numpy()[both] - n_at_p).max() <= 1e-4
-    assert np.abs(n_ref[both] - n_at_p).max() <= 10 * cond ** 0.5      # curvature x sqrt(t error)
+    assert np.abs(n_ref[both] - n_at_p).max() <= 10 * cond**0.5  # curvature x sqrt(t error)
 
 
 def _disc(o, d, pos, R, size):
@@ -168,9 +183,9 @@ def test_three_equal_semi_axes_is_the_sphere():
     both = (te < R3.INF) & (ts < R3.INF) & decided
     assert both.sum() > 1000
     # same derived bound as the fuzz: two spellings of one quadratic, each with its own rounding
-    cond = 16.0 * 2.0 ** -23 * float(((o - pos).norm(dim=-1).max() / r) ** 2)
+    cond = 16.0 * 2.0**-23 * float(((o - pos).norm(dim=-1).max() / r) ** 2)
     assert float(((te - ts).abs() / ts)[both].max()) <= cond
-    assert float((ne - ns).abs()[both].max()) <= 10 * cond ** 0.5
+    assert float((ne - ns).abs()[both].max()) <= 10 * cond**0.5
 
 
 def test_a_zero_semi_axis_is_a_miss_and_never_a_nan():
@@ -186,8 +201,13 @@ def test_the_dispatch_and_the_bounds_know_the_kind():
     assert R3.ELLIPSOID == 4
     size = torch.tensor([[[0.3, 0.27, 0.2]]])
     assert float(R3._bound_radius(R3.ELLIPSOID, size)) == pytest.approx(0.3)
-    prims = R3.Primitives(kind=np.array([R3.ELLIPSOID, R3.SPHERE]), size=np.array([[0.3, 0.27, 0.2], [0.1, 0, 0]]),
-                          mat_rgb=np.ones((2, 3)), tex_rgb=np.ones((2, 3)), spec=np.zeros(2))
+    prims = R3.Primitives(
+        kind=np.array([R3.ELLIPSOID, R3.SPHERE]),
+        size=np.array([[0.3, 0.27, 0.2], [0.1, 0, 0]]),
+        mat_rgb=np.ones((2, 3)),
+        tex_rgb=np.ones((2, 3)),
+        spec=np.zeros(2),
+    )
     assert prims.bound_radius().tolist() == [0.3, 0.1]
     assert R3.ELLIPSOID not in R3._BOUNDED_KINDS, "membership is a measurement (r6_kind_cost), not a default"
     assert R3._kind_tensor([R3.ELLIPSOID, R3.SPHERE], "cpu").tolist() == [4, 2]

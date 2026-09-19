@@ -37,6 +37,7 @@ Five mechanisms, each answering an incident this repo actually had:
 Everything is opt-out through environment variables (``SE_SKIP_NODE_GATE``, ``SE_GUARD_MODE=report``)
 so that debugging a guard never requires editing the plugin.
 """
+
 from __future__ import annotations
 
 import json
@@ -104,8 +105,7 @@ def pytest_configure(config):
         # every record has to reach the kernel before the next test starts. A buffered write would be
         # lost in exactly the case the file exists for.
         _EVENTS = open(path, "a", buffering=1)
-        _emit(kind="session_start", pid=os.getpid(), host=node_health.hostname(),
-              patched=len(patched))
+        _emit(kind="session_start", pid=os.getpid(), host=node_health.hostname(), patched=len(patched))
 
 
 def pytest_unconfigure(config):
@@ -121,11 +121,12 @@ def _emit(**rec):
     try:
         _EVENTS.write(json.dumps(rec, default=str) + "\n")
         _EVENTS.flush()
-    except Exception:                                                        # noqa: BLE001
-        pass                                     # a broken breadcrumb must never fail a test
+    except Exception:  # noqa: BLE001
+        pass  # a broken breadcrumb must never fail a test
 
 
 # ------------------------------------------------------------------ collection: resume + smoke
+
 
 def _family_representatives() -> dict:
     """``family module -> the cheapest registered env in it``. Computed, not listed.
@@ -137,11 +138,11 @@ def _family_representatives() -> dict:
     more than an order of magnitude and any one of them exercises the same code.
     """
     import stable_envs as se
+
     best = {}
     for name, cls in sorted(se.registry.REGISTRY.items()):
         fam = cls.__module__.rsplit(".", 1)[-1]
-        maze = {"medium": 0, "teleport": 1, "large": 2, "giant": 3}.get(
-            str(getattr(cls, "MAZE", "")).lower(), 0)
+        maze = {"medium": 0, "teleport": 1, "large": 2, "giant": 3}.get(str(getattr(cls, "MAZE", "")).lower(), 0)
         loco = {"point": 0, "ant": 1, "humanoid": 2}.get(str(getattr(cls, "LOCO", "")).lower(), 0)
         key = (int(getattr(cls, "default_size", 0) or 0), maze, loco, name)
         if fam not in best or key < best[fam][0]:
@@ -174,8 +175,7 @@ def pytest_collection_modifyitems(config, items):
     # 2. smoke: mark one env per family, plus every test that is not parameterised over envs at all.
     #    The registry is only imported when something is actually parameterised over it, so a run that
     #    touches no env (the safety-net tests, a unit run) does not pay for importing torch and mujoco.
-    reps = smoke_envs() if any("env" in getattr(getattr(i, "callspec", None), "params", {})
-                               for i in items) else set()
+    reps = smoke_envs() if any("env" in getattr(getattr(i, "callspec", None), "params", {}) for i in items) else set()
     for item in items:
         params = getattr(getattr(item, "callspec", None), "params", {})
         env_name = params.get("env")
@@ -184,7 +184,7 @@ def pytest_collection_modifyitems(config, items):
         if SMOKE_EXCLUDED_FIXTURES & set(getattr(item, "fixturenames", ())):
             continue
         if item.nodeid.split("::")[0].rsplit("/", 1)[-1][:-3] in SMOKE_EXCLUDED_MODULES:
-            continue                       # by nodeid, not item.module: not every item type has one
+            continue  # by nodeid, not item.module: not every item type has one
         if "selftest" in item.keywords:
             continue
         item.add_marker(pytest.mark.smoke)
@@ -192,8 +192,9 @@ def pytest_collection_modifyitems(config, items):
     # 3. the deliberately-crashing self-tests are opt-in. They exist to prove the supervisor survives
     #    a SIGSEGV/SIGABRT, so running them by accident would abort a normal run on purpose.
     if not os.environ.get("SE_SELFTEST_CRASH"):
-        skip = pytest.mark.skip(reason="crash self-tests are opt-in: set SE_SELFTEST_CRASH=1 "
-                                       "(they abort the interpreter by design)")
+        skip = pytest.mark.skip(
+            reason="crash self-tests are opt-in: set SE_SELFTEST_CRASH=1 (they abort the interpreter by design)"
+        )
         for item in items:
             if "selftest" in item.keywords:
                 item.add_marker(skip)
@@ -210,9 +211,9 @@ def pytest_collection_finish(session):
         return
     if not session.items:
         return
-    names = sorted({p["env"] for i in session.items
-                    for p in [getattr(getattr(i, "callspec", None), "params", {})]
-                    if "env" in p})
+    names = sorted(
+        {p["env"] for i in session.items for p in [getattr(getattr(i, "callspec", None), "params", {})] if "env" in p}
+    )
     # The scheduler question is free and always worth asking. The renderer probe costs a MuJoCo build,
     # so it is only asked when the run contains something that renders — a unit or safety-net run has
     # no parity number to invalidate and should not pay for the answer.
@@ -233,6 +234,7 @@ def pytest_collection_finish(session):
 
 
 # ------------------------------------------------------------------ per-test resource guard
+
 
 @pytest.hookimpl(trylast=True)
 def pytest_runtest_logstart(nodeid, location):
@@ -266,8 +268,7 @@ def pytest_runtest_makereport(item, call):
         item._se_guard_reported = True
         names = ", ".join(n for n, _ in bad)
         body = "\n\n".join(f"{n}: {m}" for n, m in bad)
-        _emit(kind="guard_violation", nodeid=item.nodeid, names=names, **{
-            k: v for k, v in d.items() if k != "sites"})
+        _emit(kind="guard_violation", nodeid=item.nodeid, names=names, **{k: v for k, v in d.items() if k != "sites"})
         report.outcome = "failed"
         report.longrepr = (
             f"RESOURCE GUARD [{names}]\n\n{body}\n\n"
@@ -275,7 +276,8 @@ def pytest_runtest_makereport(item, call):
             f"{d['context_freed']}; renderers created {d['renderer_created']}, closed "
             f"{d['renderer_closed']}; {d['context_live']} live now.\n"
             f"The rule (stable_envs/testing/conformance.py): in this process an EGL context is created "
-            f"and NEVER released, and nothing may create them in proportion to the batch.")
+            f"and NEVER released, and nothing may create them in proportion to the batch."
+        )
     return report
 
 
@@ -300,26 +302,33 @@ def pytest_runtest_logreport(report):
     if report.when != "teardown":
         return
     started = _STARTED.pop(report.nodeid, None)
-    _emit(kind="end", nodeid=report.nodeid, outcome=phases.get("outcome", "passed"),
-          dur=round(time.time() - started[0], 3) if started else None)
+    _emit(
+        kind="end",
+        nodeid=report.nodeid,
+        outcome=phases.get("outcome", "passed"),
+        dur=round(time.time() - started[0], 3) if started else None,
+    )
     _PHASES.pop(report.nodeid, None)
 
 
 # ------------------------------------------------------------------ summary
 
+
 def pytest_terminal_summary(terminalreporter, exitstatus, config):
     t = resource_guard.totals()
     gate = getattr(config, "_se_node_gate", {})
-    line = (f"resources: {t['context_created']} EGL contexts created, {t['context_freed']} released, "
-            f"{t['context_live']} live (peak {t['context_peak_live']}); "
-            f"renderers {t['renderer_created']} created / {t['renderer_closed']} closed")
+    line = (
+        f"resources: {t['context_created']} EGL contexts created, {t['context_freed']} released, "
+        f"{t['context_live']} live (peak {t['context_peak_live']}); "
+        f"renderers {t['renderer_created']} created / {t['renderer_closed']} closed"
+    )
     terminalreporter.write_sep("-", "stable-envs safety")
     terminalreporter.write_line(line)
     if not t["patched"]:
-        terminalreporter.write_line(
-            "resource guard: mujoco not importable, EGL accounting NOT active for this run")
+        terminalreporter.write_line("resource guard: mujoco not importable, EGL accounting NOT active for this run")
     if gate:
         terminalreporter.write_line(
             f"node: {gate.get('host')} slurm={gate.get('scheduler', {}).get('state') or '?'} "
             f"reason={gate.get('scheduler', {}).get('reason') or 'none'} "
-            f"reference-renderer={gate.get('renderer', {})}")
+            f"reference-renderer={gate.get('renderer', {})}"
+        )

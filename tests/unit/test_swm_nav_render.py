@@ -18,6 +18,7 @@ OUTSIDE the frame: ``_gaussian_dot`` divides by the frame's own maximum, so a do
 the picture is rescaled until its largest in-frame sample is 1.0, and a window derived from the
 un-normalised tail alone would crop a dot that is painting at full strength.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -34,13 +35,13 @@ def _reference(env, states, sty):
     """The pre-Step-6 render: base image per row, both dots over the whole frame."""
     s = torch.as_tensor(np.asarray(states, np.float32), device=env.device).reshape(-1, env.state_dim)
     k = int(s.shape[0])
-    sl = lambda p: sty[p][0:k]                                                   # noqa: E731
+    sl = lambda p: sty[p][0:k]  # noqa: E731
     img = env.base_image(sl, k)
     if hasattr(env, "_target_dot_is_drawn") or "Target" in type(env).__name__:
-        img = SN._alpha_blend(img, SN._gaussian_dot(env._gy, env._gx, s[:, 2:4],
-                                                    sl("target.radius")), sl("target.color"))
-    return SN._alpha_blend(img, SN._gaussian_dot(env._gy, env._gx, s[:, 0:2],
-                                                 sl("agent.radius")), sl("agent.color"))
+        img = SN._alpha_blend(
+            img, SN._gaussian_dot(env._gy, env._gx, s[:, 2:4], sl("target.radius")), sl("target.color")
+        )
+    return SN._alpha_blend(img, SN._gaussian_dot(env._gy, env._gx, s[:, 0:2], sl("agent.radius")), sl("agent.color"))
 
 
 def _check(env, states):
@@ -53,7 +54,8 @@ def _check(env, states):
     raise AssertionError(
         f"{type(env).__name__}: {int((d.amax(-1) > 0).sum())} pixels differ, max {int(d.max())}. "
         f"Either the baked base image is not a function of the style alone, or _dot_window cropped "
-        f"a dot that could still move a pixel.")
+        f"a dot that could still move a pixel."
+    )
 
 
 @pytest.mark.parametrize("cfg", CONFIGS)
@@ -78,15 +80,30 @@ def test_matches_on_states_the_env_would_never_sample(cfg):
     # centre 20-60 px outside still paints at full strength on the frame edge, and there the window
     # has to carry the distance from the centre to the nearest in-frame sample or it crops a live
     # dot. Dropping that term passes every extreme case and fails these.
-    pos = [(112.0, 112.0), (112.5, 112.5), (0.0, 0.0), (223.0, 223.0),
-           (-50.0, 112.0), (-20.0, 112.0), (230.0, 112.0), (112.0, -30.0), (112.0, 250.0),
-           (-35.0, -35.0), (250.0, 250.0), (-5.0, 229.0),
-           (-400.0, 112.0), (112.0, -400.0), (600.0, 600.0), (1e4, 1e4), (-1e4, 112.0)]
+    pos = [
+        (112.0, 112.0),
+        (112.5, 112.5),
+        (0.0, 0.0),
+        (223.0, 223.0),
+        (-50.0, 112.0),
+        (-20.0, 112.0),
+        (230.0, 112.0),
+        (112.0, -30.0),
+        (112.0, 250.0),
+        (-35.0, -35.0),
+        (250.0, 250.0),
+        (-5.0, 229.0),
+        (-400.0, 112.0),
+        (112.0, -400.0),
+        (600.0, 600.0),
+        (1e4, 1e4),
+        (-1e4, 112.0),
+    ]
     dim = env.state_dim
     states = np.zeros((len(pos), dim), np.float32)
     for i, (x, y) in enumerate(pos):
         states[i, 0], states[i, 1] = x, y
-        if dim >= 4:                                   # TwoRoomTarget carries the target too
+        if dim >= 4:  # TwoRoomTarget carries the target too
             states[i, 2], states[i, 3] = 223.0 - x, 223.0 - y
     e = se.make(cfg, num_envs=len(pos), device="cpu")
     _check(e, states)
@@ -118,13 +135,14 @@ def test_the_bake_is_not_a_function_of_call_history(cfg):
     env.rng = np.random.default_rng(2)
     st = np.asarray(env.sample_states(8), np.float32)
     first = env.render(st).clone()
-    solo = se.make(cfg, num_envs=1, device="cpu")          # warms and could corrupt the shared cache
+    solo = se.make(cfg, num_envs=1, device="cpu")  # warms and could corrupt the shared cache
     for i in range(8):
-        assert torch.equal(solo.render(st[i:i + 1])[0], first[i]), f"{cfg}: row {i} at batch 1"
+        assert torch.equal(solo.render(st[i : i + 1])[0], first[i]), f"{cfg}: row {i} at batch 1"
     assert torch.equal(env.render(st), first), f"{cfg}: render is not pure"
     perm = np.array([3, 1, 7, 0, 5, 2, 6, 4])
     assert torch.equal(env.render(np.ascontiguousarray(st[perm]))[np.argsort(perm)], first), (
-        f"{cfg}: render is not order invariant")
+        f"{cfg}: render is not order invariant"
+    )
     dup = np.concatenate([st[:1]] * 4 + [st[1:2]] * 4)
     out = env.render(dup)
     assert torch.equal(out[0], out[3]) and torch.equal(out[4], out[7]), f"{cfg}: duplicate rows"
@@ -144,14 +162,15 @@ def test_a_per_row_style_is_not_collapsed_to_one_plate(cfg):
     rows = np.tile(base, (6, 1))
     off = dict((p, o) for p, o, _ in env.variation_space.flat_layout())["background.color"]
     for i in range(6):
-        rows[i, off:off + 3] = [10 + 40 * i, 20, 200 - 30 * i]
+        rows[i, off : off + 3] = [10 + 40 * i, 20, 200 - 30 * i]
     sty = env.resolve_style(rows, None, batch=6)
     want = _reference(env, st, sty)
     got = env.render(st, style=rows)
     assert torch.equal(want, got), f"{cfg}: per-row style"
     flat = got.reshape(6, -1)
     assert len({tuple(flat[i].tolist()) for i in range(6)}) == 6, (
-        f"{cfg}: six different backgrounds produced fewer than six different frames")
+        f"{cfg}: six different backgrounds produced fewer than six different frames"
+    )
 
 
 @pytest.mark.parametrize("cfg", CONFIGS)
@@ -174,9 +193,9 @@ def test_two_styles_with_repeats_take_the_gather_branch(cfg):
     base = np.asarray(env.default_style(), np.float32)
     off = dict((p, o) for p, o, _ in env.variation_space.flat_layout())["background.color"]
     rows = np.tile(base, (6, 1))
-    which = [0, 1, 0, 1, 1, 0]                      # interleaved, three of each
+    which = [0, 1, 0, 1, 1, 0]  # interleaved, three of each
     for i, w in enumerate(which):
-        rows[i, off:off + 3] = [20.0, 200.0, 40.0] if w == 0 else [180.0, 30.0, 90.0]
+        rows[i, off : off + 3] = [20.0, 200.0, 40.0] if w == 0 else [180.0, 30.0, 90.0]
     sty = env.resolve_style(rows, None, batch=6)
     want = _reference(env, st, sty)
     got = env.render(st, style=rows)
@@ -185,14 +204,15 @@ def test_two_styles_with_repeats_take_the_gather_branch(cfg):
     # the gather really was the branch taken, not the expand and not the fallback
     plates = {}
     for i in range(6):
-        plates.setdefault(tuple(rows[i, off:off + 3]), []).append(i)
+        plates.setdefault(tuple(rows[i, off : off + 3]), []).append(i)
     assert len(plates) == 2 and all(len(v) == 3 for v in plates.values())
 
     # rows sharing a style must share a background, and the two styles must differ
     flat = got.reshape(6, -1)
     a, b = list(plates.values())
     assert not torch.equal(got[a[0]][0, 0], got[b[0]][0, 0]), (
-        f"{cfg}: the two styles produced the same corner pixel, so the gather collapsed them")
+        f"{cfg}: the two styles produced the same corner pixel, so the gather collapsed them"
+    )
     for i in a[1:]:
         assert torch.equal(got[i][0, 0], got[a[0]][0, 0]), f"{cfg}: row {i} got the wrong plate"
     for i in b[1:]:
@@ -201,13 +221,14 @@ def test_two_styles_with_repeats_take_the_gather_branch(cfg):
     # and the invariants, on the branch that has an index in it
     assert torch.equal(env.render(st, style=rows), got), f"{cfg}: gather branch is not pure"
     perm = np.array([4, 0, 5, 2, 1, 3])
-    assert torch.equal(env.render(np.ascontiguousarray(st[perm]),
-                                  style=np.ascontiguousarray(rows[perm]))[np.argsort(perm)], got), (
-        f"{cfg}: gather branch is not order invariant")
+    assert torch.equal(
+        env.render(np.ascontiguousarray(st[perm]), style=np.ascontiguousarray(rows[perm]))[np.argsort(perm)], got
+    ), f"{cfg}: gather branch is not order invariant"
     solo = se.make(cfg, num_envs=1, device="cpu")
     for i in range(6):
-        assert torch.equal(solo.render(st[i:i + 1], style=rows[i:i + 1])[0], got[i]), (
-            f"{cfg}: row {i} differs when rendered alone, so a plate is stale or misindexed")
+        assert torch.equal(solo.render(st[i : i + 1], style=rows[i : i + 1])[0], got[i]), (
+            f"{cfg}: row {i} differs when rendered alone, so a plate is stale or misindexed"
+        )
 
 
 def test_the_alpha_floor_is_the_measured_one():
@@ -227,9 +248,9 @@ def test_the_alpha_floor_is_the_measured_one():
             for _ in range(60):
                 mid = (lo + hi) / 2
                 a = torch.full((1, 1, 1), mid)
-                lo, hi = ((lo, mid) if not torch.equal(SN._alpha_blend(img, a, rgb), img)
-                          else (mid, hi))
+                lo, hi = (lo, mid) if not torch.equal(SN._alpha_blend(img, a, rgb), img) else (mid, hi)
             smallest = min(smallest, hi)
     assert SN._ALPHA_FLOOR <= smallest, (
         f"_ALPHA_FLOOR is {SN._ALPHA_FLOOR:.3e} but _alpha_blend acts on alphas as small as "
-        f"{smallest:.3e}; the dot window is no longer a bound")
+        f"{smallest:.3e}; the dot window is no longer a bound"
+    )

@@ -9,6 +9,7 @@ on the defect rather than on its symptom.
 
 `stable_worldmodel` and `ogbench` are optional; every test skips cleanly without them.
 """
+
 from __future__ import annotations
 
 import json
@@ -22,13 +23,14 @@ pytest.importorskip("ogbench")
 
 try:
     import stable_envs.envs.ogbench.manipulation as ogb
-except RuntimeError as e:      # no MEASURED visual_fidelity yet: the module refuses to register
+except RuntimeError as e:  # no MEASURED visual_fidelity yet: the module refuses to register
     pytest.skip(f"ogbench.manipulation is not measured in this build: {e}", allow_module_level=True)
 except ImportError as e:
     pytest.skip(f"ogbench.manipulation's dependencies are absent: {e}", allow_module_level=True)
 
 
 # --------------------------------------------------------------------------- state layout
+
 
 @pytest.mark.parametrize("cell,nq,nbuttons", [("Cube", 21, 0), ("Scene", 25, 2)])
 def test_state_layout_is_qpos_mocap_pos_and_bits(cell, nq, nbuttons):
@@ -37,8 +39,8 @@ def test_state_layout_is_qpos_mocap_pos_and_bits(cell, nq, nbuttons):
     names = list(b.state_names)
     assert len(names) == nq + 3 + nbuttons
     assert names[:nq] == [f"qpos[{i}]" for i in range(nq)]
-    assert names[nq:nq + 3] == [f"mocap_pos[{i}]" for i in range(3)]
-    assert names[nq + 3:] == [f"button_state_{i}" for i in range(nbuttons)]
+    assert names[nq : nq + 3] == [f"mocap_pos[{i}]" for i in range(3)]
+    assert names[nq + 3 :] == [f"button_state_{i}" for i in range(nbuttons)]
 
 
 @pytest.mark.parametrize("cell", ["Cube", "Scene"])
@@ -72,6 +74,7 @@ def test_mocap_quat_really_is_constant_in_the_registered_distribution(cell):
 
 # --------------------------------------------------------------------------- reproducibility
 
+
 @pytest.mark.parametrize("cell", ["Cube", "Scene"])
 def test_sample_states_is_a_pure_function_of_its_rng(cell):
     """The property `tests/gpu/test_reproducibility.py` asserts, and the one the first version failed.
@@ -90,11 +93,13 @@ def test_sample_states_is_a_pure_function_of_its_rng(cell):
 
 def _fake(cell):
     """An instance with only what `sample_states` needs -- no CUDA, no renderer."""
+
     class _F(ogb.OGBManipBase):
         CELL = cell
 
         def __init__(self):
             self._b = ogb._bundle(cell)
+
     return _F()
 
 
@@ -109,13 +114,13 @@ def test_sample_states_leaves_the_global_numpy_rng_alone(cell):
 
 # --------------------------------------------------------------------------- button tables
 
+
 def test_button_tables_cover_every_combination_and_differ():
     b = ogb._bundle("Scene")
     assert b.button_tables is not None
     assert sorted(b.button_tables) == [(0, 0), (0, 1), (1, 0), (1, 1)]
     g0, m0 = b.button_tables[(0, 0)]
-    assert any(not np.array_equal(g0, g) or not np.array_equal(m0, m)
-               for g, m in b.button_tables.values())
+    assert any(not np.array_equal(g0, g) or not np.array_equal(m0, m) for g, m in b.button_tables.values())
 
 
 def test_button_deltas_are_the_same_whatever_task_the_env_starts_in():
@@ -161,14 +166,17 @@ def test_the_context_forces_all_zero_bits_before_copying_the_model():
     it forces the reference to all-zero bits around the deep copy and restores what it found.
     """
     import inspect
+
     src = inspect.getsource(ogb._context)
     assert "zero_bits" in src and "_apply_button_states" in src
     assert "saved_bits" in src, "the reference's own bits must be restored after the copy"
     assert src.index("_cur_button_states") < src.index("copy.deepcopy"), (
-        "the bits must be forced BEFORE the copy is taken")
+        "the bits must be forced BEFORE the copy is taken"
+    )
 
 
 # --------------------------------------------------------------------------- the composite rule
+
 
 @pytest.mark.parametrize("cell", ["Cube", "Scene"])
 def test_the_mover_set_excludes_the_floor_and_the_sky(cell):
@@ -179,6 +187,7 @@ def test_the_mover_set_excludes_the_floor_and_the_sky(cell):
     only on sky, which is what the first version shipped.
     """
     import mujoco
+
     b = ogb._bundle(cell)
     m = b.model
     movers = set(b.movers)
@@ -202,7 +211,7 @@ def test_the_lut_rule_selects_movers_and_lets_everything_else_fall_through():
     ngeom, movers = 6, [2, 4]
     lut = torch.zeros(ngeom + 1, dtype=torch.bool)
     lut[torch.as_tensor(np.asarray(movers) + 1)] = True
-    seg = torch.as_tensor([[-1, 0, 2], [3, 4, 5]], dtype=torch.int32)   # -1 = sky, 0 = floor
+    seg = torch.as_tensor([[-1, 0, 2], [3, 4, 5]], dtype=torch.int32)  # -1 = sky, 0 = floor
     mv = lut.index_select(0, (seg + 1).reshape(-1)).view(seg.shape)
     assert mv.tolist() == [[False, False, True], [False, True, False]]
     rgb = torch.full((2, 3, 3), 7, dtype=torch.uint8)
@@ -215,15 +224,28 @@ def test_the_lut_rule_selects_movers_and_lets_everything_else_fall_through():
 
 # --------------------------------------------------------------------------- declarations
 
+
 @pytest.mark.parametrize("cname", ["OGBCube", "OGBScene"])
 def test_the_declaration_is_complete_and_visual(cname):
     import stable_envs as se
+
     cls = se.registry.REGISTRY[cname]
     assert cls.fidelity_tier == "visual"
     assert cls.parity_interior_min is None
     vf = cls.visual_fidelity
-    for k in ("mean_abs", "within8_frac", "ssim", "mean_abs_max", "within8_min", "ssim_min",
-              "measured_at", "reference_versions", "measured_with", "interior_frac", "draw_spread"):
+    for k in (
+        "mean_abs",
+        "within8_frac",
+        "ssim",
+        "mean_abs_max",
+        "within8_min",
+        "ssim_min",
+        "measured_at",
+        "reference_versions",
+        "measured_with",
+        "interior_frac",
+        "draw_spread",
+    ):
         assert k in vf, f"{cname}: visual_fidelity is missing {k}"
     assert vf["mean_abs_max"] > vf["mean_abs"], "a ceiling must sit above the measurement"
     assert vf["within8_min"] < vf["within8_frac"]
@@ -232,24 +254,28 @@ def test_the_declaration_is_complete_and_visual(cname):
     # The docstring may (and should) EXPLAIN that qvel is excluded; what it must not do is list it
     # as part of the state. Asserting the bare word is absent would forbid the explanation.
     doc = cls.__doc__ or ""
-    assert "qvel)" not in doc and "qvel," not in doc.split("deliberately NOT")[0], \
+    assert "qvel)" not in doc and "qvel," not in doc.split("deliberately NOT")[0], (
         "the docstring must not present qvel as part of the state"
+    )
     assert "(qpos, mocap_pos" in doc, "the docstring must state the real layout"
 
 
 @pytest.mark.parametrize("cname", ["OGBCube", "OGBScene"])
 def test_cpu_is_refused_rather_than_served_from_the_gpu(cname):
     import stable_envs as se
+
     with pytest.raises(ValueError, match="CPU3D-OGB-1"):
         se.make(cname, num_envs=1, device="cpu")
 
 
 # --------------------------------------------------------------------------- the frozen corpus
 
+
 @pytest.mark.parametrize("cname", ["OGBCube", "OGBScene"])
 def test_the_frozen_corpus_is_a_subset_of_the_pool_committed_beside_it(cname):
     """B4: `meta['indices']` must index the pool that was actually kept."""
     from pathlib import Path
+
     root = Path(__file__).resolve().parents[2]
     d = root / "examples/results/step7/ogb-manipulation/states"
     sp, pp = d / f"{cname}.npz", d / f"{cname}_pool.npz"
@@ -267,6 +293,7 @@ def test_the_frozen_corpus_is_a_subset_of_the_pool_committed_beside_it(cname):
 
 # --------------------------------------------------------------------------- the upload slicing
 
+
 @pytest.mark.parametrize("cell,nq,nbuttons", [("Cube", 21, 0), ("Scene", 25, 2)])
 def test_the_render_upload_slices_match_the_state_layout(cell, nq, nbuttons):
     """The arithmetic `render()` uses to cut a state vector up, checked without CUDA.
@@ -281,7 +308,7 @@ def test_the_render_upload_slices_match_the_state_layout(cell, nq, nbuttons):
     assert dim == nq + 3 + nbuttons
     chunk = np.arange(2 * dim, dtype=np.float32).reshape(2, dim)
 
-    mp = chunk[:, b.nq: b.nq + 3 * b.nmocap]
+    mp = chunk[:, b.nq : b.nq + 3 * b.nmocap]
     assert mp.shape == (2, 3 * b.nmocap), "mocap_pos slice must be non-empty and the right width"
     assert mp.reshape(2, b.nmocap, 3).shape == (2, b.nmocap, 3)
 
@@ -294,7 +321,7 @@ def test_the_render_upload_slices_match_the_state_layout(cell, nq, nbuttons):
 
     # and there is NO quaternion left to slice
     assert not any(n.startswith("mocap_quat[") for n in b.state_names)
-    assert chunk[:, b.nq + 3 * b.nmocap: b.nq + 7 * b.nmocap].shape[1] == nbuttons or nbuttons == 0
+    assert chunk[:, b.nq + 3 * b.nmocap : b.nq + 7 * b.nmocap].shape[1] == nbuttons or nbuttons == 0
 
 
 def test_split_returns_an_identity_quaternion_rather_than_reading_one():
@@ -320,7 +347,9 @@ def test_the_bake_and_the_button_rule_touch_disjoint_material_rows():
     rows belong to the buttons rather than to the bake.
     """
     import copy
+
     from stable_envs.render import mjwarp as MW
+
     b = ogb._bundle("Scene")
     zero = (0, 0)
     ref_g0, ref_m0 = b.button_tables[zero]
@@ -345,7 +374,8 @@ def test_the_bake_and_the_button_rule_touch_disjoint_material_rows():
     assert bake_rows, "the bake must change a material row"
     assert button_rows, "the button rule must change material rows"
     assert not (bake_rows & button_rows), (
-        f"bake rows {sorted(bake_rows)} and button rows {sorted(button_rows)} overlap")
+        f"bake rows {sorted(bake_rows)} and button rows {sorted(button_rows)} overlap"
+    )
 
 
 @pytest.mark.parametrize("cell", ["Cube", "Scene"])
@@ -390,11 +420,12 @@ def test_the_appearance_digest_ignores_sites_the_renderer_never_draws():
     sitegroup = b.unwrapped._scene_option.sitegroup
     seen = set()
     for seed in range(10):
-        env.reset(seed=seed)              # lands on a different task id as the seed changes
+        env.reset(seed=seed)  # lands on a different task id as the seed changes
         seen.add(ogb._appearance_digest(b.model, sitegroup))
     assert len(seen) == 1, (
         f"the digest took {len(seen)} values over ten task-changing resets, so a plate rig built "
-        f"before one of them would be rejected by _bake_plate for a change no pixel can show")
+        f"before one of them would be rejected by _bake_plate for a change no pixel can show"
+    )
 
 
 def test_the_appearance_digest_still_sees_a_site_that_is_drawn():
@@ -409,7 +440,7 @@ def test_the_appearance_digest_still_sees_a_site_that_is_drawn():
     base = ogb._appearance_digest(m, sitegroup)
     group, pos = np.array(m.site_group, copy=True), np.array(m.site_pos, copy=True)
     try:
-        m.site_group[0] = 0               # group 0 is drawn under this scene option
+        m.site_group[0] = 0  # group 0 is drawn under this scene option
         m.site_pos[0] = m.site_pos[0] + 0.05
         moved = ogb._appearance_digest(m, sitegroup)
     finally:

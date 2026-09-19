@@ -34,6 +34,7 @@ must not borrow each other's language:
   * PushT's contact solver tracks pymunk to a median 0.68 px over 100 steps and is explicitly not
     bit-exact, because contact is chaotic and no reimplementation of it can be.
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -100,9 +101,16 @@ class ScriptedPolicy(BasePolicy):
 
 
 @torch.no_grad()
-def sample(env, steps: int = 100, batch: int | None = None, policy: BasePolicy | None = None,
-           style=None, render: bool = False, seed: int | None = None,
-           init_states=None) -> dict:
+def sample(
+    env,
+    steps: int = 100,
+    batch: int | None = None,
+    policy: BasePolicy | None = None,
+    style=None,
+    render: bool = False,
+    seed: int | None = None,
+    init_states=None,
+) -> dict:
     """``batch`` trajectories of ``steps`` steps, entirely on device.
 
     Returns a dict of stacked tensors with time on axis 1 — ``states (B, steps+1, state_dim)``,
@@ -124,7 +132,8 @@ def sample(env, steps: int = 100, batch: int | None = None, policy: BasePolicy |
             f"env earns a step() only where its dynamics can be ported AND checked. Either supply "
             f"states you already have "
             f"(stable_envs.render_states / StateDataset), or roll out the official CPU env and render "
-            f"the states it produces.")
+            f"the states it produces."
+        )
 
     B = int(batch or env.B)
     if B != env.B:
@@ -146,9 +155,11 @@ def sample(env, steps: int = 100, batch: int | None = None, policy: BasePolicy |
         acts.append(a)
         st.append(env.get_state().clone())
 
-    out = {"states": torch.stack(st, dim=1),
-           "actions": torch.stack(acts, dim=1) if acts else None,
-           "style": env.get_style().clone()}
+    out = {
+        "states": torch.stack(st, dim=1),
+        "actions": torch.stack(acts, dim=1) if acts else None,
+        "style": env.get_style().clone(),
+    }
     if render:
         # Assign rather than render into ``out=``. ``frames[:, t]`` is a strided view of this buffer
         # and ``render(out=)`` refuses a non-contiguous destination — deliberately, and now
@@ -164,8 +175,7 @@ def sample(env, steps: int = 100, batch: int | None = None, policy: BasePolicy |
         # 96px) against a step dominated by the simulator, so it is not the thing to optimise here.
         # The shape is measured, not assumed square: highway-env draws 150x600, Craftax 112x144.
         first = env.render(out["states"][:, 0], style=out["style"])
-        frames = torch.empty((B, int(steps) + 1, *first.shape[1:]), dtype=torch.uint8,
-                             device=env.device)
+        frames = torch.empty((B, int(steps) + 1, *first.shape[1:]), dtype=torch.uint8, device=env.device)
         frames[:, 0] = first
         for t in range(1, int(steps) + 1):
             frames[:, t] = env.render(out["states"][:, t], style=out["style"])

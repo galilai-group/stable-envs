@@ -17,6 +17,7 @@ The stand-in env integrates: ``state' = state + action``. That makes the whole t
 closed form, so "are these the actions that produced these states" is an assertion rather than a
 plausibility check, and it needs no GPU, no renderer and no reference simulator.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -55,8 +56,7 @@ class RenderOnlyEnv:
         return self
 
     def render(self, states=None, **kw):
-        s = torch.as_tensor(self._state if states is None else states,
-                            dtype=torch.float32).reshape(-1, self.state_dim)
+        s = torch.as_tensor(self._state if states is None else states, dtype=torch.float32).reshape(-1, self.state_dim)
         img = torch.zeros((s.shape[0], 2, 3, 3), dtype=torch.uint8)
         img[:, 0, 0, :] = (s[:, 0].to(torch.int64) % 251).to(torch.uint8).unsqueeze(-1)
         return img
@@ -98,7 +98,8 @@ def test_an_env_with_no_simulator_says_so_and_points_at_the_alternative():
     msg = str(e.value)
     assert "RenderOnlyEnv" in msg
     assert "StateDataset" in msg and "render_states" in msg, (
-        f"the refusal must name what to do instead — supply states you already have: {msg}")
+        f"the refusal must name what to do instead — supply states you already have: {msg}"
+    )
 
 
 def test_a_batch_that_is_not_the_env_s_batch_is_refused_at_the_top():
@@ -134,8 +135,7 @@ def test_the_returned_actions_ARE_the_actions_the_simulator_was_driven_with():
     env = IntegratorEnv(num_envs=4)
     tr = sample(env, steps=6, seed=1)
     delta = tr["states"][:, 1:] - tr["states"][:, :-1]
-    assert torch.allclose(delta, tr["actions"], atol=1e-6), (
-        "the stored actions do not account for the stored states")
+    assert torch.allclose(delta, tr["actions"], atol=1e-6), "the stored actions do not account for the stored states"
 
 
 def test_each_recorded_state_is_a_COPY_and_not_the_env_s_live_buffer():
@@ -147,7 +147,8 @@ def test_each_recorded_state_is_a_COPY_and_not_the_env_s_live_buffer():
     tr = sample(env, steps=4, seed=2)
     assert not torch.allclose(tr["states"][:, 0], tr["states"][:, -1]), (
         "the first and last states are identical, which for a random-driven integrator means every "
-        "recorded step is the same aliased buffer")
+        "recorded step is the same aliased buffer"
+    )
 
 
 def test_init_states_are_used_verbatim_as_step_zero():
@@ -195,7 +196,7 @@ def test_the_seed_reaches_the_env_s_own_generator_too():
     """``sample_states`` draws the initial condition, so a seeded rollout must seed that as well."""
     env = IntegratorEnv(num_envs=4)
     first = sample(env, steps=1, seed=7)["states"][:, 0].clone()
-    env.rng = np.random.default_rng(999)                       # advance it somewhere else entirely
+    env.rng = np.random.default_rng(999)  # advance it somewhere else entirely
     again = sample(env, steps=1, seed=7)["states"][:, 0]
     assert torch.equal(first, again), "the initial states were not drawn from the rollout's seed"
 
@@ -257,7 +258,8 @@ def test_the_random_policy_re_seeds_on_reset_so_two_rollouts_agree():
     second = [p.get_action(env.get_state()).clone() for _ in range(4)]
     assert all(torch.equal(a, b) for a, b in zip(first, second)), (
         "reset() did not put the policy's generator back, so the second rollout of a seeded pair "
-        "differs from the first")
+        "differs from the first"
+    )
 
 
 def test_the_random_policy_honours_bounds_given_explicitly_over_the_env_s():

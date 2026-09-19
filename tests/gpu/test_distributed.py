@@ -13,6 +13,7 @@ would still produce a loss curve, and would be wrong.
 manual multi-GPU script hit immediately. It is tested separately because the caches are keyed by scene
 content, not by device.
 """
+
 from __future__ import annotations
 
 import os
@@ -27,9 +28,9 @@ pytestmark = pytest.mark.gpu
 if not torch.cuda.is_available():
     pytest.skip("stable-envs GPU tests require a CUDA device", allow_module_level=True)
 
-import stable_envs as se
-
 from _shared import assert_frames_identical, make_or_skip, sampled_states
+
+import stable_envs as se
 
 #: One env per RENDER BACKEND rather than per family: the 2-D rasterizer, the tile atlas and the 3-D
 #: ray caster are the three places a device-blind cache can live, and every other registered env
@@ -77,10 +78,13 @@ def test_two_devices_in_one_process(name):
     f1 = env1.render(states).cpu()
 
     assert_frames_identical(
-        f0, f1, what=f"{name}: cuda:0 against cuda:1",
+        f0,
+        f1,
+        what=f"{name}: cuda:0 against cuda:1",
         why="a device-blind cache is the first place to look — the static-prefix cache is keyed by "
-            "scene content and the tile atlas by the STRING 'cuda', which is the same on every rank "
-            "while the device it resolves to is not")
+        "scene content and the tile atlas by the STRING 'cuda', which is the same on every rank "
+        "while the device it resolves to is not",
+    )
 
 
 def _ddp_child(rank: int, world: int, name: str, n: int, q):
@@ -101,8 +105,9 @@ def _ddp_child(rank: int, world: int, name: str, n: int, q):
     # The caller's own DataLoader (``ds.loader()`` is gone). ``collate_batched`` because this dataset
     # renders in ``__getitems__``; ``num_workers=0`` because those frames are already on this rank's
     # GPU and a worker would only duplicate the CUDA context to ship them back.
-    loader = DataLoader(ds, batch_size=16, shuffle=False, sampler=sampler, num_workers=0,
-                        collate_fn=se.collate_batched)
+    loader = DataLoader(
+        ds, batch_size=16, shuffle=False, sampler=sampler, num_workers=0, collate_fn=se.collate_batched
+    )
 
     idxs, frames = list(iter(sampler)), []
     for batch in loader:
@@ -150,10 +155,13 @@ def test_ddp_shards_and_matches_single_process(name):
         idxs, frames = got[r]
         assert frames.shape[0] == len(idxs)
         assert_frames_identical(
-            frames, ref[idxs], what=f"{name}: rank {r} against a single process",
+            frames,
+            ref[idxs],
+            what=f"{name}: rank {r} against a single process",
             why="every module-level cache in this repository is per-rank by construction, so a "
-                "difference means a rank rendered from a different device, atlas or cached plate — "
-                "which would still train and would still produce a loss curve")
+            "difference means a rank rendered from a different device, atlas or cached plate — "
+            "which would still train and would still produce a loss curve",
+        )
 
 
 if __name__ == "__main__":

@@ -9,6 +9,7 @@ HOW MUCH OF THE FRAME MOVES, and its seven movers cover 11.7% of an 84 px frame 
 2.5%. ``parity_interior_min`` is NOT relaxed on any of the three — it measures exactly 1.000000. The
 other two clear the shared 0.90 bar by 0.024-0.029 and declare nothing. See ``PARITY_NOTE``.
 """
+
 from __future__ import annotations
 
 from ._cells import PARITY_NOTE, parity_cell
@@ -20,7 +21,11 @@ from ._cells import PARITY_NOTE, parity_cell
 ALL_EXACT_FLOOR = {"DMCFingerTurnEasy": 0.89}
 
 DMCFingerSpin = parity_cell("DMCFingerSpin", "finger", "spin")
-DMCFingerTurnEasy = parity_cell("DMCFingerTurnEasy", "finger", "turn_easy",
-                                parity_all_exact_min=ALL_EXACT_FLOOR["DMCFingerTurnEasy"],
-                                parity_note=PARITY_NOTE)
+DMCFingerTurnEasy = parity_cell(
+    "DMCFingerTurnEasy",
+    "finger",
+    "turn_easy",
+    parity_all_exact_min=ALL_EXACT_FLOOR["DMCFingerTurnEasy"],
+    parity_note=PARITY_NOTE,
+)
 DMCFingerTurnHard = parity_cell("DMCFingerTurnHard", "finger", "turn_hard")

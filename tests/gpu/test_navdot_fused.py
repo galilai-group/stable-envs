@@ -5,6 +5,7 @@ if something renders the same scene BOTH ways and diffs them, on the registered 
 a synthetic case. Here the two ways are ``navdot.blend_dots`` and the ``_alpha_blend``/
 ``_gaussian_dot`` composition it replaces, and the switch is ``navdot.available``.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -17,16 +18,16 @@ from stable_envs.render import navdot
 
 CONFIGS = ("TwoRoom", "TwoRoomTarget", "Piecewise", "PiecewiseZones")
 
-pytestmark = pytest.mark.skipif(not torch.cuda.is_available() or not navdot.HAVE_TRITON,
-                                reason="the fused path needs a CUDA device and Triton")
+pytestmark = pytest.mark.skipif(
+    not torch.cuda.is_available() or not navdot.HAVE_TRITON, reason="the fused path needs a CUDA device and Triton"
+)
 
 
 def _torch_path(env, base, s, sl, k):
     img = base
     pos, sig, col = env._dots(s, sl, k)
     for d in range(pos.shape[1]):
-        img = SN._alpha_blend(img, SN._gaussian_dot(env._gy, env._gx, pos[:, d], sig[:, d]),
-                              col[:, d])
+        img = SN._alpha_blend(img, SN._gaussian_dot(env._gy, env._gx, pos[:, d], sig[:, d]), col[:, d])
     return img
 
 
@@ -37,7 +38,7 @@ def test_fused_matches_the_torch_path_on_sampled_states(cfg, B):
     env.rng = np.random.default_rng(0)
     st = torch.as_tensor(np.asarray(env.sample_states(B), np.float32), device="cuda")
     sty = env.resolve_style(None, None, batch=B)
-    sl = lambda p: sty[p][0:B]                                             # noqa: E731
+    sl = lambda p: sty[p][0:B]  # noqa: E731
     base = env._base_image(sty, 0, B).expand(B, SN.IMG, SN.IMG, 3).contiguous()
     want = _torch_path(env, base, st, sl, B)
     pos, sig, col = env._dots(st, sl, B)
@@ -49,8 +50,16 @@ def test_fused_matches_the_torch_path_on_sampled_states(cfg, B):
 def test_fused_matches_on_states_the_env_would_never_sample(cfg):
     """Dots off the frame, on and between pixel centres, and stacked on each other."""
     env = se.make(cfg, num_envs=1, device="cuda")
-    pos = [(112.0, 112.0), (112.5, 112.5), (0.0, 0.0), (223.0, 223.0), (-60.0, 112.0),
-           (112.0, -60.0), (280.0, 280.0), (-3000.0, 4000.0)]
+    pos = [
+        (112.0, 112.0),
+        (112.5, 112.5),
+        (0.0, 0.0),
+        (223.0, 223.0),
+        (-60.0, 112.0),
+        (112.0, -60.0),
+        (280.0, 280.0),
+        (-3000.0, 4000.0),
+    ]
     dim = env.state_dim
     st = np.zeros((len(pos), dim), np.float32)
     for i, (x, y) in enumerate(pos):
@@ -60,7 +69,7 @@ def test_fused_matches_on_states_the_env_would_never_sample(cfg):
     e = se.make(cfg, num_envs=len(pos), device="cuda")
     s = torch.as_tensor(st, device="cuda")
     sty = e.resolve_style(None, None, batch=len(pos))
-    sl = lambda p: sty[p][0:len(pos)]                                      # noqa: E731
+    sl = lambda p: sty[p][0 : len(pos)]  # noqa: E731
     base = e._base_image(sty, 0, len(pos)).expand(len(pos), SN.IMG, SN.IMG, 3).contiguous()
     want = _torch_path(e, base, s, sl, len(pos))
     p_, sg, cl = e._dots(s, sl, len(pos))
@@ -93,13 +102,12 @@ def test_per_row_styles_against_the_class_s_own_torch_path(cfg):
         if path not in lay:
             continue
         o, w = lay[path]
-        rows[:, o:o + w] = (rng.uniform(0, 255, (B, w)) if path.endswith("color")
-                            else rng.uniform(7.0, 14.0, (B, w)))
+        rows[:, o : o + w] = rng.uniform(0, 255, (B, w)) if path.endswith("color") else rng.uniform(7.0, 14.0, (B, w))
     sty = env.resolve_style(rows, None, batch=B)
-    sl = lambda p: sty[p][0:B]                                             # noqa: E731
+    sl = lambda p: sty[p][0:B]  # noqa: E731
     base = env._base_image(sty, 0, B).expand(B, SN.IMG, SN.IMG, 3).contiguous()
 
-    want = env.blend_dots(base, st, sl, B)               # the class's own torch path, in its order
+    want = env.blend_dots(base, st, sl, B)  # the class's own torch path, in its order
     pos, sig, col = env._dots(st, sl, B)
     got = navdot.blend_dots(base.clone(), pos, sig, col)
     assert torch.equal(want, got), f"{cfg}: per-row styles through the fused kernel"
@@ -107,11 +115,13 @@ def test_per_row_styles_against_the_class_s_own_torch_path(cfg):
     # no two rows may have collapsed onto one another's style
     flat = got.reshape(B, -1)
     assert len({tuple(flat[i].tolist()) for i in range(B)}) == B, (
-        f"{cfg}: {B} different dot styles produced fewer than {B} different frames")
+        f"{cfg}: {B} different dot styles produced fewer than {B} different frames"
+    )
 
     # and through render(), which is what a caller reaches
     assert torch.equal(env.render(st.cpu().numpy(), style=rows), want), (
-        f"{cfg}: render() with per-row styles disagrees with the torch path")
+        f"{cfg}: render() with per-row styles disagrees with the torch path"
+    )
 
 
 @pytest.mark.parametrize("cfg", CONFIGS)
@@ -125,7 +135,8 @@ def test_render_is_the_fused_path_and_is_still_invariant(cfg):
     assert torch.equal(env.render(st), first), f"{cfg}: render is not pure"
     perm = np.array([3, 1, 7, 0, 5, 2, 6, 4])
     assert torch.equal(env.render(np.ascontiguousarray(st[perm]))[np.argsort(perm)], first), (
-        f"{cfg}: render is not order invariant")
+        f"{cfg}: render is not order invariant"
+    )
     solo = se.make(cfg, num_envs=1, device="cuda")
     for i in (0, 3, 7):
-        assert torch.equal(solo.render(st[i:i + 1])[0], first[i]), f"{cfg}: batch-1 row {i}"
+        assert torch.equal(solo.render(st[i : i + 1])[0], first[i]), f"{cfg}: batch-1 row {i}"

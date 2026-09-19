@@ -25,6 +25,7 @@ the design: the assembled-``__getitems__`` design was kept because per-item coll
 states-only ``TrajectoryDataset`` batch, and the ``BatchSampler`` recipe was documented because it
 reaches the same throughput with torch's own collate.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -32,11 +33,10 @@ import pytest
 
 torch = pytest.importorskip("torch")
 
+from test_input_validation import TinyEnv, _ids, _states  # noqa: E402  (same directory)
 from torch.utils.data import BatchSampler, DataLoader, SequentialSampler, TensorDataset
 
 from stable_envs.data import StateDataset, TrajectoryDataset, collate_batched
-
-from test_input_validation import TinyEnv, _ids, _states           # noqa: E402  (same directory)
 
 DEV = "cpu"
 
@@ -97,7 +97,8 @@ def test_the_datasets_no_longer_ship_a_dataloader_factory():
     assert not hasattr(ds, "loader"), (
         "StateDataset.loader is back; the recommended idiom is the caller's own DataLoader, and the "
         "one argument it needs (collate_fn=collate_batched, and only when the dataset renders) is "
-        "documented in stable_envs/data.py")
+        "documented in stable_envs/data.py"
+    )
     assert not hasattr(TrajectoryDataset(_env(1), np.stack([_states(4)]), device=DEV), "loader")
 
 

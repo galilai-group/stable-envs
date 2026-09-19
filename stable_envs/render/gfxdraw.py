@@ -72,6 +72,7 @@ THE SIX RULES, all measured (``scratch/classic_control/probe_*.py``):
    make that easy to get right: it owns the caches, and nothing in the drawing functions allocates from
    the host.
 """
+
 from __future__ import annotations
 
 import torch
@@ -94,108 +95,513 @@ SHIFT = (16, 8, 0)
 #: the solid pixels are identical with and without it), so a table is both cheaper and safer than
 #: re-deriving an ellipse walker.
 AACIRCLE_FRINGE: dict[int, tuple[tuple[int, int, int, int], ...]] = {
-    1: ((-1, -1, 2, 1), (-1, -1, 255, 0), (-1, 1, 2, 1), (-1, 1, 255, 0), (1, -1, 2, 1),
-        (1, -1, 255, 0), (1, 1, 2, 1), (1, 1, 255, 0)),
+    1: (
+        (-1, -1, 2, 1),
+        (-1, -1, 255, 0),
+        (-1, 1, 2, 1),
+        (-1, 1, 255, 0),
+        (1, -1, 2, 1),
+        (1, -1, 255, 0),
+        (1, 1, 2, 1),
+        (1, 1, 255, 0),
+    ),
     2: ((-2, -1, 192, 0), (-2, 1, 192, 0), (2, -1, 192, 0), (2, 1, 192, 0)),
-    3: ((-3, -2, 63, 0), (-3, -1, 213, 0), (-3, 1, 213, 0), (-3, 2, 63, 0), (3, -2, 63, 0),
-        (3, -1, 213, 0), (3, 1, 213, 0), (3, 2, 63, 0)),
-    4: ((-4, -2, 127, 0), (-4, -1, 224, 0), (-4, 1, 224, 0), (-4, 2, 127, 0), (-3, -3, 170, 0),
-        (-3, 3, 170, 0), (-2, -4, 127, 0), (-2, 4, 127, 0), (2, -4, 127, 0), (2, 4, 127, 0),
-        (3, -3, 170, 0), (3, 3, 170, 0), (4, -2, 127, 0), (4, -1, 224, 0), (4, 1, 224, 0),
-        (4, 2, 127, 0)),
-    5: ((-5, -2, 153, 0), (-5, -1, 230, 0), (-5, 1, 230, 0), (-5, 2, 153, 0), (5, -2, 153, 0),
-        (5, -1, 230, 0), (5, 1, 230, 0), (5, 2, 153, 0)),
-    6: ((-6, -3, 51, 0), (-6, -2, 170, 0), (-6, -1, 234, 0), (-6, 1, 234, 0), (-6, 2, 170, 0),
-        (-6, 3, 51, 0), (-5, -4, 127, 0), (-5, 4, 127, 0), (-3, -6, 51, 0), (-3, 6, 51, 0),
-        (3, -6, 51, 0), (3, 6, 51, 0), (5, -4, 127, 0), (5, 4, 127, 0), (6, -3, 51, 0),
-        (6, -2, 170, 0), (6, -1, 234, 0), (6, 1, 234, 0), (6, 2, 170, 0), (6, 3, 51, 0)),
-    7: ((-7, -3, 85, 0), (-7, -2, 183, 0), (-7, -1, 237, 0), (-7, 1, 237, 0), (-7, 2, 183, 0),
-        (-7, 3, 85, 0), (-6, -4, 192, 0), (-6, 4, 192, 0), (-3, -7, 85, 0), (-3, 7, 85, 0),
-        (3, -7, 85, 0), (3, 7, 85, 0), (6, -4, 192, 0), (6, 4, 192, 0), (7, -3, 85, 0),
-        (7, -2, 183, 0), (7, -1, 237, 0), (7, 1, 237, 0), (7, 2, 183, 0), (7, 3, 85, 0)),
-    8: ((-8, -3, 109, 0), (-8, -2, 192, 0), (-8, -1, 240, 0), (-8, 1, 240, 0), (-8, 2, 192, 0),
-        (-8, 3, 109, 0), (-7, -5, 63, 0), (-7, -4, 237, 0), (-7, 4, 237, 0), (-7, 5, 63, 0),
-        (-6, -6, 76, 0), (-6, 6, 76, 0), (-3, -8, 109, 0), (-3, 8, 109, 0), (3, -8, 109, 0),
-        (3, 8, 109, 0), (6, -6, 76, 0), (6, 6, 76, 0), (7, -5, 63, 0), (7, -4, 237, 0),
-        (7, 4, 237, 0), (7, 5, 63, 0), (8, -3, 109, 0), (8, -2, 192, 0), (8, -1, 240, 0),
-        (8, 1, 240, 0), (8, 2, 192, 0), (8, 3, 109, 0)),
-    9: ((-9, -4, 15, 0), (-9, -3, 127, 0), (-9, -2, 199, 0), (-9, -1, 241, 0), (-9, 1, 241, 0),
-        (-9, 2, 199, 0), (-9, 3, 127, 0), (-9, 4, 15, 0), (-8, -5, 127, 0), (-8, 5, 127, 0),
-        (-7, -6, 183, 0), (-7, 6, 183, 0), (-6, -7, 183, 0), (-6, 7, 183, 0), (-5, -8, 127, 0),
-        (-5, 8, 127, 0), (-4, -9, 15, 0), (-4, 9, 15, 0), (-3, -9, 127, 0), (-3, 9, 127, 0),
-        (3, -9, 127, 0), (3, 9, 127, 0), (4, -9, 15, 0), (4, 9, 15, 0), (5, -8, 127, 0),
-        (5, 8, 127, 0), (6, -7, 183, 0), (6, 7, 183, 0), (7, -6, 183, 0), (7, 6, 183, 0),
-        (8, -5, 127, 0), (8, 5, 127, 0), (9, -4, 15, 0), (9, -3, 127, 0), (9, -2, 199, 0),
-        (9, -1, 241, 0), (9, 1, 241, 0), (9, 2, 199, 0), (9, 3, 127, 0), (9, 4, 15, 0)),
-    10: ((-10, -4, 42, 0), (-10, -3, 141, 0), (-10, -2, 204, 0), (-10, -1, 243, 0), (-10, 1, 243, 0),
-         (-10, 2, 204, 0), (-10, 3, 141, 0), (-10, 4, 42, 0), (-9, -5, 170, 0), (-9, 5, 170, 0),
-         (-8, -7, 36, 0), (-8, 7, 36, 0), (-4, -10, 42, 0), (-4, 10, 42, 0), (4, -10, 42, 0),
-         (4, 10, 42, 0), (8, -7, 36, 0), (8, 7, 36, 0), (9, -5, 170, 0), (9, 5, 170, 0),
-         (10, -4, 42, 0), (10, -3, 141, 0), (10, -2, 204, 0), (10, -1, 243, 0), (10, 1, 243, 0),
-         (10, 2, 204, 0), (10, 3, 141, 0), (10, 4, 42, 0)),
-    11: ((-11, -4, 63, 0), (-11, -3, 151, 0), (-11, -2, 209, 0), (-11, -1, 244, 0), (-11, 1, 244, 0),
-         (-11, 2, 209, 0), (-11, 3, 151, 0), (-11, 4, 63, 0), (-10, -6, 56, 0), (-10, -5, 204, 0),
-         (-10, 5, 204, 0), (-10, 6, 56, 0), (-9, -7, 127, 0), (-9, 7, 127, 0), (-8, -8, 144, 0),
-         (-8, 8, 144, 0), (-7, -9, 127, 0), (-7, 9, 127, 0), (-6, -10, 56, 0), (-6, 10, 56, 0),
-         (-4, -11, 63, 0), (-4, 11, 63, 0), (4, -11, 63, 0), (4, 11, 63, 0), (6, -10, 56, 0),
-         (6, 10, 56, 0), (7, -9, 127, 0), (7, 9, 127, 0), (8, -8, 144, 0), (8, 8, 144, 0),
-         (9, -7, 127, 0), (9, 7, 127, 0), (10, -6, 56, 0), (10, -5, 204, 0), (10, 5, 204, 0),
-         (10, 6, 56, 0), (11, -4, 63, 0), (11, -3, 151, 0), (11, -2, 209, 0), (11, -1, 244, 0),
-         (11, 1, 244, 0), (11, 2, 209, 0), (11, 3, 151, 0), (11, 4, 63, 0)),
-    12: ((-12, -4, 81, 0), (-12, -3, 160, 0), (-12, -2, 213, 0), (-12, -1, 245, 0), (-12, 1, 245, 0),
-         (-12, 2, 213, 0), (-12, 3, 160, 0), (-12, 4, 81, 0), (-11, -6, 102, 0), (-11, -5, 232, 0),
-         (-11, 5, 232, 0), (-11, 6, 102, 0), (-10, -7, 192, 0), (-10, 7, 192, 0), (-6, -11, 102, 0),
-         (-6, 11, 102, 0), (-4, -12, 81, 0), (-4, 12, 81, 0), (4, -12, 81, 0), (4, 12, 81, 0),
-         (6, -11, 102, 0), (6, 11, 102, 0), (10, -7, 192, 0), (10, 7, 192, 0), (11, -6, 102, 0),
-         (11, -5, 232, 0), (11, 5, 232, 0), (11, 6, 102, 0), (12, -4, 81, 0), (12, -3, 160, 0),
-         (12, -2, 213, 0), (12, -1, 245, 0), (12, 1, 245, 0), (12, 2, 213, 0), (12, 3, 160, 0),
-         (12, 4, 81, 0)),
-    13: ((-13, -4, 95, 0), (-13, -3, 167, 0), (-13, -2, 216, 0), (-13, -1, 246, 0), (-13, 1, 246, 0),
-         (-13, 2, 216, 0), (-13, 3, 167, 0), (-13, 4, 95, 0), (-12, -6, 139, 0), (-12, -5, 255, 0),
-         (-12, 5, 255, 0), (-12, 6, 139, 0), (-11, -8, 63, 0), (-11, 8, 63, 0), (-10, -9, 99, 0),
-         (-10, 9, 99, 0), (-8, -11, 63, 0), (-8, 11, 63, 0), (-4, -13, 95, 0), (-4, 13, 95, 0),
-         (4, -13, 95, 0), (4, 13, 95, 0), (8, -11, 63, 0), (8, 11, 63, 0), (10, -9, 99, 0),
-         (10, 9, 99, 0), (11, -8, 63, 0), (11, 8, 63, 0), (12, -6, 139, 0), (12, -5, 255, 0),
-         (12, 5, 255, 0), (12, 6, 139, 0), (13, -4, 95, 0), (13, -3, 167, 0), (13, -2, 216, 0),
-         (13, -1, 246, 0), (13, 1, 246, 0), (13, 2, 216, 0), (13, 3, 167, 0), (13, 4, 95, 0)),
-    14: ((-14, -5, 19, 0), (-14, -4, 107, 0), (-14, -3, 174, 0), (-14, -2, 219, 0), (-14, -1, 246, 0),
-         (-14, 1, 246, 0), (-14, 2, 219, 0), (-14, 3, 174, 0), (-14, 4, 107, 0), (-14, 5, 19, 0),
-         (-13, -7, 31, 0), (-13, -6, 167, 0), (-13, -5, 236, 0), (-13, 5, 236, 0), (-13, 6, 167, 0),
-         (-13, 7, 31, 0), (-12, -8, 127, 0), (-12, 8, 127, 0), (-11, -9, 186, 0), (-11, 9, 186, 0),
-         (-8, -12, 127, 0), (-8, 12, 127, 0), (-7, -13, 31, 0), (-7, 13, 31, 0), (-5, -14, 19, 0),
-         (-5, 14, 19, 0), (-4, -14, 107, 0), (-4, 14, 107, 0), (4, -14, 107, 0), (4, 14, 107, 0),
-         (5, -14, 19, 0), (5, 14, 19, 0), (7, -13, 31, 0), (7, 13, 31, 0), (8, -12, 127, 0),
-         (8, 12, 127, 0), (11, -9, 186, 0), (11, 9, 186, 0), (12, -8, 127, 0), (12, 8, 127, 0),
-         (13, -7, 31, 0), (13, -6, 167, 0), (13, -5, 236, 0), (13, 5, 236, 0), (13, 6, 167, 0),
-         (13, 7, 31, 0), (14, -5, 19, 0), (14, -4, 107, 0), (14, -3, 174, 0), (14, -2, 219, 0),
-         (14, -1, 246, 0), (14, 1, 246, 0), (14, 2, 219, 0), (14, 3, 174, 0), (14, 4, 107, 0),
-         (14, 5, 19, 0)),
-    15: ((-15, -5, 36, 0), (-15, -4, 118, 0), (-15, -3, 179, 0), (-15, -2, 221, 0), (-15, -1, 247, 0),
-         (-15, 1, 247, 0), (-15, 2, 221, 0), (-15, 3, 179, 0), (-15, 4, 118, 0), (-15, 5, 36, 0),
-         (-14, -7, 68, 0), (-14, -6, 192, 0), (-14, -5, 219, 0), (-14, 5, 219, 0), (-14, 6, 192, 0),
-         (-14, 7, 68, 0), (-13, -8, 177, 0), (-13, 8, 177, 0), (-12, -10, 46, 0), (-12, 10, 46, 0),
-         (-11, -11, 51, 0), (-11, 11, 51, 0), (-7, -14, 68, 0), (-7, 14, 68, 0), (-5, -15, 36, 0),
-         (-5, 15, 36, 0), (-4, -15, 118, 0), (-4, 15, 118, 0), (4, -15, 118, 0), (4, 15, 118, 0),
-         (5, -15, 36, 0), (5, 15, 36, 0), (7, -14, 68, 0), (7, 14, 68, 0), (11, -11, 51, 0),
-         (11, 11, 51, 0), (12, -10, 46, 0), (12, 10, 46, 0), (13, -8, 177, 0), (13, 8, 177, 0),
-         (14, -7, 68, 0), (14, -6, 192, 0), (14, -5, 219, 0), (14, 5, 219, 0), (14, 6, 192, 0),
-         (14, 7, 68, 0), (15, -5, 36, 0), (15, -4, 118, 0), (15, -3, 179, 0), (15, -2, 221, 0),
-         (15, -1, 247, 0), (15, 1, 247, 0), (15, 2, 221, 0), (15, 3, 179, 0), (15, 4, 118, 0),
-         (15, 5, 36, 0)),
-    16: ((-16, -5, 51, 0), (-16, -4, 127, 0), (-16, -3, 184, 0), (-16, -2, 224, 0), (-16, -1, 248, 0),
-         (-16, 1, 248, 0), (-16, 2, 224, 0), (-16, 3, 184, 0), (-16, 4, 127, 0), (-16, 5, 51, 0),
-         (-15, -7, 100, 0), (-15, -6, 213, 0), (-15, -5, 204, 0), (-15, 5, 204, 0), (-15, 6, 213, 0),
-         (-15, 7, 100, 0), (-14, -9, 58, 0), (-14, -8, 219, 0), (-14, 8, 219, 0), (-14, 9, 58, 0),
-         (-13, -10, 127, 0), (-13, 10, 127, 0), (-12, -11, 160, 0), (-12, 11, 160, 0),
-         (-10, -13, 127, 0), (-10, 13, 127, 0), (-9, -14, 58, 0), (-9, 14, 58, 0), (-7, -15, 100, 0),
-         (-7, 15, 100, 0), (-5, -16, 51, 0), (-5, 16, 51, 0), (-4, -16, 127, 0), (-4, 16, 127, 0),
-         (4, -16, 127, 0), (4, 16, 127, 0), (5, -16, 51, 0), (5, 16, 51, 0), (7, -15, 100, 0),
-         (7, 15, 100, 0), (9, -14, 58, 0), (9, 14, 58, 0), (10, -13, 127, 0), (10, 13, 127, 0),
-         (12, -11, 160, 0), (12, 11, 160, 0), (13, -10, 127, 0), (13, 10, 127, 0), (14, -9, 58, 0),
-         (14, -8, 219, 0), (14, 8, 219, 0), (14, 9, 58, 0), (15, -7, 100, 0), (15, -6, 213, 0),
-         (15, -5, 204, 0), (15, 5, 204, 0), (15, 6, 213, 0), (15, 7, 100, 0), (16, -5, 51, 0),
-         (16, -4, 127, 0), (16, -3, 184, 0), (16, -2, 224, 0), (16, -1, 248, 0), (16, 1, 248, 0),
-         (16, 2, 224, 0), (16, 3, 184, 0), (16, 4, 127, 0), (16, 5, 51, 0)),
+    3: (
+        (-3, -2, 63, 0),
+        (-3, -1, 213, 0),
+        (-3, 1, 213, 0),
+        (-3, 2, 63, 0),
+        (3, -2, 63, 0),
+        (3, -1, 213, 0),
+        (3, 1, 213, 0),
+        (3, 2, 63, 0),
+    ),
+    4: (
+        (-4, -2, 127, 0),
+        (-4, -1, 224, 0),
+        (-4, 1, 224, 0),
+        (-4, 2, 127, 0),
+        (-3, -3, 170, 0),
+        (-3, 3, 170, 0),
+        (-2, -4, 127, 0),
+        (-2, 4, 127, 0),
+        (2, -4, 127, 0),
+        (2, 4, 127, 0),
+        (3, -3, 170, 0),
+        (3, 3, 170, 0),
+        (4, -2, 127, 0),
+        (4, -1, 224, 0),
+        (4, 1, 224, 0),
+        (4, 2, 127, 0),
+    ),
+    5: (
+        (-5, -2, 153, 0),
+        (-5, -1, 230, 0),
+        (-5, 1, 230, 0),
+        (-5, 2, 153, 0),
+        (5, -2, 153, 0),
+        (5, -1, 230, 0),
+        (5, 1, 230, 0),
+        (5, 2, 153, 0),
+    ),
+    6: (
+        (-6, -3, 51, 0),
+        (-6, -2, 170, 0),
+        (-6, -1, 234, 0),
+        (-6, 1, 234, 0),
+        (-6, 2, 170, 0),
+        (-6, 3, 51, 0),
+        (-5, -4, 127, 0),
+        (-5, 4, 127, 0),
+        (-3, -6, 51, 0),
+        (-3, 6, 51, 0),
+        (3, -6, 51, 0),
+        (3, 6, 51, 0),
+        (5, -4, 127, 0),
+        (5, 4, 127, 0),
+        (6, -3, 51, 0),
+        (6, -2, 170, 0),
+        (6, -1, 234, 0),
+        (6, 1, 234, 0),
+        (6, 2, 170, 0),
+        (6, 3, 51, 0),
+    ),
+    7: (
+        (-7, -3, 85, 0),
+        (-7, -2, 183, 0),
+        (-7, -1, 237, 0),
+        (-7, 1, 237, 0),
+        (-7, 2, 183, 0),
+        (-7, 3, 85, 0),
+        (-6, -4, 192, 0),
+        (-6, 4, 192, 0),
+        (-3, -7, 85, 0),
+        (-3, 7, 85, 0),
+        (3, -7, 85, 0),
+        (3, 7, 85, 0),
+        (6, -4, 192, 0),
+        (6, 4, 192, 0),
+        (7, -3, 85, 0),
+        (7, -2, 183, 0),
+        (7, -1, 237, 0),
+        (7, 1, 237, 0),
+        (7, 2, 183, 0),
+        (7, 3, 85, 0),
+    ),
+    8: (
+        (-8, -3, 109, 0),
+        (-8, -2, 192, 0),
+        (-8, -1, 240, 0),
+        (-8, 1, 240, 0),
+        (-8, 2, 192, 0),
+        (-8, 3, 109, 0),
+        (-7, -5, 63, 0),
+        (-7, -4, 237, 0),
+        (-7, 4, 237, 0),
+        (-7, 5, 63, 0),
+        (-6, -6, 76, 0),
+        (-6, 6, 76, 0),
+        (-3, -8, 109, 0),
+        (-3, 8, 109, 0),
+        (3, -8, 109, 0),
+        (3, 8, 109, 0),
+        (6, -6, 76, 0),
+        (6, 6, 76, 0),
+        (7, -5, 63, 0),
+        (7, -4, 237, 0),
+        (7, 4, 237, 0),
+        (7, 5, 63, 0),
+        (8, -3, 109, 0),
+        (8, -2, 192, 0),
+        (8, -1, 240, 0),
+        (8, 1, 240, 0),
+        (8, 2, 192, 0),
+        (8, 3, 109, 0),
+    ),
+    9: (
+        (-9, -4, 15, 0),
+        (-9, -3, 127, 0),
+        (-9, -2, 199, 0),
+        (-9, -1, 241, 0),
+        (-9, 1, 241, 0),
+        (-9, 2, 199, 0),
+        (-9, 3, 127, 0),
+        (-9, 4, 15, 0),
+        (-8, -5, 127, 0),
+        (-8, 5, 127, 0),
+        (-7, -6, 183, 0),
+        (-7, 6, 183, 0),
+        (-6, -7, 183, 0),
+        (-6, 7, 183, 0),
+        (-5, -8, 127, 0),
+        (-5, 8, 127, 0),
+        (-4, -9, 15, 0),
+        (-4, 9, 15, 0),
+        (-3, -9, 127, 0),
+        (-3, 9, 127, 0),
+        (3, -9, 127, 0),
+        (3, 9, 127, 0),
+        (4, -9, 15, 0),
+        (4, 9, 15, 0),
+        (5, -8, 127, 0),
+        (5, 8, 127, 0),
+        (6, -7, 183, 0),
+        (6, 7, 183, 0),
+        (7, -6, 183, 0),
+        (7, 6, 183, 0),
+        (8, -5, 127, 0),
+        (8, 5, 127, 0),
+        (9, -4, 15, 0),
+        (9, -3, 127, 0),
+        (9, -2, 199, 0),
+        (9, -1, 241, 0),
+        (9, 1, 241, 0),
+        (9, 2, 199, 0),
+        (9, 3, 127, 0),
+        (9, 4, 15, 0),
+    ),
+    10: (
+        (-10, -4, 42, 0),
+        (-10, -3, 141, 0),
+        (-10, -2, 204, 0),
+        (-10, -1, 243, 0),
+        (-10, 1, 243, 0),
+        (-10, 2, 204, 0),
+        (-10, 3, 141, 0),
+        (-10, 4, 42, 0),
+        (-9, -5, 170, 0),
+        (-9, 5, 170, 0),
+        (-8, -7, 36, 0),
+        (-8, 7, 36, 0),
+        (-4, -10, 42, 0),
+        (-4, 10, 42, 0),
+        (4, -10, 42, 0),
+        (4, 10, 42, 0),
+        (8, -7, 36, 0),
+        (8, 7, 36, 0),
+        (9, -5, 170, 0),
+        (9, 5, 170, 0),
+        (10, -4, 42, 0),
+        (10, -3, 141, 0),
+        (10, -2, 204, 0),
+        (10, -1, 243, 0),
+        (10, 1, 243, 0),
+        (10, 2, 204, 0),
+        (10, 3, 141, 0),
+        (10, 4, 42, 0),
+    ),
+    11: (
+        (-11, -4, 63, 0),
+        (-11, -3, 151, 0),
+        (-11, -2, 209, 0),
+        (-11, -1, 244, 0),
+        (-11, 1, 244, 0),
+        (-11, 2, 209, 0),
+        (-11, 3, 151, 0),
+        (-11, 4, 63, 0),
+        (-10, -6, 56, 0),
+        (-10, -5, 204, 0),
+        (-10, 5, 204, 0),
+        (-10, 6, 56, 0),
+        (-9, -7, 127, 0),
+        (-9, 7, 127, 0),
+        (-8, -8, 144, 0),
+        (-8, 8, 144, 0),
+        (-7, -9, 127, 0),
+        (-7, 9, 127, 0),
+        (-6, -10, 56, 0),
+        (-6, 10, 56, 0),
+        (-4, -11, 63, 0),
+        (-4, 11, 63, 0),
+        (4, -11, 63, 0),
+        (4, 11, 63, 0),
+        (6, -10, 56, 0),
+        (6, 10, 56, 0),
+        (7, -9, 127, 0),
+        (7, 9, 127, 0),
+        (8, -8, 144, 0),
+        (8, 8, 144, 0),
+        (9, -7, 127, 0),
+        (9, 7, 127, 0),
+        (10, -6, 56, 0),
+        (10, -5, 204, 0),
+        (10, 5, 204, 0),
+        (10, 6, 56, 0),
+        (11, -4, 63, 0),
+        (11, -3, 151, 0),
+        (11, -2, 209, 0),
+        (11, -1, 244, 0),
+        (11, 1, 244, 0),
+        (11, 2, 209, 0),
+        (11, 3, 151, 0),
+        (11, 4, 63, 0),
+    ),
+    12: (
+        (-12, -4, 81, 0),
+        (-12, -3, 160, 0),
+        (-12, -2, 213, 0),
+        (-12, -1, 245, 0),
+        (-12, 1, 245, 0),
+        (-12, 2, 213, 0),
+        (-12, 3, 160, 0),
+        (-12, 4, 81, 0),
+        (-11, -6, 102, 0),
+        (-11, -5, 232, 0),
+        (-11, 5, 232, 0),
+        (-11, 6, 102, 0),
+        (-10, -7, 192, 0),
+        (-10, 7, 192, 0),
+        (-6, -11, 102, 0),
+        (-6, 11, 102, 0),
+        (-4, -12, 81, 0),
+        (-4, 12, 81, 0),
+        (4, -12, 81, 0),
+        (4, 12, 81, 0),
+        (6, -11, 102, 0),
+        (6, 11, 102, 0),
+        (10, -7, 192, 0),
+        (10, 7, 192, 0),
+        (11, -6, 102, 0),
+        (11, -5, 232, 0),
+        (11, 5, 232, 0),
+        (11, 6, 102, 0),
+        (12, -4, 81, 0),
+        (12, -3, 160, 0),
+        (12, -2, 213, 0),
+        (12, -1, 245, 0),
+        (12, 1, 245, 0),
+        (12, 2, 213, 0),
+        (12, 3, 160, 0),
+        (12, 4, 81, 0),
+    ),
+    13: (
+        (-13, -4, 95, 0),
+        (-13, -3, 167, 0),
+        (-13, -2, 216, 0),
+        (-13, -1, 246, 0),
+        (-13, 1, 246, 0),
+        (-13, 2, 216, 0),
+        (-13, 3, 167, 0),
+        (-13, 4, 95, 0),
+        (-12, -6, 139, 0),
+        (-12, -5, 255, 0),
+        (-12, 5, 255, 0),
+        (-12, 6, 139, 0),
+        (-11, -8, 63, 0),
+        (-11, 8, 63, 0),
+        (-10, -9, 99, 0),
+        (-10, 9, 99, 0),
+        (-8, -11, 63, 0),
+        (-8, 11, 63, 0),
+        (-4, -13, 95, 0),
+        (-4, 13, 95, 0),
+        (4, -13, 95, 0),
+        (4, 13, 95, 0),
+        (8, -11, 63, 0),
+        (8, 11, 63, 0),
+        (10, -9, 99, 0),
+        (10, 9, 99, 0),
+        (11, -8, 63, 0),
+        (11, 8, 63, 0),
+        (12, -6, 139, 0),
+        (12, -5, 255, 0),
+        (12, 5, 255, 0),
+        (12, 6, 139, 0),
+        (13, -4, 95, 0),
+        (13, -3, 167, 0),
+        (13, -2, 216, 0),
+        (13, -1, 246, 0),
+        (13, 1, 246, 0),
+        (13, 2, 216, 0),
+        (13, 3, 167, 0),
+        (13, 4, 95, 0),
+    ),
+    14: (
+        (-14, -5, 19, 0),
+        (-14, -4, 107, 0),
+        (-14, -3, 174, 0),
+        (-14, -2, 219, 0),
+        (-14, -1, 246, 0),
+        (-14, 1, 246, 0),
+        (-14, 2, 219, 0),
+        (-14, 3, 174, 0),
+        (-14, 4, 107, 0),
+        (-14, 5, 19, 0),
+        (-13, -7, 31, 0),
+        (-13, -6, 167, 0),
+        (-13, -5, 236, 0),
+        (-13, 5, 236, 0),
+        (-13, 6, 167, 0),
+        (-13, 7, 31, 0),
+        (-12, -8, 127, 0),
+        (-12, 8, 127, 0),
+        (-11, -9, 186, 0),
+        (-11, 9, 186, 0),
+        (-8, -12, 127, 0),
+        (-8, 12, 127, 0),
+        (-7, -13, 31, 0),
+        (-7, 13, 31, 0),
+        (-5, -14, 19, 0),
+        (-5, 14, 19, 0),
+        (-4, -14, 107, 0),
+        (-4, 14, 107, 0),
+        (4, -14, 107, 0),
+        (4, 14, 107, 0),
+        (5, -14, 19, 0),
+        (5, 14, 19, 0),
+        (7, -13, 31, 0),
+        (7, 13, 31, 0),
+        (8, -12, 127, 0),
+        (8, 12, 127, 0),
+        (11, -9, 186, 0),
+        (11, 9, 186, 0),
+        (12, -8, 127, 0),
+        (12, 8, 127, 0),
+        (13, -7, 31, 0),
+        (13, -6, 167, 0),
+        (13, -5, 236, 0),
+        (13, 5, 236, 0),
+        (13, 6, 167, 0),
+        (13, 7, 31, 0),
+        (14, -5, 19, 0),
+        (14, -4, 107, 0),
+        (14, -3, 174, 0),
+        (14, -2, 219, 0),
+        (14, -1, 246, 0),
+        (14, 1, 246, 0),
+        (14, 2, 219, 0),
+        (14, 3, 174, 0),
+        (14, 4, 107, 0),
+        (14, 5, 19, 0),
+    ),
+    15: (
+        (-15, -5, 36, 0),
+        (-15, -4, 118, 0),
+        (-15, -3, 179, 0),
+        (-15, -2, 221, 0),
+        (-15, -1, 247, 0),
+        (-15, 1, 247, 0),
+        (-15, 2, 221, 0),
+        (-15, 3, 179, 0),
+        (-15, 4, 118, 0),
+        (-15, 5, 36, 0),
+        (-14, -7, 68, 0),
+        (-14, -6, 192, 0),
+        (-14, -5, 219, 0),
+        (-14, 5, 219, 0),
+        (-14, 6, 192, 0),
+        (-14, 7, 68, 0),
+        (-13, -8, 177, 0),
+        (-13, 8, 177, 0),
+        (-12, -10, 46, 0),
+        (-12, 10, 46, 0),
+        (-11, -11, 51, 0),
+        (-11, 11, 51, 0),
+        (-7, -14, 68, 0),
+        (-7, 14, 68, 0),
+        (-5, -15, 36, 0),
+        (-5, 15, 36, 0),
+        (-4, -15, 118, 0),
+        (-4, 15, 118, 0),
+        (4, -15, 118, 0),
+        (4, 15, 118, 0),
+        (5, -15, 36, 0),
+        (5, 15, 36, 0),
+        (7, -14, 68, 0),
+        (7, 14, 68, 0),
+        (11, -11, 51, 0),
+        (11, 11, 51, 0),
+        (12, -10, 46, 0),
+        (12, 10, 46, 0),
+        (13, -8, 177, 0),
+        (13, 8, 177, 0),
+        (14, -7, 68, 0),
+        (14, -6, 192, 0),
+        (14, -5, 219, 0),
+        (14, 5, 219, 0),
+        (14, 6, 192, 0),
+        (14, 7, 68, 0),
+        (15, -5, 36, 0),
+        (15, -4, 118, 0),
+        (15, -3, 179, 0),
+        (15, -2, 221, 0),
+        (15, -1, 247, 0),
+        (15, 1, 247, 0),
+        (15, 2, 221, 0),
+        (15, 3, 179, 0),
+        (15, 4, 118, 0),
+        (15, 5, 36, 0),
+    ),
+    16: (
+        (-16, -5, 51, 0),
+        (-16, -4, 127, 0),
+        (-16, -3, 184, 0),
+        (-16, -2, 224, 0),
+        (-16, -1, 248, 0),
+        (-16, 1, 248, 0),
+        (-16, 2, 224, 0),
+        (-16, 3, 184, 0),
+        (-16, 4, 127, 0),
+        (-16, 5, 51, 0),
+        (-15, -7, 100, 0),
+        (-15, -6, 213, 0),
+        (-15, -5, 204, 0),
+        (-15, 5, 204, 0),
+        (-15, 6, 213, 0),
+        (-15, 7, 100, 0),
+        (-14, -9, 58, 0),
+        (-14, -8, 219, 0),
+        (-14, 8, 219, 0),
+        (-14, 9, 58, 0),
+        (-13, -10, 127, 0),
+        (-13, 10, 127, 0),
+        (-12, -11, 160, 0),
+        (-12, 11, 160, 0),
+        (-10, -13, 127, 0),
+        (-10, 13, 127, 0),
+        (-9, -14, 58, 0),
+        (-9, 14, 58, 0),
+        (-7, -15, 100, 0),
+        (-7, 15, 100, 0),
+        (-5, -16, 51, 0),
+        (-5, 16, 51, 0),
+        (-4, -16, 127, 0),
+        (-4, 16, 127, 0),
+        (4, -16, 127, 0),
+        (4, 16, 127, 0),
+        (5, -16, 51, 0),
+        (5, 16, 51, 0),
+        (7, -15, 100, 0),
+        (7, 15, 100, 0),
+        (9, -14, 58, 0),
+        (9, 14, 58, 0),
+        (10, -13, 127, 0),
+        (10, 13, 127, 0),
+        (12, -11, 160, 0),
+        (12, 11, 160, 0),
+        (13, -10, 127, 0),
+        (13, 10, 127, 0),
+        (14, -9, 58, 0),
+        (14, -8, 219, 0),
+        (14, 8, 219, 0),
+        (14, 9, 58, 0),
+        (15, -7, 100, 0),
+        (15, -6, 213, 0),
+        (15, -5, 204, 0),
+        (15, 5, 204, 0),
+        (15, 6, 213, 0),
+        (15, 7, 100, 0),
+        (16, -5, 51, 0),
+        (16, -4, 127, 0),
+        (16, -3, 184, 0),
+        (16, -2, 224, 0),
+        (16, -1, 248, 0),
+        (16, 1, 248, 0),
+        (16, 2, 224, 0),
+        (16, 3, 184, 0),
+        (16, 4, 127, 0),
+        (16, 5, 51, 0),
+    ),
 }
 
 
@@ -238,8 +644,7 @@ def _round16(v: torch.Tensor) -> torch.Tensor:
     return (v >> 16) + ((v & 32768) >> 15)
 
 
-def fill_polygon_mask(vx: torch.Tensor, vy: torch.Tensor, ys: torch.Tensor, xs: torch.Tensor,
-                      W: int) -> torch.Tensor:
+def fill_polygon_mask(vx: torch.Tensor, vy: torch.Tensor, ys: torch.Tensor, xs: torch.Tensor, W: int) -> torch.Tensor:
     """``gfxdraw.filled_polygon`` for a batch of CONVEX polygons -> ``(B,H,W)`` bool. Rule 2.
 
     ``vx``/``vy`` are ``(B,n)`` int64 vertices, ALREADY truncated. ``ys``/``xs`` are the row and column
@@ -249,12 +654,12 @@ def fill_polygon_mask(vx: torch.Tensor, vy: torch.Tensor, ys: torch.Tensor, xs: 
     ay, by = vy.roll(1, 1), vy
     ax, bx = vx.roll(1, 1), vx
     swap = ay > by
-    ylo = torch.where(swap, by, ay).unsqueeze(-1)                     # (B,n,1)
+    ylo = torch.where(swap, by, ay).unsqueeze(-1)  # (B,n,1)
     yhi = torch.where(swap, ay, by).unsqueeze(-1)
     xlo = torch.where(swap, bx, ax).unsqueeze(-1)
     xhi = torch.where(swap, ax, bx).unsqueeze(-1)
     live = (ay != by).unsqueeze(-1)
-    maxy = vy.max(1, keepdim=True).values.unsqueeze(-1)               # (B,1,1)
+    maxy = vy.max(1, keepdim=True).values.unsqueeze(-1)  # (B,1,1)
 
     y = ys.view(1, 1, -1)
     act = live & (((y >= ylo) & (y < yhi)) | ((y == maxy) & (y > ylo) & (y <= yhi)))
@@ -289,18 +694,18 @@ def disc_offsets(r: int) -> list[tuple[int, int]]:
     return out
 
 
-def fill_circle_mask(cx: torch.Tensor, cy: torch.Tensor, r: int, ys: torch.Tensor,
-                     xs: torch.Tensor, hw_t: torch.Tensor) -> torch.Tensor:
+def fill_circle_mask(
+    cx: torch.Tensor, cy: torch.Tensor, r: int, ys: torch.Tensor, xs: torch.Tensor, hw_t: torch.Tensor
+) -> torch.Tensor:
     """``gfxdraw.filled_circle`` -> ``(B,H,W)`` bool. ``cx``/``cy`` are ``(B,)`` int64. Rule 3."""
-    dy = (ys.view(1, -1) - cy.view(-1, 1)).abs()                      # (B,H)
+    dy = (ys.view(1, -1) - cy.view(-1, 1)).abs()  # (B,H)
     h = torch.where(dy <= r, hw_t[dy.clamp(0, r)], torch.full_like(dy, -1))
-    dx = (xs.view(1, 1, -1) - cx.view(-1, 1, 1)).abs()                # (B,1,W)
+    dx = (xs.view(1, 1, -1) - cx.view(-1, 1, 1)).abs()  # (B,1,W)
     return dx <= h.unsqueeze(-1)
 
 
 # --------------------------------------------------------------------------- blends
-def blend(src: torch.Tensor, dst: torch.Tensor, w: torch.Tensor,
-          sh: torch.Tensor) -> torch.Tensor:
+def blend(src: torch.Tensor, dst: torch.Tensor, w: torch.Tensor, sh: torch.Tensor) -> torch.Tensor:
     """``_putPixelAlpha`` on SDL's masked channel word. ``src``/``dst`` (...,3) int64, ``w`` (...,1).
 
     Rule 4: the blend runs on the channel in its packed bit position, so the truncating ``>>8`` lands
@@ -334,8 +739,9 @@ def _clip_encode(x: torch.Tensor, y: torch.Tensor, W: int, H: int) -> torch.Tens
     return c | torch.where(y < 0, z + 8, torch.where(y > H - 1, z + 4, z))
 
 
-def clip_line(x1: torch.Tensor, y1: torch.Tensor, x2: torch.Tensor, y2: torch.Tensor,
-              W: int, H: int, iters: int = 6) -> tuple[torch.Tensor, ...]:
+def clip_line(
+    x1: torch.Tensor, y1: torch.Tensor, x2: torch.Tensor, y2: torch.Tensor, W: int, H: int, iters: int = 6
+) -> tuple[torch.Tensor, ...]:
     """SDL_gfx ``clipLine``: Cohen-Sutherland on Sint16 with a float32 slope, batched. Rule 4.
 
     Returns ``(draw, x1, y1, x2, y2)``. The endpoint SWAP is load-bearing: when the first point is
@@ -359,8 +765,7 @@ def clip_line(x1: torch.Tensor, y1: torch.Tensor, x2: torch.Tensor, y2: torch.Te
 
         dxne = x2 != x1
         den = (x2 - x1).to(torch.float32)
-        m = torch.where(dxne, (y2 - y1).to(torch.float32) / torch.where(dxne, den, den + 1),
-                        torch.ones_like(den))
+        m = torch.where(dxne, (y2 - y1).to(torch.float32) / torch.where(dxne, den, den + 1), torch.ones_like(den))
         msafe = torch.where(m == 0, torch.ones_like(m), m)
         L = act & ((c1 & 1) != 0)
         Rt = act & ~L & ((c1 & 2) != 0)
@@ -370,11 +775,20 @@ def clip_line(x1: torch.Tensor, y1: torch.Tensor, x2: torch.Tensor, y2: torch.Te
         dyR = torch.trunc((W - 1 - x1).to(torch.float32) * m).to(torch.int64)
         dxB = torch.trunc((H - 1 - y1).to(torch.float32) / msafe).to(torch.int64)
         dxT = torch.trunc((0 - y1).to(torch.float32) / msafe).to(torch.int64)
-        ny = torch.where(L, y1 + dyL, torch.where(Rt, y1 + dyR, torch.where(
-            Bt, torch.full_like(y1, H - 1), torch.where(Tp, torch.zeros_like(y1), y1))))
-        nx = torch.where(L, torch.zeros_like(x1), torch.where(
-            Rt, torch.full_like(x1, W - 1), torch.where(
-                Bt & dxne, x1 + dxB, torch.where(Tp & dxne, x1 + dxT, x1))))
+        ny = torch.where(
+            L,
+            y1 + dyL,
+            torch.where(
+                Rt, y1 + dyR, torch.where(Bt, torch.full_like(y1, H - 1), torch.where(Tp, torch.zeros_like(y1), y1))
+            ),
+        )
+        nx = torch.where(
+            L,
+            torch.zeros_like(x1),
+            torch.where(
+                Rt, torch.full_like(x1, W - 1), torch.where(Bt & dxne, x1 + dxB, torch.where(Tp & dxne, x1 + dxT, x1))
+            ),
+        )
         x1, y1 = nx, ny
     return draw, x1, y1, x2, y2
 
@@ -465,13 +879,13 @@ class Canvas:
 
     def window(self, win):
         """``self.buf`` restricted to ``(y0, y1, x0, x1)``; the whole surface when ``win`` is None."""
-        return self.buf if win is None else self.buf[:, :, win[0]:win[1], win[2]:win[3]]
+        return self.buf if win is None else self.buf[:, :, win[0] : win[1], win[2] : win[3]]
 
     def rows(self, win):
         """The row and column index vectors a primitive with window ``win`` evaluates over."""
         if win is None:
             return self.ys, self.xs
-        return self.ys[win[0]:win[1]], self.xs[win[2]:win[3]]
+        return self.ys[win[0] : win[1]], self.xs[win[2] : win[3]]
 
     def fill_from(self, base: torch.Tensor) -> None:
         """Start from a prebaked ``(3,1,H,W)`` or ``(3,B,H,W)`` layer instead of a flat colour."""
@@ -492,8 +906,9 @@ class Canvas:
         if gate is not None:
             ok = ok & gate.view(-1, 1)
         b = torch.arange(B, device=self.device).view(-1, 1)
-        return torch.where(ok, (b * self.H + y.clamp(0, self.H - 1)) * self.W
-                           + x.clamp(0, self.W - 1), self.trash).reshape(-1)
+        return torch.where(
+            ok, (b * self.H + y.clamp(0, self.H - 1)) * self.W + x.clamp(0, self.W - 1), self.trash
+        ).reshape(-1)
 
     def paint_disc(self, cy, cx, off, color) -> None:
         """``filled_circle`` as a scatter of its own pixels. Same write set as the window form.
@@ -509,11 +924,9 @@ class Canvas:
     def blend_at(self, b, y, x, color_t, w, valid) -> None:
         """Blend ``color_t`` ``(3,1)`` int64 at flat-indexed pixels; ``valid`` False goes to the trash."""
         ok = valid & (y >= 0) & (y < self.H) & (x >= 0) & (x < self.W)
-        flat = torch.where(ok, (b * self.H + y.clamp(0, self.H - 1)) * self.W
-                           + x.clamp(0, self.W - 1), self.trash)
+        flat = torch.where(ok, (b * self.H + y.clamp(0, self.H - 1)) * self.W + x.clamp(0, self.W - 1), self.trash)
         dst = self.flat[:, flat].to(torch.int64)
-        self.flat[:, flat] = blend(color_t, dst, w.reshape(1, -1),
-                                   self.sh.view(3, 1)).to(torch.uint8)
+        self.flat[:, flat] = blend(color_t, dst, w.reshape(1, -1), self.sh.view(3, 1)).to(torch.uint8)
 
     def rgb(self, out=None) -> torch.Tensor:
         """The finished frame, with the reference's final ``transform.flip(surf, False, True)``.
@@ -563,19 +976,19 @@ class StyleCanvas(Canvas):
     fringe is blended, and getting the count wrong is worth up to 152/255 on those pixels.
     """
 
-    def __init__(self, gfx: "Gfx", B: int, bg):
+    def __init__(self, gfx: Gfx, B: int, bg):
         super().__init__(B, gfx.H, gfx.W, gfx.device, gfx.sh, gfx.ys, gfx.xs, (0, 0, 0), gfx=gfx)
         self.buf.copy_(to_u8(bg).t().view(3, B, 1, 1))
         self.col = None
         self.aa = None
         self.gate = None
 
-    def use(self, color) -> "StyleCanvas":
+    def use(self, color) -> StyleCanvas:
         """Set the colour subsequent primitives paint with. ``color`` is ``(B,3)``."""
         self.col = color
         return self
 
-    def gated(self, gate) -> "StyleCanvas":
+    def gated(self, gate) -> StyleCanvas:
         """Restrict subsequent primitives to the environments where ``gate`` (``(B,)`` bool) is True."""
         self.gate = gate
         return self
@@ -609,8 +1022,7 @@ class StyleCanvas(Canvas):
         """
         g = self.gate if gate is None else gate
         n = int(offsets.numel())
-        idx = (torch.arange(self.B, device=self.device).view(-1, 1) * (self.H * self.W)
-               + offsets.view(1, -1))
+        idx = torch.arange(self.B, device=self.device).view(-1, 1) * (self.H * self.W) + offsets.view(1, -1)
         if g is not None:
             idx = torch.where(g.view(-1, 1), idx, torch.full_like(idx, self.trash))
         c = to_u8(self.col if color is None else color)
@@ -631,8 +1043,9 @@ class StyleCanvas(Canvas):
 
 
 # --------------------------------------------------------------------------- primitives
-def edge_geometry(x1: torch.Tensor, y1: torch.Tensor, x2: torch.Tensor, y2: torch.Tensor,
-                  W: int, H: int) -> tuple[torch.Tensor, ...]:
+def edge_geometry(
+    x1: torch.Tensor, y1: torch.Tensor, x2: torch.Tensor, y2: torch.Tensor, W: int, H: int
+) -> tuple[torch.Tensor, ...]:
     """``clip_line`` plus every constant ``aalineColor``'s Wu walk needs, for a FLAT batch of edges.
 
     **The one place this arithmetic is written down.** All three anti-aliased paths in this package
@@ -673,11 +1086,13 @@ def edge_geometry(x1: torch.Tensor, y1: torch.Tensor, x2: torch.Tensor, y2: torc
     return (draw, x1, y1, x2, y2, xx0, yy0, dx, dy, xdir, vert, horiz, ymaj, major, E, lo)
 
 
-def edge_setup(x1: torch.Tensor, y1: torch.Tensor, x2: torch.Tensor, y2: torch.Tensor,
-               W: int, H: int) -> tuple[torch.Tensor, ...]:
+def edge_setup(
+    x1: torch.Tensor, y1: torch.Tensor, x2: torch.Tensor, y2: torch.Tensor, W: int, H: int
+) -> tuple[torch.Tensor, ...]:
     """:func:`edge_geometry` in the order :func:`aaline_emit` unpacks it (no clipped far endpoint)."""
-    draw, sx, sy, _x2, _y2, xx0, yy0, dx, dy, xdir, vert, horiz, ymaj, major, E, lo = \
-        edge_geometry(x1, y1, x2, y2, W, H)
+    draw, sx, sy, _x2, _y2, xx0, yy0, dx, dy, xdir, vert, horiz, ymaj, major, E, lo = edge_geometry(
+        x1, y1, x2, y2, W, H
+    )
     return (draw, sx, sy, xx0, yy0, dx, dy, xdir, vert, horiz, ymaj, major, E, lo)
 
 
@@ -704,12 +1119,22 @@ def aaline_emit(cv: Canvas, p, color_t, kmax, bidx) -> None:
     bb = bidx.view(-1, 1).expand(B, kmax + 1).reshape(-1)
     dw = draw.view(-1, 1)
     # axis-aligned edges: SDL_gfx short-circuits to a solid vline/hline, with no AA whatsoever
-    cv.blend_at(bb, (yy0.view(-1, 1) + k).reshape(-1),
-                xx0.view(-1, 1).expand(B, kmax + 1).reshape(-1), color_t, run,
-                (dw & vert.view(-1, 1) & (dy > 0).view(-1, 1) & (k <= dy.view(-1, 1))).reshape(-1))
-    cv.blend_at(bb, yy0.view(-1, 1).expand(B, kmax + 1).reshape(-1),
-                (lo.view(-1, 1) + k).reshape(-1), color_t, run,
-                (dw & horiz.view(-1, 1) & (k <= dx.view(-1, 1))).reshape(-1))
+    cv.blend_at(
+        bb,
+        (yy0.view(-1, 1) + k).reshape(-1),
+        xx0.view(-1, 1).expand(B, kmax + 1).reshape(-1),
+        color_t,
+        run,
+        (dw & vert.view(-1, 1) & (dy > 0).view(-1, 1) & (k <= dy.view(-1, 1))).reshape(-1),
+    )
+    cv.blend_at(
+        bb,
+        yy0.view(-1, 1).expand(B, kmax + 1).reshape(-1),
+        (lo.view(-1, 1) + k).reshape(-1),
+        color_t,
+        run,
+        (dw & horiz.view(-1, 1) & (k <= dx.view(-1, 1))).reshape(-1),
+    )
 
     gen = ~vert & ~horiz
     kk = k[:, 1:]
@@ -733,8 +1158,9 @@ def aaline(cv: Canvas, x1, y1, x2, y2, color_t, kmax, bidx) -> None:
     aaline_emit(cv, edge_setup(x1, y1, x2, y2, cv.W, cv.H), color_t, kmax, bidx)
 
 
-def polygon(cv: Canvas, verts, color, color_t, bidx, kmax, aa: bool = True,
-            fill_first: bool = False, window=None) -> None:
+def polygon(
+    cv: Canvas, verts, color, color_t, bidx, kmax, aa: bool = True, fill_first: bool = False, window=None
+) -> None:
     """The gymnasium idiom: ``aapolygon`` then ``filled_polygon``, on the same float64 vertices.
 
     The AA fringe is blended against the canvas at draw time and the hard fill then overwrites the
@@ -761,11 +1187,10 @@ def polygon(cv: Canvas, verts, color, color_t, bidx, kmax, aa: bool = True,
     def _aa():
         # one clip for every edge of the polygon, then the writes edge by edge and in order
         nx, ny = vx.roll(-1, 1), vy.roll(-1, 1)
-        pars = edge_setup(vx.t().reshape(-1), vy.t().reshape(-1),
-                          nx.t().reshape(-1), ny.t().reshape(-1), cv.W, cv.H)
+        pars = edge_setup(vx.t().reshape(-1), vy.t().reshape(-1), nx.t().reshape(-1), ny.t().reshape(-1), cv.W, cv.H)
         B = vx.shape[0]
         for e in range(n):
-            aaline_emit(cv, tuple(t[e * B:(e + 1) * B] for t in pars), color_t, km[e], bidx)
+            aaline_emit(cv, tuple(t[e * B : (e + 1) * B] for t in pars), color_t, km[e], bidx)
 
     if aa and not fill_first:
         _aa()
@@ -775,8 +1200,9 @@ def polygon(cv: Canvas, verts, color, color_t, bidx, kmax, aa: bool = True,
         _aa()
 
 
-def circle(cv: Canvas, cx, cy, r, color, color_t, bidx, hw_t, stencil, aa: bool = True,
-           window=None, disc=None) -> None:
+def circle(
+    cv: Canvas, cx, cy, r, color, color_t, bidx, hw_t, stencil, aa: bool = True, window=None, disc=None
+) -> None:
     """``aacircle`` (fringe stencil) then ``filled_circle``.
 
     ``stencil`` is a per-pass list of ``(dy, dx, w)`` tensors: ``aaellipseColor`` writes a few pixels
@@ -793,10 +1219,14 @@ def circle(cv: Canvas, cx, cy, r, color, color_t, bidx, hw_t, stencil, aa: bool 
             if not S:
                 continue
             bb = bidx.view(-1, 1).expand(B, S).reshape(-1)
-            cv.blend_at(bb, (cy.view(-1, 1) + st[:, 0].view(1, -1)).reshape(-1),
-                        (cx.view(-1, 1) + st[:, 1].view(1, -1)).reshape(-1), color_t,
-                        st[:, 2].view(1, -1).expand(B, S).reshape(-1),
-                        cv.always().expand(B * S))
+            cv.blend_at(
+                bb,
+                (cy.view(-1, 1) + st[:, 0].view(1, -1)).reshape(-1),
+                (cx.view(-1, 1) + st[:, 1].view(1, -1)).reshape(-1),
+                color_t,
+                st[:, 2].view(1, -1).expand(B, S).reshape(-1),
+                cv.always().expand(B * S),
+            )
     if disc is not None:
         cv.paint_disc(cy, cx, disc, color)
     else:
@@ -860,8 +1290,7 @@ class Gfx:
     def disc(self, r: int) -> torch.Tensor:
         """``(S,2)`` int64 offsets of the filled disc of radius ``r``, cached (rule 6)."""
         if r not in self._disc:
-            self._disc[r] = torch.tensor(disc_offsets(int(r)), dtype=torch.int64,
-                                         device=self.device).view(-1, 2)
+            self._disc[r] = torch.tensor(disc_offsets(int(r)), dtype=torch.int64, device=self.device).view(-1, 2)
         return self._disc[r]
 
     def stencil(self, r: int) -> list[torch.Tensor]:
@@ -870,10 +1299,14 @@ class Gfx:
             if rows is None:
                 raise KeyError(
                     f"no aacircle fringe table for radius {r}; regenerate with "
-                    f"scratch/classic_control/gen_stencils.py rather than approximating it")
-            self._st[r] = [torch.tensor([[a, b, w] for (a, b, w, p) in rows if p == pas],
-                                        dtype=torch.int64, device=self.device).view(-1, 3)
-                           for pas in (0, 1)]
+                    f"scratch/classic_control/gen_stencils.py rather than approximating it"
+                )
+            self._st[r] = [
+                torch.tensor(
+                    [[a, b, w] for (a, b, w, p) in rows if p == pas], dtype=torch.int64, device=self.device
+                ).view(-1, 3)
+                for pas in (0, 1)
+            ]
         return self._st[r]
 
     def verts(self, vals) -> torch.Tensor:

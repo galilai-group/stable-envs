@@ -11,6 +11,7 @@ Three things are asserted, and the middle one is the load-bearing one:
 
 Everything here is a file read plus one class attribute. Nothing renders and no GPU is required.
 """
+
 from __future__ import annotations
 
 import importlib.util
@@ -44,32 +45,35 @@ def arm() -> dict:
 
 @pytest.mark.parametrize("cell", TRACKCOM)
 def test_the_cell_declares_the_reference_it_was_measured_against(cell: str) -> None:
-    from stable_envs.env import reference_versions_of
     import stable_envs
+    from stable_envs.env import reference_versions_of
 
     cls = stable_envs.registry.REGISTRY.get(cell)
     assert cls is not None, f"{cell} is not registered in this interpreter"
     declared = dict(reference_versions_of(cls) or {})
     assert declared == DECLARED, (
         f"{cell} declares {declared}; the Step-8 certification of this cell rests on "
-        f"{DECLARED}. Changing it is a re-declaration, not a test fix.")
+        f"{DECLARED}. Changing it is a re-declaration, not a test fix."
+    )
     assert not any(p in declared for p in OURS), (
         f"{cell} declares one of OUR packages as a REFERENCE version: {declared}. "
-        f"measured_with is the field for our side, and it is recorded, never compared.")
+        f"measured_with is the field for our side, and it is recorded, never compared."
+    )
 
 
 def test_the_reference_arm_record_regenerates(arm: dict) -> None:
     """Re-run the generator and compare. Only the HEAD sha may differ between runs."""
-    spec = importlib.util.spec_from_file_location(
-        "_ref_arm", ROOT / "scratch/step8/provenance/reference_arm.py")
+    spec = importlib.util.spec_from_file_location("_ref_arm", ROOT / "scratch/step8/provenance/reference_arm.py")
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     fresh = mod.build()
     volatile = "generated_at_head_sha"
-    assert json.dumps({k: v for k, v in fresh.items() if k != volatile}, sort_keys=True) == \
-           json.dumps({k: v for k, v in arm.items() if k != volatile}, sort_keys=True), (
+    assert json.dumps({k: v for k, v in fresh.items() if k != volatile}, sort_keys=True) == json.dumps(
+        {k: v for k, v in arm.items() if k != volatile}, sort_keys=True
+    ), (
         "the committed reference_arm.json is not what the generator produces from the committed "
-        "inputs; regenerate it rather than editing it")
+        "inputs; regenerate it rather than editing it"
+    )
 
 
 @pytest.mark.parametrize("cell", TRACKCOM)
@@ -78,8 +82,8 @@ def test_the_authoritative_arm_is_the_declared_one_and_it_passes(arm: dict, cell
     assert rec["declared_reference_versions"] == DECLARED
     auth = next(a for a in rec["arms"] if a["arm"] == rec["authoritative_arm"])
     assert auth["reference_version_mismatch"] == [], (
-        f"{cell}'s authoritative arm does not satisfy its own declaration: "
-        f"{auth['reference_version_mismatch']}")
+        f"{cell}'s authoritative arm does not satisfy its own declaration: {auth['reference_version_mismatch']}"
+    )
     assert (auth["provenance"]["reference_packages"] or {})["mujoco"] == DECLARED["mujoco"]
     assert auth["gate_a"] == "PASS", f"{cell} on the declared reference: {auth['gate_a']}"
     assert auth["failures"] == [] and auth["blocked"] == []
@@ -103,13 +107,13 @@ def test_the_drifted_arm_is_kept_not_erased(arm: dict, cell: str) -> None:
         # failure, and Step 4's own rule is that a dependency failure is not a fidelity failure.
         assert vf["status"] == "blocked_environment", vf["status"]
         assert vf.get("judged_against_wrong_reference"), (
-            "the verdict the drifted arm WOULD have received is the finding; it must be recorded")
+            "the verdict the drifted arm WOULD have received is the finding; it must be recorded"
+        )
 
 
 @pytest.mark.parametrize("cell", TRACKCOM)
 def test_the_support_matrix_reads_the_authoritative_arm_and_reports_the_drift(cell: str) -> None:
-    rows = [r for r in json.loads(MATRIX.read_text())["rows"]
-            if cell in (r.get("stable_envs_cells") or [])]
+    rows = [r for r in json.loads(MATRIX.read_text())["rows"] if cell in (r.get("stable_envs_cells") or [])]
     assert len(rows) == 1, f"{cell} appears in {len(rows)} matrix rows"
     row = rows[0]
     assert row["gate_a"]["status"] == "PASS", row["gate_a"]["status"]
@@ -118,7 +122,8 @@ def test_the_support_matrix_reads_the_authoritative_arm_and_reports_the_drift(ce
     kinds = {(x["kind"], x["what"]) for x in row["limitations"]}
     assert ("DOCUMENTED_LIMITATION", "reference/upstream drift") in kinds, (
         f"{cell}'s row passes without carrying the 3.12 drift as a limitation; both facts are "
-        f"required to stay in the row")
+        f"required to stay in the row"
+    )
 
 
 def test_no_committed_provenance_file_carries_an_absolute_cluster_path() -> None:
@@ -127,7 +132,7 @@ def test_no_committed_provenance_file_carries_an_absolute_cluster_path() -> None
     for d in (ROOT / "scratch/step8/provenance", ROOT / "examples/results/step8/provenance"):
         for p in sorted(d.rglob("*")):
             if not p.is_file() or p.name == "sanitize.py":
-                continue                   # the scrubber's own patterns, not a path into a home
+                continue  # the scrubber's own patterns, not a path into a home
             try:
                 text = p.read_text()
             except UnicodeDecodeError:

@@ -37,6 +37,7 @@ Polygons are padded to ``V`` vertices by repeating the last one. Degenerate (zer
 detected in the kernel and excluded from the SDF; they are harmless for the inside test (their cross
 product is 0, which passes) but would otherwise pin the outline distance to 0 and paint the whole plane.
 """
+
 from __future__ import annotations
 
 from collections.abc import Sequence
@@ -70,14 +71,14 @@ class Scene2D:
     PushT render.
     """
 
-    kind: torch.Tensor          # (B,N) int32
-    geom: torch.Tensor          # (B,N,G) float32
-    fill: torch.Tensor          # (B,N,3) float32, 0-255
-    line: torch.Tensor          # (B,N,3) float32, 0-255
-    line_w: torch.Tensor        # (B,N)   float32, world units (half-width); 0 = no outline
-    background: torch.Tensor    # (B,3)   float32, 0-255
+    kind: torch.Tensor  # (B,N) int32
+    geom: torch.Tensor  # (B,N,G) float32
+    fill: torch.Tensor  # (B,N,3) float32, 0-255
+    line: torch.Tensor  # (B,N,3) float32, 0-255
+    line_w: torch.Tensor  # (B,N)   float32, world units (half-width); 0 = no outline
+    background: torch.Tensor  # (B,3)   float32, 0-255
     world: tuple[float, float, float, float] = (0.0, 0.0, 1.0, 1.0)
-    flip_y: bool = False        # True when the env's +y points up but the image's +y points down
+    flip_y: bool = False  # True when the env's +y points up but the image's +y points down
     #: Number of LEADING primitives that are identical across the batch and across calls (given the
     #: same variation). They are rasterized once into a cached base image and skipped every frame
     #: afterwards. Most scenes are mostly static — PushT's goal T and four walls are 6 of its 9
@@ -106,15 +107,22 @@ class Scene2D:
         """``V``: the polygon width ``geom`` is padded to, in whole ``(x, y)`` pairs."""
         return int(self.geom.shape[2]) // 2
 
-    def to(self, device: Any = None, dtype: Any = None) -> "Scene2D":
+    def to(self, device: Any = None, dtype: Any = None) -> Scene2D:
         """This scene on another device and/or float dtype. ``kind`` keeps its int32 dtype."""
         f = lambda t, d=None: t.to(device=device, dtype=d or t.dtype)
-        return Scene2D(kind=f(self.kind), geom=f(self.geom, dtype), fill=f(self.fill, dtype),
-                       line=f(self.line, dtype), line_w=f(self.line_w, dtype),
-                       background=f(self.background, dtype), world=self.world, flip_y=self.flip_y,
-                       static_prefix=self.static_prefix)
+        return Scene2D(
+            kind=f(self.kind),
+            geom=f(self.geom, dtype),
+            fill=f(self.fill, dtype),
+            line=f(self.line, dtype),
+            line_w=f(self.line_w, dtype),
+            background=f(self.background, dtype),
+            world=self.world,
+            flip_y=self.flip_y,
+            static_prefix=self.static_prefix,
+        )
 
-    def validate(self) -> "Scene2D":
+    def validate(self) -> Scene2D:
         """Shape/dtype contract, checked once at build time rather than misrendered silently."""
         B, N = self.kind.shape
         assert self.geom.shape[:2] == (B, N), f"geom {tuple(self.geom.shape)} vs kind {(B, N)}"
@@ -139,8 +147,14 @@ class SceneBuilder:
     builder broadcasts.
     """
 
-    def __init__(self, batch: int, device: Any = "cuda", vertices: int = 4,
-                 dtype: torch.dtype = torch.float32, style: Any = None) -> None:
+    def __init__(
+        self,
+        batch: int,
+        device: Any = "cuda",
+        vertices: int = 4,
+        dtype: torch.dtype = torch.float32,
+        style: Any = None,
+    ) -> None:
         self.B = int(batch)
         self.V = int(vertices)
         self.device = torch.device(device)
@@ -169,8 +183,7 @@ class SceneBuilder:
         if t.ndim == 0:
             t = t.reshape(1, 1).expand(self.B, width)
         elif t.ndim == 1:
-            t = (t.reshape(1, -1).expand(self.B, -1) if t.shape[0] == width
-                 else t.reshape(-1, 1).expand(self.B, width))
+            t = t.reshape(1, -1).expand(self.B, -1) if t.shape[0] == width else t.reshape(-1, 1).expand(self.B, width)
         return t.reshape(self.B, width).contiguous()
 
     def _enabled(self, enabled: Batched | None) -> torch.Tensor:
@@ -193,8 +206,11 @@ class SceneBuilder:
         if t.ndim == 0:
             t = t.reshape(1, 1, 1).expand(self.B, n, width)
         elif t.ndim == 1:
-            t = (t.reshape(1, 1, -1).expand(self.B, n, -1) if t.shape[0] == width
-                 else t.reshape(-1, 1, 1).expand(self.B, n, width))
+            t = (
+                t.reshape(1, 1, -1).expand(self.B, n, -1)
+                if t.shape[0] == width
+                else t.reshape(-1, 1, 1).expand(self.B, n, width)
+            )
         elif t.ndim == 2:
             t = t.reshape(self.B, 1, width).expand(self.B, n, width)
         return t.reshape(self.B, n, width).contiguous()
@@ -210,8 +226,16 @@ class SceneBuilder:
             t = t.reshape(self.B, 1).expand(self.B, n)
         return t.reshape(self.B, n).bool()
 
-    def _push(self, kind_id: int, geom: torch.Tensor, fill: Batched, line: Batched | None,
-              line_w: Batched, enabled: Batched | None, n: int = 1) -> None:
+    def _push(
+        self,
+        kind_id: int,
+        geom: torch.Tensor,
+        fill: Batched,
+        line: Batched | None,
+        line_w: Batched,
+        enabled: Batched | None,
+        n: int = 1,
+    ) -> None:
         """Append ``n`` primitives. ``n == 1`` takes ``(B, ...)``; otherwise ``(B, n, ...)``.
 
         The batched form exists because dispatch, not arithmetic, is what a scene of a few hundred
@@ -221,13 +245,15 @@ class SceneBuilder:
         """
         b = self.B
         sh = (b,) if n == 1 else (b, n)
-        k = torch.where(self._enabled(enabled) if n == 1 else self._enabled_n(enabled, n),
-                        torch.full(sh, kind_id, device=self.device, dtype=torch.int32),
-                        torch.zeros(sh, device=self.device, dtype=torch.int32))
+        k = torch.where(
+            self._enabled(enabled) if n == 1 else self._enabled_n(enabled, n),
+            torch.full(sh, kind_id, device=self.device, dtype=torch.int32),
+            torch.zeros(sh, device=self.device, dtype=torch.int32),
+        )
         pad = 2 * self.V - geom.shape[-1]
         if pad > 0:
             geom = torch.cat([geom, torch.zeros(*sh, pad, device=self.device, dtype=self.dtype)], -1)
-        geom = geom[..., :2 * self.V]
+        geom = geom[..., : 2 * self.V]
         if n == 1:
             fill_t = self._b(fill, 3)
             line_t = self._b(line if line is not None else fill, 3)
@@ -248,9 +274,15 @@ class SceneBuilder:
 
     # primitives
 
-    def add_disc(self, center: Batched, radius: Batched, color: Batched,
-                 inner_radius: Batched = 0.0, inner_color: Batched | None = None,
-                 enabled: Batched | None = None) -> None:
+    def add_disc(
+        self,
+        center: Batched,
+        radius: Batched,
+        color: Batched,
+        inner_radius: Batched = 0.0,
+        inner_color: Batched | None = None,
+        enabled: Batched | None = None,
+    ) -> None:
         """A filled disc, optionally with a concentric inner disc drawn on top (a ring).
 
         The ring is one primitive rather than two because that is how the reference renderers draw it —
@@ -261,37 +293,56 @@ class SceneBuilder:
         r = self._b(radius, 1)
         ir = self._b(inner_radius, 1)
         geom = torch.cat([c, r, ir], dim=1)
-        self._push(KIND_DISC, geom, color, inner_color if inner_color is not None else color,
-                   0.0, enabled)
+        self._push(KIND_DISC, geom, color, inner_color if inner_color is not None else color, 0.0, enabled)
 
-    def add_poly(self, verts: Batched, color: Batched, outline_color: Batched | None = None,
-                 outline_w: Batched = 0.0, enabled: Batched | None = None) -> None:
+    def add_poly(
+        self,
+        verts: Batched,
+        color: Batched,
+        outline_color: Batched | None = None,
+        outline_w: Batched = 0.0,
+        enabled: Batched | None = None,
+    ) -> None:
         """A convex polygon, vertices CCW, ``(B,V,2)`` or ``(V,2)``. Padded to the builder's V."""
         t = torch.as_tensor(verts, device=self.device, dtype=self.dtype)
         if t.ndim == 2:
             t = t.unsqueeze(0).expand(self.B, -1, -1)
         v = t.shape[1]
-        if v < self.V:              # repeat the last vertex; the kernel drops degenerate edges
+        if v < self.V:  # repeat the last vertex; the kernel drops degenerate edges
             t = torch.cat([t, t[:, -1:].expand(-1, self.V - v, -1)], dim=1)
-        self._push(KIND_POLY, t[:, :self.V].reshape(self.B, -1).contiguous(),
-                   color, outline_color, outline_w, enabled)
+        self._push(
+            KIND_POLY, t[:, : self.V].reshape(self.B, -1).contiguous(), color, outline_color, outline_w, enabled
+        )
 
-    def add_segment(self, a: Batched, b: Batched, half_w: Batched, color: Batched,
-                    enabled: Batched | None = None) -> None:
+    def add_segment(
+        self, a: Batched, b: Batched, half_w: Batched, color: Batched, enabled: Batched | None = None
+    ) -> None:
         """A thick line segment with round caps — a capsule, i.e. distance-to-segment <= half_w."""
         geom = torch.cat([self._b(a, 2), self._b(b, 2), self._b(half_w, 1)], dim=1)
         self._push(KIND_SEGMENT, geom, color, color, 0.0, enabled)
 
-    def add_rect(self, center: Batched, size: Batched, color: Batched,
-                 angle: Batched | None = None, outline_color: Batched | None = None,
-                 outline_w: Batched = 0.0, enabled: Batched | None = None) -> None:
+    def add_rect(
+        self,
+        center: Batched,
+        size: Batched,
+        color: Batched,
+        angle: Batched | None = None,
+        outline_color: Batched | None = None,
+        outline_w: Batched = 0.0,
+        enabled: Batched | None = None,
+    ) -> None:
         """Axis-aligned or rotated rectangle, as a convex polygon. The most common primitive by far."""
         c = self._b(center, 2)
         s = self._b(size, 2) * 0.5
-        base = torch.stack([torch.stack([-s[:, 0], -s[:, 1]], -1),
-                            torch.stack([s[:, 0], -s[:, 1]], -1),
-                            torch.stack([s[:, 0], s[:, 1]], -1),
-                            torch.stack([-s[:, 0], s[:, 1]], -1)], dim=1)      # (B,4,2) CCW
+        base = torch.stack(
+            [
+                torch.stack([-s[:, 0], -s[:, 1]], -1),
+                torch.stack([s[:, 0], -s[:, 1]], -1),
+                torch.stack([s[:, 0], s[:, 1]], -1),
+                torch.stack([-s[:, 0], s[:, 1]], -1),
+            ],
+            dim=1,
+        )  # (B,4,2) CCW
         if angle is not None:
             th = self._b(angle, 1).squeeze(1)
             ct, st = torch.cos(th), torch.sin(th)
@@ -308,46 +359,74 @@ class SceneBuilder:
     # but ``einsum`` and ``norm`` over an extra axis are each entitled to a different last bit, and
     # one ulp on a vertex is a pixel wherever that vertex lands on a boundary.
 
-    def add_segments(self, a: torch.Tensor, b: torch.Tensor, half_w: Batched, color: Batched,
-                     enabled: Batched | None = None) -> None:
+    def add_segments(
+        self, a: torch.Tensor, b: torch.Tensor, half_w: Batched, color: Batched, enabled: Batched | None = None
+    ) -> None:
         """``n`` capsules per environment: ``a``/``b`` ``(B,n,2)``, ``half_w`` ``(B,n)`` or scalar."""
         n = int(a.shape[1])
-        hw = (half_w.reshape(self.B, n, 1).to(device=self.device, dtype=self.dtype)
-              if torch.is_tensor(half_w) and half_w.ndim >= 2 else self._bn(half_w, n, 1))
+        hw = (
+            half_w.reshape(self.B, n, 1).to(device=self.device, dtype=self.dtype)
+            if torch.is_tensor(half_w) and half_w.ndim >= 2
+            else self._bn(half_w, n, 1)
+        )
         geom = torch.cat([self._bn(a, n, 2), self._bn(b, n, 2), hw], dim=-1)
         self._push(KIND_SEGMENT, geom, color, color, 0.0, enabled, n=n)
 
-    def add_polys(self, verts: torch.Tensor, color: Batched, outline_color: Batched | None = None,
-                  outline_w: Batched = 0.0, enabled: Batched | None = None) -> None:
+    def add_polys(
+        self,
+        verts: torch.Tensor,
+        color: Batched,
+        outline_color: Batched | None = None,
+        outline_w: Batched = 0.0,
+        enabled: Batched | None = None,
+    ) -> None:
         """``n`` convex polygons per environment, ``verts`` ``(B,n,v,2)``, padded to the builder's V."""
         n, v = int(verts.shape[1]), int(verts.shape[2])
         t = verts.to(device=self.device, dtype=self.dtype)
         if v < self.V:
             t = torch.cat([t, t[:, :, -1:].expand(-1, -1, self.V - v, -1)], dim=2)
-        self._push(KIND_POLY, t[:, :, :self.V].reshape(self.B, n, -1).contiguous(),
-                   color, outline_color, outline_w, enabled, n=n)
+        self._push(
+            KIND_POLY,
+            t[:, :, : self.V].reshape(self.B, n, -1).contiguous(),
+            color,
+            outline_color,
+            outline_w,
+            enabled,
+            n=n,
+        )
 
-    def add_rects(self, center: torch.Tensor, size: torch.Tensor, color: Batched,
-                  angle: Batched | None = None, outline_color: Batched | None = None,
-                  outline_w: Batched = 0.0, enabled: Batched | None = None) -> None:
+    def add_rects(
+        self,
+        center: torch.Tensor,
+        size: torch.Tensor,
+        color: Batched,
+        angle: Batched | None = None,
+        outline_color: Batched | None = None,
+        outline_w: Batched = 0.0,
+        enabled: Batched | None = None,
+    ) -> None:
         """``n`` rectangles per environment: ``center``/``size`` ``(B,n,2)``, ``angle`` ``(B,n)``."""
         n = int(center.shape[1])
         M = self.B * n
         c = center.to(device=self.device, dtype=self.dtype).reshape(M, 2)
         s = size.to(device=self.device, dtype=self.dtype).reshape(M, 2) * 0.5
-        base = torch.stack([torch.stack([-s[:, 0], -s[:, 1]], -1),
-                            torch.stack([s[:, 0], -s[:, 1]], -1),
-                            torch.stack([s[:, 0], s[:, 1]], -1),
-                            torch.stack([-s[:, 0], s[:, 1]], -1)], dim=1)      # (M,4,2) CCW
+        base = torch.stack(
+            [
+                torch.stack([-s[:, 0], -s[:, 1]], -1),
+                torch.stack([s[:, 0], -s[:, 1]], -1),
+                torch.stack([s[:, 0], s[:, 1]], -1),
+                torch.stack([-s[:, 0], s[:, 1]], -1),
+            ],
+            dim=1,
+        )  # (M,4,2) CCW
         if angle is not None:
             th = torch.as_tensor(angle, device=self.device, dtype=self.dtype).reshape(M)
             ct, st = torch.cos(th), torch.sin(th)
             rot = torch.stack([torch.stack([ct, -st], -1), torch.stack([st, ct], -1)], -2)
             base = torch.einsum("bij,bkj->bki", rot, base)
-        self.add_polys((base + c.unsqueeze(1)).reshape(self.B, n, 4, 2), color, outline_color,
-                       outline_w, enabled)
+        self.add_polys((base + c.unsqueeze(1)).reshape(self.B, n, 4, 2), color, outline_color, outline_w, enabled)
 
-    def mark_static(self) -> "SceneBuilder":
+    def mark_static(self) -> SceneBuilder:
         """Everything added so far depends on the variation and not on the state; offer it for baking.
 
         The env declares the prefix; whether it is *baked* depends on whether it is actually identical
@@ -383,8 +462,7 @@ class SceneBuilder:
             return K
         return K if self._style.shared else 0
 
-    def build(self, background: Batched, world: Sequence[float],
-              flip_y: bool = False) -> Scene2D:
+    def build(self, background: Batched, world: Sequence[float], flip_y: bool = False) -> Scene2D:
         """The finished, validated ``Scene2D``. ``world`` is ``(x0, y0, x1, y1)`` in the env's units."""
         assert self._kind, "scene has no primitives"
         cat = lambda xs: (xs[0] if len(xs) == 1 else torch.cat(xs, dim=1)).contiguous()  # noqa: E731
@@ -395,6 +473,7 @@ class SceneBuilder:
             line=cat(self._line),
             line_w=cat(self._lw),
             background=self._b(background, 3),
-            world=tuple(float(w) for w in world), flip_y=bool(flip_y),
+            world=tuple(float(w) for w in world),
+            flip_y=bool(flip_y),
             static_prefix=self._requested_prefix(),
         ).validate()

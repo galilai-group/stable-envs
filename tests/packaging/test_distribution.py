@@ -66,9 +66,7 @@ def test_optional_extras_are_installable_on_pypi() -> None:
 def test_dynamic_version_reads_about() -> None:
     project = _pyproject()
     assert project["project"]["dynamic"] == ["version"]
-    assert project["tool"]["setuptools"]["dynamic"]["version"]["attr"] == (
-        "stable_envs.__about__.__version__"
-    )
+    assert project["tool"]["setuptools"]["dynamic"]["version"]["attr"] == ("stable_envs.__about__.__version__")
 
 
 def test_mkdocs_yaml_is_canonical_with_yml_compat() -> None:
@@ -121,12 +119,7 @@ def test_certification_is_manual_and_profiled() -> None:
 
 def test_pre_commit_does_not_reformat_research_history() -> None:
     cfg = yaml.safe_load((ROOT / ".pre-commit-config.yaml").read_text())
-    ruff = next(
-        hook
-        for repo in cfg["repos"]
-        for hook in repo["hooks"]
-        if hook["id"] == "ruff"
-    )
+    ruff = next(hook for repo in cfg["repos"] for hook in repo["hooks"] if hook["id"] == "ruff")
     assert "--no-fix" in ruff["args"]
     assert "stable_envs/" in ruff["files"]
 

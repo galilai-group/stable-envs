@@ -36,6 +36,7 @@ produces a hash that is wrong everywhere while looking like noise. Measured on o
 at ``B=256``, ``(112,144)``: int32 is bit-identical to an int64-with-masking implementation and to
 jax, and **2.3x faster** (190.7 ms -> 82.8 ms).
 """
+
 from __future__ import annotations
 
 import torch
@@ -54,8 +55,9 @@ def _rotl32(x: torch.Tensor, d: int) -> torch.Tensor:
     return (x << d) | ((x >> (32 - d)) & ((1 << d) - 1))
 
 
-def threefry2x32(k1: torch.Tensor, k2: torch.Tensor,
-                 x1: torch.Tensor, x2: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+def threefry2x32(
+    k1: torch.Tensor, k2: torch.Tensor, x1: torch.Tensor, x2: torch.Tensor
+) -> tuple[torch.Tensor, torch.Tensor]:
     """The 20-round Threefry-2x32 hash. All arguments int32 and mutually broadcastable.
 
     ``k1, k2`` are the two halves of the key; ``x1, x2`` the two halves of the counter. Returns the
@@ -102,8 +104,9 @@ def random_bits(keys: torch.Tensor, n: int, offset: int = 0) -> torch.Tensor:
     k = keys.to(torch.int32)
     B = k.shape[0]
     hi, lo = _counter(n, offset, k.device)
-    b1, b2 = threefry2x32(k[:, 0].view(B, 1), k[:, 1].view(B, 1),
-                          hi.view(1, n).expand(B, n), lo.view(1, n).expand(B, n))
+    b1, b2 = threefry2x32(
+        k[:, 0].view(B, 1), k[:, 1].view(B, 1), hi.view(1, n).expand(B, n), lo.view(1, n).expand(B, n)
+    )
     return b1 ^ b2
 
 
@@ -155,5 +158,4 @@ def key_from_halves(halves: torch.Tensor) -> torch.Tensor:
 def key_to_halves(keys: torch.Tensor) -> torch.Tensor:
     """``(B, 2)`` int32 keys -> ``(B, 4)`` int64 of 16-bit halves. The inverse of the above."""
     k = keys.to(torch.int64) & 0xFFFFFFFF
-    return torch.stack([(k[:, 0] >> 16) & 0xFFFF, k[:, 0] & 0xFFFF,
-                        (k[:, 1] >> 16) & 0xFFFF, k[:, 1] & 0xFFFF], dim=1)
+    return torch.stack([(k[:, 0] >> 16) & 0xFFFF, k[:, 0] & 0xFFFF, (k[:, 1] >> 16) & 0xFFFF, k[:, 1] & 0xFFFF], dim=1)

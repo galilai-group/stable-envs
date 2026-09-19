@@ -25,6 +25,7 @@ its numbers belong to, and the failure is a wrong picture rather than an error.
     python examples/hf_roundtrip.py
     python examples/hf_roundtrip.py --corpus examples/results/pusht_rollout.npz
 """
+
 from __future__ import annotations
 
 import argparse
@@ -54,12 +55,21 @@ def build_corpus(env, corpus: Path | None, n_traj: int, steps: int, seed: int):
         z = np.load(corpus)
         states = z["states"].astype(np.float32)
         style = z["style"].astype(np.float32) if "style" in z else None
-        return states, style, f"{corpus} ({states.shape[0]} trajectories x {states.shape[1]} steps, " \
-                              f"official gym_pusht simulator)"
+        return (
+            states,
+            style,
+            f"{corpus} ({states.shape[0]} trajectories x {states.shape[1]} steps, official gym_pusht simulator)",
+        )
     states = np.stack([env.sample_states(steps, rng) for _ in range(n_traj)]).astype(np.float32)
     style = env.sample_style(n_traj, rng=rng)
-    return states, style, (f"{n_traj} x {steps} independent states from the env's reset distribution "
-                           f"(NOT a simulated trajectory; the round trip is a statement about bytes)")
+    return (
+        states,
+        style,
+        (
+            f"{n_traj} x {steps} independent states from the env's reset distribution "
+            f"(NOT a simulated trajectory; the round trip is a statement about bytes)"
+        ),
+    )
 
 
 def dir_bytes(p: Path) -> int:
@@ -84,14 +94,15 @@ def main() -> None:
     states, style, provenance = build_corpus(env, args.corpus, args.traj, args.steps, args.seed)
     print(f"corpus: {provenance}")
 
-    ds = se.TrajectoryDataset(env, states, style=style, window=args.window, stride=args.stride,
-                              size=args.size)
+    ds = se.TrajectoryDataset(env, states, style=style, window=args.window, stride=args.stride, size=args.size)
     print(ds)
     print("describe   ", json.dumps(ds.describe()))
     comp = ds.compression
-    print(f"compression {comp['stored_bytes']:,} B stored "
-          f"({comp['state_bytes']:,} states + {comp['style_bytes']:,} style) against "
-          f"{comp['frame_bytes']:,} B of {comp['frame_shape']} frames -> {comp['ratio']:.1f}x")
+    print(
+        f"compression {comp['stored_bytes']:,} B stored "
+        f"({comp['state_bytes']:,} states + {comp['style_bytes']:,} style) against "
+        f"{comp['frame_bytes']:,} B of {comp['frame_shape']} frames -> {comp['ratio']:.1f}x"
+    )
 
     # The window property, checked rather than claimed: every row a clip reads must lie inside the
     # trajectory that clip belongs to, and consecutive windows must be consecutive rows.
@@ -100,8 +111,10 @@ def main() -> None:
     hi = (ds.offsets + ds.lengths - 1)[ds.clip_traj][:, None]
     inside = bool(((rows >= lo) & (rows <= hi)).all())
     consec = bool((np.diff(rows, axis=1) == ds.frameskip).all())
-    print(f"windows: {len(ds)} clips, none straddles a trajectory boundary: {inside}; "
-          f"rows consecutive at frameskip {ds.frameskip}: {consec}")
+    print(
+        f"windows: {len(ds)} clips, none straddles a trajectory boundary: {inside}; "
+        f"rows consecutive at frameskip {ds.frameskip}: {consec}"
+    )
     assert inside and consec
 
     batch = ds[[0, 1, 2, 3]]
@@ -112,13 +125,22 @@ def main() -> None:
     torch.cuda.synchronize()
     dt = time.perf_counter() - t0
     n = before.shape[0]
-    print(f"rendered {n:,} frames in {dt * 1e3:.1f} ms ({n / dt:,.0f} frames/s) "
-          f"= {before.numel() / 1e6:.1f} MB of pixels from {comp['stored_bytes'] / 1e3:.1f} kB of state")
+    print(
+        f"rendered {n:,} frames in {dt * 1e3:.1f} ms ({n / dt:,.0f} frames/s) "
+        f"= {before.numel() / 1e6:.1f} MB of pixels from {comp['stored_bytes'] / 1e3:.1f} kB of state"
+    )
 
     tmp = Path(args.keep) if args.keep else Path(tempfile.mkdtemp(prefix="stable_envs_hf_"))
-    results = {"provenance": provenance, "describe": ds.describe(), "compression": comp,
-               "n_frames": int(n), "render_s": dt, "frames_per_s": n / dt,
-               "windows_inside_trajectory": inside, "windows_consecutive": consec}
+    results = {
+        "provenance": provenance,
+        "describe": ds.describe(),
+        "compression": comp,
+        "n_frames": int(n),
+        "render_s": dt,
+        "frames_per_s": n / dt,
+        "windows_inside_trajectory": inside,
+        "windows_consecutive": consec,
+    }
     try:
         # 1. Arrow directory
         p = tmp / "corpus_arrow"
@@ -128,16 +150,22 @@ def main() -> None:
         ok = torch.equal(before, after)
         maxdiff = int((before.int() - after.int()).abs().max())
         print(f"\nsave_to_disk -> {dir_bytes(p):,} B on disk; reload: {back}")
-        print(f"  states identical: {torch.equal(ds.states, back.states)}   "
-              f"style identical: {torch.equal(ds.style, back.style)}")
-        print(f"  FRAMES BIT-IDENTICAL: {ok}  (max abs pixel difference {maxdiff} over "
-              f"{before.numel():,} bytes)")
+        print(
+            f"  states identical: {torch.equal(ds.states, back.states)}   "
+            f"style identical: {torch.equal(ds.style, back.style)}"
+        )
+        print(f"  FRAMES BIT-IDENTICAL: {ok}  (max abs pixel difference {maxdiff} over {before.numel():,} bytes)")
         assert ok, "the save/load round trip changed the pixels"
-        results["arrow"] = {"bytes": dir_bytes(p), "frames_identical": ok, "max_abs_diff": maxdiff,
-                            "env_recovered": type(back.env).__name__}
+        results["arrow"] = {
+            "bytes": dir_bytes(p),
+            "frames_identical": ok,
+            "max_abs_diff": maxdiff,
+            "env_recovered": type(back.env).__name__,
+        }
 
         # 2. parquet — what push_to_hub uploads
         import datasets
+
         hf = ds.to_hf()
         pq = tmp / "corpus.parquet"
         hf.to_parquet(pq)
@@ -148,17 +176,24 @@ def main() -> None:
         after2 = back2.all_frames()
         ok2 = torch.equal(before, after2)
         print(f"\nto_parquet -> {pq.stat().st_size:,} B (the format push_to_hub uploads)")
-        print(f"  info.description survived: {desc_survived}   "
-              f"'{se_data.HF_META_KEY}' column survived: {col_survived} "
-              f"-> env recovered as {type(back2.env).__name__} with no env= argument")
+        print(
+            f"  info.description survived: {desc_survived}   "
+            f"'{se_data.HF_META_KEY}' column survived: {col_survived} "
+            f"-> env recovered as {type(back2.env).__name__} with no env= argument"
+        )
         print(f"  FRAMES BIT-IDENTICAL: {ok2}")
         assert ok2, "the parquet round trip changed the pixels"
-        results["parquet"] = {"bytes": pq.stat().st_size, "frames_identical": ok2,
-                              "description_survived": desc_survived, "column_survived": col_survived,
-                              "env_recovered": type(back2.env).__name__}
+        results["parquet"] = {
+            "bytes": pq.stat().st_size,
+            "frames_identical": ok2,
+            "description_survived": desc_survived,
+            "column_survived": col_survived,
+            "env_recovered": type(back2.env).__name__,
+        }
 
         # 3. the message when the optional dependency is absent
         import builtins
+
         real = builtins.__import__
 
         def blocked(name, *a, **k):
@@ -168,6 +203,7 @@ def main() -> None:
 
         builtins.__import__ = blocked
         import sys
+
         saved = sys.modules.pop("datasets", None)
         try:
             ds.to_hf()

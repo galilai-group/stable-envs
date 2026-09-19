@@ -8,6 +8,7 @@ division is free to use an approximate reciprocal and a crossing that lands on a
 floors to the wrong column. So the two paths are diffed on random polygons rather than on the states
 one env happens to reach.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -41,10 +42,13 @@ def _poly_mask():
     """
     try:
         from stable_envs.envs.carracing import _draw_poly_mask
-    except ImportError as e:                                            # noqa: BLE001
-        pytest.skip(f"carracing's reference rasterizer is unavailable here ({e}); the fused kernel "
-                    f"under test is pure torch and does not need it")
+    except ImportError as e:  # noqa: BLE001
+        pytest.skip(
+            f"carracing's reference rasterizer is unavailable here ({e}); the fused kernel "
+            f"under test is pure torch and does not need it"
+        )
     return _draw_poly_mask
+
 
 H, W = 256, 640
 
@@ -64,10 +68,12 @@ def _tables(verts, colours, nvs, n_gfx):
     y0 = torch.where(live, vy, torch.full_like(vy, BIG)).amin(-1) - 1
     y1 = torch.where(live, vy, torch.full_like(vy, -BIG)).amax(-1) + 1
     col = colours.to(torch.int32)
-    meta = torch.stack([nv.expand(B, P), col[..., 0], col[..., 1], col[..., 2],
-                        x0, H - 1 - y1, x1, H - 1 - y0], -1).contiguous()
-    edge = F.edge_table(vx[:, :n_gfx, :4].reshape(-1, 4).to(torch.int64),
-                        vy[:, :n_gfx, :4].reshape(-1, 4).to(torch.int64), H, W)
+    meta = torch.stack(
+        [nv.expand(B, P), col[..., 0], col[..., 1], col[..., 2], x0, H - 1 - y1, x1, H - 1 - y0], -1
+    ).contiguous()
+    edge = F.edge_table(
+        vx[:, :n_gfx, :4].reshape(-1, 4).to(torch.int64), vy[:, :n_gfx, :4].reshape(-1, 4).to(torch.int64), H, W
+    )
     return vert.contiguous(), meta, edge.reshape(B, n_gfx, 4, F.EG_W)
 
 
@@ -82,7 +88,7 @@ def _reference(verts, colours, nvs, n_gfx):
     cv.aa = torch.ones(B, dtype=torch.bool, device=verts.device)
     bi = gfx.batch_index(B)
     for i in range(P):
-        v = verts[:, i, :nvs[i]]
+        v = verts[:, i, : nvs[i]]
         cv.use(colours[:, i])
         cv.gated(torch.ones(B, dtype=torch.bool, device=verts.device))
         if i < n_gfx:
@@ -102,8 +108,7 @@ def _random_polys(rng, B, P, dev, radius=40.0):
     cy = torch.as_tensor(rng.uniform(-20, H + 20, (B, P)), dtype=torch.float64, device=dev)
     rx = torch.as_tensor(rng.uniform(6, radius, (B, P)), dtype=torch.float64, device=dev)
     ry = torch.as_tensor(rng.uniform(6, radius, (B, P)), dtype=torch.float64, device=dev)
-    base = torch.tensor([[-1.0, -1.0], [1.0, -1.0], [1.0, 1.0], [-1.0, 1.0]],
-                        dtype=torch.float64, device=dev)
+    base = torch.tensor([[-1.0, -1.0], [1.0, -1.0], [1.0, 1.0], [-1.0, 1.0]], dtype=torch.float64, device=dev)
     c, s = torch.cos(ang), torch.sin(ang)
     bx = base[:, 0].view(1, 1, 4) * rx.unsqueeze(-1)
     by = base[:, 1].view(1, 1, 4) * ry.unsqueeze(-1)
@@ -123,14 +128,16 @@ def test_matches_per_primitive_path(seed):
     colours = torch.as_tensor(rng.integers(0, 256, (B, P, 3)), dtype=torch.float32, device=dev)
     nvs = [4] * P
     vert, meta, edge = _tables(verts, colours, nvs, n_gfx)
-    got = F.render_surface(vert, meta, edge,
-                           torch.ones(B, dtype=torch.int32, device=dev), H, W, n_gfx, P)
+    got = F.render_surface(vert, meta, edge, torch.ones(B, dtype=torch.int32, device=dev), H, W, n_gfx, P)
     want = _reference(verts, colours, nvs, n_gfx)
     assert_frames_identical(
-        got, want, what=f"the fused rasterizer against the per-primitive one, seed {seed}",
+        got,
+        want,
+        what=f"the fused rasterizer against the per-primitive one, seed {seed}",
         why="gfxdraw.py and carracing._draw_poly_mask are the executable specification — each rule in "
-            "them was recovered by pixel-diffing pygame — and the fused kernel is a rewrite of the "
-            "same rules into a closed form per pixel, which is admissible only while the two agree")
+        "them was recovered by pixel-diffing pygame — and the fused kernel is a rewrite of the "
+        "same rules into a closed form per pixel, which is admissible only while the two agree",
+    )
 
 
 def test_exact_integer_crossing_is_not_rounded_away():
@@ -145,16 +152,16 @@ def test_exact_integer_crossing_is_not_rounded_away():
     from stable_envs.render import gfxdraw_fused as F
 
     dev = "cuda"
-    quad = torch.tensor([[[[522.0, 217.0], [516.0, 231.0], [509.0, 228.0], [515.0, 214.0]]]],
-                        dtype=torch.float64, device=dev)                       # the CarRacing wheel
+    quad = torch.tensor(
+        [[[[522.0, 217.0], [516.0, 231.0], [509.0, 228.0], [515.0, 214.0]]]], dtype=torch.float64, device=dev
+    )  # the CarRacing wheel
     colour = torch.full((1, 1, 3), 200.0, dtype=torch.float32, device=dev)
     vert, meta, edge = _tables(quad, colour, [4], 0)
     # PG=0 so nothing takes the gfxdraw branch and the edge table is never read; PPOST=1 so the one
     # primitive is drawn in PRE-flip coordinates, which is the frame the mask below is in.
-    got = F.render_surface(vert, meta, vert, torch.ones(1, dtype=torch.int32, device=dev),
-                           H, W, 0, 1)
-    fused = torch.flip(got[0, ..., 0] == 200, dims=(0,))                 # undo the reference's flip
+    got = F.render_surface(vert, meta, vert, torch.ones(1, dtype=torch.int32, device=dev), H, W, 0, 1)
+    fused = torch.flip(got[0, ..., 0] == 200, dims=(0,))  # undo the reference's flip
     want = _draw_poly_mask(quad[0], torch.arange(H, device=dev), torch.arange(W, device=dev))[0]
     assert torch.equal(fused, want), (
-        f"the fused fill and pygame.draw.polygon disagree on "
-        f"{int((fused != want).sum())} pixels of this quad")
+        f"the fused fill and pygame.draw.polygon disagree on {int((fused != want).sum())} pixels of this quad"
+    )

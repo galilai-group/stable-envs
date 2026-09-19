@@ -81,6 +81,7 @@ surgery that any MuJoCo scene needs, and ``BatchRenderer`` is the integration su
 ``scratch/backend3d/mjwarp_surface.py``. It is imported lazily; ``mujoco_warp`` is not a dependency of
 ``stable_envs``.
 """
+
 from __future__ import annotations
 
 import contextlib
@@ -91,8 +92,7 @@ import numpy as np
 
 from . import _resources
 
-os.environ.setdefault("WARP_CACHE_PATH",
-                      os.path.expanduser("~/.cache/warp"))
+os.environ.setdefault("WARP_CACHE_PATH", os.path.expanduser("~/.cache/warp"))
 
 #: Groups ``mujoco.Renderer`` shows at its default ``MjvOption``. Matching them on both sides is the
 #: difference between comparing two renders of one scene and comparing two different scenes.
@@ -100,7 +100,7 @@ DEFAULT_GROUPS = (0, 1, 2)
 #: Where ``prepare_model`` parks geometry MJWarp would otherwise draw opaque.
 HIDDEN_GROUP = 5
 #: mjtGeom codes whose UVs MJWarp can derive. Everything else samples texel (0,0) when textured.
-TEXTURED_OK = (0, 7)                                    # PLANE, MESH
+TEXTURED_OK = (0, 7)  # PLANE, MESH
 #: mjtTexture codes MJWarp's ``sample_texture`` can address. It builds ``wp.Texture2D`` and samples
 #: with 2-D coordinates, so a CUBE (1) or SKYBOX (2) map worn by a geom is not a texture it draws
 #: badly -- it is a texture it indexes out of bounds. Measured on ``swm/OGBScene-v0``, whose
@@ -108,7 +108,7 @@ TEXTURED_OK = (0, 7)                                    # PLANE, MESH
 #: ``Warp CUDA error 700: an illegal memory access`` inside the warm-up frame, and detaching that
 #: ONE texture -- leaving every 2-D texture and the skybox in place -- makes the scene render
 #: (``examples/results/step7/ogb-manipulation/oscar/mjwarp/mjwarp_bisect_OGBScene.json``).
-TEXTURE_SAMPLER_OK = (0,)                               # mjTEXTURE_2D
+TEXTURE_SAMPLER_OK = (0,)  # mjTEXTURE_2D
 #: OpenGL's ``GL_SPOT_CUTOFF`` accepts ``[0, 90]`` or the sentinel ``180``; anything else is
 #: ``GL_INVALID_VALUE`` and the parameter is left at its default 180, i.e. NOT a spotlight. MuJoCo's
 #: renderer follows that, and ``mujoco_warp`` does not -- see ``neutralise_illegal_spots``.
@@ -148,11 +148,15 @@ class Prepared:
     neutralised_spots: list[int] = field(default_factory=list)
 
     def summary(self) -> str:
-        out = (f"{len(self.hidden_geoms)} invisible geoms and {len(self.hidden_sites)} invisible "
-               f"sites moved out of groups {self.groups}")
+        out = (
+            f"{len(self.hidden_geoms)} invisible geoms and {len(self.hidden_sites)} invisible "
+            f"sites moved out of groups {self.groups}"
+        )
         if self.neutralised_spots:
-            out += (f"; {len(self.neutralised_spots)} spot light(s) with an out-of-range cutoff "
-                    f"given MuJoCo's semantics (no angular attenuation)")
+            out += (
+                f"; {len(self.neutralised_spots)} spot light(s) with an out-of-range cutoff "
+                f"given MuJoCo's semantics (no angular attenuation)"
+            )
         return out
 
 
@@ -212,12 +216,14 @@ def neutralise_illegal_spots(m) -> tuple[list[int], dict]:
     A spot with a LEGAL cutoff is left untouched: MuJoCo honours those, so MJWarp agreeing with the
     model is agreeing with MuJoCo.
     """
-    hit, restore = [], {"light_exponent": np.array(m.light_exponent, copy=True),
-                        "light_cutoff": np.array(m.light_cutoff, copy=True)}
+    hit, restore = (
+        [],
+        {"light_exponent": np.array(m.light_exponent, copy=True), "light_cutoff": np.array(m.light_cutoff, copy=True)},
+    )
     for i in range(int(m.nlight)):
         if hasattr(m, "light_type"):
             is_spot = int(m.light_type[i]) == 0
-        else:                                        # older mujoco: directional flag only
+        else:  # older mujoco: directional flag only
             is_spot = not int(m.light_directional[i])
         if not is_spot:
             continue
@@ -229,8 +235,7 @@ def neutralise_illegal_spots(m) -> tuple[list[int], dict]:
     return hit, restore
 
 
-def prepare_model(m, groups=DEFAULT_GROUPS, alpha_eps: float = 0.0,
-                  spot_semantics: bool = True) -> Prepared:
+def prepare_model(m, groups=DEFAULT_GROUPS, alpha_eps: float = 0.0, spot_semantics: bool = True) -> Prepared:
     """Move zero-alpha geometry out of the visible groups, IN PLACE. Returns what to restore.
 
     MJWarp draws every geom in an enabled group at full opacity because its shader never reads the
@@ -241,8 +246,7 @@ def prepare_model(m, groups=DEFAULT_GROUPS, alpha_eps: float = 0.0,
     """
     ga = effective_alpha(m, "geom")
     sa = effective_alpha(m, "site")
-    restore = {"geom_group": np.array(m.geom_group, copy=True),
-               "site_group": np.array(m.site_group, copy=True)}
+    restore = {"geom_group": np.array(m.geom_group, copy=True), "site_group": np.array(m.site_group, copy=True)}
     gh = [i for i in range(m.ngeom) if ga[i] <= alpha_eps and int(m.geom_group[i]) in groups]
     sh = [i for i in range(m.nsite) if sa[i] <= alpha_eps and int(m.site_group[i]) in groups]
     if gh:
@@ -306,6 +310,7 @@ def texture_gaps(m, groups=DEFAULT_GROUPS) -> list[tuple[int, str, int]]:
     wear a 2-D albedo and a cube environment map at once and only the second is fatal.
     """
     import mujoco
+
     out = []
     for g in range(m.ngeom):
         if int(m.geom_group[g]) not in groups:
@@ -325,8 +330,7 @@ def texture_gaps(m, groups=DEFAULT_GROUPS) -> list[tuple[int, str, int]]:
             if mi >= 0:
                 bad_texcoord = int(m.mesh_texcoordnum[mi]) == 0
         if bad_uv or bad_kind or bad_texcoord:
-            out.append((g, mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_GEOM, g) or f"geom{g}",
-                        int(m.geom_type[g])))
+            out.append((g, mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_GEOM, g) or f"geom{g}", int(m.geom_type[g])))
     return out
 
 
@@ -335,7 +339,7 @@ def texture_mean_rgb(m, tex: int) -> np.ndarray:
     w, h = int(m.tex_width[tex]), int(m.tex_height[tex])
     nc = int(m.tex_nchannel[tex]) if hasattr(m, "tex_nchannel") else 3
     adr = int(m.tex_adr[tex])
-    a = np.asarray(m.tex_data[adr:adr + w * h * nc], np.float64).reshape(h, w, nc)
+    a = np.asarray(m.tex_data[adr : adr + w * h * nc], np.float64).reshape(h, w, nc)
     return (a[..., :3].mean((0, 1)) if nc >= 3 else np.repeat(a.mean((0, 1)), 3)) / 255.0
 
 
@@ -353,7 +357,6 @@ def unsamplable_texture_materials(m, groups=DEFAULT_GROUPS) -> dict[int, list[in
     wrong but survives. These kill the renderer. ``swm/OGBScene-v0`` is the worked example — one
     512x512 cube map on two UV-less button meshes.
     """
-    import mujoco
     out: dict[int, list[int]] = {}
     for g in range(m.ngeom):
         if int(m.geom_group[g]) not in groups:
@@ -418,9 +421,9 @@ def bake_unsamplable_textures(m, groups=DEFAULT_GROUPS) -> dict:
     state the residual, not just apply it.
     """
     import mujoco
+
     rgb_role = int(getattr(mujoco.mjtTextureRole, "mjTEXROLE_RGB", 1))
-    restore = {"mat_texid": np.array(m.mat_texid, copy=True),
-               "mat_rgba": np.array(m.mat_rgba, copy=True)}
+    restore = {"mat_texid": np.array(m.mat_texid, copy=True), "mat_rgba": np.array(m.mat_rgba, copy=True)}
     targets = unsamplable_texture_materials(m, groups)
     baked = []
     for mid, geoms in sorted(targets.items()):
@@ -439,36 +442,52 @@ def bake_unsamplable_textures(m, groups=DEFAULT_GROUPS) -> dict:
             for role in range(int(np.asarray(t).shape[0])):
                 tid = int(t[role])
                 if tid >= 0:
-                    removed.append({"texture": tid, "role": role,
-                                    "name": mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_TEXTURE, tid),
-                                    "tex_type": int(m.tex_type[tid]),
-                                    "unsamplable": bool(int(m.tex_type[tid])
-                                                        not in TEXTURE_SAMPLER_OK)})
-        elif int(t) >= 0:
-            tid = int(t)
-            removed.append({"texture": tid, "role": None,
+                    removed.append(
+                        {
+                            "texture": tid,
+                            "role": role,
                             "name": mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_TEXTURE, tid),
                             "tex_type": int(m.tex_type[tid]),
-                            "unsamplable": bool(int(m.tex_type[tid]) not in TEXTURE_SAMPLER_OK)})
+                            "unsamplable": bool(int(m.tex_type[tid]) not in TEXTURE_SAMPLER_OK),
+                        }
+                    )
+        elif int(t) >= 0:
+            tid = int(t)
+            removed.append(
+                {
+                    "texture": tid,
+                    "role": None,
+                    "name": mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_TEXTURE, tid),
+                    "tex_type": int(m.tex_type[tid]),
+                    "unsamplable": bool(int(m.tex_type[tid]) not in TEXTURE_SAMPLER_OK),
+                }
+            )
         m.mat_rgba[mid, :3] = mean
         if np.ndim(t):
             m.mat_texid[mid, :] = -1
         else:
             m.mat_texid[mid] = -1
-        baked.append({
-            "material": mid,
-            "material_name": mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_MATERIAL, mid),
-            # the texture the mean colour came from, and then EVERY texture removed with it
-            "texture": tex,
-            "texture_name": mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_TEXTURE, tex),
-            "tex_type": int(m.tex_type[tex]),
-            "removed_textures": removed,
-            "n_removed": len(removed),
-            "mean_rgb": [round(float(x), 6) for x in mean],
-            "geoms": geoms,
-            "geom_names": [mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_GEOM, g) for g in geoms]})
-    return {"baked": baked, "n_materials": len(baked),
-            "n_geoms": sum(len(b["geoms"]) for b in baked), "restore": restore}
+        baked.append(
+            {
+                "material": mid,
+                "material_name": mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_MATERIAL, mid),
+                # the texture the mean colour came from, and then EVERY texture removed with it
+                "texture": tex,
+                "texture_name": mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_TEXTURE, tex),
+                "tex_type": int(m.tex_type[tex]),
+                "removed_textures": removed,
+                "n_removed": len(removed),
+                "mean_rgb": [round(float(x), 6) for x in mean],
+                "geoms": geoms,
+                "geom_names": [mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_GEOM, g) for g in geoms],
+            }
+        )
+    return {
+        "baked": baked,
+        "n_materials": len(baked),
+        "n_geoms": sum(len(b["geoms"]) for b in baked),
+        "restore": restore,
+    }
 
 
 def bake_primitive_textures(m, groups=DEFAULT_GROUPS) -> dict:
@@ -503,9 +522,9 @@ def bake_primitive_textures(m, groups=DEFAULT_GROUPS) -> dict:
     before believing anything about the result.
     """
     import mujoco
+
     rgb_role = int(getattr(mujoco.mjtTextureRole, "mjTEXROLE_RGB", 1))
-    restore = {"mat_texid": np.array(m.mat_texid, copy=True),
-               "mat_rgba": np.array(m.mat_rgba, copy=True)}
+    restore = {"mat_texid": np.array(m.mat_texid, copy=True), "mat_rgba": np.array(m.mat_rgba, copy=True)}
     wearers: dict[int, set[int]] = {}
     for g in range(m.ngeom):
         if int(m.geom_group[g]) in groups and int(m.geom_matid[g]) >= 0:
@@ -520,7 +539,7 @@ def bake_primitive_textures(m, groups=DEFAULT_GROUPS) -> dict:
             mixed.append(mid)
             continue
         if int(m.tex_type[tex]) != int(mujoco.mjtTexture.mjTEXTURE_2D):
-            skipped.append(mid)                       # cube/skybox: not what a primitive samples
+            skipped.append(mid)  # cube/skybox: not what a primitive samples
             continue
         m.mat_rgba[mid, :3] = texture_mean_rgb(m, tex)
         if np.ndim(t):
@@ -547,10 +566,11 @@ def needs_com_pos(m) -> bool:
     repo answers no.
     """
     import mujoco
-    com = (int(mujoco.mjtCamLight.mjCAMLIGHT_TRACKCOM),
-           int(mujoco.mjtCamLight.mjCAMLIGHT_TARGETBODYCOM))
-    return bool(np.isin(np.asarray(m.cam_mode, np.int64), com).any()
-                or np.isin(np.asarray(m.light_mode, np.int64), com).any())
+
+    com = (int(mujoco.mjtCamLight.mjCAMLIGHT_TRACKCOM), int(mujoco.mjtCamLight.mjCAMLIGHT_TARGETBODYCOM))
+    return bool(
+        np.isin(np.asarray(m.cam_mode, np.int64), com).any() or np.isin(np.asarray(m.light_mode, np.int64), com).any()
+    )
 
 
 #: Why the fallback below retains for the life of the process, in ``_resources`` terms.
@@ -581,8 +601,8 @@ def release_render_context(rc) -> None:
     """
     try:
         rc._se_tex_lod_keep = None
-    except Exception:                                                    # noqa: BLE001
-        pass                                              # a C type with no settable attribute
+    except Exception:  # noqa: BLE001
+        pass  # a C type with no settable attribute
 
 
 def release_cached_ctx(c) -> None:
@@ -637,9 +657,8 @@ def create_render_context(m, tex_lod: int = 1, **kw):
     Reported upstream-worthy as a one-line change; until it lands, this monkeypatches for the
     duration of the call and restores afterwards, so no other caller of ``mujoco_warp`` is affected.
     """
-    import warp as wp
-
     import mujoco_warp as mjw
+    import warp as wp
     from mujoco_warp._src import render_util as ru
 
     original = ru.create_warp_texture
@@ -652,15 +671,21 @@ def create_render_context(m, tex_lod: int = 1, **kw):
             blob["data"] = wp.array(model.tex_data, dtype=wp.uint8)
         w, h = int(model.tex_width[tex_id]), int(model.tex_height[tex_id])
         out = wp.zeros((h, w, 4), dtype=float)
-        wp.launch(ru._convert_texture_data, dim=(w, h),
-                  inputs=[w, int(model.tex_adr[tex_id]), int(model.tex_nchannel[tex_id]),
-                          blob["data"]],
-                  outputs=[out])
+        wp.launch(
+            ru._convert_texture_data,
+            dim=(w, h),
+            inputs=[w, int(model.tex_adr[tex_id]), int(model.tex_nchannel[tex_id]), blob["data"]],
+            outputs=[out],
+        )
         if lod > 1:
             import torch.nn.functional as F
+
             t = wp.to_torch(out)
-            t = F.interpolate(t.permute(2, 0, 1)[None], size=(max(1, h // lod), max(1, w // lod)),
-                              mode="area")[0].permute(1, 2, 0).contiguous()
+            t = (
+                F.interpolate(t.permute(2, 0, 1)[None], size=(max(1, h // lod), max(1, w // lod)), mode="area")[0]
+                .permute(1, 2, 0)
+                .contiguous()
+            )
             keep.append(t)
             out = wp.from_torch(t)
         return wp.Texture2D(out, filter_mode=wp.TextureFilterMode.LINEAR)
@@ -676,7 +701,7 @@ def create_render_context(m, tex_lod: int = 1, **kw):
         # otherwise free the context and keep the textures forever.
         try:
             rc._se_tex_lod_keep = keep
-        except AttributeError:                                        # pragma: no cover
+        except AttributeError:  # pragma: no cover
             for t in keep:
                 # This is the compatibility path for context types that cannot carry an ownership
                 # attribute. The old _TEX_KEEP list was unbounded and never refused construction;
@@ -725,13 +750,11 @@ def gl_rounding():
       ``mujoco-warp`` 3.11.0, the latest release, and on ``main`` as of 2026-08-10.
     """
     import warp as wp
-
     from mujoco_warp._src import render as R
 
     @wp.func
     def pack_rgba_round(r: float, g: float, b: float, a: float) -> wp.uint32:
-        return wp.uint32((int(a) << int(24)) | (int(r + 0.5) << int(16))
-                         | (int(g + 0.5) << int(8)) | int(b + 0.5))
+        return wp.uint32((int(a) << int(24)) | (int(r + 0.5) << int(16)) | (int(g + 0.5) << int(8)) | int(b + 0.5))
 
     original = R.pack_rgba_to_uint32
     R.pack_rgba_to_uint32 = pack_rgba_round
@@ -773,13 +796,22 @@ class BatchRenderer(_resources.Closeable):
 
     resource_kind = "mjwarp.BatchRenderer"
 
-    def __init__(self, m, batch: int, res: int = 224, camera: int = 0, groups=DEFAULT_GROUPS,
-                 textures: bool = True, shadows: bool = True, skybox: bool = True,
-                 prepare: bool = True, capture: bool = True):
+    def __init__(
+        self,
+        m,
+        batch: int,
+        res: int = 224,
+        camera: int = 0,
+        groups=DEFAULT_GROUPS,
+        textures: bool = True,
+        shadows: bool = True,
+        skybox: bool = True,
+        prepare: bool = True,
+        capture: bool = True,
+    ):
         import mujoco
-        import warp as wp
-
         import mujoco_warp as mjw
+        import warp as wp
 
         self.prepared = prepare_model(m, groups) if prepare else None
         self.texture_gaps = texture_gaps(m, groups)
@@ -791,13 +823,19 @@ class BatchRenderer(_resources.Closeable):
         self.m = mjw.put_model(m)
         self.d = mjw.put_data(m, d0, nworld=int(batch))
         self.rc = create_render_context(
-            m, nworld=int(batch), cam_res=(int(res), int(res)), render_rgb=True,
+            m,
+            nworld=int(batch),
+            cam_res=(int(res), int(res)),
+            render_rgb=True,
             cam_active=[i == int(camera) for i in range(m.ncam)],
-            enabled_geom_groups=list(groups), use_textures=textures, use_shadows=shadows,
-            render_skybox=skybox)
+            enabled_geom_groups=list(groups),
+            use_textures=textures,
+            use_shadows=shadows,
+            render_skybox=skybox,
+        )
         import torch
-        self._bgra = wp.to_torch(self.rc.rgb_data).view(torch.uint8).reshape(
-            int(batch), int(res), int(res), 4)
+
+        self._bgra = wp.to_torch(self.rc.rgb_data).view(torch.uint8).reshape(int(batch), int(res), int(res), 4)
         self._wp, self._mjw = wp, mjw
         self.graph = None
         self._opened()
@@ -847,4 +885,4 @@ class BatchRenderer(_resources.Closeable):
             self._wp.capture_launch(self.graph)
         else:
             self._frame()
-        return self._bgra[..., [2, 1, 0]]                # the swap; ~3% of frame time, never optional
+        return self._bgra[..., [2, 1, 0]]  # the swap; ~3% of frame time, never optional

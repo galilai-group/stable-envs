@@ -17,6 +17,7 @@ property (``test_rendering_a_sub_batch_refuses_environment_0_s_style`` and its t
 is twelve lines of tensor arithmetic. Those tests assert that the envs GO THROUGH the rule and must
 stay; this asserts what the rule IS.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -32,11 +33,14 @@ DEV = "cpu"
 
 def _space():
     """A two-leaf tree: one 3-wide colour and one scalar. Flat width 4, layout sorted by path."""
-    return spaces.Dict({
-        "block": spaces.Dict({"color": spaces.RGBBox(init_value=(10, 20, 30))}),
-        "agent": spaces.Dict({"radius": spaces.Box(low=0.0, high=1.0, shape=(1,),
-                                                   init_value=np.array([0.5], np.float32))}),
-    })
+    return spaces.Dict(
+        {
+            "block": spaces.Dict({"color": spaces.RGBBox(init_value=(10, 20, 30))}),
+            "agent": spaces.Dict(
+                {"radius": spaces.Box(low=0.0, high=1.0, shape=(1,), init_value=np.array([0.5], np.float32))}
+            ),
+        }
+    )
 
 
 #: The flat layout is sorted BY PATH, not by declaration order (see ``spaces.Dict.flat_layout``: a
@@ -68,7 +72,8 @@ def test_rows_are_equal_reads_the_VALUES_not_how_the_tensor_was_made():
     base = torch.tensor([[1.0, 2.0, 3.0, 4.0]] * 8)
     view = base[:, 1:3]
     assert view.stride(0) != 0 and not view.is_contiguous(), (
-        "the probe must be a strided, non-contiguous slice or it proves nothing")
+        "the probe must be a strided, non-contiguous slice or it proves nothing"
+    )
     assert rows_are_equal(view)
 
     differing = base.clone()
@@ -76,12 +81,15 @@ def test_rows_are_equal_reads_the_VALUES_not_how_the_tensor_was_made():
     assert not rows_are_equal(differing[:, 1:3])
 
 
-@pytest.mark.parametrize("t,expected", [
-    (None, True),                                          # nothing to disagree
-    (torch.tensor(5.0), True),                             # 0-dim: no batch axis
-    (torch.zeros(0, 4), True),                             # empty: vacuously uniform
-    (torch.zeros(1, 4), True),                             # one row is equal to itself
-])
+@pytest.mark.parametrize(
+    "t,expected",
+    [
+        (None, True),  # nothing to disagree
+        (torch.tensor(5.0), True),  # 0-dim: no batch axis
+        (torch.zeros(0, 4), True),  # empty: vacuously uniform
+        (torch.zeros(1, 4), True),  # one row is equal to itself
+    ],
+)
 def test_rows_are_equal_degenerate_inputs_are_uniform_not_errors(t, expected):
     """Each of these reaches this function from a real call site and none of them is a disagreement.
 
@@ -126,7 +134,8 @@ def test_one_row_broadcasts_to_any_batch():
         assert torch.equal(got.values, s.values.expand(b, 4))
         assert got.values.is_contiguous(), (
             "a broadcast style must be materialised, not left as a stride-0 view: the scene builder "
-            "writes into slices of it and a zero-stride destination aliases every row")
+            "writes into slices of it and a zero-stride destination aliases every row"
+        )
 
 
 def test_B_IDENTICAL_rows_broadcast_because_row_i_IS_row_0():
@@ -165,9 +174,11 @@ def test_B_DIFFERENT_rows_are_REFUSED_rather_than_collapsed_to_environment_0():
     assert "8" in msg and "1 environment" in msg, f"both batch sizes must be named: {msg}"
     assert "style=env.get_style()[i:j]" in msg, (
         f"the refusal must show the indexed call that works, or the reader will slice with [:1] and "
-        f"reintroduce the collapse: {msg}")
+        f"reintroduce the collapse: {msg}"
+    )
     assert "row 0" in msg or "substitute" in msg, (
-        f"the message should say what it USED to do, so an old traceback is recognisable: {msg}")
+        f"the message should say what it USED to do, so an old traceback is recognisable: {msg}"
+    )
 
 
 def test_the_owner_of_a_refusal_is_named():
@@ -187,7 +198,7 @@ def test_a_leaf_is_addressed_by_path_and_keeps_its_width():
     per-primitive parameter and indexes a vector leaf channel-wise, and a scalar arriving as ``(B, 1)``
     broadcasts into the wrong axis without raising.
     """
-    s = _style([[0.4, 1, 2, 3], [0.7, 4, 5, 6]])          # [radius, r, g, b]; see LAYOUT
+    s = _style([[0.4, 1, 2, 3], [0.7, 4, 5, 6]])  # [radius, r, g, b]; see LAYOUT
     assert s["block.color"].shape == (2, 3)
     assert s["agent.radius"].shape == (2,)
     assert torch.equal(s["block.color"][1], torch.tensor([4.0, 5.0, 6.0]))
@@ -197,7 +208,7 @@ def test_a_leaf_is_addressed_by_path_and_keeps_its_width():
 def test_an_unknown_path_names_the_ones_that_exist():
     s = _style([[1, 2, 3, 0.4]])
     with pytest.raises(KeyError) as e:
-        s["block.colour"]                       # British spelling: the plausible mistake
+        s["block.colour"]  # British spelling: the plausible mistake
     assert "block.color" in str(e.value), "the error must list the real paths, not just reject one"
     assert s.get("block.colour", "fallback") == "fallback"
     assert "block.color" in s and "nope" not in s
@@ -290,8 +301,7 @@ def test_an_override_count_that_is_neither_is_refused_by_name(bad):
     array for a batch of 4 is not going to work out ``w`` from a shape mismatch three frames later.
     """
     with pytest.raises(ValueError) as e:
-        StyleTensor.from_space(_space(), 4, device=DEV,
-                               overrides={"block.color": np.zeros(bad, np.float32)})
+        StyleTensor.from_space(_space(), 4, device=DEV, overrides={"block.color": np.zeros(bad, np.float32)})
     msg = str(e.value)
     assert "block.color" in msg and "expected 3" in msg and "12" in msg, msg
     assert "environment 0" in msg, f"the message must name the wrong answer it replaced: {msg}"

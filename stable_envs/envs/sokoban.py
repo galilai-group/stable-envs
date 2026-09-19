@@ -75,6 +75,7 @@ actually goes, but it is a level generator rather than a transition, and this re
 transitions. Boxoban shares both the renderer and the transition and changes only how rooms are
 generated, so it is covered by the same atlas and the same ``step``.
 """
+
 from __future__ import annotations
 
 import importlib.util
@@ -83,7 +84,6 @@ import random
 
 import numpy as np
 import torch
-
 from tensordict import TensorDict
 
 from ..env import Env
@@ -106,12 +106,30 @@ ROOM_FIXED_OF = (0, 1, 2, 2, 1, 1, 2)
 #: ``scratch/sokoban/probe_labels.py``, which prints the pixel count and bounding box of every colour
 #: in every tile. Three near-identical reds and three near-identical box shades are separate labels
 #: because they are separate colours in the art, not because they mean different things.
-PALETTE_NAMES = ("background", "player", "wall_brick", "wall_mortar",
-                 "box_dark", "box_mid", "box_light",
-                 "target_dark", "target_mid", "target_light")
-OFFICIAL_PALETTE = ((0, 0, 0), (41, 202, 26), (176, 61, 0), (176, 154, 142),
-                    (215, 103, 0), (215, 114, 0), (215, 196, 0),
-                    (238, 0, 0), (239, 22, 22), (242, 26, 26))
+PALETTE_NAMES = (
+    "background",
+    "player",
+    "wall_brick",
+    "wall_mortar",
+    "box_dark",
+    "box_mid",
+    "box_light",
+    "target_dark",
+    "target_mid",
+    "target_light",
+)
+OFFICIAL_PALETTE = (
+    (0, 0, 0),
+    (41, 202, 26),
+    (176, 61, 0),
+    (176, 154, 142),
+    (215, 103, 0),
+    (215, 114, 0),
+    (215, 196, 0),
+    (238, 0, 0),
+    (239, 22, 22),
+    (242, 26, 26),
+)
 N_LABEL = len(PALETTE_NAMES)
 
 #: ``CHANGE_COORDINATES``: action-1 mod 4 -> (d_row, d_col). Up, down, left, right.
@@ -137,7 +155,8 @@ def _tile_dir() -> str:
         raise ImportError(
             "gym-sokoban is not installed. The seven 16x16 tile images ARE this env -- the frame is a "
             "gather from them and nothing here re-derives them -- so there is no degraded mode to fall "
-            "back to. `pip install gym-sokoban`.")
+            "back to. `pip install gym-sokoban`."
+        )
     return os.path.join(list(spec.submodule_search_locations)[0], "envs", "surface")
 
 
@@ -152,15 +171,18 @@ def _build_atlas():
     default appearance -- which is the only one parity is measured under.
     """
     import imageio.v2 as imageio
+
     root = _tile_dir()
     missing = [n for n in TILE_NAMES if not os.path.exists(os.path.join(root, f"{n}.png"))]
     if missing:
         raise ImportError(
             f"gym-sokoban is installed at {root} but {len(missing)} of its seven tile images are "
             f"missing ({', '.join(missing)}). The frame is a gather from those files; a wheel that "
-            f"ships the code without the art cannot render this env.")
-    rgb = np.stack([np.asarray(imageio.imread(os.path.join(root, f"{n}.png")))[..., :3]
-                    for n in TILE_NAMES]).astype(np.uint8)
+            f"ships the code without the art cannot render this env."
+        )
+    rgb = np.stack([np.asarray(imageio.imread(os.path.join(root, f"{n}.png")))[..., :3] for n in TILE_NAMES]).astype(
+        np.uint8
+    )
     pal = np.asarray(OFFICIAL_PALETTE, np.uint8)
     labels = np.full(rgb.shape[:3], 255, np.uint8)
     for k, c in enumerate(pal):
@@ -171,7 +193,8 @@ def _build_atlas():
             f"the shipped tiles use colours OFFICIAL_PALETTE does not name: the atlas has "
             f"{len(found)} distinct colours and the palette names {len(pal)}. Every recoloured "
             f"frame would be wrong in a way no parity test would catch, because parity is measured "
-            f"at the default palette where the label map is unused.")
+            f"at the default palette where the label map is unused."
+        )
     if not np.array_equal(pal[labels], rgb):
         raise AssertionError("palette[labels] does not reproduce the official tiles")
     return rgb, labels
@@ -198,18 +221,21 @@ def _check_sokoban_works() -> None:
     """
     _build_atlas()
     import warnings
+
     with warnings.catch_warnings():
-        warnings.simplefilter("ignore")            # the legacy gym deprecation banner
+        warnings.simplefilter("ignore")  # the legacy gym deprecation banner
         try:
             from gym_sokoban.envs.sokoban_env import SokobanEnv
+
             SokobanEnv(dim_room=(ROOM_H, ROOM_W), num_boxes=4, reset=False)
         except ImportError:
             raise
-        except Exception as e:                     # noqa: BLE001
+        except Exception as e:  # noqa: BLE001
             raise ImportError(
                 f"gym-sokoban is installed but SokobanEnv does not construct: {type(e).__name__}: "
                 f"{e}. It installs against the legacy `gym`, which does not support NumPy 2.0, so a "
-                f"skew there presents here.") from e
+                f"skew there presents here."
+            ) from e
 
 
 _check_sokoban_works()
@@ -223,16 +249,16 @@ class _Atlas:
     ``sample_states`` rolls the official env out.
     """
 
-    _mem: dict[str, "_Atlas"] = {}
+    _mem: dict[str, _Atlas] = {}
 
     def __init__(self, device="cuda"):
         rgb, labels = _build_atlas()
         self.device = torch.device(device)
-        self.rgb = torch.from_numpy(rgb).to(self.device)                 # (7,16,16,3) uint8
-        self.labels = torch.from_numpy(labels).to(self.device)           # (7,16,16) uint8
+        self.rgb = torch.from_numpy(rgb).to(self.device)  # (7,16,16,3) uint8
+        self.labels = torch.from_numpy(labels).to(self.device)  # (7,16,16) uint8
 
     @classmethod
-    def get(cls, device="cuda") -> "_Atlas":
+    def get(cls, device="cuda") -> _Atlas:
         key = str(device)
         if key not in cls._mem:
             cls._mem[key] = cls(device)
@@ -305,7 +331,8 @@ class Sokoban(Env):
         if r or r2 or k < 1:
             raise ValueError(
                 f"Sokoban renders at whole multiples of its 16 px art only: size must be "
-                f"{self.ROOM_H * TILE_PX} x k for an integer k >= 1, got {size}")
+                f"{self.ROOM_H * TILE_PX} x k for an integer k >= 1, got {size}"
+            )
         return k
 
     # --- variation --------------------------------------------------------------------------------
@@ -320,8 +347,7 @@ class Sokoban(Env):
         not for MiniGrid (whose every tile is downsampled and, in the POV view, blended with the
         field-of-view overlay).
         """
-        return Dict({"palette": Dict({n: RGBBox(init_value=c)
-                                      for n, c in zip(PALETTE_NAMES, OFFICIAL_PALETTE)})})
+        return Dict({"palette": Dict({n: RGBBox(init_value=c) for n, c in zip(PALETTE_NAMES, OFFICIAL_PALETTE)})})
 
     # --- rendering --------------------------------------------------------------------------------
 
@@ -331,8 +357,7 @@ class Sokoban(Env):
 
     def _is_default(self, sty) -> bool:
         if self._default_t is None:
-            self._default_t = torch.as_tensor(self.default_style(), device=self.device,
-                                              dtype=torch.float32)
+            self._default_t = torch.as_tensor(self.default_style(), device=self.device, dtype=torch.float32)
         return bool((sty.values[0] == self._default_t).all())
 
     def _shared_rgb(self, sty, k: int) -> torch.Tensor:
@@ -342,22 +367,32 @@ class Sokoban(Env):
         hit = self._rgb_cache.get(key)
         if hit is not None:
             return hit
-        base = (self.atlas.rgb if self._is_default(sty)
-                else self._palette(sty)[0].to(torch.uint8)[self.atlas.labels.long()])
+        base = (
+            self.atlas.rgb
+            if self._is_default(sty)
+            else self._palette(sty)[0].to(torch.uint8)[self.atlas.labels.long()]
+        )
         out = (base if k == 1 else base.repeat_interleave(k, 1).repeat_interleave(k, 2)).contiguous()
         return self._rgb_cache.put(key, out)
 
     @torch.no_grad()
-    def render(self, states=None, size: int | None = None, supersample: int | None = None,
-               variation: dict | None = None, style=None, out=None) -> torch.Tensor:
+    def render(
+        self,
+        states=None,
+        size: int | None = None,
+        supersample: int | None = None,
+        variation: dict | None = None,
+        style=None,
+        out=None,
+    ) -> torch.Tensor:
         """``(...,100)`` -> ``(...,160,160,3)`` uint8 on device. A gather, with no rasterisation."""
         if supersample not in (None, 1):
             raise ValueError(
                 f"Sokoban: supersample={supersample} is not available. The frame is a gather from "
                 f"16x16 bitmaps, so there is no coverage to sample twice -- ask for a larger `size`, "
-                f"which replicates each art pixel k x k exactly.")
-        s = self._state if states is None else torch.as_tensor(states, device=self.device,
-                                                               dtype=torch.float32)
+                f"which replicates each art pixel k x k exactly."
+            )
+        s = self._state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
         lead = tuple(s.shape[:-1])
         s = s.reshape(-1, self.state_dim)
         k = self._scale(int(size or self.size))
@@ -382,9 +417,9 @@ class Sokoban(Env):
         differ only in whether the lookup happens before or after the gather.
         """
         B, H, W = idx.shape
-        lab = self.atlas.labels.long()[idx.long()]                       # (B,H,W,16,16)
+        lab = self.atlas.labels.long()[idx.long()]  # (B,H,W,16,16)
         lab = lab.permute(0, 1, 3, 2, 4).reshape(B, H * TILE_PX, W * TILE_PX)
-        pal = self._palette(sty).to(torch.uint8)                         # (B,10,3)
+        pal = self._palette(sty).to(torch.uint8)  # (B,10,3)
         img = pal[torch.arange(B, device=idx.device).view(B, 1, 1), lab]
         if k > 1:
             img = img.repeat_interleave(k, 1).repeat_interleave(k, 2)
@@ -436,8 +471,8 @@ class Sokoban(Env):
         H, W = self.ROOM_H, self.ROOM_W
         a = act[:, 0].floor().clamp(0, N_ACTIONS - 1).long()
         tile = torch.round(s).long() % N_TILE
-        st = self._state_of[tile]                                        # room_state
-        fx = self._fixed_of[tile]                                        # room_fixed
+        st = self._state_of[tile]  # room_state
+        fx = self._fixed_of[tile]  # room_fixed
 
         # the player is wherever room_state == 5; argmax picks the first, exactly as
         # ``np.argwhere(self.room_state == 5)[0]`` does
@@ -474,10 +509,8 @@ class Sokoban(Env):
 
         out = tile
         out = out.scatter(1, bi, torch.where(can_push, box, out.gather(1, bi).squeeze(1)).unsqueeze(1))
-        out = out.scatter(1, ni, torch.where(stepped, enter,
-                                             out.gather(1, ni).squeeze(1)).unsqueeze(1))
-        out = out.scatter(1, pi, torch.where(stepped, left,
-                                             out.gather(1, pi).squeeze(1)).unsqueeze(1))
+        out = out.scatter(1, ni, torch.where(stepped, enter, out.gather(1, ni).squeeze(1)).unsqueeze(1))
+        out = out.scatter(1, pi, torch.where(stepped, left, out.gather(1, pi).squeeze(1)).unsqueeze(1))
         s.copy_(out.to(torch.float32))
 
     @torch.no_grad()
@@ -493,8 +526,9 @@ class Sokoban(Env):
         velocity, no carried object, no RNG -- so a stored trajectory determines its own continuation
         exactly, and ``transition`` needs no hidden field to be pure.
         """
-        self._act.copy_(torch.as_tensor(action, device=self.device, dtype=torch.float32
-                                        ).reshape(self.B, self.action_dim))
+        self._act.copy_(
+            torch.as_tensor(action, device=self.device, dtype=torch.float32).reshape(self.B, self.action_dim)
+        )
         self._advance()
         return self._step_result(self._step_state())
 
@@ -506,8 +540,7 @@ class Sokoban(Env):
         ``_advance_into``, which is the whole transition, over buffers the caller names.
         """
         rows = self.pack(state).clone()
-        act = torch.as_tensor(action, device=self.device, dtype=torch.float32
-                              ).reshape(-1, self.action_dim)
+        act = torch.as_tensor(action, device=self.device, dtype=torch.float32).reshape(-1, self.action_dim)
         self._advance_into(rows, act)
         return self.unpack(rows)
 
@@ -596,8 +629,8 @@ class Sokoban(Env):
         is both the shorter path and the one that does not depend on which wrappers the shim installs.
         """
         from gym_sokoban.envs.sokoban_env import SokobanEnv
-        return SokobanEnv(dim_room=(cls.ROOM_H, cls.ROOM_W), num_boxes=cls.NUM_BOXES,
-                          max_steps=cls.MAX_STEPS)
+
+        return SokobanEnv(dim_room=(cls.ROOM_H, cls.ROOM_W), num_boxes=cls.NUM_BOXES, max_steps=cls.MAX_STEPS)
 
     @staticmethod
     def _tiles_of(u) -> np.ndarray:
@@ -611,7 +644,8 @@ class Sokoban(Env):
         if size is not None and int(size) != cls.default_size:
             raise ValueError(
                 f"the official renderer draws 16 px tiles and nothing else, so there is no reference "
-                f"frame at size {size}; parity is measured at {cls.default_size}")
+                f"frame at size {size}; parity is measured at {cls.default_size}"
+            )
         return cls._official()
 
     @classmethod
@@ -643,7 +677,8 @@ class Sokoban(Env):
                 bad = int((got != want).sum())
                 raise AssertionError(
                     f"Sokoban: the reference did not reach the requested state ({bad} cells differ); "
-                    f"parity measured against this frame would compare two scenes")
+                    f"parity measured against this frame would compare two scenes"
+                )
             out.append(np.asarray(env.render(mode="rgb_array")).copy())
         return np.stack(out)
 

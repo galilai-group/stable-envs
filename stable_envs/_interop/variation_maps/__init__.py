@@ -15,9 +15,10 @@ nothing in ``worldmodel`` changes at all.
 key. Two modules claiming one cell is a coordination bug and the import should say so rather than let
 whichever module imported last win.
 """
+
 from __future__ import annotations
 
-from typing import Mapping
+from collections.abc import Mapping
 
 #: Family modules, in the order they are installed. One line per workstream.
 _MODULES = ("dmc_control", "fetch", "newcells")
@@ -25,6 +26,7 @@ _MODULES = ("dmc_control", "fetch", "newcells")
 
 def _collect() -> dict:
     import importlib
+
     out: dict = {}
     for name in _MODULES:
         mod = importlib.import_module(f"{__name__}.{name}")
@@ -32,7 +34,8 @@ def _collect() -> dict:
             if cell in out:
                 raise RuntimeError(
                     f"variation_maps: {cell!r} is declared by both {out[cell][1]} and {name}; one "
-                    f"cell has one appearance mapping — ask the coordinator which module owns it")
+                    f"cell has one appearance mapping — ask the coordinator which module owns it"
+                )
             out[cell] = (vmap, name)
     return out
 
@@ -48,7 +51,8 @@ def install(registry: Mapping) -> dict:
         if cell in registry:
             raise RuntimeError(
                 f"variation_maps.{name} declares {cell!r}, which worldmodel.VARIATION_MAPS already "
-                f"carries; remove one of the two rather than shadowing")
+                f"carries; remove one of the two rather than shadowing"
+            )
         registry[cell] = vmap
         where[cell] = name
     return where

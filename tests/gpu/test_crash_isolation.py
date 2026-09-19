@@ -16,6 +16,7 @@ is to run
 
 and confirm the summary reports the crashes by name and still reports every other test.
 """
+
 from __future__ import annotations
 
 import ctypes
@@ -47,13 +48,16 @@ def test_the_resource_guard_is_attached_to_the_classes_the_driver_goes_through()
     resource_guard.install()
     assert getattr(mujoco.egl.GLContext.__init__, "_se_guarded", False), (
         "EGL context creation is not instrumented; every number the safety summary prints would be "
-        "zero regardless of what the run did")
+        "zero regardless of what the run did"
+    )
     assert getattr(mujoco.egl.GLContext.free, "_se_guarded", False), (
-        "context RELEASE is not instrumented — the one event that is never legitimate")
+        "context RELEASE is not instrumented — the one event that is never legitimate"
+    )
     assert getattr(mujoco.Renderer.__init__, "_se_guarded", False)
     assert mujoco.GLContext is mujoco.egl.GLContext, (
         "MUJOCO_GL is not egl on this host, so the instrumented class is not the one in use; the "
-        "guard's numbers describe a backend nothing is rendering through")
+        "guard's numbers describe a backend nothing is rendering through"
+    )
 
 
 def test_building_an_env_does_not_release_anything():
@@ -68,21 +72,25 @@ def test_building_an_env_does_not_release_anything():
     if not cells:
         pytest.skip("no EGL-backed env registered")
     before = resource_guard.take()
-    env = se.make("PointmazeMediumNavigate" if "PointmazeMediumNavigate" in cells else cells[0],
-                  num_envs=2, device="cuda")
+    env = se.make(
+        "PointmazeMediumNavigate" if "PointmazeMediumNavigate" in cells else cells[0], num_envs=2, device="cuda"
+    )
     env.render(env.sample_states(2, rng=np.random.default_rng(0)))
     del env
     import gc
+
     gc.collect()
     d = resource_guard.delta(before)
     assert d["context_freed"] == 0, (
         f"building and dropping one env released {d['context_freed']} EGL context(s) — that is the "
         f"defect that corrupts every other live renderer in the process:\n"
-        f"{resource_guard.format_sites([s for s in d['sites'] if s[0].endswith('freed')])}")
+        f"{resource_guard.format_sites([s for s in d['sites'] if s[0].endswith('freed')])}"
+    )
     assert d["renderer_closed"] == 0
 
 
 # ------------------------------------------------------------------ opt-in: real crashes
+
 
 @pytest.mark.selftest
 def test_selftest_segfault_with_live_egl_contexts():
@@ -94,7 +102,7 @@ def test_selftest_segfault_with_live_egl_contexts():
     """
     env = se.make("PushT", num_envs=4, device="cuda")
     env.render(env.sample_states(4, rng=np.random.default_rng(0)))
-    ctypes.string_at(0)                         # genuine null dereference in libc
+    ctypes.string_at(0)  # genuine null dereference in libc
 
 
 @pytest.mark.selftest

@@ -53,12 +53,14 @@ constructors, and it is the authority on rule 3. :func:`counts` here is the comp
 the backend objects THIS repository constructs, so a test can assert that ten create/close cycles
 produced ten closes and left nothing live, which is the thing ``resource_guard`` cannot see.
 """
+
 from __future__ import annotations
 
 import logging
 import threading
 from collections import OrderedDict
-from typing import Any, Callable, Iterator
+from collections.abc import Callable, Iterator
+from typing import Any
 
 
 class UseAfterCloseError(RuntimeError):
@@ -100,9 +102,13 @@ def counts() -> dict[str, Any]:
     happened inside its own window, not about what the session did before it.
     """
     with _LOCK:
-        return {"created": dict(_CREATED), "closed": dict(_CLOSED),
-                "release_failed": dict(_RELEASE_FAILED), "evicted": dict(_EVICTED),
-                "retained": len(_RETAINED)}
+        return {
+            "created": dict(_CREATED),
+            "closed": dict(_CLOSED),
+            "release_failed": dict(_RELEASE_FAILED),
+            "evicted": dict(_EVICTED),
+            "retained": len(_RETAINED),
+        }
 
 
 def live(kind: str) -> int:
@@ -118,8 +124,7 @@ def delta(before: dict, after: dict | None = None) -> dict[str, dict[str, int]]:
     for section in ("created", "closed", "release_failed", "evicted"):
         a, b = after[section], before[section]
         keys = set(a) | set(b)
-        out[section] = {k: a.get(k, 0) - b.get(k, 0) for k in sorted(keys)
-                        if a.get(k, 0) - b.get(k, 0)}
+        out[section] = {k: a.get(k, 0) - b.get(k, 0) for k in sorted(keys) if a.get(k, 0) - b.get(k, 0)}
     out["retained"] = {"retained": after["retained"] - before["retained"]}
     return out
 
@@ -135,8 +140,7 @@ def _record_release_failure(kind: str, exc: BaseException) -> None:
     with _LOCK:
         _RELEASE_FAILED[kind] = _RELEASE_FAILED.get(kind, 0) + 1
         _RELEASE_FAILURES.append(detail)
-    _LOG.warning("resource release failed for %s: %s: %s",
-                 kind, type(exc).__name__, exc)
+    _LOG.warning("resource release failed for %s: %s: %s", kind, type(exc).__name__, exc)
 
 
 def retain_process_lifetime(obj: Any, why: str, *, overflow: str = "raise") -> Any:
@@ -162,7 +166,8 @@ def retain_process_lifetime(obj: Any, why: str, *, overflow: str = "raise") -> A
                 f"life of the process (cap {MAX_RETAINED}); refusing to retain another for {why!r}. "
                 f"Retention is per model or per context, never per frame or per state — a growing "
                 f"count means the caller is retaining in a loop. Retained so far: "
-                f"{sorted({w for w, _ in _RETAINED})}")
+                f"{sorted({w for w, _ in _RETAINED})}"
+            )
             if overflow == "raise":
                 raise ResourceWarning(message)
             _LOG.warning("%s Keeping it because this caller cannot transfer ownership.", message)
@@ -177,6 +182,7 @@ def retained_reasons() -> list[str]:
 
 
 # --------------------------------------------------------------------------- the protocol
+
 
 class Closeable:
     """Explicit lifetime for a backend object: ``close()``, ``with``, and no reliance on ``__del__``.
@@ -201,7 +207,7 @@ class Closeable:
     #: What :func:`counts` calls objects of this class. Subclasses override.
     resource_kind: str = "resource"
 
-    _se_closed: bool = True          # until _opened() says otherwise: a half-built object is not open
+    _se_closed: bool = True  # until _opened() says otherwise: a half-built object is not open
     _se_counted: bool = False
 
     def _opened(self) -> None:
@@ -222,7 +228,8 @@ class Closeable:
             raise UseAfterCloseError(
                 f"{type(self).__name__}.{what}: this renderer is closed. close() released its device "
                 f"buffers, so what came back would be drawn through memory that no longer belongs to "
-                f"it — or, worse, would look like a frame. Build a new one.")
+                f"it — or, worse, would look like a frame. Build a new one."
+            )
 
     def _release(self) -> None:
         """Drop what this object EXCLUSIVELY owns. Never an EGL context, never a cached shared value."""
@@ -254,6 +261,7 @@ class Closeable:
 
 # --------------------------------------------------------------------------- the cache
 
+
 class BoundedCache:
     """A keyed cache with a hard capacity and LRU eviction, and an optional release of what it drops.
 
@@ -279,14 +287,13 @@ class BoundedCache:
     that every use reads as a cache rather than as a mapping someone might mutate in place.
     """
 
-    def __init__(self, capacity: int, *, name: str = "cache",
-                 on_evict: Callable[[Any], None] | None = None):
+    def __init__(self, capacity: int, *, name: str = "cache", on_evict: Callable[[Any], None] | None = None):
         if int(capacity) < 1:
             raise ValueError(f"BoundedCache({name!r}) needs capacity >= 1, got {capacity!r}")
         self.capacity = int(capacity)
         self.name = str(name)
         self.on_evict = on_evict
-        self._d: "OrderedDict[Any, Any]" = OrderedDict()
+        self._d: OrderedDict[Any, Any] = OrderedDict()
         self._lock = threading.Lock()
         self.hits = 0
         self.misses = 0
@@ -315,7 +322,7 @@ class BoundedCache:
                 drop.append(self._d.pop(key))
             self._d[key] = value
             while len(self._d) > self.capacity:
-                _, old = self._d.popitem(last=False)     # least recently used, ONE at a time
+                _, old = self._d.popitem(last=False)  # least recently used, ONE at a time
                 self.evictions += 1
                 _bump(_EVICTED, self.name)
                 drop.append(old)
@@ -341,7 +348,7 @@ class BoundedCache:
             return
         try:
             self.on_evict(value)
-        except Exception as exc:                                             # noqa: BLE001
+        except Exception as exc:  # noqa: BLE001
             # A cache must not become the thing that fails. An eviction happens at an arbitrary
             # insertion, far from anything the caller is thinking about, so raising here would
             # attribute a release failure to whichever unrelated call happened to overflow it.
@@ -365,5 +372,7 @@ class BoundedCache:
         return iter(self.keys())
 
     def __repr__(self) -> str:
-        return (f"BoundedCache({self.name!r}, {len(self)}/{self.capacity}, "
-                f"hits={self.hits} misses={self.misses} evictions={self.evictions})")
+        return (
+            f"BoundedCache({self.name!r}, {len(self)}/{self.capacity}, "
+            f"hits={self.hits} misses={self.misses} evictions={self.evictions})"
+        )

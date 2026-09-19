@@ -65,6 +65,7 @@ never is: a flat region of value v comes out at v-2 (102 -> 101 -> 100 through t
 is exactly what the official frames show). Declaring RGB knobs here would advertise something the
 output cannot express.
 """
+
 from __future__ import annotations
 
 import math
@@ -98,17 +99,19 @@ def _check_car_racing_works() -> None:
     dies. ``lunarlander.py`` carries the same guard for the same reason.
     """
     import gymnasium
+
     try:
         env = gymnasium.make("CarRacing-v3", render_mode="rgb_array")
         env.reset(seed=0)
         env.unwrapped.render()
         env.close()
-    except Exception as e:                          # noqa: BLE001
+    except Exception as e:  # noqa: BLE001
         raise ImportError(
             f"CarRacing-v3 cannot be reset and rendered: {type(e).__name__}: {e}. This env needs BOTH "
             f"`box2d-py` (for the simulator that produces its states) and `pygame` (for the reference "
-            f'renderer parity is measured against); `pip install swig` then `pip install '
-            f'"gymnasium[box2d]"`.') from e
+            f"renderer parity is measured against); `pip install swig` then `pip install "
+            f'"gymnasium[box2d]"`.'
+        ) from e
 
 
 _check_car_racing_works()
@@ -140,6 +143,7 @@ def _bake_track(seed: int) -> dict:
     if key in _BAKE:
         return _BAKE[key]
     import os
+
     os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
     import gymnasium
     from gymnasium.envs.box2d.car_dynamics import SIZE, WHEEL_R, WHEEL_W
@@ -160,13 +164,20 @@ def _bake_track(seed: int) -> dict:
     hull_l = [[(float(v[0]), float(v[1])) for v in f.shape.vertices] for f in u.car.hull.fixtures]
     assert all(len(h) != 3 for h in hull_l) and len(wl[0]) != 3, (
         "a car fixture became a triangle; pygame.draw.polygon dispatches those to draw_filltri, "
-        "which is a different rule from the one implemented here")
+        "which is a different rule from the one implemented here"
+    )
     g = GRASS_DIM
-    grass = [[(g * x + g, g * y), (g * x, g * y), (g * x, g * y + g), (g * x + g, g * y + g)]
-             for x in range(-20, 20, 2) for y in range(-20, 20, 2)]
+    grass = [
+        [(g * x + g, g * y), (g * x, g * y), (g * x, g * y + g), (g * x + g, g * y + g)]
+        for x in range(-20, 20, 2)
+        for y in range(-20, 20, 2)
+    ]
     b = PLAYFIELD
     out = dict(
-        road_v=road_v, road_c=road_c, is_tile=is_tile, tile_of=tile_of,
+        road_v=road_v,
+        road_c=road_c,
+        is_tile=is_tile,
+        tile_of=tile_of,
         n_tiles=int(is_tile.sum()),
         grass_v=np.array(grass, np.float64),
         field_v=np.array([[(b, b), (b, -b), (-b, -b), (-b, b)]], np.float64),
@@ -175,11 +186,12 @@ def _bake_track(seed: int) -> dict:
         hull_color=[int(c * 255) for c in u.car.hull.color],
         wheel_color=[int(c * 255) for c in u.car.wheels[0].color],
         wheel_white=[77, 77, 77],
-        wheel_w=WHEEL_W * SIZE, wheel_r=WHEEL_R * SIZE,
+        wheel_w=WHEEL_W * SIZE,
+        wheel_r=WHEEL_R * SIZE,
         road_color=np.array([int(c) for c in u.road_color], np.float32),
         bg_color=np.array([int(c) for c in u.bg_color], np.float32),
         grass_color=np.array([int(c) for c in u.grass_color], np.float32),
-        track=np.array([[t[1], t[2], t[3]] for t in u.track], np.float64),   # (beta, x, y)
+        track=np.array([[t[1], t[2], t[3]] for t in u.track], np.float64),  # (beta, x, y)
     )
     env.close()
     _BAKE[key] = out
@@ -191,12 +203,13 @@ def _bake_text() -> tuple:
     if "a" in _TEXT:
         return _TEXT["a"], _TEXT["w"], _TEXT["h"]
     import os
+
     os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
     import pygame
+
     pygame.font.init()
     f = pygame.font.Font(pygame.font.get_default_font(), 42)
-    surfs = [f.render("%04i" % v, True, (255, 255, 255), (0, 0, 0))
-             for v in range(TEXT_LO, TEXT_HI + 1)]
+    surfs = [f.render("%04i" % v, True, (255, 255, 255), (0, 0, 0)) for v in range(TEXT_LO, TEXT_HI + 1)]
     ws = [s.get_size()[0] for s in surfs]
     hs = {s.get_size()[1] for s in surfs}
     assert len(hs) == 1, f"the score text is not a fixed height: {hs}"
@@ -207,7 +220,7 @@ def _bake_text() -> tuple:
         buf.fill((0, 0, 0))
         buf.blit(s, (0, 0))
         a = np.transpose(np.array(pygame.surfarray.pixels3d(buf)), (1, 0, 2))
-        atlas[i, :, :a.shape[1]] = a[..., 0]      # grey: R == G == B, measured
+        atlas[i, :, : a.shape[1]] = a[..., 0]  # grey: R == G == B, measured
     _TEXT["a"], _TEXT["w"], _TEXT["h"] = atlas, np.array(ws, np.int64), th
     return atlas, _TEXT["w"], th
 
@@ -278,8 +291,7 @@ def _rotate_rad(v, cos, sin):
     """``pygame.math.Vector2.rotate_rad``. cos/sin come from the CALLER because the reference
     normalises the angle into [0, 2pi) with ``fmod`` first, and sin/cos of the normalised angle is
     not the same double as sin/cos of the raw one."""
-    return torch.stack([v[..., 0] * cos - v[..., 1] * sin,
-                        v[..., 0] * sin + v[..., 1] * cos], -1)
+    return torch.stack([v[..., 0] * cos - v[..., 1] * sin, v[..., 0] * sin + v[..., 1] * cos], -1)
 
 
 def _to_screen(verts, cos, sin, zoom, trans):
@@ -313,8 +325,9 @@ def _pad_verts(v: torch.Tensor, vmax: int) -> torch.Tensor:
 def _visible(scr):
     """The reference's own cull: any vertex inside the window grown by ``MAX_SHAPE_DIM``."""
     x, y = scr[..., 0], scr[..., 1]
-    return ((-MAX_SHAPE_DIM <= x) & (x <= W + MAX_SHAPE_DIM)
-            & (-MAX_SHAPE_DIM <= y) & (y <= H + MAX_SHAPE_DIM)).any(-1)
+    return ((-MAX_SHAPE_DIM <= x) & (x <= W + MAX_SHAPE_DIM) & (-MAX_SHAPE_DIM <= y) & (y <= H + MAX_SHAPE_DIM)).any(
+        -1
+    )
 
 
 def _draw_poly_mask(scr, ys, xs):
@@ -355,22 +368,26 @@ def _draw_poly_mask(scr, ys, xs):
     xg = xs.view(1, 1, -1)
     mask = torch.zeros((B, ys.numel(), xs.numel()), dtype=torch.bool, device=vx.device)
     for k in range(0, n - 1, 2):
-        mask |= ((cnt >= k + 2).unsqueeze(-1) & (xg >= srt[:, k, :].unsqueeze(-1))
-                 & (xg <= srt[:, k + 1, :].unsqueeze(-1)))
+        mask |= (
+            (cnt >= k + 2).unsqueeze(-1) & (xg >= srt[:, k, :].unsqueeze(-1)) & (xg <= srt[:, k + 1, :].unsqueeze(-1))
+        )
 
     flat = (miny == maxy).reshape(-1)
-    if bool(flat.any()):                       # a quad one row high: min x to max x
+    if bool(flat.any()):  # a quad one row high: min x to max x
         row = ys.view(1, -1) == vy.min(1, keepdim=True).values
-        mask |= (flat.view(-1, 1, 1) & row.unsqueeze(-1)
-                 & (xg >= vx.min(1).values.view(-1, 1, 1))
-                 & (xg <= vx.max(1).values.view(-1, 1, 1)))
+        mask |= (
+            flat.view(-1, 1, 1)
+            & row.unsqueeze(-1)
+            & (xg >= vx.min(1).values.view(-1, 1, 1))
+            & (xg <= vx.max(1).values.view(-1, 1, 1))
+        )
 
     lo_y, hi_y = miny.reshape(-1, 1), maxy.reshape(-1, 1)
-    for e in range(n):                          # horizontal edges strictly inside get one span each
+    for e in range(n):  # horizontal edges strictly inside get one span each
         sel = (vy.roll(1, 1)[:, e] == vy[:, e]) & (vy[:, e] > lo_y[:, 0]) & (vy[:, e] < hi_y[:, 0])
         if not bool(sel.any()):
             continue
-        row = ys.view(1, -1) == vy[:, e:e + 1]
+        row = ys.view(1, -1) == vy[:, e : e + 1]
         a = torch.minimum(vx[:, e], vx.roll(1, 1)[:, e]).view(-1, 1, 1)
         b = torch.maximum(vx[:, e], vx.roll(1, 1)[:, e]).view(-1, 1, 1)
         mask |= sel.view(-1, 1, 1) & row.unsqueeze(-1) & (xg >= a) & (xg <= b)
@@ -385,24 +402,49 @@ class CarRacing(Env):
     name = "car-racing"
     state_dim = 28
     state_names = (
-        "hull_x", "hull_y", "hull_angle", "hull_vx", "hull_vy", "hull_omega",
-        "w0_x", "w0_y", "w0_angle", "w1_x", "w1_y", "w1_angle",
-        "w2_x", "w2_y", "w2_angle", "w3_x", "w3_y", "w3_angle",
-        "w0_phase", "w1_phase", "w2_phase", "w3_phase",
-        "w0_omega", "w1_omega", "w2_omega", "w3_omega",
-        "reward", "t")
+        "hull_x",
+        "hull_y",
+        "hull_angle",
+        "hull_vx",
+        "hull_vy",
+        "hull_omega",
+        "w0_x",
+        "w0_y",
+        "w0_angle",
+        "w1_x",
+        "w1_y",
+        "w1_angle",
+        "w2_x",
+        "w2_y",
+        "w2_angle",
+        "w3_x",
+        "w3_y",
+        "w3_angle",
+        "w0_phase",
+        "w1_phase",
+        "w2_phase",
+        "w3_phase",
+        "w0_omega",
+        "w1_omega",
+        "w2_omega",
+        "w3_omega",
+        "reward",
+        "t",
+    )
     #: Step-9 state (contract §3). Five keys over the unchanged 28 columns, grouped by what draws
     #: them: the hull's pose and twist, the four wheels' poses, their rolling phases (the tread
     #: pattern) and their spin rates (the skid marks), and the two scalars the HUD prints. Every
     #: column is covered and none moved, so the frozen layout and its digests are untouched.
     #: ``reward`` and ``time`` are STATE here and not a step result -- they are two numbers this
     #: renderer paints onto the score bar, which is why they are in the row at all.
-    state_layout = ((("hull",), 6, 0),
-                    (("wheels", "pose"), 12, 6),
-                    (("wheels", "phase"), 4, 18),
-                    (("wheels", "omega"), 4, 22),
-                    (("reward",), 1, 26),
-                    (("time",), 1, 27))
+    state_layout = (
+        (("hull",), 6, 0),
+        (("wheels", "pose"), 12, 6),
+        (("wheels", "phase"), 4, 18),
+        (("wheels", "omega"), 4, 22),
+        (("reward",), 1, 26),
+        (("time",), 1, 27),
+    )
     default_size = 96
     reference_id = "CarRacing-v3"
 
@@ -443,11 +485,18 @@ class CarRacing(Env):
         declared as a variation because it is per-episode-SHAPED and a dataset must record it, not
         because it is appearance.
         """
-        return Dict({
-            "track": Dict({"visited": Box(low=0.0, high=1.0, shape=(self.n_tiles,),
-                                          init_value=np.zeros(self.n_tiles, np.float32))}),
-            "rendering": Dict({"antialias": Discrete(2, init_value=1)}),
-        })
+        return Dict(
+            {
+                "track": Dict(
+                    {
+                        "visited": Box(
+                            low=0.0, high=1.0, shape=(self.n_tiles,), init_value=np.zeros(self.n_tiles, np.float32)
+                        )
+                    }
+                ),
+                "rendering": Dict({"antialias": Discrete(2, init_value=1)}),
+            }
+        )
 
     def sample_states(self, batch: int, rng: np.random.Generator | None = None) -> np.ndarray:
         """The car on a track tile, driving, spread around the whole loop.
@@ -487,19 +536,28 @@ class CarRacing(Env):
 
     # --- render -------------------------------------------------------------------------
     @torch.no_grad()
-    def render(self, states=None, size: int | None = None, supersample: int | None = None,
-               variation: dict | None = None, style=None, out=None) -> torch.Tensor:
+    def render(
+        self,
+        states=None,
+        size: int | None = None,
+        supersample: int | None = None,
+        variation: dict | None = None,
+        style=None,
+        out=None,
+    ) -> torch.Tensor:
         want = int(self.size if size is None else size)
         if want != 96:
             raise ValueError(
                 f"CarRacing renders at the reference's own 96x96 and nothing else (got size={want}). "
                 f"The observation is a smoothscale of a FIXED 1000x800 surface, so another output "
-                f"size is a different filter, not a different resolution.")
+                f"size is a different filter, not a different resolution."
+            )
         if supersample not in (None, 1):
-            raise ValueError("CarRacing: supersample is not available; both of its rasterizers are "
-                             "integer, so there is no coverage to supersample.")
-        s = self._state if states is None else torch.as_tensor(states, device=self.device,
-                                                               dtype=torch.float32)
+            raise ValueError(
+                "CarRacing: supersample is not available; both of its rasterizers are "
+                "integer, so there is no coverage to supersample."
+            )
+        s = self._state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
         lead = tuple(s.shape[:-1])
         s = s.reshape(-1, self.state_dim).to(torch.float64)
         B = s.shape[0]
@@ -523,9 +581,9 @@ class CarRacing(Env):
         dev = self.device
         on = torch.ones(B, dtype=torch.bool, device=dev)
         ar = torch.arange(B, device=dev)
-        gfx_v, gfx_c, gfx_on = [], [], []          # gfxdraw quads, pre-flip
-        pre_v, pre_c, pre_on = [], [], []          # pygame.draw polygons, pre-flip
-        post_v, post_c, post_on = [], [], []       # pygame.draw polygons, post-flip
+        gfx_v, gfx_c, gfx_on = [], [], []  # gfxdraw quads, pre-flip
+        pre_v, pre_c, pre_on = [], [], []  # pygame.draw polygons, pre-flip
+        post_v, post_c, post_on = [], [], []  # pygame.draw polygons, post-flip
 
         angle = -s[:, 2]
         a = torch.fmod(angle, TWO_PI)
@@ -541,8 +599,7 @@ class CarRacing(Env):
             return torch.as_tensor(c, dtype=torch.float32, device=dev).view(1, 3).expand(B, 3)
 
         # 1 background: clip=False, so it is drawn unconditionally
-        gfx_v.append(_to_screen(self.field_v[0].unsqueeze(0).expand(B, 4, 2),
-                                cos, sin, zoom, trans).unsqueeze(1))
+        gfx_v.append(_to_screen(self.field_v[0].unsqueeze(0).expand(B, 4, 2), cos, sin, zoom, trans).unsqueeze(1))
         gfx_c.append(const(self.bk["bg_color"]).unsqueeze(1))
         gfx_on.append(on.unsqueeze(1))
 
@@ -551,8 +608,9 @@ class CarRacing(Env):
         # index order (a stable argsort on the negated predicate), which keeps the draw order and
         # turns 794 primitives into the ~100 the cull actually leaves.
         def culled(all_verts, n_all):
-            scr = _to_screen(all_verts.reshape(1, -1, 2).expand(B, n_all * 4, 2),
-                             cos, sin, zoom, trans).reshape(B, n_all, 4, 2)
+            scr = _to_screen(all_verts.reshape(1, -1, 2).expand(B, n_all * 4, 2), cos, sin, zoom, trans).reshape(
+                B, n_all, 4, 2
+            )
             vis = _visible(scr)
             order = torch.argsort((~vis).to(torch.uint8), dim=1, stable=True)
             K = int(vis.sum(1).max().item())
@@ -564,9 +622,9 @@ class CarRacing(Env):
         gfx_on.append(gvis.gather(1, gord))
 
         rscr, rvis, rord, rK = culled(self.road_v, self.road_v.shape[0])
-        visited = sty["track.visited"] > 0.5                       # (B, n_tiles)
-        base = self.road_c[rord]                                   # (B,rK,3) unvisited colour
-        ti = self.tile_of[rord]                                    # (B,rK)
+        visited = sty["track.visited"] > 0.5  # (B, n_tiles)
+        base = self.road_c[rord]  # (B,rK,3) unvisited colour
+        ti = self.tile_of[rord]  # (B,rK)
         was = (ti >= 0) & visited.gather(1, ti.clamp_min(0))
         gfx_v.append(rscr.gather(1, rord.view(B, rK, 1, 1).expand(B, rK, 4, 2)))
         gfx_c.append(torch.where(was.unsqueeze(-1), self.road_color.view(1, 1, 3), base))
@@ -596,14 +654,15 @@ class CarRacing(Env):
         # coordinates. The kernel is told which frame a primitive is in rather than the surface being
         # moved between the two.
         speed = torch.sqrt(s[:, 3] ** 2 + s[:, 4] ** 2)
-        steer = s[:, 8] - s[:, 2]                      # revolute joint angle, not a state dimension
+        steer = s[:, 8] - s[:, 2]  # revolute joint angle, not a state dimension
         for verts, col, gate in self._indicators(speed, s[:, 22:26], steer, s[:, 5], B):
             post_v.append(verts)
             post_c.append(const(col))
             post_on.append(gate)
 
-        buf = self._raster(B, gfx_v, gfx_c, gfx_on, pre_v, pre_c, pre_on, post_v, post_c, post_on,
-                           sty["rendering.antialias"] > 0.5)
+        buf = self._raster(
+            B, gfx_v, gfx_c, gfx_on, pre_v, pre_c, pre_on, post_v, post_c, post_on, sty["rendering.antialias"] > 0.5
+        )
 
         # 6 score, then 7 the resample
         self._blit_text(buf, s[:, 26])
@@ -622,18 +681,17 @@ class CarRacing(Env):
         Pg = sum(v.shape[1] for v in gfx_v)
         groups = [(torch.cat(gfx_v, 1), torch.cat(gfx_c, 1), torch.cat(gfx_on, 1))]
         for vs, cs, os_ in ((pre_v, pre_c, pre_on), (post_v, post_c, post_on)):
-            if not vs:                      # an empty group is legal; a bisect over the list uses it
+            if not vs:  # an empty group is legal; a bisect over the list uses it
                 continue
-            groups.append((torch.stack([_pad_verts(v, VMAX) for v in vs], 1),
-                           torch.stack(cs, 1), torch.stack(os_, 1)))
-        nvs = ([4] * Pg + [v.shape[1] for v in pre_v] + [4] * len(post_v))
+            groups.append((torch.stack([_pad_verts(v, VMAX) for v in vs], 1), torch.stack(cs, 1), torch.stack(os_, 1)))
+        nvs = [4] * Pg + [v.shape[1] for v in pre_v] + [4] * len(post_v)
         Ppost = Pg + len(pre_v)
         P = Ppost + len(post_v)
 
         vert = torch.cat([_pad_verts(g[0].reshape(B, -1, g[0].shape[2], 2), VMAX) for g in groups], 1)
-        vert = torch.trunc(vert).to(torch.int32)                       # (B,P,VMAX,2)
-        col = torch.cat([g[1] for g in groups], 1).to(torch.int32)     # (B,P,3)
-        gate = torch.cat([g[2] for g in groups], 1)                    # (B,P)
+        vert = torch.trunc(vert).to(torch.int32)  # (B,P,VMAX,2)
+        col = torch.cat([g[1] for g in groups], 1).to(torch.int32)  # (B,P,3)
+        gate = torch.cat([g[2] for g in groups], 1)  # (B,P)
         nv = torch.tensor(nvs, dtype=torch.int32, device=dev).view(1, P)
 
         vx, vy = vert[..., 0], vert[..., 1]
@@ -647,16 +705,33 @@ class CarRacing(Env):
         y0 = torch.where(post, ylo, H - 1 - yhi)
         y1 = torch.where(post, yhi, H - 1 - ylo)
         off = ~gate
-        meta = torch.stack([nv.expand(B, P), col[..., 0], col[..., 1], col[..., 2],
-                            torch.where(off, torch.ones_like(x0), x0),
-                            torch.where(off, torch.ones_like(y0), y0),
-                            torch.where(off, torch.zeros_like(x1), x1),
-                            torch.where(off, torch.zeros_like(y1), y1)], -1).contiguous()
+        meta = torch.stack(
+            [
+                nv.expand(B, P),
+                col[..., 0],
+                col[..., 1],
+                col[..., 2],
+                torch.where(off, torch.ones_like(x0), x0),
+                torch.where(off, torch.ones_like(y0), y0),
+                torch.where(off, torch.zeros_like(x1), x1),
+                torch.where(off, torch.zeros_like(y1), y1),
+            ],
+            -1,
+        ).contiguous()
 
-        edge = F.edge_table(vx[:, :Pg, :4].reshape(-1, 4).to(torch.int64),
-                            vy[:, :Pg, :4].reshape(-1, 4).to(torch.int64), H, W)
-        return F.render_surface(vert.contiguous(), meta, edge.reshape(B, Pg, 4, F.EG_W),
-                                aa.to(torch.int32).reshape(B).contiguous(), H, W, Pg, Ppost)
+        edge = F.edge_table(
+            vx[:, :Pg, :4].reshape(-1, 4).to(torch.int64), vy[:, :Pg, :4].reshape(-1, 4).to(torch.int64), H, W
+        )
+        return F.render_surface(
+            vert.contiguous(),
+            meta,
+            edge.reshape(B, Pg, 4, F.EG_W),
+            aa.to(torch.int32).reshape(B).contiguous(),
+            H,
+            W,
+            Pg,
+            Ppost,
+        )
 
     def _stripe(self, px, py, ang, phase, B):
         """The wheel's white stripe: a quad whose two heights are ``cos(phase)`` and
@@ -668,10 +743,15 @@ class CarRacing(Env):
         c2 = torch.where(s2 > 0, torch.sign(torch.cos(a2)), torch.cos(a2))
         z = torch.zeros_like(c1)
         wf, wr = self.bk["wheel_w"], self.bk["wheel_r"]
-        loc = torch.stack([torch.stack([z - wf, wr * c1], -1),
-                           torch.stack([z + wf, wr * c1], -1),
-                           torch.stack([z + wf, wr * c2], -1),
-                           torch.stack([z - wf, wr * c2], -1)], 1)
+        loc = torch.stack(
+            [
+                torch.stack([z - wf, wr * c1], -1),
+                torch.stack([z + wf, wr * c1], -1),
+                torch.stack([z + wf, wr * c2], -1),
+                torch.stack([z - wf, wr * c2], -1),
+            ],
+            1,
+        )
         return _body_to_world(loc, px, py, ang), ~((s1 > 0) & (s2 > 0))
 
     def _indicators(self, speed, omegas, steer, gyro, B):
@@ -682,24 +762,37 @@ class CarRacing(Env):
 
         def vert(place, val):
             top, bot = H - (hh + hh * val), torch.full_like(val, H - hh)
-            f = lambda c: torch.full_like(val, c)                                   # noqa: E731
-            return torch.stack([torch.stack([f(place * sx), top], -1),
-                                torch.stack([f((place + 1) * sx), top], -1),
-                                torch.stack([f((place + 1) * sx), bot], -1),
-                                torch.stack([f(place * sx), bot], -1)], 1)
+            f = lambda c: torch.full_like(val, c)  # noqa: E731
+            return torch.stack(
+                [
+                    torch.stack([f(place * sx), top], -1),
+                    torch.stack([f((place + 1) * sx), top], -1),
+                    torch.stack([f((place + 1) * sx), bot], -1),
+                    torch.stack([f(place * sx), bot], -1),
+                ],
+                1,
+            )
 
         def horiz(place, val):
             x0, x1 = torch.full_like(val, place * sx), (place + val) * sx
             y0, y1 = torch.full_like(val, H - 4 * hh), torch.full_like(val, H - 2 * hh)
-            return torch.stack([torch.stack([x0, y0], -1), torch.stack([x1, y0], -1),
-                                torch.stack([x1, y1], -1), torch.stack([x0, y1], -1)], 1)
+            return torch.stack(
+                [
+                    torch.stack([x0, y0], -1),
+                    torch.stack([x1, y0], -1),
+                    torch.stack([x1, y1], -1),
+                    torch.stack([x0, y1], -1),
+                ],
+                1,
+            )
 
-        panel = torch.tensor([[W, H], [W, H - 5 * hh], [0, H - 5 * hh], [0, H]],
-                             dtype=torch.float64, device=dev).view(1, 4, 2).expand(B, 4, 2)
-        out = [(panel, (0, 0, 0), one),
-               (vert(5, 0.02 * speed), (255, 255, 255), speed.abs() > 1e-4)]
-        for k, place, col in ((0, 7, (0, 0, 255)), (1, 8, (0, 0, 255)),
-                              (2, 9, (51, 0, 255)), (3, 10, (51, 0, 255))):
+        panel = (
+            torch.tensor([[W, H], [W, H - 5 * hh], [0, H - 5 * hh], [0, H]], dtype=torch.float64, device=dev)
+            .view(1, 4, 2)
+            .expand(B, 4, 2)
+        )
+        out = [(panel, (0, 0, 0), one), (vert(5, 0.02 * speed), (255, 255, 255), speed.abs() > 1e-4)]
+        for k, place, col in ((0, 7, (0, 0, 255)), (1, 8, (0, 0, 255)), (2, 9, (51, 0, 255)), (3, 10, (51, 0, 255))):
             out.append((vert(place, 0.01 * omegas[:, k]), col, omegas[:, k].abs() > 1e-4))
         out.append((horiz(20, -10.0 * steer), (0, 255, 0), steer.abs() > 1e-4))
         out.append((horiz(30, -0.8 * gyro), (255, 0, 0), gyro.abs() > 1e-4))
@@ -719,9 +812,12 @@ class CarRacing(Env):
         j = torch.arange(win_w, device=dev).view(1, -1)
         src = win_lo + j - x0.view(-1, 1)
         ok = (src >= 0) & (src < w.view(-1, 1))
-        g = self.atlas[idx.view(-1, 1, 1), torch.arange(th, device=dev).view(1, -1, 1),
-                       src.clamp(0, self.atlas.shape[2] - 1).view(-1, 1, win_w)]
-        dst = buf[:, y0:y0 + th, win_lo:win_lo + win_w, :]
+        g = self.atlas[
+            idx.view(-1, 1, 1),
+            torch.arange(th, device=dev).view(1, -1, 1),
+            src.clamp(0, self.atlas.shape[2] - 1).view(-1, 1, win_w),
+        ]
+        dst = buf[:, y0 : y0 + th, win_lo : win_lo + win_w, :]
         dst.copy_(torch.where(ok.view(-1, 1, win_w, 1), g.unsqueeze(-1).expand(-1, -1, -1, 3), dst))
 
     # --- reference bridge ---------------------------------------------------------------
@@ -730,8 +826,10 @@ class CarRacing(Env):
         """The official env, reset to the SAME track this class baked. ``size`` is ignored: the
         observation is a fixed 96x96 and the surface behind it a fixed 1000x800."""
         import os
+
         os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
         import gymnasium
+
         env = gymnasium.make("CarRacing-v3", render_mode="state_pixels").unwrapped
         env.reset(seed=BAKE_SEED)
         return env
@@ -761,17 +859,24 @@ class CarRacing(Env):
             # Box2D stores every pose as float32, so this round-trips exactly only for a float32
             # state -- which is the repo's own dtype. Asserting at float64 tolerance fails by ~2e-6
             # and reads as a renderer bug.
-            got = np.array([*env.car.hull.position, env.car.hull.angle,
-                            *env.car.hull.linearVelocity, env.car.hull.angularVelocity], np.float64)
+            got = np.array(
+                [
+                    *env.car.hull.position,
+                    env.car.hull.angle,
+                    *env.car.hull.linearVelocity,
+                    env.car.hull.angularVelocity,
+                ],
+                np.float64,
+            )
             want = np.asarray(st[:6], np.float64)[[0, 1, 2, 3, 4, 5]]
             if np.abs(got - want).max() > 1e-5:
-                raise AssertionError(
-                    f"the reference env did not reach the requested state: {got} vs {want}")
+                raise AssertionError(f"the reference env did not reach the requested state: {got} vs {want}")
             j = float(env.car.wheels[0].joint.angle)
             if abs(j - (float(st[8]) - float(st[2]))) > 1e-4:
                 raise AssertionError(
                     f"wheels[0].joint.angle is {j}, not wheel0.angle - hull.angle "
                     f"({float(st[8]) - float(st[2])}) -- the steering bar would be drawn from a "
-                    f"quantity this state cannot reproduce")
+                    f"quantity this state cannot reproduce"
+                )
             out.append(env.render().copy())
         return np.stack(out)

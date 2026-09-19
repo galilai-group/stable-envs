@@ -12,6 +12,7 @@ Sweep the intermediate resolution and report which one reproduces the corpus.
 
     python corpus_origin_probe.py --n 24
 """
+
 from __future__ import annotations
 
 import argparse
@@ -35,6 +36,7 @@ def two_stage(img512: np.ndarray, mid: int, size: int, up: str) -> np.ndarray:
     """The swm pipeline: env cv2-resizes the 512 canvas to ``mid``, the wrapper PIL-resizes up to 224."""
     import cv2
     from PIL import Image
+
     small = cv2.resize(img512, (mid, mid))
     flt = {"bilinear": Image.BILINEAR, "bicubic": Image.BICUBIC, "nearest": Image.NEAREST}[up]
     return np.array(Image.fromarray(small).resize((size, size), flt))
@@ -74,8 +76,11 @@ def main() -> None:
             m = pixel_agreement(v, stored)
             m["own_interior_frac"] = float(interior_mask(v).mean())
             res[f"{up}_{mid}"] = m
-            print(f"[origin] mid={mid:4d} up={up:9s} exact={m['exact_frac']:.4f} "
-                  f"mean_abs={m['mean_abs']:.4f} flat={m['own_interior_frac']:.4f}", flush=True)
+            print(
+                f"[origin] mid={mid:4d} up={up:9s} exact={m['exact_frac']:.4f} "
+                f"mean_abs={m['mean_abs']:.4f} flat={m['own_interior_frac']:.4f}",
+                flush=True,
+            )
             if m["exact_frac"] > best[1]:
                 best = (f"{up}_{mid}", m["exact_frac"])
     res["best"] = {"key": best[0], "exact_frac": best[1]}

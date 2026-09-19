@@ -9,6 +9,7 @@ that agrees to a tolerance. On CUDA the stateful path may be a replayed graph; t
 CPU only, no reference package: PushT's simulator is ours, and its agreement with pymunk is a
 different claim measured elsewhere (``check_step_matches_reference``).
 """
+
 from __future__ import annotations
 
 import pytest
@@ -37,8 +38,9 @@ def test_step_is_stateful_and_returns_a_stepresult_carrying_the_state(env):
     env.reset(seed=0)
     before = env.get_state().clone()
     out = env.step(_actions(6))
-    assert set(out.keys()) == {"state"}, ("PushT has no reward and no termination in stable-envs and "
-                                          "must omit them rather than fabricate zeros")
+    assert set(out.keys()) == {"state"}, (
+        "PushT has no reward and no termination in stable-envs and must omit them rather than fabricate zeros"
+    )
     assert list(out.batch_size) == [6]
     assert torch.equal(env.pack(out["state"]), env.get_state())
     assert not torch.equal(before, env.get_state()), "step must advance the env's held state"
@@ -95,14 +97,14 @@ def test_unroll_refuses_actions_without_a_time_axis(env):
 
 def test_a_cell_without_dynamics_says_so_precisely():
     """Renderer-only cells are the majority and the refusal is a design statement, not a gap."""
+
     class Renderless(snv.PushT):
         step = snv.Env.step
         transition = snv.Env.transition
 
     e = Renderless(num_envs=2, device="cpu")
     assert not e.has_dynamics
-    for call in (lambda: e.step(torch.zeros(2, 2)),
-                 lambda: e.transition(e.reset(seed=0), torch.zeros(2, 2))):
+    for call in (lambda: e.step(torch.zeros(2, 2)), lambda: e.transition(e.reset(seed=0), torch.zeros(2, 2))):
         with pytest.raises(NotImplementedError) as exc:
             call()
         assert "PushT has dynamics" in str(exc.value) and "Renderless" in str(exc.value)
@@ -122,7 +124,8 @@ def test_the_step_result_is_built_by_the_shared_helper(env):
     assert set(built.keys()) == {"state", "reward", "done"}
     assert list(built["reward"].shape) == [6] and list(built["done"].shape) == [6]
     assert set(env._step_result(env.state, reward=None).keys()) == {"state"}, (
-        "a cell with no reward semantics passes None and the key is ABSENT, not zero")
+        "a cell with no reward semantics passes None and the key is ABSENT, not zero"
+    )
 
 
 def test_a_cell_with_hidden_state_and_no_hook_fails_loudly_instead_of_reporting_zeros():
@@ -131,6 +134,7 @@ def test_a_cell_with_hidden_state_and_no_hook_fails_loudly_instead_of_reporting_
     A hidden field left unfilled would come back as zeros — ``env.state`` looking fine while
     ``transition(env.state, a)`` quietly stopped matching ``step(a)``.
     """
+
     class Forgetful(snv.PushT):
         _hidden_state = snv.Env._hidden_state
 

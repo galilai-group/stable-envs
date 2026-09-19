@@ -15,6 +15,7 @@ Which env modules import depends on what is installed, so the recorded fingerpri
 that failed to import) is compared first and the class-by-class comparison is skipped, loudly, if the
 interpreter is not the one the baseline was taken on.
 """
+
 from __future__ import annotations
 
 import importlib
@@ -70,22 +71,23 @@ def test_an_unknown_name_lists_what_is_known():
 
 def test_every_canonical_class_name_resolves_to_the_same_class_as_at_the_baseline():
     if not BASELINE.exists():
-        pytest.skip(f"no baseline registry table recorded at {BASELINE}; run "
-                    f"scratch/step9/foundation/pusht_oracle.py")
+        pytest.skip(f"no baseline registry table recorded at {BASELINE}; run scratch/step9/foundation/pusht_oracle.py")
     base = json.loads(BASELINE.read_text())
     if set(base["import_errors"]) != set(snv.import_errors()):
-        pytest.skip("this interpreter imports a different set of env families than the one the "
-                    f"baseline was recorded on: baseline {sorted(base['import_errors'])} vs "
-                    f"{sorted(snv.import_errors())}")
+        pytest.skip(
+            "this interpreter imports a different set of env families than the one the "
+            f"baseline was recorded on: baseline {sorted(base['import_errors'])} vs "
+            f"{sorted(snv.import_errors())}"
+        )
     now = {r["name"]: r for r in R.registry_table()}
     then = {r["name"]: r for r in base["registry_table"]}
     assert sorted(now) == sorted(then), "the set of registered class names changed"
     for name, row in then.items():
         # ``module`` may move when unpublished shims are retired. The class is still the same
         # object, reachable at its canonical module; the old import path is gone on purpose.
-        assert {k: v for k, v in now[name].items() if k != "module"} == \
-               {k: v for k, v in row.items() if k != "module"}, \
-            f"the registry row for {name} changed"
+        assert {k: v for k, v in now[name].items() if k != "module"} == {
+            k: v for k, v in row.items() if k != "module"
+        }, f"the registry row for {name} changed"
         if now[name]["module"] != row["module"]:
             assert getattr(importlib.import_module(now[name]["module"]), name) is R.REGISTRY[name]
         assert R.make.__module__ and R._resolve(name, "make") is R.REGISTRY[name]
@@ -106,4 +108,5 @@ def test_discovery_records_its_failures_rather_than_hiding_them():
     assert isinstance(errs, dict)
     assert all(isinstance(v, str) and v for v in errs.values())
     assert set(errs) & {*[c.__module__.rsplit(".", 1)[-1] for c in R.REGISTRY.values()]} == set(), (
-        "a module cannot both have failed to import and have registered a class")
+        "a module cannot both have failed to import and have registered a class"
+    )

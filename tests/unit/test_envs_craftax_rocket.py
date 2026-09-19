@@ -16,10 +16,10 @@ produced; stable-envs ships no batched Craftax simulator, and PyFlyt's dynamics 
 ``PFRocketLanding`` cannot be CONSTRUCTED on a machine without nvdiffrast, so its tests are about the
 class and the module: the constructor's signature, the CPU refusal's wording, and the declarations.
 """
+
 from __future__ import annotations
 
 import inspect
-
 import types
 
 import numpy as np
@@ -28,7 +28,8 @@ import torch
 
 import stable_envs as snv
 from stable_envs import dynamics
-from stable_envs.envs import _craftax_full, craftax, rocket_landing as RL
+from stable_envs.envs import _craftax_full, craftax
+from stable_envs.envs import rocket_landing as RL
 
 CRAFTAX = ("CraftaxClassic", "CraftaxFull")
 
@@ -53,7 +54,7 @@ def test_takes_the_step9_constructor(name):
         assert not env.closed
         env.close()
         assert env.closed
-    env.close()                                            # idempotent, and after __exit__ closed it
+    env.close()  # idempotent, and after __exit__ closed it
     with pytest.raises(RuntimeError, match="is closed"):
         env.render(env.sample_states(2))
 
@@ -76,10 +77,18 @@ EXPECTED_KEYS = {
     "CraftaxClassic": [("world", "blocks"), ("world", "mobs"), ("player", "facing")]
     + [("inventory", n) for n in craftax.STRIP_NAMES]
     + [("player", "is_sleeping"), ("world", "light_level"), ("world", "rng_key")],
-    "CraftaxFull": [("world", "blocks"), ("world", "items"), ("world", "mobs"),
-                    ("world", "projectiles"), ("world", "light_map"),
-                    ("player", "facing"), ("player", "is_sleeping"), ("player", "level"),
-                    ("world", "light_level"), ("world", "rng_key")]
+    "CraftaxFull": [
+        ("world", "blocks"),
+        ("world", "items"),
+        ("world", "mobs"),
+        ("world", "projectiles"),
+        ("world", "light_map"),
+        ("player", "facing"),
+        ("player", "is_sleeping"),
+        ("player", "level"),
+        ("world", "light_level"),
+        ("world", "rng_key"),
+    ]
     + [("inventory", n) for n in _craftax_full.STRIP_SLOTS],
 }
 
@@ -143,10 +152,12 @@ def test_a_state_the_caller_keeps_is_not_a_view_of_the_env(envs, name):
 def test_the_rocket_state_is_one_rigid_body_grouped_by_what_it_is():
     """Checked on the CLASS: the cell cannot be built without a CUDA host."""
     lay = RL.PFRocketLanding.state_layout
-    assert [tuple(k) for k, _, _ in lay] == [("rocket", "angular_velocity"),
-                                             ("rocket", "orientation"),
-                                             ("rocket", "linear_velocity"),
-                                             ("rocket", "position")]
+    assert [tuple(k) for k, _, _ in lay] == [
+        ("rocket", "angular_velocity"),
+        ("rocket", "orientation"),
+        ("rocket", "linear_velocity"),
+        ("rocket", "position"),
+    ]
     assert [w for _, w, _ in lay] == [3, 4, 3, 3]
     assert [o for _, _, o in lay] == [0, 3, 7, 10]
     assert sum(w for _, w, _ in lay) == RL.PFRocketLanding.state_dim == 13
@@ -218,8 +229,12 @@ def test_these_cells_have_no_dynamics_and_say_so_precisely(envs, name):
     assert not env.has_dynamics and not dynamics.has_dynamics(env)
     a = torch.zeros(env.num_envs, 1)
     st = env.state
-    for call in (lambda: env.step(a), lambda: env.transition(st, a),
-                 lambda: env.unroll(st, a.unsqueeze(0)), lambda: env.action_spec):
+    for call in (
+        lambda: env.step(a),
+        lambda: env.transition(st, a),
+        lambda: env.unroll(st, a.unsqueeze(0)),
+        lambda: env.action_spec,
+    ):
         with pytest.raises(NotImplementedError) as e:
             call()
         assert "ships a renderer and no batched simulator" in str(e.value)
@@ -254,8 +269,18 @@ def test_craftax_full_registers_from_the_private_module():
     """``discover()`` loads ``_craftax_full`` explicitly; there is no ``craftax_full.py`` shim."""
     assert snv.CraftaxFull is _craftax_full.CraftaxFull
     assert snv.CraftaxFull.__module__ == "stable_envs.envs._craftax_full"
-    for n in ("N_BLOCK", "N_STRIP", "STRIP_SLOTS", "STRIP_CELLS", "OBS_H", "OBS_W",
-              "light_night_and_sleep", "night_vignette", "transparent_mob_slots", "_tent"):
+    for n in (
+        "N_BLOCK",
+        "N_STRIP",
+        "STRIP_SLOTS",
+        "STRIP_CELLS",
+        "OBS_H",
+        "OBS_W",
+        "light_night_and_sleep",
+        "night_vignette",
+        "transparent_mob_slots",
+        "_tent",
+    ):
         assert hasattr(_craftax_full, n)
 
 
@@ -270,8 +295,13 @@ def test_the_two_craftax_modules_could_not_have_been_merged():
     delivered findings and this docstring both claimed 21, counting eight names that are in fact
     identical in the two modules. A claim that carries a number and cannot fail is not evidence.
     """
-    shared = {"N_BLOCK": (17, 37), "N_STRIP": (16, 41), "STRIP_H": (2, 4),
-              "TILE_PX_AGENT": (7, 10), "N_COUNT": (10, 100)}
+    shared = {
+        "N_BLOCK": (17, 37),
+        "N_STRIP": (16, 41),
+        "STRIP_H": (2, 4),
+        "TILE_PX_AGENT": (7, 10),
+        "N_COUNT": (10, 100),
+    }
     for n, (classic, full) in shared.items():
         assert getattr(craftax, n) == classic
         assert getattr(_craftax_full, n) == full
@@ -280,11 +310,26 @@ def test_the_two_craftax_modules_could_not_have_been_merged():
     #: The 15 shared names that genuinely conflict: 9 constants, 3 functions whose bodies differ, and
     #: 3 same-named but distinct per-device caches. Pinned so that a future edit which makes the two
     #: modules mergeable has to come here and say so.
-    CONFLICTING = {"N_BLOCK", "N_COUNT", "N_STRIP", "N_TILE", "OBS_H", "OBS_W", "REFERENCE_TILE_PX",
-                   "STRIP_H", "TILE_PX_AGENT", "_unpack", "night_vignette", "strip_geometry",
-                   "_CONST_CACHE", "_GRID_CACHE", "_VIGNETTE_CACHE"}
-    names = {n for n in dir(craftax) if not n.startswith("__")} & \
-            {n for n in dir(_craftax_full) if not n.startswith("__")}
+    CONFLICTING = {
+        "N_BLOCK",
+        "N_COUNT",
+        "N_STRIP",
+        "N_TILE",
+        "OBS_H",
+        "OBS_W",
+        "REFERENCE_TILE_PX",
+        "STRIP_H",
+        "TILE_PX_AGENT",
+        "_unpack",
+        "night_vignette",
+        "strip_geometry",
+        "_CONST_CACHE",
+        "_GRID_CACHE",
+        "_VIGNETTE_CACHE",
+    }
+    names = {n for n in dir(craftax) if not n.startswith("__")} & {
+        n for n in dir(_craftax_full) if not n.startswith("__")
+    }
     assert len(names) == 34, f"shared name count moved to {len(names)}; update the module decision"
 
     def _differs(n):
@@ -292,15 +337,19 @@ def test_the_two_craftax_modules_could_not_have_been_merged():
         if isinstance(x, types.FunctionType) and isinstance(y, types.FunctionType):
             return x.__code__.co_code != y.__code__.co_code
         if isinstance(x, torch.Tensor) or isinstance(y, torch.Tensor):
-            return not (isinstance(x, torch.Tensor) and isinstance(y, torch.Tensor)
-                        and x.shape == y.shape and bool((x == y).all()))
+            return not (
+                isinstance(x, torch.Tensor)
+                and isinstance(y, torch.Tensor)
+                and x.shape == y.shape
+                and bool((x == y).all())
+            )
         if isinstance(x, dict) and isinstance(y, dict):
             return x is not y
         if type(x) is not type(y):
             return True
         try:
             return not bool(x == y)
-        except Exception:                      # noqa: BLE001 -- unorderable objects: identity decides
+        except Exception:  # noqa: BLE001 -- unorderable objects: identity decides
             return x is not y
 
     assert {n for n in names if _differs(n)} == CONFLICTING
@@ -349,8 +398,13 @@ def test_the_parity_claims_and_their_reference_versions_survive():
 
 def test_the_rocket_colour_exactness_declaration_survives_verbatim():
     d = RL.PFRocketLanding.color_exactness_applicability
-    assert d["leaves"] == ("pad.color", "rocket.body_color", "rocket.booster_color",
-                           "rocket.fin_color", "rocket.leg_color")
+    assert d["leaves"] == (
+        "pad.color",
+        "rocket.body_color",
+        "rocket.booster_color",
+        "rocket.fin_color",
+        "rocket.leg_color",
+    )
     assert len(d["leaves"]) == 5
     assert d["max_shading_factor"] == 0.993567
     assert d["reachable_ceiling_for_the_probe_targets"] == {"200": 198, "33": 32, "17": 16}
@@ -403,6 +457,7 @@ def test_both_frozen_craftax_classic_corpora_are_kept_and_both_replay():
     64x149 Step-7 array certifies the complete observation.
     """
     from pathlib import Path
+
     root = Path(__file__).resolve().parents[2]
     step4 = np.load(root / "examples/results/step4/states/CraftaxClassic.npz")["states"]
     step7 = np.load(root / "examples/results/step7/craftax-classic-full/corpus/states.npz")["states"]

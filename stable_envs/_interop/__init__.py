@@ -6,4 +6,5 @@ that size is not the "small, obvious module" the same plan asks for, so it lives
 and ``stable_envs/interop.py`` is the single public face of it. Nothing outside imports
 ``stable_envs._interop`` directly; the leading underscore says so.
 """
+
 from __future__ import annotations

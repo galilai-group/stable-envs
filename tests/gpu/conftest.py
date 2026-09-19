@@ -18,6 +18,7 @@ a leftover ``_state`` cannot reach a later frame. Size does need one and is hand
 the env's size before returning, because for the highway family ``size`` IS carried on the env (see
 ``HIGHWAY_SIZE_LEAK``) and a leaked one silently rewrites every later frame.
 """
+
 from __future__ import annotations
 
 import pytest

@@ -28,16 +28,22 @@ The swm-dependent tests skip when ``stable_worldmodel`` is not importable, which
 repository's default test venv; they are run in a venv that has it (see
 ``docs/research/step8_variations_dmc_control.md``).
 """
+
 from __future__ import annotations
 
 import numpy as np
 import pytest
 import torch
 
-from stable_envs.interop import (VARIATION_MAPS, check_mapping, style_from_variation,
-                                           swm_variation_space, variation_from_style, variation_map)
-from stable_envs._interop.variation_maps.dmc_control import (EXPECTED_COUNTS, LIGHT_RANGE, MAPS,
-                                                           swm_defaults)
+from stable_envs._interop.variation_maps.dmc_control import EXPECTED_COUNTS, LIGHT_RANGE, MAPS, swm_defaults
+from stable_envs.interop import (
+    VARIATION_MAPS,
+    check_mapping,
+    style_from_variation,
+    swm_variation_space,
+    variation_from_style,
+    variation_map,
+)
 from stable_envs.registry import REGISTRY, make
 
 _HAVE_SWM = True
@@ -50,8 +56,9 @@ except Exception:  # pragma: no cover
 needs_swm = pytest.mark.skipif(not _HAVE_SWM, reason="stable_worldmodel is not installed")
 #: The DM Control cells register only when dm_control and a GL backend are importable; the two
 #: tests below are the only ones that need a DM Control cell and no swm.
-needs_dmc = pytest.mark.skipif("DMCManipulatorBringBall" not in REGISTRY,
-                               reason="the DM Control cells did not register (dm_control/MUJOCO_GL)")
+needs_dmc = pytest.mark.skipif(
+    "DMCManipulatorBringBall" not in REGISTRY, reason="the DM Control cells did not register (dm_control/MUJOCO_GL)"
+)
 
 CELLS = sorted(MAPS)
 #: The five cells whose swm REGISTERED default is a different appearance from the compiled model's,
@@ -75,6 +82,7 @@ def _layout(env):
 
 # --------------------------------------------------------------------- completeness
 
+
 @needs_swm
 @pytest.mark.parametrize("cell", CELLS)
 def test_every_leaf_is_classified(cell):
@@ -82,10 +90,12 @@ def test_every_leaf_is_classified(cell):
     env = _env(cell)
     r = check_mapping(env)
     assert r["undocumented"] == [], f"{cell}: unclassified swm leaves {r['undocumented']}"
-    assert r["mapped_but_absent_from_swm"] == [], \
+    assert r["mapped_but_absent_from_swm"] == [], (
         f"{cell}: map names swm leaves that do not exist: {r['mapped_but_absent_from_swm']}"
-    assert set(r["ours_only"]) == set(r["ours_only_documented"]), \
+    )
+    assert set(r["ours_only"]) == set(r["ours_only_documented"]), (
         f"{cell}: ours_only is out of step with its documentation"
+    )
     assert all(v for v in r["reasons"].values()), f"{cell}: an unmapped leaf has an empty reason"
 
 
@@ -121,6 +131,7 @@ def test_the_seventeen_ids_total_161_leaves():
 
 # --------------------------------------------------------------------- the registered default
 
+
 @needs_swm
 @pytest.mark.parametrize("cell", CELLS)
 def test_registered_default_is_reproducible_through_the_mapping(cell):
@@ -132,8 +143,7 @@ def test_registered_default_is_reproducible_through_the_mapping(cell):
     env = _env(cell)
     base = np.asarray(env.default_style(), np.float32).reshape(-1)
     mapped = style_from_variation(env, swm_defaults(variation_map(env).swm_id))
-    moved = {p for p, (o, w) in _layout(env).items() if not np.array_equal(base[o:o + w],
-                                                                          mapped[o:o + w])}
+    moved = {p for p, (o, w) in _layout(env).items() if not np.array_equal(base[o : o + w], mapped[o : o + w])}
     assert moved == DEFAULT_REACHED_THROUGH.get(cell, set()), cell
 
     states = torch.as_tensor(env.sample_states(8, rng=np.random.default_rng(3)))
@@ -142,13 +152,13 @@ def test_registered_default_is_reproducible_through_the_mapping(cell):
     if cell not in DEFAULT_REACHED_THROUGH:
         assert np.array_equal(a, b), f"{cell}: the mapped swm default is not the cell's default frame"
     else:
-        assert not np.array_equal(a, b), \
+        assert not np.array_equal(a, b), (
             f"{cell}: the swm default is declared to differ from the compiled model's and does not"
+        )
 
 
 @needs_swm
-@pytest.mark.parametrize("cell", ["Acrobot", "CartPole", "Pendulum", "MountainCar",
-                                  "MountainCarContinuous"])
+@pytest.mark.parametrize("cell", ["Acrobot", "CartPole", "Pendulum", "MountainCar", "MountainCarContinuous"])
 def test_classic_default_matches_the_official_swm_render(cell):
     """The five classic-control cells, at the registered default, against swm's OWN frame.
 
@@ -169,17 +179,18 @@ def test_classic_default_matches_the_official_swm_render(cell):
         while getattr(holder, "variation_space", None) is None:
             holder = holder.env
         holder.reset(seed=0)
-        official = np.stack([(cls.reference_set_state(holder.env.unwrapped, s),
-                              holder.render().copy())[1] for s in states])
+        official = np.stack(
+            [(cls.reference_set_state(holder.env.unwrapped, s), holder.render().copy())[1] for s in states]
+        )
     finally:
         ref_wrapper.close()
     mapped = style_from_variation(env, swm_defaults(m.swm_id))
-    ours = env.render(torch.as_tensor(states),
-                      style=torch.as_tensor(np.repeat(mapped[None], 8, 0))).cpu().numpy()
+    ours = env.render(torch.as_tensor(states), style=torch.as_tensor(np.repeat(mapped[None], 8, 0))).cpu().numpy()
     assert np.array_equal(ours, official), f"{cell}: {int((ours != official).sum())} bytes differ"
 
 
 # --------------------------------------------------------------------- isolation
+
 
 @needs_swm
 @pytest.mark.parametrize("cell", CELLS)
@@ -203,9 +214,8 @@ def test_mapped_leaves_are_isolated(cell):
             leaf = leaf[part]
         probe = _probe(leaf)
         row = style_from_variation(env, {**defaults, swm_path: probe})
-        moved = {p for p, (o, w) in layout.items() if not np.array_equal(base[o:o + w], row[o:o + w])}
-        assert moved <= set(ours_paths), \
-            f"{cell}: swm {swm_path} moved {sorted(moved - set(ours_paths))} as well"
+        moved = {p for p, (o, w) in layout.items() if not np.array_equal(base[o : o + w], row[o : o + w])}
+        assert moved <= set(ours_paths), f"{cell}: swm {swm_path} moved {sorted(moved - set(ours_paths))} as well"
 
 
 def _mapped_pairs(m):
@@ -235,6 +245,7 @@ def _probe(leaf):
 
 # --------------------------------------------------------------------- round trip
 
+
 @needs_swm
 @pytest.mark.parametrize("cell", CELLS)
 def test_round_trip(cell):
@@ -260,9 +271,9 @@ def test_round_trip(cell):
                 # the quantisation: half a level, 1/510. The stronger statement is that it round-trips
                 # to the SAME uint8, i.e. swm would paint the identical pixel, so that is asserted too.
                 assert np.allclose(got, want, atol=1.0 / 510.0), f"{cell}: {path} {got} != {want}"
-                assert np.array_equal((got * 255.0 + 0.5).astype(np.uint8),
-                                      (np.clip(want, 0, 1) * 255.0 + 0.5).astype(np.uint8)), \
-                    f"{cell}: {path} does not round-trip to the same uint8"
+                assert np.array_equal(
+                    (got * 255.0 + 0.5).astype(np.uint8), (np.clip(want, 0, 1) * 255.0 + 0.5).astype(np.uint8)
+                ), f"{cell}: {path} does not round-trip to the same uint8"
             else:
                 # float32 is the style row's dtype, so 3e-7 is the representation and not slack.
                 assert np.allclose(got, want, atol=3e-7), f"{cell}: {path} {got} != {want}"
@@ -280,7 +291,7 @@ def test_rgb255_is_swm_quantisation():
     for t in np.linspace(0.0, 1.0, 513):
         row = style_from_variation(env, {"visuals.rod": np.full(3, t, np.float32)})
         want = (np.float32(t) * 255.0 + 0.5).astype(np.uint8)
-        got = np.asarray(row[o:o + w]).astype(np.uint8)
+        got = np.asarray(row[o : o + w]).astype(np.uint8)
         assert (got == want).all(), f"t={t}: {got} != {want}"
 
 
@@ -305,8 +316,9 @@ def test_light_intensity_lands_on_the_model(cell):
     # and the gap: swm's darkest tenth of the range cannot be reached, because our scale stops at 0.2
     assert lo > 0.0
     dark = style_from_variation(env, {"light.intensity": np.float32([lo / 2.0])})
-    assert float(dark[o]) < float(env.variation_space["light"]["diffuse_scale"].low[0]) + 1e-9 or \
-        float(dark[o]) < 0.2, f"{cell}: the declared dark-end gap does not exist"
+    assert (
+        float(dark[o]) < float(env.variation_space["light"]["diffuse_scale"].low[0]) + 1e-9 or float(dark[o]) < 0.2
+    ), f"{cell}: the declared dark-end gap does not exist"
 
 
 # --------------------------------------------------------------------- dead upstream
@@ -399,31 +411,33 @@ def test_dead_upstream_leaves_really_are_dead(tmp_path):
     script.write_text(_DEAD_PROBE)
     result = tmp_path / "out.json"
     import os
+
     import stable_envs
+
     # the subprocess must import the SAME checkout pytest is running against; the repo is normally on
     # sys.path via the root conftest rather than installed.
     root = os.path.dirname(os.path.dirname(os.path.abspath(stable_envs.__file__)))
     env = {**os.environ, "PYTHONPATH": root + os.pathsep + os.environ.get("PYTHONPATH", "")}
-    proc = subprocess.run([sys.executable, str(script), str(result)],
-                          capture_output=True, text=True, timeout=900, env=env)
+    proc = subprocess.run(
+        [sys.executable, str(script), str(result)], capture_output=True, text=True, timeout=900, env=env
+    )
     assert proc.returncode == 0, proc.stderr[-4000:]
     measured = json.loads(result.read_text())
 
-    declared = {c: set(variation_map(c).dead_upstream) for c in CELLS
-                if variation_map(c).dead_upstream}
+    declared = {c: set(variation_map(c).dead_upstream) for c in CELLS if variation_map(c).dead_upstream}
     assert set(measured) == set(declared)
     for cell, leaves in measured.items():
         assert set(leaves) == declared[cell], cell
         for path, got in leaves.items():
-            assert got["model_unchanged"] or got["px_changed"] == 0, \
-                f"{cell}: {path} is declared dead upstream but moves the model AND " \
-                f"{got['px_changed']} pixels"
+            assert got["model_unchanged"] or got["px_changed"] == 0, (
+                f"{cell}: {path} is declared dead upstream but moves the model AND {got['px_changed']} pixels"
+            )
 
 
 # --------------------------------------------------------------------- backward compatibility
 
-@pytest.mark.parametrize("cell", ["TwoRoom", "TwoRoomTarget", "Piecewise", "PiecewiseZones",
-                                  "PushT"])
+
+@pytest.mark.parametrize("cell", ["TwoRoom", "TwoRoomTarget", "Piecewise", "PiecewiseZones", "PushT"])
 def test_the_four_pre_step8_maps_are_untouched(cell):
     """The Step-8 fields are additive: the maps that predate them behave exactly as they did.
 
@@ -471,12 +485,13 @@ def test_affine_is_invertible_and_additive():
     from dataclasses import replace
 
     env = make("Pendulum", num_envs=1, device="cpu")
-    m = replace(variation_map(env), rgb255={}, scaled={},
-                affine={"rendering.antialias": ("visuals.bg", -1.0, 1.0)})
+    m = replace(variation_map(env), rgb255={}, scaled={}, affine={"rendering.antialias": ("visuals.bg", -1.0, 1.0)})
     VARIATION_MAPS["_AffineProbe"] = m
     try:
+
         class Probe(type(env)):
             pass
+
         Probe.__name__ = "_AffineProbe"
         probe = Probe.__new__(Probe)
         probe.__dict__.update(env.__dict__)
@@ -494,6 +509,7 @@ def test_affine_is_invertible_and_additive():
 def test_a_non_invertible_affine_is_refused():
     """``factor = 0`` collapses every swm value onto one of ours and cannot round-trip."""
     from dataclasses import replace
+
     with pytest.raises(ValueError, match="not invertible"):
         replace(VARIATION_MAPS["Pendulum"], affine={"a.b": ("c.d", 0.0, 1.0)})
 
@@ -507,6 +523,7 @@ def test_strict_accepts_the_whole_swm_space(cell):
 
 
 # --------------------------------------------------------------- the Step-8 capability patch
+
 
 @needs_dmc
 def test_the_parity_floor_set_is_the_plate_baking_tier():
@@ -524,12 +541,14 @@ def test_the_parity_floor_set_is_the_plate_baking_tier():
     # exactly "which of our cells bake a plate", which is the DMControlSuite tier.
     derived = {c for c in MAPS if c in REGISTRY and issubclass(REGISTRY[c], DMControlSuite)}
     assert derived == set(_PARITY_FLOOR), (
-        f"the plate-baking tier is {sorted(derived)} but the map declares {sorted(_PARITY_FLOOR)}")
+        f"the plate-baking tier is {sorted(derived)} but the map declares {sorted(_PARITY_FLOOR)}"
+    )
 
 
 @needs_dmc
-@pytest.mark.parametrize("cell", sorted(
-    c for c in MAPS if c in REGISTRY and MAPS[c].classification().get("floor.color") == "mapped"))
+@pytest.mark.parametrize(
+    "cell", sorted(c for c in MAPS if c in REGISTRY and MAPS[c].classification().get("floor.color") == "mapped")
+)
 def test_floor_color_is_a_leaf_and_the_default_is_the_identity(cell):
     """The two halves of "mapped": the leaf exists with swm's shape and default, and it moves pixels.
 

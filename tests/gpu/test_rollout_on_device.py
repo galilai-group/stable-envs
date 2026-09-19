@@ -18,6 +18,7 @@ reach is what happens when the simulator is a real one and the renderer is a rea
 Kept small on purpose: 4 environments, 4 steps. Every property here is falsified at that size as surely
 as at 256x100, and the suite is a gate that has to finish.
 """
+
 from __future__ import annotations
 
 import pytest
@@ -28,10 +29,10 @@ pytestmark = pytest.mark.gpu
 if not torch.cuda.is_available():
     pytest.skip("stable-envs GPU tests require a CUDA device", allow_module_level=True)
 
+from _shared import family_params, make_or_skip, resolve_family
+
 import stable_envs as se
 from stable_envs.rollout import RandomPolicy, ScriptedPolicy
-
-from _shared import family_params, make_or_skip, resolve_family
 
 N, STEPS, SEED = 4, 4, 20260812
 
@@ -44,8 +45,7 @@ STEPPING = tuple(n for n, c in sorted(se.registry.REGISTRY.items()) if "step" in
 STEP_MODULES = ("minigrid", "classic_control", "pusht", "lunarlander")
 
 
-@pytest.mark.parametrize("name", family_params(STEPPING, family="stepping envs",
-                                               modules=STEP_MODULES))
+@pytest.mark.parametrize("name", family_params(STEPPING, family="stepping envs", modules=STEP_MODULES))
 def test_a_rollout_has_the_documented_shape_and_its_actions_account_for_its_states(name):
     """``steps+1`` states, ``steps`` actions, one style row per environment — and all on device.
 
@@ -53,8 +53,7 @@ def test_a_rollout_has_the_documented_shape_and_its_actions_account_for_its_stat
     as a shape. The style is returned because it is part of the state: without it the stored trajectory
     does not determine its own frames, which is the whole claim the corpus rests on.
     """
-    resolve_family(name, family="stepping envs", modules=STEP_MODULES,
-                   subject="the batched-simulator rollout")
+    resolve_family(name, family="stepping envs", modules=STEP_MODULES, subject="the batched-simulator rollout")
     env = make_or_skip(name, num_envs=N, device="cuda")
     tr = env.sample(steps=STEPS, batch=N, seed=SEED)
 
@@ -66,11 +65,11 @@ def test_a_rollout_has_the_documented_shape_and_its_actions_account_for_its_stat
         assert tr["actions"].device.type == "cuda"
     assert "frames" not in tr, (
         "frames must be OFF by default — 256x100 at 96px is 707 MB of pixels against 512 kB of "
-        "states, and materialising them during collection re-creates the problem this repo removes")
+        "states, and materialising them during collection re-creates the problem this repo removes"
+    )
 
 
-@pytest.mark.parametrize("name", family_params(STEPPING, family="stepping envs",
-                                               modules=STEP_MODULES))
+@pytest.mark.parametrize("name", family_params(STEPPING, family="stepping envs", modules=STEP_MODULES))
 def test_the_same_seed_gives_the_same_trajectory_and_a_different_one_does_not(name):
     """Both halves, because a rollout that ignores the seed satisfies the first half perfectly.
 
@@ -90,11 +89,11 @@ def test_the_same_seed_gives_the_same_trajectory_and_a_different_one_does_not(na
         # actions do not move it would legitimately agree. Say which, rather than failing blind.
         assert float(a.std()) == 0.0, (
             f"{name}: two different seeds gave the same non-degenerate trajectory, so the seed reaches "
-            f"neither the initial states nor the policy")
+            f"neither the initial states nor the policy"
+        )
 
 
-@pytest.mark.parametrize("name", family_params(STEPPING, family="stepping envs",
-                                               modules=STEP_MODULES))
+@pytest.mark.parametrize("name", family_params(STEPPING, family="stepping envs", modules=STEP_MODULES))
 def test_rendered_frames_are_exactly_the_renders_of_the_states_beside_them(name):
     """``frames[:, t] == render(states[:, t])``, byte for byte, for every t including 0.
 
@@ -111,7 +110,8 @@ def test_rendered_frames_are_exactly_the_renders_of_the_states_beside_them(name)
 
     probe = env.render(states[:, 0], style=style)
     assert frames.shape == (N, STEPS + 1, *probe.shape[1:]), (
-        f"{name}: frame buffer {tuple(frames.shape)} does not match {(N, STEPS + 1, *probe.shape[1:])}")
+        f"{name}: frame buffer {tuple(frames.shape)} does not match {(N, STEPS + 1, *probe.shape[1:])}"
+    )
     assert frames.dtype == torch.uint8
     for t in range(STEPS + 1):
         want = env.render(states[:, t], style=style)
@@ -119,11 +119,11 @@ def test_rendered_frames_are_exactly_the_renders_of_the_states_beside_them(name)
         assert int(d.max()) == 0, (
             f"{name}: frame {t} differs from render(states[:, {t}]) by max {int(d.max())}/255 on "
             f"{int((d > 0).any(-1).sum())} pixels — the rollout's frame buffer is not the render of "
-            f"the trajectory it is stored beside")
+            f"the trajectory it is stored beside"
+        )
 
 
-@pytest.mark.parametrize("name", family_params(STEPPING, family="stepping envs",
-                                               modules=STEP_MODULES))
+@pytest.mark.parametrize("name", family_params(STEPPING, family="stepping envs", modules=STEP_MODULES))
 def test_a_scripted_policy_drives_the_real_simulator(name):
     """A fixed action sequence must actually reach ``step``, and must be what comes back in ``actions``.
 
@@ -135,19 +135,17 @@ def test_a_scripted_policy_drives_the_real_simulator(name):
     env = make_or_skip(name, num_envs=N, device="cuda")
     adim = int(getattr(env, "action_dim", 1))
     lo, hi = float(getattr(env, "action_low", -1.0)), float(getattr(env, "action_high", 1.0))
-    want = [torch.full((N, adim), lo + (hi - lo) * (0.1 + 0.2 * t), device="cuda")
-            for t in range(STEPS)]
+    want = [torch.full((N, adim), lo + (hi - lo) * (0.1 + 0.2 * t), device="cuda") for t in range(STEPS)]
 
-    tr = env.sample(steps=STEPS, batch=N, seed=SEED,
-                    policy=ScriptedPolicy(lambda s, t: want[t]))
+    tr = env.sample(steps=STEPS, batch=N, seed=SEED, policy=ScriptedPolicy(lambda s, t: want[t]))
     assert tr["actions"] is not None, f"{name}: a scripted rollout returned no actions"
     for t in range(STEPS):
         assert torch.allclose(tr["actions"][:, t], want[t], atol=1e-6), (
-            f"{name}: the action stored at t={t} is not the one the policy returned")
+            f"{name}: the action stored at t={t} is not the one the policy returned"
+        )
 
 
-@pytest.mark.parametrize("name", family_params(STEPPING, family="stepping envs",
-                                               modules=STEP_MODULES))
+@pytest.mark.parametrize("name", family_params(STEPPING, family="stepping envs", modules=STEP_MODULES))
 def test_the_random_policy_stays_inside_the_env_s_declared_action_bounds(name):
     """Declared bounds are a contract with the simulator, and the discrete ones are HALF-OPEN.
 
@@ -180,13 +178,13 @@ def test_an_env_without_a_simulator_refuses_and_says_what_to_do_instead():
     without = [n for n, c in sorted(se.registry.REGISTRY.items()) if not hasattr(c, "step")]
     assert without, (
         "every registered env now declares a step, which would make this check vacuous; if that is "
-        "really true, delete it")
+        "really true, delete it"
+    )
     env = make_or_skip(without[0], num_envs=2, device="cuda")
     with pytest.raises(NotImplementedError) as e:
         env.sample(steps=2, batch=2)
     msg = str(e.value)
-    assert "render_states" in msg and "StateDataset" in msg, (
-        f"the refusal must name what to do instead: {msg}")
+    assert "render_states" in msg and "StateDataset" in msg, f"the refusal must name what to do instead: {msg}"
 
 
 def test_the_registry_still_contains_envs_that_can_be_rolled_out():
@@ -202,7 +200,7 @@ def test_the_registry_still_contains_envs_that_can_be_rolled_out():
         assert errs, (
             "no registered class declares its own step(), and none of the env modules that ship one "
             f"({', '.join(STEP_MODULES)}) failed to import to explain it — so every rollout sweep in "
-            "this file is empty and green")
+            "this file is empty and green"
+        )
         pytest.skip(f"the simulator-bearing modules are not importable here: {errs}")
-    assert len(STEPPING) >= 2, (
-        f"only {list(STEPPING)} declares a step; the rollout sweeps are near-empty")
+    assert len(STEPPING) >= 2, f"only {list(STEPPING)} declares a step; the rollout sweeps are near-empty"

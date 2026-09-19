@@ -27,6 +27,7 @@ for the mover pass (``CPU_BACKEND_MISSING``), so ``render()`` cannot run on a ma
 The plate half — MuJoCo's own raster of floor/table/skybox, 91% of the frame — DOES run on the CPU
 and is checked in tier 2; the ray-cast half and the composite are owed to the GPU oracle.
 """
+
 from __future__ import annotations
 
 import ast
@@ -69,8 +70,7 @@ def test_the_constructor_takes_num_envs():
     args = [a.arg for a in METHODS["__init__"].args.args]
     assert args[:2] == ["self", "num_envs"], args
     assert "batch" not in args
-    call = [n for n in ast.walk(METHODS["__init__"])
-            if isinstance(n, ast.Call) and "super()" in ast.unparse(n)]
+    call = [n for n in ast.walk(METHODS["__init__"]) if isinstance(n, ast.Call) and "super()" in ast.unparse(n)]
     assert call and "num_envs=num_envs" in ast.unparse(call[0])
     assert "batch=" not in ast.unparse(call[0])
 
@@ -83,8 +83,7 @@ def test_state_layout_is_assigned_per_instance_and_nothing_else_is_overridden():
     ``_hidden_state``/``_live_state`` override would be a second place for the packed row to be
     described, and the base class's refusal to guess would stop protecting anything.
     """
-    assigns = [ast.unparse(t) for n in ast.walk(METHODS["__init__"])
-               if isinstance(n, ast.Assign) for t in n.targets]
+    assigns = [ast.unparse(t) for n in ast.walk(METHODS["__init__"]) if isinstance(n, ast.Assign) for t in n.targets]
     assert "self.state_layout" in assigns, assigns
     for forbidden in ("_layout", "_layout_dtypes", "state", "_hidden_state", "_live_state"):
         assert forbidden not in METHODS, f"FetchBase must not override {forbidden}"
@@ -100,8 +99,11 @@ def test_close_releases_only_what_the_instance_owns():
     """The shared MuJoCo renderer and MJWarp contexts are never released — see ``_renderer``."""
     assert "_close" in METHODS
     # the STATEMENTS, not the docstring — which names the shared caches in order to say they stay
-    body = "\n".join(ast.unparse(n) for n in METHODS["_close"].body
-                     if not (isinstance(n, ast.Expr) and isinstance(n.value, ast.Constant)))
+    body = "\n".join(
+        ast.unparse(n)
+        for n in METHODS["_close"].body
+        if not (isinstance(n, ast.Expr) and isinstance(n.value, ast.Constant))
+    )
     assert "_idx_cache" in body
     for shared in ("_CTX_CACHE", "_RENDERER_CACHE", "_MODEL_CACHE", "_PLATE_CACHE"):
         assert shared not in body, f"{shared} is shared by every instance and must not be released"
@@ -113,35 +115,40 @@ def test_the_frozen_fidelity_declarations_still_say_what_step_8_froze():
     assert "parity_interior_min = 0.99" in src
     assert "THE ROBOT'S 18 MESHES ARE SHADED PER PIXEL AND MuJoCo SHADES THEM PER VERTEX" in src
     assert "THE TRANSLUCENT MOCAP MARKERS ARE " in src
-    assert "fidelity_tier" not in {t.id for n in FETCH_BASE.body if isinstance(n, ast.Assign)
-                                   for t in n.targets if isinstance(t, ast.Name)}, \
-        "the family is parity by inheritance; declaring the tier here would be a second source"
+    assert "fidelity_tier" not in {
+        t.id for n in FETCH_BASE.body if isinstance(n, ast.Assign) for t in n.targets if isinstance(t, ast.Name)
+    }, "the family is parity by inheritance; declaring the tier here would be a second source"
 
 
 def test_the_plate_paths_are_the_six_leaves_that_change_the_static_scene():
     """Everything else is a mover property and is applied per environment inside the ray-cast."""
-    got = next(ast.literal_eval(n.value) for n in FETCH_BASE.body
-               if isinstance(n, ast.Assign)
-               and any(getattr(t, "id", "") == "PLATE_PATHS" for t in n.targets))
-    assert got == ("floor.color", "table.color", "light.diffuse", "camera.distance_scale",
-                   "camera.azimuth_delta", "camera.elevation_delta")
+    got = next(
+        ast.literal_eval(n.value)
+        for n in FETCH_BASE.body
+        if isinstance(n, ast.Assign) and any(getattr(t, "id", "") == "PLATE_PATHS" for t in n.targets)
+    )
+    assert got == (
+        "floor.color",
+        "table.color",
+        "light.diffuse",
+        "camera.distance_scale",
+        "camera.azimuth_delta",
+        "camera.elevation_delta",
+    )
 
 
 def test_twelve_cells_are_declared_as_data_and_not_as_twelve_class_bodies():
     """Four scenes x three swm suffixes; the suffixes reach no pixel, so they share a renderer."""
     ns: dict = {}
     src = SRC.read_text(encoding="utf-8")
-    exec(compile(ast.parse(src[src.index("SCENE_XML = {"):src.index("\nROBOT_JOINTS")]),
-                 "<scene_xml>", "exec"), ns)
-    exec(compile(ast.parse(src[src.index("CELLS = ("):src.index("\n\n\ndef _make_classes")]),
-                 "<cells>", "exec"), ns)
+    exec(compile(ast.parse(src[src.index("SCENE_XML = {") : src.index("\nROBOT_JOINTS")]), "<scene_xml>", "exec"), ns)
+    exec(compile(ast.parse(src[src.index("CELLS = (") : src.index("\n\n\ndef _make_classes")]), "<cells>", "exec"), ns)
     cells = ns["CELLS"]
     assert [c for c, _, _ in cells] == list(CELL_NAMES)
     # eight distinct official ids for twelve cells: Dense has its own, Dict shares the sparse one
     assert len({ref for _, _, ref in cells}) == 8, sorted({ref for _, _, ref in cells})
-    assert all(ref == f"Fetch{scene}-v4" for cell, scene, ref in cells
-               if cell.endswith("Dict"))
-    assert len(CLASSES) == 4, sorted(CLASSES)   # _Cache, _Bundle, _Ctx, FetchBase — and no cell
+    assert all(ref == f"Fetch{scene}-v4" for cell, scene, ref in cells if cell.endswith("Dict"))
+    assert len(CLASSES) == 4, sorted(CLASSES)  # _Cache, _Bundle, _Ctx, FetchBase — and no cell
 
 
 def test_the_module_still_refuses_to_import_without_the_raytracer():
@@ -150,6 +157,7 @@ def test_the_module_still_refuses_to_import_without_the_raytracer():
     assert 'for _m in ("warp", "mujoco_warp")' in src
     assert "raise ImportError(" in src
     import stable_envs as snv
+
     errs = snv.import_errors()
     if "fetch" in errs:
         assert "mujoco_warp" in errs["fetch"]
@@ -169,7 +177,7 @@ def test_the_module_level_caches_split_egl_from_device_memory():
 
 # ---------------------------------------------------------------- tier 2: two built cells
 
-PROBE = r'''
+PROBE = r"""
 import hashlib, json, os, sys, types
 import importlib.machinery as im
 import numpy as np, torch
@@ -230,24 +238,29 @@ for name in ("FetchReach", "FetchPush"):
     e2.close()
     out[name] = rec
 print("@@JSON@@" + json.dumps(out))
-'''
+"""
 
 
 @pytest.fixture(scope="module")
 def built() -> dict:
     """Build FetchReach and FetchPush in a child interpreter and return what it saw."""
-    pytest.importorskip("gymnasium_robotics",
-                        reason="the Fetch models are compiled from gymnasium-robotics' own assets")
+    pytest.importorskip(
+        "gymnasium_robotics", reason="the Fetch models are compiled from gymnasium-robotics' own assets"
+    )
     env = dict(os.environ)
     env["PYTHONPATH"] = str(ROOT)
     env.setdefault("MUJOCO_GL", "glfw")
-    r = subprocess.run([sys.executable, "-c", textwrap.dedent(PROBE),
-                        str(ROOT / "examples/results/step4/states")],
-                       capture_output=True, text=True, cwd=str(ROOT), env=env)
+    r = subprocess.run(
+        [sys.executable, "-c", textwrap.dedent(PROBE), str(ROOT / "examples/results/step4/states")],
+        capture_output=True,
+        text=True,
+        cwd=str(ROOT),
+        env=env,
+    )
     if r.returncode != 0:
         pytest.fail(f"the Fetch probe failed:\n{r.stdout[-3000:]}\n{r.stderr[-3000:]}")
     line = [ln for ln in r.stdout.splitlines() if ln.startswith("@@JSON@@")][-1]
-    return json.loads(line[len("@@JSON@@"):])
+    return json.loads(line[len("@@JSON@@") :])
 
 
 def test_the_public_state_is_qpos_plus_the_goal_and_hides_nothing(built):

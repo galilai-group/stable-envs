@@ -22,6 +22,7 @@ happens to load:
 A change that made ``xmat`` batch-shared would render every environment at one draw's orientation and
 would pass every existing test; this is the line that fails instead.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -31,9 +32,11 @@ import torch
 try:
     import stable_envs as se
     import stable_envs.envs.dmcontrol as D
-except ImportError as exc:                       # dm_control / mujoco absent: legitimately skippable
-    pytest.skip(f"stable_envs.envs.dmcontrol needs dm_control ({exc}); this file has nothing to "
-                f"assert without it", allow_module_level=True)
+except ImportError as exc:  # dm_control / mujoco absent: legitimately skippable
+    pytest.skip(
+        f"stable_envs.envs.dmcontrol needs dm_control ({exc}); this file has nothing to assert without it",
+        allow_module_level=True,
+    )
 except RuntimeError as exc:
     # Same narrow guard as test_dmcontrol_tendon.py: a machine with no usable offscreen GL raises
     # RuntimeError out of mujoco's gl_context at import, and only that is skippable. A dmcontrol.py
@@ -52,15 +55,18 @@ def test_the_guard_refuses_size_and_direction_and_not_orientation():
     which really would render every environment at one draw's size -- cannot happen silently.
     """
     import inspect
+
     src = inspect.getsource(D._episode_slots)
     assert '("_size", "_dir")' in src, (
         "the _episode_slots guard is no longer ('_size', '_dir'). A per-episode SIZE is shared by the "
         "batch at bake time (_prims / screen_span) and a light DIRECTION is captured once per bake "
         "(_Lights), so both must stay refused; ORIENTATION goes through mj_kinematics into the "
-        f"per-row xmat and must stay allowed. Current source:\n{src}")
+        f"per-row xmat and must stay allowed. Current source:\n{src}"
+    )
     assert '"_quat"' not in src.split("bad = ")[1].split("\n")[0], (
         "the guard refuses per-episode orientation again; see this file's docstring for why that is "
-        "not the same class of problem as a per-episode size")
+        "not the same class of problem as a per-episode size"
+    )
 
 
 @pytest.fixture(scope="module")
@@ -74,11 +80,11 @@ def test_manipulator_widens_the_state_with_the_quaternion_slots(cell):
     """The census finds the four floats ``Bring.initialize_episode`` writes, and names them."""
     slots = cell._slots()
     arrays = sorted({a for a, _ in slots})
-    assert arrays == ["body_pos", "body_quat"], (
-        f"{CELL}'s episode draw is no longer target_ball's pose: {slots}")
+    assert arrays == ["body_pos", "body_quat"], f"{CELL}'s episode draw is no longer target_ball's pose: {slots}"
     names = cell._slot_names(cell._model())
-    assert set(names) == {"target_ball_pos_x", "target_ball_pos_z",
-                          "target_ball_quat_qw", "target_ball_quat_qy"}, names
+    assert set(names) == {"target_ball_pos_x", "target_ball_pos_z", "target_ball_quat_qw", "target_ball_quat_qy"}, (
+        names
+    )
     env = cell(num_envs=1, device="cpu", seed=0)
     assert env.state_dim == env.nq + 4 == 15
 
@@ -106,7 +112,8 @@ def test_fk_orientation_is_per_row(cell):
         "_fk returned the same orientation for two rows whose target_ball quaternion differs by "
         "0.7 rad: the mover orientation is batch-shared, so every environment would be drawn at one "
         "row's orientation. xmat max row-to-row difference per primitive: "
-        f"{per_prim.tolist()}")
+        f"{per_prim.tolist()}"
+    )
 
 
 def test_the_official_renderer_moves_for_the_quaternion_slots(cell):
@@ -119,6 +126,7 @@ def test_the_official_renderer_moves_for_the_quaternion_slots(cell):
     that the state carries a dimension the reference itself ignores.
     """
     from stable_envs.testing import conformance as C
+
     env = cell(num_envs=1, device="cpu", seed=0)
     names = list(env.state_names)
     iw, iy = names.index("target_ball_quat_qw"), names.index("target_ball_quat_qy")
@@ -136,7 +144,8 @@ def test_the_official_renderer_moves_for_the_quaternion_slots(cell):
     d = np.abs(base.astype(np.int16) - moved.astype(np.int16)).max(-1)
     assert int((d > 0).sum()) > 0, (
         "rotating target_ball changed 0 pixels in the OFFICIAL renderer, so the two quaternion slots "
-        "would be dead in the reference as well as here and should not be in the state at all")
+        "would be dead in the reference as well as here and should not be in the state at all"
+    )
 
 
 def test_a_body_slot_becomes_one_visibility_leaf_over_its_geoms(cell):
@@ -147,6 +156,7 @@ def test_a_body_slot_becomes_one_visibility_leaf_over_its_geoms(cell):
     ``stable_worldmodel``'s ``render_target = 0`` is unreachable.
     """
     import mujoco
+
     hide = cell._hideable()
     assert len(hide) == 1, hide
     kind, name, ids = hide[0]
@@ -160,10 +170,10 @@ def test_a_body_slot_becomes_one_visibility_leaf_over_its_geoms(cell):
     assert "visibility.target_ball" in env.variation_space.names()
     st = env.sample_states(2, np.random.default_rng(3))
     shown = env.render(torch.as_tensor(st)).cpu().numpy()
-    hidden = env.render(torch.as_tensor(st),
-                        variation={"visibility.target_ball": [0]}).cpu().numpy()
+    hidden = env.render(torch.as_tensor(st), variation={"visibility.target_ball": [0]}).cpu().numpy()
     assert not np.array_equal(shown, hidden), (
-        "hiding visibility.target_ball changed no pixel, so the body slot did not reach the geoms")
+        "hiding visibility.target_ball changed no pixel, so the body slot did not reach the geoms"
+    )
 
 
 def test_the_shape_leaf_default_is_the_compiled_model(cell):
@@ -175,8 +185,7 @@ def test_the_shape_leaf_default_is_the_compiled_model(cell):
     default = int(np.asarray(leaf.value).reshape(-1)[0])
     st = env.sample_states(2, np.random.default_rng(13))
     base = env.render(torch.as_tensor(st)).cpu().numpy()
-    same = env.render(torch.as_tensor(st),
-                      variation={"target_ball.shape": [default]}).cpu().numpy()
+    same = env.render(torch.as_tensor(st), variation={"target_ball.shape": [default]}).cpu().numpy()
     assert np.array_equal(base, same), "target_ball.shape's default is not the default appearance"
     for k in range(leaf.n):
         if k == default:
@@ -184,7 +193,8 @@ def test_the_shape_leaf_default_is_the_compiled_model(cell):
         other = env.render(torch.as_tensor(st), variation={"target_ball.shape": [k]}).cpu().numpy()
         assert not np.array_equal(base, other), (
             f"target_ball.shape = {k} changed no pixel; a declared alternative that cannot be seen "
-            f"fails check_variations_do_something and advertises support that is not there")
+            f"fails check_variations_do_something and advertises support that is not there"
+        )
 
 
 # --------------------------------------------------------------------------- synthetic bodies
@@ -220,13 +230,16 @@ def _synth_cls(extra_site=""):
     is the whole point.
     """
     import mujoco
+
     m = mujoco.MjModel.from_xml_string(_SYNTH_XML.format(extra_site=extra_site))
     bid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_BODY, "marker")
-    pristine = dict(mat_rgba=np.array(m.mat_rgba, copy=True),
-                    geom_rgba=np.array(m.geom_rgba, copy=True),
-                    site_rgba=np.array(m.site_rgba, copy=True),
-                    geom_group=np.array(m.geom_group, copy=True),
-                    site_group=np.array(m.site_group, copy=True))
+    pristine = dict(
+        mat_rgba=np.array(m.mat_rgba, copy=True),
+        geom_rgba=np.array(m.geom_rgba, copy=True),
+        site_rgba=np.array(m.site_rgba, copy=True),
+        geom_group=np.array(m.geom_group, copy=True),
+        site_group=np.array(m.site_group, copy=True),
+    )
 
     class Synth(D.DMControlSuite):
         _M, _PR = m, pristine
@@ -255,6 +268,7 @@ def test_a_body_slot_with_several_drawn_geoms_resolves_to_all_of_them():
     ``check_variations_do_something`` fails on.
     """
     import mujoco
+
     cls = _synth_cls()
     hide = cls._hideable()
     assert len(hide) == 1, hide
@@ -263,7 +277,8 @@ def test_a_body_slot_with_several_drawn_geoms_resolves_to_all_of_them():
     got = sorted(mujoco.mj_id2name(cls._M, mujoco.mjtObj.mjOBJ_GEOM, i) for i in ids)
     assert got == ["marker_a", "marker_b"], (
         f"the body leaf resolved to {got}; marker_hidden is alpha 0 and marker_grouped is in group 3, "
-        f"and neither is drawn at the default MjvOption")
+        f"and neither is drawn at the default MjvOption"
+    )
 
 
 def test_a_body_carrying_both_drawn_geoms_and_drawn_sites_raises():
@@ -305,6 +320,7 @@ def test_the_declared_dims_are_excluded_and_reported_never_silently_passed(cell)
     """``check_state_dims_matter`` excludes the three, REPORTS them with a reason, and finds no dead
     dimension. An excluded dim must never simply vanish from the output."""
     from stable_envs.testing import conformance as C
+
     env = cell(num_envs=8, device="cpu", seed=0)
     r = C.check_state_dims_matter(env, n=8)
     assert r["dead_dims"] == [], r
@@ -325,7 +341,8 @@ def test_excluded_dims_leave_pixels_byte_unchanged_at_both_sizes(cell):
             moved = env.render(torch.as_tensor(_rotate(st, names, names.index(nm)))).cpu().numpy()
             assert np.array_equal(base, moved), (
                 f"{nm} changed pixels at {size} px, so it is NOT render-invariant and must not be "
-                f"excluded from check_state_dims_matter")
+                f"excluded from check_state_dims_matter"
+            )
 
 
 def test_the_target_quat_dims_are_live_again_when_the_target_is_a_box(cell):
@@ -339,6 +356,7 @@ def test_the_target_quat_dims_are_live_again_when_the_target_is_a_box(cell):
     in both styles and is not what ``target_ball.shape`` switches.
     """
     from stable_envs.testing import conformance as C
+
     box = {"target_ball.shape": [0]}
     env = cell(num_envs=16, size=224, device="cpu", seed=0)
     names = list(env.state_names)
@@ -363,6 +381,7 @@ def test_a_dimension_that_moves_position_is_refused_for_exclusion(cell):
     the frozen-array comparison forbids. None of them may be excludable, whatever an env declares.
     """
     from stable_envs.testing import conformance as C
+
     env = cell(num_envs=8, size=224, device="cpu", seed=0)
     names = list(env.state_names)
     st = env.sample_states(8, np.random.default_rng(12))
@@ -374,6 +393,7 @@ def test_a_dimension_that_moves_position_is_refused_for_exclusion(cell):
 def test_an_env_that_declares_nothing_is_unaffected(cell):
     """The mechanism is opt-in: with no declaration, a dead dim is dead exactly as before."""
     from stable_envs.testing import conformance as C
+
     env = cell(num_envs=8, device="cpu", seed=0)
     env.RENDER_INVARIANT_DIMS = ()
     try:
@@ -381,7 +401,7 @@ def test_an_env_that_declares_nothing_is_unaffected(cell):
         assert set(r["dead_dims"]) == set(_INVARIANT), r
         assert "excluded_dims" not in r, r
     finally:
-        del env.RENDER_INVARIANT_DIMS       # back to the class attribute
+        del env.RENDER_INVARIANT_DIMS  # back to the class attribute
 
 
 # ------------------------------------------------- the two false positives review demonstrated (D1/D2)
@@ -414,6 +434,7 @@ def test_a_missing_frozen_field_is_refused_and_named_not_skipped(cell):
     NAMES the key.
     """
     from stable_envs.testing import conformance as C
+
     env = cell(num_envs=8, size=224, device="cpu", seed=0)
     names = list(env.state_names)
     st = env.sample_states(8, np.random.default_rng(4))
@@ -444,6 +465,7 @@ def test_a_lying_sphere_flag_cannot_grant_an_exclusion(cell):
     sphere-LIKE kind that is not rotation-invariant, and it is in the registry now.
     """
     from stable_envs.testing import conformance as C
+
     env = cell(num_envs=8, size=224, device="cpu", seed=0)
     names = list(env.state_names)
     st = env.sample_states(8, np.random.default_rng(4))
@@ -465,6 +487,7 @@ def test_a_lying_sphere_flag_cannot_grant_an_exclusion(cell):
 def test_the_rule_derives_sphereness_even_when_the_env_omits_the_flag(cell):
     """The flag is now optional evidence, not the basis of the decision."""
     from stable_envs.testing import conformance as C
+
     env = cell(num_envs=8, size=224, device="cpu", seed=0)
     names = list(env.state_names)
     st = env.sample_states(8, np.random.default_rng(4))

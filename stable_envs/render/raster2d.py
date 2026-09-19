@@ -75,6 +75,7 @@ definition of what the picture should be, it runs where Triton does not, and ``t
 against each other. A fast kernel with no independent implementation to check it against is a kernel
 nobody can trust.
 """
+
 from __future__ import annotations
 
 import torch
@@ -85,8 +86,9 @@ from .scene import KIND_DISC, KIND_POLY, KIND_SEGMENT, Scene2D
 try:
     import triton
     import triton.language as tl
+
     HAVE_TRITON = True
-except ImportError:                                    # reported by the renderer, never silent
+except ImportError:  # reported by the renderer, never silent
     HAVE_TRITON = False
 
 
@@ -163,9 +165,13 @@ def _prim_plan(scene: Scene2D, Rh: int, Rw: int) -> list[tuple]:
     is_disc, is_poly, is_seg = k == KIND_DISC, k == KIND_POLY, k == KIND_SEGMENT
 
     # --- what each slot is, and which of its optional parts exist (all (N,) bool) -----------
-    rows = [is_disc.any(0), is_poly.any(0), is_seg.any(0),
-            (is_disc & (g[:, :, 3] > 0)).any(0) if G > 3 else is_disc.new_zeros(N),
-            (is_poly & (scene.line_w > 0)).any(0)]
+    rows = [
+        is_disc.any(0),
+        is_poly.any(0),
+        is_seg.any(0),
+        (is_disc & (g[:, :, 3] > 0)).any(0) if G > 3 else is_disc.new_zeros(N),
+        (is_poly & (scene.line_w > 0)).any(0),
+    ]
     # An edge is skippable only if it is degenerate for every environment, and "degenerate" has to
     # be decided by the expression the loop uses, in the loop's dtype, or the plan and the loop
     # could disagree about one edge of one polygon.
@@ -174,23 +180,23 @@ def _prim_plan(scene: Scene2D, Rh: int, Rw: int) -> list[tuple]:
         ex = g[:, :, 2 * j] - g[:, :, 2 * e]
         ey = g[:, :, 2 * j + 1] - g[:, :, 2 * e + 1]
         degen = (ex * ex + ey * ey) < 1e-12
-        rows.append(~degen.all(0))                       # some row has this edge
+        rows.append(~degen.all(0))  # some row has this edge
     for e in range(V):
         j = (e + 1) % V
         ex = g[:, :, 2 * j] - g[:, :, 2 * e]
         ey = g[:, :, 2 * j + 1] - g[:, :, 2 * e + 1]
-        rows.append(((ex * ex + ey * ey) < 1e-12).any(0))   # ... and some row does not
+        rows.append(((ex * ex + ey * ey) < 1e-12).any(0))  # ... and some row does not
 
     # --- the world-space bound, exactly as _bbox_kernel encodes it ---------------------------
     f64 = torch.float64
     gg = g.to(f64)
     lw = scene.line_w.abs().to(f64)
-    vx, vy = gg[:, :, 0:2 * V:2], gg[:, :, 1:2 * V:2]
+    vx, vy = gg[:, :, 0 : 2 * V : 2], gg[:, :, 1 : 2 * V : 2]
     # float64, and then the geom dtype as well: the kernel's ``flat`` is a float32 shoelace
     # tested against exactly zero, and a polygon it calls unbounded must be unbounded here too
     # or the two backends would cull by different rules.
     area2 = (vx * torch.roll(vy, -1, -1) - torch.roll(vx, -1, -1) * vy).sum(-1)
-    v32x, v32y = g[:, :, 0:2 * V:2], g[:, :, 1:2 * V:2]
+    v32x, v32y = g[:, :, 0 : 2 * V : 2], g[:, :, 1 : 2 * V : 2]
     a32 = (v32x * torch.roll(v32y, -1, -1) - torch.roll(v32x, -1, -1) * v32y).sum(-1)
     flat = (area2 == 0) | (a32 == 0)
     r = torch.maximum(gg[:, :, 2].abs(), gg[:, :, 3].clamp_min(0)) if G > 3 else gg[:, :, 0] * 0
@@ -202,14 +208,10 @@ def _prim_plan(scene: Scene2D, Rh: int, Rw: int) -> list[tuple]:
     poly0y = torch.where(flat, -inf, vy.min(-1).values - lw)
     poly1x = torch.where(flat, inf, vx.max(-1).values + lw)
     poly1y = torch.where(flat, inf, vy.max(-1).values + lw)
-    bx0 = torch.where(is_disc, gg[:, :, 0] - r,
-                      torch.where(is_poly, poly0x, torch.minimum(gg[:, :, 0], sx1) - hw))
-    by0 = torch.where(is_disc, gg[:, :, 1] - r,
-                      torch.where(is_poly, poly0y, torch.minimum(gg[:, :, 1], sy1) - hw))
-    bx1 = torch.where(is_disc, gg[:, :, 0] + r,
-                      torch.where(is_poly, poly1x, torch.maximum(gg[:, :, 0], sx1) + hw))
-    by1 = torch.where(is_disc, gg[:, :, 1] + r,
-                      torch.where(is_poly, poly1y, torch.maximum(gg[:, :, 1], sy1) + hw))
+    bx0 = torch.where(is_disc, gg[:, :, 0] - r, torch.where(is_poly, poly0x, torch.minimum(gg[:, :, 0], sx1) - hw))
+    by0 = torch.where(is_disc, gg[:, :, 1] - r, torch.where(is_poly, poly0y, torch.minimum(gg[:, :, 1], sy1) - hw))
+    bx1 = torch.where(is_disc, gg[:, :, 0] + r, torch.where(is_poly, poly1x, torch.maximum(gg[:, :, 0], sx1) + hw))
+    by1 = torch.where(is_disc, gg[:, :, 1] + r, torch.where(is_poly, poly1y, torch.maximum(gg[:, :, 1], sy1) + hw))
     off = k == 0
     # NaN geometry is not a bound, so it draws over the whole frame, which is what the unbounded
     # loop did with it. Silently shrinking a window around a NaN is how a bound stops being one.
@@ -220,6 +222,7 @@ def _prim_plan(scene: Scene2D, Rh: int, Rw: int) -> list[tuple]:
 
     x0, y0, x1, y1 = scene.world
     sx, sy = (x1 - x0) / Rw, (y1 - y0) / Rh
+
     # Pixel r samples at its CENTRE, y0 + (r+0.5)*sy, or y1 - (r+0.5)*sy under flip_y. One pixel of
     # slack on every side so that no rounding of this conversion can cost a pixel the loop would
     # have painted; one pixel too many costs throughput and nothing else.
@@ -237,7 +240,7 @@ def _prim_plan(scene: Scene2D, Rh: int, Rw: int) -> list[tuple]:
     # The batch UNION window, which is what one torch op over the whole batch can cover.
     ux0, uy0 = bx0.min(0).values, by0.min(0).values
     ux1, uy1 = bx1.max(0).values, by1.max(0).values
-    uwin = torch.stack(_window(ux0, uy0, ux1, uy1), dim=1)                            # (N,4)
+    uwin = torch.stack(_window(ux0, uy0, ux1, uy1), dim=1)  # (N,4)
 
     # Whether the union is worth replacing, decided in WORLD units before any pixel window is built.
     # This test is three ``(B,N)`` reductions; building the per-row pixel windows for every primitive
@@ -246,22 +249,29 @@ def _prim_plan(scene: Scene2D, Rh: int, Rw: int) -> list[tuple]:
     # on the scenes that do not want it. So the per-row boxes are built only for the primitives whose
     # union is at least ``_GROUP_MIN_SPREAD`` times the largest single row's box, which is the
     # necessary condition for grouping to buy anything at all.
-    area = (bx1 - bx0).clamp_min(0) * (by1 - by0).clamp_min(0)                        # (B,N)
-    spread = ((ux1 - ux0).clamp_min(0) * (uy1 - uy0).clamp_min(0)
-              > _GROUP_MIN_SPREAD * area.nan_to_num(0.0).amax(0))                     # (N,)
+    area = (bx1 - bx0).clamp_min(0) * (by1 - by0).clamp_min(0)  # (B,N)
+    spread = (ux1 - ux0).clamp_min(0) * (uy1 - uy0).clamp_min(0) > _GROUP_MIN_SPREAD * area.nan_to_num(0.0).amax(
+        0
+    )  # (N,)
 
     # ONE host transfer for the whole plan. Eleven small ``.cpu()`` calls is how a decision that
     # costs nothing on paper becomes a dozen synchronisations per frame.
     flags = torch.stack(rows + [spread], dim=1).to(f64)
     plan = torch.cat([flags, uwin], dim=1).cpu().tolist()
     wide = [i for i, row in enumerate(plan) if row[5 + 2 * V] and B > 1]
-    per_row = (torch.stack(_window(bx0[:, wide], by0[:, wide], bx1[:, wide], by1[:, wide]), dim=2)
-               .to(torch.int64).cpu().numpy() if wide else None)                      # (B,|wide|,4)
+    per_row = (
+        torch.stack(_window(bx0[:, wide], by0[:, wide], bx1[:, wide], by1[:, wide]), dim=2)
+        .to(torch.int64)
+        .cpu()
+        .numpy()
+        if wide
+        else None
+    )  # (B,|wide|,4)
     out = []
     for i, row in enumerate(plan):
         disc, poly, seg, ring, outline = (bool(v) for v in row[:5])
         edges = [(e, bool(row[5 + V + e])) for e in range(V) if row[5 + e]]
-        rr0, rr1, cc0, cc1 = (int(v) for v in row[6 + 2 * V:])
+        rr0, rr1, cc0, cc1 = (int(v) for v in row[6 + 2 * V :])
         win = [(None, rr0, rr1, cc0, cc1)]
         if i in wide:
             win = row_groups(per_row[:, wide.index(i)], rr0, rr1, cc0, cc1)
@@ -363,7 +373,7 @@ def row_groups(box, r0: int, r1: int, c0: int, c1: int) -> list[tuple]:
     for gi, key in enumerate(keys):
         if key < 0:
             continue
-        idx = order[starts[gi]:ends[gi]]
+        idx = order[starts[gi] : ends[gi]]
         g0, g1 = int(br0[idx].min()), int(br1[idx].max())
         f0, f1 = int(bc0[idx].min()), int(bc1[idx].max())
         work += len(idx) * (g1 - g0) * (f1 - f0)
@@ -383,8 +393,7 @@ _row_groups = row_groups
 
 
 @torch.no_grad()
-def render_torch(scene: Scene2D, out_size: int | tuple[int, int],
-                 supersample: int = 1) -> torch.Tensor:
+def render_torch(scene: Scene2D, out_size: int | tuple[int, int], supersample: int = 1) -> torch.Tensor:
     """Reference implementation: ``Scene2D`` -> ``(B,H,W,3)`` uint8. Readable, not fast.
 
     Still the executable specification — every per-pixel expression below is the one it always was,
@@ -425,23 +434,24 @@ def render_torch(scene: Scene2D, out_size: int | tuple[int, int],
         u8 = lambda c, m: c.round().clamp(0, 255).to(torch.uint8).view(m, 1, 1, 3)  # noqa: E731
         canvas = u8(scene.background, B).expand(B, Rh, Rw, 3).clone()
     else:
-        u8 = lambda c, m: c.view(m, 3, 1, 1)                                        # noqa: E731
+        u8 = lambda c, m: c.view(m, 3, 1, 1)  # noqa: E731
         canvas = scene.background.view(B, 3, 1, 1).expand(B, 3, Rh, Rw).clone()
 
-    for i, (has_disc, has_ring, has_poly, has_outline, has_seg, edges,
-            windows) in enumerate(_prim_plan(scene, Rh, Rw)):
+    for i, (has_disc, has_ring, has_poly, has_outline, has_seg, edges, windows) in enumerate(
+        _prim_plan(scene, Rh, Rw)
+    ):
         if not (has_disc or has_poly or has_seg):
-            continue                       # disabled in every environment
+            continue  # disabled in every environment
         for rows, r0, r1, c0, c1 in windows:
             if r1 <= r0 or c1 <= c0:
-                continue                   # this window's bound misses the frame
+                continue  # this window's bound misses the frame
             # ``rows is None`` is the whole batch through a view; otherwise this window belongs to a
             # group of rows and every per-environment quantity is gathered for them. The gather is
             # what buys the tight window -- see ``_row_groups``.
             sel = (lambda t: t) if rows is None else (lambda t, _r=rows: t[_r])
             n = B if rows is None else len(rows)
-            kind = sel(scene.kind[:, i])                           # (n,)
-            g = sel(scene.geom[:, i])                              # (n,2V)
+            kind = sel(scene.kind[:, i])  # (n,)
+            g = sel(scene.geom[:, i])  # (n,2V)
             fill = u8(sel(scene.fill[:, i]), n)
             line = u8(sel(scene.line[:, i]), n)
             lw = sel(scene.line_w[:, i]).view(n, 1, 1)
@@ -485,15 +495,13 @@ def render_torch(scene: Scene2D, out_size: int | tuple[int, int],
                 is_disc = (kind == KIND_DISC).view(n, 1, 1)
                 paint(is_disc & (d2 <= g[:, 2].view(n, 1, 1) ** 2), fill)
                 if has_ring:
-                    paint(is_disc & (d2 <= g[:, 3].view(n, 1, 1) ** 2)
-                          & (g[:, 3].view(n, 1, 1) > 0), line)
+                    paint(is_disc & (d2 <= g[:, 3].view(n, 1, 1) ** 2) & (g[:, 3].view(n, 1, 1) > 0), line)
 
             # convex polygon: inside = max over outward edge planes <= 0; outline = edge capsules
             if has_poly:
                 h, w = r1 - r0, c1 - c0
                 sdf = torch.full((n, h, w), -1e30, device=dev, dtype=dt)
-                edge_d2 = (torch.full((n, h, w), 1e30, device=dev, dtype=dt)
-                           if has_outline else None)
+                edge_d2 = torch.full((n, h, w), 1e30, device=dev, dtype=dt) if has_outline else None
                 for e, mixed in edges:
                     ax, ay = g[:, 2 * e].view(n, 1, 1), g[:, 2 * e + 1].view(n, 1, 1)
                     j = (e + 1) % V
@@ -503,15 +511,14 @@ def render_torch(scene: Scene2D, out_size: int | tuple[int, int],
                     degen = L2 < 1e-12
                     inv = torch.rsqrt(L2.clamp_min(1e-20))
                     d = (p - ax) * (ey * inv) + (q - ay) * (-ex * inv)
-                    sdf = torch.maximum(sdf, torch.where(degen, torch.full_like(d, -1e30), d)
-                                        if mixed else d)
+                    sdf = torch.maximum(sdf, torch.where(degen, torch.full_like(d, -1e30), d) if mixed else d)
                     if has_outline:
                         t = (((p - ax) * ex + (q - ay) * ey) / L2.clamp_min(1e-20)).clamp(0, 1)
                         qx, qy = p - ax - t * ex, q - ay - t * ey
                         e2 = qx * qx + qy * qy
                         edge_d2 = torch.minimum(
-                            edge_d2, torch.where(degen, torch.full_like(qx, 1e30), e2)
-                            if mixed else e2)
+                            edge_d2, torch.where(degen, torch.full_like(qx, 1e30), e2) if mixed else e2
+                        )
                 is_poly = (kind == KIND_POLY).view(n, 1, 1)
                 paint(is_poly & (sdf <= 0), fill)
                 if has_outline:
@@ -521,11 +528,9 @@ def render_torch(scene: Scene2D, out_size: int | tuple[int, int],
             if has_seg:
                 ax, ay = g[:, 0].view(n, 1, 1), g[:, 1].view(n, 1, 1)
                 ex, ey = g[:, 2].view(n, 1, 1) - ax, g[:, 3].view(n, 1, 1) - ay
-                t = (((p - ax) * ex + (q - ay) * ey)
-                     / (ex * ex + ey * ey).clamp_min(1e-20)).clamp(0, 1)
+                t = (((p - ax) * ex + (q - ay) * ey) / (ex * ex + ey * ey).clamp_min(1e-20)).clamp(0, 1)
                 dx, dy = p - ax - t * ex, q - ay - t * ey
-                paint((kind == KIND_SEGMENT).view(n, 1, 1)
-                      & (dx * dx + dy * dy <= g[:, 4].view(n, 1, 1) ** 2), fill)
+                paint((kind == KIND_SEGMENT).view(n, 1, 1) & (dx * dx + dy * dy <= g[:, 4].view(n, 1, 1) ** 2), fill)
 
     if flat_out:
         return canvas
@@ -563,7 +568,7 @@ if HAVE_TRITON:
         g1 = tl.load(gb + 1, mask=m, other=0.0)
         g2 = tl.load(gb + 2, mask=m, other=0.0)
         g3 = tl.load(gb + 3, mask=m, other=0.0)
-        if 2 * V > 4:                        # a capsule's half-width; V is 3 or more in every env
+        if 2 * V > 4:  # a capsule's half-width; V is 3 or more in every env
             g4 = tl.load(gb + 4, mask=m, other=0.0)
         else:
             g4 = tl.zeros([BLOCK], dtype=tl.float32)
@@ -591,14 +596,10 @@ if HAVE_TRITON:
             area2 += ax * by - bx * ay
         flat = area2 == 0.0
         INF = float("inf")
-        x0 = tl.where(k == 1, g0 - r, tl.where(k == 2, tl.where(flat, -INF, px0 - lw),
-                                               tl.minimum(g0, g2) - hw))
-        y0 = tl.where(k == 1, g1 - r, tl.where(k == 2, tl.where(flat, -INF, py0 - lw),
-                                               tl.minimum(g1, g3) - hw))
-        x1 = tl.where(k == 1, g0 + r, tl.where(k == 2, tl.where(flat, INF, px1 + lw),
-                                               tl.maximum(g0, g2) + hw))
-        y1 = tl.where(k == 1, g1 + r, tl.where(k == 2, tl.where(flat, INF, py1 + lw),
-                                               tl.maximum(g1, g3) + hw))
+        x0 = tl.where(k == 1, g0 - r, tl.where(k == 2, tl.where(flat, -INF, px0 - lw), tl.minimum(g0, g2) - hw))
+        y0 = tl.where(k == 1, g1 - r, tl.where(k == 2, tl.where(flat, -INF, py0 - lw), tl.minimum(g1, g3) - hw))
+        x1 = tl.where(k == 1, g0 + r, tl.where(k == 2, tl.where(flat, INF, px1 + lw), tl.maximum(g0, g2) + hw))
+        y1 = tl.where(k == 1, g1 + r, tl.where(k == 2, tl.where(flat, INF, py1 + lw), tl.maximum(g1, g3) + hw))
         off = k == 0
         ob = box_ptr + offs * 4
         tl.store(ob + 0, tl.where(off, INF, x0), mask=m)
@@ -607,12 +608,34 @@ if HAVE_TRITON:
         tl.store(ob + 3, tl.where(off, -INF, y1), mask=m)
 
     @triton.jit
-    def _scene_kernel(kind_ptr, geom_ptr, fill_ptr, line_ptr, lw_ptr, bg_ptr, base_ptr, box_ptr,
-                      out_ptr, N, PSTART,
-                      H: tl.constexpr, W: tl.constexpr, SS: tl.constexpr, V: tl.constexpr,
-                      wx0, wy0, sx, sy, FLIP: tl.constexpr, y_hi, HAS_BASE: tl.constexpr,
-                      CULL: tl.constexpr, NTX: tl.constexpr,
-                      BH: tl.constexpr, BW: tl.constexpr):
+    def _scene_kernel(
+        kind_ptr,
+        geom_ptr,
+        fill_ptr,
+        line_ptr,
+        lw_ptr,
+        bg_ptr,
+        base_ptr,
+        box_ptr,
+        out_ptr,
+        N,
+        PSTART,
+        H: tl.constexpr,
+        W: tl.constexpr,
+        SS: tl.constexpr,
+        V: tl.constexpr,
+        wx0,
+        wy0,
+        sx,
+        sy,
+        FLIP: tl.constexpr,
+        y_hi,
+        HAS_BASE: tl.constexpr,
+        CULL: tl.constexpr,
+        NTX: tl.constexpr,
+        BH: tl.constexpr,
+        BW: tl.constexpr,
+    ):
         b = tl.program_id(0)
         tid = tl.program_id(1)
         npix = H * W
@@ -646,7 +669,7 @@ if HAVE_TRITON:
             m = pos < npix
             oy = pos // W
             ox = pos % W
-            bx_lo, bx_hi, by_lo, by_hi = wx0, wx0, wy0, wy0        # never read; CULL is False
+            bx_lo, bx_hi, by_lo, by_hi = wx0, wx0, wy0, wy0  # never read; CULL is False
         offs = oy * W + ox
         # 64-bit output offset. The frame base is b * H * W * 3, which overflows int32 well inside the
         # batch sizes this repo exists to serve: at 224px, b = 16383 gives 16383*50176*3 = 2.47e9 against
@@ -697,8 +720,12 @@ if HAVE_TRITON:
                     # it is about to skip.
                     if CULL:
                         bb = box_ptr + pid * 4
-                        live = ((tl.load(bb + 2) >= bx_lo) & (tl.load(bb + 0) <= bx_hi)
-                                & (tl.load(bb + 3) >= by_lo) & (tl.load(bb + 1) <= by_hi))
+                        live = (
+                            (tl.load(bb + 2) >= bx_lo)
+                            & (tl.load(bb + 0) <= bx_hi)
+                            & (tl.load(bb + 3) >= by_lo)
+                            & (tl.load(bb + 1) <= by_hi)
+                        )
                     else:
                         live = tl.load(kind_ptr + pid) != 0
                     if live:
@@ -717,7 +744,7 @@ if HAVE_TRITON:
                         g2 = tl.load(gb + 2)
                         g3 = tl.load(gb + 3)
 
-                        if k == 1:                                   # disc (+ optional inner disc)
+                        if k == 1:  # disc (+ optional inner disc)
                             dx = px - g0
                             dy = py - g1
                             d2 = dx * dx + dy * dy
@@ -730,7 +757,7 @@ if HAVE_TRITON:
                             cg = tl.where(hit, lg, cg)
                             cb = tl.where(hit, lb, cb)
 
-                        elif k == 2:                                 # convex polygon
+                        elif k == 2:  # convex polygon
                             sdf = tl.full([BH, BW], -1e30, tl.float32)
                             edge_d2 = tl.full([BH, BW], 1e30, tl.float32)
                             for e in tl.static_range(V):
@@ -760,8 +787,7 @@ if HAVE_TRITON:
                                 t = tl.minimum(tl.maximum(t, 0.0), 1.0)
                                 qx = wxx - t * ex
                                 qy = wyy - t * ey
-                                edge_d2 = tl.minimum(edge_d2,
-                                                     tl.where(degen, 1e30, qx * qx + qy * qy))
+                                edge_d2 = tl.minimum(edge_d2, tl.where(degen, 1e30, qx * qx + qy * qy))
                             hit = sdf <= 0.0
                             cr = tl.where(hit, fr, cr)
                             cg = tl.where(hit, fg, cg)
@@ -771,7 +797,7 @@ if HAVE_TRITON:
                             cg = tl.where(hit, lg, cg)
                             cb = tl.where(hit, lb, cb)
 
-                        else:                                        # segment (capsule)
+                        else:  # segment (capsule)
                             ex = g2 - g0
                             ey = g3 - g1
                             wxx = px - g0
@@ -857,19 +883,30 @@ def _static_base(scene: Scene2D, Rh: int, Rw: int, block: int) -> torch.Tensor |
         return None
     B = scene.batch
     if K * B * Rh * Rw < _BAKE_MIN_WORK * scene.n_prims:
-        return None                                      # too little work to earn the synchronisation
-    rows = torch.cat([_row_bytes(t, B) for t in
-                      (scene.kind[:, :K], scene.geom[:, :K], scene.fill[:, :K], scene.line[:, :K],
-                       scene.line_w[:, :K], scene.background)], dim=1)          # (B, M) uint8
+        return None  # too little work to earn the synchronisation
+    rows = torch.cat(
+        [
+            _row_bytes(t, B)
+            for t in (
+                scene.kind[:, :K],
+                scene.geom[:, :K],
+                scene.fill[:, :K],
+                scene.line[:, :K],
+                scene.line_w[:, :K],
+                scene.background,
+            )
+        ],
+        dim=1,
+    )  # (B, M) uint8
     row0 = rows[0]
     if B > 1:
         ok = (rows == rows[:1]).all().reshape(1).to(torch.uint8)
         row0 = torch.cat([row0, ok])
-    blob = row0.cpu().numpy().tobytes()                   # the one synchronisation
+    blob = row0.cpu().numpy().tobytes()  # the one synchronisation
     if B > 1:
         blob, uniform = blob[:-1], blob[-1]
         if not uniform:
-            return None                                  # per-environment prefix: draw it per frame
+            return None  # per-environment prefix: draw it per frame
     # The device is part of the key. Without it, a process that renders the same scene on two GPUs --
     # DataParallel, or any manual multi-device script -- gets back a plate that lives on the other one,
     # and Triton refuses the launch with "Pointer argument (at 0) cannot be accessed". DDP never sees
@@ -877,11 +914,17 @@ def _static_base(scene: Scene2D, Rh: int, Rw: int, block: int) -> torch.Tensor |
     key = (Rh, Rw, scene.world, scene.flip_y, scene.vertices, K, str(scene.kind.device), blob)
     hit = _BASE_CACHE.get(key)
     if hit is None:
-        prefix = Scene2D(kind=scene.kind[:1, :K].contiguous(), geom=scene.geom[:1, :K].contiguous(),
-                         fill=scene.fill[:1, :K].contiguous(), line=scene.line[:1, :K].contiguous(),
-                         line_w=scene.line_w[:1, :K].contiguous(),
-                         background=scene.background[:1].contiguous(),
-                         world=scene.world, flip_y=scene.flip_y, static_prefix=0)
+        prefix = Scene2D(
+            kind=scene.kind[:1, :K].contiguous(),
+            geom=scene.geom[:1, :K].contiguous(),
+            fill=scene.fill[:1, :K].contiguous(),
+            line=scene.line[:1, :K].contiguous(),
+            line_w=scene.line_w[:1, :K].contiguous(),
+            background=scene.background[:1].contiguous(),
+            world=scene.world,
+            flip_y=scene.flip_y,
+            static_prefix=0,
+        )
         hit = _BASE_CACHE.put(key, render_triton(prefix, (Rh, Rw), supersample=1, block=block)[0].contiguous())
     return hit
 
@@ -906,11 +949,13 @@ def _destination(out, B: int, H: int, W: int) -> torch.Tensor | None:
             "through a flat view of it, and a view of a strided tensor keeps its strides, so the "
             "frames would be scattered across your buffer rather than written into it. `buf[:, t]` of "
             "a (B, T, H, W, 3) rollout buffer is the usual way to reach this; assign into it instead "
-            "(`buf[:, t] = render(...)`), or lay the buffer out with the frame axis outermost.")
+            "(`buf[:, t] = render(...)`), or lay the buffer out with the frame axis outermost."
+        )
     if out.numel() != B * H * W * 3:
         raise ValueError(
             f"render(out=): the destination holds {out.numel()} elements, and the frames need "
-            f"{B * H * W * 3} ({B}x{H}x{W}x3).")
+            f"{B * H * W * 3} ({B}x{H}x{W}x3)."
+        )
     if out.dtype != torch.uint8:
         raise ValueError(f"render(out=): the destination must be uint8, got {out.dtype}")
     return out.view(B, H, W, 3)
@@ -993,9 +1038,14 @@ def _tiles(H: int, W: int, block: int, cull: bool) -> tuple[int, int, int, int, 
 
 
 @torch.no_grad()
-def render_triton(scene: Scene2D, out_size: int | tuple[int, int], supersample: int = 1,
-                  out: torch.Tensor | None = None, block: int = 128,
-                  cull: bool | None = None) -> torch.Tensor:
+def render_triton(
+    scene: Scene2D,
+    out_size: int | tuple[int, int],
+    supersample: int = 1,
+    out: torch.Tensor | None = None,
+    block: int = 128,
+    cull: bool | None = None,
+) -> torch.Tensor:
     """Fused path: ``Scene2D`` -> ``(B,H,W,3)`` uint8, one launch, nothing materialized but the output.
 
     ``cull`` forces the tile-binning pre-pass on or off; ``None`` decides from the primitive count.
@@ -1022,29 +1072,53 @@ def render_triton(scene: Scene2D, out_size: int | tuple[int, int], supersample: 
     # single-process multi-GPU script does not.
     with torch.cuda.device(scene.kind.device):
         base = _static_base(scene, H * ss, W * ss, block)
-        dummy = buf                   # unused pointer when a flag is False; Triton needs an argument
+        dummy = buf  # unused pointer when a flag is False; Triton needs an argument
         box = dummy
         if do_cull:
             M = B * N
             box = torch.empty((M, 4), dtype=scene.geom.dtype, device=scene.kind.device)
-            _bbox_kernel[(triton.cdiv(M, 256),)](scene.kind, scene.geom, scene.line_w, box, M,
-                                                 V=V, BLOCK=256)
+            _bbox_kernel[(triton.cdiv(M, 256),)](scene.kind, scene.geom, scene.line_w, box, M, V=V, BLOCK=256)
         bh, bw, nt, ntx, warps = _tiles(H, W, block, do_cull)
         _scene_kernel[(B, nt)](
-            scene.kind, scene.geom, scene.fill, scene.line, scene.line_w, scene.background,
-            base if base is not None else dummy, box, buf,
-            N, int(scene.static_prefix) if base is not None else 0,
-            H=H, W=W, SS=ss, V=V,
-            wx0=x0, wy0=y0, sx=(x1 - x0) / (W * ss), sy=(y1 - y0) / (H * ss),
-            FLIP=bool(scene.flip_y), y_hi=(y0 + y1), HAS_BASE=base is not None,
-            CULL=do_cull, NTX=ntx, BH=bh, BW=bw, num_warps=warps,
+            scene.kind,
+            scene.geom,
+            scene.fill,
+            scene.line,
+            scene.line_w,
+            scene.background,
+            base if base is not None else dummy,
+            box,
+            buf,
+            N,
+            int(scene.static_prefix) if base is not None else 0,
+            H=H,
+            W=W,
+            SS=ss,
+            V=V,
+            wx0=x0,
+            wy0=y0,
+            sx=(x1 - x0) / (W * ss),
+            sy=(y1 - y0) / (H * ss),
+            FLIP=bool(scene.flip_y),
+            y_hi=(y0 + y1),
+            HAS_BASE=base is not None,
+            CULL=do_cull,
+            NTX=ntx,
+            BH=bh,
+            BW=bw,
+            num_warps=warps,
         )
     return buf
 
 
 @torch.no_grad()
-def render(scene: Scene2D, out_size: int | tuple[int, int], supersample: int = 1,
-           backend: str = "auto", out: torch.Tensor | None = None) -> torch.Tensor:
+def render(
+    scene: Scene2D,
+    out_size: int | tuple[int, int],
+    supersample: int = 1,
+    backend: str = "auto",
+    out: torch.Tensor | None = None,
+) -> torch.Tensor:
     """``auto`` prefers Triton and falls back to torch. Both produce the same picture by construction.
 
     ``auto`` is a question about THIS SCENE, not about this host. It used to be answered by
@@ -1064,9 +1138,9 @@ def render(scene: Scene2D, out_size: int | tuple[int, int], supersample: int = 1
     if backend == "triton" and scene.kind.device.type != "cuda":
         raise ValueError(
             f"render(backend='triton') on a scene that lives on {scene.kind.device}. The fused "
-            f"kernel is CUDA-only; use backend='torch', or build the scene on a cuda device.")
-    if backend == "torch" or (backend == "auto"
-                              and not (HAVE_TRITON and scene.kind.device.type == "cuda")):
+            f"kernel is CUDA-only; use backend='torch', or build the scene on a cuda device."
+        )
+    if backend == "torch" or (backend == "auto" and not (HAVE_TRITON and scene.kind.device.type == "cuda")):
         H = W = int(out_size) if isinstance(out_size, int) else out_size[0]
         if not isinstance(out_size, int):
             H, W = out_size

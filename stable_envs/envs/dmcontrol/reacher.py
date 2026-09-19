@@ -6,6 +6,7 @@ floor that fills the frame is also why this domain ships at parity and not throu
 spotlight's radial falloff IS the picture here, the plate holds it exactly because MuJoCo painted
 it, and MJWarp renders it nearly flat (mean 28.4/255).
 """
+
 from __future__ import annotations
 
 from ._cells import parity_cell

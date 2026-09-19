@@ -91,6 +91,7 @@ renders byte-for-byte what it rendered before:**
   (TinyRenderer tests integer pixel coordinates, bottom-up; nvdiffrast tests ``i + 0.5``; ``(0.5, 0.5)``
   makes the two agree, measured 25/25 columns and 13/13 rows in ``tiny_law_probe.py``).
 """
+
 from __future__ import annotations
 
 import math
@@ -121,6 +122,7 @@ RAY_CACHE_MAX = 8
 
 # --------------------------------------------------------------------------- quantisation
 
+
 def QUANT(x, mode: str = "round"):
     """float in [0,1] -> uint8. ``round`` is what the GL pipeline MuJoCo renders through does.
 
@@ -130,6 +132,7 @@ def QUANT(x, mode: str = "round"):
     on this backend.
     """
     import torch
+
     y = torch.clamp(x, 0.0, 1.0) * 255.0
     if mode == "round":
         y = torch.round(y)
@@ -173,6 +176,7 @@ class TinyShading:
 def shade_tiny(n, base, law: TinyShading):
     """``n`` unit WORLD normals ``(..., 3)``, ``base`` material colour ``(..., 3)`` -> unclamped colour."""
     import torch
+
     l = torch.as_tensor(law.unit_dir(), dtype=base.dtype, device=base.device)
     ndl = (n * l).sum(-1, keepdim=True)
     r = 2.0 * ndl * n - l
@@ -190,6 +194,7 @@ def gather_material(mat, gid):
     the knob), and a different ``Scene`` per colour is a different rasterization per colour.
     """
     import torch
+
     if mat.dim() == 2:
         return mat[gid]
     b = torch.arange(gid.shape[0], device=gid.device).view(-1, 1, 1)
@@ -201,8 +206,12 @@ def _mm4(a, b):
     order. No matmul and no reduction kernel: each output element is computed by the same four
     multiplies and three adds whatever the leading (batch) shape, so the result cannot depend on how
     many other rows share the launch."""
-    return (a[..., :, 0:1] * b[..., 0:1, :] + a[..., :, 1:2] * b[..., 1:2, :]
-            + a[..., :, 2:3] * b[..., 2:3, :] + a[..., :, 3:4] * b[..., 3:4, :])
+    return (
+        a[..., :, 0:1] * b[..., 0:1, :]
+        + a[..., :, 1:2] * b[..., 1:2, :]
+        + a[..., :, 2:3] * b[..., 2:3, :]
+        + a[..., :, 3:4] * b[..., 3:4, :]
+    )
 
 
 def mvp_rows(proj, view, M):
@@ -223,14 +232,15 @@ def mvp_rows(proj, view, M):
     the split. Elementwise products have no such kernel choice.
     """
     import torch
+
     p = proj.to(torch.float64)
     v = view.to(torch.float64)
-    vp = _mm4(p, v)                                                   # (B,4,4) or (4,4)
+    vp = _mm4(p, v)  # (B,4,4) or (4,4)
     vp = vp[:, None] if vp.ndim == 3 else vp[None, None]
     return _mm4(vp, M.to(torch.float64)).to(M.dtype)
 
 
-def offset_clip(pos, R: int, offset) -> "torch.Tensor":
+def offset_clip(pos, R: int, offset) -> torch.Tensor:
     """Shift clip-space vertices ``(B, V, 4)`` by ``offset`` PIXELS at resolution ``R`` (x right, y UP).
 
     nvdiffrast tests coverage at pixel centres ``(i + 0.5, j + 0.5)`` in a bottom-up frame; a rasterizer
@@ -260,13 +270,13 @@ def _sphere(radii, nslice: int = NUMSLICES, nstack: int = NUMSTACKS):
     watertight and the limb is a ``nslice``-gon rather than a circle -- which is what the reference
     draws.
     """
-    th = np.linspace(0.0, 2.0 * np.pi, nslice + 1)                 # closes on itself
+    th = np.linspace(0.0, 2.0 * np.pi, nslice + 1)  # closes on itself
     ph = np.linspace(0.0, np.pi, nstack + 1)
     T, P = np.meshgrid(th, ph, indexing="ij")
     n = np.stack([np.sin(P) * np.cos(T), np.sin(P) * np.sin(T), np.cos(P)], -1)
     v = n * np.asarray(radii, np.float64)
     nrm = n / np.linalg.norm(n, axis=-1, keepdims=True).clip(1e-12)
-    if not np.allclose(radii, radii[0]):                            # ellipsoid: normal is not the point
+    if not np.allclose(radii, radii[0]):  # ellipsoid: normal is not the point
         nrm = v / np.asarray(radii, np.float64) ** 2
         nrm = nrm / np.linalg.norm(nrm, axis=-1, keepdims=True).clip(1e-12)
     idx = np.arange((nslice + 1) * (nstack + 1)).reshape(nslice + 1, nstack + 1)
@@ -286,7 +296,7 @@ def _capsule(r: float, hl: float, nslice: int = NUMSLICES, nstack: int = NUMSTAC
     V, N, F = [], [], []
     off = 0
 
-    for z in (-hl, hl):                                             # barrel
+    for z in (-hl, hl):  # barrel
         V.append(np.stack([r * ct, r * st, np.full(nslice + 1, z)], -1))
         N.append(np.stack([ct, st, np.zeros(nslice + 1)], -1))
     for i in range(nslice):
@@ -296,14 +306,13 @@ def _capsule(r: float, hl: float, nslice: int = NUMSLICES, nstack: int = NUMSTAC
     off = 2 * (nslice + 1)
 
     half = max(nstack // 2, 1)
-    for sign, zc in ((1.0, hl), (-1.0, -hl)):                       # hemispherical caps
+    for sign, zc in ((1.0, hl), (-1.0, -hl)):  # hemispherical caps
         ang = np.linspace(0.0, np.pi / 2.0, half + 1)
         base = off
         for a in ang:
             rr, zz = r * np.cos(a), sign * r * np.sin(a)
             V.append(np.stack([rr * ct, rr * st, np.full(nslice + 1, zc + zz)], -1))
-            N.append(np.stack([np.cos(a) * ct, np.cos(a) * st,
-                               np.full(nslice + 1, sign * np.sin(a))], -1))
+            N.append(np.stack([np.cos(a) * ct, np.cos(a) * st, np.full(nslice + 1, sign * np.sin(a))], -1))
         for k in range(half):
             for i in range(nslice):
                 a0 = base + k * (nslice + 1) + i
@@ -320,17 +329,20 @@ def _cylinder(r: float, hl: float, nslice: int = NUMSLICES):
     ct, st = np.cos(th), np.sin(th)
     ring = lambda z: np.stack([r * ct, r * st, np.full(nslice + 1, z)], -1)  # noqa: E731
     side_n = np.stack([ct, st, np.zeros(nslice + 1)], -1)
-    V = [ring(-hl), ring(hl), ring(-hl), ring(hl),
-         np.array([[0.0, 0.0, -hl], [0.0, 0.0, hl]])]
-    N = [side_n, side_n,
-         np.tile([0.0, 0.0, -1.0], (nslice + 1, 1)), np.tile([0.0, 0.0, 1.0], (nslice + 1, 1)),
-         np.array([[0.0, 0.0, -1.0], [0.0, 0.0, 1.0]])]
+    V = [ring(-hl), ring(hl), ring(-hl), ring(hl), np.array([[0.0, 0.0, -hl], [0.0, 0.0, hl]])]
+    N = [
+        side_n,
+        side_n,
+        np.tile([0.0, 0.0, -1.0], (nslice + 1, 1)),
+        np.tile([0.0, 0.0, 1.0], (nslice + 1, 1)),
+        np.array([[0.0, 0.0, -1.0], [0.0, 0.0, 1.0]]),
+    ]
     n1 = nslice + 1
     F = []
     for i in range(nslice):
         F += [[i, i + 1, n1 + i + 1], [i, n1 + i + 1, n1 + i]]
-        F += [[4 * n1, 2 * n1 + i + 1, 2 * n1 + i]]                 # bottom cap
-        F += [[4 * n1 + 1, 3 * n1 + i, 3 * n1 + i + 1]]             # top cap
+        F += [[4 * n1, 2 * n1 + i + 1, 2 * n1 + i]]  # bottom cap
+        F += [[4 * n1 + 1, 3 * n1 + i, 3 * n1 + i + 1]]  # top cap
     return np.concatenate(V), np.concatenate(N), np.asarray(F, np.int64)
 
 
@@ -371,6 +383,7 @@ def _plane(size, extent: float):
 
 # --------------------------------------------------------------------------- appearance resolution
 
+
 def effective_rgba(m, g: int) -> np.ndarray:
     """``(4,)`` the colour MuJoCo draws geom ``g`` with, resolved MuJoCo's way rather than MJWarp's.
 
@@ -394,6 +407,7 @@ def _tex_of(m, mid: int) -> int:
     if np.ndim(t) == 0:
         return int(t)
     import mujoco
+
     role = int(getattr(mujoco.mjtTextureRole, "mjTEXROLE_RGB", 1))
     return int(t[role]) if role < len(t) else int(np.max(t))
 
@@ -412,7 +426,7 @@ def texture_array(m, tex: int) -> np.ndarray:
     w, h = int(m.tex_width[tex]), int(m.tex_height[tex])
     nc = int(m.tex_nchannel[tex]) if hasattr(m, "tex_nchannel") else 3
     a0 = int(m.tex_adr[tex])
-    a = np.asarray(buf[a0:a0 + w * h * nc], np.uint8).reshape(h, w, nc)
+    a = np.asarray(buf[a0 : a0 + w * h * nc], np.uint8).reshape(h, w, nc)
     return np.repeat(a, 3, -1) if nc == 1 else a[..., :3]
 
 
@@ -446,7 +460,7 @@ def half_extent(m, g: int, drawn_plane: float = 0.0) -> np.ndarray:
         return np.array([s[0], s[0], s[0]])
     if t in (CAPSULE, CYLINDER):
         return np.array([s[0], s[0], max(s[1], 1e-12)])
-    return np.where(s > 0, s, 1.0)                                  # BOX, ELLIPSOID, MESH
+    return np.where(s > 0, s, 1.0)  # BOX, ELLIPSOID, MESH
 
 
 #: The texgen offset. One number for every geom type: measured 0.4966-0.4999 on planes, boxes,
@@ -501,6 +515,7 @@ def texgen(m, g: int, drawn_plane: float = 0.0, cube: bool = False) -> tuple[np.
 
 # --------------------------------------------------------------------------- scene
 
+
 @dataclass
 class Lights:
     """The lights as ``mjv_updateScene`` RESOLVES them, plus the headlight it attaches to the camera.
@@ -510,21 +525,21 @@ class Lights:
     point FROM the light.
     """
 
-    pos: np.ndarray                 # (L,3)
-    dir: np.ndarray                 # (L,3) unit, direction the light travels
-    directional: np.ndarray         # (L,) bool
-    ambient: np.ndarray             # (L,3)
-    diffuse: np.ndarray             # (L,3)
-    specular: np.ndarray            # (L,3)
-    attenuation: np.ndarray         # (L,3)
-    cutoff: np.ndarray              # (L,)
-    exponent: np.ndarray            # (L,)
-    headlight: np.ndarray           # (L,) bool -- pos/dir follow the camera, per frame
+    pos: np.ndarray  # (L,3)
+    dir: np.ndarray  # (L,3) unit, direction the light travels
+    directional: np.ndarray  # (L,) bool
+    ambient: np.ndarray  # (L,3)
+    diffuse: np.ndarray  # (L,3)
+    specular: np.ndarray  # (L,3)
+    attenuation: np.ndarray  # (L,3)
+    cutoff: np.ndarray  # (L,)
+    exponent: np.ndarray  # (L,)
+    headlight: np.ndarray  # (L,) bool -- pos/dir follow the camera, per frame
 
     @staticmethod
-    def from_scene(scn) -> "Lights":
+    def from_scene(scn) -> Lights:
         n = int(scn.nlight)
-        g = lambda a: np.asarray(a, np.float64)                      # noqa: E731
+        g = lambda a: np.asarray(a, np.float64)  # noqa: E731
 
         def flag(i, name, fallback):
             """``mjvLight`` gained a ``type`` enum where it used to carry booleans; read either."""
@@ -536,8 +551,7 @@ class Lights:
         return Lights(
             pos=g([scn.lights[i].pos for i in range(n)]).reshape(n, 3),
             dir=g([scn.lights[i].dir for i in range(n)]).reshape(n, 3),
-            directional=np.array([flag(i, "directional", lambda li: int(li.type) == 1)
-                                  for i in range(n)]),
+            directional=np.array([flag(i, "directional", lambda li: int(li.type) == 1) for i in range(n)]),
             ambient=g([scn.lights[i].ambient for i in range(n)]).reshape(n, 3),
             diffuse=g([scn.lights[i].diffuse for i in range(n)]).reshape(n, 3),
             specular=g([scn.lights[i].specular for i in range(n)]).reshape(n, 3),
@@ -562,15 +576,19 @@ class Camera:
     zfar: float
 
     @staticmethod
-    def from_model(m, d, cam: int) -> "Camera":
+    def from_model(m, d, cam: int) -> Camera:
         znear = float(m.vis.map.znear) * float(m.stat.extent)
         zfar = float(m.vis.map.zfar) * float(m.stat.extent)
-        return Camera(np.asarray(d.cam_xpos[cam], np.float64).reshape(3),
-                      np.asarray(d.cam_xmat[cam], np.float64).reshape(3, 3),
-                      float(m.cam_fovy[cam]), znear, zfar)
+        return Camera(
+            np.asarray(d.cam_xpos[cam], np.float64).reshape(3),
+            np.asarray(d.cam_xmat[cam], np.float64).reshape(3, 3),
+            float(m.cam_fovy[cam]),
+            znear,
+            zfar,
+        )
 
     @staticmethod
-    def from_glcam(m, scn) -> "Camera":
+    def from_glcam(m, scn) -> Camera:
         """The MONO camera: the average of ``mjv_updateScene``'s two eyes.
 
         This is the one a free ``MjvCamera`` (OGBench's top-down view) only exists as. The eyes'
@@ -587,8 +605,7 @@ class Camera:
         near = 0.5 * (float(a.frustum_near) + float(b.frustum_near))
         top = 0.5 * (float(a.frustum_top) + float(b.frustum_top))
         fovy = 2.0 * math.degrees(math.atan2(top, near))
-        return Camera(pos, np.stack([right, up, -fwd], -1), fovy, near,
-                      float(m.vis.map.zfar) * float(m.stat.extent))
+        return Camera(pos, np.stack([right, up, -fwd], -1), fovy, near, float(m.vis.map.zfar) * float(m.stat.extent))
 
     def matrices(self, aspect: float = 1.0):
         """``(view (...,4,4), proj (4,4))``. OpenGL clip convention, which is what nvdiffrast wants."""
@@ -628,9 +645,18 @@ class Scene(_resources.Closeable):
 
     resource_kind = "nvdiff.Scene"
 
-    def __init__(self, m, groups=DEFAULT_GROUPS, device="cuda", nslice: int = NUMSLICES,
-                 nstack: int = NUMSTACKS, skip_alpha_zero: bool = True, tex_policy: str = "pot"):
+    def __init__(
+        self,
+        m,
+        groups=DEFAULT_GROUPS,
+        device="cuda",
+        nslice: int = NUMSLICES,
+        nstack: int = NUMSTACKS,
+        skip_alpha_zero: bool = True,
+        tex_policy: str = "pot",
+    ):
         import torch
+
         self.groups = tuple(groups)
         self.tex_policy = tex_policy
         self.device = device
@@ -661,7 +687,7 @@ class Scene(_resources.Closeable):
             elif t == MESH:
                 v, n, f, uv_mesh = self._mesh(m, g)
             else:
-                continue                                            # hfield / sdf: not handled
+                continue  # hfield / sdf: not handled
             if t == MESH and uv_mesh is not None:
                 # A mesh carries its own texcoords; generating them would overwrite the asset's UV
                 # layout with a projection, which is exactly the artefact this module exists to avoid.
@@ -679,8 +705,15 @@ class Scene(_resources.Closeable):
             self.geoms.append(g)
 
         dev = torch.device(device)
-        self._assemble(np.concatenate(V), np.concatenate(N), np.concatenate(U), np.concatenate(GI),
-                       np.concatenate(F), np.concatenate(FG), dev)
+        self._assemble(
+            np.concatenate(V),
+            np.concatenate(N),
+            np.concatenate(U),
+            np.concatenate(GI),
+            np.concatenate(F),
+            np.concatenate(FG),
+            dev,
+        )
         self._appearance(m, dev)
         self._sparse(dev)
         self._opened()
@@ -691,14 +724,31 @@ class Scene(_resources.Closeable):
         Listed by name rather than swept with ``vars()`` so that a member added later is a deliberate
         decision about its lifetime instead of silently retained (or silently freed).
         """
-        for name in ("vert", "norm", "uv", "vgeom", "face", "fgeom", "mjgeom", "S3", "S4", "S3p",
-                     "mat_rgb", "alpha", "spec", "shininess", "emission", "texid"):
+        for name in (
+            "vert",
+            "norm",
+            "uv",
+            "vgeom",
+            "face",
+            "fgeom",
+            "mjgeom",
+            "S3",
+            "S4",
+            "S3p",
+            "mat_rgb",
+            "alpha",
+            "spec",
+            "shininess",
+            "emission",
+            "texid",
+        ):
             if hasattr(self, name):
                 setattr(self, name, None)
         self.textures = {}
 
     def _assemble(self, vert, norm, uv, vgeom, face, fgeom, dev) -> None:
         import torch
+
         self.vert = torch.as_tensor(vert, dtype=torch.float32, device=dev)
         self.norm = torch.as_tensor(norm, dtype=torch.float32, device=dev)
         self.uv = torch.as_tensor(uv, dtype=torch.float32, device=dev)
@@ -709,9 +759,23 @@ class Scene(_resources.Closeable):
         self.mjgeom = torch.as_tensor(np.asarray(self.geoms, np.int64), device=dev)
 
     @classmethod
-    def from_triangles(cls, vert, norm, face, vert_geom, rgba, *, uv=None, specular=None, shininess=None,
-                       emission=None, textures=None, tex_of_geom=None, device="cuda",
-                       tex_policy: str = "pot") -> "Scene":
+    def from_triangles(
+        cls,
+        vert,
+        norm,
+        face,
+        vert_geom,
+        rgba,
+        *,
+        uv=None,
+        specular=None,
+        shininess=None,
+        emission=None,
+        textures=None,
+        tex_of_geom=None,
+        device="cuda",
+        tex_policy: str = "pot",
+    ) -> Scene:
         """A scene from a triangle soup, with no ``MjModel``: the same members, the same render.
 
         ``vert (V,3)`` in each geom's OWN frame, ``norm (V,3)``, ``face (F,3)`` indices, ``vert_geom (V,)``
@@ -726,6 +790,7 @@ class Scene(_resources.Closeable):
         stay shared, so a fix to one path is a fix to both.
         """
         import torch
+
         self = cls.__new__(cls)
         self.groups = ()
         self.tex_policy = tex_policy
@@ -754,12 +819,15 @@ class Scene(_resources.Closeable):
         z = np.zeros(G)
         self.mat_rgb = torch.as_tensor(rgba[:, :3], dtype=torch.float32, device=dev)
         self.alpha = torch.as_tensor(rgba[:, 3], dtype=torch.float32, device=dev)
-        self.spec = torch.as_tensor(z if specular is None else np.asarray(specular, np.float64),
-                                    dtype=torch.float32, device=dev)
-        self.shininess = torch.as_tensor(z if shininess is None else np.asarray(shininess, np.float64),
-                                         dtype=torch.float32, device=dev)
-        self.emission = torch.as_tensor(z if emission is None else np.asarray(emission, np.float64),
-                                        dtype=torch.float32, device=dev)
+        self.spec = torch.as_tensor(
+            z if specular is None else np.asarray(specular, np.float64), dtype=torch.float32, device=dev
+        )
+        self.shininess = torch.as_tensor(
+            z if shininess is None else np.asarray(shininess, np.float64), dtype=torch.float32, device=dev
+        )
+        self.emission = torch.as_tensor(
+            z if emission is None else np.asarray(emission, np.float64), dtype=torch.float32, device=dev
+        )
         texid = np.full(G, -1, np.int64) if tex_of_geom is None else np.asarray(tex_of_geom, np.int64)
         self.texid = torch.as_tensor(texid, device=dev)
         self.texid_np = texid
@@ -789,13 +857,16 @@ class Scene(_resources.Closeable):
         did = int(m.geom_dataid[g])
         va, vn = int(m.mesh_vertadr[did]), int(m.mesh_vertnum[did])
         fa, fn = int(m.mesh_faceadr[did]), int(m.mesh_facenum[did])
-        vert = np.asarray(m.mesh_vert[va:va + vn], np.float64).reshape(-1, 3)
-        face = np.asarray(m.mesh_face[fa:fa + fn], np.int64).reshape(-1, 3)
+        vert = np.asarray(m.mesh_vert[va : va + vn], np.float64).reshape(-1, 3)
+        face = np.asarray(m.mesh_face[fa : fa + fn], np.int64).reshape(-1, 3)
         na = int(m.mesh_normaladr[did]) if hasattr(m, "mesh_normaladr") else va
         nn = int(m.mesh_normalnum[did]) if hasattr(m, "mesh_normalnum") else vn
-        nrm = np.asarray(m.mesh_normal[na:na + nn], np.float64).reshape(-1, 3)
-        fnrm = (np.asarray(m.mesh_facenormal[fa:fa + fn], np.int64).reshape(-1, 3)
-                if hasattr(m, "mesh_facenormal") else face)
+        nrm = np.asarray(m.mesh_normal[na : na + nn], np.float64).reshape(-1, 3)
+        fnrm = (
+            np.asarray(m.mesh_facenormal[fa : fa + fn], np.int64).reshape(-1, 3)
+            if hasattr(m, "mesh_facenormal")
+            else face
+        )
 
         v = vert[face.reshape(-1)]
         n = nrm[np.clip(fnrm.reshape(-1), 0, len(nrm) - 1)] if len(nrm) else np.zeros_like(v)
@@ -809,9 +880,12 @@ class Scene(_resources.Closeable):
         ta = int(m.mesh_texcoordadr[did]) if hasattr(m, "mesh_texcoordadr") else -1
         if ta >= 0 and hasattr(m, "mesh_texcoord") and len(m.mesh_texcoord):
             tn = int(m.mesh_texcoordnum[did]) if hasattr(m, "mesh_texcoordnum") else 0
-            tc = np.asarray(m.mesh_texcoord[ta:ta + tn], np.float64).reshape(-1, 2)
-            ftc = (np.asarray(m.mesh_facetexcoord[fa:fa + fn], np.int64).reshape(-1, 3)
-                   if hasattr(m, "mesh_facetexcoord") else face)
+            tc = np.asarray(m.mesh_texcoord[ta : ta + tn], np.float64).reshape(-1, 2)
+            ftc = (
+                np.asarray(m.mesh_facetexcoord[fa : fa + fn], np.int64).reshape(-1, 3)
+                if hasattr(m, "mesh_facetexcoord")
+                else face
+            )
             if len(tc):
                 uv = tc[np.clip(ftc.reshape(-1), 0, len(tc) - 1)]
         f = np.arange(3 * len(face), dtype=np.int64).reshape(-1, 3)
@@ -827,22 +901,33 @@ class Scene(_resources.Closeable):
         produces every world's clip-space vertex directly.
         """
         import torch
+
         v4 = torch.cat([self.vert, torch.ones(self.V, 1, device=dev)], -1)
         rows = torch.arange(self.V, device=dev).repeat_interleave(4)
         cols = (self.vgeom[:, None] * 4 + torch.arange(4, device=dev)[None]).reshape(-1)
-        self.S4 = torch.sparse_coo_tensor(torch.stack([rows, cols]), v4.reshape(-1),
-                                          (self.V, 4 * self.G)).coalesce().to_sparse_csr()
+        self.S4 = (
+            torch.sparse_coo_tensor(torch.stack([rows, cols]), v4.reshape(-1), (self.V, 4 * self.G))
+            .coalesce()
+            .to_sparse_csr()
+        )
         rows3 = torch.arange(self.V, device=dev).repeat_interleave(3)
         cols3 = (self.vgeom[:, None] * 3 + torch.arange(3, device=dev)[None]).reshape(-1)
-        self.S3 = torch.sparse_coo_tensor(torch.stack([rows3, cols3]), self.norm.reshape(-1),
-                                          (self.V, 3 * self.G)).coalesce().to_sparse_csr()
-        self.S3p = torch.sparse_coo_tensor(torch.stack([rows3, cols3]), self.vert.reshape(-1),
-                                           (self.V, 3 * self.G)).coalesce().to_sparse_csr()
+        self.S3 = (
+            torch.sparse_coo_tensor(torch.stack([rows3, cols3]), self.norm.reshape(-1), (self.V, 3 * self.G))
+            .coalesce()
+            .to_sparse_csr()
+        )
+        self.S3p = (
+            torch.sparse_coo_tensor(torch.stack([rows3, cols3]), self.vert.reshape(-1), (self.V, 3 * self.G))
+            .coalesce()
+            .to_sparse_csr()
+        )
 
     # -- appearance --------------------------------------------------------
 
     def _appearance(self, m, dev):
         import torch
+
         G = self.G
         rgb = np.zeros((G, 3))
         alpha = np.ones(G)
@@ -863,7 +948,7 @@ class Scene(_resources.Closeable):
                 t = _tex_of(m, mid)
                 if t >= 0:
                     texid[i] = t
-                    texcube[i] = int(m.tex_type[t]) != 0            # 0 == mjTEXTURE_2D
+                    texcube[i] = int(m.tex_type[t]) != 0  # 0 == mjTEXTURE_2D
         self.mat_rgb = torch.as_tensor(rgb, dtype=torch.float32, device=dev)
         self.alpha = torch.as_tensor(alpha, dtype=torch.float32, device=dev)
         self.spec = torch.as_tensor(spec, dtype=torch.float32, device=dev)
@@ -882,13 +967,14 @@ class Scene(_resources.Closeable):
     def clip(self, xpos, xmat, view, proj):
         """``(B, V, 4)`` clip-space vertices, ``(B, V, 3)`` world normals and world positions."""
         import torch
+
         self._check_open("clip")
         B, G = xpos.shape[0], self.G
         M = torch.zeros(B, G, 4, 4, device=xpos.device, dtype=xpos.dtype)
         M[:, :, :3, :3] = xmat
         M[:, :, :3, 3] = xpos
         M[:, :, 3, 3] = 1.0
-        mvp = mvp_rows(proj, view, M)                                 # batch-invariant, see mvp_rows
+        mvp = mvp_rows(proj, view, M)  # batch-invariant, see mvp_rows
         pos = torch.sparse.mm(self.S4, mvp.permute(1, 3, 0, 2).reshape(4 * G, 4 * B))
         pos = pos.reshape(self.V, B, 4).permute(1, 0, 2).contiguous()
         nrm = torch.sparse.mm(self.S3, xmat.permute(1, 3, 0, 2).reshape(3 * G, 3 * B))
@@ -926,6 +1012,7 @@ def prepare_texture_array(a: np.ndarray, dev, policy: str = "pot", cube: bool = 
     handling cannot drift between the two.
     """
     import torch
+
     a = np.asarray(a)
     if a.dtype == np.uint8:
         a = a.astype(np.float32) / 255.0
@@ -942,7 +1029,7 @@ def prepare_texture_array(a: np.ndarray, dev, policy: str = "pot", cube: bool = 
             a = a.reshape(6, w, w, 3)
         elif h == w:
             a = np.repeat(a[None], 6, 0)
-        else:                                                       # not a layout we can name
+        else:  # not a layout we can name
             cube = False
     hw = a.shape[-3:-1]
     ok = is_pow2(hw[0]) and is_pow2(hw[1])
@@ -955,8 +1042,7 @@ def prepare_texture_array(a: np.ndarray, dev, policy: str = "pot", cube: bool = 
         a, resampled = _to_pow2(a)
         ok = True
     tex = torch.as_tensor(np.ascontiguousarray(a), dtype=torch.float32, device=dev)
-    return {"tex": tex, "cube": cube, "resampled": resampled, "mipmap_ok": ok,
-            "shape": tuple(a.shape)}
+    return {"tex": tex, "cube": cube, "resampled": resampled, "mipmap_ok": ok, "shape": tuple(a.shape)}
 
 
 def _to_pow2(a: np.ndarray):
@@ -981,6 +1067,7 @@ def _to_pow2(a: np.ndarray):
 
 
 # --------------------------------------------------------------------------- the renderer
+
 
 def close_cached_renderer(c) -> None:
     """``BoundedCache.on_evict`` for a family cache whose values hold ``c.br``."""
@@ -1029,12 +1116,28 @@ class BatchRenderer(_resources.Closeable):
 
     resource_kind = "nvdiff.BatchRenderer"
 
-    def __init__(self, m=None, res: int = 224, groups=DEFAULT_GROUPS, device: str = "cuda",
-                 textures: bool = True, mipmap: bool = True, skybox: bool = True,
-                 quant: str = "round", nslice: int = NUMSLICES, nstack: int = NUMSTACKS,
-                 supersample: int = 1, tex_policy: str = "pot", aniso: int = 1, *,
-                 scene: "Scene | None" = None, shading: str = "mujoco", tiny: "TinyShading | None" = None,
-                 tex_filter: str = "linear", sample_offset=(0.0, 0.0)):
+    def __init__(
+        self,
+        m=None,
+        res: int = 224,
+        groups=DEFAULT_GROUPS,
+        device: str = "cuda",
+        textures: bool = True,
+        mipmap: bool = True,
+        skybox: bool = True,
+        quant: str = "round",
+        nslice: int = NUMSLICES,
+        nstack: int = NUMSTACKS,
+        supersample: int = 1,
+        tex_policy: str = "pot",
+        aniso: int = 1,
+        *,
+        scene: Scene | None = None,
+        shading: str = "mujoco",
+        tiny: TinyShading | None = None,
+        tex_filter: str = "linear",
+        sample_offset=(0.0, 0.0),
+    ):
         """``m`` an ``MjModel``, or ``scene=`` a prebuilt ``Scene`` (``Scene.from_triangles``) and no model.
 
         The keyword-only options are the Step-7 extensions and their defaults select the paths every
@@ -1042,9 +1145,9 @@ class BatchRenderer(_resources.Closeable):
         pyramid when ``mipmap`` is on), ``sample_offset=(0, 0)`` (pixel centres). ``shading="tiny"`` needs
         ``tiny=TinyShading(...)`` (or takes its defaults) and lights set with ``set_lights`` are ignored.
         """
+        import nvdiffrast.torch as dr
         import torch
 
-        import nvdiffrast.torch as dr
         if scene is None and m is None:
             raise ValueError("BatchRenderer needs an MjModel (m=) or a prebuilt Scene (scene=)")
         if shading not in ("mujoco", "tiny"):
@@ -1068,8 +1171,11 @@ class BatchRenderer(_resources.Closeable):
         #: True when this renderer BUILT its scene and therefore closes it; False when a caller handed
         #: one in with ``scene=`` and kept ownership of it.
         self.owns_scene = scene is None
-        self.scene = scene if scene is not None else Scene(m, groups, device=device, nslice=nslice,
-                                                           nstack=nstack, tex_policy=tex_policy)
+        self.scene = (
+            scene
+            if scene is not None
+            else Scene(m, groups, device=device, nslice=nslice, nstack=nstack, tex_policy=tex_policy)
+        )
         self.ctx = dr.RasterizeCudaContext(device=self.device)
         self.lights: Lights | None = None
         self.background = np.array([0.0, 0.0, 0.0])
@@ -1122,6 +1228,7 @@ class BatchRenderer(_resources.Closeable):
         """Attach the model's skybox texture, if it has one."""
         self._check_open("set_skybox")
         import mujoco
+
         if m is None:
             return
         for t in range(m.ntex):
@@ -1138,6 +1245,7 @@ class BatchRenderer(_resources.Closeable):
         """
         self._check_open("resolve_from_mujoco")
         import mujoco
+
         opt = option if option is not None else mujoco.MjvOption()
         scn = mujoco.MjvScene(m, maxgeom=max(m.ngeom * 2, 1000))
         cam = camera if camera is not None else mujoco.MjvCamera()
@@ -1155,9 +1263,9 @@ class BatchRenderer(_resources.Closeable):
         a caller holding full ``geom_xpos`` should index it with ``scene.mjgeom`` first. ``mat_rgb``, if
         given, is a PER-ROW ``(B, G, 3)`` material colour replacing the scene's ``mat_rgb`` for this call.
         """
+        import nvdiffrast.torch as dr
         import torch
 
-        import nvdiffrast.torch as dr
         self._check_open("render")
         S = self.scene
         R = self.res * self.ss
@@ -1165,22 +1273,24 @@ class BatchRenderer(_resources.Closeable):
         view_np, proj_np = cam.matrices(aspect=1.0)
         view = torch.as_tensor(view_np, dtype=torch.float32, device=self.device)
         proj = torch.as_tensor(proj_np, dtype=torch.float32, device=self.device)
-        campos = torch.as_tensor(np.atleast_2d(np.asarray(cam.pos, np.float64)),
-                                 dtype=torch.float32, device=self.device)
-        camfwd = torch.as_tensor(-np.asarray(cam.mat, np.float64).reshape(-1, 3, 3)[:, :, 2],
-                                 dtype=torch.float32, device=self.device)
+        campos = torch.as_tensor(
+            np.atleast_2d(np.asarray(cam.pos, np.float64)), dtype=torch.float32, device=self.device
+        )
+        camfwd = torch.as_tensor(
+            -np.asarray(cam.mat, np.float64).reshape(-1, 3, 3)[:, :, 2], dtype=torch.float32, device=self.device
+        )
 
         pos, nrm, wpos = S.clip(xpos, xmat, view, proj)
-        pos = offset_clip(pos, R, self.sample_offset)                # identity at (0, 0)
+        pos = offset_clip(pos, R, self.sample_offset)  # identity at (0, 0)
         rast, db = dr.rasterize(self.ctx, pos, S.face, resolution=[R, R], grad_db=self.mipmap)
 
-        attr = torch.cat([nrm, wpos], -1)                            # (B,V,6)
+        attr = torch.cat([nrm, wpos], -1)  # (B,V,6)
         interp, _ = dr.interpolate(attr, rast, S.face)
         n = interp[..., :3]
         p = interp[..., 3:6]
         n = n / n.norm(dim=-1, keepdim=True).clamp_min(1e-9)
 
-        tid = rast[..., 3].long()                                    # 0 = miss, else triangle+1
+        tid = rast[..., 3].long()  # 0 = miss, else triangle+1
         hit = tid > 0
         gid = torch.where(hit, S.fgeom[(tid - 1).clamp_min(0)], torch.zeros_like(tid))
 
@@ -1188,8 +1298,7 @@ class BatchRenderer(_resources.Closeable):
         if self.shading == "tiny":
             col = shade_tiny(n, base, self.tiny)
         else:
-            col = self._shade(n, p, base, S.spec[gid], S.shininess[gid], S.emission[gid],
-                              campos, camfwd)
+            col = self._shade(n, p, base, S.spec[gid], S.shininess[gid], S.emission[gid], campos, camfwd)
         if self.use_tex:
             col = col * self._texture(S, rast, db, gid)
         # CLAMP AFTER THE TEXTURE, never before. The primary colour routinely exceeds 1 -- on a floor
@@ -1202,7 +1311,7 @@ class BatchRenderer(_resources.Closeable):
         img = torch.where(hit[..., None], col, self._background(cam, R, B, campos, camfwd))
         if self.ss > 1:
             img = img.view(B, self.res, self.ss, self.res, self.ss, 3).mean((2, 4))
-        img = QUANT(img, self.quant).flip(1)                          # nvdiffrast row 0 is the BOTTOM
+        img = QUANT(img, self.quant).flip(1)  # nvdiffrast row 0 is the BOTTOM
         if out is not None:
             out.view(B, self.res, self.res, 3).copy_(img)
             return out
@@ -1213,6 +1322,7 @@ class BatchRenderer(_resources.Closeable):
         self._check_open("render_qpos")
         import mujoco
         import torch
+
         q = np.asarray(qpos.cpu() if hasattr(qpos, "cpu") else qpos, np.float64)
         d = mujoco.MjData(self.m)
         xp, xm = [], []
@@ -1232,9 +1342,13 @@ class BatchRenderer(_resources.Closeable):
         xpos = torch.as_tensor(np.stack(xp), dtype=torch.float32, device=self.device)
         xmat = torch.as_tensor(np.stack(xm), dtype=torch.float32, device=self.device)
         if camera_id >= 0:
-            cam = Camera(np.stack(cp), np.stack(cm), float(self.m.cam_fovy[camera_id]),
-                         float(self.m.vis.map.znear) * float(self.m.stat.extent),
-                         float(self.m.vis.map.zfar) * float(self.m.stat.extent))
+            cam = Camera(
+                np.stack(cp),
+                np.stack(cm),
+                float(self.m.cam_fovy[camera_id]),
+                float(self.m.vis.map.znear) * float(self.m.stat.extent),
+                float(self.m.vis.map.zfar) * float(self.m.stat.extent),
+            )
         if cam is None:
             raise ValueError("render_qpos needs either a Camera or a camera_id >= 0")
         return self.render(xpos, xmat, cam, out=out)
@@ -1250,6 +1364,7 @@ class BatchRenderer(_resources.Closeable):
         it onto untextured geometry overshoots wall tops by 6.5/255. ``docs/research/ogbench.md``.
         """
         import torch
+
         L = self.lights
         v = campos.view(-1, 1, 1, 3) - p
         v = v / v.norm(dim=-1, keepdim=True).clamp_min(1e-9)
@@ -1262,7 +1377,7 @@ class BatchRenderer(_resources.Closeable):
         for i in range(len(L.pos)):
             amb, dif, sp = t(L.ambient[i]), t(L.diffuse[i]), t(L.specular[i])
             if L.headlight[i]:
-                ldir = -camfwd.view(-1, 1, 1, 3)                     # toward the light
+                ldir = -camfwd.view(-1, 1, 1, 3)  # toward the light
                 ldir = ldir.expand_as(v)
                 att = torch.ones(base.shape[:-1] + (1,), device=base.device)
             elif L.directional[i]:
@@ -1288,7 +1403,7 @@ class BatchRenderer(_resources.Closeable):
             h = h / h.norm(dim=-1, keepdim=True).clamp_min(1e-9)
             ndh = (n * h).sum(-1, keepdim=True).clamp_min(0.0)
             high = high + sp * spec.unsqueeze(-1) * torch.pow(ndh, exp) * att
-        return prim + high + base * emis.unsqueeze(-1)                # UNCLAMPED: see render()
+        return prim + high + base * emis.unsqueeze(-1)  # UNCLAMPED: see render()
 
     # -- texturing ---------------------------------------------------------
 
@@ -1305,17 +1420,16 @@ class BatchRenderer(_resources.Closeable):
         DISTINCT textures actually worn by visible geometry, and it is reported per scene in
         ``docs/research/nvdiffrast.md`` rather than hidden.
         """
+        import nvdiffrast.torch as dr
         import torch
 
-        import nvdiffrast.torch as dr
         B = rast.shape[0]
         out = torch.ones(rast.shape[:3] + (3,), device=rast.device)
         if not S.textures:
             return out
-        uv3, uv3_da = dr.interpolate(S.uv.expand(B, -1, -1).contiguous(), rast, S.face,
-                                     rast_db=db, diff_attrs="all")
+        uv3, uv3_da = dr.interpolate(S.uv.expand(B, -1, -1).contiguous(), rast, S.face, rast_db=db, diff_attrs="all")
         for t, spec in S.textures.items():
-            sel = (S.texid[gid] == t)
+            sel = S.texid[gid] == t
             if not bool(sel.any()):
                 continue
             if spec["cube"]:
@@ -1331,11 +1445,9 @@ class BatchRenderer(_resources.Closeable):
                 elif self.mipmap and spec["mipmap_ok"]:
                     c = self._sample(spec["tex"], uv, uv_da)
                 else:
-                    c = dr.texture(spec["tex"][None], uv, filter_mode="linear",
-                                   boundary_mode="wrap")
+                    c = dr.texture(spec["tex"][None], uv, filter_mode="linear", boundary_mode="wrap")
             out = torch.where(sel[..., None], c, out)
         return out
-
 
     def _sample(self, tex, uv, uv_da):
         """Trilinear, optionally with an ANISOTROPIC approximation of GL's minification filter.
@@ -1351,27 +1463,31 @@ class BatchRenderer(_resources.Closeable):
         and average them. ``aniso=1`` is plain trilinear and is the default, because the cost is linear
         in the tap count and whether it pays is a measurement per scene, not a general truth.
         """
+        import nvdiffrast.torch as dr
         import torch
 
-        import nvdiffrast.torch as dr
         n = int(self.aniso)
         if n <= 1:
-            return dr.texture(tex[None], uv, uv_da, filter_mode="linear-mipmap-linear",
-                              boundary_mode="wrap")
-        ax = uv_da[..., 0:2]                                         # d(u,v)/dx
-        ay = uv_da[..., 2:4]                                         # d(u,v)/dy
+            return dr.texture(tex[None], uv, uv_da, filter_mode="linear-mipmap-linear", boundary_mode="wrap")
+        ax = uv_da[..., 0:2]  # d(u,v)/dx
+        ay = uv_da[..., 2:4]  # d(u,v)/dy
         lx = ax.norm(dim=-1, keepdim=True)
         ly = ay.norm(dim=-1, keepdim=True)
         major = torch.where(lx >= ly, ax, ay)
         lmaj = torch.maximum(lx, ly).clamp_min(1e-12)
         lmin = torch.minimum(lx, ly).clamp_min(1e-12)
-        ratio = (lmin / lmaj).clamp(1.0 / n, 1.0)                    # capped like GL's max anisotropy
+        ratio = (lmin / lmaj).clamp(1.0 / n, 1.0)  # capped like GL's max anisotropy
         da = uv_da * ratio
         out = 0.0
         for k in range(n):
             t = (k + 0.5) / n - 0.5
-            c = dr.texture(tex[None], (uv + t * major).contiguous(), da.contiguous(),
-                           filter_mode="linear-mipmap-linear", boundary_mode="wrap")
+            c = dr.texture(
+                tex[None],
+                (uv + t * major).contiguous(),
+                da.contiguous(),
+                filter_mode="linear-mipmap-linear",
+                boundary_mode="wrap",
+            )
             out = out + c
         return out / n
 
@@ -1379,12 +1495,11 @@ class BatchRenderer(_resources.Closeable):
 
     def _background(self, cam, R, B, campos, camfwd):
         """The skybox, sampled as a cube map along each pixel's ray, or a flat colour without one."""
+        import nvdiffrast.torch as dr
         import torch
 
-        import nvdiffrast.torch as dr
         if not (self.use_skybox and self.skybox_tex is not None):
-            return torch.as_tensor(self.background, dtype=torch.float32,
-                                   device=self.device).view(1, 1, 1, 3)
+            return torch.as_tensor(self.background, dtype=torch.float32, device=self.device).view(1, 1, 1, 3)
         d = self._ray_dirs(cam, R, B)
         # MuJoCo maps a world direction into cube space by rotating 90 degrees about X: S=x, T=z, R=-y.
         d = torch.stack([d[..., 0], d[..., 2], -d[..., 1]], -1)
@@ -1410,6 +1525,7 @@ class BatchRenderer(_resources.Closeable):
         """
         self._check_open("_ray_dirs")
         import torch
+
         mat = np.asarray(cam.mat, np.float64).reshape(-1, 3, 3)
         key = (int(R), mat.tobytes(), float(cam.fovy))
         t = self._ray_cache.get(key)
@@ -1417,11 +1533,10 @@ class BatchRenderer(_resources.Closeable):
             right, up, back = mat[:, :, 0], mat[:, :, 1], mat[:, :, 2]
             fwd = -back
             f = math.tan(math.radians(cam.fovy) / 2.0)
-            ys = (2.0 * (np.arange(R) + 0.5) / R - 1.0) * f          # row 0 at the BOTTOM
+            ys = (2.0 * (np.arange(R) + 0.5) / R - 1.0) * f  # row 0 at the BOTTOM
             xs = (2.0 * (np.arange(R) + 0.5) / R - 1.0) * f
             X, Y = np.meshgrid(xs, ys)
-            d = (X[None, ..., None] * right[:, None, None] + Y[None, ..., None] * up[:, None, None]
-                 + fwd[:, None, None])
+            d = X[None, ..., None] * right[:, None, None] + Y[None, ..., None] * up[:, None, None] + fwd[:, None, None]
             d = d / np.linalg.norm(d, axis=-1, keepdims=True)
             # The bound and the eviction are the cache's (``RAY_CACHE_MAX``, least-recently-used);
             # a grid is R*R*n*4 bytes.

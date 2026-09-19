@@ -59,10 +59,12 @@ triangle soup, and the policy is that a CPU request is never served by CUDA; the
 triangle rasteriser for this ~600-triangle scene is a measured, separate question
 (``scratch/step7/rocket-landing/cpu_raster_probe.py``).
 """
+
 from __future__ import annotations
 
 import math
 import os
+
 import numpy as np
 import torch
 
@@ -72,9 +74,10 @@ from ..spaces import Dict, Discrete, RGBBox
 
 try:
     import nvdiffrast.torch as _nvdr
+
     _ = _nvdr.RasterizeCudaContext
     NVDIFF_IMPORT_ERROR: str | None = None
-except Exception as _e:                                                       # pragma: no cover
+except Exception as _e:  # pragma: no cover
     NVDIFF_IMPORT_ERROR = f"{type(_e).__name__}: {_e}"
 
 from ..render import _resources as _RES
@@ -87,17 +90,17 @@ DT = 1.0 / 240.0
 #: visuals themselves sit at the link origin (``getVisualShapeData`` local pose is identity on all 14).
 #: ``kind``: ("cyl", length, radius) or ("box", full size). ``rpy`` is URDF roll-pitch-yaw.
 ROCKET_LINKS = (
-    ("body",      ("cyl", 4.77, 0.185), (0.0, 0.0, 0.0),        (0.0, 0.0, 0.0)),
-    ("fueltank",  ("cyl", 1.0, 0.1),    (0.0, 0.0, 0.0),        (0.0, 0.0, 0.0)),
-    ("booster",   ("cyl", 0.5, 0.25),   (0.0, 0.0, -2.0),       (0.0, 0.0, 0.0)),
-    ("fin_pos_x", ("box", 0.3, 0.03, 0.3), (0.35, 0.0, 2.051),  (0.0, 0.0, 0.0)),
+    ("body", ("cyl", 4.77, 0.185), (0.0, 0.0, 0.0), (0.0, 0.0, 0.0)),
+    ("fueltank", ("cyl", 1.0, 0.1), (0.0, 0.0, 0.0), (0.0, 0.0, 0.0)),
+    ("booster", ("cyl", 0.5, 0.25), (0.0, 0.0, -2.0), (0.0, 0.0, 0.0)),
+    ("fin_pos_x", ("box", 0.3, 0.03, 0.3), (0.35, 0.0, 2.051), (0.0, 0.0, 0.0)),
     ("fin_neg_x", ("box", 0.3, 0.03, 0.3), (-0.35, 0.0, 2.051), (0.0, 0.0, 0.0)),
-    ("fin_pos_y", ("box", 0.03, 0.3, 0.3), (0.0, 0.35, 2.051),  (0.0, 0.0, 0.0)),
+    ("fin_pos_y", ("box", 0.03, 0.3, 0.3), (0.0, 0.35, 2.051), (0.0, 0.0, 0.0)),
     ("fin_neg_y", ("box", 0.03, 0.3, 0.3), (0.0, -0.35, 2.051), (0.0, 0.0, 0.0)),
-    ("leg_1",     ("box", 0.05, 0.5, 0.05), (0.0, 0.35, -2.4),  (0.0, 0.0, 0.0)),
-    ("leg_2",     ("box", 0.05, 0.5, 0.05), (0.3031, -0.175, -2.4), (0.0, 0.0, 4.188)),
-    ("leg_3",     ("box", 0.05, 0.5, 0.05), (-0.3031, -0.175, -2.4), (0.0, 0.0, -4.188)),
-    ("flame",     ("cyl", 2.0, 0.15),   (0.0, 0.0, -3.4),       (0.0, 0.0, 0.0)),
+    ("leg_1", ("box", 0.05, 0.5, 0.05), (0.0, 0.35, -2.4), (0.0, 0.0, 0.0)),
+    ("leg_2", ("box", 0.05, 0.5, 0.05), (0.3031, -0.175, -2.4), (0.0, 0.0, 4.188)),
+    ("leg_3", ("box", 0.05, 0.5, 0.05), (-0.3031, -0.175, -2.4), (0.0, 0.0, -4.188)),
+    ("flame", ("cyl", 2.0, 0.15), (0.0, 0.0, -3.4), (0.0, 0.0, 0.0)),
 )
 GEOM_NAMES = ("ground",) + tuple(n for n, *_ in ROCKET_LINKS) + ("pad",)
 N_GEOMS = len(GEOM_NAMES)
@@ -108,7 +111,7 @@ GROUND_HALF = 100.0
 #: ignition transition (``self.ignition_color``) and never resets.
 FLAME_RGBA = (1.0, 0.8, 0.0, 0.1)
 IGNITION_RGBA = (1.0, 0.3, 0.3, 0.8)
-FUELTANK_RGBA = (1.0, 1.0, 1.0, 1.0)                    # PyBullet's default for a link with no <visual>
+FUELTANK_RGBA = (1.0, 1.0, 1.0, 1.0)  # PyBullet's default for a link with no <visual>
 #: PyFlyt's rocket camera (``Rocket.__init__``): link 0, offset in the link frame, +30 deg of pitch, a
 #: tracking target at the link origin, 90 deg fov, near 0.1, far 255.
 CAM_OFFSET = np.array([-1.0, 0.0, 3.0])
@@ -116,29 +119,61 @@ CAM_PITCH_DEG = 30.0
 CAM_FOV, CAM_NEAR, CAM_FAR = 90.0, 0.1, 255.0
 #: Bullet's ``btShapeHull`` support directions (``src/BulletCollision/CollisionShapes/btShapeHull.cpp``,
 #: ``sUnitSpherePoints``, the 42 used at ``highres=0``), verbatim.
-UNIT_SPHERE_42 = np.array([
-    [0.000000, -0.000000, -1.000000], [0.723608, -0.525725, -0.447219], [-0.276388, -0.850649, -0.447219],
-    [-0.894426, -0.000000, -0.447216], [-0.276388, 0.850649, -0.447220], [0.723608, 0.525725, -0.447219],
-    [0.276388, -0.850649, 0.447220], [-0.723608, -0.525725, 0.447219], [-0.723608, 0.525725, 0.447219],
-    [0.276388, 0.850649, 0.447219], [0.894426, 0.000000, 0.447216], [-0.000000, 0.000000, 1.000000],
-    [0.425323, -0.309011, -0.850654], [-0.162456, -0.499995, -0.850654], [0.262869, -0.809012, -0.525738],
-    [0.425323, 0.309011, -0.850654], [0.850648, -0.000000, -0.525736], [-0.525730, -0.000000, -0.850652],
-    [-0.688190, -0.499997, -0.525736], [-0.162456, 0.499995, -0.850654], [-0.688190, 0.499997, -0.525736],
-    [0.262869, 0.809012, -0.525738], [0.951058, 0.309013, 0.000000], [0.951058, -0.309013, 0.000000],
-    [0.587786, -0.809017, 0.000000], [0.000000, -1.000000, 0.000000], [-0.587786, -0.809017, 0.000000],
-    [-0.951058, -0.309013, -0.000000], [-0.951058, 0.309013, -0.000000], [-0.587786, 0.809017, -0.000000],
-    [-0.000000, 1.000000, -0.000000], [0.587786, 0.809017, -0.000000], [0.688190, -0.499997, 0.525736],
-    [-0.262869, -0.809012, 0.525738], [-0.850648, 0.000000, 0.525736], [-0.262869, 0.809012, 0.525738],
-    [0.688190, 0.499997, 0.525736], [0.525730, 0.000000, 0.850652], [0.162456, -0.499995, 0.850654],
-    [-0.425323, -0.309011, 0.850654], [-0.425323, 0.309011, 0.850654], [0.162456, 0.499995, 0.850654],
-], np.float64)
-HULL_MARGIN = 0.001                                      # ``cylZShape->setMargin(0.001)``
+UNIT_SPHERE_42 = np.array(
+    [
+        [0.000000, -0.000000, -1.000000],
+        [0.723608, -0.525725, -0.447219],
+        [-0.276388, -0.850649, -0.447219],
+        [-0.894426, -0.000000, -0.447216],
+        [-0.276388, 0.850649, -0.447220],
+        [0.723608, 0.525725, -0.447219],
+        [0.276388, -0.850649, 0.447220],
+        [-0.723608, -0.525725, 0.447219],
+        [-0.723608, 0.525725, 0.447219],
+        [0.276388, 0.850649, 0.447219],
+        [0.894426, 0.000000, 0.447216],
+        [-0.000000, 0.000000, 1.000000],
+        [0.425323, -0.309011, -0.850654],
+        [-0.162456, -0.499995, -0.850654],
+        [0.262869, -0.809012, -0.525738],
+        [0.425323, 0.309011, -0.850654],
+        [0.850648, -0.000000, -0.525736],
+        [-0.525730, -0.000000, -0.850652],
+        [-0.688190, -0.499997, -0.525736],
+        [-0.162456, 0.499995, -0.850654],
+        [-0.688190, 0.499997, -0.525736],
+        [0.262869, 0.809012, -0.525738],
+        [0.951058, 0.309013, 0.000000],
+        [0.951058, -0.309013, 0.000000],
+        [0.587786, -0.809017, 0.000000],
+        [0.000000, -1.000000, 0.000000],
+        [-0.587786, -0.809017, 0.000000],
+        [-0.951058, -0.309013, -0.000000],
+        [-0.951058, 0.309013, -0.000000],
+        [-0.587786, 0.809017, -0.000000],
+        [-0.000000, 1.000000, -0.000000],
+        [0.587786, 0.809017, -0.000000],
+        [0.688190, -0.499997, 0.525736],
+        [-0.262869, -0.809012, 0.525738],
+        [-0.850648, 0.000000, 0.525736],
+        [-0.262869, 0.809012, 0.525738],
+        [0.688190, 0.499997, 0.525736],
+        [0.525730, 0.000000, 0.850652],
+        [0.162456, -0.499995, 0.850654],
+        [-0.425323, -0.309011, 0.850654],
+        [-0.425323, 0.309011, 0.850654],
+        [0.162456, 0.499995, 0.850654],
+    ],
+    np.float64,
+)
+HULL_MARGIN = 0.001  # ``cylZShape->setMargin(0.001)``
 CYL_STEPS = 32
 #: Device memory per world, the fit ``mujoco_locomotion.py`` carries from ``docs/research/nvdiffrast.md``.
 NVD_BYTES_PER_PIXEL, NVD_BYTES_PER_VERTEX, NVD_BUDGET_BYTES = 239, 69, 6 << 30
 
 
 # --------------------------------------------------------------------------- pure math (CPU-tested)
+
 
 def quat_to_mat(q: np.ndarray) -> np.ndarray:
     """``(...,4)`` xyzw -> ``(...,3,3)``. PyBullet's quaternion order."""
@@ -163,10 +198,15 @@ def quat_mul(a: np.ndarray, b: np.ndarray) -> np.ndarray:
     """``a * b`` in xyzw, i.e. rotate by ``b`` then by ``a``."""
     ax, ay, az, aw = np.moveaxis(np.asarray(a, np.float64), -1, 0)
     bx, by, bz, bw = np.moveaxis(np.asarray(b, np.float64), -1, 0)
-    return np.stack([aw * bx + ax * bw + ay * bz - az * by,
-                     aw * by - ax * bz + ay * bw + az * bx,
-                     aw * bz + ax * by - ay * bx + az * bw,
-                     aw * bw - ax * bx - ay * by - az * bz], -1)
+    return np.stack(
+        [
+            aw * bx + ax * bw + ay * bz - az * by,
+            aw * by - ax * bz + ay * bw + az * bx,
+            aw * bz + ax * by - ay * bx + az * bw,
+            aw * bw - ax * bx - ay * by - az * bz,
+        ],
+        -1,
+    )
 
 
 def quat_from_rotvec(v: np.ndarray) -> np.ndarray:
@@ -181,8 +221,15 @@ def quat_from_euler(rpy: np.ndarray) -> np.ndarray:
     """PyBullet's ``getQuaternionFromEuler``: roll about x, then pitch about y, then yaw about z (fixed axes)."""
     r, p, y = np.moveaxis(np.asarray(rpy, np.float64), -1, 0)
     cr, sr, cp, sp, cy, sy = np.cos(r / 2), np.sin(r / 2), np.cos(p / 2), np.sin(p / 2), np.cos(y / 2), np.sin(y / 2)
-    return np.stack([sr * cp * cy - cr * sp * sy, cr * sp * cy + sr * cp * sy,
-                     cr * cp * sy - sr * sp * cy, cr * cp * cy + sr * sp * sy], -1)
+    return np.stack(
+        [
+            sr * cp * cy - cr * sp * sy,
+            cr * sp * cy + sr * cp * sy,
+            cr * cp * sy - sr * sp * cy,
+            cr * cp * cy + sr * sp * sy,
+        ],
+        -1,
+    )
 
 
 def euler_from_quat(q: np.ndarray) -> np.ndarray:
@@ -245,10 +292,15 @@ def tiny_cylinder(length: float, radius: float, steps: int = CYL_STEPS, margin: 
     ties, plus ``margin`` along the direction); the triangulation of each planar cap is scipy's.
     """
     from scipy.spatial import ConvexHull
+
     i = np.arange(steps)
     ring = np.stack([radius * np.sin(2 * np.pi * i / steps), radius * np.cos(2 * np.pi * i / steps)], -1)
-    pts = np.concatenate([np.concatenate([ring, np.full((steps, 1), length / 2.0)], -1),
-                          np.concatenate([ring, np.full((steps, 1), -length / 2.0)], -1)])
+    pts = np.concatenate(
+        [
+            np.concatenate([ring, np.full((steps, 1), length / 2.0)], -1),
+            np.concatenate([ring, np.full((steps, 1), -length / 2.0)], -1),
+        ]
+    )
     # btConvexHullShape stores the two rings interleaved (top_i, bottom_i); ties resolve to the FIRST
     # maximum, so keep Bullet's order.
     pts = pts.reshape(2, steps, 3).transpose(1, 0, 2).reshape(-1, 3)
@@ -284,9 +336,15 @@ def build_scene_arrays():
         UV.append(np.zeros((len(v), 2)) if uv is None else uv)
         nv += len(v)
 
-    gq = np.array([[GROUND_HALF, -GROUND_HALF, 0.0], [GROUND_HALF, GROUND_HALF, 0.0],
-                   [-GROUND_HALF, GROUND_HALF, 0.0], [-GROUND_HALF, -GROUND_HALF, 0.0]])
-    guv = np.array([[100.0, 0.0], [100.0, 100.0], [0.0, 100.0], [0.0, 0.0]])       # plane100.obj's vt
+    gq = np.array(
+        [
+            [GROUND_HALF, -GROUND_HALF, 0.0],
+            [GROUND_HALF, GROUND_HALF, 0.0],
+            [-GROUND_HALF, GROUND_HALF, 0.0],
+            [-GROUND_HALF, -GROUND_HALF, 0.0],
+        ]
+    )
+    guv = np.array([[100.0, 0.0], [100.0, 100.0], [0.0, 100.0], [0.0, 0.0]])  # plane100.obj's vt
     add(0, gq, np.tile([0.0, 0.0, 1.0], (4, 1)), np.array([[0, 1, 2], [0, 2, 3]], np.int64), guv)
     for g, (name, kind, _pos, _rpy) in enumerate(ROCKET_LINKS, start=1):
         if kind[0] == "cyl":
@@ -312,9 +370,9 @@ def geom_poses(state: np.ndarray):
     xpos = np.zeros((B, N_GEOMS, 3))
     xq = np.zeros((B, N_GEOMS, 4))
     xq[:, :, 3] = 1.0
-    xpos[:, 1], xq[:, 1] = pos, q                                                   # the body: pose t
+    xpos[:, 1], xq[:, 1] = pos, q  # the body: pose t
     Rp = quat_to_mat(q_prev)
-    for i in range(1, len(ROCKET_LINKS)):                                           # links: pose t - dt
+    for i in range(1, len(ROCKET_LINKS)):  # links: pose t - dt
         xpos[:, 1 + i] = pos_prev + np.einsum("bij,j->bi", Rp, lp[i])
         xq[:, 1 + i] = quat_mul(q_prev, np.broadcast_to(lq[i], (B, 4)))
     xpos[:, N_GEOMS - 1] = PAD_POS
@@ -325,21 +383,31 @@ def geom_poses(state: np.ndarray):
 #: existed): body, fin, leg, booster, pad RGBs then the flame bit. The ENV's style layout is the
 #: variation space's ``flat_layout``, which ``gymnasium.spaces.Dict`` sorts alphabetically; nothing
 #: below assumes either order -- leaves are addressed by path.
-CORPUS_STYLE_PATHS = ("rocket.body_color", "rocket.fin_color", "rocket.leg_color", "rocket.booster_color",
-                      "pad.color", "flame.ignited")
+CORPUS_STYLE_PATHS = (
+    "rocket.body_color",
+    "rocket.fin_color",
+    "rocket.leg_color",
+    "rocket.booster_color",
+    "pad.color",
+    "flame.ignited",
+)
 
 
 def _make_variation_space() -> Dict:
-    return Dict({
-        "rocket": Dict({
-            "body_color": RGBBox(init_value=(255, 204, 0)),
-            "fin_color": RGBBox(init_value=(51, 51, 51)),
-            "leg_color": RGBBox(init_value=(0, 0, 0)),
-            "booster_color": RGBBox(init_value=(51, 51, 51)),
-        }),
-        "pad": Dict({"color": RGBBox(init_value=(255, 255, 255))}),
-        "flame": Dict({"ignited": Discrete(2, init_value=0)}),
-    })
+    return Dict(
+        {
+            "rocket": Dict(
+                {
+                    "body_color": RGBBox(init_value=(255, 204, 0)),
+                    "fin_color": RGBBox(init_value=(51, 51, 51)),
+                    "leg_color": RGBBox(init_value=(0, 0, 0)),
+                    "booster_color": RGBBox(init_value=(51, 51, 51)),
+                }
+            ),
+            "pad": Dict({"color": RGBBox(init_value=(255, 255, 255))}),
+            "flame": Dict({"ignited": Discrete(2, init_value=0)}),
+        }
+    )
 
 
 def style_layout() -> dict:
@@ -359,7 +427,7 @@ def corpus_style_to_env(rows: np.ndarray) -> np.ndarray:
     col = 0
     for path in CORPUS_STYLE_PATHS:
         o, w = lay[path]
-        out[:, o:o + w] = rows[:, col:col + w]
+        out[:, o : o + w] = rows[:, col : col + w]
         col += w
     return out
 
@@ -375,7 +443,7 @@ def material_table(style: np.ndarray) -> np.ndarray:
     lay = style_layout()
     st = np.asarray(style, np.float64).reshape(-1, style_dim())
     B = len(st)
-    leaf = lambda p: st[:, lay[p][0]:lay[p][0] + lay[p][1]]                         # noqa: E731
+    leaf = lambda p: st[:, lay[p][0] : lay[p][0] + lay[p][1]]  # noqa: E731
     body, fin, leg, booster, pad = (leaf(p) / 255.0 for p in CORPUS_STYLE_PATHS[:5])
     pad_q = np.vectorize(lambda x: float(f"{x:.3f}"))(pad)
     ignited = leaf("flame.ignited")[:, 0] > 0.5
@@ -398,6 +466,7 @@ def checker_texture() -> np.ndarray:
     """
     import pybullet_data
     from PIL import Image
+
     path = os.path.join(pybullet_data.getDataPath(), "checker_blue.png")
     a = np.asarray(Image.open(path).convert("RGB"), np.uint8)
     return np.ascontiguousarray(a[::-1])
@@ -408,11 +477,12 @@ def _optional_import_errors() -> dict:
     this runs at import on every machine (the import-time probe cost 0.87 s in review), and the
     registration gate is the same either way: a package that is present is one this module can use."""
     import importlib.util
+
     out = {}
     for mod in ("scipy", "pybullet_data", "PIL"):
         try:
             found = importlib.util.find_spec(mod) is not None
-        except Exception as e:                                                # pragma: no cover
+        except Exception as e:  # pragma: no cover
             found, why = False, f"{type(e).__name__}: {e}"
         else:
             why = "not installed"
@@ -447,6 +517,7 @@ def _reference_make(size: int):
         return hit
     import gymnasium
     import stable_worldmodel  # noqa: F401  (registers swm/*)
+
     env = gymnasium.make("swm/PFRocketLanding-v0", render_mode="rgb_array", render_resolution=(size, size))
     env.reset(seed=0)
     _REF_CACHE[size] = env
@@ -534,6 +605,7 @@ def _reference_frame_flagged(env, state: np.ndarray, style_row: np.ndarray, cont
     own goal image is rendered under) and ``unreachable`` is True, so a caller can record and exclude the
     row; without it, or when the failure is outside the band (a genuine bridge failure), it raises."""
     import pybullet as p
+
     u = env.unwrapped
     c, rid, pad = u.env._client, u.env.drones[0].Id, u.landing_pad_id
     _reference_apply_style(p, c, rid, pad, style_row)
@@ -561,13 +633,16 @@ def _reference_frame_flagged(env, state: np.ndarray, style_row: np.ndarray, cont
         in_band = _lowest_link_z(p, c, rid) <= PAD_TOP_Z + CONTACT_BAND_MARGIN
         if contact_fallback and in_band:
             return np.asarray(u.render(), np.uint8)[..., :3].copy(), True
-        raise AssertionError(f"PFRocketLanding: the reference did not reach the requested pose (pos {pos_err:.3e} m, "
-                             f"1-|q.q'| {rot_err:.3e}; {'in' if in_band else 'outside'} the contact band); every "
-                             f"fidelity number computed from it would compare two different scenes")
+        raise AssertionError(
+            f"PFRocketLanding: the reference did not reach the requested pose (pos {pos_err:.3e} m, "
+            f"1-|q.q'| {rot_err:.3e}; {'in' if in_band else 'outside'} the contact band); every "
+            f"fidelity number computed from it would compare two different scenes"
+        )
     return np.asarray(u.render(), np.uint8)[..., :3].copy(), False
 
 
 # --------------------------------------------------------------------------- the env
+
 
 class _Nvd:
     __slots__ = ("br", "size", "ss", "chunk")
@@ -594,10 +669,23 @@ class PFRocketLanding(Env):
     reference_id = "swm/PFRocketLanding-v0"
     #: swm's registered default, the observation it actually returns (480 x 480 x 3 = 691,200 B).
     default_size = 480
-    default_supersample = 1                                # TinyRenderer has no anti-aliasing
+    default_supersample = 1  # TinyRenderer has no anti-aliasing
     state_dim = 13
-    state_names = ("ang_vel_x", "ang_vel_y", "ang_vel_z", "quat_x", "quat_y", "quat_z", "quat_w",
-                   "lin_vel_x", "lin_vel_y", "lin_vel_z", "pos_x", "pos_y", "pos_z")
+    state_names = (
+        "ang_vel_x",
+        "ang_vel_y",
+        "ang_vel_z",
+        "quat_x",
+        "quat_y",
+        "quat_z",
+        "quat_w",
+        "lin_vel_x",
+        "lin_vel_y",
+        "lin_vel_z",
+        "pos_x",
+        "pos_y",
+        "pos_z",
+    )
     fidelity_tier = "visual"
     parity_interior_min = None
     parity_note = ""
@@ -630,22 +718,27 @@ class PFRocketLanding(Env):
     #: for a reader to discover. It is 1 state in 960 of this env's own ``sample_states`` distribution,
     #: and none of the four certification draws drew one.
     visual_fidelity = {
-        "mean_abs": 7.71, "within8_frac": 0.961, "ssim": 0.854,
-        "exact_frac": 0.959, "interior_exact_frac": 0.967,
-        "draw_spread": {"mean_abs": [7.482, 7.709], "within8_frac": [0.961, 0.962],
-                        "ssim": [0.854, 0.868]},
-        "under_variation": {"mean_abs": 7.646, "within8_frac": 0.958, "ssim": 0.896,
-                            "exact_frac": 0.903},
+        "mean_abs": 7.71,
+        "within8_frac": 0.961,
+        "ssim": 0.854,
+        "exact_frac": 0.959,
+        "interior_exact_frac": 0.967,
+        "draw_spread": {"mean_abs": [7.482, 7.709], "within8_frac": [0.961, 0.962], "ssim": [0.854, 0.868]},
+        "under_variation": {"mean_abs": 7.646, "within8_frac": 0.958, "ssim": 0.896, "exact_frac": 0.903},
         "reference_unreachable_share": REFERENCE_UNREACHABLE_SHARE,
         "reference_unreachable_rows_in_draws": 0,
-        "mean_abs_max": 10.0, "within8_min": 0.91, "ssim_min": 0.80,
-        "measured_at": ("480 px, supersample 1, default appearance, worst of 4 independent 64-state draws of "
-                        "sample_states (default_rng(1000..1003)) over the rows the reference bridge reaches, "
-                        "against PyFlyt 0.29.0 / pybullet 3.2.7 TinyRenderer frames of swm/PFRocketLanding-v0 "
-                        "at the lagged pose; NVIDIA GeForce RTX 3090 gpu2106, SLURM job 6410105, tree 726241e, "
-                        "torch 2.14.0+cu126, nvdiffrast 0.4.0 "
-                        "(scratch/step7/rocket-landing/measure_tier.py, "
-                        "examples/results/step7/rocket-landing/tier/job6410105/)"),
+        "mean_abs_max": 10.0,
+        "within8_min": 0.91,
+        "ssim_min": 0.80,
+        "measured_at": (
+            "480 px, supersample 1, default appearance, worst of 4 independent 64-state draws of "
+            "sample_states (default_rng(1000..1003)) over the rows the reference bridge reaches, "
+            "against PyFlyt 0.29.0 / pybullet 3.2.7 TinyRenderer frames of swm/PFRocketLanding-v0 "
+            "at the lagged pose; NVIDIA GeForce RTX 3090 gpu2106, SLURM job 6410105, tree 726241e, "
+            "torch 2.14.0+cu126, nvdiffrast 0.4.0 "
+            "(scratch/step7/rocket-landing/measure_tier.py, "
+            "examples/results/step7/rocket-landing/tier/job6410105/)"
+        ),
         "reference_versions": {"PyFlyt": "0.29.0", "pybullet": "3.2.7"},
         "measured_with": {"nvdiffrast": "0.4.0", "torch": "2.14.0+cu126"},
     }
@@ -673,36 +766,39 @@ class PFRocketLanding(Env):
     #: law-aware successor (compare our response to the knob against the OFFICIAL renderer's response
     #: to the same knob) is a PROPOSAL only -- see docs/research/step8_certification.md.
     color_exactness_applicability = {
-        "leaves": ("pad.color", "rocket.body_color", "rocket.booster_color", "rocket.fin_color",
-                   "rocket.leg_color"),
+        "leaves": ("pad.color", "rocket.body_color", "rocket.booster_color", "rocket.fin_color", "rocket.leg_color"),
         "status": "not_applicable: literal RGB equality is unreachable under the reference's own law",
         "mechanism": "bullet3 TinyRenderer's MULTIPLICATIVE one-light law "
-                     "out_i = int(255*c_i*(A + D*max(0,n.l) + S*max(0,r_z)**spec)*L_i), truncated, "
-                     "A=0.6 D=0.35 S=0.05 spec=2, light (-50,30,100) normalised, no shadow, no gamma",
+        "out_i = int(255*c_i*(A + D*max(0,n.l) + S*max(0,r_z)**spec)*L_i), truncated, "
+        "A=0.6 D=0.35 S=0.05 spec=2, light (-50,30,100) normalised, no shadow, no gamma",
         "max_shading_factor": 0.993567,
         "reachable_ceiling_for_the_probe_targets": {"200": 198, "33": 32, "17": 16},
         "official_renderer_fails_the_same_check": True,
         "official_renderer_evidence": "the official PyFlyt 0.29.0 / pybullet 3.2.7 frame's brightest "
-                                      "body pixel is 0.991*int(255*c); the requested triple is absent "
-                                      "from the OFFICIAL frames too",
-        "evidence": ("examples/results/step8/certification/colour_law_ceiling.json",
-                     "examples/results/step8/certification/colour_check_decision.md",
-                     "examples/results/step7/rocket-landing/findings.md:251-257,1209-1220",
-                     "examples/results/step7/rocket-landing/review_phase1.md:885-894"),
+        "body pixel is 0.991*int(255*c); the requested triple is absent "
+        "from the OFFICIAL frames too",
+        "evidence": (
+            "examples/results/step8/certification/colour_law_ceiling.json",
+            "examples/results/step8/certification/colour_check_decision.md",
+            "examples/results/step7/rocket-landing/findings.md:251-257,1209-1220",
+            "examples/results/step7/rocket-landing/review_phase1.md:885-894",
+        ),
         "measured_against": "PyFlyt 0.29.0, pybullet 3.2.7 (bullet3 TinyRenderer.cpp Shader::fragment)",
         "ruled_by": "Sami, 2026-09-16, on examples/results/step8/certification/colour_check_decision.md",
         "scope_note": "scoped to these five lit leaves only; any other RGB leaf on this env stays "
-                      "judged against literal equality",
+        "judged against literal equality",
         "successor": "PROPOSAL only, not implemented and not mandatory: compare this renderer's "
-                     "response to the knob against the OFFICIAL renderer's response to the same knob",
+        "response to the knob against the OFFICIAL renderer's response to the same knob",
     }
-    visual_note = ("A different rasterizer (nvdiffrast) drawing TinyRenderer's scene under TinyRenderer's law. "
-                   "Residual: silhouette pixels (different edge rules and float paths), checker-tile edges "
-                   "(sub-pixel UV rounding under nearest sampling) and the far ground where tiles are "
-                   "sub-pixel, scipy's rather than Bullet's triangulation of the hull cylinders' planar caps "
-                   "(Gouraud interpolation across a cap differs by the diagonal chosen), and the 61-px flame. "
-                   "NOT a substitute for a stored dataset when a policy will be evaluated on official pixels. "
-                   + DOCUMENTED_LIMITATIONS)
+    visual_note = (
+        "A different rasterizer (nvdiffrast) drawing TinyRenderer's scene under TinyRenderer's law. "
+        "Residual: silhouette pixels (different edge rules and float paths), checker-tile edges "
+        "(sub-pixel UV rounding under nearest sampling) and the far ground where tiles are "
+        "sub-pixel, scipy's rather than Bullet's triangulation of the hull cylinders' planar caps "
+        "(Gouraud interpolation across a cap differs by the diagonal chosen), and the 61-px flame. "
+        "NOT a substitute for a stored dataset when a policy will be evaluated on official pixels. "
+        + DOCUMENTED_LIMITATIONS
+    )
 
     # ------------------------------------------------------------------ Step-9 state
     #
@@ -723,24 +819,37 @@ class PFRocketLanding(Env):
         (("rocket", "position"), 3, 10),
     )
 
-    def __init__(self, num_envs: int = 1, size: int | None = None, supersample: int | None = None,
-                 device: str = "cuda", backend: str = "auto", seed: int = 0):
+    def __init__(
+        self,
+        num_envs: int = 1,
+        size: int | None = None,
+        supersample: int | None = None,
+        device: str = "cuda",
+        backend: str = "auto",
+        seed: int = 0,
+    ):
         """``num_envs`` rockets on ``device``.
 
         The CPU refusal below is BY DESIGN and is checked before anything is built: a ``device="cpu"``
         request is never quietly served by CUDA (plan §2's device-honesty rule), and this cell has no
         CPU textured-triangle rasteriser to serve it with.
         """
-        if missing_backend() is not None:                                      # pragma: no cover
+        if missing_backend() is not None:  # pragma: no cover
             raise ImportError(f"PFRocketLanding cannot render in this interpreter: {missing_backend()}")
         if str(device).startswith("cpu"):
             raise NotImplementedError(
                 "PFRocketLanding has no CPU backend: it needs a CPU textured-triangle rasteriser, which this "
                 "repo does not have (cpu3d/raycast3d cast MuJoCo primitives). A CPU request is never served "
-                "by CUDA; see scratch/step7/rocket-landing/cpu_raster_probe.py for the measured feasibility.")
-        super().__init__(num_envs=num_envs, size=size,
-                         supersample=self.default_supersample if supersample is None else supersample,
-                         device=device, backend=backend, seed=seed)
+                "by CUDA; see scratch/step7/rocket-landing/cpu_raster_probe.py for the measured feasibility."
+            )
+        super().__init__(
+            num_envs=num_envs,
+            size=size,
+            supersample=self.default_supersample if supersample is None else supersample,
+            device=device,
+            backend=backend,
+            seed=seed,
+        )
         self._nvd()
 
     def _close(self) -> None:
@@ -769,15 +878,36 @@ class PFRocketLanding(Env):
         rgba[11] = FLAME_RGBA
         tex_of_geom = np.full(N_GEOMS, -1, np.int64)
         tex_of_geom[0] = 0
-        scene = ND.Scene.from_triangles(vert, norm, face, vg, rgba, uv=uv, textures={0: checker_texture()},
-                                        tex_of_geom=tex_of_geom, device=str(self.device), tex_policy="none")
+        scene = ND.Scene.from_triangles(
+            vert,
+            norm,
+            face,
+            vg,
+            rgba,
+            uv=uv,
+            textures={0: checker_texture()},
+            tex_of_geom=tex_of_geom,
+            device=str(self.device),
+            tex_policy="none",
+        )
         c = _Nvd()
         c.size, c.ss = size, ss
-        c.br = ND.BatchRenderer(None, res=size, device=str(self.device), supersample=ss, mipmap=False,
-                                skybox=False, quant="trunc", scene=scene, shading="tiny", tiny=ND.TinyShading(),
-                                tex_filter="nearest", sample_offset=(0.5, 0.5))
+        c.br = ND.BatchRenderer(
+            None,
+            res=size,
+            device=str(self.device),
+            supersample=ss,
+            mipmap=False,
+            skybox=False,
+            quant="trunc",
+            scene=scene,
+            shading="tiny",
+            tiny=ND.TinyShading(),
+            tex_filter="nearest",
+            sample_offset=(0.5, 0.5),
+        )
         c.br.owns_scene = True
-        c.br.background = np.array([1.0, 1.0, 1.0])                       # TinyRenderer's clear colour
+        c.br.background = np.array([1.0, 1.0, 1.0])  # TinyRenderer's clear colour
         per_world = NVD_BYTES_PER_PIXEL * (size * ss) ** 2 + NVD_BYTES_PER_VERTEX * scene.V
         c.chunk = max(1, int(NVD_BUDGET_BYTES // max(1, per_world)))
         _NVD_CACHE.put(key, c)
@@ -803,7 +933,9 @@ class PFRocketLanding(Env):
         the far plane makes, half the log-uniform descent to the pad."""
         rng = rng or self.rng
         B = int(batch)
-        h = np.where(rng.random(B) < 0.5, rng.uniform(300.0, 480.0, B), np.exp(rng.uniform(np.log(1.9), np.log(300.0), B)))
+        h = np.where(
+            rng.random(B) < 0.5, rng.uniform(300.0, 480.0, B), np.exp(rng.uniform(np.log(1.9), np.log(300.0), B))
+        )
         ang = rng.uniform(0, 2 * np.pi, B)
         rad = rng.uniform(0.0, 1.0, B) ** 0.5 * 190.0
         rad = np.where(rng.random(B) < 0.3, rng.uniform(0.0, 3.0, B), rad)
@@ -816,7 +948,7 @@ class PFRocketLanding(Env):
         q = np.where(upright[:, None], quat_mul(yaw, tilt), q)
         v_world = np.stack([rng.normal(0, 12, B), rng.normal(0, 12, B), rng.uniform(-70.0, 60.0, B)], -1)
         w_world = rng.normal(size=(B, 3)) * rng.uniform(0.02, 2.5, B)[:, None]
-        Rt_ = np.transpose(quat_to_mat(q), (0, 2, 1))                                  # world -> body
+        Rt_ = np.transpose(quat_to_mat(q), (0, 2, 1))  # world -> body
         v_body = np.einsum("bij,bj->bi", Rt_, v_world)
         w_body = np.einsum("bij,bj->bi", Rt_, w_world)
         return np.concatenate([w_body, q, v_body, pos], -1).astype(np.float32)
@@ -824,8 +956,15 @@ class PFRocketLanding(Env):
     # ---- render ---------------------------------------------------------------
 
     @torch.no_grad()
-    def render(self, states=None, size: int | None = None, supersample: int | None = None,
-               variation: dict | None = None, style=None, out=None) -> torch.Tensor:
+    def render(
+        self,
+        states=None,
+        size: int | None = None,
+        supersample: int | None = None,
+        variation: dict | None = None,
+        style=None,
+        out=None,
+    ) -> torch.Tensor:
         """``(...,13)`` -> ``(...,H,W,3)`` uint8 on device. Style may differ per environment.
 
         THESE ARE NOT THE OFFICIAL PIXELS. See ``visual_fidelity`` for what they are instead.
@@ -844,8 +983,9 @@ class PFRocketLanding(Env):
         # ONE device-to-host read each for the state and the style; the kinematics, the camera and the
         # colour table are a few thousand float64 ops on the host per row, as in mujoco_locomotion.py.
         st = s.detach().cpu().numpy().astype(np.float64)
-        mat = torch.as_tensor(material_table(sty.values.detach().cpu().numpy()), dtype=torch.float32,
-                              device=self.device)
+        mat = torch.as_tensor(
+            material_table(sty.values.detach().cpu().numpy()), dtype=torch.float32, device=self.device
+        )
         xp, xm = geom_poses(st)
         _, _, pos_prev, q_prev, _, _ = lagged_pose(st)
         eye, cmat = camera_pose(pos_prev, q_prev)

@@ -14,6 +14,7 @@ The walk itself now lives in ``stable_envs/registry.py`` (Step 9), because disco
 operation and the registry is what the rest of the package asks. This module keeps the two names it
 has always exported so that ``stable_envs.envs.import_errors()`` keeps answering.
 """
+
 from __future__ import annotations
 
 from ..registry import discover, import_errors  # noqa: F401

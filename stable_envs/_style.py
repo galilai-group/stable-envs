@@ -41,6 +41,7 @@ them: ``env.render(states[3:4], style=env.get_style()[3:4])``.
 No ``[:1]`` remains on any style path. A collapse cannot be reintroduced by editing an env, only by
 editing this rule.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -85,8 +86,7 @@ def _as_tensor(v, device, dtype=torch.float32) -> torch.Tensor:
 class StyleTensor:
     """``(B, style_dim)`` appearance values, addressable by variation path."""
 
-    def __init__(self, values: torch.Tensor, layout: list[tuple[str, int, int]],
-                 shared: bool | None = None):
+    def __init__(self, values: torch.Tensor, layout: list[tuple[str, int, int]], shared: bool | None = None):
         self.values = values
         self.layout = {p: (o, w) for p, o, w in layout}
         self.paths = [p for p, _, _ in layout]
@@ -129,7 +129,7 @@ class StyleTensor:
         if path not in self.layout:
             raise KeyError(f"unknown style path {path!r}; known: {self.paths}")
         o, w = self.layout[path]
-        v = self.values[:, o:o + w]
+        v = self.values[:, o : o + w]
         return v if w > 1 else v.reshape(-1)
 
     def get(self, path: str, default=None):
@@ -138,11 +138,12 @@ class StyleTensor:
     def _layout_list(self) -> list[tuple[str, int, int]]:
         return [(p, o, w) for p, (o, w) in self.layout.items()]
 
-    def to(self, device=None, dtype=None) -> "StyleTensor":
-        return StyleTensor(self.values.to(device=device, dtype=dtype or self.values.dtype),
-                           self._layout_list(), shared=self._shared)
+    def to(self, device=None, dtype=None) -> StyleTensor:
+        return StyleTensor(
+            self.values.to(device=device, dtype=dtype or self.values.dtype), self._layout_list(), shared=self._shared
+        )
 
-    def for_batch(self, batch: int, owner: str = "render") -> "StyleTensor":
+    def for_batch(self, batch: int, owner: str = "render") -> StyleTensor:
         """This style at ``batch`` rows. THE only operation that changes a style's batch.
 
         See the module docstring for why there is exactly one of these and what it refuses. The refusal
@@ -161,13 +162,14 @@ class StyleTensor:
                 f"{b} environments, because nothing in the states says which of the {self.batch} rows "
                 f"they are. This used to substitute row 0's appearance for every row and say nothing. "
                 f"Index the style the same way as the states, e.g. "
-                f"env.render(states[i:j], style=env.get_style()[i:j]).")
-        return StyleTensor(self.values[:1].expand(b, self.values.shape[1]).contiguous(),
-                           self._layout_list(), shared=True)
+                f"env.render(states[i:j], style=env.get_style()[i:j])."
+            )
+        return StyleTensor(
+            self.values[:1].expand(b, self.values.shape[1]).contiguous(), self._layout_list(), shared=True
+        )
 
     @classmethod
-    def from_space(cls, space, batch: int, device="cuda", overrides: dict | None = None,
-                   values=None) -> "StyleTensor":
+    def from_space(cls, space, batch: int, device="cuda", overrides: dict | None = None, values=None) -> StyleTensor:
         """Build from a variation space, optionally overriding leaves per environment.
 
         ``values`` is an existing ``(B, style_dim)`` tensor (e.g. read from a dataset), and must hold
@@ -206,11 +208,13 @@ class StyleTensor:
                     f"{v.shape[-1]} (shape {tuple(v.shape)}). A style is (batch, style_dim) or one "
                     f"shared (style_dim,) row; anything else used to be flattened and regrouped, "
                     f"which for a transposed array succeeds and gives every environment a mixture of "
-                    f"other environments' knobs. env.style_names lists the {dim} columns in order.")
+                    f"other environments' knobs. env.style_names lists the {dim} columns in order."
+                )
             if v.ndim <= 1 and v.numel() % dim:
                 raise ValueError(
                     f"a flat style must be a whole number of {dim}-wide rows, and {v.numel()} is not "
-                    f"a multiple of {dim}. One row is env.style_dim numbers, in env.style_names order.")
+                    f"a multiple of {dim}. One row is env.style_dim numbers, in env.style_names order."
+                )
             vals = v.reshape(-1, dim)
             shared = True if vals.shape[0] == 1 else None
             if vals.shape[0] == 1 and b != 1:
@@ -221,7 +225,8 @@ class StyleTensor:
                     f"style must be one row (shared by the whole batch) or exactly one row per "
                     f"environment, in the same order as the states — anything else has no defined "
                     f"meaning, and the row count is exactly what a caller gets wrong when they slice "
-                    f"the states and forget the style.")
+                    f"the states and forget the style."
+                )
         if overrides:
             lut = {p: (o, w) for p, o, w in layout}
             for path, v in overrides.items():
@@ -237,11 +242,12 @@ class StyleTensor:
                         f"arrangement — almost always a transpose. Reshaping it by size would give "
                         f"environment i a mixture of the other environments' values and render "
                         f"without complaint, so it is refused. Pass ({b}, {w}), or ({w},) to share "
-                        f"one value across the batch.")
+                        f"one value across the batch."
+                    )
                 if n == b * w and b != 1:
-                    t = t.reshape(b, w)               # one value per environment
+                    t = t.reshape(b, w)  # one value per environment
                     if shared:
-                        shared = None                 # may still be uniform; measure it if asked
+                        shared = None  # may still be uniform; measure it if asked
                 elif n == w:
                     t = t.reshape(1, w).expand(b, w)  # one value shared by the batch
                 else:
@@ -249,7 +255,8 @@ class StyleTensor:
                         f"variation {path!r}: expected {w} numbers (shared by the batch) or "
                         f"{b * w} ({b} environments x {w}), got {n} with shape "
                         f"{tuple(t.shape)}. A count that is neither used to be taken as 'the first "
-                        f"{w} numbers, broadcast', i.e. environment 0's value for everybody.")
+                        f"{w} numbers, broadcast', i.e. environment 0's value for everybody."
+                    )
                 vals = vals.clone()
-                vals[:, o:o + w] = t
+                vals[:, o : o + w] = t
         return cls(vals.contiguous(), layout, shared=shared)

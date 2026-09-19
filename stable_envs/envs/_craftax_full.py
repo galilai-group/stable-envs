@@ -106,6 +106,7 @@ exceptions are stated where they are made: ``light_level`` and the per-tile ``li
 tent of period 2 (identity on ``[0, 1]``, so an in-range value passes through bit-exact), and the
 health slot is lifted to at least 1 because the reference draws ``max(floor(health), 1)``.
 """
+
 from __future__ import annotations
 
 import base64
@@ -131,15 +132,15 @@ REFERENCE_TILE_PX = (10, 16, 64)
 #: Sizes this env has baked tables for; anything else is a resample of the finished tile.
 BAKED_TILE_PX = tuple(sorted(TABLES))
 
-OBS_H, OBS_W = 9, 11         #: ``craftax.craftax.constants.OBS_DIM``
-STRIP_H = 4                  #: ``INVENTORY_OBS_HEIGHT``
-N_TILE = OBS_H * OBS_W       #: 99 world tiles
-N_BLOCK = 37                 #: ``len(BlockType)``
-N_ITEM = 5                   #: ``len(ItemType)``
-N_LEVEL = 9                  #: ``StaticEnvParams.num_levels``
-N_FACING = 4                 #: left, right, up, down -- the values ``player_direction - 1`` takes
-PLAYER_ASLEEP = 4            #: ``player_texture_index = select(is_sleeping, 4, player_direction - 1)``
-NO_PLAYER = 5                #: the sixth player slot: "nothing is drawn here". Mask is all false.
+OBS_H, OBS_W = 9, 11  #: ``craftax.craftax.constants.OBS_DIM``
+STRIP_H = 4  #: ``INVENTORY_OBS_HEIGHT``
+N_TILE = OBS_H * OBS_W  #: 99 world tiles
+N_BLOCK = 37  #: ``len(BlockType)``
+N_ITEM = 5  #: ``len(ItemType)``
+N_LEVEL = 9  #: ``StaticEnvParams.num_levels``
+N_FACING = 4  #: left, right, up, down -- the values ``player_direction - 1`` takes
+PLAYER_ASLEEP = 4  #: ``player_texture_index = select(is_sleeping, 4, player_direction - 1)``
+NO_PLAYER = 5  #: the sixth player slot: "nothing is drawn here". Mask is all false.
 N_PLAYER_SLOT = 6
 #: Counts the strip can show. ``clip_inventory_and_intrinsics`` does ``jnp.minimum(x, 99)`` over the
 #: whole ``Inventory``, and the intrinsic ceilings are ``8 + strength`` / ``7 + 2*dexterity`` /
@@ -231,13 +232,34 @@ def _tent_np(x):
 #: (``examples/results/step7/craftax-full/phase0/chain.json``: 23 distinct values, min 0.0, max 1.0).
 #: Used only by ``sample_states``, so a drawn dark tile looks like a tile the simulator produces
 #: rather than like a uniform draw.
-LIGHT_MAP_ALPHABET = np.array([
-    0.0, 0.10557276010513306, 0.15147191286087036, 0.17537885904312134, 0.19999998807907104,
-    0.20000000298023224, 0.2788897156715393, 0.3055727481842041, 0.3675444722175598,
-    0.3999999761581421, 0.4000000059604645, 0.4343145489692688, 0.47888970375061035,
-    0.5527863502502441, 0.6000000238418579, 0.6343145370483398, 0.699999988079071,
-    0.717157244682312, 0.7527863383293152, 0.800000011920929, 0.8999999761581421,
-    0.9788897037506104, 1.0], np.float32)
+LIGHT_MAP_ALPHABET = np.array(
+    [
+        0.0,
+        0.10557276010513306,
+        0.15147191286087036,
+        0.17537885904312134,
+        0.19999998807907104,
+        0.20000000298023224,
+        0.2788897156715393,
+        0.3055727481842041,
+        0.3675444722175598,
+        0.3999999761581421,
+        0.4000000059604645,
+        0.4343145489692688,
+        0.47888970375061035,
+        0.5527863502502441,
+        0.6000000238418579,
+        0.6343145370483398,
+        0.699999988079071,
+        0.717157244682312,
+        0.7527863383293152,
+        0.800000011920929,
+        0.8999999761581421,
+        0.9788897037506104,
+        1.0,
+    ],
+    np.float32,
+)
 
 
 def strip_geometry(t: int):
@@ -345,8 +367,16 @@ STRIP_CELLS = (
 )
 
 #: How many icon-layer entries each ``kind`` needs.
-_KIND_VARIANTS = {"count": 2, "level": 1, "armour": 9, "attr": None, "tool": None,
-                  "sword": 15, "flag": 2, "arrows": N_COUNT * 3}
+_KIND_VARIANTS = {
+    "count": 2,
+    "level": 1,
+    "armour": 9,
+    "attr": None,
+    "tool": None,
+    "sword": 15,
+    "flag": 2,
+    "arrows": N_COUNT * 3,
+}
 
 
 def _cell_variants(kind, params) -> int:
@@ -389,6 +419,7 @@ N_DIGIT_ENTRY = N_ONES * N_TENS
 
 # --------------------------------------------------------------------------- table construction
 
+
 def _blend(px, rgb, a):
     """The reference's own ``px * (1 - a) + rgb`` on integer arrays. ``a`` is 0/1, so this is a select
     -- but it is written the reference's way so a non-premultiplied texture would show up here rather
@@ -401,7 +432,8 @@ def _check_premultiplied(rgb, a, what):
         raise ValueError(
             f"_craftax_full_tex: {what} is not zero where its alpha is zero, so the reference's "
             f"'multiply by (1-alpha) then ADD' is not a select and this table cannot be gathered. "
-            f"Re-derive the layer as an explicit blend rather than a stencil.")
+            f"Re-derive the layer as an explicit blend rather than a stencil."
+        )
 
 
 def _strip_icon_tiles(src: int) -> np.ndarray:
@@ -455,10 +487,9 @@ def _strip_icon_tiles(src: int) -> np.ndarray:
         return tile
 
     out = []
-    for (x, y, kind, _slots, p) in STRIP_CELLS:
+    for x, y, kind, _slots, p in STRIP_CELLS:
         if kind == "count":
-            src_tex = (icons[p[1]] if p[0] == "icon" else
-                       small[p[1]] if p[0] == "block" else pot[p[1]])
+            src_tex = icons[p[1]] if p[0] == "icon" else small[p[1]] if p[0] == "block" else pot[p[1]]
             out += [put(blank(), empty), put(blank(), src_tex)]
         elif kind == "flag":
             out += [put(blank(), empty), put(blank(), icons[p[1]])]
@@ -487,7 +518,7 @@ def _strip_icon_tiles(src: int) -> np.ndarray:
                     tile = digits(put(blank(), arrow if v > 0 else empty), v)
                     lv = e if v > 0 else 0
                     out.append(over(tile, ar_e[lv], ar_ea[lv]))
-        else:                                                    # pragma: no cover - guarded by spec
+        else:  # pragma: no cover - guarded by spec
             raise AssertionError(kind)
     a = np.stack(out)
     if a.shape[0] != N_STRIP_ICON:
@@ -497,11 +528,11 @@ def _strip_icon_tiles(src: int) -> np.ndarray:
 
 def _bg_tiles(src: int) -> np.ndarray:
     """``(N_BG, src, src, 3)`` — the whole frame's background in one table."""
-    block = _unpack("block", src).astype(np.int64)                       # (37, s, s, 3)
-    irgb = _unpack("item_rgb", src).astype(np.int64)                     # (5, s, s, 3)
-    ia = _unpack("item_a", src).astype(np.int64)[..., None]              # (5, s, s, 1)
+    block = _unpack("block", src).astype(np.int64)  # (37, s, s, 3)
+    irgb = _unpack("item_rgb", src).astype(np.int64)  # (5, s, s, 3)
+    ia = _unpack("item_a", src).astype(np.int64)[..., None]  # (5, s, s, 1)
     _check_premultiplied(irgb * ia, ia, "full_map_item_textures")
-    bg = block[:, None] * (1 - ia[None]) + (irgb * ia)[None]             # (37, 5, s, s, 3)
+    bg = block[:, None] * (1 - ia[None]) + (irgb * ia)[None]  # (37, 5, s, s, 3)
     bg = bg.reshape(N_WORLD_BG, *block.shape[1:])
     return np.concatenate([bg, np.zeros((1, *block.shape[1:]), np.int64), _strip_icon_tiles(src)])
 
@@ -604,8 +635,7 @@ class _Tables:
             # measured, reverted; the comment is here so it is not tried again.
             return {"u8": u8, "m": cls._rows(np.repeat(m[..., None], 3, -1), t, device)}
 
-        tab = {"bg": pack(bg), "ov": pack(ov_rgb, ov_m),
-               "pl": pack(pl_rgb, pl_m), "dg": pack(dg_rgb, dg_m), "t": t}
+        tab = {"bg": pack(bg), "ov": pack(ov_rgb, ov_m), "pl": pack(pl_rgb, pl_m), "dg": pack(dg_rgb, dg_m), "t": t}
         return cls._cache.put(key, tab)
 
 
@@ -631,7 +661,7 @@ def night_vignette(device: torch.device, h: int, w: int) -> torch.Tensor:
     if key not in _VIGNETTE_CACHE:
         x = (np.arange(h, dtype=np.float32) - (h // 2))[:, None]
         y = (np.arange(w, dtype=np.float32) - (w // 2))[None, :]
-        v = np.sqrt(x ** 2 + y ** 2).astype(np.float32)
+        v = np.sqrt(x**2 + y**2).astype(np.float32)
         v = (v * np.float32(np.float32(1.0) / np.float32(v.max()))).astype(np.float32)
         _VIGNETTE_CACHE[key] = torch.as_tensor(v, device=device).unsqueeze(-1)
     return _VIGNETTE_CACHE[key]
@@ -644,8 +674,9 @@ def _night_tint(device: torch.device) -> torch.Tensor:
     return _CONST_CACHE[key]
 
 
-def light_night_and_sleep(world: torch.Tensor, light_map: torch.Tensor, daylight: torch.Tensor,
-                          sleeping: torch.Tensor, keys: torch.Tensor) -> torch.Tensor:
+def light_night_and_sleep(
+    world: torch.Tensor, light_map: torch.Tensor, daylight: torch.Tensor, sleeping: torch.Tensor, keys: torch.Tensor
+) -> torch.Tensor:
     """Full Craftax's lighting chain, in the reference's own order, op for op.
 
     ``world`` ``(n, h, w, 3)`` float32 pre-lighting pixels; ``light_map`` ``(n, h, w, 1)`` the
@@ -675,8 +706,7 @@ def light_night_and_sleep(world: torch.Tensor, light_map: torch.Tensor, daylight
         idx = dark.nonzero(as_tuple=True)[0]
         sub = px.index_select(0, idx)
         noise = (prng.uniform(keys.index_select(0, idx), (h, w)) * 95 + 32).unsqueeze(-1)
-        mask = night_vignette(dev, h, w) * torch.clamp_min(
-            2.0 * (NIGHT_THRESHOLD - dl.index_select(0, idx)), 0.0)
+        mask = night_vignette(dev, h, w) * torch.clamp_min(2.0 * (NIGHT_THRESHOLD - dl.index_select(0, idx)), 0.0)
         night.index_copy_(0, idx, (1.0 - mask) * sub + mask * noise)
     night.mul_(0.5).add_(_night_tint(dev) * 0.5)
     out = night.mul_(1 - dl).add_(px * dl)
@@ -685,16 +715,47 @@ def light_night_and_sleep(world: torch.Tensor, light_map: torch.Tensor, daylight
 
 #: The 41 per-frame numbers the strip reads, in state order.
 STRIP_SLOTS = (
-    "health", "food", "drink", "energy", "mana",
-    "xp", "dexterity", "strength", "intelligence",
-    "wood", "stone", "coal", "iron", "diamond", "sapphire", "ruby", "sapling", "torches",
-    "books", "arrows",
-    "potion0", "potion1", "potion2", "potion3", "potion4", "potion5",
-    "pickaxe", "sword", "bow",
-    "armour0", "armour1", "armour2", "armour3",
-    "ench_sword", "ench_bow",
-    "ench_armour0", "ench_armour1", "ench_armour2", "ench_armour3",
-    "spell_fireball", "spell_iceball",
+    "health",
+    "food",
+    "drink",
+    "energy",
+    "mana",
+    "xp",
+    "dexterity",
+    "strength",
+    "intelligence",
+    "wood",
+    "stone",
+    "coal",
+    "iron",
+    "diamond",
+    "sapphire",
+    "ruby",
+    "sapling",
+    "torches",
+    "books",
+    "arrows",
+    "potion0",
+    "potion1",
+    "potion2",
+    "potion3",
+    "potion4",
+    "potion5",
+    "pickaxe",
+    "sword",
+    "bow",
+    "armour0",
+    "armour1",
+    "armour2",
+    "armour3",
+    "ench_sword",
+    "ench_bow",
+    "ench_armour0",
+    "ench_armour1",
+    "ench_armour2",
+    "ench_armour3",
+    "spell_fireball",
+    "spell_iceball",
 )
 N_STRIP = len(STRIP_SLOTS)
 _SLOT = {name: i for i, name in enumerate(STRIP_SLOTS)}
@@ -704,9 +765,9 @@ _SLOT = {name: i for i, name in enumerate(STRIP_SLOTS)}
 #: 12 draws a "9"; the state slot carries the digit that is drawn).
 _SLOT_MOD = {n: N_COUNT for n in STRIP_SLOTS}
 _SLOT_MOD.update({n: N_DIGIT for n in ("xp", "dexterity", "strength", "intelligence")})
-_SLOT_MOD.update({"pickaxe": 5, "sword": 5, "bow": 2,
-                  "ench_sword": 3, "ench_bow": 3,
-                  "spell_fireball": 2, "spell_iceball": 2})
+_SLOT_MOD.update(
+    {"pickaxe": 5, "sword": 5, "bow": 2, "ench_sword": 3, "ench_bow": 3, "spell_fireball": 2, "spell_iceball": 2}
+)
 _SLOT_MOD.update({f"armour{i}": 3 for i in range(4)})
 _SLOT_MOD.update({f"ench_armour{i}": 3 for i in range(4)})
 STRIP_MOD = tuple(_SLOT_MOD[n] for n in STRIP_SLOTS)
@@ -715,8 +776,17 @@ STRIP_MOD = tuple(_SLOT_MOD[n] for n in STRIP_SLOTS)
 def _cell_groups():
     """Cells grouped by how their icon variant and digit index are computed, so a render does a
     handful of vectorised ops over the whole strip instead of 36 per-cell ones."""
-    g = {"count": [], "flag": [], "attr_cond": [], "attr_fixed": [], "tool": [],
-         "armour": [], "sword": [], "arrows": [], "level": []}
+    g = {
+        "count": [],
+        "flag": [],
+        "attr_cond": [],
+        "attr_fixed": [],
+        "tool": [],
+        "armour": [],
+        "sword": [],
+        "arrows": [],
+        "level": [],
+    }
     for ci, (x, y, kind, slots, p) in enumerate(STRIP_CELLS):
         pos = y * OBS_W + x
         base = BG_STRIP_BASE + STRIP_ICON_BASE[ci]
@@ -746,8 +816,10 @@ def _strip_index(device):
     """Per-device index tensors for :func:`_cell_groups`, plus the all-black strip defaults."""
     key = str(device)
     if key not in _GRID_CACHE:
+
         def T(rows, col):
             return torch.as_tensor([r[col] for r in rows], dtype=torch.long, device=device)
+
         idx = {k: tuple(T(v, i) for i in range(len(v[0]))) for k, v in CELL_GROUPS.items() if v}
         bg0 = torch.full((STRIP_H * OBS_W,), BG_BLACK, dtype=torch.long, device=device)
         dg0 = torch.zeros(STRIP_H * OBS_W, dtype=torch.long, device=device)
@@ -783,7 +855,8 @@ class CraftaxFull(Env):
         + tuple(f"light_r{r}c{c}" for r in range(OBS_H) for c in range(OBS_W))
         + ("player_facing", "is_sleeping", "player_level", "light_level")
         + tuple(f"rng_half{i}" for i in range(N_KEY_HALVES))
-        + tuple(f"inv_{n}" for n in STRIP_SLOTS))
+        + tuple(f"inv_{n}" for n in STRIP_SLOTS)
+    )
     #: The frame is ``((9 + 4) * size, 11 * size, 3)``. 10 is what ``swm/CraftaxPixels-v1`` is
     #: registered at, and the size the parity claim is headlined on; 16 is craftax's other shipped
     #: size and is certified too.
@@ -807,18 +880,18 @@ class CraftaxFull(Env):
     SWM_WRAPPER_GATE_F = {
         "swm_wrapper_jits": ["reset", "step"],
         "swm_wrapper_source": "stable_worldmodel/envs/craftax/craftax.py:CraftaxWrapper.__init__ "
-                              "(self._reset_fn = jax.jit(_reset, ...); self._step_fn = "
-                              "jax.jit(_step, ...))",
+        "(self._reset_fn = jax.jit(_reset, ...); self._step_fn = "
+        "jax.jit(_step, ...))",
         "certified_reference": "un-jitted craftax 1.6.1 (see reference_env)",
         "live_swm_reference": "jitted craftax 1.6.1, via CraftaxWrapper",
         "certified_exact_frac": 1.0,
         "certified_max_abs_diff": 0,
         "live_swm_exact_frac_phase0_pool": "48/49 states uint8-identical jitted vs un-jitted; 1/49 "
-                                           "differed on 0.0023% of pixels, max |diff| 1 (see "
-                                           "parity_note above, phase-0 pool)",
+        "differed on 0.0023% of pixels, max |diff| 1 (see "
+        "parity_note above, phase-0 pool)",
         "max_abs_diff_swm_wrapper_vs_certified": 1,
         "note": "not hidden: a stated discrepancy between the certified claim and what a live "
-                "stable_worldmodel workflow observes, not a renderer defect here.",
+        "stable_worldmodel workflow observes, not a renderer defect here.",
     }
     parity_all_exact_min = 1.0
     parity_note = (
@@ -837,7 +910,8 @@ class CraftaxFull(Env):
         "differed on 0.0023% of pixels by 1. reference_env therefore returns the un-jitted function, "
         "which is the renderer as written. jax is a declared reference version because "
         "jax_threefry_partitionable selects between two threefry counter layouts that agree on 0 of "
-        "448 draws, and the night noise field is drawn from one of them.")
+        "448 draws, and the night noise field is drawn from one of them."
+    )
     #: Where ``check_resolution_consistency`` applies, decided by running the check's own protocol on
     #: the OFFICIAL renderer rather than by argument from this one -- W1's ruling (Sami's decision A)
     #: applied by precedent. At S=10 / 2S=20 over the phase-0 pool, craftax itself scores
@@ -860,13 +934,13 @@ class CraftaxFull(Env):
     #: and exact parity at each supported size is unaffected and still required.
     resolution_consistency_applicability = {
         "all bands": "not_applicable: the official renderer is itself resolution-inconsistent in "
-                     "every band -- world rows 0.4817 in full daylight and 0.0991 at night, strip "
-                     "rows 0.94 throughout, max abs 191 at S=10/2S=20",
+        "every band -- world rows 0.4817 in full daylight and 0.0991 at night, strip "
+        "rows 0.94 throughout, max abs 191 at S=10/2S=20",
         "mechanisms": "craftax.load_texture resamples every PNG with Image.NEAREST at each size, so "
-                      "2S textures are not a 2x replication of the S ones; and the night noise field "
-                      "is drawn at the frame's own resolution",
+        "2S textures are not a 2x replication of the S ones; and the night noise field "
+        "is drawn at the frame's own resolution",
         "scope_note": "broader than CraftaxClassic.resolution_consistency_applicability, which marks "
-                      "only light_level < 0.5 inapplicable and keeps the frozen bound above it",
+        "only light_level < 0.5 inapplicable and keeps the frozen bound above it",
         "evidence": "examples/results/step7/craftax-full/phase0/resolution_and_dead_dims.json",
         "measured_against": "craftax 1.6.1 un-jitted, jax 0.11.1, jax_threefry_partitionable=True",
         "still_required": "exact parity against the official renderer at 10 px and at 16 px",
@@ -879,9 +953,12 @@ class CraftaxFull(Env):
     certification_state_distribution = {
         "draw": "CraftaxFull.sample_states(64) -- examples/bench_step3.py's own protocol",
         "band_assignment": "stratified by row index (i % 6); values inside a band from craftax's own "
-                           "day cycle and light-map alphabet",
-        "level0_day_share": 1 / 6, "level0_dusk_share": 1 / 6, "level0_night_share": 2 / 6,
-        "underground_lit_share": 1 / 6, "underground_dark_share": 1 / 6,
+        "day cycle and light-map alphabet",
+        "level0_day_share": 1 / 6,
+        "level0_dusk_share": 1 / 6,
+        "level0_night_share": 2 / 6,
+        "underground_lit_share": 1 / 6,
+        "underground_dark_share": 1 / 6,
         #: **0.25, not the 2/6 the lighting bands alone suggest.** The two fully-lit bands are 2/6 of
         #: the draw, but ``is_sleeping`` is stratified independently on ``i % 4`` and a sleeping row
         #: takes the float chain whatever its lighting is. Over the twelve-row period of the two
@@ -892,12 +969,12 @@ class CraftaxFull(Env):
         "uint8_fast_path_share": 0.25,
         "sleeping_share": 0.25,
         "note": "a row stays on the uint8 gather only if it is fully lit AND awake AND at unit gain, "
-                "so the fast-path share is NOT the 2/6 the lighting bands alone give: the sleeping "
-                "stratification (i % 4 == 3) takes a quarter of them away and the answer is 0.25. "
-                "The two level-0 night bands are the only ones that draw the threefry field. The "
-                "LIGHTING shares are exact when the batch is a multiple of six and otherwise move by "
-                "the remainder: at the certification batch of 64 the night share measures 0.328 "
-                "against 1/3, while the fast-path share is exactly 0.25 at that batch",
+        "so the fast-path share is NOT the 2/6 the lighting bands alone give: the sleeping "
+        "stratification (i % 4 == 3) takes a quarter of them away and the answer is 0.25. "
+        "The two level-0 night bands are the only ones that draw the threefry field. The "
+        "LIGHTING shares are exact when the batch is a multiple of six and otherwise move by "
+        "the remainder: at the certification batch of 64 the night share measures 0.328 "
+        "against 1/3, while the fast-path share is exactly 0.25 at that batch",
     }
 
     #: **The measured performance record, at the labels Sami's reference ruling produces.** The rule
@@ -914,25 +991,36 @@ class CraftaxFull(Env):
     #: over the frozen ladder in ``scratch/certification.json``, not from reading the thresholds by
     #: hand.
     performance_record_cpu = {
-        "tier": "CPU_FASTER", "qualifiers": ["BELOW_G4"],
-        "mixed_default_fps": 1469.1, "mixed_default_batch": 64,
-        "official_jitted_fps": 613.4, "s_cpu": 2.395,
-        "decode_bar_fps": 4294.0, "cores_cpu": 0.342,
-        "host": "node2339.oscar.ccv.brown.edu", "job": "6409963",
+        "tier": "CPU_FASTER",
+        "qualifiers": ["BELOW_G4"],
+        "mixed_default_fps": 1469.1,
+        "mixed_default_batch": 64,
+        "official_jitted_fps": 613.4,
+        "s_cpu": 2.395,
+        "decode_bar_fps": 4294.0,
+        "cores_cpu": 0.342,
+        "host": "node2339.oscar.ccv.brown.edu",
+        "job": "6409963",
         #: The one-core condition, enforced by the cgroup and logged rather than asserted.
         #: ``taskset -c 0`` does not work inside a SLURM cpuset, so the allocation itself is one core.
-        "condition": ("--cpus-per-task=1; Cpus_allowed_list 1; nproc 1; sched_getaffinity [1]; "
-                      "torch threads 1; jax default_backend cpu"),
-        "paired_verdict": ("USABLE -- baseline legs 101,598 and 105,684 f/s (spread 1.040), the "
-                           "baseline reproduces its known 115,166 f/s to 0.90x, load 0.92 per node "
-                           "core"),
-        "superseded": ("an earlier take on node2352 under --cpus-per-task=4 read S_cpu 3.810. It is "
-                       "NOT the number: torch.set_num_threads(1) binds torch and says nothing about "
-                       "jax, whose CPU backend has its own pool, so the reference could use four "
-                       "cores while ours used one. The two takes also differ by node, so the drop "
-                       "from 3.810 to 2.395 is not cleanly attributable to the core budget -- what "
-                       "is attributable is that only the second was taken under the condition the "
-                       "ladder is defined at"),
+        "condition": (
+            "--cpus-per-task=1; Cpus_allowed_list 1; nproc 1; sched_getaffinity [1]; "
+            "torch threads 1; jax default_backend cpu"
+        ),
+        "paired_verdict": (
+            "USABLE -- baseline legs 101,598 and 105,684 f/s (spread 1.040), the "
+            "baseline reproduces its known 115,166 f/s to 0.90x, load 0.92 per node "
+            "core"
+        ),
+        "superseded": (
+            "an earlier take on node2352 under --cpus-per-task=4 read S_cpu 3.810. It is "
+            "NOT the number: torch.set_num_threads(1) binds torch and says nothing about "
+            "jax, whose CPU backend has its own pool, so the reference could use four "
+            "cores while ours used one. The two takes also differ by node, so the drop "
+            "from 3.810 to 2.395 is not cleanly attributable to the core budget -- what "
+            "is attributable is that only the second was taken under the condition the "
+            "ladder is defined at"
+        ),
     }
     #: R is a real ratio here rather than ``NO_REFERENCE``, because the official renderer **could** be
     #: timed on the same card in the same job -- and measuring it **demoted** this cell. On the
@@ -941,34 +1029,50 @@ class CraftaxFull(Env):
     #: ``GPU_FASTER``. Retaining ``NO_REFERENCE`` would have been the more flattering label and was
     #: available by simply not measuring, which is the reason to measure.
     performance_record_gpu = {
-        "tier": "GPU_FASTER", "backend_class": "R",
-        "mixed_fps": 94343.9, "mixed_batch": 4096, "size": 10,
-        "official_jitted_fps": 934.5, "R": 100.96,
-        "decode_bar_fps": 4323.3, "cores": 21.82,
-        "card": "NVIDIA GeForce RTX 3090", "host": "gpu2109.oscar.ccv.brown.edu", "job": "6410052",
-        "condition": ("same card, same job; the official timed from $SCR/venvs/se7-craftax-gpu with "
-                      "jax.default_backend() == 'gpu' and devices ['cuda:0'] ASSERTED before timing, "
-                      "jitted, warm, 6.72 s of compile excluded; ours timed from "
-                      "$SCR/venvs/se7-craftax on the same allocation"),
-        "batch_scales": ("425x (fps(4096)/fps(1)) against the 20x bar, measured on the sibling "
-                         "gpu2106 run of the same code, job 6397699; the R run drew B=256 and 4096 "
-                         "only, so its own record carries no B=1 cell"),
-        "why_not_no_reference": ("$SCR/venvs/se7-craftax is a jax[cpu] build, so jax.default_backend() "
-                                 "is 'cpu' inside a GPU job whatever JAX_PLATFORMS says; job 6409535 "
-                                 "would have timed the 'same-card reference' on the CPU and was "
-                                 "cancelled before it ran. W1's jax[cuda12] venv was reused rather "
-                                 "than a second one built, and it carries no torch, so the two "
-                                 "interpreters share one allocation"),
+        "tier": "GPU_FASTER",
+        "backend_class": "R",
+        "mixed_fps": 94343.9,
+        "mixed_batch": 4096,
+        "size": 10,
+        "official_jitted_fps": 934.5,
+        "R": 100.96,
+        "decode_bar_fps": 4323.3,
+        "cores": 21.82,
+        "card": "NVIDIA GeForce RTX 3090",
+        "host": "gpu2109.oscar.ccv.brown.edu",
+        "job": "6410052",
+        "condition": (
+            "same card, same job; the official timed from $SCR/venvs/se7-craftax-gpu with "
+            "jax.default_backend() == 'gpu' and devices ['cuda:0'] ASSERTED before timing, "
+            "jitted, warm, 6.72 s of compile excluded; ours timed from "
+            "$SCR/venvs/se7-craftax on the same allocation"
+        ),
+        "batch_scales": (
+            "425x (fps(4096)/fps(1)) against the 20x bar, measured on the sibling "
+            "gpu2106 run of the same code, job 6397699; the R run drew B=256 and 4096 "
+            "only, so its own record carries no B=1 cell"
+        ),
+        "why_not_no_reference": (
+            "$SCR/venvs/se7-craftax is a jax[cpu] build, so jax.default_backend() "
+            "is 'cpu' inside a GPU job whatever JAX_PLATFORMS says; job 6409535 "
+            "would have timed the 'same-card reference' on the CPU and was "
+            "cancelled before it ran. W1's jax[cuda12] venv was reused rather "
+            "than a second one built, and it carries no torch, so the two "
+            "interpreters share one allocation"
+        ),
     }
     #: What the two references are, and why they are allowed to differ.
     reference_labels = {
         "parity": "the UN-JITTED renderer -- a uint8 claim; see parity_note",
         "speed": "the JITTED renderer, as craftax executes it, timed on the certification host",
-        "official_unjitted_fps_cpu": 0.43, "official_jitted_fps_cpu": 613.4,
+        "official_unjitted_fps_cpu": 0.43,
+        "official_jitted_fps_cpu": 613.4,
         "ratio_between_the_two_references": 1426,
-        "note": ("S_cpu against the un-jitted function would read 1,808 and certify nothing real. "
-                 "The ruling is applied literally: the speed ratio uses the renderer as a user runs "
-                 "it, and NO_REFERENCE is retained only where it cannot be timed on the host."),
+        "note": (
+            "S_cpu against the un-jitted function would read 1,808 and certify nothing real. "
+            "The ruling is applied literally: the speed ratio uses the renderer as a user runs "
+            "it, and NO_REFERENCE is retained only where it cannot be timed on the host."
+        ),
     }
 
     # ------------------------------------------------------------------ Step-9 state
@@ -993,8 +1097,7 @@ class CraftaxFull(Env):
         (("player", "level"), 1, 5 * N_TILE + 2),
         (("world", "light_level"), 1, 5 * N_TILE + 3),
         (("world", "rng_key"), N_KEY_HALVES, 5 * N_TILE + 4),
-    ) + tuple((("inventory", nm), 1, 5 * N_TILE + 4 + N_KEY_HALVES + i)
-              for i, nm in enumerate(STRIP_SLOTS))
+    ) + tuple((("inventory", nm), 1, 5 * N_TILE + 4 + N_KEY_HALVES + i) for i, nm in enumerate(STRIP_SLOTS))
 
     @property
     def frame_shape(self) -> tuple[int, int]:
@@ -1016,12 +1119,13 @@ class CraftaxFull(Env):
         recolouring that is exactly the identity at 1.0; the two visibility flags are ablations a
         world-model experiment actually wants.
         """
-        return Dict({
-            "channel_gain": Box(low=0.0, high=2.0, shape=(3,), dtype=np.float32,
-                                init_value=[1.0, 1.0, 1.0]),
-            "player_visible": Discrete(2, init_value=1),
-            "mobs_visible": Discrete(2, init_value=1),
-        })
+        return Dict(
+            {
+                "channel_gain": Box(low=0.0, high=2.0, shape=(3,), dtype=np.float32, init_value=[1.0, 1.0, 1.0]),
+                "player_visible": Discrete(2, init_value=1),
+                "mobs_visible": Discrete(2, init_value=1),
+            }
+        )
 
     # ---------------------------------------------------------------- decode
 
@@ -1041,18 +1145,17 @@ class CraftaxFull(Env):
         """
         k = N_TILE
         blk = s[:, 0:k].round().remainder(N_BLOCK).long().view(n, OBS_H, OBS_W)
-        itm = s[:, k:2 * k].round().remainder(N_ITEM).long().view(n, OBS_H, OBS_W)
-        mob = s[:, 2 * k:3 * k].round().remainder(N_MOB_SLOT).long().view(n, OBS_H, OBS_W)
-        prj = s[:, 3 * k:4 * k].round().remainder(N_PROJ_SLOT).long().view(n, OBS_H, OBS_W)
-        lm = _tent(s[:, 4 * k:5 * k]).view(n, OBS_H, OBS_W)
+        itm = s[:, k : 2 * k].round().remainder(N_ITEM).long().view(n, OBS_H, OBS_W)
+        mob = s[:, 2 * k : 3 * k].round().remainder(N_MOB_SLOT).long().view(n, OBS_H, OBS_W)
+        prj = s[:, 3 * k : 4 * k].round().remainder(N_PROJ_SLOT).long().view(n, OBS_H, OBS_W)
+        lm = _tent(s[:, 4 * k : 5 * k]).view(n, OBS_H, OBS_W)
         j = 5 * k
         facing = s[:, j].round().remainder(N_FACING).long()
         sleeping = s[:, j + 1] > 0.5
         level = s[:, j + 2].round().remainder(N_LEVEL).long()
         light = _tent(s[:, j + 3])
-        halves = s[:, j + 4:j + 4 + N_KEY_HALVES].round().remainder(65536.0)
-        cnt = s[:, j + 4 + N_KEY_HALVES:].round().remainder(
-            _strip_index(s.device)[3].view(1, N_STRIP)).long()
+        halves = s[:, j + 4 : j + 4 + N_KEY_HALVES].round().remainder(65536.0)
+        cnt = s[:, j + 4 + N_KEY_HALVES :].round().remainder(_strip_index(s.device)[3].view(1, N_STRIP)).long()
         # the reference draws max(floor(player_health), 1), so a health slot of 0 is a 1
         cnt[:, _SLOT["health"]] = cnt[:, _SLOT["health"]].clamp_min(1)
         daylight = torch.where(level == 0, light, torch.ones_like(light))
@@ -1076,8 +1179,7 @@ class CraftaxFull(Env):
         ov = m * N_PROJ_SLOT + prj
 
         pslot = torch.where(sleeping, torch.full_like(facing, PLAYER_ASLEEP), facing)
-        pslot = torch.where(sty["player_visible"].view(n) > 0.5, pslot,
-                            torch.full_like(pslot, NO_PLAYER))
+        pslot = torch.where(sty["player_visible"].view(n) > 0.5, pslot, torch.full_like(pslot, NO_PLAYER))
 
         bg = bg0.view(1, -1).expand(n, -1).clone()
         dg = dg0.view(1, -1).expand(n, -1).clone()
@@ -1122,9 +1224,12 @@ class CraftaxFull(Env):
             bg[:, pos] = base
             dg[:, pos] = level.view(n, 1) * N_TENS
         strip_bg = bg.view(n, STRIP_H, OBS_W)
-        return (torch.cat([world_bg, strip_bg], dim=1).to(torch.int32),
-                ov.to(torch.int32), dg.view(n, STRIP_H, OBS_W).to(torch.int32),
-                pslot.to(torch.int32))
+        return (
+            torch.cat([world_bg, strip_bg], dim=1).to(torch.int32),
+            ov.to(torch.int32),
+            dg.view(n, STRIP_H, OBS_W).to(torch.int32),
+            pslot.to(torch.int32),
+        )
 
     # ---------------------------------------------------------------- render
 
@@ -1135,8 +1240,15 @@ class CraftaxFull(Env):
         return (ids.unsqueeze(2) * t + a).reshape(-1)
 
     @torch.no_grad()
-    def render(self, states=None, size: int | None = None, supersample: int | None = None,
-               variation: dict | None = None, style=None, out=None) -> torch.Tensor:
+    def render(
+        self,
+        states=None,
+        size: int | None = None,
+        supersample: int | None = None,
+        variation: dict | None = None,
+        style=None,
+        out=None,
+    ) -> torch.Tensor:
         """``(..., 544)`` -> ``(..., 13*size, 11*size, 3)`` uint8, in the reference's own order.
 
         There is no ``scene()``: the frame is a gather from texture tables with three stencil selects
@@ -1150,8 +1262,7 @@ class CraftaxFull(Env):
         ``light_map`` multiply, the night chain, the sleep halving and ``channel_gain`` all happen
         before the rounding.
         """
-        s = self._state if states is None else torch.as_tensor(states, device=self.device,
-                                                               dtype=torch.float32)
+        s = self._state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
         lead = tuple(s.shape[:-1])
         s = s.reshape(-1, self.state_dim)
         n = s.shape[0]
@@ -1159,7 +1270,8 @@ class CraftaxFull(Env):
         if supersample not in (None, 1):
             raise ValueError(
                 f"CraftaxFull.render: supersample={supersample} is meaningless here -- the frame is a "
-                f"gather from a bitmap atlas, so there is no sub-pixel coverage to estimate.")
+                f"gather from a bitmap atlas, so there is no sub-pixel coverage to estimate."
+            )
         sty = self.resolve_style(style, variation, batch=n)
         dec = self._decode(s, n)
         img = self._render_atlas(dec, sty, t, out)
@@ -1192,41 +1304,50 @@ class CraftaxFull(Env):
         # lit (``light_map == 1`` multiplies by one), the daylight override has left every row at 1.0
         # (``1*px + 0*night`` is exactly ``px``) and nothing is asleep.
         gain = sty["channel_gain"]
-        flags = torch.stack([torch.all(gain == 1.0),
-                             torch.all(daylight == 1.0) & torch.all(lm == 1.0) & ~sleeping.any()])
+        flags = torch.stack(
+            [torch.all(gain == 1.0), torch.all(daylight == 1.0) & torch.all(lm == 1.0) & ~sleeping.any()]
+        )
         unit_gain, identity_chain = (bool(x) for x in flags.tolist())
         plain = unit_gain and identity_chain
 
-        img = (out.view(n, H, W, 3) if out is not None
-               else torch.empty(n, H, W, 3, dtype=torch.uint8, device=dev))
+        img = out.view(n, H, W, 3) if out is not None else torch.empty(n, H, W, 3, dtype=torch.uint8, device=dev)
         torch.index_select(tab["bg"]["u8"], 0, self._rows(bg_id, t), out=img.view(-1, t * 3))
 
         # the player, on the centre tile only -- 1/99 of the frame, so it never earns a full-frame pass
-        pl_rows = (pslot.view(n, 1).to(torch.int32) * t
-                   + torch.arange(t, dtype=torch.int32, device=dev).view(1, t)).reshape(-1)
+        pl_rows = (
+            pslot.view(n, 1).to(torch.int32) * t + torch.arange(t, dtype=torch.int32, device=dev).view(1, t)
+        ).reshape(-1)
         cr, cc = OBS_H // 2, OBS_W // 2
         k = tab["pl"]
-        sl = img[:, cr * t:(cr + 1) * t, cc * t:(cc + 1) * t]
-        sl.copy_(torch.where(torch.index_select(k["m"], 0, pl_rows).view(n, t, t, 3),
-                             torch.index_select(k["u8"], 0, pl_rows).view(n, t, t, 3), sl))
+        sl = img[:, cr * t : (cr + 1) * t, cc * t : (cc + 1) * t]
+        sl.copy_(
+            torch.where(
+                torch.index_select(k["m"], 0, pl_rows).view(n, t, t, 3),
+                torch.index_select(k["u8"], 0, pl_rows).view(n, t, t, 3),
+                sl,
+            )
+        )
 
         def over(name, ids, tile_rows, lo, hi):
             rows = self._rows(ids, t)
             k = tab[name]
             v = img[:, lo:hi]
-            v.copy_(torch.where(
-                torch.index_select(k["m"], 0, rows).view(n, tile_rows * t, W, 3),
-                torch.index_select(k["u8"], 0, rows).view(n, tile_rows * t, W, 3), v))
+            v.copy_(
+                torch.where(
+                    torch.index_select(k["m"], 0, rows).view(n, tile_rows * t, W, 3),
+                    torch.index_select(k["u8"], 0, rows).view(n, tile_rows * t, W, 3),
+                    v,
+                )
+            )
 
-        over("ov", ov_id, OBS_H, 0, wh)          # mobs and projectiles, on the world rows
-        over("dg", dg_id, STRIP_H, wh, H)        # the strip's digits, on the strip rows
+        over("ov", ov_id, OBS_H, 0, wh)  # mobs and projectiles, on the world rows
+        over("dg", dg_id, STRIP_H, wh, H)  # the strip's digits, on the strip rows
         if plain:
             return img
 
         def lit(world):
             lmp = lm.repeat_interleave(t, 1).repeat_interleave(t, 2).unsqueeze(-1)
-            return light_night_and_sleep(world, lmp, daylight, sleeping,
-                                         prng.key_from_halves(halves))
+            return light_night_and_sleep(world, lmp, daylight, sleeping, prng.key_from_halves(halves))
 
         if unit_gain:
             # ``plain`` already returned, so the chain is NOT the identity here. The strip is never
@@ -1286,8 +1407,8 @@ class CraftaxFull(Env):
         b = int(batch)
         st = np.zeros((b, self.state_dim), np.float32)
         k = N_TILE
-        st[:, 0:k] = rng.integers(2, N_BLOCK, size=(b, k))          # 0/1 are INVALID/OUT_OF_BOUNDS
-        st[:, k:2 * k] = rng.integers(1, N_ITEM, size=(b, k)) * (rng.random((b, k)) < 0.30)
+        st[:, 0:k] = rng.integers(2, N_BLOCK, size=(b, k))  # 0/1 are INVALID/OUT_OF_BOUNDS
+        st[:, k : 2 * k] = rng.integers(1, N_ITEM, size=(b, k)) * (rng.random((b, k)) < 0.30)
         # The centre tile is under the player sprite, so most of it is hidden. TORCH is a small icon
         # that lands exactly where the player is opaque and is invisible there at 10 px; a ladder is
         # not. Every other row therefore carries a ladder at the centre, so the ``item_r4c5``
@@ -1335,16 +1456,16 @@ class CraftaxFull(Env):
                 # or two ``item_r*c*`` dimensions dead on half of twelve seeds, every one of them a
                 # tile under an overlay. With ladders it reports none, and a ladder still leaves the
                 # block beneath it visible, so no other dimension is traded away for it.
-                st[i, k:2 * k] = rng.integers(I_LADDER_DOWN, N_ITEM, size=k)
+                st[i, k : 2 * k] = rng.integers(I_LADDER_DOWN, N_ITEM, size=k)
             elif band[i] == 4:
                 dark = rng.random(k) < 0.5
                 lit[i] = np.where(dark, rng.choice(LIGHT_MAP_ALPHABET, size=k), 1.0)
-        st[:, 4 * k:5 * k] = lit
+        st[:, 4 * k : 5 * k] = lit
         st[:, j] = rng.integers(0, N_FACING, size=b)
         st[:, j + 1] = (np.arange(b) % 4 == 3).astype(np.float32)
         st[:, j + 2] = lvl
         st[:, j + 3] = light
-        st[:, j + 4:j + 4 + N_KEY_HALVES] = rng.integers(0, 65536, size=(b, N_KEY_HALVES))
+        st[:, j + 4 : j + 4 + N_KEY_HALVES] = rng.integers(0, 65536, size=(b, N_KEY_HALVES))
         for c, name in enumerate(STRIP_SLOTS):
             st[:, j + 4 + N_KEY_HALVES + c] = rng.integers(0, STRIP_MOD[c], size=b)
         st[:, j + 4 + N_KEY_HALVES + _SLOT["health"]] = rng.integers(1, N_COUNT, size=b)
@@ -1370,9 +1491,11 @@ class CraftaxFull(Env):
             rng.shuffle(free)
             it = iter(free)
             ok = transparent_mob_slots(_source_size(self.size))
-            for base, n_type, cap in ((MOB_BASE["melee"], N_MELEE, MAX_MELEE),
-                                      (MOB_BASE["passive"], N_PASSIVE, MAX_PASSIVE),
-                                      (MOB_BASE["ranged"], N_RANGED, MAX_RANGED)):
+            for base, n_type, cap in (
+                (MOB_BASE["melee"], N_MELEE, MAX_MELEE),
+                (MOB_BASE["passive"], N_PASSIVE, MAX_PASSIVE),
+                (MOB_BASE["ranged"], N_RANGED, MAX_RANGED),
+            ):
                 for _ in range(int(rng.integers(0, cap + 1))):
                     v = base + int(rng.integers(0, n_type))
                     if band[i] == 0 and v not in ok:
@@ -1412,17 +1535,20 @@ class CraftaxFull(Env):
         if int(size) not in REFERENCE_TILE_PX:
             raise ValueError(
                 f"craftax draws full Craftax at {REFERENCE_TILE_PX} px per tile; there is no official "
-                f"frame to compare a {size} px render against")
+                f"frame to compare a {size} px render against"
+            )
         import jax
         from craftax.craftax.renderer import make_craftax_pixel_renderer
         from craftax.craftax_env import make_craftax_env_from_name
+
         if not bool(jax.config.jax_threefry_partitionable):
             raise RuntimeError(
                 "CraftaxFull.reference_env: jax_threefry_partitionable is off, so this jax draws the "
                 "night noise field with the pre-0.4.36 threefry counter layout. That is a different "
                 "field for the same state_rng (0 of 448 draws agree between the two paths), so a "
                 "parity number taken against it would not be a parity number. Run with the flag at "
-                "its default (True), or declare the other path and re-measure.")
+                "its default (True), or declare the other path and re-measure."
+            )
         env = make_craftax_env_from_name("Craftax-Pixels-v1", auto_reset=False)
         _obs, template = env.reset(jax.random.PRNGKey(0), env.default_params)
         return (make_craftax_pixel_renderer(int(size), do_night_noise=True), template, int(size))
@@ -1448,6 +1574,7 @@ class CraftaxFull(Env):
         """
         import jax
         import jax.numpy as jnp
+
         render, tmpl, _tile_px = env
 
         def _i(field, v):
@@ -1463,22 +1590,22 @@ class CraftaxFull(Env):
         out = []
         for row in s:
             blk = np.round(row[0:k]).astype(np.int64) % N_BLOCK
-            itm = np.round(row[k:2 * k]).astype(np.int64) % N_ITEM
-            mob = np.round(row[2 * k:3 * k]).astype(np.int64) % N_MOB_SLOT
-            prj = np.round(row[3 * k:4 * k]).astype(np.int64) % N_PROJ_SLOT
-            lit = _tent_np(row[4 * k:5 * k])
+            itm = np.round(row[k : 2 * k]).astype(np.int64) % N_ITEM
+            mob = np.round(row[2 * k : 3 * k]).astype(np.int64) % N_MOB_SLOT
+            prj = np.round(row[3 * k : 4 * k]).astype(np.int64) % N_PROJ_SLOT
+            lit = _tent_np(row[4 * k : 5 * k])
             facing = int(np.round(row[j])) % N_FACING
             sleeping = bool(row[j + 1] > 0.5)
             lvl = int(np.round(row[j + 2])) % N_LEVEL
             light = _tent_np(np.asarray(row[j + 3]))
-            halves = np.round(row[j + 4:j + 4 + N_KEY_HALVES]).astype(np.int64) % 65536
+            halves = np.round(row[j + 4 : j + 4 + N_KEY_HALVES]).astype(np.int64) % 65536
             key = np.array([(halves[0] << 16) | halves[1], (halves[2] << 16) | halves[3]], np.uint32)
-            cnt = np.round(row[j + 4 + N_KEY_HALVES:]).astype(np.int64) % np.asarray(STRIP_MOD)
+            cnt = np.round(row[j + 4 + N_KEY_HALVES :]).astype(np.int64) % np.asarray(STRIP_MOD)
             cnt[_SLOT["health"]] = max(int(cnt[_SLOT["health"]]), 1)
 
             def win(a, v, fill=None):
                 a = np.asarray(a).copy()
-                a[lvl, r0:r0 + OBS_H, c0:c0 + OBS_W] = v.reshape(OBS_H, OBS_W)
+                a[lvl, r0 : r0 + OBS_H, c0 : c0 + OBS_W] = v.reshape(OBS_H, OBS_W)
                 return a
 
             m = win(tmpl.map, blk)
@@ -1498,9 +1625,9 @@ class CraftaxFull(Env):
                         pos[lvl, n] = (r0 + p // OBS_W, c0 + p % OBS_W)
                         msk[lvl, n], tid[lvl, n] = True, v - base
                         n += 1
-                return template_mobs.replace(position=jnp.asarray(pos, jnp.int32),
-                                             mask=jnp.asarray(msk),
-                                             type_id=_i(template_mobs.type_id, tid))
+                return template_mobs.replace(
+                    position=jnp.asarray(pos, jnp.int32), mask=jnp.asarray(msk), type_id=_i(template_mobs.type_id, tid)
+                )
 
             occupied = [(p, int(prj[p])) for p in range(k) if prj[p] != 0]
 
@@ -1514,19 +1641,25 @@ class CraftaxFull(Env):
                     msk[lvl, n] = True
                     tid[lvl, n] = (v - 1) // 4
                     dr[lvl, n] = PROJ_DIR[(v - 1) % 4]
-                return (template_mobs.replace(position=jnp.asarray(pos, jnp.int32),
-                                              mask=jnp.asarray(msk),
-                                              type_id=_i(template_mobs.type_id, tid)),
-                        _i(dirs_template, dr))
+                return (
+                    template_mobs.replace(
+                        position=jnp.asarray(pos, jnp.int32),
+                        mask=jnp.asarray(msk),
+                        type_id=_i(template_mobs.type_id, tid),
+                    ),
+                    _i(dirs_template, dr),
+                )
 
-            mp, mpd = proj_of(tmpl.mob_projectiles, occupied[:MAX_MOB_PROJ],
-                              tmpl.mob_projectile_directions)
-            pp, ppd = proj_of(tmpl.player_projectiles,
-                              occupied[MAX_MOB_PROJ:MAX_MOB_PROJ + MAX_PLAYER_PROJ],
-                              tmpl.player_projectile_directions)
+            mp, mpd = proj_of(tmpl.mob_projectiles, occupied[:MAX_MOB_PROJ], tmpl.mob_projectile_directions)
+            pp, ppd = proj_of(
+                tmpl.player_projectiles,
+                occupied[MAX_MOB_PROJ : MAX_MOB_PROJ + MAX_PLAYER_PROJ],
+                tmpl.player_projectile_directions,
+            )
             inv = tmpl.inventory
             st = tmpl.replace(
-                map=_i(tmpl.map, m), item_map=_i(tmpl.item_map, im),
+                map=_i(tmpl.map, m),
+                item_map=_i(tmpl.item_map, im),
                 light_map=jnp.asarray(lmv, jnp.float32),
                 monsters_killed=_i(tmpl.monsters_killed, mk),
                 boss_timesteps_to_spawn_this_round=_i(tmpl.boss_timesteps_to_spawn_this_round, 1),
@@ -1547,20 +1680,38 @@ class CraftaxFull(Env):
                 player_intelligence=_i(tmpl.player_intelligence, cnt[_SLOT["intelligence"]]),
                 sword_enchantment=_i(tmpl.sword_enchantment, cnt[_SLOT["ench_sword"]]),
                 bow_enchantment=_i(tmpl.bow_enchantment, cnt[_SLOT["ench_bow"]]),
-                armour_enchantments=_i(tmpl.armour_enchantments,
-                                       [cnt[_SLOT[f"ench_armour{i}"]] for i in range(4)]),
-                learned_spells=jnp.asarray([bool(cnt[_SLOT["spell_fireball"]]),
-                                            bool(cnt[_SLOT["spell_iceball"]])]),
+                armour_enchantments=_i(tmpl.armour_enchantments, [cnt[_SLOT[f"ench_armour{i}"]] for i in range(4)]),
+                learned_spells=jnp.asarray([bool(cnt[_SLOT["spell_fireball"]]), bool(cnt[_SLOT["spell_iceball"]])]),
                 inventory=inv.replace(
                     armour=_i(inv.armour, [cnt[_SLOT[f"armour{i}"]] for i in range(4)]),
                     potions=_i(inv.potions, [cnt[_SLOT[f"potion{i}"]] for i in range(6)]),
-                    **{n: _i(getattr(inv, n), cnt[_SLOT[n]]) for n in
-                       ("wood", "stone", "coal", "iron", "diamond", "sapphire", "ruby", "sapling",
-                        "torches", "books", "arrows", "pickaxe", "sword", "bow")}),
+                    **{
+                        n: _i(getattr(inv, n), cnt[_SLOT[n]])
+                        for n in (
+                            "wood",
+                            "stone",
+                            "coal",
+                            "iron",
+                            "diamond",
+                            "sapphire",
+                            "ruby",
+                            "sapling",
+                            "torches",
+                            "books",
+                            "arrows",
+                            "pickaxe",
+                            "sword",
+                            "bow",
+                        )
+                    },
+                ),
                 melee_mobs=mobs_of(MOB_BASE["melee"], N_MELEE, MAX_MELEE, tmpl.melee_mobs),
                 passive_mobs=mobs_of(MOB_BASE["passive"], N_PASSIVE, MAX_PASSIVE, tmpl.passive_mobs),
                 ranged_mobs=mobs_of(MOB_BASE["ranged"], N_RANGED, MAX_RANGED, tmpl.ranged_mobs),
-                mob_projectiles=mp, mob_projectile_directions=mpd,
-                player_projectiles=pp, player_projectile_directions=ppd)
+                mob_projectiles=mp,
+                mob_projectile_directions=mpd,
+                player_projectiles=pp,
+                player_projectile_directions=ppd,
+            )
             out.append(np.round(np.asarray(jax.device_get(render(st)))).clip(0, 255).astype(np.uint8))
         return np.stack(out)

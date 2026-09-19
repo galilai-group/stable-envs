@@ -22,10 +22,11 @@ turns out not to be capturable, should fall back to the eager path and say so. B
 ``advance``, which is what makes "graph and eager are bit-identical" a property of the design rather
 than a coincidence to be tested for — it is tested for anyway.
 """
+
 from __future__ import annotations
 
 import warnings
-from typing import Callable, Sequence
+from collections.abc import Callable, Sequence
 
 import torch
 
@@ -37,7 +38,7 @@ def capture(advance: Callable[[], None], state: Sequence[torch.Tensor], warmup: 
         s = torch.cuda.Stream()
         s.wait_stream(torch.cuda.current_stream())
         with torch.cuda.stream(s):
-            for _ in range(int(warmup)):          # warm up autotune and the allocator before capture
+            for _ in range(int(warmup)):  # warm up autotune and the allocator before capture
                 advance()
         torch.cuda.current_stream().wait_stream(s)
         g = torch.cuda.CUDAGraph()
@@ -51,7 +52,7 @@ def capture(advance: Callable[[], None], state: Sequence[torch.Tensor], warmup: 
             with torch.cuda.graph(g):
                 advance()
         return g, ""
-    except Exception as e:                        # noqa: BLE001 - fall back to eager, do not hide it
+    except Exception as e:  # noqa: BLE001 - fall back to eager, do not hide it
         return None, f"{type(e).__name__}: {e}"
     finally:
         for b, s0 in zip(state, saved):

@@ -73,6 +73,7 @@ The sidecar ``.json`` is a convenience copy for reading; the authoritative heade
 ``.pt``, and ``load`` refuses if the two disagree. Editing a declared floor in the json to make
 something pass therefore does not work, which is the point.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -87,8 +88,7 @@ import torch.nn.functional as F
 from . import _resources
 
 #: Where sealed correctors live. One file per cell, named for the env class it is keyed to.
-CACHE_ROOT = os.path.expanduser(
-    os.environ.get("STABLE_ENVS_RENDERNET_CACHE", "~/.cache/stable-envs/rendernet"))
+CACHE_ROOT = os.path.expanduser(os.environ.get("STABLE_ENVS_RENDERNET_CACHE", "~/.cache/stable-envs/rendernet"))
 
 #: Bumped when the checkpoint layout changes in a way an older loader would misread. A file written
 #: under a different format string is refused rather than best-effort parsed.
@@ -140,6 +140,7 @@ _SCALE = 1.0 / 255.0
 
 # --------------------------------------------------------------------------------- the networks
 
+
 class Corrector(nn.Module):
     """``(B, r, r, 3) uint8`` -> ``(B, out, out, 3) uint8``. A bilinear upsample plus a residual.
 
@@ -167,11 +168,9 @@ class Corrector(nn.Module):
         what makes the loss differentiable; keeping them IN ``forward`` is what makes the tensor the
         metric is computed on the tensor a consumer receives.
         """
-        base = F.interpolate(x, size=(self.out_size, self.out_size), mode="bilinear",
-                             align_corners=False)
+        base = F.interpolate(x, size=(self.out_size, self.out_size), mode="bilinear", align_corners=False)
         if self.pre_size and x.shape[-1] != self.in_size:
-            x = F.interpolate(x, size=(self.in_size, self.in_size), mode="bilinear",
-                              align_corners=False)
+            x = F.interpolate(x, size=(self.in_size, self.in_size), mode="bilinear", align_corners=False)
         return base + self.residual(x)
 
     def forward(self, u8: torch.Tensor) -> torch.Tensor:
@@ -218,8 +217,15 @@ class ESPCN(Corrector):
     leaves the arithmetic identical while cutting the traffic 4x.
     """
 
-    def __init__(self, in_size: int = 128, out_size: int = 256, width: int = 32, depth: int = 4,
-                 unshuffle: int = 1, pre_size: int = 0):
+    def __init__(
+        self,
+        in_size: int = 128,
+        out_size: int = 256,
+        width: int = 32,
+        depth: int = 4,
+        unshuffle: int = 1,
+        pre_size: int = 0,
+    ):
         super().__init__()
         if out_size % in_size:
             raise ValueError(f"out_size {out_size} must be a multiple of in_size {in_size}")
@@ -250,16 +256,26 @@ class UNetTiny(Corrector):
     at a quarter of the traffic.
     """
 
-    def __init__(self, in_size: int = 128, out_size: int = 256, width: int = 32, depth: int = 2,
-                 unshuffle: int = 1, pre_size: int = 0):
+    def __init__(
+        self,
+        in_size: int = 128,
+        out_size: int = 256,
+        width: int = 32,
+        depth: int = 2,
+        unshuffle: int = 1,
+        pre_size: int = 0,
+    ):
         super().__init__()
         self.out_size, self.in_size, self.unshuffle = out_size, in_size, unshuffle
         self.pre_size = pre_size
         up = (out_size // in_size) * unshuffle
         w2 = width * 2
         self.stem = nn.Sequential(_conv(3 * unshuffle * unshuffle, width), _act())
-        self.down = nn.Sequential(nn.Conv2d(width, w2, 3, stride=2, padding=1), _act(),
-                                  *sum([[_conv(w2, w2), _act()] for _ in range(depth)], []))
+        self.down = nn.Sequential(
+            nn.Conv2d(width, w2, 3, stride=2, padding=1),
+            _act(),
+            *sum([[_conv(w2, w2), _act()] for _ in range(depth)], []),
+        )
         self.up = nn.Sequential(_conv(w2, width * 4), nn.PixelShuffle(2), _act())
         self.fuse = nn.Sequential(_conv(2 * width, width), _act())
         self.head = _conv(width, 3 * up * up)
@@ -303,8 +319,7 @@ def build(net: str, out_size: int = 256) -> Corrector:
     if net not in ZOO:
         raise KeyError(f"unknown corrector architecture {net!r}; known: {sorted(ZOO)}")
     cls, in_size, width, depth, un, pre = ZOO[net]
-    return cls(in_size=in_size, out_size=out_size, width=width, depth=depth, unshuffle=un,
-               pre_size=pre)
+    return cls(in_size=in_size, out_size=out_size, width=width, depth=depth, unshuffle=un, pre_size=pre)
 
 
 def n_params(m: nn.Module) -> int:
@@ -317,8 +332,7 @@ def n_params(m: nn.Module) -> int:
 #: ``cell`` is the identity lock; ``render`` is how the cheap frame must be produced, and getting it
 #: wrong feeds the network an input it was never fitted on, which is the same failure as a mismatched
 #: cell with none of its visibility.
-HEADER_KEYS = ("format", "cell", "render", "net", "visual_fidelity", "variation_fidelity",
-               "baseline", "provenance")
+HEADER_KEYS = ("format", "cell", "render", "net", "visual_fidelity", "variation_fidelity", "baseline", "provenance")
 
 
 def slug(cell: dict) -> str:
@@ -371,7 +385,7 @@ def available() -> dict[str, dict]:
         try:
             with open(os.path.join(CACHE_ROOT, fn)) as f:
                 hdr = json.load(f)
-        except Exception:                                            # noqa: BLE001
+        except Exception:  # noqa: BLE001
             continue
         if hdr.get("format") == FORMAT and hdr.get("cell", {}).get("env_class") == name:
             out[name] = hdr
@@ -379,12 +393,15 @@ def available() -> dict[str, dict]:
 
 
 def missing_message(env_class: str) -> str:
-    return (f"no sealed render corrector for {env_class} under {CACHE_ROOT}. This repository ships "
-            f"code, not weights, exactly as it ships no compiled RoboCasa kitchen and no MiniGrid "
-            f"atlas; build one on this machine with\n\n    " + BUILD_CMD.format(env=env_class)
-            + "\n\nIt trains on the cell's own states and its own official reference renderer, "
-              "measures the corrected path, and seals only if the result beats the render it "
-              "replaces. See stable_envs/render/rendernet.py.")
+    return (
+        f"no sealed render corrector for {env_class} under {CACHE_ROOT}. This repository ships "
+        f"code, not weights, exactly as it ships no compiled RoboCasa kitchen and no MiniGrid "
+        f"atlas; build one on this machine with\n\n    "
+        + BUILD_CMD.format(env=env_class)
+        + "\n\nIt trains on the cell's own states and its own official reference renderer, "
+        "measures the corrected path, and seals only if the result beats the render it "
+        "replaces. See stable_envs/render/rendernet.py."
+    )
 
 
 class CellMismatch(RuntimeError):
@@ -413,8 +430,11 @@ def check_cell(want: dict, got: dict) -> None:
     if want == got:
         return
     diff = sorted(set(want) | set(got))
-    lines = [f"  {k}: checkpoint {got.get(k, '<absent>')!r} vs env {want.get(k, '<absent>')!r}"
-             for k in diff if want.get(k) != got.get(k)]
+    lines = [
+        f"  {k}: checkpoint {got.get(k, '<absent>')!r} vs env {want.get(k, '<absent>')!r}"
+        for k in diff
+        if want.get(k) != got.get(k)
+    ]
     raise CellMismatch(
         "this render corrector was fitted on a different cell and applying it here would be worse "
         "than not correcting at all -- measured at 2.6x worse than a plain resize on the wrong "
@@ -422,7 +442,8 @@ def check_cell(want: dict, got: dict) -> None:
         "the pixel MEAN does not catch. A corrector is per (scene, camera).\n"
         + "\n".join(lines)
         + f"\n  checkpoint cell: {_describe_cell(got)}"
-        + f"\n  env cell:        {_describe_cell(want)}")
+        + f"\n  env cell:        {_describe_cell(want)}"
+    )
 
 
 class _Runner(_resources.Closeable):
@@ -460,20 +481,21 @@ class _Runner(_resources.Closeable):
         if self.mode != "eager":
             try:
                 fn = torch.compile(module, mode=self.mode, fullgraph=True, dynamic=False)
-            except Exception as e:                                   # noqa: BLE001
+            except Exception as e:  # noqa: BLE001
                 raise RuntimeError(
                     f"could not compile the render corrector with mode={self.mode!r} "
                     f"({type(e).__name__}: {e}). This is not silently downgraded to eager, because "
                     f"eager is a DIFFERENT configuration -- the same weights with slightly different "
                     f"arithmetic -- and two processes that disagree about it do not reproduce each "
                     f"other's frames. Set STABLE_ENVS_RENDERNET_COMPILE=eager to choose it "
-                    f"deliberately, everywhere, including in whatever wrote your dataset.") from e
+                    f"deliberately, everywhere, including in whatever wrote your dataset."
+                ) from e
 
         def step():
             with torch.no_grad():
                 self.sout.copy_(fn(self.sin))
 
-        for _ in range(3):                       # compile, autotune, and warm the allocator
+        for _ in range(3):  # compile, autotune, and warm the allocator
             step()
         torch.cuda.synchronize()
         side = torch.cuda.Stream()
@@ -501,7 +523,7 @@ class _Runner(_resources.Closeable):
             if callable(reset):
                 try:
                     reset()
-                except Exception:                                        # noqa: BLE001
+                except Exception:  # noqa: BLE001
                     pass
         self.sin = None
         self.sout = None
@@ -543,8 +565,15 @@ class LoadedCorrector(_resources.Closeable):
 
     resource_kind = "rendernet.LoadedCorrector"
 
-    def __init__(self, module: Corrector, header: dict, path: str, device="cuda",
-                 mode: str | None = None, net_batch: int | None = None):
+    def __init__(
+        self,
+        module: Corrector,
+        header: dict,
+        path: str,
+        device="cuda",
+        mode: str | None = None,
+        net_batch: int | None = None,
+    ):
         self.module, self.header, self.path = module, header, path
         self.device = torch.device(device)
         self.mode = COMPILE_MODE if mode is None else str(mode)
@@ -571,9 +600,11 @@ class LoadedCorrector(_resources.Closeable):
         self.module = None
 
     def __repr__(self) -> str:
-        return (f"LoadedCorrector({self.cell.get('env_class')}, {self.net}, "
-                f"{self.render_size}px tex_lod={self.tex_lod} -> {self.out_size}px, "
-                f"{n_params(self.module)/1e3:.0f}k params, {self.mode}, batch {self.net_batch})")
+        return (
+            f"LoadedCorrector({self.cell.get('env_class')}, {self.net}, "
+            f"{self.render_size}px tex_lod={self.tex_lod} -> {self.out_size}px, "
+            f"{n_params(self.module) / 1e3:.0f}k params, {self.mode}, batch {self.net_batch})"
+        )
 
     def runner(self) -> _Runner:
         """The compiled, captured invocation. Built on FIRST USE, not at load.
@@ -584,8 +615,9 @@ class LoadedCorrector(_resources.Closeable):
         """
         self._check_open("runner")
         if self._runner is None:
-            self._runner = _Runner(self.module, self.net_batch, self.render_size, self.out_size,
-                                   self.device, self.mode)
+            self._runner = _Runner(
+                self.module, self.net_batch, self.render_size, self.out_size, self.device, self.mode
+            )
         return self._runner
 
     def __call__(self, low: torch.Tensor, out: torch.Tensor | None = None) -> torch.Tensor:
@@ -595,7 +627,8 @@ class LoadedCorrector(_resources.Closeable):
                 f"{self!r} was fitted on {self.render_size}x{self.render_size} renders and got "
                 f"{tuple(low.shape)}. The input resolution is part of what the weights encode; a "
                 f"corrector handed a different one produces a plausible wrong picture rather than an "
-                f"error.")
+                f"error."
+            )
         b = int(low.shape[0])
         s = self.out_size
         if out is None:
@@ -610,15 +643,22 @@ class LoadedCorrector(_resources.Closeable):
 def _read(path: str) -> dict:
     try:
         return torch.load(path, map_location="cpu", weights_only=True)
-    except Exception as e:                                           # noqa: BLE001
+    except Exception as e:  # noqa: BLE001
         raise ValueError(
             f"{path} is not a readable sealed corrector ({type(e).__name__}: {e}). It is loaded with "
             f"weights_only=True on purpose: a checkpoint is data, and a cache directory that can "
-            f"execute code on load is a worse problem than a missing corrector.") from e
+            f"execute code on load is a worse problem than a missing corrector."
+        ) from e
 
 
-def load(cell: dict, device="cuda", dtype=torch.float16, mode: str | None = None,
-         net_batch: int | None = None, path: str | None = None) -> LoadedCorrector:
+def load(
+    cell: dict,
+    device="cuda",
+    dtype=torch.float16,
+    mode: str | None = None,
+    net_batch: int | None = None,
+    path: str | None = None,
+) -> LoadedCorrector:
     """The sealed corrector for ``cell``, verified against it. Raises rather than approximating.
 
     Four things are checked and each of them has produced a wrong picture somewhere: the format string
@@ -631,8 +671,10 @@ def load(cell: dict, device="cuda", dtype=torch.float16, mode: str | None = None
         raise FileNotFoundError(missing_message(slug(cell)))
     ck = _read(p)
     if ck.get("format") != FORMAT:
-        raise ValueError(f"{p} declares format {ck.get('format')!r}; this loader reads {FORMAT!r}. "
-                         f"Re-seal it with {BUILD_CMD.format(env=slug(cell))}")
+        raise ValueError(
+            f"{p} declares format {ck.get('format')!r}; this loader reads {FORMAT!r}. "
+            f"Re-seal it with {BUILD_CMD.format(env=slug(cell))}"
+        )
     check_cell(cell, dict(ck.get("cell") or {}))
     sd = ck["state_dict"]
     want = ck.get("state_dict_sha256")
@@ -642,7 +684,8 @@ def load(cell: dict, device="cuda", dtype=torch.float16, mode: str | None = None
             f"{p}: the header was measured on different weights from the ones in the file "
             f"(sha256 {want} declared, {got} present). Every number in visual_fidelity describes a "
             f"specific checkpoint; a header that does not belong to its weights is a declaration "
-            f"about something else.")
+            f"about something else."
+        )
     side = p[:-3] + ".json"
     if os.path.exists(side):
         with open(side) as f:
@@ -652,7 +695,8 @@ def load(cell: dict, device="cuda", dtype=torch.float16, mode: str | None = None
             raise ValueError(
                 f"{side} disagrees with the header inside {os.path.basename(p)}. The json is a "
                 f"convenience copy and the checkpoint is authoritative; a divergence means one of "
-                f"them was edited, and a declared floor is not something to edit.")
+                f"them was edited, and a declared floor is not something to edit."
+            )
     m = build(ck["net"], out_size=int(ck["render"]["out_size"]))
     m.load_state_dict({k: v for k, v in sd.items()})
     m = m.to(device=device, dtype=dtype).eval().to(memory_format=torch.channels_last)
@@ -661,9 +705,17 @@ def load(cell: dict, device="cuda", dtype=torch.float16, mode: str | None = None
     return LoadedCorrector(m, header_of(ck), p, device=device, mode=mode, net_batch=net_batch)
 
 
-def unsealed(module: Corrector, *, cell: dict, render: dict, net: str, device="cuda",
-             dtype=torch.float16, mode: str | None = None,
-             net_batch: int | None = None) -> LoadedCorrector:
+def unsealed(
+    module: Corrector,
+    *,
+    cell: dict,
+    render: dict,
+    net: str,
+    device="cuda",
+    dtype=torch.float16,
+    mode: str | None = None,
+    net_batch: int | None = None,
+) -> LoadedCorrector:
     """A corrector that has NOT been sealed yet, for the one caller that cannot have been: the
     training script, which has to run the corrected path in order to measure the declaration that a
     sealed checkpoint is required to carry.
@@ -679,9 +731,18 @@ def unsealed(module: Corrector, *, cell: dict, render: dict, net: str, device="c
     return LoadedCorrector(m, hdr, "<unsealed>", device=device, mode=mode, net_batch=net_batch)
 
 
-def seal(path: str, *, cell: dict, render: dict, net: str, state_dict: dict,
-         visual_fidelity: dict, variation_fidelity: dict, baseline: dict,
-         provenance: dict) -> str:
+def seal(
+    path: str,
+    *,
+    cell: dict,
+    render: dict,
+    net: str,
+    state_dict: dict,
+    visual_fidelity: dict,
+    variation_fidelity: dict,
+    baseline: dict,
+    provenance: dict,
+) -> str:
     """Write a checkpoint AND its sidecar. The only supported way to produce one.
 
     Kept in the library rather than in the training script so that the file layout has exactly one
@@ -690,6 +751,7 @@ def seal(path: str, *, cell: dict, render: dict, net: str, state_dict: dict,
     """
     os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
     sd = {k: v.detach().to(torch.float32).cpu() for k, v in state_dict.items()}
+
     # EVERY HEADER FIELD GOES THROUGH JSON ON THE WAY IN. Two things follow and both are load-bearing.
     # ``load`` reads with ``weights_only=True`` — a cache directory that can execute code on load is a
     # worse problem than a missing corrector — and that refuses any type outside a small allowlist, so
@@ -701,10 +763,16 @@ def seal(path: str, *, cell: dict, render: dict, net: str, state_dict: dict,
         return json.loads(json.dumps(dict(d), default=str, sort_keys=True))
 
     ck: dict[str, Any] = {
-        "format": FORMAT, "cell": plain(cell), "render": plain(render), "net": str(net),
-        "visual_fidelity": plain(visual_fidelity), "variation_fidelity": plain(variation_fidelity),
-        "baseline": plain(baseline), "provenance": plain(provenance),
-        "state_dict": sd, "state_dict_sha256": state_dict_digest(sd),
+        "format": FORMAT,
+        "cell": plain(cell),
+        "render": plain(render),
+        "net": str(net),
+        "visual_fidelity": plain(visual_fidelity),
+        "variation_fidelity": plain(variation_fidelity),
+        "baseline": plain(baseline),
+        "provenance": plain(provenance),
+        "state_dict": sd,
+        "state_dict_sha256": state_dict_digest(sd),
     }
     torch.save(ck, path)
     with open(path[:-3] + ".json", "w") as f:

@@ -27,6 +27,7 @@ them.
     python examples/bench_step3.py --device cpu  --threads 1 --out examples/results/step3/cpu/m5_1t.json
     python examples/bench_step3.py --device cuda --out examples/results/step3/gpu/3090.json
 """
+
 from __future__ import annotations
 
 import argparse
@@ -44,10 +45,10 @@ import torch
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-import stable_envs as se
-from bench_gpu_vs_cpu import (CELL_BUDGET_S, cpu_throughput, gpu_throughput, make_env, parse_ss,
-                              set_device, states_for)
+from bench_gpu_vs_cpu import cpu_throughput, gpu_throughput, make_env, parse_ss, set_device
 from bench_vs_decode import decode_baseline
+
+import stable_envs as se
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -151,10 +152,21 @@ def _physical_cores() -> int | None:
     return int(v) if v.isdigit() else None
 
 
-def measure_env(name: str, swm_ids: list[str], device: str, batches: list[int], reps: int,
-                max_out_gb: float, max_cell_s: float, ref_frames: int, decode_frames: int,
-                ss_tok: str, scratch: Path, states_in: Path | None = None,
-                states_out: Path | None = None) -> dict:
+def measure_env(
+    name: str,
+    swm_ids: list[str],
+    device: str,
+    batches: list[int],
+    reps: int,
+    max_out_gb: float,
+    max_cell_s: float,
+    ref_frames: int,
+    decode_frames: int,
+    ss_tok: str,
+    scratch: Path,
+    states_in: Path | None = None,
+    states_out: Path | None = None,
+) -> dict:
     """One env: the batch sweep, the official-renderer baseline, and the decode bar.
 
     Ascending batch order is deliberate and load-bearing on the CPU. A 500x500 classic-control frame at
@@ -166,8 +178,11 @@ def measure_env(name: str, swm_ids: list[str], device: str, batches: list[int], 
     rec: dict = {"env": name, "projected_to": swm_ids, "device": device}
     cls = se.registry.REGISTRY.get(name)
     if cls is None:
-        rec["blocked"] = {"stage": "registry", "reason": f"{name} is not in stable_envs.registry.REGISTRY in "
-                          f"this interpreter", "kind": "blocked_environment"}
+        rec["blocked"] = {
+            "stage": "registry",
+            "reason": f"{name} is not in stable_envs.registry.REGISTRY in this interpreter",
+            "kind": "blocked_environment",
+        }
         return rec
 
     ss = parse_ss(ss_tok)
@@ -191,15 +206,26 @@ def measure_env(name: str, swm_ids: list[str], device: str, batches: list[int], 
             rec["states_written"] = str(states_out / f"{name}.npy")
         frame0 = probe.render(torch.as_tensor(pool[:1], device=device))
         hw = (int(frame0.shape[1]), int(frame0.shape[2]))
-        rec.update({"size": int(probe.size), "supersample": int(probe.ss), "shape": f"{hw[0]}x{hw[1]}",
-                    "backend": getattr(probe, "backend", None), "renderer_class": type(probe).__name__,
-                    "reference_id": getattr(cls, "reference_id", None),
-                    "fidelity_tier": getattr(cls, "fidelity_tier", None),
-                    "state_dim": int(getattr(cls, "state_dim", 0) or 0)})
+        rec.update(
+            {
+                "size": int(probe.size),
+                "supersample": int(probe.ss),
+                "shape": f"{hw[0]}x{hw[1]}",
+                "backend": getattr(probe, "backend", None),
+                "renderer_class": type(probe).__name__,
+                "reference_id": getattr(cls, "reference_id", None),
+                "fidelity_tier": getattr(cls, "fidelity_tier", None),
+                "state_dim": int(getattr(cls, "state_dim", 0) or 0),
+            }
+        )
         del probe
     except Exception as e:
-        rec["blocked"] = {"stage": "construct", "reason": f"{type(e).__name__}: {e}"[:400],
-                          "kind": "blocked_environment", "traceback": traceback.format_exc()[-1200:]}
+        rec["blocked"] = {
+            "stage": "construct",
+            "reason": f"{type(e).__name__}: {e}"[:400],
+            "kind": "blocked_environment",
+            "traceback": traceback.format_exc()[-1200:],
+        }
         return rec
 
     # --- the renderer sweep ------------------------------------------------------------------
@@ -208,9 +234,15 @@ def measure_env(name: str, swm_ids: list[str], device: str, batches: list[int], 
         if fps_seen and max_cell_s > 0:
             projected = b / fps_seen
             if projected > max_cell_s:
-                cells.append({"batch": b, "skipped": f"projected {projected:,.0f} s per repetition at "
-                              f"the {fps_seen:,.0f} frames/s already measured, over the "
-                              f"{max_cell_s:.0f} s per-cell budget", "kind": "not_measured_here"})
+                cells.append(
+                    {
+                        "batch": b,
+                        "skipped": f"projected {projected:,.0f} s per repetition at "
+                        f"the {fps_seen:,.0f} frames/s already measured, over the "
+                        f"{max_cell_s:.0f} s per-cell budget",
+                        "kind": "not_measured_here",
+                    }
+                )
                 continue
         cell = gpu_throughput(name, b, None, ss, reps, max_out_gb, pool, hw)
         cells.append(cell)
@@ -227,8 +259,11 @@ def measure_env(name: str, swm_ids: list[str], device: str, batches: list[int], 
     except Exception as e:
         rec["official_cpu"] = {"error": f"{type(e).__name__}: {e}"[:300]}
     if rec.get("official_cpu") is None:
-        rec["official_cpu"] = {"absent": "the class declares no reference_env / reference_id, so no "
-                               "official renderer exists to form a ratio against", "kind": "no_reference"}
+        rec["official_cpu"] = {
+            "absent": "the class declares no reference_env / reference_id, so no "
+            "official renderer exists to form a ratio against",
+            "kind": "no_reference",
+        }
     try:
         f = None
         for c in cells:
@@ -258,10 +293,12 @@ def main() -> None:
     ap.add_argument("--decode-frames", type=int, default=40)
     ap.add_argument("--ss", default="native")
     ap.add_argument("--resume", action="store_true", help="keep envs already present in --out")
-    ap.add_argument("--states-in", default=None,
-                    help="directory of <env>.npy state pools to render instead of sampling")
-    ap.add_argument("--states-out", default=None,
-                    help="directory to save each env's state pool into, for a split-interpreter run")
+    ap.add_argument(
+        "--states-in", default=None, help="directory of <env>.npy state pools to render instead of sampling"
+    )
+    ap.add_argument(
+        "--states-out", default=None, help="directory to save each env's state pool into, for a split-interpreter run"
+    )
     a = ap.parse_args()
 
     set_device(a.device)
@@ -270,8 +307,10 @@ def main() -> None:
         for v in ("OMP_NUM_THREADS", "MKL_NUM_THREADS"):
             os.environ.setdefault(v, str(a.threads))
     if a.device == "cuda" and not torch.cuda.is_available():
-        raise SystemExit("--device cuda but torch.cuda.is_available() is False; refusing to write a "
-                         "shard that would look like a GPU measurement")
+        raise SystemExit(
+            "--device cuda but torch.cuda.is_available() is False; refusing to write a "
+            "shard that would look like a GPU measurement"
+        )
 
     universe = matched_universe()
     names = sorted(universe) if a.envs == "auto" else [n.strip() for n in a.envs.split(",") if n.strip()]
@@ -288,13 +327,18 @@ def main() -> None:
             done = {}
 
     batches = batches_for(a.device, a.optional_batches)
-    res = {"what": "Step 3 raw renderer benchmark shard",
-           "provenance": provenance(a.device, torch.get_num_threads()),
-           "batches": batches, "ss_request": a.ss, "reps": a.reps,
-           "universe": "the 34 matched swm rows of scratch/swm_matrix.json, projected onto the "
-                       "stable-envs envs that back them",
-           "states_in": a.states_in, "states_out": a.states_out,
-           "envs": []}
+    res = {
+        "what": "Step 3 raw renderer benchmark shard",
+        "provenance": provenance(a.device, torch.get_num_threads()),
+        "batches": batches,
+        "ss_request": a.ss,
+        "reps": a.reps,
+        "universe": "the 34 matched swm rows of scratch/swm_matrix.json, projected onto the "
+        "stable-envs envs that back them",
+        "states_in": a.states_in,
+        "states_out": a.states_out,
+        "envs": [],
+    }
     scratch = Path(os.environ.get("TMPDIR", "/tmp"))
     for i, n in enumerate(names, 1):
         if n in done:
@@ -303,28 +347,52 @@ def main() -> None:
             continue
         t0 = time.perf_counter()
         try:
-            r = measure_env(n, universe.get(n, []), a.device, batches, a.reps, a.max_out_gb,
-                            a.max_cell_s, a.ref_frames, a.decode_frames, a.ss, scratch,
-                            Path(a.states_in) if a.states_in else None,
-                            Path(a.states_out) if a.states_out else None)
-        except Exception as e:                       # one env must never end the sweep
-            r = {"env": n, "projected_to": universe.get(n, []), "device": a.device,
-                 "blocked": {"stage": "measure", "reason": f"{type(e).__name__}: {e}"[:400],
-                             "kind": "blocked_environment", "traceback": traceback.format_exc()[-1200:]}}
+            r = measure_env(
+                n,
+                universe.get(n, []),
+                a.device,
+                batches,
+                a.reps,
+                a.max_out_gb,
+                a.max_cell_s,
+                a.ref_frames,
+                a.decode_frames,
+                a.ss,
+                scratch,
+                Path(a.states_in) if a.states_in else None,
+                Path(a.states_out) if a.states_out else None,
+            )
+        except Exception as e:  # one env must never end the sweep
+            r = {
+                "env": n,
+                "projected_to": universe.get(n, []),
+                "device": a.device,
+                "blocked": {
+                    "stage": "measure",
+                    "reason": f"{type(e).__name__}: {e}"[:400],
+                    "kind": "blocked_environment",
+                    "traceback": traceback.format_exc()[-1200:],
+                },
+            }
         r["seconds"] = round(time.perf_counter() - t0, 2)
         res["envs"].append(r)
         best = max((c.get("fps") or 0 for c in r.get("cells", [])), default=0)
-        print(f"[{i}/{len(names)}] {n}: "
-              + (f"blocked ({r['blocked']['reason'][:70]})" if "blocked" in r
-                 else f"best {best:,.0f} f/s  ref "
-                      f"{(r.get('official_cpu') or {}).get('set_state_render', {}).get('fps', float('nan')):,.0f} f/s")
-              + f"  [{r['seconds']}s]", flush=True)
+        print(
+            f"[{i}/{len(names)}] {n}: "
+            + (
+                f"blocked ({r['blocked']['reason'][:70]})"
+                if "blocked" in r
+                else f"best {best:,.0f} f/s  ref "
+                f"{(r.get('official_cpu') or {}).get('set_state_render', {}).get('fps', float('nan')):,.0f} f/s"
+            )
+            + f"  [{r['seconds']}s]",
+            flush=True,
+        )
         res["provenance"]["loadavg_end"] = os.getloadavg()[0]
-        out.write_text(json.dumps(res, indent=1, sort_keys=True) + "\n")   # resumable after every env
+        out.write_text(json.dumps(res, indent=1, sort_keys=True) + "\n")  # resumable after every env
     out.write_text(json.dumps(res, indent=1, sort_keys=True) + "\n")
     ok = sum(1 for r in res["envs"] if r.get("cells") and any(c.get("fps") for c in r["cells"]))
-    print(f"\nwrote {out}: {ok}/{len(res['envs'])} envs measured, "
-          f"{len(res['envs']) - ok} blocked", flush=True)
+    print(f"\nwrote {out}: {ok}/{len(res['envs'])} envs measured, {len(res['envs']) - ok} blocked", flush=True)
 
 
 if __name__ == "__main__":

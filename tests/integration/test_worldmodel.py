@@ -1,18 +1,18 @@
 """Focused Step-9 contract for the public stable-worldmodel interoperability facade."""
+
 from __future__ import annotations
 
 import inspect
 import json
-from pathlib import Path
 import subprocess
 import sys
+from pathlib import Path
 
 import numpy as np
 import pytest
 
 import stable_envs as snv
-from stable_envs import interop
-from stable_envs import registry
+from stable_envs import interop, registry
 
 pytestmark = pytest.mark.integration
 
@@ -34,16 +34,12 @@ assert len(interop.SWM_IDS) == 42
 assert "stable_envs._interop.worldmodel" not in sys.modules
 assert "stable_worldmodel" not in sys.modules
 """
-    result = subprocess.run(
-        [sys.executable, "-c", code], cwd=ROOT, text=True, capture_output=True
-    )
+    result = subprocess.run([sys.executable, "-c", code], cwd=ROOT, text=True, capture_output=True)
     assert result.returncode == 0, result.stderr
 
 
 def test_all_42_frozen_swm_ids_resolve_to_the_same_canonical_classes():
-    expected = {
-        row["swm_id"]: tuple(row["stable_envs_cells"]) for row in _frozen_rows()
-    }
+    expected = {row["swm_id"]: tuple(row["stable_envs_cells"]) for row in _frozen_rows()}
     assert interop.SWM_IDS is registry.SWM_IDS
     assert interop.SWM_IDS == expected
     assert len(expected) == 42

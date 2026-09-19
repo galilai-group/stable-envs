@@ -16,6 +16,7 @@ generator). What this file pins:
 The generator is a script under ``scratch/``, loaded by path rather than imported as a package,
 matching ``tests/unit/test_swm_matrix.py``'s own convention for the sibling Step-3/7 tool.
 """
+
 from __future__ import annotations
 
 import importlib.util
@@ -31,8 +32,13 @@ SUPPORT_MATRIX = REPO / "examples" / "results" / "step8" / "support_matrix.json"
 
 STATUS_VOCAB = {"MEASURED", "UNMEASURED", "NOT_APPLICABLE", "MISMATCH(upstream)"}
 ROW_STATUS_FIELDS = (
-    "registry_resolution", "registered_default", "swm_wrapper_reset_appearance",
-    "variation_map", "state_observation_api", "device_behavior", "wrapper_interaction_path",
+    "registry_resolution",
+    "registered_default",
+    "swm_wrapper_reset_appearance",
+    "variation_map",
+    "state_observation_api",
+    "device_behavior",
+    "wrapper_interaction_path",
 )
 SYMBOLIC_IDS = {"swm/CraftaxClassicSymbolic-v1", "swm/CraftaxSymbolic-v1"}
 
@@ -58,10 +64,9 @@ def test_regenerates_byte_identically_modulo_head_sha(gen, committed):
     # HEAD moves as commits land on this branch; everything else must not.
     committed_copy.pop("baseline_sha", None)
     fresh_copy.pop("baseline_sha", None)
-    assert json.dumps(fresh_copy, indent=2, sort_keys=True) == \
-        json.dumps(committed_copy, indent=2, sort_keys=True), (
-        "gate_f_matrix.json is stale: re-run `python scratch/step8/swm/build_gate_f.py` and "
-        "commit the result")
+    assert json.dumps(fresh_copy, indent=2, sort_keys=True) == json.dumps(committed_copy, indent=2, sort_keys=True), (
+        "gate_f_matrix.json is stale: re-run `python scratch/step8/swm/build_gate_f.py` and commit the result"
+    )
 
 
 def test_all_42_ids_present_and_agree_with_support_matrix(committed):
@@ -82,11 +87,15 @@ def test_every_row_every_status_field_has_a_vocabulary_status_and_evidence(commi
             # every UNMEASURED/NOT_APPLICABLE/MISMATCH must say WHY, and every MEASURED must point
             # somewhere -- 'source', 'why', 'evidence' or a non-empty per-class/per-cell breakdown
             # (which itself carries sources) are all acceptable, but nothing bare is.
-            has_reason = any(k in node for k in ("source", "why", "evidence")) or \
-                bool(node.get("per_class")) or bool(node.get("per_cell")) or \
-                bool(node.get("classes"))
-            assert has_reason, f"{row['swm_id']}.{field} has status {status!r} with no evidence " \
-                f"path or reason: {node!r}"
+            has_reason = (
+                any(k in node for k in ("source", "why", "evidence"))
+                or bool(node.get("per_class"))
+                or bool(node.get("per_cell"))
+                or bool(node.get("classes"))
+            )
+            assert has_reason, (
+                f"{row['swm_id']}.{field} has status {status!r} with no evidence path or reason: {node!r}"
+            )
 
 
 def test_symbolic_ids_are_not_applicable_across_renderer_columns(committed):
@@ -94,14 +103,13 @@ def test_symbolic_ids_are_not_applicable_across_renderer_columns(committed):
     for sid in SYMBOLIC_IDS:
         row = by_id[sid]
         assert row["pixel_or_symbolic"] == "symbolic"
-        for field in ("registered_default", "variation_map", "state_observation_api",
-                      "wrapper_interaction_path"):
+        for field in ("registered_default", "variation_map", "state_observation_api", "wrapper_interaction_path"):
             assert row[field]["status"] == "NOT_APPLICABLE", f"{sid}.{field}"
 
 
 def test_craftax_swm_wrapper_jit_declaration_exists_on_both_cells():
-    import stable_envs.envs.craftax as cc
     import stable_envs.envs._craftax_full as cf
+    import stable_envs.envs.craftax as cc
 
     for cls in (cc.CraftaxClassic, cf.CraftaxFull):
         decl = cls.SWM_WRAPPER_GATE_F

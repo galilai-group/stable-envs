@@ -42,6 +42,7 @@ the two IS the cost of generating the pixels, measured rather than inferred from
     python examples/train_from_states.py --batch 512 --steps 800
     python examples/train_from_states.py --batch 4096 --batch-sampler
 """
+
 from __future__ import annotations
 
 import argparse
@@ -71,12 +72,17 @@ class StateNet(nn.Module):
     def __init__(self, out_dim: int = 6, width: int = 32):
         super().__init__()
         c = [3, width, width * 2, width * 4, width * 4]
-        self.body = nn.Sequential(*[
-            layer for i in range(4) for layer in (
-                nn.Conv2d(c[i], c[i + 1], 3, stride=2, padding=1),
-                nn.GroupNorm(8, c[i + 1]),
-                nn.SiLU(),
-            )])
+        self.body = nn.Sequential(
+            *[
+                layer
+                for i in range(4)
+                for layer in (
+                    nn.Conv2d(c[i], c[i + 1], 3, stride=2, padding=1),
+                    nn.GroupNorm(8, c[i + 1]),
+                    nn.SiLU(),
+                )
+            ]
+        )
         self.head = nn.Sequential(nn.Flatten(), nn.LazyLinear(256), nn.SiLU(), nn.Linear(256, out_dim))
 
     def forward(self, frames_uint8: torch.Tensor) -> torch.Tensor:
@@ -109,7 +115,7 @@ def evaluate(net, env, states: torch.Tensor, batch: int) -> dict:
     net.eval()
     preds, gts = [], []
     for i in range(0, states.shape[0] - batch + 1, batch):
-        s = states[i:i + batch].cuda()
+        s = states[i : i + batch].cuda()
         f = env.set_state(s).render()
         preds.append(net(f).float())
         gts.append(targets(s))
@@ -123,16 +129,19 @@ def evaluate(net, env, states: torch.Tensor, batch: int) -> dict:
     agent_px = (ps[:, :2] - gs[:, :2]).norm(dim=1).mean().item()
     block_px = (ps[:, 2:4] - gs[:, 2:4]).norm(dim=1).mean().item()
     d = (ps[:, 4] - gs[:, 4] + math.pi) % (2 * math.pi) - math.pi
-    return {"r2": {n: float(v) for n, v in zip(["agent_x", "agent_y", "block_x", "block_y",
-                                                "cos_angle", "sin_angle"], r2)},
-            "mse": float(((p - g) ** 2).mean()),
-            "agent_err_px": agent_px, "block_err_px": block_px,
-            "angle_err_deg": float(d.abs().mean() * 180 / math.pi),
-            "n": int(p.shape[0])}
+    return {
+        "r2": {
+            n: float(v) for n, v in zip(["agent_x", "agent_y", "block_x", "block_y", "cos_angle", "sin_angle"], r2)
+        },
+        "mse": float(((p - g) ** 2).mean()),
+        "agent_err_px": agent_px,
+        "block_err_px": block_px,
+        "angle_err_deg": float(d.abs().mean() * 180 / math.pi),
+        "n": int(p.shape[0]),
+    }
 
 
-def timed_steps(env, net, opt, states_pool, batch: int, steps: int, source=None,
-                warmup: int = 5) -> dict:
+def timed_steps(env, net, opt, states_pool, batch: int, steps: int, source=None, warmup: int = 5) -> dict:
     """``steps`` optimisation steps, with render and forward/backward timed separately.
 
     ``source`` supplies pre-rendered frames instead of rendering, which is the control: the same
@@ -173,12 +182,17 @@ def timed_steps(env, net, opt, states_pool, batch: int, steps: int, source=None,
         render_s += t1 - t0
         train_s += t2 - t1
     wall = time.perf_counter() - t_all
-    return {"batch": batch, "steps": steps, "wall_s": wall,
-            "render_ms": render_s / steps * 1e3, "train_ms": train_s / steps * 1e3,
-            "step_ms": wall / steps * 1e3,
-            "render_share": render_s / (render_s + train_s),
-            "frames_per_s": batch * steps / wall,
-            "final_loss": float(loss.detach())}
+    return {
+        "batch": batch,
+        "steps": steps,
+        "wall_s": wall,
+        "render_ms": render_s / steps * 1e3,
+        "train_ms": train_s / steps * 1e3,
+        "step_ms": wall / steps * 1e3,
+        "render_share": render_s / (render_s + train_s),
+        "frames_per_s": batch * steps / wall,
+        "final_loss": float(loss.detach()),
+    }
 
 
 def main() -> None:
@@ -191,9 +205,12 @@ def main() -> None:
     ap.add_argument("--val", type=int, default=4096)
     ap.add_argument("--lr", type=float, default=1e-3)
     ap.add_argument("--sweep", default="64,128,256,512,1024")
-    ap.add_argument("--batch-sampler", action="store_true",
-                    help="index the states a batch at a time instead of a row at a time; worth it "
-                         "above ~B=1024, no custom collate either way")
+    ap.add_argument(
+        "--batch-sampler",
+        action="store_true",
+        help="index the states a batch at a time instead of a row at a time; worth it "
+        "above ~B=1024, no custom collate either way",
+    )
     ap.add_argument("--out", type=Path, default=Path("examples/results/train_from_states.json"))
     args = ap.parse_args()
 
@@ -201,21 +218,25 @@ def main() -> None:
     rng = np.random.default_rng(0)
     proto = se.make(args.env, num_envs=1, size=args.size, device="cuda")
     all_states = proto.sample_states(args.train + args.val, rng)
-    train_states, val_states = all_states[:args.train], all_states[args.train:]
+    train_states, val_states = all_states[: args.train], all_states[args.train :]
 
     # `StateDataset` is used for ONE line here — the storage report, which needs the env to measure the
     # frame shape rather than assume it is square. It is not in the training path below; the loader is
     # a plain torch DataLoader over a plain TensorDataset.
     comp = se.StateDataset(proto, train_states, size=args.size, frames=False).compression
-    print(f"{args.env}: {comp['n']:,} training states, {comp['stored_bytes']:,} B "
-          f"({comp['state_bytes'] / comp['n']:.0f} B/sample) against "
-          f"{comp['frame_bytes']:,} B of {comp['frame_shape']} frames -> {comp['ratio']:.0f}x smaller")
-    print(f"the whole training set fits in {comp['stored_bytes'] / 1024:.0f} kB; the frames it stands "
-          f"in for are {comp['frame_bytes'] / 1e6:.0f} MB")
+    print(
+        f"{args.env}: {comp['n']:,} training states, {comp['stored_bytes']:,} B "
+        f"({comp['state_bytes'] / comp['n']:.0f} B/sample) against "
+        f"{comp['frame_bytes']:,} B of {comp['frame_shape']} frames -> {comp['ratio']:.0f}x smaller"
+    )
+    print(
+        f"the whole training set fits in {comp['stored_bytes'] / 1024:.0f} kB; the frames it stands "
+        f"in for are {comp['frame_bytes'] / 1e6:.0f} MB"
+    )
 
     env = se.make(args.env, num_envs=args.batch, size=args.size, device="cuda")
     net = StateNet().cuda()
-    net(env.set_state(torch.as_tensor(train_states[:args.batch], device="cuda")).render())  # LazyLinear
+    net(env.set_state(torch.as_tensor(train_states[: args.batch], device="cuda")).render())  # LazyLinear
     n_params = sum(p.numel() for p in net.parameters())
     opt = torch.optim.Adam(net.parameters(), lr=args.lr)
     sched = torch.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=args.steps)
@@ -230,17 +251,21 @@ def main() -> None:
     # fix needs no custom collate — see the --batch-sampler flag and the note in stable_envs/data.py.
     train_ds = TensorDataset(torch.as_tensor(np.asarray(train_states, np.float32)))
     if args.batch_sampler:
-        loader = DataLoader(train_ds, batch_size=None, sampler=BatchSampler(
-            RandomSampler(range(len(train_ds))), args.batch, drop_last=False))
+        loader = DataLoader(
+            train_ds,
+            batch_size=None,
+            sampler=BatchSampler(RandomSampler(range(len(train_ds))), args.batch, drop_last=False),
+        )
     else:
         loader = DataLoader(train_ds, batch_size=args.batch, shuffle=True, drop_last=False)
-    print(f"DataLoader: {len(loader)} batches/epoch over TensorDataset, torch's default collate, "
-          f"drop_last=False")
+    print(f"DataLoader: {len(loader)} batches/epoch over TensorDataset, torch's default collate, drop_last=False")
 
     val = torch.as_tensor(val_states)
     before = evaluate(net, env, val, args.batch)
-    print(f"before training: val MSE {before['mse']:.4f}, block error {before['block_err_px']:.1f} px, "
-          f"R^2 {min(before['r2'].values()):+.3f}..{max(before['r2'].values()):+.3f}")
+    print(
+        f"before training: val MSE {before['mse']:.4f}, block error {before['block_err_px']:.1f} px, "
+        f"R^2 {min(before['r2'].values()):+.3f}..{max(before['r2'].values()):+.3f}"
+    )
 
     render_s = train_s = 0.0
     seen = 0
@@ -256,7 +281,7 @@ def main() -> None:
             states = batch[0] if isinstance(batch, (list, tuple)) else batch
             torch.cuda.synchronize()
             t0 = time.perf_counter()
-            frames = env.set_state(states).render()          # <- the whole point
+            frames = env.set_state(states).render()  # <- the whole point
             torch.cuda.synchronize()
             t1 = time.perf_counter()
             # get_state(), not `states`: on device, and already the right number of rows if this was
@@ -282,14 +307,18 @@ def main() -> None:
     print(f"  val MSE {before['mse']:.4f} -> {after['mse']:.5f}")
     for k, v in after["r2"].items():
         print(f"  R^2 {k:<10s} {v:+.4f}")
-    print(f"  agent position error {after['agent_err_px']:.2f} px, "
-          f"block position error {after['block_err_px']:.2f} px, "
-          f"block angle error {after['angle_err_deg']:.2f} deg  (512-unit board, rendered at "
-          f"{args.size} px, so one output pixel is {SCREEN / args.size:.2f} board units)")
+    print(
+        f"  agent position error {after['agent_err_px']:.2f} px, "
+        f"block position error {after['block_err_px']:.2f} px, "
+        f"block angle error {after['angle_err_deg']:.2f} deg  (512-unit board, rendered at "
+        f"{args.size} px, so one output pixel is {SCREEN / args.size:.2f} board units)"
+    )
 
     share = render_s / (render_s + train_s)
-    print(f"\nthroughput: {seen / wall:,.0f} frames/s end to end "
-          f"({wall / args.steps * 1e3:.2f} ms/step at batch {args.batch})")
+    print(
+        f"\nthroughput: {seen / wall:,.0f} frames/s end to end "
+        f"({wall / args.steps * 1e3:.2f} ms/step at batch {args.batch})"
+    )
     print(f"  render          {render_s / args.steps * 1e3:.3f} ms/step  ({share * 100:.1f}% of step)")
     print(f"  fwd+bwd+step    {train_s / args.steps * 1e3:.3f} ms/step  ({(1 - share) * 100:.1f}%)")
 
@@ -301,16 +330,18 @@ def main() -> None:
     ctl_opt = torch.optim.Adam(ctl_net.parameters(), lr=args.lr)
     ctl = timed_steps(env, ctl_net, ctl_opt, pool, args.batch, 100, source=cached)
     live_net = StateNet().cuda()
-    live_net(env.set_state(pool[:args.batch].cuda()).render())
+    live_net(env.set_state(pool[: args.batch].cuda()).render())
     live_opt = torch.optim.Adam(live_net.parameters(), lr=args.lr)
     live = timed_steps(env, live_net, live_opt, pool, args.batch, 100)
     print(f"\ncontrol, batch {args.batch}, 100 steps:")
     print(f"  frames already in VRAM  {ctl['step_ms']:.2f} ms/step   {ctl['frames_per_s']:,.0f} frames/s")
     print(f"  rendered every step     {live['step_ms']:.2f} ms/step   {live['frames_per_s']:,.0f} frames/s")
-    print(f"  generating the pixels costs {live['step_ms'] - ctl['step_ms']:.2f} ms/step "
-          f"({(live['step_ms'] / ctl['step_ms'] - 1) * 100:.0f}% over the fastest data path there is), "
-          f"and replaces {cached.numel() / 1e6:.0f} MB of resident pixels with "
-          f"{pool.numel() * 4 / 1e3:.0f} kB of state")
+    print(
+        f"  generating the pixels costs {live['step_ms'] - ctl['step_ms']:.2f} ms/step "
+        f"({(live['step_ms'] / ctl['step_ms'] - 1) * 100:.0f}% over the fastest data path there is), "
+        f"and replaces {cached.numel() / 1e6:.0f} MB of resident pixels with "
+        f"{pool.numel() * 4 / 1e3:.0f} kB of state"
+    )
     del cached
     torch.cuda.empty_cache()
 
@@ -327,21 +358,43 @@ def main() -> None:
     print("\n| batch | render ms | fwd+bwd ms | step ms | render share | frames/s |")
     print("|---|---|---|---|---|---|")
     for r in sweep:
-        print(f"| {r['batch']} | {r['render_ms']:.2f} | {r['train_ms']:.2f} | {r['step_ms']:.2f} | "
-              f"{r['render_share'] * 100:.1f}% | {r['frames_per_s']:,.0f} |")
+        print(
+            f"| {r['batch']} | {r['render_ms']:.2f} | {r['train_ms']:.2f} | {r['step_ms']:.2f} | "
+            f"{r['render_share'] * 100:.1f}% | {r['frames_per_s']:,.0f} |"
+        )
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
-    args.out.write_text(json.dumps({
-        "env": args.env, "size": args.size, "batch": args.batch, "steps": args.steps,
-        "n_train": args.train, "n_val": args.val, "params": n_params,
-        "compression": comp, "loss_log": log,
-        "before": before, "after": after,
-        "throughput": {"frames_per_s": seen / wall, "wall_s": wall,
-                       "render_ms": render_s / args.steps * 1e3,
-                       "train_ms": train_s / args.steps * 1e3, "render_share": share},
-        "control_cached_vram": ctl, "control_live_render": live, "batch_sweep": sweep,
-        "device": torch.cuda.get_device_name(0), "torch": torch.__version__,
-    }, indent=2, default=str))
+    args.out.write_text(
+        json.dumps(
+            {
+                "env": args.env,
+                "size": args.size,
+                "batch": args.batch,
+                "steps": args.steps,
+                "n_train": args.train,
+                "n_val": args.val,
+                "params": n_params,
+                "compression": comp,
+                "loss_log": log,
+                "before": before,
+                "after": after,
+                "throughput": {
+                    "frames_per_s": seen / wall,
+                    "wall_s": wall,
+                    "render_ms": render_s / args.steps * 1e3,
+                    "train_ms": train_s / args.steps * 1e3,
+                    "render_share": share,
+                },
+                "control_cached_vram": ctl,
+                "control_live_render": live,
+                "batch_sweep": sweep,
+                "device": torch.cuda.get_device_name(0),
+                "torch": torch.__version__,
+            },
+            indent=2,
+            default=str,
+        )
+    )
     print(f"\nwrote {args.out}")
 
 

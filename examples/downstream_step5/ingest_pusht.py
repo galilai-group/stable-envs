@@ -14,6 +14,7 @@ different tasks and the interval around them means nothing.
 
     python examples/downstream_step5/ingest_pusht.py --out examples/results/step5/pusht
 """
+
 from __future__ import annotations
 
 import argparse
@@ -92,21 +93,23 @@ def episodes(runs: list[dict]) -> list[dict]:
     rows = []
     for r in runs:
         for i, (ep, st, ok) in enumerate(zip(r["episodes_idx"], r["start_steps"], r["episode_successes"])):
-            rows.append({
-                "env": "swm/PushT-v1",
-                "model_family": "lewm",
-                "checkpoint": r["policy"],
-                "planner": "cem",
-                "arm": r["arm"],
-                "seed": r["seed"],
-                "episode_id": int(ep),
-                "start_step": int(st),
-                "goal_offset": r["goal_offset"],
-                "eval_budget": r["eval_budget"],
-                "slot": i,
-                "success": int(ok),
-                "source": str(r["path"].relative_to(ROOT)),
-            })
+            rows.append(
+                {
+                    "env": "swm/PushT-v1",
+                    "model_family": "lewm",
+                    "checkpoint": r["policy"],
+                    "planner": "cem",
+                    "arm": r["arm"],
+                    "seed": r["seed"],
+                    "episode_id": int(ep),
+                    "start_step": int(st),
+                    "goal_offset": r["goal_offset"],
+                    "eval_budget": r["eval_budget"],
+                    "slot": i,
+                    "success": int(ok),
+                    "source": str(r["path"].relative_to(ROOT)),
+                }
+            )
     return rows
 
 
@@ -114,8 +117,7 @@ def series(rows: list[dict], arm: str, seeds: list[int] | None = None) -> tuple[
     """Outcomes for one arm in a fixed order, plus the seed of each -- the order IS the pairing."""
     sel = [r for r in rows if r["arm"] == arm and (seeds is None or r["seed"] in seeds)]
     sel.sort(key=lambda r: (r["seed"], r["slot"]))
-    return ([r["success"] for r in sel], [r["seed"] for r in sel],
-            [r["episode_id"] for r in sel])
+    return ([r["success"] for r in sel], [r["seed"] for r in sel], [r["episode_id"] for r in sel])
 
 
 def main() -> None:
@@ -125,6 +127,7 @@ def main() -> None:
     args = ap.parse_args()
 
     import sys
+
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     import step5_stats as S
 
@@ -160,8 +163,7 @@ def main() -> None:
         if (ss, se) != (os_, oe):
             secondary[a] = {"error": "not aligned with official"}
             continue
-        secondary[a] = {"arm": S.arm(sa), "paired": S.paired(oa, sa),
-                        "seeds": sorted(set(ss))}
+        secondary[a] = {"arm": S.arm(sa), "paired": S.paired(oa, sa), "seeds": sorted(set(ss))}
 
     out = {
         "env": "swm/PushT-v1",
@@ -186,13 +188,19 @@ def main() -> None:
     for p in pairing["problems"]:
         print("  !", p)
     print(f"official    {g['official']['successes']}/{g['official']['n']} = {g['official']['success_rate']:.1f}%")
-    print(f"stable-envs {g['stable_envs']['successes']}/{g['stable_envs']['n']} = {g['stable_envs']['success_rate']:.1f}%")
+    print(
+        f"stable-envs {g['stable_envs']['successes']}/{g['stable_envs']['n']} = {g['stable_envs']['success_rate']:.1f}%"
+    )
     e = g["equivalence"]
-    print(f"paired      b={e['b']} c={e['c']} delta={e['delta_points']:+.2f} pts "
-          f"CI [{e['ci'][0]:.2f}, {e['ci'][1]:.2f}] McNemar p={e['mcnemar_p']:.3f}")
+    print(
+        f"paired      b={e['b']} c={e['c']} delta={e['delta_points']:+.2f} pts "
+        f"CI [{e['ci'][0]:.2f}, {e['ci'][1]:.2f}] McNemar p={e['mcnemar_p']:.3f}"
+    )
     c = g["control"]
-    print(f"control     {c['arm']['successes']}/{c['arm']['n']} delta={c['paired']['delta_points']:+.1f} pts "
-          f"p={c['paired']['mcnemar_p']:.2e} degraded={c['degraded']}")
+    print(
+        f"control     {c['arm']['successes']}/{c['arm']['n']} delta={c['paired']['delta_points']:+.1f} pts "
+        f"p={c['paired']['mcnemar_p']:.2e} degraded={c['degraded']}"
+    )
     print(f"VERDICT     {g['verdict']} -- {g['verdict_reason']}")
     print(f"wrote {jl.relative_to(ROOT)} and {(args.out / 'gate_h.json').relative_to(ROOT)}")
 

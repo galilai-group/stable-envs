@@ -32,6 +32,7 @@ Every check asserts the MESSAGE, not only the exception type. ``pytest.raises(Va
 as well against ``ValueError("")``, and the entire point of a diagnostic is that a human reads it and
 knows what they did and what to do instead.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -40,9 +41,10 @@ import pytest
 torch = pytest.importorskip("torch")
 
 from stable_envs import spaces
-from stable_envs.env import Env as StableEnv, check_states, require_contiguous_out
 from stable_envs._style import StyleTensor
 from stable_envs.data import StateDataset, TrajectoryDataset, check_style, render_states
+from stable_envs.env import Env as StableEnv
+from stable_envs.env import check_states, require_contiguous_out
 
 DEV = "cpu"
 NAMES = ("agent_x", "agent_y", "block_x", "block_y", "block_angle")
@@ -70,8 +72,7 @@ class TinyEnv(StableEnv):
         # The first line of all 26 shipped render overrides, verbatim, including the unchecked
         # ``as_tensor`` + ``reshape`` this file exists to make unreachable. The hook on the base class
         # is what validates and substitutes before this body runs.
-        s = self._state if states is None else torch.as_tensor(states, device=self.device,
-                                                               dtype=torch.float32)
+        s = self._state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
         lead = tuple(s.shape[:-1])
         s = s.reshape(-1, self.state_dim)
         sty = self.resolve_style(style, variation, batch=int(s.shape[0]))
@@ -120,7 +121,7 @@ def test_a_frame_stack_whose_size_DIVIDES_is_refused():
     This is the only case in the file where the old code produced pixels rather than a traceback, and
     it is the reason the rule is on the shape rather than on whether the reshape happens to work.
     """
-    env = _env(120)                                     # 600 / 5 = 120, so even the batch lined up
+    env = _env(120)  # 600 / 5 = 120, so even the batch lined up
     frames = torch.zeros((8, 5, 5, 3), dtype=torch.uint8)
     assert frames.numel() % env.state_dim == 0, "the fixture must be the DIVISIBLE case"
     with pytest.raises(ValueError) as e:
@@ -252,6 +253,7 @@ def test_the_non_finite_scan_runs_on_the_caller_s_tensor_before_any_device_copy(
     the reporter is handed a CPU tensor and must answer without moving it.
     """
     from stable_envs.env import _nonfinite_report
+
     st = torch.zeros(4, 5)
     st[2, 3] = float("nan")
     out = _nonfinite_report(st, NAMES)
@@ -397,8 +399,8 @@ def test_a_transposed_style_is_refused_rather_than_regrouped():
     square case (batch == style_dim) is genuinely ambiguous and no rule can separate it, which is why
     the check is stated as "the last axis is style_dim" rather than as "detect transposes".
     """
-    space = TinyEnv(num_envs=1, device=DEV).variation_space         # style_dim 3
-    transposed = np.arange(15, dtype=np.float32).reshape(3, 5)   # meant to be (5, 3)
+    space = TinyEnv(num_envs=1, device=DEV).variation_space  # style_dim 3
+    transposed = np.arange(15, dtype=np.float32).reshape(3, 5)  # meant to be (5, 3)
     assert transposed.size == 5 * 3, "the fixture must hold exactly the right NUMBER of values"
     with pytest.raises(ValueError) as e:
         StyleTensor.from_space(space, 5, device=DEV, values=transposed)
@@ -428,8 +430,7 @@ def test_a_transposed_per_environment_variation_value_is_refused():
     """
     space = TinyEnv(num_envs=1, device=DEV).variation_space
     with pytest.raises(ValueError) as e:
-        StyleTensor.from_space(space, 8, device=DEV,
-                               overrides={"block.color": np.zeros((3, 8), np.float32)})
+        StyleTensor.from_space(space, 8, device=DEV, overrides={"block.color": np.zeros((3, 8), np.float32)})
     msg = str(e.value)
     assert "transpose" in msg and "(8, 3)" in msg and "(3, 8)" in msg, msg
 
@@ -448,7 +449,7 @@ def test_an_unknown_path_in_sample_style_is_refused_rather_than_randomising_noth
     """
     env = _env(4)
     with pytest.raises(KeyError) as e:
-        env.sample_style(4, paths=["block.colour"])              # British spelling, silent no-op
+        env.sample_style(4, paths=["block.colour"])  # British spelling, silent no-op
     msg = str(e.value)
     assert "block.colour" in msg and "block.color" in msg, f"neither the typo nor the fix: {msg}"
     assert "DEFAULT" in msg, f"the message does not say what used to happen: {msg}"
@@ -493,8 +494,7 @@ def test_a_trajectory_dataset_refuses_a_rank_three_frame_for_a_three_wide_env():
     For an env whose state happens to be 3 numbers wide that used to be accepted in full.
     """
     with pytest.raises(ValueError) as e:
-        TrajectoryDataset(_env(1, cls=ThreeWideEnv), torch.zeros((6, 8, 3), dtype=torch.uint8),
-                          device=DEV)
+        TrajectoryDataset(_env(1, cls=ThreeWideEnv), torch.zeros((6, 8, 3), dtype=torch.uint8), device=DEV)
     assert "FRAMES" in str(e.value), str(e.value)
 
 
@@ -506,8 +506,7 @@ def test_a_trajectory_dataset_refuses_a_transposed_style():
 
 
 def test_a_trajectory_dataset_still_accepts_a_dense_corpus():
-    ds = TrajectoryDataset(_env(1), np.stack([_states(4), _states(4, first=10)]), window=2,
-                           device=DEV)
+    ds = TrajectoryDataset(_env(1), np.stack([_states(4), _states(4, first=10)]), window=2, device=DEV)
     assert ds.n_trajectories == 2 and len(ds) == 6
 
 
@@ -534,13 +533,14 @@ def test_a_float_out_buffer_is_refused_for_every_env_not_just_the_rasterizer_one
     with pytest.raises(ValueError) as e:
         require_contiguous_out("test", torch.zeros((4, 8, 8, 3), dtype=torch.float32))
     assert "uint8" in str(e.value)
-    require_contiguous_out("test", torch.zeros((4, 8, 8, 3), dtype=torch.uint8))     # the good case
-    require_contiguous_out("test", None)                                              # and no buffer
+    require_contiguous_out("test", torch.zeros((4, 8, 8, 3), dtype=torch.uint8))  # the good case
+    require_contiguous_out("test", None)  # and no buffer
 
 
 def test_an_out_buffer_of_the_wrong_size_or_dtype_is_refused():
     """``_destination`` is the shared contract both rasterizer backends go through."""
     from stable_envs.render.raster2d import _destination
+
     with pytest.raises(ValueError, match="holds 12 elements"):
         _destination(torch.zeros(12, dtype=torch.uint8), 2, 4, 4)
     with pytest.raises(ValueError, match="must be uint8"):

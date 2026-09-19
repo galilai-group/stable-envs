@@ -6,6 +6,7 @@ duplication could return: not "the two agree today" (two copies of an expression
 is why nobody noticed), but "there is ONE object", checked by identity wherever identity is the real
 property, and by value over the inputs that separate the two spellings where it is not.
 """
+
 from __future__ import annotations
 
 import pytest
@@ -79,17 +80,26 @@ def test_the_fused_edge_table_is_the_per_primitive_walks_own_setup(seed):
     over tidy ones.
     """
     vx, vy, H, W = _random_quads(seed)
-    tab = GF.edge_table(vx, vy, H, W)                                  # (M,4,EG_W) int32
+    tab = GF.edge_table(vx, vy, H, W)  # (M,4,EG_W) int32
     nx, ny = vx.roll(-1, 1), vy.roll(-1, 1)
     a, b, c, d = (t.reshape(-1) for t in (vx, vy, nx, ny))
-    (draw, sx, sy, xx0, yy0, dx, dy, xdir, vert, horiz, ymaj, major, E,
-     lo) = G.edge_setup(a, b, c, d, W, H)
+    (draw, sx, sy, xx0, yy0, dx, dy, xdir, vert, horiz, ymaj, major, E, lo) = G.edge_setup(a, b, c, d, W, H)
     flat = tab.permute(0, 1, 2).reshape(-1, GF.EG_W).to(torch.int64)
     # ``edge_table`` is laid out edge-major within each quad, which is how the flat tuple is ordered
     # too, so the two line up row for row.
-    cols = {GF.EG_DRAW: draw.to(torch.int64), GF.EG_SX: sx, GF.EG_SY: sy, GF.EG_X0: xx0,
-            GF.EG_Y0: yy0, GF.EG_DX: dx, GF.EG_DY: dy, GF.EG_XDIR: xdir, GF.EG_MAJOR: major,
-            GF.EG_E: E, GF.EG_LO: lo}
+    cols = {
+        GF.EG_DRAW: draw.to(torch.int64),
+        GF.EG_SX: sx,
+        GF.EG_SY: sy,
+        GF.EG_X0: xx0,
+        GF.EG_Y0: yy0,
+        GF.EG_DX: dx,
+        GF.EG_DY: dy,
+        GF.EG_XDIR: xdir,
+        GF.EG_MAJOR: major,
+        GF.EG_E: E,
+        GF.EG_LO: lo,
+    }
     for col, want in cols.items():
         assert torch.equal(flat[:, col], want), f"edge column {col} disagrees with edge_setup"
     kind = flat[:, GF.EG_KIND]
@@ -119,7 +129,8 @@ def test_the_edge_law_has_exactly_one_definition():
     src = open(GF.__file__).read()
     assert "G.edge_geometry(" in src, "gfxdraw_fused stopped using gfxdraw's edge law"
     assert "clip_line" not in src.split("def bin_primitives")[0].split("edge_geometry")[-1], (
-        "gfxdraw_fused clips its own edges again")
+        "gfxdraw_fused clips its own edges again"
+    )
 
 
 # --------------------------------------------------------------------------- the smaller copies
@@ -145,11 +156,12 @@ def test_row_groups_is_one_function_under_two_names():
 def test_the_scene_builder_broadcast_contract_is_in_the_signatures():
     """``Batched`` is what every builder argument accepts; it exists so the promise is on the methods
     and not only in the class docstring."""
-    from stable_envs.render import scene as SC
     import inspect
+
+    from stable_envs.render import scene as SC
+
     assert hasattr(SC, "Batched")
     for name in ("add_disc", "add_poly", "add_segment", "add_rect"):
         sig = inspect.signature(getattr(SC.SceneBuilder, name))
         assert sig.return_annotation is not inspect.Signature.empty, name
-        assert all(p.annotation is not inspect.Parameter.empty
-                   for n, p in sig.parameters.items() if n != "self"), name
+        assert all(p.annotation is not inspect.Parameter.empty for n, p in sig.parameters.items() if n != "self"), name

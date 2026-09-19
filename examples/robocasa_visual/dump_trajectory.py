@@ -21,6 +21,7 @@ comparison if it is missing:
   and the context is live, so the ratio stage C prints is loop-against-loop rather than
   loop-against-setup.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -58,9 +59,17 @@ def main() -> None:
     import mujoco
     from robocasa.utils.env_utils import create_env
 
-    env = create_env(env_name=args.task, robots="PandaOmron", camera_names=list(CAMERAS),
-                     camera_widths=args.res, camera_heights=args.res, seed=args.seed,
-                     render_onscreen=False, layout_ids=layout, style_ids=style)
+    env = create_env(
+        env_name=args.task,
+        robots="PandaOmron",
+        camera_names=list(CAMERAS),
+        camera_widths=args.res,
+        camera_heights=args.res,
+        seed=args.seed,
+        render_onscreen=False,
+        layout_ids=layout,
+        style_ids=style,
+    )
     t0 = time.perf_counter()
     env.reset()
     t_reset = time.perf_counter() - t0
@@ -109,7 +118,7 @@ def main() -> None:
     vopt = mujoco.MjvOption()
     vopt.geomgroup[:] = 0
     vopt.geomgroup[1] = 1
-    chk = mujoco.Renderer(m, width=args.res, height=args.res)     # never closed; EGL contexts persist
+    chk = mujoco.Renderer(m, width=args.res, height=args.res)  # never closed; EGL contexts persist
     d_chk = mujoco.MjData(m)
     worst = {}
     for c in CAMERAS:
@@ -120,14 +129,14 @@ def main() -> None:
             d_chk.qvel[:] = 0.0
             mujoco.mj_forward(m, d_chk)
             chk.update_scene(d_chk, camera=cid, scene_option=vopt)
-            w = max(w, int(np.abs(chk.render().astype(np.int16)
-                                  - frames[c][t].astype(np.int16)).max()))
+            w = max(w, int(np.abs(chk.render().astype(np.int16) - frames[c][t].astype(np.int16)).max()))
         worst[c] = w
     if max(worst.values()) != 0:
         raise AssertionError(
             f"the recorded frames are not a pure function of the recorded qpos (max abs diff per "
             f"camera {worst}). Every fidelity number computed from this dump would be scoring a state "
-            f"mismatch as a renderer difference")
+            f"mismatch as a renderer difference"
+        )
 
     xml = sim.model.get_xml()
     with open(os.path.join(d, "scene.xml"), "w") as f:
@@ -141,18 +150,31 @@ def main() -> None:
         "joint_names": jnames,
         "jnt_qposadr": np.asarray(m.jnt_qposadr, int).tolist(),
         "jnt_type": np.asarray(m.jnt_type, int).tolist(),
-        "nq": int(m.nq), "ngeom": int(m.ngeom), "nmesh": int(m.nmesh), "ntex": int(m.ntex),
+        "nq": int(m.nq),
+        "ngeom": int(m.ngeom),
+        "nmesh": int(m.nmesh),
+        "ntex": int(m.ntex),
         "nmeshface": int(m.nmeshface),
     }
-    meta = {"task": args.task, "kitchen": args.kitchen, "layout": layout, "style": style,
-            "steps": args.steps, "res": args.res, "seed": args.seed, "cameras": list(CAMERAS),
-            "mujoco": mujoco.__version__, "reset_s": t_reset, "xml_bytes": len(xml),
-            "state_sufficiency_max_abs": worst,
-            "ep_meta": env.get_ep_meta(), "model": layout_info}
+    meta = {
+        "task": args.task,
+        "kitchen": args.kitchen,
+        "layout": layout,
+        "style": style,
+        "steps": args.steps,
+        "res": args.res,
+        "seed": args.seed,
+        "cameras": list(CAMERAS),
+        "mujoco": mujoco.__version__,
+        "reset_s": t_reset,
+        "xml_bytes": len(xml),
+        "state_sufficiency_max_abs": worst,
+        "ep_meta": env.get_ep_meta(),
+        "model": layout_info,
+    }
     with open(os.path.join(d, "meta.json"), "w") as f:
         json.dump(meta, f, indent=1, default=str)
-    print(json.dumps({k: v for k, v in meta.items() if k not in ("ep_meta",)},
-                     indent=1, default=str), flush=True)
+    print(json.dumps({k: v for k, v in meta.items() if k not in ("ep_meta",)}, indent=1, default=str), flush=True)
     print(f"wrote {d}", flush=True)
 
 

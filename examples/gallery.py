@@ -26,6 +26,7 @@ the manifest so the claim is checkable rather than asserted.
 
     python examples/gallery.py --out docs/assets/media
 """
+
 from __future__ import annotations
 
 import argparse
@@ -55,7 +56,7 @@ def _tile(frames: np.ndarray, cols: int, pad: int = 2, pad_value: int = 235) -> 
     for i, f in enumerate(frames):
         r, c = divmod(i, cols)
         y, x = pad + r * (h + pad), pad + c * (w + pad)
-        canvas[y:y + h, x:x + w] = f
+        canvas[y : y + h, x : x + w] = f
     return canvas
 
 
@@ -74,8 +75,7 @@ def _label(img: np.ndarray, text: str) -> np.ndarray:
         if tw <= img.shape[1] - 6:
             break
         scale -= 0.02
-    cv2.putText(band, text, (3, LABEL_H - 8), cv2.FONT_HERSHEY_SIMPLEX, scale, (20, 20, 20), 1,
-                cv2.LINE_AA)
+    cv2.putText(band, text, (3, LABEL_H - 8), cv2.FONT_HERSHEY_SIMPLEX, scale, (20, 20, 20), 1, cv2.LINE_AA)
     return np.concatenate([band, img], axis=0)
 
 
@@ -103,18 +103,48 @@ def _write_png(path: Path, img: np.ndarray) -> None:
 def write_h264(path: Path, frames: np.ndarray, fps: int = 15) -> dict:
     """Encode ``(T,H,W,3)`` uint8 to a browser-playable H.264 mp4, and probe what actually landed."""
     import imageio_ffmpeg
+
     exe = imageio_ffmpeg.get_ffmpeg_exe()
     t, h, w, _ = frames.shape
     assert h % 2 == 0 and w % 2 == 0, f"yuv420p needs even dimensions, got {h}x{w}"
-    cmd = [exe, "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "rgb24",
-           "-s", f"{w}x{h}", "-r", str(fps), "-i", "-",
-           "-c:v", "libx264", "-pix_fmt", "yuv420p", "-profile:v", "baseline",
-           "-movflags", "+faststart", "-crf", "18", str(path)]
+    cmd = [
+        exe,
+        "-y",
+        "-loglevel",
+        "error",
+        "-f",
+        "rawvideo",
+        "-pix_fmt",
+        "rgb24",
+        "-s",
+        f"{w}x{h}",
+        "-r",
+        str(fps),
+        "-i",
+        "-",
+        "-c:v",
+        "libx264",
+        "-pix_fmt",
+        "yuv420p",
+        "-profile:v",
+        "baseline",
+        "-movflags",
+        "+faststart",
+        "-crf",
+        "18",
+        str(path),
+    ]
     p = subprocess.run(cmd, input=np.ascontiguousarray(frames).tobytes(), capture_output=True)
     if p.returncode != 0:
         raise RuntimeError(f"ffmpeg failed: {p.stderr.decode()[-2000:]}")
-    return {"path": str(path), "bytes": path.stat().st_size, "frames": int(t), "fps": fps,
-            "size": [int(h), int(w)], "codec": probe_codec(path)}
+    return {
+        "path": str(path),
+        "bytes": path.stat().st_size,
+        "frames": int(t),
+        "fps": fps,
+        "size": [int(h), int(w)],
+        "codec": probe_codec(path),
+    }
 
 
 def probe_codec(path: Path) -> str:
@@ -124,15 +154,30 @@ def probe_codec(path: Path) -> str:
     plays in a desktop player and fails silently in a browser, so the file existing proves nothing.
     """
     import imageio_ffmpeg
+
     ffprobe = shutil.which("ffprobe")
     if ffprobe:
-        p = subprocess.run([ffprobe, "-v", "error", "-select_streams", "v:0",
-                            "-show_entries", "stream=codec_name,profile,codec_tag_string",
-                            "-of", "default=nw=1", str(path)], capture_output=True, text=True)
+        p = subprocess.run(
+            [
+                ffprobe,
+                "-v",
+                "error",
+                "-select_streams",
+                "v:0",
+                "-show_entries",
+                "stream=codec_name,profile,codec_tag_string",
+                "-of",
+                "default=nw=1",
+                str(path),
+            ],
+            capture_output=True,
+            text=True,
+        )
         if p.returncode == 0 and p.stdout.strip():
             return " ".join(p.stdout.split())
-    p = subprocess.run([imageio_ffmpeg.get_ffmpeg_exe(), "-hide_banner", "-i", str(path)],
-                       capture_output=True, text=True)
+    p = subprocess.run(
+        [imageio_ffmpeg.get_ffmpeg_exe(), "-hide_banner", "-i", str(path)], capture_output=True, text=True
+    )
     for line in p.stderr.splitlines():
         if "Stream #" in line and "Video:" in line:
             return line.strip()
@@ -142,6 +187,7 @@ def probe_codec(path: Path) -> str:
 def write_gif(path: Path, frames: np.ndarray, fps: int = 10, max_frames: int = 60) -> dict:
     """GIF fallback for contexts that will not run a video element (some markdown viewers)."""
     import imageio.v2 as imageio
+
     step = max(1, len(frames) // max_frames)
     sub = frames[::step]
     imageio.mimsave(path, list(sub), duration=1.0 / fps, loop=0)
@@ -174,9 +220,9 @@ def rollout_states(cls, env, n: int) -> tuple[np.ndarray, str]:
         goal = np.array([256.0, 256.0])
         states = []
         for _ in range(n):
-            s = obs[:env.state_dim].copy()
+            s = obs[: env.state_dim].copy()
             states.append(s)
-            if scripted:                     # aim behind the block, so the T is actually pushed
+            if scripted:  # aim behind the block, so the T is actually pushed
                 block = s[2:4]
                 away = block - goal
                 action = np.clip(block + away / (np.linalg.norm(away) + 1e-6) * 45.0, 20, 492)
@@ -227,7 +273,7 @@ def per_env_leaves(env, states: np.ndarray, batch: int) -> tuple[dict, list[str]
     for path in env.variation_space.names():
         node = _leaf(env.variation_space, path)
         shape = tuple(getattr(node, "shape", ()) or ())
-        if shape != (3,):                          # colours only: a per-env geometry sweep is not a sheet
+        if shape != (3,):  # colours only: a per-env geometry sweep is not a sheet
             continue
         vals = rng.integers(0, 256, size=(batch, 3)).astype(np.float32)
         try:
@@ -254,12 +300,14 @@ def sweep_panels(env, state: np.ndarray) -> list[np.ndarray]:
                 lo = np.broadcast_to(node.low, node.shape).astype(np.float64)
                 hi = np.broadcast_to(node.high, node.shape).astype(np.float64)
                 mid = np.asarray(node.value, np.float64)
-                if lo.size > 3:                    # a whole palette: ends only, and label it as such
+                if lo.size > 3:  # a whole palette: ends only, and label it as such
                     picks = [("low", lo), ("default", mid), ("high", hi)]
                 else:
-                    picks = [(np.array2string(lo.reshape(-1), precision=2, separator=","), lo),
-                             (np.array2string(mid.reshape(-1), precision=2, separator=","), mid),
-                             (np.array2string(hi.reshape(-1), precision=2, separator=","), hi)]
+                    picks = [
+                        (np.array2string(lo.reshape(-1), precision=2, separator=","), lo),
+                        (np.array2string(mid.reshape(-1), precision=2, separator=","), mid),
+                        (np.array2string(hi.reshape(-1), precision=2, separator=","), hi),
+                    ]
                 values = [(t, v.astype(node.dtype)) for t, v in picks]
             for text, v in values:
                 f = env.render(state[:1], variation={path: v}).cpu().numpy()[0]
@@ -306,8 +354,12 @@ def env_media(name: str, outdir: Path, video_frames: int, target_px: int) -> dic
         if keep:
             frames = env.render(np.repeat(states[:1], grid_n, axis=0), variation=keep).cpu().numpy()
             _write_png(d / "variation_batch.png", _tile(frames, cols))
-            man["variation_batch"] = {"path": str(d / "variation_batch.png"),
-                                      "leaves": sorted(keep), "batch": grid_n, "launches": 1}
+            man["variation_batch"] = {
+                "path": str(d / "variation_batch.png"),
+                "leaves": sorted(keep),
+                "batch": grid_n,
+                "launches": 1,
+            }
         else:
             man["notes"].append("no variation leaf varies per environment on this env")
         man["per_env_rejected"] = rejected
@@ -324,8 +376,12 @@ def env_media(name: str, outdir: Path, video_frames: int, target_px: int) -> dic
 
     traj, traj_kind = rollout_states(cls, env, video_frames)
     np.save(d / "states.npy", traj)
-    man["states"] = {"path": str(d / "states.npy"), "bytes": (d / "states.npy").stat().st_size,
-                     "frames": int(len(traj)), "kind": traj_kind}
+    man["states"] = {
+        "path": str(d / "states.npy"),
+        "bytes": (d / "states.npy").stat().st_size,
+        "frames": int(len(traj)),
+        "kind": traj_kind,
+    }
     del env
 
     official = None
@@ -344,15 +400,25 @@ def env_media(name: str, outdir: Path, video_frames: int, target_px: int) -> dic
 
     if official is not None:
         from stable_envs.testing import conformance as C
+
         man["parity"] = C.pixel_agreement(ours, official)
         rows = []
         for i in np.linspace(0, len(traj) - 1, 4).astype(int):
             diff = np.abs(official[i].astype(np.int16) - ours[i].astype(np.int16)).max(-1)
             heat = np.stack([np.full_like(diff, 255), 255 - diff, 255 - diff], -1).astype(np.uint8)
             bar = np.full((fh + LABEL_H, GAP, 3), 245, np.uint8)
-            rows.append(np.concatenate([_label(official[i], f"official t={i}"), bar,
-                                        _label(ours[i], "stable-envs"), bar,
-                                        _label(heat, f"diff, max {int(diff.max())}")], axis=1))
+            rows.append(
+                np.concatenate(
+                    [
+                        _label(official[i], f"official t={i}"),
+                        bar,
+                        _label(ours[i], "stable-envs"),
+                        bar,
+                        _label(heat, f"diff, max {int(diff.max())}"),
+                    ],
+                    axis=1,
+                )
+            )
         _write_png(d / "parity.png", np.concatenate(rows, axis=0))
         man["parity_panel"] = str(d / "parity.png")
 
@@ -375,8 +441,12 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default="docs/assets/media")
     ap.add_argument("--video-frames", type=int, default=120)
-    ap.add_argument("--target-px", type=int, default=288,
-                    help="video panel width to aim for; the upscale factor is the nearest integer")
+    ap.add_argument(
+        "--target-px",
+        type=int,
+        default=288,
+        help="video panel width to aim for; the upscale factor is the nearest integer",
+    )
     ap.add_argument("--envs", default="", help="comma-separated subset; default is the whole registry")
     a = ap.parse_args()
 

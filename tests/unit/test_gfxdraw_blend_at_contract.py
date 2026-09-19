@@ -18,6 +18,7 @@ So: drive the recorder with the exact shapes ``aaline_emit`` emits, over an edge
 every one of the five scatters, and assert the contract directly (``len(w) == len(valid)``) as well
 as the behaviour.
 """
+
 from __future__ import annotations
 
 import pytest
@@ -60,8 +61,7 @@ def _run(verts, kmax=64):
     vi = torch.tensor([verts], dtype=torch.int64)
     bidx = torch.zeros(1, dtype=torch.long)
     for e in range(4):
-        G.aaline(rec, vi[:, e, 0], vi[:, e, 1], vi[:, (e + 1) % 4, 0], vi[:, (e + 1) % 4, 1],
-                 None, kmax, bidx)
+        G.aaline(rec, vi[:, e, 0], vi[:, e, 1], vi[:, (e + 1) % 4, 0], vi[:, (e + 1) % 4, 1], None, kmax, bidx)
     return rec
 
 
@@ -74,7 +74,8 @@ def test_a_blend_at_override_may_index_the_weight_by_the_write_mask(case):
         assert w_shape == valid_shape == y_shape, (
             f"aaline handed blend_at a weight of shape {w_shape} against a mask of {valid_shape} "
             f"and coordinates of {y_shape}. An override that indexes the weight by the mask -- "
-            f"LunarLander._AARecorder, which runs inside __init__ -- needs all three to agree.")
+            f"LunarLander._AARecorder, which runs inside __init__ -- needs all three to agree."
+        )
 
 
 def test_the_axis_aligned_scatters_are_actually_reached():
@@ -91,7 +92,8 @@ def test_the_axis_aligned_scatters_are_actually_reached():
     assert n_axis > n_general, (
         f"the axis-aligned quad recorded {n_axis} writes and the all-general one {n_general}; the "
         f"vline/hline short-circuit is not being exercised, so this file is not testing what it "
-        f"says it tests")
+        f"says it tests"
+    )
 
 
 #: The write list each quad class produces at 89fa5ca, the pre-Step-6 baseline. Positions and
@@ -118,4 +120,5 @@ def test_the_recorded_fringe_matches_the_pre_step6_baseline(case):
     n = sum(int(y.numel()) for y, _, _ in rec.writes)
     assert (h.hexdigest()[:16], n) == (want, n_want), (
         f"the recorded aaline write list for the {case!r} quad changed against 89fa5ca "
-        f"({n} writes, digest {h.hexdigest()[:16]}); LunarLander bakes this into its flag fringe")
+        f"({n} writes, digest {h.hexdigest()[:16]}); LunarLander bakes this into its flag fringe"
+    )

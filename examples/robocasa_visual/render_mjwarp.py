@@ -19,6 +19,7 @@ Every known correction is applied, and each of them is silent when omitted:
 Setup is decomposed rather than totalled, because a live-generation user pays it once per compiled
 kitchen and pays the loop every frame, and the break-even between them is the whole economic question.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -46,10 +47,9 @@ def load_mjwarp_helpers():
     gymnasium and torch-side env dependencies this venv deliberately does not have. The module itself
     has no package-internal imports, so loading the file is exact rather than a copy that can drift.
     """
-    spec = importlib.util.spec_from_file_location(
-        "se_mjwarp", os.path.join(REPO, "stable_envs/render/mjwarp.py"))
+    spec = importlib.util.spec_from_file_location("se_mjwarp", os.path.join(REPO, "stable_envs/render/mjwarp.py"))
     mod = importlib.util.module_from_spec(spec)
-    sys.modules["se_mjwarp"] = mod          # @dataclass resolves annotations via sys.modules
+    sys.modules["se_mjwarp"] = mod  # @dataclass resolves annotations via sys.modules
     spec.loader.exec_module(mod)
     return mod
 
@@ -66,6 +66,7 @@ def qpos_by_name(mjm, meta, qpos):
     measurement and a nonsense one.
     """
     import mujoco
+
     src_names = meta["model"]["joint_names"]
     src_adr = meta["model"]["jnt_qposadr"]
     src_type = meta["model"]["jnt_type"]
@@ -81,7 +82,7 @@ def qpos_by_name(mjm, meta, qpos):
         w = width.get(int(mjm.jnt_type[j]), 1)
         assert w == width.get(int(src_type[k]), 1), f"joint {nm!r} changed type between compilations"
         dst, src = int(mjm.jnt_qposadr[j]), int(src_adr[k])
-        out[:, dst:dst + w] = qpos[:, src:src + w]
+        out[:, dst : dst + w] = qpos[:, src : src + w]
         identical &= dst == src
         hit += w
     assert hit == int(mjm.nq), f"mapped {hit} of {mjm.nq} qpos entries"
@@ -93,10 +94,9 @@ class Ctx:
 
     def __init__(self, xml, res, nworld, cam_name, batched_fields=(), groups=(1,), bake=False):
         import mujoco
+        import mujoco_warp as mjw
         import torch
         import warp as wp
-
-        import mujoco_warp as mjw
 
         self.wp, self.mjw, self.torch = wp, mjw, torch
         self.nworld, self.res = int(nworld), int(res)
@@ -132,16 +132,21 @@ class Ctx:
         # while it is COMPILED (first launch), so the warm-up frame is inside the block.
         with MW.gl_rounding():
             self.rc = MW.create_render_context(
-                self.mjm, nworld=int(nworld), cam_res=(int(res), int(res)), render_rgb=True,
+                self.mjm,
+                nworld=int(nworld),
+                cam_res=(int(res), int(res)),
+                render_rgb=True,
                 cam_active=[i == self.cam for i in range(self.mjm.ncam)],
-                enabled_geom_groups=list(groups), use_textures=True, use_shadows=True,
-                render_skybox=True)
+                enabled_geom_groups=list(groups),
+                use_textures=True,
+                use_shadows=True,
+                render_skybox=True,
+            )
             wp.synchronize()
             t["render_context_s"] = time.perf_counter() - t0
             self._frame()
             wp.synchronize()
-        self.bgra = wp.to_torch(self.rc.rgb_data).view(torch.uint8).reshape(
-            int(nworld), int(res), int(res), 4)
+        self.bgra = wp.to_torch(self.rc.rgb_data).view(torch.uint8).reshape(int(nworld), int(res), int(res), 4)
         t0 = time.perf_counter()
         with wp.ScopedCapture() as cap:
             self._frame()
@@ -173,7 +178,7 @@ class Ctx:
 
 def bench(ctx, qpos, reps=20):
     """Steady-state frames/s for a full batch, graph-replayed, including the channel swap."""
-    q = np.tile(qpos[:1], (ctx.nworld, 1)) if len(qpos) < ctx.nworld else qpos[:ctx.nworld]
+    q = np.tile(qpos[:1], (ctx.nworld, 1)) if len(qpos) < ctx.nworld else qpos[: ctx.nworld]
     ctx.render(q)
     t0 = time.perf_counter()
     for _ in range(reps):
@@ -193,17 +198,29 @@ def do_trajectory(args, rec):
     # scored against the thing it approximates is a decoration. Stage C reports the pair.
     for cam in meta["cameras"]:
         for bake, tag in ((False, "mjwarp"), (True, "mjwarpbake")):
-            ctx = Ctx(os.path.join(d, "scene.xml"), res, nworld, cam,
-                      batched_fields=("cam_pos", "cam_quat", "light_diffuse"), bake=bake)
+            ctx = Ctx(
+                os.path.join(d, "scene.xml"),
+                res,
+                nworld,
+                cam,
+                batched_fields=("cam_pos", "cam_quat", "light_diffuse"),
+                bake=bake,
+            )
             q, identical = qpos_by_name(ctx.mjm, meta, qpos)
             frames = np.empty((len(q), res, res, 3), np.uint8)
             for lo in range(0, len(q), nworld):
                 hi = min(lo + nworld, len(q))
                 frames[lo:hi] = ctx.render(q[lo:hi]).cpu().numpy()
             np.save(os.path.join(d, f"{tag}_{cam}.npy"), frames)
-            entry = dict(ctx.timings, camera=cam, kitchen=args.kitchen, res=res,
-                         nworld=nworld, qpos_layout_identical=identical,
-                         fps_batch=bench(ctx, q))
+            entry = dict(
+                ctx.timings,
+                camera=cam,
+                kitchen=args.kitchen,
+                res=res,
+                nworld=nworld,
+                qpos_layout_identical=identical,
+                fps_batch=bench(ctx, q),
+            )
             rec["trajectory"].append(entry)
             print(json.dumps(entry, indent=1), flush=True)
             del ctx
@@ -248,10 +265,12 @@ def do_grids(args, rec):
     n = int(args.grid)
     cam = meta["cameras"][0]
 
-    ctx = Ctx(os.path.join(d, "scene.xml"), res, n, cam,
-              batched_fields=("cam_pos", "cam_quat", "light_diffuse", "mat_rgba"))
+    ctx = Ctx(
+        os.path.join(d, "scene.xml"), res, n, cam, batched_fields=("cam_pos", "cam_quat", "light_diffuse", "mat_rgba")
+    )
     q, _ = qpos_by_name(ctx.mjm, meta, qpos)
     import mujoco
+
     rng = np.random.default_rng(0)
     wp = ctx.wp
     base_pos = np.asarray(ctx.mjm.cam_pos[ctx.cam], np.float64)
@@ -276,14 +295,20 @@ def do_grids(args, rec):
     grid = ctx.render(q[idx]).cpu().numpy()
     dt = time.perf_counter() - t0
     np.save(os.path.join(args.out, "dr_one_batch.npy"), grid)
-    rec["grids"]["dr_one_batch"] = {"kitchen": args.kitchen, "worlds": n, "res": res,
-                                    "launches": 1, "contexts": 1, "seconds": dt,
-                                    "varied": ["camera pose", "light diffuse (scale + tint)"]}
+    rec["grids"]["dr_one_batch"] = {
+        "kitchen": args.kitchen,
+        "worlds": n,
+        "res": res,
+        "launches": 1,
+        "contexts": 1,
+        "seconds": dt,
+        "varied": ["camera pose", "light diffuse (scale + tint)"],
+    }
     del ctx
 
     panels, labels, tim = [], [], []
     xmls = sorted(glob.glob(os.path.join(CORPUS, "*", "ep00[0-2].xml")))
-    for xml in xmls[:int(args.kitchens)]:
+    for xml in xmls[: int(args.kitchens)]:
         tag = f"{os.path.basename(os.path.dirname(xml))}/{os.path.basename(xml)[:-4]}"
         c = Ctx(xml, res, 1, cam)
         qk = np.load(xml.replace(".xml", "_qpos.npy"))[None]
@@ -297,9 +322,13 @@ def do_grids(args, rec):
     if panels:
         np.save(os.path.join(args.out, "kitchen_grid.npy"), np.stack(panels))
         rec["grids"]["kitchen_grid"] = {
-            "panels": labels, "contexts": len(panels), "launches": len(panels), "res": res,
+            "panels": labels,
+            "contexts": len(panels),
+            "launches": len(panels),
+            "res": res,
             "setup_s_each": [t["setup_total_s"] for t in tim],
-            "note": "N different compiled models = N contexts; MJWarp batches worlds of ONE model"}
+            "note": "N different compiled models = N contexts; MJWarp batches worlds of ONE model",
+        }
     with open(os.path.join(args.out, "grid_labels.json"), "w") as f:
         json.dump({"dr_one_batch": int(args.grid), "kitchen_grid": labels}, f, indent=1)
 
@@ -313,15 +342,20 @@ def main() -> None:
     ap.add_argument("--throughput-res", type=int, nargs="+", default=[128, 224, 256])
     ap.add_argument("--grid", type=int, default=12)
     ap.add_argument("--kitchens", type=int, default=12)
-    ap.add_argument("--stages", nargs="+", default=["trajectory"],
-                    choices=["trajectory", "throughput", "grids"])
+    ap.add_argument("--stages", nargs="+", default=["trajectory"], choices=["trajectory", "throughput", "grids"])
     args = ap.parse_args()
 
     import mujoco
-
     import mujoco_warp as mjw
-    rec = {"mujoco": mujoco.__version__, "mujoco_warp": getattr(mjw, "__version__", "?"),
-           "kitchen": args.kitchen, "trajectory": [], "throughput": [], "grids": {}}
+
+    rec = {
+        "mujoco": mujoco.__version__,
+        "mujoco_warp": getattr(mjw, "__version__", "?"),
+        "kitchen": args.kitchen,
+        "trajectory": [],
+        "throughput": [],
+        "grids": {},
+    }
     for s in args.stages:
         {"trajectory": do_trajectory, "throughput": do_throughput, "grids": do_grids}[s](args, rec)
     path = os.path.join(args.out, f"mjwarp_{args.kitchen}_{'_'.join(args.stages)}.json")

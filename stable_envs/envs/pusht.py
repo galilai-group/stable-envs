@@ -99,13 +99,13 @@ whole point of ``pack``/``unpack``:
 ``unpack`` fills the velocity with zeros, which is not a placeholder: it is exactly the condition
 ``set_state`` puts the env in, so a state loaded from a corpus behaves as it always did.
 """
+
 from __future__ import annotations
 
 import math
 
 import numpy as np
 import torch
-
 from tensordict import TensorDict
 
 from ..env import Env
@@ -119,33 +119,37 @@ SCREEN = 512.0
 BAR = ((-60.0, 0.0), (60.0, 0.0), (60.0, 30.0), (-60.0, 30.0))
 STEM = ((-15.0, 30.0), (15.0, 30.0), (15.0, 120.0), (-15.0, 120.0))
 AGENT_RADIUS = 15.0
-AGENT_INNER_RADIUS = 11.0          # round(radius - 4)
+AGENT_INNER_RADIUS = 11.0  # round(radius - 4)
 OUTLINE_HALF_W = 2.5
 WALL_HALF_W = 2.5
 GOAL_POSE = (256.0, 256.0, math.pi / 4)
-WALLS = (((5.0, 506.0), (5.0, 5.0)), ((5.0, 5.0), (506.0, 5.0)),
-         ((506.0, 5.0), (506.0, 506.0)), ((5.0, 506.0), (506.0, 506.0)))
+WALLS = (
+    ((5.0, 506.0), (5.0, 5.0)),
+    ((5.0, 5.0), (506.0, 5.0)),
+    ((506.0, 5.0), (506.0, 506.0)),
+    ((5.0, 506.0), (506.0, 506.0)),
+)
 
 BG = (255, 255, 255)
-GOAL_C = (144, 238, 144)           # LightGreen
-WALL_C = (211, 211, 211)           # LightGray
-BLOCK_FILL = (143, 163, 184)       # light_color(LightSlateGray), rounded
-BLOCK_LINE = (119, 136, 153)       # LightSlateGray
-AGENT_C = (65, 105, 225)           # RoyalBlue
-AGENT_IN = (78, 126, 255)          # light_color(RoyalBlue)
+GOAL_C = (144, 238, 144)  # LightGreen
+WALL_C = (211, 211, 211)  # LightGray
+BLOCK_FILL = (143, 163, 184)  # light_color(LightSlateGray), rounded
+BLOCK_LINE = (119, 136, 153)  # LightSlateGray
+AGENT_C = (65, 105, 225)  # RoyalBlue
+AGENT_IN = (78, 126, 255)  # light_color(RoyalBlue)
 
 # ------------------------------------------------------------------ physics (see the module docstring)
 
-DT = 0.01                          # space.step increment
-SUBSTEPS = 10                      # int(1 / (dt * control_hz)), control_hz = 10
-K_P, K_V = 100.0, 20.0             # the agent's PD gains
+DT = 0.01  # space.step increment
+SUBSTEPS = 10  # int(1 / (dt * control_hz)), control_hz = 10
+K_P, K_V = 100.0, 20.0  # the agent's PD gains
 MASS = 1.0
-MOMENT = 3000.0                    # 2x moment_for_poly(1, BAR) — the reference's own bug, reproduced
-COG = (0.0, 45.0)                  # block centre of gravity, body-local
-SLOP = 0.1                         # space.collision_slop
-COLLISION_BIAS = 0.0017970074436457143          # space.collision_bias, == (1 - 0.1) ** 60
-BIAS_COEF = 1.0 - COLLISION_BIAS ** DT          # ~0.06125, Chipmunk's per-substep correction gain
-SOLVER_ITERS = 10                  # space.iterations
+MOMENT = 3000.0  # 2x moment_for_poly(1, BAR) — the reference's own bug, reproduced
+COG = (0.0, 45.0)  # block centre of gravity, body-local
+SLOP = 0.1  # space.collision_slop
+COLLISION_BIAS = 0.0017970074436457143  # space.collision_bias, == (1 - 0.1) ** 60
+BIAS_COEF = 1.0 - COLLISION_BIAS**DT  # ~0.06125, Chipmunk's per-substep correction gain
+SOLVER_ITERS = 10  # space.iterations
 #: Arena half-planes ``n . p >= d``. The walls are Segments of collision radius 2 at 5 and 506, so the
 #: contact surface is at 7 and 504 — NOT the 2.5 half-width the renderer draws (see the docstring).
 WALL_PLANES = (((1.0, 0.0), 7.0), ((-1.0, 0.0), -504.0), ((0.0, 1.0), 7.0), ((0.0, -1.0), -504.0))
@@ -176,9 +180,7 @@ class PushT(Env):
     #: precision — a disagreement there is an integration bug, not solver divergence, and without its
     #: own group it would hide inside the block numbers. The block is the gate: an episode whose block
     #: was never touched agrees trivially and is evidence of nothing.
-    step_reference_groups = (("agent", (0, 1), "euclidean"),
-                             ("block", (2, 3), "euclidean"),
-                             ("angle", (4,), "angle"))
+    step_reference_groups = (("agent", (0, 1), "euclidean"), ("block", (2, 3), "euclidean"), ("angle", (4,), "angle"))
     step_reference_control = "agent"
     step_reference_gate = "block"
     #: Targets are held for 8 steps because one resampled every step keeps the agent in transit and
@@ -207,9 +209,9 @@ class PushT(Env):
         #: block vertices relative to the CoG; they double as contact arms, since the body rotates
         #: about the CoG. ``pos + R @ v_local`` (the render transform) and ``c + R @ (v_local - cog)``
         #: (this one) describe the same world points, because ``pos = c - R @ cog``.
-        self._quads_c = torch.tensor([BAR, STEM], **f) - self._cog          # (2,4,2)
-        self._wall_n = torch.tensor([w[0] for w in WALL_PLANES], **f)       # (4,2)
-        self._wall_d = torch.tensor([w[1] for w in WALL_PLANES], **f)       # (4,)
+        self._quads_c = torch.tensor([BAR, STEM], **f) - self._cog  # (2,4,2)
+        self._wall_n = torch.tensor([w[0] for w in WALL_PLANES], **f)  # (4,2)
+        self._wall_d = torch.tensor([w[1] for w in WALL_PLANES], **f)  # (4,)
         #: The agent's velocity is real dynamical state that the compact state does not carry (neither
         #: does gym_pusht's observation), so it lives here and ``set_state`` zeroes it.
         self._agent_v = torch.zeros(self.B, 2, **f)
@@ -230,45 +232,54 @@ class PushT(Env):
         keeps pushing the reference one. Randomise colours freely; randomise geometry only when nothing
         is stepping, or the frame advertises a world the dynamics do not share.
         """
-        return Dict({
-            "agent": Dict({
-                "color": RGBBox(init_value=AGENT_C),
-                "inner_color": RGBBox(init_value=AGENT_IN),
-                "scale": Box(low=0.25, high=3.0, shape=(1,), init_value=[1.0]),
-            }),
-            "block": Dict({
-                "color": RGBBox(init_value=BLOCK_FILL),
-                "outline_color": RGBBox(init_value=BLOCK_LINE),
-                "scale": Box(low=0.25, high=3.0, shape=(1,), init_value=[1.0]),
-            }),
-            "goal": Dict({
-                "color": RGBBox(init_value=GOAL_C),
-                "position": Box(low=0.0, high=512.0, shape=(2,), init_value=list(GOAL_POSE[:2])),
-                "angle": Box(low=-math.pi, high=math.pi, shape=(1,), init_value=[GOAL_POSE[2]]),
-                "scale": Box(low=0.25, high=3.0, shape=(1,), init_value=[1.0]),
-            }),
-            "walls": Dict({
-                "color": RGBBox(init_value=WALL_C),
-                "visible": Discrete(2, init_value=1),
-            }),
-            "background": Dict({"color": RGBBox(init_value=BG)}),
-            "rendering": Dict({"render_goal": Discrete(2, init_value=1)}),
-        })
+        return Dict(
+            {
+                "agent": Dict(
+                    {
+                        "color": RGBBox(init_value=AGENT_C),
+                        "inner_color": RGBBox(init_value=AGENT_IN),
+                        "scale": Box(low=0.25, high=3.0, shape=(1,), init_value=[1.0]),
+                    }
+                ),
+                "block": Dict(
+                    {
+                        "color": RGBBox(init_value=BLOCK_FILL),
+                        "outline_color": RGBBox(init_value=BLOCK_LINE),
+                        "scale": Box(low=0.25, high=3.0, shape=(1,), init_value=[1.0]),
+                    }
+                ),
+                "goal": Dict(
+                    {
+                        "color": RGBBox(init_value=GOAL_C),
+                        "position": Box(low=0.0, high=512.0, shape=(2,), init_value=list(GOAL_POSE[:2])),
+                        "angle": Box(low=-math.pi, high=math.pi, shape=(1,), init_value=[GOAL_POSE[2]]),
+                        "scale": Box(low=0.25, high=3.0, shape=(1,), init_value=[1.0]),
+                    }
+                ),
+                "walls": Dict(
+                    {
+                        "color": RGBBox(init_value=WALL_C),
+                        "visible": Discrete(2, init_value=1),
+                    }
+                ),
+                "background": Dict({"color": RGBBox(init_value=BG)}),
+                "rendering": Dict({"render_goal": Discrete(2, init_value=1)}),
+            }
+        )
 
     # geometry
 
     def _t_verts(self, pos, angle, scale):
         """(B,2,4,2) world vertices of the two quads. ``pos`` (B,2), ``angle`` (B,), ``scale`` (B,)."""
-        local = torch.tensor([BAR, STEM], device=self.device, dtype=torch.float32)      # (2,4,2)
+        local = torch.tensor([BAR, STEM], device=self.device, dtype=torch.float32)  # (2,4,2)
         local = local.unsqueeze(0) * scale.view(-1, 1, 1, 1)
         c, s = torch.cos(angle), torch.sin(angle)
-        rot = torch.stack([torch.stack([c, -s], -1), torch.stack([s, c], -1)], -2)      # (B,2,2)
+        rot = torch.stack([torch.stack([c, -s], -1), torch.stack([s, c], -1)], -2)  # (B,2,2)
         return torch.einsum("bij,bqkj->bqki", rot, local) + pos.view(-1, 1, 1, 2)
 
     def scene(self, states, variation: dict | None = None, style=None) -> Scene2D:
         n = int(states.shape[0]) if hasattr(states, "shape") else len(states)
         return self._scene(states, self.resolve_style(style, variation, batch=n))
-
 
     def _scene(self, states, sty) -> Scene2D:
         """Build the scene from the compact state and a resolved per-environment style tensor."""
@@ -295,10 +306,13 @@ class PushT(Env):
         sb.mark_static()
 
         ascale = sty["agent.scale"]
-        sb.add_disc(s[:, 0:2], AGENT_RADIUS * ascale,
-                    sty["agent.color"],
-                    inner_radius=AGENT_INNER_RADIUS * ascale,
-                    inner_color=sty["agent.inner_color"])
+        sb.add_disc(
+            s[:, 0:2],
+            AGENT_RADIUS * ascale,
+            sty["agent.color"],
+            inner_radius=AGENT_INNER_RADIUS * ascale,
+            inner_color=sty["agent.inner_color"],
+        )
 
         bscale = sty["block.scale"]
         bverts = self._t_verts(s[:, 2:4], s[:, 4], bscale)
@@ -307,19 +321,25 @@ class PushT(Env):
         for q in range(2):
             sb.add_poly(bverts[:, q], bfill, outline_color=bline, outline_w=OUTLINE_HALF_W * bscale)
 
-        return sb.build(background=sty["background.color"],
-                        world=(0.0, 0.0, SCREEN, SCREEN), flip_y=False)
+        return sb.build(background=sty["background.color"], world=(0.0, 0.0, SCREEN, SCREEN), flip_y=False)
 
     def sample_states(self, batch: int, rng: np.random.Generator | None = None) -> np.ndarray:
         """gym_pusht's reset distribution: agent U[50,450]^2, block U[100,400]^2, angle U[-pi,pi]."""
         rng = rng or self.rng
-        return np.stack([rng.uniform(50, 450, batch), rng.uniform(50, 450, batch),
-                         rng.uniform(100, 400, batch), rng.uniform(100, 400, batch),
-                         rng.uniform(-np.pi, np.pi, batch)], axis=1).astype(np.float32)
+        return np.stack(
+            [
+                rng.uniform(50, 450, batch),
+                rng.uniform(50, 450, batch),
+                rng.uniform(100, 400, batch),
+                rng.uniform(100, 400, batch),
+                rng.uniform(-np.pi, np.pi, batch),
+            ],
+            axis=1,
+        ).astype(np.float32)
 
     # ------------------------------------------------------------------ physics
 
-    def set_state(self, states, style=None) -> "PushT":
+    def set_state(self, states, style=None) -> PushT:
         """As the base class, and zero the agent's velocity — the state does not carry it.
 
         Restoring a stored state must put the env in one definite condition, and the only defensible
@@ -333,7 +353,7 @@ class PushT(Env):
 
     def _rot(self, th: torch.Tensor) -> torch.Tensor:
         c, s = torch.cos(th), torch.sin(th)
-        return torch.stack([torch.stack([c, -s], -1), torch.stack([s, c], -1)], -2)      # (B,2,2)
+        return torch.stack([torch.stack([c, -s], -1), torch.stack([s, c], -1)], -2)  # (B,2,2)
 
     def _cog_of(self, pos: torch.Tensor, th: torch.Tensor) -> torch.Tensor:
         """Body origin -> centre of gravity. The solver's coordinate."""
@@ -355,38 +375,37 @@ class PushT(Env):
         of its endpoints, so a single clamped projection covers the edge and vertex cases together. When
         the centre is inside, the least-penetrating face is the contact.
         """
-        cc = (ap - c).unsqueeze(1)                                       # (B,1,2), disc centre rel CoG
-        a = rel                                                          # (B,2,4,2)
+        cc = (ap - c).unsqueeze(1)  # (B,1,2), disc centre rel CoG
+        a = rel  # (B,2,4,2)
         b = torch.roll(rel, -1, dims=2)
         e = b - a
         elen = e.norm(dim=-1).clamp_min(1e-9)
-        n = torch.stack([e[..., 1], -e[..., 0]], -1) / elen.unsqueeze(-1)      # outward, CCW winding
+        n = torch.stack([e[..., 1], -e[..., 0]], -1) / elen.unsqueeze(-1)  # outward, CCW winding
         w = cc.unsqueeze(2) - a
-        s = (w * n).sum(-1)                                              # (B,2,4)
+        s = (w * n).sum(-1)  # (B,2,4)
         smax, imax = s.max(dim=2)
         gather = lambda t: torch.gather(t, 2, imax[..., None, None].expand(-1, -1, 1, 2)).squeeze(2)
         a_i, e_i, n_i = gather(a), gather(e), gather(n)
         wv = cc - a_i
         t = ((wv * e_i).sum(-1) / (e_i * e_i).sum(-1).clamp_min(1e-9)).clamp(0, 1)
-        q = a_i + t.unsqueeze(-1) * e_i                                  # closest point on the polygon
+        q = a_i + t.unsqueeze(-1) * e_i  # closest point on the polygon
         dvec = cc - q
         dist = dvec.norm(dim=-1).clamp_min(1e-9)
         inside = smax <= 0
         n_out = torch.where(inside.unsqueeze(-1), n_i, dvec / dist.unsqueeze(-1))
         depth = torch.where(inside, AGENT_RADIUS - smax, AGENT_RADIUS - dist)
         arm = torch.where(inside.unsqueeze(-1), cc - n_i * smax.unsqueeze(-1), q)
-        return -n_out, depth, arm            # n_push drives the BLOCK, i.e. away from the disc
+        return -n_out, depth, arm  # n_push drives the BLOCK, i.e. away from the disc
 
     def _wall_contacts(self, c, rel):
         """Deepest ``N_WALL_CONTACTS`` block vertices per wall -> ``(n_push, depth, arm)``."""
         B = rel.shape[0]
         v = rel.reshape(B, 8, 2)
         world = v + c.unsqueeze(1)
-        proj = torch.einsum("bvi,wi->bwv", world, self._wall_n)          # (B,4,8)
-        depth = self._wall_d.view(1, 4, 1) - proj                        # > 0 == penetrating
+        proj = torch.einsum("bvi,wi->bwv", world, self._wall_n)  # (B,4,8)
+        depth = self._wall_d.view(1, 4, 1) - proj  # > 0 == penetrating
         d, idx = depth.topk(N_WALL_CONTACTS, dim=2)
-        arm = torch.gather(v.unsqueeze(1).expand(-1, 4, -1, -1), 2,
-                           idx[..., None].expand(-1, -1, -1, 2))         # (B,4,k,2)
+        arm = torch.gather(v.unsqueeze(1).expand(-1, 4, -1, -1), 2, idx[..., None].expand(-1, -1, -1, 2))  # (B,4,k,2)
         n = self._wall_n.view(1, 4, 1, 2).expand(B, 4, N_WALL_CONTACTS, 2)
         k = 4 * N_WALL_CONTACTS
         return n.reshape(B, k, 2), d.reshape(B, k), arm.reshape(B, k, 2)
@@ -414,12 +433,11 @@ class PushT(Env):
         rel = self._block_verts_cog(th)
         cn, cd, ca = self._disc_quad_contacts(ap, c, rel)
         wn, wd, wa = self._wall_contacts(c, rel)
-        n = torch.cat([cn, wn], dim=1)                                   # (B,NC,2) push direction
+        n = torch.cat([cn, wn], dim=1)  # (B,NC,2) push direction
         depth = torch.cat([cd, wd], dim=1)
-        arm = torch.cat([ca, wa], dim=1)                                 # (B,NC,2) rel CoG
+        arm = torch.cat([ca, wa], dim=1)  # (B,NC,2) rel CoG
         # velocity of the OTHER body at the contact: the agent for the disc contacts, 0 for the walls
-        v_other = torch.cat([av.unsqueeze(1).expand(-1, cn.shape[1], -1),
-                             torch.zeros_like(wa)], dim=1)
+        v_other = torch.cat([av.unsqueeze(1).expand(-1, cn.shape[1], -1), torch.zeros_like(wa)], dim=1)
         active = depth > 0
 
         rn = _cross2(arm, n)
@@ -433,8 +451,9 @@ class PushT(Env):
         zero = torch.zeros_like(depth)
         for _ in range(SOLVER_ITERS):
             # real velocity: separation speed along n must be >= 0
-            v_at = vc.unsqueeze(1) + torch.stack([-omega.unsqueeze(1) * arm[..., 1],
-                                                  omega.unsqueeze(1) * arm[..., 0]], -1)
+            v_at = vc.unsqueeze(1) + torch.stack(
+                [-omega.unsqueeze(1) * arm[..., 1], omega.unsqueeze(1) * arm[..., 0]], -1
+            )
             vs = ((v_at - v_other) * n).sum(-1)
             new = (lam + torch.where(active, -vs / k_eff, zero)).clamp_min(0.0)
             dl = new - lam
@@ -444,8 +463,9 @@ class PushT(Env):
 
             # split impulse: the overlap correction lives in its own velocity channel (Chipmunk's
             # v_bias) so pushing bodies apart cannot inject energy into the real velocity.
-            vb_at = vcb.unsqueeze(1) + torch.stack([-omb.unsqueeze(1) * arm[..., 1],
-                                                    omb.unsqueeze(1) * arm[..., 0]], -1)
+            vb_at = vcb.unsqueeze(1) + torch.stack(
+                [-omb.unsqueeze(1) * arm[..., 1], omb.unsqueeze(1) * arm[..., 0]], -1
+            )
             vsb = (vb_at * n).sum(-1)
             newb = (lam_b + torch.where(active, (bias - vsb) / k_eff, zero)).clamp_min(0.0)
             dlb = newb - lam_b
@@ -482,7 +502,7 @@ class PushT(Env):
             s = torch.cuda.Stream()
             s.wait_stream(torch.cuda.current_stream())
             with torch.cuda.stream(s):
-                for _ in range(3):                       # warm up autotune/allocator before capture
+                for _ in range(3):  # warm up autotune/allocator before capture
                     self._advance(self._state, self._agent_v, self._step_target)
             torch.cuda.current_stream().wait_stream(s)
             g = torch.cuda.CUDAGraph()
@@ -491,7 +511,7 @@ class PushT(Env):
                 self._state.copy_(st)
                 self._agent_v.copy_(av)
             self._step_graph = g
-        except Exception as e:                           # noqa: BLE001 - fall back, do not hide it
+        except Exception as e:  # noqa: BLE001 - fall back, do not hide it
             self._step_graph = None
             self._step_graph_error = f"{type(e).__name__}: {e}"
             self.use_step_graph = False
@@ -502,17 +522,21 @@ class PushT(Env):
     #: ``("agent", "velocity")`` carries offset ``None``: it is real dynamical state that the packed
     #: row has never carried (neither does gym_pusht's observation), which is what makes
     #: ``transition`` pure without moving a single column of the corpus layout.
-    state_layout = ((("agent", "position"), 2, 0),
-                    (("agent", "velocity"), 2, None),
-                    (("block", "position"), 2, 2),
-                    (("block", "angle"), 1, 4))
+    state_layout = (
+        (("agent", "position"), 2, 0),
+        (("agent", "velocity"), 2, None),
+        (("block", "position"), 2, 2),
+        (("block", "angle"), 1, 4),
+    )
 
     #: Bounds for ``state_spec``: the 512-unit board, the reference's own action range for the
     #: velocity (the PD controller cannot exceed it by construction), and a full turn for the angle.
-    state_bounds = {("agent", "position"): (0.0, SCREEN),
-                    ("agent", "velocity"): (-SCREEN, SCREEN),
-                    ("block", "position"): (0.0, SCREEN),
-                    ("block", "angle"): (-math.pi, math.pi)}
+    state_bounds = {
+        ("agent", "position"): (0.0, SCREEN),
+        ("agent", "velocity"): (-SCREEN, SCREEN),
+        ("block", "position"): (0.0, SCREEN),
+        ("block", "angle"): (-math.pi, math.pi),
+    }
 
     def _hidden_state(self) -> dict[tuple[str, ...], torch.Tensor]:
         """Where the one field the packed row does not carry actually lives.
@@ -522,7 +546,7 @@ class PushT(Env):
         agree to the bit or the functional path is a different simulator. This is the whole of what a
         cell with hidden dynamics has to say; ``Env.state`` does the splicing.
         """
-        return {("agent", "velocity"): self._agent_v[:self._live_rows].clone()}
+        return {("agent", "velocity"): self._agent_v[: self._live_rows].clone()}
 
     def _target(self, action) -> torch.Tensor:
         """The absolute PD target as ``(n, 2)`` float32 on this env's device."""
@@ -539,8 +563,7 @@ class PushT(Env):
         bit on CPU and the oracle script asserts it again on CUDA.
         """
         rows = self.pack(state)
-        av = torch.as_tensor(state["agent", "velocity"], device=self.device,
-                             dtype=torch.float32).reshape(-1, 2)
+        av = torch.as_tensor(state["agent", "velocity"], device=self.device, dtype=torch.float32).reshape(-1, 2)
         st, av = self._advance(rows, av, self._target(action))
         out = self.unpack(st)
         out["agent", "velocity"] = av
@@ -590,7 +613,9 @@ class PushT(Env):
     def reference_env(size: int = 96):
         """The official env, with the pymunk>=7 collision-API shim gym_pusht needs."""
         import pymunk
+
         if not hasattr(pymunk.Space, "add_collision_handler"):
+
             class _H:
                 _PHASES = ("begin", "pre_solve", "post_solve", "separate")
 
@@ -605,10 +630,16 @@ class PushT(Env):
                         object.__setattr__(self, k, v)
 
             pymunk.Space.add_collision_handler = lambda self, a=0, b=0: _H(self, a, b)
-        import gymnasium
         import gym_pusht  # noqa: F401
-        return gymnasium.make("gym_pusht/PushT-v0", obs_type="state", render_mode="rgb_array",
-                              observation_width=size, observation_height=size)
+        import gymnasium
+
+        return gymnasium.make(
+            "gym_pusht/PushT-v0",
+            obs_type="state",
+            render_mode="rgb_array",
+            observation_width=size,
+            observation_height=size,
+        )
 
     @staticmethod
     def reference_sim_state(ref) -> np.ndarray:
@@ -687,6 +718,7 @@ class PushT(Env):
                 raise AssertionError(
                     f"reference env did not reach the requested state (max err {err:.3e}); "
                     f"asked {np.asarray(st)}, got {got}. Parity measured against this frame would "
-                    f"be comparing two different scenes.")
+                    f"be comparing two different scenes."
+                )
             out.append(u._render(visualize=False).copy())
         return np.stack(out)

@@ -20,6 +20,7 @@ against, for all ten cells at once:
 Sizes are small (4-8 envs) and every cell renders at its reference's native canvas, so the whole file
 is a few seconds on CPU.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -72,7 +73,7 @@ def test_every_cell_takes_the_step9_constructor(name):
         assert env.num_envs == 3 == env.B and len(env) == 3
         assert env.device.type == "cpu"
     assert env.closed
-    env.close()                                   # idempotent
+    env.close()  # idempotent
     with pytest.raises(RuntimeError, match="closed"):
         env.render()
 
@@ -183,17 +184,25 @@ def test_step_reports_a_state_and_does_not_fabricate_a_reward(name):
     out = env.step(_actions(env, 2))
     assert list(out.keys()) == ["state"], (
         "these cells have no reward and no termination semantics in stable-envs; an absent key is "
-        "the honest answer and a zero would read as a measured one")
+        "the honest answer and a zero would read as a measured one"
+    )
     assert env.has_dynamics
 
 
 def test_navigation_cells_live_in_the_merged_module():
     from stable_envs.envs import navigation
-    for attr in ("IMG", "_ALPHA_FLOOR", "_alpha_blend", "_gaussian_dot",
-                 "DEFAULT_WALL_SHAPE", "DEFAULT_WALL_POS", "SimplePointMaze"):
+
+    for attr in (
+        "IMG",
+        "_ALPHA_FLOOR",
+        "_alpha_blend",
+        "_gaussian_dot",
+        "DEFAULT_WALL_SHAPE",
+        "DEFAULT_WALL_POS",
+        "SimplePointMaze",
+    ):
         assert hasattr(navigation, attr)
-    assert {c.__module__ for c in (snv.TwoRoom, snv.Piecewise, snv.SimplePointMaze)} == \
-        {"stable_envs.envs.navigation"}
+    assert {c.__module__ for c in (snv.TwoRoom, snv.Piecewise, snv.SimplePointMaze)} == {"stable_envs.envs.navigation"}
 
 
 @pytest.mark.parametrize("name", ALL)
@@ -202,8 +211,7 @@ def test_the_registered_default_frame_size_and_the_specs_agree(name):
     assert env.size == env.default_size
     assert tuple(env.action_spec.shape) == (env.action_dim,)
     spec = env.state_spec
-    assert sorted(tuple(k) if isinstance(k, tuple) else (k,)
-                  for k in spec.keys(nested=True)) == sorted(KEYS[name])
+    assert sorted(tuple(k) if isinstance(k, tuple) else (k,) for k in spec.keys(nested=True)) == sorted(KEYS[name])
     env.close()
 
 
@@ -265,7 +273,7 @@ def test_env_state_is_the_simulator_buffer_and_not_the_widened_packed_row(name):
     assert answered == set(KEYS[name]), "a field would be served by the lossy packed row"
     st = env.state
     for i, nm in enumerate(env.sim_state_names):
-        assert torch.equal(st[nm], env.sim_state()[:, i:i + 1]), nm
+        assert torch.equal(st[nm], env.sim_state()[:, i : i + 1]), nm
     # and the row the renderer sees is still exactly the packed float32 one
     assert torch.equal(env.pack(st), env.get_state())
     env.close()
@@ -276,12 +284,14 @@ def test_a_classic_cell_whose_layout_does_not_cover_its_packed_row_fails_at_impo
     from stable_envs.envs.classic_control import _Classic
 
     with pytest.raises(TypeError, match="packed column"):
+
         class _Broken(_Classic):
             state_dim = 2
             sim_state_names = ("a", "b", "c")
             render_from_sim = (0,)
 
     with pytest.raises(TypeError, match="duplicate"):
+
         class _Dup(_Classic):
             state_dim = 2
             sim_state_names = ("a", "a", "c")
@@ -328,7 +338,8 @@ def test_a_step_result_is_not_a_view_of_the_env_that_produced_it(name):
     env.step(_actions(env, 4, seed=8))
     for k in KEYS[name]:
         assert torch.equal(out["state"][k], held[k]), (
-            f"{'.'.join(k)} in a StepResult changed when the env was stepped again")
+            f"{'.'.join(k)} in a StepResult changed when the env was stepped again"
+        )
     env.close()
 
 

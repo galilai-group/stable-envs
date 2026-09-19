@@ -62,13 +62,13 @@ The rule is therefore kept as written — do not close contexts, do not scale cr
 it is now a cheap invariant rather than a scarce budget, and a suite that trips it should suspect its
 NODE first.
 """
+
 from __future__ import annotations
 
 import hashlib
 
 import numpy as np
 import torch
-
 
 #: ``(env class, output size)`` -> the OFFICIAL reference env. Built once per process, never dropped.
 _REFERENCE_ENVS: dict = {}
@@ -162,11 +162,11 @@ def interior_mask(frames: np.ndarray) -> np.ndarray:
     mechanism instead.
     """
     import scipy.ndimage as ndi
+
     out = []
     for f in frames:
         g = f.astype(np.int16)
-        flat = (np.abs(np.diff(g, axis=0)).sum(-1)[:, :-1]
-                + np.abs(np.diff(g, axis=1)).sum(-1)[:-1]) == 0
+        flat = (np.abs(np.diff(g, axis=0)).sum(-1)[:, :-1] + np.abs(np.diff(g, axis=1)).sum(-1)[:-1]) == 0
         out.append(ndi.minimum_filter(flat, size=3))
     return np.stack(out)
 
@@ -174,8 +174,12 @@ def interior_mask(frames: np.ndarray) -> np.ndarray:
 def pixel_agreement(a: np.ndarray, b: np.ndarray) -> dict:
     """Agreement between two uint8 frame stacks, split into all-pixel and interior-pixel."""
     d = np.abs(a.astype(np.int16) - b.astype(np.int16)).max(-1)
-    res = {"mean_abs": float(d.mean()), "exact_frac": float((d == 0).mean()),
-           "within8_frac": float((d <= 8).mean()), "max_abs": int(d.max())}
+    res = {
+        "mean_abs": float(d.mean()),
+        "exact_frac": float((d == 0).mean()),
+        "within8_frac": float((d <= 8).mean()),
+        "max_abs": int(d.max()),
+    }
     try:
         m = interior_mask(b)
         di = d[:, :-1, :-1][m]
@@ -186,8 +190,13 @@ def pixel_agreement(a: np.ndarray, b: np.ndarray) -> dict:
             # is reachable: Craftax's dithered pixel art has no flat neighbourhood at 7px or 16px, and
             # it reported interior_frac 0.000 alongside exact_frac 1.0. None is the honest value, and
             # the test skips the interior check on it and falls back to all-pixel agreement.
-            res.update(interior_frac=float(m.mean()), interior_exact_frac=None,
-                       interior_mean_abs=None, interior_px=0, interior_bad_px=0)
+            res.update(
+                interior_frac=float(m.mean()),
+                interior_exact_frac=None,
+                interior_mean_abs=None,
+                interior_px=0,
+                interior_bad_px=0,
+            )
         else:
             # The COUNTS, not only the fraction. An interior disagreement is reported as a number
             # like 0.9999996, and nobody can act on that: the decision an env author has to make is
@@ -196,12 +205,21 @@ def pixel_agreement(a: np.ndarray, b: np.ndarray) -> dict:
             # families where it came up, MujocoPusher and the swm nav envs, the answer was 1-2 pixels
             # of ~3 million, on about a fifth of draws — which reads as a rounding boundary at a
             # glance and as a passing test with 0.9999996 in it.
-            res.update(interior_frac=float(m.mean()), interior_exact_frac=float((di == 0).mean()),
-                       interior_mean_abs=float(di.mean()), interior_px=int(di.size),
-                       interior_bad_px=int((di != 0).sum()))
-    except ImportError:                       # scipy is optional; the coarse numbers still stand
-        res.update(interior_frac=None, interior_exact_frac=None, interior_mean_abs=None,
-                   interior_px=None, interior_bad_px=None)
+            res.update(
+                interior_frac=float(m.mean()),
+                interior_exact_frac=float((di == 0).mean()),
+                interior_mean_abs=float(di.mean()),
+                interior_px=int(di.size),
+                interior_bad_px=int((di != 0).sum()),
+            )
+    except ImportError:  # scipy is optional; the coarse numbers still stand
+        res.update(
+            interior_frac=None,
+            interior_exact_frac=None,
+            interior_mean_abs=None,
+            interior_px=None,
+            interior_bad_px=None,
+        )
     return res
 
 
@@ -219,6 +237,7 @@ def ssim(a: np.ndarray, b: np.ndarray, win: int = 7) -> float:
     tier's whole claim is that it does.
     """
     import scipy.ndimage as ndi
+
     f = lambda x: ndi.uniform_filter(x, size=win, mode="nearest")
     x = a.astype(np.float64) @ [0.299, 0.587, 0.114]
     y = b.astype(np.float64) @ [0.299, 0.587, 0.114]
@@ -226,7 +245,7 @@ def ssim(a: np.ndarray, b: np.ndarray, win: int = 7) -> float:
     ux, uy = f(x), f(y)
     vx, vy = f(x * x) - ux * ux, f(y * y) - uy * uy
     vxy = f(x * y) - ux * uy
-    s = ((2 * ux * uy + c1) * (2 * vxy + c2)) / ((ux ** 2 + uy ** 2 + c1) * (vx + vy + c2))
+    s = ((2 * ux * uy + c1) * (2 * vxy + c2)) / ((ux**2 + uy**2 + c1) * (vx + vy + c2))
     return float(s.mean())
 
 
@@ -240,12 +259,13 @@ def reference_accepts_style(cls) -> bool:
     looks exactly like a catastrophic renderer regression.
     """
     import inspect
+
     fn = getattr(cls, "reference_render", None)
     if fn is None:
         return False
     try:
         return "style" in inspect.signature(fn).parameters
-    except (TypeError, ValueError):                                  # pragma: no cover
+    except (TypeError, ValueError):  # pragma: no cover
         return False
 
 
@@ -267,9 +287,11 @@ def check_visual_fidelity_under_variation(env, n: int = 64, seed: int = 0) -> di
     """
     cls = type(env)
     if not reference_accepts_style(cls):
-        return {"skipped": f"{cls.__name__}.reference_render does not take a style, so the official "
-                           f"renderer cannot be driven at this env's declared appearance and the two "
-                           f"sides would be pictures of different scenes"}
+        return {
+            "skipped": f"{cls.__name__}.reference_render does not take a style, so the official "
+            f"renderer cannot be driven at this env's declared appearance and the two "
+            f"sides would be pictures of different scenes"
+        }
     ref = reference_env(cls, env.size)
     rng = np.random.default_rng(int(seed))
     states = env.sample_states(int(n), rng=rng)
@@ -378,11 +400,11 @@ def check_state_dims_matter(env, n: int = 8, eps: float = 25.0, donors: int = 4)
             pert = st.copy()
             pert[:, d] = donor[:, d]
             if np.array_equal(pert[:, d], st[:, d]):
-                continue                      # donor happened to match; proves nothing either way
+                continue  # donor happened to match; proves nothing either way
             if not np.array_equal(env.render(pert).cpu().numpy(), base):
                 alive = True
                 break
-        if not alive:                          # fall back to an additive nudge
+        if not alive:  # fall back to an additive nudge
             for step in (eps, -eps, 1.0, 0.5):
                 pert = st.copy()
                 pert[:, d] = pert[:, d] + step
@@ -420,11 +442,28 @@ def _render_invariant_candidates(env) -> tuple:
 #: Arrays a render-invariance claim must leave bit-unchanged. Everything a renderer can read off the
 #: scene except the one thing the claim is about (``geom_xmat`` on spheres), so the escape is bounded by
 #: an enumeration rather than by a promise.
-_RENDER_INVARIANT_FROZEN = ("geom_xpos", "geom_size", "geom_type", "geom_rgba", "geom_matid",
-                            "geom_names", "mat_rgba", "mat_reflectance", "mat_specular",
-                            "mat_shininess", "mat_texid", "light_pos", "light_dir", "light_diffuse",
-                            "light_specular", "light_ambient", "light_castshadow", "cam_pos",
-                            "cam_quat", "cam_fovy")
+_RENDER_INVARIANT_FROZEN = (
+    "geom_xpos",
+    "geom_size",
+    "geom_type",
+    "geom_rgba",
+    "geom_matid",
+    "geom_names",
+    "mat_rgba",
+    "mat_reflectance",
+    "mat_specular",
+    "mat_shininess",
+    "mat_texid",
+    "light_pos",
+    "light_dir",
+    "light_diffuse",
+    "light_specular",
+    "light_ambient",
+    "light_castshadow",
+    "cam_pos",
+    "cam_quat",
+    "cam_fovy",
+)
 
 #: Frozen fields an env may legitimately omit, with the reason it may. EMPTY, deliberately: this tuple
 #: exists so that a future omission has to be argued here, in the rule, rather than being granted by a
@@ -472,8 +511,10 @@ def _validate_render_invariant(env, states, d: int, variation=None) -> tuple:
     """
     sig = getattr(env, "render_scene_signature", None)
     if sig is None:
-        return False, ("the env declares render_invariant_dims but provides no "
-                       "render_scene_signature, so the claim cannot be validated")
+        return False, (
+            "the env declares render_invariant_dims but provides no "
+            "render_scene_signature, so the claim cannot be validated"
+        )
     row = np.asarray(states[:1]).copy()
     kw = {} if variation is None else {"variation": variation}
     a = sig(row, **kw)
@@ -487,13 +528,14 @@ def _validate_render_invariant(env, states, d: int, variation=None) -> tuple:
         return False, "render_scene_signature returned different keys for the two states"
     # EVERY frozen field must be PRESENT, not merely unchanged. A field the env does not emit is a
     # field this rule is not checking, and the enumeration is the entire bound on the exclusion.
-    missing = [k for k in _RENDER_INVARIANT_FROZEN
-               if k not in a and k not in _RENDER_INVARIANT_OPTIONAL]
+    missing = [k for k in _RENDER_INVARIANT_FROZEN if k not in a and k not in _RENDER_INVARIANT_OPTIONAL]
     if missing:
-        return False, (f"render_scene_signature does not emit {missing}, and the frozen enumeration "
-                       f"is the whole bound on this exclusion -- a field that is not reported is a "
-                       f"field that is not checked. Emit it, or add it to "
-                       f"_RENDER_INVARIANT_OPTIONAL with the reason it cannot change a pixel")
+        return False, (
+            f"render_scene_signature does not emit {missing}, and the frozen enumeration "
+            f"is the whole bound on this exclusion -- a field that is not reported is a "
+            f"field that is not checked. Emit it, or add it to "
+            f"_RENDER_INVARIANT_OPTIONAL with the reason it cannot change a pixel"
+        )
     if "geom_type" not in a:
         return False, "render_scene_signature must emit geom_type; sphere-ness is derived from it"
     # DERIVED HERE, never taken from the env. ``geom_is_sphere`` would otherwise be an assertion by
@@ -505,40 +547,49 @@ def _validate_render_invariant(env, states, d: int, variation=None) -> tuple:
     if claimed is not None:
         claimed = np.asarray(claimed, bool).reshape(-1)
         if claimed.shape != sphere.shape or not np.array_equal(claimed, sphere):
-            return False, ("render_scene_signature's geom_is_sphere disagrees with the geom_type it "
-                           "reports; sphere-ness is derived from geom_type here and a disagreement "
-                           "means one of the two is wrong")
+            return False, (
+                "render_scene_signature's geom_is_sphere disagrees with the geom_type it "
+                "reports; sphere-ness is derived from geom_type here and a disagreement "
+                "means one of the two is wrong"
+            )
     if sphere.size == 0 or not sphere.any():
         return False, "the model has no sphere geoms, so no dimension can be sphere-orientation-only"
     for k in _RENDER_INVARIANT_FROZEN:
         if k not in a:
-            continue                                  # only reachable via _RENDER_INVARIANT_OPTIONAL
+            continue  # only reachable via _RENDER_INVARIANT_OPTIONAL
         if not np.array_equal(np.asarray(a[k]), np.asarray(b[k])):
-            return False, (f"perturbing this dimension changed {k}, which a claim of "
-                           f"sphere-orientation-only invariance forbids")
+            return False, (
+                f"perturbing this dimension changed {k}, which a claim of sphere-orientation-only invariance forbids"
+            )
     xa, xb = np.asarray(a["geom_xmat"]), np.asarray(b["geom_xmat"])
     if xa.shape != xb.shape:
         return False, "geom_xmat changed shape between the two states"
     changed = ~np.all(np.isclose(xa, xb, rtol=0, atol=0), axis=tuple(range(1, xa.ndim)))
     if not changed.any():
-        return False, ("perturbing this dimension changed nothing in the scene at all, so it is dead "
-                       "in the MODEL and not merely invisible to the renderer")
+        return False, (
+            "perturbing this dimension changed nothing in the scene at all, so it is dead "
+            "in the MODEL and not merely invisible to the renderer"
+        )
     bad = np.flatnonzero(changed & ~sphere)
     if bad.size:
         names = a.get("geom_names") or []
         which = [names[i] if i < len(names) else int(i) for i in bad]
-        return False, (f"perturbing this dimension rotated NON-sphere geoms {which}, whose orientation "
-                       f"a correct renderer must draw")
+        return False, (
+            f"perturbing this dimension rotated NON-sphere geoms {which}, whose orientation "
+            f"a correct renderer must draw"
+        )
     names = a.get("geom_names") or []
     which = [names[i] if i < len(names) else int(i) for i in np.flatnonzero(changed)]
-    return True, (f"render-invariant: sphere orientation. Perturbing it rotates only the sphere "
-                  f"geom(s) {which} and changes nothing else in the render-side scene (geom_xpos, "
-                  f"geom_size, geom_type, every non-sphere geom_xmat, and every material, light and "
-                  f"camera array are bit-identical). An analytic per-pixel sphere is exactly invariant "
-                  f"under rotation about its centre, so no renderer of this design can make this "
-                  f"dimension visible. MuJoCo's tessellated, per-vertex-shaded sphere is not invariant "
-                  f"and does move a few hundred pixels at <= 55/255; that difference is declared in the "
-                  f"env's state_dims_note.")
+    return True, (
+        f"render-invariant: sphere orientation. Perturbing it rotates only the sphere "
+        f"geom(s) {which} and changes nothing else in the render-side scene (geom_xpos, "
+        f"geom_size, geom_type, every non-sphere geom_xmat, and every material, light and "
+        f"camera array are bit-identical). An analytic per-pixel sphere is exactly invariant "
+        f"under rotation about its centre, so no renderer of this design can make this "
+        f"dimension visible. MuJoCo's tessellated, per-vertex-shaded sphere is not invariant "
+        f"and does move a few hundred pixels at <= 55/255; that difference is declared in the "
+        f"env's state_dims_note."
+    )
 
 
 def check_batch_invariance(env, n: int = 8) -> dict:
@@ -547,7 +598,7 @@ def check_batch_invariance(env, n: int = 8) -> dict:
     batched = env.render(st).cpu().numpy()
     worst = 0
     for i in range(min(n, env.B)):
-        one = env.render(st[i:i + 1]).cpu().numpy()[0]
+        one = env.render(st[i : i + 1]).cpu().numpy()[0]
         worst = max(worst, int(np.abs(one.astype(np.int16) - batched[i].astype(np.int16)).max()))
     return {"max_abs_diff": worst}
 
@@ -574,6 +625,7 @@ def check_backend_agreement(env, n: int = 4, max_size: int = 96) -> dict:
     The predicate is therefore the scene's device, read the same way ``raster2d.render`` reads it.
     """
     from ..render.raster2d import HAVE_TRITON, render_torch, render_triton
+
     if not HAVE_TRITON:
         return {"skipped": "triton unavailable"}
     b_n = min(int(n), env.B)
@@ -583,8 +635,10 @@ def check_backend_agreement(env, n: int = 4, max_size: int = 96) -> dict:
     except NotImplementedError:
         return {"skipped": "env renders without a Scene2D (tilemap path)"}
     if sc.kind.device.type != "cuda":
-        return {"skipped": f"the fused kernel is CUDA-only and this scene is on "
-                           f"{sc.kind.device}; on a CPU device there is one backend, not two"}
+        return {
+            "skipped": f"the fused kernel is CUDA-only and this scene is on "
+            f"{sc.kind.device}; on a CPU device there is one backend, not two"
+        }
     size = min(int(env.size), int(max_size))
     a = render_triton(sc, size, env.ss).cpu().numpy()
     b = render_torch(sc, size, env.ss).cpu().numpy()
@@ -602,9 +656,9 @@ def check_variations_do_something(env) -> dict:
             node = node[part]
         default = node.value
         try:
-            if hasattr(node, "n"):                        # Discrete: flip it
+            if hasattr(node, "n"):  # Discrete: flip it
                 alt = 0 if int(default) != 0 else 1
-            else:                                          # Box/RGBBox: go to the far end of the range
+            else:  # Box/RGBBox: go to the far end of the range
                 lo = np.broadcast_to(node.low, node.shape).astype(np.float64)
                 hi = np.broadcast_to(node.high, node.shape).astype(np.float64)
                 d = np.asarray(default, np.float64)
@@ -612,7 +666,7 @@ def check_variations_do_something(env) -> dict:
             frames = env.render(st, variation={path: alt}).cpu().numpy()
             if np.array_equal(frames, base):
                 inert.append(path)
-        except Exception as e:                             # a variation that cannot be set is inert too
+        except Exception as e:  # a variation that cannot be set is inert too
             inert.append(f"{path} ({type(e).__name__}: {e})")
     return {"inert_variations": inert}
 
@@ -634,7 +688,7 @@ def check_per_env_variation(env) -> dict:
         for part in path.split("."):
             node = node[part]
         if not hasattr(node, "low"):
-            continue                                   # Discrete: nothing continuous to spread
+            continue  # Discrete: nothing continuous to spread
         lo = np.broadcast_to(node.low, node.shape).astype(np.float64)
         hi = np.broadcast_to(node.high, node.shape).astype(np.float64)
         # TWO distinct values, not a B-wide ramp. What is being tested is whether per-environment
@@ -646,12 +700,12 @@ def check_per_env_variation(env) -> dict:
         # contexts held, and closing one of them harmless — see the module docstring). The cost
         # argument stands on its own and is the reason this stays at two values.
         half = np.zeros((env.B, 1))
-        half[env.B // 2:] = 1.0
+        half[env.B // 2 :] = 1.0
         ramp = half * (hi - lo).reshape(1, -1) + lo.reshape(1, -1)
         try:
             f = env.render(st, variation={path: ramp.astype(node.dtype)}).cpu().numpy()
         except Exception:
-            continue                                   # env may not accept a per-env form for this leaf
+            continue  # env may not accept a per-env form for this leaf
         if len(np.unique(f.reshape(env.B, -1), axis=0)) < 2:
             collapsed.append(path)
     return {"collapsed_variations": collapsed}
@@ -702,8 +756,13 @@ def check_default_style_is_official(env) -> dict:
 #:  ``official_renderer_fails_the_same_check``  the demonstration AGAINST the official renderer. The
 #:                  claim is about the reference's shading model, so the reference has to fail it too.
 #:  ``evidence``    the artifact paths the two numbers above were measured in.
-_COLOR_APPLICABILITY_REQUIRED = ("leaves", "mechanism", "max_shading_factor",
-                                 "official_renderer_fails_the_same_check", "evidence")
+_COLOR_APPLICABILITY_REQUIRED = (
+    "leaves",
+    "mechanism",
+    "max_shading_factor",
+    "official_renderer_fails_the_same_check",
+    "evidence",
+)
 
 
 def color_exactness_applicability(env, probes=None) -> dict:
@@ -725,43 +784,63 @@ def color_exactness_applicability(env, probes=None) -> dict:
     """
     cls = env if isinstance(env, type) else type(env)
     decl = getattr(cls, "color_exactness_applicability", None)
-    none = {"honoured": False, "not_applicable_probes": [], "declared_leaves": [],
-            "undeclared_leaves_still_judged": sorted(probes or []), "declaration": None,
-            "why": "no color_exactness_applicability is declared, so literal RGB equality is "
-                   "asserted on every RGB leaf"}
+    none = {
+        "honoured": False,
+        "not_applicable_probes": [],
+        "declared_leaves": [],
+        "undeclared_leaves_still_judged": sorted(probes or []),
+        "declaration": None,
+        "why": "no color_exactness_applicability is declared, so literal RGB equality is asserted on every RGB leaf",
+    }
     if not isinstance(decl, dict) or not decl:
         return none
 
     missing = [k for k in _COLOR_APPLICABILITY_REQUIRED if decl.get(k) in (None, "", (), [], {})]
     if missing:
-        return {**none, "declaration": dict(decl), "rejected_because": missing,
-                "why": f"the declaration is missing {missing}, so it is REFUSED and every RGB leaf "
-                       f"stays judged; see _COLOR_APPLICABILITY_REQUIRED"}
+        return {
+            **none,
+            "declaration": dict(decl),
+            "rejected_because": missing,
+            "why": f"the declaration is missing {missing}, so it is REFUSED and every RGB leaf "
+            f"stays judged; see _COLOR_APPLICABILITY_REQUIRED",
+        }
     try:
         ceiling = float(decl["max_shading_factor"])
     except (TypeError, ValueError):
         ceiling = 1.0
     if not (0.0 < ceiling < 1.0):
-        return {**none, "declaration": dict(decl), "rejected_because": ["max_shading_factor"],
-                "why": f"max_shading_factor {decl['max_shading_factor']!r} is not a measured ceiling "
-                       f"strictly below 1, so the declaration is REFUSED and every leaf stays judged"}
+        return {
+            **none,
+            "declaration": dict(decl),
+            "rejected_because": ["max_shading_factor"],
+            "why": f"max_shading_factor {decl['max_shading_factor']!r} is not a measured ceiling "
+            f"strictly below 1, so the declaration is REFUSED and every leaf stays judged",
+        }
     if decl["official_renderer_fails_the_same_check"] is not True:
-        return {**none, "declaration": dict(decl),
-                "rejected_because": ["official_renderer_fails_the_same_check"],
-                "why": "the declaration does not assert that the OFFICIAL renderer fails this check "
-                       "too, so it is REFUSED and every leaf stays judged"}
+        return {
+            **none,
+            "declaration": dict(decl),
+            "rejected_because": ["official_renderer_fails_the_same_check"],
+            "why": "the declaration does not assert that the OFFICIAL renderer fails this check "
+            "too, so it is REFUSED and every leaf stays judged",
+        }
 
     leaves = [str(x) for x in decl["leaves"]]
     probes = sorted(probes or [])
     covered = [k for k in probes if k.split("->", 1)[0] in leaves]
     rest = sorted({k.split("->", 1)[0] for k in probes} - set(leaves))
-    return {"honoured": True, "not_applicable_probes": covered, "declared_leaves": sorted(leaves),
-            "undeclared_leaves_still_judged": rest, "declaration": dict(decl),
-            "why": f"{len(leaves)} named leaves are rendered through {decl['mechanism']}, whose "
-                   f"measured ceiling is {ceiling:.6f} < 1, so the requested triple is unreachable "
-                   f"for any correct implementation of the reference and the official renderer fails "
-                   f"this check too; evidence {list(decl['evidence'])}. Every other RGB leaf on this "
-                   f"env stays judged ({rest or 'there are none'})."}
+    return {
+        "honoured": True,
+        "not_applicable_probes": covered,
+        "declared_leaves": sorted(leaves),
+        "undeclared_leaves_still_judged": rest,
+        "declaration": dict(decl),
+        "why": f"{len(leaves)} named leaves are rendered through {decl['mechanism']}, whose "
+        f"measured ceiling is {ceiling:.6f} < 1, so the requested triple is unreachable "
+        f"for any correct implementation of the reference and the official renderer fails "
+        f"this check too; evidence {list(decl['evidence'])}. Every other RGB leaf on this "
+        f"env stays judged ({rest or 'there are none'}).",
+    }
 
 
 def partition_colour_exactness(result: dict) -> dict:
@@ -785,14 +864,19 @@ def partition_colour_exactness(result: dict) -> dict:
     app = result.get("applicability") or {}
     best = result.get("best_abs_diff") or {}
     if not app.get("honoured"):
-        return {"asserted": failures, "not_applicable": [], "honoured": False,
-                "why": app.get("why") or "no honoured colour-exactness declaration, so every failing "
-                                         "probe is asserted on"}
+        return {
+            "asserted": failures,
+            "not_applicable": [],
+            "honoured": False,
+            "why": app.get("why") or "no honoured colour-exactness declaration, so every failing probe is asserted on",
+        }
     excused = set(app.get("not_applicable_probes") or [])
-    return {"asserted": [p for p in failures if p not in excused],
-            "not_applicable": [{"probe": p, "best_abs_diff": best.get(p)}
-                               for p in failures if p in excused],
-            "honoured": True, "why": app.get("why")}
+    return {
+        "asserted": [p for p in failures if p not in excused],
+        "not_applicable": [{"probe": p, "best_abs_diff": best.get(p)} for p in failures if p in excused],
+        "honoured": True,
+        "why": app.get("why"),
+    }
 
 
 def check_colors_apply_exactly(env) -> dict:
@@ -811,10 +895,10 @@ def check_colors_apply_exactly(env) -> dict:
         for part in path.split("."):
             node = node[part]
         if w != 3 or not hasattr(node, "high") or int(np.max(node.high)) != 255:
-            continue                                   # only RGB leaves have a checkable answer
-        for target in ([17, 33, 200], [200, 17, 33]):   # two, so a channel swap cannot pass both
+            continue  # only RGB leaves have a checkable answer
+        for target in ([17, 33, 200], [200, 17, 33]):  # two, so a channel swap cannot pass both
             sty = np.tile(env.default_style(), (env.B, 1))
-            sty[:, off:off + w] = np.asarray(target, np.float32)
+            sty[:, off : off + w] = np.asarray(target, np.float32)
             f = env.render(st, style=sty).cpu().numpy()
             d = np.abs(f.astype(np.int16) - np.asarray(target, np.int16)).sum(-1)
             # REPORTED, never judged: how close the closest pixel came, in summed absolute channel
@@ -824,8 +908,11 @@ def check_colors_apply_exactly(env) -> dict:
             best[f"{path}->{target}"] = int(d.min())
             if not (d == 0).any():
                 wrong.append(f"{path}->{target}")
-    return {"colors_not_applied": wrong, "best_abs_diff": best,
-            "applicability": color_exactness_applicability(env, sorted(best))}
+    return {
+        "colors_not_applied": wrong,
+        "best_abs_diff": best,
+        "applicability": color_exactness_applicability(env, sorted(best)),
+    }
 
 
 #: How close a pixel has to be to count as agreeing inside a task object's footprint. The same 8/255
@@ -907,7 +994,7 @@ def check_task_object_visibility(env, states=None, n: int = 16, seed: int = 0) -
             # to a local here is dropped on return, and for the MuJoCo families that RELEASES an EGL
             # context while other envs still hold live ones. Same rule the parity test follows.
             official = cls.reference_render(reference_env(cls, env.size), states).astype(np.int16)
-        except ImportError as e:                      # the package is absent HERE, not broken
+        except ImportError as e:  # the package is absent HERE, not broken
             why_ref = f"the official renderer is not installed in this interpreter ({e})"
 
     out: dict = {"n_states": int(len(states)), "tol": int(PRESENCE_TOL), "objects": {}}
@@ -919,23 +1006,30 @@ def check_task_object_visibility(env, states=None, n: int = 16, seed: int = 0) -
         other = 1 - declared
         a = env.render(states, variation={path: declared}).cpu().numpy()
         b = env.render(states, variation={path: other}).cpu().numpy()
-        M = (a != b).any(-1)                                  # the object's own pixels, exactly
+        M = (a != b).any(-1)  # the object's own pixels, exactly
 
         # per-row, through the STYLE vector rather than the variation dict: that is the form a dataset
         # stores and the form a per-environment appearance arrives in.
         off, w = layout[path]
         sty = np.tile(np.asarray(env.default_style(), np.float32), (len(states), 1))
         odd = np.arange(len(states)) % 2 == 1
-        sty[:, off:off + w] = float(declared)
-        sty[odd, off:off + w] = float(other)
+        sty[:, off : off + w] = float(declared)
+        sty[odd, off : off + w] = float(other)
         mix = env.render(states, style=sty).cpu().numpy()
-        per_row = int(max(np.abs(mix[~odd].astype(np.int16) - a[~odd].astype(np.int16)).max(initial=0),
-                          np.abs(mix[odd].astype(np.int16) - b[odd].astype(np.int16)).max(initial=0)))
+        per_row = int(
+            max(
+                np.abs(mix[~odd].astype(np.int16) - a[~odd].astype(np.int16)).max(initial=0),
+                np.abs(mix[odd].astype(np.int16) - b[odd].astype(np.int16)).max(initial=0),
+            )
+        )
 
-        row = {"declared_value": declared, "footprint_px": int(M.sum()),
-               "footprint_frac": float(M.mean()),
-               "rows_with_footprint": int((M.reshape(len(states), -1).any(1)).sum()),
-               "per_row_max_abs_diff": per_row}
+        row = {
+            "declared_value": declared,
+            "footprint_px": int(M.sum()),
+            "footprint_frac": float(M.mean()),
+            "rows_with_footprint": int((M.reshape(len(states), -1).any(1)).sum()),
+            "per_row_max_abs_diff": per_row,
+        }
         if official is not None and M.any():
             da = np.abs(a.astype(np.int16) - official).max(-1)[M]
             db = np.abs(b.astype(np.int16) - official).max(-1)[M]
@@ -954,20 +1048,21 @@ def check_task_object_visibility(env, states=None, n: int = 16, seed: int = 0) -
                 row["why_no_margin"] = (
                     "the FLIPPED appearance is bit-exact against the official frame on the object's "
                     "own pixels, so the official renderer is drawing the flipped configuration and "
-                    "the declared default is the wrong one")
+                    "the declared default is the wrong one"
+                )
             row["reference_id"] = cls.reference_id
         else:
             row["presence_margin"] = None
-            row["why_no_reference"] = (why_ref if official is None
-                                       else "the object has an empty footprint on these states")
+            row["why_no_reference"] = (
+                why_ref if official is None else "the object has an empty footprint on these states"
+            )
         out["objects"][path] = row
     return out
 
 
 def check_determinism(env) -> dict:
     st = env.sample_states(env.B)
-    return {"identical": bool(np.array_equal(env.render(st).cpu().numpy(),
-                                             env.render(st).cpu().numpy()))}
+    return {"identical": bool(np.array_equal(env.render(st).cpu().numpy(), env.render(st).cpu().numpy()))}
 
 
 #: How an env declares the reference the step checker should drive. Every entry is optional except
@@ -1032,8 +1127,9 @@ def _default_actions(cls, rng, steps: int, hold: int) -> np.ndarray:
     return out
 
 
-def check_step_matches_reference(env, steps: int = 100, episodes: int = 16, seed: int = 0,
-                                 hold: int | None = None) -> dict:
+def check_step_matches_reference(
+    env, steps: int = 100, episodes: int = 16, seed: int = 0, hold: int | None = None
+) -> dict:
     """How far a batched GPU ``step`` drifts from the official CPU simulator on identical actions.
 
     Rendering parity is a bit-exactness claim; simulation parity is only sometimes one, and the two
@@ -1071,21 +1167,24 @@ def check_step_matches_reference(env, steps: int = 100, episodes: int = 16, seed
     decide whether another env can be checked at all.
     """
     from stable_envs.dynamics import has_dynamics
+
     cls = type(env)
     if not has_dynamics(env):
-        raise ValueError(f"{cls.__name__} has no step(); there is no solver to compare. Envs that ship "
-                         f"a renderer alone are covered by the render-parity checks instead.")
+        raise ValueError(
+            f"{cls.__name__} has no step(); there is no solver to compare. Envs that ship "
+            f"a renderer alone are covered by the render-parity checks instead."
+        )
     if not hasattr(cls, "reference_sim_state"):
         raise ValueError(
             f"{cls.__name__} ships a step() but declares no reference_sim_state(ref), so this check "
             f"cannot read the reference's state. Guessing an attribute name is what this function used "
             f"to do and it produces a silent mismatch rather than an error. Declare:\n"
-            f"{STEP_REFERENCE_HOOKS}")
+            f"{STEP_REFERENCE_HOOKS}"
+        )
 
     names = tuple(getattr(cls, "sim_state_names", None) or cls.state_names)
     D = len(names)
-    groups = tuple(getattr(cls, "step_reference_groups", None)
-                   or tuple((n, (i,), "abs") for i, n in enumerate(names)))
+    groups = tuple(getattr(cls, "step_reference_groups", None) or tuple((n, (i,), "abs") for i, n in enumerate(names)))
     control = str(getattr(cls, "step_reference_control", "") or "")
     gate = str(getattr(cls, "step_reference_gate", "") or "")
     hold = int(getattr(cls, "step_reference_hold", 8) if hold is None else hold)
@@ -1094,9 +1193,9 @@ def check_step_matches_reference(env, steps: int = 100, episodes: int = 16, seed
     read = cls.reference_sim_state
     advance = getattr(cls, "reference_step", None) or (lambda ref, a: ref.step(a))
     reset = getattr(cls, "step_reference_reset", None) or (
-        lambda ref, sd: (ref.reset(seed=sd), np.asarray(read(ref), np.float64))[1])
-    make_acts = getattr(cls, "step_reference_actions", None) or (
-        lambda rng, n, h: _default_actions(cls, rng, n, h))
+        lambda ref, sd: (ref.reset(seed=sd), np.asarray(read(ref), np.float64))[1]
+    )
+    make_acts = getattr(cls, "step_reference_actions", None) or (lambda rng, n, h: _default_actions(cls, rng, n, h))
 
     ref = reference_env(cls, env.size)
     rng = np.random.default_rng(seed)
@@ -1133,19 +1232,23 @@ def check_step_matches_reference(env, steps: int = 100, episodes: int = 16, seed
     # would (a) release an EGL context while other envs hold live ones, which the module docstring
     # forbids, and (b) hand the next caller a closed env out of the cache.
 
-    diff = np.stack(diffs)                                   # (episodes, steps, D)
+    diff = np.stack(diffs)  # (episodes, steps, D)
     m = np.array(touched, bool) if gate else np.ones(episodes, bool)
     sel = m if m.any() else np.ones_like(m)
     at25 = min(24, steps - 1)
 
-    out = {"env": cls.__name__, "episodes": episodes, "steps": steps,
-           "exact_claim": bool(getattr(cls, "step_reference_exact", False)),
-           "exact_frac": float(np.stack(exact).mean())}
+    out = {
+        "env": cls.__name__,
+        "episodes": episodes,
+        "steps": steps,
+        "exact_claim": bool(getattr(cls, "step_reference_exact", False)),
+        "exact_frac": float(np.stack(exact).mean()),
+    }
     if gate:
         out[f"{gate}_touched"] = int(m.sum())
     per_group, first = {}, 0.0
     for name, dims, metric in groups:
-        e = _group_error(diff, dims, metric)                 # (episodes, steps)
+        e = _group_error(diff, dims, metric)  # (episodes, steps)
         per_group[name] = e
         first = max(first, float(e[:, 0].max()))
         out[f"{name}_max_err"] = float(e.max())
@@ -1153,7 +1256,7 @@ def check_step_matches_reference(env, steps: int = 100, episodes: int = 16, seed
         out[f"{name}_median_err"] = float(np.median(e[sel][:, -1]))
         out[f"{name}_p90_err"] = float(np.percentile(e[sel][:, -1], 90))
         out[f"{name}_median_err_at_25"] = float(np.median(e[sel][:, at25]))
-    allg = np.stack(list(per_group.values())).max(0)         # worst group, per (episode, step)
+    allg = np.stack(list(per_group.values())).max(0)  # worst group, per (episode, step)
     out["first_step_max_err"] = first
     out["max_err"] = float(allg.max())
     out["median_err"] = float(np.median(allg[sel][:, -1]))
@@ -1193,8 +1296,7 @@ def uniform_style(env, n: int, groups: int = 2, seed: int = 0):
     return base[idx]
 
 
-def check_batch_size_invariance(env, states, style=None, sizes=(1, 7, 64),
-                                probes: int = 4) -> dict:
+def check_batch_size_invariance(env, states, style=None, sizes=(1, 7, 64), probes: int = 4) -> dict:
     """Frame ``i`` must not depend on how many other environments were rendered beside it.
 
     ``check_batch_invariance`` already compares a batch against single renders. This extends it to the
@@ -1211,8 +1313,8 @@ def check_batch_size_invariance(env, states, style=None, sizes=(1, 7, 64),
         b = min(int(b), n)
         for i in idx:
             lo = max(0, min(int(i) - b // 2, n - b))
-            sub = states[lo:lo + b]
-            k = None if style is None else style[lo:lo + b]
+            sub = states[lo : lo + b]
+            k = None if style is None else style[lo : lo + b]
             got = env.render(sub, style=k).detach().cpu().numpy()[int(i) - lo]
             d = int(np.abs(got.astype(np.int16) - full[int(i)].astype(np.int16)).max())
             if d > worst:
@@ -1229,11 +1331,16 @@ def check_chunked_render_matches(env, states, style=None, chunks=(1, 7, 64, 4096
     can reach.
     """
     from ..data import render_states
+
     ref = None
     worst, where = 0, ""
     for c in chunks:
-        got = render_states(env, states, size=env.size, chunk=int(c), style=style,
-                            device=str(env.device)).detach().cpu().numpy()
+        got = (
+            render_states(env, states, size=env.size, chunk=int(c), style=style, device=str(env.device))
+            .detach()
+            .cpu()
+            .numpy()
+        )
         if ref is None:
             ref = got
             continue
@@ -1271,9 +1378,14 @@ def downsample_protocol(states=None) -> dict:
     later run can show it measured the same eight states and not a re-seeded ``sample_states``.
     """
     from . import render_worker as W
-    out = {"n": DOWNSAMPLE_PROTOCOL_N, "state_seed": W.STATE_SEED,
-           "draw": "render_worker.sample_inputs(env, n)", "style": "default appearance",
-           "bound": "tests/gpu/test_reproducibility.py:DOWNSAMPLE_EXACT_FRAC (MEASURED_ON)"}
+
+    out = {
+        "n": DOWNSAMPLE_PROTOCOL_N,
+        "state_seed": W.STATE_SEED,
+        "draw": "render_worker.sample_inputs(env, n)",
+        "style": "default appearance",
+        "bound": "tests/gpu/test_reproducibility.py:DOWNSAMPLE_EXACT_FRAC (MEASURED_ON)",
+    }
     if states is not None:
         out["states_sha256"] = frames_digest(np.ascontiguousarray(states, np.float32))
         out["n_states"] = int(len(states))
@@ -1283,14 +1395,25 @@ def downsample_protocol(states=None) -> dict:
 def downsample_protocol_states(env) -> np.ndarray:
     """The states ``DOWNSAMPLE_EXACT_FRAC`` was measured on for ``env``: the test fixture's own draw."""
     from . import render_worker as W
+
     states, _ = W.sample_inputs(env, DOWNSAMPLE_PROTOCOL_N)
     return np.ascontiguousarray(states, np.float32)
 
 
 #: Keys of a ``resolution_consistency_applicability`` declaration that describe the declaration rather
 #: than naming a band. Everything else in the dict is read as a band condition.
-_APPLICABILITY_METADATA = frozenset({"evidence", "measured_against", "mechanisms", "scope_note",
-                                     "still_required", "note", "notes", "reference_versions"})
+_APPLICABILITY_METADATA = frozenset(
+    {
+        "evidence",
+        "measured_against",
+        "mechanisms",
+        "scope_note",
+        "still_required",
+        "note",
+        "notes",
+        "reference_versions",
+    }
+)
 
 #: A band whose value starts with this is one the relation itself does not hold in, on the official
 #: renderer's own evidence. Anything else is a band the bound is asserted in.
@@ -1299,9 +1422,14 @@ _NOT_APPLICABLE_PREFIX = "not_applicable"
 #: The band condition that means "the whole cell", not a subset of its states.
 _ALL_BANDS = frozenset({"all bands", "all", "every band"})
 
-_APPLICABILITY_OPS = {">=": lambda x, v: x >= v, "<=": lambda x, v: x <= v,
-                      ">": lambda x, v: x > v, "<": lambda x, v: x < v,
-                      "==": lambda x, v: x == v, "!=": lambda x, v: x != v}
+_APPLICABILITY_OPS = {
+    ">=": lambda x, v: x >= v,
+    "<=": lambda x, v: x <= v,
+    ">": lambda x, v: x > v,
+    "<": lambda x, v: x < v,
+    "==": lambda x, v: x == v,
+    "!=": lambda x, v: x != v,
+}
 
 
 def resolution_consistency_applicability(env, states=None) -> dict:
@@ -1333,27 +1461,42 @@ def resolution_consistency_applicability(env, states=None) -> dict:
     caller may skip subsetting for.
     """
     decl = getattr(type(env), "resolution_consistency_applicability", None)
-    full = {"applicable": True, "why": "no resolution_consistency_applicability is declared, so the "
-                                       "bound is asserted on every state",
-            "indices": None, "declaration": None, "bands": {}}
+    full = {
+        "applicable": True,
+        "why": "no resolution_consistency_applicability is declared, so the bound is asserted on every state",
+        "indices": None,
+        "declaration": None,
+        "bands": {},
+    }
     if not isinstance(decl, dict) or not decl:
         return full
 
     cited = {k: decl[k] for k in sorted(decl) if k in _APPLICABILITY_METADATA}
     bands = {k: v for k, v in decl.items() if k not in _APPLICABILITY_METADATA}
-    out_bands = {k: ("not_applicable" if str(v).strip().lower().startswith(_NOT_APPLICABLE_PREFIX)
-                     else "applicable") for k, v in bands.items()}
+    out_bands = {
+        k: ("not_applicable" if str(v).strip().lower().startswith(_NOT_APPLICABLE_PREFIX) else "applicable")
+        for k, v in bands.items()
+    }
 
     # "all bands: not_applicable" is the whole cell, and it is answered before any state is looked at:
     # there is no subset to fall back to and no draw to depend on.
     for k, v in bands.items():
         if k.strip().lower() in _ALL_BANDS and out_bands[k] == "not_applicable":
-            return {"applicable": False, "indices": [], "declaration": cited, "bands": out_bands,
-                    "why": f"the class declares '{k}': {v}"}
+            return {
+                "applicable": False,
+                "indices": [],
+                "declaration": cited,
+                "bands": out_bands,
+                "why": f"the class declares '{k}': {v}",
+            }
 
     if states is None:
-        return {**full, "declaration": cited, "bands": out_bands,
-                "why": "band conditions are declared but no states were supplied to resolve them"}
+        return {
+            **full,
+            "declaration": cited,
+            "bands": out_bands,
+            "why": "band conditions are declared but no states were supplied to resolve them",
+        }
 
     x = np.asarray(states, np.float64)
     names = list(getattr(env, "state_names", None) or [])
@@ -1378,9 +1521,13 @@ def resolution_consistency_applicability(env, states=None) -> dict:
     if unresolved:
         # A band nobody can resolve must not silently narrow or widen the judged set. Reporting it and
         # judging everything is the conservative direction: the bound stays asserted where it was.
-        return {**full, "declaration": cited, "bands": out_bands,
-                "why": f"band conditions {unresolved} could not be resolved against state_names, so "
-                       f"the bound is asserted on every state"}
+        return {
+            **full,
+            "declaration": cited,
+            "bands": out_bands,
+            "why": f"band conditions {unresolved} could not be resolved against state_names, so "
+            f"the bound is asserted on every state",
+        }
 
     # A declaration that names ONLY inapplicable bands leaves their complement judged.
     if not any(status == "applicable" for status in out_bands.values()):
@@ -1388,17 +1535,30 @@ def resolution_consistency_applicability(env, states=None) -> dict:
     keep = np.flatnonzero(applicable & ~excluded)
     inapplicable = sorted(k for k, s in out_bands.items() if s == "not_applicable")
     if len(keep) == 0:
-        return {"applicable": False, "indices": [], "declaration": cited, "bands": out_bands,
-                "why": f"every drawn state falls in a band the class declares inapplicable "
-                       f"({inapplicable}); {cited}"}
-    if len(keep) == len(x):
-        return {"applicable": True, "indices": None, "declaration": cited, "bands": out_bands,
-                "why": "no drawn state falls in a band the class declares inapplicable"}
-    return {"applicable": True, "indices": [int(i) for i in keep], "declaration": cited,
+        return {
+            "applicable": False,
+            "indices": [],
+            "declaration": cited,
             "bands": out_bands,
-            "why": f"{len(keep)} of {len(x)} states are outside the bands the class declares "
-                   f"inapplicable ({inapplicable}); the bound is asserted on those and the rest are "
-                   f"recorded not_applicable with the class's cited evidence"}
+            "why": f"every drawn state falls in a band the class declares inapplicable ({inapplicable}); {cited}",
+        }
+    if len(keep) == len(x):
+        return {
+            "applicable": True,
+            "indices": None,
+            "declaration": cited,
+            "bands": out_bands,
+            "why": "no drawn state falls in a band the class declares inapplicable",
+        }
+    return {
+        "applicable": True,
+        "indices": [int(i) for i in keep],
+        "declaration": cited,
+        "bands": out_bands,
+        "why": f"{len(keep)} of {len(x)} states are outside the bands the class declares "
+        f"inapplicable ({inapplicable}); the bound is asserted on those and the rest are "
+        f"recorded not_applicable with the class's cited evidence",
+    }
 
 
 def check_resolution_consistency(env, states, style=None, factor: int = 2) -> dict:
@@ -1427,10 +1587,15 @@ def check_resolution_consistency(env, states, style=None, factor: int = 2) -> di
     # where it lands.
     env.render(states[:1], size=S, style=None if style is None else style[:1])
     if big.shape[-3] != a.shape[-3] * factor or big.shape[-2] != a.shape[-2] * factor:
-        return {"skipped": f"size={S*factor} is not a {factor}x frame ({big.shape} vs {a.shape})"}
+        return {"skipped": f"size={S * factor} is not a {factor}x frame ({big.shape} vs {a.shape})"}
     d = np.abs(_box_downsample(big, factor).astype(np.int16) - a.astype(np.int16))
-    return {"exact_frac": float((d.max(-1) == 0).mean()), "mean_abs": float(d.mean()),
-            "max_abs": int(d.max()), "size": S, "factor": int(factor)}
+    return {
+        "exact_frac": float((d.max(-1) == 0).mean()),
+        "mean_abs": float(d.mean()),
+        "max_abs": int(d.max()),
+        "size": S,
+        "factor": int(factor),
+    }
 
 
 def check_input_form_invariance(env, states, style=None) -> dict:
@@ -1471,7 +1636,7 @@ def check_input_form_invariance(env, states, style=None) -> dict:
     for name, s in forms.items():
         try:
             got = env.render(s, style=style).detach().cpu().numpy()
-        except Exception as e:                                          # noqa: BLE001
+        except Exception as e:  # noqa: BLE001
             bad[name] = f"{type(e).__name__}: {e}"
             continue
         d = int(np.abs(got.astype(np.int16) - ref.astype(np.int16)).max())
@@ -1494,9 +1659,12 @@ def check_order_independence(env, states, style=None, seed: int = 0) -> dict:
     rng = np.random.default_rng(seed)
     perm = rng.permutation(n)
     base = env.render(states, style=style).detach().cpu().numpy()
-    permuted = env.render(np.asarray(states)[perm],
-                          style=None if style is None else np.asarray(style)[perm]
-                          ).detach().cpu().numpy()
+    permuted = (
+        env.render(np.asarray(states)[perm], style=None if style is None else np.asarray(style)[perm])
+        .detach()
+        .cpu()
+        .numpy()
+    )
     d_perm = int(np.abs(permuted.astype(np.int16) - base[perm].astype(np.int16)).max())
 
     # the same state twice in one batch must give the same frame twice
@@ -1516,16 +1684,17 @@ def check_render_is_pure(env, states, style=None) -> dict:
     loop that renders twice per step silently drifts. ``set_state(get_state())`` applied twice is the
     same claim from the other side: it is the operation a dataset performs on every batch.
     """
-    env.set_state(np.asarray(states)[:env.B] if len(states) >= env.B else
-                  np.repeat(np.asarray(states)[:1], env.B, 0),
-                  style=None if style is None else (
-                      np.asarray(style)[:env.B] if len(style) >= env.B else
-                      np.repeat(np.asarray(style)[:1], env.B, 0)))
+    env.set_state(
+        np.asarray(states)[: env.B] if len(states) >= env.B else np.repeat(np.asarray(states)[:1], env.B, 0),
+        style=None
+        if style is None
+        else (np.asarray(style)[: env.B] if len(style) >= env.B else np.repeat(np.asarray(style)[:1], env.B, 0)),
+    )
     s0 = env.get_state().detach().cpu().numpy().copy()
     k0 = env.get_style().detach().cpu().numpy().copy()
     f0 = env.render().detach().cpu().numpy()
 
-    env.render(states, style=style)                      # an unrelated render, with explicit arguments
+    env.render(states, style=style)  # an unrelated render, with explicit arguments
     s1 = env.get_state().detach().cpu().numpy().copy()
     k1 = env.get_style().detach().cpu().numpy().copy()
 
@@ -1539,11 +1708,12 @@ def check_render_is_pure(env, states, style=None) -> dict:
     # maximum which has no identity" and a styleless env cannot pass a check about RENDER PURITY that
     # has nothing to do with style. An env with no style trivially cannot have its style changed by a
     # render, so the honest answer for that case is 0.0, not a crash.
-    return {"state_changed_by_render": float(np.abs(s1 - s0).max()),
-            "style_changed_by_render": float(np.abs(k1 - k0).max()) if k0.size else 0.0,
-            "state_changed_by_double_set": float(np.abs(s2 - s0).max()),
-            "frame_changed_by_double_set": int(np.abs(f2.astype(np.int16)
-                                                      - f0.astype(np.int16)).max())}
+    return {
+        "state_changed_by_render": float(np.abs(s1 - s0).max()),
+        "style_changed_by_render": float(np.abs(k1 - k0).max()) if k0.size else 0.0,
+        "state_changed_by_double_set": float(np.abs(s2 - s0).max()),
+        "frame_changed_by_double_set": int(np.abs(f2.astype(np.int16) - f0.astype(np.int16)).max()),
+    }
 
 
 def check_set_state_copies(env) -> dict:
@@ -1562,5 +1732,7 @@ def check_set_state_copies(env) -> dict:
     stored = env.get_state().detach().cpu().numpy().copy()
     buf[:] = 0.0
     after = env.get_state().detach().cpu().numpy()
-    return {"aliased_caller_buffer": float(np.abs(after - stored).max()),
-            "state_tensor_rebound": bool(env.get_state().data_ptr() != before)}
+    return {
+        "aliased_caller_buffer": float(np.abs(after - stored).max()),
+        "state_tensor_rebound": bool(env.get_state().data_ptr() != before),
+    }

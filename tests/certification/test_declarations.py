@@ -19,6 +19,7 @@ repository breaks any of them (that is what ``register`` is for). The registry-w
 then asserts that the real classes still satisfy the rules — the tripwire for the enforcement being
 bypassed or weakened, on every env rather than on the ones that happen to have weights here.
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -30,15 +31,29 @@ torch = pytest.importorskip("torch")
 
 import stable_envs as se
 from stable_envs import spaces
-from stable_envs.env import REQUIRED_VISUAL_FIDELITY, Env as StableEnv
-from stable_envs.registry import (check_decoder_declaration, check_fidelity_declaration,
-                                  format_registry, make, register, registry_table)
+from stable_envs.env import REQUIRED_VISUAL_FIDELITY
+from stable_envs.env import Env as StableEnv
+from stable_envs.registry import (
+    check_decoder_declaration,
+    check_fidelity_declaration,
+    format_registry,
+    make,
+    register,
+    registry_table,
+)
 
 #: A complete, self-consistent measurement. Individual tests below remove exactly one thing from it,
 #: which is what makes each of them a test of one rule rather than of the whole block.
-VF = {"mean_abs": 2.45, "within8_frac": 0.935, "ssim": 0.97,
-      "mean_abs_max": 3.2, "within8_min": 0.88, "ssim_min": 0.92,
-      "measured_at": "a test", "decoder": "espcn_112t128_w48_d4_u2"}
+VF = {
+    "mean_abs": 2.45,
+    "within8_frac": 0.935,
+    "ssim": 0.97,
+    "mean_abs_max": 3.2,
+    "within8_min": 0.88,
+    "ssim_min": 0.92,
+    "measured_at": "a test",
+    "decoder": "espcn_112t128_w48_d4_u2",
+}
 
 
 @pytest.fixture(autouse=True)
@@ -56,18 +71,27 @@ def _registry_is_restored():
 
 def _cls(name: str, doc: str, **attrs):
     """A minimal registerable env class. Nothing here renders; the declarations are the subject."""
-    body = {"__doc__": doc, "state_dim": 2, "state_names": ("a", "b"), "default_size": 8,
-            "reference_id": "fake/Env-v0",
-            "make_variation_space": lambda self: spaces.Dict({}),
-            "sample_states": lambda self, batch, rng=None: np.zeros((batch, 2), np.float32)}
+    body = {
+        "__doc__": doc,
+        "state_dim": 2,
+        "state_names": ("a", "b"),
+        "default_size": 8,
+        "reference_id": "fake/Env-v0",
+        "make_variation_space": lambda self: spaces.Dict({}),
+        "sample_states": lambda self, batch, rng=None: np.zeros((batch, 2), np.float32),
+    }
     body.update(attrs)
     return type(name, (StableEnv,), body)
 
 
 def _visual(name="Vis", **over):
     """A well-formed VISUAL-tier class, before whatever the caller breaks."""
-    attrs = {"fidelity_tier": "visual", "visual_fidelity": dict(VF),
-             "visual_note": "a different rasterizer draws the same scene", "parity_interior_min": None}
+    attrs = {
+        "fidelity_tier": "visual",
+        "visual_fidelity": dict(VF),
+        "visual_note": "a different rasterizer draws the same scene",
+        "parity_interior_min": None,
+    }
     attrs.update(over)
     return _cls(name, "A test env. VISUAL TIER: the frames are a different render.", **attrs)
 
@@ -91,8 +115,11 @@ def test_a_well_formed_declaration_of_each_kind_registers():
     """The control. Without it every refusal below could be passing for an unrelated reason."""
     register(_cls("Plain", "An ordinary parity env."))
     register(_visual("GoodVisual"))
-    register(_learned("GoodLearnedCorrected",
-                      __doc__="A test env. VISUAL TIER, LEARNED decoder: a network drew the detail."))
+    register(
+        _learned(
+            "GoodLearnedCorrected", __doc__="A test env. VISUAL TIER, LEARNED decoder: a network drew the detail."
+        )
+    )
     assert {"Plain", "GoodVisual", "GoodLearnedCorrected"} <= set(se.registry.REGISTRY)
 
 
@@ -168,8 +195,7 @@ def test_a_learned_decoder_outside_the_visual_tier_is_refused():
     declared number, which is exactly why this has to be blocked structurally rather than by judgement.
     """
     with pytest.raises(ValueError, match="declares render_decoder='learned' outside the VISUAL tier"):
-        register(_cls("Bad", "doc. LEARNED.", render_decoder="learned",
-                      variation_fidelity=dict(VF)))
+        register(_cls("Bad", "doc. LEARNED.", render_decoder="learned", variation_fidelity=dict(VF)))
 
 
 def test_a_learned_decoder_whose_numbers_do_not_name_the_checkpoint_is_refused():
@@ -184,8 +210,9 @@ def test_a_learned_decoder_whose_numbers_do_not_name_the_checkpoint_is_refused()
         register(_learned("BadCorrected", visual_fidelity=vf))
 
 
-@pytest.mark.parametrize("missing", ["mean_abs", "within8_frac", "ssim", "mean_abs_max",
-                                     "within8_min", "ssim_min", "measured_at"])
+@pytest.mark.parametrize(
+    "missing", ["mean_abs", "within8_frac", "ssim", "mean_abs_max", "within8_min", "ssim_min", "measured_at"]
+)
 def test_a_learned_decoder_without_a_complete_variation_measurement_is_refused(missing):
     """THE asymmetry, and it is measured rather than stylistic.
 
@@ -211,8 +238,7 @@ def test_a_learned_decoder_that_does_not_say_so_in_its_docstring_is_refused():
     """The difference between "MuJoCo's renderer approximated" and "a learned approximation of MuJoCo's
     renderer" is INVISIBLE IN THE PICTURE, and ``help(cls)`` is where someone finds it."""
     with pytest.raises(ValueError, match="does not say so in its class docstring"):
-        register(_learned("BadCorrected",
-                          __doc__="A test env. VISUAL TIER: a fast re-render of the same scene."))
+        register(_learned("BadCorrected", __doc__="A test env. VISUAL TIER: a fast re-render of the same scene."))
 
 
 # ------------------------------------------------------------------ registration itself
@@ -241,7 +267,7 @@ def test_registering_the_same_class_twice_is_not_a_collision():
 
 def test_an_unknown_env_name_lists_the_ones_that_exist():
     with pytest.raises(KeyError) as e:
-        make("Pusht")                                   # the plausible casing mistake
+        make("Pusht")  # the plausible casing mistake
     assert "unknown env" in str(e.value)
     assert len(str(e.value)) > 100, "the error must list the known names, not merely reject one"
 
@@ -259,8 +285,9 @@ def test_the_listing_marks_a_visual_env_and_a_learned_one_differently():
     """
     register(_cls("PlainOne", "An ordinary parity env."))
     register(_visual("VisualOne"))
-    register(_learned("LearnedOneCorrected",
-                      __doc__="A test env. VISUAL TIER, LEARNED decoder: a network drew the detail."))
+    register(
+        _learned("LearnedOneCorrected", __doc__="A test env. VISUAL TIER, LEARNED decoder: a network drew the detail.")
+    )
     rows = {r["name"]: r for r in registry_table()}
     assert rows["PlainOne"]["tier"] == "parity" and rows["PlainOne"]["decoder"] == "renderer"
     assert rows["VisualOne"]["tier"] == "visual" and rows["VisualOne"]["decoder"] == "renderer"
@@ -298,9 +325,9 @@ def test_describe_tells_a_consumer_what_the_frames_are_not_for():
     assert "different render of the same scene" in vis["not_for"]
     assert vis["visual_fidelity"]["ssim_min"] == 0.92
 
-    lrn = _learned("L2Corrected",
-                   __doc__="A test env. VISUAL TIER, LEARNED decoder.")(num_envs=1,
-                                                                        device="cpu").describe()
+    lrn = _learned("L2Corrected", __doc__="A test env. VISUAL TIER, LEARNED decoder.")(
+        num_envs=1, device="cpu"
+    ).describe()
     assert "LEARNED approximation" in lrn["not_for"]
     assert "synthesised rather than measured" in lrn["not_for"]
     assert lrn["variation_fidelity"]["ssim_min"] == 0.92
@@ -360,11 +387,12 @@ def test_a_learned_class_has_the_plain_sibling_its_claim_is_relative_to():
         base = name.removesuffix("Corrected")
         assert base != name, (
             f"{name} draws through a learned decoder but is not named <Plain>Corrected, so the sibling "
-            f"it is a correction OF cannot be found by name")
-        assert base in se.registry.REGISTRY, (
-            f"{name} has no plain sibling {base} in the registry")
+            f"it is a correction OF cannot be found by name"
+        )
+        assert base in se.registry.REGISTRY, f"{name} has no plain sibling {base} in the registry"
         assert se.registry.REGISTRY[base].render_decoder == "renderer", (
-            f"{base} is supposed to be the plain way to draw this cell and it is not")
+            f"{base} is supposed to be the plain way to draw this cell and it is not"
+        )
 
 
 def test_the_declared_numbers_beat_the_render_they_replace_wherever_a_baseline_is_declared():
@@ -381,17 +409,21 @@ def test_the_declared_numbers_beat_the_render_they_replace_wherever_a_baseline_i
     for name, cls in sorted(se.registry.REGISTRY.items()):
         if getattr(cls, "render_decoder", "renderer") != "learned":
             continue
-        for label, decl in (("visual_fidelity", dict(getattr(cls, "visual_fidelity", {}) or {})),
-                            ("variation_fidelity", dict(getattr(cls, "variation_fidelity", {}) or {}))):
+        for label, decl in (
+            ("visual_fidelity", dict(getattr(cls, "visual_fidelity", {}) or {})),
+            ("variation_fidelity", dict(getattr(cls, "variation_fidelity", {}) or {})),
+        ):
             if "plain_mean_abs" not in decl:
-                continue                      # sealed before the baseline was recorded alongside it
+                continue  # sealed before the baseline was recorded alongside it
             checked += 1
             assert decl["mean_abs"] < decl["plain_mean_abs"], f"{name} {label}: mean is not better"
             assert decl["within8_frac"] > decl["plain_within8_frac"], f"{name} {label}: within-8"
             assert decl["ssim"] > decl["plain_ssim"], f"{name} {label}: SSIM is not better"
     if not checked:
-        pytest.skip("no registered class declares a learned decoder with a recorded plain baseline; "
-                    "the live-frame version of this check is in tests/gpu/test_conformance.py")
+        pytest.skip(
+            "no registered class declares a learned decoder with a recorded plain baseline; "
+            "the live-frame version of this check is in tests/gpu/test_conformance.py"
+        )
 
 
 def test_the_import_error_report_is_a_readable_mapping_and_costs_nothing():
@@ -408,7 +440,8 @@ def test_the_import_error_report_is_a_readable_mapping_and_costs_nothing():
         assert ":" in v, f"the reason for {k} does not name an exception type: {v!r}"
     errs["scribbled"] = "x"
     assert "scribbled" not in se.import_errors(), (
-        "import_errors() hands out its own dict, so a caller can corrupt the record it reads")
+        "import_errors() hands out its own dict, so a caller can corrupt the record it reads"
+    )
 
 
 def test_a_family_that_failed_to_import_contributed_no_envs_and_took_none_away():
@@ -421,11 +454,11 @@ def test_a_family_that_failed_to_import_contributed_no_envs_and_took_none_away()
     assert se.registry.REGISTRY, f"no envs registered at all; import errors: {errs}"
     for mod in errs:
         offenders = [n for n, c in se.registry.REGISTRY.items() if c.__module__.endswith(f".{mod}")]
-        assert not offenders, (
-            f"{mod} is recorded as having failed to import, yet {offenders} claim to come from it")
+        assert not offenders, f"{mod} is recorded as having failed to import, yet {offenders} claim to come from it"
 
 
 # ------------------------------------------------------------- base/subclass attribute collisions
+
 
 def test_no_env_shadows_an_attribute_the_base_class_owns():
     """An env module must not assign ``self.<name>`` for a ``<name>`` ``StableEnv`` assigns itself.
@@ -452,11 +485,11 @@ def test_no_env_shadows_an_attribute_the_base_class_owns():
     def self_attrs(node: ast.AST) -> set[str]:
         out: set[str] = set()
         for n in ast.walk(node):
-            targets = ([n.target] if isinstance(n, ast.AnnAssign) else
-                       list(n.targets) if isinstance(n, ast.Assign) else [])
+            targets = (
+                [n.target] if isinstance(n, ast.AnnAssign) else list(n.targets) if isinstance(n, ast.Assign) else []
+            )
             for t in targets:
-                if (isinstance(t, ast.Attribute) and isinstance(t.value, ast.Name)
-                        and t.value.id == "self"):
+                if isinstance(t, ast.Attribute) and isinstance(t.value, ast.Name) and t.value.id == "self":
                     out.add(t.attr)
         return out
 
@@ -464,7 +497,8 @@ def test_no_env_shadows_an_attribute_the_base_class_owns():
     assert {"_state", "device", "_live_rows"} <= owned, (
         f"read the base class wrong — it must assign self._state, self.device and self._live_rows, "
         f"and it appears to assign {sorted(owned)}. The collision check below is worthless if this "
-        f"set is empty or partial, so it is asserted rather than trusted.")
+        f"set is empty or partial, so it is asserted rather than trusted."
+    )
 
     def env_classes(tree: ast.Module) -> list[ast.ClassDef]:
         """Only classes that actually INHERIT the base, transitively within the file.
@@ -504,10 +538,12 @@ def test_no_env_shadows_an_attribute_the_base_class_owns():
         "runs last silently wins and the other meaning is destroyed with no error:\n  "
         + "\n  ".join(f"{f}: {sorted(c)}" for f, c in sorted(offenders.items()))
         + "\n\nRename the env's attribute, or the base class's if the base class is the newcomer — "
-          "that is what was done for _live (base -> _live_rows, robocasa -> _live_idx).")
+        "that is what was done for _live (base -> _live_rows, robocasa -> _live_idx)."
+    )
 
 
 # -------------------------------------------------------------------- the release gate's exclusions
+
 
 def test_every_gate_exclusion_states_its_mechanism():
     """An env left out of the release gate must say WHY, and the why must name a mechanism.
@@ -525,11 +561,13 @@ def test_every_gate_exclusion_states_its_mechanism():
         assert why and len(why) > 120, (
             f"gate.EXCLUDED[{name!r}] must explain the CONFLICT, not merely assert one. An exclusion "
             f"is the one way an env leaves the gate without failing it, so it carries the burden of "
-            f"proof: name the packages and the versions that cannot be satisfied together.")
+            f"proof: name the packages and the versions that cannot be satisfied together."
+        )
         assert any(tok in why for tok in ("==", "<=", ">=", "<", ">")), (
             f"gate.EXCLUDED[{name!r}] does not name a version constraint. Every real exclusion so far "
             f"has been two packages whose pins cannot both hold; if this one is not, it is probably a "
-            f"missing install rather than an exclusion.")
+            f"missing install rather than an exclusion."
+        )
 
 
 def test_gate_envs_removes_exactly_the_excluded_and_nothing_else():
@@ -555,12 +593,13 @@ def test_the_excluded_family_documents_itself_where_a_user_would_look():
     # Case-insensitive: this is prose, and the first version of this test asserted "own interpreter"
     # against a docstring that shouts "OWN INTERPRETER". A guard that fails on capitalisation trains
     # people to edit the guard, which is the opposite of what it is for.
-    head = src[:src.index('"""', 3) + 3].lower()
+    head = src[: src.index('"""', 3) + 3].lower()
     for token in ("scipy", "own interpreter", "gate.py"):
         assert token in head, (
             f"stable_envs/envs/overcooked.py's module docstring does not mention {token!r}. The "
             f"family is excluded from the release gate, and a user who hits that must be able to "
-            f"find out why from the module itself.")
+            f"find out why from the module itself."
+        )
 
 
 def test_the_live_context_cap_scales_with_the_registry():
@@ -581,22 +620,32 @@ def test_the_live_context_cap_scales_with_the_registry():
     assert lim["session_live"] >= 192, "the floor must never make an existing run's bound tighter"
     assert lim["session_live"] >= 2 * len(se.registry.REGISTRY), (
         f"session_live is {lim['session_live']} for a registry of {len(se.registry.REGISTRY)}; one context per "
-        f"env is legitimate and never released, so a cap below that fails healthy runs")
-    assert lim["per_test"] == 8, ("per_test is the RATE bound and must stay fixed — it is what still "
-                                  "catches a context created per state, per style value or per call")
+        f"env is legitimate and never released, so a cap below that fails healthy runs"
+    )
+    assert lim["per_test"] == 8, (
+        "per_test is the RATE bound and must stay fixed — it is what still "
+        "catches a context created per state, per style value or per call"
+    )
 
 
 def test_a_test_that_creates_no_context_is_never_a_runaway():
     """The exact shape of the false positive: zero created, zero freed, many live."""
     from stable_envs.testing import resource_guard as RG
 
-    d = {"context_created": 0, "context_freed": 0, "renderer_created": 0, "renderer_closed": 0,
-         "context_live": 2 * len(se.registry.REGISTRY), "sites": []}
+    d = {
+        "context_created": 0,
+        "context_freed": 0,
+        "renderer_created": 0,
+        "renderer_closed": 0,
+        "context_live": 2 * len(se.registry.REGISTRY),
+        "sites": [],
+    }
     names = [n for n, _ in RG.violations(d)]
     assert names == [], (
         f"a test that created and released nothing was reported as {names}. Holding many live "
         f"contexts is the DESIGN — they are cached for the life of the process — so it cannot by "
-        f"itself be a violation, or the guard fails every test that runs after the registry is warm.")
+        f"itself be a violation, or the guard fails every test that runs after the registry is warm."
+    )
 
 
 # ------------------------------------------------------------------ reference versions
@@ -636,8 +685,7 @@ def test_an_undeclared_reference_version_is_absent_not_empty():
     assert REFERENCE_VERSIONS_KEY not in cls(num_envs=1, device="cpu").describe()
 
 
-@pytest.mark.parametrize("bad", [[], "3.11.0", {}, {"mujoco": 3.11}, {"mujoco": ""}, {"": "3.11.0"},
-                                 {"mujoco": None}])
+@pytest.mark.parametrize("bad", [[], "3.11.0", {}, {"mujoco": 3.11}, {"mujoco": ""}, {"": "3.11.0"}, {"mujoco": None}])
 def test_a_malformed_reference_version_field_is_refused(bad):
     """A version the certifier cannot compare is worse than none, because it looks like provenance."""
     with pytest.raises(ValueError, match="reference_versions"):
@@ -661,10 +709,19 @@ def _dmc_declaration_table() -> dict:
     merged. The claim is unchanged: the same entries, read off the source, never imported.
     """
     import ast
+
     pkg = ROOT / "stable_envs" / "envs" / "dmcontrol"
-    want = {"_AT", "_SWIMMER_AT", "_AT_VERSIONS", "_SWIMMER_AT_VERSIONS", "_AT_MEASURED_WITH",
-            "_SWIMMER_AT_MEASURED_WITH", "_QUADRUPED_AT", "_QUADRUPED_AT_MEASURED_WITH",
-            "VISUAL_FIDELITY"}
+    want = {
+        "_AT",
+        "_SWIMMER_AT",
+        "_AT_VERSIONS",
+        "_SWIMMER_AT_VERSIONS",
+        "_AT_MEASURED_WITH",
+        "_SWIMMER_AT_MEASURED_WITH",
+        "_QUADRUPED_AT",
+        "_QUADRUPED_AT_MEASURED_WITH",
+        "VISUAL_FIDELITY",
+    }
     # ``__init__.py`` is skipped: its ``VISUAL_FIDELITY`` is a VIEW of the per-domain tables
     # (``{n: globals()[n].visual_fidelity ...}``), not a declaration, and reading it would either
     # need the classes or hide the literals this check exists to read.
@@ -673,15 +730,19 @@ def _dmc_declaration_table() -> dict:
     ns: dict = {}
     table: dict = {}
     for path in paths:
-        keep = [n for n in ast.parse(path.read_text()).body
-                if isinstance(n, (ast.Assign, ast.AnnAssign))
-                and any(isinstance(t, ast.Name) and t.id in want
-                        for t in (n.targets if isinstance(n, ast.Assign) else [n.target]))]
+        keep = [
+            n
+            for n in ast.parse(path.read_text()).body
+            if isinstance(n, (ast.Assign, ast.AnnAssign))
+            and any(
+                isinstance(t, ast.Name) and t.id in want
+                for t in (n.targets if isinstance(n, ast.Assign) else [n.target])
+            )
+        ]
         if not keep:
             continue
         ns.pop("VISUAL_FIDELITY", None)
-        exec(compile(ast.Module(body=keep, type_ignores=[]),
-                     f"{path.name}<declarations>", "exec"), ns)
+        exec(compile(ast.Module(body=keep, type_ignores=[]), f"{path.name}<declarations>", "exec"), ns)
         table.update(ns.get("VISUAL_FIDELITY", {}))
     assert table, f"no VISUAL_FIDELITY entries found under {pkg}; the walk has drifted"
     return table
@@ -706,8 +767,7 @@ def _declared_reference_versions() -> list[tuple[str, dict, str]]:
     for name, vf in sorted(_dmc_declaration_table().items()):
         for key in (REFERENCE_VERSIONS_KEY, MEASURED_WITH_KEY):
             if key in vf:
-                rows.append((f"dmcontrol.VISUAL_FIDELITY[{name}].{key}", vf[key],
-                             str(vf.get("measured_at", ""))))
+                rows.append((f"dmcontrol.VISUAL_FIDELITY[{name}].{key}", vf[key], str(vf.get("measured_at", ""))))
     return rows
 
 
@@ -737,7 +797,7 @@ def test_the_dm_control_trackcom_declarations_name_the_reference_they_were_measu
     for name in ("DMCCheetahRun", "DMCHopperHop", "DMCWalkerWalk", "DMCHumanoidStand"):
         assert table[name][REFERENCE_VERSIONS_KEY] == {"mujoco": "3.11.0"}
         assert table[name][MEASURED_WITH_KEY] == {"mujoco_warp": "3.11.0"}
-        assert table[name]["measured_at"].startswith("84 px")          # the text is kept as it was
+        assert table[name]["measured_at"].startswith("84 px")  # the text is kept as it was
     assert table["DMCSwimmerSwimmer6"][REFERENCE_VERSIONS_KEY] == {"mujoco": "3.11.0"}
     assert table["DMCSwimmerSwimmer6"][MEASURED_WITH_KEY] == {"warp": "1.16.0"}
 
@@ -757,8 +817,12 @@ def test_reference_versions_never_name_our_own_renderer():
 
 
 def test_measured_with_is_validated_like_reference_versions_but_is_not_a_reference_version():
-    cls = _visual("Measured", visual_fidelity=dict(VF, **{REFERENCE_VERSIONS_KEY: {"mujoco": "3.11.0"},
-                                                          MEASURED_WITH_KEY: {"mujoco_warp": "3.11.0"}}))
+    cls = _visual(
+        "Measured",
+        visual_fidelity=dict(
+            VF, **{REFERENCE_VERSIONS_KEY: {"mujoco": "3.11.0"}, MEASURED_WITH_KEY: {"mujoco_warp": "3.11.0"}}
+        ),
+    )
     register(cls)
     assert reference_versions_of(cls) == {"mujoco": "3.11.0"}
     with pytest.raises(ValueError, match="measured_with"):
@@ -767,7 +831,10 @@ def test_measured_with_is_validated_like_reference_versions_but_is_not_a_referen
 
 def test_visual_fidelity_reference_versions_take_precedence_over_the_class_attribute():
     """``reference_versions_of`` is the one reading; ``describe()`` and the certifier both use it."""
-    cls = _visual("Both", reference_versions={"mujoco": "3.10.0", "gymnasium": "1.3.0"},
-                  visual_fidelity=dict(VF, **{REFERENCE_VERSIONS_KEY: {"mujoco": "3.11.0"}}))
+    cls = _visual(
+        "Both",
+        reference_versions={"mujoco": "3.10.0", "gymnasium": "1.3.0"},
+        visual_fidelity=dict(VF, **{REFERENCE_VERSIONS_KEY: {"mujoco": "3.11.0"}}),
+    )
     register(cls)
     assert reference_versions_of(cls) == {"mujoco": "3.11.0", "gymnasium": "1.3.0"}

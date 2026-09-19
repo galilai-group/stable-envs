@@ -21,6 +21,7 @@ interior metric is unmoved by the same event.
 
 Nothing here touches ``interior_mask``, ``pixel_agreement`` or any declared floor.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -77,8 +78,7 @@ class FakeEnv:
     reference_id = "synthetic/disc"
     fidelity_tier = "parity"
 
-    def __init__(self, n: int = 8, declared: int = 1, official_draws: bool = True,
-                 jitter: int = 1):
+    def __init__(self, n: int = 8, declared: int = 1, official_draws: bool = True, jitter: int = 1):
         self.B, self.size, self.n = n, SIZE, n
         self.official_draws = bool(official_draws)
         # A one-level offset on OUR floor, so neither arm is ever bit-exact against the official
@@ -86,9 +86,11 @@ class FakeEnv:
         # denominator vanishes -- a real case, tested separately, but not the ordinary one, and a
         # fixture that only exercises the degenerate path proves nothing about the usual one.
         self.jitter = int(jitter)
-        self.variation_space = spaces.Dict({
-            "visibility": spaces.Dict({"target": spaces.Discrete(2, init_value=int(declared))}),
-        })
+        self.variation_space = spaces.Dict(
+            {
+                "visibility": spaces.Dict({"target": spaces.Discrete(2, init_value=int(declared))}),
+            }
+        )
         self._layout = {p: (o, w) for p, o, w in self.variation_space.flat_layout()}
 
     # -- the surface the check uses -------------------------------------------------
@@ -129,9 +131,9 @@ def _reference(monkeypatch):
     """Route ``conformance``'s reference plumbing at the fixture. No GL, no dm_control, no cache."""
     holder = {}
     monkeypatch.setattr(C, "reference_env", lambda cls, size: holder["env"])
-    monkeypatch.setattr(FakeEnv, "reference_render",
-                        classmethod(lambda cls, ref, states: ref._official(len(states))),
-                        raising=False)
+    monkeypatch.setattr(
+        FakeEnv, "reference_render", classmethod(lambda cls, ref, states: ref._official(len(states))), raising=False
+    )
     return holder
 
 
@@ -156,7 +158,8 @@ def test_the_interior_metric_does_not_move_when_the_object_appears():
     assert a["mean_abs"] > b["mean_abs"], "the disc must change the frame at all"
     assert a["interior_exact_frac"] == b["interior_exact_frac"], (
         f"the fixture no longer reproduces the blind spot: interior exactness moved from "
-        f"{b['interior_exact_frac']} to {a['interior_exact_frac']} when a whole object appeared")
+        f"{b['interior_exact_frac']} to {a['interior_exact_frac']} when a whole object appeared"
+    )
     assert a["interior_px"] == b["interior_px"]
 
 
@@ -181,7 +184,8 @@ def test_the_guard_FIRES_when_we_draw_an_object_the_reference_does_not(_referenc
     """The Step-5 situation, and the one the interior metric is blind to."""
     o = _run(_reference, declared=1, official_draws=False)
     assert o["presence_margin"] < 0, (
-        f"we paint an object the reference does not paint and the guard did not notice: {o}")
+        f"we paint an object the reference does not paint and the guard did not notice: {o}"
+    )
 
 
 def test_a_flipped_arm_that_is_bit_exact_is_reported_rather_than_divided_by(_reference):
@@ -199,14 +203,16 @@ def test_a_flipped_arm_that_is_bit_exact_is_reported_rather_than_divided_by(_ref
     same = C.pixel_agreement(np.stack([_frame(False, 0)] * 8), env._official(8))
     assert blind["interior_exact_frac"] == same["interior_exact_frac"], (
         "the fixture is no longer demonstrating the blind spot; the guard's justification has "
-        "changed and this file has to be re-argued")
+        "changed and this file has to be re-argued"
+    )
 
 
 def test_the_guard_FIRES_when_the_reference_draws_an_object_we_do_not(_reference):
     """The mirror image, which is just as wrong and just as invisible to the interior metric."""
     o = _run(_reference, declared=0, official_draws=True)
     assert o["presence_margin"] < 0, (
-        f"the reference paints an object we do not paint and the guard did not notice: {o}")
+        f"the reference paints an object we do not paint and the guard did not notice: {o}"
+    )
 
 
 def test_the_guard_reports_a_per_row_collapse(_reference):
@@ -220,14 +226,14 @@ def test_the_guard_reports_a_per_row_collapse(_reference):
 
     real = FakeEnv.render
 
-    def collapse(self, states, variation=None, style=None):      # row 0's appearance for everybody
+    def collapse(self, states, variation=None, style=None):  # row 0's appearance for everybody
         if style is not None:
-            style = np.tile(np.asarray(style, np.float32).reshape(len(states), -1)[:1],
-                            (len(states), 1))
+            style = np.tile(np.asarray(style, np.float32).reshape(len(states), -1)[:1], (len(states), 1))
         return real(self, states, variation=variation, style=style)
 
     env.render = collapse.__get__(env, FakeEnv)
     r = C.check_task_object_visibility(env, states=env.sample_states(8))
     assert r["objects"]["visibility.target"]["per_row_max_abs_diff"] > 0, (
         "a style collapse to row 0 went unreported: every uniform render still agrees, which is "
-        "exactly why check_per_env_variation exists and exactly why it cannot cover a Discrete leaf")
+        "exactly why check_per_env_variation exists and exactly why it cannot cover a Discrete leaf"
+    )
