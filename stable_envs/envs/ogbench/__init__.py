@@ -19,11 +19,7 @@ met directly by the re-exports below. Every module-level name the Step-8 module 
 this package, and ``scratch/step9/envs-ogbench/oracle.py`` checks that name by name, read off the
 baseline SOURCE so the list cannot drift from what that file actually had.
 
-``stable_envs/envs/ogb_manip.py`` keeps ITS name, because no package claims it: it is a
-``sys.modules`` alias of ``stable_envs.envs.ogbench.manipulation``, so the private names its tests
-reach for (``_bundle``, ``_context``, ``_button_tables``, ``_appearance_digest``, ``SPEC``, …) all
-still resolve and a monkeypatch through either path is seen by both — there is one module object.
-Wave 3 removes that file.
+The manipulation half lives at ``stable_envs.envs.ogbench.manipulation``.
 
 THE RE-EXPORTS ARE THE SAME OBJECTS, not copies, and that matters for two of them in particular:
 ``_SCENE_CACHE`` and ``_ENV_CACHE`` are mutated through this package by

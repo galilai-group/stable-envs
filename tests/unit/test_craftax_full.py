@@ -29,11 +29,11 @@ GOLDEN = json.loads((Path(__file__).resolve().parents[1] / "fixtures"
 
 @pytest.fixture(scope="module")
 def env():
-    return CraftaxFull(batch=8, device="cpu")
+    return CraftaxFull(num_envs=8, device="cpu")
 
 
 def states(n=8, seed=0):
-    e = CraftaxFull(batch=n, device="cpu")
+    e = CraftaxFull(num_envs=n, device="cpu")
     return e, CraftaxFull.sample_states(e, n, np.random.default_rng(seed))
 
 
@@ -262,7 +262,7 @@ def test_the_sampler_stratifies_so_a_batch_of_one_still_has_every_dimension_live
     from stable_envs.testing.conformance import check_state_dims_matter
     for b in (1, 2, 3, 4, 8):
         for seed in range(3):
-            e = CraftaxFull(batch=b, device="cpu")
+            e = CraftaxFull(num_envs=b, device="cpu")
             rng = np.random.default_rng(seed)
             e.sample_states = lambda n, _r=rng, _e=e: CraftaxFull.sample_states(_e, n, _r)
             assert check_state_dims_matter(e)["dead_dims"] == [], f"batch {b} seed {seed}"
@@ -270,7 +270,7 @@ def test_the_sampler_stratifies_so_a_batch_of_one_still_has_every_dimension_live
 
 def test_the_declared_certification_distribution_matches_the_sampler():
     d = CraftaxFull.certification_state_distribution
-    e = CraftaxFull(batch=64, device="cpu")
+    e = CraftaxFull(num_envs=64, device="cpu")
     st = CraftaxFull.sample_states(e, 64, np.random.default_rng(0))
     j = 5 * CF.N_TILE
     lvl = np.round(st[:, j + 2]).astype(int) % CF.N_LEVEL
@@ -292,7 +292,7 @@ def test_the_declared_certification_distribution_matches_the_sampler():
 def test_the_sampler_respects_the_simulators_mob_budgets():
     """A window with four zombies cannot be written into an ``EnvState`` at all, so a state carrying
     one is not a state the parity bridge can score."""
-    e = CraftaxFull(batch=32, device="cpu")
+    e = CraftaxFull(num_envs=32, device="cpu")
     st = CraftaxFull.sample_states(e, 32, np.random.default_rng(1))
     k = CF.N_TILE
     centre = (CF.OBS_H // 2) * CF.OBS_W + (CF.OBS_W // 2)
@@ -379,7 +379,7 @@ def test_a_window_carrying_more_projectiles_than_the_simulator_can_hold_is_not_r
     (``examples/results/step7/craftax-full/certify/boundary_pool.json``).
     """
     assert CF.MAX_MOB_PROJ + CF.MAX_PLAYER_PROJ == 6
-    e = CraftaxFull(batch=32, device="cpu")
+    e = CraftaxFull(num_envs=32, device="cpu")
     st = CraftaxFull.sample_states(e, 32, np.random.default_rng(3))
     n_proj = (np.round(st[:, 3 * CF.N_TILE:4 * CF.N_TILE]) != 0).sum(1)
     assert n_proj.max() <= CF.MAX_MOB_PROJ + CF.MAX_PLAYER_PROJ, n_proj.max()
@@ -414,7 +414,7 @@ def test_the_arrow_guard_leaves_the_frozen_corpus_untouched():
     import json as _json
     rec = _json.loads((Path(__file__).resolve().parents[2] / "examples" / "results" / "step7"
                        / "craftax-full" / "corpus" / "corpus.json").read_text())
-    e = CraftaxFull(batch=rec["kept"], device="cpu")
+    e = CraftaxFull(num_envs=rec["kept"], device="cpu")
     pool = CraftaxFull.sample_states(e, rec["pool"], np.random.default_rng(rec["seed"]))
     assert hashlib.sha256(np.ascontiguousarray(pool).tobytes()).hexdigest() == rec["pool_sha256"]
     kept = pool[rec["indices"]]

@@ -110,7 +110,7 @@ def probe_at(name: str, size: int | None, n_frames: int, pool_max: int):
     render that follows.
     """
     kw = {} if size is None else {"size": int(size)}
-    probe = se.make(name, batch=1, device="cuda", **kw)
+    probe = se.make(name, num_envs=1, device="cuda", **kw)
     try:
         pool = probe.sample_states(pool_max)
         frames = probe.render(pool[:min(n_frames, len(pool))]).cpu().numpy()
@@ -151,7 +151,7 @@ def probe_frames(name: str, requested: int, n_frames: int, pool_max: int):
 def gpu_fps(name: str, batch: int, size: int, hw, pool, reps: int) -> dict:
     env = st = out = None
     try:
-        env = se.make(name, batch=batch, size=size, device="cuda")
+        env = se.make(name, num_envs=batch, size=size, device="cuda")
         st = torch.as_tensor(states_for(pool, batch), device="cuda")
         out = torch.empty((batch, hw[0], hw[1], 3), dtype=torch.uint8, device="cuda")
         for _ in range(5):
@@ -215,7 +215,7 @@ def main() -> None:
     res = {"device": torch.cuda.get_device_name(0), "cpu": cpu_name or "unknown",
            "size": a.size, "batch": a.batch, "n_frames": a.frames,
            "jpeg_quality": a.jpeg_quality, "loadavg": [os.getloadavg()[0]],
-           "registry_size": len(se.REGISTRY), "envs": {}}
+           "registry_size": len(se.registry.REGISTRY), "envs": {}}
     # Resume, so a sweep killed at hour six does not start over. The failure mode this creates is worse
     # than the one it fixes if it is the only option: after a kernel lands, every env in the old file is
     # "done" and the sweep silently republishes the numbers the kernel was written to change. It has
@@ -232,9 +232,9 @@ def main() -> None:
         (outdir / f"storage{tag}.json").write_text(json.dumps(res, indent=2))
 
     skip = {s for s in a.skip.split(",") if s}
-    wanted = [n for n in sorted(se.REGISTRY)
+    wanted = [n for n in sorted(se.registry.REGISTRY)
               if (not a.envs or n in a.envs.split(",")) and n not in skip]
-    print(f"registry {len(se.REGISTRY)}, measuring {len(wanted)} at {a.size}px batch {a.batch}",
+    print(f"registry {len(se.registry.REGISTRY)}, measuring {len(wanted)} at {a.size}px batch {a.batch}",
           flush=True)
 
     for name in wanted:

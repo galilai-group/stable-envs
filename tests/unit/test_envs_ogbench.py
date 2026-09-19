@@ -67,24 +67,15 @@ def test_the_import_path_is_the_package_and_it_carries_the_step8_names():
         assert getattr(OGB, cell) is R.REGISTRY[cell], f"{cell} is not the registered class"
 
 
-def test_the_manipulation_module_path_is_an_alias_and_not_a_set_of_re_exports():
-    """``stable_envs.envs.ogb_manip`` IS ``stable_envs.envs.ogbench.manipulation``: one object.
-
-    Re-exports would satisfy a read of each name and would NOT satisfy the thing the tests need — a
-    monkeypatch or a cache mutation applied through either path being seen by both. The identity is
-    what makes that true, so the identity is what is asserted.
-    """
-    import stable_envs.envs.ogb_manip as alias
-    assert alias is MANIP
+def test_the_manipulation_module_exposes_the_names_the_tests_reach_for():
+    """Canonical path: ``stable_envs.envs.ogbench.manipulation``."""
     for name in ("OGBManipBase", "SPEC", "VISIBLE_GROUPS", "IDENTITY_QUAT", "MJW_CHUNK",
                  "_bundle", "_reference_env", "_button_tables", "_ctx_button_tables", "_context",
                  "_appearance_digest", "_plate_rig", "_PlateRig", "_movers", "_cube_geoms",
                  "_grid_texture", "_variation_defaults", "mj_quantise", "_seeded_action_space",
                  "_PLATE_CACHE", "_CTX_CACHE", "_BUNDLE_CACHE", "_PLATE_RIGS", "_KEEPALIVE"):
-        assert hasattr(alias, name), f"the Step-8 name {name} no longer resolves off ogb_manip"
-    # ``inspect.getsource`` on a re-exported function still works; on an aliased MODULE the source
-    # is the migrated file, which is what ``test_ogb_manip.py`` reads to check the forced-zero block.
-    assert "zero_bits" in inspect.getsource(alias._context)
+        assert hasattr(MANIP, name), f"{name} no longer resolves off ogbench.manipulation"
+    assert "zero_bits" in inspect.getsource(MANIP._context)
 
 
 def test_the_module_caches_are_one_object_each_across_the_package():
@@ -107,28 +98,20 @@ def test_the_module_caches_are_one_object_each_across_the_package():
         OGB._SCENE_CACHE.pop(sentinel, None)
 
 
-def test_every_cell_reports_the_step8_module_so_the_registry_row_did_not_move():
-    """``registry.spec`` derives the FAMILY from ``__module__``, so an unpinned move renames it.
-
-    The mazes were ``stable_envs.envs.ogbench`` in Step 8 and the package carries the same path. The
-    two manipulation cells were ``stable_envs.envs.ogb_manip``, which is now a ``sys.modules`` alias,
-    so the attribute is both unchanged AND truthful — the class really is reachable there. That is
-    why this workstream does not need Workstream A's ``module``-column ruling: the column is
-    identical and the oracle compares it like every other.
-    """
+def test_every_cell_reports_its_canonical_module():
+    """``registry.spec`` derives the FAMILY from ``__module__``."""
     for cell in MAZE_CELLS:
         cls = R.REGISTRY[cell]
         assert cls.__module__ == "stable_envs.envs.ogbench"
         assert R.spec(cell)["family"] == "ogbench"
     for cell in MANIP_CELLS:
         cls = R.REGISTRY[cell]
-        assert cls.__module__ == "stable_envs.envs.ogb_manip"
-        assert R.spec(cell)["family"] == "ogb_manip"
+        assert cls.__module__ == "stable_envs.envs.ogbench.manipulation"
+        assert R.spec(cell)["family"] == "manipulation"
         import importlib
-        assert getattr(importlib.import_module(cls.__module__), cell) is cls, (
-            "the pinned __module__ must be a path the class is actually reachable at")
+        assert getattr(importlib.import_module(cls.__module__), cell) is cls
     assert set(R.list_envs(family="ogbench")) == set(MAZE_CELLS)
-    assert set(R.list_envs(family="ogb_manip")) == set(MANIP_CELLS)
+    assert set(R.list_envs(family="manipulation")) == set(MANIP_CELLS)
 
 
 def test_a_maze_cell_is_a_declaration_and_overrides_no_renderer_method():
@@ -325,14 +308,6 @@ def test_takes_the_step9_constructor_and_the_lifecycle(_ogbench, cell):
     with R.REGISTRY[cell](num_envs=2, device="cpu") as e:
         assert e.num_envs == 2
     assert e.closed
-
-
-@pytest.mark.parametrize("cell", BODY_SAMPLE)
-def test_batch_is_still_accepted_and_means_num_envs(_ogbench, cell):
-    with R.REGISTRY[cell](batch=2, device="cpu") as e:
-        assert e.num_envs == 2
-    with pytest.raises(TypeError, match="same argument"):
-        R.REGISTRY[cell](num_envs=4, batch=2, device="cpu")
 
 
 @pytest.mark.parametrize("cell", BODY_SAMPLE)

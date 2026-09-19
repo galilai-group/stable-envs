@@ -94,14 +94,14 @@ def main() -> None:
     args = ap.parse_args()
 
     rng = np.random.default_rng(args.seed)
-    proto = se.make(args.env, batch=1, size=args.size, device="cuda")
+    proto = se.make(args.env, num_envs=1, size=args.size, device="cuda")
     print(f"{args.env}: state_dim {proto.state_dim}, style_dim {proto.style_dim}")
     print(f"style leaves: {proto.style_names}")
 
     # One state, many appearances: any difference between the frames is the style and nothing else.
     state = proto.sample_states(1, rng)
     style = proto.sample_style(args.grid, rng=rng)
-    env = se.make(args.env, batch=args.grid, size=args.size, device="cuda")
+    env = se.make(args.env, num_envs=args.grid, size=args.size, device="cuda")
     frames = env.render(np.repeat(state, args.grid, 0), style=style)
     n_distinct = distinct_frames(frames)
     print(f"\ngrid: {args.grid} environments, one shared state, {args.grid} sampled styles, one launch")
@@ -131,12 +131,12 @@ def main() -> None:
         st = torch.as_tensor(states, device="cuda")
         sty_t = torch.as_tensor(sty, device="cuda")
 
-        env = se.make(args.env, batch=B, size=args.size, device="cuda")
+        env = se.make(args.env, num_envs=B, size=args.size, device="cuda")
         probe = env.render(st[:1])                       # frame shape measured, not assumed square
         out = torch.empty((B, *probe.shape[1:]), dtype=torch.uint8, device="cuda")
         batched = timeit(lambda: env.render(st, style=sty_t, out=out))
 
-        one = se.make(args.env, batch=1, size=args.size, device="cuda")
+        one = se.make(args.env, num_envs=1, size=args.size, device="cuda")
         n_loop = min(B, 256)          # the loop is linear; time a prefix and scale, rather than wait
         per_render = timeit(lambda: [one.render(st[i:i + 1], style=sty_t[i:i + 1])
                                      for i in range(n_loop)], budget_s=2.0, max_reps=5) * (B / n_loop)
@@ -145,7 +145,7 @@ def main() -> None:
         if B <= args.per_env_cap:
             def loop_construct():
                 for i in range(B):
-                    e = se.make(args.env, batch=1, size=args.size, device="cuda")
+                    e = se.make(args.env, num_envs=1, size=args.size, device="cuda")
                     e.render(st[i:i + 1], style=sty_t[i:i + 1])
             per_env = timeit(loop_construct, budget_s=2.0, max_reps=3)
 

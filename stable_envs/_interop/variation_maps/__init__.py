@@ -1,6 +1,6 @@
 """One ``VariationMap`` module per family, installed into ``worldmodel.VARIATION_MAPS``.
 
-``stable_envs.compat.worldmodel`` carries the four maps that predate Step 8 inline. Everything Step 8
+``stable_envs.interop`` carries the four maps that predate Step 8 inline. Everything Step 8
 adds lives here instead, one module per family, for a reason that is about ownership rather than
 tidiness: the maps are written by different workstreams against different evidence, and a single
 dict literal in one file is a merge conflict per workstream and no way to say which measurement a

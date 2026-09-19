@@ -40,8 +40,8 @@ from stable_envs.envs.craftax import (ATLAS_MAX_TILE_PX, N_BLOCK, N_COUNT, N_FAC
 SIZES = (7, 16, 32, 64)
 
 
-def _env(size: int, batch: int = 8) -> CraftaxClassic:
-    return CraftaxClassic(batch=batch, size=size, device="cpu")
+def _env(size: int, num_envs: int = 8) -> CraftaxClassic:
+    return CraftaxClassic(num_envs=num_envs, size=size, device="cpu")
 
 
 def _with(st: np.ndarray, **kw) -> np.ndarray:
@@ -183,7 +183,7 @@ def test_atlas_shape_and_budget():
     assert f32.shape == (N_TILE * 16, 16 * 3) and u8.shape == f32.shape
     assert u8.numel() == N_TILE * 16 * 16 * 3
     # above the budget render must not build a table at all
-    env = _env(ATLAS_MAX_TILE_PX + 1, batch=1)
+    env = _env(ATLAS_MAX_TILE_PX + 1, num_envs=1)
     states = env.sample_states(1, np.random.default_rng(0))
     img = env.render(states)
     assert img.shape == (1, (OBS_H + STRIP_H) * (ATLAS_MAX_TILE_PX + 1),
@@ -195,7 +195,7 @@ def test_atlas_shape_and_budget():
 @pytest.mark.parametrize("size", (7, 16))
 def test_batch_order_and_chunk_invariance_on_the_gather(size):
     """Folding the visibility flags into the gather index must not couple rows to each other."""
-    env = _env(size, batch=12)
+    env = _env(size, num_envs=12)
     rng = np.random.default_rng(99)
     states = env.sample_states(12, rng)
     vals = _style(env, 12, player_visible=rng.integers(0, 2, (12, 1)),
@@ -216,7 +216,7 @@ def test_batch_order_and_chunk_invariance_on_the_gather(size):
 @pytest.mark.parametrize("size", (7, 16))
 def test_out_buffer_receives_the_frame_and_is_the_returned_tensor(size):
     """``out=`` is written in place on both the uint8 gather and the gain path."""
-    env = _env(size, batch=5)
+    env = _env(size, num_envs=5)
     states = env.sample_states(5, np.random.default_rng(12))
     shape = (5, (OBS_H + STRIP_H) * size, OBS_W * size, 3)
     for variation in ({}, {"channel_gain": [0.5, 1.0, 1.75]}):
@@ -230,7 +230,7 @@ def test_out_buffer_receives_the_frame_and_is_the_returned_tensor(size):
 
 def test_leading_dimensions_are_preserved():
     """``(...,127)`` in, ``(...,H,W,3)`` out — the reshape around the gather must not flatten them."""
-    env = _env(16, batch=6)
+    env = _env(16, num_envs=6)
     states = env.sample_states(6, np.random.default_rng(1)).reshape(2, 3, env.state_dim)
     img = env.render(states)
     assert img.shape == (2, 3, (OBS_H + STRIP_H) * 16, OBS_W * 16, 3)
@@ -241,7 +241,7 @@ def test_leading_dimensions_are_preserved():
 def test_the_table_cache_is_bounded():
     """A caller sweeping tile sizes must not retain one table per size for the life of the process."""
     _Composite._cache.clear()
-    env = _env(16, batch=1)
+    env = _env(16, num_envs=1)
     states = env.sample_states(1, np.random.default_rng(0))
     for size in range(4, 4 + _Composite._MAX_ENTRIES + 3):
         env.render(states, size=size)

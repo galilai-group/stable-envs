@@ -12,7 +12,7 @@ import pytest
 import torch
 
 import stable_envs as se
-from stable_envs.envs import swm_nav as SN
+from stable_envs.envs import navigation as SN
 from stable_envs.render import navdot
 
 CONFIGS = ("TwoRoom", "TwoRoomTarget", "Piecewise", "PiecewiseZones")
@@ -33,7 +33,7 @@ def _torch_path(env, base, s, sl, k):
 @pytest.mark.parametrize("cfg", CONFIGS)
 @pytest.mark.parametrize("B", [1, 7, 64])
 def test_fused_matches_the_torch_path_on_sampled_states(cfg, B):
-    env = se.make(cfg, batch=B, device="cuda")
+    env = se.make(cfg, num_envs=B, device="cuda")
     env.rng = np.random.default_rng(0)
     st = torch.as_tensor(np.asarray(env.sample_states(B), np.float32), device="cuda")
     sty = env.resolve_style(None, None, batch=B)
@@ -48,7 +48,7 @@ def test_fused_matches_the_torch_path_on_sampled_states(cfg, B):
 @pytest.mark.parametrize("cfg", CONFIGS)
 def test_fused_matches_on_states_the_env_would_never_sample(cfg):
     """Dots off the frame, on and between pixel centres, and stacked on each other."""
-    env = se.make(cfg, batch=1, device="cuda")
+    env = se.make(cfg, num_envs=1, device="cuda")
     pos = [(112.0, 112.0), (112.5, 112.5), (0.0, 0.0), (223.0, 223.0), (-60.0, 112.0),
            (112.0, -60.0), (280.0, 280.0), (-3000.0, 4000.0)]
     dim = env.state_dim
@@ -57,7 +57,7 @@ def test_fused_matches_on_states_the_env_would_never_sample(cfg):
         st[i, 0], st[i, 1] = x, y
         if dim >= 4:
             st[i, 2], st[i, 3] = (x, y) if i % 2 else (223.0 - x, 223.0 - y)
-    e = se.make(cfg, batch=len(pos), device="cuda")
+    e = se.make(cfg, num_envs=len(pos), device="cuda")
     s = torch.as_tensor(st, device="cuda")
     sty = e.resolve_style(None, None, batch=len(pos))
     sl = lambda p: sty[p][0:len(pos)]                                      # noqa: E731
@@ -82,7 +82,7 @@ def test_per_row_styles_against_the_class_s_own_torch_path(cfg):
     kernel that read row 0 for the whole batch would pass every uniform-style test in this file.
     """
     B = 6
-    env = se.make(cfg, batch=B, device="cuda")
+    env = se.make(cfg, num_envs=B, device="cuda")
     env.rng = np.random.default_rng(5)
     st = torch.as_tensor(np.asarray(env.sample_states(B), np.float32), device="cuda")
 
@@ -117,7 +117,7 @@ def test_per_row_styles_against_the_class_s_own_torch_path(cfg):
 @pytest.mark.parametrize("cfg", CONFIGS)
 def test_render_is_the_fused_path_and_is_still_invariant(cfg):
     """``render`` takes the kernel here, and the contracts hold across it."""
-    env = se.make(cfg, batch=8, device="cuda")
+    env = se.make(cfg, num_envs=8, device="cuda")
     assert navdot.available(env.device), "this test is not exercising the fused path"
     env.rng = np.random.default_rng(1)
     st = np.asarray(env.sample_states(8), np.float32)
@@ -126,6 +126,6 @@ def test_render_is_the_fused_path_and_is_still_invariant(cfg):
     perm = np.array([3, 1, 7, 0, 5, 2, 6, 4])
     assert torch.equal(env.render(np.ascontiguousarray(st[perm]))[np.argsort(perm)], first), (
         f"{cfg}: render is not order invariant")
-    solo = se.make(cfg, batch=1, device="cuda")
+    solo = se.make(cfg, num_envs=1, device="cuda")
     for i in (0, 3, 7):
         assert torch.equal(solo.render(st[i:i + 1])[0], first[i]), f"{cfg}: batch-1 row {i}"

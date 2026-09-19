@@ -40,7 +40,7 @@ column that claimed 0.4%. Every GPU row therefore records ``cpu_frac`` and the l
 the throughput. Read a row with ``cpu_frac`` near 1 or above as a host measurement that does not
 travel; a row near 0 is the device and does.
 
-Nothing here is env-specific. Every env in ``stable_envs.REGISTRY`` is benchmarked, and any env with a
+Nothing here is env-specific. Every env in ``stable_envs.registry.REGISTRY`` is benchmarked, and any env with a
 reference renderer gets the CPU comparison; the rest get the GPU columns only. Resolutions are per env:
 ``native`` resolves to the env's ``default_size``, and an explicitly requested size an env cannot produce
 (MiniGrid needs a whole number of tiles) is recorded with the env's own message rather than silently
@@ -90,7 +90,7 @@ def make_env(name: str, batch: int, size: int, ss: int | None):
     ball_in_cup A/B measured 1,149 against 356.
     """
     kw = {} if ss is None else {"supersample": int(ss)}
-    return se.make(name, batch=batch, size=size, device=DEVICE, **kw)
+    return se.make(name, num_envs=batch, size=size, device=DEVICE, **kw)
 
 
 #: The device every timed render in this file runs on. It was ``"cuda"`` as a literal in three places
@@ -524,8 +524,8 @@ def main() -> None:
                # evidence for that is recorded rather than assumed. One entry at the start, one after
                # every env, so a sweep that started idle and ended contended is visible in the file.
                "loadavg": [os.getloadavg()[0]],
-               "registry_size": len(se.REGISTRY),
-               "import_errors": se.envs.import_errors(), "envs": {}}
+               "registry_size": len(se.registry.REGISTRY),
+               "import_errors": se.import_errors(), "envs": {}}
     # Merge into any previous run, per env. The registry is large enough that sweeping it at several
     # resolutions does not fit one allocation, so the sweep has to be resumable and splittable by
     # --envs; replacing the file would make the last partial run delete every earlier measurement.
@@ -549,13 +549,13 @@ def main() -> None:
         (outdir / "bench_gpu_vs_cpu.md").write_text(markdown(results))
 
     skip = {s for s in a.skip.split(",") if s}
-    wanted = [n for n in sorted(se.REGISTRY)
+    wanted = [n for n in sorted(se.registry.REGISTRY)
               if (not a.envs or n in a.envs.split(",")) and n not in skip]
     results["skipped_envs"] = sorted(skip)
     for name in wanted:
-        cls = se.REGISTRY[name]
+        cls = se.registry.REGISTRY[name]
         try:
-            probe = se.make(name, batch=1, device="cuda")
+            probe = se.make(name, num_envs=1, device="cuda")
             entry = {"describe": probe.describe(), "sizes": {}}
             native = probe.size
             del probe
@@ -573,7 +573,7 @@ def main() -> None:
                 sizes.append(s)
         for size in sizes:
             try:
-                probe = se.make(name, batch=1, size=size, device="cuda")
+                probe = se.make(name, num_envs=1, size=size, device="cuda")
                 pool = probe.sample_states(min(max(batches), a.pool))
                 f = probe.render(pool[:1]).cpu().numpy()
                 hw = (int(f.shape[1]), int(f.shape[2]))

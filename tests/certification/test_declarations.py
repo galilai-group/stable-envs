@@ -48,10 +48,10 @@ def _registry_is_restored():
     Leaking one would parameterise every registry-swept test in the GPU suite over a class that cannot
     render, and the failure would surface in a completely unrelated file.
     """
-    before = dict(se.REGISTRY)
+    before = dict(se.registry.REGISTRY)
     yield
-    se.REGISTRY.clear()
-    se.REGISTRY.update(before)
+    se.registry.REGISTRY.clear()
+    se.registry.REGISTRY.update(before)
 
 
 def _cls(name: str, doc: str, **attrs):
@@ -93,7 +93,7 @@ def test_a_well_formed_declaration_of_each_kind_registers():
     register(_visual("GoodVisual"))
     register(_learned("GoodLearnedCorrected",
                       __doc__="A test env. VISUAL TIER, LEARNED decoder: a network drew the detail."))
-    assert {"Plain", "GoodVisual", "GoodLearnedCorrected"} <= set(se.REGISTRY)
+    assert {"Plain", "GoodVisual", "GoodLearnedCorrected"} <= set(se.registry.REGISTRY)
 
 
 def test_an_unknown_tier_is_refused_by_name():
@@ -228,7 +228,7 @@ def test_two_classes_cannot_share_a_lookup_key():
     b = _cls("Twin", "a different class with the same name")
     with pytest.raises(ValueError, match="env name collision"):
         register(b)
-    assert se.REGISTRY["Twin"] is a
+    assert se.registry.REGISTRY["Twin"] is a
 
 
 def test_registering_the_same_class_twice_is_not_a_collision():
@@ -236,7 +236,7 @@ def test_registering_the_same_class_twice_is_not_a_collision():
     a = _cls("Same", "doc")
     register(a)
     register(a)
-    assert se.REGISTRY["Same"] is a
+    assert se.registry.REGISTRY["Same"] is a
 
 
 def test_an_unknown_env_name_lists_the_ones_that_exist():
@@ -290,16 +290,16 @@ def test_describe_tells_a_consumer_what_the_frames_are_not_for():
     parity one, and must not mistake a learned decoder for a rasterizer — so the learned case adds its
     own sentence in the caller's own words rather than leaving it to ``visual_note``.
     """
-    plain = _cls("P2", "doc")(batch=1, device="cpu").describe()
+    plain = _cls("P2", "doc")(num_envs=1, device="cpu").describe()
     assert plain["fidelity_tier"] == "parity" and plain["render_decoder"] == "renderer"
     assert "not_for" not in plain and plain["parity_interior_min"] == 1.0
 
-    vis = _visual("V2")(batch=1, device="cpu").describe()
+    vis = _visual("V2")(num_envs=1, device="cpu").describe()
     assert "different render of the same scene" in vis["not_for"]
     assert vis["visual_fidelity"]["ssim_min"] == 0.92
 
     lrn = _learned("L2Corrected",
-                   __doc__="A test env. VISUAL TIER, LEARNED decoder.")(batch=1,
+                   __doc__="A test env. VISUAL TIER, LEARNED decoder.")(num_envs=1,
                                                                         device="cpu").describe()
     assert "LEARNED approximation" in lrn["not_for"]
     assert "synthesised rather than measured" in lrn["not_for"]
@@ -319,7 +319,7 @@ def test_every_registered_class_still_satisfies_both_declarations():
     would otherwise sit unnoticed, since every test that could see it needs the package.
     """
     bad = []
-    for name, cls in sorted(se.REGISTRY.items()):
+    for name, cls in sorted(se.registry.REGISTRY.items()):
         for check in (check_fidelity_declaration, check_decoder_declaration):
             try:
                 check(cls)
@@ -336,7 +336,7 @@ def test_a_variation_fidelity_declared_by_anyone_is_complete():
     published as a measurement is the failure this closes.
     """
     bad = []
-    for name, cls in sorted(se.REGISTRY.items()):
+    for name, cls in sorted(se.registry.REGISTRY.items()):
         vf = dict(getattr(cls, "variation_fidelity", {}) or {})
         if not vf:
             continue
@@ -354,16 +354,16 @@ def test_a_learned_class_has_the_plain_sibling_its_claim_is_relative_to():
     numbers in its declaration describe nothing. Asserted on the class rather than on frames (which
     ``tests/gpu/test_conformance.py`` does) so it holds in interpreters with no checkpoint at all.
     """
-    for name, cls in sorted(se.REGISTRY.items()):
+    for name, cls in sorted(se.registry.REGISTRY.items()):
         if getattr(cls, "render_decoder", "renderer") != "learned":
             continue
         base = name.removesuffix("Corrected")
         assert base != name, (
             f"{name} draws through a learned decoder but is not named <Plain>Corrected, so the sibling "
             f"it is a correction OF cannot be found by name")
-        assert base in se.REGISTRY, (
+        assert base in se.registry.REGISTRY, (
             f"{name} has no plain sibling {base} in the registry")
-        assert se.REGISTRY[base].render_decoder == "renderer", (
+        assert se.registry.REGISTRY[base].render_decoder == "renderer", (
             f"{base} is supposed to be the plain way to draw this cell and it is not")
 
 
@@ -378,7 +378,7 @@ def test_the_declared_numbers_beat_the_render_they_replace_wherever_a_baseline_i
     SSIM and within-8 do.
     """
     checked = 0
-    for name, cls in sorted(se.REGISTRY.items()):
+    for name, cls in sorted(se.registry.REGISTRY.items()):
         if getattr(cls, "render_decoder", "renderer") != "learned":
             continue
         for label, decl in (("visual_fidelity", dict(getattr(cls, "visual_fidelity", {}) or {})),
@@ -401,13 +401,13 @@ def test_the_import_error_report_is_a_readable_mapping_and_costs_nothing():
     be a plain ``{module: reason}`` of strings, and it must not be able to fail while being read (it is
     called from a test that runs before anything else, and from the suite's terminal summary).
     """
-    errs = se.envs.import_errors()
+    errs = se.import_errors()
     assert isinstance(errs, dict)
     for k, v in errs.items():
         assert isinstance(k, str) and isinstance(v, str) and v, f"{k!r} -> {v!r}"
         assert ":" in v, f"the reason for {k} does not name an exception type: {v!r}"
     errs["scribbled"] = "x"
-    assert "scribbled" not in se.envs.import_errors(), (
+    assert "scribbled" not in se.import_errors(), (
         "import_errors() hands out its own dict, so a caller can corrupt the record it reads")
 
 
@@ -417,10 +417,10 @@ def test_a_family_that_failed_to_import_contributed_no_envs_and_took_none_away()
     Asserted as the conjunction rather than by counting: for every module that did NOT import, no
     registered class claims to come from it, and the registry is still non-empty.
     """
-    errs = se.envs.import_errors()
-    assert se.REGISTRY, f"no envs registered at all; import errors: {errs}"
+    errs = se.import_errors()
+    assert se.registry.REGISTRY, f"no envs registered at all; import errors: {errs}"
     for mod in errs:
-        offenders = [n for n, c in se.REGISTRY.items() if c.__module__.endswith(f".{mod}")]
+        offenders = [n for n, c in se.registry.REGISTRY.items() if c.__module__.endswith(f".{mod}")]
         assert not offenders, (
             f"{mod} is recorded as having failed to import, yet {offenders} claim to come from it")
 
@@ -579,8 +579,8 @@ def test_the_live_context_cap_scales_with_the_registry():
 
     lim = RG.limits()
     assert lim["session_live"] >= 192, "the floor must never make an existing run's bound tighter"
-    assert lim["session_live"] >= 2 * len(se.REGISTRY), (
-        f"session_live is {lim['session_live']} for a registry of {len(se.REGISTRY)}; one context per "
+    assert lim["session_live"] >= 2 * len(se.registry.REGISTRY), (
+        f"session_live is {lim['session_live']} for a registry of {len(se.registry.REGISTRY)}; one context per "
         f"env is legitimate and never released, so a cap below that fails healthy runs")
     assert lim["per_test"] == 8, ("per_test is the RATE bound and must stay fixed — it is what still "
                                   "catches a context created per state, per style value or per call")
@@ -591,7 +591,7 @@ def test_a_test_that_creates_no_context_is_never_a_runaway():
     from stable_envs.testing import resource_guard as RG
 
     d = {"context_created": 0, "context_freed": 0, "renderer_created": 0, "renderer_closed": 0,
-         "context_live": 2 * len(se.REGISTRY), "sites": []}
+         "context_live": 2 * len(se.registry.REGISTRY), "sites": []}
     names = [n for n, _ in RG.violations(d)]
     assert names == [], (
         f"a test that created and released nothing was reported as {names}. Holding many live "
@@ -617,14 +617,14 @@ def test_a_visual_env_may_declare_the_reference_versions_it_was_measured_against
     cls = _visual("Versioned", visual_fidelity=dict(VF, **{REFERENCE_VERSIONS_KEY: dict(RV)}))
     register(cls)
     assert reference_versions_of(cls) == RV
-    assert cls(batch=1, device="cpu").describe()[REFERENCE_VERSIONS_KEY] == RV
+    assert cls(num_envs=1, device="cpu").describe()[REFERENCE_VERSIONS_KEY] == RV
 
 
 def test_a_parity_env_carries_reference_versions_as_a_class_attribute():
     cls = _cls("VersionedParity", "An ordinary parity env.", reference_versions=dict(RV))
     register(cls)
     assert reference_versions_of(cls) == RV
-    assert cls(batch=1, device="cpu").describe()[REFERENCE_VERSIONS_KEY] == RV
+    assert cls(num_envs=1, device="cpu").describe()[REFERENCE_VERSIONS_KEY] == RV
 
 
 def test_an_undeclared_reference_version_is_absent_not_empty():
@@ -633,7 +633,7 @@ def test_an_undeclared_reference_version_is_absent_not_empty():
     cls = _cls("Plain", "An ordinary parity env.")
     register(cls)
     assert reference_versions_of(cls) == {}
-    assert REFERENCE_VERSIONS_KEY not in cls(batch=1, device="cpu").describe()
+    assert REFERENCE_VERSIONS_KEY not in cls(num_envs=1, device="cpu").describe()
 
 
 @pytest.mark.parametrize("bad", [[], "3.11.0", {}, {"mujoco": 3.11}, {"mujoco": ""}, {"": "3.11.0"},
@@ -692,7 +692,7 @@ def _declared_reference_versions() -> list[tuple[str, dict, str]]:
     versions: the registered classes, plus the DM Control table read off the source so the check runs
     where that family cannot register."""
     rows = []
-    for name, cls in sorted(se.REGISTRY.items()):
+    for name, cls in sorted(se.registry.REGISTRY.items()):
         rv = reference_versions_of(cls)
         if rv:
             # A visual env corroborates its declared versions with ``visual_fidelity["measured_at"]``.

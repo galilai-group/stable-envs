@@ -75,15 +75,11 @@ defect.)
 STEP 9
 ------
 
-This module is the manipulation half of the ``stable_envs.envs.ogbench`` PACKAGE (plan §3);
-``stable_envs/envs/ogb_manip.py`` is now a ``sys.modules`` ALIAS of it, so every Step-8 import path,
-including the private names the tests reach for, resolves to THIS module object and a monkeypatch
-through either path is seen by both. The two cells' ``__module__`` stays ``stable_envs.envs.ogb_manip``
-so the registry row and the family name do not move (see ``_MODULE``).
+This module is the manipulation half of the ``stable_envs.envs.ogbench`` PACKAGE.
 
 Three things are added and nothing else changes:
 
-  * ``num_envs=`` (contract §2), with ``batch=`` still accepted as the deprecated spelling;
+  * ``num_envs=`` (contract §2);
   * a public entity-grouped :data:`State` over the UNCHANGED packed row (contract §3):
     ``{"qpos": (nq,), "mocap": {"position": (3,)}}`` plus ``{"buttons": (2,)}`` on the Scene.
     Nothing is hidden and nothing about the packed row moved;
@@ -635,9 +631,8 @@ class OGBManipBase(Env):
     fidelity_tier = "visual"
 
     def __init__(self, num_envs: int = 1, size: int | None = None, supersample: int | None = None,
-                 device: str = "cuda", backend: str = "auto", seed: int = 0,
-                 batch: int | None = None):
-        """``num_envs`` environments on ``device`` (contract §2); ``batch=`` is the Step-8 spelling.
+                 device: str = "cuda", backend: str = "auto", seed: int = 0):
+        """``num_envs`` environments on ``device`` (contract §2).
 
         ``device`` is checked FIRST, before anything is built, because the CPU refusal is this
         family's loudest declaration and a caller who asked for a CPU env should get the reason
@@ -677,7 +672,7 @@ class OGBManipBase(Env):
         self.state_layout = ((("qpos",), b.nq, 0),
                              (("mocap", "position"), 3 * b.nmocap, b.nq)) + (
             ((("buttons",), b.nbuttons, b.nq + 3 * b.nmocap),) if b.nbuttons else ())
-        super().__init__(num_envs=num_envs, batch=batch, size=size or b.size,
+        super().__init__(num_envs=num_envs, size=size or b.size,
                          supersample=self.default_supersample if supersample is None else supersample,
                          device=device, backend=backend, seed=seed)
         self._b = b
@@ -1608,29 +1603,12 @@ _SCENE_BAKE_NOTE = (
     "for this bake entirely -- to be measured, not assumed, since 3.13.0 moves more than one thing.")
 
 
-#: The two cells' ``__module__``, PINNED to the Step-8 import path rather than left at ``type()``'s
-#: default (which would now be ``stable_envs.envs.ogbench.manipulation``).
-#:
-#: ``registry.spec`` derives an env's FAMILY from the last component of ``__module__``, so the
-#: default would rename this family from ``ogb_manip`` to ``manipulation`` and move
-#: ``spec(name)["family"]``, ``list_envs(family=...)``, ``list_families()``, the registry row every
-#: Step-8 artifact recorded and ``scratch/step4/universe.py::shard_of``, which reads the same field.
-#: Pinning it keeps the registry row BYTE-IDENTICAL, so unlike Workstream A this migration does not
-#: need the R2 ``module``-column ruling at all.
-#:
-#: It is also accurate rather than a fiction: ``stable_envs/envs/ogb_manip.py`` is a ``sys.modules``
-#: alias of this module, so ``stable_envs.envs.ogb_manip.OGBCube`` IS this class -- the same object,
-#: not a re-export. Wave 3 removes the alias; that is when this constant and the family name move
-#: together, deliberately and in one place.
-_MODULE = "stable_envs.envs.ogb_manip"
-
-
 def _make_classes():
     made = {}
     for cell, spec in SPEC.items():
         cname = f"OGB{cell}"
         made[cname] = register(type(cname, (OGBManipBase,), dict(
-            CELL=cell, __module__=_MODULE,
+            CELL=cell,
             name=f"ogb-{cell.lower()}",
             reference_id=spec["swm_ref"],
             default_size=spec["size"],

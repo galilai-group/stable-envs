@@ -79,10 +79,10 @@ def _egl_probe_class(candidates=None):
     it is asked about.
     """
     import stable_envs as se
-    names = list(candidates) if candidates else sorted(se.REGISTRY)
+    names = list(candidates) if candidates else sorted(se.registry.REGISTRY)
     scored = []
     for n in names:
-        cls = se.REGISTRY.get(n)
+        cls = se.registry.REGISTRY.get(n)
         if cls is None or not hasattr(cls, "reference_env") or getattr(cls, "reference_id", None) is None:
             continue
         egl = hasattr(cls, "PLATE_PATHS") or "ogbench" in cls.__module__ or "mujoco" in str(

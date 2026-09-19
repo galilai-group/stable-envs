@@ -37,7 +37,7 @@ N, STEPS, SEED = 4, 4, 20260812
 
 #: Envs that DECLARE a step of their own. ``hasattr`` is too loose — it is inherited — and the claim
 #: being made is that this class ported its dynamics, not that some ancestor did.
-STEPPING = tuple(n for n, c in sorted(se.REGISTRY.items()) if "step" in c.__dict__)
+STEPPING = tuple(n for n, c in sorted(se.registry.REGISTRY.items()) if "step" in c.__dict__)
 
 #: Env modules that ship a simulator. If none of them imported, an empty sweep is a fact about the
 #: interpreter; if they did import and the sweep is still empty, the ports have gone missing.
@@ -55,7 +55,7 @@ def test_a_rollout_has_the_documented_shape_and_its_actions_account_for_its_stat
     """
     resolve_family(name, family="stepping envs", modules=STEP_MODULES,
                    subject="the batched-simulator rollout")
-    env = make_or_skip(name, batch=N, device="cuda")
+    env = make_or_skip(name, num_envs=N, device="cuda")
     tr = env.sample(steps=STEPS, batch=N, seed=SEED)
 
     assert tr["states"].shape == (N, STEPS + 1, env.state_dim)
@@ -79,7 +79,7 @@ def test_the_same_seed_gives_the_same_trajectory_and_a_different_one_does_not(na
     can see a policy whose generator carries on from where the previous rollout left it.
     """
     resolve_family(name, family="stepping envs", modules=STEP_MODULES, subject="seeded rollouts")
-    env = make_or_skip(name, batch=N, device="cuda")
+    env = make_or_skip(name, num_envs=N, device="cuda")
     a = env.sample(steps=STEPS, batch=N, seed=SEED)["states"].clone()
     b = env.sample(steps=STEPS, batch=N, seed=SEED)["states"]
     assert torch.equal(a, b), f"{name}: the same seed produced two different trajectories"
@@ -105,7 +105,7 @@ def test_rendered_frames_are_exactly_the_renders_of_the_states_beside_them(name)
     the refusal existed, scatter the frames across the buffer and still return the right shape.
     """
     resolve_family(name, family="stepping envs", modules=STEP_MODULES, subject="rendered rollouts")
-    env = make_or_skip(name, batch=N, device="cuda")
+    env = make_or_skip(name, num_envs=N, device="cuda")
     tr = env.sample(steps=STEPS, batch=N, seed=SEED, render=True)
     frames, states, style = tr["frames"], tr["states"], tr["style"]
 
@@ -132,7 +132,7 @@ def test_a_scripted_policy_drives_the_real_simulator(name):
     policy is chosen by the TEST, so the two can disagree.
     """
     resolve_family(name, family="stepping envs", modules=STEP_MODULES, subject="scripted rollouts")
-    env = make_or_skip(name, batch=N, device="cuda")
+    env = make_or_skip(name, num_envs=N, device="cuda")
     adim = int(getattr(env, "action_dim", 1))
     lo, hi = float(getattr(env, "action_low", -1.0)), float(getattr(env, "action_high", 1.0))
     want = [torch.full((N, adim), lo + (hi - lo) * (0.1 + 0.2 * t), device="cuda")
@@ -156,7 +156,7 @@ def test_the_random_policy_stays_inside_the_env_s_declared_action_bounds(name):
     table — which for a table-driven port is an out-of-bounds read rather than an error.
     """
     resolve_family(name, family="stepping envs", modules=STEP_MODULES, subject="action bounds")
-    env = make_or_skip(name, batch=N, device="cuda")
+    env = make_or_skip(name, num_envs=N, device="cuda")
     if not hasattr(env, "action_dim"):
         pytest.skip(f"{name} declares a step but no action_dim, so there are no bounds to check")
     p = RandomPolicy(seed=SEED)
@@ -177,11 +177,11 @@ def test_an_env_without_a_simulator_refuses_and_says_what_to_do_instead():
     your own states — rather than reading like a missing feature, and it must arrive before any work
     is done rather than as an ``AttributeError`` from inside a loop.
     """
-    without = [n for n, c in sorted(se.REGISTRY.items()) if not hasattr(c, "step")]
+    without = [n for n, c in sorted(se.registry.REGISTRY.items()) if not hasattr(c, "step")]
     assert without, (
         "every registered env now declares a step, which would make this check vacuous; if that is "
         "really true, delete it")
-    env = make_or_skip(without[0], batch=2, device="cuda")
+    env = make_or_skip(without[0], num_envs=2, device="cuda")
     with pytest.raises(NotImplementedError) as e:
         env.sample(steps=2, batch=2)
     msg = str(e.value)
@@ -198,7 +198,7 @@ def test_the_registry_still_contains_envs_that_can_be_rolled_out():
     simulator in the repository.
     """
     if not STEPPING:
-        errs = {m: e for m, e in se.envs.import_errors().items() if m in STEP_MODULES}
+        errs = {m: e for m, e in se.import_errors().items() if m in STEP_MODULES}
         assert errs, (
             "no registered class declares its own step(), and none of the env modules that ship one "
             f"({', '.join(STEP_MODULES)}) failed to import to explain it — so every rollout sweep in "

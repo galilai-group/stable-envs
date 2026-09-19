@@ -71,7 +71,7 @@ from _shared import family_params, make_or_skip, resolve_family, sampled_states
 from stable_envs.testing import conformance as C
 from stable_envs.testing import render_worker as W
 
-ENV_NAMES = sorted(se.REGISTRY)
+ENV_NAMES = sorted(se.registry.REGISTRY)
 
 #: States per env. Small on purpose: every property here except batch-size invariance is a statement
 #: about indexing and purity, not about coverage, and it is falsified at 8 rows as surely as at 8192.
@@ -149,7 +149,7 @@ def _continuous_leaf(env):
 
 @pytest.fixture(scope="module", params=ENV_NAMES)
 def env(request):
-    return se.make(request.param, batch=N, device="cuda")
+    return se.make(request.param, num_envs=N, device="cuda")
 
 
 # The "put the env back at its default appearance before every test" fixture now lives in
@@ -1108,9 +1108,9 @@ def test_highway_render_size_is_an_argument_not_a_mode(name):
     A fresh env per parameter, so this states the property on its own and cannot be satisfied (or
     broken) by whatever the module-scoped fixture did before it.
     """
-    if name not in se.REGISTRY:
+    if name not in se.registry.REGISTRY:
         pytest.skip(f"{name} is not registered")
-    env = se.make(name, batch=4, device="cuda")
+    env = se.make(name, num_envs=4, device="cuda")
     st = env.sample_states(4, rng=np.random.default_rng(0))
     before = tuple(env.render(st).shape)
     big = tuple(env.render(st, size=2 * int(env.size)).shape)
@@ -1254,8 +1254,8 @@ def test_cuda_graph_step_matches_eager(env):
     cls = type(env)
     if "step" not in cls.__dict__ or not getattr(cls, "use_step_graph", False):
         pytest.skip(f"{cls.__name__}: no CUDA-graph-captured step")
-    graphed = se.make(cls.__name__, batch=N, device="cuda")
-    eager = se.make(cls.__name__, batch=N, device="cuda")
+    graphed = se.make(cls.__name__, num_envs=N, device="cuda")
+    eager = se.make(cls.__name__, num_envs=N, device="cuda")
     eager.use_step_graph = False
 
     st = env.sample_states(N, rng=np.random.default_rng(5))
@@ -1338,7 +1338,7 @@ def _visibility_capable_envs():
     COLLECTION time would create an EGL context per domain for a run that may deselect every one of
     them. The test body asks the precise question once it has the env.
     """
-    return [name for name, cls in sorted(se.REGISTRY.items())
+    return [name for name, cls in sorted(se.registry.REGISTRY.items())
             if getattr(cls, "VISIBILITY_KNOB", False) and hasattr(cls, "_hideable")]
 
 
@@ -1349,7 +1349,7 @@ def _declared_visibility_leaves(names) -> dict:
     """
     out = {}
     for name in names:
-        cls = se.REGISTRY[name]
+        cls = se.registry.REGISTRY[name]
         try:
             out[name] = [f"visibility.{el[1]}" for el in cls._hideable()]
         except ImportError:                                # the family is not installed here
@@ -1369,7 +1369,7 @@ def test_some_env_actually_declares_a_hideable_task_object():
     """
     names = _visibility_capable_envs()
     if not names:
-        errs = se.envs.import_errors()
+        errs = se.import_errors()
         if "dmcontrol" in errs:
             pytest.skip(f"no env can carry a visibility knob here: dmcontrol did not import "
                         f"({errs['dmcontrol']})")
@@ -1413,7 +1413,7 @@ def test_a_baked_scene_does_not_inherit_the_last_bake_s_visibility(name):
     """
     resolve_family(name, family="visibility", modules=("dm_control",),
                    subject="the scene-cache visibility check")
-    env = make_or_skip(name, batch=8, device="cuda")
+    env = make_or_skip(name, num_envs=8, device="cuda")
     paths = [p for p in env.variation_space.names() if p.split(".")[0] == "visibility"]
     if not paths:
         # A property of the DOMAIN, not a defect: this cell's initialize_episode draws no task object

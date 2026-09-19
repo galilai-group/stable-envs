@@ -311,9 +311,9 @@ def main() -> None:
     ap.add_argument("--report", default="", help="also write the full measurement here as json")
     a = ap.parse_args()
 
-    if a.env not in se.REGISTRY:
-        raise SystemExit(f"unknown env {a.env!r}; import errors: {se.envs.import_errors()}")
-    cls = se.REGISTRY[a.env]
+    if a.env not in se.registry.REGISTRY:
+        raise SystemExit(f"unknown env {a.env!r}; import errors: {se.import_errors()}")
+    cls = se.registry.REGISTRY[a.env]
     if getattr(cls, "render_decoder", "renderer") != "renderer":
         raise SystemExit(f"{a.env} already draws through a learned decoder. Fit a corrector for the "
                          f"PLAIN class it was derived from, not for a corrected one.")
@@ -332,12 +332,12 @@ def main() -> None:
           f"tex_lod {tex_lod} -> 256 px\ncell {cell}", flush=True)
 
     torch.manual_seed(a.seed)
-    plain = se.make(a.env, batch=1, size=256, device="cuda", seed=a.seed)
+    plain = se.make(a.env, num_envs=1, size=256, device="cuda", seed=a.seed)
     # The cheap render, through the SAME class with the corrector's profile. Not registered: it is a
     # render configuration, not an env, and the thing that makes it one is the checkpoint this run is
     # trying to produce.
     Cheap = type(f"{a.env}CheapProfile", (cls,), dict(TEX_LOD=int(tex_lod), BACKFACE_CULL=False))
-    cheap = Cheap(batch=1, size=256, device="cuda", seed=a.seed)
+    cheap = Cheap(num_envs=1, size=256, device="cuda", seed=a.seed)
 
     model = RN.build(net).cuda().to(memory_format=torch.channels_last)
     hist: list[dict] = []
@@ -372,12 +372,12 @@ def main() -> None:
                      default_size=256))
 
     def make_corrected(k):
-        e = Cand(batch=16, size=256, device="cuda", seed=k)
+        e = Cand(num_envs=16, size=256, device="cuda", seed=k)
         e._corrector_override = corr
         return e
 
     c_def, c_draws, c_var = measure(make_corrected, a.decl_seeds, a.decl_states, "corrected")
-    p_def, p_draws, p_var = measure(lambda k: se.make(a.env, batch=16, size=256, device="cuda",
+    p_def, p_draws, p_var = measure(lambda k: se.make(a.env, num_envs=16, size=256, device="cuda",
                                                       seed=k),
                                     a.decl_seeds, a.decl_states, "plain")
     c_varw, p_varw = worst(c_var), worst(p_var)

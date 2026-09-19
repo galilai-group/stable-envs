@@ -82,14 +82,14 @@ def unbounded(monkeypatch):
 @pytest.mark.parametrize("name", CLASSIC)
 def test_the_windows_and_kmax_are_bounds_on_extreme_states(name, unbounded, monkeypatch):
     """One state list, drawn bounded and unbounded. A too-tight bound shows up as lost pixels."""
-    if name not in se.REGISTRY:
+    if name not in se.registry.REGISTRY:
         pytest.skip(f"{name} is not registered in this interpreter")
     states = _states(name, 24, seed=20260913)
 
-    env = se.make(name, batch=len(states), device="cpu")
+    env = se.make(name, num_envs=len(states), device="cpu")
     loose = _render(env, states)
     monkeypatch.undo()                      # put the real _poly/_circ back
-    env2 = se.make(name, batch=len(states), device="cpu")
+    env2 = se.make(name, num_envs=len(states), device="cpu")
     tight = _render(env2, states)
 
     d = (tight.to(torch.int16) - loose.to(torch.int16)).abs()
@@ -118,10 +118,10 @@ LEAVES_SURFACE = {
 @pytest.mark.parametrize("name", CLASSIC)
 def test_the_extreme_states_actually_exercise_something(name):
     """The guard on the guard: states that changed nothing would make the bound check vacuous."""
-    if name not in se.REGISTRY:
+    if name not in se.registry.REGISTRY:
         pytest.skip(f"{name} is not registered in this interpreter")
     states = _states(name, 24, seed=20260913)
-    env = se.make(name, batch=len(states), device="cpu")
+    env = se.make(name, num_envs=len(states), device="cpu")
     frames = _render(env, states)
     H, W = env.native
     # Not "most frames differ": at these ranges the moving primitive is off the surface for most
@@ -148,12 +148,12 @@ def test_a_deliberately_short_kmax_is_caught(monkeypatch):
     Without this, a window/kmax test that silently stopped comparing anything would read as a pass
     forever — which is the failure mode the Acrobot tuple rotation slipped through on the first try.
     """
-    if "CartPole" not in se.REGISTRY:
+    if "CartPole" not in se.registry.REGISTRY:
         pytest.skip("CartPole is not registered in this interpreter")
     states = _states("CartPole", 8, seed=1)
-    good = _render(se.make("CartPole", batch=len(states), device="cpu"), states)
+    good = _render(se.make("CartPole", num_envs=len(states), device="cpu"), states)
     monkeypatch.setattr(CC.CartPole, "KMAX_POLE", (8, 8, 8, 8))
-    bad = _render(se.make("CartPole", batch=len(states), device="cpu"), states)
+    bad = _render(se.make("CartPole", num_envs=len(states), device="cpu"), states)
     assert not torch.equal(good, bad), (
         "shrinking CartPole's pole kmax to 8 changed no pixels, so the comparison in this file is "
         "not sensitive to the bound it claims to check")

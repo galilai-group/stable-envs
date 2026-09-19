@@ -602,8 +602,7 @@ class HumanoidBenchBase(Env):
     parity_interior_min = None
 
     def __init__(self, num_envs: int = 1, size: int | None = None, supersample: int = 1,
-                 device: str = "cuda", backend: str = "auto", seed: int = 0,
-                 batch: int | None = None):
+                 device: str = "cuda", backend: str = "auto", seed: int = 0):
         b = _build_bundle(self.ROBOT, self.TASK)
         self.state_dim = b.nq
         self.state_names = b.state_names
@@ -612,7 +611,7 @@ class HumanoidBenchBase(Env):
         # compiled model. Nothing is hidden (every column is covered, no offset is ``None``) and
         # there is no ``_live_state``: the packed row is this family's live state.
         self.state_layout = ((("qpos",), self.state_dim, 0),)
-        super().__init__(num_envs=num_envs, batch=batch, size=size, supersample=supersample,
+        super().__init__(num_envs=num_envs, size=size, supersample=supersample,
                          device=device, backend=backend, seed=seed)
         self._b = b
 

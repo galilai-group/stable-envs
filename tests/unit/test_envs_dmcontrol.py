@@ -68,7 +68,7 @@ CPU_REFUSED = ("DMCSwimmerSwimmer6",)
 
 def _build(name, **kw):
     """Construct a cell, or skip with the reason. A refusal this family DECLARES is not a skip."""
-    cls = snv.REGISTRY[name]
+    cls = snv.registry.REGISTRY[name]
     try:
         return cls(**kw)
     except ValueError:                           # a declared device refusal; the caller handles it
@@ -107,7 +107,7 @@ def test_every_cell_reports_the_package_as_its_module(name):
     changed a column every Step-8 artifact recorded. The attribute is also ACCURATE: the class is
     reachable at that path, which the assertion checks rather than assumes.
     """
-    cls = snv.REGISTRY[name]
+    cls = snv.registry.REGISTRY[name]
     assert cls.__module__ == "stable_envs.envs.dmcontrol"
     assert getattr(dmc, name) is cls
     assert snv.spec(name)["family"] == "dmcontrol"
@@ -118,7 +118,7 @@ def test_every_cell_reports_the_package_as_its_module(name):
 def test_every_cell_is_written_in_its_own_domain_module(name):
     """Plan §3: one module per domain. The cell's DECLARATION lives where its domain does."""
     mod = importlib.import_module(f"stable_envs.envs.dmcontrol.{WRITTEN_IN[name]}")
-    assert getattr(mod, name) is snv.REGISTRY[name]
+    assert getattr(mod, name) is snv.registry.REGISTRY[name]
 
 
 def test_the_package_tables_are_views_of_the_cells_and_not_a_second_copy():
@@ -131,13 +131,13 @@ def test_the_package_tables_are_views_of_the_cells_and_not_a_second_copy():
     was collected from rather than against a transcription.
     """
     assert dmc.DEFAULT_SIZES == {"DMCManipulatorBringBall": 224}
-    assert snv.REGISTRY["DMCManipulatorBringBall"].default_size == 224
+    assert snv.registry.REGISTRY["DMCManipulatorBringBall"].default_size == 224
     assert set(dmc.CPU_UNCERTIFIED) == set(CPU_REFUSED)
     for n, reason in dmc.CPU_UNCERTIFIED.items():
-        assert snv.REGISTRY[n].CPU_UNCERTIFIED_REASON == reason
+        assert snv.registry.REGISTRY[n].CPU_UNCERTIFIED_REASON == reason
     assert set(dmc.VISUAL_FIDELITY) == set(TRACKCOM)
     for n, vf in dmc.VISUAL_FIDELITY.items():
-        assert snv.REGISTRY[n].visual_fidelity is vf
+        assert snv.registry.REGISTRY[n].visual_fidelity is vf
     assert set(dmc.TRACKCOM_BASES) == {"DMCQuadrupedWalk"}
     assert dmc.TRACKCOM_BASES["DMCQuadrupedWalk"] == (dmc._SWMQuadrupedModel,)
     assert set(dmc.DOMAINS) == set(PARITY) and set(dmc.TRACKCOM_DOMAINS) == set(TRACKCOM)
@@ -153,7 +153,7 @@ def test_a_cell_is_a_declaration_and_overrides_no_renderer_method(name):
     where that would be caught. ``DMCQuadrupedWalk`` carries one extra BASE, not an override: its
     model is ``stable_worldmodel``'s rather than ``suite.load``'s.
     """
-    cls = snv.REGISTRY[name]
+    cls = snv.registry.REGISTRY[name]
     tier = dmc.DMControlSuite if name in PARITY else dmc.DMControlTrackCom
     assert issubclass(cls, tier)
     own = {k: v for k, v in vars(cls).items() if not k.startswith("__")}
@@ -179,29 +179,29 @@ def test_the_preserved_declarations_are_still_exactly_what_step_8_declared():
     """
     # mujoco 3.11 certification provenance: the declared arm is authoritative
     for n in TRACKCOM:
-        vf = snv.REGISTRY[n].visual_fidelity
+        vf = snv.registry.REGISTRY[n].visual_fidelity
         assert vf["reference_versions"] == {"mujoco": "3.11.0"}, n
         assert vf["measured_with"] in ({"mujoco_warp": "3.11.0"}, {"warp": "1.16.0"}), n
         assert "3.11.0" in vf["measured_at"], n
     # the one declared all-pixel floor, and the interior floor NOT relaxed anywhere
     assert dmc.ALL_EXACT_FLOOR == {"DMCFingerTurnEasy": 0.89}
-    assert snv.REGISTRY["DMCFingerTurnEasy"].parity_all_exact_min == 0.89
+    assert snv.registry.REGISTRY["DMCFingerTurnEasy"].parity_all_exact_min == 0.89
     for n in PARITY:
-        assert snv.REGISTRY[n].parity_interior_min == snv.REGISTRY["DMCCartpoleBalance"].parity_interior_min
+        assert snv.registry.REGISTRY[n].parity_interior_min == snv.registry.REGISTRY["DMCCartpoleBalance"].parity_interior_min
     # Manipulator's task-specific state exclusions, and nobody else's
     assert dmc.RENDER_INVARIANT_DIMS == {
         "DMCManipulatorBringBall": ("ball_y", "target_ball_quat_qw", "target_ball_quat_qy")}
     for n in ALL:
         want = dmc.RENDER_INVARIANT_DIMS.get(n, ())
-        assert tuple(getattr(snv.REGISTRY[n], "RENDER_INVARIANT_DIMS", ()) or ()) == want, n
+        assert tuple(getattr(snv.registry.REGISTRY[n], "RENDER_INVARIANT_DIMS", ()) or ()) == want, n
     # the trackcom flags, and swimmer's specular note reaching its visual_note
     assert dmc.TRACKCOM_RENDER_FLAGS == {"DMCSwimmerSwimmer6": {"enable_specular": False}}
-    assert dmc.SPECULAR_NOTE in snv.REGISTRY["DMCSwimmerSwimmer6"].visual_note
-    assert dmc.QUADRUPED_NOTE in snv.REGISTRY["DMCQuadrupedWalk"].visual_note
+    assert dmc.SPECULAR_NOTE in snv.registry.REGISTRY["DMCSwimmerSwimmer6"].visual_note
+    assert dmc.QUADRUPED_NOTE in snv.registry.REGISTRY["DMCQuadrupedWalk"].visual_note
     for n in TRACKCOM:
-        assert snv.REGISTRY[n].visual_note.startswith(dmc.VISUAL_NOTE)
+        assert snv.registry.REGISTRY[n].visual_note.startswith(dmc.VISUAL_NOTE)
     # the trackcom cameras: quadruped is the one cell not at camera 0
-    assert {n: snv.REGISTRY[n].CAMERA for n in ALL if snv.REGISTRY[n].CAMERA} == {
+    assert {n: snv.registry.REGISTRY[n].CAMERA for n in ALL if snv.registry.REGISTRY[n].CAMERA} == {
         "DMCQuadrupedWalk": 2}
 
 
@@ -229,7 +229,7 @@ def test_takes_the_step9_constructor_and_the_lifecycle(name):
     that refuses to render rather than drawing through a backend the caller believes is gone."""
     if name in CPU_REFUSED:
         with pytest.raises(ValueError, match="CPU_UNCERTIFIED"):
-            snv.REGISTRY[name](num_envs=2, device="cpu")
+            snv.registry.REGISTRY[name](num_envs=2, device="cpu")
         return
     env = _build(name, num_envs=2, device="cpu")
     assert env.num_envs == 2 and len(env) == 2 and env.B == 2

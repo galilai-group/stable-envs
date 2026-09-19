@@ -244,12 +244,12 @@ def test_missing_backend_names_every_optional_dependency():
 def test_registered_iff_every_backend_dependency_is_present():
     import stable_envs as se
     if RL.missing_backend() is None:
-        assert "PFRocketLanding" in se.REGISTRY
+        assert "PFRocketLanding" in se.registry.REGISTRY
         with pytest.raises(NotImplementedError, match="CPU"):
-            RL.PFRocketLanding(batch=1, device="cpu")
+            RL.PFRocketLanding(num_envs=1, device="cpu")
     else:
-        assert "PFRocketLanding" not in se.REGISTRY
-        assert "rocket_landing" not in se.envs.import_errors()          # absent cleanly, not broken
+        assert "PFRocketLanding" not in se.registry.REGISTRY
+        assert "rocket_landing" not in se.import_errors()          # absent cleanly, not broken
 
 
 def test_reference_render_can_return_its_unreachable_flags_without_breaking_the_shared_checks():

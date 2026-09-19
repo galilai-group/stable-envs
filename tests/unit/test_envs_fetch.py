@@ -10,7 +10,7 @@ module anyway, by stubbing them in ``sys.modules``, would ALSO register twelve c
 of the pytest session and change what every registry-wide test in this suite sees. So:
 
 **Tier 1 reads the SOURCE.** That ``FetchBase`` derives ``Env``, that its constructor takes
-``num_envs=`` with ``batch=`` still accepted, that it assigns ``state_layout`` per instance and
+``num_envs=``, that it assigns ``state_layout`` per instance and
 overrides none of the state machinery, that it defines no ``step``/``transition``, and that the
 frozen declarations (the 0.99 interior floor, ``parity_note``, ``PLATE_PATHS``, the twelve ``CELLS``)
 still say what Step 8 froze, are all properties of the text. They are checked with ``ast`` and run on
@@ -64,16 +64,15 @@ def test_fetch_base_derives_the_step9_env_and_not_the_step8_alias():
     assert "StableEnv" not in text, "the Step-8 alias should not survive the migration"
 
 
-def test_the_constructor_takes_num_envs_and_still_accepts_batch():
-    """Contract §2. ``num_envs`` sits in the slot ``batch`` had, so positional callers are unaffected."""
+def test_the_constructor_takes_num_envs():
+    """Contract §2. ``num_envs`` sits in the first slot after ``self``."""
     args = [a.arg for a in METHODS["__init__"].args.args]
     assert args[:2] == ["self", "num_envs"], args
-    assert "batch" in args, "batch= must still be accepted as the deprecated Step-8 spelling"
-    # forwarded to Env.__init__, which is the one place the deprecation warning is issued
+    assert "batch" not in args
     call = [n for n in ast.walk(METHODS["__init__"])
             if isinstance(n, ast.Call) and "super()" in ast.unparse(n)]
-    assert call and "num_envs=num_envs" in ast.unparse(call[0]) and "batch=batch" in ast.unparse(
-        call[0]), ast.unparse(call[0]) if call else "no super().__init__ call"
+    assert call and "num_envs=num_envs" in ast.unparse(call[0])
+    assert "batch=" not in ast.unparse(call[0])
 
 
 def test_state_layout_is_assigned_per_instance_and_nothing_else_is_overridden():
@@ -151,7 +150,7 @@ def test_the_module_still_refuses_to_import_without_the_raytracer():
     assert 'for _m in ("warp", "mujoco_warp")' in src
     assert "raise ImportError(" in src
     import stable_envs as snv
-    errs = snv.envs.import_errors()
+    errs = snv.import_errors()
     if "fetch" in errs:
         assert "mujoco_warp" in errs["fetch"]
 
@@ -226,8 +225,8 @@ for name in ("FetchReach", "FetchPush"):
         env.render(); rec["closed_refuses_render"] = False
     except RuntimeError:
         rec["closed_refuses_render"] = True
-    e2 = getattr(snv, name)(batch=2, device="cpu")
-    rec["batch_kwarg"] = int(e2.num_envs)
+    e2 = getattr(snv, name)(num_envs=2, device="cpu")
+    rec["constructed_num_envs"] = int(e2.num_envs)
     e2.close()
     out[name] = rec
 print("@@JSON@@" + json.dumps(out))
@@ -268,10 +267,10 @@ def test_the_public_state_is_qpos_plus_the_goal_and_hides_nothing(built):
         assert r["pack_is_packed_row"] and r["roundtrip_exact"]
 
 
-def test_num_envs_is_accepted_and_batch_still_means_the_same_thing(built):
+def test_num_envs_is_accepted(built):
     for r in built.values():
         assert r["num_envs"] == 6 and r["len"] == 6
-        assert r["batch_kwarg"] == 2
+        assert r["constructed_num_envs"] == 2
 
 
 def test_a_renderer_only_cell_refuses_step_and_transition_and_says_why(built):

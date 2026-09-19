@@ -128,7 +128,7 @@ def sample(env, steps: int = 100, batch: int | None = None, policy: BasePolicy |
 
     B = int(batch or env.B)
     if B != env.B:
-        raise ValueError(f"batch {B} != env batch {env.B}; construct the env with batch={B}")
+        raise ValueError(f"batch {B} != env batch {env.B}; construct the env with num_envs={B}")
     if seed is not None:
         env.rng = np.random.default_rng(seed)
 

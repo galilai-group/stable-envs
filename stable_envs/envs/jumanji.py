@@ -760,12 +760,11 @@ class JumanjiGrid(Env):
     parity_interior_min = 1.0
 
     def __init__(self, num_envs: int = 1, size: int | None = None, supersample: int = 1,
-                 device: str = "cuda", backend: str = "auto", seed: int = 0,
-                 batch: int | None = None):
+                 device: str = "cuda", backend: str = "auto", seed: int = 0):
         spec = self.SPEC
         self.state_dim = spec.P
         self.state_names = spec.cell_names()
-        super().__init__(num_envs=num_envs, batch=batch, size=size, supersample=supersample,
+        super().__init__(num_envs=num_envs, size=size, supersample=supersample,
                          device=device, backend=backend, seed=seed)
         self._check_size(self.size)
         self._a = _load_atlas(spec, self.size, self.device)

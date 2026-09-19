@@ -138,7 +138,7 @@ def _family_representatives() -> dict:
     """
     import stable_envs as se
     best = {}
-    for name, cls in sorted(se.REGISTRY.items()):
+    for name, cls in sorted(se.registry.REGISTRY.items()):
         fam = cls.__module__.rsplit(".", 1)[-1]
         maze = {"medium": 0, "teleport": 1, "large": 2, "giant": 3}.get(
             str(getattr(cls, "MAZE", "")).lower(), 0)

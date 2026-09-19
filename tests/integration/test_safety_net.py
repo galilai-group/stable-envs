@@ -355,7 +355,7 @@ def test_the_smoke_subset_covers_every_env_family_exactly_once():
     import stable_envs as se
     from stable_envs.testing.safety_plugin import _family_representatives, smoke_envs
     reps = _family_representatives()
-    families = {cls.__module__.rsplit(".", 1)[-1] for cls in se.REGISTRY.values()}
+    families = {cls.__module__.rsplit(".", 1)[-1] for cls in se.registry.REGISTRY.values()}
     assert set(reps) == families, f"families without a smoke representative: {families - set(reps)}"
-    assert set(reps.values()) <= set(se.REGISTRY), "a representative is not a registered env"
+    assert set(reps.values()) <= set(se.registry.REGISTRY), "a representative is not a registered env"
     assert len(smoke_envs()) == len(families)

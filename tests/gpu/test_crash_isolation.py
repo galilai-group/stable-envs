@@ -64,12 +64,12 @@ def test_building_an_env_does_not_release_anything():
     ``free`` and a reference dropped at the end of a function is exactly how incident 1 and incident 2
     released contexts while other envs were still using theirs.
     """
-    cells = sorted(n for n, c in se.REGISTRY.items() if "ogbench" in c.__module__)
+    cells = sorted(n for n, c in se.registry.REGISTRY.items() if "ogbench" in c.__module__)
     if not cells:
         pytest.skip("no EGL-backed env registered")
     before = resource_guard.take()
     env = se.make("PointmazeMediumNavigate" if "PointmazeMediumNavigate" in cells else cells[0],
-                  batch=2, device="cuda")
+                  num_envs=2, device="cuda")
     env.render(env.sample_states(2, rng=np.random.default_rng(0)))
     del env
     import gc
@@ -92,7 +92,7 @@ def test_selftest_segfault_with_live_egl_contexts():
     the breadcrumb survives a death that happens with a module-scoped MuJoCo fixture in play and a GPU
     context open, which is the situation every real incident happened in.
     """
-    env = se.make("PushT", batch=4, device="cuda")
+    env = se.make("PushT", num_envs=4, device="cuda")
     env.render(env.sample_states(4, rng=np.random.default_rng(0)))
     ctypes.string_at(0)                         # genuine null dereference in libc
 
@@ -100,7 +100,7 @@ def test_selftest_segfault_with_live_egl_contexts():
 @pytest.mark.selftest
 def test_selftest_abort_with_live_egl_contexts():
     """SIGABRT — the signal a MuJoCo fatal error raises, and the one that ended four of these runs."""
-    env = se.make("PushT", batch=4, device="cuda")
+    env = se.make("PushT", num_envs=4, device="cuda")
     env.render(env.sample_states(4, rng=np.random.default_rng(0)))
     os.abort()
 

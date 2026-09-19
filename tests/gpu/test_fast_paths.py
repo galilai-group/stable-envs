@@ -130,7 +130,7 @@ class FastPath:
     #: an empty list.
     names: tuple
     modules: tuple
-    batch: int
+    num_envs: int
     seed: int
     #: Output sizes to build the env at; ``(None,)`` means "the env's own size".
     sizes: tuple
@@ -313,11 +313,11 @@ CASES: tuple[FastPath, ...] = (
              "comparison is on the WHOLE uint8 frame rather than on an isolated cast because the "
              "cast's output feeds a shadow test and a nearest-hit composite, and a one-ulp difference "
              "only matters once it reaches a pixel."),
-        names=tuple(n for n in sorted(se.REGISTRY)
+        names=tuple(n for n in sorted(se.registry.REGISTRY)
                     if n.startswith(("DMC", "Mujoco", "Antmaze", "Pointmaze", "Humanoidmaze",
                                      "Maze2d"))),
         modules=RAYCAST_MODULES,
-        batch=8,
+        num_envs=8,
         seed=0,
         sizes=(84, 256),
         prepare=_states_prepare(0),
@@ -337,9 +337,9 @@ CASES: tuple[FastPath, ...] = (
              "Deliberately NOT through the official renderer: the reference path needs ``dm_control``, "
              "whose EGL teardown aborts the interpreter on this cluster, and the property is a "
              "property of our own two code paths. Parity against MuJoCo is test_conformance.py's job."),
-        names=tuple(n for n in sorted(se.REGISTRY) if n.startswith(("DMC", "Mujoco"))),
+        names=tuple(n for n in sorted(se.registry.REGISTRY) if n.startswith(("DMC", "Mujoco"))),
         modules=MOVER_MODULES,
-        batch=16,
+        num_envs=16,
         seed=0,
         sizes=(84, 256),
         prepare=_states_prepare(0),
@@ -362,11 +362,11 @@ CASES: tuple[FastPath, ...] = (
              "invariant the bound rests on is checked at runtime, so a bundle that violated it would "
              "take the unbounded path and this case would pass vacuously -- "
              "tests/unit/test_raycast3d_primitive_bounds.py is what stops that being silent."),
-        names=tuple(n for n in sorted(se.REGISTRY)
+        names=tuple(n for n in sorted(se.registry.REGISTRY)
                     if n.startswith(("DMC", "Mujoco", "Antmaze", "Pointmaze", "Humanoidmaze",
                                      "PointMaze"))),
         modules=RAYCAST_MODULES,
-        batch=8,
+        num_envs=8,
         seed=0,
         # THE ENV'S OWN SIZE, not 84. This case first ran at 84 px only and passed on every env while
         # the CPU replay of the same change moved a pixel on HumanoidmazeGiantNavigate at its
@@ -390,10 +390,10 @@ CASES: tuple[FastPath, ...] = (
              "is not +0.0 where it is dropped -- and it would show up as a handful of pixels on the "
              "agent's silhouette, which is exactly what no mean-absolute-difference catches. The "
              "union is over ray POSITIONS, not pixels, because the window moves per environment."),
-        names=tuple(n for n in sorted(se.REGISTRY)
+        names=tuple(n for n in sorted(se.registry.REGISTRY)
                     if n.startswith(("Antmaze", "Pointmaze", "Humanoidmaze", "PointMaze"))),
         modules=("ogbench", "maze2d"),
-        batch=8,
+        num_envs=8,
         seed=0,
         sizes=(None,),
         prepare=_states_prepare(0),
@@ -419,10 +419,10 @@ CASES: tuple[FastPath, ...] = (
              "is the differential fuzz; this case is the same claim on the environments, at their "
              "own sizes, because the span's lever arm is a far camera and a small primitive and "
              "building a giant maze at 84 px shortens exactly the thing under test."),
-        names=tuple(n for n in sorted(se.REGISTRY)
+        names=tuple(n for n in sorted(se.registry.REGISTRY)
                     if n.startswith(("Antmaze", "Pointmaze", "Humanoidmaze", "PointMaze"))),
         modules=("ogbench", "maze2d"),
-        batch=8,
+        num_envs=8,
         seed=1,
         sizes=(None,),
         prepare=_states_prepare(1),
@@ -445,9 +445,9 @@ CASES: tuple[FastPath, ...] = (
              "racetrack-v0, and the UNCULLED path disagrees with itself at another block size on "
              "exactly those pixels. The batches here are small enough that the coincidence does not "
              "arise."),
-        names=tuple(sorted(se.REGISTRY)),
+        names=tuple(sorted(se.registry.REGISTRY)),
         modules=(),
-        batch=8,
+        num_envs=8,
         seed=0,
         sizes=(None,),
         prepare=_scene_prepare(0),
@@ -466,7 +466,7 @@ CASES: tuple[FastPath, ...] = (
              "of those is worth a handful of pixels, which is why the bar is zero."),
         names=CLASSIC,
         modules=(),
-        batch=8,
+        num_envs=8,
         seed=0,
         sizes=(None,),
         prepare=_classic_prepare(0, extreme=False),
@@ -484,7 +484,7 @@ CASES: tuple[FastPath, ...] = (
              "from zero, the car outside the track and the torque past the end of its sprite table."),
         names=CLASSIC,
         modules=(),
-        batch=8,
+        num_envs=8,
         seed=11,
         sizes=(None,),
         prepare=_classic_prepare(11, extreme=True),
@@ -501,9 +501,9 @@ CASES: tuple[FastPath, ...] = (
              "getting that wrong shows up ONLY at ``ss > 1`` — so the default supersample cannot be "
              "the only setting under test. The tile's world box must cover every subsample the program "
              "evaluates, not just the pixel centres."),
-        names=tuple(sorted(se.REGISTRY)),
+        names=tuple(sorted(se.registry.REGISTRY)),
         modules=(),
-        batch=4,
+        num_envs=4,
         seed=1,
         sizes=(None,),
         prepare=_scene_prepare(1),
@@ -545,7 +545,7 @@ def test_the_fast_path_is_bit_identical_to_the_path_it_replaces(case_id, name, s
     if not case.enabled():
         pytest.skip(f"{case.id}: {case.disabled_reason}")
 
-    kw = {"batch": case.batch, "device": "cuda"}
+    kw = {"num_envs": case.num_envs, "device": "cuda"}
     if size is not None:
         kw["size"] = size
     env = make_or_skip(name, **kw)
@@ -704,9 +704,9 @@ def test_every_declared_fast_path_is_actually_reachable():
     assert "cull" in inspect.signature(R2.render_triton).parameters, (
         "raster2d.render_triton no longer takes cull=, so both culling cases are drawing the same "
         "picture twice")
-    if any(n.startswith(("DMC", "Mujoco")) for n in se.REGISTRY):
-        switchable = [n for n in se.REGISTRY
-                      if any(hasattr(se.REGISTRY[n], k)
+    if any(n.startswith(("DMC", "Mujoco")) for n in se.registry.REGISTRY):
+        switchable = [n for n in se.registry.REGISTRY
+                      if any(hasattr(se.registry.REGISTRY[n], k)
                              for k in ("MOVER_TILES", "SHADOW_COMPACTION", "COVER_COMPACTION"))]
         assert switchable, (
             "no registered class carries MOVER_TILES / SHADOW_COMPACTION / COVER_COMPACTION, so "

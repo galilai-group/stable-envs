@@ -22,7 +22,7 @@ if not torch.cuda.is_available():
 import stable_envs as se
 from stable_envs.testing import conformance as C
 
-ENV_NAMES = sorted(se.REGISTRY)
+ENV_NAMES = sorted(se.registry.REGISTRY)
 
 #: Parity thresholds. Interior pixels must be EXACT — that is the strong claim and it is achievable,
 #: since interior pixels have no anti-aliasing ambiguity. All-pixel agreement is held to a much looser
@@ -94,11 +94,11 @@ PARITY_STATE_SEED = 20260811
 
 @pytest.fixture(scope="module", params=ENV_NAMES)
 def env(request):
-    return se.make(request.param, batch=16, device="cuda")
+    return se.make(request.param, num_envs=16, device="cuda")
 
 
 def test_registry_is_not_empty():
-    errs = se.envs.import_errors()
+    errs = se.import_errors()
     assert ENV_NAMES, f"no envs registered; env-module import errors: {errs}"
     if errs:
         # Not a failure: a missing optional dependency legitimately removes one env. Printed so a
@@ -124,10 +124,10 @@ def test_required_env_modules_actually_imported():
     want = [m.strip() for m in os.environ.get("SE_REQUIRE_ENV_MODULES", "").split(",") if m.strip()]
     if not want:
         pytest.skip("SE_REQUIRE_ENV_MODULES is not set; import failures are reported, not asserted")
-    errs = se.envs.import_errors()
+    errs = se.import_errors()
     missing = {m: errs.get(m, "imported but registered no envs") for m in want
                if m in errs or not any(cls.__module__.endswith(f".{m}")
-                                       for cls in se.REGISTRY.values())}
+                                       for cls in se.registry.REGISTRY.values())}
     assert not missing, (
         "this run was launched to cover env modules it does not have, so every test for them "
         "collected zero cases and the run would have been green anyway:\n  "
@@ -155,8 +155,8 @@ def test_required_envs_are_all_reachable():
     if not want:
         pytest.skip("SE_REQUIRE_ENVS is not set; this interpreter was not launched to cover a "
                     "named set of envs, so there is no assignment to hold it to")
-    errs = se.envs.import_errors()
-    missing = sorted(n for n in want if n not in se.REGISTRY)
+    errs = se.import_errors()
+    missing = sorted(n for n in want if n not in se.registry.REGISTRY)
     assert not missing, (
         f"this run was launched to cover {len(want)} env(s) and {len(missing)} of them are not "
         f"registered in this interpreter, so every test parameterised over them collected ZERO "
@@ -181,7 +181,7 @@ def test_relaxed_parity_floors_are_all_explained():
     lowered in.
     """
     bad = []
-    for name, cls in sorted(se.REGISTRY.items()):
+    for name, cls in sorted(se.registry.REGISTRY.items()):
         floors = {k: getattr(cls, k, None) for k in ("parity_interior_min", "parity_all_exact_min")}
         lowered = {k: v for k, v in floors.items()
                    if v is not None and float(v) < (INTERIOR_EXACT_MIN if k == "parity_interior_min"
@@ -488,7 +488,7 @@ def test_a_learned_decoder_beats_the_render_it_replaces(env):
         pytest.skip(f"{cls.__name__} draws its frames with a renderer; there is nothing to compare "
                     f"a learned decoder against")
     base = cls.__name__.removesuffix("Corrected")
-    assert base in se.REGISTRY, (
+    assert base in se.registry.REGISTRY, (
         f"{cls.__name__} has no plain sibling {base}: a learned decoder is a second way to draw a "
         f"cell that already exists, and the claim it makes is relative to the first one")
     try:
@@ -496,7 +496,7 @@ def test_a_learned_decoder_beats_the_render_it_replaces(env):
     except ImportError as e:
         pytest.skip(f"{cls.__name__}: reference env not installed ({e})")
 
-    plain = se.make(base, batch=env.B, size=env.size, device="cuda")
+    plain = se.make(base, num_envs=env.B, size=env.size, device="cuda")
     states = env.sample_states(64, rng=np.random.default_rng(PARITY_STATE_SEED))
     official = cls.reference_render(ref, states)
     got, was = env.render(states).cpu().numpy(), plain.render(states).cpu().numpy()

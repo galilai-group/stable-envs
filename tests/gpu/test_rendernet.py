@@ -39,7 +39,7 @@ from stable_envs.render import rendernet as RN
 
 from _shared import EMPTY, family_params
 
-LEARNED = sorted(n for n, c in se.REGISTRY.items()
+LEARNED = sorted(n for n, c in se.registry.REGISTRY.items()
                  if getattr(c, "render_decoder", "renderer") == "learned")
 
 
@@ -69,7 +69,7 @@ def env(request):
                                 collects nothing is green and proves nothing.
     """
     if request.param == EMPTY:
-        errs = se.envs.import_errors()
+        errs = se.import_errors()
         blamed = {m: errs[m] for m in LEARNED_MODULES if m in errs}
         if blamed:
             pytest.skip("learned-decoder: no env declares one here because "
@@ -89,25 +89,25 @@ def env(request):
             f"render_decoder='learned'. Nothing explains that, so it is a registration or naming "
             f"change rather than a missing dependency — and every test in this file would otherwise "
             f"have collected zero cases and reported green.")
-    return se.make(request.param, batch=8, device="cuda")
+    return se.make(request.param, num_envs=8, device="cuda")
 
 
 def plain_sibling(env):
     """The same cell drawn by the renderer alone. Every learned class is derived from one."""
     name = type(env).__name__.removesuffix("Corrected")
-    if name not in se.REGISTRY:
+    if name not in se.registry.REGISTRY:
         pytest.fail(f"{type(env).__name__} has no plain sibling {name} in the registry; a learned "
                     f"decoder is a second way to draw a cell that already exists, and without the "
                     f"first one there is nothing to compare it against")
-    return se.make(name, batch=env.B, size=env.size, device="cuda")
+    return se.make(name, num_envs=env.B, size=env.size, device="cuda")
 
 
 def cheap_render(env, states):
     """The cheap frame, produced independently of the corrected class, through its OWN profile."""
     corr = env.corrector()
-    base = se.REGISTRY[type(env).__name__.removesuffix("Corrected")]
+    base = se.registry.REGISTRY[type(env).__name__.removesuffix("Corrected")]
     cls = type("CheapProbe", (base,), dict(TEX_LOD=corr.tex_lod, BACKFACE_CULL=corr.backface_cull))
-    e = cls(batch=env.B, size=env.size, device="cuda")
+    e = cls(num_envs=env.B, size=env.size, device="cuda")
     return e.render(states, size=corr.render_size)
 
 
@@ -218,7 +218,7 @@ def test_this_corrector_refuses_every_other_registered_cell(env):
     """
     corr = env.corrector()
     mine = type(env).corrector_cell_key()
-    others = [c for n, c in sorted(se.REGISTRY.items())
+    others = [c for n, c in sorted(se.registry.REGISTRY.items())
               if getattr(c, "render_decoder", "renderer") == "renderer"
               and hasattr(c, "corrector_cell_key")
               and c.corrector_cell_key().get("family") == mine["family"]
@@ -241,11 +241,11 @@ def test_no_checkpoint_means_no_class(monkeypatch):
     monkeypatch.setattr(RN, "CACHE_ROOT", "/nonexistent/stable-envs-rendernet")
     assert RN.available() == {}
     assert RC._make_corrected_classes() == {}
-    plain = [n for n in se.REGISTRY if n.startswith("RoboCasa") and not n.endswith("Corrected")]
+    plain = [n for n in se.registry.REGISTRY if n.startswith("RoboCasa") and not n.endswith("Corrected")]
     assert plain, "the plain RoboCasa classes must be registered whether or not weights exist"
     for n in plain:
-        assert se.REGISTRY[n].render_decoder == "renderer"
-        assert se.REGISTRY[n].TEX_LOD == 1 and se.REGISTRY[n].BACKFACE_CULL is None, (
+        assert se.registry.REGISTRY[n].render_decoder == "renderer"
+        assert se.registry.REGISTRY[n].TEX_LOD == 1 and se.registry.REGISTRY[n].BACKFACE_CULL is None, (
             f"{n} is the plain class and its MJWarp render profile must be the one every number in "
             f"FIDELITY was measured through")
 

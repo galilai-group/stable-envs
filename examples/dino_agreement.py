@@ -102,8 +102,8 @@ def _jpeg_roundtrip(frames: np.ndarray, quality: int = 95) -> np.ndarray:
 
 def measure(name: str, n: int, model, device: str) -> dict:
     m, mean, std, size = model
-    cls = se.REGISTRY[name]
-    env = se.make(name, batch=n, device=device)
+    cls = se.registry.REGISTRY[name]
+    env = se.make(name, num_envs=n, device=device)
     ref = C.reference_env(cls, env.size)                    # cached: never bind an EGL context locally
 
     states = env.sample_states(n, rng=np.random.default_rng(STATE_SEED))
@@ -163,10 +163,10 @@ def main() -> None:
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
     model = _encoder(a.model, device)
-    wanted = [n for n in sorted(se.REGISTRY)
+    wanted = [n for n in sorted(se.registry.REGISTRY)
               if (not a.envs or n in a.envs.split(","))
-              and getattr(se.REGISTRY[n], "reference_id", None)
-              and hasattr(se.REGISTRY[n], "reference_env")]
+              and getattr(se.registry.REGISTRY[n], "reference_id", None)
+              and hasattr(se.registry.REGISTRY[n], "reference_env")]
     print(f"{len(wanted)} env(s) declare a reference renderer; encoder {a.model} on {device}")
 
     outdir = Path(a.out); outdir.mkdir(parents=True, exist_ok=True)

@@ -516,8 +516,7 @@ class PgxBoardBase(Env):
     parity_note = ""
 
     def __init__(self, num_envs: int = 1, size: int | None = None, supersample: int | None = None,
-                 device: str = "cuda", backend: str = "auto", seed: int = 0,
-                 batch: int | None = None):
+                 device: str = "cuda", backend: str = "auto", seed: int = 0):
         b = _bundle(self.GAME)
         spec = GAMES[self.GAME]
         self._b = b
@@ -525,7 +524,7 @@ class PgxBoardBase(Env):
         self.state_dim = int(spec["cells"])
         self.state_names = tuple(
             f"cell_r{i // spec['ncols']}c{i % spec['ncols']}" for i in range(spec["cells"]))
-        super().__init__(num_envs=num_envs, batch=batch, size=size,
+        super().__init__(num_envs=num_envs, size=size,
                          supersample=self.default_supersample if supersample is None else supersample,
                          device=device, backend=backend, seed=seed)
         assert self.default_size == b.native, (

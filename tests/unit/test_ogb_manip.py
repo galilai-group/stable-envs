@@ -21,11 +21,11 @@ pytest.importorskip("stable_worldmodel")
 pytest.importorskip("ogbench")
 
 try:
-    import stable_envs.envs.ogb_manip as ogb
+    import stable_envs.envs.ogbench.manipulation as ogb
 except RuntimeError as e:      # no MEASURED visual_fidelity yet: the module refuses to register
-    pytest.skip(f"ogb_manip is not measured in this build: {e}", allow_module_level=True)
+    pytest.skip(f"ogbench.manipulation is not measured in this build: {e}", allow_module_level=True)
 except ImportError as e:
-    pytest.skip(f"ogb_manip's dependencies are absent: {e}", allow_module_level=True)
+    pytest.skip(f"ogbench.manipulation's dependencies are absent: {e}", allow_module_level=True)
 
 
 # --------------------------------------------------------------------------- state layout
@@ -218,7 +218,7 @@ def test_the_lut_rule_selects_movers_and_lets_everything_else_fall_through():
 @pytest.mark.parametrize("cname", ["OGBCube", "OGBScene"])
 def test_the_declaration_is_complete_and_visual(cname):
     import stable_envs as se
-    cls = se.REGISTRY[cname]
+    cls = se.registry.REGISTRY[cname]
     assert cls.fidelity_tier == "visual"
     assert cls.parity_interior_min is None
     vf = cls.visual_fidelity
@@ -241,7 +241,7 @@ def test_the_declaration_is_complete_and_visual(cname):
 def test_cpu_is_refused_rather_than_served_from_the_gpu(cname):
     import stable_envs as se
     with pytest.raises(ValueError, match="CPU3D-OGB-1"):
-        se.make(cname, batch=1, device="cpu")
+        se.make(cname, num_envs=1, device="cpu")
 
 
 # --------------------------------------------------------------------------- the frozen corpus

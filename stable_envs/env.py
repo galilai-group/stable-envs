@@ -41,7 +41,6 @@ import torch
 from tensordict import TensorDict
 
 from . import dynamics as _dynamics
-from ._config import deprecated as _deprecated
 from ._config import get_config as _get_config
 from ._style import StyleTensor
 from .spaces import Dict as VariationDict
@@ -473,8 +472,7 @@ class Env:
     the four specs — WITHOUT changing what any of it computes. The packed float32 row
     (``state_dim``/``state_names``) is still the internal layout every renderer, every frozen corpus
     and every certification check uses, and ``pack``/``unpack`` are the only bridge between it and the
-    public entity-grouped state. ``StableEnv`` remains as a deprecated alias for this class — the same
-    class object, so ``isinstance``, ``issubclass`` and every ``__init_subclass__`` hook are unaffected.
+    public entity-grouped state.
     """
 
     #: dataset name, hyphenated-lowercase; the env is identified by its class name
@@ -557,23 +555,8 @@ class Env:
     state_layout: tuple[tuple, ...] = ()
 
     def __init__(self, num_envs: int = 1, size: int | None = None, supersample: int = 1,
-                 device: str | None = None, backend: str = "auto", seed: int = 0,
-                 batch: int | None = None):
-        """``num_envs`` environments on ``device``. ``batch=`` is the deprecated Step-8 spelling.
-
-        The positional order is unchanged from Step 8 (``num_envs`` sits where ``batch`` sat), so the
-        existing call sites keep working while Workstream K migrates them.
-        """
-        if batch is not None:
-            _deprecated("Env(batch=)",
-                        "stable-envs: `batch=` is deprecated and will be removed; it is now "
-                        "`num_envs=` (env = snv.PushT(num_envs=64, device='cuda')). The two mean "
-                        "exactly the same thing.")
-            if num_envs not in (1, batch) :
-                raise TypeError(
-                    f"{type(self).__name__}: given both num_envs={num_envs} and batch={batch}. They "
-                    f"are the same argument; pass num_envs alone.")
-            num_envs = batch
+                 device: str | None = None, backend: str = "auto", seed: int = 0):
+        """``num_envs`` environments on ``device``."""
         if device is None:
             device = _get_config()["default_device"] or "cuda"
         self.B = int(num_envs)
@@ -683,7 +666,7 @@ class Env:
                 f"with drop_last=False renders fine, and only those rows are drawn — but it cannot be "
                 f"longer, because there is nowhere to put the extra {n - self.B}. Either build the env "
                 f"at the batch you feed it, se.make({type(self).__name__!r}, "
-                f"batch={n}), or render without touching the env's buffer: env.render(states), which "
+                f"num_envs={n}), or render without touching the env's buffer: env.render(states), which "
                 f"takes any batch.")
         self._state[:n].copy_(s)
         self._live_rows = n

@@ -66,7 +66,7 @@ DEFAULT_REACHED_THROUGH = {
 
 
 def _env(cell):
-    return make(cell, batch=1, device="cpu")
+    return make(cell, num_envs=1, device="cpu")
 
 
 def _layout(env):
@@ -274,7 +274,7 @@ def test_rgb255_is_swm_quantisation():
     A bare factor of 255 does not: ``to_u8`` truncates, so swm's 0.3 -> 77 becomes 76. Checked over a
     dense grid rather than at the endpoints, because the disagreement is at the half-integers.
     """
-    env = make("Pendulum", batch=1, device="cpu")
+    env = make("Pendulum", num_envs=1, device="cpu")
     layout = _layout(env)
     o, w = layout["rod.color"]
     for t in np.linspace(0.0, 1.0, 513):
@@ -443,7 +443,7 @@ def test_the_four_pre_step8_maps_are_untouched(cell):
 @needs_dmc
 def test_enum_alternatives_round_trip():
     """The one ``enum`` leaf in this family: swm's Discrete(2) into our Discrete(3), both ways."""
-    env = make("DMCManipulatorBringBall", batch=1, device="cpu")
+    env = make("DMCManipulatorBringBall", num_envs=1, device="cpu")
     o, _ = _layout(env)["target_ball.shape"]
     for swm_index in (0, 1):
         row = style_from_variation(env, {"target.shape": swm_index})
@@ -456,7 +456,7 @@ def test_enum_alternatives_round_trip():
 @needs_dmc
 def test_an_unreachable_enum_index_is_refused():
     """A swm index the table does not cover must raise rather than silently pick something."""
-    env = make("DMCManipulatorBringBall", batch=1, device="cpu")
+    env = make("DMCManipulatorBringBall", num_envs=1, device="cpu")
     with pytest.raises(KeyError, match="no entry in the map"):
         style_from_variation(env, {"target.shape": 7})
 
@@ -470,7 +470,7 @@ def test_affine_is_invertible_and_additive():
     """
     from dataclasses import replace
 
-    env = make("Pendulum", batch=1, device="cpu")
+    env = make("Pendulum", num_envs=1, device="cpu")
     m = replace(variation_map(env), rgb255={}, scaled={},
                 affine={"rendering.antialias": ("visuals.bg", -1.0, 1.0)})
     VARIATION_MAPS["_AffineProbe"] = m
@@ -538,7 +538,7 @@ def test_floor_color_is_a_leaf_and_the_default_is_the_identity(cell):
     ``common/materials.xml`` grid texture, so a correct implementation renders the registered default
     BYTE-IDENTICALLY to the pre-patch frame -- the leaf must add reach without moving the picture.
     """
-    env = make(cell, batch=2, size=84, device="cpu")
+    env = make(cell, num_envs=2, size=84, device="cpu")
     layout = dict((p, (o, w)) for p, o, w in env.variation_space.flat_layout())
     assert "floor.color" in layout and layout["floor.color"][1] == 6, layout
     d = np.asarray(env.variation_space["floor"]["color"].value, np.float64).reshape(2, 3)

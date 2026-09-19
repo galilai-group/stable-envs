@@ -85,7 +85,7 @@ class Renderer:
         elif mode != "blank":
             import stable_envs as se
             from state_bridge import slot_names
-            self.env = se.make(env_name, batch=1, size=self.size, device=device)
+            self.env = se.make(env_name, num_envs=1, size=self.size, device=device)
             self.slots = slot_names(self.env)
             self.nq = self.env.nq
             if VISIBILITY not in self.env.style_names:

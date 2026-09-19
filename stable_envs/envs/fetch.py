@@ -559,8 +559,7 @@ class FetchBase(Env):
 
     The Step-9 foundation additions are three, and they are all this family needed:
 
-      * ``num_envs=`` (contract §2), with ``batch=`` still accepted as the deprecated spelling;
-      * a two-key public :data:`~stable_envs.env.State` (contract §3) — ``{"qpos": (nq,),
+      * ``num_envs=`` (contract §2);
         "goal": (3,)}`` — whose ``state_layout`` is assigned PER INSTANCE, because a Fetch cell's
         ``state_dim`` is a property of the COMPILED MODEL (``nq`` differs between Reach and the
         three scenes that carry a block) and is not known until one is built;
@@ -624,9 +623,8 @@ class FetchBase(Env):
         "it is baked through MuJoCo itself.")
 
     def __init__(self, num_envs: int = 1, size: int | None = None, supersample: int | None = None,
-                 device: str = "cuda", backend: str = "auto", seed: int = 0,
-                 batch: int | None = None):
-        """``num_envs`` environments on ``device`` (contract §2); ``batch=`` is the Step-8 spelling.
+                 device: str = "cuda", backend: str = "auto", seed: int = 0):
+        """``num_envs`` environments on ``device`` (contract §2).
 
         ``state_dim``, ``state_names`` and ``state_layout`` are read off the COMPILED MODEL here and
         not declared on the class, because they are properties of the model: Reach has no block and
@@ -643,7 +641,7 @@ class FetchBase(Env):
         # configuration, and ``goal`` is the task target the env writes to a MOCAP body rather than
         # to the simulator — a different kind of quantity, and the one the goal sphere is drawn from.
         self.state_layout = ((("qpos",), int(b.nq), 0), (("goal",), 3, int(b.nq)))
-        super().__init__(num_envs=num_envs, batch=batch, size=size,
+        super().__init__(num_envs=num_envs, size=size,
                          supersample=self.default_supersample if supersample is None else supersample,
                          device=device, backend=backend, seed=seed)
         self._b = b

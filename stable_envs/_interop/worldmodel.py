@@ -28,7 +28,7 @@ one thing:
     of the whole world is one ``step`` launch and one ``render`` launch. This is where the speed
     actually is, and it is one line at the call site::
 
-        world.envs = stable_envs.compat.worldmodel.BatchedEnvPool("TwoRoom", num_envs=64)
+        world.envs = stable_envs.interop.BatchedEnvPool("TwoRoom", num_envs=64)
 
     The cost is that it replaces the wrapper stack too, so it has to produce the same ``info`` keys
     itself. It does — see ``INFO_KEYS`` — and the example asserts key-for-key equality against a
@@ -336,7 +336,7 @@ def style_from_variation(env, variation: Mapping[str, Any], base=None,
     m = variation_map(env)
     if m is None:
         raise KeyError(f"{type(env).__name__} has no recorded stable_worldmodel counterpart; add a "
-                       f"VariationMap to stable_envs.compat.worldmodel.VARIATION_MAPS")
+                       f"VariationMap to stable_envs.interop.VARIATION_MAPS")
     flat = _flatten(dict(variation))
     row = np.array(env.default_style() if base is None else base, np.float32).reshape(-1).copy()
     layout = {p: (o, w) for p, o, w in env.variation_space.flat_layout()}
@@ -509,7 +509,7 @@ class StableEnvGym(gym.Env):
                  **kwargs):
         super().__init__()
         self.se_name = se_name
-        self.env = make(se_name, batch=1, size=size, device=device, **kwargs)
+        self.env = make(se_name, num_envs=1, size=size, device=device, **kwargs)
         self.render_mode = render_mode
         self.success_radius = float(success_radius)
         self.default_variations = tuple(default_variations)
@@ -558,7 +558,7 @@ class StableEnvGym(gym.Env):
         if not _has_dynamics(self.env):
             raise NotImplementedError(
                 f"{self.se_name} ships a renderer and no batched GPU simulator, so this facade "
-                f"cannot advance it. Use stable_envs.compat.worldmodel.swap_renderer to keep the "
+                f"cannot advance it. Use stable_envs.interop.swap_renderer to keep the "
                 f"official env's dynamics and replace only its pixels, or drive it from states you "
                 f"already have.")
         a = np.asarray(action, np.float32).reshape(1, -1)
@@ -726,7 +726,7 @@ class BatchedEnvPool:
         from gymnasium.vector.utils import batch_space
 
         self.se_name = se_name
-        self.renderer = make(se_name, batch=int(num_envs), size=size, device=device, **kwargs)
+        self.renderer = make(se_name, num_envs=int(num_envs), size=size, device=device, **kwargs)
         self.success_radius = float(success_radius)
         self.default_variations = tuple(default_variations)
         self.watch_variations = tuple(watch_variations)
@@ -976,7 +976,7 @@ def swap_renderer(gym_env, se_name: str, read_state: Callable[[Any], np.ndarray]
     ``read_state`` maps the unwrapped official env to our compact state — four lines that have to be
     written once per env family and that are the entire coupling between the two libraries.
     """
-    env = make(se_name, batch=1, size=size, device=device)
+    env = make(se_name, num_envs=1, size=size, device=device)
     if style is not None:
         env.set_style(np.asarray(style, np.float32).reshape(1, -1))
     u = getattr(gym_env, "unwrapped", gym_env)

@@ -85,7 +85,7 @@ def run(names, n: int, device: str = "cuda") -> tuple[dict, dict]:
     report, arrays = {}, {}
     for name in names:
         try:
-            env = se.make(name, batch=n, device=device)
+            env = se.make(name, num_envs=n, device=device)
             states, style = sample_inputs(env, n)
             sty = style if env.style_dim else None
             frames = env.render(states)
@@ -126,7 +126,7 @@ def main(argv=None) -> int:
     a = p.parse_args(argv)
 
     import stable_envs as se
-    names = [s for s in a.envs.split(",") if s] or sorted(se.REGISTRY)
+    names = [s for s in a.envs.split(",") if s] or sorted(se.registry.REGISTRY)
     report, arrays = run(names, a.n, a.device)
     np.savez(a.out_npz, **arrays)
     with open(a.out_json, "w") as f:

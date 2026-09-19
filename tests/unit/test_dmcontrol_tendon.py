@@ -149,7 +149,7 @@ def test_fk_is_unchanged_on_the_frozen_ball_in_cup_states():
     if not npz.is_file():
         pytest.skip("frozen DMCBallInCupCatch corpus not present")
     try:
-        env = se.make("DMCBallInCupCatch", batch=64, device="cpu")
+        env = se.make("DMCBallInCupCatch", num_envs=64, device="cpu")
     except Exception as exc:                                            # noqa: BLE001
         pytest.skip(f"DMCBallInCupCatch is not constructible here: {type(exc).__name__}: {exc}")
     states = torch.as_tensor(np.asarray(np.load(npz)["states"], np.float32))

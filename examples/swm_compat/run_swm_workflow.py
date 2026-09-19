@@ -142,7 +142,7 @@ def arm_renderer_swap(steps: int = 40, size: int = 224, seed: int = 0) -> dict:
     # those states are the ones compared.
     wm.swap_renderer(env, "PushT", wm.pusht_state, size=size)
     swapped = np.stack([np.ascontiguousarray(_render_at(env, st)) for st in states[:4]])
-    r = se.make("PushT", batch=len(states), size=size, device="cuda")
+    r = se.make("PushT", num_envs=len(states), size=size, device="cuda")
     ours = r.render(states.astype(np.float32)).cpu().numpy()
     swap_matches = int(np.abs(swapped.astype(np.int16) - ours[:4].astype(np.int16)).max())
     env.close()
@@ -182,9 +182,9 @@ def arm_scaling(swm, steps: int = 10) -> dict:
 def arm_variation_mapping() -> dict:
     out = {}
     for name in ("TwoRoom", "TwoRoomTarget", "Piecewise", "PiecewiseZones", "PushT"):
-        if name not in se.REGISTRY:
+        if name not in se.registry.REGISTRY:
             continue
-        env = se.make(name, batch=1, device="cuda")
+        env = se.make(name, num_envs=1, device="cuda")
         out[name] = wm.check_mapping(env)
     return out
 
@@ -200,7 +200,7 @@ def arm_config_drives_our_renderer() -> dict:
     import stable_worldmodel  # noqa: F401
     from stable_envs.testing import conformance as C
 
-    env = se.make("TwoRoom", batch=8, device="cuda")
+    env = se.make("TwoRoom", num_envs=8, device="cuda")
     ref = gymnasium.make("swm/TwoRoom-v1")
     u = ref.unwrapped
     # Randomise exactly the leaves the map CLAIMS to cover, all at once. Not ``['all']``: that also

@@ -36,7 +36,7 @@ def main() -> None:
 
     outdir = Path(a.out)
     outdir.mkdir(parents=True, exist_ok=True)
-    wanted = [n for n in sorted(se.REGISTRY) if not a.envs or n in a.envs.split(",")]
+    wanted = [n for n in sorted(se.registry.REGISTRY) if not a.envs or n in a.envs.split(",")]
     print(f"dumping {len(wanted)} envs at {a.size}px q{a.jpeg_quality}", flush=True)
 
     for name in wanted:
@@ -46,11 +46,11 @@ def main() -> None:
             continue
         size, note = a.size, None
         try:
-            env = se.make(name, batch=1, size=a.size, device="cuda")
+            env = se.make(name, num_envs=1, size=a.size, device="cuda")
         except Exception as e:
             note = f"{type(e).__name__}: {e}"
             try:
-                env = se.make(name, batch=1, device="cuda")
+                env = se.make(name, num_envs=1, device="cuda")
                 size = env.size
             except Exception as e2:
                 print(f"[{name}] cannot instantiate: {e2}", flush=True)
@@ -68,7 +68,7 @@ def main() -> None:
             del env
             torch.cuda.empty_cache()
             try:
-                env = se.make(name, batch=1, device="cuda")
+                env = se.make(name, num_envs=1, device="cuda")
                 size = env.size
                 pool = env.sample_states(a.frames)
                 frames = env.render(pool).cpu().numpy()
@@ -85,7 +85,7 @@ def main() -> None:
         if note is None and max(frames.shape[1], frames.shape[2]) > 2 * a.size:
             note = (f"size={a.size} produced a {frames.shape[1]}x{frames.shape[2]} frame: this env "
                     f"reads size per tile; dumped at its native size instead")
-            env = se.make(name, batch=1, device="cuda")
+            env = se.make(name, num_envs=1, device="cuda")
             size = env.size
             pool = env.sample_states(a.frames)
             frames = env.render(pool).cpu().numpy()

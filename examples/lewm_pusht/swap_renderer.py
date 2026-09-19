@@ -57,7 +57,7 @@ class _Renderer:
         # than to the resampling policy. 'direct' is what the repo actually advertises.
         self.raster_size = 512 if mode == "resize512" else self.size
         self.env = None if mode == "blank" else se.make(
-            "PushT", batch=1, size=self.raster_size, supersample=supersample, device=device)
+            "PushT", num_envs=1, size=self.raster_size, supersample=supersample, device=device)
         self.n_calls = 0
 
     def __call__(self, states, variation: dict | None = None) -> np.ndarray:

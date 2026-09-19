@@ -724,9 +724,8 @@ class PFRocketLanding(Env):
     )
 
     def __init__(self, num_envs: int = 1, size: int | None = None, supersample: int | None = None,
-                 device: str = "cuda", backend: str = "auto", seed: int = 0,
-                 batch: int | None = None):
-        """``num_envs`` rockets on ``device``. ``batch=`` is the deprecated Step-8 spelling.
+                 device: str = "cuda", backend: str = "auto", seed: int = 0):
+        """``num_envs`` rockets on ``device``.
 
         The CPU refusal below is BY DESIGN and is checked before anything is built: a ``device="cpu"``
         request is never quietly served by CUDA (plan §2's device-honesty rule), and this cell has no
@@ -741,7 +740,7 @@ class PFRocketLanding(Env):
                 "by CUDA; see scratch/step7/rocket-landing/cpu_raster_probe.py for the measured feasibility.")
         super().__init__(num_envs=num_envs, size=size,
                          supersample=self.default_supersample if supersample is None else supersample,
-                         device=device, backend=backend, seed=seed, batch=batch)
+                         device=device, backend=backend, seed=seed)
         self._nvd()
 
     def _close(self) -> None:

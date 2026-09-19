@@ -1,8 +1,8 @@
-"""The public namespace, the deprecated Step-8 aliases, the config, and resource lifetime.
+"""The public namespace, the config, and resource lifetime.
 
-Every assertion here is about the PROMISE rather than about an implementation: that the old names keep
-working and say so once, that closing is explicit and idempotent, and that a closed env refuses to
-draw rather than handing back a frame through a backend that may no longer exist.
+Every assertion here is about the PROMISE rather than about an implementation: ``dir(snv)`` is the
+P0 contract, closing is explicit and idempotent, and a closed env refuses to draw rather than
+handing back a frame through a backend that may no longer exist.
 """
 from __future__ import annotations
 
@@ -46,17 +46,19 @@ def _clean_config():
 
 
 def test_dir_advertises_the_documented_namespace_and_the_environments_only():
-    """Contract §1: the top level exposes the happy path, not backend machinery.
-
-    The retained Step-8 names still RESOLVE (escalation 3) — they must, until Workstream K migrates
-    ~470 call sites — but tab completion must not teach them to anyone new.
-    """
+    """Contract §1: the top level exposes the happy path, not backend machinery."""
     listed = set(dir(snv))
     assert {"Env", "State", "StepResult", "make", "spec", "PushT"} <= listed
     assert not listed & {"Scene2D", "raster2d", "raycast3d", "render", "testing", "StyleTensor",
                          "render_states", "StableEnv", "REGISTRY", "register"}
     for name in ("Scene2D", "StyleTensor", "render_states"):
         assert getattr(snv, name) is not None, f"snv.{name} must still resolve, just not be listed"
+
+
+def test_unpublished_step8_names_do_not_resolve():
+    for name in ("StableEnv", "REGISTRY", "register"):
+        with pytest.raises(AttributeError):
+            getattr(snv, name)
 
 
 def test_the_public_namespace_is_the_contract():
@@ -86,74 +88,31 @@ def test_state_and_stepresult_are_the_tensordict_type_and_not_private_subclasses
                                          "not each hand-roll the TensorDict call")
 
 
-# ------------------------------------------------------------------ deprecated aliases
+# ------------------------------------------------------------------ constructor
 
 
-@pytest.mark.parametrize("name", ["StableEnv", "REGISTRY", "register"])
-def test_the_step8_names_still_work_and_warn_exactly_once(name, records):
-    _config.reset_config()
-    obj = getattr(snv, name)
-    getattr(snv, name)
-    assert obj is not None
-    warnings = [r for r in records if name in r]
-    assert len(warnings) == 1, f"{name} must warn exactly once per process, got {len(warnings)}"
-    assert "stable-envs" in warnings[0] and "WARNING" in warnings[0]
-
-
-def test_stableenv_is_the_same_class_object_as_env():
-    _config.set(warn_on_deprecated=False)
-    assert snv.StableEnv is snv.Env
-    from stable_envs.core.env import StableEnv as ShimStableEnv
-    assert ShimStableEnv is snv.Env
-
-
-def test_registry_is_the_one_registry_whichever_path_finds_it():
-    _config.set(warn_on_deprecated=False)
-    from stable_envs.core.env import REGISTRY as shim
-    assert shim is snv.registry.REGISTRY is snv.REGISTRY
-
-
-def test_make_with_batch_still_builds_an_env_and_warns_once(records):
-    _config.reset_config()
-    env = snv.make("PushT", batch=4, device="cpu")
-    env2 = snv.make("PushT", batch=2, device="cpu")
+def test_make_takes_num_envs():
+    env = snv.make("PushT", num_envs=4, device="cpu")
+    env2 = snv.make("PushT", num_envs=2, device="cpu")
     assert env.num_envs == 4 == env.B and env2.num_envs == 2
-    warnings = [r for r in records if "batch=" in r]
-    assert len(warnings) == 1 and "num_envs=" in warnings[0]
     env.close(); env2.close()
 
 
-#: Classes whose own ``__init__`` still declares ``batch=`` and not ``num_envs=``. They accept the
-#: Step-8 spelling and REJECT the Step-9 one, because they forward positionally to ``Env.__init__``
-#: and never reach its deprecation branch. Migrating them is Wave-1 family-agent work (findings §2,
-#: "Wave-1 scope"); the number is pinned here so it can only go DOWN.
-#:
-#: 41 at Wave-0. Workstream D migrated its 27 OGBench classes and Workstream F migrated the
-#: remaining fourteen (highway 6, maze2d 4, mujoco_locomotion 4). The live merged count is zero.
-NUM_ENVS_HOLDOUTS = 0
-
-
-def test_the_number_of_classes_that_still_reject_num_envs_only_goes_down():
-    """Wave-0 migrated one cell. This is the size of the job Wave 1 inherits, as a number.
-
-    Checked from the SIGNATURE rather than by constructing: most of these families need a GPU, an EGL
-    context or a compiled scene, so a test that instantiated would skip on the machine where this
-    question is asked and the count would quietly stop being enforced.
-    """
+def test_no_registered_class_declares_batch_as_the_constructor_spelling():
+    """``batch=`` was never a tagged-release spelling of ``num_envs=``."""
     import inspect
 
     holdouts = sorted(n for n, c in R.REGISTRY.items()
                       if "batch" in inspect.signature(c.__init__).parameters
                       and "num_envs" not in inspect.signature(c.__init__).parameters)
-    assert len(holdouts) <= NUM_ENVS_HOLDOUTS, (
-        f"{len(holdouts)} registered classes reject num_envs=, up from {NUM_ENVS_HOLDOUTS}. A new "
-        f"env must take the Step-9 constructor: {holdouts}")
-    assert "PushT" not in holdouts, "the Wave-0 template must take num_envs="
+    assert holdouts == [], f"registered classes still take batch= as the constructor: {holdouts}"
 
 
-def test_num_envs_and_batch_cannot_disagree():
-    with pytest.raises(TypeError, match="same argument"):
-        snv.PushT(num_envs=8, batch=4, device="cpu")
+def test_batch_is_not_a_spelling_of_num_envs():
+    with pytest.raises(TypeError, match="unexpected keyword argument 'batch'"):
+        snv.PushT(batch=4, device="cpu")
+    with pytest.raises(TypeError, match="unexpected keyword argument 'batch'"):
+        snv.make("PushT", batch=4, device="cpu")
 
 
 # ------------------------------------------------------------------ config
@@ -177,12 +136,9 @@ def test_default_device_is_honoured_when_the_caller_names_none():
     env.close()
 
 
-def test_warn_on_deprecated_can_be_switched_off(records):
-    _config.reset_config()
+def test_warn_on_deprecated_can_be_switched_off():
     snv.set(warn_on_deprecated=False)
-    snv.StableEnv
-    snv.make("PushT", batch=2, device="cpu").close()
-    assert records == []
+    assert snv.get_config()["warn_on_deprecated"] is False
 
 
 # ------------------------------------------------------------------ lifecycle

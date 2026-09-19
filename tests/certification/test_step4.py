@@ -329,7 +329,7 @@ def test_a_visual_bound_judged_under_its_declared_reference_is_judged(C, tmp_pat
 
 
 def test_the_certifier_reads_reference_versions_with_the_same_precedence_as_describe(C, tmp_path):
-    """visual_fidelity's entry overrides the class attribute (stable_envs.core.env.reference_versions_of),
+    """visual_fidelity's entry overrides the class attribute (``reference_versions_of``),
     so a class-level 3.10.0 under a visual_fidelity 3.11.0 is judged against 3.11.0."""
     row = _visual_row({"mujoco": "3.11.0"}, observed={"mean_abs": 4.99, "within8_frac": 0.882, "ssim": 0.661})
     row["mandatory"]["check_fidelity_declaration"]["evidence"]["reference_versions"] = {"mujoco": "3.10.0",
