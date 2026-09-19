@@ -238,18 +238,18 @@ workstreams:
   branch: step9/render-mjwarp-nvdiff
   worktree: /Users/samib/stable-envs-step9-render-mjwarp-nvdiff
   owner: opus
-  status: 'DELIVERED at 5aeee37, integration (312a631) merged in at 50acdf8 by the coordinator; independent
-    review IN FLIGHT (opus, ruling 8). MUST NOT merge on local evidence: every backend is CUDA-only, so
-    the oracle is UNESTABLISHED, not satisfied.'
+  status: MERGED into step9/integration after GPU pixels established
   files_owned: stable_envs/render/{mjwarp,mjwarp_lightspec,nvdiff,rendernet,_resources(new)}.py, tests
   ids_affected: 'every MJWarp/nvdiff consumer: DMC trackcom cuda, Fetch, OGB, Rocket, RoboCasa, MetaWorld,
     HumanoidBench'
   baseline_sha: b3f3a81
-  head_sha: 50acdf8
-  oracle_diff: UNESTABLISHED. No frame was rendered anywhere in this workstream -- every backend is CUDA-only.
-    Positive evidence is a static read-through (eleven removed lines argued to change no number, no upload
-    and no cache key) plus 28 lifetime tests. Establishing the oracle requires scratch/step9/render-mjwarp-nvdiff/gpu_oracle.sbatch,
-    folded into the single post-Wave-1 GPU job.
+  head_sha: e67be88
+  review: review_i.md APPROVE-WITH-CHANGES at 50acdf8; GPU contingency closed by job 6509711; probe fix e67be88
+  merge_sha: 4eca3ff
+  tests: local CPU resource tests committed; CUDA pixels/lifetime/bench from jobs 6507919 (2D+3D) and 6509711 (MJWarp/nvdiff)
+  oracle_diff: vis311 DMC trackcom, OGB Cube/Scene, Rocket, Fetch (4 cells) frames identical vs 21cb306; unexplained_differences empty. Benches 0.999 / 1.006 / within-bar / 1.017 against 1.10. Rendernet resource probe classified as probe construction (CPU ESPCN), not a product regression. Broad tests/gpu missing-dep noise and Fetch venv-without-pytest classified as harness.
+  api_diff: Closeable/BoundedCache on five backend objects; EGL contexts still never released; no public renderer math change
+  performance_diff: paired B=1/B=4096 worst ratios inside 1.10 on all four CUDA arms
 - workstream: M_docs_examples
   branch: step9/docs-examples
   owner: grok
@@ -400,6 +400,18 @@ decisions:
   topic: rollout.py stays in the package
   ruling: stable_envs/rollout.py remains snv.sample / BasePolicy. The Wave-0 prohibition is no env.rollout(policy).
     Moving the module is not required for v0.
+- date: '2026-09-19'
+  by: coordinator
+  topic: Workstream I GPU gate
+  ruling: 'job 6509711 established byte-identical CUDA frames vs 21cb306 on vis311 DMC trackcom, OGB Cube/Scene,
+    Rocket, and Fetch (4 cells); benches inside 1.10. Rendernet resource-probe CUDA-vs-CPU failure is
+    probe construction (LoadedCorrector around a CPU ESPCN), not a product path. Merge I. Consumer MJWarp
+    close()/BoundedCache wiring stays a documented follow-up.'
+- date: '2026-09-19'
+  by: coordinator
+  topic: Wave 3 v0 archaeology
+  ruling: keep shims, scratch/, and examples/results/ for v0. Do not destroy the Step-8 oracle. Correct
+    only user-facing falsehoods (README [all] extra). stable_envs.testing stays public; rollout.py stays.
 escalations: []
 incident_log:
 - date: '2026-09-17'
@@ -467,6 +479,10 @@ incident_log:
 - date: '2026-09-19'
   item: Workstream K merged at 491b1c1 after APPROVE. Cursor attribution trailers stripped from the four
     author commits before merge (trees unchanged).
+- date: '2026-09-19'
+  item: 'GPU jobs 6507919 (2D+3D pixels/timings PASS; tests/gpu missing-dep noise) and 6509711 (MJWarp/nvdiff
+    pixels/lifetime/bench PASS; rendernet probe classified as CPU ESPCN construction). Workstream I merged
+    at 4eca3ff.'
 non_42_families_note: "carracing, crafter, griddly, highway, jumanji, lunarlander, maze2d, metaworld,\
   \ minigrid, minihack, mujoco_locomotion, overcooked, pgx, procgen, robocasa, sokoban, humanoidbench\
   \ are outside the 42-id oracle (plan \xA717 of Step 8); Step 9 migrates them mechanically under Workstream\
