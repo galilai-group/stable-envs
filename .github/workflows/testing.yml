@@ -1,0 +1,112 @@
+name: tests
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit:
+    name: unit (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - name: Install editable development environment
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev,mujoco-locomotion]"
+      - name: Run unit tests
+        run: |
+          python -m pytest tests/unit -m unit -q
+          python -m pytest scratch/step9/packaging-ci/test_packaging.py -q
+
+  integration:
+    name: integration
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install integration environment
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev,interop,mujoco-locomotion]"
+      - name: Run integration tests
+        shell: bash
+        run: |
+          paths=(tests/unit)
+          if [[ -d tests/integration ]]; then
+            paths+=(tests/integration)
+          fi
+          python -m pytest "${paths[@]}" -m "unit or integration" -q
+
+  package:
+    name: build distributions
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Build wheel and source distribution
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install build twine
+          python -m build
+          python -m twine check dist/*
+          python scratch/step9/packaging-ci/audit_dist.py dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: distributions
+          path: dist/
+          if-no-files-found: error
+
+  install:
+    name: install ${{ matrix.distribution }}
+    needs: package
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        distribution: [wheel, sdist]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - uses: actions/download-artifact@v4
+        with:
+          name: distributions
+          path: dist
+      - name: Install and smoke-test distribution
+        shell: bash
+        run: |
+          python -m venv .dist-venv
+          if [[ "${{ matrix.distribution }}" == "wheel" ]]; then
+            artifact=(dist/*.whl)
+          else
+            artifact=(dist/*.tar.gz)
+          fi
+          .dist-venv/bin/python -m pip install --upgrade pip
+          .dist-venv/bin/python -m pip install "${artifact[0]}"
+          .dist-venv/bin/python scratch/step9/packaging-ci/smoke_installed.py

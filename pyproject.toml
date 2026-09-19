@@ -1,216 +1,123 @@
 [build-system]
-requires = ["setuptools>=64"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "stable-envs"
-version = "0.1.0"
 description = "Famous research environments as GPU-batched, state-driven renderers"
 readme = "README.md"
 requires-python = ">=3.10"
-license = {text = "MIT"}
-# tensordict: the public state IS a TensorDict (Step 9, contract §3) — pure torch, no torchrl.
-# loguru: the package's logger, as in every sibling stable-* repository.
-dependencies = ["numpy>=1.24", "torch>=2.2", "gymnasium>=1.0", "tensordict>=0.6", "loguru>=0.7"]
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [
+  { name = "Randall Balestriero" },
+  { name = "Sami BuGhanem" },
+]
+keywords = ["reinforcement-learning", "environments", "rendering", "pytorch", "gpu"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Science/Research",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dynamic = ["version"]
+dependencies = [
+  "gymnasium>=1.0",
+  "loguru>=0.7",
+  "numpy>=1.24",
+  "tensordict>=0.6",
+  "torch>=2.2",
+]
+
+[project.urls]
+Homepage = "https://github.com/galilai-group/stable-envs"
+Documentation = "https://galilai-group.github.io/stable-envs/"
+Issues = "https://github.com/galilai-group/stable-envs/issues"
+Source = "https://github.com/galilai-group/stable-envs"
 
 [project.optional-dependencies]
-# ONE EXTRA PER ENV FAMILY, and each one installs what that family's REFERENCE needs.
-#
-# Nothing here is needed to render. Every env module imports its reference package inside the
-# staticmethod that needs it, so `pip install -e .` gives the whole registry — the extras are what a
-# parity run, a CPU-vs-GPU benchmark or a gallery comparison needs, and a missing one costs exactly the
-# comparison, not the env. `stable_envs.envs.import_errors()` names any module that did not load.
-#
-# Version floors are only stated where a version was MEASURED to matter; everything else is left
-# unpinned rather than pinned to whatever happened to be installed on one machine.
-pusht = ["gym-pusht", "pymunk", "pygame"]
-minigrid = ["minigrid"]                        # also covers the BabyAI ids, same package
-# ogbench brings its own MuJoCo models; `mujoco` is what the reference renderer and the plate bake use.
-ogbench = ["ogbench", "mujoco"]
+# Reference-family extras. Backends remain separate so users do not install CUDA
+# extensions merely to compare against an official CPU renderer.
+pusht = ["gym-pusht", "pygame", "pymunk"]
+box2d = ["gymnasium[box2d]>=1.0", "pygame"]
+minigrid = ["minigrid"]
+ogbench = ["mujoco>=3.11,<3.13", "ogbench"]
 highway = ["highway-env"]
-# Craftax is a JAX env; the reference renderer runs under whatever jax backend is installed, and the
-# CPU wheel is enough to produce reference frames.
 craftax = ["craftax", "jax"]
-# NLE is the engine, minihack the tile set; the renderer reads minihack's own glyph mapper.
 minihack = ["minihack", "nle"]
-sokoban = ["gym-sokoban", "imageio"]           # the reference composes cached PNG tiles through imageio
-# dm_control and mujoco move together and the working pairs were measured, not guessed: dm_control
-# 1.0.41 needs a mujoco that still has `MjModel.flex_bandwidth`, which 3.9.0 removed. 3.11.0 + 1.0.44 is
-# the pair this repo's DM Control parity numbers were taken under; see docs/research/dmcontrol.md.
-dmcontrol = ["dm-control>=1.0.44", "mujoco>=3.11"]
-mujoco-locomotion = ["mujoco", "gymnasium[mujoco]"]
-# The SIX locomotion domains of that same family, which ship in the VISUAL tier because MuJoCo's
-# minification-filtered checker floor rules them out of the parity one. Like `metaworld` and unlike
-# most extras here, this one is needed to RENDER: without nvdiffrast the four parity envs still load
-# and the six do not, and `stable_envs.envs.mujoco_locomotion.missing_visual_backend()` says why
-# (`import_errors()` cannot, because it reports whole modules and this module holds both tiers).
-#
-# `pip install` ALONE IS NOT ENOUGH and the failure is at build time, not at import. nvdiffrast
-# compiles a CUDA extension during install and needs two things it does not find on its own: a
-# CUDA_HOME with a real `nvcc` matching torch's CUDA major version, and CPATH pointing at torch's own
-# bundled CUDA headers (it includes <cusparse.h>, which a conda toolkit does not ship). The recipe
-# that was run from scratch and verified is `scratch/nvdiff/install_venv.sh`; the venv these numbers
-# were measured in is ~/venvs/senvdiff. Pinned to 0.4.0 because that is the version measured.
-mujoco-locomotion-visual = [
-  "nvdiffrast @ git+https://github.com/NVlabs/nvdiffrast.git@v0.4.0",
-  "mujoco", "gymnasium[mujoco]",
-]
-# The stable_worldmodel family: the reference envs for TwoRoom / Piecewise / SimplePointMaze, and
-# everything stable_envs.compat.worldmodel talks to. Nothing in stable_envs imports it at module
-# scope — the reference bridges import it inside the staticmethod that needs it — so this extra is
-# what a parity run and the compat example need, not what the renderer needs.
-swm = ["stable-worldmodel"]
-# gymnasium-robotics carries TWO things: the Fetch family, measured in docs/research/swm_coverage.md
-# and not rendered here, and PointMaze — the maintained D4RL maze2d — which IS rendered here
-# (stable_envs/envs/maze2d.py). D4RL itself is deliberately absent: it needs mujoco_py and the
-# MuJoCo 2.1 binaries, and it is the same environment one generation back.
-robotics = ["gymnasium-robotics", "mujoco"]
-# Crafter's REFERENCE renderer. Nothing in stable_envs.envs.crafter imports it at module scope — the
-# 56 sprites and the state pool are embedded — so this is what a parity run needs, not what the
-# renderer needs. A machine without it keeps the env and loses only its reference bridge.
+sokoban = ["gym-sokoban", "imageio"]
+dmcontrol = ["dm-control>=1.0.44", "mujoco>=3.11,<3.13"]
+mujoco-locomotion = ["gymnasium[mujoco]>=1.0", "mujoco>=3.11,<3.13"]
+# gymnasium-robotics 1.4.2's Fetch setters fail with MuJoCo 3.12.
+robotics = ["gymnasium-robotics", "mujoco>=3.11,<3.12"]
 crafter = ["crafter"]
-# Overcooked here is JaxMARL's, NOT `overcooked_ai_py`'s -- a different picture, declared as
-# `reference_id = "jaxmarl/Overcooked-V1"`; see docs/research/overcooked.md. jaxmarl is needed to
-# RENDER and not only to compare: the atlas is composed of tiles jaxmarl's own `_render_tile` draws.
-# matplotlib is listed EXPLICITLY because jaxmarl.viz.window -- which the visualiser imports at module
-# scope -- responds to a missing matplotlib by calling sys.exit(-1) rather than by raising, so a
-# machine without it loses the interpreter and not just the env.
-#
-# THIS IS THE ONE EXTRA THAT NEEDS ITS OWN INTERPRETER, and the only family excluded from the release
-# gate (stable_envs/testing/gate.py::EXCLUDED). It is not a soft preference: jaxmarl 0.1.0 requires
-# scipy<=1.12 and jax 0.10.2 requires scipy>=1.14, so `all` below and this extra cannot coexist. Do
-# NOT "fix" it with --no-deps -- that walks into brax, then jaxopt, then the rest of the 2023 JAX
-# ecosystem, and ends at an interpreter where nothing has checked that the tiles are still right.
-# INSTALL INTO A CLEAN VENV: `python -m venv --system-site-packages` breaks jax's CUDA plugin
-# discovery. Measured against jaxmarl 0.1.0 / jax 0.4.38 in ~/venvs/se-oc.
-overcooked = ["jaxmarl", "jax", "matplotlib"]
-# EVERYTHING ELSE, IN ONE INTERPRETER. 191 of the library's 196 envs, on current torch.
-#
-# This extra exists because the opposite was believed for a long time and is false. The families were
-# split across seven venvs on the theory that their pins are irreconcilable; in fact all but one of
-# those pins is DECLARED-BUT-FALSE -- contradicted by an interpreter that was already running the
-# combination successfully:
-#
-#   metaworld 3.1.1   declares mujoco==3.3.0     runs on 3.11.0  (all 50 tasks measured there)
-#   procgen2 0.10.7   declares numpy<2.0.0       runs on 2.4.6
-#   nle 1.3.0         declares gymnasium==1.2.0  runs on 1.2.3
-#   humanoid_bench    declares mujoco==3.1.6,    runs on 3.11.0 / 1.2.3 / 2.13.0
-#                     gymnasium==0.29.1, torch==2.3.1
-#
-# humanoid_bench is the dangerous one and the reason `--no-deps` is mandatory rather than tidy:
-# installed normally it does not fail, it SUCCEEDS and silently walks dm_control 1.0.44 -> 1.0.20 and
-# torch 2.13 -> 2.3.1. The symptom is `'MjModel' object has no attribute 'flex_xvert0'` at the next
-# render, which reads exactly like a real dm_control/mujoco incompatibility and is not one.
-#
-# Verified at torch 2.13.0+cu130 / triton 3.7.1 / mujoco 3.11.0 / jax 0.10.2 / numpy 2.4.6, python
-# 3.11: registry 192, and every env of the gate reachable. Because four of these packages must be
-# installed against overrides, `pip install ".[all]"` ALONE IS NOT ENOUGH -- the order and the
-# overrides are the recipe, and it is scripted end to end in `scratch/census/build_se_all.sbatch`:
-#
-#   uv pip install torch torchvision --index-url https://download.pytorch.org/whl/cu130
-#   uv pip install --override overrides.txt -r <this extra>      # mujoco==3.11.0, numpy==2.4.6,
-#                                                                # gymnasium==1.2.3
-#   uv pip install --no-deps -e path/to/humanoid-bench           # cloned; -e git+... is rejected,
-#                                                                # and a wheel drops its dmc_deps
-#   CPATH=$SITE/nvidia/cu13/include uv pip install --no-deps --no-build-isolation path/to/nvdiffrast
-#
-# The nvdiffrast line carries three separate fixes; see the mujoco-locomotion-visual note above for
-# CUDA_HOME/CPATH, and add --no-build-isolation because its setup.py imports torch.utils.cpp_extension.
-# `overcooked` is deliberately NOT included: see that extra.
-all = [
-  "torch>=2.13", "torchvision>=0.28", "numpy>=2.4", "gymnasium>=1.2.3",
-  "mujoco>=3.11", "mujoco-warp>=3.11", "warp-lang>=1.16", "dm-control>=1.0.44",
-  "gymnasium-robotics", "metaworld>=3.1", "minigrid", "procgen2", "gym-pusht", "pymunk", "pygame",
-  "box2d-py", "gym-sokoban", "crafter", "griddly==1.6.7", "pyyaml", "highway-env", "ogbench",
-  "stable-worldmodel", "jax>=0.10", "jaxlib>=0.10", "jumanji", "pgx", "resvg-py", "pillow",
-  "craftax", "minihack", "nle", "matplotlib", "imageio",
-]
-# griddly is PINNED, not floored, and the pin is the whole release history: 1.6.7 is the only PyPI
-# release (2023-03-15), upstream's last commit is 2024-04-07, and there is no successor and no
-# deprecation notice. Needed to RENDER: the atlas is composed of tiles griddly's Vulkan renderer draws.
-# PyYAML is listed explicitly because the tile size is patched into the game's own yaml.
-# NOTE griddly installs against the legacy `gym`, which prints a NumPy-2.0 banner and is unmaintained.
+overcooked = ["jax", "jaxmarl", "matplotlib"]
 griddly = ["griddly==1.6.7", "pyyaml"]
-# Jumanji is the one family whose reference package is NOT optional: its atlas IS a stack of official
-# matplotlib frames, so a machine without `jumanji` cannot build one and the module raises ImportError
-# at import (stable_envs.envs.import_errors() names it). matplotlib is listed explicitly rather than
-# leaned on as a jumanji dependency, because it is what the atlas is rendered THROUGH.
-# INSTALL INTO A CLEAN VENV: `python -m venv --system-site-packages` breaks jax's CUDA plugin
-# discovery, which is how these numbers were nearly measured on the wrong device.
-jumanji = ["jumanji", "jax", "matplotlib"]
-# PGX ships NO rasterizer -- `save_svg` writes vector text and there is no render() in the package --
-# so the reference has to be NAMED, and it is resvg_py. cairosvg is deliberately absent rather than
-# offered as an alternative: it binds libcairo through ctypes at CALL time, so `import cairosvg`
-# succeeds on a machine where every call then raises, and the reference would be available or not
-# depending on which host a test landed on. resvg-py is a self-contained Rust wheel with no system
-# library lookup. Pillow decodes the PNG it returns. Same clean-venv rule as jumanji (pgx brings jax).
-pgx = ["pgx", "resvg-py", "pillow"]
-# The 3-D backend for flat-material MuJoCo scenes (stable_envs/render/mjwarp.py). mujoco-warp tracks
-# mujoco's version, and mixing them is a silent wrong answer rather than an ImportError.
-mjwarp = ["mujoco-warp>=3.11", "mujoco>=3.11"]
-# Meta-World's 50 v3 tasks (stable_envs/envs/metaworld.py). Unlike every extra above, this one is
-# needed to RENDER and not only to compare: the env is built from the task's own MjModel, so a machine
-# without `metaworld` loses the 50 envs (stable_envs.envs.import_errors() names the module).
-#
-# INSTALL metaworld WITH --no-deps. It pins `mujoco==3.3.0`, mujoco-warp requires >= 3.11, and the two
-# pins are incompatible only on paper: Meta-World runs unmodified against 3.11 and all 50 tasks were
-# measured there. Letting pip resolve the pin silently downgrades mujoco and then every render context
-# fails inside put_model. The measured environment is a venv built with
-# `python -m venv --system-site-packages ~/venvs/se-fetch` (shared with the Fetch family, which needs
-# the identical pair) so that only mujoco is shadowed; see docs/research/metaworld.md.
-metaworld = ["metaworld>=3.1", "mujoco-warp>=3.11", "mujoco>=3.11"]
-# HumanoidBench's Unitree H1 scenes (stable_envs/envs/humanoidbench.py, VISUAL tier). Needed to
-# RENDER, like `metaworld`: the scenes are read out of the humanoid_bench package's own assets.
-#
-# INSTALL humanoid_bench WITH --no-deps, AND FROM GIT: it is not on PyPI, and its setup.py pins
-# `mujoco==3.1.6`, `gymnasium==0.29.1`, `dm_control==1.0.20`, `torch==2.3.1`, `brax`, `gymnax` and
-# `mujoco-mjx` — a resolver given that list downgrades mujoco under mujoco-warp and then every render
-# context fails inside put_model. It runs unmodified against mujoco 3.11 / gymnasium 1.2.3 given the
-# two shims in `_hb_compat`, both of which are version skew and neither of which reaches a pixel.
-#
-#   git clone https://github.com/carlosferrazza/humanoid-bench
-#   pip install --no-deps -e humanoid-bench && pip install "jax[cpu]"
-#
-# `jax` is listed because humanoid_bench.wrappers imports `jax.numpy` at module scope for its
-# hierarchical-policy wrappers, so `import humanoid_bench` fails without it even though nothing this
-# repo touches uses JAX. dm-control is its named indexer, used for rewards and not for pixels.
-# Measured in ~/venvs/se-hb. NOTE the module does not register by default: set
-# STABLE_ENVS_HUMANOIDBENCH=1. See docs/research/humanoidbench.md Section 5.2 for why.
-humanoidbench = ["mujoco-warp>=3.11", "mujoco>=3.11", "dm-control", "jax", "gymnasium"]
-# Only stable_envs.data's TrajectoryDataset.to_hf/from_hf need this; everything else in the repo works
-# on plain tensors and numpy, so a user who saves corpora with np.savez never has to install it.
+jumanji = ["jax", "jumanji", "matplotlib"]
+pgx = ["jax", "pgx", "pillow", "resvg-py"]
+procgen = ["pillow", "procgen2"]
+swm = ["stable-worldmodel"]
+
+# Optional render/data surfaces. nvdiffrast is intentionally not metadata:
+# PyPI rejects direct-URL requirements and its CUDA extension needs a matching
+# local toolkit. The measured source install remains documented in
+# docs/research/nvdiffrast.md and scratch/nvdiff/install_venv.sh.
+mjwarp = [
+  "mujoco>=3.11,<3.13",
+  "mujoco-warp>=3.11,<3.13",
+  "warp-lang>=1.16",
+]
+# Needed to render: Meta-World scenes come from the package's own MjModel.
+# Install metaworld with --no-deps; it pins mujoco==3.3.0 on paper and runs on 3.11.
+metaworld = ["metaworld>=3.1", "mujoco>=3.11,<3.13", "mujoco-warp>=3.11,<3.13"]
+# humanoid_bench is not on PyPI. Install it from git with --no-deps; this extra
+# is only the PyPI-installable remainder.
+humanoidbench = ["dm-control", "gymnasium", "jax", "mujoco>=3.11,<3.13", "mujoco-warp>=3.11,<3.13"]
+rocket = ["pillow", "pybullet", "scipy"]
 hf = ["datasets>=2.14"]
-# What examples/ needs beyond the library: cv2 for the grids and difference panels,
-# imageio-ffmpeg for the H.264 side-by-side videos (see examples/README.md on why mp4v is not enough).
-examples = ["opencv-python", "imageio", "imageio-ffmpeg"]
-# pytest>=8 is required, not preferred: the safety plugin uses the `hookimpl(wrapper=True)` form to
-# turn a resource-guard violation into a real test failure, which does not exist before 8.
-#   pytest-timeout    per-test wall limit; see the addopts note below for how the number was chosen.
-#   pytest-randomly   NOT enabled by default (see `-p no:randomly`); it exists so that order
-#                     independence can be re-checked deliberately with `-p randomly -p no:cacheprovider`.
-#   pytest-xdist      unused by the GPU suite (one CUDA device, one EGL display), kept for unit tests.
-# pytest-forked is deliberately ABSENT. `--forked` is the obvious way to isolate a crashing test and it
-# cannot work here: torch refuses to initialise CUDA in a forked child even when the parent never
-# touched it ("Cannot re-initialize CUDA in forked subprocess", measured on this hardware), so every
-# GPU test would error. stable_envs/testing/supervisor.py does the isolation instead, from outside.
-dev = ["pytest>=8", "pytest-timeout>=2.3", "pytest-randomly>=3.15", "pytest-xdist"]
+examples = ["imageio", "imageio-ffmpeg", "opencv-python"]
+interop = ["stable-worldmodel"]
+# No `all` extra: Fetch needs mujoco<3.12, Overcooked needs its own interpreter,
+# and nvdiffrast cannot be expressed as PyPI metadata.
+docs = [
+  "mkdocs-material>=9.5",
+  "mkdocstrings[python]>=0.27",
+  "pymdown-extensions>=10.0",
+]
+dev = [
+  "build>=1.2",
+  "pre-commit>=4.0",
+  "pygame",
+  "pytest>=8",
+  "pytest-randomly>=3.15",
+  "pytest-timeout>=2.3",
+  "pytest-xdist>=3.6",
+  "pyyaml>=6",
+  "ruff>=0.12",
+  "tomli>=2; python_version < '3.11'",
+  "twine>=6",
+]
 
 [tool.setuptools.packages.find]
 include = ["stable_envs*"]
 
+[tool.setuptools.dynamic]
+version = { attr = "stable_envs.__about__.__version__" }
+
+[tool.ruff]
+target-version = "py310"
+line-length = 119
+
+[tool.ruff.lint]
+select = ["E9", "F63", "F7"]
+
 [tool.pytest.ini_options]
-# -p no:randomly: installing pytest-randomly must not silently change the default order. This suite's
-#   env fixtures are module-scoped and rebuilding them per test costs a MuJoCo plate bake apiece, so
-#   shuffling is a thing to ask for, not a thing to inherit. Ask for it with `-p randomly`.
-#   (The per-test timeout is NOT set here. `--timeout=900` in addopts would make a bare `pytest` fail at
-#   startup wherever pytest-timeout is absent; stable_envs/testing/safety_plugin.py applies the same
-#   number when the plugin is present and says nothing when it is not. The value and the measurements
-#   behind it are documented there, on DEFAULT_TIMEOUT.)
 addopts = ["-p", "no:randomly"]
 markers = [
-  # The five Step-9 markers (plan §2). `unit`, `integration` and `certification` are new; `gpu` and
-  # `slow` already existed and keep their meaning. `reference`, `smoke` and `selftest` stay until
-  # Workstream K retires them.
   "unit: fast, CPU-only, no reference package and no device",
   "integration: several components together (env + renderer + registry + interop)",
   "certification: the frozen Step-4/Step-8 oracle — corpora, digests, support matrix",

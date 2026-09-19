@@ -1,0 +1,105 @@
+name: certification
+
+# Certification is intentionally manual. The 42-environment oracle needs
+# incompatible reference stacks (notably Fetch versus current DM Control), and
+# GPU renderers need CUDA/EGL plus locally compiled nvdiffrast. A single
+# all-extras environment would skip or corrupt real coverage.
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Certification target
+        required: true
+        type: choice
+        options: [cpu, gpu]
+
+permissions:
+  contents: read
+
+jobs:
+  cpu:
+    if: inputs.target == 'cpu'
+    name: CPU certification (${{ matrix.profile }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - profile: core
+            install: .[dev]
+          - profile: dmcontrol
+            install: .[dev,dmcontrol]
+          - profile: ogbench
+            install: .[dev,ogbench]
+          - profile: fetch
+            install: .[dev,robotics]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install certification profile
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e "${{ matrix.install }}"
+      - name: Run CPU certification
+        env:
+          MUJOCO_GL: osmesa
+          STABLE_ENVS_CI_PROFILE: ${{ matrix.profile }}
+        run: >-
+          python -m pytest
+          -m "certification and not gpu"
+          --junitxml=certification-${{ matrix.profile }}.xml
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cpu-certification-${{ matrix.profile }}
+          path: certification-${{ matrix.profile }}.xml
+          if-no-files-found: error
+
+  gpu:
+    if: inputs.target == 'gpu'
+    name: GPU certification (${{ matrix.profile }})
+    # Maintainers provision this label with an NVIDIA GPU, EGL, a CUDA-enabled
+    # torch build, and nvdiffrast 0.4.0 for the nvdiff profile.
+    runs-on: [self-hosted, linux, x64, stable-envs-gpu]
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        include:
+          - profile: native
+            install: .[dev]
+          - profile: mjwarp-dmc-ogbench
+            install: .[dev,mjwarp,dmcontrol,ogbench]
+          - profile: mjwarp-fetch
+            install: .[dev,mjwarp,robotics]
+          - profile: nvdiff
+            install: .[dev,rocket]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install certification profile
+        run: python -m pip install -e "${{ matrix.install }}"
+      - name: Verify CUDA runner
+        run: >-
+          python -c
+          "import torch; assert torch.cuda.is_available(), 'CUDA runner required';
+          print(torch.cuda.get_device_name(0))"
+      - name: Verify nvdiffrast provisioning
+        if: matrix.profile == 'nvdiff'
+        run: python -c "import nvdiffrast.torch"
+      - name: Run GPU certification
+        env:
+          MUJOCO_GL: egl
+          STABLE_ENVS_CI_PROFILE: ${{ matrix.profile }}
+        run: >-
+          python -m pytest
+          -m "certification and gpu"
+          --junitxml=certification-${{ matrix.profile }}.xml
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gpu-certification-${{ matrix.profile }}
+          path: certification-${{ matrix.profile }}.xml
+          if-no-files-found: error
