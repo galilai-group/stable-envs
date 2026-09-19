@@ -1,5 +1,0 @@
-tests/gpu/test_gfxdraw_fused.py::test_matches_per_primitive_path[0] SKIPPED [ 25%]
-tests/gpu/test_gfxdraw_fused.py::test_matches_per_primitive_path[1] SKIPPED [ 50%]
-tests/gpu/test_gfxdraw_fused.py::test_matches_per_primitive_path[2] SKIPPED [ 75%]
-tests/gpu/test_gfxdraw_fused.py::test_exact_integer_crossing_is_not_rounded_away SKIPPED [100%]
-============================== 4 skipped in 1.36s ==============================

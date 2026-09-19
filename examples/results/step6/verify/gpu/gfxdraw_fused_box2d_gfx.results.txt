@@ -1,5 +1,0 @@
-tests/gpu/test_gfxdraw_fused.py::test_matches_per_primitive_path[0] PASSED [ 25%]
-tests/gpu/test_gfxdraw_fused.py::test_matches_per_primitive_path[1] PASSED [ 50%]
-tests/gpu/test_gfxdraw_fused.py::test_matches_per_primitive_path[2] PASSED [ 75%]
-tests/gpu/test_gfxdraw_fused.py::test_exact_integer_crossing_is_not_rounded_away PASSED [100%]
-============================== 4 passed in 2.05s ===============================

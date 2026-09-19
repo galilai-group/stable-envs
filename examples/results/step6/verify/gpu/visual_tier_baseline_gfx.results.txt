@@ -1,7 +1,0 @@
-tests/gpu/test_conformance.py::test_visual_tier_matches_its_declared_fidelity[DMCCheetahRun] FAILED [ 33%]
-tests/gpu/test_conformance.py::test_visual_tier_matches_its_declared_fidelity[DMCHopperHop] FAILED [ 66%]
-tests/gpu/test_conformance.py::test_visual_tier_matches_its_declared_fidelity[DMCWalkerWalk] FAILED [100%]
-FAILED tests/gpu/test_conformance.py::test_visual_tier_matches_its_declared_fidelity[DMCCheetahRun]
-FAILED tests/gpu/test_conformance.py::test_visual_tier_matches_its_declared_fidelity[DMCHopperHop]
-FAILED tests/gpu/test_conformance.py::test_visual_tier_matches_its_declared_fidelity[DMCWalkerWalk]
-============== 3 failed, 1673 deselected, 1352 warnings in 6.95s ===============

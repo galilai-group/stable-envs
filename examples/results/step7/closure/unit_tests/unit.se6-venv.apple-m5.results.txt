@@ -1,3 +1,0 @@
-FAILED tests/unit/test_examples.py::test_every_argparse_script_can_print_its_own_help[robocasa_visual/render_mjwarp.py]
-FAILED tests/unit/test_repo_contracts.py::test_every_cited_scratch_path_resolves
-2 failed, 1035 passed, 9 skipped, 25920 warnings in 76.46s (0:01:16)

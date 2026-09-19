@@ -359,14 +359,18 @@ Step-9 behavioral oracle, byte-identical **on purpose**.
 
 ---
 
-## What this wave did not do
+## Follow-up `git rm` on `v0-draft` (after `332deb6`)
 
-- No `git rm`, no history rewrite, no `main` push, no tag.
-- No GIF→MP4 conversion (MetaWorld is the one proof that would pay; keep the GIF if anyone converts).
-- No change to `test_repo_contracts.py` exemptions.
-- Workstream F still owns moving `scratch/step9/packaging-ci/` into
-  `tests/packaging/` + `scripts/ci/`. Until that lands, those scripts stay
-  KEEP_MAIN on `main`.
+Classification above still stands. The product branch now drops the leave-behind
+classes; `step8-closure` keeps the bytes. No history rewrite.
+
+| class | what left `v0-draft` |
+|---|---|
+| RELEASE_ASSET | Menagerie `.obj`/`.stl` next to `scratch/backend3d/scenes/*.xml`; RoboCasa visual binaries; uncited `docs/assets/media/{MetaWorldAssembly,DMCWalkerWalk,PointmazeMediumNavigate,CarRacing}` |
+| ARCHIVE_TAG_ONLY | `examples/results/step6/{verify,texture-fidelity,gfxdraw,raster2d,tilemap,reacher-correctness,fetch-gpu,texture}` and cpu-3d remainder; raycast3d bulk minus `experiments/` + `bake_probe_branch.json`; `step7/closure/` and large frame banks; `decode/pre_*`; `STEP_09_AGENT_BRIEFS/` |
+| DELETE_DUPLICATE | `examples/results/storage/pre_final/`; `scratch/backend3d/scenes/flat/` meshes |
+
+KEEP_MAIN / KEEP_FIXTURE files that current tests `np.load` or `Path.read` were not removed.
 
 Helper: `python scripts/archaeology_sizes.py` reprints `du -sh` for the four
 trees and their children.

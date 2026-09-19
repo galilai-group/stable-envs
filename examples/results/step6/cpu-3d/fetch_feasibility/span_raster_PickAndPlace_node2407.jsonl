@@ -1,8 +1,0 @@
-{"mode":"full","cull":1,"ntri":31720,"states":16,"reps":5,"res":480,"ms_per_frame":4.275,"fps_1core":233.9,"ns_per_tri":134.8,"covered_px_per_frame":36588,"bbox_px_per_frame":500599,"chk":17}
-{"mode":"full","cull":1,"ntri":31720,"states":16,"reps":5,"res":480,"ms_per_frame":4.278,"fps_1core":233.7,"ns_per_tri":134.9,"covered_px_per_frame":36588,"bbox_px_per_frame":500599,"chk":17}
-{"mode":"nocull","cull":0,"ntri":31720,"states":16,"reps":5,"res":480,"ms_per_frame":6.792,"fps_1core":147.2,"ns_per_tri":214.1,"covered_px_per_frame":49109,"bbox_px_per_frame":941704,"chk":86}
-{"mode":"nocull","cull":0,"ntri":31720,"states":16,"reps":5,"res":480,"ms_per_frame":6.793,"fps_1core":147.2,"ns_per_tri":214.2,"covered_px_per_frame":49109,"bbox_px_per_frame":941704,"chk":86}
-{"mode":"setup","cull":1,"ntri":31720,"states":16,"reps":5,"res":480,"ms_per_frame":0.765,"fps_1core":1307.2,"ns_per_tri":24.1,"covered_px_per_frame":0,"bbox_px_per_frame":0,"chk":0}
-{"mode":"setup","cull":1,"ntri":31720,"states":16,"reps":5,"res":480,"ms_per_frame":0.765,"fps_1core":1307.0,"ns_per_tri":24.1,"covered_px_per_frame":0,"bbox_px_per_frame":0,"chk":0}
-{"mode":"bbox","cull":1,"ntri":31720,"states":16,"reps":5,"res":480,"ms_per_frame":3.194,"fps_1core":313.1,"ns_per_tri":100.7,"covered_px_per_frame":36588,"bbox_px_per_frame":500599,"chk":0}
-{"mode":"bbox","cull":1,"ntri":31720,"states":16,"reps":5,"res":480,"ms_per_frame":3.194,"fps_1core":313.1,"ns_per_tri":100.7,"covered_px_per_frame":36588,"bbox_px_per_frame":500599,"chk":0}

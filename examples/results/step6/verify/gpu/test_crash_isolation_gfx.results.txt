@@ -1,6 +1,0 @@
-tests/gpu/test_crash_isolation.py::test_the_resource_guard_is_attached_to_the_classes_the_driver_goes_through PASSED [ 20%]
-tests/gpu/test_crash_isolation.py::test_building_an_env_does_not_release_anything PASSED [ 40%]
-tests/gpu/test_crash_isolation.py::test_selftest_segfault_with_live_egl_contexts SKIPPED [ 60%]
-tests/gpu/test_crash_isolation.py::test_selftest_abort_with_live_egl_contexts SKIPPED [ 80%]
-tests/gpu/test_crash_isolation.py::test_selftest_releasing_a_real_egl_context_is_caught_as_a_failure SKIPPED [100%]
-=================== 2 passed, 3 skipped, 1 warning in 2.08s ====================
