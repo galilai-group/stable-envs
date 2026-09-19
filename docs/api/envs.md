@@ -1,13 +1,20 @@
 # `stable_envs.envs`
 
-The registered environments. The package auto-discovers its modules, so adding a file here is the whole
-registration step, and `stable_envs.envs.import_errors()` names any module that did not load — a missing
-optional reference package costs that family and not the package.
+The registered environments. The package auto-discovers its modules, so adding a file here is the whole registration step, and `snv.import_errors()` names any module that did not load — a missing optional reference package costs that family and not the package.
 
-Each module's docstring is where its measured constants live: the reference id, the state layout, and
-every value that was recovered by pixel-diffing rather than read off the reference's source. Those are
-reproduced below, one per family, without their class members. PushT is rendered in full because it is
-the worked example the [porting guide](../adding-an-env.md) follows.
+List what this interpreter actually imported with `snv.list_envs()` / `snv.spec(name)`; the narrative index is [Environments](../environments.md).
+
+Each module's docstring is where its measured constants live: the reference id, the state layout, and every value that was recovered by pixel-diffing rather than read off the reference's source. Those are reproduced below, one per family, without their class members. PushT is rendered in full because it is the worked example the [porting guide](../adding-an-env.md) follows.
+
+Step-9 module moves (old import paths still resolve as `sys.modules` aliases until Wave 3):
+
+| Step-8 path | now |
+|---|---|
+| `stable_envs.envs.swm_nav` / `simple_point_maze` | `stable_envs.envs.navigation` |
+| `stable_envs.envs.dmcontrol` (module) | `stable_envs.envs.dmcontrol` (package) |
+| `stable_envs.envs.ogbench` (module) | `stable_envs.envs.ogbench` (package: `maze` + `manipulation`) |
+| `stable_envs.envs.ogb_manip` | alias of `stable_envs.envs.ogbench.manipulation` |
+| `stable_envs.envs.craftax_full` | alias of `stable_envs.envs._craftax_full` |
 
 ## PushT
 
@@ -19,6 +26,10 @@ the worked example the [porting guide](../adding-an-env.md) follows.
     options:
       members: false
 
+::: stable_envs.envs.navigation
+    options:
+      members: false
+
 ::: stable_envs.envs.minigrid
     options:
       members: false
@@ -27,7 +38,19 @@ the worked example the [porting guide](../adding-an-env.md) follows.
     options:
       members: false
 
+::: stable_envs.envs.ogbench.maze
+    options:
+      members: false
+
+::: stable_envs.envs.ogbench.manipulation
+    options:
+      members: false
+
 ::: stable_envs.envs.dmcontrol
+    options:
+      members: false
+
+::: stable_envs.envs.fetch
     options:
       members: false
 
@@ -39,15 +62,15 @@ the worked example the [porting guide](../adding-an-env.md) follows.
     options:
       members: false
 
+::: stable_envs.envs.craftax_full
+    options:
+      members: false
+
+::: stable_envs.envs.rocket_landing
+    options:
+      members: false
+
 ::: stable_envs.envs.minihack
-    options:
-      members: false
-
-::: stable_envs.envs.simple_point_maze
-    options:
-      members: false
-
-::: stable_envs.envs.swm_nav
     options:
       members: false
 

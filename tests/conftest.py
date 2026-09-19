@@ -4,21 +4,25 @@
 were measured before they were declared. ``stable_envs/testing/`` is the library that supplies the
 measurements — public, importable, used by ``examples/`` and by env authors outside this repo — and it
 deliberately asserts nothing. The dependency runs one way: everything here imports from there.
+``stable_envs/testing/`` stays in the package (like ``numpy.testing``); it is not this directory.
 
     tests/
-      test_safety_net.py          the harness proving itself, CPU-only and dependency-free: a
-                                  generated module is crashed with a real SIGSEGV/SIGABRT in a
-                                  subprocess and the supervisor has to name it and finish the run.
-      unit/                       no GPU, no reference env, no checkpoint, ~seconds. Pure contracts:
-                                  style batching, dataset indexing, the policy/rollout API, the
-                                  fidelity and decoder declarations, the corrector's refusals, the
-                                  benchmark scripts' guards, and the repo's own citations and nav.
+      unit/                       family/unit contracts. No GPU, no reference env, no checkpoint.
+      integration/                several components together, including the CPU safety-net
+                                  (``test_safety_net.py``) and the SWM interop suite.
       gpu/                        the release gate, parameterised over the registry. Needs CUDA by
                                   design — the product is a GPU renderer, so a suite that passes on
                                   CPU-only CI proves nothing about it.
         _shared.py                the three conventions the GPU files kept getting wrong. Read it
                                   before adding a file here.
         conftest.py               puts every shared env back at its default appearance per test.
+      certification/              frozen Step-3/4/5/6/8 corpora, digests, declarations, provenance,
+                                  and the Gate-F matrix. CPU unless also under ``gpu/``.
+      fixtures/                   golden JSON the unit/certification readers assert against.
+
+Directory markers are applied below so ``pytest -m unit`` / ``-m integration`` /
+``-m "certification and not gpu"`` / ``-m "certification and gpu"`` select the matching
+bucket even when a file forgot ``pytestmark``. Existing per-file markers are kept.
 
 THE EMPTY-RUN GUARD, below, and why it is a hook rather than a test. Twice now this suite has been
 green while covering nothing: the DM Control family's 16 envs were absent from the suite interpreter
@@ -30,8 +34,45 @@ one line among a dozen other import notes. ``test_conformance.py`` closed that a
 from __future__ import annotations
 
 import os
+from pathlib import Path
 
 import pytest
+
+#: GPU files that are also the certification oracle (parity / reproducibility / fast==slow).
+_GPU_CERTIFICATION = {
+    "test_conformance.py",
+    "test_reproducibility.py",
+    "test_fast_paths.py",
+}
+
+
+def pytest_collection_modifyitems(config, items):
+    """Stamp directory markers on every collected item.
+
+    A file that already has ``pytestmark = pytest.mark.unit`` (or gpu, …) keeps that mark;
+    adding the same mark again is a no-op for ``-m`` selection.
+    """
+    del config
+    for item in items:
+        path = Path(getattr(item, "path", item.fspath))
+        parts = path.parts
+        try:
+            tests_i = parts.index("tests")
+        except ValueError:
+            continue
+        if tests_i + 1 >= len(parts):
+            continue
+        bucket = parts[tests_i + 1]
+        if bucket == "unit":
+            item.add_marker(pytest.mark.unit)
+        elif bucket == "integration":
+            item.add_marker(pytest.mark.integration)
+        elif bucket == "certification":
+            item.add_marker(pytest.mark.certification)
+        elif bucket == "gpu":
+            item.add_marker(pytest.mark.gpu)
+            if path.name in _GPU_CERTIFICATION:
+                item.add_marker(pytest.mark.certification)
 
 #: Set to anything to allow a run in which nothing passed or failed. For a deliberately narrow
 #: selection on a machine that cannot service it — ``pytest tests/gpu -k RoboCasa`` in an interpreter

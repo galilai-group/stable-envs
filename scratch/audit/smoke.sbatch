@@ -13,7 +13,7 @@ set -uo pipefail
 cd /mnt/vast/home/randall.balestriero/code/stable-envs
 export PYTHONPATH=. MUJOCO_GL=egl SDL_VIDEODRIVER=dummy
 PY=/mnt/vast/home/randall.balestriero/miniconda3/envs/test/bin/python
-"$PY" -m pytest tests/unit tests/test_safety_net.py -q --no-header
+"$PY" -m pytest tests/unit tests/certification tests/integration/test_safety_net.py -q --no-header
 echo "unit rc=$?"
 "$PY" -m pytest tests/gpu/test_conformance.py -v -rs --no-header \
     -k "parity_floors or required_env_modules or (render_parity and (TwoRoom or Piecewise or MujocoPusher or MujocoReacher or PushT))"

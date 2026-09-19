@@ -103,14 +103,14 @@ from stable_envs.render.raster2d import render, render_triton, render_torch
 img = render(scene, out_size=96, supersample=1, backend="auto")   # Triton, torch fallback
 ```
 
-`backend="auto"` prefers Triton and falls back to torch when it is unavailable. `StableEnv.render` also
+`backend="auto"` prefers Triton and falls back to torch when it is unavailable. `Env.render` also
 accepts an `out=` tensor, which is what the benchmarks use: rendering into a pre-allocated
 `(B,H,W,3)` uint8 buffer removes the allocation from the timed region, and in a training loop it removes
 it from the steady state.
 
 ## What `render()` costs beyond the kernel
 
-`StableEnv.render` does two things: build a `Scene2D` from the states, then rasterize it. Those halves
+`Env.render` does two things: build a `Scene2D` from the states, then rasterize it. Those halves
 have different cost models and the split matters, because at small batch the total is dominated by the
 half that is not the kernel. `scene()` is a few dozen small torch ops issued from Python, so its cost is
 launch-overhead-bound and nearly independent of the batch, while the rasterizer is one launch that scales

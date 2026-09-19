@@ -173,8 +173,7 @@ workstreams:
   branch: step9/envs-fetch
   worktree: /Users/samib/stable-envs-step9-envs-fetch
   owner: opus
-  status: 'DELIVERED at 0ef8a97, integration (312a631) merged in at 86df7ee by the coordinator; independent
-    review IN FLIGHT (sonnet, ruling 8: mechanical env-family review)'
+  status: MERGED into step9/integration after independent APPROVE
   files_owned: stable_envs/envs/fetch.py, tests
   ids_affected: 12 Fetch ids
   baseline_sha: b3f3a81
@@ -182,12 +181,13 @@ workstreams:
   oracle_diff: 'author: 12 cells, 41 keys identical incl. baked plates and taxonomy 33/12/12/15/51 (CPU).
     Frames CUDA-only for some paths, owed to the single post-Wave-1 GPU oracle. Record predates the integration
     merge; the reviewer re-runs it at 86df7ee.'
+  merge_sha: 99f018e
+  review: review_c.md APPROVE
 - workstream: D_envs_ogbench
   branch: step9/envs-ogbench
   worktree: /Users/samib/stable-envs-step9-envs-ogbench
   owner: opus
-  status: DELIVERED at 7f90a06, integration (312a631) merged in at e2a6aed by the coordinator; independent
-    review IN FLIGHT (sonnet)
+  status: MERGED into step9/integration after independent APPROVE
   files_owned: stable_envs/envs/ogbench/ (from ogbench.py + ogb_manip.py), tests
   ids_affected: OGBMaze (17 maze ids + PointmazeLarge*), OGBCube, OGBScene
   baseline_sha: b3f3a81
@@ -196,13 +196,13 @@ workstreams:
     identical incl. registry module; 58/58 Step-8 module-level names resolve. OGBCube/OGBScene frames
     CUDA-only, owed to the post-Wave-1 GPU oracle. Record predates the integration merge; the reviewer
     re-runs it at e2a6aed.'
+  merge_sha: 404e348
+  review: review_d.md APPROVE
 - workstream: E_envs_craftax_rocket
   branch: step9/envs-craftax-rocket
   worktree: /Users/samib/stable-envs-step9-envs-craftax-rocket
   owner: opus
-  status: 'DELIVERED at 4f7350d, integration (312a631) merged in at 5547270 by the coordinator; independent
-    review IN FLIGHT (sonnet). Highest-risk oracle re-run of Wave 1: Craftax renders through the 2-D paths
-    G just consolidated.'
+  status: MERGED into step9/integration after independent APPROVE
   files_owned: stable_envs/envs/craftax.py (+craftax_full.py, _craftax_full_tex.py), rocket_landing.py,
     tests
   ids_affected: CraftaxClassic, CraftaxFull, PFRocketLanding
@@ -211,6 +211,8 @@ workstreams:
   oracle_diff: 'author: Craftax frames identical on all three frozen corpora at both sizes and equal to
     the frozen meta digests; Rocket host-side chain identical, Rocket frames CUDA-only and owed. Record
     predates the integration merge; the reviewer re-runs it at 5547270.'
+  merge_sha: f612a45
+  review: review_e.md APPROVE
 - workstream: F_envs_mujoco
   branch: step9/envs-mujoco
   worktree: /Users/samib/stable-envs-step9-envs-mujoco
@@ -248,6 +250,72 @@ workstreams:
     Positive evidence is a static read-through (eleven removed lines argued to change no number, no upload
     and no cache key) plus 28 lifetime tests. Establishing the oracle requires scratch/step9/render-mjwarp-nvdiff/gpu_oracle.sbatch,
     folded into the single post-Wave-1 GPU job.
+- workstream: M_docs_examples
+  branch: step9/docs-examples
+  owner: grok
+  status: MERGED into step9/integration after independent APPROVE
+  files_owned: README.md, docs/, examples/{render,batched_env,functional_dynamics,worldmodel}.py
+  head_sha: 1f23f51
+  review: review_m.md APPROVE; review artifact commit cb2a59a
+  merge_sha: 5ccc2af
+  tests: 12 example tests passed; 2 nav checks passed; four --help and CPU smokes passed
+  api_diff: OSS docs and examples now use class-first snv API, num_envs, State, transition/unroll, lifecycle
+    and registry; native World(env=...) documented as unsupported by installed SWM
+  oracle_diff: documentation-only; no behavior or Step-8 oracle rows changed
+- workstream: J_interop
+  branch: step9/interop
+  owner: sol
+  status: MERGED into step9/integration after independent APPROVE
+  files_owned: stable_envs/interop.py, tests/integration/test_worldmodel.py
+  head_sha: c9e94dc
+  review: review_j.md APPROVE; review artifact commit 2fa993e
+  merge_sha: 4f04803
+  tests: 42/42 frozen IDs match; SWM integration 5 passed/1 honest upstream skip; matrix 5 passed; dependency/registry
+    71 passed/1 environment skip; VariationMap 81 passed/8 optional-runtime skips
+  api_diff: public interop facade consolidated; swap_renderer and registered-gym World paths preserved;
+    native World(env=...) unsupported by installed stable_worldmodel and documented honestly
+  oracle_diff: all 42 frozen SWM mappings unchanged; 40 pixel and 2 symbolic
+- workstream: N_benchmarks
+  branch: step9/benchmarks
+  owner: grok
+  status: MERGED into step9/integration after independent APPROVE
+  files_owned: benchmarks/, tests/unit/test_benchmark_surface.py
+  head_sha: f170cd0
+  review: review_n.md APPROVE after re-review; review commit 0a7820d
+  merge_sha: 173d5ff
+  tests: 23 benchmark surface tests passed; 25 historical benchmark tests passed; PushT/CartPole and pipeline
+    CPU smokes passed
+  performance_diff: local CPU harness evidence only, schema stable-envs-benchmark/v1; no certification
+    or cross-machine claim; GPU throughput not measured
+  api_diff: new OSS performance CLIs use class-first public snv API and optional dynamic aliases; no library
+    API changes
+  oracle_diff: none; benchmarks are separated from correctness and certification
+- workstream: L_packaging_ci
+  branch: step9/packaging-ci
+  owner: grok
+  status: MERGED into step9/integration after independent APPROVE
+  files_owned: pyproject.toml, .github/workflows/, .pre-commit-config.yaml, mkdocs.yaml
+  head_sha: c78c433
+  review: review_l.md APPROVE after re-review; review commit e2c673b
+  merge_sha: f4ef912
+  tests: clean CI profile 403 passed/88 skipped; packaging 11 passed on Python 3.10 and 3.12; wheel/sdist/Twine/archive
+    audit/editable install/pre-commit/docs build passed
+  api_diff: PEP 639 metadata, ordered authors Randall Balestriero and Sami BuGhanem, core/family extras,
+    CI/docs/release workflows; no product API changes
+  oracle_diff: none; packaging-only
+- workstream: K_testing
+  branch: step9/testing
+  owner: coordinator
+  status: MERGED into step9/integration after independent APPROVE
+  files_owned: tests/ layout, markers, tests/certification, tests/fixtures, conftest
+  head_sha: daea98c
+  review: review_k.md APPROVE; review artifact commit f95a6cf; trailer-free rewrite of 4bbcc56 (identical
+    tree 8b181f8)
+  merge_sha: 491b1c1
+  tests: prescribed suite 1721 passed / 279 skipped / 1 pre-existing safety-net timeout; collect 2243;
+    -m unit 1836; -m certification 285
+  api_diff: stable_envs.testing remains public measurement library; rollout.py stays; no product API change
+  oracle_diff: none; layout only
 decisions:
 - date: '2026-09-17'
   by: coordinator
@@ -321,6 +389,17 @@ decisions:
     and import clean (registry 81 classes on each). Each reviewer is instructed to re-run the CPU oracle
     at the merged SHA rather than read the committed record.'
   by: coordinator (opus)
+- date: '2026-09-19'
+  by: coordinator
+  topic: Workstream K public testing library
+  ruling: stable_envs/testing/ stays the public measurement library (numpy.testing analogue). The brief's
+    move applies to this repo's certification assertions (tests/certification) and golden JSON (tests/fixtures),
+    not the library.
+- date: '2026-09-19'
+  by: coordinator
+  topic: rollout.py stays in the package
+  ruling: stable_envs/rollout.py remains snv.sample / BasePolicy. The Wave-0 prohibition is no env.rollout(policy).
+    Moving the module is not required for v0.
 escalations: []
 incident_log:
 - date: '2026-09-17'
@@ -385,6 +464,9 @@ incident_log:
     has the same keying and was already fixed for navigation by A; it needs no craftax_full entry (neither
     spelling was ever in it, so both route to raster unchanged -- verified over all 81 registered classes,
     shard tally dmc 18 / ogb 25 / swm 6 / raster 32 on both trees).'
+- date: '2026-09-19'
+  item: Workstream K merged at 491b1c1 after APPROVE. Cursor attribution trailers stripped from the four
+    author commits before merge (trees unchanged).
 non_42_families_note: "carracing, crafter, griddly, highway, jumanji, lunarlander, maze2d, metaworld,\
   \ minigrid, minihack, mujoco_locomotion, overcooked, pgx, procgen, robocasa, sokoban, humanoidbench\
   \ are outside the 42-id oracle (plan \xA717 of Step 8); Step 9 migrates them mechanically under Workstream\

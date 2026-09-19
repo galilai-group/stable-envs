@@ -1,7 +1,9 @@
 # Examples
 
-Fifteen scripts. Five are the training-facing surface — states in the dataset, frames in the forward
-pass — nine are the measurement harnesses, driven from `stable_envs.REGISTRY` so a newly registered env
+Fifteen measurement and training scripts, plus four public-API examples (`render.py`,
+`batched_env.py`, `functional_dynamics.py`, `worldmodel.py`) that use only the Step-9 `snv` surface.
+Five of the older scripts are the training-facing surface — states in the dataset, frames in the forward
+pass — nine are the measurement harnesses, driven from the registry so a newly registered env
 is covered without editing them, and one draws the media.
 
 Five subdirectories carry longer studies rather than scripts:
@@ -9,13 +11,18 @@ Five subdirectories carry longer studies rather than scripts:
 and reports the paired test, [`downstream_step5/`](downstream_step5/) generalises that swap into the
 Step 5 semantic gate — PushT with LeWM and Reacher with DINO-WM, both against the frozen Step 2
 equivalence rule and both with a blank-frame control, [`swm_compat/`](swm_compat/) runs a real
-`stable_worldmodel` workflow on a stable-envs renderer through `stable_envs.compat.worldmodel`,
+`stable_worldmodel` workflow on a stable-envs renderer through `stable_envs.interop`
+(the Step-8 import `stable_envs.compat.worldmodel` still resolves to the same objects),
 [`robocasa_visual/`](robocasa_visual/) puts the official RoboCasa renderer and the batched one side
 by side so the [visual tier](../docs/concepts/fidelity-tiers.md)'s quality can be judged rather than
 asserted, and [`paper/`](paper/) builds the write-up and its figures.
 
 | script | what it produces |
 |---|---|
+| [`render.py`](render.py) | public-API render: `snv.PushT`, `reset`, `render(state)`, optional save. CPU by default. |
+| [`batched_env.py`](batched_env.py) | `num_envs`, specs, short last batch, context manager / `close()`. |
+| [`functional_dynamics.py`](functional_dynamics.py) | stateful `step` vs pure `transition` / `unroll`; renderer-only refusal. |
+| [`worldmodel.py`](worldmodel.py) | frozen `stable_envs.interop` contract; native `swm.World(env=…)` marked not shipped. |
 | [`train_from_states.py`](train_from_states.py) | a real training loop: state dataset, `DataLoader`, `env.set_state(batch).render()` in the forward pass. Throughput, the render's share of a step, and convergence as held-out R². |
 | [`ddp_train_from_states.py`](ddp_train_from_states.py) | the same loop under `DistributedDataParallel`, launched with `torchrun`: per-rank throughput, render share and peak memory, and the three things that differ from a stored-image pipeline. `results/ddp_train_from_states.json`. |
 | [`rollout_with_policy.py`](rollout_with_policy.py) | `env.sample(steps=100, batch=256, policy=...)` on PushT's native GPU simulator with `RandomPolicy` and a `ScriptedPolicy`: the returned dict, the batch-scaling table, the measured divergence from pymunk, and the storage comparison. Also prints, verbatim, what `sample` raises on the envs that ship no simulator. |
@@ -33,6 +40,11 @@ asserted, and [`paper/`](paper/) builds the write-up and its figures.
 | [`gallery.py`](gallery.py) | per env: a state grid, a CPU-vs-GPU side-by-side H.264 video and GIF on identical states, a per-frame difference panel, and a variation showcase. |
 
 ```bash
+python examples/render.py --help
+python examples/batched_env.py --help
+python examples/functional_dynamics.py --help
+python examples/worldmodel.py --help
+
 pip install -e ".[pusht,hf]"   # gym_pusht for the rollout, datasets for the HF round trip
 export PYTHONPATH=.            # only if the package itself is not installed
 export SDL_VIDEODRIVER=dummy   # gym_pusht imports pygame; only rollout_with_policy needs it

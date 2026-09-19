@@ -1,0 +1,31 @@
+default_language_version:
+  python: python3
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-ast
+      - id: check-case-conflict
+      - id: check-json
+        exclude: ^scratch/census/census_.*\.json$
+      - id: check-merge-conflict
+      - id: check-toml
+      - id: check-yaml
+      - id: debug-statements
+      - id: detect-private-key
+      - id: mixed-line-ending
+      - id: check-added-large-files
+        args: [--maxkb=1000]
+        exclude: ^(docs/assets/media/|examples/results/|examples/paper/)
+
+  # Step 9 deliberately does not reformat the research history. This safety
+  # ruleset catches syntax errors and undefined names across maintained Python
+  # without creating a repository-wide style migration.
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.0
+    hooks:
+      - id: ruff
+        args: [--no-fix]
+        types_or: [python, pyi]
+        files: ^(stable_envs/|tests/|scratch/step9/packaging-ci/)

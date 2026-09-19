@@ -80,7 +80,7 @@ done
 echo "=== the new unit tests on the cuda host"
 $PY -m pytest -q -p no:cacheprovider tests/unit/test_envs_dmcontrol.py \
     tests/unit/test_dmcontrol_tendon.py tests/unit/test_dmcontrol_episode_quat.py \
-    tests/unit/test_cpu3d.py tests/unit/test_declarations.py \
+    tests/unit/test_cpu3d.py tests/certification/test_declarations.py \
     > "$OUT/pytest_unit_dmcontrol.txt" 2>&1
 echo "exit $? :: $(tail -1 "$OUT/pytest_unit_dmcontrol.txt")"
 

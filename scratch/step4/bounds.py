@@ -15,7 +15,7 @@ So every bound is read out of the source that declares it, at run time:
     scratch/certification.json          the representation tripwire, frozen by Step 2
 
 Read by ``ast``, not by import: ``tests/gpu/*`` skips at module level without a CUDA device, and the
-certifier is meant to run anywhere. ``tests/unit/test_step4.py`` asserts that what comes out of here
+certifier is meant to run anywhere. ``tests/certification/test_step4.py`` asserts that what comes out of here
 still matches what those files say, so an extraction that goes blind is a test failure rather than a
 quietly missing bound.
 """

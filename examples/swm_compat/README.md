@@ -1,10 +1,10 @@
 # Running a `stable_worldmodel` workflow on the stable-envs renderer
 
-`stable_envs.compat.worldmodel` exists because a stable-envs env is a **batched renderer, not a
-`gym.Env`**: no `reset`, a `step` that takes `(B, action_dim)`, and a `render` that is a pure function
-of a `(B, state_dim)` stack. `stable_worldmodel` drives environments through `swm.World`, which builds
-a plain Python list of single envs (`EnvPool.__init__` is `[fn() for fn in env_fns]`) and loops over
-them one at a time. Neither shape is wrong; something has to translate.
+`stable_envs.interop` exists because a stable-envs env is a **batched renderer with an optional
+simulator**, while `stable_worldmodel` drives environments through `swm.World`, which builds
+a plain Python list of single `gym.Env` objects. Native `swm.World(env=snv.PushT(...))` is **not**
+a public API (Workstream J has not merged it). The frozen adapters are `StableEnvGym`,
+`BatchedEnvPool` and `swap_renderer`.
 
 This directory is the evidence that the translation works, not a demonstration that it compiles.
 
@@ -126,5 +126,5 @@ Two entries are worth reading before trusting a name match:
 |---|---|
 | `run_swm_workflow.py` | the four arms, the mapping table and the scaling sweep |
 | `results/swm_workflow.json` | everything above, as measured |
-| `../../stable_envs/compat/worldmodel.py` | `StableEnvGym`, `BatchedEnvPool`, `swap_renderer`, `VARIATION_MAPS` |
+| `../../stable_envs/interop.py` | public face: `StableEnvGym`, `BatchedEnvPool`, `swap_renderer`, `VARIATION_MAPS` |
 | `../../docs/research/swm_coverage.md` | which swm envs we render, and the verdicts on the ones we do not |
