@@ -25,7 +25,9 @@ run_section () {
   local label="$1" script="$2"
   local log="$OUT/${label}_${SLURM_JOB_ID:-local}.log"
   echo "=== $label: $script ==="
-  if SE9_WS="$WS" bash -e "$script" >"$log" 2>&1; then
+  # Do not use bash -e: the section scripts count their own failures and must
+  # finish later arms after an earlier oracle miss (missing optional extra).
+  if SE9_WS="$WS" bash "$script" >"$log" 2>&1; then
     echo "$label: PASS"
   else
     local rc=$?

@@ -87,16 +87,16 @@ arm () {
       --python "$py" --baseline-sha "$BASE_SHA" --n-states 64 --cycles 5 \
       --cells "$cells" --tag "${label}_${TAG}" > "$OUT/oracle_${label}_${TAG}.log" 2>&1
   local rc=$?
-  echo "  oracle rc=$rc :: $(grep -E '^ORACLE:' "$OUT/oracle_${label}_${TAG}.log")"
+  echo "  oracle rc=$rc :: $(grep -E '^ORACLE:' "$OUT/oracle_${label}_${TAG}.log" || true)"
   [ "$rc" -eq 0 ] || fail "$label frame oracle failed"
-  grep -E '"identical"|"lifetime_ok"|"cells_ok"' "$OUT/oracle_${label}_${TAG}.log"
+  grep -E '"identical"|"lifetime_ok"|"cells_ok"' "$OUT/oracle_${label}_${TAG}.log" || true
 
   echo "  -- 2/3 fresh-process reproducibility: the SAME tree, twice"
   PYTHONPATH="$WS" "$py" scratch/step9/render-mjwarp-nvdiff/oracle.py \
       --python "$py" --arms head,head --n-states 64 --cycles 2 \
       --cells "$cells" --tag "${label}_fresh_${TAG}" > "$OUT/fresh_${label}_${TAG}.log" 2>&1
   rc=$?
-  echo "  fresh rc=$rc :: $(grep -E '^ORACLE:' "$OUT/fresh_${label}_${TAG}.log")"
+  echo "  fresh rc=$rc :: $(grep -E '^ORACLE:' "$OUT/fresh_${label}_${TAG}.log" || true)"
   [ "$rc" -eq 0 ] || fail "$label fresh-process oracle failed"
 
   echo "  -- 3/3 paired throughput, B=1 and B=4096 (stepping down on OOM), this card"
@@ -104,9 +104,9 @@ arm () {
       --python "$py" --baseline-sha "$BASE_SHA" --rounds 5 --reps 5 \
       --cells "$cells" --tag "${label}_${TAG}" > "$OUT/bench_${label}_${TAG}.log" 2>&1
   rc=$?
-  echo "  bench rc=$rc :: $(grep -E 'worst ratio' "$OUT/bench_${label}_${TAG}.log")"
+  echo "  bench rc=$rc :: $(grep -E 'worst ratio' "$OUT/bench_${label}_${TAG}.log" || true)"
   [ "$rc" -eq 0 ] || fail "$label benchmark failed or exceeded the 1.10 bar"
-  grep -E 'ratio [0-9]' "$OUT/bench_${label}_${TAG}.log"
+  grep -E 'ratio [0-9]' "$OUT/bench_${label}_${TAG}.log" || true
 }
 
 # The four arms. The cell lists are disjoint because no venv can build another's cells; a cell whose
@@ -130,7 +130,7 @@ for spec in "vis311:se-vis311:mjwarp" "vis311:se-vis311:rendernet" "rocket:se7-r
   PYTHONPATH="$WS" "$py" scratch/step9/render-mjwarp-nvdiff/resource_probe.py \
       --backend "$backend" >"$log" 2>&1
   rc=$?
-  echo "  $label/$backend rc=$rc :: $(grep -E '^RESOURCE_PROBE:' "$log")"
+  echo "  $label/$backend rc=$rc :: $(grep -E '^RESOURCE_PROBE:' "$log" || true)"
   [ "$rc" -eq 0 ] || fail "$label direct $backend resource probe failed"
 done
 
@@ -146,12 +146,12 @@ for v in vis311:se-vis311 ogb:se7-ogb rocket:se7-rocket fetch:se-s3b-fetch311; d
       tests/gpu/test_fast_paths.py tests/gpu/test_rendernet.py \
       > "$OUT/gpu_tests_${label}_${TAG}.log" 2>&1
   rc=$?
-  echo "  $label rc=$rc :: $(grep -E '[0-9]+ (passed|failed|error)' "$OUT/gpu_tests_${label}_${TAG}.log" | grep -v 'Exception ignored')"
+  echo "  $label rc=$rc :: $(grep -E '[0-9]+ (passed|failed|error)' "$OUT/gpu_tests_${label}_${TAG}.log" | grep -v 'Exception ignored' || true)"
   [ "$rc" -eq 0 ] || fail "$label GPU tests failed (rc=$rc; rc=5 means no coverage)"
   PYTHONPATH="$WS" "$py" -m pytest -q -p no:cacheprovider tests/unit/test_render_resources.py \
       > "$OUT/unit_resources_${label}_${TAG}.log" 2>&1
   rc=$?
-  echo "  $label unit rc=$rc :: $(grep -E '[0-9]+ (passed|failed|error)' "$OUT/unit_resources_${label}_${TAG}.log")"
+  echo "  $label unit rc=$rc :: $(grep -E '[0-9]+ (passed|failed|error)' "$OUT/unit_resources_${label}_${TAG}.log" || true)"
   [ "$rc" -eq 0 ] || fail "$label resource unit tests failed (rc=$rc)"
 done
 

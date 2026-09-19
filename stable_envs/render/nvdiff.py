@@ -881,8 +881,8 @@ class Scene(_resources.Closeable):
 
     def clip(self, xpos, xmat, view, proj):
         """``(B, V, 4)`` clip-space vertices, ``(B, V, 3)`` world normals and world positions."""
-        self._check_open("clip")
         import torch
+        self._check_open("clip")
         B, G = xpos.shape[0], self.G
         M = torch.zeros(B, G, 4, 4, device=xpos.device, dtype=xpos.dtype)
         M[:, :, :3, :3] = xmat
@@ -1401,6 +1401,7 @@ class BatchRenderer(_resources.Closeable):
         rebuilt per call by every caller in this repo, and CPython reuses the id of a freed object, so
         an id-keyed cache is both always-miss and occasionally wrong.
         """
+        self._check_open("_ray_dirs")
         import torch
         mat = np.asarray(cam.mat, np.float64).reshape(-1, 3, 3)
         key = (int(R), mat.tobytes(), float(cam.fovy))
