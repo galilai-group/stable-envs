@@ -67,7 +67,7 @@ def sample_inputs(env, n: int):
 
 
 def rollout_digests(env, n: int) -> dict:
-    """``env.sample(seed=)`` digests, for the envs that ship a batched simulator.
+    """Seeded private-rollout digests for envs that ship batched dynamics.
 
     A rollout is the one API here that consumes randomness at every step rather than once, so it is
     where a seed leaks: an unseeded global generator, a policy that reseeds on ``set_env`` but not on
@@ -78,7 +78,9 @@ def rollout_digests(env, n: int) -> dict:
 
     if not has_dynamics(env):
         return {}
-    tr = env.sample(steps=ROLLOUT_STEPS, batch=n, seed=ROLLOUT_SEED)
+    from ._rollout import sample
+
+    tr = sample(env, steps=ROLLOUT_STEPS, batch=n, seed=ROLLOUT_SEED)
     out = {"rollout_states_sha": _digest(tr["states"].detach().cpu().numpy())}
     if tr.get("actions") is not None:
         out["rollout_actions_sha"] = _digest(tr["actions"].detach().cpu().numpy())

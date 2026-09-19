@@ -69,17 +69,15 @@ def test_dynamic_version_reads_about() -> None:
     assert project["tool"]["setuptools"]["dynamic"]["version"]["attr"] == ("stable_envs.__about__.__version__")
 
 
-def test_mkdocs_yaml_is_canonical_with_yml_compat() -> None:
+def test_mkdocs_yaml_is_canonical() -> None:
     canonical = ROOT / "mkdocs.yaml"
-    legacy = ROOT / "mkdocs.yml"
     assert canonical.is_file()
     cfg = yaml.safe_load(canonical.read_text())
     assert cfg["site_name"] == "stable-envs"
     assert cfg["site_url"] == "https://galilai-group.github.io/stable-envs/"
     assert cfg["theme"]["name"] == "material"
     assert "nav" in cfg
-    assert legacy.exists()
-    assert legacy.resolve() == canonical.resolve()
+    assert not (ROOT / "mkdocs.yml").exists()
 
 
 def test_workflows_exist_and_default_to_read_permissions() -> None:

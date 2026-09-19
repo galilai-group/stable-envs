@@ -829,17 +829,6 @@ class Env:
             style = current.values
         return StyleTensor.from_space(self.variation_space, B, device=self.device, values=style, overrides=variation)
 
-    def sample(self, steps: int = 100, batch: int | None = None, policy=None, **kw) -> dict:
-        """``batch`` trajectories of ``steps`` steps under ``policy``. See ``stable_envs.rollout``.
-
-        A convenience for when no state corpus exists yet, and available only on the minority of envs
-        that ship ``step``. If states already exist, feed them to the renderer from your own loader —
-        ``env.set_state(batch).render()`` — which works on the whole registry.
-        """
-        from .rollout import sample as _sample
-
-        return _sample(self, steps=steps, batch=batch, policy=policy, **kw)
-
     def variation_values(self) -> dict:
         return self.variation_space.value
 

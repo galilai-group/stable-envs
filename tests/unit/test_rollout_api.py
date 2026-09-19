@@ -25,7 +25,7 @@ import pytest
 
 torch = pytest.importorskip("torch")
 
-from stable_envs.rollout import BasePolicy, RandomPolicy, ScriptedPolicy, sample
+from stable_envs.testing._rollout import BasePolicy, RandomPolicy, ScriptedPolicy, sample
 
 
 class RenderOnlyEnv:
@@ -97,9 +97,7 @@ def test_an_env_with_no_simulator_says_so_and_points_at_the_alternative():
         sample(RenderOnlyEnv(), steps=2)
     msg = str(e.value)
     assert "RenderOnlyEnv" in msg
-    assert "StateDataset" in msg and "render_states" in msg, (
-        f"the refusal must name what to do instead — supply states you already have: {msg}"
-    )
+    assert "states you already have" in msg, f"the refusal must name what to do instead: {msg}"
 
 
 def test_a_batch_that_is_not_the_env_s_batch_is_refused_at_the_top():
@@ -308,12 +306,8 @@ def test_a_policy_gets_set_env_and_reset_before_the_first_action():
     assert calls.count("action") == 2
 
 
-def test_an_env_level_sample_is_the_module_level_one():
-    """``env.sample(...)`` is the ergonomic entry point and must not be a second implementation."""
-    from stable_envs.env import Env as StableEnv
+def test_env_does_not_offer_a_policy_sample_shorthand():
+    """Policy rollouts are not an environment API. Use ``step`` / ``unroll`` or the private helper."""
+    from stable_envs.env import Env
 
-    assert "sample" in StableEnv.__dict__, "StableEnv no longer offers the shorthand"
-    env = IntegratorEnv(num_envs=4)
-    direct = sample(env, steps=3, seed=5)
-    viaenv = StableEnv.sample(env, steps=3, seed=5)
-    assert torch.equal(direct["states"], viaenv["states"])
+    assert "sample" not in Env.__dict__

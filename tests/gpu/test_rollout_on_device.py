@@ -1,4 +1,4 @@
-"""``env.sample(...)`` against the envs that really ship a batched GPU simulator.
+"""Private ``testing._rollout.sample`` against the envs that really ship a batched GPU simulator.
 
 ``tests/unit/test_rollout_api.py`` pins the contract on an integrator whose trajectory is known in
 closed form — shapes, the actions/states correspondence, the seeding, the refusals. What it cannot
@@ -32,7 +32,7 @@ if not torch.cuda.is_available():
 from _shared import family_params, make_or_skip, resolve_family
 
 import stable_envs as se
-from stable_envs.rollout import RandomPolicy, ScriptedPolicy
+from stable_envs.testing._rollout import RandomPolicy, ScriptedPolicy, sample
 
 N, STEPS, SEED = 4, 4, 20260812
 
@@ -55,7 +55,7 @@ def test_a_rollout_has_the_documented_shape_and_its_actions_account_for_its_stat
     """
     resolve_family(name, family="stepping envs", modules=STEP_MODULES, subject="the batched-simulator rollout")
     env = make_or_skip(name, num_envs=N, device="cuda")
-    tr = env.sample(steps=STEPS, batch=N, seed=SEED)
+    tr = sample(env, steps=STEPS, batch=N, seed=SEED)
 
     assert tr["states"].shape == (N, STEPS + 1, env.state_dim)
     assert tr["states"].device.type == "cuda", "the trajectory came back on the host"
@@ -79,11 +79,11 @@ def test_the_same_seed_gives_the_same_trajectory_and_a_different_one_does_not(na
     """
     resolve_family(name, family="stepping envs", modules=STEP_MODULES, subject="seeded rollouts")
     env = make_or_skip(name, num_envs=N, device="cuda")
-    a = env.sample(steps=STEPS, batch=N, seed=SEED)["states"].clone()
-    b = env.sample(steps=STEPS, batch=N, seed=SEED)["states"]
+    a = sample(env, steps=STEPS, batch=N, seed=SEED)["states"].clone()
+    b = sample(env, steps=STEPS, batch=N, seed=SEED)["states"]
     assert torch.equal(a, b), f"{name}: the same seed produced two different trajectories"
 
-    c = env.sample(steps=STEPS, batch=N, seed=SEED + 1)["states"]
+    c = sample(env, steps=STEPS, batch=N, seed=SEED + 1)["states"]
     if torch.equal(a, c):
         # Not automatically a defect: an env whose reset distribution is a single point and whose
         # actions do not move it would legitimately agree. Say which, rather than failing blind.
@@ -105,7 +105,7 @@ def test_rendered_frames_are_exactly_the_renders_of_the_states_beside_them(name)
     """
     resolve_family(name, family="stepping envs", modules=STEP_MODULES, subject="rendered rollouts")
     env = make_or_skip(name, num_envs=N, device="cuda")
-    tr = env.sample(steps=STEPS, batch=N, seed=SEED, render=True)
+    tr = sample(env, steps=STEPS, batch=N, seed=SEED, render=True)
     frames, states, style = tr["frames"], tr["states"], tr["style"]
 
     probe = env.render(states[:, 0], style=style)
@@ -137,7 +137,7 @@ def test_a_scripted_policy_drives_the_real_simulator(name):
     lo, hi = float(getattr(env, "action_low", -1.0)), float(getattr(env, "action_high", 1.0))
     want = [torch.full((N, adim), lo + (hi - lo) * (0.1 + 0.2 * t), device="cuda") for t in range(STEPS)]
 
-    tr = env.sample(steps=STEPS, batch=N, seed=SEED, policy=ScriptedPolicy(lambda s, t: want[t]))
+    tr = sample(env, steps=STEPS, batch=N, seed=SEED, policy=ScriptedPolicy(lambda s, t: want[t]))
     assert tr["actions"] is not None, f"{name}: a scripted rollout returned no actions"
     for t in range(STEPS):
         assert torch.allclose(tr["actions"][:, t], want[t], atol=1e-6), (
@@ -182,9 +182,9 @@ def test_an_env_without_a_simulator_refuses_and_says_what_to_do_instead():
     )
     env = make_or_skip(without[0], num_envs=2, device="cuda")
     with pytest.raises(NotImplementedError) as e:
-        env.sample(steps=2, batch=2)
+        sample(env, steps=2, batch=2)
     msg = str(e.value)
-    assert "render_states" in msg and "StateDataset" in msg, f"the refusal must name what to do instead: {msg}"
+    assert "states you already have" in msg, f"the refusal must name what to do instead: {msg}"
 
 
 def test_the_registry_still_contains_envs_that_can_be_rolled_out():

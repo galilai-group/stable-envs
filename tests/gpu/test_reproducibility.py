@@ -331,20 +331,22 @@ def test_frames_are_bit_identical_in_a_fresh_process(env, fresh_process):
 
 
 def test_rollout_seed_reproduces_in_a_fresh_process(env, fresh_process):
-    """``env.sample(steps, batch, seed=)`` is the one API that draws randomness at every step.
+    """The private seeded rollout is the one helper that draws randomness at every step.
 
     That makes it where a seed leaks: a policy that seeds on ``set_env`` but not on ``reset``, a CUDA
     generator bound to whatever device was current, a global numpy call inside a step. The states and
     the actions are checked separately because a reproducible action sequence driving a
     non-reproducible simulator and the reverse are different bugs.
     """
+    from stable_envs.testing._rollout import sample
+
     name = type(env).__name__
     rec = _record(fresh_process, name)
     if "rollout_states_sha" not in rec:
         pytest.skip(f"{name}: no batched GPU simulator, so there is no rollout to seed")
-    tr = env.sample(steps=W.ROLLOUT_STEPS, batch=N, seed=W.ROLLOUT_SEED)
+    tr = sample(env, steps=W.ROLLOUT_STEPS, batch=N, seed=W.ROLLOUT_SEED)
     assert _digest(tr["states"].detach().cpu().numpy()) == rec["rollout_states_sha"], (
-        f"{name}.sample(seed={W.ROLLOUT_SEED}) produced a different trajectory in a fresh process — "
+        f"{name} sample(seed={W.ROLLOUT_SEED}) produced a different trajectory in a fresh process — "
         f"the rollout reads randomness the seed does not reach"
     )
     if tr.get("actions") is not None and "rollout_actions_sha" in rec:

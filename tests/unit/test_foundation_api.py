@@ -62,12 +62,20 @@ def test_dir_advertises_the_documented_namespace_and_the_environments_only():
         "REGISTRY",
         "register",
     }
-    for name in ("Scene2D", "StyleTensor", "render_states"):
+    for name in ("Scene2D", "StyleTensor"):
         assert getattr(snv, name) is not None, f"snv.{name} must still resolve, just not be listed"
 
 
 def test_unpublished_step8_names_do_not_resolve():
-    for name in ("StableEnv", "REGISTRY", "register"):
+    for name in (
+        "StableEnv",
+        "REGISTRY",
+        "register",
+        "render_states",
+        "StateDataset",
+        "BasePolicy",
+        "sample",
+    ):
         with pytest.raises(AttributeError):
             getattr(snv, name)
 

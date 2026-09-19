@@ -45,8 +45,6 @@ validation:
 # Built, but not listed individually. Reach them from research/index.md.
 not_in_nav: |
   research/**
-  api/data.md
-  api/rollout.md
   api/style.md
   api/scene.md
   api/raster2d.md

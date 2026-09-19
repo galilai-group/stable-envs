@@ -22,9 +22,10 @@ Public surface::
 ``snv.spec("PushT")`` and ``snv.list_envs()`` answer what exists without constructing anything;
 ``snv.set(verbose="INFO")`` and ``snv.get_config()`` are the whole configuration.
 
-``import stable_envs.testing``, ``stable_envs.rollout``, ``stable_envs.data`` and
-``stable_envs.interop`` are package imports: they resolve, and they are not advertised in
-``dir(snv)``. ``Env.sample`` / ``rollout.py`` stay in the package and are not first-class.
+``stable_envs.testing`` and ``stable_envs.interop`` are developer-facing subpackages. Policy
+rollouts and dataset storage belong to ``stable-worldmodel`` and ``stable-datasets``
+respectively; the public ``stable-envs`` surface stays focused on environment state,
+dynamics, and rendering.
 """
 
 from __future__ import annotations
@@ -51,14 +52,6 @@ _HELPER_ATTRS = {
     "Scene2D": ("stable_envs.render.scene", "Scene2D"),
     "SceneBuilder": ("stable_envs.render.scene", "SceneBuilder"),
     "StyleTensor": ("stable_envs._style", "StyleTensor"),
-    "StateDataset": ("stable_envs.data", "StateDataset"),
-    "TrajectoryDataset": ("stable_envs.data", "TrajectoryDataset"),
-    "collate_batched": ("stable_envs.data", "collate_batched"),
-    "render_states": ("stable_envs.data", "render_states"),
-    "BasePolicy": ("stable_envs.rollout", "BasePolicy"),
-    "RandomPolicy": ("stable_envs.rollout", "RandomPolicy"),
-    "ScriptedPolicy": ("stable_envs.rollout", "ScriptedPolicy"),
-    "sample": ("stable_envs.rollout", "sample"),
     "check_states": ("stable_envs.env", "check_states"),
     "FIDELITY_TIERS": ("stable_envs.env", "FIDELITY_TIERS"),
     "RENDER_DECODERS": ("stable_envs.env", "RENDER_DECODERS"),

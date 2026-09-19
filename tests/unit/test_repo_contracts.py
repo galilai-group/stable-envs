@@ -32,7 +32,7 @@ ROOT = Path(__file__).resolve().parents[2]
 #: Where a citation can be written. Source comments count: several of the sharpest ones live in
 #: ``stable_envs/envs/*.py`` docstrings, next to the constant they justify.
 SEARCH_ROOTS = ("docs", "examples", "stable_envs", "scripts", "tests")
-SEARCH_FILES = ("README.md", "CONTRIBUTING.md", "mkdocs.yml", "pyproject.toml")
+SEARCH_FILES = ("README.md", "CONTRIBUTING.md", "mkdocs.yaml", "pyproject.toml")
 SEARCH_SUFFIXES = {".py", ".md", ".yml", ".yaml", ".toml", ".sh", ".sbatch", ".tex", ".txt"}
 
 _CITE = re.compile(r"scratch/[A-Za-z0-9_./{}*,\-]+")
@@ -255,19 +255,17 @@ def _nav_targets(node, out):
 def test_every_page_in_the_mkdocs_nav_exists():
     """A nav entry with no page behind it is a 404 in the built site and a warning nobody reads."""
     yaml = pytest.importorskip("yaml")
-    cfg = yaml.safe_load(re.sub(r"!![A-Za-z_.]+\s*", "", (ROOT / "mkdocs.yml").read_text()))
+    cfg = yaml.safe_load(re.sub(r"!![A-Za-z_.]+\s*", "", (ROOT / "mkdocs.yaml").read_text()))
     targets: list[str] = []
     _nav_targets(cfg.get("nav", []), targets)
     assert len(targets) > 20, f"the nav parsed to only {len(targets)} entries; the parse is wrong"
     missing = [t for t in targets if not t.startswith(("http://", "https://")) and not (ROOT / "docs" / t).exists()]
-    assert not missing, f"mkdocs.yml lists pages that are not there: {missing}"
+    assert not missing, f"mkdocs.yaml lists pages that are not there: {missing}"
 
 
 # Historical research notes and internal API pages are linked from the archive
 # landing page / contributor docs rather than listed in the main nav.
 _NAV_OPTIONAL = {
-    "api/data.md",
-    "api/rollout.md",
     "api/style.md",
     "api/scene.md",
     "api/raster2d.md",
@@ -285,7 +283,7 @@ def test_every_docs_page_is_reachable_from_the_nav():
     other than the landing page are linked from ``docs/research/index.md``.
     """
     yaml = pytest.importorskip("yaml")
-    cfg = yaml.safe_load(re.sub(r"!![A-Za-z_.]+\s*", "", (ROOT / "mkdocs.yml").read_text()))
+    cfg = yaml.safe_load(re.sub(r"!![A-Za-z_.]+\s*", "", (ROOT / "mkdocs.yaml").read_text()))
     listed: list[str] = []
     _nav_targets(cfg.get("nav", []), listed)
     targets = set(listed)

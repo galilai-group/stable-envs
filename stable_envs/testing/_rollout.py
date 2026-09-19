@@ -1,11 +1,9 @@
-"""Policies and batched rollouts: ``env.sample(steps=100, batch=256)`` -> 256 trajectories.
+"""Private seeded rollout helper for certification tests.
 
-A CONVENIENCE FOR WHEN THERE ARE NO STATES YET, not the recommended way to build a training set. The
-recommended way is that you already have states — an offline dataset, a rollout of the official CPU
-env, a corpus someone else published — and you feed them to the renderer from your own ``DataLoader``
-with ``env.set_state(batch).render()``. That path works on every env in the registry. This one works
-only on the minority that ship ``step``, and it is here for the case where a state corpus does not
-exist yet and generating one on device beats writing frames to disk.
+Policy-driven rollouts belong to stable-worldmodel. stable-envs exposes stateful ``step`` plus
+pure open-loop ``transition`` / ``unroll``. This module exists so reproducibility and GPU
+regression tests can generate a deterministic action sequence around environments that ship
+dynamics; it is not a user API.
 
 The policy interface mirrors ``stable_worldmodel.policy.BasePolicy`` — ``get_action(obs, **kwargs)``
 plus ``set_env(env)`` — so a policy written for one works here. The one deliberate addition is that
@@ -130,9 +128,8 @@ def sample(
             f"{type(env).__name__} ships a renderer but no batched GPU simulator, so it cannot generate "
             f"trajectories. That is a deliberate split: rendering and simulation are separable, and an "
             f"env earns a step() only where its dynamics can be ported AND checked. Either supply "
-            f"states you already have "
-            f"(stable_envs.render_states / StateDataset), or roll out the official CPU env and render "
-            f"the states it produces."
+            f"states you already have, or roll out the official environment and render the states it "
+            f"produces."
         )
 
     B = int(batch or env.B)

@@ -44,7 +44,7 @@ from bench_gpu_vs_cpu import set_device
 from bench_step3 import provenance
 
 import stable_envs as se
-from stable_envs.data import collate_batched
+from stable_envs._data import collate_batched
 
 ROOT = Path(__file__).resolve().parents[1]
 

@@ -1,4 +1,11 @@
-"""State datasets in, frames out. The entry point for "stop storing pixels".
+"""Private corpus helpers used by certification and research tooling.
+
+Dataset storage is not part of the public stable-envs API. Ordinary users keep compact states in
+their own data stack and call ``env.render``. The helpers here remain because certification
+exercises chunked rendering, trajectory boundaries, style serialization, and optional HuggingFace
+round trips. They are private and may change without compatibility guarantees.
+
+State datasets in, frames out. The entry point for "stop storing pixels".
 
 This is what the repo is for. A trajectory corpus already contains the compact state at every step; the
 frames stored beside it are redundant with those numbers, and regenerating them on the GPU is faster

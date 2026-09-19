@@ -24,19 +24,19 @@ concrete env classes via snv.PushT / snv.make("PushT")
 `import stable_envs as snv` still auto-discovers families. A missing optional
 dependency costs that family alone (`snv.import_errors()`).
 
-## Public modules that are not in `dir(snv)` but stay importable
+## Developer and internal modules
 
 | module | status | why |
 |---|---|---|
 | `stable_envs.interop` | **public developer API** | SWM facade; not advertised at `snv.*` |
 | `stable_envs.testing` | **public developer API** | measurement library (`numpy.testing`-style); stays |
-| `stable_envs.rollout` | **kept, not first-class** | `BasePolicy` / `sample` / `Env.sample` remain for tests and notebooks; not in README, not in MkDocs API nav, not in `dir(snv)` |
-| `stable_envs.data` | **kept, not first-class** | same rule; `render_states` may be documented as a helper later |
+| `stable_envs.testing._rollout` | **private** | certification/GPU helper only; not a user API |
+| `stable_envs._data` | **private** | corpus helpers for tests; storage is not a stable-envs responsibility |
 | `stable_envs.render` | **internal** | not a user import |
 | `stable_envs.spaces` | **internal** | used by interop / envs |
 | `stable_envs._style` | **internal** | |
 
-`env.unroll(state, actions)` stays. `env.rollout(policy)` stays forbidden.
+`env.unroll(state, actions)` stays. `env.sample(policy=...)` and `env.rollout(policy)` are not APIs.
 
 ## Removed before first tagged 0.1.0
 
