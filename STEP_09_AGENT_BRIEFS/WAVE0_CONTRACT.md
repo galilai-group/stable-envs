@@ -87,3 +87,10 @@ the Step-8 support-matrix row must be byte-identical before/after. `transition(s
 today's `step(a)` (graph or eager) to the bit on the same device for the same `state`; `unroll`
 equals repeated `transition`. Measured with a local CPU test and one GPU check (PushT is a CPU-capable
 cell: run both).
+
+## Coordinator addendum (2026-09-19)
+
+v0 keeps the deprecated aliases (`StableEnv`, `REGISTRY`, `register`, `batch=`, `core`/`compat` shims)
+importable and unadvertised. `stable_envs.testing` stays the public measurement library.
+`stable_envs.rollout` stays (`snv.sample` / `BasePolicy`; no `env.rollout(policy)`). There is no `[all]`
+extra. Native `swm.World(env=snv.Env)` is unsupported by the installed `stable-worldmodel`.

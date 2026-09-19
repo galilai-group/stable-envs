@@ -23,11 +23,11 @@ async orchestration
 auto-reset policy semantics
 ```
 
-Do not look for `env.rollout(policy, …)` here. `stable_envs.rollout` still exists as a Step-8 convenience for existing tests and will move out of the public core in Wave 3.
+Do not look for `env.rollout(policy, …)` here. `stable_envs.rollout` remains `snv.sample` / `BasePolicy` for existing tests; it is not `env.rollout(policy)`.
 
 ## Frozen interop (what is shipped today)
 
-Workstream J's native `swm.World(env=snv.PushT(...))` path has **not** merged. The public contract is the facade in `stable_envs.interop` (not advertised at `snv.*` top level):
+Workstream J merged the public `stable_envs.interop` facade (not advertised at `snv.*` top level). Native `swm.World(env=snv.PushT(...))` is still **unsupported** by the installed `stable-worldmodel` (`World` takes `env_name: str` and always `gym.make`s it). The shipped contract is:
 
 ```python
 from stable_envs import interop
@@ -53,7 +53,7 @@ interop.variation_map / style_from_variation / variation_from_style / check_mapp
 
 `swap_renderer` is the honest path when the simulator is the reference and only the renderer is ours. `StableEnvGym` does **not** carry an official reward function: a reward is a task, and this package defines what a frame is.
 
-The Step-8 `stable_envs.compat.worldmodel` import path still resolves to the same module objects until Wave 3.
+The Step-8 `stable_envs.compat.worldmodel` import path still resolves to the same module objects.
 
 ## Native `World(env=…)` — not a public API
 
@@ -62,6 +62,6 @@ The Step-8 `stable_envs.compat.worldmodel` import path still resolves to the sam
 world = swm.World(env=snv.PushT(num_envs=64, device="cuda"))
 ```
 
-That is the long-term direction (interop shrinks as SWM consumes `Env` natively). Until Workstream J merges it, the frozen adapters above are the entire public interop surface. `examples/worldmodel.py` prints this limitation rather than inventing the call.
+That remains the long-term direction (interop shrinks as SWM consumes `Env` natively). Installed SWM still requires `env_name: str`. `examples/worldmodel.py` prints this limitation rather than inventing the call.
 
 Worked evidence that the frozen adapters run an unmodified SWM workflow: [`examples/swm_compat/`](https://github.com/galilai-group/stable-envs/tree/main/examples/swm_compat).

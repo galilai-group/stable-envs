@@ -204,6 +204,7 @@ nav:
       - 'Step 8: handoff checkpoint': research/step8_handoff.md
       - 'Step 8: closure packet': research/step8_closure.md
       - 'Step 9: coordinator handoff': research/step9_handoff.md
+      - 'Step 9: closure packet': research/step9_closure.md
       - 'Step 8: takeover stop note': research/step8_takeover_stop_handoff.md
       # Step 8, Workstream B. The leaf-by-leaf account of how the twelve swm/Fetch*-v3 variation
       # spaces relate to ours: mapped, unsupported, dead upstream or state. Its numbers live in

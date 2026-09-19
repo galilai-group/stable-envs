@@ -23,8 +23,8 @@ Public surface::
 ``snv.set(verbose="INFO")`` and ``snv.get_config()`` are the whole configuration.
 
 The Step-8 names — ``StableEnv``, ``REGISTRY``, ``register``, and ``make(name, batch=...)`` — keep
-working as deprecated aliases that announce themselves ONCE per process. They are removed in Wave 3 of
-Step 9, never before the behavioral oracle is green.
+working as deprecated aliases that announce themselves ONCE per process. They stay in v0 so historical
+tests and research scripts keep importing; they are not advertised in ``dir(snv)``.
 """
 from __future__ import annotations
 
@@ -44,9 +44,9 @@ from . import registry as _registry
 # family alone (``snv.import_errors()``).
 _registry.discover()
 
-#: The Step-8 top-level names that are NOT part of the Step-9 public namespace but must keep resolving
-#: until Workstream K migrates their call sites. Kept behind the module ``__getattr__`` below so they
-#: are resolved lazily and do not advertise backend machinery in ``dir(snv)``.
+#: The Step-8 top-level names that are NOT part of the Step-9 public namespace but must keep resolving.
+#: Kept behind the module ``__getattr__`` below so they are resolved lazily and do not advertise
+#: backend machinery in ``dir(snv)``. Removal is a post-v0 ticket after live callers move.
 _LEGACY_MODULES = {"spaces": "stable_envs.spaces", "envs": "stable_envs.envs",
                    "data": "stable_envs.data", "rollout": "stable_envs.rollout",
                    "testing": "stable_envs.testing", "render": "stable_envs.render",

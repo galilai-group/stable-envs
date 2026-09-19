@@ -316,6 +316,18 @@ workstreams:
     -m unit 1836; -m certification 285
   api_diff: stable_envs.testing remains public measurement library; rollout.py stays; no product API change
   oracle_diff: none; layout only
+- workstream: O_cleanup
+  branch: step9/cleanup
+  owner: coordinator
+  status: MERGED into step9/integration (inventory; Step-8 oracle retained)
+  files_owned: scratch/, examples/results/, superseded modules (Wave 3 only)
+  head_sha: 6ed256c
+  merge_sha: aa52dc6
+  review: coordinator classification; conservative v0 keeps shims unadvertised
+  tests: documentation/inventory only
+  api_diff: README no longer advertises a nonexistent [all] extra; CHANGELOG 0.1.0; support_matrix.json
+    wrapper REGRESSION=0
+  oracle_diff: none; research evidence and compatibility shims retained
 decisions:
 - date: '2026-09-17'
   by: coordinator
@@ -483,6 +495,12 @@ incident_log:
   item: 'GPU jobs 6507919 (2D+3D pixels/timings PASS; tests/gpu missing-dep noise) and 6509711 (MJWarp/nvdiff
     pixels/lifetime/bench PASS; rendernet probe classified as CPU ESPCN construction). Workstream I merged
     at 4eca3ff.'
+- date: '2026-09-19'
+  item: Workstream O merged at aa52dc6. Shims/scratch/examples/results classified KEEP_INTERNAL or ARCHIVE_RESEARCH.
+    README [all] extra removed. support_matrix.json wrapper REGRESSION=0.
+- date: '2026-09-19'
+  item: Step-9 v0-draft closure packet at docs/research/step9_closure.md. RELEASE_BLOCKING empty. Push
+    target v0-draft, not main; no release tag.
 non_42_families_note: "carracing, crafter, griddly, highway, jumanji, lunarlander, maze2d, metaworld,\
   \ minigrid, minihack, mujoco_locomotion, overcooked, pgx, procgen, robocasa, sokoban, humanoidbench\
   \ are outside the 42-id oracle (plan \xA717 of Step 8); Step 9 migrates them mechanically under Workstream\
@@ -496,5 +514,8 @@ buckets:
     configuration; Step-6 job 6348207 precedent); baseline tree emitted two digests across jobs, head
     tree one (H)
   UPSTREAM_FINDING: []
-  STEP9_CLEANUP: []
+  STEP9_CLEANUP:
+  - post-v0 retarget live tests off core/compat/swm_nav/ogb_manip/craftax_full shims, then delete the aliases
+  - post-v0 consumer MJWarp close()/BoundedCache wiring on family caches (fetch, ogbench, robocasa,
+    humanoidbench, metaworld, dmcontrol _TC_CACHE, mujoco_locomotion, rocket_landing)
   DEFERRED_OPTIMIZATION: []

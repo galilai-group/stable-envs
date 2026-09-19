@@ -1,6 +1,9 @@
 # Step 9 — coordinator handoff (2026-09-17, written by the Fable coordinator for an Opus successor)
 
-Read this, then `STEP_09_AGENT_BRIEFS/STEP_09_OSS_REFACTOR_AND_PRODUCTIZATION.md` (Sami's binding
+**Superseded as the living status document.** v0 draft closure is `docs/research/step9_closure.md`
+(2026-09-19). This file is the 2026-09-17 stop; do not treat section 0 as current.
+
+Read this, then `STEP_09_AGENT_BRIEFS/STEP_09_OSS_REFACTOR_AND_PRODUCTIZATION.md` (Sami's binding)
 plan), `STEP_09_AGENT_BRIEFS/WAVE0_CONTRACT.md` (the frozen API contract every workstream follows),
 `examples/results/step9/dashboard.yaml` (machine-readable state; edit only via yaml safe_load/dump
 with `/Users/samib/se6-venv/bin/python`), and the review reports under

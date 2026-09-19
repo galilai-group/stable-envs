@@ -48,4 +48,4 @@ The full lists: [Step 8 closure](../research/step8_closure.md) §12, [support ma
 
 ## Interop
 
-Native `swm.World(env=snv.PushT(...))` is **not** a public API until Workstream J merges it. Use `stable_envs.interop` as documented in [worldmodel](worldmodel.md).
+Native `swm.World(env=snv.PushT(...))` is **not** a public API: installed `stable-worldmodel` takes `env_name: str` and always `gym.make`s it. Use `stable_envs.interop` as documented in [worldmodel](worldmodel.md).
