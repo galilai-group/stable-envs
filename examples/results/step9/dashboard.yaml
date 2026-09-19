@@ -288,6 +288,19 @@ workstreams:
   api_diff: new OSS performance CLIs use class-first public snv API and optional dynamic aliases; no library
     API changes
   oracle_diff: none; benchmarks are separated from correctness and certification
+- workstream: L_packaging_ci
+  branch: step9/packaging-ci
+  owner: grok
+  status: MERGED into step9/integration after independent APPROVE
+  files_owned: pyproject.toml, .github/workflows/, .pre-commit-config.yaml, mkdocs.yaml
+  head_sha: c78c433
+  review: review_l.md APPROVE after re-review; review commit e2c673b
+  merge_sha: f4ef912
+  tests: clean CI profile 403 passed/88 skipped; packaging 11 passed on Python 3.10 and 3.12; wheel/sdist/Twine/archive
+    audit/editable install/pre-commit/docs build passed
+  api_diff: PEP 639 metadata, ordered authors Randall Balestriero and Sami BuGhanem, core/family extras,
+    CI/docs/release workflows; no product API changes
+  oracle_diff: none; packaging-only
 decisions:
 - date: '2026-09-17'
   by: coordinator
