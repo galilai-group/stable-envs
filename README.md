@@ -15,12 +15,12 @@ Authors: **Randall Balestriero**, **Sami BuGhanem**.
 ## Install
 
 ```bash
-pip install -e .                  # numpy, torch, gymnasium, tensordict, loguru
-pip install -e ".[pusht]"         # gym_pusht + pymunk + pygame — parity tests only
-pip install -e ".[all]"           # every family this interpreter can hold
+pip install -e .                       # numpy, torch, gymnasium, tensordict, loguru
+pip install -e ".[pusht]"              # gym_pusht + pymunk + pygame — parity tests only
+pip install -e ".[dmcontrol,ogbench]"  # add family extras as needed
 ```
 
-A missing optional extra costs **that family**, not the package. `snv.import_errors()` names the modules that did not load. Overcooked is the one family that needs its own interpreter; the extras on `[all]` that need `--no-deps` are documented on those extras in `pyproject.toml`.
+There is no `[all]` extra: Fetch needs `mujoco<3.12`, Overcooked needs its own interpreter, and nvdiffrast is not expressible as PyPI metadata. A missing optional extra costs **that family**, not the package. `snv.import_errors()` names the modules that did not load. Extras that need `--no-deps` are documented next to those extras in `pyproject.toml`.
 
 CUDA is required for the 3-D and most MuJoCo families. PushT, classic control, navigation and several 2-D families run on CPU.
 
