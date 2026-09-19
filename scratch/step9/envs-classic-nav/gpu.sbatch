@@ -20,7 +20,7 @@ SCR=/oscar/scratch/sboughan
 export UV_CACHE_DIR=$SCR/cache/uv PIP_CACHE_DIR=$SCR/cache/pip XDG_CACHE_HOME=$SCR/cache/xdg
 export TORCH_HOME=$SCR/cache/torch WARP_CACHE_PATH=$SCR/cache/warp HF_HOME=$SCR/cache/hf
 export MUJOCO_GL=egl
-WS=$SCR/se9/classic-nav
+WS=${SE9_WS:-$SCR/se9/classic-nav}
 OUT=$WS/examples/results/step9/envs-classic-nav/gpu
 PY=$SCR/venvs/se-step6/bin/python
 SHA=$(cat $WS/.git_sha 2>/dev/null || echo unknown)
