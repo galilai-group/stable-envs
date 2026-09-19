@@ -259,6 +259,7 @@ if _missing or _mjver < (3, 11):                                             # p
 
 from ..env import Env
 from ..registry import register
+from ..render import _resources as _RES
 from ..render import mjwarp as MW
 from ..spaces import Box, Dict
 
@@ -280,7 +281,7 @@ VISIBLE_GROUPS = MW.DEFAULT_GROUPS
 MJW_CHUNK = 64
 
 _MODEL_CACHE: dict = {}
-_CTX_CACHE: dict = {}
+_CTX_CACHE = _RES.BoundedCache(32, name="humanoidbench.ctx", on_evict=MW.release_cached_ctx)
 #: One MJWarp render context per (cell, resolution), and the bound is deliberately larger than the
 #: number of registered cells. A context owns ``nworld * H * W * 4`` bytes of output buffer -- 16.8 MB
 #: at 64 worlds and 256 px -- plus the model and its mesh BVHs, so holding all 19 costs a few hundred
@@ -517,8 +518,6 @@ def _context(robot: str, task: str, res: int, nworld: int) -> _Ctx:
     hit = _CTX_CACHE.get(key)
     if hit is not None:
         return hit
-    if len(_CTX_CACHE) >= _CTX_CACHE_MAX:
-        _CTX_CACHE.clear()
     b = _build_bundle(robot, task)
     m = b.model
     d0 = mujoco.MjData(m)
@@ -574,7 +573,7 @@ def _context(robot: str, task: str, res: int, nworld: int) -> _Ctx:
         with wp.ScopedCapture() as cap:
             _frame(c)
         c.graph = cap.graph
-    _CTX_CACHE[key] = c
+    _CTX_CACHE.put(key, c)
     return c
 
 

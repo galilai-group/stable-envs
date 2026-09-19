@@ -33,7 +33,7 @@ from pathlib import Path
 import numpy as np
 
 import stable_envs as se
-from stable_envs.compat import worldmodel as wm
+from stable_envs._interop import worldmodel as wm
 
 STEPS = 20
 NUM_ENVS = 8

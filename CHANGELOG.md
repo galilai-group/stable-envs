@@ -14,7 +14,8 @@ First public-shaped cut of `stable-envs` after the Step 8 functional-completion 
 - `close()` / context-manager lifecycle on every environment.
 - Public `stable_envs.testing` measurement library and `stable_envs.interop` SWM facade.
 - Explicit renderer resource ownership (`Closeable`, `BoundedCache`) for MJWarp / nvdiffrast /
-  rendernet.
+  rendernet, including family-cache eviction (`release_cached_ctx` / `close_cached_renderer`)
+  and LRU CPU working-set caches (plates, terrains, RGB, raycast memos).
 - Packaging extras, GitHub Actions, MkDocs, and OSS example / benchmark CLIs.
 
 ### Changed

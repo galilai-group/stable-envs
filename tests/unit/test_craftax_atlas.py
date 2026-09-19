@@ -30,7 +30,7 @@ import numpy as np
 import pytest
 import torch
 
-from stable_envs.core.style import StyleTensor
+from stable_envs._style import StyleTensor
 from stable_envs.envs.craftax import (ATLAS_MAX_TILE_PX, N_BLOCK, N_COUNT, N_FACING,
                                       N_KEY_HALVES, N_MOB, N_PLAYER, N_STRIP, N_TILE, NO_PLAYER,
                                       OBS_H, OBS_W, STRIP_H, CraftaxClassic, _Assets, _Composite)

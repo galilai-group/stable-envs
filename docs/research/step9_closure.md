@@ -163,8 +163,11 @@ objects are `Closeable` (`mjwarp.BatchRenderer`, `nvdiff.Scene`, `nvdiff.BatchRe
 `mjwarp_lightspec._CASTS_CACHE` and `nvdiff.BatchRenderer._ray_cache` are bounded LRU.
 
 Consumer family caches (Fetch, OGBench, RoboCasa, HumanoidBench, MetaWorld, DMC `_TC_CACHE`,
-locomotion, Rocket) are **not** yet wired to `close()` / `BoundedCache`. That is a post-v0
-`STEP9_CLEANUP` item; it does not change pixels.
+locomotion, Rocket) are `BoundedCache` with `on_evict` calling `release_cached_ctx` /
+`close_cached_renderer`. Rocket sets `owns_scene = True`. RoboCasa's corrector cache is
+`BoundedCache(4, on_evict=close)`. CPU working-set caches (plates, terrains, RGB atlases,
+raycast3d memos, OGBench maze scenes) are the same `BoundedCache` LRU, without a release
+callback. EGL contexts are still never released.
 
 ## 10. SWM interoperability
 
@@ -212,13 +215,12 @@ Step-9 documented:
 
 - `HumanoidmazeGiantNavigate` CUDA not process-reproducible on some Oscar nodes.
 - Native `World(env=...)` unsupported by installed SWM.
-- Compatibility shims still importable (unadvertised).
-- Consumer MJWarp `close()` / `BoundedCache` wiring not done.
+- Compatibility shims still importable (unadvertised); live tests import canonical modules.
 - Broad `tests/gpu` in family venvs is a dependency/harness matrix, not the pixel oracle.
 - Pre-existing citation-scanner and robocasa-example-help deselects.
 
-`dashboard.yaml` buckets: `RELEASE_BLOCKING` empty; `STEP9_CLEANUP` holds the two post-v0 tickets
-above.
+`dashboard.yaml` buckets: `RELEASE_BLOCKING` empty; `STEP9_CLEANUP` holds the
+`craftax_full.py` auto-discovery alias.
 
 ## 15. Suggested first OSS release notes
 

@@ -114,6 +114,7 @@ import torch
 
 from ..env import Env
 from ..registry import register
+from ..render import _resources as _RES
 from ..render import tilemap as tm
 from ..spaces import Box, Dict
 
@@ -299,7 +300,7 @@ class GriddlyDecoder:
         self.official = torch.from_numpy(np.ascontiguousarray(d["atlas"])).to(self.device)
         self.table = torch.from_numpy(np.ascontiguousarray(d["table"])).long().to(self.device)
         self.cls = torch.from_numpy(np.ascontiguousarray(d["cls"])).long().to(self.device)
-        self._rgb_cache: dict[bytes, torch.Tensor] = {}
+        self._rgb_cache = _RES.BoundedCache(8, name="griddly.rgb")
 
     @classmethod
     def get(cls, name: str, rel: str, tile: int, device="cuda") -> "GriddlyDecoder":
@@ -336,10 +337,8 @@ class GriddlyDecoder:
         hit = self._rgb_cache.get(key)
         if hit is None:
             t = torch.as_tensor(g, dtype=torch.float32, device=self.device)
-            hit = (self.official.float() * t).clamp_(0, 255).to(torch.uint8).contiguous()
-            if len(self._rgb_cache) > 8:
-                self._rgb_cache.clear()
-            self._rgb_cache[key] = hit
+            hit = self._rgb_cache.put(
+                key, (self.official.float() * t).clamp_(0, 255).to(torch.uint8).contiguous())
         return hit
 
 

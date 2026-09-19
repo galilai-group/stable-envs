@@ -92,14 +92,15 @@ def test_the_module_caches_are_one_object_each_across_the_package():
 
     ``tests/unit/test_ogbench_scene_cache.py`` saves, clears and restores ``OGB._SCENE_CACHE`` and
     then drives ``OGBenchMaze._scene``, which reads the cache out of ``maze``'s own globals. That
-    only works because the two names bind ONE dict. A re-export written as ``dict(maze._SCENE_CACHE)``
+    only works because the two names bind ONE cache. A re-export written as a copy of
+    ``maze._SCENE_CACHE``
     would leave the test passing vacuously — it would isolate a cache nothing uses — so the identity
     is asserted rather than assumed.
     """
     assert OGB._SCENE_CACHE is MAZE._SCENE_CACHE
     assert OGB._ENV_CACHE is MAZE._ENV_CACHE
     sentinel = ("__identity_probe__",)
-    OGB._SCENE_CACHE[sentinel] = 1
+    OGB._SCENE_CACHE.put(sentinel, 1)
     try:
         assert MAZE._SCENE_CACHE.get(sentinel) == 1, "a write through the package was not shared"
     finally:

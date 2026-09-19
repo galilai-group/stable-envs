@@ -46,7 +46,8 @@ _registry.discover()
 
 #: The Step-8 top-level names that are NOT part of the Step-9 public namespace but must keep resolving.
 #: Kept behind the module ``__getattr__`` below so they are resolved lazily and do not advertise
-#: backend machinery in ``dir(snv)``. Removal is a post-v0 ticket after live callers move.
+#: backend machinery in ``dir(snv)``. Live tests import the canonical modules; these names remain for
+#: scratch and unpublished notebooks.
 _LEGACY_MODULES = {"spaces": "stable_envs.spaces", "envs": "stable_envs.envs",
                    "data": "stable_envs.data", "rollout": "stable_envs.rollout",
                    "testing": "stable_envs.testing", "render": "stable_envs.render",

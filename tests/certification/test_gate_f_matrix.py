@@ -101,7 +101,7 @@ def test_symbolic_ids_are_not_applicable_across_renderer_columns(committed):
 
 def test_craftax_swm_wrapper_jit_declaration_exists_on_both_cells():
     import stable_envs.envs.craftax as cc
-    import stable_envs.envs.craftax_full as cf
+    import stable_envs.envs._craftax_full as cf
 
     for cls in (cc.CraftaxClassic, cf.CraftaxFull):
         decl = cls.SWM_WRAPPER_GATE_F

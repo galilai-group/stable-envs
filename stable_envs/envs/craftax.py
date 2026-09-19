@@ -120,6 +120,7 @@ import torch
 
 from ..env import Env
 from ..registry import register
+from ..render import _resources as _RES
 from ..render import prng
 from ..spaces import Box, Dict, Discrete
 
@@ -651,13 +652,8 @@ class _Composite:
       table.
     """
 
-    _cache: dict = {}
-    #: How many (device, tile size) tables to keep. Both forms of one table come to ~40 MiB at
-    #: :data:`ATLAS_MAX_TILE_PX`, and a caller sweeping sizes would otherwise retain one per size
-    #: for the life of the process. Dropping the whole dict rather than evicting one entry is the
-    #: rule ``render/tilemap.py``'s recoloured-atlas cache already uses, and it is safe because a
-    #: render holds its own reference to the table it is gathering from.
     _MAX_ENTRIES = 8
+    _cache = _RES.BoundedCache(_MAX_ENTRIES, name="craftax.composite")
 
     @staticmethod
     def _build(device: torch.device, t: int) -> torch.Tensor:
@@ -697,10 +693,7 @@ class _Composite:
             return have
         f32 = cls._build(device, t)
         u8 = have[1] if have is not None else f32.round().clamp_(0, 255).to(torch.uint8)
-        if have is None and len(cls._cache) >= cls._MAX_ENTRIES:
-            cls._cache.clear()
-        cls._cache[key] = (f32 if want_float else None, u8)
-        return cls._cache[key]
+        return cls._cache.put(key, (f32 if want_float else None, u8))
 
 
 @register

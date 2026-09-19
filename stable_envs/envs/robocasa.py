@@ -185,6 +185,7 @@ if _missing or _mjver < (3, 11):                                              # 
 
 from ..env import Env
 from ..registry import register
+from ..render import _resources as _RES
 from ..render import mjwarp as MW
 from ..render import rendernet as RN
 from ..spaces import Box, Dict
@@ -209,7 +210,7 @@ VISIBLE_GROUPS = (1,)
 #: ``nworld * H * W * 4`` bytes of output buffer plus this family's ~356 MB of textures, and four are
 #: cached, which is why this stops at 256.
 MJW_CHUNK = 256
-_CTX_CACHE: dict = {}
+_CTX_CACHE = _RES.BoundedCache(4, name="robocasa.ctx", on_evict=MW.release_cached_ctx)
 _CTX_CACHE_MAX = 4
 _SCENE_CACHE: dict = {}
 _REF_CACHE: dict = {}
@@ -333,8 +334,6 @@ def _context(kitchen: str, camera: str, res: int, nworld: int,
     hit = _CTX_CACHE.get(key)
     if hit is not None:
         return hit
-    if len(_CTX_CACHE) >= _CTX_CACHE_MAX:
-        _CTX_CACHE.clear()
     s = _scene(kitchen)
     m = s.model
     cid = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_CAMERA, camera)
@@ -389,7 +388,7 @@ def _context(kitchen: str, camera: str, res: int, nworld: int,
         with wp.ScopedCapture() as cap:
             _frame(c)
         c.graph = cap.graph
-    _CTX_CACHE[key] = c
+    _CTX_CACHE.put(key, c)
     return c
 
 
@@ -901,10 +900,10 @@ VISUAL_NOTE = (
     "policy.")
 
 
-#: ``env class -> LoadedCorrector``. One per process, like the render contexts and for the same
-#: reason: it owns a compiled kernel, a CUDA graph and two static buffers, and building it twice is
-#: tens of seconds of autotuning for an object that has no per-instance state.
-_CORRECTOR_CACHE: dict = {}
+#: ``env class -> LoadedCorrector``. Bounded: a corrector owns a captured CUDA graph and two static
+#: uint8 buffers of ``net_batch × out_size²×3``.
+_CORRECTOR_CACHE = _RES.BoundedCache(
+    4, name="robocasa.correctors", on_evict=lambda c: c.close())
 
 
 class RoboCasaCorrectedBase(RoboCasaBase):
@@ -933,7 +932,7 @@ class RoboCasaCorrectedBase(RoboCasaBase):
         cls = type(self)
         hit = _CORRECTOR_CACHE.get(cls.__name__)
         if hit is None:
-            hit = _CORRECTOR_CACHE[cls.__name__] = RN.load(cls.corrector_cell_key())
+            hit = _CORRECTOR_CACHE.put(cls.__name__, RN.load(cls.corrector_cell_key()))
         return hit
 
     @torch.no_grad()

@@ -109,6 +109,7 @@ import torch
 from ...env import Env
 from ...registry import register
 from ...spaces import Box, Dict
+from ...render import _resources as _RES
 from ...render import mjwarp as MW
 from .._plate_texels import quantise as _quantise, substitute as _substitute
 from .._plate_texels import texel_key as _texel_key, texel_slots as _texel_slots
@@ -158,10 +159,10 @@ DEFAULT_VARIATION_PATHS = {
 #                                          plate. Its texture and GL context are MUTATED per bake,
 #                                          so `_apply_floor` writes the floor it wants on every
 #                                          bake rather than trusting what the last bake left.
-_CTX_CACHE: dict = {}
+_CTX_CACHE = _RES.BoundedCache(4, name="ogbench.ctx", on_evict=MW.release_cached_ctx)
 _CTX_CACHE_MAX = 4
-_PLATE_CACHE: dict = {}
 _PLATE_CACHE_MAX = 8
+_PLATE_CACHE = _RES.BoundedCache(_PLATE_CACHE_MAX, name="ogbench.plate")
 _BUNDLE_CACHE: dict = {}
 _REF_CACHE: dict = {}
 
@@ -493,8 +494,6 @@ def _context(cell: str, res: int, nworld: int) -> _Ctx:
     hit = _CTX_CACHE.get(key)
     if hit is not None:
         return hit
-    if len(_CTX_CACHE) >= _CTX_CACHE_MAX:
-        _CTX_CACHE.clear()
     b = _bundle(cell)
     # A DEEP COPY, and this is not tidiness. `_bundle.model` is the swm env's OWN MjModel -- the
     # object `reference_render` and `_bake_plate` render the reference through. `prepare_model`
@@ -556,7 +555,7 @@ def _context(cell: str, res: int, nworld: int) -> _Ctx:
             _frame(c)
         c.graph = cap.graph
     c.button_tables = _ctx_button_tables(b, m, res, device="cuda")
-    _CTX_CACHE[key] = c
+    _CTX_CACHE.put(key, c)
     return c
 
 
@@ -880,10 +879,7 @@ class OGBManipBase(Env):
         hit = _PLATE_CACHE.get(key)
         if hit is not None:
             return hit
-        if len(_PLATE_CACHE) >= _PLATE_CACHE_MAX:
-            _PLATE_CACHE.clear()
-        out = _PLATE_CACHE[key] = self._bake_plate(res, floor=floor)
-        return out
+        return _PLATE_CACHE.put(key, self._bake_plate(res, floor=floor))
 
     def _floor_key(self, floor):
         """The cache key for a floor colour: the bytes MuJoCo stores, or ``None`` for the default.

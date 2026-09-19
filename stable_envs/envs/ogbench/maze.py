@@ -81,7 +81,6 @@ re-exports are for and what the oracle checks name by name.
 from __future__ import annotations
 
 import os
-from collections import OrderedDict
 
 import numpy as np
 import torch
@@ -95,6 +94,7 @@ os.environ.setdefault("MUJOCO_GL", "egl")
 
 from ...env import Env
 from ...registry import register
+from ...render import _resources as _RES
 from ...render import raycast3d as R3
 from ...spaces import Box, Dict, Discrete
 
@@ -137,8 +137,7 @@ CELLS = (
     + [("humanoid", m, d) for m in ("medium", "large", "giant") for d in ("navigate", "stitch")]
 )
 
-#: Baked scenes, LRU. ``OrderedDict`` and not ``dict``, and evicting ONE entry and not all of them,
-#: for a reason that is a correctness reason and not a tidiness one.
+#: Baked scenes, LRU. Overflow drops the least recently used plate, not the whole cache.
 #:
 #: The wholesale ``clear()`` this replaces meant that crossing the cap threw away the key the caller
 #: was actively rendering, so the very next ``render`` of the SAME appearance re-baked it. That is
@@ -153,8 +152,8 @@ CELLS = (
 #: LRU does NOT make the bake deterministic -- a genuinely cold key still lands on either image, and
 #: the fix for that is above this module (see the findings note). What it removes is cache pressure
 #: as the trigger: a key that is being used is never the one evicted.
-_SCENE_CACHE: "OrderedDict" = OrderedDict()
 _SCENE_CACHE_MAX = 256      # a plate is 150 kB and a depth buffer 200 kB; re-baking costs far more
+_SCENE_CACHE = _RES.BoundedCache(_SCENE_CACHE_MAX, name="ogbench.maze")
 
 
 def _offsets(paths, sty):
@@ -441,13 +440,8 @@ class OGBenchMaze(Env):
         key = self._plate_key(size, variation)
         hit = _SCENE_CACHE.get(key)
         if hit is not None:
-            _SCENE_CACHE.move_to_end(key)          # a key in use is never the one evicted
             return hit
-        sc = self._bake(size, variation)
-        _SCENE_CACHE[key] = sc
-        while len(_SCENE_CACHE) > _SCENE_CACHE_MAX:
-            _SCENE_CACHE.popitem(last=False)       # one entry, the least recently used, not all of them
-        return sc
+        return _SCENE_CACHE.put(key, self._bake(size, variation))
 
     def _bake(self, size: int, variation) -> _Scene:
         """Apply the static half of the variation to the shared model, then let MuJoCo draw the plate.
@@ -498,7 +492,7 @@ class OGBenchMaze(Env):
         # presence from MuJoCo's rasterizer, and a pose change was measured to move 2-10 pixels by
         # 1/255 on the ant and humanoid mazes (examples/results/step6/raycast3d/
         # style_is_state_bisect.json). The plate is then MEMOISED, so the impurity stays invisible
-        # until ``_SCENE_CACHE`` clears itself wholesale at ``_SCENE_CACHE_MAX`` and the same key is
+        # until ``_SCENE_CACHE`` evicts the key and the same appearance is
         # baked a second time from a different leftover pose -- which is how it reached Step 4 as
         # ``check_style_is_state`` observing 1 on AntmazeTeleportExplore and
         # HumanoidmazeMediumNavigate, and 0 on nine configurations that carry the identical defect.

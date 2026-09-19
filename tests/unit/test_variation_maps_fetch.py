@@ -55,8 +55,8 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from stable_envs.compat import worldmodel as WM
-from stable_envs.compat.variation_maps import fetch as FM
+from stable_envs import interop as WM
+from stable_envs._interop.variation_maps import fetch as FM
 
 ROOT = Path(__file__).resolve().parents[2]
 

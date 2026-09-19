@@ -308,7 +308,7 @@ def test_a_policy_gets_set_env_and_reset_before_the_first_action():
 
 def test_an_env_level_sample_is_the_module_level_one():
     """``env.sample(...)`` is the ergonomic entry point and must not be a second implementation."""
-    from stable_envs.core.env import StableEnv
+    from stable_envs.env import Env as StableEnv
 
     assert "sample" in StableEnv.__dict__, "StableEnv no longer offers the shorthand"
     env = IntegratorEnv(batch=4)

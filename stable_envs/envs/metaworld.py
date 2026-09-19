@@ -231,6 +231,7 @@ if _missing or _mjver < (3, 11):                                             # p
 
 from ..env import Env
 from ..registry import register
+from ..render import _resources as _RES
 from ..render import mjwarp as MW
 from ..spaces import Box, Dict
 
@@ -294,10 +295,10 @@ POOL_EPISODES, POOL_PER_EPISODE = 64, 4
 
 _MODEL_CACHE: dict = {}
 _RASTER_CACHE: dict = {}
-_CTX_CACHE: dict = {}
+_CTX_CACHE = _RES.BoundedCache(3, name="metaworld.ctx", on_evict=MW.release_cached_ctx)
 _CTX_CACHE_MAX = 3
-_PLATE_CACHE: dict = {}
 _PLATE_CACHE_MAX = 96
+_PLATE_CACHE = _RES.BoundedCache(_PLATE_CACHE_MAX, name="metaworld.plate")
 _POOL_CACHE: dict = {}
 
 
@@ -757,8 +758,6 @@ def _context(task: str, res: int, nworld: int) -> _Ctx:
     hit = _CTX_CACHE.get(key)
     if hit is not None:
         return hit
-    if len(_CTX_CACHE) >= _CTX_CACHE_MAX:
-        _CTX_CACHE.clear()
     b = _build_bundle(task)
     m, d = b.model, b.data
     for a in MODEL_ARRAYS:                                  # a canonical model, so the context is a
@@ -849,7 +848,7 @@ def _context(task: str, res: int, nworld: int) -> _Ctx:
         MW.restore_model(m, prep)
         m.mat_texid[:] = tex0
         m.geom_margin[:], m.pair_margin[:] = margin0
-    _CTX_CACHE[key] = c
+    _CTX_CACHE.put(key, c)
     return c
 
 
@@ -1109,10 +1108,7 @@ class MetaWorldBase(Env):
         hit = _PLATE_CACHE.get(key)
         if hit is not None:
             return hit
-        if len(_PLATE_CACHE) >= _PLATE_CACHE_MAX:
-            _PLATE_CACHE.clear()
-        out = _PLATE_CACHE[key] = self._bake(res, over, state_row)
-        return out
+        return _PLATE_CACHE.put(key, self._bake(res, over, state_row))
 
     def _bake(self, res, variation, state_row) -> _Plate:
         """MuJoCo's own raster of ONE episode's static scene, and its static kinematics.

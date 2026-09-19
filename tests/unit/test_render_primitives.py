@@ -147,14 +147,13 @@ def test_primitives_bound_radius_is_the_free_function():
 
 
 @pytest.mark.unit
-def test_the_memo_clears_at_its_cap_and_is_still_a_dict():
-    m = R3._Memo(4)
+def test_the_memo_evicts_lru_at_its_cap():
+    m = R3._Memo(4, name="test")
     for i in range(4):
         m.put(i, i * i)
     assert len(m) == 4 and m.get(3) == 9
-    m.put(99, 1)                      # at the cap: the whole cache goes, the new entry stays
-    assert len(m) == 1 and m.get(99) == 1 and m.get(3) is None
-    assert isinstance(m, dict) and m.copy() == {99: 1}
+    m.put(99, 1)                      # at the cap: the least recently used key goes, the rest stay
+    assert len(m) == 4 and m.get(99) == 1 and m.get(3) == 9 and m.get(0) is None
 
 
 @pytest.mark.unit
@@ -162,7 +161,7 @@ def test_every_raycast3d_cache_is_bounded():
     """An unbounded memo on a per-frame path is a leak; each one carries its own cap."""
     for cache in (R3._PROJ_CACHE, R3._CORNER_CACHE, R3._KIND_CACHE, R3._RAY_CACHE, R3._TILE_CACHE):
         assert isinstance(cache, R3._Memo)
-        assert 0 < cache.cap <= 64
+        assert 0 < cache.capacity <= 64
 
 
 @pytest.mark.unit

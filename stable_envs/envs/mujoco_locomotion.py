@@ -162,6 +162,7 @@ os.environ.setdefault("MUJOCO_GL", "egl")
 
 from ..env import Env
 from ..registry import register
+from ..render import _resources as _RES
 from ..render import raycast3d as R3
 from ..spaces import Box, Dict
 
@@ -245,8 +246,8 @@ ENVS: dict[str, str] = {
 #: ``MujocoRenderer``, and releasing one corrupts rendering in every other live context in the
 #: process — the rule ``stable_envs/testing/conformance.py`` carries.
 _ENV_CACHE: dict = {}
-_SCENE_CACHE: dict = {}
 _SCENE_CACHE_MAX = 96
+_SCENE_CACHE = _RES.BoundedCache(_SCENE_CACHE_MAX, name="mujoco_locomotion.scene")
 #: Headless envs used only to roll out ``sample_states``. No ``render_mode``, so no viewer is ever
 #: built and no GL context is created; that is why these can be cached per class without counting
 #: against the context budget.
@@ -796,11 +797,7 @@ class GymMujoco(_GymMujocoFamily):
         hit = _SCENE_CACHE.get(key)
         if hit is not None:
             return hit
-        if len(_SCENE_CACHE) >= _SCENE_CACHE_MAX:
-            _SCENE_CACHE.clear()
-        sc = self._bake(size, variation)
-        _SCENE_CACHE[key] = sc
-        return sc
+        return _SCENE_CACHE.put(key, self._bake(size, variation))
 
     @staticmethod
     def _visible(m, kind: str, pr) -> list[int]:
@@ -1402,7 +1399,7 @@ NVD_BUDGET_BYTES = 6 << 30
 #: is what one conformance run asks for (the default 240 plus the 2x render
 #: ``check_resolution_consistency`` makes) and is the point below which the cache thrashes rather than
 #: caches.
-_NVD_CACHE: dict = {}
+_NVD_CACHE = _RES.BoundedCache(16, name="mujoco_locomotion.nvd", on_evict=ND.close_cached_renderer)
 _NVD_CACHE_MAX = 16
 
 
@@ -1677,8 +1674,6 @@ class GymMujocoVisual(_GymMujocoFamily):
         hit = _NVD_CACHE.get(key)
         if hit is not None:
             return hit
-        if len(_NVD_CACHE) >= _NVD_CACHE_MAX:
-            _NVD_CACHE.clear()
         m = self._model()
         c = _Nvd()
         c.model, c.data, c.size, c.ss = m, mujoco.MjData(m), size, ss
@@ -1713,7 +1708,7 @@ class GymMujocoVisual(_GymMujocoFamily):
         c.shadow = _ShadowPass(c, cast[0], NVD_SHADOW_RES) if (self.SHADOWS and cast) else None
         per_world = NVD_BYTES_PER_PIXEL * (size * ss) ** 2 + NVD_BYTES_PER_VERTEX * c.br.scene.V
         c.chunk = max(1, int(NVD_BUDGET_BYTES // max(1, per_world)))
-        _NVD_CACHE[key] = c
+        _NVD_CACHE.put(key, c)
         return c
 
     def _check_scene_is_supported(self, c: _Nvd) -> None:

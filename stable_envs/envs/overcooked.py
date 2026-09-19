@@ -111,6 +111,7 @@ import torch
 
 from ..env import Env
 from ..registry import register
+from ..render import _resources as _RES
 from ..render import tilemap as tm
 from ..spaces import Dict, RGBBox
 
@@ -348,7 +349,7 @@ class OvercookedAtlas:
         rgb, labels = self._load_or_build(self.T)
         self.official = torch.from_numpy(rgb).to(self.device)
         self.labels = torch.from_numpy(labels).to(self.device)
-        self._rgb_cache: dict[bytes, torch.Tensor] = {}
+        self._rgb_cache = _RES.BoundedCache(8, name="overcooked.rgb")
 
     @classmethod
     def get(cls, tile_size: int, device="cuda") -> "OvercookedAtlas":
@@ -382,11 +383,7 @@ class OvercookedAtlas:
         if hit is not None:
             return hit
         pal = torch.as_tensor(_label_palette(values), device=self.device)
-        out = self._recolour(pal)
-        if len(self._rgb_cache) > 8:
-            self._rgb_cache.clear()
-        self._rgb_cache[key] = out
-        return out
+        return self._rgb_cache.put(key, self._recolour(pal))
 
     def _recolour(self, pal: torch.Tensor) -> torch.Tensor:
         f, T = SUBDIVS, self.T

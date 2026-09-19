@@ -421,6 +421,13 @@ decisions:
     close()/BoundedCache wiring stays a documented follow-up.'
 - date: '2026-09-19'
   by: coordinator
+  topic: post-v0 shortcomings closed in-tree
+  ruling: 'Consumer MJWarp/nvdiff family caches are BoundedCache with on_evict release. Remaining
+    CPU clear-on-full caches (plates, terrains, RGB, raycast memos) are BoundedCache LRU. Live tests
+    and OSS examples import canonical modules; shims stay for scratch and alias-identity tests.
+    Fetch background.color and native swm.World(env=...) stay documented limitations.'
+- date: '2026-09-19'
+  by: coordinator
   topic: Wave 3 v0 archaeology
   ruling: keep shims, scratch/, and examples/results/ for v0. Do not destroy the Step-8 oracle. Correct
     only user-facing falsehoods (README [all] extra). stable_envs.testing stays public; rollout.py stays.
@@ -515,7 +522,5 @@ buckets:
     tree one (H)
   UPSTREAM_FINDING: []
   STEP9_CLEANUP:
-  - post-v0 retarget live tests off core/compat/swm_nav/ogb_manip/craftax_full shims, then delete the aliases
-  - post-v0 consumer MJWarp close()/BoundedCache wiring on family caches (fetch, ogbench, robocasa,
-    humanoidbench, metaworld, dmcontrol _TC_CACHE, mujoco_locomotion, rocket_landing)
+  - craftax_full.py remains a sys.modules alias so auto-discovery can load _craftax_full
   DEFERRED_OPTIMIZATION: []

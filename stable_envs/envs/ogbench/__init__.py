@@ -27,8 +27,8 @@ Wave 3 removes that file.
 
 THE RE-EXPORTS ARE THE SAME OBJECTS, not copies, and that matters for two of them in particular:
 ``_SCENE_CACHE`` and ``_ENV_CACHE`` are mutated through this package by
-``tests/unit/test_ogbench_scene_cache.py``, which saves, clears and restores the dict. A re-export
-binds the same dict, so a mutation through either path is seen by both; only a REBIND would not be,
+``tests/unit/test_ogbench_scene_cache.py``, which saves, clears and restores the cache. A re-export
+binds the same object, so a mutation through either path is seen by both; only a REBIND would not be,
 and ``tests/unit/test_envs_ogbench.py`` asserts the identity so that a future re-export written as a
 copy fails loudly instead of quietly rendering the wrong thing.
 """

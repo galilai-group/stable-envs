@@ -25,7 +25,7 @@ import pytest
 torch = pytest.importorskip("torch")
 
 from stable_envs import spaces
-from stable_envs.core.style import StyleTensor, rows_are_equal
+from stable_envs._style import StyleTensor, rows_are_equal
 
 DEV = "cpu"
 

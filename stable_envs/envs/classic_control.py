@@ -114,6 +114,7 @@ from tensordict import TensorDict
 
 from ..env import Env, check_states
 from ..registry import register
+from ..render import _resources as _RES
 from ..render import gfxdraw as G
 from ..spaces import Dict, Discrete, RGBBox
 from . import _stepgraph
@@ -1395,35 +1396,32 @@ def _mc_height(x):
     return float(np.sin(3 * x) * 0.45 + 0.55)
 
 
-_TERRAIN_CACHE: dict[tuple, np.ndarray] = {}
-_SPRITE_CACHE: dict = {}
-
-
 #: Bounded because the key is a colour pair and a randomised style draws a new one every call; an
 #: unbounded dict would grow by 720 kB per distinct appearance for the lifetime of the process.
 _TERRAIN_CACHE_MAX = 512
+_TERRAIN_CACHE = _RES.BoundedCache(_TERRAIN_CACHE_MAX, name="classic.terrain")
+_SPRITE_CACHE: dict = {}
 
 
 def _bake_terrain(bg, terrain) -> np.ndarray:
     """MountainCar's ``pygame.draw.aalines`` terrain, rasterised once. ``(400,600,3)`` uint8, pre-flip."""
     key = (tuple(bg), tuple(terrain))
-    if len(_TERRAIN_CACHE) >= _TERRAIN_CACHE_MAX and key not in _TERRAIN_CACHE:
-        _TERRAIN_CACHE.clear()
-    if key not in _TERRAIN_CACHE:
-        import os
-        os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
-        import pygame
-        pygame.init()
-        surf = pygame.Surface((600, 400))
-        surf.fill(tuple(bg))
-        sc = MountainCar.SCALE
-        xs = np.linspace(MountainCar.MINP, MountainCar.MAXP, 100)
-        ys = np.sin(3 * xs) * 0.45 + 0.55
-        pygame.draw.aalines(surf, points=list(zip((xs - MountainCar.MINP) * sc, ys * sc)),
-                            closed=False, color=tuple(terrain))
-        _TERRAIN_CACHE[key] = np.transpose(np.array(pygame.surfarray.pixels3d(surf)),
-                                           (1, 0, 2)).copy()
-    return _TERRAIN_CACHE[key]
+    hit = _TERRAIN_CACHE.get(key)
+    if hit is not None:
+        return hit
+    import os
+    os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
+    import pygame
+    pygame.init()
+    surf = pygame.Surface((600, 400))
+    surf.fill(tuple(bg))
+    sc = MountainCar.SCALE
+    xs = np.linspace(MountainCar.MINP, MountainCar.MAXP, 100)
+    ys = np.sin(3 * xs) * 0.45 + 0.55
+    pygame.draw.aalines(surf, points=list(zip((xs - MountainCar.MINP) * sc, ys * sc)),
+                        closed=False, color=tuple(terrain))
+    return _TERRAIN_CACHE.put(key, np.transpose(np.array(pygame.surfarray.pixels3d(surf)),
+                                                (1, 0, 2)).copy())
 
 
 def _torque_sprites(device) -> torch.Tensor:

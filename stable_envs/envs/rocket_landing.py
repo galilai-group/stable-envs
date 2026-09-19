@@ -77,6 +77,7 @@ try:
 except Exception as _e:                                                       # pragma: no cover
     NVDIFF_IMPORT_ERROR = f"{type(_e).__name__}: {_e}"
 
+from ..render import _resources as _RES
 from ..render import nvdiff as ND  # noqa: E402
 
 #: PyBullet's physics substep in PyFlyt's Aviary (``physics_hz = 240``); the lag is exactly one of them.
@@ -572,7 +573,7 @@ class _Nvd:
     __slots__ = ("br", "size", "ss", "chunk")
 
 
-_NVD_CACHE: dict = {}
+_NVD_CACHE = _RES.BoundedCache(8, name="rocket.nvd", on_evict=ND.close_cached_renderer)
 
 
 class PFRocketLanding(Env):
@@ -764,8 +765,6 @@ class PFRocketLanding(Env):
         hit = _NVD_CACHE.get(key)
         if hit is not None:
             return hit
-        if len(_NVD_CACHE) >= 8:
-            _NVD_CACHE.clear()
         vert, norm, face, vg, uv = build_scene_arrays()
         rgba = np.ones((N_GEOMS, 4))
         rgba[11] = FLAME_RGBA
@@ -778,10 +777,11 @@ class PFRocketLanding(Env):
         c.br = ND.BatchRenderer(None, res=size, device=str(self.device), supersample=ss, mipmap=False,
                                 skybox=False, quant="trunc", scene=scene, shading="tiny", tiny=ND.TinyShading(),
                                 tex_filter="nearest", sample_offset=(0.5, 0.5))
+        c.br.owns_scene = True
         c.br.background = np.array([1.0, 1.0, 1.0])                       # TinyRenderer's clear colour
         per_world = NVD_BYTES_PER_PIXEL * (size * ss) ** 2 + NVD_BYTES_PER_VERTEX * scene.V
         c.chunk = max(1, int(NVD_BUDGET_BYTES // max(1, per_world)))
-        _NVD_CACHE[key] = c
+        _NVD_CACHE.put(key, c)
         return c
 
     # ---- variation ----------------------------------------------------------

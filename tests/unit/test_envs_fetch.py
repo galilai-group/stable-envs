@@ -156,13 +156,16 @@ def test_the_module_still_refuses_to_import_without_the_raytracer():
         assert "mujoco_warp" in errs["fetch"]
 
 
-def test_the_module_level_caches_are_one_kind_of_thing():
-    """Six caches, one ``_Cache``: the eviction policy cannot drift between them any more."""
+def test_the_module_level_caches_split_egl_from_device_memory():
+    """EGL/model/pool stay unbounded; plates, free-camera poses and MJWarp contexts are LRU."""
     src = SRC.read_text(encoding="utf-8")
-    for name in ("_CTX_CACHE", "_PLATE_CACHE", "_MODEL_CACHE", "_RENDERER_CACHE", "_POOL_CACHE",
-                 "_CAM_CACHE"):
+    for name in ("_MODEL_CACHE", "_RENDERER_CACHE", "_POOL_CACHE"):
         assert f"{name} = _Cache(" in src, name
-    assert "_CACHE_MAX" not in src, "the per-cache bound constants were folded into _Cache"
+    assert '_PLATE_CACHE = _RES.BoundedCache(32, name="fetch.plate"' in src
+    assert '_CAM_CACHE = _RES.BoundedCache(256, name="fetch.cam"' in src
+    assert '_CTX_CACHE = _RES.BoundedCache(6, name="fetch.ctx"' in src
+    assert "on_evict=MW.release_cached_ctx" in src
+    assert "_CACHE_MAX" not in src, "the per-cache bound constants were folded into BoundedCache / _Cache"
 
 
 # ---------------------------------------------------------------- tier 2: two built cells

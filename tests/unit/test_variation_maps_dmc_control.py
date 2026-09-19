@@ -34,11 +34,11 @@ import numpy as np
 import pytest
 import torch
 
-from stable_envs.compat.worldmodel import (VARIATION_MAPS, check_mapping, style_from_variation,
+from stable_envs.interop import (VARIATION_MAPS, check_mapping, style_from_variation,
                                            swm_variation_space, variation_from_style, variation_map)
-from stable_envs.compat.variation_maps.dmc_control import (EXPECTED_COUNTS, LIGHT_RANGE, MAPS,
+from stable_envs._interop.variation_maps.dmc_control import (EXPECTED_COUNTS, LIGHT_RANGE, MAPS,
                                                            swm_defaults)
-from stable_envs.core.env import REGISTRY, make
+from stable_envs.registry import REGISTRY, make
 
 _HAVE_SWM = True
 try:  # pragma: no cover - environment dependent
@@ -321,9 +321,9 @@ def test_light_intensity_lands_on_the_model(cell):
 _DEAD_PROBE = r"""
 import hashlib, json, sys
 import numpy as np, gymnasium, stable_worldmodel  # noqa: F401
-from stable_envs.compat.worldmodel import variation_map
-from stable_envs.compat.variation_maps.dmc_control import MAPS
-from stable_envs.core.env import REGISTRY
+from stable_envs.interop import variation_map
+from stable_envs._interop.variation_maps.dmc_control import MAPS
+from stable_envs.registry import REGISTRY
 
 def probe(leaf):
     iv = np.asarray(leaf.init_value)
@@ -517,7 +517,7 @@ def test_the_parity_floor_set_is_the_plate_baking_tier():
     would otherwise leave the map claiming support the renderer no longer has -- or withholding
     support it does have -- and nothing else in this file would notice.
     """
-    from stable_envs.compat.variation_maps.dmc_control import _PARITY_FLOOR
+    from stable_envs._interop.variation_maps.dmc_control import _PARITY_FLOOR
     from stable_envs.envs.dmcontrol import DMControlSuite
 
     # Every DM Control id declares swm's floor.color, so "which of our cells can honour it" is

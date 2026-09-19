@@ -30,9 +30,9 @@ torch = pytest.importorskip("torch")
 
 import stable_envs as se
 from stable_envs import spaces
-from stable_envs.core.env import (REQUIRED_VISUAL_FIDELITY, StableEnv, check_decoder_declaration,
-                                  check_fidelity_declaration, format_registry, make, register,
-                                  registry_table)
+from stable_envs.env import REQUIRED_VISUAL_FIDELITY, Env as StableEnv
+from stable_envs.registry import (check_decoder_declaration, check_fidelity_declaration,
+                                  format_registry, make, register, registry_table)
 
 #: A complete, self-consistent measurement. Individual tests below remove exactly one thing from it,
 #: which is what makes each of them a test of one rule rather than of the whole block.
@@ -601,7 +601,7 @@ def test_a_test_that_creates_no_context_is_never_a_runaway():
 
 # ------------------------------------------------------------------ reference versions
 
-from stable_envs.core.env import MEASURED_WITH_KEY, REFERENCE_VERSIONS_KEY, reference_versions_of  # noqa: E402
+from stable_envs.env import MEASURED_WITH_KEY, REFERENCE_VERSIONS_KEY, reference_versions_of  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[2]
 

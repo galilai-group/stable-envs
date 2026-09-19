@@ -40,8 +40,8 @@ import pytest
 torch = pytest.importorskip("torch")
 
 from stable_envs import spaces
-from stable_envs.core.env import StableEnv, check_states, require_contiguous_out
-from stable_envs.core.style import StyleTensor
+from stable_envs.env import Env as StableEnv, check_states, require_contiguous_out
+from stable_envs._style import StyleTensor
 from stable_envs.data import StateDataset, TrajectoryDataset, check_style, render_states
 
 DEV = "cpu"
@@ -251,7 +251,7 @@ def test_the_non_finite_scan_runs_on_the_caller_s_tensor_before_any_device_copy(
     reduction over a few kilobytes and costs no device synchronisation at all. Asserted structurally:
     the reporter is handed a CPU tensor and must answer without moving it.
     """
-    from stable_envs.core.env import _nonfinite_report
+    from stable_envs.env import _nonfinite_report
     st = torch.zeros(4, 5)
     st[2, 3] = float("nan")
     out = _nonfinite_report(st, NAMES)

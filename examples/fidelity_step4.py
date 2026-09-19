@@ -271,7 +271,8 @@ def mandatory(env, states, style) -> dict:
 
 def _fidelity_declaration(env) -> dict:
     """``register``'s own enforcement, re-run on the live class. Raises if the tier is half-declared."""
-    from stable_envs.core.env import check_fidelity_declaration, reference_versions_of
+    from stable_envs.env import reference_versions_of
+    from stable_envs.registry import check_fidelity_declaration
     check_fidelity_declaration(type(env))
     d = env.describe()
     return {"tier": env.fidelity_tier, "describe_reports_tier": d.get("fidelity_tier"),

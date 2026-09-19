@@ -145,6 +145,7 @@ if _missing or _mjver < (3, 11):                                              # 
 
 from ..env import Env
 from ..registry import register
+from ..render import _resources as _RES
 from ..render import mjwarp as MW
 from ..spaces import Box, Dict
 
@@ -182,31 +183,16 @@ MJW_CHUNK = 256
 
 
 class _Cache(dict):
-    """A dict with a cap, which CLEARS rather than evicting one entry when it is reached.
+    """An unbounded dict with ``get_or_build``. Used only for values that are never released.
 
-    Six caches in this module asked the same question — look up, build on a miss, store — and wrote
-    it out six times. Three of them are also bounded, and the bound was checked in two different
-    places relative to the build: ``_CTX_CACHE`` and ``_PLATE_CACHE`` cleared BEFORE inserting, so
-    they held at most ``maxsize``; ``_CAM_CACHE`` cleared AFTER, so it held ``maxsize + 1``. That is
-    the kind of difference nobody intends and nobody notices, and it is why these are one type now.
-    The bound is applied before the insert, as the two that matter already did.
-
-    CLEARING ALL OF IT is the existing policy, kept deliberately rather than replaced with LRU: what
-    these hold is render contexts and compiled models, whose cost is dominated by the FIRST one (an
-    EGL context, a model compile), and an LRU that keeps five stale contexts alive holds
-    ``nworld * H * W * 12`` bytes apiece for them. ``maxsize=None`` means unbounded, which is what
-    the three per-scene caches want: there are four scenes and their entries are the point.
+    Compiled models, EGL renderers and state pools live for the process: an EGL context must not be
+    closed, and a compiled model is cheap enough that a cap would only cost recompiles. Bounded
+    working sets (plates, free-camera poses, MJWarp contexts) are ``BoundedCache`` instead.
     """
 
-    def __init__(self, name: str, maxsize: int | None = None):
+    def __init__(self, name: str):
         super().__init__()
         self.name = name
-        self.maxsize = maxsize
-
-    def __setitem__(self, key, value):
-        if self.maxsize is not None and len(self) >= self.maxsize and key not in self:
-            self.clear()
-        super().__setitem__(key, value)
 
     def get_or_build(self, key, build):
         """``self[key]``, building it with ``build()`` on a miss. The only way anything is stored."""
@@ -216,17 +202,17 @@ class _Cache(dict):
         return hit
 
 
-#: Contexts are cached per (scene, resolution, worlds); this bounds the cache rather than the number
-#: of EGL contexts, which are separate and never released.
-_CTX_CACHE = _Cache("render context", 6)
-_PLATE_CACHE = _Cache("baked plate", 32)
+#: Contexts are cached per (scene, resolution, worlds). Overflow LRU-evicts and drops tex_lod
+#: keepalives; EGL contexts are separate and never released.
+_CTX_CACHE = _RES.BoundedCache(6, name="fetch.ctx", on_evict=MW.release_cached_ctx)
+_PLATE_CACHE = _RES.BoundedCache(32, name="fetch.plate")
 _MODEL_CACHE = _Cache("compiled model")
 _RENDERER_CACHE = _Cache("MuJoCo renderer")
 _POOL_CACHE = _Cache("state pool")
 #: (model, lookat, distance, azimuth, elevation) -> the world pose MuJoCo gives that free camera.
 #: Cached because ``render`` asks for it once per distinct camera appearance per chunk, and the answer
 #: costs an ``MjvScene`` allocation and an ``mjv_updateScene``.
-_CAM_CACHE = _Cache("free-camera pose", 256)
+_CAM_CACHE = _RES.BoundedCache(256, name="fetch.cam")
 
 
 def _asset_dir() -> str:
@@ -316,8 +302,7 @@ def _free_cam_pose(m, d, lookat, distance, azimuth, elevation):
     y = np.cross(z, x)
     q = np.empty(4)
     mujoco.mju_mat2Quat(q, np.stack([x, y, z], axis=1).reshape(-1))
-    _CAM_CACHE[key] = (pos, q)
-    return pos, q
+    return _CAM_CACHE.put(key, (pos, q))
 
 
 class _Bundle:
@@ -552,7 +537,7 @@ def _context(scene: str, res: int, nworld: int) -> _Ctx:
         with c.wp.ScopedCapture() as cap:
             _frame(c)
         c.graph = cap.graph
-    _CTX_CACHE[key] = c
+    _CTX_CACHE.put(key, c)
     return c
 
 
@@ -794,8 +779,11 @@ class FetchBase(Env):
                 *[tuple(np.round(self._var(variation, p), 6).tolist()) for p in self.PLATE_PATHS])
 
     def _plate(self, res, variation) -> torch.Tensor:
-        return _PLATE_CACHE.get_or_build(self._plate_key(res, variation),
-                                         lambda: self._bake_plate(res, variation))
+        key = self._plate_key(res, variation)
+        hit = _PLATE_CACHE.get(key)
+        if hit is not None:
+            return hit
+        return _PLATE_CACHE.put(key, self._bake_plate(res, variation))
 
     def _bake_plate(self, res, variation, states=None) -> torch.Tensor:
         """MuJoCo's own raster of the static scene: floor, table, skybox. Exact by construction.

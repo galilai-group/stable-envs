@@ -982,6 +982,13 @@ def _to_pow2(a: np.ndarray):
 
 # --------------------------------------------------------------------------- the renderer
 
+def close_cached_renderer(c) -> None:
+    """``BoundedCache.on_evict`` for a family cache whose values hold ``c.br``."""
+    br = getattr(c, "br", None)
+    if br is not None:
+        br.close()
+
+
 class BatchRenderer(_resources.Closeable):
     """``(B, ngeom, ...)`` geom frames -> ``(B, H, W, 3)`` uint8 on device.
 

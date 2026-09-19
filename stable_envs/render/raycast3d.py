@@ -43,6 +43,7 @@ from dataclasses import dataclass
 import numpy as np
 import torch
 
+from . import _resources as _RES
 from .primitives import (BOX, CAPSULE, CYLINDER, ELLIPSOID, GEOM_NAMES, INF,  # noqa: F401
                          PLANE, PRIMITIVE_KINDS, SPHERE, Primitives)
 from .primitives import bound_radius_tensor as _bound_radius
@@ -151,35 +152,11 @@ class Camera:
 # a set of bounding radii -- rebuilt because they were written where they are used rather than where
 # they are computed. Memoising them is not an optimisation of the arithmetic; it removes a stall.
 
-class _Memo(dict):
-    """A dict for a value that is a pure function of its key, with a bound on how many it keeps.
-
-    Five things in this module are memoised -- a camera basis, the eight corner sign patterns, the
-    kind vector, a ray bundle, a tile's flat offsets -- and each one used to carry its own copy of
-    "look it up; if it is missing and the dict is full, clear it; build it; store it". The eviction
-    is a CLEAR rather than an LRU on purpose: the keys are (camera, resolution, device) tuples that
-    a process holds a couple of live combinations of, so the cap exists to stop an adversarial
-    caller growing the dict without bound, not to manage a working set, and a policy nobody can
-    trip is better as three lines in one place than as five near-copies.
-
-    A plain ``dict`` subclass, so ``len``/``clear``/``copy`` and every reader keep working.
-    """
-
-    def __init__(self, cap: int):
-        super().__init__()
-        self.cap = int(cap)
-
-    def put(self, key, value):
-        """Store and return ``value``, emptying the cache first if it is at its cap."""
-        if len(self) >= self.cap:
-            self.clear()
-        self[key] = value
-        return value
-
+_Memo = _RES.BoundedCache
 
 _CACHE_MAX = 32
-_PROJ_CACHE = _Memo(_CACHE_MAX)
-_CORNER_CACHE = _Memo(_CACHE_MAX)
+_PROJ_CACHE = _Memo(_CACHE_MAX, name="raycast3d.proj")
+_CORNER_CACHE = _Memo(_CACHE_MAX, name="raycast3d.corner")
 
 
 def _proj_tensors(cam: "Camera", device, dtype):
@@ -1134,7 +1111,7 @@ CAST_BLOCK = 256
 #: (device, kinds) -> the (K,) int32 the kernel branches on. Cast kinds arrive as a numpy array or a
 #: Python list and are constant for the life of a scene, so rebuilding the tensor per call would be a
 #: host-to-device copy on the critical path of every pass.
-_KIND_CACHE = _Memo(64)
+_KIND_CACHE = _Memo(64, name="raycast3d.kind")
 
 
 def _kind_tensor(kinds, device) -> torch.Tensor:
@@ -1264,7 +1241,7 @@ def any_blocking(kinds: Kinds, sizes: torch.Tensor, pos: torch.Tensor, R: torch.
 #: ``Rh*Rw*3`` float32 -- 3.1 MB at 512x512 -- and no caller here has more than a couple of live
 #: (camera, resolution) pairs at once.
 _RAY_CACHE_MAX = 8
-_RAY_CACHE = _Memo(_RAY_CACHE_MAX)
+_RAY_CACHE = _Memo(_RAY_CACHE_MAX, name="raycast3d.rays")
 
 
 def cached_rays(cam: Camera, H: int, W: int, device,
@@ -1696,7 +1673,7 @@ def _tile_origin(cam: Camera, prims: Primitives, xpos: torch.Tensor, H: int, W: 
 
 #: ``(tile, ss, width, device)`` -> the ``(tile*ss)^2`` flat offsets of a window at the origin.
 _TILE_CACHE_MAX = 16
-_TILE_CACHE = _Memo(_TILE_CACHE_MAX)
+_TILE_CACHE = _Memo(_TILE_CACHE_MAX, name="raycast3d.tile")
 
 
 def _expand_tile(org, tile: int, ss: int, Wpix: int, device) -> torch.Tensor:

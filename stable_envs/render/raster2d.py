@@ -79,6 +79,7 @@ from __future__ import annotations
 
 import torch
 
+from . import _resources as _RES
 from .scene import KIND_DISC, KIND_POLY, KIND_SEGMENT, Scene2D
 
 try:
@@ -799,8 +800,8 @@ if HAVE_TRITON:
 #: Cache of baked static-prefix images, keyed by (resolution, the static primitives' exact bytes).
 #: Keyed on VALUES, not on the env object: a variation that recolours the goal must invalidate the bake,
 #: and an identity keyed on the env would silently keep serving the old background.
-_BASE_CACHE: dict = {}
 _BASE_CACHE_MAX = 32
+_BASE_CACHE = _RES.BoundedCache(_BASE_CACHE_MAX, name="raster2d.base")
 
 #: Subpixel-primitive evaluations the bake must save before it is worth asking whether it may run.
 #: Deciding costs one device-to-host synchronisation per call (0.08-0.29 ms, flat in batch); the bake
@@ -881,10 +882,7 @@ def _static_base(scene: Scene2D, Rh: int, Rw: int, block: int) -> torch.Tensor |
                          line_w=scene.line_w[:1, :K].contiguous(),
                          background=scene.background[:1].contiguous(),
                          world=scene.world, flip_y=scene.flip_y, static_prefix=0)
-        hit = render_triton(prefix, (Rh, Rw), supersample=1, block=block)[0].contiguous()
-        if len(_BASE_CACHE) >= _BASE_CACHE_MAX:
-            _BASE_CACHE.clear()
-        _BASE_CACHE[key] = hit
+        hit = _BASE_CACHE.put(key, render_triton(prefix, (Rh, Rw), supersample=1, block=block)[0].contiguous())
     return hit
 
 

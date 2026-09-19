@@ -299,6 +299,7 @@ from tensordict import TensorDict
 
 from ..env import Env, check_states
 from ..registry import register
+from ..render import _resources as _RES
 from ..render import navdot
 from ..render.scene import Scene2D, SceneBuilder
 from ..spaces import Box, Dict, Discrete, RGBBox
@@ -769,11 +770,10 @@ class _SWMNavBase(_SWMPort):
         return (s[:, 0:2].reshape(k, 1, 2), sl("agent.radius").reshape(k, 1),
                 sl("agent.color").reshape(k, 1, 3))
 
-    #: Baked base images, keyed on the bytes of the style row that produced them. Bounded, and
-    #: cleared wholesale rather than evicted one at a time — the same shape, and for the same
-    #: reasons, as ``render/raster2d.py``'s ``_BASE_CACHE``.
-    _BAKE_CACHE: dict = {}
+    #: Baked base images, keyed on the bytes of the style row that produced them. Bounded LRU —
+    #: the same shape as ``render/raster2d.py``'s ``_BASE_CACHE``.
     _BAKE_CACHE_MAX = 64
+    _BAKE_CACHE = _RES.BoundedCache(_BAKE_CACHE_MAX, name="navigation.bake")
 
     def _base_image(self, sty, lo: int, hi: int) -> torch.Tensor:
         """``base_image`` for rows ``[lo, hi)``, built once per DISTINCT style row rather than per row.
@@ -830,10 +830,8 @@ class _SWMNavBase(_SWMPort):
             hit = _SWMNavBase._BAKE_CACHE.get(ck)
             if hit is None:
                 first = lo + idx[0]
-                hit = self.base_image(lambda p, a=first: sty[p][a:a + 1], 1)
-                if len(_SWMNavBase._BAKE_CACHE) >= self._BAKE_CACHE_MAX:
-                    _SWMNavBase._BAKE_CACHE.clear()
-                _SWMNavBase._BAKE_CACHE[ck] = hit
+                hit = _SWMNavBase._BAKE_CACHE.put(
+                    ck, self.base_image(lambda p, a=first: sty[p][a:a + 1], 1))
             plates.append(hit)
         if len(plates) == 1:
             return plates[0].expand(k, IMG, IMG, 3)

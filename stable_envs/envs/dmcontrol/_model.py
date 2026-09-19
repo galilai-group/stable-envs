@@ -14,6 +14,9 @@ import os
 
 import numpy as np
 
+from ...render import _resources as _RES
+from ...render import mjwarp as MW
+
 # MuJoCo picks its GL backend from MUJOCO_GL and defaults to GLFW, which needs an X display; on a
 # headless GPU node that aborts the interpreter rather than raising. Every machine this runs on
 # renders offscreen. An explicit setting always wins.
@@ -71,8 +74,8 @@ EPISODE_ARRAYS = ("geom_pos", "geom_quat", "geom_size", "site_pos", "site_quat",
 N_DRAWS = 6
 #: Component labels, so a widened state dimension is named ``target_pos_x`` and not ``slot 3``.
 _COMPONENT = {3: ("x", "y", "z"), 4: ("qw", "qx", "qy", "qz")}
-_SCENE_CACHE: dict = {}
 _SCENE_CACHE_MAX = 96
+_SCENE_CACHE = _RES.BoundedCache(_SCENE_CACHE_MAX, name="dmcontrol.scene")
 #: ``(width, height, nchannel) -> (rgb1 mask, rgb2 mask)`` over the suite's builtin ``grid`` checker,
 #: and ``{}`` until the first parity cell asks. See ``_grid_masks``.
 _GRID_MASKS: dict = {}
@@ -84,7 +87,7 @@ _GRID_SLOTS: dict = {}
 _ENV_CACHE: dict = {}
 #: (domain, task, res, worlds) -> a captured MJWarp context. Small, because a context owns
 #: ``nworld * res^2 * 12`` bytes of device memory and holding several domains' at once buys nothing.
-_TC_CACHE: dict = {}
+_TC_CACHE = _RES.BoundedCache(3, name="dmcontrol.tc", on_evict=MW.release_cached_ctx)
 _TC_CACHE_MAX = 3
 #: Worlds per MJWarp context, as in Meta-World and Fetch. Throughput saturates well below this (S7 of
 #: the research note), so a bigger context only costs memory.

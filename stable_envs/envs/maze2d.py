@@ -105,6 +105,7 @@ os.environ.setdefault("MUJOCO_GL", "egl")
 
 from ..env import Env
 from ..registry import register
+from ..render import _resources as _RES
 from ..render import raycast3d as R3
 from ..spaces import Box, Dict, Discrete
 
@@ -128,8 +129,8 @@ POSITION_NOISE = 0.25
 STATE_NAMES = ("ball_x", "ball_y", "goal_x", "goal_y")
 
 _ENV_CACHE: dict = {}
-_SCENE_CACHE: dict = {}
 _SCENE_CACHE_MAX = 64
+_SCENE_CACHE = _RES.BoundedCache(_SCENE_CACHE_MAX, name="maze2d.scene")
 
 
 def _offsets(paths, sty):
@@ -359,11 +360,7 @@ class PointMaze(Env):
         hit = _SCENE_CACHE.get(key)
         if hit is not None:
             return hit
-        if len(_SCENE_CACHE) >= _SCENE_CACHE_MAX:
-            _SCENE_CACHE.clear()
-        sc = self._bake(size, variation)
-        _SCENE_CACHE[key] = sc
-        return sc
+        return _SCENE_CACHE.put(key, self._bake(size, variation))
 
     def _bake(self, size: int, variation) -> _Scene:
         """Hide the two sites, let MuJoCo draw everything else, and read the camera off its scene.

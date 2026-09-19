@@ -585,6 +585,17 @@ def release_render_context(rc) -> None:
         pass                                              # a C type with no settable attribute
 
 
+def release_cached_ctx(c) -> None:
+    """``BoundedCache.on_evict`` for a family ``_Ctx`` that holds an MJWarp render context.
+
+    Drops the tex_lod keepalives attached to ``c.rc``. Does not free an EGL context — the object
+    does not own one, and the repository-wide rule is that an EGL context is never released.
+    """
+    rc = getattr(c, "rc", None)
+    if rc is not None:
+        release_render_context(rc)
+
+
 def create_render_context(m, tex_lod: int = 1, **kw):
     """``mjw.create_render_context`` without its per-texture re-upload of the whole texture blob.
 

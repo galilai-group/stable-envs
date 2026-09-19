@@ -44,7 +44,7 @@ def arm() -> dict:
 
 @pytest.mark.parametrize("cell", TRACKCOM)
 def test_the_cell_declares_the_reference_it_was_measured_against(cell: str) -> None:
-    from stable_envs.core.env import reference_versions_of
+    from stable_envs.env import reference_versions_of
     import stable_envs
 
     cls = stable_envs.REGISTRY.get(cell)

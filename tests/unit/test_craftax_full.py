@@ -20,8 +20,8 @@ import numpy as np
 import pytest
 import torch
 
-from stable_envs.envs import craftax_full as CF
-from stable_envs.envs.craftax_full import CraftaxFull
+from stable_envs.envs import _craftax_full as CF
+from stable_envs.envs._craftax_full import CraftaxFull
 
 GOLDEN = json.loads((Path(__file__).resolve().parents[1] / "fixtures"
                      / "craftax_full_golden.json").read_text())

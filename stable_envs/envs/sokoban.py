@@ -88,6 +88,7 @@ from tensordict import TensorDict
 
 from ..env import Env
 from ..registry import register
+from ..render import _resources as _RES
 from ..render import tilemap as tm
 from ..spaces import Dict, RGBBox
 
@@ -282,7 +283,7 @@ class Sokoban(Env):
         self._pool: np.ndarray | None = None
         self._pool_has: np.ndarray | None = None
         self._default_t: torch.Tensor | None = None
-        self._rgb_cache: dict[bytes, torch.Tensor] = {}
+        self._rgb_cache = _RES.BoundedCache(8, name="sokoban.rgb")
         dev = self.device
         self._state_of = torch.tensor(ROOM_STATE_OF, dtype=torch.long, device=dev)
         self._fixed_of = torch.tensor(ROOM_FIXED_OF, dtype=torch.long, device=dev)
@@ -344,10 +345,7 @@ class Sokoban(Env):
         base = (self.atlas.rgb if self._is_default(sty)
                 else self._palette(sty)[0].to(torch.uint8)[self.atlas.labels.long()])
         out = (base if k == 1 else base.repeat_interleave(k, 1).repeat_interleave(k, 2)).contiguous()
-        if len(self._rgb_cache) > 8:
-            self._rgb_cache.clear()
-        self._rgb_cache[key] = out
-        return out
+        return self._rgb_cache.put(key, out)
 
     @torch.no_grad()
     def render(self, states=None, size: int | None = None, supersample: int | None = None,
@@ -523,7 +521,7 @@ class Sokoban(Env):
         self._pool = None
         self._pool_has = None
         self._default_t = None
-        self._rgb_cache = {}
+        self._rgb_cache.clear()
 
     # --- states -----------------------------------------------------------------------------------
 

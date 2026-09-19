@@ -352,7 +352,7 @@ def test_fidelity_tier_is_fully_declared(env):
     enforcement is ever weakened or bypassed. The tier decides which of the two parity tests below
     applies, so an env with an under-specified tier would silently be checked by neither.
     """
-    from stable_envs.core.env import check_fidelity_declaration
+    from stable_envs.registry import check_fidelity_declaration
     check_fidelity_declaration(type(env))
     assert env.describe()["fidelity_tier"] == env.fidelity_tier, (
         "describe() must report the tier — it is how a consumer finds out that these frames are not "

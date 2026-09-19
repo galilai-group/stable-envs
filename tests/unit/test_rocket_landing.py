@@ -203,8 +203,8 @@ def test_the_visual_declaration_is_complete_and_measured():
     ``tests/gpu/test_conformance.py::test_visual_tier_matches_its_declared_fidelity``, on a card,
     against the official PyFlyt renderer.
     """
-    from stable_envs.core.env import (REQUIRED_VISUAL_FIDELITY, check_fidelity_declaration,
-                                      check_decoder_declaration)
+    from stable_envs.env import REQUIRED_VISUAL_FIDELITY
+    from stable_envs.registry import check_decoder_declaration, check_fidelity_declaration
     vf = RL.PFRocketLanding.visual_fidelity
     assert all(k in vf for k in REQUIRED_VISUAL_FIDELITY)
     assert all(vf[k] is not None for k in REQUIRED_VISUAL_FIDELITY)

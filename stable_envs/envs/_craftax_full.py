@@ -116,6 +116,7 @@ import torch
 
 from ..env import Env
 from ..registry import register
+from ..render import _resources as _RES
 from ..render import prng
 from ..spaces import Box, Dict, Discrete
 from ._craftax_full_tex import MOB_BASE, N_MOB_SLOT, N_PROJ_SLOT, TABLES
@@ -563,8 +564,8 @@ class _Tables:
     bytes, which is worth about 3x on a lit frame.
     """
 
-    _cache: dict = {}
     _MAX_ENTRIES = 6
+    _cache = _RES.BoundedCache(_MAX_ENTRIES, name="craftax_full.tables")
 
     @staticmethod
     def _rows(a: np.ndarray, t: int, device) -> torch.Tensor:
@@ -605,10 +606,7 @@ class _Tables:
 
         tab = {"bg": pack(bg), "ov": pack(ov_rgb, ov_m),
                "pl": pack(pl_rgb, pl_m), "dg": pack(dg_rgb, dg_m), "t": t}
-        if len(cls._cache) >= cls._MAX_ENTRIES:
-            cls._cache.clear()
-        cls._cache[key] = tab
-        return tab
+        return cls._cache.put(key, tab)
 
 
 _VIGNETTE_CACHE: dict = {}

@@ -36,7 +36,7 @@ def normalize_package(name: str) -> str:
 def reference_version_mismatch(declared: dict | None, recorded: dict | None) -> list[str]:
     """Every declared reference version the measuring interpreter did not match, as sentences.
 
-    ``declared`` is the env's ``reference_versions`` (``stable_envs.core.env.reference_versions_of``);
+    ``declared`` is the env's ``reference_versions`` (``stable_envs.env.reference_versions_of``);
     ``recorded`` is the artifact's ``provenance.reference_packages``. Empty list means every declared
     version was recorded and equal -- or nothing was declared, which is not a mismatch: an
     undeclared version is the pre-field state of the world and is judged as before.

@@ -15,8 +15,8 @@ import numpy as np
 import torch
 import pytest
 
-from stable_envs.compat.worldmodel import VARIATION_MAPS, variation_map
-from stable_envs.compat.variation_maps.newcells import (
+from stable_envs.interop import VARIATION_MAPS, variation_map
+from stable_envs._interop.variation_maps.newcells import (
     BUCKETS, LEAF_CLASSIFICATION, NEWCELL_VARIATION_MAPS, RECORDED_OURS_LEAVES,
     RECORDED_SWM_LEAVES,
 )
@@ -409,7 +409,7 @@ def test_simple_point_maze_mapped_leaves_are_dims_of_our_own_space():
 def test_craftax_ids_are_recorded_as_having_no_leaves_at_all():
     """Confirmed live: CraftaxWrapper.__init__ sets variation_space = None, so there is no Gate-F
     variation gap for either id. Recorded so the Step-8 count has no implicit exception."""
-    from stable_envs.compat.variation_maps.newcells import CRAFTAX_NO_LEAVES
+    from stable_envs._interop.variation_maps.newcells import CRAFTAX_NO_LEAVES
     assert set(CRAFTAX_NO_LEAVES) == {"swm/CraftaxClassicPixels-v1", "swm/CraftaxPixels-v1"}
     for sid, rec in CRAFTAX_NO_LEAVES.items():
         assert rec["n_swm_leaves"] == 0
@@ -439,7 +439,7 @@ def _stub_env(device="cpu"):
     """An `OGBManipBase` with only the attributes the colour helpers touch."""
     import types
 
-    from stable_envs.envs.ogb_manip import OGBManipBase
+    from stable_envs.envs.ogbench.manipulation import OGBManipBase
     ngeom = 80
     pristine = np.zeros((ngeom, 4), np.float64)
     pristine[:, 3] = 1.0
@@ -491,13 +491,13 @@ def _sty(rows):
 
 
 def _base_cls():
-    from stable_envs.envs.ogb_manip import OGBManipBase
+    from stable_envs.envs.ogbench.manipulation import OGBManipBase
     return OGBManipBase
 
 
 def _upload(env, c, sty, B, nworld):
     """One render's worth of uploads, chunked exactly as `render` chunks them."""
-    from stable_envs.envs.ogb_manip import MJW_CHUNK
+    from stable_envs.envs.ogbench.manipulation import MJW_CHUNK
     cube = env._cube_colours(sty, B)
     assert cube is not None, (
         "_cube_colours returned None, so render() would skip the upload entirely. That is the "
@@ -618,7 +618,7 @@ def _ogb_space(cell):
     """
     import types
     pytest.importorskip("ogbench")
-    from stable_envs.envs.ogb_manip import OGBManipBase
+    from stable_envs.envs.ogbench.manipulation import OGBManipBase
     return OGBManipBase.make_variation_space(types.SimpleNamespace(CELL=cell))
 
 
@@ -648,7 +648,7 @@ def test_a_swm_shaped_cube_colour_survives_the_round_trip_through_our_style_row(
     """
     import types
 
-    from stable_envs.compat.worldmodel import style_from_variation, variation_from_style
+    from stable_envs.interop import style_from_variation, variation_from_style
     space = _ogb_space(cell)
     name = {"Cube": "OGBCube", "Scene": "OGBScene"}[cell]
     env = types.new_class(name, ())()

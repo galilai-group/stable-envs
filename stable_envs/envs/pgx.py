@@ -233,12 +233,13 @@ except Exception as _e:                                                       # 
 
 from ..env import Env
 from ..registry import register
+from ..render import _resources as _RES
 from ..spaces import Box, Dict, RGBBox
 
 #: Rasterized plates, keyed by (game, resolution, colours). Bounded because each miss costs one resvg
 #: raster of the whole canvas; the number of DISTINCT appearances is what a caller controls.
-_PLATE_CACHE: dict = {}
 _PLATE_CACHE_MAX = 64
+_PLATE_CACHE = _RES.BoundedCache(_PLATE_CACHE_MAX, name="pgx.plate")
 #: (game,) -> the pool of real played positions ``sample_states`` draws from.
 _POOL_CACHE: dict = {}
 #: colour name -> (r, g, b), resolved by RASTERIZING rather than by transcribing a table.
@@ -619,11 +620,7 @@ class PgxBoardBase(Env):
         hit = _PLATE_CACHE.get(key)
         if hit is not None:
             return hit
-        if len(_PLATE_CACHE) >= _PLATE_CACHE_MAX:
-            _PLATE_CACHE.clear()
-        img = self._bake_plate(res, colors)
-        out = _PLATE_CACHE[key] = torch.as_tensor(img, device=self.device)
-        return out
+        return _PLATE_CACHE.put(key, torch.as_tensor(self._bake_plate(res, colors), device=self.device))
 
     def _bake_plate(self, res: int, colors: dict | None, probe_state=None) -> np.ndarray:
         """resvg's own raster of the EMPTY board. Exact by construction.

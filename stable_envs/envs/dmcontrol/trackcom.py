@@ -14,9 +14,10 @@ from __future__ import annotations
 import numpy as np
 import torch
 
+from ...render import _resources as _RES
 from ...render import cpu3d as C3
 from ...render import mjwarp as MW
-from ._model import MJW_CHUNK, VISIBLE_GROUPS, _TC_CACHE, _TC_CACHE_MAX, _effective_alpha, \
+from ._model import MJW_CHUNK, VISIBLE_GROUPS, _TC_CACHE, _effective_alpha, \
     _row_width, _slot_element
 from .base import _DMCModel
 
@@ -55,8 +56,6 @@ def _tc_context(cls, res: int, nworld: int) -> _TCtx:
     hit = _TC_CACHE.get(key)
     if hit is not None:
         return hit
-    if len(_TC_CACHE) >= _TC_CACHE_MAX:
-        _TC_CACHE.clear()
     _, m, _, pr, _, slots = cls._bundle(cls.default_size)
     for arr in {a for a, _ in slots}:                  # a canonical model, so the context is a
         getattr(m, arr)[:] = pr[arr]                   # function of the domain and nothing else
@@ -102,7 +101,7 @@ def _tc_context(cls, res: int, nworld: int) -> _TCtx:
     with wp.ScopedCapture() as cap:
         _tc_frame(c)
     c.graph = cap.graph
-    _TC_CACHE[key] = c
+    _TC_CACHE.put(key, c)
     return c
 
 
@@ -227,7 +226,8 @@ class DMControlTrackCom(_DMCModel):
 
     def _cpu_scene(self, size: int) -> "C3.Scene":
         """One ``cpu3d.Scene`` per resolution: rays, the baked skybox, the plane, the movers."""
-        cache = self.__dict__.setdefault("_cpu_scenes", {})
+        cache = self.__dict__.setdefault(
+            "_cpu_scenes", _RES.BoundedCache(4, name="dmcontrol.trackcom.cpu"))
         hit = cache.get(int(size))
         if hit is not None:
             return hit
@@ -260,10 +260,7 @@ class DMControlTrackCom(_DMCModel):
                 f"{type(self).__name__} ({self.DOMAIN}-{self.TASK}) has no CPU 3-D backend: {e}. "
                 f"device='cuda' draws it through MJWarp; device='cpu' is refused rather than "
                 f"silently served by the GPU") from e
-        if len(cache) >= 4:                        # a scene is one ray grid + one skybox plate per size
-            cache.clear()
-        cache[int(size)] = sc
-        return sc
+        return cache.put(int(size), sc)
 
     def _cpu_poses(self, s: torch.Tensor, sc: "C3.Scene"):
         """``(B, state_dim)`` -> camera, mover, light poses through MuJoCo's own FK.

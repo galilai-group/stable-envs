@@ -180,11 +180,7 @@ class DMControlSuite(_DMCModel):
         hit = _SCENE_CACHE.get(key)
         if hit is not None:
             return hit
-        if len(_SCENE_CACHE) >= _SCENE_CACHE_MAX:
-            _SCENE_CACHE.clear()
-        sc = self._bake(size, variation)
-        _SCENE_CACHE[key] = sc
-        return sc
+        return _SCENE_CACHE.put(key, self._bake(size, variation))
 
     def _apply_variation(self, m, pr, variation):
         """Absolute assignment from the pristine snapshot, never an increment, so baking B after A

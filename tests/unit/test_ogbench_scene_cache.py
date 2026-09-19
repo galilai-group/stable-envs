@@ -42,13 +42,14 @@ def _scene(stub, size, variation):
 @pytest.fixture(autouse=True)
 def _isolated_cache():
     """The cache is module-level, so a test that leaves entries in it changes the next one."""
-    saved = OGB._SCENE_CACHE.copy()
+    saved = {k: OGB._SCENE_CACHE.get(k) for k in OGB._SCENE_CACHE.keys()}
     OGB._SCENE_CACHE.clear()
     try:
         yield
     finally:
         OGB._SCENE_CACHE.clear()
-        OGB._SCENE_CACHE.update(saved)
+        for k, v in saved.items():
+            OGB._SCENE_CACHE.put(k, v)
 
 
 def test_a_hot_key_survives_far_more_distinct_inserts_than_the_cap():

@@ -43,8 +43,11 @@ from __future__ import annotations
 
 import math
 import os
+
 import numpy as np
 import torch
+
+from . import _resources as _RES
 
 try:                                       # triton is optional; the torch path is the readable one
     import triton
@@ -294,7 +297,7 @@ class MiniGridAtlas:
         atlas, labels = self._load_or_build(self.T, verify)
         self.official = torch.from_numpy(atlas).to(self.device)
         self.labels = torch.from_numpy(labels).to(self.device)
-        self._rgb_cache: dict[bytes, torch.Tensor] = {}
+        self._rgb_cache = _RES.BoundedCache(8, name="tilemap.rgb")
 
     @classmethod
     def get(cls, tile_size: int, device="cuda") -> "MiniGridAtlas":
@@ -340,8 +343,9 @@ class MiniGridAtlas:
         """(1980,T,T,3) uint8 atlas for these variation values. Default values return the official one."""
         key = b"|".join(np.ascontiguousarray(np.asarray(values[k], np.float64)).tobytes()
                         for k in sorted(values))
-        if key in self._rgb_cache:
-            return self._rgb_cache[key]
+        hit = self._rgb_cache.get(key)
+        if hit is not None:
+            return hit
         if self._is_default(values):
             out = self.official
         else:
@@ -350,10 +354,7 @@ class MiniGridAtlas:
                                    float(np.asarray(values.get("highlight_alpha",
                                                                DEFAULT_HIGHLIGHT_ALPHA)).ravel()[0]))
             out = recolour(self.labels, p, hp, self.T)
-        if len(self._rgb_cache) > 8:
-            self._rgb_cache.clear()
-        self._rgb_cache[key] = out
-        return out
+        return self._rgb_cache.put(key, out)
 
     @staticmethod
     def _is_default(values: dict) -> bool:

@@ -54,13 +54,14 @@ breakage.
 
 ## Coordinator requests (after K and the GPU gate)
 
-1. Retarget live tests from `stable_envs.core` / `stable_envs.compat` to `env` / `interop` /
-   `_interop`. Keep the shims for scratch until a later ticket.
+1. Live tests import canonical modules (`env` / `interop` / `_interop`). Shims stay for scratch
+   and for the alias-identity tests.
 2. When `ogb_manip` goes, move `manipulation._MODULE` and `scratch/step4/universe.py::shard_of`
    together (Workstream D R2).
 3. Do not delete `examples/results/` or `scratch/` for v0.
-4. Consumer `close()` / `BoundedCache` wiring on MJWarp family caches is still the I follow-up
-   list; it is behavior-preserving and can land after the GPU oracle, not in this inventory.
+4. Consumer `close()` / `BoundedCache` wiring on MJWarp/nvdiff family caches is done
+   (`release_cached_ctx` / `close_cached_renderer` / rocket `owns_scene`). Remaining CPU
+   clear-on-full caches are the same LRU.
 
 ## §17 ten items
 
