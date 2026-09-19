@@ -10,7 +10,7 @@ produced by ``parity_cell``/``trackcom_cell`` from the data in the eighteen doma
 
 The Step-9 foundation additions live here too, and there are only three:
 
-  * ``num_envs=`` (contract §2), with ``batch=`` still accepted as the deprecated spelling;
+  * ``num_envs=`` (contract §2);
   * a two-key public ``State`` (contract §3) — ``{"qpos": (nq,), "episode": (k,)}`` — whose
     ``state_layout`` is assigned PER INSTANCE, because a DM Control cell's ``state_dim`` is a
     property of the compiled model and is not known until one is constructed;
@@ -86,9 +86,8 @@ class _DMCModel(Env):
     CPU_UNCERTIFIED_REASON: str = ""
 
     def __init__(self, num_envs: int = 1, size: int | None = None, supersample: int | None = None,
-                 device: str = "cuda", backend: str = "auto", seed: int = 0,
-                 batch: int | None = None):
-        """``num_envs`` environments on ``device`` (contract §2); ``batch=`` is the Step-8 spelling.
+                 device: str = "cuda", backend: str = "auto", seed: int = 0):
+        """``num_envs`` environments on ``device`` (contract §2).
 
         ``state_dim`` and ``state_names`` are read off the COMPILED MODEL here and not declared on the
         class, because they are: ``nq`` plus however many model entries this task draws per episode,
@@ -107,7 +106,7 @@ class _DMCModel(Env):
         k = self.state_dim - self.nq
         self.state_layout = ((("qpos",), self.nq, 0),) + (
             ((("episode",), k, self.nq),) if k else ())
-        super().__init__(num_envs=num_envs, batch=batch, size=size,
+        super().__init__(num_envs=num_envs, size=size,
                          supersample=self.default_supersample if supersample is None else supersample,
                          device=device, backend=backend, seed=seed)
         assert len(self.state_names) == self.state_dim

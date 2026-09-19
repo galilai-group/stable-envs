@@ -115,7 +115,7 @@ def time_arm(make_iter, env, device: str, reps: int) -> dict:
 def run_env(name: str, device: str, batches: list[int], n_states: int, reps: int) -> dict:
     rec: dict = {"env": name, "device": device}
     try:
-        env = se.make(name, batch=max(batches), device=device)
+        env = se.make(name, num_envs=max(batches), device=device)
         pool = np.asarray(env.sample_states(min(n_states, 4096)), np.float32)
         states = torch.as_tensor(np.resize(pool, (n_states, pool.shape[1])))
         rec.update({"size": int(env.size), "supersample": int(env.ss), "n_states": n_states,

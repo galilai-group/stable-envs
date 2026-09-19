@@ -16,7 +16,7 @@ Three properties make that work, and each is asserted below rather than asserted
   * the library's own datasets still work under a caller-built loader, with the one argument they
     genuinely need, and with a ``BatchSampler`` they need no argument at all.
 
-CPU only. The env here is a real ``StableEnv`` subclass on ``device="cpu"`` — see
+CPU only. The env here is a real ``Env`` subclass on ``device="cpu"`` — see
 ``tests/unit/test_input_validation.py`` for why the guard tests in this area must not live in
 ``tests/gpu/``.
 
@@ -41,8 +41,8 @@ from test_input_validation import TinyEnv, _ids, _states           # noqa: E402 
 DEV = "cpu"
 
 
-def _env(batch: int = 8) -> TinyEnv:
-    return TinyEnv(batch=batch, device=DEV)
+def _env(num_envs: int = 8) -> TinyEnv:
+    return TinyEnv(num_envs=num_envs, device=DEV)
 
 
 # ------------------------------------------------------------------ the recommended idiom

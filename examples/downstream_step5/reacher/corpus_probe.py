@@ -92,7 +92,7 @@ def main() -> None:
     qpos, qvel, tpos = arr("qpos"), arr("qvel"), arr("target_pos")
     print(f"{len(stored)} stored frames {stored.shape[1:]}, {reddish(stored):.0f} red px/frame")
 
-    ours = se.make("DMCReacherHard", batch=1, size=args.size, device=args.device)
+    ours = se.make("DMCReacherHard", num_envs=1, size=args.size, device=args.device)
     slots = slot_names(ours)
 
     def render_ours(placement: str) -> np.ndarray:

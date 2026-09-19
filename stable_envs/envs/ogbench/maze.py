@@ -58,7 +58,7 @@ observations, not a limitation introduced here.
 STEP 9 ADDS THREE THINGS AND CHANGES NOTHING ELSE
 -------------------------------------------------
 
-  * ``num_envs=`` (contract §2), with ``batch=`` still accepted as the deprecated Step-8 spelling;
+  * ``num_envs=`` (contract §2);
   * a public entity-grouped :data:`State` over the UNCHANGED packed row (contract §3) —
     ``{"root": {"position", "orientation"}, "joints"}`` for the legged bodies and
     ``{"root": {"position"}}`` for the point, which is what ``qpos`` IS for each body. Nothing is
@@ -324,9 +324,8 @@ class OGBenchMaze(Env):
     }
 
     def __init__(self, num_envs: int = 1, size: int | None = None, supersample: int | None = None,
-                 device: str = "cuda", backend: str = "auto", seed: int = 0,
-                 batch: int | None = None):
-        """``num_envs`` environments on ``device`` (contract §2); ``batch=`` is the Step-8 spelling.
+                 device: str = "cuda", backend: str = "auto", seed: int = 0):
+        """``num_envs`` environments on ``device`` (contract §2).
 
         ``state_layout`` is assigned here rather than declared on the class only because it depends on
         ``LOCO``, which the generated subclass sets; it is a per-BODY constant, not a per-instance
@@ -335,7 +334,7 @@ class OGBenchMaze(Env):
         self.state_dim = len(BODY_STATE[self.LOCO])
         self.state_names = BODY_STATE[self.LOCO]
         self.state_layout = self.STATE_LAYOUT[self.LOCO]
-        super().__init__(num_envs=num_envs, batch=batch, size=size,
+        super().__init__(num_envs=num_envs, size=size,
                          supersample=self.default_supersample if supersample is None else supersample,
                          device=device, backend=backend, seed=seed)
         sc = self._scene()

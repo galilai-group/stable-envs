@@ -28,7 +28,7 @@ import torch
 
 import stable_envs as snv
 from stable_envs import dynamics
-from stable_envs.envs import _craftax_full, craftax, craftax_full, rocket_landing as RL
+from stable_envs.envs import _craftax_full, craftax, rocket_landing as RL
 
 CRAFTAX = ("CraftaxClassic", "CraftaxFull")
 
@@ -58,16 +58,12 @@ def test_takes_the_step9_constructor(name):
         env.render(env.sample_states(2))
 
 
-def test_the_rocket_constructor_takes_num_envs_and_still_takes_batch():
-    """Asserted from the SIGNATURE, because this cell cannot be built without a CUDA host.
-
-    It was one of the classes that declared ``batch=`` itself and forwarded positionally, so it never
-    reached ``Env.__init__``'s deprecation branch and raised ``TypeError`` for the Step-9 spelling.
-    """
+def test_the_rocket_constructor_takes_num_envs():
+    """Asserted from the SIGNATURE, because this cell cannot be built without a CUDA host."""
     p = inspect.signature(RL.PFRocketLanding.__init__).parameters
     assert list(p)[1] == "num_envs", "num_envs must sit in the slot batch sat in (positional callers)"
     assert p["num_envs"].default == 1
-    assert "batch" in p and p["batch"].default is None, "batch= stays accepted and deprecated"
+    assert "batch" not in p
     assert p["device"].default == "cuda"
 
 
@@ -248,20 +244,19 @@ def test_the_rocket_refuses_a_cpu_device_by_design():
 
 
 def test_the_rocket_is_registered_exactly_when_it_can_render():
-    assert ("PFRocketLanding" in snv.REGISTRY) == (RL.missing_backend() is None)
+    assert ("PFRocketLanding" in snv.registry.REGISTRY) == (RL.missing_backend() is None)
 
 
 # ------------------------------------------------------------------ the module split
 
 
-def test_the_old_craftax_full_import_path_is_the_private_module():
-    """One module object, not a set of re-exports, so a monkeypatch through either path is seen."""
-    assert craftax_full is _craftax_full
-    assert craftax_full.CraftaxFull is snv.CraftaxFull
-    # the names the existing tests and scratch scripts reach for still resolve
+def test_craftax_full_registers_from_the_private_module():
+    """``discover()`` loads ``_craftax_full`` explicitly; there is no ``craftax_full.py`` shim."""
+    assert snv.CraftaxFull is _craftax_full.CraftaxFull
+    assert snv.CraftaxFull.__module__ == "stable_envs.envs._craftax_full"
     for n in ("N_BLOCK", "N_STRIP", "STRIP_SLOTS", "STRIP_CELLS", "OBS_H", "OBS_W",
               "light_night_and_sleep", "night_vignette", "transparent_mob_slots", "_tent"):
-        assert hasattr(craftax_full, n)
+        assert hasattr(_craftax_full, n)
 
 
 def test_the_two_craftax_modules_could_not_have_been_merged():
@@ -311,8 +306,8 @@ def test_the_two_craftax_modules_could_not_have_been_merged():
     assert {n for n in names if _differs(n)} == CONFLICTING
 
 
-def test_a_missing_craftax_is_still_recorded_under_the_old_module_key():
-    """Discovery skips ``_``-prefixed modules, so the importable name is still ``craftax_full``."""
+def test_a_missing_craftax_is_recorded_under_the_historical_module_key():
+    """Discovery loads ``_craftax_full`` explicitly and records a missing extra as ``craftax_full``."""
     errs = snv.import_errors()
     assert "_craftax_full" not in errs
     assert "_craftax_full_tex" not in errs

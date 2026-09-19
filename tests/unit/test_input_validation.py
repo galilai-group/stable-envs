@@ -92,8 +92,8 @@ class ThreeWideEnv(TinyEnv):
     state_names = ("x", "y", "z")
 
 
-def _env(batch: int = 8, cls=TinyEnv) -> TinyEnv:
-    return cls(batch=batch, device=DEV)
+def _env(num_envs: int = 8, cls=TinyEnv) -> TinyEnv:
+    return cls(num_envs=num_envs, device=DEV)
 
 
 def _states(n: int, first: int = 0, width: int = 5) -> np.ndarray:
@@ -324,7 +324,7 @@ def test_a_batch_longer_than_the_env_names_both_numbers_and_the_two_fixes():
     msg = str(e.value)
     assert "4" in msg and "9" in msg, f"the message does not name both batches: {msg}"
     assert "SHORTER" in msg, f"the message does not say which direction IS allowed: {msg}"
-    assert "batch=9" in msg, f"the message does not give the constructor fix: {msg}"
+    assert "num_envs=9" in msg, f"the message does not give the constructor fix: {msg}"
     assert "env.render(states)" in msg, f"the message does not give the no-buffer fix: {msg}"
 
 
@@ -397,7 +397,7 @@ def test_a_transposed_style_is_refused_rather_than_regrouped():
     square case (batch == style_dim) is genuinely ambiguous and no rule can separate it, which is why
     the check is stated as "the last axis is style_dim" rather than as "detect transposes".
     """
-    space = TinyEnv(batch=1, device=DEV).variation_space         # style_dim 3
+    space = TinyEnv(num_envs=1, device=DEV).variation_space         # style_dim 3
     transposed = np.arange(15, dtype=np.float32).reshape(3, 5)   # meant to be (5, 3)
     assert transposed.size == 5 * 3, "the fixture must hold exactly the right NUMBER of values"
     with pytest.raises(ValueError) as e:
@@ -406,7 +406,7 @@ def test_a_transposed_style_is_refused_rather_than_regrouped():
 
 
 def test_a_style_whose_last_axis_is_the_wrong_width_is_refused():
-    space = TinyEnv(batch=1, device=DEV).variation_space
+    space = TinyEnv(num_envs=1, device=DEV).variation_space
     with pytest.raises(ValueError) as e:
         StyleTensor.from_space(space, 4, device=DEV, values=np.zeros((4, 2), np.float32))
     msg = str(e.value)
@@ -415,7 +415,7 @@ def test_a_style_whose_last_axis_is_the_wrong_width_is_refused():
 
 
 def test_a_style_with_the_wrong_ROW_count_is_still_refused_by_name():
-    space = TinyEnv(batch=1, device=DEV).variation_space
+    space = TinyEnv(num_envs=1, device=DEV).variation_space
     with pytest.raises(ValueError, match="style has 5 rows but 4 environment"):
         StyleTensor.from_space(space, 4, device=DEV, values=np.zeros((5, 3), np.float32))
 
@@ -426,7 +426,7 @@ def test_a_transposed_per_environment_variation_value_is_refused():
     Reshaping it by size gives environment i a mixture of the other environments' colours and renders
     without complaint, which is the same class of defect one level down.
     """
-    space = TinyEnv(batch=1, device=DEV).variation_space
+    space = TinyEnv(num_envs=1, device=DEV).variation_space
     with pytest.raises(ValueError) as e:
         StyleTensor.from_space(space, 8, device=DEV,
                                overrides={"block.color": np.zeros((3, 8), np.float32)})
@@ -435,7 +435,7 @@ def test_a_transposed_per_environment_variation_value_is_refused():
 
 
 def test_an_unknown_variation_key_is_refused_rather_than_ignored():
-    space = TinyEnv(batch=1, device=DEV).variation_space
+    space = TinyEnv(num_envs=1, device=DEV).variation_space
     with pytest.raises(KeyError, match="unknown style path"):
         StyleTensor.from_space(space, 2, device=DEV, overrides={"blcok.color": [1, 2, 3]})
 

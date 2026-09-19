@@ -652,10 +652,9 @@ class GymMujoco(_GymMujocoFamily):
         "0.668) and Pusher (0.729 -> 0.677) worse, so the documented law is kept.")
 
     def __init__(self, num_envs: int = 1, size: int | None = None, supersample: int | None = None,
-                 device: str = "cuda", backend: str = "auto", seed: int = 0,
-                 batch: int | None = None):
+                 device: str = "cuda", backend: str = "auto", seed: int = 0):
         self._declare_state(self._model())
-        super().__init__(num_envs=num_envs, batch=batch, size=size,
+        super().__init__(num_envs=num_envs, size=size,
                          supersample=self.default_supersample if supersample is None else supersample,
                          device=device, backend=backend, seed=seed)
         sc = self._scene()
@@ -1642,13 +1641,12 @@ class GymMujocoVisual(_GymMujocoFamily):
     parity_note = ""
 
     def __init__(self, num_envs: int = 1, size: int | None = None, supersample: int | None = None,
-                 device: str = "cuda", backend: str = "auto", seed: int = 0,
-                 batch: int | None = None):
+                 device: str = "cuda", backend: str = "auto", seed: int = 0):
         if NVDIFF_IMPORT_ERROR is not None:                                   # pragma: no cover
             raise ImportError(f"{type(self).__name__} renders through nvdiffrast, which this "
                               f"interpreter cannot import: {NVDIFF_IMPORT_ERROR}")
         self._declare_state(self._model())
-        super().__init__(num_envs=num_envs, batch=batch, size=size,
+        super().__init__(num_envs=num_envs, size=size,
                          supersample=self.default_supersample if supersample is None else supersample,
                          device=device, backend=backend, seed=seed)
         self._check_scene_is_supported(self._nvd())

@@ -220,8 +220,8 @@ def main() -> None:
     res = {"device": torch.cuda.get_device_name(0), "cpu": cpu_name or "unknown",
            "cpu_count": len(os.sched_getaffinity(0)), "torch": torch.__version__,
            "jpeg_quality": a.jpeg_quality, "loadavg": [os.getloadavg()[0]],
-           "registry_size": len(se.REGISTRY), "registry": sorted(se.REGISTRY),
-           "import_errors": se.envs.import_errors(), "envs": {}}
+           "registry_size": len(se.registry.REGISTRY), "registry": sorted(se.registry.REGISTRY),
+           "import_errors": se.import_errors(), "envs": {}}
 
     prev = outdir / f"bench_vs_decode{tag}.json"
     if prev.exists():
@@ -236,9 +236,9 @@ def main() -> None:
         (outdir / f"bench_vs_decode{tag}.md").write_text(markdown(res))
 
     skip = {s for s in a.skip.split(",") if s}
-    wanted = [n for n in sorted(se.REGISTRY)
+    wanted = [n for n in sorted(se.registry.REGISTRY)
               if (not a.envs or n in a.envs.split(",")) and n not in skip]
-    print(f"registry {len(se.REGISTRY)}, measuring {len(wanted)}", flush=True)
+    print(f"registry {len(se.registry.REGISTRY)}, measuring {len(wanted)}", flush=True)
 
     for name in wanted:
         done = res["envs"].get(name, {})
@@ -246,7 +246,7 @@ def main() -> None:
             print(f"[{name}] already measured, skipping", flush=True)
             continue
         try:
-            probe = se.make(name, batch=1, device="cuda")
+            probe = se.make(name, num_envs=1, device="cuda")
             size = probe.size
             pool = probe.sample_states(min(max(batches), a.pool))
             frame = probe.render(pool[:1]).cpu().numpy()[0]
@@ -284,7 +284,7 @@ def main() -> None:
         if a.cpu_frames and _cpu_pending(entry):
             # The official renderer is the one column that can take the process down (highway-env's
             # pygame path SIGABRTs), which is why it runs last and the file is written straight after.
-            entry["cpu"] = cpu_throughput(se.REGISTRY[name], name, size, a.cpu_frames, pool)
+            entry["cpu"] = cpu_throughput(se.registry.REGISTRY[name], name, size, a.cpu_frames, pool)
             c = _cpu_fps(entry)
             # "absent" and "raised" are different facts and were printed as the same sentence, which is
             # how a bug in the reference bridge read as 39 envs simply not having a reference package.

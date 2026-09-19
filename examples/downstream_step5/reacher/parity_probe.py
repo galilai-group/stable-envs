@@ -90,7 +90,7 @@ def main() -> None:
 
     swm_env = ReacherDMControlWrapper(task=args.task, seed=PROBE_SEED)
     swm_env.reset(seed=PROBE_SEED)
-    ours = se.make("DMCReacherHard", batch=1, size=args.size, device=args.device)
+    ours = se.make("DMCReacherHard", num_envs=1, size=args.size, device=args.device)
     slots = slot_names(ours)
     print("our state layout:", ours.state_names, "-> slots", slots)
 

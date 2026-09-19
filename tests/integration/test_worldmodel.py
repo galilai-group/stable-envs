@@ -64,12 +64,7 @@ def test_all_42_frozen_swm_ids_resolve_to_the_same_canonical_classes():
     )
 
 
-def test_variation_map_bridge_is_public_and_old_import_is_the_same_object():
-    from stable_envs.compat import worldmodel as legacy
-
-    assert interop.VariationMap is legacy.VariationMap
-    assert interop.VARIATION_MAPS is legacy.VARIATION_MAPS
-
+def test_variation_map_bridge_is_public():
     env = snv.PushT(num_envs=1, device="cpu", size=32)
     try:
         mapping = interop.variation_map(env)

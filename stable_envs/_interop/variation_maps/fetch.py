@@ -270,7 +270,7 @@ MAPS: dict[str, VariationMap] = {
 def swm_variation_space(swm_id: str):
     """The live ``variation_space`` of a ``swm/Fetch*-v3`` id.
 
-    Constructs the id and hands the live env to ``compat.worldmodel.swm_variation_space``, which
+    Constructs the id and hands the live env to ``interop.swm_variation_space``, which
     walks the wrapper chain. It has to be walked rather than read off ``unwrapped``: ``FetchWrapper``
     is a ``gym.Wrapper`` around the official ``MujocoFetchEnv``, so ``unwrapped`` is the official env
     and has no ``variation_space`` at all (it raised ``AttributeError`` for all twelve ids until

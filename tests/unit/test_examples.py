@@ -167,10 +167,10 @@ def test_a_hard_coded_variation_path_in_an_example_names_a_knob_that_exists():
         if not literals or len(envs) != 1:
             continue
         name = envs.pop()
-        if name not in se.REGISTRY:
+        if name not in se.registry.REGISTRY:
             continue
         try:
-            known = set(se.make(name, batch=1, device="cpu").style_names)
+            known = set(se.make(name, num_envs=1, device="cpu").style_names)
         except Exception as e:                                          # noqa: BLE001
             pytest.skip(f"{name} cannot be constructed on CPU here ({type(e).__name__}), so its "
                         f"variation paths cannot be listed without a GPU")

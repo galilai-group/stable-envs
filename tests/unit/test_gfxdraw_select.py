@@ -31,9 +31,9 @@ def _where_branch(dst, mask, src):
 
 @pytest.mark.parametrize("name", CONFIGS)
 def test_both_select_branches_draw_the_same_frame(name, monkeypatch):
-    if name not in se.REGISTRY:
+    if name not in se.registry.REGISTRY:
         pytest.skip(f"{name} is not registered in this interpreter")
-    env = se.make(name, batch=8, device="cpu")
+    env = se.make(name, num_envs=8, device="cpu")
     states = np.asarray(env.sample_states(8, np.random.default_rng(0)), np.float32)
     style = C.uniform_style(env, 8, groups=2, seed=0)
 

@@ -52,7 +52,7 @@ def _registered_or_skip(name: str) -> None:
     ``ENVS`` is three deliberately-chosen backends rather than a family sweep: if all three were
     missing the registry itself would be empty, which ``test_registry_is_not_empty`` already fails on.
     """
-    if name not in se.REGISTRY:
+    if name not in se.registry.REGISTRY:
         pytest.skip(f"{name} is not registered in this interpreter, so neither backend is reachable")
 
 
@@ -69,11 +69,11 @@ def test_two_devices_in_one_process(name):
     if torch.cuda.device_count() < 2:
         pytest.skip("needs 2 GPUs")
 
-    env0 = make_or_skip(name, batch=8, device="cuda:0")
+    env0 = make_or_skip(name, num_envs=8, device="cuda:0")
     states = sampled_states(env0, 8, STATE_SEED)
     f0 = env0.render(states).cpu()
 
-    env1 = make_or_skip(name, batch=8, device="cuda:1")
+    env1 = make_or_skip(name, num_envs=8, device="cuda:1")
     f1 = env1.render(states).cpu()
 
     assert_frames_identical(
@@ -92,7 +92,7 @@ def _ddp_child(rank: int, world: int, name: str, n: int, q):
     os.environ.setdefault("MASTER_PORT", "29517")
     dist.init_process_group("nccl", rank=rank, world_size=world)
 
-    proto = se.make(name, batch=1, device=f"cuda:{rank}")
+    proto = se.make(name, num_envs=1, device=f"cuda:{rank}")
     states = proto.sample_states(n, rng=np.random.default_rng(STATE_SEED))
     del proto
 
@@ -141,7 +141,7 @@ def test_ddp_shards_and_matches_single_process(name):
     # 2. the union is what one process would have rendered, to the byte. Drawn from the same explicit
     #    seed the children used, so "the ranks disagree with one process" cannot be "the two sides
     #    drew different states".
-    proto = se.make(name, batch=1, device="cuda:0")
+    proto = se.make(name, num_envs=1, device="cuda:0")
     states = proto.sample_states(n, rng=np.random.default_rng(STATE_SEED))
     del proto
     ref = se.render_states(name, states, device="cuda:0").cpu()

@@ -38,6 +38,7 @@ import numpy as np
 import torch
 
 import stable_envs as se
+import stable_envs.data as se_data
 
 
 def build_corpus(env, corpus: Path | None, n_traj: int, steps: int, seed: int):
@@ -79,7 +80,7 @@ def main() -> None:
     ap.add_argument("--keep", type=Path, default=None, help="write the saved dataset here and keep it")
     args = ap.parse_args()
 
-    env = se.make(args.env, batch=1, size=args.size, device="cuda")
+    env = se.make(args.env, num_envs=1, size=args.size, device="cuda")
     states, style, provenance = build_corpus(env, args.corpus, args.traj, args.steps, args.seed)
     print(f"corpus: {provenance}")
 
@@ -142,13 +143,13 @@ def main() -> None:
         hf.to_parquet(pq)
         hf2 = datasets.Dataset.from_parquet(str(pq))
         desc_survived = bool(hf2.info.description)
-        col_survived = se.data.HF_META_KEY in hf2.column_names
+        col_survived = se_data.HF_META_KEY in hf2.column_names
         back2 = se.TrajectoryDataset.from_hf(hf2, window=args.window, stride=args.stride)
         after2 = back2.all_frames()
         ok2 = torch.equal(before, after2)
         print(f"\nto_parquet -> {pq.stat().st_size:,} B (the format push_to_hub uploads)")
         print(f"  info.description survived: {desc_survived}   "
-              f"'{se.data.HF_META_KEY}' column survived: {col_survived} "
+              f"'{se_data.HF_META_KEY}' column survived: {col_survived} "
               f"-> env recovered as {type(back2.env).__name__} with no env= argument")
         print(f"  FRAMES BIT-IDENTICAL: {ok2}")
         assert ok2, "the parquet round trip changed the pixels"

@@ -31,7 +31,7 @@ torch = pytest.importorskip("torch")
 @pytest.fixture(scope="module")
 def se():
     import stable_envs as se
-    if not all(c in se.REGISTRY for c in CELLS):
+    if not all(c in se.registry.REGISTRY for c in CELLS):
         pytest.skip("DM Control trackcom cells are not registered in this interpreter")
     return se
 
@@ -51,7 +51,7 @@ def test_cpu3d_imports_no_gpu_runtime():
 
 @pytest.mark.parametrize("cell", CELLS)
 def test_cpu_device_builds_the_cpu_backend_and_no_mjwarp_context(se, cell):
-    env = se.make(cell, batch=2, device="cpu")
+    env = se.make(cell, num_envs=2, device="cpu")
     assert env.device.type == "cpu"
     assert int(env.size) in env._cpu_scenes                    # the CPU scene was built at init
     from stable_envs.envs import dmcontrol as D
@@ -64,11 +64,11 @@ def test_cpu_device_builds_the_cpu_backend_and_no_mjwarp_context(se, cell):
 def test_unknown_device_raises_rather_than_falling_back(se, device):
     """No silent fallback: a device with no 3-D backend is refused by name, whether torch can host
     tensors on it (mps on this Mac, meta anywhere) or not."""
-    cls = se.REGISTRY["DMCHopperHop"]
+    cls = se.registry.REGISTRY["DMCHopperHop"]
     if device == "mps" and not torch.backends.mps.is_available():
         pytest.skip("no mps device on this host")
     with pytest.raises((ValueError, RuntimeError, NotImplementedError)) as e:
-        cls(batch=1, device=device)
+        cls(num_envs=1, device=device)
     msg = str(e.value)
     assert "no 3-D backend" in msg or device in msg
 
@@ -79,10 +79,10 @@ def test_swimmer_is_refused_on_cpu_by_the_allow_list(se):
     the geom-type refusal is gone -- and swimmer, which is not an SWM id and has no CPU certification,
     is now refused by an explicit allow-list (``CPU_UNCERTIFIED``) naming the env and the reason,
     rather than drawn uncertified. Step 8 decides whether it is certified and the entry removed."""
-    if "DMCSwimmerSwimmer6" not in se.REGISTRY:
+    if "DMCSwimmerSwimmer6" not in se.registry.REGISTRY:
         pytest.skip("swimmer not registered")
     with pytest.raises(ValueError) as e:
-        se.REGISTRY["DMCSwimmerSwimmer6"](batch=1, device="cpu")
+        se.registry.REGISTRY["DMCSwimmerSwimmer6"](num_envs=1, device="cpu")
     msg = str(e.value)
     assert "DMCSwimmerSwimmer6" in msg and "not certified" in msg and "CPU" in msg
 
@@ -94,10 +94,10 @@ def test_trackcom_material_knobs_are_geom_wearers_only(se):
     does not move -- and on quadruped it drops ``eye``, worn by the two pupil sites alone."""
     from stable_envs.envs import dmcontrol as D
     for name in CELLS:
-        cls = se.REGISTRY[name]
+        cls = se.registry.REGISTRY[name]
         assert cls._used_materials() == D._DMCModel._used_materials.__func__(cls), name
-    if "DMCQuadrupedWalk" in se.REGISTRY:
-        cls = se.REGISTRY["DMCQuadrupedWalk"]
+    if "DMCQuadrupedWalk" in se.registry.REGISTRY:
+        cls = se.registry.REGISTRY["DMCQuadrupedWalk"]
         base = D._DMCModel._used_materials.__func__(cls)
         ours = cls._used_materials()
         assert "eye" in base and "eye" not in ours and ours == [m for m in base if m != "eye"]
@@ -113,7 +113,7 @@ def test_the_swm_quadruped_mixin_overrides_only_the_loader_hook_and_the_size(se)
     from stable_envs.envs import dmcontrol as D
     own = {k for k in vars(D._SWMQuadrupedModel) if not k.startswith("__")}
     assert own == {"default_size", "_load_env"}, own
-    cls = se.REGISTRY["DMCQuadrupedWalk"]
+    cls = se.registry.REGISTRY["DMCQuadrupedWalk"]
     assert cls._bundle.__func__ is D._DMCModel._bundle.__func__
     assert cls.reference_env.__func__ is D._DMCModel.reference_env.__func__
     assert cls.sample_states is D._DMCModel.sample_states
@@ -125,7 +125,7 @@ def test_the_swm_quadruped_mixin_overrides_only_the_loader_hook_and_the_size(se)
 
 
 def test_no_gpu_runtime_is_loaded_by_a_cpu_render(se):
-    env = se.make("DMCCheetahRun", batch=2, device="cpu")
+    env = se.make("DMCCheetahRun", num_envs=2, device="cpu")
     env.render(_states("DMCCheetahRun", 2))
     assert "warp" not in sys.modules and "mujoco_warp" not in sys.modules
 
@@ -137,7 +137,7 @@ def test_window_and_footprint_bounds_are_exact(se, cell, size):
     shadow-testing every lit hit must give the identical frame, byte for byte, at every size."""
     from stable_envs.render import cpu3d
     st = _states(cell, 6)
-    env = se.make(cell, batch=6, device="cpu")
+    env = se.make(cell, num_envs=6, device="cpu")
     ref = env.render(st, size=size).numpy()
     try:
         cpu3d.FORCE_FULL_FRAME = True
@@ -157,7 +157,7 @@ def test_batch_chunk_and_order_invariance(se, cell):
     from stable_envs.render import cpu3d
     n = cpu3d.CPU_CHUNK + 3                                     # straddles a chunk boundary
     st = _states(cell, n)
-    env = se.make(cell, batch=n, device="cpu")
+    env = se.make(cell, num_envs=n, device="cpu")
     a = env.render(st).numpy()
     b = env.render(st).numpy()
     assert np.array_equal(a, b), "not deterministic"
@@ -182,7 +182,7 @@ def test_batch_chunk_and_order_invariance(se, cell):
 def test_matches_mjwarp_to_within_a_level(se, cell):
     z = np.load(FIXTURE)
     ref = z[f"{cell}_mjwarp"]
-    env = se.make(cell, batch=len(ref), device="cpu")
+    env = se.make(cell, num_envs=len(ref), device="cpu")
     ours = env.render(_states(cell, len(ref))).numpy()
     d = np.abs(ours.astype(np.int16) - ref.astype(np.int16)).max(-1)
     within1 = float((d <= 1).mean())
@@ -195,7 +195,7 @@ def test_matches_mjwarp_to_within_a_level(se, cell):
 
 
 def test_render_at_another_resolution_is_a_pure_function_of_size(se):
-    env = se.make("DMCCheetahRun", batch=2, device="cpu")
+    env = se.make("DMCCheetahRun", num_envs=2, device="cpu")
     st = _states("DMCCheetahRun", 2)
     big = env.render(st, size=168)
     assert big.shape == (2, 168, 168, 3)

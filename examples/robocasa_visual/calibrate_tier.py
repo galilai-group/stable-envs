@@ -38,14 +38,14 @@ def main() -> None:
     args = ap.parse_args()
 
     print(se.format_registry(), flush=True)
-    names = [n for n, c in sorted(se.REGISTRY.items())
+    names = [n for n, c in sorted(se.registry.REGISTRY.items())
              if getattr(c, "fidelity_tier", "parity") == "visual"]
     if not names:
-        raise SystemExit(f"no visual-tier envs registered; import errors: {se.envs.import_errors()}")
+        raise SystemExit(f"no visual-tier envs registered; import errors: {se.import_errors()}")
 
     rec = {"envs": {}}
     for name in names:
-        env = se.make(name, batch=args.batch, device="cuda")
+        env = se.make(name, num_envs=args.batch, device="cuda")
         cls = type(env)
         d = env.describe()
         # Several INDEPENDENT state draws, not one. A threshold set from a single draw is a threshold
@@ -54,7 +54,7 @@ def main() -> None:
         # most of that frame).
         draws = []
         for s in range(args.seeds):
-            e2 = se.make(name, batch=args.batch, device="cuda", seed=s)
+            e2 = se.make(name, num_envs=args.batch, device="cuda", seed=s)
             draws.append(C.check_visual_fidelity(e2, n=args.n))
         r = draws[0]
         spread = {k: [min(x[k] for x in draws), max(x[k] for x in draws)]
@@ -66,7 +66,7 @@ def main() -> None:
              "n_draws": args.seeds, "state_names_head": list(env.state_names[:8])}
         # Throughput at the env's own surface: states in, uint8 frames out, everything included.
         for b in args.bench_batches:
-            en = se.make(name, batch=b, device="cuda")
+            en = se.make(name, num_envs=b, device="cuda")
             st = torch.as_tensor(en.sample_states(b), device="cuda")
             en.render(st)
             torch.cuda.synchronize()

@@ -187,14 +187,11 @@ def test_step_reports_a_state_and_does_not_fabricate_a_reward(name):
     assert env.has_dynamics
 
 
-def test_the_old_navigation_module_paths_are_the_merged_module():
-    from stable_envs.envs import navigation, simple_point_maze, swm_nav
-    assert swm_nav is navigation and simple_point_maze is navigation
-    # the names the render tests and the parity scripts reach for, through the old paths
-    for attr in ("IMG", "_ALPHA_FLOOR", "_alpha_blend", "_gaussian_dot"):
-        assert hasattr(swm_nav, attr)
-    for attr in ("DEFAULT_WALL_SHAPE", "DEFAULT_WALL_POS", "SimplePointMaze"):
-        assert hasattr(simple_point_maze, attr)
+def test_navigation_cells_live_in_the_merged_module():
+    from stable_envs.envs import navigation
+    for attr in ("IMG", "_ALPHA_FLOOR", "_alpha_blend", "_gaussian_dot",
+                 "DEFAULT_WALL_SHAPE", "DEFAULT_WALL_POS", "SimplePointMaze"):
+        assert hasattr(navigation, attr)
     assert {c.__module__ for c in (snv.TwoRoom, snv.Piecewise, snv.SimplePointMaze)} == \
         {"stable_envs.envs.navigation"}
 

@@ -9,9 +9,6 @@ first four are a Gaussian alpha blend (``render/navdot``) and the last is a flat
 this module has two halves and one shared SWM reference bridge (``_SWMPort``) rather than one base
 class pretending the renderers are the same.
 
-``stable_envs.envs.swm_nav`` and ``stable_envs.envs.simple_point_maze`` still import and are THIS
-module — ``sys.modules`` aliases, not copies — until Wave 3 retires them.
-
 Part 1 of the module docstring below is the swm_nav material and part 2 is SimplePointMaze's; both
 are reproduced unchanged, because every constant in them was measured and the measurement is the
 documentation.

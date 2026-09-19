@@ -33,7 +33,7 @@ structure:
     TrajectoryDataset   (n_traj, T, state_dim) + per-trajectory style, yielding windows that never
                         straddle an episode boundary, with HuggingFace round-trips
 
-Every entry point here validates what it is given before it reshapes it — see ``core.env.check_states``
+Every entry point here validates what it is given before it reshapes it — see ``env.check_states``
 for the rule and for the silent-garbage path it closes. ``StateDataset`` used to take its state width
 from the INPUT (``reshape(-1, st.shape[-1])``), so any array at all was a valid corpus and a frame
 stack became a dataset that either failed much later or did not fail at all; it now takes the width
@@ -85,7 +85,8 @@ from pathlib import Path
 import numpy as np
 import torch
 
-from .core.env import StableEnv, check_states, make, require_contiguous_out
+from .env import Env, check_states, require_contiguous_out
+from .registry import make
 
 #: Written into the HuggingFace dataset description so a corpus says which renderer it belongs to.
 #: Without it a reload has to be told the env by hand, and a corpus that does not name its own env is
@@ -165,7 +166,7 @@ def collate_batched(batch):
 
 
 @torch.no_grad()
-def render_states(env: StableEnv | str, states, size: int | None = None, chunk: int = 8192,
+def render_states(env: Env | str, states, size: int | None = None, chunk: int = 8192,
                   variation: dict | None = None, style=None, out=None, device: str = "cuda", **env_kw):
     """``(...,state_dim)`` states -> ``(...,H,W,3)`` uint8 frames.
 
@@ -185,7 +186,7 @@ def render_states(env: StableEnv | str, states, size: int | None = None, chunk: 
                                 ()))
     n_guess = int(np.prod(probe_shape[:-1])) if len(probe_shape) >= 1 else 1
     if isinstance(env, str):
-        env = make(env, batch=max(1, min(chunk, n_guess or 1)), size=size, device=device, **env_kw)
+        env = make(env, num_envs=max(1, min(chunk, n_guess or 1)), size=size, device=device, **env_kw)
 
     # ``move=False``: the corpus stays wherever the caller put it and is copied one chunk at a time,
     # which is the whole contract of this function. The NaN/inf scan therefore runs on the host for a
@@ -235,13 +236,13 @@ class _RenderingDataset(torch.utils.data.Dataset):
     into disagreeing about the frame shape or the style handling.
     """
 
-    env: StableEnv
+    env: Env
     size: int
     variation: dict | None
     device: str
 
     def _init_env(self, env, size, variation, device, env_kw):
-        self.env = make(env, batch=1, size=size, device=device, **env_kw) if isinstance(env, str) else env
+        self.env = make(env, num_envs=1, size=size, device=device, **env_kw) if isinstance(env, str) else env
         self.size = size or self.env.size
         self.variation = variation
         self.device = device
@@ -336,7 +337,7 @@ class StateDataset(_RenderingDataset):
     ``BatchSampler`` recipe in this module's docstring work on it with the DEFAULT collate function.
     """
 
-    def __init__(self, env: StableEnv | str, states, style=None, size: int | None = None,
+    def __init__(self, env: Env | str, states, style=None, size: int | None = None,
                  variation: dict | None = None, frames: bool = True, device: str = "cuda", **env_kw):
         self.frames = bool(frames)
         # The env FIRST: it is the only thing that knows ``state_dim``, and without that this
@@ -420,7 +421,7 @@ class TrajectoryDataset(_RenderingDataset):
     transposes time into batch.
     """
 
-    def __init__(self, env: StableEnv | str, states, style=None, lengths=None,
+    def __init__(self, env: Env | str, states, style=None, lengths=None,
                  window: int = 1, stride: int = 1, frameskip: int = 1, frames: bool = False,
                  size: int | None = None, variation: dict | None = None, device: str = "cuda",
                  **env_kw):
@@ -698,7 +699,7 @@ class TrajectoryDataset(_RenderingDataset):
         return self.to_hf().push_to_hub(repo_id, **kw)
 
     @classmethod
-    def from_hf(cls, source, env: StableEnv | str | None = None, split: str = "train",
+    def from_hf(cls, source, env: Env | str | None = None, split: str = "train",
                 **kw) -> "TrajectoryDataset":
         """Load from a hub repo id, a ``save_to_disk`` directory, or an in-memory ``datasets.Dataset``.
 

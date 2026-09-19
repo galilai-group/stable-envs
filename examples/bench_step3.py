@@ -164,9 +164,9 @@ def measure_env(name: str, swm_ids: list[str], device: str, batches: list[int], 
     says why it is missing instead of looking like a failure.
     """
     rec: dict = {"env": name, "projected_to": swm_ids, "device": device}
-    cls = se.REGISTRY.get(name)
+    cls = se.registry.REGISTRY.get(name)
     if cls is None:
-        rec["blocked"] = {"stage": "registry", "reason": f"{name} is not in stable_envs.REGISTRY in "
+        rec["blocked"] = {"stage": "registry", "reason": f"{name} is not in stable_envs.registry.REGISTRY in "
                           f"this interpreter", "kind": "blocked_environment"}
         return rec
 

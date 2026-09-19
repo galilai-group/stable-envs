@@ -65,9 +65,9 @@ def test_the_guard_refuses_size_and_direction_and_not_orientation():
 
 @pytest.fixture(scope="module")
 def cell():
-    if CELL not in se.REGISTRY:
+    if CELL not in se.registry.REGISTRY:
         pytest.skip(f"{CELL} is not registered in this interpreter")
-    return se.REGISTRY[CELL]
+    return se.registry.REGISTRY[CELL]
 
 
 def test_manipulator_widens_the_state_with_the_quaternion_slots(cell):
@@ -79,7 +79,7 @@ def test_manipulator_widens_the_state_with_the_quaternion_slots(cell):
     names = cell._slot_names(cell._model())
     assert set(names) == {"target_ball_pos_x", "target_ball_pos_z",
                           "target_ball_quat_qw", "target_ball_quat_qy"}, names
-    env = cell(batch=1, device="cpu", seed=0)
+    env = cell(num_envs=1, device="cpu", seed=0)
     assert env.state_dim == env.nq + 4 == 15
 
 
@@ -89,7 +89,7 @@ def test_fk_orientation_is_per_row(cell):
     This is the property the guard's removal rests on. The two rows share every ``qpos`` entry and
     every positional slot, so a batch-shared orientation would make the two ``xmat`` stacks equal.
     """
-    env = cell(batch=2, device="cpu", seed=0)
+    env = cell(num_envs=2, device="cpu", seed=0)
     names = list(env.state_names)
     iw, iy = names.index("target_ball_quat_qw"), names.index("target_ball_quat_qy")
     st = env.sample_states(1, np.random.default_rng(7))
@@ -119,7 +119,7 @@ def test_the_official_renderer_moves_for_the_quaternion_slots(cell):
     that the state carries a dimension the reference itself ignores.
     """
     from stable_envs.testing import conformance as C
-    env = cell(batch=1, device="cpu", seed=0)
+    env = cell(num_envs=1, device="cpu", seed=0)
     names = list(env.state_names)
     iw, iy = names.index("target_ball_quat_qw"), names.index("target_ball_quat_qy")
     st = env.sample_states(2, np.random.default_rng(11))
@@ -156,7 +156,7 @@ def test_a_body_slot_becomes_one_visibility_leaf_over_its_geoms(cell):
     for gid in ids:
         assert mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_GEOM, gid) == "target_ball"
 
-    env = cell(batch=2, device="cpu", seed=0)
+    env = cell(num_envs=2, device="cpu", seed=0)
     assert "visibility.target_ball" in env.variation_space.names()
     st = env.sample_states(2, np.random.default_rng(3))
     shown = env.render(torch.as_tensor(st)).cpu().numpy()
@@ -169,7 +169,7 @@ def test_a_body_slot_becomes_one_visibility_leaf_over_its_geoms(cell):
 def test_the_shape_leaf_default_is_the_compiled_model(cell):
     """``target_ball.shape``'s default is the index that matches the compiled model, and the other
     alternatives -- ``stable_worldmodel``'s 0.015 box and 0.015 sphere -- actually change the frame."""
-    env = cell(batch=2, device="cpu", seed=0)
+    env = cell(num_envs=2, device="cpu", seed=0)
     leaf = env.variation_space["target_ball"]["shape"]
     assert leaf.n == 3, leaf.n
     default = int(np.asarray(leaf.value).reshape(-1)[0])
@@ -305,7 +305,7 @@ def test_the_declared_dims_are_excluded_and_reported_never_silently_passed(cell)
     """``check_state_dims_matter`` excludes the three, REPORTS them with a reason, and finds no dead
     dimension. An excluded dim must never simply vanish from the output."""
     from stable_envs.testing import conformance as C
-    env = cell(batch=8, device="cpu", seed=0)
+    env = cell(num_envs=8, device="cpu", seed=0)
     r = C.check_state_dims_matter(env, n=8)
     assert r["dead_dims"] == [], r
     assert set(r.get("excluded_dims", {})) == set(_INVARIANT), r
@@ -317,7 +317,7 @@ def test_the_declared_dims_are_excluded_and_reported_never_silently_passed(cell)
 def test_excluded_dims_leave_pixels_byte_unchanged_at_both_sizes(cell):
     """Regression A: the claim is about PIXELS, so it is asserted on pixels and not only on the model."""
     for size in (224, 84):
-        env = cell(batch=16, size=size, device="cpu", seed=0)
+        env = cell(num_envs=16, size=size, device="cpu", seed=0)
         names = list(env.state_names)
         st = env.sample_states(16, np.random.default_rng(55))
         base = env.render(torch.as_tensor(st)).cpu().numpy()
@@ -340,7 +340,7 @@ def test_the_target_quat_dims_are_live_again_when_the_target_is_a_box(cell):
     """
     from stable_envs.testing import conformance as C
     box = {"target_ball.shape": [0]}
-    env = cell(batch=16, size=224, device="cpu", seed=0)
+    env = cell(num_envs=16, size=224, device="cpu", seed=0)
     names = list(env.state_names)
     st = env.sample_states(16, np.random.default_rng(55))
     base = env.render(torch.as_tensor(st), variation=box).cpu().numpy()
@@ -363,7 +363,7 @@ def test_a_dimension_that_moves_position_is_refused_for_exclusion(cell):
     the frozen-array comparison forbids. None of them may be excludable, whatever an env declares.
     """
     from stable_envs.testing import conformance as C
-    env = cell(batch=8, size=224, device="cpu", seed=0)
+    env = cell(num_envs=8, size=224, device="cpu", seed=0)
     names = list(env.state_names)
     st = env.sample_states(8, np.random.default_rng(12))
     for nm in ("arm_root", "ball_x", "target_ball_pos_x"):
@@ -374,7 +374,7 @@ def test_a_dimension_that_moves_position_is_refused_for_exclusion(cell):
 def test_an_env_that_declares_nothing_is_unaffected(cell):
     """The mechanism is opt-in: with no declaration, a dead dim is dead exactly as before."""
     from stable_envs.testing import conformance as C
-    env = cell(batch=8, device="cpu", seed=0)
+    env = cell(num_envs=8, device="cpu", seed=0)
     env.RENDER_INVARIANT_DIMS = ()
     try:
         r = C.check_state_dims_matter(env, n=8)
@@ -414,7 +414,7 @@ def test_a_missing_frozen_field_is_refused_and_named_not_skipped(cell):
     NAMES the key.
     """
     from stable_envs.testing import conformance as C
-    env = cell(batch=8, size=224, device="cpu", seed=0)
+    env = cell(num_envs=8, size=224, device="cpu", seed=0)
     names = list(env.state_names)
     st = env.sample_states(8, np.random.default_rng(4))
     d = names.index("thumbtip")
@@ -444,7 +444,7 @@ def test_a_lying_sphere_flag_cannot_grant_an_exclusion(cell):
     sphere-LIKE kind that is not rotation-invariant, and it is in the registry now.
     """
     from stable_envs.testing import conformance as C
-    env = cell(batch=8, size=224, device="cpu", seed=0)
+    env = cell(num_envs=8, size=224, device="cpu", seed=0)
     names = list(env.state_names)
     st = env.sample_states(8, np.random.default_rng(4))
     box = {"target_ball.shape": [0]}
@@ -465,7 +465,7 @@ def test_a_lying_sphere_flag_cannot_grant_an_exclusion(cell):
 def test_the_rule_derives_sphereness_even_when_the_env_omits_the_flag(cell):
     """The flag is now optional evidence, not the basis of the decision."""
     from stable_envs.testing import conformance as C
-    env = cell(batch=8, size=224, device="cpu", seed=0)
+    env = cell(num_envs=8, size=224, device="cpu", seed=0)
     names = list(env.state_names)
     st = env.sample_states(8, np.random.default_rng(4))
     noflag = _Wrapped(env, lambda sig: {k: v for k, v in sig.items() if k != "geom_is_sphere"})

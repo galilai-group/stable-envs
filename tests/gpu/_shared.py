@@ -3,7 +3,7 @@
 Nothing here is a helper for its own sake. Each of the three cost this project a real afternoon while it
 was open-coded per file, and each failed in a way that looked like a code defect and was not.
 
-**A missing optional dependency SKIPS, with a reason.** ``se.REGISTRY`` is the UNION over interpreters:
+**A missing optional dependency SKIPS, with a reason.** ``se.registry.REGISTRY`` is the UNION over interpreters:
 an env module that cannot import is recorded by ``stable_envs.envs.import_errors()`` and its classes are
 simply absent, so ``se.make(name)`` for a name the registry knows can still raise ``ModuleNotFoundError``
 somewhere else. ``test_fused_cast.py`` forgave that; ``test_mover_window.py`` and
@@ -90,7 +90,7 @@ def resolve_family(name: str, *, family: str, modules=(), subject: str) -> None:
     """
     if name != EMPTY:
         return
-    errs = se.envs.import_errors()
+    errs = se.import_errors()
     blamed = {m: errs[m] for m in modules if m in errs}
     if blamed:
         pytest.skip(f"{family}: no env registered in this interpreter because "
@@ -99,7 +99,7 @@ def resolve_family(name: str, *, family: str, modules=(), subject: str) -> None:
     expected = ", ".join(modules) if modules else "any env module"
     pytest.fail(
         f"{family}: {subject} has NO env to check it on, and {expected} imported cleanly, so nothing "
-        f"explains that. The registry holds {len(se.REGISTRY)} envs, which makes this a selection or a "
+        f"explains that. The registry holds {len(se.registry.REGISTRY)} envs, which makes this a selection or a "
         f"naming change rather than a missing dependency — and a sweep that collects zero real cases "
         f"is GREEN and proves nothing, which is exactly how the DM Control family went uncovered for "
         f"a week.")

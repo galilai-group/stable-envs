@@ -199,7 +199,7 @@ def main() -> None:
 
     torch.manual_seed(0)
     rng = np.random.default_rng(0)
-    proto = se.make(args.env, batch=1, size=args.size, device="cuda")
+    proto = se.make(args.env, num_envs=1, size=args.size, device="cuda")
     all_states = proto.sample_states(args.train + args.val, rng)
     train_states, val_states = all_states[:args.train], all_states[args.train:]
 
@@ -213,7 +213,7 @@ def main() -> None:
     print(f"the whole training set fits in {comp['stored_bytes'] / 1024:.0f} kB; the frames it stands "
           f"in for are {comp['frame_bytes'] / 1e6:.0f} MB")
 
-    env = se.make(args.env, batch=args.batch, size=args.size, device="cuda")
+    env = se.make(args.env, num_envs=args.batch, size=args.size, device="cuda")
     net = StateNet().cuda()
     net(env.set_state(torch.as_tensor(train_states[:args.batch], device="cuda")).render())  # LazyLinear
     n_params = sum(p.numel() for p in net.parameters())
@@ -317,7 +317,7 @@ def main() -> None:
     # How the render share moves with batch size: the scene build is ~2 ms of Python regardless of B.
     sweep = []
     for b in [int(x) for x in args.sweep.split(",") if x]:
-        e = se.make(args.env, batch=b, size=args.size, device="cuda")
+        e = se.make(args.env, num_envs=b, size=args.size, device="cuda")
         n = StateNet().cuda()
         n(e.set_state(torch.as_tensor(train_states[:b], device="cuda")).render())
         o = torch.optim.Adam(n.parameters(), lr=args.lr)

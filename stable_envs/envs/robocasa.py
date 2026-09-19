@@ -437,8 +437,7 @@ class RoboCasaBase(Env):
     BACKFACE_CULL: bool | None = None
 
     def __init__(self, num_envs: int = 1, size: int | None = None, supersample: int = 1,
-                 device: str = "cuda", backend: str = "auto", seed: int = 0,
-                 batch: int | None = None):
+                 device: str = "cuda", backend: str = "auto", seed: int = 0):
         s = _scene(self.KITCHEN)
         live = _live_dims(self.KITCHEN, self.CAMERA, int(size or self.default_size))
         self._live_idx = live
@@ -450,7 +449,7 @@ class RoboCasaBase(Env):
         # the model's qpos, the rest of which is pinned (``_full_qpos``) and is not state. Every
         # column is covered, so nothing is hidden and the corpus layout is untouched.
         self.state_layout = ((("qpos",), self.state_dim, 0),)
-        super().__init__(num_envs=num_envs, batch=batch, size=size, supersample=supersample,
+        super().__init__(num_envs=num_envs, size=size, supersample=supersample,
                          device=device, backend=backend, seed=seed)
         self._s = s
         self._live_t = torch.as_tensor(live, device=self.device, dtype=torch.long)
@@ -654,7 +653,7 @@ class RoboCasaBase(Env):
             # measurable share of the run for an object with no per-call state.
             probe = _STYLE_PROBE.get((cls, int(r.height)))
             if probe is None:
-                probe = _STYLE_PROBE[(cls, int(r.height))] = cls(batch=1, size=int(r.height),
+                probe = _STYLE_PROBE[(cls, int(r.height))] = cls(num_envs=1, size=int(r.height),
                                                                  device="cpu")
             packed = np.asarray(style, np.float64).reshape(len(st), -1)
             leaf = {p: packed[:, off:off + w] for p, off, w in probe.variation_space.flat_layout()}

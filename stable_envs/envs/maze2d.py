@@ -294,9 +294,8 @@ class PointMaze(Env):
         "one flat colour, and a shaded 12-pixel sphere has none.")
 
     def __init__(self, num_envs: int = 1, size: int | None = None, supersample: int | None = None,
-                 device: str = "cuda", backend: str = "auto", seed: int = 0,
-                 batch: int | None = None):
-        super().__init__(num_envs=num_envs, batch=batch, size=size,
+                 device: str = "cuda", backend: str = "auto", seed: int = 0):
+        super().__init__(num_envs=num_envs, size=size,
                          supersample=self.default_supersample if supersample is None else supersample,
                          device=device, backend=backend, seed=seed)
         sc = self._scene()

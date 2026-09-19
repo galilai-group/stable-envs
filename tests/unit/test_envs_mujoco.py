@@ -82,19 +82,13 @@ def test_this_workstream_owns_some_registered_classes():
 
 @pytest.mark.parametrize("name", OWNED)
 def test_every_owned_class_takes_the_step9_constructor(name):
-    """``num_envs=`` reaches the class, from the SIGNATURE — no construction, so no optional dep.
-
-    A class whose own ``__init__`` declares ``batch=`` and not ``num_envs=`` forwards positionally
-    to ``Env.__init__``, never reaches its deprecation branch, and raises ``TypeError`` for the
-    Step-9 spelling. That is what the Wave-0 holdout list counted; these fourteen classes (highway
-    6, maze2d 4, mujoco_locomotion 4) were on it.
-    """
+    """``num_envs=`` reaches the class, from the SIGNATURE — no construction, so no optional dep."""
     params = inspect.signature(REGISTRY[name].__init__).parameters
     assert "num_envs" in params or "kw" in params or any(
         p.kind is inspect.Parameter.VAR_KEYWORD for p in params.values()), (
         f"{name} does not accept num_envs=; its signature is {params}")
-    assert "batch" not in params or "num_envs" in params, (
-        f"{name} declares batch= and not num_envs=, so it rejects the Step-9 constructor")
+    assert "batch" not in params, (
+        f"{name} declares batch= as a constructor spelling")
 
 
 @pytest.mark.parametrize("name", OWNED)

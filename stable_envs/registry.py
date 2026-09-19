@@ -280,11 +280,7 @@ def _resolve(name: str, what: str) -> type[Env]:
 
 
 def make(name: str, **kwargs) -> Env:
-    """``make("PushT", num_envs=64)`` or ``make("swm/PushT-v1", device="cuda")``.
-
-    ``batch=`` is accepted as the deprecated spelling of ``num_envs`` and handled by ``Env.__init__``,
-    which is where the one warning per process is emitted.
-    """
+    """``make("PushT", num_envs=64)`` or ``make("swm/PushT-v1", device="cuda")``."""
     return _resolve(name, "make")(**kwargs)
 
 
@@ -334,12 +330,40 @@ _IMPORT_ERRORS: dict[str, str] = {}
 _DISCOVERED = False
 
 
+#: Private modules that still register a public class. ``pkgutil`` skips ``_``-prefixed names, so
+#: these would otherwise never load. The error key is the historical module name a missing extra was
+#: recorded under (``craftax_full``), not the private filename.
+_EXPLICIT_ENV_MODULES: tuple[tuple[str, str], ...] = (
+    ("_craftax_full", "craftax_full"),
+)
+
+
+def _import_env_module(mod_name: str, error_key: str) -> None:
+    """Import one env module. A missing extra costs that family; anything else is recorded as unexpected.
+
+    Never raised to the caller: discovery must not fail the package import.
+    """
+    try:
+        importlib.import_module(f"stable_envs.envs.{mod_name}")
+    except (ImportError, ModuleNotFoundError) as e:
+        _IMPORT_ERRORS[error_key] = f"{type(e).__name__}: {e}"
+        _log("DEBUG", f"stable_envs.envs.{mod_name} did not import (missing extra): "
+                      f"{type(e).__name__}: {e}")
+    except Exception as e:                     # noqa: BLE001 — recorded, never fatal
+        _IMPORT_ERRORS[error_key] = (
+            f"{type(e).__name__}: {e} (unexpected; this is not an optional-dependency miss)")
+        _log("DEBUG", f"stable_envs.envs.{mod_name} did not import (unexpected, not an "
+                      f"optional-dep miss): {type(e).__name__}: {e}")
+
+
 def discover(force: bool = False) -> dict[str, str]:
     """Import every module under ``stable_envs/envs`` so its registered classes exist.
 
     Failures are RECORDED, never silent: most env modules need an optional dependency (``pymunk`` for
     PushT, ``minigrid`` for the grid family, ``mujoco``/``ogbench`` for the mazes), and a machine
-    without one should lose exactly that family rather than the package.
+    without one should lose exactly that family rather than the package. ``ImportError`` /
+    ``ModuleNotFoundError`` are missing extras; any other exception is still recorded, with a message
+    that says it is not an optional-dependency miss.
     """
     global _DISCOVERED
     if _DISCOVERED and not force:
@@ -348,11 +372,9 @@ def discover(force: bool = False) -> dict[str, str]:
     for mod in pkgutil.iter_modules(pkg.__path__):
         if mod.name.startswith("_"):
             continue
-        try:
-            importlib.import_module(f"stable_envs.envs.{mod.name}")
-        except Exception as e:                     # optional dependency, or a broken env module
-            _IMPORT_ERRORS[mod.name] = f"{type(e).__name__}: {e}"
-            _log("DEBUG", f"stable_envs.envs.{mod.name} did not import: {type(e).__name__}: {e}")
+        _import_env_module(mod.name, mod.name)
+    for mod_name, error_key in _EXPLICIT_ENV_MODULES:
+        _import_env_module(mod_name, error_key)
     _DISCOVERED = True
     return dict(_IMPORT_ERRORS)
 

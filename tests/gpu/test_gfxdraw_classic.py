@@ -123,7 +123,7 @@ def test_the_described_frame_is_the_drawn_frame(name, kind):
     clips a primitive, an order that swaps two of them, a colour taken from the wrong style path —
     is the kind of error that should cost a laptop second, not a GPU job.
     """
-    env = make_or_skip(name, batch=8, device="cpu")
+    env = make_or_skip(name, num_envs=8, device="cpu")
     if not getattr(env, "fused_capable", False):
         pytest.skip(f"{name} has no fused description")
     states = _states(env, kind, env.B, seed=SEEDS[kind])
@@ -141,7 +141,7 @@ def test_the_description_carries_per_row_appearance(name):
     A kernel that cached any of them on anything but static geometry would pass the default-style
     test and fail here, which is the entire reason a batch is allowed to hold 4,096 appearances.
     """
-    env = make_or_skip(name, batch=8, device="cpu")
+    env = make_or_skip(name, num_envs=8, device="cpu")
     if not getattr(env, "fused_capable", False):
         pytest.skip(f"{name} has no fused description")
     states = _states(env, "corpus", env.B, seed=0)
@@ -173,7 +173,7 @@ def test_the_kernel_is_the_description(name, kind, style_kind):
         pytest.skip("needs a CUDA device")
     if not FC.HAVE_TRITON:
         pytest.skip("triton is unavailable")
-    env = make_or_skip(name, batch=8, device="cuda")
+    env = make_or_skip(name, num_envs=8, device="cuda")
     if not getattr(env, "fused_capable", False):
         pytest.skip(f"{name} has no fused description")
     states = _states(env, kind, env.B, seed=SEEDS[kind])
@@ -217,7 +217,7 @@ def test_env_render_agrees_under_a_per_row_style(name):
     """
     if not (torch.cuda.is_available() and FC.HAVE_TRITON):
         pytest.skip("needs a CUDA device with triton")
-    env = make_or_skip(name, batch=8, device="cuda")
+    env = make_or_skip(name, num_envs=8, device="cuda")
     if not getattr(env, "fused_capable", False):
         pytest.skip(f"{name} has no fused description")
     states = _states(env, "corpus", env.B, seed=0)
@@ -247,12 +247,12 @@ def test_the_kernel_is_batch_and_chunk_invariant(name):
     """
     if not (torch.cuda.is_available() and FC.HAVE_TRITON):
         pytest.skip("needs a CUDA device with triton")
-    env = make_or_skip(name, batch=12, device="cuda")
+    env = make_or_skip(name, num_envs=12, device="cuda")
     if not getattr(env, "fused_capable", False):
         pytest.skip(f"{name} has no fused description")
     states = _states(env, "corpus", 12, seed=0)
     whole = env.render(states).clone()
-    chunks = torch.cat([se.make(name, batch=k, device="cuda").render(states[i:i + k])
+    chunks = torch.cat([se.make(name, num_envs=k, device="cuda").render(states[i:i + k])
                         for i, k in ((0, 4), (4, 8))])
     assert_frames_identical(chunks, whole, what=f"{name} chunked vs whole (fused)",
                             why="the fused kernel must be batch-size invariant")
@@ -270,7 +270,7 @@ def test_the_cpu_path_is_untouched_by_the_kernel(name):
     Triton has no CPU backend here, so this is true by construction — and it is asserted anyway,
     because "the fused path is CUDA-only" is a claim about a dispatch predicate and predicates rot.
     """
-    cpu = make_or_skip(name, batch=4, device="cpu")
+    cpu = make_or_skip(name, num_envs=4, device="cpu")
     assert cpu._use_fused() is False, (
         f"{name} on device='cpu' selected the fused kernel; the CPU path must stay the "
         f"per-primitive one, whose pixels this ticket does not change")

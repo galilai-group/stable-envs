@@ -961,8 +961,7 @@ class MetaWorldBase(Env):
         "through MuJoCo itself.")
 
     def __init__(self, num_envs: int = 1, size: int | None = None, supersample: int | None = None,
-                 device: str = "cuda", backend: str = "auto", seed: int = 0,
-                 batch: int | None = None):
+                 device: str = "cuda", backend: str = "auto", seed: int = 0):
         b = _build_bundle(self.TASK)
         self.state_dim = len(b.state_names)
         self.state_names = b.state_names
@@ -975,7 +974,7 @@ class MetaWorldBase(Env):
         # ``pack``/``unpack`` round-trip the frozen corpus bit for bit.
         k = self.state_dim - b.nq
         self.state_layout = ((("qpos",), b.nq, 0),) + ((((("episode",), k, b.nq)),) if k else ())
-        super().__init__(num_envs=num_envs, batch=batch, size=size,
+        super().__init__(num_envs=num_envs, size=size,
                          supersample=self.default_supersample if supersample is None else supersample,
                          device=device, backend=backend, seed=seed)
         self._b = b

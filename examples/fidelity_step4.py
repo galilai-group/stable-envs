@@ -565,7 +565,7 @@ def provenance(device: str) -> dict:
          "slurm_job_id": os.environ.get("SLURM_JOB_ID"),
          "slurm_nodelist": os.environ.get("SLURM_JOB_NODELIST"),
          "mujoco_gl": os.environ.get("MUJOCO_GL"),
-         "registry_here": sorted(se.REGISTRY), "import_errors": _jsonable(se.envs.import_errors())}
+         "registry_here": sorted(se.registry.REGISTRY), "import_errors": _jsonable(se.import_errors())}
     if device == "cuda" and torch.cuda.is_available():
         p["gpu"] = torch.cuda.get_device_name(0)
         p["driver"] = _run(["bash", "-c",
@@ -606,13 +606,13 @@ def measure(config: dict, states_dir: Path, n: int, pool: int, device: str, imag
            "registered_default_coverage": config["registered_default_coverage"],
            "declared_tier": config["fidelity_tier"], "backends": config["backends"]}
     t0 = time.perf_counter()
-    if name not in se.REGISTRY:
+    if name not in se.registry.REGISTRY:
         row["status"] = "blocked_environment"
         row["why"] = (f"{name} is not registered in this interpreter; env-module import errors: "
-                      f"{se.envs.import_errors()}")
+                      f"{se.import_errors()}")
         return row
     try:
-        env = se.make(name, batch=n, device=device)
+        env = se.make(name, num_envs=n, device=device)
     except BaseException as e:                                              # noqa: BLE001
         row["status"] = ("blocked_environment" if isinstance(e, BLOCKING) else "error")
         row["why"] = f"{type(e).__name__}: {str(e)[:400]}"
@@ -650,11 +650,11 @@ def siblings(env, config: dict, states) -> dict:
         return out
     mine = C.frames_digest(env.render(states))
     for s in config["siblings"]:
-        if s not in se.REGISTRY:
+        if s not in se.registry.REGISTRY:
             out[s] = {"status": "blocked_environment", "why": "not registered in this interpreter"}
             continue
         try:
-            other = se.make(s, batch=len(states), size=env.size, device=str(env.device))
+            other = se.make(s, num_envs=len(states), size=env.size, device=str(env.device))
             if other.state_dim != env.state_dim:
                 out[s] = {"status": "not_comparable",
                           "why": f"state_dim {other.state_dim} vs {env.state_dim}: not the same corpus"}
@@ -731,7 +731,7 @@ def main() -> None:
     elif a.shard:
         want = [c for c in all_cfg if universe.shard_of(c) == a.shard]
     else:
-        want = [c for c in all_cfg if c["config_id"] in se.REGISTRY]
+        want = [c for c in all_cfg if c["config_id"] in se.registry.REGISTRY]
 
     out = Path(a.out)
     out.parent.mkdir(parents=True, exist_ok=True)

@@ -11,7 +11,7 @@ later. The rules:
   * ``render/*`` imports nothing from ``envs/`` and nothing from ``stable_worldmodel``, at any depth.
     A renderer that knew an env class or an SWM id would be a backend with a policy about what it is
     drawing.
-  * nothing outside ``interop``/``compat`` imports ``stable_worldmodel`` at module scope.
+  * nothing outside ``interop`` imports ``stable_worldmodel`` at module scope.
 """
 from __future__ import annotations
 
@@ -69,7 +69,7 @@ def test_a_renderer_knows_nothing_about_environments_or_stable_worldmodel(path):
 def test_only_interop_reaches_for_stable_worldmodel():
     offenders = {}
     for path in PKG.rglob("*.py"):
-        if "_interop" in path.parts or "compat" in path.parts:
+        if "_interop" in path.parts:
             continue
         hits = [m for m in _imports(path, top_level_only=True) if m.startswith("stable_worldmodel")]
         if hits:
@@ -98,3 +98,51 @@ def test_the_package_imports_with_no_environment_family_available(tmp_path):
             "import stable_envs as snv; print(snv.__version__)")
     r = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, cwd=str(ROOT))
     assert r.returncode == 0, r.stderr[-2000:]
+
+
+GONE_SHIMS = (
+    "stable_envs/core",
+    "stable_envs/compat",
+    "stable_envs/envs/swm_nav.py",
+    "stable_envs/envs/simple_point_maze.py",
+    "stable_envs/envs/ogb_manip.py",
+    "stable_envs/envs/craftax_full.py",
+)
+BANNED_IMPORTS = (
+    "stable_envs.core",
+    "stable_envs.compat",
+    "stable_envs.envs.swm_nav",
+    "stable_envs.envs.simple_point_maze",
+    "stable_envs.envs.ogb_manip",
+    "stable_envs.envs.craftax_full",
+)
+
+
+def test_unpublished_step8_shims_are_gone():
+    missing = [rel for rel in GONE_SHIMS if (ROOT / rel).exists()]
+    assert missing == [], missing
+
+
+def test_discover_loads_underscore_craftax_full_and_separates_missing_extras():
+    src = (PKG / "registry.py").read_text()
+    assert '"_craftax_full"' in src and '"craftax_full"' in src
+    assert "except (ImportError, ModuleNotFoundError)" in src
+    assert "not an optional-dependency miss" in src
+    assert "never raised to the caller" in src or "must not fail the package import" in src
+
+
+def _is_banned(mod: str) -> bool:
+    return any(mod == b or mod.startswith(b + ".") for b in BANNED_IMPORTS)
+
+
+def test_maintained_tests_and_examples_do_not_import_deleted_modules():
+    offenders = {}
+    for folder in ("tests", "examples"):
+        for path in (ROOT / folder).rglob("*.py"):
+            rel = path.relative_to(ROOT).as_posix()
+            if rel.startswith("examples/results/"):
+                continue
+            hits = [m for m in _imports(path, top_level_only=False) if _is_banned(m)]
+            if hits:
+                offenders[rel] = hits
+    assert offenders == {}, offenders

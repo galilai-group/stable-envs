@@ -26,14 +26,14 @@ a = ap.parse_args()
 SS = None if str(a.ss).lower() in ("native", "default", "env", "none") else int(a.ss)
 
 print(f"{torch.cuda.get_device_name(0)}   supersample={a.ss}\n")
-for name in sorted(se.REGISTRY):
+for name in sorted(se.registry.REGISTRY):
     for size in [int(s) for s in a.sizes.split(",")]:
         print(f"--- {name} @ {size}px ---")
         print(f"  {'batch':>7} {'ms/frame':>10} {'frames/s':>13} {'GB/s':>8} {'peak GB':>9} {'ss':>3}")
         for B in [int(b) for b in a.batches.split(",")]:
             try:
                 kw = {} if SS is None else {"supersample": SS}
-                env = se.make(name, batch=B, size=size, device="cuda", **kw)
+                env = se.make(name, num_envs=B, size=size, device="cuda", **kw)
                 st = torch.as_tensor(env.sample_states(B), device="cuda")
                 out = torch.empty((B, size, size, 3), dtype=torch.uint8, device="cuda")
                 for _ in range(3):

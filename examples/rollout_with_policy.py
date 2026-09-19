@@ -50,7 +50,7 @@ MEDIAN_TOLERANCE_PX = 2.0
 AGENT_TOLERANCE_PX = 1e-3
 
 
-class ReferencePushT(se.REGISTRY["PushT"]):
+class ReferencePushT(se.registry.REGISTRY["PushT"]):
     """PushT stepped by B copies of the official ``gym_pusht`` env, on the CPU.
 
     Kept, now that PushT has a native ``step``, for two reasons. It is the CPU baseline the GPU solver
@@ -62,8 +62,8 @@ class ReferencePushT(se.REGISTRY["PushT"]):
 
     use_step_graph = False                # the state is written by pymunk each step, not by a kernel
 
-    def __init__(self, batch: int = 256, **kw):
-        super().__init__(batch=batch, **kw)
+    def __init__(self, num_envs: int = 256, **kw):
+        super().__init__(num_envs=num_envs, **kw)
         self._refs = [self.reference_env(size=self.size) for _ in range(self.B)]
         for i, e in enumerate(self._refs):
             e.reset(seed=i)
@@ -148,11 +148,11 @@ def rollout_stats(out: dict, sim_s: float, batch: int, steps: int) -> dict:
 
 def show_unsupported(size: int) -> tuple[str, str]:
     """Call ``sample`` on the first renderer-only env in the registry and return what it raised."""
-    for name, cls in sorted(se.REGISTRY.items()):
+    for name, cls in sorted(se.registry.REGISTRY.items()):
         if hasattr(cls, "step"):
             continue
         try:
-            env = se.make(name, batch=4, size=None, device="cuda")
+            env = se.make(name, num_envs=4, size=None, device="cuda")
             env.sample(steps=2, batch=4)
             return name, "NO ERROR RAISED"
         except NotImplementedError as e:
@@ -188,15 +188,15 @@ def main() -> None:
     ap.add_argument("--corpus", type=Path, default=Path("examples/results/pusht_rollout.npz"))
     args = ap.parse_args()
 
-    steppable = sorted(n for n, c in se.REGISTRY.items() if hasattr(c, "step"))
-    print(f"registry: {len(se.REGISTRY)} envs, {len(steppable)} of which implement step(): {steppable}")
+    steppable = sorted(n for n, c in se.registry.REGISTRY.items() if hasattr(c, "step"))
+    print(f"registry: {len(se.registry.REGISTRY)} envs, {len(steppable)} of which implement step(): {steppable}")
     only_render, msg = show_unsupported(args.size)
     print(f"\n{only_render}.sample(steps=2, batch=4) raises NotImplementedError:\n  {msg}\n")
-    results = {"registry_size": len(se.REGISTRY), "steppable": steppable,
+    results = {"registry_size": len(se.registry.REGISTRY), "steppable": steppable,
                "renderer_only_example": only_render, "not_implemented_message": msg,
                "batch": args.batch, "steps": args.steps}
 
-    env = se.make("PushT", batch=args.batch, size=args.size, device="cuda", seed=args.seed)
+    env = se.make("PushT", num_envs=args.batch, size=args.size, device="cuda", seed=args.seed)
     init = env.sample_states(args.batch, np.random.default_rng(args.seed))
     # Colours only. The style space also carries goal.position, goal.angle and the geometry scales, and
     # randomising those would change what the picture MEANS relative to the simulator, whose goal pose
@@ -275,7 +275,7 @@ def main() -> None:
         print(f"\nfallback path: {args.batch} official gym_pusht envs behind one batched step() ...",
               flush=True)
         t0 = time.perf_counter()
-        cpu_env = ReferencePushT(batch=args.batch, size=args.size, device="cuda", seed=args.seed)
+        cpu_env = ReferencePushT(num_envs=args.batch, size=args.size, device="cuda", seed=args.seed)
         build_s = time.perf_counter() - t0
         t0 = time.perf_counter()
         cpu_out = cpu_env.sample(steps=args.steps, batch=args.batch,
@@ -312,12 +312,12 @@ def main() -> None:
 
     scale = []
     for B in [int(x) for x in args.scale.split(",") if x]:
-        e = se.make("PushT", batch=B, size=args.size, device="cuda")
+        e = se.make("PushT", num_envs=B, size=args.size, device="cuda")
         e.set_state(e.sample_states(B))
         dt = time_step(e, 50)
         # The same arithmetic without the graph, to show what the graph is actually buying. The step is
         # 10 substeps x 10 solver iterations of small ops; uncaptured, the cost is the launches.
-        eager = se.make("PushT", batch=B, size=args.size, device="cuda")
+        eager = se.make("PushT", num_envs=B, size=args.size, device="cuda")
         eager.use_step_graph = False
         eager.set_state(eager.sample_states(B))
         dt_eager = time_step(eager, 5)

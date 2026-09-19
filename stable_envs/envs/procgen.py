@@ -873,8 +873,8 @@ class _ProcgenEnv(Env):
     pool_warmup = 48
 
     def __init__(self, num_envs: int = 1, size=None, supersample=1, device="cuda",
-                 backend="auto", seed=0, batch: int | None = None):
-        super().__init__(num_envs=num_envs, batch=batch, size=size, supersample=supersample,
+                 backend="auto", seed=0):
+        super().__init__(num_envs=num_envs, size=size, supersample=supersample,
                          device=device, backend=backend, seed=seed)
         # Step-9 state (contract §3): the tile grid and the entity slots, which is the division this
         # class is already built around (``n_cells``, ``has_grid``, ``_unpack``) rather than a new

@@ -162,7 +162,7 @@ class _FakeEnv:
 
 def _fake_registry(monkeypatch, storage, table):
     """``table`` maps the requested size (or None for native) to an env or an exception."""
-    def fake_make(name, batch=1, device="cuda", size=None, **kw):
+    def fake_make(name, num_envs=1, device="cuda", size=None, **kw):
         got = table[size]
         if isinstance(got, Exception):
             raise got

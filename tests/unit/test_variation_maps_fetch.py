@@ -358,8 +358,8 @@ def envs():
     if not torch.cuda.is_available():
         _unavailable("the Fetch family renders only through mujoco_warp on cuda")
     import stable_envs as se
-    if "fetch" in se.envs.import_errors():
-        _unavailable(f"stable_envs.envs.fetch: {se.envs.import_errors()['fetch']}")
+    if "fetch" in se.import_errors():
+        _unavailable(f"stable_envs.envs.fetch: {se.import_errors()['fetch']}")
     # import_errors() is not enough, and this is not belt-and-braces. The module's dependency check
     # is ``warp``/``mujoco_warp``/``mujoco >= 3.11`` at import; ``gymnasium_robotics`` is imported
     # LAZILY by ``_asset_dir`` at the first build. So on an interpreter with mujoco_warp and a CUDA
@@ -367,7 +367,7 @@ def envs():
     # pytest -- the module imports clean, records no error, and then every one of these tests ERRORS
     # in setup instead of skipping. Measured, in SLURM job 6451948 stage 3: 24 setup errors.
     try:
-        return {s: se.make(f"Fetch{s}", batch=2, size=64, device="cuda") for s in SCENES}
+        return {s: se.make(f"Fetch{s}", num_envs=2, size=64, device="cuda") for s in SCENES}
     except Exception as exc:
         _unavailable(f"this interpreter cannot build a Fetch env: {type(exc).__name__}: {exc}")
 

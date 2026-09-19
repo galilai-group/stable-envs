@@ -98,7 +98,7 @@ def main() -> None:
     # Every rank holds the same states on the HOST; the sampler is what makes the work disjoint. This
     # is the same arrangement as an image folder whose file list every rank knows in full.
     rng = np.random.default_rng(0)
-    proto = se.make(a.env, batch=1, device=dev, **({"size": a.size} if a.size else {}))
+    proto = se.make(a.env, num_envs=1, device=dev, **({"size": a.size} if a.size else {}))
     states = proto.sample_states(a.n_states, rng=rng)
     del proto
 
@@ -111,7 +111,7 @@ def main() -> None:
                                  drop_last=False)
     loader = DataLoader(ds, batch_size=a.batch, sampler=sampler, drop_last=False, num_workers=0)
 
-    env = se.make(a.env, batch=a.batch, device=dev, **({"size": a.size} if a.size else {}))
+    env = se.make(a.env, num_envs=a.batch, device=dev, **({"size": a.size} if a.size else {}))
     net = DDP(TinyNet(env.state_dim).to(dev), device_ids=[local_rank])
     opt = torch.optim.Adam(net.parameters(), lr=3e-4)
 

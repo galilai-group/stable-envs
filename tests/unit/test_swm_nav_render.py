@@ -25,7 +25,7 @@ import pytest
 import torch
 
 import stable_envs as se
-from stable_envs.envs import swm_nav as SN
+from stable_envs.envs import navigation as SN
 
 CONFIGS = ("TwoRoom", "TwoRoomTarget", "Piecewise", "PiecewiseZones")
 
@@ -59,7 +59,7 @@ def _check(env, states):
 @pytest.mark.parametrize("cfg", CONFIGS)
 @pytest.mark.parametrize("B", [1, 5, 16])
 def test_matches_the_full_frame_composition_on_sampled_states(cfg, B):
-    env = se.make(cfg, batch=B, device="cpu")
+    env = se.make(cfg, num_envs=B, device="cpu")
     env.rng = np.random.default_rng(0)
     _check(env, env.sample_states(B))
 
@@ -72,7 +72,7 @@ def test_matches_on_states_the_env_would_never_sample(cfg):
     picture is a legal input and is exactly where the frame-maximum normalisation stops being a
     detail.
     """
-    env = se.make(cfg, batch=1, device="cpu")
+    env = se.make(cfg, num_envs=1, device="cpu")
     # The MODERATE offsets are the ones that bite. A centre 400 px away underflows exp() to zero
     # before the normalisation can rescale anything, so every windowing agrees on a blank dot; a
     # centre 20-60 px outside still paints at full strength on the frame edge, and there the window
@@ -88,7 +88,7 @@ def test_matches_on_states_the_env_would_never_sample(cfg):
         states[i, 0], states[i, 1] = x, y
         if dim >= 4:                                   # TwoRoomTarget carries the target too
             states[i, 2], states[i, 3] = 223.0 - x, 223.0 - y
-    e = se.make(cfg, batch=len(pos), device="cpu")
+    e = se.make(cfg, num_envs=len(pos), device="cpu")
     _check(e, states)
 
 
@@ -96,7 +96,7 @@ def test_matches_on_states_the_env_would_never_sample(cfg):
 @pytest.mark.parametrize("radius", [7.0, 9.5, 14.0])
 def test_matches_across_the_declared_radius_range(cfg, radius):
     """The window scales with sigma, so both ends of ``agent.radius`` have to be checked."""
-    env = se.make(cfg, batch=4, device="cpu")
+    env = se.make(cfg, num_envs=4, device="cpu")
     env.rng = np.random.default_rng(1)
     st = env.sample_states(4)
     style = np.tile(np.asarray(env.default_style(), np.float32), (4, 1))
@@ -114,11 +114,11 @@ def test_the_bake_is_not_a_function_of_call_history(cfg):
     plate that was mutated after it was cached -- which happened once, when the agent was painted
     into the plate at batch 1 and every later render of that style came back with a stale dot on it.
     """
-    env = se.make(cfg, batch=8, device="cpu")
+    env = se.make(cfg, num_envs=8, device="cpu")
     env.rng = np.random.default_rng(2)
     st = np.asarray(env.sample_states(8), np.float32)
     first = env.render(st).clone()
-    solo = se.make(cfg, batch=1, device="cpu")          # warms and could corrupt the shared cache
+    solo = se.make(cfg, num_envs=1, device="cpu")          # warms and could corrupt the shared cache
     for i in range(8):
         assert torch.equal(solo.render(st[i:i + 1])[0], first[i]), f"{cfg}: row {i} at batch 1"
     assert torch.equal(env.render(st), first), f"{cfg}: render is not pure"
@@ -137,7 +137,7 @@ def test_a_per_row_style_is_not_collapsed_to_one_plate(cfg):
     This is the failure mode the style tensor's own docstring calls the three shipped collapses, and
     a cache keyed on one row of a batch is the fourth way to have it.
     """
-    env = se.make(cfg, batch=6, device="cpu")
+    env = se.make(cfg, num_envs=6, device="cpu")
     env.rng = np.random.default_rng(3)
     st = np.asarray(env.sample_states(6), np.float32)
     base = np.asarray(env.default_style(), np.float32)
@@ -168,7 +168,7 @@ def test_two_styles_with_repeats_take_the_gather_branch(cfg):
     Two styles across six rows, interleaved rather than blocked, so a gather that merely preserved
     grouping order would be caught.
     """
-    env = se.make(cfg, batch=6, device="cpu")
+    env = se.make(cfg, num_envs=6, device="cpu")
     env.rng = np.random.default_rng(11)
     st = np.asarray(env.sample_states(6), np.float32)
     base = np.asarray(env.default_style(), np.float32)
@@ -204,7 +204,7 @@ def test_two_styles_with_repeats_take_the_gather_branch(cfg):
     assert torch.equal(env.render(np.ascontiguousarray(st[perm]),
                                   style=np.ascontiguousarray(rows[perm]))[np.argsort(perm)], got), (
         f"{cfg}: gather branch is not order invariant")
-    solo = se.make(cfg, batch=1, device="cpu")
+    solo = se.make(cfg, num_envs=1, device="cpu")
     for i in range(6):
         assert torch.equal(solo.render(st[i:i + 1], style=rows[i:i + 1])[0], got[i]), (
             f"{cfg}: row {i} differs when rendered alone, so a plate is stale or misindexed")

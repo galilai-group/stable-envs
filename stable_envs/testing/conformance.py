@@ -132,7 +132,7 @@ def check_reference_renderer_is_stable(cls, size: int, n: int = 4) -> dict:
     interpreter aborted" into one line naming the node.
     """
     ref = reference_env(cls, size)
-    env = cls(batch=1, size=size, device="cuda")
+    env = cls(num_envs=1, size=size, device="cuda")
     st = env.sample_states(n, rng=np.random.default_rng(0))
     a = cls.reference_render(ref, st)
     b = cls.reference_render(ref, st)
@@ -154,7 +154,7 @@ def interior_mask(frames: np.ndarray) -> np.ndarray:
     worked example — a normalised Gaussian alpha with a 41 px tail, where the reference is constant
     over a 7x7 patch around pixels whose underlying float is still moving — and it costs those envs a
     declared ``parity_interior_min`` of 0.999995 (about 2 pixels in 2.3 million, one in eight draws).
-    See ``stable_envs.envs.swm_nav``.
+    See ``stable_envs.envs.navigation``.
 
     The mask is deliberately NOT widened to compensate. Doing so would relax the strong claim for
     every flat-shaded env in the registry — where the 3x3 test is exactly right — in order to
@@ -670,7 +670,7 @@ def check_style_is_state(env) -> dict:
     st = env.sample_states(env.B)
     sty = env.sample_style(env.B)
     a = env.render(st, style=sty).cpu().numpy()
-    fresh = type(env)(batch=env.B, size=env.size, supersample=env.ss, device=str(env.device))
+    fresh = type(env)(num_envs=env.B, size=env.size, supersample=env.ss, device=str(env.device))
     fresh.set_state(st, style=sty)
     b = fresh.render().cpu().numpy()
     return {"max_abs_diff": int(np.abs(a.astype(np.int16) - b.astype(np.int16)).max())}
@@ -1101,7 +1101,7 @@ def check_step_matches_reference(env, steps: int = 100, episodes: int = 16, seed
     ref = reference_env(cls, env.size)
     rng = np.random.default_rng(seed)
     dev = env.device
-    single = cls(batch=1, size=env.size, device=str(dev))
+    single = cls(num_envs=1, size=env.size, device=str(dev))
     get_sim = getattr(single, "sim_state", single.get_state)
     set_sim = getattr(single, "set_sim_state", single.set_state)
 

@@ -14,7 +14,7 @@ The artifacts answer different questions, and none substitutes for another:
                           that domain randomisation costs nothing here — and the sweep sheet covers the
                           rest across separate calls.
 
-Everything is driven from ``stable_envs.REGISTRY``, so a new env produces its own media without editing
+Everything is driven from ``stable_envs.registry.REGISTRY``, so a new env produces its own media without editing
 this file, and every stage is wrapped: an env that cannot produce one artifact still produces the others,
 with the reason recorded in the manifest.
 
@@ -275,12 +275,12 @@ def sweep_panels(env, state: np.ndarray) -> list[np.ndarray]:
 
 
 def env_media(name: str, outdir: Path, video_frames: int, target_px: int) -> dict:
-    cls = se.REGISTRY[name]
+    cls = se.registry.REGISTRY[name]
     d = outdir / name
     d.mkdir(parents=True, exist_ok=True)
     man: dict = {"env": name, "notes": []}
 
-    env = se.make(name, batch=1, device="cuda")
+    env = se.make(name, num_envs=1, device="cuda")
     size = env.size
     man["describe"] = env.describe()
     # Sheet geometry is derived from a rendered frame, not from ``env.size``. They are not always the
@@ -296,7 +296,7 @@ def env_media(name: str, outdir: Path, video_frames: int, target_px: int) -> dic
     cols = 8 if span <= 128 else (4 if span <= 256 else 2)
     video_scale = max(1, round(target_px / span))
 
-    env = se.make(name, batch=grid_n, size=size, device="cuda")
+    env = se.make(name, num_envs=grid_n, size=size, device="cuda")
     states = env.sample_states(grid_n)
     _write_png(d / "grid.png", _tile(env.render(states).cpu().numpy(), cols))
     man["grid"] = {"path": str(d / "grid.png"), "n": grid_n, "size": size}
@@ -337,7 +337,7 @@ def env_media(name: str, outdir: Path, video_frames: int, target_px: int) -> dic
         except Exception as e:
             man["notes"].append(f"reference render failed: {type(e).__name__}: {e}")
 
-    genv = se.make(name, batch=len(traj), size=size, device="cuda")
+    genv = se.make(name, num_envs=len(traj), size=size, device="cuda")
     ours = genv.render(traj).cpu().numpy()
     del genv
     torch.cuda.empty_cache()
@@ -384,13 +384,13 @@ def main() -> None:
     out.mkdir(parents=True, exist_ok=True)
     # Merge rather than replace, so regenerating one env with --envs does not silently drop the
     # recorded parity numbers and codecs of every other env from the manifest.
-    manifest = {"envs": {}, "import_errors": se.envs.import_errors()}
+    manifest = {"envs": {}, "import_errors": se.import_errors()}
     if (out / "manifest.json").exists():
         try:
             manifest["envs"] = json.loads((out / "manifest.json").read_text()).get("envs", {})
         except Exception as e:
             print(f"existing manifest unreadable ({type(e).__name__}); starting fresh", flush=True)
-    wanted = [n for n in sorted(se.REGISTRY) if not a.envs or n in a.envs.split(",")]
+    wanted = [n for n in sorted(se.registry.REGISTRY) if not a.envs or n in a.envs.split(",")]
     for name in wanted:
         print(f"[{name}]", flush=True)
         try:
