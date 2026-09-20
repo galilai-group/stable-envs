@@ -1,8 +1,0 @@
-scratch/mwfast/train.py MetaWorldWindowOpen --net unet_112t128_w48_d2_u2 --tag r112_noblend --epochs 400 --out pt_MetaWorldWindowOpen_unet_112t128_w48_d2_u2_r112_noblend
-scratch/mwfast/train.py MetaWorldWindowOpen --net unet_112t128_w64_d3_u2 --tag r112_noblend --epochs 400 --out pt_MetaWorldWindowOpen_unet_112t128_w64_d3_u2_r112_noblend
-scratch/mwfast/train.py MetaWorldWindowOpen --net unet_96t128_w48_d2_u2 --tag r96_noblend --epochs 400 --out pt_MetaWorldWindowOpen_unet_96t128_w48_d2_u2_r96_noblend
-scratch/mwfast/train.py MetaWorldWindowOpen --net unet_112t128_w48_d2_u2 --tag r112 --epochs 400 --out pt_MetaWorldWindowOpen_unet_112t128_w48_d2_u2_r112
-scratch/mwfast/train.py MetaWorldWindowClose --net unet_112t128_w48_d2_u2 --tag r112_noblend --epochs 400 --out pt_MetaWorldWindowClose_unet_112t128_w48_d2_u2_r112_noblend
-scratch/mwfast/train.py MetaWorldWindowClose --net unet_112t128_w64_d3_u2 --tag r112_noblend --epochs 400 --out pt_MetaWorldWindowClose_unet_112t128_w64_d3_u2_r112_noblend
-scratch/mwfast/train.py MetaWorldWindowClose --net unet_96t128_w48_d2_u2 --tag r96_noblend --epochs 400 --out pt_MetaWorldWindowClose_unet_96t128_w48_d2_u2_r96_noblend
-scratch/mwfast/train.py MetaWorldWindowClose --net unet_112t128_w48_d2_u2 --tag r112 --epochs 400 --out pt_MetaWorldWindowClose_unet_112t128_w48_d2_u2_r112

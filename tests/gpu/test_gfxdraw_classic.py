@@ -68,7 +68,11 @@ def _states(env, kind, n, seed):
     if kind == "corpus":
         from pathlib import Path
 
-        npz = Path(__file__).resolve().parents[2] / "examples/results/step4/states" / f"{type(env).__name__}.npz"
+        npz = (
+            Path(__file__).resolve().parents[2]
+            / "tests/fixtures/regression/join/step4/states"
+            / f"{type(env).__name__}.npz"
+        )
         if not npz.is_file():
             pytest.skip(f"no frozen corpus for {type(env).__name__} in this checkout")
         pool = np.load(npz)["states"]

@@ -83,7 +83,7 @@ renders byte-for-byte what it rendered before:**
   beside MuJoCo's (``shade_tiny``): one world-fixed directional light, the specular term MULTIPLIED into
   the material colour with an infinite-viewer reflection whose exponent is a parameter, coefficients
   ``ambient + diffuse*max(0, n.l) + specular*max(0, r_z)^e``. Measured on real frames before it was
-  written (``scratch/step7/rocket-landing/tiny_law_probe.py``, ``tiny_law_probe2.py``): the light is
+  written (the frozen measurement record, ``tiny_law_probe2.py``): the light is
   world-fixed (not head-lamp), the exponent is 2, ``r_z`` is the WORLD z of the reflection, and the
   output is TRUNCATED to uint8 (``quant="trunc"``).
 * ``BatchRenderer(tex_filter="nearest")`` and ``sample_offset=(ox, oy)`` — unfiltered texel lookup, and
@@ -157,7 +157,7 @@ class TinyShading:
     (an infinite viewer looking down -z, whatever the camera does). ``dir`` points TOWARD the light and is
     normalised here. The defaults are Bullet's own for a z-up world: direction ``(-50, 30, 100)``,
     coefficients 0.6 / 0.35 / 0.05, white light, exponent 2 -- each reproduces the default frame with
-    0 differing pixels when passed explicitly (``examples/results/step7/rocket-landing/phase0/
+    0 differing pixels when passed explicitly (``tests/fixtures/regression/join/step7/rocket-landing/phase0/
     phase0_light_sweep.json``; the exponent from ``tiny_law2.json``: 190/255 = 0.8639 ** 2).
     """
 
@@ -227,7 +227,7 @@ def mvp_rows(proj, view, M):
     B <= 24 and a different rounding for B >= 31, 46 of a row's 208 entries off by up to 1.5e-5 at
     100-500 m coordinates, which moved 1282 clip-space vertex coordinates and flipped ~10 silhouette,
     internal-edge and truncation pixels per frame between a state rendered alone and the same state in
-    a batch (``examples/results/step7/rocket-landing/tier/probe_batch/``, jobs 6407151/6407256). The
+    a batch (``tests/fixtures/regression/join/step7/rocket-landing/tier/probe_batch/``, jobs 6407151/6407256). The
     sparse per-geom stage and the rasterizer were exact on identical input; the GEMM alone reproduced
     the split. Elementwise products have no such kernel choice.
     """
@@ -433,7 +433,7 @@ def texture_array(m, tex: int) -> np.ndarray:
 # --------------------------------------------------------------------------- texgen
 # MuJoCo generates texture coordinates for primitives with OBJECT_LINEAR texgen: an affine map from
 # the geom's own frame to (s, t, r). Everything below is an affine map, and the CONSTANTS in it are
-# calibrated in scratch/nvdiff/probe_texgen.py against MuJoCo's own frames rather than read off a
+# calibrated against MuJoCo's own frames rather than read off a
 # source file -- every constant in this repo that was read rather than measured turned out wrong.
 #
 # `texuniform` is the one qualitative switch: false means the repeat count spans the object, true means
@@ -476,7 +476,7 @@ def texgen(m, g: int, drawn_plane: float = 0.0, cube: bool = False) -> tuple[np.
     every type. That is not what a reading of the code suggests (a per-face unwrap, or a cube map), and
     it is not what MJWarp implements (it derives no UVs for anything but planes and meshes); it is what
     a texture painted with its own texel index shows when you read the frame back --
-    ``scratch/nvdiff/probe_texgen{2,3}.py``. It is also independent of ``numquads``, which was the
+    the frozen measurement record. It is also independent of ``numquads``, which was the
     tessellation hypothesis and is refuted (slope identical at 1, 2, 4 and 8).
 
         u = +0.5 * repeat_x * x * scale_x + offset

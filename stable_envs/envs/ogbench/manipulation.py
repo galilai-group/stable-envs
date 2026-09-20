@@ -18,7 +18,7 @@ corrections are not needed (the camera is a MODEL camera, so nothing has to be r
 (``gl_rounding``) applies unchanged.
 
 What is different is the LIGHTING, and it was attributed term by term before this class was written
-(``examples/results/step7/ogb-manipulation/m1/``, ``m1b/``; jobs 6396646, 6397454, 6397621 on a
+(``tests/fixtures/regression/join/step7/ogb-manipulation/m1/``, ``m1b/``; jobs 6396646, 6397454, 6397621 on a
 3090). Raw MJWarp scored **0.0091** interior-exact against MuJoCo's EGL frames. One term explained
 almost all of it — ``mujoco_warp`` honours a spot cutoff MuJoCo discards — and that correction now
 lives in the SHARED path (``render/mjwarp.py::neutralise_illegal_spots``), because it is a property
@@ -724,7 +724,7 @@ class OGBManipBase(Env):
                 f"{tri:,} visible triangles at a median projected edge of ~0.7 px, and the "
                 f"certification CPU bar leaves under a nanosecond per triangle against a "
                 f"24 ns/triangle vertex-setup floor -- 9.9-12.9x short before a single pixel is "
-                f"filled. See examples/results/step7/ogb-manipulation/findings.md. "
+                f"filled. See tests/fixtures/regression/join/step7/ogb-manipulation/findings.md. "
                 f"Use device='cuda'."
             )
         b = _bundle(self.CELL)
@@ -1497,7 +1497,7 @@ def _plate_rig(cell: str, res: int) -> _PlateRig:
 
 
 #: MEASURED, not chosen. EIGHT independent draws of 64 states each on an RTX 3090 (job 6433493, its
-#: JSON and log committed under ``examples/results/step7/ogb-manipulation/m6/final8/``), taken
+#: JSON and log committed under ``tests/fixtures/regression/join/step7/ogb-manipulation/m6/final8/``), taken
 #: THROUGH ``check_visual_fidelity`` -- the function that grades the declaration -- against swm's own
 #: EGL frames at the registered resolution. One of the eight IS the graded draw: the check calls
 #: ``sample_states(n)`` with no rng, which is ``default_rng(0)``, the same fixed draw every run.
@@ -1510,7 +1510,7 @@ def _plate_rig(cell: str, res: int) -> _PlateRig:
 #: the placeholder impossible to mistake for evidence.
 import os as _os
 
-#: MEASURED by `scratch/step7/ogb-manipulation/probe_remeasure_chain.py`, job 6407605 on
+#: MEASURED by the Gate-F remeasure chain, job 6407605 on
 #: gpu2109 (RTX 3090), three independent 64-state draws per cell against swm's own EGL frames at
 #: the registered resolution. The declared value is the WORST of the three and `draw_spread` carries
 #: the range; the thresholds were computed by that script under the family rule (x1.3 on the mean,
@@ -1570,9 +1570,9 @@ def _fidelity(cell: str) -> dict:
         if not _UNMEASURED:
             raise RuntimeError(
                 f"ogb_manip: {cell} has no MEASURED visual_fidelity. This module refuses to register "
-                f"a visual cell with invented numbers. Run "
-                f"scratch/step7/ogb-manipulation/probe_gate_fidelity.py, paste its worst-of-eight into "
-                f"_MEASURED, and re-import. Set SE7_OGB_UNMEASURED=1 only inside that measuring job."
+                f"a visual cell with invented numbers. Re-measure Gate-F fidelity, paste its "
+                f"worst-of-eight into _MEASURED, and re-import. Set SE7_OGB_UNMEASURED=1 only "
+                f"inside that measuring job."
             )
         return {
             "mean_abs": -1.0,

@@ -45,7 +45,7 @@ VISIBILITY = "visibility.target"
 MODES = ("stable_envs", "blank", "official_regen")
 #: ``hidden`` and ``offscreen`` differ in MECHANISM, not in intent: both say "the reference does not
 #: draw its target, so neither should we". ``offscreen`` is the Step-5 mechanism and is retained so
-#: ``examples/results/step5/reacher/`` can be reproduced exactly; ``hidden`` is the representation and
+#: ``tests/fixtures/regression/join/step5/reacher/`` can be reproduced exactly; ``hidden`` is the representation and
 #: is the default.
 TARGET_MODES = ("hidden", "offscreen", "as_placed")
 

@@ -7,7 +7,7 @@ them. Exactness is then structural rather than measured, and the measurement say
 
   * the atlas is **7 x 16 x 16 x 3 uint8 = 5,376 bytes**, and a pure gather from it reproduces
     ``render(mode='rgb_array')`` with **max absolute pixel difference 0** over 120 frames spanning 12
-    generated rooms (``scratch/sokoban/probe_atlas.py``);
+    generated rooms;
   * the whole atlas uses **10 distinct colours**, so a recolouring variation is a 10-entry palette
     applied to a label map with no filtering at all -- ``palette[label]`` IS the tile, and an RGB knob
     therefore puts its literal colour in the frame rather than an interpolation of it. ``_Atlas``
@@ -42,7 +42,7 @@ has a bug. There is no chaos to hide behind and no tolerance to negotiate, so ``
 only statistic worth quoting.
 
 Measured by ENUMERATION rather than by rollout, because a random rollout is a weak test of a decision
-table (``python scratch/sokoban/enumerate_step.py``): **all 9 actions from each of 1,024 states, 9,216
+table: **all 9 actions from each of 1,024 states, 9,216
 transitions, 921,600 cells, 0 mismatched**, plus 16 x 100 uniform-random steps at ``exact_frac 1.0``.
 The enumeration pool is drawn from real rollouts and is stratified so that every outcome occurs -- 131
 pushes onto a target, 9 off one, 354 plain pushes, 3,947 walks and 4,775 blocked moves. A rollout that
@@ -103,7 +103,7 @@ ROOM_STATE_OF = (0, 1, 2, 3, 4, 5, 5)
 ROOM_FIXED_OF = (0, 1, 2, 2, 1, 1, 2)
 
 #: The ten colours of the atlas, in ascending order, each named by WHERE it is painted -- measured in
-#: ``scratch/sokoban/probe_labels.py``, which prints the pixel count and bounding box of every colour
+#: the frozen measurement record, which prints the pixel count and bounding box of every colour
 #: in every tile. Three near-identical reds and three near-identical box shades are separate labels
 #: because they are separate colours in the art, not because they mean different things.
 PALETTE_NAMES = (
@@ -563,8 +563,7 @@ class Sokoban(Env):
 
         Uniform draws from the pool are not enough and the reason is measured rather than suspected:
         under random actions a box sits on a target in **7.0%** of states and the player stands on one
-        in **9.4%**, so **221 of 500** 16-state batches were missing at least one tile id
-        (``scratch/sokoban/probe_labels.py``). A missing tile means the knob that colours it cannot
+        in **9.4%**, so **221 of 500** 16-state batches were missing at least one tile id. A missing tile means the knob that colours it cannot
         move a pixel, and ``check_colors_apply_exactly`` would then pass or fail on the draw rather
         than on the renderer. Every state here is a real one the env reached; only WHICH of them are
         selected is arranged.

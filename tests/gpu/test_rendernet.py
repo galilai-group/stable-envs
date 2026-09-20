@@ -60,7 +60,7 @@ def env(request):
     sentence, so the two that are faults read as the one that is not:
 
       no ``robocasa`` here      a dependency fact, and nothing to do — the cover in
-                                ``scratch/census/assignment.json`` hands these envs to the
+                                ``tests/fixtures/regression/census/assignment.json`` hands these envs to the
                                 interpreter that has them. SKIP, with the import error attached.
       no sealed corrector       an ARTIFACT fact. The class is gated on the checkpoint ("no
                                 checkpoint, no class", above), so this empties the family too — but
@@ -76,7 +76,7 @@ def env(request):
                 "learned-decoder: no env declares one here because "
                 + "; ".join(f"{m} did not import ({e})" for m, e in blamed.items())
                 + " — the corrector is checked in the interpreter that owns RoboCasa in "
-                "scratch/census/assignment.json"
+                "tests/fixtures/regression/census/assignment.json"
             )
         if not RN.available():
             pytest.skip(

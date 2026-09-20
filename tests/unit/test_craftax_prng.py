@@ -1,8 +1,8 @@
 """``stable_envs/render/prng.py`` against golden vectors frozen from a real jax.
 
 The repo ships no jax and no Oscar interpreter has one, so a test that imported jax would skip
-everywhere and assert nothing. ``tests/fixtures/prng_threefry_golden.json`` is therefore frozen by
-``scratch/step7/craftax-classic-full/gen_prng_golden.py`` against jax 0.11.1 with
+everywhere and assert nothing. ``tests/fixtures/regression/fidelity/prng_threefry_golden.json`` is therefore frozen by
+``scripts/regression/craftax/gen_prng_golden.py`` against jax 0.11.1 with
 ``jax_threefry_partitionable = True``, and this module asserts against the file.
 
 What is being asserted is **bit** agreement, not closeness. ``jax.random.uniform`` builds its
@@ -23,7 +23,9 @@ import torch
 
 from stable_envs.render import prng
 
-GOLDEN = pathlib.Path(__file__).resolve().parents[1] / "fixtures" / "prng_threefry_golden.json"
+GOLDEN = (
+    pathlib.Path(__file__).resolve().parents[1] / "fixtures" / "regression" / "fidelity" / "prng_threefry_golden.json"
+)
 
 
 @pytest.fixture(scope="module")

@@ -64,8 +64,7 @@ def catenary(x0, x1, gravity, length: float, npoints: int) -> np.ndarray:
     is exported from ``libmujoco`` but is NOT in the Python bindings, so it had to be reproduced.
 
     It is reproduced EXACTLY. Validated against the C symbol through ctypes on 440 inputs spanning all
-    three branches and on 64 real ``ball_in_cup`` states: max absolute error 0.0, max ULP difference 0
-    (``scratch/dmcontrol/probe_catenary.py``). Two things buy that and neither is stylistic —
+    three branches and on 64 real ``ball_in_cup`` states: max absolute error 0.0, max ULP difference 0. Two things buy that and neither is stylistic —
     ``math.*`` is a direct call into the same libm MuJoCo's ``mju_*`` macros expand to, where a numpy
     ufunc is not, and the Newton loop below is MuJoCo's iteration count, tolerance, seed and
     backtracking rather than an equivalent solve.
@@ -106,7 +105,7 @@ def catenary(x0, x1, gravity, length: float, npoints: int) -> np.ndarray:
     pts[0], pts[npoints - 1] = x0, x1
     # The interior points, written as ONE numpy expression rather than as a Python loop of (3,)
     # temporaries. ``_cosh_sinh`` stays SCALAR and stays ``math.exp``: the 0-ULP validation against
-    # libmujoco's ``mjv_catenary`` (scratch/dmcontrol/probe_catenary.py, 440 inputs) depends on
+    # libmujoco's ``mjv_catenary`` (440 inputs) depends on
     # calling the same libm that MuJoCo's ``mju_*`` macros expand to, and ``np.exp`` is a different
     # implementation. What is vectorised is only the assembly, which is elementwise in the same
     # association order -- ``(x0 + ac*hor) + up*w``, componentwise -- so it is bit-identical.
@@ -261,7 +260,7 @@ def _tendon_frame(m, d, td: _Tendon):
     which is why the string turns red when the ball pulls the cup. ``imp`` is column 2 of
     ``efc_KBIP`` on the tendon-limit row, and that is measured rather than guessed: over 88 taut
     states the four columns reproduce MuJoCo's own scene colour to 1384, 52, **2.9e-08** and 23
-    respectively (``scratch/dmcontrol/probe_tendon_colour.py``). The 2.9e-08 is the float32 round-trip
+    respectively. The 2.9e-08 is the float32 round-trip
     through ``mjvGeom.rgba``.
 
     A random policy leaves ``ball_in_cup`` taut in 35-44% of the states it visits, so this is not a

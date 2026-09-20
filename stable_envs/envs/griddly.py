@@ -83,7 +83,7 @@ flight and ``stable_envs.testing.supervisor`` would have to report a green run a
 failure.
 
 Containment takes TWO things and it is measured which, because the obvious single fix does not work
-(``scratch/griddly_pack/p6_exit.py``, four modes x 6 runs, exit codes only):
+(the frozen measurement record, four modes x 6 runs, exit codes only):
 
     stock       GymWrapper bound to a script-level name                  -11 -11 -11 -11 -11 -11
     noreload    __del__ overridden to do nothing, script-level name      -11 -11 -11 -11 -11 -11

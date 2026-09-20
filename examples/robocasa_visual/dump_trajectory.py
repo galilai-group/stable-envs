@@ -112,7 +112,7 @@ def main() -> None:
     # The claim the whole comparison rests on, asserted here rather than assumed downstream: with the
     # compiled model held fixed, the recorded frame is a pure function of the recorded qpos. Checked
     # by restoring into a FRESH ``MjData`` and re-rendering through a bare ``mujoco.Renderer`` at geom
-    # group 1 -- which is separately shown (``scratch/robocasa/probe_visual_reference.py``, case A) to
+    # group 1 -- which is separately shown to
     # reproduce ``sim.render`` bit-identically on the live model, and is therefore the official
     # renderer without robosuite in the process.
     vopt = mujoco.MjvOption()

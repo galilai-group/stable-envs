@@ -108,7 +108,7 @@ def disc_table(r: int) -> np.ndarray:
     # makes. Two passes exist precisely because ``aaellipseColor`` writes a few pixels twice, so a
     # duplicate ACROSS passes is the normal case and a duplicate WITHIN one is a table that this
     # representation cannot hold. Checked rather than assumed, because the table is generated
-    # (``scratch/classic_control/gen_stencils.py``) and a regenerated one must fail loudly here
+    # and a regenerated one must fail loudly here
     # instead of quietly losing pixels only on the radii that grew one.
     seen: dict[tuple[int, int, int], int] = {}
     for dy, dx, wt, pas in G.AACIRCLE_FRINGE[r]:

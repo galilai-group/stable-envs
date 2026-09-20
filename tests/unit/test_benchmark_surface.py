@@ -19,7 +19,7 @@ from benchmarks import pipeline as pipeline_benchmark
 from benchmarks import render as render_benchmark
 
 ROOT = Path(__file__).resolve().parents[2]
-EVIDENCE = ROOT / "examples" / "results" / "step9" / "benchmarks"
+EVIDENCE = ROOT / "tests" / "fixtures" / "regression" / "references" / "benchmarks"
 FORBIDDEN_IMPORT_PREFIXES = (
     "stable_worldmodel",
     "stable_envs.testing",

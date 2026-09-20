@@ -70,7 +70,7 @@ break. It is not the shipped path.
 A peak frames/s is not an answer, so throughput is quoted as a `(ratio, batch, resolution)` surface with
 its crossovers. The official column is MuJoCo's own rasterizer at geom group 1, one process, warmed,
 best of two passes. The decode column is one CPU core of PIL JPEG decode from memory
-(`scratch/robocasa/bench_decode.py`), which is the *favourable* case for a stored dataset and therefore
+(`examples/robocasa_visual` decode arm), which is the *favourable* case for a stored dataset and therefore
 the honest bar for regenerating one.
 
 Frames/s, L52S03, `robot0_agentview_left`, one H200:

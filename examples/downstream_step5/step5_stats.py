@@ -1,6 +1,6 @@
 """The Step 2 downstream gate, computed rather than restated.
 
-Every bound this module applies is read from ``scratch/certification.json`` at import time -- the
+Every bound this module applies is read from ``tests/fixtures/regression/fidelity/certification.json`` at import time -- the
 same file Step 2 froze and Step 4's certifier reads. Nothing here declares a threshold of its own,
 so a number in a Step 5 report cannot drift from the policy that authorised it: change the frozen
 spec and these verdicts change with it, edit this file and the tests that compare it against the
@@ -24,7 +24,9 @@ ROOT = Path(__file__).resolve().parents[2]
 
 #: The frozen Step 2 downstream policy. Read, never edited: Step 5 is a measurement against the
 #: rule Step 2 wrote down before any downstream number existed.
-SPEC = json.loads((ROOT / "scratch" / "certification.json").read_text())["downstream"]
+SPEC = json.loads((ROOT / "tests" / "fixtures" / "regression" / "fidelity" / "certification.json").read_text())[
+    "downstream"
+]
 
 
 def wilson(k: int, n: int, z: float | None = None) -> tuple[float, float]:

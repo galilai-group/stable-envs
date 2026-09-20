@@ -125,7 +125,7 @@ def test_ss_flag_defaults_to_native(bench):
 @pytest.mark.parametrize(
     "hw,requested,tripped",
     [
-        # Every shape here is one this sweep has actually produced; see examples/results/storage/*.json.
+        # Every shape here is one this sweep has actually produced; see the storage regression fixtures.
         ((1792, 2304), 256, True),  # CraftaxClassic: size is a PER-TILE edge
         ((256, 1024), 256, False),  # Highway, Merge: 1:4 and the requested 256 IS the short edge
         ((256, 512), 256, False),  # Parking

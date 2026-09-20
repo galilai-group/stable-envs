@@ -47,7 +47,7 @@ reference is float64 and so is this, term for term, in the same association orde
 
 Measured against the official CPU env on identical action sequences from identical states, 16 episodes
 x 100 steps (actions held 4 steps), comparing the FULL dynamical state including the velocities. Every
-number below is reproduced by ``python scratch/step_bench.py --what all``:
+number below is reproduced by the classic-control step regression:
 
     env                      max deviation over 1,600 steps   after ONE step     bit-identical steps
     CartPole                 4.4e-14  (theta_dot)             1.1e-16            50.5%

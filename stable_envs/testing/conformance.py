@@ -938,7 +938,7 @@ def check_task_object_visibility(env, states=None, n: int = 16, seed: int = 0) -
     ``interior_exact_frac`` by anything. Step 5 hit exactly that on DM Control reacher: two renders
     that differ by a whole red disc — mean |d| 0.459 against 0.171 — report interior exactness equal
     to SIXTEEN digits and an identical ``interior_px``
-    (``examples/results/step5/reacher/parity_probe.json``). The frame's ``interior_frac`` is 0.000000
+    (``tests/fixtures/regression/join/step5/reacher/parity_probe.json``). The frame's ``interior_frac`` is 0.000000
     at 84 px, so the strong assertion is not merely blunted there, it is undefined.
 
     Nothing here redefines or relaxes that metric. This measures a population the interior mask
@@ -1364,7 +1364,7 @@ def _box_downsample(frames: np.ndarray, f: int) -> np.ndarray:
 #: of a STATE SET as much as of a renderer: how much speckled sky and far floor is in view decides how
 #: many pixels survive a 2x box filter, and the same renderer measures 0.6188 on one 64-state corpus,
 #: 0.6241 on the first 8 of it and 0.6290 on these 8 (walker, both mujoco 3.11 and 3.12; see
-#: ``examples/results/step6/texture-fidelity/findings.md`` section 6). A bound applied on a different
+#: ``tests/fixtures/regression/join/step6/texture-fidelity/findings.md`` section 6). A bound applied on a different
 #: draw with a 0.005 margin fails for the draw and not for the renderer, which is why the check
 #: carries its own protocol here rather than borrowing whatever states the caller has.
 DOWNSAMPLE_PROTOCOL_N = 8

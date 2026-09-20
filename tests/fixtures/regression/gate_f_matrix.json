@@ -1,0 +1,3643 @@
+{
+  "baseline_sha": "e4b285739e4d3e6f1a1ae2e50a065aa5cc36ece8",
+  "rows": [
+    {
+      "backends": [
+        "gfxdraw"
+      ],
+      "device_behavior": {
+        "source": "tests/fixtures/regression/support_matrix.json (supported_devices, Workstream E)",
+        "status": "UNMEASURED",
+        "supported_devices": {}
+      },
+      "pixel_or_symbolic": "pixel",
+      "registered_default": {
+        "per_class": {
+          "Acrobot": {
+            "default_equals_style_from_empty_variation": true,
+            "device": "cpu",
+            "source": "tests/fixtures/regression/join/step8/swm/default_roundtrip_cpu.json (this workstream, CPU, host=Mac.lan)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "registry_resolution": {
+        "classes": [
+          "Acrobot"
+        ],
+        "evidence": "the probe saw class 'AcrobotEnv' under swm/AcrobotControl-v1, and gymnasium.make() on our reference_id produces the same unwrapped class",
+        "rung": "reference_env_class",
+        "source": "tests/fixtures/regression/support_matrix.json (join_evidence) + tests/fixtures/regression/join/step7/closure2/coverage_matrix.json (join.rung)",
+        "status": "MEASURED"
+      },
+      "stable_envs_cells": [
+        "Acrobot"
+      ],
+      "state_observation_api": {
+        "per_cell": {
+          "Acrobot": {
+            "checks": {
+              "check_default_style_is_official": "pass",
+              "check_state_roundtrip": "pass",
+              "render_parity_with_official_renderer": "pass"
+            },
+            "source": "tests/fixtures/regression/join/step7/closure2/replay/certify/certification.json (config=Acrobot)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "supported_devices": {},
+      "swm_id": "swm/AcrobotControl-v1",
+      "swm_wrapper_reset_appearance": {
+        "status": "UNMEASURED",
+        "why": "no committed Step-8 measurement of the SWM WRAPPER's own reset() appearance against the registered default exists for this family beyond #2's mapping round trip"
+      },
+      "variation_map": {
+        "aggregate_counts": {
+          "mapped": 4,
+          "unsupported": 7
+        },
+        "per_class": {
+          "Acrobot": {
+            "counts": {
+              "mapped": 4,
+              "unsupported": 7
+            },
+            "n_leaves": 11,
+            "source": "tests/fixtures/regression/join/step8/swm/variation_classification.json (VariationMap.classification(), class=Acrobot)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "wrapper_interaction_path": {
+        "path": "swap_renderer",
+        "source": "stable_envs/compat/worldmodel.py:swap_renderer; tests/fixtures/regression/join/step7/craftax-full/findings.md, tests/fixtures/regression/join/step7/ogb-manipulation/findings.md (\"Gate F -- arm D\"), tests/fixtures/regression/join/step7/rocket-landing/findings.md",
+        "status": "MEASURED",
+        "why": "the official upstream env keeps its own dynamics; only render() is replaced -- 'the answer for the envs we render but do not simulate' (stable_envs/compat/worldmodel.py module docstring). This is the mechanism every Step-7 family's Gate F PASS was measured through."
+      }
+    },
+    {
+      "backends": [
+        "cpu3d",
+        "mjwarp",
+        "raycast3d"
+      ],
+      "device_behavior": {
+        "source": "tests/fixtures/regression/support_matrix.json (supported_devices, Workstream E)",
+        "status": "UNMEASURED",
+        "supported_devices": {}
+      },
+      "pixel_or_symbolic": "pixel",
+      "registered_default": {
+        "per_class": {
+          "DMCAcrobotSwingup": {
+            "default_equals_style_from_empty_variation": true,
+            "device": "cpu",
+            "source": "tests/fixtures/regression/join/step8/swm/default_roundtrip_cpu.json (this workstream, CPU, host=Mac.lan)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "registry_resolution": {
+        "classes": [
+          "DMCAcrobotSwingup"
+        ],
+        "evidence": "this id resolves to dm_control/acrobot-swingup_sparse, which no stable-envs env declares; we declare ['dm_control/acrobot-swingup'] of the same domain, and the two compile to a byte-identical render model after reset() (same geom types/sizes/colours/materials, same camera, same lights), so the picture is the same and only the reward differs",
+        "rung": "same_dmc_appearance",
+        "source": "tests/fixtures/regression/support_matrix.json (join_evidence) + tests/fixtures/regression/join/step7/closure2/coverage_matrix.json (join.rung)",
+        "status": "MEASURED"
+      },
+      "stable_envs_cells": [
+        "DMCAcrobotSwingup"
+      ],
+      "state_observation_api": {
+        "per_cell": {
+          "DMCAcrobotSwingup": {
+            "checks": {
+              "check_default_style_is_official": "pass",
+              "check_state_roundtrip": "pass",
+              "render_parity_with_official_renderer": "pass"
+            },
+            "source": "tests/fixtures/regression/join/step7/closure2/replay/certify/certification.json (config=DMCAcrobotSwingup)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "supported_devices": {},
+      "swm_id": "swm/AcrobotDMControl-v0",
+      "swm_wrapper_reset_appearance": {
+        "status": "UNMEASURED",
+        "why": "no committed Step-8 measurement of the SWM WRAPPER's own reset() appearance against the registered default exists for this family beyond #2's mapping round trip"
+      },
+      "variation_map": {
+        "aggregate_counts": {
+          "dead_upstream": 5,
+          "mapped": 2,
+          "unsupported": 4
+        },
+        "per_class": {
+          "DMCAcrobotSwingup": {
+            "counts": {
+              "dead_upstream": 5,
+              "mapped": 2,
+              "unsupported": 4
+            },
+            "n_leaves": 11,
+            "source": "tests/fixtures/regression/join/step8/swm/variation_classification.json (VariationMap.classification(), class=DMCAcrobotSwingup)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "wrapper_interaction_path": {
+        "path": "swap_renderer",
+        "source": "stable_envs/compat/worldmodel.py:swap_renderer; tests/fixtures/regression/join/step7/craftax-full/findings.md, tests/fixtures/regression/join/step7/ogb-manipulation/findings.md (\"Gate F -- arm D\"), tests/fixtures/regression/join/step7/rocket-landing/findings.md",
+        "status": "MEASURED",
+        "why": "the official upstream env keeps its own dynamics; only render() is replaced -- 'the answer for the envs we render but do not simulate' (stable_envs/compat/worldmodel.py module docstring). This is the mechanism every Step-7 family's Gate F PASS was measured through."
+      }
+    },
+    {
+      "backends": [
+        "cpu3d",
+        "mjwarp",
+        "raycast3d"
+      ],
+      "device_behavior": {
+        "source": "tests/fixtures/regression/support_matrix.json (supported_devices, Workstream E)",
+        "status": "UNMEASURED",
+        "supported_devices": {}
+      },
+      "pixel_or_symbolic": "pixel",
+      "registered_default": {
+        "per_class": {
+          "DMCBallInCupCatch": {
+            "default_equals_style_from_empty_variation": true,
+            "device": "cpu",
+            "source": "tests/fixtures/regression/join/step8/swm/default_roundtrip_cpu.json (this workstream, CPU, host=Mac.lan)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "registry_resolution": {
+        "classes": [
+          "DMCBallInCupCatch"
+        ],
+        "evidence": "reference_id ['dm_control/ball_in_cup-catch'] equals the official env this id was measured to wrap (DM Control task resolved against the suite: match=exact)",
+        "rung": "reference_id",
+        "source": "tests/fixtures/regression/support_matrix.json (join_evidence) + tests/fixtures/regression/join/step7/closure2/coverage_matrix.json (join.rung)",
+        "status": "MEASURED"
+      },
+      "stable_envs_cells": [
+        "DMCBallInCupCatch"
+      ],
+      "state_observation_api": {
+        "per_cell": {
+          "DMCBallInCupCatch": {
+            "checks": {
+              "check_default_style_is_official": "pass",
+              "check_state_roundtrip": "pass",
+              "render_parity_with_official_renderer": "pass"
+            },
+            "source": "tests/fixtures/regression/join/step7/closure2/replay/certify/certification.json (config=DMCBallInCupCatch)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "supported_devices": {},
+      "swm_id": "swm/BallInCupDMControl-v0",
+      "swm_wrapper_reset_appearance": {
+        "status": "UNMEASURED",
+        "why": "no committed Step-8 measurement of the SWM WRAPPER's own reset() appearance against the registered default exists for this family beyond #2's mapping round trip"
+      },
+      "variation_map": {
+        "aggregate_counts": {
+          "dead_upstream": 4,
+          "mapped": 2,
+          "unsupported": 7
+        },
+        "per_class": {
+          "DMCBallInCupCatch": {
+            "counts": {
+              "dead_upstream": 4,
+              "mapped": 2,
+              "unsupported": 7
+            },
+            "n_leaves": 13,
+            "source": "tests/fixtures/regression/join/step8/swm/variation_classification.json (VariationMap.classification(), class=DMCBallInCupCatch)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "wrapper_interaction_path": {
+        "path": "swap_renderer",
+        "source": "stable_envs/compat/worldmodel.py:swap_renderer; tests/fixtures/regression/join/step7/craftax-full/findings.md, tests/fixtures/regression/join/step7/ogb-manipulation/findings.md (\"Gate F -- arm D\"), tests/fixtures/regression/join/step7/rocket-landing/findings.md",
+        "status": "MEASURED",
+        "why": "the official upstream env keeps its own dynamics; only render() is replaced -- 'the answer for the envs we render but do not simulate' (stable_envs/compat/worldmodel.py module docstring). This is the mechanism every Step-7 family's Gate F PASS was measured through."
+      }
+    },
+    {
+      "backends": [
+        "gfxdraw"
+      ],
+      "device_behavior": {
+        "source": "tests/fixtures/regression/support_matrix.json (supported_devices, Workstream E)",
+        "status": "UNMEASURED",
+        "supported_devices": {}
+      },
+      "pixel_or_symbolic": "pixel",
+      "registered_default": {
+        "per_class": {
+          "CartPole": {
+            "default_equals_style_from_empty_variation": true,
+            "device": "cpu",
+            "source": "tests/fixtures/regression/join/step8/swm/default_roundtrip_cpu.json (this workstream, CPU, host=Mac.lan)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "registry_resolution": {
+        "classes": [
+          "CartPole"
+        ],
+        "evidence": "the probe saw class 'CartPoleEnv' under swm/CartPoleControl-v1, and gymnasium.make() on our reference_id produces the same unwrapped class",
+        "rung": "reference_env_class",
+        "source": "tests/fixtures/regression/support_matrix.json (join_evidence) + tests/fixtures/regression/join/step7/closure2/coverage_matrix.json (join.rung)",
+        "status": "MEASURED"
+      },
+      "stable_envs_cells": [
+        "CartPole"
+      ],
+      "state_observation_api": {
+        "per_cell": {
+          "CartPole": {
+            "checks": {
+              "check_default_style_is_official": "pass",
+              "check_state_roundtrip": "pass",
+              "render_parity_with_official_renderer": "pass"
+            },
+            "source": "tests/fixtures/regression/join/step7/closure2/replay/certify/certification.json (config=CartPole)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "supported_devices": {},
+      "swm_id": "swm/CartPoleControl-v1",
+      "swm_wrapper_reset_appearance": {
+        "status": "UNMEASURED",
+        "why": "no committed Step-8 measurement of the SWM WRAPPER's own reset() appearance against the registered default exists for this family beyond #2's mapping round trip"
+      },
+      "variation_map": {
+        "aggregate_counts": {
+          "mapped": 4,
+          "unsupported": 6
+        },
+        "per_class": {
+          "CartPole": {
+            "counts": {
+              "mapped": 4,
+              "unsupported": 6
+            },
+            "n_leaves": 10,
+            "source": "tests/fixtures/regression/join/step8/swm/variation_classification.json (VariationMap.classification(), class=CartPole)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "wrapper_interaction_path": {
+        "path": "swap_renderer",
+        "source": "stable_envs/compat/worldmodel.py:swap_renderer; tests/fixtures/regression/join/step7/craftax-full/findings.md, tests/fixtures/regression/join/step7/ogb-manipulation/findings.md (\"Gate F -- arm D\"), tests/fixtures/regression/join/step7/rocket-landing/findings.md",
+        "status": "MEASURED",
+        "why": "the official upstream env keeps its own dynamics; only render() is replaced -- 'the answer for the envs we render but do not simulate' (stable_envs/compat/worldmodel.py module docstring). This is the mechanism every Step-7 family's Gate F PASS was measured through."
+      }
+    },
+    {
+      "backends": [
+        "cpu3d",
+        "mjwarp",
+        "raycast3d"
+      ],
+      "device_behavior": {
+        "source": "tests/fixtures/regression/support_matrix.json (supported_devices, Workstream E)",
+        "status": "UNMEASURED",
+        "supported_devices": {}
+      },
+      "pixel_or_symbolic": "pixel",
+      "registered_default": {
+        "per_class": {
+          "DMCCartpoleBalance": {
+            "default_equals_style_from_empty_variation": true,
+            "device": "cpu",
+            "source": "tests/fixtures/regression/join/step8/swm/default_roundtrip_cpu.json (this workstream, CPU, host=Mac.lan)",
+            "status": "MEASURED"
+          },
+          "DMCCartpoleSwingup": {
+            "default_equals_style_from_empty_variation": true,
+            "device": "cpu",
+            "source": "tests/fixtures/regression/join/step8/swm/default_roundtrip_cpu.json (this workstream, CPU, host=Mac.lan)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "registry_resolution": {
+        "classes": [
+          "DMCCartpoleBalance",
+          "DMCCartpoleSwingup"
+        ],
+        "evidence": "this id resolves to dm_control/cartpole-swingup_sparse, which no stable-envs env declares; we declare ['dm_control/cartpole-balance', 'dm_control/cartpole-swingup'] of the same domain, and the two compile to a byte-identical render model after reset() (same geom types/sizes/colours/materials, same camera, same lights), so the picture is the same and only the reward differs",
+        "rung": "same_dmc_appearance",
+        "source": "tests/fixtures/regression/support_matrix.json (join_evidence) + tests/fixtures/regression/join/step7/closure2/coverage_matrix.json (join.rung)",
+        "status": "MEASURED"
+      },
+      "stable_envs_cells": [
+        "DMCCartpoleBalance",
+        "DMCCartpoleSwingup"
+      ],
+      "state_observation_api": {
+        "per_cell": {
+          "DMCCartpoleBalance": {
+            "checks": {
+              "check_default_style_is_official": "pass",
+              "check_state_roundtrip": "pass",
+              "render_parity_with_official_renderer": "pass"
+            },
+            "source": "tests/fixtures/regression/join/step7/closure2/replay/certify/certification.json (config=DMCCartpoleBalance)",
+            "status": "MEASURED"
+          },
+          "DMCCartpoleSwingup": {
+            "checks": {
+              "check_default_style_is_official": "pass",
+              "check_state_roundtrip": "pass",
+              "render_parity_with_official_renderer": "pass"
+            },
+            "source": "tests/fixtures/regression/join/step7/closure2/replay/certify/certification.json (config=DMCCartpoleSwingup)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "supported_devices": {},
+      "swm_id": "swm/CartpoleDMControl-v0",
+      "swm_wrapper_reset_appearance": {
+        "status": "UNMEASURED",
+        "why": "no committed Step-8 measurement of the SWM WRAPPER's own reset() appearance against the registered default exists for this family beyond #2's mapping round trip"
+      },
+      "variation_map": {
+        "aggregate_counts": {
+          "dead_upstream": 4,
+          "mapped": 4,
+          "unsupported": 10
+        },
+        "per_class": {
+          "DMCCartpoleBalance": {
+            "counts": {
+              "dead_upstream": 2,
+              "mapped": 2,
+              "unsupported": 5
+            },
+            "n_leaves": 9,
+            "source": "tests/fixtures/regression/join/step8/swm/variation_classification.json (VariationMap.classification(), class=DMCCartpoleBalance)",
+            "status": "MEASURED"
+          },
+          "DMCCartpoleSwingup": {
+            "counts": {
+              "dead_upstream": 2,
+              "mapped": 2,
+              "unsupported": 5
+            },
+            "n_leaves": 9,
+            "source": "tests/fixtures/regression/join/step8/swm/variation_classification.json (VariationMap.classification(), class=DMCCartpoleSwingup)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "wrapper_interaction_path": {
+        "path": "swap_renderer",
+        "source": "stable_envs/compat/worldmodel.py:swap_renderer; tests/fixtures/regression/join/step7/craftax-full/findings.md, tests/fixtures/regression/join/step7/ogb-manipulation/findings.md (\"Gate F -- arm D\"), tests/fixtures/regression/join/step7/rocket-landing/findings.md",
+        "status": "MEASURED",
+        "why": "the official upstream env keeps its own dynamics; only render() is replaced -- 'the answer for the envs we render but do not simulate' (stable_envs/compat/worldmodel.py module docstring). This is the mechanism every Step-7 family's Gate F PASS was measured through."
+      }
+    },
+    {
+      "backends": [
+        "cpu3d",
+        "mjwarp",
+        "raycast3d"
+      ],
+      "device_behavior": {
+        "source": "tests/fixtures/regression/support_matrix.json (supported_devices, Workstream E)",
+        "status": "UNMEASURED",
+        "supported_devices": {}
+      },
+      "pixel_or_symbolic": "pixel",
+      "registered_default": {
+        "per_class": {
+          "DMCCheetahRun": {
+            "default_equals_style_from_empty_variation": true,
+            "device": "cpu",
+            "source": "tests/fixtures/regression/join/step8/swm/default_roundtrip_cpu.json (this workstream, CPU, host=Mac.lan)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "registry_resolution": {
+        "classes": [
+          "DMCCheetahRun"
+        ],
+        "evidence": "reference_id ['dm_control/cheetah-run'] equals the official env this id was measured to wrap (DM Control task resolved against the suite: match=by_class)",
+        "rung": "reference_id",
+        "source": "tests/fixtures/regression/support_matrix.json (join_evidence) + tests/fixtures/regression/join/step7/closure2/coverage_matrix.json (join.rung)",
+        "status": "MEASURED"
+      },
+      "stable_envs_cells": [
+        "DMCCheetahRun"
+      ],
+      "state_observation_api": {
+        "per_cell": {
+          "DMCCheetahRun": {
+            "checks": {
+              "check_default_style_is_official": "pass",
+              "check_state_roundtrip": "pass",
+              "render_parity_with_official_renderer": "not_applicable"
+            },
+            "source": "tests/fixtures/regression/join/step7/closure2/replay/certify/certification.json (config=DMCCheetahRun)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "supported_devices": {},
+      "swm_id": "swm/CheetahDMControl-v0",
+      "swm_wrapper_reset_appearance": {
+        "status": "UNMEASURED",
+        "why": "no committed Step-8 measurement of the SWM WRAPPER's own reset() appearance against the registered default exists for this family beyond #2's mapping round trip"
+      },
+      "variation_map": {
+        "aggregate_counts": {
+          "dead_upstream": 1,
+          "mapped": 2,
+          "unsupported": 7
+        },
+        "per_class": {
+          "DMCCheetahRun": {
+            "counts": {
+              "dead_upstream": 1,
+              "mapped": 2,
+              "unsupported": 7
+            },
+            "n_leaves": 10,
+            "source": "tests/fixtures/regression/join/step8/swm/variation_classification.json (VariationMap.classification(), class=DMCCheetahRun)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "wrapper_interaction_path": {
+        "path": "swap_renderer",
+        "source": "stable_envs/compat/worldmodel.py:swap_renderer; tests/fixtures/regression/join/step7/craftax-full/findings.md, tests/fixtures/regression/join/step7/ogb-manipulation/findings.md (\"Gate F -- arm D\"), tests/fixtures/regression/join/step7/rocket-landing/findings.md",
+        "status": "MEASURED",
+        "why": "the official upstream env keeps its own dynamics; only render() is replaced -- 'the answer for the envs we render but do not simulate' (stable_envs/compat/worldmodel.py module docstring). This is the mechanism every Step-7 family's Gate F PASS was measured through."
+      }
+    },
+    {
+      "backends": [
+        "prng"
+      ],
+      "device_behavior": {
+        "source": "tests/fixtures/regression/support_matrix.json (supported_devices, Workstream E)",
+        "status": "MEASURED",
+        "supported_devices": {
+          "cpu": {
+            "status": "PASS",
+            "verdict": "PASS",
+            "why": ""
+          },
+          "cuda": {
+            "status": "PASS",
+            "verdict": "PASS",
+            "why": ""
+          }
+        }
+      },
+      "pixel_or_symbolic": "pixel",
+      "registered_default": {
+        "per_class": {},
+        "status": "NOT_APPLICABLE",
+        "why": "swm offers zero variation leaves for this family (n_swm_leaves=0 in the support matrix); there is no swm config whose round trip could be tested"
+      },
+      "registry_resolution": {
+        "classes": [
+          "CraftaxClassic"
+        ],
+        "evidence": "W1 craftax-classic-full, merged 9ca318f",
+        "rung": "step7_workstream",
+        "source": "tests/fixtures/regression/support_matrix.json (join_evidence) + tests/fixtures/regression/join/step7/closure2/coverage_matrix.json (join.rung)",
+        "status": "MEASURED"
+      },
+      "stable_envs_cells": [
+        "CraftaxClassic"
+      ],
+      "state_observation_api": {
+        "per_cell": {
+          "CraftaxClassic": {
+            "checks": {
+              "check_default_style_is_official": "pass",
+              "check_state_roundtrip": "pass",
+              "render_parity_with_official_renderer": "pass"
+            },
+            "device": "cpu",
+            "source": "tests/fixtures/regression/join/step8/certification/gate_a_rejudged.json (Workstream E rejudgment of the Step-7 shard)",
+            "source_sha256": "ab82e3f77c8c68236355af9d14ccff0f52ac2f05f6b293e89074f445ffcc587d",
+            "source_within": "examples/results/step7/closure2/gate_a/cpu_craftax.json",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "supported_devices": {
+        "cpu": {
+          "status": "PASS",
+          "verdict": "PASS",
+          "why": ""
+        },
+        "cuda": {
+          "status": "PASS",
+          "verdict": "PASS",
+          "why": ""
+        }
+      },
+      "swm_id": "swm/CraftaxClassicPixels-v1",
+      "swm_wrapper_reset_appearance": {
+        "status": "UNMEASURED",
+        "why": "no committed Step-8 measurement of the SWM WRAPPER's own reset() appearance against the registered default exists for this family beyond #2's mapping round trip"
+      },
+      "variation_map": {
+        "per_class": {},
+        "status": "NOT_APPLICABLE",
+        "why": "swm offers zero variation leaves for this family (n_swm_leaves=0)"
+      },
+      "wrapper_interaction_path": {
+        "path": "swap_renderer",
+        "source": "stable_envs/compat/worldmodel.py:swap_renderer; tests/fixtures/regression/join/step7/craftax-full/findings.md, tests/fixtures/regression/join/step7/ogb-manipulation/findings.md (\"Gate F -- arm D\"), tests/fixtures/regression/join/step7/rocket-landing/findings.md",
+        "status": "MEASURED",
+        "why": "the official upstream env keeps its own dynamics; only render() is replaced -- 'the answer for the envs we render but do not simulate' (stable_envs/compat/worldmodel.py module docstring). This is the mechanism every Step-7 family's Gate F PASS was measured through."
+      }
+    },
+    {
+      "backends": [],
+      "device_behavior": {
+        "source": "tests/fixtures/regression/support_matrix.json (supported_devices, Workstream E)",
+        "status": "UNMEASURED",
+        "supported_devices": {}
+      },
+      "pixel_or_symbolic": "symbolic",
+      "registered_default": {
+        "per_class": {},
+        "status": "NOT_APPLICABLE",
+        "why": "symbolic id: no renderer, no registered appearance to reproduce"
+      },
+      "registry_resolution": {
+        "classes": [],
+        "evidence": "no rung matched: no VARIATION_MAPS entry, no docstring mention, no reference_id or reference class in common, no identical scene, no normalized-name match, and no documented manual join",
+        "rung": null,
+        "source": "tests/fixtures/regression/support_matrix.json (join_evidence) + tests/fixtures/regression/join/step7/closure2/coverage_matrix.json (join.rung)",
+        "status": "MEASURED"
+      },
+      "stable_envs_cells": [],
+      "state_observation_api": {
+        "status": "NOT_APPLICABLE",
+        "why": "symbolic id: renderer-free by design; no frame/state contract to check"
+      },
+      "supported_devices": {},
+      "swm_id": "swm/CraftaxClassicSymbolic-v1",
+      "swm_wrapper_reset_appearance": {
+        "status": "NOT_APPLICABLE",
+        "why": "symbolic id: no renderer"
+      },
+      "variation_map": {
+        "per_class": {},
+        "status": "NOT_APPLICABLE",
+        "why": "symbolic id: no variation space to map"
+      },
+      "wrapper_interaction_path": {
+        "path": null,
+        "status": "NOT_APPLICABLE",
+        "why": "symbolic id: no renderer to swap"
+      }
+    },
+    {
+      "backends": [
+        "prng"
+      ],
+      "device_behavior": {
+        "source": "tests/fixtures/regression/support_matrix.json (supported_devices, Workstream E)",
+        "status": "MEASURED",
+        "supported_devices": {
+          "cpu": {
+            "status": "PASS",
+            "verdict": "PASS",
+            "why": ""
+          },
+          "cuda": {
+            "status": "PASS",
+            "verdict": "PASS",
+            "why": ""
+          }
+        }
+      },
+      "pixel_or_symbolic": "pixel",
+      "registered_default": {
+        "per_class": {},
+        "status": "NOT_APPLICABLE",
+        "why": "swm offers zero variation leaves for this family (n_swm_leaves=0 in the support matrix); there is no swm config whose round trip could be tested"
+      },
+      "registry_resolution": {
+        "classes": [
+          "CraftaxFull"
+        ],
+        "evidence": "W2 craftax-full, merged d024c1a",
+        "rung": "step7_workstream",
+        "source": "tests/fixtures/regression/support_matrix.json (join_evidence) + tests/fixtures/regression/join/step7/closure2/coverage_matrix.json (join.rung)",
+        "status": "MEASURED"
+      },
+      "stable_envs_cells": [
+        "CraftaxFull"
+      ],
+      "state_observation_api": {
+        "per_cell": {
+          "CraftaxFull": {
+            "checks": {
+              "check_default_style_is_official": "pass",
+              "check_state_roundtrip": "pass",
+              "render_parity_with_official_renderer": "pass"
+            },
+            "device": "cpu",
+            "source": "tests/fixtures/regression/join/step8/certification/gate_a_rejudged.json (Workstream E rejudgment of the Step-7 shard)",
+            "source_sha256": "ab82e3f77c8c68236355af9d14ccff0f52ac2f05f6b293e89074f445ffcc587d",
+            "source_within": "examples/results/step7/closure2/gate_a/cpu_craftax.json",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "supported_devices": {
+        "cpu": {
+          "status": "PASS",
+          "verdict": "PASS",
+          "why": ""
+        },
+        "cuda": {
+          "status": "PASS",
+          "verdict": "PASS",
+          "why": ""
+        }
+      },
+      "swm_id": "swm/CraftaxPixels-v1",
+      "swm_wrapper_reset_appearance": {
+        "status": "UNMEASURED",
+        "why": "no committed Step-8 measurement of the SWM WRAPPER's own reset() appearance against the registered default exists for this family beyond #2's mapping round trip"
+      },
+      "variation_map": {
+        "per_class": {},
+        "status": "NOT_APPLICABLE",
+        "why": "swm offers zero variation leaves for this family (n_swm_leaves=0)"
+      },
+      "wrapper_interaction_path": {
+        "path": "swap_renderer",
+        "source": "stable_envs/compat/worldmodel.py:swap_renderer; tests/fixtures/regression/join/step7/craftax-full/findings.md, tests/fixtures/regression/join/step7/ogb-manipulation/findings.md (\"Gate F -- arm D\"), tests/fixtures/regression/join/step7/rocket-landing/findings.md",
+        "status": "MEASURED",
+        "why": "the official upstream env keeps its own dynamics; only render() is replaced -- 'the answer for the envs we render but do not simulate' (stable_envs/compat/worldmodel.py module docstring). This is the mechanism every Step-7 family's Gate F PASS was measured through."
+      }
+    },
+    {
+      "backends": [],
+      "device_behavior": {
+        "source": "tests/fixtures/regression/support_matrix.json (supported_devices, Workstream E)",
+        "status": "UNMEASURED",
+        "supported_devices": {}
+      },
+      "pixel_or_symbolic": "symbolic",
+      "registered_default": {
+        "per_class": {},
+        "status": "NOT_APPLICABLE",
+        "why": "symbolic id: no renderer, no registered appearance to reproduce"
+      },
+      "registry_resolution": {
+        "classes": [],
+        "evidence": "no rung matched: no VARIATION_MAPS entry, no docstring mention, no reference_id or reference class in common, no identical scene, no normalized-name match, and no documented manual join",
+        "rung": null,
+        "source": "tests/fixtures/regression/support_matrix.json (join_evidence) + tests/fixtures/regression/join/step7/closure2/coverage_matrix.json (join.rung)",
+        "status": "MEASURED"
+      },
+      "stable_envs_cells": [],
+      "state_observation_api": {
+        "status": "NOT_APPLICABLE",
+        "why": "symbolic id: renderer-free by design; no frame/state contract to check"
+      },
+      "supported_devices": {},
+      "swm_id": "swm/CraftaxSymbolic-v1",
+      "swm_wrapper_reset_appearance": {
+        "status": "NOT_APPLICABLE",
+        "why": "symbolic id: no renderer"
+      },
+      "variation_map": {
+        "per_class": {},
+        "status": "NOT_APPLICABLE",
+        "why": "symbolic id: no variation space to map"
+      },
+      "wrapper_interaction_path": {
+        "path": null,
+        "status": "NOT_APPLICABLE",
+        "why": "symbolic id: no renderer to swap"
+      }
+    },
+    {
+      "backends": [
+        "mjwarp"
+      ],
+      "device_behavior": {
+        "source": "tests/fixtures/regression/support_matrix.json (supported_devices, Workstream E)",
+        "status": "UNMEASURED",
+        "supported_devices": {}
+      },
+      "pixel_or_symbolic": "pixel",
+      "registered_default": {
+        "per_class": {
+          "FetchPickAndPlace": {
+            "device": "cuda",
+            "note": "default_through_empty_mapping / round_trip, per-scene, in the cited artifact (Workstream B)",
+            "source": "tests/fixtures/regression/join/step8/variations-fetch/gpu_evidence.json (Workstream B, GPU)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "registry_resolution": {
+        "classes": [
+          "FetchPickAndPlace"
+        ],
+        "evidence": "the stable-envs class docstring names swm/FetchPickAndPlace-v3",
+        "rung": "declared_docstring",
+        "source": "tests/fixtures/regression/support_matrix.json (join_evidence) + tests/fixtures/regression/join/step7/closure2/coverage_matrix.json (join.rung)",
+        "status": "MEASURED"
+      },
+      "stable_envs_cells": [
+        "FetchPickAndPlace"
+      ],
+      "state_observation_api": {
+        "per_cell": {
+          "FetchPickAndPlace": {
+            "checks": {
+              "check_default_style_is_official": "pass",
+              "check_state_roundtrip": "pass",
+              "render_parity_with_official_renderer": "pass"
+            },
+            "source": "tests/fixtures/regression/join/step7/closure2/replay/certify/certification.json (config=FetchPickAndPlace)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "supported_devices": {},
+      "swm_id": "swm/FetchPickAndPlace-v3",
+      "swm_wrapper_reset_appearance": {
+        "source": "tests/fixtures/regression/join/step8/variations-fetch/findings.md (\"swm Fetch declared leaf defaults are not the official appearance\"); tests/fixtures/regression/join/step8/dashboard.yaml upstream_findings (source: B)",
+        "status": "MISMATCH(upstream)",
+        "why": "Workstream B measured that swm's declared leaf defaults for the Fetch family are not the official appearance -- an upstream finding, not a stable-envs defect"
+      },
+      "variation_map": {
+        "aggregate_counts": {
+          "dead_upstream": 1,
+          "mapped": 3,
+          "not_applicable": 5,
+          "partial": 1,
+          "unsupported": 1
+        },
+        "per_class": {
+          "FetchPickAndPlace": {
+            "counts": {
+              "dead_upstream": 1,
+              "mapped": 3,
+              "not_applicable": 5,
+              "partial": 1,
+              "unsupported": 1
+            },
+            "n_leaves": 11,
+            "source": "tests/fixtures/regression/join/step8/swm/variation_classification.json (VariationMap.classification(), class=FetchPickAndPlace)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "wrapper_interaction_path": {
+        "path": "swap_renderer",
+        "source": "stable_envs/compat/worldmodel.py:swap_renderer; tests/fixtures/regression/join/step7/craftax-full/findings.md, tests/fixtures/regression/join/step7/ogb-manipulation/findings.md (\"Gate F -- arm D\"), tests/fixtures/regression/join/step7/rocket-landing/findings.md",
+        "status": "MEASURED",
+        "why": "the official upstream env keeps its own dynamics; only render() is replaced -- 'the answer for the envs we render but do not simulate' (stable_envs/compat/worldmodel.py module docstring). This is the mechanism every Step-7 family's Gate F PASS was measured through."
+      }
+    },
+    {
+      "backends": [
+        "mjwarp"
+      ],
+      "device_behavior": {
+        "source": "tests/fixtures/regression/support_matrix.json (supported_devices, Workstream E)",
+        "status": "UNMEASURED",
+        "supported_devices": {}
+      },
+      "pixel_or_symbolic": "pixel",
+      "registered_default": {
+        "per_class": {
+          "FetchPickAndPlaceDense": {
+            "device": "cuda",
+            "note": "default_through_empty_mapping / round_trip, per-scene, in the cited artifact (Workstream B)",
+            "source": "tests/fixtures/regression/join/step8/variations-fetch/gpu_evidence.json (Workstream B, GPU)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "registry_resolution": {
+        "classes": [
+          "FetchPickAndPlaceDense"
+        ],
+        "evidence": "the stable-envs class docstring names swm/FetchPickAndPlaceDense-v3",
+        "rung": "declared_docstring",
+        "source": "tests/fixtures/regression/support_matrix.json (join_evidence) + tests/fixtures/regression/join/step7/closure2/coverage_matrix.json (join.rung)",
+        "status": "MEASURED"
+      },
+      "stable_envs_cells": [
+        "FetchPickAndPlaceDense"
+      ],
+      "state_observation_api": {
+        "per_cell": {
+          "FetchPickAndPlaceDense": {
+            "checks": {
+              "check_default_style_is_official": "pass",
+              "check_state_roundtrip": "pass",
+              "render_parity_with_official_renderer": "pass"
+            },
+            "source": "tests/fixtures/regression/join/step7/closure2/replay/certify/certification.json (config=FetchPickAndPlaceDense)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "supported_devices": {},
+      "swm_id": "swm/FetchPickAndPlaceDense-v3",
+      "swm_wrapper_reset_appearance": {
+        "source": "tests/fixtures/regression/join/step8/variations-fetch/findings.md (\"swm Fetch declared leaf defaults are not the official appearance\"); tests/fixtures/regression/join/step8/dashboard.yaml upstream_findings (source: B)",
+        "status": "MISMATCH(upstream)",
+        "why": "Workstream B measured that swm's declared leaf defaults for the Fetch family are not the official appearance -- an upstream finding, not a stable-envs defect"
+      },
+      "variation_map": {
+        "aggregate_counts": {
+          "dead_upstream": 1,
+          "mapped": 3,
+          "not_applicable": 5,
+          "partial": 1,
+          "unsupported": 1
+        },
+        "per_class": {
+          "FetchPickAndPlaceDense": {
+            "counts": {
+              "dead_upstream": 1,
+              "mapped": 3,
+              "not_applicable": 5,
+              "partial": 1,
+              "unsupported": 1
+            },
+            "n_leaves": 11,
+            "source": "tests/fixtures/regression/join/step8/swm/variation_classification.json (VariationMap.classification(), class=FetchPickAndPlaceDense)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "wrapper_interaction_path": {
+        "path": "swap_renderer",
+        "source": "stable_envs/compat/worldmodel.py:swap_renderer; tests/fixtures/regression/join/step7/craftax-full/findings.md, tests/fixtures/regression/join/step7/ogb-manipulation/findings.md (\"Gate F -- arm D\"), tests/fixtures/regression/join/step7/rocket-landing/findings.md",
+        "status": "MEASURED",
+        "why": "the official upstream env keeps its own dynamics; only render() is replaced -- 'the answer for the envs we render but do not simulate' (stable_envs/compat/worldmodel.py module docstring). This is the mechanism every Step-7 family's Gate F PASS was measured through."
+      }
+    },
+    {
+      "backends": [
+        "mjwarp"
+      ],
+      "device_behavior": {
+        "source": "tests/fixtures/regression/support_matrix.json (supported_devices, Workstream E)",
+        "status": "UNMEASURED",
+        "supported_devices": {}
+      },
+      "pixel_or_symbolic": "pixel",
+      "registered_default": {
+        "per_class": {
+          "FetchPickAndPlaceDict": {
+            "device": "cuda",
+            "note": "default_through_empty_mapping / round_trip, per-scene, in the cited artifact (Workstream B)",
+            "source": "tests/fixtures/regression/join/step8/variations-fetch/gpu_evidence.json (Workstream B, GPU)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "registry_resolution": {
+        "classes": [
+          "FetchPickAndPlaceDict"
+        ],
+        "evidence": "the stable-envs class docstring names swm/FetchPickAndPlaceDict-v3",
+        "rung": "declared_docstring",
+        "source": "tests/fixtures/regression/support_matrix.json (join_evidence) + tests/fixtures/regression/join/step7/closure2/coverage_matrix.json (join.rung)",
+        "status": "MEASURED"
+      },
+      "stable_envs_cells": [
+        "FetchPickAndPlaceDict"
+      ],
+      "state_observation_api": {
+        "per_cell": {
+          "FetchPickAndPlaceDict": {
+            "checks": {
+              "check_default_style_is_official": "pass",
+              "check_state_roundtrip": "pass",
+              "render_parity_with_official_renderer": "pass"
+            },
+            "source": "tests/fixtures/regression/join/step7/closure2/replay/certify/certification.json (config=FetchPickAndPlaceDict)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "supported_devices": {},
+      "swm_id": "swm/FetchPickAndPlaceDict-v3",
+      "swm_wrapper_reset_appearance": {
+        "source": "tests/fixtures/regression/join/step8/variations-fetch/findings.md (\"swm Fetch declared leaf defaults are not the official appearance\"); tests/fixtures/regression/join/step8/dashboard.yaml upstream_findings (source: B)",
+        "status": "MISMATCH(upstream)",
+        "why": "Workstream B measured that swm's declared leaf defaults for the Fetch family are not the official appearance -- an upstream finding, not a stable-envs defect"
+      },
+      "variation_map": {
+        "aggregate_counts": {
+          "dead_upstream": 1,
+          "mapped": 3,
+          "not_applicable": 5,
+          "partial": 1,
+          "unsupported": 1
+        },
+        "per_class": {
+          "FetchPickAndPlaceDict": {
+            "counts": {
+              "dead_upstream": 1,
+              "mapped": 3,
+              "not_applicable": 5,
+              "partial": 1,
+              "unsupported": 1
+            },
+            "n_leaves": 11,
+            "source": "tests/fixtures/regression/join/step8/swm/variation_classification.json (VariationMap.classification(), class=FetchPickAndPlaceDict)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "wrapper_interaction_path": {
+        "path": "swap_renderer",
+        "source": "stable_envs/compat/worldmodel.py:swap_renderer; tests/fixtures/regression/join/step7/craftax-full/findings.md, tests/fixtures/regression/join/step7/ogb-manipulation/findings.md (\"Gate F -- arm D\"), tests/fixtures/regression/join/step7/rocket-landing/findings.md",
+        "status": "MEASURED",
+        "why": "the official upstream env keeps its own dynamics; only render() is replaced -- 'the answer for the envs we render but do not simulate' (stable_envs/compat/worldmodel.py module docstring). This is the mechanism every Step-7 family's Gate F PASS was measured through."
+      }
+    },
+    {
+      "backends": [
+        "mjwarp"
+      ],
+      "device_behavior": {
+        "source": "tests/fixtures/regression/support_matrix.json (supported_devices, Workstream E)",
+        "status": "UNMEASURED",
+        "supported_devices": {}
+      },
+      "pixel_or_symbolic": "pixel",
+      "registered_default": {
+        "per_class": {
+          "FetchPush": {
+            "device": "cuda",
+            "note": "default_through_empty_mapping / round_trip, per-scene, in the cited artifact (Workstream B)",
+            "source": "tests/fixtures/regression/join/step8/variations-fetch/gpu_evidence.json (Workstream B, GPU)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "registry_resolution": {
+        "classes": [
+          "FetchPush"
+        ],
+        "evidence": "the stable-envs class docstring names swm/FetchPush-v3",
+        "rung": "declared_docstring",
+        "source": "tests/fixtures/regression/support_matrix.json (join_evidence) + tests/fixtures/regression/join/step7/closure2/coverage_matrix.json (join.rung)",
+        "status": "MEASURED"
+      },
+      "stable_envs_cells": [
+        "FetchPush"
+      ],
+      "state_observation_api": {
+        "per_cell": {
+          "FetchPush": {
+            "checks": {
+              "check_default_style_is_official": "pass",
+              "check_state_roundtrip": "pass",
+              "render_parity_with_official_renderer": "pass"
+            },
+            "source": "tests/fixtures/regression/join/step7/closure2/replay/certify/certification.json (config=FetchPush)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "supported_devices": {},
+      "swm_id": "swm/FetchPush-v3",
+      "swm_wrapper_reset_appearance": {
+        "source": "tests/fixtures/regression/join/step8/variations-fetch/findings.md (\"swm Fetch declared leaf defaults are not the official appearance\"); tests/fixtures/regression/join/step8/dashboard.yaml upstream_findings (source: B)",
+        "status": "MISMATCH(upstream)",
+        "why": "Workstream B measured that swm's declared leaf defaults for the Fetch family are not the official appearance -- an upstream finding, not a stable-envs defect"
+      },
+      "variation_map": {
+        "aggregate_counts": {
+          "dead_upstream": 1,
+          "mapped": 3,
+          "not_applicable": 5,
+          "partial": 1,
+          "unsupported": 1
+        },
+        "per_class": {
+          "FetchPush": {
+            "counts": {
+              "dead_upstream": 1,
+              "mapped": 3,
+              "not_applicable": 5,
+              "partial": 1,
+              "unsupported": 1
+            },
+            "n_leaves": 11,
+            "source": "tests/fixtures/regression/join/step8/swm/variation_classification.json (VariationMap.classification(), class=FetchPush)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "wrapper_interaction_path": {
+        "path": "swap_renderer",
+        "source": "stable_envs/compat/worldmodel.py:swap_renderer; tests/fixtures/regression/join/step7/craftax-full/findings.md, tests/fixtures/regression/join/step7/ogb-manipulation/findings.md (\"Gate F -- arm D\"), tests/fixtures/regression/join/step7/rocket-landing/findings.md",
+        "status": "MEASURED",
+        "why": "the official upstream env keeps its own dynamics; only render() is replaced -- 'the answer for the envs we render but do not simulate' (stable_envs/compat/worldmodel.py module docstring). This is the mechanism every Step-7 family's Gate F PASS was measured through."
+      }
+    },
+    {
+      "backends": [
+        "mjwarp"
+      ],
+      "device_behavior": {
+        "source": "tests/fixtures/regression/support_matrix.json (supported_devices, Workstream E)",
+        "status": "UNMEASURED",
+        "supported_devices": {}
+      },
+      "pixel_or_symbolic": "pixel",
+      "registered_default": {
+        "per_class": {
+          "FetchPushDense": {
+            "device": "cuda",
+            "note": "default_through_empty_mapping / round_trip, per-scene, in the cited artifact (Workstream B)",
+            "source": "tests/fixtures/regression/join/step8/variations-fetch/gpu_evidence.json (Workstream B, GPU)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "registry_resolution": {
+        "classes": [
+          "FetchPushDense"
+        ],
+        "evidence": "the stable-envs class docstring names swm/FetchPushDense-v3",
+        "rung": "declared_docstring",
+        "source": "tests/fixtures/regression/support_matrix.json (join_evidence) + tests/fixtures/regression/join/step7/closure2/coverage_matrix.json (join.rung)",
+        "status": "MEASURED"
+      },
+      "stable_envs_cells": [
+        "FetchPushDense"
+      ],
+      "state_observation_api": {
+        "per_cell": {
+          "FetchPushDense": {
+            "checks": {
+              "check_default_style_is_official": "pass",
+              "check_state_roundtrip": "pass",
+              "render_parity_with_official_renderer": "pass"
+            },
+            "source": "tests/fixtures/regression/join/step7/closure2/replay/certify/certification.json (config=FetchPushDense)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "supported_devices": {},
+      "swm_id": "swm/FetchPushDense-v3",
+      "swm_wrapper_reset_appearance": {
+        "source": "tests/fixtures/regression/join/step8/variations-fetch/findings.md (\"swm Fetch declared leaf defaults are not the official appearance\"); tests/fixtures/regression/join/step8/dashboard.yaml upstream_findings (source: B)",
+        "status": "MISMATCH(upstream)",
+        "why": "Workstream B measured that swm's declared leaf defaults for the Fetch family are not the official appearance -- an upstream finding, not a stable-envs defect"
+      },
+      "variation_map": {
+        "aggregate_counts": {
+          "dead_upstream": 1,
+          "mapped": 3,
+          "not_applicable": 5,
+          "partial": 1,
+          "unsupported": 1
+        },
+        "per_class": {
+          "FetchPushDense": {
+            "counts": {
+              "dead_upstream": 1,
+              "mapped": 3,
+              "not_applicable": 5,
+              "partial": 1,
+              "unsupported": 1
+            },
+            "n_leaves": 11,
+            "source": "tests/fixtures/regression/join/step8/swm/variation_classification.json (VariationMap.classification(), class=FetchPushDense)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "wrapper_interaction_path": {
+        "path": "swap_renderer",
+        "source": "stable_envs/compat/worldmodel.py:swap_renderer; tests/fixtures/regression/join/step7/craftax-full/findings.md, tests/fixtures/regression/join/step7/ogb-manipulation/findings.md (\"Gate F -- arm D\"), tests/fixtures/regression/join/step7/rocket-landing/findings.md",
+        "status": "MEASURED",
+        "why": "the official upstream env keeps its own dynamics; only render() is replaced -- 'the answer for the envs we render but do not simulate' (stable_envs/compat/worldmodel.py module docstring). This is the mechanism every Step-7 family's Gate F PASS was measured through."
+      }
+    },
+    {
+      "backends": [
+        "mjwarp"
+      ],
+      "device_behavior": {
+        "source": "tests/fixtures/regression/support_matrix.json (supported_devices, Workstream E)",
+        "status": "UNMEASURED",
+        "supported_devices": {}
+      },
+      "pixel_or_symbolic": "pixel",
+      "registered_default": {
+        "per_class": {
+          "FetchPushDict": {
+            "device": "cuda",
+            "note": "default_through_empty_mapping / round_trip, per-scene, in the cited artifact (Workstream B)",
+            "source": "tests/fixtures/regression/join/step8/variations-fetch/gpu_evidence.json (Workstream B, GPU)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "registry_resolution": {
+        "classes": [
+          "FetchPushDict"
+        ],
+        "evidence": "the stable-envs class docstring names swm/FetchPushDict-v3",
+        "rung": "declared_docstring",
+        "source": "tests/fixtures/regression/support_matrix.json (join_evidence) + tests/fixtures/regression/join/step7/closure2/coverage_matrix.json (join.rung)",
+        "status": "MEASURED"
+      },
+      "stable_envs_cells": [
+        "FetchPushDict"
+      ],
+      "state_observation_api": {
+        "per_cell": {
+          "FetchPushDict": {
+            "checks": {
+              "check_default_style_is_official": "pass",
+              "check_state_roundtrip": "pass",
+              "render_parity_with_official_renderer": "pass"
+            },
+            "source": "tests/fixtures/regression/join/step7/closure2/replay/certify/certification.json (config=FetchPushDict)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "supported_devices": {},
+      "swm_id": "swm/FetchPushDict-v3",
+      "swm_wrapper_reset_appearance": {
+        "source": "tests/fixtures/regression/join/step8/variations-fetch/findings.md (\"swm Fetch declared leaf defaults are not the official appearance\"); tests/fixtures/regression/join/step8/dashboard.yaml upstream_findings (source: B)",
+        "status": "MISMATCH(upstream)",
+        "why": "Workstream B measured that swm's declared leaf defaults for the Fetch family are not the official appearance -- an upstream finding, not a stable-envs defect"
+      },
+      "variation_map": {
+        "aggregate_counts": {
+          "dead_upstream": 1,
+          "mapped": 3,
+          "not_applicable": 5,
+          "partial": 1,
+          "unsupported": 1
+        },
+        "per_class": {
+          "FetchPushDict": {
+            "counts": {
+              "dead_upstream": 1,
+              "mapped": 3,
+              "not_applicable": 5,
+              "partial": 1,
+              "unsupported": 1
+            },
+            "n_leaves": 11,
+            "source": "tests/fixtures/regression/join/step8/swm/variation_classification.json (VariationMap.classification(), class=FetchPushDict)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "wrapper_interaction_path": {
+        "path": "swap_renderer",
+        "source": "stable_envs/compat/worldmodel.py:swap_renderer; tests/fixtures/regression/join/step7/craftax-full/findings.md, tests/fixtures/regression/join/step7/ogb-manipulation/findings.md (\"Gate F -- arm D\"), tests/fixtures/regression/join/step7/rocket-landing/findings.md",
+        "status": "MEASURED",
+        "why": "the official upstream env keeps its own dynamics; only render() is replaced -- 'the answer for the envs we render but do not simulate' (stable_envs/compat/worldmodel.py module docstring). This is the mechanism every Step-7 family's Gate F PASS was measured through."
+      }
+    },
+    {
+      "backends": [
+        "mjwarp"
+      ],
+      "device_behavior": {
+        "source": "tests/fixtures/regression/support_matrix.json (supported_devices, Workstream E)",
+        "status": "UNMEASURED",
+        "supported_devices": {}
+      },
+      "pixel_or_symbolic": "pixel",
+      "registered_default": {
+        "per_class": {
+          "FetchReach": {
+            "device": "cuda",
+            "note": "default_through_empty_mapping / round_trip, per-scene, in the cited artifact (Workstream B)",
+            "source": "tests/fixtures/regression/join/step8/variations-fetch/gpu_evidence.json (Workstream B, GPU)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "registry_resolution": {
+        "classes": [
+          "FetchReach"
+        ],
+        "evidence": "the stable-envs class docstring names swm/FetchReach-v3",
+        "rung": "declared_docstring",
+        "source": "tests/fixtures/regression/support_matrix.json (join_evidence) + tests/fixtures/regression/join/step7/closure2/coverage_matrix.json (join.rung)",
+        "status": "MEASURED"
+      },
+      "stable_envs_cells": [
+        "FetchReach"
+      ],
+      "state_observation_api": {
+        "per_cell": {
+          "FetchReach": {
+            "checks": {
+              "check_default_style_is_official": "pass",
+              "check_state_roundtrip": "pass",
+              "render_parity_with_official_renderer": "pass"
+            },
+            "source": "tests/fixtures/regression/join/step7/closure2/replay/certify/certification.json (config=FetchReach)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "supported_devices": {},
+      "swm_id": "swm/FetchReach-v3",
+      "swm_wrapper_reset_appearance": {
+        "source": "tests/fixtures/regression/join/step8/variations-fetch/findings.md (\"swm Fetch declared leaf defaults are not the official appearance\"); tests/fixtures/regression/join/step8/dashboard.yaml upstream_findings (source: B)",
+        "status": "MISMATCH(upstream)",
+        "why": "Workstream B measured that swm's declared leaf defaults for the Fetch family are not the official appearance -- an upstream finding, not a stable-envs defect"
+      },
+      "variation_map": {
+        "aggregate_counts": {
+          "dead_upstream": 2,
+          "mapped": 2,
+          "not_applicable": 2,
+          "partial": 1,
+          "unsupported": 1
+        },
+        "per_class": {
+          "FetchReach": {
+            "counts": {
+              "dead_upstream": 2,
+              "mapped": 2,
+              "not_applicable": 2,
+              "partial": 1,
+              "unsupported": 1
+            },
+            "n_leaves": 8,
+            "source": "tests/fixtures/regression/join/step8/swm/variation_classification.json (VariationMap.classification(), class=FetchReach)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "wrapper_interaction_path": {
+        "path": "swap_renderer",
+        "source": "stable_envs/compat/worldmodel.py:swap_renderer; tests/fixtures/regression/join/step7/craftax-full/findings.md, tests/fixtures/regression/join/step7/ogb-manipulation/findings.md (\"Gate F -- arm D\"), tests/fixtures/regression/join/step7/rocket-landing/findings.md",
+        "status": "MEASURED",
+        "why": "the official upstream env keeps its own dynamics; only render() is replaced -- 'the answer for the envs we render but do not simulate' (stable_envs/compat/worldmodel.py module docstring). This is the mechanism every Step-7 family's Gate F PASS was measured through."
+      }
+    },
+    {
+      "backends": [
+        "mjwarp"
+      ],
+      "device_behavior": {
+        "source": "tests/fixtures/regression/support_matrix.json (supported_devices, Workstream E)",
+        "status": "UNMEASURED",
+        "supported_devices": {}
+      },
+      "pixel_or_symbolic": "pixel",
+      "registered_default": {
+        "per_class": {
+          "FetchReachDense": {
+            "device": "cuda",
+            "note": "default_through_empty_mapping / round_trip, per-scene, in the cited artifact (Workstream B)",
+            "source": "tests/fixtures/regression/join/step8/variations-fetch/gpu_evidence.json (Workstream B, GPU)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "registry_resolution": {
+        "classes": [
+          "FetchReachDense"
+        ],
+        "evidence": "the stable-envs class docstring names swm/FetchReachDense-v3",
+        "rung": "declared_docstring",
+        "source": "tests/fixtures/regression/support_matrix.json (join_evidence) + tests/fixtures/regression/join/step7/closure2/coverage_matrix.json (join.rung)",
+        "status": "MEASURED"
+      },
+      "stable_envs_cells": [
+        "FetchReachDense"
+      ],
+      "state_observation_api": {
+        "per_cell": {
+          "FetchReachDense": {
+            "checks": {
+              "check_default_style_is_official": "pass",
+              "check_state_roundtrip": "pass",
+              "render_parity_with_official_renderer": "pass"
+            },
+            "source": "tests/fixtures/regression/join/step7/closure2/replay/certify/certification.json (config=FetchReachDense)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "supported_devices": {},
+      "swm_id": "swm/FetchReachDense-v3",
+      "swm_wrapper_reset_appearance": {
+        "source": "tests/fixtures/regression/join/step8/variations-fetch/findings.md (\"swm Fetch declared leaf defaults are not the official appearance\"); tests/fixtures/regression/join/step8/dashboard.yaml upstream_findings (source: B)",
+        "status": "MISMATCH(upstream)",
+        "why": "Workstream B measured that swm's declared leaf defaults for the Fetch family are not the official appearance -- an upstream finding, not a stable-envs defect"
+      },
+      "variation_map": {
+        "aggregate_counts": {
+          "dead_upstream": 2,
+          "mapped": 2,
+          "not_applicable": 2,
+          "partial": 1,
+          "unsupported": 1
+        },
+        "per_class": {
+          "FetchReachDense": {
+            "counts": {
+              "dead_upstream": 2,
+              "mapped": 2,
+              "not_applicable": 2,
+              "partial": 1,
+              "unsupported": 1
+            },
+            "n_leaves": 8,
+            "source": "tests/fixtures/regression/join/step8/swm/variation_classification.json (VariationMap.classification(), class=FetchReachDense)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "wrapper_interaction_path": {
+        "path": "swap_renderer",
+        "source": "stable_envs/compat/worldmodel.py:swap_renderer; tests/fixtures/regression/join/step7/craftax-full/findings.md, tests/fixtures/regression/join/step7/ogb-manipulation/findings.md (\"Gate F -- arm D\"), tests/fixtures/regression/join/step7/rocket-landing/findings.md",
+        "status": "MEASURED",
+        "why": "the official upstream env keeps its own dynamics; only render() is replaced -- 'the answer for the envs we render but do not simulate' (stable_envs/compat/worldmodel.py module docstring). This is the mechanism every Step-7 family's Gate F PASS was measured through."
+      }
+    },
+    {
+      "backends": [
+        "mjwarp"
+      ],
+      "device_behavior": {
+        "source": "tests/fixtures/regression/support_matrix.json (supported_devices, Workstream E)",
+        "status": "UNMEASURED",
+        "supported_devices": {}
+      },
+      "pixel_or_symbolic": "pixel",
+      "registered_default": {
+        "per_class": {
+          "FetchReachDict": {
+            "device": "cuda",
+            "note": "default_through_empty_mapping / round_trip, per-scene, in the cited artifact (Workstream B)",
+            "source": "tests/fixtures/regression/join/step8/variations-fetch/gpu_evidence.json (Workstream B, GPU)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "registry_resolution": {
+        "classes": [
+          "FetchReachDict"
+        ],
+        "evidence": "the stable-envs class docstring names swm/FetchReachDict-v3",
+        "rung": "declared_docstring",
+        "source": "tests/fixtures/regression/support_matrix.json (join_evidence) + tests/fixtures/regression/join/step7/closure2/coverage_matrix.json (join.rung)",
+        "status": "MEASURED"
+      },
+      "stable_envs_cells": [
+        "FetchReachDict"
+      ],
+      "state_observation_api": {
+        "per_cell": {
+          "FetchReachDict": {
+            "checks": {
+              "check_default_style_is_official": "pass",
+              "check_state_roundtrip": "pass",
+              "render_parity_with_official_renderer": "pass"
+            },
+            "source": "tests/fixtures/regression/join/step7/closure2/replay/certify/certification.json (config=FetchReachDict)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "supported_devices": {},
+      "swm_id": "swm/FetchReachDict-v3",
+      "swm_wrapper_reset_appearance": {
+        "source": "tests/fixtures/regression/join/step8/variations-fetch/findings.md (\"swm Fetch declared leaf defaults are not the official appearance\"); tests/fixtures/regression/join/step8/dashboard.yaml upstream_findings (source: B)",
+        "status": "MISMATCH(upstream)",
+        "why": "Workstream B measured that swm's declared leaf defaults for the Fetch family are not the official appearance -- an upstream finding, not a stable-envs defect"
+      },
+      "variation_map": {
+        "aggregate_counts": {
+          "dead_upstream": 2,
+          "mapped": 2,
+          "not_applicable": 2,
+          "partial": 1,
+          "unsupported": 1
+        },
+        "per_class": {
+          "FetchReachDict": {
+            "counts": {
+              "dead_upstream": 2,
+              "mapped": 2,
+              "not_applicable": 2,
+              "partial": 1,
+              "unsupported": 1
+            },
+            "n_leaves": 8,
+            "source": "tests/fixtures/regression/join/step8/swm/variation_classification.json (VariationMap.classification(), class=FetchReachDict)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "wrapper_interaction_path": {
+        "path": "swap_renderer",
+        "source": "stable_envs/compat/worldmodel.py:swap_renderer; tests/fixtures/regression/join/step7/craftax-full/findings.md, tests/fixtures/regression/join/step7/ogb-manipulation/findings.md (\"Gate F -- arm D\"), tests/fixtures/regression/join/step7/rocket-landing/findings.md",
+        "status": "MEASURED",
+        "why": "the official upstream env keeps its own dynamics; only render() is replaced -- 'the answer for the envs we render but do not simulate' (stable_envs/compat/worldmodel.py module docstring). This is the mechanism every Step-7 family's Gate F PASS was measured through."
+      }
+    },
+    {
+      "backends": [
+        "mjwarp"
+      ],
+      "device_behavior": {
+        "source": "tests/fixtures/regression/support_matrix.json (supported_devices, Workstream E)",
+        "status": "UNMEASURED",
+        "supported_devices": {}
+      },
+      "pixel_or_symbolic": "pixel",
+      "registered_default": {
+        "per_class": {
+          "FetchSlide": {
+            "device": "cuda",
+            "note": "default_through_empty_mapping / round_trip, per-scene, in the cited artifact (Workstream B)",
+            "source": "tests/fixtures/regression/join/step8/variations-fetch/gpu_evidence.json (Workstream B, GPU)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "registry_resolution": {
+        "classes": [
+          "FetchSlide"
+        ],
+        "evidence": "the stable-envs class docstring names swm/FetchSlide-v3",
+        "rung": "declared_docstring",
+        "source": "tests/fixtures/regression/support_matrix.json (join_evidence) + tests/fixtures/regression/join/step7/closure2/coverage_matrix.json (join.rung)",
+        "status": "MEASURED"
+      },
+      "stable_envs_cells": [
+        "FetchSlide"
+      ],
+      "state_observation_api": {
+        "per_cell": {
+          "FetchSlide": {
+            "checks": {
+              "check_default_style_is_official": "pass",
+              "check_state_roundtrip": "pass",
+              "render_parity_with_official_renderer": "pass"
+            },
+            "source": "tests/fixtures/regression/join/step7/closure2/replay/certify/certification.json (config=FetchSlide)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "supported_devices": {},
+      "swm_id": "swm/FetchSlide-v3",
+      "swm_wrapper_reset_appearance": {
+        "source": "tests/fixtures/regression/join/step8/variations-fetch/findings.md (\"swm Fetch declared leaf defaults are not the official appearance\"); tests/fixtures/regression/join/step8/dashboard.yaml upstream_findings (source: B)",
+        "status": "MISMATCH(upstream)",
+        "why": "Workstream B measured that swm's declared leaf defaults for the Fetch family are not the official appearance -- an upstream finding, not a stable-envs defect"
+      },
+      "variation_map": {
+        "aggregate_counts": {
+          "dead_upstream": 1,
+          "mapped": 3,
+          "not_applicable": 5,
+          "partial": 1,
+          "unsupported": 1
+        },
+        "per_class": {
+          "FetchSlide": {
+            "counts": {
+              "dead_upstream": 1,
+              "mapped": 3,
+              "not_applicable": 5,
+              "partial": 1,
+              "unsupported": 1
+            },
+            "n_leaves": 11,
+            "source": "tests/fixtures/regression/join/step8/swm/variation_classification.json (VariationMap.classification(), class=FetchSlide)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "wrapper_interaction_path": {
+        "path": "swap_renderer",
+        "source": "stable_envs/compat/worldmodel.py:swap_renderer; tests/fixtures/regression/join/step7/craftax-full/findings.md, tests/fixtures/regression/join/step7/ogb-manipulation/findings.md (\"Gate F -- arm D\"), tests/fixtures/regression/join/step7/rocket-landing/findings.md",
+        "status": "MEASURED",
+        "why": "the official upstream env keeps its own dynamics; only render() is replaced -- 'the answer for the envs we render but do not simulate' (stable_envs/compat/worldmodel.py module docstring). This is the mechanism every Step-7 family's Gate F PASS was measured through."
+      }
+    },
+    {
+      "backends": [
+        "mjwarp"
+      ],
+      "device_behavior": {
+        "source": "tests/fixtures/regression/support_matrix.json (supported_devices, Workstream E)",
+        "status": "UNMEASURED",
+        "supported_devices": {}
+      },
+      "pixel_or_symbolic": "pixel",
+      "registered_default": {
+        "per_class": {
+          "FetchSlideDense": {
+            "device": "cuda",
+            "note": "default_through_empty_mapping / round_trip, per-scene, in the cited artifact (Workstream B)",
+            "source": "tests/fixtures/regression/join/step8/variations-fetch/gpu_evidence.json (Workstream B, GPU)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "registry_resolution": {
+        "classes": [
+          "FetchSlideDense"
+        ],
+        "evidence": "the stable-envs class docstring names swm/FetchSlideDense-v3",
+        "rung": "declared_docstring",
+        "source": "tests/fixtures/regression/support_matrix.json (join_evidence) + tests/fixtures/regression/join/step7/closure2/coverage_matrix.json (join.rung)",
+        "status": "MEASURED"
+      },
+      "stable_envs_cells": [
+        "FetchSlideDense"
+      ],
+      "state_observation_api": {
+        "per_cell": {
+          "FetchSlideDense": {
+            "checks": {
+              "check_default_style_is_official": "pass",
+              "check_state_roundtrip": "pass",
+              "render_parity_with_official_renderer": "pass"
+            },
+            "source": "tests/fixtures/regression/join/step7/closure2/replay/certify/certification.json (config=FetchSlideDense)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "supported_devices": {},
+      "swm_id": "swm/FetchSlideDense-v3",
+      "swm_wrapper_reset_appearance": {
+        "source": "tests/fixtures/regression/join/step8/variations-fetch/findings.md (\"swm Fetch declared leaf defaults are not the official appearance\"); tests/fixtures/regression/join/step8/dashboard.yaml upstream_findings (source: B)",
+        "status": "MISMATCH(upstream)",
+        "why": "Workstream B measured that swm's declared leaf defaults for the Fetch family are not the official appearance -- an upstream finding, not a stable-envs defect"
+      },
+      "variation_map": {
+        "aggregate_counts": {
+          "dead_upstream": 1,
+          "mapped": 3,
+          "not_applicable": 5,
+          "partial": 1,
+          "unsupported": 1
+        },
+        "per_class": {
+          "FetchSlideDense": {
+            "counts": {
+              "dead_upstream": 1,
+              "mapped": 3,
+              "not_applicable": 5,
+              "partial": 1,
+              "unsupported": 1
+            },
+            "n_leaves": 11,
+            "source": "tests/fixtures/regression/join/step8/swm/variation_classification.json (VariationMap.classification(), class=FetchSlideDense)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "wrapper_interaction_path": {
+        "path": "swap_renderer",
+        "source": "stable_envs/compat/worldmodel.py:swap_renderer; tests/fixtures/regression/join/step7/craftax-full/findings.md, tests/fixtures/regression/join/step7/ogb-manipulation/findings.md (\"Gate F -- arm D\"), tests/fixtures/regression/join/step7/rocket-landing/findings.md",
+        "status": "MEASURED",
+        "why": "the official upstream env keeps its own dynamics; only render() is replaced -- 'the answer for the envs we render but do not simulate' (stable_envs/compat/worldmodel.py module docstring). This is the mechanism every Step-7 family's Gate F PASS was measured through."
+      }
+    },
+    {
+      "backends": [
+        "mjwarp"
+      ],
+      "device_behavior": {
+        "source": "tests/fixtures/regression/support_matrix.json (supported_devices, Workstream E)",
+        "status": "UNMEASURED",
+        "supported_devices": {}
+      },
+      "pixel_or_symbolic": "pixel",
+      "registered_default": {
+        "per_class": {
+          "FetchSlideDict": {
+            "device": "cuda",
+            "note": "default_through_empty_mapping / round_trip, per-scene, in the cited artifact (Workstream B)",
+            "source": "tests/fixtures/regression/join/step8/variations-fetch/gpu_evidence.json (Workstream B, GPU)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "registry_resolution": {
+        "classes": [
+          "FetchSlideDict"
+        ],
+        "evidence": "the stable-envs class docstring names swm/FetchSlideDict-v3",
+        "rung": "declared_docstring",
+        "source": "tests/fixtures/regression/support_matrix.json (join_evidence) + tests/fixtures/regression/join/step7/closure2/coverage_matrix.json (join.rung)",
+        "status": "MEASURED"
+      },
+      "stable_envs_cells": [
+        "FetchSlideDict"
+      ],
+      "state_observation_api": {
+        "per_cell": {
+          "FetchSlideDict": {
+            "checks": {
+              "check_default_style_is_official": "pass",
+              "check_state_roundtrip": "pass",
+              "render_parity_with_official_renderer": "pass"
+            },
+            "source": "tests/fixtures/regression/join/step7/closure2/replay/certify/certification.json (config=FetchSlideDict)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "supported_devices": {},
+      "swm_id": "swm/FetchSlideDict-v3",
+      "swm_wrapper_reset_appearance": {
+        "source": "tests/fixtures/regression/join/step8/variations-fetch/findings.md (\"swm Fetch declared leaf defaults are not the official appearance\"); tests/fixtures/regression/join/step8/dashboard.yaml upstream_findings (source: B)",
+        "status": "MISMATCH(upstream)",
+        "why": "Workstream B measured that swm's declared leaf defaults for the Fetch family are not the official appearance -- an upstream finding, not a stable-envs defect"
+      },
+      "variation_map": {
+        "aggregate_counts": {
+          "dead_upstream": 1,
+          "mapped": 3,
+          "not_applicable": 5,
+          "partial": 1,
+          "unsupported": 1
+        },
+        "per_class": {
+          "FetchSlideDict": {
+            "counts": {
+              "dead_upstream": 1,
+              "mapped": 3,
+              "not_applicable": 5,
+              "partial": 1,
+              "unsupported": 1
+            },
+            "n_leaves": 11,
+            "source": "tests/fixtures/regression/join/step8/swm/variation_classification.json (VariationMap.classification(), class=FetchSlideDict)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "wrapper_interaction_path": {
+        "path": "swap_renderer",
+        "source": "stable_envs/compat/worldmodel.py:swap_renderer; tests/fixtures/regression/join/step7/craftax-full/findings.md, tests/fixtures/regression/join/step7/ogb-manipulation/findings.md (\"Gate F -- arm D\"), tests/fixtures/regression/join/step7/rocket-landing/findings.md",
+        "status": "MEASURED",
+        "why": "the official upstream env keeps its own dynamics; only render() is replaced -- 'the answer for the envs we render but do not simulate' (stable_envs/compat/worldmodel.py module docstring). This is the mechanism every Step-7 family's Gate F PASS was measured through."
+      }
+    },
+    {
+      "backends": [
+        "cpu3d",
+        "mjwarp",
+        "raycast3d"
+      ],
+      "device_behavior": {
+        "source": "tests/fixtures/regression/support_matrix.json (supported_devices, Workstream E)",
+        "status": "UNMEASURED",
+        "supported_devices": {}
+      },
+      "pixel_or_symbolic": "pixel",
+      "registered_default": {
+        "per_class": {
+          "DMCFingerTurnHard": {
+            "default_equals_style_from_empty_variation": true,
+            "device": "cpu",
+            "source": "tests/fixtures/regression/join/step8/swm/default_roundtrip_cpu.json (this workstream, CPU, host=Mac.lan)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "registry_resolution": {
+        "classes": [
+          "DMCFingerTurnHard"
+        ],
+        "evidence": "reference_id ['dm_control/finger-turn_hard'] equals the official env this id was measured to wrap (DM Control task resolved against the suite: match=exact)",
+        "rung": "reference_id",
+        "source": "tests/fixtures/regression/support_matrix.json (join_evidence) + tests/fixtures/regression/join/step7/closure2/coverage_matrix.json (join.rung)",
+        "status": "MEASURED"
+      },
+      "stable_envs_cells": [
+        "DMCFingerTurnHard"
+      ],
+      "state_observation_api": {
+        "per_cell": {
+          "DMCFingerTurnHard": {
+            "checks": {
+              "check_default_style_is_official": "pass",
+              "check_state_roundtrip": "pass",
+              "render_parity_with_official_renderer": "pass"
+            },
+            "source": "tests/fixtures/regression/join/step7/closure2/replay/certify/certification.json (config=DMCFingerTurnHard)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "supported_devices": {},
+      "swm_id": "swm/FingerDMControl-v0",
+      "swm_wrapper_reset_appearance": {
+        "status": "UNMEASURED",
+        "why": "no committed Step-8 measurement of the SWM WRAPPER's own reset() appearance against the registered default exists for this family beyond #2's mapping round trip"
+      },
+      "variation_map": {
+        "aggregate_counts": {
+          "mapped": 4,
+          "unsupported": 7
+        },
+        "per_class": {
+          "DMCFingerTurnHard": {
+            "counts": {
+              "mapped": 4,
+              "unsupported": 7
+            },
+            "n_leaves": 11,
+            "source": "tests/fixtures/regression/join/step8/swm/variation_classification.json (VariationMap.classification(), class=DMCFingerTurnHard)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "wrapper_interaction_path": {
+        "path": "swap_renderer",
+        "source": "stable_envs/compat/worldmodel.py:swap_renderer; tests/fixtures/regression/join/step7/craftax-full/findings.md, tests/fixtures/regression/join/step7/ogb-manipulation/findings.md (\"Gate F -- arm D\"), tests/fixtures/regression/join/step7/rocket-landing/findings.md",
+        "status": "MEASURED",
+        "why": "the official upstream env keeps its own dynamics; only render() is replaced -- 'the answer for the envs we render but do not simulate' (stable_envs/compat/worldmodel.py module docstring). This is the mechanism every Step-7 family's Gate F PASS was measured through."
+      }
+    },
+    {
+      "backends": [
+        "cpu3d",
+        "mjwarp",
+        "raycast3d"
+      ],
+      "device_behavior": {
+        "source": "tests/fixtures/regression/support_matrix.json (supported_devices, Workstream E)",
+        "status": "UNMEASURED",
+        "supported_devices": {}
+      },
+      "pixel_or_symbolic": "pixel",
+      "registered_default": {
+        "per_class": {
+          "DMCHopperHop": {
+            "default_equals_style_from_empty_variation": true,
+            "device": "cpu",
+            "source": "tests/fixtures/regression/join/step8/swm/default_roundtrip_cpu.json (this workstream, CPU, host=Mac.lan)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "registry_resolution": {
+        "classes": [
+          "DMCHopperHop"
+        ],
+        "evidence": "reference_id ['dm_control/hopper-hop'] equals the official env this id was measured to wrap (DM Control task resolved against the suite: match=by_class)",
+        "rung": "reference_id",
+        "source": "tests/fixtures/regression/support_matrix.json (join_evidence) + tests/fixtures/regression/join/step7/closure2/coverage_matrix.json (join.rung)",
+        "status": "MEASURED"
+      },
+      "stable_envs_cells": [
+        "DMCHopperHop"
+      ],
+      "state_observation_api": {
+        "per_cell": {
+          "DMCHopperHop": {
+            "checks": {
+              "check_default_style_is_official": "pass",
+              "check_state_roundtrip": "pass",
+              "render_parity_with_official_renderer": "not_applicable"
+            },
+            "source": "tests/fixtures/regression/join/step7/closure2/replay/certify/certification.json (config=DMCHopperHop)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "supported_devices": {},
+      "swm_id": "swm/HopperDMControl-v0",
+      "swm_wrapper_reset_appearance": {
+        "status": "UNMEASURED",
+        "why": "no committed Step-8 measurement of the SWM WRAPPER's own reset() appearance against the registered default exists for this family beyond #2's mapping round trip"
+      },
+      "variation_map": {
+        "aggregate_counts": {
+          "dead_upstream": 1,
+          "mapped": 2,
+          "unsupported": 7
+        },
+        "per_class": {
+          "DMCHopperHop": {
+            "counts": {
+              "dead_upstream": 1,
+              "mapped": 2,
+              "unsupported": 7
+            },
+            "n_leaves": 10,
+            "source": "tests/fixtures/regression/join/step8/swm/variation_classification.json (VariationMap.classification(), class=DMCHopperHop)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "wrapper_interaction_path": {
+        "path": "swap_renderer",
+        "source": "stable_envs/compat/worldmodel.py:swap_renderer; tests/fixtures/regression/join/step7/craftax-full/findings.md, tests/fixtures/regression/join/step7/ogb-manipulation/findings.md (\"Gate F -- arm D\"), tests/fixtures/regression/join/step7/rocket-landing/findings.md",
+        "status": "MEASURED",
+        "why": "the official upstream env keeps its own dynamics; only render() is replaced -- 'the answer for the envs we render but do not simulate' (stable_envs/compat/worldmodel.py module docstring). This is the mechanism every Step-7 family's Gate F PASS was measured through."
+      }
+    },
+    {
+      "backends": [
+        "cpu3d",
+        "mjwarp",
+        "raycast3d"
+      ],
+      "device_behavior": {
+        "source": "tests/fixtures/regression/support_matrix.json (supported_devices, Workstream E)",
+        "status": "UNMEASURED",
+        "supported_devices": {}
+      },
+      "pixel_or_symbolic": "pixel",
+      "registered_default": {
+        "per_class": {
+          "DMCHumanoidStand": {
+            "default_equals_style_from_empty_variation": true,
+            "device": "cpu",
+            "source": "tests/fixtures/regression/join/step8/swm/default_roundtrip_cpu.json (this workstream, CPU, host=Mac.lan)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "registry_resolution": {
+        "classes": [
+          "DMCHumanoidStand"
+        ],
+        "evidence": "this id resolves to dm_control/humanoid-walk, which no stable-envs env declares; we declare ['dm_control/humanoid-stand'] of the same domain, and the two compile to a byte-identical render model after reset() (same geom types/sizes/colours/materials, same camera, same lights), so the picture is the same and only the reward differs",
+        "rung": "same_dmc_appearance",
+        "source": "tests/fixtures/regression/support_matrix.json (join_evidence) + tests/fixtures/regression/join/step7/closure2/coverage_matrix.json (join.rung)",
+        "status": "MEASURED"
+      },
+      "stable_envs_cells": [
+        "DMCHumanoidStand"
+      ],
+      "state_observation_api": {
+        "per_cell": {
+          "DMCHumanoidStand": {
+            "checks": {
+              "check_default_style_is_official": "pass",
+              "check_state_roundtrip": "pass",
+              "render_parity_with_official_renderer": "not_applicable"
+            },
+            "source": "tests/fixtures/regression/join/step7/closure2/replay/certify/certification.json (config=DMCHumanoidStand)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "supported_devices": {},
+      "swm_id": "swm/HumanoidDMControl-v0",
+      "swm_wrapper_reset_appearance": {
+        "status": "UNMEASURED",
+        "why": "no committed Step-8 measurement of the SWM WRAPPER's own reset() appearance against the registered default exists for this family beyond #2's mapping round trip"
+      },
+      "variation_map": {
+        "aggregate_counts": {
+          "dead_upstream": 1,
+          "mapped": 2,
+          "unsupported": 7
+        },
+        "per_class": {
+          "DMCHumanoidStand": {
+            "counts": {
+              "dead_upstream": 1,
+              "mapped": 2,
+              "unsupported": 7
+            },
+            "n_leaves": 10,
+            "source": "tests/fixtures/regression/join/step8/swm/variation_classification.json (VariationMap.classification(), class=DMCHumanoidStand)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "wrapper_interaction_path": {
+        "path": "swap_renderer",
+        "source": "stable_envs/compat/worldmodel.py:swap_renderer; tests/fixtures/regression/join/step7/craftax-full/findings.md, tests/fixtures/regression/join/step7/ogb-manipulation/findings.md (\"Gate F -- arm D\"), tests/fixtures/regression/join/step7/rocket-landing/findings.md",
+        "status": "MEASURED",
+        "why": "the official upstream env keeps its own dynamics; only render() is replaced -- 'the answer for the envs we render but do not simulate' (stable_envs/compat/worldmodel.py module docstring). This is the mechanism every Step-7 family's Gate F PASS was measured through."
+      }
+    },
+    {
+      "backends": [
+        "cpu3d",
+        "mjwarp",
+        "raycast3d"
+      ],
+      "device_behavior": {
+        "source": "tests/fixtures/regression/support_matrix.json (supported_devices, Workstream E)",
+        "status": "MEASURED",
+        "supported_devices": {
+          "cpu": {
+            "status": "PASS",
+            "verdict": "PASS",
+            "why": ""
+          },
+          "cuda": {
+            "status": "PASS",
+            "verdict": "PASS",
+            "why": ""
+          }
+        }
+      },
+      "pixel_or_symbolic": "pixel",
+      "registered_default": {
+        "per_class": {
+          "DMCManipulatorBringBall": {
+            "default_equals_style_from_empty_variation": true,
+            "device": "cpu",
+            "source": "tests/fixtures/regression/join/step8/swm/default_roundtrip_cpu.json (this workstream, CPU, host=Mac.lan)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "registry_resolution": {
+        "classes": [
+          "DMCManipulatorBringBall"
+        ],
+        "evidence": "W3 dmc-manipulator, merged 1d9dccb",
+        "rung": "step7_workstream",
+        "source": "tests/fixtures/regression/support_matrix.json (join_evidence) + tests/fixtures/regression/join/step7/closure2/coverage_matrix.json (join.rung)",
+        "status": "MEASURED"
+      },
+      "stable_envs_cells": [
+        "DMCManipulatorBringBall"
+      ],
+      "state_observation_api": {
+        "per_cell": {
+          "DMCManipulatorBringBall": {
+            "checks": {
+              "check_default_style_is_official": "pass",
+              "check_state_roundtrip": "pass",
+              "render_parity_with_official_renderer": "pass"
+            },
+            "device": "cpu",
+            "source": "tests/fixtures/regression/join/step8/certification/gate_a_rejudged.json (Workstream E rejudgment of the Step-7 shard)",
+            "source_sha256": "c4cf7007a103624746c89ffefdbc730a7cce826bc18e3cc195fd56090abba07c",
+            "source_within": "examples/results/step7/closure2/gate_a/cpu_vis311.json",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "supported_devices": {
+        "cpu": {
+          "status": "PASS",
+          "verdict": "PASS",
+          "why": ""
+        },
+        "cuda": {
+          "status": "PASS",
+          "verdict": "PASS",
+          "why": ""
+        }
+      },
+      "swm_id": "swm/ManipulatorDMControl-v0",
+      "swm_wrapper_reset_appearance": {
+        "status": "UNMEASURED",
+        "why": "no committed Step-8 measurement of the SWM WRAPPER's own reset() appearance against the registered default exists for this family beyond #2's mapping round trip"
+      },
+      "variation_map": {
+        "aggregate_counts": {
+          "dead_upstream": 1,
+          "mapped": 5,
+          "unsupported": 3
+        },
+        "per_class": {
+          "DMCManipulatorBringBall": {
+            "counts": {
+              "dead_upstream": 1,
+              "mapped": 5,
+              "unsupported": 3
+            },
+            "n_leaves": 9,
+            "source": "tests/fixtures/regression/join/step8/swm/variation_classification.json (VariationMap.classification(), class=DMCManipulatorBringBall)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "wrapper_interaction_path": {
+        "path": "swap_renderer",
+        "source": "stable_envs/compat/worldmodel.py:swap_renderer; tests/fixtures/regression/join/step7/craftax-full/findings.md, tests/fixtures/regression/join/step7/ogb-manipulation/findings.md (\"Gate F -- arm D\"), tests/fixtures/regression/join/step7/rocket-landing/findings.md",
+        "status": "MEASURED",
+        "why": "the official upstream env keeps its own dynamics; only render() is replaced -- 'the answer for the envs we render but do not simulate' (stable_envs/compat/worldmodel.py module docstring). This is the mechanism every Step-7 family's Gate F PASS was measured through."
+      }
+    },
+    {
+      "backends": [
+        "gfxdraw"
+      ],
+      "device_behavior": {
+        "source": "tests/fixtures/regression/support_matrix.json (supported_devices, Workstream E)",
+        "status": "UNMEASURED",
+        "supported_devices": {}
+      },
+      "pixel_or_symbolic": "pixel",
+      "registered_default": {
+        "per_class": {
+          "MountainCarContinuous": {
+            "default_equals_style_from_empty_variation": true,
+            "device": "cpu",
+            "source": "tests/fixtures/regression/join/step8/swm/default_roundtrip_cpu.json (this workstream, CPU, host=Mac.lan)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "registry_resolution": {
+        "classes": [
+          "MountainCarContinuous"
+        ],
+        "evidence": "the probe saw class 'Continuous_MountainCarEnv' under swm/MountainCarContinuousControl-v0, and gymnasium.make() on our reference_id produces the same unwrapped class",
+        "rung": "reference_env_class",
+        "source": "tests/fixtures/regression/support_matrix.json (join_evidence) + tests/fixtures/regression/join/step7/closure2/coverage_matrix.json (join.rung)",
+        "status": "MEASURED"
+      },
+      "stable_envs_cells": [
+        "MountainCarContinuous"
+      ],
+      "state_observation_api": {
+        "per_cell": {
+          "MountainCarContinuous": {
+            "checks": {
+              "check_default_style_is_official": "pass",
+              "check_state_roundtrip": "pass",
+              "render_parity_with_official_renderer": "pass"
+            },
+            "source": "tests/fixtures/regression/join/step7/closure2/replay/certify/certification.json (config=MountainCarContinuous)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "supported_devices": {},
+      "swm_id": "swm/MountainCarContinuousControl-v0",
+      "swm_wrapper_reset_appearance": {
+        "status": "UNMEASURED",
+        "why": "no committed Step-8 measurement of the SWM WRAPPER's own reset() appearance against the registered default exists for this family beyond #2's mapping round trip"
+      },
+      "variation_map": {
+        "aggregate_counts": {
+          "mapped": 2,
+          "unsupported": 2
+        },
+        "per_class": {
+          "MountainCarContinuous": {
+            "counts": {
+              "mapped": 2,
+              "unsupported": 2
+            },
+            "n_leaves": 4,
+            "source": "tests/fixtures/regression/join/step8/swm/variation_classification.json (VariationMap.classification(), class=MountainCarContinuous)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "wrapper_interaction_path": {
+        "path": "swap_renderer",
+        "source": "stable_envs/compat/worldmodel.py:swap_renderer; tests/fixtures/regression/join/step7/craftax-full/findings.md, tests/fixtures/regression/join/step7/ogb-manipulation/findings.md (\"Gate F -- arm D\"), tests/fixtures/regression/join/step7/rocket-landing/findings.md",
+        "status": "MEASURED",
+        "why": "the official upstream env keeps its own dynamics; only render() is replaced -- 'the answer for the envs we render but do not simulate' (stable_envs/compat/worldmodel.py module docstring). This is the mechanism every Step-7 family's Gate F PASS was measured through."
+      }
+    },
+    {
+      "backends": [
+        "gfxdraw"
+      ],
+      "device_behavior": {
+        "source": "tests/fixtures/regression/support_matrix.json (supported_devices, Workstream E)",
+        "status": "UNMEASURED",
+        "supported_devices": {}
+      },
+      "pixel_or_symbolic": "pixel",
+      "registered_default": {
+        "per_class": {
+          "MountainCar": {
+            "default_equals_style_from_empty_variation": true,
+            "device": "cpu",
+            "source": "tests/fixtures/regression/join/step8/swm/default_roundtrip_cpu.json (this workstream, CPU, host=Mac.lan)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "registry_resolution": {
+        "classes": [
+          "MountainCar"
+        ],
+        "evidence": "the probe saw class 'MountainCarEnv' under swm/MountainCarControl-v0, and gymnasium.make() on our reference_id produces the same unwrapped class",
+        "rung": "reference_env_class",
+        "source": "tests/fixtures/regression/support_matrix.json (join_evidence) + tests/fixtures/regression/join/step7/closure2/coverage_matrix.json (join.rung)",
+        "status": "MEASURED"
+      },
+      "stable_envs_cells": [
+        "MountainCar"
+      ],
+      "state_observation_api": {
+        "per_cell": {
+          "MountainCar": {
+            "checks": {
+              "check_default_style_is_official": "pass",
+              "check_state_roundtrip": "pass",
+              "render_parity_with_official_renderer": "pass"
+            },
+            "source": "tests/fixtures/regression/join/step7/closure2/replay/certify/certification.json (config=MountainCar)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "supported_devices": {},
+      "swm_id": "swm/MountainCarControl-v0",
+      "swm_wrapper_reset_appearance": {
+        "status": "UNMEASURED",
+        "why": "no committed Step-8 measurement of the SWM WRAPPER's own reset() appearance against the registered default exists for this family beyond #2's mapping round trip"
+      },
+      "variation_map": {
+        "aggregate_counts": {
+          "mapped": 2,
+          "unsupported": 3
+        },
+        "per_class": {
+          "MountainCar": {
+            "counts": {
+              "mapped": 2,
+              "unsupported": 3
+            },
+            "n_leaves": 5,
+            "source": "tests/fixtures/regression/join/step8/swm/variation_classification.json (VariationMap.classification(), class=MountainCar)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "wrapper_interaction_path": {
+        "path": "swap_renderer",
+        "source": "stable_envs/compat/worldmodel.py:swap_renderer; tests/fixtures/regression/join/step7/craftax-full/findings.md, tests/fixtures/regression/join/step7/ogb-manipulation/findings.md (\"Gate F -- arm D\"), tests/fixtures/regression/join/step7/rocket-landing/findings.md",
+        "status": "MEASURED",
+        "why": "the official upstream env keeps its own dynamics; only render() is replaced -- 'the answer for the envs we render but do not simulate' (stable_envs/compat/worldmodel.py module docstring). This is the mechanism every Step-7 family's Gate F PASS was measured through."
+      }
+    },
+    {
+      "backends": [
+        "mjwarp"
+      ],
+      "device_behavior": {
+        "source": "tests/fixtures/regression/support_matrix.json (supported_devices, Workstream E)",
+        "status": "MEASURED",
+        "supported_devices": {
+          "cpu": {
+            "status": "UNSUPPORTED_BY_DESIGN",
+            "verdict": "REFUSED_BY_DESIGN",
+            "why": "ValueError: OGBCube has no CPU backend (CPU3D-OGB-1): this scene is 193,113 visible triangles at a median projected edge of ~0.7 px, and the certification CPU bar leaves under a nanosecond per triangle against a 24 ns/triangle vertex-setup floor -- 9.9-12.9x short before a single pixel is filled. Se"
+          },
+          "cuda": {
+            "status": "PASS",
+            "verdict": "PASS",
+            "why": ""
+          }
+        }
+      },
+      "pixel_or_symbolic": "pixel",
+      "registered_default": {
+        "per_class": {
+          "OGBCube": {
+            "device": "cuda",
+            "source": "tests/fixtures/regression/join/step8/variations-newcells/gpu/default_ogb_baseline.json, tests/fixtures/regression/join/step8/variations-newcells/gpu/default_ogb_branch.json (Workstream C, GPU, gpu2264, job 6443480)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "registry_resolution": {
+        "classes": [
+          "OGBCube"
+        ],
+        "evidence": "W5 ogb-manipulation, merged 24d1054",
+        "rung": "step7_workstream",
+        "source": "tests/fixtures/regression/support_matrix.json (join_evidence) + tests/fixtures/regression/join/step7/closure2/coverage_matrix.json (join.rung)",
+        "status": "MEASURED"
+      },
+      "stable_envs_cells": [
+        "OGBCube"
+      ],
+      "state_observation_api": {
+        "per_cell": {
+          "OGBCube": {
+            "checks": {
+              "check_default_style_is_official": "not_applicable",
+              "check_state_roundtrip": "pass",
+              "render_parity_with_official_renderer": "not_applicable"
+            },
+            "device": "cuda",
+            "source": "tests/fixtures/regression/join/step8/certification/gate_a_rejudged.json (Workstream E rejudgment of the Step-7 shard)",
+            "source_sha256": "814ae221e3976a46b15637c502bc397d259938864ad70f22f43bb6909c437535",
+            "source_within": "examples/results/step7/closure2/gate_a/cuda_ogbmanip.json",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "supported_devices": {
+        "cpu": {
+          "status": "UNSUPPORTED_BY_DESIGN",
+          "verdict": "REFUSED_BY_DESIGN",
+          "why": "ValueError: OGBCube has no CPU backend (CPU3D-OGB-1): this scene is 193,113 visible triangles at a median projected edge of ~0.7 px, and the certification CPU bar leaves under a nanosecond per triangle against a 24 ns/triangle vertex-setup floor -- 9.9-12.9x short before a single pixel is filled. Se"
+        },
+        "cuda": {
+          "status": "PASS",
+          "verdict": "PASS",
+          "why": ""
+        }
+      },
+      "swm_id": "swm/OGBCube-v0",
+      "swm_wrapper_reset_appearance": {
+        "status": "UNMEASURED",
+        "why": "no committed Step-8 measurement of the SWM WRAPPER's own reset() appearance against the registered default exists for this family beyond #2's mapping round trip"
+      },
+      "variation_map": {
+        "aggregate_counts": {
+          "mapped": 2,
+          "swm_only": 9
+        },
+        "per_class": {
+          "OGBCube": {
+            "counts": {
+              "mapped": 2,
+              "swm_only": 9
+            },
+            "n_leaves": 11,
+            "source": "tests/fixtures/regression/join/step8/swm/variation_classification.json (VariationMap.classification(), class=OGBCube)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "wrapper_interaction_path": {
+        "path": "swap_renderer",
+        "source": "stable_envs/compat/worldmodel.py:swap_renderer; tests/fixtures/regression/join/step7/craftax-full/findings.md, tests/fixtures/regression/join/step7/ogb-manipulation/findings.md (\"Gate F -- arm D\"), tests/fixtures/regression/join/step7/rocket-landing/findings.md",
+        "status": "MEASURED",
+        "why": "the official upstream env keeps its own dynamics; only render() is replaced -- 'the answer for the envs we render but do not simulate' (stable_envs/compat/worldmodel.py module docstring). This is the mechanism every Step-7 family's Gate F PASS was measured through."
+      }
+    },
+    {
+      "backends": [
+        "raycast3d"
+      ],
+      "device_behavior": {
+        "source": "tests/fixtures/regression/support_matrix.json (supported_devices, Workstream E)",
+        "status": "UNMEASURED",
+        "supported_devices": {}
+      },
+      "pixel_or_symbolic": "pixel",
+      "registered_default": {
+        "per_class": {
+          "PointmazeLargeNavigate": {
+            "default_equals_style_from_empty_variation": true,
+            "device": "cpu",
+            "source": "tests/fixtures/regression/join/step8/swm/default_roundtrip_cpu.json (this workstream, CPU, host=Mac.lan)",
+            "status": "MEASURED"
+          },
+          "PointmazeLargeStitch": {
+            "default_equals_style_from_empty_variation": true,
+            "device": "cpu",
+            "source": "tests/fixtures/regression/join/step8/swm/default_roundtrip_cpu.json (this workstream, CPU, host=Mac.lan)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "registry_resolution": {
+        "classes": [
+          "PointmazeLargeNavigate",
+          "PointmazeLargeStitch"
+        ],
+        "evidence": "one swm id stands for a whole family. The probe records the REGISTERED default as maze_type='large' with PointEnv in the MRO, and stable_worldmodel's MazeEnv builds loco_env_type in {point, ant, humanoid} x maze_type in {arena, medium, large, giant, teleport}; the default therefore corresponds to ogbench/pointmaze-large-v0, which is the reference_id of PointmazeLargeNavigate and PointmazeLargeStitch (the two dataset suffixes share one rendered scene). The other 23 Antmaze*/Humanoidmaze*/Pointmaze* envs cover the rest of the cross product; we render no 'arena' maze.",
+        "rung": "documented_manual",
+        "source": "tests/fixtures/regression/support_matrix.json (join_evidence) + tests/fixtures/regression/join/step7/closure2/coverage_matrix.json (join.rung)",
+        "status": "MEASURED"
+      },
+      "stable_envs_cells": [
+        "PointmazeLargeNavigate",
+        "PointmazeLargeStitch"
+      ],
+      "state_observation_api": {
+        "per_cell": {
+          "PointmazeLargeNavigate": {
+            "checks": {
+              "check_default_style_is_official": "pass",
+              "check_state_roundtrip": "pass",
+              "render_parity_with_official_renderer": "pass"
+            },
+            "source": "tests/fixtures/regression/join/step7/closure2/replay/certify/certification.json (config=PointmazeLargeNavigate)",
+            "status": "MEASURED"
+          },
+          "PointmazeLargeStitch": {
+            "checks": {
+              "check_default_style_is_official": "pass",
+              "check_state_roundtrip": "pass",
+              "render_parity_with_official_renderer": "pass"
+            },
+            "note": "PointmazeLargeStitch shares one rendered scene with PointmazeLargeNavigate (support_matrix.json join_evidence); no separate bulk-cert config exists for the Stitch dataset suffix",
+            "source": "tests/fixtures/regression/join/step7/closure2/replay/certify/certification.json (config=PointmazeLargeNavigate)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "supported_devices": {},
+      "swm_id": "swm/OGBMaze-v0",
+      "swm_wrapper_reset_appearance": {
+        "status": "UNMEASURED",
+        "why": "no committed Step-8 measurement of the SWM WRAPPER's own reset() appearance against the registered default exists for this family beyond #2's mapping round trip"
+      },
+      "variation_map": {
+        "aggregate_counts": {
+          "mapped": 4,
+          "swm_only": 6
+        },
+        "per_class": {
+          "PointmazeLargeNavigate": {
+            "counts": {
+              "mapped": 2,
+              "swm_only": 3
+            },
+            "n_leaves": 5,
+            "source": "tests/fixtures/regression/join/step8/swm/variation_classification.json (VariationMap.classification(), class=PointmazeLargeNavigate)",
+            "status": "MEASURED"
+          },
+          "PointmazeLargeStitch": {
+            "counts": {
+              "mapped": 2,
+              "swm_only": 3
+            },
+            "n_leaves": 5,
+            "source": "tests/fixtures/regression/join/step8/swm/variation_classification.json (VariationMap.classification(), class=PointmazeLargeStitch)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "wrapper_interaction_path": {
+        "path": "swap_renderer",
+        "source": "stable_envs/compat/worldmodel.py:swap_renderer; tests/fixtures/regression/join/step7/craftax-full/findings.md, tests/fixtures/regression/join/step7/ogb-manipulation/findings.md (\"Gate F -- arm D\"), tests/fixtures/regression/join/step7/rocket-landing/findings.md",
+        "status": "MEASURED",
+        "why": "the official upstream env keeps its own dynamics; only render() is replaced -- 'the answer for the envs we render but do not simulate' (stable_envs/compat/worldmodel.py module docstring). This is the mechanism every Step-7 family's Gate F PASS was measured through."
+      }
+    },
+    {
+      "backends": [
+        "mjwarp"
+      ],
+      "device_behavior": {
+        "source": "tests/fixtures/regression/support_matrix.json (supported_devices, Workstream E)",
+        "status": "MEASURED",
+        "supported_devices": {
+          "cpu": {
+            "status": "UNSUPPORTED_BY_DESIGN",
+            "verdict": "REFUSED_BY_DESIGN",
+            "why": "ValueError: OGBScene has no CPU backend (CPU3D-OGB-1): this scene is 196,633 visible triangles at a median projected edge of ~0.7 px, and the certification CPU bar leaves under a nanosecond per triangle against a 24 ns/triangle vertex-setup floor -- 9.9-12.9x short before a single pixel is filled. S"
+          },
+          "cuda": {
+            "status": "PASS",
+            "verdict": "PASS",
+            "why": ""
+          }
+        }
+      },
+      "pixel_or_symbolic": "pixel",
+      "registered_default": {
+        "per_class": {
+          "OGBScene": {
+            "device": "cuda",
+            "source": "tests/fixtures/regression/join/step8/variations-newcells/gpu/default_ogb_baseline.json, tests/fixtures/regression/join/step8/variations-newcells/gpu/default_ogb_branch.json (Workstream C, GPU, gpu2264, job 6443480)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "registry_resolution": {
+        "classes": [
+          "OGBScene"
+        ],
+        "evidence": "W5 ogb-manipulation, merged 24d1054",
+        "rung": "step7_workstream",
+        "source": "tests/fixtures/regression/support_matrix.json (join_evidence) + tests/fixtures/regression/join/step7/closure2/coverage_matrix.json (join.rung)",
+        "status": "MEASURED"
+      },
+      "stable_envs_cells": [
+        "OGBScene"
+      ],
+      "state_observation_api": {
+        "per_cell": {
+          "OGBScene": {
+            "checks": {
+              "check_default_style_is_official": "not_applicable",
+              "check_state_roundtrip": "pass",
+              "render_parity_with_official_renderer": "not_applicable"
+            },
+            "device": "cuda",
+            "source": "tests/fixtures/regression/join/step8/certification/gate_a_rejudged.json (Workstream E rejudgment of the Step-7 shard)",
+            "source_sha256": "814ae221e3976a46b15637c502bc397d259938864ad70f22f43bb6909c437535",
+            "source_within": "examples/results/step7/closure2/gate_a/cuda_ogbmanip.json",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "supported_devices": {
+        "cpu": {
+          "status": "UNSUPPORTED_BY_DESIGN",
+          "verdict": "REFUSED_BY_DESIGN",
+          "why": "ValueError: OGBScene has no CPU backend (CPU3D-OGB-1): this scene is 196,633 visible triangles at a median projected edge of ~0.7 px, and the certification CPU bar leaves under a nanosecond per triangle against a 24 ns/triangle vertex-setup floor -- 9.9-12.9x short before a single pixel is filled. S"
+        },
+        "cuda": {
+          "status": "PASS",
+          "verdict": "PASS",
+          "why": ""
+        }
+      },
+      "swm_id": "swm/OGBScene-v0",
+      "swm_wrapper_reset_appearance": {
+        "status": "UNMEASURED",
+        "why": "no committed Step-8 measurement of the SWM WRAPPER's own reset() appearance against the registered default exists for this family beyond #2's mapping round trip"
+      },
+      "variation_map": {
+        "aggregate_counts": {
+          "mapped": 2,
+          "swm_only": 10
+        },
+        "per_class": {
+          "OGBScene": {
+            "counts": {
+              "mapped": 2,
+              "swm_only": 10
+            },
+            "n_leaves": 12,
+            "source": "tests/fixtures/regression/join/step8/swm/variation_classification.json (VariationMap.classification(), class=OGBScene)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "wrapper_interaction_path": {
+        "path": "swap_renderer",
+        "source": "stable_envs/compat/worldmodel.py:swap_renderer; tests/fixtures/regression/join/step7/craftax-full/findings.md, tests/fixtures/regression/join/step7/ogb-manipulation/findings.md (\"Gate F -- arm D\"), tests/fixtures/regression/join/step7/rocket-landing/findings.md",
+        "status": "MEASURED",
+        "why": "the official upstream env keeps its own dynamics; only render() is replaced -- 'the answer for the envs we render but do not simulate' (stable_envs/compat/worldmodel.py module docstring). This is the mechanism every Step-7 family's Gate F PASS was measured through."
+      }
+    },
+    {
+      "backends": [
+        "nvdiff"
+      ],
+      "device_behavior": {
+        "source": "tests/fixtures/regression/support_matrix.json (supported_devices, Workstream E)",
+        "status": "MEASURED",
+        "supported_devices": {
+          "cpu": {
+            "status": "UNSUPPORTED_BY_DESIGN",
+            "verdict": "REFUSED_BY_DESIGN",
+            "why": "NotImplementedError: PFRocketLanding has no CPU backend: it needs a CPU textured-triangle rasteriser, which this repo does not have (cpu3d/raycast3d cast MuJoCo primitives). A CPU request is never served by CUDA; see scratch/step7/rocket-landing/cpu_raster_probe.py for the measured feasibility."
+          },
+          "cuda": {
+            "status": "PASS",
+            "verdict": "PASS",
+            "why": ""
+          }
+        }
+      },
+      "pixel_or_symbolic": "pixel",
+      "registered_default": {
+        "per_class": {
+          "PFRocketLanding": {
+            "device": "cuda",
+            "source": "tests/fixtures/regression/join/step8/variations-newcells/gpu/default_rocket_baseline.json, tests/fixtures/regression/join/step8/variations-newcells/gpu/default_rocket_branch.json (Workstream C, GPU, gpu2264, job 6443480)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "registry_resolution": {
+        "classes": [
+          "PFRocketLanding"
+        ],
+        "evidence": "W6 rocket-landing, merged fd2b8ef",
+        "rung": "step7_workstream",
+        "source": "tests/fixtures/regression/support_matrix.json (join_evidence) + tests/fixtures/regression/join/step7/closure2/coverage_matrix.json (join.rung)",
+        "status": "MEASURED"
+      },
+      "stable_envs_cells": [
+        "PFRocketLanding"
+      ],
+      "state_observation_api": {
+        "per_cell": {
+          "PFRocketLanding": {
+            "checks": {
+              "check_default_style_is_official": "pass",
+              "check_state_roundtrip": "pass",
+              "render_parity_with_official_renderer": "not_applicable"
+            },
+            "device": "cuda",
+            "source": "tests/fixtures/regression/join/step8/certification/gate_a_rejudged.json (Workstream E rejudgment of the Step-7 shard)",
+            "source_sha256": "a8db0aed8b075c8f35c9b171ea731c011ec5f283c424a75f1c97f849e7bf2101",
+            "source_within": "examples/results/step8/certification/gate_a_resweep/cuda_rocket.json",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "supported_devices": {
+        "cpu": {
+          "status": "UNSUPPORTED_BY_DESIGN",
+          "verdict": "REFUSED_BY_DESIGN",
+          "why": "NotImplementedError: PFRocketLanding has no CPU backend: it needs a CPU textured-triangle rasteriser, which this repo does not have (cpu3d/raycast3d cast MuJoCo primitives). A CPU request is never served by CUDA; see scratch/step7/rocket-landing/cpu_raster_probe.py for the measured feasibility."
+        },
+        "cuda": {
+          "status": "PASS",
+          "verdict": "PASS",
+          "why": ""
+        }
+      },
+      "swm_id": "swm/PFRocketLanding-v0",
+      "swm_wrapper_reset_appearance": {
+        "status": "UNMEASURED",
+        "why": "no committed Step-8 measurement of the SWM WRAPPER's own reset() appearance against the registered default exists for this family beyond #2's mapping round trip"
+      },
+      "variation_map": {
+        "aggregate_counts": {
+          "mapped": 5,
+          "swm_only": 4
+        },
+        "per_class": {
+          "PFRocketLanding": {
+            "counts": {
+              "mapped": 5,
+              "swm_only": 4
+            },
+            "n_leaves": 9,
+            "source": "tests/fixtures/regression/join/step8/swm/variation_classification.json (VariationMap.classification(), class=PFRocketLanding)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "wrapper_interaction_path": {
+        "path": "swap_renderer",
+        "source": "stable_envs/compat/worldmodel.py:swap_renderer; tests/fixtures/regression/join/step7/craftax-full/findings.md, tests/fixtures/regression/join/step7/ogb-manipulation/findings.md (\"Gate F -- arm D\"), tests/fixtures/regression/join/step7/rocket-landing/findings.md",
+        "status": "MEASURED",
+        "why": "the official upstream env keeps its own dynamics; only render() is replaced -- 'the answer for the envs we render but do not simulate' (stable_envs/compat/worldmodel.py module docstring). This is the mechanism every Step-7 family's Gate F PASS was measured through."
+      }
+    },
+    {
+      "backends": [
+        "gfxdraw"
+      ],
+      "device_behavior": {
+        "source": "tests/fixtures/regression/support_matrix.json (supported_devices, Workstream E)",
+        "status": "UNMEASURED",
+        "supported_devices": {}
+      },
+      "pixel_or_symbolic": "pixel",
+      "registered_default": {
+        "per_class": {
+          "Pendulum": {
+            "default_equals_style_from_empty_variation": true,
+            "device": "cpu",
+            "source": "tests/fixtures/regression/join/step8/swm/default_roundtrip_cpu.json (this workstream, CPU, host=Mac.lan)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "registry_resolution": {
+        "classes": [
+          "Pendulum"
+        ],
+        "evidence": "the probe saw class 'PendulumEnv' under swm/PendulumControl-v1, and gymnasium.make() on our reference_id produces the same unwrapped class",
+        "rung": "reference_env_class",
+        "source": "tests/fixtures/regression/support_matrix.json (join_evidence) + tests/fixtures/regression/join/step7/closure2/coverage_matrix.json (join.rung)",
+        "status": "MEASURED"
+      },
+      "stable_envs_cells": [
+        "Pendulum"
+      ],
+      "state_observation_api": {
+        "per_cell": {
+          "Pendulum": {
+            "checks": {
+              "check_default_style_is_official": "pass",
+              "check_state_roundtrip": "pass",
+              "render_parity_with_official_renderer": "pass"
+            },
+            "source": "tests/fixtures/regression/join/step7/closure2/replay/certify/certification.json (config=Pendulum)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "supported_devices": {},
+      "swm_id": "swm/PendulumControl-v1",
+      "swm_wrapper_reset_appearance": {
+        "status": "UNMEASURED",
+        "why": "no committed Step-8 measurement of the SWM WRAPPER's own reset() appearance against the registered default exists for this family beyond #2's mapping round trip"
+      },
+      "variation_map": {
+        "aggregate_counts": {
+          "mapped": 3,
+          "unsupported": 6
+        },
+        "per_class": {
+          "Pendulum": {
+            "counts": {
+              "mapped": 3,
+              "unsupported": 6
+            },
+            "n_leaves": 9,
+            "source": "tests/fixtures/regression/join/step8/swm/variation_classification.json (VariationMap.classification(), class=Pendulum)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "wrapper_interaction_path": {
+        "path": "swap_renderer",
+        "source": "stable_envs/compat/worldmodel.py:swap_renderer; tests/fixtures/regression/join/step7/craftax-full/findings.md, tests/fixtures/regression/join/step7/ogb-manipulation/findings.md (\"Gate F -- arm D\"), tests/fixtures/regression/join/step7/rocket-landing/findings.md",
+        "status": "MEASURED",
+        "why": "the official upstream env keeps its own dynamics; only render() is replaced -- 'the answer for the envs we render but do not simulate' (stable_envs/compat/worldmodel.py module docstring). This is the mechanism every Step-7 family's Gate F PASS was measured through."
+      }
+    },
+    {
+      "backends": [
+        "cpu3d",
+        "mjwarp",
+        "raycast3d"
+      ],
+      "device_behavior": {
+        "source": "tests/fixtures/regression/support_matrix.json (supported_devices, Workstream E)",
+        "status": "UNMEASURED",
+        "supported_devices": {}
+      },
+      "pixel_or_symbolic": "pixel",
+      "registered_default": {
+        "per_class": {
+          "DMCPendulumSwingup": {
+            "default_equals_style_from_empty_variation": true,
+            "device": "cpu",
+            "source": "tests/fixtures/regression/join/step8/swm/default_roundtrip_cpu.json (this workstream, CPU, host=Mac.lan)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "registry_resolution": {
+        "classes": [
+          "DMCPendulumSwingup"
+        ],
+        "evidence": "reference_id ['dm_control/pendulum-swingup'] equals the official env this id was measured to wrap (DM Control task resolved against the suite: match=exact)",
+        "rung": "reference_id",
+        "source": "tests/fixtures/regression/support_matrix.json (join_evidence) + tests/fixtures/regression/join/step7/closure2/coverage_matrix.json (join.rung)",
+        "status": "MEASURED"
+      },
+      "stable_envs_cells": [
+        "DMCPendulumSwingup"
+      ],
+      "state_observation_api": {
+        "per_cell": {
+          "DMCPendulumSwingup": {
+            "checks": {
+              "check_default_style_is_official": "pass",
+              "check_state_roundtrip": "pass",
+              "render_parity_with_official_renderer": "pass"
+            },
+            "source": "tests/fixtures/regression/join/step7/closure2/replay/certify/certification.json (config=DMCPendulumSwingup)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "supported_devices": {},
+      "swm_id": "swm/PendulumDMControl-v0",
+      "swm_wrapper_reset_appearance": {
+        "status": "UNMEASURED",
+        "why": "no committed Step-8 measurement of the SWM WRAPPER's own reset() appearance against the registered default exists for this family beyond #2's mapping round trip"
+      },
+      "variation_map": {
+        "aggregate_counts": {
+          "dead_upstream": 3,
+          "mapped": 2,
+          "unsupported": 4
+        },
+        "per_class": {
+          "DMCPendulumSwingup": {
+            "counts": {
+              "dead_upstream": 3,
+              "mapped": 2,
+              "unsupported": 4
+            },
+            "n_leaves": 9,
+            "source": "tests/fixtures/regression/join/step8/swm/variation_classification.json (VariationMap.classification(), class=DMCPendulumSwingup)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "wrapper_interaction_path": {
+        "path": "swap_renderer",
+        "source": "stable_envs/compat/worldmodel.py:swap_renderer; tests/fixtures/regression/join/step7/craftax-full/findings.md, tests/fixtures/regression/join/step7/ogb-manipulation/findings.md (\"Gate F -- arm D\"), tests/fixtures/regression/join/step7/rocket-landing/findings.md",
+        "status": "MEASURED",
+        "why": "the official upstream env keeps its own dynamics; only render() is replaced -- 'the answer for the envs we render but do not simulate' (stable_envs/compat/worldmodel.py module docstring). This is the mechanism every Step-7 family's Gate F PASS was measured through."
+      }
+    },
+    {
+      "backends": [
+        "navdot"
+      ],
+      "device_behavior": {
+        "source": "tests/fixtures/regression/support_matrix.json (supported_devices, Workstream E)",
+        "status": "UNMEASURED",
+        "supported_devices": {}
+      },
+      "pixel_or_symbolic": "pixel",
+      "registered_default": {
+        "per_class": {
+          "Piecewise": {
+            "default_equals_style_from_empty_variation": true,
+            "device": "cpu",
+            "source": "tests/fixtures/regression/join/step8/swm/default_roundtrip_cpu.json (this workstream, CPU, host=Mac.lan)",
+            "status": "MEASURED"
+          },
+          "PiecewiseZones": {
+            "default_equals_style_from_empty_variation": true,
+            "device": "cpu",
+            "source": "tests/fixtures/regression/join/step8/swm/default_roundtrip_cpu.json (this workstream, CPU, host=Mac.lan)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "registry_resolution": {
+        "classes": [
+          "Piecewise",
+          "PiecewiseZones"
+        ],
+        "evidence": "stable_envs.compat.worldmodel.VARIATION_MAPS declares swm_id='swm/Piecewise-v0' for Piecewise, PiecewiseZones",
+        "rung": "variation_map",
+        "source": "tests/fixtures/regression/support_matrix.json (join_evidence) + tests/fixtures/regression/join/step7/closure2/coverage_matrix.json (join.rung)",
+        "status": "MEASURED"
+      },
+      "stable_envs_cells": [
+        "Piecewise",
+        "PiecewiseZones"
+      ],
+      "state_observation_api": {
+        "per_cell": {
+          "Piecewise": {
+            "checks": {
+              "check_default_style_is_official": "pass",
+              "check_state_roundtrip": "pass",
+              "render_parity_with_official_renderer": "pass"
+            },
+            "source": "tests/fixtures/regression/join/step7/closure2/replay/certify/certification.json (config=Piecewise)",
+            "status": "MEASURED"
+          },
+          "PiecewiseZones": {
+            "checks": {
+              "check_default_style_is_official": "pass",
+              "check_state_roundtrip": "pass",
+              "render_parity_with_official_renderer": "pass"
+            },
+            "source": "tests/fixtures/regression/join/step7/closure2/replay/certify/certification.json (config=PiecewiseZones)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "supported_devices": {},
+      "swm_id": "swm/Piecewise-v0",
+      "swm_wrapper_reset_appearance": {
+        "status": "UNMEASURED",
+        "why": "no committed Step-8 measurement of the SWM WRAPPER's own reset() appearance against the registered default exists for this family beyond #2's mapping round trip"
+      },
+      "variation_map": {
+        "aggregate_counts": {
+          "mapped": 12,
+          "swm_only": 30
+        },
+        "per_class": {
+          "Piecewise": {
+            "counts": {
+              "mapped": 4,
+              "swm_only": 17
+            },
+            "n_leaves": 21,
+            "source": "tests/fixtures/regression/join/step8/swm/variation_classification.json (VariationMap.classification(), class=Piecewise)",
+            "status": "MEASURED"
+          },
+          "PiecewiseZones": {
+            "counts": {
+              "mapped": 8,
+              "swm_only": 13
+            },
+            "n_leaves": 21,
+            "source": "tests/fixtures/regression/join/step8/swm/variation_classification.json (VariationMap.classification(), class=PiecewiseZones)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "wrapper_interaction_path": {
+        "additional_surface": {
+          "classes": [
+            "Piecewise",
+            "PiecewiseZones"
+          ],
+          "path": "StableEnvGym facade + BatchedEnvPool (arms B/C)",
+          "source": "examples/swm_compat/README.md; examples/swm_compat/results/swm_workflow.json",
+          "why": "these classes are stable-envs' OWN simulator (not renderer-only), so they can also run natively inside a swm.World -- measured throughput and info-dict parity, not required for the pixel certification above"
+        },
+        "path": "swap_renderer",
+        "source": "stable_envs/compat/worldmodel.py:swap_renderer; tests/fixtures/regression/join/step7/craftax-full/findings.md, tests/fixtures/regression/join/step7/ogb-manipulation/findings.md (\"Gate F -- arm D\"), tests/fixtures/regression/join/step7/rocket-landing/findings.md",
+        "status": "MEASURED",
+        "why": "the official upstream env keeps its own dynamics; only render() is replaced -- 'the answer for the envs we render but do not simulate' (stable_envs/compat/worldmodel.py module docstring). This is the mechanism every Step-7 family's Gate F PASS was measured through."
+      }
+    },
+    {
+      "backends": [
+        "scene"
+      ],
+      "device_behavior": {
+        "source": "tests/fixtures/regression/support_matrix.json (supported_devices, Workstream E)",
+        "status": "UNMEASURED",
+        "supported_devices": {}
+      },
+      "pixel_or_symbolic": "pixel",
+      "registered_default": {
+        "per_class": {
+          "PushT": {
+            "default_equals_style_from_empty_variation": true,
+            "device": "cpu",
+            "source": "tests/fixtures/regression/join/step8/swm/default_roundtrip_cpu.json (this workstream, CPU, host=Mac.lan)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "registry_resolution": {
+        "classes": [
+          "PushT"
+        ],
+        "evidence": "the probe recorded the same env_name, the same variation leaves and the same frame shape as swm/PushT-v1, so it is the same picture",
+        "rung": "same_scene_as",
+        "source": "tests/fixtures/regression/support_matrix.json (join_evidence) + tests/fixtures/regression/join/step7/closure2/coverage_matrix.json (join.rung)",
+        "status": "MEASURED"
+      },
+      "stable_envs_cells": [
+        "PushT"
+      ],
+      "state_observation_api": {
+        "per_cell": {
+          "PushT": {
+            "checks": {
+              "check_default_style_is_official": "pass",
+              "check_state_roundtrip": "pass",
+              "render_parity_with_official_renderer": "pass"
+            },
+            "source": "tests/fixtures/regression/join/step7/closure2/replay/certify/certification.json (config=PushT)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "supported_devices": {},
+      "swm_id": "swm/PushT-Discrete-v1",
+      "swm_wrapper_reset_appearance": {
+        "status": "UNMEASURED",
+        "why": "no committed Step-8 measurement of the SWM WRAPPER's own reset() appearance against the registered default exists for this family beyond #2's mapping round trip"
+      },
+      "variation_map": {
+        "aggregate_counts": {
+          "mapped": 10,
+          "swm_only": 7
+        },
+        "per_class": {
+          "PushT": {
+            "counts": {
+              "mapped": 10,
+              "swm_only": 7
+            },
+            "n_leaves": 17,
+            "source": "tests/fixtures/regression/join/step8/swm/variation_classification.json (VariationMap.classification(), class=PushT)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "wrapper_interaction_path": {
+        "additional_surface": {
+          "classes": [
+            "PushT"
+          ],
+          "path": "StableEnvGym facade + BatchedEnvPool (arms B/C)",
+          "source": "examples/swm_compat/README.md; examples/swm_compat/results/swm_workflow.json",
+          "why": "these classes are stable-envs' OWN simulator (not renderer-only), so they can also run natively inside a swm.World -- measured throughput and info-dict parity, not required for the pixel certification above"
+        },
+        "path": "swap_renderer",
+        "source": "stable_envs/compat/worldmodel.py:swap_renderer; tests/fixtures/regression/join/step7/craftax-full/findings.md, tests/fixtures/regression/join/step7/ogb-manipulation/findings.md (\"Gate F -- arm D\"), tests/fixtures/regression/join/step7/rocket-landing/findings.md",
+        "status": "MEASURED",
+        "why": "the official upstream env keeps its own dynamics; only render() is replaced -- 'the answer for the envs we render but do not simulate' (stable_envs/compat/worldmodel.py module docstring). This is the mechanism every Step-7 family's Gate F PASS was measured through."
+      }
+    },
+    {
+      "backends": [
+        "scene"
+      ],
+      "device_behavior": {
+        "source": "tests/fixtures/regression/support_matrix.json (supported_devices, Workstream E)",
+        "status": "UNMEASURED",
+        "supported_devices": {}
+      },
+      "pixel_or_symbolic": "pixel",
+      "registered_default": {
+        "per_class": {
+          "PushT": {
+            "default_equals_style_from_empty_variation": true,
+            "device": "cpu",
+            "source": "tests/fixtures/regression/join/step8/swm/default_roundtrip_cpu.json (this workstream, CPU, host=Mac.lan)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "registry_resolution": {
+        "classes": [
+          "PushT"
+        ],
+        "evidence": "stable_envs.compat.worldmodel.VARIATION_MAPS declares swm_id='swm/PushT-v1' for PushT",
+        "rung": "variation_map",
+        "source": "tests/fixtures/regression/support_matrix.json (join_evidence) + tests/fixtures/regression/join/step7/closure2/coverage_matrix.json (join.rung)",
+        "status": "MEASURED"
+      },
+      "stable_envs_cells": [
+        "PushT"
+      ],
+      "state_observation_api": {
+        "per_cell": {
+          "PushT": {
+            "checks": {
+              "check_default_style_is_official": "pass",
+              "check_state_roundtrip": "pass",
+              "render_parity_with_official_renderer": "pass"
+            },
+            "source": "tests/fixtures/regression/join/step7/closure2/replay/certify/certification.json (config=PushT)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "supported_devices": {},
+      "swm_id": "swm/PushT-v1",
+      "swm_wrapper_reset_appearance": {
+        "status": "UNMEASURED",
+        "why": "no committed Step-8 measurement of the SWM WRAPPER's own reset() appearance against the registered default exists for this family beyond #2's mapping round trip"
+      },
+      "variation_map": {
+        "aggregate_counts": {
+          "mapped": 10,
+          "swm_only": 7
+        },
+        "per_class": {
+          "PushT": {
+            "counts": {
+              "mapped": 10,
+              "swm_only": 7
+            },
+            "n_leaves": 17,
+            "source": "tests/fixtures/regression/join/step8/swm/variation_classification.json (VariationMap.classification(), class=PushT)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "wrapper_interaction_path": {
+        "additional_surface": {
+          "classes": [
+            "PushT"
+          ],
+          "path": "StableEnvGym facade + BatchedEnvPool (arms B/C)",
+          "source": "examples/swm_compat/README.md; examples/swm_compat/results/swm_workflow.json",
+          "why": "these classes are stable-envs' OWN simulator (not renderer-only), so they can also run natively inside a swm.World -- measured throughput and info-dict parity, not required for the pixel certification above"
+        },
+        "path": "swap_renderer",
+        "source": "stable_envs/compat/worldmodel.py:swap_renderer; tests/fixtures/regression/join/step7/craftax-full/findings.md, tests/fixtures/regression/join/step7/ogb-manipulation/findings.md (\"Gate F -- arm D\"), tests/fixtures/regression/join/step7/rocket-landing/findings.md",
+        "status": "MEASURED",
+        "why": "the official upstream env keeps its own dynamics; only render() is replaced -- 'the answer for the envs we render but do not simulate' (stable_envs/compat/worldmodel.py module docstring). This is the mechanism every Step-7 family's Gate F PASS was measured through."
+      }
+    },
+    {
+      "backends": [
+        "cpu3d",
+        "mjwarp",
+        "raycast3d"
+      ],
+      "device_behavior": {
+        "source": "tests/fixtures/regression/support_matrix.json (supported_devices, Workstream E)",
+        "status": "MEASURED",
+        "supported_devices": {
+          "cpu": {
+            "status": "PASS",
+            "verdict": "PASS",
+            "why": ""
+          },
+          "cuda": {
+            "status": "PASS",
+            "verdict": "PASS",
+            "why": ""
+          }
+        }
+      },
+      "pixel_or_symbolic": "pixel",
+      "registered_default": {
+        "per_class": {
+          "DMCQuadrupedWalk": {
+            "default_equals_style_from_empty_variation": true,
+            "device": "cpu",
+            "source": "tests/fixtures/regression/join/step8/swm/default_roundtrip_cpu.json (this workstream, CPU, host=Mac.lan)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "registry_resolution": {
+        "classes": [
+          "DMCQuadrupedWalk"
+        ],
+        "evidence": "W4 dmc-quadruped, merged 0a029bd",
+        "rung": "step7_workstream",
+        "source": "tests/fixtures/regression/support_matrix.json (join_evidence) + tests/fixtures/regression/join/step7/closure2/coverage_matrix.json (join.rung)",
+        "status": "MEASURED"
+      },
+      "stable_envs_cells": [
+        "DMCQuadrupedWalk"
+      ],
+      "state_observation_api": {
+        "per_cell": {
+          "DMCQuadrupedWalk": {
+            "checks": {
+              "check_default_style_is_official": "pass",
+              "check_state_roundtrip": "pass",
+              "render_parity_with_official_renderer": "not_applicable"
+            },
+            "device": "cpu",
+            "source": "tests/fixtures/regression/join/step8/certification/gate_a_rejudged.json (Workstream E rejudgment of the Step-7 shard)",
+            "source_sha256": "c4cf7007a103624746c89ffefdbc730a7cce826bc18e3cc195fd56090abba07c",
+            "source_within": "examples/results/step7/closure2/gate_a/cpu_vis311.json",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "supported_devices": {
+        "cpu": {
+          "status": "PASS",
+          "verdict": "PASS",
+          "why": ""
+        },
+        "cuda": {
+          "status": "PASS",
+          "verdict": "PASS",
+          "why": ""
+        }
+      },
+      "swm_id": "swm/QuadrupedDMControl-v0",
+      "swm_wrapper_reset_appearance": {
+        "status": "UNMEASURED",
+        "why": "no committed Step-8 measurement of the SWM WRAPPER's own reset() appearance against the registered default exists for this family beyond #2's mapping round trip"
+      },
+      "variation_map": {
+        "aggregate_counts": {
+          "dead_upstream": 1,
+          "mapped": 2,
+          "unsupported": 7
+        },
+        "per_class": {
+          "DMCQuadrupedWalk": {
+            "counts": {
+              "dead_upstream": 1,
+              "mapped": 2,
+              "unsupported": 7
+            },
+            "n_leaves": 10,
+            "source": "tests/fixtures/regression/join/step8/swm/variation_classification.json (VariationMap.classification(), class=DMCQuadrupedWalk)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "wrapper_interaction_path": {
+        "path": "swap_renderer",
+        "source": "stable_envs/compat/worldmodel.py:swap_renderer; tests/fixtures/regression/join/step7/craftax-full/findings.md, tests/fixtures/regression/join/step7/ogb-manipulation/findings.md (\"Gate F -- arm D\"), tests/fixtures/regression/join/step7/rocket-landing/findings.md",
+        "status": "MEASURED",
+        "why": "the official upstream env keeps its own dynamics; only render() is replaced -- 'the answer for the envs we render but do not simulate' (stable_envs/compat/worldmodel.py module docstring). This is the mechanism every Step-7 family's Gate F PASS was measured through."
+      }
+    },
+    {
+      "backends": [
+        "cpu3d",
+        "mjwarp",
+        "raycast3d"
+      ],
+      "device_behavior": {
+        "source": "tests/fixtures/regression/support_matrix.json (supported_devices, Workstream E)",
+        "status": "UNMEASURED",
+        "supported_devices": {}
+      },
+      "pixel_or_symbolic": "pixel",
+      "registered_default": {
+        "per_class": {
+          "DMCReacherHard": {
+            "default_equals_style_from_empty_variation": true,
+            "device": "cpu",
+            "source": "tests/fixtures/regression/join/step8/swm/default_roundtrip_cpu.json (this workstream, CPU, host=Mac.lan)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "registry_resolution": {
+        "classes": [
+          "DMCReacherHard"
+        ],
+        "evidence": "reference_id ['dm_control/reacher-hard'] equals the official env this id was measured to wrap (DM Control task resolved against the suite: match=exact)",
+        "rung": "reference_id",
+        "source": "tests/fixtures/regression/support_matrix.json (join_evidence) + tests/fixtures/regression/join/step7/closure2/coverage_matrix.json (join.rung)",
+        "status": "MEASURED"
+      },
+      "stable_envs_cells": [
+        "DMCReacherHard"
+      ],
+      "state_observation_api": {
+        "per_cell": {
+          "DMCReacherHard": {
+            "checks": {
+              "check_default_style_is_official": "pass",
+              "check_state_roundtrip": "pass",
+              "render_parity_with_official_renderer": "pass"
+            },
+            "source": "tests/fixtures/regression/join/step7/closure2/replay/certify/certification.json (config=DMCReacherHard)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "supported_devices": {},
+      "swm_id": "swm/ReacherDMControl-v0",
+      "swm_wrapper_reset_appearance": {
+        "status": "UNMEASURED",
+        "why": "no committed Step-8 measurement of the SWM WRAPPER's own reset() appearance against the registered default exists for this family beyond #2's mapping round trip"
+      },
+      "variation_map": {
+        "aggregate_counts": {
+          "dead_upstream": 1,
+          "mapped": 4,
+          "unsupported": 4
+        },
+        "per_class": {
+          "DMCReacherHard": {
+            "counts": {
+              "dead_upstream": 1,
+              "mapped": 4,
+              "unsupported": 4
+            },
+            "n_leaves": 9,
+            "source": "tests/fixtures/regression/join/step8/swm/variation_classification.json (VariationMap.classification(), class=DMCReacherHard)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "wrapper_interaction_path": {
+        "path": "swap_renderer",
+        "source": "stable_envs/compat/worldmodel.py:swap_renderer; tests/fixtures/regression/join/step7/craftax-full/findings.md, tests/fixtures/regression/join/step7/ogb-manipulation/findings.md (\"Gate F -- arm D\"), tests/fixtures/regression/join/step7/rocket-landing/findings.md",
+        "status": "MEASURED",
+        "why": "the official upstream env keeps its own dynamics; only render() is replaced -- 'the answer for the envs we render but do not simulate' (stable_envs/compat/worldmodel.py module docstring). This is the mechanism every Step-7 family's Gate F PASS was measured through."
+      }
+    },
+    {
+      "backends": [
+        "scene"
+      ],
+      "device_behavior": {
+        "source": "tests/fixtures/regression/support_matrix.json (supported_devices, Workstream E)",
+        "status": "UNMEASURED",
+        "supported_devices": {}
+      },
+      "pixel_or_symbolic": "pixel",
+      "registered_default": {
+        "per_class": {
+          "SimplePointMaze": {
+            "default_equals_style_from_empty_variation": true,
+            "device": "cpu",
+            "source": "tests/fixtures/regression/join/step8/swm/default_roundtrip_cpu.json (this workstream, CPU, host=Mac.lan)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "registry_resolution": {
+        "classes": [
+          "SimplePointMaze"
+        ],
+        "evidence": "the stable-envs class docstring names swm/SimplePointMaze-v0",
+        "rung": "declared_docstring",
+        "source": "tests/fixtures/regression/support_matrix.json (join_evidence) + tests/fixtures/regression/join/step7/closure2/coverage_matrix.json (join.rung)",
+        "status": "MEASURED"
+      },
+      "stable_envs_cells": [
+        "SimplePointMaze"
+      ],
+      "state_observation_api": {
+        "per_cell": {
+          "SimplePointMaze": {
+            "checks": {
+              "check_default_style_is_official": "pass",
+              "check_state_roundtrip": "pass",
+              "render_parity_with_official_renderer": "pass"
+            },
+            "source": "tests/fixtures/regression/join/step7/closure2/replay/certify/certification.json (config=SimplePointMaze)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "supported_devices": {},
+      "swm_id": "swm/SimplePointMaze-v0",
+      "swm_wrapper_reset_appearance": {
+        "status": "UNMEASURED",
+        "why": "no committed Step-8 measurement of the SWM WRAPPER's own reset() appearance against the registered default exists for this family beyond #2's mapping round trip"
+      },
+      "variation_map": {
+        "aggregate_counts": {
+          "mapped": 7,
+          "swm_only": 5
+        },
+        "per_class": {
+          "SimplePointMaze": {
+            "counts": {
+              "mapped": 7,
+              "swm_only": 5
+            },
+            "n_leaves": 12,
+            "source": "tests/fixtures/regression/join/step8/swm/variation_classification.json (VariationMap.classification(), class=SimplePointMaze)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "wrapper_interaction_path": {
+        "path": "swap_renderer",
+        "source": "stable_envs/compat/worldmodel.py:swap_renderer; tests/fixtures/regression/join/step7/craftax-full/findings.md, tests/fixtures/regression/join/step7/ogb-manipulation/findings.md (\"Gate F -- arm D\"), tests/fixtures/regression/join/step7/rocket-landing/findings.md",
+        "status": "MEASURED",
+        "why": "the official upstream env keeps its own dynamics; only render() is replaced -- 'the answer for the envs we render but do not simulate' (stable_envs/compat/worldmodel.py module docstring). This is the mechanism every Step-7 family's Gate F PASS was measured through."
+      }
+    },
+    {
+      "backends": [
+        "navdot"
+      ],
+      "device_behavior": {
+        "source": "tests/fixtures/regression/support_matrix.json (supported_devices, Workstream E)",
+        "status": "UNMEASURED",
+        "supported_devices": {}
+      },
+      "pixel_or_symbolic": "pixel",
+      "registered_default": {
+        "per_class": {
+          "TwoRoom": {
+            "default_equals_style_from_empty_variation": true,
+            "device": "cpu",
+            "source": "tests/fixtures/regression/join/step8/swm/default_roundtrip_cpu.json (this workstream, CPU, host=Mac.lan)",
+            "status": "MEASURED"
+          },
+          "TwoRoomTarget": {
+            "default_equals_style_from_empty_variation": true,
+            "device": "cpu",
+            "source": "tests/fixtures/regression/join/step8/swm/default_roundtrip_cpu.json (this workstream, CPU, host=Mac.lan)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "registry_resolution": {
+        "classes": [
+          "TwoRoom",
+          "TwoRoomTarget"
+        ],
+        "evidence": "stable_envs.compat.worldmodel.VARIATION_MAPS declares swm_id='swm/TwoRoom-v1' for TwoRoom, TwoRoomTarget",
+        "rung": "variation_map",
+        "source": "tests/fixtures/regression/support_matrix.json (join_evidence) + tests/fixtures/regression/join/step7/closure2/coverage_matrix.json (join.rung)",
+        "status": "MEASURED"
+      },
+      "stable_envs_cells": [
+        "TwoRoom",
+        "TwoRoomTarget"
+      ],
+      "state_observation_api": {
+        "per_cell": {
+          "TwoRoom": {
+            "checks": {
+              "check_default_style_is_official": "pass",
+              "check_state_roundtrip": "pass",
+              "render_parity_with_official_renderer": "pass"
+            },
+            "source": "tests/fixtures/regression/join/step7/closure2/replay/certify/certification.json (config=TwoRoom)",
+            "status": "MEASURED"
+          },
+          "TwoRoomTarget": {
+            "checks": {
+              "check_default_style_is_official": "pass",
+              "check_state_roundtrip": "pass",
+              "render_parity_with_official_renderer": "pass"
+            },
+            "source": "tests/fixtures/regression/join/step7/closure2/replay/certify/certification.json (config=TwoRoomTarget)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "supported_devices": {},
+      "swm_id": "swm/TwoRoom-v1",
+      "swm_wrapper_reset_appearance": {
+        "status": "UNMEASURED",
+        "why": "no committed Step-8 measurement of the SWM WRAPPER's own reset() appearance against the registered default exists for this family beyond #2's mapping round trip"
+      },
+      "variation_map": {
+        "aggregate_counts": {
+          "mapped": 22,
+          "swm_only": 14
+        },
+        "per_class": {
+          "TwoRoom": {
+            "counts": {
+              "mapped": 10,
+              "swm_only": 8
+            },
+            "n_leaves": 18,
+            "source": "tests/fixtures/regression/join/step8/swm/variation_classification.json (VariationMap.classification(), class=TwoRoom)",
+            "status": "MEASURED"
+          },
+          "TwoRoomTarget": {
+            "counts": {
+              "mapped": 12,
+              "swm_only": 6
+            },
+            "n_leaves": 18,
+            "source": "tests/fixtures/regression/join/step8/swm/variation_classification.json (VariationMap.classification(), class=TwoRoomTarget)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "wrapper_interaction_path": {
+        "additional_surface": {
+          "classes": [
+            "TwoRoom",
+            "TwoRoomTarget"
+          ],
+          "path": "StableEnvGym facade + BatchedEnvPool (arms B/C)",
+          "source": "examples/swm_compat/README.md; examples/swm_compat/results/swm_workflow.json",
+          "why": "these classes are stable-envs' OWN simulator (not renderer-only), so they can also run natively inside a swm.World -- measured throughput and info-dict parity, not required for the pixel certification above"
+        },
+        "path": "swap_renderer",
+        "source": "stable_envs/compat/worldmodel.py:swap_renderer; tests/fixtures/regression/join/step7/craftax-full/findings.md, tests/fixtures/regression/join/step7/ogb-manipulation/findings.md (\"Gate F -- arm D\"), tests/fixtures/regression/join/step7/rocket-landing/findings.md",
+        "status": "MEASURED",
+        "why": "the official upstream env keeps its own dynamics; only render() is replaced -- 'the answer for the envs we render but do not simulate' (stable_envs/compat/worldmodel.py module docstring). This is the mechanism every Step-7 family's Gate F PASS was measured through."
+      }
+    },
+    {
+      "backends": [
+        "cpu3d",
+        "mjwarp",
+        "raycast3d"
+      ],
+      "device_behavior": {
+        "source": "tests/fixtures/regression/support_matrix.json (supported_devices, Workstream E)",
+        "status": "UNMEASURED",
+        "supported_devices": {}
+      },
+      "pixel_or_symbolic": "pixel",
+      "registered_default": {
+        "per_class": {
+          "DMCWalkerWalk": {
+            "default_equals_style_from_empty_variation": true,
+            "device": "cpu",
+            "source": "tests/fixtures/regression/join/step8/swm/default_roundtrip_cpu.json (this workstream, CPU, host=Mac.lan)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "registry_resolution": {
+        "classes": [
+          "DMCWalkerWalk"
+        ],
+        "evidence": "reference_id ['dm_control/walker-walk'] equals the official env this id was measured to wrap (DM Control task resolved against the suite: match=by_class)",
+        "rung": "reference_id",
+        "source": "tests/fixtures/regression/support_matrix.json (join_evidence) + tests/fixtures/regression/join/step7/closure2/coverage_matrix.json (join.rung)",
+        "status": "MEASURED"
+      },
+      "stable_envs_cells": [
+        "DMCWalkerWalk"
+      ],
+      "state_observation_api": {
+        "per_cell": {
+          "DMCWalkerWalk": {
+            "checks": {
+              "check_default_style_is_official": "pass",
+              "check_state_roundtrip": "pass",
+              "render_parity_with_official_renderer": "not_applicable"
+            },
+            "source": "tests/fixtures/regression/join/step7/closure2/replay/certify/certification.json (config=DMCWalkerWalk)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "supported_devices": {},
+      "swm_id": "swm/WalkerDMControl-v0",
+      "swm_wrapper_reset_appearance": {
+        "status": "UNMEASURED",
+        "why": "no committed Step-8 measurement of the SWM WRAPPER's own reset() appearance against the registered default exists for this family beyond #2's mapping round trip"
+      },
+      "variation_map": {
+        "aggregate_counts": {
+          "dead_upstream": 1,
+          "mapped": 2,
+          "unsupported": 8
+        },
+        "per_class": {
+          "DMCWalkerWalk": {
+            "counts": {
+              "dead_upstream": 1,
+              "mapped": 2,
+              "unsupported": 8
+            },
+            "n_leaves": 11,
+            "source": "tests/fixtures/regression/join/step8/swm/variation_classification.json (VariationMap.classification(), class=DMCWalkerWalk)",
+            "status": "MEASURED"
+          }
+        },
+        "status": "MEASURED"
+      },
+      "wrapper_interaction_path": {
+        "path": "swap_renderer",
+        "source": "stable_envs/compat/worldmodel.py:swap_renderer; tests/fixtures/regression/join/step7/craftax-full/findings.md, tests/fixtures/regression/join/step7/ogb-manipulation/findings.md (\"Gate F -- arm D\"), tests/fixtures/regression/join/step7/rocket-landing/findings.md",
+        "status": "MEASURED",
+        "why": "the official upstream env keeps its own dynamics; only render() is replaced -- 'the answer for the envs we render but do not simulate' (stable_envs/compat/worldmodel.py module docstring). This is the mechanism every Step-7 family's Gate F PASS was measured through."
+      }
+    }
+  ],
+  "schema_version": 1,
+  "sources": [
+    "tests/fixtures/regression/support_matrix.json",
+    "tests/fixtures/regression/join/step7/closure2/coverage_matrix.json",
+    "tests/fixtures/regression/join/step7/closure2/replay/certify/certification.json",
+    "tests/fixtures/regression/join/step8/certification/gate_a_rejudged.json",
+    "tests/fixtures/regression/join/step8/swm/default_roundtrip_cpu.json",
+    "tests/fixtures/regression/join/step8/swm/variation_classification.json",
+    "tests/fixtures/regression/join/step8/variations-fetch/gpu_evidence.json"
+  ],
+  "status_vocabulary": [
+    "MEASURED",
+    "UNMEASURED",
+    "NOT_APPLICABLE",
+    "MISMATCH(upstream)"
+  ],
+  "step": 8,
+  "upstream_findings_bundle_ids": [
+    "U1",
+    "U2",
+    "U3",
+    "U4",
+    "U5",
+    "U6",
+    "U7",
+    "U8",
+    "U9"
+  ],
+  "what_this_is": "Generate the Gate-F / SWM-API matrix for all 42 SWM ids (Step 8, Workstream D, plan section 12).\n\n    python scripts/regression/support/build_gate_f.py\n\nwrites ``tests/fixtures/regression/join/step8/swm/gate_f_matrix.json`` and\n``docs/research/step8_swm_integration.md``.\n\nThis is a JOIN over already-committed evidence, in the same spirit as\n``scripts/regression/support/report.py`` (Workstream E's support matrix): it never constructs an env, never\nrenders, and never re-measures anything that is already on disk. Its two cheap exceptions --\n``default_style() == style_from_variation(env, {})`` for the classes constructible on this Mac's\nCPU, and reading ``VariationMap.classification()`` -- are themselves pre-computed, committed\nartifacts (``scratch/step8/swm/probe_default_roundtrip.py`` ->\n``tests/fixtures/regression/join/step8/swm/default_roundtrip_cpu.json``; ``probe_variation_classification.py``\n-> ``variation_classification.json``), so this script itself needs no ``numpy`` / ``stable_envs``\nimport and runs under plain ``python3``.\n\nPer id, every cell in the matrix carries an explicit status from a fixed vocabulary plus an\nevidence path -- never a bare PASS:\n\n    MEASURED               a committed artifact (or a cheap check run here) establishes the claim\n    UNMEASURED              nobody measured it here; not a failure, an absence of evidence\n    NOT_APPLICABLE          the question does not apply to this id (symbolic, no renderer, ...)\n    MISMATCH(upstream)       B/C measured the SWM wrapper's own reset producing a DIFFERENT\n                            appearance than the registered default -- an upstream fact, not ours\n\nRe-run after ``VARIATION_MAPS`` changes (e.g. T3, the in-flight plate-texel capability) by\nre-running the two probes above first, THEN this script -- it always reads whatever is currently\ncommitted under ``tests/fixtures/regression/join/step8/swm/*.json`` rather than caching a copy of its own.\n",
+  "workstream": "D_swm_integration"
+}

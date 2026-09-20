@@ -295,7 +295,7 @@ class UNetTiny(Corrector):
 #: timing table and a checkpoint cannot drift apart: the architecture is stored in the checkpoint by
 #: NAME and rebuilt from this table, so a file can never be loaded into a differently shaped network.
 #: Only the configurations that were measured end to end are here — the frontier study is
-#: ``scratch/altrender/rendernet/README.md``, and a name it swept but did not recommend is not a name
+#: the frozen measurement record, and a name it swept but did not recommend is not a name
 #: this loader accepts.
 ZOO: dict[str, tuple] = {
     #  name                        class     trunk width depth unshuffle render

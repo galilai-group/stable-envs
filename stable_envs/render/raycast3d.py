@@ -502,7 +502,7 @@ def _cast_nearest_torch_unbounded(
 #: rows return to 1.00-1.06x, and the one sub-bar reading -- cartpole at 0.969 -- is at B=1, which the
 #: frozen spec forbids certifying on, inside that row's own 5.8 % off-vs-off noise and an 11.7 % worst
 #: noise floor. The bar is finer than one thread on a shared node can resolve, and that is recorded
-#: rather than smoothed over: see the RAYCAST-5 section of examples/results/step6/raycast3d/findings.md.
+#: rather than smoothed over: see the RAYCAST-5 section of tests/fixtures/regression/join/step6/raycast3d/findings.md.
 PRIMITIVE_BOUNDS: bool = True
 
 #: The bound is valid only for UNIT ray directions, and that is a fact about the INTERSECTORS rather
@@ -596,7 +596,7 @@ _BOUND_SLACK_NOISE = 16.0 * 1.1920929e-7  # (|oc| * sqrt(this))^2, added to r^2
 #: 2/2, finger_spin 7/7, reacher 2/4, acrobot 3/4. The maze families keep 12/13 (antmaze) and 16/19
 #: (humanoidmaze).
 #:
-#: MEASURED by ``scratch/step6/raycast3d/r5_kind_cost.py``, THREE independent runs in one job (6356311,
+#: MEASURED by the frozen measurement record, THREE independent runs in one job (6356311,
 #: node1843, Xeon 8268, 1 thread) over B in {1,16,64} x N in {7056, 50176, 200704}. The bound is timed
 #: at its worst case -- N-1 rays kept, so the gather and the scatter run at essentially full width --
 #: in the ``cast_nearest`` shape, which is the branch that decides this table: it gathers ``best`` and
@@ -622,7 +622,7 @@ _BOUND_SLACK_NOISE = 16.0 * 1.1920929e-7  # (|oc| * sqrt(this))^2, added to r^2
 #: cheapest bounded kind never falls below 1.11, and the line at 1.0 sits inside that 2.4x gap. (The
 #: earlier note claimed a ">2x gap between 0.83 and 1.84" about where a THRESHOLD sat; that framing
 #: is retired along with the threshold.) Numbers in
-#: ``examples/results/step6/raycast3d/experiments/r6_kind_cost.json``, which supersedes the
+#: ``tests/fixtures/regression/join/step6/raycast3d/experiments/r6_kind_cost.json``, which supersedes the
 #: ``r5_kind_cost.json`` of the first attempt;
 #: ``test_the_bounded_kinds_are_the_ones_the_committed_MEASUREMENT_chose`` keeps this set, that file
 #: and the rule behind it from drifting apart.
@@ -836,7 +836,7 @@ def any_blocking_torch(
 #   * ``tl.math.div_rn`` for every division. Plain ``/`` lowers to the non-IEEE ``div.full.f32``.
 #   * ``tl.sqrt_rn`` for every root. ``tl.sqrt`` lowers to ``sqrt.approx.f32``.
 #
-# ``scratch/perf3d/triton_exact.py`` and ``triton_exact2.py`` are those measurements; ``tests/gpu``
+# the frozen measurement record and ``triton_exact2.py`` are those measurements; ``tests/gpu``
 # diffs the kernel against ``cast_nearest_torch`` on the envs themselves.
 
 if HAVE_TRITON:

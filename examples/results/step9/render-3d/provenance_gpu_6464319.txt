@@ -1,8 +1,0 @@
-host gpu1503.oscar.ccv.brown.edu
-job 6464319
-date 2026-09-17T05:26:14-04:00
-head 899e4a6752ad0129f31328033a7fe5fad1fd07bb
-baseline_present yes
-python $SCR/venvs/se-step6/bin/python
-torch 2.14.0+cu126 triton 3.8.0
-NVIDIA RTX A6000, 575.57.08, 49140 MiB

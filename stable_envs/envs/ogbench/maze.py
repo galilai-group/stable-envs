@@ -157,7 +157,7 @@ CELLS = (
 #: free when a bake is a pure function of (scene, style) and it is not free here: measured on a 3090,
 #: ``mujoco.Renderer.render()`` returns two different plates for the same scene -- three bakes of one
 #: key with nothing in between give two distinct images, 1/255 apart on four pixels
-#: (``scratch/step6/raycast3d/bake_probe.py``). So a cache clear could change the frame a config was
+#:. So a cache clear could change the frame a config was
 #: already producing, which is how ``check_style_is_state`` came to observe 1 on
 #: ``AntmazeTeleportExplore`` and ``HumanoidmazeMediumNavigate`` in Step 4 and 0 on nine cells that
 #: carry the identical defect: the difference between them was where the 256th insert landed.
@@ -285,7 +285,7 @@ def _scene_env(loco: str, maze: str, size: int):
 #: qpos came back 44/255 apart, which reads exactly like "the state does not determine the frame" and is
 #: the one conclusion this repo must never reach by accident. The tell was that the first two env names
 #: passed and every one after them failed -- i.e. failures began the moment the pool started evicting.
-#: Driven directly, two fresh instances are bit-identical (``scratch/ogbench/two_instances.py``).
+#: Driven directly, two fresh instances are bit-identical.
 
 
 class OGBenchMaze(Env):
@@ -551,7 +551,7 @@ class OGBenchMaze(Env):
         # Without this reset the plate is a function of whichever environment happened to be
         # rendered last: hiding the agent sets its alpha to 0, which removes its colour but not its
         # presence from MuJoCo's rasterizer, and a pose change was measured to move 2-10 pixels by
-        # 1/255 on the ant and humanoid mazes (examples/results/step6/raycast3d/
+        # 1/255 on the ant and humanoid mazes (tests/fixtures/regression/join/step6/raycast3d/
         # style_is_state_bisect.json). The plate is then MEMOISED, so the impurity stays invisible
         # until ``_SCENE_CACHE`` evicts the key and the same appearance is
         # baked a second time from a different leftover pose -- which is how it reached Step 4 as

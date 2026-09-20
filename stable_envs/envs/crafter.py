@@ -7,8 +7,7 @@ material texture with at most one object alpha-blended over it, then a daylight 
 one of those steps is a lookup into a fixed set of 56 16x16 PNGs plus per-pixel arithmetic, which is
 why the family belongs here.
 
-**The state Crafter hands you is bigger than the frame, and the render window is not.** Measured
-(``scratch/crafter/probe.py``): the world's two arrays alone — ``_mat_map`` (64x64 uint8) and
+**The state Crafter hands you is bigger than the frame, and the render window is not.** Measured: the world's two arrays alone — ``_mat_map`` (64x64 uint8) and
 ``_obj_map`` (64x64 uint32) — are 20,480 bytes against a 12,288-byte frame, **1.67x worse**, before
 counting the object list, the player's counters or the RNG. That is the same shape of result the
 Craftax note records for a JAX reimplementation of this game (6.37x), and it has the same cause and
@@ -20,15 +19,15 @@ field the alphabet needs (**153.6x**).
 Parity against the official renderer, measured twice and in both directions:
 
   * **599 of 599 frames bit-identical** along a live 690-step uniform-random rollout, at every daylight
-    level in [0.5, 1] and including 84 frames with the player asleep (``scratch/crafter/probe.py``);
+    level in [0.5, 1] and including 84 frames with the player asleep;
   * **512 of 512 frames bit-identical** over the whole embedded state pool this env samples from,
     driven through ``reference_render`` — i.e. the world rebuilt from the state and drawn by
-    ``crafter.Env.render`` — including 223 windows that leave the world (``scratch/crafter/parity.py``:
+    ``crafter.Env.render`` — including 223 windows that leave the world (the frozen measurement record:
     ``exact_frac 1.0, mean |diff| 0.000, max |diff| 0``).
 
 The atlas is exact by construction rather than by fitting — every tile is composed with crafter's own
 ``_draw`` / ``_draw_alpha`` / ``ItemView``, checked at every tile size from 3 to 40 px
-(``scratch/crafter/gen_assets.py``: max abs diff 0) — so ``parity_interior_min`` stays at 1.0 with
+(the frozen measurement record: max abs diff 0) — so ``parity_interior_min`` stays at 1.0 with
 nothing relaxed.
 
 Throughput on one H200: **701,594 frames/s at batch 16,384** (8.6 GB/s of frame output; 244,566 f/s at

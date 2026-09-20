@@ -3,7 +3,7 @@
 Everything here is a way of asking one question: can a corrector end up applied to something it was
 not fitted on, or described by numbers that were not measured on it? Both failures are silent — a
 mismatched corrector produces a confident, plausible, wrong picture, and it does not lower the pixel
-mean enough to notice (§4 of ``scratch/altrender/rendernet/README.md``: on the wrong camera it is 2.6x
+mean enough to notice (on the wrong camera it is 2.6x
 worse than a plain resize, and on a different kitchen the MEAN ties while SSIM and within-8 fall).
 
 So these are the tests that must not need a GPU, a cache directory or a trained network to run, and

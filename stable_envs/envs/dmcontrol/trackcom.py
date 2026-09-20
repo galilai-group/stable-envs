@@ -134,7 +134,7 @@ class DMControlTrackCom(_DMCModel):
     --------------------
 
     Two named mechanisms, measured per surface off MuJoCo's own segmentation buffer (84 px, 32 states
-    per domain, ``scratch/dmcontrol/probe_trackcom.py``):
+    per domain, the frozen measurement record):
 
       * **the speckled gradient skybox**, which is 48-89% of the frame on cheetah, hopper and walker.
         DM Control's ``skybox`` is an 800x4800 ``builtin="gradient"`` texture with ``mark="random"``,

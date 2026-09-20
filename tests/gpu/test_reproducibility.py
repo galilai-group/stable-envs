@@ -466,7 +466,7 @@ DOWNSAMPLE_MARGIN = 0.005
 #:                                 for the record, not asserted: 0.850842 (cpu and cuda, closure2).
 #:
 #: Both numbers live with their provenance in
-#: ``examples/results/step8/certification/downsample_provenance.json``.
+#: ``tests/fixtures/regression/join/step8/certification/downsample_provenance.json``.
 DOWNSAMPLE_EXACT_FRAC: dict[str, float] = {
     "AntmazeGiantNavigate": 0.708287,  # mean 1.1419/255
     "AntmazeGiantStitch": 0.708287,  # mean 1.1419/255
@@ -495,8 +495,8 @@ DOWNSAMPLE_EXACT_FRAC: dict[str, float] = {
     #: either (world rows 0.1634 for both, the same number), so the class declares
     #: ``resolution_consistency_applicability`` and this test judges the applicable band. On the
     #: protocol's own 8-state draw that is 6 states and they measure exactly 1.000000.
-    #: Oracle: examples/results/step7/craftax-classic-full/oracle/resolution_oracle_S16.json.
-    #: Ruling: Sami 2026-09-15 (examples/results/step7/dashboard.yaml, decisions).
+    #: Oracle: tests/fixtures/regression/join/step7/craftax-classic-full/oracle/resolution_oracle_S16.json.
+    #: Ruling: Sami 2026-09-15 (tests/fixtures/regression/join/step7/dashboard.yaml, decisions).
     "CraftaxClassic": 1.000000,  # mean 0.0000/255 on light >= 0.5; see applicability
     "DMCCartpoleSwingup": 0.282065,  # mean 1.4428/255  see DM Control note below
     "DMCPointMassEasy": 0.730424,  # mean 0.2418/255
@@ -515,7 +515,7 @@ DOWNSAMPLE_EXACT_FRAC: dict[str, float] = {
     #: minimum over the four committed Step-7 runs -- cpu 0.8118772 (closure2) and 0.8118797
     #: (closure), cuda 0.8120117 and 0.8120217, at mujoco 3.11.0 and 3.12.0 -- so the floor holds on
     #: every device and reference pair measured, and the whole spread is 2.5e-05 wide inside a
-    #: 0.005 margin. Artifacts: examples/results/step7/closure2/gate_a/{cpu,cuda}_vis311.json.
+    #: 0.005 margin. Artifacts: tests/fixtures/regression/join/step7/closure2/gate_a/{cpu,cuda}_vis311.json.
     "DMCQuadrupedWalk": 0.811877,  # mean 0.6329/255
     "DMCHopperHop": 0.550220,  # mean 2.9202/255
     "DMCHumanoidStand": 0.603650,  # mean 2.4394/255
@@ -639,7 +639,7 @@ DOWNSAMPLE_EXACT_FRAC: dict[str, float] = {
     #: 0.4.0, MUJOCO_GL unused: exact 0.9561372, mean 0.9923/255, max 255 -- the same number in the
     #: closure and closure2 sweeps. 0.956137 is 0.95614 to five decimals, which is the value the
     #: Step-7 carry-over recorded. There is no cpu row: PFRocketLanding raises on device="cpu" by
-    #: design. Artifact: examples/results/step7/closure2/gate_a/cuda_rocket.json.
+    #: design. Artifact: tests/fixtures/regression/join/step7/closure2/gate_a/cuda_rocket.json.
     "PFRocketLanding": 0.956137,  # mean 0.9923/255
     "PointMazeLarge": 0.913387,  # mean 0.2794/255  (measured on PointMazeMedium)
     "PointMazeMedium": 0.913387,  # mean 0.2794/255
@@ -672,7 +672,7 @@ DOWNSAMPLE_EXACT_FRAC: dict[str, float] = {
     #: RoboCasa. These four were failing this test with "has no measured downsample bound recorded",
     #: and the failure was invisible in the main run because the suite's interpreter cannot import
     #: robocasa (it pins mujoco 3.3.1 against mujoco_warp's >= 3.11), so the whole family was skipped.
-    #: Measured in ``~/venvs/se-robocasa`` with ``scratch/perf/downsample.py``, three repeats each,
+    #: Measured in ``~/venvs/se-robocasa``, three repeats each,
     #: identical to six decimals every time. They sit with the locomotion domains and for the same
     #: reason: a kitchen is 73 textures on 344 visible geoms, and doubling the resolution changes what
     #: each pixel of a photographic wood or granite surface filters over. The wrist camera is the

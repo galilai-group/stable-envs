@@ -1,2 +1,0 @@
-scratch/mwfast/train.py MetaWorldDoorLock --net unet_112t128_w48_d2_u2 --tag r112_sty --epochs 400 --out sty_MetaWorldDoorLock_unet_112t128_w48_d2_u2_r112_sty
-scratch/mwfast/train.py MetaWorldAssembly --net unet_112t128_w48_d2_u2 --tag r112_sty --epochs 400 --out sty_MetaWorldAssembly_unet_112t128_w48_d2_u2_r112_sty

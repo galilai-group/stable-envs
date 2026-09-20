@@ -5,7 +5,7 @@ CPU only, no GL for rendering (the trackcom cells never touch ``mujoco.Renderer`
 ``configure_mujoco_gl`` picks that before ``mujoco`` or ``dm_control`` is imported. Do not default
 to GLFW on macOS: ``from dm_control import mujoco`` hangs inside ``dm_control._render``).
 The oracle for the picture is a committed slice of OUR MJWarp frames at the first four frozen Step-4
-states of each cell (``examples/results/step6/cpu-3d/replay/mjwarp_frames_first4.npz``, from the
+states of each cell (``tests/fixtures/regression/join/step6/cpu-3d/replay/mjwarp_frames_first4.npz``, from the
 texture-fidelity workstream's stacks rendered in ``se-step5`` on an RTX 3090); the claim tested is
 the one the design makes -- the same picture to within a level -- not bit-identity, which a different
 renderer cannot promise and MJWarp does not keep against itself.
@@ -24,7 +24,7 @@ from stable_envs._mujoco_gl import configure_mujoco_gl
 configure_mujoco_gl()
 
 ROOT = Path(__file__).resolve().parents[2]
-FIXTURE = ROOT / "examples/results/step6/cpu-3d/replay/mjwarp_frames_first4.npz"
+FIXTURE = ROOT / "tests/fixtures/regression/join/step6/cpu-3d/replay/mjwarp_frames_first4.npz"
 CELLS = ("DMCCheetahRun", "DMCHopperHop", "DMCWalkerWalk", "DMCHumanoidStand")
 
 pytest.importorskip("dm_control")
@@ -41,7 +41,7 @@ def se():
 
 
 def _states(cell: str, n: int) -> np.ndarray:
-    return np.load(ROOT / f"examples/results/step4/states/{cell}.npz")["states"][:n]
+    return np.load(ROOT / f"tests/fixtures/regression/join/step4/states/{cell}.npz")["states"][:n]
 
 
 def test_cpu3d_imports_no_gpu_runtime():
@@ -200,7 +200,7 @@ def test_matches_mjwarp_to_within_a_level(se, cell):
     within1 = float((d <= 1).mean())
     mean = float(d.mean())
     # the design's claim: the same picture to within a level; measured on the full 64-state corpus at
-    # exact 0.982-0.997, within-1 >= 0.9994, mean 0.004-0.018 (examples/results/step6/cpu-3d/m1_local)
+    # exact 0.982-0.997, within-1 >= 0.9994, mean 0.004-0.018 (tests/fixtures/regression/join/step6/cpu-3d/m1_local)
     assert within1 >= 0.998, (cell, within1, mean)
     assert mean <= 0.06, (cell, within1, mean)
     assert float((d == 0).mean()) >= 0.95, (cell, float((d == 0).mean()))

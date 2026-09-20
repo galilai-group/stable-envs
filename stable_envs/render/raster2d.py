@@ -292,8 +292,8 @@ _GROUP_MIN_SPREAD = 4.0
 #:
 #: One group is ~20 torch ops on small tensors. Timed directly on a scene built so the grouped pixel
 #: work is fixed and only the group count varies (B discs in B distinct cells at 64 px, one group per
-#: row) by ``scratch/step6/raster2d/window_experiment.py --mode pergroup``, whose committed output is
-#: ``examples/results/step6/raster2d/experiments/window_pergroup.txt``:
+#: row) by the frozen measurement record, whose committed output is
+#: ``tests/fixtures/regression/join/step6/raster2d/experiments/window_pergroup.txt``:
 #:
 #:     B                  8      32     128     512
 #:     us per group    72.0    57.1    56.3    60.1      -- flat, as dispatch should be
@@ -407,7 +407,7 @@ def render_torch(scene: Scene2D, out_size: int | tuple[int, int], supersample: i
       * every family is evaluated only inside the pixel window of its own world-space bound.
 
     All four are bounds and masks that were already being computed and thrown away, so the picture
-    is bit-identical; ``scratch/step6/raster2d/cpu_digest.py`` and the frozen Step 4 replay hold
+    is bit-identical; the frozen measurement record and the frozen Step 4 replay hold
     that rather than leaving it as an argument. Measured on Oscar's batch partition at one thread,
     the whole-frame version cost 324 ms for one 500 px SimplePointMaze frame, of which 13 of the 13
     primitives paid for a capsule test the scene contains none of.

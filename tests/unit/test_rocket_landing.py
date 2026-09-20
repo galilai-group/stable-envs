@@ -1,5 +1,5 @@
 """``stable_envs.envs.rocket_landing`` on the CPU: the state contract, the colour law, the tessellation,
-the camera and the lag, against the measurements in ``examples/results/step7/rocket-landing/``.
+the camera and the lag, against the measurements in ``tests/fixtures/regression/join/step7/rocket-landing/``.
 
 Nothing here renders (nvdiffrast is CUDA-only); the render path is asserted on the certification card
 by the conformance suite. What can be checked without a GPU is everything between a state and a
@@ -18,7 +18,7 @@ pytest.importorskip("scipy")
 from stable_envs.envs import rocket_landing as RL  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[2]
-REF = ROOT / "examples" / "results" / "step7" / "rocket-landing" / "reference"
+REF = ROOT / "tests" / "fixtures" / "regression" / "join" / "step7" / "rocket-landing" / "reference"
 
 
 def _corpus():
@@ -134,7 +134,17 @@ def test_camera_is_pyflyts_rocket_camera():
     fwd = -m[:, 2]
     assert np.allclose(fwd, (pos[0] - eye[0]) / np.linalg.norm(pos[0] - eye[0]))  # tracking the link
     assert np.linalg.det(m) > 0
-    val = ROOT / "examples" / "results" / "step7" / "rocket-landing" / "phase0" / "env_math_validation.json"
+    val = (
+        ROOT
+        / "tests"
+        / "fixtures"
+        / "regression"
+        / "join"
+        / "step7"
+        / "rocket-landing"
+        / "phase0"
+        / "env_math_validation.json"
+    )
     if val.exists():
         v = json.load(open(val))
         # PyBullet's computeViewMatrix runs in float32 at translations of hundreds of metres, so the

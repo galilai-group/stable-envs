@@ -1,4 +1,0 @@
-host gpu1503.oscar.ccv.brown.edu
-job 6464601
-head 900065a0a5ab9e8b010c7e8ccb94ff7d90adb76e
-NVIDIA RTX A6000, 575.57.08

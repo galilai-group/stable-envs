@@ -4,10 +4,10 @@ THESE ARE NOT THE OFFICIAL PIXELS. The official frame is PyBullet's TinyRenderer
 PyFlyt's rocket-mounted camera; this cell draws the same scene -- the same 13 primitives, the same
 camera, the same one-light fixed-function law, the same checker ground -- through a different
 rasterizer, and declares what that costs in ``visual_fidelity``. Step 7 workstream W6; the gate that
-admitted it is ``examples/results/step7/rocket-landing/findings.md`` and every number below is from
+admitted it is ``tests/fixtures/regression/join/step7/rocket-landing/findings.md`` and every number below is from
 the probes it cites.
 
-What the scene is (``scratch/step7/rocket-landing/phase0_probe.py``, census of ``getVisualShapeData``
+What the scene is (the frozen measurement record, census of ``getVisualShapeData``
 over six resets: geometry identical, only ``rgba`` changes):
 
 * the rocket: a body cylinder (l 4.77, r 0.185), a fuel-tank cylinder (l 1, r 0.1; PyBullet
@@ -52,12 +52,11 @@ substep, sets velocities and runs one raw ``stepSimulation`` with gravity off, i
 velocity until the post-step velocity equals the recorded one (Bullet's substep is semi-implicit and a
 spinning composite multibody changes its own velocity by gyroscopic terms). Validated against the
 corpus: 199/200 frames byte-identical, the last off by 1 px, base landing error 7e-13 m
-(``examples/results/step7/rocket-landing/reference/reference_trick_validation.json``).
+(``tests/fixtures/regression/join/step7/rocket-landing/reference/reference_trick_validation.json``).
 
 CPU: ``device="cpu"`` raises. No CPU-native backend in this repo rasterises an arbitrary textured
 triangle soup, and the policy is that a CPU request is never served by CUDA; the feasibility of a CPU
-triangle rasteriser for this ~600-triangle scene is a measured, separate question
-(``scratch/step7/rocket-landing/cpu_raster_probe.py``).
+triangle rasteriser for this ~600-triangle scene is a measured, separate question.
 """
 
 from __future__ import annotations
@@ -551,11 +550,11 @@ def _reference_apply_style(p, c, rid, pad, style_row: np.ndarray) -> None:
 #: measured and is not this repo's arithmetic -- ``nvdiff.mvp_rows`` is bit-identical at every width on
 #: every machine measured, and so are the normals and world positions; the residual is
 #: ``torch.sparse.mm``'s freedom to reorder a four-term sum for a narrow batch
-#: (``examples/results/step7/rocket-landing/closure1/probe_clip_cpu_batch_x86_threads1.json``, with
-#: ``_threads2`` and ``_threads4``, and ``examples/results/step7/closure/nvdiff_cpu_batch/``).
+#: (``tests/fixtures/regression/join/step7/rocket-landing/closure1/probe_clip_cpu_batch_x86_threads1.json``, with
+#: ``_threads2`` and ``_threads4``, and ``tests/fixtures/regression/join/step7/closure/nvdiff_cpu_batch/``).
 #:
 #: The fix is written, measured and NOT applied in Step 7:
-#: ``scratch/step7/rocket-landing/closure1_explicit_pos_rows.patch`` writes the sum out and removes the
+#: the frozen measurement record writes the sum out and removes the
 #: kernel's freedom, but on cuda it moves four of the six re-frozen locomotion cells by 2.7e-07 of
 #: mean_abs and 1e-09 of SSIM (``closure1/digest_vs_refreeze.json``), and a re-freeze requires a
 #: certification failure with a causal reason rather than an implementation that merely differs. It is
@@ -566,7 +565,7 @@ DOCUMENTED_LIMITATIONS = (
     "bitwise at every width on arm64; on x86-64 the clip positions move by one ulp at widths 1-6 and "
     "the normals at widths 4 and 8 (CLOSURE-1). Cuda, the certified device, is bitwise invariant at "
     "every width. No frame this cell produces is affected: device='cpu' raises. See findings.md "
-    "section M7 and examples/results/step7/rocket-landing/closure1/."
+    "section M7 and tests/fixtures/regression/join/step7/rocket-landing/closure1/."
 )
 
 
@@ -576,7 +575,7 @@ DOCUMENTED_LIMITATIONS = (
 #: ground contact into the recipe's one substep, which Bullet resolves with a split-impulse position
 #: correction the velocity fixed point cannot absorb. Measured share of such states in the cell's own
 #: ``sample_states`` distribution: REFERENCE_UNREACHABLE_SHARE (1 of 960 over 15 seeds x 64 states,
-#: ``examples/results/step7/rocket-landing/tier/reference_rejections_local.json``; the rejected state:
+#: ``tests/fixtures/regression/join/step7/rocket-landing/tier/reference_rejections_local.json``; the rejected state:
 #: height 2.07 m, tilt 3.4 deg). The sampled distribution is NOT narrowed for it.
 PAD_TOP_Z = float(PAD_POS[2] + PAD_LEN / 2.0)
 CONTACT_BAND_MARGIN = 0.05
@@ -690,12 +689,12 @@ class PFRocketLanding(Env):
     parity_interior_min = None
     parity_note = ""
     #: MEASURED on an RTX 3090, worst of four independent 64-state draws, and copied here BY HAND from
-    #: ``examples/results/step7/rocket-landing/tier/job6410105/gpu2106.json``: a threshold a script
+    #: ``tests/fixtures/regression/join/step7/rocket-landing/tier/job6410105/gpu2106.json``: a threshold a script
     #: writes into the file it then tests is not a threshold.
     #:
     #: The three headline numbers are the worst draw's. The three thresholds are the DMC family's
     #: margin convention applied to that worst draw -- ceiling ~1.3x, floors ~0.93-0.95x, rounded to
-    #: round numbers -- and not values chosen to clear it; ``scratch/step7/rocket-landing/fill_declaration.py``
+    #: round numbers -- and not values chosen to clear it; the frozen measurement record
     #: computes them from the JSON and prints exactly 10.0 / 0.91 / 0.80
     #: (``tier/job6410105/declaration_block.json``). The same numbers came out of two jobs on two
     #: different 3090s (6408817/gpu2109 and 6410105/gpu2106) to every digit printed here.
@@ -736,8 +735,7 @@ class PFRocketLanding(Env):
             "against PyFlyt 0.29.0 / pybullet 3.2.7 TinyRenderer frames of swm/PFRocketLanding-v0 "
             "at the lagged pose; NVIDIA GeForce RTX 3090 gpu2106, SLURM job 6410105, tree 726241e, "
             "torch 2.14.0+cu126, nvdiffrast 0.4.0 "
-            "(scratch/step7/rocket-landing/measure_tier.py, "
-            "examples/results/step7/rocket-landing/tier/job6410105/)"
+            "(tests/fixtures/regression/join/step7/rocket-landing/tier/job6410105/)"
         ),
         "reference_versions": {"PyFlyt": "0.29.0", "pybullet": "3.2.7"},
         "measured_with": {"nvdiffrast": "0.4.0", "torch": "2.14.0+cu126"},
@@ -745,7 +743,7 @@ class PFRocketLanding(Env):
     #: The ONE cell in the repo where ``check_colors_apply_exactly``'s literal-RGB bound is declared
     #: inapplicable, and the declaration is narrow on purpose: these five leaves, named one by one,
     #: and nothing else. Sami's ruling of 2026-09-16, on the packet at
-    #: ``examples/results/step8/certification/colour_check_decision.md``.
+    #: ``tests/fixtures/regression/join/step8/certification/colour_check_decision.md``.
     #:
     #: The mechanism is the reference's own shading law, not ours. bullet3's TinyRenderer computes
     #: ``out_i = int(255 * c_i * (A + D*max(0, n.l) + S*max(0, r_z)**spec) * L_i)``, truncated, with
@@ -778,13 +776,13 @@ class PFRocketLanding(Env):
         "body pixel is 0.991*int(255*c); the requested triple is absent "
         "from the OFFICIAL frames too",
         "evidence": (
-            "examples/results/step8/certification/colour_law_ceiling.json",
-            "examples/results/step8/certification/colour_check_decision.md",
-            "examples/results/step7/rocket-landing/findings.md:251-257,1209-1220",
-            "examples/results/step7/rocket-landing/review_phase1.md:885-894",
+            "tests/fixtures/regression/join/step8/certification/colour_law_ceiling.json",
+            "tests/fixtures/regression/join/step8/certification/colour_check_decision.md",
+            "tests/fixtures/regression/join/step7/rocket-landing/findings.md:251-257,1209-1220",
+            "tests/fixtures/regression/join/step7/rocket-landing/review_phase1.md:885-894",
         ),
         "measured_against": "PyFlyt 0.29.0, pybullet 3.2.7 (bullet3 TinyRenderer.cpp Shader::fragment)",
-        "ruled_by": "Sami, 2026-09-16, on examples/results/step8/certification/colour_check_decision.md",
+        "ruled_by": "Sami, 2026-09-16, on tests/fixtures/regression/join/step8/certification/colour_check_decision.md",
         "scope_note": "scoped to these five lit leaves only; any other RGB leaf on this env stays "
         "judged against literal equality",
         "successor": "PROPOSAL only, not implemented and not mandatory: compare this renderer's "
@@ -840,7 +838,7 @@ class PFRocketLanding(Env):
             raise NotImplementedError(
                 "PFRocketLanding has no CPU backend: it needs a CPU textured-triangle rasteriser, which this "
                 "repo does not have (cpu3d/raycast3d cast MuJoCo primitives). A CPU request is never served "
-                "by CUDA; see scratch/step7/rocket-landing/cpu_raster_probe.py for the measured feasibility."
+                "by CUDA."
             )
         super().__init__(
             num_envs=num_envs,

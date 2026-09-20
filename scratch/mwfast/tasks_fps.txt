@@ -1,7 +1,0 @@
-MetaWorldDoorLock
-MetaWorldSoccer
-MetaWorldAssembly
-MetaWorldSweepInto
-MetaWorldPlateSlide
-MetaWorldButtonPress
-MetaWorldHammer

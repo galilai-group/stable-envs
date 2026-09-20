@@ -1,6 +1,6 @@
 #!/bin/bash
 # stable-envs UNIT subset: no GPU work, no reference env, no checkpoint. Seconds, not minutes.
-#   sbatch scripts/run_unit_tests.sbatch                    # unit + CPU certification + safety net
+#   sbatch scripts/run_unit_tests.sbatch                    # unit + CPU regression + safety net
 #   sbatch scripts/run_unit_tests.sbatch -k style           # extra args go straight to pytest
 #
 # Everything here runs on CPU and is the loop to use while editing a contract rather than a kernel:
@@ -37,7 +37,7 @@ mkdir -p "$RUN"
 
 "$PY" -u -m stable_envs.testing.supervisor \
     --rundir "$RUN" --json "$RUN/result.json" \
-    -- tests/unit tests/certification tests/integration/test_safety_net.py -v -rs --durations=15 "$@"
+    -- tests/unit tests/regression tests/integration/test_safety_net.py -v -rs --durations=15 "$@"
 rc=$?
 echo "se-unit job=${SLURM_JOB_ID:-manual} node=$(hostname) rc=$rc artifacts=$RUN"
 exit $rc

@@ -4,7 +4,7 @@
 ``for obj in self.particles: obj.ttl -= 0.15`` and then ``self._clean_particles(False)``, so rendering
 twice gives two different images and the frame is not a function of the observation. That is an
 argument for WIDENING the state, not for excluding the env, and the three questions that decide which
-have now been asked (``scratch/lunarlander/probe_state.py``):
+have now been asked:
 
   **A. Is the mutation deterministic?** Yes. Restoring the env to a recorded state and rendering it
   twice gives **max absolute pixel difference 0**; rendering twice WITHOUT restoring gives 63/255,

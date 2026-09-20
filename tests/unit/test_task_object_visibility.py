@@ -8,12 +8,12 @@ task-relevant object can then appear or disappear and the metric does not move.
 Measured, on real renderers, before this file existed: Step 5's reacher probe compared the same 32
 states under two target placements that differ by an entire red disc — mean |d| 0.459 against 0.171 —
 and both reported ``interior_exact_frac = 0.9998668941566535`` and ``interior_px = 82641``, identical
-to the last digit (``examples/results/step5/reacher/parity_probe.json``). At the shipped 84 px the
+to the last digit (``tests/fixtures/regression/join/step5/reacher/parity_probe.json``). At the shipped 84 px the
 same scene reports ``interior_frac = 0.000000``, so the assertion does not even apply.
 
 ``check_task_object_visibility`` is the complement. This file proves it FIRES, which is the only thing
 a guard has to prove and the thing no passing run can show. The instrument is synthetic on purpose,
-for the reason ``tests/certification/test_declarations.py`` gives: a rule is proved by something that breaks
+for the reason ``tests/regression/test_declarations.py`` gives: a rule is proved by something that breaks
 it, and no env in this repository does. A fake env draws a disc over a checkerboard, a fake official
 renderer decides independently whether IT draws one, and the four combinations are put through both
 metrics side by side — so the test also records, as an assertion rather than as a claim, that the

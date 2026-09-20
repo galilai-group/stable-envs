@@ -12,7 +12,7 @@ trustworthy, each of which was violated by the first pass and fixed in the secon
 Plus one that was never violated and is easy to violate later: a parameterised id whose default
 matches must not be promoted to full configuration coverage.
 
-The generator is a script in ``scratch/``, so it is loaded by path rather than imported as a package.
+The generator is a script in ``scripts/regression/``, so it is loaded by path rather than imported as a package.
 """
 
 from __future__ import annotations
@@ -24,7 +24,7 @@ from pathlib import Path
 import pytest
 
 REPO = Path(__file__).resolve().parents[2]
-MATRIX_PY = REPO / "scratch" / "swm_matrix.py"
+MATRIX_PY = REPO / "scripts" / "regression" / "swm_matrix.py"
 
 
 @pytest.fixture(scope="module")
@@ -503,18 +503,18 @@ def test_generation_is_byte_identical_on_repeat(mx, tmp_path):
     Runs against the committed inputs, with the live probe off so the test does not need CUDA, swm,
     or any optional dependency.
     """
-    registries = sorted((REPO / "scratch").glob("swm_registry*.json"))
-    censuses = sorted((REPO / "scratch" / "census").glob("census_*.json"))
+    registries = sorted((REPO / "tests" / "fixtures" / "regression" / "census").glob("swm_registry*.json"))
+    censuses = sorted((REPO / "tests" / "fixtures" / "regression" / "census").glob("census_*.json"))
     if not registries or not censuses:
         pytest.skip("committed matrix inputs are absent")
 
     class Args:
         swm_registry = [str(q) for q in registries]
         se_census = [str(q) for q in censuses]
-        union = str(REPO / "scratch/census/union.json")
-        decode_all = str(REPO / "examples/results/decode/ALL.json")
-        bench = str(REPO / "examples/results/bench_gpu_vs_cpu.json")
-        dino = str(REPO / "examples/results/dino/dino_agreement.json")
+        union = str(REPO / "tests/fixtures/regression/census/union.json")
+        decode_all = str(REPO / "tests/fixtures/regression/references/decode_all.json")
+        bench = str(REPO / "tests/fixtures/regression/references/bench_gpu_vs_cpu.json")
+        dino = str(REPO / "tests/fixtures/regression/references/dino_agreement.json")
         lewm = str(REPO / "examples/lewm_pusht/results")
         swm_workflow = str(REPO / "examples/swm_compat/results/swm_workflow.json")
         live = False
@@ -528,8 +528,8 @@ def test_generation_is_byte_identical_on_repeat(mx, tmp_path):
 
 def test_every_live_swm_id_appears_exactly_once(mx):
     """The join must not drop or duplicate a registered id, whatever the evidence says about it."""
-    matrix_json = REPO / "scratch" / "swm_matrix.json"
-    registries = sorted((REPO / "scratch").glob("swm_registry*.json"))
+    matrix_json = REPO / "tests" / "fixtures" / "regression" / "fidelity" / "swm_matrix.json"
+    registries = sorted((REPO / "tests" / "fixtures" / "regression" / "census").glob("swm_registry*.json"))
     if not matrix_json.exists() or not registries:
         pytest.skip("committed matrix outputs are absent")
     live_ids = json.loads(registries[0].read_text())["ids"]

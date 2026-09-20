@@ -59,8 +59,7 @@ effort: the transition is a finite decision table over a finite alphabet (turn, 
 can be overlapped, pick up, drop, toggle a door or a box), so a port either agrees on every
 (state, action) pair or has a bug. There is no chaos to hide behind and no tolerance to negotiate.
 
-Measured two ways, because a random rollout is a weak test of a decision table
-(``python scratch/step_bench.py --what all`` reproduces both):
+Measured two ways, because a random rollout is a weak test of a decision table:
 
   * 16 episodes x 100 steps of uniform random actions per env, all six registered classes:
     **exact_frac 1.0, max deviation 0** on every cell, the agent, its direction and the carried object.

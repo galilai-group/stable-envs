@@ -6,7 +6,7 @@ as rotated rectangles. That is a pure function of ``(x, y, heading, crashed)`` p
 follows the ego, so the ego's own coordinates fix the window, and the lane markings follow from the
 static network plus that window.
 
-Every constant below was recovered by instrumenting the reference (``scratch/highway/probe_*.py``),
+Every constant below was recovered by instrumenting the reference,
 because reading the source is not enough — five things read plausibly and are wrong:
 
   * **highway-env draws nothing at all under ``SDL_VIDEODRIVER=dummy``.** ``EnvViewer.__init__`` sets
@@ -47,7 +47,7 @@ an ``IDMVehicle`` never gets them -- as four small sprites, each its own rotate-
 vehicle sprite, which is then rotated again. **The pivot rule below therefore applies twice**, once
 about the tyre sprite's own centre at the steering angle and once about the vehicle sprite's centre at
 the heading, and ``steering`` joins the state because the two front tyres turn with it. See
-``_add_tires``; measured in ``scratch/highway/calib.py``.
+``_add_tires``; measured in the frozen measurement record.
 
 Also not ported: ``show_trajectories`` (the ghost history of past poses) and the lidar observation
 overlay, neither of which is on by default. ``ObservationGraphics.display`` draws only for
@@ -1031,7 +1031,7 @@ class HighwayEnvBase(Env):
         tested. That is not academic here: a heading of ``pi/2`` carried through a float32 STATE comes
         back as 90.0000025 degrees, inside the band, and an exact-equality test sends it down the
         ``Wr`` branch instead -- worth 23 px a frame on parking-v0's 14x14 goal landmark alone.
-        Measured in ``scratch/highway/probe_rot_tolerance.py``.
+        Measured in the frozen measurement record.
         """
         a = -h.double()  # VehicleGraphics passes rad2deg(-heading)
         deg = a * (180.0 / math.pi)
@@ -1369,7 +1369,7 @@ def _on_track(lanes, batch, rng, jitter: float = 1.0, heading_jitter: float = 0.
 def _racetrack_lanes():
     """``RacetrackEnv._make_road``: nine sections of two 5 m lanes, read off the official network.
 
-    Emitted by ``scratch/highway/probe_racetrack.py`` from ``road.network`` rather than transcribed
+    Emitted by the frozen measurement record from ``road.network`` rather than transcribed
     from ``_make_road`` by eye, and re-checked against the package by ``_check_lanes`` every time a
     reference env is built. Phases are written in degrees because that is the unit the source uses and
     the unit a typo is visible in.

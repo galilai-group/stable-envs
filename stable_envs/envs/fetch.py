@@ -79,7 +79,7 @@ check rather than a vacuous one. ``swm_coverage.md``'s "40-53 floats including m
 the reference; the render-relevant state is **18 floats (Reach) or 25**, and the seven that dropped
 out buy 1.4% of pixels that no alpha-blind renderer can draw.
 
-MEASURED (480 px, 64 states per scene from the env's own pool, H200; ``scratch/fetch/calibrate.py``)
+MEASURED (480 px, 64 states per scene from the env's own pool, H200; the frozen measurement record)
 ----------------------------------------------------------------------------------------------------
 
 ===============  ==============  =========  ==========  =========  ========  ===========
@@ -190,7 +190,7 @@ VISIBLE_GROUPS = MW.DEFAULT_GROUPS
 #: issuing the per-world writes. Measured end to end at 256 px / batch 1024: **64 -> 18,323 f/s,
 #: 128 -> 19,851, 256 -> 20,540, 512 -> 20,936**. 256 rather than 512 because the last step is 2% and
 #: a context owns ``nworld * H * W * 12`` bytes, which is what bounds memory at ``supersample=2``.
-#: The frame is bit-identical at every one of those sizes (``scratch/perf/chunk_invariance.py``:
+#: The frame is bit-identical at every one of those sizes (the frozen measurement record:
 #: 512 states, max 0/255 on 0 pixels), so this is a free knob and not a change of contract.
 MJW_CHUNK = 256
 
@@ -566,7 +566,7 @@ def _context(scene: str, res: int, nworld: int) -> _Ctx:
     # the source is regenerated per call from whatever ``pack_rgba_to_uint32`` is bound then; captured
     # outside, the graph every later render replays is the TRUNCATING kernel and this block reaches
     # only the warm-up frame. Measured at 15.8% of this family's channels one level low
-    # (``scratch/perf/rounding.py``), against the 0.791 -> 0.9988 interior parity the rule is worth.
+    # , against the 0.791 -> 0.9988 interior parity the rule is worth.
     with MW.gl_rounding():
         c.rc = MW.create_render_context(
             m,
@@ -791,7 +791,7 @@ class FetchBase(Env):
         substituting moves 143,275-171,620 of 230,400 px, and it is the same operation
         ``stable_worldmodel`` itself performs (its ``background.color`` writes
         ``(bg * 255).astype(uint8)`` flat over the skybox texels and calls ``mjr_uploadTexture``; it
-        does not recompile either). See ``examples/results/step8/capability/fetch_skybox_probe.json``.
+        does not recompile either). See ``tests/fixtures/regression/join/step8/capability/fetch_skybox_probe.json``.
 
         WHAT ACTUALLY BLOCKS THE LEAF IS THE DEFAULT. swm FLATTENS the skybox to one colour, and this
         family's skybox is a 16-colour GRADIENT (rgb1 ``.44 .85 .56`` to rgb2 ``.46 .87 .58`` over
@@ -1174,8 +1174,7 @@ class FetchBase(Env):
         own defaults, points it at ``median(geom_xpos)`` — a function of whatever state the viewer
         happened to be constructed in rather than of the model. ``MujocoFetchEnv`` overrides all four
         parameters from ``DEFAULT_CAMERA_CONFIG``, so here it IS a constant of the family: measured
-        identical over three reset-step-render cycles and identical again in a clean process
-        (``scratch/fetch/probe7_interference.py``). This check is what keeps that true — an upstream
+        identical over three reset-step-render cycles and identical again in a clean process. This check is what keeps that true — an upstream
         change to the config would otherwise present as a diffuse parity regression rather than as a
         moved camera.
         """

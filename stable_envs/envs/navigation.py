@@ -118,7 +118,7 @@ Measured parity and throughput
 ------------------------------
 
 H200, 64 states per env from ``sample_states(rng=default_rng(3))``, default appearance, 224px, against
-the official CPU renderer (``scratch/swm_nav_parity.py``). GPU frames/s at batch 512 rendering into a
+the official CPU renderer. GPU frames/s at batch 512 rendering into a
 caller-owned buffer; the official column is the same env driven one frame at a time, which is the only
 way it runs.
 
@@ -147,7 +147,7 @@ pixels**, never more than 1/255, always on ONE channel. The parity test drew its
 this was a 1-in-5 chance of a red suite on a different env each run, and seeding it to a clean draw
 would have hidden a real disagreement rather than explained it.
 
-The mechanism, measured by decomposition (``scratch/audit/swm_mechanism3.py``). Our renderer and the
+The mechanism, measured by decomposition. Our renderer and the
 reference differ in exactly two respects — the DEVICE and the PRECISION of the transcendental — so
 build the frame stack with one factor changed at a time:
 
@@ -197,7 +197,7 @@ matplotlib figure: ``plt.subplots(figsize=(5,5))`` at the default 100 dpi, ``tig
 ``canvas.tostring_argb()``. That makes the interesting question not "can we draw rectangles" but
 "is the data-to-pixel map recoverable exactly, and is anything on the canvas outside our vocabulary".
 Both were answered by measurement before any of this was written
-(``scratch/simple_point_maze_gates.py`` and ``scratch/simple_point_maze_calib.py``):
+(the frozen measurement record and the frozen measurement record):
 
   * **The axes fill the figure exactly, at 100 px per data unit.** ``tight_layout(pad=0)`` with no
     ticks and no labels leaves no margin at all. Measured by painting a wall of known extent and
@@ -267,8 +267,7 @@ of it. Inventing one would produce a picture the reference never draws.
 Measured
 --------
 
-H200, 48 states from ``sample_states(rng=default_rng(3))``, default appearance
-(``scratch/spm_parity.py``):
+H200, 48 states from ``sample_states(rng=default_rng(3))``, default appearance:
 
     interior pixels exact   100.000%          <- the bar; no tolerance relaxed
     all pixels exact         99.9690%         (3,719 px of 12.0 M, max 241/255)
@@ -418,7 +417,7 @@ def _gaussian_dot(gy, gx, pos, radius) -> torch.Tensor:
     assumed. CUDA's float32 ``expf`` and the CPU's differ by up to one ulp, the alpha then multiplies
     a background of 255, and ``.to(uint8)`` truncates — so a one-ulp difference in ``exp`` flips a
     whole pixel wherever ``255*(1-a)`` sits within an ulp of an integer. Measured over 64 states per
-    env against the official renderer (``scratch/swm_nav_exp_probe.py``):
+    env against the official renderer:
 
         disagreeing pixels (and interior-exact fraction), 64 states per env:
 
@@ -471,7 +470,7 @@ def _gaussian_dot(gy, gx, pos, radius) -> torch.Tensor:
 _CUDA_IS_NOT_THE_CPU = True
 
 #: The smallest alpha ``_alpha_blend`` can act on, MEASURED against that function over every uint8
-#: contrast by ``scratch/step6/raster2d/alpha_bound.py``: 2.98e-8 = 2^-25, reached at img=1,
+#: contrast by the frozen measurement record: 2.98e-8 = 2^-25, reached at img=1,
 #: colour=0. The two directions are not symmetric and the asymmetry is the whole point. Painting a
 #: bright colour onto a dark pixel needs ``a * |img - colour| >= 1`` before the truncation sees it,
 #: i.e. ``a >= 1/255``. Darkening a bright one goes through ``img * (1 - a)``, and ``1 - a`` rounds
@@ -890,7 +889,7 @@ class _SWMNavBase(_SWMPort):
         # ``expand`` to its own shape returns the tensor itself and ``contiguous()`` on something
         # already contiguous returns it again, so the loop below would paint the agent into the
         # cache and every later render of that style would come back with a stale dot on it. Caught
-        # by the order-invariance and purity checks in scratch/step6/raster2d/cpu_digest.py, which
+        # by the order-invariance and purity checks in the raster2d regression suite, which
         # is what they are for; ``clone`` copies unconditionally.
         out = img.expand(k, IMG, IMG, 3).clone()
         for rows, r0, r1, c0, c1 in wins:

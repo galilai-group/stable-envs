@@ -205,7 +205,7 @@ Two ids were measured and refused, and both failures are informative rather than
     renormalises all 25 tiles. Anchoring the base (two 0s, two 24s) takes it to **2,564**, all of
     them **within 1 px of a cell edge** — Connector's shared-border blend, firing at 200 px instead
     of 400. Still refused, but the next step is a size sweep rather than a wall; see
-    ``docs/research/jumanji.md`` and ``scratch/jumanji/probe_slidingtile_reachable.py``.
+    ``docs/research/jumanji.md`` and the frozen measurement record.
 
 THROUGHPUT, and the batch it is quoted at
 ------------------------------------------

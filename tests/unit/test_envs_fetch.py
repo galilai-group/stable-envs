@@ -250,7 +250,7 @@ def built() -> dict:
     env["PYTHONPATH"] = str(ROOT)
     env.pop("MUJOCO_GL", None)
     r = subprocess.run(
-        [sys.executable, "-c", textwrap.dedent(PROBE), str(ROOT / "examples/results/step4/states")],
+        [sys.executable, "-c", textwrap.dedent(PROBE), str(ROOT / "tests/fixtures/regression/join/step4/states")],
         capture_output=True,
         text=True,
         cwd=str(ROOT),
@@ -315,6 +315,6 @@ def test_the_plate_is_baked_and_the_mover_mask_still_covers_the_robot(built):
 
 
 def test_every_cell_names_its_swm_id_in_its_docstring(built):
-    """``scratch/swm_matrix.py``'s declared_docstring rung reads exactly this."""
+    """``scripts/regression/swm_matrix.py``'s declared_docstring rung reads exactly this."""
     for name, r in built.items():
         assert r["swm_doc"].startswith("Fetch") or r["swm_doc"].endswith("-v4"), r["swm_doc"]

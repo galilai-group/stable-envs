@@ -5,14 +5,14 @@ measurement was taken against. When the reference package moves, the official fr
 and the declaration stops describing anything -- Step 4 judged DM Control's trackcom cells, declared
 under mujoco 3.11.0, against mujoco 3.12.0, which re-anchors finite-plane textures (changelog 3.12.0
 item 15, commit ``cc7fb98c``); the reference's floor checker had phase-shifted, ours had not, and three
-renderer FAILs were recorded for a version drift (``examples/results/step6/texture-fidelity/findings.md``).
+renderer FAILs were recorded for a version drift (``tests/fixtures/regression/join/step6/texture-fidelity/findings.md``).
 
 The rule this module implements is the one Step 4 already applies to a reference that is missing: a
 dependency failure is not a fidelity failure. A reference at the WRONG version is the same fact one
 step later -- the comparison could not be made -- so the check is ``blocked_environment``, with the
 mismatch recorded, and never ``fail``.
 
-Library code so the certifier (``scratch/step4/certify.py``) and anything else that judges a bound
+Library code so the certifier (``scripts/regression/fidelity/certify.py``) and anything else that judges a bound
 share one definition of "mismatch".
 """
 

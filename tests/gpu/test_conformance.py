@@ -144,7 +144,7 @@ def test_required_envs_are_all_reachable():
     The env-name counterpart to the module check above, and the guard the test MATRIX rests on. No
     single interpreter can hold the whole library — robocasa pins ``mujoco==3.3.1``, ``mujoco_warp``
     needs ``>=3.11``, dm_control needs a build in between — so the release gate is a fan-out over the
-    set cover in ``scratch/census/assignment.json``, and each job is told which envs it OWNS.
+    set cover in ``tests/fixtures/regression/census/assignment.json``, and each job is told which envs it OWNS.
 
     Without this, the fan-out decays into the thing it replaces. An interpreter that quietly lost a
     dependency would skip its entire assignment with a per-env reason that is individually honest,
@@ -170,7 +170,7 @@ def test_required_envs_are_all_reachable():
         + "\n  ".join(missing[:20])
         + (f"\n  ... and {len(missing) - 20} more" if len(missing) > 20 else "")
         + f"\n\nenv-module import errors here: {errs or 'none'}\n"
-        + "If the assignment is what changed, edit scratch/census/assignment.json — it is the one "
+        + "If the assignment is what changed, edit tests/fixtures/regression/census/assignment.json — it is the one "
         "definition of the cover, shared with the throughput census, so that the envs that are "
         "MEASURED and the envs that are TESTED cannot drift apart."
     )
@@ -335,7 +335,7 @@ def test_a_declared_task_object_is_drawn_iff_the_reference_draws_it(env):
     no interior pixels and can appear or disappear without moving ``interior_exact_frac``. Measured,
     not supposed — two DM Control reacher renders that differ by an entire red disc report interior
     exactness identical to sixteen digits and the same ``interior_px``
-    (``examples/results/step5/reacher/parity_probe.json``), and the frame's ``interior_frac`` at 84 px
+    (``tests/fixtures/regression/join/step5/reacher/parity_probe.json``), and the frame's ``interior_frac`` at 84 px
     is 0.000000, so the assertion there does not even apply.
 
     Nothing about the interior metric is changed to fix that. This asserts a SEPARATE bound on the

@@ -20,8 +20,7 @@ from ._cells import trackcom_cell
 _SWIMMER_AT = (
     "84 px, 64 states x 4 independent draws from sample_states, WORST of the four, "
     "default appearance, enable_specular=False, one H200, mujoco 3.11.0 / warp 1.16.0, "
-    "against dm_control's physics.render at camera 0 "
-    "(scratch/altrender/probe_declare.py --config nospec_native --size 84 --draws 4)"
+    "against dm_control's physics.render at camera 0"
 )
 
 
@@ -45,7 +44,7 @@ _SWIMMER_AT_MEASURED_WITH = {"warp": "1.16.0"}
 #: toward the reference only where MJWarp was adding a highlight the reference does not have. That
 #: happens on the two floor-dominated domains (swimmer floor_share 0.981, humanoid 0.959) and not on
 #: the skybox-dominated ones — the same camera-and-scene dependence the RoboCasa investigation found
-#: between its agentview and wrist cameras (``scratch/altrender/README.md``). Swimmer is the one
+#: between its agentview and wrist cameras. Swimmer is the one
 #: domain where the gain is large (mean |diff| down 37%) rather than in the third decimal, so it is
 #: the one domain that sets the flag.
 SPECULAR_NOTE = (
@@ -69,7 +68,7 @@ VISUAL_FIDELITY: dict[str, dict] = {
     # swimmer is the one domain that renders with ``enable_specular=False`` (see SPECULAR_NOTE), so
     # its entry is the only one measured under a non-default render context. Everything here is the
     # WORST of 4 independent 64-state draws, natively at 84 px with no resampling
-    # (``scratch/altrender/probe_declare.py``), and every number is BETTER than the shipped
+    # , and every number is BETTER than the shipped
     # specular-on measurement it replaces: mean 5.48 -> 3.45, within-8 0.813 -> 0.917,
     # SSIM 0.980 -> 0.986, interior mean 6.22 -> 0.91, interior-exact 0.464 -> 0.515,
     # all-exact 0.123 -> 0.148. The thresholds keep the family's own margin convention (ceiling
@@ -102,7 +101,7 @@ VISUAL_FIDELITY: dict[str, dict] = {
         "measured_with": _SWIMMER_AT_MEASURED_WITH,
     },
     # quadruped at the registered SWM default (camera 2, 224 px). Three residuals, per surface off the
-    # segmentation buffer (examples/results/step7/dmc-quadruped/findings.md S5): the floor near the
+    # segmentation buffer (tests/fixtures/regression/join/step7/dmc-quadruped/findings.md S5): the floor near the
     # body -- the body's REFLECTION in the reflectance-0.2 floor and its shadow -- carries ~half of
     # it; the far checker and the one-tap skybox the rest; the ellipsoid itself is 1.2 % of the frame
     # at mean ~4/255. Thresholds by the family's margin convention (ceiling ~1.3x, floors ~0.93x).

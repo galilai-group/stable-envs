@@ -7,26 +7,26 @@ intention, and the suite is where the number comes from.
 Every check below corresponds to a specific way the claim can be false. The suite is parameterised over
 the registry (`snv.list_envs()`), so an env added tomorrow is covered without editing a test.
 
-Markers: `unit`, `integration`, `gpu`, `certification`, `slow`. The extra markers
+Markers: `unit`, `integration`, `gpu`, `regression`, `slow`. The extra markers
 `reference`, `smoke` and `selftest` stay. Directory markers are applied automatically, so a
 file that forgot `pytestmark` is still selected by its folder.
 
 ```bash
 pytest -m unit                                 # CPU-only family/unit contracts
 pytest -m integration                          # multi-component (safety net, SWM interop)
-pytest -m "certification and not gpu"          # frozen corpora, digests, support matrix
-pytest -m "certification and gpu"              # GPU certification (needs CUDA)
+pytest -m "regression and not gpu"             # frozen corpora, digests, support matrix
+pytest -m "regression and gpu"                 # GPU regression (needs CUDA)
 pytest                                         # full suite
 sbatch scripts/run_gpu_tests.sbatch            # full suite, crash-isolated
 sbatch scripts/run_smoke_tests.sbatch          # one env per family              ~3.4 min
 sbatch scripts/run_smoke_tests.sbatch --fast   # one env per render backend      ~0.9 min
-sbatch scripts/run_unit_tests.sbatch           # CPU contracts + CPU certification
+sbatch scripts/run_unit_tests.sbatch           # CPU contracts + CPU regression
 ```
 
 `tests/unit/` renders nothing: the style batching rule, the dataset indexing and episode
 boundaries, the policy and rollout API, the corrector's refusals, the benchmark scripts' guards,
-and the repository's own citations, docs nav and launcher agreement. `tests/certification/` is
-the frozen certification oracle (corpora, digests, declarations, provenance). Green on
+and the repository's own citations, docs nav and launcher agreement. `tests/regression/` is
+the frozen regression oracle (corpora, digests, declarations, provenance). Green on
 `-m unit` says the contracts hold and says nothing about the frames;
 `scripts/run_gpu_tests.sbatch` is still the release gate.
 

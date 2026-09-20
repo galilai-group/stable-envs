@@ -12,7 +12,7 @@ asserting about this module is arithmetic or bookkeeping and none of it should n
 The GL half — that the upload goes to the renderer's own context — cannot be asserted here and is
 asserted where it is observable: ``tests/unit/test_variation_maps_dmc_control.py`` renders, and the
 byte-equality evidence against a full recompile is in
-``examples/results/step8/capability/bake_vs_recompile_probe*.json``.
+``tests/fixtures/regression/join/step8/capability/bake_vs_recompile_probe*.json``.
 """
 
 from __future__ import annotations

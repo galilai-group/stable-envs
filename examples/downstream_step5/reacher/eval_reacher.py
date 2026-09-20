@@ -12,7 +12,7 @@ construction rather than by a check afterwards -- and the check is done anyway, 
 ``paired_gate.py``, because "by construction" is what everybody says before the arms diverge.
 
     python examples/downstream_step5/reacher/eval_reacher.py --arm official --seed 42 --n 50 \
-        --policy reacher/prejepa --out examples/results/step5/reacher/runs
+        --policy reacher/prejepa --out tests/fixtures/regression/join/step5/reacher/runs
 """
 
 from __future__ import annotations
@@ -110,7 +110,7 @@ def main() -> None:
     # ``hidden`` is Step 6's REPRESENTATION -- the env's own ``visibility.target`` style leaf, which
     # is what stable_worldmodel's ``render_target = 0`` actually does -- and ``offscreen`` is the
     # Step-5 mechanism, which moved the geometry out of the camera frustum instead. The DEFAULT stays
-    # ``offscreen`` so ``examples/results/step5/reacher/`` reproduces exactly; the two are measured
+    # ``offscreen`` so ``tests/fixtures/regression/join/step5/reacher/`` reproduces exactly; the two are measured
     # BIT-IDENTICAL on this scene (probe_mode_equivalence.py: max |d| 0 over 16 frozen states at both
     # 84 and 224 px), so the choice cannot move a downstream number either way.
     ap.add_argument(
@@ -145,7 +145,9 @@ def main() -> None:
     ap.add_argument(
         "--tf32", action="store_true", help="allow TF32 matmul/cudnn on Ampere (recorded in the run provenance)"
     )
-    ap.add_argument("--out", type=Path, default=ROOT / "examples" / "results" / "step5" / "reacher" / "runs")
+    ap.add_argument(
+        "--out", type=Path, default=ROOT / "tests" / "fixtures" / "regression" / "join" / "step5" / "reacher" / "runs"
+    )
     ap.add_argument("--extra", nargs="*", default=[], help="extra hydra overrides, verbatim")
     args = ap.parse_args()
 

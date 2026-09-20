@@ -23,7 +23,7 @@ Which one runs is decided by the ``jax_threefry_partitionable`` config flag, who
 to ``True`` in jax 0.4.36. **This module implements the partitionable path only**, because that is
 what every supported jax draws. Measured: the partitionable path reproduces
 ``jax.random.uniform`` on 448/448 draws across seven shapes and 64 keys, and the ``original`` path
-matches 0/448 (``examples/results/step7/craftax-classic-full/phase0/prng_exactness.json``). A
+matches 0/448 (``tests/fixtures/regression/join/step7/craftax-classic-full/phase0/prng_exactness.json``). A
 caller whose reference runs with the flag off is comparing against a different picture, and the
 environment that depends on this must say so in its ``reference_versions`` declaration rather than
 leave it to be discovered.

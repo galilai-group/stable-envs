@@ -7,7 +7,7 @@
 #
 # One interpreter cannot hold the library: robocasa pins mujoco==3.3.1, mujoco_warp needs >=3.11 and
 # dm_control needs a build in between, so the dependency sets are mutually exclusive by construction.
-# scratch/census/assignment.json is the set cover -- 7 interpreters, 196 envs, no overlap -- and it is
+# tests/fixtures/regression/census/assignment.json is the set cover -- 7 interpreters, 196 envs, no overlap -- and it is
 # the SAME file the throughput census fans out over, so the envs that are measured and the envs that
 # are tested are one set rather than two that drift.
 #
@@ -24,7 +24,7 @@ for a in "$@"; do
     VENVS+=("$a"); shift
 done
 if [ ${#VENVS[@]} -eq 0 ]; then
-    mapfile -t VENVS < <(python3 -c "import json;print('\n'.join(sorted(json.load(open('scratch/census/assignment.json')))))")
+    mapfile -t VENVS < <(python3 -c "import json;print('\n'.join(sorted(json.load(open('tests/fixtures/regression/census/assignment.json')))))")
 fi
 
 for v in "${VENVS[@]}"; do

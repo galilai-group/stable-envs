@@ -44,7 +44,7 @@ body on six. That single fact decides the renderer and therefore the tier:
 WHAT THE STATE IS, AND WHY IT IS NOT ALWAYS ``qpos``
 ----------------------------------------------------
 
-Measured, not asserted. Over 17 domains at 84 px (``scratch/dmcontrol/probe_load.py``): re-rendering
+Measured, not asserted. Over 17 domains at 84 px: re-rendering
 the same ``qpos`` changes 0 pixels, scaling ``qvel`` by 100 changes 0 pixels, reaching the same
 ``qpos`` after a different history changes 0 pixels, and EVERY ``qpos`` entry moves pixels in every
 domain.
@@ -53,8 +53,7 @@ Within an episode that makes the state ``qpos``. Across episodes it does not, on
 ``initialize_episode`` writes the episode's draw into the MODEL rather than into ``qpos``: ``reacher``
 moves a target geom, ``finger-turn`` a target site, ``swimmer`` a target geom AND a target light.
 Restoring ``qpos`` alone into a different episode leaves 171-219/255 of disagreement over 0.6-90% of
-the frame; restoring ``qpos`` plus those 2-4 floats is **0/255** on every one
-(``scratch/dmcontrol/probe_widen.py``). So the state is ``qpos`` plus the episode's draw, the draw is
+the frame; restoring ``qpos`` plus those 2-4 floats is **0/255** on every one. So the state is ``qpos`` plus the episode's draw, the draw is
 DISCOVERED by diffing episodes rather than transcribed (``_episode_slots``), and ``state_names`` names
 each entry.
 

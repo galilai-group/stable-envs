@@ -25,14 +25,13 @@ _QUADRUPED_AT = (
     "224 px, camera 2 ('y', trackcom), 64 states x 3 independent draws from sample_states "
     "(SWM's model and default appearance: material self rgba .6 .3 .3, foot_back_left "
     "density 1000), RTX 3090 / driver 575.57.08 / MUJOCO_GL=egl, mujoco 3.11.0 + "
-    "mujoco-warp 3.11.0, against dm_control's physics.render at camera 2 "
-    "(scratch/dmcontrol/visual_calib.py --env DMCQuadrupedWalk --size 224 --draws 3)"
+    "mujoco-warp 3.11.0, against dm_control's physics.render at camera 2"
 )
 _QUADRUPED_AT_MEASURED_WITH = {"mujoco_warp": "3.11.0"}
 
 #: MEASURED per domain, then the thresholds the conformance suite asserts. The thresholds are set from
 #: the SPREAD over independent state draws rather than from one, which is why they are not the
-#: measurements: ``scratch/dmcontrol/visual_calib.py`` re-draws three times and the ceiling sits clear
+#: measurements: the frozen measurement record re-draws three times and the ceiling sits clear
 
 
 def _swm_quadruped_env(seed: int):
@@ -43,7 +42,7 @@ def _swm_quadruped_env(seed: int):
     through ``dm_control.mjcf`` applying its variation space's DEFAULT values at every reset, and
     drives ``quadruped.Move(desired_speed=0.5)`` (the suite's ``walk`` task) under
     ``action_scale.Wrapper``. Measured against ``suite.load("quadruped", "walk")``
-    (``examples/results/step7/dmc-quadruped/phase0/swm_model_roundtrip.json``): geometry, cameras,
+    (``tests/fixtures/regression/join/step7/dmc-quadruped/phase0/swm_model_roundtrip.json``): geometry, cameras,
     lights, texture bytes and ``qpos0`` identical, the material/texture tables permuted, and TWO
     defaults that differ from the suite -- material ``self`` is rgba (0.6, 0.3, 0.3, 1) where the suite
     has (0.7, 0.5, 0.3, 1) (mean 1.34/255 between the two on the same qpos), and ``foot_back_left``
@@ -125,7 +124,7 @@ QUADRUPED_NOTE = (
 
 VISUAL_FIDELITY: dict[str, dict] = {
     # quadruped at the registered SWM default (camera 2, 224 px). Three residuals, per surface off the
-    # segmentation buffer (examples/results/step7/dmc-quadruped/findings.md S5): the floor near the
+    # segmentation buffer (tests/fixtures/regression/join/step7/dmc-quadruped/findings.md S5): the floor near the
     # body -- the body's REFLECTION in the reflectance-0.2 floor and its shadow -- carries ~half of
     # it; the far checker and the one-tap skybox the rest; the ellipsoid itself is 1.2 % of the frame
     # at mean ~4/255. Thresholds by the family's margin convention (ceiling ~1.3x, floors ~0.93x).

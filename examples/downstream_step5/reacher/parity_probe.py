@@ -21,7 +21,7 @@ This probe therefore answers three questions with pixels rather than with reason
   3. How close is it with the target moved out of the camera's view -- the only way this renderer
      can express "do not draw that geom"?
 
-    python examples/downstream_step5/reacher/parity_probe.py --n 32 --out examples/results/step5/reacher
+    python examples/downstream_step5/reacher/parity_probe.py --n 32 --out tests/fixtures/regression/join/step5/reacher
 """
 
 from __future__ import annotations
@@ -73,7 +73,9 @@ def main() -> None:
     ap.add_argument("--size", type=int, default=224)
     ap.add_argument("--task", default="qpos_match", help="the swm reacher task the eval config names")
     ap.add_argument("--device", default="cuda")
-    ap.add_argument("--out", type=Path, default=ROOT / "examples" / "results" / "step5" / "reacher")
+    ap.add_argument(
+        "--out", type=Path, default=ROOT / "tests" / "fixtures" / "regression" / "join" / "step5" / "reacher"
+    )
     args = ap.parse_args()
 
     os.environ.setdefault("MUJOCO_GL", "egl")

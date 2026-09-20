@@ -17,8 +17,7 @@ and how ``reference_render`` places the official env.
 **Qt's raster engine did not have to be re-derived; it had to be READ OFF.** ``resource_root`` is a
 procgen option, so the shipped binary can be pointed at an asset tree in which every sprite pixel
 encodes its own ``(x, y)`` and an id. Rendering then reports, for all 4096 output pixels, WHICH sprite
-painted each one and WHICH source pixel it sampled. Three rules fell out, none of them guessed
-(``scratch/procgen/probe0{2,3,6,7}*.py``):
+painted each one and WHICH source pixel it sampled. Three rules fell out, none of them guessed:
 
 | rule | what it is | how it was measured |
 |---|---|---|
@@ -31,8 +30,7 @@ in C ``float``. This is not a detail: heist's ``view_dim`` is 12.999999, not 13,
 2.3475061e-06 rather than 0 — both readable in the state blob, and both worth a whole pixel row if the
 arithmetic is done in float64.
 
-Parity, measured against the shipped renderer over 20 levels x 12 steps per game with backgrounds on
-(``scratch/procgen/probe08_parity.py``):
+Parity, measured against the shipped renderer over 20 levels x 12 steps per game with backgrounds on:
 
 | game | frames | pixels exact | max abs diff |
 |---|---|---|---|
@@ -46,8 +44,7 @@ Parity, measured against the shipped renderer over 20 levels x 12 steps per game
 flat 3x3 neighbourhood anywhere, so the interior statistic is undefined and the suite falls back to
 all-pixel agreement, which is 1.0. Craftax's pixel art does the same thing for the same reason.
 
-Four more facts the renderer's SHAPE depends on, each measured rather than assumed
-(``scratch/procgen/probe09_facts.py``):
+Four more facts the renderer's SHAPE depends on, each measured rather than assumed:
 
   * a device column or row is covered by **at most 2** grid cells (``RENDER_EPS = 0.02`` overlaps
     neighbours by 0.04 of a cell), at every size from 64 to 512 in all three games — so the grid is
@@ -70,7 +67,7 @@ are out of scope, and the reason is NOT that the raster rules are missing (both 
 and whether its entity cast is a constant of the game. chaser's is (3 orbs, 3 eggs, 3 enemies);
 bigfish's is a Bernoulli(1/10) spawner reaching 24 fish at once, and a fixed-width slot state for
 that is either lossy or full of dead dimensions. That renderer is written and bit-exact and lives in
-``scratch/procgen/bigfish_env.py`` rather than here; ``docs/research/pixel_native.md`` 2.9 has the
+the frozen measurement record rather than here; ``docs/research/pixel_native.md`` 2.9 has the
 numbers and the same argument applied to bossfight, dodgeball, plunder and starpilot.
 
 **Assets are loaded from the installed ``procgen`` wheel, not embedded.** MiniHack and Craftax embed
@@ -82,8 +79,7 @@ installed upstream package.
 
 **Throughput, with its crossover, because the peak ratio alone would flatter it.** procgen's own
 renderer is C++ drawing 12.3 kB frames and it is fast; this one wins only once the batch pays for a
-chain of serial composites. Both sides swept on one H200 with 8 threads for the reference
-(``scratch/procgen/probe12_crossover.py``):
+chain of serial composites. Both sides swept on one H200 with 8 threads for the reference:
 
 | batch | maze | heist | miner | chaser |
 |---|---|---|---|---|
@@ -295,7 +291,7 @@ TOPDOWN_SIMPLE_BG = ["topdown_backgrounds/floortiles.png"]
 #: `water_backgrounds`. NONE of the seven is square (342x192 x4, 980x581, 2100x1500, 2048x1536), so
 #: `offset_x = bg_pct_x * (bg_ar - world_ar)` is not identically 0 and `bg_pct_x` would be render
 #: state for any game that uses them — the same call miner's non-square platform backgrounds force.
-#: Kept here rather than in `scratch/procgen/bigfish_env.py` (its only consumer today) because it is
+#: Kept here rather than next to a family-specific consumer because it is
 #: a transcription of `resources.cpp`, not a property of that experiment.
 WATER_BG = [
     f"water_backgrounds/{n}"
@@ -484,7 +480,7 @@ SPECS = {
 #: `image_for_type(ENEMY)` in chaser, as a table over the one shared state dimension it collapses to.
 #: `can_eat_enemies()` gives ENEMY_WEAK; otherwise `rem = (cur_time / 2) % 4` with `3 -> 1`, so the
 #: reachable image ids are {3, 6, 7, 8} and nothing else -- enumerated over 32 (cur_time, eat_time)
-#: pairs in `scratch/procgen/probe14_chaser.py`, 0 unmatched.
+#: pairs, 0 unmatched.
 _CHASER_ENEMY_SPRITE = (2, 5, 6, 7)  # atlas slots for image ids 3, 6, 7, 8
 #: procgen grid object id -> render class. miner folds MOVING_BOULDER/MOVING_DIAMOND into their
 #: stationary forms because `image_for_type` gives them the same sprite.
@@ -494,7 +490,7 @@ _CLASS_OF = {
     "miner": {P_SPACE: 0, 1: 1, 3: 1, 2: 2, 4: 2, 9: 3},
     # chaser's MAZE_WALL is 5 and its ORB is 1002; MARKER (1001) is a level-generation
     # scratch value that `game_reset` clears before the first frame, and 5,376 harvested
-    # states hold only {5, 100, 1002} (`scratch/procgen/probe13_recon.py`).
+    # states hold only {5, 100, 1002}.
     "chaser": {P_SPACE: 0, 5: 1, 1002: 2},
 }
 _PROCGEN_ID = {
@@ -989,7 +985,7 @@ def _blend_torch(canvas, atlas, idx, mask, gain):
 
     "Checked against" is a measurement, not an intention: triton imports on the machines this repo
     runs on, so every parity number comes from the fused path and this one is dead code there unless
-    somebody forces it. ``scratch/procgen/probe21_chaser_torch_path.py`` does — it flips
+    somebody forces it. the frozen measurement record does — it flips
     ``HAVE_TRITON`` off and re-renders — and gets **max abs diff 0 on 64 states against both the
     Triton path and the official renderer**, for all three kernels including chaser's fill layer.
     """
@@ -1055,7 +1051,7 @@ class _ProcgenEnv(Env):
     #: whether the grid reaches a pixel at all. True for every SHIPPED game; the hook exists because
     #: several procgen games never write their grid — `game_reset` leaves it `fill_elem(..., SPACE)`
     #: and `draw_grid_obj` returns immediately on SPACE — so declaring those cells would be hundreds
-    #: of dead state dimensions. `scratch/procgen/bigfish_env.py` is the worked case.
+    #: of dead state dimensions. Bigfish is the worked case.
     has_grid = True
 
     @property
@@ -1285,7 +1281,7 @@ class _ProcgenEnv(Env):
         Constant for every entity in every SHIPPED game, which is why the base returns ``None``.
         The hook exists for the games where it is not: bigfish's fish are sampled a radius at spawn
         (``FISH_MIN_R`` to ``FISH_MAX_R``) and its agent grows one ``r_inc`` per fish eaten. See
-        ``scratch/procgen/bigfish_env.py`` and ``docs/research/pixel_native.md`` 2.9.
+        the frozen measurement record and ``docs/research/pixel_native.md`` 2.9.
         """
         return None
 
@@ -1586,7 +1582,7 @@ _TAIL = {
         ("maze_dim", "i"),
     ],
     # bigfish is NOT a shipped env (see docs/research/pixel_native.md 2.9); its tail stays here
-    # because `scratch/procgen/bigfish_env.py` drives the reference through this parser.
+    # because the bigfish reference still drives through this parser.
     "bigfish": [("fish_eaten", "i"), ("r_inc", "f")],
 }
 
@@ -1870,7 +1866,7 @@ class ProcgenChaser(_ProcgenEnv):
     """13x13 pac-man: stone maze, green orbs painted as fillRects, 3 eggs that hatch into chasers.
 
     Three things here are new relative to maze/heist/miner, and each was measured before it was
-    written (``scratch/procgen/probe1{3,4,5}*.py``):
+    written:
 
       * **a grid value that is not a sprite.** ``ChaserGame::draw_grid_obj`` paints ORB as a solid
         ``QColor(0, 255, 0)`` over the centred 30% sub-rect of the cell, so the grid is four gathers

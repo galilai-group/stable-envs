@@ -16,13 +16,13 @@ deliberately asserts nothing. The dependency runs one way: everything here impor
         _shared.py                the three conventions the GPU files kept getting wrong. Read it
                                   before adding a file here.
         conftest.py               puts every shared env back at its default appearance per test.
-      certification/              frozen Step-3/4/5/6/8 corpora, digests, declarations, provenance,
-                                  and the Gate-F matrix. CPU unless also under ``gpu/``.
-      fixtures/                   golden JSON the unit/certification readers assert against.
+      regression/                 frozen corpora, digests, declarations, provenance,
+                                  and the support-matrix oracle. CPU unless also under ``gpu/``.
+      fixtures/                   golden JSON the unit/regression readers assert against.
       packaging/                  wheel/sdist metadata, extras, and GitHub Actions safety.
 
 Directory markers are applied below so ``pytest -m unit`` / ``-m integration`` /
-``-m "certification and not gpu"`` / ``-m "certification and gpu"`` select the matching
+``-m "regression and not gpu"`` / ``-m "regression and gpu"`` select the matching
 bucket even when a file forgot ``pytestmark``. Existing per-file markers are kept.
 
 THE EMPTY-RUN GUARD, below, and why it is a hook rather than a test. Twice now this suite has been
@@ -40,11 +40,12 @@ from pathlib import Path
 
 import pytest
 
-#: GPU files that are also the certification oracle (parity / reproducibility / fast==slow).
-_GPU_CERTIFICATION = {
+#: GPU files that are also the frozen regression oracle (parity / reproducibility / fast==slow).
+_GPU_REGRESSION = {
     "test_conformance.py",
     "test_reproducibility.py",
     "test_fast_paths.py",
+    "test_rollout_on_device.py",
 }
 
 
@@ -69,12 +70,12 @@ def pytest_collection_modifyitems(config, items):
             item.add_marker(pytest.mark.unit)
         elif bucket == "integration":
             item.add_marker(pytest.mark.integration)
-        elif bucket == "certification":
-            item.add_marker(pytest.mark.certification)
+        elif bucket == "regression":
+            item.add_marker(pytest.mark.regression)
         elif bucket == "gpu":
             item.add_marker(pytest.mark.gpu)
-            if path.name in _GPU_CERTIFICATION:
-                item.add_marker(pytest.mark.certification)
+            if path.name in _GPU_REGRESSION:
+                item.add_marker(pytest.mark.regression)
 
 
 #: Set to anything to allow a run in which nothing passed or failed. For a deliberately narrow

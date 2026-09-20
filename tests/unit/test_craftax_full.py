@@ -2,12 +2,12 @@
 
 The repo ships no jax and no interpreter outside ``$SCR/venvs/se7-craftax`` has one, so a test that
 imported jax would skip everywhere and assert nothing. The facts that *come from* craftax are frozen
-into ``tests/fixtures/craftax_full_golden.json`` by ``scratch/step7/craftax-full/gen_golden.py``, which
+into ``tests/fixtures/regression/fidelity/craftax_full_golden.json`` by ``scripts/regression/craftax/gen_golden.py``, which
 records the craftax and jax versions it was frozen under -- a golden vector that does not say where it
 came from is worthless.
 
-The parity number itself lives in ``examples/results/step7/craftax-full/certify/`` and is taken by
-``scratch/step7/craftax-full/certify.py`` in the jax venv; what is asserted here is everything that
+The parity number itself lives in ``tests/fixtures/regression/join/step7/craftax-full/certify/`` and is taken by
+``scripts/regression/craftax/certify.py`` in the jax venv; what is asserted here is everything that
 can be checked against the frozen facts and against the renderer's own internal invariants.
 """
 
@@ -24,7 +24,11 @@ import torch
 from stable_envs.envs import _craftax_full as CF
 from stable_envs.envs._craftax_full import CraftaxFull
 
-GOLDEN = json.loads((Path(__file__).resolve().parents[1] / "fixtures" / "craftax_full_golden.json").read_text())
+GOLDEN = json.loads(
+    (
+        Path(__file__).resolve().parents[1] / "fixtures" / "regression" / "fidelity" / "craftax_full_golden.json"
+    ).read_text()
+)
 
 
 @pytest.fixture(scope="module")
@@ -390,7 +394,7 @@ def test_a_window_carrying_more_projectiles_than_the_simulator_can_hold_is_not_r
     It is asserted rather than left implicit because the boundary pool found it: eight projectiles
     disagreed with the official renderer on exactly the two tiles past the budget, max abs 114, while
     all 48 representable rows were byte-identical
-    (``examples/results/step7/craftax-full/certify/boundary_pool.json``).
+    (``tests/fixtures/regression/join/step7/craftax-full/certify/boundary_pool.json``).
     """
     assert CF.MAX_MOB_PROJ + CF.MAX_PLAYER_PROJ == 6
     e = CraftaxFull(num_envs=32, device="cpu")
@@ -430,8 +434,10 @@ def test_the_arrow_guard_leaves_the_frozen_corpus_untouched():
     rec = _json.loads(
         (
             Path(__file__).resolve().parents[2]
-            / "examples"
-            / "results"
+            / "tests"
+            / "fixtures"
+            / "regression"
+            / "join"
             / "step7"
             / "craftax-full"
             / "corpus"
@@ -456,14 +462,23 @@ def test_the_declared_tiers_are_what_the_frozen_ladder_says_they_are():
     """The tier in the record must follow from its own S_cpu / R and cores through the FROZEN ladder,
     not be typed in beside them.
 
-    Walks ``scratch/certification.json``'s rungs the way ``scratch/step3/certify.py:_tier_from`` does:
+    Walks ``tests/fixtures/regression/fidelity/certification.json``'s rungs the way ``scripts/regression/semantic/certify.py:_tier_from`` does:
     the ratio picks the starting rung and a failed ``cores`` conjunct walks down from it. Both labels
     were produced by that classifier; this keeps them from drifting apart from the numbers if either
     is edited later.
     """
     import json as _json
 
-    spec = _json.loads((Path(__file__).resolve().parents[2] / "scratch" / "certification.json").read_text())
+    spec = _json.loads(
+        (
+            Path(__file__).resolve().parents[2]
+            / "tests"
+            / "fixtures"
+            / "regression"
+            / "fidelity"
+            / "certification.json"
+        ).read_text()
+    )
 
     def walk(rungs, order, ratio, cores, rkey, ckey):
         def holds(cond, keys, val):

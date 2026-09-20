@@ -65,7 +65,7 @@ swm = ["stable-worldmodel"]
 # Optional render/data surfaces. nvdiffrast is intentionally not metadata:
 # PyPI rejects direct-URL requirements and its CUDA extension needs a matching
 # local toolkit. The measured source install remains documented in
-# docs/research/nvdiffrast.md and scratch/nvdiff/install_venv.sh.
+# docs/research/nvdiffrast.md.
 mjwarp = [
   "mujoco>=3.11,<3.13",
   "mujoco-warp>=3.11,<3.13",
@@ -111,7 +111,7 @@ version = { attr = "stable_envs.__about__.__version__" }
 [tool.ruff]
 target-version = "py310"
 line-length = 119
-extend-exclude = ["scratch", "examples/results", "examples/paper", "docs/assets"]
+extend-exclude = ["examples/results", "examples/paper", "docs/assets"]
 
 [tool.ruff.lint]
 select = ["E4", "E7", "E9", "F", "I", "UP"]
@@ -149,7 +149,7 @@ testpaths = ["tests"]
 markers = [
   "unit: fast, CPU-only, no reference package and no device",
   "integration: several components together (env + renderer + registry + interop)",
-  "certification: the frozen certification oracle — corpora, digests, support matrix",
+  "regression: the frozen regression oracle — corpora, digests, support matrix",
   "gpu: requires a CUDA device (skipped otherwise)",
   "reference: requires the official reference env to be installed",
   "slow: long-running throughput benchmark",

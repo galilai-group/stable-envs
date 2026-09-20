@@ -8,11 +8,11 @@ Nothing here is a new correctness framework. Every check is a function in
 ``stable_envs.testing.conformance``, called with the arguments ``tests/gpu/test_conformance.py`` calls
 it with; this script decides WHICH checks apply to which configuration, feeds the ones that accept
 states from a frozen corpus, and records the numbers. The thresholds are not applied here at all --
-``scratch/step4/certify.py`` reads them out of the frozen Step 2 spec and out of each env's own
+``scripts/regression/fidelity/certify.py`` reads them out of the frozen Step 2 spec and out of each env's own
 declaration, so a bar cannot be moved in the same file that reports the measurement.
 
-    raw shard  ->  examples/results/step4/conformance/<shard>.json
-    corpus     ->  examples/results/step4/states/<config>.npz     (shared by every shard and rerun)
+    raw shard  ->  tests/fixtures/regression/join/step4/conformance/<shard>.json
+    corpus     ->  tests/fixtures/regression/join/step4/states/<config>.npz     (shared by every shard and rerun)
 
 THREE THINGS THIS SCRIPT IS CAREFUL ABOUT, each of which has already cost somebody a wrong number:
 
@@ -35,7 +35,7 @@ it is LOADED, never regenerated -- across shards, across hosts and across the St
 the states is the entire point of the step, and a corpus that is silently re-drawn because it was
 convenient is not frozen.
 
-    python examples/fidelity_step4.py --shard dmc --out examples/results/step4/conformance/dmc.json
+    python examples/fidelity_step4.py --shard dmc --out tests/fixtures/regression/join/step4/conformance/dmc.json
 """
 
 from __future__ import annotations
@@ -54,8 +54,8 @@ import numpy as np
 import torch
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "scratch" / "step4"))
-import universe  # noqa: E402  (the shared, stdlib-only definition of what Step 4 validates)
+sys.path.insert(0, str(ROOT / "scripts" / "regression" / "fidelity"))
+import universe  # noqa: E402  (the shared, stdlib-only definition of the fidelity universe)
 
 import stable_envs as se  # noqa: E402
 from stable_envs.testing import conformance as C  # noqa: E402
@@ -399,7 +399,7 @@ def _resolution(env, states) -> dict:
     8 states the floor was recorded on), not on the frozen corpus. The floor is a property of the
     state set as much as of the renderer -- the same renderer measures 0.6188 on walker's 64-state
     corpus and 0.6290, the recorded floor to six decimals, on the protocol's 8 (both mujoco
-    versions; ``examples/results/step6/texture-fidelity/resprobe31{1,2}.json``) -- so a floor applied
+    versions; ``tests/fixtures/regression/join/step6/texture-fidelity/resprobe31{1,2}.json``) -- so a floor applied
     to another draw with a 0.005 margin failed the draw, not the renderer. The corpus number is still
     measured and recorded beside it as ``frozen_corpus``, because Step 6 replays the corpus and a
     regression that moves a shape shows up in either.
@@ -595,8 +595,8 @@ def _dmc_model_digest(domain: str, task: str) -> str | None:
     """Step 1's ``_dmc_appearance_groups`` digest for one cell, computed by Step 1's own function."""
     if not _DMC_DIGESTS:
         try:
-            sys.path.insert(0, str(ROOT))
-            from scratch.swm_matrix import _dmc_appearance_groups
+            sys.path.insert(0, str(ROOT / "scripts" / "regression"))
+            from swm_matrix import _dmc_appearance_groups
 
             _DMC_DIGESTS.update(_dmc_appearance_groups() or {"__none__": {}})
         except BaseException:  # noqa: BLE001
@@ -827,7 +827,9 @@ def main() -> None:
     ap.add_argument("--configs", default="", help="comma-separated config ids, overrides --shard")
     ap.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
     ap.add_argument("--out", required=True)
-    ap.add_argument("--states-dir", default=str(ROOT / "examples" / "results" / "step4" / "states"))
+    ap.add_argument(
+        "--states-dir", default=str(ROOT / "tests" / "fixtures" / "regression" / "join" / "step4" / "states")
+    )
     ap.add_argument("--images", default="", help="write contact sheets here; off when empty")
     ap.add_argument(
         "--image-configs",
@@ -857,7 +859,7 @@ def main() -> None:
         "step": 4,
         "shard": a.shard or "adhoc",
         "what_this_is": "raw Step 4 conformance/fidelity measurements for one interpreter. No "
-        "threshold is applied here; scratch/step4/certify.py does that from the "
+        "threshold is applied here; scripts/regression/fidelity/certify.py does that from the "
         "frozen Step 2 spec.",
         "provenance": provenance(a.device),
         "configs": {},

@@ -13,7 +13,7 @@ pygame, and three of them had to be recovered by measurement rather than read of
   ``pygame.font`` glyphs                       the score
   ``pygame.transform.smoothscale``             1000x800 -> 96x96, on every frame
 
-MEASURED CONSTANTS, each with how it was found (``scratch/carracing/probe_*.py``):
+MEASURED CONSTANTS, each with how it was found:
 
 | what | the plausible reading | what is actually true | how it was found |
 |---|---|---|---|

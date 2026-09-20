@@ -469,7 +469,7 @@ def test_the_declared_resolution_applicability_matches_measurement(env, states):
 
     ``check_resolution_consistency`` is declared applicable at ``light_level >= 0.5`` and not below,
     because the OFFICIAL renderer is itself inconsistent below it (the oracle experiment in
-    ``examples/results/step7/craftax-classic-full/oracle/``). What can be asserted without jax is
+    ``tests/fixtures/regression/join/step7/craftax-classic-full/oracle/``). What can be asserted without jax is
     our side of it: that we meet the frozen bound where the declaration says we do, and do not where
     it says the check does not apply.
     """

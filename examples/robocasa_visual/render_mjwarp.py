@@ -38,7 +38,7 @@ import numpy as np
 _HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.abspath(os.path.join(_HERE, "..", ".."))
 DEFAULT_OUT = os.environ.get("ROBOCASA_VISUAL_OUT", "/mnt/vast/home/randall.balestriero/robocasa_visual_work")
-CORPUS = os.path.join(REPO, "scratch/robocasa/out/corpus")
+CORPUS = os.environ.get("ROBOCASA_CORPUS", os.path.join(REPO, "examples", "robocasa_visual", "corpus"))
 
 
 def load_mjwarp_helpers():

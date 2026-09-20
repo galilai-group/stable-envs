@@ -46,7 +46,7 @@ _AT = (
 #: ``physics.render`` draws with -- because the certifier blocks a measurement whose reference is not
 #: this version: Step 4 judged these numbers under mujoco 3.12.0, whose finite-plane texture
 #: re-anchoring (changelog item 15, commit cc7fb98c) had phase-shifted the reference's floor checker
-#: while ours had not (examples/results/step6/texture-fidelity/findings.md), and recorded three
+#: while ours had not (tests/fixtures/regression/join/step6/texture-fidelity/findings.md), and recorded three
 #: renderer FAILs for a version drift. dm_control is deliberately absent: neither string names a
 #: dm_control version, and a version nobody measured under is not provenance.
 #:

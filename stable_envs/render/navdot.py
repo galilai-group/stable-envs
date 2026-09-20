@@ -28,7 +28,7 @@ the port was written to avoid: measured over 4.2 M arguments, a float32 ``exp`` 
 float64-then-round answer in 3,162,766 of them.
 
 Four things make every expression here match the torch path bit for bit, and all four were measured
-rather than assumed (``scratch/step6/raster2d/swmnav_exact_probe.py``, ``swmnav_exp_probe.py``):
+rather than assumed (the frozen measurement record, ``swmnav_exp_probe.py``):
 
   * ``enable_fp_fusion=False`` at launch. LLVM contracts ``a*b + c*d`` into an ``fma``, which rounds
     once where torch -- separate kernels -- rounds twice. With fusion on, ``dist2`` differs in
@@ -57,7 +57,7 @@ import torch
 from .raster2d import tile_shape
 
 #: The smallest alpha ``swm_nav._alpha_blend`` can act on, MEASURED against that function over every
-#: uint8 contrast (``scratch/step6/raster2d/alpha_bound.py``): 2.98e-8 = 2^-25, reached at img=1,
+#: uint8 contrast: 2.98e-8 = 2^-25, reached at img=1,
 #: colour=0 because ``img * (1 - a)`` goes through ``1 - a``, which rounds to exactly 1.0 in float32
 #: below the spacing at 1.0. Below this alpha the blend is the identity.
 ALPHA_FLOOR = 2.0**-25

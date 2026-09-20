@@ -17,7 +17,7 @@ from stable_envs import interop, registry
 pytestmark = pytest.mark.integration
 
 ROOT = Path(__file__).resolve().parents[2]
-FROZEN_MATRIX = ROOT / "examples" / "results" / "step8" / "swm" / "gate_f_matrix.json"
+FROZEN_MATRIX = ROOT / "tests" / "fixtures" / "regression" / "gate_f_matrix.json"
 
 
 def _frozen_rows() -> list[dict]:

@@ -5,7 +5,7 @@ which meant that crossing the threshold discarded the key the current render was
 render of the same appearance re-baked it. That would be free if a bake were a pure function of
 (scene, style). It is not: measured on a 3090, three bakes of one key with nothing in between return
 two distinct plates, 1/255 apart on four pixels
-(``examples/results/step6/raycast3d/bake_probe_branch.json``). So a cache eviction could change the
+(``tests/fixtures/regression/join/step6/raycast3d/bake_probe_branch.json``). So a cache eviction could change the
 frame a configuration was already producing — which is how ``check_style_is_state`` observed 1 on two
 OGBench cells in Step 4 and 0 on nine that carry the identical defect.
 

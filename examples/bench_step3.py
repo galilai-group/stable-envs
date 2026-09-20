@@ -18,14 +18,14 @@ one-core JPEG-q90 bar. What is new here is only what Step 3 actually needs:
     needs mujoco>=3.12 and gymnasium-robotics needs <=3.11, which Step 1 established by measurement.
     Shards merge deterministically downstream.
 
-The universe is the **34 matched swm rows** of ``scratch/swm_matrix.json``, projected onto the 37
+The universe is the **34 matched swm rows** of ``tests/fixtures/regression/fidelity/swm_matrix.json``, projected onto the 37
 stable-envs envs that back them -- not the 196-env registry. Envs an interpreter cannot reach are
 recorded as blockers with the importer's own message. A blocker is NEVER a performance tier: "we could
 not build this here" and "this renderer is slow" are different findings and Step 2 forbids conflating
 them.
 
-    python examples/bench_step3.py --device cpu  --threads 1 --out examples/results/step3/cpu/m5_1t.json
-    python examples/bench_step3.py --device cuda --out examples/results/step3/gpu/3090.json
+    python examples/bench_step3.py --device cpu  --threads 1 --out tests/fixtures/regression/join/step3/cpu/m5_1t.json
+    python examples/bench_step3.py --device cuda --out tests/fixtures/regression/join/step3/gpu/3090.json
 """
 
 from __future__ import annotations
@@ -52,9 +52,9 @@ import stable_envs as se
 
 ROOT = Path(__file__).resolve().parents[1]
 
-#: The frozen Step 2 sweeps. Read from scratch/certification.json rather than retyped, so a batch list
+#: The frozen Step 2 sweeps. Read from tests/fixtures/regression/fidelity/certification.json rather than retyped, so a batch list
 #: cannot drift from the policy that requires it -- section 5.2 (CPU) and 6.2 (GPU) of certification.md.
-SPEC = json.loads((ROOT / "scratch" / "certification.json").read_text())
+SPEC = json.loads((ROOT / "tests" / "fixtures" / "regression" / "fidelity" / "certification.json").read_text())
 
 
 def batches_for(device: str, optional: bool) -> list[int]:
@@ -72,7 +72,7 @@ def matched_universe() -> dict[str, list[str]]:
     ``PushT-Discrete-v1``) and is timed ONCE; the merge step must be able to say that both rows came
     from one measurement instead of presenting two independent-looking numbers.
     """
-    m = json.loads((ROOT / "scratch" / "swm_matrix.json").read_text())
+    m = json.loads((ROOT / "tests" / "fixtures" / "regression" / "fidelity" / "swm_matrix.json").read_text())
     out: dict[str, list[str]] = {}
     for r in m["rows"]:
         for e in r["stable_envs"]["envs"]:
@@ -333,7 +333,7 @@ def main() -> None:
         "batches": batches,
         "ss_request": a.ss,
         "reps": a.reps,
-        "universe": "the 34 matched swm rows of scratch/swm_matrix.json, projected onto the "
+        "universe": "the 34 matched swm rows of tests/fixtures/regression/fidelity/swm_matrix.json, projected onto the "
         "stable-envs envs that back them",
         "states_in": a.states_in,
         "states_out": a.states_out,

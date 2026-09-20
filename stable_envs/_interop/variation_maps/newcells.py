@@ -49,26 +49,26 @@ __all__ = ["NEWCELL_VARIATION_MAPS", "LEAF_CLASSIFICATION"]
 #: that produced a verdict rather than taking the verdict on trust.
 PROBES = {
     "rocket_liveness": (
-        "examples/results/step8/variations-newcells/probes/live_rocket.json -- each leaf resampled "
+        "tests/fixtures/regression/join/step8/variations-newcells/probes/live_rocket.json -- each leaf resampled "
         "alone under 5 seeds, 3 frames of 480x480 (691,200 px) per reset, compared against the "
         "no-variation reset"
     ),
     "rocket_pad": (
-        "examples/results/step8/variations-newcells/probes/pad_color.json -- pad.color over 3 seeds, "
+        "tests/fixtures/regression/join/step8/variations-newcells/probes/pad_color.json -- pad.color over 3 seeds, "
         "120 steps, 6 frames of 480x480, plus pybullet getVisualShapeData on the landing pad body"
     ),
     "ogb_model": (
-        "examples/results/step8/variations-newcells/probes/ogb_model_{Cube,Scene}.json -- every "
+        "tests/fixtures/regression/join/step8/variations-newcells/probes/ogb_model_{Cube,Scene}.json -- every "
         "MjModel array diffed between a no-variation reset and a one-leaf-extreme reset, with each "
         "changed geom classified as a MOVER (drawn per world by mujoco_warp) or STATIC (baked into "
         "the plate)"
     ),
     "ogb_agent_color": (
-        "examples/results/step8/variations-newcells/probes/agent_color_dirty_flag.json -- "
+        "tests/fixtures/regression/join/step8/variations-newcells/probes/agent_color_dirty_flag.json -- "
         "agent.color=RED alone vs agent.color=RED co-varied with light.intensity"
     ),
     "scene_noise": (
-        "examples/results/step8/variations-newcells/probes/scene_noise.json -- two IDENTICAL "
+        "tests/fixtures/regression/join/step8/variations-newcells/probes/scene_noise.json -- two IDENTICAL "
         "seed=0 SceneEnv resets diffed, to separate reset noise from leaf effect"
     ),
 }
@@ -426,14 +426,14 @@ BUCKETS = ("mapped", "unsupported", "dead_upstream", "not_applicable")
 
 _MAZE_PROBES = {
     "ogbmaze": (
-        "examples/results/step8/variations-newcells/probes/probe_ogbmaze.json -- each leaf set to "
+        "tests/fixtures/regression/join/step8/variations-newcells/probes/probe_ogbmaze.json -- each leaf set to "
         "explicit values through options['variation_values'], 224x224 (50,176 px), with the task id "
         "and the qpos/qvel pinned and the global numpy seed fixed so the ~3,000-5,500 px reset noise "
         "floor (ogbench draws cur_task_id from the GLOBAL np.random) does not swamp the leaf; "
         "base-vs-base maxdiff 0"
     ),
     "spm": (
-        "examples/results/step8/variations-newcells/probes/probe_spm.json -- 500x500 (250,000 px). "
+        "tests/fixtures/regression/join/step8/variations-newcells/probes/probe_spm.json -- 500x500 (250,000 px). "
         "SimplePointMazeEnv honours ONLY options['variation'] (a resample list) and silently ignores "
         "options['variation_values'], so exact values are set on the leaf after a no-variation reset; "
         "base-vs-base maxdiff 0"

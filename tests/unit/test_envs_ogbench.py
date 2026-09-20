@@ -9,8 +9,7 @@ it skips cleanly without ``ogbench``.
 The two manipulation cells are CUDA-only by declaration, so nothing here renders them. What IS
 asserted about them here is everything that does not need a frame: the CPU refusal and its message,
 the declarations, the variation space (which needs only the cached bundle) and the shape of the
-public state. Their frames are owed to the GPU oracle and are recorded as owed in
-``examples/results/step9/envs-ogbench/findings.md``.
+public state. Their frames are owed to the GPU regression oracle.
 """
 
 from __future__ import annotations

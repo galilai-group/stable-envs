@@ -1,4 +1,0 @@
-scratch/mwfast/gen_pairs.py MetaWorldDoorLock --split train --episodes 1024 --per-episode 4 --res 112 --style
-scratch/mwfast/gen_pairs.py MetaWorldDoorLock --split heldout --episodes 128 --per-episode 4 --res 112 --style
-scratch/mwfast/gen_pairs.py MetaWorldAssembly --split train --episodes 1024 --per-episode 4 --res 112 --style
-scratch/mwfast/gen_pairs.py MetaWorldAssembly --split heldout --episodes 128 --per-episode 4 --res 112 --style

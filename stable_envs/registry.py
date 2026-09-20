@@ -218,7 +218,7 @@ def format_registry(width: int = 34) -> str:
 
 
 #: SWM id -> the stable-envs cell(s) that serve it, VERBATIM from the support matrix
-#: (``examples/results/step8/support_matrix.json``, 42 rows, 40 pixel-producing and 2 symbolic).
+#: (``tests/fixtures/regression/support_matrix.json``, 42 rows, 40 pixel-producing and 2 symbolic).
 #:
 #: These are aliases, not a second registry: every id resolves to a class that is already registered
 #: under its canonical name, and ``tests/unit/test_registry.py`` asserts this table against

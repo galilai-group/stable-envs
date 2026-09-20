@@ -5,8 +5,7 @@ per light plus once for the headlight, and every copy carries a full any-hit BVH
 ``use_shadows`` is a runtime kernel argument and ``lightcastshadow`` is read from a per-world array.
 Meta-World has three lights and a headlight, of which exactly ONE ever casts
 (``light_castshadow = [false, true, false]``, and the headlight is called with a literal ``False``),
-so four traversals are compiled and one runs. Measured at 256 px / 64 worlds on ``MetaWorldReach``
-(``scratch/perf/shadow_code.py``):
+so four traversals are compiled and one runs. Measured at 256 px / 64 worlds on ``MetaWorldReach``:
 
     baseline                              7.636 ms
     rc.use_shadows = False (rays gone)    4.930 ms   x1.55
@@ -43,7 +42,7 @@ same applies to ``sample_texture``, ``sample_skybox`` and ``_make_cast_ray``: al
 on the upstream module inside ``render`` so every patch a caller applies to upstream still reaches
 this kernel.
 
-GENERATED, DO NOT EDIT BY HAND. ``scratch/perf/gen_lightspec.py`` produces this file by transforming
+GENERATED, DO NOT EDIT BY HAND. the frozen measurement record produces this file by transforming
 the installed ``mujoco_warp._src.render`` source in three places; ``--check`` re-generates and diffs,
 which is the test to run after a mujoco_warp bump.
 
@@ -68,7 +67,7 @@ from . import _resources
 wp.set_module_options({"enable_backward": False})
 
 #: The mujoco_warp release this file was generated from. A bump is not automatically wrong, it is
-#: unverified: re-run ``scratch/perf/gen_lightspec.py --check``.
+#: unverified: re-run the frozen measurement record.
 UPSTREAM_VERSION = "3.11.0"
 
 MAX_SHININESS = 128.0
@@ -145,7 +144,7 @@ def specialised_lights(enabled: bool = True):
     compiled, so it is the only window that matters), and nothing else in the process ever sees it.
 
     ``enabled`` IS THE CALLER'S CALL AND DEFAULTS TO OFF FOR A PARITY FAMILY, because the elision is
-    bit-identical on most scenes and not on all of them. Measured with ``scratch/perf/lightspec_kernel.py``,
+    bit-identical on most scenes and not on all of them. Measured with the frozen measurement record,
     comparing the raw megakernel output over 64 states at 256 px:
 
         RoboCasa (2 cells), HumanoidBench (2 cells), Meta-World reach / sweep-into   0 / 4,194,304 px

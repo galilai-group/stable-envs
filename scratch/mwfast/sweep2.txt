@@ -1,8 +1,0 @@
-scratch/mwfast/train.py MetaWorldDoorLock --net unet_112t128_w48_d2_u2 --tag r112 --epochs 400 --out sweep2_unet_112t128_w48_d2_u2_r112_e400
-scratch/mwfast/train.py MetaWorldDoorLock --net unet_112t128_w48_d2_u2 --tag r112 --epochs 800 --out sweep2_unet_112t128_w48_d2_u2_r112_e800
-scratch/mwfast/train.py MetaWorldDoorLock --net unet_112t128_w64_d3_u2 --tag r112 --epochs 400 --out sweep2_unet_112t128_w64_d3_u2_r112_e400
-scratch/mwfast/train.py MetaWorldDoorLock --net espcn_112t128_w96_d6_u2 --tag r112 --epochs 400 --out sweep2_espcn_112t128_w96_d6_u2_r112_e400
-scratch/mwfast/train.py MetaWorldDoorLock --net unet_112t128_w32_d2_u2 --tag r112 --epochs 400 --out sweep2_unet_112t128_w32_d2_u2_r112_e400
-scratch/mwfast/train.py MetaWorldDoorLock --net unet_96t128_w48_d2_u2 --tag r96 --epochs 400 --out sweep2_unet_96t128_w48_d2_u2_r96_e400
-scratch/mwfast/train.py MetaWorldDoorLock --net unet_96t128_w64_d3_u2 --tag r96 --epochs 400 --out sweep2_unet_96t128_w64_d3_u2_r96_e400
-scratch/mwfast/train.py MetaWorldDoorLock --net unet_128_w48_d2_u2b --tag r128 --epochs 400 --out sweep2_unet_128_w48_d2_u2b_r128_e400

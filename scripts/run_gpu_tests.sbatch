@@ -46,7 +46,7 @@ export STABLE_ENVS_HUMANOIDBENCH=1        # the family does not register by defa
 # THE interpreter, holding 191 of 196 envs. It used to be miniconda3/envs/test, whose registry held
 # 64: every test parameterised over the other 132 skipped with an individually honest reason, and the
 # run was green having never exercised two thirds of the library. Built by
-# scratch/census/build_se_all.sbatch; the recipe and the four --no-deps/--override packages it needs
+# Built by the documented extras recipe; the four --no-deps/--override packages it needs
 # are documented on the `all` extra in pyproject.toml.
 PY=/mnt/vast/home/randall.balestriero/venvs/se-all/bin/python
 

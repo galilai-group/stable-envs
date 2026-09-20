@@ -13,7 +13,7 @@
 # >=3.11, and dm_control needs a build in between, so the deps are mutually exclusive BY CONSTRUCTION
 # and the suite has to be a fan-out or it is a subset.
 #
-# The cover is scratch/census/assignment.json -- the same one the throughput census uses, so the
+# The cover is tests/fixtures/regression/census/assignment.json -- the same one the throughput census uses, so the
 # envs that were MEASURED and the envs that are TESTED are the same set by construction rather than
 # by coincidence. 7 interpreters, 196 envs, no overlap.
 #
@@ -44,7 +44,7 @@ PY=/mnt/vast/home/randall.balestriero/venvs/$VENV/bin/python
 # definition; a venv absent from the assignment is a launch error, not an empty run.
 export SE_REQUIRE_ENVS=$("$PY" - "$VENV" <<'EOF'
 import json, sys
-a = json.load(open("scratch/census/assignment.json"))
+a = json.load(open("tests/fixtures/regression/census/assignment.json"))
 if sys.argv[1] not in a:
     sys.exit(f"{sys.argv[1]} is not in the cover: {sorted(a)}")
 print(",".join(a[sys.argv[1]]))

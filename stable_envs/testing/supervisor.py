@@ -173,7 +173,7 @@ def main(argv=None) -> int:
     args = [x for x in a.pytest_args if x != "--"]
     # Default to tests/ when the caller named no target. Detected by shape rather than by "the first
     # token that is not a flag": `-k PushT` and `-m smoke` both have a bare word in them, and treating
-    # that word as a path would leave pytest collecting from the repo root — which here means scratch/
+    # that word as a path would leave pytest collecting from the repo root.
     # and examples/, hundreds of probe scripts that were never meant to be collected.
     if not any(x.endswith(".py") or "/" in x or x == "tests" for x in args):
         args = args + ["tests/"]

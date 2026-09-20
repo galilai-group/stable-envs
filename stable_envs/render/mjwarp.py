@@ -69,7 +69,7 @@ The third is a colour-resolution rule rather than a gap: **MJWarp reads a geom's
 material whenever the geom has one, and MuJoCo prefers the geom's own ``rgba`` unless that is the
 compiler default** ``(0.5, 0.5, 0.5, 1)``. ``effective_alpha`` already follows MuJoCo's rule for
 alpha; the colour has no in-place fix, because one material is generally worn by geoms of several
-colours. ``fetch.py`` and ``scratch/mujoco_locomotion/mjw_probe4_resolved.py`` both recompile with one
+colours. ``fetch.py`` and the frozen measurement record both recompile with one
 material per geom carrying the resolved colour. It is not cosmetic: uncorrected it moved the
 locomotion floor's mean luminance by 13-19/255 and it was worth interior 0.016 -> 0.939 on a
 flat-material control.
@@ -78,7 +78,7 @@ All of these are present in ``mujoco-warp`` 3.11.0, the latest release, and on `
 
 This module is deliberately independent of any env: ``prepare_model`` and ``texture_gaps`` are model
 surgery that any MuJoCo scene needs, and ``BatchRenderer`` is the integration surface from
-``scratch/backend3d/mjwarp_surface.py``. It is imported lazily; ``mujoco_warp`` is not a dependency of
+the frozen measurement record. It is imported lazily; ``mujoco_warp`` is not a dependency of
 ``stable_envs``.
 """
 
@@ -107,7 +107,7 @@ TEXTURED_OK = (0, 7)  # PLANE, MESH
 #: ``btn_metal`` material wears one 512x512 cube map on two button MESH geoms: the render dies with
 #: ``Warp CUDA error 700: an illegal memory access`` inside the warm-up frame, and detaching that
 #: ONE texture -- leaving every 2-D texture and the skybox in place -- makes the scene render
-#: (``examples/results/step7/ogb-manipulation/oscar/mjwarp/mjwarp_bisect_OGBScene.json``).
+#: (``tests/fixtures/regression/join/step7/ogb-manipulation/oscar/mjwarp/mjwarp_bisect_OGBScene.json``).
 TEXTURE_SAMPLER_OK = (0,)  # mjTEXTURE_2D
 #: OpenGL's ``GL_SPOT_CUTOFF`` accepts ``[0, 90]`` or the sentinel ``180``; anything else is
 #: ``GL_INVALID_VALUE`` and the parameter is left at its default 180, i.e. NOT a spotlight. MuJoCo's
@@ -172,7 +172,7 @@ def neutralise_illegal_spots(m) -> tuple[list[int], dict]:
     MuJoCo does neither when the cutoff is out of range, because OpenGL's ``GL_SPOT_CUTOFF`` accepts
     ``[0, 90]`` or the sentinel ``180`` and rejects everything else with ``GL_INVALID_VALUE``,
     leaving the default **180 = not a spotlight**. Measured on ``swm/OGBCube-v0``, whose one spot is
-    ``cutoff = 100°, exponent = 10`` (``examples/results/step7/ogb-manipulation/m1/``):
+    ``cutoff = 100°, exponent = 10`` (``tests/fixtures/regression/join/step7/ogb-manipulation/m1/``):
 
     ========================================  ============  ==================
     MuJoCo-side change                         frame mean    vs shipped
@@ -394,7 +394,7 @@ def bake_unsamplable_textures(m, groups=DEFAULT_GROUPS) -> dict:
 
     **Measured cost on the case that motivated it**, ``swm/OGBScene-v0``'s ``btn_metal`` cube map on
     two button meshes, MuJoCo against MuJoCo over 8 states at 200 px
-    (``examples/results/step7/ogb-manipulation/m5/q11_button_bake.json``):
+    (``tests/fixtures/regression/join/step7/ogb-manipulation/m5/q11_button_bake.json``):
 
     ====================================  =========
     quantity                                  value
@@ -413,7 +413,7 @@ def bake_unsamplable_textures(m, groups=DEFAULT_GROUPS) -> dict:
     from 3.13.0 (commit 58d8c77 / PR #1608, 2026-08-26), so on a newer pin this helper is not needed
     for that case at all. It is therefore a venv bump rather than a patch — cheaper than this helper,
     and TO BE MEASURED before it is believed, since 3.13.0 moves more than one thing. Documented in
-    ``examples/results/step7/ogb-manipulation/m5/q11_for_sami.md``; this helper is the one that lands
+    ``tests/fixtures/regression/join/step7/ogb-manipulation/m5/q11_for_sami.md``; this helper is the one that lands
     without a third-party patch.
 
     Returns the per-GEOM record a declaration needs — which geoms, which texture, what mean colour,
@@ -651,7 +651,7 @@ def create_render_context(m, tex_lod: int = 1, **kw):
 
     The frames are bit-identical (max abs diff 0 over the whole batch), which is the only reason this
     is a wrapper rather than a fork: nothing about the render changes, one array stops being rebuilt.
-    Measured in ``scratch/robocasa/probe_fastsetup.py``; the same win applies to every textured
+    Measured in the frozen measurement record; the same win applies to every textured
     MuJoCo scene, DM Control's plate bake included.
 
     Reported upstream-worthy as a one-line change; until it lands, this monkeypatches for the
@@ -741,7 +741,7 @@ def gl_rounding():
       built as ``with gl_rounding(): create_render_context(); frame()`` and then captured OUTSIDE the
       block generates a second, truncating kernel, and the graph every later render replays is that
       one — the patch reaches the warm-up frame and nothing else. Measured with
-      ``scratch/perf/rounding.py``: the captured graph agreed with a TRUNCATING direct render on
+      the frozen measurement record: the captured graph agreed with a TRUNCATING direct render on
       100.0% of channels and differed from a rounded one by exactly ``{0, -1}`` on 15.8% (Fetch),
       21.2% (Meta-World) and 63.8% (HumanoidBench) of them. Capturing inside the block costs nothing —
       the warm-up frame has already compiled and loaded that module, so the capture reuses it.

@@ -56,7 +56,7 @@ def read_state(se_env, swm_env, slots=None, target_override=None) -> np.ndarray:
     see it. Step 6 gave the env a ``visibility.target`` style leaf and
     ``swap_renderer.Renderer._variation`` uses it, so the state read here keeps the position the
     episode actually drew. The override is kept, unused by the default path, because
-    ``examples/results/step5/reacher/`` was measured under it and has to stay reproducible.
+    ``tests/fixtures/regression/join/step5/reacher/`` was measured under it and has to stay reproducible.
     """
     import mujoco
 

@@ -13,7 +13,7 @@ renderer edit is actually made on, which is where the mistake gets made.
 
 THE ORACLE IS FROZEN AND IS NOT THIS REPO'S CURRENT CODE. It is ``render_torch`` as it stood at
 ``89fa5ca8`` -- the completed Step 5 baseline, before any Step 6 renderer change -- kept in
-``scratch/step6/raster2d/fuzz_render_torch.py`` and loaded from there so there is one copy rather than
+``scripts/regression/raster2d/fuzz_render_torch.py`` and loaded from there so there is one copy rather than
 two that can drift. Checked against the git blob when it was written: the two function bodies are
 AST-identical, the only differences being the parameter's type annotation, the docstring, and
 ``_pixel_grid`` spelled through the module. Comparing the current renderer against itself would pass
@@ -36,11 +36,11 @@ from stable_envs.render import raster2d as R2
 from stable_envs.render.scene import Scene2D
 
 ROOT = Path(__file__).resolve().parents[2]
-FUZZ = ROOT / "scratch" / "step6" / "raster2d" / "fuzz_render_torch.py"
+FUZZ = ROOT / "scripts" / "regression" / "raster2d" / "fuzz_render_torch.py"
 
 
 def _oracle():
-    if not FUZZ.is_file():  # a checkout without scratch/ still runs the suite
+    if not FUZZ.is_file():  # a checkout without the raster2d fuzz oracle still runs the suite
         pytest.skip(f"{FUZZ.relative_to(ROOT)} is not in this checkout")
     spec = importlib.util.spec_from_file_location("se_fuzz_oracle", FUZZ)
     mod = importlib.util.module_from_spec(spec)

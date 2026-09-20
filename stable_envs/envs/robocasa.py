@@ -55,7 +55,7 @@ ASSERTS the round trip is bit-exact before writing anything.
 *A bare ``mujoco.Renderer`` is the official renderer, but only at geom group 1.* It defaults to groups
 0-2 and paints robosuite's ~730 collision primitives over the visual meshes. Restricted to group 1 it
 reproduces ``env.sim.render`` with max abs diff **0** on the live model
-(``scratch/robocasa/probe_visual_reference.py``, case A) — which is what lets this env carry a
+(the frozen measurement record, case A) — which is what lets this env carry a
 reference renderer at all, because ``robocasa/__init__.py`` asserts ``mujoco.__version__ == "3.3.1"``
 while ``mujoco_warp`` requires >= 3.11, so **no interpreter can hold both robocasa and MJWarp**.
 
@@ -104,13 +104,13 @@ and the disagreement is the camera, not the compositing rule: the structural mov
 measured over the pool agree exactly (nothing missing on any of the four cells). The two halves cost
 5.08 ms (static) and 7.06 ms (dynamic) against 10.86 for the fused frame at 64 worlds and 256 px, so
 paying both is **1.11x SLOWER** and the whole design rests on a cache that can never hit.
-``scratch/perf/split_static.py`` and ``scratch/perf/rc_split_diag.py``.
+the frozen measurement record and the frozen measurement record.
 
 Two further routes measured at the same time and closed by the same fact. A screen window around the
 movers DOES scale here — 0.562 of the rays for 1.56x, 0.25 for 3.01x, bit-identical to the full frame's
-crop (``scratch/perf/window_dyn.py``) — but it needs a plate for the pixels outside it. And nvdiffrast
+crop — but it needs a plate for the pixels outside it. And nvdiffrast
 reaches **1,520 f/s at batch 64** on this kitchen at 256 px and dies at 256 with an illegal memory
-access (``scratch/nvdiff/bench256.py``), i.e. 0.27x of MJWarp and 0.10x of the 15,937 f/s that 8 CPU
+access, i.e. 0.27x of MJWarp and 0.10x of the 15,937 f/s that 8 CPU
 workers reach reading these frames off disk.
 
 So the ray-cast ceiling for the room cameras is **5,700-5,900 f/s**, this env is at 97-100 % of it, and
@@ -209,7 +209,7 @@ VISIBLE_GROUPS = (1,)
 #: Worlds per MJWarp render context. The ray-cast saturates by 64 at 256 px (5,462 f/s at 32, 5,599 at
 #: 64, 5,710 at 256) and this family is bound by it, so the constant buys only the per-chunk
 #: overheads: measured end to end at 256 px / batch 1024, **64 -> 5,504 f/s, 128 -> 5,628,
-#: 256 -> 5,689**. Bit-identical at all of them (``scratch/perf/chunk_invariance.py``). A context owns
+#: 256 -> 5,689**. Bit-identical at all of them. A context owns
 #: ``nworld * H * W * 4`` bytes of output buffer plus this family's ~356 MB of textures, and four are
 #: cached, which is why this stops at 256.
 MJW_CHUNK = 256
@@ -335,8 +335,7 @@ def _context(
 
     ``backface_cull=None`` means "do not pass the flag", i.e. exactly what every render in this repo
     did before the profile existed. ``False`` turns culling off, which is measured at **0 pixels
-    changed** on all four cells and is worth a few per cent of the render rate
-    (``scratch/altrender/README.md``); it is only taken on the corrector path, because a byte-identical
+    changed** on all four cells and is worth a few per cent of the render rate; it is only taken on the corrector path, because a byte-identical
     speed-up still changes a context's identity and the declared numbers were measured without it.
     """
     import mujoco
@@ -363,8 +362,8 @@ def _context(
     # THE RENDER BLOCK IS A LAUNCH GEOMETRY, NOT ARITHMETIC: the megakernel is a plain
     # ``wp.launch(dim=(nworld, rays))``, one ray per thread, so the block size changes how the threads
     # are packed onto SMs and changes no float. Asserted rather than argued -- 32, 64 and 128 render
-    # this kitchen to max 0/255 on 0 pixels (``scratch/perf/blockdim_identity.py``). Swept in
-    # ``scratch/perf/knobs.py`` at 256 px / 64 worlds: 32 -> 10.85 ms, 64 (mujoco_warp's default) ->
+    # this kitchen to max 0/255 on 0 pixels. Swept in
+    # the frozen measurement record at 256 px / 64 worlds: 32 -> 10.85 ms, 64 (mujoco_warp's default) ->
     # 11.43, 128 -> 11.11, 256 -> 16.42, and 512 fails to launch, over the register budget. A kitchen
     # is the one family where it pays -- 5.4% -- and the other three are flat or worse at 32, which is
     # why this is set here and not in ``render/mjwarp.py``.
@@ -373,13 +372,13 @@ def _context(
     # THE CAPTURE IS INSIDE THE PATCH. ``mujoco_warp.render`` defines its megakernel inside itself, so
     # the source is regenerated per call from whatever ``pack_rgba_to_uint32`` is bound then; captured
     # outside, the graph every later render replays is the TRUNCATING kernel and this block reaches
-    # only the warm-up frame (``scratch/perf/rounding.py``).
+    # only the warm-up frame.
     #
     # ``specialised_lights`` is in the same window and is ON here. A kitchen's one light declares
     # ``castshadow=0``, so stock ``mujoco_warp`` compiles two any-hit BVH traversals -- one for the
     # light, one for the headlight -- and executes NEITHER; this deletes both. Measured at 256 px /
     # batch 1024 against stock in the same process: 5,699 -> 5,771 f/s and 13,159 -> 13,215, with the
-    # frames byte-identical over 64 states (``scratch/perf/lightspec_check.py``). 1.0-1.3% is small
+    # frames byte-identical over 64 states. 1.0-1.3% is small
     # because this family is bound by 442 k triangles rather than by registers -- it is taken because
     # it is free and exact, not because it is large.
     from ..render import mjwarp_lightspec as LS
@@ -864,7 +863,7 @@ def _live_dims(kitchen: str, camera: str, size: int) -> np.ndarray:
 #: comment there): captured outside, the graph every render replayed was the TRUNCATING kernel and the
 #: patch reached only the warm-up frame. Putting the graph back outside reproduces the OLD numbers to
 #: three decimals -- 0.1299 / 0.0498 against the 0.129 / 0.048 that were declared, and mean 6.55
-#: against the declared 6.54-6.58 (``scratch/perf/draw_spread.py --legacy``) -- which is what says the
+#: against the declared 6.54-6.58 -- which is what says the
 #: capture fix is the cause and not a harness difference. Rounding instead of truncating is worth
 #: interior-exact **0.129 -> 0.413, 0.079 -> 0.683, 0.158 -> 0.451, 0.048 -> 0.153** and only 0.1-0.4
 #: of a level on ``mean_abs``, which is exactly why the other three columns looked like they still

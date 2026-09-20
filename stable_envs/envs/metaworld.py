@@ -165,7 +165,7 @@ Setting ``seeded_rand_vec = True`` and reseeding ``np_random`` before every rese
 the env's own generator and reproduces it on **50/50**, which is what makes ``sample_states(rng=)``
 regenerate the same corpus in a fresh process.
 
-MEASURED (480 px, 64 states per task from the env's own pool, H200; ``scratch/metaworld/calibrate.py``)
+MEASURED (480 px, 64 states per task from the env's own pool, H200; the frozen measurement record)
 -------------------------------------------------------------------------------------------------------
 
 All 50 tasks, one process each:
@@ -338,14 +338,14 @@ HIDDEN_GROUP = MW.HIDDEN_GROUP
 VISIBLE_GROUPS = MW.DEFAULT_GROUPS
 #: Worlds per MJWarp render context. A context owns ``nworld * H * W * 12`` bytes, so this is the knob
 #: that bounds memory; it is NOT the knob that saturates the ray-cast, which is done by 32 worlds
-#: (``scratch/perf/prof_render.py --mode nworld``: 8,215 f/s at 32, 8,414 at 64, 8,600 at 256, 8,647 at
+#: (the frozen measurement record: 8,215 f/s at 32, 8,414 at 64, 8,600 at 256, 8,647 at
 #: 1024). What it buys instead is fewer CHUNKS: every chunk pays two device synchronisations and a
 #: pass of Python issuing the per-world writes, and at batch 1024 that was 16 of each. Measured end to
 #: end at 256 px / batch 1024: **64 -> 7,300 f/s, 128 -> 7,661, 256 -> 7,782, 512 -> 7,850**, and on
 #: Fetch 18,323 / 19,851 / 20,540 / 20,936. 256 rather than 512 because the last step is 1-2% and the
 #: buffers double: at ``supersample=2`` a 256-world context already owns 805 MB and three are cached.
 #: THE FRAME DOES NOT MOVE WITH IT, which is what makes this a free knob rather than a contract
-#: change -- ``scratch/perf/chunk_invariance.py`` renders 512 states at 64, 128, 256 and 512 and gets
+#: change -- the frozen measurement record renders 512 states at 64, 128, 256 and 512 and gets
 #: max 0/255 on 0 pixels, on Meta-World, Fetch and RoboCasa alike. (HumanoidBench is deliberately not
 #: raised: there the chunk IS the pinned world count, and a batch of 1 would launch 256 worlds.)
 MJW_CHUNK = 256
@@ -916,7 +916,7 @@ def _context(task: str, res: int, nworld: int) -> _Ctx:
         # its megakernel inside itself, so the source is regenerated per call from whatever
         # ``pack_rgba_to_uint32`` is bound then. Captured outside, the graph every later render replays
         # is the TRUNCATING kernel and this block reaches only the warm-up frame — measured at 21.2% of
-        # this family's channels one level low (``scratch/perf/rounding.py``). See ``MW.gl_rounding``.
+        # this family's channels one level low. See ``MW.gl_rounding``.
         #
         # ``specialised_lights`` IS OFF HERE, and it is off for the one reason that matters on a
         # parity family. It pays more on this scene than on any other in the repo -- three lights and
@@ -926,7 +926,7 @@ def _context(task: str, res: int, nworld: int) -> _Ctx:
         # 7,777 -> 8,422, sweep-into 8,001 -> 8,694, assembly 7,633 -> 8,249). It is bit-identical on
         # 11 of those 13 and NOT on ``window-open`` and ``window-close``, where the raw megakernel
         # differs by 1/255 on **2 of 4,194,304 pixels** -- reproducibly, on three independent jobs,
-        # against a stock-vs-stock control of 0 (``scratch/perf/lightspec_kernel.py``). The
+        # against a stock-vs-stock control of 0. The
         # segmentation buffer is identical, so it is not a different hit; it is ``fast_math``
         # reassociating the surviving light's arithmetic in a new inlining context.
         #
@@ -1410,7 +1410,7 @@ class MetaWorldBase(Env):
         # PLATES and the STYLE, and the chunk boundary is a property of the render context. Inside the
         # loop each one was paid per chunk -- a device synchronisation and a host sort for the camera,
         # a rebuild of the (G, res, res, 3) stack for the movers-off gather, and five stacks of the
-        # plates' model arrays. Measured with ``scratch/perf/prof_render.py`` at 256 px / batch 1024,
+        # plates' model arrays. Measured with the frozen measurement record at 256 px / batch 1024,
         # when the batch was still cut into sixteen chunks: 32 ms of a 162 ms render.
         campos, camquat = self._camera_batch(sty, B)
         stacked = self._plate_stacks(plates)

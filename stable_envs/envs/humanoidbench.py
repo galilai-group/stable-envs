@@ -119,7 +119,7 @@ WHERE THE FRAME'S TIME GOES, AND THE FOUR LEVERS THAT DO NOT APPLY
 
 Measured at 256 px / batch 1024 on one H200, against the **18,595-22,197 f/s** that 8 CPU workers
 reach decoding this family's own JPEG-q95 frames out of a Lance table
-(``examples/results/storage/lance.json``). The env runs at **86-87 % of its own megakernel** --
+(``tests/fixtures/regression/references/lance.json``). The env runs at **86-87 % of its own megakernel** --
 ``h1-walk`` 19,312 f/s against 22,300 for a bare ``capture_launch`` at 64 worlds,
 ``h1hand-balance_simple`` 11,275 against 14,100 -- so there is nothing outside the kernel left worth
 taking and the whole question is what the kernel costs.
@@ -130,23 +130,22 @@ three quarters of the rays cost 0.64 ms between them: **0.20 ns per ray outside 
 inside**. Every lever follows from that ratio.
 
 * **A screen window round the movers is worth at most 1.29x** -- 25 % of the rays for 1.29x, and
-  bit-identical to the full frame's crop (``scratch/perf/window_dyn.py``) -- because the window
+  bit-identical to the full frame's crop -- because the window
   contains precisely the expensive rays. Composited against a static plate it is worth 1.10x: this
   family's camera is ``TRACKCOM``, so the plate moves with the state and has to be redrawn every frame
   (0.389 ms) rather than cached.
-* **A static/dynamic split is worth 1.12x**, because 21 of the 22 visible geoms ARE the robot
-  (``scratch/perf/split_static.py``). It is the design ``fetch.py`` and ``metaworld.py`` are built on
+* **A static/dynamic split is worth 1.12x**, because 21 of the 22 visible geoms ARE the robot. It is the design ``fetch.py`` and ``metaworld.py`` are built on
   and there is nothing here for it to bake.
 * **The shadow ray is worth 1.42-1.53x and is not available.** It is 35 % of the kernel
   (``use_shadows=False``: 2.863 -> 1.870 ms) and dropping it fails the floors these classes already
-  declare, measured over 64 states against the official renderer (``scratch/perf/hb_noshadow.py``):
+  declare, measured over 64 states against the official renderer:
   ``h1-walk`` mean 2.88 -> 7.30 against a ceiling of 3.4 and SSIM 0.8425 -> 0.7453 against a floor of
   0.80; ``h1hand-balance_simple`` 5.37 -> 10.08 and 0.8601 -> 0.7626; ``h1-sit_hard`` 3.41 -> 8.15 and
   0.8614 -> 0.7710. The visual tier licenses a DIFFERENT picture, not a picture below the numbers it
   publishes.
 * **nvdiffrast is 0.16-0.22x**, measured at this operating point on these scenes rather than inferred
   from ``docs/research/nvdiffrast.md``: 3,109 f/s (h1) and 2,437 (h1hand) at batch 256, and an illegal
-  memory access that kills the interpreter at 1024 (``scratch/nvdiff/bench256.py``).
+  memory access that kills the interpreter at 1024.
 
 So the family is bound by intersecting a 295-398 k triangle articulated mesh -- 21-66 geoms with
 overlapping bounds -- once per ray that reaches it, and reading these frames back off disk is
@@ -193,11 +192,11 @@ each run. What is known about it:
   ``h1-walk``'s scene and state pool. The declaration itself is sound: **six processes on five nodes
   (008, 045, 049 twice, 054, 101) all return 2.8088 / 2.8692 / 2.8334 / 2.8596 for seeds 3 / 1 / 2 / 0**,
   inside the declared spread [2.81, 2.87], and a process that renders one seed four times returns the
-  same number four times (``scratch/perf/draw_spread.py --seeds 0,0,0,0``). So a fidelity number
+  same number four times. So a fidelity number
   measured inside a long session here is not trustworthy, not only a determinism test — which is a
   bigger claim than "2-3 tests fail by 1-2/255" and the same reason for the opt-in;
 * and it correlates with repeated env CONSTRUCTION rather than with repeated rendering, which is the
-  one new handle on it. ``scratch/perf/hb_session_drift.py`` holds ONE env and one set of states,
+  one new handle on it. the frozen measurement record holds ONE env and one set of states,
   re-renders them ten times on both sides, and builds two further cells and their reference envs
   half-way through: both sides come back bit-identical to round 0 on every round, in two independent
   processes. The run that DID drift built a fresh env per draw. Whatever this is, re-rendering does
@@ -542,7 +541,7 @@ def _context(robot: str, task: str, res: int, nworld: int) -> _Ctx:
     # MJWarp packs float->uint8 with C's ``int()``, which truncates, where the GL pipeline MuJoCo
     # renders through rounds; ``MW.gl_rounding`` corrects it and on the PARITY families it is the
     # largest single win available (Fetch interior 0.9923 -> 0.9988). Here it moves the other way.
-    # Measured on one interpreter and one state draw with ``scratch/perf/fidelity.py``, h1-walk, 64
+    # Measured on one interpreter and one state draw with the frozen measurement record, h1-walk, 64
     # states, 256 px: mean |diff| **2.860 truncating vs 3.500 rounding** against a declared ceiling of
     # 3.4, with within-8 and SSIM flat (0.9338/0.8491 vs 0.9331/0.8487).
     #
@@ -561,7 +560,7 @@ def _context(robot: str, task: str, res: int, nworld: int) -> _Ctx:
     # kernel forever. This scene has one light and a headlight; the headlight is called with a literal
     # ``lightcastshadow=False``, so stock ``mujoco_warp`` compiles two any-hit BVH traversals and runs
     # one. Deleting the dead one is worth 1.000-1.001x here and is byte-identical over 64 states on
-    # both cells measured (``scratch/perf/lightspec_check.py``): this family is bound by the robot's
+    # both cells measured: this family is bound by the robot's
     # mesh intersections, not by the register budget, so there is nothing for it to recover. It is on
     # because it is exact and free, and so that the three families share one code path.
     from ..render import mjwarp_lightspec as LS
@@ -706,7 +705,7 @@ class HumanoidBenchBase(Env):
         # HOISTED OUT OF THE CHUNK LOOP. The camera pose is a function of the style and the batch row,
         # not of the render context, so computing it per chunk bought nothing and cost sixteen device
         # synchronisations (``.cpu()`` on the style key) and sixteen host sorts per render -- 5.2 ms of
-        # a 62.7 ms batch, measured with ``scratch/perf/prof_render.py``.
+        # a 62.7 ms batch, measured with the frozen measurement record.
         campos, cammat = self._camera(sty, 0, B)
         # THE WORLD COUNT IS FIXED, NOT SIZED TO THE CHUNK, and that is a correctness requirement
         # rather than a simplification. MJWarp generates and compiles a megakernel per render
@@ -726,7 +725,7 @@ class HumanoidBenchBase(Env):
         # difference -- the previous form (``wp.synchronize`` / ``torch.cuda.synchronize`` /
         # ``wp.synchronize`` per chunk) blocked the host 32 times per render and left the GPU idle
         # while Python issued the next chunk. Measured at 256 px / batch 1024 with
-        # ``scratch/perf/prof_render.py``: 49.8 ms of a 54.5 ms render was inside ``wp.synchronize``,
+        # the frozen measurement record: 49.8 ms of a 54.5 ms render was inside ``wp.synchronize``,
         # against 46.4 ms of actual kernel.
         #
         # It is safe for exactly the reason the syncs were: the hazard is a previous launch still
@@ -775,7 +774,7 @@ class HumanoidBenchBase(Env):
         the requested states alone.
 
         NECESSARY BUT NOT SUFFICIENT, and the residue is now measured rather than suspected.
-        ``scratch/perf/worldslot.py`` fills EVERY world of one launch with the IDENTICAL ``qpos`` --
+        the frozen measurement record fills EVERY world of one launch with the IDENTICAL ``qpos`` --
         no tail, no padding, nothing left over from a previous call -- and compares each world against
         world 0. Seven cells give 0/255 on every pixel; ``h1-balance_simple`` gives **2 pixels at
         1/255, in slots 21 and 42 of 64**. Meta-World and Fetch give 0 on the same probe. So a frame

@@ -73,7 +73,7 @@ class DMControlSuite(_DMCModel):
     #:
     #: ``supersample=2`` remains available per call and per instance for a caller who wants the
     #: smaller worst-pixel; it is the same kwarg it always was and it is not deprecated. See
-    #: ``scratch/msaa/`` for the 615-draw survey, the throughput table and the conformance diff.
+    #: the frozen measurement record for the 615-draw survey, the throughput table and the conformance diff.
     default_supersample = 1
     #: Rays cast in one pass, so a large batch bounds its own memory. Every quantity here is
     #: (B, H*W*ss^2, 3) float32, and the arithmetic is per-ray, so chunking changes nothing about the
@@ -255,7 +255,7 @@ class DMControlSuite(_DMCModel):
         # it needed a way IN. Zeroing the element's own alpha rather than its MATERIAL's is the finer
         # of the two instruments and measurably matters: on finger-turn the ``target`` material is worn
         # by both the ``target`` and ``tip`` sites, so a material-alpha knob hides 58 px where the
-        # element knob hides 43 (84 px, scratch/step6/reacher-correctness/probe_hide.py). On reacher
+        # element knob hides 43 (84 px). On reacher
         # the target geom is the material's only wearer and the two coincide exactly, which is what
         # makes this a faithful reading of stable_worldmodel's ``render_target = 0``.
         for kind, name, eids in self._hideable():
@@ -370,7 +370,7 @@ class DMControlSuite(_DMCModel):
             # one mover that cannot be hidden by a geom group because it is not a geom. Measured:
             # ball_in_cup's plate varies by 97/255 over 0.78% of the frame with every moving geom and
             # site hidden, and by 0/255 once mjVIS_TENDON goes off as well
-            # (``scratch/dmcontrol/probe_widen.py``). That 97/255 is the whole of what
+            # . That 97/255 is the whole of what
             # ``docs/research/dmcontrol.md`` S8 recorded as this domain's blocker.
             opt.flags[int(mujoco.mjtVisFlag.mjVIS_TENDON)] = 0
 
@@ -971,7 +971,7 @@ class DMControlSuite(_DMCModel):
     #: The ladder runs past 2 on purpose. ``ball_in_cup``'s movers span 44x50 of an 84px frame -- 31% of
     #: it, and 1.03% actually covered -- so a half-frame window misses by eight pixels in y and the
     #: environment fell all the way back to full-frame casting. Measured with
-    #: ``scratch/census/bbox_probe.py``, which also confirms the per-primitive bound is correct: 0 of 36
+    #: the frozen measurement record, which also confirms the per-primitive bound is correct: 0 of 36
     #: primitives draw outside the box projected for them.
     MOVER_TILES = (8, 6, 4, 3, 2, 1.5, 1.25)
 

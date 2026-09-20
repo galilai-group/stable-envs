@@ -19,7 +19,7 @@ Both produce a plausible raster. Only one of them is a constant of the family:
   is the kind of dependency that ``import cairosvg`` does NOT reveal: the import succeeds either way.
 * ``resvg_py`` is a self-contained Rust wheel (tiny-skia) with no system library lookup. It rasterized
   identically on two calls in one process and across two independent processes (sha256 of the PNG,
-  all 5 games, ``scratch/pgx/probe3_constants.py``), and its output honours the SVG's declared canvas
+  all 5 games, the frozen measurement record), and its output honours the SVG's declared canvas
   EXACTLY at every scale tried -- 0.5x, 1x, 2x all landed on the integer pixel count with no
   resampling, which is what lets ``reference_render`` answer at an arbitrary size.
 
@@ -29,7 +29,7 @@ this module rather than a reference-only extra -- because it also bakes the plat
 THE TEXT SPLIT, WHICH IS WHY THIS FAMILY IS 4 IDS AND NOT 20
 --------------------------------------------------------------
 
-PGX has 20 env ids. A census of the emitted documents (``scratch/pgx/probe1_svg_census.py``) splits
+PGX has 20 env ids. A census of the emitted documents splits
 them cleanly by whether the drawing contains ``<text>``:
 
 ===================  ======  =========================================================
@@ -44,8 +44,8 @@ text and/or image       14    chess, shogi, animal_shogi, gardner_chess, backgam
 The obvious objection to dropping 14 ids is that a font can simply be PINNED -- name the reference as
 "resvg plus this one font file" and the decoder is a constant of the family again, exactly as naming
 resvg made the rasterizer one. That was tested rather than argued, and it fails, for a sharper reason
-than the one it was expected to fail for (``scratch/pgx/probe11_fonts.py``,
-``scratch/pgx/probe12_textcheck.py``):
+than the one it was expected to fail for (the frozen measurement record,
+the frozen measurement record):
 
 **resvg draws no text at all here.** A minimal document containing one ``<text>`` element rasterizes
 to ZERO non-white pixels under the default configuration, under ``skip_system_fonts=True``, and under
@@ -145,7 +145,7 @@ caps would extend each of the four arms by 1.5 px past its endpoint. The marks a
 rectangles for that reason. It is also visible in PGX's own drawing, which paints little r=0.84 discs
 at the grid-line endpoints -- a workaround for butt caps that would be double-counted under round ones.
 
-MEASURED (native size, 16 states from the env's own play pool, H200; ``scratch/pgx/probe5_parity.py``)
+MEASURED (native size, 16 states from the env's own play pool, H200; the frozen measurement record)
 -------------------------------------------------------------------------------------------------------
 
 =================  =====  =========  ==============  =========  ========  =========  ==========
@@ -419,7 +419,7 @@ def _bundle(game: str) -> _Bundle:
 
 
 #: One entry per registered game. Every number here was read off the emitted document
-#: (``scratch/pgx/probe2_primitives.py``), not off ``pgx/_src/dwg/*.py``.
+#:, not off ``pgx/_src/dwg/*.py``.
 #:
 #:   cells/ncols/nrows  the board, in the env's own index order (index = row * ncols + col)
 #:   grid               GRID_SIZE, and also the lattice pitch: mark centre = (index + 1) * grid
@@ -497,9 +497,9 @@ def _drawn_board(game: str, st) -> np.ndarray:
 
     go clips chain ids to the sign; othello flips by whose turn it is. Both transformations are read
     out of ``pgx/_src/dwg/`` and both are verified against the emitted document rather than against
-    that source: ``scratch/pgx/probe2_primitives.py`` dumps every drawable PGX actually emits, in
+    that source: the frozen measurement record dumps every drawable PGX actually emits, in
     document order with its resolved attributes, so the stones the reference drew can be counted and
-    placed, and ``scratch/pgx/probe3_constants.py`` (section 2) establishes the other half — that an
+    placed, and the frozen measurement record (section 2) establishes the other half — that an
     arbitrary board array can be written back into a ``State`` and read out again by the renderer,
     which is what makes the comparison a comparison of one scene.
     """
@@ -907,7 +907,7 @@ class PgxBoardBase(Env):
         # the true covered area is 0.843 -- the two layers overlap on [r-w/2, r] and src-over
         # double-counts it. Splitting at r-w/2 makes the two coverages sum to cov(disc(r+w/2)), i.e.
         # exactly the union, so a black stone with a black stroke comes out as one disc. Measured on
-        # the isolated stone of scratch/pgx/probe7_onestone.py: 19 -> 30 against a reference of 26,
+        # an isolated stone: 19 -> 30 against a reference of 26,
         # against a true-area prediction of 30.
         inner = disc_cov(r - half)
         outer = disc_cov(r + half)
@@ -1021,7 +1021,7 @@ class PgxBoardBase(Env):
 #: effective radius in tiny-skia's stroker, which is its rasterizer's own rule and not a constant this
 #: repo can measure its way to.
 #:
-#: The class is still constructed, so ``scratch/pgx/`` can reproduce every number above; it just does
+#: The class is still constructed, so the frozen measurement record can reproduce every number above; it just does
 #: not enter ``REGISTRY``. See docs/research/pgx.md.
 NOT_REGISTERED = {
     "go_19x19": "all-pixel 0.8876 < the suite's shared ALL_EXACT_MIN of 0.90; interior is 1.0",

@@ -11,7 +11,7 @@ package and an env that is absent because it CANNOT be installed alongside the o
 facts, and only the second one is allowed to be quiet.
 
 ``EXCLUDED`` is that second list. It is deliberately hard to add to: an entry needs a reason naming
-the mechanism, and ``tests/certification/test_declarations.py`` asserts every entry has one. Being on it does
+the mechanism, and ``tests/regression/test_declarations.py`` asserts every entry has one. Being on it does
 NOT remove an env from the library — the module, its parity numbers and its docs all stay, and the env
 registers normally in an interpreter that can install it.
 """
@@ -56,7 +56,14 @@ if __name__ == "__main__":  # the launcher's way in: no imports, no GPU, one lin
     import sys
 
     cover = json.loads(
-        (pathlib.Path(__file__).resolve().parents[2] / "scratch" / "census" / "assignment.json").read_text()
+        (
+            pathlib.Path(__file__).resolve().parents[2]
+            / "tests"
+            / "fixtures"
+            / "regression"
+            / "census"
+            / "assignment.json"
+        ).read_text()
     )
     print(",".join(gate_envs({e for es in cover.values() for e in es})))
     sys.exit(0)

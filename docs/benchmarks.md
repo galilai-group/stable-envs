@@ -36,10 +36,10 @@ taken with `examples/bench_gpu_vs_cpu.py`, `examples/bench_vs_decode.py` and
 
 The PushT sections on this page were produced by
 [`examples/bench_gpu_vs_cpu.py`](https://github.com/galilai-group/stable-envs/blob/main/examples/bench_gpu_vs_cpu.py)
-on one NVIDIA H200 with an Intel Xeon Platinum 8558 (16 cores visible to the job), torch 2.11.0+cu130, triton 3.6.0 — and re-measured unchanged on torch 2.13.0+cu130 / triton 3.7.1 (geomean 1.003x over 12 cells, `scratch/census/triton_ab.sbatch`), at PushT's own `default_supersample` of 1. Raw output, including the host load average
+on one NVIDIA H200 with an Intel Xeon Platinum 8558 (16 cores visible to the job), torch 2.11.0+cu130, triton 3.6.0 — and re-measured unchanged on torch 2.13.0+cu130 / triton 3.7.1 (geomean 1.003x over 12 cells), at PushT's own `default_supersample` of 1. Raw output, including the host load average
 around the sweep:
-[`examples/results/bench_gpu_vs_cpu.json`](https://github.com/galilai-group/stable-envs/blob/main/examples/results/bench_gpu_vs_cpu.json)
-and [`.md`](https://github.com/galilai-group/stable-envs/blob/main/examples/results/bench_gpu_vs_cpu.md).
+[`tests/fixtures/regression/references/bench_gpu_vs_cpu.json`](https://github.com/galilai-group/stable-envs/blob/main/tests/fixtures/regression/references/bench_gpu_vs_cpu.json)
+and [`examples/results/bench_gpu_vs_cpu.md`](https://github.com/galilai-group/stable-envs/blob/main/examples/results/bench_gpu_vs_cpu.md).
 The registry-wide table further down is a separate sweep and says so where it starts.
 
 `--ss` now defaults to `native` in `examples/bench_gpu_vs_cpu.py`, `examples/bench_vs_decode.py` and
@@ -177,7 +177,7 @@ of replacing the file, so a sweep can resume where the last allocation stopped).
 
 The registry is **196 environments in 24 families** at the last census (2026-08-11). No single
 interpreter can import every family, so the census is the union over 15 of them and the widest single one
-holds 147; `scratch/census/union.json` is the source. `LunarLander` and `Sokoban`, which an earlier sweep
+holds 147; `tests/fixtures/regression/census/union.json` is the source. `LunarLander` and `Sokoban`, which an earlier sweep
 could not construct, both ship.
 
 The table below is the `## By family` table of
@@ -195,7 +195,7 @@ JPEG q90, already in memory. **cores replaced** is ours / stored.
     — 123x and 58x. The ray-cast families move by less at that resolution. Current per-family ratios,
     against eight worker processes batch-decoding JPEG-in-Lance rather than against one core, are
     regenerated from the storage sweep into `examples/paper/tables/family.tex`. To refresh the table
-    below, re-run `examples/bench_vs_decode.py` per tag and then `scratch/census/merge_bench.py`.
+    below, re-run `examples/bench_vs_decode.py` per tag and then regenerate the union table.
 
 | family | envs | frame | default f/s ¹ | ours f/s ¹ | stored f/s/core | **cores replaced** |
 |---|---|---|---|---|---|---|

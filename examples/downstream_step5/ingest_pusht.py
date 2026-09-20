@@ -12,7 +12,7 @@ at the SAME start steps with the same goal offset, budget, checkpoint and planne
 whole basis for using McNemar at all; if it does not hold, the discordant counts are comparing
 different tasks and the interval around them means nothing.
 
-    python examples/downstream_step5/ingest_pusht.py --out examples/results/step5/pusht
+    python examples/downstream_step5/ingest_pusht.py --out tests/fixtures/regression/join/step5/pusht
 """
 
 from __future__ import annotations
@@ -123,7 +123,9 @@ def series(rows: list[dict], arm: str, seeds: list[int] | None = None) -> tuple[
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--results", type=Path, default=RESULTS, help="raw lewm_pusht run JSONs")
-    ap.add_argument("--out", type=Path, default=ROOT / "examples" / "results" / "step5" / "pusht")
+    ap.add_argument(
+        "--out", type=Path, default=ROOT / "tests" / "fixtures" / "regression" / "join" / "step5" / "pusht"
+    )
     args = ap.parse_args()
 
     import sys

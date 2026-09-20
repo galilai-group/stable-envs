@@ -35,7 +35,7 @@ exists instead of a generalisation of :mod:`stable_envs.envs.craftax`:
 
 Parity: measured on 64 sampled states at 10 px and 16 px over the whole observation and over all
 five cost bands. **100% of all pixels exact, max abs diff 0** against the **un-jitted** reference.
-See ``examples/results/step7/craftax-full/findings.md``.
+See ``tests/fixtures/regression/join/step7/craftax-full/findings.md``.
 
 **One ULP, and it decides the parity number.** craftax normalises the night vignette as
 ``ntx / ntx.max()`` under jax, and XLA lowers a float32 divide by a scalar as a **reciprocal
@@ -229,7 +229,7 @@ def _tent_np(x):
 
 
 #: The values craftax's own light maps take, measured over every level of four generated worlds
-#: (``examples/results/step7/craftax-full/phase0/chain.json``: 23 distinct values, min 0.0, max 1.0).
+#: (``tests/fixtures/regression/join/step7/craftax-full/phase0/chain.json``: 23 distinct values, min 0.0, max 1.0).
 #: Used only by ``sample_states``, so a drawn dark tile looks like a tile the simulator produces
 #: rather than like a uniform draw.
 LIGHT_MAP_ALPHABET = np.array(
@@ -840,7 +840,7 @@ class CraftaxFull(Env):
     :meth:`sample_states` never produces such a row and
     ``tests/unit/test_craftax_full.py::test_a_window_carrying_more_projectiles_than_the_simulator_can_hold_is_not_representable``
     asserts both halves. The boundary pool keeps one such row deliberately, scored apart
-    (``examples/results/step7/craftax-full/certify/boundary_pool.json``).
+    (``tests/fixtures/regression/join/step7/craftax-full/certify/boundary_pool.json``).
     """
 
     name = "craftax-full"
@@ -874,7 +874,7 @@ class CraftaxFull(Env):
     #: ``CraftaxClassic.SWM_WRAPPER_GATE_F`` for the mechanism (jit fuses float32 arithmetic
     #: differently and disagrees with its own un-jitted self by up to 1.5e-05, which a sleeping or
     #: lit row can turn into a uint8 rounding flip); the same identity-recheck evidence
-    #: (``examples/results/step8/semantic/identity_recheck.json``) establishes the un-jitted
+    #: (``tests/fixtures/regression/join/step8/semantic/identity_recheck.json``) establishes the un-jitted
     #: byte-identity this class certifies, and the same bounded (<=1 uint8 step) gap applies to a
     #: live SWM caller of this cell.
     SWM_WRAPPER_GATE_F = {
@@ -941,7 +941,7 @@ class CraftaxFull(Env):
         "is drawn at the frame's own resolution",
         "scope_note": "broader than CraftaxClassic.resolution_consistency_applicability, which marks "
         "only light_level < 0.5 inapplicable and keeps the frozen bound above it",
-        "evidence": "examples/results/step7/craftax-full/phase0/resolution_and_dead_dims.json",
+        "evidence": "tests/fixtures/regression/join/step7/craftax-full/phase0/resolution_and_dead_dims.json",
         "measured_against": "craftax 1.6.1 un-jitted, jax 0.11.1, jax_threefry_partitionable=True",
         "still_required": "exact parity against the official renderer at 10 px and at 16 px",
     }
@@ -987,8 +987,8 @@ class CraftaxFull(Env):
     #: different references on purpose, because the jitted renderer disagrees with itself in uint8
     #: and the un-jitted one is not what anybody runs.
     #:
-    #: Both rungs come from the repo's own classifier (``scratch/step3/certify.py:classify``) walked
-    #: over the frozen ladder in ``scratch/certification.json``, not from reading the thresholds by
+    #: Both rungs come from the repo's own classifier (``scripts/regression/semantic/certify.py:classify``) walked
+    #: over the frozen ladder in ``tests/fixtures/regression/fidelity/certification.json``, not from reading the thresholds by
     #: hand.
     performance_record_cpu = {
         "tier": "CPU_FASTER",

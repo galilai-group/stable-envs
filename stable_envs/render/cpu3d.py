@@ -18,7 +18,7 @@ are certified under is the visual-tier declaration measured on MJWarp's frames; 
 mipmapped floor would be a *different* picture from the one the declaration describes.
 
 What makes it a CPU design rather than a port (measured in
-``examples/results/step6/cpu-3d/design.md``):
+``tests/fixtures/regression/join/step6/cpu-3d/design.md``):
 
 * **The camera translates and never rotates** (``mode="trackcom"``), so the ray-direction grid is a
   constant per (orientation, resolution) and the SKYBOX is a constant image in camera space —
@@ -42,7 +42,7 @@ unrolled for the reason ``raycast3d._mv`` gives, so the frame is batch-size, ord
 invariant by construction. Bit-exactness against MJWarp is NOT claimed and is not achievable by a
 different renderer (CUDA's 9-bit texture-filter weights, ``fast_math``, ``powf``); what is claimed is
 the same picture to within a level on the overwhelming majority of pixels, and it is measured on the
-frozen states rather than assumed (``examples/results/step6/cpu-3d/``).
+frozen states rather than assumed (``tests/fixtures/regression/join/step6/cpu-3d/``).
 
 The module knows nothing about environments: it takes a compiled ``MjModel`` plus a camera id to build
 a ``Scene``, and per-frame poses (from MuJoCo's own ``mj_kinematics``/``mj_comPos``/``mj_camlight``)
@@ -97,7 +97,7 @@ MJ_MINVAL = 1e-15
 #: graph OUTSIDE that block, so the frames the four trackcom cells are certified on -- the frozen
 #: Step-4 digests and the declared visual-tier numbers -- are the truncating kernel's. The CPU
 #: backend follows the frames as certified: ``"trunc"`` by default, ``"round"`` available. Measured
-#: on the frozen states (examples/results/step6/cpu-3d/m1_local*): rounding leaves 83-91 % of floor
+#: on the frozen states (tests/fixtures/regression/join/step6/cpu-3d/m1_local*): rounding leaves 83-91 % of floor
 #: and body pixels exactly one level ABOVE MJWarp's; truncating removes that offset.
 QUANT = "trunc"
 

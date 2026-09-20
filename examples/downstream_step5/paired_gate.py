@@ -10,11 +10,11 @@ the renderer is reported as a discrepancy, and a discrepancy in the checkpoint o
 fatal: the paired test would then be attributing a model difference to the pixels.
 
 **Then compute the gate.** ``step5_stats.gate_h`` applies the frozen ``downstream`` policy from
-``scratch/certification.json`` -- margin, CI formula, control thresholds and power guard all come
+``tests/fixtures/regression/fidelity/certification.json`` -- margin, CI formula, control thresholds and power guard all come
 from there.
 
-    python examples/downstream_step5/paired_gate.py --runs examples/results/step5/reacher/runs \
-        --out examples/results/step5/reacher
+    python examples/downstream_step5/paired_gate.py --runs tests/fixtures/regression/join/step5/reacher/runs \
+        --out tests/fixtures/regression/join/step5/reacher
 """
 
 from __future__ import annotations

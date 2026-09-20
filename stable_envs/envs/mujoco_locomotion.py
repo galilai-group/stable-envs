@@ -21,8 +21,7 @@ as body positions rather than as the slide coordinates ``qpos`` holds. Either wa
 neither a superset nor a subset of the render state, and ``state_names`` below names the ``qpos``
 entries, read off the compiled model's joint layout rather than transcribed.
 
-That ``qpos`` is the WHOLE render state is measured, not assumed (``scratch/mujoco_locomotion/
-probe_state.py``, all ten Gymnasium MuJoCo envs at 128 px, 8 states each): re-rendering the same
+That ``qpos`` is the WHOLE render state is measured, not assumed (the frozen measurement record, all ten Gymnasium MuJoCo envs at 128 px, 8 states each): re-rendering the same
 ``qpos`` changes 0 pixels, drawing ``qvel`` from ``U[-100, 100]`` instead of zero changes 0 pixels,
 and reaching the same ``qpos`` from the reverse rollout changes 0 pixels. Every ``qpos`` entry moves
 pixels. The compact state is 2-24 floats across the ten, 2-11 for the four that ship here, against
@@ -183,7 +182,7 @@ DEFAULT_SPECULAR, DEFAULT_SHININESS = 0.5, 0.5
 #: incidence — the one surface where MuJoCo's per-vertex shading and a per-pixel evaluation coincide
 #: by construction. The lighting there is identical to the lighting here (headlight ambient .1 /
 #: diffuse .4 / specular .5, material specular .5), which is why the number transfers; it is checked
-#: rather than trusted by ``scratch/mujoco_locomotion/calibrate.py``, which scores 1.0 and 0.988 on
+#: rather than trusted by the frozen measurement record, which scores 1.0 and 0.988 on
 #: mover-interior pixels for each of the four envs.
 SPECULAR_SCALE = 0.988
 
@@ -536,7 +535,7 @@ class _GymMujocoFamily(Env):
         env renders the frames being compared against them.
 
         MEASURED, and the shape of the result is why the line is here rather than in a comment
-        (``scratch/mujoco_locomotion/probe_context.py``, four envs at 240 px, same env, same state,
+        (the frozen measurement record, four envs at 240 px, same env, same state,
         rendered before and after an interloper):
 
           * a plain ``mujoco.Renderer``: 0/255.
@@ -649,7 +648,7 @@ class GymMujoco(_GymMujocoFamily):
     #: which is the largest supersample win in the registry because these cells cast over a 240 px
     #: frame where the movers cover a couple of percent of it.
     #:
-    #: ``supersample=2`` remains available per call and per instance. See ``scratch/msaa/``.
+    #: ``supersample=2`` remains available per call and per instance. See the frozen measurement record.
     default_supersample = 1
     #: Rays cast in one pass, so a large batch bounds its own memory rather than the caller's. Every
     #: quantity is (B, H*W*ss^2, ...) float32 and the arithmetic is per-ray, so chunking cannot change
@@ -1567,11 +1566,11 @@ def _camera_pose(pos: np.ndarray, mat: np.ndarray, offset: np.ndarray, pan: np.n
 #: floor, and 256 texels over the ~4 m box the movers occupy is 1.6 cm — the same order, which is
 #: what decides whether the shadow's EDGE is a pixel out. Its interior, which is where the error
 #: lives, is exact at any resolution. Measured against 512 in
-#: ``scratch/mujoco_locomotion/nvd_probe3_shadow.py`` rather than assumed.
+#: the frozen measurement record rather than assumed.
 NVD_SHADOW_RES = 256
 #: How far along the surface normal a receiver is pushed before it looks itself up, in TEXELS of the
 #: shadow map, and a small constant depth slack in metres on top. Both are swept rather than chosen
-#: (``scratch/mujoco_locomotion/nvd_probe6_shadowbias.py``): too little and a curved surface shadows
+#:: too little and a curved surface shadows
 #: itself in stripes, too much and the shadow pulls away from the object casting it.
 NVD_SHADOW_OFFSET_TEXELS = 1.0
 NVD_SHADOW_DEPTH_BIAS = 0.002
@@ -1787,7 +1786,7 @@ class GymMujocoVisual(_GymMujocoFamily):
     #: Draw the shadow-casting light's shadow map. A class attribute rather than a constructor
     #: argument because the declared ``visual_fidelity`` is measured WITH it, so an instance that
     #: turned it off would be an env whose numbers do not describe it; the ablation that measured what
-    #: it is worth (``scratch/mujoco_locomotion/nvd_probe3_shadow.py``) subclasses to flip it.
+    #: it is worth subclasses to flip it.
     SHADOWS = True
     fidelity_tier = "visual"
     parity_interior_min = None
@@ -1969,7 +1968,7 @@ class GymMujocoVisual(_GymMujocoFamily):
         was last computed and the picture would be the right scene from the wrong place. ``mj_comPos``
         supplies it. That the three-call sequence reproduces ``mj_forward`` EXACTLY — 0.0 on geom
         poses and on the camera, all six envs, 16 states — is measured in
-        ``scratch/mujoco_locomotion/nvd_probe1_facts.py``, and it is worth doing because it skips the
+        the frozen measurement record, and it is worth doing because it skips the
         whole dynamics pipeline for a quantity that is pure kinematics.
 
         The camera is written into a preallocated row rather than appended, because ``d.cam_xpos[i]``

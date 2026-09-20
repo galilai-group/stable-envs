@@ -301,7 +301,7 @@ _FLOOR_MAPPED = (
     "GL context, which needs no recompile and no second render context. VERIFIED byte-for-byte, not "
     "argued: over all twelve parity cells, three probe colours and eight states at 84 px, the "
     "substituted ``tex_data`` and the rendered frames are IDENTICAL to a full recompile of the suite "
-    "at the same floor.color (examples/results/step8/capability/bake_vs_recompile_probe{0,1,2}.json). "
+    "at the same floor.color (tests/fixtures/regression/join/step8/capability/bake_vs_recompile_probe{0,1,2}.json). "
     "The suite's markrgb equals its rgb2, so the 1,196 edge-mark texels are separated positionally "
     "and left alone exactly as swm's recompile leaves them."
 )

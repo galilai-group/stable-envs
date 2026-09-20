@@ -1,0 +1,94 @@
+{
+  "env": "CraftaxClassic",
+  "device": "cpu",
+  "evaluator": "scratch/step3/certify.py:classify",
+  "spec": "scratch/certification.json (frozen in Step 2, not read by this file)",
+  "before": {
+    "env": "CraftaxClassic",
+    "device": "cpu",
+    "backend_class": "R",
+    "backends": [],
+    "projected_to": [
+      "swm/CraftaxClassicPixels-v1"
+    ],
+    "host": "node2333.oscar.ccv.brown.edu",
+    "device_name": null,
+    "threads": 1,
+    "qualifiers": [
+      "NO_REFERENCE",
+      "BELOW_G4"
+    ],
+    "evidence": {
+      "best_batch": 16,
+      "se_fps": 2527.980034985862,
+      "official_cpu_fps": null,
+      "decode_fps_per_core": 4817.785063107621,
+      "shape": "112x144",
+      "supersample": 1,
+      "size": 16,
+      "max_cpu_frac": 0.9950019946968018,
+      "cores": 0.5247183097361418
+    },
+    "why": "no official renderer measured here",
+    "tier": "CPU_REGRESSION",
+    "shard": "/oscar/scratch/sboughan/se6/tilemap/examples/results/step6/tilemap/sweep/cpu_before_final.json",
+    "per_batch_fps": {
+      "1": 579.681554136056,
+      "16": 2527.980034985862,
+      "64": 1582.613047058132,
+      "256": 879.1264606497691,
+      "1024": 781.12424727131
+    }
+  },
+  "after": {
+    "env": "CraftaxClassic",
+    "device": "cpu",
+    "backend_class": "R",
+    "backends": [],
+    "projected_to": [
+      "swm/CraftaxClassicPixels-v1"
+    ],
+    "host": "node2333.oscar.ccv.brown.edu",
+    "device_name": null,
+    "threads": 1,
+    "qualifiers": [
+      "NO_REFERENCE"
+    ],
+    "evidence": {
+      "best_batch": 256,
+      "se_fps": 154085.7629590432,
+      "official_cpu_fps": null,
+      "decode_fps_per_core": 5533.504699327608,
+      "shape": "112x144",
+      "supersample": 1,
+      "size": 16,
+      "max_cpu_frac": 0.9955584307935427,
+      "cores": 27.845962248440234
+    },
+    "why": "no official renderer measured here",
+    "tier": "CPU_EXCEPTIONAL",
+    "shard": "/oscar/scratch/sboughan/se6/tilemap/examples/results/step6/tilemap/sweep/cpu_after_final.json",
+    "per_batch_fps": {
+      "1": 3486.6728493680916,
+      "16": 38914.96897651493,
+      "64": 99768.69041853226,
+      "256": 154085.7629590432,
+      "1024": 146631.50229833613
+    }
+  },
+  "delta": {
+    "tier": [
+      "CPU_REGRESSION",
+      "CPU_EXCEPTIONAL"
+    ],
+    "qualifiers": [
+      [
+        "NO_REFERENCE",
+        "BELOW_G4"
+      ],
+      [
+        "NO_REFERENCE"
+      ]
+    ]
+  }
+}

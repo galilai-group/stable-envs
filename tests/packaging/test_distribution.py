@@ -16,7 +16,7 @@ yaml = pytest.importorskip("yaml")
 
 EXPECTED_AUTHORS = ["Randall Balestriero", "Sami BuGhanem"]
 WORKFLOWS = (
-    "certification.yml",
+    "regression.yml",
     "docs.yml",
     "pre-commit.yml",
     "release.yml",
@@ -106,8 +106,8 @@ def test_docs_deploy_only_on_main_push() -> None:
     assert "github.event_name == 'push'" in str(deploy["if"])
 
 
-def test_certification_is_manual_and_profiled() -> None:
-    data = _workflow("certification.yml")
+def test_regression_is_manual_and_profiled() -> None:
+    data = _workflow("regression.yml")
     assert list(data["on"]) == ["workflow_dispatch"]
     assert "cpu" in data["jobs"] and "gpu" in data["jobs"]
     gpu = data["jobs"]["gpu"]

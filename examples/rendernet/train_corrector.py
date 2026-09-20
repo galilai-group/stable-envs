@@ -56,7 +56,7 @@ import stable_envs as se
 from stable_envs.render import rendernet as RN
 from stable_envs.testing import conformance as C
 
-#: The recommended configuration per family, measured in ``scratch/altrender/rendernet/README.md``.
+#: The recommended configuration per family, measured in the render-corrector study.
 #: A RoboCasa room camera gives away resolution almost for free once a corrector exists (256 -> 112 px
 #: costs 0.08/255 held out) and texture LOD 2 buys the throughput that makes the whole thing worth
 #: doing; HumanoidBench's floor is already a single dominant texel, so its LOD lever is inert.

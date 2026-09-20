@@ -17,7 +17,7 @@ The third row measures how far the OFFICIAL arm's own live frames have drifted f
 ones -- a mismatch inside the baseline that has nothing to do with us. The fourth says whether
 turning the knob back on reproduces the corpus, which is what would identify how it was recorded.
 
-    python examples/downstream_step5/reacher/corpus_probe.py --n 32 --out examples/results/step5/reacher
+    python examples/downstream_step5/reacher/corpus_probe.py --n 32 --out tests/fixtures/regression/join/step5/reacher
 """
 
 from __future__ import annotations
@@ -61,7 +61,9 @@ def main() -> None:
     ap.add_argument("--size", type=int, default=224)
     ap.add_argument("--task", default="qpos_match")
     ap.add_argument("--device", default="cuda")
-    ap.add_argument("--out", type=Path, default=ROOT / "examples" / "results" / "step5" / "reacher")
+    ap.add_argument(
+        "--out", type=Path, default=ROOT / "tests" / "fixtures" / "regression" / "join" / "step5" / "reacher"
+    )
     args = ap.parse_args()
 
     os.environ.setdefault("MUJOCO_GL", "egl")

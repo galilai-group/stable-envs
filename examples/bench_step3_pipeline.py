@@ -21,7 +21,7 @@ The H200 figures those docstrings quote, PushT at B=1024, states only: 2.774 ms 
 BatchSampler, 2.907 collate_batched, 5.637 per-item. This script re-measures them on the project's own
 hardware and adds the render and transfer terms beside them.
 
-    python examples/bench_step3_pipeline.py --device cuda --out examples/results/step3/pipeline/3090.json
+    python examples/bench_step3_pipeline.py --device cuda --out tests/fixtures/regression/join/step3/pipeline/3090.json
 """
 
 from __future__ import annotations

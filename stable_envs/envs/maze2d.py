@@ -8,7 +8,7 @@ reference. The picture is the same: a green ball in a top-lit maze of brown boxe
 floor, with a translucent red ball marking the goal.
 
 **The state is four numbers**: the ball's two slide joints and the goal's ``(x, y)``. Measured, not
-asserted (``scratch/maze2d/probe.py``): reaching the same ``(qpos, goal)`` through a different history
+asserted: reaching the same ``(qpos, goal)`` through a different history
 changes **0 pixels**; scaling ``qvel`` by 100 changes **0 pixels**; a FRESH env instance driven to the
 same state changes **0 pixels**. So 16 bytes of float32 stand against a 150,528-byte 224x224 frame —
 **9,408x** — the same ratio OGBench's pointmaze reports, which is not a coincidence: it is the same
@@ -76,8 +76,7 @@ two implementations to compare, and both are recorded at the function that works
 Parity, and where the residual lives
 ------------------------------------
 
-Measured over 4 scenes x 32 states at 224 px against the official renderer
-(``scratch/maze2d/parity.py``): **99.49-99.77% of all pixels exact, mean |diff| 0.013-0.023/255**, and
+Measured over 4 scenes x 32 states at 224 px against the official renderer: **99.49-99.77% of all pixels exact, mean |diff| 0.013-0.023/255**, and
 **interior agreement 1.000000 on every scene**, so nothing is relaxed. The two spheres cover
 0.25-0.57% of the frame; the plate carries the rest and is **99.997% bit-identical**. Rendering the
 ball on top of its own goal — the state that exercises the occlusion fallback — is 99.67-99.82% exact.

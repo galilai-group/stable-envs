@@ -245,7 +245,7 @@ def _classic_prepare(seed: int, extreme: bool):
 
             npz = (
                 pathlib.Path(__file__).resolve().parents[2]
-                / "examples/results/step4/states"
+                / "tests/fixtures/regression/join/step4/states"
                 / f"{type(env).__name__}.npz"
             )
             if npz.is_file():

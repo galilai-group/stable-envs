@@ -362,7 +362,7 @@ def _episode_slots(env, m) -> tuple[tuple[str, int], ...]:
     Measured rather than reasoned: ``manipulator-bring_ball`` draws ``body_quat['target_ball']`` qw and
     qy every episode, and with only the ``_quat`` term removed from the guard the shipped bake and
     mover pass render it at interior-pixel agreement 1.000000 — 0 bad of 4,154,763 over 3 draws of 64
-    states at 224 px (``examples/results/step7/dmc-manipulator/``). The per-row claim is asserted directly
+    states at 224 px (``tests/fixtures/regression/join/step7/dmc-manipulator/``). The per-row claim is asserted directly
     in ``tests/unit/test_dmcontrol_episode_quat.py``, so a future change that makes ``xmat`` batch-shared
     fails there rather than silently drawing every environment at one draw's orientation.
     """

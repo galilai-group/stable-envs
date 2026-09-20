@@ -3,7 +3,7 @@
 ``stable_worldmodel`` reaches four gymnasium-robotics scenes through twelve ids, and the ``Dense``
 and ``Dict`` suffixes change the reward and the observation container and not a pixel. Their
 variation spaces are therefore *identical per scene* — measured, not assumed
-(``examples/results/step8/variations-fetch/leaf_classification.json`` carries the enumeration from
+(``tests/fixtures/regression/join/step8/variations-fetch/leaf_classification.json`` carries the enumeration from
 the live wrapper for all twelve) — so this module builds twelve maps from ONE vocabulary plus a
 per-scene difference table, rather than writing twelve tables that would drift apart.
 
@@ -57,7 +57,7 @@ the floor is **9.2-9.4%** of the frame and the skybox a further **61.7-73.0%**. 
 half exactly and offer no leaf for the skybox half.
 
 **The reason for that was measured and replaced** — see
-``examples/results/step8/capability/fetch_skybox_probe.json``. It is NOT, as this module and
+``tests/fixtures/regression/join/step8/capability/fetch_skybox_probe.json``. It is NOT, as this module and
 ``FetchBase.make_variation_space`` used to say, that a per-value skybox costs one render context
 per distinct value: the delivered frame's skybox comes from the MuJoCo-baked PLATE, not from the ``mujoco_warp``
 pass, so a texel substitution on the plate rig reaches it with no second context, and that is
@@ -220,7 +220,7 @@ _PARTIAL = {
         "THE REASON CHANGED IN STEP 8 AND THE NEW ONE IS NARROWER. The old one -- that a per-value "
         "skybox costs one render context per distinct value -- was measured WRONG, and the "
         "measurement is "
-        "examples/results/step8/capability/fetch_skybox_probe.json. The skybox of the DELIVERED "
+        "tests/fixtures/regression/join/step8/capability/fetch_skybox_probe.json. The skybox of the DELIVERED "
         "frame comes from the MuJoCo-baked plate, not from the mujoco_warp pass (the composite takes "
         "mujoco_warp only under the mover mask), so substituting the skybox texels on the plate rig "
         "and re-uploading moves 62.2-74.5 % of the frame with no second context -- and that IS the "

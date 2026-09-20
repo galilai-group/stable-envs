@@ -16,7 +16,7 @@ WHAT THE IMPORT PATHS ARE, AND WHY THEY ARE NOT THE SAME SHAPE
 one directory, so — unlike the ``swm_nav``/``navigation`` merge — there is no second path
 to alias: the package IS ``stable_envs.envs.ogbench``, and the obligation the alias would have met is
 met directly by the re-exports below. Every module-level name the package exported resolves off
-this package, and ``scratch/step9/envs-ogbench/oracle.py`` checks that name by name, read off the
+this package, and the frozen measurement record checks that name by name, read off the
 baseline SOURCE so the list cannot drift from what that file actually had.
 
 The manipulation half lives at ``stable_envs.envs.ogbench.manipulation``.

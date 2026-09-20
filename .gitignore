@@ -220,39 +220,10 @@ __marimo__/
 .streamlit/secrets.toml
 
 # ============================================================================================
-# scratch/ -- the probes stay, what they produced does not
+# Historical probe trees lived under scratch/ on milestone tags (step8-closure). They are not
+# part of the product branch. The patterns below remain so a mixed worktree that checks out an
+# older tag does not accidentally add generated blobs.
 # ============================================================================================
-#
-# `scratch/` is 3.5 GB across ~1,270 files and it holds three different things. Only one of them is
-# code, and the rules below are written so that the split is by KIND rather than by a list of paths
-# somebody has to remember to extend:
-#
-#   1. ~1,200 .py probe scripts. THESE ARE THE REPRODUCTION PATH, not leftovers. 217 distinct scratch
-#      paths are cited by name from docs/, examples/paper/ and stable_envs/ source comments ("measured
-#      by scratch/census/bbox_probe.py"), and `tests/unit/test_repo_contracts.py` re-extracts every one
-#      of those citations and fails if it stops resolving or if a rule here starts ignoring it.
-#      No EXTENSION rule below matches a .py, a .sh, a .sbatch or a .md, so a probe cannot be caught by
-#      one; the two directory rules (3 and the named vendored trees in 4) can, and each was checked
-#      against the tree before it was written. The test is what keeps that true.
-#
-#   2. What the probes PRODUCED -- 1,565 PNGs, 328 .npy, SLURM stdout, HTML frame dumps. Bulk and
-#      regenerable: the script that wrote each one sits beside it. This is the evidence behind the
-#      numbers and it belongs on disk, not in the history. A push to this repo has already failed on
-#      1.7 GB of shards, and the standing rule is that the repo is code only.
-#
-#   3. Vendored upstream source that a probe had to build against -- `scratch/cule/` alone is 1,497
-#      .hpp/.cu/.cpp files and 76 MB of somebody else's project.
-#
-# WHAT IS DELIBERATELY *NOT* IGNORED, and why: .json under a probe directory. They are the measured
-# numbers themselves rather than a rendering of them, they total ~1.3 MB, and one of them
-# (`scratch/census/union.json`, the 196-env census) is cited from README.md, docs/index.md,
-# docs/benchmarks.md and examples/paper/main.tex. Output JSON that IS bulk lives under an `out/` or
-# `results/` directory and is covered by the directory rules below.
-
-# --- 1. rendered evidence and measurement arrays --------------------------------------------------
-# Every one of these is written by a probe and re-written by re-running it. Images and video are the
-# bulk (1,565 PNGs); the arrays are reference frames and qpos banks; the .html files are frame dumps
-# (`scratch/altrender/frames.html` alone is 0.9 MB of base64).
 scratch/**/*.png
 scratch/**/*.jpg
 scratch/**/*.jpeg
@@ -271,49 +242,20 @@ scratch/**/*.parquet
 scratch/**/*.arrow
 scratch/**/*.lance/
 scratch/**/*.mjb
-
-# --- 2. run logs ----------------------------------------------------------------------------------
-# SLURM stdout is named `<job>.<id>.out` here. `*.log` is already ignored globally, further up.
 scratch/**/*.out
 scratch/**/*.err
 scratch/**/logs/
 scratch/**/nohup.out
-
-# --- 3. probe output directories ------------------------------------------------------------------
-# By convention a probe writes under `out/` or `results/` beside itself. Checked: no .py lives under
-# either in this tree, so these cannot swallow a cited probe. `scratch/robocasa/out/corpus/` (3 GB of
-# expanded MJCFs, qpos banks and union models, rebuilt by `scratch/robocasa/dump_corpus.py` in ~15 min
-# on a GPU node) and `scratch/ogbench/out/` are the two big ones; both are cited from docs as the
-# place the raw numbers live, and test_repo_contracts.py records them as regenerable rather than
-# letting the citation quietly rot.
 scratch/*/out/
 scratch/*/outputs/
 scratch/*/results/
-
-# --- 4. vendored upstream source ------------------------------------------------------------------
-# Not ours and not written here. The extension rules are the general case -- nothing in this
-# repository authors C or C++, verified over every tracked file -- so the next vendored tree is
-# excluded the day it lands instead of after it is pushed. The named directories stay because they
-# also carry Python, assets and build systems that the extensions do not reach: 32 MB of
-# `openai/procgen` C++ and assets that `scratch/procgen/probe13_recon.py`'s header explains how to
-# re-fetch in one curl, the two CuLE forks and a CUDA-10-era Thrust tree the replay measurement had to
-# build against, and the pixelbrax / kage-bench checkouts.
 scratch/**/*.cu
 scratch/**/*.cuh
 scratch/**/*.cpp
-# ...except this one. RAYCAST-3's micro-benchmark kernel is a hand-written SOURCE, not build output:
-# examples/results/step6/raycast3d/findings.md cites it, and the whole go/no-go it reports is whether
-# that transcription is bit-identical to cast_nearest_torch -- which a reviewer can only judge by
-# reading it. The blanket rule above is for compiled artifacts.
-!scratch/step6/raycast3d/cast_kernel.cpp
 scratch/**/*.cc
 scratch/**/*.hpp
 scratch/**/*.h
 scratch/**/*.inl
-# Vendored MESH assets, which are the same thing in a different file format. 56 files and 66 MB of
-# MuJoCo Menagerie UR5e arm and Robotiq gripper geometry under `scratch/backend3d/scenes/` (and a
-# second copy of all of it under `scenes/flat/`), pulled in so the four hand-written .xml scenes
-# beside them have something to load. The scenes are ours and are cited; the meshes are upstream's.
 scratch/**/*.obj
 scratch/**/*.stl
 scratch/**/*.dae
@@ -322,26 +264,17 @@ scratch/**/*.ply
 scratch/**/*.msh
 scratch/**/*.skn
 scratch/procgen/_src/
-scratch/cule/cule_mehrdad/
-scratch/cule/cule_chengscott/
-scratch/cule/thrust_1_9_10/
-scratch/cule/cudahome/
-scratch/gpunative/pixelbrax/
-scratch/gpunative/kage-bench/
-scratch/cule/get-pip.py
-
-# --- 5. probe scenes that ARE inputs ---------------------------------------------------------------
-# The four backend3d scenes are cited by docs/research/backend3d.md and are hand-written MJCF, not
-# output; rule 1 does not touch .xml, and this says so out loud so nobody adds an .xml rule later.
-!scratch/backend3d/scenes/*.xml
+scratch/cule/
+scratch/gpunative/
+scratch/backend3d/scenes/*.obj
+scratch/backend3d/scenes/*.stl
 
 # ============================================================================================
 # examples/ -- build artefacts
 # ============================================================================================
 # `examples/paper/` is a LaTeX project whose source (main.tex, tables/*.tex, the .sty files it
-# vendors) is tracked and whose build output is not. `examples/results/*.json` are the measured tables
-# themselves -- small, cited by examples/paper/make_tables.py and by tests/unit/test_benchmarks.py --
-# and stay. `examples/lewm_pusht/logs/` is covered by that directory's own .gitignore.
+# vendors) is tracked and whose build output is not. `examples/results/*.json` are compact
+# example outputs -- small, cited by docs -- and stay.
 examples/paper/main.pdf
 *.aux
 *.fdb_latexmk
@@ -352,8 +285,7 @@ examples/paper/main.pdf
 *.blg
 GIT_COMMIT
 
-# The commit of the tree an Oscar job measured, written by the sync step (scratch/step7/*/oscar_*.sbatch
-# read it and refuse to run without it) and carried across an rsync that excludes .git. It must stay
-# UNTRACKED: its content is the hash of the commit that would contain it, so a tracked copy is always
-# one commit stale and is exactly the wrong thing to trust.
+# The commit of the tree an Oscar job measured, written by the sync step and carried across an
+# rsync that excludes .git. It must stay UNTRACKED: its content is the hash of the commit that
+# would contain it, so a tracked copy is always one commit stale.
 .git_sha

@@ -37,7 +37,7 @@ comparison is vacuous and the result is `INCONCLUSIVE` rather than a pass.
 
 ## The verdict is not ours to choose
 
-Every threshold comes from `scratch/certification.json`, which Step 2 froze before any of these
+Every threshold comes from `tests/fixtures/regression/fidelity/certification.json`, which Step 2 froze before any of these
 numbers existed: the ±5-point equivalence margin, the CI formula, the 300-episode/6-seed design,
 the control's −20-point requirement and the power guard. `step5_stats.py` reads that file and
 contains no bound of its own — `tests/unit/test_step5.py::test_no_threshold_is_hardcoded` fails if
@@ -62,18 +62,18 @@ The claim is that the 95% interval on the paired difference lies entirely inside
 
 ```bash
 # PushT: audit the existing paired evidence (no GPU, no retraining)
-python examples/downstream_step5/ingest_pusht.py --out examples/results/step5/pusht
+python examples/downstream_step5/ingest_pusht.py --out tests/fixtures/regression/join/step5/pusht
 
 # Reacher: the pre-flight, then one arm
-python examples/downstream_step5/reacher/parity_probe.py --out examples/results/step5/reacher
+python examples/downstream_step5/reacher/parity_probe.py --out tests/fixtures/regression/join/step5/reacher
 python examples/downstream_step5/reacher/eval_reacher.py --arm official --seed 42 --n 50 \
     --policy reacher/prejepa/weights_epoch_3.pt --swm /path/to/stable-worldmodel
 
 # the verdict, from the run JSONs
-python examples/downstream_step5/paired_gate.py --runs examples/results/step5/reacher/runs \
-    --out examples/results/step5/reacher
+python examples/downstream_step5/paired_gate.py --runs tests/fixtures/regression/join/step5/reacher/runs \
+    --out tests/fixtures/regression/join/step5/reacher
 ```
 
 The Reacher arms need a GPU, the `stable_worldmodel` training stack and the Reacher corpus; the
-SLURM scripts that build all three are in `scratch/step5/`. The findings are in
+findings are in
 [`docs/research/step5_downstream_semantics.md`](../../docs/research/step5_downstream_semantics.md).

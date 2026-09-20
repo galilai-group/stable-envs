@@ -3,12 +3,12 @@
 TWO ORACLES, and they are different in kind:
 
   * the 42 SWM ids are asserted against the ACCEPTED STEP-8 SUPPORT MATRIX
-    (``examples/results/step8/support_matrix.json``), which is the certified behavioral oracle this tree is not
+    (``tests/fixtures/regression/support_matrix.json``), which is the frozen behavioral oracle this tree is not
     allowed to change. The alias table in ``registry.py`` is a copy of it and this test is what stops
     the copy drifting.
   * the canonical class names are asserted against the BASELINE REGISTRY TABLE recorded from
-    ``21cb306`` by ``scratch/step9/foundation/pusht_oracle.py``
-    (``examples/results/step9/foundation/registry_baseline.json``) — same interpreter, same optional
+    ``21cb306`` into the frozen registry baseline
+    (``tests/fixtures/regression/references/registry_baseline.json``) — same interpreter, same optional
     dependencies, so "the same classes as before" is a comparison and not an impression.
 
 Which env modules import depends on what is installed, so the recorded fingerprint (the set of modules
@@ -32,8 +32,8 @@ from stable_envs import registry as R
 pytestmark = pytest.mark.unit
 
 ROOT = Path(__file__).resolve().parents[2]
-MATRIX = ROOT / "examples" / "results" / "step8" / "support_matrix.json"
-BASELINE = ROOT / "examples" / "results" / "step9" / "foundation" / "registry_baseline.json"
+MATRIX = ROOT / "tests" / "fixtures" / "regression" / "support_matrix.json"
+BASELINE = ROOT / "tests" / "fixtures" / "regression" / "references" / "registry_baseline.json"
 SWM_IDS_IN_MATRIX = sorted({r["swm_id"] for r in json.loads(MATRIX.read_text())["rows"]})
 
 
@@ -71,7 +71,7 @@ def test_an_unknown_name_lists_what_is_known():
 
 def test_every_canonical_class_name_resolves_to_the_same_class_as_at_the_baseline():
     if not BASELINE.exists():
-        pytest.skip(f"no baseline registry table recorded at {BASELINE}; run scratch/step9/foundation/pusht_oracle.py")
+        pytest.skip(f"no baseline registry table recorded at {BASELINE}")
     base = json.loads(BASELINE.read_text())
     if set(base["import_errors"]) != set(snv.import_errors()):
         pytest.skip(
