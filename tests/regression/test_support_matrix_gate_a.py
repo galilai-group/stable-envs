@@ -149,9 +149,9 @@ def test_an_undeclared_leaf_is_not_covered_by_a_declared_one():
 
 def test_the_rocket_declares_exactly_the_five_lit_leaves():
     """Read off the CLASS, with no env constructed and no PyFlyt installed."""
-    from stable_envs.envs.rocket_landing import PFRocketLanding
+    from stable_envs.envs.rocket_landing import PyFlytRocketLanding
 
-    decl = PFRocketLanding.color_exactness_applicability
+    decl = PyFlytRocketLanding.color_exactness_applicability
     assert tuple(decl["leaves"]) == ROCKET_LEAVES
     assert decl["max_shading_factor"] == 0.993567
     assert decl["official_renderer_fails_the_same_check"] is True
@@ -201,15 +201,15 @@ def test_the_rocket_declaration_is_recorded_as_a_join_not_invented(rejudged):
 def test_a_record_without_the_distance_says_so_rather_than_showing_a_blank(rejudged):
     """An older shard has no best_abs_diff. The join must name the gap, not imply zero."""
     rejudge = module("step8_rejudge_nobest", "scripts/regression/support/rejudge_gate_a.py")
-    from stable_envs.envs.rocket_landing import PFRocketLanding
+    from stable_envs.envs.rocket_landing import PyFlytRocketLanding
 
     res = {
         "status": "measured",
         "evidence": {"colors_not_applied": [f"{leaf}->[17, 33, 200]" for leaf in ROCKET_LEAVES]},
     }
-    _, join = rejudge._colour_join("PFRocketLanding", "cuda", res, PFRocketLanding)
+    _, join = rejudge._colour_join("PFRocketLanding", "cuda", res, PyFlytRocketLanding)
     assert join["measured_best_abs_diff"] is None
-    assert "records it from Step 8 onward" in join["best_abs_diff_note"]
+    assert "records the per-leaf distance on subsequent runs" in join["best_abs_diff_note"]
 
 
 def test_craftax_classic_is_judged_on_its_applicable_subset(rejudged):
@@ -406,13 +406,13 @@ def test_partition_on_a_passing_env_is_empty_either_way():
 
 def test_the_rocket_declaration_drives_the_partition_end_to_end():
     """The class declaration, the real probe names, and the helper the GPU suite calls."""
-    from stable_envs.envs.rocket_landing import PFRocketLanding
+    from stable_envs.envs.rocket_landing import PyFlytRocketLanding
 
     probes = [_probe(leaf, t) for leaf in ROCKET_LEAVES for t in ("[17, 33, 200]", "[200, 17, 33]")]
     result = {
         "colors_not_applied": probes + [_probe("environment.sky_color")],
         "best_abs_diff": {p: 3 for p in probes + [_probe("environment.sky_color")]},
-        "applicability": color_exactness_applicability(PFRocketLanding, probes + [_probe("environment.sky_color")]),
+        "applicability": color_exactness_applicability(PyFlytRocketLanding, probes + [_probe("environment.sky_color")]),
     }
     part = partition_colour_exactness(result)
     # The five declared leaves are excused; a sixth leaf nobody declared still fails.

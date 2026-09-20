@@ -49,7 +49,7 @@ def _clean_config():
 def test_dir_advertises_the_documented_namespace_and_the_environments_only():
     """Contract §1: the top level exposes the happy path, not backend machinery."""
     listed = set(dir(snv))
-    assert {"Env", "State", "StepResult", "make", "spec", "PushT"} <= listed
+    assert {"Env", "State", "StepResult", "VariationLike", "make", "info", "PushT"} <= listed
     assert not listed & {
         "Scene2D",
         "raster2d",
@@ -61,9 +61,12 @@ def test_dir_advertises_the_documented_namespace_and_the_environments_only():
         "StableEnv",
         "REGISTRY",
         "register",
+        "SWM_IDS",
+        "spec",
     }
-    for name in ("Scene2D", "StyleTensor"):
-        assert getattr(snv, name) is not None, f"snv.{name} must still resolve, just not be listed"
+    for name in ("Scene2D", "StyleTensor", "SWM_IDS"):
+        with pytest.raises(AttributeError):
+            getattr(snv, name)
 
 
 def test_unpublished_step8_names_do_not_resolve():
@@ -86,10 +89,11 @@ def test_the_public_namespace_is_the_contract():
     for name in (
         "Env",
         "State",
+        "VariationLike",
         "Spec",
         "CompositeSpec",
         "make",
-        "spec",
+        "info",
         "list_envs",
         "set",
         "get_config",
@@ -158,15 +162,26 @@ def test_batch_is_not_a_spelling_of_num_envs():
 # ------------------------------------------------------------------ config
 
 
-def test_config_is_three_keys_and_a_typo_is_an_error():
+def test_config_is_two_keys_and_a_typo_is_an_error():
     cfg = snv.get_config()
-    assert set(cfg) == {"verbose", "default_device", "warn_on_deprecated"}
+    assert set(cfg) == {"verbose", "default_device"}
+    assert cfg["default_device"] == "auto"
     snv.set(verbose="INFO")
     assert snv.get_config()["verbose"] == "INFO"
     with pytest.raises(KeyError, match="unknown config key"):
         snv.set(verbosity="INFO")
     with pytest.raises(ValueError, match="verbose must be one of"):
         snv.set(verbose="LOUD")
+    with pytest.raises(KeyError, match="unknown config key"):
+        snv.set(warn_on_deprecated=False)
+
+
+def test_default_device_auto_is_cpu_when_cuda_is_unavailable():
+    snv.set(default_device="auto")
+    env = snv.PushT(num_envs=2)
+    expected = "cuda" if torch.cuda.is_available() else "cpu"
+    assert env.device == torch.device(expected)
+    env.close()
 
 
 def test_default_device_is_honoured_when_the_caller_names_none():
@@ -174,11 +189,6 @@ def test_default_device_is_honoured_when_the_caller_names_none():
     env = snv.PushT(num_envs=2)
     assert env.device == torch.device("cpu")
     env.close()
-
-
-def test_warn_on_deprecated_can_be_switched_off():
-    snv.set(warn_on_deprecated=False)
-    assert snv.get_config()["warn_on_deprecated"] is False
 
 
 # ------------------------------------------------------------------ lifecycle

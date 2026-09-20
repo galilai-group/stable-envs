@@ -12,7 +12,7 @@ There is no `[all]` extra. A missing optional extra costs **that family**, not t
 ```python
 import stable_envs as snv
 snv.import_errors()     # {module: "ModuleNotFoundError: ..."}
-snv.list_families()     # modules that did load
+snv.list_families()     # stable family ids that registered
 ```
 
 CUDA is required for the 3-D and most MuJoCo families. PushT, classic control, navigation and
@@ -22,27 +22,33 @@ From a clone, use an editable install — see [Contributing](https://github.com/
 
 ## Extras
 
-Each family extra installs what that family's **reference** needs (parity, CPU-vs-GPU benches,
-gallery). Most extras are not required to *render*.
+Two kinds, and they are easy to mix up.
 
-| extra | what it adds |
-|---|---|
-| `pusht` | official PushT renderer (`gym-pusht`, pygame, pymunk) |
-| `box2d` | Gymnasium Box2D |
-| `minigrid` | MiniGrid / BabyAI |
-| `ogbench` | OGBench mazes and manipulation (`mujoco>=3.11,<3.13`) |
-| `dmcontrol` | DM Control (`mujoco>=3.11,<3.13`) |
-| `mujoco-locomotion` | Gymnasium MuJoCo locomotion |
-| `robotics` | Fetch (`mujoco>=3.11,<3.12`) |
-| `mjwarp` | MuJoCo Warp render backend |
-| `metaworld` | Meta-World (install the package itself with `--no-deps`) |
-| `humanoidbench` | HumanoidBench remainder (the env package is not on PyPI) |
-| `craftax` / `crafter` | Craftax (needs jax) / Crafter |
-| `overcooked` | Overcooked (needs its **own interpreter**) |
-| `rocket` | PyFlyt rocket landing |
-| `highway` / `minihack` / `sokoban` / `griddly` / `jumanji` / `pgx` / `procgen` | those families |
-| `swm` / `interop` | `stable-worldmodel` |
-| `docs` / `dev` / `examples` / `hf` | documentation, tests, gallery helpers, HuggingFace |
+**Runtime** extras install what that family needs to **construct and render** in stable-envs.
+
+**Reference** extras install the official CPU renderer / env package used for parity tests, the gallery, and certification. They are not required to draw our frames.
+
+| extra | needed to render in stable-envs? | what the extra actually adds |
+|---|---|---|
+| *(none)* | PushT, classic control, navigation | core install is enough |
+| `pusht` | no | official `gym-pusht` / pygame / pymunk — **parity tests only** |
+| `box2d` | LunarLander / CarRacing reference path | Gymnasium Box2D |
+| `minigrid` | MiniGrid / BabyAI | MiniGrid |
+| `ogbench` | OGBench mazes (and manip, with CUDA) | `ogbench` + MuJoCo |
+| `dmcontrol` | DM Control cells | `dm_control` + MuJoCo |
+| `mujoco-locomotion` | Gymnasium MuJoCo locomotion | Gymnasium MuJoCo |
+| `robotics` | Fetch | gymnasium-robotics (MuJoCo pin) |
+| `mjwarp` | Fetch / some visual 3-D cells | MuJoCo Warp render backend |
+| `metaworld` | Meta-World | scenes come from the package's own MjModel |
+| `humanoidbench` | HumanoidBench remainder | env package is not on PyPI |
+| `craftax` / `crafter` | Craftax / Crafter | jax / Crafter |
+| `overcooked` | Overcooked | needs its **own interpreter** |
+| `rocket` | PyFlyt rocket (CUDA + nvdiffrast) | pillow / pybullet / scipy |
+| `highway` / `minihack` / `sokoban` / `griddly` / `jumanji` / `pgx` / `procgen` | those families | those packages |
+| `swm` / `interop` | no | `stable-worldmodel` for the interop adapters |
+| `docs` / `dev` / `examples` / `hf` | no | documentation, tests, gallery helpers, HuggingFace |
+
+`pip install "stable-envs[pusht]"` is **not** required to call `snv.PushT()` and `env.render()`. It is required to compare against the official pygame renderer.
 
 ## Extra incompatibilities
 
@@ -82,5 +88,5 @@ The measured source install, including the header-path failure mode, is in
 
 ## Device honesty
 
-OGBCube, OGBScene and PFRocketLanding refuse `device="cpu"` rather than silently falling
-back to CUDA. Fetch has no CPU backend. Details: [limitations](concepts/limitations.md).
+OGBCube, OGBScene and PyFlytRocketLanding refuse `device="cpu"` (and `device="auto"` on a CPU-only
+machine) rather than silently falling back to CUDA. Fetch has no CPU backend. Details: [limitations](concepts/limitations.md).

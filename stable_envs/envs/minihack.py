@@ -746,6 +746,9 @@ class _Assets:
 class MiniHack(Env):
     """NetHack's 21x79 glyph grid, rendered as a batched atlas gather. State = the glyph ids."""
 
+    family = "minihack"
+    domain = "minihack"
+
     name = "minihack"
     state_dim = GRID_H * GRID_W
     state_names = tuple(f"glyph_r{r:02d}c{c:02d}" for r in range(GRID_H) for c in range(GRID_W))
@@ -753,7 +756,7 @@ class MiniHack(Env):
     @property
     def frame_shape(self) -> tuple[int, int]:
         """``(H, W)`` of a frame: the 21x79 glyph grid at ``size`` px per tile, so 336x1264 at the
-        default 16. ``Env.observation_spec`` defaults to a SQUARE frame and this one is nowhere near
+        default 16. ``Env.frame_spec`` defaults to a SQUARE frame and this one is nowhere near
         square; without this the spec would describe a 16x16 buffer. ``size`` is the TILE size for
         this env, which is what ``default_size = TILE_PX`` says."""
         return GRID_H * int(self.size), GRID_W * int(self.size)

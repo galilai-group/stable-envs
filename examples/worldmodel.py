@@ -1,33 +1,19 @@
-"""Frozen stable-worldmodel interop — and the native-World limitation that is not shipped.
+"""stable-worldmodel integration: SWM ids, the gym adapter, and ``swap_renderer``.
 
-This tree does not ship ``swm.World(env=snv.PushT(...))``. This script documents the frozen
-contract only: SWM id aliases, ``StableEnvGym``, ``swap_renderer``. It does not invent that native
-call. ``gymnasium`` / ``stable_worldmodel`` are optional; missing extras print the reason and exit 0
-on the arms that need them.
+This is the supported path. ``gymnasium`` / ``stable_worldmodel`` are optional; missing extras
+print the reason and exit 0 on the arms that need them.
 
     python examples/worldmodel.py
     python examples/worldmodel.py --mode ids
     python examples/worldmodel.py --mode gym --device cpu
     python examples/worldmodel.py --mode swap --device cpu
+    python examples/worldmodel.py --mode all --device cpu
 """
 
 from __future__ import annotations
 
 import argparse
 import sys
-
-NATIVE_WORLD_LIMITATION = """\
-NATIVE WORLD LIMITATION
-    swm.World(env=snv.PushT(...)) is not a public API on this tree.
-    stable_envs.interop does not expose a native-env World constructor. Do not write that call against current stable-envs.
-    The frozen surface is:
-        snv.make("swm/PushT-v1", ...)
-        snv.SWM_IDS / snv.spec("swm/PushT-v1")
-        stable_envs.interop.StableEnvGym / BatchedEnvPool / attach_batched_pool / swap_renderer
-        stable_envs.interop.VariationMap / style_from_variation / variation_from_style
-    stable-envs owns reset/step/transition/unroll/render.
-    stable-worldmodel owns policy rollouts, MPC, planning, dataset collection, evaluation.
-"""
 
 
 def resolve_device(requested: str) -> str:
@@ -42,16 +28,16 @@ def resolve_device(requested: str) -> str:
 
 def cmd_ids() -> int:
     import stable_envs as snv
+    from stable_envs import interop
 
     print(f"stable-envs {snv.__version__}")
-    print(f"SWM_IDS {len(snv.SWM_IDS)}  (snv.SWM_IDS; 40 pixel + 2 symbolic)")
-    print(f"spec('swm/PushT-v1')['name'] = {snv.spec('swm/PushT-v1')['name']}")
-    print(f"spec('PushT')['swm_ids'] = {snv.spec('PushT')['swm_ids']}")
+    print(f"SWM_IDS {len(interop.SWM_IDS)}  (stable_envs.interop.SWM_IDS; 40 pixel + 2 symbolic)")
+    print(f"info('swm/PushT-v1')['class_name'] = {snv.info('swm/PushT-v1')['class_name']}")
+    print(f"info('PushT')['swm_ids'] = {snv.info('PushT')['swm_ids']}")
     try:
         env = snv.make("swm/PushT-v1", num_envs=2, device="cpu")
     except Exception as e:
         print(f"make('swm/PushT-v1') refused: {type(e).__name__}: {e}")
-        print(NATIVE_WORLD_LIMITATION)
         return 0
     print(f"make('swm/PushT-v1') -> {type(env).__name__} num_envs={env.num_envs}")
     env.close()
@@ -59,7 +45,6 @@ def cmd_ids() -> int:
         snv.make("swm/CraftaxSymbolic-v1")
     except KeyError as e:
         print(f"symbolic id refused: {e}")
-    print(NATIVE_WORLD_LIMITATION)
     return 0
 
 
@@ -70,12 +55,11 @@ def cmd_gym(device: str) -> int:
         print("gymnasium is a core dependency; this interpreter cannot import it. Skipping gym arm.")
         return 0
     try:
-        import stable_envs.interop as interop
+        from stable_envs import interop
     except ImportError as e:
         print(f"stable_envs.interop failed to import: {e}")
         return 0
 
-    print(NATIVE_WORLD_LIMITATION)
     try:
         gym_env = interop.StableEnvGym("PushT", device=device)
     except Exception as e:
@@ -88,7 +72,7 @@ def cmd_gym(device: str) -> int:
         print(f"render {getattr(frame, 'shape', type(frame))}")
     finally:
         gym_env.close()
-    print("A swm.World still takes a gym id string, not a native snv.Env, on this tree.")
+    print("A swm.World is constructed from a gym id string (or this adapter), not from a native snv.Env.")
     return 0
 
 
@@ -97,7 +81,7 @@ def cmd_swap(device: str) -> int:
         import gymnasium as gym
         import numpy as np
 
-        import stable_envs.interop as interop
+        from stable_envs import interop
     except ImportError as e:
         print(f"swap arm needs gymnasium (+ numpy): {e}")
         return 0
@@ -106,7 +90,6 @@ def cmd_swap(device: str) -> int:
     except Exception as e:
         print(f"gym_pusht is optional (pip install -e '.[pusht]'): {type(e).__name__}: {e}")
         return 0
-    print(NATIVE_WORLD_LIMITATION)
     try:
         wrapped = interop.swap_renderer(official, "PushT", read_state=interop.pusht_state, device=device)
         wrapped.reset(seed=0)
@@ -117,8 +100,18 @@ def cmd_swap(device: str) -> int:
     return 0
 
 
+def cmd_limitation() -> None:
+    print(
+        "Native World(env=snv.PushT(...)) is not shipped. Use the adapter above "
+        "(SWM ids, StableEnvGym, swap_renderer). stable-envs owns reset/step/transition/unroll/render; "
+        "stable-worldmodel owns policy rollouts, MPC, planning, dataset collection, evaluation."
+    )
+
+
 def main(argv: list[str] | None = None) -> int:
-    p = argparse.ArgumentParser(description="Frozen SWM interop. Native World(env=snv.Env) is not shipped.")
+    p = argparse.ArgumentParser(
+        description="Supported stable-worldmodel integration: ids, gym adapter, swap_renderer."
+    )
     p.add_argument("--mode", choices=("ids", "gym", "swap", "all"), default="ids")
     p.add_argument("--device", default="auto")
     args = p.parse_args(argv)
@@ -137,6 +130,7 @@ def main(argv: list[str] | None = None) -> int:
         cmd_gym(device)
     if args.mode in ("swap", "all"):
         cmd_swap(device)
+    cmd_limitation()
     return 0
 
 

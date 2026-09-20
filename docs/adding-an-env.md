@@ -9,11 +9,12 @@ implementation is [`stable_envs/envs/pusht.py`](api/envs.md); this page is the r
 
 ## Step 0: decide whether the env belongs here
 
-One question: **is the frame a pure function of a compact state vector?**
+One question: **is the frame a deterministic function of explicit render state + variation?**
 
-Not "can I approximate it" — can you write down a fixed-width vector of numbers such that the picture is
-determined by them and nothing else? If the answer needs an emulator's internal RAM, a 24 GB asset
-library, or a mesh that changes shape per episode, the answer is no, and *saying so is a result*. The
+Not "can I approximate it" — can you write down a fixed-width render row (and a Variation row) such that
+the picture is determined by them and nothing else, regardless of backend? If the answer needs an
+emulator's internal RAM, a 24 GB asset library, or a mesh that changes shape per episode, the answer is
+no, and *saying so is a result*. The
 [RoboCasa note](research/robocasa.md) is a worked no-go: the frames there are exactly reproducible from a
 state, but the state is a 385 KB MJCF plus 24 GB of assets and changes shape every episode, which is not
 the claim this repo makes.
@@ -37,7 +38,9 @@ from stable_envs.registry import register
 
 @register
 class MyEnv(Env):
-    name = "my-env"                 # dataset name, hyphenated-lowercase
+    family = "myfamily"             # stable id; never inferred from the file path
+    domain = "mydomain"
+    name = "my-env"                 # slug, hyphenated-lowercase — not the class name
     state_dim = 5
     state_names = ("agent_x", "agent_y", "block_x", "block_y", "block_angle")
     default_size = 96
@@ -46,6 +49,8 @@ class MyEnv(Env):
 
 Construct with `num_envs=`. `snv.MyEnv(num_envs=8, device="cpu")` after registration.
 The public base class is `Env`.
+
+`state_dim` / `state_names` declare the **compact render row** — the layout `render` consumes and the frozen corpus speaks. Public consumers see that width as `env.render_state_dim` / `env.render_state_names` and convert with `pack_render_state` / `unpack_render_state`. The compact row is not always a lossless dump of public State.
 
 `state_names` is not decoration. The conformance suite asserts `len(state_names) == state_dim` with the
 reasoning that a state vector whose fields are unnamed cannot be checked or reused by anyone, and the
@@ -131,8 +136,10 @@ rather than a number nobody re-checks.
 **Do not declare a knob you have not wired into `scene()`.** `check_variations_do_something` moves every
 declared leaf to the far end of its range and fails if the frame does not change. A knob in the space but
 not in the scene advertises support that does not exist, and this is the check that stops it shipping.
+`check_per_env_variation` is the second check: it catches a knob that changes the picture for the whole
+batch but collapses to environment 0. The measurement record is [variation collapses](research/variation_collapses.md).
 
-## Step 4: write `scene()` — the load-bearing method
+## Step 4: write `scene()` — or override `render()`
 
 ```python
 def scene(self, states, variation=None, style=None) -> Scene2D:
@@ -256,7 +263,7 @@ failure, and it looks like a rendering discrepancy.
 ## Step 7: run the suite and read the numbers
 
 Nothing needs editing — the suite is parameterised over the registry, so the new env is covered the
-moment it is registered (`snv.list_envs()` / `snv.spec("MyEnv")`):
+moment it is registered (`snv.list_envs()` / `snv.info("MyEnv")`):
 
 ```bash
 sbatch scripts/run_gpu_tests.sbatch     # or, on a GPU node:
@@ -279,7 +286,7 @@ rather than faked.
 
 ## Checklist
 
-- [ ] the frame is a function of a fixed-width state, and the official env agrees (state sufficiency)
+- [ ] the frame is a deterministic function of render state + variation, and the official env agrees (state sufficiency)
 - [ ] the module is in `stable_envs/envs/` and the class carries `@register`
 - [ ] `state_dim`, `state_names`, `default_size`, `reference_id` declared
 - [ ] every reference constant *measured*, with the measurement recorded in the docstring

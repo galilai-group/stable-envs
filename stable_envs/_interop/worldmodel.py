@@ -363,9 +363,19 @@ def _flatten(values: Mapping[str, Any], prefix: str = "") -> dict[str, Any]:
 
 
 def variation_map(env) -> VariationMap | None:
-    """The mapping for an env or env name, or ``None`` if this env has no swm counterpart."""
+    """The mapping for an env or env name, or ``None`` if this env has no swm counterpart.
+
+    Maps are keyed by the frozen support-matrix cell spelling. Live class names are translated
+    at lookup rather than registered twice.
+    """
+    from stable_envs.registry import _canonical_from_frozen, _frozen_from_canonical
+
     name = env if isinstance(env, str) else type(env).__name__
-    return VARIATION_MAPS.get(name)
+    return (
+        VARIATION_MAPS.get(name)
+        or VARIATION_MAPS.get(_canonical_from_frozen(name))
+        or VARIATION_MAPS.get(_frozen_from_canonical(name))
+    )
 
 
 def style_from_variation(env, variation: Mapping[str, Any], base=None, strict: bool = False) -> np.ndarray:

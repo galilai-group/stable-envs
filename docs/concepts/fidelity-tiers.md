@@ -6,15 +6,15 @@ docstring says it, and the conformance suite applies a different assertion to ea
 
 ```python
 import stable_envs as snv
-print(snv.spec("PushT")["fidelity_tier"])                     # 'parity'
-print(snv.spec("RoboCasaCounterToSink")["fidelity_tier"])     # 'visual' (if that extra imported)
+print(snv.info("PushT")["fidelity_tier"])                     # 'parity'
+print(snv.info("RoboCasaCounterToSink")["fidelity_tier"])     # 'visual' (if that extra imported)
 ```
 
 There is a **second, independent field**, and a consumer of the visual tier has to read both:
 
 ```python
-snv.spec("RoboCasaCounterToSink")["render_decoder"]            # 'renderer'
-snv.spec("RoboCasaCounterToSinkCorrected")["render_decoder"]   # 'learned'
+snv.info("RoboCasaCounterToSink")["render_decoder"]            # 'renderer'
+snv.info("RoboCasaCounterToSinkCorrected")["render_decoder"]   # 'learned'
 ```
 
 `render_decoder` says *what drew the frame*: a rasterizer, or a rasterizer followed by a fixed neural

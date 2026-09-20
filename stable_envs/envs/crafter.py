@@ -551,6 +551,9 @@ def _luma(x: torch.Tensor) -> torch.Tensor:
 class Crafter(Env):
     """Crafter's 64x64 observation: a 9x7 lit world window plus the 2x9 inventory strip."""
 
+    family = "crafter"
+    domain = "crafter"
+
     name = "crafter"
     state_dim = N_CELL + N_ITEM + 1
     state_names = (

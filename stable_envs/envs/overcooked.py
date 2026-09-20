@@ -408,6 +408,8 @@ class OvercookedAtlas:
 class _OvercookedLayout(Env):
     """One JaxMARL Overcooked layout, rendered as a gather from the 64-tile atlas."""
 
+    family = "overcooked"
+
     #: jaxmarl layout key; the class name is the registry key
     layout: str = ""
     reference_id = "jaxmarl/Overcooked-V1"
@@ -419,7 +421,7 @@ class _OvercookedLayout(Env):
     def frame_shape(self) -> tuple[int, int]:
         """``(H, W)`` of a frame: ``(grid_h * T, grid_w * T)``, which is what ``render`` reshapes to.
 
-        ``Env.observation_spec`` assumes a SQUARE frame unless the env says otherwise, and no shipped
+        ``Env.frame_spec`` assumes a SQUARE frame unless the env says otherwise, and no shipped
         Overcooked layout is square -- ``size`` divides the grid HEIGHT into tiles (``_tile``) and the
         width follows the layout's own column count -- so an unqualified spec described a
         ``(size, size)`` buffer for every cell in this family. Read off the same two class attributes

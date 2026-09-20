@@ -627,6 +627,8 @@ class FetchBase(Env):
     and render the states it gives you.
     """
 
+    family = "fetch"
+
     SCENE: str = ""
     REF_ID: str = ""
     default_size = 480  # gymnasium-robotics' own DEFAULT_SIZE
@@ -1260,11 +1262,11 @@ def _make_classes() -> dict[str, type]:
     alternative, one written-out class per id, is twelve copies of a body whose only content is two
     strings, and twelve places for the next fidelity declaration to be applied to eleven of them.
 
-    ``__module__`` is pinned to this module rather than left to ``type()``'s default because
-    ``registry.spec`` derives an env's FAMILY from the last component of it: a wrong value would
-    split one family of twelve and move ``list_families()``, ``spec(name)["family"]`` and
-    ``list_envs(family=...)``. ``type()`` happens to get it right from the calling frame; that is a
-    coincidence of where this function is defined, and this family is not registered on a coincidence.
+    ``__module__`` is pinned to this module rather than left to ``type()``'s default so the
+    class stays reachable at ``stable_envs.envs.fetch``. Family is the explicit ``family``
+    class attribute (``info(name)["family"]`` / ``list_envs(family=...)``); ``type()`` happens
+    to get the module right from the calling frame, and this family is not registered on a
+    coincidence.
     """
     made = {}
     for cname, scene, ref in CELLS:
@@ -1277,6 +1279,7 @@ def _make_classes() -> dict[str, type]:
                     SCENE=scene,
                     REF_ID=ref,
                     name=f"fetch-{scene.lower()}" + (f"-{suffix.lower()}" if suffix else ""),
+                    domain=scene.lower(),
                     reference_id=ref,
                     __module__=__name__,
                     __doc__=(

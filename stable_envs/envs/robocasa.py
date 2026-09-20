@@ -444,6 +444,8 @@ class RoboCasaBase(Env):
     ``KITCHEN`` and ``CAMERA`` are set by the generated subclasses.
     """
 
+    family = "robocasa"
+
     KITCHEN: str = ""
     CAMERA: str = ""
     default_size = 256

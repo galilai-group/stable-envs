@@ -174,6 +174,8 @@ def _code_lookup(device) -> torch.Tensor:
 class _TileEnv(Env):
     """Shared machinery: variation space, atlas plumbing, and the blit. Not registered itself."""
 
+    family = "minigrid"
+
     grid_w: int = 8
     grid_h: int = 8
     see_through_walls: bool = False
@@ -527,9 +529,9 @@ class MiniGridTopDown(_TileEnv):
         super()._close()
         self._step_graph = None
 
-    def set_state(self, states, style=None) -> MiniGridTopDown:
+    def set_state(self, states, variation=None, style=None) -> MiniGridTopDown:
         """As the base class, and empty the agent's hands — the compact state does not carry them."""
-        super().set_state(states, style=style)
+        super().set_state(states, variation=variation, style=style)
         self._carry.fill_(CARRY_NONE)
         return self
 

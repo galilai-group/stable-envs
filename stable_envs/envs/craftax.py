@@ -762,6 +762,9 @@ class _Composite:
 class CraftaxClassic(Env):
     """Craftax Classic: a 7x9 block window, the player, one mob per tile, and the inventory strip."""
 
+    family = "craftax"
+    domain = "classic"
+
     name = "craftax-classic"
     #: 63 blocks, 63 mobs, the player's facing, then the sixteen strip counts and the sleeping flag.
     #: **Appended, never reordered**: the first 127 slots keep the meaning and position they had when
@@ -1040,7 +1043,7 @@ class CraftaxClassic(Env):
     def frame_shape(self) -> tuple[int, int]:
         """``(H, W)`` of one frame. ``size`` is the TILE edge here, not the frame edge.
 
-        ``Env.observation_spec`` assumes a square frame of ``size`` pixels, which would report
+        ``Env.frame_spec`` assumes a square frame of ``size`` pixels, which would report
         ``(16, 16)`` for a picture that is ``(144, 144)``: the buffer a consumer allocates from the
         spec would be 81x too small. The window is ``OBS_H + STRIP_H`` rows by ``OBS_W`` columns of
         ``size``-pixel tiles, and it happens to be square only because 7 + 2 == 9; the arithmetic is

@@ -161,4 +161,4 @@ def test_the_hook_reports_the_live_velocity_and_env_state_round_trips_through_st
 
 
 def test_pusht_declares_that_it_has_dynamics(env):
-    assert env.has_dynamics and snv.spec("PushT")["has_dynamics"]
+    assert env.has_dynamics and snv.info("PushT")["has_dynamics"]

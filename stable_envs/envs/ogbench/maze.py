@@ -89,7 +89,7 @@ from ..._mujoco_gl import configure_mujoco_gl
 configure_mujoco_gl()
 
 from ...env import Env
-from ...registry import register
+from ...registry import _remember_historical_name, register
 from ...render import _resources as _RES
 from ...render import raycast3d as R3
 from ...spaces import Box, Dict, Discrete
@@ -290,6 +290,8 @@ def _scene_env(loco: str, maze: str, size: int):
 
 class OGBenchMaze(Env):
     """Base for the 25 cells. ``LOCO`` / ``MAZE`` are set by the generated subclasses."""
+
+    family = "ogbench"
 
     LOCO: str = ""
     MAZE: str = ""
@@ -822,20 +824,18 @@ class OGBenchMaze(Env):
         return np.stack(out)
 
 
-#: Every cell's ``__module__`` is PINNED to the package, not left at ``type()``'s default.
-#: ``registry.spec`` derives an env's FAMILY from the last component of ``__module__``, so the
-#: default (``stable_envs.envs.ogbench.maze``) would rename this family from ``ogbench`` to ``maze``
-#: and move ``spec(name)["family"]``, ``list_envs(family=...)``, ``list_families()`` and the registry
-#: row every certified artifact recorded. The attribute is also accurate: the class IS reachable at
-#: ``stable_envs.envs.ogbench.<name>``, because the package re-exports it.
+#: ``__module__`` is pinned to the package so ``stable_envs.envs.ogbench.<Cell>`` still resolves.
+#: Family identity is the explicit ``family = "ogbench"`` on :class:`OGBenchMaze`, not this path.
 _MODULE = "stable_envs.envs.ogbench"
 
 
 def _make_classes():
     """One registered class per dataset cell. ``navigate``/``stitch``/``explore`` share a renderer."""
     made = {}
+    aliases = {}
     for loco, maze, dataset in CELLS:
-        cname = f"{loco.capitalize()}maze{maze.capitalize()}{dataset.capitalize()}"
+        old = f"{loco.capitalize()}maze{maze.capitalize()}{dataset.capitalize()}"
+        cname = f"{loco.capitalize()}Maze{maze.capitalize()}{dataset.capitalize()}"
         cls = register(
             type(
                 cname,
@@ -844,6 +844,7 @@ def _make_classes():
                     LOCO=loco,
                     MAZE=maze,
                     __module__=_MODULE,
+                    domain=f"{loco}maze",
                     name=f"{loco}maze-{maze}-{dataset}",
                     reference_id=f"ogbench/{loco}maze-{maze}-v0",
                     state_dim=len(BODY_STATE[loco]),
@@ -857,13 +858,15 @@ def _make_classes():
                 ),
             )
         )
+        _remember_historical_name(old, cls)
         made[cname] = cls
-    return made
+        aliases[old] = cname
+    return made, aliases
 
 
 #: ``{name: class}`` for every registered cell this module declares, so the package ``__init__``
-#: can re-export them by NAME without transcribing the naming rule a second time. The names are also
-#: injected into this module's own globals, exactly as the package did, so ``from
-#: stable_envs.envs.ogbench.maze import PointmazeLargeNavigate`` and the package path both work.
-CELL_CLASSES = _make_classes()
+#: can re-export them by NAME without transcribing the naming rule a second time. Frozen-oracle
+#: spellings (``PointmazeLargeNavigate``) are recorded privately for SWM / regression joins; they
+#: are not public aliases.
+CELL_CLASSES, CELL_ALIASES = _make_classes()
 globals().update(CELL_CLASSES)

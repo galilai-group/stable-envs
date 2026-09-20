@@ -71,8 +71,8 @@ def build_parser() -> argparse.ArgumentParser:
 def _load_states(env: snv.Env, args: argparse.Namespace) -> tuple[np.ndarray, str]:
     if args.state_file is None:
         state = env.reset(seed=args.seed)
-        rows = env.pack(state).detach().cpu().numpy().copy()
-        return rows, "env.reset(seed) -> env.pack(public State)"
+        rows = env.pack_render_state(state).detach().cpu().numpy().copy()
+        return rows, "env.reset(seed) -> env.pack_render_state(public State)"
 
     path = Path(args.state_file)
     if not path.is_file():
@@ -146,7 +146,7 @@ def _environment(name: str, args: argparse.Namespace, device: torch.device) -> t
     env = None
     try:
         env = public_env(name, env_kwargs(args, args.batch))
-        shape = tuple(int(x) for x in env.observation_spec.shape)
+        shape = tuple(int(x) for x in env.frame_spec.shape)
         output_mib = args.batch * shape[0] * shape[1] * shape[2] / 2**20
         if output_mib > args.max_output_mib:
             return (

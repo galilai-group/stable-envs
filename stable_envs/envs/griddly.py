@@ -533,6 +533,8 @@ def _mask_index_np(grids: np.ndarray, cls: np.ndarray, live, m: int, oob: int) -
 class _GriddlyGame(Env):
     """One griddly game at one level, rendered as a gather from an enumerated tile table."""
 
+    family = "griddly"
+
     #: path under griddly's ``resources/games``
     game_yaml: str = ""
     #: the level this class pins. A class fixes ``state_dim``, and griddly's levels differ in grid size.
@@ -544,7 +546,7 @@ class _GriddlyGame(Env):
     def frame_shape(self) -> tuple[int, int]:
         """``(H, W)`` of a frame: ``(grid_h * T, grid_w * T)``, which is what ``render`` reshapes to.
 
-        ``Env.observation_spec`` assumes a SQUARE frame unless the env says otherwise, and griddly's
+        ``Env.frame_spec`` assumes a SQUARE frame unless the env says otherwise, and griddly's
         levels are not: the module header records the frames as ``grid_w*T x grid_h*T`` and the games
         this family pins are wider than they are tall, so an unqualified spec described a
         ``(size, size)`` buffer. ``size`` divides the grid HEIGHT into tiles (``_tile``); read off the

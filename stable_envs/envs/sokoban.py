@@ -273,6 +273,9 @@ class Sokoban(Env):
     160x160x3 = 76,800-byte frame (**768x**, or 3,072x at the one byte per cell the alphabet needs).
     """
 
+    family = "sokoban"
+    domain = "sokoban"
+
     name = "sokoban"
     reference_id = "Sokoban-v0"
     #: ``SokobanEnv`` defaults; the room shape fixes ``state_dim`` and the frame size

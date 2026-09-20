@@ -11,10 +11,14 @@ skips where it matters is not a test. The live enumeration runs as well wherever
 and asserts the recorded inventory still matches the wrapper.
 """
 
+# ruff: noqa: I001
+# worldmodel must load before newcells (circular MAPS install).
+
 import numpy as np
 import pytest
 import torch
 
+from stable_envs.interop import VARIATION_MAPS, variation_map
 from stable_envs._interop.variation_maps.newcells import (
     BUCKETS,
     LEAF_CLASSIFICATION,
@@ -22,7 +26,6 @@ from stable_envs._interop.variation_maps.newcells import (
     RECORDED_OURS_LEAVES,
     RECORDED_SWM_LEAVES,
 )
-from stable_envs.interop import VARIATION_MAPS, variation_map
 
 IDS = sorted(RECORDED_SWM_LEAVES)
 

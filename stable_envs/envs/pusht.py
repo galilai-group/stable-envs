@@ -166,6 +166,9 @@ def _cross2(a, b):
 class PushT(Env):
     """T-block pushing. State ``[agent_x, agent_y, block_x, block_y, block_angle]`` in a 512 board."""
 
+    family = "pusht"
+    domain = "pusht"
+
     name = "push-t"
     state_dim = 5
     state_names = ("agent_x", "agent_y", "block_x", "block_y", "block_angle")
@@ -339,7 +342,7 @@ class PushT(Env):
 
     # ------------------------------------------------------------------ physics
 
-    def set_state(self, states, style=None) -> PushT:
+    def set_state(self, states, variation=None, style=None) -> PushT:
         """As the base class, and zero the agent's velocity — the state does not carry it.
 
         Restoring a stored state must put the env in one definite condition, and the only defensible
@@ -347,7 +350,7 @@ class PushT(Env):
         doing before would make ``set_state(s)`` depend on history, which is precisely the failure this
         repo documents for ``gym_pusht._set_state`` on the position/angle order.
         """
-        super().set_state(states, style=style)
+        super().set_state(states, variation=variation, style=style)
         self._agent_v.zero_()
         return self
 

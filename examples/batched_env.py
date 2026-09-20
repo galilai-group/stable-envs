@@ -46,10 +46,10 @@ def main(argv: list[str] | None = None) -> int:
     cls = getattr(snv, args.env)
     print(f"stable-envs {snv.__version__}  {args.env}  num_envs={args.num_envs}  device={device}")
     print(f"this interpreter: {len(snv.list_envs())} envs, families={snv.list_families()}")
-    spec = snv.spec(args.env)
+    meta = snv.info(args.env)
     print(
-        f"spec family={spec['family']} tier={spec['fidelity_tier']} "
-        f"has_dynamics={spec['has_dynamics']} swm_ids={spec['swm_ids']}"
+        f"info family={meta['family']} domain={meta['domain']} tier={meta['fidelity_tier']} "
+        f"has_dynamics={meta['has_dynamics']} swm_ids={meta['swm_ids']}"
     )
 
     try:
@@ -62,16 +62,16 @@ def main(argv: list[str] | None = None) -> int:
         assert len(env) == args.num_envs
         state = env.reset(seed=args.seed)
         print(f"state_spec keys: {list(env.state_spec.keys())}")
-        print(f"observation_spec: {env.observation_spec}")
+        print(f"frame_spec: {env.frame_spec}")
         try:
             print(f"action_spec: {env.action_spec}")
         except NotImplementedError as e:
             print(f"action_spec: (no dynamics) {e}")
         print(f"variation_spec.shape: {env.variation_spec.shape}")
 
-        packed = env.pack(state)
-        print(f"pack(state) -> {tuple(packed.shape)}  state_names={list(env.state_names)}")
-        roundtrip = env.unpack(packed)
+        packed = env.pack_render_state(state)
+        print(f"pack_render_state(state) -> {tuple(packed.shape)}  names={list(env.render_state_names)}")
+        roundtrip = env.unpack_render_state(packed)
         print(f"unpack keys {list(roundtrip.keys())}")
 
         short = env.get_state()[: args.short]

@@ -33,21 +33,22 @@ Editable install (from a clone) lives under [Contributing](CONTRIBUTING.md).
 ```python
 import stable_envs as snv
 
-with snv.PushT(num_envs=64, device="cpu") as env:
-    state = env.reset(seed=0)  # TensorDict, keys grouped by entity
-    pixels = env.render(state)  # (64, 96, 96, 3) uint8
+with snv.PushT(num_envs=64) as env:          # device="auto" → CUDA if available, else CPU
+    state = env.reset(seed=0)                # State
+    pixels = env.render(state)               # Frame: (64, 96, 96, 3) uint8
     action = env.action_spec.sample(64, env.rng)
-    out = env.step(action)  # stateful: writes env.state
-    nxt = env.transition(state, action)  # functional: env.state is untouched
+    out = env.step(action)                   # stateful
+    state = out["state"]
+    nxt = env.transition(state, action)      # functional: env.state is untouched
 ```
 
 Concrete classes are canonical. Strings are for configs, serialisation and interop:
 
 ```python
-env = snv.make("swm/PushT-v1", num_envs=64, device="cpu")
+env = snv.make("swm/PushT-v1", num_envs=64)
 print(snv.list_envs())
-print(snv.spec("PushT"))
-snv.set(verbose="INFO")
+print(snv.info("PushT"))
+snv.set(verbose="INFO", default_device="auto")
 ```
 
 `step(actions)` is stateful. `transition` / `unroll` are pure in `state` and take **known** actions — not a policy. There is no `env.rollout(policy=...)`; planning and policy rollouts belong to [`stable-worldmodel`](https://github.com/galilai-group/stable-worldmodel).
@@ -57,19 +58,19 @@ Full walkthrough: [Quickstart](docs/quickstart.md).
 ## What the public API is
 
 ```text
-snv.Env, snv.State, snv.StepResult
+snv.Env, snv.State, snv.StepResult, snv.VariationLike
 snv.Dynamics, snv.Spec, snv.CompositeSpec
-snv.make, snv.spec, snv.list_envs, snv.list_families, snv.import_errors
-snv.set, snv.get_config, snv.SWM_IDS, snv.__version__
+snv.make, snv.info, snv.list_envs, snv.list_families, snv.import_errors
+snv.set, snv.get_config, snv.__version__
 snv.PushT / snv.CartPole / …                  concrete env classes
 ```
 
-`stable_envs.testing` and `stable_envs.interop` are public developer APIs; they are not advertised at `snv.*`.
+`stable_envs.testing` and `stable_envs.interop` are public developer APIs; they are not advertised at `snv.*`. The frozen SWM id table is `stable_envs.interop.SWM_IDS`.
 
 | topic | page |
 |---|---|
 | Environment listing | [docs/environments.md](docs/environments.md) |
-| State, specs, TensorDict keys | [docs/concepts/state.md](docs/concepts/state.md) |
+| State, Variation, Frame | [docs/concepts/state.md](docs/concepts/state.md) |
 | Stateful `step` vs functional `transition`/`unroll` | [docs/concepts/dynamics.md](docs/concepts/dynamics.md) |
 | `close()` / context manager | [docs/concepts/lifecycle.md](docs/concepts/lifecycle.md) |
 | What stable-envs owns vs stable-worldmodel | [docs/concepts/worldmodel.md](docs/concepts/worldmodel.md) |
@@ -101,7 +102,7 @@ with snv.PushT(num_envs=256, device="cuda") as env:
     ds = TensorDataset(states)  # your compact states, in RAM
     loader = DataLoader(ds, batch_size=256)
     for (batch,) in loader:
-        frames = env.render(env.unpack(batch))  # or env.set_state(batch).render()
+        frames = env.render(env.unpack_render_state(batch))  # or env.set_state(batch).render()
 ```
 
 Side-by-side against the official renderer, same recorded states: [Gallery](docs/gallery.md).
@@ -112,10 +113,10 @@ Side-by-side against the official renderer, same recorded states: [Gallery](docs
 
 ```python
 snv.import_errors()  # {module: "ModuleNotFoundError: ..."}
-snv.list_families()  # modules that did load
+snv.list_families()  # stable family ids that registered
 ```
 
-Device honesty is part of the contract: OGBCube, OGBScene and PFRocketLanding refuse CPU rather than silently falling back; Fetch has no CPU backend; HumanoidBench registers only under `STABLE_ENVS_HUMANOIDBENCH=1`. Details: [limitations](docs/concepts/limitations.md).
+Device honesty is part of the contract: OGBCube, OGBScene and PyFlytRocketLanding refuse CPU rather than silently falling back; Fetch has no CPU backend; HumanoidBench registers only under `STABLE_ENVS_HUMANOIDBENCH=1`. Details: [limitations](docs/concepts/limitations.md).
 
 ## Documentation
 

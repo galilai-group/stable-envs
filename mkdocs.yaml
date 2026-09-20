@@ -98,7 +98,7 @@ nav:
       - Quickstart: quickstart.md
       - Install: install.md
       - Environments: environments.md
-      - State and specs: concepts/state.md
+      - State, Variation, Frame: concepts/state.md
       - Stateful vs functional: concepts/dynamics.md
       - Variations: concepts/variation-spaces.md
       - Lifecycle: concepts/lifecycle.md

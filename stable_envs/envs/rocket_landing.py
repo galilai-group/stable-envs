@@ -68,7 +68,7 @@ import numpy as np
 import torch
 
 from ..env import Env
-from ..registry import register
+from ..registry import _remember_historical_name, register
 from ..spaces import Dict, Discrete, RGBBox
 
 try:
@@ -491,7 +491,7 @@ def _optional_import_errors() -> dict:
 
 
 def missing_backend() -> str | None:
-    """Why ``PFRocketLanding`` is absent or cannot render on this machine, or ``None``.
+    """Why ``PyFlytRocketLanding`` is absent or cannot render on this machine, or ``None``.
 
     nvdiffrast (the rasterizer), scipy (the hull tessellation), pybullet_data (the checker texture --
     its provenance rests on the pybullet 3.2.7 declaration, the package that ships ``checker_blue.png``)
@@ -545,7 +545,7 @@ def _reference_apply_style(p, c, rid, pad, style_row: np.ndarray) -> None:
 #: ``closure1/probe_clip_cpu_batch_x86_widthsweep.json``; two earlier samples skipped widths 4-6 and so
 #: reported a narrower limitation than this.
 #:
-#: It reaches no frame this cell produces: ``PFRocketLanding`` raises on ``device="cpu"`` by design, so
+#: It reaches no frame this cell produces: ``PyFlytRocketLanding`` raises on ``device="cpu"`` by design, so
 #: its CPU transform path exists only so the geometry can be unit-tested without a GPU. The cause is
 #: measured and is not this repo's arithmetic -- ``nvdiff.mvp_rows`` is bit-identical at every width on
 #: every machine measured, and so are the normals and world positions; the residual is
@@ -633,7 +633,7 @@ def _reference_frame_flagged(env, state: np.ndarray, style_row: np.ndarray, cont
         if contact_fallback and in_band:
             return np.asarray(u.render(), np.uint8)[..., :3].copy(), True
         raise AssertionError(
-            f"PFRocketLanding: the reference did not reach the requested pose (pos {pos_err:.3e} m, "
+            f"PyFlytRocketLanding: the reference did not reach the requested pose (pos {pos_err:.3e} m, "
             f"1-|q.q'| {rot_err:.3e}; {'in' if in_band else 'outside'} the contact band); every "
             f"fidelity number computed from it would compare two different scenes"
         )
@@ -650,7 +650,7 @@ class _Nvd:
 _NVD_CACHE = _RES.BoundedCache(8, name="rocket.nvd", on_evict=ND.close_cached_renderer)
 
 
-class PFRocketLanding(Env):
+class PyFlytRocketLanding(Env):
     """swm/PFRocketLanding-v0 (PyFlyt rocket landing), rendered by nvdiffrast. State is obs[:13].
 
     VISUAL TIER — these are NOT the official pixels. The frame is a different rasterization of the same
@@ -663,6 +663,10 @@ class PFRocketLanding(Env):
     Suitable for generating training frames live. NOT a substitute for a stored dataset when a policy
     will be evaluated on official PyFlyt pixels. See visual_note.
     """
+
+    family = "pyflyt"
+    domain = "rocket_landing"
+    requires_cuda = True
 
     name = "pf-rocket-landing"
     reference_id = "swm/PFRocketLanding-v0"
@@ -822,7 +826,7 @@ class PFRocketLanding(Env):
         num_envs: int = 1,
         size: int | None = None,
         supersample: int | None = None,
-        device: str = "cuda",
+        device: str | None = None,
         backend: str = "auto",
         seed: int = 0,
     ):
@@ -833,10 +837,11 @@ class PFRocketLanding(Env):
         CPU textured-triangle rasteriser to serve it with.
         """
         if missing_backend() is not None:  # pragma: no cover
-            raise ImportError(f"PFRocketLanding cannot render in this interpreter: {missing_backend()}")
+            raise ImportError(f"PyFlytRocketLanding cannot render in this interpreter: {missing_backend()}")
+        device = Env.resolve_device(device)
         if str(device).startswith("cpu"):
             raise NotImplementedError(
-                "PFRocketLanding has no CPU backend: it needs a CPU textured-triangle rasteriser, which this "
+                "PyFlytRocketLanding has no CPU backend: it needs a CPU textured-triangle rasteriser, which this "
                 "repo does not have (cpu3d/raycast3d cast MuJoCo primitives). A CPU request is never served "
                 "by CUDA."
             )
@@ -1053,5 +1058,6 @@ def _default_style_row() -> np.ndarray:
     return np.asarray(_make_variation_space().pack(), np.float64)
 
 
+_remember_historical_name("PFRocketLanding", PyFlytRocketLanding)
 if missing_backend() is None:
-    register(PFRocketLanding)
+    register(PyFlytRocketLanding)

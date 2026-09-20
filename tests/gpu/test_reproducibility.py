@@ -74,6 +74,11 @@ from stable_envs._data import StateDataset, TrajectoryDataset, collate_batched
 from stable_envs.testing import conformance as C
 from stable_envs.testing import render_worker as W
 
+
+def _recorded_name(name: str) -> str:
+    """Measured-table spelling: frozen downsample floors are keyed by historical class names."""
+    return se.registry._frozen_from_canonical(name)
+
 ENV_NAMES = sorted(se.registry.REGISTRY)
 
 #: States per env. Small on purpose: every property here except batch-size invariance is a statement
@@ -695,9 +700,9 @@ DOWNSAMPLE_EXACT_FRAC: dict[str, float] = {
 #: straight down at a floor that fills the frame, and the 2S re-bake costs them 0.282 and 0.730.
 PLATE_REPRESENTATIVES = frozenset(
     {
-        "PointmazeMediumNavigate",
-        "AntmazeMediumNavigate",
-        "HumanoidmazeMediumNavigate",
+        "PointMazeMediumNavigate",
+        "AntMazeMediumNavigate",
+        "HumanoidMazeMediumNavigate",
         "DMCCartpoleSwingup",
         "DMCPointMassEasy",
         # gymnasium-robotics PointMaze: a DIFFERENT camera geometry from
@@ -848,6 +853,8 @@ def test_resolution_downsample_agrees_within_the_measured_bound(env, inputs):
         pytest.skip(f"{name}: {r['skipped']}")
     print(f"\n{name} 2S->S: exact {100 * r['exact_frac']:.3f}%  mean {r['mean_abs']:.4f}/255  max {r['max_abs']}/255")
     measured = DOWNSAMPLE_EXACT_FRAC.get(name)
+    if measured is None:
+        measured = DOWNSAMPLE_EXACT_FRAC.get(_recorded_name(name))
     assert measured is not None, (
         f"{name} has no measured downsample bound recorded. Run "
         f"stable_envs.testing.conformance.check_resolution_consistency on it and add the number to "

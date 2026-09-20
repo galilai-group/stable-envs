@@ -1,52 +1,103 @@
-# State and specs
+# State, Variation, and Frame
 
-The public state describes the **environment**, not a renderer kernel's packed layout.
+Four nouns, two usage modes.
+
+| noun | what it is |
+|---|---|
+| **Env** | a batched environment class (`snv.PushT`, …) |
+| **State** | the world: a `tensordict.TensorDict` grouped by entity |
+| **Variation** | appearance / layout knobs that do not change the world |
+| **Frame** | rendered pixels: `(B, H, W, 3)` uint8 from `render` |
+
+Two ways to use an Env:
 
 ```python
-state = env.reset(seed=0)          # tensordict.TensorDict, batch size [num_envs]
+import stable_envs as snv
+
+with snv.PushT(num_envs=64) as env:          # device="auto" → CUDA if available, else CPU
+    state = env.reset(seed=0)                # State
+    action = env.action_spec.sample(64, env.rng)
+
+    out = env.step(action)                   # STATEFUL: writes env.state
+    state = out["state"]
+    nxt = env.transition(state, action)      # FUNCTIONAL: env.state is untouched
+    traj = env.unroll(state, action[None])   # FUNCTIONAL, known actions, time first
+    frame = env.render(state)                # Frame
+```
+
+`reset` / `step` return State-oriented values. Pixels come from `render`. There is no Gym-shaped "observation" on `step`.
+
+## State
+
+`snv.State` is an alias for `tensordict.TensorDict`, not a subclass.
+
+```python
+state = env.reset(seed=0)          # batch size [num_envs]
 state["agent", "position"]         # PushT: (num_envs, 2)
-state["agent", "velocity"]         # hidden dynamics live here so transition can be pure
+state["agent", "velocity"]         # dynamics-only; may be absent from the render row
 state["block", "angle"]            # (num_envs, 1)
 ```
 
-`snv.State` is an alias for `tensordict.TensorDict`, not a subclass. Anything that consumes a TensorDict consumes a stable-envs state.
-
 Trivial cells may expose a single key (`{"x": (d,)}`) rather than an entity tree.
 
-## Packed row vs public State
+## Compact render state is not the full State
 
-Every renderer, frozen corpus and certification check still speaks a float32 row of width `state_dim`:
+Every renderer and frozen corpus speaks a compact float32 row used to **regenerate pixels**. That row is *render state*. It is not always a lossless / Markov dump of public State — dynamics-only fields can be omitted.
 
 ```python
-rows = env.pack(state)             # (n, state_dim) float32 — the frozen packed layout
-state = env.unpack(rows)           # entity-grouped view; hidden fields the row does not carry come back as zeros
-names = env.state_names            # column labels of that packed row
+row = env.pack_render_state(state)     # (n, render_state_dim) float32
+state = env.unpack_render_state(row)   # entity-grouped view; omitted fields come back as zeros
+env.render_state_dim
+env.render_state_names                 # column labels of that row
 ```
 
-`unpack` **copies**. A State never aliases the env buffer, so mutating `state["agent", "position"]` does not silently change the next `step`.
+PushT's agent velocity is public State (`state["agent", "velocity"]`) and is **dropped** by `pack_render_state`, because the frozen row never carried it. That is why `transition` can be a pure function of the State it is given.
 
-PushT's agent velocity is public state (`state["agent", "velocity"]`) and is **dropped** by `pack`, because the frozen row never carried it. That is why `transition` can be a pure function of the State it is given: as long as one dynamical variable lived in an instance attribute, two calls with the same packed row could disagree.
+`unpack_render_state` **copies**. Mutating `state["agent", "position"]` does not silently change the next `step`.
+
+## Frame
+
+```python
+frame = env.render(state)          # (num_envs, H, W, 3) uint8 on env.device
+env.frame_spec                     # (H, W, 3) uint8 — what render produces
+```
+
+`frame_spec` is not what `reset` / `step` return. Those carry State.
+
+## Variation
+
+```python
+env.variation_spec
+env.variation_dim, env.variation_names
+env.default_variation()
+env.sample_variation(env.num_envs)
+frame = env.render(state, variation={"block.color": [220, 40, 40]})
+```
+
+Defaults are the official appearance. Domain randomisation is a tensor, not a loop. See [Variation](variation-spaces.md).
 
 ## Specs
 
-One `Spec` dataclass (`shape`, `dtype`, `low`, `high`, `device`, `names`, `discrete_n`) plus `CompositeSpec` as a nested dict of Specs. There is no torchrl dependency and no class hierarchy per spec kind.
+One `Spec` dataclass (`shape`, `dtype`, `low`, `high`, `device`, `names`, `discrete_n`) plus `CompositeSpec` as a nested dict of Specs.
 
 ```python
 env.state_spec                     # CompositeSpec mirroring TensorDict keys
 env.action_spec                    # per-environment action; renderer-only cells raise
-env.observation_spec               # (H, W, 3) uint8
-env.variation_spec                 # flat style layout (one Spec, not a tree)
+env.frame_spec                     # (H, W, 3) uint8
+env.variation_spec                 # flat Variation row (one Spec, not a tree)
 ```
+
+`snv.Spec` describes tensor contracts. `snv.info("PushT")` is environment **metadata** (family, domain, slug) — it is not a `Spec`.
 
 `shape` is the **per-environment** shape, without the batch axis. `sample(num_envs, rng)` draws uniformly inside the bounds; an unbounded continuous spec refuses rather than inventing a distribution — reachable states come from `env.sample_states`.
 
-`variation_space` remains the gymnasium-style tree the certification harness samples. `variation_spec` is the same layout in the package's own vocabulary.
+## StepResult
 
-## Step result
+`env.step(actions)` returns a TensorDict (`snv.StepResult`, the same type as `State`):
 
-`env.step(actions)` returns a TensorDict (`snv.StepResult`, the same type as `State`) with:
+```python
+out = env.step(action)
+state = out["state"]               # always present
+```
 
-- `"state"` — always
-- `"reward"` / `"done"` — only if the cell has those semantics
-
-Pure renderers omit the keys rather than fabricating zeros. PushT currently returns `{"state": …}` only.
+`reward` / `terminated` / `truncated` (or a combined `done`) exist **only where that environment defines those semantics**. They are not fabricated for renderer-only cells. PushT currently returns `{"state": …}` only.

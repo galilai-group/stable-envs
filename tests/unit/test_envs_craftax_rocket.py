@@ -61,11 +61,11 @@ def test_takes_the_step9_constructor(name):
 
 def test_the_rocket_constructor_takes_num_envs():
     """Asserted from the SIGNATURE, because this cell cannot be built without a CUDA host."""
-    p = inspect.signature(RL.PFRocketLanding.__init__).parameters
+    p = inspect.signature(RL.PyFlytRocketLanding.__init__).parameters
     assert list(p)[1] == "num_envs", "num_envs must sit in the slot batch sat in (positional callers)"
     assert p["num_envs"].default == 1
     assert "batch" not in p
-    assert p["device"].default == "cuda"
+    assert p["device"].default is None
 
 
 # ------------------------------------------------------------------ the public State
@@ -151,7 +151,7 @@ def test_a_state_the_caller_keeps_is_not_a_view_of_the_env(envs, name):
 
 def test_the_rocket_state_is_one_rigid_body_grouped_by_what_it_is():
     """Checked on the CLASS: the cell cannot be built without a CUDA host."""
-    lay = RL.PFRocketLanding.state_layout
+    lay = RL.PyFlytRocketLanding.state_layout
     assert [tuple(k) for k, _, _ in lay] == [
         ("rocket", "angular_velocity"),
         ("rocket", "orientation"),
@@ -160,9 +160,9 @@ def test_the_rocket_state_is_one_rigid_body_grouped_by_what_it_is():
     ]
     assert [w for _, w, _ in lay] == [3, 4, 3, 3]
     assert [o for _, _, o in lay] == [0, 3, 7, 10]
-    assert sum(w for _, w, _ in lay) == RL.PFRocketLanding.state_dim == 13
+    assert sum(w for _, w, _ in lay) == RL.PyFlytRocketLanding.state_dim == 13
     # the offsets are the frozen obs layout, not a re-grouping of it
-    n = RL.PFRocketLanding.state_names
+    n = RL.PyFlytRocketLanding.state_names
     assert n[0:3] == ("ang_vel_x", "ang_vel_y", "ang_vel_z")
     assert n[3:7] == ("quat_x", "quat_y", "quat_z", "quat_w")
     assert n[7:10] == ("lin_vel_x", "lin_vel_y", "lin_vel_z")
@@ -185,10 +185,10 @@ def test_render_takes_a_state_a_packed_row_or_nothing(envs, name):
 
 
 @pytest.mark.parametrize("name,tiles", [("CraftaxClassic", (9, 9)), ("CraftaxFull", (13, 11))])
-def test_the_observation_spec_is_the_frame_and_not_the_tile(envs, name, tiles):
+def test_the_frame_spec_is_the_frame_and_not_the_tile(envs, name, tiles):
     """``size`` is the TILE edge for Craftax, so the base class's square-``size`` assumption is wrong.
 
-    Left alone, ``observation_spec`` reported ``(16, 16, 3)`` for a 144x144 picture — a buffer 81x too
+    Left alone, ``frame_spec`` reported ``(16, 16, 3)`` for a 144x144 picture — a buffer 81x too
     small — and ``(10, 10, 3)`` for full Craftax's 130x110 one, which is the wrong shape as well as
     the wrong size. Fixed in the family (``frame_shape``), not in the base class, exactly as classic
     control's 400x600 was.
@@ -197,9 +197,9 @@ def test_the_observation_spec_is_the_frame_and_not_the_tile(envs, name, tiles):
     rows = torch.as_tensor(env.sample_states(2), dtype=torch.float32)
     h, w = tiles[0] * env.size, tiles[1] * env.size
     assert env.frame_shape == (h, w)
-    assert tuple(env.observation_spec.shape) == (h, w, 3)
+    assert tuple(env.frame_spec.shape) == (h, w, 3)
     assert tuple(env.render(rows).shape) == (2, h, w, 3)
-    assert env.observation_spec.dtype == torch.uint8
+    assert env.frame_spec.dtype == torch.uint8
 
 
 @pytest.mark.parametrize("name", CRAFTAX)
@@ -250,7 +250,7 @@ def test_the_rocket_refuses_a_cpu_device_by_design():
     Both are asserted so the test means something on either kind of machine.
     """
     with pytest.raises((NotImplementedError, ImportError)) as e:
-        RL.PFRocketLanding(num_envs=1, device="cpu")
+        RL.PyFlytRocketLanding(num_envs=1, device="cpu")
     msg = str(e.value)
     if isinstance(e.value, NotImplementedError):
         assert "has no CPU backend" in msg and "never served" in msg
@@ -259,7 +259,7 @@ def test_the_rocket_refuses_a_cpu_device_by_design():
 
 
 def test_the_rocket_is_registered_exactly_when_it_can_render():
-    assert ("PFRocketLanding" in snv.registry.REGISTRY) == (RL.missing_backend() is None)
+    assert ("PyFlytRocketLanding" in snv.registry.REGISTRY) == (RL.missing_backend() is None)
 
 
 # ------------------------------------------------------------------ the module split
@@ -397,7 +397,7 @@ def test_the_parity_claims_and_their_reference_versions_survive():
 
 
 def test_the_rocket_colour_exactness_declaration_survives_verbatim():
-    d = RL.PFRocketLanding.color_exactness_applicability
+    d = RL.PyFlytRocketLanding.color_exactness_applicability
     assert d["leaves"] == (
         "pad.color",
         "rocket.body_color",
@@ -413,7 +413,7 @@ def test_the_rocket_colour_exactness_declaration_survives_verbatim():
 
 
 def test_the_rocket_tier_and_reference_versions_survive():
-    cls = RL.PFRocketLanding
+    cls = RL.PyFlytRocketLanding
     assert cls.fidelity_tier == "visual" and cls.parity_interior_min is None
     v = cls.visual_fidelity
     assert v["reference_versions"] == {"PyFlyt": "0.29.0", "pybullet": "3.2.7"}

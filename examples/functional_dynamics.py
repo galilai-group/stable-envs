@@ -90,10 +90,10 @@ def main(argv: list[str] | None = None) -> int:
 
     out = env.step(a0)
     print(f"step keys={list(out.keys())}  (reward/done omitted unless the cell has them)")
-    if torch.equal(env.pack(nxt), env.pack(out["state"])):
+    if torch.equal(env.pack_render_state(nxt), env.pack_render_state(out["state"])):
         print("transition(state, a) == step(a)['state']  (bit-identical on this device)")
     else:
-        err = (env.pack(nxt) - env.pack(out["state"])).abs().max().item()
+        err = (env.pack_render_state(nxt) - env.pack_render_state(out["state"])).abs().max().item()
         print(f"transition vs step max abs {err}  (not identical on this cell/device)")
 
     acts = torch.stack([_actions(env, args.num_envs, 100 + t) for t in range(args.horizon)])
@@ -109,7 +109,7 @@ def main(argv: list[str] | None = None) -> int:
     ok = True
     for t in range(args.horizon):
         cur = env.transition(cur, acts[t])
-        if not torch.equal(env.pack(traj[t]), env.pack(cur)):
+        if not torch.equal(env.pack_render_state(traj[t]), env.pack_render_state(cur)):
             ok = False
             break
     print("unroll == repeated transition" if ok else "unroll diverged from repeated transition")

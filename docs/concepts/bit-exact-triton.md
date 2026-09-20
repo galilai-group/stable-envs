@@ -142,9 +142,8 @@ kernel_seconds = sum(e.self_device_time_total for e in evs) / 1e6
 
 The `device_type` filter is load-bearing. `key_averages()` lists both the `aten::` op and the kernels
 it launched, and the op's `self_device_time_total` is the sum of its children's — so summing
-everything counts every kernel twice. The first version of `scratch/perf3d/residual.py` did exactly
-that and reported 150% of wall time, i.e. a *negative* interpreter share, which is at least an error
-that announces itself.
+everything counts every kernel twice. That double-count reports more than 100% of wall time, i.e. a
+*negative* interpreter share, which is at least an error that announces itself.
 
 `cpu%` is still worth recording, for a different reason: these families are host-sensitive, and the
 same env has measured 3,664 f/s on an idle node and 271 f/s on a contended one. Report it, and the

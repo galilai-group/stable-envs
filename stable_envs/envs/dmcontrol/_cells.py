@@ -20,10 +20,10 @@ from .trackcom import DMControlTrackCom
 
 #: Every cell's ``__module__``, which is the PACKAGE and not the domain module it is written in.
 #: Deliberate, and the one place in this migration where the truth is chosen over the mechanism:
-#: ``registry.spec``/``list_envs`` derive an env's FAMILY from the last component of ``__module__``,
-#: so leaving ``type()``'s default would split one family of eighteen cells into fourteen families
-#: named after domains and change ``list_families()``, ``spec(name)["family"]`` and the registry row
-#: every certified artifact recorded. The class IS reachable at this path -- the package re-exports all
+#: Family is the explicit ``family`` class attribute (``info(name)["family"]`` /
+#: ``list_envs(family=...)``). ``__module__`` is still pinned to the package so the class stays
+#: reachable at ``stable_envs.envs.dmcontrol`` — leaving ``type()``'s default would name fourteen
+#: domain modules instead. The class IS reachable at this path -- the package re-exports all
 #: eighteen -- so the attribute is accurate as well as unchanged.
 _MODULE = __name__.rsplit(".", 1)[0]
 

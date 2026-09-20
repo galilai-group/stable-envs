@@ -7,10 +7,10 @@ renderers. Store compact states, choose the camera and the appearance afterwards
 
 ### What you get
 
-- Class-first public API: `snv.PushT(num_envs=..., device=...)`, plus `snv.make` / `snv.spec` /
+- Class-first public API: `snv.PushT(num_envs=..., device=...)`, plus `snv.make` / `snv.info` /
   `snv.list_envs` / `snv.list_families` for configs and interop.
-- TensorDict `State` with `pack` / `unpack` to the frozen packed row every renderer and
-  certification corpus uses.
+- TensorDict `State` with `pack_render_state` / `unpack_render_state` to the compact render
+  row every renderer and certification corpus uses.
 - Stateful `step` and functional `transition` / `unroll` (known actions only). There is no
   `env.rollout(policy=...)`.
 - `close()` / context-manager lifecycle on every environment.
@@ -25,10 +25,10 @@ renderers. Store compact states, choose the camera and the appearance afterwards
 ### Limitations
 
 - Fetch `background.color` is partial (floor mapped; skybox residual measured).
-- `HumanoidmazeGiantNavigate` on CUDA is not process-reproducible on some measured nodes.
+- `HumanoidMazeGiantNavigate` on CUDA is not process-reproducible on some measured nodes.
 - Native `swm.World(env=snv.PushT(...))` is unsupported by the installed `stable-worldmodel`;
   registered-gym and `swap_renderer` paths remain.
-- OGBCube, OGBScene and PFRocketLanding refuse CPU rather than silently falling back.
+- OGBCube, OGBScene and PyFlytRocketLanding refuse CPU rather than silently falling back.
 - Fetch has no CPU backend.
 
 See [limitations](docs/concepts/limitations.md).

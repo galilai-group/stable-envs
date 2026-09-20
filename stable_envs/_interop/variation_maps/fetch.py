@@ -71,8 +71,8 @@ The leaf is therefore declared ``partial``, not ``mapped``: the rename is real a
 genuinely what swm writes, and the skybox half is genuinely missing, and
 ``VariationMap.classification`` says so, so a generated completeness table cannot count this leaf as
 full support. That field exists because of this leaf — Sami's ruling is that a feasible, semantically
-required leaf is NOT declared unsupported merely because a renderer capability is missing, and the
-skybox capability is aggregated with the other families' capability needs after Wave 1. Until that
+required leaf is NOT declared unsupported merely because a renderer capability is missing. The
+skybox is a missing renderer capability recorded rather than approximated; until a re-freeze
 decision lands, the truthful label is ``partial`` and the measured residual travels with it.
 
 ``light.intensity`` -> ``light.diffuse`` is a **scale**, and the factor is not 1. swm assigns the

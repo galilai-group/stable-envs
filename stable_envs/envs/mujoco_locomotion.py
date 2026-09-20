@@ -158,7 +158,7 @@ from .._mujoco_gl import configure_mujoco_gl
 configure_mujoco_gl()
 
 from ..env import Env
-from ..registry import register
+from ..registry import _remember_historical_name, register
 from ..render import _resources as _RES
 from ..render import raycast3d as R3
 from ..spaces import Box, Dict
@@ -450,6 +450,8 @@ class _GymMujocoFamily(Env):
     ``ENV_ID``, and a helper that takes the env id as an argument is a helper that can be called with
     the wrong one.
     """
+
+    family = "mujoco"
 
     ENV_ID: str = ""
 
@@ -1421,6 +1423,11 @@ class GymMujoco(_GymMujocoFamily):
             )
 
 
+def _public_mujoco_name(old: str) -> str:
+    """``MujocoAnt`` → ``MuJoCoAnt``. Internal tables keep the historical keys."""
+    return "MuJoCo" + old[len("Mujoco") :] if old.startswith("Mujoco") else old
+
+
 def _hyphen_name(env_id: str) -> str:
     """``"HalfCheetah-v5"`` -> ``"mujoco-half-cheetah"``: the dataset name, from the gymnasium id."""
     pretty = env_id.split("-")[0]
@@ -1431,12 +1438,14 @@ def _make_classes():
     made = {}
     for cname, env_id in ENVS.items():
         floor, extra = PARITY.get(cname, (1.0, ""))
+        public = _public_mujoco_name(cname)
         cls = register(
             type(
-                cname,
+                public,
                 (GymMujoco,),
                 dict(
                     ENV_ID=env_id,
+                    domain=env_id.split("-")[0].lower(),
                     parity_interior_min=floor,
                     parity_note=GymMujoco.parity_note + extra,
                     name=_hyphen_name(env_id),
@@ -1449,7 +1458,8 @@ def _make_classes():
                 ),
             )
         )
-        made[cname] = cls
+        _remember_historical_name(cname, cls)
+        made[public] = cls
     return made
 
 
@@ -2236,12 +2246,14 @@ def _make_visual_classes():
         vf = VISUAL_FIDELITY.get(cname)
         if vf is None:  # pragma: no cover
             continue
-        made[cname] = register(
+        public = _public_mujoco_name(cname)
+        cls = register(
             type(
-                cname,
+                public,
                 (GymMujocoVisual,),
                 dict(
                     ENV_ID=env_id,
+                    domain=env_id.split("-")[0].lower(),
                     name=_hyphen_name(env_id),
                     reference_id=f"gymnasium/{env_id}",
                     visual_fidelity=vf,
@@ -2261,6 +2273,8 @@ def _make_visual_classes():
                 ),
             )
         )
+        _remember_historical_name(cname, cls)
+        made[public] = cls
     return made
 
 

@@ -132,7 +132,7 @@ def test_the_declared_state_layout_tiles_the_packed_row(name):
 
 @pytest.mark.parametrize("name", OWNED)
 def test_render_takes_a_state_a_packed_row_or_nothing(name):
-    """The three spellings are the same frame, and ``observation_spec`` describes it."""
+    """The three spellings are the same frame, and ``frame_spec`` describes it."""
     env = _constructible(name, REGISTRY[name])
     try:
         rows = env.sample_states(env.num_envs, np.random.default_rng(0))
@@ -141,7 +141,7 @@ def test_render_takes_a_state_a_packed_row_or_nothing(name):
         assert torch.equal(px, env.render(env.state))
         assert torch.equal(px, env.render(env.get_state()))
         assert px.dtype is torch.uint8 and px.shape[0] == env.num_envs
-        assert tuple(env.observation_spec.shape) == tuple(px.shape[1:])
+        assert tuple(env.frame_spec.shape) == tuple(px.shape[1:])
     finally:
         env.close()
 

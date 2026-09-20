@@ -246,7 +246,7 @@ PushT: **no inert variations** out of 14 leaves.
 Rules out: a knob wired into the space but not into `scene()` — advertised support that does not exist.
 
 It does *not* rule out a knob that changes the picture for the whole batch when it was supposed to change
-it per environment; see [what actually varies per environment](concepts/variation-spaces.md#what-actually-varies-per-environment)
+it per environment; see [what actually varies per environment](research/variation_collapses.md#what-actually-varies-per-environment)
 for the measured breakdown of that case.
 
 ### Determinism

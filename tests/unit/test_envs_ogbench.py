@@ -31,13 +31,13 @@ from stable_envs.envs.ogbench import maze as MAZE  # noqa: E402
 
 pytestmark = pytest.mark.unit
 
-MAZE_CELLS = tuple(f"{lo.capitalize()}maze{mz.capitalize()}{ds.capitalize()}" for lo, mz, ds in MAZE.CELLS)
+MAZE_CELLS = tuple(f"{lo.capitalize()}Maze{mz.capitalize()}{ds.capitalize()}" for lo, mz, ds in MAZE.CELLS)
 MANIP_CELLS = ("OGBCube", "OGBScene")
 
 #: A representative maze cell per BODY, so the behavioural half exercises all three state shapes and
 #: both forward-kinematics paths (the closed-form point one and ``mj_kinematics`` for the legged
 #: bodies) without paying for 25 MuJoCo bakes in a unit run.
-BODY_SAMPLE = ("PointmazeMediumNavigate", "AntmazeMediumExplore", "HumanoidmazeMediumNavigate")
+BODY_SAMPLE = ("PointMazeMediumNavigate", "AntMazeMediumExplore", "HumanoidMazeMediumNavigate")
 
 
 def _needs_ogbench():
@@ -139,20 +139,27 @@ def test_the_module_caches_are_one_object_each_across_the_package():
 
 
 def test_every_cell_reports_its_canonical_module():
-    """``registry.spec`` derives the FAMILY from ``__module__``."""
+    """Family is an explicit class attribute, not a module-path fragment."""
     for cell in MAZE_CELLS:
         cls = R.REGISTRY[cell]
         assert cls.__module__ == "stable_envs.envs.ogbench"
-        assert R.spec(cell)["family"] == "ogbench"
+        meta = R.info(cell)
+        assert meta["family"] == "ogbench"
+        assert meta["domain"] == cls.LOCO + "maze"
     for cell in MANIP_CELLS:
+        if cell not in R.REGISTRY:
+            continue
         cls = R.REGISTRY[cell]
         assert cls.__module__ == "stable_envs.envs.ogbench.manipulation"
-        assert R.spec(cell)["family"] == "manipulation"
+        meta = R.info(cell)
+        assert meta["family"] == "ogbench"
+        assert meta["domain"] == cls.CELL.lower()
         import importlib
 
         assert getattr(importlib.import_module(cls.__module__), cell) is cls
-    assert set(R.list_envs(family="ogbench")) == set(MAZE_CELLS)
-    assert set(R.list_envs(family="manipulation")) == set(MANIP_CELLS)
+    assert set(MAZE_CELLS) <= set(R.list_envs(family="ogbench"))
+    assert set(R.list_envs(family="ogbench", domain="pointmaze")) <= set(MAZE_CELLS)
+    assert set(R.list_envs(family="manipulation")) == set()
 
 
 def test_a_maze_cell_is_a_declaration_and_overrides_no_renderer_method():
@@ -423,7 +430,7 @@ def test_render_takes_a_state_a_packed_row_or_nothing(_ogbench, cell):
         a, b, c = env.render(st), env.render(env.pack(st)), env.render()
         assert torch.equal(a, b) and torch.equal(a, c)
         assert a.shape == (2, 224, 224, 3) and a.dtype == torch.uint8
-        assert env.observation_spec.shape == (224, 224, 3)
+        assert env.frame_spec.shape == (224, 224, 3)
 
 
 def test_the_dataset_siblings_of_one_scene_draw_the_same_frame(_ogbench):
@@ -434,7 +441,7 @@ def test_the_dataset_siblings_of_one_scene_draw_the_same_frame(_ogbench):
     """
     states = None
     digests = []
-    for cell in ("PointmazeMediumNavigate", "PointmazeMediumStitch"):
+    for cell in ("PointMazeMediumNavigate", "PointMazeMediumStitch"):
         with R.REGISTRY[cell](num_envs=2, device="cpu") as env:
             if states is None:
                 states = env.sample_states(2, np.random.default_rng(0))

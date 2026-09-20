@@ -11,10 +11,11 @@ Authors: **Randall Balestriero**, **Sami BuGhanem**.
 ```python
 import stable_envs as snv
 
-with snv.PushT(num_envs=64, device="cpu") as env:
+with snv.PushT(num_envs=64) as env:
     state = env.reset(seed=0)
-    pixels = env.render(state)                 # (64, 96, 96, 3) uint8
+    pixels = env.render(state)                 # Frame
     out = env.step(env.action_spec.sample(64, env.rng))
+    state = out["state"]
 ```
 
 Concrete classes are canonical. `snv.make("swm/PushT-v1", …)` is the string API for configs and interop. The full walkthrough is the [Quickstart](quickstart.md).
@@ -23,8 +24,8 @@ Concrete classes are canonical. `snv.make("swm/PushT-v1", …)` is the string AP
 
 - **[Quickstart](quickstart.md)** — install, `reset` / `step` / `render`, specs, logging
 - **[Install](install.md)** — extras, pins, nvdiffrast
-- **[Environments](environments.md)** — `list_envs`, `spec`, SWM aliases, optional extras
-- **[State and specs](concepts/state.md)** — TensorDict keys, pack/unpack, StepResult
+- **[Environments](environments.md)** — `list_envs`, `info`, SWM aliases, optional extras
+- **[State, Variation, Frame](concepts/state.md)** — the four nouns; compact render state; StepResult
 - **[Stateful vs functional](concepts/dynamics.md)** — `step` writes; `transition` / `unroll` do not
 - **[Variations](concepts/variation-spaces.md)** — appearance without changing state
 - **[Lifecycle](concepts/lifecycle.md)** — `close()`, context manager, short batches
@@ -59,7 +60,7 @@ Rendering is a drop-in: `render` is a pure function of state. Stepping is option
         ds = TensorDataset(states)
         loader = DataLoader(ds, batch_size=1024)
         for (s,) in loader:
-            frames = env.render(env.unpack(s))
+            frames = env.render(env.unpack_render_state(s))
             loss = mse(net(frames), target)
     ```
 
@@ -73,7 +74,7 @@ More in the [Gallery](gallery.md). Fidelity claims, including the visual tier, a
 
 ## How it works
 
-An env that can produce a `Scene2D` from a state has *proved* the frame is a function of the state. Tile-atlas families gather from a precomputed atlas; OGBench mazes ray-cast analytic primitives. Those override `render` and the suite applies the checks that still apply.
+A frame is a deterministic function of explicit render state plus Variation, regardless of backend. Some families rasterize a `Scene2D`; tile-atlas families gather from a precomputed atlas; OGBench mazes ray-cast analytic primitives. Those override `render` and the suite applies the checks that still apply.
 
 - [The Scene2D IR](concepts/scene-ir.md)
 - [The fused rasterizer](concepts/rasterizer.md)

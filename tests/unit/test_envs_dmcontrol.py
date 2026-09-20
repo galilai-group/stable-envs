@@ -160,15 +160,15 @@ def test_the_import_path_is_the_package_and_it_carries_the_step8_names():
 def test_every_cell_reports_the_package_as_its_module(name):
     """The registry row, the family and ``list_envs(family=...)`` did not move.
 
-    ``registry.spec`` derives an env's FAMILY from the last component of ``__module__``, so letting
-    ``type()`` default would have split one family of eighteen into fourteen named after domains and
-    changed a column every certified artifact recorded. The attribute is also ACCURATE: the class is
-    reachable at that path, which the assertion checks rather than assumes.
+    Family is the explicit ``family`` class attribute. ``__module__`` is still pinned to the
+    package so the class stays reachable at ``stable_envs.envs.dmcontrol``; letting ``type()``
+    default would have named fourteen domain modules. The attribute is also ACCURATE: the class
+    is reachable at that path, which the assertion checks rather than assumes.
     """
     cls = snv.registry.REGISTRY[name]
     assert cls.__module__ == "stable_envs.envs.dmcontrol"
     assert getattr(dmc, name) is cls
-    assert snv.spec(name)["family"] == "dmcontrol"
+    assert snv.info(name)["family"] == "dmcontrol"
     assert name in snv.list_envs(family="dmcontrol")
 
 
@@ -369,4 +369,4 @@ def test_render_takes_a_state_a_packed_row_or_nothing(name):
         a, b, c = env.render(st), env.render(env.pack(st)), env.render()
         assert torch.equal(a, b) and torch.equal(a, c)
         assert tuple(a.shape) == (2, env.size, env.size, 3) and a.dtype == torch.uint8
-        assert tuple(env.observation_spec.shape) == (env.size, env.size, 3)
+        assert tuple(env.frame_spec.shape) == (env.size, env.size, 3)

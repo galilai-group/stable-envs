@@ -169,6 +169,8 @@ class _Classic(Env):
     policy.
     """
 
+    family = "classic_control"
+
     #: (H, W) of the reference surface. Fixed, because the official renderers hardcode their primitive
     #: sizes in PIXELS (a 50x30 cart, a 10 px pole, an r=5 axle) rather than in world units, so there is
     #: no resized frame to be exact against — a different size would be a different picture that no
@@ -227,7 +229,7 @@ class _Classic(Env):
         self._step_graph_error = ""
         self._disc_tables = None
 
-    def set_state(self, states, style=None) -> _Classic:
+    def set_state(self, states, variation=None, style=None) -> _Classic:
         """As the base class, and put the velocities the compact state does not carry back at rest.
 
         The alternative — keeping whatever the env was doing before — would make ``set_state(s)`` depend
@@ -235,7 +237,7 @@ class _Classic(Env):
         what ``reference_set_state`` writes into the official env, so the two paths start from the same
         condition rather than from two defensible ones.
         """
-        super().set_state(states, style=style)
+        super().set_state(states, variation=variation, style=style)
         self._sim.zero_()
         self._sim[:, self._cols] = self._state.to(torch.float64)
         return self
@@ -492,7 +494,7 @@ class _Classic(Env):
     def frame_shape(self) -> tuple[int, int]:
         """``(H, W)`` of the frame, which in this family is NOT ``(size, size)``.
 
-        ``Env.observation_spec`` assumes a square frame unless the env says otherwise, and three of
+        ``Env.frame_spec`` assumes a square frame unless the env says otherwise, and three of
         these five are 400x600: the reference hardcodes its canvas, ``size`` is its WIDTH, and a spec
         that reported ``(600, 600, 3)`` would be wrong about the buffer every consumer allocates.
         """

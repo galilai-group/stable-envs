@@ -61,7 +61,7 @@ def _point(name: str, batch: int, args: argparse.Namespace, device: torch.device
     env = None
     try:
         env = public_env(name, env_kwargs(args, batch))
-        shape = tuple(int(x) for x in env.observation_spec.shape)
+        shape = tuple(int(x) for x in env.frame_spec.shape)
         output_mib = batch * shape[0] * shape[1] * shape[2] / 2**20
         if output_mib > args.max_output_mib:
             return {

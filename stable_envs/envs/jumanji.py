@@ -802,6 +802,8 @@ def _load_atlas(spec: _Spec, size: int, device) -> dict:
 class JumanjiGrid(Env):
     """A Jumanji id whose frame is a per-pixel lookup indexed by one cell's symbol."""
 
+    family = "jumanji"
+
     SPEC: _Spec = None
     #: 200 px, i.e. matplotlib at dpi 20. Not the viewer's 1000x1000 default, and the reason is cost
     #: rather than fidelity: the model holds at 200, 500 and 1000 alike on Maze, while the atlas is P*V

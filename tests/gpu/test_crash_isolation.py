@@ -73,7 +73,7 @@ def test_building_an_env_does_not_release_anything():
         pytest.skip("no EGL-backed env registered")
     before = resource_guard.take()
     env = se.make(
-        "PointmazeMediumNavigate" if "PointmazeMediumNavigate" in cells else cells[0], num_envs=2, device="cuda"
+        "PointMazeMediumNavigate" if "PointMazeMediumNavigate" in cells else cells[0], num_envs=2, device="cuda"
     )
     env.render(env.sample_states(2, rng=np.random.default_rng(0)))
     del env

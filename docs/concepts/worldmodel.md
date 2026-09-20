@@ -35,8 +35,8 @@ Do not look for `env.rollout(policy, …)` here. Planning and policy rollouts be
 ```python
 from stable_envs import interop
 
-snv.SWM_IDS                               # 42-id table (public)
-snv.spec("swm/PushT-v1")                  # resolves aliases without constructing on GPU
+interop.SWM_IDS                           # 42-id table
+snv.info("swm/PushT-v1")                  # resolves aliases without constructing on GPU
 interop.StableEnvGym("PushT", device="cpu")          # gym.Env over a batch-1 renderer
 interop.BatchedEnvPool("PushT", num_envs=8, device="cpu")
 interop.attach_batched_pool(world)                   # replace a swm.World's env list

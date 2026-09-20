@@ -1,9 +1,11 @@
-"""``make`` / ``spec`` / ``list_envs``, plus the registration decorator and its declaration checks.
+"""``make`` / ``info`` / ``list_envs``, plus the registration decorator and its declaration checks.
 
 THE CLASSES ARE CANONICAL AND THIS MODULE HOLDS NO SEMANTICS. ``snv.PushT`` is the environment;
 ``snv.make("swm/PushT-v1")`` is a string that finds it, for configs, serialisation and interop. The
 registry knows three things: the class a name refers to, the SWM ids that are aliases for it, and
 whether a class declared its fidelity tier completely before it was allowed in.
+
+Family metadata is declared on the class (``family``, ``domain``), never inferred from the file path.
 
 Auto-discovery of ``stable_envs/envs/*`` is kept (``discover()``), and so is the rule that a missing
 optional dependency costs exactly the family that needs it: the failure is recorded in
@@ -32,6 +34,10 @@ from .env import (
 
 #: class name -> class, populated by ``register``. One place, no parallel tables.
 REGISTRY: dict[str, type[Env]] = {}
+#: Frozen-oracle / SWM-cell spellings -> live class names. Not a public alias table:
+#: ``make("PointmazeLargeNavigate")`` does not resolve. Used when joining SWM_IDS cells
+#: and when regression fixtures still key rows by the historical spelling.
+_HISTORICAL_CLASS_NAMES: dict[str, str] = {}
 
 
 def check_fidelity_declaration(cls: type[Env]) -> None:
@@ -154,10 +160,49 @@ def register(cls: type[Env]) -> type[Env]:
             f"env name collision: {key} is already registered by "
             f"{REGISTRY[key].__module__}; two classes cannot share a lookup key"
         )
+    family = str(getattr(cls, "family", "") or "")
+    if not family:
+        raise ValueError(
+            f"{key}: set family= as an explicit class attribute; it is not inferred from the "
+            "module path. Example: family = 'dmcontrol'."
+        )
+    domain = str(getattr(cls, "domain", "") or "")
+    if not domain and getattr(cls, "DOMAIN", ""):
+        cls.domain = str(cls.DOMAIN)
+    elif not domain:
+        cls.domain = family
     check_fidelity_declaration(cls)
     check_decoder_declaration(cls)
     REGISTRY[key] = cls
     return cls
+
+
+def _remember_historical_name(old: str, cls: type[Env]) -> None:
+    """Record a frozen-oracle spelling. Not a public alias: ``make(old)`` still fails."""
+    if old == cls.__name__:
+        return
+    existing = _HISTORICAL_CLASS_NAMES.get(old)
+    if existing is not None and existing != cls.__name__:
+        raise ValueError(f"historical name {old!r} already points at {existing}")
+    _HISTORICAL_CLASS_NAMES[old] = cls.__name__
+
+
+def _canonical_from_frozen(name: str) -> str:
+    """Live class name for a frozen-oracle / SWM-cell spelling, or ``name`` if it was never renamed."""
+    return _HISTORICAL_CLASS_NAMES.get(name, name)
+
+
+def _frozen_from_canonical(name: str) -> str:
+    """Frozen-oracle spelling for a live class name, or ``name`` if it was never renamed."""
+    for old, new in _HISTORICAL_CLASS_NAMES.items():
+        if new == name:
+            return old
+    return name
+
+
+def _class_for_frozen_cell(name: str) -> type[Env] | None:
+    """Look up a class by live name or by a frozen SWM/oracle cell spelling."""
+    return REGISTRY.get(name) or REGISTRY.get(_canonical_from_frozen(name))
 
 
 def registry_table() -> list[dict[str, Any]]:
@@ -172,10 +217,13 @@ def registry_table() -> list[dict[str, Any]]:
     # 0 for those would be a number that is wrong rather than absent, so it is not reported.
     return [
         {
+            "class_name": n,
             "name": n,
             "tier": getattr(c, "fidelity_tier", "parity"),
             "decoder": getattr(c, "render_decoder", "renderer"),
-            "state_dim": (int(c.state_dim) or None) if isinstance(getattr(c, "state_dim", None), int) else None,
+            "family": getattr(c, "family", "") or None,
+            "domain": getattr(c, "domain", "") or None,
+            "render_state_dim": (int(c.state_dim) or None) if isinstance(getattr(c, "state_dim", None), int) else None,
             "reference_id": getattr(c, "reference_id", None),
             "module": c.__module__,
         }
@@ -278,15 +326,24 @@ SYMBOLIC_IDS = tuple(sorted(k for k, v in SWM_IDS.items() if not v))
 
 
 def canonical_names(name: str) -> tuple[str, ...]:
-    """The class name(s) ``name`` refers to: itself if it is one, else its SWM id's cells."""
+    """The class name(s) ``name`` refers to: itself if it is one, else its SWM id's cells.
+
+    SWM cells are recorded in the frozen support-matrix spelling. Join those onto live classes
+    with :func:`_class_for_frozen_cell`.
+    """
     if name in REGISTRY:
         return (name,)
     return SWM_IDS.get(name, ())
 
 
+def _lookup_class(name: str) -> type[Env] | None:
+    return REGISTRY.get(name)
+
+
 def _resolve(name: str, what: str) -> type[Env]:
-    if name in REGISTRY:
-        return REGISTRY[name]
+    cls = _lookup_class(name)
+    if cls is not None:
+        return cls
     cells = SWM_IDS.get(name)
     if cells is None:
         raise KeyError(
@@ -299,12 +356,12 @@ def _resolve(name: str, what: str) -> type[Env]:
             f"its observation is a symbol array, not a frame, so this package has nothing to render "
             f"for it and does not pretend to. Use stable_worldmodel's own env."
         )
-    live = [c for c in cells if c in REGISTRY]
+    live = [c for c in cells if _class_for_frozen_cell(c) is not None]
     if len(cells) > 1:
         raise KeyError(
             f"{name} maps onto {len(cells)} stable-envs cells ({', '.join(cells)}), which are "
             f"different environments — the id names the family and the cell names the task. Ask for "
-            f"one by its class name, e.g. {what}({cells[0]!r})."
+            f"one by its class name, e.g. {what}({_canonical_from_frozen(cells[0])!r})."
         )
     if not live:
         errs = import_errors()
@@ -313,7 +370,9 @@ def _resolve(name: str, what: str) -> type[Env]:
             f"errors recorded during discovery: {errs or 'none'} — most often an optional dependency "
             f"the family needs."
         )
-    return REGISTRY[live[0]]
+    found = _class_for_frozen_cell(live[0])
+    assert found is not None
+    return found
 
 
 def make(name: str, **kwargs) -> Env:
@@ -321,44 +380,55 @@ def make(name: str, **kwargs) -> Env:
     return _resolve(name, "make")(**kwargs)
 
 
-def spec(name: str) -> dict[str, Any]:
+def info(name: str) -> dict[str, Any]:
     """Everything about an env that can be known WITHOUT constructing one.
 
     Construction needs a device, and for several families a GPU, an EGL context or a compiled scene —
-    so a ``spec`` that instantiated would be unanswerable on the machine where the question is usually
+    so a lookup that instantiated would be unanswerable on the machine where the question is usually
     asked (a laptop choosing what to run). Every field here is a class attribute or a registry fact.
+
+    This is environment metadata, not a :class:`~stable_envs.specs.Spec`. Tensor contracts live on
+    ``env.state_spec`` / ``env.frame_spec`` / ``env.variation_spec`` after construction.
     """
-    cls = _resolve(name, "spec")
-    ids = tuple(sorted(i for i, cells in SWM_IDS.items() if cls.__name__ in cells))
+    cls = _resolve(name, "info")
+    public = cls.__name__
+    frozen = _frozen_from_canonical(public)
+    ids = tuple(sorted(i for i, cells in SWM_IDS.items() if public in cells or frozen in cells))
     dim = getattr(cls, "state_dim", None)
+    render_dim = int(dim) if isinstance(dim, int) and dim else None
     return {
-        "name": cls.__name__,
+        "class_name": cls.__name__,
+        "id": getattr(cls, "name", "") or cls.__name__,
         "class": cls,
         "module": cls.__module__,
-        "family": cls.__module__.rsplit(".", 1)[-1],
-        "state_dim": int(dim) if isinstance(dim, int) and dim else None,
-        "state_names": list(getattr(cls, "state_names", ()) or ()),
+        "family": getattr(cls, "family", "") or None,
+        "domain": getattr(cls, "domain", "") or None,
+        "render_state_dim": render_dim,
+        "render_state_names": list(getattr(cls, "state_names", ()) or ()),
         "default_size": getattr(cls, "default_size", None),
         "reference_id": getattr(cls, "reference_id", None),
         "fidelity_tier": getattr(cls, "fidelity_tier", "parity"),
         "render_decoder": getattr(cls, "render_decoder", "renderer"),
         "action_dim": getattr(cls, "action_dim", None),
         "has_dynamics": any(getattr(cls, m, None) is not getattr(Env, m, None) for m in ("step", "transition")),
+        "requires_cuda": bool(getattr(cls, "requires_cuda", False)),
         "swm_ids": ids,
     }
 
 
-def list_envs(family: str | None = None) -> list[str]:
-    """Registered class names, sorted. ``family`` filters by the module they live in ("pusht")."""
+def list_envs(family: str | None = None, domain: str | None = None) -> list[str]:
+    """Registered canonical class names, sorted. Filters use explicit class metadata."""
     names = sorted(REGISTRY)
-    if family is None:
-        return names
-    return [n for n in names if REGISTRY[n].__module__.rsplit(".", 1)[-1] == family]
+    if family is not None:
+        names = [n for n in names if REGISTRY[n].family == family]
+    if domain is not None:
+        names = [n for n in names if REGISTRY[n].domain == domain]
+    return names
 
 
 def list_families() -> list[str]:
-    """The env modules that contributed at least one registered class."""
-    return sorted({c.__module__.rsplit(".", 1)[-1] for c in REGISTRY.values()})
+    """Stable family ids that have at least one registered class. Not module path fragments."""
+    return sorted({c.family for c in REGISTRY.values() if c.family})
 
 
 # ------------------------------------------------------------------ auto-discovery
@@ -434,10 +504,10 @@ __all__ = [
     "discover",
     "format_registry",
     "import_errors",
+    "info",
     "list_envs",
     "list_families",
     "make",
     "register",
     "registry_table",
-    "spec",
 ]

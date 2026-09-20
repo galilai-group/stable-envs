@@ -47,12 +47,16 @@ def test_all_42_frozen_swm_ids_resolve_to_the_same_canonical_classes():
     for swm_id, class_names in expected.items():
         assert interop.canonical_names(swm_id) == class_names
         for class_name in class_names:
-            if class_name in registry.REGISTRY:
-                cls = registry.REGISTRY[class_name]
-                assert getattr(snv, class_name) is cls
-                assert registry._resolve(class_name, "test") is cls
-        if len(class_names) == 1 and class_names[0] in registry.REGISTRY:
-            assert snv.spec(swm_id)["class"] is registry.REGISTRY[class_names[0]]
+            cls = registry._class_for_frozen_cell(class_name)
+            if cls is not None:
+                assert getattr(snv, cls.__name__) is cls
+                if class_name != cls.__name__:
+                    with pytest.raises(KeyError):
+                        registry._resolve(class_name, "test")
+        if len(class_names) == 1:
+            live = registry._class_for_frozen_cell(class_names[0])
+            if live is not None:
+                assert snv.info(swm_id)["class"] is live
 
     assert interop.SYMBOLIC_IDS == (
         "swm/CraftaxClassicSymbolic-v1",
@@ -66,7 +70,7 @@ def test_variation_map_bridge_is_public():
         mapping = interop.variation_map(env)
         assert isinstance(mapping, interop.VariationMap)
         assert mapping.swm_id == "swm/PushT-v1"
-        style = env.default_style()
+        style = env.default_variation()
         variation = interop.variation_from_style(env, style)
         restored = interop.style_from_variation(env, variation)
         np.testing.assert_array_equal(restored, style)

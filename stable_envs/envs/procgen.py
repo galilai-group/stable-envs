@@ -1004,6 +1004,8 @@ def _blend_torch(canvas, atlas, idx, mask, gain):
 class _ProcgenEnv(Env):
     """Shared renderer. Subclasses declare only which game they are and how the state is laid out."""
 
+    family = "procgen"
+
     game: str = ""
     default_size = 64
     parity_interior_min = 1.0

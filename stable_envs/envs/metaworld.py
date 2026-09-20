@@ -1040,6 +1040,8 @@ class _Plate:
 class MetaWorldBase(Env):
     """Base for the 50 ids. ``TASK`` is set by the generated subclasses."""
 
+    family = "metaworld"
+
     TASK: str = ""
     default_size = 480  # metaworld's own SawyerXYZEnv default
     default_supersample = 1

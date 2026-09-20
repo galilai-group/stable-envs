@@ -25,7 +25,7 @@ same frame".
 |---|---|---|
 | PushT, classic control, navigation, OGBench mazes, most 2-D | yes | yes |
 | Fetch (12 ids) | **no backend** | yes |
-| OGBCube, OGBScene, PFRocketLanding | **refuse** (`device="cpu"` raises; no silent CUDA fallback) | required |
+| OGBCube, OGBScene, PyFlytRocketLanding | **refuse** (`device="cpu"` / CPU-only `auto` raises; no silent CUDA fallback) | required |
 | DM Control trackcom / visual-tier body-tracking | CPU3D path where declared | MJWarp |
 | nvdiff locomotion (visual tier) | not a supported consumer of the x86 sparse-stage path | nvdiffrast |
 
@@ -34,7 +34,7 @@ same frame".
 ## Fidelity
 
 - **Parity tier:** interior pixels match the official renderer (floor 1.0 unless a named `parity_note` mechanism is declared).
-- **Visual tier:** a different rasterizer of the same scene. Suitable for live training frames; **not** interchangeable with official pixels at eval. `spec(name)["fidelity_tier"]` reports it.
+- **Visual tier:** a different rasterizer of the same scene. Suitable for live training frames; **not** interchangeable with official pixels at eval. `info(name)["fidelity_tier"]` reports it.
 
 Fetch `background.color` is **partial**: the floor half is mapped, the skybox residual is measured (swm flat-fills a 16-colour gradient). Supporting the skybox would move the family's frozen default frame.
 
@@ -48,7 +48,7 @@ OGBench `light.intensity` / `camera.angle_delta` / `cube.size` and Scene `lock_c
 
 - DM Control certification interpreter is `mujoco==3.11.0` + `dm_control==1.0.44`. `mujoco >= 3.12` re-anchors finite-plane textures; the 3.12 arm is recorded as reference drift, not as our renderer moving.
 - nvdiff on x86 CPU has a documented sparse-stage one-ULP batch dependence. There is no CPU consumer of that path in the 42-id set.
-- `HumanoidmazeGiantNavigate` on CUDA is not process-reproducible across runs on at least one measured card (`gpu1503`).
+- `HumanoidMazeGiantNavigate` on CUDA is not process-reproducible across runs on at least one measured card (`gpu1503`).
 - Craftax's live SWM wrapper JITs `reset`/`step`. Certified pixel identity is against the **un-jitted** official renderer. The class attribute `SWM_WRAPPER_GATE_F` declares that.
 
 The measurement record is in the [research archive](../research/index.md).

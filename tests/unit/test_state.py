@@ -40,8 +40,9 @@ def test_the_state_keys_are_the_entities_and_not_the_packed_row(env):
 
 
 def test_the_packed_row_is_the_step8_layout_unchanged(env):
-    assert env.state_dim == 5
+    assert env.state_dim == 5 == env.render_state_dim
     assert env.state_names == ("agent_x", "agent_y", "block_x", "block_y", "block_angle")
+    assert env.render_state_names == env.state_names
     assert env.state_names_of(("agent", "position")) == ["agent_x", "agent_y"]
     assert env.state_names_of(("block", "angle")) == ["block_angle"]
     # the hidden dynamical field occupies no packed column at all
@@ -50,8 +51,11 @@ def test_the_packed_row_is_the_step8_layout_unchanged(env):
 
 def test_pack_unpack_round_trips_a_corpus_row_for_row(env):
     rows = torch.as_tensor(env.sample_states(8, np.random.default_rng(3)), dtype=torch.float32)
-    back = env.pack(env.unpack(rows))
-    assert torch.equal(rows, back), "pack(unpack(rows)) must be the identity on the packed layout"
+    back = env.pack_render_state(env.unpack_render_state(rows))
+    assert torch.equal(rows, back), (
+        "pack_render_state(unpack_render_state(rows)) must be the identity on the packed layout"
+    )
+    assert torch.equal(env.pack(env.unpack(rows)), back)
 
 
 def test_unpack_fills_the_hidden_field_with_the_condition_set_state_produces(env):
@@ -112,16 +116,16 @@ def test_the_specs_describe_the_state_the_actions_the_frames_and_the_style(env):
     assert isinstance(a, Spec) and a.shape == (2,)
     assert float(np.min(np.asarray(a.low))) == 0.0 and float(np.max(np.asarray(a.high))) == 512.0
 
-    o = env.observation_spec
+    o = env.frame_spec
     assert o.shape == (env.size, env.size, 3) and o.dtype is torch.uint8
 
     v = env.variation_spec
-    assert v.shape == (env.style_dim,)
+    assert v.shape == (env.variation_dim,)
     # one name per COLUMN: a width-3 colour leaf contributes three of them, and the set of paths is
-    # still exactly ``style_names``.
-    assert len(v.names) == env.style_dim
-    assert sorted({n.split("[")[0] for n in v.names}) == sorted(env.style_names)
-    assert v.contains(torch.as_tensor(env.default_style()).reshape(1, -1))
+    # still exactly ``variation_names``.
+    assert len(v.names) == env.variation_dim
+    assert sorted({n.split("[")[0] for n in v.names}) == sorted(env.variation_names)
+    assert v.contains(torch.as_tensor(env.default_variation()).reshape(1, -1))
 
 
 def test_num_envs_is_the_batch_and_len_agrees(env):

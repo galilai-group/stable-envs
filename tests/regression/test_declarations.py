@@ -77,6 +77,7 @@ def _cls(name: str, doc: str, **attrs):
         "state_names": ("a", "b"),
         "default_size": 8,
         "reference_id": "fake/Env-v0",
+        "family": "test",
         "make_variation_space": lambda self: spaces.Dict({}),
         "sample_states": lambda self, batch, rng=None: np.zeros((batch, 2), np.float32),
     }
@@ -307,7 +308,7 @@ def test_registry_table_reports_no_state_dim_rather_than_a_wrong_one():
     absent."""
     register(_cls("Deferred", "doc", state_dim=0))
     row = {r["name"]: r for r in registry_table()}["Deferred"]
-    assert row["state_dim"] is None
+    assert row["render_state_dim"] is None
 
 
 def test_describe_tells_a_consumer_what_the_frames_are_not_for():

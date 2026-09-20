@@ -52,6 +52,8 @@ class _DMCModel(Env):
     every frame (visual). Everything that would otherwise be written twice, and drift, lives here.
     """
 
+    family = "dmcontrol"
+
     DOMAIN: str = ""
     TASK: str = ""
     CAMERA: int = 0

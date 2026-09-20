@@ -5,7 +5,7 @@ one small base, two renderer modules and one module per domain (plan §3, §12 B
 exported is re-exported here, so ``from stable_envs.envs import dmcontrol as D`` and every
 ``D.<anything>`` the tests, the probes and ``stable_worldmodel`` reach for keeps resolving, and the
 registered classes still report ``stable_envs.envs.dmcontrol`` as their module — which is the path
-they are reachable at, and the family ``registry.spec`` reports.
+they are reachable at. Family is the explicit ``family`` class attribute.
 
 WHERE THINGS ARE
 ----------------

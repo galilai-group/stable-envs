@@ -843,6 +843,9 @@ class CraftaxFull(Env):
     (``tests/fixtures/regression/join/step7/craftax-full/certify/boundary_pool.json``).
     """
 
+    family = "craftax"
+    domain = "full"
+
     name = "craftax-full"
     #: 99 blocks, 99 items, 99 mob slots, 99 projectile slots, 99 light-map values, then the player
     #: slot, the sleeping flag, the level, the daylight, four PRNG-key halves and the 41 strip numbers.
@@ -1103,7 +1106,7 @@ class CraftaxFull(Env):
     def frame_shape(self) -> tuple[int, int]:
         """``(H, W)`` of one frame. ``size`` is the TILE edge here, not the frame edge.
 
-        ``Env.observation_spec`` assumes a square frame of ``size`` pixels, and this frame is neither
+        ``Env.frame_spec`` assumes a square frame of ``size`` pixels, and this frame is neither
         ``size`` pixels nor square: at the registered 10 px tile it is ``(130, 110)``. A consumer
         allocating from the spec would get a buffer of the wrong shape AND the wrong size, so the cell
         answers for its own geometry, exactly as the classic-control family does for its 400x600.

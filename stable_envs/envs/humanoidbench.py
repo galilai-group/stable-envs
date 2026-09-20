@@ -611,6 +611,8 @@ def _frame(c: _Ctx) -> None:
 class HumanoidBenchBase(Env):
     """Base for the registered cells. ``ROBOT`` and ``TASK`` are set by the generated subclasses."""
 
+    family = "humanoidbench"
+
     ROBOT: str = ""
     TASK: str = ""
     default_size = 256  # HumanoidBench's own default width/height

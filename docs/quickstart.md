@@ -8,12 +8,20 @@ pip install stable-envs
 
 Family extras, pins, and the nvdiffrast source build: [Install](install.md). From a clone, `pip install -e .` — see [Contributing](https://github.com/galilai-group/stable-envs/blob/main/CONTRIBUTING.md).
 
+Four nouns — **Env**, **State**, **Variation**, **Frame** — and two usage modes:
+
 ```python
 import stable_envs as snv
 
-env = snv.PushT(num_envs=64, device="cpu")   # or device="cuda"
-state = env.reset(seed=0)
-pixels = env.render(state)                   # (64, H, W, 3) uint8
+env = snv.PushT(num_envs=64)                 # device="auto" → CUDA if available, else CPU
+state = env.reset(seed=0)                    # State
+pixels = env.render(state)                   # Frame: (64, H, W, 3) uint8
+action = env.action_spec.sample(env.num_envs, env.rng)
+
+out = env.step(action)                       # STATEFUL: writes env.state
+state = out["state"]
+nxt = env.transition(state, action)          # FUNCTIONAL: env.state is untouched
+traj = env.unroll(state, action[None])       # known actions, time first
 env.close()
 ```
 
@@ -22,7 +30,7 @@ env.close()
 The same object as a context manager — `close()` is idempotent and correctness never depends on `__del__`:
 
 ```python
-with snv.PushT(num_envs=8, device="cpu") as env:
+with snv.PushT(num_envs=8) as env:
     state = env.reset(seed=0)
     pixels = env.render(state)
 ```
@@ -30,13 +38,17 @@ with snv.PushT(num_envs=8, device="cpu") as env:
 ## Strings are secondary
 
 ```python
-env = snv.make("PushT", num_envs=8, device="cpu")
-env = snv.make("swm/PushT-v1", num_envs=8, device="cpu")
-info = snv.spec("PushT")          # no construction, no GPU
-names = snv.list_envs()           # what this interpreter actually imported
+env = snv.make("PushT", num_envs=8)
+env = snv.make("swm/PushT-v1", num_envs=8)
+info = snv.info("PushT")          # metadata, no construction, no GPU — not a snv.Spec
+names = snv.list_envs()           # canonical class names this interpreter imported
+snv.list_envs(family="dmcontrol")
+snv.list_families()
 ```
 
 An unknown name raises with the registered classes (and, for `swm/…` ids, the alias table). Two SWM ids are **symbolic** (`CraftaxClassicSymbolic-v1`, `CraftaxSymbolic-v1`): this package does not pretend to render them.
+
+The frozen SWM id table lives at `stable_envs.interop.SWM_IDS`, not at `snv.*`.
 
 ## Stateful step, functional dynamics
 
@@ -45,6 +57,8 @@ state = env.reset(seed=0)
 action = env.action_spec.sample(env.num_envs, env.rng)
 
 out = env.step(action)                    # writes env.state; returns a StepResult TensorDict
+state = out["state"]                      # always
+# out["reward"] / out["terminated"] exist only where that env defines those semantics
 nxt = env.transition(state, action)       # does not touch env.state
 traj = env.unroll(state, actions)         # actions are (T, num_envs, …), time first
 ```
@@ -56,31 +70,37 @@ traj = env.unroll(state, actions)         # actions are (T, num_envs, …), time
 ```python
 env.state_spec          # nested, mirrors TensorDict keys
 env.action_spec         # raises on renderer-only cells
-env.observation_spec    # (H, W, 3) uint8
-env.variation_spec      # flat style row
+env.frame_spec          # (H, W, 3) uint8 — what render() produces
+env.variation_spec      # flat Variation row
 ```
 
-PushT's public state is grouped by entity — `state["agent", "position"]`, `state["agent", "velocity"]`, `state["block", "position"]`, `state["block", "angle"]` — not the packed float32 row the renderer uses internally. `env.pack(state)` / `env.unpack(rows)` convert; the packed layout is the frozen certification layout.
+PushT's public state is grouped by entity — `state["agent", "position"]`, `state["agent", "velocity"]`, `state["block", "position"]`, `state["block", "angle"]` — not the compact render row. `env.pack_render_state(state)` / `env.unpack_render_state(rows)` convert; that packed layout is the frozen certification layout and **may omit dynamics-only fields**.
 
-## Appearance
+## Appearance (Variation)
 
 ```python
-env.variation_space.names()
+env.variation_spec                    # flat row contract
+env.variation_dim, env.variation_names
+row = env.default_variation()         # official appearance
+rows = env.sample_variation(env.num_envs)
 pixels = env.render(state, variation={"block.color": [220, 40, 40]})
+pixels = env.render(state, variation=rows)
 ```
 
-Defaults are the official appearance. Domain randomisation is a tensor, not a loop. See [variation spaces](concepts/variation-spaces.md).
+A mapping overrides named leaves; a `(variation_dim,)` or `(B, variation_dim)` row is the full
+appearance. Defaults are the official picture. See [Variation](concepts/variation-spaces.md).
 
 ## Logging
 
 ```python
-snv.set(verbose="INFO")          # TRACE, DEBUG, INFO, WARNING, ERROR
+snv.set(verbose="INFO", default_device="auto")
 cfg = snv.get_config()           # verbose, default_device
 ```
 
 ## Next
 
 - [Environment listing](environments.md)
+- [State, Variation, Frame](concepts/state.md)
 - [Lifecycle](concepts/lifecycle.md)
 - [stable-worldmodel ownership](concepts/worldmodel.md)
 - [Adding an environment](adding-an-env.md)

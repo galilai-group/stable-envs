@@ -399,6 +399,9 @@ def _draw_poly_mask(scr, ys, xs):
 class CarRacing(Env):
     """CarRacing-v3 at its native 96x96. 100.0000% of pixels exact against the official renderer."""
 
+    family = "carracing"
+    domain = "carracing"
+
     name = "car-racing"
     state_dim = 28
     state_names = (

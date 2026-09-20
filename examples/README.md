@@ -20,7 +20,7 @@ python examples/worldmodel.py --help
 
 [`train_from_states.py`](train_from_states.py) and
 [`ddp_train_from_states.py`](ddp_train_from_states.py) show the intended training path: store compact
-states in your own dataset/loader and call `env.render(env.unpack(batch))` after transfer. stable-envs
+states in your own dataset/loader and call `env.render(env.unpack_render_state(batch))` after transfer. stable-envs
 does not own dataset storage or policy rollouts; those responsibilities belong to your data stack and
 `stable-worldmodel` respectively.
 

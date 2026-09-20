@@ -514,6 +514,8 @@ def _drawn_board(game: str, st) -> np.ndarray:
 class PgxBoardBase(Env):
     """Base for the 5 board games. ``GAME`` is set by the generated subclasses."""
 
+    family = "pgx"
+
     GAME: str = ""
     default_supersample = 1
     #: Style leaves that change the STATIC furniture and therefore the baked plate. Everything else is

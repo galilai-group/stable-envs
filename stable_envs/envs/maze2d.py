@@ -271,6 +271,8 @@ def _mat_and_tex(m, g):
 class PointMaze(Env):
     """Base for the four scenes. ``MAZE`` is set by the generated subclasses."""
 
+    family = "maze2d"
+
     MAZE: str = ""
     state_dim = 4
     state_names = STATE_NAMES
@@ -738,6 +740,7 @@ def _make_classes():
                 (PointMaze,),
                 dict(
                     MAZE=maze,
+                    domain=maze.lower(),
                     name=f"pointmaze-{maze.lower()}",
                     reference_id=f"PointMaze_{maze}-v3",
                     __doc__=(

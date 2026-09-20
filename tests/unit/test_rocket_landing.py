@@ -28,8 +28,8 @@ def _corpus():
 
 
 def test_state_is_the_env_observation_prefix():
-    assert RL.PFRocketLanding.state_dim == 13 and len(RL.PFRocketLanding.state_names) == 13
-    assert RL.PFRocketLanding.state_names[3:7] == ("quat_x", "quat_y", "quat_z", "quat_w")
+    assert RL.PyFlytRocketLanding.state_dim == 13 and len(RL.PyFlytRocketLanding.state_names) == 13
+    assert RL.PyFlytRocketLanding.state_names[3:7] == ("quat_x", "quat_y", "quat_z", "quat_w")
     S = _corpus()
     assert np.array_equal(S["state13"], S["obs30"][:, :13].astype(np.float32))
 
@@ -165,7 +165,7 @@ def test_euler_round_trip_is_pybullets_convention():
 
 
 def test_sample_states_have_the_obs_layout_and_the_corpus_ranges():
-    env = object.__new__(RL.PFRocketLanding)
+    env = object.__new__(RL.PyFlytRocketLanding)
     env.rng = np.random.default_rng(1)
     st = env.sample_states(512)
     assert st.shape == (512, 13) and st.dtype == np.float32 and np.isfinite(st).all()
@@ -175,8 +175,8 @@ def test_sample_states_have_the_obs_layout_and_the_corpus_ranges():
 
 
 def test_default_style_row_is_the_variation_space_default():
-    env = object.__new__(RL.PFRocketLanding)
-    space = RL.PFRocketLanding.make_variation_space(env)
+    env = object.__new__(RL.PyFlytRocketLanding)
+    space = RL.PyFlytRocketLanding.make_variation_space(env)
     assert sorted(space.names()) == sorted(RL.CORPUS_STYLE_PATHS)
     assert np.array_equal(space.pack().astype(np.float64), RL._default_style_row())
     lay = RL.style_layout()
@@ -217,7 +217,7 @@ def test_the_visual_declaration_is_complete_and_measured():
     from stable_envs.env import REQUIRED_VISUAL_FIDELITY
     from stable_envs.registry import check_decoder_declaration, check_fidelity_declaration
 
-    vf = RL.PFRocketLanding.visual_fidelity
+    vf = RL.PyFlytRocketLanding.visual_fidelity
     assert all(k in vf for k in REQUIRED_VISUAL_FIDELITY)
     assert all(vf[k] is not None for k in REQUIRED_VISUAL_FIDELITY)
     assert not vf["measured_at"].startswith("UNMEASURED")
@@ -238,8 +238,8 @@ def test_the_visual_declaration_is_complete_and_measured():
     # defect B's exclusion is declared, at the share it was measured at
     assert vf["reference_unreachable_share"] == RL.REFERENCE_UNREACHABLE_SHARE == 1.0 / 960.0
     assert vf["reference_unreachable_rows_in_draws"] == 0
-    check_fidelity_declaration(RL.PFRocketLanding)
-    check_decoder_declaration(RL.PFRocketLanding)
+    check_fidelity_declaration(RL.PyFlytRocketLanding)
+    check_decoder_declaration(RL.PyFlytRocketLanding)
 
 
 def test_missing_backend_names_every_optional_dependency():
@@ -257,11 +257,11 @@ def test_registered_iff_every_backend_dependency_is_present():
     import stable_envs as se
 
     if RL.missing_backend() is None:
-        assert "PFRocketLanding" in se.registry.REGISTRY
+        assert "PyFlytRocketLanding" in se.registry.REGISTRY
         with pytest.raises(NotImplementedError, match="CPU"):
-            RL.PFRocketLanding(num_envs=1, device="cpu")
+            RL.PyFlytRocketLanding(num_envs=1, device="cpu")
     else:
-        assert "PFRocketLanding" not in se.registry.REGISTRY
+        assert "PyFlytRocketLanding" not in se.registry.REGISTRY
         assert "rocket_landing" not in se.import_errors()  # absent cleanly, not broken
 
 
@@ -285,8 +285,8 @@ def test_reference_render_can_return_its_unreachable_flags_without_breaking_the_
 
     from stable_envs.testing.conformance import reference_accepts_style
 
-    sig = inspect.signature(RL.PFRocketLanding.reference_render)
-    assert "style" in sig.parameters and reference_accepts_style(RL.PFRocketLanding)
+    sig = inspect.signature(RL.PyFlytRocketLanding.reference_render)
+    assert "style" in sig.parameters and reference_accepts_style(RL.PyFlytRocketLanding)
     assert sig.parameters["return_flags"].default is False
     assert sig.parameters["style"].default is None
     src = inspect.getsource(RL)

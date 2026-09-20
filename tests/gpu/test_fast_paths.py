@@ -327,7 +327,7 @@ CASES: tuple[FastPath, ...] = (
         names=tuple(
             n
             for n in sorted(se.registry.REGISTRY)
-            if n.startswith(("DMC", "Mujoco", "Antmaze", "Pointmaze", "Humanoidmaze", "Maze2d"))
+            if n.startswith(("DMC", "MuJoCo", "AntMaze", "PointMaze", "HumanoidMaze", "Maze2d"))
         ),
         modules=RAYCAST_MODULES,
         num_envs=8,
@@ -352,7 +352,7 @@ CASES: tuple[FastPath, ...] = (
             "whose EGL teardown aborts the interpreter on this cluster, and the property is a "
             "property of our own two code paths. Parity against MuJoCo is test_conformance.py's job."
         ),
-        names=tuple(n for n in sorted(se.registry.REGISTRY) if n.startswith(("DMC", "Mujoco"))),
+        names=tuple(n for n in sorted(se.registry.REGISTRY) if n.startswith(("DMC", "MuJoCo"))),
         modules=MOVER_MODULES,
         num_envs=16,
         seed=0,
@@ -381,7 +381,7 @@ CASES: tuple[FastPath, ...] = (
         names=tuple(
             n
             for n in sorted(se.registry.REGISTRY)
-            if n.startswith(("DMC", "Mujoco", "Antmaze", "Pointmaze", "Humanoidmaze", "PointMaze"))
+            if n.startswith(("DMC", "MuJoCo", "AntMaze", "PointMaze", "HumanoidMaze"))
         ),
         modules=RAYCAST_MODULES,
         num_envs=8,
@@ -413,7 +413,7 @@ CASES: tuple[FastPath, ...] = (
         names=tuple(
             n
             for n in sorted(se.registry.REGISTRY)
-            if n.startswith(("Antmaze", "Pointmaze", "Humanoidmaze", "PointMaze"))
+            if n.startswith(("AntMaze", "PointMaze", "HumanoidMaze"))
         ),
         modules=("ogbench", "maze2d"),
         num_envs=8,
@@ -449,7 +449,7 @@ CASES: tuple[FastPath, ...] = (
         names=tuple(
             n
             for n in sorted(se.registry.REGISTRY)
-            if n.startswith(("Antmaze", "Pointmaze", "Humanoidmaze", "PointMaze"))
+            if n.startswith(("AntMaze", "PointMaze", "HumanoidMaze"))
         ),
         modules=("ogbench", "maze2d"),
         num_envs=8,
@@ -767,7 +767,7 @@ def test_every_declared_fast_path_is_actually_reachable():
     assert "cull" in inspect.signature(R2.render_triton).parameters, (
         "raster2d.render_triton no longer takes cull=, so both culling cases are drawing the same picture twice"
     )
-    if any(n.startswith(("DMC", "Mujoco")) for n in se.registry.REGISTRY):
+    if any(n.startswith(("DMC", "MuJoCo")) for n in se.registry.REGISTRY):
         switchable = [
             n
             for n in se.registry.REGISTRY

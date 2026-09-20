@@ -523,6 +523,8 @@ class _SWMPort(Env):
     means, and the certification numbers are quoted against it.
     """
 
+    family = "navigation"
+
     #: kwargs the reference env is constructed with; for the split cells this is their whole reason
     #: for existing (``render_target``, ``show_goal``)
     reference_kwargs: dict = {}

@@ -7,6 +7,8 @@ state = env.reset(seed=0)
 action = env.action_spec.sample(env.num_envs, env.rng)
 
 out = env.step(action)                 # STATEFUL: writes env.state; returns StepResult
+state = out["state"]                   # always
+# reward / terminated / truncated exist only where that env defines those semantics
 nxt = env.transition(state, action)    # FUNCTIONAL: env.state is not touched
 traj = env.unroll(state, actions)      # FUNCTIONAL, open-loop; actions (T, num_envs, …)
 ```

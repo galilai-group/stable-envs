@@ -66,6 +66,14 @@ def _repo_root() -> Path:
 ROOT = _repo_root()
 sys.path.insert(0, str(ROOT))
 
+
+def _frozen_cell_name(cls) -> str:
+    """Regression-layer spelling: frozen oracle cells, not unpublished public aliases."""
+    from stable_envs.registry import _frozen_from_canonical
+
+    return _frozen_from_canonical(cls.__name__)
+
+
 GATE_A = ROOT / "tests/fixtures/regression/join/step7/closure2/gate_a"
 S8 = ROOT / "tests/fixtures/regression/join/step8/certification"
 OUTPUT = S8 / "gate_a_rejudged.json"
@@ -115,18 +123,23 @@ def env_class(cell: str):
     try:
         from stable_envs import registry as R
 
-        cls = R.REGISTRY.get(cell)
+        cls = R._class_for_frozen_cell(cell)
         if cls is not None:
-            return cls, f"REGISTRY[{cell!r}]"
+            return cls, f"REGISTRY[{cls.__name__!r}] (frozen cell {cell!r})"
+        live = R._canonical_from_frozen(cell)
     except BaseException as e:  # noqa: BLE001
         return None, f"stable_envs could not be imported: {type(e).__name__}: {e}"
-    pattern = re.compile(rf"^class {re.escape(cell)}\(", re.M)
+    names = (cell,) if live == cell else (cell, live)
+    pattern = re.compile(rf"^class ({'|'.join(re.escape(n) for n in names)})\(", re.M)
     for path in sorted((ROOT / "stable_envs" / "envs").glob("*.py")):
-        if not pattern.search(path.read_text()):
+        text = path.read_text()
+        m = pattern.search(text)
+        if not m:
             continue
+        found = m.group(1)
         name = f"stable_envs.envs.{path.stem}"
         try:
-            return getattr(importlib.import_module(name), cell), f"{name}.{cell} (module import only)"
+            return getattr(importlib.import_module(name), found), f"{name}.{found} (module import only)"
         except BaseException as e:  # noqa: BLE001
             return None, f"{name} is not importable here: {type(e).__name__}: {e}"
     return None, f"no module under stable_envs/envs defines class {cell}"
@@ -247,9 +260,9 @@ def _colour_join(cell: str, device: str, res: dict, cls) -> tuple[dict, dict]:
         "measured_colors_not_applied": probes,
         "measured_best_abs_diff": evidence.get("best_abs_diff"),
         "best_abs_diff_note": (
-            "not captured by the Step-7 measurement; conformance.check_colors_apply_exactly "
-            "records it from Step 8 onward, so the next run of this cell carries the per-leaf "
-            "distance and a knob coming off its primitive moves a number"
+            "not captured by this measurement; conformance.check_colors_apply_exactly "
+            "records the per-leaf distance on subsequent runs of this cell, so a knob "
+            "coming off its primitive moves a number"
             if evidence.get("best_abs_diff") is None
             else None
         ),
@@ -278,7 +291,7 @@ def _colour_join(cell: str, device: str, res: dict, cls) -> tuple[dict, dict]:
             "status": "not_applicable",
             "why": why,
             "measured_evidence": evidence,
-            "declared_by": f"{cls.__name__}.color_exactness_applicability",
+            "declared_by": f"{_frozen_cell_name(cls)}.color_exactness_applicability",
         },
         join,
     )

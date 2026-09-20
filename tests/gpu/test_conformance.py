@@ -205,9 +205,11 @@ def test_relaxed_parity_floors_are_all_explained():
 
 def test_describe_is_complete(env):
     d = env.describe()
-    assert d["state_dim"] > 0, f"{d['name']}: state_dim must be positive"
-    assert len(d["state_names"]) == d["state_dim"], (
-        f"{d['name']}: {len(d['state_names'])} state_names for {d['state_dim']} dims — a state vector "
+    label = d.get("class_name") or d.get("id")
+    assert d["render_state_dim"] > 0, f"{label}: render_state_dim must be positive"
+    assert len(d["render_state_names"]) == d["render_state_dim"], (
+        f"{label}: {len(d['render_state_names'])} render_state_names for "
+        f"{d['render_state_dim']} dims — a state vector "
         f"whose fields are unnamed cannot be checked or reused by anyone"
     )
 

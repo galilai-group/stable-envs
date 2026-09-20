@@ -173,7 +173,7 @@ def test_render_takes_a_state_a_packed_row_or_nothing_and_draws_the_same_frame(n
     c = env.render(env.state)
     assert a.dtype == torch.uint8 and a.shape[0] == 2
     assert torch.equal(a, b) and torch.equal(a, c)
-    assert tuple(env.observation_spec.shape) == tuple(a.shape[1:])
+    assert tuple(env.frame_spec.shape) == tuple(a.shape[1:])
     env.close()
 
 

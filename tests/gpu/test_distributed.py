@@ -36,7 +36,7 @@ from stable_envs._data import render_states
 #: One env per RENDER BACKEND rather than per family: the 2-D rasterizer, the tile atlas and the 3-D
 #: ray caster are the three places a device-blind cache can live, and every other registered env
 #: renders through one of them.
-ENVS = ["PushT", "MiniGridEmpty", "PointmazeMediumNavigate"]
+ENVS = ["PushT", "MiniGridEmpty", "PointMazeMediumNavigate"]
 
 #: The states both halves of this file draw. A CONSTANT, and not the env's own generator: the
 #: cross-device and cross-process comparisons are only meaningful if both sides drew the same numbers,

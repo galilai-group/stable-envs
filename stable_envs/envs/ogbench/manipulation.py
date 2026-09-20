@@ -687,6 +687,9 @@ SPEC = {
 class OGBManipBase(Env):
     """Base for the two manipulation cells. ``CELL`` is set by the generated subclasses."""
 
+    family = "ogbench"
+    requires_cuda = True
+
     CELL: str = ""
     default_supersample = 1
     fidelity_tier = "visual"
@@ -696,7 +699,7 @@ class OGBManipBase(Env):
         num_envs: int = 1,
         size: int | None = None,
         supersample: int | None = None,
-        device: str = "cuda",
+        device: str | None = None,
         backend: str = "auto",
         seed: int = 0,
     ):
@@ -710,7 +713,8 @@ class OGBManipBase(Env):
         rather than declared on the class: the widths are ``nq``, ``3 * nmocap`` and the cell's
         button count, and every one of them is a property of the scene swm compiles.
         """
-        if str(device) != "cuda":
+        device = Env.resolve_device(device)
+        if not str(device).startswith("cuda"):
             # Honest device selection, per the Step-6 policy addendum. There is no CPU backend for
             # this family and the measurement that says why is CPU3D-OGB-1: the binding CPU bar
             # leaves 0.75 ns per triangle for 193,113 triangles, while the Step-6 span rasteriser's
@@ -1699,6 +1703,7 @@ def _make_classes():
                 (OGBManipBase,),
                 dict(
                     CELL=cell,
+                    domain=cell.lower(),
                     name=f"ogb-{cell.lower()}",
                     reference_id=spec["swm_ref"],
                     default_size=spec["size"],

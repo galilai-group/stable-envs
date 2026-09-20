@@ -1,19 +1,7 @@
-"""Global configuration and logging — deliberately three keys and one logger.
+"""Global configuration and logging — deliberately two keys and one logger.
 
-``snv.set(verbose="INFO")`` / ``snv.get_config()`` mirror the sibling ``stable-*`` packages. The
-temptation with a config object is to let it grow into a second way of configuring an environment; it
-is kept to the three keys that genuinely cannot live on an env instance:
-
-  * ``verbose`` — the level at or above which this package emits log records;
-  * ``default_device`` — the device an env gets when the caller names none (``None`` keeps the
-    historical default, which every env spells itself);
-  * ``warn_on_deprecated`` — whether the deprecated aliases announce themselves.
-
-THE LOGGER DOES NOT TOUCH GLOBAL LOGURU STATE. ``loguru.logger`` is a process-wide singleton owned by
-the application, so adding or removing handlers here would silently re-configure logging for a program
-that merely imported an environment. Instead every record this package emits is filtered against
-``verbose`` before it is handed to loguru, and the record carries ``extra={"package": "stable_envs"}``
-so an application that does want its own sink can filter for exactly ours.
+``snv.set(verbose="INFO", default_device="auto")`` / ``snv.get_config()`` are the whole
+configuration. Anything env-specific (size, supersample, backend) belongs on the constructor.
 """
 
 from __future__ import annotations
@@ -38,13 +26,8 @@ _LEVELS = {
     "SILENT": 100,
 }
 
-_DEFAULTS: dict[str, Any] = {"verbose": "WARNING", "default_device": None, "warn_on_deprecated": True}
+_DEFAULTS: dict[str, Any] = {"verbose": "WARNING", "default_device": "auto"}
 _CONFIG: dict[str, Any] = dict(_DEFAULTS)
-
-#: Deprecation keys already announced. One warning per alias per process: a repository with ~470 call
-#: sites on the old names would otherwise print ~470 identical lines, which trains the reader to ignore
-#: them.
-_ANNOUNCED: set[str] = set()
 
 
 def set(**kwargs: Any) -> dict[str, Any]:  # noqa: A001 - the public spelling is ``snv.set``
@@ -63,8 +46,6 @@ def set(**kwargs: Any) -> dict[str, Any]:  # noqa: A001 - the public spelling is
         kwargs["verbose"] = v
     if "default_device" in kwargs and kwargs["default_device"] is not None:
         kwargs["default_device"] = str(kwargs["default_device"])
-    if "warn_on_deprecated" in kwargs:
-        kwargs["warn_on_deprecated"] = bool(kwargs["warn_on_deprecated"])
     _CONFIG.update(kwargs)
     return dict(_CONFIG)
 
@@ -75,10 +56,9 @@ def get_config() -> dict[str, Any]:
 
 
 def reset_config() -> dict[str, Any]:
-    """Back to the defaults, and forget which deprecations have been announced. Used by the tests."""
+    """Back to the defaults. Used by the tests."""
     _CONFIG.clear()
     _CONFIG.update(_DEFAULTS)
-    _ANNOUNCED.clear()
     return dict(_CONFIG)
 
 
@@ -86,20 +66,3 @@ def log(level: str, message: str) -> None:
     """Emit one record at ``level`` if ``verbose`` allows it. The only logging entry point."""
     if _LEVELS[level.upper()] >= _LEVELS[_CONFIG["verbose"]]:
         logger.opt(depth=1).log(level.upper(), message)
-
-
-def deprecated(key: str, message: str) -> None:
-    """Announce a deprecated alias ONCE per process, under ``warn_on_deprecated``."""
-    if not _CONFIG["warn_on_deprecated"] or key in _ANNOUNCED:
-        return
-    _ANNOUNCED.add(key)
-    log("WARNING", message)
-
-
-def announced() -> set[str]:
-    """Which deprecation keys have already been announced. For tests and for debugging.
-
-    Spelled as a set literal because this module defines a function named ``set`` (the public
-    ``snv.set``), which shadows the builtin inside it.
-    """
-    return {*_ANNOUNCED}

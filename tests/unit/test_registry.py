@@ -51,9 +51,10 @@ def test_the_swm_alias_table_is_the_step8_support_matrix_row_for_row():
 def test_every_swm_id_resolves_to_the_cells_the_matrix_records(swm_id):
     cells = R.SWM_IDS[swm_id]
     assert R.canonical_names(swm_id) == cells
-    if len(cells) == 1 and cells[0] in R.REGISTRY:
-        assert R.spec(swm_id)["class"] is R.REGISTRY[cells[0]]
-        assert swm_id in R.spec(cells[0])["swm_ids"]
+    live = R._class_for_frozen_cell(cells[0]) if len(cells) == 1 else None
+    if len(cells) == 1 and live is not None:
+        assert R.info(swm_id)["class"] is live
+        assert swm_id in R.info(live.__name__)["swm_ids"]
     elif len(cells) > 1:
         with pytest.raises(KeyError, match="different environments"):
             R.make(swm_id)
@@ -79,28 +80,53 @@ def test_every_canonical_class_name_resolves_to_the_same_class_as_at_the_baselin
             f"baseline was recorded on: baseline {sorted(base['import_errors'])} vs "
             f"{sorted(snv.import_errors())}"
         )
-    now = {r["name"]: r for r in R.registry_table()}
-    then = {r["name"]: r for r in base["registry_table"]}
+    now = {r["class_name"]: r for r in R.registry_table()}
+    then = {R._canonical_from_frozen(r["name"]): r for r in base["registry_table"]}
     assert sorted(now) == sorted(then), "the set of registered class names changed"
+    skip_keys = {"module", "name", "class_name", "family", "domain", "render_state_dim", "state_dim"}
     for name, row in then.items():
         # ``module`` may move when unpublished shims are retired. The class is still the same
         # object, reachable at its canonical module; the old import path is gone on purpose.
-        assert {k: v for k, v in now[name].items() if k != "module"} == {
-            k: v for k, v in row.items() if k != "module"
-        }, f"the registry row for {name} changed"
+        # Family/domain/render_state_dim are new explicit metadata, not a behavior change.
+        now_cmp = {k: v for k, v in now[name].items() if k not in skip_keys}
+        then_cmp = {k: v for k, v in row.items() if k not in skip_keys}
+        assert now_cmp == then_cmp, f"the registry row for {name} changed"
         if now[name]["module"] != row["module"]:
             assert getattr(importlib.import_module(now[name]["module"]), name) is R.REGISTRY[name]
         assert R.make.__module__ and R._resolve(name, "make") is R.REGISTRY[name]
 
 
-def test_list_envs_and_spec_answer_without_constructing_anything():
+def test_list_envs_and_info_answer_without_constructing_anything():
     names = R.list_envs()
     assert names == sorted(R.REGISTRY) and "PushT" in names
     assert R.list_envs(family="pusht") == ["PushT"]
-    s = R.spec("PushT")
-    assert s["state_dim"] == 5 and s["family"] == "pusht" and s["fidelity_tier"] == "parity"
+    s = R.info("PushT")
+    assert s["render_state_dim"] == 5 and s["family"] == "pusht" and s["fidelity_tier"] == "parity"
+    assert s["class_name"] == "PushT" and s["id"] == "push-t"
     assert s["swm_ids"] == ("swm/PushT-Discrete-v1", "swm/PushT-v1")
     assert "pusht" in R.list_families()
+    assert "spec" not in dir(snv)
+    assert not hasattr(R, "spec")
+    assert snv.info is R.info
+
+
+def test_unpublished_historical_class_names_do_not_resolve():
+    """Pre-v0 renames are not public aliases. Frozen SWM ids still find the live class."""
+    samples = ("PointmazeLargeNavigate", "MujocoAnt", "PFRocketLanding")
+    for old in samples:
+        live = R._canonical_from_frozen(old)
+        if live == old or live not in R.REGISTRY:
+            continue
+        with pytest.raises(KeyError, match="unknown env"):
+            R.make(old)
+        with pytest.raises(AttributeError):
+            getattr(snv, old)
+        assert getattr(snv, live) is R.REGISTRY[live]
+    if "PyFlytRocketLanding" in R.REGISTRY:
+        assert R.info("swm/PFRocketLanding-v0")["class"] is R.REGISTRY["PyFlytRocketLanding"]
+    if "PointMazeLargeNavigate" in R.REGISTRY:
+        with pytest.raises(KeyError, match="different environments"):
+            R.make("swm/OGBMaze-v0")
 
 
 def test_discovery_records_its_failures_rather_than_hiding_them():

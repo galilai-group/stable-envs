@@ -1,31 +1,28 @@
 """stable-envs: famous research environments as GPU-batched, state-driven renderers.
 
-The claim the repo is built on: for a large fraction of the environments the field trains on, a frame
-is a pure function of a compact state vector. If that is true, an image dataset is redundant with a
-state dataset that is orders of magnitude smaller, and the frames can be regenerated on the GPU faster
-than they could be read from disk. PushT is 5 floats per step against a 96x96x3 frame — 1,382x at 96px,
-7,526x at 224px — and renders at 3.2 M frames/s end-to-end on one H200 (5.6 M for the rasterizer alone).
+Four nouns: **Env**, **State**, **Variation**, **Frame**.
+Two usage modes: **stateful** (``reset`` / ``step``) and **functional** (``transition`` / ``unroll`` / ``render``).
+``VariationLike`` is the type of ``render(..., variation=)``: a mapping of overrides, or a flat / batched row.
 
 Public surface::
 
     import stable_envs as snv
 
-    env   = snv.PushT(num_envs=64, device="cuda")   # concrete classes are canonical
-    env   = snv.make("swm/PushT-v1", device="cuda") # strings are for configs and interop
-    state = env.reset(seed=0)                       # a TensorDict, keys grouped by entity
-    out   = env.step(actions)                       # stateful
-    nxt   = env.transition(state, action)           # functional, pure in `state`
-    traj  = env.unroll(state, action_sequence)      # open loop, known actions
-    px    = env.render(state)                       # (B,H,W,3) uint8 on device
+    env   = snv.PushT(num_envs=64)              # device="auto" → CUDA if available, else CPU
+    env   = snv.make("swm/PushT-v1")            # strings are for configs and interop
+    state = env.reset(seed=0)                   # State: TensorDict, keys grouped by entity
+    out   = env.step(actions)                   # stateful; read out["state"]
+    nxt   = env.transition(state, action)       # functional, pure in `state`
+    traj  = env.unroll(state, action_sequence)  # open loop, known actions
+    px    = env.render(state)                   # Frame: (B,H,W,3) uint8 on device
     env.close()
 
-``snv.spec("PushT")`` and ``snv.list_envs()`` answer what exists without constructing anything;
-``snv.set(verbose="INFO")`` and ``snv.get_config()`` are the whole configuration.
+``snv.info("PushT")`` and ``snv.list_envs()`` answer what exists without constructing anything;
+``snv.set(verbose="INFO", default_device="auto")`` is the whole configuration.
 
-``stable_envs.testing`` and ``stable_envs.interop`` are developer-facing subpackages. Policy
-rollouts and dataset storage belong to ``stable-worldmodel`` and ``stable-datasets``
-respectively; the public ``stable-envs`` surface stays focused on environment state,
-dynamics, and rendering.
+``stable_envs.testing`` and ``stable_envs.interop`` are developer-facing subpackages. The SWM id
+table lives at ``stable_envs.interop.SWM_IDS``. Policy rollouts and dataset storage belong to
+``stable-worldmodel`` and ``stable-datasets`` respectively.
 """
 
 from __future__ import annotations
@@ -36,8 +33,8 @@ from . import registry as _registry
 from .__about__ import __version__  # noqa: F401
 from ._config import get_config, set  # noqa: A004,F401
 from .dynamics import Dynamics  # noqa: F401
-from .env import Env, State, StepResult  # noqa: F401
-from .registry import SWM_IDS, import_errors, list_envs, list_families, spec  # noqa: F401
+from .env import Env, State, StepResult, VariationLike  # noqa: F401
+from .registry import import_errors, info, list_envs, list_families  # noqa: F401
 from .registry import make as _make
 from .specs import CompositeSpec, Spec  # noqa: F401
 
@@ -45,19 +42,6 @@ from .specs import CompositeSpec, Spec  # noqa: F401
 # ``snv.PushT``, and a family whose optional dependency is missing costs that family alone
 # (``snv.import_errors()``).
 _registry.discover()
-
-#: Names that still RESOLVE off ``snv.*`` but are not advertised in ``dir(snv)``. They are helpers
-#: tests and notebooks reach for; they are not the happy path.
-_HELPER_ATTRS = {
-    "Scene2D": ("stable_envs.render.scene", "Scene2D"),
-    "SceneBuilder": ("stable_envs.render.scene", "SceneBuilder"),
-    "StyleTensor": ("stable_envs._style", "StyleTensor"),
-    "check_states": ("stable_envs.env", "check_states"),
-    "FIDELITY_TIERS": ("stable_envs.env", "FIDELITY_TIERS"),
-    "RENDER_DECODERS": ("stable_envs.env", "RENDER_DECODERS"),
-    "registry_table": ("stable_envs.registry", "registry_table"),
-    "format_registry": ("stable_envs.registry", "format_registry"),
-}
 
 
 def make(name: str, **kwargs) -> Env:
@@ -69,19 +53,9 @@ make.__doc__ = (_make.__doc__ or "") + "\n\n    " + (make.__doc__ or "")
 
 
 def __getattr__(name: str) -> Any:
-    """Environment classes and unadvertised helpers — resolved lazily.
-
-    ``snv.PushT`` is a lookup in the registry rather than a hand-maintained import list, so the
-    top-level namespace and the registry cannot disagree and adding an environment stays a one-file
-    change.
-    """
-    import importlib
-
+    """Environment classes — resolved lazily from the registry by canonical class name."""
     if name in _registry.REGISTRY:
         return _registry.REGISTRY[name]
-    if name in _HELPER_ATTRS:
-        mod, attr = _HELPER_ATTRS[name]
-        return getattr(importlib.import_module(mod), attr)
     raise AttributeError(
         f"module 'stable_envs' has no attribute {name!r}. Environments are looked up by their class "
         f"name — snv.list_envs() shows the {len(_registry.REGISTRY)} registered; "
@@ -90,14 +64,7 @@ def __getattr__(name: str) -> Any:
 
 
 def __dir__() -> list[str]:
-    """The documented namespace and the environments.
-
-    Built from ``__all__`` rather than from ``globals()``, because Python itself binds every imported
-    submodule as an attribute of its package (importing ``stable_envs.spaces`` anywhere puts
-    ``spaces`` in this module's globals), so a ``globals()``-based listing advertises whatever the
-    process happened to import. The environments are added because the concrete classes ARE the
-    primary public API: ``snv.PushT`` must be completable.
-    """
+    """The documented namespace and the canonical environment class names."""
     return sorted({*__all__, *_registry.REGISTRY})
 
 
@@ -105,16 +72,16 @@ __all__ = [
     "Env",
     "State",
     "StepResult",
+    "VariationLike",
     "Spec",
     "CompositeSpec",
     "Dynamics",
     "make",
-    "spec",
+    "info",
     "list_envs",
     "list_families",
     "import_errors",
     "set",
     "get_config",
-    "SWM_IDS",
     "__version__",
 ]
