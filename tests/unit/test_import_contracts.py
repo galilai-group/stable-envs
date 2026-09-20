@@ -183,6 +183,7 @@ def test_dm_control_import_does_not_hang_after_gl_configure():
 GONE_SHIMS = (
     "stable_envs/core",
     "stable_envs/compat",
+    "stable_envs/data.py",
     "stable_envs/envs/swm_nav.py",
     "stable_envs/envs/simple_point_maze.py",
     "stable_envs/envs/ogb_manip.py",
@@ -191,6 +192,7 @@ GONE_SHIMS = (
 BANNED_IMPORTS = (
     "stable_envs.core",
     "stable_envs.compat",
+    "stable_envs.data",
     "stable_envs.envs.swm_nav",
     "stable_envs.envs.simple_point_maze",
     "stable_envs.envs.ogb_manip",
@@ -217,7 +219,7 @@ def _is_banned(mod: str) -> bool:
 
 def test_maintained_tests_and_examples_do_not_import_deleted_modules():
     offenders = {}
-    for folder in ("tests", "examples"):
+    for folder in ("tests", "examples", "stable_envs"):
         for path in (ROOT / folder).rglob("*.py"):
             rel = path.relative_to(ROOT).as_posix()
             if rel.startswith("examples/results/"):

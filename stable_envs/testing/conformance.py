@@ -1330,7 +1330,7 @@ def check_chunked_render_matches(env, states, style=None, chunks=(1, 7, 64, 4096
     non-blocking copy that is read before it lands would show up — none of which the single-call render
     can reach.
     """
-    from ..data import render_states
+    from .._data import render_states
 
     ref = None
     worst, where = 0, ""
