@@ -149,7 +149,7 @@ testpaths = ["tests"]
 markers = [
   "unit: fast, CPU-only, no reference package and no device",
   "integration: several components together (env + renderer + registry + interop)",
-  "certification: the frozen Step-4/Step-8 oracle — corpora, digests, support matrix",
+  "certification: the frozen certification oracle — corpora, digests, support matrix",
   "gpu: requires a CUDA device (skipped otherwise)",
   "reference: requires the official reference env to be installed",
   "slow: long-running throughput benchmark",

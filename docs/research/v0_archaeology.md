@@ -374,3 +374,56 @@ KEEP_MAIN / KEEP_FIXTURE files that current tests `np.load` or `Path.read` were 
 
 Helper: `python scripts/archaeology_sizes.py` reprints `du -sh` for the four
 trees and their children.
+
+---
+
+## Closed on `v0-draft` after `29249c0`
+
+This branch is the source of truth. The earlier `noscratch` tarball is not.
+Public/private API and release-surface decisions are unchanged.
+
+Re-audit of what is still on the product branch (tests, MkDocs, CI, and
+`test_repo_contracts.py` citations). Classes below override the 41ab42a
+inventory where a later `git rm` already landed, or where an ARCHIVE leftover
+is still opened by a live probe or research page.
+
+### Still on this branch (do not `git rm`)
+
+| path | class | why it stays |
+|---|---|---|
+| `scratch/**/*.py`, `*.sbatch`, `*.md` | KEEP_MAIN | reproduction path |
+| `scratch/certification.json`, `scratch/swm_matrix.json`, `scratch/census/*.json` | KEEP_MAIN | certification / unit / GPU conformance |
+| `scratch/step{3,4,5,6,7,8,9}/` | KEEP_MAIN | certifiers, report generators, packaging-ci sources |
+| `scratch/backend3d/scenes/*.xml` | KEEP_MAIN | `docs/research/backend3d.md`; probes load `antmaze_medium.xml` / `cube_single.xml` |
+| `scratch/backend3d/scenes/upperarm_3.obj` | RELEASE_ASSET leftover | not this pass; user limited deletes to ARCHIVE / DELETE_DUPLICATE |
+| `examples/results/step3/`, `step4/{states,certification,merged,conformance,dino}/` | KEEP_MAIN / KEEP_FIXTURE | tests `np.load` / report generators |
+| `examples/results/step4/comparisons/*.png` | KEEP_MAIN | linked from `docs/research/step4_fidelity_baseline.md` |
+| `examples/results/step5/**/*.json` (+ reacher PNGs / `episodes.jsonl`) | KEEP_MAIN | `test_task_object_visibility`, `test_conformance`, `test_step5` |
+| `examples/results/step6/cpu-3d/replay/mjwarp_frames_first4.npz` | KEEP_FIXTURE | `tests/unit/test_cpu3d.py` |
+| `examples/results/step6/{verify,texture-fidelity,gfxdraw,raster2d,tilemap,reacher-correctness,cpu-3d}/findings.md` | KEEP_MAIN | cited by unit/certification tests and research notes |
+| `examples/results/step6/raycast3d/{experiments/,bake_probe_branch.json,findings.md}` | KEEP_MAIN | `test_raycast3d_primitive_bounds`, `test_ogbench_scene_cache` |
+| `examples/results/step6/lance/` | KEEP_MAIN | `comparison2.json` + arms JSON named from `docs/research/step6_optimization.md` |
+| `examples/results/step7/closure2/` | KEEP_MAIN | Gate A / coverage matrix |
+| `examples/results/step7/rocket-landing/reference/{states,frames}.npz` | KEEP_FIXTURE | unit fixture + `scratch/step7/rocket-landing/*.py` |
+| `examples/results/step7/{ogb-manipulation/states,craftax-*}/` | KEEP_FIXTURE / KEEP_MAIN | unit + certify JSON |
+| `examples/results/step7/dmc-*/` remaining JSON/PNG | KEEP_MAIN | findings / review pages and Step-7 oracle states |
+| `examples/results/step8/`, `step9/` | KEEP_MAIN | support matrix, Gate F, Step-9 oracles (including intentional `step9/oracle/step8_*.json` snapshots) |
+| `examples/results/{decode,dino,storage/lance.json,pusht_rollout.npz,bench_gpu_vs_cpu.json}` | KEEP_MAIN | tests / docs |
+
+### Already left this branch (prior slim + this pass)
+
+| class | removed | retained on |
+|---|---|---|
+| RELEASE_ASSET | Menagerie `.obj`/`.stl` next to `scenes/*.xml` except leftover `upperarm_3.obj`; RoboCasa visual binaries; uncited `docs/assets/media/{MetaWorldAssembly,DMCWalkerWalk,PointmazeMediumNavigate,CarRacing}` | `step8-closure` |
+| ARCHIVE_TAG_ONLY | `scratch/backend3d/images/`; Step-6 verify/texture/gfxdraw/… bulk (JSON shards, GPU dumps); `step7/closure/`; large frame banks; `decode/pre_*`; `STEP_09_AGENT_BRIEFS/` | `step8-closure` |
+| DELETE_DUPLICATE | `examples/results/storage/pre_final/`; **this pass:** `scratch/backend3d/scenes/flat/` (31 files: byte-identical meshes + unused flattened XML). No test, CI job, or product/research page other than this inventory named `flat/`. | `step8-closure` |
+
+RELEASE_ASSET is **not** deleted in this pass.
+
+### This-pass `git rm`
+
+```text
+scratch/backend3d/scenes/flat/     # 31 files, ~33 MB
+```
+
+`step8-closure` / earlier `v0-draft` commits keep the bytes. No history rewrite.
