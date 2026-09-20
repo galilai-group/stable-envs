@@ -86,8 +86,8 @@ Pendulum (8x500x500)     **0 px**     64-2,726 px (<= 0.14 %)
 MountainCar (8x400x600)  **0 px**     11,033-11,326 px (0.6 %)
 ======================== ============ ======================
 
-The registered default is **byte-identical on every one of the five**, which is the property Step 8
-asks for; the divergence is confined to non-default styles and to shape boundaries. It is recorded
+The registered default is **byte-identical on every one of the five**, which is the property
+certification asks for; the divergence is confined to non-default styles and to shape boundaries. It is recorded
 here rather than smoothed over, because reproducing it would mean rendering the default frame and
 then recoloring it, which is a renderer change and a worse picture.
 
@@ -291,7 +291,7 @@ _PARITY_FLOOR = frozenset(
     }
 )
 
-#: The floor, on the eight parity cells: MAPPED, identically, as of the Step-8 capability patch.
+#: The floor, on the eight parity cells: MAPPED, identically, as of the capability patch.
 _FLOOR_MAPPED = (
     "Our ``floor.color`` is swm's leaf in shape, order, units and default: (2,3) rgb1/rgb2 of the "
     "builtin ``grid`` checker, with the default READ from dm_control's own common/materials.xml -- "

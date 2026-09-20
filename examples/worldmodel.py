@@ -1,6 +1,6 @@
 """Frozen stable-worldmodel interop — and the native-World limitation that is not shipped.
 
-Workstream J has not merged ``swm.World(env=snv.PushT(...))``. This script documents the frozen
+This tree does not ship ``swm.World(env=snv.PushT(...))``. This script documents the frozen
 contract only: SWM id aliases, ``StableEnvGym``, ``swap_renderer``. It does not invent that native
 call. ``gymnasium`` / ``stable_worldmodel`` are optional; missing extras print the reason and exit 0
 on the arms that need them.
@@ -19,8 +19,7 @@ import sys
 NATIVE_WORLD_LIMITATION = """\
 NATIVE WORLD LIMITATION
     swm.World(env=snv.PushT(...)) is not a public API on this tree.
-    Workstream J (stable_envs/interop.py + tests/integration/test_worldmodel.py) has not
-    merged a native-env World constructor. Do not write that call against current stable-envs.
+    stable_envs.interop does not expose a native-env World constructor. Do not write that call against current stable-envs.
     The frozen surface is:
         snv.make("swm/PushT-v1", ...)
         snv.SWM_IDS / snv.spec("swm/PushT-v1")

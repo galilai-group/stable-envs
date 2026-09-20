@@ -1,4 +1,4 @@
-"""The Step-8 variation mapping for the five classic-control and thirteen DM Control cells.
+"""The variation mapping for the five classic-control and thirteen DM Control cells.
 
 What each test is FOR, because a variation map fails in ways a smoke test cannot see:
 
@@ -6,7 +6,7 @@ What each test is FOR, because a variation map fails in ways a smoke test cannot
     the completeness claim. Read against the LIVE swm variation space, not against a transcribed
     list, so a leaf swm adds tomorrow fails here instead of being silently unmapped.
 ``test_registered_default_*``
-    Step-8 closure asks that "the registered default is reproducible through the mapping". For ten of
+    Certification asks that "the registered default is reproducible through the mapping". For ten of
     the eighteen cells the mapped default IS the cell's default style and the render is byte-identical;
     for the other five the swm default is a DIFFERENT appearance from the compiled model's and is
     reached through named leaves. Both are asserted, and the second names the leaves, so a cell that
@@ -123,7 +123,7 @@ def test_the_seventeen_ids_total_161_leaves():
         for k in totals:
             totals[k] += EXPECTED_COUNTS[m.swm_id][k]
     assert len(seen) == 17
-    # mapped 46 -> 53 and unsupported 94 -> 87 in the Step-8 capability patch: ``floor.color`` moved
+    # mapped 46 -> 53 and unsupported 94 -> 87 in the capability patch: ``floor.color`` moved
     # on the seven DM Control ids whose cells bake a plate. The total cannot move.
     assert totals == {"mapped": 53, "unsupported": 87, "dead_upstream": 21, "not_applicable": 0}
     assert sum(totals.values()) == 161
@@ -407,6 +407,12 @@ def test_dead_upstream_leaves_really_are_dead(tmp_path):
     import subprocess
     import sys
 
+    if sys.platform == "darwin":
+        pytest.skip(
+            "this probe needs dm_control physics.render; on macOS that either hangs in GLFW or is "
+            "bound to MUJOCO_GL=disable so import of stable_envs cannot hang"
+        )
+
     script = tmp_path / "probe.py"
     script.write_text(_DEAD_PROBE)
     result = tmp_path / "out.json"
@@ -439,7 +445,7 @@ def test_dead_upstream_leaves_really_are_dead(tmp_path):
 
 @pytest.mark.parametrize("cell", ["TwoRoom", "TwoRoomTarget", "Piecewise", "PiecewiseZones", "PushT"])
 def test_the_four_pre_step8_maps_are_untouched(cell):
-    """The Step-8 fields are additive: the maps that predate them behave exactly as they did.
+    """The extra mapping fields are additive: the maps that predate them behave exactly as they did.
 
     ``unmapped()`` must equal the old ``swm_only`` and ``mapped_swm_paths()`` the old
     ``{t for t, _ in pairs().values()}``, because those two expressions are what the old
@@ -476,11 +482,11 @@ def test_an_unreachable_enum_index_is_refused():
 
 
 def test_affine_is_invertible_and_additive():
-    """The ``affine`` form added for Workstream C: ``ours = theirs * factor + offset``.
+    """The ``affine`` form: ``ours = theirs * factor + offset``.
 
     Exercised on a synthetic map rather than on one of this family's — nothing here needs an offset —
     so that the arithmetic is tested rather than one caller's use of it. The inverted-switch case is
-    the one Workstream C asked for: swm 0/1 into our 1/0.
+    the invert: swm 0/1 into our 1/0.
     """
     from dataclasses import replace
 
@@ -522,7 +528,7 @@ def test_strict_accepts_the_whole_swm_space(cell):
     style_from_variation(env, swm_defaults(variation_map(env).swm_id), strict=True)
 
 
-# --------------------------------------------------------------- the Step-8 capability patch
+# --------------------------------------------------------------- the capability patch
 
 
 @needs_dmc

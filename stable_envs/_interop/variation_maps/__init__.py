@@ -1,6 +1,6 @@
 """One ``VariationMap`` module per family, installed into ``worldmodel.VARIATION_MAPS``.
 
-``stable_envs.interop`` carries the four maps that predate Step 8 inline. Everything Step 8
+``stable_envs.interop`` carries the four maps that predate the certified maps inline. The certified maps
 adds lives here instead, one module per family, for a reason that is about ownership rather than
 tidiness: the maps are written by different workstreams against different evidence, and a single
 dict literal in one file is a merge conflict per workstream and no way to say which measurement a
@@ -44,7 +44,7 @@ def install(registry: Mapping) -> dict:
     """Merge every family module's maps into ``registry`` (``worldmodel.VARIATION_MAPS``).
 
     Returns ``cell -> module name`` so a caller can say where a map came from. Refuses to replace a
-    map already in ``registry``: the four pre-Step-8 maps are authoritative for their cells.
+    map already in ``registry``: the four earlier maps are authoritative for their cells.
     """
     where = {}
     for cell, (vmap, name) in _collect().items():

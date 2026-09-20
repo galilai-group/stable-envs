@@ -28,9 +28,7 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -e ".[docs]"
       - name: Build documentation
-        # --strict is withheld until Workstream M rewrites research-note links that
-        # point at examples/results and scratch files outside the docs tree.
-        run: python -m mkdocs build --config-file mkdocs.yaml
+        run: python -m mkdocs build --strict --config-file mkdocs.yaml
       - uses: actions/upload-artifact@v4
         with:
           name: documentation

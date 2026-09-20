@@ -8,7 +8,7 @@ graph against one compiled model. It is also not necessary: the compiled texture
 checker is a small set of distinct texel values, so the same bytes are reached by SUBSTITUTING those
 texels in the renderer's own model and re-uploading the texture to its own GL context.
 
-VERIFIED, not assumed, by Workstream C on ``swm/OGBCube-v0`` and ``swm/OGBScene-v0``: substituting
+VERIFIED, not assumed, on ``swm/OGBCube-v0`` and ``swm/OGBScene-v0``: substituting
 here and uploading gives a plate BYTE-IDENTICAL to letting swm recompile the whole model at the same
 ``floor.color`` -- ``tex_data`` 0 bytes differing, 0 of 50,176 pixels differing, both cells. This
 module is that operation, lifted out of ``ogb_manip.py`` so that ``dmcontrol.py`` runs the same code

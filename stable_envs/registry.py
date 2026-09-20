@@ -217,7 +217,7 @@ def format_registry(width: int = 34) -> str:
     return "\n".join(out)
 
 
-#: SWM id -> the stable-envs cell(s) that serve it, VERBATIM from the accepted Step-8 support matrix
+#: SWM id -> the stable-envs cell(s) that serve it, VERBATIM from the support matrix
 #: (``examples/results/step8/support_matrix.json``, 42 rows, 40 pixel-producing and 2 symbolic).
 #:
 #: These are aliases, not a second registry: every id resolves to a class that is already registered
@@ -405,6 +405,9 @@ def discover(force: bool = False) -> dict[str, str]:
     global _DISCOVERED
     if _DISCOVERED and not force:
         return dict(_IMPORT_ERRORS)
+    from ._mujoco_gl import configure_mujoco_gl
+
+    configure_mujoco_gl()
     pkg = importlib.import_module("stable_envs.envs")
     for mod in pkgutil.iter_modules(pkg.__path__):
         if mod.name.startswith("_"):

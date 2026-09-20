@@ -1,4 +1,4 @@
-"""Step 8 Workstream F: the reference-version declarations, and the record that reads them.
+"""Reference provenance: the reference-version declarations, and the record that reads them.
 
 Three things are asserted, and the middle one is the load-bearing one:
 
@@ -52,7 +52,7 @@ def test_the_cell_declares_the_reference_it_was_measured_against(cell: str) -> N
     assert cls is not None, f"{cell} is not registered in this interpreter"
     declared = dict(reference_versions_of(cls) or {})
     assert declared == DECLARED, (
-        f"{cell} declares {declared}; the Step-8 certification of this cell rests on "
+        f"{cell} declares {declared}; the certification of this cell rests on "
         f"{DECLARED}. Changing it is a re-declaration, not a test fix."
     )
     assert not any(p in declared for p in OURS), (

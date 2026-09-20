@@ -6,7 +6,7 @@ and it turned out to need nothing from the renderer that a per-episode position 
 camera is ``fovy = 4``, nearly orthographic from 16 m, and its one model light is DIRECTIONAL with
 ``castshadow = 1`` — both of which the existing bake and cast handled unchanged.
 
-Three things are declared here and nowhere else in the family, and all three are PRESERVED Step-8
+Three things are declared here and nowhere else in the family, and all three are preserved
 facts rather than choices this migration made: the registered default size (224 px, which is
 ``stable_worldmodel``'s ``DMControlWrapper.render(width=224, height=224)``), the one ``SHAPE_KNOBS``
 entry, and the task-specific state exclusions ``check_state_dims_matter`` is OFFERED.

@@ -2,7 +2,7 @@
 
 ``raycast3d`` casts analytic primitives with a batched torch loop and a fused Triton kernel;
 ``cpu3d`` draws MuJoCo's own shading law on the CPU and borrows those intersectors for its movers
-and its shadow rays. Both therefore have to agree on three things, and until Step 9 each carried
+and its shadow rays. Both therefore have to agree on three things, and each previously carried
 its own copy of all three:
 
   * **the kind codes.** ``PLANE, SPHERE, CAPSULE, ELLIPSOID, CYLINDER, BOX = 0, 2, 3, 4, 5, 6``

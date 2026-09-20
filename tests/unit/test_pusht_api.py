@@ -1,10 +1,10 @@
-"""PushT's dynamics under the Step-9 contract: stateful ``step``, pure ``transition``, ``unroll``.
+"""PushT's dynamics under the Env contract: stateful ``step``, pure ``transition``, ``unroll``.
 
 The bit-equality assertions are the point. ``transition`` exists so that a planner can ask "what would
 this state do" without disturbing the environment, and the only version of that promise worth having
 is that it computes THE SAME ARITHMETIC as the step the env actually takes — not a reimplementation
 that agrees to a tolerance. On CUDA the stateful path may be a replayed graph; the oracle script
-(``scratch/step9/foundation/pusht_oracle.py``) runs the same comparison there.
+the PushT oracle runs the same comparison there.
 
 CPU only, no reference package: PushT's simulator is ours, and its agreement with pymunk is a
 different claim measured elsewhere (``check_step_matches_reference``).

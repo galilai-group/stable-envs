@@ -1,4 +1,4 @@
-"""What the OGBench family promises after the Step-9 package migration.
+"""What the OGBench family promises after the package layout.
 
 TWO HALVES, for the reason ``tests/unit/test_envs_dmcontrol.py`` splits the same way. The STRUCTURAL
 half needs no MuJoCo, no ``ogbench`` and no GL context: it is about where the code lives, which names
@@ -53,7 +53,7 @@ def test_the_import_path_is_the_package_and_it_carries_the_step8_names():
     """``envs/ogbench.py`` became the PACKAGE ``envs/ogbench/``, so there is no second path to alias.
 
     A module and a package cannot share a name in one directory, so the obligation a shim would have
-    met — every Step-8 module-level name still resolving — is met by the package's re-exports. The
+    met — every package-level name still resolving — is met by the package's re-exports. The
     oracle checks the FULL list, read off the baseline source; this pins the ones that the tests, the
     probes and the docs actually reach for, so a broken re-export fails in the unit run and not only
     in a 27-cell replay.
@@ -82,7 +82,7 @@ def test_the_import_path_is_the_package_and_it_carries_the_step8_names():
         "_scene_env",
         "_make_classes",
     ):
-        assert hasattr(OGB, name), f"the Step-8 name {name} no longer resolves off the package"
+        assert hasattr(OGB, name), f"the exported name {name} no longer resolves off the package"
     for cell in MAZE_CELLS:
         assert getattr(OGB, cell) is R.REGISTRY[cell], f"{cell} is not the registered class"
 
@@ -268,9 +268,9 @@ def test_cpu_is_refused_rather_than_served_from_the_gpu(cell):
 
 
 def test_the_plate_texel_helpers_are_the_shared_module_and_not_a_second_copy():
-    """Step 8 lifted this code OUT of ``ogb_manip`` for ``dmcontrol`` to share and left the copy here.
+    """The plate texel helpers were lifted out of this family for ``dmcontrol`` to share.
 
-    Step 9 deletes the copy. ``mj_quantise`` is asserted to BE ``_plate_texels.quantise`` — the same
+    The copy is gone. ``mj_quantise`` is asserted to BE ``_plate_texels.quantise`` — the same
     function object, so the truncation rule cannot drift — and the two call sites are asserted to
     call the shared functions, because a comment saying they do is not enforcement. The behaviour
     those functions carry is unchanged and is checked by ``tests/unit/test_plate_texels.py``.
@@ -281,7 +281,7 @@ def test_the_plate_texel_helpers_are_the_shared_module_and_not_a_second_copy():
     assert "_texel_slots(" in inspect.getsource(MANIP._grid_texture)
     assert "_substitute(" in inspect.getsource(MANIP.OGBManipBase._apply_floor)
     assert "_texel_key(" in inspect.getsource(MANIP.OGBManipBase._floor_key)
-    # The GL-context-current fix (Step-8 38150c3) must still be on the path a bake takes. It lives in
+    # The GL-context-current fix  must still be on the path a bake takes. It lives in
     # ``substitute`` now; a version of it that forgot the line would put back a 219/255 plate.
     body = inspect.getsource(PX.substitute).split('"""')[-1]  # the code, not the prose above it
     assert "make_current()" in body and "mjr_uploadTexture" in body
@@ -295,7 +295,7 @@ def test_the_manipulation_plate_is_grouped_by_floor_colour_and_nothing_else():
     assert MANIP.MJW_CHUNK == 256
 
 
-# =============================================================== structural: the Step-9 state layout
+# =============================================================== structural: the public State layout
 
 
 @pytest.mark.parametrize("loco,dim", [("point", 2), ("ant", 15), ("humanoid", 28)])
@@ -328,7 +328,7 @@ def test_the_maze_variation_taxonomy_is_the_step8_one():
     """
     for loco in ("point", "ant", "humanoid"):
         space = MAZE.OGBenchMaze.make_variation_space(types.SimpleNamespace(LOCO=loco, MAZE="medium"))
-        # ``names()`` is sorted, which is the Step-8 order the oracle compares against the baseline.
+        # ``names()`` is sorted, which is the packed-row order the oracle compares against the baseline.
         assert list(space.names()) == [
             "agent.color",
             "agent.scale",
@@ -345,7 +345,7 @@ def test_the_maze_variation_taxonomy_is_the_step8_one():
 
 
 def test_the_manipulation_variation_taxonomy_is_the_two_mapped_leaves():
-    """``cube.color`` and ``floor.color``, in the shapes the boundary was decided at in Step 8.
+    """``cube.color`` and ``floor.color``, in the shapes the boundary was decided at.
 
     Needs the cached bundle (mujoco + ogbench + swm on the CPU) because the defaults are read off
     swm's own space rather than transcribed, which is what makes "our default IS the registered

@@ -108,10 +108,9 @@ import os
 import numpy as np
 import torch
 
-# MuJoCo picks its GL backend from MUJOCO_GL and defaults to GLFW, which needs an X display; on a
-# headless GPU node that aborts the interpreter rather than raising. Every machine this runs on renders
-# offscreen. An explicit setting always wins.
-os.environ.setdefault("MUJOCO_GL", "egl")
+from .._mujoco_gl import configure_mujoco_gl
+
+configure_mujoco_gl()
 
 # THE DEPENDENCY CHECK, and why it is at module scope. ``mujoco_warp`` needs ``mujoco >= 3.11``, and
 # the shared environment this repo's suite runs in carries 3.9 with neither ``mujoco_warp`` nor its
@@ -612,7 +611,7 @@ class FetchBase(Env):
     scene and the official id it is validated against, which is why ``CELLS`` is a table and not
     twelve class bodies: a per-cell body is twelve places for the next fidelity number to drift.
 
-    The Step-9 foundation additions are three, and they are all this family needed:
+    The Public State additions are three, and they are all this family needed:
 
       * ``num_envs=`` (contract §2);
         "goal": (3,)}`` — whose ``state_layout`` is assigned PER INSTANCE, because a Fetch cell's
@@ -698,14 +697,14 @@ class FetchBase(Env):
         ``state_dim``, ``state_names`` and ``state_layout`` are read off the COMPILED MODEL here and
         not declared on the class, because they are properties of the model: Reach has no block and
         therefore no free joint, so its ``nq`` is 15 where the other three scenes carry 22. The
-        packed row is ``qpos`` then the 3-D goal, exactly the Step-8 layout every frozen corpus and
+        packed row is ``qpos`` then the 3-D goal, exactly the packed float32 layout every frozen corpus and
         certification check speaks.
         """
         b = _build_bundle(self.SCENE)
         self.state_dim = len(b.state_names)
         self.state_names = b.state_names
-        # Set PER INSTANCE, which is the whole of this family's Step-9 state machinery since the
-        # foundation made ``Env._layout`` an instance method (integration f24d94c, Workstream B's
+        # Set PER INSTANCE, which is the whole of this family's State layout since the
+        # foundation made ``Env._layout`` an instance method (the
         # request R1). The two keys are what the halves ARE: ``qpos`` is the simulator's
         # configuration, and ``goal`` is the task target the env writes to a MOCAP body rather than
         # to the simulator — a different kind of quantity, and the one the goal sphere is drawn from.
@@ -722,7 +721,7 @@ class FetchBase(Env):
         assert b.nq + 3 == self.state_dim, f"{type(self).__name__}: model nq={b.nq} but state_dim={self.state_dim}"
         self._check_plate_is_constant()
 
-    # ---- Step-9 state -----------------------------------------------------
+    # ---- state -----------------------------------------------------
     #
     # NOTHING IS HIDDEN. Every column of the packed row is carried by one of the two keys, so no
     # field has offset ``None``, ``_hidden_state`` is never consulted, and ``pack``/``unpack`` round

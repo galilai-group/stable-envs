@@ -1,6 +1,6 @@
 """Explicit resource lifetime: the close protocol, the bounded LRU cache, and the never-release rule.
 
-``render/_resources.py`` is the one Step-9 design change in the render backends, so what it promises
+``render/_resources.py`` is the resource-lifetime design in the render backends, so what it promises
 is tested against a FAKE backend object rather than against MJWarp or nvdiffrast. That is not a
 convenience for a laptop with no CUDA: the promises are about ordering and idempotency — released
 once, released before the object is reusable, never released twice, never released by the collector —
@@ -9,7 +9,7 @@ Python at all.
 
 The four backend classes are checked separately, by their SHAPE (they honour the protocol and declare
 what they own) rather than by construction, which needs a GPU. The GPU arm asserts the counters
-across repeated create/close cycles; see ``scratch/step9/render-mjwarp-nvdiff/gpu_oracle.sbatch``.
+across repeated create/close cycles; see the GPU resource-lifetime suite.
 """
 
 from __future__ import annotations
@@ -445,7 +445,7 @@ def test_nothing_in_the_render_backends_releases_an_egl_context(name):
 
 @pytest.mark.unit
 def test_family_device_caches_release_on_eviction():
-    """Workstream I's consumer list: overflow must call close/release, not drop to the collector."""
+    """the renderer-resource consumer list: overflow must call close/release, not drop to the collector."""
     import pathlib
 
     root = pathlib.Path(__file__).resolve().parents[2] / "stable_envs"

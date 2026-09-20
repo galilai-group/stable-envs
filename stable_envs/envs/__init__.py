@@ -10,7 +10,7 @@ machine without one should lose exactly that env, not the whole package. ``impor
 what failed and why, and the conformance suite prints it, so "my env vanished" is answerable in one
 line instead of being mistaken for a registration bug.
 
-The walk itself now lives in ``stable_envs/registry.py`` (Step 9), because discovery is a registry
+The walk itself now lives in ``stable_envs/registry.py`` , because discovery is a registry
 operation and the registry is what the rest of the package asks. This module keeps the two names it
 has always exported so that ``stable_envs.envs.import_errors()`` keeps answering.
 """

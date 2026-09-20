@@ -787,7 +787,7 @@ class CraftaxClassic(Env):
     #: and the strip layout. ``jax`` is here for a reason that is not obvious and is load-bearing:
     #: see :meth:`reference_env`, which refuses to build a reference whose PRNG path differs.
     reference_versions = {"craftax": "1.6.1", "jax": "0.11.1"}
-    #: **Step 8, Workstream D.** ``stable_worldmodel``'s ``CraftaxWrapper`` (
+    #: ``stable_worldmodel``'s ``CraftaxWrapper`` (
     #: ``stable_worldmodel/envs/craftax/craftax.py``) builds its step function as
     #: ``self._step_fn = jax.jit(_step, backend=self.backend)`` (and reset likewise), so a LIVE
     #: ``gymnasium.make("swm/CraftaxClassicPixels-v1")`` workflow always observes the JIT-produced
@@ -917,7 +917,7 @@ class CraftaxClassic(Env):
     #: nobody runs, on an env whose ``NO_REFERENCE`` ladder says ``CPU_REGRESSION``.
     #:
     #: The general rule this asks for -- parity against the reference **as written**, speed against
-    #: the reference **as a user runs it** -- is Sami's to rule on and Step 8's to encode. Nothing in
+    #: the reference **as a user runs it** -- is a certification ruling. Nothing in
     #: the shared harness is edited here to suppress ``S_cpu``; both numbers are recorded so the
     #: ruling can be made on them.
     s_cpu_note = {
@@ -1011,7 +1011,7 @@ class CraftaxClassic(Env):
         "from one of them."
     )
 
-    # ------------------------------------------------------------------ Step-9 state
+    # ------------------------------------------------------------------ state
     #
     # The public :data:`State` is the render WINDOW grouped by what it describes, which is what this
     # cell's whole thesis is about (module docstring): the 149 numbers are the tiles on screen, the

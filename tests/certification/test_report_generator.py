@@ -227,7 +227,7 @@ def test_the_generator_survives_a_tree_with_no_git_and_an_unreadable_artifact(tm
 def test_a_superseded_shard_is_excluded_and_listed_with_its_reason(tmp_path):
     """A shard the workstream withdrew must not label a tier, and must not disappear either.
 
-    Workstreams quarantine a measurement they no longer stand behind by moving it into a
+    A quarantine moves a measurement they no longer stand behind by moving it into a
     `superseded_*` directory beside the replacement — gfxdraw's node2338 CPU sweep and raster2d's
     round-1 node2344 sweep are both withdrawn for the same reason, a host load average that makes
     the shard a measurement of the node. The page has to honour that (or it reports a tier nobody

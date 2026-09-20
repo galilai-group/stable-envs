@@ -559,7 +559,7 @@ class Crafter(Env):
         + tuple(f"inv_{n}" for n in ITEMS)
         + ("daylight",)
     )
-    #: Step-9 state (contract §3). Three keys because the row is genuinely three things -- the lit
+    #: Public state. Three keys because the row is genuinely three things -- the lit
     #: world window, the inventory strip below it, and the scalar that decides how the world half is
     #: tinted -- drawn by three different parts of the renderer. The packed row and its column order
     #: are unchanged, every column is covered, so nothing is hidden and the frozen layout does not

@@ -95,14 +95,12 @@ reaches the renderer, and the sampler here draws from every free cell, which is 
 
 from __future__ import annotations
 
-import os
-
 import numpy as np
 import torch
 
-# See ogbench.py: MuJoCo defaults to GLFW, which needs an X display, and on a headless node that
-# surfaces as a GLFWError out of every fixture followed by SIGABRT.
-os.environ.setdefault("MUJOCO_GL", "egl")
+from .._mujoco_gl import configure_mujoco_gl
+
+configure_mujoco_gl()
 
 from ..env import Env
 from ..registry import register
@@ -277,7 +275,7 @@ class PointMaze(Env):
     MAZE: str = ""
     state_dim = 4
     state_names = STATE_NAMES
-    #: Step-9 state (contract §3): the four columns are two positions in a plane, and saying so is
+    #: Public state: the four columns are two positions in a plane, and saying so is
     #: the whole of this family's state structure. The packed row is unchanged -- ball then goal, the
     #: order ``STATE_NAMES`` has always named -- and every column is covered, so nothing is hidden,
     #: ``_hidden_state`` is never consulted and the frozen layout does not move. The ball's velocity

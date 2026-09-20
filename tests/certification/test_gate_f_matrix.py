@@ -1,4 +1,4 @@
-"""Contract for the Step-8 Gate-F/API matrix (`scratch/step8/swm/build_gate_f.py`).
+"""Contract for the Gate-F/API matrix.
 
 Not a test of the matrix's CONTENTS -- those move as VariationMaps and Gate-A shards change, which
 is why the matrix is generated rather than hand-written (see the module docstring on the

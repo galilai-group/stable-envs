@@ -163,7 +163,7 @@ def test_fk_is_unchanged_on_the_frozen_ball_in_cup_states():
 
     got = env._fk(states, sc)
 
-    # The two callables are substituted WHERE THEY ARE LOOKED UP, which since the Step-9 package
+    # The two callables are substituted WHERE THEY ARE LOOKED UP, which since the package
     # split is the module that calls each: ``suite`` calls ``_chain_capsules_batch`` and
     # ``_tendon._tendon_polyline`` calls ``catenary``. Patching the package attribute instead would
     # leave the real implementations running on both sides and this test would pass vacuously, so

@@ -11,18 +11,14 @@ that lived on a class or an instance would give a second env a second context. S
 
 from __future__ import annotations
 
-import os
-
 import numpy as np
+
+from ..._mujoco_gl import configure_mujoco_gl
+
+configure_mujoco_gl()
 
 from ...render import _resources as _RES
 from ...render import mjwarp as MW
-
-# MuJoCo picks its GL backend from MUJOCO_GL and defaults to GLFW, which needs an X display; on a
-# headless GPU node that aborts the interpreter rather than raising. Every machine this runs on
-# renders offscreen. An explicit setting always wins.
-os.environ.setdefault("MUJOCO_GL", "egl")
-
 from .._plate_texels import quantise as _quantise
 
 #: ``mjvLight.type``: 1 is directional, 0 is a positional spot/point light. Every domain here has both

@@ -25,7 +25,7 @@ pytestmark = pytest.mark.unit
 
 ROOT = Path(__file__).resolve().parents[2]
 PKG = ROOT / "stable_envs"
-CORE = ["env.py", "dynamics.py", "specs.py", "registry.py", "_config.py", "_style.py"]
+CORE = ["env.py", "dynamics.py", "specs.py", "registry.py", "_config.py", "_style.py", "_mujoco_gl.py"]
 
 
 def _imports(path: Path, top_level_only: bool) -> list[str]:
@@ -125,6 +125,59 @@ def test_the_package_imports_with_no_environment_family_available(tmp_path):
     code = "import sys; sys.modules['gym_pusht'] = None;import stable_envs as snv; print(snv.__version__)"
     r = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, cwd=str(ROOT))
     assert r.returncode == 0, r.stderr[-2000:]
+
+
+@pytest.mark.parametrize("mujoco_gl", [None, "egl", "glfw"])
+def test_package_import_returns_before_a_gl_hang(mujoco_gl):
+    """``import stable_envs`` must not block inside GLFW.
+
+    On macOS, ``MUJOCO_GL=glfw`` (or unset, which is glfw) hangs in ``dm_control._render`` at
+    package import; ``egl`` is what cluster scripts export and is not a mujoco backend here.
+    """
+    import os
+    import subprocess
+    import sys
+
+    env = os.environ.copy()
+    if mujoco_gl is None:
+        env.pop("MUJOCO_GL", None)
+    else:
+        env["MUJOCO_GL"] = mujoco_gl
+    code = "import stable_envs as snv; print('ok', snv.__version__, len(snv.list_envs()))"
+    r = subprocess.run(
+        [sys.executable, "-c", code],
+        capture_output=True,
+        text=True,
+        cwd=str(ROOT),
+        timeout=20,
+        env=env,
+    )
+    assert r.returncode == 0, r.stderr[-2000:]
+    assert r.stdout.startswith("ok "), r.stdout
+
+
+def test_dm_control_import_does_not_hang_after_gl_configure():
+    """Discovery imports dm_control. With GLFW that never returns; configure() must make it return."""
+    import subprocess
+    import sys
+
+    pytest.importorskip("dm_control")
+    code = (
+        "from stable_envs._mujoco_gl import configure_mujoco_gl; "
+        "configure_mujoco_gl(); "
+        "from dm_control import mujoco as dm_mujoco; "
+        "dm_mujoco.Physics.from_xml_string('<mujoco/>'); "
+        "print('ok')"
+    )
+    r = subprocess.run(
+        [sys.executable, "-c", code],
+        capture_output=True,
+        text=True,
+        cwd=str(ROOT),
+        timeout=15,
+    )
+    assert r.returncode == 0, r.stderr[-2000:]
+    assert r.stdout.strip() == "ok"
 
 
 GONE_SHIMS = (

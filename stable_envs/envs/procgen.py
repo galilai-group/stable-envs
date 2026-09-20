@@ -1025,7 +1025,7 @@ class _ProcgenEnv(Env):
         super().__init__(
             num_envs=num_envs, size=size, supersample=supersample, device=device, backend=backend, seed=seed
         )
-        # Step-9 state (contract §3): the tile grid and the entity slots, which is the division this
+        # Public state: the tile grid and the entity slots, which is the division this
         # class is already built around (``n_cells``, ``has_grid``, ``_unpack``) rather than a new
         # one. Per instance because ``n_cells`` is a per-game property, and the ``grid`` key is
         # absent on a game that has none. Every column is covered by one of the two, so nothing is

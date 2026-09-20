@@ -3,7 +3,7 @@
 Two directions, and keeping them apart is what the module is for:
 
   * **IDs resolve without constructing an environment.** ``SWM_IDS`` and
-    ``canonical_names`` expose the frozen Step-8 stable-worldmodel-to-stable-envs mapping.
+    ``canonical_names`` expose the certified stable-worldmodel-to-stable-envs mapping.
   * **stable-worldmodel drives us.** ``StableEnvGym`` presents one stable-envs cell as a gymnasium env
     and ``BatchedEnvPool`` presents ``num_envs`` of them as a vector env, so ``swm.World`` can collect,
     plan and evaluate against a batched GPU renderer through the API it already speaks.

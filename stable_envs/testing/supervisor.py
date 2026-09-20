@@ -190,7 +190,6 @@ def main(argv=None) -> int:
     base_env = dict(os.environ)
     base_env["SE_TEST_RUNDIR"] = str(rundir)
     base_env["SE_TEST_DESELECT"] = str(deselect)
-    base_env.setdefault("MUJOCO_GL", "egl")
     base_env.setdefault("SDL_VIDEODRIVER", "dummy")
 
     # No core dumps. A crash-isolating runner exists to make crashes cheap, and a Python process with

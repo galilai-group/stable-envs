@@ -53,7 +53,7 @@ Physics
 -------
 
 The top-down classes also ship ``step`` — a batched GPU port of ``MiniGridEnv.step`` — so
-``env.sample(steps, batch, policy)`` runs on device. **This is the one family in the repo where the
+``env.step`` / ``env.unroll`` run on device. **This is the one family in the repo where the
 simulator's claim is as strong as the renderer's**, and that is structural rather than a matter of
 effort: the transition is a finite decision table over a finite alphabet (turn, move onto a cell that
 can be overlapped, pick up, drop, toggle a door or a box), so a port either agrees on every
@@ -534,7 +534,7 @@ class MiniGridTopDown(_TileEnv):
         self._carry.fill_(CARRY_NONE)
         return self
 
-    # ------------------------------------------------------------------ Step-9 state / dynamics
+    # ------------------------------------------------------------------ state / dynamics
 
     def _hidden_state(self) -> dict[tuple[str, ...], torch.Tensor]:
         """Where the one field the packed row does not carry lives: the object in the agent's hands.
@@ -965,7 +965,7 @@ def topdown(
             "has_lava": lava,
             "state_dim": n + 3,
             "state_names": _cell_names(w, h) + ("agent_x", "agent_y", "agent_dir"),
-            # Step-9 state (contract §3). The packed row is unchanged — the grid, then the agent's cell
+            # Public state. The packed row is unchanged — the grid, then the agent's cell
             # and heading — and ``("agent", "carrying")`` carries offset ``None``: it is real dynamical
             # state that the row has never carried, because ``get_full_render`` provably never reads it,
             # which is what makes ``transition`` pure without moving one column of the frozen layout.

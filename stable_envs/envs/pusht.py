@@ -35,7 +35,7 @@ Physics
 -------
 
 PushT is the one env here that also ships ``step`` — a batched GPU port of Chipmunk's solver, so
-``env.sample(steps=100, batch=256)`` runs entirely on device. **Renderer parity and simulator parity are
+``env.unroll / env.step on device`` runs entirely on device. **Renderer parity and simulator parity are
 different claims and this file must not blur them.** The renderer is bit-exact on interior pixels; the
 simulator is not bit-exact and cannot be. Contact is chaotic, so two solvers that disagree by a micron
 at first touch disagree by centimetres later — that is true of any replacement engine (MJX, Brax,
@@ -86,12 +86,12 @@ so ``set_state`` zeroes it — the condition the reference is in after ``reset``
 same stored state therefore agree; a rollout *resumed* mid-episode does not inherit the previous
 velocity, and neither does the reference's.
 
-Step 9 made that velocity part of the PUBLIC state — ``state["agent", "velocity"]`` — while leaving the
+That velocity is part of the public State — ``state["agent", "velocity"]`` — while leaving the
 packed row at the same five columns. The two statements are not in tension and the distinction is the
 whole point of ``pack``/``unpack``:
 
   * the PACKED row is what a corpus stores, what every renderer reads and what every frozen Step-4
-    digest was computed from, and it is byte-for-byte what it was in Step 8;
+    digest was computed from, and it is byte-for-byte the certified packed row;
   * the PUBLIC state is what the dynamics need to be a FUNCTION. While the velocity lived in an
     attribute, ``transition(state, action)`` was not pure — it silently consulted whatever the env had
     been doing — so two calls with the same ``state`` could disagree. Now it cannot.
@@ -516,7 +516,7 @@ class PushT(Env):
             self._step_graph_error = f"{type(e).__name__}: {e}"
             self.use_step_graph = False
 
-    # ------------------------------------------------------------------ Step-9 state / lifecycle
+    # ------------------------------------------------------------------ state / lifecycle
 
     #: The public state, grouped by entity, and how it maps onto the five packed columns.
     #: ``("agent", "velocity")`` carries offset ``None``: it is real dynamical state that the packed

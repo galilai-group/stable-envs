@@ -282,7 +282,7 @@ class Sokoban(Env):
     default_size = ROOM_H * TILE_PX
     state_dim = N_CELLS
     state_names = CELL_NAMES
-    #: Step-9 state (contract §3): one key, because the state IS one grid — the room, in this
+    #: Public state: one key, because the state IS one grid — the room, in this
     #: module's seven-tile alphabet. Every column is covered at its unchanged offset, so nothing is
     #: hidden, ``_hidden_state`` is never consulted and the frozen layout does not move. Unlike
     #: MiniGrid there is no carried object and no hidden variable of any kind: a stored Sokoban state

@@ -13,9 +13,9 @@ WHAT THE IMPORT PATHS ARE, AND WHY THEY ARE NOT THE SAME SHAPE
 --------------------------------------------------------------
 
 ``stable_envs/envs/ogbench.py`` became THIS PACKAGE. A module and a package cannot share a name in
-one directory, so — unlike Workstream A's ``swm_nav``/``navigation`` merge — there is no second path
+one directory, so — unlike the ``swm_nav``/``navigation`` merge — there is no second path
 to alias: the package IS ``stable_envs.envs.ogbench``, and the obligation the alias would have met is
-met directly by the re-exports below. Every module-level name the Step-8 module exported resolves off
+met directly by the re-exports below. Every module-level name the package exported resolves off
 this package, and ``scratch/step9/envs-ogbench/oracle.py`` checks that name by name, read off the
 baseline SOURCE so the list cannot drift from what that file actually had.
 
@@ -68,7 +68,7 @@ from .maze import (  # noqa: F401
 )
 
 #: The 25 maze cells and the two manipulation cells, by name, so ``stable_envs.envs.ogbench.<Cell>``
-#: resolves exactly as it did in Step 8. Taken from each module's own ``CELL_CLASSES`` rather than
+#: resolves exactly as it did historically. Taken from each module's own ``CELL_CLASSES`` rather than
 #: transcribed, so a cell cannot exist and be missing here.
 CELL_CLASSES = {**maze.CELL_CLASSES, **manipulation.CELL_CLASSES}
 globals().update(CELL_CLASSES)

@@ -1,7 +1,7 @@
 """What a tensor in this package IS: shape, dtype, bounds, device, and the names of its columns.
 
 ONE spec type, not a hierarchy. A state spec, an action spec, an observation spec and a variation spec
-differ in what they describe, never in what they can do, so the Step-9 rule (§16: no abstraction
+differ in what they describe, never in what they can do, so the rule (no abstraction
 without demand) says they are the same class used four times. ``CompositeSpec`` is the nested-dict form
 that mirrors a ``TensorDict``'s keys and nothing more.
 

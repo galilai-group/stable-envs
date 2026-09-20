@@ -258,7 +258,7 @@ def test_from_triangles_clip_row_is_independent_of_batch_size():
     ``scratch/step7/rocket-landing/closure1_explicit_pos_rows.patch`` -- and is not applied in Step 7
     because on cuda it moves four of the six re-frozen locomotion cells by 2.7e-07 of mean_abs and
     1e-09 of SSIM, and a re-freeze needs a certification failure with a causal reason rather than an
-    implementation that merely differs. It is the Step-8 candidate
+    implementation that merely differs. It is the nvdiff candidate
     (``closure1/digest_vs_refreeze.json``). Note that it addresses the positions only; the normals
     share the same sparse stage and would need the same treatment.
     """

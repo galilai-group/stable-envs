@@ -1,8 +1,8 @@
-"""The Step-9 migration of Craftax (Classic + Full) and PFRocketLanding onto the Wave-0 foundation.
+"""Craftax and Rocket on Craftax (Classic + Full) and PFRocketLanding onto the Env contract.
 
-What these pin is the part of the Wave-0 contract that a family agent OWES — the constructor, the
+What these pin is the part of the Env contract that a family agent OWES — the constructor, the
 public :data:`State`, the packed row it projects to, the renderer-only refusal and the observation
-spec — plus the Step-8 declarations the plan §12 E brief names by hand. They deliberately do NOT
+spec — plus the certified declarations the plan §12 E brief names by hand. They deliberately do NOT
 re-assert what ``test_craftax_atlas.py``, ``test_craftax_strip.py``, ``test_craftax_full.py`` and
 ``test_rocket_landing.py`` already assert about the renderers themselves: a migration that broke a
 sprite would fail those, and duplicating them here would only make two places to update.
@@ -42,7 +42,7 @@ def envs():
         e.close()
 
 
-# ------------------------------------------------------------------ the Step-9 constructor
+# ------------------------------------------------------------------ the `num_envs=` constructor
 
 
 @pytest.mark.parametrize("name", CRAFTAX)
@@ -287,7 +287,7 @@ def test_craftax_full_registers_from_the_private_module():
 def test_the_two_craftax_modules_could_not_have_been_merged():
     """The evidence for the brief's fallback, kept beside the choice rather than only in findings.
 
-    34 module-level names are shared and 15 of them hold DIFFERENT values, so one module object cannot
+    35 module-level names are shared and 15 of them hold DIFFERENT values, so one module object cannot
     serve both spellings and a merge would have had to rename constants that tests import by name —
     which is not behaviour-neutral, the condition the brief attached to the merge.
 
@@ -330,7 +330,7 @@ def test_the_two_craftax_modules_could_not_have_been_merged():
     names = {n for n in dir(craftax) if not n.startswith("__")} & {
         n for n in dir(_craftax_full) if not n.startswith("__")
     }
-    assert len(names) == 34, f"shared name count moved to {len(names)}; update the module decision"
+    assert len(names) == 35, f"shared name count moved to {len(names)}; update the module decision"
 
     def _differs(n):
         x, y = getattr(craftax, n), getattr(_craftax_full, n)
@@ -362,7 +362,7 @@ def test_a_missing_craftax_is_recorded_under_the_historical_module_key():
     assert "_craftax_full_tex" not in errs
 
 
-# --------------------------------------------------- the Step-8 declarations plan §12 E names
+# --------------------------------------------------- the certified declarations plan §12 E names
 
 
 def test_the_jit_wrapper_declaration_survives_on_both_craftax_cells():
@@ -450,7 +450,7 @@ def test_the_batch_invariant_float64_mvp_does_not_depend_on_the_batch():
 
 
 def test_both_frozen_craftax_classic_corpora_are_kept_and_both_replay():
-    """Sami's Step-8 ruling: keep both. They are two different claims about the same cell.
+    """Ruling: keep both. They are two different claims about the same cell.
 
     The 64x127 Step-4 array predates the nine-row world window, so it is the world-row oracle under
     the zero-extension interpretation, and rendering it DIRECTLY must raise rather than reshape. The

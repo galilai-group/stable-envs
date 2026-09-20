@@ -94,7 +94,7 @@ def test_an_unbounded_kind_says_so_in_each_spellings_own_way():
     ``np.isfinite`` guard in ``Primitives.radii`` does NOT fire on a plane and the screen-space
     caller is not protected by it. What actually rejects a plane there is ``screen_span``'s
     ``torch.isfinite(ndc)`` probe on the PROJECTED corners, which do overflow. Both behaviours are
-    Step-8's and are preserved deliberately; this test exists so that a future reader who "fixes"
+    the original values and are preserved deliberately; this test exists so that a future reader who "fixes"
     the guard finds out here rather than in a frame.
     """
     assert P.bound_radius_tensor(P.PLANE, torch.ones(4, 3)) is None

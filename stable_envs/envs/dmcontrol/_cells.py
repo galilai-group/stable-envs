@@ -23,11 +23,11 @@ from .trackcom import DMControlTrackCom
 #: ``registry.spec``/``list_envs`` derive an env's FAMILY from the last component of ``__module__``,
 #: so leaving ``type()``'s default would split one family of eighteen cells into fourteen families
 #: named after domains and change ``list_families()``, ``spec(name)["family"]`` and the registry row
-#: every Step-8 artifact recorded. The class IS reachable at this path -- the package re-exports all
+#: every certified artifact recorded. The class IS reachable at this path -- the package re-exports all
 #: eighteen -- so the attribute is accurate as well as unchanged.
 _MODULE = __name__.rsplit(".", 1)[0]
 
-#: class name -> (domain, task, camera) for the PARITY cells, filled by ``parity_cell``. The Step-8
+#: class name -> (domain, task, camera) for the PARITY cells, filled by ``parity_cell``. The
 #: table, reconstructed from the declarations instead of standing beside them.
 DOMAINS: dict[str, tuple[str, str, int]] = {}
 #: The same, for the VISUAL (``mode="trackcom"`` camera) cells; filled by ``trackcom_cell``.

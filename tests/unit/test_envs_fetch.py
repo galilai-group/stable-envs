@@ -1,4 +1,4 @@
-"""The twelve Fetch cells after the Wave-1C migration, in two tiers.
+"""The twelve Fetch cells after the Fetch layout, in two tiers.
 
 WHY TWO TIERS, AND WHY NEITHER OF THEM IMPORTS ``stable_envs.envs.fetch`` INTO THE SUITE.
 
@@ -13,7 +13,7 @@ of the pytest session and change what every registry-wide test in this suite see
 ``num_envs=``, that it assigns ``state_layout`` per instance and
 overrides none of the state machinery, that it defines no ``step``/``transition``, and that the
 frozen declarations (the 0.99 interior floor, ``parity_note``, ``PLATE_PATHS``, the twelve ``CELLS``)
-still say what Step 8 froze, are all properties of the text. They are checked with ``ast`` and run on
+still say what certification froze, are all properties of the text. They are checked with ``ast`` and run on
 every interpreter, which is the only reason they run at all.
 
 **Tier 2 BUILDS the envs, in a subprocess.** One child interpreter installs the stub, substitutes
@@ -62,7 +62,7 @@ def test_fetch_base_derives_the_step9_env_and_not_the_step8_alias():
     text = SRC.read_text(encoding="utf-8")
     assert "from ..env import Env" in text
     assert "from ..registry import register" in text
-    assert "StableEnv" not in text, "the Step-8 alias should not survive the migration"
+    assert "StableEnv" not in text, "the old alias should not survive the migration"
 
 
 def test_the_constructor_takes_num_envs():
@@ -183,7 +183,6 @@ import importlib.machinery as im
 import numpy as np, torch
 for nm in ("warp", "mujoco_warp"):
     m = types.ModuleType(nm); m.__spec__ = im.ModuleSpec(nm, None); sys.modules[nm] = m
-os.environ.setdefault("MUJOCO_GL", "glfw")
 import stable_envs as snv
 import stable_envs.envs.fetch as F
 
@@ -249,7 +248,7 @@ def built() -> dict:
     )
     env = dict(os.environ)
     env["PYTHONPATH"] = str(ROOT)
-    env.setdefault("MUJOCO_GL", "glfw")
+    env.pop("MUJOCO_GL", None)
     r = subprocess.run(
         [sys.executable, "-c", textwrap.dedent(PROBE), str(ROOT / "examples/results/step4/states")],
         capture_output=True,

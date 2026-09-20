@@ -188,7 +188,7 @@ def test_the_rocket_declaration_is_recorded_as_a_join_not_invented(rejudged):
     assert join["result"].startswith("NOT_APPLICABLE")
     assert join["declared_leaves"] == sorted(ROCKET_LEAVES)
     assert join["undeclared_leaves_still_judged"] == []
-    # The Step-8 re-sweep measured the distances, so the declaration is not the only thing in the
+    # The re-sweep measured the distances, so the declaration is not the only thing in the
     # record: every declared probe carries a number a wiring regression would move. Every distance
     # is > 0, which is the whole claim -- a leaf that could reach its colour would not need the
     # declaration, and a zero here would mean the declaration had gone stale.
@@ -323,7 +323,7 @@ def test_the_rocket_row_passes_with_the_ruling_recorded(rejudged, report):
     joined = report._gate_a(row, rejudged)
     assert joined["status"] == "PASS"
     assert joined["failing_checks"] == []
-    # The Step-8 re-sweep records the declared reference versions, so nothing is blocked any more.
+    # The re-sweep records the declared reference versions, so nothing is blocked any more.
     assert joined["blocked_checks"] == []
     assert joined["per_device"] == {"cpu": "UNSUPPORTED_BY_DESIGN", "cuda": "PASS"}
     assert any(
@@ -368,7 +368,7 @@ def _probe(leaf, target="[17, 33, 200]"):
 
 
 def test_partition_without_a_declaration_asserts_everything():
-    """The pre-Step-8 behaviour, exactly: no declaration means every failure is asserted on."""
+    """The previous behaviour, exactly: no declaration means every failure is asserted on."""
     part = partition_colour_exactness({"colors_not_applied": [_probe("a.color"), _probe("b.color")]})
     assert part["honoured"] is False
     assert part["asserted"] == [_probe("a.color"), _probe("b.color")]

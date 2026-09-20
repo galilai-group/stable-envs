@@ -220,18 +220,28 @@ def main() -> None:
     all_states = proto.sample_states(args.train + args.val, rng)
     train_states, val_states = all_states[: args.train], all_states[args.train :]
 
-    # `StateDataset` is used for ONE line here — the storage report, which needs the env to measure the
-    # frame shape rather than assume it is square. It is not in the training path below; the loader is
-    # a plain torch DataLoader over a plain TensorDataset.
-    comp = se.StateDataset(proto, train_states, size=args.size, frames=False).compression
+    # Storage report: measure the frame shape by rendering one state rather than assuming square.
+    # Several envs are not (highway 150x600, Craftax 112x144). Not in the training path below.
+    n, d = int(train_states.shape[0]), int(train_states.shape[-1])
+    h, w, c = (int(x) for x in proto.render(train_states[:1]).shape[-3:])
+    state_b, frame_b = n * d * 4, n * h * w * c
+    comp = {
+        "n": n,
+        "state_bytes": state_b,
+        "style_bytes": 0,
+        "stored_bytes": state_b,
+        "frame_bytes": frame_b,
+        "frame_shape": (h, w, c),
+        "ratio": frame_b / max(state_b, 1),
+    }
     print(
-        f"{args.env}: {comp['n']:,} training states, {comp['stored_bytes']:,} B "
-        f"({comp['state_bytes'] / comp['n']:.0f} B/sample) against "
-        f"{comp['frame_bytes']:,} B of {comp['frame_shape']} frames -> {comp['ratio']:.0f}x smaller"
+        f"{args.env}: {n:,} training states, {state_b:,} B "
+        f"({d * 4} B/sample) against "
+        f"{frame_b:,} B of {(h, w, c)} frames -> {frame_b / max(state_b, 1):.0f}x smaller"
     )
     print(
-        f"the whole training set fits in {comp['stored_bytes'] / 1024:.0f} kB; the frames it stands "
-        f"in for are {comp['frame_bytes'] / 1e6:.0f} MB"
+        f"the whole training set fits in {state_b / 1024:.0f} kB; the frames it stands "
+        f"in for are {frame_b / 1e6:.0f} MB"
     )
 
     env = se.make(args.env, num_envs=args.batch, size=args.size, device="cuda")
@@ -323,8 +333,8 @@ def main() -> None:
     print(f"  fwd+bwd+step    {train_s / args.steps * 1e3:.3f} ms/step  ({(1 - share) * 100:.1f}%)")
 
     # Control: the same optimisation with frames already in VRAM. No renderer, no I/O, nothing to beat.
-    pool = torch.as_tensor(train_states[:8192])
-    cached = se.render_states(env, pool.numpy(), size=args.size, chunk=4096)
+    pool = torch.as_tensor(train_states[:8192], device=proto.device)
+    cached = torch.cat([proto.render(pool[i : i + 4096], size=args.size) for i in range(0, len(pool), 4096)])
     ctl_net = StateNet().cuda()
     ctl_net(cached[:2])
     ctl_opt = torch.optim.Adam(ctl_net.parameters(), lr=args.lr)

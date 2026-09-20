@@ -1,7 +1,7 @@
 """Who owns a GPU resource, when it is released, and the one class of resource that never is.
 
-Step 9 asks every backend object for explicit lifetime: ``close()``, a context manager, and no
-correctness that depends on ``__del__`` (plan 2, "Resource ownership"). This module is where that
+Every backend object has explicit lifetime: ``close()``, a context manager, and no
+correctness that depends on ``__del__``. This module is where that
 rule is written down once, because the two backends it serves — ``mjwarp.py`` and ``nvdiff.py`` —
 hold four different kinds of thing with three different correct answers, and getting the answer
 wrong in either direction has already cost this repository days.
@@ -24,7 +24,7 @@ THE THREE ANSWERS
    :class:`BoundedCache` is how a cache bounds itself (LRU, one eviction at a time, an optional
    release callback run on the evicted value).
 
-3. **An EGL/GL context is never released at all, deliberately.** This is not an oversight that Step 9
+3. **An EGL/GL context is never released at all, deliberately.** This is not an oversight the library
    tidies up; it is a measured rule with a failure mode. ``stable_envs/testing/resource_guard.py``
    documents four separate incidents in which releasing ONE context silently corrupted rendering in
    every other live context in the process, surfacing minutes later as pixel differences in an env

@@ -18,7 +18,7 @@ What genuinely differs from a stored-image pipeline, measured by ``tests/gpu/tes
 
   **2. ``num_workers`` is a free choice here, and 0 is the right default.** There is no disk in this
   path and no decode, so the usual DDP advice to raise it is advice about a bottleneck that does not
-  exist; states are 20 B a row. (Were the *dataset* doing the rendering, as ``StateDataset(frames=True)``
+  exist; states are 20 B a row. (Were the *dataset* doing the rendering, as ``_data.StateDataset(frames=True)``
   does, 0 would be mandatory rather than merely sensible — a worker would build a second CUDA context
   and ship frames back over IPC that never needed to leave the device.)
 

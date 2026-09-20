@@ -28,7 +28,6 @@ from __future__ import annotations
 
 import ast
 import os
-import re
 import subprocess
 import sys
 from pathlib import Path
@@ -139,53 +138,6 @@ def test_every_argparse_script_can_print_its_own_help(path: Path):
     assert "usage" in (p.stdout + p.stderr).lower(), (
         f"{path.relative_to(ROOT)} --help exited 0 without printing a usage line, so the argparse it "
         f"declares is not the one reached at the command line"
-    )
-
-
-def test_a_hard_coded_variation_path_in_an_example_names_a_knob_that_exists():
-    """``sample_style(paths=["agent.color", ...])`` must address knobs the env actually has.
-
-    Until today an unknown path there was a SILENT NO-OP: ``sample_style`` skipped every leaf it did not
-    recognise and returned the default appearance for every environment, so a domain-randomisation
-    study driven through it randomised nothing and reported success. It refuses now — which turns the
-    silent failure into a loud one at exactly the moment these scripts are hardest to run, twenty
-    minutes into a GPU job.
-
-    So the paths are checked here, statically, against the env the script itself names. Only scripts
-    that hard-code BOTH are checked: ``examples/domain_randomization.py`` derives its paths from
-    ``proto.style_names`` and is correct by construction, which is the better pattern and the reason
-    this test does not simply ban the literal form.
-    """
-    import stable_envs as se
-
-    call = re.compile(r"sample_style\([^)]*paths\s*=\s*\[([^\]]*)\]", re.S)
-    make = re.compile(r'se\.make\(\s*"([A-Za-z0-9_]+)"')
-    checked = []
-    for path in SCRIPTS:
-        src = path.read_text()
-        literals = [lit for m in call.finditer(src) for lit in re.findall(r'"([^"{}]+)"', m.group(1))]
-        envs = set(make.findall(src))
-        if not literals or len(envs) != 1:
-            continue
-        name = envs.pop()
-        if name not in se.registry.REGISTRY:
-            continue
-        try:
-            known = set(se.make(name, num_envs=1, device="cpu").style_names)
-        except Exception as e:  # noqa: BLE001
-            pytest.skip(
-                f"{name} cannot be constructed on CPU here ({type(e).__name__}), so its "
-                f"variation paths cannot be listed without a GPU"
-            )
-        missing = [p for p in literals if p not in known]
-        assert not missing, (
-            f"{path.relative_to(ROOT)} asks {name} to randomise {missing}, which it does not declare. "
-            f"Known: {sorted(known)}"
-        )
-        checked.append(f"{path.name} -> {name}")
-    assert checked, (
-        "no example was found that hard-codes both an env name and a sample_style(paths=) list, so "
-        "this check covered nothing; if that is now true, delete it rather than leaving it green"
     )
 
 

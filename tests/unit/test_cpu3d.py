@@ -1,8 +1,9 @@
 """The CPU backend for the MJWarp-only DM Control cells: honest device, invariances, and MJWarp's picture.
 
 CPU only, no GL for rendering (the trackcom cells never touch ``mujoco.Renderer`` on the CPU path;
-``_bundle`` still constructs one, so ``MUJOCO_GL`` must name a backend the host has -- the conftest
-does not set it, so this module picks ``glfw``/``egl`` per platform before ``mujoco`` is imported).
+``_bundle`` still constructs one, so ``MUJOCO_GL`` must name a backend the host has --
+``configure_mujoco_gl`` picks that before ``mujoco`` or ``dm_control`` is imported. Do not default
+to GLFW on macOS: ``from dm_control import mujoco`` hangs inside ``dm_control._render``).
 The oracle for the picture is a committed slice of OUR MJWarp frames at the first four frozen Step-4
 states of each cell (``examples/results/step6/cpu-3d/replay/mjwarp_frames_first4.npz``, from the
 texture-fidelity workstream's stacks rendered in ``se-step5`` on an RTX 3090); the claim tested is
@@ -12,14 +13,15 @@ renderer cannot promise and MJWarp does not keep against itself.
 
 from __future__ import annotations
 
-import os
 import sys
 from pathlib import Path
 
 import numpy as np
 import pytest
 
-os.environ.setdefault("MUJOCO_GL", "glfw" if sys.platform == "darwin" else "egl")
+from stable_envs._mujoco_gl import configure_mujoco_gl
+
+configure_mujoco_gl()
 
 ROOT = Path(__file__).resolve().parents[2]
 FIXTURE = ROOT / "examples/results/step6/cpu-3d/replay/mjwarp_frames_first4.npz"
@@ -82,7 +84,7 @@ def test_swimmer_is_refused_on_cpu_by_the_allow_list(se):
     and no CPU intersector covered them. Step 7 added the intersector (for the quadruped torso), so
     the geom-type refusal is gone -- and swimmer, which is not an SWM id and has no CPU certification,
     is now refused by an explicit allow-list (``CPU_UNCERTIFIED``) naming the env and the reason,
-    rather than drawn uncertified. Step 8 decides whether it is certified and the entry removed."""
+    rather than drawn uncertified. Certification decides whether it is listed and the entry removed."""
     if "DMCSwimmerSwimmer6" not in se.registry.REGISTRY:
         pytest.skip("swimmer not registered")
     with pytest.raises(ValueError) as e:

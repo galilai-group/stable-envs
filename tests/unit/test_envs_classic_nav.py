@@ -1,11 +1,11 @@
-"""Workstream A's cells on the Wave-0 foundation: the same pixels, a pure ``transition``.
+"""Classic-control and navigation cells on the Env contract: the same pixels, a pure ``transition``.
 
 The oracle that the BEHAVIOR did not change is
-``scratch/step9/envs-classic-nav/oracle.py`` (frozen Step-4 corpus, both trees, byte-identical
-frames). This file pins the claims that are NEW in Step 9 and therefore have no baseline to compare
+the certified classic/nav corpus (byte-identical
+frames). This file pins the claims that are new on the public API and therefore have no baseline to compare
 against, for all ten cells at once:
 
-  * the Step-9 constructor (``num_envs=``) and the lifecycle (``close``, the context manager);
+  * the ``num_envs=`` constructor and the lifecycle (``close``, the context manager);
   * ``state_layout``: what the public State's keys are, and — for classic control — that the
     velocities the packed row never carried are declared with offset ``None`` and answered by
     ``_hidden_state``;

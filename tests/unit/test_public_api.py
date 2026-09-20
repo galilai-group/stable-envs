@@ -73,6 +73,8 @@ def test_unpublished_step8_names_do_not_resolve():
         "register",
         "render_states",
         "StateDataset",
+        "TrajectoryDataset",
+        "collate_batched",
         "BasePolicy",
         "sample",
     ):
@@ -95,7 +97,7 @@ def test_the_public_namespace_is_the_contract():
         "StepResult",
         "__version__",
     ):
-        assert hasattr(snv, name), f"snv.{name} is part of the Step-9 public namespace"
+        assert hasattr(snv, name), f"snv.{name} is part of the public namespace"
     assert snv.__version__ == __import__("stable_envs.__about__", fromlist=["x"]).__version__
 
 
@@ -212,8 +214,8 @@ def test_the_context_manager_closes_and_does_not_swallow_exceptions():
 
 
 def test_testing_harness_asks_has_dynamics_not_hasattr_step():
-    """Wave 0 gave every Env a ``step``; a ``hasattr(env, "step")`` guard is therefore always true and
-    sends renderer-only cells into ``env.sample``, which refuses them (Workstream A, R9)."""
+    """Every Env has a ``step``; a ``hasattr(env, "step")`` guard is therefore always true and
+    must not treat renderer-only cells as simulators."""
     import pathlib
     import re
 

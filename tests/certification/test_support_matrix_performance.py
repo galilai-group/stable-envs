@@ -1,4 +1,4 @@
-"""The committed Step-8 performance accounting is exactly what its generator produces.
+"""The committed performance accounting is exactly what its generator produces.
 
 Two things are asserted and they are different things:
 
@@ -6,7 +6,7 @@ Two things are asserted and they are different things:
     committed Step-6/Step-7 artifacts. A generated artifact that has been hand-edited is a report
     that no longer matches its evidence, and this is the only cheap way to catch that.
   * every one of the 42 registered ``swm/`` ids carries a CPU and a GPU entry whose ``status`` is
-    one of the four words the Step-8 closure criteria use, with the numbers a MEASURED row must
+    one of the four words the closure criteria use, with the numbers a MEASURED row must
     have and no numbers on a row that claims not to be measured.
 
 The test runs on CPU, imports no renderer and reaches no network.

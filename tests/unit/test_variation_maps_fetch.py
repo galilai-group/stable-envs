@@ -189,7 +189,7 @@ def test_the_dead_and_unsupported_leaves_carry_their_mechanism():
     for leaf in ("agent.start_position", "goal.start_position", "block.start_position", "block.angle"):
         assert cls[leaf] == "not_applicable" and "STATE" in m.not_applicable[leaf], leaf
     assert not m.swm_only, (
-        "this family uses the Step-8 four-way taxonomy; the undifferentiated "
+        "this family uses the four-way taxonomy; the undifferentiated "
         "swm_only bucket must stay empty or classification() loses the "
         "distinction it exists to make"
     )
@@ -219,7 +219,7 @@ def test_background_is_partial_not_mapped_and_carries_the_measured_residual():
         )
         why = m.partial["background.color"]
         assert "skybox" in why and "61.7-73.0 %" in why, f"{c}: the residual is not in the reason"
-        # Step-8 capability patch: the REASON changed and the classification did not. The old reason
+        # Capability patch: the REASON changed and the classification did not. The old reason
         # ("a per-value skybox costs a render context per value") was measured wrong -- the skybox is
         # in the baked plate -- and the reason that replaces it is about the DEFAULT, not the
         # mechanism. Asserted so the corrected reason cannot quietly revert to the refuted one.
@@ -331,7 +331,7 @@ def test_check_mapping_reads_a_fetch_variation_space_through_the_public_function
     for every swm env whose variation space lives on the env itself and wrong for this family:
     ``FetchWrapper`` is a ``gym.Wrapper`` around the official ``MujocoFetchEnv``, so ``unwrapped``
     reaches PAST the wrapper and raised ``AttributeError`` for all twelve Fetch ids — the Gate-F
-    matrix could not report them at all. Workstream A fixed it centrally by walking the wrapper
+    matrix could not report them at all. it is fixed centrally by walking the wrapper
     chain (``worldmodel.swm_variation_space``); this asserts the fix from the outside, on the family
     that exposed it, because a helper that walks wrappers is worth nothing if the public API never
     calls it.

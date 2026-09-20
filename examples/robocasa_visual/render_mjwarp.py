@@ -35,8 +35,9 @@ os.environ.setdefault("MUJOCO_GL", "egl")
 
 import numpy as np
 
-DEFAULT_OUT = "/mnt/vast/home/randall.balestriero/robocasa_visual_work"
-REPO = "/mnt/vast/home/randall.balestriero/code/stable-envs"
+_HERE = os.path.dirname(os.path.abspath(__file__))
+REPO = os.path.abspath(os.path.join(_HERE, "..", ".."))
+DEFAULT_OUT = os.environ.get("ROBOCASA_VISUAL_OUT", "/mnt/vast/home/randall.balestriero/robocasa_visual_work")
 CORPUS = os.path.join(REPO, "scratch/robocasa/out/corpus")
 
 

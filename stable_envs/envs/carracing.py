@@ -431,7 +431,7 @@ class CarRacing(Env):
         "reward",
         "t",
     )
-    #: Step-9 state (contract §3). Five keys over the unchanged 28 columns, grouped by what draws
+    #: Public state. Five keys over the unchanged 28 columns, grouped by what draws
     #: them: the hull's pose and twist, the four wheels' poses, their rolling phases (the tread
     #: pattern) and their spin rates (the skid marks), and the two scalars the HUD prints. Every
     #: column is covered and none moved, so the frozen layout and its digests are untouched.

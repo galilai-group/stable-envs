@@ -3,7 +3,7 @@
 ``TwoRoom``/``TwoRoomTarget``, ``Piecewise``/``PiecewiseZones`` and ``SimplePointMaze`` are one
 family by every criterion that matters here — an agent dot moved by a clipped 2-D action inside a
 bounded arena, a reference that is a ``swm/*`` gymnasium env, and a frame that is a pure function of
-the position — so Step 9 gives them one home (plan §3). What they do NOT share is the renderer: the
+the position — so they share one module. What they do NOT share is the renderer: the
 first four are a Gaussian alpha blend (``render/navdot``) and the last is a flat-primitive
 ``Scene2D``, because their references are torch arithmetic and matplotlib respectively. That is why
 this module has two halves and one shared SWM reference bridge (``_SWMPort``) rather than one base
@@ -586,7 +586,7 @@ class _SWMPort(Env):
         ref.reset(seed=int(seed))
         return np.asarray(cls.reference_sim_state(ref.unwrapped), np.float64)
 
-    # ---------------------------------------------------------------- Step-9 state / dynamics
+    # ---------------------------------------------------------------- state / dynamics
     #
     # These five cells have NO hidden dynamical state: the packed row is the whole simulator state
     # (the agent, and the target where it is drawn), so every ``state_layout`` below covers every

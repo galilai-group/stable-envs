@@ -269,7 +269,7 @@ def test_default_style_is_the_official_appearance(env):
 def test_color_knobs_apply_the_requested_color(env):
     """Every RGB knob puts its colour in the frame — except where the CLASS declares it cannot.
 
-    The check is unchanged and still probes every leaf. What changed in Step 8 is what this assertion
+    The check is unchanged and still probes every leaf. What changed is what this assertion
     is entitled to conclude from the result: a leaf whose renderer applies a documented lighting law
     that cannot reach unit gain can never contain the literal triple, and the OFFICIAL renderer
     cannot either, so asserting it here measures the reference's shading model. Sami's ruling of

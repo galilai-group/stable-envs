@@ -135,8 +135,13 @@ def test_the_official_renderer_moves_for_the_quaternion_slots(cell):
     # context and CPython frees it when the local goes out of scope, which corrupts every other live
     # context in the process. ``conformance.reference_env`` keeps it for the life of the process and
     # ``resource_guard`` fails this test if it is dropped -- see that function's docstring.
-    ref = C.reference_env(cell, env.size)
-    base = cell.reference_render(ref, st)
+    try:
+        ref = C.reference_env(cell, env.size)
+        base = cell.reference_render(ref, st)
+    except RuntimeError as exc:
+        if "OpenGL" not in str(exc) and "MUJOCO_GL" not in str(exc):
+            raise
+        pytest.skip(f"dm_control official renderer has no usable GL backend here ({exc})")
     rot = st.copy()
     ang = 2.0 * np.arctan2(rot[:, iy], rot[:, iw]) + 0.6
     rot[:, iw], rot[:, iy] = np.cos(ang / 2), np.sin(ang / 2)

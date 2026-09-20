@@ -1,8 +1,8 @@
 """The State: what ``pack``/``unpack`` promise, what ``reset`` promises, and what the specs report.
 
-The load-bearing claim of Step 9's state work is that NOTHING MOVED. The entity-grouped TensorDict is
+The load-bearing claim of the public State is that NOTHING MOVED. The entity-grouped TensorDict is
 a view of the same five floats a PushT corpus has always stored, in the same order, so every frozen
-digest and every certification check still sees the Step-8 row. These tests assert that as an identity
+digest and every certification check still sees the packed row. These tests assert that as an identity
 rather than as an intention.
 
 CPU only; PushT needs no reference package to be constructed and rendered.

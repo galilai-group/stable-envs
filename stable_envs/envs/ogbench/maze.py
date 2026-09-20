@@ -71,27 +71,22 @@ STEP 9 ADDS THREE THINGS AND CHANGES NOTHING ELSE
 
 NO DYNAMICS, declared rather than omitted: there is no batched maze simulator in this package, so
 ``has_dynamics`` is False and ``step``/``transition`` raise ``Env``'s precise refusal naming the cell
-and the reason, while ``reset`` and ``render`` work as usual. This is the Step-8 behaviour — those
+and the reason, while ``reset`` and ``render`` work as usual. This is existing behaviour — those
 calls raised there too — said out loud.
 
 The module is one half of the ``stable_envs.envs.ogbench`` PACKAGE; ``manipulation`` is the other.
-Every Step-8 module-level name still resolves off the package, which is what the ``__init__``
+Every package-level name still resolves off the package, which is what the ``__init__``
 re-exports are for and what the oracle checks name by name.
 """
 
 from __future__ import annotations
 
-import os
-
 import numpy as np
 import torch
 
-# MuJoCo picks its GL backend from MUJOCO_GL and defaults to GLFW, which needs an X display. On a
-# headless GPU node that surfaces as `glfw.GLFWError: X11: The DISPLAY environment variable is missing`
-# raised out of every fixture, followed by SIGABRT — so pytest never prints a summary line and the
-# failure reads as "the maze envs are broken" rather than "there is no display". Every machine this
-# runs on renders offscreen, so EGL is the right default; an explicit setting always wins.
-os.environ.setdefault("MUJOCO_GL", "egl")
+from ..._mujoco_gl import configure_mujoco_gl
+
+configure_mujoco_gl()
 
 from ...env import Env
 from ...registry import register
@@ -831,7 +826,7 @@ class OGBenchMaze(Env):
 #: ``registry.spec`` derives an env's FAMILY from the last component of ``__module__``, so the
 #: default (``stable_envs.envs.ogbench.maze``) would rename this family from ``ogbench`` to ``maze``
 #: and move ``spec(name)["family"]``, ``list_envs(family=...)``, ``list_families()`` and the registry
-#: row every Step-8 artifact recorded. The attribute is also accurate: the class IS reachable at
+#: row every certified artifact recorded. The attribute is also accurate: the class IS reachable at
 #: ``stable_envs.envs.ogbench.<name>``, because the package re-exports it.
 _MODULE = "stable_envs.envs.ogbench"
 
@@ -868,7 +863,7 @@ def _make_classes():
 
 #: ``{name: class}`` for every registered cell this module declares, so the package ``__init__``
 #: can re-export them by NAME without transcribing the naming rule a second time. The names are also
-#: injected into this module's own globals, exactly as Step 8 did, so ``from
-#: stable_envs.envs.ogbench.maze import PointmazeLargeNavigate`` and the Step-8 module path both work.
+#: injected into this module's own globals, exactly as the package did, so ``from
+#: stable_envs.envs.ogbench.maze import PointmazeLargeNavigate`` and the package path both work.
 CELL_CLASSES = _make_classes()
 globals().update(CELL_CLASSES)

@@ -3,7 +3,7 @@
 `stable_envs.interop` exists because a stable-envs env is a **batched renderer with an optional
 simulator**, while `stable_worldmodel` drives environments through `swm.World`, which builds
 a plain Python list of single `gym.Env` objects. Native `swm.World(env=snv.PushT(...))` is **not**
-a public API (Workstream J has not merged it). The frozen adapters are `StableEnvGym`,
+a public API. The frozen adapters are `StableEnvGym`,
 `BatchedEnvPool` and `swap_renderer`.
 
 This directory is the evidence that the translation works, not a demonstration that it compiles.

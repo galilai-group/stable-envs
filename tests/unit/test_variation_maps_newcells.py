@@ -3,7 +3,7 @@ agrees with the map it is supposed to describe.
 
 The point of these tests is NOT that the reasons are well written. It is that no swm leaf can be
 added upstream, or removed from a map here, without something failing: an unclassified leaf is
-exactly the Gate-F gap Step 8 exists to close, and it is invisible unless a test counts.
+exactly the Gate-F gap the maps exist to close, and it is invisible unless a test counts.
 
 Most of this runs without ``stable_worldmodel``, against the leaf inventory recorded from the live
 wrappers, because swm is not importable in every environment this suite runs in and a test that
@@ -61,7 +61,7 @@ def test_every_offered_leaf_is_in_exactly_one_bucket_of_the_map(swm_id):
     undocumented = leaves - mapped - declared
     assert not undocumented, (
         f"{swm_id}: {sorted(undocumented)} are offered by swm and appear in NEITHER the mapped "
-        f"leaves nor swm_only. That is a silently unmapped leaf, which is the Gate-F gap Step 8 "
+        f"leaves nor swm_only. That is a silently unmapped leaf, which is the Gate-F gap the maps "
         f"closes -- classify it rather than deleting this assertion"
     )
     both = mapped & declared
@@ -422,7 +422,7 @@ def test_simple_point_maze_maps_all_seven_appearance_leaves():
 
 def test_simple_point_maze_goal_leaves_are_not_applicable_because_show_goal_is_off():
     """Not `unsupported`: the renderer could draw a goal. This registration does not have one, which
-    is a different statement, and it is the pre-existing documented divergence rather than a Step-8
+    is a different statement, and it is the pre-existing documented divergence rather than a mapping
     decision."""
     for leaf in ("goal.color", "goal.radius", "goal.position"):
         rec = LEAF_CLASSIFICATION[SPM]["leaves"][leaf]
@@ -448,7 +448,7 @@ def test_simple_point_maze_mapped_leaves_are_dims_of_our_own_space():
 
 def test_craftax_ids_are_recorded_as_having_no_leaves_at_all():
     """Confirmed live: CraftaxWrapper.__init__ sets variation_space = None, so there is no Gate-F
-    variation gap for either id. Recorded so the Step-8 count has no implicit exception."""
+    variation gap for either id. Recorded so the completeness count has no implicit exception."""
     from stable_envs._interop.variation_maps.newcells import CRAFTAX_NO_LEAVES
 
     assert set(CRAFTAX_NO_LEAVES) == {"swm/CraftaxClassicPixels-v1", "swm/CraftaxPixels-v1"}

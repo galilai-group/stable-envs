@@ -56,7 +56,7 @@ is two things at once: the ``floor_mat`` geoms AND the skybox texture, recoloure
 the floor is **9.2-9.4%** of the frame and the skybox a further **61.7-73.0%**. We render the floor
 half exactly and offer no leaf for the skybox half.
 
-**The reason for that was measured in Step 8 and replaced** — see
+**The reason for that was measured and replaced** — see
 ``examples/results/step8/capability/fetch_skybox_probe.json``. It is NOT, as this module and
 ``FetchBase.make_variation_space`` used to say, that a per-value skybox costs one render context
 per distinct value: the delivered frame's skybox comes from the MuJoCo-baked PLATE, not from the ``mujoco_warp``
@@ -154,7 +154,7 @@ _BLOCK_MASS = (
 )
 _STATE = "a RESET DISTRIBUTION in swm, and a dimension of our STATE (qpos + goal) here -- "
 
-# The four unmapped buckets below are the Step-8 taxonomy, and this module uses them rather than the
+# The four unmapped buckets below are the four-way taxonomy, and this module uses them rather than the
 # older undifferentiated ``swm_only``: ``classification()`` reads them directly, so the Gate-F matrix
 # and every generated support table get the distinction between "upstream moves and we cannot follow"
 # (unsupported), "upstream does not move at all" (dead_upstream) and "not a question a renderer
@@ -230,7 +230,7 @@ _PARTIAL = {
         "6,144 texels), so no value of a flat-fill leaf reproduces our registered default "
         "appearance and no two-colour masked substitution reproduces swm's flat sky. Offering the "
         "leaf therefore moves this family's DEFAULT frame, which is a frozen pixel oracle on the "
-        "Step-4 and Step-7 corpora. That is a re-freeze decision (Step-8 plan section 19), not an "
+        "frozen corpora. That is a re-freeze decision, not an "
         "implementation decision, and it is escalated rather than taken."
     ),
 }
@@ -276,7 +276,7 @@ def swm_variation_space(swm_id: str):
     walks the wrapper chain. It has to be walked rather than read off ``unwrapped``: ``FetchWrapper``
     is a ``gym.Wrapper`` around the official ``MujocoFetchEnv``, so ``unwrapped`` is the official env
     and has no ``variation_space`` at all (it raised ``AttributeError`` for all twelve ids until
-    Workstream A fixed ``check_mapping`` centrally). This is the id-taking convenience over that
+    ``check_mapping`` is fixed centrally). This is the id-taking convenience over that
     function, and deliberately not a second implementation of it — the discovery rule lives in one
     place so a future wrapper change cannot fix ``check_mapping`` and leave this module behind.
 

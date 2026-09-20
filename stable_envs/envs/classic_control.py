@@ -38,7 +38,7 @@ forms) and verified by replaying whole frames.
 Physics
 -------
 
-All five also ship ``step`` — a batched GPU simulator, so ``env.sample(steps, batch, policy)`` runs
+All five also ship ``step`` — a batched GPU simulator, so ``env.step`` / ``env.unroll`` run
 entirely on device. **Renderer parity and simulator parity are different claims and this file must not
 blur them**, but here they are unusually close, and for a reason worth stating: these dynamics are a
 published closed form (Euler for CartPole and the two mountain cars, one RK4 step for Acrobot), so a
@@ -266,7 +266,7 @@ class _Classic(Env):
         self._sim.copy_(self._dynamics(self._sim, self._act))
         self._state.copy_(self._sim.index_select(1, self._cols).to(torch.float32))
 
-    # ------------------------------------------------------------------ Step-9 state / dynamics
+    # ------------------------------------------------------------------ state / dynamics
     #
     # ``state_layout`` is DERIVED, in ``__init_subclass__`` below, from ``sim_state_names`` and
     # ``render_from_sim`` rather than written out five times. Those two already say everything the
@@ -342,7 +342,7 @@ class _Classic(Env):
         ``x`` moves by 9.6e-08, and that is enough for ``transition(env.state, a)`` to stop equalling
         ``step(a)`` — the functional path quietly becoming a different simulator. Answering here is
         what the foundation's ``_live_state`` hook exists for (findings §10, R7); before it existed
-        this family had to override the ``state`` property, which was the one thing the Wave-0
+        this family had to override the ``state`` property, which was the one thing the
         review's T1 defect asks cells not to do.
         """
         return self._sim_columns(drawn=True)

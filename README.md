@@ -34,11 +34,11 @@ Editable install (from a clone) lives under [Contributing](CONTRIBUTING.md).
 import stable_envs as snv
 
 with snv.PushT(num_envs=64, device="cpu") as env:
-    state = env.reset(seed=0)                  # TensorDict, keys grouped by entity
-    pixels = env.render(state)                 # (64, 96, 96, 3) uint8
+    state = env.reset(seed=0)  # TensorDict, keys grouped by entity
+    pixels = env.render(state)  # (64, 96, 96, 3) uint8
     action = env.action_spec.sample(64, env.rng)
-    out = env.step(action)                     # stateful: writes env.state
-    nxt = env.transition(state, action)        # functional: env.state is untouched
+    out = env.step(action)  # stateful: writes env.state
+    nxt = env.transition(state, action)  # functional: env.state is untouched
 ```
 
 Concrete classes are canonical. Strings are for configs, serialisation and interop:
@@ -98,10 +98,10 @@ import stable_envs as snv
 from torch.utils.data import DataLoader, TensorDataset
 
 with snv.PushT(num_envs=256, device="cuda") as env:
-    ds = TensorDataset(states)                 # your compact states, in RAM
+    ds = TensorDataset(states)  # your compact states, in RAM
     loader = DataLoader(ds, batch_size=256)
     for (batch,) in loader:
-        frames = env.render(env.unpack(batch)) # or env.set_state(batch).render()
+        frames = env.render(env.unpack(batch))  # or env.set_state(batch).render()
 ```
 
 Side-by-side against the official renderer, same recorded states: [Gallery](docs/gallery.md).
@@ -111,8 +111,8 @@ Side-by-side against the official renderer, same recorded states: [Gallery](docs
 `len(snv.list_envs())` is the current answer **on this interpreter**. The union over every extra is larger; a machine without `mujoco` simply does not register DM Control, Fetch, OGBench manipulation, and so on.
 
 ```python
-snv.import_errors()     # {module: "ModuleNotFoundError: ..."}
-snv.list_families()     # modules that did load
+snv.import_errors()  # {module: "ModuleNotFoundError: ..."}
+snv.list_families()  # modules that did load
 ```
 
 Device honesty is part of the contract: OGBCube, OGBScene and PFRocketLanding refuse CPU rather than silently falling back; Fetch has no CPU backend; HumanoidBench registers only under `STABLE_ENVS_HUMANOIDBENCH=1`. Details: [limitations](docs/concepts/limitations.md).

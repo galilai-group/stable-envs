@@ -338,7 +338,7 @@ class DMControlSuite(_DMCModel):
         ``substitute`` makes the renderer's own GL context current before uploading. This family
         keeps one ``Renderer`` per (domain, SIZE) and a process rendering at two sizes therefore
         holds two live contexts; GL texture names are per-context, so an upload under the wrong one
-        silently overwrites an unrelated texture object in it. Workstream C measured exactly that on
+        silently overwrites an unrelated texture object in it. Measured exactly that on
         gpu2264 in the OGB port -- two 128 px plates differing by 219/255, read as "the plate depends
         on the state" -- before the ``make_current`` line existed. It is the reason this goes through
         the shared helper instead of two lines here.

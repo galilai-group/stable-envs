@@ -1,6 +1,6 @@
-"""The Step-8 Workstream-H record has to agree with itself.
+"""The Craftax semantic record has to agree with itself.
 
-Workstream H returned a ``FINDING`` rather than a Gate-H run, and the whole argument rests on two
+The semantic follow-up returned a ``FINDING`` rather than a Gate-H run, and the whole argument rests on two
 committed measurements: that both Craftax cells are byte-identical to the official renderer, and
 that no downstream Craftax evaluator exists. A prose verdict that has drifted from the JSON
 underneath it is worse than no verdict, because it reads as evidence. These tests re-derive every
@@ -29,7 +29,7 @@ SIZES = {("CraftaxClassic", "7"), ("CraftaxClassic", "16"), ("CraftaxFull", "10"
 def load(name: str) -> dict:
     p = REC / name
     if not p.exists():
-        pytest.fail(f"missing Workstream-H artifact: {p.relative_to(ROOT)}")
+        pytest.fail(f"missing semantic artifact: {p.relative_to(ROOT)}")
     return json.loads(p.read_text())
 
 

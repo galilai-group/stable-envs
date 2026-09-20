@@ -3,7 +3,7 @@
 TWO ORACLES, and they are different in kind:
 
   * the 42 SWM ids are asserted against the ACCEPTED STEP-8 SUPPORT MATRIX
-    (``examples/results/step8/support_matrix.json``), which is the behavioral oracle Step 9 is not
+    (``examples/results/step8/support_matrix.json``), which is the certified behavioral oracle this tree is not
     allowed to change. The alias table in ``registry.py`` is a copy of it and this test is what stops
     the copy drifting.
   * the canonical class names are asserted against the BASELINE REGISTRY TABLE recorded from

@@ -1,6 +1,6 @@
 """Render a public ``State`` through a concrete environment class.
 
-Uses only the Step-9 ``snv`` surface: construct by class (or ``snv.make``), ``reset``, ``render``,
+Uses the public ``snv`` surface: construct by class (or ``snv.make``), ``reset``, ``render``,
 ``close``. Optional extras are not required for PushT.
 
     python examples/render.py

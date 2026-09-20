@@ -302,7 +302,7 @@ class HighwayEnvBase(Env):
         for k, (kind, _, _) in enumerate(self.STATE_OBJECTS):
             names += [f"{kind}{k}_x", f"{kind}{k}_y", f"{kind}{k}_heading"]
         self.state_names = tuple(names)
-        # Step-9 state (contract §3). The packed row is unchanged -- vehicles, then the ego's
+        # Public state. The packed row is unchanged -- vehicles, then the ego's
         # steering angle if it has tires, then the static objects, exactly the order the offsets
         # above have always fixed -- and the layout names the three runs it already consists of.
         # Assigned per instance because all three widths are functions of the class's own

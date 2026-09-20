@@ -866,7 +866,7 @@ class CraftaxFull(Env):
     #: the strip layout and the texture resampling; ``jax`` is load-bearing for the reason
     #: :meth:`reference_env` refuses to build a reference whose PRNG path differs.
     reference_versions = {"craftax": "1.6.1", "jax": "0.11.1"}
-    #: **Step 8, Workstream D.** ``stable_worldmodel``'s ``CraftaxWrapper`` (
+    #: ``stable_worldmodel``'s ``CraftaxWrapper`` (
     #: ``stable_worldmodel/envs/craftax/craftax.py``) builds its step function as
     #: ``self._step_fn = jax.jit(_step, backend=self.backend)`` (and reset likewise), so a LIVE
     #: ``gymnasium.make("swm/CraftaxPixels-v1")`` workflow always observes the JIT-produced frame,
@@ -1075,7 +1075,7 @@ class CraftaxFull(Env):
         ),
     }
 
-    # ------------------------------------------------------------------ Step-9 state
+    # ------------------------------------------------------------------ state
     #
     # The public :data:`State` groups the 544 packed numbers by what they describe. Five per-tile
     # planes (the block, the item drawn over it, the mob slot, the projectile slot and the light-map

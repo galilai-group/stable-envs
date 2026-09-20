@@ -63,7 +63,7 @@ TRACKCOM_RENDER_FLAGS: dict[str, dict] = {
 
 #: The reason ``device="cpu"`` is refused, carried by the cell (``CPU_UNCERTIFIED_REASON``). The
 #: package re-exports the collected mapping as ``CPU_UNCERTIFIED`` for the scripts that read it.
-CPU_UNCERTIFIED_REASON = "no CPU certification (Step 7 allow-list; not an SWM id; Step 8 decides)"
+CPU_UNCERTIFIED_REASON = "no CPU certification (not an SWM id; certification deferred)"
 
 VISUAL_FIDELITY: dict[str, dict] = {
     # swimmer is the one domain that renders with ``enable_specular=False`` (see SPECULAR_NOTE), so

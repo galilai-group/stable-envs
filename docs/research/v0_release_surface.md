@@ -80,6 +80,6 @@ Formatting the whole tree while others edit is a guaranteed conflict.
 
 ## Open items disposition
 
-See [step9_open_items.md](step9_open_items.md). Only item 5 (`craftax_full`
-alias) is in this polish pass (workstream A). Items 1–4 stay documented
-limitations.
+See [step9_open_items.md](step9_open_items.md). Items 1–4 stay documented
+limitations. The `craftax_full.py` discovery shim (former item 5) is closed:
+`discover()` loads `_craftax_full` explicitly.

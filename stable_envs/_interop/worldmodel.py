@@ -131,7 +131,7 @@ class VariationMap:
     scaled: Mapping[str, tuple[str, float]] = field(default_factory=dict)
     #: ``our_path -> (swm_path, factor, offset)`` with ``ours = theirs * factor + offset``. The
     #: general form of ``scaled``, kept separate rather than widening it because ``scaled``'s
-    #: two-tuple is what the four pre-Step-8 maps are written in and a silent arity change is the one
+    #: two-tuple is what the four earlier maps are written in and a silent arity change is the one
     #: edit a reader cannot see. It exists for the leaves whose two libraries agree on WHAT the knob
     #: means and disagree on how it is spelled: an inverted binary switch is ``(-1.0, 1.0)``, a unit
     #: shift is ``(1.0, k)``. The inverse is ``theirs = (ours - offset) / factor``, so a ``factor`` of
@@ -149,7 +149,7 @@ class VariationMap:
     #: ``swm_path -> why we do not carry it``. Every swm leaf must appear in exactly one of the
     #: mapping fields or in one of the four unmapped buckets, and ``check_mapping`` asserts that.
     #: ``swm_only`` is the original undifferentiated bucket and is kept for the maps that predate the
-    #: Step-8 taxonomy; new maps should use one of the three below instead.
+    #: four-way taxonomy; new maps should use one of the three below instead.
     swm_only: Mapping[str, str] = field(default_factory=dict)
     #: ``swm_path -> reason``: the leaf has a real effect upstream (pixels, or dynamics on a cell that
     #: simulates) and THIS cell cannot express it. The reason must name the mechanism.
@@ -171,7 +171,7 @@ class VariationMap:
     #: ``background.color`` writes the floor material AND the skybox texture, and the map carries the
     #: floor half. Unlike ``notes`` this is a classification, not a caveat: ``classification`` reports
     #: such a leaf as ``partial`` so a generated completeness table cannot count it as full support,
-    #: and the reason must carry the measured residual. Added by the coordinator for Workstream B under
+    #: and the reason must carry the measured residual. Added under
     #: Sami's ruling that a feasible, required leaf is not declared unsupported for want of a renderer
     #: capability; the capability decision is recorded separately.
     partial: Mapping[str, str] = field(default_factory=dict)
@@ -194,7 +194,7 @@ class VariationMap:
         """``our_path -> (swm_path, factor)`` over every leaf mapped by a pure multiply.
 
         ``affine`` is NOT folded in here: this returns two-tuples and a caller that unpacked three
-        would be a silent breakage of the four pre-Step-8 maps. See ``affine_pairs``.
+        would be a silent breakage of the four earlier maps. See ``affine_pairs``.
         """
         out = {p: (p, 1.0) for p in self.identical}
         out.update({a: (b, 1.0) for a, b in self.renamed.items()})
@@ -230,7 +230,7 @@ class VariationMap:
     def classification(self) -> dict[str, str]:
         """``swm_path -> one of mapped / partial / unsupported / dead_upstream / not_applicable / swm_only``.
 
-        The Step-8 taxonomy, per leaf, from the map itself rather than from prose beside it.
+        The four-way taxonomy, per leaf, from the map itself rather than from prose beside it.
         """
         out = {p: "mapped" for p in self.mapped_swm_paths()}
         out.update({p: "partial" for p in self.partial})
@@ -343,7 +343,7 @@ VARIATION_MAPS: dict[str, VariationMap] = {
 }
 
 
-#: Step 8's maps live one module per family under ``compat/variation_maps`` and install themselves
+#: Certified maps live one module per family under ``compat/variation_maps`` and install themselves
 #: here; see that package's docstring for why they are not more entries in the literal above.
 from .variation_maps import install as _install_variation_maps
 
@@ -520,7 +520,7 @@ def check_mapping(env) -> dict:
         "mapped_but_absent_from_swm": sorted(mapped - swm_leaves),
         "ours_only": sorted(ours - ours_mapped),
         "ours_only_documented": sorted(set(m.ours_only)),
-        # the Step-8 four-way taxonomy, one label per swm leaf actually offered by this env
+        # the four-way taxonomy, one label per swm leaf actually offered by this env
         "classification": {p: cls.get(p, "undocumented") for p in sorted(swm_leaves)},
         "reasons": {p: unmapped[p] for p in sorted(swm_leaves & set(unmapped))},
         "notes": {p: m.notes[p] for p in sorted(swm_leaves & set(m.notes))},
@@ -622,7 +622,7 @@ class StableEnvGym(gym.Env):
                 f"already have."
             )
         a = np.asarray(action, np.float32).reshape(1, -1)
-        # ``step`` is stateful and its return type is the env's business (Step 9 made it a StepResult
+        # ``step`` is stateful and its return type is the env's business (it returns a StepResult
         # TensorDict for migrated cells, a packed tensor for the rest); ``get_state()`` is the packed
         # row on either path and is what this facade has always reported.
         self.env.step(a)

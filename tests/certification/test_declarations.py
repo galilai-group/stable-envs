@@ -697,12 +697,12 @@ def test_a_malformed_reference_version_field_is_refused(bad):
 def _dmc_declaration_table() -> dict:
     """``stable_envs.envs.dmcontrol.VISUAL_FIDELITY``, read off the SOURCE rather than the module.
 
-    The package imports mujoco with ``MUJOCO_GL=egl`` at import time, so on a host without EGL (this
-    laptop) the family does not register and it cannot be imported -- but the declaration is a table
-    of literals and names, and the claim under test is about the table. Only the module-level
-    assignments the table is built from are executed, in one shared namespace.
+    The DM Control family is read off the SOURCE rather than imported so the claim under test is
+    about the declaration table even on a host whose GL backend cannot register the cells (or that
+    used to hang inside ``dm_control._render`` before ``configure_mujoco_gl``). Only the
+    module-level assignments the table is built from are executed, in one shared namespace.
 
-    Step 9 split ``envs/dmcontrol.py`` into ``envs/dmcontrol/``, where each trackcom domain declares
+    ``envs/dmcontrol.py`` into ``envs/dmcontrol/``, where each trackcom domain declares
     its OWN ``VISUAL_FIDELITY`` entry beside the cell it describes and the shared provenance strings
     live in ``_cells.py``. So the walk is over every module of the package, ``_cells`` first because
     the per-domain entries name ``_AT``/``_AT_VERSIONS``/``_AT_MEASURED_WITH``, and the tables are

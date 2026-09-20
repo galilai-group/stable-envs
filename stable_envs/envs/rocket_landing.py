@@ -559,7 +559,7 @@ def _reference_apply_style(p, c, rid, pad, style_row: np.ndarray) -> None:
 #: kernel's freedom, but on cuda it moves four of the six re-frozen locomotion cells by 2.7e-07 of
 #: mean_abs and 1e-09 of SSIM (``closure1/digest_vs_refreeze.json``), and a re-freeze requires a
 #: certification failure with a causal reason rather than an implementation that merely differs. It is
-#: the Step-8 candidate, under its own clean re-verification pass. It addresses the POSITIONS only; the
+#: the nvdiff candidate, under its own clean re-verification pass. It addresses the POSITIONS only; the
 #: normals share the same sparse stage and would need the same treatment.
 DOCUMENTED_LIMITATIONS = (
     "nvdiff's CPU transform is batch-size invariant to within one float32 ulp at every width, and "
@@ -800,7 +800,7 @@ class PFRocketLanding(Env):
         + DOCUMENTED_LIMITATIONS
     )
 
-    # ------------------------------------------------------------------ Step-9 state
+    # ------------------------------------------------------------------ state
     #
     # The public :data:`State` is the 13-number observation grouped by what it describes: one rigid
     # body, its attitude, and the two velocities the camera lag reads. The offsets are the Step-7
@@ -1020,7 +1020,7 @@ class PFRocketLanding(Env):
     #: ``stable_envs/testing/conformance.py`` calls ``cls.reference_render(ref, states, style=style)``
     #: with no way to ask for the flags, and ``conformance.py`` is shared and not this workstream's to
     #: change. So the variation path reads the attribute immediately after the call and nothing else
-    #: does. Step-8 carryover: give the shared checks a way to receive per-row exclusions, and delete
+    #: does. Carryover: give the shared checks a way to receive per-row exclusions, and delete
     #: this attribute.
     last_reference_unreachable: np.ndarray = np.zeros(0, bool)
 

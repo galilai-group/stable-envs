@@ -31,6 +31,7 @@ if not torch.cuda.is_available():
 from _shared import assert_frames_identical, make_or_skip, sampled_states
 
 import stable_envs as se
+from stable_envs._data import render_states
 
 #: One env per RENDER BACKEND rather than per family: the 2-D rasterizer, the tile atlas and the 3-D
 #: ray caster are the three places a device-blind cache can live, and every other registered env
@@ -91,6 +92,8 @@ def _ddp_child(rank: int, world: int, name: str, n: int, q):
     import torch.distributed as dist
     from torch.utils.data import DataLoader, DistributedSampler
 
+    from stable_envs._data import StateDataset, collate_batched
+
     torch.cuda.set_device(rank)
     os.environ.setdefault("MASTER_ADDR", "127.0.0.1")
     os.environ.setdefault("MASTER_PORT", "29517")
@@ -100,14 +103,12 @@ def _ddp_child(rank: int, world: int, name: str, n: int, q):
     states = proto.sample_states(n, rng=np.random.default_rng(STATE_SEED))
     del proto
 
-    ds = se.StateDataset(name, states, device=f"cuda:{rank}")
+    ds = StateDataset(name, states, device=f"cuda:{rank}")
     sampler = DistributedSampler(ds, num_replicas=world, rank=rank, shuffle=False, drop_last=False)
     # The caller's own DataLoader (``ds.loader()`` is gone). ``collate_batched`` because this dataset
     # renders in ``__getitems__``; ``num_workers=0`` because those frames are already on this rank's
     # GPU and a worker would only duplicate the CUDA context to ship them back.
-    loader = DataLoader(
-        ds, batch_size=16, shuffle=False, sampler=sampler, num_workers=0, collate_fn=se.collate_batched
-    )
+    loader = DataLoader(ds, batch_size=16, shuffle=False, sampler=sampler, num_workers=0, collate_fn=collate_batched)
 
     idxs, frames = list(iter(sampler)), []
     for batch in loader:
@@ -149,7 +150,7 @@ def test_ddp_shards_and_matches_single_process(name):
     proto = se.make(name, num_envs=1, device="cuda:0")
     states = proto.sample_states(n, rng=np.random.default_rng(STATE_SEED))
     del proto
-    ref = se.render_states(name, states, device="cuda:0").cpu()
+    ref = render_states(name, states, device="cuda:0").cpu()
 
     for r in range(world):
         idxs, frames = got[r]

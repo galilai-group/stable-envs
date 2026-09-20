@@ -31,7 +31,9 @@ import os
 import sys
 import traceback
 
-os.environ.setdefault("MUJOCO_GL", "egl")
+from .._mujoco_gl import configure_mujoco_gl
+
+configure_mujoco_gl()
 os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
 
 import numpy as np

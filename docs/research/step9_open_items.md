@@ -2,12 +2,17 @@
 
 Tracked against `v0-draft`. These are not release blockers and are not Step-9
 regressions. Each row is a different *kind* of remaining work: a freeze you
-would choose to reopen, an upstream API, hardware-dependent numerics, a
-process-global EGL constraint, or a discovery-naming shim.
+would choose to reopen, an upstream API, hardware-dependent numerics, or a
+process-global EGL constraint.
 
 User-facing summaries stay in [limitations](../concepts/limitations.md) and
 [worldmodel](../concepts/worldmodel.md). This file is the tracker: why it was
 left, what a fix actually is, and how you would know it is done.
+
+Discovery-naming shims from an earlier draft of this list (`envs/craftax_full.py`,
+`ogb_manip`, `swm_nav`, `core/`, `compat/`) are gone: `discover()` loads
+`_craftax_full` explicitly, and the unpublished Step-8 modules were deleted
+before the first tagged 0.1.0.
 
 | # | item | class | in-tree afternoon patch? |
 |---|---|---|---|
@@ -15,7 +20,6 @@ left, what a fix actually is, and how you would know it is done.
 | 2 | Native `swm.World(env=snv.PushT(...))` | upstream API | no — change stable-worldmodel |
 | 3 | `HumanoidmazeGiantNavigate` CUDA process-repro | hardware numerics | investigate; may not close |
 | 4 | EGL contexts never released | platform constraint | no — `close()` is unsafe here |
-| 5 | `envs/craftax_full.py` alias | discovery naming | yes — small ticket |
 
 ---
 
@@ -129,32 +133,3 @@ exists, "leak until process exit" is the correctness policy.
 **Done when.** A release path is demonstrated that does **not** move pixels in
 any other live env in the same process, under the resource-guard, across a
 sweep that constructs and closes several families.
-
----
-
-## 5. `stable_envs/envs/craftax_full.py` alias
-
-**Status.** Unadvertised `sys.modules` alias of `_craftax_full`. Dashboard
-`STEP9_CLEANUP`.
-
-**Why v0 left it.** `discover()` skips `_`-prefixed modules
-(`stable_envs/registry.py`). Auto-discovery therefore imports
-`craftax_full.py`, which rebinds `sys.modules[__name__]` onto
-`_craftax_full`, so `CraftaxFull` still registers and a missing extra is
-still recorded under the key `craftax_full`.
-
-Full cannot merge into Classic: they share 34 module-level names, **15 of
-which hold different values** (`N_BLOCK` 17 vs 37, `N_STRIP` 16 vs 41,
-`STRIP_H` 2 vs 4, `TILE_PX_AGENT` 7 vs 10, plus caches and helpers).
-`tests/unit/test_craftax_full.py` reaches for 48 of those names. A merge
-would rename constants; that is not behaviour-neutral.
-
-**Path (this repo, small).** Teach `discover()` to load `_craftax_full.py`
-explicitly (or give Full a public non-underscore name that is not Classic),
-retarget remaining live imports, then delete `envs/craftax_full.py`. Keep
-`ogb_manip` / `swm_nav` / `core` / `compat` on their own tickets — those still
-have scratch and alias-identity tests.
-
-**Done when.** `CraftaxFull` registers with no `craftax_full.py` shim;
-`snv.import_errors()` still keys a missing extra as `craftax_full` (or the
-key change is documented); unit tests import `_craftax_full`.

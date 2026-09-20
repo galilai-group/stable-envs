@@ -387,7 +387,7 @@ def row_groups(box, r0: int, r1: int, c0: int, c1: int) -> list[tuple]:
     return groups
 
 
-#: Step-8 spelling. ``envs/navigation.py`` imports it under this name and Workstream G does not own
+#: packed-row alias. ``envs/navigation.py`` imports it under this name ; this file is not rewritten here
 #: that file; the alias keeps the call site working, and there is exactly one function.
 _row_groups = row_groups
 

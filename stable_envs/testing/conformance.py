@@ -858,7 +858,7 @@ def partition_colour_exactness(result: dict) -> dict:
                           comes off its primitive still moves a number.
 
     A result with no ``applicability`` (an older artifact, or an env with no declaration) puts every
-    failure in ``asserted``: the conservative direction, and the pre-Step-8 behaviour exactly.
+    failure in ``asserted``: the conservative direction, and the previous behaviour exactly.
     """
     failures = list(result.get("colors_not_applied") or [])
     app = result.get("applicability") or {}
@@ -904,7 +904,7 @@ def check_colors_apply_exactly(env) -> dict:
             # REPORTED, never judged: how close the closest pixel came, in summed absolute channel
             # error. The verdict below is unchanged -- this is the number a leaf whose literal bound
             # is declared inapplicable still moves when a knob comes off its primitive, and the
-            # number this check used to throw away. Step 8, at Sami's condition on the colour ruling.
+            # number this check used to throw away, at the colour-ruling condition.
             best[f"{path}->{target}"] = int(d.min())
             if not (d == 0).any():
                 wrong.append(f"{path}->{target}")
@@ -1218,7 +1218,7 @@ def check_step_matches_reference(
         gpu = np.empty((steps, D), np.float64)
         for i, a in enumerate(acts):
             # ``step`` is stateful; what it RETURNS differs by cell (a StepResult TensorDict for a
-            # Step-9-migrated env, a packed tensor for the rest), so the reading is done by the
+            # migrated env, a packed tensor for the rest), so the reading is done by the
             # ``get_sim`` the caller supplied, which is the packed row on every path.
             single.step(torch.as_tensor(a, dtype=torch.float32, device=dev).view(1, -1))
             gpu[i] = np.asarray(get_sim().detach().cpu().numpy(), np.float64).reshape(D)

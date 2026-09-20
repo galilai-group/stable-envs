@@ -191,14 +191,12 @@ ray-caster is linear in pixels. The per-task table is in ``docs/research/metawor
 
 from __future__ import annotations
 
-import os
-
 import numpy as np
 import torch
 
-# MuJoCo picks its GL backend from MUJOCO_GL and defaults to GLFW, which needs an X display; on a
-# headless GPU node that aborts the interpreter rather than raising.
-os.environ.setdefault("MUJOCO_GL", "egl")
+from .._mujoco_gl import configure_mujoco_gl
+
+configure_mujoco_gl()
 
 # THE DEPENDENCY CHECK, at module scope, probing the FAILING PATH rather than the family's name.
 # ``metaworld`` pins ``mujoco==3.3.0``; ``mujoco_warp`` needs ``mujoco >= 3.11``; and the shared
@@ -1122,7 +1120,7 @@ class MetaWorldBase(Env):
         b = _build_bundle(self.TASK)
         self.state_dim = len(b.state_names)
         self.state_names = b.state_names
-        # Step-9 state (contract §3): two keys, and they are what the two halves ARE rather than an
+        # Public state: two keys, and they are what the two halves ARE rather than an
         # invention. ``qpos`` is the simulator's configuration; ``episode`` is what the task wrote
         # into the MODEL when the episode began (``_live_slots``), which is a different KIND of
         # quantity and is the whole subject of the widening this family performs. Assigned per

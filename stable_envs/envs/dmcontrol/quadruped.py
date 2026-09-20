@@ -1,7 +1,7 @@
 """DM Control ``quadruped`` — the visual tier, at camera 2, on ``stable_worldmodel``'s own model.
 
 The one cell in the family whose MODEL is not ``suite.load``'s and whose camera is not 0. Both are
-Step-8 facts and both are preserved exactly: ``swm/QuadrupedDMControl-v0`` registers quadruped-walk
+These facts and both are preserved exactly: ``swm/QuadrupedDMControl-v0`` registers quadruped-walk
 at camera 2 (``y``, on the torso, trackcom) with SWM's default appearance, and the certified
 configuration is the registered default (Step 2 S4.2), so this is the model the cell draws and the
 reference renders. The suite's own appearance is one ``material.self`` knob away.

@@ -70,6 +70,7 @@ if not torch.cuda.is_available():
 from _shared import family_params, make_or_skip, resolve_family, sampled_states
 
 import stable_envs as se
+from stable_envs._data import StateDataset, TrajectoryDataset, collate_batched
 from stable_envs.testing import conformance as C
 from stable_envs.testing import render_worker as W
 
@@ -1244,7 +1245,7 @@ def test_dataset_paths_regenerate_identical_frames(env, inputs):
     states, style = inputs
     ref = env.render(states, style=style).detach().cpu().numpy()
 
-    ds = se.StateDataset(env, states, style=style, size=env.size, device=str(env.device))
+    ds = StateDataset(env, states, style=style, size=env.size, device=str(env.device))
     assert np.array_equal(ds.__getitems__(list(range(N))).detach().cpu().numpy(), ref), (
         f"{type(env).__name__}: StateDataset renders different pixels from env.render"
     )
@@ -1253,13 +1254,13 @@ def test_dataset_paths_regenerate_identical_frames(env, inputs):
     # a rendering dataset needs, because ``__getitems__`` hands back an assembled batch.
     from torch.utils.data import DataLoader
 
-    loaded = next(iter(DataLoader(ds, batch_size=N, shuffle=False, num_workers=0, collate_fn=se.collate_batched)))
+    loaded = next(iter(DataLoader(ds, batch_size=N, shuffle=False, num_workers=0, collate_fn=collate_batched)))
     assert np.array_equal(loaded.detach().cpu().numpy(), ref), (
         f"{type(env).__name__}: the DataLoader path renders different pixels from env.render"
     )
 
     # one trajectory of N steps, so the per-trajectory style has to be expanded over its own rows
-    traj = se.TrajectoryDataset(
+    traj = TrajectoryDataset(
         env,
         states.reshape(1, N, -1),
         style=None if style is None else style[:1],
@@ -1285,7 +1286,7 @@ def test_huggingface_round_trip_regenerates_identical_frames(env, inputs, tmp_pa
     """
     pytest.importorskip("datasets", reason="the HuggingFace round-trip needs `datasets`")
     states, style = inputs
-    ds = se.TrajectoryDataset(
+    ds = TrajectoryDataset(
         env,
         states.reshape(1, N, -1),
         style=None if style is None else style[:1],
@@ -1295,14 +1296,14 @@ def test_huggingface_round_trip_regenerates_identical_frames(env, inputs, tmp_pa
     )
     ref = _digest(ds.all_frames())
 
-    back = se.TrajectoryDataset.from_hf(ds.to_hf(), env=env, window=1, device=str(env.device))
+    back = TrajectoryDataset.from_hf(ds.to_hf(), env=env, window=1, device=str(env.device))
     assert _digest(back.all_frames()) == ref, (
         f"{type(env).__name__}: an in-memory HuggingFace round-trip does not re-render the same frames"
     )
 
     path = str(tmp_path / "corpus")
     ds.save_to_disk(path)
-    disk = se.TrajectoryDataset.load_from_disk(path, env=env, window=1, device=str(env.device))
+    disk = TrajectoryDataset.load_from_disk(path, env=env, window=1, device=str(env.device))
     assert _digest(disk.all_frames()) == ref, (
         f"{type(env).__name__}: a corpus written with save_to_disk and read back renders different "
         f"frames — the stored corpus is not the corpus"
@@ -1362,7 +1363,7 @@ def test_cuda_graph_step_matches_eager(env):
     worst = 0.0
     for _ in range(8):
         a = torch.as_tensor(rng.uniform(lo, hi, (N, adim)).astype(np.float32), device="cuda")
-        # ``step`` is stateful and, for a Step-9-migrated cell, returns a StepResult TensorDict
+        # ``step`` is stateful and, for a migrated cell, returns a StepResult TensorDict
         # rather than the packed buffer. ``get_state()`` is the packed row on every path and is what
         # this comparison has always been about.
         graphed.step(a)

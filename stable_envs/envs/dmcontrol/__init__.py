@@ -1,6 +1,6 @@
 """DM Control suite — eighteen cells in two tiers, one state vector each.
 
-``stable_envs.envs.dmcontrol`` IS this package. Step 9 split the 3,376-line module it used to be into
+``stable_envs.envs.dmcontrol`` IS this package. This package split the 3,376-line module it used to be into
 one small base, two renderer modules and one module per domain (plan §3, §12 B); every name the module
 exported is re-exported here, so ``from stable_envs.envs import dmcontrol as D`` and every
 ``D.<anything>`` the tests, the probes and ``stable_worldmodel`` reach for keeps resolving, and the
@@ -58,7 +58,7 @@ the frame; restoring ``qpos`` plus those 2-4 floats is **0/255** on every one
 DISCOVERED by diffing episodes rather than transcribed (``_episode_slots``), and ``state_names`` names
 each entry.
 
-The public Step-9 :data:`~stable_envs.State` is that same row, grouped by what the two halves ARE:
+The public :data:`~stable_envs.State` is that same row, grouped by what the two halves ARE:
 ``{"qpos": (nq,), "episode": (k,)}``, with the ``episode`` key absent on the eleven cells that draw
 nothing. Nothing is hidden and nothing is reordered — ``pack``/``unpack`` round-trip the frozen corpus
 layout bit for bit.
@@ -78,7 +78,7 @@ are in ``docs/research/dmcontrol.md`` and in the modules that implement each of 
 
 from __future__ import annotations
 
-# The renderer modules and the base, re-exported under the names the Step-8 module had.
+# The renderer modules and the base, re-exported under the names the package had.
 # The domain modules. Importing them is what REGISTERS the eighteen cells, so the list is the
 # registry: a domain not named here does not exist as far as ``stable_envs`` is concerned.
 from . import (  # noqa: F401  # noqa: F401
@@ -225,5 +225,5 @@ TRACKCOM_BASES: dict[str, tuple[type, ...]] = {
 }
 
 #: Every trackcom cell's measured numbers, in one table, for the certifier and the declaration tests.
-#: The entries live in the domain modules; this is a view of them, keyed as the Step-8 table was.
+#: The entries live in the domain modules; this is a view of them, keyed as the original table was.
 VISUAL_FIDELITY: dict[str, dict] = {n: globals()[n].visual_fidelity for n in TRACKCOM_DOMAINS}

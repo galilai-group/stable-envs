@@ -1,10 +1,10 @@
-"""Workstream B's eighteen DM Control cells on the Wave-0 foundation, and the package they now live in.
+"""The eighteen DM Control cells on the Env contract, and the package they now live in.
 
-The oracle that the BEHAVIOR did not change is ``scratch/step9/envs-dmcontrol/oracle.py`` (every
+The oracle that the BEHAVIOR did not change is the certified DM Control corpus (every
 cell's corpus through both trees, byte-identical frames, identical declarations). This file pins two
 things that oracle cannot:
 
-  * the claims that are NEW in Step 9 and have no baseline to compare against — the ``num_envs=``
+  * the claims that are new on the public API and have no baseline to compare against — the ``num_envs=``
     constructor, the two-key public State, ``pack``/``unpack`` round-tripping the frozen packed row,
     the lifecycle, and the fact that a renderer-only cell REFUSES ``step``/``transition`` with the
     contract's precise error instead of inventing a simulator;
@@ -113,7 +113,7 @@ def _build(name, **kw):
 def test_the_import_path_is_the_package_and_it_carries_the_step8_names():
     """``stable_envs.envs.dmcontrol`` IS the package, and nothing that used the module lost a name.
 
-    A module and a package cannot share a name, so unlike Workstream A's ``swm_nav`` merge there is
+    A module and a package cannot share a name, so unlike the ``swm_nav`` merge there is
     no second path to alias — the package has to BE the old one. The names below are the ones the
     tests, the probes and ``stable_worldmodel`` actually reach for; the oracle checks all 79.
     """
@@ -162,7 +162,7 @@ def test_every_cell_reports_the_package_as_its_module(name):
 
     ``registry.spec`` derives an env's FAMILY from the last component of ``__module__``, so letting
     ``type()`` default would have split one family of eighteen into fourteen named after domains and
-    changed a column every Step-8 artifact recorded. The attribute is also ACCURATE: the class is
+    changed a column every certified artifact recorded. The attribute is also ACCURATE: the class is
     reachable at that path, which the assertion checks rather than assumes.
     """
     cls = snv.registry.REGISTRY[name]
@@ -184,7 +184,7 @@ def test_the_package_tables_are_views_of_the_cells_and_not_a_second_copy():
     COLLECTED from the classes.
 
     That is the whole reason they can still exist: a table written beside the cells is a second place
-    to change and the Step-8 module had four of them. Collected, the table cannot disagree with the
+    to change and the package had four of them. Collected, the table cannot disagree with the
     class it describes — and this test is what says so, by comparing each entry against the class it
     was collected from rather than against a transcription.
     """
@@ -286,7 +286,7 @@ def test_the_one_renderer_per_domain_size_bundle_policy_is_still_a_module_level_
     assert "_close" not in vars(dmc.DMControlSuite) and "_close" not in vars(dmc.DMControlTrackCom)
 
 
-# --------------------------------------------------------------- the Step-9 contract, live
+# --------------------------------------------------------------- the Env contract, live
 
 
 @pytest.mark.parametrize("name", ALL)

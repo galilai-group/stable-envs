@@ -8,7 +8,7 @@ rather than two more rungs of a hierarchy. Below those there is exactly one clas
 cell, and those classes are DECLARATIONS — ``DOMAIN``/``TASK``/``CAMERA`` and the measured numbers —
 produced by ``parity_cell``/``trackcom_cell`` from the data in the eighteen domain modules.
 
-The Step-9 foundation additions live here too, and there are only three:
+The Public State additions live here too, and there are only three:
 
   * ``num_envs=`` (contract §2);
   * a two-key public ``State`` (contract §3) — ``{"qpos": (nq,), "episode": (k,)}`` — whose
@@ -115,7 +115,7 @@ class _DMCModel(Env):
         self.nq = int(m.nq)
         self.state_dim = self.nq + len(self._slots())
         self.state_names = self._qpos_names(m) + self._slot_names(m)
-        # ``state_layout`` is set PER INSTANCE, which is the whole of this family's Step-9 state
+        # ``state_layout`` is set PER INSTANCE, which is the whole of this family's public State
         # machinery since the foundation made ``Env._layout`` an instance method (integration
         # f24d94c, this workstream's request R1). The two keys are what the halves ARE, and the
         # ``episode`` key is absent on the eleven cells that draw nothing per episode.
@@ -131,10 +131,10 @@ class _DMCModel(Env):
         )
         assert len(self.state_names) == self.state_dim
 
-    # ---- Step-9 state -----------------------------------------------------
+    # ---- state -----------------------------------------------------
     #
-    # The packed float32 row is unchanged: ``qpos`` then the episode draw, exactly the Step-8 layout
-    # every frozen corpus, digest and certification check speaks. What Step 9 adds is the entity
+    # The packed float32 row is unchanged: ``qpos`` then the episode draw, exactly the packed float32 layout
+    # every frozen corpus, digest and certification check speaks. The public State adds the entity
     # grouping over it, and the grouping is the state's own structure rather than an invention --
     # ``qpos`` is the simulator's configuration and ``episode`` is what ``initialize_episode`` wrote
     # into the MODEL, which is a different KIND of quantity and is the whole subject of the widening

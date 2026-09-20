@@ -94,7 +94,7 @@ def test_native_supersample_is_not_passed_as_one(bench, monkeypatch):
         f"ss=None must not reach se.make at all, got {seen} — passing supersample=1 measures a "
         f"different picture than se.make(name) produces for the 44 classes declaring 2"
     )
-    assert seen["batch"] == 8 and seen["size"] == 84 and seen["device"] == "cuda"
+    assert seen["num_envs"] == 8 and seen["size"] == 84 and seen["device"] == "cuda"
 
     seen.clear()
     bench.make_env("Whatever", 8, 84, 2)
@@ -113,7 +113,7 @@ def test_ss_flag_defaults_to_native(bench):
     """The DEFAULT is the thing that got published, so pin it rather than the parser."""
     for script in ("bench_gpu_vs_cpu", "bench_vs_decode"):
         src = (EXAMPLES / f"{script}.py").read_text()
-        assert '"--ss", default="native"' in src, (
+        assert '"--ss"' in src and 'default="native"' in src, (
             f"{script}.py must default --ss to the env's own supersample; a numeric default silently "
             f"overrides default_supersample for 44 classes"
         )

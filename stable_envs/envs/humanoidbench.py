@@ -217,9 +217,9 @@ import os
 import numpy as np
 import torch
 
-# MuJoCo picks its GL backend from MUJOCO_GL and defaults to GLFW, which needs an X display; on a
-# headless GPU node that aborts the interpreter rather than raising.
-os.environ.setdefault("MUJOCO_GL", "egl")
+from .._mujoco_gl import configure_mujoco_gl
+
+configure_mujoco_gl()
 
 # THE DEPENDENCY CHECK, at module scope and probing the FAILING PATH, for the reason ``fetch.py``
 # gives: a lazy import inside ``render`` turns one missing wheel into a failure per test rather than
@@ -630,7 +630,7 @@ class HumanoidBenchBase(Env):
         b = _build_bundle(self.ROBOT, self.TASK)
         self.state_dim = b.nq
         self.state_names = b.state_names
-        # Step-9 state (contract §3): the packed row IS ``qpos`` and nothing else, so the public
+        # Public state: the packed row IS ``qpos`` and nothing else, so the public
         # State is one key over it, assigned per instance because ``nq`` is a property of the
         # compiled model. Nothing is hidden (every column is covered, no offset is ``None``) and
         # there is no ``_live_state``: the packed row is this family's live state.

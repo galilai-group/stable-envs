@@ -86,7 +86,7 @@ Three things are added and nothing else changes:
   * ``close()``, which drops this instance's index tables and then refuses to render, WITHOUT
     releasing any shared EGL context or mujoco_warp graph — the rule ``_PlateRig`` exists to enforce.
 
-The one deletion is a duplication: the texel substitution Step 8 lifted out of this file into
+The one deletion is a duplication: the texel substitution was lifted out of this file into
 ``envs/_plate_texels.py`` (for ``dmcontrol`` to share) is now CALLED here instead of being kept
 alongside a second copy. ``mj_quantise``, ``_grid_texture``, ``_floor_key`` and ``_apply_floor`` keep
 their names and their behaviour; their bodies are the shared functions.
@@ -352,11 +352,11 @@ def _bundle(cell: str) -> _Bundle:
 #: 41, and 0.18 becomes 45 where rounding gives 46. Measured against the compiled ``tex_data`` of
 #: both cells at six default channels and five probe channels; every one truncates.
 #:
-#: THIS IS NOW THE SHARED FUNCTION AND NOT A SECOND COPY OF IT. Step 8 lifted this file's texel
+#: THIS IS NOW THE SHARED FUNCTION AND NOT A SECOND COPY OF IT. was lifted this file's texel
 #: substitution into ``envs/_plate_texels.py`` so that ``dmcontrol`` could run the same code -- and
 #: left the original standing here, so the one family the helper was extracted FROM was the one
-#: family not running it. Step 9 closes that: ``mj_quantise`` IS ``_plate_texels.quantise``, the
-#: same function object, and the Step-8 name is kept because probes and call sites reach for it.
+#: family not running it. Now ``mj_quantise`` IS ``_plate_texels.quantise``, the
+#: same function object, and the exported name is kept because probes and call sites reach for it.
 mj_quantise = _quantise
 
 
@@ -451,8 +451,8 @@ def _grid_texture(m, floor_default) -> dict | None:
     THE ADDRESSING, THE MASKS AND THE ASSERTIONS ARE NOW ``_plate_texels.texel_slots``, which is the
     same arithmetic this function used to spell itself: the texture id, ``tex_adr``, the channel
     count, and one equality mask per default colour taken from the PRISTINE texture. That module was
-    extracted from THIS file in Step 8 for ``dmcontrol`` to share, and then this file kept its own
-    copy; Step 9 deletes the copy. The returned dict is the shared one -- ``masks`` is a tuple in
+    extracted from THIS file for ``dmcontrol`` to share, and then this file kept its own
+    copy; The copy is gone. The returned dict is the shared one -- ``masks`` is a tuple in
     leaf order where this used to spell ``mask1``/``mask2`` -- and nothing outside this module ever
     read those keys.
     """
@@ -1053,7 +1053,7 @@ class OGBManipBase(Env):
         renderer at one resolution.
 
         ALL THREE OF THOSE ARE NOW ``_plate_texels.substitute``'s, which is where they were written
-        down in Step 8 -- the unconditional write, the ``mjr_uploadTexture``, and the
+        already -- the unconditional write, the ``mjr_uploadTexture``, and the
         ``make_current()`` before it -- after being lifted out of this very function. What stays here
         is the only part that is this family's: which colour is meant when the caller passes ``None``
         (swm's registered default, read off its own variation space at bundle time) and the ``rig.floor``

@@ -251,7 +251,7 @@ def render_states_arg(env, states) -> torch.Tensor:
         # A public State is accepted wherever packed rows are (contract §5). ``pack`` is the only
         # bridge between the two and it is the env's own, so an env whose State carries a field the
         # packed row does not (PushT's agent velocity) drops exactly that field here and the renderer
-        # sees the identical Step-8 row.
+        # sees the identical packed row.
         return env.pack(states)
     scan = not (torch.is_tensor(states) and states.device.type == "cuda")
     return check_states(env, states, f"{type(env).__name__}.render", leading=True, scan=scan)
@@ -498,7 +498,7 @@ def _check_reference_versions_shape(cls, where: str, rv) -> None:
 class Env:
     """Base class: a batched, GPU-renderable environment defined by ``scene()``.
 
-    Step 9 renamed this from ``StableEnv`` and gave it the lifecycle every ``stable-*`` package has —
+    This class has the lifecycle every ``stable-*`` package has —
     ``reset``/``step``/``transition``/``unroll``/``render``/``close``, a TensorDict :data:`State`, and
     the four specs — WITHOUT changing what any of it computes. The packed float32 row
     (``state_dim``/``state_names``) is still the internal layout every renderer, every frozen corpus
@@ -881,7 +881,7 @@ class Env:
 
     @property
     def num_envs(self) -> int:
-        """How many environments this object holds. ``B`` is the Step-8 spelling and still works."""
+        """How many environments this object holds. ``B`` is the packed-row alias and still works."""
         return self.B
 
     def __len__(self) -> int:
@@ -935,7 +935,7 @@ class Env:
         """:data:`State` -> the ``(n, state_dim)`` float32 row every renderer and corpus speaks.
 
         BYTE FOR BYTE THE STEP-8 LAYOUT. ``state_names`` names its columns and nothing about it moved
-        in Step 9; the entity-grouped State is a view of the same numbers with the keys a user would
+        ; the entity-grouped State is a view of the same numbers with the keys a user would
         pick. Fields whose offset is ``None`` (hidden dynamics that the row never carried, e.g.
         PushT's agent velocity) are dropped here, which is why a packed row is still exactly what the
         frozen digests were computed from.

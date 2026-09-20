@@ -1,8 +1,8 @@
-"""Workstream F's families on the Wave-0 foundation: the constructor, the State, the refusal.
+"""MuJoCo-wrapper families on the Env contract: the constructor, the State, the refusal.
 
-The oracle that the BEHAVIOR did not change is ``scratch/step9/envs-mujoco/oracle.py`` (both trees,
-byte-identical frames over 24 cells). This file pins the claims that are NEW in Step 9 and therefore
-have no baseline to compare against, across the seventeen families this workstream owns:
+The oracle that the BEHAVIOR did not change is the certified MuJoCo-wrapper corpus (both trees,
+byte-identical frames over 24 cells). This file pins the claims that are new on the public API and therefore
+have no baseline to compare against, across the seventeen families these families cover:
 
   * **the constructor**, checked from the SIGNATURE for every registered class of these families and
     not only for the ones this host can build. Most of these families need an optional dependency
@@ -40,7 +40,7 @@ from stable_envs.registry import REGISTRY
 
 pytestmark = pytest.mark.unit
 
-#: The seventeen modules this workstream owns, by the last component of their import path.
+#: The seventeen modules these families cover, by the last component of their import path.
 FAMILIES = (
     "mujoco_locomotion",
     "humanoidbench",
@@ -67,7 +67,7 @@ WITH_DYNAMICS = ("MiniGridTopDown", "Sokoban")
 
 
 def _owned_classes() -> dict:
-    """``{registered name: class}`` for every class of the families this workstream owns.
+    """``{registered name: class}`` for every class of the families these families cover.
 
     Read off the registry rather than by importing each module, so a family whose optional
     dependency is missing simply contributes nothing instead of erroring — and so a class that is
@@ -92,7 +92,7 @@ OWNED = sorted(_owned_classes())
 def test_this_workstream_owns_some_registered_classes():
     """A guard on the guard: if discovery silently stopped, every test below would vacuously pass."""
     assert OWNED, (
-        "no registered class resolves to a Workstream-F family; the tests below "
+        "no registered class resolves to a MuJoCo-wrapper family; the tests below "
         "parametrise over this list and would all pass on an empty one"
     )
 

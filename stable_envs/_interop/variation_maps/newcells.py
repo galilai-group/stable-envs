@@ -598,7 +598,7 @@ LEAF_CLASSIFICATION.update(
                     "unsupported",
                     _OGBMAZE_SWM_ONLY["floor.pixel_encoding"],
                     _MAZE_PROBES["ogbmaze"] + " -- encoding 1 vs 0 moves 21,029 px at maxdiff 224",
-                    mechanism="VariationMap cannot express an inverting relation (Workstream A), AND "
+                    mechanism="VariationMap cannot express an inverting relation , AND "
                     "checker-versus-flat equivalence is unmeasured; both must resolve before "
                     "this can be mapped",
                 ),
@@ -615,7 +615,7 @@ LEAF_CLASSIFICATION.update(
             "our_envs": ["SimplePointMaze"],
             "config_note": (
                 "This class is the show_goal=False configuration, which the swm id itself registers as "
-                "True. That divergence predates Step 8 and is documented in docs/research/"
+                "True. That divergence predates the certified maps and is documented in docs/research/"
                 "swm_coverage.md; reference_env passes show_goal=False so fidelity compares like with "
                 "like. It is why the three goal leaves are not_applicable rather than unsupported"
             ),
@@ -682,7 +682,7 @@ LEAF_CLASSIFICATION.update(
 )
 
 #: The two symbolic-adjacent Craftax pixel ids. They are recorded here rather than left out so the
-#: Step-8 completeness count can say "every id is accounted for" without an implicit exception.
+#: completeness count can say "every id is accounted for" without an implicit exception.
 #: MEASURED LIVE: `CraftaxWrapper.__init__` sets `self.variation_space = None` (craftax.py:59) and
 #: there is no `swm.spaces` import anywhere in stable_worldmodel/envs/craftax/, so both ids offer
 #: ZERO leaves and there is no Gate-F variation gap to close for either.

@@ -7,7 +7,7 @@ is kept to the three keys that genuinely cannot live on an env instance:
   * ``verbose`` — the level at or above which this package emits log records;
   * ``default_device`` — the device an env gets when the caller names none (``None`` keeps the
     historical default, which every env spells itself);
-  * ``warn_on_deprecated`` — whether the deprecated Step-8 aliases announce themselves.
+  * ``warn_on_deprecated`` — whether the deprecated aliases announce themselves.
 
 THE LOGGER DOES NOT TOUCH GLOBAL LOGURU STATE. ``loguru.logger`` is a process-wide singleton owned by
 the application, so adding or removing handlers here would silently re-configure logging for a program

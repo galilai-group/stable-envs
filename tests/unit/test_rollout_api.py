@@ -1,7 +1,7 @@
 """Policies and ``sample``: the contract, on CPU, with a simulator whose answer is known by hand.
 
-``stable_envs/rollout.py`` is the half of the repo that answers "I have no states yet". It had no direct
-test — ``tests/gpu/test_reproducibility.py`` asserts that ``env.sample(seed=)`` reproduces in a fresh
+``stable_envs.testing._rollout.sample`` is the helper that answers "I have no states yet". It had no direct
+test — ``tests/gpu/test_reproducibility.py`` asserts that ``testing.sample(seed=)`` reproduces in a fresh
 interpreter, which is the strongest thing to say about it and says nothing about what it RETURNS. The
 failures below all produce a dict of tensors with the right keys and the right shapes:
 

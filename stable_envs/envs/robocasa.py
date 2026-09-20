@@ -154,9 +154,9 @@ import os
 import numpy as np
 import torch
 
-# MuJoCo picks its GL backend from MUJOCO_GL and defaults to GLFW, which needs an X display; on a
-# headless GPU node that aborts the interpreter rather than raising.
-os.environ.setdefault("MUJOCO_GL", "egl")
+from .._mujoco_gl import configure_mujoco_gl
+
+configure_mujoco_gl()
 
 # THE DEPENDENCY CHECK, at module scope for the reason ``fetch.py`` gives: a lazy import inside
 # ``render`` turns one missing wheel into a failure per test rather than one missing env. Two things
@@ -470,7 +470,7 @@ class RoboCasaBase(Env):
         self._live_idx = live
         self.state_dim = len(live)
         self.state_names = tuple(s.qpos_names[i] for i in live)
-        # Step-9 state (contract §3): one key over the packed row, assigned per instance because the
+        # Public state: one key over the packed row, assigned per instance because the
         # LIVE dims are a property of the compiled kitchen and the camera (``_live_dims``) and are
         # not known until one is chosen. ``qpos`` is the honest name -- these columns are a SUBSET of
         # the model's qpos, the rest of which is pinned (``_full_qpos``) and is not state. Every

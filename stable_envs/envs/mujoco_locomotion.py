@@ -151,15 +151,12 @@ InvertedDoublePendulum and by a fraction of a point elsewhere.
 
 from __future__ import annotations
 
-import os
-
 import numpy as np
 import torch
 
-# MuJoCo picks its GL backend from MUJOCO_GL and defaults to GLFW, which needs an X display; on a
-# headless GPU node that aborts the interpreter rather than raising. Every machine this runs on
-# renders offscreen. An explicit setting always wins.
-os.environ.setdefault("MUJOCO_GL", "egl")
+from .._mujoco_gl import configure_mujoco_gl
+
+configure_mujoco_gl()
 
 from ..env import Env
 from ..registry import register
@@ -457,10 +454,10 @@ class _GymMujocoFamily(Env):
 
     ENV_ID: str = ""
 
-    #: ---- Step-9 state (contract §3) --------------------------------------------------------
+    #: ---- Public state --------------------------------------------------------
     #:
-    #: The packed float32 row is unchanged: it IS ``qpos``, exactly the Step-8 layout every frozen
-    #: digest and certification check speaks. What Step 9 adds is a name for it. One key and not
+    #: The packed float32 row is unchanged: it IS ``qpos``, exactly the packed float32 layout every frozen
+    #: digest and certification check speaks. The public State adds a name for it. One key and not
     #: several, because this family's state has no second half to separate from the first -- unlike
     #: DM Control there is nothing drawn per episode, so ``qpos`` covers every column and the layout
     #: is one entry with offset 0. It is assigned PER INSTANCE in ``_declare_state`` for the reason

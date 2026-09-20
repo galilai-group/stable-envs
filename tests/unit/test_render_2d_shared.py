@@ -1,4 +1,4 @@
-"""What the Step-9 render-2d consolidation bought, pinned so it cannot quietly come apart.
+"""What the 2-D renderer consolidation bought, pinned so it cannot quietly come apart.
 
 Three laws in this package were each written out twice, in modules that are certified against one
 another pixel for pixel. Each is now one definition, and each test below is the specific way the
@@ -147,7 +147,7 @@ def test_the_classic_path_blends_through_gfxdraws_own_rule():
 
 
 def test_row_groups_is_one_function_under_two_names():
-    """The public spelling and the Step-8 one that ``envs/navigation.py`` still imports are the SAME
+    """The public spelling and the historical alias that ``envs/navigation.py`` still imports are the SAME
     object -- a second function would be a second partition, and the two paths would group the batch
     differently."""
     assert R2.row_groups is R2._row_groups

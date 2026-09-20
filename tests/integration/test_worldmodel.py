@@ -1,4 +1,4 @@
-"""Focused Step-9 contract for the public stable-worldmodel interoperability facade."""
+"""Contract for the public stable-worldmodel interoperability facade."""
 
 from __future__ import annotations
 
