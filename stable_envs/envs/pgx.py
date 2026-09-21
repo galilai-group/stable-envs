@@ -985,7 +985,6 @@ class PgxBoardBase(Env):
 
         game = env["game"]
         size = int(env["size"])
-        spec = GAMES[game]
         b = _bundle(game)
         base = _pgx.make(game)
         st0 = jax.jit(base.init)(jax.random.PRNGKey(0))

@@ -208,7 +208,6 @@ def test_two_styles_with_repeats_take_the_gather_branch(cfg):
     assert len(plates) == 2 and all(len(v) == 3 for v in plates.values())
 
     # rows sharing a style must share a background, and the two styles must differ
-    flat = got.reshape(6, -1)
     a, b = list(plates.values())
     assert not torch.equal(got[a[0]][0, 0], got[b[0]][0, 0]), (
         f"{cfg}: the two styles produced the same corner pixel, so the gather collapsed them"

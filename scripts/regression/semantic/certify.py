@@ -693,7 +693,6 @@ def report(merged: dict, cert: dict, pipeline: list[dict]) -> str:
     from collections import Counter, defaultdict
 
     matrix = json.loads((ROOT / "tests" / "fixtures" / "regression" / "fidelity" / "swm_matrix.json").read_text())
-    rows = {r["swm_id"]: r for r in matrix["rows"]}
     matched = [r for r in matrix["rows"] if r["stable_envs"]["envs"]]
     partial_envs = {
         e

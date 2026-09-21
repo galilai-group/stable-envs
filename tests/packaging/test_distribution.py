@@ -21,6 +21,7 @@ WORKFLOWS = (
     "pre-commit.yml",
     "release.yml",
     "testing.yml",
+    "extras-smoke.yml",
 )
 
 
@@ -44,6 +45,14 @@ def test_about_merges_integration_author_spelling() -> None:
     about = (ROOT / "stable_envs" / "__about__.py").read_text()
     assert '__author__ = "Randall Balestriero, Sami BuGhanem"' in about
     assert "Bou Ghanem" not in about
+
+
+def test_requires_python_matches_the_ci_matrix() -> None:
+    """Metadata and CI must tell the same story. 3.13+ is not claimed until a job runs there."""
+    assert _pyproject()["project"]["requires-python"] == ">=3.10,<3.13"
+    testing = (ROOT / ".github" / "workflows" / "testing.yml").read_text()
+    assert '"3.10"' in testing and '"3.11"' in testing and '"3.12"' in testing
+    assert '"3.13"' not in testing
 
 
 def test_core_dependencies_are_minimal() -> None:
@@ -115,11 +124,29 @@ def test_regression_is_manual_and_profiled() -> None:
     assert int(gpu["strategy"]["max-parallel"]) == 1
 
 
-def test_pre_commit_does_not_reformat_research_history() -> None:
+def test_pre_commit_hygiene_excludes_only_frozen_artifacts() -> None:
     cfg = yaml.safe_load((ROOT / ".pre-commit-config.yaml").read_text())
     ruff = next(hook for repo in cfg["repos"] for hook in repo["hooks"] if hook["id"] == "ruff")
-    assert "--no-fix" in ruff["args"]
+    assert "--fix" in ruff["args"] and "--exit-non-zero-on-fix" in ruff["args"]
     assert "stable_envs/" in ruff["files"]
+    whitespace = next(hook for repo in cfg["repos"] for hook in repo["hooks"] if hook["id"] == "trailing-whitespace")
+    exclude = whitespace.get("exclude") or ""
+    assert "docs/research/" in exclude
+    assert "tests/fixtures/" in exclude
+    assert "docs/assets/" in exclude
+    assert r".*\.md$" not in exclude
+    assert exclude.strip() != r"^(docs/|"
+
+
+def test_lightweight_regression_and_macos_run_on_ordinary_ci() -> None:
+    testing = (ROOT / ".github" / "workflows" / "testing.yml").read_text()
+    assert "regression and not gpu" in testing
+    assert "STABLE_ENVS_CI_PROFILE: core" in testing
+    assert "macos-latest" in testing
+    assert "scripts/ci/smoke_macos.py" in testing
+    extras = (ROOT / ".github" / "workflows" / "extras-smoke.yml").read_text()
+    assert "scripts/ci/smoke_extra.py" in extras
+    assert "workflow_dispatch" in extras
 
 
 def test_ordinary_ci_does_not_invoke_scratch() -> None:

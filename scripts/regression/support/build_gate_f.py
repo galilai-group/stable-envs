@@ -517,7 +517,6 @@ def load_upstream_bundle() -> list[dict]:
             "SWM_WRAPPER_GATE_F",
         },
     ]
-    dash_text = DASHBOARD.read_text() if DASHBOARD.is_file() else ""
     # dashboard.yaml's upstream_findings/buckets are read and quoted verbatim in the docs/findings
     # generation below via a tiny line-scanner (no yaml dependency in this script on purpose).
     return items

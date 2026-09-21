@@ -37,8 +37,11 @@ jobs:
           python -m pytest tests/unit -m unit -q
           python -m pytest tests/packaging/test_distribution.py -q
 
+  # Intentional dependency-interaction check: unit + integration under the
+  # richer ``[interop,mujoco-locomotion]`` extra set, not a second copy of
+  # the unit job's interpreter.
   integration:
-    name: integration
+    name: unit + integration under interop profile
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -46,11 +49,11 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
-      - name: Install integration environment
+      - name: Install interop profile
         run: |
           python -m pip install --upgrade pip
           python -m pip install -e ".[dev,interop,mujoco-locomotion]"
-      - name: Run integration tests
+      - name: Run unit and integration tests
         shell: bash
         run: |
           paths=(tests/unit)
@@ -110,3 +113,52 @@ jobs:
           .dist-venv/bin/python -m pip install --upgrade pip
           .dist-venv/bin/python -m pip install "${artifact[0]}"
           .dist-venv/bin/python scripts/ci/smoke_installed.py
+
+  regression-cpu:
+    name: CPU regression (core)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install core development environment
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+      - name: Run lightweight CPU regression
+        env:
+          MUJOCO_GL: osmesa
+          STABLE_ENVS_CI_PROFILE: core
+          SE_SKIP_NODE_GATE: "1"
+        run: >-
+          python -m pytest
+          -m "regression and not gpu"
+          -q --tb=line
+
+  macos-core:
+    name: macOS core smoke
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install core package
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+      - name: device=auto smoke
+        env:
+          SE_SKIP_NODE_GATE: "1"
+        run: python scripts/ci/smoke_macos.py
+      - name: Small unit selection
+        env:
+          SE_SKIP_NODE_GATE: "1"
+        run: >-
+          python -m pytest
+          tests/unit/test_public_api.py
+          tests/unit/test_state.py
+          -q --tb=line

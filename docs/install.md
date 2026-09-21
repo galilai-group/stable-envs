@@ -9,6 +9,9 @@ pip install "stable-envs[dmcontrol,ogbench]"  # add family extras as needed
 There is no `[all]` extra. A missing optional extra costs **that family**, not the package.
 `snv.import_errors()` names the modules that did not load.
 
+Supported CPython is **3.10, 3.11, and 3.12** — the range CI exercises. Newer versions are not
+claimed until a job runs there.
+
 ```python
 import stable_envs as snv
 snv.import_errors()     # {module: "ModuleNotFoundError: ..."}

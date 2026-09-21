@@ -570,7 +570,6 @@ class HighwayEnvBase(Env):
         if hit is not None:
             return hit
         lanes = self.LANES
-        f64 = dict(device=self.device, dtype=torch.float64)
         circ = [isinstance(l, Circular) for l in lanes]
         sine = [isinstance(l, Sine) for l in lanes]
 

@@ -6,13 +6,15 @@ repos:
     rev: v6.0.0
     hooks:
       - id: trailing-whitespace
-        exclude: ^(docs/|examples/results/|examples/paper/|docs/assets/|tests/fixtures/|STEP_.*_AGENT_BRIEFS/|.*\.md$|.*\.json$)
+        exclude: >-
+          ^(?:docs/research/|docs/assets/|examples/results/|examples/paper/|tests/fixtures/|STEP_.*_AGENT_BRIEFS/)
       - id: end-of-file-fixer
-        exclude: ^(docs/|examples/results/|examples/paper/|docs/assets/|tests/fixtures/|STEP_.*_AGENT_BRIEFS/|.*\.md$|.*\.json$)
+        exclude: >-
+          ^(?:docs/research/|docs/assets/|examples/results/|examples/paper/|tests/fixtures/|STEP_.*_AGENT_BRIEFS/)
       - id: check-ast
       - id: check-case-conflict
       - id: check-json
-        exclude: ^tests/fixtures/regression/census/census_.*\.json$
+        exclude: ^tests/fixtures/regression/
       - id: check-merge-conflict
       - id: check-toml
       - id: check-yaml
@@ -21,7 +23,7 @@ repos:
       - id: mixed-line-ending
       - id: check-added-large-files
         args: [--maxkb=1000]
-        exclude: ^(docs/assets/media/|examples/results/|examples/paper/)
+        exclude: ^docs/assets/media/
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.15.0
@@ -40,7 +42,11 @@ repos:
     rev: v0.11.0.1
     hooks:
       - id: shellcheck
+        name: shellcheck (ordinary scripts)
         require_serial: true
-        # Cluster launchers trip info/warning on intentional word-splitting and `cd`.
+        exclude: ^(docs/|.*\.sbatch$)
+      - id: shellcheck
+        name: shellcheck (SLURM launchers)
+        require_serial: true
+        files: \.sbatch$
         args: [--severity=error]
-        exclude: ^(docs/)

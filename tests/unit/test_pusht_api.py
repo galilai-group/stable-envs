@@ -149,7 +149,7 @@ def test_a_cell_with_hidden_state_and_no_hook_fails_loudly_instead_of_reporting_
 
 
 def test_the_hook_reports_the_live_velocity_and_env_state_round_trips_through_step(env):
-    st = env.reset(seed=6)
+    env.reset(seed=6)
     assert float(env.state["agent", "velocity"].abs().max()) == 0.0
     env.step(_actions(6, 6))
     live = env.state["agent", "velocity"]

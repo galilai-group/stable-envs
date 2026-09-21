@@ -159,7 +159,7 @@ def _prim_plan(scene: Scene2D, Rh: int, Rw: int) -> list[tuple]:
     that depends on what was rendered before.
     """
     B, N, V = scene.batch, scene.n_prims, scene.vertices
-    k, dt = scene.kind, scene.geom.dtype
+    k, _ = scene.kind, scene.geom.dtype
     g = scene.geom
     G = int(g.shape[2])
     is_disc, is_poly, is_seg = k == KIND_DISC, k == KIND_POLY, k == KIND_SEGMENT
@@ -427,7 +427,7 @@ def render_torch(scene: Scene2D, out_size: int | tuple[int, int], supersample: i
     Rh, Rw = H * ss, W * ss
     dev, dt = scene.kind.device, scene.geom.dtype
     px, py = _pixel_grid(scene, Rh, Rw, dev, dt)
-    B, N, V = scene.batch, scene.n_prims, scene.vertices
+    B, _, V = scene.batch, scene.n_prims, scene.vertices
 
     flat_out = ss == 1
     if flat_out:

@@ -6,7 +6,7 @@
 **Famous research environments, rendered on the GPU as a pure function of a compact state, batched over thousands of environments in one launch.**
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-black.svg)](LICENSE)
-[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-black.svg)](pyproject.toml)
+[![Python 3.10–3.12](https://img.shields.io/badge/python-3.10--3.12-black.svg)](pyproject.toml)
 
 Store states, not frames. Choose the camera, the resolution and the appearance **afterwards**. On PushT that is 5 floats per step against a 96×96×3 frame — 20 bytes against 27,648 — and the default picture is the official appearance, bit for bit on interior pixels.
 

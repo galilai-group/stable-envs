@@ -13,9 +13,9 @@ Four things are asserted, and each of them is a way the page could go quietly wr
   * **every one of the 49 frozen configurations appears** in the summary table, because a
     configuration silently dropped from the table is a configuration silently dropped from the four
     counts underneath it;
-  * **no cluster path reaches the page** — the artifacts are full of `/oscar/scratch/sboughan/...`,
-    which `tests/unit/test_repo_contracts.py` would extract as a `scratch/...` citation that does
-    not resolve, so the citation contract fails one commit after somebody prints a `shard` field;
+  * **no cluster path or dead ``scratch/`` path reaches the page** — the artifacts are full of
+    `/oscar/scratch/sboughan/...` and historical ``scratch/step3/...`` provenance strings. Those
+    stay in the frozen JSON; the generated page must not present them as live resources;
   * **no count in the generator is a literal** — the check `test_step3.py` and `test_step4.py` make
     of their evaluators, applied here: the page's numbers must come from the artifacts.
 
@@ -165,11 +165,14 @@ def test_no_cluster_path_reaches_the_page(report):
     )
 
 
-def test_every_scratch_path_the_page_cites_resolves(report):
-    """The same contract `test_repo_contracts.py` applies repo-wide, checked before the page lands."""
-    cited = {c.rstrip(".,;:)]}>\"'`") for c in re.findall(r"scratch/[A-Za-z0-9_./-]+", report)}
-    broken = sorted(c for c in cited if c != "scratch/" and not (ROOT / c).exists())
-    assert not broken, f"the page cites scratch paths that do not exist here: {broken}"
+def test_generated_page_does_not_cite_scratch_as_a_live_path(report):
+    """Frozen JSON may keep historical ``scratch/...`` provenance. The generated page may not."""
+    cited = {c.rstrip(".,;:)]}>\"'`") for c in re.findall(r"(?<![\w./])scratch/[A-Za-z0-9_./-]+", report)}
+    assert not cited, (
+        "the generated page cites scratch/ paths as if they were live resources; scrub them the "
+        "same way cluster paths are scrubbed. Frozen JSON may retain the historical strings:\n  "
+        + "\n  ".join(sorted(cited))
+    )
 
 
 def test_the_appendix_accounts_for_every_json_artifact(report):
@@ -238,7 +241,12 @@ def test_a_superseded_shard_is_excluded_and_listed_with_its_reason(tmp_path):
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
 
-    live = json.loads((RESULTS / "tilemap" / "sweep" / "cpu_after.json").read_text())
+    live = {
+        "env": "SyntheticCell",
+        "device": "cpu",
+        "before": {"env": "SyntheticCell", "device": "cpu", "tier": "CPU_OK"},
+        "after": {"env": "SyntheticCell", "device": "cpu", "tier": "CPU_FAST"},
+    }
     ws = RESULTS / "_test_supersession"
     quarantine = ws / "sweep" / "superseded_loaded_node"
     quarantine.mkdir(parents=True)

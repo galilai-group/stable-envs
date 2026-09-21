@@ -1,9 +1,11 @@
 name: regression
 
-# Regression is intentionally manual. The 42-environment oracle needs
+# Heterogeneous oracle: manual only. The 42-environment matrix needs
 # incompatible reference stacks (notably Fetch versus current DM Control), and
 # GPU renderers need CUDA/EGL plus locally compiled nvdiffrast. A single
 # all-extras environment would skip or corrupt real coverage.
+# Lightweight CPU regression (core profile) runs automatically on PR/main
+# from .github/workflows/testing.yml.
 on:
   workflow_dispatch:
     inputs:

@@ -1588,7 +1588,6 @@ class CraftaxFull(Env):
         L, HH, WW = np.asarray(tmpl.map).shape
         py, px_ = HH // 2, WW // 2
         r0, c0 = py - OBS_H // 2, px_ - OBS_W // 2
-        cr, cc = OBS_H // 2, OBS_W // 2
         j = 5 * k
         out = []
         for row in s:

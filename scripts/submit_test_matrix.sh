@@ -15,7 +15,7 @@
 # SE_REQUIRE_ENVS for its own slice so an interpreter that lost a dependency FAILS instead of
 # skipping its whole assignment and reporting green.
 set -uo pipefail
-cd "$(dirname "$0")/.."
+cd "$(dirname "$0")/.." || exit
 
 PYTEST_ARGS=()
 VENVS=()

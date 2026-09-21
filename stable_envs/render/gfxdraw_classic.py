@@ -308,7 +308,6 @@ def render_classic_torch(ops: Ops, out: torch.Tensor | None = None) -> torch.Ten
 
 
 def _blit_torch(ops, m, col, ypre, xs, box):
-    B, dev = ops.B, ops.device
     o = m[:, CM_C].view(-1, 1, 1)
     n = m[:, CM_B2].view(-1, 1, 1)
     off = (m[:, CM_D].view(-1, 1, 1) // 2) - torch.div(n, 2, rounding_mode="floor")
@@ -316,7 +315,6 @@ def _blit_torch(ops, m, col, ypre, xs, box):
     lx = (xs - o) - off
     ok = box & (ly >= 0) & (ly < n) & (lx >= 0) & (lx < n)
     S = ops.sprite.shape[-2]
-    b = torch.arange(B, device=dev).view(-1, 1, 1)
     rgba = ops.sprite[
         m[:, CM_A].view(-1, 1, 1).expand_as(ly), n.expand_as(ly), ly.clamp(0, S - 1), lx.clamp(0, S - 1)
     ].to(torch.int64)

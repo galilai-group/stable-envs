@@ -583,7 +583,6 @@ class CarRacing(Env):
         """
         dev = self.device
         on = torch.ones(B, dtype=torch.bool, device=dev)
-        ar = torch.arange(B, device=dev)
         gfx_v, gfx_c, gfx_on = [], [], []  # gfxdraw quads, pre-flip
         pre_v, pre_c, pre_on = [], [], []  # pygame.draw polygons, pre-flip
         post_v, post_c, post_on = [], [], []  # pygame.draw polygons, post-flip

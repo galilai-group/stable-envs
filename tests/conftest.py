@@ -38,6 +38,10 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
+#: Set by CI profile jobs (``core``, ``dmcontrol``, ``ogbench``, ``fetch``, GPU profiles).
+#: Tests already skip missing extras; the variable names the interpreter the job installed.
+CI_PROFILE = os.environ.get("STABLE_ENVS_CI_PROFILE", "")
+
 import pytest
 
 #: GPU files that are also the frozen regression oracle (parity / reproducibility / fast==slow).

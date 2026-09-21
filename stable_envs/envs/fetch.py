@@ -804,7 +804,7 @@ class FetchBase(Env):
         implementation decision, and it is escalated rather than taken.
         """
         b = _build_bundle(self.SCENE)
-        m, info = b.model, b.info
+        _, info = b.model, b.info
         base = b.pristine["mat_rgba"]
         space = {
             "floor": Dict(

@@ -304,7 +304,7 @@ def _bundle(cell: str) -> _Bundle:
     spec = SPEC[cell]
     env = _reference_env(cell, role="sample")
     u = env.unwrapped
-    m, d = u.model, u.data
+    m = u.model
     b = _Bundle()
     b.unwrapped = u
     b.size = int(u._render_height)
@@ -860,7 +860,7 @@ class OGBManipBase(Env):
                 u.np_random = np.random.default_rng(sd)
                 with _seeded_action_space(u, sd):
                     env.reset(seed=sd, options={"variation_values": self._variation_values(rng)})
-                    m, d = u.model, u.data
+                    _m, d = u.model, u.data
                     for _ in range(int(rng.integers(0, 26))):
                         env.step(u.action_space.sample())
                 bits = [float(x) for x in list(getattr(u, "_cur_button_states", []))[: b.nbuttons]]

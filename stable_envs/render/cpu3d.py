@@ -576,7 +576,6 @@ def render(
     """
     B = int(cam_pos.shape[0])
     W = H = scene.res
-    N = W * H
     if out is None:
         out = torch.empty((B, H, W, 3), dtype=torch.uint8, device=scene.device)
     for lo in range(0, B, CPU_CHUNK):

@@ -72,13 +72,17 @@ SPEC_MD = "docs/research/certification.md"
 #: Cluster paths appear inside artifacts (`shard`, `replay`, `states_source`, `before_dir`). They
 #: must never reach the page: `/oscar/scratch/sboughan/...` contains the literal `scratch/...` that
 #: `tests/unit/test_repo_contracts.py` extracts as a citation, so printing one would assert that a
-#: directory on Oscar is a file in this repository and break the citation contract. Scrubbed on the
-#: way out, once, over the whole document.
+#: directory on Oscar is a file in this repository and break the citation contract. Historical
+#: `scratch/...` provenance strings in frozen JSON are the same class of claim now that `scratch/`
+#: is off the product tree: keep them in the immutable record, do not present them as live paths.
+#: Scrubbed on the way out, once, over the whole document.
 _CLUSTER = re.compile(r"(?:\$SCR|/oscar)[\w./$-]*")
+_HISTORICAL_SCRATCH = re.compile(r"(?<![\w./])scratch/[A-Za-z0-9_./:-]+")
 
 
 def scrub(x) -> str:
-    return _CLUSTER.sub("<cluster path>", str(x))
+    text = _CLUSTER.sub("<cluster path>", str(x))
+    return _HISTORICAL_SCRATCH.sub("<historical provenance>", text)
 
 
 # ------------------------------------------------------------------------------ git

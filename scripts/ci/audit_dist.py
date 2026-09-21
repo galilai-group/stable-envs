@@ -34,7 +34,7 @@ def _audit_metadata(text: str) -> None:
     metadata = email.message_from_string(text)
     assert metadata["Name"] == "stable-envs"
     assert metadata["Version"]
-    assert metadata["Requires-Python"] == ">=3.10"
+    assert metadata["Requires-Python"] == ">=3.10,<3.13"
     assert metadata["License-Expression"] == "MIT"
 
     requirements = metadata.get_all("Requires-Dist", [])
