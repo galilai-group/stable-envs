@@ -4,7 +4,7 @@
 
 **A batched environment library for research: explicit state, dynamics, and variation, with fast state-driven rendering across CPU and GPU.**
 
-Store states, not frames. Choose the camera, the resolution and the configuration **afterwards**. PushT is 5 floats per step against a 96×96×3 frame: 20 bytes against 27,648, and 100% of the interior pixels are bit-identical to the official `gym_pusht` renderer.
+Store compact render state, not frames. Choose the camera, the resolution and the configuration **afterwards**. On PushT the compact render state is 5 floats per step against a 96×96×3 frame: 20 bytes against 27,648, and 100% of the interior pixels are bit-identical to the official `gym_pusht` renderer.
 
 Authors: **Randall Balestriero**, **Sami BuGhanem**.
 

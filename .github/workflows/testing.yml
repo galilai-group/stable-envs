@@ -38,10 +38,9 @@ jobs:
           python -m pytest tests/packaging/test_distribution.py -q
 
   # Intentional dependency-interaction check: unit + integration under the
-  # richer ``[interop,mujoco-locomotion]`` extra set, not a second copy of
-  # the unit job's interpreter.
+  # MuJoCo extra set, not a second copy of the unit job's interpreter.
   integration:
-    name: unit + integration under interop profile
+    name: unit + integration under MuJoCo profile
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -49,10 +48,10 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
-      - name: Install interop profile
+      - name: Install MuJoCo profile
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -e ".[dev,interop,mujoco-locomotion]"
+          python -m pip install -e ".[dev,mujoco-locomotion]"
       - name: Run unit and integration tests
         shell: bash
         run: |

@@ -4,10 +4,9 @@ Split from the measurement because no interpreter can hold both sides. The env v
 ``mujoco_warp``/``jax``/``griddly``; ``lancedb`` + ``torchvision``'s libjpeg-turbo decoder live in the
 suite's conda env. So this renders and encodes, and ``bench_lance.py`` reads.
 
-Encoding matches ``stable_worldmodel.data.formats.lance``: JPEG at **quality 95**, one blob per frame,
-RGB. Quality is not a detail to round off — it sets both the bytes a dataset occupies and the work its
-decoder does, and q90 (this repo's earlier default) is measurably cheaper than the q95 a real corpus
-was written at, in the stored path's favour.
+Encoding is the JPEG-q95 Lance baseline: JPEG at **quality 95**, one blob per frame, RGB. Quality is
+not a detail to round off — it sets both the bytes a dataset occupies and the work its decoder does,
+and q90 is measurably cheaper than q95, in the stored path's favour.
 """
 
 from __future__ import annotations
@@ -27,7 +26,7 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--size", type=int, default=256)
     ap.add_argument("--frames", type=int, default=512)
-    ap.add_argument("--jpeg-quality", type=int, default=95, help="stable-worldmodel's default")
+    ap.add_argument("--jpeg-quality", type=int, default=95, help="JPEG-q95 Lance baseline")
     ap.add_argument("--envs", default="")
     ap.add_argument("--out", default="/mnt/vast/home/randall.balestriero/se_frames")
     a = ap.parse_args()

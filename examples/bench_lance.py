@@ -1,12 +1,10 @@
 """Phase 2: the strongest disk-based baseline in use today — JPEG blobs in Lance, batch-decoded.
 
-Per-file ``PIL.Image.open`` is not what a world-model corpus does and benchmarking against it would be
-setting up a straw man. The current practice this has to beat is the one
-``stable_worldmodel.data.formats.lance`` implements: an episode-contiguous LanceDB table whose image
-column is ``pa.binary`` holding **JPEG at quality 95**, fetched a chunk of rows at a time and decoded in
-a single ``torchvision.io.decode_jpeg`` call — libjpeg-turbo, SIMD, GIL released. That hot path is
-reproduced here (``data/formats/lance.py``: ``_encode_frame``, ``_decode_images``, and the
-``Permutation.__getitems__`` row fetch), and cited rather than approximated.
+Per-file ``PIL.Image.open`` is not what a stored-frame corpus does and benchmarking against it would
+be setting up a straw man. The current practice this has to beat is the JPEG-q95 Lance baseline: an
+episode-contiguous LanceDB table whose image column is ``pa.binary`` holding **JPEG at quality 95**,
+fetched a chunk of rows at a time and decoded in a single ``torchvision.io.decode_jpeg`` call —
+libjpeg-turbo, SIMD, GIL released.
 
 **Every environment is measured in ONE process on ONE node against ONE table layout.** That is the
 whole point of splitting this out. In the first pass each env's storage number came from whichever job
@@ -22,7 +20,7 @@ Four read paths, all from the same table:
   ``shared_1``   the shared filesystem a cluster corpus actually lives on, otherwise identical.
   ``local_n``    node-local, ``--workers`` processes, which is how a DataLoader is really run. This is
                  the honest "fastest disk-based setup today" number.
-  ``local_gpu``  node-local, nvJPEG decode on the GPU. Not what stable-worldmodel does today, measured
+  ``local_gpu``  node-local, nvJPEG decode on the GPU. Not the default CPU-decode path, measured
                  because it is the strongest thing the baseline could become.
 """
 
@@ -44,7 +42,7 @@ FRAMES = "/mnt/vast/home/randall.balestriero/se_frames"
 
 
 def build_table(blobs, root: Path, name: str):
-    """A Lance table in stable-worldmodel's shape: episode/step index + a binary ``pixels`` column."""
+    """A Lance table with episode/step index plus a binary ``pixels`` column."""
     import lancedb
     import pyarrow as pa
 

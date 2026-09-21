@@ -94,12 +94,11 @@ def make_env(name: str, batch: int, size: int, ss: int | None):
     return se.make(name, num_envs=batch, size=size, device=DEVICE, **kw)
 
 
-#: The device every timed render in this file runs on. It was ``"cuda"`` as a literal in three places
-#: until Step 3 needed the SAME measurement on a CPU: the repo had never timed its own renderer there,
-#: so every ``cpu`` column in every committed result file is the OFFICIAL renderer and the stable-envs
-#: CPU throughput was simply unknown. Making it a variable is the whole change -- the timing loop, the
-#: warm-up, the supersample resolution and the output-budget arithmetic are identical on both devices,
-#: and duplicating them into a second script is how two files come to describe different pictures.
+#: The device every timed render in this file runs on. It is a variable so the same timing loop, warm-up,
+#: supersample resolution and output-budget arithmetic run on CPU or CUDA; a hardcoded ``"cuda"``
+#: would leave the stable-envs CPU path unmeasured (every committed ``cpu`` column is the official
+#: renderer). Duplicating the loop into a second script is how two files come to describe different
+#: pictures.
 DEVICE = "cuda"
 
 
