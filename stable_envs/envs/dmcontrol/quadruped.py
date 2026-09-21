@@ -15,15 +15,15 @@ import numpy as np
 
 from ._cells import _AT_VERSIONS, trackcom_cell
 
-#: Quadruped (Step 7): the family's convention -- three independent MJWarp draws through the shipped
-#: env -- at the REGISTERED default (camera 2, 224 px; Step 2 S4.2), under the
+#: Quadruped: the family's convention -- three independent MJWarp draws through the shipped
+#: env -- at the certified default (camera 2, 224 px), under the
 #: declared 3.11.0 pair, on a 3090 (job 6394987, gpu2107; the draws of job 6394721 on gpu2104 were
 #: overwritten by it and are not what the numbers rest on). The CPU backend
 #: measured the same picture locally first (3.42 / 0.902 / 0.957 on one draw, Apple M5) and is
 #: certified against this entry, not its own.
 _QUADRUPED_AT = (
     "224 px, camera 2 ('y', trackcom), 64 states x 3 independent draws from sample_states "
-    "(SWM's model and default appearance: material self rgba .6 .3 .3, foot_back_left "
+    "(certified model and default appearance: material self rgba .6 .3 .3, foot_back_left "
     "density 1000), RTX 3090 / driver 575.57.08 / MUJOCO_GL=egl, mujoco 3.11.0 + "
     "mujoco-warp 3.11.0, against dm_control's physics.render at camera 2"
 )
@@ -79,9 +79,9 @@ def _transcribed_quadruped_env(seed: int):
     model.find("geom", "foot_back_left").density = 1000.0
     model.find("light", "light").diffuse = 0.7 * np.ones(3, np.float32)
     # The export exists only to be compiled: ``Physics.from_xml_path`` reads the XML and its assets
-    # into the MjModel at once, so the directory is scoped to the call and removed on exit (SWM keeps
-    # its ``TemporaryDirectory`` on the wrapper for its lifetime; a ``mkdtemp`` here leaked one
-    # directory per ``sample_states``/``reference_env`` call -- review of 9188c2c).
+    # into the MjModel at once, so the directory is scoped to the call and removed on exit.
+    # A ``mkdtemp`` that outlived the call leaked one directory per ``sample_states`` /
+    # ``reference_env``.
     with tempfile.TemporaryDirectory(prefix="se_quadruped_mjcf_") as td:
         mjcf.export_with_assets(model, td, out_file_name="quadruped.xml")
         physics = quadruped.Physics.from_xml_path(os.path.join(td, "quadruped.xml"))

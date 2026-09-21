@@ -273,8 +273,8 @@ class BoundedCache:
 
     ``clear()``-on-full is not a bound with a different constant: it is a bound with a *cliff*. The
     entry a caller is holding right now is as likely to be discarded as the coldest one, so a
-    working set at the capacity rebuilds everything on every miss (Step 6 measured exactly this on
-    OGBench's scene cache and replaced it with an ``OrderedDict`` LRU, which is the policy generalised
+    working set at the capacity rebuilds everything on every miss (measured on
+    OGBench's scene cache, which is why it uses an ``OrderedDict`` LRU, the policy generalised
     here), and — the reason this is a correctness class and not a performance one — a value that was
     handed out and is still being read can be dropped by an *unrelated* insertion.
 

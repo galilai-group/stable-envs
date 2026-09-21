@@ -497,7 +497,7 @@ DOWNSAMPLE_EXACT_FRAC: dict[str, float] = {
     #: tiles are not 7 px tiles doubled. Both are properties of the reference. The floor is low and it
     #: is still a live regression detector: it moves the moment a tile lands in a different place.
     "Crafter": 0.382263,  # mean 12.5190/255
-    #: STILL 1.000000, unchanged, and now asserted only where it can be. Step 7 measured the night
+    #: STILL 1.000000, unchanged, and now asserted only where it can be. The night
     #: band: the noise field is drawn at the FRAME's resolution, so 2S draws a different field and
     #: not a finer sampling of the same one -- 0.282 at light 0.45 and 0.035 at light 0.1 against
     #: 1.000 at light >= 0.5. The official craftax renderer is not resolution-consistent there
@@ -516,7 +516,7 @@ DOWNSAMPLE_EXACT_FRAC: dict[str, float] = {
     #: textures rather than of the geometry. It is still a live detector — the bodies and the camera
     #: are what a regression would move, and moving them collapses it.
     "DMCCheetahRun": 0.533850,  # mean 3.0869/255
-    #: Step 7 added a sixth cell to that VISUAL-tier group and it belongs here for the same reason:
+    #: A sixth VISUAL-tier cell belongs here for the same reason:
     #: DMCQuadrupedWalk draws the whole scene through MJWarp with no plate, so PLATE_REPRESENTATIVES
     #: does not cover it. It sits ABOVE the other five because its camera is much closer to the body
     #: and sees proportionally less speckled skybox. MEASURED under this table's own protocol
@@ -647,7 +647,7 @@ DOWNSAMPLE_EXACT_FRAC: dict[str, float] = {
     #: appearance, states sha256 a5f128ad...), on the RTX 3090 at torch 2.14.0+cu126 / nvdiffrast
     #: 0.4.0, MUJOCO_GL unused: exact 0.9561372, mean 0.9923/255, max 255 -- the same number in the
     #: closure and closure2 sweeps. 0.956137 is 0.95614 to five decimals, which is the value the
-    #: Step-7 carry-over recorded. There is no cpu row: PFRocketLanding raises on device="cpu" by
+    #: frozen carry-over recorded. There is no cpu row: PyFlytRocketLanding raises on device="cpu" by
     #: design. Artifact: tests/fixtures/regression/join/step7/closure2/gate_a/cuda_rocket.json.
     "PFRocketLanding": 0.956137,  # mean 0.9923/255
     "PointMazeLarge": 0.913387,  # mean 0.2794/255  (measured on PointMazeMedium)

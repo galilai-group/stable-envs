@@ -1,5 +1,8 @@
 """OGBench MANIPULATION — CubeEnv and SceneEnv, on the Fetch pattern.
 
+Rendering and Variation handling are provided by stable-envs. Dynamics stay in OGBench / MuJoCo;
+these cells currently render stored states (``has_dynamics`` is False).
+
 Reference: OGBench's ``ManipSpaceEnv`` subclasses ``CubeEnv`` at **224 px** and ``SceneEnv`` at
 **200 px**, both ``ob_type='states'``, both rendered from the model camera ``front_pixels``. Not
 ogbench's ``cube-single-v0`` / ``scene-v0`` gymnasium ids: those wrap the same classes with different
@@ -730,9 +733,9 @@ class OGBManipBase(Env):
         """
         device = Env.resolve_device(device)
         if not str(device).startswith("cuda"):
-            # Honest device selection, per the Step-6 policy addendum. There is no CPU backend for
+            # Honest device selection. There is no CPU backend for
             # this family and the measurement that says why is CPU3D-OGB-1: the binding CPU bar
-            # leaves 0.75 ns per triangle for 193,113 triangles, while the Step-6 span rasteriser's
+            # leaves 0.75 ns per triangle for 193,113 triangles, while the span rasteriser's
             # SETUP-ONLY floor -- transform, bbox, area, cull, no fill, no shade -- is 24 ns per
             # triangle. That is 12.9x over `cores_cpu >= 1` before a single pixel is written, and
             # 72x at the full measured 135 ns. Falling back to CUDA behind a device="cpu" request is

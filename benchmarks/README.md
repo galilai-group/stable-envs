@@ -12,8 +12,8 @@ pytest certification suite for those claims. Benchmark output deliberately conta
 errors, not pass/fail tiers, release gates, badges, or a selected "best" row.
 
 Canonical environment names are constructed through the public class-first API (`snv.PushT(...)`).
-SWM aliases and other registry strings go through `snv.make(...)`. Neither script imports renderer
-internals, `stable_envs.testing`, or `stable_worldmodel`.
+`snv.make(...)` takes those class names. Neither script imports renderer
+internals, `stable_envs.testing`, or any sibling-library identifier.
 
 ## Quick start
 

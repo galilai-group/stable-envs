@@ -196,7 +196,7 @@ from .swimmer import (  # noqa: F401
 from .trackcom import DMControlTrackCom, _tc_context, _tc_frame, _TCtx  # noqa: F401
 from .walker import DMCWalkerWalk  # noqa: F401
 
-#: Cells whose registered SWM default is rendered at something other than the family's 84 px, so the
+#: Cells whose certified default is rendered at something other than the family's 84 px, so the
 #: size the conformance suite builds them at is the size they are certified at. COLLECTED from the
 #: cells rather than declared beside them: the fact is "this cell is certified at 224 px", and the
 #: cell is where a reader looks for what a cell claims.

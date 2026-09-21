@@ -494,7 +494,7 @@ def _cast_nearest_torch_unbounded(
 #:
 #: RAYCAST-4 shipped this bound on for every kind. It gained 3.08x on ``ball_in_cup`` and cost
 #: ``PointmazeLargeNavigate`` 8 % and ``PointmazeMediumNavigate`` 25 % -- a regression on a row with a
-#: frozen Step-3 CPU certification -- so it was turned off and left off while RAYCAST-5 found out
+#: frozen CPU certification -- so it was turned off and left off while RAYCAST-5 found out
 #: why. The repair is ``_BOUNDED_KINDS`` below plus the call-level short circuit in the two casts.
 #:
 #: TURNED BACK ON against a measured bar, not a hoped-for one (job 6354150, four INTERLEAVED legs,

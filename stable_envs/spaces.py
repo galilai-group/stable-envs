@@ -5,9 +5,8 @@ A leaf may be render-only, dynamics-only, reset/task, or render+dynamics. Leaves
 ``reset_variation_space`` resets a whole tree. ``batch_sample`` draws B independent values for a
 subtree and returns them stacked, which is the form the scene builder consumes.
 
-The implementation was originally inspired by the space classes used in the lab's other
-environment work. This module now owns its own API: environments written against it do not
-need another package's space types.
+This module owns the Variation-space API. Environments written against it do not need
+another package's space types.
 
 Values flow into a ``Scene2D`` as per-environment tensors, so a batch of 4096 environments can
 each carry a different block colour, agent radius or background, and still render in a single

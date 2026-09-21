@@ -398,7 +398,7 @@ def render_torch(scene: Scene2D, out_size: int | tuple[int, int], supersample: i
 
     Still the executable specification — every per-pixel expression below is the one it always was,
     character for character, and it is still what ``tests/gpu`` diffs the fused kernel against. What
-    changed in Step 6 is not the arithmetic but WHERE it is evaluated, and that is decided entirely
+    changed is not the arithmetic but WHERE it is evaluated, and that is decided entirely
     by ``_prim_plan``:
 
       * a slot is evaluated only for the primitive families some environment actually has there;
@@ -407,7 +407,7 @@ def render_torch(scene: Scene2D, out_size: int | tuple[int, int], supersample: i
       * every family is evaluated only inside the pixel window of its own world-space bound.
 
     All four are bounds and masks that were already being computed and thrown away, so the picture
-    is bit-identical; the frozen measurement record and the frozen Step 4 replay hold
+    is bit-identical; the frozen measurement record and the frozen corpus replay hold
     that rather than leaving it as an argument. Measured on Oscar's batch partition at one thread,
     the whole-frame version cost 324 ms for one 500 px SimplePointMaze frame, of which 13 of the 13
     primitives paid for a capsule test the scene contains none of.
@@ -1125,8 +1125,8 @@ def render(
     ``HAVE_TRITON`` alone, which is a property of the interpreter: on a machine where ``import
     triton`` succeeds, a ``device="cpu"`` scene was routed into ``render_triton``, whose first act is
     ``with torch.cuda.device(scene.kind.device)`` — so every CPU render of a Scene2D env died with
-    ``ValueError: Expected a cuda device, but got: cpu``. The laptop that measured the Step 3 CPU rows
-    had no Triton and never saw it; the certification cluster has Triton in every venv and could not
+    ``ValueError: Expected a cuda device, but got: cpu``. The laptop that measured the CPU throughput
+    rows had no Triton and never saw it; the certification cluster has Triton in every venv and could not
     render PushT or SimplePointMaze on CPU at all. Triton compiles for CUDA here, so the predicate is
     "Triton is importable AND the scene lives on a CUDA device", and ``device="cpu"`` is honoured on
     every host.

@@ -156,7 +156,7 @@ def test_rocket_ignition_is_ours_only_because_swm_derives_it_from_the_action():
 
 
 def test_rocket_sky_color_is_dead_upstream_and_not_quietly_mapped():
-    """The one leaf Step 7 measured dead. If a future edit maps it, this fails rather than shipping
+    """The one leaf measured dead upstream. If a future edit maps it, this fails rather than shipping
     a knob that moves nothing."""
     m = _map_for(ROCKET)
     assert "environment.sky_color" not in {t for t, _ in m.pairs().values()}

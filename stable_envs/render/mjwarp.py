@@ -276,7 +276,7 @@ def texture_gaps(m, groups=DEFAULT_GROUPS) -> list[tuple[int, str, int]]:
     depending on which of the two conditions below fired, those surfaces either render as one texel
     or do not render at all.
 
-    **Two conditions, and the second was missing until Step 7.**
+    **Two conditions, and both must be checked.**
 
     1. *The geom's UVs.* ``sample_texture`` derives UVs for ``PLANE`` and ``MESH`` only, so a textured
        ``BOX``/``CYLINDER``/``SPHERE``/``CAPSULE`` samples texel (0,0) and comes out one flat colour.

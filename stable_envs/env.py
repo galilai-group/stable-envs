@@ -771,8 +771,8 @@ class Env:
     def set_state(self, states, variation: VariationLike | None = None, style=None) -> Env:
         """``(n, render_state_dim)`` states, ``n <= B``. Returns ``self``, so ``.render()`` chains off it.
 
-        ``variation`` is the public appearance argument: a mapping of overrides or a flat/batched row
-        (:data:`VariationLike`). ``style`` is the developer/testing compiled-row path.
+        ``variation`` is the public configuration argument: a mapping of overrides or a flat/batched
+        row (:data:`VariationLike`). ``style`` is the internal render-style row compiled from Variation.
 
         A batch SHORTER than the env's is supported rather than refused, and that is the important
         case: every ``DataLoader`` built with ``drop_last=False`` — the default — ends its epoch with a
@@ -825,7 +825,7 @@ class Env:
 
         ``variation`` is :data:`VariationLike`: a mapping of leaf overrides, or a flat / batched
         Variation row (``(variation_dim,)`` or ``(B, variation_dim)``). ``style`` is the
-        developer/testing compiled-row path used by Scene2D internals; ordinary callers use
+        internal render-style row compiled from Variation; ordinary callers use
         ``variation=``.
         """
         require_contiguous_out(f"{type(self).__name__}.render", out)
@@ -838,7 +838,7 @@ class Env:
         sc = self.scene(s, variation, style)
         # Imported HERE rather than at module scope, and that is a dependency rule rather than a
         # style choice (contract §8): the core modules — env, dynamics, specs, registry, _config —
-        # import nothing from ``render/``, ``envs/`` or ``interop``, so the arrow between the vocabulary
+        # import nothing from ``render/`` or ``envs/``, so the arrow between the vocabulary
         # of the package and its backends points one way and cannot become a cycle. ``render`` is the
         # one core method that genuinely needs a backend, and it needs it at call time.
         from .render.raster2d import render as render_scene
@@ -848,7 +848,7 @@ class Env:
         )
         return img.view(*lead, *img.shape[1:]) if lead else img
 
-    # Variation (public appearance) / StyleTensor (compiled layout used by the renderer)
+    # Variation (public configuration) / StyleTensor (internal render-style compiled from Variation)
 
     @property
     def variation_dim(self) -> int:

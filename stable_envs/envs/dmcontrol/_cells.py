@@ -8,8 +8,8 @@ are the whole of the machinery: no cell overrides a renderer method, and a cell 
 be saying its domain is not in the tier it declared.
 
 ``DOMAINS`` and ``TRACKCOM_DOMAINS`` are FILLED BY the declarations rather than driving them, so the
-two cannot disagree; they are re-exported from the package because the Step-6/7 probe scripts read
-them.
+two cannot disagree; they are re-exported from the package so measurement scripts can enumerate
+the family.
 """
 
 from __future__ import annotations
@@ -19,7 +19,6 @@ from .suite import DMControlSuite
 from .trackcom import DMControlTrackCom
 
 #: Every cell's ``__module__``, which is the PACKAGE and not the domain module it is written in.
-#: Deliberate, and the one place in this migration where the truth is chosen over the mechanism:
 #: Family is the explicit ``family`` class attribute (``info(name)["family"]`` /
 #: ``list_envs(family=...)``). ``__module__`` is still pinned to the package so the class stays
 #: reachable at ``stable_envs.envs.dmcontrol`` — leaving ``type()``'s default would name fourteen
@@ -44,7 +43,7 @@ _AT = (
 #:
 #: ``reference_versions`` holds the REFERENCE side only -- mujoco, which is what dm_control's
 #: ``physics.render`` draws with -- because the certifier blocks a measurement whose reference is not
-#: this version: Step 4 judged these numbers under mujoco 3.12.0, whose finite-plane texture
+#: this version: the frozen numbers were judged under mujoco 3.12.0, whose finite-plane texture
 #: re-anchoring (changelog item 15, commit cc7fb98c) had phase-shifted the reference's floor checker
 #: while ours had not (tests/fixtures/regression/join/step6/texture-fidelity/findings.md), and recorded three
 #: renderer FAILs for a version drift. dm_control is deliberately absent: neither string names a

@@ -90,7 +90,7 @@ That velocity is part of the public State — ``state["agent", "velocity"]`` —
 packed row at the same five columns. The two statements are not in tension and the distinction is the
 whole point of ``pack``/``unpack``:
 
-  * the PACKED row is what a corpus stores, what every renderer reads and what every frozen Step-4
+  * the PACKED row is what a corpus stores, what every renderer reads and what every frozen
     digest was computed from, and it is byte-for-byte the certified packed row;
   * the PUBLIC state is what the dynamics need to be a FUNCTION. While the velocity lived in an
     attribute, ``transition(state, action)`` was not pure — it silently consulted whatever the env had

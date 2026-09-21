@@ -42,5 +42,5 @@ Useful entry points include:
 - [`dino_agreement.py`](dino_agreement.py) — DINO agreement measurement.
 
 Historical milestone-specific scripts and large calibration artifacts are preserved in release/tag
-archives rather than defining the public API. Step-5 SWM paired-eval harnesses live under
+archives rather than defining the public API. Historical paired-eval harnesses live under
 [`docs/research/artifacts/`](../docs/research/artifacts/README.md), not in this directory.

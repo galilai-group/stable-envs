@@ -1,7 +1,7 @@
 """``gfxdraw.py``'s rules for a classic-control frame, per PIXEL and in one kernel.
 
-Why this exists next to ``gfxdraw.py`` and ``gfxdraw_fused.py``. Step 6 took the per-primitive torch
-path from 60 to 258-520 frames/s on one CPU core and from 16,661 to 37,221 on a 3090 by making each
+Why this exists next to ``gfxdraw.py`` and ``gfxdraw_fused.py``. The per-primitive torch
+path went from 60 to 258-520 frames/s on one CPU core and from 16,661 to 37,221 on a 3090 by making each
 primitive write only its own box on a planar surface. What is left is the shape itself, and it is
 the same shape ``gfxdraw_fused`` was written to escape for CarRacing:
 

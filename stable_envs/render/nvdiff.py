@@ -72,7 +72,7 @@ This module is deliberately env-agnostic and imports neither ``mujoco`` nor ``nv
 scope; both are looked up inside the functions that need them, so importing ``stable_envs`` on a machine
 without either still works.
 
-**Four generic extensions (Step 7), every one of them OFF by default so that every existing caller
+**Four generic extensions, every one of them OFF by default so that every existing caller
 renders byte-for-byte what it rendered before:**
 
 * ``Scene.from_triangles`` — a scene from a triangle soup and a per-geom appearance table, with no
@@ -223,7 +223,7 @@ def mvp_rows(proj, view, M):
 
     Why not ``(proj @ view)[:, None] @ M``: that is one cuBLAS batched GEMM over ``B*G`` 4x4 products,
     and cuBLAS picks its kernel -- hence its FMA and summation order -- by the batch count. Measured on
-    an RTX 3090 (torch 2.14.0+cu126, TF32 off, ``PFRocketLanding``, 13 geoms): identical results for
+    an RTX 3090 (torch 2.14.0+cu126, TF32 off, ``PyFlytRocketLanding``, 13 geoms): identical results for
     B <= 24 and a different rounding for B >= 31, 46 of a row's 208 entries off by up to 1.5e-5 at
     100-500 m coordinates, which moved 1282 clip-space vertex coordinates and flipped ~10 silhouette,
     internal-edge and truncation pixels per frame between a state rendered alone and the same state in
@@ -1140,7 +1140,7 @@ class BatchRenderer(_resources.Closeable):
     ):
         """``m`` an ``MjModel``, or ``scene=`` a prebuilt ``Scene`` (``Scene.from_triangles``) and no model.
 
-        The keyword-only options are the Step-7 extensions and their defaults select the paths every
+        The keyword-only options are optional extensions and their defaults select the paths every
         earlier caller used: ``shading="mujoco"`` (``_shade``), ``tex_filter="linear"`` (the mipmapped
         pyramid when ``mipmap`` is on), ``sample_offset=(0, 0)`` (pixel centres). ``shading="tiny"`` needs
         ``tiny=TinyShading(...)`` (or takes its defaults) and lights set with ``set_lights`` are ignored.

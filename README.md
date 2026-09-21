@@ -70,7 +70,7 @@ snv.PushT / snv.CartPole / …                  concrete env classes
 | topic | page |
 |---|---|
 | Environment listing | [docs/environments.md](docs/environments.md) |
-| State, Variation, Frame | [docs/concepts/state.md](docs/concepts/state.md) |
+| State, Action, Variation, Frame | [docs/concepts/state.md](docs/concepts/state.md) |
 | Stateful `step` vs functional `transition`/`unroll` | [docs/concepts/dynamics.md](docs/concepts/dynamics.md) |
 | `close()` / context manager | [docs/concepts/lifecycle.md](docs/concepts/lifecycle.md) |
 | Sibling projects | [docs/concepts/worldmodel.md](docs/concepts/worldmodel.md) |

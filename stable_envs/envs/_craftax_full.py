@@ -832,6 +832,9 @@ def _strip_index(device):
 class CraftaxFull(Env):
     """Full Craftax: nine levels, an item/mob/projectile stencil over a block window, and a 4-row strip.
 
+    Rendering and Variation handling are provided by stable-envs. Dynamics stay in Craftax/JAX;
+    this cell currently renders stored windows (``has_dynamics`` is False).
+
     **The render window is wider than the reference bridge in one place, and it is stated here rather
     than discovered.** The window has room for a projectile on each of its 99 tiles; an ``EnvState``
     has room for ``MAX_MOB_PROJ + MAX_PLAYER_PROJ`` = **6**, because its two projectile masks are
@@ -877,7 +880,7 @@ class CraftaxFull(Env):
     #: un-jitted byte-identity this class certifies.
     parity_all_exact_min = 1.0
     parity_note = (
-        "Measured on the frozen Step-7 corpus at 10 px (the registered observation) and 16 px, over "
+        "Measured on the frozen corpus at 10 px (the registered observation) and 16 px, over "
         "the WHOLE observation -- the 9x11 world window and the 4-row inventory strip -- and over all "
         "five cost bands: level 0 at full daylight, level 0 at dusk, level 0 at night (the noise "
         "field drawn), levels 1-8 fully lit, and levels 1-8 in darkness, with sleeping rows "
@@ -912,7 +915,7 @@ class CraftaxFull(Env):
     #: inconsistent even in full daylight, so there is no band in which the check measures what it is
     #: defined to measure. This renderer resamples the FINISHED tile, which makes it exactly
     #: 2x-consistent where the reference is not; matching craftax's per-size resample instead would
-    #: buy no parity at a size that has no official frame. The frozen Step-2 threshold is not edited,
+    #: buy no parity at a size that has no official frame. The frozen threshold is not edited,
     #: and exact parity at each supported size is unaffected and still required.
     resolution_consistency_applicability = {
         "all bands": "not_applicable: the official renderer is itself resolution-inconsistent in "
@@ -927,7 +930,7 @@ class CraftaxFull(Env):
         "measured_against": "craftax 1.6.1 un-jitted, jax 0.11.1, jax_threefry_partitionable=True",
         "still_required": "exact parity against the official renderer at 10 px and at 16 px",
     }
-    #: The distribution the single registered performance tier is measured on. Step 3's harness draws
+    #: The distribution the single registered performance tier is measured on. The throughput harness draws
     #: ``probe.sample_states(64)`` (``examples/bench_step3.py``), so this env's own sampler IS the
     #: certification distribution and its shares are a declared property of the cell rather than a
     #: weighting invented for the benchmark. Bands are assigned by row index (``i % 6``), so the
@@ -1062,7 +1065,7 @@ class CraftaxFull(Env):
     # The public :data:`State` groups the 544 packed numbers by what they describe. Five per-tile
     # planes (the block, the item drawn over it, the mob slot, the projectile slot and the light-map
     # value), the player's own four scalars, the day-cycle key, and the 41 inventory/attribute slots
-    # the 4-row strip reads. Every offset is the Step-7 packed column it has always been, in the order
+    # the 4-row strip reads. Every offset is the packed column it has always been, in the order
     # ``state_names`` gives, so ``pack`` writes the frozen row and the frozen corpus round-trips
     # unchanged.
     #

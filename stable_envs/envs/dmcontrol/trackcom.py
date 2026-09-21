@@ -187,7 +187,7 @@ class DMControlTrackCom(_DMCModel):
         # DEVICE SELECTION IS HONEST. ``cuda`` gets MJWarp; ``cpu`` gets the CPU-native backend in
         # ``stable_envs/render/cpu3d.py`` -- the same scene, camera, materials and lighting law drawn
         # by an analytic caster over a baked skybox plate; anything else raises here rather than
-        # rendering somewhere the caller did not ask for. Step 3's "cpu" rows for these cells were
+        # rendering somewhere the caller did not ask for. Earlier ``device="cpu"`` rows for these cells were
         # MJWarp on the GPU behind a ``device="cpu"`` request (``DEVICE_NOT_HONOURED``); that path no
         # longer exists.
         if self.device.type == "cuda":
@@ -269,9 +269,9 @@ class DMControlTrackCom(_DMCModel):
         except ValueError as e:
             # A cell the CPU backend cannot draw refuses HERE, at construction, naming itself. It
             # used to render on the GPU behind the caller's back; the policy is an honest raise.
-            # Since Step 7 no shipped trackcom cell reaches this branch by geom type (raycast3d
-            # covers the ellipsoid too); swimmer is refused earlier, by name, through
-            # CPU_UNCERTIFIED (no CPU certification). This stays for the next unsupported kind,
+            # No shipped trackcom cell reaches this branch by geom type (raycast3d covers the
+            # ellipsoid too); swimmer is refused earlier, by name, through CPU_UNCERTIFIED (no CPU
+            # certification). This stays for the next unsupported kind,
             # light type or camera mode Scene.__init__ refuses.
             raise ValueError(
                 f"{type(self).__name__} ({self.DOMAIN}-{self.TASK}) has no CPU 3-D backend: {e}. "

@@ -616,7 +616,7 @@ def check_backend_agreement(env, n: int = 4, max_size: int = 96) -> dict:
     **There are two backends only where there is a CUDA device.** ``HAVE_TRITON`` says the
     interpreter can import Triton; it says nothing about where the scene lives, and the fused kernel
     is CUDA-only. Guarding on the import alone and then calling ``render_triton`` unconditionally is
-    the same defect this Step 6 fixed in ``raster2d.render`` -- on a Triton host a ``device="cpu"``
+    the same defect ``raster2d.render`` used to have -- on a Triton host a ``device="cpu"``
     env reached ``with torch.cuda.device(scene.kind.device)`` and this check died with
     ``ValueError: Expected a cuda device, but got: cpu``, taking the whole conformance row with it.
     It is a defect here rather than a slow path there: a CPU env has one backend, so the question the
@@ -947,7 +947,7 @@ def check_task_object_visibility(env, states=None, n: int = 16, seed: int = 0) -
     WHY THIS EXISTS, measured rather than argued. ``interior_mask`` keeps only pixels whose 3x3
     neighbourhood in the reference is one flat colour, so an object that lands on a TEXTURED surface
     contributes no interior pixels at all and can appear or disappear without moving
-    ``interior_exact_frac`` by anything. Step 5 hit exactly that on DM Control reacher: two renders
+    ``interior_exact_frac`` by anything. DM Control reacher is the measured case: two renders
     that differ by a whole red disc — mean |d| 0.459 against 0.171 — report interior exactness equal
     to SIXTEEN digits and an identical ``interior_px``
     (``tests/fixtures/regression/join/step5/reacher/parity_probe.json``). The frame's ``interior_frac`` is 0.000000
@@ -1447,7 +1447,7 @@ _APPLICABILITY_OPS = {
 def resolution_consistency_applicability(env, states=None) -> dict:
     """Which of ``states`` ``check_resolution_consistency``'s bound may be asserted on, and why.
 
-    Two of the Step-7 cells declare, on the class, that the 2x-render-and-box-downsample RELATION does
+    Two of the cells declare, on the class, that the 2x-render-and-box-downsample RELATION does
     not hold in some or all of their state space -- not because this renderer is wrong there, but
     because the OFFICIAL renderer is not resolution-consistent there either. Craftax draws its night
     noise field at the frame's own resolution, so the 2S field is a different field rather than a finer
@@ -1459,7 +1459,7 @@ def resolution_consistency_applicability(env, states=None) -> dict:
     so the harness has to be able to read that declaration rather than discover it as a failure. It is
     read, never invented: an env with no ``resolution_consistency_applicability`` is fully applicable,
     which is every cell but two, and no bound value is touched here -- ``DOWNSAMPLE_EXACT_FRAC`` and
-    ``DOWNSAMPLE_MARGIN`` stay exactly what Step 4 froze.
+    ``DOWNSAMPLE_MARGIN`` stay exactly what the frozen fidelity spec records.
 
     A band is a key of the form ``"<state name> <op> <value>"`` resolved against ``env.state_names``,
     or one of ``"all bands"``/``"all"``/``"every band"`` for the whole cell. A band whose value begins

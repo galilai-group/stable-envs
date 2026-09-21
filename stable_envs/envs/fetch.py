@@ -1,5 +1,8 @@
 """Fetch (gymnasium-robotics) — 12 registered ids over 4 scenes, one state vector each: ``qpos + goal``.
 
+Rendering and Variation handling are provided by stable-envs. Dynamics stay in Gymnasium Robotics /
+MuJoCo; this family currently renders stored states (``has_dynamics`` is False).
+
 Reference: ``gymnasium.make("Fetch{Reach,Push,Slide,PickAndPlace}[Dense]-v4", render_mode="rgb_array")``
 at its native 480x480, i.e. MuJoCo's EGL raster of a lit 3-D scene under the FREE camera
 ``MujocoFetchEnv`` configures (distance 2.5, azimuth 132, elevation -14, lookat (1.3, 0.75, 0.55)).
@@ -800,7 +803,7 @@ class FetchBase(Env):
         6,144 texels): no value of a flat-fill leaf reproduces the compiled appearance, and no
         two-colour masked substitution — the shape that works for DM Control's checker — reproduces
         a flat sky. So the leaf cannot be added without moving this family's DEFAULT frame, which
-        is a frozen pixel oracle on the Step-4 and Step-7 corpora. That is a re-freeze decision, not an
+        is a frozen pixel oracle on the certified corpora. That is a re-freeze decision, not an
         implementation decision, and it is escalated rather than taken.
         """
         b = _build_bundle(self.SCENE)

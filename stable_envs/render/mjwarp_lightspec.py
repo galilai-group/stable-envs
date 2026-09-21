@@ -237,8 +237,7 @@ def _make_compute_lighting(cast_ray_first_hit, can_shadow: bool) -> wp.Function:
         diff_rgb = wp.vec3(0.0)
         spec_rgb = wp.vec3(0.0)
 
-        # TODO: We should probably only be looping over active lights
-        # in the first place with a static loop of enabled light idx?
+        # Skip inactive lights; they contribute nothing.
         if not lightactive:
             return diff_rgb, spec_rgb
 

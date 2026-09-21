@@ -29,16 +29,15 @@ Parity against the official renderer, measured on 64 sampled states at both tile
 rows, 29 dusk rows, 17 daylight rows, sleeping rows throughout.
 **100% of all pixels exact in every band, mean |diff| 0.000, max |diff| 0.**
 
-**What Step 7 cost the daylight path, measured rather than asserted.** A daylight, awake, unit-gain
-batch still takes the Step-6 route — one gather from a uint8 table, no float buffer, no PRNG — but
-it does not cost what it did, because the frame grew from 7 to 9 tile rows. One Apple arm64 core,
-one thread, against the Step-6 tree on the same machine: at 16 px and B=256, **1.440 -> 1.871 ms**,
-of which **1.851 ms is the 112 -> 144 row growth** and 0.020 ms (1.1%) is everything else; at
-B=1024 the growth accounts for all of it. What remains is a **flat ~0.02 ms per call**, which
-matters only at tiny batches (B=1: 0.069 -> 0.111 ms). It used to be five times that — independent
-review measured 0.061 -> 0.166 ms at B=1 — because ``_strip_grid`` rebuilt two tensors with 32
-indexed assignments on every render and the two post-process colour constants were allocated per
-call; all four are now cached per device, and the PRNG key is assembled only on a lit row.
+**The daylight path is one gather from a uint8 table** — no float buffer, no PRNG — and the
+measured cost of growing the frame from 7 to 9 tile rows is almost all of the extra time. One Apple
+arm64 core, one thread: at 16 px and B=256, **1.440 -> 1.871 ms**, of which **1.851 ms is the
+112 -> 144 row growth** and 0.020 ms (1.1%) is everything else; at B=1024 the growth accounts for
+all of it. What remains is a **flat ~0.02 ms per call**, which matters only at tiny batches
+(B=1: 0.069 -> 0.111 ms). Independently measured 0.061 -> 0.166 ms at B=1 because ``_strip_grid``
+rebuilt two tensors with 32 indexed assignments on every render and the two post-process colour
+constants were allocated per call; all four are now cached per device, and the PRNG key is assembled
+only on a lit row.
 
 **"The official frame" is not one object, and the parity number says which one.** Under ``jax.jit``
 XLA fuses the renderer's arithmetic differently and it disagrees with its own un-jitted self by up to
@@ -689,7 +688,7 @@ ATLAS_MAX_TILE_PX = 64
 class _Composite:
     """The **composited** tile atlas: every (player slot, block, mob) tile the renderer can draw.
 
-    The frame is a gather and nothing else. The reference — and this env before Step 6 — composited
+    The frame is a gather and nothing else. The reference composited
     per frame: it gathered the block texture into a ``(B, 7t, 9t, 3)`` float32 buffer, blended the
     player into the centre tile, then blended a full-frame mob texture and a full-frame mob alpha
     over all of it, applied the channel gain and rounded. Every one of those steps is a
@@ -760,7 +759,11 @@ class _Composite:
 
 @register
 class CraftaxClassic(Env):
-    """Craftax Classic: a 7x9 block window, the player, one mob per tile, and the inventory strip."""
+    """Craftax Classic: a 7x9 block window, the player, one mob per tile, and the inventory strip.
+
+    Rendering and Variation handling are provided by stable-envs. Dynamics stay in Craftax/JAX;
+    this cell currently renders stored windows (``has_dynamics`` is False).
+    """
 
     family = "craftax"
     domain = "classic"
@@ -768,7 +771,7 @@ class CraftaxClassic(Env):
     name = "craftax-classic"
     #: 63 blocks, 63 mobs, the player's facing, then the sixteen strip counts and the sleeping flag.
     #: **Appended, never reordered**: the first 127 slots keep the meaning and position they had when
-    #: Step 4 froze this env's corpus, which is what makes the world rows of that corpus replayable.
+    #: the frozen corpus was recorded, which is what makes the world rows of that corpus replayable.
     state_dim = OBS_H * OBS_W * 2 + 1 + N_STRIP + 1 + 1 + N_KEY_HALVES
     state_names = (
         tuple(f"block_r{r}c{c}" for r in range(OBS_H) for c in range(OBS_W))
@@ -800,7 +803,7 @@ class CraftaxClassic(Env):
     #: an experiment on the OFFICIAL renderer, not by argument from this one**. The check renders at
     #: S and 2S, box-downsamples, and asks how much agrees. Running its exact protocol on craftax's
     #: own renderer (un-jitted, each state's own ``state_rng``, craftax's own
-    #: ``load_all_textures_given_size(32)``) over the frozen Step-7 corpus splits into two
+    #: ``load_all_textures_given_size(32)``) over the frozen corpus splits into two
     #: independent mechanisms, each confined to one region of the frame
     #: (``tests/fixtures/regression/join/step7/craftax-classic-full/oracle/resolution_oracle_S16.json``):
     #:
@@ -830,7 +833,7 @@ class CraftaxClassic(Env):
     #: Parity at the two supported sizes is unaffected and still exact: the same experiment records
     #: ``exact_frac`` 1.0 against the official at S in every band.
     #: The state distribution the **one** registered/default performance tier is measured on, which
-    #: is not a choice made for the benchmark: Step 3's harness draws ``probe.sample_states(64)``
+    #: is not a choice made for the benchmark: the throughput harness draws ``probe.sample_states(64)``
     #: (``examples/bench_step3.py``), so this env's own sampler IS the certification distribution and
     #: its shares are a declared property of the cell. Measured over seeds 0-5 at n=64: **daylight
     #: exactly 0.25** (the band the index stratification pins to ``light_level == 1.0``), **dusk
@@ -859,7 +862,7 @@ class CraftaxClassic(Env):
     #:
     #: Oscar ``node2356``, ``examples/bench_step3.py --device cpu --threads 1``, paired against a
     #: pristine 76dc511 measured either side of it in the same job (spread 1.0045, baseline at 1.44x
-    #: its Step-6 certified value, node load 0.86 per core). Artifacts under
+    #: its previously certified value, node load 0.86 per core). Artifacts under
     #: ``tests/fixtures/regression/join/step7/craftax-classic-full/sweep/``.
     performance_record_cpu = {
         "mixed_default_fps": 1150.6,
@@ -874,8 +877,8 @@ class CraftaxClassic(Env):
         "daylight_diagnostic_fps": 105742,
         "night_diagnostic_fps": 656,
         "daylight_over_night": 104.9,
-        "why_lower_than_step6": (
-            "the Step-6 tier was measured on an observation that could not "
+        "why_lower_than_prior": (
+            "the prior tier was measured on an observation that could not "
             "represent night; this one is the full observation, about three "
             "quarters of which is lit. The daylight path itself is unchanged."
         ),
@@ -887,7 +890,7 @@ class CraftaxClassic(Env):
     #: that first bites.** :meth:`reference_env` returns the renderer UN-JITTED, because the jitted
     #: one disagrees with itself in uint8 and cannot be what a parity claim is made against. But
     #: ``bench_step3`` then measures ``official_cpu`` at **2.18 f/s** against 610.6 f/s for the
-    #: jitted one, so ``S_cpu`` -- the ratio the Step-3 ladder prefers wherever a reference exists --
+    #: jitted one, so ``S_cpu`` -- the ratio the throughput ladder prefers wherever a reference exists --
     #: would read **528x** where the honest figure against the renderer a user actually runs is about
     #: **1.9x**. A tier taken on 528x would certify ``CPU_EXCEPTIONAL`` on a speedup over a renderer
     #: nobody runs, on an env whose ``NO_REFERENCE`` ladder says ``CPU_REGRESSION``.
@@ -915,8 +918,8 @@ class CraftaxClassic(Env):
             "258.9 f/s gpu2104 GPU": "JAX_PLATFORMS unset, but the venv carries jax[cpu]: no CUDA "
             "jaxlib, so jax reported backend 'cpu' anyway",
         },
-        # Step 3's own evaluator, run on the real records three ways. The GPU pair is the proof that
-        # this is not a quibble: measured on ONE 3090 in ONE job, the Step-6 tree does 1,174,913 f/s
+        # The throughput evaluator, run on the real records three ways. The GPU pair is the proof that
+        # this is not a quibble: measured on ONE 3090 in ONE job, the previous tree does 1,174,913 f/s
         # against a jitted reference and labels GPU_FAST, while this branch does 46,187 f/s -- 25x
         # slower -- against an un-jitted one and labels GPU_EXCEPTIONAL.
         "labels_cpu": {"as_measured": "CPU_FASTER", "vs_jitted": "CPU_PARITY", "no_reference": "CPU_REGRESSION"},
@@ -931,7 +934,7 @@ class CraftaxClassic(Env):
     }
     #: The GPU side of :attr:`performance_record_cpu`. Oscar ``gpu2107``, one RTX 3090, paired
     #: against a pristine 76dc511 either side of it in the same allocation: baselines 1,174,913 and
-    #: 1,149,220 f/s, spread 1.0224, **0.963x** the 1,206,822 Step 6 certified for that tree.
+    #: 1,149,220 f/s, spread 1.0224, **0.963x** the 1,206,822 previously certified for that tree.
     performance_record_gpu = {
         "mixed_default_fps": 46187.3,
         "mixed_default_batch": 4096,
@@ -992,7 +995,7 @@ class CraftaxClassic(Env):
     # The public :data:`State` is the render WINDOW grouped by what it describes, which is what this
     # cell's whole thesis is about (module docstring): the 149 numbers are the tiles on screen, the
     # sprites over them, the sixteen inventory counts, the day-cycle light and the PRNG key — not the
-    # simulator's 20,952-byte ``EnvState``. Every offset below is the Step-4/Step-7 packed column it
+    # simulator's 20,952-byte ``EnvState``. Every offset below is the packed column it
     # has always been, in the order ``state_names`` gives, so ``pack`` writes the frozen row and both
     # frozen corpora round-trip unchanged.
     #
@@ -1155,9 +1158,9 @@ class CraftaxClassic(Env):
         """``(...,144)`` -> ``(...,(7+2)*size, 9*size, 3)`` uint8, in the reference's own order.
 
         There is no ``scene()``: the frame is a gather from a texture atlas with two alpha blends
-        over it, not a rasterisation of vector primitives — and since Step 6 the blends are baked
-        into the atlas (:class:`_Composite`) instead of being redone per frame. Step 7 put the
-        inventory strip's 160 composited cells into the *same* table, so the whole observation —
+        over it, not a rasterisation of vector primitives — the blends are baked
+        into the atlas (:class:`_Composite`) instead of being redone per frame. The
+        inventory strip's 160 composited cells live in the *same* table, so the whole observation —
         world window and strip — is still **one** ``index_select``: a strip cell is a tile like any
         other, indexed by ``(cell, count)`` instead of by ``(player, block, mob)``.
 
@@ -1232,7 +1235,7 @@ class CraftaxClassic(Env):
         return px.round_().clamp_(0, 255).to(torch.uint8)
 
     def _render_blend(self, blk, mob, facing, cnt, sleeping, light, halves, t, sty) -> torch.Tensor:
-        """Composite per frame, the way this renderer did before Step 6.
+        """Composite per frame, the readable definition of what the atlas bakes.
 
         Kept because the baked atlas costs ``976 * t*t*3`` bytes and stops being a table worth
         keeping somewhere above :data:`ATLAS_MAX_TILE_PX` (see there). It is the readable definition
@@ -1446,10 +1449,8 @@ class CraftaxClassic(Env):
         ``arrow_direction`` whose ``(flip, transpose)`` classification is the one encoded, and the
         sixteen strip counts go into ``player_health``/``food``/``drink``/``energy`` and ``inventory``.
 
-        Until Step 7 this cropped the official frame to the world layer, because the strip was not
-        drawn and comparing against the whole frame would have been comparing against a picture this
-        renderer never claimed. The strip is drawn now, so the crop is gone and the parity number is
-        over all ``(OBS_H + STRIP_H) * tile_px`` rows.
+        The crop of the official frame to the world layer is gone: the strip is drawn, so the parity
+        number is over all ``(OBS_H + STRIP_H) * tile_px`` rows.
 
         Nothing is forced any more. ``light_level`` and ``state_rng`` are written back from the state
         row like everything else, so a night frame is compared against the reference's own night

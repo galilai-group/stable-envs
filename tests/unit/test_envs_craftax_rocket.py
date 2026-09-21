@@ -1,19 +1,17 @@
-"""Craftax and Rocket on Craftax (Classic + Full) and PFRocketLanding onto the Env contract.
+"""Craftax (Classic + Full) and PyFlytRocketLanding onto the Env contract.
 
 What these pin is the part of the Env contract that a family agent OWES — the constructor, the
-public :data:`State`, the packed row it projects to, the renderer-only refusal and the observation
-spec — plus the certified declarations the plan §12 E brief names by hand. They deliberately do NOT
+public :data:`State`, the compact render row it projects to, the renderer-only refusal and the
+frame spec — plus the certified declarations named by hand. They deliberately do NOT
 re-assert what ``test_craftax_atlas.py``, ``test_craftax_strip.py``, ``test_craftax_full.py`` and
 ``test_rocket_landing.py`` already assert about the renderers themselves: a migration that broke a
 sprite would fail those, and duplicating them here would only make two places to update.
 
-The three cells are the repository's first RENDERER-ONLY migrated cells, which is why so much of this
-file is about refusals. Craftax renders from a state that the OFFICIAL jitted ``craftax`` step
-produced; stable-envs ships no batched Craftax simulator, and PyFlyt's dynamics stay in PyFlyt. So
+The three cells currently render stored states: Craftax/JAX and PyFlyt keep their own dynamics.
 ``step``/``transition``/``unroll`` must raise the contract's precise ``NotImplementedError`` — not an
 ``AttributeError``, and not a fabricated one-step integrator invented for the sake of the API.
 
-``PFRocketLanding`` cannot be CONSTRUCTED on a machine without nvdiffrast, so its tests are about the
+``PyFlytRocketLanding`` cannot be CONSTRUCTED on a machine without nvdiffrast, so its tests are about the
 class and the module: the constructor's signature, the CPU refusal's wording, and the declarations.
 """
 

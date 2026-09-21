@@ -632,7 +632,7 @@ def test_an_unknown_geom_code_is_refused_by_both_cast_backends():
 def test_the_ellipsoid_twins_are_bit_identical_on_both_casts():
     """``_ellipsoid`` (torch) and the ``kind == 4`` branch of ``_tri_isect`` are two spellings of one
     function, admissible together only because they agree to the bit -- the argument the module makes
-    for every other kind. Step 7 added the kind for DM Control's quadruped torso; this is the
+    for every other kind. The ellipsoid kind exists for DM Control's quadruped torso; this is the
     synthetic-scene check (rotated, anisotropic, some degenerate, some with the origin inside), and
     the env-level one is the ``raycast3d-fused-vs-torch`` case above once a cell carries an ellipsoid
     through ``composite``."""

@@ -193,8 +193,8 @@ def test_prepare_texture_array_accepts_uint8_rgba_and_flags_non_pow2():
 
 
 def test_mvp_rows_is_bitwise_independent_of_batch_composition():
-    """Row 0's model-view-projection must not change with how many rows share the call (defect A of Step 7
-    W6: cuBLAS's batched 4x4 GEMM changed kernel between 13*24 and 13*31 products and flipped pixels)."""
+    """Row 0's model-view-projection must not change with how many rows share the call.
+    (cuBLAS's batched 4x4 GEMM changed kernel between 13*24 and 13*31 products and flipped pixels.)"""
     rng = np.random.default_rng(3)
     B, G = 4096, 13
     proj = torch.as_tensor(rng.normal(size=(4, 4)), dtype=torch.float32)
@@ -220,13 +220,13 @@ def test_from_triangles_clip_row_is_independent_of_batch_size():
     """``Scene.clip`` row ``i`` must not depend on how many rows share the call -- as CERTIFIED.
 
     This test originally asserted bitwise invariance at every width on whatever device it ran on, and
-    that over-claimed: the Step-7 closure sweep found it failing on x86-64 CPU. Corrected here to
-    assert what the repo certifies, per the CLOSURE-1 ruling (no second re-freeze in Step 7).
+    that over-claimed: the x86-64 CPU sweep found it failing. Corrected here to
+    assert what the repo certifies (no second re-freeze of those cells).
 
     **cuda, when available: bitwise at every width.** This is the certified device -- every nvdiff cell
     renders on it -- and it is enforced per env by the mandatory ``check_batch_size_invariance``
     (measured 0 at 1, 3, 7, 8, 64, 256 for the six locomotion cells and at 1, 7, 64, 4096 for
-    ``PFRocketLanding``).
+    ``PyFlytRocketLanding``).
 
     **cpu: within ONE float32 ulp at every width**, which is the portable claim. Bitwise-ness on CPU is
     a property of the machine, not of this repo's arithmetic, so it is measured and recorded rather
@@ -252,7 +252,7 @@ def test_from_triangles_clip_row_is_independent_of_batch_size():
     ``torch.sparse.mm``, whose four-term row sums (``S4``/``S3`` carry four and three nonzeros per row)
     are reordered by a kernel chosen from the dense operand's column count.
 
-    DOCUMENTED_LIMITATION (Step 7), also on ``rocket_landing.DOCUMENTED_LIMITATIONS`` and so in
+    DOCUMENTED_LIMITATION, also on ``rocket_landing.DOCUMENTED_LIMITATIONS`` and so in
     ``describe()``: this reaches no shipped frame, because nothing in the registry draws through nvdiff
     on ``device="cpu"``. A fix for the POSITIONS is written and measured, and is not applied
     because on cuda it moves four of the six re-frozen locomotion cells by 2.7e-07 of mean_abs and

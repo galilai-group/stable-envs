@@ -7,10 +7,10 @@ a ray through the pixel centre, the nearest primitive by BVH, one bilinear textu
 a cube-mapped skybox on a miss, and MuJoCo's fixed-function composition (headlight at the camera,
 per-light diffuse/specular with a spot cone, a 0.3 shadow factor from an any-hit ray). It runs on
 the GPU only, and ``device="cpu"`` on those cells used to be answered by the GPU behind the caller's
-back (Step 3 labelled the rows ``DEVICE_NOT_HONOURED``).
+back (labelled ``DEVICE_NOT_HONOURED``).
 
-This module is the CPU answer, and it is the SAME picture computed a different way (the Step 6
-policy: backend implementation may differ by device, renderer semantics may not). Every law below
+This module is the CPU answer, and it is the SAME picture computed a different way (backend
+implementation may differ by device, renderer semantics may not). Every law below
 is MJWarp's, transcribed from ``mujoco_warp/_src/render.py`` 3.11/3.12 — ``compute_ray``,
 ``sample_skybox``, ``sample_texture`` (PLANE branch), ``ray_plane``, the megakernel's shading order,
 ``pack_rgba_to_uint32`` under ``gl_rounding`` — and not MuJoCo's, because the contract these cells
@@ -75,7 +75,7 @@ from .primitives import dot3 as _dot
 #: mjtGeom codes this backend draws as movers: every analytic primitive ``raycast3d`` intersects
 #: except the plane, which this module draws itself as the one static floor. Derived from
 #: ``PRIMITIVE_KINDS`` rather than listed again, so a kind added to the intersectors is a mover here
-#: without a second edit. ELLIPSOID joined in Step 7 (``raycast3d._ellipsoid``, for DM Control's
+#: without a second edit. ELLIPSOID is included (``raycast3d._ellipsoid``, for DM Control's
 #: quadruped torso); nothing else here is kind-specific -- the window and the shadow footprint read
 #: the shared ``bound_radius``.
 MOVER_KINDS = tuple(k for k in PRIMITIVE_KINDS if k != PLANE)
@@ -95,7 +95,7 @@ MJ_MINVAL = 1e-15
 #: ``stable_envs.render.mjwarp.gl_rounding`` patches it to round -- but only for kernels generated
 #: inside its block. ``DMControlTrackCom``'s context (``dmcontrol._tc_context``) captures its CUDA
 #: graph OUTSIDE that block, so the frames the four trackcom cells are certified on -- the frozen
-#: Step-4 digests and the declared visual-tier numbers -- are the truncating kernel's. The CPU
+#: digests and the declared visual-tier numbers -- are the truncating kernel's. The CPU
 #: backend follows the frames as certified: ``"trunc"`` by default, ``"round"`` available. Measured
 #: on the frozen states (tests/fixtures/regression/join/step6/cpu-3d/m1_local*): rounding leaves 83-91 % of floor
 #: and body pixels exactly one level ABOVE MJWarp's; truncating removes that offset.

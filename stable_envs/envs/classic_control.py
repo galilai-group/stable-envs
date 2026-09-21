@@ -15,11 +15,13 @@ this depends on. Consequently these envs do NOT build a ``Scene2D``: the SDF ras
 coverage by supersampling, which is the right tool for an anti-aliased reference and the wrong one for
 an integer-exact one. They override ``render`` instead.
 
-STATE IS THE RENDER STATE, NOT THE OBSERVATION. Velocities never reach the screen, so they are not
-here: CartPole renders from ``(x, theta)`` although its observation is 4-D, Acrobot from
+STATE IS THE COMPACT RENDER ROW, NOT THE GYM OBSERVATION. Velocities never reach the screen, so they
+are not in that row: CartPole renders from ``(x, theta)`` although its observation is 4-D, Acrobot from
 ``(theta1, theta2)`` although its observation is 6-D, and MountainCar from ``position`` alone — one
-number for a 400x600 frame. This is the compact-state claim at its sharpest, and it is checked rather
-than asserted: the conformance suite fails an env whose state has a dimension the renderer ignores.
+number for a 400x600 frame. Public State still carries the full dynamical vector (velocities included)
+so ``transition`` can be pure. Compact render state is what ``pack_render_state`` produces and is
+not a lossless dump of that State. This is the compact-state claim at its sharpest, and it is checked rather
+than asserted: the conformance suite fails an env whose render row has a dimension the renderer ignores.
 
 Pendulum is the interesting case. Its second dimension is ``torque``, which is **not in the
 observation** — ``render()`` blits a torque-arrow PNG scaled by ``|last_u|``, a value ``step()`` sets
@@ -179,11 +181,11 @@ class _Classic(Env):
 
     # --- physics ----------------------------------------------------------------------------
     #
-    # The render state is NOT the dynamical state, and this family is where that is most visible: the
-    # frame needs (x, theta) and the integrator needs (x, x_dot, theta, theta_dot). The compact state
+    # The compact render row is NOT the dynamical state, and this family is where that is most visible: the
+    # frame needs (x, theta) and the integrator needs (x, x_dot, theta, theta_dot). The compact row
     # stays exactly what it is — the renderer and every stored corpus depend on it — and the velocities
-    # live in a private float64 buffer beside it, the way PushT keeps its agent's velocity. ``set_state``
-    # therefore zeroes them, which is not a compromise but the reference's own condition after
+    # live on public State (and in a float64 buffer beside the packed row). ``unpack_render_state``
+    # therefore zeroes omitted fields, which is not a compromise but the reference's own condition after
     # ``reset``: ``reference_set_state`` has always written ``[x, 0.0, theta, 0.0]``.
     #
     # float64 throughout, because the claim here is near-bit-exactness against a float64 reference and

@@ -1,10 +1,13 @@
 """PyFlyt rocket landing, rendered by nvdiffrast. VISUAL TIER.
 
+Rendering and Variation handling are provided by stable-envs. Dynamics stay in PyFlyt; this cell
+currently renders stored states (``has_dynamics`` is False).
+
 THESE ARE NOT THE OFFICIAL PIXELS. The official frame is PyBullet's TinyRenderer at 480x480 through
 PyFlyt's rocket-mounted camera; this cell draws the same scene -- the same 13 primitives, the same
 camera, the same one-light fixed-function law, the same checker ground -- through a different
-rasterizer, and declares what that costs in ``visual_fidelity``. Step 7 workstream W6; the gate that
-admitted it is ``tests/fixtures/regression/join/step7/rocket-landing/findings.md`` and every number below is from
+rasterizer, and declares what that costs in ``visual_fidelity``. The gate that admitted it is
+``tests/fixtures/regression/join/step7/rocket-landing/findings.md`` and every number below is from
 the probes it cites.
 
 What the scene is (the frozen measurement record, census of ``getVisualShapeData``
@@ -36,15 +39,15 @@ every rule below was measured on synthetic scenes before it was written down):
 * boxes are flat-shaded cubes; pixels are tested at INTEGER coordinates from the bottom-left, not at
   centres (25/25 columns, 13/13 rows), which ``sample_offset=(0.5, 0.5)`` reproduces.
 
-What the state is, and why it carries velocities (coordinator ruling 3, ``findings.md`` G1): the frame
+What the state is, and why it carries velocities: the frame
 after ``env.step`` draws the base cylinder at pose *t* but the ten links AND the camera
 link one 1/240 s substep behind, and that lagged pose is exactly ``(pos - v dt, exp(-w dt) q)`` in
 world velocities (position error 0.0, quaternion 1e-16 over 40 steps; 1.8e-15 / 5.6e-16 over the
 200-state corpus). So the state is the first 13 entries of the env's own observation --
 ``ang_vel`` (body frame), quaternion ``xyzw``, ``lin_vel`` (body frame), ``lin_pos`` -- and nothing
-else: ``state = obs[:13]``. The five RGB colours and the flame's ignition bit are STYLE, because they
-are per-episode appearance: they are sampled per reset, and PyFlyt recolours the flame on the first
-ignition transition and never restores it.
+else: ``state = obs[:13]``. The five RGB colours and the flame's ignition bit are Variation
+(compiled internally to a render-style row): they are per-episode configuration, sampled per reset,
+and PyFlyt recolours the flame on the first ignition transition and never restores it.
 
 Reference bridge: for an arbitrary state the official picture cannot be produced by a teleport (a
 teleport syncs the links to the base), so ``reference_render`` teleports the base to the PREVIOUS
@@ -536,7 +539,7 @@ def _reference_apply_style(p, c, rid, pad, style_row: np.ndarray) -> None:
     p.changeVisualShape(pad, -1, rgbaColor=[*mat[12], 1.0], physicsClientId=c)
 
 
-#: DOCUMENTED_LIMITATION (Step 7, CLOSURE-1). The shared ``nvdiff`` transform is bitwise independent of
+#: DOCUMENTED_LIMITATION. The shared ``nvdiff`` transform is bitwise independent of
 #: the batch width on cuda -- the device every nvdiff cell renders on, and the one the mandatory
 #: ``check_batch_size_invariance`` is measured on (0 at 1, 7, 64 and 4096 for this cell) -- and on
 #: arm64 CPU. On x86-64 CPU the clip outputs differ from their full-batch values by ONE float32 ulp at
@@ -554,7 +557,7 @@ def _reference_apply_style(p, c, rid, pad, style_row: np.ndarray) -> None:
 #: (``tests/fixtures/regression/join/step7/rocket-landing/closure1/probe_clip_cpu_batch_x86_threads1.json``, with
 #: ``_threads2`` and ``_threads4``, and ``tests/fixtures/regression/join/step7/closure/nvdiff_cpu_batch/``).
 #:
-#: The fix is written, measured and NOT applied in Step 7:
+#: The fix is written, measured and NOT applied:
 #: the frozen measurement record writes the sum out and removes the
 #: kernel's freedom, but on cuda it moves four of the six re-frozen locomotion cells by 2.7e-07 of
 #: mean_abs and 1e-09 of SSIM (``closure1/digest_vs_refreeze.json``), and a re-freeze requires a
@@ -654,7 +657,8 @@ _NVD_CACHE = _RES.BoundedCache(8, name="rocket.nvd", on_evict=ND.close_cached_re
 class PyFlytRocketLanding(Env):
     """PyFlyt rocket landing, rendered by nvdiffrast. State is obs[:13].
 
-    VISUAL TIER — these are NOT the official pixels. The frame is a different rasterization of the same
+    VISUAL TIER — these are NOT the official pixels. Dynamics stay in PyFlyt; this cell currently
+    renders stored states. The frame is a different rasterization of the same
     scene from the same state: the same 13 primitives, the same rocket-mounted camera one substep behind
     the body, the same one-light TinyRenderer law, the same nearest-sampled checker ground. The
     residual is silhouettes, checker edges and the far ground where tiles are sub-pixel, and the
@@ -806,7 +810,7 @@ class PyFlytRocketLanding(Env):
     # ------------------------------------------------------------------ state
     #
     # The public :data:`State` is the 13-number observation grouped by what it describes: one rigid
-    # body, its attitude, and the two velocities the camera lag reads. The offsets are the Step-7
+    # body, its attitude, and the two velocities the camera lag reads. The offsets are the
     # packed columns unchanged, in ``state_names`` order, so ``pack`` writes the frozen row and the
     # corpus round-trips exactly. The quaternion is ONE field of width 4 rather than four scalars,
     # because it is one quantity with a norm constraint and splitting it invites a caller to write

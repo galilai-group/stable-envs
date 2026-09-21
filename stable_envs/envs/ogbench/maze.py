@@ -1,5 +1,8 @@
 """OGBench mazes — 25 dataset cells, 11 distinct scenes, one state vector each: ``qpos``.
 
+Rendering and Variation handling are provided by stable-envs. Dynamics stay in OGBench / MuJoCo;
+these cells currently render stored states (``has_dynamics`` is False).
+
 Reference: ``ogbench``'s ``pointmaze`` / ``antmaze`` / ``humanoidmaze`` at ``ob_type='pixels'``, i.e. a
 MuJoCo 3-D scene under the top-down camera ``MazeEnv`` builds when no camera is named. All 25 names are
 registered, but ``navigate`` / ``stitch`` / ``explore`` differ only in which offline dataset was
@@ -63,7 +66,7 @@ STEP 9 ADDS THREE THINGS AND CHANGES NOTHING ELSE
     ``{"root": {"position", "orientation"}, "joints"}`` for the legged bodies and
     ``{"root": {"position"}}`` for the point, which is what ``qpos`` IS for each body. Nothing is
     hidden (no field has offset ``None``), so ``pack``/``unpack`` round-trip the frozen corpus bit
-    for bit and every Step-4 digest is untouched;
+    for bit and every frozen digest is untouched;
   * ``close()``, which refuses to render afterwards without releasing anything shared. The baked
     scenes, the reference envs and their ``mujoco.Renderer``s live in MODULE caches and are never
     released for the reason recorded above: releasing one EGL context corrupts every other live one
@@ -159,7 +162,7 @@ CELLS = (
 #: key with nothing in between give two distinct images, 1/255 apart on four pixels
 #:. So a cache clear could change the frame a config was
 #: already producing, which is how ``check_style_is_state`` came to observe 1 on
-#: ``AntmazeTeleportExplore`` and ``HumanoidmazeMediumNavigate`` in Step 4 and 0 on nine cells that
+#: ``AntmazeTeleportExplore`` and ``HumanoidmazeMediumNavigate`` in the frozen corpus and 0 on nine cells that
 #: carry the identical defect: the difference between them was where the 256th insert landed.
 #:
 #: LRU does NOT make the bake deterministic -- a genuinely cold key still lands on either image, and
@@ -556,7 +559,8 @@ class OGBenchMaze(Env):
         # 1/255 on the ant and humanoid mazes (tests/fixtures/regression/join/step6/raycast3d/
         # style_is_state_bisect.json). The plate is then MEMOISED, so the impurity stays invisible
         # until ``_SCENE_CACHE`` evicts the key and the same appearance is
-        # baked a second time from a different leftover pose -- which is how it reached Step 4 as
+        # baked a second time from a different leftover pose -- which is how it reached the frozen
+        # corpus as
         # ``check_style_is_state`` observing 1 on AntmazeTeleportExplore and
         # HumanoidmazeMediumNavigate, and 0 on nine configurations that carry the identical defect.
         #

@@ -1,11 +1,12 @@
 # Why physics is separate
 
-Every `Env` has `reset`, `render`, `get_state`, `set_state` and a `variation_space`. Batched dynamics
-are optional: `step` / `transition` / `unroll` exist on every class so a renderer-only cell can raise
-with the exact reason instead of an `AttributeError`, and only cells that override them ship a
-simulator. How many of the registry that is changes as families land; `env.has_dynamics` is the check,
-and `hasattr(env, "step")` is always true. The call-shape difference — stateful `step` vs functional
-`transition` / `unroll` — is [Stateful vs functional](dynamics.md).
+Every `Env` has `reset`, `render`, `get_state`, `set_state` and a `variation_space`. Variation is
+persistent environment configuration and may include physics, geometry, reset and task knobs as well
+as appearance. Batched dynamics are optional: `step` / `transition` / `unroll` exist on every class
+so an incomplete / render-only cell can raise with the exact reason instead of an `AttributeError`,
+and only cells that override them ship a simulator (native or delegated to an upstream one).
+`env.has_dynamics` is the check, and `hasattr(env, "step")` is always true. The call-shape difference
+— stateful `step` vs functional `transition` / `unroll` — is [Stateful vs functional](dynamics.md).
 
 The rest of this page is why that split exists: a renderer can be bit-exact against the official
 frame, and a contact solver cannot.
@@ -33,7 +34,7 @@ The workload this repo is built for is re-rendering states you already have:
 - a stored dataset of trajectories, kept as states rather than as frames;
 - a planner or world model that produced imagined states and wants to look at them;
 - an evaluation that resets to recorded states;
-- any of the above at a different resolution, or with different appearance, than whatever was recorded.
+- any of the above at a different resolution, or with different configuration, than whatever was recorded.
 
 None of that runs dynamics. The states exist; the question is only how fast they become pixels. Making
 `step` part of the contract would force every env to port a simulator before it could serve any of these,

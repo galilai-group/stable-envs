@@ -2,11 +2,9 @@
 
 Two things are declared here and nowhere else: its own provenance string (its numbers are measured
 under a non-default render context and over four draws rather than three, so it cannot borrow
-``_AT``), and the CPU refusal. Swimmer has no CPU certification; until Step 7 it
-was refused on ``device="cpu"`` by GEOM TYPE — its bodies are ``mjGEOM_ELLIPSOID`` and ``cpu3d`` had
-no intersector — and the intersector now exists (``raycast3d._ellipsoid``, added for the quadruped
-torso), so without an explicit refusal swimmer would be DRAWN on CPU with no certification behind the
-frames. The refusal is therefore BY NAME, with the reason, and the GPU path is unaffected.
+``_AT``), and the CPU refusal. Swimmer has no CPU certification; without an explicit
+refusal it would be drawn on CPU — its bodies are ``mjGEOM_ELLIPSOID`` and ``raycast3d._ellipsoid``
+can intersect them — with no certification behind the frames. The refusal is therefore BY NAME, with the reason, and the GPU path is unaffected.
 """
 
 from __future__ import annotations
