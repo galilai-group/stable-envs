@@ -158,7 +158,7 @@ from .._mujoco_gl import configure_mujoco_gl
 configure_mujoco_gl()
 
 from ..env import Env
-from ..registry import _remember_historical_name, register
+from ..registry import register
 from ..render import _resources as _RES
 from ..render import raycast3d as R3
 from ..spaces import Box, Dict
@@ -1458,7 +1458,6 @@ def _make_classes():
                 ),
             )
         )
-        _remember_historical_name(cname, cls)
         made[public] = cls
     return made
 
@@ -2273,7 +2272,6 @@ def _make_visual_classes():
                 ),
             )
         )
-        _remember_historical_name(cname, cls)
         made[public] = cls
     return made
 

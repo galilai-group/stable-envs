@@ -26,7 +26,7 @@ os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
 
 import numpy as np
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+sys.path.insert(0, str(next(p for p in Path(__file__).resolve().parents if (p / "pyproject.toml").is_file())))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from parity_probe import load_rows  # noqa: E402

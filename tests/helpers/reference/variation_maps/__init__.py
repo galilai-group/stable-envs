@@ -1,7 +1,7 @@
-"""One ``VariationMap`` module per family, installed into ``worldmodel.VARIATION_MAPS``.
+"""One ``VariationMap`` module per family, installed into the test-only ``VARIATION_MAPS``.
 
-``stable_envs.interop`` carries the four maps that predate the certified maps inline. The certified maps
-adds lives here instead, one module per family, for a reason that is about ownership rather than
+The four maps that predate the certified maps live inline in ``variation.py``. The certified maps
+live here instead, one module per family, for a reason that is about ownership rather than
 tidiness: the maps are written by different workstreams against different evidence, and a single
 dict literal in one file is a merge conflict per workstream and no way to say which measurement a
 given classification rests on.

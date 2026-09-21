@@ -31,7 +31,6 @@ FAMILY_EXTRAS = {
     "robotics": ("gymnasium-robotics", "mujoco"),
     "rocket": ("pybullet", "pillow", "scipy"),
     "sokoban": ("gym-sokoban", "imageio"),
-    "swm": ("stable-worldmodel",),
 }
 
 

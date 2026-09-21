@@ -89,7 +89,7 @@ from ..._mujoco_gl import configure_mujoco_gl
 configure_mujoco_gl()
 
 from ...env import Env
-from ...registry import _remember_historical_name, register
+from ...registry import register
 from ...render import _resources as _RES
 from ...render import raycast3d as R3
 from ...spaces import Box, Dict, Discrete
@@ -858,15 +858,12 @@ def _make_classes():
                 ),
             )
         )
-        _remember_historical_name(old, cls)
         made[cname] = cls
         aliases[old] = cname
     return made, aliases
 
 
 #: ``{name: class}`` for every registered cell this module declares, so the package ``__init__``
-#: can re-export them by NAME without transcribing the naming rule a second time. Frozen-oracle
-#: spellings (``PointmazeLargeNavigate``) are recorded privately for SWM / regression joins; they
-#: are not public aliases.
+#: can re-export them by NAME without transcribing the naming rule a second time.
 CELL_CLASSES, CELL_ALIASES = _make_classes()
 globals().update(CELL_CLASSES)

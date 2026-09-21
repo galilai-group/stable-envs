@@ -3,7 +3,7 @@
 ``stable_envs.envs.dmcontrol`` IS this package. This package split the 3,376-line module it used to be into
 one small base, two renderer modules and one module per domain (plan §3, §12 B); every name the module
 exported is re-exported here, so ``from stable_envs.envs import dmcontrol as D`` and every
-``D.<anything>`` the tests, the probes and ``stable_worldmodel`` reach for keeps resolving, and the
+``D.<anything>`` the tests and the probes reach for keeps resolving, and the
 registered classes still report ``stable_envs.envs.dmcontrol`` as their module — which is the path
 they are reachable at. Family is the explicit ``family`` class attribute.
 
@@ -167,7 +167,7 @@ from .finger import ALL_EXACT_FLOOR, DMCFingerSpin, DMCFingerTurnEasy, DMCFinger
 from .hopper import DMCHopperHop  # noqa: F401
 from .humanoid import DMCHumanoidStand  # noqa: F401
 from .manipulator import (  # noqa: F401
-    _SWM_SMALL_TARGET,
+    _REGISTERED_SMALL_TARGET,
     RENDER_INVARIANT_DIMS,
     SHAPE_KNOB_SPECS,
     STATE_DIMS_NOTE,
@@ -180,8 +180,8 @@ from .quadruped import (  # noqa: F401
     _QUADRUPED_AT_MEASURED_WITH,
     QUADRUPED_NOTE,
     DMCQuadrupedWalk,
-    _swm_quadruped_env,
-    _SWMQuadrupedModel,
+    _transcribed_quadruped_env,
+    _TranscribedQuadrupedModel,
 )
 from .reacher import DMCReacherEasy, DMCReacherHard  # noqa: F401
 from .suite import DMControlSuite  # noqa: F401

@@ -247,7 +247,7 @@ def main() -> None:
 
     import sys
 
-    sys.path.insert(0, str(ROOT / "examples" / "downstream_step5"))
+    sys.path.insert(0, str(ROOT / "docs" / "research" / "artifacts" / "step5_downstream"))
     import step5_stats as S
 
     pusht = load(args.results / "pusht" / "gate_h.json")

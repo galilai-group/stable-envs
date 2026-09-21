@@ -17,7 +17,7 @@ The third row measures how far the OFFICIAL arm's own live frames have drifted f
 ones -- a mismatch inside the baseline that has nothing to do with us. The fourth says whether
 turning the knob back on reproduces the corpus, which is what would identify how it was recorded.
 
-    python examples/downstream_step5/reacher/corpus_probe.py --n 32 --out tests/fixtures/regression/join/step5/reacher
+    python docs/research/artifacts/step5_downstream/reacher/corpus_probe.py --n 32 --out tests/fixtures/regression/join/step5/reacher
 """
 
 from __future__ import annotations
@@ -29,7 +29,7 @@ from pathlib import Path
 
 import numpy as np
 
-ROOT = Path(__file__).resolve().parents[3]
+ROOT = next(p for p in Path(__file__).resolve().parents if (p / "pyproject.toml").is_file())
 
 PROBE_SEED = 8712
 OFFSCREEN = (10.0, 10.0, 0.01)

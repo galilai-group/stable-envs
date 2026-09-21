@@ -16,16 +16,14 @@ The concrete payoff is that the parity claim and the variation machinery are the
 path. There is no "reference mode" that bypasses the knobs, so a knob cannot drift away
 from the reference without the parity test noticing.
 
-## The API is `stable_worldmodel.spaces`
+## The space API is owned by `stable_envs.spaces`
 
-Same class names, same `init_value` / `value` / `reset` / `sample` / `set_value` / `check`
-surface, same `reset_variation_space` entry point. An env written against one works
-against the other, and `stable_worldmodel` envs move here without a rewrite. The module is
-vendored rather than imported so that `stable_envs` stays installable on its own: the
-compatibility is the point, the dependency is not.
+The leaf surface (`init_value` / `value` / `reset` / `sample` / `set_value` / `check`,
+`reset_variation_space`) was originally inspired by the lab's other environment work.
+`stable_envs.spaces` now owns that API; cross-package identity is not a product feature.
 
-What differs is what the values are *for*. In `stable_worldmodel` a variation is read once
-at reset and baked into a CPU renderer. Here the values flow into a `Scene2D` as
+What the values are *for* is the same as it was when this page was written. A variation is
+not baked once at reset into a CPU renderer. Here the values flow into a `Scene2D` as
 per-environment tensors, which is why `Box.batch_sample(B)` exists — it draws `B`
 independent values for a leaf and returns them stacked, the form the scene builder
 consumes. It uses a plain uniform rather than `B` calls to gymnasium's `sample`, because

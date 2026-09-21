@@ -1,8 +1,22 @@
 # Variation
 
-**Variation** is appearance and layout that can change without changing State. The world
-(`state["agent", "position"]`, …) stays put; colours, scales, toggles, and similar knobs
-do not.
+**Variation** is persistent environment configuration. It is not appearance-only. A leaf may
+change how the world looks, how it is shaped, how it integrates, how an episode is reset, or
+which task is being solved — without being folded into the instantaneous **State**.
+
+```text
+render-only          background.color, agent.color
+dynamics-only        gravity, joint damping, agent.speed
+reset / task         spawn distribution, task.min_steps
+render + dynamics    block.scale, morphology
+```
+
+Do not invent knobs. Declare the factors the environment actually has. Variation may live on
+the env rather than on every method signature; `set_variation` / `render(..., variation=)`
+are the public surface.
+
+The world (`state["agent", "position"]`, …) is still the instantaneous dynamic state. A frame
+is `f(state, variation)`. Where native dynamics exist, `next_state = g(state, action, variation)`.
 
 ```python
 import stable_envs as snv
@@ -12,9 +26,9 @@ state = env.reset(seed=0)
 frames = env.render(state, variation={"block.color": [220, 40, 40]})
 ```
 
-A frame is a deterministic function of compact render state **plus** Variation. Defaults
-are the official appearance: rendering with no `variation=` (or with `default_variation()`)
-reproduces the reference picture.
+Defaults are the official configuration: rendering with no `variation=` (or with
+`default_variation()`) reproduces the reference picture. Render fidelity and contact-solver
+fidelity remain separate claims — a gravity leaf does not make a reimplemented solver bit-exact.
 
 ## Inspect the space
 
@@ -35,12 +49,12 @@ family / domain / slug.
 ## Defaults and samples
 
 ```python
-row = env.default_variation()     # (variation_dim,) — official appearance
+row = env.default_variation()     # (variation_dim,) — official defaults
 rows = env.sample_variation(64)   # (64, variation_dim) independent draws
 bg = env.sample_variation(64, paths=["background.color"])
 ```
 
-`sample_variation(batch)` draws **B independent** appearances. `paths=` randomises only
+`sample_variation(batch)` draws **B independent** configurations. `paths=` randomises only
 those leaves; everything else stays at the official default. An unknown path is an error,
 not a silent no-op.
 
@@ -49,13 +63,13 @@ Install a row on the env with `env.set_variation(rows)` or pass it into `render`
 
 ## One Variation vs B independent Variations
 
-`num_envs` is how many copies the object holds. Appearance follows the same batch axis:
+`num_envs` is how many copies the object holds. Configuration follows the same batch axis:
 
 | you pass | meaning |
 |---|---|
-| nothing | current / default appearance, broadcast to the batch |
-| one row `(variation_dim,)` or a dict of scalars | **one** appearance, shared by every environment |
-| a `(B, variation_dim)` row | **B independent** appearances, one per environment |
+| nothing | current / default configuration, broadcast to the batch |
+| one row `(variation_dim,)` or a dict of scalars | **one** configuration, shared by every environment |
+| a `(B, variation_dim)` row | **B independent** configurations, one per environment |
 
 ```python
 shared = env.default_variation()
@@ -83,7 +97,7 @@ frames = env.render(state, variation={"block.color": [220, 40, 40], "agent.scale
 row = env.default_variation()
 frames = env.render(state, variation=row)
 
-# Batched rows: one appearance per environment.
+# Batched rows: one configuration per environment.
 rows = env.sample_variation(env.num_envs)
 frames = env.render(state, variation=rows)
 ```
@@ -106,7 +120,7 @@ frames = env.render(state, variation=variation_row)
 reseeds `env.rng`; pass an explicit `rng` when you want Variation draws independent of
 reset.
 
-Defaults (`default_variation()`) are the official appearance. Saving them is optional;
+Defaults (`default_variation()`) are the official configuration. Saving them is optional;
 omitting `variation=` at render time reproduces the same picture.
 
 ## Next

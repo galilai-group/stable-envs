@@ -1,9 +1,8 @@
-# `stable_envs.interop`
+# Sibling projects
 
-Cross-package glue only. Nothing here is imported by `env`, `dynamics`, `specs`, `registry` or `_config`, and nothing is advertised at `import stable_envs as snv` top level.
+`stable-envs` does not ship a runtime interop layer for other stable-* packages.
 
-**Ownership.** stable-envs owns `reset` / `step` / `transition` / `unroll` / `render` and state semantics. stable-worldmodel owns policy rollouts, MPC, planning, dataset collection and evaluation. There is no `env.rollout(policy=...)`.
+Environment lookup is by canonical class name (`snv.make("PushT")`). Historical SWM identifiers
+and variation-correspondence tables live in the regression suite as certification evidence.
 
-**Native `swm.World(env=snv.PushT(...))` is not a public API.** Installed `stable-worldmodel` takes `env_name: str` and always `gym.make`s it. The shipped contract is the adapters below. See [stable-worldmodel](../concepts/worldmodel.md).
-
-::: stable_envs.interop
+See [Sibling projects](../concepts/worldmodel.md).

@@ -7,8 +7,7 @@ camera is ``fovy = 4``, nearly orthographic from 16 m, and its one model light i
 ``castshadow = 1`` — both of which the existing bake and cast handled unchanged.
 
 Three things are declared here and nowhere else in the family, and all three are preserved
-facts rather than choices this migration made: the registered default size (224 px, which is
-``stable_worldmodel``'s ``DMControlWrapper.render(width=224, height=224)``), the one ``SHAPE_KNOBS``
+facts rather than choices this migration made: the registered default size (224 px), the one ``SHAPE_KNOBS``
 entry, and the task-specific state exclusions ``check_state_dims_matter`` is OFFERED.
 """
 
@@ -17,22 +16,22 @@ from __future__ import annotations
 from ...render import raycast3d as R3
 from ._cells import parity_cell
 
-#: Cells whose registered SWM default is rendered at something other than the family's 84 px, so the
+#: Cells whose registered default is rendered at something other than the family's 84 px, so the
 #: size the conformance suite builds them at is the size they are certified at. ``manipulator`` is
-#: ``stable_worldmodel``'s ``DMControlWrapper.render(width=224, height=224)``.
+#: 224 px.
 DEFAULT_SIZE = 224
 
 
-#: ``_SMALL_TARGET`` in ``stable_worldmodel.envs.dmcontrol.manipulator``: the edge/radius its
-#: ``target.shape`` knob writes for both of its alternatives.
-_SWM_SMALL_TARGET = 0.015
+#: Manipulator target size at the registered default: the edge/radius its ``target.shape`` knob
+#: writes for both of its alternatives.
+_REGISTERED_SMALL_TARGET = 0.015
 
 #: Per-cell ``SHAPE_KNOBS``. ONE cell, because one cell's registered wrapper offers a shape knob.
-#: ``stable_worldmodel``'s ``target.shape`` is ``Discrete(2)`` over a 0.015 box and a 0.015 sphere, and
+#: The registered ``target.shape`` is ``Discrete(2)`` over a 0.015 box and a 0.015 sphere, and
 #: neither is the compiled model's own target (``sphere size=.02``, from ``manipulator.xml``'s ``ghost``
 #: class) — so the leaf carries THREE alternatives and its default is index 2, the model's own. That is
 #: what keeps the DEFAULT STYLE a render of the compiled model, which is the appearance every parity
-#: number here is measured under, while still making the registered SWM default reachable, which is the
+#: number here is measured under, while still making the registered default reachable, which is the
 #: Gate-F obligation. Note what that is NOT: ``check_default_style_is_official`` compares
 #: ``render(states)`` against ``render(states, style=default_style())`` and never touches the official
 #: renderer, so it cannot see a default that drifted off the compiled model. The ``len(cur) != 1``
@@ -40,8 +39,8 @@ _SWM_SMALL_TARGET = 0.015
 SHAPE_KNOB_SPECS: dict[str, dict] = {
     "DMCManipulatorBringBall": {
         "target_ball": (
-            (R3.BOX, (_SWM_SMALL_TARGET,) * 3),  # swm target.shape = 0
-            (R3.SPHERE, (_SWM_SMALL_TARGET, 0.0, 0.0)),  # swm target.shape = 1
+            (R3.BOX, (_REGISTERED_SMALL_TARGET,) * 3),  # target.shape = 0
+            (R3.SPHERE, (_REGISTERED_SMALL_TARGET, 0.0, 0.0)),  # target.shape = 1
             (R3.SPHERE, (0.02, 0.0, 0.0)),
         ),  # dm_control's own, the default
     },

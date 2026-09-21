@@ -1,11 +1,10 @@
-"""The registry after the move: the same classes under the same names, plus the 42 SWM ids.
+"""The registry knows stable-envs class names. The 42 SWM ids live in regression helpers.
 
 TWO ORACLES, and they are different in kind:
 
   * the 42 SWM ids are asserted against the ACCEPTED STEP-8 SUPPORT MATRIX
     (``tests/fixtures/regression/support_matrix.json``), which is the frozen behavioral oracle this tree is not
-    allowed to change. The alias table in ``registry.py`` is a copy of it and this test is what stops
-    the copy drifting.
+    allowed to change. The test-only crosswalk is derived from that file.
   * the canonical class names are asserted against the BASELINE REGISTRY TABLE recorded from
     ``21cb306`` into the frozen registry baseline
     (``tests/fixtures/regression/references/registry_baseline.json``) — same interpreter, same optional
@@ -28,6 +27,14 @@ pytest.importorskip("torch")
 
 import stable_envs as snv
 from stable_envs import registry as R
+from tests.helpers.reference import (
+    SWM_IDS,
+    SYMBOLIC_IDS,
+    canonical_from_frozen,
+    canonical_names,
+    class_for_frozen_cell,
+    swm_ids_for_class,
+)
 
 pytestmark = pytest.mark.unit
 
@@ -37,37 +44,37 @@ BASELINE = ROOT / "tests" / "fixtures" / "regression" / "references" / "registry
 SWM_IDS_IN_MATRIX = sorted({r["swm_id"] for r in json.loads(MATRIX.read_text())["rows"]})
 
 
-def test_the_swm_alias_table_is_the_step8_support_matrix_row_for_row():
+def test_the_swm_crosswalk_is_the_step8_support_matrix_row_for_row():
     rows = json.loads(MATRIX.read_text())["rows"]
     assert len(rows) == 42, "the oracle is 42 SWM ids; this file is not the accepted matrix"
     expected = {r["swm_id"]: tuple(r["stable_envs_cells"]) for r in rows}
-    assert R.SWM_IDS == expected
-    assert len(R.SWM_IDS) == 42
-    assert sum(1 for v in R.SWM_IDS.values() if v) == 40, "40 pixel-producing ids"
-    assert R.SYMBOLIC_IDS == ("swm/CraftaxClassicSymbolic-v1", "swm/CraftaxSymbolic-v1")
+    assert SWM_IDS == expected
+    assert len(SWM_IDS) == 42
+    assert sum(1 for v in SWM_IDS.values() if v) == 40, "40 pixel-producing ids"
+    assert SYMBOLIC_IDS == ("swm/CraftaxClassicSymbolic-v1", "swm/CraftaxSymbolic-v1")
+    assert not hasattr(R, "SWM_IDS")
+    assert not hasattr(R, "SYMBOLIC_IDS")
+    assert not hasattr(R, "canonical_names")
 
 
 @pytest.mark.parametrize("swm_id", SWM_IDS_IN_MATRIX)
-def test_every_swm_id_resolves_to_the_cells_the_matrix_records(swm_id):
-    cells = R.SWM_IDS[swm_id]
-    assert R.canonical_names(swm_id) == cells
-    live = R._class_for_frozen_cell(cells[0]) if len(cells) == 1 else None
+def test_every_swm_id_joins_the_cells_the_matrix_records(swm_id):
+    cells = SWM_IDS[swm_id]
+    assert canonical_names(swm_id) == cells
+    live = class_for_frozen_cell(cells[0]) if len(cells) == 1 else None
+    with pytest.raises(KeyError, match="unknown env"):
+        R.make(swm_id)
     if len(cells) == 1 and live is not None:
-        assert R.info(swm_id)["class"] is live
-        assert swm_id in R.info(live.__name__)["swm_ids"]
-    elif len(cells) > 1:
-        with pytest.raises(KeyError, match="different environments"):
-            R.make(swm_id)
-    elif not cells:
-        with pytest.raises(KeyError, match="SYMBOLIC"):
-            R.make(swm_id)
+        assert swm_id in swm_ids_for_class(live.__name__)
 
 
 def test_an_unknown_name_lists_what_is_known():
     with pytest.raises(KeyError, match="unknown env"):
         R.make("NoSuchEnv")
-    with pytest.raises(KeyError, match="known SWM ids"):
+    with pytest.raises(KeyError, match="unknown env"):
         R.make("swm/NoSuchId-v9")
+    with pytest.raises(KeyError, match="unknown env"):
+        R.make("swm/PushT-v1")
 
 
 def test_every_canonical_class_name_resolves_to_the_same_class_as_at_the_baseline():
@@ -81,7 +88,7 @@ def test_every_canonical_class_name_resolves_to_the_same_class_as_at_the_baselin
             f"{sorted(snv.import_errors())}"
         )
     now = {r["class_name"]: r for r in R.registry_table()}
-    then = {R._canonical_from_frozen(r["name"]): r for r in base["registry_table"]}
+    then = {canonical_from_frozen(r["name"]): r for r in base["registry_table"]}
     assert sorted(now) == sorted(then), "the set of registered class names changed"
     skip_keys = {"module", "name", "class_name", "family", "domain", "render_state_dim", "state_dim"}
     for name, row in then.items():
@@ -93,7 +100,7 @@ def test_every_canonical_class_name_resolves_to_the_same_class_as_at_the_baselin
         assert now_cmp == then_cmp, f"the registry row for {name} changed"
         if now[name]["module"] != row["module"]:
             assert getattr(importlib.import_module(now[name]["module"]), name) is R.REGISTRY[name]
-        assert R.make.__module__ and R._resolve(name, "make") is R.REGISTRY[name]
+        assert R.make.__module__ and R._resolve(name) is R.REGISTRY[name]
 
 
 def test_list_envs_and_info_answer_without_constructing_anything():
@@ -103,7 +110,7 @@ def test_list_envs_and_info_answer_without_constructing_anything():
     s = R.info("PushT")
     assert s["render_state_dim"] == 5 and s["family"] == "pusht" and s["fidelity_tier"] == "parity"
     assert s["class_name"] == "PushT" and s["id"] == "push-t"
-    assert s["swm_ids"] == ("swm/PushT-Discrete-v1", "swm/PushT-v1")
+    assert "swm_ids" not in s
     assert "pusht" in R.list_families()
     assert "spec" not in dir(snv)
     assert not hasattr(R, "spec")
@@ -111,10 +118,10 @@ def test_list_envs_and_info_answer_without_constructing_anything():
 
 
 def test_unpublished_historical_class_names_do_not_resolve():
-    """Pre-v0 renames are not public aliases. Frozen SWM ids still find the live class."""
+    """Pre-v0 renames are not public aliases. Frozen SWM ids are not either."""
     samples = ("PointmazeLargeNavigate", "MujocoAnt", "PFRocketLanding")
     for old in samples:
-        live = R._canonical_from_frozen(old)
+        live = canonical_from_frozen(old)
         if live == old or live not in R.REGISTRY:
             continue
         with pytest.raises(KeyError, match="unknown env"):
@@ -123,9 +130,10 @@ def test_unpublished_historical_class_names_do_not_resolve():
             getattr(snv, old)
         assert getattr(snv, live) is R.REGISTRY[live]
     if "PyFlytRocketLanding" in R.REGISTRY:
-        assert R.info("swm/PFRocketLanding-v0")["class"] is R.REGISTRY["PyFlytRocketLanding"]
+        with pytest.raises(KeyError, match="unknown env"):
+            R.info("swm/PFRocketLanding-v0")
     if "PointMazeLargeNavigate" in R.REGISTRY:
-        with pytest.raises(KeyError, match="different environments"):
+        with pytest.raises(KeyError, match="unknown env"):
             R.make("swm/OGBMaze-v0")
 
 

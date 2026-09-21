@@ -60,8 +60,6 @@ griddly = ["griddly==1.6.7", "pyyaml"]
 jumanji = ["jax", "jumanji", "matplotlib"]
 pgx = ["jax", "pgx", "pillow", "resvg-py"]
 procgen = ["pillow", "procgen2"]
-swm = ["stable-worldmodel"]
-
 # Optional render/data surfaces. nvdiffrast is intentionally not metadata:
 # PyPI rejects direct-URL requirements and its CUDA extension needs a matching
 # local toolkit. The measured source install remains documented in
@@ -80,7 +78,6 @@ humanoidbench = ["dm-control", "gymnasium", "jax", "mujoco>=3.11,<3.13", "mujoco
 rocket = ["pillow", "pybullet", "scipy"]
 hf = ["datasets>=2.14"]
 examples = ["imageio", "imageio-ffmpeg", "opencv-python"]
-interop = ["stable-worldmodel"]
 # No `all` extra: Fetch needs mujoco<3.12, Overcooked needs its own interpreter,
 # and nvdiffrast cannot be expressed as PyPI metadata.
 docs = [
@@ -144,7 +141,7 @@ ignore = ["E402", "E731", "E741"]
 testpaths = ["tests"]
 markers = [
   "unit: fast, CPU-only, no reference package and no device",
-  "integration: several components together (env + renderer + registry + interop)",
+  "integration: several components together (env + renderer + registry)",
   "regression: the frozen regression oracle — corpora, digests, support matrix",
   "gpu: requires a CUDA device (skipped otherwise)",
   "reference: requires the official reference env to be installed",

@@ -13,7 +13,7 @@ fatal: the paired test would then be attributing a model difference to the pixel
 ``tests/fixtures/regression/fidelity/certification.json`` -- margin, CI formula, control thresholds and power guard all come
 from there.
 
-    python examples/downstream_step5/paired_gate.py --runs tests/fixtures/regression/join/step5/reacher/runs \
+    python docs/research/artifacts/step5_downstream/paired_gate.py --runs tests/fixtures/regression/join/step5/reacher/runs \
         --out tests/fixtures/regression/join/step5/reacher
 """
 
@@ -24,7 +24,7 @@ import hashlib
 import json
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = next(p for p in Path(__file__).resolve().parents if (p / "pyproject.toml").is_file())
 
 #: Config keys that are ALLOWED to differ between arms, because they are the experiment's own
 #: bookkeeping rather than part of what is being held fixed.

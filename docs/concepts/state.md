@@ -6,7 +6,7 @@ Four nouns, two usage modes.
 |---|---|
 | **Env** | a batched environment class (`snv.PushT`, …) |
 | **State** | the world: a `tensordict.TensorDict` grouped by entity |
-| **Variation** | appearance / layout knobs that do not change the world |
+| **Variation** | persistent environment configuration (appearance, geometry, morphology, physics, reset/task) |
 | **Frame** | rendered pixels: `(B, H, W, 3)` uint8 from `render` |
 
 Two ways to use an Env:
@@ -74,7 +74,7 @@ env.sample_variation(env.num_envs)
 frame = env.render(state, variation={"block.color": [220, 40, 40]})
 ```
 
-Defaults are the official appearance. Domain randomisation is a tensor, not a loop. See [Variation](variation-spaces.md).
+Defaults are the official configuration. Domain randomisation is a tensor, not a loop. See [Variation](variation-spaces.md).
 
 ## Specs
 

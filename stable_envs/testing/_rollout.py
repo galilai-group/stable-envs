@@ -1,12 +1,12 @@
 """Private seeded rollout helper for certification tests.
 
-Policy-driven rollouts belong to stable-worldmodel. stable-envs exposes stateful ``step`` plus
+Policy-driven rollouts belong outside this package. stable-envs exposes stateful ``step`` plus
 pure open-loop ``transition`` / ``unroll``. This module exists so reproducibility and GPU
 regression tests can generate a deterministic action sequence around environments that ship
 dynamics; it is not a user API.
 
-The policy interface mirrors ``stable_worldmodel.policy.BasePolicy`` — ``get_action(obs, **kwargs)``
-plus ``set_env(env)`` — so a policy written for one works here. The one deliberate addition is that
+The policy interface is ``get_action(obs, **kwargs)`` plus ``set_env(env)``, so a policy written
+for that shape works here. The one deliberate addition is that
 ``get_action`` receives a BATCH: ``obs`` carries B environments and the return is ``(B, action_dim)``.
 A per-environment policy call would put a Python loop inside the hot path and give back the launch
 overhead the rest of the repo spends its effort removing; a policy that genuinely cannot batch can
@@ -44,7 +44,7 @@ from ..dynamics import has_dynamics
 
 
 class BasePolicy:
-    """``get_action(obs) -> (B, action_dim)``. Mirrors ``stable_worldmodel.policy.BasePolicy``."""
+    """``get_action(obs) -> (B, action_dim)``."""
 
     def __init__(self, **kwargs: Any) -> None:
         self.env = None

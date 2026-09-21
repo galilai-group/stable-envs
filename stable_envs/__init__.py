@@ -1,4 +1,4 @@
-"""stable-envs: famous research environments as GPU-batched, state-driven renderers.
+"""stable-envs: a batched environment library with explicit state, dynamics, and variation, plus fast state-driven rendering.
 
 Four nouns: **Env**, **State**, **Variation**, **Frame**.
 Two usage modes: **stateful** (``reset`` / ``step``) and **functional** (``transition`` / ``unroll`` / ``render``).
@@ -9,7 +9,7 @@ Public surface::
     import stable_envs as snv
 
     env   = snv.PushT(num_envs=64)              # device="auto" → CUDA if available, else CPU
-    env   = snv.make("swm/PushT-v1")            # strings are for configs and interop
+    env   = snv.make("PushT")                   # strings are canonical class names
     state = env.reset(seed=0)                   # State: TensorDict, keys grouped by entity
     out   = env.step(actions)                   # stateful; read out["state"]
     nxt   = env.transition(state, action)       # functional, pure in `state`
@@ -20,9 +20,9 @@ Public surface::
 ``snv.info("PushT")`` and ``snv.list_envs()`` answer what exists without constructing anything;
 ``snv.set(verbose="INFO", default_device="auto")`` is the whole configuration.
 
-``stable_envs.testing`` and ``stable_envs.interop`` are developer-facing subpackages. The SWM id
-table lives at ``stable_envs.interop.SWM_IDS``. Policy rollouts and dataset storage belong to
-``stable-worldmodel`` and ``stable-datasets`` respectively.
+``stable_envs.testing`` is a developer-facing measurement library, not advertised at ``snv.*``.
+Policy rollouts, planning, dataset storage and training belong to the sibling stable-* projects
+and are not part of this API.
 """
 
 from __future__ import annotations

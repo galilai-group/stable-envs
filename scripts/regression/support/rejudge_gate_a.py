@@ -69,9 +69,9 @@ sys.path.insert(0, str(ROOT))
 
 def _frozen_cell_name(cls) -> str:
     """Regression-layer spelling: frozen oracle cells, not unpublished public aliases."""
-    from stable_envs.registry import _frozen_from_canonical
+    from tests.helpers.reference import frozen_from_canonical
 
-    return _frozen_from_canonical(cls.__name__)
+    return frozen_from_canonical(cls.__name__)
 
 
 GATE_A = ROOT / "tests/fixtures/regression/join/step7/closure2/gate_a"
@@ -121,12 +121,12 @@ def env_class(cell: str):
     Rocket's module imports cleanly without PyFlyt; a module that does not is reported, not guessed.
     """
     try:
-        from stable_envs import registry as R
+        from tests.helpers.reference import canonical_from_frozen, class_for_frozen_cell
 
-        cls = R._class_for_frozen_cell(cell)
+        cls = class_for_frozen_cell(cell)
         if cls is not None:
             return cls, f"REGISTRY[{cls.__name__!r}] (frozen cell {cell!r})"
-        live = R._canonical_from_frozen(cell)
+        live = canonical_from_frozen(cell)
     except BaseException as e:  # noqa: BLE001
         return None, f"stable_envs could not be imported: {type(e).__name__}: {e}"
     names = (cell,) if live == cell else (cell, live)

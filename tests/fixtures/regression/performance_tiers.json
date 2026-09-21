@@ -4896,7 +4896,7 @@
    "roles": [
     "frozen Step-2 tier definitions (prose)"
    ],
-   "sha256": "32717032cb0c5abfa18f55d71e80d29b5e81374a4c73d7cbd1eaca08197c5310"
+   "sha256": "bb528be7ddbbe648cf4302d167253e178d4e9ecc071563b26cb20bb5e32ca36d"
   },
   {
    "path": "docs/research/step6_optimization.md",

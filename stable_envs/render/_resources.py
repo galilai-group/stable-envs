@@ -44,8 +44,8 @@ WHAT THIS MODULE DOES NOT DO
 
 It does not import torch, warp, mujoco or nvdiffrast, and it must not start: it is imported by
 ``render/`` modules that are themselves imported in interpreters where none of those exist, and the
-dependency-direction test walks every file in ``render/`` to check it knows nothing about ``envs/``
-or ``stable_worldmodel``. Everything here is stdlib and works on a fake backend object, which is also
+dependency-direction test walks every file in ``render/`` to check it knows nothing about ``envs/``.
+Everything here is stdlib and works on a fake backend object, which is also
 how it is unit-tested on a machine with no CUDA.
 
 It also does not count EGL contexts — ``testing/resource_guard.py`` does that, by patching mujoco's

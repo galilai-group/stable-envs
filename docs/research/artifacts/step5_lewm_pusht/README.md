@@ -112,7 +112,7 @@ the same two episodes (14 and 15) as the historical run in
 Everything runs under SLURM; nothing here touches `stable_envs/` or `tests/`.
 
 ```bash
-cd examples/lewm_pusht
+cd docs/research/artifacts/step5_lewm_pusht
 
 sbatch run_probe.sbatch                                          # pixel parity + colour census
 sbatch --export=ALL,RENDERER=official,SEED=42    run_eval.sbatch

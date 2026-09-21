@@ -3,7 +3,7 @@
 Step 5 section 2 says to trace the existing 300-pair result to its checkpoint, config, seeds and
 episode selection and, if it holds up, ingest it rather than burn 300 episodes reproducing a table
 we already have. This script is that audit. It reads only the RAW per-run JSONs under
-``examples/lewm_pusht/results/`` -- never the prose -- and recomputes every number from the
+``docs/research/artifacts/step5_lewm_pusht/results/`` -- never the prose -- and recomputes every number from the
 per-episode outcomes, so a disagreement between the artifact and the write-up surfaces as a
 finding instead of being inherited.
 
@@ -12,7 +12,7 @@ at the SAME start steps with the same goal offset, budget, checkpoint and planne
 whole basis for using McNemar at all; if it does not hold, the discordant counts are comparing
 different tasks and the interval around them means nothing.
 
-    python examples/downstream_step5/ingest_pusht.py --out tests/fixtures/regression/join/step5/pusht
+    python docs/research/artifacts/step5_downstream/ingest_pusht.py --out tests/fixtures/regression/join/step5/pusht
 """
 
 from __future__ import annotations
@@ -23,8 +23,8 @@ import json
 import re
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
-RESULTS = ROOT / "examples" / "lewm_pusht" / "results"
+ROOT = next(p for p in Path(__file__).resolve().parents if (p / "pyproject.toml").is_file())
+RESULTS = ROOT / "docs" / "research" / "artifacts" / "step5_lewm_pusht" / "results"
 
 #: The arm that carries the claim, and the two that split it by pixel surface. ``stable_envs``
 #: replaces every image the checkpoint ever sees; the other two exist to say WHERE any movement
@@ -242,7 +242,7 @@ def provenance(runs: list[dict]) -> dict:
         ],
         "why_not_recovered": (
             "these runs were executed on the open_research cluster referenced by "
-            "examples/lewm_pusht/run_eval.sbatch, which this checkout has no access to; the "
+            "docs/research/artifacts/step5_lewm_pusht/run_eval.sbatch, which this checkout has no access to; the "
             "per-episode outcomes are committed and are what the audit reads"
         ),
     }

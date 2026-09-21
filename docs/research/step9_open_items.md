@@ -58,29 +58,25 @@ budget is still bounded (or the study names a new cost).
 
 ---
 
-## 2. Native `swm.World(env=snv.PushT(...))`
+## 2. Native `World(env=snv.PushT(...))` on the sibling package
 
-**Status.** Not a public API. Installed `stable-worldmodel` takes
-`env_name: str` and always `gym.make`s it.
+**Status.** Not a stable-envs API. Installed `stable-worldmodel` takes
+`env_name: str` and always `gym.make`s it. `stable_envs.interop` is gone:
+no `StableEnvGym`, no `BatchedEnvPool`, no `snv.make("swm/...")`.
 
-**Why v0 left it.** We cannot invent that call on our side. The shipped
-contract is `stable_envs.interop`:
+**Why v0 left it.** The dependency direction is the other way. stable-envs
+does not wrap, register, or adapt SWM. If a later SWM release wants to
+construct `World` from a live `snv.Env`, that change belongs in
+`stable-worldmodel`.
 
-- `StableEnvGym` — gym.Env over a batch-1 renderer (different simulator)
-- `BatchedEnvPool` / `attach_batched_pool` — one batched renderer behind N envs
-- `swap_renderer` — official dynamics, our pixels (the pixel-comparable path)
+Historical renderer-swap evidence lives under
+[research artifacts](artifacts/README.md), not in `examples/`.
 
-`examples/worldmodel.py` prints the limitation rather than faking the call.
-Worked evidence that the frozen adapters run an unmodified SWM workflow:
-`examples/swm_compat/`.
+**Path.** Change `stable-worldmodel.World` (or equivalent) to accept a live
+env. Do not restore an interop layer here.
 
-**Path.** Change `stable-worldmodel.World` to accept a live env (or gym.Env)
-instead of only a string. Then this package's interop façade can shrink. That
-is the documented long-term direction (`docs/concepts/worldmodel.md`).
-
-**Done when.** A released SWM accepts `World(env=snv.PushT(...))` (or an
-equivalent native object); the skip in `tests/integration/test_worldmodel.py`
-is removed; examples stop warning.
+**Done when.** A released SWM accepts a live `snv.Env` (or equivalent). That
+is an SWM change, not a restoration of `stable_envs.interop`.
 
 ---
 

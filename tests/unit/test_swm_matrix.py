@@ -515,8 +515,8 @@ def test_generation_is_byte_identical_on_repeat(mx, tmp_path):
         decode_all = str(REPO / "tests/fixtures/regression/references/decode_all.json")
         bench = str(REPO / "tests/fixtures/regression/references/bench_gpu_vs_cpu.json")
         dino = str(REPO / "tests/fixtures/regression/references/dino_agreement.json")
-        lewm = str(REPO / "examples/lewm_pusht/results")
-        swm_workflow = str(REPO / "examples/swm_compat/results/swm_workflow.json")
+        lewm = str(REPO / "docs/research/artifacts/step5_lewm_pusht/results")
+        swm_workflow = str(REPO / "tests/fixtures/regression/references/swm_workflow.json")
         live = False
         _variation_maps = {}
 

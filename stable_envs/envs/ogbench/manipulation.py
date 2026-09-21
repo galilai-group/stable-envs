@@ -1,12 +1,12 @@
-"""OGBench MANIPULATION — ``swm/OGBCube-v0`` and ``swm/OGBScene-v0``, on the Fetch pattern.
+"""OGBench MANIPULATION — CubeEnv and SceneEnv, on the Fetch pattern.
 
-Reference: ``stable_worldmodel``'s own forks of OGBench's ``ManipSpaceEnv`` — ``CubeEnv`` at
-**224 px** and ``SceneEnv`` at **200 px**, both ``ob_type='states'``, both rendered from the model
-camera ``front_pixels``. Not ogbench's ``cube-single-v0`` / ``scene-v0``: swm subclasses
-``ManipSpaceEnv`` directly and registers its subclasses with no kwargs, so the registered defaults
-are swm's and those are what is certified here. (``SceneEnv`` renders at 200 px only because it
-forgets to override the ogbench default while swm's own collection scripts pass 224; the registered
-default is certified as it stands and the omission is recorded as an upstream note.)
+Reference: OGBench's ``ManipSpaceEnv`` subclasses ``CubeEnv`` at **224 px** and ``SceneEnv`` at
+**200 px**, both ``ob_type='states'``, both rendered from the model camera ``front_pixels``. Not
+ogbench's ``cube-single-v0`` / ``scene-v0`` gymnasium ids: those wrap the same classes with different
+kwargs. This family constructs the classes directly, so the certified defaults are Cube at 224 px
+and Scene at 200 px from camera ``front_pixels``. (``SceneEnv`` renders at 200 px because it keeps
+the ogbench base default; collection scripts sometimes pass 224. The registered default is certified
+as it stands.)
 
 WHY THIS FAMILY IS A ``visual`` CELL AND FETCH IS NOT
 -----------------------------------------------------
@@ -52,12 +52,12 @@ STATE
 ``(qpos, mocap_pos)`` — and for the Scene, two extra dimensions for the button bits.
 Measured in phase 0: the frame is a bit-exact function of exactly that, verified by imposing a state
 from one episode onto a DIFFERENT episode (different seed, recompiled model) and getting an identical
-frame. The mocap pose is what positions the translucent goal marker, and it is NOT in swm's info
-dict, so a caller has to read it off ``data``.
+frame. The mocap pose is what positions the translucent goal marker, and it is not in the
+observation, so a caller has to read it off ``data``.
 
 Two things are deliberately NOT in the state, for two different reasons. **``qvel``** reaches no
 pixel — the mover pass runs ``kinematics``, which reads ``qpos`` and the mocap pose — and Gate A
-measured exactly that: carrying it, 20 of 48 dimensions moved no pixel. swm's own
+measured exactly that: carrying it, 20 of 48 dimensions moved no pixel. OGBench's
 ``reset(options={'state'})`` contract is still ``concat(qpos, qvel)``; the RENDER state is the part
 that reaches a pixel. **``mocap_quat``** is CONSTANT under the registered distribution: over 520
 states spanning both cells, all five task ids and 12 steps per episode it has exactly one unique
@@ -67,8 +67,8 @@ repo's ``check_state_dims_matter`` reports it dead, so it is supplied as a const
 ``fetch.py`` made the same call when it dropped mocap from its own state.
 
 The Scene's two button bits are not in ``qpos`` either. They are required keyword arguments of
-``SceneEnv.set_state`` — so swm's own API exposes them — and they drive ``geom_rgba`` of the two
-buttons and ``mat_rgba`` of the drawer/window handles, worth 1.0-2.2 % of pixels. (swm's
+``SceneEnv.set_state`` — so that API exposes them — and they drive ``geom_rgba`` of the two
+buttons and ``mat_rgba`` of the drawer/window handles, worth 1.0-2.2 % of pixels. (OGBench's
 ``reset(options={'state': ...})`` cannot supply them and raises ``KeyError``; recorded as an upstream
 defect.)
 
@@ -127,8 +127,9 @@ def IDENTITY_QUAT(nmocap: int) -> np.ndarray:
 #: MJWarp worlds per launch. Same constant and the same reason as Fetch: a context is per (res,
 #: nworld) and an unbounded batch would build one per batch size.
 MJW_CHUNK = 256
-#: The leaves swm resamples on every reset by default (`CubeEnv.DEFAULT_VARIATIONS`). They are drawn
-#: explicitly from the caller's `rng` so a state draw is reproducible; see `_variation_values`.
+#: The leaves CubeEnv/SceneEnv resample on every reset by default (`CubeEnv.DEFAULT_VARIATIONS`).
+#: They are drawn explicitly from the caller's `rng` so a state draw is reproducible; see
+#: `_variation_values`.
 DEFAULT_VARIATION_PATHS = {
     "Cube": ("cube.start_position", "cube.start_yaw", "cube.goal_position", "cube.goal_yaw"),
     "Scene": ("cube.start_position", "cube.start_yaw", "cube.goal_position", "cube.goal_yaw"),
@@ -141,7 +142,8 @@ DEFAULT_VARIATION_PATHS = {
 # own buffers, so the rule is written down once:
 #
 #   _BUNDLE_CACHE   (cell)                 immutable reference model, pristine arrays, cube geom
-#                                          ids, grid-texture masks, swm's declared defaults. Never
+#                                          ids, grid-texture masks, the declared variation defaults.
+#                                          Never
 #                                          varies with style; read-only after construction.
 #   _CTX_CACHE      (cell, res, nworld)    the mujoco_warp context. Its per-world `geom_rgba` is
 #                                          MUTABLE and SHARED across renders, across chunks and
@@ -202,7 +204,7 @@ def _seeded_action_space(u, seed: int):
 
 
 def _reference_env(cell: str, size: int | None = None, role: str = "render"):
-    """The swm-registered env itself. Needs ``stable_worldmodel``, ``ogbench`` and a GL backend.
+    """The OGBench reference env. Needs ``ogbench`` and a GL backend.
 
     Cached per (cell, size, ROLE) because each ``mujoco.Renderer`` holds a GL context and this family
     would otherwise open one per call. The env is reset once so the model is compiled.
@@ -225,16 +227,45 @@ def _reference_env(cell: str, size: int | None = None, role: str = "render"):
     hit = _REF_CACHE.get(key)
     if hit is not None:
         return hit
-    import gymnasium
-    import stable_worldmodel  # noqa: F401  (registers swm/*)
-
     kw = {}
     if size:
         kw = {"width": int(size), "height": int(size)}
-    env = gymnasium.make(SPEC[cell]["swm_id"], **kw)
+    env = _construct_reference(cell, kw)
     env.reset(seed=0)
     _REF_CACHE[key] = env
     return env
+
+
+def _construct_reference(cell: str, kw: dict):
+    """Build the certified reference env from OGBench.
+
+    Native path is the OGBench constructors at the certified size. If those are unavailable and
+    the gymnasium id is already registered, ``gymnasium.make`` is used.
+    """
+    try:
+        return _ogbench_make(cell, kw)
+    except ImportError as missing:
+        import gymnasium
+
+        gym_id = SPEC[cell]["reference_gym_id"]
+        try:
+            return gymnasium.make(gym_id, **kw)
+        except gymnasium.error.Error as exc:
+            raise missing from exc
+
+
+def _ogbench_make(cell: str, kw: dict):
+    """Upstream OGBench construction at the certified size / observation type."""
+    size = int(kw.get("height") or kw.get("width") or SPEC[cell]["size"])
+    if cell == "Cube":
+        from ogbench.manipspace.envs.cube_env import CubeEnv
+
+        return CubeEnv(env_type="single", ob_type="states", height=size, width=size)
+    if cell == "Scene":
+        from ogbench.manipspace.envs.scene_env import SceneEnv
+
+        return SceneEnv(ob_type="states", height=size, width=size)
+    raise KeyError(f"no OGBench constructor for {cell!r}")
 
 
 class _Bundle:
@@ -326,7 +357,7 @@ def _bundle(cell: str) -> _Bundle:
     # reads qpos and the mocap pose and nothing else -- and Gate A measured exactly that: with qvel
     # carried, 20 of 48 dimensions moved no pixel under a 0.05 perturbation. `check_state_dims_matter`
     # would correctly fail that, and fetch.py made the same call for the same reason when it dropped
-    # mocap from ITS state. swm's own `reset(options={'state'})` contract is concat(qpos, qvel), which
+    # mocap from ITS state. OGBench's `reset(options={'state'})` contract is concat(qpos, qvel), which
     # is why the split helper still understands qvel; the RENDER state is the part that reaches a pixel.
     names = (
         [f"qpos[{i}]" for i in range(b.nq)]
@@ -361,21 +392,21 @@ mj_quantise = _quantise
 
 
 def _variation_defaults(u) -> dict:
-    """The swm variation leaves we offer, at their declared init values.
+    """The appearance leaves we offer, at their declared init values.
 
-    Read from the live space rather than written down here, so our default IS swm's default by
-    construction and cannot drift from it in a later swm release.
+    Read from the live space rather than written down here, so our default IS the registered default
+    by construction and cannot drift from a later OGBench release.
 
-    SHAPE CONTRACT, decided once and enforced here so nothing downstream has to guess. swm declares
-    ``cube.color`` as ``(num_cubes, 3)`` and both registered cells are one-cube configurations
-    (``CubeEnv(env_type='single')`` and ``SceneEnv``, which pins ``_num_cubes = 1``), so the leaf
-    carries exactly one RGB triple. We carry it FLAT, as ``(3,)``: ``VariationMap`` pairs leaves by
-    dotted path and ``compat.worldmodel`` moves them through ``flat_layout`` widths, so a leading
-    axis of length 1 buys nothing and costs a shape that the Box, the style row and the swm value
-    would each spell differently. ``style_from_variation`` accepts swm's ``(1, 3)`` because it
-    flattens before slicing; ``variation_from_style`` emits the flat ``(3,)`` back, which is the
-    same flattening every multi-row leaf in that module already gets and is recorded in findings.md
-    as a boundary reshape rather than papered over here.
+    SHAPE CONTRACT, decided once and enforced here so nothing downstream has to guess. CubeEnv
+    declares ``cube.color`` as ``(num_cubes, 3)`` and both registered cells are one-cube
+    configurations (``CubeEnv(env_type='single')`` and ``SceneEnv``, which pins ``_num_cubes = 1``),
+    so the leaf carries exactly one RGB triple. We carry it FLAT, as ``(3,)``: ``VariationMap`` pairs
+    leaves by dotted path and the layout helper moves them through ``flat_layout`` widths, so a
+    leading axis of length 1 buys nothing and costs a shape that the Box, the style row and the
+    upstream value would each spell differently. ``style_from_variation`` accepts the upstream
+    ``(1, 3)`` because it flattens before slicing; ``variation_from_style`` emits the flat ``(3,)``
+    back, which is the same flattening every multi-row leaf in that module already gets and is
+    recorded in findings.md as a boundary reshape rather than papered over here.
 
     ``floor.color`` is ``(2, 3)`` on both sides -- the checker's two colours -- and stays shaped,
     because the two rows are not interchangeable and a flat six-vector would let a caller swap them
@@ -403,21 +434,21 @@ def _variation_defaults(u) -> dict:
             except Exception:
                 val = None
         out[path] = np.asarray(fallback, np.float64) if val is None else val
-    # swm's (num_cubes, 3) -> our flat (3,); asserted one cube above, so this cannot silently drop a
-    # second cube's colour.
+    # upstream (num_cubes, 3) -> our flat (3,); asserted one cube above, so this cannot silently drop
+    # a second cube's colour.
     out["cube.color"] = np.asarray(out["cube.color"], np.float64).reshape(-1)[:3]
     out["floor.color"] = np.asarray(out["floor.color"], np.float64).reshape(2, 3)
     return out
 
 
 def _cube_geoms(u, m) -> np.ndarray:
-    """The geoms swm's ``initialize_episode`` paints with ``cube.color``.
+    """The geoms ``initialize_episode`` paints with ``cube.color``.
 
     MEASURED (both cells): rows 62 ``object_0`` and 63 ``target_object_0``, and both are MOVERS, so
     this leaf never touches the baked plate. Resolved BY NAME rather than by the measured ids, since
     an id is a property of one compilation and a name is a property of the MJCF. The alpha channel is
     deliberately NOT part of this: ``object_0`` is opaque and ``target_object_0`` is the translucent
-    goal marker at alpha 0.2, and swm preserves each geom's own alpha while writing only rgb.
+    goal marker at alpha 0.2, and each geom's own alpha is preserved while writing only rgb.
     """
     import mujoco
 
@@ -435,18 +466,20 @@ def _cube_geoms(u, m) -> np.ndarray:
 def _grid_texture(m, floor_default) -> dict | None:
     """Where the checker floor lives in ``tex_data``, and which texels are rgb1 / rgb2.
 
-    swm honours ``floor.color`` by rewriting the MJCF texture's rgb1/rgb2 and RECOMPILING the scene.
-    The plate does not need a recompile to reproduce that: the compiled texture is a two-colour
-    checker plus a mark colour, so the same picture is reached by substituting the texels in a
-    PRIVATE copy and re-uploading the texture to the renderer's own context.
+    The registered default honours ``floor.color`` by rewriting the MJCF texture's rgb1/rgb2 and
+    RECOMPILING the scene. The plate does not need a recompile to reproduce that: the compiled
+    texture is a two-colour checker plus a mark colour, so the same picture is reached by
+    substituting the texels in a PRIVATE copy and re-uploading the texture to the renderer's own
+    context.
 
     The masks are taken once, from the DEFAULT texture, so a later write cannot be confused by the
     two requested colours happening to collide with each other. ``markrgb`` texels (204,204,204) are
-    deliberately left alone: swm does not touch them, and measured they are 1,023 of the 262,144.
+    deliberately left alone: the recompile does not touch them, and measured they are 1,023 of the
+    262,144.
 
     VERIFIED, not assumed: rewriting these texels and calling ``mjr_uploadTexture`` gives a plate
-    BYTE-IDENTICAL to letting swm recompile the whole model at the same floor.color -- tex_data 0
-    bytes differing, 0 of 50,176 pixels differing (both cells).
+    BYTE-IDENTICAL to recompiling the whole model at the same floor.color -- tex_data 0 bytes
+    differing, 0 of 50,176 pixels differing (both cells).
 
     THE ADDRESSING, THE MASKS AND THE ASSERTIONS ARE NOW ``_plate_texels.texel_slots``, which is the
     same arithmetic this function used to spell itself: the texture id, ``tex_adr``, the channel
@@ -460,7 +493,7 @@ def _grid_texture(m, floor_default) -> dict | None:
 
 
 def _button_tables(u, m, nbuttons: int) -> dict | None:
-    """``{bit tuple: (geom_rgba, mat_rgba)}`` for every button combination, taken from SWM'S OWN CODE.
+    """``{bit tuple: (geom_rgba, mat_rgba)}`` for every button combination, taken from SceneEnv.
 
     The Scene's two button bits are state, and they reach the frame only through colours:
     ``SceneEnv._apply_button_states`` writes ``geom_rgba`` of the two buttons and ``mat_rgba`` of the
@@ -471,7 +504,7 @@ def _button_tables(u, m, nbuttons: int) -> dict | None:
     The tables are captured by CALLING ``_apply_button_states`` rather than by reimplementing its
     rule here. Reimplementing would be a second copy of a colour law that already exists, free to
     drift from it silently; calling it means the only thing this file asserts is "these are the
-    colours swm produces for these bits", which is checkable by construction.
+    colours SceneEnv produces for these bits", which is checkable by construction.
     """
     if not nbuttons:
         return None
@@ -487,8 +520,8 @@ def _button_tables(u, m, nbuttons: int) -> dict | None:
     # The tables must actually DIFFER, or the bits are not colours and this design is wrong.
     first = out[tuple([0] * nbuttons)]
     assert any(not np.array_equal(first[0], v[0]) or not np.array_equal(first[1], v[1]) for v in out.values()), (
-        "button states produce identical colour tables: either swm's rule changed or this cell is "
-        "capturing the wrong arrays, and carrying the bits in the state would be a lie either way"
+        "button states produce identical colour tables: either SceneEnv's rule changed or this cell "
+        "is capturing the wrong arrays, and carrying the bits in the state would be a lie either way"
     )
     return out
 
@@ -530,7 +563,7 @@ def _context(cell: str, res: int, nworld: int) -> _Ctx:
     if hit is not None:
         return hit
     b = _bundle(cell)
-    # A DEEP COPY, and this is not tidiness. `_bundle.model` is the swm env's OWN MjModel -- the
+    # A DEEP COPY, and this is not tidiness. `_bundle.model` is the reference env's OWN MjModel -- the
     # object `reference_render` and `_bake_plate` render the reference through. `prepare_model`
     # mutates in place and is deliberately left applied for the life of the context (MJWarp reads
     # geometry once, at `create_render_context`), so applying it to the shared model would move the
@@ -602,7 +635,7 @@ def _context(cell: str, res: int, nworld: int) -> _Ctx:
 def _ctx_button_tables(b: _Bundle, m, res: int, device: str = "cuda") -> dict | None:
     """``{bit code: (geom_rgba, mat_rgba)}`` on the CONTEXT's model, as device tensors.
 
-    The tables in ``_bundle`` were captured from swm's own ``_apply_button_states`` on the REFERENCE
+    The tables in ``_bundle`` were captured from SceneEnv's ``_apply_button_states`` on the REFERENCE
     model. The context renders through a deep copy that has had ``prepare_model`` and
     ``bake_unsamplable_textures`` applied, so its ``mat_rgba`` already differs from the reference's by
     the baked button texture. Copying the reference tables in wholesale would silently undo the bake
@@ -655,29 +688,27 @@ def _ctx_button_tables(b: _Bundle, m, res: int, device: str = "cuda") -> dict | 
     return out
 
 
-#: Per-cell facts. ``swm_id`` is the registration under test; ``camera`` is what swm's own ``render``
-#: defaults to (both subclasses override the ogbench base to use ``front_pixels``).
+#: Per-cell facts. ``reference_gym_id`` is the gymnasium id kept for certification;
+#: ``camera`` is the model camera both subclasses render from (``front_pixels``).
 SPEC = {
     # `visible_tri` is the phase-0 census figure for geoms in the rendered groups, used only in the
     # device="cpu" refusal so the message quotes THIS cell's size rather than its sibling's.
     # `state_dim` is a CONSTANT here, not `len(_bundle(cell).state_names)`. Calling `_bundle` from
-    # `_make_classes` meant `import stable_envs` built both swm environments: 4.4 s of import time,
-    # and without `stable_worldmodel` installed the module raised and BOTH ids vanished from the
+    # `_make_classes` meant `import stable_envs` built both OGBench environments: 4.4 s of import
+    # time, and without `ogbench` installed the module raised and BOTH ids vanished from the
     # registry (76 instead of 78). A docstring is not worth either. `tests/unit/test_ogb_manip.py`
-    # asserts these agree with what `_bundle` computes, wherever swm IS importable.
+    # asserts these agree with what `_bundle` computes, wherever ogbench IS importable.
     "Cube": {
-        "swm_id": "swm/OGBCube-v0",
+        "reference_gym_id": "swm/OGBCube-v0",
         "camera": "front_pixels",
         "size": 224,
-        "swm_ref": "swm/OGBCube-v0",
         "visible_tri": 193113,
         "state_dim": 24,
     },
     "Scene": {
-        "swm_id": "swm/OGBScene-v0",
+        "reference_gym_id": "swm/OGBScene-v0",
         "camera": "front_pixels",
         "size": 200,
-        "swm_ref": "swm/OGBScene-v0",
         "visible_tri": 196633,
         "state_dim": 30,
     },
@@ -707,11 +738,11 @@ class OGBManipBase(Env):
 
         ``device`` is checked FIRST, before anything is built, because the CPU refusal is this
         family's loudest declaration and a caller who asked for a CPU env should get the reason
-        rather than four seconds of swm environment construction followed by it.
+        rather than four seconds of OGBench environment construction followed by it.
 
         ``state_dim``, ``state_names`` and ``state_layout`` are all read off the COMPILED MODEL here
         rather than declared on the class: the widths are ``nq``, ``3 * nmocap`` and the cell's
-        button count, and every one of them is a property of the scene swm compiles.
+        button count, and every one of them is a property of the scene OGBench compiles.
         """
         device = Env.resolve_device(device)
         if not str(device).startswith("cuda"):
@@ -805,7 +836,7 @@ class OGBManipBase(Env):
     def _variation_values(self, rng: np.random.Generator) -> dict:
         """Explicit values for the registered default variation leaves, drawn from ``rng``.
 
-        `reset_variation_space` is called by swm with `seed=None`, so the leaves it resamples come
+        `reset_variation_space` is called with `seed=None`, so the leaves it resamples come
         from OS entropy and no reset is reproducible. It does honour an explicit
         `options['variation_values']`, which is the one handle that makes the draw ours. Uniform over
         each leaf's own bounds, which is what `Box.sample` would have done, so the distribution is
@@ -839,11 +870,11 @@ class OGBManipBase(Env):
         env = _reference_env(self.CELL, role="sample")  # reset many times; never rendered
         u = env.unwrapped
         out = []
-        # THE GLOBAL NUMPY RNG IS SEEDED FROM `rng`, and this is not belt-and-braces. swm's
-        # `CubeEnv.reset` calls `reset_variation_space(..., seed=None, ...)` and the task is picked
+        # THE GLOBAL NUMPY RNG IS SEEDED FROM `rng`, and this is not belt-and-braces. CubeEnv.reset
+        # calls `reset_variation_space(..., seed=None, ...)` and the task is picked
         # with the module-level `np.random`, so two calls with the same `rng` drew DIFFERENT states
         # and `test_seeded_sampling_reproduces_in_a_fresh_process` could not hold. Seeding the global
-        # generator is the only handle swm exposes; its prior state is saved and restored so this
+        # generator is the only handle the reference exposes; its prior state is saved and restored so this
         # function does not become a side effect on the caller's own draws.
         gstate = np.random.get_state()
         try:
@@ -877,11 +908,11 @@ class OGBManipBase(Env):
     # ---- variation ------------------------------------------------------------------------
 
     def make_variation_space(self) -> Dict:
-        """The two swm appearance leaves this cell can honour without a per-world model array.
+        """The two appearance leaves this cell can honour without a per-world model array.
 
-        swm offers six. Which ones are reachable is not a matter of taste: it is decided by WHICH
-        MODEL ARRAY each one writes and whether the geoms it writes are movers or plate, and that was
-        measured leaf by leaf (see docs/research/step8_variations_newcells.md).
+        The reference offers six. Which ones are reachable is not a matter of taste: it is decided by
+        WHICH MODEL ARRAY each one writes and whether the geoms it writes are movers or plate, and
+        that was measured leaf by leaf (see docs/research/step8_variations_newcells.md).
 
         ``cube.color`` writes ``geom_rgba`` on two MOVER geoms -- ``object_0`` and the translucent
         ``target_object_0`` -- with no recompile, which is exactly what ``_upload_button_colours``
@@ -893,11 +924,11 @@ class OGBManipBase(Env):
         ``light.intensity`` (``light_diffuse``), ``camera.angle_delta`` (``cam_mat0``/``cam_quat``)
         and ``cube.size`` (``geom_size``) all need the value to differ PER WORLD inside one
         mujoco_warp context, which this renderer cannot express; ``agent.color`` is dead upstream in
-        isolation (swm's dirty-flag test is inverted, so the colour never reaches the compiled
+        isolation (the dirty-flag test is inverted, so the colour never reaches the compiled
         model). Those are recorded as escalations rather than quietly approximated.
 
-        The defaults are read from swm's own variation space at bundle time, so "our default is the
-        registered default" is true by construction rather than by a copied literal.
+        The defaults are read from the reference variation space at bundle time, so "our default is
+        the registered default" is true by construction rather than by a copied literal.
         """
         d = _bundle(self.CELL).var_defaults
         return Dict(
@@ -1015,12 +1046,12 @@ class OGBManipBase(Env):
     def _apply_floor(self, rig, floor) -> None:
         """Put one ``floor.color`` into the rig's PRIVATE texture, and onto the renderer's context.
 
-        swm reaches the same picture by rewriting the MJCF rgb1/rgb2 and recompiling the scene. A
+        The same picture is reached by rewriting the MJCF rgb1/rgb2 and recompiling the scene. A
         recompile is exactly what this cell cannot afford -- it would invalidate the plate rig, the
         appearance digest and the mujoco_warp graph all at once -- and it turns out not to be
         necessary: the compiled texture is a two-colour checker plus an untouched mark colour, so
-        substituting the texels reaches the same bytes. VERIFIED byte-for-byte against letting swm
-        recompile, on both cells: ``tex_data`` 0 bytes differing and the baked plate 0 of 50,176
+        substituting the texels reaches the same bytes. VERIFIED byte-for-byte against a recompile,
+        on both cells: ``tex_data`` 0 bytes differing and the baked plate 0 of 50,176
         pixels differing.
 
         ``mjr_uploadTexture`` is the half that is easy to forget. ``mujoco.Renderer`` uploads
@@ -1060,7 +1091,7 @@ class OGBManipBase(Env):
         already -- the unconditional write, the ``mjr_uploadTexture``, and the
         ``make_current()`` before it -- after being lifted out of this very function. What stays here
         is the only part that is this family's: which colour is meant when the caller passes ``None``
-        (swm's registered default, read off its own variation space at bundle time) and the ``rig.floor``
+        (the registered default, read off the variation space at bundle time) and the ``rig.floor``
         record, which is a note of what was last written and never a permission to skip the write.
         """
         g = self._b.grid_tex
@@ -1252,8 +1283,8 @@ class OGBManipBase(Env):
         value that is ``None`` here is "this cell has no cube geoms at all".
 
         Each geom keeps its OWN alpha -- ``object_0`` is opaque, ``target_object_0`` is the
-        translucent goal marker -- taken from the pristine model, because swm writes rgb and leaves
-        the alpha channel to the MJCF.
+        translucent goal marker -- taken from the pristine model, because the colour write is rgb and
+        leaves the alpha channel to the MJCF.
         """
         b = self._b
         gids = b.cube_geoms
@@ -1286,7 +1317,7 @@ class OGBManipBase(Env):
     def _upload_button_colours(self, c, chunk, n: int) -> None:
         """Write each world's button colours from its own state bits.
 
-        The tables come from ``swm``'s own ``_apply_button_states`` (see ``_button_tables``) and are
+        The tables come from SceneEnv's ``_apply_button_states`` (see ``_button_tables``) and are
         re-baked here through the context's copy, because that copy has had
         ``bake_unsamplable_textures`` applied to it and its ``mat_rgba`` therefore differs from the
         reference's by the baked button texture.
@@ -1310,11 +1341,11 @@ class OGBManipBase(Env):
 
     @classmethod
     def reference_render(cls, env, states) -> np.ndarray:
-        """The official frames for a state stack, through swm's own ``render``.
+        """The official frames for a state stack, through the reference ``render``.
 
         The button bits go through ``SceneEnv.set_state``'s required keyword arguments, which is the
-        only way swm exposes them; ``mocap_pos``/``mocap_quat`` are written directly because nothing
-        in swm's API takes them.
+        only way the reference exposes them; ``mocap_pos``/``mocap_quat`` are written directly because
+        nothing in the reference API takes them.
         """
         import mujoco
 
@@ -1360,7 +1391,7 @@ _PLATE_RIGS: dict = {}
 _KEEPALIVE: list = []
 
 #: Model arrays the plate depends on, by prefix. `geom_rgba` and `mat_rgba` are EXCLUDED because
-#: swm's `_apply_button_states` writes them into the live model on every button change -- they are
+#: SceneEnv's `_apply_button_states` writes them into the live model on every button change -- they are
 #: state wearing the shape of appearance, and the rig pins them itself (see `_plate_rig`).
 _APPEARANCE_PREFIXES = ("geom_", "mat_", "tex", "light_", "cam_", "mesh_", "body_", "site_", "hfield_", "skin_")
 _APPEARANCE_SKIP = ("geom_rgba", "mat_rgba", "geom_group")
@@ -1502,7 +1533,7 @@ def _plate_rig(cell: str, res: int) -> _PlateRig:
 
 #: MEASURED, not chosen. EIGHT independent draws of 64 states each on an RTX 3090 (job 6433493, its
 #: JSON and log committed under ``tests/fixtures/regression/join/step7/ogb-manipulation/m6/final8/``), taken
-#: THROUGH ``check_visual_fidelity`` -- the function that grades the declaration -- against swm's own
+#: THROUGH ``check_visual_fidelity`` -- the function that grades the declaration -- against OGBench's
 #: EGL frames at the registered resolution. One of the eight IS the graded draw: the check calls
 #: ``sample_states(n)`` with no rng, which is ``default_rng(0)``, the same fixed draw every run.
 #: The declared value is the WORST of the eight draws; the threshold beside it
@@ -1515,7 +1546,7 @@ def _plate_rig(cell: str, res: int) -> _PlateRig:
 import os as _os
 
 #: MEASURED by the Gate-F remeasure chain, job 6407605 on
-#: gpu2109 (RTX 3090), three independent 64-state draws per cell against swm's own EGL frames at
+#: gpu2109 (RTX 3090), three independent 64-state draws per cell against OGBench's EGL frames at
 #: the registered resolution. The declared value is the WORST of the three and `draw_spread` carries
 #: the range; the thresholds were computed by that script under the family rule (x1.3 on the mean,
 #: the fractional floors a round 0.05 step below the worst draw), not set by hand here.
@@ -1558,12 +1589,10 @@ _MEASURED: dict = {
 #: OUR side: the batch raytracer that drew the movers.
 _UNMEASURED = str(_os.environ.get("SE7_OGB_UNMEASURED", "")) == "1"
 
-#: The REFERENCE side: swm's `render()` goes through `mujoco.Renderer`, so mujoco is the version the
-#: certifier must compare, and ogbench is named beside it because it is the package that compiles the
-#: scene these frames are of -- `tests/unit/test_declarations.py` requires a version declared here to
-#: be named in `measured_at` too, so the two cannot drift. swm itself stays absent: the numbers were
-#: measured against a source checkout rather than a released version, and a version nobody measured
-#: under is not provenance.
+#: The REFERENCE side: OGBench's `render()` goes through `mujoco.Renderer`, so mujoco is the version
+#: the certifier must compare, and ogbench is named beside it because it is the package that compiles
+#: the scene these frames are of -- `tests/unit/test_declarations.py` requires a version declared here
+#: to be named in `measured_at` too, so the two cannot drift.
 _REFERENCE_VERSIONS = {"mujoco": "3.12.0", "ogbench": "1.2.1"}
 
 _MEASURED_WITH = {"mujoco_warp": "3.12.0"}
@@ -1628,7 +1657,7 @@ def _fidelity(cell: str) -> dict:
             f"{spec['camera']}, 8 independent "
             f"draws of 64 states from the "
             f"env's own pool (reset + 0-25 random actions) on an RTX 3090 under MUJOCO_GL=egl, "
-            f"against swm's own render(); the declared value is the WORST of the eight and "
+            f"against OGBench's own render(); the declared value is the WORST of the eight and "
             f"draw_spread carries the range, for mean_abs/within8_frac/ssim AND for "
             f"interior_exact_frac, all_exact_frac and interior_frac. MEASURED THROUGH THE CHECK "
             f"THAT GRADES IT, `check_visual_fidelity`, and one of the eight draws IS the draw the "
@@ -1641,7 +1670,7 @@ def _fidelity(cell: str) -> dict:
             f"MJWarp movers through the mover segmentation LUT, with gl_rounding and the shared "
             f"out-of-range-spot correction applied. {d['job']}"
         ),
-        # The REFERENCE side, which the certifier compares: mujoco is what swm's render() draws with.
+        # The REFERENCE side, which the certifier compares: mujoco is what OGBench's render() draws with.
         "reference_versions": _REFERENCE_VERSIONS,
         # OUR side, recorded and never compared: a bump of our own renderer that moves these numbers
         # is a regression to be seen, not a reason to block the check.
@@ -1705,15 +1734,15 @@ def _make_classes():
                     CELL=cell,
                     domain=cell.lower(),
                     name=f"ogb-{cell.lower()}",
-                    reference_id=spec["swm_ref"],
+                    reference_id=spec["reference_gym_id"],
                     default_size=spec["size"],
                     visual_fidelity=_fidelity(cell),
                     visual_note=_RESIDUAL_NOTE + (_SCENE_BAKE_NOTE if cell == "Scene" else ""),
                     parity_interior_min=None,
                     __doc__=(
-                        f"OGBench manipulation {cell} ({spec['swm_ref']}), fidelity_tier='visual'.\n\n"
+                        f"OGBench manipulation {cell}, fidelity_tier='visual'.\n\n"
                         f"The frame is a MuJoCo-baked static plate composited with mujoco_warp's batch "
-                        f"ray-caster for the movers, at swm's registered {spec['size']} px from the model "
+                        f"ray-caster for the movers, at default_size={spec['size']} from the model "
                         f"camera {spec['camera']!r}. State is (qpos, mocap_pos"
                         + (", button bits)" if cell == "Scene" else ")")
                         + f", {spec['state_dim']} dimensions. qvel is excluded because it "

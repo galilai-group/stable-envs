@@ -1,6 +1,6 @@
 """Before any downstream number: do the two Reacher renderers draw the same picture at all?
 
-The PushT arm had this probe (``examples/lewm_pusht/parity_probe.py``) and it is what turned a
+The PushT arm had this probe (``docs/research/artifacts/step5_lewm_pusht/parity_probe.py``) and it is what turned a
 null result into a diagnosis. The Reacher arm needs it more, because ``stable_worldmodel``'s reacher
 is not ``suite.load('reacher', 'hard')``: it recompiles the model through ``mjcf`` after editing
 materials, geom types and densities, and its variation space defaults include
@@ -21,7 +21,7 @@ This probe therefore answers three questions with pixels rather than with reason
   3. How close is it with the target moved out of the camera's view -- the only way this renderer
      can express "do not draw that geom"?
 
-    python examples/downstream_step5/reacher/parity_probe.py --n 32 --out tests/fixtures/regression/join/step5/reacher
+    python docs/research/artifacts/step5_downstream/reacher/parity_probe.py --n 32 --out tests/fixtures/regression/join/step5/reacher
 """
 
 from __future__ import annotations
@@ -33,7 +33,7 @@ from pathlib import Path
 
 import numpy as np
 
-ROOT = Path(__file__).resolve().parents[3]
+ROOT = next(p for p in Path(__file__).resolve().parents if (p / "pyproject.toml").is_file())
 
 #: Where the harness puts a geom the reference refuses to draw. Far outside a scene whose arm
 #: reaches 0.22 m and whose camera sees roughly +/-0.3 m, and finite so MuJoCo still computes a pose.

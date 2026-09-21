@@ -1,9 +1,9 @@
 """``make`` / ``info`` / ``list_envs``, plus the registration decorator and its declaration checks.
 
 THE CLASSES ARE CANONICAL AND THIS MODULE HOLDS NO SEMANTICS. ``snv.PushT`` is the environment;
-``snv.make("swm/PushT-v1")`` is a string that finds it, for configs, serialisation and interop. The
-registry knows three things: the class a name refers to, the SWM ids that are aliases for it, and
-whether a class declared its fidelity tier completely before it was allowed in.
+``snv.make("PushT")`` is a string that finds that class. The registry knows the class a name
+refers to, and whether a class declared its fidelity tier completely before it was allowed in.
+It does not know sibling-library identifiers.
 
 Family metadata is declared on the class (``family``, ``domain``), never inferred from the file path.
 
@@ -34,10 +34,6 @@ from .env import (
 
 #: class name -> class, populated by ``register``. One place, no parallel tables.
 REGISTRY: dict[str, type[Env]] = {}
-#: Frozen-oracle / SWM-cell spellings -> live class names. Not a public alias table:
-#: ``make("PointmazeLargeNavigate")`` does not resolve. Used when joining SWM_IDS cells
-#: and when regression fixtures still key rows by the historical spelling.
-_HISTORICAL_CLASS_NAMES: dict[str, str] = {}
 
 
 def check_fidelity_declaration(cls: type[Env]) -> None:
@@ -177,34 +173,6 @@ def register(cls: type[Env]) -> type[Env]:
     return cls
 
 
-def _remember_historical_name(old: str, cls: type[Env]) -> None:
-    """Record a frozen-oracle spelling. Not a public alias: ``make(old)`` still fails."""
-    if old == cls.__name__:
-        return
-    existing = _HISTORICAL_CLASS_NAMES.get(old)
-    if existing is not None and existing != cls.__name__:
-        raise ValueError(f"historical name {old!r} already points at {existing}")
-    _HISTORICAL_CLASS_NAMES[old] = cls.__name__
-
-
-def _canonical_from_frozen(name: str) -> str:
-    """Live class name for a frozen-oracle / SWM-cell spelling, or ``name`` if it was never renamed."""
-    return _HISTORICAL_CLASS_NAMES.get(name, name)
-
-
-def _frozen_from_canonical(name: str) -> str:
-    """Frozen-oracle spelling for a live class name, or ``name`` if it was never renamed."""
-    for old, new in _HISTORICAL_CLASS_NAMES.items():
-        if new == name:
-            return old
-    return name
-
-
-def _class_for_frozen_cell(name: str) -> type[Env] | None:
-    """Look up a class by live name or by a frozen SWM/oracle cell spelling."""
-    return REGISTRY.get(name) or REGISTRY.get(_canonical_from_frozen(name))
-
-
 def registry_table() -> list[dict[str, Any]]:
     """One row per registered env, with its FIDELITY TIER. The listing, in a form that can be printed.
 
@@ -265,119 +233,20 @@ def format_registry(width: int = 34) -> str:
     return "\n".join(out)
 
 
-#: SWM id -> the stable-envs cell(s) that serve it, VERBATIM from the support matrix
-#: (``tests/fixtures/regression/support_matrix.json``, 42 rows, 40 pixel-producing and 2 symbolic).
-#:
-#: These are aliases, not a second registry: every id resolves to a class that is already registered
-#: under its canonical name, and ``tests/unit/test_registry.py`` asserts this table against
-#: the frozen matrix row for row, so the two cannot drift. An id with SEVERAL cells (a DM-Control id
-#: that covers two tasks, the two OGB maze layouts) does not pick one for the caller — the cells are
-#: different environments and choosing silently is how a benchmark ends up reporting the wrong one.
-SWM_IDS: dict[str, tuple[str, ...]] = {
-    "swm/AcrobotControl-v1": ("Acrobot",),
-    "swm/AcrobotDMControl-v0": ("DMCAcrobotSwingup",),
-    "swm/BallInCupDMControl-v0": ("DMCBallInCupCatch",),
-    "swm/CartPoleControl-v1": ("CartPole",),
-    "swm/CartpoleDMControl-v0": ("DMCCartpoleBalance", "DMCCartpoleSwingup"),
-    "swm/CheetahDMControl-v0": ("DMCCheetahRun",),
-    "swm/CraftaxClassicPixels-v1": ("CraftaxClassic",),
-    "swm/CraftaxClassicSymbolic-v1": (),
-    "swm/CraftaxPixels-v1": ("CraftaxFull",),
-    "swm/CraftaxSymbolic-v1": (),
-    "swm/FetchPickAndPlace-v3": ("FetchPickAndPlace",),
-    "swm/FetchPickAndPlaceDense-v3": ("FetchPickAndPlaceDense",),
-    "swm/FetchPickAndPlaceDict-v3": ("FetchPickAndPlaceDict",),
-    "swm/FetchPush-v3": ("FetchPush",),
-    "swm/FetchPushDense-v3": ("FetchPushDense",),
-    "swm/FetchPushDict-v3": ("FetchPushDict",),
-    "swm/FetchReach-v3": ("FetchReach",),
-    "swm/FetchReachDense-v3": ("FetchReachDense",),
-    "swm/FetchReachDict-v3": ("FetchReachDict",),
-    "swm/FetchSlide-v3": ("FetchSlide",),
-    "swm/FetchSlideDense-v3": ("FetchSlideDense",),
-    "swm/FetchSlideDict-v3": ("FetchSlideDict",),
-    "swm/FingerDMControl-v0": ("DMCFingerTurnHard",),
-    "swm/HopperDMControl-v0": ("DMCHopperHop",),
-    "swm/HumanoidDMControl-v0": ("DMCHumanoidStand",),
-    "swm/ManipulatorDMControl-v0": ("DMCManipulatorBringBall",),
-    "swm/MountainCarContinuousControl-v0": ("MountainCarContinuous",),
-    "swm/MountainCarControl-v0": ("MountainCar",),
-    "swm/OGBCube-v0": ("OGBCube",),
-    "swm/OGBMaze-v0": ("PointmazeLargeNavigate", "PointmazeLargeStitch"),
-    "swm/OGBScene-v0": ("OGBScene",),
-    "swm/PFRocketLanding-v0": ("PFRocketLanding",),
-    "swm/PendulumControl-v1": ("Pendulum",),
-    "swm/PendulumDMControl-v0": ("DMCPendulumSwingup",),
-    "swm/Piecewise-v0": ("Piecewise", "PiecewiseZones"),
-    "swm/PushT-Discrete-v1": ("PushT",),
-    "swm/PushT-v1": ("PushT",),
-    "swm/QuadrupedDMControl-v0": ("DMCQuadrupedWalk",),
-    "swm/ReacherDMControl-v0": ("DMCReacherHard",),
-    "swm/SimplePointMaze-v0": ("SimplePointMaze",),
-    "swm/TwoRoom-v1": ("TwoRoom", "TwoRoomTarget"),
-    "swm/WalkerDMControl-v0": ("DMCWalkerWalk",),
-}
-
-
-#: The two symbolic ids: ``stable_worldmodel`` serves them and this package deliberately does not,
-#: because there is no frame to be a function of the state. Recorded so ``make`` can say that rather
-#: than "unknown env".
-SYMBOLIC_IDS = tuple(sorted(k for k, v in SWM_IDS.items() if not v))
-
-
-def canonical_names(name: str) -> tuple[str, ...]:
-    """The class name(s) ``name`` refers to: itself if it is one, else its SWM id's cells.
-
-    SWM cells are recorded in the frozen support-matrix spelling. Join those onto live classes
-    with :func:`_class_for_frozen_cell`.
-    """
-    if name in REGISTRY:
-        return (name,)
-    return SWM_IDS.get(name, ())
-
-
 def _lookup_class(name: str) -> type[Env] | None:
     return REGISTRY.get(name)
 
 
-def _resolve(name: str, what: str) -> type[Env]:
+def _resolve(name: str) -> type[Env]:
     cls = _lookup_class(name)
     if cls is not None:
         return cls
-    cells = SWM_IDS.get(name)
-    if cells is None:
-        raise KeyError(
-            f"unknown env {name!r}; known: {sorted(REGISTRY)}"
-            + (f"; known SWM ids: {sorted(SWM_IDS)}" if name.startswith("swm/") else "")
-        )
-    if not cells:
-        raise KeyError(
-            f"{name} is one of the two SYMBOLIC stable_worldmodel ids ({', '.join(SYMBOLIC_IDS)}): "
-            f"its observation is a symbol array, not a frame, so this package has nothing to render "
-            f"for it and does not pretend to. Use stable_worldmodel's own env."
-        )
-    live = [c for c in cells if _class_for_frozen_cell(c) is not None]
-    if len(cells) > 1:
-        raise KeyError(
-            f"{name} maps onto {len(cells)} stable-envs cells ({', '.join(cells)}), which are "
-            f"different environments — the id names the family and the cell names the task. Ask for "
-            f"one by its class name, e.g. {what}({_canonical_from_frozen(cells[0])!r})."
-        )
-    if not live:
-        errs = import_errors()
-        raise KeyError(
-            f"{name} maps onto {cells[0]}, which is not registered in this interpreter. Import "
-            f"errors recorded during discovery: {errs or 'none'} — most often an optional dependency "
-            f"the family needs."
-        )
-    found = _class_for_frozen_cell(live[0])
-    assert found is not None
-    return found
+    raise KeyError(f"unknown env {name!r}; known: {sorted(REGISTRY)}")
 
 
 def make(name: str, **kwargs) -> Env:
-    """``make("PushT", num_envs=64)`` or ``make("swm/PushT-v1", device="cuda")``."""
-    return _resolve(name, "make")(**kwargs)
+    """``make("PushT", num_envs=64)``. Canonical stable-envs class names only."""
+    return _resolve(name)(**kwargs)
 
 
 def info(name: str) -> dict[str, Any]:
@@ -390,10 +259,7 @@ def info(name: str) -> dict[str, Any]:
     This is environment metadata, not a :class:`~stable_envs.specs.Spec`. Tensor contracts live on
     ``env.state_spec`` / ``env.frame_spec`` / ``env.variation_spec`` after construction.
     """
-    cls = _resolve(name, "info")
-    public = cls.__name__
-    frozen = _frozen_from_canonical(public)
-    ids = tuple(sorted(i for i, cells in SWM_IDS.items() if public in cells or frozen in cells))
+    cls = _resolve(name)
     dim = getattr(cls, "state_dim", None)
     render_dim = int(dim) if isinstance(dim, int) and dim else None
     return {
@@ -412,7 +278,6 @@ def info(name: str) -> dict[str, Any]:
         "action_dim": getattr(cls, "action_dim", None),
         "has_dynamics": any(getattr(cls, m, None) is not getattr(Env, m, None) for m in ("step", "transition")),
         "requires_cuda": bool(getattr(cls, "requires_cuda", False)),
-        "swm_ids": ids,
     }
 
 
@@ -496,9 +361,6 @@ def import_errors() -> dict[str, str]:
 
 __all__ = [
     "REGISTRY",
-    "SWM_IDS",
-    "SYMBOLIC_IDS",
-    "canonical_names",
     "check_decoder_declaration",
     "check_fidelity_declaration",
     "discover",

@@ -77,7 +77,7 @@ A Step-5-style Gate H needs four things at once, and for Craftax none of them is
 | a planner arm for the action space | CEM 300x30, continuous | **none** — four env configs exist (`cube`, `pusht`, `reacher`, `tworoom`). A discrete solver (`solver/categorical_cem.py`) does exist, so this gap is configuration; it is configuration for a model that does not |
 | a state-space success criterion | goal state `goal_offset` steps ahead | **none, and not well-posed** — Craftax is open-ended, achievement-scored and terminates on death; neither Craftax id registers a goal or a success |
 
-Our side matches: `examples/downstream_step5/` has a PushT arm and a Reacher arm, and
+Our side matches: `docs/research/artifacts/step5_downstream/` has a PushT arm and a Reacher arm, and
 `examples/swm_compat/run_swm_workflow.py` drives TwoRoom and PushT — which is why Step 7 routed both
 Craftax cells' Gate F through `swap_renderer` in the first place.
 

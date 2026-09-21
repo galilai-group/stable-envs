@@ -13,7 +13,7 @@ file that forgot `pytestmark` is still selected by its folder.
 
 ```bash
 pytest -m unit                                 # CPU-only family/unit contracts
-pytest -m integration                          # multi-component (safety net, SWM interop)
+pytest -m integration                          # multi-component (safety net)
 pytest -m "regression and not gpu"             # frozen corpora, digests, support matrix
 pytest -m "regression and gpu"                 # GPU regression (needs CUDA)
 pytest                                         # full suite

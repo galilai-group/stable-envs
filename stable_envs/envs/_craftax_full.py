@@ -1,6 +1,6 @@
 """Full Craftax: nine levels, a 130x110 window, and a composite that is a stencil rather than a blend.
 
-Reference: ``Craftax-Pixels-v1`` (JAX), which ``swm/CraftaxPixels-v1`` registers at
+Reference: ``Craftax-Pixels-v1`` (JAX), registered at
 ``BLOCK_PIXEL_SIZE_AGENT = 10``. The observation is
 ``craftax.craftax.renderer.make_craftax_pixel_renderer(10)(state) / 255`` — a 9x11 window of one of
 nine 48x48 levels, an item layer over it, the player, up to eight mobs and six projectiles, a
@@ -122,7 +122,7 @@ from ..render import prng
 from ..spaces import Box, Dict, Discrete
 from ._craftax_full_tex import MOB_BASE, N_MOB_SLOT, N_PROJ_SLOT, TABLES
 
-#: tile edge in px. 10 is what ``swm/CraftaxPixels-v1`` is registered at (``BLOCK_PIXEL_SIZE_AGENT``);
+#: tile edge in px. 10 is the registered default (``BLOCK_PIXEL_SIZE_AGENT``);
 #: craftax also ships 16 (``_IMG``) and 64 (``_HUMAN``). The baked tables carry 10 and 16, the two
 #: sizes parity is certified at; any other size resamples the finished tile from the nearer of them.
 TILE_PX_AGENT = 10
@@ -860,26 +860,20 @@ class CraftaxFull(Env):
         + tuple(f"rng_half{i}" for i in range(N_KEY_HALVES))
         + tuple(f"inv_{n}" for n in STRIP_SLOTS)
     )
-    #: The frame is ``((9 + 4) * size, 11 * size, 3)``. 10 is what ``swm/CraftaxPixels-v1`` is
-    #: registered at, and the size the parity claim is headlined on; 16 is craftax's other shipped
-    #: size and is certified too.
+    #: The frame is ``((9 + 4) * size, 11 * size, 3)``. 10 is the registered default, and the size
+    #: the parity claim is headlined on; 16 is craftax's other shipped size and is certified too.
     default_size = TILE_PX_AGENT
     reference_id = "Craftax-Pixels-v1"
     #: REFERENCE-side versions the parity numbers were measured against. ``craftax`` pins the atlas,
     #: the strip layout and the texture resampling; ``jax`` is load-bearing for the reason
     #: :meth:`reference_env` refuses to build a reference whose PRNG path differs.
     reference_versions = {"craftax": "1.6.1", "jax": "0.11.1"}
-    #: ``stable_worldmodel``'s ``CraftaxWrapper`` (
-    #: ``stable_worldmodel/envs/craftax/craftax.py``) builds its step function as
-    #: ``self._step_fn = jax.jit(_step, backend=self.backend)`` (and reset likewise), so a LIVE
-    #: ``gymnasium.make("swm/CraftaxPixels-v1")`` workflow always observes the JIT-produced frame,
-    #: never the un-jitted one the parity claim above is measured against. See
-    #: ``CraftaxClassic.SWM_WRAPPER_GATE_F`` for the mechanism (jit fuses float32 arithmetic
-    #: differently and disagrees with its own un-jitted self by up to 1.5e-05, which a sleeping or
-    #: lit row can turn into a uint8 rounding flip); the same identity-recheck evidence
-    #: (``tests/fixtures/regression/join/step8/semantic/identity_recheck.json``) establishes the un-jitted
-    #: byte-identity this class certifies, and the same bounded (<=1 uint8 step) gap applies to a
-    #: live SWM caller of this cell.
+    #: Certified against un-jitted Craftax. A jitted wrapper of the same renderer can differ by
+    #: at most 1 uint8 because ``jax.jit`` fuses the float32 arithmetic differently (up to 1.5e-05),
+    #: which a sleeping or lit row's desaturation can turn into a rounding flip. See
+    #: ``CraftaxClassic.SWM_WRAPPER_GATE_F`` for the recorded numbers. The identity-recheck evidence
+    #: (``tests/fixtures/regression/join/step8/semantic/identity_recheck.json``) establishes the
+    #: un-jitted byte-identity this class certifies.
     SWM_WRAPPER_GATE_F = {
         "swm_wrapper_jits": ["reset", "step"],
         "swm_wrapper_source": "stable_worldmodel/envs/craftax/craftax.py:CraftaxWrapper.__init__ "

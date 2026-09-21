@@ -108,19 +108,21 @@ def test_trackcom_material_knobs_are_geom_wearers_only(se):
         base = D._DMCModel._used_materials.__func__(cls)
         ours = cls._used_materials()
         assert "eye" in base and "eye" not in ours and ours == [m for m in base if m != "eye"]
-        assert cls.CAMERA == 2 and cls.default_size == 224  # the registered SWM default
+        assert cls.CAMERA == 2 and cls.default_size == 224  # the registered default
 
 
-def test_the_swm_quadruped_mixin_overrides_only_the_loader_hook_and_the_size(se):
-    """``_DMCModel._load_env`` is the one place a cell's model comes from, and ``_SWMQuadrupedModel``
-    overrides it and ``default_size`` and NOTHING else -- so ``_bundle``/``sample_states``/
-    ``reference_env`` are the base class's and cannot drift from it (INTEG-1: a copied ``_bundle``
-    drifted the moment W3 changed the base one). Every loader in the base goes through the hook."""
+def test_the_transcribed_quadruped_mixin_overrides_only_the_loader_hook_and_the_size(se):
+    """``_TranscribedQuadrupedModel`` is the non-suite.load quadruped MJCF (``default_size=224``).
+
+    ``_DMCModel._load_env`` is the one place a cell's model comes from, and this mixin overrides it
+    and ``default_size`` and NOTHING else -- so ``_bundle``/``sample_states``/``reference_env`` are
+    the base class's and cannot drift from it (INTEG-1: a copied ``_bundle`` drifted the moment W3
+    changed the base one). Every loader in the base goes through the hook."""
     import inspect
 
     from stable_envs.envs import dmcontrol as D
 
-    own = {k for k in vars(D._SWMQuadrupedModel) if not k.startswith("__")}
+    own = {k for k in vars(D._TranscribedQuadrupedModel) if not k.startswith("__")}
     assert own == {"default_size", "_load_env"}, own
     cls = se.registry.REGISTRY["DMCQuadrupedWalk"]
     assert cls._bundle.__func__ is D._DMCModel._bundle.__func__

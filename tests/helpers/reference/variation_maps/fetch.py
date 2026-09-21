@@ -118,7 +118,7 @@ parity number computed through the swm wrapper is not mistaken for a stable-envs
 
 from __future__ import annotations
 
-from ..worldmodel import VariationMap
+from ..variation import VariationMap
 
 #: ``model.light_diffuse[0]`` on all four Fetch scenes, read off the compiled model (identical in
 #: reach/push/slide/pick_and_place). swm's ``light.intensity`` is this quantity absolutely; ours is a
@@ -285,7 +285,7 @@ def swm_variation_space(swm_id: str):
     import gymnasium
     import stable_worldmodel  # noqa: F401
 
-    from ..worldmodel import swm_variation_space as _walk
+    from ..variation import swm_variation_space as _walk
 
     env = gymnasium.make(swm_id)
     try:

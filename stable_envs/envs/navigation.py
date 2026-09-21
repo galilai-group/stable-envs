@@ -1,22 +1,22 @@
-"""The navigation family: the three ``stable_worldmodel`` navigation ports, in one module.
+"""The navigation family: TwoRoom, Piecewise and SimplePointMaze, in one module.
 
 ``TwoRoom``/``TwoRoomTarget``, ``Piecewise``/``PiecewiseZones`` and ``SimplePointMaze`` are one
 family by every criterion that matters here — an agent dot moved by a clipped 2-D action inside a
-bounded arena, a reference that is a ``swm/*`` gymnasium env, and a frame that is a pure function of
-the position — so they share one module. What they do NOT share is the renderer: the
-first four are a Gaussian alpha blend (``render/navdot``) and the last is a flat-primitive
-``Scene2D``, because their references are torch arithmetic and matplotlib respectively. That is why
-this module has two halves and one shared SWM reference bridge (``_SWMPort``) rather than one base
-class pretending the renderers are the same.
+bounded arena, and a frame that is a pure function of the position — so they share one module.
+What they do NOT share is the renderer: the first four are a Gaussian alpha blend
+(``render/navdot``) and the last is a flat-primitive ``Scene2D``, because their official comparison
+envs are torch arithmetic and matplotlib respectively. That is why this module has two halves and
+one shared gymnasium reference-env bridge (``_GymReferencePort``) rather than one base class
+pretending the renderers are the same.
 
-Part 1 of the module docstring below is the swm_nav material and part 2 is SimplePointMaze's; both
-are reproduced unchanged, because every constant in them was measured and the measurement is the
-documentation.
+Part 1 of the module docstring below is the torch-nav material and part 2 is SimplePointMaze's;
+both are reproduced unchanged, because every constant in them was measured and the measurement is
+the documentation.
 
 ===============================================================================================
 PART 1 — TwoRoom and Piecewise (``render/navdot``)
 ===============================================================================================
-``stable_worldmodel``'s two torch-rendered navigation envs: ``swm/TwoRoom-v1`` and ``swm/Piecewise-v0``.
+The two torch-rendered navigation envs: ``TwoRoom`` and ``Piecewise``.
 
 Both official envs already draw with torch on the CPU, one environment at a time, in float32. That is
 an unusual reference to port and it changes what "parity" can mean here. There is no rasterizer to
@@ -89,10 +89,10 @@ every knob that describes them would be inert. Rather than default them on (whic
 defaults are the official appearance" false) or declare dead knobs, each configuration is its own
 class whose defaults reproduce the official env *in that configuration*:
 
-    TwoRoom          swm/TwoRoom-v1                          (render_target=0, the shipped default)
-    TwoRoomTarget    swm/TwoRoom-v1  render_target=True      (target dot drawn; state carries it)
-    Piecewise        swm/Piecewise-v0                        (render_zones=0, the shipped default)
-    PiecewiseZones   swm/Piecewise-v0 render_zones=1         (zone tints drawn)
+    TwoRoom          render_target off (the shipped default)
+    TwoRoomTarget    render_target on (target dot drawn; state carries it)
+    Piecewise        render_zones off (the shipped default)
+    PiecewiseZones   render_zones on (zone tints drawn)
 
 Output size
 -----------
@@ -189,7 +189,7 @@ about 11 pixels of 2.3 million.
 ===============================================================================================
 PART 2 — SimplePointMaze (``Scene2D``)
 ===============================================================================================
-``swm/SimplePointMaze-v0``: a 5x5 point maze, and the first env here whose reference is matplotlib.
+``SimplePointMaze``: a 5x5 point maze, and the first env here whose official comparison env is matplotlib.
 
 Every other env in this repo is drawn by pygame, by a tile atlas or by MuJoCo. This one is a
 matplotlib figure: ``plt.subplots(figsize=(5,5))`` at the default 100 dpi, ``tight_layout(pad=0)``,
@@ -511,12 +511,12 @@ def _alpha_blend(img_u8: torch.Tensor, alpha: torch.Tensor, rgb: torch.Tensor) -
     return out.to(torch.uint8)
 
 
-class _SWMPort(Env):
-    """What the three navigation ports share: the bridge to their ``swm/*`` reference env.
+class _GymReferencePort(Env):
+    """The shared gymnasium reference-env bridge for certification.
 
     Not a rendering base class — the two halves of this module draw through different backends and
-    have nothing to say to each other about pixels. This is the other axis: all three are ports of a
-    ``stable_worldmodel`` gymnasium env whose appearance is reset through the same
+    have nothing to say to each other about pixels. This is the other axis: all three share a
+    gymnasium reference env whose appearance is reset through the same
     ``options={"variation": []}`` protocol, whose ``step`` takes a float32 action array, and which
     the shared conformance checker drives through the same four hooks. Written once here rather than
     twice because a divergence between the two copies would be a divergence in what "the reference"
@@ -543,7 +543,6 @@ class _SWMPort(Env):
     def reference_env(cls, size: int | None = None):
         """The official env. ``size`` is ignored: none of these three has a configurable canvas."""
         import gymnasium
-        import stable_worldmodel  # noqa: F401  (registers the swm/* ids)
 
         return gymnasium.make(cls.reference_id, **cls.reference_kwargs)
 
@@ -628,10 +627,9 @@ class _SWMPort(Env):
     def step(self, action) -> TensorDict:
         """Advance every environment one control step. STATEFUL: it writes ``env.state``.
 
-        Returns a :data:`~stable_envs.env.StepResult` carrying ``"state"`` and nothing else: these
-        envs have a goal-distance reward in ``stable_worldmodel`` that is computed from a target this
-        renderer treats as appearance, so a reward reported here would be a different quantity
-        wearing the same name, and a zero would read as a measured one (contract §5).
+        Returns a :data:`~stable_envs.env.StepResult` carrying ``"state"`` and nothing else: a
+        goal-distance reward computed from a target this renderer treats as configuration would be
+        a different quantity wearing the same name, and a zero would read as a measured one.
         """
         self._check_open("step")
         act = torch.as_tensor(action, device=self.device, dtype=torch.float32).reshape(self.B, self.action_dim)
@@ -643,13 +641,13 @@ class _SWMPort(Env):
         raise NotImplementedError
 
 
-class _SWMNavBase(_SWMPort):
-    """Shared machinery for the two torch-rendered swm navigation envs.
+class _TorchNavBase(_GymReferencePort):
+    """The torch nav raster path.
 
-    The split between this and the subclasses follows the reference: everything up to and including
-    the base image (background, structure, borders) is env-specific, and everything from the first
-    alpha blend onwards is identical, because the official ``_render_frame`` bodies are identical
-    from that point on.
+    Shared machinery for the two torch-rendered navigation envs. The split between this and the
+    subclasses follows the reference: everything up to and including the base image (background,
+    structure, borders) is env-specific, and everything from the first alpha blend onwards is
+    identical, because the official ``_render_frame`` bodies are identical from that point on.
     """
 
     default_size = IMG
@@ -733,8 +731,7 @@ class _SWMNavBase(_SWMPort):
                 f"a resolution change. Every length in the reference is in output pixels — a 4 px "
                 f"border, a door half-extent in pixels, a Gaussian sigma in pixels, a wall at column "
                 f"112 — with no world-unit description underneath, so there is nothing to re-sample. "
-                f"Resize the frames afterwards if a different size is wanted; that is what "
-                f"stable_worldmodel's own pipeline does."
+                f"Resize the frames afterwards if a different size is wanted."
             )
         if supersample not in (None, 1):
             raise ValueError(
@@ -835,10 +832,10 @@ class _SWMNavBase(_SWMPort):
         plates = []
         for key, idx in order.items():
             ck = (cls, int(self.fixed_size), str(self.device), key)
-            hit = _SWMNavBase._BAKE_CACHE.get(ck)
+            hit = _TorchNavBase._BAKE_CACHE.get(ck)
             if hit is None:
                 first = lo + idx[0]
-                hit = _SWMNavBase._BAKE_CACHE.put(ck, self.base_image(lambda p, a=first: sty[p][a : a + 1], 1))
+                hit = _TorchNavBase._BAKE_CACHE.put(ck, self.base_image(lambda p, a=first: sty[p][a : a + 1], 1))
             plates.append(hit)
         if len(plates) == 1:
             return plates[0].expand(k, IMG, IMG, 3)
@@ -920,7 +917,7 @@ class _SWMNavBase(_SWMPort):
 
     # ---------------------------------------------------------------- reference bridge
     #
-    # ``_SWMPort`` owns all of it. The one hook that is genuinely per-family is where the official
+    # ``_GymReferencePort`` owns all of it. The one hook that is genuinely per-family is where the official
     # env keeps the agent: these two store it as a torch tensor on ``agent_position``, while
     # SimplePointMaze keeps a numpy ``state``.
 
@@ -946,7 +943,7 @@ class _SWMNavBase(_SWMPort):
 # ====================================================================== TwoRoom
 
 
-class _TwoRoomBase(_SWMNavBase):
+class _TwoRoomBase(_TorchNavBase):
     reference_id = "swm/TwoRoom-v1"
 
     def _structure_space(self) -> dict:
@@ -1059,12 +1056,12 @@ class _TwoRoomBase(_SWMNavBase):
 
 @register
 class TwoRoom(_TwoRoomBase):
-    """``swm/TwoRoom-v1`` at its shipped appearance: two rooms, a wall with doors, no target drawn.
+    """Two rooms, a wall with doors, no target drawn. Default ``TwoRoom`` configuration.
 
     State is the agent position and nothing else, because that is all the frame reads under
-    ``render_target = 0``. The goal image a swm workflow consumes is not a second kind of frame — the
-    official env produces it as ``_render_frame(agent_pos=target_position)``, i.e. this same renderer
-    at a different state — so a corpus of agent positions regenerates the goals too.
+    ``render_target = 0``. The goal image is not a second kind of frame — the official comparison
+    env produces it as ``_render_frame(agent_pos=target_position)``, i.e. this same renderer at a
+    different state — so a corpus of agent positions regenerates the goals too.
     """
 
     name = "swm-two-room"
@@ -1078,9 +1075,9 @@ class TwoRoom(_TwoRoomBase):
         return Dict({"agent": Dict(self._agent_space()), **self._structure_space()})
 
     def step(self, action) -> TensorDict:
-        """One control step; the implementation is :meth:`_SWMPort.step`. Declared here because the
+        """One control step; the implementation is :meth:`_GymReferencePort.step`. Declared here because the
         shared step check only sees a ``step`` in the concrete class's own ``__dict__`` — see the
-        note above ``_SWMPort.step``."""
+        note above ``_GymReferencePort.step``."""
         return super().step(action)
 
     def sample_states(self, batch: int, rng: np.random.Generator | None = None) -> np.ndarray:
@@ -1109,7 +1106,7 @@ class TwoRoom(_TwoRoomBase):
 
 @register
 class TwoRoomTarget(_TwoRoomBase):
-    """``swm/TwoRoom-v1`` constructed with ``render_target=True``: the target dot is drawn.
+    """Two rooms with the target dot drawn. ``render_target`` on; the target is in State.
 
     A separate class rather than a knob because ``rendering.render_target`` ships as 0. With it off,
     ``target.color``, ``target.radius`` and the target's coordinates change no pixel, so declaring
@@ -1140,9 +1137,9 @@ class TwoRoomTarget(_TwoRoomBase):
         )
 
     def step(self, action) -> TensorDict:
-        """One control step; the implementation is :meth:`_SWMPort.step`. Declared here because the
+        """One control step; the implementation is :meth:`_GymReferencePort.step`. Declared here because the
         shared step check only sees a ``step`` in the concrete class's own ``__dict__`` — see the
-        note above ``_SWMPort.step``."""
+        note above ``_GymReferencePort.step``."""
         return super().step(action)
 
     def _dots(self, s, sl, k):
@@ -1187,7 +1184,7 @@ class TwoRoomTarget(_TwoRoomBase):
 # ====================================================================== Piecewise
 
 
-class _PiecewiseBase(_SWMNavBase):
+class _PiecewiseBase(_TorchNavBase):
     reference_id = "swm/Piecewise-v0"
     state_dim = 2
     state_names = ("agent_x", "agent_y")
@@ -1234,7 +1231,7 @@ class _PiecewiseBase(_SWMNavBase):
 
 @register
 class Piecewise(_PiecewiseBase):
-    """``swm/Piecewise-v0`` at its shipped appearance: one open room, four invisible bias zones.
+    """One open room, four invisible bias zones. Default ``Piecewise`` configuration.
 
     The zones are the whole point of the env and they are invisible by default — ``render_zones``
     ships as 0 — so the frame is background, a 4 px border and the agent dot. That is a *feature* for
@@ -1252,9 +1249,9 @@ class Piecewise(_PiecewiseBase):
         return Dict(self._common_space())
 
     def step(self, action) -> TensorDict:
-        """One control step; the implementation is :meth:`_SWMPort.step`. Declared here because the
+        """One control step; the implementation is :meth:`_GymReferencePort.step`. Declared here because the
         shared step check only sees a ``step`` in the concrete class's own ``__dict__`` — see the
-        note above ``_SWMPort.step``."""
+        note above ``_GymReferencePort.step``."""
         return super().step(action)
 
     def base_image(self, sl, k) -> torch.Tensor:
@@ -1263,7 +1260,7 @@ class Piecewise(_PiecewiseBase):
 
 @register
 class PiecewiseZones(_PiecewiseBase):
-    """``swm/Piecewise-v0`` with ``rendering.render_zones = 1``: each bias zone tinted.
+    """One open room with each bias zone tinted. ``render_zones`` on.
 
     The zone map itself is a constant of the family — it depends on ``grid_n`` and the 14 px margin
     and on nothing else — so only the four colours are variation, and the zone rectangles are
@@ -1282,9 +1279,9 @@ class PiecewiseZones(_PiecewiseBase):
         return Dict({**self._common_space(), "zones": Dict(z)})
 
     def step(self, action) -> TensorDict:
-        """One control step; the implementation is :meth:`_SWMPort.step`. Declared here because the
+        """One control step; the implementation is :meth:`_GymReferencePort.step`. Declared here because the
         shared step check only sees a ``step`` in the concrete class's own ``__dict__`` — see the
-        note above ``_SWMPort.step``."""
+        note above ``_GymReferencePort.step``."""
         return super().step(action)
 
     def base_image(self, sl, k) -> torch.Tensor:
@@ -1303,7 +1300,6 @@ class PiecewiseZones(_PiecewiseBase):
         by that reset and the reference would silently render the untinted picture.
         """
         import gymnasium
-        import stable_worldmodel  # noqa: F401
 
         env = gymnasium.make(cls.reference_id)
         env.unwrapped.variation_space["rendering"]["render_zones"].set_init_value(1)
@@ -1354,8 +1350,8 @@ DEFAULT_WALL_SHAPE, DEFAULT_WALL_POS = _default_walls()
 
 
 @register
-class SimplePointMaze(_SWMPort):
-    """``swm/SimplePointMaze-v0`` with ``show_goal=False``. State: the agent's ``(x, y)`` in a 5x5 box."""
+class SimplePointMaze(_GymReferencePort):
+    """5x5 point maze with ``show_goal=False``. State: the agent's ``(x, y)``."""
 
     name = "swm-simple-point-maze"
     state_dim = 2
@@ -1536,14 +1532,14 @@ class SimplePointMaze(_SWMPort):
         return nxt.clamp(0.0, WORLD)
 
     def step(self, action) -> TensorDict:
-        """One control step; the implementation is :meth:`_SWMPort.step`. Declared here because the
+        """One control step; the implementation is :meth:`_GymReferencePort.step`. Declared here because the
         shared step check only sees a ``step`` in the concrete class's own ``__dict__`` — see the
-        note above ``_SWMPort.step``."""
+        note above ``_GymReferencePort.step``."""
         return super().step(action)
 
     # ---------------------------------------------------------------- reference bridge
     #
-    # ``_SWMPort`` owns the rest; this env is the one of the three whose official state is a numpy
+    # ``_GymReferencePort`` owns the rest; this env is the one of the three whose official state is a numpy
     # ``state`` array rather than a torch ``agent_position``.
 
     @classmethod

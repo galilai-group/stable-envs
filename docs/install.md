@@ -48,7 +48,6 @@ Two kinds, and they are easy to mix up.
 | `overcooked` | Overcooked | needs its **own interpreter** |
 | `rocket` | PyFlyt rocket (CUDA + nvdiffrast) | pillow / pybullet / scipy |
 | `highway` / `minihack` / `sokoban` / `griddly` / `jumanji` / `pgx` / `procgen` | those families | those packages |
-| `swm` / `interop` | no | `stable-worldmodel` for the interop adapters |
 | `docs` / `dev` / `examples` / `hf` | no | documentation, tests, gallery helpers, HuggingFace |
 
 `pip install "stable-envs[pusht]"` is **not** required to call `snv.PushT()` and `env.render()`. It is required to compare against the official pygame renderer.

@@ -445,8 +445,8 @@ class TrajectoryDataset(_RenderingDataset):
         approximately.
 
     Storage is flat — ``states (N, D)`` plus ``offsets``/``lengths`` — which is what makes ragged
-    episodes a normal case rather than a padded special case, and mirrors
-    ``stable_worldmodel.data.Dataset``. Dense ``(n_traj, T, D)`` input is accepted and flattened.
+    episodes a normal case rather than a padded special case. Dense ``(n_traj, T, D)`` input is
+    accepted and flattened.
 
     Indexing returns states by default and frames on request (``frames=True``), because the states are
     what is stored and the frames are what is derived; a dataset that always renders would pay for
@@ -568,7 +568,7 @@ class TrajectoryDataset(_RenderingDataset):
 
     @property
     def clip_indices(self) -> list[tuple[int, int]]:
-        """``(trajectory, start-within-trajectory)`` per clip. Mirrors ``stable_worldmodel``'s name."""
+        """``(trajectory, start-within-trajectory)`` per clip."""
         return [(int(t), int(s - self.offsets[t])) for t, s in zip(self.clip_traj, self.clip_start)]
 
     def __len__(self) -> int:

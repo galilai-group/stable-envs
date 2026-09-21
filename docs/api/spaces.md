@@ -1,5 +1,5 @@
 # `stable_envs.spaces`
 
-Variation spaces, API-compatible with `stable_worldmodel.spaces`.
+Persistent environment configuration spaces owned by stable-envs.
 
 ::: stable_envs.spaces

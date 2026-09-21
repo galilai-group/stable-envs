@@ -1,19 +1,17 @@
 # Examples
 
-The four getting-started examples use only the public `stable_envs` API:
+The getting-started examples use only the public `stable_envs` API:
 
 | script | demonstrates |
 |---|---|
 | [`render.py`](render.py) | construct an env, `reset`, and `render(state)` |
 | [`batched_env.py`](batched_env.py) | `num_envs`, specs, short batches, lifecycle |
 | [`functional_dynamics.py`](functional_dynamics.py) | stateful `step` vs pure `transition` / `unroll` |
-| [`worldmodel.py`](worldmodel.py) | the shipped `stable_envs.interop` contract |
 
 ```bash
 python examples/render.py --help
 python examples/batched_env.py --help
 python examples/functional_dynamics.py --help
-python examples/worldmodel.py --help
 ```
 
 ## Training from compact state
@@ -22,7 +20,7 @@ python examples/worldmodel.py --help
 [`ddp_train_from_states.py`](ddp_train_from_states.py) show the intended training path: store compact
 states in your own dataset/loader and call `env.render(env.unpack_render_state(batch))` after transfer. stable-envs
 does not own dataset storage or policy rollouts; those responsibilities belong to your data stack and
-`stable-worldmodel` respectively.
+sibling stable-* projects.
 
 ## Measurement and research scripts
 
@@ -39,9 +37,10 @@ Useful entry points include:
 - [`fidelity_step4.py`](fidelity_step4.py) — frozen-corpus fidelity/conformance measurement;
 - [`bench_storage.py`](bench_storage.py) / [`bench_lance.py`](bench_lance.py) — storage pipeline baselines;
 - [`gallery.py`](gallery.py) — side-by-side media on identical states;
-- [`domain_randomization.py`](domain_randomization.py) — batched appearance variation;
+- [`domain_randomization.py`](domain_randomization.py) — batched Variation / configuration;
 - [`dump_frames.py`](dump_frames.py) — write frames from stored states;
 - [`dino_agreement.py`](dino_agreement.py) — DINO agreement measurement.
 
 Historical milestone-specific scripts and large calibration artifacts are preserved in release/tag
-archives rather than defining the public API.
+archives rather than defining the public API. Step-5 SWM paired-eval harnesses live under
+[`docs/research/artifacts/`](../docs/research/artifacts/README.md), not in this directory.

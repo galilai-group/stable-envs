@@ -6,8 +6,8 @@ Two functions, and the whole content of the module is what "pure" means here:
     hidden buffer, no cached velocity. That is why PushT's agent velocity had to become part of the
     public state (contract §3): as long as one dynamical variable lived in an attribute, a function
     that looked pure was not, and two calls with the same ``state`` could disagree.
-  * ``unroll`` applies known, OPEN-LOOP actions. It is not a policy rollout and never will be —
-    policies, planners, MPC and dataset collection belong to ``stable_worldmodel`` (plan §2). The
+    * ``unroll`` applies known, OPEN-LOOP actions. It is not a policy rollout and never will be —
+    policies, planners, MPC and dataset collection belong outside this package. The
     distinction is load-bearing: ``unroll`` can be a pure function of ``(state, actions)`` precisely
     because nothing in the loop consults an agent.
 

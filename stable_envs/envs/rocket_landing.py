@@ -1,4 +1,4 @@
-"""PyFlyt's rocket landing (``swm/PFRocketLanding-v0``), rendered by nvdiffrast. VISUAL TIER.
+"""PyFlyt rocket landing, rendered by nvdiffrast. VISUAL TIER.
 
 THESE ARE NOT THE OFFICIAL PIXELS. The official frame is PyBullet's TinyRenderer at 480x480 through
 PyFlyt's rocket-mounted camera; this cell draws the same scene -- the same 13 primitives, the same
@@ -37,13 +37,13 @@ every rule below was measured on synthetic scenes before it was written down):
   centres (25/25 columns, 13/13 rows), which ``sample_offset=(0.5, 0.5)`` reproduces.
 
 What the state is, and why it carries velocities (coordinator ruling 3, ``findings.md`` G1): the frame
-swm observes after ``env.step`` draws the base cylinder at pose *t* but the ten links AND the camera
+after ``env.step`` draws the base cylinder at pose *t* but the ten links AND the camera
 link one 1/240 s substep behind, and that lagged pose is exactly ``(pos - v dt, exp(-w dt) q)`` in
 world velocities (position error 0.0, quaternion 1e-16 over 40 steps; 1.8e-15 / 5.6e-16 over the
 200-state corpus). So the state is the first 13 entries of the env's own observation --
 ``ang_vel`` (body frame), quaternion ``xyzw``, ``lin_vel`` (body frame), ``lin_pos`` -- and nothing
 else: ``state = obs[:13]``. The five RGB colours and the flame's ignition bit are STYLE, because they
-are per-episode appearance: swm samples them per reset, and PyFlyt recolours the flame on the first
+are per-episode appearance: they are sampled per reset, and PyFlyt recolours the flame on the first
 ignition transition and never restores it.
 
 Reference bridge: for an arbitrary state the official picture cannot be produced by a teleport (a
@@ -68,7 +68,7 @@ import numpy as np
 import torch
 
 from ..env import Env
-from ..registry import _remember_historical_name, register
+from ..registry import register
 from ..spaces import Dict, Discrete, RGBBox
 
 try:
@@ -510,12 +510,11 @@ _REF_CACHE: dict = {}
 
 
 def _reference_make(size: int):
-    """The swm env at ``size``, reset once (PyFlyt's numba JIT, ~57 s per process) and kept for the process."""
+    """The PyFlyt rocket-landing env at ``size``, reset once (PyFlyt's numba JIT, ~57 s per process) and kept for the process."""
     hit = _REF_CACHE.get(size)
     if hit is not None:
         return hit
     import gymnasium
-    import stable_worldmodel  # noqa: F401  (registers swm/*)
 
     env = gymnasium.make("swm/PFRocketLanding-v0", render_mode="rgb_array", render_resolution=(size, size))
     env.reset(seed=0)
@@ -600,8 +599,8 @@ def _reference_frame_flagged(env, state: np.ndarray, style_row: np.ndarray, cont
     base) via the previous-substep teleport and the velocity fixed point. When the recipe does not reach
     the requested pose AND the pose is in the contact band (``PAD_TOP_Z`` + ``CONTACT_BAND_MARGIN``, any
     link AABB), the lagged picture is unreachable by this bridge: with ``contact_fallback`` the frame
-    returned is swm's SYNCED picture of the requested pose (teleport, no substep -- the convention swm's
-    own goal image is rendered under) and ``unreachable`` is True, so a caller can record and exclude the
+    returned is the SYNCED picture of the requested pose (teleport, no substep -- the convention the
+    reference goal image is rendered under) and ``unreachable`` is True, so a caller can record and exclude the
     row; without it, or when the failure is outside the band (a genuine bridge failure), it raises."""
     import pybullet as p
 
@@ -651,7 +650,7 @@ _NVD_CACHE = _RES.BoundedCache(8, name="rocket.nvd", on_evict=ND.close_cached_re
 
 
 class PyFlytRocketLanding(Env):
-    """swm/PFRocketLanding-v0 (PyFlyt rocket landing), rendered by nvdiffrast. State is obs[:13].
+    """PyFlyt rocket landing, rendered by nvdiffrast. State is obs[:13].
 
     VISUAL TIER — these are NOT the official pixels. The frame is a different rasterization of the same
     scene from the same state: the same 13 primitives, the same rocket-mounted camera one substep behind
@@ -670,7 +669,7 @@ class PyFlytRocketLanding(Env):
 
     name = "pf-rocket-landing"
     reference_id = "swm/PFRocketLanding-v0"
-    #: swm's registered default, the observation it actually returns (480 x 480 x 3 = 691,200 B).
+    #: Registered default: 480 x 480 x 3 = 691,200 B, the observation PyFlyt actually returns.
     default_size = 480
     default_supersample = 1  # TinyRenderer has no anti-aliasing
     state_dim = 13
@@ -736,7 +735,7 @@ class PyFlytRocketLanding(Env):
         "measured_at": (
             "480 px, supersample 1, default appearance, worst of 4 independent 64-state draws of "
             "sample_states (default_rng(1000..1003)) over the rows the reference bridge reaches, "
-            "against PyFlyt 0.29.0 / pybullet 3.2.7 TinyRenderer frames of swm/PFRocketLanding-v0 "
+            "against PyFlyt 0.29.0 / pybullet 3.2.7 TinyRenderer frames of the rocket-landing env "
             "at the lagged pose; NVIDIA GeForce RTX 3090 gpu2106, SLURM job 6410105, tree 726241e, "
             "torch 2.14.0+cu126, nvdiffrast 0.4.0 "
             "(tests/fixtures/regression/join/step7/rocket-landing/tier/job6410105/)"
@@ -919,9 +918,9 @@ class PyFlytRocketLanding(Env):
     # ---- variation ----------------------------------------------------------
 
     def make_variation_space(self) -> Dict:
-        """The five colours swm samples per reset, plus the flame's ignition bit. Defaults = the official
+        """The five colours sampled per reset, plus the flame's ignition bit. Defaults = the official
         appearance of a reset WITHOUT a variation request: URDF yellow / grey / black, a white pad (no
-        material), the flame unignited. ``environment.sky_color`` is deliberately absent: swm samples it and
+        material), the flame unignited. ``environment.sky_color`` is deliberately absent: it is sampled and
         nothing reads it. ``start_*`` are dynamics, not appearance, and live in ``sample_states``.
         The flat layout is alphabetical (``gymnasium.spaces.Dict`` sorts); see ``style_layout``."""
         return _make_variation_space()
@@ -1005,11 +1004,11 @@ class PyFlytRocketLanding(Env):
 
     @classmethod
     def reference_env(cls, size: int = 480):
-        """The swm env at ``size`` (its own ``render_resolution``), reset once and never closed."""
+        """The PyFlyt rocket-landing env at ``size`` (its own ``render_resolution``), reset once and never closed."""
         return _reference_make(int(size))
 
     #: Per-row flags of the LAST ``reference_render`` call: True where the bridge could not produce the
-    #: lagged picture (contact band, see ``_reference_frame_flagged``) and returned swm's synced picture
+    #: lagged picture (contact band, see ``_reference_frame_flagged``) and returned the synced picture
     #: instead.
     #:
     #: **HAZARD, and why it exists anyway.** This is mutable class state, and mutable class state set
@@ -1029,10 +1028,10 @@ class PyFlytRocketLanding(Env):
 
     @classmethod
     def reference_render(cls, env, states, style=None, return_flags: bool = False):
-        """Official frames for ``(state, style)`` rows -- the LAGGED picture swm observes after ``step``.
+        """Official frames for ``(state, style)`` rows -- the LAGGED picture after ``step``.
 
         Rows the bridge cannot reach (the contact band, ``REFERENCE_UNREACHABLE_SHARE`` of the sampled
-        distribution) get swm's SYNCED picture instead and are flagged. With ``return_flags`` the
+        distribution) get the SYNCED picture instead and are flagged. With ``return_flags`` the
         return is ``(frames, flags)``; without it the return is the frame stack alone -- the shape the
         shared conformance checks expect -- and the flags are also left in
         ``last_reference_unreachable``, whose hazard is documented above.
@@ -1058,6 +1057,5 @@ def _default_style_row() -> np.ndarray:
     return np.asarray(_make_variation_space().pack(), np.float64)
 
 
-_remember_historical_name("PFRocketLanding", PyFlytRocketLanding)
 if missing_backend() is None:
     register(PyFlytRocketLanding)

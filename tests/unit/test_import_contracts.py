@@ -5,13 +5,13 @@ reading, they are discovered when an unrelated module is imported in an unusual 
 later. The rules:
 
   * the core modules — ``env``, ``dynamics``, ``specs``, ``registry``, ``_config``, ``_style`` — import
-    nothing from ``render/``, ``envs/`` or ``interop`` AT MODULE SCOPE. ``Env.render`` does import a
+    nothing from ``render/`` or ``envs/`` AT MODULE SCOPE. ``Env.render`` does import a
     rasterizer, inside the method, which is the whole point of the distinction: the arrow exists at
     call time, where it cannot make a cycle, and not at import time, where it would.
   * ``render/*`` imports nothing from ``envs/`` and nothing from ``stable_worldmodel``, at any depth.
     A renderer that knew an env class or an SWM id would be a backend with a policy about what it is
     drawing.
-  * nothing outside ``interop`` imports ``stable_worldmodel`` at module scope.
+  * nothing in the installed package imports ``stable_worldmodel``.
 """
 
 from __future__ import annotations
@@ -91,18 +91,26 @@ def test_a_renderer_knows_nothing_about_environments_or_stable_worldmodel(path):
     assert bad == [], f"stable_envs/render/{path.name} imports {bad}"
 
 
-def test_only_interop_reaches_for_stable_worldmodel():
+def test_the_installed_package_never_imports_stable_worldmodel():
     offenders = {}
     for path in PKG.rglob("*.py"):
-        if "_interop" in path.parts:
-            continue
-        hits = [m for m in _imports(path, top_level_only=True) if m.startswith("stable_worldmodel")]
+        hits = [m for m in _imports(path, top_level_only=False) if m.startswith("stable_worldmodel")]
         if hits:
             offenders[str(path.relative_to(ROOT))] = hits
-    assert offenders == {}, (
-        f"{offenders} import stable_worldmodel at module scope; the dependency is optional and lives "
-        f"in interop, which imports it lazily."
-    )
+    assert offenders == {}, f"{offenders} import stable_worldmodel; the installed package must not"
+
+
+def test_the_installed_package_has_no_swm_runtime_symbols():
+    """Production identity: no ``_SWM*`` types. ``SWM_WRAPPER_GATE_F`` is the Craftax JIT declaration."""
+    import re
+
+    offenders = []
+    pat = re.compile(r"\b_SWM[A-Za-z0-9_]*\b")
+    for path in PKG.rglob("*.py"):
+        for i, line in enumerate(path.read_text().splitlines(), 1):
+            if pat.search(line):
+                offenders.append(f"{path.relative_to(ROOT)}:{i}:{line.strip()}")
+    assert offenders == [], "shipped stable_envs still names _SWM* types:\n" + "\n".join(offenders)
 
 
 def test_the_core_modules_have_no_cycle_among_themselves():
@@ -183,6 +191,8 @@ def test_dm_control_import_does_not_hang_after_gl_configure():
 GONE_SHIMS = (
     "stable_envs/core",
     "stable_envs/compat",
+    "stable_envs/interop.py",
+    "stable_envs/_interop",
     "stable_envs/data.py",
     "stable_envs/envs/swm_nav.py",
     "stable_envs/envs/simple_point_maze.py",
@@ -192,6 +202,8 @@ GONE_SHIMS = (
 BANNED_IMPORTS = (
     "stable_envs.core",
     "stable_envs.compat",
+    "stable_envs.interop",
+    "stable_envs._interop",
     "stable_envs.data",
     "stable_envs.envs.swm_nav",
     "stable_envs.envs.simple_point_maze",

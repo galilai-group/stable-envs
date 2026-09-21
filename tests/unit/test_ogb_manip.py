@@ -7,7 +7,8 @@ a colour table captured against the wrong baseline, a state draw that was not re
 committed pool the corpus was not selected from. Each of those has a test below, written so it fails
 on the defect rather than on its symptom.
 
-`stable_worldmodel` and `ogbench` are optional; every test skips cleanly without them.
+`ogbench` is optional; every test skips cleanly without it. This package does not import
+`stable_worldmodel`.
 """
 
 from __future__ import annotations
@@ -18,7 +19,6 @@ import numpy as np
 import pytest
 
 pytest.importorskip("mujoco")
-pytest.importorskip("stable_worldmodel")
 pytest.importorskip("ogbench")
 
 try:
@@ -105,7 +105,7 @@ def _fake(cell):
 
 @pytest.mark.parametrize("cell", ["Cube", "Scene"])
 def test_sample_states_leaves_the_global_numpy_rng_alone(cell):
-    """It seeds the global generator (the only handle swm exposes) and must put it back."""
+    """It seeds the global generator (the only handle the reference exposes) and must put it back."""
     np.random.seed(1234)
     before = np.random.get_state()[1][:8].copy()
     ogb.OGBManipBase.sample_states(_fake(cell), 2, np.random.default_rng(0))
@@ -382,10 +382,10 @@ def test_the_bake_and_the_button_rule_touch_disjoint_material_rows():
 def test_the_SPEC_state_dim_constant_matches_what_bundle_computes(cell):
     """`SPEC[cell]['state_dim']` is a constant so that `_make_classes` never calls `_bundle`.
 
-    It was `len(_bundle(cell).state_names)`, which built both swm environments at IMPORT: 4.4 s, and
-    without `stable_worldmodel` the module raised and both ids dropped out of the registry (76
+    It was `len(_bundle(cell).state_names)`, which built both OGBench environments at IMPORT: 4.4 s, and
+    without `ogbench` the module raised and both ids dropped out of the registry (76
     instead of 78). The constant has to be kept honest by something, and this is it -- it runs only
-    where swm IS importable, which is exactly where the truth is available.
+    where ogbench IS importable, which is exactly where the truth is available.
     """
     assert ogb.SPEC[cell]["state_dim"] == len(ogb._bundle(cell).state_names)
 

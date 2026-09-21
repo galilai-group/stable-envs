@@ -17,7 +17,7 @@ observed while enumerating the registries. Where no such source exists the cell 
     and the separate ``cpu_render_executes`` field -- which the probe CAN establish -- is kept well
     away from it, because a path that runs and a path that is fast are different claims.
   * **Downstream equivalence from pixels.** Pixel parity and DINO feature agreement are recorded as
-    what they are. Only ``examples/lewm_pusht/`` carries a task-success result, and only PushT gets
+    what they are. Only ``docs/research/artifacts/step5_lewm_pusht/`` carries a task-success result, and only PushT gets
     the downstream label.
 
 INPUTS (all discovered from the repo except the first, which must be produced where swm is installed):
@@ -28,8 +28,8 @@ INPUTS (all discovered from the repo except the first, which must be produced wh
     examples/results/decode/ALL.json          merged multi-interpreter throughput (196 envs)
     examples/results/bench_gpu_vs_cpu.json    official-CPU vs GPU, with describe() blocks
     examples/results/dino/dino_agreement.json DINOv2 feature agreement
-    examples/lewm_pusht/results/*.json        the LeWM PushT downstream evaluation
-    examples/swm_compat/results/swm_workflow.json   recorded check_mapping / adapter run
+    docs/research/artifacts/step5_lewm_pusht/results/*.json        the LeWM PushT downstream evaluation
+    tests/fixtures/regression/references/swm_workflow.json   recorded check_mapping / adapter run
 
     python scripts/regression/swm_matrix.py --swm-registry OUT.json \\
         --se-census census_a.json --se-census census_b.json --live
@@ -639,7 +639,7 @@ def read_dino(path: Path | None) -> dict:
 def read_lewm(results_dir: Path | None) -> dict | None:
     """The LeWM PushT downstream evaluation, aggregated with the repo's own statistics.
 
-    ``examples/lewm_pusht/summarize.py`` already owns the paired McNemar test and the Wilson interval,
+    ``docs/research/artifacts/step5_lewm_pusht/summarize.py`` already owns the paired McNemar test and the Wilson interval,
     and the pairing is the whole point of the experiment, so its helpers are imported rather than
     reimplemented. Only the aggregation loop is here, because ``summarize.main()`` prints.
     """
@@ -649,7 +649,9 @@ def read_lewm(results_dir: Path | None) -> dict | None:
     try:
         from summarize import mcnemar_exact, wilson  # type: ignore
     except Exception as ex:
-        return {"error": f"cannot import examples/lewm_pusht/summarize.py: {type(ex).__name__}: {ex}"}
+        return {
+            "error": f"cannot import docs/research/artifacts/step5_lewm_pusht/summarize.py: {type(ex).__name__}: {ex}"
+        }
     finally:
         sys.path.pop(0)
 
@@ -698,7 +700,7 @@ def read_lewm(results_dir: Path | None) -> dict | None:
     return {
         "arms": arms,
         "paired_vs_official": paired,
-        "source": "examples/lewm_pusht/results/*.json via summarize.py",
+        "source": "docs/research/artifacts/step5_lewm_pusht/results/*.json via summarize.py",
         "note": (
             "paired evaluation: for a seed, both arms run the same episode indices, start "
             "steps, goal offset and CEM seed, so the only difference is the renderer. The "
@@ -717,7 +719,7 @@ def read_swm_workflow(path: Path | None) -> dict:
         "renderer_swap": d.get("D_renderer_swap", {}),
         "info_key_parity": d.get("key_parity", {}),
         "scaling": d.get("G_scaling", {}),
-        "source": "examples/swm_compat/results/swm_workflow.json",
+        "source": "tests/fixtures/regression/references/swm_workflow.json",
     }
 
 
@@ -795,9 +797,8 @@ def live_probe(swm_ids: list[str]) -> dict:
     """
     out: dict = {"available": False}
     try:
-        from stable_envs.compat import worldmodel as wm
-
         import stable_envs as se
+        from tests.helpers import reference as wm
     except Exception as ex:
         out["error"] = f"stable_envs not importable: {type(ex).__name__}: {ex}"
         return out
@@ -1730,7 +1731,7 @@ def decide_status(row: dict) -> list[dict]:
         add(
             "ready_for_downstream_validation",
             "run the paired task-equivalence gate (official renderer vs ours, same episodes, same "
-            "seeds) the way examples/lewm_pusht/ does for PushT; current evidence is "
+            "seeds) the way docs/research/artifacts/step5_lewm_pusht/ does for PushT; current evidence is "
             + row["validation"]["level"]
             + ". A missing VariationMap does not block this -- the gate "
             "uses the registered default appearance.",
@@ -2114,7 +2115,7 @@ def build(args) -> dict:
                 ),
                 "downstream_from_pixels": (
                     "pixel parity and DINO cosine are recorded as themselves; "
-                    "only examples/lewm_pusht/ promotes a row to "
+                    "only docs/research/artifacts/step5_lewm_pusht/ promotes a row to "
                     "downstream_policy_or_worldmodel."
                 ),
                 "cpu_support_from_absence_of_error": (
@@ -2765,8 +2766,8 @@ def main() -> None:
     ap.add_argument("--decode-all", default=str(REPO / "tests/fixtures/regression/references/decode_all.json"))
     ap.add_argument("--bench", default=str(REPO / "tests/fixtures/regression/references/bench_gpu_vs_cpu.json"))
     ap.add_argument("--dino", default=str(REPO / "tests/fixtures/regression/references/dino_agreement.json"))
-    ap.add_argument("--lewm", default=str(REPO / "examples/lewm_pusht/results"))
-    ap.add_argument("--swm-workflow", default=str(REPO / "examples/swm_compat/results/swm_workflow.json"))
+    ap.add_argument("--lewm", default=str(REPO / "docs/research/artifacts/step5_lewm_pusht/results"))
+    ap.add_argument("--swm-workflow", default=str(REPO / "tests/fixtures/regression/references/swm_workflow.json"))
     ap.add_argument(
         "--live",
         action="store_true",
@@ -2786,7 +2787,7 @@ def main() -> None:
 
     # VARIATION_MAPS is the strongest join rung, so it is read from the module rather than copied.
     try:
-        from stable_envs.compat.worldmodel import VARIATION_MAPS
+        from tests.helpers.reference import VARIATION_MAPS
 
         args._variation_maps = {n: m.swm_id for n, m in VARIATION_MAPS.items()}
     except Exception as ex:

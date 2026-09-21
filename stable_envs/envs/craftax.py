@@ -790,20 +790,14 @@ class CraftaxClassic(Env):
     #: and the strip layout. ``jax`` is here for a reason that is not obvious and is load-bearing:
     #: see :meth:`reference_env`, which refuses to build a reference whose PRNG path differs.
     reference_versions = {"craftax": "1.6.1", "jax": "0.11.1"}
-    #: ``stable_worldmodel``'s ``CraftaxWrapper`` (
-    #: ``stable_worldmodel/envs/craftax/craftax.py``) builds its step function as
-    #: ``self._step_fn = jax.jit(_step, backend=self.backend)`` (and reset likewise), so a LIVE
-    #: ``gymnasium.make("swm/CraftaxClassicPixels-v1")`` workflow always observes the JIT-produced
-    #: frame, never the un-jitted one. The parity claim certified above (100.0000% exact, max |diff|
-    #: 0, see :meth:`reference_env`) is measured against the renderer as WRITTEN -- un-jitted -- for
-    #: the reason given there: jit fuses the arithmetic differently and the reference disagrees with
-    #: its own un-jitted self by up to 1.5e-05 in float32, which a sleeping or lit row's desaturation
-    #: can turn into a uint8 rounding flip. So there are two honest, DIFFERENT numbers depending on
-    #: which official frame a caller means: **un-jitted 100.0000% exact / max |diff| 0** (what this
-    #: class certifies against) and **jitted 99.7854% exact at 7 px / 99.7225% at 16 px, max |diff|
-    #: 1** (what a live SWM caller actually receives). Neither number is hidden behind the other; a
-    #: workflow built on ``swm/CraftaxClassicPixels-v1`` should expect the jitted number, and the gap
-    #: is stated below rather than omitted.
+    #: Certified against un-jitted Craftax. A jitted wrapper of the same renderer can differ by
+    #: at most 1 uint8 because ``jax.jit`` fuses the float32 arithmetic differently (up to 1.5e-05),
+    #: which a sleeping or lit row's desaturation can turn into a rounding flip. The parity claim
+    #: certified above (100.0000% exact, max |diff| 0, see :meth:`reference_env`) is measured against
+    #: the renderer as WRITTEN -- un-jitted. Two honest numbers: **un-jitted 100.0000% exact /
+    #: max |diff| 0** (what this class certifies against) and **jitted 99.7854% exact at 7 px /
+    #: 99.7225% at 16 px, max |diff| 1**. Neither number is hidden behind the other; the gap is
+    #: stated below rather than omitted.
     SWM_WRAPPER_GATE_F = {
         "swm_wrapper_jits": ["reset", "step"],
         "swm_wrapper_source": "stable_worldmodel/envs/craftax/craftax.py:CraftaxWrapper.__init__ "

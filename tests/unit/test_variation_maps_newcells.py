@@ -18,8 +18,8 @@ import numpy as np
 import pytest
 import torch
 
-from stable_envs.interop import VARIATION_MAPS, variation_map
-from stable_envs._interop.variation_maps.newcells import (
+from tests.helpers.reference import VARIATION_MAPS, variation_map
+from tests.helpers.reference.variation_maps.newcells import (
     BUCKETS,
     LEAF_CLASSIFICATION,
     NEWCELL_VARIATION_MAPS,
@@ -452,7 +452,7 @@ def test_simple_point_maze_mapped_leaves_are_dims_of_our_own_space():
 def test_craftax_ids_are_recorded_as_having_no_leaves_at_all():
     """Confirmed live: CraftaxWrapper.__init__ sets variation_space = None, so there is no Gate-F
     variation gap for either id. Recorded so the completeness count has no implicit exception."""
-    from stable_envs._interop.variation_maps.newcells import CRAFTAX_NO_LEAVES
+    from tests.helpers.reference.variation_maps.newcells import CRAFTAX_NO_LEAVES
 
     assert set(CRAFTAX_NO_LEAVES) == {"swm/CraftaxClassicPixels-v1", "swm/CraftaxPixels-v1"}
     for sid, rec in CRAFTAX_NO_LEAVES.items():
@@ -702,7 +702,7 @@ def test_a_swm_shaped_cube_colour_survives_the_round_trip_through_our_style_row(
     """
     import types
 
-    from stable_envs.interop import style_from_variation, variation_from_style
+    from tests.helpers.reference import style_from_variation, variation_from_style
 
     space = _ogb_space(cell)
     name = {"Cube": "OGBCube", "Scene": "OGBScene"}[cell]

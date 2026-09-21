@@ -62,18 +62,18 @@ The claim is that the 95% interval on the paired difference lies entirely inside
 
 ```bash
 # PushT: audit the existing paired evidence (no GPU, no retraining)
-python examples/downstream_step5/ingest_pusht.py --out tests/fixtures/regression/join/step5/pusht
+python docs/research/artifacts/step5_downstream/ingest_pusht.py --out tests/fixtures/regression/join/step5/pusht
 
 # Reacher: the pre-flight, then one arm
-python examples/downstream_step5/reacher/parity_probe.py --out tests/fixtures/regression/join/step5/reacher
-python examples/downstream_step5/reacher/eval_reacher.py --arm official --seed 42 --n 50 \
+python docs/research/artifacts/step5_downstream/reacher/parity_probe.py --out tests/fixtures/regression/join/step5/reacher
+python docs/research/artifacts/step5_downstream/reacher/eval_reacher.py --arm official --seed 42 --n 50 \
     --policy reacher/prejepa/weights_epoch_3.pt --swm /path/to/stable-worldmodel
 
 # the verdict, from the run JSONs
-python examples/downstream_step5/paired_gate.py --runs tests/fixtures/regression/join/step5/reacher/runs \
+python docs/research/artifacts/step5_downstream/paired_gate.py --runs tests/fixtures/regression/join/step5/reacher/runs \
     --out tests/fixtures/regression/join/step5/reacher
 ```
 
 The Reacher arms need a GPU, the `stable_worldmodel` training stack and the Reacher corpus; the
 findings are in
-[`docs/research/step5_downstream_semantics.md`](../../docs/research/step5_downstream_semantics.md).
+[`docs/research/step5_downstream_semantics.md`](../../step5_downstream_semantics.md).

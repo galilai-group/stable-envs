@@ -14,7 +14,6 @@ REQUIRED_EXTRAS = {
     "dev",
     "docs",
     "humanoidbench",
-    "interop",
     "metaworld",
     "mjwarp",
     "rocket",

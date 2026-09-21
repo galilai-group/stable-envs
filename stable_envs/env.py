@@ -1,14 +1,22 @@
 """The contract every stable-envs environment implements.
 
-Four nouns: **Env**, **State** (the world), **Variation** (appearance), **Frame** (pixels).
-Two usage modes: **stateful** (``reset`` / ``step``) and **functional** (``transition`` / ``unroll`` /
-``render``).
+Four nouns: **Env**, **State** (the world), **Variation** (persistent environment configuration),
+**Frame** (pixels). Two usage modes: **stateful** (``reset`` / ``step``) and **functional**
+(``transition`` / ``unroll`` / ``render``).
+
+The invariant is ``frame = f(state, variation)``. Where native dynamics exist,
+``next_state = g(state, action, variation)``. Variation may live on the env rather than on every
+method signature; ``render(..., variation=)`` and ``set_variation`` are the public knobs.
 
 A frame must be a deterministic function of explicit render state + variation, regardless of
 backend representation. Some families rasterize a ``Scene2D``; others gather from a tile atlas
-or ray-cast analytic primitives. Those are implementation choices. The invariant is the same:
-given the compact render row and the Variation, the pixels are determined — no env instance, no
-simulator handle, no hidden buffer.
+or ray-cast analytic primitives. Those are implementation choices. Given the compact render row
+and the Variation, the pixels are determined — no env instance, no simulator handle, no hidden
+buffer.
+
+Variation is not appearance-only. A leaf may be render-only, dynamics-only, reset/task, or
+render+dynamics (appearance, geometry, morphology, physics, reset distributions, task
+configuration). Do not invent knobs; declare the ones the environment actually has.
 
 Two state shapes, and they are not the same thing:
 
@@ -20,11 +28,11 @@ Two state shapes, and they are not the same thing:
 
     render_state_dim / render_state_names   the compact row used to regenerate pixels
     pack_render_state / unpack_render_state public State <-> that compact row
-    variation_space                         every appearance/layout knob
+    variation_space                         persistent configuration knobs
     render(state, variation=…)              (B,H,W,3) uint8 on device, batched
 
-Physics is deliberately NOT part of this contract. Rendering and simulation are separable, and keeping
-them separate is what makes the repo useful:
+Render fidelity and physics *fidelity* remain separate, even though Variation may include physics
+*configuration*. Keeping those claims apart is what makes the repo useful:
 
   * the common case is re-rendering a stored dataset of states — no simulator runs at all;
   * where a batched GPU simulator exists it is offered as ``step``, but the reference CPU simulator
@@ -32,6 +40,8 @@ them separate is what makes the repo useful:
   * a GPU physics port and a GPU renderer have completely different fidelity stories. A renderer can be
     bit-exact against the reference. A contact solver cannot: contact is chaotic, so any reimplementation
     diverges, and conflating the two lets a "our env matches" claim rest on the half that does not.
+  * gravity, mass, damping, and similar leaves are still Variation when an env exposes them. That does
+    not make the contact solver bit-exact.
 
 The conformance suite in ``tests/gpu`` is parameterised over the registry, so an env added tomorrow is
 covered without editing a test: render parity against the official renderer, get/set round-trip,
@@ -67,7 +77,7 @@ State = TensorDict
 StepResult = TensorDict
 
 #: What ``render(..., variation=)`` and ``set_variation`` accept: leaf overrides, or a compiled
-#: flat / batched Variation row. ``None`` means "the env's current (or default) appearance".
+#: flat / batched Variation row. ``None`` means "the env's current (or default) configuration".
 VariationLike = Mapping[str, Any] | torch.Tensor | np.ndarray
 
 #: How many offending rows/columns a diagnostic lists before it says "and N more". Long enough to see
@@ -518,11 +528,15 @@ def _check_reference_versions_shape(cls, where: str, rv) -> None:
 
 
 class Env:
-    """Base class: a batched, GPU-renderable environment defined by ``scene()``.
+    """Base class: a batched environment with explicit State, Variation, and state-driven rendering.
 
-    Four nouns: **Env**, **State** (the world), **Variation** (appearance), **Frame** (pixels).
-    Two usage modes: **stateful** (``reset`` / ``step``) and **functional** (``transition`` /
-    ``unroll`` / ``render``).
+    Four nouns: **Env**, **State** (the world), **Variation** (persistent environment configuration),
+    **Frame** (pixels). Two usage modes: **stateful** (``reset`` / ``step``) and **functional**
+    (``transition`` / ``unroll`` / ``render``).
+
+    ``frame = f(state, variation)``. Where native dynamics exist,
+    ``next_state = g(state, action, variation)``. Variation may be stored on the env rather than
+    threaded through every signature.
 
     The compact float32 row every renderer and frozen corpus speaks is *render state*. It is not
     always a lossless dump of public ``State`` — dynamics-only fields can be omitted. The public
@@ -696,7 +710,10 @@ class Env:
     # to implement
 
     def make_variation_space(self) -> VariationDict:
-        """Every appearance/layout knob this env exposes. Override; may be an empty Dict."""
+        """Persistent configuration knobs this env exposes.
+
+        Appearance, geometry, morphology, physics, reset/task. Override; may be an empty Dict.
+        """
         raise NotImplementedError
 
     def scene(self, states: torch.Tensor, variation: VariationLike | None = None, style=None) -> Scene2D:
@@ -851,7 +868,7 @@ class Env:
     def sample_variation(
         self, batch: int | None = None, paths=None, rng: np.random.Generator | None = None
     ) -> np.ndarray:
-        """``(batch, variation_dim)`` independent appearances — batched domain randomisation.
+        """``(batch, variation_dim)`` independent configurations — batched domain randomisation.
 
         ``paths`` restricts randomisation to named leaves; everything else stays at the official
         default, which is what makes a study of "vary only the background" expressible.

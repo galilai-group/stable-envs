@@ -11,7 +11,7 @@
     **No benchmark was run to produce this page.** It reads
     `examples/results/bench_gpu_vs_cpu.json` (133 env×size rows, NVIDIA H200),
     `examples/results/decode/ALL.json` (196 rows), `examples/results/dino/dino_agreement.json`
-    (192 envs), `examples/lewm_pusht/results/` (300 paired episodes) and
+    (192 envs), `docs/research/artifacts/step5_lewm_pusht/results/` (300 paired episodes) and
     [`scratch/swm_matrix.json`](https://github.com/galilai-group/stable-envs/blob/main/scratch/swm_matrix.json).
 
 ---

@@ -35,8 +35,8 @@ import numpy as np
 import pytest
 import torch
 
-from stable_envs._interop.variation_maps.dmc_control import EXPECTED_COUNTS, LIGHT_RANGE, MAPS, swm_defaults
-from stable_envs.interop import (
+from stable_envs.registry import REGISTRY, make
+from tests.helpers.reference import (
     VARIATION_MAPS,
     check_mapping,
     style_from_variation,
@@ -44,7 +44,7 @@ from stable_envs.interop import (
     variation_from_style,
     variation_map,
 )
-from stable_envs.registry import REGISTRY, make
+from tests.helpers.reference.variation_maps.dmc_control import EXPECTED_COUNTS, LIGHT_RANGE, MAPS, swm_defaults
 
 _HAVE_SWM = True
 try:  # pragma: no cover - environment dependent
@@ -333,8 +333,8 @@ def test_light_intensity_lands_on_the_model(cell):
 _DEAD_PROBE = r"""
 import hashlib, json, sys
 import numpy as np, gymnasium, stable_worldmodel  # noqa: F401
-from stable_envs.interop import variation_map
-from stable_envs._interop.variation_maps.dmc_control import MAPS
+from tests.helpers.reference import variation_map
+from tests.helpers.reference.variation_maps.dmc_control import MAPS
 from stable_envs.registry import REGISTRY
 
 def probe(leaf):
@@ -540,8 +540,8 @@ def test_the_parity_floor_set_is_the_plate_baking_tier():
     would otherwise leave the map claiming support the renderer no longer has -- or withholding
     support it does have -- and nothing else in this file would notice.
     """
-    from stable_envs._interop.variation_maps.dmc_control import _PARITY_FLOOR
     from stable_envs.envs.dmcontrol import DMControlSuite
+    from tests.helpers.reference.variation_maps.dmc_control import _PARITY_FLOOR
 
     # Every DM Control id declares swm's floor.color, so "which of our cells can honour it" is
     # exactly "which of our cells bake a plate", which is the DMControlSuite tier.

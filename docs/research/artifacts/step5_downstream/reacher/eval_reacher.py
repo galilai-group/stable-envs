@@ -11,7 +11,7 @@ Everything that decides WHICH episodes run is inside ``eval_wm.run`` and is a pu
 construction rather than by a check afterwards -- and the check is done anyway, in
 ``paired_gate.py``, because "by construction" is what everybody says before the arms diverge.
 
-    python examples/downstream_step5/reacher/eval_reacher.py --arm official --seed 42 --n 50 \
+    python docs/research/artifacts/step5_downstream/reacher/eval_reacher.py --arm official --seed 42 --n 50 \
         --policy reacher/prejepa --out tests/fixtures/regression/join/step5/reacher/runs
 """
 
@@ -26,7 +26,7 @@ import sys
 import time
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[3]
+ROOT = next(p for p in Path(__file__).resolve().parents if (p / "pyproject.toml").is_file())
 
 ARMS = ("official", "stable_envs", "blank", "official_regen")
 

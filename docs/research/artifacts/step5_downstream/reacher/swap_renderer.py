@@ -1,6 +1,6 @@
 """Replace the Reacher renderer under ``stable_worldmodel``'s own evaluation, and nothing else.
 
-Same three surfaces as the PushT arm (``examples/lewm_pusht/swap_renderer.py``), for the same
+Same three surfaces as the PushT arm (``docs/research/artifacts/step5_lewm_pusht/swap_renderer.py``), for the same
 reason -- swapping only some of them would have the world model comparing our frames against
 theirs:
 

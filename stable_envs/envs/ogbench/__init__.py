@@ -1,9 +1,9 @@
-"""The OGBench family: 25 maze cells plus the two ``stable_worldmodel`` manipulation cells.
+"""The OGBench family: 25 maze cells plus the two manipulation cells.
 
 TWO MODULES, BECAUSE THERE ARE TWO SCENES AND TWO RENDERERS. ``maze`` is OGBench's own
 ``pointmaze``/``antmaze``/``humanoidmaze`` under a fixed top-down camera: a MuJoCo-baked plate plus
 the analytic ray-caster in ``render/raycast3d.py`` for the handful of agent primitives, certified at
-the ``parity`` tier and CPU-capable. ``manipulation`` is swm's ``CubeEnv``/``SceneEnv``: a
+the ``parity`` tier and CPU-capable. ``manipulation`` is OGBench's ``CubeEnv``/``SceneEnv``: a
 MuJoCo-baked plate composited with ``mujoco_warp``'s batch ray-caster for the movers, certified at
 the ``visual`` tier and CUDA-only by declaration (``CPU3D-OGB-1``). They share the family name, the
 upstream package and the plate-bake idea, and nothing else — no base class, no renderer, no cache.
@@ -13,7 +13,7 @@ WHAT THE IMPORT PATHS ARE, AND WHY THEY ARE NOT THE SAME SHAPE
 --------------------------------------------------------------
 
 ``stable_envs/envs/ogbench.py`` became THIS PACKAGE. A module and a package cannot share a name in
-one directory, so — unlike the ``swm_nav``/``navigation`` merge — there is no second path
+one directory, so — unlike the navigation merge — there is no second path
 to alias: the package IS ``stable_envs.envs.ogbench``, and the obligation the alias would have met is
 met directly by the re-exports below. Every module-level name the package exported resolves off
 this package, and the frozen measurement record checks that name by name, read off the

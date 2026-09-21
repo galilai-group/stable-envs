@@ -220,8 +220,8 @@ def test_the_shared_swm_reference_bridge_drives_simple_point_maze_the_old_way():
 
     ``SimplePointMaze``'s reference is a matplotlib figure, and neither local interpreter has
     matplotlib, so ``reference_render`` cannot be run against the official env here (the other four
-    navigation cells share the identical ``_SWMPort`` code path and ARE measured against theirs —
-    see findings §6). What is checkable without it is the call SEQUENCE, which is the whole of what
+    navigation cells share the identical ``_GymReferencePort`` gymnasium reference-env bridge and ARE
+    measured against theirs — see findings §6). What is checkable without it is the call SEQUENCE, which is the whole of what
     the merge changed: the reset must pass ``options={"variation": []}`` (a plain reset resamples
     ``agent.position`` and every number measured afterwards would describe a different appearance),
     the state must be written to ``u.state`` as float32, and ``render`` must be called with

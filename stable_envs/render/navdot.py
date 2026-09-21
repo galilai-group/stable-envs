@@ -1,4 +1,4 @@
-"""One fused kernel for the swm_nav family: a base image, a few Gaussian dots, and the blend.
+"""One fused kernel for the navigation family: a base image, a few Gaussian dots, and the blend.
 
 TwoRoom, TwoRoomTarget, Piecewise and PiecewiseZones are the four rows in this repo that render with
 no kernel at all. Their picture is a flat base image -- background, wall stripe, doors, zone tints,
@@ -56,7 +56,7 @@ import torch
 
 from .raster2d import tile_shape
 
-#: The smallest alpha ``swm_nav._alpha_blend`` can act on, MEASURED against that function over every
+#: The smallest alpha ``navigation._alpha_blend`` can act on, MEASURED against that function over every
 #: uint8 contrast: 2.98e-8 = 2^-25, reached at img=1,
 #: colour=0 because ``img * (1 - a)`` goes through ``1 - a``, which rounds to exactly 1.0 in float32
 #: below the spacing at 1.0. Below this alpha the blend is the identity.
@@ -69,7 +69,7 @@ DOT_SIGMAS = math.sqrt(2.0 * math.log(1.0 / ALPHA_FLOOR))
 def dot_window(pos: torch.Tensor, sigma: torch.Tensor, H: int, W: int) -> torch.Tensor:
     """``(..., 4)`` int64 ``r0, r1, c0, c1`` outside which a normalised dot cannot move a pixel.
 
-    ONE definition, used by the CPU path (``swm_nav._blend_dot``) and by the kernel below, because
+    ONE definition, used by the CPU path (``navigation._blend_dot``) and by the kernel below, because
     the two must agree about what "outside" means or the fast path is not the slow one.
 
     ``_gaussian_dot`` divides by the frame's own maximum, so the profile that reaches

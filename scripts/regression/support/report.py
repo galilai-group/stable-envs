@@ -365,7 +365,7 @@ def registered_variation_maps() -> dict:
     guesses ``present``.
     """
     try:
-        from stable_envs.compat.worldmodel import VARIATION_MAPS
+        from tests.helpers.reference import VARIATION_MAPS
 
         return dict(VARIATION_MAPS)
     except BaseException:  # noqa: BLE001

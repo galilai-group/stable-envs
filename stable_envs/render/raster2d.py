@@ -305,7 +305,7 @@ _GROUP_MIN_SPREAD = 4.0
 #:
 #: BOTH NUMBERS ARE THE CPU'S. On a device where the plan's ``.cpu()`` is a synchronisation rather
 #: than a copy, this model accepts groupings that lose -- measured, and the reason
-#: ``envs/swm_nav.py`` calls this only on the CPU path. A caller on another device needs constants
+#: ``envs/navigation.py`` calls this only on the CPU path. A caller on another device needs constants
 #: measured on it.
 #:
 #: The margin is 1.25 rather than 2: with the constant measured rather than assumed, a larger margin
@@ -344,7 +344,7 @@ def row_groups(box, r0: int, r1: int, c0: int, c1: int) -> list[tuple]:
     ``box`` is ``(B,4)`` int64 pixel boxes, ``r0..c1`` the union window already computed from them.
 
     Public because it has a second caller outside this module: ``envs/navigation.py`` groups the
-    swm_nav dot windows by exactly this partition, so that the fused kernel and the torch path agree
+    navigation-family dot windows by exactly this partition, so that the fused kernel and the torch path agree
     about which rows share a window. It was reaching in for ``_row_groups``; the name it reaches for
     is now part of this module's surface rather than a private one two modules deep.
     """

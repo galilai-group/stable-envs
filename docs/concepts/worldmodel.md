@@ -1,68 +1,29 @@
-# stable-envs and stable-worldmodel
+# Sibling projects
 
-Two packages, a deliberate split.
+`stable-envs` is the canonical environment layer. It owns Env / State / Action / Variation / Frame,
+with stateful `reset` / `step` and functional `transition` / `unroll` / `render`.
 
-**stable-envs owns**
-
-```text
-reset
-step                 (stateful, where a cell ships dynamics)
-transition / unroll  (functional, known actions)
-render
-state / action / variation semantics
-```
-
-**stable-worldmodel owns**
+`stable-worldmodel` is a sibling that may later depend on this package. The installed
+`stable-envs` runtime has **zero knowledge** of `stable-worldmodel`: no SWM ids in the registry,
+no interop adapters, no `snv.make("swm/...")`.
 
 ```text
-policy rollouts
-MPC, CEM / MPPI, planning
-dataset collection
-evaluation
-async orchestration
-auto-reset policy semantics
+stable-worldmodel          (policy, planning, collection — later)
+        ↓  may depend
+   stable-envs             (environments; zero runtime knowledge the other way)
+
+stable-datasets            dataset/storage API
+stable-pretraining         training API
 ```
 
-Do not look for `env.rollout(policy, …)` here. Planning and policy rollouts belong to
-`stable-worldmodel`.
+Do not look for `env.rollout(policy, …)` here. Planning, policy rollouts, dataset storage and
+training are deliberately outside this API. Other [stable-*](https://github.com/galilai-group)
+projects provide tools in those areas.
 
-## Shipped interop
+The packages may be used together by ordinary Python and data conventions. There is no runtime
+interop contract. Historical correspondence (the 42-id inventory, VariationMaps) lives in
+regression fixtures and the research archive, not in the shipped lookup.
 
-`stable_envs.interop` is a public developer API (not advertised at `snv.*`). Native
-`swm.World(env=snv.PushT(...))` is **unsupported** by the installed `stable-worldmodel`
-(`World` takes `env_name: str` and always `gym.make`s it). The shipped contract is:
-
-```python
-from stable_envs import interop
-
-interop.SWM_IDS                           # 42-id table
-snv.info("swm/PushT-v1")                  # resolves aliases without constructing on GPU
-interop.StableEnvGym("PushT", device="cpu")          # gym.Env over a batch-1 renderer
-interop.BatchedEnvPool("PushT", num_envs=8, device="cpu")
-interop.attach_batched_pool(world)                   # replace a swm.World's env list
-interop.swap_renderer(gym_env, "PushT", read_state=interop.pusht_state, device="cpu")
-interop.variation_map / style_from_variation / variation_from_style / check_mapping
-```
-
-`gymnasium` is imported when an adapter is first used; `stable_worldmodel` is imported only by operations that inspect a live SWM env. A user with neither installed pays nothing.
-
-### What each adapter is for
-
-| adapter | keeps | replaces | pixel-comparable? |
-|---|---|---|---|
-| `StableEnvGym` | caller code (`swm.World` + wrappers) | the env id string | no — different simulator, different reset draw |
-| `BatchedEnvPool` | `swm.World` loop shape | N single envs with one batched renderer | no |
-| `swap_renderer` | official dynamics, reward, termination | `render()` only | **yes** — both arms visit the same states |
-
-`swap_renderer` is the honest path when the simulator is the reference and only the renderer is ours. `StableEnvGym` does **not** carry an official reward function: a reward is a task, and this package defines what a frame is.
-
-## Native `World(env=…)` — not a public API
-
-```python
-# NOT shipped. Do not write this against current stable-envs:
-world = swm.World(env=snv.PushT(num_envs=64, device="cuda"))
-```
-
-Installed SWM still requires `env_name: str`. `examples/worldmodel.py` prints this limitation rather than inventing the call.
-
-Worked evidence that the adapters run an unmodified SWM workflow: [`examples/swm_compat/`](https://github.com/galilai-group/stable-envs/tree/main/examples/swm_compat).
+- [stable-worldmodel](https://github.com/galilai-group/stable-worldmodel)
+- [stable-datasets](https://github.com/galilai-group/stable-datasets)
+- [stable-pretraining](https://github.com/galilai-group/stable-pretraining)

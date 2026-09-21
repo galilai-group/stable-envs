@@ -26,7 +26,7 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
-STEP5 = ROOT / "examples" / "downstream_step5"
+STEP5 = ROOT / "docs" / "research" / "artifacts" / "step5_downstream"
 
 
 def _load(rel: str, name: str):
@@ -218,7 +218,7 @@ def test_the_pusht_audit_reproduces_the_committed_artifact(P, S, SPEC):
     numbers Step 2 recorded when it validated its own rule."""
     runs = P.load_runs(P.RESULTS)
     if not runs:
-        pytest.skip("examples/lewm_pusht/results is not present in this checkout")
+        pytest.skip("docs/research/artifacts/step5_lewm_pusht/results is not present in this checkout")
     rows = P.episodes(runs)
     off, seeds, _ = P.series(rows, "official")
     ours, _, _ = P.series(rows, "stable_envs")
@@ -231,7 +231,7 @@ def test_the_pusht_audit_reproduces_the_committed_artifact(P, S, SPEC):
 def test_the_pusht_arms_are_actually_paired(P):
     runs = P.load_runs(P.RESULTS)
     if not runs:
-        pytest.skip("examples/lewm_pusht/results is not present in this checkout")
+        pytest.skip("docs/research/artifacts/step5_lewm_pusht/results is not present in this checkout")
     assert P.check_pairing(runs)["paired"], "the committed PushT runs are not episode-for-episode"
 
 
@@ -239,7 +239,7 @@ def test_a_mismatched_episode_list_is_caught(P):
     """The check has to be able to fail, or it is decoration."""
     runs = P.load_runs(P.RESULTS)
     if not runs:
-        pytest.skip("examples/lewm_pusht/results is not present in this checkout")
+        pytest.skip("docs/research/artifacts/step5_lewm_pusht/results is not present in this checkout")
     bad = [dict(r) for r in runs]
     for r in bad:
         if r["arm"] == "stable_envs" and r["seed"] == 42:
@@ -253,7 +253,7 @@ def test_the_control_arm_degradation_is_measured_paired(P, S):
     aggregate would mix two different sets of tasks; the gate pairs it against the same 50."""
     runs = P.load_runs(P.RESULTS)
     if not runs:
-        pytest.skip("examples/lewm_pusht/results is not present in this checkout")
+        pytest.skip("docs/research/artifacts/step5_lewm_pusht/results is not present in this checkout")
     rows = P.episodes(runs)
     cseeds = sorted({r["seed"] for r in rows if r["arm"] == "blank"})
     ctrl, _, ce = P.series(rows, "blank")

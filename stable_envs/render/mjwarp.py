@@ -103,7 +103,7 @@ HIDDEN_GROUP = 5
 TEXTURED_OK = (0, 7)  # PLANE, MESH
 #: mjtTexture codes MJWarp's ``sample_texture`` can address. It builds ``wp.Texture2D`` and samples
 #: with 2-D coordinates, so a CUBE (1) or SKYBOX (2) map worn by a geom is not a texture it draws
-#: badly -- it is a texture it indexes out of bounds. Measured on ``swm/OGBScene-v0``, whose
+#: badly -- it is a texture it indexes out of bounds. Measured on OGBScene, whose
 #: ``btn_metal`` material wears one 512x512 cube map on two button MESH geoms: the render dies with
 #: ``Warp CUDA error 700: an illegal memory access`` inside the warm-up frame, and detaching that
 #: ONE texture -- leaving every 2-D texture and the skybox in place -- makes the scene render
@@ -171,7 +171,7 @@ def neutralise_illegal_spots(m) -> tuple[list[int], dict]:
 
     MuJoCo does neither when the cutoff is out of range, because OpenGL's ``GL_SPOT_CUTOFF`` accepts
     ``[0, 90]`` or the sentinel ``180`` and rejects everything else with ``GL_INVALID_VALUE``,
-    leaving the default **180 = not a spotlight**. Measured on ``swm/OGBCube-v0``, whose one spot is
+    leaving the default **180 = not a spotlight**. Measured on OGBCube, whose one spot is
     ``cutoff = 100°, exponent = 10`` (``tests/fixtures/regression/join/step7/ogb-manipulation/m1/``):
 
     ========================================  ============  ==================
@@ -186,7 +186,7 @@ def neutralise_illegal_spots(m) -> tuple[list[int], dict]:
     At an illegal cutoff the angular term is **bit-inert** in MuJoCo and the frame sits at its
     brightest: MuJoCo is lighting the scene with that light unattenuated by angle. MJWarp meanwhile
     applies ``cos^10`` and extinguishes it off-axis, which is why it comes out uniformly 3-8 levels
-    darker. Neutralising the angular term on the MJWarp model moves ``swm/OGBCube-v0`` from
+    darker. Neutralising the angular term on the MJWarp model moves OGBCube from
     **0.0091 to 0.3507** interior-exact and mean |diff| from 8.90 to 2.79, and moves the signed
     interior difference from a systematic -3..-8 to centred on zero with +/-1 tails.
 
@@ -208,7 +208,7 @@ def neutralise_illegal_spots(m) -> tuple[list[int], dict]:
     discards the cutoff entirely -- a cutoff-100 spot aimed straight up renders as 180 does, and so
     does -5 -- so ``light_cutoff`` is set to the sentinel **180**, where ``cos(180) = -1`` and
     ``cos_theta < -1`` is never true. Upstream reads ``light_cutoff`` only in that cone test, so
-    writing it changes nothing else. Measured on ``swm/OGBCube-v0``, whose cutoff is 100 and where
+    writing it changes nothing else. Measured on OGBCube, whose cutoff is 100 and where
     the cone is therefore nearly inert either way: ``exponent = 0`` alone scored 0.3506 and
     ``exponent = 0`` + ``cutoff = 180`` scored 0.3507 -- indistinguishable on THIS scene, which is
     exactly why the rule has to be right in general rather than right here.
@@ -294,14 +294,14 @@ def texture_gaps(m, groups=DEFAULT_GROUPS) -> list[tuple[int, str, int]]:
 
     Conditions 2 and 3 are checked regardless of geom type, which is the whole point of adding them:
     the case that found them is a textured **MESH**, the geom type condition 1 declares safe.
-    ``swm/OGBScene-v0`` returned an EMPTY gap list from this function and then killed the renderer.
+    ``OGBScene`` returned an EMPTY gap list from this function and then killed the renderer.
     An empty result here must mean "safe", so a check that classifies by geom type alone is a false
     all-clear.
 
     **Condition 3 is the one that actually predicts the crash**, and condition 2 catches the same
     case for a related reason: a cube-mapped mesh normally carries no UVs at all, because MuJoCo
     generates cube texgen from position and normal and never needs them. Measured on
-    ``swm/OGBScene-v0``: its two button geoms wear mesh ``stopbuttonrim`` with a CUBE texture and
+    ``OGBScene``: its two button geoms wear mesh ``stopbuttonrim`` with a CUBE texture and
     ``texcoordadr = -1, texcoordnum = 0``. Both conditions are kept because they are independent —
     a 2-D texture on a UV-less mesh crashes with no cube map in sight, and a cube map on a mesh that
     does have UVs is sampled as if its six stacked faces were one 2-D image.
@@ -354,7 +354,7 @@ def unsamplable_texture_materials(m, groups=DEFAULT_GROUPS) -> dict[int, list[in
       unconditionally, so a UV-less mesh reads off the allocation).
 
     Distinct from the UV half of ``texture_gaps``: a textured BOX renders one flat texel, which is
-    wrong but survives. These kill the renderer. ``swm/OGBScene-v0`` is the worked example — one
+    wrong but survives. These kill the renderer. ``OGBScene`` is the worked example — one
     512x512 cube map on two UV-less button meshes.
     """
     out: dict[int, list[int]] = {}
@@ -392,7 +392,7 @@ def bake_unsamplable_textures(m, groups=DEFAULT_GROUPS) -> dict:
     thing on offer. Mixing them would let a per-scene crash workaround silently change scenes that
     render perfectly well.
 
-    **Measured cost on the case that motivated it**, ``swm/OGBScene-v0``'s ``btn_metal`` cube map on
+    **Measured cost on the case that motivated it**, OGBScene's ``btn_metal`` cube map on
     two button meshes, MuJoCo against MuJoCo over 8 states at 200 px
     (``tests/fixtures/regression/join/step7/ogb-manipulation/m5/q11_button_bake.json``):
 

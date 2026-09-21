@@ -15,7 +15,7 @@ traj = env.unroll(state, actions)      # FUNCTIONAL, open-loop; actions (T, num_
 
 On a cell that ships dynamics, `transition(state, a)` equals `step(a)` **to the bit** on the same device for the same `state`. `unroll` equals repeated `transition`. The initial state is not included in the trajectory: the caller already holds it, and returning `T+1` states would offset every downstream index against the actions beside it.
 
-`unroll` means **known / open-loop actions**, not a policy rollout. There is no `env.rollout(policy=...)`. Policies, MPC, CEM/MPPI, planning, dataset collection and auto-reset belong to `stable-worldmodel`. See [ownership](worldmodel.md).
+`unroll` means **known / open-loop actions**, not a policy rollout. There is no `env.rollout(policy=...)`. Policies, MPC, CEM/MPPI, planning, dataset collection and auto-reset belong to sibling projects. See [sibling projects](worldmodel.md).
 
 ## Renderer-only cells
 

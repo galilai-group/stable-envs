@@ -170,9 +170,9 @@ def _grid_defaults() -> np.ndarray:
 
     It is read because it is simultaneously three things that must not be allowed to drift apart: the
     compiled texture's colours, this family's declared ``floor.color`` default, and
-    ``stable_worldmodel``'s own ``init_value`` for the leaf (``[[0.1,0.2,0.3],[0.2,0.3,0.4]]``, in
-    every one of its twelve DM Control wrappers). A constant here would make "our default IS swm's
-    default" a coincidence that a ``dm_control`` release could quietly end.
+    the registered ``init_value`` for the leaf (``[[0.1,0.2,0.3],[0.2,0.3,0.4]]``, in
+    every one of the twelve DM Control wrappers). A constant here would make "our default IS the
+    registered default" a coincidence that a ``dm_control`` release could quietly end.
     """
     import re
 
@@ -194,7 +194,7 @@ def _grid_masks(m, texid: int) -> tuple[np.ndarray, np.ndarray]:
 
     NOT DERIVED BY EQUALITY, and that is the whole point of this function. The suite declares
     ``markrgb=".2 .3 .4"``, which is EXACTLY its ``rgb2``, so in the compiled texture the 1,196
-    edge-mark texels and the 44,402 rgb2 texels are byte-identical. ``stable_worldmodel`` honours
+    edge-mark texels and the 44,402 rgb2 texels are byte-identical. The registered default honours
     ``floor.color`` by writing ``rgb1``/``rgb2`` and RECOMPILING: the recompile moves the rgb2 texels
     and leaves ``markrgb`` at its literal ``.2 .3 .4``. A mask taken by equality would move both, and
     the 1,196 marks are the frame's grid lines -- the most visible feature on the floor.

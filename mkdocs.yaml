@@ -1,5 +1,5 @@
 site_name: stable-envs
-site_description: Famous research environments as GPU-batched, state-driven renderers
+site_description: A batched environment library with explicit state, dynamics, variation, and fast state-driven rendering
 repo_url: https://github.com/galilai-group/stable-envs
 repo_name: galilai-group/stable-envs
 site_url: https://galilai-group.github.io/stable-envs/
@@ -103,7 +103,7 @@ nav:
       - Variations: concepts/variation-spaces.md
       - Lifecycle: concepts/lifecycle.md
       - Limitations: concepts/limitations.md
-      - stable-worldmodel: concepts/worldmodel.md
+      - Sibling projects: concepts/worldmodel.md
       - Benchmarks: benchmarks.md
       - Gallery: gallery.md
   - Contributor:
@@ -117,6 +117,6 @@ nav:
       - Why physics is separate: concepts/physics.md
       - Env: api/env.md
       - Registered environments: api/envs.md
-      - interop: api/compat.md
+      - Sibling projects (API): api/compat.md
       - testing: api/testing.md
   - Research archive: research/index.md

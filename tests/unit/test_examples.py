@@ -118,7 +118,7 @@ def test_every_argparse_script_can_print_its_own_help(path: Path):
     options sharing a flag, or a module-level line that is doing real work.
 
     A missing optional dependency SKIPS. ``examples/rendernet/train_corrector.py`` needs robocasa and
-    ``examples/lewm_pusht/`` needs hydra and a policy checkpoint; neither absence says anything about
+    ``docs/research/artifacts/step5_lewm_pusht/`` needs hydra and a policy checkpoint; neither absence says anything about
     the script, and failing on it is the exact mistake that put four red marks on this suite today for
     a Box2D the code under test does not use.
     """
@@ -144,8 +144,8 @@ def test_every_argparse_script_can_print_its_own_help(path: Path):
 def test_the_readme_lists_the_scripts_that_exist():
     """``examples/README.md`` is the index somebody reads before running any of this.
 
-    Only the top level is required to be listed — the sub-projects (``lewm_pusht/``,
-    ``robocasa_visual/``, ``rendernet/``, ``swm_compat/``) carry their own READMEs — but a top-level
+    Only the top level is required to be listed — the sub-projects (``robocasa_visual/``,
+    ``rendernet/``) carry their own READMEs — but a top-level
     script that the index does not mention is one nobody will find, and an index entry with no script
     behind it is a command that fails.
     """

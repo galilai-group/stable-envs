@@ -353,11 +353,10 @@ def test_the_maze_variation_taxonomy_is_the_step8_one():
 def test_the_manipulation_variation_taxonomy_is_the_two_mapped_leaves():
     """``cube.color`` and ``floor.color``, in the shapes the boundary was decided at.
 
-    Needs the cached bundle (mujoco + ogbench + swm on the CPU) because the defaults are read off
-    swm's own space rather than transcribed, which is what makes "our default IS the registered
-    default" true by construction.
+    Needs the cached bundle (mujoco + ogbench on the CPU) because the defaults are read off
+    the reference variation space rather than transcribed, which is what makes "our default IS the
+    registered default" true by construction.
     """
-    pytest.importorskip("stable_worldmodel")
     _needs_ogbench()
     for cell in ("Cube", "Scene"):
         space = MANIP.OGBManipBase.make_variation_space(types.SimpleNamespace(CELL=cell))

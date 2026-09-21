@@ -1,15 +1,15 @@
 """Per-value texel substitution on a baked plate: one texture edit, one upload, one cache key.
 
-WHAT THIS IS FOR. Several ``stable_worldmodel`` appearance leaves are TEXTURE writes rather than
+WHAT THIS IS FOR. Several appearance leaves are TEXTURE writes rather than
 material writes -- DM Control's ``floor.color`` and OGBench's ``floor.color`` both rewrite the
-builtin ``grid`` texture's ``rgb1``/``rgb2`` and let swm recompile the whole scene. A recompile is
+builtin ``grid`` texture's ``rgb1``/``rgb2`` and recompile the whole scene. A recompile is
 not available to a cell that has baked a static plate, cached a render context and captured a CUDA
 graph against one compiled model. It is also not necessary: the compiled texture of a two-colour
 checker is a small set of distinct texel values, so the same bytes are reached by SUBSTITUTING those
 texels in the renderer's own model and re-uploading the texture to its own GL context.
 
-VERIFIED, not assumed, on ``swm/OGBCube-v0`` and ``swm/OGBScene-v0``: substituting
-here and uploading gives a plate BYTE-IDENTICAL to letting swm recompile the whole model at the same
+VERIFIED, not assumed, on OGBCube and OGBScene: substituting
+here and uploading gives a plate BYTE-IDENTICAL to recompiling the whole model at the same
 ``floor.color`` -- ``tex_data`` 0 bytes differing, 0 of 50,176 pixels differing, both cells. This
 module is that operation, lifted out of ``ogb_manip.py`` so that ``dmcontrol.py`` runs the same code
 rather than a second copy of it that is free to drift.
@@ -18,7 +18,7 @@ THE THREE THINGS IT IS EASY TO GET WRONG, and which are therefore the whole of t
 
 1. **The quantisation rule.** MuJoCo's texture compiler TRUNCATES ``int(255 * v)``; it does not
    round. 0.16 becomes 40 where rounding gives 41. ``quantise`` is that rule and the only place it
-   is written down. (``stable_worldmodel``'s own Fetch skybox write is
+   is written down. (Fetch's own skybox write is
    ``(bg * 255).astype(np.uint8)`` -- the same truncation, independently.)
 2. **The upload.** ``mujoco.Renderer`` uploads textures to its GL context when it is BUILT. Writing
    ``tex_data`` afterwards changes the model and not the context, so without ``mjr_uploadTexture``
@@ -71,13 +71,13 @@ def texel_slots(model, texture: str | int, default_colours, masks=None) -> dict 
     REQUEST alone.
 
     Texels matching neither default -- MuJoCo's ``markrgb`` grid lines, a gradient's interpolated
-    band -- are deliberately left alone, because swm does not touch them either. The masks are
+    band -- are deliberately left alone, because the recompile does not touch them either. The masks are
     therefore asserted to be non-empty AND their union is reported, so a caller can see how much of
     the texture the leaf actually reaches rather than assuming it reaches all of it.
 
     ``masks`` OVERRIDES the equality rule, and DM Control is why it has to exist. Its ``grid``
     texture declares ``markrgb=".2 .3 .4"``, which is EXACTLY its ``rgb2``: the 1,196 edge-mark
-    texels and the 44,402 rgb2 texels are byte-identical in the compiled texture, and swm's
+    texels and the 44,402 rgb2 texels are byte-identical in the compiled texture, and a
     recompile moves the second set and leaves the first at ``.2 .3 .4``. Equality alone cannot tell
     them apart, so a caller that knows the texture's construction supplies the masks and this
     function still owns the addressing, the assertions and the bookkeeping.
@@ -105,7 +105,7 @@ def texel_slots(model, texture: str | int, default_colours, masks=None) -> dict 
             assert bad == 0, (
                 f"mask {i} selects {bad} texels that do not hold default colour {i} "
                 f"({list(cols[i])}); the masks and the compiled texture disagree, so a substitution "
-                f"would paint texels swm does not paint"
+                f"would paint texels the recompile does not paint"
             )
     for i, mk in enumerate(masks):
         assert mk.any(), (

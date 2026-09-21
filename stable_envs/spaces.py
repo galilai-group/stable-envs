@@ -1,19 +1,17 @@
-"""Variation spaces: every appearance and layout knob an env has, declared as a space you can sample.
+"""Variation spaces: persistent environment configuration declared as a space you can sample.
 
-The API deliberately mirrors ``stable_worldmodel.spaces`` — same class names, same
-``init_value`` / ``value`` / ``reset`` / ``sample`` / ``set_value`` / ``check`` surface, same
-``reset_variation_space`` entry point — so an env written against one works against the other and
-``stable_worldmodel`` envs can move here without a rewrite. It is vendored rather than imported so that
-``stable_envs`` stays installable on its own; the compatibility is the point, the dependency is not.
+A leaf may be render-only, dynamics-only, reset/task, or render+dynamics. Leaves expose
+``init_value`` / ``value`` / ``reset`` / ``sample`` / ``set_value`` / ``check``.
+``reset_variation_space`` resets a whole tree. ``batch_sample`` draws B independent values for a
+subtree and returns them stacked, which is the form the scene builder consumes.
 
-What changes here is what the values are *for*. In ``stable_worldmodel`` a variation is read once at
-reset and baked into a CPU renderer. Here the variation values flow into a ``Scene2D`` as per-environment
-tensors, so a batch of 4096 environments can each carry a different block colour, agent radius or
-background, and still render in a single kernel launch. Domain randomisation becomes a tensor, not a
-loop over envs.
+The implementation was originally inspired by the space classes used in the lab's other
+environment work. This module now owns its own API: environments written against it do not
+need another package's space types.
 
-``batch_sample`` exists for exactly that: it draws B independent values for a subtree and returns them
-stacked, which is the form the scene builder consumes.
+Values flow into a ``Scene2D`` as per-environment tensors, so a batch of 4096 environments can
+each carry a different block colour, agent radius or background, and still render in a single
+kernel launch. Domain randomisation becomes a tensor, not a loop over envs.
 """
 
 from __future__ import annotations

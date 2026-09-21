@@ -10,13 +10,12 @@ snv.list_envs(family="classic_control")
 snv.list_envs(family="ogbench", domain="pointmaze")
 snv.list_families()                  # stable family ids, not module paths
 snv.info("PushT")                    # facts that do not need a device
-snv.info("swm/PushT-v1")             # SWM aliases resolve the same way as make()
 snv.import_errors()                  # {module: exception}, families this machine lacks
 ```
 
 `info(name)` does **not** construct the env. Construction needs a device, and for several families a GPU, an EGL context or a compiled scene.
 
-Returned fields include `class_name`, `id` (slug), `family`, `domain`, `reference_id`, `render_state_dim`, `render_state_names`, `default_size`, `fidelity_tier`, `render_decoder`, `action_dim`, `has_dynamics`, `requires_cuda`, `swm_ids`.
+Returned fields include `class_name`, `id` (slug), `family`, `domain`, `reference_id`, `render_state_dim`, `render_state_names`, `default_size`, `fidelity_tier`, `render_decoder`, `action_dim`, `has_dynamics`, `requires_cuda`.
 
 `snv.Spec` is a tensor contract (`env.frame_spec`, `env.state_spec`, …). `snv.info` is metadata. They are different types with similar English names on purpose — do not confuse them.
 
@@ -30,15 +29,11 @@ env = snv.CartPole(num_envs=8)
 # snv.DMCReacherHard, snv.OGBCube, snv.CraftaxClassic, snv.PointMazeLargeNavigate, …
 ```
 
-`dir(snv)` lists the documented namespace **and** the registered class names. `stable_envs.testing` and `stable_envs.interop` still import for developers but are not advertised at `snv.*`.
+`dir(snv)` lists the documented namespace **and** the registered class names. `stable_envs.testing` still imports for developers but is not advertised at `snv.*`.
 
-## The 42 stable-worldmodel ids
+`reference_id` is provenance of the official simulator or renderer a cell is measured against (`gym_pusht/PushT-v0`, `dm_control/reacher-hard`, …). It is not a `make()` alias.
 
-`stable_envs.interop.SWM_IDS` is the frozen 42-id table: 40 pixel-producing, 2 symbolic / renderer-free. `make("swm/PushT-v1")` is an alias for the PushT class. Ids that map onto several cells (for example `swm/CartpoleDMControl-v0` → Balance and Swingup) refuse to pick one silently — ask for the class name.
-
-The two symbolic ids raise from `make` / `info` with that reason rather than "unknown env".
-
-Per-id measurements live in the [research archive](research/index.md).
+Per-id certification measurements live in the [research archive](research/index.md).
 
 ## Families are declared, not derived
 

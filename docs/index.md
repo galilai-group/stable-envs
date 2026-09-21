@@ -2,9 +2,9 @@
 
 # stable-envs
 
-**Famous research environments, rendered on the GPU as a pure function of a compact state, batched over thousands of environments in one launch.**
+**A batched environment library for research: explicit state, dynamics, and variation, with fast state-driven rendering across CPU and GPU.**
 
-Store states, not frames. Choose the camera, the resolution and the appearance **afterwards**. PushT is 5 floats per step against a 96×96×3 frame: 20 bytes against 27,648, and 100% of the interior pixels are bit-identical to the official `gym_pusht` renderer.
+Store states, not frames. Choose the camera, the resolution and the configuration **afterwards**. PushT is 5 floats per step against a 96×96×3 frame: 20 bytes against 27,648, and 100% of the interior pixels are bit-identical to the official `gym_pusht` renderer.
 
 Authors: **Randall Balestriero**, **Sami BuGhanem**.
 
@@ -18,18 +18,18 @@ with snv.PushT(num_envs=64) as env:
     state = out["state"]
 ```
 
-Concrete classes are canonical. `snv.make("swm/PushT-v1", …)` is the string API for configs and interop. The full walkthrough is the [Quickstart](quickstart.md).
+Concrete classes are canonical. `snv.make("PushT", …)` is the string API for those class names. The full walkthrough is the [Quickstart](quickstart.md).
 
 <div class="grid cards" markdown>
 
 - **[Quickstart](quickstart.md)** — install, `reset` / `step` / `render`, specs, logging
 - **[Install](install.md)** — extras, pins, nvdiffrast
-- **[Environments](environments.md)** — `list_envs`, `info`, SWM aliases, optional extras
+- **[Environments](environments.md)** — `list_envs`, `info`, optional extras
 - **[State, Variation, Frame](concepts/state.md)** — the four nouns; compact render state; StepResult
 - **[Stateful vs functional](concepts/dynamics.md)** — `step` writes; `transition` / `unroll` do not
-- **[Variations](concepts/variation-spaces.md)** — appearance without changing state
+- **[Variations](concepts/variation-spaces.md)** — persistent environment configuration
 - **[Lifecycle](concepts/lifecycle.md)** — `close()`, context manager, short batches
-- **[stable-worldmodel](concepts/worldmodel.md)** — ownership boundary; shipped adapters
+- **[Sibling projects](concepts/worldmodel.md)** — where this package ends
 - **[Limitations](concepts/limitations.md)** — devices, extras, accepted limits
 - **[Throughput](benchmarks.md)** — methodology, then the measured tables
 - **[Gallery](gallery.md)** — official renderer and ours, same states
@@ -74,7 +74,7 @@ More in the [Gallery](gallery.md). Fidelity claims, including the visual tier, a
 
 ## How it works
 
-A frame is a deterministic function of explicit render state plus Variation, regardless of backend. Some families rasterize a `Scene2D`; tile-atlas families gather from a precomputed atlas; OGBench mazes ray-cast analytic primitives. Those override `render` and the suite applies the checks that still apply.
+A frame is `f(state, variation)`. Where native dynamics exist, `next_state = g(state, action, variation)`. Variation may live on the env rather than on every signature. Some families rasterize a `Scene2D`; tile-atlas families gather from a precomputed atlas; OGBench mazes ray-cast analytic primitives. Those override `render` and the suite applies the checks that still apply. Render fidelity and contact-solver fidelity stay separate claims.
 
 - [The Scene2D IR](concepts/scene-ir.md)
 - [The fused rasterizer](concepts/rasterizer.md)

@@ -2,7 +2,7 @@
 
 import pytest
 
-from stable_envs.interop import VariationMap
+from tests.helpers.reference import VariationMap
 
 
 def test_partial_is_a_classification_on_a_mapped_leaf():

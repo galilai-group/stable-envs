@@ -176,7 +176,7 @@ class _DMCModel(Env):
         THE ONE PLACE A CELL'S MODEL COMES FROM. ``_bundle`` (the canonical model), ``sample_states``
         (the visited distribution) and ``reference_env`` (the official frames) all load through
         it, so a cell whose model is not ``suite.load``'s -- ``DMCQuadrupedWalk`` draws the env
-        ``stable_worldmodel`` registers, built through ``dm_control.mjcf`` with SWM's default
+        the registered default uses, built through ``dm_control.mjcf`` with that default
         appearance -- overrides this and nothing else (integration finding INTEG-1: a copied
         ``_bundle`` drifted the moment the base one changed).
         """
@@ -265,7 +265,7 @@ class _DMCModel(Env):
         ``initialize_episode`` writes ``body_pos``/``body_quat`` of ``target_ball``, which is a FRAME
         and has no rgba of its own — what MuJoCo draws is the geoms hanging off it. So a body slot
         resolves to every DRAWN geom on that body, named by the BODY, and hiding the leaf zeroes each
-        of their alphas. That is the faithful reading of ``stable_worldmodel``'s own
+        of their alphas. That is the faithful reading of the registered
         ``render_target = 0``, which sets the ``target`` MATERIAL's alpha to zero and hides exactly the
         ``target_ball`` geom.
 
@@ -421,7 +421,7 @@ class _DMCModel(Env):
         hold, and in a lit 3-D scene no material colour appears verbatim in any pixel anyway, because
         a pixel is the material colour times the lighting.
 
-        VISIBILITY is a ``Discrete(2)`` and deliberately not an alpha ``Box``. ``stable_worldmodel``'s
+        VISIBILITY is a ``Discrete(2)`` and deliberately not an alpha ``Box``. The registered
         reacher hides its target with a material alpha of zero (``render_target = 0``) and MuJoCo then
         declines to draw the geom; the thing that has to be representable is therefore exactly "drawn
         or not". MuJoCo BLENDS an alpha strictly between 0 and 1 and the analytic ray-caster is

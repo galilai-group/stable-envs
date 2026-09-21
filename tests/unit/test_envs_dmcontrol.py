@@ -137,8 +137,8 @@ def test_the_import_path_is_the_package_and_it_carries_the_step8_names():
         "DMControlSuite",
         "DMControlTrackCom",
         "_DMCModel",
-        "_SWMQuadrupedModel",
-        "_swm_quadruped_env",
+        "_TranscribedQuadrupedModel",
+        "_transcribed_quadruped_env",
         "_tc_context",
         "_TCtx",
         "_episode_slots",
@@ -197,7 +197,7 @@ def test_the_package_tables_are_views_of_the_cells_and_not_a_second_copy():
     for n, vf in dmc.VISUAL_FIDELITY.items():
         assert snv.registry.REGISTRY[n].visual_fidelity is vf
     assert set(dmc.TRACKCOM_BASES) == {"DMCQuadrupedWalk"}
-    assert dmc.TRACKCOM_BASES["DMCQuadrupedWalk"] == (dmc._SWMQuadrupedModel,)
+    assert dmc.TRACKCOM_BASES["DMCQuadrupedWalk"] == (dmc._TranscribedQuadrupedModel,)
     assert set(dmc.DOMAINS) == set(PARITY) and set(dmc.TRACKCOM_DOMAINS) == set(TRACKCOM)
 
 
@@ -209,7 +209,7 @@ def test_a_cell_is_a_declaration_and_overrides_no_renderer_method(name):
     the leaf's own namespace holds nothing but declarations. A cell that needed to override a
     renderer method would be saying its domain does not belong in the tier it declared, and this is
     where that would be caught. ``DMCQuadrupedWalk`` carries one extra BASE, not an override: its
-    model is ``stable_worldmodel``'s rather than ``suite.load``'s.
+    model is the transcribed quadruped MJCF rather than ``suite.load``'s.
     """
     cls = snv.registry.REGISTRY[name]
     tier = dmc.DMControlSuite if name in PARITY else dmc.DMControlTrackCom
@@ -220,7 +220,7 @@ def test_a_cell_is_a_declaration_and_overrides_no_renderer_method(name):
     )
     assert not callables, f"{name} overrides {callables}; a cell should be a declaration"
     extra_bases = tuple(b for b in cls.__bases__ if b is not tier)
-    assert extra_bases == ((dmc._SWMQuadrupedModel,) if name == "DMCQuadrupedWalk" else ())
+    assert extra_bases == ((dmc._TranscribedQuadrupedModel,) if name == "DMCQuadrupedWalk" else ())
 
 
 def test_the_two_tiers_are_the_only_thing_below_the_base():

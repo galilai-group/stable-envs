@@ -2,7 +2,7 @@
 
 Two things are declared here and nowhere else: its own provenance string (its numbers are measured
 under a non-default render context and over four draws rather than three, so it cannot borrow
-``_AT``), and the CPU refusal. Swimmer is not an SWM id and has no CPU certification; until Step 7 it
+``_AT``), and the CPU refusal. Swimmer has no CPU certification; until Step 7 it
 was refused on ``device="cpu"`` by GEOM TYPE — its bodies are ``mjGEOM_ELLIPSOID`` and ``cpu3d`` had
 no intersector — and the intersector now exists (``raycast3d._ellipsoid``, added for the quadruped
 torso), so without an explicit refusal swimmer would be DRAWN on CPU with no certification behind the
@@ -62,7 +62,7 @@ TRACKCOM_RENDER_FLAGS: dict[str, dict] = {
 
 #: The reason ``device="cpu"`` is refused, carried by the cell (``CPU_UNCERTIFIED_REASON``). The
 #: package re-exports the collected mapping as ``CPU_UNCERTIFIED`` for the scripts that read it.
-CPU_UNCERTIFIED_REASON = "no CPU certification (not an SWM id; certification deferred)"
+CPU_UNCERTIFIED_REASON = "no CPU certification (certification deferred)"
 
 VISUAL_FIDELITY: dict[str, dict] = {
     # swimmer is the one domain that renders with ``enable_specular=False`` (see SPECULAR_NOTE), so
@@ -100,7 +100,7 @@ VISUAL_FIDELITY: dict[str, dict] = {
         "reference_versions": _SWIMMER_AT_VERSIONS,
         "measured_with": _SWIMMER_AT_MEASURED_WITH,
     },
-    # quadruped at the registered SWM default (camera 2, 224 px). Three residuals, per surface off the
+    # quadruped at the registered default (camera 2, 224 px). Three residuals, per surface off the
     # segmentation buffer (tests/fixtures/regression/join/step7/dmc-quadruped/findings.md S5): the floor near the
     # body -- the body's REFLECTION in the reflectance-0.2 floor and its shadow -- carries ~half of
     # it; the far checker and the one-tap skybox the rest; the ellipsoid itself is 1.2 % of the frame

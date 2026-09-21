@@ -3,12 +3,12 @@
   <img src="docs/assets/brand/logo.png" alt="stable-envs" width="340">
 </picture>
 
-**Famous research environments, rendered on the GPU as a pure function of a compact state, batched over thousands of environments in one launch.**
+**A batched environment library for research: explicit state, dynamics, and variation, with fast state-driven rendering across CPU and GPU.**
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-black.svg)](LICENSE)
 [![Python 3.10–3.12](https://img.shields.io/badge/python-3.10--3.12-black.svg)](pyproject.toml)
 
-Store states, not frames. Choose the camera, the resolution and the appearance **afterwards**. On PushT that is 5 floats per step against a 96×96×3 frame — 20 bytes against 27,648 — and the default picture is the official appearance, bit for bit on interior pixels.
+Store states, not frames. Choose the camera, the resolution and the configuration **afterwards**. On PushT that is 5 floats per step against a 96×96×3 frame — 20 bytes against 27,648 — and the default picture is the official configuration, bit for bit on interior pixels.
 
 Authors: **Randall Balestriero**, **Sami BuGhanem**.
 
@@ -42,16 +42,16 @@ with snv.PushT(num_envs=64) as env:          # device="auto" → CUDA if availab
     nxt = env.transition(state, action)      # functional: env.state is untouched
 ```
 
-Concrete classes are canonical. Strings are for configs, serialisation and interop:
+Concrete classes are canonical. Strings are those class names:
 
 ```python
-env = snv.make("swm/PushT-v1", num_envs=64)
+env = snv.make("PushT", num_envs=64)
 print(snv.list_envs())
 print(snv.info("PushT"))
 snv.set(verbose="INFO", default_device="auto")
 ```
 
-`step(actions)` is stateful. `transition` / `unroll` are pure in `state` and take **known** actions — not a policy. There is no `env.rollout(policy=...)`; planning and policy rollouts belong to [`stable-worldmodel`](https://github.com/galilai-group/stable-worldmodel).
+`step(actions)` is stateful. `transition` / `unroll` are pure in `state` and take **known** actions — not a policy. There is no `env.rollout(policy=...)`. Planning, datasets and training belong to sibling [stable-*](https://github.com/galilai-group) projects.
 
 Full walkthrough: [Quickstart](docs/quickstart.md).
 
@@ -65,7 +65,7 @@ snv.set, snv.get_config, snv.__version__
 snv.PushT / snv.CartPole / …                  concrete env classes
 ```
 
-`stable_envs.testing` and `stable_envs.interop` are public developer APIs; they are not advertised at `snv.*`. The frozen SWM id table is `stable_envs.interop.SWM_IDS`.
+`stable_envs.testing` is a public measurement library; it is not advertised at `snv.*`. There is no runtime interop contract with other stable-* packages.
 
 | topic | page |
 |---|---|
@@ -73,7 +73,7 @@ snv.PushT / snv.CartPole / …                  concrete env classes
 | State, Variation, Frame | [docs/concepts/state.md](docs/concepts/state.md) |
 | Stateful `step` vs functional `transition`/`unroll` | [docs/concepts/dynamics.md](docs/concepts/dynamics.md) |
 | `close()` / context manager | [docs/concepts/lifecycle.md](docs/concepts/lifecycle.md) |
-| What stable-envs owns vs stable-worldmodel | [docs/concepts/worldmodel.md](docs/concepts/worldmodel.md) |
+| Sibling projects | [docs/concepts/worldmodel.md](docs/concepts/worldmodel.md) |
 | Backend and device limitations | [docs/concepts/limitations.md](docs/concepts/limitations.md) |
 | How throughput numbers were taken | [docs/benchmarks.md](docs/benchmarks.md) |
 
@@ -85,7 +85,6 @@ These four scripts use only the public `snv` surface and degrade honestly when a
 python examples/render.py --help
 python examples/batched_env.py --help
 python examples/functional_dynamics.py --help
-python examples/worldmodel.py --help
 ```
 
 Historical training loops, GPU sweeps and paper tables stay under [`examples/`](examples/) and [`docs/research/`](docs/research/). They are evidence, not the getting-started path.

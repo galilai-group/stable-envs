@@ -138,10 +138,10 @@ class DMControlSuite(_DMCModel):
         context, which is what ``_plate_texels.substitute`` does. No second context is created and
         the one-Renderer-per-(domain, size) policy is unchanged.
 
-        ``(2, 3)`` and in that order because that is ``stable_worldmodel``'s own shape and order for
-        the leaf, in all twelve of its DM Control wrappers: ``rgb1`` then ``rgb2`` of the builtin
+        ``(2, 3)`` and in that order because that is the registered shape and order for
+        the leaf, in all twelve of the DM Control wrappers: ``rgb1`` then ``rgb2`` of the builtin
         ``grid`` texture. The default is read from ``dm_control``'s ``common/materials.xml`` (see
-        ``_grid_defaults``), which is the same file swm's ``init_value`` transcribes -- so the
+        ``_grid_defaults``), which is the same file the registered ``init_value`` transcribes -- so the
         registered default is the compiled appearance BY CONSTRUCTION and the default plate cannot
         move. That is asserted rather than trusted: ``texel_key`` returns ``None`` at the default, so
         a default render keeps exactly the plate-cache key it had before this leaf existed.
@@ -257,7 +257,7 @@ class DMControlSuite(_DMCModel):
         # by both the ``target`` and ``tip`` sites, so a material-alpha knob hides 58 px where the
         # element knob hides 43 (84 px). On reacher
         # the target geom is the material's only wearer and the two coincide exactly, which is what
-        # makes this a faithful reading of stable_worldmodel's ``render_target = 0``.
+        # makes this a faithful reading of the registered ``render_target = 0``.
         for kind, name, eids in self._hideable():
             # ``>= 0.5`` rather than ``!= 0``: the value arrives as a float32 style column, and a
             # Discrete leaf only ever holds 0 or 1, so the threshold is a guard on a caller who writes

@@ -20,7 +20,7 @@ import json
 import math
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = next(p for p in Path(__file__).resolve().parents if (p / "pyproject.toml").is_file())
 
 #: The frozen Step 2 downstream policy. Read, never edited: Step 5 is a measurement against the
 #: rule Step 2 wrote down before any downstream number existed.

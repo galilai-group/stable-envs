@@ -39,16 +39,13 @@ with snv.PushT(num_envs=8) as env:
 
 ```python
 env = snv.make("PushT", num_envs=8)
-env = snv.make("swm/PushT-v1", num_envs=8)
 info = snv.info("PushT")          # metadata, no construction, no GPU — not a snv.Spec
 names = snv.list_envs()           # canonical class names this interpreter imported
 snv.list_envs(family="dmcontrol")
 snv.list_families()
 ```
 
-An unknown name raises with the registered classes (and, for `swm/…` ids, the alias table). Two SWM ids are **symbolic** (`CraftaxClassicSymbolic-v1`, `CraftaxSymbolic-v1`): this package does not pretend to render them.
-
-The frozen SWM id table lives at `stable_envs.interop.SWM_IDS`, not at `snv.*`.
+An unknown name raises with the registered class names. Strings are those class names, not sibling-library ids.
 
 ## Stateful step, functional dynamics
 
@@ -76,19 +73,20 @@ env.variation_spec      # flat Variation row
 
 PushT's public state is grouped by entity — `state["agent", "position"]`, `state["agent", "velocity"]`, `state["block", "position"]`, `state["block", "angle"]` — not the compact render row. `env.pack_render_state(state)` / `env.unpack_render_state(rows)` convert; that packed layout is the frozen certification layout and **may omit dynamics-only fields**.
 
-## Appearance (Variation)
+## Variation / configuration
 
 ```python
 env.variation_spec                    # flat row contract
 env.variation_dim, env.variation_names
-row = env.default_variation()         # official appearance
+row = env.default_variation()         # official configuration
 rows = env.sample_variation(env.num_envs)
 pixels = env.render(state, variation={"block.color": [220, 40, 40]})
 pixels = env.render(state, variation=rows)
 ```
 
 A mapping overrides named leaves; a `(variation_dim,)` or `(B, variation_dim)` row is the full
-appearance. Defaults are the official picture. See [Variation](concepts/variation-spaces.md).
+configuration. Defaults are the official picture. Leaves may be render-only, dynamics-only,
+reset/task, or both. See [Variation](concepts/variation-spaces.md).
 
 ## Logging
 
@@ -102,6 +100,6 @@ cfg = snv.get_config()           # verbose, default_device
 - [Environment listing](environments.md)
 - [State, Variation, Frame](concepts/state.md)
 - [Lifecycle](concepts/lifecycle.md)
-- [stable-worldmodel ownership](concepts/worldmodel.md)
+- [Sibling projects](concepts/worldmodel.md)
 - [Adding an environment](adding-an-env.md)
 - Examples: `python examples/render.py --help`

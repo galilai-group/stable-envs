@@ -6,7 +6,7 @@ Public vocabulary:
 
 - `Env` — `reset`, stateful `step`, functional `transition` / `unroll`, `render`, `close`
 - `State` — the world; alias for `tensordict.TensorDict`
-- `Variation` / `VariationLike` — appearance that does not change the world; `render(..., variation=)` accepts a mapping or a flat / batched row
+- `Variation` / `VariationLike` — persistent environment configuration (not appearance-only); `render(..., variation=)` accepts a mapping or a flat / batched row
 - `Frame` — pixels from `render`; described by `frame_spec`
 - `StepResult` — TensorDict `step` returns; always has `"state"`
 - `pack_render_state` / `unpack_render_state` / `render_state_dim` / `render_state_names` — public State ↔ compact render row (not always lossless)

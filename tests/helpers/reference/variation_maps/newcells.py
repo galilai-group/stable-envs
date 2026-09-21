@@ -38,7 +38,7 @@ below, measured rather than guessed.
 
 from __future__ import annotations
 
-from ..worldmodel import VariationMap
+from ..variation import VariationMap
 
 __all__ = ["NEWCELL_VARIATION_MAPS", "LEAF_CLASSIFICATION"]
 

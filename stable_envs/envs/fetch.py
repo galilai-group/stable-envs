@@ -3,9 +3,9 @@
 Reference: ``gymnasium.make("Fetch{Reach,Push,Slide,PickAndPlace}[Dense]-v4", render_mode="rgb_array")``
 at its native 480x480, i.e. MuJoCo's EGL raster of a lit 3-D scene under the FREE camera
 ``MujocoFetchEnv`` configures (distance 2.5, azimuth 132, elevation -14, lookat (1.3, 0.75, 0.55)).
-``stable_worldmodel`` reaches the same four scenes through 12 ``swm/Fetch*-v3`` ids whose ``Dense`` and
-``Dict`` suffixes change the reward and the observation container and not a pixel; one class per
-official id, as the OGBench family already does for its 25 dataset cells.
+The same four scenes are offered as twelve classes: ``Dense`` and ``Dict`` suffixes change the reward
+and the observation container and not a pixel; one class per official id, as the OGBench family
+already does for its 25 dataset cells.
 
 WHY THIS FAMILY NEEDS A MESH RAY-CASTER, AND WHERE ONE WAS FOUND
 ---------------------------------------------------------------
@@ -75,7 +75,7 @@ carrying them would declare seven dimensions the renderer provably ignores and
 ``check_state_dims_matter`` would correctly fail. ``reference_render`` closes the loop by putting the
 reference's mocap where the env's own ``reset_mocap2body_xpos`` puts it — at the welded gripper body —
 so the official frame is a function of ``(qpos, goal)`` and ``test_state_is_sufficient`` is a real
-check rather than a vacuous one. ``swm_coverage.md``'s "40-53 floats including mocap" was measuring
+check rather than a vacuous one. The "40-53 floats including mocap" figure was measuring
 the reference; the render-relevant state is **18 floats (Reach) or 25**, and the seven that dropped
 out buy 1.4% of pixels that no alpha-blind renderer can draw.
 
@@ -605,7 +605,7 @@ def _frame(c: _Ctx) -> None:
 class FetchBase(Env):
     """The whole family. ``SCENE`` and ``REF_ID`` are the only things the 12 cells disagree about.
 
-    ONE CLASS, TWELVE DECLARATIONS. Four scenes x three swm suffixes, and the suffixes change the
+    ONE CLASS, TWELVE DECLARATIONS. Four scenes x three observation/reward suffixes, and the suffixes change the
     REWARD and the OBSERVATION CONTAINER — neither of which reaches a pixel — so three ids share
     each scene's compiled model, plate and ray-cast. There is nothing per-cell to write except the
     scene and the official id it is validated against, which is why ``CELLS`` is a table and not
@@ -791,15 +791,15 @@ class FetchBase(Env):
         is a texel substitution on the plate rig — ``stable_envs.envs._plate_texels`` — with one more
         entry in ``PLATE_PATHS``, and no second context anywhere. Measured, four scenes at 480 px:
         substituting moves 143,275-171,620 of 230,400 px, and it is the same operation
-        ``stable_worldmodel`` itself performs (its ``background.color`` writes
+        a flat skybox write performs (``background.color`` writes
         ``(bg * 255).astype(uint8)`` flat over the skybox texels and calls ``mjr_uploadTexture``; it
         does not recompile either). See ``tests/fixtures/regression/join/step8/capability/fetch_skybox_probe.json``.
 
-        WHAT ACTUALLY BLOCKS THE LEAF IS THE DEFAULT. swm FLATTENS the skybox to one colour, and this
+        WHAT ACTUALLY BLOCKS THE LEAF IS THE DEFAULT. A flat-fill skybox is one colour, and this
         family's skybox is a 16-colour GRADIENT (rgb1 ``.44 .85 .56`` to rgb2 ``.46 .87 .58`` over
         6,144 texels): no value of a flat-fill leaf reproduces the compiled appearance, and no
         two-colour masked substitution — the shape that works for DM Control's checker — reproduces
-        swm's flat sky. So the leaf cannot be added without moving this family's DEFAULT frame, which
+        a flat sky. So the leaf cannot be added without moving this family's DEFAULT frame, which
         is a frozen pixel oracle on the Step-4 and Step-7 corpora. That is a re-freeze decision, not an
         implementation decision, and it is escalated rather than taken.
         """
@@ -1244,8 +1244,8 @@ def _state_pool(scene: str, ref_id: str, state_dim: int, nq: int, n: int = 512) 
     return out
 
 
-#: (class name, scene, official gymnasium-robotics id). The 12 ``swm/Fetch*-v3`` ids map onto these:
-#: ``Dense`` selects a reward and ``Dict`` selects an observation container, and neither reaches a
+#: (class name, scene, official gymnasium-robotics id). Dense selects a reward and Dict selects an
+#: observation container, and neither reaches a
 #: pixel — so three classes share each scene's renderer, exactly as OGBench's dataset suffixes do.
 CELLS = (
     [(f"Fetch{t}", t, f"Fetch{t}-v4") for t in SCENE_XML]
@@ -1258,7 +1258,7 @@ def _make_classes() -> dict[str, type]:
     """The twelve cells, from ``CELLS``. DATA, not twelve class bodies (see ``FetchBase``).
 
     Each carries exactly what distinguishes it — the scene, the official id it is validated against,
-    its registered ``name``, and a docstring naming its swm id — and inherits everything else. The
+    its registered ``name``, and a docstring naming the gymnasium-robotics id — and inherits everything else. The
     alternative, one written-out class per id, is twelve copies of a body whose only content is two
     strings, and twelve places for the next fidelity declaration to be applied to eleven of them.
 
@@ -1283,7 +1283,7 @@ def _make_classes() -> dict[str, type]:
                     reference_id=ref,
                     __module__=__name__,
                     __doc__=(
-                        f"gymnasium-robotics {ref} (swm/Fetch{scene}{suffix}-v3). State is qpos plus the "
+                        f"gymnasium-robotics {ref}. State is qpos plus the "
                         f"3-D goal; the {suffix or 'sparse'} variant differs from its siblings in the "
                         f"reward and the observation container, neither of which reaches the renderer, so "
                         f"it shares the {scene} plate and model."

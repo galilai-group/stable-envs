@@ -77,7 +77,10 @@ from stable_envs.testing import render_worker as W
 
 def _recorded_name(name: str) -> str:
     """Measured-table spelling: frozen downsample floors are keyed by historical class names."""
-    return se.registry._frozen_from_canonical(name)
+    from tests.helpers.reference import frozen_from_canonical
+
+    return frozen_from_canonical(name)
+
 
 ENV_NAMES = sorted(se.registry.REGISTRY)
 

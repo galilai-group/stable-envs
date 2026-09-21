@@ -44,6 +44,11 @@ CI_PROFILE = os.environ.get("STABLE_ENVS_CI_PROFILE", "")
 
 import pytest
 
+try:
+    import stable_worldmodel  # noqa: F401 — registers swm/* ids for certification oracles
+except ImportError:
+    pass
+
 #: GPU files that are also the frozen regression oracle (parity / reproducibility / fast==slow).
 _GPU_REGRESSION = {
     "test_conformance.py",
