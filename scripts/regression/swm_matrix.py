@@ -12,7 +12,7 @@ observed while enumerating the registries. Where no such source exists the cell 
 ``needs_measurement`` and the row gets a next action. Two claims in particular are refused:
 
   * **CPU throughput.** Nothing in this repo has ever timed the stable-envs renderer on
-    ``device="cpu"``. ``examples/results/bench_gpu_vs_cpu.json``'s ``cpu`` block is the OFFICIAL
+    ``device="cpu"``. ``tests/fixtures/regression/references/bench_gpu_vs_cpu.json``'s ``cpu`` block is the OFFICIAL
     renderer, which is a different program. So ``se_cpu_fps`` is ``needs_measurement`` on every row,
     and the separate ``cpu_render_executes`` field -- which the probe CAN establish -- is kept well
     away from it, because a path that runs and a path that is fast are different claims.
@@ -25,9 +25,12 @@ INPUTS (all discovered from the repo except the first, which must be produced wh
     scratch/swm_registry.py OUT.json          the live swm registry + per-id probe   [required]
     scratch/census/census.py                  per-interpreter stable-envs declarations [repeatable]
     tests/fixtures/regression/census/union.json                 the registry union across interpreters
-    examples/results/decode/ALL.json          merged multi-interpreter throughput (196 envs)
-    examples/results/bench_gpu_vs_cpu.json    official-CPU vs GPU, with describe() blocks
-    examples/results/dino/dino_agreement.json DINOv2 feature agreement
+    tests/fixtures/regression/references/decode_all.json
+                                          merged multi-interpreter throughput (196 envs)
+    tests/fixtures/regression/references/bench_gpu_vs_cpu.json
+                                          official-CPU vs GPU, with describe() blocks
+    tests/fixtures/regression/references/dino_agreement.json
+                                          DINOv2 feature agreement
     docs/research/artifacts/step5_lewm_pusht/results/*.json        the LeWM PushT downstream evaluation
     tests/fixtures/regression/references/swm_workflow.json   recorded check_mapping / adapter run
 

@@ -74,7 +74,7 @@ Milestone write-ups and generated tables. They use the project's internal names
 - [Public-surface freeze](step9_closure.md)
 - [Refactor handoff](step9_handoff.md)
 - [Replacement-readiness (42 historical cells)](step9_replacement_readiness.md)
-- [Step-5 paired-eval harnesses](artifacts/README.md)
+- [Historical research artifacts](artifacts/README.md)
 - [Open items after the freeze](step9_open_items.md)
 - [v0.1 release-surface contract](v0_release_surface.md)
 - [Historical throughput tables](throughput.md)

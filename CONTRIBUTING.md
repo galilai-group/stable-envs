@@ -69,6 +69,6 @@ Construct with `num_envs=`. The public base class is `Env`.
 ## Artifacts
 
 Do **not** commit ad-hoc local artifacts (scratch dumps, screenshots, one-off JSON from a laptop
-run). Canonical JSON fixtures that a committed script regenerates can live in-tree
-(`examples/results/`, certification corpora referenced by tests). Large binary corpora stay out
-of `main`.
+run). Canonical JSON fixtures that a committed script regenerates live under
+`tests/fixtures/regression/`. Historical harness dumps belong in `docs/research/artifacts/`, which
+is an archive, not a place to write new results. Large binary corpora stay out of `main`.
