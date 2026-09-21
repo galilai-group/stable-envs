@@ -1,13 +1,14 @@
-# State, Variation, and Frame
+# State, Action, Variation, and Frame
 
-Four nouns, two usage modes.
+Five nouns, two usage modes.
 
 | noun | what it is |
 |---|---|
-| **Env** | a batched environment class (`snv.PushT`, …) |
-| **State** | the world: a `tensordict.TensorDict` grouped by entity |
-| **Variation** | persistent environment configuration (appearance, geometry, morphology, physics, reset/task) |
-| **Frame** | rendered pixels: `(B, H, W, 3)` uint8 from `render` |
+| **Env** | a batched environment class (`snv.PushT`, …); owns the relationship among the others |
+| **State** | instantaneous dynamic world state: a `tensordict.TensorDict` grouped by entity |
+| **Action** | intervention at a timestep |
+| **Variation** | persistent / episode-level environment configuration (appearance, geometry, morphology, physics, reset distributions, task configuration) |
+| **Frame** | rendered observation: `(B, H, W, 3)` uint8 from `render` |
 
 Two ways to use an Env:
 

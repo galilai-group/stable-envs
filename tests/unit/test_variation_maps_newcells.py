@@ -408,11 +408,12 @@ def test_both_pointmaze_large_cells_share_one_mapping():
     assert a.pairs() == b.pairs() and dict(a.swm_only) == dict(b.swm_only)
 
 
-def test_simple_point_maze_maps_all_seven_appearance_leaves():
+def test_simple_point_maze_maps_appearance_and_speed():
     m = _map_for(SPM)
     assert set(m.pairs()) == {
         "agent.color",
         "agent.radius",
+        "agent.speed",
         "background.color",
         "walls.color",
         "walls.number",
@@ -434,9 +435,9 @@ def test_simple_point_maze_goal_leaves_are_not_applicable_because_show_goal_is_o
     assert "show_goal=False" in LEAF_CLASSIFICATION[SPM]["config_note"]
 
 
-def test_simple_point_maze_position_and_speed_are_not_style():
-    for leaf in ("agent.position", "agent.speed"):
-        assert LEAF_CLASSIFICATION[SPM]["leaves"][leaf]["classification"] == "not_applicable"
+def test_simple_point_maze_position_is_not_style():
+    assert LEAF_CLASSIFICATION[SPM]["leaves"]["agent.position"]["classification"] == "not_applicable"
+    assert LEAF_CLASSIFICATION[SPM]["leaves"]["agent.speed"]["classification"] == "mapped"
 
 
 def test_simple_point_maze_mapped_leaves_are_dims_of_our_own_space():

@@ -150,7 +150,7 @@ def interior_mask(frames: np.ndarray) -> np.ndarray:
     rounding ambiguity here" only for a renderer that fills flat-coloured primitives. For a renderer
     whose output is a smooth per-pixel function it is false: the quantisation contour of a slow ramp
     can sit arbitrarily far from any 3x3 non-flatness, so a pixel on the contour is classified
-    interior while being exactly where two implementations may round apart. The swm nav family is the
+    interior while being exactly where two implementations may round apart. The navigation family is the
     worked example — a normalised Gaussian alpha with a 41 px tail, where the reference is constant
     over a 7x7 patch around pixels whose underlying float is still moving — and it costs those envs a
     declared ``parity_interior_min`` of 0.999995 (about 2 pixels in 2.3 million, one in eight draws).
@@ -202,7 +202,7 @@ def pixel_agreement(a: np.ndarray, b: np.ndarray) -> dict:
             # like 0.9999996, and nobody can act on that: the decision an env author has to make is
             # whether this is a geometry error or a handful of pixels on a quantisation boundary, and
             # that is a question about how many pixels, not about how many nines. Measured on the two
-            # families where it came up, MujocoPusher and the swm nav envs, the answer was 1-2 pixels
+            # families where it came up, MujocoPusher and the navigation envs, the answer was 1-2 pixels
             # of ~3 million, on about a fifth of draws — which reads as a rounding boundary at a
             # glance and as a passing test with 0.9999996 in it.
             res.update(
@@ -645,12 +645,24 @@ def check_backend_agreement(env, n: int = 4, max_size: int = 96) -> dict:
     return pixel_agreement(a, b)
 
 
+def _frame_variation_paths(env):
+    """Variation leaves that are required to change a frame.
+
+    Dynamics/reset/task leaves (``env.dynamics_variation_leaves``) configure ``g(state, action,
+    variation)`` and are not required to move pixels.
+    """
+    skip = set(getattr(env, "dynamics_variation_leaves", ()) or ())
+    for path in env.variation_space.names():
+        if path not in skip:
+            yield path
+
+
 def check_variations_do_something(env) -> dict:
-    """Every declared variation leaf must change the picture when moved off its default."""
+    """Every declared *frame* variation leaf must change the picture when moved off its default."""
     st = env.sample_states(env.B)
     base = env.render(st).cpu().numpy()
     inert = []
-    for path in env.variation_space.names():
+    for path in _frame_variation_paths(env):
         node = env.variation_space
         for part in path.split("."):
             node = node[part]
@@ -683,7 +695,7 @@ def check_per_env_variation(env) -> dict:
         return {"skipped": "batch too small"}
     st = env.sample_states(env.B)
     collapsed = []
-    for path in env.variation_space.names():
+    for path in _frame_variation_paths(env):
         node = env.variation_space
         for part in path.split("."):
             node = node[part]

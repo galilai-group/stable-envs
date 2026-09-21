@@ -237,21 +237,8 @@ def _reference_env(cell: str, size: int | None = None, role: str = "render"):
 
 
 def _construct_reference(cell: str, kw: dict):
-    """Build the certified reference env from OGBench.
-
-    Native path is the OGBench constructors at the certified size. If those are unavailable and
-    the gymnasium id is already registered, ``gymnasium.make`` is used.
-    """
-    try:
-        return _ogbench_make(cell, kw)
-    except ImportError as missing:
-        import gymnasium
-
-        gym_id = SPEC[cell]["reference_gym_id"]
-        try:
-            return gymnasium.make(gym_id, **kw)
-        except gymnasium.error.Error as exc:
-            raise missing from exc
+    """Build the certified reference env from OGBench constructors."""
+    return _ogbench_make(cell, kw)
 
 
 def _ogbench_make(cell: str, kw: dict):
@@ -688,8 +675,7 @@ def _ctx_button_tables(b: _Bundle, m, res: int, device: str = "cuda") -> dict | 
     return out
 
 
-#: Per-cell facts. ``reference_gym_id`` is the gymnasium id kept for certification;
-#: ``camera`` is the model camera both subclasses render from (``front_pixels``).
+#: Per-cell facts. Native OGBench constructors are the certified reference.
 SPEC = {
     # `visible_tri` is the phase-0 census figure for geoms in the rendered groups, used only in the
     # device="cpu" refusal so the message quotes THIS cell's size rather than its sibling's.
@@ -699,14 +685,12 @@ SPEC = {
     # registry (76 instead of 78). A docstring is not worth either. `tests/unit/test_ogb_manip.py`
     # asserts these agree with what `_bundle` computes, wherever ogbench IS importable.
     "Cube": {
-        "reference_gym_id": "swm/OGBCube-v0",
         "camera": "front_pixels",
         "size": 224,
         "visible_tri": 193113,
         "state_dim": 24,
     },
     "Scene": {
-        "reference_gym_id": "swm/OGBScene-v0",
         "camera": "front_pixels",
         "size": 200,
         "visible_tri": 196633,
@@ -1734,7 +1718,7 @@ def _make_classes():
                     CELL=cell,
                     domain=cell.lower(),
                     name=f"ogb-{cell.lower()}",
-                    reference_id=spec["reference_gym_id"],
+                    reference_id=None,
                     default_size=spec["size"],
                     visual_fidelity=_fidelity(cell),
                     visual_note=_RESIDUAL_NOTE + (_SCENE_BAKE_NOTE if cell == "Scene" else ""),

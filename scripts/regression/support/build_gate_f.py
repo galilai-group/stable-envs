@@ -512,9 +512,7 @@ def load_upstream_bundle() -> list[dict]:
             "own un-jitted self by up to 1.5e-05 in float32 (<=1 uint8 step on lit/sleeping rows); "
             "the certified renderer comparison is against the un-jitted official renderer.",
             "source": "stable_worldmodel/envs/craftax/craftax.py:CraftaxWrapper.__init__ (external "
-            "repo, read directly); stable_envs/envs/craftax.py:CraftaxClassic."
-            "SWM_WRAPPER_GATE_F; stable_envs/envs/craftax_full.py:CraftaxFull."
-            "SWM_WRAPPER_GATE_F",
+            "repo, read directly); tests/helpers/reference/craftax_jit.py:CRAFTAX_JIT_GAP",
         },
     ]
     # dashboard.yaml's upstream_findings/buckets are read and quoted verbatim in the docs/findings

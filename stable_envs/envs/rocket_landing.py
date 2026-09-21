@@ -510,16 +510,18 @@ _REF_CACHE: dict = {}
 
 
 def _reference_make(size: int):
-    """The PyFlyt rocket-landing env at ``size``, reset once (PyFlyt's numba JIT, ~57 s per process) and kept for the process."""
+    """PyFlyt rocket-landing env at ``size``.
+
+    Production has no gymnasium id for this cell. Tests install a certification factory on
+    ``_reference_make`` (see ``tests.helpers.reference.certification``).
+    """
     hit = _REF_CACHE.get(size)
     if hit is not None:
         return hit
-    import gymnasium
-
-    env = gymnasium.make("swm/PFRocketLanding-v0", render_mode="rgb_array", render_resolution=(size, size))
-    env.reset(seed=0)
-    _REF_CACHE[size] = env
-    return env
+    raise LookupError(
+        "PyFlytRocketLanding has no production gymnasium id; the certification overlay in "
+        "tests.helpers.reference.certification installs the historical reference factory"
+    )
 
 
 def _reference_apply_style(p, c, rid, pad, style_row: np.ndarray) -> None:
@@ -668,7 +670,7 @@ class PyFlytRocketLanding(Env):
     requires_cuda = True
 
     name = "pf-rocket-landing"
-    reference_id = "swm/PFRocketLanding-v0"
+    reference_id = None
     #: Registered default: 480 x 480 x 3 = 691,200 B, the observation PyFlyt actually returns.
     default_size = 480
     default_supersample = 1  # TinyRenderer has no anti-aliasing

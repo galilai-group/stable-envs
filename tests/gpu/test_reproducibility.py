@@ -73,6 +73,7 @@ import stable_envs as se
 from stable_envs._data import StateDataset, TrajectoryDataset, collate_batched
 from stable_envs.testing import conformance as C
 from stable_envs.testing import render_worker as W
+from tests.helpers.reference.certification import has_reference_renderer
 
 
 def _recorded_name(name: str) -> str:
@@ -1426,7 +1427,7 @@ def test_the_reference_renderer_on_this_machine_is_deterministic(env):
     instead of one test. Two frames answer it, and the answer names the machine instead of the code.
     """
     cls = type(env)
-    if not hasattr(cls, "reference_env") or env.reference_id is None:
+    if not has_reference_renderer(cls):
         pytest.skip(f"{cls.__name__}: no official reference renderer")
     try:
         r = C.check_reference_renderer_is_stable(cls, env.size)

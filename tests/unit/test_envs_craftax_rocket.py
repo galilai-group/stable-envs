@@ -366,13 +366,15 @@ def test_a_missing_craftax_is_recorded_under_the_historical_module_key():
 
 
 def test_the_jit_wrapper_declaration_survives_on_both_craftax_cells():
-    for cls in (snv.CraftaxClassic, snv.CraftaxFull):
-        g = cls.SWM_WRAPPER_GATE_F
+    from tests.helpers.reference.craftax_jit import CRAFTAX_JIT_GAP
+
+    for name in ("CraftaxClassic", "CraftaxFull"):
+        g = CRAFTAX_JIT_GAP[name]
         assert g["swm_wrapper_jits"] == ["reset", "step"]
         assert g["certified_exact_frac"] == 1.0 and g["certified_max_abs_diff"] == 0
         assert g["max_abs_diff_swm_wrapper_vs_certified"] == 1
         assert "un-jitted" in g["certified_reference"]
-    c = snv.CraftaxClassic.SWM_WRAPPER_GATE_F
+    c = CRAFTAX_JIT_GAP["CraftaxClassic"]
     assert c["live_swm_exact_frac_7px"] == 0.997854
     assert c["live_swm_exact_frac_16px"] == 0.997225
 

@@ -1,8 +1,21 @@
 """The contract every stable-envs environment implements.
 
-Four nouns: **Env**, **State** (the world), **Variation** (persistent environment configuration),
-**Frame** (pixels). Two usage modes: **stateful** (``reset`` / ``step``) and **functional**
+Five nouns: **Env**, **State**, **Action**, **Variation**, **Frame**.
+Two usage modes: **stateful** (``reset`` / ``step``) and **functional**
 (``transition`` / ``unroll`` / ``render``).
+
+    State
+        instantaneous dynamic world state
+    Action
+        intervention at a timestep
+    Variation
+        persistent / episode-level environment configuration,
+        including appearance, geometry, morphology, physics,
+        reset distributions and appropriate task configuration
+    Frame
+        rendered observation
+    Env
+        owns the relationship among them
 
 The invariant is ``frame = f(state, variation)``. Where native dynamics exist,
 ``next_state = g(state, action, variation)``. Variation may live on the env rather than on every
@@ -528,10 +541,10 @@ def _check_reference_versions_shape(cls, where: str, rv) -> None:
 
 
 class Env:
-    """Base class: a batched environment with explicit State, Variation, and state-driven rendering.
+    """Base class: a batched environment with explicit State, Action, Variation, and state-driven rendering.
 
-    Four nouns: **Env**, **State** (the world), **Variation** (persistent environment configuration),
-    **Frame** (pixels). Two usage modes: **stateful** (``reset`` / ``step``) and **functional**
+    Five nouns: **Env**, **State**, **Action**, **Variation**, **Frame**.
+    Two usage modes: **stateful** (``reset`` / ``step``) and **functional**
     (``transition`` / ``unroll`` / ``render``).
 
     ``frame = f(state, variation)``. Where native dynamics exist,
@@ -557,8 +570,11 @@ class Env:
     requires_cuda: bool = False
     #: native output resolution of the reference renderer, for parity tests
     default_size: int = 96
-    #: the reference (CPU, official) env id this is validated against; None means no external reference
+    #: gymnasium / official id this is validated against; None means no production gym id
     reference_id: str | None = None
+    #: Variation leaves that configure dynamics / reset / task and are not required to change a frame.
+    #: ``check_variations_do_something`` skips them. Empty by default.
+    dynamics_variation_leaves: frozenset[str] = frozenset()
     #: Required fraction of INTERIOR pixels that must be bit-identical to the official renderer.
     #: 1.0 (exact) is the default and the expectation: an interior disagreement is a real geometry or
     #: colour error. An env may relax it ONLY with ``parity_note`` explaining the mechanism, which the

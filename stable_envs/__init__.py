@@ -1,6 +1,6 @@
 """stable-envs: a batched environment library with explicit state, dynamics, and variation, plus fast state-driven rendering.
 
-Four nouns: **Env**, **State**, **Variation**, **Frame**.
+Five nouns: **Env**, **State**, **Action**, **Variation**, **Frame**.
 Two usage modes: **stateful** (``reset`` / ``step``) and **functional** (``transition`` / ``unroll`` / ``render``).
 ``VariationLike`` is the type of ``render(..., variation=)``: a mapping of overrides, or a flat / batched row.
 

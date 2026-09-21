@@ -8,7 +8,7 @@ pip install stable-envs
 
 Family extras, pins, and the nvdiffrast source build: [Install](install.md). From a clone, `pip install -e .` — see [Contributing](https://github.com/galilai-group/stable-envs/blob/main/CONTRIBUTING.md).
 
-Four nouns — **Env**, **State**, **Variation**, **Frame** — and two usage modes:
+Five nouns — **Env**, **State**, **Action**, **Variation**, **Frame** — and two usage modes:
 
 ```python
 import stable_envs as snv

@@ -108,11 +108,10 @@ def test_symbolic_ids_are_not_applicable_across_renderer_columns(committed):
 
 
 def test_craftax_swm_wrapper_jit_declaration_exists_on_both_cells():
-    import stable_envs.envs._craftax_full as cf
-    import stable_envs.envs.craftax as cc
+    from tests.helpers.reference.craftax_jit import CRAFTAX_JIT_GAP
 
-    for cls in (cc.CraftaxClassic, cf.CraftaxFull):
-        decl = cls.SWM_WRAPPER_GATE_F
+    for name in ("CraftaxClassic", "CraftaxFull"):
+        decl = CRAFTAX_JIT_GAP[name]
         assert "step" in decl["swm_wrapper_jits"]
         assert decl["certified_exact_frac"] == 1.0
         assert decl["certified_max_abs_diff"] == 0

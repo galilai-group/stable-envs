@@ -25,7 +25,7 @@ Concrete classes are canonical. `snv.make("PushT", …)` is the string API for t
 - **[Quickstart](quickstart.md)** — install, `reset` / `step` / `render`, specs, logging
 - **[Install](install.md)** — extras, pins, nvdiffrast
 - **[Environments](environments.md)** — `list_envs`, `info`, optional extras
-- **[State, Variation, Frame](concepts/state.md)** — the four nouns; compact render state; StepResult
+- **[State, Action, Variation, Frame](concepts/state.md)** — the five nouns; compact render state; StepResult
 - **[Stateful vs functional](concepts/dynamics.md)** — `step` writes; `transition` / `unroll` do not
 - **[Variations](concepts/variation-spaces.md)** — persistent environment configuration
 - **[Lifecycle](concepts/lifecycle.md)** — `close()`, context manager, short batches

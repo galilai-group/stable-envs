@@ -22,6 +22,7 @@ if not torch.cuda.is_available():
 
 import stable_envs as se
 from stable_envs.testing import conformance as C
+from tests.helpers.reference.certification import has_reference_renderer
 
 ENV_NAMES = sorted(se.registry.REGISTRY)
 
@@ -404,7 +405,7 @@ def test_render_parity_with_official_renderer(env):
             f"{cls.__name__} declares the VISUAL tier: it is a different render of the same "
             f"scene and is asserted by test_visual_tier_matches_its_declared_fidelity"
         )
-    if not hasattr(cls, "reference_env") or env.reference_id is None:
+    if not has_reference_renderer(cls):
         pytest.skip(f"{cls.__name__}: no official reference renderer to compare against")
     try:
         # Through the process-wide cache, NOT cls.reference_env directly. A reference env bound
@@ -647,7 +648,7 @@ def test_state_is_sufficient(env):
     then the state really does determine the frame and nothing hidden is carried along.
     """
     cls = type(env)
-    if not hasattr(cls, "reference_env") or env.reference_id is None:
+    if not has_reference_renderer(cls):
         pytest.skip(f"{cls.__name__}: no official reference renderer")
     try:
         # Through the process-wide cache, NOT cls.reference_env directly. A reference env bound

@@ -276,7 +276,6 @@ _TWOROOM_STRUCTURE = (
 )
 _TWOROOM_SWM_ONLY = {
     "agent.position": "this is our STATE, not our style — see state_names",
-    "agent.speed": "dynamics only; carried as env.speed because it changes no pixel",
     "task.min_steps": "a task definition, not an appearance; changes no pixel",
     "wall.border_color": "declared by TwoRoomEnv and read by nothing (measured: 0/255 diff)",
     "rendering.render_target": "selects TwoRoom vs TwoRoomTarget, which are separate classes",
@@ -286,7 +285,6 @@ _TWOROOM_SWM_ONLY = {
 }
 _PIECEWISE_SWM_ONLY = {
     "agent.position": "this is our STATE, not our style",
-    "agent.speed": "dynamics only; carried as env.speed",
     "task.min_steps": "a task definition; changes no pixel",
     "target.color": "drawn only when render_target is on, which this port does not reproduce",
     "target.radius": "drawn only when render_target is on",
@@ -294,24 +292,24 @@ _PIECEWISE_SWM_ONLY = {
     "rendering.render_target": "not reproduced; see the swm_nav module docstring",
     "rendering.render_zones": "selects Piecewise vs PiecewiseZones, which are separate classes",
     "rendering.render_bias_field": "rasterises a matplotlib quiver; not reproduced, see swm_nav",
-    **{f"zones.bias_{i}": "dynamics only; carried as env.zone_bias" for i in range(4)},
 }
 
 #: our class name -> how its appearance relates to the official swm env's
 VARIATION_MAPS: dict[str, VariationMap] = {
     "TwoRoom": VariationMap(
         swm_id="swm/TwoRoom-v1",
-        identical=("agent.color", "agent.radius") + _TWOROOM_STRUCTURE,
+        identical=("agent.color", "agent.radius", "agent.speed") + _TWOROOM_STRUCTURE,
         swm_only=_TWOROOM_SWM_ONLY,
     ),
     "TwoRoomTarget": VariationMap(
         swm_id="swm/TwoRoom-v1",
-        identical=("agent.color", "agent.radius", "target.color", "target.radius") + _TWOROOM_STRUCTURE,
+        identical=("agent.color", "agent.radius", "agent.speed", "target.color", "target.radius") + _TWOROOM_STRUCTURE,
         swm_only={k: v for k, v in _TWOROOM_SWM_ONLY.items() if k not in ("target.color", "target.radius")},
     ),
     "Piecewise": VariationMap(
         swm_id="swm/Piecewise-v0",
-        identical=("agent.color", "agent.radius", "background.color", "border.color"),
+        identical=("agent.color", "agent.radius", "agent.speed", "background.color", "border.color")
+        + tuple(f"zones.bias_{i}" for i in range(4)),
         swm_only={
             **_PIECEWISE_SWM_ONLY,
             **{f"zones.color_{i}": "drawn only with render_zones; see PiecewiseZones" for i in range(4)},
@@ -319,8 +317,9 @@ VARIATION_MAPS: dict[str, VariationMap] = {
     ),
     "PiecewiseZones": VariationMap(
         swm_id="swm/Piecewise-v0",
-        identical=("agent.color", "agent.radius", "background.color", "border.color")
-        + tuple(f"zones.color_{i}" for i in range(4)),
+        identical=("agent.color", "agent.radius", "agent.speed", "background.color", "border.color")
+        + tuple(f"zones.color_{i}" for i in range(4))
+        + tuple(f"zones.bias_{i}" for i in range(4)),
         swm_only=_PIECEWISE_SWM_ONLY,
     ),
     "PushT": VariationMap(

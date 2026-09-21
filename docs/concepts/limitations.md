@@ -49,7 +49,7 @@ OGBench `light.intensity` / `camera.angle_delta` / `cube.size` and Scene `lock_c
 - DM Control certification interpreter is `mujoco==3.11.0` + `dm_control==1.0.44`. `mujoco >= 3.12` re-anchors finite-plane textures; the 3.12 arm is recorded as reference drift, not as our renderer moving.
 - nvdiff on x86 CPU has a documented sparse-stage one-ULP batch dependence. There is no CPU consumer of that path in the historical 42-id set.
 - `HumanoidMazeGiantNavigate` on CUDA is not process-reproducible across runs on at least one measured card (`gpu1503`).
-- Craftax's live official wrapper JITs `reset`/`step`. Certified pixel identity is against the **un-jitted** official renderer. The class attribute `SWM_WRAPPER_GATE_F` records that gate.
+- Craftax's live official wrapper JITs `reset`/`step`. Certified pixel identity is against the **un-jitted** official renderer. Historical jitted-wrapper measurements live in `tests.helpers.reference.craftax_jit`.
 
 The measurement record is in the [research archive](../research/index.md).
 

@@ -77,10 +77,10 @@ declared knobs are deliberately absent here and the reason is recorded rather th
     alpha 0.85) and composites it. That is a second rasterizer with its own coverage rules inside an
     otherwise arithmetic renderer; it is off by default and it is not reproduced. An env that wants
     it should render the official frame.
-  * ``zones.bias_*``, ``agent.speed`` and ``task.min_steps`` are DYNAMICS, not appearance — they
-    change no pixel. They are carried as plain attributes (``env.speed``, ``env.zone_bias``) so
-    ``step`` can use them, and are not declared as variations, because a knob in the variation space
-    that changes nothing advertises support that does not exist.
+  * ``zones.bias_*`` and ``agent.speed`` are DYNAMICS, not appearance — they change no pixel.
+    They are declared as Variation leaves (``dynamics_variation_leaves``) so ``step`` can read
+    them from the same configuration row as appearance. ``task.min_steps`` is a task definition
+    and is not fabricated here.
 
 The same reasoning splits each official env into two registered classes, exactly as MiniGrid splits
 top-down from POV against one official id. ``rendering.render_target`` and ``rendering.render_zones``
@@ -541,10 +541,21 @@ class _GymReferencePort(Env):
 
     @classmethod
     def reference_env(cls, size: int | None = None):
-        """The official env. ``size`` is ignored: none of these three has a configurable canvas."""
+        """Official env for parity tests.
+
+        Production cells do not store a gymnasium id. Tests install a certification overlay
+        (``tests.helpers.reference.certification``) that supplies the historical constructor.
+        """
+        del size
+        gym_id = getattr(cls, "_se_cert_gym_id", None) or cls.reference_id
+        if not gym_id:
+            raise LookupError(
+                f"{cls.__name__} has no production reference_id; certification gym ids live in "
+                "tests.helpers.reference.certification"
+            )
         import gymnasium
 
-        return gymnasium.make(cls.reference_id, **cls.reference_kwargs)
+        return gymnasium.make(gym_id, **cls.reference_kwargs)
 
     @classmethod
     def reference_set_state(cls, u, st) -> None:
@@ -674,9 +685,9 @@ class _TorchNavBase(_GymReferencePort):
     action_low = -1.0
     action_high = 1.0
 
-    #: DYNAMICS, not appearance: these change no pixel, so they are attributes rather than variation
-    #: leaves. ``check_variations_do_something`` would (correctly) call them inert.
+    #: Default agent speed. The live value is the ``agent.speed`` variation leaf (dynamics-only).
     speed = AGENT_SPEED
+    dynamics_variation_leaves = frozenset({"agent.speed"})
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -689,6 +700,7 @@ class _TorchNavBase(_GymReferencePort):
         return {
             "color": RGBBox(init_value=AGENT_C),
             "radius": Box(low=7.0, high=14.0, shape=(1,), init_value=[AGENT_R]),
+            "speed": Box(low=0.1, high=50.0, shape=(1,), init_value=[AGENT_SPEED]),
         }
 
     def base_image(self, sty, n: int) -> torch.Tensor:
@@ -944,7 +956,7 @@ class _TorchNavBase(_GymReferencePort):
 
 
 class _TwoRoomBase(_TorchNavBase):
-    reference_id = "swm/TwoRoom-v1"
+    reference_id = None
 
     def _structure_space(self) -> dict:
         return {
@@ -952,9 +964,9 @@ class _TwoRoomBase(_TorchNavBase):
             "wall": Dict(
                 {
                     "color": RGBBox(init_value=WALL_C),
-                    # swm declares these Discrete/MultiDiscrete. The stored form is a float32 row either
-                    # way (that is what makes style storable), and the renderer reads the number, so they
-                    # are Boxes with the same bounds here and the compat layer converts. ``wall.axis``
+                    # Historical reference declared these Discrete/MultiDiscrete. The stored form is a
+                    # float32 row either way (that is what makes style storable), and the renderer
+                    # reads the number, so they are Boxes with the same bounds here. ``wall.axis``
                     # stays Discrete because it selects a branch rather than a length.
                     "thickness": Discrete(35, start=7, init_value=WALL_THICKNESS),
                     "axis": Discrete(2, init_value=WALL_AXIS),
@@ -1024,7 +1036,7 @@ class _TwoRoomBase(_TorchNavBase):
         sl = lambda p: sty[p]
         r = sl("agent.radius").reshape(-1)
         pos = rows[:, 0:2]
-        nxt = self._clamp_border(pos + a * float(self.speed), r)
+        nxt = self._clamp_border(pos + a * sty["agent.speed"].reshape(-1, 1), r)
 
         half = sl("wall.thickness").trunc().long().div(2, rounding_mode="floor")
         axis1 = sl("wall.axis") > 0.5
@@ -1064,7 +1076,7 @@ class TwoRoom(_TwoRoomBase):
     different state — so a corpus of agent positions regenerates the goals too.
     """
 
-    name = "swm-two-room"
+    name = "two-room"
     state_dim = 2
     state_names = ("agent_x", "agent_y")
     reference_kwargs = {"render_target": False}
@@ -1114,7 +1126,7 @@ class TwoRoomTarget(_TwoRoomBase):
     are all live, and the state carries the target because the frame reads it.
     """
 
-    name = "swm-two-room-target"
+    name = "two-room-target"
     state_dim = 4
     state_names = ("agent_x", "agent_y", "target_x", "target_y")
     reference_kwargs = {"render_target": True}
@@ -1185,20 +1197,25 @@ class TwoRoomTarget(_TwoRoomBase):
 
 
 class _PiecewiseBase(_TorchNavBase):
-    reference_id = "swm/Piecewise-v0"
+    reference_id = None
     state_dim = 2
     state_names = ("agent_x", "agent_y")
     state_layout = ((("agent", "position"), 2, 0),)
     state_bounds = {("agent", "position"): (POS_LO, POS_HI)}
-    #: DYNAMICS only. The reference draws these as a matplotlib quiver and only when
-    #: ``render_bias_field`` is on, which this env does not reproduce; ``step`` still needs them.
+    #: Default zone biases. The live values are ``zones.bias_*`` variation leaves (dynamics-only).
     zone_bias = ZONE_BIAS
+    dynamics_variation_leaves = frozenset({"agent.speed", *(f"zones.bias_{i}" for i in range(N_ZONES))})
 
     def _common_space(self) -> dict:
         return {
             "agent": Dict(self._agent_space()),
             "background": Dict({"color": RGBBox(init_value=BG_C)}),
             "border": Dict({"color": RGBBox(init_value=BORDER_C)}),
+        }
+
+    def _zone_bias_space(self) -> dict:
+        return {
+            f"bias_{i}": Box(low=-10.0, high=10.0, shape=(2,), init_value=list(ZONE_BIAS[i])) for i in range(N_ZONES)
         }
 
     def sample_states(self, batch: int, rng: np.random.Generator | None = None) -> np.ndarray:
@@ -1218,8 +1235,10 @@ class _PiecewiseBase(_TorchNavBase):
         # an ulp — the one place in this env where the dtype of an intermediate is load-bearing.
         idx = ((pos.double() - float(BORDER)) / play * GRID_N).trunc().long().clamp(0, GRID_N - 1)
         zone = idx[:, 1] * GRID_N + idx[:, 0]
-        bias = torch.as_tensor(self.zone_bias, device=self.device, dtype=torch.float32)[zone]
-        nxt = pos + a * float(self.speed) + bias
+        n = int(pos.shape[0])
+        biases = torch.stack([sty[f"zones.bias_{i}"].reshape(n, 2) for i in range(N_ZONES)], dim=1)
+        bias = biases[torch.arange(n, device=pos.device), zone]
+        nxt = pos + a * sty["agent.speed"].reshape(n, 1) + bias
         out = rows.clone()
         out[:, 0:2] = self._clamp_border(nxt, r)
         return out
@@ -1239,14 +1258,14 @@ class Piecewise(_PiecewiseBase):
     configuration is registered separately as ``PiecewiseZones`` rather than folded in here.
     """
 
-    name = "swm-piecewise"
+    name = "piecewise"
     #: ``PiecewiseEnv.__init__`` takes ``render_target`` and ``grid_n`` and NOT ``render_zones``: the
     #: zone tint is reachable only through the variation space. Passing it as a kwarg raises, which is
     #: how the asymmetry with ``TwoRoomEnv`` was found; ``PiecewiseZones`` sets the leaf instead.
     reference_kwargs: dict = {}
 
     def make_variation_space(self) -> Dict:
-        return Dict(self._common_space())
+        return Dict({**self._common_space(), "zones": Dict(self._zone_bias_space())})
 
     def step(self, action) -> TensorDict:
         """One control step; the implementation is :meth:`_GymReferencePort.step`. Declared here because the
@@ -1268,14 +1287,14 @@ class PiecewiseZones(_PiecewiseBase):
     far side because ``int(row * 196 / 2)`` truncates.
     """
 
-    name = "swm-piecewise-zones"
+    name = "piecewise-zones"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._zones = _zone_map(self.device)
 
     def make_variation_space(self) -> Dict:
-        z = {f"color_{i}": RGBBox(init_value=ZONE_C[i]) for i in range(N_ZONES)}
+        z = {**self._zone_bias_space(), **{f"color_{i}": RGBBox(init_value=ZONE_C[i]) for i in range(N_ZONES)}}
         return Dict({**self._common_space(), "zones": Dict(z)})
 
     def step(self, action) -> TensorDict:
@@ -1289,21 +1308,6 @@ class PiecewiseZones(_PiecewiseBase):
         for i in range(N_ZONES):
             img = self._paint(img, self._zones == i, sl(f"zones.color_{i}"))
         return self._paint(img, self._border, sl("border.color"))
-
-    @classmethod
-    def reference_env(cls, size: int = IMG):
-        """The official env with the zone tint switched on.
-
-        ``render_zones`` has no constructor kwarg — unlike ``render_target`` it is reachable only
-        through the variation space — so it is set as the leaf's INIT value, which survives the
-        ``reset()`` that ``reference_render`` performs. Setting it as a plain value would be undone
-        by that reset and the reference would silently render the untinted picture.
-        """
-        import gymnasium
-
-        env = gymnasium.make(cls.reference_id)
-        env.unwrapped.variation_space["rendering"]["render_zones"].set_init_value(1)
-        return env
 
 
 #: figsize 5x5 inches at matplotlib's default 100 dpi
@@ -1353,11 +1357,11 @@ DEFAULT_WALL_SHAPE, DEFAULT_WALL_POS = _default_walls()
 class SimplePointMaze(_GymReferencePort):
     """5x5 point maze with ``show_goal=False``. State: the agent's ``(x, y)``."""
 
-    name = "swm-simple-point-maze"
+    name = "simple-point-maze"
     state_dim = 2
     state_names = ("agent_x", "agent_y")
     default_size = SIZE
-    reference_id = "swm/SimplePointMaze-v0"
+    reference_id = None
     #: the configuration this cell registers; see "Why the goal disc is not drawn" above
     reference_kwargs = {"show_goal": False}
     #: matplotlib's env needs the mode named; the torch-rendered cells take no argument
@@ -1368,9 +1372,9 @@ class SimplePointMaze(_GymReferencePort):
     state_layout = ((("agent", "position"), 2, 0),)
     state_bounds = {("agent", "position"): (0.0, WORLD)}
 
-    #: DYNAMICS only: ``agent.speed`` scales the move and changes no pixel, so it is an attribute
-    #: rather than a variation leaf. Declaring it would advertise a knob the renderer cannot honour.
+    #: Default agent speed. The live value is the ``agent.speed`` variation leaf (dynamics-only).
     speed = MAZE_AGENT_SPEED
+    dynamics_variation_leaves = frozenset({"agent.speed"})
 
     def make_variation_space(self) -> Dict:
         return Dict(
@@ -1379,6 +1383,7 @@ class SimplePointMaze(_GymReferencePort):
                     {
                         "color": RGBBox(init_value=MAZE_AGENT_C),
                         "radius": Box(low=0.05, high=0.5, shape=(1,), init_value=[MAZE_AGENT_R]),
+                        "speed": Box(low=0.05, high=8.0, shape=(1,), init_value=[MAZE_AGENT_SPEED]),
                     }
                 ),
                 "walls": Dict(
@@ -1526,7 +1531,7 @@ class SimplePointMaze(_GymReferencePort):
         dead.
         """
         a = action.clamp(-ACTION_LIMIT, ACTION_LIMIT)
-        nxt = rows + float(self.speed) * a
+        nxt = rows + sty["agent.speed"].reshape(-1, 1) * a
         blocked = self._collides(nxt, sty, int(rows.shape[0]))
         nxt = torch.where(blocked.unsqueeze(1), rows, nxt)
         return nxt.clamp(0.0, WORLD)

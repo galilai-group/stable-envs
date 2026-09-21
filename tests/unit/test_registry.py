@@ -90,7 +90,16 @@ def test_every_canonical_class_name_resolves_to_the_same_class_as_at_the_baselin
     now = {r["class_name"]: r for r in R.registry_table()}
     then = {canonical_from_frozen(r["name"]): r for r in base["registry_table"]}
     assert sorted(now) == sorted(then), "the set of registered class names changed"
-    skip_keys = {"module", "name", "class_name", "family", "domain", "render_state_dim", "state_dim"}
+    skip_keys = {
+        "module",
+        "name",
+        "class_name",
+        "family",
+        "domain",
+        "render_state_dim",
+        "state_dim",
+        "reference_id",
+    }
     for name, row in then.items():
         # ``module`` may move when unpublished shims are retired. The class is still the same
         # object, reachable at its canonical module; the old import path is gone on purpose.

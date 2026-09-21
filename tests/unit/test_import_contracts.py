@@ -101,16 +101,14 @@ def test_the_installed_package_never_imports_stable_worldmodel():
 
 
 def test_the_installed_package_has_no_swm_runtime_symbols():
-    """Production identity: no ``_SWM*`` types. ``SWM_WRAPPER_GATE_F`` is the Craftax JIT declaration."""
-    import re
-
+    """Production identity: no SWM types, ids, or adapter names in shipped runtime code."""
+    needles = ("stable_worldmodel", "stable-worldmodel", "swm/", "_SWM", "SWM_", "swm_ref")
     offenders = []
-    pat = re.compile(r"\b_SWM[A-Za-z0-9_]*\b")
     for path in PKG.rglob("*.py"):
         for i, line in enumerate(path.read_text().splitlines(), 1):
-            if pat.search(line):
+            if any(n in line for n in needles):
                 offenders.append(f"{path.relative_to(ROOT)}:{i}:{line.strip()}")
-    assert offenders == [], "shipped stable_envs still names _SWM* types:\n" + "\n".join(offenders)
+    assert offenders == [], "shipped stable_envs still names SWM identity:\n" + "\n".join(offenders)
 
 
 def test_the_core_modules_have_no_cycle_among_themselves():

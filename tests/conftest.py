@@ -49,6 +49,10 @@ try:
 except ImportError:
     pass
 
+from tests.helpers.reference.certification import install_on_classes
+
+install_on_classes()
+
 #: GPU files that are also the frozen regression oracle (parity / reproducibility / fast==slow).
 _GPU_REGRESSION = {
     "test_conformance.py",

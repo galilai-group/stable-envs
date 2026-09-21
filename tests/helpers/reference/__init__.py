@@ -5,6 +5,13 @@ environments. They exist so regression can still join the frozen 42-id SWM matri
 and the measured variation correspondence.
 """
 
+from .certification import (
+    CERT_GYM_IDS,
+    certification_gym_id,
+    has_reference_renderer,
+    install_on_classes,
+)
+from .craftax_jit import CRAFTAX_JIT_GAP
 from .crosswalk import (
     HISTORICAL_CLASS_NAMES,
     SWM_IDS,
@@ -28,9 +35,14 @@ from .variation import (
 )
 
 __all__ = [
+    "CERT_GYM_IDS",
+    "CRAFTAX_JIT_GAP",
     "HISTORICAL_CLASS_NAMES",
     "SWM_IDS",
     "SYMBOLIC_IDS",
+    "certification_gym_id",
+    "has_reference_renderer",
+    "install_on_classes",
     "VARIATION_MAPS",
     "VariationMap",
     "canonical_from_frozen",

@@ -237,7 +237,7 @@ def reset_variation_space(
     options: dict | None = None,
     default_variations: Sequence[str] | None = None,
 ) -> None:
-    """Reset, then resample the requested leaves, then apply explicit overrides. swm-compatible."""
+    """Reset, then resample the requested leaves, then apply explicit overrides."""
     variation_space.seed(seed)
     variation_space.reset()
     options = options or {}

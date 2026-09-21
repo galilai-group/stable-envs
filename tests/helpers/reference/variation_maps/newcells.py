@@ -490,8 +490,6 @@ _SPM_SWM_ONLY = {
     "agent.position": "this is our STATE, not our style. MEASURED: swm's render() draws "
     "`self.state`, never the leaf -- the leaf is a RESET distribution that seeds "
     "the state, so setting it after a reset moves 0 of 250,000 px",
-    "agent.speed": "dynamics only; carried as the class attribute `speed` because it changes no "
-    "pixel. MEASURED: 0 of 250,000 px at both 0.05 and 2.0, and under resample",
     "goal.color": "not drawn: this class is the `show_goal=False` configuration, a pre-existing and "
     "documented divergence (docs/research/swm_coverage.md). MEASURED: 0 of 250,000 px "
     "with show_goal=False, 1,324 px with show_goal=True. Our reference_env passes "
@@ -513,6 +511,7 @@ NEWCELL_VARIATION_MAPS.update(
             identical=(
                 "agent.color",
                 "agent.radius",
+                "agent.speed",
                 "background.color",
                 "walls.color",
                 "walls.number",
@@ -656,10 +655,10 @@ LEAF_CLASSIFICATION.update(
                     mechanism="render() draws self.state; the leaf only seeds it",
                 ),
                 "agent.speed": _cls(
-                    "not_applicable",
-                    _SPM_SWM_ONLY["agent.speed"],
-                    _MAZE_PROBES["spm"] + " -- 0 of 250,000 px at 0.05 and at 2.0",
-                    mechanism="step(): state + speed*action; reaches no draw call",
+                    "mapped",
+                    "identical path; dynamics-only Variation leaf that scales the move",
+                    _MAZE_PROBES["spm"] + " -- 0 of 250,000 px at 0.05 and at 2.0 (no pixel effect)",
+                    mechanism="step(): state + speed*action; now a native variation leaf",
                 ),
                 "goal.color": _cls(
                     "not_applicable",
