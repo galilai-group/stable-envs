@@ -833,8 +833,8 @@ class CraftaxClassic(Env):
     #: Parity at the two supported sizes is unaffected and still exact: the same experiment records
     #: ``exact_frac`` 1.0 against the official at S in every band.
     #: The state distribution the **one** registered/default performance tier is measured on, which
-    #: is not a choice made for the benchmark: the throughput harness draws ``probe.sample_states(64)``
-    #: (``examples/bench_step3.py``), so this env's own sampler IS the certification distribution and
+    #: is not a choice made for the benchmark: the frozen throughput harness draws
+    #: ``probe.sample_states(64)``, so this env's own sampler IS the certification distribution and
     #: its shares are a declared property of the cell. Measured over seeds 0-5 at n=64: **daylight
     #: exactly 0.25** (the band the index stratification pins to ``light_level == 1.0``), **dusk
     #: 0.33-0.44**, **night 0.31-0.43**, **sleeping 0.31-0.46**, over seeds 0-39. Daylight is exact because the band
@@ -848,7 +848,7 @@ class CraftaxClassic(Env):
     #: is lit. A tier quoted on daylight alone would be a number about a state the agent is in a
     #: quarter of the time.
     certification_state_distribution = {
-        "draw": "CraftaxClassic.sample_states(64) -- examples/bench_step3.py's own protocol",
+        "draw": "CraftaxClassic.sample_states(64) -- the throughput harness protocol",
         "daylight_share": 0.25,
         "dusk_share": "0.39-0.44",
         "night_share": "0.31-0.36",
@@ -860,7 +860,7 @@ class CraftaxClassic(Env):
     #: belongs to rather than only in a findings file. **None of these numbers certifies anything
     #: until Sami rules on which reference a speed ratio may use** -- see ``s_cpu_note``.
     #:
-    #: Oscar ``node2356``, ``examples/bench_step3.py --device cpu --threads 1``, paired against a
+    #: Oscar ``node2356``, frozen throughput harness ``--device cpu --threads 1``, paired against a
     #: pristine 76dc511 measured either side of it in the same job (spread 1.0045, baseline at 1.44x
     #: its previously certified value, node load 0.86 per core). Artifacts under
     #: ``tests/fixtures/regression/join/step7/craftax-classic-full/sweep/``.

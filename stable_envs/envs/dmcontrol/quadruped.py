@@ -40,8 +40,7 @@ def _transcribed_quadruped_env(seed: int):
     ``quadruped.make_model(floor_size=20 * 0.5)`` (the suite's ``walk`` model) is round-tripped
     through ``dm_control.mjcf`` with the registered default material/density/light values, then
     driven by ``quadruped.Move(desired_speed=0.5)`` under ``action_scale.Wrapper``. Measured against
-    ``suite.load("quadruped", "walk")``
-    (``tests/fixtures/regression/join/step7/dmc-quadruped/phase0/swm_model_roundtrip.json``):
+    ``suite.load("quadruped", "walk")`` (frozen roundtrip fixture):
     geometry, cameras, lights, texture bytes and ``qpos0`` identical, the material/texture tables
     permuted, and two defaults that differ from the suite — material ``self`` is rgba
     (0.6, 0.3, 0.3, 1) where the suite has (0.7, 0.5, 0.3, 1) (mean 1.34/255 on the same qpos), and

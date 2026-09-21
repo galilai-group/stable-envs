@@ -211,7 +211,7 @@ def main() -> None:
         help="index the states a batch at a time instead of a row at a time; worth it "
         "above ~B=1024, no custom collate either way",
     )
-    ap.add_argument("--out", type=Path, default=Path("examples/results/train_from_states.json"))
+    ap.add_argument("--out", type=Path, default=Path("docs/research/artifacts/results/train_from_states.json"))
     args = ap.parse_args()
 
     torch.manual_seed(0)

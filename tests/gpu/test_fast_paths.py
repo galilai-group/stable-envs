@@ -410,11 +410,7 @@ CASES: tuple[FastPath, ...] = (
             "agent's silhouette, which is exactly what no mean-absolute-difference catches. The "
             "union is over ray POSITIONS, not pixels, because the window moves per environment."
         ),
-        names=tuple(
-            n
-            for n in sorted(se.registry.REGISTRY)
-            if n.startswith(("AntMaze", "PointMaze", "HumanoidMaze"))
-        ),
+        names=tuple(n for n in sorted(se.registry.REGISTRY) if n.startswith(("AntMaze", "PointMaze", "HumanoidMaze"))),
         modules=("ogbench", "maze2d"),
         num_envs=8,
         seed=0,
@@ -446,11 +442,7 @@ CASES: tuple[FastPath, ...] = (
             "own sizes, because the span's lever arm is a far camera and a small primitive and "
             "building a giant maze at 84 px shortens exactly the thing under test."
         ),
-        names=tuple(
-            n
-            for n in sorted(se.registry.REGISTRY)
-            if n.startswith(("AntMaze", "PointMaze", "HumanoidMaze"))
-        ),
+        names=tuple(n for n in sorted(se.registry.REGISTRY) if n.startswith(("AntMaze", "PointMaze", "HumanoidMaze"))),
         modules=("ogbench", "maze2d"),
         num_envs=8,
         seed=1,

@@ -87,7 +87,7 @@ def main() -> None:
     )
     ap.add_argument("--grid", type=int, default=64)
     ap.add_argument("--seed", type=int, default=0)
-    ap.add_argument("--out", type=Path, default=Path("examples/results"))
+    ap.add_argument("--out", type=Path, default=Path("docs/research/artifacts/results"))
     args = ap.parse_args()
 
     rng = np.random.default_rng(args.seed)

@@ -147,7 +147,9 @@ def test_a_failing_protocol_draw_is_an_error_not_a_skip():
     renders at one size only; a ValueError from sample_states must not be reclassified as that skip."""
     import importlib.util
 
-    spec = importlib.util.spec_from_file_location("fidelity_step4", ROOT / "examples" / "fidelity_step4.py")
+    spec = importlib.util.spec_from_file_location(
+        "fidelity_step4", ROOT / "docs" / "research" / "artifacts" / "fidelity_step4.py"
+    )
     F = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(F)
 

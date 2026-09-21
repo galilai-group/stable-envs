@@ -255,7 +255,7 @@ Why the goal disc is not drawn
 So the configuration registered here is ``show_goal=False``, exactly as ``TwoRoom`` and
 ``PiecewiseZones`` register one configuration of their official env each. The measured blend rule is
 recorded above so that adding the goal disc is a short job once the shared check can express a
-translucent knob; the note in ``docs/research/swm_coverage.md`` says what that would take.
+translucent knob; the migration coverage note records what that would take.
 
 Output size
 -----------

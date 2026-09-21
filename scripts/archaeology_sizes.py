@@ -10,7 +10,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 TREES = (
     "scratch",
-    "examples/results",
+    "docs/research/artifacts/results",
     "examples/robocasa_visual",
     "docs/assets",
 )

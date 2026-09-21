@@ -47,7 +47,7 @@ reference renderer gets the CPU comparison; the rest get the GPU columns only. R
 dropped. Every measurement is wrapped, so an env that cannot run leaves a row saying why instead of
 ending the sweep.
 
-    python examples/bench_gpu_vs_cpu.py --out examples/results
+    python examples/bench_gpu_vs_cpu.py --out docs/research/artifacts/results
 """
 
 from __future__ import annotations
@@ -559,7 +559,7 @@ def main() -> None:
     ap.add_argument(
         "--skip", default="", help="comma-separated envs to leave out; for reference envs that abort the process"
     )
-    ap.add_argument("--out", default="examples/results")
+    ap.add_argument("--out", default="docs/research/artifacts/results")
     a = ap.parse_args()
 
     outdir = Path(a.out)

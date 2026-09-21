@@ -277,7 +277,7 @@ start. Do not relax the threshold; that is the one number that makes the repo's 
 The examples pick the env up automatically too:
 
 ```bash
-python examples/bench_gpu_vs_cpu.py --out examples/results   # GPU vs the official CPU renderer
+python examples/bench_gpu_vs_cpu.py --out docs/research/artifacts/results   # GPU vs the official CPU renderer
 python examples/gallery.py --out docs/assets/media           # grid, parity panel, side-by-side video
 ```
 

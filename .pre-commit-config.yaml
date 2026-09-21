@@ -7,10 +7,10 @@ repos:
     hooks:
       - id: trailing-whitespace
         exclude: >-
-          ^(?:docs/research/|docs/assets/|examples/results/|examples/paper/|tests/fixtures/|STEP_.*_AGENT_BRIEFS/)
+          ^(?:docs/research/|docs/assets/|tests/fixtures/|STEP_.*_AGENT_BRIEFS/)
       - id: end-of-file-fixer
         exclude: >-
-          ^(?:docs/research/|docs/assets/|examples/results/|examples/paper/|tests/fixtures/|STEP_.*_AGENT_BRIEFS/)
+          ^(?:docs/research/|docs/assets/|tests/fixtures/|STEP_.*_AGENT_BRIEFS/)
       - id: check-ast
       - id: check-case-conflict
       - id: check-json
@@ -32,11 +32,9 @@ repos:
         args: [--fix, --exit-non-zero-on-fix]
         types_or: [python, pyi]
         files: ^(stable_envs/|tests/|benchmarks/|scripts/|examples/|conftest\.py)
-        exclude: ^(examples/results/|examples/paper/)
       - id: ruff-format
         types_or: [python, pyi]
         files: ^(stable_envs/|tests/|benchmarks/|scripts/|examples/|conftest\.py)
-        exclude: ^(examples/results/|examples/paper/)
 
   - repo: https://github.com/shellcheck-py/shellcheck-py
     rev: v0.11.0.1

@@ -930,13 +930,13 @@ class CraftaxFull(Env):
         "measured_against": "craftax 1.6.1 un-jitted, jax 0.11.1, jax_threefry_partitionable=True",
         "still_required": "exact parity against the official renderer at 10 px and at 16 px",
     }
-    #: The distribution the single registered performance tier is measured on. The throughput harness draws
-    #: ``probe.sample_states(64)`` (``examples/bench_step3.py``), so this env's own sampler IS the
+    #: The distribution the single registered performance tier is measured on. The frozen throughput
+    #: harness draws ``probe.sample_states(64)``, so this env's own sampler IS the
     #: certification distribution and its shares are a declared property of the cell rather than a
     #: weighting invented for the benchmark. Bands are assigned by row index (``i % 6``), so the
     #: shares are exact rather than drawn.
     certification_state_distribution = {
-        "draw": "CraftaxFull.sample_states(64) -- examples/bench_step3.py's own protocol",
+        "draw": "CraftaxFull.sample_states(64) -- the throughput harness protocol",
         "band_assignment": "stratified by row index (i % 6); values inside a band from craftax's own "
         "day cycle and light-map alphabet",
         "level0_day_share": 1 / 6,

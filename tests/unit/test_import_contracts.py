@@ -232,8 +232,6 @@ def test_maintained_tests_and_examples_do_not_import_deleted_modules():
     for folder in ("tests", "examples", "stable_envs"):
         for path in (ROOT / folder).rglob("*.py"):
             rel = path.relative_to(ROOT).as_posix()
-            if rel.startswith("examples/results/"):
-                continue
             hits = [m for m in _imports(path, top_level_only=False) if _is_banned(m)]
             if hits:
                 offenders[rel] = hits

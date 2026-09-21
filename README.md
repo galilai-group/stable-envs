@@ -79,7 +79,7 @@ snv.PushT / snv.CartPole / …                  concrete env classes
 
 ## Examples
 
-These four scripts use only the public `snv` surface and degrade honestly when an extra is missing:
+These three scripts use only the public `snv` surface and degrade honestly when an extra is missing:
 
 ```bash
 python examples/render.py --help
@@ -87,7 +87,7 @@ python examples/batched_env.py --help
 python examples/functional_dynamics.py --help
 ```
 
-Historical training loops, GPU sweeps and paper tables stay under [`examples/`](examples/) and [`docs/research/`](docs/research/). They are evidence, not the getting-started path.
+Historical training loops, GPU sweeps and paper tables stay under [`docs/research/`](docs/research/). They are evidence, not the getting-started path.
 
 ## Keep your training loop. Delete your image dataset.
 

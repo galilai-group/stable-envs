@@ -20,7 +20,7 @@ three distances, on identical states and one encoder:
 Reported as a RATIO of the first to the second, because the absolute number is a property of the
 encoder and the ratio is a property of the renderer.
 
-    python examples/dino_agreement.py --out examples/results/dino
+    python examples/dino_agreement.py --out docs/research/artifacts/results/dino
 """
 
 from __future__ import annotations
@@ -163,7 +163,7 @@ def main() -> None:
     ap.add_argument("--n", type=int, default=32)
     ap.add_argument("--model", default=DEFAULT_MODEL)
     ap.add_argument("--envs", default="")
-    ap.add_argument("--out", default="examples/results/dino")
+    ap.add_argument("--out", default="docs/research/artifacts/results/dino")
     a = ap.parse_args()
 
     device = "cuda" if torch.cuda.is_available() else "cpu"

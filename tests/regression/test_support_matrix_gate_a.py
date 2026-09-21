@@ -412,7 +412,9 @@ def test_the_rocket_declaration_drives_the_partition_end_to_end():
     result = {
         "colors_not_applied": probes + [_probe("environment.sky_color")],
         "best_abs_diff": {p: 3 for p in probes + [_probe("environment.sky_color")]},
-        "applicability": color_exactness_applicability(PyFlytRocketLanding, probes + [_probe("environment.sky_color")]),
+        "applicability": color_exactness_applicability(
+            PyFlytRocketLanding, probes + [_probe("environment.sky_color")]
+        ),
     }
     part = partition_colour_exactness(result)
     # The five declared leaves are excused; a sixth leaf nobody declared still fails.

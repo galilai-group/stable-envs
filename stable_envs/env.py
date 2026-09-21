@@ -495,7 +495,7 @@ REQUIRED_VISUAL_FIDELITY = (
 #: the reference drew had moved while ours had not. Judged as a FAIL, that read as a renderer defect;
 #: it was a version drift, and a field the certifier can compare is what tells the two apart.
 #:
-#: Keys follow ``examples/fidelity_step4.py``'s ``reference_packages`` record -- ``"mujoco"``,
+#: Keys follow the frozen fidelity harness's ``reference_packages`` record -- ``"mujoco"``,
 #: ``"dm_control"``, ``"gymnasium"`` ... -- so the comparison is a dictionary lookup and not a parse.
 #: Values are the exact version strings. A visual env carries it inside ``visual_fidelity`` (next to
 #: ``measured_at``, whose text it must agree with); a parity env carries it as the class attribute

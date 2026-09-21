@@ -55,7 +55,7 @@ clear hundreds of thousands to millions of frames a second, replacing thousands 
 visual-tier MuJoCo / Meta-World / Fetch sit near 1–7× a stored JPEG/core.
 
 The paper's per-family table uses eight worker processes batch-decoding JPEG-in-Lance, not one core.
-See `examples/bench_lance.py` and `examples/paper/tables/family.tex`.
+See `examples/bench_lance.py` and `docs/research/artifacts/paper/tables/family.tex`.
 
 ## Caveats / losers
 
@@ -75,8 +75,8 @@ See `examples/bench_lance.py` and `examples/paper/tables/family.tex`.
 ```bash
 python -m benchmarks.render --help
 python -m benchmarks.pipeline --help
-python examples/bench_gpu_vs_cpu.py --out examples/results --envs PushT --sizes 96,224
-python examples/bench_gpu_vs_cpu.py --out examples/results --sizes native
+python examples/bench_gpu_vs_cpu.py --out docs/research/artifacts/results --envs PushT --sizes 96,224
+python examples/bench_gpu_vs_cpu.py --out docs/research/artifacts/results --sizes native
 python examples/bench_vs_decode.py --help
 ```
 

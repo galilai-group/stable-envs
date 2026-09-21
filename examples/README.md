@@ -22,25 +22,16 @@ states in your own dataset/loader and call `env.render(env.unpack_render_state(b
 does not own dataset storage or policy rollouts; those responsibilities belong to your data stack and
 sibling stable-* projects.
 
-## Measurement and research scripts
+## Other current examples
 
-The remaining scripts are benchmark/research harnesses used to produce the evidence in
-[`results/`](results/) and the research archive. They are not part of the getting-started API. In
-particular, fidelity and throughput claims should be read from the generated artifacts rather than
-reproduced from prose in this file.
+- [`domain_randomization.py`](domain_randomization.py) — batched Variation / configuration
+- [`dump_frames.py`](dump_frames.py) — write frames from stored states
+- [`gallery.py`](gallery.py) — side-by-side media on identical states
+- [`bench_gpu_vs_cpu.py`](bench_gpu_vs_cpu.py) / [`bench_vs_decode.py`](bench_vs_decode.py) — renderer throughput
+- [`bench_storage.py`](bench_storage.py) / [`bench_lance.py`](bench_lance.py) — storage pipeline baselines
+- [`dino_agreement.py`](dino_agreement.py) — DINO agreement measurement
+- [`rendernet/`](rendernet/README.md) — residual corrector training
+- [`robocasa_visual/`](robocasa_visual/README.md) — RoboCasa visual pipeline
 
-Useful entry points include:
-
-- [`bench_gpu_vs_cpu.py`](bench_gpu_vs_cpu.py) — renderer throughput vs official CPU references;
-- [`bench_vs_decode.py`](bench_vs_decode.py) — regeneration vs JPEG decode;
-- [`bench_step3.py`](bench_step3.py) / [`bench_step3_pipeline.py`](bench_step3_pipeline.py) — pipeline benches;
-- [`fidelity_step4.py`](fidelity_step4.py) — frozen-corpus fidelity/conformance measurement;
-- [`bench_storage.py`](bench_storage.py) / [`bench_lance.py`](bench_lance.py) — storage pipeline baselines;
-- [`gallery.py`](gallery.py) — side-by-side media on identical states;
-- [`domain_randomization.py`](domain_randomization.py) — batched Variation / configuration;
-- [`dump_frames.py`](dump_frames.py) — write frames from stored states;
-- [`dino_agreement.py`](dino_agreement.py) — DINO agreement measurement.
-
-Historical milestone-specific scripts and large calibration artifacts are preserved in release/tag
-archives rather than defining the public API. Historical paired-eval harnesses live under
-[`docs/research/artifacts/`](../docs/research/artifacts/README.md), not in this directory.
+Frozen measurement harnesses, paper tables, and historical result dumps live under
+[`docs/research/artifacts/`](../docs/research/artifacts/README.md).

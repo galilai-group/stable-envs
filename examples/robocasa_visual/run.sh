@@ -16,7 +16,11 @@ REPO=/mnt/vast/home/randall.balestriero/code/stable-envs
 WORK=/mnt/vast/home/randall.balestriero/robocasa_visual_work
 RC=/mnt/vast/home/randall.balestriero/miniconda3/envs/robocasa/bin/python
 SE3D=/mnt/vast/home/randall.balestriero/venvs/se3d/bin/python
-KITCHENS=${*:-L52S03 L45S33}
+if [[ $# -gt 0 ]]; then
+  KITCHENS=("$@")
+else
+  KITCHENS=(L52S03 L45S33)
+fi
 STEPS=${STEPS:-200}
 RES=${RES:-256}
 export MUJOCO_GL=egl PYOPENGL_PLATFORM=egl
@@ -27,23 +31,23 @@ cd "$REPO"
 echo "=== node $(hostname) ==="
 nvidia-smi --query-gpu=name,memory.total --format=csv,noheader
 
-for K in $KITCHENS; do
+for K in "${KITCHENS[@]}"; do
   echo "--- A: trajectory + official frames, $K ---"
-  $RC examples/robocasa_visual/dump_trajectory.py --kitchen "$K" --steps "$STEPS" --res "$RES" \
+  "$RC" examples/robocasa_visual/dump_trajectory.py --kitchen "$K" --steps "$STEPS" --res "$RES" \
       --out "$WORK" 2>&1 | tail -5
   echo "--- B: MJWarp re-render, $K ---"
-  $SE3D examples/robocasa_visual/render_mjwarp.py --kitchen "$K" --out "$WORK" \
+  "$SE3D" examples/robocasa_visual/render_mjwarp.py --kitchen "$K" --out "$WORK" \
       --max-worlds 64 --stages trajectory
 done
 
 echo "--- bridge: is a bare Renderer at group 1 the official renderer, on both MuJoCos? ---"
-$RC examples/robocasa_visual/check_reference_bridge.py --kitchen "${KITCHENS%% *}" --tag mj331
-$SE3D examples/robocasa_visual/check_reference_bridge.py --kitchen "${KITCHENS%% *}" --tag mj311
+"$RC" examples/robocasa_visual/check_reference_bridge.py --kitchen "${KITCHENS[0]}" --tag mj331
+"$SE3D" examples/robocasa_visual/check_reference_bridge.py --kitchen "${KITCHENS[0]}" --tag mj311
 
-echo "--- B: throughput curve + grids (on ${KITCHENS%% *}) ---"
-$SE3D examples/robocasa_visual/render_mjwarp.py --kitchen "${KITCHENS%% *}" --out "$WORK" \
+echo "--- B: throughput curve + grids (on ${KITCHENS[0]}) ---"
+"$SE3D" examples/robocasa_visual/render_mjwarp.py --kitchen "${KITCHENS[0]}" --out "$WORK" \
     --stages throughput grids --batches 1 16 64 256 --grid 12 --kitchens 12
 
 echo "--- C: video, gif, contact sheet, fidelity ---"
-$RC examples/robocasa_visual/make_video.py --kitchens $KITCHENS --work "$WORK" \
+"$RC" examples/robocasa_visual/make_video.py --kitchens "${KITCHENS[@]}" --work "$WORK" \
     --out "$REPO/examples/robocasa_visual/media"

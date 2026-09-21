@@ -61,7 +61,7 @@ def test_there_are_scripts_to_check():
     this file collect nothing and report nothing — green, and covering the thing it was written for
     exactly as well as deleting it would.
     """
-    assert len(SCRIPTS) >= 20, (
+    assert len(SCRIPTS) >= 15, (
         f"only {len(SCRIPTS)} scripts found under {EXAMPLES}; the sweep below would be near-empty and would still pass"
     )
 
