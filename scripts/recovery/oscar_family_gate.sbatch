@@ -11,12 +11,17 @@
 set -euo pipefail
 base=/oscar/scratch/sboughan/se-semantic-recovery
 stage=${1:?source stage required}
-cohort=${2:?dmc or ogbench required}
+cohort=${2:?family cohort required}
 case "$cohort" in
   dmc)
     py=/oscar/scratch/sboughan/venvs/se6-verify-vis311/bin/python
     deps=/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages:/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages
     gate=scripts/recovery/dmc_first_family_gate.py
+    ;;
+  dmc_continuation|native_classic)
+    py=/oscar/scratch/sboughan/venvs/se6-verify-vis311/bin/python
+    deps=/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages:/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages
+    gate="scripts/recovery/${cohort}_gate.py"
     ;;
   ogbench)
     py=/oscar/scratch/sboughan/venvs/se7-ogb/bin/python
@@ -47,7 +52,10 @@ candidate = json.loads((base / f"{stage}-renderer-cuda.json").read_text())
 assert baseline == candidate, (baseline, candidate)
 print("FAMILY_FROZEN_RENDERER_GATE_PASS", stage, len(baseline), "cells")
 PY
-if [[ "$cohort" == dmc ]]; then
+if [[ "$cohort" == dmc || "$cohort" == dmc_continuation ]]; then
   "$py" scripts/recovery/reacher_gate.py --device cuda --output "$base/$stage-reacher-regression-cuda.json"
+fi
+if [[ "$cohort" == dmc_continuation ]]; then
+  "$py" scripts/recovery/dmc_first_family_gate.py --device cuda --output "$base/$stage-first-family-regression-cuda.json"
 fi
 echo "FAMILY_GPU_GATE_PASS $stage"

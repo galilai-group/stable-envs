@@ -92,7 +92,10 @@
       "evidence": [
         "docs/research/semantic_recovery_evidence/dmc_first_family_cpu.json",
         "docs/research/semantic_recovery_evidence/dmc_first_family_cuda.json",
-        "docs/research/first_family_recovery.md"
+        "docs/research/first_family_recovery.md",
+        "docs/research/semantic_recovery_evidence/acrobot_identity_cpu.json",
+        "docs/research/semantic_recovery_evidence/acrobot_identity_cuda.json",
+        "docs/research/acrobot_identity_correction.md"
       ],
       "oracle_identity": "tests/fixtures/semantics/dmc_first_family/acrobot_identity.json"
     },
@@ -134,7 +137,7 @@
         "CartPole"
       ],
       "family": "classic_control",
-      "owner": "coordinator",
+      "owner": "native-verification",
       "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
       "state_status": "INCOMPLETE",
       "action_parity": "UNTESTED",
@@ -156,7 +159,8 @@
         "Native step returns state only, omits reward/terminated/truncated."
       ],
       "test": "tests/unit/test_full_state_contract.py",
-      "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private"
+      "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
+      "recovery_status": "IN_PROGRESS_FROM_REVIEWED_7221759"
     },
     {
       "historical_id": "swm/CartpoleDMControl-v0",
@@ -227,7 +231,7 @@
         "DMCCheetahRun"
       ],
       "family": "dmcontrol",
-      "owner": "coordinator",
+      "owner": "dmcontrol-continuation",
       "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
       "state_status": "INCOMPLETE",
       "action_parity": "UNTESTED",
@@ -252,7 +256,8 @@
       ],
       "test": "tests/unit/test_full_state_contract.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
-      "execution_candidate": "DELEGATED"
+      "execution_candidate": "DELEGATED",
+      "recovery_status": "IN_PROGRESS_FROM_REVIEWED_7221759"
     },
     {
       "historical_id": "swm/CraftaxClassicPixels-v1",
@@ -784,7 +789,7 @@
         "DMCHopperHop"
       ],
       "family": "dmcontrol",
-      "owner": "coordinator",
+      "owner": "dmcontrol-continuation",
       "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
       "state_status": "INCOMPLETE",
       "action_parity": "UNTESTED",
@@ -809,7 +814,8 @@
       ],
       "test": "tests/unit/test_full_state_contract.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
-      "execution_candidate": "DELEGATED"
+      "execution_candidate": "DELEGATED",
+      "recovery_status": "IN_PROGRESS_FROM_REVIEWED_7221759"
     },
     {
       "historical_id": "swm/HumanoidDMControl-v0",
@@ -1115,7 +1121,7 @@
         "Pendulum"
       ],
       "family": "classic_control",
-      "owner": "coordinator",
+      "owner": "native-verification",
       "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
       "state_status": "INCOMPLETE",
       "action_parity": "UNTESTED",
@@ -1137,7 +1143,8 @@
         "Native step returns state only, omits reward/terminated/truncated."
       ],
       "test": "tests/unit/test_full_state_contract.py",
-      "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private"
+      "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
+      "recovery_status": "IN_PROGRESS_FROM_REVIEWED_7221759"
     },
     {
       "historical_id": "swm/PendulumDMControl-v0",
@@ -1453,7 +1460,7 @@
         "DMCWalkerWalk"
       ],
       "family": "dmcontrol",
-      "owner": "coordinator",
+      "owner": "dmcontrol-continuation",
       "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
       "state_status": "INCOMPLETE",
       "action_parity": "UNTESTED",
@@ -1478,7 +1485,8 @@
       ],
       "test": "tests/unit/test_full_state_contract.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
-      "execution_candidate": "DELEGATED"
+      "execution_candidate": "DELEGATED",
+      "recovery_status": "IN_PROGRESS_FROM_REVIEWED_7221759"
     }
   ],
   "checkpoint": "First cohort approved after Acrobot sparse-Balance identity correction; exact scopes only; integration continues on repair/environment-semantics"

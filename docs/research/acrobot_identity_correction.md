@@ -17,7 +17,9 @@ Balance reset, full-State restoration, reward, lifecycle/RNG and Variation
 checks. CPU registry/DMC/oracle/mapping tests passed: 198 tests and three expected
 CPU-only-profile skips for an unrelated CUDA-only cell. Three-cell renderer
 preservation uses the same frozen rows, translating only the historical name.
-Coordinated CPU/Oscar results are recorded in `semantic_recovery_evidence/`.
+Oscar job 6605333 passed in 1m32s: exact three-default semantic gate,
+byte-identical three-cell frozen renderer preservation, and original Reacher
+regression. CPU/Oscar results are recorded in `semantic_recovery_evidence/`.
 
 Subsequent family recovery integrates only into `repair/environment-semantics`.
 `v0-draft` remains at the previously delivered `9471a61` checkpoint. OGBench

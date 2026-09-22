@@ -1,6 +1,8 @@
 # Replacement-readiness of the 42 historical environment cells
 
-Maintained inventory after the v0 architecture freeze. Status is **derived** from
+Maintained inventory after the v0 architecture freeze. Semantic certification
+is tracked separately in [the recovery matrix](semantic_recovery_matrix.json);
+these architecture statuses do not certify task parity. Status is **derived** from
 `tests/helpers/reference/readiness.py`, not from prose beside the table.
 
 <!-- readiness-counts READY=0 PARTIAL=10 INCOMPLETE=30 SYMBOLIC=2 -->
@@ -75,7 +77,7 @@ Coverage is what **stable-envs** owns standalone. Reward on NATIVE cells is omit
 | swm id | native class(es) | execution | status | remaining UM / PARTIAL |
 |---|---|---|---|---|
 | `swm/AcrobotControl-v1` | `Acrobot` | NATIVE | PARTIAL | `physics.link_*` masses/com/moi/lengths |
-| `swm/AcrobotDMControl-v0` | `DMCAcrobotSwingup` | INCOMPLETE | INCOMPLETE | no SE step; `gravity.*`; task `swingup` vs historical `swingup_sparse` |
+| `swm/AcrobotDMControl-v0` | `DMCAcrobotBalance` | INCOMPLETE | INCOMPLETE | no SE step; `gravity.*`; task `swingup` vs historical `swingup_sparse` |
 | `swm/BallInCupDMControl-v0` | `DMCBallInCupCatch` | INCOMPLETE | INCOMPLETE | no SE step; gravity/density/`ball.size` |
 | `swm/CartPoleControl-v1` | `CartPole` | NATIVE | PARTIAL | `physics.{gravity,masscart,masspole,force_mag,tau,length}` |
 | `swm/CartpoleDMControl-v0` | `DMCCartpoleBalance`, `DMCCartpoleSwingup` | INCOMPLETE | INCOMPLETE | no SE step; gravity/`cart_mass`; historical default was sparse swingup |

@@ -15,6 +15,8 @@ import stable_envs as se
 
 COHORTS = {
     "dmc": ("DMCAcrobotBalance", "DMCPendulumSwingup", "DMCCartpoleSwingup"),
+    "dmc_continuation": ("DMCCheetahRun", "DMCHopperHop", "DMCWalkerWalk"),
+    "native_classic": ("CartPole", "Pendulum"),
     "ogbench": ("PointMazeLargeNavigate",),
 }
 
