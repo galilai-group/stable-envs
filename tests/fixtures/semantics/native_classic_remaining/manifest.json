@@ -1,0 +1,365 @@
+{
+  "reference_commit": "176d54532b3c0a251a4f509b74f2fdacc143a63d",
+  "seed": 17,
+  "batch": 3,
+  "steps": 32,
+  "generator": "scripts/recovery/freeze_native_classic_remaining_oracle.py",
+  "versions": {
+    "numpy": "2.5.3",
+    "gymnasium": "1.3.0",
+    "torch": "2.14.0",
+    "tensordict": "0.14.2",
+    "stable-worldmodel": "0.0.6"
+  },
+  "source": "Real pinned SWM wrappers only; independent of stable-envs production adapter",
+  "domains": {
+    "acrobot": {
+      "historical_id": "swm/AcrobotControl-v1",
+      "file": "acrobot_swm_176d545_gymnasium130.npz",
+      "sha256": "0fa54f79e12578177975ebd35df170372797661324b9cf3f35b71560f77aab0e",
+      "arrays": {
+        "actions": {
+          "shape": [
+            32,
+            3,
+            1
+          ],
+          "dtype": "int64"
+        },
+        "state/theta1": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/theta2": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/dtheta1": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/dtheta2": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/lifecycle/elapsed_steps": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "int64"
+        },
+        "state/rng/state": {
+          "shape": [
+            33,
+            3,
+            4
+          ],
+          "dtype": "int64"
+        },
+        "state/rng/increment": {
+          "shape": [
+            33,
+            3,
+            4
+          ],
+          "dtype": "int64"
+        },
+        "state/rng/has_uint32": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "int64"
+        },
+        "state/rng/uinteger": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "int64"
+        },
+        "reward": {
+          "shape": [
+            32,
+            3
+          ],
+          "dtype": "float64"
+        },
+        "terminated": {
+          "shape": [
+            32,
+            3
+          ],
+          "dtype": "bool"
+        },
+        "truncated": {
+          "shape": [
+            32,
+            3
+          ],
+          "dtype": "bool"
+        },
+        "observation": {
+          "shape": [
+            32,
+            3,
+            6
+          ],
+          "dtype": "float32"
+        },
+        "info_state": {
+          "shape": [
+            32,
+            3,
+            6
+          ],
+          "dtype": "float32"
+        }
+      }
+    },
+    "mountain_car": {
+      "historical_id": "swm/MountainCarControl-v0",
+      "file": "mountain_car_swm_176d545_gymnasium130.npz",
+      "sha256": "4d8281ce784985585e8fbeb4da5ab2c84a735c3dba5ab6ea72b2c1dabf0a1155",
+      "arrays": {
+        "actions": {
+          "shape": [
+            32,
+            3,
+            1
+          ],
+          "dtype": "int64"
+        },
+        "state/position": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/velocity": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/lifecycle/elapsed_steps": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "int64"
+        },
+        "state/rng/state": {
+          "shape": [
+            33,
+            3,
+            4
+          ],
+          "dtype": "int64"
+        },
+        "state/rng/increment": {
+          "shape": [
+            33,
+            3,
+            4
+          ],
+          "dtype": "int64"
+        },
+        "state/rng/has_uint32": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "int64"
+        },
+        "state/rng/uinteger": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "int64"
+        },
+        "reward": {
+          "shape": [
+            32,
+            3
+          ],
+          "dtype": "float64"
+        },
+        "terminated": {
+          "shape": [
+            32,
+            3
+          ],
+          "dtype": "bool"
+        },
+        "truncated": {
+          "shape": [
+            32,
+            3
+          ],
+          "dtype": "bool"
+        },
+        "observation": {
+          "shape": [
+            32,
+            3,
+            2
+          ],
+          "dtype": "float32"
+        },
+        "info_state": {
+          "shape": [
+            32,
+            3,
+            2
+          ],
+          "dtype": "float32"
+        }
+      }
+    },
+    "mountain_car_continuous": {
+      "historical_id": "swm/MountainCarContinuousControl-v0",
+      "file": "mountain_car_continuous_swm_176d545_gymnasium130.npz",
+      "sha256": "68081ac40c6352d370c968296467ce1b53acaadc39c4be8dbb23e9cdf807b78d",
+      "arrays": {
+        "actions": {
+          "shape": [
+            32,
+            3,
+            1
+          ],
+          "dtype": "float32"
+        },
+        "state/position": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/velocity": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "float64"
+        },
+        "state/task/state_is_float32": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "bool"
+        },
+        "state/lifecycle/elapsed_steps": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "int64"
+        },
+        "state/rng/state": {
+          "shape": [
+            33,
+            3,
+            4
+          ],
+          "dtype": "int64"
+        },
+        "state/rng/increment": {
+          "shape": [
+            33,
+            3,
+            4
+          ],
+          "dtype": "int64"
+        },
+        "state/rng/has_uint32": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "int64"
+        },
+        "state/rng/uinteger": {
+          "shape": [
+            33,
+            3,
+            1
+          ],
+          "dtype": "int64"
+        },
+        "reward": {
+          "shape": [
+            32,
+            3
+          ],
+          "dtype": "float64"
+        },
+        "terminated": {
+          "shape": [
+            32,
+            3
+          ],
+          "dtype": "bool"
+        },
+        "truncated": {
+          "shape": [
+            32,
+            3
+          ],
+          "dtype": "bool"
+        },
+        "observation": {
+          "shape": [
+            32,
+            3,
+            2
+          ],
+          "dtype": "float32"
+        },
+        "info_state": {
+          "shape": [
+            32,
+            3,
+            2
+          ],
+          "dtype": "float32"
+        }
+      }
+    }
+  }
+}
