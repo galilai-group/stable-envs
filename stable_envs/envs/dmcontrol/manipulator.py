@@ -14,6 +14,7 @@ entry, and the task-specific state exclusions ``check_state_dims_matter`` is OFF
 from __future__ import annotations
 
 from ...render import raycast3d as R3
+from ._aligned import DMCAlignedSemantics
 from ._cells import parity_cell
 
 #: Cells whose registered default is rendered at something other than the family's 84 px, so the
@@ -99,4 +100,5 @@ DMCManipulatorBringBall = parity_cell(
     SHAPE_KNOBS=SHAPE_KNOB_SPECS["DMCManipulatorBringBall"],
     RENDER_INVARIANT_DIMS=RENDER_INVARIANT_DIMS["DMCManipulatorBringBall"],
     state_dims_note=STATE_DIMS_NOTE["DMCManipulatorBringBall"],
+    bases=(DMCAlignedSemantics,),
 )

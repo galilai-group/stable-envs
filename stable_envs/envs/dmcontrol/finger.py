@@ -12,6 +12,7 @@ other two clear the shared 0.90 bar by 0.024-0.029 and declare nothing. See ``PA
 
 from __future__ import annotations
 
+from ._aligned import DMCAlignedSemantics
 from ._cells import PARITY_NOTE, parity_cell
 
 #: All-pixel floors that differ from the suite's shared 0.90, with the mechanism in ``PARITY_NOTE``.
@@ -28,4 +29,6 @@ DMCFingerTurnEasy = parity_cell(
     parity_all_exact_min=ALL_EXACT_FLOOR["DMCFingerTurnEasy"],
     parity_note=PARITY_NOTE,
 )
-DMCFingerTurnHard = parity_cell("DMCFingerTurnHard", "finger", "turn_hard")
+DMCFingerTurnHard = parity_cell(
+    "DMCFingerTurnHard", "finger", "turn_hard", bases=(DMCAlignedSemantics,)
+)

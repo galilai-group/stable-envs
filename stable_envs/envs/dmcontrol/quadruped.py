@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import numpy as np
 
+from ._aligned import DMCAlignedSemantics
 from ._cells import _AT_VERSIONS, trackcom_cell
 
 #: Quadruped: the family's convention -- three independent MJWarp draws through the shipped
@@ -154,5 +155,5 @@ DMCQuadrupedWalk = trackcom_cell(
     2,
     VISUAL_FIDELITY["DMCQuadrupedWalk"],
     note_suffix=QUADRUPED_NOTE,
-    bases=(_TranscribedQuadrupedModel,),
+    bases=(DMCAlignedSemantics, _TranscribedQuadrupedModel),
 )
