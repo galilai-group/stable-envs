@@ -121,6 +121,8 @@ def run_gate(device="cpu"):
                 other.reset(seed=777)
                 for action in np.random.default_rng(777).uniform(-1, 1, (7, batch, 2)).astype(np.float32):
                     other.step(action)
+                for first, second in zip(env._simulator.envs, other._simulator.envs, strict=True):
+                    assert first.action_space.np_random.bit_generator.state != second.action_space.np_random.bit_generator.state
                 env.set_state(snapshot)
                 ref.set_state(snapshot)
                 other.set_state(snapshot)
