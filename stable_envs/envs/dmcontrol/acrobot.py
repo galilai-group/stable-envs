@@ -7,5 +7,8 @@ One task. Its ``target`` site is in geom group 3, which ``mujoco.Renderer``'s de
 from __future__ import annotations
 
 from ._cells import parity_cell
+from ._first_family import FirstFamilySemantics
 
-DMCAcrobotSwingup = parity_cell("DMCAcrobotSwingup", "acrobot", "swingup")
+DMCAcrobotSwingup = parity_cell(
+    "DMCAcrobotSwingup", "acrobot", "swingup", bases=(FirstFamilySemantics,)
+)

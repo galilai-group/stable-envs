@@ -6,5 +6,8 @@ One task, one mover. Nothing is drawn per episode, so the state is ``qpos`` alon
 from __future__ import annotations
 
 from ._cells import parity_cell
+from ._first_family import FirstFamilySemantics
 
-DMCPendulumSwingup = parity_cell("DMCPendulumSwingup", "pendulum", "swingup")
+DMCPendulumSwingup = parity_cell(
+    "DMCPendulumSwingup", "pendulum", "swingup", bases=(FirstFamilySemantics,)
+)
