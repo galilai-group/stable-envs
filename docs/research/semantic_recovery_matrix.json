@@ -9,7 +9,7 @@
         "Acrobot"
       ],
       "family": "classic_control",
-      "owner": "coordinator",
+      "owner": "native_classic_remaining",
       "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
       "state_status": "INCOMPLETE",
       "action_parity": "UNTESTED",
@@ -33,7 +33,11 @@
       "test": "tests/unit/test_full_state_contract.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "audit_status": "SOURCE_AUDITED_NOT_VERIFIED",
-      "audit_report": "docs/research/native_verification.md"
+      "audit_report": "docs/research/native_verification.md",
+      "recovery_status": "CPU_COHORT_IN_PROGRESS",
+      "cohort": "remaining-simple-and-source-aligned",
+      "worktree_base": "152cb2402bd44063f414865faff6d28e4ccb67c2",
+      "planned_gate": "scripts/recovery/native_classic_remaining_gate.py"
     },
     {
       "historical_id": "swm/AcrobotDMControl-v0",
@@ -107,7 +111,7 @@
         "DMCBallInCupCatch"
       ],
       "family": "dmcontrol",
-      "owner": "coordinator",
+      "owner": "dmc_aligned",
       "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
       "state_status": "INCOMPLETE",
       "action_parity": "UNTESTED",
@@ -133,7 +137,11 @@
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "execution_candidate": "DELEGATED",
       "audit_status": "SOURCE_AUDITED_NOT_VERIFIED",
-      "audit_report": "docs/research/dmc_continuation_recovery.md"
+      "audit_report": "docs/research/dmc_continuation_recovery.md",
+      "recovery_status": "CPU_COHORT_IN_PROGRESS",
+      "cohort": "remaining-simple-and-source-aligned",
+      "worktree_base": "152cb2402bd44063f414865faff6d28e4ccb67c2",
+      "planned_gate": "scripts/recovery/dmc_aligned_gate.py"
     },
     {
       "historical_id": "swm/CartPoleControl-v1",
@@ -829,7 +837,7 @@
         "DMCFingerTurnHard"
       ],
       "family": "dmcontrol",
-      "owner": "coordinator",
+      "owner": "dmc_aligned",
       "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
       "state_status": "INCOMPLETE",
       "action_parity": "UNTESTED",
@@ -855,7 +863,11 @@
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "execution_candidate": "DELEGATED",
       "audit_status": "SOURCE_AUDITED_NOT_VERIFIED",
-      "audit_report": "docs/research/dmc_continuation_recovery.md"
+      "audit_report": "docs/research/dmc_continuation_recovery.md",
+      "recovery_status": "CPU_COHORT_IN_PROGRESS",
+      "cohort": "remaining-simple-and-source-aligned",
+      "worktree_base": "152cb2402bd44063f414865faff6d28e4ccb67c2",
+      "planned_gate": "scripts/recovery/dmc_aligned_gate.py"
     },
     {
       "historical_id": "swm/HopperDMControl-v0",
@@ -978,7 +990,7 @@
         "DMCManipulatorBringBall"
       ],
       "family": "dmcontrol",
-      "owner": "coordinator",
+      "owner": "dmc_aligned",
       "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
       "state_status": "INCOMPLETE",
       "action_parity": "UNTESTED",
@@ -1004,7 +1016,11 @@
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "execution_candidate": "DELEGATED",
       "audit_status": "SOURCE_AUDITED_NOT_VERIFIED",
-      "audit_report": "docs/research/dmc_continuation_recovery.md"
+      "audit_report": "docs/research/dmc_continuation_recovery.md",
+      "recovery_status": "CPU_COHORT_IN_PROGRESS",
+      "cohort": "remaining-simple-and-source-aligned",
+      "worktree_base": "152cb2402bd44063f414865faff6d28e4ccb67c2",
+      "planned_gate": "scripts/recovery/dmc_aligned_gate.py"
     },
     {
       "historical_id": "swm/MountainCarContinuousControl-v0",
@@ -1012,7 +1028,7 @@
         "MountainCarContinuous"
       ],
       "family": "classic_control",
-      "owner": "coordinator",
+      "owner": "native_classic_remaining",
       "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
       "state_status": "INCOMPLETE",
       "action_parity": "UNTESTED",
@@ -1036,7 +1052,11 @@
       "test": "tests/unit/test_full_state_contract.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "audit_status": "SOURCE_AUDITED_NOT_VERIFIED",
-      "audit_report": "docs/research/native_verification.md"
+      "audit_report": "docs/research/native_verification.md",
+      "recovery_status": "CPU_COHORT_IN_PROGRESS",
+      "cohort": "remaining-simple-and-source-aligned",
+      "worktree_base": "152cb2402bd44063f414865faff6d28e4ccb67c2",
+      "planned_gate": "scripts/recovery/native_classic_remaining_gate.py"
     },
     {
       "historical_id": "swm/MountainCarControl-v0",
@@ -1044,7 +1064,7 @@
         "MountainCar"
       ],
       "family": "classic_control",
-      "owner": "coordinator",
+      "owner": "native_classic_remaining",
       "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
       "state_status": "INCOMPLETE",
       "action_parity": "UNTESTED",
@@ -1068,7 +1088,11 @@
       "test": "tests/unit/test_full_state_contract.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "audit_status": "SOURCE_AUDITED_NOT_VERIFIED",
-      "audit_report": "docs/research/native_verification.md"
+      "audit_report": "docs/research/native_verification.md",
+      "recovery_status": "CPU_COHORT_IN_PROGRESS",
+      "cohort": "remaining-simple-and-source-aligned",
+      "worktree_base": "152cb2402bd44063f414865faff6d28e4ccb67c2",
+      "planned_gate": "scripts/recovery/native_classic_remaining_gate.py"
     },
     {
       "historical_id": "swm/OGBCube-v0",
@@ -1373,7 +1397,7 @@
         "PiecewiseZones"
       ],
       "family": "navigation",
-      "owner": "coordinator",
+      "owner": "native_navigation",
       "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
       "state_status": "INCOMPLETE",
       "action_parity": "UNTESTED",
@@ -1398,7 +1422,11 @@
       "test": "tests/unit/test_full_state_contract.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "audit_status": "SOURCE_AUDITED_NOT_VERIFIED",
-      "audit_report": "docs/research/native_verification.md"
+      "audit_report": "docs/research/native_verification.md",
+      "recovery_status": "CPU_COHORT_IN_PROGRESS",
+      "cohort": "remaining-simple-and-source-aligned",
+      "worktree_base": "152cb2402bd44063f414865faff6d28e4ccb67c2",
+      "planned_gate": "scripts/recovery/native_navigation_gate.py"
     },
     {
       "historical_id": "swm/PushT-Discrete-v1",
@@ -1475,7 +1503,7 @@
         "DMCQuadrupedWalk"
       ],
       "family": "dmcontrol",
-      "owner": "coordinator",
+      "owner": "dmc_aligned",
       "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
       "state_status": "INCOMPLETE",
       "action_parity": "UNTESTED",
@@ -1501,7 +1529,11 @@
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "execution_candidate": "DELEGATED",
       "audit_status": "SOURCE_AUDITED_NOT_VERIFIED",
-      "audit_report": "docs/research/dmc_continuation_recovery.md"
+      "audit_report": "docs/research/dmc_continuation_recovery.md",
+      "recovery_status": "CPU_COHORT_IN_PROGRESS",
+      "cohort": "remaining-simple-and-source-aligned",
+      "worktree_base": "152cb2402bd44063f414865faff6d28e4ccb67c2",
+      "planned_gate": "scripts/recovery/dmc_aligned_gate.py"
     },
     {
       "historical_id": "swm/ReacherDMControl-v0",
@@ -1563,7 +1595,7 @@
         "SimplePointMaze"
       ],
       "family": "navigation",
-      "owner": "coordinator",
+      "owner": "native_navigation",
       "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
       "state_status": "INCOMPLETE",
       "action_parity": "UNTESTED",
@@ -1591,7 +1623,7 @@
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "audit_status": "SOURCE_AUDITED_NOT_VERIFIED",
       "audit_report": "docs/research/native_verification.md",
-      "recovery_status": "BLOCKED_DEFAULT_IDENTITY",
+      "recovery_status": "CPU_COHORT_IN_PROGRESS",
       "blocker": {
         "status": "OPEN",
         "kind": "DEFAULT_VISUAL_IDENTITY_MISMATCH",
@@ -1599,7 +1631,10 @@
         "candidate": "SimplePointMaze.reference_kwargs show_goal=False",
         "resolution_cohort": "native navigation",
         "permanent_skip": false
-      }
+      },
+      "cohort": "remaining-simple-and-source-aligned",
+      "worktree_base": "152cb2402bd44063f414865faff6d28e4ccb67c2",
+      "planned_gate": "scripts/recovery/native_navigation_gate.py"
     },
     {
       "historical_id": "swm/TwoRoom-v1",
@@ -1608,7 +1643,7 @@
         "TwoRoomTarget"
       ],
       "family": "navigation",
-      "owner": "coordinator",
+      "owner": "native_navigation",
       "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
       "state_status": "INCOMPLETE",
       "action_parity": "UNTESTED",
@@ -1633,7 +1668,11 @@
       "test": "tests/unit/test_full_state_contract.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "audit_status": "SOURCE_AUDITED_NOT_VERIFIED",
-      "audit_report": "docs/research/native_verification.md"
+      "audit_report": "docs/research/native_verification.md",
+      "recovery_status": "CPU_COHORT_IN_PROGRESS",
+      "cohort": "remaining-simple-and-source-aligned",
+      "worktree_base": "152cb2402bd44063f414865faff6d28e4ccb67c2",
+      "planned_gate": "scripts/recovery/native_navigation_gate.py"
     },
     {
       "historical_id": "swm/WalkerDMControl-v0",

@@ -17,6 +17,9 @@ COHORTS = {
     "dmc": ("DMCAcrobotBalance", "DMCPendulumSwingup", "DMCCartpoleSwingup"),
     "dmc_continuation": ("DMCCheetahRun", "DMCHopperHop", "DMCWalkerWalk"),
     "native_classic": ("CartPole", "Pendulum"),
+    "native_classic_remaining": ("Acrobot", "MountainCar", "MountainCarContinuous"),
+    "native_navigation": ("TwoRoom", "Piecewise", "SimplePointMaze"),
+    "dmc_aligned": ("DMCBallInCupCatch", "DMCFingerTurnHard", "DMCManipulatorBringBall", "DMCQuadrupedWalk"),
     "ogbench": ("PointMazeLargeNavigate",),
 }
 
@@ -35,7 +38,11 @@ def main():
             "DMCAcrobotBalance": "DMCAcrobotSwingup",
         }.get(name, name)
         lookup_name = "DMCAcrobotSwingup" if args.historical_baseline and name == "DMCAcrobotBalance" else name
-        path = Path("tests/fixtures/regression/join/step4/states") / f"{corpus_name}.npz"
+        corpus_paths = {
+            "DMCManipulatorBringBall": "step7/dmc-manipulator/corpus/states/DMCManipulatorBringBall.npz",
+            "DMCQuadrupedWalk": "step7/dmc-quadruped/phase1/corpus/states/DMCQuadrupedWalk.npz",
+        }
+        path = Path("tests/fixtures/regression/join") / corpus_paths.get(name, f"step4/states/{corpus_name}.npz")
         with np.load(path) as corpus:
             rows = corpus["states"][:4].copy()
         with se.make(lookup_name, num_envs=len(rows), device=args.device) as env:
