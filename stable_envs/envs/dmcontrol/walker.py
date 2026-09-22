@@ -10,6 +10,7 @@ mechanisms that carry it are named in ``VISUAL_NOTE``.
 from __future__ import annotations
 
 from ._cells import _AT, _AT_MEASURED_WITH, _AT_VERSIONS, trackcom_cell  # noqa: F401
+from ._continuation import DMCContinuationSemantics
 
 VISUAL_FIDELITY: dict[str, dict] = {
     "DMCWalkerWalk": {
@@ -31,4 +32,11 @@ VISUAL_FIDELITY: dict[str, dict] = {
     },
 }
 
-DMCWalkerWalk = trackcom_cell("DMCWalkerWalk", "walker", "walk", 0, VISUAL_FIDELITY["DMCWalkerWalk"])
+DMCWalkerWalk = trackcom_cell(
+    "DMCWalkerWalk",
+    "walker",
+    "walk",
+    0,
+    VISUAL_FIDELITY["DMCWalkerWalk"],
+    bases=(DMCContinuationSemantics,),
+)
