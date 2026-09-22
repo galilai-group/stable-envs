@@ -1,0 +1,47 @@
+{
+  "source_commit": "e4d5c2cd99d035fc57d84dd5eab1ea70e9b26941",
+  "baseline_commit": "6d80b68b8b3ccd07d4207be94cbf4f0760758a06",
+  "identical": true,
+  "cells": {
+    "DMCBallInCupCatch": {
+      "rows_sha256": "7410a7cfcdcfadd499f6c8d4a76048f4e8b48a46571a6d3998679c70de137a7a",
+      "frame_sha256": "1d36aade5e8d74b2890eab52d83d8a2d849c5c4e04d3ae304ce3e047e0484a77",
+      "shape": [
+        4,
+        84,
+        84,
+        3
+      ]
+    },
+    "DMCFingerTurnHard": {
+      "rows_sha256": "f28f44de8729576be3d9a93f4942d5dd310668df68e3f3c326f4c1c641fd0c8e",
+      "frame_sha256": "e9e1e49ec05b9baf1ddd4a084a53df4cf0a29b5f36c61139b42e5c3ab0bb24d2",
+      "shape": [
+        4,
+        84,
+        84,
+        3
+      ]
+    },
+    "DMCManipulatorBringBall": {
+      "rows_sha256": "bb879bae0bd738c20af0ab465727514ef55f80b050829016acdb86aeddefc1e8",
+      "frame_sha256": "4b9c4b1d33524a15f8b0a96795f2d4ed49dae06ca1cb06407e2d705d4e990c9c",
+      "shape": [
+        4,
+        224,
+        224,
+        3
+      ]
+    },
+    "DMCQuadrupedWalk": {
+      "rows_sha256": "c7dc6a4e5ebfb7ebc9fb37aa0bb99cc0eb6e03c44db23321f9931a43783cae6d",
+      "frame_sha256": "858b6503f68eb93e3775f94bfc68917de0bebb28c57e1a8699c6d75cfdbc9cc3",
+      "shape": [
+        4,
+        224,
+        224,
+        3
+      ]
+    }
+  }
+}

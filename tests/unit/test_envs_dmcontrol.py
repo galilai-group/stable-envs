@@ -67,7 +67,10 @@ TRACKCOM = (
 )
 ALL = PARITY + TRACKCOM
 CONTINUATION = ("DMCCheetahRun", "DMCHopperHop", "DMCWalkerWalk")
-RECOVERED = ("DMCReacherHard", "DMCAcrobotBalance", "DMCPendulumSwingup", "DMCCartpoleSwingup") + CONTINUATION
+ALIGNED = ("DMCBallInCupCatch", "DMCFingerTurnHard", "DMCManipulatorBringBall", "DMCQuadrupedWalk")
+RECOVERED = (
+    ("DMCReacherHard", "DMCAcrobotBalance", "DMCPendulumSwingup", "DMCCartpoleSwingup") + CONTINUATION + ALIGNED
+)
 
 #: Which domain module each cell is WRITTEN in. The registry reports the package for all eighteen
 #: (see ``test_every_cell_reports_the_package_as_its_module``); this is the other half of that fact —
@@ -199,7 +202,9 @@ def test_the_package_tables_are_views_of_the_cells_and_not_a_second_copy():
     for n, vf in dmc.VISUAL_FIDELITY.items():
         assert snv.registry.REGISTRY[n].visual_fidelity is vf
     assert set(dmc.TRACKCOM_BASES) == {"DMCQuadrupedWalk", *CONTINUATION}
-    assert dmc.TRACKCOM_BASES["DMCQuadrupedWalk"] == (dmc._TranscribedQuadrupedModel,)
+    from stable_envs.envs.dmcontrol._aligned import DMCAlignedSemantics
+
+    assert dmc.TRACKCOM_BASES["DMCQuadrupedWalk"] == (DMCAlignedSemantics, dmc._TranscribedQuadrupedModel)
     from stable_envs.envs.dmcontrol._continuation import DMCContinuationSemantics
 
     for name in CONTINUATION:
@@ -230,6 +235,12 @@ def test_a_cell_is_a_declaration_and_overrides_no_renderer_method(name):
         from stable_envs.envs.dmcontrol.reacher import _ReacherSemantics
 
         expected = (_ReacherSemantics,)
+    elif name in ALIGNED:
+        from stable_envs.envs.dmcontrol._aligned import DMCAlignedSemantics
+
+        expected = (DMCAlignedSemantics,)
+        if name == "DMCQuadrupedWalk":
+            expected += (dmc._TranscribedQuadrupedModel,)
     elif name in CONTINUATION:
         from stable_envs.envs.dmcontrol._continuation import DMCContinuationSemantics
 

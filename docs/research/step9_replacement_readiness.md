@@ -5,7 +5,7 @@ is tracked separately in [the recovery matrix](semantic_recovery_matrix.json);
 these architecture statuses do not certify task parity. Status is **derived** from
 `tests/helpers/reference/readiness.py`, not from prose beside the table.
 
-<!-- readiness-counts READY=0 PARTIAL=18 INCOMPLETE=22 SYMBOLIC=2 -->
+<!-- readiness-counts READY=0 PARTIAL=22 INCOMPLETE=18 SYMBOLIC=2 -->
 
 `READY` means:
 
@@ -66,11 +66,11 @@ renderer sharing the same historical registration can remain incomplete.
 | status | count |
 |---|---|
 | READY | 0 |
-| PARTIAL | 18 |
-| INCOMPLETE | 22 |
+| PARTIAL | 22 |
+| INCOMPLETE | 18 |
 | SYMBOLIC | 2 |
 
-Execution: NATIVE 5 · DELEGATED_CPU 13 · INCOMPLETE 22 · SYMBOLIC 2.
+Execution: NATIVE 5 · DELEGATED_CPU 17 · INCOMPLETE 18 · SYMBOLIC 2.
 
 ## Per historical cell
 
@@ -82,7 +82,7 @@ exact default task being `VERIFIED`. Full Variation surfaces remain uncertified.
 |---|---|---|---|---|
 | `swm/AcrobotControl-v1` | `Acrobot` | DELEGATED_CPU | PARTIAL | Exact CPU default; full historical Variation surface remains uncertified |
 | `swm/AcrobotDMControl-v0` | `DMCAcrobotBalance` | DELEGATED_CPU | PARTIAL | sparse Balance; complete historical Variation surface remains uncertified |
-| `swm/BallInCupDMControl-v0` | `DMCBallInCupCatch` | INCOMPLETE | INCOMPLETE | no SE step; gravity/density/`ball.size` |
+| `swm/BallInCupDMControl-v0` | `DMCBallInCupCatch` | DELEGATED_CPU | PARTIAL | Exact CPU historical default; complete Variation surface and sibling tasks uncertified |
 | `swm/CartPoleControl-v1` | `CartPole` | DELEGATED_CPU | PARTIAL | Gymnasium CartPole-v1; full Variation surface remains uncertified |
 | `swm/CartpoleDMControl-v0` | `DMCCartpoleSwingup` (sparse default only) | DELEGATED_CPU | PARTIAL | Balance and dense swing-up remain uncertified; complete Variation surface |
 | `swm/CheetahDMControl-v0` | `DMCCheetahRun` | DELEGATED_CPU | PARTIAL | historical custom run default; density/floor and other task variants |
@@ -102,10 +102,10 @@ exact default task being `VERIFIED`. Full Variation surfaces remain uncertified.
 | `swm/FetchSlide-v3` | `FetchSlide` | INCOMPLETE | INCOMPLETE | same |
 | `swm/FetchSlideDense-v3` | `FetchSlideDense` | INCOMPLETE | INCOMPLETE | same |
 | `swm/FetchSlideDict-v3` | `FetchSlideDict` | INCOMPLETE | INCOMPLETE | same |
-| `swm/FingerDMControl-v0` | `DMCFingerTurnHard` | INCOMPLETE | INCOMPLETE | no SE step; density/`target.shape` |
+| `swm/FingerDMControl-v0` | `DMCFingerTurnHard` | DELEGATED_CPU | PARTIAL | Exact CPU historical default; complete Variation surface and sibling tasks uncertified |
 | `swm/HopperDMControl-v0` | `DMCHopperHop` | DELEGATED_CPU | PARTIAL | historical custom hop default; density/floor and other task variants |
 | `swm/HumanoidDMControl-v0` | `DMCHumanoidStand` | INCOMPLETE | INCOMPLETE | no SE step; historical `walk` vs `stand` |
-| `swm/ManipulatorDMControl-v0` | `DMCManipulatorBringBall` | INCOMPLETE | INCOMPLETE | no SE step; arm/hand density |
+| `swm/ManipulatorDMControl-v0` | `DMCManipulatorBringBall` | DELEGATED_CPU | PARTIAL | Exact CPU historical default; complete Variation surface and sibling tasks uncertified |
 | `swm/MountainCarContinuousControl-v0` | `MountainCarContinuous` | DELEGATED_CPU | PARTIAL | Exact CPU default; full historical Variation surface remains uncertified |
 | `swm/MountainCarControl-v0` | `MountainCar` | DELEGATED_CPU | PARTIAL | Exact CPU default; full historical Variation surface remains uncertified |
 | `swm/OGBCube-v0` | `OGBCube` | INCOMPLETE | INCOMPLETE | no SE step; size/light/camera; reset poses |
@@ -117,7 +117,7 @@ exact default task being `VERIFIED`. Full Variation surfaces remain uncertified.
 | `swm/Piecewise-v0` | `Piecewise`, `PiecewiseZones` | NATIVE | PARTIAL | `task.min_steps`; target draw; `render_bias_field`; agent.position-as-reset |
 | `swm/PushT-Discrete-v1` | `PushT` | NATIVE | PARTIAL | `agent.shape` / `block.shape` / `agent.velocity`; start poses as Variation |
 | `swm/PushT-v1` | `PushT` | NATIVE | PARTIAL | same; downstream task evidence exists |
-| `swm/QuadrupedDMControl-v0` | `DMCQuadrupedWalk` | INCOMPLETE | INCOMPLETE | no SE step; gravity/density/floor |
+| `swm/QuadrupedDMControl-v0` | `DMCQuadrupedWalk` | DELEGATED_CPU | PARTIAL | Exact CPU historical default; complete Variation surface and sibling tasks uncertified |
 | `swm/ReacherDMControl-v0` | `DMCReacherHard` | DELEGATED_CPU | PARTIAL | hard/default only; easy/qpos_match and complete Variation surface |
 | `swm/SimplePointMaze-v0` | `SimplePointMaze` | NATIVE | PARTIAL | `goal.*` under `show_goal=False`; agent.position-as-reset |
 | `swm/TwoRoom-v1` | `TwoRoom`, `TwoRoomTarget` | NATIVE | PARTIAL | `task.min_steps`; agent/target.position-as-reset |

@@ -34,6 +34,11 @@ NATIVE_SWM_IDS = frozenset(
 # exact accepted scopes and evidence live in semantic_recovery_matrix.json.
 DELEGATED_CPU_SWM_IDS = frozenset(
     {
+        "swm/BallInCupDMControl-v0",
+        "swm/FingerDMControl-v0",
+        "swm/ManipulatorDMControl-v0",
+        "swm/QuadrupedDMControl-v0",
+
         "swm/AcrobotControl-v1",
         "swm/MountainCarControl-v0",
         "swm/MountainCarContinuousControl-v0",

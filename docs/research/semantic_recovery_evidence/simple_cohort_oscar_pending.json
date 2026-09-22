@@ -18,6 +18,25 @@
         "baseline/candidate frozen renderer JSON equality",
         "prior CartPole/Pendulum regression"
       ]
+    },
+    {
+      "job_id": 6610032,
+      "cohort": "dmc_aligned",
+      "source_commit": "e4d5c2cd99d035fc57d84dd5eab1ea70e9b26941",
+      "stage": "dmc-aligned-e4d5c2c",
+      "archive_sha256": "4e5711d3ee42e263863df51c25db0e850e41e556dc0b0f159f3f58f4204860a1",
+      "driver": "family_renderer_boundary-ea65ea9.py",
+      "driver_sha256": "ea65ea9ed551e3efc59b11d371417779713aa44e88a46a9f92e8ac232c7d4901",
+      "runner": "oscar_simple_cohort_gate-fde6867.sbatch",
+      "runner_sha256": "fde686773b07c612014e2d3fde69aae75ef91074c365046c2d4205eb1ca2d25b",
+      "acceptance_requires": [
+        "FAMILY_GPU_GATE_PASS dmc-aligned-e4d5c2c",
+        "exact CUDA State semantic gate",
+        "baseline/candidate frozen renderer JSON equality",
+        "Reacher regression",
+        "first-family DMC regression",
+        "continuation DMC regression"
+      ]
     }
   ],
   "preceding_cohort_jobs": [

@@ -55,3 +55,16 @@ and runner leave both older queued jobs unchanged. Hashes and acceptance
 requirements are in `semantic_recovery_evidence/simple_cohort_oscar_pending.json`.
 All three rows remain `INCOMPLETE / CPU_PASSED_OSCAR_PENDING`; accurate execution
 metadata is `DELEGATED_CPU`. No acceptance is inferred from CPU evidence.
+
+## Source-aligned DMC CPU checkpoint
+
+Immutable implementation `e4d5c2cd99d035fc57d84dd5eab1ea70e9b26941` is integrated
+on the repair branch. Independent coordinator execution of the complete CPU gate
+passed, including positive sparse rewards, field-specific omission experiments,
+and physical Variation divergence from default with exact varied-reference parity.
+Combined DMC API, adapter, oracle and integration checks passed **128 tests** with
+three existing Swimmer CPU skips. The four frozen CPU renderer cells match baseline.
+
+Oscar job `6610032` gates the immutable source archive, all four CUDA State/render
+cells, Reacher, the first DMC family, and the previous DMC continuation cohort.
+All four new rows remain `INCOMPLETE / CPU_PASSED_OSCAR_PENDING`.
