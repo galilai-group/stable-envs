@@ -2,7 +2,7 @@
 
 The renderer remains native to :mod:`stable_envs.envs.classic_control`.  This
 module owns only authoritative CPU execution and the explicit resume state for
-the two pinned SWM wrappers recovered so far.  It imports Gymnasium directly;
+the five pinned SWM wrappers.  It imports Gymnasium directly;
 production never imports ``stable_worldmodel``.
 """
 
@@ -47,9 +47,38 @@ CLASSIC_FIELDS = {
         ("lifecycle", "elapsed_steps"): (1, torch.int64),
         **_RNG_FIELDS,
     },
+    "acrobot": {
+        "theta1": (1, torch.float64),
+        "theta2": (1, torch.float64),
+        "dtheta1": (1, torch.float64),
+        "dtheta2": (1, torch.float64),
+        ("lifecycle", "elapsed_steps"): (1, torch.int64),
+        **_RNG_FIELDS,
+    },
+    "mountain_car": {
+        "position": (1, torch.float64),
+        "velocity": (1, torch.float64),
+        ("lifecycle", "elapsed_steps"): (1, torch.int64),
+        **_RNG_FIELDS,
+    },
+    "mountain_car_continuous": {
+        "position": (1, torch.float64),
+        "velocity": (1, torch.float64),
+        # Reset installs float64 state; every step installs float32 state.  The
+        # dtype changes the next NumPy update, so it is continuation state.
+        ("task", "state_is_float32"): (1, torch.bool),
+        ("lifecycle", "elapsed_steps"): (1, torch.int64),
+        **_RNG_FIELDS,
+    },
 }
 
-_ENV_IDS = {"cartpole": "CartPole-v1", "pendulum": "Pendulum-v1"}
+_ENV_IDS = {
+    "cartpole": "CartPole-v1",
+    "pendulum": "Pendulum-v1",
+    "acrobot": "Acrobot-v1",
+    "mountain_car": "MountainCar-v0",
+    "mountain_car_continuous": "MountainCarContinuous-v0",
+}
 
 _PHYSICS_SPACES = {
     "cartpole": {
@@ -68,6 +97,36 @@ _PHYSICS_SPACES = {
         "max_speed": (4.0, 12.0, 8.0),
         "dt": (0.025, 0.1, 0.05),
     },
+    "acrobot": {
+        "link_length_1": (0.5, 1.5, 1.0),
+        "link_length_2": (0.5, 1.5, 1.0),
+        "link_mass_1": (0.5, 1.5, 1.0),
+        "link_mass_2": (0.5, 1.5, 1.0),
+        "link_com_pos_1": (0.25, 0.75, 0.5),
+        "link_com_pos_2": (0.25, 0.75, 0.5),
+        "link_moi": (0.5, 1.5, 1.0),
+    },
+    "mountain_car": {
+        "gravity": (0.00125, 0.00375, 0.0025),
+        "force": (0.0005, 0.0015, 0.001),
+        "max_speed": (0.035, 0.105, 0.07),
+    },
+    "mountain_car_continuous": {
+        "power": (0.00075, 0.00225, 0.0015),
+        "max_speed": (0.035, 0.105, 0.07),
+    },
+}
+
+_PHYSICS_ATTRIBUTES = {
+    "acrobot": {
+        "link_length_1": "LINK_LENGTH_1",
+        "link_length_2": "LINK_LENGTH_2",
+        "link_mass_1": "LINK_MASS_1",
+        "link_mass_2": "LINK_MASS_2",
+        "link_com_pos_1": "LINK_COM_POS_1",
+        "link_com_pos_2": "LINK_COM_POS_2",
+        "link_moi": "LINK_MOI",
+    }
 }
 
 
@@ -131,7 +190,8 @@ class ClassicControlAdapter:
         for i, env in enumerate(self.envs):
             base = env.unwrapped
             for name, rows in values.items():
-                setattr(base, name, float(np.asarray(rows)[i]))
+                attribute = _PHYSICS_ATTRIBUTES.get(self.domain, {}).get(name, name)
+                setattr(base, attribute, float(np.asarray(rows)[i]))
             if self.domain == "cartpole":
                 base.total_mass = base.masspole + base.masscart
                 base.polemass_length = base.masspole * base.length
@@ -162,11 +222,17 @@ class ClassicControlAdapter:
                 beyond = base.steps_beyond_terminated
                 values[("task", "steps_beyond_terminated")] = [0 if beyond is None else beyond]
                 values[("task", "has_steps_beyond_terminated")] = [beyond is not None]
-            else:
+            elif self.domain == "pendulum":
                 values["theta"], values["theta_dot"] = np.asarray(base.state)
                 last_u = getattr(base, "last_u", None)
                 values["torque"] = [0.0 if last_u is None else last_u]
                 values[("task", "has_last_u")] = [last_u is not None]
+            elif self.domain == "acrobot":
+                values.update(dict(zip(("theta1", "theta2", "dtheta1", "dtheta2"), np.asarray(base.state))))
+            else:
+                values["position"], values["velocity"] = np.asarray(base.state)
+                if self.domain == "mountain_car_continuous":
+                    values[("task", "state_is_float32")] = [np.asarray(base.state).dtype == np.float32]
 
             row = TensorDict({}, batch_size=[], device=self.device)
             for key, (width, dtype) in self.fields.items():
@@ -189,12 +255,27 @@ class ClassicControlAdapter:
                     if row["task", "has_steps_beyond_terminated"].item()
                     else None
                 )
-            else:
+            elif self.domain == "pendulum":
                 base.state = np.asarray([row["theta"].item(), row["theta_dot"].item()], np.float64)
                 if row["task", "has_last_u"].item():
                     base.last_u = np.float64(row["torque"].item())
                 else:
                     base.last_u = None
+            elif self.domain == "acrobot":
+                base.state = np.asarray(
+                    [row[name].item() for name in ("theta1", "theta2", "dtheta1", "dtheta2")], np.float64
+                )
+            else:
+                dtype = (
+                    np.float32
+                    if self.domain == "mountain_car_continuous" and row["task", "state_is_float32"].item()
+                    else np.float64
+                )
+                values = [row["position"].item(), row["velocity"].item()]
+                # MountainCar itself stores a tuple after stepping, but only
+                # the scalar values affect continuation.  The continuous
+                # variant's ndarray dtype is semantically significant.
+                base.state = np.asarray(values, dtype=dtype)
 
             env._elapsed_steps = row["lifecycle", "elapsed_steps"].item()
             # A public State can only be captured after reset.  Restore that
@@ -217,7 +298,7 @@ class ClassicControlAdapter:
         array = np.asarray(actions)
         if array.shape != (self.num_envs, 1):
             raise ValueError(f"Recovered {self.domain} action must have shape ({self.num_envs}, 1), got {array.shape}")
-        if self.domain == "cartpole":
+        if self.domain in {"cartpole", "acrobot", "mountain_car"}:
             # ``item`` retains the integer-vs-float distinction checked by
             # Gymnasium's Discrete.contains assertion.
             return [array[i, 0].item() for i in range(self.num_envs)]
@@ -310,7 +391,10 @@ class ClassicControlSemantics:
     def action_spec(self):
         if self.CLASSIC_DOMAIN == "cartpole":
             return Spec(shape=(1,), dtype=torch.int64, low=0, high=1, discrete_n=2, device=self.device)
-        return Spec(shape=(1,), dtype=torch.float32, low=-2.0, high=2.0, device=self.device)
+        if self.CLASSIC_DOMAIN in {"acrobot", "mountain_car"}:
+            return Spec(shape=(1,), dtype=torch.int64, low=0, high=2, discrete_n=3, device=self.device)
+        bound = 2.0 if self.CLASSIC_DOMAIN == "pendulum" else 1.0
+        return Spec(shape=(1,), dtype=torch.float32, low=-bound, high=bound, device=self.device)
 
     def _sync_authoritative_state(self, state):
         sim = torch.cat(

@@ -6,15 +6,14 @@ rollouts and half spread across the full render range: **0 differing pixels out 
 frames bit-identical**, at the reference's own resolution. Not "interior pixels exact" — every pixel,
 including the anti-aliased rims.
 
-Current semantic status is narrower than this five-renderer history. ``CartPole`` and ``Pendulum``
-now execute their pinned historical SWM defaults through independent authoritative Gymnasium CPU
+All five canonical classes now execute their pinned historical SWM defaults through independent
+authoritative Gymnasium CPU
 simulators (``execution_mode = 'DELEGATED_CPU'``), while retaining these native renderers and compact
 rows. Their public State also carries reset RNG, TimeLimit bookkeeping, and task continuation fields;
 their stateful ``step`` returns reward/termination/truncation and numeric wrapper outputs exactly.
 Their former torch equations remain below as numerical provenance, but are not the public execution
 path: measured last-bit drift prevents an exact gate, and functional ``transition``/``unroll`` refuse
-rather than silently using the old incomplete lifecycle model. The other three classic-control cells
-remain on the native movement implementation described below and are not certified by that recovery.
+rather than silently using the old incomplete lifecycle model.
 
 That is achievable here and not on PushT for a structural reason, not because anyone tried harder.
 These renderers draw through ``pygame.gfxdraw``, whose primitives take **Sint16** vertices: every float
@@ -28,8 +27,9 @@ an integer-exact one. They override ``render`` instead.
 STATE IS THE COMPACT RENDER ROW, NOT THE GYM OBSERVATION. Velocities never reach the screen, so they
 are not in that row: CartPole renders from ``(x, theta)`` although its observation is 4-D, Acrobot from
 ``(theta1, theta2)`` although its observation is 6-D, and MountainCar from ``position`` alone — one
-number for a 400x600 frame. Public State still carries the full dynamical vector (velocities included)
-so ``transition`` can be pure. Compact render state is what ``pack_render_state`` produces and is
+number for a 400x600 frame. Public State still carries the full dynamical vector (velocities included),
+lifecycle, and RNG so stateful execution can resume exactly. Functional ``transition`` refuses because
+it cannot represent the delegated lifecycle contract. Compact render state is what ``pack_render_state`` produces and is
 not a lossless dump of that State. This is the compact-state claim at its sharpest, and it is checked rather
 than asserted: the conformance suite fails an env whose render row has a dimension the renderer ignores.
 
@@ -47,15 +47,15 @@ The blit is SDL's own composite, ``d + ((s-d)*a) >> 8``, a different rule from S
 recovered by diffing over four backgrounds (100% of pixels, against 96.2% for the plausible ``//255``
 forms) and verified by replaying whole frames.
 
-Physics
--------
+Retained numerical provenance
+-----------------------------
 
-All five also ship ``step`` — a batched GPU simulator, so ``env.step`` / ``env.unroll`` run
-entirely on device. **Renderer parity and simulator parity are different claims and this file must not
-blur them**, but here they are unusually close, and for a reason worth stating: these dynamics are a
-published closed form (Euler for CartPole and the two mountain cars, one RK4 step for Acrobot), so a
-port can be transcribed rather than re-derived, and there is no contact and no chaos excuse. The
-reference is float64 and so is this, term for term, in the same association order.
+All five retain their former batched GPU equations below as measured provenance for the renderer-era
+implementation. They are not reachable through public ``step``, ``transition``, or ``unroll`` after
+the exact semantic recovery. Public ``step`` uses authoritative Gymnasium CPU simulators, while
+``transition`` and ``unroll`` refuse. **Renderer parity and simulator parity are different claims and
+this file must not blur them.** These dynamics are published closed forms (Euler for CartPole and the
+two mountain cars, one RK4 step for Acrobot), so the retained port can still be audited directly.
 
 Measured against the official CPU env on identical action sequences from identical states, 16 episodes
 x 100 steps (actions held 4 steps), comparing the FULL dynamical state including the velocities. Every
@@ -1002,7 +1002,7 @@ class Pendulum(ClassicControlSemantics, _Classic):
 
 # =============================================================================== Acrobot
 @register
-class Acrobot(_Classic):
+class Acrobot(ClassicControlSemantics, _Classic):
     """Acrobot-v1. Render state ``[theta1, theta2]`` — 2 of the observation's 6 dims.
 
     Two traps in the source, both silent. ``xys = np.array([[0,0], p1, p2])[:, ::-1]`` **swaps x and
@@ -1011,7 +1011,7 @@ class Acrobot(_Classic):
     TRUNCATES its float y (363.6364 -> row 363) — rounding puts the whole line one row off, 1000 px a
     frame, which looks like a rasterizer bug rather than a coordinate one.
 
-    ``step`` takes 3 discrete actions — torque -1, 0, +1 — as one floored float. Dynamical state
+    The retained ``_dynamics`` takes 3 discrete actions — torque -1, 0, +1. Dynamical state
     ``[theta1, theta2, dtheta1, dtheta2]``, one RK4 step at ``dt = 0.2``; tracks the reference to
     **4.4e-13 over 100 steps, 1.1e-16 after one**. The widest spread in the family and the fewest
     bit-identical steps (15.4%), which is what a chaotic double pendulum is supposed to do to two
@@ -1024,6 +1024,7 @@ class Acrobot(_Classic):
     native = (500, 500)
     default_size = 500
     reference_id = "Acrobot-v1"
+    CLASSIC_DOMAIN = "acrobot"
 
     SCALE = 500 / 4.4
     OFF = 250.0
@@ -1125,14 +1126,16 @@ class Acrobot(_Classic):
         )
 
     def make_variation_space(self) -> Dict:
-        return Dict(
-            {
-                "link": Dict(self._colors(color=(0, 204, 204))),
-                "joint": Dict(self._colors(color=(204, 204, 0))),
-                "ground": Dict(self._colors(color=(0, 0, 0))),
-                "background": Dict(self._colors(color=WHITE)),
-                "rendering": self._aa_space(),
-            }
+        return self._with_physics_variation(
+            Dict(
+                {
+                    "link": Dict(self._colors(color=(0, 204, 204))),
+                    "joint": Dict(self._colors(color=(204, 204, 0))),
+                    "ground": Dict(self._colors(color=(0, 0, 0))),
+                    "background": Dict(self._colors(color=WHITE)),
+                    "rendering": self._aa_space(),
+                }
+            )
         )
 
     #: Windows, per LINK, both axes. The first joint is pinned at the centre and the second is one
@@ -1207,7 +1210,7 @@ class Acrobot(_Classic):
         return rng.uniform(-np.pi, np.pi, (batch, 2)).astype(np.float32)
 
     def step(self, action) -> TensorDict:
-        """One control step. ``action`` is ``(B,1)``: **0 = -1 torque, 1 = 0, 2 = +1**, floored, applied
+        """One control step. ``action`` is ``(B,1)``: **0 = -1 torque, 1 = 0, 2 = +1**, integer, applied
         to the ELBOW joint only — the shoulder is unactuated, which is the whole task."""
         return super().step(action)
 
@@ -1222,7 +1225,7 @@ class Acrobot(_Classic):
 
 # =============================================================================== MountainCar
 @register
-class MountainCar(_Classic):
+class MountainCar(ClassicControlSemantics, _Classic):
     """MountainCar-v0. Render state ``[position]`` — one number for a 400x600 frame.
 
     The terrain is 99 ``pygame.draw.aalines`` segments, a sub-pixel AA path unrelated to gfxdraw's and
@@ -1232,7 +1235,7 @@ class MountainCar(_Classic):
     ``render/gfxdraw``. The flag is drawn AFTER the car in the reference, so it cannot join the baked
     layer; it is gfxdraw too, so it does not need to.
 
-    ``step`` takes 3 discrete actions — 0 push left, 1 coast, 2 push right — as one floored float.
+    The retained ``_dynamics`` takes 3 discrete actions — 0 push left, 1 coast, 2 push right.
     Dynamical state ``[position, velocity]``; tracks the reference to **3.3e-16 over 100 steps,
     5.4e-20 after one**, the tightest in the family because one step is three float64 operations and a
     cosine.
@@ -1244,6 +1247,7 @@ class MountainCar(_Classic):
     native = (400, 600)
     default_size = 600
     reference_id = "MountainCar-v0"
+    CLASSIC_DOMAIN = "mountain_car"
 
     MINP, MAXP = -1.2, 0.6
     #: ``screen_width / world_width``, and world_width MUST be computed as ``MAXP - MINP`` rather than
@@ -1293,15 +1297,17 @@ class MountainCar(_Classic):
         self.flagy2 = self.flagy1 + 50
 
     def make_variation_space(self) -> Dict:
-        return Dict(
-            {
-                "car": Dict(self._colors(color=(0, 0, 0))),
-                "wheel": Dict(self._colors(color=(128, 128, 128))),
-                "terrain": Dict(self._colors(color=(0, 0, 0))),
-                "flag": Dict(self._colors(color=(204, 204, 0), pole_color=(0, 0, 0))),
-                "background": Dict(self._colors(color=WHITE)),
-                "rendering": self._aa_space(),
-            }
+        return self._with_physics_variation(
+            Dict(
+                {
+                    "car": Dict(self._colors(color=(0, 0, 0))),
+                    "wheel": Dict(self._colors(color=(128, 128, 128))),
+                    "terrain": Dict(self._colors(color=(0, 0, 0))),
+                    "flag": Dict(self._colors(color=(204, 204, 0), pole_color=(0, 0, 0))),
+                    "background": Dict(self._colors(color=WHITE)),
+                    "rendering": self._aa_space(),
+                }
+            )
         )
 
     def _terrain_base(self, bg, terrain) -> torch.Tensor:
@@ -1440,7 +1446,7 @@ class MountainCar(_Classic):
         return rng.uniform(self.MINP, self.MAXP, (batch, 1)).astype(np.float32)
 
     def step(self, action) -> TensorDict:
-        """One control step. ``action`` is ``(B,1)``: **0 push left, 1 coast, 2 push right**, floored."""
+        """One control step. ``action`` is ``(B,1)``: **0 push left, 1 coast, 2 push right**, integer."""
         return super().step(action)
 
     @classmethod
@@ -1474,6 +1480,7 @@ class MountainCarContinuous(MountainCar):
 
     name = "mountain-car-continuous"
     reference_id = "MountainCarContinuous-v0"
+    CLASSIC_DOMAIN = "mountain_car_continuous"
     GOALP = 0.45
 
     #: and the dynamics differ too, which the identical render code also hides: a continuous force

@@ -1,0 +1,47 @@
+"""Pinned-SWM gate and frozen real-reference corpus for remaining classic defaults."""
+
+import hashlib
+import json
+import os
+from pathlib import Path
+
+import numpy as np
+import pytest
+import torch
+
+import stable_envs as se
+
+pytest.importorskip("stable_worldmodel")
+
+from scripts.recovery.native_classic_remaining_gate import CASES, run_gate
+
+
+def test_native_classic_remaining_gate():
+    result = run_gate(os.environ.get("SE_NATIVE_CLASSIC_REMAINING_DEVICE", "cpu"))
+    assert result["execution_mode"] == "DELEGATED_CPU"
+    assert all(case.get("max_error", 0) == 0 for case in result["cases"])
+    assert all(case["max_error"] == 0 for case in result["physical_variation"].values())
+
+
+@pytest.mark.parametrize("domain", ["acrobot", "mountain_car", "mountain_car_continuous"])
+def test_frozen_remaining_reference_oracle(domain):
+    root = Path(__file__).parents[1] / "fixtures" / "semantics" / "native_classic_remaining"
+    manifest = json.loads((root / "manifest.json").read_text())
+    entry = manifest["domains"][domain]
+    path = root / entry["file"]
+    assert hashlib.sha256(path.read_bytes()).hexdigest() == entry["sha256"]
+    oracle = np.load(path)
+    with se.make(CASES[domain]["stable_env"], num_envs=3, device="cpu") as env:
+        states = [env.reset(seed=manifest["seed"])]
+        outputs = []
+        for action in oracle["actions"]:
+            output = env.step(action)
+            outputs.append(output)
+            states.append(output["state"])
+        for key in states[0].keys(True, True):
+            name = key if isinstance(key, str) else "/".join(key)
+            actual = torch.stack([state[key] for state in states]).cpu().numpy()
+            assert np.array_equal(actual, oracle[f"state/{name}"])
+        for key in ("reward", "terminated", "truncated", "observation", "info_state"):
+            actual = torch.stack([output[key] for output in outputs]).cpu().numpy()
+            assert np.array_equal(actual, oracle[key])
