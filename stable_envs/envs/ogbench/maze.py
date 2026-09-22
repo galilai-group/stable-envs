@@ -1,7 +1,8 @@
 """OGBench mazes — 25 dataset cells, 11 distinct scenes, one state vector each: ``qpos``.
 
-Rendering and Variation handling are provided by stable-envs. Dynamics stay in OGBench / MuJoCo;
-these cells currently render stored states (``has_dynamics`` is False).
+Rendering and Variation handling are provided by stable-envs. The exact historical
+``swm/OGBMaze-v0`` default delegates point/large/navigate dynamics to OGBench / MuJoCo;
+the other cells still render stored states (``has_dynamics`` is False).
 
 Reference: ``ogbench``'s ``pointmaze`` / ``antmaze`` / ``humanoidmaze`` at ``ob_type='pixels'``, i.e. a
 MuJoCo 3-D scene under the top-down camera ``MazeEnv`` builds when no camera is named. All 25 names are
@@ -72,10 +73,10 @@ STEP 9 ADDS THREE THINGS AND CHANGES NOTHING ELSE
     released for the reason recorded above: releasing one EGL context corrupts every other live one
     in the process.
 
-NO DYNAMICS, declared rather than omitted: there is no batched maze simulator in this package, so
-``has_dynamics`` is False and ``step``/``transition`` raise ``Env``'s precise refusal naming the cell
-and the reason, while ``reset`` and ``render`` work as usual. This is existing behaviour — those
-calls raised there too — said out loud.
+BOUNDED DYNAMICS: ``PointMazeLargeNavigate`` composes independent upstream CPU
+simulators for the exact empty-kwargs historical registration and exposes full
+State. The other 24 cells remain renderer-only: ``has_dynamics`` is False and
+``step`` raises ``Env``'s precise refusal naming the cell and the reason.
 
 The module is one half of the ``stable_envs.envs.ogbench`` PACKAGE; ``manipulation`` is the other.
 Every package-level name still resolves off the package, which is what the ``__init__``
@@ -86,11 +87,13 @@ from __future__ import annotations
 
 import numpy as np
 import torch
+from tensordict import TensorDict
 
 from ..._mujoco_gl import configure_mujoco_gl
 
 configure_mujoco_gl()
 
+from ..._adapters.ogbench import OGB_MAZE_FIELDS, OGBMazeAdapter
 from ...env import Env
 from ...registry import register
 from ...render import _resources as _RES
@@ -828,6 +831,54 @@ class OGBenchMaze(Env):
         return np.stack(out)
 
 
+class _HistoricalDefaultSemantics:
+    """Exact point/large/state semantics of the empty-kwargs SWM registration."""
+
+    action_dim = 2
+    action_dtype = torch.float32
+    action_low, action_high = -1.0, 1.0
+    execution_mode = "DELEGATED_CPU"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._simulator = OGBMazeAdapter(self.B, self.device, self._seed)
+
+    def _layout(self):
+        return tuple((key, width, 0 if key == ("root", "position") else None) for key, (width, _) in OGB_MAZE_FIELDS.items())
+
+    def _layout_dtypes(self):
+        return {key: dtype for key, (_, dtype) in OGB_MAZE_FIELDS.items()}
+
+    def _pack_render_state(self, state):
+        if not isinstance(state, TensorDict):
+            raise TypeError("Expected full OGBMaze State")
+        return state["root", "position"].to(self.device, torch.float32)
+
+    def _unpack_render_state(self, rows):
+        rows = torch.as_tensor(rows, device=self.device).reshape(-1, 2)
+        return TensorDict({"root": {"position": rows.clone()}}, [len(rows)], device=self.device)
+
+    def reset(self, seed=None):
+        self._check_open("reset")
+        return self._simulator.reset(seed)
+
+    def get_state(self):
+        self._check_open("get_state")
+        return self._simulator.get_state()
+
+    def set_state(self, state):
+        self._check_open("set_state")
+        self._simulator.set_state(state)
+
+    def step(self, actions):
+        self._check_open("step")
+        return self._simulator.step(actions)
+
+    def _close(self):
+        if hasattr(self, "_simulator"):
+            self._simulator.close()
+
+
 #: ``__module__`` is pinned to the package so ``stable_envs.envs.ogbench.<Cell>`` still resolves.
 #: Family identity is the explicit ``family = "ogbench"`` on :class:`OGBenchMaze`, not this path.
 _MODULE = "stable_envs.envs.ogbench"
@@ -840,10 +891,11 @@ def _make_classes():
     for loco, maze, dataset in CELLS:
         old = f"{loco.capitalize()}maze{maze.capitalize()}{dataset.capitalize()}"
         cname = f"{loco.capitalize()}Maze{maze.capitalize()}{dataset.capitalize()}"
+        bases = (_HistoricalDefaultSemantics, OGBenchMaze) if (loco, maze, dataset) == ("point", "large", "navigate") else (OGBenchMaze,)
         cls = register(
             type(
                 cname,
-                (OGBenchMaze,),
+                bases,
                 dict(
                     LOCO=loco,
                     MAZE=maze,
