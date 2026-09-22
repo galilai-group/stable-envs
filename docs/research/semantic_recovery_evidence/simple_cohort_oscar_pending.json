@@ -1,0 +1,27 @@
+{
+  "status": "PENDING_NOT_ACCEPTED",
+  "scope": "remaining-simple-and-source-aligned",
+  "jobs": [
+    {
+      "job_id": 6608718,
+      "cohort": "native_classic_remaining",
+      "source_commit": "b3b6da79555020a3fe9ae046c3f6b4a2bef8a153",
+      "stage": "native-classic-remaining-b3b6da7",
+      "archive_sha256": "0e72fed870ff221edf47ec144a6054d613d54c4bc416dccd161894a80897894e",
+      "driver": "family_renderer_boundary-ea65ea9.py",
+      "driver_sha256": "ea65ea9ed551e3efc59b11d371417779713aa44e88a46a9f92e8ac232c7d4901",
+      "runner": "oscar_simple_cohort_gate-fde6867.sbatch",
+      "runner_sha256": "fde686773b07c612014e2d3fde69aae75ef91074c365046c2d4205eb1ca2d25b",
+      "acceptance_requires": [
+        "FAMILY_GPU_GATE_PASS native-classic-remaining-b3b6da7",
+        "exact CUDA State semantic gate",
+        "baseline/candidate frozen renderer JSON equality",
+        "prior CartPole/Pendulum regression"
+      ]
+    }
+  ],
+  "preceding_cohort_jobs": [
+    6605941,
+    6605999
+  ]
+}

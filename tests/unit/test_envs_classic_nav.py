@@ -1,7 +1,7 @@
 """Classic/navigation renderer contracts and scoped semantic-recovery boundaries.
 
-CartPole and Pendulum use authoritative Gymnasium CPU execution with full
-lifecycle/RNG State. Their exact SWM parity lives in test_native_classic_*.
+Classic-control implementations use authoritative Gymnasium CPU execution with full
+lifecycle/RNG State. Their exact SWM parity lives in the bounded test_native_classic_* gates.
 The other cells retain their existing structural tests and are not certified by
 having a native step implementation. Frozen renderer evidence is independent.
 """
@@ -24,8 +24,7 @@ pytestmark = pytest.mark.unit
 CLASSIC = ("CartPole", "Pendulum", "Acrobot", "MountainCar", "MountainCarContinuous")
 NAV = ("TwoRoom", "TwoRoomTarget", "Piecewise", "PiecewiseZones", "SimplePointMaze")
 ALL = CLASSIC + NAV
-RECOVERED = ("CartPole", "Pendulum")
-LEGACY_CLASSIC = tuple(name for name in CLASSIC if name not in RECOVERED)
+RECOVERED = CLASSIC
 PURE = tuple(name for name in ALL if name not in RECOVERED)
 
 #: What each cell's public State is keyed by. Written out rather than derived from the class, so a
@@ -47,6 +46,11 @@ KEYS = {
 RNG_KEYS = [("rng", name) for name in ("state", "increment", "has_uint32", "uinteger")]
 FULL_KEYS = {
     **KEYS,
+    "Acrobot": KEYS["Acrobot"] + [("lifecycle", "elapsed_steps")] + RNG_KEYS,
+    "MountainCar": KEYS["MountainCar"] + [("lifecycle", "elapsed_steps")] + RNG_KEYS,
+    "MountainCarContinuous": KEYS["MountainCarContinuous"]
+    + [("task", "state_is_float32"), ("lifecycle", "elapsed_steps")]
+    + RNG_KEYS,
     "CartPole": KEYS["CartPole"]
     + [
         ("lifecycle", "elapsed_steps"),
@@ -107,35 +111,29 @@ def test_the_state_keys_are_the_declared_ones_and_cover_the_packed_row(name):
     env.close()
 
 
-@pytest.mark.parametrize("name", LEGACY_CLASSIC)
-def test_classic_velocities_are_hidden_state_the_packed_row_does_not_carry(name):
-    """The velocities are public state (so ``transition`` is pure) and no column of the row moved."""
-    env = _env(name)
-    hidden = [k for k, _, o in env._layout() if o is None]
-    drawn = set(env.render_from_sim)
-    assert hidden == [(nm,) for i, nm in enumerate(env.sim_state_names) if i not in drawn]
-    assert hidden, "every classic-control cell has at least one velocity the frame never shows"
-    # unpack fills them with zeros -- the condition set_state puts the env in, and the reference's
-    # own condition after reset -- and the cell answers with the live value from its own buffer.
-    rows = torch.as_tensor(env.sample_states(4, np.random.default_rng(0)), device=env.device)
-    assert all(k not in env._unpack_render_state(rows).keys(True, True) for k in hidden)
-    assert sorted(env._hidden_state()) == sorted(hidden)
-    env.close()
+@pytest.mark.parametrize("name", CLASSIC)
+def test_classic_velocities_are_full_state_and_absent_from_render_projection(name):
+    with _env(name) as env:
+        state = env.reset(seed=17)
+        hidden = {key for key, _, offset in env._layout() if offset is None}
+        velocities = {(field,) for i, field in enumerate(env.sim_state_names) if i not in set(env.render_from_sim)}
+        assert velocities and velocities <= hidden
+        projection = env._unpack_render_state(env._pack_render_state(state))
+        for key in velocities:
+            assert key in state.keys(True, True)
+            assert key not in projection.keys(True, True)
+        with pytest.raises(ValueError, match="missing"):
+            env.set_state(projection)
 
 
-@pytest.mark.parametrize("name", LEGACY_CLASSIC)
-def test_the_classic_public_state_is_float64_and_packs_back_to_the_float32_row(name):
-    """The dtype the family SIMULATES in, which is what makes the functional path the same simulator.
-
-    A float32 State would still pass a one-step ``transition == step`` check (a corpus state is a
-    float32 value with the velocities at rest) and drift from the second step on.
-    """
-    env = _env(name)
-    env._set_render_state(env.sample_states(4, np.random.default_rng(0)))
-    st = env.state
-    assert all(st[k].dtype == torch.float64 for k in KEYS[name])
-    assert torch.equal(env._pack_render_state(st), env._get_render_state())
-    env.close()
+@pytest.mark.parametrize("name", CLASSIC)
+def test_classic_physical_state_is_lossless_and_projects_to_float32(name):
+    with _env(name) as env:
+        state = env.reset(seed=17)
+        assert all(state[key].dtype == torch.float64 for key in KEYS[name])
+        rows = env._pack_render_state(state)
+        assert rows.dtype == torch.float32
+        assert torch.equal(rows, env._get_render_state())
 
 
 @pytest.mark.parametrize("name", PURE)
@@ -274,29 +272,15 @@ def test_the_shared_swm_reference_bridge_drives_simple_point_maze_the_old_way():
     assert snv.SimplePointMaze.reference_kwargs == {"show_goal": False}
 
 
-@pytest.mark.parametrize("name", LEGACY_CLASSIC)
-def test_env_state_is_the_simulator_buffer_and_not_the_widened_packed_row(name):
-    """The two hooks together must cover the state exactly, with no field left to the lossy row.
-
-    ``Env.state`` builds from ``unpack(get_state())`` and then takes ``_live_state()`` for the drawn
-    fields and ``_hidden_state()`` for the hidden ones. This asserts the two answer for EVERY key —
-    so no field is being served by the widened float32 row — and that what comes back is the
-    simulator's own float64 buffer bit for bit, after the env has been stepped, which is when the row
-    and the buffer have actually diverged.
-    """
-    env = _env(name)
-    env._set_render_state(env.sample_states(4, np.random.default_rng(4)))
-    for _ in range(3):
-        env.step(_actions(env, 4))
-
-    answered = {*env._live_state(), *env._hidden_state()}
-    assert answered == set(KEYS[name]), "a field would be served by the lossy packed row"
-    st = env.state
-    for i, nm in enumerate(env.sim_state_names):
-        assert torch.equal(st[nm], env.sim_state()[:, i : i + 1]), nm
-    # and the row the renderer sees is still exactly the packed float32 one
-    assert torch.equal(env._pack_render_state(st), env._get_render_state())
-    env.close()
+@pytest.mark.parametrize("name", CLASSIC)
+def test_classic_physical_only_helpers_cannot_bypass_full_state(name):
+    with _env(name) as env:
+        state = env.reset(seed=17)
+        with pytest.raises(NotImplementedError, match="get_state"):
+            env.sim_state()
+        with pytest.raises(NotImplementedError, match="set_state"):
+            env.set_sim_state(torch.zeros(env.B, len(env.sim_state_names)))
+        assert (env.get_state() == state).all()
 
 
 def test_a_classic_cell_whose_layout_does_not_cover_its_packed_row_fails_at_import():

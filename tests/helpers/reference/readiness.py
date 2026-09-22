@@ -21,9 +21,6 @@ from .variation import VARIATION_MAPS
 #: Historical SWM ids whose stable-envs port implements transition/step itself.
 NATIVE_SWM_IDS = frozenset(
     {
-        "swm/AcrobotControl-v1",
-        "swm/MountainCarContinuousControl-v0",
-        "swm/MountainCarControl-v0",
         "swm/Piecewise-v0",
         "swm/PushT-Discrete-v1",
         "swm/PushT-v1",
@@ -37,6 +34,10 @@ NATIVE_SWM_IDS = frozenset(
 # exact accepted scopes and evidence live in semantic_recovery_matrix.json.
 DELEGATED_CPU_SWM_IDS = frozenset(
     {
+        "swm/AcrobotControl-v1",
+        "swm/MountainCarControl-v0",
+        "swm/MountainCarContinuousControl-v0",
+
         "swm/AcrobotDMControl-v0",
         "swm/CartPoleControl-v1",
         "swm/CartpoleDMControl-v0",

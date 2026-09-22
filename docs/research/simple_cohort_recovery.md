@@ -40,3 +40,18 @@ that acceptance cohort. New cohort work does not confer acceptance on those rows
 
 The integration branch is `repair/environment-semantics`. Product `v0-draft` and
 `baseline/renderer-v0` stay at their previously recorded commits.
+
+## Remaining classic-control CPU checkpoint
+
+Implementation `b3b6da79555020a3fe9ae046c3f6b4a2bef8a153` and its report
+`3bebf6275a506746314d15e3f6fab26e16edbe05` are integrated only on the repair branch.
+The independent coordinator gate passed exactly; all three frozen CPU renderer
+cells match the immutable baseline. Combined current API, full-State, prior-two
+and new-three semantic suites passed **138 tests**. Readiness checks passed 8 tests.
+
+Oscar job `6608718` tests the immutable implementation archive, CUDA State and
+rendering, and the prior CartPole/Pendulum gate. Its separately versioned driver
+and runner leave both older queued jobs unchanged. Hashes and acceptance
+requirements are in `semantic_recovery_evidence/simple_cohort_oscar_pending.json`.
+All three rows remain `INCOMPLETE / CPU_PASSED_OSCAR_PENDING`; accurate execution
+metadata is `DELEGATED_CPU`. No acceptance is inferred from CPU evidence.

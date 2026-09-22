@@ -19,7 +19,7 @@ esac
 py=/oscar/scratch/sboughan/venvs/se6-verify-vis311/bin/python
 deps=/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages:/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages:/oscar/scratch/sboughan/venvs/se-step4-swm/lib/python3.12/site-packages
 # Separate versioned driver: do not replace the driver used by the pending cohort.
-driver="$base/family_renderer_boundary-simple-cohort.py"
+driver="$base/${3:?immutable renderer driver filename required}"
 export MUJOCO_GL=egl PYOPENGL_PLATFORM=egl OMP_NUM_THREADS=4
 export TORCH_EXTENSIONS_DIR="$base/cache/torch" TRITON_CACHE_DIR="$base/cache/triton"
 export XDG_CACHE_HOME="$base/cache" WARP_CACHE_PATH="$base/cache/warp"

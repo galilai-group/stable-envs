@@ -12,32 +12,62 @@
       "owner": "native_classic_remaining",
       "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
       "state_status": "INCOMPLETE",
-      "action_parity": "UNTESTED",
-      "reset_parity": "UNTESTED",
-      "step_parity": "UNTESTED",
-      "reward_parity": "UNTESTED",
-      "terminated_truncated_parity": "UNTESTED",
-      "rng_lifecycle": "UNTESTED",
-      "variation_parity": "UNTESTED",
-      "execution_mode": "NATIVE",
-      "adapter_status": "NOT_IMPLEMENTED",
-      "renderer_regression": "PENDING",
-      "oracle_corpus": null,
+      "action_parity": "PASS_EXACT_CPU",
+      "reset_parity": "PASS_CPU_SEEDED_UNSEEDED_CUSTOM_BOUNDS",
+      "step_parity": "PASS_EXACT_CPU; CUDA_STATE_PENDING",
+      "reward_parity": "PASS_EXACT_CPU_INCLUDING_TASK_BOUNDARIES",
+      "terminated_truncated_parity": "PASS_EXACT_CPU_INCLUDING_TIMELIMIT",
+      "rng_lifecycle": "PASS_CPU_TWO_HISTORIES_AND_UNSEEDED_RESET",
+      "variation_parity": "PASS_CPU_NONDEFAULT_ALL_DOMAIN_PHYSICS_LEAVES; full historical surface remains uncertified",
+      "execution_mode": "DELEGATED_CPU",
+      "adapter_status": "IMPLEMENTED_HISTORICAL_DEFAULT",
+      "renderer_regression": "PASS_THREE_CELL_FROZEN_CPU; OSCAR_PENDING",
+      "oracle_corpus": "tests/fixtures/semantics/native_classic_remaining/manifest.json",
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Native step returns state only, omits reward/terminated/truncated."
+        "Required Oscar CUDA State and frozen renderer gate pending cluster scheduling",
+        "Complete historical Variation surface and task kwargs remain uncertified",
+        "Legacy physical-only transition/unroll and sim_state/set_sim_state explicitly refused",
+        "All-42 renderer certification and paired benchmarks remain unrun"
       ],
-      "test": "tests/unit/test_full_state_contract.py",
+      "test": "tests/integration/test_native_classic_remaining_gate.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "audit_status": "SOURCE_AUDITED_NOT_VERIFIED",
-      "audit_report": "docs/research/native_verification.md",
-      "recovery_status": "CPU_COHORT_IN_PROGRESS",
+      "audit_report": "docs/research/native_classic_remaining.md",
+      "recovery_status": "CPU_PASSED_OSCAR_PENDING",
       "cohort": "remaining-simple-and-source-aligned",
       "worktree_base": "152cb2402bd44063f414865faff6d28e4ccb67c2",
-      "planned_gate": "scripts/recovery/native_classic_remaining_gate.py"
+      "planned_gate": "scripts/recovery/native_classic_remaining_gate.py",
+      "implementation_commit": "b3b6da79555020a3fe9ae046c3f6b4a2bef8a153",
+      "oscar_job": 6608718,
+      "evidence": [
+        "docs/research/native_classic_remaining.md",
+        "docs/research/semantic_recovery_evidence/native_classic_remaining_cpu.json",
+        "docs/research/semantic_recovery_evidence/native_classic_remaining_renderer_cpu.json"
+      ],
+      "verification_scope": {
+        "classes": [
+          "Acrobot"
+        ],
+        "seeds": [
+          0,
+          17,
+          42
+        ],
+        "batches": [
+          1,
+          3
+        ],
+        "trajectory_steps": 32,
+        "time_limit": 500,
+        "atol": 0,
+        "rtol": 0,
+        "same_persistent_variation_required": true,
+        "status": "CPU_PASSED_OSCAR_PENDING"
+      }
     },
     {
       "historical_id": "swm/AcrobotDMControl-v0",
@@ -1031,32 +1061,62 @@
       "owner": "native_classic_remaining",
       "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
       "state_status": "INCOMPLETE",
-      "action_parity": "UNTESTED",
-      "reset_parity": "UNTESTED",
-      "step_parity": "UNTESTED",
-      "reward_parity": "UNTESTED",
-      "terminated_truncated_parity": "UNTESTED",
-      "rng_lifecycle": "UNTESTED",
-      "variation_parity": "UNTESTED",
-      "execution_mode": "NATIVE",
-      "adapter_status": "NOT_IMPLEMENTED",
-      "renderer_regression": "PENDING",
-      "oracle_corpus": null,
+      "action_parity": "PASS_EXACT_CPU",
+      "reset_parity": "PASS_CPU_SEEDED_UNSEEDED_CUSTOM_BOUNDS",
+      "step_parity": "PASS_EXACT_CPU; CUDA_STATE_PENDING",
+      "reward_parity": "PASS_EXACT_CPU_INCLUDING_TASK_BOUNDARIES",
+      "terminated_truncated_parity": "PASS_EXACT_CPU_INCLUDING_TIMELIMIT",
+      "rng_lifecycle": "PASS_CPU_TWO_HISTORIES_AND_UNSEEDED_RESET",
+      "variation_parity": "PASS_CPU_NONDEFAULT_ALL_DOMAIN_PHYSICS_LEAVES; full historical surface remains uncertified",
+      "execution_mode": "DELEGATED_CPU",
+      "adapter_status": "IMPLEMENTED_HISTORICAL_DEFAULT",
+      "renderer_regression": "PASS_THREE_CELL_FROZEN_CPU; OSCAR_PENDING",
+      "oracle_corpus": "tests/fixtures/semantics/native_classic_remaining/manifest.json",
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Native step returns state only, omits reward/terminated/truncated."
+        "Required Oscar CUDA State and frozen renderer gate pending cluster scheduling",
+        "Complete historical Variation surface and task kwargs remain uncertified",
+        "Legacy physical-only transition/unroll and sim_state/set_sim_state explicitly refused",
+        "All-42 renderer certification and paired benchmarks remain unrun"
       ],
-      "test": "tests/unit/test_full_state_contract.py",
+      "test": "tests/integration/test_native_classic_remaining_gate.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "audit_status": "SOURCE_AUDITED_NOT_VERIFIED",
-      "audit_report": "docs/research/native_verification.md",
-      "recovery_status": "CPU_COHORT_IN_PROGRESS",
+      "audit_report": "docs/research/native_classic_remaining.md",
+      "recovery_status": "CPU_PASSED_OSCAR_PENDING",
       "cohort": "remaining-simple-and-source-aligned",
       "worktree_base": "152cb2402bd44063f414865faff6d28e4ccb67c2",
-      "planned_gate": "scripts/recovery/native_classic_remaining_gate.py"
+      "planned_gate": "scripts/recovery/native_classic_remaining_gate.py",
+      "implementation_commit": "b3b6da79555020a3fe9ae046c3f6b4a2bef8a153",
+      "oscar_job": 6608718,
+      "evidence": [
+        "docs/research/native_classic_remaining.md",
+        "docs/research/semantic_recovery_evidence/native_classic_remaining_cpu.json",
+        "docs/research/semantic_recovery_evidence/native_classic_remaining_renderer_cpu.json"
+      ],
+      "verification_scope": {
+        "classes": [
+          "MountainCarContinuous"
+        ],
+        "seeds": [
+          0,
+          17,
+          42
+        ],
+        "batches": [
+          1,
+          3
+        ],
+        "trajectory_steps": 32,
+        "time_limit": 999,
+        "atol": 0,
+        "rtol": 0,
+        "same_persistent_variation_required": true,
+        "status": "CPU_PASSED_OSCAR_PENDING"
+      }
     },
     {
       "historical_id": "swm/MountainCarControl-v0",
@@ -1067,32 +1127,62 @@
       "owner": "native_classic_remaining",
       "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
       "state_status": "INCOMPLETE",
-      "action_parity": "UNTESTED",
-      "reset_parity": "UNTESTED",
-      "step_parity": "UNTESTED",
-      "reward_parity": "UNTESTED",
-      "terminated_truncated_parity": "UNTESTED",
-      "rng_lifecycle": "UNTESTED",
-      "variation_parity": "UNTESTED",
-      "execution_mode": "NATIVE",
-      "adapter_status": "NOT_IMPLEMENTED",
-      "renderer_regression": "PENDING",
-      "oracle_corpus": null,
+      "action_parity": "PASS_EXACT_CPU",
+      "reset_parity": "PASS_CPU_SEEDED_UNSEEDED_CUSTOM_BOUNDS",
+      "step_parity": "PASS_EXACT_CPU; CUDA_STATE_PENDING",
+      "reward_parity": "PASS_EXACT_CPU_INCLUDING_TASK_BOUNDARIES",
+      "terminated_truncated_parity": "PASS_EXACT_CPU_INCLUDING_TIMELIMIT",
+      "rng_lifecycle": "PASS_CPU_TWO_HISTORIES_AND_UNSEEDED_RESET",
+      "variation_parity": "PASS_CPU_NONDEFAULT_ALL_DOMAIN_PHYSICS_LEAVES; full historical surface remains uncertified",
+      "execution_mode": "DELEGATED_CPU",
+      "adapter_status": "IMPLEMENTED_HISTORICAL_DEFAULT",
+      "renderer_regression": "PASS_THREE_CELL_FROZEN_CPU; OSCAR_PENDING",
+      "oracle_corpus": "tests/fixtures/semantics/native_classic_remaining/manifest.json",
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Native step returns state only, omits reward/terminated/truncated."
+        "Required Oscar CUDA State and frozen renderer gate pending cluster scheduling",
+        "Complete historical Variation surface and task kwargs remain uncertified",
+        "Legacy physical-only transition/unroll and sim_state/set_sim_state explicitly refused",
+        "All-42 renderer certification and paired benchmarks remain unrun"
       ],
-      "test": "tests/unit/test_full_state_contract.py",
+      "test": "tests/integration/test_native_classic_remaining_gate.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "audit_status": "SOURCE_AUDITED_NOT_VERIFIED",
-      "audit_report": "docs/research/native_verification.md",
-      "recovery_status": "CPU_COHORT_IN_PROGRESS",
+      "audit_report": "docs/research/native_classic_remaining.md",
+      "recovery_status": "CPU_PASSED_OSCAR_PENDING",
       "cohort": "remaining-simple-and-source-aligned",
       "worktree_base": "152cb2402bd44063f414865faff6d28e4ccb67c2",
-      "planned_gate": "scripts/recovery/native_classic_remaining_gate.py"
+      "planned_gate": "scripts/recovery/native_classic_remaining_gate.py",
+      "implementation_commit": "b3b6da79555020a3fe9ae046c3f6b4a2bef8a153",
+      "oscar_job": 6608718,
+      "evidence": [
+        "docs/research/native_classic_remaining.md",
+        "docs/research/semantic_recovery_evidence/native_classic_remaining_cpu.json",
+        "docs/research/semantic_recovery_evidence/native_classic_remaining_renderer_cpu.json"
+      ],
+      "verification_scope": {
+        "classes": [
+          "MountainCar"
+        ],
+        "seeds": [
+          0,
+          17,
+          42
+        ],
+        "batches": [
+          1,
+          3
+        ],
+        "trajectory_steps": 32,
+        "time_limit": 200,
+        "atol": 0,
+        "rtol": 0,
+        "same_persistent_variation_required": true,
+        "status": "CPU_PASSED_OSCAR_PENDING"
+      }
     },
     {
       "historical_id": "swm/OGBCube-v0",
