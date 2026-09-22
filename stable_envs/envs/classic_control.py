@@ -6,6 +6,16 @@ rollouts and half spread across the full render range: **0 differing pixels out 
 frames bit-identical**, at the reference's own resolution. Not "interior pixels exact" — every pixel,
 including the anti-aliased rims.
 
+Current semantic status is narrower than this five-renderer history. ``CartPole`` and ``Pendulum``
+now execute their pinned historical SWM defaults through independent authoritative Gymnasium CPU
+simulators (``execution_mode = 'DELEGATED_CPU'``), while retaining these native renderers and compact
+rows. Their public State also carries reset RNG, TimeLimit bookkeeping, and task continuation fields;
+their stateful ``step`` returns reward/termination/truncation and numeric wrapper outputs exactly.
+Their former torch equations remain below as numerical provenance, but are not the public execution
+path: measured last-bit drift prevents an exact gate, and functional ``transition``/``unroll`` refuse
+rather than silently using the old incomplete lifecycle model. The other three classic-control cells
+remain on the native movement implementation described below and are not certified by that recovery.
+
 That is achievable here and not on PushT for a structural reason, not because anyone tried harder.
 These renderers draw through ``pygame.gfxdraw``, whose primitives take **Sint16** vertices: every float
 coordinate is truncated to an integer before SDL_gfx sees it, so the whole reference is integer
@@ -121,6 +131,7 @@ from ..render import _resources as _RES
 from ..render import gfxdraw as G
 from ..spaces import Dict, Discrete, RGBBox
 from . import _stepgraph
+from ._classic_semantics import ClassicControlSemantics
 
 WHITE = (255, 255, 255)
 
@@ -424,7 +435,9 @@ class _Classic(Env):
         replayed = False
         if self.use_step_graph and self.device.type == "cuda":
             if self._step_graph is None and not self._step_graph_error:
-                self._step_graph, self._step_graph_error = _stepgraph.capture(self._advance, (self._sim, self._render_state))
+                self._step_graph, self._step_graph_error = _stepgraph.capture(
+                    self._advance, (self._sim, self._render_state)
+                )
                 if self._step_graph is None:
                     self.use_step_graph = False
             if self._step_graph is not None:
@@ -607,16 +620,17 @@ class _Classic(Env):
 
 # =============================================================================== CartPole
 @register
-class CartPole(_Classic):
+class CartPole(ClassicControlSemantics, _Classic):
     """CartPole-v1. Render state ``[x, theta]`` — 2 of the observation's 4 dims.
 
     Draw order, from the source: cart quad, pole quad, axle disc, then ``hline`` for the track, which
     is painted LAST and therefore over the cart. The cart is axis-aligned, so its ``aapolygon`` takes
     SDL_gfx's solid ``hline``/``vline`` short-circuit and is not anti-aliased at all; only the pole is.
 
-    ``step`` takes 2 discrete actions — 0 push left, 1 push right — as one float per environment,
-    floored. Dynamical state ``[x, x_dot, theta, theta_dot]``, Euler at ``tau = 0.02``; tracks the
-    reference to **4.4e-14 over 100 steps, 1.1e-16 after one**.
+    The recovered public ``step`` takes an integer Discrete(2) action and delegates to pinned
+    Gymnasium ``CartPole-v1``, including reward, termination, TimeLimit and post-terminal bookkeeping.
+    The retained torch equation below was measured to **4.4e-14 over 100 steps, 1.1e-16 after one**
+    and is renderer-era numerical provenance, not the public transition path.
     """
 
     name = "cartpole"
@@ -625,6 +639,7 @@ class CartPole(_Classic):
     native = (400, 600)
     default_size = 600
     reference_id = "CartPole-v1"
+    CLASSIC_DOMAIN = "cartpole"
 
     SCALE = 600 / 4.8  # screen_width / (2 * x_threshold)
     POLELEN = 125.0  # scale * 2 * length
@@ -678,15 +693,17 @@ class CartPole(_Classic):
         )
 
     def make_variation_space(self) -> Dict:
-        return Dict(
-            {
-                "cart": Dict(self._colors(color=(0, 0, 0))),
-                "pole": Dict(self._colors(color=(202, 152, 101))),
-                "axle": Dict(self._colors(color=(129, 132, 203))),
-                "track": Dict(self._colors(color=(0, 0, 0))),
-                "background": Dict(self._colors(color=WHITE)),
-                "rendering": self._aa_space(),
-            }
+        return self._with_physics_variation(
+            Dict(
+                {
+                    "cart": Dict(self._colors(color=(0, 0, 0))),
+                    "pole": Dict(self._colors(color=(202, 152, 101))),
+                    "axle": Dict(self._colors(color=(129, 132, 203))),
+                    "track": Dict(self._colors(color=(0, 0, 0))),
+                    "background": Dict(self._colors(color=WHITE)),
+                    "rendering": self._aa_space(),
+                }
+            )
         )
 
     #: Row windows. ``x`` moves the cart along the track and ``theta`` only rotates the pole, so the
@@ -769,7 +786,7 @@ class CartPole(_Classic):
         return np.stack([rng.uniform(-2.4, 2.4, batch), rng.uniform(-0.2095, 0.2095, batch)], 1).astype(np.float32)
 
     def step(self, action) -> TensorDict:
-        """One control step. ``action`` is ``(B,1)``: **0 push left, 1 push right**, floored.
+        """One control step. ``action`` is integer ``(B,1)``: **0 push left, 1 push right**.
 
         Declared per env rather than inherited because the number means something different in each of
         these five, and because the conformance suite requires the class that CLAIMS a batched
@@ -798,16 +815,19 @@ class CartPole(_Classic):
 
 # =============================================================================== Pendulum
 @register
-class Pendulum(_Classic):
+class Pendulum(ClassicControlSemantics, _Classic):
     """Pendulum-v1. Render state ``[theta, torque]``.
 
     ``torque`` is ``last_u``: not part of the observation, but it is drawn, so it is part of the render
     state. See the module docstring for why it reduces to a 228-entry sprite table and why ``u = 0``
     needs no separate flag.
 
-    ``step`` takes one CONTINUOUS torque in [-2, 2]. Dynamical state ``[theta, theta_dot, torque]``, and
-    stepping is what makes the third render dimension move on its own: the torque a policy asks for is
-    the torque that gets drawn. Tracks the reference to **2.8e-13 over 100 steps, 2.2e-16 after one**.
+    The recovered public ``step`` delegates the clipped continuous torque to pinned Gymnasium
+    ``Pendulum-v1``, including cost reward and TimeLimit. Dynamical State is
+    ``[theta, theta_dot, torque]`` plus lifecycle/RNG fields, and torque preserves accepted float64
+    input exactly even though the compact renderer row remains float32. The retained torch equation
+    below was measured to **2.8e-13 over 100 steps, 2.2e-16 after one** and is numerical provenance
+    rather than the public transition path.
     """
 
     name = "pendulum"
@@ -816,6 +836,7 @@ class Pendulum(_Classic):
     native = (500, 500)
     default_size = 500
     reference_id = "Pendulum-v1"
+    CLASSIC_DOMAIN = "pendulum"
 
     SCALE = 500 / 4.4
     OFF = 250
@@ -861,13 +882,15 @@ class Pendulum(_Classic):
         self._sprite = _torque_sprites(self.device)
 
     def make_variation_space(self) -> Dict:
-        return Dict(
-            {
-                "rod": Dict(self._colors(color=(204, 77, 77))),
-                "axle": Dict(self._colors(color=(0, 0, 0))),
-                "background": Dict(self._colors(color=WHITE)),
-                "rendering": self._aa_space(),
-            }
+        return self._with_physics_variation(
+            Dict(
+                {
+                    "rod": Dict(self._colors(color=(204, 77, 77))),
+                    "axle": Dict(self._colors(color=(0, 0, 0))),
+                    "background": Dict(self._colors(color=WHITE)),
+                    "rendering": self._aa_space(),
+                }
+            )
         )
 
     #: Windows, both axes: the rod pivots about the centre, so it reaches ``hypot(SCALE, 0.1*SCALE)``
