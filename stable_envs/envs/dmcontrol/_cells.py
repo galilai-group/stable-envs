@@ -91,7 +91,7 @@ PARITY_NOTE = (
 )
 
 
-def parity_cell(cname: str, domain: str, task: str, camera: int = 0, **extra) -> type:
+def parity_cell(cname: str, domain: str, task: str, camera: int = 0, *, bases: tuple[type, ...] = (), **extra) -> type:
     """Declare and register one PARITY cell: a ``DMControlSuite`` leaf carrying its domain's facts.
 
     ``extra`` is whatever that cell declares beyond the domain triple — ``default_size``,
@@ -102,7 +102,7 @@ def parity_cell(cname: str, domain: str, task: str, camera: int = 0, **extra) ->
     cls = register(
         type(
             cname,
-            (DMControlSuite,),
+            tuple(bases) + (DMControlSuite,),
             dict(
                 **extra,
                 DOMAIN=domain,

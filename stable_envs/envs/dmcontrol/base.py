@@ -133,26 +133,9 @@ class _DMCModel(Env):
         )
         assert len(self.state_names) == self.state_dim
 
-    # ---- state -----------------------------------------------------
-    #
-    # The packed float32 row is unchanged: ``qpos`` then the episode draw, exactly the packed float32 layout
-    # every frozen corpus, digest and certification check speaks. The public State adds the entity
-    # grouping over it, and the grouping is the state's own structure rather than an invention --
-    # ``qpos`` is the simulator's configuration and ``episode`` is what ``initialize_episode`` wrote
-    # into the MODEL, which is a different KIND of quantity and is the whole subject of the widening
-    # ``_episode_slots`` performs. Eleven of the eighteen cells draw nothing per episode and get the
-    # single key alone, which is what contract §3 means by no ceremony for a state that is one vector.
-    #
-    # NOTHING IS HIDDEN. Every column of the packed row is carried by one of the two keys, so no
-    # field has offset ``None``, ``_hidden_state`` is never consulted, and ``pack``/``unpack`` round
-    # trip the frozen corpus bit for bit. There is no ``_live_state`` either: the packed row IS this
-    # family's live state -- ``set_state`` writes it and ``render`` reads it -- so there is no more
-    # precise buffer to answer from, unlike classic control's float64 simulator.
-    #
-    # ``state_layout`` is an INSTANCE attribute, assigned in ``__init__`` above, and there is no
-    # ``_layout`` override any more: ``Env._layout`` reads ``self.state_layout``, so a family whose
-    # width comes from a compiled model declares it where the model is compiled. That is request R1,
-    # done by the foundation at f24d94c.
+    # The four/variable-width compact rows above remain the frozen renderer layout.
+    # They are not full simulator State. Recovered cells compose a simulator adapter
+    # and declare their own full-State schema; unrecovered cells refuse restoration.
 
     def _close(self) -> None:
         """Release what this INSTANCE owns, which is the per-instance CPU scene cache and nothing else.

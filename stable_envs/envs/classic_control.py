@@ -246,7 +246,6 @@ class _Classic(Env):
 
     def _restore_state(self, state: TensorDict) -> None:
         self.set_sim_state(self._sim_from_state(state))
-        self._live_rows = self.B
 
     def sim_state(self) -> torch.Tensor:
         """``(B, len(sim_state_names))`` float64 — the full dynamical state, velocities included."""

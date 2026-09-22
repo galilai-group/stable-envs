@@ -495,7 +495,7 @@ def test_no_env_shadows_an_attribute_the_base_class_owns():
         return out
 
     owned = self_attrs(ast.parse((root / "stable_envs" / "env.py").read_text()))
-    assert {"_state", "device", "_live_rows"} <= owned, (
+    assert {"_render_state", "device", "_live_rows"} <= owned, (
         f"read the base class wrong — it must assign self._render_state, self.device and self._live_rows, "
         f"and it appears to assign {sorted(owned)}. The collision check below is worthless if this "
         f"set is empty or partial, so it is asserted rather than trusted."

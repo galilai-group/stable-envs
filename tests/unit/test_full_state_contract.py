@@ -17,6 +17,8 @@ def test_full_snapshot_restores_future_and_has_no_aliases(name):
         env.step(action)
         saved = env.get_state()
         assert isinstance(saved, TensorDict)
+        for key in saved.keys(True, True):
+            assert env.state_spec[key].dtype == saved[key].dtype
         frozen = saved.clone()
         expected = env.step(action)
         for _ in range(3):

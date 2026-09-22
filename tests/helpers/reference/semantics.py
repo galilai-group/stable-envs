@@ -52,7 +52,8 @@ def check_step_matches_reference(candidate, reference, actions, *, atol=0.0):
         actual, expected = candidate.step(action), reference.step(action)
         state = compare_state(actual["state"], expected["state"], atol=atol)
         task = check_reward_done_matches_reference(actual, expected, atol=atol)
-        evidence.append(dict(state=state, task=task))
+        outputs = compare_state(actual.exclude("state"), expected.exclude("state"), atol=atol)
+        evidence.append(dict(state=state, task=task, outputs=outputs))
     return evidence
 
 

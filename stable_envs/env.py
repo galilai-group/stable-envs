@@ -784,6 +784,7 @@ class Env:
         self._require_state("set_state")
         self._validate_state(state, batch=self.B)
         self._restore_state(state)
+        self._live_rows = self.B
 
     def _restore_state(self, state: State) -> None:
         if any(offset is None for _, _, offset in self._layout()):
@@ -1128,11 +1129,7 @@ class Env:
             dt = dtypes.get(key, torch.float32)
             # ``copy=True``: ``.to`` on a same-dtype tensor returns the SAME storage, and a State that
             # aliases the env's packed buffer changes under the caller's feet at the next step.
-            v = (
-                r[:, off : off + w].to(dt, copy=True)
-                if off is not None
-                else torch.zeros(n, w, device=self.device, dtype=dt)
-            )
+            v = r[:, off : off + w].to(dt, copy=True)
             node = out
             for part in key[:-1]:
                 node = node.setdefault(part, {})
@@ -1226,7 +1223,14 @@ class Env:
         for key, w, _ in self._layout():
             lo, hi = bounds.get(key, (None, None))
             names = tuple(self.state_names_of(key)) if len(key) and w == len(self.state_names_of(key)) else ()
-            spec = Spec(shape=(w,), low=lo, high=hi, device=self.device, names=names)
+            spec = Spec(
+                shape=(w,),
+                low=lo,
+                high=hi,
+                dtype=self._layout_dtypes().get(key, torch.float32),
+                device=self.device,
+                names=names,
+            )
             node = out
             for part in key[:-1]:
                 node = node.setdefault(part, {})
@@ -1241,6 +1245,7 @@ class Env:
             _dynamics.no_dynamics(self, "action_spec")
         return Spec(
             shape=(int(dim),),
+            dtype=getattr(self, "action_dtype", torch.float32),
             low=getattr(self, "action_low", None),
             high=getattr(self, "action_high", None),
             device=self.device,

@@ -20,7 +20,8 @@ for name in ("CartPole", "Pendulum", "PushT", "TwoRoom", "DMCReacherHard", "DMCC
     rows = corpus["states"][:4]
     with se.make(name, num_envs=len(rows), device=a.device) as env:
         render = getattr(env, "_render", env.render)
-        frame = render(rows).cpu().numpy()
+        variation = {"visibility.target": 1} if name == "DMCReacherHard" else None
+        frame = render(rows, variation=variation).cpu().numpy()
         results[name] = dict(
             rows_sha256=hashlib.sha256(rows.tobytes()).hexdigest(),
             frame_sha256=hashlib.sha256(frame.tobytes()).hexdigest(),

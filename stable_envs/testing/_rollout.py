@@ -109,7 +109,9 @@ def sample(
     seed: int | None = None,
     init_states=None,
 ) -> dict:
-    """``batch`` trajectories of ``steps`` steps, entirely on device.
+    """Legacy renderer-corpus sampler; returned rows are projections, not resumable State.
+
+    Simulation may be delegated to CPU even when the output tensors live on CUDA.
 
     Returns a dict of stacked tensors with time on axis 1 — ``states (B, steps+1, state_dim)``,
     ``actions (B, steps, action_dim)``, ``style (B, style_dim)``, and ``frames (B, steps+1, H, W, 3)``
@@ -142,15 +144,26 @@ def sample(
     policy.set_env(env)
     policy.reset(B)
 
-    env._set_render_state(init_states if init_states is not None else env.sample_states(B), style=style)
-    st = [env._get_render_state().clone()]
+    if getattr(env, "execution_mode", None) == "DELEGATED_CPU":
+        if style is not None:
+            env.set_variation(style)
+        env.reset(seed=seed)
+        if init_states is not None:
+            env.set_state(init_states)  # Requires full State, never a lossy corpus row.
+
+        def render_rows():
+            return env._pack_render_state(env.get_state())
+    else:
+        env._set_render_state(init_states if init_states is not None else env.sample_states(B), style=style)
+        render_rows = env._get_render_state
+    st = [render_rows().clone()]
     acts = []
     for t in range(int(steps)):
-        a = policy.get_action(env._get_render_state(), t=t)
+        a = policy.get_action(render_rows(), t=t)
         a = torch.as_tensor(a, device=env.device, dtype=torch.float32).reshape(B, -1)
         env.step(a)
         acts.append(a)
-        st.append(env._get_render_state().clone())
+        st.append(render_rows().clone())
 
     out = {
         "states": torch.stack(st, dim=1),

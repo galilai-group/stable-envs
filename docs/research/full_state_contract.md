@@ -28,5 +28,5 @@ Local validation before Reacher implementation: 156 native/contract/harness
 checks passed; 180 shared input/dataset/API checks passed, four skipped. Seven
 frozen renderer corpora (four rows each) produced byte-identical CPU frames
 against commit 6d80b68, including Reacher and Hopper. See
-`semantic_recovery_evidence/phase05_cpu_renderer.json`. GPU verification is
-pending the Oscar job. This is scoped evidence, not a 42-cell REGRESSION=0 claim.
+`semantic_recovery_evidence/phase05_cpu_renderer.json`. Oscar job 6597759 subsequently verified the same seven corpora on RTX 3090.
+The completed bounded Reacher proof is recorded in `reacher_recovery_gate.md`. This is scoped evidence, not a 42-cell REGRESSION=0 claim.
