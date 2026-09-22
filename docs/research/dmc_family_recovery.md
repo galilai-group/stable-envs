@@ -52,8 +52,11 @@ python -m pytest tests/unit/test_dmc_first_family_adapter.py \
   tests/unit/test_dmc_first_family_oracle.py
 ```
 
-CUDA State/render execution and frozen renderer comparisons require Oscar and
-are intentionally left to the coordinated cluster run. Other DMC registrations,
+Oscar job 6604555 passed the same zero-error gate with CUDA State/render
+placement on RTX 3090 (MuJoCo 3.11.0, dm_control 1.0.44). The three frozen
+renderer comparisons were byte-identical to baseline, and the original Reacher
+gate passed again. CPU frozen renderer comparisons also matched. See
+`first_family_recovery.md` and `semantic_recovery_evidence/` for coordinated evidence. Other DMC registrations,
 nondefault tasks, the rest of each historical Variation surface, and reset
 `options.state` are outside this bounded checkpoint. No shared contract change
 was needed.

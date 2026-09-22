@@ -32,8 +32,7 @@ manifest = {
     "steps": 32,
     "generator": "scripts/recovery/freeze_dmc_first_family_oracle.py",
     "versions": {
-        name: importlib.metadata.version(name)
-        for name in ("numpy", "mujoco", "dm-control", "stable-worldmodel")
+        name: importlib.metadata.version(name) for name in ("numpy", "mujoco", "dm-control", "stable-worldmodel")
     },
     "source": "Real SWM wrappers only; independent of candidate adapter",
     "domains": {},
@@ -63,4 +62,3 @@ for domain in DOMAINS:
         ref.close()
 (root / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
 print(root / "manifest.json")
-

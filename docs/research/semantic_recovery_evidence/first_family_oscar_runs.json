@@ -1,0 +1,67 @@
+{
+  "shared_contract_commit": "5fbfe4fc401e95c275bacc1d4448b48e503767f9",
+  "reference_commit": "176d54532b3c0a251a4f509b74f2fdacc143a63d",
+  "baseline_commit": "6d80b68b8b3ccd07d4207be94cbf4f0760758a06",
+  "partition": "3090-gcondo",
+  "qos": "cs-3090-gcondo",
+  "gpu_constraint": "geforce3090",
+  "execution_mode": "DELEGATED_CPU",
+  "scripts": {
+    "scripts/recovery/oscar_family_gate.sbatch": "f26bc50e1685f98780a704606b14e202e514e9efe3eb979dedc0d3c85d5986e1",
+    "scripts/recovery/family_renderer_boundary.py": "e3b215b13c68998f98a0cc6c939f40d88a28b9129585f85a7327c0004b8a6f07"
+  },
+  "runs": [
+    {
+      "family": "dmcontrol",
+      "job_id": 6604555,
+      "source_commit": "3fd78ab847e5079eb7b3d88b8c1c62916b3b48b7",
+      "archive": "se-dmc-family-3fd78ab.tgz",
+      "archive_sha256": "17256e6d0c5d76b5e16476f85172a49e8e11d61f24ae34d18b2be3ee7844b9a8",
+      "stage": "/oscar/scratch/sboughan/se-semantic-recovery/dmc-3fd78ab",
+      "python": "/oscar/scratch/sboughan/venvs/se6-verify-vis311/bin/python",
+      "state": "COMPLETED",
+      "exit_code": "0:0",
+      "elapsed": "00:01:48",
+      "log": "/oscar/scratch/sboughan/se-semantic-recovery/logs/family-6604555.out",
+      "asserted_marker": "FAMILY_GPU_GATE_PASS dmc-3fd78ab",
+      "renderer_comparison": "BYTE_IDENTICAL",
+      "integrated_python_ast_sha256": {
+        "scripts/recovery/dmc_first_family_gate.py": "520c8941c85b685d562a31dee524f3607ebc4f1558af73088e05ab2c16798ce9",
+        "scripts/recovery/freeze_dmc_first_family_oracle.py": "20b27a71537ec46de8b0617027f7507bf1075c1d3aadcdd2fb230bd3569677bd",
+        "stable_envs/_adapters/dmcontrol.py": "f609f4f3f1e28d2015176ace49af847f37f02bbafa3cbc0e221c89c1be8a341b",
+        "stable_envs/envs/dmcontrol/_first_family.py": "bd4462bfcb4e97f87716bbfee4f7fbf0f485eb04005799391ba88c01675d7a12",
+        "stable_envs/envs/dmcontrol/acrobot.py": "7ca82e89a7977017c350313d58c13550031e36af8b7e0826673c104c2fb0ffeb",
+        "stable_envs/envs/dmcontrol/cartpole.py": "eb489538b769e539a7e12c350fcfbabcfd5df755022c24fabbbd45e8178a800e",
+        "stable_envs/envs/dmcontrol/pendulum.py": "5ea62602d62d18be15eb67676169f8b9cd13d059e873a33bb4c6f019b4330755",
+        "tests/helpers/reference/dmc_first_family_semantics.py": "33e1e3bf196a004047c7bfe19d2a0d17e6d984bb25a99903a068a2a7cddf8873",
+        "tests/integration/test_dmc_first_family_semantics.py": "f444437f4e12d2c7bc61e4e4f6c9689ec0dee1d6282cc6bd1df2c810adaf2d41",
+        "tests/unit/test_dmc_first_family_adapter.py": "c75796a2ef8b606455b56dd99e6cca94a3e5d3126969651e19e34fdd70c7fdea",
+        "tests/unit/test_dmc_first_family_oracle.py": "d4ff54dc6975ea87286aa4f70e6768215014cabc7d1a7700ad5340c96020d1ff"
+      }
+    },
+    {
+      "family": "ogbench",
+      "job_id": 6604606,
+      "source_commit": "7f2f3ae902e05928572f73ece608971c0a8f2595",
+      "archive": "se-ogbench-family-7f2f3ae.tgz",
+      "archive_sha256": "dbbfbc454bc0e9adfdecb0e8df85628fb244adb1727dd8c15bc2f958981ca6bc",
+      "stage": "/oscar/scratch/sboughan/se-semantic-recovery/ogbench-7f2f3ae",
+      "python": "/oscar/scratch/sboughan/venvs/se7-ogb/bin/python",
+      "state": "COMPLETED",
+      "exit_code": "0:0",
+      "elapsed": "00:01:29",
+      "log": "/oscar/scratch/sboughan/se-semantic-recovery/logs/family-6604606.out",
+      "asserted_marker": "FAMILY_GPU_GATE_PASS ogbench-7f2f3ae",
+      "renderer_comparison": "BYTE_IDENTICAL",
+      "integrated_python_ast_sha256": {
+        "scripts/recovery/freeze_ogbench_maze_oracle.py": "d0f910f044467abf8a09205e6259c4035dd1f94c43b5f65cd67aab00ded17e00",
+        "scripts/recovery/ogbench_maze_gate.py": "7354e479907c4ffef869b3f3179d3b0c6a1b140bfbfe671d2443d7473fa6a720",
+        "stable_envs/_adapters/ogbench.py": "846ac75ceef77b9e1008a2e76fbf85edb0c399915f005fc50656ac8ed2eede61",
+        "stable_envs/envs/ogbench/maze.py": "07ed66ab326be4cc212bf5311c5cc4bcca231e732eac1cb0422e772e72babaa7",
+        "tests/helpers/reference/ogbench_maze_semantics.py": "f68b7649018ec27666dfa11334eb8ab6813d54cfd8c257a0c2b1970e842ad868",
+        "tests/integration/test_ogbench_semantics.py": "48dad15cf095720d7f10809cf912896fbc7ecc5d39fff2ba1e5a7a8514863bfd",
+        "tests/unit/test_ogbench_semantics_oracle.py": "9ab7cf387e527cd1e8b1463abdc6bb12caf6bf9b68ee86d11ccd69f636176473"
+      }
+    }
+  ]
+}

@@ -5,7 +5,7 @@ cell's corpus through both trees, byte-identical frames, identical declarations)
 things that oracle cannot:
 
   * the claims that are new on the public API and have no baseline to compare against — the ``num_envs=``
-    constructor, the two-key public State, ``pack``/``unpack`` round-tripping the frozen packed row,
+    constructor, full State for recovered cells and private projections round-tripping frozen rows,
     the lifecycle, and the fact that a renderer-only cell REFUSES ``step``/``transition`` with the
     contract's precise error instead of inventing a simulator;
   * the SHAPE of the migration itself — that the package is what ``stable_envs.envs.dmcontrol`` now
@@ -66,6 +66,7 @@ TRACKCOM = (
     "DMCWalkerWalk",
 )
 ALL = PARITY + TRACKCOM
+RECOVERED = ("DMCReacherHard", "DMCAcrobotSwingup", "DMCPendulumSwingup", "DMCCartpoleSwingup")
 
 #: Which domain module each cell is WRITTEN in. The registry reports the package for all eighteen
 #: (see ``test_every_cell_reports_the_package_as_its_module``); this is the other half of that fact —
@@ -220,7 +221,17 @@ def test_a_cell_is_a_declaration_and_overrides_no_renderer_method(name):
     )
     assert not callables, f"{name} overrides {callables}; a cell should be a declaration"
     extra_bases = tuple(b for b in cls.__bases__ if b is not tier)
-    assert extra_bases == ((dmc._TranscribedQuadrupedModel,) if name == "DMCQuadrupedWalk" else ())
+    if name == "DMCReacherHard":
+        from stable_envs.envs.dmcontrol.reacher import _ReacherSemantics
+
+        expected = (_ReacherSemantics,)
+    elif name in RECOVERED:
+        from stable_envs.envs.dmcontrol._first_family import FirstFamilySemantics
+
+        expected = (FirstFamilySemantics,)
+    else:
+        expected = (dmc._TranscribedQuadrupedModel,) if name == "DMCQuadrupedWalk" else ()
+    assert extra_bases == expected
 
 
 def test_the_two_tiers_are_the_only_thing_below_the_base():
@@ -306,67 +317,63 @@ def test_takes_the_step9_constructor_and_the_lifecycle(name):
 
 
 @pytest.mark.parametrize("name", ALL)
-def test_the_public_state_is_qpos_plus_the_episode_draw_and_hides_nothing(name):
-    """Contract §3, and the reason this family's ``state_layout`` is built per INSTANCE.
-
-    ``qpos`` is the simulator's configuration; ``episode`` is what ``initialize_episode`` wrote into
-    the MODEL, which is a different kind of quantity and is the whole subject of the widening. Every
-    packed column belongs to one of the two, so no field has offset ``None``, ``_hidden_state`` is
-    never consulted, and ``pack``/``unpack`` round-trip the frozen corpus layout bit for bit.
-    """
+def test_private_projection_roundtrips_the_frozen_renderer_layout(name):
+    """Compact renderer rows remain stable and never become public snapshots."""
     if name in CPU_REFUSED:
         pytest.skip(f"{name} declares no CPU backend")
     with _build(name, num_envs=4, device="cpu") as env:
-        lay = env._layout()
-        keys = [".".join(k) for k, _, _ in lay]
-        assert keys in (["qpos"], ["qpos", "episode"]), keys
-        assert all(off is not None for _, _, off in lay), "this family hides no field"
-        assert sum(w for _, w, _ in lay) == env.state_dim
-        assert lay[0][1] == env.nq
         env._set_render_state(env.sample_states(4, np.random.default_rng(0)))
         rows = env._get_render_state()
-        assert torch.equal(env._pack_render_state(env._unpack_render_state(rows)), rows)
-        assert torch.equal(env._pack_render_state(env.state), rows)
-        assert env._hidden_state() == {} and env._live_state() == {}
-        # R1, done by the foundation at f24d94c: ``Env._layout`` is an instance method reading
-        # ``self.state_layout``, so this family declares the layout where the model is compiled and
-        # overrides NOTHING. The assertion is what keeps the override from coming back.
-        assert "_layout" not in vars(dmc._DMCModel)
-        assert env.state_layout == lay and type(env).state_layout == ()
-        # the State keys name the packed columns they occupy, in order and covering all of them
-        named = [n for k in keys for n in env.state_names_of(k)]
-        assert named == list(env.state_names)
+        projection = env._unpack_render_state(rows)
+        if name in RECOVERED:
+            state = env.get_state()
+            assert "qvel" in state
+            assert env._pack_render_state(state).shape == rows.shape
+            assert any(off is None for _, _, off in env._layout())
+            with pytest.raises((TypeError, ValueError)):
+                env.set_state(projection)
+        else:
+            assert torch.equal(env._pack_render_state(projection), rows)
+            with pytest.raises(NotImplementedError, match="full simulator semantics"):
+                env.get_state()
 
 
-@pytest.mark.parametrize("name", ALL)
-def test_a_renderer_only_cell_refuses_step_and_transition_and_says_why(name):
-    """There is no batched simulator in this package for any DM Control cell, and that is DECLARED.
-
-    Contract §5: an env without dynamics raises from ``step``/``transition`` with the exact reason,
-    while ``reset`` and ``render`` always work. The alternative — inventing a simulator, or
-    fabricating a zero reward — is what this test exists to prevent.
-    """
+@pytest.mark.parametrize("name", [n for n in ALL if n not in RECOVERED])
+def test_a_renderer_only_cell_refuses_public_simulator_operations(name):
+    """Unrecovered cells explicitly refuse simulator State, reset and dynamics."""
     if name in CPU_REFUSED:
         pytest.skip(f"{name} declares no CPU backend")
     with _build(name, num_envs=2, device="cpu") as env:
         assert env.has_dynamics is False
-        a = torch.zeros(2, 1, device=env.device)
-        for call, args in (("step", (a,)), ("transition", (env.state, a))):
-            with pytest.raises(NotImplementedError) as e:
+        action = torch.zeros(2, 1, device=env.device)
+        projection = env._unpack_render_state(env._get_render_state())
+        for call, args in (
+            ("get_state", ()),
+            ("reset", ()),
+            ("step", (action,)),
+            ("transition", (projection, action)),
+        ):
+            with pytest.raises(NotImplementedError, match="full simulator semantics"):
                 getattr(env, call)(*args)
-            assert name in str(e.value) and "simulator" in str(e.value)
-        assert env.reset(seed=0).batch_size[0] == 2
 
 
 @pytest.mark.parametrize("name", ALL)
-def test_render_takes_a_state_a_packed_row_or_nothing(name):
+def test_private_render_takes_a_projection_a_packed_row_or_nothing(name):
     """The frame is a function of the state, and the three ways of saying so agree to the bit."""
     if name in CPU_REFUSED:
         pytest.skip(f"{name} declares no CPU backend")
     with _build(name, num_envs=2, device="cpu") as env:
-        env._set_render_state(env.sample_states(2, np.random.default_rng(0)))
-        st = env.state
-        a, b, c = env._render(st), env._render(env._pack_render_state(st)), env._render()
+        if name in RECOVERED:
+            st = env.get_state()
+            rows = env._pack_render_state(st)
+            env._set_render_state(rows)
+            a = env.render(st)
+        else:
+            env._set_render_state(env.sample_states(2, np.random.default_rng(0)))
+            rows = env._get_render_state()
+            st = env._unpack_render_state(rows)
+            a = env._render(st)
+        b, c = env._render(rows), env._render()
         assert torch.equal(a, b) and torch.equal(a, c)
         assert tuple(a.shape) == (2, env.size, env.size, 3) and a.dtype == torch.uint8
         assert tuple(env.frame_spec.shape) == (env.size, env.size, 3)

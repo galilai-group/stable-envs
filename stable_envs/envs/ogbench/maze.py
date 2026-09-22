@@ -844,7 +844,9 @@ class _HistoricalDefaultSemantics:
         self._simulator = OGBMazeAdapter(self.B, self.device, self._seed)
 
     def _layout(self):
-        return tuple((key, width, 0 if key == ("root", "position") else None) for key, (width, _) in OGB_MAZE_FIELDS.items())
+        return tuple(
+            (key, width, 0 if key == ("root", "position") else None) for key, (width, _) in OGB_MAZE_FIELDS.items()
+        )
 
     def _layout_dtypes(self):
         return {key: dtype for key, (_, dtype) in OGB_MAZE_FIELDS.items()}
@@ -891,7 +893,11 @@ def _make_classes():
     for loco, maze, dataset in CELLS:
         old = f"{loco.capitalize()}maze{maze.capitalize()}{dataset.capitalize()}"
         cname = f"{loco.capitalize()}Maze{maze.capitalize()}{dataset.capitalize()}"
-        bases = (_HistoricalDefaultSemantics, OGBenchMaze) if (loco, maze, dataset) == ("point", "large", "navigate") else (OGBenchMaze,)
+        bases = (
+            (_HistoricalDefaultSemantics, OGBenchMaze)
+            if (loco, maze, dataset) == ("point", "large", "navigate")
+            else (OGBenchMaze,)
+        )
         cls = register(
             type(
                 cname,

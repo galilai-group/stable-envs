@@ -26,11 +26,7 @@ SWM_PIN = "176d54532b3c0a251a4f509b74f2fdacc143a63d"
 
 
 def _np_state_equal(first, second):
-    return (
-        first[0] == second[0]
-        and np.array_equal(first[1], second[1])
-        and first[2:] == second[2:]
-    )
+    return first[0] == second[0] and np.array_equal(first[1], second[1]) and first[2:] == second[2:]
 
 
 def run_gate(device="cpu"):
@@ -43,7 +39,14 @@ def run_gate(device="cpu"):
     evidence = {
         "historical_id": "swm/OGBMaze-v0",
         "candidate_class": "PointMazeLargeNavigate",
-        "historical_defaults": {"loco_env_type": "point", "maze_env_type": "maze", "maze_type": "large", "ob_type": "states", "width": 224, "height": 224},
+        "historical_defaults": {
+            "loco_env_type": "point",
+            "maze_env_type": "maze",
+            "maze_type": "large",
+            "ob_type": "states",
+            "width": 224,
+            "height": 224,
+        },
         "swm_commit": commit,
         "swm_source": str(source),
         "device": device,
@@ -82,14 +85,19 @@ def run_gate(device="cpu"):
                     # Goal and target geom are both restored; OGBench's vector goal setter updates
                     # only the first two model coordinates, so the complete target is explicit State.
                     for simulator, row in zip(env._simulator.envs, snapshot.cpu().unbind(0), strict=True):
-                        np.testing.assert_array_equal(simulator.model.geom("target").pos, row["task", "goal_pos"].numpy())
+                        np.testing.assert_array_equal(
+                            simulator.model.geom("target").pos, row["task", "goal_pos"].numpy()
+                        )
                         np.testing.assert_array_equal(simulator.cur_goal_xy, row["task", "goal_pos"][:2].numpy())
                     frame = env.render(snapshot)
                     assert torch.equal(frame, env._render(env._pack_render_state(snapshot)))
                     before = env.get_state()
                     env.render(snapshot)
                     compare_state(env.get_state(), before)
-                    for bad in (env._pack_render_state(snapshot), env._unpack_render_state(env._pack_render_state(snapshot))):
+                    for bad in (
+                        env._pack_render_state(snapshot),
+                        env._unpack_render_state(env._pack_render_state(snapshot)),
+                    ):
                         try:
                             env.set_state(bad)
                         except (TypeError, ValueError):
@@ -122,7 +130,10 @@ def run_gate(device="cpu"):
                 for action in np.random.default_rng(777).uniform(-1, 1, (7, batch, 2)).astype(np.float32):
                     other.step(action)
                 for first, second in zip(env._simulator.envs, other._simulator.envs, strict=True):
-                    assert first.action_space.np_random.bit_generator.state != second.action_space.np_random.bit_generator.state
+                    assert (
+                        first.action_space.np_random.bit_generator.state
+                        != second.action_space.np_random.bit_generator.state
+                    )
                 env.set_state(snapshot)
                 ref.set_state(snapshot)
                 other.set_state(snapshot)
@@ -132,7 +143,14 @@ def run_gate(device="cpu"):
                 compare_state(got, expected)
                 compare_state(got, alternate)
                 assert _np_state_equal(outside, np.random.get_state())
-                evidence["cases"].append(dict(batch=batch, unseeded_reset_replay=True, warmup_action_rng_not_continuation_state=True, env_and_legacy_rng_restored=True))
+                evidence["cases"].append(
+                    dict(
+                        batch=batch,
+                        unseeded_reset_replay=True,
+                        warmup_action_rng_not_continuation_state=True,
+                        env_and_legacy_rng_restored=True,
+                    )
+                )
                 # The historical registration exposes visual knobs but no physical default knob.
                 # Prove that a persistent nondefault appearance still consumes the full State via
                 # the preserved private qpos projection and cannot mutate delegated physics.
@@ -142,7 +160,14 @@ def run_gate(device="cpu"):
                 assert torch.equal(env.render(varied_state), env._render(env._pack_render_state(varied_state)))
                 compare_state(env.get_state(), varied_before)
                 compare_state(varied_state, varied_before)
-                evidence["cases"].append(dict(batch=batch, persistent_visual_variation="agent.color=[0.2,0.8,0.4]", full_state_render=True, simulator_unmutated=True))
+                evidence["cases"].append(
+                    dict(
+                        batch=batch,
+                        persistent_visual_variation="agent.color=[0.2,0.8,0.4]",
+                        full_state_render=True,
+                        simulator_unmutated=True,
+                    )
+                )
                 # Positive reward and the default post-step success/termination boundary.
                 check_reset_matches_reference(env, ref, seed=18)
                 success_state = ref.get_state()
@@ -155,9 +180,21 @@ def run_gate(device="cpu"):
                 assert (got["reward"] == 1).all() and got["success"].bool().all()
                 assert got["terminated"].all() and not got["truncated"].any()
                 # Termination is a returned boundary, not an implicit reset or a step prohibition.
-                got, expected = env.step(np.full((batch, 2), 0.25, np.float32)), ref.step(np.full((batch, 2), 0.25, np.float32))
+                got, expected = (
+                    env.step(np.full((batch, 2), 0.25, np.float32)),
+                    ref.step(np.full((batch, 2), 0.25, np.float32)),
+                )
                 compare_state(got, expected)
-                evidence["cases"].append(dict(batch=batch, positive_reward=1.0, success=1.0, terminated=True, truncated=False, post_termination_step_matches=True))
+                evidence["cases"].append(
+                    dict(
+                        batch=batch,
+                        positive_reward=1.0,
+                        success=1.0,
+                        terminated=True,
+                        truncated=False,
+                        post_termination_step_matches=True,
+                    )
+                )
 
                 # The wrapped raw OGBench env has no TimeLimit. Prove continued parity past the
                 # conventional 1000-step boundary rather than inventing a truncation lifecycle.
@@ -169,7 +206,15 @@ def run_gate(device="cpu"):
                     assert not got["terminated"].any() and not got["truncated"].any()
                 elapsed = env.get_state()["simulator", "time"]
                 torch.testing.assert_close(elapsed, torch.full_like(elapsed, 100.1), atol=1e-10, rtol=0)
-                evidence["cases"].append(dict(batch=batch, no_registered_horizon_steps=1001, terminated=False, truncated=False, time=float(elapsed[0, 0])))
+                evidence["cases"].append(
+                    dict(
+                        batch=batch,
+                        no_registered_horizon_steps=1001,
+                        terminated=False,
+                        truncated=False,
+                        time=float(elapsed[0, 0]),
+                    )
+                )
             finally:
                 ref.close()
     return evidence

@@ -103,4 +103,3 @@ class DMCFirstFamilyReference:
     def close(self):
         for env in self.envs:
             env.close()
-

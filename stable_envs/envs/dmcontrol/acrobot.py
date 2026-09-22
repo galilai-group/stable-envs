@@ -9,6 +9,4 @@ from __future__ import annotations
 from ._cells import parity_cell
 from ._first_family import FirstFamilySemantics
 
-DMCAcrobotSwingup = parity_cell(
-    "DMCAcrobotSwingup", "acrobot", "swingup", bases=(FirstFamilySemantics,)
-)
+DMCAcrobotSwingup = parity_cell("DMCAcrobotSwingup", "acrobot", "swingup", bases=(FirstFamilySemantics,))

@@ -42,14 +42,23 @@ try:
     manifest = {
         "reference_commit": pin,
         "historical_id": "swm/OGBMaze-v0",
-        "historical_defaults": {"loco_env_type": "point", "maze_env_type": "maze", "maze_type": "large", "ob_type": "states", "width": 224, "height": 224},
+        "historical_defaults": {
+            "loco_env_type": "point",
+            "maze_env_type": "maze",
+            "maze_type": "large",
+            "ob_type": "states",
+            "width": 224,
+            "height": 224,
+        },
         "file": path.name,
         "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
         "seed": 17,
         "batch": 3,
         "steps": 32,
         "generator": "scripts/recovery/freeze_ogbench_maze_oracle.py",
-        "versions": {k: importlib.metadata.version(k) for k in ("numpy", "gymnasium", "ogbench", "mujoco", "stable-worldmodel")},
+        "versions": {
+            k: importlib.metadata.version(k) for k in ("numpy", "gymnasium", "ogbench", "mujoco", "stable-worldmodel")
+        },
         "source": "Real pinned SWM wrapper only; independent of candidate adapter",
         "arrays": {k: {"shape": list(v.shape), "dtype": str(v.dtype)} for k, v in values.items()},
     }

@@ -163,10 +163,15 @@ def test_every_cell_reports_its_canonical_module():
 
 
 def test_a_maze_cell_is_a_declaration_and_overrides_no_renderer_method():
-    """No inheritance hierarchy grew: 25 cells over ONE base, and each leaf declares and nothing more."""
+    """Every cell preserves the renderer; only the recovered default adds simulator composition."""
     for cell in MAZE_CELLS:
         cls = R.REGISTRY[cell]
-        assert cls.__bases__ == (MAZE.OGBenchMaze,)
+        expected = (
+            (MAZE._HistoricalDefaultSemantics, MAZE.OGBenchMaze)
+            if cell == "PointMazeLargeNavigate"
+            else (MAZE.OGBenchMaze,)
+        )
+        assert cls.__bases__ == expected
         callables = [k for k, v in vars(cls).items() if callable(v) and not k.startswith("__")]
         assert not callables, f"{cell} defines {callables}; a cell is a declaration"
     for cell in MANIP_CELLS:
@@ -305,16 +310,11 @@ def test_the_manipulation_plate_is_grouped_by_floor_colour_and_nothing_else():
 
 
 @pytest.mark.parametrize("loco,dim", [("point", 2), ("ant", 15), ("humanoid", 28)])
-def test_the_maze_state_layout_covers_the_packed_row_and_hides_nothing(loco, dim):
-    """The public State is the BODY's own structure and the packed row is untouched.
-
-    ``qpos`` for a point is two slide joints; for the legged bodies it is a free joint (3 position +
-    4 quaternion) followed by hinges. Every offset is a real column, so ``pack`` drops nothing,
-    ``unpack`` invents nothing and every frozen Step-4 digest is computed from the same bytes.
-    """
+def test_the_maze_render_layout_covers_the_packed_row(loco, dim):
+    """The private body projection preserves every frozen renderer column."""
     layout = MAZE.OGBenchMaze.STATE_LAYOUT[loco]
     assert sum(w for _, w, o in layout if o is not None) == dim == len(MAZE.BODY_STATE[loco])
-    assert all(o is not None for _, _, o in layout), "these cells have no hidden dynamical state"
+    assert all(o is not None for _, _, o in layout), "every renderer column has an offset"
     off = 0
     for key, w, o in layout:
         assert o == off, f"{loco}: {key} starts at {o}, not at {off}"
@@ -390,15 +390,17 @@ def test_takes_the_step9_constructor_and_the_lifecycle(_ogbench, cell):
 
 
 @pytest.mark.parametrize("cell", BODY_SAMPLE)
-def test_the_public_state_is_the_bodys_own_structure_and_packs_back_to_the_frozen_row(_ogbench, cell):
+def test_the_private_projection_packs_back_to_the_frozen_row(_ogbench, cell):
     with R.REGISTRY[cell](num_envs=4, device="cpu") as env:
         rows = torch.as_tensor(env.sample_states(4, np.random.default_rng(0)), device=env.device)
         env._set_render_state(rows)
-        st = env.state
+        st = env._unpack_render_state(env._get_render_state())
         keys = [".".join(k) for k, _, _ in env._layout()]
         assert keys[0] == "root.position"
         assert torch.equal(env._pack_render_state(st), env._get_render_state()), "pack(state) must BE the packed row"
-        assert torch.equal(env._pack_render_state(env._unpack_render_state(env._get_render_state())), env._get_render_state())
+        assert torch.equal(
+            env._pack_render_state(env._unpack_render_state(env._get_render_state())), env._get_render_state()
+        )
         assert env._hidden_state() == {} and env._live_state() == {}
         # the keys name the packed columns in order, which is what makes the grouping a VIEW
         names, i = list(env.state_names), 0
@@ -411,21 +413,25 @@ def test_the_public_state_is_the_bodys_own_structure_and_packs_back_to_the_froze
 def test_a_renderer_only_cell_refuses_step_and_transition_and_says_why(_ogbench, cell):
     with R.REGISTRY[cell](num_envs=2, device="cpu") as env:
         assert env.has_dynamics is False
-        st = env.reset(seed=0)
+        for call in (env.reset, env.get_state):
+            with pytest.raises(NotImplementedError, match="full simulator semantics"):
+                call()
+        env._set_render_state(env.sample_states(2, np.random.default_rng(0)))
+        st = env._unpack_render_state(env._get_render_state())
         for call, args in (("step", (torch.zeros(2, 1),)), ("transition", (st, torch.zeros(2, 1)))):
             with pytest.raises(NotImplementedError) as e:
                 getattr(env, call)(*args)
             msg = str(e.value)
-            assert cell in msg and "no batched simulator" in msg
-            assert "env._render(states)" in msg, "the refusal must say what DOES work"
-        assert env._render().shape == (2, 224, 224, 3)  # reset and render still work
+            assert cell in msg and "full simulator semantics" in msg
+            assert "semantic_recovery_matrix.json" in msg
+        assert env._render().shape == (2, 224, 224, 3)
 
 
 @pytest.mark.parametrize("cell", BODY_SAMPLE)
-def test_render_takes_a_state_a_packed_row_or_nothing(_ogbench, cell):
+def test_private_render_takes_a_projection_a_packed_row_or_nothing(_ogbench, cell):
     with R.REGISTRY[cell](num_envs=2, device="cpu") as env:
         env._set_render_state(env.sample_states(2, np.random.default_rng(0)))
-        st = env.state
+        st = env._unpack_render_state(env._get_render_state())
         a, b, c = env._render(st), env._render(env._pack_render_state(st)), env._render()
         assert torch.equal(a, b) and torch.equal(a, c)
         assert a.shape == (2, 224, 224, 3) and a.dtype == torch.uint8

@@ -72,9 +72,7 @@ def run_gate(device="cpu"):
             for name in ("torch", "numpy", "dm-control", "mujoco", "tensordict", "stable-worldmodel")
         },
         "mappings": CASES,
-        "excluded_mapping": {
-            "DMCCartpoleBalance": "historical default is sparse swing-up, not dense balance"
-        },
+        "excluded_mapping": {"DMCCartpoleBalance": "historical default is sparse swing-up, not dense balance"},
         "cases": [],
     }
     for domain, env_name in CASES.items():
@@ -136,7 +134,13 @@ def run_gate(device="cpu"):
                     compare_state(got, expected)
                     assert (got["reward"] == 2).all()
                     evidence["cases"].append(
-                        {"domain": domain, "batch": batch, "positive_reward": 2.0, "terminated": False, "truncated": False}
+                        {
+                            "domain": domain,
+                            "batch": batch,
+                            "positive_reward": 2.0,
+                            "terminated": False,
+                            "truncated": False,
+                        }
                     )
 
                     # Derive the boundary from the pinned DMC step limit and repeat=2.
@@ -149,10 +153,7 @@ def run_gate(device="cpu"):
                     rng_before = near_limit.select("rng").clone()
                     check_step_matches_reference(env, ref, actions[public_at_last - 1 :])
                     after = env.get_state()
-                    assert any(
-                        not torch.equal(rng_before[key], after[key])
-                        for key in rng_before.keys(True, True)
-                    )
+                    assert any(not torch.equal(rng_before[key], after[key]) for key in rng_before.keys(True, True))
                     other.reset(seed=77)
                     check_two_histories_same_state(env, other, near_limit, actions[:4])
                     evidence["cases"].append(

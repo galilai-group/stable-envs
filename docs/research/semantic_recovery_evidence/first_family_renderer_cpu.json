@@ -1,0 +1,56 @@
+{
+  "dmc": {
+    "device": "cpu",
+    "baseline_commit": "6d80b68b8b3ccd07d4207be94cbf4f0760758a06",
+    "identical": true,
+    "cells": {
+      "DMCAcrobotSwingup": {
+        "rows_sha256": "ef14a0b9d79e95fc094fb7617680a0f8c5dbe679e85f8ba8a02e941174e70ccc",
+        "frame_sha256": "7aefe8cb7c5c6d40404252a931d37d74c384b2067147454c548e807c2ffbc011",
+        "shape": [
+          4,
+          84,
+          84,
+          3
+        ]
+      },
+      "DMCPendulumSwingup": {
+        "rows_sha256": "69815ca8198e1b1beb482e22393bcf09b6c3b198705c877ac6f8bcdbe29838de",
+        "frame_sha256": "cfd64f707d43e0530cdc4b0469efd4578392012130925d70d424dd4dc9ba877f",
+        "shape": [
+          4,
+          84,
+          84,
+          3
+        ]
+      },
+      "DMCCartpoleSwingup": {
+        "rows_sha256": "183ae1dd8813c127fd200317133f07568cc25c041eaacebf5af5275675bf376f",
+        "frame_sha256": "95be5d4deb0ea5b95258e81335c4b0414ccada4a44fe0cff0a558e4c7663273c",
+        "shape": [
+          4,
+          84,
+          84,
+          3
+        ]
+      }
+    }
+  },
+  "ogbench": {
+    "device": "cpu",
+    "baseline_commit": "6d80b68b8b3ccd07d4207be94cbf4f0760758a06",
+    "identical": true,
+    "cells": {
+      "PointMazeLargeNavigate": {
+        "rows_sha256": "7fc1738f62c42d4d2e853677f69218717b4f260123579b567dc3d41d2aea95e5",
+        "frame_sha256": "aa80bf17efb7478a79410a811cdb0e4976ba323e9c8c8bd1b0b45de071e8f589",
+        "shape": [
+          4,
+          224,
+          224,
+          3
+        ]
+      }
+    }
+  }
+}

@@ -58,5 +58,8 @@ PYTHONPATH=.:/Users/samib/stable-worldmodel \
   --device cpu --output /tmp/ogbench-maze-cpu.json
 ```
 
-CUDA State/render validation and the frozen renderer digest comparison remain
-for Oscar. No shared contract change was required.
+Oscar job 6604606 passed the same zero-error CUDA State/render gate on RTX 3090
+with OGBench 1.2.1 and MuJoCo 3.12.0. Four frozen renderer rows were byte-identical
+to baseline on both CPU and CUDA. See `first_family_recovery.md` and
+`semantic_recovery_evidence/` for coordinated evidence. No shared contract
+change was required.

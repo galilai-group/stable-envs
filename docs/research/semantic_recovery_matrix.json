@@ -39,32 +39,60 @@
         "DMCAcrobotSwingup"
       ],
       "family": "dmcontrol",
-      "owner": "coordinator",
+      "owner": "dmcontrol-first-family",
       "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
-      "state_status": "INCOMPLETE",
-      "action_parity": "UNTESTED",
-      "reset_parity": "UNTESTED",
-      "step_parity": "UNTESTED",
-      "reward_parity": "UNTESTED",
-      "terminated_truncated_parity": "UNTESTED",
-      "rng_lifecycle": "UNTESTED",
-      "variation_parity": "UNTESTED",
-      "execution_mode": null,
-      "adapter_status": "NOT_IMPLEMENTED",
-      "renderer_regression": "PENDING",
-      "oracle_corpus": null,
+      "state_status": "VERIFIED",
+      "action_parity": "PASS_HISTORICAL_DEFAULT",
+      "reset_parity": "PASS_SEEDED_DEFAULT_OPTIONS",
+      "step_parity": "PASS_EXACT_CPU_AND_CUDA_STATE",
+      "reward_parity": "PASS_EXACT_INCLUDING_POSITIVE_REWARD",
+      "terminated_truncated_parity": "PASS_INCLUDING_502_STEP_BOUNDARY",
+      "rng_lifecycle": "PASS_TWO_HISTORIES_AND_IMPLICIT_RESET",
+      "variation_parity": "PARTIAL: nondefault gravity and visual-only preservation tested; complete historical surface unverified",
+      "execution_mode": "DELEGATED_CPU",
+      "adapter_status": "IMPLEMENTED_HISTORICAL_DEFAULT",
+      "renderer_regression": "PASS_SCOPED_CPU_CUDA: four frozen rows per verified class, byte-identical to baseline",
+      "oracle_corpus": "tests/fixtures/semantics/dmc_first_family/manifest.json",
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Missing qvel and executable dynamics.",
-        "Reset samples rollout states rather than reference reset.",
-        "Sparse balance reward; upstream DMCAcrobotSwingup uses swingup (not swingup_sparse)."
+        "Complete historical Variation mapping and upstream image similarity remain uncertified",
+        "Historical reset options and nondefault task kwargs are not certified",
+        "All-42 renderer certification and paired benchmarks remain unrun"
       ],
-      "test": "tests/unit/test_full_state_contract.py",
+      "test": "tests/integration/test_dmc_first_family_semantics.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
-      "execution_candidate": "DELEGATED"
+      "execution_candidate": "DELEGATED",
+      "recovery_status": "ACCEPTED_CPU_AND_OSCAR",
+      "verified_classes": [
+        "DMCAcrobotSwingup"
+      ],
+      "verification_scope": {
+        "classes": [
+          "DMCAcrobotSwingup"
+        ],
+        "seeds": [
+          0,
+          17,
+          42
+        ],
+        "batches": [
+          1,
+          3
+        ],
+        "trajectory_steps": 32,
+        "lifecycle_steps": 502,
+        "atol": 0,
+        "rtol": 0,
+        "same_persistent_variation_required": true
+      },
+      "evidence": [
+        "docs/research/semantic_recovery_evidence/dmc_first_family_cpu.json",
+        "docs/research/semantic_recovery_evidence/dmc_first_family_cuda.json",
+        "docs/research/first_family_recovery.md"
+      ]
     },
     {
       "historical_id": "swm/BallInCupDMControl-v0",
@@ -135,32 +163,61 @@
         "DMCCartpoleSwingup"
       ],
       "family": "dmcontrol",
-      "owner": "coordinator",
+      "owner": "dmcontrol-first-family",
       "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
-      "state_status": "INCOMPLETE",
-      "action_parity": "UNTESTED",
-      "reset_parity": "UNTESTED",
-      "step_parity": "UNTESTED",
-      "reward_parity": "UNTESTED",
-      "terminated_truncated_parity": "UNTESTED",
-      "rng_lifecycle": "UNTESTED",
-      "variation_parity": "UNTESTED",
-      "execution_mode": null,
-      "adapter_status": "NOT_IMPLEMENTED",
-      "renderer_regression": "PASS_SCOPED_CPU_CUDA: four frozen rows per selected class; explicit legacy target visibility for Reacher",
-      "oracle_corpus": null,
+      "state_status": "VERIFIED",
+      "action_parity": "PASS_HISTORICAL_DEFAULT",
+      "reset_parity": "PASS_SEEDED_DEFAULT_OPTIONS",
+      "step_parity": "PASS_EXACT_CPU_AND_CUDA_STATE",
+      "reward_parity": "PASS_EXACT_INCLUDING_POSITIVE_REWARD",
+      "terminated_truncated_parity": "PASS_INCLUDING_502_STEP_BOUNDARY",
+      "rng_lifecycle": "PASS_TWO_HISTORIES_AND_IMPLICIT_RESET",
+      "variation_parity": "PARTIAL: nondefault gravity and visual-only preservation tested; complete historical surface unverified",
+      "execution_mode": "DELEGATED_CPU",
+      "adapter_status": "IMPLEMENTED_HISTORICAL_DEFAULT",
+      "renderer_regression": "PASS_SCOPED_CPU_CUDA: four frozen rows per verified class, byte-identical to baseline",
+      "oracle_corpus": "tests/fixtures/semantics/dmc_first_family/manifest.json",
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Missing qvel and executable dynamics.",
-        "Reset samples rollout states rather than reference reset.",
-        "SWM default is sparse swingup; neither balance nor dense swingup is the same task."
+        "DMCCartpoleBalance remains renderer-only; it is not the historical sparse swing-up default",
+        "Complete historical Variation mapping and upstream image similarity remain uncertified",
+        "Historical reset options and nondefault task kwargs are not certified",
+        "All-42 renderer certification and paired benchmarks remain unrun"
       ],
-      "test": "tests/unit/test_full_state_contract.py",
+      "test": "tests/integration/test_dmc_first_family_semantics.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
-      "execution_candidate": "DELEGATED"
+      "execution_candidate": "DELEGATED",
+      "recovery_status": "ACCEPTED_CPU_AND_OSCAR",
+      "verified_classes": [
+        "DMCCartpoleSwingup"
+      ],
+      "verification_scope": {
+        "classes": [
+          "DMCCartpoleSwingup"
+        ],
+        "seeds": [
+          0,
+          17,
+          42
+        ],
+        "batches": [
+          1,
+          3
+        ],
+        "trajectory_steps": 32,
+        "lifecycle_steps": 502,
+        "atol": 0,
+        "rtol": 0,
+        "same_persistent_variation_required": true
+      },
+      "evidence": [
+        "docs/research/semantic_recovery_evidence/dmc_first_family_cpu.json",
+        "docs/research/semantic_recovery_evidence/dmc_first_family_cuda.json",
+        "docs/research/first_family_recovery.md"
+      ]
     },
     {
       "historical_id": "swm/CheetahDMControl-v0",
@@ -916,30 +973,65 @@
         "PointMazeLargeStitch"
       ],
       "family": "ogbench",
-      "owner": "coordinator",
+      "owner": "ogbench-maze-default",
       "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
-      "state_status": "INCOMPLETE",
-      "action_parity": "UNTESTED",
-      "reset_parity": "UNTESTED",
-      "step_parity": "UNTESTED",
-      "reward_parity": "UNTESTED",
-      "terminated_truncated_parity": "UNTESTED",
-      "rng_lifecycle": "UNTESTED",
-      "variation_parity": "UNTESTED",
-      "execution_mode": null,
-      "adapter_status": "NOT_IMPLEMENTED",
-      "renderer_regression": "PENDING",
-      "oracle_corpus": null,
+      "state_status": "VERIFIED",
+      "action_parity": "PASS_HISTORICAL_DEFAULT",
+      "reset_parity": "PASS_SEEDED_AND_UNSEEDED_DEFAULT_OPTIONS",
+      "step_parity": "PASS_EXACT_CPU_AND_CUDA_STATE",
+      "reward_parity": "PASS_EXACT_INCLUDING_SUCCESS",
+      "terminated_truncated_parity": "PASS_SUCCESS_AND_1001_STEPS_WITHOUT_TIMELIMIT",
+      "rng_lifecycle": "PASS_TWO_HISTORIES_UNSEEDED_RESET_AND_GLOBAL_RNG_ISOLATION",
+      "variation_parity": "PARTIAL: persistent nondefault agent color tested; complete historical appearance surface unverified",
+      "execution_mode": "DELEGATED_CPU",
+      "adapter_status": "IMPLEMENTED_HISTORICAL_POINT_LARGE_DEFAULT",
+      "renderer_regression": "PASS_SCOPED_CPU_CUDA: four frozen rows, byte-identical to baseline",
+      "oracle_corpus": "tests/fixtures/semantics/ogbench_maze/manifest.json",
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "No stable dynamics; render state deliberately drops qvel."
+        "PointMazeLargeStitch and all other OGBench cells remain renderer-only and are not certified by this default mapping",
+        "Complete historical Variation mapping and upstream image similarity remain uncertified",
+        "Historical reset options and nondefault task kwargs are not certified",
+        "All-42 renderer certification and paired benchmarks remain unrun"
       ],
-      "test": "tests/unit/test_full_state_contract.py",
+      "test": "tests/integration/test_ogbench_semantics.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
-      "execution_candidate": "DELEGATED"
+      "execution_candidate": "DELEGATED",
+      "recovery_status": "ACCEPTED_CPU_AND_OSCAR",
+      "verified_classes": [
+        "PointMazeLargeNavigate"
+      ],
+      "verification_scope": {
+        "classes": [
+          "PointMazeLargeNavigate"
+        ],
+        "loco_env_type": "point",
+        "maze_env_type": "maze",
+        "maze_type": "large",
+        "ob_type": "states",
+        "seeds": [
+          0,
+          17,
+          42
+        ],
+        "batches": [
+          1,
+          3
+        ],
+        "trajectory_steps": 32,
+        "no_horizon_steps": 1001,
+        "atol": 0,
+        "rtol": 0,
+        "same_persistent_variation_required": true
+      },
+      "evidence": [
+        "docs/research/semantic_recovery_evidence/ogbench_maze_cpu.json",
+        "docs/research/semantic_recovery_evidence/ogbench_maze_cuda.json",
+        "docs/research/first_family_recovery.md"
+      ]
     },
     {
       "historical_id": "swm/OGBScene-v0",
@@ -967,7 +1059,8 @@
       "similarity_metrics": null,
       "remaining_issues": [
         "No stable dynamics; render state deliberately drops qvel.",
-        "Pinned SWM Scene.reset(options.state) calls set_state without required button kwargs: source-level KeyError path; live reproduction pending."
+        "Pinned SWM Scene.reset(options.state) calls set_state without required button kwargs: source-level KeyError path; live reproduction pending.",
+        "Existing renderer Scene constructor omits required env_type under OGBench 1.2.1; reproduced on frozen baseline during first-cohort checks (see first_family_recovery.md)"
       ],
       "test": "tests/unit/test_full_state_contract.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
@@ -1041,31 +1134,60 @@
         "DMCPendulumSwingup"
       ],
       "family": "dmcontrol",
-      "owner": "coordinator",
+      "owner": "dmcontrol-first-family",
       "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
-      "state_status": "INCOMPLETE",
-      "action_parity": "UNTESTED",
-      "reset_parity": "UNTESTED",
-      "step_parity": "UNTESTED",
-      "reward_parity": "UNTESTED",
-      "terminated_truncated_parity": "UNTESTED",
-      "rng_lifecycle": "UNTESTED",
-      "variation_parity": "UNTESTED",
-      "execution_mode": null,
-      "adapter_status": "NOT_IMPLEMENTED",
-      "renderer_regression": "PENDING",
-      "oracle_corpus": null,
+      "state_status": "VERIFIED",
+      "action_parity": "PASS_HISTORICAL_DEFAULT",
+      "reset_parity": "PASS_SEEDED_DEFAULT_OPTIONS",
+      "step_parity": "PASS_EXACT_CPU_AND_CUDA_STATE",
+      "reward_parity": "PASS_EXACT_INCLUDING_POSITIVE_REWARD",
+      "terminated_truncated_parity": "PASS_INCLUDING_502_STEP_BOUNDARY",
+      "rng_lifecycle": "PASS_TWO_HISTORIES_AND_IMPLICIT_RESET",
+      "variation_parity": "PARTIAL: nondefault gravity and visual-only preservation tested; complete historical surface unverified",
+      "execution_mode": "DELEGATED_CPU",
+      "adapter_status": "IMPLEMENTED_HISTORICAL_DEFAULT",
+      "renderer_regression": "PASS_SCOPED_CPU_CUDA: four frozen rows per verified class, byte-identical to baseline",
+      "oracle_corpus": "tests/fixtures/semantics/dmc_first_family/manifest.json",
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Missing qvel and executable dynamics.",
-        "Reset samples rollout states rather than reference reset."
+        "Complete historical Variation mapping and upstream image similarity remain uncertified",
+        "Historical reset options and nondefault task kwargs are not certified",
+        "All-42 renderer certification and paired benchmarks remain unrun"
       ],
-      "test": "tests/unit/test_full_state_contract.py",
+      "test": "tests/integration/test_dmc_first_family_semantics.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
-      "execution_candidate": "DELEGATED"
+      "execution_candidate": "DELEGATED",
+      "recovery_status": "ACCEPTED_CPU_AND_OSCAR",
+      "verified_classes": [
+        "DMCPendulumSwingup"
+      ],
+      "verification_scope": {
+        "classes": [
+          "DMCPendulumSwingup"
+        ],
+        "seeds": [
+          0,
+          17,
+          42
+        ],
+        "batches": [
+          1,
+          3
+        ],
+        "trajectory_steps": 32,
+        "lifecycle_steps": 502,
+        "atol": 0,
+        "rtol": 0,
+        "same_persistent_variation_required": true
+      },
+      "evidence": [
+        "docs/research/semantic_recovery_evidence/dmc_first_family_cpu.json",
+        "docs/research/semantic_recovery_evidence/dmc_first_family_cuda.json",
+        "docs/research/first_family_recovery.md"
+      ]
     },
     {
       "historical_id": "swm/Piecewise-v0",
@@ -1348,5 +1470,5 @@
       "execution_candidate": "DELEGATED"
     }
   ],
-  "checkpoint": "Phase 0.5 + bounded Reacher stopping gate; no broad family or benchmark work"
+  "checkpoint": "Approved shared contract retained; Reacher plus four bounded historical defaults verified on CPU and Oscar; other 37 registrations remain incomplete"
 }

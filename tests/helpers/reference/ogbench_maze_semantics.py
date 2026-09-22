@@ -123,7 +123,10 @@ class OGBMazeReference:
                 "observation": torch.as_tensor(np.stack([o[0] for o in outputs])),
                 "success": torch.tensor([info["success"] for info in infos], dtype=torch.float64),
                 "info": TensorDict(
-                    {key: torch.as_tensor(np.stack([info[key] for info in infos])) for key in ("xy", "prev_qpos", "prev_qvel", "qpos", "qvel")},
+                    {
+                        key: torch.as_tensor(np.stack([info[key] for info in infos]))
+                        for key in ("xy", "prev_qpos", "prev_qvel", "qpos", "qvel")
+                    },
                     batch_size=[self.num_envs],
                 ),
             },

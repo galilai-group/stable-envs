@@ -45,4 +45,3 @@ def test_dmc_first_family_replays_independent_full_state_corpus(domain):
                 torch.testing.assert_close(result[key].cpu(), torch.from_numpy(data[key][t]), atol=0, rtol=0)
     finally:
         env.close()
-
