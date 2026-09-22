@@ -24,7 +24,7 @@ from tests.helpers.reference.semantics import (
 
 SWM_PIN = "176d54532b3c0a251a4f509b74f2fdacc143a63d"
 CASES = {
-    "acrobot": "DMCAcrobotSwingup",
+    "acrobot": "DMCAcrobotBalance",
     "pendulum": "DMCPendulumSwingup",
     "cartpole": "DMCCartpoleSwingup",
 }

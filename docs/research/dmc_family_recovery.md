@@ -4,7 +4,7 @@ This checkpoint recovers the registered defaults of three historical IDs at SWM
 commit `176d54532b3c0a251a4f509b74f2fdacc143a63d`. Registration kwargs are empty;
 the constructors select sparse Acrobot `Balance`, Pendulum `SwingUp`, and sparse
 Cartpole `Balance(swing_up=True)`. The matching executable stable-envs cells are
-`DMCAcrobotSwingup`, `DMCPendulumSwingup`, and `DMCCartpoleSwingup`.
+`DMCAcrobotBalance`, `DMCPendulumSwingup`, and `DMCCartpoleSwingup`.
 `DMCCartpoleBalance` remains a renderer because its dense balance task does not
 match the historical registered default.
 

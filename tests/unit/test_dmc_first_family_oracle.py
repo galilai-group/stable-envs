@@ -16,6 +16,23 @@ from tests.helpers.reference.semantics import compare_state
 ROOT = Path(__file__).parents[1] / "fixtures/semantics/dmc_first_family"
 
 
+def test_acrobot_identity_preserves_oracle_and_rejects_old_public_name():
+    import stable_envs as se
+    from tests.helpers.reference.crosswalk import canonical_names, class_for_frozen_cell
+
+    identity = json.loads((ROOT / "acrobot_identity.json").read_text())
+    assert identity["task"] == "dm_control.suite.acrobot.Balance(sparse=True)"
+    assert (
+        hashlib.sha256((ROOT / identity["oracle_manifest"]).read_bytes()).hexdigest()
+        == identity["oracle_manifest_sha256"]
+    )
+    assert canonical_names("swm/AcrobotDMControl-v0") == ("DMCAcrobotBalance",)
+    assert class_for_frozen_cell("DMCAcrobotSwingup") is se.DMCAcrobotBalance
+    assert se.info("DMCAcrobotBalance")["reference_id"] == "dm_control/acrobot-swingup_sparse"
+    with pytest.raises(KeyError):
+        se.make("DMCAcrobotSwingup", device="cpu")
+
+
 def test_dmc_first_family_oracle_hashes():
     manifest = json.loads((ROOT / "manifest.json").read_text())
     for entry in manifest["domains"].values():

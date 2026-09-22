@@ -243,7 +243,7 @@ _CLASSIC_MAPS["MountainCarContinuous"] = _mountain_car("swm/MountainCarContinuou
 #: has exactly one light (``nlight == 1``) with an equal diffuse on all three channels, so one scalar
 #: scale really is the whole leaf.
 _LIGHT_BASE = {
-    "DMCAcrobotSwingup": 0.7,
+    "DMCAcrobotBalance": 0.7,
     "DMCBallInCupCatch": 0.6,
     "DMCCartpoleBalance": 0.7,
     "DMCCartpoleSwingup": 0.7,
@@ -280,7 +280,7 @@ def _light_reason(base: float) -> str:
 #: classes and asserts this set, so the transcription cannot drift.
 _PARITY_FLOOR = frozenset(
     {
-        "DMCAcrobotSwingup",
+        "DMCAcrobotBalance",
         "DMCBallInCupCatch",
         "DMCCartpoleBalance",
         "DMCCartpoleSwingup",
@@ -447,8 +447,8 @@ _DECOR_OURS = {
 _EFFECTOR_OURS = {"material.effector": "the effector material; swm has no leaf that reaches it"}
 
 _DMC_MAPS = {
-    "DMCAcrobotSwingup": _dmc(
-        "DMCAcrobotSwingup",
+    "DMCAcrobotBalance": _dmc(
+        "DMCAcrobotBalance",
         "swm/AcrobotDMControl-v0",
         dead_upstream={
             "agent.upper_arm_locked": _never_read(),

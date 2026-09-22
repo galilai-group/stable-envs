@@ -1,3 +1,7 @@
+> Current semantic identity: the renderer-era `DMCAcrobotSwingup` is now
+> `DMCAcrobotBalance` (historical sparse Balance). Measurements below retain
+> their original labels; see [identity correction](acrobot_identity_correction.md).
+
 # DM Control: a frame is `f(state)`, and the two renderers that reproduce it
 
 **Verdict: sixteen cells, eleven at parity and five at the visual tier.** The five that landed first —

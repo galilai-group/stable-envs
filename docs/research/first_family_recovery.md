@@ -7,7 +7,7 @@ independent upstream CPU instances; CUDA selects State and renderer placement.
 
 | Historical registration | Verified implementation | Scope |
 | --- | --- | --- |
-| `swm/AcrobotDMControl-v0` | `DMCAcrobotSwingup` | Historical sparse default |
+| `swm/AcrobotDMControl-v0` | `DMCAcrobotBalance` | Historical sparse default |
 | `swm/PendulumDMControl-v0` | `DMCPendulumSwingup` | Historical default |
 | `swm/CartpoleDMControl-v0` | `DMCCartpoleSwingup` | Historical sparse swing-up default |
 | `swm/OGBMaze-v0` | `PointMazeLargeNavigate` | Point/large maze, state observations, 224 pixels |

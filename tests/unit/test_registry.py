@@ -60,7 +60,7 @@ def test_the_swm_crosswalk_is_the_step8_support_matrix_row_for_row():
 @pytest.mark.parametrize("swm_id", SWM_IDS_IN_MATRIX)
 def test_every_swm_id_joins_the_cells_the_matrix_records(swm_id):
     cells = SWM_IDS[swm_id]
-    assert canonical_names(swm_id) == cells
+    assert canonical_names(swm_id) == tuple(canonical_from_frozen(cell) for cell in cells)
     live = class_for_frozen_cell(cells[0]) if len(cells) == 1 else None
     with pytest.raises(KeyError, match="unknown env"):
         R.make(swm_id)
@@ -128,7 +128,7 @@ def test_list_envs_and_info_answer_without_constructing_anything():
 
 def test_unpublished_historical_class_names_do_not_resolve():
     """Pre-v0 renames are not public aliases. Frozen SWM ids are not either."""
-    samples = ("PointmazeLargeNavigate", "MujocoAnt", "PFRocketLanding")
+    samples = ("DMCAcrobotSwingup", "PointmazeLargeNavigate", "MujocoAnt", "PFRocketLanding")
     for old in samples:
         live = canonical_from_frozen(old)
         if live == old or live not in R.REGISTRY:

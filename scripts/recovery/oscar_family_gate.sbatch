@@ -32,7 +32,7 @@ export XDG_CACHE_HOME="$base/cache" WARP_CACHE_PATH="$base/cache/warp"
 nvidia-smi
 export PYTHONPATH="$base/baseline:$base/swm-reference:$deps"
 cd "$base/baseline"
-"$py" "$base/family_renderer_boundary.py" --cohort "$cohort" --device cuda --output "$base/$stage-renderer-baseline-cuda.json"
+"$py" "$base/family_renderer_boundary.py" --cohort "$cohort" --device cuda --output "$base/$stage-renderer-baseline-cuda.json" --historical-baseline
 export PYTHONPATH="$base/$stage:$base/swm-reference:$deps"
 cd "$base/$stage"
 "$py" "$gate" --device cuda --output "$base/$stage-gate-cuda.json"

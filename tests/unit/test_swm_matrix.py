@@ -450,13 +450,13 @@ def test_parameter_space_comes_from_the_swm_wrapper_not_the_suite(mx):
         "dmc_reference": {"reference_id": "dm_control/acrobot-swingup_sparse", "how": "exact"},
         "swm_task_space": {"accepts_task": False, "why": "AcrobotDMControlWrapper.__init__ takes no `task` argument"},
     }
-    decls = {"DMCAcrobotSwingup": {"reference_id": "dm_control/acrobot-swingup"}}
+    decls = {"DMCAcrobotBalance": {"reference_id": "dm_control/acrobot-swingup"}}
     match = {
-        "envs": ["DMCAcrobotSwingup"],
+        "envs": ["DMCAcrobotBalance"],
         "rung": "same_dmc_appearance",
         "confidence": "verified",
         "evidence": "",
-        "primary": "DMCAcrobotSwingup",
+        "primary": "DMCAcrobotBalance",
     }
     # a suite index that DOES list a second acrobot task must not create a missing configuration
     suite = {"acrobot": {"swingup": "aaa", "swingup_sparse": "aaa"}}

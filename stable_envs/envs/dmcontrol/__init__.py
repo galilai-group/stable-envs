@@ -1,78 +1,15 @@
-"""DM Control suite — eighteen cells in two tiers, one state vector each.
+"""DM Control renderers and independently recovered historical task semantics.
 
-``stable_envs.envs.dmcontrol`` IS this package. This package split the 3,376-line module it used to be into
-one small base, two renderer modules and one module per domain (plan §3, §12 B); every name the module
-exported is re-exported here, so ``from stable_envs.envs import dmcontrol as D`` and every
-``D.<anything>`` the tests and the probes reach for keeps resolving, and the
-registered classes still report ``stable_envs.envs.dmcontrol`` as their module — which is the path
-they are reachable at. Family is the explicit ``family`` class attribute.
+Each domain module declares its public class identity. Verified implementations
+compose the preserved renderer with independent authoritative CPU simulators;
+CUDA selects full-State and frame placement, not GPU physics. See the semantic
+recovery matrix for exact task scopes. Unrecovered cells refuse public simulator
+State/reset/step rather than returning compact renderer projections.
 
-WHERE THINGS ARE
-----------------
-
-``base``      ``_DMCModel``: the model plumbing, the widened state, the appearance knobs, the visited
-              distribution, the bridge to dm_control's own renderer. Properties of the DOMAIN.
-``suite``     the PARITY renderer: three baked plates and an analytic ray-cast of the movers.
-``trackcom``  the VISUAL renderer: the whole scene to MJWarp (CUDA) or ``cpu3d`` (CPU), every frame.
-``_model``    what a compiled ``MjModel`` says, the caches, and the census of what an episode draws.
-``_shading``  the lit-surface law both tiers evaluate, and the lights (including MuJoCo's headlight,
-              which is not in the model).
-``_tendon``   ``mjv_catenary`` and the capsule chain it becomes — ``ball_in_cup``'s string.
-``_cells``    how a cell is DECLARED, and the provenance strings several of them share.
-<domain>.py   one module per domain, holding that domain's declarations and its leaf classes. What a
-              reader looking for "what does cheetah claim" opens.
-
-Reference: ``dm_control.suite.load(domain, task).physics.render(h, w, camera_id=0)``, which is
-``mujoco.Renderer`` at the default ``MjvOption`` (verified: 0/255 against a hand-built Renderer on
-every domain probed). So the target is MuJoCo's own EGL raster of a lit 3-D scene, not a vector
-drawing.
-
-TWO TIERS, AND WHAT SPLITS THEM
--------------------------------
-
-Camera 0 is a ``fixed`` model camera on twelve cells and a ``mode="trackcom"`` camera that rides the
-body on six. That single fact decides the renderer and therefore the tier:
-
-  * **PARITY** (``DMControlSuite``, twelve cells): the static half of the scene is a constant image,
-    so it is baked through MuJoCo itself and only the movers are ray-cast. Interior-pixel agreement is
-    exactly 1.000000 wherever the metric is defined.
-  * **VISUAL** (``DMControlTrackCom``, six cells): with the camera on the body there is no static
-    half to bake — hide every mover and the remaining frame still moves by 51-220/255 — so the whole
-    scene goes to MJWarp every frame. Mean 3.5-8.1/255 against ``physics.render``, and the residual is
-    two named texture mechanisms. These are NOT the official pixels; see ``DMControlTrackCom``.
-
-WHAT THE STATE IS, AND WHY IT IS NOT ALWAYS ``qpos``
-----------------------------------------------------
-
-Measured, not asserted. Over 17 domains at 84 px: re-rendering
-the same ``qpos`` changes 0 pixels, scaling ``qvel`` by 100 changes 0 pixels, reaching the same
-``qpos`` after a different history changes 0 pixels, and EVERY ``qpos`` entry moves pixels in every
-domain.
-
-Within an episode that makes the state ``qpos``. Across episodes it does not, on four domains, because
-``initialize_episode`` writes the episode's draw into the MODEL rather than into ``qpos``: ``reacher``
-moves a target geom, ``finger-turn`` a target site, ``swimmer`` a target geom AND a target light.
-Restoring ``qpos`` alone into a different episode leaves 171-219/255 of disagreement over 0.6-90% of
-the frame; restoring ``qpos`` plus those 2-4 floats is **0/255** on every one. So the state is ``qpos`` plus the episode's draw, the draw is
-DISCOVERED by diffing episodes rather than transcribed (``_episode_slots``), and ``state_names`` names
-each entry.
-
-The public :data:`~stable_envs.State` is that same row, grouped by what the two halves ARE:
-``{"qpos": (nq,), "episode": (k,)}``, with the ``episode`` key absent on the eleven cells that draw
-nothing. Nothing is hidden and nothing is reordered — ``pack``/``unpack`` round-trip the frozen corpus
-layout bit for bit.
-
-NO DYNAMICS
------------
-
-A declaration rather than an omission: these cells ship a renderer over ``dm_control``'s own physics
-and there is no batched simulator in this package for any of them, so ``step``/``transition`` raise
-``Env``'s precise refusal and ``has_dynamics`` is False. ``reset`` and ``render`` always work; to
-produce trajectories, roll out the official CPU env and render the states it gives you.
-
-The long-form research notes — why the plate + ray-cast design, where the parity residual lives, why
-the interior claim does not hold at 256 px, and why MJWarp is not used for the fixed-camera cells —
-are in ``docs/research/dmcontrol.md`` and in the modules that implement each of them.
+Full State includes each task's experimentally established continuation fields.
+The private renderer representation remains qpos plus any episode model draw;
+it is never sufficient evidence for simulator restoration. Renderer provenance
+and historical measurements remain in the domain modules and research reports.
 """
 
 from __future__ import annotations
@@ -158,7 +95,7 @@ from ._tendon import (  # noqa: F401
     _tendon_polyline,
     catenary,
 )
-from .acrobot import DMCAcrobotSwingup  # noqa: F401
+from .acrobot import DMCAcrobotBalance  # noqa: F401
 from .ball_in_cup import DMCBallInCupCatch  # noqa: F401
 from .base import _DMCModel  # noqa: F401
 from .cartpole import DMCCartpoleBalance, DMCCartpoleSwingup  # noqa: F401

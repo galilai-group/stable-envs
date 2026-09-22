@@ -14,7 +14,7 @@ import numpy as np
 import stable_envs as se
 
 COHORTS = {
-    "dmc": ("DMCAcrobotSwingup", "DMCPendulumSwingup", "DMCCartpoleSwingup"),
+    "dmc": ("DMCAcrobotBalance", "DMCPendulumSwingup", "DMCCartpoleSwingup"),
     "ogbench": ("PointMazeLargeNavigate",),
 }
 
@@ -24,14 +24,19 @@ def main():
     parser.add_argument("--cohort", choices=COHORTS, required=True)
     parser.add_argument("--device", choices=("cpu", "cuda"), required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--historical-baseline", action="store_true")
     args = parser.parse_args()
     results = {}
     for name in COHORTS[args.cohort]:
-        corpus_name = "PointmazeLargeNavigate" if name == "PointMazeLargeNavigate" else name
+        corpus_name = {
+            "PointMazeLargeNavigate": "PointmazeLargeNavigate",
+            "DMCAcrobotBalance": "DMCAcrobotSwingup",
+        }.get(name, name)
+        lookup_name = "DMCAcrobotSwingup" if args.historical_baseline and name == "DMCAcrobotBalance" else name
         path = Path("tests/fixtures/regression/join/step4/states") / f"{corpus_name}.npz"
         with np.load(path) as corpus:
             rows = corpus["states"][:4].copy()
-        with se.make(name, num_envs=len(rows), device=args.device) as env:
+        with se.make(lookup_name, num_envs=len(rows), device=args.device) as env:
             render = getattr(env, "_render", env.render)
             frame = render(rows).cpu().numpy()
             results[name] = {

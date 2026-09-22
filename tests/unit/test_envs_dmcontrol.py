@@ -44,7 +44,7 @@ dmc = pytest.importorskip(
 #: read off the package: a test that derives its own expectation from the thing under test cannot see
 #: a cell disappear.
 PARITY = (
-    "DMCAcrobotSwingup",
+    "DMCAcrobotBalance",
     "DMCBallInCupCatch",
     "DMCCartpoleBalance",
     "DMCCartpoleSwingup",
@@ -66,14 +66,14 @@ TRACKCOM = (
     "DMCWalkerWalk",
 )
 ALL = PARITY + TRACKCOM
-RECOVERED = ("DMCReacherHard", "DMCAcrobotSwingup", "DMCPendulumSwingup", "DMCCartpoleSwingup")
+RECOVERED = ("DMCReacherHard", "DMCAcrobotBalance", "DMCPendulumSwingup", "DMCCartpoleSwingup")
 
 #: Which domain module each cell is WRITTEN in. The registry reports the package for all eighteen
 #: (see ``test_every_cell_reports_the_package_as_its_module``); this is the other half of that fact —
 #: the cell is written where its domain is, which is what plan §3 asks for and what makes "what does
 #: cheetah claim" a one-file question.
 WRITTEN_IN = {
-    "DMCAcrobotSwingup": "acrobot",
+    "DMCAcrobotBalance": "acrobot",
     "DMCBallInCupCatch": "ball_in_cup",
     "DMCCartpoleBalance": "cartpole",
     "DMCCartpoleSwingup": "cartpole",

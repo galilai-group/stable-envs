@@ -36,7 +36,7 @@
     {
       "historical_id": "swm/AcrobotDMControl-v0",
       "stable_envs_classes": [
-        "DMCAcrobotSwingup"
+        "DMCAcrobotBalance"
       ],
       "family": "dmcontrol",
       "owner": "dmcontrol-first-family",
@@ -67,11 +67,11 @@
       "execution_candidate": "DELEGATED",
       "recovery_status": "ACCEPTED_CPU_AND_OSCAR",
       "verified_classes": [
-        "DMCAcrobotSwingup"
+        "DMCAcrobotBalance"
       ],
       "verification_scope": {
         "classes": [
-          "DMCAcrobotSwingup"
+          "DMCAcrobotBalance"
         ],
         "seeds": [
           0,
@@ -86,13 +86,15 @@
         "lifecycle_steps": 502,
         "atol": 0,
         "rtol": 0,
-        "same_persistent_variation_required": true
+        "same_persistent_variation_required": true,
+        "task": "Balance(sparse=True)"
       },
       "evidence": [
         "docs/research/semantic_recovery_evidence/dmc_first_family_cpu.json",
         "docs/research/semantic_recovery_evidence/dmc_first_family_cuda.json",
         "docs/research/first_family_recovery.md"
-      ]
+      ],
+      "oracle_identity": "tests/fixtures/semantics/dmc_first_family/acrobot_identity.json"
     },
     {
       "historical_id": "swm/BallInCupDMControl-v0",
@@ -1064,7 +1066,16 @@
       ],
       "test": "tests/unit/test_full_state_contract.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
-      "execution_candidate": "DELEGATED"
+      "execution_candidate": "DELEGATED",
+      "recovery_status": "BLOCKED_CONSTRUCTOR",
+      "blocker": {
+        "status": "OPEN",
+        "kind": "DEFAULT_CONSTRUCTOR_FAILURE",
+        "exception": "SceneEnv.__init__() missing required env_type",
+        "baseline_reproduced": true,
+        "resolution_cohort": "OGBench manipulation",
+        "permanent_skip": false
+      }
     },
     {
       "historical_id": "swm/PFRocketLanding-v0",
@@ -1470,5 +1481,5 @@
       "execution_candidate": "DELEGATED"
     }
   ],
-  "checkpoint": "Approved shared contract retained; Reacher plus four bounded historical defaults verified on CPU and Oscar; other 37 registrations remain incomplete"
+  "checkpoint": "First cohort approved after Acrobot sparse-Balance identity correction; exact scopes only; integration continues on repair/environment-semantics"
 }

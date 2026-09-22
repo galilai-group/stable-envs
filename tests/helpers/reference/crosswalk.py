@@ -30,6 +30,7 @@ SYMBOLIC_IDS = tuple(sorted(k for k, v in SWM_IDS.items() if not v))
 
 #: Frozen-oracle / support-matrix cell spelling -> live class name.
 HISTORICAL_CLASS_NAMES: dict[str, str] = {
+    "DMCAcrobotSwingup": "DMCAcrobotBalance",
     "AntmazeGiantNavigate": "AntMazeGiantNavigate",
     "AntmazeGiantStitch": "AntMazeGiantStitch",
     "AntmazeLargeExplore": "AntMazeLargeExplore",
@@ -98,7 +99,7 @@ def canonical_names(name: str) -> tuple[str, ...]:
     live = canonical_from_frozen(name)
     if live in REGISTRY:
         return (live,)
-    return SWM_IDS.get(name, ())
+    return tuple(canonical_from_frozen(cell) for cell in SWM_IDS.get(name, ()))
 
 
 def swm_ids_for_class(name: str) -> tuple[str, ...]:
