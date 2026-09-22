@@ -1574,33 +1574,62 @@
       "owner": "native_navigation",
       "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
       "state_status": "INCOMPLETE",
-      "action_parity": "UNTESTED",
-      "reset_parity": "UNTESTED",
-      "step_parity": "UNTESTED",
-      "reward_parity": "UNTESTED",
-      "terminated_truncated_parity": "UNTESTED",
-      "rng_lifecycle": "UNTESTED",
-      "variation_parity": "UNTESTED",
-      "execution_mode": "NATIVE",
-      "adapter_status": "NOT_IMPLEMENTED",
-      "renderer_regression": "PENDING",
-      "oracle_corpus": null,
+      "action_parity": "PASS_EXACT_CPU_DEFAULT_FLOAT32",
+      "reset_parity": "PASS_CPU_SEEDED_DEFAULT_AND_SCOPED_OPTIONS; other options explicitly refused",
+      "step_parity": "PASS_EXACT_CPU; CUDA_STATE_PENDING",
+      "reward_parity": "PASS_EXACT_CPU_INCLUDING_STRICT_SUCCESS_BOUNDARIES",
+      "terminated_truncated_parity": "PASS_EXACT_CPU; no source horizon or auto-reset",
+      "rng_lifecycle": "PASS_SEEDED_RESET_AND_TWO_HISTORIES; no step RNG; unseeded reset uses fresh external entropy upstream",
+      "variation_parity": "PASS_CPU_COMBINED_NONDEFAULT_DYNAMICS_WITH_DEFAULT_DIVERGENCE; complete historical surface remains uncertified",
+      "execution_mode": "NATIVE_TORCH",
+      "adapter_status": "NATIVE_IMPLEMENTED_HISTORICAL_DEFAULT",
+      "renderer_regression": "PASS_THREE_CELL_FROZEN_CPU; SPM private historical hidden-goal translation; OSCAR_PENDING",
+      "oracle_corpus": "tests/fixtures/semantics/native_navigation/manifest.json",
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Stable native step returns state only; reference rewards/termination/info omitted.",
-        "Reset options and goal semantics unverified."
+        "Required Oscar CUDA State/output and frozen renderer gate pending cluster scheduling",
+        "Complete sampled reset options, historical Variation surface and sibling variants remain uncertified",
+        "Unseeded reset draws fresh external entropy in pinned source; no restored-unseeded-reset replay claim",
+        "All-42 renderer certification and paired benchmarks remain unrun"
       ],
-      "test": "tests/unit/test_full_state_contract.py",
+      "test": "tests/integration/test_native_navigation_gate.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "audit_status": "SOURCE_AUDITED_NOT_VERIFIED",
-      "audit_report": "docs/research/native_verification.md",
-      "recovery_status": "CPU_COHORT_IN_PROGRESS",
+      "audit_report": "docs/research/native_navigation_recovery.md",
+      "recovery_status": "CPU_PASSED_OSCAR_PENDING",
       "cohort": "remaining-simple-and-source-aligned",
       "worktree_base": "152cb2402bd44063f414865faff6d28e4ccb67c2",
-      "planned_gate": "scripts/recovery/native_navigation_gate.py"
+      "planned_gate": "scripts/recovery/native_navigation_gate.py",
+      "implementation_commit": "9fed5402631660c0764229182ed2a71c9a7a8e83",
+      "evidence": [
+        "docs/research/native_navigation_recovery.md",
+        "docs/research/semantic_recovery_evidence/native_navigation_cpu.json",
+        "docs/research/semantic_recovery_evidence/native_navigation_renderer_cpu.json"
+      ],
+      "verification_scope": {
+        "classes": [
+          "Piecewise"
+        ],
+        "seeds": [
+          0,
+          17,
+          42
+        ],
+        "batches": [
+          1,
+          3
+        ],
+        "trajectory_steps": 32,
+        "lifecycle_steps_without_truncation": 257,
+        "atol": 0,
+        "rtol": 0,
+        "same_persistent_variation_required": true,
+        "status": "CPU_PASSED_OSCAR_PENDING"
+      },
+      "oscar_job": 6611139
     },
     {
       "historical_id": "swm/PushT-Discrete-v1",
@@ -1800,32 +1829,33 @@
       "owner": "native_navigation",
       "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
       "state_status": "INCOMPLETE",
-      "action_parity": "UNTESTED",
-      "reset_parity": "UNTESTED",
-      "step_parity": "UNTESTED",
-      "reward_parity": "UNTESTED",
-      "terminated_truncated_parity": "UNTESTED",
-      "rng_lifecycle": "UNTESTED",
-      "variation_parity": "UNTESTED",
-      "execution_mode": "NATIVE",
-      "adapter_status": "NOT_IMPLEMENTED",
-      "renderer_regression": "PENDING",
-      "oracle_corpus": null,
+      "action_parity": "PASS_EXACT_CPU; SimplePointMaze float16/float32/float64 and blocked promotion gated",
+      "reset_parity": "PASS_CPU_SEEDED_DEFAULT_AND_SCOPED_OPTIONS; other options explicitly refused",
+      "step_parity": "PASS_EXACT_CPU; CUDA_STATE_PENDING",
+      "reward_parity": "PASS_EXACT_CPU_INCLUDING_STRICT_SUCCESS_BOUNDARIES",
+      "terminated_truncated_parity": "PASS_EXACT_CPU; no source horizon or auto-reset",
+      "rng_lifecycle": "PASS_SEEDED_RESET_AND_TWO_HISTORIES; no step RNG; unseeded reset uses fresh external entropy upstream",
+      "variation_parity": "PASS_CPU_COMBINED_NONDEFAULT_DYNAMICS_WITH_DEFAULT_DIVERGENCE; complete historical surface remains uncertified",
+      "execution_mode": "NATIVE_TORCH",
+      "adapter_status": "NATIVE_IMPLEMENTED_HISTORICAL_DEFAULT",
+      "renderer_regression": "PASS_THREE_CELL_FROZEN_CPU; SPM private historical hidden-goal translation; OSCAR_PENDING",
+      "oracle_corpus": "tests/fixtures/semantics/native_navigation/manifest.json",
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Stable native step returns state only; reference rewards/termination/info omitted.",
-        "Reset options and goal semantics unverified.",
-        "SWM goal image is sampled at a random agent location, while reward goal is separate variation goal.position; do not silently conflate them.",
-        "Historical default uses show_goal=True; existing renderer default uses show_goal=False"
+        "Required Oscar CUDA State/output and frozen renderer gate pending cluster scheduling",
+        "Complete sampled reset options, historical Variation surface and sibling variants remain uncertified",
+        "Unseeded reset draws fresh external entropy in pinned source; no restored-unseeded-reset replay claim",
+        "SimplePointMaze exact cached goal image requires Matplotlib Agg; CPU profile3.10.9 tested, Oscar profile3.11.1 pending",
+        "All-42 renderer certification and paired benchmarks remain unrun"
       ],
-      "test": "tests/unit/test_full_state_contract.py",
+      "test": "tests/integration/test_native_navigation_gate.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "audit_status": "SOURCE_AUDITED_NOT_VERIFIED",
-      "audit_report": "docs/research/native_verification.md",
-      "recovery_status": "CPU_COHORT_IN_PROGRESS",
+      "audit_report": "docs/research/native_navigation_recovery.md",
+      "recovery_status": "CPU_PASSED_OSCAR_PENDING",
       "blocker": {
         "status": "OPEN",
         "kind": "DEFAULT_VISUAL_IDENTITY_MISMATCH",
@@ -1836,7 +1866,34 @@
       },
       "cohort": "remaining-simple-and-source-aligned",
       "worktree_base": "152cb2402bd44063f414865faff6d28e4ccb67c2",
-      "planned_gate": "scripts/recovery/native_navigation_gate.py"
+      "planned_gate": "scripts/recovery/native_navigation_gate.py",
+      "implementation_commit": "9fed5402631660c0764229182ed2a71c9a7a8e83",
+      "evidence": [
+        "docs/research/native_navigation_recovery.md",
+        "docs/research/semantic_recovery_evidence/native_navigation_cpu.json",
+        "docs/research/semantic_recovery_evidence/native_navigation_renderer_cpu.json"
+      ],
+      "verification_scope": {
+        "classes": [
+          "SimplePointMaze"
+        ],
+        "seeds": [
+          0,
+          17,
+          42
+        ],
+        "batches": [
+          1,
+          3
+        ],
+        "trajectory_steps": 32,
+        "lifecycle_steps_without_truncation": 257,
+        "atol": 0,
+        "rtol": 0,
+        "same_persistent_variation_required": true,
+        "status": "CPU_PASSED_OSCAR_PENDING"
+      },
+      "oscar_job": 6611139
     },
     {
       "historical_id": "swm/TwoRoom-v1",
@@ -1848,33 +1905,62 @@
       "owner": "native_navigation",
       "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
       "state_status": "INCOMPLETE",
-      "action_parity": "UNTESTED",
-      "reset_parity": "UNTESTED",
-      "step_parity": "UNTESTED",
-      "reward_parity": "UNTESTED",
-      "terminated_truncated_parity": "UNTESTED",
-      "rng_lifecycle": "UNTESTED",
-      "variation_parity": "UNTESTED",
-      "execution_mode": "NATIVE",
-      "adapter_status": "NOT_IMPLEMENTED",
-      "renderer_regression": "PASS_SCOPED_CPU_CUDA: four frozen rows per selected class; explicit legacy target visibility for Reacher",
-      "oracle_corpus": null,
+      "action_parity": "PASS_EXACT_CPU_DEFAULT_FLOAT32",
+      "reset_parity": "PASS_CPU_SEEDED_DEFAULT_AND_SCOPED_OPTIONS; other options explicitly refused",
+      "step_parity": "PASS_EXACT_CPU; CUDA_STATE_PENDING",
+      "reward_parity": "PASS_EXACT_CPU_INCLUDING_STRICT_SUCCESS_BOUNDARIES",
+      "terminated_truncated_parity": "PASS_EXACT_CPU; no source horizon or auto-reset",
+      "rng_lifecycle": "PASS_SEEDED_RESET_AND_TWO_HISTORIES; no step RNG; unseeded reset uses fresh external entropy upstream",
+      "variation_parity": "PASS_CPU_COMBINED_NONDEFAULT_DYNAMICS_WITH_DEFAULT_DIVERGENCE; complete historical surface remains uncertified",
+      "execution_mode": "NATIVE_TORCH",
+      "adapter_status": "NATIVE_IMPLEMENTED_HISTORICAL_DEFAULT",
+      "renderer_regression": "PASS_THREE_CELL_FROZEN_CPU; SPM private historical hidden-goal translation; OSCAR_PENDING",
+      "oracle_corpus": "tests/fixtures/semantics/native_navigation/manifest.json",
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Stable native step returns state only; reference rewards/termination/info omitted.",
-        "Reset options and goal semantics unverified."
+        "Required Oscar CUDA State/output and frozen renderer gate pending cluster scheduling",
+        "Complete sampled reset options, historical Variation surface and sibling variants remain uncertified",
+        "Unseeded reset draws fresh external entropy in pinned source; no restored-unseeded-reset replay claim",
+        "All-42 renderer certification and paired benchmarks remain unrun"
       ],
-      "test": "tests/unit/test_full_state_contract.py",
+      "test": "tests/integration/test_native_navigation_gate.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "audit_status": "SOURCE_AUDITED_NOT_VERIFIED",
-      "audit_report": "docs/research/native_verification.md",
-      "recovery_status": "CPU_COHORT_IN_PROGRESS",
+      "audit_report": "docs/research/native_navigation_recovery.md",
+      "recovery_status": "CPU_PASSED_OSCAR_PENDING",
       "cohort": "remaining-simple-and-source-aligned",
       "worktree_base": "152cb2402bd44063f414865faff6d28e4ccb67c2",
-      "planned_gate": "scripts/recovery/native_navigation_gate.py"
+      "planned_gate": "scripts/recovery/native_navigation_gate.py",
+      "implementation_commit": "9fed5402631660c0764229182ed2a71c9a7a8e83",
+      "evidence": [
+        "docs/research/native_navigation_recovery.md",
+        "docs/research/semantic_recovery_evidence/native_navigation_cpu.json",
+        "docs/research/semantic_recovery_evidence/native_navigation_renderer_cpu.json"
+      ],
+      "verification_scope": {
+        "classes": [
+          "TwoRoom"
+        ],
+        "seeds": [
+          0,
+          17,
+          42
+        ],
+        "batches": [
+          1,
+          3
+        ],
+        "trajectory_steps": 32,
+        "lifecycle_steps_without_truncation": 257,
+        "atol": 0,
+        "rtol": 0,
+        "same_persistent_variation_required": true,
+        "status": "CPU_PASSED_OSCAR_PENDING"
+      },
+      "oscar_job": 6611139
     },
     {
       "historical_id": "swm/WalkerDMControl-v0",

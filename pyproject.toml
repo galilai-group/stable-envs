@@ -40,10 +40,13 @@ Issues = "https://github.com/galilai-group/stable-envs/issues"
 Source = "https://github.com/galilai-group/stable-envs"
 
 [project.optional-dependencies]
-# Reference-family extras. Backends remain separate so users do not install CUDA
+# Family extras. Backends remain separate so users do not install CUDA
 # extensions merely to compare against an official CPU renderer.
 pusht = ["gym-pusht", "pygame", "pymunk"]
 box2d = ["gymnasium[box2d]>=1.0", "pygame"]
+# SimplePointMaze's exact cached info.goal image uses Matplotlib Agg.
+# Navigation dynamics and the public renderer remain native Torch.
+navigation = ["matplotlib>=3.10"]
 minigrid = ["minigrid"]
 ogbench = ["mujoco>=3.11,<3.13", "ogbench"]
 highway = ["highway-env"]

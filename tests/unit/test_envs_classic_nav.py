@@ -2,8 +2,9 @@
 
 Classic-control implementations use authoritative Gymnasium CPU execution with full
 lifecycle/RNG State. Their exact SWM parity lives in the bounded test_native_classic_* gates.
-The other cells retain their existing structural tests and are not certified by
-having a native step implementation. Frozen renderer evidence is independent.
+The three navigation defaults own native dynamics with explicit task continuation
+State. Sibling variants retain structural coverage only. Frozen renderer evidence
+and exact pinned-source semantic gates are independent checks.
 """
 
 from __future__ import annotations
@@ -25,7 +26,8 @@ CLASSIC = ("CartPole", "Pendulum", "Acrobot", "MountainCar", "MountainCarContinu
 NAV = ("TwoRoom", "TwoRoomTarget", "Piecewise", "PiecewiseZones", "SimplePointMaze")
 ALL = CLASSIC + NAV
 RECOVERED = CLASSIC
-PURE = tuple(name for name in ALL if name not in RECOVERED)
+NAV_RECOVERED = ("TwoRoom", "Piecewise", "SimplePointMaze")
+PURE = NAV
 
 #: What each cell's public State is keyed by. Written out rather than derived from the class, so a
 #: silent change of the public vocabulary is a failure and not a tautology.
@@ -46,6 +48,10 @@ KEYS = {
 RNG_KEYS = [("rng", name) for name in ("state", "increment", "has_uint32", "uinteger")]
 FULL_KEYS = {
     **KEYS,
+    "TwoRoom": KEYS["TwoRoom"] + [("target", "position")],
+    "Piecewise": KEYS["Piecewise"] + [("target", "position")],
+    "SimplePointMaze": KEYS["SimplePointMaze"]
+    + [("goal", "position"), ("task", "cached_goal_agent_position"), ("task", "state_is_float64")],
     "Acrobot": KEYS["Acrobot"] + [("lifecycle", "elapsed_steps")] + RNG_KEYS,
     "MountainCar": KEYS["MountainCar"] + [("lifecycle", "elapsed_steps")] + RNG_KEYS,
     "MountainCarContinuous": KEYS["MountainCarContinuous"]
@@ -68,7 +74,7 @@ FULL_KEYS = {
 
 
 def _initialize(env, name, seed):
-    if name in RECOVERED:
+    if name in RECOVERED + NAV_RECOVERED:
         env.reset(seed=seed)
     else:
         env._set_render_state(env.sample_states(env.B, np.random.default_rng(seed)))
@@ -146,7 +152,7 @@ def test_transition_is_bit_identical_to_the_stateful_step(name):
     functional = env.transition(env.state, a)
     stateful = env.step(a)["state"]
     assert torch.equal(env._pack_render_state(functional), env._pack_render_state(stateful))
-    for k in KEYS[name]:
+    for k in FULL_KEYS[name]:
         assert torch.equal(functional[k], stateful[k]), f"{'.'.join(k)} differs"
     env.close()
 
@@ -166,13 +172,13 @@ def test_transition_does_not_touch_the_env_and_unroll_is_repeated_transition(nam
     cur = env.state
     for t in range(4):
         cur = env.transition(cur, acts[t])
-        for k in KEYS[name]:
+        for k in FULL_KEYS[name]:
             assert torch.equal(traj[t][k], cur[k])
 
     # ... and four steps of the stateful path land on exactly the same numbers.
     for t in range(4):
         env.step(acts[t])
-    for k in KEYS[name]:
+    for k in FULL_KEYS[name]:
         assert torch.equal(traj[3][k], env.state[k]), f"{'.'.join(k)} drifted over four steps"
     env.close()
 
@@ -193,7 +199,7 @@ def test_render_takes_a_state_a_packed_row_or_nothing_and_draws_the_same_frame(n
     env.close()
 
 
-@pytest.mark.parametrize("name", PURE)
+@pytest.mark.parametrize("name", ("TwoRoomTarget", "PiecewiseZones"))
 def test_unrecovered_step_reports_only_its_implemented_state(name):
     env = _env(name, 2)
     env._set_render_state(env.sample_states(2, np.random.default_rng(3)))
@@ -233,22 +239,24 @@ def test_the_registered_default_frame_size_and_the_specs_agree(name):
     env.close()
 
 
-def test_the_shared_swm_reference_bridge_drives_simple_point_maze_the_old_way():
-    """The one refactor this host cannot measure against the live reference, checked on a stub.
+def test_the_swm_reference_bridge_uses_the_source_default_goal_visibility():
+    """Canonical reference rows contain agent and reward-goal coordinates."""
 
-    ``SimplePointMaze``'s reference is a matplotlib figure, and neither local interpreter has
-    matplotlib, so ``reference_render`` cannot be run against the official env here (the other four
-    navigation cells share the identical ``_GymReferencePort`` gymnasium reference-env bridge and ARE
-    measured against theirs — see findings §6). What is checkable without it is the call SEQUENCE, which is the whole of what
-    the merge changed: the reset must pass ``options={"variation": []}`` (a plain reset resamples
-    ``agent.position`` and every number measured afterwards would describe a different appearance),
-    the state must be written to ``u.state`` as float32, and ``render`` must be called with
-    ``"rgb_array"`` — matplotlib's env requires the mode, the torch-rendered cells refuse it.
-    """
+    class _Leaf:
+        _value = None
+
+        @property
+        def value(self):
+            return self._value
+
     calls = []
 
     class _Stub:
         state = np.zeros(2, np.float32)
+        variation_space = {
+            "agent": {"position": _Leaf()},
+            "goal": {"position": _Leaf()},
+        }
 
         def reset(self, seed=None, options=None):
             calls.append(("reset", seed, options))
@@ -262,14 +270,15 @@ def test_the_shared_swm_reference_bridge_drives_simple_point_maze_the_old_way():
             return self
 
     ref = _Stub()
-    want = np.array([[1.0, 2.0], [3.0, 4.0]], np.float32)
+    want = np.array([[1.0, 2.0, 4.5, 4.5], [3.0, 4.0, 2.5, 3.5]], np.float32)
     frames = snv.SimplePointMaze.reference_render(ref, want)
 
     assert frames.shape == (2, 500, 500, 3)
     assert calls[0] == ("reset", 0, {"variation": []})
     assert [c for c in calls if c[0] == "render"] == [("render", ("rgb_array",))] * 2
-    assert ref.state.dtype == np.float32 and np.array_equal(ref.state, want[1])
-    assert snv.SimplePointMaze.reference_kwargs == {"show_goal": False}
+    assert ref.state.dtype == np.float32 and np.array_equal(ref.state, want[1, :2])
+    assert np.array_equal(ref.variation_space["goal"]["position"]._value, want[1, 2:])
+    assert snv.SimplePointMaze.reference_kwargs == {"show_goal": True}
 
 
 @pytest.mark.parametrize("name", CLASSIC)
@@ -322,7 +331,7 @@ def test_transition_still_equals_step_after_the_env_has_been_stepped(name):
     functional = env.transition(env.state, a)
     stateful = env.step(a)["state"]
     assert torch.equal(env._pack_render_state(functional), env._pack_render_state(stateful))
-    for k in KEYS[name]:
+    for k in FULL_KEYS[name]:
         assert torch.equal(functional[k], stateful[k]), f"{'.'.join(k)} differs after five steps"
     env.close()
 

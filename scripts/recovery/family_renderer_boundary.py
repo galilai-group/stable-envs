@@ -47,6 +47,10 @@ def main():
             rows = corpus["states"][:4].copy()
         with se.make(lookup_name, num_envs=len(rows), device=args.device) as env:
             render = getattr(env, "_render", env.render)
+            if name == "SimplePointMaze" and not args.historical_baseline:
+                # The historical two-column corpus hid the goal. The corrected
+                # public default shows it and has a four-column projection.
+                render = env._render_historical_rows
             frame = render(rows).cpu().numpy()
             results[name] = {
                 "rows_sha256": hashlib.sha256(rows.tobytes()).hexdigest(),

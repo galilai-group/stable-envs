@@ -68,3 +68,62 @@ three existing Swimmer CPU skips. The four frozen CPU renderer cells match basel
 Oscar job `6610032` gates the immutable source archive, all four CUDA State/render
 cells, Reacher, the first DMC family, and the previous DMC continuation cohort.
 All four new rows remain `INCOMPLETE / CPU_PASSED_OSCAR_PENDING`.
+
+## Native navigation CPU checkpoint
+
+Immutable implementation `9fed5402631660c0764229182ed2a71c9a7a8e83` is integrated
+on the repair branch. The final independent coordinator CPU gate passed all
+18 seed/batch cells and the hidden-field and dtype-flag omission probes against
+uninterrupted source outputs. Float16/32/64 actions, blocked dtype retention,
+strict success thresholds, structural Variation divergence, and cached goal-image
+bytes are covered. All three frozen CPU renderer cells match baseline.
+
+SimplePointMaze now shows its reward goal by default. Its full State preserves
+physical precision and the cached image's separate agent position. The historical
+hidden-goal two-column renderer remains available only through the private
+`_render_historical_rows` fixture translation. No historical fixture changed.
+Its cached `info.goal` output requires the new `navigation` optional dependency
+(`pip install -e '.[navigation]'`). CPU exact-byte evidence uses Matplotlib 3.10.9;
+the queued Oscar profile has 3.11.1 and must pass its own exact source comparison.
+
+Oscar job `6611139` gates the immutable navigation archive and a separately
+versioned renderer driver/runner. None of the four older queued jobs was modified.
+All three new navigation rows remain `INCOMPLETE / CPU_PASSED_OSCAR_PENDING`.
+
+## Integrated validation and remaining acceptance
+
+The combined CPU suite passed **304 tests**. It initially reported six skips:
+three expected Swimmer CPU exclusions and three OGBench dependency skips. Running
+the OGBench suite in its existing `/Users/samib/se7-ogb-venv` environment passed
+all four tests (including the oracle hash check already counted in the main run).
+Thus **307 distinct tests passed**, with only the three existing Swimmer CPU
+exclusions remaining. Coverage includes Reacher, the earlier DMC families, the
+earlier classic-control defaults, OGBench Maze, all ten new defaults, the shared
+semantic harness, full-State/API contracts, and immutable oracle checks. The
+maintained readiness inventory also passed its eight consistency checks.
+
+The ten new defaults have exact CPU gates and byte-identical scoped frozen CPU
+renderer comparisons. GPU acceptance is still open. At **2026-09-22 17:00 UTC**,
+all five jobs were `PENDING (QOSGrpGRES)` with no execution or completion evidence:
+
+| Job | Acceptance slice | Immutable source |
+| --- | --- | --- |
+| 6605941 | Earlier CartPole/Pendulum | `446f8608bc800c2d61701f675a2536df0dcbaa3f` |
+| 6605999 | Earlier Cheetah/Hopper/Walker | `6470521e84a47d5f95a5bd5f0c5a338ab293619f` |
+| 6608718 | Remaining classic control | `b3b6da79555020a3fe9ae046c3f6b4a2bef8a153` |
+| 6610032 | Source-aligned DMC | `e4d5c2cd99d035fc57d84dd5eab1ea70e9b26941` |
+| 6611139 | Native navigation | `9fed5402631660c0764229182ed2a71c9a7a8e83` |
+
+Close the preceding five-registration cohort only after retrieving its actual
+terminal `FAMILY_GPU_GATE_PASS` markers, exact semantic JSON and matching
+baseline/candidate frozen renderer JSON. The DMC jobs additionally require their
+Reacher and earlier-family regression outputs. Apply the same acceptance rule to
+each new slice; job completion alone is insufficient. Immutable archive/driver
+hashes and output requirements are recorded in the pending evidence files.
+
+No registration was promoted: the semantic matrix remains **5 VERIFIED /
+37 INCOMPLETE**, with 15 of those incomplete rows now CPU-passed/Oscar-pending.
+PushT stays separate and unstarted in this cohort. Fetch, Craftax and Rocket were
+not started. Humanoid Walk/Stand and the OGBench Scene constructor blocker remain
+explicit. Shared contracts, the Phase 0 audit, historical render/performance
+fixtures, `v0-draft`, and `baseline/renderer-v0` remain unchanged. No branch was pushed.

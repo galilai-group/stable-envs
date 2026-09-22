@@ -23,6 +23,7 @@ driver="$base/${3:?immutable renderer driver filename required}"
 export MUJOCO_GL=egl PYOPENGL_PLATFORM=egl OMP_NUM_THREADS=4
 export TORCH_EXTENSIONS_DIR="$base/cache/torch" TRITON_CACHE_DIR="$base/cache/triton"
 export XDG_CACHE_HOME="$base/cache" WARP_CACHE_PATH="$base/cache/warp"
+export MPLBACKEND=Agg MPLCONFIGDIR="$base/cache/matplotlib"
 nvidia-smi
 export PYTHONPATH="$base/baseline:$base/swm-reference:$deps"
 cd "$base/baseline"

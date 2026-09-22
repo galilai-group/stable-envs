@@ -37,10 +37,54 @@
         "first-family DMC regression",
         "continuation DMC regression"
       ]
+    },
+    {
+      "job_id": 6611139,
+      "cohort": "native_navigation",
+      "source_commit": "9fed5402631660c0764229182ed2a71c9a7a8e83",
+      "stage": "native-navigation-9fed540",
+      "archive_sha256": "363506d943f65c97300c6fb71a248f61e97c57839228e0361b2cddc71d7c6f30",
+      "driver": "family_renderer_boundary-1b5ef11.py",
+      "driver_sha256": "1b5ef11ffe3c8bf48c9949c7433035d2844a58e536ac8a5cd8232a1665c18459",
+      "runner": "oscar_simple_cohort_gate-98f7736.sbatch",
+      "runner_sha256": "98f773635d78a69fede783d1f4a2c78adca491be3e9c81975dca451709b6c6c0",
+      "acceptance_requires": [
+        "FAMILY_GPU_GATE_PASS native-navigation-9fed540",
+        "exact CUDA State and numeric-output semantic gate including goal-image bytes",
+        "baseline/candidate frozen renderer JSON equality"
+      ]
     }
   ],
   "preceding_cohort_jobs": [
     6605941,
     6605999
-  ]
+  ],
+  "last_checked_utc": "2026-09-22 17:00 UTC",
+  "all_job_states": {
+    "6605941": {
+      "state": "PENDING",
+      "reason": "QOSGrpGRES",
+      "elapsed": "00:00:00"
+    },
+    "6605999": {
+      "state": "PENDING",
+      "reason": "QOSGrpGRES",
+      "elapsed": "00:00:00"
+    },
+    "6608718": {
+      "state": "PENDING",
+      "reason": "QOSGrpGRES",
+      "elapsed": "00:00:00"
+    },
+    "6610032": {
+      "state": "PENDING",
+      "reason": "QOSGrpGRES",
+      "elapsed": "00:00:00"
+    },
+    "6611139": {
+      "state": "PENDING",
+      "reason": "QOSGrpGRES",
+      "elapsed": "00:00:00"
+    }
+  }
 }
