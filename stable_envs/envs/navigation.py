@@ -220,9 +220,10 @@ Both were answered by measurement before any of this was written
 State and appearance
 --------------------
 
-The state is the agent's position and nothing else: 2 floats against a 500x500x3 frame, a ratio of
-**1/93,750**, the largest in this repo. Everything else on the canvas — the walls' count, sizes,
-positions and colour, the agent's colour and radius, the background — is variation, and all of it is
+The canonical render projection contains agent and reward-goal positions. Full continuation State
+also carries the distinct agent position used to generate the cached ``info.goal`` image and a dtype
+flag for NumPy's accepted float64-action promotion. Everything else on the canvas — wall count, sizes,
+positions and colour, entity radii/colours, and background — is persistent variation, and all of it is
 per-environment, so a batch of 4096 mazes with 4096 different layouts is still one launch.
 
 The default wall layout is a constant of the family rather than a free parameter: the official env
@@ -231,11 +232,11 @@ result in as the leaf's ``init_value``. The same two draws are reproduced here s
 ``default_style()`` is the official appearance, and the parity script asserts the two agree rather
 than trusting the reproduction.
 
-Why the goal disc is not drawn
-------------------------------
+Why the goal disc can be drawn exactly
+--------------------------------------
 
 ``SimplePointMazeEnv`` takes ``show_goal`` and defaults it to True, drawing the goal as a
-``Circle(..., alpha=0.5)``. Two measured facts decide what to do with it:
+``Circle(..., alpha=0.5)``. Two measured facts determine the implementation:
 
   1. **The compositing rule is closed-form and was solved.** Over 12 (background, colour) pairs =
      36 channels, ``out = floor(bg + (c - bg) * (128 - eps)/255)`` reproduces **36/36**; plain
@@ -245,17 +246,12 @@ Why the goal disc is not drawn
      So an exact port of the goal disc is available, and the env's own constraint that the goal may
      never overlap a wall (``constrain_fn`` on ``goal.position`` rejects any placement that
      collides) means one pre-blend against the background is always sufficient.
-  2. **A half-transparent primitive cannot satisfy ``check_colors_apply_exactly``.** That check sets
-     each declared RGB knob to a literal colour and requires the frame to contain that colour
-     somewhere. A disc composited at 128/255 never puts its own colour on the canvas — the official
-     env does not either: ``goal.color = (17,33,200)`` over the default white background produces
-     ``(135,143,227)``. The check is right about opaque primitives and has no way to express this
-     one, and it lives in a file this env does not own.
+  2. **The goal colour names the source colour before alpha compositing.** The rendered centre is the
+     measured blend, e.g. ``goal.color = (17,33,200)`` over white produces ``(135,143,227)``.
 
-So the configuration registered here is ``show_goal=False``, exactly as ``TwoRoom`` and
-``PiecewiseZones`` register one configuration of their official env each. The measured blend rule is
-recorded above so that adding the goal disc is a short job once the shared check can express a
-translucent knob; the migration coverage note records what that would take.
+The registered identity is therefore the actual empty-kwargs default, ``show_goal=True``. The
+renderer pre-blends the goal colour against the background and draws that equivalent opaque disc
+before the agent.
 
 Output size
 -----------
@@ -290,9 +286,10 @@ from __future__ import annotations
 
 import numpy as np
 import torch
+from gymnasium import spaces as gym_spaces
 from tensordict import TensorDict
 
-from ..env import Env, check_states
+from ..env import Env, StepResult, check_states
 from ..registry import register
 from ..render import _resources as _RES
 from ..render import navdot
@@ -511,6 +508,128 @@ def _alpha_blend(img_u8: torch.Tensor, alpha: torch.Tensor, rgb: torch.Tensor) -
     return out.to(torch.uint8)
 
 
+def _seed_leaf(shape=(1,), low=0.0, high=1.0, dtype=np.float32):
+    """A plain Gymnasium leaf used only to reproduce SWM's recursive seed routing.
+
+    Gymnasium ``Dict.seed`` assigns an independent seed to every child.  The seed reaching a
+    position leaf therefore depends on the complete ancestor tree, including siblings that reset
+    does not sample.  These source-shaped trees retain that routing without importing SWM in
+    production.  Their sampled position leaves were compared bit-for-bit with the pinned source at
+    seeds 0, 17 and 42; the reference-only gate repeats that check for every supported batch.
+    """
+
+    return gym_spaces.Box(low=low, high=high, shape=shape, dtype=dtype)
+
+
+def _two_room_reset_tree():
+    return gym_spaces.Dict(
+        {
+            "agent": gym_spaces.Dict(
+                {
+                    "color": _seed_leaf((3,), 0, 255, np.uint8),
+                    "radius": _seed_leaf(),
+                    "position": _seed_leaf((2,), POS_LO, POS_HI),
+                    "speed": _seed_leaf(),
+                }
+            ),
+            "background": gym_spaces.Dict({"color": _seed_leaf((3,), 0, 255, np.uint8)}),
+            "door": gym_spaces.Dict(
+                {
+                    "color": _seed_leaf((3,), 0, 255, np.uint8),
+                    "number": gym_spaces.Discrete(3),
+                    "position": _seed_leaf((3,), 0, 223),
+                    "size": _seed_leaf((3,), 1, 21),
+                }
+            ),
+            "rendering": gym_spaces.Dict({"render_target": gym_spaces.Discrete(2)}),
+            "target": gym_spaces.Dict(
+                {
+                    "color": _seed_leaf((3,), 0, 255, np.uint8),
+                    "position": _seed_leaf((2,), POS_LO, POS_HI),
+                    "radius": _seed_leaf(),
+                }
+            ),
+            "task": gym_spaces.Dict({"min_steps": gym_spaces.Discrete(100)}),
+            "wall": gym_spaces.Dict(
+                {
+                    "axis": gym_spaces.Discrete(2),
+                    "border_color": _seed_leaf((3,), 0, 255, np.uint8),
+                    "color": _seed_leaf((3,), 0, 255, np.uint8),
+                    "thickness": gym_spaces.Discrete(35),
+                }
+            ),
+        }
+    )
+
+
+def _piecewise_reset_tree():
+    zones = {}
+    for i in range(N_ZONES):
+        zones[f"bias_{i}"] = _seed_leaf((2,), -4, 4)
+        zones[f"color_{i}"] = _seed_leaf((3,), 0, 255, np.uint8)
+    return gym_spaces.Dict(
+        {
+            "agent": gym_spaces.Dict(
+                {
+                    "color": _seed_leaf((3,), 0, 255, np.uint8),
+                    "radius": _seed_leaf(),
+                    "position": _seed_leaf((2,), POS_LO, POS_HI),
+                    "speed": _seed_leaf(),
+                }
+            ),
+            "background": gym_spaces.Dict({"color": _seed_leaf((3,), 0, 255, np.uint8)}),
+            "border": gym_spaces.Dict({"color": _seed_leaf((3,), 0, 255, np.uint8)}),
+            "rendering": gym_spaces.Dict(
+                {
+                    "render_bias_field": gym_spaces.Discrete(2),
+                    "render_target": gym_spaces.Discrete(2),
+                    "render_zones": gym_spaces.Discrete(2),
+                }
+            ),
+            "target": gym_spaces.Dict(
+                {
+                    "color": _seed_leaf((3,), 0, 255, np.uint8),
+                    "position": _seed_leaf((2,), POS_LO, POS_HI),
+                    "radius": _seed_leaf(),
+                }
+            ),
+            "task": gym_spaces.Dict({"min_steps": gym_spaces.Discrete(100)}),
+            "zones": gym_spaces.Dict(zones),
+        }
+    )
+
+
+def _simple_maze_reset_tree():
+    return gym_spaces.Dict(
+        {
+            "agent": gym_spaces.Dict(
+                {
+                    "color": _seed_leaf((3,), 0, 255, np.uint8),
+                    "position": _seed_leaf((2,), 0, 5),
+                    "radius": _seed_leaf(shape=()),
+                    "speed": _seed_leaf(shape=()),
+                }
+            ),
+            "background": gym_spaces.Dict({"color": _seed_leaf((3,), 0, 255, np.uint8)}),
+            "goal": gym_spaces.Dict(
+                {
+                    "color": _seed_leaf((3,), 0, 255, np.uint8),
+                    "position": _seed_leaf((2,), 0, 5),
+                    "radius": _seed_leaf(shape=()),
+                }
+            ),
+            "walls": gym_spaces.Dict(
+                {
+                    "color": _seed_leaf((3,), 0, 255, np.uint8),
+                    "number": gym_spaces.Discrete(MAX_WALLS - MIN_WALLS + 1),
+                    "positions": _seed_leaf((MAX_WALLS, 2), 0, 5),
+                    "shape": _seed_leaf((MAX_WALLS, 2), 0.5, 1.5),
+                }
+            ),
+        }
+    )
+
+
 class _GymReferencePort(Env):
     """The shared gymnasium reference-env bridge for certification.
 
@@ -651,6 +770,163 @@ class _GymReferencePort(Env):
     def _advance_rows(self, rows: torch.Tensor, action: torch.Tensor, sty) -> torch.Tensor:
         """``(n, state_dim)`` + a clipped action + the style -> the next packed rows. Pure."""
         raise NotImplementedError
+
+
+class _HiddenTargetSemantics:
+    """Historical task semantics for the two default hidden-target navigation cells.
+
+    The compact renderer row remains the two agent coordinates used by the frozen visual corpus.
+    Target position is nevertheless continuation State: reward/termination and every observation
+    read it, and restoring two identical agent rows with different targets changes the next output.
+    """
+
+    execution_mode = "NATIVE_TORCH"
+    state_layout = ((('agent', 'position'), 2, 0), (('target', 'position'), 2, None))
+    state_bounds = {
+        ('agent', 'position'): (POS_LO, POS_HI),
+        ('target', 'position'): (POS_LO, POS_HI),
+    }
+    reset_tree_factory = None
+    reset_value_paths = frozenset()
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._target_position = torch.full((self.B, 2), 0.0, device=self.device, dtype=torch.float32)
+        self._target_position[:, 0] = 164.0
+        self._target_position[:, 1] = 112.0
+
+    def _hidden_state(self):
+        return {('target', 'position'): self._target_position[: self._live_rows].clone()}
+
+    def _restore_state(self, state):
+        self._set_render_state(self._pack_render_state(state))
+        self._target_position.copy_(
+            torch.as_tensor(state['target', 'position'], device=self.device, dtype=torch.float32).reshape(self.B, 2)
+        )
+
+    @staticmethod
+    def _option_position(value, lane, batch):
+        value = np.asarray(value, np.float32)
+        if value.shape == (2,):
+            return value.copy()
+        if value.shape == (batch, 2):
+            return value[lane].copy()
+        raise ValueError(f"reset position option must have shape (2,) or ({batch}, 2), got {value.shape}")
+
+    def _agent_sample_ok(self, value, lane):
+        del value, lane
+        return True
+
+    def reset(self, seed=None, options=None):
+        self._check_open('reset')
+        options = dict(options or {})
+        variations = options.get('variation', ('agent.position', 'target.position'))
+        if not isinstance(variations, (list, tuple)):
+            raise ValueError('variation option must be a Sequence containing variations names')
+        values = dict(options.get('variation_values', {}))
+        unsupported_samples = set(variations) - {'agent.position', 'target.position'}
+        if unsupported_samples:
+            raise NotImplementedError(
+                f"{type(self).__name__}.reset does not certify sampled variation leaves {sorted(unsupported_samples)}"
+            )
+        supported_values = {'agent.position', 'target.position'} | set(self.reset_value_paths)
+        unsupported_values = set(values) - supported_values
+        if unsupported_values:
+            raise NotImplementedError(
+                f"{type(self).__name__}.reset does not certify variation_values {sorted(unsupported_values)}"
+            )
+        style_values = {key: value for key, value in values.items() if key in self.reset_value_paths}
+        if style_values:
+            self.set_variation(style_values)
+        agent_rows, target_rows = [], []
+        for lane in range(self.B):
+            tree = self.reset_tree_factory()
+            tree.seed(None if seed is None else int(seed) + lane)
+            agent_leaf, target_leaf = tree['agent']['position'], tree['target']['position']
+            agent = np.asarray([60.0, 112.0], np.float32)
+            target = np.asarray([164.0, 112.0], np.float32)
+            if 'agent.position' in variations:
+                for _ in range(1000):
+                    candidate = agent_leaf.sample()
+                    if self._agent_sample_ok(candidate, lane):
+                        agent = candidate
+                        break
+                else:
+                    raise RuntimeError('agent.position rejection sampling did not converge')
+            if 'target.position' in variations:
+                target = target_leaf.sample()
+            if 'agent.position' in values:
+                agent = np.asarray(values['agent.position'], np.float32)
+            if 'target.position' in values:
+                target = np.asarray(values['target.position'], np.float32)
+            if 'state' in options:
+                agent = self._option_position(options['state'], lane, self.B)
+            if 'target_state' in options:
+                target = self._option_position(options['target_state'], lane, self.B)
+            agent_rows.append(agent)
+            target_rows.append(target)
+        self._set_render_state(np.stack(agent_rows))
+        self._target_position.copy_(torch.as_tensor(np.stack(target_rows), device=self.device))
+        self._live_rows = self.B
+        return self.get_state()
+
+    def _full_state(self, agent):
+        n = int(agent.shape[0])
+        return TensorDict(
+            {
+                'agent': {'position': agent.clone()},
+                'target': {'position': self._target_position[:n].clone()},
+            },
+            batch_size=[n],
+            device=self.device,
+        )
+
+    def _observation(self, agent, target):
+        return torch.cat([agent, target], dim=1)
+
+    def _outputs(self, state):
+        agent = state['agent', 'position']
+        target = state['target', 'position']
+        observation = self._observation(agent, target)
+        distance = torch.linalg.vector_norm(agent - target, dim=1)
+        n = int(state.batch_size[0])
+        return StepResult(
+            {
+                'state': state,
+                'reward': torch.zeros(n, device=self.device, dtype=torch.float64),
+                'terminated': distance < 16.0,
+                'truncated': torch.zeros(n, device=self.device, dtype=torch.bool),
+                'observation': observation,
+                'info': {
+                    'proprio': agent.clone(),
+                    'state': agent.clone(),
+                    'goal_state': target.clone(),
+                    'distance_to_target': distance.to(torch.float64),
+                },
+            },
+            batch_size=[n],
+            device=self.device,
+        )
+
+    @torch.no_grad()
+    def transition(self, state, action):
+        self._validate_state(state)
+        rows, sty = self._rows_and_style(state, 'transition')
+        act = torch.as_tensor(action, device=self.device, dtype=torch.float32).reshape(-1, self.action_dim)
+        agent = self._advance_rows(rows, act, sty)[:, :2]
+        target = torch.as_tensor(state['target', 'position'], device=self.device, dtype=torch.float32)
+        return TensorDict(
+            {'agent': {'position': agent}, 'target': {'position': target.clone()}},
+            batch_size=[int(agent.shape[0])],
+            device=self.device,
+        )
+
+    @torch.no_grad()
+    def step(self, action):
+        self._check_open('step')
+        act = torch.as_tensor(action, device=self.device, dtype=torch.float32).reshape(self.B, self.action_dim)
+        self._render_state.copy_(self._advance_rows(self._render_state, act, self._style))
+        return self._outputs(self.get_state())
 
 
 class _TorchNavBase(_GymReferencePort):
@@ -1068,21 +1344,31 @@ class _TwoRoomBase(_TorchNavBase):
 
 
 @register
-class TwoRoom(_TwoRoomBase):
+class TwoRoom(_HiddenTargetSemantics, _TwoRoomBase):
     """Two rooms, a wall with doors, no target drawn. Default ``TwoRoom`` configuration.
 
-    State is the agent position and nothing else, because that is all the frame reads under
-    ``render_target = 0``. The goal image is not a second kind of frame — the official comparison
-    env produces it as ``_render_frame(agent_pos=target_position)``, i.e. this same renderer at a
-    different state — so a corpus of agent positions regenerates the goals too.
+    The compact renderer reads only agent position under ``render_target = 0``. Full continuation
+    State also carries hidden target position because observations, distance and termination read it;
+    compact rows therefore cannot restore this task.
     """
 
     name = "two-room"
     state_dim = 2
     state_names = ("agent_x", "agent_y")
     reference_kwargs = {"render_target": False}
-    state_layout = ((("agent", "position"), 2, 0),)
-    state_bounds = {("agent", "position"): (POS_LO, POS_HI)}
+    reset_tree_factory = staticmethod(_two_room_reset_tree)
+    reset_value_paths = frozenset({'agent.speed'})
+    dynamics_variation_leaves = frozenset(
+        {
+            'agent.speed',
+            'agent.radius',
+            'wall.thickness',
+            'wall.axis',
+            'door.number',
+            'door.position',
+            'door.size',
+        }
+    )
 
     def make_variation_space(self) -> Dict:
         return Dict({"agent": Dict(self._agent_space()), **self._structure_space()})
@@ -1092,6 +1378,30 @@ class TwoRoom(_TwoRoomBase):
         shared step check only sees a ``step`` in the concrete class's own ``__dict__`` — see the
         note above ``_GymReferencePort.step``."""
         return super().step(action)
+
+    def _agent_sample_ok(self, value, lane):
+        axis = int(self._style['wall.axis'][lane].item())
+        thickness = int(self._style['wall.thickness'][lane].item())
+        radius = float(self._style['agent.radius'][lane].item())
+        lo = WALL_CENTER - thickness // 2 - radius
+        hi = WALL_CENTER + thickness // 2 + radius
+        return not (lo <= float(value[0 if axis == 1 else 1]) <= hi)
+
+    def _observation(self, agent, target):
+        n = int(agent.shape[0])
+        axis = self._style['wall.axis'][:n] > 0.5
+        count = self._style['door.number'][:n].trunc()
+        positions = self._style['door.position'][:n]
+        doors = []
+        center = torch.full((n,), float(WALL_CENTER), device=self.device, dtype=torch.float32)
+        zeros = torch.zeros_like(center)
+        for i in range(MAX_DOOR):
+            live = count > i
+            p = positions[:, i]
+            x = torch.where(live, torch.where(axis, center, p), zeros)
+            y = torch.where(live, torch.where(axis, p, center), zeros)
+            doors.extend([x, y])
+        return torch.cat([agent, target, torch.stack(doors, dim=1)], dim=1)
 
     def sample_states(self, batch: int, rng: np.random.Generator | None = None) -> np.ndarray:
         """The official reset distribution for ``agent.position``.
@@ -1205,7 +1515,9 @@ class _PiecewiseBase(_TorchNavBase):
     state_bounds = {("agent", "position"): (POS_LO, POS_HI)}
     #: Default zone biases. The live values are ``zones.bias_*`` variation leaves (dynamics-only).
     zone_bias = ZONE_BIAS
-    dynamics_variation_leaves = frozenset({"agent.speed", *(f"zones.bias_{i}" for i in range(N_ZONES))})
+    dynamics_variation_leaves = frozenset(
+        {"agent.speed", "agent.radius", *(f"zones.bias_{i}" for i in range(N_ZONES))}
+    )
 
     def _common_space(self) -> dict:
         return {
@@ -1250,7 +1562,7 @@ class _PiecewiseBase(_TorchNavBase):
 
 
 @register
-class Piecewise(_PiecewiseBase):
+class Piecewise(_HiddenTargetSemantics, _PiecewiseBase):
     """One open room, four invisible bias zones. Default ``Piecewise`` configuration.
 
     The zones are the whole point of the env and they are invisible by default — ``render_zones``
@@ -1264,6 +1576,8 @@ class Piecewise(_PiecewiseBase):
     #: zone tint is reachable only through the variation space. Passing it as a kwarg raises, which is
     #: how the asymmetry with ``TwoRoomEnv`` was found; ``PiecewiseZones`` sets the leaf instead.
     reference_kwargs: dict = {}
+    reset_tree_factory = staticmethod(_piecewise_reset_tree)
+    reset_value_paths = frozenset({'agent.speed', *(f'zones.bias_{i}' for i in range(N_ZONES))})
 
     def make_variation_space(self) -> Dict:
         return Dict({**self._common_space(), "zones": Dict(self._zone_bias_space())})
@@ -1320,9 +1634,12 @@ MAX_WALLS = 6
 MIN_WALLS = 4
 
 MAZE_AGENT_C = (255, 0, 0)
+MAZE_GOAL_C = (0, 255, 0)
 MAZE_WALL_C = (0, 0, 0)
 MAZE_BG_C = (255, 255, 255)
 MAZE_AGENT_R = 0.1
+MAZE_GOAL_R = 0.2
+MAZE_GOAL_POS = (4.5, 4.5)
 N_WALLS = 5
 #: The reference's own action bounds: ``Box(-0.2, 0.2)``.
 ACTION_LIMIT = 0.2
@@ -1356,26 +1673,45 @@ DEFAULT_WALL_SHAPE, DEFAULT_WALL_POS = _default_walls()
 
 @register
 class SimplePointMaze(_GymReferencePort):
-    """5x5 point maze with ``show_goal=False``. State: the agent's ``(x, y)``."""
+    """Exact default 5x5 point maze with the reward goal visible."""
 
     name = "simple-point-maze"
-    state_dim = 2
-    state_names = ("agent_x", "agent_y")
+    execution_mode = "NATIVE_TORCH"
+    state_dim = 4
+    state_names = ("agent_x", "agent_y", "goal_x", "goal_y")
     default_size = SIZE
     reference_id = None
-    #: the configuration this cell registers; see "Why the goal disc is not drawn" above
-    reference_kwargs = {"show_goal": False}
+    reference_kwargs = {"show_goal": True}
     #: matplotlib's env needs the mode named; the torch-rendered cells take no argument
     reference_render_args = ("rgb_array",)
     action_dim = 2
     action_low = -ACTION_LIMIT
     action_high = ACTION_LIMIT
-    state_layout = ((("agent", "position"), 2, 0),)
-    state_bounds = {("agent", "position"): (0.0, WORLD)}
+    state_layout = (
+        (("agent", "position"), 2, 0, torch.float64),
+        (("goal", "position"), 2, 2),
+        (("task", "cached_goal_agent_position"), 2, None),
+        (("task", "state_is_float64"), 1, None, torch.bool),
+    )
+    state_bounds = {
+        ("agent", "position"): (0.0, WORLD),
+        ("goal", "position"): (0.0, WORLD),
+        ("task", "cached_goal_agent_position"): (0.0, WORLD),
+        ("task", "state_is_float64"): (0, 1),
+    }
 
     #: Default agent speed. The live value is the ``agent.speed`` variation leaf (dynamics-only).
     speed = MAZE_AGENT_SPEED
-    dynamics_variation_leaves = frozenset({"agent.speed"})
+    dynamics_variation_leaves = frozenset(
+        {
+            "agent.speed",
+            "agent.radius",
+            "goal.radius",
+            "walls.number",
+            "walls.shape",
+            "walls.positions",
+        }
+    )
 
     def make_variation_space(self) -> Dict:
         return Dict(
@@ -1385,6 +1721,12 @@ class SimplePointMaze(_GymReferencePort):
                         "color": RGBBox(init_value=MAZE_AGENT_C),
                         "radius": Box(low=0.05, high=0.5, shape=(1,), init_value=[MAZE_AGENT_R]),
                         "speed": Box(low=0.05, high=8.0, shape=(1,), init_value=[MAZE_AGENT_SPEED]),
+                    }
+                ),
+                "goal": Dict(
+                    {
+                        "color": RGBBox(init_value=MAZE_GOAL_C),
+                        "radius": Box(low=0.05, high=0.5, shape=(1,), init_value=[MAZE_GOAL_R]),
                     }
                 ),
                 "walls": Dict(
@@ -1399,10 +1741,182 @@ class SimplePointMaze(_GymReferencePort):
             }
         )
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._cached_goal_agent_position = torch.full(
+            (self.B, 2), 0.5, device=self.device, dtype=torch.float32
+        )
+        self._agent_position = torch.full((self.B, 2), 0.5, device=self.device, dtype=torch.float64)
+        self._state_is_float64 = torch.zeros(self.B, 1, device=self.device, dtype=torch.bool)
+        self._cached_goal_image = torch.zeros(
+            self.B, SIZE, SIZE, 3, device=self.device, dtype=torch.uint8
+        )
+
+    def _hidden_state(self):
+        return {
+            ('task', 'cached_goal_agent_position'): self._cached_goal_agent_position[
+                : self._live_rows
+            ].clone(),
+            ('task', 'state_is_float64'): self._state_is_float64[: self._live_rows].clone(),
+        }
+
+    def _live_state(self):
+        return {('agent', 'position'): self._agent_position[: self._live_rows].clone()}
+
+    def _restore_state(self, state):
+        self._set_render_state(self._pack_render_state(state))
+        self._cached_goal_agent_position.copy_(
+            torch.as_tensor(
+                state['task', 'cached_goal_agent_position'],
+                device=self.device,
+                dtype=torch.float32,
+            ).reshape(self.B, 2)
+        )
+        state_is_float64 = torch.as_tensor(
+            state['task', 'state_is_float64'], device=self.device, dtype=torch.bool
+        ).reshape(self.B, 1)
+        agent = torch.as_tensor(
+            state['agent', 'position'], device=self.device, dtype=torch.float64
+        ).reshape(self.B, 2)
+        agent = torch.where(state_is_float64, agent, agent.to(torch.float32).to(torch.float64))
+        self._agent_position.copy_(agent)
+        self._render_state[:, 0:2].copy_(agent.to(torch.float32))
+        self._state_is_float64.copy_(state_is_float64)
+        self._regenerate_cached_goal()
+
+    def _position_collides(self, value, lane):
+        p = np.asarray(value, np.float32)
+        number = int(self._style['walls.number'][lane].item())
+        positions = self._style['walls.positions'][lane].detach().cpu().numpy().reshape(MAX_WALLS, 2)
+        shapes = self._style['walls.shape'][lane].detach().cpu().numpy().reshape(MAX_WALLS, 2)
+        radius = float(self._style['agent.radius'][lane].item())
+        for corner, shape in zip(positions[:number], shapes[:number], strict=True):
+            lo = np.minimum(corner, corner + shape)
+            hi = np.maximum(corner, corner + shape)
+            closest = np.clip(p, lo, hi)
+            if float(np.square(closest - p).sum()) <= radius**2:
+                return True
+        return False
+
+    def reset(self, seed=None, options=None):
+        self._check_open('reset')
+        options = dict(options or {})
+        variations = options.get('variation', ('agent.position',))
+        if not isinstance(variations, (list, tuple)):
+            raise ValueError('variation option must be a Sequence containing variations names')
+        values = dict(options.get('variation_values', {}))
+        unsupported_samples = set(variations) - {'agent.position'}
+        if unsupported_samples:
+            raise NotImplementedError(
+                'SimplePointMaze.reset certifies sampled agent.position only; unsupported leaves '
+                f'{sorted(unsupported_samples)}'
+            )
+        supported_values = {'agent.position', 'goal.position', 'agent.speed', 'goal.radius'}
+        unsupported_values = set(values) - supported_values
+        if unsupported_values:
+            raise NotImplementedError(
+                f'SimplePointMaze.reset does not certify variation_values {sorted(unsupported_values)}'
+            )
+        style_values = {key: value for key, value in values.items() if key in {'agent.speed', 'goal.radius'}}
+        if style_values:
+            self.set_variation(style_values)
+        starts, cached, goals = [], [], []
+        for lane in range(self.B):
+            tree = _simple_maze_reset_tree()
+            tree.seed(None if seed is None else int(seed) + lane)
+            leaf = tree['agent']['position']
+
+            def sample_free():
+                for _ in range(1000):
+                    candidate = leaf.sample()
+                    if not self._position_collides(candidate, lane):
+                        return candidate
+                raise RuntimeError('agent.position rejection sampling did not converge')
+
+            start = sample_free() if 'agent.position' in variations else np.asarray([0.5, 0.5], np.float32)
+            if 'agent.position' in values:
+                start = np.asarray(values['agent.position'], np.float32)
+            cached_position = sample_free()
+            goal = np.asarray(values.get('goal.position', MAZE_GOAL_POS), np.float32)
+            starts.append(start)
+            cached.append(cached_position)
+            goals.append(goal)
+        rows = np.concatenate([np.stack(starts), np.stack(goals)], axis=1)
+        self._set_render_state(rows)
+        self._agent_position.copy_(torch.as_tensor(np.stack(starts), device=self.device, dtype=torch.float64))
+        self._state_is_float64.zero_()
+        self._cached_goal_agent_position.copy_(torch.as_tensor(np.stack(cached), device=self.device))
+        self._live_rows = self.B
+        self._regenerate_cached_goal()
+        return self.get_state()
+
+    def _regenerate_cached_goal(self):
+        """Rebuild SWM's cached ``info.goal`` byte-for-byte from explicit State + Variation.
+
+        This is the only production use of Matplotlib.  Dynamics and the public renderer remain
+        native torch.  Agg 3.10.9 is the pinned oracle version used by the gate.
+        """
+
+        try:
+            from matplotlib.backends.backend_agg import FigureCanvasAgg
+            from matplotlib.figure import Figure
+            from matplotlib.patches import Circle, Rectangle
+        except ImportError as exc:
+            raise ImportError(
+                'SimplePointMaze exact info.goal output requires matplotlib (validated with 3.10.9)'
+            ) from exc
+
+        rows = self._render_state.detach().cpu().numpy()
+        cached = self._cached_goal_agent_position.detach().cpu().numpy()
+        images = []
+        for lane in range(self.B):
+            fig = Figure(figsize=(5, 5))
+            FigureCanvasAgg(fig)
+            ax = fig.subplots()
+            ax.set_xlim(0, WORLD)
+            ax.set_ylim(0, WORLD)
+            ax.set_aspect('equal')
+            ax.set_xticks([])
+            ax.set_yticks([])
+            background = self._style['background.color'][lane].detach().cpu().numpy() / 255.0
+            ax.set_facecolor(background)
+            number = int(self._style['walls.number'][lane].item())
+            shapes = self._style['walls.shape'][lane].detach().cpu().numpy().reshape(MAX_WALLS, 2)
+            positions = self._style['walls.positions'][lane].detach().cpu().numpy().reshape(MAX_WALLS, 2)
+            wall_color = self._style['walls.color'][lane].detach().cpu().numpy() / 255.0
+            for position, shape in zip(positions[:number], shapes[:number], strict=True):
+                ax.add_patch(Rectangle(position, shape[0], shape[1], facecolor=wall_color))
+            goal_color = self._style['goal.color'][lane].detach().cpu().numpy() / 255.0
+            goal_radius = float(self._style['goal.radius'][lane].item())
+            ax.add_patch(Circle(rows[lane, 2:4], goal_radius, facecolor=goal_color, alpha=0.5))
+            agent_color = self._style['agent.color'][lane].detach().cpu().numpy() / 255.0
+            agent_radius = float(self._style['agent.radius'][lane].item())
+            ax.add_patch(Circle(cached[lane], agent_radius, facecolor=agent_color))
+            fig.tight_layout(pad=0)
+            fig.canvas.draw()
+            width, height = fig.canvas.get_width_height()
+            image = np.frombuffer(fig.canvas.tostring_argb(), dtype=np.uint8).reshape(height, width, 4)[:, :, 1:]
+            images.append(image.copy())
+            fig.clear()
+        self._cached_goal_image.copy_(torch.as_tensor(np.stack(images), device=self.device))
+
+    def _render_historical_rows(self, rows):
+        """Render the immutable former two-column hidden-goal corpus privately.
+
+        This is intentionally not a public identity alias.  Canonical State/render rows have four
+        columns and show the reward goal; the coordinator uses this method only to preserve the old
+        frozen renderer evidence generated for the pre-recovery hidden-goal configuration.
+        """
+
+        old = torch.as_tensor(rows, device=self.device, dtype=torch.float32).reshape(-1, 2)
+        goal = torch.tensor(MAZE_GOAL_POS, device=self.device, dtype=torch.float32).expand(len(old), 2)
+        full = torch.cat([old, goal], dim=1)
+        return self._render(full, variation={'goal.color': MAZE_BG_C})
+
     # ---------------------------------------------------------------- scene
 
     def scene(self, states, variation: dict | None = None, style=None) -> Scene2D:
-        s = torch.as_tensor(states, device=self.device, dtype=torch.float32).reshape(-1, 2)
+        s = torch.as_tensor(states, device=self.device, dtype=torch.float32).reshape(-1, 4)
         n = int(s.shape[0])
         sty = self.resolve_style(style, variation, batch=n)
         sb = SceneBuilder(n, device=self.device, vertices=4)
@@ -1421,7 +1935,13 @@ class SimplePointMaze(_GymReferencePort):
         # or layout makes the prefix differ across the batch (SceneBuilder.mark_static)
         sb.mark_static()
 
-        sb.add_disc(s, sty["agent.radius"], sty["agent.color"])
+        # Agg's alpha=.5 is 128/255 coverage.  The goal is constrained away from walls, so its
+        # opaque equivalent is a pre-blend against the background; the agent is then drawn over it.
+        bg64 = bg.to(torch.float64)
+        goal64 = sty["goal.color"].to(torch.float64)
+        goal_blend = torch.floor(bg64 + (goal64 - bg64) * ((128.0 - 1e-9) / 255.0)).to(torch.float32)
+        sb.add_disc(s[:, 2:4], sty["goal.radius"], goal_blend)
+        sb.add_disc(s[:, 0:2], sty["agent.radius"], sty["agent.color"])
 
         # The spine, last, because matplotlib gives it zorder 2.5 against a patch's 1 — measured: a
         # wall placed at x in [0, 0.5] starts at column 1, so the black line is on top of it.
@@ -1521,7 +2041,8 @@ class SimplePointMaze(_GymReferencePort):
             raise RuntimeError(
                 "agent.position rejection sampling did not converge; the wall layout leaves no free space"
             )
-        return out
+        goal = np.broadcast_to(np.asarray(MAZE_GOAL_POS, np.float32), (n, 2)).copy()
+        return np.concatenate([out, goal], axis=1)
 
     def _advance_rows(self, rows, action, sty) -> torch.Tensor:
         """One control step. Exact against the reference: a clip, a collision test and a clip.
@@ -1532,16 +2053,112 @@ class SimplePointMaze(_GymReferencePort):
         dead.
         """
         a = action.clamp(-ACTION_LIMIT, ACTION_LIMIT)
-        nxt = rows + sty["agent.speed"].reshape(-1, 1) * a
+        pos = rows[:, 0:2]
+        nxt = pos + sty["agent.speed"].reshape(-1, 1) * a
         blocked = self._collides(nxt, sty, int(rows.shape[0]))
-        nxt = torch.where(blocked.unsqueeze(1), rows, nxt)
-        return nxt.clamp(0.0, WORLD)
+        nxt = torch.where(blocked.unsqueeze(1), pos, nxt).clamp(0.0, WORLD)
+        out = rows.clone()
+        out[:, 0:2] = nxt
+        return out
+
+    def _outputs(self, state):
+        agent = state['agent', 'position']
+        goal = state['goal', 'position']
+        was64 = state['task', 'state_is_float64'].reshape(-1)
+        distance32 = torch.linalg.vector_norm(agent.to(torch.float32) - goal, dim=1).to(torch.float64)
+        distance64 = torch.linalg.vector_norm(agent - goal.to(torch.float64), dim=1)
+        distance = torch.where(was64, distance64, distance32)
+        terminated = distance < self._style['goal.radius'][: len(agent)].reshape(-1).to(torch.float64)
+        n = int(state.batch_size[0])
+        reward = torch.where(
+            terminated,
+            torch.ones(n, device=self.device, dtype=torch.float64),
+            torch.full((n,), -0.01, device=self.device, dtype=torch.float64),
+        )
+        observation = (
+            agent.clone()
+            if bool(state['task', 'state_is_float64'].any())
+            else agent.to(torch.float32)
+        )
+        return StepResult(
+            {
+                'state': state,
+                'reward': reward,
+                'terminated': terminated,
+                'truncated': torch.zeros(n, device=self.device, dtype=torch.bool),
+                'observation': observation,
+                'info': {'goal': self._cached_goal_image[:n].clone()},
+            },
+            batch_size=[n],
+            device=self.device,
+        )
+
+    def _advance_agent(self, agent, action, sty, state_is_float64):
+        """Preserve NumPy's source dtype promotion for float16/float32/float64 actions."""
+
+        action_tensor = torch.as_tensor(action, device=self.device)
+        if not action_tensor.is_floating_point():
+            action_tensor = action_tensor.to(torch.float64)
+        if action_tensor.dtype not in (torch.float16, torch.float32, torch.float64):
+            action_tensor = action_tensor.to(torch.float64)
+        action_tensor = action_tensor.reshape(-1, self.action_dim)
+        use64 = state_is_float64.reshape(-1) | (action_tensor.dtype == torch.float64)
+        limit = float(np.float32(ACTION_LIMIT))
+
+        def advance(dtype):
+            p = agent.to(dtype)
+            a = action_tensor.to(dtype).clamp(-limit, limit)
+            speed = sty['agent.speed'].reshape(-1, 1).to(dtype)
+            nxt = p + speed * a
+            blocked = self._collides(nxt, sty, int(p.shape[0]))
+            return torch.where(blocked.unsqueeze(1), p, nxt).clamp(0.0, WORLD), blocked
+
+        value32, _ = advance(torch.float32)
+        value64, blocked64 = advance(torch.float64)
+        value = torch.where(use64.unsqueeze(1), value64, value32.to(torch.float64))
+        action_promotes = action_tensor.dtype == torch.float64
+        next_is_float64 = state_is_float64.reshape(-1) | (action_promotes & ~blocked64)
+        return value, next_is_float64.reshape(-1, 1)
+
+    @torch.no_grad()
+    def transition(self, state, action):
+        self._validate_state(state)
+        n = int(state.batch_size[0])
+        sty = self._style.for_batch(n, owner='SimplePointMaze.transition')
+        agent, state_is_float64 = self._advance_agent(
+            torch.as_tensor(state['agent', 'position'], device=self.device, dtype=torch.float64).reshape(n, 2),
+            action,
+            sty,
+            torch.as_tensor(state['task', 'state_is_float64'], device=self.device, dtype=torch.bool),
+        )
+        return TensorDict(
+            {
+                'agent': {'position': agent},
+                'goal': {
+                    'position': torch.as_tensor(
+                        state['goal', 'position'], device=self.device, dtype=torch.float32
+                    ).reshape(n, 2).clone()
+                },
+                'task': {
+                    'cached_goal_agent_position': torch.as_tensor(
+                        state['task', 'cached_goal_agent_position'], device=self.device, dtype=torch.float32
+                    ).reshape(n, 2).clone(),
+                    'state_is_float64': state_is_float64,
+                },
+            },
+            batch_size=[n],
+            device=self.device,
+        )
 
     def step(self, action) -> TensorDict:
-        """One control step; the implementation is :meth:`_GymReferencePort.step`. Declared here because the
-        shared step check only sees a ``step`` in the concrete class's own ``__dict__`` — see the
-        note above ``_GymReferencePort.step``."""
-        return super().step(action)
+        self._check_open('step')
+        agent, state_is_float64 = self._advance_agent(
+            self._agent_position, action, self._style, self._state_is_float64
+        )
+        self._agent_position.copy_(agent)
+        self._state_is_float64.copy_(state_is_float64)
+        self._render_state[:, 0:2].copy_(agent.to(torch.float32))
+        return self._outputs(self.get_state())
 
     # ---------------------------------------------------------------- reference bridge
     #
@@ -1550,9 +2167,14 @@ class SimplePointMaze(_GymReferencePort):
 
     @classmethod
     def reference_set_state(cls, u, st) -> None:
-        u.state = np.asarray(st, np.float32).reshape(2)
+        value = np.asarray(st, np.float32).reshape(4)
+        u.state = value[:2].copy()
+        u.variation_space['agent']['position']._value = value[:2].copy()
+        u.variation_space['goal']['position']._value = value[2:4].copy()
 
     @staticmethod
     def reference_sim_state(env) -> np.ndarray:
         u = getattr(env, "unwrapped", env)
-        return np.asarray(u.state, np.float64).reshape(2)
+        return np.concatenate(
+            [np.asarray(u.state, np.float32), np.asarray(u.variation_space['goal']['position'].value, np.float32)]
+        ).astype(np.float64)
