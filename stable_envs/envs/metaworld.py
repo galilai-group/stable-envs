@@ -1353,7 +1353,7 @@ class MetaWorldBase(Env):
     # ---- render -----------------------------------------------------------------------------
 
     @torch.no_grad()
-    def render(
+    def _render(
         self,
         states=None,
         size: int | None = None,
@@ -1369,7 +1369,7 @@ class MetaWorldBase(Env):
         EPISODE splits it. Only the baked plate is shared per (appearance, episode), and it is gathered
         per row afterwards.
         """
-        s = self._state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
+        s = self._render_state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
         lead = tuple(s.shape[:-1])
         s = s.reshape(-1, self.state_dim).to(torch.float32)
         B = int(s.shape[0])

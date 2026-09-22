@@ -55,8 +55,8 @@ def test_the_state_window_is_the_size_it_says_it_is():
 def test_the_frame_is_the_registered_observation():
     """``swm/CraftaxPixels-v1`` declares (130, 110, 3) and that is 13x11 tiles at 10 px."""
     e, st = states(4)
-    assert tuple(e.render(st).shape) == (4, 130, 110, 3)
-    assert tuple(e.render(st, size=16).shape) == (4, 208, 176, 3)
+    assert tuple(e._render(st).shape) == (4, 130, 110, 3)
+    assert tuple(e._render(st, size=16).shape) == (4, 208, 176, 3)
     g = GOLDEN["geometry"]
     assert [CF.OBS_H, CF.OBS_W] == g["OBS_DIM"]
     assert CF.STRIP_H == g["INVENTORY_OBS_HEIGHT"]
@@ -74,7 +74,7 @@ def test_counts_are_capped_at_99_not_at_9():
     j = 5 * CF.N_TILE + 4 + CF.N_KEY_HALVES
     a, b = st.copy(), st.copy()
     a[:, j + CF._SLOT["wood"]], b[:, j + CF._SLOT["wood"]] = 7, 87
-    assert not np.array_equal(e.render(a).numpy(), e.render(b).numpy())
+    assert not np.array_equal(e._render(a).numpy(), e._render(b).numpy())
 
 
 # ------------------------------------------------------------------ the two traps
@@ -132,10 +132,10 @@ def test_the_uint8_gather_and_the_float_chain_agree_bit_for_bit():
     st[:, 4 * CF.N_TILE : 5 * CF.N_TILE] = 1.0  # light_map all 1
     st[:, 5 * CF.N_TILE + 1] = 0.0  # awake
     st[:, 5 * CF.N_TILE + 3] = 1.0  # full daylight
-    fast = e.render(st).numpy()
+    fast = e._render(st).numpy()
     forced = st.copy()
     forced[0, 5 * CF.N_TILE + 1] = 1.0  # one sleeper forces the float path
-    slow = e.render(forced).numpy()
+    slow = e._render(forced).numpy()
     assert np.array_equal(fast[1:], slow[1:]), "the float path disagrees with the uint8 gather"
 
 
@@ -174,16 +174,16 @@ def test_the_daylight_override_makes_eight_of_nine_levels_noise_free():
         a[:, j + 3] = 0.0
         b = a.copy()
         b[:, j + 3] = 1.0
-        assert np.array_equal(e.render(a).numpy(), e.render(b).numpy())
+        assert np.array_equal(e._render(a).numpy(), e._render(b).numpy())
         c = a.copy()
         c[:, j + 4 : j + 8] = (a[:, j + 4 : j + 8] + 137) % 65536
-        assert np.array_equal(e.render(a).numpy(), e.render(c).numpy())
+        assert np.array_equal(e._render(a).numpy(), e._render(c).numpy())
     a = st.copy()
     a[:, j + 2] = 0
     a[:, j + 3] = 0.2
     c = a.copy()
     c[:, j + 4 : j + 8] = (a[:, j + 4 : j + 8] + 137) % 65536
-    assert not np.array_equal(e.render(a).numpy(), e.render(c).numpy()), (
+    assert not np.array_equal(e._render(a).numpy(), e._render(c).numpy()), (
         "on level 0 at night the key MUST reach pixels, or the state window is wrong"
     )
 
@@ -197,7 +197,7 @@ def test_the_level_digit_is_the_one_thing_the_strip_reads_from_the_world():
     j = 5 * CF.N_TILE
     a, b = st.copy(), st.copy()
     a[:, j + 2], b[:, j + 2] = 0, 7
-    assert not np.array_equal(e.render(a).numpy()[:, wh:], e.render(b).numpy()[:, wh:])
+    assert not np.array_equal(e._render(a).numpy()[:, wh:], e._render(b).numpy()[:, wh:])
 
 
 def test_the_strip_is_not_lit():
@@ -206,7 +206,7 @@ def test_the_strip_is_not_lit():
     midnight underground as at noon on the surface."""
     e, st = states(6, seed=5)
     wh = CF.OBS_H * e.size
-    base = e.render(st).numpy()[:, wh:]
+    base = e._render(st).numpy()[:, wh:]
     j = 5 * CF.N_TILE
     # player_level is deliberately NOT varied here: it is the one lighting-adjacent field the strip
     # DOES read, because the level digit is drawn in cell (6, 0).
@@ -214,17 +214,17 @@ def test_the_strip_is_not_lit():
         a = st.copy()
         a[:, 4 * CF.N_TILE : 5 * CF.N_TILE] = lm
         a[:, j + 1], a[:, j + 3] = sleep, light
-        assert np.array_equal(e.render(a).numpy()[:, wh:], base), (
+        assert np.array_equal(e._render(a).numpy()[:, wh:], base), (
             f"the strip moved at light_map={lm} light={light} sleeping={sleep}"
         )
     a = st.copy()
     a[:, j + 4 : j + 8] = (st[:, j + 4 : j + 8] + 999) % 65536
-    assert np.array_equal(e.render(a).numpy()[:, wh:], base)
+    assert np.array_equal(e._render(a).numpy()[:, wh:], base)
 
 
 def test_the_eight_unwritten_strip_cells_stay_black():
     e, st = states(3)
-    img = e.render(st).numpy()
+    img = e._render(st).numpy()
     t = e.size
     written = {(x, y) for (x, y, *_r) in CF.STRIP_CELLS}
     blanks = [(x, y) for y in range(CF.STRIP_H) for x in range(CF.OBS_W) if (x, y) not in written]
@@ -256,8 +256,8 @@ def test_a_render_at_twice_the_size_resamples_from_the_size_that_divides_it():
     st[:, 4 * CF.N_TILE : 5 * CF.N_TILE] = 1.0
     st[:, 5 * CF.N_TILE + 1] = 0.0
     st[:, 5 * CF.N_TILE + 3] = 1.0
-    small = e.render(st, size=10).numpy()
-    big = e.render(st, size=20).numpy()
+    small = e._render(st, size=10).numpy()
+    big = e._render(st, size=20).numpy()
     assert np.array_equal(big[:, ::2, ::2], small), "20 px is not a 2x replication of 10 px"
 
 
@@ -334,7 +334,7 @@ def test_out_of_range_ids_wrap_rather_than_clamp():
     a[:, 0] = 2.0
     b = a.copy()
     b[:, 0] = 2.0 + CF.N_BLOCK
-    assert np.array_equal(e.render(a).numpy(), e.render(b).numpy())
+    assert np.array_equal(e._render(a).numpy(), e._render(b).numpy())
 
 
 def test_the_two_light_floats_fold_on_a_tent_and_are_the_identity_inside_the_range():
@@ -352,7 +352,7 @@ def test_the_health_slot_is_lifted_to_one_the_way_the_reference_lifts_it():
     j = 5 * CF.N_TILE + 4 + CF.N_KEY_HALVES + CF._SLOT["health"]
     a, b = st.copy(), st.copy()
     a[:, j], b[:, j] = 0.0, 1.0
-    assert np.array_equal(e.render(a).numpy(), e.render(b).numpy())
+    assert np.array_equal(e._render(a).numpy(), e._render(b).numpy())
 
 
 # ------------------------------------------------------------------ declarations
@@ -409,7 +409,7 @@ def test_a_window_carrying_more_projectiles_than_the_simulator_can_hold_is_not_r
     six[0, 3 * CF.N_TILE : 3 * CF.N_TILE + 6] = 1 + np.arange(6) % 4
     eight = six.copy()
     eight[0, 3 * CF.N_TILE + 6 : 3 * CF.N_TILE + 8] = 1 + np.arange(6, 8) % 4
-    a, b = e.render(six).numpy(), e.render(eight).numpy()
+    a, b = e._render(six).numpy(), e._render(eight).numpy()
     assert not np.array_equal(a, b), "the renderer drops a projectile the state asked for"
     t = e.size
     moved = (a[0] != b[0]).any(-1)  # [0]: the batch axis, or the tile scan below slices it

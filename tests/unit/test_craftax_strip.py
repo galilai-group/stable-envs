@@ -135,7 +135,7 @@ def test_the_strip_atlas_resamples_by_exact_replication():
 
 @pytest.mark.parametrize("t", SIZES)
 def test_the_frame_has_the_strip_below_the_world(env, states, t):
-    f = env.render(states, size=t)
+    f = env._render(states, size=t)
     assert tuple(f.shape) == (len(states), (OBS_H + STRIP_H) * t, OBS_W * t, 3)
     assert f.dtype == torch.uint8
 
@@ -150,8 +150,8 @@ def test_each_count_reaches_its_own_cell_and_no_other(env, states, t):
     w = OBS_H * t
     lay = {i: STRIP_LAYOUT[i] for i in range(N_STRIP)}
     for i, name in enumerate(STRIP_NAMES):
-        a = env.render(_set(states, **{name: 0}), size=t).numpy()
-        b = env.render(_set(states, **{name: 7}), size=t).numpy()
+        a = env._render(_set(states, **{name: 0}), size=t).numpy()
+        b = env._render(_set(states, **{name: 7}), size=t).numpy()
         d = np.abs(a.astype(np.int16) - b.astype(np.int16)).max(-1) > 0
         assert d[:, :w].sum() == 0, f"{name} reached the world layer"
         r, c = lay[i]
@@ -165,7 +165,7 @@ def test_each_count_reaches_its_own_cell_and_no_other(env, states, t):
 def test_the_two_unwritten_cells_stay_black_whatever_the_state(env, states, t):
     w = OBS_H * t
     written = set(STRIP_LAYOUT)
-    f = env.render(states, size=t).numpy()
+    f = env._render(states, size=t).numpy()
     for r in range(STRIP_H):
         for c in range(OBS_W):
             if (r, c) in written:
@@ -181,8 +181,8 @@ def test_the_strip_is_not_lit_and_not_desaturated(env, states, t):
     Crafter's port found this by failing (`docs/research/crafter.md`); here it is asserted.
     """
     w = OBS_H * t
-    awake = env.render(_set(states, is_sleeping=0.0), size=t).numpy()
-    asleep = env.render(_set(states, is_sleeping=1.0), size=t).numpy()
+    awake = env._render(_set(states, is_sleeping=0.0), size=t).numpy()
+    asleep = env._render(_set(states, is_sleeping=1.0), size=t).numpy()
     assert np.array_equal(awake[:, w:], asleep[:, w:]), "sleeping changed the inventory strip"
     assert not np.array_equal(awake[:, :w], asleep[:, :w]), "sleeping did not change the world layer"
 
@@ -195,8 +195,8 @@ def test_sleeping_changes_the_centre_tile_sprite_and_desaturates_everything_else
     """Both halves. A renderer with only one of them draws a plausible frame and a wrong one."""
     w = OBS_H * t
     cr, cc = OBS_H // 2, OBS_W // 2
-    awake = env.render(_set(states, is_sleeping=0.0), size=t).numpy()[:, :w]
-    asleep = env.render(_set(states, is_sleeping=1.0), size=t).numpy()[:, :w]
+    awake = env._render(_set(states, is_sleeping=0.0), size=t).numpy()[:, :w]
+    asleep = env._render(_set(states, is_sleeping=1.0), size=t).numpy()[:, :w]
 
     # (a) the desaturation reaches the whole world layer, not only the player's tile
     d = np.abs(awake.astype(np.int16) - asleep.astype(np.int16)).max(-1) > 0
@@ -229,18 +229,18 @@ def test_the_facing_slot_wraps_mod_four_not_mod_five(env, states):
     st = np.array(states, np.float32, copy=True)
     st[:, base] = 0.0
     st[:, OBS_H * OBS_W * 2 + 1 + N_STRIP] = 0.0
-    a = env.render(st, size=16)
+    a = env._render(st, size=16)
     st4 = np.array(st, copy=True)
     st4[:, base] = 4.0
-    assert torch.equal(a, env.render(st4, size=16)), "facing 4 is not facing 0; it aliased the sprite"
+    assert torch.equal(a, env._render(st4, size=16)), "facing 4 is not facing 0; it aliased the sprite"
     assert PLAYER_ASLEEP == 4 and NO_PLAYER == 5
 
 
 def test_player_visible_still_hides_a_sleeping_player(env, states):
     """The ablation has to keep working on the new slot, or it is inert on a quarter of the pool."""
     st = _set(states, is_sleeping=1.0)
-    on = env.render(st, size=16, variation={"player_visible": 1})
-    off = env.render(st, size=16, variation={"player_visible": 0})
+    on = env._render(st, size=16, variation={"player_visible": 1})
+    off = env._render(st, size=16, variation={"player_visible": 0})
     assert not torch.equal(on, off)
 
 
@@ -272,7 +272,7 @@ def test_a_step4_shaped_row_reproduces_the_old_world_layer(env):
     old[:, :127] = st[:, :127]  # counts 0, not sleeping, light_level 0...
     old[:, 127 + N_STRIP + 1] = 1.0  # ...except daylight, which is the Step-4 state
     for t in (7, 16):
-        f = env.render(old, size=t).numpy()
+        f = env._render(old, size=t).numpy()
         w = OBS_H * t
         assert int(f[:, w:].max()) == 0, "an empty inventory must draw a black strip"
         assert int(f[:, :w].max()) > 0
@@ -301,11 +301,11 @@ def test_every_new_state_dimension_reaches_a_pixel(env):
     rng = np.random.default_rng(11)
     st = _set(env.sample_states(6, rng), light=0.15)
     base = OBS_H * OBS_W * 2 + 1
-    ref = env.render(st, size=16)
+    ref = env._render(st, size=16)
     for j in range(base, env.state_dim):
         probe = np.array(st, copy=True)
         probe[:, j] = probe[:, j] + 25.0
-        assert not torch.equal(ref, env.render(probe, size=16)), (
+        assert not torch.equal(ref, env._render(probe, size=16)), (
             f"state dim {j} ({env.state_names[j]}) reaches no pixel under a +25 probe"
         )
 
@@ -322,7 +322,7 @@ def test_daylight_is_the_identity_and_keeps_the_uint8_fast_path(env, states):
     the whole chain, so "the identity" is a measurement rather than a code-reading.
     """
     st = _set(states, light=1.0, is_sleeping=0.0)
-    fast = env.render(st, size=16)
+    fast = env._render(st, size=16)
     dec = env._decode(torch.as_tensor(st), len(st))
     sty = env.resolve_style(None, None, batch=len(st))
     # force the float path by asking for the blend implementation, which never short-circuits
@@ -341,7 +341,7 @@ def test_no_noise_is_drawn_at_or_above_half_daylight(env, states, light):
     b = np.array(a, copy=True)
     assert env.state_names[OBS_H * OBS_W * 2 + 3 + N_STRIP] == "rng_half0"
     b[:, OBS_H * OBS_W * 2 + 3 + N_STRIP :] = 12345.0
-    assert torch.equal(env.render(a, size=16), env.render(b, size=16))
+    assert torch.equal(env._render(a, size=16), env._render(b, size=16))
 
 
 def test_the_key_reaches_the_world_layer_below_half_daylight(env, states):
@@ -350,7 +350,7 @@ def test_the_key_reaches_the_world_layer_below_half_daylight(env, states):
     b = np.array(a, copy=True)
     assert env.state_names[OBS_H * OBS_W * 2 + 3 + N_STRIP] == "rng_half0"
     b[:, OBS_H * OBS_W * 2 + 3 + N_STRIP :] = 4321.0
-    fa, fb = env.render(a, size=16).numpy(), env.render(b, size=16).numpy()
+    fa, fb = env._render(a, size=16).numpy(), env._render(b, size=16).numpy()
     w = OBS_H * 16
     changed = np.abs(fa.astype(np.int16) - fb.astype(np.int16)).max(-1) > 0
     assert changed[:, :w].mean() > 0.3, "the night noise field barely reaches the frame"
@@ -363,9 +363,9 @@ def test_the_lighting_bands_are_three_different_pictures(env, states):
     A renderer that treated ``light >= 0.5`` as "nothing to do" would pass every noise test and be
     wrong on 55% of the day cycle.
     """
-    day = env.render(_set(states, light=1.0), size=16)
-    dusk = env.render(_set(states, light=0.75), size=16)
-    night = env.render(_set(states, light=0.1), size=16)
+    day = env._render(_set(states, light=1.0), size=16)
+    dusk = env._render(_set(states, light=0.75), size=16)
+    night = env._render(_set(states, light=0.1), size=16)
     assert not torch.equal(day, dusk) and not torch.equal(dusk, night)
     w = OBS_H * 16
     for a, b in ((day, dusk), (dusk, night)):
@@ -384,7 +384,7 @@ def test_light_level_decodes_by_a_tent_that_is_the_identity_in_range(env, states
     # 1.0 + 25 = 26; 26 % 2 == 0; tent(0) == 0 -> full night, so the probe reaches the frame
     _, _, _, _, _, probed, _ = env._decode(torch.as_tensor(_set(states, light=26.0)), len(states))
     assert float(probed.max()) == 0.0
-    assert not torch.equal(env.render(_set(states, light=1.0), size=16), env.render(_set(states, light=26.0), size=16))
+    assert not torch.equal(env._render(_set(states, light=1.0), size=16), env._render(_set(states, light=26.0), size=16))
 
 
 def test_a_batch_may_mix_day_dusk_night_and_sleep(env, states):
@@ -399,9 +399,9 @@ def test_a_batch_may_mix_day_dusk_night_and_sleep(env, states):
     j = OBS_H * OBS_W * 2 + 1 + N_STRIP
     mixed[:, j] = (np.arange(n) % 4 == 0).astype(np.float32)
     mixed[:, j + 1] = np.tile([1.0, 0.75, 0.3, 0.0], n // 4 + 1)[:n]
-    together = env.render(mixed, size=16)
+    together = env._render(mixed, size=16)
     for i in range(n):
-        assert torch.equal(together[i], env.render(mixed[i : i + 1], size=16)[0]), i
+        assert torch.equal(together[i], env._render(mixed[i : i + 1], size=16)[0]), i
 
 
 def test_the_night_chain_is_shape_parameterised_for_the_full_renderer():
@@ -443,9 +443,9 @@ def test_the_strip_grid_cache_is_not_written_through(env, states):
     cell_of, blank = env._strip_grid(dev)
     before = (cell_of.clone(), blank.clone())
     for t in (7, 16):
-        env.render(states, size=t)
-        env.render(_set(states, light=0.1), size=t)
-        env.render(states, size=t, variation={"channel_gain": [0.5, 1.0, 2.0]})
+        env._render(states, size=t)
+        env._render(_set(states, light=0.1), size=t)
+        env._render(states, size=t, variation={"channel_gain": [0.5, 1.0, 2.0]})
     again = env._strip_grid(dev)
     assert again[0] is cell_of and again[1] is blank, "the grid was rebuilt instead of cached"
     assert torch.equal(cell_of, before[0]) and torch.equal(blank, before[1])
@@ -501,8 +501,8 @@ def test_the_strip_is_resolution_consistent_in_every_band(env, states):
     w = OBS_H * 16
     for light in (1.0, 0.75, 0.1):
         st = _set(states, light=light)
-        a = env.render(st, size=16).numpy()[:, w:]
-        b = env.render(st, size=32).numpy()[:, OBS_H * 32 :]
+        a = env._render(st, size=16).numpy()[:, w:]
+        b = env._render(st, size=32).numpy()[:, OBS_H * 32 :]
         d = np.abs(_box_downsample(b, 2).astype(np.int16) - a.astype(np.int16))
         assert float((d.max(-1) == 0).mean()) == 1.0, (light, int(d.max()))
 

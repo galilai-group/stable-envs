@@ -105,7 +105,7 @@ class FakeEnv:
     def sample_states(self, n, rng=None):
         return np.zeros((int(n), 1), np.float32)
 
-    def render(self, states, variation=None, style=None):
+    def _render(self, states, variation=None, style=None):
         n = len(states)
         off, _ = self._layout["visibility.target"]
         if style is not None:
@@ -198,7 +198,7 @@ def test_a_flipped_arm_that_is_bit_exact_is_reported_rather_than_divided_by(_ref
     # and the interior metric, on the same frames, does NOT notice — which is the whole argument for
     # this check existing rather than for tightening that one.
     env = FakeEnv(n=8, declared=1, official_draws=False, jitter=0)
-    ours = env.render(env.sample_states(8)).cpu().numpy()
+    ours = env._render(env.sample_states(8)).cpu().numpy()
     blind = C.pixel_agreement(ours, env._official(8))
     same = C.pixel_agreement(np.stack([_frame(False, 0)] * 8), env._official(8))
     assert blind["interior_exact_frac"] == same["interior_exact_frac"], (

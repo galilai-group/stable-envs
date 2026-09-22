@@ -419,7 +419,7 @@ def test_render_parity_with_official_renderer(env):
 
     states = env.sample_states(64, rng=np.random.default_rng(PARITY_STATE_SEED))
     official = cls.reference_render(ref, states)
-    ours = env.render(states).cpu().numpy()
+    ours = env._render(states).cpu().numpy()
     assert ours.shape == official.shape, f"shape {ours.shape} vs official {official.shape}"
 
     r = C.pixel_agreement(ours, official)
@@ -539,7 +539,7 @@ def test_a_learned_decoder_beats_the_render_it_replaces(env):
     plain = se.make(base, num_envs=env.B, size=env.size, device="cuda")
     states = env.sample_states(64, rng=np.random.default_rng(PARITY_STATE_SEED))
     official = cls.reference_render(ref, states)
-    got, was = env.render(states).cpu().numpy(), plain.render(states).cpu().numpy()
+    got, was = env._render(states).cpu().numpy(), plain.render(states).cpu().numpy()
     a, b = C.pixel_agreement(got, official), C.pixel_agreement(was, official)
     a["ssim"], b["ssim"] = C.ssim(got, official), C.ssim(was, official)
     print(f"\n{cls.__name__} [LEARNED] {a}\n  {base} [renderer] {b}")

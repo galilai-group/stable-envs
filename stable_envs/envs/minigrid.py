@@ -336,7 +336,7 @@ class _TileEnv(Env):
     # rendering
 
     @torch.no_grad()
-    def render(
+    def _render(
         self,
         states=None,
         size: int | None = None,
@@ -352,7 +352,7 @@ class _TileEnv(Env):
                 f"3x supersampling is already baked into the atlas by Grid.render_tile; sampling "
                 f"again on top of it would render something the reference never draws."
             )
-        s = self._state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
+        s = self._render_state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
         lead = tuple(s.shape[:-1])
         s = s.reshape(-1, self.state_dim)
         size = int(size or self.size)
@@ -529,13 +529,17 @@ class MiniGridTopDown(_TileEnv):
         super()._close()
         self._step_graph = None
 
-    def set_state(self, states, variation=None, style=None) -> MiniGridTopDown:
+    def _set_render_state(self, states, variation=None, style=None) -> MiniGridTopDown:
         """As the base class, and empty the agent's hands — the compact state does not carry them."""
-        super().set_state(states, variation=variation, style=style)
+        super()._set_render_state(states, variation=variation, style=style)
         self._carry.fill_(CARRY_NONE)
         return self
 
     # ------------------------------------------------------------------ state / dynamics
+
+    def _restore_state(self, state: TensorDict) -> None:
+        self._set_render_state(self._pack_render_state(state))
+        self._carry.copy_(state["agent", "carrying"].reshape(-1).long())
 
     def _hidden_state(self) -> dict[tuple[str, ...], torch.Tensor]:
         """Where the one field the packed row does not carry lives: the object in the agent's hands.
@@ -559,33 +563,34 @@ class MiniGridTopDown(_TileEnv):
         them from a CUDA graph; this one passes three fresh ones, because a captured graph reads
         FIXED ADDRESSES and this call may not write the env's.
         """
-        rows = self.pack(state).clone()
+        self._validate_state(state)
+        rows = self._pack_render_state(state).clone()
         carry = torch.as_tensor(state["agent", "carrying"], device=self.device).reshape(-1).round().to(torch.long)
         act = torch.as_tensor(action, device=self.device, dtype=torch.float32).reshape(-1, self.action_dim)
         self._advance_into(rows, carry, act)
-        out = self.unpack(rows)
+        out = self._unpack_render_state(rows)
         out["agent", "carrying"] = carry.reshape(-1, 1).to(torch.float32)
         return out
 
     def sim_state(self) -> torch.Tensor:
         """``(B, state_dim + 1)`` — the compact state with ``carrying`` appended."""
-        return torch.cat([self._state.to(torch.float64), self._carry.to(torch.float64).unsqueeze(1)], 1)
+        return torch.cat([self._render_state.to(torch.float64), self._carry.to(torch.float64).unsqueeze(1)], 1)
 
     def set_sim_state(self, v) -> MiniGridTopDown:
         v = torch.as_tensor(v, device=self.device, dtype=torch.float64).reshape(self.B, -1)
-        self.set_state(v[:, : self.state_dim])
+        self._set_render_state(v[:, : self.state_dim])
         self._carry.copy_(torch.round(v[:, self.state_dim]).long())
         return self
 
     def _advance(self) -> None:
         """The env's OWN buffers advanced one step, at the fixed addresses a CUDA graph requires."""
-        self._advance_into(self._state, self._carry, self._act)
+        self._advance_into(self._render_state, self._carry, self._act)
 
     def _step_state(self) -> TensorDict:
         """Snapshot the live state with one packed-row copy for the hot ``step`` return path."""
         n = self._live_rows
         N = self.grid_w * self.grid_h
-        rows = self._state[:n].clone()
+        rows = self._render_state[:n].clone()
         return TensorDict(
             {
                 "grid": rows[:, :N],
@@ -681,7 +686,7 @@ class MiniGridTopDown(_TileEnv):
         if self.use_step_graph and self.device.type == "cuda":
             if self._step_graph is None and not self._step_graph_error:
                 self._step_graph, self._step_graph_error = _stepgraph.capture(
-                    self._advance, (self._state, self._carry)
+                    self._advance, (self._render_state, self._carry)
                 )
                 if self._step_graph is None:
                     self.use_step_graph = False

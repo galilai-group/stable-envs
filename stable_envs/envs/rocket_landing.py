@@ -964,7 +964,7 @@ class PyFlytRocketLanding(Env):
     # ---- render ---------------------------------------------------------------
 
     @torch.no_grad()
-    def render(
+    def _render(
         self,
         states=None,
         size: int | None = None,
@@ -977,7 +977,7 @@ class PyFlytRocketLanding(Env):
 
         THESE ARE NOT THE OFFICIAL PIXELS. See ``visual_fidelity`` for what they are instead.
         """
-        s = self._state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
+        s = self._render_state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
         lead = tuple(s.shape[:-1])
         s = s.reshape(-1, self.state_dim)
         B = int(s.shape[0])

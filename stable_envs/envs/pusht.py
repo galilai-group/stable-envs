@@ -342,7 +342,7 @@ class PushT(Env):
 
     # ------------------------------------------------------------------ physics
 
-    def set_state(self, states, variation=None, style=None) -> PushT:
+    def _set_render_state(self, states, variation=None, style=None) -> PushT:
         """As the base class, and zero the agent's velocity — the state does not carry it.
 
         Restoring a stored state must put the env in one definite condition, and the only defensible
@@ -350,7 +350,7 @@ class PushT(Env):
         doing before would make ``set_state(s)`` depend on history, which is precisely the failure this
         repo documents for ``gym_pusht._set_state`` on the position/angle order.
         """
-        super().set_state(states, variation=variation, style=style)
+        super()._set_render_state(states, variation=variation, style=style)
         self._agent_v.zero_()
         return self
 
@@ -495,7 +495,7 @@ class PushT(Env):
     def _capture_step(self) -> None:
         """Capture one env step into a CUDA graph, or record why it could not be.
 
-        The graph reads ``self._state`` and ``self._agent_v`` at fixed addresses, so anything that
+        The graph reads ``self._render_state`` and ``self._agent_v`` at fixed addresses, so anything that
         REBINDS those attributes instead of writing through ``copy_`` would leave the graph replaying
         against dead memory — the env would look like it silently ignored every ``set_state``. The base
         class writes with ``copy_``; keep it that way.
@@ -506,12 +506,12 @@ class PushT(Env):
             s.wait_stream(torch.cuda.current_stream())
             with torch.cuda.stream(s):
                 for _ in range(3):  # warm up autotune/allocator before capture
-                    self._advance(self._state, self._agent_v, self._step_target)
+                    self._advance(self._render_state, self._agent_v, self._step_target)
             torch.cuda.current_stream().wait_stream(s)
             g = torch.cuda.CUDAGraph()
             with torch.cuda.graph(g):
-                st, av = self._advance(self._state, self._agent_v, self._step_target)
-                self._state.copy_(st)
+                st, av = self._advance(self._render_state, self._agent_v, self._step_target)
+                self._render_state.copy_(st)
                 self._agent_v.copy_(av)
             self._step_graph = g
         except Exception as e:  # noqa: BLE001 - fall back, do not hide it
@@ -541,6 +541,10 @@ class PushT(Env):
         ("block", "angle"): (-math.pi, math.pi),
     }
 
+    def _restore_state(self, state: TensorDict) -> None:
+        self._set_render_state(self._pack_render_state(state))
+        self._agent_v.copy_(state["agent", "velocity"])
+
     def _hidden_state(self) -> dict[tuple[str, ...], torch.Tensor]:
         """Where the one field the packed row does not carry actually lives.
 
@@ -561,14 +565,15 @@ class PushT(Env):
 
         Bit-identical to ``step`` on the same device for the same state, because it is the same
         ``_advance`` over the same float32 inputs — the eager path, since a CUDA graph reads fixed
-        addresses (``self._state``, ``self._agent_v``) and this call may not write them. ``step``
+        addresses (``self._render_state``, ``self._agent_v``) and this call may not write them. ``step``
         keeps the captured path; ``tests/unit/test_pusht_api.py`` asserts the two agree to the
         bit on CPU and the oracle script asserts it again on CUDA.
         """
-        rows = self.pack(state)
+        self._validate_state(state)
+        rows = self._pack_render_state(state)
         av = torch.as_tensor(state["agent", "velocity"], device=self.device, dtype=torch.float32).reshape(-1, 2)
         st, av = self._advance(rows, av, self._target(action))
-        out = self.unpack(st)
+        out = self._unpack_render_state(st)
         out["agent", "velocity"] = av
         return out
 
@@ -600,8 +605,8 @@ class PushT(Env):
                 self._step_graph.replay()
                 replayed = True
         if not replayed:
-            st, av = self._advance(self._state, self._agent_v, target)
-            self._state.copy_(st)
+            st, av = self._advance(self._render_state, self._agent_v, target)
+            self._render_state.copy_(st)
             self._agent_v.copy_(av)
         return self._step_result(self.state)
 

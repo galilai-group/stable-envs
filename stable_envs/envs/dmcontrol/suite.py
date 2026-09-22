@@ -921,7 +921,7 @@ class DMControlSuite(_DMCModel):
     # ---- render -----------------------------------------------------------
 
     @torch.no_grad()
-    def render(
+    def _render(
         self,
         states=None,
         size: int | None = None,
@@ -935,7 +935,7 @@ class DMControlSuite(_DMCModel):
         The batch is grouped by style, because every leaf changes the baked plates. Environments that
         share an appearance share one bake and are rendered in one call.
         """
-        s = self._state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
+        s = self._render_state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
         lead = tuple(s.shape[:-1])
         s = s.reshape(-1, self.state_dim)
         B = s.shape[0]

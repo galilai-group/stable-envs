@@ -677,7 +677,7 @@ class HumanoidBenchBase(Env):
     # ---- render ---------------------------------------------------------------------------
 
     @torch.no_grad()
-    def render(
+    def _render(
         self,
         states=None,
         size: int | None = None,
@@ -691,7 +691,7 @@ class HumanoidBenchBase(Env):
         One MJWarp launch per chunk for the whole batch: colours, light and camera are per-world model
         fields, so nothing about a per-environment appearance splits it.
         """
-        s = self._state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
+        s = self._render_state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
         lead = tuple(s.shape[:-1])
         s = s.reshape(-1, self.state_dim).to(torch.float32)
         B = int(s.shape[0])

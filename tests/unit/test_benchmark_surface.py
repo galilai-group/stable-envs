@@ -218,7 +218,7 @@ def test_pipeline_cli_cpu_smoke_uses_public_state_contract(tmp_path):
     assert record["benchmark"] == "host-state-render-pipeline"
     assert record["methodology"]["stable_worldmodel_required"] is False
     assert "jpeg_comparison" not in row
-    assert row["state_source"] == "env.reset(seed) -> env.pack_render_state(public State)"
+    assert row["state_source"] == "env.reset(seed) -> env._pack_render_state(public State)"
     assert row["packed_state_shape"] == [2, 5]
     assert row["frame_shape"] == [96, 96, 3]
     assert {"tier", "passed", "certification"}.isdisjoint(_all_keys(record))

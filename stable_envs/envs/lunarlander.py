@@ -326,7 +326,7 @@ class LunarLander(Env):
     # --- rendering --------------------------------------------------------------------------------
 
     @torch.no_grad()
-    def render(
+    def _render(
         self,
         states=None,
         size: int | None = None,
@@ -351,7 +351,7 @@ class LunarLander(Env):
                 "before rasterisation and its anti-aliasing is Wu weights rather than coverage, so "
                 "sampling twice would average a picture the reference never draws."
             )
-        s = self._state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
+        s = self._render_state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
         lead = tuple(s.shape[:-1])
         # float64 from here: every coordinate is truncated to an integer before it is rasterised, so
         # float32 lands on the wrong integer whenever a vertex falls within ~1e-5 of one

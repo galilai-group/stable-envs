@@ -881,7 +881,7 @@ class JumanjiGrid(Env):
     # ---- render ---------------------------------------------------------------------
 
     @torch.no_grad()
-    def render(
+    def _render(
         self,
         states=None,
         size: int | None = None,
@@ -891,7 +891,7 @@ class JumanjiGrid(Env):
         out=None,
     ) -> torch.Tensor:
         """``(...,P)`` -> ``(...,H,W,3)`` uint8 on device: the plate, with one gather scattered in."""
-        s = self._state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
+        s = self._render_state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
         lead = tuple(s.shape[:-1])
         s = s.reshape(-1, self.state_dim)
         B = int(s.shape[0])

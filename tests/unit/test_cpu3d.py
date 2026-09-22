@@ -62,7 +62,7 @@ def test_cpu_device_builds_the_cpu_backend_and_no_mjwarp_context(se, cell):
     from stable_envs.envs import dmcontrol as D
 
     assert not any(k[0] == env.DOMAIN for k in D._TC_CACHE)  # and no MJWarp context was
-    f = env.render(_states(cell, 2))
+    f = env._render(_states(cell, 2))
     assert f.shape == (2, env.size, env.size, 3) and f.dtype == torch.uint8 and f.device.type == "cpu"
 
 
@@ -137,7 +137,7 @@ def test_the_transcribed_quadruped_mixin_overrides_only_the_loader_hook_and_the_
 
 def test_no_gpu_runtime_is_loaded_by_a_cpu_render(se):
     env = se.make("DMCCheetahRun", num_envs=2, device="cpu")
-    env.render(_states("DMCCheetahRun", 2))
+    env._render(_states("DMCCheetahRun", 2))
     assert "warp" not in sys.modules and "mujoco_warp" not in sys.modules
 
 
@@ -150,13 +150,13 @@ def test_window_and_footprint_bounds_are_exact(se, cell, size):
 
     st = _states(cell, 6)
     env = se.make(cell, num_envs=6, device="cpu")
-    ref = env.render(st, size=size).numpy()
+    ref = env._render(st, size=size).numpy()
     try:
         cpu3d.FORCE_FULL_FRAME = True
-        full = env.render(st, size=size).numpy()
+        full = env._render(st, size=size).numpy()
         cpu3d.FORCE_FULL_FRAME = False
         cpu3d.SHADOW_TEST_ALL_HITS = True
-        allhits = env.render(st, size=size).numpy()
+        allhits = env._render(st, size=size).numpy()
     finally:
         cpu3d.FORCE_FULL_FRAME = False
         cpu3d.SHADOW_TEST_ALL_HITS = False
@@ -171,24 +171,24 @@ def test_batch_chunk_and_order_invariance(se, cell):
     n = cpu3d.CPU_CHUNK + 3  # straddles a chunk boundary
     st = _states(cell, n)
     env = se.make(cell, num_envs=n, device="cpu")
-    a = env.render(st).numpy()
-    b = env.render(st).numpy()
+    a = env._render(st).numpy()
+    b = env._render(st).numpy()
     assert np.array_equal(a, b), "not deterministic"
     for i in (0, cpu3d.CPU_CHUNK - 1, cpu3d.CPU_CHUNK, n - 1):
-        one = env.render(st[i : i + 1]).numpy()[0]
+        one = env._render(st[i : i + 1]).numpy()[0]
         assert np.array_equal(one, a[i]), f"frame {i} depends on its batch"
     perm = np.random.default_rng(0).permutation(n)
-    c = env.render(st[perm]).numpy()
+    c = env._render(st[perm]).numpy()
     assert np.array_equal(c, a[perm]), "frame depends on batch order"
     # the same three properties with a DIFFERENT appearance per row (materials and light per env)
     sty = env.sample_style(n, rng=np.random.default_rng(1))
-    d1 = env.render(st, style=sty).numpy()
-    assert np.array_equal(d1, env.render(st, style=sty).numpy())
+    d1 = env._render(st, style=sty).numpy()
+    assert np.array_equal(d1, env._render(st, style=sty).numpy())
     for i in (0, cpu3d.CPU_CHUNK, n - 1):
-        assert np.array_equal(env.render(st[i : i + 1], style=sty[i : i + 1]).numpy()[0], d1[i]), (
+        assert np.array_equal(env._render(st[i : i + 1], style=sty[i : i + 1]).numpy()[0], d1[i]), (
             f"frame {i} with a per-row style depends on its batch"
         )
-    assert np.array_equal(env.render(st[perm], style=sty[perm]).numpy(), d1[perm])
+    assert np.array_equal(env._render(st[perm], style=sty[perm]).numpy(), d1[perm])
     assert not np.array_equal(d1, a), "the per-row styles should have changed the picture"
 
 
@@ -197,7 +197,7 @@ def test_matches_mjwarp_to_within_a_level(se, cell):
     z = np.load(FIXTURE)
     ref = z[f"{cell}_mjwarp"]
     env = se.make(cell, num_envs=len(ref), device="cpu")
-    ours = env.render(_states(cell, len(ref))).numpy()
+    ours = env._render(_states(cell, len(ref))).numpy()
     d = np.abs(ours.astype(np.int16) - ref.astype(np.int16)).max(-1)
     within1 = float((d <= 1).mean())
     mean = float(d.mean())
@@ -211,6 +211,6 @@ def test_matches_mjwarp_to_within_a_level(se, cell):
 def test_render_at_another_resolution_is_a_pure_function_of_size(se):
     env = se.make("DMCCheetahRun", num_envs=2, device="cpu")
     st = _states("DMCCheetahRun", 2)
-    big = env.render(st, size=168)
+    big = env._render(st, size=168)
     assert big.shape == (2, 168, 168, 3)
-    assert np.array_equal(big.numpy(), env.render(st, size=168).numpy())
+    assert np.array_equal(big.numpy(), env._render(st, size=168).numpy())

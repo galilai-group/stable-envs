@@ -1,0 +1,1265 @@
+{
+  "schema": "stable-envs-semantic-recovery/v1",
+  "source_audit": "docs/research/environment_semantics_audit.json",
+  "source_audit_sha256": "f27769ec10d843145c5642d9e98ee12d679a9f01206ad1e29c7c24c69ca61c0a",
+  "rows": [
+    {
+      "historical_id": "swm/AcrobotControl-v1",
+      "stable_envs_classes": [
+        "Acrobot"
+      ],
+      "family": "classic_control",
+      "owner": "coordinator",
+      "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
+      "state_status": "INCOMPLETE",
+      "action_parity": "UNTESTED",
+      "reset_parity": "UNTESTED",
+      "step_parity": "UNTESTED",
+      "reward_parity": "UNTESTED",
+      "terminated_truncated_parity": "UNTESTED",
+      "rng_lifecycle": "UNTESTED",
+      "variation_parity": "UNTESTED",
+      "execution_mode": "NATIVE",
+      "adapter_status": "NOT_IMPLEMENTED",
+      "renderer_regression": "PENDING",
+      "oracle_corpus": null,
+      "reference_cpu_benchmark": "NOT_RUN",
+      "stable_cpu_benchmark": "NOT_RUN",
+      "stable_gpu_benchmark": "NOT_RUN",
+      "similarity_metrics": null,
+      "remaining_issues": [
+        "Native step returns state only, omits reward/terminated/truncated.",
+        "env.state preserves live simulator fields, but get_state returns render row and set_state zeros omitted velocities.",
+        "unpack_render_state manufactures zero velocities and can be transitioned without a provenance guard."
+      ],
+      "test": "tests/unit/test_full_state_contract.py"
+    },
+    {
+      "historical_id": "swm/AcrobotDMControl-v0",
+      "stable_envs_classes": [
+        "DMCAcrobotSwingup"
+      ],
+      "family": "dmcontrol",
+      "owner": "coordinator",
+      "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
+      "state_status": "INCOMPLETE",
+      "action_parity": "UNTESTED",
+      "reset_parity": "UNTESTED",
+      "step_parity": "UNTESTED",
+      "reward_parity": "UNTESTED",
+      "terminated_truncated_parity": "UNTESTED",
+      "rng_lifecycle": "UNTESTED",
+      "variation_parity": "UNTESTED",
+      "execution_mode": "DELEGATED",
+      "adapter_status": "NOT_IMPLEMENTED",
+      "renderer_regression": "PENDING",
+      "oracle_corpus": null,
+      "reference_cpu_benchmark": "NOT_RUN",
+      "stable_cpu_benchmark": "NOT_RUN",
+      "stable_gpu_benchmark": "NOT_RUN",
+      "similarity_metrics": null,
+      "remaining_issues": [
+        "Missing qvel and executable dynamics.",
+        "Reset samples rollout states rather than reference reset.",
+        "Sparse balance reward; upstream DMCAcrobotSwingup uses swingup (not swingup_sparse)."
+      ],
+      "test": "tests/unit/test_full_state_contract.py"
+    },
+    {
+      "historical_id": "swm/BallInCupDMControl-v0",
+      "stable_envs_classes": [
+        "DMCBallInCupCatch"
+      ],
+      "family": "dmcontrol",
+      "owner": "coordinator",
+      "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
+      "state_status": "INCOMPLETE",
+      "action_parity": "UNTESTED",
+      "reset_parity": "UNTESTED",
+      "step_parity": "UNTESTED",
+      "reward_parity": "UNTESTED",
+      "terminated_truncated_parity": "UNTESTED",
+      "rng_lifecycle": "UNTESTED",
+      "variation_parity": "UNTESTED",
+      "execution_mode": "DELEGATED",
+      "adapter_status": "NOT_IMPLEMENTED",
+      "renderer_regression": "PENDING",
+      "oracle_corpus": null,
+      "reference_cpu_benchmark": "NOT_RUN",
+      "stable_cpu_benchmark": "NOT_RUN",
+      "stable_gpu_benchmark": "NOT_RUN",
+      "similarity_metrics": null,
+      "remaining_issues": [
+        "Missing qvel and executable dynamics.",
+        "Reset samples rollout states rather than reference reset."
+      ],
+      "test": "tests/unit/test_full_state_contract.py"
+    },
+    {
+      "historical_id": "swm/CartPoleControl-v1",
+      "stable_envs_classes": [
+        "CartPole"
+      ],
+      "family": "classic_control",
+      "owner": "coordinator",
+      "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
+      "state_status": "INCOMPLETE",
+      "action_parity": "UNTESTED",
+      "reset_parity": "UNTESTED",
+      "step_parity": "UNTESTED",
+      "reward_parity": "UNTESTED",
+      "terminated_truncated_parity": "UNTESTED",
+      "rng_lifecycle": "UNTESTED",
+      "variation_parity": "UNTESTED",
+      "execution_mode": "NATIVE",
+      "adapter_status": "NOT_IMPLEMENTED",
+      "renderer_regression": "PENDING",
+      "oracle_corpus": null,
+      "reference_cpu_benchmark": "NOT_RUN",
+      "stable_cpu_benchmark": "NOT_RUN",
+      "stable_gpu_benchmark": "NOT_RUN",
+      "similarity_metrics": null,
+      "remaining_issues": [
+        "Native step returns state only, omits reward/terminated/truncated.",
+        "env.state preserves live simulator fields, but get_state returns render row and set_state zeros omitted velocities.",
+        "unpack_render_state manufactures zero velocities and can be transitioned without a provenance guard."
+      ],
+      "test": "tests/unit/test_full_state_contract.py"
+    },
+    {
+      "historical_id": "swm/CartpoleDMControl-v0",
+      "stable_envs_classes": [
+        "DMCCartpoleBalance",
+        "DMCCartpoleSwingup"
+      ],
+      "family": "dmcontrol",
+      "owner": "coordinator",
+      "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
+      "state_status": "INCOMPLETE",
+      "action_parity": "UNTESTED",
+      "reset_parity": "UNTESTED",
+      "step_parity": "UNTESTED",
+      "reward_parity": "UNTESTED",
+      "terminated_truncated_parity": "UNTESTED",
+      "rng_lifecycle": "UNTESTED",
+      "variation_parity": "UNTESTED",
+      "execution_mode": "DELEGATED",
+      "adapter_status": "NOT_IMPLEMENTED",
+      "renderer_regression": "PENDING",
+      "oracle_corpus": null,
+      "reference_cpu_benchmark": "NOT_RUN",
+      "stable_cpu_benchmark": "NOT_RUN",
+      "stable_gpu_benchmark": "NOT_RUN",
+      "similarity_metrics": null,
+      "remaining_issues": [
+        "Missing qvel and executable dynamics.",
+        "Reset samples rollout states rather than reference reset.",
+        "SWM default is sparse swingup; neither balance nor dense swingup is the same task."
+      ],
+      "test": "tests/unit/test_full_state_contract.py"
+    },
+    {
+      "historical_id": "swm/CheetahDMControl-v0",
+      "stable_envs_classes": [
+        "DMCCheetahRun"
+      ],
+      "family": "dmcontrol",
+      "owner": "coordinator",
+      "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
+      "state_status": "INCOMPLETE",
+      "action_parity": "UNTESTED",
+      "reset_parity": "UNTESTED",
+      "step_parity": "UNTESTED",
+      "reward_parity": "UNTESTED",
+      "terminated_truncated_parity": "UNTESTED",
+      "rng_lifecycle": "UNTESTED",
+      "variation_parity": "UNTESTED",
+      "execution_mode": "DELEGATED",
+      "adapter_status": "NOT_IMPLEMENTED",
+      "renderer_regression": "PENDING",
+      "oracle_corpus": null,
+      "reference_cpu_benchmark": "NOT_RUN",
+      "stable_cpu_benchmark": "NOT_RUN",
+      "stable_gpu_benchmark": "NOT_RUN",
+      "similarity_metrics": null,
+      "remaining_issues": [
+        "Missing qvel and executable dynamics.",
+        "Reset samples rollout states rather than reference reset.",
+        "Inspect SWM custom_tasks/cheetah.py; suite task name alone is insufficient authority."
+      ],
+      "test": "tests/unit/test_full_state_contract.py"
+    },
+    {
+      "historical_id": "swm/CraftaxClassicPixels-v1",
+      "stable_envs_classes": [
+        "CraftaxClassic"
+      ],
+      "family": "craftax",
+      "owner": "coordinator",
+      "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
+      "state_status": "INCOMPLETE",
+      "action_parity": "UNTESTED",
+      "reset_parity": "UNTESTED",
+      "step_parity": "UNTESTED",
+      "reward_parity": "UNTESTED",
+      "terminated_truncated_parity": "UNTESTED",
+      "rng_lifecycle": "UNTESTED",
+      "variation_parity": "UNTESTED",
+      "execution_mode": "DELEGATED",
+      "adapter_status": "NOT_IMPLEMENTED",
+      "renderer_regression": "PENDING",
+      "oracle_corpus": null,
+      "reference_cpu_benchmark": "NOT_RUN",
+      "stable_cpu_benchmark": "NOT_RUN",
+      "stable_gpu_benchmark": "NOT_RUN",
+      "similarity_metrics": null,
+      "remaining_issues": [
+        "Local visible tiles/inventory are a lossy render projection, not game state; no dynamics."
+      ],
+      "test": "tests/unit/test_full_state_contract.py"
+    },
+    {
+      "historical_id": "swm/CraftaxClassicSymbolic-v1",
+      "stable_envs_classes": [],
+      "family": "craftax",
+      "owner": "coordinator",
+      "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
+      "state_status": "INCOMPLETE",
+      "action_parity": "UNTESTED",
+      "reset_parity": "UNTESTED",
+      "step_parity": "UNTESTED",
+      "reward_parity": "UNTESTED",
+      "terminated_truncated_parity": "UNTESTED",
+      "rng_lifecycle": "UNTESTED",
+      "variation_parity": "UNTESTED",
+      "execution_mode": "DELEGATED",
+      "adapter_status": "NOT_IMPLEMENTED",
+      "renderer_regression": "PENDING",
+      "oracle_corpus": null,
+      "reference_cpu_benchmark": "NOT_RUN",
+      "stable_cpu_benchmark": "NOT_RUN",
+      "stable_gpu_benchmark": "NOT_RUN",
+      "similarity_metrics": null,
+      "remaining_issues": [
+        "No stable-envs symbolic class in frozen crosswalk."
+      ],
+      "test": "tests/unit/test_full_state_contract.py"
+    },
+    {
+      "historical_id": "swm/CraftaxPixels-v1",
+      "stable_envs_classes": [
+        "CraftaxFull"
+      ],
+      "family": "craftax",
+      "owner": "coordinator",
+      "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
+      "state_status": "INCOMPLETE",
+      "action_parity": "UNTESTED",
+      "reset_parity": "UNTESTED",
+      "step_parity": "UNTESTED",
+      "reward_parity": "UNTESTED",
+      "terminated_truncated_parity": "UNTESTED",
+      "rng_lifecycle": "UNTESTED",
+      "variation_parity": "UNTESTED",
+      "execution_mode": "DELEGATED",
+      "adapter_status": "NOT_IMPLEMENTED",
+      "renderer_regression": "PENDING",
+      "oracle_corpus": null,
+      "reference_cpu_benchmark": "NOT_RUN",
+      "stable_cpu_benchmark": "NOT_RUN",
+      "stable_gpu_benchmark": "NOT_RUN",
+      "similarity_metrics": null,
+      "remaining_issues": [
+        "Local visible tiles/inventory are a lossy render projection, not game state; no dynamics."
+      ],
+      "test": "tests/unit/test_full_state_contract.py"
+    },
+    {
+      "historical_id": "swm/CraftaxSymbolic-v1",
+      "stable_envs_classes": [],
+      "family": "craftax",
+      "owner": "coordinator",
+      "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
+      "state_status": "INCOMPLETE",
+      "action_parity": "UNTESTED",
+      "reset_parity": "UNTESTED",
+      "step_parity": "UNTESTED",
+      "reward_parity": "UNTESTED",
+      "terminated_truncated_parity": "UNTESTED",
+      "rng_lifecycle": "UNTESTED",
+      "variation_parity": "UNTESTED",
+      "execution_mode": "DELEGATED",
+      "adapter_status": "NOT_IMPLEMENTED",
+      "renderer_regression": "PENDING",
+      "oracle_corpus": null,
+      "reference_cpu_benchmark": "NOT_RUN",
+      "stable_cpu_benchmark": "NOT_RUN",
+      "stable_gpu_benchmark": "NOT_RUN",
+      "similarity_metrics": null,
+      "remaining_issues": [
+        "No stable-envs symbolic class in frozen crosswalk."
+      ],
+      "test": "tests/unit/test_full_state_contract.py"
+    },
+    {
+      "historical_id": "swm/FetchPickAndPlace-v3",
+      "stable_envs_classes": [
+        "FetchPickAndPlace"
+      ],
+      "family": "fetch",
+      "owner": "coordinator",
+      "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
+      "state_status": "INCOMPLETE",
+      "action_parity": "UNTESTED",
+      "reset_parity": "UNTESTED",
+      "step_parity": "UNTESTED",
+      "reward_parity": "UNTESTED",
+      "terminated_truncated_parity": "UNTESTED",
+      "rng_lifecycle": "UNTESTED",
+      "variation_parity": "UNTESTED",
+      "execution_mode": "DELEGATED",
+      "adapter_status": "NOT_IMPLEMENTED",
+      "renderer_regression": "PENDING",
+      "oracle_corpus": null,
+      "reference_cpu_benchmark": "NOT_RUN",
+      "stable_cpu_benchmark": "NOT_RUN",
+      "stable_gpu_benchmark": "NOT_RUN",
+      "similarity_metrics": null,
+      "remaining_issues": [
+        "No dynamics/reward/done; qpos+goal renderer projection cannot restore velocities or episode horizon."
+      ],
+      "test": "tests/unit/test_full_state_contract.py"
+    },
+    {
+      "historical_id": "swm/FetchPickAndPlaceDense-v3",
+      "stable_envs_classes": [
+        "FetchPickAndPlaceDense"
+      ],
+      "family": "fetch",
+      "owner": "coordinator",
+      "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
+      "state_status": "INCOMPLETE",
+      "action_parity": "UNTESTED",
+      "reset_parity": "UNTESTED",
+      "step_parity": "UNTESTED",
+      "reward_parity": "UNTESTED",
+      "terminated_truncated_parity": "UNTESTED",
+      "rng_lifecycle": "UNTESTED",
+      "variation_parity": "UNTESTED",
+      "execution_mode": "DELEGATED",
+      "adapter_status": "NOT_IMPLEMENTED",
+      "renderer_regression": "PENDING",
+      "oracle_corpus": null,
+      "reference_cpu_benchmark": "NOT_RUN",
+      "stable_cpu_benchmark": "NOT_RUN",
+      "stable_gpu_benchmark": "NOT_RUN",
+      "similarity_metrics": null,
+      "remaining_issues": [
+        "No dynamics/reward/done; qpos+goal renderer projection cannot restore velocities or episode horizon."
+      ],
+      "test": "tests/unit/test_full_state_contract.py"
+    },
+    {
+      "historical_id": "swm/FetchPickAndPlaceDict-v3",
+      "stable_envs_classes": [
+        "FetchPickAndPlaceDict"
+      ],
+      "family": "fetch",
+      "owner": "coordinator",
+      "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
+      "state_status": "INCOMPLETE",
+      "action_parity": "UNTESTED",
+      "reset_parity": "UNTESTED",
+      "step_parity": "UNTESTED",
+      "reward_parity": "UNTESTED",
+      "terminated_truncated_parity": "UNTESTED",
+      "rng_lifecycle": "UNTESTED",
+      "variation_parity": "UNTESTED",
+      "execution_mode": "DELEGATED",
+      "adapter_status": "NOT_IMPLEMENTED",
+      "renderer_regression": "PENDING",
+      "oracle_corpus": null,
+      "reference_cpu_benchmark": "NOT_RUN",
+      "stable_cpu_benchmark": "NOT_RUN",
+      "stable_gpu_benchmark": "NOT_RUN",
+      "similarity_metrics": null,
+      "remaining_issues": [
+        "No dynamics/reward/done; qpos+goal renderer projection cannot restore velocities or episode horizon."
+      ],
+      "test": "tests/unit/test_full_state_contract.py"
+    },
+    {
+      "historical_id": "swm/FetchPush-v3",
+      "stable_envs_classes": [
+        "FetchPush"
+      ],
+      "family": "fetch",
+      "owner": "coordinator",
+      "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
+      "state_status": "INCOMPLETE",
+      "action_parity": "UNTESTED",
+      "reset_parity": "UNTESTED",
+      "step_parity": "UNTESTED",
+      "reward_parity": "UNTESTED",
+      "terminated_truncated_parity": "UNTESTED",
+      "rng_lifecycle": "UNTESTED",
+      "variation_parity": "UNTESTED",
+      "execution_mode": "DELEGATED",
+      "adapter_status": "NOT_IMPLEMENTED",
+      "renderer_regression": "PENDING",
+      "oracle_corpus": null,
+      "reference_cpu_benchmark": "NOT_RUN",
+      "stable_cpu_benchmark": "NOT_RUN",
+      "stable_gpu_benchmark": "NOT_RUN",
+      "similarity_metrics": null,
+      "remaining_issues": [
+        "No dynamics/reward/done; qpos+goal renderer projection cannot restore velocities or episode horizon."
+      ],
+      "test": "tests/unit/test_full_state_contract.py"
+    },
+    {
+      "historical_id": "swm/FetchPushDense-v3",
+      "stable_envs_classes": [
+        "FetchPushDense"
+      ],
+      "family": "fetch",
+      "owner": "coordinator",
+      "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
+      "state_status": "INCOMPLETE",
+      "action_parity": "UNTESTED",
+      "reset_parity": "UNTESTED",
+      "step_parity": "UNTESTED",
+      "reward_parity": "UNTESTED",
+      "terminated_truncated_parity": "UNTESTED",
+      "rng_lifecycle": "UNTESTED",
+      "variation_parity": "UNTESTED",
+      "execution_mode": "DELEGATED",
+      "adapter_status": "NOT_IMPLEMENTED",
+      "renderer_regression": "PENDING",
+      "oracle_corpus": null,
+      "reference_cpu_benchmark": "NOT_RUN",
+      "stable_cpu_benchmark": "NOT_RUN",
+      "stable_gpu_benchmark": "NOT_RUN",
+      "similarity_metrics": null,
+      "remaining_issues": [
+        "No dynamics/reward/done; qpos+goal renderer projection cannot restore velocities or episode horizon."
+      ],
+      "test": "tests/unit/test_full_state_contract.py"
+    },
+    {
+      "historical_id": "swm/FetchPushDict-v3",
+      "stable_envs_classes": [
+        "FetchPushDict"
+      ],
+      "family": "fetch",
+      "owner": "coordinator",
+      "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
+      "state_status": "INCOMPLETE",
+      "action_parity": "UNTESTED",
+      "reset_parity": "UNTESTED",
+      "step_parity": "UNTESTED",
+      "reward_parity": "UNTESTED",
+      "terminated_truncated_parity": "UNTESTED",
+      "rng_lifecycle": "UNTESTED",
+      "variation_parity": "UNTESTED",
+      "execution_mode": "DELEGATED",
+      "adapter_status": "NOT_IMPLEMENTED",
+      "renderer_regression": "PENDING",
+      "oracle_corpus": null,
+      "reference_cpu_benchmark": "NOT_RUN",
+      "stable_cpu_benchmark": "NOT_RUN",
+      "stable_gpu_benchmark": "NOT_RUN",
+      "similarity_metrics": null,
+      "remaining_issues": [
+        "No dynamics/reward/done; qpos+goal renderer projection cannot restore velocities or episode horizon."
+      ],
+      "test": "tests/unit/test_full_state_contract.py"
+    },
+    {
+      "historical_id": "swm/FetchReach-v3",
+      "stable_envs_classes": [
+        "FetchReach"
+      ],
+      "family": "fetch",
+      "owner": "coordinator",
+      "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
+      "state_status": "INCOMPLETE",
+      "action_parity": "UNTESTED",
+      "reset_parity": "UNTESTED",
+      "step_parity": "UNTESTED",
+      "reward_parity": "UNTESTED",
+      "terminated_truncated_parity": "UNTESTED",
+      "rng_lifecycle": "UNTESTED",
+      "variation_parity": "UNTESTED",
+      "execution_mode": "DELEGATED",
+      "adapter_status": "NOT_IMPLEMENTED",
+      "renderer_regression": "PENDING",
+      "oracle_corpus": null,
+      "reference_cpu_benchmark": "NOT_RUN",
+      "stable_cpu_benchmark": "NOT_RUN",
+      "stable_gpu_benchmark": "NOT_RUN",
+      "similarity_metrics": null,
+      "remaining_issues": [
+        "No dynamics/reward/done; qpos+goal renderer projection cannot restore velocities or episode horizon."
+      ],
+      "test": "tests/unit/test_full_state_contract.py"
+    },
+    {
+      "historical_id": "swm/FetchReachDense-v3",
+      "stable_envs_classes": [
+        "FetchReachDense"
+      ],
+      "family": "fetch",
+      "owner": "coordinator",
+      "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
+      "state_status": "INCOMPLETE",
+      "action_parity": "UNTESTED",
+      "reset_parity": "UNTESTED",
+      "step_parity": "UNTESTED",
+      "reward_parity": "UNTESTED",
+      "terminated_truncated_parity": "UNTESTED",
+      "rng_lifecycle": "UNTESTED",
+      "variation_parity": "UNTESTED",
+      "execution_mode": "DELEGATED",
+      "adapter_status": "NOT_IMPLEMENTED",
+      "renderer_regression": "PENDING",
+      "oracle_corpus": null,
+      "reference_cpu_benchmark": "NOT_RUN",
+      "stable_cpu_benchmark": "NOT_RUN",
+      "stable_gpu_benchmark": "NOT_RUN",
+      "similarity_metrics": null,
+      "remaining_issues": [
+        "No dynamics/reward/done; qpos+goal renderer projection cannot restore velocities or episode horizon."
+      ],
+      "test": "tests/unit/test_full_state_contract.py"
+    },
+    {
+      "historical_id": "swm/FetchReachDict-v3",
+      "stable_envs_classes": [
+        "FetchReachDict"
+      ],
+      "family": "fetch",
+      "owner": "coordinator",
+      "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
+      "state_status": "INCOMPLETE",
+      "action_parity": "UNTESTED",
+      "reset_parity": "UNTESTED",
+      "step_parity": "UNTESTED",
+      "reward_parity": "UNTESTED",
+      "terminated_truncated_parity": "UNTESTED",
+      "rng_lifecycle": "UNTESTED",
+      "variation_parity": "UNTESTED",
+      "execution_mode": "DELEGATED",
+      "adapter_status": "NOT_IMPLEMENTED",
+      "renderer_regression": "PENDING",
+      "oracle_corpus": null,
+      "reference_cpu_benchmark": "NOT_RUN",
+      "stable_cpu_benchmark": "NOT_RUN",
+      "stable_gpu_benchmark": "NOT_RUN",
+      "similarity_metrics": null,
+      "remaining_issues": [
+        "No dynamics/reward/done; qpos+goal renderer projection cannot restore velocities or episode horizon."
+      ],
+      "test": "tests/unit/test_full_state_contract.py"
+    },
+    {
+      "historical_id": "swm/FetchSlide-v3",
+      "stable_envs_classes": [
+        "FetchSlide"
+      ],
+      "family": "fetch",
+      "owner": "coordinator",
+      "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
+      "state_status": "INCOMPLETE",
+      "action_parity": "UNTESTED",
+      "reset_parity": "UNTESTED",
+      "step_parity": "UNTESTED",
+      "reward_parity": "UNTESTED",
+      "terminated_truncated_parity": "UNTESTED",
+      "rng_lifecycle": "UNTESTED",
+      "variation_parity": "UNTESTED",
+      "execution_mode": "DELEGATED",
+      "adapter_status": "NOT_IMPLEMENTED",
+      "renderer_regression": "PENDING",
+      "oracle_corpus": null,
+      "reference_cpu_benchmark": "NOT_RUN",
+      "stable_cpu_benchmark": "NOT_RUN",
+      "stable_gpu_benchmark": "NOT_RUN",
+      "similarity_metrics": null,
+      "remaining_issues": [
+        "No dynamics/reward/done; qpos+goal renderer projection cannot restore velocities or episode horizon."
+      ],
+      "test": "tests/unit/test_full_state_contract.py"
+    },
+    {
+      "historical_id": "swm/FetchSlideDense-v3",
+      "stable_envs_classes": [
+        "FetchSlideDense"
+      ],
+      "family": "fetch",
+      "owner": "coordinator",
+      "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
+      "state_status": "INCOMPLETE",
+      "action_parity": "UNTESTED",
+      "reset_parity": "UNTESTED",
+      "step_parity": "UNTESTED",
+      "reward_parity": "UNTESTED",
+      "terminated_truncated_parity": "UNTESTED",
+      "rng_lifecycle": "UNTESTED",
+      "variation_parity": "UNTESTED",
+      "execution_mode": "DELEGATED",
+      "adapter_status": "NOT_IMPLEMENTED",
+      "renderer_regression": "PENDING",
+      "oracle_corpus": null,
+      "reference_cpu_benchmark": "NOT_RUN",
+      "stable_cpu_benchmark": "NOT_RUN",
+      "stable_gpu_benchmark": "NOT_RUN",
+      "similarity_metrics": null,
+      "remaining_issues": [
+        "No dynamics/reward/done; qpos+goal renderer projection cannot restore velocities or episode horizon."
+      ],
+      "test": "tests/unit/test_full_state_contract.py"
+    },
+    {
+      "historical_id": "swm/FetchSlideDict-v3",
+      "stable_envs_classes": [
+        "FetchSlideDict"
+      ],
+      "family": "fetch",
+      "owner": "coordinator",
+      "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
+      "state_status": "INCOMPLETE",
+      "action_parity": "UNTESTED",
+      "reset_parity": "UNTESTED",
+      "step_parity": "UNTESTED",
+      "reward_parity": "UNTESTED",
+      "terminated_truncated_parity": "UNTESTED",
+      "rng_lifecycle": "UNTESTED",
+      "variation_parity": "UNTESTED",
+      "execution_mode": "DELEGATED",
+      "adapter_status": "NOT_IMPLEMENTED",
+      "renderer_regression": "PENDING",
+      "oracle_corpus": null,
+      "reference_cpu_benchmark": "NOT_RUN",
+      "stable_cpu_benchmark": "NOT_RUN",
+      "stable_gpu_benchmark": "NOT_RUN",
+      "similarity_metrics": null,
+      "remaining_issues": [
+        "No dynamics/reward/done; qpos+goal renderer projection cannot restore velocities or episode horizon."
+      ],
+      "test": "tests/unit/test_full_state_contract.py"
+    },
+    {
+      "historical_id": "swm/FingerDMControl-v0",
+      "stable_envs_classes": [
+        "DMCFingerTurnHard"
+      ],
+      "family": "dmcontrol",
+      "owner": "coordinator",
+      "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
+      "state_status": "INCOMPLETE",
+      "action_parity": "UNTESTED",
+      "reset_parity": "UNTESTED",
+      "step_parity": "UNTESTED",
+      "reward_parity": "UNTESTED",
+      "terminated_truncated_parity": "UNTESTED",
+      "rng_lifecycle": "UNTESTED",
+      "variation_parity": "UNTESTED",
+      "execution_mode": "DELEGATED",
+      "adapter_status": "NOT_IMPLEMENTED",
+      "renderer_regression": "PENDING",
+      "oracle_corpus": null,
+      "reference_cpu_benchmark": "NOT_RUN",
+      "stable_cpu_benchmark": "NOT_RUN",
+      "stable_gpu_benchmark": "NOT_RUN",
+      "similarity_metrics": null,
+      "remaining_issues": [
+        "Missing qvel and executable dynamics.",
+        "Reset samples rollout states rather than reference reset."
+      ],
+      "test": "tests/unit/test_full_state_contract.py"
+    },
+    {
+      "historical_id": "swm/HopperDMControl-v0",
+      "stable_envs_classes": [
+        "DMCHopperHop"
+      ],
+      "family": "dmcontrol",
+      "owner": "coordinator",
+      "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
+      "state_status": "INCOMPLETE",
+      "action_parity": "UNTESTED",
+      "reset_parity": "UNTESTED",
+      "step_parity": "UNTESTED",
+      "reward_parity": "UNTESTED",
+      "terminated_truncated_parity": "UNTESTED",
+      "rng_lifecycle": "UNTESTED",
+      "variation_parity": "UNTESTED",
+      "execution_mode": "DELEGATED",
+      "adapter_status": "NOT_IMPLEMENTED",
+      "renderer_regression": "PENDING",
+      "oracle_corpus": null,
+      "reference_cpu_benchmark": "NOT_RUN",
+      "stable_cpu_benchmark": "NOT_RUN",
+      "stable_gpu_benchmark": "NOT_RUN",
+      "similarity_metrics": null,
+      "remaining_issues": [
+        "Missing qvel and executable dynamics.",
+        "Reset samples rollout states rather than reference reset.",
+        "Inspect SWM custom_tasks/hopper.py rather than assuming suite reward equivalence."
+      ],
+      "test": "tests/unit/test_full_state_contract.py"
+    },
+    {
+      "historical_id": "swm/HumanoidDMControl-v0",
+      "stable_envs_classes": [
+        "DMCHumanoidStand"
+      ],
+      "family": "dmcontrol",
+      "owner": "coordinator",
+      "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
+      "state_status": "INCOMPLETE",
+      "action_parity": "UNTESTED",
+      "reset_parity": "UNTESTED",
+      "step_parity": "UNTESTED",
+      "reward_parity": "UNTESTED",
+      "terminated_truncated_parity": "UNTESTED",
+      "rng_lifecycle": "UNTESTED",
+      "variation_parity": "UNTESTED",
+      "execution_mode": "DELEGATED",
+      "adapter_status": "NOT_IMPLEMENTED",
+      "renderer_regression": "PENDING",
+      "oracle_corpus": null,
+      "reference_cpu_benchmark": "NOT_RUN",
+      "stable_cpu_benchmark": "NOT_RUN",
+      "stable_gpu_benchmark": "NOT_RUN",
+      "similarity_metrics": null,
+      "remaining_issues": [
+        "Missing qvel and executable dynamics.",
+        "Reset samples rollout states rather than reference reset.",
+        "SWM constructor defaults to walk; crosswalk names DMCHumanoidStand."
+      ],
+      "test": "tests/unit/test_full_state_contract.py"
+    },
+    {
+      "historical_id": "swm/ManipulatorDMControl-v0",
+      "stable_envs_classes": [
+        "DMCManipulatorBringBall"
+      ],
+      "family": "dmcontrol",
+      "owner": "coordinator",
+      "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
+      "state_status": "INCOMPLETE",
+      "action_parity": "UNTESTED",
+      "reset_parity": "UNTESTED",
+      "step_parity": "UNTESTED",
+      "reward_parity": "UNTESTED",
+      "terminated_truncated_parity": "UNTESTED",
+      "rng_lifecycle": "UNTESTED",
+      "variation_parity": "UNTESTED",
+      "execution_mode": "DELEGATED",
+      "adapter_status": "NOT_IMPLEMENTED",
+      "renderer_regression": "PENDING",
+      "oracle_corpus": null,
+      "reference_cpu_benchmark": "NOT_RUN",
+      "stable_cpu_benchmark": "NOT_RUN",
+      "stable_gpu_benchmark": "NOT_RUN",
+      "similarity_metrics": null,
+      "remaining_issues": [
+        "Missing qvel and executable dynamics.",
+        "Reset samples rollout states rather than reference reset."
+      ],
+      "test": "tests/unit/test_full_state_contract.py"
+    },
+    {
+      "historical_id": "swm/MountainCarContinuousControl-v0",
+      "stable_envs_classes": [
+        "MountainCarContinuous"
+      ],
+      "family": "classic_control",
+      "owner": "coordinator",
+      "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
+      "state_status": "INCOMPLETE",
+      "action_parity": "UNTESTED",
+      "reset_parity": "UNTESTED",
+      "step_parity": "UNTESTED",
+      "reward_parity": "UNTESTED",
+      "terminated_truncated_parity": "UNTESTED",
+      "rng_lifecycle": "UNTESTED",
+      "variation_parity": "UNTESTED",
+      "execution_mode": "NATIVE",
+      "adapter_status": "NOT_IMPLEMENTED",
+      "renderer_regression": "PENDING",
+      "oracle_corpus": null,
+      "reference_cpu_benchmark": "NOT_RUN",
+      "stable_cpu_benchmark": "NOT_RUN",
+      "stable_gpu_benchmark": "NOT_RUN",
+      "similarity_metrics": null,
+      "remaining_issues": [
+        "Native step returns state only, omits reward/terminated/truncated.",
+        "env.state preserves live simulator fields, but get_state returns render row and set_state zeros omitted velocities.",
+        "unpack_render_state manufactures zero velocities and can be transitioned without a provenance guard."
+      ],
+      "test": "tests/unit/test_full_state_contract.py"
+    },
+    {
+      "historical_id": "swm/MountainCarControl-v0",
+      "stable_envs_classes": [
+        "MountainCar"
+      ],
+      "family": "classic_control",
+      "owner": "coordinator",
+      "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
+      "state_status": "INCOMPLETE",
+      "action_parity": "UNTESTED",
+      "reset_parity": "UNTESTED",
+      "step_parity": "UNTESTED",
+      "reward_parity": "UNTESTED",
+      "terminated_truncated_parity": "UNTESTED",
+      "rng_lifecycle": "UNTESTED",
+      "variation_parity": "UNTESTED",
+      "execution_mode": "NATIVE",
+      "adapter_status": "NOT_IMPLEMENTED",
+      "renderer_regression": "PENDING",
+      "oracle_corpus": null,
+      "reference_cpu_benchmark": "NOT_RUN",
+      "stable_cpu_benchmark": "NOT_RUN",
+      "stable_gpu_benchmark": "NOT_RUN",
+      "similarity_metrics": null,
+      "remaining_issues": [
+        "Native step returns state only, omits reward/terminated/truncated.",
+        "env.state preserves live simulator fields, but get_state returns render row and set_state zeros omitted velocities.",
+        "unpack_render_state manufactures zero velocities and can be transitioned without a provenance guard."
+      ],
+      "test": "tests/unit/test_full_state_contract.py"
+    },
+    {
+      "historical_id": "swm/OGBCube-v0",
+      "stable_envs_classes": [
+        "OGBCube"
+      ],
+      "family": "ogbench",
+      "owner": "coordinator",
+      "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
+      "state_status": "INCOMPLETE",
+      "action_parity": "UNTESTED",
+      "reset_parity": "UNTESTED",
+      "step_parity": "UNTESTED",
+      "reward_parity": "UNTESTED",
+      "terminated_truncated_parity": "UNTESTED",
+      "rng_lifecycle": "UNTESTED",
+      "variation_parity": "UNTESTED",
+      "execution_mode": "DELEGATED",
+      "adapter_status": "NOT_IMPLEMENTED",
+      "renderer_regression": "PENDING",
+      "oracle_corpus": null,
+      "reference_cpu_benchmark": "NOT_RUN",
+      "stable_cpu_benchmark": "NOT_RUN",
+      "stable_gpu_benchmark": "NOT_RUN",
+      "similarity_metrics": null,
+      "remaining_issues": [
+        "No stable dynamics; render state deliberately drops qvel.",
+        "Cube.reset seed parameter is not forwarded; fixed-seed oracle needs explicit global/variation/simulator RNG control."
+      ],
+      "test": "tests/unit/test_full_state_contract.py"
+    },
+    {
+      "historical_id": "swm/OGBMaze-v0",
+      "stable_envs_classes": [
+        "PointMazeLargeNavigate",
+        "PointMazeLargeStitch"
+      ],
+      "family": "ogbench",
+      "owner": "coordinator",
+      "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
+      "state_status": "INCOMPLETE",
+      "action_parity": "UNTESTED",
+      "reset_parity": "UNTESTED",
+      "step_parity": "UNTESTED",
+      "reward_parity": "UNTESTED",
+      "terminated_truncated_parity": "UNTESTED",
+      "rng_lifecycle": "UNTESTED",
+      "variation_parity": "UNTESTED",
+      "execution_mode": "DELEGATED",
+      "adapter_status": "NOT_IMPLEMENTED",
+      "renderer_regression": "PENDING",
+      "oracle_corpus": null,
+      "reference_cpu_benchmark": "NOT_RUN",
+      "stable_cpu_benchmark": "NOT_RUN",
+      "stable_gpu_benchmark": "NOT_RUN",
+      "similarity_metrics": null,
+      "remaining_issues": [
+        "No stable dynamics; render state deliberately drops qvel."
+      ],
+      "test": "tests/unit/test_full_state_contract.py"
+    },
+    {
+      "historical_id": "swm/OGBScene-v0",
+      "stable_envs_classes": [
+        "OGBScene"
+      ],
+      "family": "ogbench",
+      "owner": "coordinator",
+      "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
+      "state_status": "INCOMPLETE",
+      "action_parity": "UNTESTED",
+      "reset_parity": "UNTESTED",
+      "step_parity": "UNTESTED",
+      "reward_parity": "UNTESTED",
+      "terminated_truncated_parity": "UNTESTED",
+      "rng_lifecycle": "UNTESTED",
+      "variation_parity": "UNTESTED",
+      "execution_mode": "DELEGATED",
+      "adapter_status": "NOT_IMPLEMENTED",
+      "renderer_regression": "PENDING",
+      "oracle_corpus": null,
+      "reference_cpu_benchmark": "NOT_RUN",
+      "stable_cpu_benchmark": "NOT_RUN",
+      "stable_gpu_benchmark": "NOT_RUN",
+      "similarity_metrics": null,
+      "remaining_issues": [
+        "No stable dynamics; render state deliberately drops qvel.",
+        "Pinned SWM Scene.reset(options.state) calls set_state without required button kwargs: source-level KeyError path; live reproduction pending."
+      ],
+      "test": "tests/unit/test_full_state_contract.py"
+    },
+    {
+      "historical_id": "swm/PFRocketLanding-v0",
+      "stable_envs_classes": [
+        "PyFlytRocketLanding"
+      ],
+      "family": "rocket",
+      "owner": "coordinator",
+      "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
+      "state_status": "INCOMPLETE",
+      "action_parity": "UNTESTED",
+      "reset_parity": "UNTESTED",
+      "step_parity": "UNTESTED",
+      "reward_parity": "UNTESTED",
+      "terminated_truncated_parity": "UNTESTED",
+      "rng_lifecycle": "UNTESTED",
+      "variation_parity": "UNTESTED",
+      "execution_mode": "DELEGATED",
+      "adapter_status": "NOT_IMPLEMENTED",
+      "renderer_regression": "PENDING",
+      "oracle_corpus": null,
+      "reference_cpu_benchmark": "NOT_RUN",
+      "stable_cpu_benchmark": "NOT_RUN",
+      "stable_gpu_benchmark": "NOT_RUN",
+      "similarity_metrics": null,
+      "remaining_issues": [
+        "No dynamics; renderer pose/velocity omits fuel, noisy actuators, lifecycle/task state.",
+        "Direct PyFlyt landing env is not the SWM subclass reward/reset implementation."
+      ],
+      "test": "tests/unit/test_full_state_contract.py"
+    },
+    {
+      "historical_id": "swm/PendulumControl-v1",
+      "stable_envs_classes": [
+        "Pendulum"
+      ],
+      "family": "classic_control",
+      "owner": "coordinator",
+      "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
+      "state_status": "INCOMPLETE",
+      "action_parity": "UNTESTED",
+      "reset_parity": "UNTESTED",
+      "step_parity": "UNTESTED",
+      "reward_parity": "UNTESTED",
+      "terminated_truncated_parity": "UNTESTED",
+      "rng_lifecycle": "UNTESTED",
+      "variation_parity": "UNTESTED",
+      "execution_mode": "NATIVE",
+      "adapter_status": "NOT_IMPLEMENTED",
+      "renderer_regression": "PENDING",
+      "oracle_corpus": null,
+      "reference_cpu_benchmark": "NOT_RUN",
+      "stable_cpu_benchmark": "NOT_RUN",
+      "stable_gpu_benchmark": "NOT_RUN",
+      "similarity_metrics": null,
+      "remaining_issues": [
+        "Native step returns state only, omits reward/terminated/truncated.",
+        "env.state preserves live simulator fields, but get_state returns render row and set_state zeros omitted velocities.",
+        "unpack_render_state manufactures zero velocities and can be transitioned without a provenance guard."
+      ],
+      "test": "tests/unit/test_full_state_contract.py"
+    },
+    {
+      "historical_id": "swm/PendulumDMControl-v0",
+      "stable_envs_classes": [
+        "DMCPendulumSwingup"
+      ],
+      "family": "dmcontrol",
+      "owner": "coordinator",
+      "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
+      "state_status": "INCOMPLETE",
+      "action_parity": "UNTESTED",
+      "reset_parity": "UNTESTED",
+      "step_parity": "UNTESTED",
+      "reward_parity": "UNTESTED",
+      "terminated_truncated_parity": "UNTESTED",
+      "rng_lifecycle": "UNTESTED",
+      "variation_parity": "UNTESTED",
+      "execution_mode": "DELEGATED",
+      "adapter_status": "NOT_IMPLEMENTED",
+      "renderer_regression": "PENDING",
+      "oracle_corpus": null,
+      "reference_cpu_benchmark": "NOT_RUN",
+      "stable_cpu_benchmark": "NOT_RUN",
+      "stable_gpu_benchmark": "NOT_RUN",
+      "similarity_metrics": null,
+      "remaining_issues": [
+        "Missing qvel and executable dynamics.",
+        "Reset samples rollout states rather than reference reset."
+      ],
+      "test": "tests/unit/test_full_state_contract.py"
+    },
+    {
+      "historical_id": "swm/Piecewise-v0",
+      "stable_envs_classes": [
+        "Piecewise",
+        "PiecewiseZones"
+      ],
+      "family": "navigation",
+      "owner": "coordinator",
+      "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
+      "state_status": "INCOMPLETE",
+      "action_parity": "UNTESTED",
+      "reset_parity": "UNTESTED",
+      "step_parity": "UNTESTED",
+      "reward_parity": "UNTESTED",
+      "terminated_truncated_parity": "UNTESTED",
+      "rng_lifecycle": "UNTESTED",
+      "variation_parity": "UNTESTED",
+      "execution_mode": "NATIVE",
+      "adapter_status": "NOT_IMPLEMENTED",
+      "renderer_regression": "PENDING",
+      "oracle_corpus": null,
+      "reference_cpu_benchmark": "NOT_RUN",
+      "stable_cpu_benchmark": "NOT_RUN",
+      "stable_gpu_benchmark": "NOT_RUN",
+      "similarity_metrics": null,
+      "remaining_issues": [
+        "Stable native step returns state only; reference rewards/termination/info omitted.",
+        "Reset options and goal semantics unverified."
+      ],
+      "test": "tests/unit/test_full_state_contract.py"
+    },
+    {
+      "historical_id": "swm/PushT-Discrete-v1",
+      "stable_envs_classes": [
+        "PushT"
+      ],
+      "family": "pusht",
+      "owner": "coordinator",
+      "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
+      "state_status": "INCOMPLETE",
+      "action_parity": "UNTESTED",
+      "reset_parity": "UNTESTED",
+      "step_parity": "UNTESTED",
+      "reward_parity": "UNTESTED",
+      "terminated_truncated_parity": "UNTESTED",
+      "rng_lifecycle": "UNTESTED",
+      "variation_parity": "UNTESTED",
+      "execution_mode": "NATIVE",
+      "adapter_status": "NOT_IMPLEMENTED",
+      "renderer_regression": "PENDING",
+      "oracle_corpus": null,
+      "reference_cpu_benchmark": "NOT_RUN",
+      "stable_cpu_benchmark": "NOT_RUN",
+      "stable_gpu_benchmark": "NOT_RUN",
+      "similarity_metrics": null,
+      "remaining_issues": [
+        "Stable actions are absolute PD targets in [0,512], not normalized relative commands.",
+        "Native solver is approximate; step omits reward/done.",
+        "get_state loses agent velocity; complete Pymunk state is not established.",
+        "Both SWM variants map to same continuous stable class; discrete decoding absent."
+      ],
+      "test": "tests/unit/test_full_state_contract.py"
+    },
+    {
+      "historical_id": "swm/PushT-v1",
+      "stable_envs_classes": [
+        "PushT"
+      ],
+      "family": "pusht",
+      "owner": "coordinator",
+      "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
+      "state_status": "INCOMPLETE",
+      "action_parity": "UNTESTED",
+      "reset_parity": "UNTESTED",
+      "step_parity": "UNTESTED",
+      "reward_parity": "UNTESTED",
+      "terminated_truncated_parity": "UNTESTED",
+      "rng_lifecycle": "UNTESTED",
+      "variation_parity": "UNTESTED",
+      "execution_mode": "NATIVE",
+      "adapter_status": "NOT_IMPLEMENTED",
+      "renderer_regression": "PENDING",
+      "oracle_corpus": null,
+      "reference_cpu_benchmark": "NOT_RUN",
+      "stable_cpu_benchmark": "NOT_RUN",
+      "stable_gpu_benchmark": "NOT_RUN",
+      "similarity_metrics": null,
+      "remaining_issues": [
+        "Stable actions are absolute PD targets in [0,512], not normalized relative commands.",
+        "Native solver is approximate; step omits reward/done.",
+        "get_state loses agent velocity; complete Pymunk state is not established."
+      ],
+      "test": "tests/unit/test_full_state_contract.py"
+    },
+    {
+      "historical_id": "swm/QuadrupedDMControl-v0",
+      "stable_envs_classes": [
+        "DMCQuadrupedWalk"
+      ],
+      "family": "dmcontrol",
+      "owner": "coordinator",
+      "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
+      "state_status": "INCOMPLETE",
+      "action_parity": "UNTESTED",
+      "reset_parity": "UNTESTED",
+      "step_parity": "UNTESTED",
+      "reward_parity": "UNTESTED",
+      "terminated_truncated_parity": "UNTESTED",
+      "rng_lifecycle": "UNTESTED",
+      "variation_parity": "UNTESTED",
+      "execution_mode": "DELEGATED",
+      "adapter_status": "NOT_IMPLEMENTED",
+      "renderer_regression": "PENDING",
+      "oracle_corpus": null,
+      "reference_cpu_benchmark": "NOT_RUN",
+      "stable_cpu_benchmark": "NOT_RUN",
+      "stable_gpu_benchmark": "NOT_RUN",
+      "similarity_metrics": null,
+      "remaining_issues": [
+        "Missing qvel and executable dynamics.",
+        "Reset samples rollout states rather than reference reset."
+      ],
+      "test": "tests/unit/test_full_state_contract.py"
+    },
+    {
+      "historical_id": "swm/ReacherDMControl-v0",
+      "stable_envs_classes": [
+        "DMCReacherHard"
+      ],
+      "family": "dmcontrol",
+      "owner": "coordinator",
+      "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
+      "state_status": "INCOMPLETE",
+      "action_parity": "UNTESTED",
+      "reset_parity": "UNTESTED",
+      "step_parity": "UNTESTED",
+      "reward_parity": "UNTESTED",
+      "terminated_truncated_parity": "UNTESTED",
+      "rng_lifecycle": "UNTESTED",
+      "variation_parity": "UNTESTED",
+      "execution_mode": "DELEGATED",
+      "adapter_status": "NOT_IMPLEMENTED",
+      "renderer_regression": "PENDING",
+      "oracle_corpus": null,
+      "reference_cpu_benchmark": "NOT_RUN",
+      "stable_cpu_benchmark": "NOT_RUN",
+      "stable_gpu_benchmark": "NOT_RUN",
+      "similarity_metrics": null,
+      "remaining_issues": [
+        "Missing qvel and executable dynamics.",
+        "Reset samples rollout states rather than reference reset."
+      ],
+      "test": "tests/unit/test_full_state_contract.py"
+    },
+    {
+      "historical_id": "swm/SimplePointMaze-v0",
+      "stable_envs_classes": [
+        "SimplePointMaze"
+      ],
+      "family": "navigation",
+      "owner": "coordinator",
+      "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
+      "state_status": "INCOMPLETE",
+      "action_parity": "UNTESTED",
+      "reset_parity": "UNTESTED",
+      "step_parity": "UNTESTED",
+      "reward_parity": "UNTESTED",
+      "terminated_truncated_parity": "UNTESTED",
+      "rng_lifecycle": "UNTESTED",
+      "variation_parity": "UNTESTED",
+      "execution_mode": "NATIVE",
+      "adapter_status": "NOT_IMPLEMENTED",
+      "renderer_regression": "PENDING",
+      "oracle_corpus": null,
+      "reference_cpu_benchmark": "NOT_RUN",
+      "stable_cpu_benchmark": "NOT_RUN",
+      "stable_gpu_benchmark": "NOT_RUN",
+      "similarity_metrics": null,
+      "remaining_issues": [
+        "Stable native step returns state only; reference rewards/termination/info omitted.",
+        "Reset options and goal semantics unverified.",
+        "SWM goal image is sampled at a random agent location, while reward goal is separate variation goal.position; do not silently conflate them."
+      ],
+      "test": "tests/unit/test_full_state_contract.py"
+    },
+    {
+      "historical_id": "swm/TwoRoom-v1",
+      "stable_envs_classes": [
+        "TwoRoom",
+        "TwoRoomTarget"
+      ],
+      "family": "navigation",
+      "owner": "coordinator",
+      "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
+      "state_status": "INCOMPLETE",
+      "action_parity": "UNTESTED",
+      "reset_parity": "UNTESTED",
+      "step_parity": "UNTESTED",
+      "reward_parity": "UNTESTED",
+      "terminated_truncated_parity": "UNTESTED",
+      "rng_lifecycle": "UNTESTED",
+      "variation_parity": "UNTESTED",
+      "execution_mode": "NATIVE",
+      "adapter_status": "NOT_IMPLEMENTED",
+      "renderer_regression": "PENDING",
+      "oracle_corpus": null,
+      "reference_cpu_benchmark": "NOT_RUN",
+      "stable_cpu_benchmark": "NOT_RUN",
+      "stable_gpu_benchmark": "NOT_RUN",
+      "similarity_metrics": null,
+      "remaining_issues": [
+        "Stable native step returns state only; reference rewards/termination/info omitted.",
+        "Reset options and goal semantics unverified."
+      ],
+      "test": "tests/unit/test_full_state_contract.py"
+    },
+    {
+      "historical_id": "swm/WalkerDMControl-v0",
+      "stable_envs_classes": [
+        "DMCWalkerWalk"
+      ],
+      "family": "dmcontrol",
+      "owner": "coordinator",
+      "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
+      "state_status": "INCOMPLETE",
+      "action_parity": "UNTESTED",
+      "reset_parity": "UNTESTED",
+      "step_parity": "UNTESTED",
+      "reward_parity": "UNTESTED",
+      "terminated_truncated_parity": "UNTESTED",
+      "rng_lifecycle": "UNTESTED",
+      "variation_parity": "UNTESTED",
+      "execution_mode": "DELEGATED",
+      "adapter_status": "NOT_IMPLEMENTED",
+      "renderer_regression": "PENDING",
+      "oracle_corpus": null,
+      "reference_cpu_benchmark": "NOT_RUN",
+      "stable_cpu_benchmark": "NOT_RUN",
+      "stable_gpu_benchmark": "NOT_RUN",
+      "similarity_metrics": null,
+      "remaining_issues": [
+        "Missing qvel and executable dynamics.",
+        "Reset samples rollout states rather than reference reset.",
+        "Inspect SWM custom_tasks/walker.py rather than assuming suite reward equivalence."
+      ],
+      "test": "tests/unit/test_full_state_contract.py"
+    }
+  ]
+}

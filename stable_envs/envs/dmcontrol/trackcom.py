@@ -342,7 +342,7 @@ class DMControlTrackCom(_DMCModel):
     # ---- render -----------------------------------------------------------
 
     @torch.no_grad()
-    def render(
+    def _render(
         self,
         states=None,
         size: int | None = None,
@@ -352,7 +352,7 @@ class DMControlTrackCom(_DMCModel):
         out=None,
     ) -> torch.Tensor:
         """``(...,state_dim)`` -> ``(...,H,W,3)`` uint8. Style may differ per environment."""
-        s = self._state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
+        s = self._render_state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
         lead = tuple(s.shape[:-1])
         s = s.reshape(-1, self.state_dim).to(torch.float32)
         B = s.shape[0]

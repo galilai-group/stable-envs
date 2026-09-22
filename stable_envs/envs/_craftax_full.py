@@ -1225,7 +1225,7 @@ class CraftaxFull(Env):
         return (ids.unsqueeze(2) * t + a).reshape(-1)
 
     @torch.no_grad()
-    def render(
+    def _render(
         self,
         states=None,
         size: int | None = None,
@@ -1247,7 +1247,7 @@ class CraftaxFull(Env):
         ``light_map`` multiply, the night chain, the sleep halving and ``channel_gain`` all happen
         before the rounding.
         """
-        s = self._state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
+        s = self._render_state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
         lead = tuple(s.shape[:-1])
         s = s.reshape(-1, self.state_dim)
         n = s.shape[0]

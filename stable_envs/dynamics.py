@@ -11,10 +11,8 @@ Two functions, and the whole content of the module is what "pure" means here:
     distinction is load-bearing: ``unroll`` can be a pure function of ``(state, actions)`` precisely
     because nothing in the loop consults an agent.
 
-MOST ENVIRONMENTS IN THIS REPOSITORY HAVE NO DYNAMICS, and that is a design statement rather than a
-gap: rendering and simulation are separable, and an env earns a simulator only where its dynamics can
-be ported AND checked against the reference. Those cells raise from ``step``/``transition`` with the
-exact reason and keep ``reset``/``render`` working, which is what ``no_dynamics`` below writes.
+Cells still awaiting semantic recovery fail explicitly. A renderer projection is not a simulator
+snapshot; renderer-only regression machinery uses private helpers until the cell is recovered.
 """
 
 from __future__ import annotations
@@ -56,13 +54,10 @@ def no_dynamics(env, what: str):
     """Raise the one refusal a renderer-only cell owes its caller: what is missing and what to do."""
     name = type(env).__name__
     raise NotImplementedError(
-        f"{name}.{what}: {name} ships a renderer and no batched simulator, so it has no dynamics — "
-        f"PushT has dynamics; {name} does not. This is deliberate: rendering and simulation are "
-        f"separable in this package and a cell earns a simulator only where its dynamics can be "
-        f"ported AND checked against the reference. reset() and render() work as usual; to produce "
-        f"trajectories, roll out the official CPU environment and render the states it gives you "
-        f"(env.render(states) takes any batch)."
+        f"{name}.{what}: full simulator semantics are not implemented for this cell. "
+        "See docs/research/semantic_recovery_matrix.json. Compact renderer rows cannot substitute for State."
     )
+
 
 
 def unroll_from_transition(env, state: TensorDict, actions) -> TensorDict:

@@ -198,7 +198,7 @@ out = {}
 for name in ("FetchReach", "FetchPush"):
     corpus = np.load(f"{states_dir}/{name}.npz")["states"].astype(np.float32)[:6]
     env = getattr(snv, name)(num_envs=6, device="cpu")
-    env.set_state(corpus)
+    env._set_render_state(corpus)
     st = env.state
     rec = {
         "num_envs": int(env.num_envs), "len": len(env),
@@ -206,9 +206,9 @@ for name in ("FetchReach", "FetchPush"):
         "widths": {".".join(k): int(w) for k, w, o in env._layout()},
         "offsets": {".".join(k): o for k, w, o in env._layout()},
         "state_dim": int(env.state_dim), "state_names": list(env.state_names),
-        "pack_is_packed_row": bool(torch.equal(env.pack(st), env.get_state())),
+        "pack_is_packed_row": bool(torch.equal(env._pack_render_state(st), env._get_render_state())),
         "roundtrip_exact": bool(np.array_equal(
-            env.get_state().cpu().numpy(), corpus)),
+            env._get_render_state().cpu().numpy(), corpus)),
         "has_dynamics": bool(env.has_dynamics),
         "default_size": int(env.size),
         "style_names": list(env.style_names),
@@ -229,7 +229,7 @@ for name in ("FetchReach", "FetchPush"):
     rec["closed"] = bool(env.closed)
     rec["idx_cache_dropped"] = "_idx_cache" not in env.__dict__
     try:
-        env.render(); rec["closed_refuses_render"] = False
+        env._render(); rec["closed_refuses_render"] = False
     except RuntimeError:
         rec["closed_refuses_render"] = True
     e2 = getattr(snv, name)(num_envs=2, device="cpu")

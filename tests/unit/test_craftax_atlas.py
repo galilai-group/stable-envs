@@ -191,9 +191,9 @@ def test_atlas_is_not_written_through_by_a_render(size):
     f32, u8 = _Composite.get(dev, size, want_float=True)
     before_f32, before_u8 = f32.clone(), u8.clone()
     states = env.sample_states(8, np.random.default_rng(4))
-    env.render(states)
-    env.render(states, variation={"channel_gain": [0.25, 1.5, 2.0]})
-    env.render(states, variation={"player_visible": 0, "mobs_visible": 0})
+    env._render(states)
+    env._render(states, variation={"channel_gain": [0.25, 1.5, 2.0]})
+    env._render(states, variation={"player_visible": 0, "mobs_visible": 0})
     after_f32, after_u8 = _Composite.get(dev, size, want_float=True)
     assert torch.equal(before_f32, after_f32) and torch.equal(before_u8, after_u8), (
         "rendering mutated the composited atlas; every later frame in the process is now wrong"
@@ -212,7 +212,7 @@ def test_atlas_shape_and_budget():
     # above the budget render must not build a table at all
     env = _env(ATLAS_MAX_TILE_PX + 1, num_envs=1)
     states = env.sample_states(1, np.random.default_rng(0))
-    img = env.render(states)
+    img = env._render(states)
     assert img.shape == (1, (OBS_H + STRIP_H) * (ATLAS_MAX_TILE_PX + 1), OBS_W * (ATLAS_MAX_TILE_PX + 1), 3)
     assert (torch.device("cpu").__str__(), ATLAS_MAX_TILE_PX + 1) not in _Composite._cache, (
         "a tile size past the budget still baked an atlas"
@@ -226,16 +226,16 @@ def test_batch_order_and_chunk_invariance_on_the_gather(size):
     rng = np.random.default_rng(99)
     states = env.sample_states(12, rng)
     vals = _style(env, 12, player_visible=rng.integers(0, 2, (12, 1)), mobs_visible=rng.integers(0, 2, (12, 1)))
-    whole = env.render(states, style=vals)
+    whole = env._render(states, style=vals)
     # one row at a time
-    per_row = torch.cat([env.render(states[i : i + 1], style=vals[i : i + 1]) for i in range(12)])
+    per_row = torch.cat([env._render(states[i : i + 1], style=vals[i : i + 1]) for i in range(12)])
     assert torch.equal(whole, per_row), "a row's frame depends on what else is in the batch"
     # chunked
-    chunks = torch.cat([env.render(states[i : i + 5], style=vals[i : i + 5]) for i in range(0, 12, 5)])
+    chunks = torch.cat([env._render(states[i : i + 5], style=vals[i : i + 5]) for i in range(0, 12, 5)])
     assert torch.equal(whole, chunks), "chunking the batch changes the frames"
     # permuted
     perm = np.array([7, 0, 11, 3, 2, 9, 1, 8, 5, 4, 10, 6])
-    assert torch.equal(env.render(states[perm], style=vals[perm]), whole[perm]), (
+    assert torch.equal(env._render(states[perm], style=vals[perm]), whole[perm]), (
         "permuting the batch changes the frames"
     )
 
@@ -248,10 +248,10 @@ def test_out_buffer_receives_the_frame_and_is_the_returned_tensor(size):
     shape = (5, (OBS_H + STRIP_H) * size, OBS_W * size, 3)
     for variation in ({}, {"channel_gain": [0.5, 1.0, 1.75]}):
         buf = torch.full(shape, 7, dtype=torch.uint8)
-        got = env.render(states, variation=variation or None, out=buf)
+        got = env._render(states, variation=variation or None, out=buf)
         assert got.shape == shape
         assert torch.equal(buf, got)
-        assert torch.equal(buf, env.render(states, variation=variation or None)), (
+        assert torch.equal(buf, env._render(states, variation=variation or None)), (
             "the out= path and the allocating path disagree"
         )
 
@@ -260,10 +260,10 @@ def test_leading_dimensions_are_preserved():
     """``(...,127)`` in, ``(...,H,W,3)`` out — the reshape around the gather must not flatten them."""
     env = _env(16, num_envs=6)
     states = env.sample_states(6, np.random.default_rng(1)).reshape(2, 3, env.state_dim)
-    img = env.render(states)
+    img = env._render(states)
     assert img.shape == (2, 3, (OBS_H + STRIP_H) * 16, OBS_W * 16, 3)
     assert torch.equal(
-        img.reshape(6, (OBS_H + STRIP_H) * 16, OBS_W * 16, 3), env.render(states.reshape(6, env.state_dim))
+        img.reshape(6, (OBS_H + STRIP_H) * 16, OBS_W * 16, 3), env._render(states.reshape(6, env.state_dim))
     )
 
 
@@ -273,7 +273,7 @@ def test_the_table_cache_is_bounded():
     env = _env(16, num_envs=1)
     states = env.sample_states(1, np.random.default_rng(0))
     for size in range(4, 4 + _Composite._MAX_ENTRIES + 3):
-        env.render(states, size=size)
+        env._render(states, size=size)
         assert len(_Composite._cache) <= _Composite._MAX_ENTRIES, (
             f"the composited-atlas cache grew to {len(_Composite._cache)} entries"
         )

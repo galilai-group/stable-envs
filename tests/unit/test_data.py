@@ -72,7 +72,7 @@ class RecordingEnv:
     def default_style(self) -> np.ndarray:
         return np.zeros(self._style_dim, np.float32)
 
-    def render(self, states=None, size=None, supersample=None, variation=None, style=None, out=None):
+    def _render(self, states=None, size=None, supersample=None, variation=None, style=None, out=None):
         s = torch.as_tensor(states, dtype=torch.float32).reshape(-1, self.state_dim)
         k = None
         if style is not None:

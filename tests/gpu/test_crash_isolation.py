@@ -75,7 +75,7 @@ def test_building_an_env_does_not_release_anything():
     env = se.make(
         "PointMazeMediumNavigate" if "PointMazeMediumNavigate" in cells else cells[0], num_envs=2, device="cuda"
     )
-    env.render(env.sample_states(2, rng=np.random.default_rng(0)))
+    env._render(env.sample_states(2, rng=np.random.default_rng(0)))
     del env
     import gc
 
@@ -101,7 +101,7 @@ def test_selftest_segfault_with_live_egl_contexts():
     context open, which is the situation every real incident happened in.
     """
     env = se.make("PushT", num_envs=4, device="cuda")
-    env.render(env.sample_states(4, rng=np.random.default_rng(0)))
+    env._render(env.sample_states(4, rng=np.random.default_rng(0)))
     ctypes.string_at(0)  # genuine null dereference in libc
 
 
@@ -109,7 +109,7 @@ def test_selftest_segfault_with_live_egl_contexts():
 def test_selftest_abort_with_live_egl_contexts():
     """SIGABRT — the signal a MuJoCo fatal error raises, and the one that ended four of these runs."""
     env = se.make("PushT", num_envs=4, device="cuda")
-    env.render(env.sample_states(4, rng=np.random.default_rng(0)))
+    env._render(env.sample_states(4, rng=np.random.default_rng(0)))
     os.abort()
 
 

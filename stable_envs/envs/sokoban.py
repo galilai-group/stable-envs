@@ -379,7 +379,7 @@ class Sokoban(Env):
         return self._rgb_cache.put(key, out)
 
     @torch.no_grad()
-    def render(
+    def _render(
         self,
         states=None,
         size: int | None = None,
@@ -395,7 +395,7 @@ class Sokoban(Env):
                 f"16x16 bitmaps, so there is no coverage to sample twice -- ask for a larger `size`, "
                 f"which replicates each art pixel k x k exactly."
             )
-        s = self._state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
+        s = self._render_state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
         lead = tuple(s.shape[:-1])
         s = s.reshape(-1, self.state_dim)
         k = self._scale(int(size or self.size))
@@ -446,13 +446,13 @@ class Sokoban(Env):
 
     def _advance(self) -> None:
         """The env's OWN buffers advanced one step, at fixed addresses."""
-        self._advance_into(self._state, self._act)
+        self._advance_into(self._render_state, self._act)
 
     def _step_state(self) -> TensorDict:
         """Snapshot the live cells with one copy for the hot ``step`` return path."""
         n = self._live_rows
         return TensorDict(
-            {"cells": self._state[:n].clone()},
+            {"cells": self._render_state[:n].clone()},
             batch_size=[n],
             device=self.device,
         )
@@ -542,10 +542,11 @@ class Sokoban(Env):
         Bit-identical to ``step`` on the same device for the same state by CONSTRUCTION: both call
         ``_advance_into``, which is the whole transition, over buffers the caller names.
         """
-        rows = self.pack(state).clone()
+        self._validate_state(state)
+        rows = self._pack_render_state(state).clone()
         act = torch.as_tensor(action, device=self.device, dtype=torch.float32).reshape(-1, self.action_dim)
         self._advance_into(rows, act)
-        return self.unpack(rows)
+        return self._unpack_render_state(rows)
 
     def _close(self) -> None:
         """Drop what this INSTANCE holds. ``Env.close`` calls this once and is idempotent.

@@ -609,7 +609,7 @@ class _GymReferencePort(Env):
     def _rows_and_style(self, state, owner: str):
         """``(state, ...) -> ((n, state_dim) float32 rows, the style for those n rows)``."""
         rows = (
-            self.pack(state)
+            self._pack_render_state(state)
             if isinstance(state, TensorDict)
             else check_states(self, state, f"{type(self).__name__}.{owner}")
         )
@@ -623,9 +623,10 @@ class _GymReferencePort(Env):
         The same ``_advance_rows`` the stateful ``step`` calls, over the same float32 rows, so the
         two agree to the bit by construction rather than by resemblance.
         """
+        self._validate_state(state)
         rows, sty = self._rows_and_style(state, "transition")
         act = torch.as_tensor(action, device=self.device, dtype=torch.float32).reshape(-1, self.action_dim)
-        return self.unpack(self._advance_rows(rows, act, sty))
+        return self._unpack_render_state(self._advance_rows(rows, act, sty))
 
     #: EVERY CONCRETE CELL RE-DECLARES ``step`` as a one-line ``super().step(action)``, and that is
     #: not ceremony. ``test_gpu_step_tracks_the_reference_simulator`` guards on
@@ -644,7 +645,7 @@ class _GymReferencePort(Env):
         """
         self._check_open("step")
         act = torch.as_tensor(action, device=self.device, dtype=torch.float32).reshape(self.B, self.action_dim)
-        self._state.copy_(self._advance_rows(self._state, act, self._style))
+        self._render_state.copy_(self._advance_rows(self._render_state, act, self._style))
         return self._step_result(self.state)
 
     def _advance_rows(self, rows: torch.Tensor, action: torch.Tensor, sty) -> torch.Tensor:
@@ -723,7 +724,7 @@ class _TorchNavBase(_GymReferencePort):
     # ---------------------------------------------------------------- rendering
 
     @torch.no_grad()
-    def render(
+    def _render(
         self,
         states=None,
         size: int | None = None,
@@ -732,7 +733,7 @@ class _TorchNavBase(_GymReferencePort):
         style=None,
         out=None,
     ) -> torch.Tensor:
-        s = self._state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
+        s = self._render_state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
         lead = tuple(s.shape[:-1])
         s = s.reshape(-1, self.state_dim)
         n = int(s.shape[0])
@@ -1443,7 +1444,7 @@ class SimplePointMaze(_GymReferencePort):
             sb.add_rect(((x0 + x1) * 0.5, (y0 + y1) * 0.5), (x1 - x0, y1 - y0), black if col is None else col)
         return sb.build(background=bg, world=(0.0, 0.0, WORLD, WORLD), flip_y=True)
 
-    def render(
+    def _render(
         self,
         states=None,
         size: int | None = None,
@@ -1466,7 +1467,7 @@ class SimplePointMaze(_GymReferencePort):
                 f"figure at 100 dpi and its axes spine is a 0.8 pt line, i.e. a constant in OUTPUT "
                 f"PIXELS with no world-unit description. Asked for {t}."
             )
-        return super().render(states, size=t, supersample=supersample, variation=variation, style=style, out=out)
+        return super()._render(states, size=t, supersample=supersample, variation=variation, style=style, out=out)
 
     # ---------------------------------------------------------------- states and dynamics
 

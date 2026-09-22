@@ -147,8 +147,8 @@ def test_registered_default_is_reproducible_through_the_mapping(cell):
     assert moved == DEFAULT_REACHED_THROUGH.get(cell, set()), cell
 
     states = torch.as_tensor(env.sample_states(8, rng=np.random.default_rng(3)))
-    a = env.render(states, style=torch.as_tensor(np.repeat(base[None], 8, 0))).cpu().numpy()
-    b = env.render(states, style=torch.as_tensor(np.repeat(mapped[None], 8, 0))).cpu().numpy()
+    a = env._render(states, style=torch.as_tensor(np.repeat(base[None], 8, 0))).cpu().numpy()
+    b = env._render(states, style=torch.as_tensor(np.repeat(mapped[None], 8, 0))).cpu().numpy()
     if cell not in DEFAULT_REACHED_THROUGH:
         assert np.array_equal(a, b), f"{cell}: the mapped swm default is not the cell's default frame"
     else:
@@ -185,7 +185,7 @@ def test_classic_default_matches_the_official_swm_render(cell):
     finally:
         ref_wrapper.close()
     mapped = style_from_variation(env, swm_defaults(m.swm_id))
-    ours = env.render(torch.as_tensor(states), style=torch.as_tensor(np.repeat(mapped[None], 8, 0))).cpu().numpy()
+    ours = env._render(torch.as_tensor(states), style=torch.as_tensor(np.repeat(mapped[None], 8, 0))).cpu().numpy()
     assert np.array_equal(ours, official), f"{cell}: {int((ours != official).sum())} bytes differ"
 
 
@@ -569,9 +569,9 @@ def test_floor_color_is_a_leaf_and_the_default_is_the_identity(cell):
     d = np.asarray(env.variation_space["floor"]["color"].value, np.float64).reshape(2, 3)
     assert np.allclose(d, [[0.1, 0.2, 0.3], [0.2, 0.3, 0.4]]), d
     st = env.sample_states(2, np.random.default_rng(0))
-    a = env.render(st)
-    b = env.render(st, variation={"floor.color": np.asarray([[0.9, 0.1, 0.1], [0.1, 0.1, 0.9]])})
+    a = env._render(st)
+    b = env._render(st, variation={"floor.color": np.asarray([[0.9, 0.1, 0.1], [0.1, 0.1, 0.9]])})
     assert int((a != b).any(-1).sum()) > 0, f"{cell}: floor.color moved no pixel"
-    c = env.render(st, variation={"floor.color": d})
+    c = env._render(st, variation={"floor.color": d})
     assert torch.equal(a, c), f"{cell}: rendering AT the declared default is not the default frame"
-    assert torch.equal(a, env.render(st)), f"{cell}: a custom floor leaked into the next render"
+    assert torch.equal(a, env._render(st)), f"{cell}: a custom floor leaked into the next render"

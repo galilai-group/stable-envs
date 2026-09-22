@@ -383,7 +383,7 @@ def test_takes_the_step9_constructor_and_the_lifecycle(_ogbench, cell):
         env.close()
     env.close()  # idempotent
     with pytest.raises(RuntimeError, match="closed"):
-        env.render()
+        env._render()
     with R.REGISTRY[cell](num_envs=2, device="cpu") as e:
         assert e.num_envs == 2
     assert e.closed
@@ -393,12 +393,12 @@ def test_takes_the_step9_constructor_and_the_lifecycle(_ogbench, cell):
 def test_the_public_state_is_the_bodys_own_structure_and_packs_back_to_the_frozen_row(_ogbench, cell):
     with R.REGISTRY[cell](num_envs=4, device="cpu") as env:
         rows = torch.as_tensor(env.sample_states(4, np.random.default_rng(0)), device=env.device)
-        env.set_state(rows)
+        env._set_render_state(rows)
         st = env.state
         keys = [".".join(k) for k, _, _ in env._layout()]
         assert keys[0] == "root.position"
-        assert torch.equal(env.pack(st), env.get_state()), "pack(state) must BE the packed row"
-        assert torch.equal(env.pack(env.unpack(env.get_state())), env.get_state())
+        assert torch.equal(env._pack_render_state(st), env._get_render_state()), "pack(state) must BE the packed row"
+        assert torch.equal(env._pack_render_state(env._unpack_render_state(env._get_render_state())), env._get_render_state())
         assert env._hidden_state() == {} and env._live_state() == {}
         # the keys name the packed columns in order, which is what makes the grouping a VIEW
         names, i = list(env.state_names), 0
@@ -417,16 +417,16 @@ def test_a_renderer_only_cell_refuses_step_and_transition_and_says_why(_ogbench,
                 getattr(env, call)(*args)
             msg = str(e.value)
             assert cell in msg and "no batched simulator" in msg
-            assert "env.render(states)" in msg, "the refusal must say what DOES work"
-        assert env.render().shape == (2, 224, 224, 3)  # reset and render still work
+            assert "env._render(states)" in msg, "the refusal must say what DOES work"
+        assert env._render().shape == (2, 224, 224, 3)  # reset and render still work
 
 
 @pytest.mark.parametrize("cell", BODY_SAMPLE)
 def test_render_takes_a_state_a_packed_row_or_nothing(_ogbench, cell):
     with R.REGISTRY[cell](num_envs=2, device="cpu") as env:
-        env.set_state(env.sample_states(2, np.random.default_rng(0)))
+        env._set_render_state(env.sample_states(2, np.random.default_rng(0)))
         st = env.state
-        a, b, c = env.render(st), env.render(env.pack(st)), env.render()
+        a, b, c = env._render(st), env._render(env._pack_render_state(st)), env._render()
         assert torch.equal(a, b) and torch.equal(a, c)
         assert a.shape == (2, 224, 224, 3) and a.dtype == torch.uint8
         assert env.frame_spec.shape == (224, 224, 3)
@@ -444,5 +444,5 @@ def test_the_dataset_siblings_of_one_scene_draw_the_same_frame(_ogbench):
         with R.REGISTRY[cell](num_envs=2, device="cpu") as env:
             if states is None:
                 states = env.sample_states(2, np.random.default_rng(0))
-            digests.append(env.render(torch.as_tensor(states)).cpu().numpy().tobytes())
+            digests.append(env._render(torch.as_tensor(states)).cpu().numpy().tobytes())
     assert digests[0] == digests[1]

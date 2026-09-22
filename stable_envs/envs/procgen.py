@@ -1112,14 +1112,14 @@ class _ProcgenEnv(Env):
         return None
 
     @torch.no_grad()
-    def render(self, states=None, size=None, supersample=None, variation=None, style=None, out=None) -> torch.Tensor:
+    def _render(self, states=None, size=None, supersample=None, variation=None, style=None, out=None) -> torch.Tensor:
         """``(...,state_dim)`` -> ``(...,S,S,3)`` uint8, in ``game_draw``'s order.
 
         There is no ``scene()``. The frame is a sequence of nearest-neighbour blits from a sprite
         atlas composited with Qt's integer SourceOver, which is exact by construction; pushing that
         through a polygon IR would trade an exact answer for an approximate one.
         """
-        s = self._state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
+        s = self._render_state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
         lead = tuple(s.shape[:-1])
         s = s.reshape(-1, self.state_dim)
         B = s.shape[0]

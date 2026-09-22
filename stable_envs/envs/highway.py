@@ -1048,7 +1048,7 @@ class HighwayEnvBase(Env):
     # --- rendering ---------------------------------------------------------------------------------
 
     @torch.no_grad()
-    def render(
+    def _render(
         self,
         states=None,
         size: int | None = None,
@@ -1068,7 +1068,7 @@ class HighwayEnvBase(Env):
         change what the next ``render()`` returns.
         """
         scr = self.screen(size)
-        s = self._state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
+        s = self._render_state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
         lead = tuple(s.shape[:-1])
         st = s.reshape(-1, self.state_dim)
         sty = self.resolve_style(style, variation, batch=int(st.shape[0]))

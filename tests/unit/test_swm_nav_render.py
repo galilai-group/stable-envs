@@ -47,7 +47,7 @@ def _reference(env, states, sty):
 def _check(env, states):
     sty = env.resolve_style(None, None, batch=len(states))
     want = _reference(env, states, sty)
-    got = env.render(np.asarray(states, np.float32))
+    got = env._render(np.asarray(states, np.float32))
     if torch.equal(want, got):
         return
     d = (want.to(torch.int16) - got.to(torch.int16)).abs()
@@ -119,7 +119,7 @@ def test_matches_across_the_declared_radius_range(cfg, radius):
     style = np.tile(np.asarray(env.default_style(), np.float32), (4, 1))
     sty = env.resolve_style(style, {"agent.radius": [radius]}, batch=4)
     want = _reference(env, st, sty)
-    got = env.render(np.asarray(st, np.float32), style=sty.values)
+    got = env._render(np.asarray(st, np.float32), style=sty.values)
     assert torch.equal(want, got), f"{cfg} at agent.radius={radius}"
 
 
@@ -134,17 +134,17 @@ def test_the_bake_is_not_a_function_of_call_history(cfg):
     env = se.make(cfg, num_envs=8, device="cpu")
     env.rng = np.random.default_rng(2)
     st = np.asarray(env.sample_states(8), np.float32)
-    first = env.render(st).clone()
+    first = env._render(st).clone()
     solo = se.make(cfg, num_envs=1, device="cpu")  # warms and could corrupt the shared cache
     for i in range(8):
         assert torch.equal(solo.render(st[i : i + 1])[0], first[i]), f"{cfg}: row {i} at batch 1"
-    assert torch.equal(env.render(st), first), f"{cfg}: render is not pure"
+    assert torch.equal(env._render(st), first), f"{cfg}: render is not pure"
     perm = np.array([3, 1, 7, 0, 5, 2, 6, 4])
-    assert torch.equal(env.render(np.ascontiguousarray(st[perm]))[np.argsort(perm)], first), (
+    assert torch.equal(env._render(np.ascontiguousarray(st[perm]))[np.argsort(perm)], first), (
         f"{cfg}: render is not order invariant"
     )
     dup = np.concatenate([st[:1]] * 4 + [st[1:2]] * 4)
-    out = env.render(dup)
+    out = env._render(dup)
     assert torch.equal(out[0], out[3]) and torch.equal(out[4], out[7]), f"{cfg}: duplicate rows"
 
 
@@ -165,7 +165,7 @@ def test_a_per_row_style_is_not_collapsed_to_one_plate(cfg):
         rows[i, off : off + 3] = [10 + 40 * i, 20, 200 - 30 * i]
     sty = env.resolve_style(rows, None, batch=6)
     want = _reference(env, st, sty)
-    got = env.render(st, style=rows)
+    got = env._render(st, style=rows)
     assert torch.equal(want, got), f"{cfg}: per-row style"
     flat = got.reshape(6, -1)
     assert len({tuple(flat[i].tolist()) for i in range(6)}) == 6, (
@@ -198,7 +198,7 @@ def test_two_styles_with_repeats_take_the_gather_branch(cfg):
         rows[i, off : off + 3] = [20.0, 200.0, 40.0] if w == 0 else [180.0, 30.0, 90.0]
     sty = env.resolve_style(rows, None, batch=6)
     want = _reference(env, st, sty)
-    got = env.render(st, style=rows)
+    got = env._render(st, style=rows)
     assert torch.equal(want, got), f"{cfg}: two styles with repeats"
 
     # the gather really was the branch taken, not the expand and not the fallback
@@ -218,10 +218,10 @@ def test_two_styles_with_repeats_take_the_gather_branch(cfg):
         assert torch.equal(got[i][0, 0], got[b[0]][0, 0]), f"{cfg}: row {i} got the wrong plate"
 
     # and the invariants, on the branch that has an index in it
-    assert torch.equal(env.render(st, style=rows), got), f"{cfg}: gather branch is not pure"
+    assert torch.equal(env._render(st, style=rows), got), f"{cfg}: gather branch is not pure"
     perm = np.array([4, 0, 5, 2, 1, 3])
     assert torch.equal(
-        env.render(np.ascontiguousarray(st[perm]), style=np.ascontiguousarray(rows[perm]))[np.argsort(perm)], got
+        env._render(np.ascontiguousarray(st[perm]), style=np.ascontiguousarray(rows[perm]))[np.argsort(perm)], got
     ), f"{cfg}: gather branch is not order invariant"
     solo = se.make(cfg, num_envs=1, device="cpu")
     for i in range(6):

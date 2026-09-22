@@ -108,13 +108,13 @@ def test_rendered_frames_are_exactly_the_renders_of_the_states_beside_them(name)
     tr = sample(env, steps=STEPS, batch=N, seed=SEED, render=True)
     frames, states, style = tr["frames"], tr["states"], tr["style"]
 
-    probe = env.render(states[:, 0], style=style)
+    probe = env._render(states[:, 0], style=style)
     assert frames.shape == (N, STEPS + 1, *probe.shape[1:]), (
         f"{name}: frame buffer {tuple(frames.shape)} does not match {(N, STEPS + 1, *probe.shape[1:])}"
     )
     assert frames.dtype == torch.uint8
     for t in range(STEPS + 1):
-        want = env.render(states[:, t], style=style)
+        want = env._render(states[:, t], style=style)
         d = (frames[:, t].to(torch.int16) - want.to(torch.int16)).abs()
         assert int(d.max()) == 0, (
             f"{name}: frame {t} differs from render(states[:, {t}]) by max {int(d.max())}/255 on "
@@ -160,7 +160,7 @@ def test_the_random_policy_stays_inside_the_env_s_declared_action_bounds(name):
     p = RandomPolicy(seed=SEED)
     p.set_env(env)
     p.reset(N)
-    a = p.get_action(env.get_state())
+    a = p.get_action(env._get_render_state())
     assert a.shape == (N, int(env.action_dim))
     lo, hi = float(env.action_low), float(env.action_high)
     assert float(a.min()) >= lo, f"{name}: action below action_low {lo}"

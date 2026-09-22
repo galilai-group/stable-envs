@@ -1146,7 +1146,7 @@ class CraftaxClassic(Env):
         return night_and_sleep(px, light, sleeping, prng.key_from_halves(halves))
 
     @torch.no_grad()
-    def render(
+    def _render(
         self,
         states=None,
         size: int | None = None,
@@ -1175,7 +1175,7 @@ class CraftaxClassic(Env):
           gain comes out identical either way, and ``tests/unit/test_craftax_atlas.py`` asserts it
           on a batch that mixes sleeping and awake rows.
         """
-        s = self._state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
+        s = self._render_state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
         lead = tuple(s.shape[:-1])
         s = s.reshape(-1, self.state_dim)
         n = s.shape[0]

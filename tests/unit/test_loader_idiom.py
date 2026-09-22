@@ -5,7 +5,7 @@ something torch and HuggingFace already do, so the idiom this package recommends
 ``stable_envs.data``::
 
     for (states,) in DataLoader(TensorDataset(states), batch_size=256, shuffle=True):
-        frames = env.set_state(states).render()
+        frames = env._set_render_state(states)._render()
 
 Three properties make that work, and each is asserted below rather than asserted in a docstring:
 
@@ -60,7 +60,7 @@ def test_a_plain_dataloader_with_drop_last_false_runs_to_the_end_of_its_epoch():
     ds = TensorDataset(torch.as_tensor(_states(n)))
     seen, sizes = [], []
     for (states,) in DataLoader(ds, batch_size=4, shuffle=False, drop_last=False):
-        frames = env.set_state(states).render()
+        frames = env._set_render_state(states)._render()
         sizes.append(int(frames.shape[0]))
         seen += _ids(frames)
     assert sizes == [4, 4, 2], "the short final batch was dropped, padded, or split"
@@ -75,16 +75,16 @@ def test_get_state_is_what_the_step_should_use_for_its_target():
     two disagree silently. ``get_state`` cannot.
     """
     env = _env(4)
-    env.set_state(_states(2))
-    assert env.get_state().shape == (2, 5)
-    assert env.get_state().device.type == DEV
-    assert env.render().shape[0] == env.get_state().shape[0]
+    env._set_render_state(_states(2))
+    assert env._get_render_state().shape == (2, 5)
+    assert env._get_render_state().device.type == DEV
+    assert env._render().shape[0] == env._get_render_state().shape[0]
 
 
 def test_states_that_are_already_on_the_env_s_device_are_accepted_unchanged():
     env = _env(4)
     s = torch.as_tensor(_states(4)).to(DEV)
-    assert _ids(env.set_state(s).render()) == [0, 1, 2, 3]
+    assert _ids(env._set_render_state(s)._render()) == [0, 1, 2, 3]
 
 
 # ------------------------------------------------------------------ the API that was dropped

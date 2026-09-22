@@ -1,7 +1,7 @@
 """Private corpus helpers used by certification and research tooling.
 
 Dataset storage is not part of the public stable-envs API. Ordinary users keep compact states in
-their own data stack and call ``env.render``. The helpers here remain because certification
+their own data stack and call ``env._render``. The helpers here remain because certification
 exercises chunked rendering, trajectory boundaries, style serialization, and optional HuggingFace
 round trips. They are private and may change without compatibility guarantees.
 
@@ -27,7 +27,7 @@ WHAT THIS MODULE IS AND IS NOT FOR
 The recommended way to train against these renderers does not use this module at all::
 
     for states in my_own_dataloader:                  # your dataset, your sampler, your workers
-        frames = env.set_state(states).render()       # (B, H, W, 3) uint8, one launch
+        frames = env._set_render_state(states).render()       # (B, H, W, 3) uint8, one launch
 
 stable-envs supplies the renderer. Slicing a corpus of states is something torch and HuggingFace
 already do well, and a library-owned ``DataLoader`` wrapper around a ``(N, state_dim)`` float32 array
@@ -219,7 +219,7 @@ def render_states(
     if style is not None:
         sty = check_style(env, style, N, "render_states(style=)")
 
-    probe = env.render(
+    probe = env._render(
         st[:1].to(device), size=S, variation=variation, style=None if sty is None else sty[:1].to(device)
     )
     H, W = int(probe.shape[1]), int(probe.shape[2])
@@ -241,9 +241,9 @@ def render_states(
         s = st[i : i + chunk].to(device, non_blocking=True)
         k = None if sty is None else (sty if sty.shape[0] == 1 else sty[i : i + chunk]).to(device)
         if on_device:
-            env.render(s, size=S, variation=variation, style=k, out=flat[i : i + chunk])
+            env._render(s, size=S, variation=variation, style=k, out=flat[i : i + chunk])
         else:
-            flat[i : i + chunk] = env.render(s, size=S, variation=variation, style=k).cpu()
+            flat[i : i + chunk] = env._render(s, size=S, variation=variation, style=k).cpu()
     return flat.reshape(*lead, H, W, 3) if lead else flat
 
 
@@ -291,7 +291,7 @@ class _RenderingDataset(torch.utils.data.Dataset):
                 if s.shape[0] % k.shape[0]:
                     raise ValueError(f"style rows {k.shape[0]} do not divide state rows {s.shape[0]}")
                 k = k.repeat_interleave(s.shape[0] // k.shape[0], dim=0)
-        img = self.env.render(s, size=self.size, variation=self.variation, style=k)
+        img = self.env._render(s, size=self.size, variation=self.variation, style=k)
         return img.reshape(*lead, *img.shape[1:]) if lead else img
 
     def frame_shape(self) -> tuple[int, int, int]:
@@ -320,7 +320,7 @@ class _RenderingDataset(torch.utils.data.Dataset):
                     1, -1
                 )
             with torch.no_grad():
-                f = self.env.render(self._probe_state(), size=self.size, variation=self.variation, style=style)
+                f = self.env._render(self._probe_state(), size=self.size, variation=self.variation, style=style)
             self._frame_hw = (int(f.shape[-3]), int(f.shape[-2]))
         return (*self._frame_hw, 3)
 
@@ -335,7 +335,7 @@ class StateDataset(_RenderingDataset):
     around an image folder can point at states instead without its training step changing: the object
     still yields ``(B, H, W, 3)`` uint8, so ``for frames in loader`` keeps working and the corpus on
     disk shrinks by three orders of magnitude. If you are writing the training step anyway, own the
-    loader yourself and call ``env.set_state(states).render()`` in it — that is the idiom this repo
+    loader yourself and call ``env._set_render_state(states).render()`` in it — that is the idiom this repo
     recommends, it needs nothing from this module, and it lets the step pick resolution and style per
     batch instead of freezing them into a dataset.
 

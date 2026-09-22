@@ -119,7 +119,7 @@ def test_per_row_styles_against_the_class_s_own_torch_path(cfg):
     )
 
     # and through render(), which is what a caller reaches
-    assert torch.equal(env.render(st.cpu().numpy(), style=rows), want), (
+    assert torch.equal(env._render(st.cpu().numpy(), style=rows), want), (
         f"{cfg}: render() with per-row styles disagrees with the torch path"
     )
 
@@ -131,10 +131,10 @@ def test_render_is_the_fused_path_and_is_still_invariant(cfg):
     assert navdot.available(env.device), "this test is not exercising the fused path"
     env.rng = np.random.default_rng(1)
     st = np.asarray(env.sample_states(8), np.float32)
-    first = env.render(st).clone()
-    assert torch.equal(env.render(st), first), f"{cfg}: render is not pure"
+    first = env._render(st).clone()
+    assert torch.equal(env._render(st), first), f"{cfg}: render is not pure"
     perm = np.array([3, 1, 7, 0, 5, 2, 6, 4])
-    assert torch.equal(env.render(np.ascontiguousarray(st[perm]))[np.argsort(perm)], first), (
+    assert torch.equal(env._render(np.ascontiguousarray(st[perm]))[np.argsort(perm)], first), (
         f"{cfg}: render is not order invariant"
     )
     solo = se.make(cfg, num_envs=1, device="cuda")

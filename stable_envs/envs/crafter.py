@@ -632,7 +632,7 @@ class Crafter(Env):
     # ---- rendering -------------------------------------------------------
 
     @torch.no_grad()
-    def render(
+    def _render(
         self,
         states=None,
         size: int | None = None,
@@ -651,7 +651,7 @@ class Crafter(Env):
                 f"Crafter.render: supersample={supersample} is meaningless here — the frame is a "
                 f"gather from a bitmap atlas, so there is no sub-pixel coverage to estimate."
             )
-        s = self._state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
+        s = self._render_state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
         lead = tuple(s.shape[:-1])
         s = s.reshape(-1, self.state_dim)
         n = s.shape[0]

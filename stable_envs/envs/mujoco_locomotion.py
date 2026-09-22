@@ -1230,7 +1230,7 @@ class GymMujoco(_GymMujocoFamily):
     # ---- render -----------------------------------------------------------
 
     @torch.no_grad()
-    def render(
+    def _render(
         self,
         states=None,
         size: int | None = None,
@@ -1245,7 +1245,7 @@ class GymMujoco(_GymMujocoFamily):
         tint and a camera share one bake and are rendered together. Body tint and body scale are
         per-environment inside the ray-cast, so randomising the body never splits the batch.
         """
-        s = self._state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
+        s = self._render_state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
         lead = tuple(s.shape[:-1])
         s = s.reshape(-1, self.state_dim)
         B = s.shape[0]
@@ -2008,7 +2008,7 @@ class GymMujocoVisual(_GymMujocoFamily):
     # ---- render -----------------------------------------------------------
 
     @torch.no_grad()
-    def render(
+    def _render(
         self,
         states=None,
         size: int | None = None,
@@ -2021,7 +2021,7 @@ class GymMujocoVisual(_GymMujocoFamily):
 
         THESE ARE NOT THE OFFICIAL PIXELS. See ``visual_fidelity`` for what they are instead.
         """
-        s = self._state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
+        s = self._render_state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
         lead = tuple(s.shape[:-1])
         s = s.reshape(-1, self.state_dim)
         B = int(s.shape[0])

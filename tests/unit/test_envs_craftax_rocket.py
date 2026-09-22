@@ -54,7 +54,7 @@ def test_takes_the_step9_constructor(name):
         assert env.closed
     env.close()  # idempotent, and after __exit__ closed it
     with pytest.raises(RuntimeError, match="is closed"):
-        env.render(env.sample_states(2))
+        env._render(env.sample_states(2))
 
 
 def test_the_rocket_constructor_takes_num_envs():
@@ -96,9 +96,9 @@ def test_state_keys_are_the_declared_ones_and_cover_the_packed_row(envs, name):
     env = envs[name]
     assert [tuple(k) for k, _, _ in env._layout()] == EXPECTED_KEYS[name]
     rows = torch.as_tensor(env.sample_states(4), dtype=torch.float32)
-    st = env.unpack(rows)
+    st = env._unpack_render_state(rows)
     assert st.batch_size[0] == 4
-    assert torch.equal(env.pack(st), rows), "pack(unpack(rows)) must be the frozen row, bit for bit"
+    assert torch.equal(env._pack_render_state(st), rows), "pack(unpack(rows)) must be the frozen row, bit for bit"
 
 
 @pytest.mark.parametrize("name", CRAFTAX)
@@ -140,10 +140,10 @@ def test_a_state_the_caller_keeps_is_not_a_view_of_the_env(envs, name):
     env = envs[name]
     a = torch.as_tensor(env.sample_states(4), dtype=torch.float32)
     b = torch.as_tensor(env.sample_states(4, np.random.default_rng(7)), dtype=torch.float32)
-    env.set_state(a)
+    env._set_render_state(a)
     st = env.state
     snap = st["world", "blocks"].clone()
-    env.set_state(b)
+    env._set_render_state(b)
     assert torch.equal(st["world", "blocks"], snap)
 
 
@@ -174,11 +174,11 @@ def test_the_rocket_state_is_one_rigid_body_grouped_by_what_it_is():
 def test_render_takes_a_state_a_packed_row_or_nothing(envs, name):
     env = envs[name]
     rows = torch.as_tensor(env.sample_states(4), dtype=torch.float32)
-    env.set_state(rows)
+    env._set_render_state(rows)
     st = env.state
-    px = env.render(st)
-    assert torch.equal(px, env.render(rows))
-    assert torch.equal(px, env.render())
+    px = env._render(st)
+    assert torch.equal(px, env._render(rows))
+    assert torch.equal(px, env._render())
     assert px.dtype == torch.uint8
 
 
@@ -196,7 +196,7 @@ def test_the_frame_spec_is_the_frame_and_not_the_tile(envs, name, tiles):
     h, w = tiles[0] * env.size, tiles[1] * env.size
     assert env.frame_shape == (h, w)
     assert tuple(env.frame_spec.shape) == (h, w, 3)
-    assert tuple(env.render(rows).shape) == (2, h, w, 3)
+    assert tuple(env._render(rows).shape) == (2, h, w, 3)
     assert env.frame_spec.dtype == torch.uint8
 
 
@@ -464,12 +464,12 @@ def test_both_frozen_craftax_classic_corpora_are_kept_and_both_replay():
     assert step4.shape == (64, 127) and step7.shape == (64, 149)
     env = snv.CraftaxClassic(num_envs=64, device="cpu")
     with pytest.raises(ValueError, match="expects state_dim 149, got 127"):
-        env.render(torch.as_tensor(step4, dtype=torch.float32))
+        env._render(torch.as_tensor(step4, dtype=torch.float32))
     wide = np.zeros((64, 149), np.float32)
     wide[:, :127] = step4
     wide[:, craftax.OBS_H * craftax.OBS_W * 2 + 2 + craftax.N_STRIP] = 1.0
-    assert env.render(torch.as_tensor(wide)).shape == (64, 144, 144, 3)
-    assert env.render(torch.as_tensor(step7, dtype=torch.float32)).shape == (64, 144, 144, 3)
+    assert env._render(torch.as_tensor(wide)).shape == (64, 144, 144, 3)
+    assert env._render(torch.as_tensor(step7, dtype=torch.float32)).shape == (64, 144, 144, 3)
     env.close()
 
 

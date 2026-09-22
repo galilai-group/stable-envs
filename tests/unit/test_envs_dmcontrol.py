@@ -302,7 +302,7 @@ def test_takes_the_step9_constructor_and_the_lifecycle(name):
     env.close()
     env.close()
     with pytest.raises(RuntimeError, match="closed"):
-        env.render()
+        env._render()
 
 
 @pytest.mark.parametrize("name", ALL)
@@ -323,10 +323,10 @@ def test_the_public_state_is_qpos_plus_the_episode_draw_and_hides_nothing(name):
         assert all(off is not None for _, _, off in lay), "this family hides no field"
         assert sum(w for _, w, _ in lay) == env.state_dim
         assert lay[0][1] == env.nq
-        env.set_state(env.sample_states(4, np.random.default_rng(0)))
-        rows = env.get_state()
-        assert torch.equal(env.pack(env.unpack(rows)), rows)
-        assert torch.equal(env.pack(env.state), rows)
+        env._set_render_state(env.sample_states(4, np.random.default_rng(0)))
+        rows = env._get_render_state()
+        assert torch.equal(env._pack_render_state(env._unpack_render_state(rows)), rows)
+        assert torch.equal(env._pack_render_state(env.state), rows)
         assert env._hidden_state() == {} and env._live_state() == {}
         # R1, done by the foundation at f24d94c: ``Env._layout`` is an instance method reading
         # ``self.state_layout``, so this family declares the layout where the model is compiled and
@@ -364,9 +364,9 @@ def test_render_takes_a_state_a_packed_row_or_nothing(name):
     if name in CPU_REFUSED:
         pytest.skip(f"{name} declares no CPU backend")
     with _build(name, num_envs=2, device="cpu") as env:
-        env.set_state(env.sample_states(2, np.random.default_rng(0)))
+        env._set_render_state(env.sample_states(2, np.random.default_rng(0)))
         st = env.state
-        a, b, c = env.render(st), env.render(env.pack(st)), env.render()
+        a, b, c = env._render(st), env._render(env._pack_render_state(st)), env._render()
         assert torch.equal(a, b) and torch.equal(a, c)
         assert tuple(a.shape) == (2, env.size, env.size, 3) and a.dtype == torch.uint8
         assert tuple(env.frame_spec.shape) == (env.size, env.size, 3)

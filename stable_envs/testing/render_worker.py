@@ -98,8 +98,8 @@ def run(names, n: int, device: str = "cuda") -> tuple[dict, dict]:
             env = se.make(name, num_envs=n, device=device)
             states, style = sample_inputs(env, n)
             sty = style if env.style_dim else None
-            frames = env.render(states)
-            frames_styled = env.render(states, style=sty)
+            frames = env._render(states)
+            frames_styled = env._render(states, style=sty)
             rec = {
                 "states_sha": _digest(states),
                 "style_sha": _digest(style),

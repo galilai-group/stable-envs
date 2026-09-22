@@ -539,7 +539,7 @@ class CarRacing(Env):
 
     # --- render -------------------------------------------------------------------------
     @torch.no_grad()
-    def render(
+    def _render(
         self,
         states=None,
         size: int | None = None,
@@ -560,7 +560,7 @@ class CarRacing(Env):
                 "CarRacing: supersample is not available; both of its rasterizers are "
                 "integer, so there is no coverage to supersample."
             )
-        s = self._state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
+        s = self._render_state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
         lead = tuple(s.shape[:-1])
         s = s.reshape(-1, self.state_dim).to(torch.float64)
         B = s.shape[0]

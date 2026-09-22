@@ -36,11 +36,11 @@ Two state shapes, and they are not the same thing:
   * **public State** — the ``TensorDict`` dynamics uses (``reset`` / ``step`` / ``transition``).
     Keys are grouped by entity. It may carry dynamics-only fields the renderer never sees.
   * **compact render state** — the float32 row that regenerates frames. Reached through
-    ``pack_render_state`` / ``unpack_render_state``. It is not always a lossless serialization
+    ``_pack_render_state`` / ``_unpack_render_state``. It is not always a lossless serialization
     of public State.
 
     render_state_dim / render_state_names   the compact row used to regenerate pixels
-    pack_render_state / unpack_render_state public State <-> that compact row
+    get_state / set_state                  full simulator snapshots and restoration
     variation_space                         persistent configuration knobs
     render(state, variation=…)              (B,H,W,3) uint8 on device, batched
 
@@ -81,7 +81,7 @@ from .specs import CompositeSpec, Spec
 #: subclass, so anything that consumes a TensorDict consumes a stable-envs state and there is no
 #: private type to learn. The keys are grouped by ENTITY (``state["agent", "position"]``), which is
 #: what the environment is; the flat packed row every renderer and every frozen corpus uses is the
-#: internal layout and is reached through ``env.pack_render_state`` / ``env.unpack_render_state``.
+#: internal layout and is reached through ``env._pack_render_state`` / ``env._unpack_render_state``.
 State = TensorDict
 
 #: What ``step`` returns: a ``TensorDict`` carrying ``"state"`` always. ``"reward"`` / ``"terminated"``
@@ -277,13 +277,13 @@ def render_states_arg(env, states) -> torch.Tensor:
     """
     env._check_open("render")
     if states is None:
-        return env.get_state()
+        return env._get_render_state()
     if isinstance(states, TensorDict):
         # A public State is accepted wherever packed rows are (contract §5).
         # ``pack_render_state`` is the bridge; an env whose State carries a field the compact row
         # does not (PushT's agent velocity) drops exactly that field here and the renderer sees the
         # identical packed row.
-        return env.pack_render_state(states)
+        return env._pack_render_state(states)
     scan = not (torch.is_tensor(states) and states.device.type == "cuda")
     return check_states(env, states, f"{type(env).__name__}.render", leading=True, scan=scan)
 
@@ -552,8 +552,8 @@ class Env:
     threaded through every signature.
 
     The compact float32 row every renderer and frozen corpus speaks is *render state*. It is not
-    always a lossless dump of public ``State`` — dynamics-only fields can be omitted. The public
-    bridge is ``pack_render_state`` / ``unpack_render_state``.
+    always a lossless dump of public ``State`` — dynamics-only fields can be omitted. The private
+    projection is ``_pack_render_state`` / ``_unpack_render_state``.
     """
 
     #: dataset slug, hyphenated-lowercase. Not the class name; see ``class_name`` / ``id``.
@@ -667,8 +667,8 @@ class Env:
         self.backend = backend
         self.rng = np.random.default_rng(seed)
         self.variation_space: VariationDict = self.make_variation_space()
-        self._state = torch.zeros(self.B, self.state_dim, device=self.device, dtype=torch.float32)
-        #: How many rows of ``_state`` the last ``set_state`` actually wrote. Equal to ``B`` except
+        self._render_state = torch.zeros(self.B, self.state_dim, device=self.device, dtype=torch.float32)
+        #: How many rows of ``_render_state`` the last ``set_state`` actually wrote. Equal to ``B`` except
         #: after a SHORT batch, which is the ordinary last batch of any ``DataLoader`` built with
         #: ``drop_last=False``; see ``set_state``.
         self._live_rows = self.B
@@ -713,15 +713,15 @@ class Env:
     def __init_subclass__(cls, **kw):
         """Give every env the shared ``out=`` contract, whether or not its author remembered it.
 
-        A subclass that overrides ``render`` gets its override wrapped once, at class-creation time;
+        A subclass that overrides ``_render`` gets its override wrapped once, at class-creation time;
         a subclass that inherits one inherits the already-wrapped function and is not double-wrapped.
         The alternative — asking each env to call a helper — is what produced the defect this exists
         to close, so it is not offered.
         """
         super().__init_subclass__(**kw)
-        fn = cls.__dict__.get("render")
+        fn = cls.__dict__.get("_render")
         if fn is not None and not getattr(fn, "_se_out_guarded", False):
-            cls.render = _guard_render_out(fn)
+            cls._render = _guard_render_out(fn)
 
     # to implement
 
@@ -760,36 +760,53 @@ class Env:
 
     # provided
 
-    def get_state(self) -> torch.Tensor:
-        """``(n, state_dim)`` — the states currently held, where ``n`` is what ``set_state`` wrote.
+    def _require_state(self, operation: str) -> None:
+        self._check_open(operation)
+        if not self.has_dynamics:
+            _dynamics.no_dynamics(self, operation)
 
-        ``n`` is ``B`` unless the last ``set_state`` was given a short batch, in which case the rows
-        beyond it are whatever was there before and are deliberately not handed back.
-        """
-        return self._state if self._live_rows == self.B else self._state[: self._live_rows]
+    def _validate_state(self, state: State, *, batch: int | None = None) -> None:
+        if not isinstance(state, TensorDict):
+            raise TypeError("Expected full State (TensorDict); compact RenderState rows cannot restore dynamics")
+        if len(state.batch_size) != 1 or (batch is not None and state.batch_size != torch.Size([batch])):
+            raise ValueError(f"Expected State batch [{batch or 'N'}], got {list(state.batch_size)}")
+        for key, width, _ in self._layout():
+            if key not in state.keys(include_nested=True, leaves_only=True):
+                raise ValueError(f"Full State is missing {'.'.join(key)}; a render projection is not restorable")
+            value = state[key]
+            if value.shape != (*state.batch_size, width):
+                raise ValueError(f"State field {'.'.join(key)} has invalid shape {tuple(value.shape)}")
+            if not torch.isfinite(value).all():
+                raise ValueError(f"State field {'.'.join(key)} contains non-finite values")
 
-    def set_state(self, states, variation: VariationLike | None = None, style=None) -> Env:
-        """``(n, render_state_dim)`` states, ``n <= B``. Returns ``self``, so ``.render()`` chains off it.
+    def set_state(self, state: State) -> None:
+        """Restore full simulator State under the environment's persistent Variation."""
+        self._require_state("set_state")
+        self._validate_state(state, batch=self.B)
+        self._restore_state(state)
 
-        ``variation`` is the public configuration argument: a mapping of overrides or a flat/batched
-        row (:data:`VariationLike`). ``style`` is the internal render-style row compiled from Variation.
+    def _restore_state(self, state: State) -> None:
+        if any(offset is None for _, _, offset in self._layout()):
+            raise NotImplementedError(f"{type(self).__name__} must restore its hidden simulator fields")
+        self._set_render_state(self._pack_render_state(state))
 
-        A batch SHORTER than the env's is supported rather than refused, and that is the important
-        case: every ``DataLoader`` built with ``drop_last=False`` — the default — ends its epoch with a
-        short batch, so refusing one would make the ordinary loop either crash on its last step or
-        throw data away. Only those ``n`` rows are stored, ``get_state`` returns only those rows, and
-        ``render()`` draws only those frames. It costs nothing: measured on one H200, PushT at 96 px
-        renders 4,095 states in 3.371 ms against 3.341 ms for 4,096, and 1,023 in 2.773 ms against
-        2.771 ms for 1,024 — the renderer's work is per state, and no cache or kernel is keyed on the
-        batch.
+    @property
+    def state(self) -> State:
+        """Alias for a detached full simulator snapshot from :meth:`get_state`."""
+        return self.get_state()
 
-        A batch LONGER than the env's still cannot be serviced: there is nowhere to put the extra rows,
-        and the message says how to fix it either way.
+    def render(self, state: State | None = None, **kwargs) -> torch.Tensor:
+        """Render full State through the private compact projection."""
+        state = self.get_state() if state is None else state
+        self._validate_state(state)
+        return self._render(self._pack_render_state(state), **kwargs)
 
-        Everything else about the input is checked in ``check_states``, which is where the reasons
-        live. In short: frames handed in where states were meant, a wrong state width, and NaN/inf all
-        used to reshape into something valid and render a picture that looks like data.
-        """
+    def _get_render_state(self) -> torch.Tensor:
+        """Private view of the live compact renderer rows. This is not simulator State."""
+        return self._render_state if self._live_rows == self.B else self._render_state[: self._live_rows]
+
+    def _set_render_state(self, states, variation: VariationLike | None = None, style=None) -> Env:
+        """Load compact rows for renderer regressions. Native hidden fields use corpus defaults."""
         s = check_states(self, states, f"{type(self).__name__}.set_state").reshape(-1, self.state_dim)
         n = int(s.shape[0])
         if n > self.B:
@@ -799,10 +816,10 @@ class Env:
                 f"with drop_last=False renders fine, and only those rows are drawn — but it cannot be "
                 f"longer, because there is nowhere to put the extra {n - self.B}. Either build the env "
                 f"at the batch you feed it, se.make({type(self).__name__!r}, "
-                f"num_envs={n}), or render without touching the env's buffer: env.render(states), which "
+                f"num_envs={n}), or render without touching the env's buffer: env._render(states), which "
                 f"takes any batch."
             )
-        self._state[:n].copy_(s)
+        self._render_state[:n].copy_(s)
         self._live_rows = n
         var_dict, style_row = _split_appearance(variation, style)
         if style_row is not None:
@@ -812,7 +829,7 @@ class Env:
         return self
 
     @torch.no_grad()
-    def render(
+    def _render(
         self,
         states=None,
         size: int | None = None,
@@ -1076,14 +1093,8 @@ class Env:
             )
         return lay
 
-    def pack(self, state: TensorDict) -> torch.Tensor:
-        """Compact render row used by env implementations and frozen corpora.
-
-        Public code should call :meth:`pack_render_state`. BYTE FOR BYTE THE STEP-8 LAYOUT.
-        ``render_state_names`` names its columns; the entity-grouped State is a view of the same
-        numbers. Fields whose offset is ``None`` are dropped here. This is *not* a lossless Markov
-        dump of public State.
-        """
+    def _pack_render_state(self, state: TensorDict) -> torch.Tensor:
+        """Project State to the frozen float32 renderer layout; dynamics-only fields are omitted."""
         if not isinstance(state, TensorDict):
             return check_states(self, state, f"{type(self).__name__}.pack", leading=True)
         lay = self._check_layout()
@@ -1102,19 +1113,18 @@ class Env:
             out[:, off : off + w] = torch.as_tensor(v, device=self.device, dtype=torch.float32).reshape(n, w)
         return out
 
-    def unpack(self, rows) -> TensorDict:
-        """Compact render row -> :data:`State`. Public code should call :meth:`unpack_render_state`.
+    def _unpack_render_state(self, rows) -> TensorDict:
+        """Decode only fields present in compact rows. Missing simulator fields stay absent.
 
-        Fields the row does not carry come back as ZEROS, which is not a placeholder: it is the
-        condition ``set_state`` puts the env in and the condition the reference env is in after
-        ``reset``, so ``unpack(pack(s))`` is the same environment and not an approximation of it.
-        """
+        This is a private renderer projection, never a reconstruction of full State."""
         lay = self._check_layout()
         dtypes = self._layout_dtypes()
         r = check_states(self, rows, f"{type(self).__name__}.unpack").reshape(-1, int(self.state_dim))
         n = int(r.shape[0])
         out: dict = {}
         for key, w, off in lay:
+            if off is None:
+                continue
             dt = dtypes.get(key, torch.float32)
             # ``copy=True``: ``.to`` on a same-dtype tensor returns the SAME storage, and a State that
             # aliases the env's packed buffer changes under the caller's feet at the next step.
@@ -1129,60 +1139,18 @@ class Env:
             node[key[-1]] = v
         return TensorDict(out, batch_size=[n], device=self.device)
 
-    def pack_render_state(self, state: TensorDict) -> torch.Tensor:
-        """Public :data:`State` → compact render row ``(n, render_state_dim)``.
-
-        Dynamics-only fields (layout offset ``None``) are omitted. This is not always a lossless
-        Markov serialization of public State.
-        """
-        return self.pack(state)
-
-    def unpack_render_state(self, rows) -> TensorDict:
-        """Compact render row → public :data:`State`.
-
-        Fields the row does not carry come back as zeros — the same condition ``set_state`` uses.
-        """
-        return self.unpack(rows)
-
     def _hidden_state(self) -> dict[tuple[str, ...], torch.Tensor]:
-        """``{key path: (n, width) tensor}`` for the fields whose offset in the packed row is ``None``.
-
-        THE HOOK EXISTS SO THAT A HIDDEN FIELD CANNOT BE FORGOTTEN QUIETLY. A cell that declares a
-        field with offset ``None`` is saying "this is real dynamical state that the packed row does
-        not carry" — PushT's agent velocity. ``unpack`` fills such a field with zeros, which is right
-        for a state loaded from a corpus and WRONG for the env's own live state after a step. A cell
-        that overrode the ``state`` property to splice its live value back in would be one forgotten
-        override away from a silent wrong answer: ``env.state`` reporting zeros, and
-        ``transition(env.state, a) != step(a)`` — a wrong number rather than a crash.
-
-        So the base class asks instead, and REFUSES to guess: declare a hidden field and you must
-        answer here. The default returns ``{}``, which is correct for the majority of cells (they
-        declare no hidden field at all) and raises for the rest, in ``state``, naming the field.
-        """
+        """Live simulator fields absent from compact rows. A declared hidden field must be supplied."""
         return {}
 
     def _live_state(self) -> dict[tuple[str, ...], torch.Tensor]:
-        """``{key path: (n, width) tensor}`` for DRAWN fields whose live value is more precise than
-        the packed row.
-
-        The packed float32 row is a lossy projection for a cell that simulates in float64 (classic
-        control's claim is near-bit-exactness against a float64 reference): widening the row back
-        gives ``float64(float32(x)) != x``, so ``transition(env.state, a)`` would silently diverge
-        from ``step(a)`` from the second step on. A cell that keeps a higher-precision live buffer
-        answers here for the fields it carries; ``state`` takes these over the widened row. Optional:
-        the default is ``{}`` and is correct for every cell whose live state IS the packed row.
-        """
+        """Live drawn fields at simulator precision, before the lossy float32 render projection."""
         return {}
 
-    @property
-    def state(self) -> TensorDict:
-        """The state the env currently holds, as a :data:`State`. ``get_state()`` is the packed row.
-
-        The packed half comes from ``unpack(get_state())`` unless :meth:`_live_state` offers a more
-        precise live value; the hidden half — the fields the row does not carry — comes from
-        :meth:`_hidden_state`, because only the cell knows where it lives.
-        """
-        td = self.unpack(self.get_state())
+    def get_state(self) -> State:
+        """Return an independent full native simulator snapshot, including hidden and precise fields."""
+        self._require_state("get_state")
+        td = self._unpack_render_state(self._get_render_state())
         hidden = {
             tuple(k) if isinstance(k, (tuple, list)) else (k,): v for k, v in (self._hidden_state() or {}).items()
         }
@@ -1215,7 +1183,7 @@ class Env:
                 f"look fine and transition(env.state, action) would stop matching step(action). "
                 f"Return {{{missing[0]!r}: <the live tensor>}} from _hidden_state()."
             )
-        return td
+        return td.clone()
 
     def _step_result(self, state: TensorDict, **extras) -> TensorDict:
         """Build the :data:`StepResult` ``step`` returns: ``{"state": ..., **extras}``.
@@ -1325,17 +1293,13 @@ class Env:
     # ------------------------------------------------------------------ lifecycle
 
     def reset(self, seed: int | None = None) -> TensorDict:
-        """Draw ``num_envs`` states from the env's own reset distribution and hold them.
-
-        ``seed`` re-seeds the env's generator, so ``reset(seed=0)`` twice gives the same states — the
-        determinism the whole corpus story rests on. With no seed the generator continues, which is
-        what a sequence of resets inside one experiment should do.
-        """
+        """Reset the native implementation. Historical reference reset parity is tracked separately."""
+        self._require_state("reset")
         self._check_open("reset")
         if seed is not None:
             self.rng = np.random.default_rng(int(seed))
             self._seed = int(seed)
-        self.set_state(self.sample_states(self.B, self.rng))
+        self._set_render_state(self.sample_states(self.B, self.rng))
         return self.state
 
     def step(self, actions) -> TensorDict:

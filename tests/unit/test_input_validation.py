@@ -68,11 +68,11 @@ class TinyEnv(StableEnv):
     def make_variation_space(self):
         return spaces.Dict({"block": spaces.Dict({"color": spaces.RGBBox(init_value=(10, 20, 30))})})
 
-    def render(self, states=None, size=None, supersample=None, variation=None, style=None, out=None):
+    def _render(self, states=None, size=None, supersample=None, variation=None, style=None, out=None):
         # The first line of all 26 shipped render overrides, verbatim, including the unchecked
         # ``as_tensor`` + ``reshape`` this file exists to make unreachable. The hook on the base class
         # is what validates and substitutes before this body runs.
-        s = self._state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
+        s = self._render_state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
         lead = tuple(s.shape[:-1])
         s = s.reshape(-1, self.state_dim)
         sty = self.resolve_style(style, variation, batch=int(s.shape[0]))
@@ -125,7 +125,7 @@ def test_a_frame_stack_whose_size_DIVIDES_is_refused():
     frames = torch.zeros((8, 5, 5, 3), dtype=torch.uint8)
     assert frames.numel() % env.state_dim == 0, "the fixture must be the DIVISIBLE case"
     with pytest.raises(ValueError) as e:
-        env.set_state(frames)
+        env._set_render_state(frames)
     msg = str(e.value)
     assert "FRAMES" in msg, f"the message does not say what arrived: {msg}"
     assert "(8, 5, 5, 3)" in msg, f"the message does not show the input shape: {msg}"
@@ -136,7 +136,7 @@ def test_a_frame_stack_whose_size_does_NOT_divide_is_refused_with_the_same_messa
     """The loud case, so that the two failures read alike instead of one being a reshape traceback."""
     env = _env(4)
     with pytest.raises(ValueError) as e:
-        env.set_state(torch.zeros((4, 96, 96, 3), dtype=torch.uint8))
+        env._set_render_state(torch.zeros((4, 96, 96, 3), dtype=torch.uint8))
     msg = str(e.value)
     assert "FRAMES" in msg and "(4, 96, 96, 3)" in msg, msg
     assert "render()" in msg, f"the message does not point at the direction that works: {msg}"
@@ -145,7 +145,7 @@ def test_a_frame_stack_whose_size_does_NOT_divide_is_refused_with_the_same_messa
 def test_uint8_is_called_out_by_name_because_states_are_float():
     env = _env(4)
     with pytest.raises(ValueError) as e:
-        env.set_state(torch.zeros((4, 8, 8, 3), dtype=torch.uint8))
+        env._set_render_state(torch.zeros((4, 8, 8, 3), dtype=torch.uint8))
     msg = str(e.value)
     assert "uint8" in msg and "states are float" in msg, f"dtype is the loudest signal: {msg}"
 
@@ -154,7 +154,7 @@ def test_a_frame_stack_is_refused_even_when_its_last_axis_EQUALS_state_dim():
     """A 3-wide env makes ``(H, W, 3)`` ambiguous by width, so rank has to carry the refusal."""
     env = _env(4, cls=ThreeWideEnv)
     with pytest.raises(ValueError) as e:
-        env.set_state(torch.zeros((4, 8, 8, 3), dtype=torch.uint8))
+        env._set_render_state(torch.zeros((4, 8, 8, 3), dtype=torch.uint8))
     msg = str(e.value)
     assert "FRAMES" in msg or "2-D" in msg, msg
 
@@ -170,7 +170,7 @@ def test_ndim_greater_than_two_is_refused_outright_rather_than_flattened():
     """
     env = _env(6)
     with pytest.raises(ValueError) as e:
-        env.set_state(np.stack([_states(3), _states(3, first=10)]))
+        env._set_render_state(np.stack([_states(3), _states(3, first=10)]))
     msg = str(e.value)
     assert "2-D" in msg and "(2, 3, 5)" in msg, msg
     assert "reshape(-1, 5)" in msg, f"the message does not give the one-line fix: {msg}"
@@ -179,7 +179,7 @@ def test_ndim_greater_than_two_is_refused_outright_rather_than_flattened():
 def test_a_row_of_the_wrong_width_names_state_dim_both_numbers_and_the_layout():
     env = _env(4)
     with pytest.raises(ValueError) as e:
-        env.set_state(np.zeros((4, 7), np.float32))
+        env._set_render_state(np.zeros((4, 7), np.float32))
     msg = str(e.value)
     assert "state_dim 5, got 7" in msg, f"the message does not name the field and both widths: {msg}"
     assert "TinyEnv" in msg, f"the message does not name the env: {msg}"
@@ -190,28 +190,28 @@ def test_a_row_of_the_wrong_width_names_state_dim_both_numbers_and_the_layout():
 def test_a_flat_input_that_is_not_a_whole_number_of_states_is_refused():
     env = _env(4)
     with pytest.raises(ValueError) as e:
-        env.set_state(np.zeros(12, np.float32))
+        env._set_render_state(np.zeros(12, np.float32))
     assert "not a multiple of 5" in str(e.value) and "(12,)" in str(e.value)
 
 
 def test_a_flat_input_that_is_a_whole_number_of_states_still_works():
     """15 numbers for a 5-wide env is 3 states, and always was. The refusal above is about 12."""
     env = _env(3)
-    env.set_state(np.repeat([1.0, 2.0, 3.0], 5).astype(np.float32))
-    assert env.get_state().shape == (3, 5)
-    assert _ids(env.render()) == [1, 2, 3]
+    env._set_render_state(np.repeat([1.0, 2.0, 3.0], 5).astype(np.float32))
+    assert env._get_render_state().shape == (3, 5)
+    assert _ids(env._render()) == [1, 2, 3]
 
 
 def test_a_scalar_is_refused_with_the_state_layout():
     env = _env(1)
     with pytest.raises(ValueError, match="scalar"):
-        env.set_state(3.0)
+        env._set_render_state(3.0)
 
 
 def test_an_empty_batch_is_refused():
     env = _env(4)
     with pytest.raises(ValueError, match="no states to render"):
-        env.set_state(np.zeros((0, 5), np.float32))
+        env._set_render_state(np.zeros((0, 5), np.float32))
 
 
 # ============================================================ NaN and inf
@@ -228,7 +228,7 @@ def test_non_finite_states_name_the_rows_and_the_named_columns():
     st[1, 2] = np.nan
     st[4, 2] = np.inf
     with pytest.raises(ValueError) as e:
-        env.set_state(st)
+        env._set_render_state(st)
     msg = str(e.value)
     assert "[1, 4]" in msg, f"the message does not say WHICH rows: {msg}"
     assert "block_x" in msg, f"the message does not name the column: {msg}"
@@ -241,7 +241,7 @@ def test_a_single_nan_names_only_its_own_row():
     st = _states(4)
     st[2, 0] = np.nan
     with pytest.raises(ValueError) as e:
-        env.set_state(st)
+        env._set_render_state(st)
     assert "1 of 4" in str(e.value) and "[2]" in str(e.value) and "agent_x" in str(e.value)
 
 
@@ -268,7 +268,7 @@ def test_a_trajectory_batch_dict_says_which_key_holds_the_states():
     """``TrajectoryDataset`` yields a dict, and ``torch.as_tensor`` on it dies without naming a key."""
     env = _env(4)
     with pytest.raises(TypeError) as e:
-        env.set_state({"states": _states(4), "traj": 0})
+        env._set_render_state({"states": _states(4), "traj": 0})
     assert "batch['states']" in str(e.value)
 
 
@@ -277,14 +277,14 @@ def test_the_one_tuple_a_tensordataset_yields_is_accepted_rather_than_refused():
     most common shape. ``torch.as_tensor`` on it raises "only one element tensors can be converted to
     Python scalars", naming neither the caller nor the fix; stacking it is simply right."""
     env = _env(4)
-    env.set_state([torch.as_tensor(_states(4))])
-    assert _ids(env.render()) == [0, 1, 2, 3]
+    env._set_render_state([torch.as_tensor(_states(4))])
+    assert _ids(env._render()) == [0, 1, 2, 3]
 
 
 def test_something_that_is_not_an_array_at_all_names_the_type_and_what_is_wanted():
     env = _env(2)
     with pytest.raises(TypeError) as e:
-        env.set_state(object())
+        env._set_render_state(object())
     assert "state_dim" in str(e.value) and "object" in str(e.value)
 
 
@@ -301,9 +301,9 @@ def test_a_partial_final_batch_is_accepted_and_renders_exactly_those_rows():
     the batch.
     """
     env = _env(8)
-    env.set_state(_states(5))
-    assert env.get_state().shape == (5, 5), "get_state must hand back only the rows set_state wrote"
-    frames = env.render()
+    env._set_render_state(_states(5))
+    assert env._get_render_state().shape == (5, 5), "get_state must hand back only the rows set_state wrote"
+    frames = env._render()
     assert frames.shape[0] == 5, "render() drew the stale tail of the buffer as well as the live rows"
     assert _ids(frames) == [0, 1, 2, 3, 4]
 
@@ -311,28 +311,28 @@ def test_a_partial_final_batch_is_accepted_and_renders_exactly_those_rows():
 def test_a_full_batch_after_a_short_one_uses_the_whole_buffer_again():
     """``_live_rows`` is per-call state, not a latch. A short batch must not shrink the env."""
     env = _env(8)
-    env.set_state(_states(3))
-    assert _ids(env.render()) == [0, 1, 2]
-    env.set_state(_states(8, first=100))
-    assert env.get_state().shape == (8, 5)
-    assert _ids(env.render()) == [100, 101, 102, 103, 104, 105, 106, 107]
+    env._set_render_state(_states(3))
+    assert _ids(env._render()) == [0, 1, 2]
+    env._set_render_state(_states(8, first=100))
+    assert env._get_render_state().shape == (8, 5)
+    assert _ids(env._render()) == [100, 101, 102, 103, 104, 105, 106, 107]
 
 
 def test_a_batch_longer_than_the_env_names_both_numbers_and_the_two_fixes():
     """Shorter is fine, longer is not, and the message must not read like the short case's twin."""
     env = _env(4)
     with pytest.raises(ValueError) as e:
-        env.set_state(_states(9))
+        env._set_render_state(_states(9))
     msg = str(e.value)
     assert "4" in msg and "9" in msg, f"the message does not name both batches: {msg}"
     assert "SHORTER" in msg, f"the message does not say which direction IS allowed: {msg}"
     assert "num_envs=9" in msg, f"the message does not give the constructor fix: {msg}"
-    assert "env.render(states)" in msg, f"the message does not give the no-buffer fix: {msg}"
+    assert "env._render(states)" in msg, f"the message does not give the no-buffer fix: {msg}"
 
 
 def test_set_state_returns_the_env_so_render_chains_off_it():
     env = _env(4)
-    assert env.set_state(_states(4)) is env
+    assert env._set_render_state(_states(4)) is env
 
 
 # ============================================================ sibling: render(states=)
@@ -346,26 +346,26 @@ def test_render_refuses_a_frame_stack_too():
     """
     env = _env(4)
     with pytest.raises(ValueError) as e:
-        env.render(torch.zeros((4, 8, 8, 3), dtype=torch.uint8))
+        env._render(torch.zeros((4, 8, 8, 3), dtype=torch.uint8))
     assert "FRAMES" in str(e.value) and "TinyEnv.render" in str(e.value)
 
 
 def test_render_keeps_accepting_leading_dims():
     env = _env(4)
-    out = env.render(np.stack([_states(3), _states(3, first=10)]))
+    out = env._render(np.stack([_states(3), _states(3, first=10)]))
     assert tuple(out.shape[:2]) == (2, 3), "render must preserve leading dims, only the width is fixed"
 
 
 def test_render_refuses_the_wrong_width():
     env = _env(4)
     with pytest.raises(ValueError, match="state_dim 5, got 7"):
-        env.render(np.zeros((4, 7), np.float32))
+        env._render(np.zeros((4, 7), np.float32))
 
 
 def test_render_takes_any_batch_because_it_does_not_touch_the_env_buffer():
     """The batch rule belongs to ``set_state``, not to the validator, and this pins the difference."""
     env = _env(4)
-    assert env.render(_states(9)).shape[0] == 9
+    assert env._render(_states(9)).shape[0] == 9
 
 
 # ============================================================ sibling: render_states

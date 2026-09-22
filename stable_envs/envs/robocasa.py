@@ -591,7 +591,7 @@ class RoboCasaBase(Env):
     # ---- render ---------------------------------------------------------------------------
 
     @torch.no_grad()
-    def render(
+    def _render(
         self,
         states=None,
         size: int | None = None,
@@ -601,7 +601,7 @@ class RoboCasaBase(Env):
         out=None,
     ) -> torch.Tensor:
         """``(...,state_dim)`` -> ``(...,H,W,3)`` uint8 on device. Style may differ per environment."""
-        s = self._state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
+        s = self._render_state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
         lead = tuple(s.shape[:-1])
         s = s.reshape(-1, self.state_dim).to(torch.float32)
         B = int(s.shape[0])
@@ -1049,7 +1049,7 @@ class RoboCasaCorrectedBase(RoboCasaBase):
         return hit
 
     @torch.no_grad()
-    def render(
+    def _render(
         self,
         states=None,
         size: int | None = None,
@@ -1079,14 +1079,14 @@ class RoboCasaCorrectedBase(RoboCasaBase):
                 f"{type(self).__name__.removesuffix('Corrected')!r}, the plain visual-tier class for "
                 f"this cell, which renders at any size."
             )
-        s = self._state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
+        s = self._render_state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
         lead = tuple(s.shape[:-1])
         s = s.reshape(-1, self.state_dim)
         b = int(s.shape[0])
         if out is None:
             out = torch.empty((b, size, size, 3), dtype=torch.uint8, device=self.device)
         buf = out.view(b, size, size, 3)
-        low = super().render(s, size=corr.render_size, supersample=1, variation=variation, style=style)
+        low = super()._render(s, size=corr.render_size, supersample=1, variation=variation, style=style)
         corr(low, out=buf)
         return buf.view(*lead, size, size, 3) if lead else buf
 

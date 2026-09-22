@@ -521,7 +521,7 @@ class PointMaze(Env):
     # ---- rendering -------------------------------------------------------
 
     @torch.no_grad()
-    def render(
+    def _render(
         self,
         states=None,
         size: int | None = None,
@@ -536,7 +536,7 @@ class PointMaze(Env):
         randomising the ball's colour never splits the batch and randomising the camera splits it once
         per distinct camera.
         """
-        s = self._state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
+        s = self._render_state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
         lead = tuple(s.shape[:-1])
         s = s.reshape(-1, self.state_dim)
         B = s.shape[0]

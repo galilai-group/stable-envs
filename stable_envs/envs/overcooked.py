@@ -517,7 +517,7 @@ class _OvercookedLayout(Env):
     # rendering
 
     @torch.no_grad()
-    def render(
+    def _render(
         self,
         states=None,
         size: int | None = None,
@@ -533,7 +533,7 @@ class _OvercookedLayout(Env):
                 f"supersampling is already baked into the atlas by _render_tile; sampling again on top "
                 f"of it would render something the reference never draws."
             )
-        s = self._state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
+        s = self._render_state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
         lead = tuple(s.shape[:-1])
         s = s.reshape(-1, self.state_dim)
         tile = self._tile(int(size or self.size))

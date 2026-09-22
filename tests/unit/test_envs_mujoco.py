@@ -118,14 +118,14 @@ def test_the_declared_state_layout_tiles_the_packed_row(name):
     """
     env = _constructible(name, REGISTRY[name])
     try:
-        env.set_state(env.sample_states(env.num_envs, np.random.default_rng(0)))
+        env._set_render_state(env.sample_states(env.num_envs, np.random.default_rng(0)))
         layout = env._layout()
         state = env.state
         assert sum(w for _, w, off in layout if off is not None) == env.state_dim
         for key, w, _ in layout:
             assert tuple(state[key].shape) == (env.num_envs, w), f"{name}: {key}"
-        assert torch.equal(env.pack(state), env.get_state())
-        assert torch.equal(env.pack(env.unpack(env.get_state())), env.get_state())
+        assert torch.equal(env._pack_render_state(state), env._get_render_state())
+        assert torch.equal(env._pack_render_state(env._unpack_render_state(env._get_render_state())), env._get_render_state())
     finally:
         env.close()
 
@@ -136,10 +136,10 @@ def test_render_takes_a_state_a_packed_row_or_nothing(name):
     env = _constructible(name, REGISTRY[name])
     try:
         rows = env.sample_states(env.num_envs, np.random.default_rng(0))
-        env.set_state(rows)
-        px = env.render()
-        assert torch.equal(px, env.render(env.state))
-        assert torch.equal(px, env.render(env.get_state()))
+        env._set_render_state(rows)
+        px = env._render()
+        assert torch.equal(px, env._render(env.state))
+        assert torch.equal(px, env._render(env._get_render_state()))
         assert px.dtype is torch.uint8 and px.shape[0] == env.num_envs
         assert tuple(env.frame_spec.shape) == tuple(px.shape[1:])
     finally:
@@ -158,7 +158,7 @@ def test_a_cell_without_a_simulator_refuses_step_and_transition_by_name(name):
     steppable = any(b.__name__ in WITH_DYNAMICS for b in cls.__mro__)
     env = _constructible(name, cls)
     try:
-        env.set_state(env.sample_states(env.num_envs, np.random.default_rng(0)))
+        env._set_render_state(env.sample_states(env.num_envs, np.random.default_rng(0)))
         if steppable:
             assert D.has_dynamics(env)
             out = env.step(torch.zeros(env.num_envs, env.action_dim))
@@ -175,7 +175,7 @@ def test_a_cell_without_a_simulator_refuses_step_and_transition_by_name(name):
             with pytest.raises(NotImplementedError) as e:
                 call()
             assert type(env).__name__ in str(e.value) and "has dynamics" in str(e.value)
-        assert env.render().shape[0] == env.num_envs  # render still works after the refusal
+        assert env._render().shape[0] == env.num_envs  # render still works after the refusal
     finally:
         env.close()
 
@@ -188,7 +188,7 @@ def test_close_is_idempotent_and_a_closed_env_refuses_to_render(name):
     env.close()
     assert env.closed
     with pytest.raises(RuntimeError) as e:
-        env.render()
+        env._render()
     assert "closed" in str(e.value)
     with _constructible(name, REGISTRY[name]) as ctx:
         assert not ctx.closed
@@ -213,13 +213,13 @@ def test_transition_is_pure_and_bit_identical_to_the_stateful_step(name):
     env = _constructible(name, cls, num_envs=4)
     try:
         rows = env.sample_states(4, np.random.default_rng(0))
-        env.set_state(rows)
+        env._set_render_state(rows)
         g = torch.Generator().manual_seed(0)
         lo, hi = float(env.action_low), float(env.action_high)
         a = lo + (hi - lo) * torch.rand(4, env.action_dim, generator=g)
-        held = env.get_state().clone()
+        held = env._get_render_state().clone()
         functional = env.transition(env.state, a)
-        assert torch.equal(env.get_state(), held), f"{name}: transition wrote the env's buffer"
+        assert torch.equal(env._get_render_state(), held), f"{name}: transition wrote the env's buffer"
         stateful = env.step(a)["state"]
         keys = [tuple(k) for k, _, _ in env._layout()]
         for k in keys:
@@ -244,18 +244,18 @@ def test_unroll_is_repeated_transition_and_repeated_step(name):
         A = lo + (hi - lo) * torch.rand(4, 4, env.action_dim, generator=g)
         keys = [tuple(k) for k, _, _ in env._layout()]
 
-        env.set_state(rows)
+        env._set_render_state(rows)
         traj = env.unroll(env.state, A)
         assert tuple(traj.batch_size) == (4, 4)
 
-        env.set_state(rows)
+        env._set_render_state(rows)
         cur = env.state
         for t in range(4):
             cur = env.transition(cur, A[t])
             for k in keys:
                 assert torch.equal(traj[t][k], cur[k]), f"{env.name}: step {t}, key {k}"
 
-        env.set_state(rows)
+        env._set_render_state(rows)
         for t in range(4):
             env.step(A[t])
         for k in keys:
@@ -280,8 +280,8 @@ def test_minigrids_carried_object_is_hidden_state_the_packed_row_does_not_carry(
         assert layout[("agent", "carrying")] == (1, None)
         assert all(off is not None for k, (_, off) in layout.items() if k != ("agent", "carrying"))
         rows = env.sample_states(4, np.random.default_rng(0))
-        env.set_state(rows)
-        assert torch.all(env.unpack(env.get_state())["agent", "carrying"] == 0)
+        env._set_render_state(rows)
+        assert torch.all(env._unpack_render_state(env._get_render_state())["agent", "carrying"] == 0)
         # pickup is action 3; whatever it does to the four environments, env.state must report the
         # env's OWN carried codes and not the zeros unpack would fill in.
         env.step(torch.full((4, 1), 3.0))
@@ -291,6 +291,6 @@ def test_minigrids_carried_object_is_hidden_state_the_packed_row_does_not_carry(
         functional = env.transition(env.state, a)
         stateful = env.step(a)["state"]
         assert torch.equal(functional["agent", "carrying"], stateful["agent", "carrying"])
-        assert torch.equal(env.pack(functional), env.pack(stateful))
+        assert torch.equal(env._pack_render_state(functional), env._pack_render_state(stateful))
     finally:
         env.close()

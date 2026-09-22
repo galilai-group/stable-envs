@@ -113,7 +113,7 @@ def _per_primitive(env, states, style=None):
     was = env.use_fused_render
     try:
         env.use_fused_render = False
-        return env.render(states, style=style).clone()
+        return env._render(states, style=style).clone()
     finally:
         env.use_fused_render = was
 
@@ -221,7 +221,7 @@ def test_the_kernel_is_the_description(name, kind, style_kind):
 @pytest.mark.gpu
 @pytest.mark.parametrize("name", CLASSIC)
 def test_env_render_agrees_under_a_per_row_style(name):
-    """CUDA, end to end: ``env.render(states, style=...)`` with the kernel on and off.
+    """CUDA, end to end: ``env._render(states, style=...)`` with the kernel on and off.
 
     The description guard above compares two evaluations of one op list; this one goes through
     ``render`` twice, so a per-row style that were resolved differently on the two paths -- rather
@@ -239,9 +239,9 @@ def test_env_render_agrees_under_a_per_row_style(name):
     was = env.use_fused_render
     try:
         env.use_fused_render = True
-        fast = env.render(states, style=style).clone()
+        fast = env._render(states, style=style).clone()
         env.use_fused_render = False
-        slow = env.render(states, style=style).clone()
+        slow = env._render(states, style=style).clone()
     finally:
         env.use_fused_render = was
     assert_frames_identical(
@@ -267,7 +267,7 @@ def test_the_kernel_is_batch_and_chunk_invariant(name):
     if not getattr(env, "fused_capable", False):
         pytest.skip(f"{name} has no fused description")
     states = _states(env, "corpus", 12, seed=0)
-    whole = env.render(states).clone()
+    whole = env._render(states).clone()
     chunks = torch.cat(
         [se.make(name, num_envs=k, device="cuda").render(states[i : i + k]) for i, k in ((0, 4), (4, 8))]
     )
@@ -275,7 +275,7 @@ def test_the_kernel_is_batch_and_chunk_invariant(name):
         chunks, whole, what=f"{name} chunked vs whole (fused)", why="the fused kernel must be batch-size invariant"
     )
     perm = np.array([7, 0, 11, 3, 5, 1, 9, 2, 10, 4, 8, 6])
-    shuffled = env.render(states[perm]).clone()
+    shuffled = env._render(states[perm]).clone()
     assert_frames_identical(
         shuffled, whole[perm], what=f"{name} permuted (fused)", why="the fused kernel must be order-independent"
     )

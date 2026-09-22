@@ -115,7 +115,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from ..env import Env, check_states
+from ..env import Env
 from ..registry import register
 from ..render import _resources as _RES
 from ..render import gfxdraw as G
@@ -231,7 +231,7 @@ class _Classic(Env):
         self._step_graph_error = ""
         self._disc_tables = None
 
-    def set_state(self, states, variation=None, style=None) -> _Classic:
+    def _set_render_state(self, states, variation=None, style=None) -> _Classic:
         """As the base class, and put the velocities the compact state does not carry back at rest.
 
         The alternative — keeping whatever the env was doing before — would make ``set_state(s)`` depend
@@ -239,10 +239,14 @@ class _Classic(Env):
         what ``reference_set_state`` writes into the official env, so the two paths start from the same
         condition rather than from two defensible ones.
         """
-        super().set_state(states, variation=variation, style=style)
+        super()._set_render_state(states, variation=variation, style=style)
         self._sim.zero_()
-        self._sim[:, self._cols] = self._state.to(torch.float64)
+        self._sim[:, self._cols] = self._render_state.to(torch.float64)
         return self
+
+    def _restore_state(self, state: TensorDict) -> None:
+        self.set_sim_state(self._sim_from_state(state))
+        self._live_rows = self.B
 
     def sim_state(self) -> torch.Tensor:
         """``(B, len(sim_state_names))`` float64 — the full dynamical state, velocities included."""
@@ -252,7 +256,7 @@ class _Classic(Env):
         self._sim.copy_(
             torch.as_tensor(v, device=self.device, dtype=torch.float64).reshape(self.B, self._sim.shape[1])
         )
-        self._state.copy_(self._sim.index_select(1, self._cols).to(torch.float32))
+        self._render_state.copy_(self._sim.index_select(1, self._cols).to(torch.float32))
         return self
 
     def _discrete(self, a: torch.Tensor) -> torch.Tensor:
@@ -268,7 +272,7 @@ class _Classic(Env):
     def _advance(self) -> None:
         """In place, through fixed addresses, so the whole thing is CUDA-graph capturable."""
         self._sim.copy_(self._dynamics(self._sim, self._act))
-        self._state.copy_(self._sim.index_select(1, self._cols).to(torch.float32))
+        self._render_state.copy_(self._sim.index_select(1, self._cols).to(torch.float32))
 
     # ------------------------------------------------------------------ state / dynamics
     #
@@ -380,11 +384,7 @@ class _Classic(Env):
         the same condition.
         """
         names = self.sim_state_names
-        if not isinstance(state, TensorDict):
-            rows = check_states(self, state, f"{type(self).__name__}.transition").reshape(-1, self.state_dim)
-            sim = torch.zeros(rows.shape[0], len(names), device=self.device, dtype=torch.float64)
-            sim[:, self._cols] = rows.to(torch.float64)
-            return sim
+        self._validate_state(state)
         n = int(state.batch_size[0]) if state.batch_size else 1
         try:
             cols = [torch.as_tensor(state[nm], device=self.device, dtype=torch.float64).reshape(n, 1) for nm in names]
@@ -400,7 +400,7 @@ class _Classic(Env):
         """``(state, action) -> next_state``. FUNCTIONAL: the env's own buffers are not touched.
 
         The same ``_dynamics`` over the same float64 inputs that ``step`` uses, so the two agree to
-        the bit — eager, because a captured CUDA graph reads ``_sim``/``_state`` at fixed addresses
+        the bit — eager, because a captured CUDA graph reads ``_sim``/``_render_state`` at fixed addresses
         and this call may not write them.
         """
         sim = self._sim_from_state(state)
@@ -425,7 +425,7 @@ class _Classic(Env):
         replayed = False
         if self.use_step_graph and self.device.type == "cuda":
             if self._step_graph is None and not self._step_graph_error:
-                self._step_graph, self._step_graph_error = _stepgraph.capture(self._advance, (self._sim, self._state))
+                self._step_graph, self._step_graph_error = _stepgraph.capture(self._advance, (self._sim, self._render_state))
                 if self._step_graph is None:
                     self.use_step_graph = False
             if self._step_graph is not None:
@@ -448,7 +448,7 @@ class _Classic(Env):
     # --- contract ---------------------------------------------------------------------------
 
     @torch.no_grad()
-    def render(
+    def _render(
         self,
         states=None,
         size: int | None = None,
@@ -473,7 +473,7 @@ class _Classic(Env):
                 f"geometry is integer and its anti-aliasing is Wu weights, not coverage — "
                 f"supersampling would average a picture the reference never draws."
             )
-        s = self._state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
+        s = self._render_state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
         lead = tuple(s.shape[:-1])
         # float64 from here on: the frame depends on trunc() of the vertex coordinates, so float32
         # arithmetic lands on the wrong integer whenever a vertex falls within ~1e-5 of one.

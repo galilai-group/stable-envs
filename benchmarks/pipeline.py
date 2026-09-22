@@ -71,8 +71,8 @@ def build_parser() -> argparse.ArgumentParser:
 def _load_states(env: snv.Env, args: argparse.Namespace) -> tuple[np.ndarray, str]:
     if args.state_file is None:
         state = env.reset(seed=args.seed)
-        rows = env.pack_render_state(state).detach().cpu().numpy().copy()
-        return rows, "env.reset(seed) -> env.pack_render_state(public State)"
+        rows = env._pack_render_state(state).detach().cpu().numpy().copy()
+        return rows, "env.reset(seed) -> env._pack_render_state(public State)"
 
     path = Path(args.state_file)
     if not path.is_file():
@@ -163,12 +163,12 @@ def _environment(name: str, args: argparse.Namespace, device: torch.device) -> t
 
         host_rows, source = _load_states(env, args)
         setup_rows = torch.as_tensor(host_rows, dtype=torch.float32).to(device)
-        first = env.render(setup_rows)
+        first = env._render(setup_rows)
         out = torch.empty_like(first)
 
         def ingest_and_render() -> None:
             rows = torch.as_tensor(host_rows, dtype=torch.float32).to(device)
-            env.render(rows, out=out)
+            env._render(rows, out=out)
 
         timing = measure(ingest_and_render, device=device, warmup=args.warmup, repeats=args.repeats)
         median_ms = timing["median_ms"]
@@ -216,7 +216,7 @@ def run(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     record["resolved_device"] = str(device)
     record["methodology"] = {
         "timed_operation": (
-            "torch.as_tensor(host packed rows).to(device) -> env.render(rows, out=reused_uint8_buffer)"
+            "torch.as_tensor(host packed rows).to(device) -> env._render(rows, out=reused_uint8_buffer)"
         ),
         "setup_excluded": [
             "environment construction",

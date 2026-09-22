@@ -154,14 +154,14 @@ def _states_prepare(seed: int):
 
 def _raycast_frames(env, states, fast: bool):
     with _forced_backend("triton" if fast else "torch"):
-        return env.render(states).clone()
+        return env._render(states).clone()
 
 
 def _mover_frames(env, states, fast: bool):
     if fast:
-        return env.render(states).clone()
+        return env._render(states).clone()
     with _unbounded(type(env)):
-        return env.render(states).clone()
+        return env._render(states).clone()
 
 
 @contextlib.contextmanager
@@ -181,7 +181,7 @@ def _composite_compact_merge(on: bool):
 
 def _compact_merge_frames(env, states, fast: bool):
     with _composite_compact_merge(fast):
-        return env.render(states).clone()
+        return env._render(states).clone()
 
 
 @contextlib.contextmanager
@@ -209,7 +209,7 @@ def _composite_frames(env, states, fast: bool):
     ``COMPOSITE_COMPACT_MERGE=False`` selects, and that is where the claim has to keep holding.
     """
     with _composite_compact_merge(False), _composite_compaction(fast):
-        return env.render(states).clone()
+        return env._render(states).clone()
 
 
 CLASSIC = ("Acrobot", "CartPole", "MountainCar", "MountainCarContinuous", "Pendulum")
@@ -220,7 +220,7 @@ def _classic_frames(env, states, fast: bool):
     was = env.use_fused_render
     try:
         env.use_fused_render = bool(fast)
-        return env.render(states).clone()
+        return env._render(states).clone()
     finally:
         env.use_fused_render = was
 
@@ -286,7 +286,7 @@ def _primitive_bounds(on: bool):
 def _bounds_frames(env, states, fast: bool):
     """Both legs through the TORCH cast: the bound is the CPU path and the fused kernel has no bound."""
     with _forced_backend("torch"), _primitive_bounds(fast):
-        return env.render(states).clone()
+        return env._render(states).clone()
 
 
 def _scene_prepare(seed: int):

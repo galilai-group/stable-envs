@@ -156,8 +156,8 @@ def test_B_IDENTICAL_rows_broadcast_because_row_i_IS_row_0():
 def test_B_DIFFERENT_rows_are_REFUSED_rather_than_collapsed_to_environment_0():
     """The defect, asserted as a refusal. Measured before the fix: 229/255, and silent.
 
-        env.set_state(st, style=sty); full = env.render()
-        alone = env.render(st[3:4])                            # asked for row 3 only
+        env._set_render_state(st, style=sty); full = env._render()
+        alone = env._render(st[3:4])                            # asked for row 3 only
         |alone - full[3]|.max()                        -> 229  # not row 3's appearance
         |alone - render(st[3:4], style=sty[0:1])|.max() ->   0  # it is row 0's
 

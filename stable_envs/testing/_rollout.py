@@ -142,15 +142,15 @@ def sample(
     policy.set_env(env)
     policy.reset(B)
 
-    env.set_state(init_states if init_states is not None else env.sample_states(B), style=style)
-    st = [env.get_state().clone()]
+    env._set_render_state(init_states if init_states is not None else env.sample_states(B), style=style)
+    st = [env._get_render_state().clone()]
     acts = []
     for t in range(int(steps)):
-        a = policy.get_action(env.get_state(), t=t)
+        a = policy.get_action(env._get_render_state(), t=t)
         a = torch.as_tensor(a, device=env.device, dtype=torch.float32).reshape(B, -1)
         env.step(a)
         acts.append(a)
-        st.append(env.get_state().clone())
+        st.append(env._get_render_state().clone())
 
     out = {
         "states": torch.stack(st, dim=1),
@@ -171,10 +171,10 @@ def sample(
         # instead of a dataset. The copy is the frame bytes once more per timestep (7 MB at B=256,
         # 96px) against a step dominated by the simulator, so it is not the thing to optimise here.
         # The shape is measured, not assumed square: highway-env draws 150x600, Craftax 112x144.
-        first = env.render(out["states"][:, 0], style=out["style"])
+        first = env._render(out["states"][:, 0], style=out["style"])
         frames = torch.empty((B, int(steps) + 1, *first.shape[1:]), dtype=torch.uint8, device=env.device)
         frames[:, 0] = first
         for t in range(1, int(steps) + 1):
-            frames[:, t] = env.render(out["states"][:, t], style=out["style"])
+            frames[:, t] = env._render(out["states"][:, t], style=out["style"])
         out["frames"] = frames
     return out

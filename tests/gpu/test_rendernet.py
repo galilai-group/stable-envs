@@ -127,7 +127,7 @@ def test_the_frame_is_exactly_the_cheap_render_put_through_the_corrector(env):
     """
     corr = env.corrector()
     states = env.sample_states(16, rng=np.random.default_rng(0))
-    got = env.render(states)
+    got = env._render(states)
     low = cheap_render(env, states)
     want = corr(low)
     d = (got.to(torch.int16) - want.to(torch.int16)).abs()
@@ -152,7 +152,7 @@ def test_the_corrector_is_actually_applied(env):
 
     corr = env.corrector()
     states = env.sample_states(8, rng=np.random.default_rng(1))
-    got = env.render(states)
+    got = env._render(states)
     low = cheap_render(env, states)
     anchor = (
         F.interpolate(
@@ -186,9 +186,9 @@ def test_the_same_states_twice_give_the_same_bytes(env):
     every call for the same reason.
     """
     states = env.sample_states(16, rng=np.random.default_rng(2))
-    a = env.render(states).clone()
-    env.render(env.sample_states(16, rng=np.random.default_rng(3)))  # something else in between
-    b = env.render(states)
+    a = env._render(states).clone()
+    env._render(env.sample_states(16, rng=np.random.default_rng(3)))  # something else in between
+    b = env._render(states)
     d = (a.to(torch.int16) - b.to(torch.int16)).abs()
     assert int(d.max()) == 0, (
         f"two renders of the same states differ by max {int(d.max())}/255 on {int((d > 0).any(-1).sum())} pixels"
@@ -208,9 +208,9 @@ def test_a_frame_does_not_depend_on_how_many_frames_were_asked_for(env, sizes):
     """
     n = max(sizes)
     states = env.sample_states(n, rng=np.random.default_rng(4))
-    ref = env.render(states).cpu().numpy()
+    ref = env._render(states).cpu().numpy()
     for b in sizes:
-        got = env.render(states[:b]).cpu().numpy()
+        got = env._render(states[:b]).cpu().numpy()
         d = np.abs(got.astype(np.int16) - ref[:b].astype(np.int16))
         assert int(d.max()) == 0, (
             f"rendering {b} of the same states gives different pixels from rendering {n} "
@@ -222,9 +222,9 @@ def test_a_size_the_checkpoint_was_not_fitted_for_is_refused(env):
     """Not serviced by resizing. A corrector is a fixed map between two resolutions."""
     states = env.sample_states(4, rng=np.random.default_rng(5))
     with pytest.raises(ValueError, match="delivers"):
-        env.render(states, size=env.size // 2)
+        env._render(states, size=env.size // 2)
     with pytest.raises(ValueError, match="delivers"):
-        env.render(states, supersample=2)
+        env._render(states, supersample=2)
 
 
 def test_this_corrector_refuses_every_other_registered_cell(env):

@@ -174,8 +174,8 @@ def test_a_body_slot_becomes_one_visibility_leaf_over_its_geoms(cell):
     env = cell(num_envs=2, device="cpu", seed=0)
     assert "visibility.target_ball" in env.variation_space.names()
     st = env.sample_states(2, np.random.default_rng(3))
-    shown = env.render(torch.as_tensor(st)).cpu().numpy()
-    hidden = env.render(torch.as_tensor(st), variation={"visibility.target_ball": [0]}).cpu().numpy()
+    shown = env._render(torch.as_tensor(st)).cpu().numpy()
+    hidden = env._render(torch.as_tensor(st), variation={"visibility.target_ball": [0]}).cpu().numpy()
     assert not np.array_equal(shown, hidden), (
         "hiding visibility.target_ball changed no pixel, so the body slot did not reach the geoms"
     )
@@ -189,13 +189,13 @@ def test_the_shape_leaf_default_is_the_compiled_model(cell):
     assert leaf.n == 3, leaf.n
     default = int(np.asarray(leaf.value).reshape(-1)[0])
     st = env.sample_states(2, np.random.default_rng(13))
-    base = env.render(torch.as_tensor(st)).cpu().numpy()
-    same = env.render(torch.as_tensor(st), variation={"target_ball.shape": [default]}).cpu().numpy()
+    base = env._render(torch.as_tensor(st)).cpu().numpy()
+    same = env._render(torch.as_tensor(st), variation={"target_ball.shape": [default]}).cpu().numpy()
     assert np.array_equal(base, same), "target_ball.shape's default is not the default appearance"
     for k in range(leaf.n):
         if k == default:
             continue
-        other = env.render(torch.as_tensor(st), variation={"target_ball.shape": [k]}).cpu().numpy()
+        other = env._render(torch.as_tensor(st), variation={"target_ball.shape": [k]}).cpu().numpy()
         assert not np.array_equal(base, other), (
             f"target_ball.shape = {k} changed no pixel; a declared alternative that cannot be seen "
             f"fails check_variations_do_something and advertises support that is not there"
@@ -341,9 +341,9 @@ def test_excluded_dims_leave_pixels_byte_unchanged_at_both_sizes(cell):
         env = cell(num_envs=16, size=size, device="cpu", seed=0)
         names = list(env.state_names)
         st = env.sample_states(16, np.random.default_rng(55))
-        base = env.render(torch.as_tensor(st)).cpu().numpy()
+        base = env._render(torch.as_tensor(st)).cpu().numpy()
         for nm in _INVARIANT:
-            moved = env.render(torch.as_tensor(_rotate(st, names, names.index(nm)))).cpu().numpy()
+            moved = env._render(torch.as_tensor(_rotate(st, names, names.index(nm)))).cpu().numpy()
             assert np.array_equal(base, moved), (
                 f"{nm} changed pixels at {size} px, so it is NOT render-invariant and must not be "
                 f"excluded from check_state_dims_matter"
@@ -366,10 +366,10 @@ def test_the_target_quat_dims_are_live_again_when_the_target_is_a_box(cell):
     env = cell(num_envs=16, size=224, device="cpu", seed=0)
     names = list(env.state_names)
     st = env.sample_states(16, np.random.default_rng(55))
-    base = env.render(torch.as_tensor(st), variation=box).cpu().numpy()
+    base = env._render(torch.as_tensor(st), variation=box).cpu().numpy()
     for nm in ("target_ball_quat_qw", "target_ball_quat_qy"):
         d = names.index(nm)
-        moved = env.render(torch.as_tensor(_rotate(st, names, d)), variation=box).cpu().numpy()
+        moved = env._render(torch.as_tensor(_rotate(st, names, d)), variation=box).cpu().numpy()
         assert not np.array_equal(base, moved), f"{nm} is dead even with a BOX target"
         ok, why = C._validate_render_invariant(env, st, d, variation=box)
         assert not ok, f"{nm} was excluded under a BOX target: {why}"
@@ -446,10 +446,10 @@ def test_a_missing_frozen_field_is_refused_and_named_not_skipped(cell):
     d = names.index("thumbtip")
 
     # it is a real, visible dimension
-    base = env.render(torch.as_tensor(st)).cpu().numpy()
+    base = env._render(torch.as_tensor(st)).cpu().numpy()
     pert = st.copy()
     pert[:, d] = pert[:, d] + 0.2
-    moved = env.render(torch.as_tensor(pert)).cpu().numpy()
+    moved = env._render(torch.as_tensor(pert)).cpu().numpy()
     assert not np.array_equal(base, moved), "thumbtip draws nothing; this test has lost its subject"
 
     blind = _Wrapped(env, lambda sig: {k: v for k, v in sig.items() if k != "geom_xpos"})

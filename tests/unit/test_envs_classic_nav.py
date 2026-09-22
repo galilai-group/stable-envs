@@ -75,7 +75,7 @@ def test_every_cell_takes_the_step9_constructor(name):
     assert env.closed
     env.close()  # idempotent
     with pytest.raises(RuntimeError, match="closed"):
-        env.render()
+        env._render()
 
 
 @pytest.mark.parametrize("name", ALL)
@@ -85,9 +85,9 @@ def test_the_state_keys_are_the_declared_ones_and_cover_the_packed_row(name):
     assert [k for k, _, _ in layout] == KEYS[name]
     assert sum(w for _, w, o in layout if o is not None) == env.state_dim
     rows = torch.as_tensor(env.sample_states(4, np.random.default_rng(0)), device=env.device)
-    td = env.unpack(rows)
+    td = env._unpack_render_state(rows)
     assert isinstance(td, TensorDict) and list(td.batch_size) == [4]
-    assert torch.equal(env.pack(td), rows), "pack/unpack must round-trip the frozen packed layout"
+    assert torch.equal(env._pack_render_state(td), rows), "pack/unpack must round-trip the frozen packed layout"
     env.close()
 
 
@@ -102,7 +102,7 @@ def test_classic_velocities_are_hidden_state_the_packed_row_does_not_carry(name)
     # unpack fills them with zeros -- the condition set_state puts the env in, and the reference's
     # own condition after reset -- and the cell answers with the live value from its own buffer.
     rows = torch.as_tensor(env.sample_states(4, np.random.default_rng(0)), device=env.device)
-    assert all(float(env.unpack(rows)[k].abs().max()) == 0.0 for k in hidden)
+    assert all(k not in env._unpack_render_state(rows).keys(True, True) for k in hidden)
     assert sorted(env._hidden_state()) == sorted(hidden)
     env.close()
 
@@ -115,10 +115,10 @@ def test_the_classic_public_state_is_float64_and_packs_back_to_the_float32_row(n
     float32 value with the velocities at rest) and drift from the second step on.
     """
     env = _env(name)
-    env.set_state(env.sample_states(4, np.random.default_rng(0)))
+    env._set_render_state(env.sample_states(4, np.random.default_rng(0)))
     st = env.state
     assert all(st[k].dtype == torch.float64 for k in KEYS[name])
-    assert torch.equal(env.pack(st), env.get_state())
+    assert torch.equal(env._pack_render_state(st), env._get_render_state())
     env.close()
 
 
@@ -126,12 +126,12 @@ def test_the_classic_public_state_is_float64_and_packs_back_to_the_float32_row(n
 def test_transition_is_bit_identical_to_the_stateful_step(name):
     env = _env(name)
     s0 = env.sample_states(4, np.random.default_rng(0))
-    env.set_state(s0)
+    env._set_render_state(s0)
     a = _actions(env, 4)
 
     functional = env.transition(env.state, a)
     stateful = env.step(a)["state"]
-    assert torch.equal(env.pack(functional), env.pack(stateful))
+    assert torch.equal(env._pack_render_state(functional), env._pack_render_state(stateful))
     for k in KEYS[name]:
         assert torch.equal(functional[k], stateful[k]), f"{'.'.join(k)} differs"
     env.close()
@@ -141,12 +141,12 @@ def test_transition_is_bit_identical_to_the_stateful_step(name):
 def test_transition_does_not_touch_the_env_and_unroll_is_repeated_transition(name):
     env = _env(name)
     s0 = env.sample_states(4, np.random.default_rng(1))
-    env.set_state(s0)
-    held = env.get_state().clone()
+    env._set_render_state(s0)
+    held = env._get_render_state().clone()
     acts = _actions(env, 4, steps=4, seed=1)
 
     traj = env.unroll(env.state, acts)
-    assert torch.equal(env.get_state(), held), "transition/unroll must not write the env's buffers"
+    assert torch.equal(env._get_render_state(), held), "transition/unroll must not write the env's buffers"
     assert list(traj.batch_size) == [4, 4]
 
     cur = env.state
@@ -167,10 +167,10 @@ def test_transition_does_not_touch_the_env_and_unroll_is_repeated_transition(nam
 def test_render_takes_a_state_a_packed_row_or_nothing_and_draws_the_same_frame(name):
     env = _env(name, 2)
     s0 = env.sample_states(2, np.random.default_rng(2))
-    env.set_state(s0)
-    a = env.render()
-    b = env.render(torch.as_tensor(s0, device=env.device))
-    c = env.render(env.state)
+    env._set_render_state(s0)
+    a = env._render()
+    b = env._render(torch.as_tensor(s0, device=env.device))
+    c = env._render(env.state)
     assert a.dtype == torch.uint8 and a.shape[0] == 2
     assert torch.equal(a, b) and torch.equal(a, c)
     assert tuple(env.frame_spec.shape) == tuple(a.shape[1:])
@@ -180,7 +180,7 @@ def test_render_takes_a_state_a_packed_row_or_nothing_and_draws_the_same_frame(n
 @pytest.mark.parametrize("name", ALL)
 def test_step_reports_a_state_and_does_not_fabricate_a_reward(name):
     env = _env(name, 2)
-    env.set_state(env.sample_states(2, np.random.default_rng(3)))
+    env._set_render_state(env.sample_states(2, np.random.default_rng(3)))
     out = env.step(_actions(env, 2))
     assert list(out.keys()) == ["state"], (
         "these cells have no reward and no termination semantics in stable-envs; an absent key is "
@@ -265,7 +265,7 @@ def test_env_state_is_the_simulator_buffer_and_not_the_widened_packed_row(name):
     and the buffer have actually diverged.
     """
     env = _env(name)
-    env.set_state(env.sample_states(4, np.random.default_rng(4)))
+    env._set_render_state(env.sample_states(4, np.random.default_rng(4)))
     for _ in range(3):
         env.step(_actions(env, 4))
 
@@ -275,7 +275,7 @@ def test_env_state_is_the_simulator_buffer_and_not_the_widened_packed_row(name):
     for i, nm in enumerate(env.sim_state_names):
         assert torch.equal(st[nm], env.sim_state()[:, i : i + 1]), nm
     # and the row the renderer sees is still exactly the packed float32 one
-    assert torch.equal(env.pack(st), env.get_state())
+    assert torch.equal(env._pack_render_state(st), env._get_render_state())
     env.close()
 
 
@@ -310,14 +310,14 @@ def test_transition_still_equals_step_after_the_env_has_been_stepped(name):
     ``_Classic.state``'s docstring.
     """
     env = _env(name)
-    env.set_state(env.sample_states(4, np.random.default_rng(5)))
+    env._set_render_state(env.sample_states(4, np.random.default_rng(5)))
     for _ in range(5):
         env.step(_actions(env, 4, seed=5))
 
     a = _actions(env, 4, seed=6)
     functional = env.transition(env.state, a)
     stateful = env.step(a)["state"]
-    assert torch.equal(env.pack(functional), env.pack(stateful))
+    assert torch.equal(env._pack_render_state(functional), env._pack_render_state(stateful))
     for k in KEYS[name]:
         assert torch.equal(functional[k], stateful[k]), f"{'.'.join(k)} differs after five steps"
     env.close()
@@ -332,7 +332,7 @@ def test_a_step_result_is_not_a_view_of_the_env_that_produced_it(name):
     request R8 — the base class's ``unpack`` stopped cloning in foundation commit ``b1585fc``.
     """
     env = _env(name)
-    env.set_state(env.sample_states(4, np.random.default_rng(7)))
+    env._set_render_state(env.sample_states(4, np.random.default_rng(7)))
     out = env.step(_actions(env, 4, seed=7))
     held = {k: out["state"][k].clone() for k in KEYS[name]}
     env.step(_actions(env, 4, seed=8))
@@ -353,7 +353,7 @@ def test_step_returns_exactly_env_state(name):
     this asserts — after several steps, when the row and the buffer have diverged.
     """
     env = _env(name)
-    env.set_state(env.sample_states(4, np.random.default_rng(9)))
+    env._set_render_state(env.sample_states(4, np.random.default_rng(9)))
     for _ in range(3):
         env.step(_actions(env, 4, seed=9))
     out = env.step(_actions(env, 4, seed=10))

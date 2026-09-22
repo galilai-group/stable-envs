@@ -39,24 +39,24 @@ class RenderOnlyEnv:
         self.size = 4
         self.device = torch.device("cpu")
         self.rng = np.random.default_rng(0)
-        self._state = torch.zeros(self.B, self.state_dim)
+        self._render_state = torch.zeros(self.B, self.state_dim)
 
     def sample_states(self, batch, rng=None):
         r = rng or self.rng
         return r.uniform(-1, 1, (int(batch), self.state_dim)).astype(np.float32)
 
-    def get_state(self):
-        return self._state
+    def _get_render_state(self):
+        return self._render_state
 
     def get_style(self):
         return torch.zeros(self.B, 0)
 
-    def set_state(self, states, style=None):
-        self._state.copy_(torch.as_tensor(states, dtype=torch.float32).reshape(self.B, -1))
+    def _set_render_state(self, states, style=None):
+        self._render_state.copy_(torch.as_tensor(states, dtype=torch.float32).reshape(self.B, -1))
         return self
 
-    def render(self, states=None, **kw):
-        s = torch.as_tensor(self._state if states is None else states, dtype=torch.float32).reshape(-1, self.state_dim)
+    def _render(self, states=None, **kw):
+        s = torch.as_tensor(self._render_state if states is None else states, dtype=torch.float32).reshape(-1, self.state_dim)
         img = torch.zeros((s.shape[0], 2, 3, 3), dtype=torch.uint8)
         img[:, 0, 0, :] = (s[:, 0].to(torch.int64) % 251).to(torch.uint8).unsqueeze(-1)
         return img
@@ -70,8 +70,8 @@ class IntegratorEnv(RenderOnlyEnv):
     action_high = 1.0
 
     def step(self, actions):
-        self._state += torch.as_tensor(actions, dtype=torch.float32).reshape(self.B, -1)
-        return self._state
+        self._render_state += torch.as_tensor(actions, dtype=torch.float32).reshape(self.B, -1)
+        return self._render_state
 
 
 class DiscreteEnv(IntegratorEnv):
@@ -171,7 +171,7 @@ def test_frames_are_OFF_by_default_and_correct_when_asked_for():
     tr = sample(env, steps=3, seed=0, render=True)
     assert tr["frames"].shape == (4, 4, 2, 3, 3)
     for t in range(4):
-        want = env.render(tr["states"][:, t], style=tr["style"])
+        want = env._render(tr["states"][:, t], style=tr["style"])
         assert torch.equal(tr["frames"][:, t], want), f"frame {t} is not the render of state {t}"
 
 
@@ -211,7 +211,7 @@ def test_the_base_policy_is_an_interface_and_says_so():
     assert p.env is env
     assert p.reset(4) is None, "reset is a hook for stateful policies, not a value"
     with pytest.raises(NotImplementedError):
-        p.get_action(env.get_state())
+        p.get_action(env._get_render_state())
 
 
 def test_the_random_policy_adopts_the_env_s_declared_bounds():
@@ -233,7 +233,7 @@ def test_the_random_policy_stays_inside_the_bounds_including_half_open_discrete_
     p.set_env(env)
     p.reset(env.B)
     for _ in range(50):
-        a = p.get_action(env.get_state())
+        a = p.get_action(env._get_render_state())
         assert a.shape == (env.B, env.action_dim)
         assert float(a.min()) >= env.action_low
         assert float(a.max()) < env.action_high, "a half-open bound was reached"
@@ -251,9 +251,9 @@ def test_the_random_policy_re_seeds_on_reset_so_two_rollouts_agree():
     p = RandomPolicy(seed=11)
     p.set_env(env)
     p.reset(env.B)
-    first = [p.get_action(env.get_state()).clone() for _ in range(4)]
+    first = [p.get_action(env._get_render_state()).clone() for _ in range(4)]
     p.reset(env.B)
-    second = [p.get_action(env.get_state()).clone() for _ in range(4)]
+    second = [p.get_action(env._get_render_state()).clone() for _ in range(4)]
     assert all(torch.equal(a, b) for a, b in zip(first, second)), (
         "reset() did not put the policy's generator back, so the second rollout of a seeded pair "
         "differs from the first"
@@ -265,7 +265,7 @@ def test_the_random_policy_honours_bounds_given_explicitly_over_the_env_s():
     p = RandomPolicy(low=0.25, high=0.5, seed=0)
     p.set_env(env)
     p.reset(env.B)
-    a = p.get_action(env.get_state())
+    a = p.get_action(env._get_render_state())
     assert float(a.min()) >= 0.25 and float(a.max()) <= 0.5
 
 

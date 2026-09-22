@@ -695,7 +695,7 @@ class OGBenchMaze(Env):
     # ---- render ----------------------------------------------------------
 
     @torch.no_grad()
-    def render(
+    def _render(
         self,
         states=None,
         size: int | None = None,
@@ -711,7 +711,7 @@ class OGBenchMaze(Env):
         one call. Agent colour and scale are per environment inside the ray-cast, so the common case —
         randomise the agent, keep the maze — never splits the batch at all.
         """
-        s = self._state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
+        s = self._render_state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
         lead = tuple(s.shape[:-1])
         s = s.reshape(-1, self.state_dim)
         B = s.shape[0]

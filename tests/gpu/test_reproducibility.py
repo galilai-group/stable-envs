@@ -112,7 +112,7 @@ BIG_BATCHES = (1024, 512, 256, 128, 64)
 #:
 #: HIGHWAY_SIZE_LEAK. ``HighwayEnvBase``
 #: derived ``self.H``/``self.W``/the camera from ``render(size=)`` and STORED them, so
-#:     env.render(st).shape -> (4,150,600,3); env.render(st, size=300); env.render(st).shape
+#:     env._render(st).shape -> (4,150,600,3); env._render(st, size=300); env._render(st).shape
 #: came back (4,300,1200,3) with ``env.size`` still 150 — and it cascaded into four unrelated dataset
 #: round-trip failures. The screen is now a frozen ``_Screen`` value derived inside the call, so there
 #: is nowhere left to store it; the four highway envs assert the property below like everyone else.
@@ -324,7 +324,7 @@ def test_frames_are_bit_identical_in_a_fresh_process(env, fresh_process):
     _, arrays = fresh_process
     states = arrays[f"{name}::states"]
     style = arrays[f"{name}::style"]
-    frames = env.render(states)
+    frames = env._render(states)
     assert list(frames.shape) == rec["shape"], (
         f"{name}: frame shape {list(frames.shape)} here, {rec['shape']} in a fresh process"
     )
@@ -334,7 +334,7 @@ def test_frames_are_bit_identical_in_a_fresh_process(env, fresh_process):
         f"which means a stored corpus does not regenerate"
     )
     if env.style_dim:
-        assert _digest(env.render(states, style=style)) == rec["frames_styled_sha"], (
+        assert _digest(env._render(states, style=style)) == rec["frames_styled_sha"], (
             f"{name}: frames agree under the default appearance but not under a stored style, so the "
             f"style half of the state does not survive a process boundary"
         )
@@ -370,7 +370,7 @@ def test_rollout_seed_reproduces_in_a_fresh_process(env, fresh_process):
 
 def _big_batch(env) -> int:
     """The largest batch from ``BIG_BATCHES`` whose frames fit ``BIG_FRAME_BUDGET``."""
-    probe = env.render(env.sample_states(1, rng=np.random.default_rng(0)))
+    probe = env._render(env.sample_states(1, rng=np.random.default_rng(0)))
     per = int(np.prod(probe.shape[1:]))
     for b in BIG_BATCHES:
         if b * per <= BIG_FRAME_BUDGET:
@@ -901,8 +901,8 @@ def test_leading_dimensions_are_preserved(env, inputs):
     frames in the wrong places, and no shape assertion anywhere would notice.
     """
     states, style = inputs
-    flat = env.render(states, style=style).detach().cpu().numpy()
-    nested = env.render(states.reshape(2, N // 2, -1), style=style).detach().cpu().numpy()
+    flat = env._render(states, style=style).detach().cpu().numpy()
+    nested = env._render(states.reshape(2, N // 2, -1), style=style).detach().cpu().numpy()
     assert nested.shape == (2, N // 2, *flat.shape[1:]), (
         f"{type(env).__name__}: leading dims not preserved — got {nested.shape}"
     )
@@ -920,9 +920,9 @@ def test_out_buffer_receives_the_same_frames(env, inputs):
     allocation is theirs, reads the buffer.
     """
     states, style = inputs
-    ref = env.render(states, style=style).detach().cpu().numpy()
+    ref = env._render(states, style=style).detach().cpu().numpy()
     buf = torch.zeros(ref.shape, dtype=torch.uint8, device=env.device)
-    got = env.render(states, style=style, out=buf)
+    got = env._render(states, style=style, out=buf)
     assert np.array_equal(buf.detach().cpu().numpy(), ref), (
         f"{type(env).__name__}: render(out=buf) did not put the frames in buf — the documented "
         f"zero-allocation path hands back a buffer that is not the picture"
@@ -939,7 +939,7 @@ def test_a_non_contiguous_out_buffer_is_refused_rather_than_silently_corrupted(e
     already has — it returns the strided tensor unchanged. Every backend here reaches its destination
     that way, so the kernel wrote ``B*H*W*3`` bytes linearly from the view's own offset and the frames
     landed across the neighbouring slices of the caller's buffer. Measured on PushT before the fix:
-    ``env.render(st, out=buf[:, 1])`` raised nothing and left ``buf[:, 1]`` 255/255 away from the
+    ``env._render(st, out=buf[:, 1])`` raised nothing and left ``buf[:, 1]`` 255/255 away from the
     frames. A silent wrong answer is the worst of the three possible behaviours, and it was reachable
     from the idiom the README recommends as soon as the buffer has a time or camera axis in front of
     the frame axis — which is the ordinary shape for a rollout.
@@ -949,14 +949,14 @@ def test_a_non_contiguous_out_buffer_is_refused_rather_than_silently_corrupted(e
     the only family that checked, which is what a per-env rule always decays to.
     """
     states, style = inputs
-    ref = env.render(states[:1], style=None if style is None else style[:1])
+    ref = env._render(states[:1], style=None if style is None else style[:1])
     H, W = int(ref.shape[-3]), int(ref.shape[-2])
     n = min(4, N)
     buf = torch.zeros((n, 3, H, W, 3), dtype=torch.uint8, device=env.device)
     view = buf[:, 1]
     assert not view.is_contiguous(), "the probe buffer must be strided for this to mean anything"
     with pytest.raises((RuntimeError, ValueError), match="(?i)contiguous"):
-        env.render(states[:n], style=None if style is None else style[:n], out=view)
+        env._render(states[:n], style=None if style is None else style[:n], out=view)
     assert int(buf.max()) == 0, (
         f"{type(env).__name__}: render(out=<non-contiguous>) reported an error but had already "
         f"written into the caller's buffer — a refusal that scribbles first is not a refusal"
@@ -973,8 +973,8 @@ def test_rendering_a_sub_batch_refuses_environment_0_s_style(env, inputs):
     checks cannot see it because they run under one shared style. Measured on PushT before the fix,
     with one random appearance per environment:
 
-        env.set_state(st, style=sty); full = env.render()
-        alone = env.render(st[3:4])                            # asked for row 3 only
+        env._set_render_state(st, style=sty); full = env._render()
+        alone = env._render(st[3:4])                            # asked for row 3 only
         |alone - full[3]|.max()                        -> 229  # not row 3's appearance
         |alone - render(st[3:4], style=sty[0:1])|.max() ->   0  # it is row 0's
 
@@ -990,13 +990,13 @@ def test_rendering_a_sub_batch_refuses_environment_0_s_style(env, inputs):
         pytest.skip(f"{type(env).__name__} declares no style, so there is nothing to collapse")
     states, _ = inputs
     sty = C.uniform_style(env, N, groups=2)  # two distinct rows; see uniform_style on the cost
-    env.set_state(states, style=sty)
-    full = env.render().detach().cpu().numpy()
+    env._set_render_state(states, style=sty)
+    full = env._render().detach().cpu().numpy()
 
     with pytest.raises(ValueError, match="(?i)per-environment style"):
-        env.render(states[3:4])
+        env._render(states[3:4])
 
-    alone = env.render(states[3:4], style=sty[3:4]).detach().cpu().numpy()[0]
+    alone = env._render(states[3:4], style=sty[3:4]).detach().cpu().numpy()[0]
     d = int(np.abs(alone.astype(np.int16) - full[3].astype(np.int16)).max())
     assert d == 0, (
         f"{type(env).__name__}: rendering row 3 on its own WITH row 3's style gave a frame {d}/255 "
@@ -1016,17 +1016,17 @@ def test_a_shared_style_broadcasts_to_any_batch(env, inputs):
     """
     states, _ = inputs
     env.set_style(None)
-    ref = env.render(states).detach().cpu().numpy()
+    ref = env._render(states).detach().cpu().numpy()
     for b in (1, 3, N):
-        got = env.render(states[:b]).detach().cpu().numpy()
+        got = env._render(states[:b]).detach().cpu().numpy()
         assert np.array_equal(got, ref[:b]), (
             f"{type(env).__name__}: under the default appearance, rendering {b} of {N} rows differs "
             f"from those rows of the full batch — a shared style must broadcast unchanged"
         )
     if env.style_dim:
         one = env.sample_style(1, rng=np.random.default_rng(3))
-        a = env.render(states, style=one).detach().cpu().numpy()
-        b_ = env.render(states[:1], style=one).detach().cpu().numpy()[0]
+        a = env._render(states, style=one).detach().cpu().numpy()
+        b_ = env._render(states[:1], style=one).detach().cpu().numpy()[0]
         assert np.array_equal(b_, a[0]), (
             f"{type(env).__name__}: a single explicit style row did not broadcast identically at two batch sizes"
         )
@@ -1049,12 +1049,12 @@ def test_variation_overrides_do_not_drop_the_env_s_per_environment_style(env, in
     path, off, w, v = chosen
     states, _ = inputs
     sty = C.uniform_style(env, N, groups=2)  # two distinct rows; see uniform_style on the cost
-    env.set_state(states, style=sty)
+    env._set_render_state(states, style=sty)
 
     want = np.array(sty, np.float32)
     want[:, off : off + w] = v
-    a = env.render(states, variation={path: v}).detach().cpu().numpy()
-    b = env.render(states, style=want).detach().cpu().numpy()
+    a = env._render(states, variation={path: v}).detach().cpu().numpy()
+    b = env._render(states, style=want).detach().cpu().numpy()
     assert np.array_equal(a, b), (
         f"{type(env).__name__}: with a per-environment style set on the env, "
         f"render(variation={{{path!r}: v}}) drew something other than the same rows with that one "
@@ -1158,17 +1158,17 @@ def test_render_size_does_not_leak_into_later_calls(env, inputs):
         # costs nothing extra.
         pytest.skip(f"{name}: covered by {sorted(PLATE_REPRESENTATIVES)} — see PLATE_REPRESENTATIVES")
     states, style = inputs
-    before = env.render(states, style=style).shape
+    before = env._render(states, style=style).shape
     try:
-        env.render(states[:1], size=2 * int(env.size), style=None if style is None else style[:1])
+        env._render(states[:1], size=2 * int(env.size), style=None if style is None else style[:1])
     except ValueError as e:
         pytest.skip(f"{name} renders at one size only, so no size can leak: {e}")
-    after = env.render(states, style=style).shape
+    after = env._render(states, style=style).shape
     # Put the env back before asserting. The module-scoped env is shared, so leaving a leaked size in
     # place turns one real defect into a cascade of unrelated failures in every later test that
     # compares a plain render against a sized one — which is exactly what it did before this line
     # existed: four dataset round-trip failures whose actual cause was three tests earlier.
-    env.render(states[:1], size=int(env.size), style=None if style is None else style[:1])
+    env._render(states[:1], size=int(env.size), style=None if style is None else style[:1])
     assert tuple(after) == tuple(before), (
         f"{name}: after one render(size={2 * int(env.size)}), a plain render() returns {tuple(after)} "
         f"instead of {tuple(before)} while env.size is still {env.size}. The size argument is being "
@@ -1185,9 +1185,9 @@ def test_highway_render_size_is_an_argument_not_a_mode(name):
     count, line width — was derived from the requested size and STORED on the env by ``_set_screen``,
     so it survived the call that asked for it. Measured before the fix:
 
-        env.render(st).shape       -> (4, 150, 600, 3)
-        env.render(st, size=300)
-        env.render(st).shape       -> (4, 300, 1200, 3)      # env.size is still 150
+        env._render(st).shape       -> (4, 150, 600, 3)
+        env._render(st, size=300)
+        env._render(st).shape       -> (4, 300, 1200, 3)      # env.size is still 150
 
     A fresh env per parameter, so this states the property on its own and cannot be satisfied (or
     broken) by whatever the module-scoped fixture did before it.
@@ -1196,9 +1196,9 @@ def test_highway_render_size_is_an_argument_not_a_mode(name):
         pytest.skip(f"{name} is not registered")
     env = se.make(name, num_envs=4, device="cuda")
     st = env.sample_states(4, rng=np.random.default_rng(0))
-    before = tuple(env.render(st).shape)
-    big = tuple(env.render(st, size=2 * int(env.size)).shape)
-    after = tuple(env.render(st).shape)
+    before = tuple(env._render(st).shape)
+    big = tuple(env._render(st, size=2 * int(env.size)).shape)
+    after = tuple(env._render(st).shape)
     assert big == (before[0], 2 * before[1], 2 * before[2], 3), (
         f"{name}: render(size=2S) returned {big}, which is not twice {before}"
     )
@@ -1223,7 +1223,7 @@ def test_numpy_and_torch_serialization_round_trip(env, inputs, tmp_path):
     a shape check would not catch and which moves pixels.
     """
     states, style = inputs
-    ref = _digest(env.render(states, style=style))
+    ref = _digest(env._render(states, style=style))
 
     np.save(tmp_path / "s.npy", states)
     ns = np.load(tmp_path / "s.npy")
@@ -1231,7 +1231,7 @@ def test_numpy_and_torch_serialization_round_trip(env, inputs, tmp_path):
     if style is not None:
         np.save(tmp_path / "k.npy", style)
         nk = np.load(tmp_path / "k.npy")
-    assert _digest(env.render(ns, style=nk)) == ref, (
+    assert _digest(env._render(ns, style=nk)) == ref, (
         f"{type(env).__name__}: frames differ after a numpy save/load of the states"
     )
 
@@ -1239,7 +1239,7 @@ def test_numpy_and_torch_serialization_round_trip(env, inputs, tmp_path):
         {"s": torch.as_tensor(states), "k": None if style is None else torch.as_tensor(style)}, tmp_path / "t.pt"
     )
     got = torch.load(tmp_path / "t.pt", weights_only=True)
-    assert _digest(env.render(got["s"], style=got["k"])) == ref, (
+    assert _digest(env._render(got["s"], style=got["k"])) == ref, (
         f"{type(env).__name__}: frames differ after a torch save/load of the states"
     )
 
@@ -1254,7 +1254,7 @@ def test_dataset_paths_regenerate_identical_frames(env, inputs):
     appearance to trajectory i's states and renders without complaint.
     """
     states, style = inputs
-    ref = env.render(states, style=style).detach().cpu().numpy()
+    ref = env._render(states, style=style).detach().cpu().numpy()
 
     ds = StateDataset(env, states, style=style, size=env.size, device=str(env.device))
     assert np.array_equal(ds.__getitems__(list(range(N))).detach().cpu().numpy(), ref), (
@@ -1280,7 +1280,7 @@ def test_dataset_paths_regenerate_identical_frames(env, inputs):
         device=str(env.device),
     )
     got = traj.all_frames().detach().cpu().numpy()
-    want = env.render(states, style=None if style is None else np.repeat(style[:1], N, 0))
+    want = env._render(states, style=None if style is None else np.repeat(style[:1], N, 0))
     assert np.array_equal(got, want.detach().cpu().numpy()), (
         f"{type(env).__name__}: TrajectoryDataset.all_frames does not reproduce env.render on the "
         f"same states and the trajectory's own style"
@@ -1336,8 +1336,8 @@ def test_variation_dict_and_style_tensor_agree(env, inputs):
 
     sty = np.tile(env.default_style(), (N, 1))
     sty[:, off : off + w] = v
-    a = env.render(states, variation={path: v}).detach().cpu().numpy()
-    b = env.render(states, style=sty).detach().cpu().numpy()
+    a = env._render(states, variation={path: v}).detach().cpu().numpy()
+    b = env._render(states, style=sty).detach().cpu().numpy()
     assert np.array_equal(a, b), (
         f"{type(env).__name__}: render(variation={{{path!r}: v}}) and the equivalent flat style row "
         f"draw different pictures (max "
@@ -1554,12 +1554,12 @@ def test_a_baked_scene_does_not_inherit_the_last_bake_s_visibility(name):
     ss = env.ss + 1  # a supersample nothing has cached for this scene
 
     D._SCENE_CACHE.clear()
-    alone = env.render(st, variation=hidden, supersample=ss).cpu().numpy()
+    alone = env._render(st, variation=hidden, supersample=ss).cpu().numpy()
 
     D._SCENE_CACHE.clear()
-    env.render(st, variation=hidden)  # bake the hidden scene at the default ss
-    env.render(st, variation=other)  # ... then bake a DIFFERENT appearance
-    after = env.render(st, variation=hidden, supersample=ss).cpu().numpy()
+    env._render(st, variation=hidden)  # bake the hidden scene at the default ss
+    env._render(st, variation=other)  # ... then bake a DIFFERENT appearance
+    after = env._render(st, variation=hidden, supersample=ss).cpu().numpy()
 
     d = np.abs(alone.astype(np.int16) - after.astype(np.int16)).max(-1)
     assert int(d.max()) == 0, (
