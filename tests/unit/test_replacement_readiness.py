@@ -54,7 +54,7 @@ def test_ready_forbids_meaningful_gaps():
             continue
         assert row["counts"]["UNSUPPORTED_MEANINGFUL"] == 0
         assert row["counts"]["PARTIAL"] == 0
-        assert row["execution"] in {"NATIVE", "DELEGATED"}
+        assert row["execution"] in {"NATIVE", "DELEGATED_CPU"}
 
 
 def test_every_historical_cell_has_a_known_status():

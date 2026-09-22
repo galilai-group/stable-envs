@@ -5,7 +5,7 @@ Status is derived, not editorial:
     SYMBOLIC     no pixel cell
     INCOMPLETE   stable-envs currently only has enough capability to render
     PARTIAL      native or delegated step exists, but UNSUPPORTED_MEANINGFUL or PARTIAL leaves remain
-    READY        execution is NATIVE or DELEGATED, and
+    READY        execution is NATIVE or DELEGATED_CPU, and
                  UNSUPPORTED_MEANINGFUL = 0 and PARTIAL = 0
 
 ``READY`` is never assigned while a meaningful gap is listed beside it.
@@ -22,10 +22,8 @@ from .variation import VARIATION_MAPS
 NATIVE_SWM_IDS = frozenset(
     {
         "swm/AcrobotControl-v1",
-        "swm/CartPoleControl-v1",
         "swm/MountainCarContinuousControl-v0",
         "swm/MountainCarControl-v0",
-        "swm/PendulumControl-v1",
         "swm/Piecewise-v0",
         "swm/PushT-Discrete-v1",
         "swm/PushT-v1",
@@ -34,8 +32,26 @@ NATIVE_SWM_IDS = frozenset(
     }
 )
 
+# These registrations have a delegated default. Sibling task variants and the
+# complete Variation surface are not certified by this architecture inventory;
+# exact accepted scopes and evidence live in semantic_recovery_matrix.json.
+DELEGATED_CPU_SWM_IDS = frozenset(
+    {
+        "swm/AcrobotDMControl-v0",
+        "swm/CartPoleControl-v1",
+        "swm/CartpoleDMControl-v0",
+        "swm/CheetahDMControl-v0",
+        "swm/HopperDMControl-v0",
+        "swm/OGBMaze-v0",
+        "swm/PendulumControl-v1",
+        "swm/PendulumDMControl-v0",
+        "swm/ReacherDMControl-v0",
+        "swm/WalkerDMControl-v0",
+    }
+)
+
 STATUSES = ("READY", "PARTIAL", "INCOMPLETE", "SYMBOLIC")
-EXECUTIONS = ("NATIVE", "DELEGATED", "INCOMPLETE", "SYMBOLIC")
+EXECUTIONS = ("NATIVE", "DELEGATED_CPU", "INCOMPLETE", "SYMBOLIC")
 
 
 def execution_for(swm_id: str) -> str:
@@ -43,6 +59,8 @@ def execution_for(swm_id: str) -> str:
         return "SYMBOLIC"
     if swm_id in NATIVE_SWM_IDS:
         return "NATIVE"
+    if swm_id in DELEGATED_CPU_SWM_IDS:
+        return "DELEGATED_CPU"
     return "INCOMPLETE"
 
 

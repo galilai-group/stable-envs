@@ -66,7 +66,8 @@ TRACKCOM = (
     "DMCWalkerWalk",
 )
 ALL = PARITY + TRACKCOM
-RECOVERED = ("DMCReacherHard", "DMCAcrobotBalance", "DMCPendulumSwingup", "DMCCartpoleSwingup")
+CONTINUATION = ("DMCCheetahRun", "DMCHopperHop", "DMCWalkerWalk")
+RECOVERED = ("DMCReacherHard", "DMCAcrobotBalance", "DMCPendulumSwingup", "DMCCartpoleSwingup") + CONTINUATION
 
 #: Which domain module each cell is WRITTEN in. The registry reports the package for all eighteen
 #: (see ``test_every_cell_reports_the_package_as_its_module``); this is the other half of that fact —
@@ -197,8 +198,12 @@ def test_the_package_tables_are_views_of_the_cells_and_not_a_second_copy():
     assert set(dmc.VISUAL_FIDELITY) == set(TRACKCOM)
     for n, vf in dmc.VISUAL_FIDELITY.items():
         assert snv.registry.REGISTRY[n].visual_fidelity is vf
-    assert set(dmc.TRACKCOM_BASES) == {"DMCQuadrupedWalk"}
+    assert set(dmc.TRACKCOM_BASES) == {"DMCQuadrupedWalk", *CONTINUATION}
     assert dmc.TRACKCOM_BASES["DMCQuadrupedWalk"] == (dmc._TranscribedQuadrupedModel,)
+    from stable_envs.envs.dmcontrol._continuation import DMCContinuationSemantics
+
+    for name in CONTINUATION:
+        assert dmc.TRACKCOM_BASES[name] == (DMCContinuationSemantics,)
     assert set(dmc.DOMAINS) == set(PARITY) and set(dmc.TRACKCOM_DOMAINS) == set(TRACKCOM)
 
 
@@ -225,6 +230,10 @@ def test_a_cell_is_a_declaration_and_overrides_no_renderer_method(name):
         from stable_envs.envs.dmcontrol.reacher import _ReacherSemantics
 
         expected = (_ReacherSemantics,)
+    elif name in CONTINUATION:
+        from stable_envs.envs.dmcontrol._continuation import DMCContinuationSemantics
+
+        expected = (DMCContinuationSemantics,)
     elif name in RECOVERED:
         from stable_envs.envs.dmcontrol._first_family import FirstFamilySemantics
 

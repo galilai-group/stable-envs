@@ -11,7 +11,7 @@ import stable_envs as se
 def test_full_snapshot_restores_future_and_has_no_aliases(name):
     with se.make(name, num_envs=2, device="cpu") as env:
         env.reset(seed=12)
-        action = torch.ones(2, env.action_dim)
+        action = torch.ones(2, env.action_dim, dtype=env.action_spec.dtype)
         if name == "PushT":
             action *= 250
         env.step(action)

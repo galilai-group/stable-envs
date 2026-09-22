@@ -1,5 +1,12 @@
 # Classic 2-D control: can we render it exactly, on the GPU, from the state vector?
 
+Current semantic recovery: `CartPole` and `Pendulum` execute the historical SWM
+defaults through Gymnasium CPU simulators, with full physical, lifecycle and RNG
+State. Their former physical-only `transition`/`unroll` path is explicitly refused.
+See [native verification](native_verification.md) for exact task evidence and
+remaining native-family blockers. The renderer measurements below are historical
+evidence; they do not certify environment semantics or GPU physics.
+
 Yes, and not approximately. **CartPole-v1, Pendulum-v1, Acrobot-v1 and MountainCar-v0 render
 bit-identically** — 0 differing pixels out of 250.9 M, 1024/1024 frames exact — from a batched torch
 rasterizer that never touches pygame. This is a stronger result than the PushT reference

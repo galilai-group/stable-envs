@@ -31,7 +31,9 @@
         "Native step returns state only, omits reward/terminated/truncated."
       ],
       "test": "tests/unit/test_full_state_contract.py",
-      "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private"
+      "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
+      "audit_status": "SOURCE_AUDITED_NOT_VERIFIED",
+      "audit_report": "docs/research/native_verification.md"
     },
     {
       "historical_id": "swm/AcrobotDMControl-v0",
@@ -129,7 +131,9 @@
       ],
       "test": "tests/unit/test_full_state_contract.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
-      "execution_candidate": "DELEGATED"
+      "execution_candidate": "DELEGATED",
+      "audit_status": "SOURCE_AUDITED_NOT_VERIFIED",
+      "audit_report": "docs/research/dmc_continuation_recovery.md"
     },
     {
       "historical_id": "swm/CartPoleControl-v1",
@@ -140,27 +144,58 @@
       "owner": "native-verification",
       "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
       "state_status": "INCOMPLETE",
-      "action_parity": "UNTESTED",
-      "reset_parity": "UNTESTED",
-      "step_parity": "UNTESTED",
-      "reward_parity": "UNTESTED",
-      "terminated_truncated_parity": "UNTESTED",
-      "rng_lifecycle": "UNTESTED",
-      "variation_parity": "UNTESTED",
-      "execution_mode": "NATIVE",
-      "adapter_status": "NOT_IMPLEMENTED",
-      "renderer_regression": "PASS_SCOPED_CPU_CUDA: four frozen rows per selected class; explicit legacy target visibility for Reacher",
-      "oracle_corpus": null,
+      "action_parity": "PASS_EXACT_CPU",
+      "reset_parity": "PASS_SEEDED_DEFAULT_OPTIONS_CPU",
+      "step_parity": "PASS_EXACT_CPU; CUDA_STATE_PENDING",
+      "reward_parity": "PASS_EXACT_CPU_INCLUDING_TASK_BOUNDARIES",
+      "terminated_truncated_parity": "PASS_EXACT_CPU_INCLUDING_TIMELIMIT",
+      "rng_lifecycle": "PASS_CPU_TWO_HISTORIES_AND_UNSEEDED_RESET",
+      "variation_parity": "PASS_CPU_NONDEFAULT_ALL_SIX_PHYSICS_LEAVES; full historical surface remains uncertified",
+      "execution_mode": "DELEGATED_CPU",
+      "adapter_status": "IMPLEMENTED_HISTORICAL_DEFAULT",
+      "renderer_regression": "PASS_TWO_CELL_FROZEN_CPU; OSCAR_PENDING",
+      "oracle_corpus": "tests/fixtures/semantics/native_classic/manifest.json",
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Native step returns state only, omits reward/terminated/truncated."
+        "Required Oscar CUDA State and frozen renderer gate pending cluster scheduling",
+        "Complete historical reset options and Variation surface remain uncertified",
+        "Legacy physical-only transition/unroll and sim_state/set_sim_state explicitly refused",
+        "All-42 renderer certification and paired benchmarks remain unrun"
       ],
-      "test": "tests/unit/test_full_state_contract.py",
+      "test": "tests/integration/test_native_classic_gate.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
-      "recovery_status": "IN_PROGRESS_FROM_REVIEWED_7221759"
+      "recovery_status": "CPU_PASSED_OSCAR_PENDING",
+      "verification_scope": {
+        "classes": [
+          "CartPole"
+        ],
+        "task": "Gymnasium CartPole-v1 with pinned SWM float32 physics defaults",
+        "seeds": [
+          0,
+          17,
+          42
+        ],
+        "batches": [
+          1,
+          3
+        ],
+        "trajectory_steps": 32,
+        "time_limit": 500,
+        "atol": 0,
+        "rtol": 0,
+        "same_persistent_variation_required": true,
+        "status": "CPU_PASSED_OSCAR_PENDING"
+      },
+      "implementation_commit": "446f8608bc800c2d61701f675a2536df0dcbaa3f",
+      "oscar_job": 6605941,
+      "evidence": [
+        "docs/research/native_verification.md",
+        "docs/research/semantic_recovery_evidence/native_classic_cpu.json",
+        "docs/research/semantic_recovery_evidence/native_classic_renderer_cpu.json"
+      ]
     },
     {
       "historical_id": "swm/CartpoleDMControl-v0",
@@ -234,30 +269,67 @@
       "owner": "dmcontrol-continuation",
       "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
       "state_status": "INCOMPLETE",
-      "action_parity": "UNTESTED",
-      "reset_parity": "UNTESTED",
-      "step_parity": "UNTESTED",
-      "reward_parity": "UNTESTED",
-      "terminated_truncated_parity": "UNTESTED",
-      "rng_lifecycle": "UNTESTED",
-      "variation_parity": "UNTESTED",
-      "execution_mode": null,
-      "adapter_status": "NOT_IMPLEMENTED",
-      "renderer_regression": "PENDING",
-      "oracle_corpus": null,
+      "action_parity": "PASS_EXACT_CPU_DEFAULT_AND_FINITE_PASSTHROUGH",
+      "reset_parity": "PASS_SEEDED_DEFAULT_OPTIONS_CPU",
+      "step_parity": "PASS_EXACT_CPU; CUDA_STATE_PENDING",
+      "reward_parity": "PASS_EXACT_CPU_INCLUDING_POSITIVE_REWARD",
+      "terminated_truncated_parity": "PASS_EXACT_CPU_THROUGH_DMC_IMPLICIT_RESET",
+      "rng_lifecycle": "PASS_CPU_TWO_HISTORIES_AND_IMPLICIT_RESET",
+      "variation_parity": "PASS_CPU_NONDEFAULT_GRAVITY_AND_VISUAL_ONLY_DEFAULT_PRESERVATION; complete surface uncertified",
+      "execution_mode": "DELEGATED_CPU",
+      "adapter_status": "IMPLEMENTED_HISTORICAL_DEFAULT",
+      "renderer_regression": "PASS_THREE_CELL_FROZEN_CPU; OSCAR_PENDING",
+      "oracle_corpus": "tests/fixtures/semantics/dmc_continuation/manifest.json",
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Missing qvel and executable dynamics.",
-        "Reset samples rollout states rather than reference reset.",
-        "Inspect SWM custom_tasks/cheetah.py; suite task name alone is insufficient authority."
+        "Required Oscar CUDA State, frozen renderer, Reacher and first-cohort regression gates pending cluster scheduling",
+        "Nondefault task kwargs, full historical Variation surface, and historical reset options remain uncertified",
+        "All-42 renderer certification and paired benchmarks remain unrun"
       ],
-      "test": "tests/unit/test_full_state_contract.py",
+      "test": "tests/integration/test_dmc_continuation_semantics.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "execution_candidate": "DELEGATED",
-      "recovery_status": "IN_PROGRESS_FROM_REVIEWED_7221759"
+      "recovery_status": "CPU_PASSED_OSCAR_PENDING",
+      "verification_scope": {
+        "classes": [
+          "DMCCheetahRun"
+        ],
+        "task": "CustomCheetah(goal='run', move_speed=10): default branch delegates to Cheetah.get_reward",
+        "seeds": [
+          0,
+          17,
+          42
+        ],
+        "batches": [
+          1,
+          3
+        ],
+        "trajectory_steps": 32,
+        "lifecycle_steps": 1252,
+        "atol": 0,
+        "rtol": 0,
+        "same_persistent_variation_required": true,
+        "status": "CPU_PASSED_OSCAR_PENDING"
+      },
+      "state_schema": "qpos, qvel, time, qacc_warmstart, lifecycle step_count/reset_next_step, task cumulative_reward, MT19937 keys/position/has_gauss/cached_gaussian",
+      "warmstart_evidence": {
+        "seed": 0,
+        "history_steps_before_snapshot": 5,
+        "different_history_steps": 9,
+        "continuation_steps": 8,
+        "max_observable_error_without_warmstart": 2.7533531010703882e-14,
+        "max_error_with_schema": 0.0
+      },
+      "implementation_commit": "6470521e84a47d5f95a5bd5f0c5a338ab293619f",
+      "oscar_job": 6605999,
+      "evidence": [
+        "docs/research/dmc_continuation_recovery.md",
+        "docs/research/semantic_recovery_evidence/dmc_continuation_cpu.json",
+        "docs/research/semantic_recovery_evidence/dmc_continuation_renderer_cpu.json"
+      ]
     },
     {
       "historical_id": "swm/CraftaxClassicPixels-v1",
@@ -781,7 +853,9 @@
       ],
       "test": "tests/unit/test_full_state_contract.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
-      "execution_candidate": "DELEGATED"
+      "execution_candidate": "DELEGATED",
+      "audit_status": "SOURCE_AUDITED_NOT_VERIFIED",
+      "audit_report": "docs/research/dmc_continuation_recovery.md"
     },
     {
       "historical_id": "swm/HopperDMControl-v0",
@@ -792,30 +866,67 @@
       "owner": "dmcontrol-continuation",
       "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
       "state_status": "INCOMPLETE",
-      "action_parity": "UNTESTED",
-      "reset_parity": "UNTESTED",
-      "step_parity": "UNTESTED",
-      "reward_parity": "UNTESTED",
-      "terminated_truncated_parity": "UNTESTED",
-      "rng_lifecycle": "UNTESTED",
-      "variation_parity": "UNTESTED",
-      "execution_mode": null,
-      "adapter_status": "NOT_IMPLEMENTED",
-      "renderer_regression": "PASS_SCOPED_CPU_CUDA: four frozen rows per selected class; explicit legacy target visibility for Reacher",
-      "oracle_corpus": null,
+      "action_parity": "PASS_EXACT_CPU_DEFAULT_AND_FINITE_PASSTHROUGH",
+      "reset_parity": "PASS_SEEDED_DEFAULT_OPTIONS_CPU",
+      "step_parity": "PASS_EXACT_CPU; CUDA_STATE_PENDING",
+      "reward_parity": "PASS_EXACT_CPU_INCLUDING_POSITIVE_REWARD",
+      "terminated_truncated_parity": "PASS_EXACT_CPU_THROUGH_DMC_IMPLICIT_RESET",
+      "rng_lifecycle": "PASS_CPU_TWO_HISTORIES_AND_IMPLICIT_RESET",
+      "variation_parity": "PASS_CPU_NONDEFAULT_GRAVITY_AND_VISUAL_ONLY_DEFAULT_PRESERVATION; complete surface uncertified",
+      "execution_mode": "DELEGATED_CPU",
+      "adapter_status": "IMPLEMENTED_HISTORICAL_DEFAULT",
+      "renderer_regression": "PASS_THREE_CELL_FROZEN_CPU; OSCAR_PENDING",
+      "oracle_corpus": "tests/fixtures/semantics/dmc_continuation/manifest.json",
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Missing qvel and executable dynamics.",
-        "Reset samples rollout states rather than reference reset.",
-        "Inspect SWM custom_tasks/hopper.py rather than assuming suite reward equivalence."
+        "Required Oscar CUDA State, frozen renderer, Reacher and first-cohort regression gates pending cluster scheduling",
+        "Nondefault task kwargs, full historical Variation surface, and historical reset options remain uncertified",
+        "All-42 renderer certification and paired benchmarks remain unrun"
       ],
-      "test": "tests/unit/test_full_state_contract.py",
+      "test": "tests/integration/test_dmc_continuation_semantics.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "execution_candidate": "DELEGATED",
-      "recovery_status": "IN_PROGRESS_FROM_REVIEWED_7221759"
+      "recovery_status": "CPU_PASSED_OSCAR_PENDING",
+      "verification_scope": {
+        "classes": [
+          "DMCHopperHop"
+        ],
+        "task": "CustomHopper(goal='hop', hopping=True): default branch delegates to Hopper.get_reward",
+        "seeds": [
+          0,
+          17,
+          42
+        ],
+        "batches": [
+          1,
+          3
+        ],
+        "trajectory_steps": 32,
+        "lifecycle_steps": 502,
+        "atol": 0,
+        "rtol": 0,
+        "same_persistent_variation_required": true,
+        "status": "CPU_PASSED_OSCAR_PENDING"
+      },
+      "state_schema": "qpos, qvel, time, qacc_warmstart, lifecycle step_count/reset_next_step, task cumulative_reward, MT19937 keys/position/has_gauss/cached_gaussian",
+      "warmstart_evidence": {
+        "seed": 0,
+        "history_steps_before_snapshot": 5,
+        "different_history_steps": 9,
+        "continuation_steps": 8,
+        "max_observable_error_without_warmstart": 2.1316282072803006e-14,
+        "max_error_with_schema": 0.0
+      },
+      "implementation_commit": "6470521e84a47d5f95a5bd5f0c5a338ab293619f",
+      "oscar_job": 6605999,
+      "evidence": [
+        "docs/research/dmc_continuation_recovery.md",
+        "docs/research/semantic_recovery_evidence/dmc_continuation_cpu.json",
+        "docs/research/semantic_recovery_evidence/dmc_continuation_renderer_cpu.json"
+      ]
     },
     {
       "historical_id": "swm/HumanoidDMControl-v0",
@@ -848,7 +959,18 @@
       ],
       "test": "tests/unit/test_full_state_contract.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
-      "execution_candidate": "DELEGATED"
+      "execution_candidate": "DELEGATED",
+      "audit_status": "SOURCE_AUDITED_NOT_VERIFIED",
+      "audit_report": "docs/research/dmc_continuation_recovery.md",
+      "recovery_status": "BLOCKED_TASK_IDENTITY",
+      "blocker": {
+        "status": "OPEN",
+        "kind": "DEFAULT_TASK_IDENTITY_MISMATCH",
+        "reference": "Humanoid walk, move_speed=1, pure_state=False",
+        "candidate": "DMCHumanoidStand",
+        "resolution_cohort": "remaining DMC",
+        "permanent_skip": false
+      }
     },
     {
       "historical_id": "swm/ManipulatorDMControl-v0",
@@ -880,7 +1002,9 @@
       ],
       "test": "tests/unit/test_full_state_contract.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
-      "execution_candidate": "DELEGATED"
+      "execution_candidate": "DELEGATED",
+      "audit_status": "SOURCE_AUDITED_NOT_VERIFIED",
+      "audit_report": "docs/research/dmc_continuation_recovery.md"
     },
     {
       "historical_id": "swm/MountainCarContinuousControl-v0",
@@ -910,7 +1034,9 @@
         "Native step returns state only, omits reward/terminated/truncated."
       ],
       "test": "tests/unit/test_full_state_contract.py",
-      "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private"
+      "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
+      "audit_status": "SOURCE_AUDITED_NOT_VERIFIED",
+      "audit_report": "docs/research/native_verification.md"
     },
     {
       "historical_id": "swm/MountainCarControl-v0",
@@ -940,7 +1066,9 @@
         "Native step returns state only, omits reward/terminated/truncated."
       ],
       "test": "tests/unit/test_full_state_contract.py",
-      "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private"
+      "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
+      "audit_status": "SOURCE_AUDITED_NOT_VERIFIED",
+      "audit_report": "docs/research/native_verification.md"
     },
     {
       "historical_id": "swm/OGBCube-v0",
@@ -1124,27 +1252,58 @@
       "owner": "native-verification",
       "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
       "state_status": "INCOMPLETE",
-      "action_parity": "UNTESTED",
-      "reset_parity": "UNTESTED",
-      "step_parity": "UNTESTED",
-      "reward_parity": "UNTESTED",
-      "terminated_truncated_parity": "UNTESTED",
-      "rng_lifecycle": "UNTESTED",
-      "variation_parity": "UNTESTED",
-      "execution_mode": "NATIVE",
-      "adapter_status": "NOT_IMPLEMENTED",
-      "renderer_regression": "PASS_SCOPED_CPU_CUDA: four frozen rows per selected class; explicit legacy target visibility for Reacher",
-      "oracle_corpus": null,
+      "action_parity": "PASS_EXACT_CPU",
+      "reset_parity": "PASS_SEEDED_DEFAULT_OPTIONS_CPU",
+      "step_parity": "PASS_EXACT_CPU; CUDA_STATE_PENDING",
+      "reward_parity": "PASS_EXACT_CPU_INCLUDING_TASK_BOUNDARIES",
+      "terminated_truncated_parity": "PASS_EXACT_CPU_INCLUDING_TIMELIMIT",
+      "rng_lifecycle": "PASS_CPU_TWO_HISTORIES_AND_UNSEEDED_RESET",
+      "variation_parity": "PASS_CPU_NONDEFAULT_ALL_SIX_PHYSICS_LEAVES; full historical surface remains uncertified",
+      "execution_mode": "DELEGATED_CPU",
+      "adapter_status": "IMPLEMENTED_HISTORICAL_DEFAULT",
+      "renderer_regression": "PASS_TWO_CELL_FROZEN_CPU; OSCAR_PENDING",
+      "oracle_corpus": "tests/fixtures/semantics/native_classic/manifest.json",
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Native step returns state only, omits reward/terminated/truncated."
+        "Required Oscar CUDA State and frozen renderer gate pending cluster scheduling",
+        "Complete historical reset options and Variation surface remain uncertified",
+        "Legacy physical-only transition/unroll and sim_state/set_sim_state explicitly refused",
+        "All-42 renderer certification and paired benchmarks remain unrun"
       ],
-      "test": "tests/unit/test_full_state_contract.py",
+      "test": "tests/integration/test_native_classic_gate.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
-      "recovery_status": "IN_PROGRESS_FROM_REVIEWED_7221759"
+      "recovery_status": "CPU_PASSED_OSCAR_PENDING",
+      "verification_scope": {
+        "classes": [
+          "Pendulum"
+        ],
+        "task": "Gymnasium Pendulum-v1 with pinned SWM float32 physics defaults",
+        "seeds": [
+          0,
+          17,
+          42
+        ],
+        "batches": [
+          1,
+          3
+        ],
+        "trajectory_steps": 32,
+        "time_limit": 200,
+        "atol": 0,
+        "rtol": 0,
+        "same_persistent_variation_required": true,
+        "status": "CPU_PASSED_OSCAR_PENDING"
+      },
+      "implementation_commit": "446f8608bc800c2d61701f675a2536df0dcbaa3f",
+      "oscar_job": 6605941,
+      "evidence": [
+        "docs/research/native_verification.md",
+        "docs/research/semantic_recovery_evidence/native_classic_cpu.json",
+        "docs/research/semantic_recovery_evidence/native_classic_renderer_cpu.json"
+      ]
     },
     {
       "historical_id": "swm/PendulumDMControl-v0",
@@ -1237,7 +1396,9 @@
         "Reset options and goal semantics unverified."
       ],
       "test": "tests/unit/test_full_state_contract.py",
-      "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private"
+      "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
+      "audit_status": "SOURCE_AUDITED_NOT_VERIFIED",
+      "audit_report": "docs/research/native_verification.md"
     },
     {
       "historical_id": "swm/PushT-Discrete-v1",
@@ -1270,7 +1431,9 @@
         "Both SWM variants map to same continuous stable class; discrete decoding absent."
       ],
       "test": "tests/unit/test_full_state_contract.py",
-      "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private"
+      "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
+      "audit_status": "SOURCE_AUDITED_NOT_VERIFIED",
+      "audit_report": "docs/research/native_verification.md"
     },
     {
       "historical_id": "swm/PushT-v1",
@@ -1302,7 +1465,9 @@
         "get_state loses agent velocity; complete Pymunk state is not established."
       ],
       "test": "tests/unit/test_full_state_contract.py",
-      "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private"
+      "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
+      "audit_status": "SOURCE_AUDITED_NOT_VERIFIED",
+      "audit_report": "docs/research/native_verification.md"
     },
     {
       "historical_id": "swm/QuadrupedDMControl-v0",
@@ -1334,7 +1499,9 @@
       ],
       "test": "tests/unit/test_full_state_contract.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
-      "execution_candidate": "DELEGATED"
+      "execution_candidate": "DELEGATED",
+      "audit_status": "SOURCE_AUDITED_NOT_VERIFIED",
+      "audit_report": "docs/research/dmc_continuation_recovery.md"
     },
     {
       "historical_id": "swm/ReacherDMControl-v0",
@@ -1417,10 +1584,22 @@
       "remaining_issues": [
         "Stable native step returns state only; reference rewards/termination/info omitted.",
         "Reset options and goal semantics unverified.",
-        "SWM goal image is sampled at a random agent location, while reward goal is separate variation goal.position; do not silently conflate them."
+        "SWM goal image is sampled at a random agent location, while reward goal is separate variation goal.position; do not silently conflate them.",
+        "Historical default uses show_goal=True; existing renderer default uses show_goal=False"
       ],
       "test": "tests/unit/test_full_state_contract.py",
-      "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private"
+      "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
+      "audit_status": "SOURCE_AUDITED_NOT_VERIFIED",
+      "audit_report": "docs/research/native_verification.md",
+      "recovery_status": "BLOCKED_DEFAULT_IDENTITY",
+      "blocker": {
+        "status": "OPEN",
+        "kind": "DEFAULT_VISUAL_IDENTITY_MISMATCH",
+        "reference": "SimplePointMazeEnv(show_goal=True)",
+        "candidate": "SimplePointMaze.reference_kwargs show_goal=False",
+        "resolution_cohort": "native navigation",
+        "permanent_skip": false
+      }
     },
     {
       "historical_id": "swm/TwoRoom-v1",
@@ -1452,7 +1631,9 @@
         "Reset options and goal semantics unverified."
       ],
       "test": "tests/unit/test_full_state_contract.py",
-      "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private"
+      "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
+      "audit_status": "SOURCE_AUDITED_NOT_VERIFIED",
+      "audit_report": "docs/research/native_verification.md"
     },
     {
       "historical_id": "swm/WalkerDMControl-v0",
@@ -1463,30 +1644,67 @@
       "owner": "dmcontrol-continuation",
       "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
       "state_status": "INCOMPLETE",
-      "action_parity": "UNTESTED",
-      "reset_parity": "UNTESTED",
-      "step_parity": "UNTESTED",
-      "reward_parity": "UNTESTED",
-      "terminated_truncated_parity": "UNTESTED",
-      "rng_lifecycle": "UNTESTED",
-      "variation_parity": "UNTESTED",
-      "execution_mode": null,
-      "adapter_status": "NOT_IMPLEMENTED",
-      "renderer_regression": "PENDING",
-      "oracle_corpus": null,
+      "action_parity": "PASS_EXACT_CPU_DEFAULT_AND_FINITE_PASSTHROUGH",
+      "reset_parity": "PASS_SEEDED_DEFAULT_OPTIONS_CPU",
+      "step_parity": "PASS_EXACT_CPU; CUDA_STATE_PENDING",
+      "reward_parity": "PASS_EXACT_CPU_INCLUDING_POSITIVE_REWARD",
+      "terminated_truncated_parity": "PASS_EXACT_CPU_THROUGH_DMC_IMPLICIT_RESET",
+      "rng_lifecycle": "PASS_CPU_TWO_HISTORIES_AND_IMPLICIT_RESET",
+      "variation_parity": "PASS_CPU_NONDEFAULT_GRAVITY_AND_VISUAL_ONLY_DEFAULT_PRESERVATION; complete surface uncertified",
+      "execution_mode": "DELEGATED_CPU",
+      "adapter_status": "IMPLEMENTED_HISTORICAL_DEFAULT",
+      "renderer_regression": "PASS_THREE_CELL_FROZEN_CPU; OSCAR_PENDING",
+      "oracle_corpus": "tests/fixtures/semantics/dmc_continuation/manifest.json",
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Missing qvel and executable dynamics.",
-        "Reset samples rollout states rather than reference reset.",
-        "Inspect SWM custom_tasks/walker.py rather than assuming suite reward equivalence."
+        "Required Oscar CUDA State, frozen renderer, Reacher and first-cohort regression gates pending cluster scheduling",
+        "Nondefault task kwargs, full historical Variation surface, and historical reset options remain uncertified",
+        "All-42 renderer certification and paired benchmarks remain unrun"
       ],
-      "test": "tests/unit/test_full_state_contract.py",
+      "test": "tests/integration/test_dmc_continuation_semantics.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "execution_candidate": "DELEGATED",
-      "recovery_status": "IN_PROGRESS_FROM_REVIEWED_7221759"
+      "recovery_status": "CPU_PASSED_OSCAR_PENDING",
+      "verification_scope": {
+        "classes": [
+          "DMCWalkerWalk"
+        ],
+        "task": "CustomPlanarWalker(goal='walk', move_speed=1): default branch delegates to PlanarWalker.get_reward",
+        "seeds": [
+          0,
+          17,
+          42
+        ],
+        "batches": [
+          1,
+          3
+        ],
+        "trajectory_steps": 32,
+        "lifecycle_steps": 502,
+        "atol": 0,
+        "rtol": 0,
+        "same_persistent_variation_required": true,
+        "status": "CPU_PASSED_OSCAR_PENDING"
+      },
+      "state_schema": "qpos, qvel, time, qacc_warmstart, lifecycle step_count/reset_next_step, task cumulative_reward, MT19937 keys/position/has_gauss/cached_gaussian",
+      "warmstart_evidence": {
+        "seed": 0,
+        "history_steps_before_snapshot": 2,
+        "different_history_steps": 9,
+        "continuation_steps": 8,
+        "max_observable_error_without_warmstart": 1.6897594434794883e-13,
+        "max_error_with_schema": 0.0
+      },
+      "implementation_commit": "6470521e84a47d5f95a5bd5f0c5a338ab293619f",
+      "oscar_job": 6605999,
+      "evidence": [
+        "docs/research/dmc_continuation_recovery.md",
+        "docs/research/semantic_recovery_evidence/dmc_continuation_cpu.json",
+        "docs/research/semantic_recovery_evidence/dmc_continuation_renderer_cpu.json"
+      ]
     }
   ],
   "checkpoint": "First cohort approved after Acrobot sparse-Balance identity correction; exact scopes only; integration continues on repair/environment-semantics"

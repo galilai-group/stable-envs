@@ -5,12 +5,12 @@ is tracked separately in [the recovery matrix](semantic_recovery_matrix.json);
 these architecture statuses do not certify task parity. Status is **derived** from
 `tests/helpers/reference/readiness.py`, not from prose beside the table.
 
-<!-- readiness-counts READY=0 PARTIAL=10 INCOMPLETE=30 SYMBOLIC=2 -->
+<!-- readiness-counts READY=0 PARTIAL=18 INCOMPLETE=22 SYMBOLIC=2 -->
 
 `READY` means:
 
 ```text
-execution in {NATIVE, DELEGATED}
+execution in {NATIVE, DELEGATED_CPU}
 UNSUPPORTED_MEANINGFUL = 0
 PARTIAL = 0
 ```
@@ -53,35 +53,39 @@ where dynamics exist: next_state = g(state, action, variation)
 | mode | meaning |
 |---|---|
 | **NATIVE** | stable-envs implements `transition` / `step` itself |
-| **DELEGATED** | stable-envs owns the Env API and steps by calling the canonical upstream simulator |
+| **DELEGATED_CPU** | stable-envs owns the Env API and calls the upstream CPU simulator; CUDA State/rendering does not imply GPU physics |
 | **INCOMPLETE** | currently only enough capability to render |
 | **SYMBOLIC** | no pixel cell |
 
-`DELEGATED` is fully acceptable. Do not reimplement official contact dynamics to make the word "native" true. No cell is `DELEGATED` yet: DMC / Fetch / OGBench / Craftax / Rocket still need an `Env.step` that calls the upstream simulator.
+Delegated execution is accepted. Exact historical defaults are recovered independently;
+see the semantic recovery matrix for each tested task and its evidence. A sibling
+renderer sharing the same historical registration can remain incomplete.
 
 ## Counts (42 historical SWM ids)
 
 | status | count |
 |---|---|
 | READY | 0 |
-| PARTIAL | 10 |
-| INCOMPLETE | 30 |
+| PARTIAL | 18 |
+| INCOMPLETE | 22 |
 | SYMBOLIC | 2 |
 
-Execution: NATIVE 10 · INCOMPLETE 30 · SYMBOLIC 2 · DELEGATED 0.
+Execution: NATIVE 8 · DELEGATED_CPU 10 · INCOMPLETE 22 · SYMBOLIC 2.
 
 ## Per historical cell
 
-Coverage is what **stable-envs** owns standalone. Reward on NATIVE cells is omitted, not fabricated.
+The table reports implementation coverage. `PARTIAL` is a conservative architecture
+status derived from the historical VariationMap overlay; it is separate from an
+exact default task being `VERIFIED`. Full Variation surfaces remain uncertified.
 
 | swm id | native class(es) | execution | status | remaining UM / PARTIAL |
 |---|---|---|---|---|
 | `swm/AcrobotControl-v1` | `Acrobot` | NATIVE | PARTIAL | `physics.link_*` masses/com/moi/lengths |
-| `swm/AcrobotDMControl-v0` | `DMCAcrobotBalance` | INCOMPLETE | INCOMPLETE | no SE step; `gravity.*`; task `swingup` vs historical `swingup_sparse` |
+| `swm/AcrobotDMControl-v0` | `DMCAcrobotBalance` | DELEGATED_CPU | PARTIAL | sparse Balance; complete historical Variation surface remains uncertified |
 | `swm/BallInCupDMControl-v0` | `DMCBallInCupCatch` | INCOMPLETE | INCOMPLETE | no SE step; gravity/density/`ball.size` |
-| `swm/CartPoleControl-v1` | `CartPole` | NATIVE | PARTIAL | `physics.{gravity,masscart,masspole,force_mag,tau,length}` |
-| `swm/CartpoleDMControl-v0` | `DMCCartpoleBalance`, `DMCCartpoleSwingup` | INCOMPLETE | INCOMPLETE | no SE step; gravity/`cart_mass`; historical default was sparse swingup |
-| `swm/CheetahDMControl-v0` | `DMCCheetahRun` | INCOMPLETE | INCOMPLETE | no SE step; gravity/density/floor |
+| `swm/CartPoleControl-v1` | `CartPole` | DELEGATED_CPU | PARTIAL | Gymnasium CartPole-v1; full Variation surface remains uncertified |
+| `swm/CartpoleDMControl-v0` | `DMCCartpoleSwingup` (sparse default only) | DELEGATED_CPU | PARTIAL | Balance and dense swing-up remain uncertified; complete Variation surface |
+| `swm/CheetahDMControl-v0` | `DMCCheetahRun` | DELEGATED_CPU | PARTIAL | historical custom run default; density/floor and other task variants |
 | `swm/CraftaxClassicPixels-v1` | `CraftaxClassic` | INCOMPLETE | INCOMPLETE | no SE step (delegate to Craftax/JAX); world layer only |
 | `swm/CraftaxClassicSymbolic-v1` | — | SYMBOLIC | SYMBOLIC | no pixel cell |
 | `swm/CraftaxPixels-v1` | `CraftaxFull` | INCOMPLETE | INCOMPLETE | no SE step (delegate to Craftax/JAX) |
@@ -99,52 +103,48 @@ Coverage is what **stable-envs** owns standalone. Reward on NATIVE cells is omit
 | `swm/FetchSlideDense-v3` | `FetchSlideDense` | INCOMPLETE | INCOMPLETE | same |
 | `swm/FetchSlideDict-v3` | `FetchSlideDict` | INCOMPLETE | INCOMPLETE | same |
 | `swm/FingerDMControl-v0` | `DMCFingerTurnHard` | INCOMPLETE | INCOMPLETE | no SE step; density/`target.shape` |
-| `swm/HopperDMControl-v0` | `DMCHopperHop` | INCOMPLETE | INCOMPLETE | no SE step; gravity/density/floor |
+| `swm/HopperDMControl-v0` | `DMCHopperHop` | DELEGATED_CPU | PARTIAL | historical custom hop default; density/floor and other task variants |
 | `swm/HumanoidDMControl-v0` | `DMCHumanoidStand` | INCOMPLETE | INCOMPLETE | no SE step; historical `walk` vs `stand` |
 | `swm/ManipulatorDMControl-v0` | `DMCManipulatorBringBall` | INCOMPLETE | INCOMPLETE | no SE step; arm/hand density |
 | `swm/MountainCarContinuousControl-v0` | `MountainCarContinuous` | NATIVE | PARTIAL | `physics.{power,max_speed}` |
 | `swm/MountainCarControl-v0` | `MountainCar` | NATIVE | PARTIAL | `physics.{force,gravity,max_speed}` |
 | `swm/OGBCube-v0` | `OGBCube` | INCOMPLETE | INCOMPLETE | no SE step; size/light/camera; reset poses |
-| `swm/OGBMaze-v0` | `PointMazeLargeNavigate` (+ family) | INCOMPLETE | INCOMPLETE | no SE step; `light.intensity` / `floor.pixel_encoding`; arena configs |
-| `swm/OGBScene-v0` | `OGBScene` | INCOMPLETE | INCOMPLETE | no SE step; size/light/camera/`lock_color` |
+| `swm/OGBMaze-v0` | `PointMazeLargeNavigate` (default only) | DELEGATED_CPU | PARTIAL | other maze configurations/tasks and complete appearance surface |
+| `swm/OGBScene-v0` | `OGBScene` | INCOMPLETE | INCOMPLETE | **BLOCKED** default constructor omits required `env_type`; no global skip |
 | `swm/PFRocketLanding-v0` | `PyFlytRocketLanding` | INCOMPLETE | INCOMPLETE | no SE step; start height/offset/tilt |
-| `swm/PendulumControl-v1` | `Pendulum` | NATIVE | PARTIAL | `physics.{g,m,l,dt,max_speed,max_torque}` |
-| `swm/PendulumDMControl-v0` | `DMCPendulumSwingup` | INCOMPLETE | INCOMPLETE | no SE step; gravity |
+| `swm/PendulumControl-v1` | `Pendulum` | DELEGATED_CPU | PARTIAL | Gymnasium Pendulum-v1; full Variation surface remains uncertified |
+| `swm/PendulumDMControl-v0` | `DMCPendulumSwingup` | DELEGATED_CPU | PARTIAL | SwingUp; complete historical Variation surface remains uncertified |
 | `swm/Piecewise-v0` | `Piecewise`, `PiecewiseZones` | NATIVE | PARTIAL | `task.min_steps`; target draw; `render_bias_field`; agent.position-as-reset |
 | `swm/PushT-Discrete-v1` | `PushT` | NATIVE | PARTIAL | `agent.shape` / `block.shape` / `agent.velocity`; start poses as Variation |
 | `swm/PushT-v1` | `PushT` | NATIVE | PARTIAL | same; downstream task evidence exists |
 | `swm/QuadrupedDMControl-v0` | `DMCQuadrupedWalk` | INCOMPLETE | INCOMPLETE | no SE step; gravity/density/floor |
-| `swm/ReacherDMControl-v0` | `DMCReacherHard` | INCOMPLETE | INCOMPLETE | no SE step; density/`target.shape` |
+| `swm/ReacherDMControl-v0` | `DMCReacherHard` | DELEGATED_CPU | PARTIAL | hard/default only; easy/qpos_match and complete Variation surface |
 | `swm/SimplePointMaze-v0` | `SimplePointMaze` | NATIVE | PARTIAL | `goal.*` under `show_goal=False`; agent.position-as-reset |
 | `swm/TwoRoom-v1` | `TwoRoom`, `TwoRoomTarget` | NATIVE | PARTIAL | `task.min_steps`; agent/target.position-as-reset |
-| `swm/WalkerDMControl-v0` | `DMCWalkerWalk` | INCOMPLETE | INCOMPLETE | no SE step; gravity/density/floor |
+| `swm/WalkerDMControl-v0` | `DMCWalkerWalk` | DELEGATED_CPU | PARTIAL | historical custom walk default; density/floor and other task variants |
 
 `agent.speed` (TwoRoom / Piecewise / SimplePointMaze) and Piecewise `zones.bias_*` are now native Variation leaves. They no longer appear as `UNSUPPORTED_MEANINGFUL`.
 
 ## Reward / task semantics
 
-NATIVE cells omit reward / termination / truncation rather than inventing them. `task.min_steps` and SPM `goal.*` (with `show_goal=False`) belong to a higher-level task layer unless that env intrinsically defines them.
+The recovered defaults expose exact upstream reward, termination, truncation,
+observations and numeric info. CartPole and Pendulum explicitly refuse the former
+physical-only `transition`/`unroll` path; callers use full-State restoration and
+`step`. Native movement in the other eight registrations does not establish
+reward, reset, action or lifecycle parity.
 
-INCOMPLETE cells that later become DELEGATED should surface the upstream simulator's reward/termination unchanged.
+Acrobot now implements sparse **Balance**, despite using a historical swing-up
+renderer asset. Cartpole implements only the historical sparse SwingUp default.
+Humanoid's historical default is **walk**; the existing Stand renderer remains
+uncertified as its replacement.
 
-Historical DMC task mismatches (not fabricated, not silently "fixed"):
+## Work remaining
 
-- Acrobot: certified `swingup` vs historical SWM `swingup_sparse`
-- Cartpole: certified balance+swingup pair vs historical sparse-swingup default
-- Humanoid: certified `stand` vs historical `walk`
+Continue independent task recovery and restoration experiments. The active native
+audit covers the remaining three classic-control registrations, PushT continuous
+and discrete, and navigation. OGBench Scene remains blocked by its default
+constructor and belongs to the later manipulation cohort. Fetch, Craftax and
+Rocket remain unresolved. Benchmark eligibility comes only from the exact
+`VERIFIED` scope in the semantic recovery matrix.
 
-## Implementation tasks remaining
-
-These are capability work, not architecture:
-
-1. Thread classic-control `physics.*` through `_dynamics` (and geometry leaves through the rasterizer) without breaking CUDA-graph capture or default bit-exactness.
-2. Add `Env.step` that **delegates** to dm_control / Gymnasium Robotics / OGBench / Craftax-JAX / PyFlyt.
-3. Expose DMC gravity/density/geometry through the Env Variation space onto the MuJoCo model (or document official-simulator-only configuration).
-4. PushT: configurable pymunk shapes; treat instantaneous `agent.velocity` as State, not Variation; start poses as reset Variation.
-5. Fetch: `block.mass` and `transparent_arm` via the MuJoCo model; skybox half of `background.color` is a re-freeze blocker.
-6. OGBench Cube/Scene: object size, lighting, camera, `lock_color` via OGBench/MuJoCo configuration.
-7. Rocket: start/reset pose as Variation; step via PyFlyt.
-8. Navigation: `task.min_steps` only if the env intrinsically defines that task; otherwise leave it to the consumer.
-9. Craftax: delegate `reset`/`step` to Craftax/JAX rather than a historical wrapper.
-
-Closing `UNSUPPORTED_MEANINGFUL` and `PARTIAL` on NATIVE cells, and adding DELEGATED `step` on render-only cells, is the remaining work. There is no further architecture pass.
+No additional shared abstraction redesign is justified by this inventory.

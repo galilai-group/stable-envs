@@ -1,0 +1,37 @@
+{
+  "source_commit": "6470521e84a47d5f95a5bd5f0c5a338ab293619f",
+  "baseline_commit": "6d80b68b8b3ccd07d4207be94cbf4f0760758a06",
+  "identical": true,
+  "cells": {
+    "DMCCheetahRun": {
+      "rows_sha256": "62be02ec9ebf3984ce614a7a70d7eae3117d92ae0693a17a57a62be18c355965",
+      "frame_sha256": "c44767991fa3faac3810b3915ee61574cfb7df558fb88347156a956f49895902",
+      "shape": [
+        4,
+        84,
+        84,
+        3
+      ]
+    },
+    "DMCHopperHop": {
+      "rows_sha256": "7e197bc170df9d000097963dcb99d0b3dcd3e0351604c74a04b51e9f6c021a1c",
+      "frame_sha256": "bd05c2c42b7715f9847c238e42ba78fe9be4a55b4a4d94b0cb519b38711d9101",
+      "shape": [
+        4,
+        84,
+        84,
+        3
+      ]
+    },
+    "DMCWalkerWalk": {
+      "rows_sha256": "fdeb45361f437f309510d817149dfb090912af34463603d3c31f2e18eb88b951",
+      "frame_sha256": "c143ed8358124d5838bb5552052fbfb9582122fbb12fe3b33ac8cc943d9ef583",
+      "shape": [
+        4,
+        84,
+        84,
+        3
+      ]
+    }
+  }
+}

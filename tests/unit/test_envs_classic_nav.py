@@ -1,24 +1,9 @@
-"""Classic-control and navigation cells on the Env contract: the same pixels, a pure ``transition``.
+"""Classic/navigation renderer contracts and scoped semantic-recovery boundaries.
 
-The oracle that the BEHAVIOR did not change is
-the certified classic/nav corpus (byte-identical
-frames). This file pins the claims that are new on the public API and therefore have no baseline to compare
-against, for all ten cells at once:
-
-  * the ``num_envs=`` constructor and the lifecycle (``close``, the context manager);
-  * ``state_layout``: what the public State's keys are, and — for classic control — that the
-    velocities the packed row never carried are declared with offset ``None`` and answered by
-    ``_hidden_state``;
-  * ``pack``/``unpack`` round-trip the frozen packed layout, and ``pack(env.state)`` is exactly the
-    packed row every renderer and digest is computed from;
-  * ``transition`` equals the stateful ``step`` **to the bit**, and ``unroll`` equals repeated
-    ``transition`` — for classic control over FOUR steps, because that is where a State that had
-    rounded the dynamics to float32 would start to drift while a one-step check still passed;
-  * ``render(State) == render(rows) == render()``;
-  * the deprecated module paths still resolve to the merged module.
-
-Sizes are small (4-8 envs) and every cell renders at its reference's native canvas, so the whole file
-is a few seconds on CPU.
+CartPole and Pendulum use authoritative Gymnasium CPU execution with full
+lifecycle/RNG State. Their exact SWM parity lives in test_native_classic_*.
+The other cells retain their existing structural tests and are not certified by
+having a native step implementation. Frozen renderer evidence is independent.
 """
 
 from __future__ import annotations
@@ -39,6 +24,9 @@ pytestmark = pytest.mark.unit
 CLASSIC = ("CartPole", "Pendulum", "Acrobot", "MountainCar", "MountainCarContinuous")
 NAV = ("TwoRoom", "TwoRoomTarget", "Piecewise", "PiecewiseZones", "SimplePointMaze")
 ALL = CLASSIC + NAV
+RECOVERED = ("CartPole", "Pendulum")
+LEGACY_CLASSIC = tuple(name for name in CLASSIC if name not in RECOVERED)
+PURE = tuple(name for name in ALL if name not in RECOVERED)
 
 #: What each cell's public State is keyed by. Written out rather than derived from the class, so a
 #: silent change of the public vocabulary is a failure and not a tautology.
@@ -56,6 +44,32 @@ KEYS = {
 }
 
 
+RNG_KEYS = [("rng", name) for name in ("state", "increment", "has_uint32", "uinteger")]
+FULL_KEYS = {
+    **KEYS,
+    "CartPole": KEYS["CartPole"]
+    + [
+        ("lifecycle", "elapsed_steps"),
+        ("task", "steps_beyond_terminated"),
+        ("task", "has_steps_beyond_terminated"),
+    ]
+    + RNG_KEYS,
+    "Pendulum": KEYS["Pendulum"]
+    + [
+        ("task", "has_last_u"),
+        ("lifecycle", "elapsed_steps"),
+    ]
+    + RNG_KEYS,
+}
+
+
+def _initialize(env, name, seed):
+    if name in RECOVERED:
+        env.reset(seed=seed)
+    else:
+        env._set_render_state(env.sample_states(env.B, np.random.default_rng(seed)))
+
+
 def _env(name, n=4):
     return getattr(snv, name)(num_envs=n, device="cpu")
 
@@ -63,6 +77,8 @@ def _env(name, n=4):
 def _actions(env, n, steps=None, seed=0):
     g = torch.Generator().manual_seed(seed)
     shape = (n, env.action_dim) if steps is None else (steps, n, env.action_dim)
+    if env.action_spec.discrete_n is not None and type(env).__name__ in RECOVERED:
+        return torch.randint(0, env.action_spec.discrete_n, shape, generator=g, dtype=env.action_spec.dtype)
     lo, hi = float(env.action_low), float(env.action_high)
     return lo + (hi - lo) * torch.rand(*shape, generator=g)
 
@@ -82,7 +98,7 @@ def test_every_cell_takes_the_step9_constructor(name):
 def test_the_state_keys_are_the_declared_ones_and_cover_the_packed_row(name):
     env = _env(name)
     layout = env._layout()
-    assert [k for k, _, _ in layout] == KEYS[name]
+    assert [k for k, _, _ in layout] == FULL_KEYS[name]
     assert sum(w for _, w, o in layout if o is not None) == env.state_dim
     rows = torch.as_tensor(env.sample_states(4, np.random.default_rng(0)), device=env.device)
     td = env._unpack_render_state(rows)
@@ -91,7 +107,7 @@ def test_the_state_keys_are_the_declared_ones_and_cover_the_packed_row(name):
     env.close()
 
 
-@pytest.mark.parametrize("name", CLASSIC)
+@pytest.mark.parametrize("name", LEGACY_CLASSIC)
 def test_classic_velocities_are_hidden_state_the_packed_row_does_not_carry(name):
     """The velocities are public state (so ``transition`` is pure) and no column of the row moved."""
     env = _env(name)
@@ -107,7 +123,7 @@ def test_classic_velocities_are_hidden_state_the_packed_row_does_not_carry(name)
     env.close()
 
 
-@pytest.mark.parametrize("name", CLASSIC)
+@pytest.mark.parametrize("name", LEGACY_CLASSIC)
 def test_the_classic_public_state_is_float64_and_packs_back_to_the_float32_row(name):
     """The dtype the family SIMULATES in, which is what makes the functional path the same simulator.
 
@@ -122,7 +138,7 @@ def test_the_classic_public_state_is_float64_and_packs_back_to_the_float32_row(n
     env.close()
 
 
-@pytest.mark.parametrize("name", ALL)
+@pytest.mark.parametrize("name", PURE)
 def test_transition_is_bit_identical_to_the_stateful_step(name):
     env = _env(name)
     s0 = env.sample_states(4, np.random.default_rng(0))
@@ -137,7 +153,7 @@ def test_transition_is_bit_identical_to_the_stateful_step(name):
     env.close()
 
 
-@pytest.mark.parametrize("name", ALL)
+@pytest.mark.parametrize("name", PURE)
 def test_transition_does_not_touch_the_env_and_unroll_is_repeated_transition(name):
     env = _env(name)
     s0 = env.sample_states(4, np.random.default_rng(1))
@@ -166,19 +182,21 @@ def test_transition_does_not_touch_the_env_and_unroll_is_repeated_transition(nam
 @pytest.mark.parametrize("name", ALL)
 def test_render_takes_a_state_a_packed_row_or_nothing_and_draws_the_same_frame(name):
     env = _env(name, 2)
-    s0 = env.sample_states(2, np.random.default_rng(2))
-    env._set_render_state(s0)
+    _initialize(env, name, 2)
+    state = env.get_state()
+    rows = env._pack_render_state(state)
+    env._set_render_state(rows)
     a = env._render()
-    b = env._render(torch.as_tensor(s0, device=env.device))
-    c = env._render(env.state)
+    b = env._render(rows)
+    c = env.render(state)
     assert a.dtype == torch.uint8 and a.shape[0] == 2
     assert torch.equal(a, b) and torch.equal(a, c)
     assert tuple(env.frame_spec.shape) == tuple(a.shape[1:])
     env.close()
 
 
-@pytest.mark.parametrize("name", ALL)
-def test_step_reports_a_state_and_does_not_fabricate_a_reward(name):
+@pytest.mark.parametrize("name", PURE)
+def test_unrecovered_step_reports_only_its_implemented_state(name):
     env = _env(name, 2)
     env._set_render_state(env.sample_states(2, np.random.default_rng(3)))
     out = env.step(_actions(env, 2))
@@ -211,7 +229,9 @@ def test_the_registered_default_frame_size_and_the_specs_agree(name):
     assert env.size == env.default_size
     assert tuple(env.action_spec.shape) == (env.action_dim,)
     spec = env.state_spec
-    assert sorted(tuple(k) if isinstance(k, tuple) else (k,) for k in spec.keys(nested=True)) == sorted(KEYS[name])
+    assert sorted(tuple(k) if isinstance(k, tuple) else (k,) for k in spec.keys(nested=True)) == sorted(
+        FULL_KEYS[name]
+    )
     env.close()
 
 
@@ -254,7 +274,7 @@ def test_the_shared_swm_reference_bridge_drives_simple_point_maze_the_old_way():
     assert snv.SimplePointMaze.reference_kwargs == {"show_goal": False}
 
 
-@pytest.mark.parametrize("name", CLASSIC)
+@pytest.mark.parametrize("name", LEGACY_CLASSIC)
 def test_env_state_is_the_simulator_buffer_and_not_the_widened_packed_row(name):
     """The two hooks together must cover the state exactly, with no field left to the lossy row.
 
@@ -298,7 +318,7 @@ def test_a_classic_cell_whose_layout_does_not_cover_its_packed_row_fails_at_impo
             render_from_sim = (0, 2)
 
 
-@pytest.mark.parametrize("name", ALL)
+@pytest.mark.parametrize("name", PURE)
 def test_transition_still_equals_step_after_the_env_has_been_stepped(name):
     """The bit-equality must hold MID-TRAJECTORY, not only from a corpus state.
 
@@ -332,11 +352,11 @@ def test_a_step_result_is_not_a_view_of_the_env_that_produced_it(name):
     request R8 — the base class's ``unpack`` stopped cloning in foundation commit ``b1585fc``.
     """
     env = _env(name)
-    env._set_render_state(env.sample_states(4, np.random.default_rng(7)))
+    _initialize(env, name, 7)
     out = env.step(_actions(env, 4, seed=7))
-    held = {k: out["state"][k].clone() for k in KEYS[name]}
+    held = {k: out["state"][k].clone() for k in FULL_KEYS[name]}
     env.step(_actions(env, 4, seed=8))
-    for k in KEYS[name]:
+    for k in FULL_KEYS[name]:
         assert torch.equal(out["state"][k], held[k]), (
             f"{'.'.join(k)} in a StepResult changed when the env was stepped again"
         )
@@ -353,13 +373,40 @@ def test_step_returns_exactly_env_state(name):
     this asserts — after several steps, when the row and the buffer have diverged.
     """
     env = _env(name)
-    env._set_render_state(env.sample_states(4, np.random.default_rng(9)))
+    _initialize(env, name, 9)
     for _ in range(3):
         env.step(_actions(env, 4, seed=9))
     out = env.step(_actions(env, 4, seed=10))
     held = env.state
     assert sorted(out["state"].keys()) == sorted(held.keys())
-    for k in KEYS[name]:
+    for k in FULL_KEYS[name]:
         assert torch.equal(out["state"][k], held[k]), k
         assert out["state"][k].dtype == held[k].dtype
     env.close()
+
+
+@pytest.mark.parametrize("name", RECOVERED)
+def test_recovered_classic_refuses_the_legacy_pure_dynamics_path(name):
+    with _env(name, 2) as env:
+        state = env.reset(seed=17)
+        action = _actions(env, 2)
+        for operation, args in (
+            (env.transition, (state, action)),
+            (env.unroll, (state, action.unsqueeze(0))),
+        ):
+            with pytest.raises(NotImplementedError, match="delegated"):
+                operation(*args)
+        assert (env.get_state() == state).all()
+
+
+@pytest.mark.parametrize("name", RECOVERED)
+def test_recovered_classic_reports_authoritative_outputs_and_typed_state(name):
+    with _env(name, 2) as env:
+        result = env.step(_actions(env, 2))
+        assert {"state", "reward", "terminated", "truncated", "observation", "info_state"} == set(result.keys())
+        assert result["reward"].dtype == torch.float64
+        assert result["terminated"].dtype == result["truncated"].dtype == torch.bool
+        assert env.execution_mode == "DELEGATED_CPU"
+        assert set(result["state"].keys(True, True)) == {key[0] if len(key) == 1 else key for key in FULL_KEYS[name]}
+        for key in result["state"].keys(True, True):
+            assert result["state"][key].dtype == env.state_spec[key].dtype
