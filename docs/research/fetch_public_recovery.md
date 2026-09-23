@@ -85,3 +85,14 @@ object color changes frames, and compares unchanged frozen renderer rows against
 baseline/renderer-v0 in separate processes. Physics under the renderer profile
 is not a semantic authority claim. Acceptance remains pending until the actual
 Oscar terminal marker and complete renderer JSON are recorded.
+
+The expanded `cpu-v3.json` gate additionally restores the reset anchor from a
+simulator with a different agent-start history, then resets without explicit
+variation overrides. Per-reset mass overrides return to the configured initial
+mass; persistent `set_variation(block.mass=8)` matches source `init_value` across
+two seeded resets and eight steps each. This source-order distinction is now
+implemented explicitly. The initial pending Oscar job 6646358 was cancelled
+before execution; its revision remains preserved and is not acceptance evidence.
+Legacy Fetch source checks pass (10); seven renderer-construction tests skip in
+the local general test environment without Robotics. CPU semantic tests run in
+the separate pinned authority profile and do not skip.

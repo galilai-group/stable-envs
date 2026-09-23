@@ -267,6 +267,18 @@ def variation():
             # Restore with persistent physical Variation, then unseeded reset.
             e.reset(options=options)
             full_compare(b.reset(options=options), [e])
+            # A reset without explicit overrides restores initial mass but keeps
+            # the historically mutated reset anchor. Restore into b beforehand.
+            anchor_snapshot = b.get_state()
+            b.reset(seed=999, options={"variation_values": {"agent.start_position": np.array([1.4, 0.8])}})
+            b.set_state(anchor_snapshot)
+            equal_state(b.get_state(), anchor_snapshot)
+            e.reset(seed=42, options={"variation": []})
+            full_compare(b.reset(seed=42), [e])
+            assert (
+                b._simulator.envs[0].unwrapped.model.body_mass[b._simulator._object[0]]
+                == e.unwrapped.model.body_mass[e.unwrapped.model.body("object0").id]
+            )
             results.append(
                 dict(
                     kind=name,
@@ -276,6 +288,7 @@ def variation():
                     exact=True,
                     default_divergence=divergence,
                     rng_reset_exact=True,
+                    cleared_override_reset_exact=True,
                 )
             )
         finally:
@@ -283,6 +296,25 @@ def variation():
             b.close()
             e.close()
             d.close()
+    # Persistent set_variation corresponds to SWM init_value, unlike a one-reset override.
+    e = gym.make("swm/FetchPickAndPlace-v3", init_value={"block.mass": np.array([8.0])})
+    a = FetchPickAndPlace(seed=17)
+    try:
+        a.set_variation({"block.mass": [8.0]})
+        for seed in (17, 42):
+            e.reset(seed=seed, options={"variation": []})
+            full_compare(a.reset(seed=seed), [e])
+            for action in np.random.default_rng(seed).uniform(-1, 1, (8, 1, 4)):
+                r = e.step(action[0])
+                out = a.step(action)
+                compare_output(out, [r])
+                full_compare(out["state"], [e])
+        results.append(
+            dict(kind="persistent_mass", values={"block.mass": [8.0]}, resets=2, steps_per_reset=8, exact=True)
+        )
+    finally:
+        e.close()
+        a.close()
     samples = []
     for seed in (0, 17, 42):
         e = gym.make("swm/FetchPickAndPlace-v3")

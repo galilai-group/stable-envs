@@ -1,13 +1,10 @@
 """The twelve Fetch cells after the Fetch layout, in two tiers.
 
-WHY TWO TIERS, AND WHY NEITHER OF THEM IMPORTS ``stable_envs.envs.fetch`` INTO THE SUITE.
-
-This family renders its 18 robot meshes with ``mujoco_warp``'s batch raytracer and refuses to import
-at all without ``warp``/``mujoco_warp`` and ``mujoco >= 3.11`` — deliberately, at module scope, so a
-missing wheel costs exactly these envs and shows up in ``stable_envs.envs.import_errors()`` instead
-of producing 300 failures at the first frame. No local interpreter has those wheels. Importing the
-module anyway, by stubbing them in ``sys.modules``, would ALSO register twelve classes for the rest
-of the pytest session and change what every registry-wide test in this suite sees. So:
+The sparse PickAndPlace representative now has delegated CPU semantics and
+imports without the optional GPU renderer dependencies. The eleven siblings
+still use FetchBase's renderer-only contract. These legacy renderer tests cover
+that base and unchanged frozen declarations; the public PickAndPlace gate lives
+in scripts/recovery/fetch_public_gate.py.
 
 **Tier 1 reads the SOURCE.** That ``FetchBase`` derives ``Env``, that its constructor takes
 ``num_envs=``, that it assigns ``state_layout`` per instance and
@@ -142,7 +139,12 @@ def test_twelve_cells_are_declared_as_data_and_not_as_twelve_class_bodies():
     ns: dict = {}
     src = SRC.read_text(encoding="utf-8")
     exec(compile(ast.parse(src[src.index("SCENE_XML = {") : src.index("\nROBOT_JOINTS")]), "<scene_xml>", "exec"), ns)
-    exec(compile(ast.parse(src[src.index("CELLS = (") : src.index("\n\n\ndef _make_classes")]), "<cells>", "exec"), ns)
+    cell_assignment = next(
+        n
+        for n in TREE.body
+        if isinstance(n, ast.Assign) and any(isinstance(t, ast.Name) and t.id == "CELLS" for t in n.targets)
+    )
+    exec(compile(ast.Module(body=[cell_assignment], type_ignores=[]), "<cells>", "exec"), ns)
     cells = ns["CELLS"]
     assert [c for c, _, _ in cells] == list(CELL_NAMES)
     # eight distinct official ids for twelve cells: Dense has its own, Dict shares the sparse one
@@ -151,16 +153,14 @@ def test_twelve_cells_are_declared_as_data_and_not_as_twelve_class_bodies():
     assert len(CLASSES) == 4, sorted(CLASSES)  # _Cache, _Bundle, _Ctx, FetchBase — and no cell
 
 
-def test_the_module_still_refuses_to_import_without_the_raytracer():
-    """The refusal is at module scope on purpose: a missing wheel costs exactly these envs."""
-    src = SRC.read_text(encoding="utf-8")
-    assert 'for _m in ("warp", "mujoco_warp")' in src
-    assert "raise ImportError(" in src
-    import stable_envs as snv
-
-    errs = snv.import_errors()
-    if "fetch" in errs:
-        assert "mujoco_warp" in errs["fetch"]
+def test_renderer_dependencies_are_checked_lazily_and_only_one_cell_has_semantics():
+    """CPU physics imports independently; mesh rendering still requires its backend."""
+    helper = next(n for n in TREE.body if isinstance(n, ast.FunctionDef) and n.name == "_require_gpu_renderer")
+    assert any(isinstance(n, ast.Raise) for n in ast.walk(helper))
+    assert not any(isinstance(n, ast.If) and any(isinstance(x, ast.Raise) for x in ast.walk(n)) for n in TREE.body)
+    maker = next(n for n in TREE.body if isinstance(n, ast.FunctionDef) and n.name == "_make_classes")
+    assert 'cname == "FetchPickAndPlace"' in ast.unparse(maker) or "cname == 'FetchPickAndPlace'" in ast.unparse(maker)
+    assert "(_PickAndPlaceSemantics, FetchBase)" in ast.unparse(maker)
 
 
 def test_the_module_level_caches_split_egl_from_device_memory():

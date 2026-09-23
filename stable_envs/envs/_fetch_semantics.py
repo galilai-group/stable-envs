@@ -29,6 +29,7 @@ class PickAndPlaceSemantics:
     def __init__(self, num_envs=1, size=None, supersample=None, device="cpu", backend="auto", seed=0):
         device = Env.resolve_device(device)
         self._simulator = FetchPickAndPlaceAdapter(num_envs, device, seed)
+        self._configured_mass = self._simulator._mass.copy()
         self.state_dim = 25  # Private frozen renderer width only.
         from .fetch import GOAL_NAMES, OBJECT_JOINT, ROBOT_JOINTS
 
@@ -124,12 +125,14 @@ class PickAndPlaceSemantics:
             v.update(explicit)
             values.append(v)
         if any("object.color" in v for v in values):
-            self.set_variation(
+            Env.set_variation(
+                self,
                 {
                     "object.color": np.stack([v["object.color"] for v in values]),
                     "block.mass": self._simulator._mass[:, None],
-                }
+                },
             )
+        self._simulator.configure_object_mass(self._configured_mass)
         state = self._simulator.reset(seed, values)
         # Persist the selected physical Variation alongside the full State.
         off = next(off for name, off, _ in self.variation_space.flat_layout() if name == "block.mass")
@@ -152,7 +155,8 @@ class PickAndPlaceSemantics:
         result = super().set_variation(variation, **overrides)
         layout = {name: (off, width) for name, off, width in self.variation_space.flat_layout()}
         off, _ = layout["block.mass"]
-        self._simulator.configure_object_mass(self.get_style()[:, off].cpu().numpy())
+        self._configured_mass = self.get_style()[:, off].cpu().numpy().astype(np.float64).copy()
+        self._simulator.configure_object_mass(self._configured_mass)
         return result
 
     def _render(self, *args, **kwargs):
