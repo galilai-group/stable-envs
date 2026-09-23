@@ -1,0 +1,2 @@
+PROFILE {"gymnasium-robotics": "1.4.2", "gymnasium": "1.3.0", "mujoco": "3.12.0", "numpy": "2.5.3"}
+JOINT {"name": "robot0:slide0", "id": 0, "type": 2, "python_type": "<class 'numpy.int32'>", "enums": {"mjJNT_FREE": 0, "mjJNT_BALL": 1, "mjJNT_HINGE": 3, "mjJNT_SLIDE": 2}, "numpy_scalar_equality": {"mjJNT_FREE": false, "mjJNT_BALL": false, "mjJNT_HINGE": false, "mjJNT_SLIDE": true}, "integer_equality": {"mjJNT_FREE": false, "mjJNT_BALL": false, "mjJNT_HINGE": false, "mjJNT_SLIDE": true}, "model_nq": 22, "model_nv": 21, "model_nu": 2, "model_na": 0, "model_nmocap": 1}
