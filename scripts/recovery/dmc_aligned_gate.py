@@ -39,7 +39,10 @@ OMISSIONS = {
     ],
     "quadruped": [("warmstart",), ("activation",)],
 }
-PREFIXES = {"ball_in_cup": 5, "finger": 7, "manipulator": 1, "quadruped": 1}
+# Ball-in-Cup prefix 5 has a zero omission witness on Oscar/MuJoCo 3.11.
+# Prefix 6 is a contact snapshot with nonzero observable omission error on
+# both the local ARM/3.12 and Oscar x86/3.11 profiles; restore stays exact.
+PREFIXES = {"ball_in_cup": 6, "finger": 7, "manipulator": 1, "quadruped": 1}
 
 
 def _max_error(actual, expected, *, exclude=()):
@@ -66,6 +69,9 @@ def _omission_experiments(domain, env, reference):
         compare_state(env.reset(seed=0), reference.reset(seed=0))
         check_step_matches_reference(env, reference, actions[:prefix])
         saved = env.get_state()
+        physics = env._simulator.envs[0].physics
+        contact_count = int(physics.data.ncon)
+        constraint_count = int(physics.data.nefc)
         if omitted_key[0] == "model":
             env.reset(seed=991)
         else:
@@ -89,6 +95,9 @@ def _omission_experiments(domain, env, reference):
         diagnostic = {
             "domain": domain,
             "omitted_key": "/".join(omitted_key),
+            "seed": 0,
+            "action_seed": 200,
+            "prefix_steps": prefix,
             "error_without": error_without,
             "error_with": error_with,
         }
@@ -97,6 +106,8 @@ def _omission_experiments(domain, env, reference):
         assert error_without > 0, ("Omission witness has no observable effect", diagnostic)
         results["/".join(omitted_key)] = {
             "prefix_steps": prefix,
+            "snapshot_contact_count": contact_count,
+            "snapshot_constraint_count": constraint_count,
             "different_history": "reset seed 991" if omitted_key[0] == "model" else "9 actions",
             "continuation_steps": 8,
             "max_observable_error_without_field": error_without,
