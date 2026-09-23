@@ -1,0 +1,9 @@
+{
+  "seed": 0,
+  "prefix": 1,
+  "different_actions": 9,
+  "continuation": 8,
+  "ctrl_different_before_restore": true,
+  "error_without_warmstart": 5.861977570020827e-13,
+  "error_with_warmstart": 0.0
+}

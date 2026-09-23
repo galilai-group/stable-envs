@@ -21,14 +21,14 @@
       "variation_parity": "PASS_CPU_NONDEFAULT_ALL_DOMAIN_PHYSICS_LEAVES; full historical surface remains uncertified",
       "execution_mode": "DELEGATED_CPU",
       "adapter_status": "IMPLEMENTED_HISTORICAL_DEFAULT",
-      "renderer_regression": "PASS_THREE_CELL_FROZEN_CPU; OSCAR_PENDING",
+      "renderer_regression": "PASS_THREE_CELL_FROZEN_CPU; OSCAR_INCOMPLETE: job failed after baseline capture and before candidate frame comparison",
       "oracle_corpus": "tests/fixtures/semantics/native_classic_remaining/manifest.json",
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Required Oscar CUDA State and frozen renderer gate pending cluster scheduling",
+        "Gate bug: continuous MountainCar omission diagnostic subtracts CUDA candidate and CPU reference tensors before completing semantic or renderer acceptance.",
         "Complete historical Variation surface and task kwargs remain uncertified",
         "Legacy physical-only transition/unroll and sim_state/set_sim_state explicitly refused",
         "All-42 renderer certification and paired benchmarks remain unrun"
@@ -46,7 +46,8 @@
       "evidence": [
         "docs/research/native_classic_remaining.md",
         "docs/research/semantic_recovery_evidence/native_classic_remaining_cpu.json",
-        "docs/research/semantic_recovery_evidence/native_classic_remaining_renderer_cpu.json"
+        "docs/research/semantic_recovery_evidence/native_classic_remaining_renderer_cpu.json",
+        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/simple-6608718.out"
       ],
       "verification_scope": {
         "classes": [
@@ -67,7 +68,9 @@
         "rtol": 0,
         "same_persistent_variation_required": true,
         "status": "CPU_PASSED_OSCAR_PENDING"
-      }
+      },
+      "oscar_result": "FAILED",
+      "oscar_failure": "Gate bug: continuous MountainCar omission diagnostic subtracts CUDA candidate and CPU reference tensors before completing semantic or renderer acceptance."
     },
     {
       "historical_id": "swm/AcrobotDMControl-v0",
@@ -153,14 +156,14 @@
       "variation_parity": "PASS_CPU_NONDEFAULT_PHYSICS_AND_VISUAL_ONLY; complete historical surface remains uncertified",
       "execution_mode": "DELEGATED_CPU",
       "adapter_status": "IMPLEMENTED_HISTORICAL_DEFAULT",
-      "renderer_regression": "PASS_FOUR_CELL_FROZEN_CPU; OSCAR_PENDING",
+      "renderer_regression": "PASS_FOUR_CELL_FROZEN_CPU; OSCAR_INCOMPLETE: job failed after baseline capture and before candidate frame comparison",
       "oracle_corpus": "tests/fixtures/semantics/dmc_aligned/manifest.json",
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Required Oscar CUDA State and frozen renderer gate pending cluster scheduling",
+        "DMC omission assertion failed: error_without > 0 and error_with == 0. Log does not identify the domain/field or either value; profile-specific cause remains unresolved.",
         "Complete historical reset options, Variation surface and sibling tasks remain uncertified",
         "All-42 renderer certification and paired benchmarks remain unrun"
       ],
@@ -177,7 +180,8 @@
       "evidence": [
         "docs/research/dmc_aligned_recovery.md",
         "docs/research/semantic_recovery_evidence/dmc_aligned_cpu.json",
-        "docs/research/semantic_recovery_evidence/dmc_aligned_renderer_cpu.json"
+        "docs/research/semantic_recovery_evidence/dmc_aligned_renderer_cpu.json",
+        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/simple-6610032.out"
       ],
       "verification_scope": {
         "classes": [
@@ -199,7 +203,9 @@
         "same_persistent_variation_required": true,
         "status": "CPU_PASSED_OSCAR_PENDING"
       },
-      "oscar_job": 6610032
+      "oscar_job": 6610032,
+      "oscar_result": "FAILED",
+      "oscar_failure": "DMC omission assertion failed: error_without > 0 and error_with == 0. Log does not identify the domain/field or either value; profile-specific cause remains unresolved."
     },
     {
       "historical_id": "swm/CartPoleControl-v1",
@@ -209,31 +215,30 @@
       "family": "classic_control",
       "owner": "native-verification",
       "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
-      "state_status": "INCOMPLETE",
-      "action_parity": "PASS_EXACT_CPU",
-      "reset_parity": "PASS_SEEDED_DEFAULT_OPTIONS_CPU",
-      "step_parity": "PASS_EXACT_CPU; CUDA_STATE_PENDING",
-      "reward_parity": "PASS_EXACT_CPU_INCLUDING_TASK_BOUNDARIES",
-      "terminated_truncated_parity": "PASS_EXACT_CPU_INCLUDING_TIMELIMIT",
-      "rng_lifecycle": "PASS_CPU_TWO_HISTORIES_AND_UNSEEDED_RESET",
-      "variation_parity": "PASS_CPU_NONDEFAULT_ALL_SIX_PHYSICS_LEAVES; full historical surface remains uncertified",
+      "state_status": "VERIFIED",
+      "action_parity": "PASS_EXACT_CPU_AND_CUDA_INPUT",
+      "reset_parity": "PASS_SEEDED_DEFAULT_OPTIONS_CPU_AND_CUDA_STATE",
+      "step_parity": "PASS_EXACT_CPU_AND_CUDA_STATE",
+      "reward_parity": "PASS_EXACT_CPU_AND_CUDA_STATE_INCLUDING_TASK_BOUNDARIES",
+      "terminated_truncated_parity": "PASS_EXACT_CPU_AND_CUDA_STATE_INCLUDING_TIMELIMIT",
+      "rng_lifecycle": "PASS_CPU_AND_CUDA_STATE_TWO_HISTORIES_AND_UNSEEDED_RESET",
+      "variation_parity": "PASS_CPU_AND_CUDA_STATE_NONDEFAULT_ALL_SIX_PHYSICS_LEAVES; full historical surface remains uncertified",
       "execution_mode": "DELEGATED_CPU",
       "adapter_status": "IMPLEMENTED_HISTORICAL_DEFAULT",
-      "renderer_regression": "PASS_TWO_CELL_FROZEN_CPU; OSCAR_PENDING",
+      "renderer_regression": "PASS_SCOPED_CPU_CUDA: four frozen rows per accepted class, byte-identical to baseline within each device profile",
       "oracle_corpus": "tests/fixtures/semantics/native_classic/manifest.json",
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Required Oscar CUDA State and frozen renderer gate pending cluster scheduling",
         "Complete historical reset options and Variation surface remain uncertified",
         "Legacy physical-only transition/unroll and sim_state/set_sim_state explicitly refused",
         "All-42 renderer certification and paired benchmarks remain unrun"
       ],
       "test": "tests/integration/test_native_classic_gate.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
-      "recovery_status": "CPU_PASSED_OSCAR_PENDING",
+      "recovery_status": "ACCEPTED_CPU_AND_OSCAR",
       "verification_scope": {
         "classes": [
           "CartPole"
@@ -253,14 +258,23 @@
         "atol": 0,
         "rtol": 0,
         "same_persistent_variation_required": true,
-        "status": "CPU_PASSED_OSCAR_PENDING"
+        "status": "ACCEPTED_CPU_AND_OSCAR"
       },
       "implementation_commit": "446f8608bc800c2d61701f675a2536df0dcbaa3f",
       "oscar_job": 6605941,
       "evidence": [
         "docs/research/native_verification.md",
         "docs/research/semantic_recovery_evidence/native_classic_cpu.json",
-        "docs/research/semantic_recovery_evidence/native_classic_renderer_cpu.json"
+        "docs/research/semantic_recovery_evidence/native_classic_renderer_cpu.json",
+        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/acceptance.json",
+        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/native-classic-446f860-gate-cuda.json",
+        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/native-classic-446f860-renderer-baseline-cuda.json",
+        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/native-classic-446f860-renderer-cuda.json",
+        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/family-6605941.out"
+      ],
+      "oscar_result": "PASS",
+      "verified_classes": [
+        "CartPole"
       ]
     },
     {
@@ -334,31 +348,30 @@
       "family": "dmcontrol",
       "owner": "dmcontrol-continuation",
       "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
-      "state_status": "INCOMPLETE",
-      "action_parity": "PASS_EXACT_CPU_DEFAULT_AND_FINITE_PASSTHROUGH",
-      "reset_parity": "PASS_SEEDED_DEFAULT_OPTIONS_CPU",
-      "step_parity": "PASS_EXACT_CPU; CUDA_STATE_PENDING",
-      "reward_parity": "PASS_EXACT_CPU_INCLUDING_POSITIVE_REWARD",
-      "terminated_truncated_parity": "PASS_EXACT_CPU_THROUGH_DMC_IMPLICIT_RESET",
-      "rng_lifecycle": "PASS_CPU_TWO_HISTORIES_AND_IMPLICIT_RESET",
-      "variation_parity": "PASS_CPU_NONDEFAULT_GRAVITY_AND_VISUAL_ONLY_DEFAULT_PRESERVATION; complete surface uncertified",
+      "state_status": "VERIFIED",
+      "action_parity": "PASS_EXACT_CPU_AND_CUDA_INPUT",
+      "reset_parity": "PASS_SEEDED_DEFAULT_OPTIONS_CPU_AND_CUDA_STATE",
+      "step_parity": "PASS_EXACT_CPU_AND_CUDA_STATE",
+      "reward_parity": "PASS_EXACT_CPU_AND_CUDA_STATE_INCLUDING_POSITIVE_REWARD",
+      "terminated_truncated_parity": "PASS_EXACT_CPU_AND_CUDA_STATE_THROUGH_DMC_IMPLICIT_RESET",
+      "rng_lifecycle": "PASS_CPU_AND_CUDA_STATE_TWO_HISTORIES_AND_IMPLICIT_RESET",
+      "variation_parity": "PASS_CPU_AND_CUDA_STATE_NONDEFAULT_GRAVITY_AND_VISUAL_ONLY_DEFAULT_PRESERVATION; complete surface uncertified",
       "execution_mode": "DELEGATED_CPU",
       "adapter_status": "IMPLEMENTED_HISTORICAL_DEFAULT",
-      "renderer_regression": "PASS_THREE_CELL_FROZEN_CPU; OSCAR_PENDING",
+      "renderer_regression": "PASS_SCOPED_CPU_CUDA: four frozen rows per accepted class, byte-identical to baseline within each device profile",
       "oracle_corpus": "tests/fixtures/semantics/dmc_continuation/manifest.json",
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Required Oscar CUDA State, frozen renderer, Reacher and first-cohort regression gates pending cluster scheduling",
         "Nondefault task kwargs, full historical Variation surface, and historical reset options remain uncertified",
         "All-42 renderer certification and paired benchmarks remain unrun"
       ],
       "test": "tests/integration/test_dmc_continuation_semantics.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "execution_candidate": "DELEGATED",
-      "recovery_status": "CPU_PASSED_OSCAR_PENDING",
+      "recovery_status": "ACCEPTED_CPU_AND_OSCAR",
       "verification_scope": {
         "classes": [
           "DMCCheetahRun"
@@ -378,7 +391,7 @@
         "atol": 0,
         "rtol": 0,
         "same_persistent_variation_required": true,
-        "status": "CPU_PASSED_OSCAR_PENDING"
+        "status": "ACCEPTED_CPU_AND_OSCAR"
       },
       "state_schema": "qpos, qvel, time, qacc_warmstart, lifecycle step_count/reset_next_step, task cumulative_reward, MT19937 keys/position/has_gauss/cached_gaussian",
       "warmstart_evidence": {
@@ -394,7 +407,18 @@
       "evidence": [
         "docs/research/dmc_continuation_recovery.md",
         "docs/research/semantic_recovery_evidence/dmc_continuation_cpu.json",
-        "docs/research/semantic_recovery_evidence/dmc_continuation_renderer_cpu.json"
+        "docs/research/semantic_recovery_evidence/dmc_continuation_renderer_cpu.json",
+        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/acceptance.json",
+        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/dmc-continuation-6470521-gate-cuda.json",
+        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/dmc-continuation-6470521-renderer-baseline-cuda.json",
+        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/dmc-continuation-6470521-renderer-cuda.json",
+        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/family-6605999.out",
+        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/dmc-continuation-6470521-reacher-regression-cuda.json",
+        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/dmc-continuation-6470521-first-family-regression-cuda.json"
+      ],
+      "oscar_result": "PASS",
+      "verified_classes": [
+        "DMCCheetahRun"
       ]
     },
     {
@@ -907,14 +931,14 @@
       "variation_parity": "PASS_CPU_NONDEFAULT_PHYSICS_AND_VISUAL_ONLY; complete historical surface remains uncertified",
       "execution_mode": "DELEGATED_CPU",
       "adapter_status": "IMPLEMENTED_HISTORICAL_DEFAULT",
-      "renderer_regression": "PASS_FOUR_CELL_FROZEN_CPU; OSCAR_PENDING",
+      "renderer_regression": "PASS_FOUR_CELL_FROZEN_CPU; OSCAR_INCOMPLETE: job failed after baseline capture and before candidate frame comparison",
       "oracle_corpus": "tests/fixtures/semantics/dmc_aligned/manifest.json",
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Required Oscar CUDA State and frozen renderer gate pending cluster scheduling",
+        "DMC omission assertion failed: error_without > 0 and error_with == 0. Log does not identify the domain/field or either value; profile-specific cause remains unresolved.",
         "Complete historical reset options, Variation surface and sibling tasks remain uncertified",
         "All-42 renderer certification and paired benchmarks remain unrun"
       ],
@@ -931,7 +955,8 @@
       "evidence": [
         "docs/research/dmc_aligned_recovery.md",
         "docs/research/semantic_recovery_evidence/dmc_aligned_cpu.json",
-        "docs/research/semantic_recovery_evidence/dmc_aligned_renderer_cpu.json"
+        "docs/research/semantic_recovery_evidence/dmc_aligned_renderer_cpu.json",
+        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/simple-6610032.out"
       ],
       "verification_scope": {
         "classes": [
@@ -953,7 +978,9 @@
         "same_persistent_variation_required": true,
         "status": "CPU_PASSED_OSCAR_PENDING"
       },
-      "oscar_job": 6610032
+      "oscar_job": 6610032,
+      "oscar_result": "FAILED",
+      "oscar_failure": "DMC omission assertion failed: error_without > 0 and error_with == 0. Log does not identify the domain/field or either value; profile-specific cause remains unresolved."
     },
     {
       "historical_id": "swm/HopperDMControl-v0",
@@ -963,31 +990,30 @@
       "family": "dmcontrol",
       "owner": "dmcontrol-continuation",
       "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
-      "state_status": "INCOMPLETE",
-      "action_parity": "PASS_EXACT_CPU_DEFAULT_AND_FINITE_PASSTHROUGH",
-      "reset_parity": "PASS_SEEDED_DEFAULT_OPTIONS_CPU",
-      "step_parity": "PASS_EXACT_CPU; CUDA_STATE_PENDING",
-      "reward_parity": "PASS_EXACT_CPU_INCLUDING_POSITIVE_REWARD",
-      "terminated_truncated_parity": "PASS_EXACT_CPU_THROUGH_DMC_IMPLICIT_RESET",
-      "rng_lifecycle": "PASS_CPU_TWO_HISTORIES_AND_IMPLICIT_RESET",
-      "variation_parity": "PASS_CPU_NONDEFAULT_GRAVITY_AND_VISUAL_ONLY_DEFAULT_PRESERVATION; complete surface uncertified",
+      "state_status": "VERIFIED",
+      "action_parity": "PASS_EXACT_CPU_AND_CUDA_INPUT",
+      "reset_parity": "PASS_SEEDED_DEFAULT_OPTIONS_CPU_AND_CUDA_STATE",
+      "step_parity": "PASS_EXACT_CPU_AND_CUDA_STATE",
+      "reward_parity": "PASS_EXACT_CPU_AND_CUDA_STATE_INCLUDING_POSITIVE_REWARD",
+      "terminated_truncated_parity": "PASS_EXACT_CPU_AND_CUDA_STATE_THROUGH_DMC_IMPLICIT_RESET",
+      "rng_lifecycle": "PASS_CPU_AND_CUDA_STATE_TWO_HISTORIES_AND_IMPLICIT_RESET",
+      "variation_parity": "PASS_CPU_AND_CUDA_STATE_NONDEFAULT_GRAVITY_AND_VISUAL_ONLY_DEFAULT_PRESERVATION; complete surface uncertified",
       "execution_mode": "DELEGATED_CPU",
       "adapter_status": "IMPLEMENTED_HISTORICAL_DEFAULT",
-      "renderer_regression": "PASS_THREE_CELL_FROZEN_CPU; OSCAR_PENDING",
+      "renderer_regression": "PASS_SCOPED_CPU_CUDA: four frozen rows per accepted class, byte-identical to baseline within each device profile",
       "oracle_corpus": "tests/fixtures/semantics/dmc_continuation/manifest.json",
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Required Oscar CUDA State, frozen renderer, Reacher and first-cohort regression gates pending cluster scheduling",
         "Nondefault task kwargs, full historical Variation surface, and historical reset options remain uncertified",
         "All-42 renderer certification and paired benchmarks remain unrun"
       ],
       "test": "tests/integration/test_dmc_continuation_semantics.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "execution_candidate": "DELEGATED",
-      "recovery_status": "CPU_PASSED_OSCAR_PENDING",
+      "recovery_status": "ACCEPTED_CPU_AND_OSCAR",
       "verification_scope": {
         "classes": [
           "DMCHopperHop"
@@ -1007,7 +1033,7 @@
         "atol": 0,
         "rtol": 0,
         "same_persistent_variation_required": true,
-        "status": "CPU_PASSED_OSCAR_PENDING"
+        "status": "ACCEPTED_CPU_AND_OSCAR"
       },
       "state_schema": "qpos, qvel, time, qacc_warmstart, lifecycle step_count/reset_next_step, task cumulative_reward, MT19937 keys/position/has_gauss/cached_gaussian",
       "warmstart_evidence": {
@@ -1023,7 +1049,18 @@
       "evidence": [
         "docs/research/dmc_continuation_recovery.md",
         "docs/research/semantic_recovery_evidence/dmc_continuation_cpu.json",
-        "docs/research/semantic_recovery_evidence/dmc_continuation_renderer_cpu.json"
+        "docs/research/semantic_recovery_evidence/dmc_continuation_renderer_cpu.json",
+        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/acceptance.json",
+        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/dmc-continuation-6470521-gate-cuda.json",
+        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/dmc-continuation-6470521-renderer-baseline-cuda.json",
+        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/dmc-continuation-6470521-renderer-cuda.json",
+        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/family-6605999.out",
+        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/dmc-continuation-6470521-reacher-regression-cuda.json",
+        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/dmc-continuation-6470521-first-family-regression-cuda.json"
+      ],
+      "oscar_result": "PASS",
+      "verified_classes": [
+        "DMCHopperHop"
       ]
     },
     {
@@ -1088,14 +1125,14 @@
       "variation_parity": "PASS_CPU_NONDEFAULT_PHYSICS_AND_VISUAL_ONLY; complete historical surface remains uncertified",
       "execution_mode": "DELEGATED_CPU",
       "adapter_status": "IMPLEMENTED_HISTORICAL_DEFAULT",
-      "renderer_regression": "PASS_FOUR_CELL_FROZEN_CPU; OSCAR_PENDING",
+      "renderer_regression": "PASS_FOUR_CELL_FROZEN_CPU; OSCAR_INCOMPLETE: job failed after baseline capture and before candidate frame comparison",
       "oracle_corpus": "tests/fixtures/semantics/dmc_aligned/manifest.json",
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Required Oscar CUDA State and frozen renderer gate pending cluster scheduling",
+        "DMC omission assertion failed: error_without > 0 and error_with == 0. Log does not identify the domain/field or either value; profile-specific cause remains unresolved.",
         "Complete historical reset options, Variation surface and sibling tasks remain uncertified",
         "All-42 renderer certification and paired benchmarks remain unrun"
       ],
@@ -1112,7 +1149,8 @@
       "evidence": [
         "docs/research/dmc_aligned_recovery.md",
         "docs/research/semantic_recovery_evidence/dmc_aligned_cpu.json",
-        "docs/research/semantic_recovery_evidence/dmc_aligned_renderer_cpu.json"
+        "docs/research/semantic_recovery_evidence/dmc_aligned_renderer_cpu.json",
+        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/simple-6610032.out"
       ],
       "verification_scope": {
         "classes": [
@@ -1134,7 +1172,9 @@
         "same_persistent_variation_required": true,
         "status": "CPU_PASSED_OSCAR_PENDING"
       },
-      "oscar_job": 6610032
+      "oscar_job": 6610032,
+      "oscar_result": "FAILED",
+      "oscar_failure": "DMC omission assertion failed: error_without > 0 and error_with == 0. Log does not identify the domain/field or either value; profile-specific cause remains unresolved."
     },
     {
       "historical_id": "swm/MountainCarContinuousControl-v0",
@@ -1154,14 +1194,14 @@
       "variation_parity": "PASS_CPU_NONDEFAULT_ALL_DOMAIN_PHYSICS_LEAVES; full historical surface remains uncertified",
       "execution_mode": "DELEGATED_CPU",
       "adapter_status": "IMPLEMENTED_HISTORICAL_DEFAULT",
-      "renderer_regression": "PASS_THREE_CELL_FROZEN_CPU; OSCAR_PENDING",
+      "renderer_regression": "PASS_THREE_CELL_FROZEN_CPU; OSCAR_INCOMPLETE: job failed after baseline capture and before candidate frame comparison",
       "oracle_corpus": "tests/fixtures/semantics/native_classic_remaining/manifest.json",
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Required Oscar CUDA State and frozen renderer gate pending cluster scheduling",
+        "Gate bug: continuous MountainCar omission diagnostic subtracts CUDA candidate and CPU reference tensors before completing semantic or renderer acceptance.",
         "Complete historical Variation surface and task kwargs remain uncertified",
         "Legacy physical-only transition/unroll and sim_state/set_sim_state explicitly refused",
         "All-42 renderer certification and paired benchmarks remain unrun"
@@ -1179,7 +1219,8 @@
       "evidence": [
         "docs/research/native_classic_remaining.md",
         "docs/research/semantic_recovery_evidence/native_classic_remaining_cpu.json",
-        "docs/research/semantic_recovery_evidence/native_classic_remaining_renderer_cpu.json"
+        "docs/research/semantic_recovery_evidence/native_classic_remaining_renderer_cpu.json",
+        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/simple-6608718.out"
       ],
       "verification_scope": {
         "classes": [
@@ -1200,7 +1241,9 @@
         "rtol": 0,
         "same_persistent_variation_required": true,
         "status": "CPU_PASSED_OSCAR_PENDING"
-      }
+      },
+      "oscar_result": "FAILED",
+      "oscar_failure": "Gate bug: continuous MountainCar omission diagnostic subtracts CUDA candidate and CPU reference tensors before completing semantic or renderer acceptance."
     },
     {
       "historical_id": "swm/MountainCarControl-v0",
@@ -1220,14 +1263,14 @@
       "variation_parity": "PASS_CPU_NONDEFAULT_ALL_DOMAIN_PHYSICS_LEAVES; full historical surface remains uncertified",
       "execution_mode": "DELEGATED_CPU",
       "adapter_status": "IMPLEMENTED_HISTORICAL_DEFAULT",
-      "renderer_regression": "PASS_THREE_CELL_FROZEN_CPU; OSCAR_PENDING",
+      "renderer_regression": "PASS_THREE_CELL_FROZEN_CPU; OSCAR_INCOMPLETE: job failed after baseline capture and before candidate frame comparison",
       "oracle_corpus": "tests/fixtures/semantics/native_classic_remaining/manifest.json",
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Required Oscar CUDA State and frozen renderer gate pending cluster scheduling",
+        "Gate bug: continuous MountainCar omission diagnostic subtracts CUDA candidate and CPU reference tensors before completing semantic or renderer acceptance.",
         "Complete historical Variation surface and task kwargs remain uncertified",
         "Legacy physical-only transition/unroll and sim_state/set_sim_state explicitly refused",
         "All-42 renderer certification and paired benchmarks remain unrun"
@@ -1245,7 +1288,8 @@
       "evidence": [
         "docs/research/native_classic_remaining.md",
         "docs/research/semantic_recovery_evidence/native_classic_remaining_cpu.json",
-        "docs/research/semantic_recovery_evidence/native_classic_remaining_renderer_cpu.json"
+        "docs/research/semantic_recovery_evidence/native_classic_remaining_renderer_cpu.json",
+        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/simple-6608718.out"
       ],
       "verification_scope": {
         "classes": [
@@ -1266,7 +1310,9 @@
         "rtol": 0,
         "same_persistent_variation_required": true,
         "status": "CPU_PASSED_OSCAR_PENDING"
-      }
+      },
+      "oscar_result": "FAILED",
+      "oscar_failure": "Gate bug: continuous MountainCar omission diagnostic subtracts CUDA candidate and CPU reference tensors before completing semantic or renderer acceptance."
     },
     {
       "historical_id": "swm/OGBCube-v0",
@@ -1449,31 +1495,30 @@
       "family": "classic_control",
       "owner": "native-verification",
       "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
-      "state_status": "INCOMPLETE",
-      "action_parity": "PASS_EXACT_CPU",
-      "reset_parity": "PASS_SEEDED_DEFAULT_OPTIONS_CPU",
-      "step_parity": "PASS_EXACT_CPU; CUDA_STATE_PENDING",
-      "reward_parity": "PASS_EXACT_CPU_INCLUDING_TASK_BOUNDARIES",
-      "terminated_truncated_parity": "PASS_EXACT_CPU_INCLUDING_TIMELIMIT",
-      "rng_lifecycle": "PASS_CPU_TWO_HISTORIES_AND_UNSEEDED_RESET",
-      "variation_parity": "PASS_CPU_NONDEFAULT_ALL_SIX_PHYSICS_LEAVES; full historical surface remains uncertified",
+      "state_status": "VERIFIED",
+      "action_parity": "PASS_EXACT_CPU_AND_CUDA_INPUT",
+      "reset_parity": "PASS_SEEDED_DEFAULT_OPTIONS_CPU_AND_CUDA_STATE",
+      "step_parity": "PASS_EXACT_CPU_AND_CUDA_STATE",
+      "reward_parity": "PASS_EXACT_CPU_AND_CUDA_STATE_INCLUDING_TASK_BOUNDARIES",
+      "terminated_truncated_parity": "PASS_EXACT_CPU_AND_CUDA_STATE_INCLUDING_TIMELIMIT",
+      "rng_lifecycle": "PASS_CPU_AND_CUDA_STATE_TWO_HISTORIES_AND_UNSEEDED_RESET",
+      "variation_parity": "PASS_CPU_AND_CUDA_STATE_NONDEFAULT_ALL_SIX_PHYSICS_LEAVES; full historical surface remains uncertified",
       "execution_mode": "DELEGATED_CPU",
       "adapter_status": "IMPLEMENTED_HISTORICAL_DEFAULT",
-      "renderer_regression": "PASS_TWO_CELL_FROZEN_CPU; OSCAR_PENDING",
+      "renderer_regression": "PASS_SCOPED_CPU_CUDA: four frozen rows per accepted class, byte-identical to baseline within each device profile",
       "oracle_corpus": "tests/fixtures/semantics/native_classic/manifest.json",
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Required Oscar CUDA State and frozen renderer gate pending cluster scheduling",
         "Complete historical reset options and Variation surface remain uncertified",
         "Legacy physical-only transition/unroll and sim_state/set_sim_state explicitly refused",
         "All-42 renderer certification and paired benchmarks remain unrun"
       ],
       "test": "tests/integration/test_native_classic_gate.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
-      "recovery_status": "CPU_PASSED_OSCAR_PENDING",
+      "recovery_status": "ACCEPTED_CPU_AND_OSCAR",
       "verification_scope": {
         "classes": [
           "Pendulum"
@@ -1493,14 +1538,23 @@
         "atol": 0,
         "rtol": 0,
         "same_persistent_variation_required": true,
-        "status": "CPU_PASSED_OSCAR_PENDING"
+        "status": "ACCEPTED_CPU_AND_OSCAR"
       },
       "implementation_commit": "446f8608bc800c2d61701f675a2536df0dcbaa3f",
       "oscar_job": 6605941,
       "evidence": [
         "docs/research/native_verification.md",
         "docs/research/semantic_recovery_evidence/native_classic_cpu.json",
-        "docs/research/semantic_recovery_evidence/native_classic_renderer_cpu.json"
+        "docs/research/semantic_recovery_evidence/native_classic_renderer_cpu.json",
+        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/acceptance.json",
+        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/native-classic-446f860-gate-cuda.json",
+        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/native-classic-446f860-renderer-baseline-cuda.json",
+        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/native-classic-446f860-renderer-cuda.json",
+        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/family-6605941.out"
+      ],
+      "oscar_result": "PASS",
+      "verified_classes": [
+        "Pendulum"
       ]
     },
     {
@@ -1583,14 +1637,14 @@
       "variation_parity": "PASS_CPU_COMBINED_NONDEFAULT_DYNAMICS_WITH_DEFAULT_DIVERGENCE; complete historical surface remains uncertified",
       "execution_mode": "NATIVE_TORCH",
       "adapter_status": "NATIVE_IMPLEMENTED_HISTORICAL_DEFAULT",
-      "renderer_regression": "PASS_THREE_CELL_FROZEN_CPU; SPM private historical hidden-goal translation; OSCAR_PENDING",
+      "renderer_regression": "PASS_THREE_CELL_FROZEN_CPU; SPM private historical hidden-goal translation; OSCAR_INCOMPLETE: job failed after baseline capture and before candidate frame comparison",
       "oracle_corpus": "tests/fixtures/semantics/native_navigation/manifest.json",
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Required Oscar CUDA State/output and frozen renderer gate pending cluster scheduling",
+        "Native navigation exact CUDA output mismatch in info.distance_to_target: absolute difference 7.62939453125e-06. No tolerance relaxation; remaining navigation gate and candidate renderer comparison did not run.",
         "Complete sampled reset options, historical Variation surface and sibling variants remain uncertified",
         "Unseeded reset draws fresh external entropy in pinned source; no restored-unseeded-reset replay claim",
         "All-42 renderer certification and paired benchmarks remain unrun"
@@ -1607,7 +1661,8 @@
       "evidence": [
         "docs/research/native_navigation_recovery.md",
         "docs/research/semantic_recovery_evidence/native_navigation_cpu.json",
-        "docs/research/semantic_recovery_evidence/native_navigation_renderer_cpu.json"
+        "docs/research/semantic_recovery_evidence/native_navigation_renderer_cpu.json",
+        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/simple-6611139.out"
       ],
       "verification_scope": {
         "classes": [
@@ -1629,7 +1684,9 @@
         "same_persistent_variation_required": true,
         "status": "CPU_PASSED_OSCAR_PENDING"
       },
-      "oscar_job": 6611139
+      "oscar_job": 6611139,
+      "oscar_result": "FAILED",
+      "oscar_failure": "Native navigation exact CUDA output mismatch in info.distance_to_target: absolute difference 7.62939453125e-06. No tolerance relaxation; remaining navigation gate and candidate renderer comparison did not run."
     },
     {
       "historical_id": "swm/PushT-Discrete-v1",
@@ -1718,14 +1775,14 @@
       "variation_parity": "PASS_CPU_NONDEFAULT_PHYSICS_AND_VISUAL_ONLY; complete historical surface remains uncertified",
       "execution_mode": "DELEGATED_CPU",
       "adapter_status": "IMPLEMENTED_HISTORICAL_DEFAULT",
-      "renderer_regression": "PASS_FOUR_CELL_FROZEN_CPU; OSCAR_PENDING",
+      "renderer_regression": "PASS_FOUR_CELL_FROZEN_CPU; OSCAR_INCOMPLETE: job failed after baseline capture and before candidate frame comparison",
       "oracle_corpus": "tests/fixtures/semantics/dmc_aligned/manifest.json",
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Required Oscar CUDA State and frozen renderer gate pending cluster scheduling",
+        "DMC omission assertion failed: error_without > 0 and error_with == 0. Log does not identify the domain/field or either value; profile-specific cause remains unresolved.",
         "Complete historical reset options, Variation surface and sibling tasks remain uncertified",
         "All-42 renderer certification and paired benchmarks remain unrun"
       ],
@@ -1742,7 +1799,8 @@
       "evidence": [
         "docs/research/dmc_aligned_recovery.md",
         "docs/research/semantic_recovery_evidence/dmc_aligned_cpu.json",
-        "docs/research/semantic_recovery_evidence/dmc_aligned_renderer_cpu.json"
+        "docs/research/semantic_recovery_evidence/dmc_aligned_renderer_cpu.json",
+        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/simple-6610032.out"
       ],
       "verification_scope": {
         "classes": [
@@ -1764,7 +1822,9 @@
         "same_persistent_variation_required": true,
         "status": "CPU_PASSED_OSCAR_PENDING"
       },
-      "oscar_job": 6610032
+      "oscar_job": 6610032,
+      "oscar_result": "FAILED",
+      "oscar_failure": "DMC omission assertion failed: error_without > 0 and error_with == 0. Log does not identify the domain/field or either value; profile-specific cause remains unresolved."
     },
     {
       "historical_id": "swm/ReacherDMControl-v0",
@@ -1838,14 +1898,14 @@
       "variation_parity": "PASS_CPU_COMBINED_NONDEFAULT_DYNAMICS_WITH_DEFAULT_DIVERGENCE; complete historical surface remains uncertified",
       "execution_mode": "NATIVE_TORCH",
       "adapter_status": "NATIVE_IMPLEMENTED_HISTORICAL_DEFAULT",
-      "renderer_regression": "PASS_THREE_CELL_FROZEN_CPU; SPM private historical hidden-goal translation; OSCAR_PENDING",
+      "renderer_regression": "PASS_THREE_CELL_FROZEN_CPU; SPM private historical hidden-goal translation; OSCAR_INCOMPLETE: job failed after baseline capture and before candidate frame comparison",
       "oracle_corpus": "tests/fixtures/semantics/native_navigation/manifest.json",
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Required Oscar CUDA State/output and frozen renderer gate pending cluster scheduling",
+        "Native navigation exact CUDA output mismatch in info.distance_to_target: absolute difference 7.62939453125e-06. No tolerance relaxation; remaining navigation gate and candidate renderer comparison did not run.",
         "Complete sampled reset options, historical Variation surface and sibling variants remain uncertified",
         "Unseeded reset draws fresh external entropy in pinned source; no restored-unseeded-reset replay claim",
         "SimplePointMaze exact cached goal image requires Matplotlib Agg; CPU profile3.10.9 tested, Oscar profile3.11.1 pending",
@@ -1871,7 +1931,8 @@
       "evidence": [
         "docs/research/native_navigation_recovery.md",
         "docs/research/semantic_recovery_evidence/native_navigation_cpu.json",
-        "docs/research/semantic_recovery_evidence/native_navigation_renderer_cpu.json"
+        "docs/research/semantic_recovery_evidence/native_navigation_renderer_cpu.json",
+        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/simple-6611139.out"
       ],
       "verification_scope": {
         "classes": [
@@ -1893,7 +1954,9 @@
         "same_persistent_variation_required": true,
         "status": "CPU_PASSED_OSCAR_PENDING"
       },
-      "oscar_job": 6611139
+      "oscar_job": 6611139,
+      "oscar_result": "FAILED",
+      "oscar_failure": "Native navigation exact CUDA output mismatch in info.distance_to_target: absolute difference 7.62939453125e-06. No tolerance relaxation; remaining navigation gate and candidate renderer comparison did not run."
     },
     {
       "historical_id": "swm/TwoRoom-v1",
@@ -1914,14 +1977,14 @@
       "variation_parity": "PASS_CPU_COMBINED_NONDEFAULT_DYNAMICS_WITH_DEFAULT_DIVERGENCE; complete historical surface remains uncertified",
       "execution_mode": "NATIVE_TORCH",
       "adapter_status": "NATIVE_IMPLEMENTED_HISTORICAL_DEFAULT",
-      "renderer_regression": "PASS_THREE_CELL_FROZEN_CPU; SPM private historical hidden-goal translation; OSCAR_PENDING",
+      "renderer_regression": "PASS_THREE_CELL_FROZEN_CPU; SPM private historical hidden-goal translation; OSCAR_INCOMPLETE: job failed after baseline capture and before candidate frame comparison",
       "oracle_corpus": "tests/fixtures/semantics/native_navigation/manifest.json",
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Required Oscar CUDA State/output and frozen renderer gate pending cluster scheduling",
+        "Native navigation exact CUDA output mismatch in info.distance_to_target: absolute difference 7.62939453125e-06. No tolerance relaxation; remaining navigation gate and candidate renderer comparison did not run.",
         "Complete sampled reset options, historical Variation surface and sibling variants remain uncertified",
         "Unseeded reset draws fresh external entropy in pinned source; no restored-unseeded-reset replay claim",
         "All-42 renderer certification and paired benchmarks remain unrun"
@@ -1938,7 +2001,8 @@
       "evidence": [
         "docs/research/native_navigation_recovery.md",
         "docs/research/semantic_recovery_evidence/native_navigation_cpu.json",
-        "docs/research/semantic_recovery_evidence/native_navigation_renderer_cpu.json"
+        "docs/research/semantic_recovery_evidence/native_navigation_renderer_cpu.json",
+        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/simple-6611139.out"
       ],
       "verification_scope": {
         "classes": [
@@ -1960,7 +2024,9 @@
         "same_persistent_variation_required": true,
         "status": "CPU_PASSED_OSCAR_PENDING"
       },
-      "oscar_job": 6611139
+      "oscar_job": 6611139,
+      "oscar_result": "FAILED",
+      "oscar_failure": "Native navigation exact CUDA output mismatch in info.distance_to_target: absolute difference 7.62939453125e-06. No tolerance relaxation; remaining navigation gate and candidate renderer comparison did not run."
     },
     {
       "historical_id": "swm/WalkerDMControl-v0",
@@ -1970,31 +2036,30 @@
       "family": "dmcontrol",
       "owner": "dmcontrol-continuation",
       "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
-      "state_status": "INCOMPLETE",
-      "action_parity": "PASS_EXACT_CPU_DEFAULT_AND_FINITE_PASSTHROUGH",
-      "reset_parity": "PASS_SEEDED_DEFAULT_OPTIONS_CPU",
-      "step_parity": "PASS_EXACT_CPU; CUDA_STATE_PENDING",
-      "reward_parity": "PASS_EXACT_CPU_INCLUDING_POSITIVE_REWARD",
-      "terminated_truncated_parity": "PASS_EXACT_CPU_THROUGH_DMC_IMPLICIT_RESET",
-      "rng_lifecycle": "PASS_CPU_TWO_HISTORIES_AND_IMPLICIT_RESET",
-      "variation_parity": "PASS_CPU_NONDEFAULT_GRAVITY_AND_VISUAL_ONLY_DEFAULT_PRESERVATION; complete surface uncertified",
+      "state_status": "VERIFIED",
+      "action_parity": "PASS_EXACT_CPU_AND_CUDA_INPUT",
+      "reset_parity": "PASS_SEEDED_DEFAULT_OPTIONS_CPU_AND_CUDA_STATE",
+      "step_parity": "PASS_EXACT_CPU_AND_CUDA_STATE",
+      "reward_parity": "PASS_EXACT_CPU_AND_CUDA_STATE_INCLUDING_POSITIVE_REWARD",
+      "terminated_truncated_parity": "PASS_EXACT_CPU_AND_CUDA_STATE_THROUGH_DMC_IMPLICIT_RESET",
+      "rng_lifecycle": "PASS_CPU_AND_CUDA_STATE_TWO_HISTORIES_AND_IMPLICIT_RESET",
+      "variation_parity": "PASS_CPU_AND_CUDA_STATE_NONDEFAULT_GRAVITY_AND_VISUAL_ONLY_DEFAULT_PRESERVATION; complete surface uncertified",
       "execution_mode": "DELEGATED_CPU",
       "adapter_status": "IMPLEMENTED_HISTORICAL_DEFAULT",
-      "renderer_regression": "PASS_THREE_CELL_FROZEN_CPU; OSCAR_PENDING",
+      "renderer_regression": "PASS_SCOPED_CPU_CUDA: four frozen rows per accepted class, byte-identical to baseline within each device profile",
       "oracle_corpus": "tests/fixtures/semantics/dmc_continuation/manifest.json",
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Required Oscar CUDA State, frozen renderer, Reacher and first-cohort regression gates pending cluster scheduling",
         "Nondefault task kwargs, full historical Variation surface, and historical reset options remain uncertified",
         "All-42 renderer certification and paired benchmarks remain unrun"
       ],
       "test": "tests/integration/test_dmc_continuation_semantics.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "execution_candidate": "DELEGATED",
-      "recovery_status": "CPU_PASSED_OSCAR_PENDING",
+      "recovery_status": "ACCEPTED_CPU_AND_OSCAR",
       "verification_scope": {
         "classes": [
           "DMCWalkerWalk"
@@ -2014,7 +2079,7 @@
         "atol": 0,
         "rtol": 0,
         "same_persistent_variation_required": true,
-        "status": "CPU_PASSED_OSCAR_PENDING"
+        "status": "ACCEPTED_CPU_AND_OSCAR"
       },
       "state_schema": "qpos, qvel, time, qacc_warmstart, lifecycle step_count/reset_next_step, task cumulative_reward, MT19937 keys/position/has_gauss/cached_gaussian",
       "warmstart_evidence": {
@@ -2030,9 +2095,20 @@
       "evidence": [
         "docs/research/dmc_continuation_recovery.md",
         "docs/research/semantic_recovery_evidence/dmc_continuation_cpu.json",
-        "docs/research/semantic_recovery_evidence/dmc_continuation_renderer_cpu.json"
+        "docs/research/semantic_recovery_evidence/dmc_continuation_renderer_cpu.json",
+        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/acceptance.json",
+        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/dmc-continuation-6470521-gate-cuda.json",
+        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/dmc-continuation-6470521-renderer-baseline-cuda.json",
+        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/dmc-continuation-6470521-renderer-cuda.json",
+        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/family-6605999.out",
+        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/dmc-continuation-6470521-reacher-regression-cuda.json",
+        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/dmc-continuation-6470521-first-family-regression-cuda.json"
+      ],
+      "oscar_result": "PASS",
+      "verified_classes": [
+        "DMCWalkerWalk"
       ]
     }
   ],
-  "checkpoint": "First cohort approved after Acrobot sparse-Balance identity correction; exact scopes only; integration continues on repair/environment-semantics"
+  "checkpoint": "Oscar checkpoint B: 10 VERIFIED / 32 INCOMPLETE; five bounded default slices accepted, ten CPU-passed rows still await acceptance after failed Oscar gates; see docs/research/oscar_acceptance_checkpoint_b.md"
 }

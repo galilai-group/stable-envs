@@ -1,0 +1,69 @@
+## SLURM PROLOG ###############################################################
+##    Job ID : 6610032
+##  Job Name : se-simple-cohort
+##  Nodelist : gpu2104
+##      CPUs : 
+##  Mem/Node : 32768 MB
+## Directory : /oscar/home/sboughan
+##   Job Started : Tue Sep 22 06:44:19 PM EDT 2026
+###############################################################################
+Tue Sep 22 18:44:19 2026       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 575.57.08              Driver Version: 575.57.08      CUDA Version: 12.9     |
+|-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA GeForce RTX 3090        On  |   00000000:81:00.0 Off |                  N/A |
+| 32%   35C    P8             34W /  350W |      18MiB /  24576MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+                                                                                         
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|    0   N/A  N/A          157466      G   /usr/libexec/Xorg                         5MiB |
++-----------------------------------------------------------------------------------------+
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+Users of this version of Gym should be able to simply replace 'import gym' with 'import gymnasium as gym' in the vast majority of cases.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+DMCBallInCupCatch {'rows_sha256': '7410a7cfcdcfadd499f6c8d4a76048f4e8b48a46571a6d3998679c70de137a7a', 'frame_sha256': '496f3a43180339dd24af85275b8a5c221ef348da9f4a769109a26b5e1c16631f', 'shape': [4, 84, 84, 3]}
+DMCFingerTurnHard {'rows_sha256': 'f28f44de8729576be3d9a93f4942d5dd310668df68e3f3c326f4c1c641fd0c8e', 'frame_sha256': '82bf3852d3394bc117610fb26a26a7ece484b3c31b9595824a87ff6bd09d7478', 'shape': [4, 84, 84, 3]}
+DMCManipulatorBringBall {'rows_sha256': 'bb879bae0bd738c20af0ab465727514ef55f80b050829016acdb86aeddefc1e8', 'frame_sha256': 'bed5bce37ca6a93d099f6def67601204f2f312eb13beff8251af055058fc305b', 'shape': [4, 224, 224, 3]}
+/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages/mujoco_warp/_src/io.py:713: UserWarning: MULTICCD is enabled, but the scene contains CCD pairs without multicontact support: [('CAPSULE', 'CYLINDER')]. At most 1 contact will be generated for these pairs.
+  warnings.warn(
+Warp 1.17.0 initialized:
+   CUDA Toolkit 12.9, Driver 12.9
+   Devices:
+     "cpu"      : "x86_64"
+     "cuda:0"   : "NVIDIA GeForce RTX 3090" (24 GiB, sm_86, mempool enabled)
+   Kernel cache:
+     /oscar/scratch/sboughan/se-semantic-recovery/cache/warp/1.17.0
+Module mujoco_warp._src.render_util 9978d2d load on device 'cuda:0' took 8.97 ms  (cached)
+Module mujoco_warp._src.io c32a0eb load on device 'cuda:0' took 11.15 ms  (cached)
+Module mujoco_warp._src.bvh 7dab8b4 load on device 'cuda:0' took 8.51 ms  (cached)
+Module mujoco_warp._src.smooth b9cc505 load on device 'cuda:0' took 12.68 ms  (cached)
+Module render__locals___render_megakernel_fd092d93 447bb7d load on device 'cuda:0' took 2472.34 ms  (compiled)
+Module render__locals___render_megakernel_33f035e0 1d57e9b load on device 'cuda:0' took 1434.90 ms  (compiled)
+DMCQuadrupedWalk {'rows_sha256': 'c7dc6a4e5ebfb7ebc9fb37aa0bb99cc0eb6e03c44db23321f9931a43783cae6d', 'frame_sha256': '9a321e51b94d266e34a36235a702a3901ead9f77b0215911bd834e9e52f1846f', 'shape': [4, 224, 224, 3]}
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+Users of this version of Gym should be able to simply replace 'import gym' with 'import gymnasium as gym' in the vast majority of cases.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+/oscar/scratch/sboughan/se-semantic-recovery/swm-reference/stable_worldmodel/envs/__init__.py:215: UserWarning: ale-py not found; ALE/* envs are unavailable. Install with: pip install 'stable-worldmodel[env]' or pip install ale-py.
+  from stable_worldmodel.envs import ale  # noqa: F401
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/se-semantic-recovery/dmc-aligned-e4d5c2c/scripts/recovery/dmc_aligned_gate.py", line 335, in <module>
+    result = run_gate(args.device)
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/oscar/scratch/sboughan/se-semantic-recovery/dmc-aligned-e4d5c2c/scripts/recovery/dmc_aligned_gate.py", line 218, in run_gate
+    evidence["state_omission_experiments"][domain] = _omission_experiments(
+                                                     ^^^^^^^^^^^^^^^^^^^^^^
+  File "/oscar/scratch/sboughan/se-semantic-recovery/dmc-aligned-e4d5c2c/scripts/recovery/dmc_aligned_gate.py", line 89, in _omission_experiments
+    assert error_without > 0 and error_with == 0
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError

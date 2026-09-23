@@ -1,0 +1,49 @@
+{
+  "dims": {"nq": 28, "nv": 27, "nu": 21, "na": 0},
+  "action": {
+    "shape": [21],
+    "dtype": "float64",
+    "low": [-1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0],
+    "high": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
+    "repeat": 2
+  },
+  "observation": {
+    "flat_shape": [67],
+    "flat_dtype": "float32",
+    "keys": {
+      "joint_angles": [21],
+      "head_height": [],
+      "extremities": [12],
+      "torso_vertical": [3],
+      "com_velocity": [3],
+      "velocity": [27]
+    }
+  },
+  "info": {
+    "success": [],
+    "qpos": [28],
+    "qvel": [27],
+    "score": [],
+    "speed": [],
+    "torso_upright": [],
+    "head_height": []
+  },
+  "task": {"_move_speed": 1, "_pure_state": false, "_visualize_reward": false},
+  "control_timestep": 0.025,
+  "step_limit": 1000,
+  "n_sub_steps": 5,
+  "qpos_names": ["root", "abdomen_z", "abdomen_y", "abdomen_x", "right_hip_x", "right_hip_z", "right_hip_y", "right_knee", "right_ankle_y", "right_ankle_x", "left_hip_x", "left_hip_z", "left_hip_y", "left_knee", "left_ankle_y", "left_ankle_x", "right_shoulder1", "right_shoulder2", "right_elbow", "left_shoulder1", "left_shoulder2", "left_elbow"],
+  "model_vs_stock_walk": {
+    "compared": 585,
+    "differences": [{"name": "geom_friction", "count": 2, "max": 1.1175870905794083e-10}]
+  },
+  "model_vs_stock_stand": {
+    "compared": 585,
+    "differences": [{"name": "geom_friction", "count": 2, "max": 1.1175870905794083e-10}]
+  },
+  "stock_tasks": {
+    "walk": {"_move_speed": 1, "_pure_state": false, "_random": "RandomState(MT19937)", "_visualize_reward": false},
+    "stand": {"_move_speed": 0, "_pure_state": false, "_random": "RandomState(MT19937)", "_visualize_reward": false}
+  },
+  "stable_existing_load_task": {"_move_speed": 0, "_pure_state": false, "_random": "RandomState(MT19937)", "_visualize_reward": false}
+}

@@ -1,0 +1,109 @@
+{
+  "observed_at_utc": "2026-09-23 00:16:40 UTC",
+  "checkpoint": "B: earlier acceptance batch changes VERIFIED count",
+  "reference_commit": "176d54532b3c0a251a4f509b74f2fdacc143a63d",
+  "baseline_commit": "6d80b68b8b3ccd07d4207be94cbf4f0760758a06",
+  "before": {
+    "VERIFIED": 5,
+    "INCOMPLETE": 37
+  },
+  "after": {
+    "VERIFIED": 10,
+    "INCOMPLETE": 32
+  },
+  "accepted": [
+    {
+      "job_id": 6605941,
+      "stage": "native-classic-446f860",
+      "terminal_marker_verified": true,
+      "semantic_case_count": 16,
+      "max_parity_error": 0.0,
+      "frozen_renderer_cells": [
+        "CartPole",
+        "Pendulum"
+      ],
+      "frozen_renderer_baseline_identical": true,
+      "source_commit": "446f8608bc800c2d61701f675a2536df0dcbaa3f",
+      "archive_sha256": "e61dce0c3be80c36075f77731a8965ac29e6e138a8577104ae795c484315f891",
+      "remote_archive_hash_rechecked": true,
+      "driver_sha256": {
+        "oscar_family_gate.sbatch": "deb6b91dfc2808da431e320073d199baec91a6ede3b29e25f0fdcc27824afdaf",
+        "family_renderer_boundary.py": "9b90fb63cf6dd8020b239902fdfea4d02e1a94a7a0382975605ae9841ec827ba"
+      }
+    },
+    {
+      "job_id": 6605999,
+      "stage": "dmc-continuation-6470521",
+      "terminal_marker_verified": true,
+      "semantic_case_count": 30,
+      "max_parity_error": 0.0,
+      "frozen_renderer_cells": [
+        "DMCCheetahRun",
+        "DMCHopperHop",
+        "DMCWalkerWalk"
+      ],
+      "frozen_renderer_baseline_identical": true,
+      "source_commit": "6470521e84a47d5f95a5bd5f0c5a338ab293619f",
+      "archive_sha256": "d6e867ebeb0cc065f2b463e90eb5d4d0d7ef72c420346a8879cd1b2e2e361a7b",
+      "remote_archive_hash_rechecked": true,
+      "driver_sha256": {
+        "oscar_family_gate.sbatch": "deb6b91dfc2808da431e320073d199baec91a6ede3b29e25f0fdcc27824afdaf",
+        "family_renderer_boundary.py": "9b90fb63cf6dd8020b239902fdfea4d02e1a94a7a0382975605ae9841ec827ba"
+      }
+    }
+  ],
+  "required_regressions": {
+    "reacher": {
+      "cases": 10,
+      "max_error": 0.0
+    },
+    "first_family_dmc": {
+      "cases": 30,
+      "max_error": 0.0
+    }
+  },
+  "failed_jobs": [
+    6608718,
+    6610032,
+    6611139
+  ],
+  "artifact_sha256": {
+    "dmc-continuation-6470521-first-family-regression-cuda.json": "c03180e7947348d257489bab73b5bebbe891487a673c6c29e6e5cb866dfa59e2",
+    "dmc-continuation-6470521-gate-cuda.json": "a39693b5cdd6d2af9e7ab695d3f713caa9138dea68f67122b7e3012d06b2d92f",
+    "dmc-continuation-6470521-reacher-regression-cuda.json": "9681d66e33729199755ebb02240a90d68aa33975efdab5d7e3a279760f1bed34",
+    "dmc-continuation-6470521-renderer-baseline-cuda.json": "685289dcafa5679ceedaf2c97d815ab2a095a612022a26375b0a4a3559813d89",
+    "dmc-continuation-6470521-renderer-cuda.json": "685289dcafa5679ceedaf2c97d815ab2a095a612022a26375b0a4a3559813d89",
+    "family-6605941.out": "14e0e40f77d7d397ec4eebd31921a067dfa3eadf8add84b0be5b22a1eb2ae7f8",
+    "family-6605999.out": "9b6626a6155eec92950c470fdf4a577ed2da0ccfe112eb849275e3898e31a8a8",
+    "native-classic-446f860-gate-cuda.json": "c78ef0b13e9d1c330653242301b598fcb0d04cc83cc13f6b1134b8ea4f860fab",
+    "native-classic-446f860-renderer-baseline-cuda.json": "c2998a1d9f2d41dbf914f97f52b8a47ccff4a8ffcacd5e3163dbbbad010b4a24",
+    "native-classic-446f860-renderer-cuda.json": "c2998a1d9f2d41dbf914f97f52b8a47ccff4a8ffcacd5e3163dbbbad010b4a24",
+    "simple-6608718.out": "4dcc23458ce99d9feee222e926a80fb20ff2045cf3e8537ef663eb3e07424b4b",
+    "simple-6610032.out": "04db79c374bdad9bf0f9e8fc7fd27a6de5a13c2072255b1d29e9b738de0aa46c",
+    "simple-6611139.out": "af17ae64797d187a2c750d35419b4569bad6dab6b41925d400cb21ae48b49d4c"
+  },
+  "failed_acceptance": [
+    {
+      "job_id": 6608718,
+      "category": "gate_device_comparison_error",
+      "details": "CUDA candidate minus CPU reference in continuous MountainCar dtype omission diagnostic",
+      "no_completed_semantic_json": true,
+      "candidate_frozen_renderer_compared": false
+    },
+    {
+      "job_id": 6610032,
+      "category": "unresolved_omission_assertion",
+      "details": "error_without > 0 and error_with == 0 failed; assertion lacks values; determine necessity-probe versus restore failure under Oscar profile",
+      "no_completed_semantic_json": true,
+      "candidate_frozen_renderer_compared": false
+    },
+    {
+      "job_id": 6611139,
+      "category": "exact_numeric_output_mismatch",
+      "details": "info.distance_to_target absolute difference 7.62939453125e-06, relative 7.292365746270448e-08",
+      "no_completed_semantic_json": true,
+      "candidate_frozen_renderer_compared": false
+    }
+  ],
+  "archives_modified_or_requeued": false
+}

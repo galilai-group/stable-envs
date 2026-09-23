@@ -1,0 +1,32 @@
+{
+  "DMCCheetahRun": {
+    "rows_sha256": "62be02ec9ebf3984ce614a7a70d7eae3117d92ae0693a17a57a62be18c355965",
+    "frame_sha256": "ab70a0208ad55083624813cc1cc2c664a076f3f8ad8ad963628b8a6501762276",
+    "shape": [
+      4,
+      84,
+      84,
+      3
+    ]
+  },
+  "DMCHopperHop": {
+    "rows_sha256": "7e197bc170df9d000097963dcb99d0b3dcd3e0351604c74a04b51e9f6c021a1c",
+    "frame_sha256": "f336a8b75f6b87fa3304e4b279ac91f8741f79302755b6247967a02f4d351026",
+    "shape": [
+      4,
+      84,
+      84,
+      3
+    ]
+  },
+  "DMCWalkerWalk": {
+    "rows_sha256": "fdeb45361f437f309510d817149dfb090912af34463603d3c31f2e18eb88b951",
+    "frame_sha256": "4f7231ab15466a589b202878d4b97721fa28dda79835c6acbb186898bd471eb6",
+    "shape": [
+      4,
+      84,
+      84,
+      3
+    ]
+  }
+}

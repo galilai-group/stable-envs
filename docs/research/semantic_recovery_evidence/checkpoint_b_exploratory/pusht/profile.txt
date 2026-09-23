@@ -1,0 +1,28 @@
+Reference checkout: /Users/samib/stable-worldmodel
+Reference commit: 176d54532b3c0a251a4f509b74f2fdacc143a63d
+Tracked checkout diff: clean (git diff --quiet HEAD -- exit 0)
+Interpreter: /private/tmp/stable-envs-semantic-recovery/.venv/bin/python
+Python: 3.12.11 (main, Jun 3 2025, 15:41:47) [Clang 17.0.0 (clang-1700.0.13.3)]
+Platform: macOS-26.6.2-arm64-arm-64bit
+stable-worldmodel: 0.0.6
+pymunk: 7.3.0
+pygame-ce: 2.5.8
+opencv-python: 5.0.0.93
+numpy: 2.5.3
+gymnasium: 1.3.0
+
+Common invocation prefix:
+env SDL_VIDEODRIVER=dummy PYTHONPATH=/Users/samib/stable-worldmodel /private/tmp/stable-envs-semantic-recovery/.venv/bin/python SCRIPT
+
+Commands actually used:
+env SDL_VIDEODRIVER=dummy PYTHONPATH=/Users/samib/stable-worldmodel /private/tmp/stable-envs-semantic-recovery/.venv/bin/python /tmp/pusht_restore_probe.py 2>/tmp/pusht-probe.err
+env SDL_VIDEODRIVER=dummy PYTHONPATH=/Users/samib/stable-worldmodel /private/tmp/stable-envs-semantic-recovery/.venv/bin/python /tmp/pusht_omission_probe2.py 2>/tmp/pusht-omission2.err
+env SDL_VIDEODRIVER=dummy PYTHONPATH=/Users/samib/stable-worldmodel /private/tmp/stable-envs-semantic-recovery/.venv/bin/python /tmp/pusht_cache_probe.py 2>/tmp/pusht-cache.err
+
+The action/quantizer probe was originally executed through an inline shell heredoc with the same environment/interpreter prefix. That original shell command is not retained as a standalone file. Its Python body is saved as action_and_quantizer.py, and its observed stdout is saved separately. The probes were not rerun while packaging this directory.
+
+Packaging provenance:
+The three standalone Python files are byte copies of the successful /tmp scratch scripts. The stdout files transcribe the already observed tool outputs because stdout was not redirected during the original runs. The stderr files are byte copies of the original redirected stderr logs.
+
+Interpretation limit:
+These observations prove that exposed body fields alone are insufficient for exact continuation. They do not isolate whether the missing cause is arbiter/contact cache, body bias state, or other Pymunk integration bookkeeping, and they do not establish a final State schema.
