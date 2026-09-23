@@ -155,8 +155,8 @@ def _warmstart_experiment(env, reference):
 def _physical_error(varied, nominal):
     return max(
         _max_error(varied, nominal),
-        float((varied["reward"] - nominal["reward"]).abs().max()),
-        float((varied["observation"] - nominal["observation"]).abs().max()),
+        float((varied["reward"].detach().cpu() - nominal["reward"].detach().cpu()).abs().max()),
+        float((varied["observation"].detach().cpu() - nominal["observation"].detach().cpu()).abs().max()),
     )
 
 

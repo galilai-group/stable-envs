@@ -18,6 +18,7 @@ export MUJOCO_GL=egl PYOPENGL_PLATFORM=egl OMP_NUM_THREADS=4
 export TORCH_EXTENSIONS_DIR="$base/cache/torch" TRITON_CACHE_DIR="$base/cache/triton"
 export XDG_CACHE_HOME="$base/cache" WARP_CACHE_PATH="$base/cache/warp"
 nvidia-smi
+sha256sum "$base/$stage/scripts/recovery/dmc_humanoid_gate.py" "$driver" "$0"
 
 export PYTHONPATH="$base/baseline:$base/swm-reference:$deps"
 cd "$base/baseline"
