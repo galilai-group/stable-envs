@@ -1,0 +1,614 @@
+## SLURM PROLOG ###############################################################
+##    Job ID : 6605333
+##  Job Name : se-family-gate
+##  Nodelist : gpu2264
+##      CPUs : 
+##  Mem/Node : 32768 MB
+## Directory : /oscar/scratch/sboughan/se-semantic-recovery
+##   Job Started : Tue Sep 22 10:14:32 AM EDT 2026
+###############################################################################
+Tue Sep 22 10:14:32 2026       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 575.57.08              Driver Version: 575.57.08      CUDA Version: 12.9     |
+|-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA GeForce RTX 3090        On  |   00000000:41:00.0 Off |                  N/A |
+| 30%   30C    P8             22W /  350W |      18MiB /  24576MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+                                                                                         
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|    0   N/A  N/A          181653      G   /usr/libexec/Xorg                         5MiB |
++-----------------------------------------------------------------------------------------+
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+Users of this version of Gym should be able to simply replace 'import gym' with 'import gymnasium as gym' in the vast majority of cases.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+DMCAcrobotBalance {'rows_sha256': 'ef14a0b9d79e95fc094fb7617680a0f8c5dbe679e85f8ba8a02e941174e70ccc', 'frame_sha256': '8b424bee9227a1c8c92ce638d733379d1689bedc5a15aed578f4852896adf289', 'shape': [4, 84, 84, 3]}
+DMCPendulumSwingup {'rows_sha256': '69815ca8198e1b1beb482e22393bcf09b6c3b198705c877ac6f8bcdbe29838de', 'frame_sha256': 'ad073b30f807f486dd8254bfae2af61ba00e63cc4c490f85ae161b0ab5aeee74', 'shape': [4, 84, 84, 3]}
+DMCCartpoleSwingup {'rows_sha256': '183ae1dd8813c127fd200317133f07568cc25c041eaacebf5af5275675bf376f', 'frame_sha256': 'ea5482a5b9ace943fa13ed3f4685e6eb03c50c01a73a106815c60a1b51e5744f', 'shape': [4, 84, 84, 3]}
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+Users of this version of Gym should be able to simply replace 'import gym' with 'import gymnasium as gym' in the vast majority of cases.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+/oscar/scratch/sboughan/se-semantic-recovery/swm-reference/stable_worldmodel/envs/__init__.py:215: UserWarning: ale-py not found; ALE/* envs are unavailable. Install with: pip install 'stable-worldmodel[env]' or pip install ale-py.
+  from stable_worldmodel.envs import ale  # noqa: F401
+{
+  "swm_commit": "176d54532b3c0a251a4f509b74f2fdacc143a63d",
+  "device": "cuda",
+  "execution_mode": "DELEGATED_CPU",
+  "platform": "Linux-5.14.0-570.62.1.0.1.el9_6.x86_64-x86_64-with-glibc2.34",
+  "versions": {
+    "torch": "2.14.0+cu126",
+    "numpy": "2.5.3",
+    "dm-control": "1.0.44",
+    "mujoco": "3.11.0",
+    "tensordict": "0.14.2",
+    "stable-worldmodel": "0.1.1"
+  },
+  "mappings": {
+    "acrobot": "DMCAcrobotBalance",
+    "pendulum": "DMCPendulumSwingup",
+    "cartpole": "DMCCartpoleSwingup"
+  },
+  "excluded_mapping": {
+    "DMCCartpoleBalance": "historical default is sparse swing-up, not dense balance"
+  },
+  "cases": [
+    {
+      "domain": "acrobot",
+      "stable_env": "DMCAcrobotBalance",
+      "batch": 1,
+      "seed": 0,
+      "reset": true,
+      "independent_snapshot": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "reward_done_error": 0.0
+    },
+    {
+      "domain": "acrobot",
+      "stable_env": "DMCAcrobotBalance",
+      "batch": 1,
+      "seed": 17,
+      "reset": true,
+      "independent_snapshot": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "reward_done_error": 0.0
+    },
+    {
+      "domain": "acrobot",
+      "stable_env": "DMCAcrobotBalance",
+      "batch": 1,
+      "seed": 42,
+      "reset": true,
+      "independent_snapshot": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "reward_done_error": 0.0
+    },
+    {
+      "domain": "acrobot",
+      "batch": 1,
+      "positive_reward": 2.0,
+      "terminated": false,
+      "truncated": false
+    },
+    {
+      "domain": "acrobot",
+      "batch": 1,
+      "dmc_step_limit": 1000,
+      "action_repeat": 2,
+      "boundary_public_steps": 502,
+      "implicit_reset_rng_changes": true,
+      "lifecycle_rng_replay": true
+    },
+    {
+      "domain": "acrobot",
+      "stable_env": "DMCAcrobotBalance",
+      "batch": 3,
+      "seed": 0,
+      "reset": true,
+      "independent_snapshot": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "reward_done_error": 0.0
+    },
+    {
+      "domain": "acrobot",
+      "stable_env": "DMCAcrobotBalance",
+      "batch": 3,
+      "seed": 17,
+      "reset": true,
+      "independent_snapshot": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "reward_done_error": 0.0
+    },
+    {
+      "domain": "acrobot",
+      "stable_env": "DMCAcrobotBalance",
+      "batch": 3,
+      "seed": 42,
+      "reset": true,
+      "independent_snapshot": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "reward_done_error": 0.0
+    },
+    {
+      "domain": "acrobot",
+      "batch": 3,
+      "positive_reward": 2.0,
+      "terminated": false,
+      "truncated": false
+    },
+    {
+      "domain": "acrobot",
+      "batch": 3,
+      "dmc_step_limit": 1000,
+      "action_repeat": 2,
+      "boundary_public_steps": 502,
+      "implicit_reset_rng_changes": true,
+      "lifecycle_rng_replay": true
+    },
+    {
+      "domain": "pendulum",
+      "stable_env": "DMCPendulumSwingup",
+      "batch": 1,
+      "seed": 0,
+      "reset": true,
+      "independent_snapshot": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "reward_done_error": 0.0
+    },
+    {
+      "domain": "pendulum",
+      "stable_env": "DMCPendulumSwingup",
+      "batch": 1,
+      "seed": 17,
+      "reset": true,
+      "independent_snapshot": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "reward_done_error": 0.0
+    },
+    {
+      "domain": "pendulum",
+      "stable_env": "DMCPendulumSwingup",
+      "batch": 1,
+      "seed": 42,
+      "reset": true,
+      "independent_snapshot": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "reward_done_error": 0.0
+    },
+    {
+      "domain": "pendulum",
+      "batch": 1,
+      "positive_reward": 2.0,
+      "terminated": false,
+      "truncated": false
+    },
+    {
+      "domain": "pendulum",
+      "batch": 1,
+      "dmc_step_limit": 1000,
+      "action_repeat": 2,
+      "boundary_public_steps": 502,
+      "implicit_reset_rng_changes": true,
+      "lifecycle_rng_replay": true
+    },
+    {
+      "domain": "pendulum",
+      "stable_env": "DMCPendulumSwingup",
+      "batch": 3,
+      "seed": 0,
+      "reset": true,
+      "independent_snapshot": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "reward_done_error": 0.0
+    },
+    {
+      "domain": "pendulum",
+      "stable_env": "DMCPendulumSwingup",
+      "batch": 3,
+      "seed": 17,
+      "reset": true,
+      "independent_snapshot": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "reward_done_error": 0.0
+    },
+    {
+      "domain": "pendulum",
+      "stable_env": "DMCPendulumSwingup",
+      "batch": 3,
+      "seed": 42,
+      "reset": true,
+      "independent_snapshot": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "reward_done_error": 0.0
+    },
+    {
+      "domain": "pendulum",
+      "batch": 3,
+      "positive_reward": 2.0,
+      "terminated": false,
+      "truncated": false
+    },
+    {
+      "domain": "pendulum",
+      "batch": 3,
+      "dmc_step_limit": 1000,
+      "action_repeat": 2,
+      "boundary_public_steps": 502,
+      "implicit_reset_rng_changes": true,
+      "lifecycle_rng_replay": true
+    },
+    {
+      "domain": "cartpole",
+      "stable_env": "DMCCartpoleSwingup",
+      "batch": 1,
+      "seed": 0,
+      "reset": true,
+      "independent_snapshot": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "reward_done_error": 0.0
+    },
+    {
+      "domain": "cartpole",
+      "stable_env": "DMCCartpoleSwingup",
+      "batch": 1,
+      "seed": 17,
+      "reset": true,
+      "independent_snapshot": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "reward_done_error": 0.0
+    },
+    {
+      "domain": "cartpole",
+      "stable_env": "DMCCartpoleSwingup",
+      "batch": 1,
+      "seed": 42,
+      "reset": true,
+      "independent_snapshot": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "reward_done_error": 0.0
+    },
+    {
+      "domain": "cartpole",
+      "batch": 1,
+      "positive_reward": 2.0,
+      "terminated": false,
+      "truncated": false
+    },
+    {
+      "domain": "cartpole",
+      "batch": 1,
+      "dmc_step_limit": 1000,
+      "action_repeat": 2,
+      "boundary_public_steps": 502,
+      "implicit_reset_rng_changes": true,
+      "lifecycle_rng_replay": true
+    },
+    {
+      "domain": "cartpole",
+      "stable_env": "DMCCartpoleSwingup",
+      "batch": 3,
+      "seed": 0,
+      "reset": true,
+      "independent_snapshot": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "reward_done_error": 0.0
+    },
+    {
+      "domain": "cartpole",
+      "stable_env": "DMCCartpoleSwingup",
+      "batch": 3,
+      "seed": 17,
+      "reset": true,
+      "independent_snapshot": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "reward_done_error": 0.0
+    },
+    {
+      "domain": "cartpole",
+      "stable_env": "DMCCartpoleSwingup",
+      "batch": 3,
+      "seed": 42,
+      "reset": true,
+      "independent_snapshot": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "reward_done_error": 0.0
+    },
+    {
+      "domain": "cartpole",
+      "batch": 3,
+      "positive_reward": 2.0,
+      "terminated": false,
+      "truncated": false
+    },
+    {
+      "domain": "cartpole",
+      "batch": 3,
+      "dmc_step_limit": 1000,
+      "action_repeat": 2,
+      "boundary_public_steps": 502,
+      "implicit_reset_rng_changes": true,
+      "lifecycle_rng_replay": true
+    }
+  ],
+  "visual_only_variation": {
+    "acrobot": {
+      "leaf": "light.diffuse_scale",
+      "nominal_gravity_exact": true,
+      "steps": 8,
+      "max_error": 0.0
+    },
+    "pendulum": {
+      "leaf": "light.diffuse_scale",
+      "nominal_gravity_exact": true,
+      "steps": 8,
+      "max_error": 0.0
+    },
+    "cartpole": {
+      "leaf": "light.diffuse_scale",
+      "nominal_gravity_exact": true,
+      "steps": 8,
+      "max_error": 0.0
+    }
+  },
+  "physical_variation": {
+    "acrobot": {
+      "gravity": [
+        1.25,
+        -0.75,
+        -7.5
+      ],
+      "steps": 32,
+      "max_error": 0.0
+    },
+    "pendulum": {
+      "gravity": [
+        1.25,
+        -0.75,
+        -7.5
+      ],
+      "steps": 32,
+      "max_error": 0.0
+    },
+    "cartpole": {
+      "gravity": [
+        1.25,
+        -0.75,
+        -7.5
+      ],
+      "steps": 32,
+      "max_error": 0.0
+    }
+  }
+}
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+Users of this version of Gym should be able to simply replace 'import gym' with 'import gymnasium as gym' in the vast majority of cases.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+DMCAcrobotBalance {'rows_sha256': 'ef14a0b9d79e95fc094fb7617680a0f8c5dbe679e85f8ba8a02e941174e70ccc', 'frame_sha256': '8b424bee9227a1c8c92ce638d733379d1689bedc5a15aed578f4852896adf289', 'shape': [4, 84, 84, 3]}
+DMCPendulumSwingup {'rows_sha256': '69815ca8198e1b1beb482e22393bcf09b6c3b198705c877ac6f8bcdbe29838de', 'frame_sha256': 'ad073b30f807f486dd8254bfae2af61ba00e63cc4c490f85ae161b0ab5aeee74', 'shape': [4, 84, 84, 3]}
+DMCCartpoleSwingup {'rows_sha256': '183ae1dd8813c127fd200317133f07568cc25c041eaacebf5af5275675bf376f', 'frame_sha256': 'ea5482a5b9ace943fa13ed3f4685e6eb03c50c01a73a106815c60a1b51e5744f', 'shape': [4, 84, 84, 3]}
+FAMILY_FROZEN_RENDERER_GATE_PASS acrobot-7221759 3 cells
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+Users of this version of Gym should be able to simply replace 'import gym' with 'import gymnasium as gym' in the vast majority of cases.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+/oscar/scratch/sboughan/se-semantic-recovery/swm-reference/stable_worldmodel/envs/__init__.py:215: UserWarning: ale-py not found; ALE/* envs are unavailable. Install with: pip install 'stable-worldmodel[env]' or pip install ale-py.
+  from stable_worldmodel.envs import ale  # noqa: F401
+{
+  "swm_commit": "176d54532b3c0a251a4f509b74f2fdacc143a63d",
+  "device": "cuda",
+  "execution_mode": "DELEGATED_CPU",
+  "platform": "Linux-5.14.0-570.62.1.0.1.el9_6.x86_64-x86_64-with-glibc2.34",
+  "versions": {
+    "torch": "2.14.0+cu126",
+    "numpy": "2.5.3",
+    "dm-control": "1.0.44",
+    "mujoco": "3.11.0",
+    "tensordict": "0.14.2",
+    "stable-worldmodel": "0.1.1"
+  },
+  "cases": [
+    {
+      "batch": 1,
+      "seed": 0,
+      "reset": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "reward_done_error": 0.0
+    },
+    {
+      "batch": 1,
+      "seed": 17,
+      "reset": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "reward_done_error": 0.0
+    },
+    {
+      "batch": 1,
+      "seed": 42,
+      "reset": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "reward_done_error": 0.0
+    },
+    {
+      "batch": 1,
+      "positive_reward": 2.0,
+      "terminated": false,
+      "truncated": false
+    },
+    {
+      "batch": 1,
+      "time_limit_public_steps": 502,
+      "target_changes_on_implicit_reset": true,
+      "lifecycle_rng_replay": true
+    },
+    {
+      "batch": 3,
+      "seed": 0,
+      "reset": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "reward_done_error": 0.0
+    },
+    {
+      "batch": 3,
+      "seed": 17,
+      "reset": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "reward_done_error": 0.0
+    },
+    {
+      "batch": 3,
+      "seed": 42,
+      "reset": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "reward_done_error": 0.0
+    },
+    {
+      "batch": 3,
+      "positive_reward": 2.0,
+      "terminated": false,
+      "truncated": false
+    },
+    {
+      "batch": 3,
+      "time_limit_public_steps": 502,
+      "target_changes_on_implicit_reset": true,
+      "lifecycle_rng_replay": true
+    }
+  ],
+  "physical_variation": {
+    "arm_density": 650,
+    "finger_density": 1350,
+    "steps": 32,
+    "max_error": 0.0
+  }
+}
+FAMILY_GPU_GATE_PASS acrobot-7221759

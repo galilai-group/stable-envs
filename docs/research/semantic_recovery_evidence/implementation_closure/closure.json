@@ -1,0 +1,385 @@
+{
+  "starting_branch": "repair/environment-semantics",
+  "starting_sha": "a5ef2e47662d352022468a1765f06d261497033a",
+  "swm_commit": "176d54532b3c0a251a4f509b74f2fdacc143a63d",
+  "counts": {
+    "VERIFIED": 21,
+    "INCOMPLETE": 21
+  },
+  "immutable_hashes_checked": [
+    "docs/research/semantic_recovery_evidence/blocker_cleanup/acceptance.json",
+    "docs/research/semantic_recovery_evidence/blocker_cleanup/dmc-humanoid-rerun-07d7098-aligned-regression-cuda.json",
+    "docs/research/semantic_recovery_evidence/blocker_cleanup/dmc-humanoid-rerun-07d7098-continuation-regression-cuda.json",
+    "docs/research/semantic_recovery_evidence/blocker_cleanup/dmc-humanoid-rerun-07d7098-first-family-regression-cuda.json",
+    "docs/research/semantic_recovery_evidence/blocker_cleanup/dmc-humanoid-rerun-07d7098-gate-cuda.json",
+    "docs/research/semantic_recovery_evidence/blocker_cleanup/dmc-humanoid-rerun-07d7098-reacher-regression-cuda.json",
+    "docs/research/semantic_recovery_evidence/blocker_cleanup/dmc-humanoid-rerun-07d7098-renderer-baseline-cuda.json",
+    "docs/research/semantic_recovery_evidence/blocker_cleanup/dmc-humanoid-rerun-07d7098-renderer-cuda.json",
+    "docs/research/semantic_recovery_evidence/blocker_cleanup/humanoid-6628919.out",
+    "docs/research/semantic_recovery_evidence/blocker_cleanup/humanoid-submit.json",
+    "docs/research/semantic_recovery_evidence/blocker_cleanup/humanoid_diagnostic_fix_cpu.json",
+    "docs/research/semantic_recovery_evidence/blocker_cleanup/navigation-diagnostic-1f717d1-renderer-baseline-cuda.json",
+    "docs/research/semantic_recovery_evidence/blocker_cleanup/navigation-failure-context.json",
+    "docs/research/semantic_recovery_evidence/blocker_cleanup/navigation-submit-final.json",
+    "docs/research/semantic_recovery_evidence/blocker_cleanup/navigation-submit.json",
+    "docs/research/semantic_recovery_evidence/blocker_cleanup/navigation_diagnostic_self_check.txt",
+    "docs/research/semantic_recovery_evidence/blocker_cleanup/navigation_diagnostics_cpu.json",
+    "docs/research/semantic_recovery_evidence/blocker_cleanup/piecewise-arithmetic-6628994.out",
+    "docs/research/semantic_recovery_evidence/blocker_cleanup/piecewise-arithmetic-submit.json",
+    "docs/research/semantic_recovery_evidence/blocker_cleanup/piecewise-zone-arithmetic-4ad7d20.json",
+    "docs/research/semantic_recovery_evidence/blocker_cleanup/piecewise_zone_arithmetic-15434d4.sbatch",
+    "docs/research/semantic_recovery_evidence/blocker_cleanup/piecewise_zone_arithmetic-4ad7d20.py",
+    "docs/research/semantic_recovery_evidence/blocker_cleanup/readiness.txt",
+    "docs/research/semantic_recovery_evidence/blocker_cleanup/simple-6628935.out",
+    "docs/research/semantic_recovery_evidence/blocker_cleanup/simple-6628945.out",
+    "docs/research/semantic_recovery_evidence/checkpoint_b_exploratory/humanoid/humanoid_audit_manifest.json",
+    "docs/research/semantic_recovery_evidence/checkpoint_b_exploratory/humanoid/humanoid_friction_probe.json",
+    "docs/research/semantic_recovery_evidence/checkpoint_b_exploratory/humanoid/humanoid_friction_probe.py",
+    "docs/research/semantic_recovery_evidence/checkpoint_b_exploratory/humanoid/humanoid_identity_probe.json",
+    "docs/research/semantic_recovery_evidence/checkpoint_b_exploratory/humanoid/humanoid_identity_probe.py",
+    "docs/research/semantic_recovery_evidence/checkpoint_b_exploratory/humanoid/humanoid_lifecycle_probe.json",
+    "docs/research/semantic_recovery_evidence/checkpoint_b_exploratory/humanoid/humanoid_lifecycle_probe.py",
+    "docs/research/semantic_recovery_evidence/checkpoint_b_exploratory/humanoid/humanoid_reward_probe.json",
+    "docs/research/semantic_recovery_evidence/checkpoint_b_exploratory/humanoid/humanoid_reward_probe.py",
+    "docs/research/semantic_recovery_evidence/checkpoint_b_exploratory/humanoid/humanoid_warmstart_probe.json",
+    "docs/research/semantic_recovery_evidence/checkpoint_b_exploratory/humanoid/humanoid_warmstart_probe.py",
+    "docs/research/semantic_recovery_evidence/checkpoint_b_exploratory/pusht/action_and_quantizer.py",
+    "docs/research/semantic_recovery_evidence/checkpoint_b_exploratory/pusht/action_and_quantizer.stdout.txt",
+    "docs/research/semantic_recovery_evidence/checkpoint_b_exploratory/pusht/action_probe.stderr.txt",
+    "docs/research/semantic_recovery_evidence/checkpoint_b_exploratory/pusht/body_field_omissions.py",
+    "docs/research/semantic_recovery_evidence/checkpoint_b_exploratory/pusht/body_field_omissions.stdout.txt",
+    "docs/research/semantic_recovery_evidence/checkpoint_b_exploratory/pusht/body_field_omissions.stderr.txt",
+    "docs/research/semantic_recovery_evidence/checkpoint_b_exploratory/pusht/body_fields_different_history.py",
+    "docs/research/semantic_recovery_evidence/checkpoint_b_exploratory/pusht/body_fields_different_history.stdout.txt",
+    "docs/research/semantic_recovery_evidence/checkpoint_b_exploratory/pusht/body_fields_different_history.stderr.txt",
+    "docs/research/semantic_recovery_evidence/checkpoint_b_exploratory/pusht/same_fields_different_engine_history.py",
+    "docs/research/semantic_recovery_evidence/checkpoint_b_exploratory/pusht/same_fields_different_engine_history.stdout.txt",
+    "docs/research/semantic_recovery_evidence/checkpoint_b_exploratory/pusht/same_fields_different_engine_history.stderr.txt",
+    "docs/research/semantic_recovery_evidence/checkpoint_b_exploratory/pusht/profile.txt",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/classic_cpu.json",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/dmc-witness-search-mac.log",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/dmc_diagnostic_cpu.json",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/dmc_omission_profile_probe.py",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/dmc_omission_profile_probe.sbatch",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/dmc_witness_fixed_cpu.json",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/dmc_witness_search.py",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/dmc_witness_search.sbatch",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/navigation_cpu.json",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/omission-profile-6626607.out",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/oscar_reruns.json",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/01_cached_arbiter_restore.py",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/01_cached_arbiter_restore.stderr.txt",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/01_cached_arbiter_restore.stdout.txt",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/02_cffi_schema.py",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/02_cffi_schema.stderr.txt",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/02_cffi_schema.stdout.txt",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/03_supported_space_copy.py",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/03_supported_space_copy.stderr.txt",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/03_supported_space_copy.stdout.txt",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/03b_supported_space_copy.stderr.txt",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/03b_supported_space_copy.stdout.txt",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/04_arbiter_roundtrip_membership.py",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/04_arbiter_roundtrip_membership.stderr.txt",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/04_arbiter_roundtrip_membership.stdout.txt",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/05_live_contact_then_restore.py",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/05_live_contact_then_restore.stderr.txt",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/05_live_contact_then_restore.stdout.txt",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/06_wall_component_ablation.py",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/06_wall_component_ablation.stderr.txt",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/06_wall_component_ablation.stdout.txt",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/07_agent_block_component_ablation.py",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/07_agent_block_component_ablation.stderr.txt",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/07_agent_block_component_ablation.stdout.txt",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/08_active_order.py",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/08_active_order.stderr.txt",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/08_active_order.stdout.txt",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/08b_active_order.stderr.txt",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/08b_active_order.stdout.txt",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/PROFILE.md",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/SHA256SUMS",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/arbiter_link_symbols.stdout.txt",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/arbiter_thread_schema.stdout.txt",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/body_symbols.stdout.txt",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/chipmunk_symbols.stdout.txt",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/pymunk_files.stdout.txt",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/source_search.stdout.txt",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/witness-search-6626635.out",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/PROFILE.md",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/01_cached_arbiter_restore.py",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/01_cached_arbiter_restore.stdout.txt",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/01_cached_arbiter_restore.stderr.txt",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/02_cffi_schema.py",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/02_cffi_schema.stdout.txt",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/02_cffi_schema.stderr.txt",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/03_supported_space_copy.py",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/03_supported_space_copy.stdout.txt",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/03_supported_space_copy.stderr.txt",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/03b_supported_space_copy.stdout.txt",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/03b_supported_space_copy.stderr.txt",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/04_arbiter_roundtrip_membership.py",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/04_arbiter_roundtrip_membership.stdout.txt",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/04_arbiter_roundtrip_membership.stderr.txt",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/05_live_contact_then_restore.py",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/05_live_contact_then_restore.stdout.txt",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/05_live_contact_then_restore.stderr.txt",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/06_wall_component_ablation.py",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/06_wall_component_ablation.stdout.txt",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/06_wall_component_ablation.stderr.txt",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/07_agent_block_component_ablation.py",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/07_agent_block_component_ablation.stdout.txt",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/07_agent_block_component_ablation.stderr.txt",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/08_active_order.py",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/08_active_order.stdout.txt",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/08_active_order.stderr.txt",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/08b_active_order.stdout.txt",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/08b_active_order.stderr.txt",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/body_symbols.stdout.txt",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/arbiter_thread_schema.stdout.txt",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/arbiter_link_symbols.stdout.txt",
+    "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/chipmunk_symbols.stdout.txt",
+    "docs/research/semantic_recovery_evidence/fetch_adapter_initial/adapter_probe.json",
+    "docs/research/semantic_recovery_evidence/fetch_adapter_initial/adapter_probe.stderr",
+    "docs/research/semantic_recovery_evidence/fetch_adapter_initial/provenance.json",
+    "docs/research/semantic_recovery_evidence/fetch_initial/construction_diagnostic.py",
+    "docs/research/semantic_recovery_evidence/fetch_initial/construction_diagnostic.stderr.txt",
+    "docs/research/semantic_recovery_evidence/fetch_initial/construction_diagnostic.stdout.txt",
+    "docs/research/semantic_recovery_evidence/fetch_initial/enum_comparison.json",
+    "docs/research/semantic_recovery_evidence/fetch_initial/enum_comparison.py",
+    "docs/research/semantic_recovery_evidence/fetch_initial/provenance.json",
+    "docs/research/semantic_recovery_evidence/fetch_initial/source_probe.py",
+    "docs/research/semantic_recovery_evidence/fetch_initial/source_probe.stderr.txt",
+    "docs/research/semantic_recovery_evidence/fetch_initial/source_probe.stdout.txt",
+    "docs/research/semantic_recovery_evidence/fetch_profile/constructor_smoke.json",
+    "docs/research/semantic_recovery_evidence/fetch_profile/constructor_smoke.py",
+    "docs/research/semantic_recovery_evidence/fetch_profile/constructor_smoke.stderr",
+    "docs/research/semantic_recovery_evidence/fetch_profile/dependency_check.txt",
+    "docs/research/semantic_recovery_evidence/fetch_profile/install.log",
+    "docs/research/semantic_recovery_evidence/fetch_profile/opencv_install.log",
+    "docs/research/semantic_recovery_evidence/fetch_profile/provenance.json",
+    "docs/research/semantic_recovery_evidence/fetch_profile/requirements.freeze.txt",
+    "docs/research/semantic_recovery_evidence/fetch_profile/source_probe.json",
+    "docs/research/semantic_recovery_evidence/fetch_profile/source_probe.py",
+    "docs/research/semantic_recovery_evidence/fetch_profile/source_probe.stderr",
+    "docs/research/semantic_recovery_evidence/fetch_state_proof/provenance.json",
+    "docs/research/semantic_recovery_evidence/fetch_state_proof/source_restore_probe.json",
+    "docs/research/semantic_recovery_evidence/fetch_state_proof/source_restore_probe.py",
+    "docs/research/semantic_recovery_evidence/fetch_state_proof/source_restore_probe.stderr",
+    "docs/research/semantic_recovery_evidence/navigation_zone_acceptance/acceptance.json",
+    "docs/research/semantic_recovery_evidence/navigation_zone_acceptance/navigation-zone-fix-6ee8d8cb-gate-cuda.json",
+    "docs/research/semantic_recovery_evidence/navigation_zone_acceptance/navigation-zone-fix-6ee8d8cb-renderer-baseline-cuda.json",
+    "docs/research/semantic_recovery_evidence/navigation_zone_acceptance/navigation-zone-fix-6ee8d8cb-renderer-cuda.json",
+    "docs/research/semantic_recovery_evidence/navigation_zone_acceptance/navigation_cpu.json",
+    "docs/research/semantic_recovery_evidence/navigation_zone_acceptance/readiness.txt",
+    "docs/research/semantic_recovery_evidence/navigation_zone_acceptance/renderer_baseline_cpu.json",
+    "docs/research/semantic_recovery_evidence/navigation_zone_acceptance/renderer_candidate_cpu.json",
+    "docs/research/semantic_recovery_evidence/navigation_zone_acceptance/simple-6642897.out",
+    "docs/research/semantic_recovery_evidence/navigation_zone_acceptance/submission.json",
+    "docs/research/semantic_recovery_evidence/post_c_acceptance/acceptance.json",
+    "docs/research/semantic_recovery_evidence/post_c_acceptance/dmc-aligned-rerun-57c10c1-continuation-regression-cuda.json",
+    "docs/research/semantic_recovery_evidence/post_c_acceptance/dmc-aligned-rerun-57c10c1-first-family-regression-cuda.json",
+    "docs/research/semantic_recovery_evidence/post_c_acceptance/dmc-aligned-rerun-57c10c1-gate-cuda.json",
+    "docs/research/semantic_recovery_evidence/post_c_acceptance/dmc-aligned-rerun-57c10c1-reacher-regression-cuda.json",
+    "docs/research/semantic_recovery_evidence/post_c_acceptance/dmc-aligned-rerun-57c10c1-renderer-baseline-cuda.json",
+    "docs/research/semantic_recovery_evidence/post_c_acceptance/dmc-aligned-rerun-57c10c1-renderer-cuda.json",
+    "docs/research/semantic_recovery_evidence/post_c_acceptance/dmc-humanoid-97436d6-renderer-baseline-cuda.json",
+    "docs/research/semantic_recovery_evidence/post_c_acceptance/humanoid-6626742.out",
+    "docs/research/semantic_recovery_evidence/post_c_acceptance/native-classic-rerun-98c65cb-classic-regression-cuda.json",
+    "docs/research/semantic_recovery_evidence/post_c_acceptance/native-classic-rerun-98c65cb-gate-cuda.json",
+    "docs/research/semantic_recovery_evidence/post_c_acceptance/native-classic-rerun-98c65cb-renderer-baseline-cuda.json",
+    "docs/research/semantic_recovery_evidence/post_c_acceptance/native-classic-rerun-98c65cb-renderer-cuda.json",
+    "docs/research/semantic_recovery_evidence/post_c_acceptance/navigation-rerun-bb517bd-renderer-baseline-cuda.json",
+    "docs/research/semantic_recovery_evidence/post_c_acceptance/simple-6626587.out",
+    "docs/research/semantic_recovery_evidence/post_c_acceptance/simple-6626600.out",
+    "docs/research/semantic_recovery_evidence/post_c_acceptance/simple-6626669.out",
+    "tests/fixtures/semantics/dmc_aligned/ball_in_cup_swm_176d545_mujoco312.npz",
+    "tests/fixtures/semantics/dmc_aligned/finger_swm_176d545_mujoco312.npz",
+    "tests/fixtures/semantics/dmc_aligned/manipulator_swm_176d545_mujoco312.npz",
+    "tests/fixtures/semantics/dmc_aligned/quadruped_swm_176d545_mujoco312.npz",
+    "tests/fixtures/semantics/dmc_continuation/cheetah_swm_176d545_mujoco312.npz",
+    "tests/fixtures/semantics/dmc_continuation/hopper_swm_176d545_mujoco312.npz",
+    "tests/fixtures/semantics/dmc_continuation/walker_swm_176d545_mujoco312.npz",
+    "tests/fixtures/semantics/dmc_first_family/acrobot_swm_176d545_mujoco312.npz",
+    "tests/fixtures/semantics/dmc_first_family/pendulum_swm_176d545_mujoco312.npz",
+    "tests/fixtures/semantics/dmc_first_family/cartpole_swm_176d545_mujoco312.npz",
+    "tests/fixtures/semantics/dmc_humanoid/humanoid_walk_swm_176d545_mujoco312.npz",
+    "tests/fixtures/semantics/native_classic/cartpole_swm_176d545_gymnasium130.npz",
+    "tests/fixtures/semantics/native_classic/pendulum_swm_176d545_gymnasium130.npz",
+    "tests/fixtures/semantics/native_classic_remaining/acrobot_swm_176d545_gymnasium130.npz",
+    "tests/fixtures/semantics/native_classic_remaining/mountain_car_swm_176d545_gymnasium130.npz",
+    "tests/fixtures/semantics/native_classic_remaining/mountain_car_continuous_swm_176d545_gymnasium130.npz",
+    "tests/fixtures/semantics/native_navigation/two_room_swm_176d545_gymnasium130.npz",
+    "tests/fixtures/semantics/native_navigation/piecewise_swm_176d545_gymnasium130.npz",
+    "tests/fixtures/semantics/native_navigation/simple_point_maze_swm_176d545_gymnasium130.npz",
+    "tests/fixtures/semantics/ogbench_maze/swm_176d545_ogbench121_mujoco312.npz",
+    "tests/fixtures/semantics/reacher/swm_176d545_mujoco312.npz"
+  ],
+  "production_stability": {
+    "dmcontrol": {
+      "covered_revision": "07d709841ea2e57fae334e7ef541559a6617236a",
+      "production_ast_unchanged": true,
+      "files": {
+        "stable_envs/envs/dmcontrol/quadruped.py": {
+          "sha256": "0322e2aa0b3b24a17029c0bba0cca68fc4626bcb1940b5e8b5662f3f49e113cc",
+          "ast_sha256": "52986887240632aaed0dd2ce8ef1a605b208a841cb26e47c8d1d7e9e28f9689c"
+        },
+        "stable_envs/envs/dmcontrol/_humanoid.py": {
+          "sha256": "06ef101f6a7e4cd4691bc6df8e680a73ac42c79aff8c08f0bae1b6c8b70632cc",
+          "ast_sha256": "aba8c749939c634af8e3b0c509d4f4dfcc0d1de7cc4e467272b8f1212f74da61"
+        },
+        "stable_envs/envs/dmcontrol/suite.py": {
+          "sha256": "c57175a4a80244ad073cf366bfdc03275e58016327fc0517d08b579f908e8986",
+          "ast_sha256": "6b5ce65f322424dcb20fabc2b1479f0d8e97d88576765721bcade09cc5a08f47"
+        },
+        "stable_envs/envs/dmcontrol/humanoid.py": {
+          "sha256": "b1db2fb92745b46b80c5a8befa26bb61cd2a4abd03a6c0062da3859900ee114d",
+          "ast_sha256": "544e256f6b2db73b622ab4bb293bcae0331f9c207c4c9961646c2f7b0bdc63c5"
+        },
+        "stable_envs/envs/dmcontrol/ball_in_cup.py": {
+          "sha256": "2eb5c2ac14f5396a0039157b14aeb87f4096966700f74cc027e384c6e41cf6ad",
+          "ast_sha256": "a8a42d6471ffecab28d84c7fa2a1521424ff589b89a1bdae6bd387ad26ff37cc"
+        },
+        "stable_envs/envs/dmcontrol/manipulator.py": {
+          "sha256": "e9ab3755721ff9e673014495916af931bb099c7b03689d725c898c70841725cb",
+          "ast_sha256": "d3658cd4263df4095c1132477a33a6c1d54d2e280a631bd9426b00c0d52ca72a"
+        },
+        "stable_envs/envs/dmcontrol/reacher.py": {
+          "sha256": "995285543024da9d9d97fd2f414f804c1dab48870399dc98e77220036553a4d4",
+          "ast_sha256": "d5af8523e81c7ecc9dc48b36e6089e5d9ec973f57c3036401f5bad369d0f94b5"
+        },
+        "stable_envs/envs/dmcontrol/walker.py": {
+          "sha256": "e4a942a8cb7dd842eb18dbf7c0502dda7123f310e0f236f00f632b34d8987650",
+          "ast_sha256": "d87ffa43353d7afcbddee2359902bb1ae3b7699f7bdb0b57d04e097e8e9fcf3f"
+        },
+        "stable_envs/envs/dmcontrol/_aligned.py": {
+          "sha256": "4973b0abe5c604a60b6ec25b135690341e4ec3c857ee8cd81707724ddb17cee5",
+          "ast_sha256": "50a38cad418c6c9d3a4f60d5539708f9d9b5322a880b6fb98cb4cf373d3d2019"
+        },
+        "stable_envs/envs/dmcontrol/__init__.py": {
+          "sha256": "2607333f544ed5491f8abb54f3410c5633d85c64e3883a7b7d8e99742a474b8b",
+          "ast_sha256": "dbaf0f15622bfae0fb33ebfe5b2c92f273d10a079e53a47759a67993ac0d4703"
+        },
+        "stable_envs/envs/dmcontrol/cheetah.py": {
+          "sha256": "54b366a8a1a32903672b4936c27441f96acb0d1f844756a18279ce234f944177",
+          "ast_sha256": "c327fc9fa7572c8e8072960d5ca41aa270438d783086da5cbbd4a374172c3e21"
+        },
+        "stable_envs/envs/dmcontrol/point_mass.py": {
+          "sha256": "de288872ce45975d8c95f55edc115b532c6ff48b94daad006c6f48836e87cd89",
+          "ast_sha256": "6f63709cc7a457e986f57d99bd67b2364668273644b9991c62c0ca29b5e729db"
+        },
+        "stable_envs/envs/dmcontrol/cartpole.py": {
+          "sha256": "6e6d351a1b7254852e47fa74f160d68dcb8807bcb048ee54fd9a4f76857b8e16",
+          "ast_sha256": "51a65af2cb60ab4cd3899a027b4f6b26451fcf0d7c14ad905b278f7ab04f02a9"
+        },
+        "stable_envs/envs/dmcontrol/hopper.py": {
+          "sha256": "fd3b6c02bf848e3f5f7c4de242a23ce4e8bfa88daccfa780422f6d816452ca1c",
+          "ast_sha256": "d166df581de5d420e455281b1bfa5e15cdde4208e9e8be3fa62bef3d3131a2b5"
+        },
+        "stable_envs/envs/dmcontrol/_first_family.py": {
+          "sha256": "4714f9fa76c20149ce333cdc9483b596488dcaa562f3da5f5da314ddae667f78",
+          "ast_sha256": "f0a808d29592c3d066ac937c88a913f27b0bb663ae1da2d43b0dcbdce4cb2b28"
+        },
+        "stable_envs/envs/dmcontrol/_tendon.py": {
+          "sha256": "150f5d2b18fb6f0c54288a6e0321f3361ee34d432d81ca650b5d790c2a93fe9b",
+          "ast_sha256": "22b93089da8d5481eb0056ceb04f2a61e1f5927f9501c515e75de2cf95dd1546"
+        },
+        "stable_envs/envs/dmcontrol/_shading.py": {
+          "sha256": "63ce81a0761ad1c7dbc2bff87107921b120c14f53754573d525dddb1140ea39a",
+          "ast_sha256": "2aa4348708e288a8897bb67a12f7c0d1a10ebd2225568d91a9dea0a570d5c693"
+        },
+        "stable_envs/envs/dmcontrol/_cells.py": {
+          "sha256": "3998063df28c79cec828f7be8c7071acf4046d8792efc2daa513893bf25b2f21",
+          "ast_sha256": "1df8d315fed64d4dc80ad4a6e540f982eb07d960d9e8bafc2fc0672e8a940333"
+        },
+        "stable_envs/envs/dmcontrol/acrobot.py": {
+          "sha256": "f4b7b23d5f431e8c48bc3b4485235c311e9c05baa39432e99ea54040d9cb0243",
+          "ast_sha256": "9812af5d91cf45bc3be234eb881cf465505a0f8c6facd731eed25b78f8c52bcb"
+        },
+        "stable_envs/envs/dmcontrol/_continuation.py": {
+          "sha256": "3766b1d2b39c09ade7414fd4f1bd5a3d738d1ecd7c49fa3c9f0c8e89ab688aee",
+          "ast_sha256": "3a6a246d468d07d1d710e4cd6375456cb1a47963f29d184f4aeef935758194a2"
+        },
+        "stable_envs/envs/dmcontrol/trackcom.py": {
+          "sha256": "9b377572e13832444b7a0e4c620a3e95b0e7e8e321e299cc70f5ca060742bfd7",
+          "ast_sha256": "5c26d464c08a6d915a8a71c65760f54114eb119984d0004cbfb39bfe201d1e8b"
+        },
+        "stable_envs/envs/dmcontrol/pendulum.py": {
+          "sha256": "d459557031f62193ebc3049290cc05726d2d13070fe08752f8e90a63c8ee121b",
+          "ast_sha256": "25124e20c2a620c34115e461bf335301ae6976ce02b8c7e77340fe8a357b798b"
+        },
+        "stable_envs/envs/dmcontrol/_model.py": {
+          "sha256": "98a8709106459619ecc5efcb55ca079c360aff14d274451462f0591175bf4eb3",
+          "ast_sha256": "466addf2661008773014402c59baa2c480d3580e739837883d01f9985ae259c6"
+        },
+        "stable_envs/envs/dmcontrol/base.py": {
+          "sha256": "8dc8ea0b4c390b2fd88acddb9451628c5da56756348cbc5843648f0e35450bb5",
+          "ast_sha256": "0749c65dd41f8a27bd7281d71eefd2e5a00971eefc289d1511caa9a57bb68c92"
+        },
+        "stable_envs/envs/dmcontrol/swimmer.py": {
+          "sha256": "6adda465382640363873f44dd118f5818e6f2f18c8609f55ddc9a61bcb1ed003",
+          "ast_sha256": "28f1bc4177d8027bb3b19d4c90395576e538a6e19efb1c61539ba625c7fb5d7f"
+        },
+        "stable_envs/envs/dmcontrol/finger.py": {
+          "sha256": "04ebcc9a83f13db87d45a5c3ba930bb9eb87d25492e073b325266633f5b07123",
+          "ast_sha256": "1dd0650d4a4470b0e1d4481c04742afd190aeb73056b323bfa00377c676ad403"
+        },
+        "stable_envs/_adapters/dmcontrol_continuation.py": {
+          "sha256": "177f9e1a25e6fdb8ce99e6f1c5ada7b864f7ab2cf17decad6afad5b5395d30e5",
+          "ast_sha256": "33e901aa3d5e190f85e9a0e365bd94d38cc0c2f2ad232500b41684cfc34a08bc"
+        },
+        "stable_envs/_adapters/dmcontrol_aligned.py": {
+          "sha256": "8d694beead5f29124f058efecc5706e97b7b21433f949912694ba0e34e2440c4",
+          "ast_sha256": "f6623210090b8dbefde28169c8497fb1bc280d48b214d5488e7d43b27073f925"
+        },
+        "stable_envs/_adapters/dmcontrol_humanoid.py": {
+          "sha256": "788664f09e002cdf826cdd6f518b407f9f34dc9421874f18b02c9810d99653b9",
+          "ast_sha256": "c03f7874b2af4d779242d63e1bdeb6cdace7e9cb340514fde024cf1a6e4a3872"
+        },
+        "stable_envs/_adapters/dmcontrol.py": {
+          "sha256": "c01d8cfbd09e8fa11309123c17fc765e8715df8bdca3ab577953cb0b6c49fadb",
+          "ast_sha256": "0e2121e23929a9b66f558ecd3ebbfd536a93abffee0159f27ceb73b0d9ed3605"
+        }
+      }
+    },
+    "classic_control": {
+      "covered_revision": "98c65cbe6690404bf04a463e72003ba924b6c989",
+      "production_ast_unchanged": true,
+      "files": {
+        "stable_envs/envs/classic_control.py": {
+          "sha256": "e0e8d0ed34c7ae4a5662c63c49b0cd8cb35b99c3d11bd7329559e1beaa2c168a",
+          "ast_sha256": "26c7c0908cbd94666ce24d28b19463a83aa79d465f58e2c1346251ef365ea05a"
+        },
+        "stable_envs/envs/_classic_semantics.py": {
+          "sha256": "cedff005d19619b4a8d4ed4a280b0ab9dd3d4d51459cea6e7058fe518646f6be",
+          "ast_sha256": "99c99da114a48793a909855529525dc73347c87381b2b1a244443cb34606f201"
+        }
+      }
+    },
+    "navigation": {
+      "covered_revision": "6ee8d8cb54031ff61eb1de24eafd1dd5c066fc3e",
+      "production_ast_unchanged": true,
+      "files": {
+        "stable_envs/envs/navigation.py": {
+          "sha256": "46c3c3252a9aeff86d458788fe97a4b225d25f08cf44e2f74e82b6bf7a5c9f24",
+          "ast_sha256": "225c091bb79ad22ca9e942ba0b74911f91ca08cc4ca744e20896677aa3dc23f2"
+        }
+      }
+    },
+    "ogbench": {
+      "covered_revision": "7f2f3ae902e05928572f73ece608971c0a8f2595",
+      "production_ast_unchanged": true,
+      "files": {
+        "stable_envs/_adapters/ogbench.py": {
+          "sha256": "bc7876259a1b1af33418a3f6d55436c7bf9407bcbcbe4fa582b0df418c6b8e2f",
+          "ast_sha256": "33940ca84bf750ae45d469025281f8336f73dd8d6c01863e2ae6eaa92f0817e6"
+        },
+        "stable_envs/envs/ogbench/maze.py": {
+          "sha256": "7075f7b21b4c0342d9d66e1ab8660f0e984dbfaaa2cca851df22c20a72884f60",
+          "ast_sha256": "1665ac05e3375bf51ad46f7bd80e0ce9bc41ab960daef98e1962d3e9c7d42ad3"
+        }
+      }
+    }
+  },
+  "status": "PASS",
+  "closure_discrepancies": [],
+  "supplemental_evidence": "Five original Oscar terminal logs retrieved; no accepted gate rerun or production modification."
+}

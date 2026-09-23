@@ -1,0 +1,178 @@
+## SLURM PROLOG ###############################################################
+##    Job ID : 6597787
+##  Job Name : se-reacher-gate
+##  Nodelist : gpu2101
+##      CPUs : 
+##  Mem/Node : 32768 MB
+## Directory : /oscar/scratch/sboughan/se-semantic-recovery
+##   Job Started : Tue Sep 22 01:48:49 AM EDT 2026
+###############################################################################
+Tue Sep 22 01:48:49 2026       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 575.57.08              Driver Version: 575.57.08      CUDA Version: 12.9     |
+|-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA GeForce RTX 3090        On  |   00000000:81:00.0 Off |                  N/A |
+| 30%   27C    P8             35W /  350W |      18MiB /  24576MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+                                                                                         
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|    0   N/A  N/A          157488      G   /usr/libexec/Xorg                         5MiB |
++-----------------------------------------------------------------------------------------+
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+Users of this version of Gym should be able to simply replace 'import gym' with 'import gymnasium as gym' in the vast majority of cases.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+/oscar/scratch/sboughan/se-semantic-recovery/swm-reference/stable_worldmodel/envs/__init__.py:215: UserWarning: ale-py not found; ALE/* envs are unavailable. Install with: pip install 'stable-worldmodel[env]' or pip install ale-py.
+  from stable_worldmodel.envs import ale  # noqa: F401
+{
+  "swm_commit": "176d54532b3c0a251a4f509b74f2fdacc143a63d",
+  "device": "cuda",
+  "execution_mode": "DELEGATED_CPU",
+  "platform": "Linux-5.14.0-570.62.1.0.1.el9_6.x86_64-x86_64-with-glibc2.34",
+  "versions": {
+    "torch": "2.14.0+cu126",
+    "numpy": "2.5.3",
+    "dm-control": "1.0.44",
+    "mujoco": "3.11.0",
+    "tensordict": "0.14.2",
+    "stable-worldmodel": "0.1.1"
+  },
+  "cases": [
+    {
+      "batch": 1,
+      "seed": 0,
+      "reset": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "reward_done_error": 0.0
+    },
+    {
+      "batch": 1,
+      "seed": 17,
+      "reset": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "reward_done_error": 0.0
+    },
+    {
+      "batch": 1,
+      "seed": 42,
+      "reset": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "reward_done_error": 0.0
+    },
+    {
+      "batch": 1,
+      "positive_reward": 2.0,
+      "terminated": false,
+      "truncated": false
+    },
+    {
+      "batch": 1,
+      "time_limit_public_steps": 502,
+      "target_changes_on_implicit_reset": true,
+      "lifecycle_rng_replay": true
+    },
+    {
+      "batch": 3,
+      "seed": 0,
+      "reset": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "reward_done_error": 0.0
+    },
+    {
+      "batch": 3,
+      "seed": 17,
+      "reset": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "reward_done_error": 0.0
+    },
+    {
+      "batch": 3,
+      "seed": 42,
+      "reset": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "reward_done_error": 0.0
+    },
+    {
+      "batch": 3,
+      "positive_reward": 2.0,
+      "terminated": false,
+      "truncated": false
+    },
+    {
+      "batch": 3,
+      "time_limit_public_steps": 502,
+      "target_changes_on_implicit_reset": true,
+      "lifecycle_rng_replay": true
+    }
+  ],
+  "physical_variation": {
+    "arm_density": 650,
+    "finger_density": 1350,
+    "steps": 32,
+    "max_error": 0.0
+  }
+}
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+Users of this version of Gym should be able to simply replace 'import gym' with 'import gymnasium as gym' in the vast majority of cases.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+CartPole {'rows_sha256': '149ea639ef5956182f6f22c01f37d51f112a7d6ca43b1bc7c3252d33e02fed16', 'frame_sha256': '576780e7c2085cfcb1c562ada93b07d19e09595dc2e513e36568fb0037dd5e65', 'shape': [4, 400, 600, 3]}
+Pendulum {'rows_sha256': '1c23839a41afb907dbd382ce56ec191792a4c73db2bc9af2dbac1bd878859543', 'frame_sha256': 'bba21d5cc2a155f1dcd6415238516c9cd304c93415edf59cc75c9952941bda61', 'shape': [4, 500, 500, 3]}
+PushT {'rows_sha256': '9fffabf9ddd14b2eeaff9e161ef7ed15f9884344879686d7cbfc6935f801ff79', 'frame_sha256': 'b116fa941ce9eaaefd13aea394da2e60e16ebc714e868a387dc6713676b8cb9a', 'shape': [4, 96, 96, 3]}
+TwoRoom {'rows_sha256': '31186d8b6bcaedc4541fa62a38c44c46351e2dc49210c92d7c69776dec0ecf59', 'frame_sha256': 'ad6bde3489ecbf5a64173d71ceb442ef4ca27daf34d05910d03c32ed76eb62ab', 'shape': [4, 224, 224, 3]}
+DMCReacherHard {'rows_sha256': 'f75020b305103ee6854dd00a9cc996ef7e91b7f6fa94862f67c0753d20e0ee66', 'frame_sha256': 'f1df13288077f0684a9b113ecfe6d021f6309ec9a8a33a13ad4cf26be690bd8f', 'shape': [4, 84, 84, 3]}
+DMCCartpoleBalance {'rows_sha256': 'b2e8f3a405905006af47579a71e2e7eef50d24d4f8fab03a07cbb1572a01d35b', 'frame_sha256': 'd4c410f35f71e7eff2f35d18923df8ab148c59bd9e491804c1ef56c2dfbdb110', 'shape': [4, 84, 84, 3]}
+Warp 1.17.0 initialized:
+   CUDA Toolkit 12.9, Driver 12.9
+   Devices:
+     "cpu"      : "x86_64"
+     "cuda:0"   : "NVIDIA GeForce RTX 3090" (24 GiB, sm_86, mempool enabled)
+   Kernel cache:
+     /oscar/scratch/sboughan/se-semantic-recovery/cache/warp/1.17.0
+Module mujoco_warp._src.render_util 9978d2d load on device 'cuda:0' took 569.77 ms  (compiled)
+Module mujoco_warp._src.io c32a0eb load on device 'cuda:0' took 2497.38 ms  (compiled)
+Module mujoco_warp._src.bvh 7dab8b4 load on device 'cuda:0' took 919.96 ms  (compiled)
+Module mujoco_warp._src.smooth b9cc505 load on device 'cuda:0' took 4019.15 ms  (compiled)
+Module render__locals___render_megakernel_e16ee0c1 04e0bd4 load on device 'cuda:0' took 1299.68 ms  (compiled)
+Module render__locals___render_megakernel_00b7e313 a1e3bb1 load on device 'cuda:0' took 937.61 ms  (compiled)
+DMCHopperHop {'rows_sha256': '7e197bc170df9d000097963dcb99d0b3dcd3e0351604c74a04b51e9f6c021a1c', 'frame_sha256': 'f336a8b75f6b87fa3304e4b279ac91f8741f79302755b6247967a02f4d351026', 'shape': [4, 84, 84, 3]}
+REACHER_AND_FROZEN_RENDERER_GATE_PASS 7 cells
