@@ -3,7 +3,7 @@
 #SBATCH --partition=3090-gcondo
 #SBATCH --qos=cs-3090-gcondo
 #SBATCH --gres=gpu:1
-#SBATCH --constraint=geforce3090
+#SBATCH --constraint=geforce3090|a5000|a5500
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=32G
 #SBATCH --time=00:20:00

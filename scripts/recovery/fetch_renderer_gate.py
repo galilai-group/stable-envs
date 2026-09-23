@@ -23,7 +23,8 @@ def main(args):
     with np.load(path) as archive:
         rows = archive["states"][:4].copy()
     with se.make("FetchPickAndPlace", num_envs=4, device="cuda") as env:
-        frame = env._render(rows).cpu().numpy()
+        render = getattr(env, "_render", env.render)
+        frame = render(rows).cpu().numpy()
         frozen = {
             "FetchPickAndPlace": {
                 "rows_sha256": digest(rows.tobytes()),
