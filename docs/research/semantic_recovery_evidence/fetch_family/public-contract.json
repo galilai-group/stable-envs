@@ -1,0 +1,110 @@
+{
+  "FetchPickAndPlace": {
+    "public_readiness": true,
+    "typed_state": true,
+    "persistent_visual_across_resets": true,
+    "reset_visual_remains_until_replaced": true,
+    "persistent_visual_can_be_restored": true,
+    "visual_set_nonmutation": true,
+    "observation_integration": "DEFERRED"
+  },
+  "FetchPickAndPlaceDense": {
+    "public_readiness": true,
+    "typed_state": true,
+    "persistent_visual_across_resets": true,
+    "reset_visual_remains_until_replaced": true,
+    "persistent_visual_can_be_restored": true,
+    "visual_set_nonmutation": true,
+    "observation_integration": "DEFERRED"
+  },
+  "FetchPickAndPlaceDict": {
+    "public_readiness": true,
+    "typed_state": true,
+    "persistent_visual_across_resets": true,
+    "reset_visual_remains_until_replaced": true,
+    "persistent_visual_can_be_restored": true,
+    "visual_set_nonmutation": true,
+    "observation_integration": "DEFERRED"
+  },
+  "FetchReach": {
+    "public_readiness": true,
+    "typed_state": true,
+    "persistent_visual_across_resets": true,
+    "reset_visual_remains_until_replaced": true,
+    "persistent_visual_can_be_restored": true,
+    "visual_set_nonmutation": true,
+    "observation_integration": "DEFERRED"
+  },
+  "FetchReachDense": {
+    "public_readiness": true,
+    "typed_state": true,
+    "persistent_visual_across_resets": true,
+    "reset_visual_remains_until_replaced": true,
+    "persistent_visual_can_be_restored": true,
+    "visual_set_nonmutation": true,
+    "observation_integration": "DEFERRED"
+  },
+  "FetchReachDict": {
+    "public_readiness": true,
+    "typed_state": true,
+    "persistent_visual_across_resets": true,
+    "reset_visual_remains_until_replaced": true,
+    "persistent_visual_can_be_restored": true,
+    "visual_set_nonmutation": true,
+    "observation_integration": "DEFERRED"
+  },
+  "FetchPush": {
+    "public_readiness": true,
+    "typed_state": true,
+    "persistent_visual_across_resets": true,
+    "reset_visual_remains_until_replaced": true,
+    "persistent_visual_can_be_restored": true,
+    "visual_set_nonmutation": true,
+    "observation_integration": "DEFERRED"
+  },
+  "FetchPushDense": {
+    "public_readiness": true,
+    "typed_state": true,
+    "persistent_visual_across_resets": true,
+    "reset_visual_remains_until_replaced": true,
+    "persistent_visual_can_be_restored": true,
+    "visual_set_nonmutation": true,
+    "observation_integration": "DEFERRED"
+  },
+  "FetchPushDict": {
+    "public_readiness": true,
+    "typed_state": true,
+    "persistent_visual_across_resets": true,
+    "reset_visual_remains_until_replaced": true,
+    "persistent_visual_can_be_restored": true,
+    "visual_set_nonmutation": true,
+    "observation_integration": "DEFERRED"
+  },
+  "FetchSlide": {
+    "public_readiness": true,
+    "typed_state": true,
+    "persistent_visual_across_resets": true,
+    "reset_visual_remains_until_replaced": true,
+    "persistent_visual_can_be_restored": true,
+    "visual_set_nonmutation": true,
+    "observation_integration": "DEFERRED"
+  },
+  "FetchSlideDense": {
+    "public_readiness": true,
+    "typed_state": true,
+    "persistent_visual_across_resets": true,
+    "reset_visual_remains_until_replaced": true,
+    "persistent_visual_can_be_restored": true,
+    "visual_set_nonmutation": true,
+    "observation_integration": "DEFERRED"
+  },
+  "FetchSlideDict": {
+    "public_readiness": true,
+    "typed_state": true,
+    "persistent_visual_across_resets": true,
+    "reset_visual_remains_until_replaced": true,
+    "persistent_visual_can_be_restored": true,
+    "visual_set_nonmutation": true,
+    "observation_integration": "DEFERRED"
+  }
+}

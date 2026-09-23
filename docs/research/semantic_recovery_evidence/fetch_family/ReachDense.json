@@ -1,0 +1,365 @@
+{
+  "status": "PASS",
+  "task": "Reach",
+  "historical_id": "swm/FetchReachDense-v3",
+  "observation_integration": "DEFERRED",
+  "swm_commit": "176d54532b3c0a251a4f509b74f2fdacc143a63d",
+  "profile": {
+    "python": "3.12.11",
+    "versions": {
+      "numpy": "2.2.6",
+      "gymnasium": "1.2.3",
+      "gymnasium-robotics": "1.4.2",
+      "mujoco": "3.8.1",
+      "torch": "2.10.0",
+      "tensordict": "0.14.2"
+    }
+  },
+  "cases": [
+    {
+      "seed": 0,
+      "batch": 1,
+      "dtype": "float32",
+      "reset_exact": true,
+      "mocap_reset_exact": true,
+      "steps": 32,
+      "restored_steps": 8,
+      "different_history": 11,
+      "all_values_shapes_dtypes_exact": true,
+      "independent_snapshots": true,
+      "roundtrip": true,
+      "rng_replay": true,
+      "repeated_seed": true,
+      "no_sequential_restore": true,
+      "compact_restore_refused": true,
+      "cpu_renderer": "CPU_BACKEND_MISSING"
+    },
+    {
+      "seed": 0,
+      "batch": 1,
+      "dtype": "float64",
+      "reset_exact": true,
+      "mocap_reset_exact": true,
+      "steps": 32,
+      "restored_steps": 8,
+      "different_history": 11,
+      "all_values_shapes_dtypes_exact": true,
+      "independent_snapshots": true,
+      "roundtrip": true,
+      "rng_replay": true,
+      "repeated_seed": true,
+      "no_sequential_restore": true,
+      "compact_restore_refused": true,
+      "cpu_renderer": "CPU_BACKEND_MISSING"
+    },
+    {
+      "seed": 0,
+      "batch": 3,
+      "dtype": "float32",
+      "reset_exact": true,
+      "mocap_reset_exact": true,
+      "steps": 32,
+      "restored_steps": 8,
+      "different_history": 11,
+      "all_values_shapes_dtypes_exact": true,
+      "independent_snapshots": true,
+      "roundtrip": true,
+      "rng_replay": true,
+      "repeated_seed": true,
+      "no_sequential_restore": true,
+      "compact_restore_refused": true,
+      "cpu_renderer": "CPU_BACKEND_MISSING"
+    },
+    {
+      "seed": 0,
+      "batch": 3,
+      "dtype": "float64",
+      "reset_exact": true,
+      "mocap_reset_exact": true,
+      "steps": 32,
+      "restored_steps": 8,
+      "different_history": 11,
+      "all_values_shapes_dtypes_exact": true,
+      "independent_snapshots": true,
+      "roundtrip": true,
+      "rng_replay": true,
+      "repeated_seed": true,
+      "no_sequential_restore": true,
+      "compact_restore_refused": true,
+      "cpu_renderer": "CPU_BACKEND_MISSING"
+    },
+    {
+      "seed": 17,
+      "batch": 1,
+      "dtype": "float32",
+      "reset_exact": true,
+      "mocap_reset_exact": true,
+      "steps": 32,
+      "restored_steps": 8,
+      "different_history": 11,
+      "all_values_shapes_dtypes_exact": true,
+      "independent_snapshots": true,
+      "roundtrip": true,
+      "rng_replay": true,
+      "repeated_seed": true,
+      "no_sequential_restore": true,
+      "compact_restore_refused": true,
+      "cpu_renderer": "CPU_BACKEND_MISSING"
+    },
+    {
+      "seed": 17,
+      "batch": 1,
+      "dtype": "float64",
+      "reset_exact": true,
+      "mocap_reset_exact": true,
+      "steps": 32,
+      "restored_steps": 8,
+      "different_history": 11,
+      "all_values_shapes_dtypes_exact": true,
+      "independent_snapshots": true,
+      "roundtrip": true,
+      "rng_replay": true,
+      "repeated_seed": true,
+      "no_sequential_restore": true,
+      "compact_restore_refused": true,
+      "cpu_renderer": "CPU_BACKEND_MISSING"
+    },
+    {
+      "seed": 17,
+      "batch": 3,
+      "dtype": "float32",
+      "reset_exact": true,
+      "mocap_reset_exact": true,
+      "steps": 32,
+      "restored_steps": 8,
+      "different_history": 11,
+      "all_values_shapes_dtypes_exact": true,
+      "independent_snapshots": true,
+      "roundtrip": true,
+      "rng_replay": true,
+      "repeated_seed": true,
+      "no_sequential_restore": true,
+      "compact_restore_refused": true,
+      "cpu_renderer": "CPU_BACKEND_MISSING"
+    },
+    {
+      "seed": 17,
+      "batch": 3,
+      "dtype": "float64",
+      "reset_exact": true,
+      "mocap_reset_exact": true,
+      "steps": 32,
+      "restored_steps": 8,
+      "different_history": 11,
+      "all_values_shapes_dtypes_exact": true,
+      "independent_snapshots": true,
+      "roundtrip": true,
+      "rng_replay": true,
+      "repeated_seed": true,
+      "no_sequential_restore": true,
+      "compact_restore_refused": true,
+      "cpu_renderer": "CPU_BACKEND_MISSING"
+    },
+    {
+      "seed": 42,
+      "batch": 1,
+      "dtype": "float32",
+      "reset_exact": true,
+      "mocap_reset_exact": true,
+      "steps": 32,
+      "restored_steps": 8,
+      "different_history": 11,
+      "all_values_shapes_dtypes_exact": true,
+      "independent_snapshots": true,
+      "roundtrip": true,
+      "rng_replay": true,
+      "repeated_seed": true,
+      "no_sequential_restore": true,
+      "compact_restore_refused": true,
+      "cpu_renderer": "CPU_BACKEND_MISSING"
+    },
+    {
+      "seed": 42,
+      "batch": 1,
+      "dtype": "float64",
+      "reset_exact": true,
+      "mocap_reset_exact": true,
+      "steps": 32,
+      "restored_steps": 8,
+      "different_history": 11,
+      "all_values_shapes_dtypes_exact": true,
+      "independent_snapshots": true,
+      "roundtrip": true,
+      "rng_replay": true,
+      "repeated_seed": true,
+      "no_sequential_restore": true,
+      "compact_restore_refused": true,
+      "cpu_renderer": "CPU_BACKEND_MISSING"
+    },
+    {
+      "seed": 42,
+      "batch": 3,
+      "dtype": "float32",
+      "reset_exact": true,
+      "mocap_reset_exact": true,
+      "steps": 32,
+      "restored_steps": 8,
+      "different_history": 11,
+      "all_values_shapes_dtypes_exact": true,
+      "independent_snapshots": true,
+      "roundtrip": true,
+      "rng_replay": true,
+      "repeated_seed": true,
+      "no_sequential_restore": true,
+      "compact_restore_refused": true,
+      "cpu_renderer": "CPU_BACKEND_MISSING"
+    },
+    {
+      "seed": 42,
+      "batch": 3,
+      "dtype": "float64",
+      "reset_exact": true,
+      "mocap_reset_exact": true,
+      "steps": 32,
+      "restored_steps": 8,
+      "different_history": 11,
+      "all_values_shapes_dtypes_exact": true,
+      "independent_snapshots": true,
+      "roundtrip": true,
+      "rng_replay": true,
+      "repeated_seed": true,
+      "no_sequential_restore": true,
+      "compact_restore_refused": true,
+      "cpu_renderer": "CPU_BACKEND_MISSING"
+    }
+  ],
+  "threshold": [
+    {
+      "distance_hex": "0x0.0p+0",
+      "direct_rule_exact": true,
+      "public_step_distance_hex": "0x1.5d9ade0b18e2fp-13",
+      "public_step_exact": true
+    },
+    {
+      "distance_hex": "0x1.9999999999999p-5",
+      "direct_rule_exact": true,
+      "public_step_distance_hex": "0x1.99746c7250b09p-5",
+      "public_step_exact": true
+    },
+    {
+      "distance_hex": "0x1.999999999999ap-5",
+      "direct_rule_exact": true,
+      "public_step_distance_hex": "0x1.99746c7250b09p-5",
+      "public_step_exact": true
+    },
+    {
+      "distance_hex": "0x1.999999999999bp-5",
+      "direct_rule_exact": true,
+      "public_step_distance_hex": "0x1.99746c7250b09p-5",
+      "public_step_exact": true
+    },
+    {
+      "distance_hex": "0x1.999999999999ap-3",
+      "direct_rule_exact": true,
+      "public_step_distance_hex": "0x1.999032a696b01p-3",
+      "public_step_exact": true
+    }
+  ],
+  "lifecycle": [
+    {
+      "step": 49,
+      "terminated": false,
+      "truncated": false,
+      "exact": true
+    },
+    {
+      "step": 50,
+      "terminated": false,
+      "truncated": true,
+      "exact": true
+    },
+    {
+      "step": 51,
+      "terminated": false,
+      "truncated": true,
+      "exact": true
+    }
+  ],
+  "variation": {
+    "cases": [
+      {
+        "kind": "start_goal",
+        "values": {
+          "agent.start_position": [
+            1.32,
+            0.72
+          ],
+          "goal.start_position": [
+            1.25,
+            0.8,
+            0.4247
+          ]
+        },
+        "steps": 32,
+        "restored_steps": 8,
+        "exact": true,
+        "default_divergence": 0.0,
+        "rng_reset_exact": true,
+        "cleared_override_reset_exact": true
+      },
+      {
+        "kind": "visual",
+        "values": {
+          "table.color": [
+            0.2,
+            0.8,
+            0.3
+          ]
+        },
+        "steps": 32,
+        "restored_steps": 8,
+        "exact": true,
+        "default_divergence": 0.0,
+        "rng_reset_exact": true,
+        "cleared_override_reset_exact": true
+      }
+    ],
+    "seeded_visual_rng": [
+      {
+        "seed": 0,
+        "color": [
+          0.6107821838414379,
+          0.27133046244604864,
+          0.4930297075507972
+        ],
+        "simulator_rng_independent": true,
+        "exact": true
+      },
+      {
+        "seed": 17,
+        "color": [
+          0.8006271652368294,
+          0.15004699427127088,
+          0.9236250480208967
+        ],
+        "simulator_rng_independent": true,
+        "exact": true
+      },
+      {
+        "seed": 42,
+        "color": [
+          0.5118120432864742,
+          0.7356078159525232,
+          0.9578833991478597
+        ],
+        "simulator_rng_independent": true,
+        "exact": true
+      }
+    ],
+    "unseeded_visual_rng": "Fresh external entropy on every source variation_space.seed(None); no replay claim. Simulator replay certified with fixed Variation."
+  },
+  "execution_mode": "DELEGATED_CPU",
+  "cpu_renderer": "CPU_BACKEND_MISSING",
+  "renderer_gate": "SEPARATE_OSCAR_PROFILE_REQUIRED",
+  "canonical_state_sha256": "d91fd43bb4eb0860b75efb9bcd2e353de5976d15ed234d442c2715e230b7cb82"
+}

@@ -3932,7 +3932,7 @@
         }
       },
       "known_limitations": [
-        "Acceptance is only sparse flattened FetchPickAndPlace historical default and the explicitly bounded Variation subset; eleven siblings unaccepted.",
+        "Original representative backend acceptance remains closed. Family CPU expansion passes; eleven sibling promotions await Oscar job 6649686. SWM observation integration is DEFERRED.",
         "CPU full rendering is explicitly unsupported (CPU_BACKEND_MISSING). CPU physics authority uses MuJoCo3.8.1; GPU renderer profile is separately certified, without a physics parity claim.",
         "Persistent renderer defaults are preserved; SWM five-leaf default appearance randomization and full theoretical Variation surface remain uncertified. Seeded object-color sampling tested; unseeded visual reset draws fresh external entropy and is not replayable.",
         "Arbitrary externally injected simulator forces, other reset options/tasks, full upstream image similarity and final paired benchmarks remain outside scope."
@@ -3947,7 +3947,9 @@
       "closure_evidence": {
         "terminal_log": "docs/research/semantic_recovery_evidence/fetch_public/fetch-6646530.out",
         "actual_success_marker": "FETCH_GPU_GATE_PASS fetch-public-bf9101cb"
-      }
+      },
+      "observation_integration": "DEFERRED",
+      "family_candidate_evidence": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json"
     },
     {
       "historical_id": "swm/FetchPickAndPlaceDense-v3",
@@ -3979,59 +3981,283 @@
         },
         "constructor_signature": "self, env_id, init_value=None, resolution=224, render_mode=None, flatten=True, **kwargs",
         "accepted_task": null,
-        "source_constructor": "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py:FetchWrapper.__init__"
+        "source_constructor": "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py:FetchWrapper.__init__",
+        "candidate_task": {
+          "has_object": true,
+          "block_gripper": false,
+          "gripper_extra_height": 0.2,
+          "target_in_the_air": true,
+          "target_offset": 0.0,
+          "obj_range": 0.15,
+          "target_range": 0.15,
+          "distance_threshold": 0.05,
+          "n_substeps": 20
+        }
       },
       "state_schema": {
-        "status": "UNPROVED",
-        "corpus_fields": {},
-        "candidate_source_catalog": [],
-        "note": "Full TensorDict simulator snapshot; restore under the same persistent Variation"
+        "status": "PROVED_CPU_PENDING_RENDERER",
+        "fields": {
+          "qpos": {
+            "width": 22,
+            "dtype": "float64"
+          },
+          "qvel": {
+            "width": 21,
+            "dtype": "float64"
+          },
+          "time": {
+            "width": 1,
+            "dtype": "float64"
+          },
+          "task.initial_gripper_xpos": {
+            "width": 3,
+            "dtype": "float64"
+          },
+          "warmstart": {
+            "width": 21,
+            "dtype": "float64"
+          },
+          "controller.position": {
+            "width": 3,
+            "dtype": "float64"
+          },
+          "controller.quaternion": {
+            "width": 4,
+            "dtype": "float64"
+          },
+          "goal": {
+            "width": 3,
+            "dtype": "float64"
+          },
+          "lifecycle.elapsed_steps": {
+            "width": 1,
+            "dtype": "int64"
+          },
+          "rng.state_words": {
+            "width": 4,
+            "dtype": "int64"
+          },
+          "rng.increment_words": {
+            "width": 4,
+            "dtype": "int64"
+          },
+          "rng.has_uint32": {
+            "width": 1,
+            "dtype": "int64"
+          },
+          "rng.uinteger": {
+            "width": 1,
+            "dtype": "int64"
+          }
+        }
       },
       "restoration_order": [
-        "UNPROVED: no accepted full public State restoration; inspect pinned methods before implementation"
+        "qpos/qvel/goal/time/reset anchor; zero external forces; mj_forward; warmstart; gripper position/quaternion cache; TimeLimit; complete PCG64"
       ],
       "action_scaling_clipping_repeat": {
-        "summary": "UNACCEPTED: pinned wrapper step implementation indexed below; no candidate parity claim.",
-        "parity": "UNTESTED",
-        "source_catalog": [
-          "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py"
-        ]
+        "summary": "Clip [-1,1]; XYZ *.05 in input dtype; 20 substeps; source gripper behavior",
+        "parity": "PASS_EXACT_PUBLIC_CPU_FLOAT32_FLOAT64_CLIPPING_BOUNDARIES_SIMULTANEOUS_CONTROLS"
       },
       "reset_rng_semantics": {
-        "reset_parity": "UNTESTED",
-        "rng_lifecycle": "UNTESTED",
-        "source_catalog": [
-          "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py"
-        ],
-        "rng_structure_policy": "Complete documented named RNG state is atomic; individual-word minimality is not required."
+        "reset_parity": "PASS_EXACT_PUBLIC_CPU_SEEDED_REPEATED_SEED_MOCAP_AND_RESET_VARIATION_ORDER",
+        "rng_lifecycle": "PASS_COMPLETE_PCG64_SIMULATOR_REPLAY_FIXED_VARIATION_AND_SEPARATE_SEEDED_VISUAL_RNG",
+        "source_provenance": "docs/research/semantic_recovery_evidence/fetch_family/provenance.json"
       },
       "reward_success_terminated_truncated": {
-        "reward": "UNTESTED",
-        "lifecycle": "UNTESTED",
-        "source_catalog": [
-          "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py"
+        "reward": "-norm(achieved-goal)",
+        "success": "(norm(achieved-goal)<.05).astype(float32)",
+        "terminated": false,
+        "truncation": "elapsed_steps >= 50"
+      },
+      "accepted_variation_scope": "NOT_PROMOTED; CPU proved PASS_BOUNDED_CPU: agent.start_position, block.angle, block.mass, block.start_position, goal.start_position, object.color, table.color; physical mass where applicable; visual physics nonmutation; persistent versus reset settings",
+      "execution_mode": "DELEGATED_CPU",
+      "evidence_manifest": {
+        "candidate": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json",
+        "artifacts": [
+          {
+            "path": "docs/research/fetch_family_recovery.md",
+            "sha256": "8b8bde43529eec45bd39c64b1aecfc716e622298be4dc8ab7bed5d9d9cd891ec"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlace-alias.json",
+            "sha256": "8c5e5e39217416f83ab9034fd0cf1e507b2e966ffc14c5d89abc2c93c0b0d390"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlace-alias.out",
+            "sha256": "08552733be3c11ed53ca69ae84e68790ebe414a47d7566258b0e85cae0a9dd3c"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlace.json",
+            "sha256": "cd683d09cb9a61c8eb14e9b904b99d82feb4046db7c1b5145053620b9d2c66c6"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlace.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlaceDense.json",
+            "sha256": "fa16033348d4f7c86d927283840fb7a96589c7d1f20444f3f9e34e31eb3bdeb7"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlaceDense.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Push-alias.json",
+            "sha256": "e41d6a549377b3a169ef44f5e58725b3992eb3c31d0357e8d22425ca1931a11b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Push-alias.out",
+            "sha256": "052094017b4f1952fd94a291cd5a3f4c0d18f3c91224c2e8c634b32dda14fd8d"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Push.json",
+            "sha256": "ba090c157d758f4c5da5c805477bb9e024082891433cdd66f428deeea9ae85ae"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Push.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PushDense.json",
+            "sha256": "b382fa01826ebbf673571c9aa0ed375555a1f6d6c91ef655c6239af30d97d424"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PushDense.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Reach-alias.json",
+            "sha256": "83c12861a5c580c2b77f99edd1ee919bf3be8aa46b88b2236b5d11e8d45746bd"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Reach-alias.out",
+            "sha256": "dbe5b34cab13298875cb11d30f9113871199b52df75dd3b2ba390ea1f6710a9c"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Reach-invalid-fixture.out",
+            "sha256": "010c5a5bd55b37f4814432ffd040818a5bcf4a388bf9c4801bb819299dd89eb2"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Reach.json",
+            "sha256": "ce0ba2e5a836ec9456cc572ba68a310d954d61339422e7a76d88d9f889a255be"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Reach.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/ReachDense.json",
+            "sha256": "49e504054a8b974e0c6a1abf91de08ff7117321be073ba4dec92f4442b4ceefb"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/ReachDense.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Slide-alias.json",
+            "sha256": "76e09aaba8426d96d1e911a7b06b8a4d74ec0a2d3601b153aad8d52aa0608b20"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Slide-alias.out",
+            "sha256": "7cf31b6438de7bee25378c8ac45fb35d0ac7203e6a517b0bd0c3c58a42770040"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Slide.json",
+            "sha256": "316ed25c5afdc46b4c6a0ef829c55b10431c9907e4851204030b92767bb90e50"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Slide.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/SlideDense.json",
+            "sha256": "d7f3978506673b660eab6e773fc3faf6c0becfe12441ea12b36e7da0f0c7a50b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/SlideDense.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/canonical-PickAndPlace.json",
+            "sha256": "3bbfd4a6d7bd16c41a2cae64f6f29cf76e89271cbdd52bc71f706ec020122aaf"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/canonical-Push.json",
+            "sha256": "62ebe561180a97938162229c3665e59ca6c824f0d45949715309fe8603e4a4ca"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/canonical-Reach.json",
+            "sha256": "d91fd43bb4eb0860b75efb9bcd2e353de5976d15ed234d442c2715e230b7cb82"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/canonical-Slide.json",
+            "sha256": "f6e91797c8635ea34e573296a74f6c2a9b7c790992fc0dcef0794b58f5722ff8"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json",
+            "sha256": "d0b5042eda5f2fb86d75482139a46f165d9ee01ae3108024a95d9c24bdb82255"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/diff-review.json",
+            "sha256": "d1bd2b2e7c3060067fba5f6a714a86df695c5a98cacaed0703eec0b4f5e09b39"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/oscar-queue.json",
+            "sha256": "4602eed7ecc4fc46500dc3dead4dcbedb09c5b7dcab631ed41f3148d88277106"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/oscar-submit.json",
+            "sha256": "0d36c10591fb90f871d19d981bcb04803d5ba66d850c80ce517c7f5ac8b3b535"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/provenance.json",
+            "sha256": "febfeb847ed959d64048ed5b524300ee72d0aef8dbb41e33da1ca55cf318e19b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/provenance.out",
+            "sha256": "ee8ce15d761ecc615cb6e4e409e315aabccf616de3533d28f4c99d40fc3c5b75"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/public-contract.json",
+            "sha256": "c483bd9551c467685f905a290bc6f6b1a972a4504c66c0957df044e8609d4090"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/public-contract.out",
+            "sha256": "35a5de2ab25f65cfd7b570f2900845ac31f99f97215b3ee07ad71b0e19cf2e38"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/shared-legacy-tests.out",
+            "sha256": "2f5e9033e79d2ff217deb3b20a02c10517adada6974844b21a1323e3038cfb37"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/start_audit.json",
+            "sha256": "94b7ca1f4ce81116e9c1c4ec08888ce275f907b33ea5d7592acd1e906f6da41b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/final-readiness.out",
+            "sha256": "ff6a9d715c246b50fc3caabc87f59ee760435b2e0d9e9d8603e285442f075494"
+          }
         ]
       },
-      "accepted_variation_scope": "UNTESTED",
-      "execution_mode": null,
-      "evidence_manifest": {
-        "oracle": null,
-        "artifacts": []
-      },
-      "cpu_semantic_result": "NOT_ACCEPTED",
+      "cpu_semantic_result": "PASS_EXACT_CPU_FAMILY_GATE",
       "gpu_semantic_result": {
-        "status": "NOT_ACCEPTED",
-        "job": null,
-        "note": "CUDA State placement is not GPU physics for DELEGATED_CPU."
+        "status": "NOT_CLAIMED",
+        "note": "Separate GPU profile is renderer-only"
       },
-      "frozen_renderer_result": "PENDING",
+      "frozen_renderer_result": "PENDING_OSCAR_JOB_6649686_QOSGrpGRES",
       "known_limitations": [
-        "No dynamics/reward/done; qpos+goal renderer projection cannot restore velocities or episode horizon."
+        "Required Oscar frozen-renderer/full-State/alias-frame gate pending at QOSGrpGRES; no backend promotion.",
+        "SWM observation integration DEFERRED; historical Dict container is not a stable-envs backend responsibility.",
+        "CPU full rendering unsupported. CPU physics pinned to MuJoCo3.8.1; GPU profile renderer-only.",
+        "Bounded Variation only; full historical appearance randomization, task kwargs, external forces and final benchmarks uncertified."
       ],
       "remaining_gates": [
-        "No dynamics/reward/done; qpos+goal renderer projection cannot restore velocities or episode horizon."
+        "Oscar frozen renderer and full/private State-render/alias-frame gates; require downloaded hash checks and actual terminal marker."
       ],
-      "closure_code_check": null
+      "closure_code_check": "Family production diff inspected independently; shared machinery and all other accepted family code unchanged.",
+      "observation_integration": "DEFERRED",
+      "family_candidate_evidence": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json"
     },
     {
       "historical_id": "swm/FetchPickAndPlaceDict-v3",
@@ -4064,59 +4290,283 @@
         },
         "constructor_signature": "self, env_id, init_value=None, resolution=224, render_mode=None, flatten=True, **kwargs",
         "accepted_task": null,
-        "source_constructor": "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py:FetchWrapper.__init__"
+        "source_constructor": "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py:FetchWrapper.__init__",
+        "candidate_task": {
+          "has_object": true,
+          "block_gripper": false,
+          "gripper_extra_height": 0.2,
+          "target_in_the_air": true,
+          "target_offset": 0.0,
+          "obj_range": 0.15,
+          "target_range": 0.15,
+          "distance_threshold": 0.05,
+          "n_substeps": 20
+        }
       },
       "state_schema": {
-        "status": "UNPROVED",
-        "corpus_fields": {},
-        "candidate_source_catalog": [],
-        "note": "Full TensorDict simulator snapshot; restore under the same persistent Variation"
+        "status": "PROVED_CPU_PENDING_RENDERER",
+        "fields": {
+          "qpos": {
+            "width": 22,
+            "dtype": "float64"
+          },
+          "qvel": {
+            "width": 21,
+            "dtype": "float64"
+          },
+          "time": {
+            "width": 1,
+            "dtype": "float64"
+          },
+          "task.initial_gripper_xpos": {
+            "width": 3,
+            "dtype": "float64"
+          },
+          "warmstart": {
+            "width": 21,
+            "dtype": "float64"
+          },
+          "controller.position": {
+            "width": 3,
+            "dtype": "float64"
+          },
+          "controller.quaternion": {
+            "width": 4,
+            "dtype": "float64"
+          },
+          "goal": {
+            "width": 3,
+            "dtype": "float64"
+          },
+          "lifecycle.elapsed_steps": {
+            "width": 1,
+            "dtype": "int64"
+          },
+          "rng.state_words": {
+            "width": 4,
+            "dtype": "int64"
+          },
+          "rng.increment_words": {
+            "width": 4,
+            "dtype": "int64"
+          },
+          "rng.has_uint32": {
+            "width": 1,
+            "dtype": "int64"
+          },
+          "rng.uinteger": {
+            "width": 1,
+            "dtype": "int64"
+          }
+        }
       },
       "restoration_order": [
-        "UNPROVED: no accepted full public State restoration; inspect pinned methods before implementation"
+        "qpos/qvel/goal/time/reset anchor; zero external forces; mj_forward; warmstart; gripper position/quaternion cache; TimeLimit; complete PCG64"
       ],
       "action_scaling_clipping_repeat": {
-        "summary": "UNACCEPTED: pinned wrapper step implementation indexed below; no candidate parity claim.",
-        "parity": "UNTESTED",
-        "source_catalog": [
-          "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py"
-        ]
+        "summary": "Clip [-1,1]; XYZ *.05 in input dtype; 20 substeps; source gripper behavior",
+        "parity": "PASS_EXACT_PUBLIC_CPU_FLOAT32_FLOAT64_CLIPPING_BOUNDARIES_SIMULTANEOUS_CONTROLS"
       },
       "reset_rng_semantics": {
-        "reset_parity": "UNTESTED",
-        "rng_lifecycle": "UNTESTED",
-        "source_catalog": [
-          "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py"
-        ],
-        "rng_structure_policy": "Complete documented named RNG state is atomic; individual-word minimality is not required."
+        "reset_parity": "PASS_EXACT_PUBLIC_CPU_SEEDED_REPEATED_SEED_MOCAP_AND_RESET_VARIATION_ORDER",
+        "rng_lifecycle": "PASS_COMPLETE_PCG64_SIMULATOR_REPLAY_FIXED_VARIATION_AND_SEPARATE_SEEDED_VISUAL_RNG",
+        "source_provenance": "docs/research/semantic_recovery_evidence/fetch_family/provenance.json"
       },
       "reward_success_terminated_truncated": {
-        "reward": "UNTESTED",
-        "lifecycle": "UNTESTED",
-        "source_catalog": [
-          "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py"
+        "reward": "-(norm(achieved-goal)>.05).astype(float32)",
+        "success": "(norm(achieved-goal)<.05).astype(float32)",
+        "terminated": false,
+        "truncation": "elapsed_steps >= 50"
+      },
+      "accepted_variation_scope": "NOT_PROMOTED; CPU proved PASS_BOUNDED_CPU: agent.start_position, block.angle, block.mass, block.start_position, goal.start_position, object.color, table.color; physical mass where applicable; visual physics nonmutation; persistent versus reset settings",
+      "execution_mode": "DELEGATED_CPU",
+      "evidence_manifest": {
+        "candidate": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json",
+        "artifacts": [
+          {
+            "path": "docs/research/fetch_family_recovery.md",
+            "sha256": "8b8bde43529eec45bd39c64b1aecfc716e622298be4dc8ab7bed5d9d9cd891ec"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlace-alias.json",
+            "sha256": "8c5e5e39217416f83ab9034fd0cf1e507b2e966ffc14c5d89abc2c93c0b0d390"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlace-alias.out",
+            "sha256": "08552733be3c11ed53ca69ae84e68790ebe414a47d7566258b0e85cae0a9dd3c"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlace.json",
+            "sha256": "cd683d09cb9a61c8eb14e9b904b99d82feb4046db7c1b5145053620b9d2c66c6"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlace.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlaceDense.json",
+            "sha256": "fa16033348d4f7c86d927283840fb7a96589c7d1f20444f3f9e34e31eb3bdeb7"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlaceDense.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Push-alias.json",
+            "sha256": "e41d6a549377b3a169ef44f5e58725b3992eb3c31d0357e8d22425ca1931a11b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Push-alias.out",
+            "sha256": "052094017b4f1952fd94a291cd5a3f4c0d18f3c91224c2e8c634b32dda14fd8d"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Push.json",
+            "sha256": "ba090c157d758f4c5da5c805477bb9e024082891433cdd66f428deeea9ae85ae"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Push.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PushDense.json",
+            "sha256": "b382fa01826ebbf673571c9aa0ed375555a1f6d6c91ef655c6239af30d97d424"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PushDense.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Reach-alias.json",
+            "sha256": "83c12861a5c580c2b77f99edd1ee919bf3be8aa46b88b2236b5d11e8d45746bd"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Reach-alias.out",
+            "sha256": "dbe5b34cab13298875cb11d30f9113871199b52df75dd3b2ba390ea1f6710a9c"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Reach-invalid-fixture.out",
+            "sha256": "010c5a5bd55b37f4814432ffd040818a5bcf4a388bf9c4801bb819299dd89eb2"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Reach.json",
+            "sha256": "ce0ba2e5a836ec9456cc572ba68a310d954d61339422e7a76d88d9f889a255be"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Reach.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/ReachDense.json",
+            "sha256": "49e504054a8b974e0c6a1abf91de08ff7117321be073ba4dec92f4442b4ceefb"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/ReachDense.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Slide-alias.json",
+            "sha256": "76e09aaba8426d96d1e911a7b06b8a4d74ec0a2d3601b153aad8d52aa0608b20"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Slide-alias.out",
+            "sha256": "7cf31b6438de7bee25378c8ac45fb35d0ac7203e6a517b0bd0c3c58a42770040"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Slide.json",
+            "sha256": "316ed25c5afdc46b4c6a0ef829c55b10431c9907e4851204030b92767bb90e50"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Slide.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/SlideDense.json",
+            "sha256": "d7f3978506673b660eab6e773fc3faf6c0becfe12441ea12b36e7da0f0c7a50b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/SlideDense.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/canonical-PickAndPlace.json",
+            "sha256": "3bbfd4a6d7bd16c41a2cae64f6f29cf76e89271cbdd52bc71f706ec020122aaf"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/canonical-Push.json",
+            "sha256": "62ebe561180a97938162229c3665e59ca6c824f0d45949715309fe8603e4a4ca"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/canonical-Reach.json",
+            "sha256": "d91fd43bb4eb0860b75efb9bcd2e353de5976d15ed234d442c2715e230b7cb82"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/canonical-Slide.json",
+            "sha256": "f6e91797c8635ea34e573296a74f6c2a9b7c790992fc0dcef0794b58f5722ff8"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json",
+            "sha256": "d0b5042eda5f2fb86d75482139a46f165d9ee01ae3108024a95d9c24bdb82255"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/diff-review.json",
+            "sha256": "d1bd2b2e7c3060067fba5f6a714a86df695c5a98cacaed0703eec0b4f5e09b39"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/oscar-queue.json",
+            "sha256": "4602eed7ecc4fc46500dc3dead4dcbedb09c5b7dcab631ed41f3148d88277106"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/oscar-submit.json",
+            "sha256": "0d36c10591fb90f871d19d981bcb04803d5ba66d850c80ce517c7f5ac8b3b535"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/provenance.json",
+            "sha256": "febfeb847ed959d64048ed5b524300ee72d0aef8dbb41e33da1ca55cf318e19b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/provenance.out",
+            "sha256": "ee8ce15d761ecc615cb6e4e409e315aabccf616de3533d28f4c99d40fc3c5b75"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/public-contract.json",
+            "sha256": "c483bd9551c467685f905a290bc6f6b1a972a4504c66c0957df044e8609d4090"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/public-contract.out",
+            "sha256": "35a5de2ab25f65cfd7b570f2900845ac31f99f97215b3ee07ad71b0e19cf2e38"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/shared-legacy-tests.out",
+            "sha256": "2f5e9033e79d2ff217deb3b20a02c10517adada6974844b21a1323e3038cfb37"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/start_audit.json",
+            "sha256": "94b7ca1f4ce81116e9c1c4ec08888ce275f907b33ea5d7592acd1e906f6da41b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/final-readiness.out",
+            "sha256": "ff6a9d715c246b50fc3caabc87f59ee760435b2e0d9e9d8603e285442f075494"
+          }
         ]
       },
-      "accepted_variation_scope": "UNTESTED",
-      "execution_mode": null,
-      "evidence_manifest": {
-        "oracle": null,
-        "artifacts": []
-      },
-      "cpu_semantic_result": "NOT_ACCEPTED",
+      "cpu_semantic_result": "PASS_EXACT_CPU_FAMILY_GATE",
       "gpu_semantic_result": {
-        "status": "NOT_ACCEPTED",
-        "job": null,
-        "note": "CUDA State placement is not GPU physics for DELEGATED_CPU."
+        "status": "NOT_CLAIMED",
+        "note": "Separate GPU profile is renderer-only"
       },
-      "frozen_renderer_result": "PENDING",
+      "frozen_renderer_result": "PENDING_OSCAR_JOB_6649686_QOSGrpGRES",
       "known_limitations": [
-        "No dynamics/reward/done; qpos+goal renderer projection cannot restore velocities or episode horizon."
+        "Required Oscar frozen-renderer/full-State/alias-frame gate pending at QOSGrpGRES; no backend promotion.",
+        "SWM observation integration DEFERRED; historical Dict container is not a stable-envs backend responsibility.",
+        "CPU full rendering unsupported. CPU physics pinned to MuJoCo3.8.1; GPU profile renderer-only.",
+        "Bounded Variation only; full historical appearance randomization, task kwargs, external forces and final benchmarks uncertified."
       ],
       "remaining_gates": [
-        "No dynamics/reward/done; qpos+goal renderer projection cannot restore velocities or episode horizon."
+        "Oscar frozen renderer and full/private State-render/alias-frame gates; require downloaded hash checks and actual terminal marker."
       ],
-      "closure_code_check": null
+      "closure_code_check": "Family production diff inspected independently; shared machinery and all other accepted family code unchanged.",
+      "observation_integration": "DEFERRED",
+      "family_candidate_evidence": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json"
     },
     {
       "historical_id": "swm/FetchPush-v3",
@@ -4148,59 +4598,283 @@
         },
         "constructor_signature": "self, env_id, init_value=None, resolution=224, render_mode=None, flatten=True, **kwargs",
         "accepted_task": null,
-        "source_constructor": "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py:FetchWrapper.__init__"
+        "source_constructor": "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py:FetchWrapper.__init__",
+        "candidate_task": {
+          "has_object": true,
+          "block_gripper": true,
+          "gripper_extra_height": 0.0,
+          "target_in_the_air": false,
+          "target_offset": 0.0,
+          "obj_range": 0.15,
+          "target_range": 0.15,
+          "distance_threshold": 0.05,
+          "n_substeps": 20
+        }
       },
       "state_schema": {
-        "status": "UNPROVED",
-        "corpus_fields": {},
-        "candidate_source_catalog": [],
-        "note": "Full TensorDict simulator snapshot; restore under the same persistent Variation"
+        "status": "PROVED_CPU_PENDING_RENDERER",
+        "fields": {
+          "qpos": {
+            "width": 22,
+            "dtype": "float64"
+          },
+          "qvel": {
+            "width": 21,
+            "dtype": "float64"
+          },
+          "time": {
+            "width": 1,
+            "dtype": "float64"
+          },
+          "task.initial_gripper_xpos": {
+            "width": 3,
+            "dtype": "float64"
+          },
+          "warmstart": {
+            "width": 21,
+            "dtype": "float64"
+          },
+          "controller.position": {
+            "width": 3,
+            "dtype": "float64"
+          },
+          "controller.quaternion": {
+            "width": 4,
+            "dtype": "float64"
+          },
+          "goal": {
+            "width": 3,
+            "dtype": "float64"
+          },
+          "lifecycle.elapsed_steps": {
+            "width": 1,
+            "dtype": "int64"
+          },
+          "rng.state_words": {
+            "width": 4,
+            "dtype": "int64"
+          },
+          "rng.increment_words": {
+            "width": 4,
+            "dtype": "int64"
+          },
+          "rng.has_uint32": {
+            "width": 1,
+            "dtype": "int64"
+          },
+          "rng.uinteger": {
+            "width": 1,
+            "dtype": "int64"
+          }
+        }
       },
       "restoration_order": [
-        "UNPROVED: no accepted full public State restoration; inspect pinned methods before implementation"
+        "qpos/qvel/goal/time/reset anchor; zero external forces; mj_forward; warmstart; gripper position/quaternion cache; TimeLimit; complete PCG64"
       ],
       "action_scaling_clipping_repeat": {
-        "summary": "UNACCEPTED: pinned wrapper step implementation indexed below; no candidate parity claim.",
-        "parity": "UNTESTED",
-        "source_catalog": [
-          "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py"
-        ]
+        "summary": "Clip [-1,1]; XYZ *.05 in input dtype; 20 substeps; source gripper behavior",
+        "parity": "PASS_EXACT_PUBLIC_CPU_FLOAT32_FLOAT64_CLIPPING_BOUNDARIES_SIMULTANEOUS_CONTROLS"
       },
       "reset_rng_semantics": {
-        "reset_parity": "UNTESTED",
-        "rng_lifecycle": "UNTESTED",
-        "source_catalog": [
-          "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py"
-        ],
-        "rng_structure_policy": "Complete documented named RNG state is atomic; individual-word minimality is not required."
+        "reset_parity": "PASS_EXACT_PUBLIC_CPU_SEEDED_REPEATED_SEED_MOCAP_AND_RESET_VARIATION_ORDER",
+        "rng_lifecycle": "PASS_COMPLETE_PCG64_SIMULATOR_REPLAY_FIXED_VARIATION_AND_SEPARATE_SEEDED_VISUAL_RNG",
+        "source_provenance": "docs/research/semantic_recovery_evidence/fetch_family/provenance.json"
       },
       "reward_success_terminated_truncated": {
-        "reward": "UNTESTED",
-        "lifecycle": "UNTESTED",
-        "source_catalog": [
-          "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py"
+        "reward": "-(norm(achieved-goal)>.05).astype(float32)",
+        "success": "(norm(achieved-goal)<.05).astype(float32)",
+        "terminated": false,
+        "truncation": "elapsed_steps >= 50"
+      },
+      "accepted_variation_scope": "NOT_PROMOTED; CPU proved PASS_BOUNDED_CPU: agent.start_position, block.angle, block.mass, block.start_position, goal.start_position, object.color, table.color; physical mass where applicable; visual physics nonmutation; persistent versus reset settings",
+      "execution_mode": "DELEGATED_CPU",
+      "evidence_manifest": {
+        "candidate": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json",
+        "artifacts": [
+          {
+            "path": "docs/research/fetch_family_recovery.md",
+            "sha256": "8b8bde43529eec45bd39c64b1aecfc716e622298be4dc8ab7bed5d9d9cd891ec"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlace-alias.json",
+            "sha256": "8c5e5e39217416f83ab9034fd0cf1e507b2e966ffc14c5d89abc2c93c0b0d390"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlace-alias.out",
+            "sha256": "08552733be3c11ed53ca69ae84e68790ebe414a47d7566258b0e85cae0a9dd3c"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlace.json",
+            "sha256": "cd683d09cb9a61c8eb14e9b904b99d82feb4046db7c1b5145053620b9d2c66c6"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlace.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlaceDense.json",
+            "sha256": "fa16033348d4f7c86d927283840fb7a96589c7d1f20444f3f9e34e31eb3bdeb7"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlaceDense.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Push-alias.json",
+            "sha256": "e41d6a549377b3a169ef44f5e58725b3992eb3c31d0357e8d22425ca1931a11b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Push-alias.out",
+            "sha256": "052094017b4f1952fd94a291cd5a3f4c0d18f3c91224c2e8c634b32dda14fd8d"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Push.json",
+            "sha256": "ba090c157d758f4c5da5c805477bb9e024082891433cdd66f428deeea9ae85ae"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Push.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PushDense.json",
+            "sha256": "b382fa01826ebbf673571c9aa0ed375555a1f6d6c91ef655c6239af30d97d424"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PushDense.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Reach-alias.json",
+            "sha256": "83c12861a5c580c2b77f99edd1ee919bf3be8aa46b88b2236b5d11e8d45746bd"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Reach-alias.out",
+            "sha256": "dbe5b34cab13298875cb11d30f9113871199b52df75dd3b2ba390ea1f6710a9c"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Reach-invalid-fixture.out",
+            "sha256": "010c5a5bd55b37f4814432ffd040818a5bcf4a388bf9c4801bb819299dd89eb2"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Reach.json",
+            "sha256": "ce0ba2e5a836ec9456cc572ba68a310d954d61339422e7a76d88d9f889a255be"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Reach.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/ReachDense.json",
+            "sha256": "49e504054a8b974e0c6a1abf91de08ff7117321be073ba4dec92f4442b4ceefb"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/ReachDense.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Slide-alias.json",
+            "sha256": "76e09aaba8426d96d1e911a7b06b8a4d74ec0a2d3601b153aad8d52aa0608b20"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Slide-alias.out",
+            "sha256": "7cf31b6438de7bee25378c8ac45fb35d0ac7203e6a517b0bd0c3c58a42770040"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Slide.json",
+            "sha256": "316ed25c5afdc46b4c6a0ef829c55b10431c9907e4851204030b92767bb90e50"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Slide.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/SlideDense.json",
+            "sha256": "d7f3978506673b660eab6e773fc3faf6c0becfe12441ea12b36e7da0f0c7a50b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/SlideDense.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/canonical-PickAndPlace.json",
+            "sha256": "3bbfd4a6d7bd16c41a2cae64f6f29cf76e89271cbdd52bc71f706ec020122aaf"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/canonical-Push.json",
+            "sha256": "62ebe561180a97938162229c3665e59ca6c824f0d45949715309fe8603e4a4ca"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/canonical-Reach.json",
+            "sha256": "d91fd43bb4eb0860b75efb9bcd2e353de5976d15ed234d442c2715e230b7cb82"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/canonical-Slide.json",
+            "sha256": "f6e91797c8635ea34e573296a74f6c2a9b7c790992fc0dcef0794b58f5722ff8"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json",
+            "sha256": "d0b5042eda5f2fb86d75482139a46f165d9ee01ae3108024a95d9c24bdb82255"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/diff-review.json",
+            "sha256": "d1bd2b2e7c3060067fba5f6a714a86df695c5a98cacaed0703eec0b4f5e09b39"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/oscar-queue.json",
+            "sha256": "4602eed7ecc4fc46500dc3dead4dcbedb09c5b7dcab631ed41f3148d88277106"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/oscar-submit.json",
+            "sha256": "0d36c10591fb90f871d19d981bcb04803d5ba66d850c80ce517c7f5ac8b3b535"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/provenance.json",
+            "sha256": "febfeb847ed959d64048ed5b524300ee72d0aef8dbb41e33da1ca55cf318e19b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/provenance.out",
+            "sha256": "ee8ce15d761ecc615cb6e4e409e315aabccf616de3533d28f4c99d40fc3c5b75"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/public-contract.json",
+            "sha256": "c483bd9551c467685f905a290bc6f6b1a972a4504c66c0957df044e8609d4090"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/public-contract.out",
+            "sha256": "35a5de2ab25f65cfd7b570f2900845ac31f99f97215b3ee07ad71b0e19cf2e38"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/shared-legacy-tests.out",
+            "sha256": "2f5e9033e79d2ff217deb3b20a02c10517adada6974844b21a1323e3038cfb37"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/start_audit.json",
+            "sha256": "94b7ca1f4ce81116e9c1c4ec08888ce275f907b33ea5d7592acd1e906f6da41b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/final-readiness.out",
+            "sha256": "ff6a9d715c246b50fc3caabc87f59ee760435b2e0d9e9d8603e285442f075494"
+          }
         ]
       },
-      "accepted_variation_scope": "UNTESTED",
-      "execution_mode": null,
-      "evidence_manifest": {
-        "oracle": null,
-        "artifacts": []
-      },
-      "cpu_semantic_result": "NOT_ACCEPTED",
+      "cpu_semantic_result": "PASS_EXACT_CPU_FAMILY_GATE",
       "gpu_semantic_result": {
-        "status": "NOT_ACCEPTED",
-        "job": null,
-        "note": "CUDA State placement is not GPU physics for DELEGATED_CPU."
+        "status": "NOT_CLAIMED",
+        "note": "Separate GPU profile is renderer-only"
       },
-      "frozen_renderer_result": "PENDING",
+      "frozen_renderer_result": "PENDING_OSCAR_JOB_6649686_QOSGrpGRES",
       "known_limitations": [
-        "No dynamics/reward/done; qpos+goal renderer projection cannot restore velocities or episode horizon."
+        "Required Oscar frozen-renderer/full-State/alias-frame gate pending at QOSGrpGRES; no backend promotion.",
+        "SWM observation integration DEFERRED; historical Dict container is not a stable-envs backend responsibility.",
+        "CPU full rendering unsupported. CPU physics pinned to MuJoCo3.8.1; GPU profile renderer-only.",
+        "Bounded Variation only; full historical appearance randomization, task kwargs, external forces and final benchmarks uncertified."
       ],
       "remaining_gates": [
-        "No dynamics/reward/done; qpos+goal renderer projection cannot restore velocities or episode horizon."
+        "Oscar frozen renderer and full/private State-render/alias-frame gates; require downloaded hash checks and actual terminal marker."
       ],
-      "closure_code_check": null
+      "closure_code_check": "Family production diff inspected independently; shared machinery and all other accepted family code unchanged.",
+      "observation_integration": "DEFERRED",
+      "family_candidate_evidence": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json"
     },
     {
       "historical_id": "swm/FetchPushDense-v3",
@@ -4232,59 +4906,283 @@
         },
         "constructor_signature": "self, env_id, init_value=None, resolution=224, render_mode=None, flatten=True, **kwargs",
         "accepted_task": null,
-        "source_constructor": "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py:FetchWrapper.__init__"
+        "source_constructor": "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py:FetchWrapper.__init__",
+        "candidate_task": {
+          "has_object": true,
+          "block_gripper": true,
+          "gripper_extra_height": 0.0,
+          "target_in_the_air": false,
+          "target_offset": 0.0,
+          "obj_range": 0.15,
+          "target_range": 0.15,
+          "distance_threshold": 0.05,
+          "n_substeps": 20
+        }
       },
       "state_schema": {
-        "status": "UNPROVED",
-        "corpus_fields": {},
-        "candidate_source_catalog": [],
-        "note": "Full TensorDict simulator snapshot; restore under the same persistent Variation"
+        "status": "PROVED_CPU_PENDING_RENDERER",
+        "fields": {
+          "qpos": {
+            "width": 22,
+            "dtype": "float64"
+          },
+          "qvel": {
+            "width": 21,
+            "dtype": "float64"
+          },
+          "time": {
+            "width": 1,
+            "dtype": "float64"
+          },
+          "task.initial_gripper_xpos": {
+            "width": 3,
+            "dtype": "float64"
+          },
+          "warmstart": {
+            "width": 21,
+            "dtype": "float64"
+          },
+          "controller.position": {
+            "width": 3,
+            "dtype": "float64"
+          },
+          "controller.quaternion": {
+            "width": 4,
+            "dtype": "float64"
+          },
+          "goal": {
+            "width": 3,
+            "dtype": "float64"
+          },
+          "lifecycle.elapsed_steps": {
+            "width": 1,
+            "dtype": "int64"
+          },
+          "rng.state_words": {
+            "width": 4,
+            "dtype": "int64"
+          },
+          "rng.increment_words": {
+            "width": 4,
+            "dtype": "int64"
+          },
+          "rng.has_uint32": {
+            "width": 1,
+            "dtype": "int64"
+          },
+          "rng.uinteger": {
+            "width": 1,
+            "dtype": "int64"
+          }
+        }
       },
       "restoration_order": [
-        "UNPROVED: no accepted full public State restoration; inspect pinned methods before implementation"
+        "qpos/qvel/goal/time/reset anchor; zero external forces; mj_forward; warmstart; gripper position/quaternion cache; TimeLimit; complete PCG64"
       ],
       "action_scaling_clipping_repeat": {
-        "summary": "UNACCEPTED: pinned wrapper step implementation indexed below; no candidate parity claim.",
-        "parity": "UNTESTED",
-        "source_catalog": [
-          "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py"
-        ]
+        "summary": "Clip [-1,1]; XYZ *.05 in input dtype; 20 substeps; source gripper behavior",
+        "parity": "PASS_EXACT_PUBLIC_CPU_FLOAT32_FLOAT64_CLIPPING_BOUNDARIES_SIMULTANEOUS_CONTROLS"
       },
       "reset_rng_semantics": {
-        "reset_parity": "UNTESTED",
-        "rng_lifecycle": "UNTESTED",
-        "source_catalog": [
-          "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py"
-        ],
-        "rng_structure_policy": "Complete documented named RNG state is atomic; individual-word minimality is not required."
+        "reset_parity": "PASS_EXACT_PUBLIC_CPU_SEEDED_REPEATED_SEED_MOCAP_AND_RESET_VARIATION_ORDER",
+        "rng_lifecycle": "PASS_COMPLETE_PCG64_SIMULATOR_REPLAY_FIXED_VARIATION_AND_SEPARATE_SEEDED_VISUAL_RNG",
+        "source_provenance": "docs/research/semantic_recovery_evidence/fetch_family/provenance.json"
       },
       "reward_success_terminated_truncated": {
-        "reward": "UNTESTED",
-        "lifecycle": "UNTESTED",
-        "source_catalog": [
-          "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py"
+        "reward": "-norm(achieved-goal)",
+        "success": "(norm(achieved-goal)<.05).astype(float32)",
+        "terminated": false,
+        "truncation": "elapsed_steps >= 50"
+      },
+      "accepted_variation_scope": "NOT_PROMOTED; CPU proved PASS_BOUNDED_CPU: agent.start_position, block.angle, block.mass, block.start_position, goal.start_position, object.color, table.color; physical mass where applicable; visual physics nonmutation; persistent versus reset settings",
+      "execution_mode": "DELEGATED_CPU",
+      "evidence_manifest": {
+        "candidate": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json",
+        "artifacts": [
+          {
+            "path": "docs/research/fetch_family_recovery.md",
+            "sha256": "8b8bde43529eec45bd39c64b1aecfc716e622298be4dc8ab7bed5d9d9cd891ec"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlace-alias.json",
+            "sha256": "8c5e5e39217416f83ab9034fd0cf1e507b2e966ffc14c5d89abc2c93c0b0d390"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlace-alias.out",
+            "sha256": "08552733be3c11ed53ca69ae84e68790ebe414a47d7566258b0e85cae0a9dd3c"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlace.json",
+            "sha256": "cd683d09cb9a61c8eb14e9b904b99d82feb4046db7c1b5145053620b9d2c66c6"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlace.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlaceDense.json",
+            "sha256": "fa16033348d4f7c86d927283840fb7a96589c7d1f20444f3f9e34e31eb3bdeb7"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlaceDense.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Push-alias.json",
+            "sha256": "e41d6a549377b3a169ef44f5e58725b3992eb3c31d0357e8d22425ca1931a11b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Push-alias.out",
+            "sha256": "052094017b4f1952fd94a291cd5a3f4c0d18f3c91224c2e8c634b32dda14fd8d"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Push.json",
+            "sha256": "ba090c157d758f4c5da5c805477bb9e024082891433cdd66f428deeea9ae85ae"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Push.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PushDense.json",
+            "sha256": "b382fa01826ebbf673571c9aa0ed375555a1f6d6c91ef655c6239af30d97d424"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PushDense.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Reach-alias.json",
+            "sha256": "83c12861a5c580c2b77f99edd1ee919bf3be8aa46b88b2236b5d11e8d45746bd"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Reach-alias.out",
+            "sha256": "dbe5b34cab13298875cb11d30f9113871199b52df75dd3b2ba390ea1f6710a9c"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Reach-invalid-fixture.out",
+            "sha256": "010c5a5bd55b37f4814432ffd040818a5bcf4a388bf9c4801bb819299dd89eb2"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Reach.json",
+            "sha256": "ce0ba2e5a836ec9456cc572ba68a310d954d61339422e7a76d88d9f889a255be"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Reach.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/ReachDense.json",
+            "sha256": "49e504054a8b974e0c6a1abf91de08ff7117321be073ba4dec92f4442b4ceefb"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/ReachDense.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Slide-alias.json",
+            "sha256": "76e09aaba8426d96d1e911a7b06b8a4d74ec0a2d3601b153aad8d52aa0608b20"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Slide-alias.out",
+            "sha256": "7cf31b6438de7bee25378c8ac45fb35d0ac7203e6a517b0bd0c3c58a42770040"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Slide.json",
+            "sha256": "316ed25c5afdc46b4c6a0ef829c55b10431c9907e4851204030b92767bb90e50"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Slide.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/SlideDense.json",
+            "sha256": "d7f3978506673b660eab6e773fc3faf6c0becfe12441ea12b36e7da0f0c7a50b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/SlideDense.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/canonical-PickAndPlace.json",
+            "sha256": "3bbfd4a6d7bd16c41a2cae64f6f29cf76e89271cbdd52bc71f706ec020122aaf"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/canonical-Push.json",
+            "sha256": "62ebe561180a97938162229c3665e59ca6c824f0d45949715309fe8603e4a4ca"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/canonical-Reach.json",
+            "sha256": "d91fd43bb4eb0860b75efb9bcd2e353de5976d15ed234d442c2715e230b7cb82"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/canonical-Slide.json",
+            "sha256": "f6e91797c8635ea34e573296a74f6c2a9b7c790992fc0dcef0794b58f5722ff8"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json",
+            "sha256": "d0b5042eda5f2fb86d75482139a46f165d9ee01ae3108024a95d9c24bdb82255"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/diff-review.json",
+            "sha256": "d1bd2b2e7c3060067fba5f6a714a86df695c5a98cacaed0703eec0b4f5e09b39"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/oscar-queue.json",
+            "sha256": "4602eed7ecc4fc46500dc3dead4dcbedb09c5b7dcab631ed41f3148d88277106"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/oscar-submit.json",
+            "sha256": "0d36c10591fb90f871d19d981bcb04803d5ba66d850c80ce517c7f5ac8b3b535"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/provenance.json",
+            "sha256": "febfeb847ed959d64048ed5b524300ee72d0aef8dbb41e33da1ca55cf318e19b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/provenance.out",
+            "sha256": "ee8ce15d761ecc615cb6e4e409e315aabccf616de3533d28f4c99d40fc3c5b75"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/public-contract.json",
+            "sha256": "c483bd9551c467685f905a290bc6f6b1a972a4504c66c0957df044e8609d4090"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/public-contract.out",
+            "sha256": "35a5de2ab25f65cfd7b570f2900845ac31f99f97215b3ee07ad71b0e19cf2e38"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/shared-legacy-tests.out",
+            "sha256": "2f5e9033e79d2ff217deb3b20a02c10517adada6974844b21a1323e3038cfb37"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/start_audit.json",
+            "sha256": "94b7ca1f4ce81116e9c1c4ec08888ce275f907b33ea5d7592acd1e906f6da41b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/final-readiness.out",
+            "sha256": "ff6a9d715c246b50fc3caabc87f59ee760435b2e0d9e9d8603e285442f075494"
+          }
         ]
       },
-      "accepted_variation_scope": "UNTESTED",
-      "execution_mode": null,
-      "evidence_manifest": {
-        "oracle": null,
-        "artifacts": []
-      },
-      "cpu_semantic_result": "NOT_ACCEPTED",
+      "cpu_semantic_result": "PASS_EXACT_CPU_FAMILY_GATE",
       "gpu_semantic_result": {
-        "status": "NOT_ACCEPTED",
-        "job": null,
-        "note": "CUDA State placement is not GPU physics for DELEGATED_CPU."
+        "status": "NOT_CLAIMED",
+        "note": "Separate GPU profile is renderer-only"
       },
-      "frozen_renderer_result": "PENDING",
+      "frozen_renderer_result": "PENDING_OSCAR_JOB_6649686_QOSGrpGRES",
       "known_limitations": [
-        "No dynamics/reward/done; qpos+goal renderer projection cannot restore velocities or episode horizon."
+        "Required Oscar frozen-renderer/full-State/alias-frame gate pending at QOSGrpGRES; no backend promotion.",
+        "SWM observation integration DEFERRED; historical Dict container is not a stable-envs backend responsibility.",
+        "CPU full rendering unsupported. CPU physics pinned to MuJoCo3.8.1; GPU profile renderer-only.",
+        "Bounded Variation only; full historical appearance randomization, task kwargs, external forces and final benchmarks uncertified."
       ],
       "remaining_gates": [
-        "No dynamics/reward/done; qpos+goal renderer projection cannot restore velocities or episode horizon."
+        "Oscar frozen renderer and full/private State-render/alias-frame gates; require downloaded hash checks and actual terminal marker."
       ],
-      "closure_code_check": null
+      "closure_code_check": "Family production diff inspected independently; shared machinery and all other accepted family code unchanged.",
+      "observation_integration": "DEFERRED",
+      "family_candidate_evidence": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json"
     },
     {
       "historical_id": "swm/FetchPushDict-v3",
@@ -4317,59 +5215,283 @@
         },
         "constructor_signature": "self, env_id, init_value=None, resolution=224, render_mode=None, flatten=True, **kwargs",
         "accepted_task": null,
-        "source_constructor": "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py:FetchWrapper.__init__"
+        "source_constructor": "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py:FetchWrapper.__init__",
+        "candidate_task": {
+          "has_object": true,
+          "block_gripper": true,
+          "gripper_extra_height": 0.0,
+          "target_in_the_air": false,
+          "target_offset": 0.0,
+          "obj_range": 0.15,
+          "target_range": 0.15,
+          "distance_threshold": 0.05,
+          "n_substeps": 20
+        }
       },
       "state_schema": {
-        "status": "UNPROVED",
-        "corpus_fields": {},
-        "candidate_source_catalog": [],
-        "note": "Full TensorDict simulator snapshot; restore under the same persistent Variation"
+        "status": "PROVED_CPU_PENDING_RENDERER",
+        "fields": {
+          "qpos": {
+            "width": 22,
+            "dtype": "float64"
+          },
+          "qvel": {
+            "width": 21,
+            "dtype": "float64"
+          },
+          "time": {
+            "width": 1,
+            "dtype": "float64"
+          },
+          "task.initial_gripper_xpos": {
+            "width": 3,
+            "dtype": "float64"
+          },
+          "warmstart": {
+            "width": 21,
+            "dtype": "float64"
+          },
+          "controller.position": {
+            "width": 3,
+            "dtype": "float64"
+          },
+          "controller.quaternion": {
+            "width": 4,
+            "dtype": "float64"
+          },
+          "goal": {
+            "width": 3,
+            "dtype": "float64"
+          },
+          "lifecycle.elapsed_steps": {
+            "width": 1,
+            "dtype": "int64"
+          },
+          "rng.state_words": {
+            "width": 4,
+            "dtype": "int64"
+          },
+          "rng.increment_words": {
+            "width": 4,
+            "dtype": "int64"
+          },
+          "rng.has_uint32": {
+            "width": 1,
+            "dtype": "int64"
+          },
+          "rng.uinteger": {
+            "width": 1,
+            "dtype": "int64"
+          }
+        }
       },
       "restoration_order": [
-        "UNPROVED: no accepted full public State restoration; inspect pinned methods before implementation"
+        "qpos/qvel/goal/time/reset anchor; zero external forces; mj_forward; warmstart; gripper position/quaternion cache; TimeLimit; complete PCG64"
       ],
       "action_scaling_clipping_repeat": {
-        "summary": "UNACCEPTED: pinned wrapper step implementation indexed below; no candidate parity claim.",
-        "parity": "UNTESTED",
-        "source_catalog": [
-          "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py"
-        ]
+        "summary": "Clip [-1,1]; XYZ *.05 in input dtype; 20 substeps; source gripper behavior",
+        "parity": "PASS_EXACT_PUBLIC_CPU_FLOAT32_FLOAT64_CLIPPING_BOUNDARIES_SIMULTANEOUS_CONTROLS"
       },
       "reset_rng_semantics": {
-        "reset_parity": "UNTESTED",
-        "rng_lifecycle": "UNTESTED",
-        "source_catalog": [
-          "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py"
-        ],
-        "rng_structure_policy": "Complete documented named RNG state is atomic; individual-word minimality is not required."
+        "reset_parity": "PASS_EXACT_PUBLIC_CPU_SEEDED_REPEATED_SEED_MOCAP_AND_RESET_VARIATION_ORDER",
+        "rng_lifecycle": "PASS_COMPLETE_PCG64_SIMULATOR_REPLAY_FIXED_VARIATION_AND_SEPARATE_SEEDED_VISUAL_RNG",
+        "source_provenance": "docs/research/semantic_recovery_evidence/fetch_family/provenance.json"
       },
       "reward_success_terminated_truncated": {
-        "reward": "UNTESTED",
-        "lifecycle": "UNTESTED",
-        "source_catalog": [
-          "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py"
+        "reward": "-(norm(achieved-goal)>.05).astype(float32)",
+        "success": "(norm(achieved-goal)<.05).astype(float32)",
+        "terminated": false,
+        "truncation": "elapsed_steps >= 50"
+      },
+      "accepted_variation_scope": "NOT_PROMOTED; CPU proved PASS_BOUNDED_CPU: agent.start_position, block.angle, block.mass, block.start_position, goal.start_position, object.color, table.color; physical mass where applicable; visual physics nonmutation; persistent versus reset settings",
+      "execution_mode": "DELEGATED_CPU",
+      "evidence_manifest": {
+        "candidate": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json",
+        "artifacts": [
+          {
+            "path": "docs/research/fetch_family_recovery.md",
+            "sha256": "8b8bde43529eec45bd39c64b1aecfc716e622298be4dc8ab7bed5d9d9cd891ec"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlace-alias.json",
+            "sha256": "8c5e5e39217416f83ab9034fd0cf1e507b2e966ffc14c5d89abc2c93c0b0d390"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlace-alias.out",
+            "sha256": "08552733be3c11ed53ca69ae84e68790ebe414a47d7566258b0e85cae0a9dd3c"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlace.json",
+            "sha256": "cd683d09cb9a61c8eb14e9b904b99d82feb4046db7c1b5145053620b9d2c66c6"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlace.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlaceDense.json",
+            "sha256": "fa16033348d4f7c86d927283840fb7a96589c7d1f20444f3f9e34e31eb3bdeb7"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlaceDense.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Push-alias.json",
+            "sha256": "e41d6a549377b3a169ef44f5e58725b3992eb3c31d0357e8d22425ca1931a11b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Push-alias.out",
+            "sha256": "052094017b4f1952fd94a291cd5a3f4c0d18f3c91224c2e8c634b32dda14fd8d"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Push.json",
+            "sha256": "ba090c157d758f4c5da5c805477bb9e024082891433cdd66f428deeea9ae85ae"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Push.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PushDense.json",
+            "sha256": "b382fa01826ebbf673571c9aa0ed375555a1f6d6c91ef655c6239af30d97d424"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PushDense.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Reach-alias.json",
+            "sha256": "83c12861a5c580c2b77f99edd1ee919bf3be8aa46b88b2236b5d11e8d45746bd"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Reach-alias.out",
+            "sha256": "dbe5b34cab13298875cb11d30f9113871199b52df75dd3b2ba390ea1f6710a9c"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Reach-invalid-fixture.out",
+            "sha256": "010c5a5bd55b37f4814432ffd040818a5bcf4a388bf9c4801bb819299dd89eb2"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Reach.json",
+            "sha256": "ce0ba2e5a836ec9456cc572ba68a310d954d61339422e7a76d88d9f889a255be"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Reach.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/ReachDense.json",
+            "sha256": "49e504054a8b974e0c6a1abf91de08ff7117321be073ba4dec92f4442b4ceefb"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/ReachDense.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Slide-alias.json",
+            "sha256": "76e09aaba8426d96d1e911a7b06b8a4d74ec0a2d3601b153aad8d52aa0608b20"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Slide-alias.out",
+            "sha256": "7cf31b6438de7bee25378c8ac45fb35d0ac7203e6a517b0bd0c3c58a42770040"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Slide.json",
+            "sha256": "316ed25c5afdc46b4c6a0ef829c55b10431c9907e4851204030b92767bb90e50"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Slide.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/SlideDense.json",
+            "sha256": "d7f3978506673b660eab6e773fc3faf6c0becfe12441ea12b36e7da0f0c7a50b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/SlideDense.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/canonical-PickAndPlace.json",
+            "sha256": "3bbfd4a6d7bd16c41a2cae64f6f29cf76e89271cbdd52bc71f706ec020122aaf"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/canonical-Push.json",
+            "sha256": "62ebe561180a97938162229c3665e59ca6c824f0d45949715309fe8603e4a4ca"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/canonical-Reach.json",
+            "sha256": "d91fd43bb4eb0860b75efb9bcd2e353de5976d15ed234d442c2715e230b7cb82"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/canonical-Slide.json",
+            "sha256": "f6e91797c8635ea34e573296a74f6c2a9b7c790992fc0dcef0794b58f5722ff8"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json",
+            "sha256": "d0b5042eda5f2fb86d75482139a46f165d9ee01ae3108024a95d9c24bdb82255"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/diff-review.json",
+            "sha256": "d1bd2b2e7c3060067fba5f6a714a86df695c5a98cacaed0703eec0b4f5e09b39"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/oscar-queue.json",
+            "sha256": "4602eed7ecc4fc46500dc3dead4dcbedb09c5b7dcab631ed41f3148d88277106"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/oscar-submit.json",
+            "sha256": "0d36c10591fb90f871d19d981bcb04803d5ba66d850c80ce517c7f5ac8b3b535"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/provenance.json",
+            "sha256": "febfeb847ed959d64048ed5b524300ee72d0aef8dbb41e33da1ca55cf318e19b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/provenance.out",
+            "sha256": "ee8ce15d761ecc615cb6e4e409e315aabccf616de3533d28f4c99d40fc3c5b75"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/public-contract.json",
+            "sha256": "c483bd9551c467685f905a290bc6f6b1a972a4504c66c0957df044e8609d4090"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/public-contract.out",
+            "sha256": "35a5de2ab25f65cfd7b570f2900845ac31f99f97215b3ee07ad71b0e19cf2e38"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/shared-legacy-tests.out",
+            "sha256": "2f5e9033e79d2ff217deb3b20a02c10517adada6974844b21a1323e3038cfb37"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/start_audit.json",
+            "sha256": "94b7ca1f4ce81116e9c1c4ec08888ce275f907b33ea5d7592acd1e906f6da41b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/final-readiness.out",
+            "sha256": "ff6a9d715c246b50fc3caabc87f59ee760435b2e0d9e9d8603e285442f075494"
+          }
         ]
       },
-      "accepted_variation_scope": "UNTESTED",
-      "execution_mode": null,
-      "evidence_manifest": {
-        "oracle": null,
-        "artifacts": []
-      },
-      "cpu_semantic_result": "NOT_ACCEPTED",
+      "cpu_semantic_result": "PASS_EXACT_CPU_FAMILY_GATE",
       "gpu_semantic_result": {
-        "status": "NOT_ACCEPTED",
-        "job": null,
-        "note": "CUDA State placement is not GPU physics for DELEGATED_CPU."
+        "status": "NOT_CLAIMED",
+        "note": "Separate GPU profile is renderer-only"
       },
-      "frozen_renderer_result": "PENDING",
+      "frozen_renderer_result": "PENDING_OSCAR_JOB_6649686_QOSGrpGRES",
       "known_limitations": [
-        "No dynamics/reward/done; qpos+goal renderer projection cannot restore velocities or episode horizon."
+        "Required Oscar frozen-renderer/full-State/alias-frame gate pending at QOSGrpGRES; no backend promotion.",
+        "SWM observation integration DEFERRED; historical Dict container is not a stable-envs backend responsibility.",
+        "CPU full rendering unsupported. CPU physics pinned to MuJoCo3.8.1; GPU profile renderer-only.",
+        "Bounded Variation only; full historical appearance randomization, task kwargs, external forces and final benchmarks uncertified."
       ],
       "remaining_gates": [
-        "No dynamics/reward/done; qpos+goal renderer projection cannot restore velocities or episode horizon."
+        "Oscar frozen renderer and full/private State-render/alias-frame gates; require downloaded hash checks and actual terminal marker."
       ],
-      "closure_code_check": null
+      "closure_code_check": "Family production diff inspected independently; shared machinery and all other accepted family code unchanged.",
+      "observation_integration": "DEFERRED",
+      "family_candidate_evidence": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json"
     },
     {
       "historical_id": "swm/FetchReach-v3",
@@ -4401,59 +5523,283 @@
         },
         "constructor_signature": "self, env_id, init_value=None, resolution=224, render_mode=None, flatten=True, **kwargs",
         "accepted_task": null,
-        "source_constructor": "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py:FetchWrapper.__init__"
+        "source_constructor": "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py:FetchWrapper.__init__",
+        "candidate_task": {
+          "has_object": false,
+          "block_gripper": true,
+          "gripper_extra_height": 0.2,
+          "target_in_the_air": true,
+          "target_offset": 0.0,
+          "obj_range": 0.15,
+          "target_range": 0.15,
+          "distance_threshold": 0.05,
+          "n_substeps": 20
+        }
       },
       "state_schema": {
-        "status": "UNPROVED",
-        "corpus_fields": {},
-        "candidate_source_catalog": [],
-        "note": "Full TensorDict simulator snapshot; restore under the same persistent Variation"
+        "status": "PROVED_CPU_PENDING_RENDERER",
+        "fields": {
+          "qpos": {
+            "width": 15,
+            "dtype": "float64"
+          },
+          "qvel": {
+            "width": 15,
+            "dtype": "float64"
+          },
+          "time": {
+            "width": 1,
+            "dtype": "float64"
+          },
+          "task.initial_gripper_xpos": {
+            "width": 3,
+            "dtype": "float64"
+          },
+          "warmstart": {
+            "width": 15,
+            "dtype": "float64"
+          },
+          "controller.position": {
+            "width": 3,
+            "dtype": "float64"
+          },
+          "controller.quaternion": {
+            "width": 4,
+            "dtype": "float64"
+          },
+          "goal": {
+            "width": 3,
+            "dtype": "float64"
+          },
+          "lifecycle.elapsed_steps": {
+            "width": 1,
+            "dtype": "int64"
+          },
+          "rng.state_words": {
+            "width": 4,
+            "dtype": "int64"
+          },
+          "rng.increment_words": {
+            "width": 4,
+            "dtype": "int64"
+          },
+          "rng.has_uint32": {
+            "width": 1,
+            "dtype": "int64"
+          },
+          "rng.uinteger": {
+            "width": 1,
+            "dtype": "int64"
+          }
+        }
       },
       "restoration_order": [
-        "UNPROVED: no accepted full public State restoration; inspect pinned methods before implementation"
+        "qpos/qvel/goal/time/reset anchor; zero external forces; mj_forward; warmstart; gripper position/quaternion cache; TimeLimit; complete PCG64"
       ],
       "action_scaling_clipping_repeat": {
-        "summary": "UNACCEPTED: pinned wrapper step implementation indexed below; no candidate parity claim.",
-        "parity": "UNTESTED",
-        "source_catalog": [
-          "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py"
-        ]
+        "summary": "Clip [-1,1]; XYZ *.05 in input dtype; 20 substeps; source gripper behavior",
+        "parity": "PASS_EXACT_PUBLIC_CPU_FLOAT32_FLOAT64_CLIPPING_BOUNDARIES_SIMULTANEOUS_CONTROLS"
       },
       "reset_rng_semantics": {
-        "reset_parity": "UNTESTED",
-        "rng_lifecycle": "UNTESTED",
-        "source_catalog": [
-          "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py"
-        ],
-        "rng_structure_policy": "Complete documented named RNG state is atomic; individual-word minimality is not required."
+        "reset_parity": "PASS_EXACT_PUBLIC_CPU_SEEDED_REPEATED_SEED_MOCAP_AND_RESET_VARIATION_ORDER",
+        "rng_lifecycle": "PASS_COMPLETE_PCG64_SIMULATOR_REPLAY_FIXED_VARIATION_AND_SEPARATE_SEEDED_VISUAL_RNG",
+        "source_provenance": "docs/research/semantic_recovery_evidence/fetch_family/provenance.json"
       },
       "reward_success_terminated_truncated": {
-        "reward": "UNTESTED",
-        "lifecycle": "UNTESTED",
-        "source_catalog": [
-          "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py"
+        "reward": "-(norm(achieved-goal)>.05).astype(float32)",
+        "success": "(norm(achieved-goal)<.05).astype(float32)",
+        "terminated": false,
+        "truncation": "elapsed_steps >= 50"
+      },
+      "accepted_variation_scope": "NOT_PROMOTED; CPU proved PASS_BOUNDED_CPU: agent.start_position, goal.start_position, table.color; physical mass where applicable; visual physics nonmutation; persistent versus reset settings",
+      "execution_mode": "DELEGATED_CPU",
+      "evidence_manifest": {
+        "candidate": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json",
+        "artifacts": [
+          {
+            "path": "docs/research/fetch_family_recovery.md",
+            "sha256": "8b8bde43529eec45bd39c64b1aecfc716e622298be4dc8ab7bed5d9d9cd891ec"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlace-alias.json",
+            "sha256": "8c5e5e39217416f83ab9034fd0cf1e507b2e966ffc14c5d89abc2c93c0b0d390"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlace-alias.out",
+            "sha256": "08552733be3c11ed53ca69ae84e68790ebe414a47d7566258b0e85cae0a9dd3c"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlace.json",
+            "sha256": "cd683d09cb9a61c8eb14e9b904b99d82feb4046db7c1b5145053620b9d2c66c6"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlace.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlaceDense.json",
+            "sha256": "fa16033348d4f7c86d927283840fb7a96589c7d1f20444f3f9e34e31eb3bdeb7"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlaceDense.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Push-alias.json",
+            "sha256": "e41d6a549377b3a169ef44f5e58725b3992eb3c31d0357e8d22425ca1931a11b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Push-alias.out",
+            "sha256": "052094017b4f1952fd94a291cd5a3f4c0d18f3c91224c2e8c634b32dda14fd8d"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Push.json",
+            "sha256": "ba090c157d758f4c5da5c805477bb9e024082891433cdd66f428deeea9ae85ae"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Push.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PushDense.json",
+            "sha256": "b382fa01826ebbf673571c9aa0ed375555a1f6d6c91ef655c6239af30d97d424"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PushDense.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Reach-alias.json",
+            "sha256": "83c12861a5c580c2b77f99edd1ee919bf3be8aa46b88b2236b5d11e8d45746bd"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Reach-alias.out",
+            "sha256": "dbe5b34cab13298875cb11d30f9113871199b52df75dd3b2ba390ea1f6710a9c"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Reach-invalid-fixture.out",
+            "sha256": "010c5a5bd55b37f4814432ffd040818a5bcf4a388bf9c4801bb819299dd89eb2"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Reach.json",
+            "sha256": "ce0ba2e5a836ec9456cc572ba68a310d954d61339422e7a76d88d9f889a255be"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Reach.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/ReachDense.json",
+            "sha256": "49e504054a8b974e0c6a1abf91de08ff7117321be073ba4dec92f4442b4ceefb"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/ReachDense.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Slide-alias.json",
+            "sha256": "76e09aaba8426d96d1e911a7b06b8a4d74ec0a2d3601b153aad8d52aa0608b20"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Slide-alias.out",
+            "sha256": "7cf31b6438de7bee25378c8ac45fb35d0ac7203e6a517b0bd0c3c58a42770040"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Slide.json",
+            "sha256": "316ed25c5afdc46b4c6a0ef829c55b10431c9907e4851204030b92767bb90e50"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Slide.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/SlideDense.json",
+            "sha256": "d7f3978506673b660eab6e773fc3faf6c0becfe12441ea12b36e7da0f0c7a50b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/SlideDense.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/canonical-PickAndPlace.json",
+            "sha256": "3bbfd4a6d7bd16c41a2cae64f6f29cf76e89271cbdd52bc71f706ec020122aaf"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/canonical-Push.json",
+            "sha256": "62ebe561180a97938162229c3665e59ca6c824f0d45949715309fe8603e4a4ca"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/canonical-Reach.json",
+            "sha256": "d91fd43bb4eb0860b75efb9bcd2e353de5976d15ed234d442c2715e230b7cb82"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/canonical-Slide.json",
+            "sha256": "f6e91797c8635ea34e573296a74f6c2a9b7c790992fc0dcef0794b58f5722ff8"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json",
+            "sha256": "d0b5042eda5f2fb86d75482139a46f165d9ee01ae3108024a95d9c24bdb82255"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/diff-review.json",
+            "sha256": "d1bd2b2e7c3060067fba5f6a714a86df695c5a98cacaed0703eec0b4f5e09b39"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/oscar-queue.json",
+            "sha256": "4602eed7ecc4fc46500dc3dead4dcbedb09c5b7dcab631ed41f3148d88277106"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/oscar-submit.json",
+            "sha256": "0d36c10591fb90f871d19d981bcb04803d5ba66d850c80ce517c7f5ac8b3b535"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/provenance.json",
+            "sha256": "febfeb847ed959d64048ed5b524300ee72d0aef8dbb41e33da1ca55cf318e19b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/provenance.out",
+            "sha256": "ee8ce15d761ecc615cb6e4e409e315aabccf616de3533d28f4c99d40fc3c5b75"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/public-contract.json",
+            "sha256": "c483bd9551c467685f905a290bc6f6b1a972a4504c66c0957df044e8609d4090"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/public-contract.out",
+            "sha256": "35a5de2ab25f65cfd7b570f2900845ac31f99f97215b3ee07ad71b0e19cf2e38"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/shared-legacy-tests.out",
+            "sha256": "2f5e9033e79d2ff217deb3b20a02c10517adada6974844b21a1323e3038cfb37"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/start_audit.json",
+            "sha256": "94b7ca1f4ce81116e9c1c4ec08888ce275f907b33ea5d7592acd1e906f6da41b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/final-readiness.out",
+            "sha256": "ff6a9d715c246b50fc3caabc87f59ee760435b2e0d9e9d8603e285442f075494"
+          }
         ]
       },
-      "accepted_variation_scope": "UNTESTED",
-      "execution_mode": null,
-      "evidence_manifest": {
-        "oracle": null,
-        "artifacts": []
-      },
-      "cpu_semantic_result": "NOT_ACCEPTED",
+      "cpu_semantic_result": "PASS_EXACT_CPU_FAMILY_GATE",
       "gpu_semantic_result": {
-        "status": "NOT_ACCEPTED",
-        "job": null,
-        "note": "CUDA State placement is not GPU physics for DELEGATED_CPU."
+        "status": "NOT_CLAIMED",
+        "note": "Separate GPU profile is renderer-only"
       },
-      "frozen_renderer_result": "PENDING",
+      "frozen_renderer_result": "PENDING_OSCAR_JOB_6649686_QOSGrpGRES",
       "known_limitations": [
-        "No dynamics/reward/done; qpos+goal renderer projection cannot restore velocities or episode horizon."
+        "Required Oscar frozen-renderer/full-State/alias-frame gate pending at QOSGrpGRES; no backend promotion.",
+        "SWM observation integration DEFERRED; historical Dict container is not a stable-envs backend responsibility.",
+        "CPU full rendering unsupported. CPU physics pinned to MuJoCo3.8.1; GPU profile renderer-only.",
+        "Bounded Variation only; full historical appearance randomization, task kwargs, external forces and final benchmarks uncertified."
       ],
       "remaining_gates": [
-        "No dynamics/reward/done; qpos+goal renderer projection cannot restore velocities or episode horizon."
+        "Oscar frozen renderer and full/private State-render/alias-frame gates; require downloaded hash checks and actual terminal marker."
       ],
-      "closure_code_check": null
+      "closure_code_check": "Family production diff inspected independently; shared machinery and all other accepted family code unchanged.",
+      "observation_integration": "DEFERRED",
+      "family_candidate_evidence": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json"
     },
     {
       "historical_id": "swm/FetchReachDense-v3",
@@ -4485,59 +5831,283 @@
         },
         "constructor_signature": "self, env_id, init_value=None, resolution=224, render_mode=None, flatten=True, **kwargs",
         "accepted_task": null,
-        "source_constructor": "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py:FetchWrapper.__init__"
+        "source_constructor": "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py:FetchWrapper.__init__",
+        "candidate_task": {
+          "has_object": false,
+          "block_gripper": true,
+          "gripper_extra_height": 0.2,
+          "target_in_the_air": true,
+          "target_offset": 0.0,
+          "obj_range": 0.15,
+          "target_range": 0.15,
+          "distance_threshold": 0.05,
+          "n_substeps": 20
+        }
       },
       "state_schema": {
-        "status": "UNPROVED",
-        "corpus_fields": {},
-        "candidate_source_catalog": [],
-        "note": "Full TensorDict simulator snapshot; restore under the same persistent Variation"
+        "status": "PROVED_CPU_PENDING_RENDERER",
+        "fields": {
+          "qpos": {
+            "width": 15,
+            "dtype": "float64"
+          },
+          "qvel": {
+            "width": 15,
+            "dtype": "float64"
+          },
+          "time": {
+            "width": 1,
+            "dtype": "float64"
+          },
+          "task.initial_gripper_xpos": {
+            "width": 3,
+            "dtype": "float64"
+          },
+          "warmstart": {
+            "width": 15,
+            "dtype": "float64"
+          },
+          "controller.position": {
+            "width": 3,
+            "dtype": "float64"
+          },
+          "controller.quaternion": {
+            "width": 4,
+            "dtype": "float64"
+          },
+          "goal": {
+            "width": 3,
+            "dtype": "float64"
+          },
+          "lifecycle.elapsed_steps": {
+            "width": 1,
+            "dtype": "int64"
+          },
+          "rng.state_words": {
+            "width": 4,
+            "dtype": "int64"
+          },
+          "rng.increment_words": {
+            "width": 4,
+            "dtype": "int64"
+          },
+          "rng.has_uint32": {
+            "width": 1,
+            "dtype": "int64"
+          },
+          "rng.uinteger": {
+            "width": 1,
+            "dtype": "int64"
+          }
+        }
       },
       "restoration_order": [
-        "UNPROVED: no accepted full public State restoration; inspect pinned methods before implementation"
+        "qpos/qvel/goal/time/reset anchor; zero external forces; mj_forward; warmstart; gripper position/quaternion cache; TimeLimit; complete PCG64"
       ],
       "action_scaling_clipping_repeat": {
-        "summary": "UNACCEPTED: pinned wrapper step implementation indexed below; no candidate parity claim.",
-        "parity": "UNTESTED",
-        "source_catalog": [
-          "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py"
-        ]
+        "summary": "Clip [-1,1]; XYZ *.05 in input dtype; 20 substeps; source gripper behavior",
+        "parity": "PASS_EXACT_PUBLIC_CPU_FLOAT32_FLOAT64_CLIPPING_BOUNDARIES_SIMULTANEOUS_CONTROLS"
       },
       "reset_rng_semantics": {
-        "reset_parity": "UNTESTED",
-        "rng_lifecycle": "UNTESTED",
-        "source_catalog": [
-          "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py"
-        ],
-        "rng_structure_policy": "Complete documented named RNG state is atomic; individual-word minimality is not required."
+        "reset_parity": "PASS_EXACT_PUBLIC_CPU_SEEDED_REPEATED_SEED_MOCAP_AND_RESET_VARIATION_ORDER",
+        "rng_lifecycle": "PASS_COMPLETE_PCG64_SIMULATOR_REPLAY_FIXED_VARIATION_AND_SEPARATE_SEEDED_VISUAL_RNG",
+        "source_provenance": "docs/research/semantic_recovery_evidence/fetch_family/provenance.json"
       },
       "reward_success_terminated_truncated": {
-        "reward": "UNTESTED",
-        "lifecycle": "UNTESTED",
-        "source_catalog": [
-          "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py"
+        "reward": "-norm(achieved-goal)",
+        "success": "(norm(achieved-goal)<.05).astype(float32)",
+        "terminated": false,
+        "truncation": "elapsed_steps >= 50"
+      },
+      "accepted_variation_scope": "NOT_PROMOTED; CPU proved PASS_BOUNDED_CPU: agent.start_position, goal.start_position, table.color; physical mass where applicable; visual physics nonmutation; persistent versus reset settings",
+      "execution_mode": "DELEGATED_CPU",
+      "evidence_manifest": {
+        "candidate": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json",
+        "artifacts": [
+          {
+            "path": "docs/research/fetch_family_recovery.md",
+            "sha256": "8b8bde43529eec45bd39c64b1aecfc716e622298be4dc8ab7bed5d9d9cd891ec"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlace-alias.json",
+            "sha256": "8c5e5e39217416f83ab9034fd0cf1e507b2e966ffc14c5d89abc2c93c0b0d390"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlace-alias.out",
+            "sha256": "08552733be3c11ed53ca69ae84e68790ebe414a47d7566258b0e85cae0a9dd3c"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlace.json",
+            "sha256": "cd683d09cb9a61c8eb14e9b904b99d82feb4046db7c1b5145053620b9d2c66c6"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlace.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlaceDense.json",
+            "sha256": "fa16033348d4f7c86d927283840fb7a96589c7d1f20444f3f9e34e31eb3bdeb7"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlaceDense.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Push-alias.json",
+            "sha256": "e41d6a549377b3a169ef44f5e58725b3992eb3c31d0357e8d22425ca1931a11b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Push-alias.out",
+            "sha256": "052094017b4f1952fd94a291cd5a3f4c0d18f3c91224c2e8c634b32dda14fd8d"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Push.json",
+            "sha256": "ba090c157d758f4c5da5c805477bb9e024082891433cdd66f428deeea9ae85ae"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Push.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PushDense.json",
+            "sha256": "b382fa01826ebbf673571c9aa0ed375555a1f6d6c91ef655c6239af30d97d424"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PushDense.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Reach-alias.json",
+            "sha256": "83c12861a5c580c2b77f99edd1ee919bf3be8aa46b88b2236b5d11e8d45746bd"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Reach-alias.out",
+            "sha256": "dbe5b34cab13298875cb11d30f9113871199b52df75dd3b2ba390ea1f6710a9c"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Reach-invalid-fixture.out",
+            "sha256": "010c5a5bd55b37f4814432ffd040818a5bcf4a388bf9c4801bb819299dd89eb2"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Reach.json",
+            "sha256": "ce0ba2e5a836ec9456cc572ba68a310d954d61339422e7a76d88d9f889a255be"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Reach.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/ReachDense.json",
+            "sha256": "49e504054a8b974e0c6a1abf91de08ff7117321be073ba4dec92f4442b4ceefb"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/ReachDense.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Slide-alias.json",
+            "sha256": "76e09aaba8426d96d1e911a7b06b8a4d74ec0a2d3601b153aad8d52aa0608b20"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Slide-alias.out",
+            "sha256": "7cf31b6438de7bee25378c8ac45fb35d0ac7203e6a517b0bd0c3c58a42770040"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Slide.json",
+            "sha256": "316ed25c5afdc46b4c6a0ef829c55b10431c9907e4851204030b92767bb90e50"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Slide.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/SlideDense.json",
+            "sha256": "d7f3978506673b660eab6e773fc3faf6c0becfe12441ea12b36e7da0f0c7a50b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/SlideDense.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/canonical-PickAndPlace.json",
+            "sha256": "3bbfd4a6d7bd16c41a2cae64f6f29cf76e89271cbdd52bc71f706ec020122aaf"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/canonical-Push.json",
+            "sha256": "62ebe561180a97938162229c3665e59ca6c824f0d45949715309fe8603e4a4ca"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/canonical-Reach.json",
+            "sha256": "d91fd43bb4eb0860b75efb9bcd2e353de5976d15ed234d442c2715e230b7cb82"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/canonical-Slide.json",
+            "sha256": "f6e91797c8635ea34e573296a74f6c2a9b7c790992fc0dcef0794b58f5722ff8"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json",
+            "sha256": "d0b5042eda5f2fb86d75482139a46f165d9ee01ae3108024a95d9c24bdb82255"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/diff-review.json",
+            "sha256": "d1bd2b2e7c3060067fba5f6a714a86df695c5a98cacaed0703eec0b4f5e09b39"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/oscar-queue.json",
+            "sha256": "4602eed7ecc4fc46500dc3dead4dcbedb09c5b7dcab631ed41f3148d88277106"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/oscar-submit.json",
+            "sha256": "0d36c10591fb90f871d19d981bcb04803d5ba66d850c80ce517c7f5ac8b3b535"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/provenance.json",
+            "sha256": "febfeb847ed959d64048ed5b524300ee72d0aef8dbb41e33da1ca55cf318e19b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/provenance.out",
+            "sha256": "ee8ce15d761ecc615cb6e4e409e315aabccf616de3533d28f4c99d40fc3c5b75"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/public-contract.json",
+            "sha256": "c483bd9551c467685f905a290bc6f6b1a972a4504c66c0957df044e8609d4090"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/public-contract.out",
+            "sha256": "35a5de2ab25f65cfd7b570f2900845ac31f99f97215b3ee07ad71b0e19cf2e38"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/shared-legacy-tests.out",
+            "sha256": "2f5e9033e79d2ff217deb3b20a02c10517adada6974844b21a1323e3038cfb37"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/start_audit.json",
+            "sha256": "94b7ca1f4ce81116e9c1c4ec08888ce275f907b33ea5d7592acd1e906f6da41b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/final-readiness.out",
+            "sha256": "ff6a9d715c246b50fc3caabc87f59ee760435b2e0d9e9d8603e285442f075494"
+          }
         ]
       },
-      "accepted_variation_scope": "UNTESTED",
-      "execution_mode": null,
-      "evidence_manifest": {
-        "oracle": null,
-        "artifacts": []
-      },
-      "cpu_semantic_result": "NOT_ACCEPTED",
+      "cpu_semantic_result": "PASS_EXACT_CPU_FAMILY_GATE",
       "gpu_semantic_result": {
-        "status": "NOT_ACCEPTED",
-        "job": null,
-        "note": "CUDA State placement is not GPU physics for DELEGATED_CPU."
+        "status": "NOT_CLAIMED",
+        "note": "Separate GPU profile is renderer-only"
       },
-      "frozen_renderer_result": "PENDING",
+      "frozen_renderer_result": "PENDING_OSCAR_JOB_6649686_QOSGrpGRES",
       "known_limitations": [
-        "No dynamics/reward/done; qpos+goal renderer projection cannot restore velocities or episode horizon."
+        "Required Oscar frozen-renderer/full-State/alias-frame gate pending at QOSGrpGRES; no backend promotion.",
+        "SWM observation integration DEFERRED; historical Dict container is not a stable-envs backend responsibility.",
+        "CPU full rendering unsupported. CPU physics pinned to MuJoCo3.8.1; GPU profile renderer-only.",
+        "Bounded Variation only; full historical appearance randomization, task kwargs, external forces and final benchmarks uncertified."
       ],
       "remaining_gates": [
-        "No dynamics/reward/done; qpos+goal renderer projection cannot restore velocities or episode horizon."
+        "Oscar frozen renderer and full/private State-render/alias-frame gates; require downloaded hash checks and actual terminal marker."
       ],
-      "closure_code_check": null
+      "closure_code_check": "Family production diff inspected independently; shared machinery and all other accepted family code unchanged.",
+      "observation_integration": "DEFERRED",
+      "family_candidate_evidence": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json"
     },
     {
       "historical_id": "swm/FetchReachDict-v3",
@@ -4570,59 +6140,283 @@
         },
         "constructor_signature": "self, env_id, init_value=None, resolution=224, render_mode=None, flatten=True, **kwargs",
         "accepted_task": null,
-        "source_constructor": "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py:FetchWrapper.__init__"
+        "source_constructor": "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py:FetchWrapper.__init__",
+        "candidate_task": {
+          "has_object": false,
+          "block_gripper": true,
+          "gripper_extra_height": 0.2,
+          "target_in_the_air": true,
+          "target_offset": 0.0,
+          "obj_range": 0.15,
+          "target_range": 0.15,
+          "distance_threshold": 0.05,
+          "n_substeps": 20
+        }
       },
       "state_schema": {
-        "status": "UNPROVED",
-        "corpus_fields": {},
-        "candidate_source_catalog": [],
-        "note": "Full TensorDict simulator snapshot; restore under the same persistent Variation"
+        "status": "PROVED_CPU_PENDING_RENDERER",
+        "fields": {
+          "qpos": {
+            "width": 15,
+            "dtype": "float64"
+          },
+          "qvel": {
+            "width": 15,
+            "dtype": "float64"
+          },
+          "time": {
+            "width": 1,
+            "dtype": "float64"
+          },
+          "task.initial_gripper_xpos": {
+            "width": 3,
+            "dtype": "float64"
+          },
+          "warmstart": {
+            "width": 15,
+            "dtype": "float64"
+          },
+          "controller.position": {
+            "width": 3,
+            "dtype": "float64"
+          },
+          "controller.quaternion": {
+            "width": 4,
+            "dtype": "float64"
+          },
+          "goal": {
+            "width": 3,
+            "dtype": "float64"
+          },
+          "lifecycle.elapsed_steps": {
+            "width": 1,
+            "dtype": "int64"
+          },
+          "rng.state_words": {
+            "width": 4,
+            "dtype": "int64"
+          },
+          "rng.increment_words": {
+            "width": 4,
+            "dtype": "int64"
+          },
+          "rng.has_uint32": {
+            "width": 1,
+            "dtype": "int64"
+          },
+          "rng.uinteger": {
+            "width": 1,
+            "dtype": "int64"
+          }
+        }
       },
       "restoration_order": [
-        "UNPROVED: no accepted full public State restoration; inspect pinned methods before implementation"
+        "qpos/qvel/goal/time/reset anchor; zero external forces; mj_forward; warmstart; gripper position/quaternion cache; TimeLimit; complete PCG64"
       ],
       "action_scaling_clipping_repeat": {
-        "summary": "UNACCEPTED: pinned wrapper step implementation indexed below; no candidate parity claim.",
-        "parity": "UNTESTED",
-        "source_catalog": [
-          "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py"
-        ]
+        "summary": "Clip [-1,1]; XYZ *.05 in input dtype; 20 substeps; source gripper behavior",
+        "parity": "PASS_EXACT_PUBLIC_CPU_FLOAT32_FLOAT64_CLIPPING_BOUNDARIES_SIMULTANEOUS_CONTROLS"
       },
       "reset_rng_semantics": {
-        "reset_parity": "UNTESTED",
-        "rng_lifecycle": "UNTESTED",
-        "source_catalog": [
-          "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py"
-        ],
-        "rng_structure_policy": "Complete documented named RNG state is atomic; individual-word minimality is not required."
+        "reset_parity": "PASS_EXACT_PUBLIC_CPU_SEEDED_REPEATED_SEED_MOCAP_AND_RESET_VARIATION_ORDER",
+        "rng_lifecycle": "PASS_COMPLETE_PCG64_SIMULATOR_REPLAY_FIXED_VARIATION_AND_SEPARATE_SEEDED_VISUAL_RNG",
+        "source_provenance": "docs/research/semantic_recovery_evidence/fetch_family/provenance.json"
       },
       "reward_success_terminated_truncated": {
-        "reward": "UNTESTED",
-        "lifecycle": "UNTESTED",
-        "source_catalog": [
-          "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py"
+        "reward": "-(norm(achieved-goal)>.05).astype(float32)",
+        "success": "(norm(achieved-goal)<.05).astype(float32)",
+        "terminated": false,
+        "truncation": "elapsed_steps >= 50"
+      },
+      "accepted_variation_scope": "NOT_PROMOTED; CPU proved PASS_BOUNDED_CPU: agent.start_position, goal.start_position, table.color; physical mass where applicable; visual physics nonmutation; persistent versus reset settings",
+      "execution_mode": "DELEGATED_CPU",
+      "evidence_manifest": {
+        "candidate": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json",
+        "artifacts": [
+          {
+            "path": "docs/research/fetch_family_recovery.md",
+            "sha256": "8b8bde43529eec45bd39c64b1aecfc716e622298be4dc8ab7bed5d9d9cd891ec"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlace-alias.json",
+            "sha256": "8c5e5e39217416f83ab9034fd0cf1e507b2e966ffc14c5d89abc2c93c0b0d390"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlace-alias.out",
+            "sha256": "08552733be3c11ed53ca69ae84e68790ebe414a47d7566258b0e85cae0a9dd3c"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlace.json",
+            "sha256": "cd683d09cb9a61c8eb14e9b904b99d82feb4046db7c1b5145053620b9d2c66c6"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlace.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlaceDense.json",
+            "sha256": "fa16033348d4f7c86d927283840fb7a96589c7d1f20444f3f9e34e31eb3bdeb7"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlaceDense.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Push-alias.json",
+            "sha256": "e41d6a549377b3a169ef44f5e58725b3992eb3c31d0357e8d22425ca1931a11b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Push-alias.out",
+            "sha256": "052094017b4f1952fd94a291cd5a3f4c0d18f3c91224c2e8c634b32dda14fd8d"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Push.json",
+            "sha256": "ba090c157d758f4c5da5c805477bb9e024082891433cdd66f428deeea9ae85ae"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Push.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PushDense.json",
+            "sha256": "b382fa01826ebbf673571c9aa0ed375555a1f6d6c91ef655c6239af30d97d424"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PushDense.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Reach-alias.json",
+            "sha256": "83c12861a5c580c2b77f99edd1ee919bf3be8aa46b88b2236b5d11e8d45746bd"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Reach-alias.out",
+            "sha256": "dbe5b34cab13298875cb11d30f9113871199b52df75dd3b2ba390ea1f6710a9c"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Reach-invalid-fixture.out",
+            "sha256": "010c5a5bd55b37f4814432ffd040818a5bcf4a388bf9c4801bb819299dd89eb2"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Reach.json",
+            "sha256": "ce0ba2e5a836ec9456cc572ba68a310d954d61339422e7a76d88d9f889a255be"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Reach.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/ReachDense.json",
+            "sha256": "49e504054a8b974e0c6a1abf91de08ff7117321be073ba4dec92f4442b4ceefb"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/ReachDense.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Slide-alias.json",
+            "sha256": "76e09aaba8426d96d1e911a7b06b8a4d74ec0a2d3601b153aad8d52aa0608b20"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Slide-alias.out",
+            "sha256": "7cf31b6438de7bee25378c8ac45fb35d0ac7203e6a517b0bd0c3c58a42770040"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Slide.json",
+            "sha256": "316ed25c5afdc46b4c6a0ef829c55b10431c9907e4851204030b92767bb90e50"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Slide.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/SlideDense.json",
+            "sha256": "d7f3978506673b660eab6e773fc3faf6c0becfe12441ea12b36e7da0f0c7a50b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/SlideDense.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/canonical-PickAndPlace.json",
+            "sha256": "3bbfd4a6d7bd16c41a2cae64f6f29cf76e89271cbdd52bc71f706ec020122aaf"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/canonical-Push.json",
+            "sha256": "62ebe561180a97938162229c3665e59ca6c824f0d45949715309fe8603e4a4ca"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/canonical-Reach.json",
+            "sha256": "d91fd43bb4eb0860b75efb9bcd2e353de5976d15ed234d442c2715e230b7cb82"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/canonical-Slide.json",
+            "sha256": "f6e91797c8635ea34e573296a74f6c2a9b7c790992fc0dcef0794b58f5722ff8"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json",
+            "sha256": "d0b5042eda5f2fb86d75482139a46f165d9ee01ae3108024a95d9c24bdb82255"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/diff-review.json",
+            "sha256": "d1bd2b2e7c3060067fba5f6a714a86df695c5a98cacaed0703eec0b4f5e09b39"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/oscar-queue.json",
+            "sha256": "4602eed7ecc4fc46500dc3dead4dcbedb09c5b7dcab631ed41f3148d88277106"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/oscar-submit.json",
+            "sha256": "0d36c10591fb90f871d19d981bcb04803d5ba66d850c80ce517c7f5ac8b3b535"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/provenance.json",
+            "sha256": "febfeb847ed959d64048ed5b524300ee72d0aef8dbb41e33da1ca55cf318e19b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/provenance.out",
+            "sha256": "ee8ce15d761ecc615cb6e4e409e315aabccf616de3533d28f4c99d40fc3c5b75"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/public-contract.json",
+            "sha256": "c483bd9551c467685f905a290bc6f6b1a972a4504c66c0957df044e8609d4090"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/public-contract.out",
+            "sha256": "35a5de2ab25f65cfd7b570f2900845ac31f99f97215b3ee07ad71b0e19cf2e38"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/shared-legacy-tests.out",
+            "sha256": "2f5e9033e79d2ff217deb3b20a02c10517adada6974844b21a1323e3038cfb37"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/start_audit.json",
+            "sha256": "94b7ca1f4ce81116e9c1c4ec08888ce275f907b33ea5d7592acd1e906f6da41b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/final-readiness.out",
+            "sha256": "ff6a9d715c246b50fc3caabc87f59ee760435b2e0d9e9d8603e285442f075494"
+          }
         ]
       },
-      "accepted_variation_scope": "UNTESTED",
-      "execution_mode": null,
-      "evidence_manifest": {
-        "oracle": null,
-        "artifacts": []
-      },
-      "cpu_semantic_result": "NOT_ACCEPTED",
+      "cpu_semantic_result": "PASS_EXACT_CPU_FAMILY_GATE",
       "gpu_semantic_result": {
-        "status": "NOT_ACCEPTED",
-        "job": null,
-        "note": "CUDA State placement is not GPU physics for DELEGATED_CPU."
+        "status": "NOT_CLAIMED",
+        "note": "Separate GPU profile is renderer-only"
       },
-      "frozen_renderer_result": "PENDING",
+      "frozen_renderer_result": "PENDING_OSCAR_JOB_6649686_QOSGrpGRES",
       "known_limitations": [
-        "No dynamics/reward/done; qpos+goal renderer projection cannot restore velocities or episode horizon."
+        "Required Oscar frozen-renderer/full-State/alias-frame gate pending at QOSGrpGRES; no backend promotion.",
+        "SWM observation integration DEFERRED; historical Dict container is not a stable-envs backend responsibility.",
+        "CPU full rendering unsupported. CPU physics pinned to MuJoCo3.8.1; GPU profile renderer-only.",
+        "Bounded Variation only; full historical appearance randomization, task kwargs, external forces and final benchmarks uncertified."
       ],
       "remaining_gates": [
-        "No dynamics/reward/done; qpos+goal renderer projection cannot restore velocities or episode horizon."
+        "Oscar frozen renderer and full/private State-render/alias-frame gates; require downloaded hash checks and actual terminal marker."
       ],
-      "closure_code_check": null
+      "closure_code_check": "Family production diff inspected independently; shared machinery and all other accepted family code unchanged.",
+      "observation_integration": "DEFERRED",
+      "family_candidate_evidence": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json"
     },
     {
       "historical_id": "swm/FetchSlide-v3",
@@ -4654,59 +6448,287 @@
         },
         "constructor_signature": "self, env_id, init_value=None, resolution=224, render_mode=None, flatten=True, **kwargs",
         "accepted_task": null,
-        "source_constructor": "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py:FetchWrapper.__init__"
+        "source_constructor": "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py:FetchWrapper.__init__",
+        "candidate_task": {
+          "has_object": true,
+          "block_gripper": true,
+          "gripper_extra_height": -0.02,
+          "target_in_the_air": false,
+          "target_offset": [
+            0.4,
+            0.0,
+            0.0
+          ],
+          "obj_range": 0.1,
+          "target_range": 0.3,
+          "distance_threshold": 0.05,
+          "n_substeps": 20
+        }
       },
       "state_schema": {
-        "status": "UNPROVED",
-        "corpus_fields": {},
-        "candidate_source_catalog": [],
-        "note": "Full TensorDict simulator snapshot; restore under the same persistent Variation"
+        "status": "PROVED_CPU_PENDING_RENDERER",
+        "fields": {
+          "qpos": {
+            "width": 22,
+            "dtype": "float64"
+          },
+          "qvel": {
+            "width": 21,
+            "dtype": "float64"
+          },
+          "time": {
+            "width": 1,
+            "dtype": "float64"
+          },
+          "task.initial_gripper_xpos": {
+            "width": 3,
+            "dtype": "float64"
+          },
+          "warmstart": {
+            "width": 21,
+            "dtype": "float64"
+          },
+          "controller.position": {
+            "width": 3,
+            "dtype": "float64"
+          },
+          "controller.quaternion": {
+            "width": 4,
+            "dtype": "float64"
+          },
+          "goal": {
+            "width": 3,
+            "dtype": "float64"
+          },
+          "lifecycle.elapsed_steps": {
+            "width": 1,
+            "dtype": "int64"
+          },
+          "rng.state_words": {
+            "width": 4,
+            "dtype": "int64"
+          },
+          "rng.increment_words": {
+            "width": 4,
+            "dtype": "int64"
+          },
+          "rng.has_uint32": {
+            "width": 1,
+            "dtype": "int64"
+          },
+          "rng.uinteger": {
+            "width": 1,
+            "dtype": "int64"
+          }
+        }
       },
       "restoration_order": [
-        "UNPROVED: no accepted full public State restoration; inspect pinned methods before implementation"
+        "qpos/qvel/goal/time/reset anchor; zero external forces; mj_forward; warmstart; gripper position/quaternion cache; TimeLimit; complete PCG64"
       ],
       "action_scaling_clipping_repeat": {
-        "summary": "UNACCEPTED: pinned wrapper step implementation indexed below; no candidate parity claim.",
-        "parity": "UNTESTED",
-        "source_catalog": [
-          "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py"
-        ]
+        "summary": "Clip [-1,1]; XYZ *.05 in input dtype; 20 substeps; source gripper behavior",
+        "parity": "PASS_EXACT_PUBLIC_CPU_FLOAT32_FLOAT64_CLIPPING_BOUNDARIES_SIMULTANEOUS_CONTROLS"
       },
       "reset_rng_semantics": {
-        "reset_parity": "UNTESTED",
-        "rng_lifecycle": "UNTESTED",
-        "source_catalog": [
-          "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py"
-        ],
-        "rng_structure_policy": "Complete documented named RNG state is atomic; individual-word minimality is not required."
+        "reset_parity": "PASS_EXACT_PUBLIC_CPU_SEEDED_REPEATED_SEED_MOCAP_AND_RESET_VARIATION_ORDER",
+        "rng_lifecycle": "PASS_COMPLETE_PCG64_SIMULATOR_REPLAY_FIXED_VARIATION_AND_SEPARATE_SEEDED_VISUAL_RNG",
+        "source_provenance": "docs/research/semantic_recovery_evidence/fetch_family/provenance.json"
       },
       "reward_success_terminated_truncated": {
-        "reward": "UNTESTED",
-        "lifecycle": "UNTESTED",
-        "source_catalog": [
-          "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py"
+        "reward": "-(norm(achieved-goal)>.05).astype(float32)",
+        "success": "(norm(achieved-goal)<.05).astype(float32)",
+        "terminated": false,
+        "truncation": "elapsed_steps >= 50"
+      },
+      "accepted_variation_scope": "NOT_PROMOTED; CPU proved PASS_BOUNDED_CPU: agent.start_position, block.angle, block.mass, block.start_position, goal.start_position, object.color, table.color; physical mass where applicable; visual physics nonmutation; persistent versus reset settings",
+      "execution_mode": "DELEGATED_CPU",
+      "evidence_manifest": {
+        "candidate": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json",
+        "artifacts": [
+          {
+            "path": "docs/research/fetch_family_recovery.md",
+            "sha256": "8b8bde43529eec45bd39c64b1aecfc716e622298be4dc8ab7bed5d9d9cd891ec"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlace-alias.json",
+            "sha256": "8c5e5e39217416f83ab9034fd0cf1e507b2e966ffc14c5d89abc2c93c0b0d390"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlace-alias.out",
+            "sha256": "08552733be3c11ed53ca69ae84e68790ebe414a47d7566258b0e85cae0a9dd3c"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlace.json",
+            "sha256": "cd683d09cb9a61c8eb14e9b904b99d82feb4046db7c1b5145053620b9d2c66c6"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlace.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlaceDense.json",
+            "sha256": "fa16033348d4f7c86d927283840fb7a96589c7d1f20444f3f9e34e31eb3bdeb7"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlaceDense.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Push-alias.json",
+            "sha256": "e41d6a549377b3a169ef44f5e58725b3992eb3c31d0357e8d22425ca1931a11b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Push-alias.out",
+            "sha256": "052094017b4f1952fd94a291cd5a3f4c0d18f3c91224c2e8c634b32dda14fd8d"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Push.json",
+            "sha256": "ba090c157d758f4c5da5c805477bb9e024082891433cdd66f428deeea9ae85ae"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Push.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PushDense.json",
+            "sha256": "b382fa01826ebbf673571c9aa0ed375555a1f6d6c91ef655c6239af30d97d424"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PushDense.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Reach-alias.json",
+            "sha256": "83c12861a5c580c2b77f99edd1ee919bf3be8aa46b88b2236b5d11e8d45746bd"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Reach-alias.out",
+            "sha256": "dbe5b34cab13298875cb11d30f9113871199b52df75dd3b2ba390ea1f6710a9c"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Reach-invalid-fixture.out",
+            "sha256": "010c5a5bd55b37f4814432ffd040818a5bcf4a388bf9c4801bb819299dd89eb2"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Reach.json",
+            "sha256": "ce0ba2e5a836ec9456cc572ba68a310d954d61339422e7a76d88d9f889a255be"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Reach.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/ReachDense.json",
+            "sha256": "49e504054a8b974e0c6a1abf91de08ff7117321be073ba4dec92f4442b4ceefb"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/ReachDense.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Slide-alias.json",
+            "sha256": "76e09aaba8426d96d1e911a7b06b8a4d74ec0a2d3601b153aad8d52aa0608b20"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Slide-alias.out",
+            "sha256": "7cf31b6438de7bee25378c8ac45fb35d0ac7203e6a517b0bd0c3c58a42770040"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Slide.json",
+            "sha256": "316ed25c5afdc46b4c6a0ef829c55b10431c9907e4851204030b92767bb90e50"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Slide.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/SlideDense.json",
+            "sha256": "d7f3978506673b660eab6e773fc3faf6c0becfe12441ea12b36e7da0f0c7a50b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/SlideDense.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/canonical-PickAndPlace.json",
+            "sha256": "3bbfd4a6d7bd16c41a2cae64f6f29cf76e89271cbdd52bc71f706ec020122aaf"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/canonical-Push.json",
+            "sha256": "62ebe561180a97938162229c3665e59ca6c824f0d45949715309fe8603e4a4ca"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/canonical-Reach.json",
+            "sha256": "d91fd43bb4eb0860b75efb9bcd2e353de5976d15ed234d442c2715e230b7cb82"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/canonical-Slide.json",
+            "sha256": "f6e91797c8635ea34e573296a74f6c2a9b7c790992fc0dcef0794b58f5722ff8"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json",
+            "sha256": "d0b5042eda5f2fb86d75482139a46f165d9ee01ae3108024a95d9c24bdb82255"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/diff-review.json",
+            "sha256": "d1bd2b2e7c3060067fba5f6a714a86df695c5a98cacaed0703eec0b4f5e09b39"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/oscar-queue.json",
+            "sha256": "4602eed7ecc4fc46500dc3dead4dcbedb09c5b7dcab631ed41f3148d88277106"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/oscar-submit.json",
+            "sha256": "0d36c10591fb90f871d19d981bcb04803d5ba66d850c80ce517c7f5ac8b3b535"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/provenance.json",
+            "sha256": "febfeb847ed959d64048ed5b524300ee72d0aef8dbb41e33da1ca55cf318e19b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/provenance.out",
+            "sha256": "ee8ce15d761ecc615cb6e4e409e315aabccf616de3533d28f4c99d40fc3c5b75"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/public-contract.json",
+            "sha256": "c483bd9551c467685f905a290bc6f6b1a972a4504c66c0957df044e8609d4090"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/public-contract.out",
+            "sha256": "35a5de2ab25f65cfd7b570f2900845ac31f99f97215b3ee07ad71b0e19cf2e38"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/shared-legacy-tests.out",
+            "sha256": "2f5e9033e79d2ff217deb3b20a02c10517adada6974844b21a1323e3038cfb37"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/start_audit.json",
+            "sha256": "94b7ca1f4ce81116e9c1c4ec08888ce275f907b33ea5d7592acd1e906f6da41b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/final-readiness.out",
+            "sha256": "ff6a9d715c246b50fc3caabc87f59ee760435b2e0d9e9d8603e285442f075494"
+          }
         ]
       },
-      "accepted_variation_scope": "UNTESTED",
-      "execution_mode": null,
-      "evidence_manifest": {
-        "oracle": null,
-        "artifacts": []
-      },
-      "cpu_semantic_result": "NOT_ACCEPTED",
+      "cpu_semantic_result": "PASS_EXACT_CPU_FAMILY_GATE",
       "gpu_semantic_result": {
-        "status": "NOT_ACCEPTED",
-        "job": null,
-        "note": "CUDA State placement is not GPU physics for DELEGATED_CPU."
+        "status": "NOT_CLAIMED",
+        "note": "Separate GPU profile is renderer-only"
       },
-      "frozen_renderer_result": "PENDING",
+      "frozen_renderer_result": "PENDING_OSCAR_JOB_6649686_QOSGrpGRES",
       "known_limitations": [
-        "No dynamics/reward/done; qpos+goal renderer projection cannot restore velocities or episode horizon."
+        "Required Oscar frozen-renderer/full-State/alias-frame gate pending at QOSGrpGRES; no backend promotion.",
+        "SWM observation integration DEFERRED; historical Dict container is not a stable-envs backend responsibility.",
+        "CPU full rendering unsupported. CPU physics pinned to MuJoCo3.8.1; GPU profile renderer-only.",
+        "Bounded Variation only; full historical appearance randomization, task kwargs, external forces and final benchmarks uncertified."
       ],
       "remaining_gates": [
-        "No dynamics/reward/done; qpos+goal renderer projection cannot restore velocities or episode horizon."
+        "Oscar frozen renderer and full/private State-render/alias-frame gates; require downloaded hash checks and actual terminal marker."
       ],
-      "closure_code_check": null
+      "closure_code_check": "Family production diff inspected independently; shared machinery and all other accepted family code unchanged.",
+      "observation_integration": "DEFERRED",
+      "family_candidate_evidence": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json"
     },
     {
       "historical_id": "swm/FetchSlideDense-v3",
@@ -4738,59 +6760,287 @@
         },
         "constructor_signature": "self, env_id, init_value=None, resolution=224, render_mode=None, flatten=True, **kwargs",
         "accepted_task": null,
-        "source_constructor": "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py:FetchWrapper.__init__"
+        "source_constructor": "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py:FetchWrapper.__init__",
+        "candidate_task": {
+          "has_object": true,
+          "block_gripper": true,
+          "gripper_extra_height": -0.02,
+          "target_in_the_air": false,
+          "target_offset": [
+            0.4,
+            0.0,
+            0.0
+          ],
+          "obj_range": 0.1,
+          "target_range": 0.3,
+          "distance_threshold": 0.05,
+          "n_substeps": 20
+        }
       },
       "state_schema": {
-        "status": "UNPROVED",
-        "corpus_fields": {},
-        "candidate_source_catalog": [],
-        "note": "Full TensorDict simulator snapshot; restore under the same persistent Variation"
+        "status": "PROVED_CPU_PENDING_RENDERER",
+        "fields": {
+          "qpos": {
+            "width": 22,
+            "dtype": "float64"
+          },
+          "qvel": {
+            "width": 21,
+            "dtype": "float64"
+          },
+          "time": {
+            "width": 1,
+            "dtype": "float64"
+          },
+          "task.initial_gripper_xpos": {
+            "width": 3,
+            "dtype": "float64"
+          },
+          "warmstart": {
+            "width": 21,
+            "dtype": "float64"
+          },
+          "controller.position": {
+            "width": 3,
+            "dtype": "float64"
+          },
+          "controller.quaternion": {
+            "width": 4,
+            "dtype": "float64"
+          },
+          "goal": {
+            "width": 3,
+            "dtype": "float64"
+          },
+          "lifecycle.elapsed_steps": {
+            "width": 1,
+            "dtype": "int64"
+          },
+          "rng.state_words": {
+            "width": 4,
+            "dtype": "int64"
+          },
+          "rng.increment_words": {
+            "width": 4,
+            "dtype": "int64"
+          },
+          "rng.has_uint32": {
+            "width": 1,
+            "dtype": "int64"
+          },
+          "rng.uinteger": {
+            "width": 1,
+            "dtype": "int64"
+          }
+        }
       },
       "restoration_order": [
-        "UNPROVED: no accepted full public State restoration; inspect pinned methods before implementation"
+        "qpos/qvel/goal/time/reset anchor; zero external forces; mj_forward; warmstart; gripper position/quaternion cache; TimeLimit; complete PCG64"
       ],
       "action_scaling_clipping_repeat": {
-        "summary": "UNACCEPTED: pinned wrapper step implementation indexed below; no candidate parity claim.",
-        "parity": "UNTESTED",
-        "source_catalog": [
-          "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py"
-        ]
+        "summary": "Clip [-1,1]; XYZ *.05 in input dtype; 20 substeps; source gripper behavior",
+        "parity": "PASS_EXACT_PUBLIC_CPU_FLOAT32_FLOAT64_CLIPPING_BOUNDARIES_SIMULTANEOUS_CONTROLS"
       },
       "reset_rng_semantics": {
-        "reset_parity": "UNTESTED",
-        "rng_lifecycle": "UNTESTED",
-        "source_catalog": [
-          "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py"
-        ],
-        "rng_structure_policy": "Complete documented named RNG state is atomic; individual-word minimality is not required."
+        "reset_parity": "PASS_EXACT_PUBLIC_CPU_SEEDED_REPEATED_SEED_MOCAP_AND_RESET_VARIATION_ORDER",
+        "rng_lifecycle": "PASS_COMPLETE_PCG64_SIMULATOR_REPLAY_FIXED_VARIATION_AND_SEPARATE_SEEDED_VISUAL_RNG",
+        "source_provenance": "docs/research/semantic_recovery_evidence/fetch_family/provenance.json"
       },
       "reward_success_terminated_truncated": {
-        "reward": "UNTESTED",
-        "lifecycle": "UNTESTED",
-        "source_catalog": [
-          "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py"
+        "reward": "-norm(achieved-goal)",
+        "success": "(norm(achieved-goal)<.05).astype(float32)",
+        "terminated": false,
+        "truncation": "elapsed_steps >= 50"
+      },
+      "accepted_variation_scope": "NOT_PROMOTED; CPU proved PASS_BOUNDED_CPU: agent.start_position, block.angle, block.mass, block.start_position, goal.start_position, object.color, table.color; physical mass where applicable; visual physics nonmutation; persistent versus reset settings",
+      "execution_mode": "DELEGATED_CPU",
+      "evidence_manifest": {
+        "candidate": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json",
+        "artifacts": [
+          {
+            "path": "docs/research/fetch_family_recovery.md",
+            "sha256": "8b8bde43529eec45bd39c64b1aecfc716e622298be4dc8ab7bed5d9d9cd891ec"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlace-alias.json",
+            "sha256": "8c5e5e39217416f83ab9034fd0cf1e507b2e966ffc14c5d89abc2c93c0b0d390"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlace-alias.out",
+            "sha256": "08552733be3c11ed53ca69ae84e68790ebe414a47d7566258b0e85cae0a9dd3c"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlace.json",
+            "sha256": "cd683d09cb9a61c8eb14e9b904b99d82feb4046db7c1b5145053620b9d2c66c6"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlace.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlaceDense.json",
+            "sha256": "fa16033348d4f7c86d927283840fb7a96589c7d1f20444f3f9e34e31eb3bdeb7"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlaceDense.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Push-alias.json",
+            "sha256": "e41d6a549377b3a169ef44f5e58725b3992eb3c31d0357e8d22425ca1931a11b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Push-alias.out",
+            "sha256": "052094017b4f1952fd94a291cd5a3f4c0d18f3c91224c2e8c634b32dda14fd8d"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Push.json",
+            "sha256": "ba090c157d758f4c5da5c805477bb9e024082891433cdd66f428deeea9ae85ae"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Push.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PushDense.json",
+            "sha256": "b382fa01826ebbf673571c9aa0ed375555a1f6d6c91ef655c6239af30d97d424"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PushDense.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Reach-alias.json",
+            "sha256": "83c12861a5c580c2b77f99edd1ee919bf3be8aa46b88b2236b5d11e8d45746bd"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Reach-alias.out",
+            "sha256": "dbe5b34cab13298875cb11d30f9113871199b52df75dd3b2ba390ea1f6710a9c"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Reach-invalid-fixture.out",
+            "sha256": "010c5a5bd55b37f4814432ffd040818a5bcf4a388bf9c4801bb819299dd89eb2"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Reach.json",
+            "sha256": "ce0ba2e5a836ec9456cc572ba68a310d954d61339422e7a76d88d9f889a255be"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Reach.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/ReachDense.json",
+            "sha256": "49e504054a8b974e0c6a1abf91de08ff7117321be073ba4dec92f4442b4ceefb"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/ReachDense.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Slide-alias.json",
+            "sha256": "76e09aaba8426d96d1e911a7b06b8a4d74ec0a2d3601b153aad8d52aa0608b20"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Slide-alias.out",
+            "sha256": "7cf31b6438de7bee25378c8ac45fb35d0ac7203e6a517b0bd0c3c58a42770040"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Slide.json",
+            "sha256": "316ed25c5afdc46b4c6a0ef829c55b10431c9907e4851204030b92767bb90e50"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Slide.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/SlideDense.json",
+            "sha256": "d7f3978506673b660eab6e773fc3faf6c0becfe12441ea12b36e7da0f0c7a50b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/SlideDense.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/canonical-PickAndPlace.json",
+            "sha256": "3bbfd4a6d7bd16c41a2cae64f6f29cf76e89271cbdd52bc71f706ec020122aaf"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/canonical-Push.json",
+            "sha256": "62ebe561180a97938162229c3665e59ca6c824f0d45949715309fe8603e4a4ca"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/canonical-Reach.json",
+            "sha256": "d91fd43bb4eb0860b75efb9bcd2e353de5976d15ed234d442c2715e230b7cb82"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/canonical-Slide.json",
+            "sha256": "f6e91797c8635ea34e573296a74f6c2a9b7c790992fc0dcef0794b58f5722ff8"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json",
+            "sha256": "d0b5042eda5f2fb86d75482139a46f165d9ee01ae3108024a95d9c24bdb82255"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/diff-review.json",
+            "sha256": "d1bd2b2e7c3060067fba5f6a714a86df695c5a98cacaed0703eec0b4f5e09b39"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/oscar-queue.json",
+            "sha256": "4602eed7ecc4fc46500dc3dead4dcbedb09c5b7dcab631ed41f3148d88277106"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/oscar-submit.json",
+            "sha256": "0d36c10591fb90f871d19d981bcb04803d5ba66d850c80ce517c7f5ac8b3b535"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/provenance.json",
+            "sha256": "febfeb847ed959d64048ed5b524300ee72d0aef8dbb41e33da1ca55cf318e19b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/provenance.out",
+            "sha256": "ee8ce15d761ecc615cb6e4e409e315aabccf616de3533d28f4c99d40fc3c5b75"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/public-contract.json",
+            "sha256": "c483bd9551c467685f905a290bc6f6b1a972a4504c66c0957df044e8609d4090"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/public-contract.out",
+            "sha256": "35a5de2ab25f65cfd7b570f2900845ac31f99f97215b3ee07ad71b0e19cf2e38"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/shared-legacy-tests.out",
+            "sha256": "2f5e9033e79d2ff217deb3b20a02c10517adada6974844b21a1323e3038cfb37"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/start_audit.json",
+            "sha256": "94b7ca1f4ce81116e9c1c4ec08888ce275f907b33ea5d7592acd1e906f6da41b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/final-readiness.out",
+            "sha256": "ff6a9d715c246b50fc3caabc87f59ee760435b2e0d9e9d8603e285442f075494"
+          }
         ]
       },
-      "accepted_variation_scope": "UNTESTED",
-      "execution_mode": null,
-      "evidence_manifest": {
-        "oracle": null,
-        "artifacts": []
-      },
-      "cpu_semantic_result": "NOT_ACCEPTED",
+      "cpu_semantic_result": "PASS_EXACT_CPU_FAMILY_GATE",
       "gpu_semantic_result": {
-        "status": "NOT_ACCEPTED",
-        "job": null,
-        "note": "CUDA State placement is not GPU physics for DELEGATED_CPU."
+        "status": "NOT_CLAIMED",
+        "note": "Separate GPU profile is renderer-only"
       },
-      "frozen_renderer_result": "PENDING",
+      "frozen_renderer_result": "PENDING_OSCAR_JOB_6649686_QOSGrpGRES",
       "known_limitations": [
-        "No dynamics/reward/done; qpos+goal renderer projection cannot restore velocities or episode horizon."
+        "Required Oscar frozen-renderer/full-State/alias-frame gate pending at QOSGrpGRES; no backend promotion.",
+        "SWM observation integration DEFERRED; historical Dict container is not a stable-envs backend responsibility.",
+        "CPU full rendering unsupported. CPU physics pinned to MuJoCo3.8.1; GPU profile renderer-only.",
+        "Bounded Variation only; full historical appearance randomization, task kwargs, external forces and final benchmarks uncertified."
       ],
       "remaining_gates": [
-        "No dynamics/reward/done; qpos+goal renderer projection cannot restore velocities or episode horizon."
+        "Oscar frozen renderer and full/private State-render/alias-frame gates; require downloaded hash checks and actual terminal marker."
       ],
-      "closure_code_check": null
+      "closure_code_check": "Family production diff inspected independently; shared machinery and all other accepted family code unchanged.",
+      "observation_integration": "DEFERRED",
+      "family_candidate_evidence": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json"
     },
     {
       "historical_id": "swm/FetchSlideDict-v3",
@@ -4823,59 +7073,287 @@
         },
         "constructor_signature": "self, env_id, init_value=None, resolution=224, render_mode=None, flatten=True, **kwargs",
         "accepted_task": null,
-        "source_constructor": "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py:FetchWrapper.__init__"
+        "source_constructor": "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py:FetchWrapper.__init__",
+        "candidate_task": {
+          "has_object": true,
+          "block_gripper": true,
+          "gripper_extra_height": -0.02,
+          "target_in_the_air": false,
+          "target_offset": [
+            0.4,
+            0.0,
+            0.0
+          ],
+          "obj_range": 0.1,
+          "target_range": 0.3,
+          "distance_threshold": 0.05,
+          "n_substeps": 20
+        }
       },
       "state_schema": {
-        "status": "UNPROVED",
-        "corpus_fields": {},
-        "candidate_source_catalog": [],
-        "note": "Full TensorDict simulator snapshot; restore under the same persistent Variation"
+        "status": "PROVED_CPU_PENDING_RENDERER",
+        "fields": {
+          "qpos": {
+            "width": 22,
+            "dtype": "float64"
+          },
+          "qvel": {
+            "width": 21,
+            "dtype": "float64"
+          },
+          "time": {
+            "width": 1,
+            "dtype": "float64"
+          },
+          "task.initial_gripper_xpos": {
+            "width": 3,
+            "dtype": "float64"
+          },
+          "warmstart": {
+            "width": 21,
+            "dtype": "float64"
+          },
+          "controller.position": {
+            "width": 3,
+            "dtype": "float64"
+          },
+          "controller.quaternion": {
+            "width": 4,
+            "dtype": "float64"
+          },
+          "goal": {
+            "width": 3,
+            "dtype": "float64"
+          },
+          "lifecycle.elapsed_steps": {
+            "width": 1,
+            "dtype": "int64"
+          },
+          "rng.state_words": {
+            "width": 4,
+            "dtype": "int64"
+          },
+          "rng.increment_words": {
+            "width": 4,
+            "dtype": "int64"
+          },
+          "rng.has_uint32": {
+            "width": 1,
+            "dtype": "int64"
+          },
+          "rng.uinteger": {
+            "width": 1,
+            "dtype": "int64"
+          }
+        }
       },
       "restoration_order": [
-        "UNPROVED: no accepted full public State restoration; inspect pinned methods before implementation"
+        "qpos/qvel/goal/time/reset anchor; zero external forces; mj_forward; warmstart; gripper position/quaternion cache; TimeLimit; complete PCG64"
       ],
       "action_scaling_clipping_repeat": {
-        "summary": "UNACCEPTED: pinned wrapper step implementation indexed below; no candidate parity claim.",
-        "parity": "UNTESTED",
-        "source_catalog": [
-          "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py"
-        ]
+        "summary": "Clip [-1,1]; XYZ *.05 in input dtype; 20 substeps; source gripper behavior",
+        "parity": "PASS_EXACT_PUBLIC_CPU_FLOAT32_FLOAT64_CLIPPING_BOUNDARIES_SIMULTANEOUS_CONTROLS"
       },
       "reset_rng_semantics": {
-        "reset_parity": "UNTESTED",
-        "rng_lifecycle": "UNTESTED",
-        "source_catalog": [
-          "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py"
-        ],
-        "rng_structure_policy": "Complete documented named RNG state is atomic; individual-word minimality is not required."
+        "reset_parity": "PASS_EXACT_PUBLIC_CPU_SEEDED_REPEATED_SEED_MOCAP_AND_RESET_VARIATION_ORDER",
+        "rng_lifecycle": "PASS_COMPLETE_PCG64_SIMULATOR_REPLAY_FIXED_VARIATION_AND_SEPARATE_SEEDED_VISUAL_RNG",
+        "source_provenance": "docs/research/semantic_recovery_evidence/fetch_family/provenance.json"
       },
       "reward_success_terminated_truncated": {
-        "reward": "UNTESTED",
-        "lifecycle": "UNTESTED",
-        "source_catalog": [
-          "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py"
+        "reward": "-(norm(achieved-goal)>.05).astype(float32)",
+        "success": "(norm(achieved-goal)<.05).astype(float32)",
+        "terminated": false,
+        "truncation": "elapsed_steps >= 50"
+      },
+      "accepted_variation_scope": "NOT_PROMOTED; CPU proved PASS_BOUNDED_CPU: agent.start_position, block.angle, block.mass, block.start_position, goal.start_position, object.color, table.color; physical mass where applicable; visual physics nonmutation; persistent versus reset settings",
+      "execution_mode": "DELEGATED_CPU",
+      "evidence_manifest": {
+        "candidate": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json",
+        "artifacts": [
+          {
+            "path": "docs/research/fetch_family_recovery.md",
+            "sha256": "8b8bde43529eec45bd39c64b1aecfc716e622298be4dc8ab7bed5d9d9cd891ec"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlace-alias.json",
+            "sha256": "8c5e5e39217416f83ab9034fd0cf1e507b2e966ffc14c5d89abc2c93c0b0d390"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlace-alias.out",
+            "sha256": "08552733be3c11ed53ca69ae84e68790ebe414a47d7566258b0e85cae0a9dd3c"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlace.json",
+            "sha256": "cd683d09cb9a61c8eb14e9b904b99d82feb4046db7c1b5145053620b9d2c66c6"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlace.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlaceDense.json",
+            "sha256": "fa16033348d4f7c86d927283840fb7a96589c7d1f20444f3f9e34e31eb3bdeb7"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlaceDense.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Push-alias.json",
+            "sha256": "e41d6a549377b3a169ef44f5e58725b3992eb3c31d0357e8d22425ca1931a11b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Push-alias.out",
+            "sha256": "052094017b4f1952fd94a291cd5a3f4c0d18f3c91224c2e8c634b32dda14fd8d"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Push.json",
+            "sha256": "ba090c157d758f4c5da5c805477bb9e024082891433cdd66f428deeea9ae85ae"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Push.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PushDense.json",
+            "sha256": "b382fa01826ebbf673571c9aa0ed375555a1f6d6c91ef655c6239af30d97d424"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/PushDense.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Reach-alias.json",
+            "sha256": "83c12861a5c580c2b77f99edd1ee919bf3be8aa46b88b2236b5d11e8d45746bd"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Reach-alias.out",
+            "sha256": "dbe5b34cab13298875cb11d30f9113871199b52df75dd3b2ba390ea1f6710a9c"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Reach-invalid-fixture.out",
+            "sha256": "010c5a5bd55b37f4814432ffd040818a5bcf4a388bf9c4801bb819299dd89eb2"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Reach.json",
+            "sha256": "ce0ba2e5a836ec9456cc572ba68a310d954d61339422e7a76d88d9f889a255be"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Reach.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/ReachDense.json",
+            "sha256": "49e504054a8b974e0c6a1abf91de08ff7117321be073ba4dec92f4442b4ceefb"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/ReachDense.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Slide-alias.json",
+            "sha256": "76e09aaba8426d96d1e911a7b06b8a4d74ec0a2d3601b153aad8d52aa0608b20"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Slide-alias.out",
+            "sha256": "7cf31b6438de7bee25378c8ac45fb35d0ac7203e6a517b0bd0c3c58a42770040"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Slide.json",
+            "sha256": "316ed25c5afdc46b4c6a0ef829c55b10431c9907e4851204030b92767bb90e50"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/Slide.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/SlideDense.json",
+            "sha256": "d7f3978506673b660eab6e773fc3faf6c0becfe12441ea12b36e7da0f0c7a50b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/SlideDense.out",
+            "sha256": "7ad95580d461ff638562d31f5e3b37382d28ca8d8cfcf8f3ba11376bdd8ff6e9"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/canonical-PickAndPlace.json",
+            "sha256": "3bbfd4a6d7bd16c41a2cae64f6f29cf76e89271cbdd52bc71f706ec020122aaf"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/canonical-Push.json",
+            "sha256": "62ebe561180a97938162229c3665e59ca6c824f0d45949715309fe8603e4a4ca"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/canonical-Reach.json",
+            "sha256": "d91fd43bb4eb0860b75efb9bcd2e353de5976d15ed234d442c2715e230b7cb82"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/canonical-Slide.json",
+            "sha256": "f6e91797c8635ea34e573296a74f6c2a9b7c790992fc0dcef0794b58f5722ff8"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json",
+            "sha256": "d0b5042eda5f2fb86d75482139a46f165d9ee01ae3108024a95d9c24bdb82255"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/diff-review.json",
+            "sha256": "d1bd2b2e7c3060067fba5f6a714a86df695c5a98cacaed0703eec0b4f5e09b39"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/oscar-queue.json",
+            "sha256": "4602eed7ecc4fc46500dc3dead4dcbedb09c5b7dcab631ed41f3148d88277106"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/oscar-submit.json",
+            "sha256": "0d36c10591fb90f871d19d981bcb04803d5ba66d850c80ce517c7f5ac8b3b535"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/provenance.json",
+            "sha256": "febfeb847ed959d64048ed5b524300ee72d0aef8dbb41e33da1ca55cf318e19b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/provenance.out",
+            "sha256": "ee8ce15d761ecc615cb6e4e409e315aabccf616de3533d28f4c99d40fc3c5b75"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/public-contract.json",
+            "sha256": "c483bd9551c467685f905a290bc6f6b1a972a4504c66c0957df044e8609d4090"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/public-contract.out",
+            "sha256": "35a5de2ab25f65cfd7b570f2900845ac31f99f97215b3ee07ad71b0e19cf2e38"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/shared-legacy-tests.out",
+            "sha256": "2f5e9033e79d2ff217deb3b20a02c10517adada6974844b21a1323e3038cfb37"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/start_audit.json",
+            "sha256": "94b7ca1f4ce81116e9c1c4ec08888ce275f907b33ea5d7592acd1e906f6da41b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/final-readiness.out",
+            "sha256": "ff6a9d715c246b50fc3caabc87f59ee760435b2e0d9e9d8603e285442f075494"
+          }
         ]
       },
-      "accepted_variation_scope": "UNTESTED",
-      "execution_mode": null,
-      "evidence_manifest": {
-        "oracle": null,
-        "artifacts": []
-      },
-      "cpu_semantic_result": "NOT_ACCEPTED",
+      "cpu_semantic_result": "PASS_EXACT_CPU_FAMILY_GATE",
       "gpu_semantic_result": {
-        "status": "NOT_ACCEPTED",
-        "job": null,
-        "note": "CUDA State placement is not GPU physics for DELEGATED_CPU."
+        "status": "NOT_CLAIMED",
+        "note": "Separate GPU profile is renderer-only"
       },
-      "frozen_renderer_result": "PENDING",
+      "frozen_renderer_result": "PENDING_OSCAR_JOB_6649686_QOSGrpGRES",
       "known_limitations": [
-        "No dynamics/reward/done; qpos+goal renderer projection cannot restore velocities or episode horizon."
+        "Required Oscar frozen-renderer/full-State/alias-frame gate pending at QOSGrpGRES; no backend promotion.",
+        "SWM observation integration DEFERRED; historical Dict container is not a stable-envs backend responsibility.",
+        "CPU full rendering unsupported. CPU physics pinned to MuJoCo3.8.1; GPU profile renderer-only.",
+        "Bounded Variation only; full historical appearance randomization, task kwargs, external forces and final benchmarks uncertified."
       ],
       "remaining_gates": [
-        "No dynamics/reward/done; qpos+goal renderer projection cannot restore velocities or episode horizon."
+        "Oscar frozen renderer and full/private State-render/alias-frame gates; require downloaded hash checks and actual terminal marker."
       ],
-      "closure_code_check": null
+      "closure_code_check": "Family production diff inspected independently; shared machinery and all other accepted family code unchanged.",
+      "observation_integration": "DEFERRED",
+      "family_candidate_evidence": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json"
     },
     {
       "historical_id": "swm/FingerDMControl-v0",
@@ -9870,6 +12348,16 @@
       "implementation_commit": "bf9101cbcddbb88566879ae40ce4e1cda0e65550",
       "acceptance_manifest": "docs/research/semantic_recovery_evidence/fetch_public/acceptance.json",
       "note": "Phase A 21-row closure audit remains immutable in audit; current row statuses include the one later promotion."
+    },
+    {
+      "kind": "FETCH_FAMILY_CPU_COMPLETE_GPU_PENDING",
+      "implementation_commit": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92",
+      "coverage": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json",
+      "counts": {
+        "VERIFIED": 22,
+        "INCOMPLETE": 20
+      },
+      "observation_integration": "DEFERRED"
     }
   ]
 }

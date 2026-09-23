@@ -1,0 +1,12 @@
+{
+  "job": 6649686,
+  "state": "PENDING",
+  "reason": "QOSGrpGRES",
+  "start_time": "Unknown",
+  "submit_time": "2026-09-23T15:28:29",
+  "last_scheduler_evaluation": "2026-09-23T15:32:12",
+  "runtime": "00:00:00",
+  "command": "/oscar/scratch/sboughan/se-semantic-recovery/fetch-family-0dd0271f/scripts/recovery/oscar_fetch_family_gate.sbatch",
+  "log": "/oscar/scratch/sboughan/se-semantic-recovery/logs/fetch-family-6649686.out",
+  "note": "No GPU evidence produced. Leave job queued; do not promote on Slurm completion alone."
+}

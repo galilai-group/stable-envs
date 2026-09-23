@@ -1,0 +1,13 @@
+{
+  "source_commit": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92",
+  "job_id": 6649686,
+  "stage": "fetch-family-0dd0271f",
+  "archive_sha256": "9829af3404ba7458ecb2e5e8195c3ac98f943a1e8c1f83114fb5a7b4305c4bbb",
+  "archive_remote_hash_verified": true,
+  "partition": "3090-gcondo",
+  "qos": "cs-3090-gcondo",
+  "features": "geforce3090|a5000|a5500",
+  "status": "PENDING",
+  "last_reason": "QOSGrpGRES",
+  "profile": "/oscar/scratch/sboughan/venvs/se6-verify-fetch311/bin/python"
+}

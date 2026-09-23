@@ -1,0 +1,31 @@
+/Users/samib/stable-worldmodel/stable_worldmodel/envs/__init__.py:215: UserWarning: ale-py not found; ALE/* envs are unavailable. Install with: pip install 'stable-worldmodel[env]' or pip install ale-py.
+  from stable_worldmodel.envs import ale  # noqa: F401
+AdroitHandRelocateDense-v1, AdroitHandHammerDense-v1, AdroitHandDoorDense-v1 environment's reward functions were updated in v1.2.1 without an environment version update. Therefore, use gymnasium-robotics==1.2.0 for v1 reproducibility or use v2 in gymnasium-robotics>=1.4.3. See https://github.com/Farama-Foundation/Gymnasium-Robotics/pull/220 for more details
+Traceback (most recent call last):
+  File "/private/tmp/stable-envs-semantic-recovery/scripts/recovery/fetch_public_gate.py", line 453, in <module>
+    main(args.output)
+  File "/private/tmp/stable-envs-semantic-recovery/scripts/recovery/fetch_public_gate.py", line 417, in main
+    variation=variation(),
+              ^^^^^^^^^^^
+  File "/private/tmp/stable-envs-semantic-recovery/scripts/recovery/fetch_public_gate.py", line 298, in variation
+    e.reset(seed=17, options=options)
+  File "/private/tmp/fetch-authority-swm-lock/lib/python3.12/site-packages/gymnasium/wrappers/common.py", line 400, in reset
+    return super().reset(seed=seed, options=options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/private/tmp/fetch-authority-swm-lock/lib/python3.12/site-packages/gymnasium/core.py", line 333, in reset
+    return self.env.reset(seed=seed, options=options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/private/tmp/fetch-authority-swm-lock/lib/python3.12/site-packages/gymnasium/wrappers/common.py", line 293, in reset
+    return env_reset_passive_checker(self.env, seed=seed, options=options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/private/tmp/fetch-authority-swm-lock/lib/python3.12/site-packages/gymnasium/utils/passive_env_checker.py", line 185, in env_reset_passive_checker
+    result = env.reset(**kwargs)
+             ^^^^^^^^^^^^^^^^^^^
+  File "/Users/samib/stable-worldmodel/stable_worldmodel/envs/gymnasium_robotics/fetch.py", line 200, in reset
+    swm_spaces.reset_variation_space(
+  File "/Users/samib/stable-worldmodel/stable_worldmodel/spaces.py", line 52, in reset_variation_space
+    variation_space.set_value(options['variation_values'])
+  File "/Users/samib/stable-worldmodel/stable_worldmodel/spaces.py", line 793, in set_value
+    assert space.contains(v), (
+           ^^^^^^^^^^^^^^^^^
+AssertionError: Value [1.25 0.8  0.6 ] for key goal.start_position is not contained in the space

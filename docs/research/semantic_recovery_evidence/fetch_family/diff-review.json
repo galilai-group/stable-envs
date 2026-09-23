@@ -1,0 +1,46 @@
+{
+  "starting_sha": "c3e03f198e91c632a42ea81e69b474093d0a7e84",
+  "implementation_sha": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92",
+  "production_paths_changed": [
+    "stable_envs/_adapters/fetch_pickandplace.py",
+    "stable_envs/envs/_fetch_semantics.py",
+    "stable_envs/envs/fetch.py"
+  ],
+  "shared_contract_changed": false,
+  "shared_contract_review_requested": false,
+  "other_accepted_family_production_unchanged": true,
+  "accepted_fixtures_unchanged": true,
+  "renderer_ast_comparisons": {
+    "_require_gpu_renderer": "UNCHANGED_AST",
+    "_Cache": "UNCHANGED_AST",
+    "_asset_dir": "UNCHANGED_AST",
+    "_effective_rgba": "UNCHANGED_AST",
+    "_restore": "UNCHANGED_AST",
+    "_style_groups": "UNCHANGED_AST",
+    "_free_cam_pose": "UNCHANGED_AST",
+    "_Bundle": "UNCHANGED_AST",
+    "_build_bundle": "UNCHANGED_AST",
+    "_renderer": "UNCHANGED_AST",
+    "_Ctx": "UNCHANGED_AST",
+    "_context": "UNCHANGED_AST",
+    "_frame": "UNCHANGED_AST",
+    "FetchBase": "UNCHANGED_AST",
+    "_state_pool": "UNCHANGED_AST"
+  },
+  "source_hashes": {
+    "stable_envs/_adapters/fetch_pickandplace.py": "8947cb8324f68297aaa2fdbfb900503c9e6bbe26a981f805f96dd7d4f1f7af68",
+    "stable_envs/envs/_fetch_semantics.py": "ff523516613725badf46d596c182aba06af2e19ee691c7f5822cf5f45cb304ea",
+    "stable_envs/envs/fetch.py": "b295d567c3e52c3e7493f9ef667cee044812f8b0049230ca6d9d29816e6d21cf"
+  },
+  "review": [
+    "Reviewed final production diff independently of gate outputs.",
+    "Task selection delegates source constructors and preserves action dtype.",
+    "Reach excludes object operations and derives nq/nv from model.",
+    "Common restoration sequence unchanged; complete typed PCG64 retained.",
+    "Only backend result keys returned; no learner observation or info dictionary.",
+    "Visual RNG tree retains historical ordering; Reach excludes only absent block subtree.",
+    "Mass remains separate persistent Variation and is applied after reset.",
+    "Renderer implementation and frozen fixtures unchanged; only semantic factory/docstring changed.",
+    "CPU gate explicitly excludes observation containers; Dict equivalence covers backend only."
+  ]
+}
