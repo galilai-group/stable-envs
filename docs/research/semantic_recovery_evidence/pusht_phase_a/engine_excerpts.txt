@@ -1,0 +1,362 @@
+Exact release-source excerpts; full-file hashes and commit identity are in audit.json.
+
+pymunk/body.py:87-109
+87:     _pickle_attrs_init = PickleMixin._pickle_attrs_init + [
+88:         "mass",
+89:         "moment",
+90:         "body_type",
+91:     ]
+92:     _pickle_attrs_general = PickleMixin._pickle_attrs_general + [
+93:         "force",
+94:         "angle",
+95:         "position",
+96:         "center_of_gravity",
+97:         "velocity",
+98:         "angular_velocity",
+99:         "torque",
+100:     ]
+101:     _pickle_attrs_skip = PickleMixin._pickle_attrs_skip + [
+102:         "is_sleeping",
+103:         "_velocity_func",
+104:         "_position_func",
+105:         # "_space",
+106:     ]
+107: 
+108:     _position_func: Optional[_PositionFunc] = None
+109:     _velocity_func: Optional[_VelocityFunc] = None
+
+pymunk/space.py:1011-1066
+1011:     def __getstate__(self) -> _State:
+1012:         """Return the state of this object
+1013: 
+1014:         This method allows the usage of the :mod:`copy` and :mod:`pickle`
+1015:         modules with this class.
+1016:         """
+1017:         d = super(Space, self).__getstate__()
+1018: 
+1019:         d["special"].append(("pymunk_version", _version.version))
+1020:         # bodies needs to be added to the state before their shapes.
+1021:         d["special"].append(("bodies", list(self.bodies)))
+1022:         if self._static_body != None:
+1023:             # print("getstate", self._static_body)
+1024:             d["special"].append(("_static_body", self._static_body))
+1025: 
+1026:         d["special"].append(("shapes", list(self.shapes)))
+1027:         d["special"].append(("constraints", list(self.constraints)))
+1028: 
+1029:         # to avoid circular dep
+1030:         from . import empty_callback
+1031: 
+1032:         handlers = []
+1033:         for k, v in self._handlers.items():
+1034:             h: dict[str, Any] = {}
+1035:             if v._begin != empty_callback:
+1036:                 h["_begin"] = v._begin
+1037:             if v._pre_solve != empty_callback:
+1038:                 h["_pre_solve"] = v._pre_solve
+1039:             if v._post_solve != empty_callback:
+1040:                 h["_post_solve"] = v._post_solve
+1041:             if v._separate != empty_callback:
+1042:                 h["_separate"] = v._separate
+1043:             handlers.append((k, h))
+1044: 
+1045:         d["special"].append(("_handlers", handlers))
+1046: 
+1047:         d["special"].append(
+1048:             ("shapeIDCounter", lib.cpSpaceGetShapeIDCounter(self._space))
+1049:         )
+1050:         d["special"].append(("stamp", lib.cpSpaceGetTimestamp(self._space)))
+1051:         d["special"].append(
+1052:             ("currentTimeStep", lib.cpSpaceGetCurrentTimeStep(self._space))
+1053:         )
+1054: 
+1055:         _arbs = self._get_arbiters()
+1056:         d["special"].append(
+1057:             ("arbiters", [_arbiter_to_dict(_arb, self) for _arb in _arbs])
+1058:         )
+1059:         return d
+1060: 
+1061:     def __setstate__(self, state: _State) -> None:
+1062:         """Unpack this object from a saved state.
+1063: 
+1064:         This method allows the usage of the :mod:`copy` and :mod:`pickle`
+1065:         modules with this class.
+1066:         """
+
+pymunk_cffi/chipmunk_cdef.h:25-56
+25: // chipmunk.h
+26: ///////////////////////////////////////////
+27: 
+28: typedef struct cpArray cpArray;
+29: typedef struct cpHashSet cpHashSet;
+30: 
+31: typedef struct cpBody cpBody;
+32: 
+33: typedef struct cpShape cpShape;
+34: typedef struct cpCircleShape cpCircleShape;
+35: typedef struct cpSegmentShape cpSegmentShape;
+36: typedef struct cpPolyShape cpPolyShape;
+37: 
+38: typedef struct cpConstraint cpConstraint;
+39: typedef struct cpPinJoint cpPinJoint;
+40: typedef struct cpSlideJoint cpSlideJoint;
+41: typedef struct cpPivotJoint cpPivotJoint;
+42: typedef struct cpGrooveJoint cpGrooveJoint;
+43: typedef struct cpDampedSpring cpDampedSpring;
+44: typedef struct cpDampedRotarySpring cpDampedRotarySpring;
+45: typedef struct cpRotaryLimitJoint cpRotaryLimitJoint;
+46: typedef struct cpRatchetJoint cpRatchetJoint;
+47: typedef struct cpGearJoint cpGearJoint;
+48: typedef struct cpSimpleMotorJoint cpSimpleMotorJoint;
+49: 
+50: typedef struct cpCollisionHandler cpCollisionHandler;
+51: typedef struct cpContactPointSet cpContactPointSet;
+52: typedef struct cpArbiter cpArbiter;
+53: 
+54: typedef struct cpSpace cpSpace;
+55: 
+56: ///////////////////////////////////////////
+
+pymunk_cffi/extensions.c:404-445
+404: void cpSpaceAddCachedArbiter(cpSpace *space, cpArbiter *arb)
+405: {
+406:     // Need to init the contact buffer
+407:     cpSpacePushFreshContactBuffer(space);
+408: 
+409:     int numContacts = arb->count;
+410:     struct cpContact *contacts = arb->contacts;
+411:     // Restore contact values back to the space's contact buffer memory
+412:     arb->contacts = cpContactBufferGetArray(space);
+413: 
+414:     memcpy(arb->contacts, contacts, numContacts * sizeof(struct cpContact));
+415:     cpSpacePushContacts(space, numContacts);
+416: 
+417:     // Reinsert the arbiter into the arbiter cache
+418:     const cpShape *a = arb->a, *b = arb->b;
+419:     const cpShape *shape_pair[] = {a, b};
+420:     cpHashValue arbHashID = CP_HASH_PAIR((cpHashValue)a, (cpHashValue)b);
+421:     cpHashSetInsert(space->cachedArbiters, arbHashID, shape_pair, NULL, arb);
+422: 
+423:     // Set handlers to their defaults
+424:     cpCollisionType typeA = a->type, typeB = b->type;
+425:     //cpCollisionHandler *handler = arb->handler = cpSpaceLookupHandler(space, typeA, typeB);
+426: 	arb->handlerAB = cpSpaceLookupHandler(space, typeA, typeB);
+427: 	arb->handlerA = cpSpaceLookupHandler(space, typeA, CP_WILDCARD_COLLISION_TYPE);
+428: 
+429: 	if (typeA != typeB){
+430: 		arb->handlerBA = cpSpaceLookupHandler(space, typeB, typeA);
+431: 		arb->handlerB = cpSpaceLookupHandler(space, typeB, CP_WILDCARD_COLLISION_TYPE);
+432: 	} else{
+433: 		arb->handlerBA = &cpCollisionHandlerDoNothing;
+434: 		arb->handlerB = &cpCollisionHandlerDoNothing;
+435: 	}
+436: 	arb->swapped = (typeA != arb->handlerAB->typeA);
+437: 
+438:     // Check if the types match, but don't swap for a default handler which use the wildcard for type A.
+439:     //cpBool swapped = arb->swapped = (typeA != handler->typeA && handler->typeA != CP_WILDCARD_COLLISION_TYPE);
+440: 
+441:     // The order of the main handler swaps the wildcard handlers too. Uffda.
+442:     //arb->handlerA = cpSpaceLookupHandler(space, (swapped ? typeB : typeA), CP_WILDCARD_COLLISION_TYPE);
+443:     //arb->handlerB = cpSpaceLookupHandler(space, (swapped ? typeA : typeB), CP_WILDCARD_COLLISION_TYPE);
+444: 
+445:     // Update the arbiter's state
+
+Munk2D/src/cpBody.c:512-523
+512: void
+513: cpBodyUpdatePosition(cpBody *body, cpFloat dt)
+514: {
+515: 	cpVect p = body->p = cpvadd(body->p, cpvmult(cpvadd(body->v, body->v_bias), dt));
+516: 	cpFloat a = SetAngle(body, body->a + (body->w + body->w_bias)*dt);
+517: 	SetTransform(body, p, a);
+518: 	
+519: 	body->v_bias = cpvzero;
+520: 	body->w_bias = 0.0f;
+521: 	
+522: 	cpAssertSaneBody(body);
+523: }
+
+Munk2D/src/cpArbiter.c:405-449
+405: void
+406: cpArbiterApplyImpulse(cpArbiter *arb)
+407: {
+408: 	cpBody *a = arb->body_a;
+409: 	cpBody *b = arb->body_b;
+410: 	cpVect n = arb->n;
+411: 	cpVect surface_vr = arb->surface_vr;
+412: 	cpFloat friction = arb->u;
+413: 
+414: 	for(int i=0; i<arb->count; i++){
+415: 		struct cpContact *con = &arb->contacts[i];
+416: 		cpFloat nMass = con->nMass;
+417: 		cpVect r1 = con->r1;
+418: 		cpVect r2 = con->r2;
+419: 		
+420: 		cpVect vb1 = cpvadd(a->v_bias, cpvmult(cpvperp(r1), a->w_bias));
+421: 		cpVect vb2 = cpvadd(b->v_bias, cpvmult(cpvperp(r2), b->w_bias));
+422: 		cpVect vr = cpvadd(relative_velocity(a, b, r1, r2), surface_vr);
+423: 		
+424: 		cpFloat vbn = cpvdot(cpvsub(vb2, vb1), n);
+425: 		cpFloat vrn = cpvdot(vr, n);
+426: 		cpFloat vrt = cpvdot(vr, cpvperp(n));
+427: 		
+428: 		cpFloat jbn = (con->bias - vbn)*nMass;
+429: 		cpFloat jbnOld = con->jBias;
+430: 		con->jBias = cpfmax(jbnOld + jbn, 0.0f);
+431: 		
+432: 		cpFloat jn = -(con->bounce + vrn)*nMass;
+433: 		cpFloat jnOld = con->jnAcc;
+434: 		con->jnAcc = cpfmax(jnOld + jn, 0.0f);
+435: 		
+436: 		cpFloat jtMax = friction*con->jnAcc;
+437: 		cpFloat jt = -vrt*con->tMass;
+438: 		cpFloat jtOld = con->jtAcc;
+439: 		con->jtAcc = cpfclamp(jtOld + jt, -jtMax, jtMax);
+440: 		
+441: 		apply_bias_impulses(a, b, r1, r2, cpvmult(n, con->jBias - jbnOld));
+442: 		apply_impulses(a, b, r1, r2, cpvrotate(n, cpv(con->jnAcc - jnOld, con->jtAcc - jtOld)));
+443: 	}
+444: }
+
+Munk2D/src/cpSpaceStep.c:365-455
+365: {
+366: 	// don't step if the timestep is 0!
+367: 	if(dt == 0.0f) return;
+368: 	
+369: 	space->stamp++;
+370: 	
+371: 	cpFloat prev_dt = space->curr_dt;
+372: 	space->curr_dt = dt;
+373: 		
+374: 	cpArray *bodies = space->dynamicBodies;
+375: 	cpArray *constraints = space->constraints;
+376: 	cpArray *arbiters = space->arbiters;
+377: 	
+378: 	// Reset and empty the arbiter lists.
+379: 	for(int i=0; i<arbiters->num; i++){
+380: 		cpArbiter *arb = (cpArbiter *)arbiters->arr[i];
+381: 		arb->state = CP_ARBITER_STATE_NORMAL;
+382: 		
+383: 		// If both bodies are awake, unthread the arbiter from the contact graph.
+384: 		if(!cpBodyIsSleeping(arb->body_a) && !cpBodyIsSleeping(arb->body_b)){
+385: 			cpArbiterUnthread(arb);
+386: 		}
+387: 	}
+388: 	arbiters->num = 0;
+389: 
+390: 	cpSpaceLock(space); {
+391: 		// Integrate positions
+392: 		for(int i=0; i<bodies->num; i++){
+393: 			cpBody *body = (cpBody *)bodies->arr[i];
+394: 			body->position_func(body, dt);
+395: 		}
+396: 		
+397: 		// Find colliding pairs.
+398: 		cpSpacePushFreshContactBuffer(space);
+399: 		cpSpatialIndexEach(space->dynamicShapes, (cpSpatialIndexIteratorFunc)cpShapeUpdateFunc, NULL);
+400: 		cpSpatialIndexReindexQuery(space->dynamicShapes, (cpSpatialIndexQueryFunc)cpSpaceCollideShapes, space);
+401: 	} cpSpaceUnlock(space, cpFalse);
+402: 	
+403: 	// Rebuild the contact graph (and detect sleeping components if sleeping is enabled)
+404: 	cpSpaceProcessComponents(space, dt);
+405: 	
+406: 	cpSpaceLock(space); {
+407: 		// Clear out old cached arbiters and call separate callbacks
+408: 		cpHashSetFilter(space->cachedArbiters, (cpHashSetFilterFunc)cpSpaceArbiterSetFilter, space);
+409: 
+410: 		// Prestep the arbiters and constraints.
+411: 		cpFloat slop = space->collisionSlop;
+412: 		cpFloat biasCoef = 1.0f - cpfpow(space->collisionBias, dt);
+413: 		for(int i=0; i<arbiters->num; i++){
+414: 			cpArbiterPreStep((cpArbiter *)arbiters->arr[i], dt, slop, biasCoef);
+415: 		}
+416: 
+417: 		for(int i=0; i<constraints->num; i++){
+418: 			cpConstraint *constraint = (cpConstraint *)constraints->arr[i];
+419: 			
+420: 			cpConstraintPreSolveFunc preSolve = constraint->preSolve;
+421: 			if(preSolve) preSolve(constraint, space);
+422: 			
+423: 			constraint->klass->preStep(constraint, dt);
+424: 		}
+425: 	
+426: 		// Integrate velocities.
+427: 		cpFloat damping = cpfpow(space->damping, dt);
+428: 		cpVect gravity = space->gravity;
+429: 		for(int i=0; i<bodies->num; i++){
+430: 			cpBody *body = (cpBody *)bodies->arr[i];
+431: 			body->velocity_func(body, gravity, damping, dt);
+432: 		}
+433: 		
+434: 		// Apply cached impulses
+435: 		cpFloat dt_coef = (prev_dt == 0.0f ? 0.0f : dt/prev_dt);
+436: 		for(int i=0; i<arbiters->num; i++){
+437: 			cpArbiterApplyCachedImpulse((cpArbiter *)arbiters->arr[i], dt_coef);
+438: 		}
+439: 		
+440: 		for(int i=0; i<constraints->num; i++){
+441: 			cpConstraint *constraint = (cpConstraint *)constraints->arr[i];
+442: 			constraint->klass->applyCachedImpulse(constraint, dt_coef);
+443: 		}
+444: 		
+445: 		// Run the impulse solver.
+446: 		for(int i=0; i<space->iterations; i++){
+447: 			for(int j=0; j<arbiters->num; j++){
+448: 				cpArbiterApplyImpulse((cpArbiter *)arbiters->arr[j]);
+449: 			}
+450: 				
+451: 			for(int j=0; j<constraints->num; j++){
+452: 				cpConstraint *constraint = (cpConstraint *)constraints->arr[j];
+453: 				constraint->klass->applyImpulse(constraint, dt);
+454: 			}
+455: 		}
+
+Munk2D/include/chipmunk/chipmunk_structs.h:30-78
+30: 
+31: struct cpArray {
+32: 	int num, max;
+33: 	void **arr;
+34: };
+35: 
+36: struct cpBody {
+37: 	// Integration functions
+38: 	cpBodyVelocityFunc velocity_func;
+39: 	cpBodyPositionFunc position_func;
+40: 	
+41: 	// mass and it's inverse
+42: 	cpFloat m;
+43: 	cpFloat m_inv;
+44: 	
+45: 	// moment of inertia and it's inverse
+46: 	cpFloat i;
+47: 	cpFloat i_inv;
+48: 	
+49: 	// center of gravity
+50: 	cpVect cog;
+51: 	
+52: 	// position, velocity, force
+53: 	cpVect p;
+54: 	cpVect v;
+55: 	cpVect f;
+56: 	
+57: 	// Angle, angular velocity, torque (radians)
+58: 	cpFloat a;
+59: 	cpFloat w;
+60: 	cpFloat t;
+61: 	
+62: 	cpTransform transform;
+63: 	
+64: 	cpDataPointer userData;
+65: 	
+66: 	// "pseudo-velocities" used for eliminating overlap.
+67: 	// Erin Catto has some papers that talk about what these are.
+68: 	cpVect v_bias;
+69: 	cpFloat w_bias;
+70: 	
+71: 	cpSpace *space;
+72: 	
+73: 	cpShape *shapeList;
+74: 	cpArbiter *arbiterList;
+75: 	cpConstraint *constraintList;
+76: 	
+77: 	struct {
+78: 		cpBody *root;

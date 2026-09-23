@@ -1,0 +1,11 @@
+{
+  "status": "PASS_DIAGNOSTIC_REVIEW_NOT_ACCEPTANCE",
+  "all_12_candidate_roundtrips_exact": true,
+  "all_controls_exact_four_steps": true,
+  "all_enhanced_numeric_cache_roundtrips_exact": true,
+  "combined_contact_both_different_history_modes_diverge_all_four_steps": true,
+  "production_shared_test_fixture_map_changes": false,
+  "no_promotion": true,
+  "no_shared_change_requested": true,
+  "no_push": true
+}
