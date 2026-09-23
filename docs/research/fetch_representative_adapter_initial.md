@@ -50,7 +50,9 @@ tasks or untested physical Variation.
 
 The independent probe uses the pinned SWM historical registration as oracle and
 extracts source State without importing candidate extraction helpers. It
-compares every numeric output and all candidate State fields exactly.
+asserts the pinned SWM revision and tracked-clean source, compares every numeric
+output with exact value, dtype and shape equality, and compares all candidate
+State fields exactly. Visual variations are explicitly disabled in this probe.
 
 - Twelve cases: seeds 0/17/42, batches 1/3, action dtype float32/float64.
 - Exact seeded reset State; independent snapshot mutation check.
