@@ -1,0 +1,12 @@
+{
+  "DMCHumanoidWalk": {
+    "rows_sha256": "216358698225a5a9daaacba852be12048f7e4ce660390e51ffe3fe97cac9f948",
+    "frame_sha256": "2348bd286192b622d5a8f527abaceecd9794e40324f14d704aaff4181b861047",
+    "shape": [
+      4,
+      84,
+      84,
+      3
+    ]
+  }
+}

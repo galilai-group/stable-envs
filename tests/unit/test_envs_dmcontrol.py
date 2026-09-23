@@ -60,7 +60,7 @@ PARITY = (
 TRACKCOM = (
     "DMCCheetahRun",
     "DMCHopperHop",
-    "DMCHumanoidStand",
+    "DMCHumanoidWalk",
     "DMCQuadrupedWalk",
     "DMCSwimmerSwimmer6",
     "DMCWalkerWalk",
@@ -68,8 +68,12 @@ TRACKCOM = (
 ALL = PARITY + TRACKCOM
 CONTINUATION = ("DMCCheetahRun", "DMCHopperHop", "DMCWalkerWalk")
 ALIGNED = ("DMCBallInCupCatch", "DMCFingerTurnHard", "DMCManipulatorBringBall", "DMCQuadrupedWalk")
+HUMANOID = ("DMCHumanoidWalk",)
 RECOVERED = (
-    ("DMCReacherHard", "DMCAcrobotBalance", "DMCPendulumSwingup", "DMCCartpoleSwingup") + CONTINUATION + ALIGNED
+    ("DMCReacherHard", "DMCAcrobotBalance", "DMCPendulumSwingup", "DMCCartpoleSwingup")
+    + CONTINUATION
+    + ALIGNED
+    + HUMANOID
 )
 
 #: Which domain module each cell is WRITTEN in. The registry reports the package for all eighteen
@@ -91,7 +95,7 @@ WRITTEN_IN = {
     "DMCReacherHard": "reacher",
     "DMCCheetahRun": "cheetah",
     "DMCHopperHop": "hopper",
-    "DMCHumanoidStand": "humanoid",
+    "DMCHumanoidWalk": "humanoid",
     "DMCQuadrupedWalk": "quadruped",
     "DMCSwimmerSwimmer6": "swimmer",
     "DMCWalkerWalk": "walker",
@@ -201,7 +205,7 @@ def test_the_package_tables_are_views_of_the_cells_and_not_a_second_copy():
     assert set(dmc.VISUAL_FIDELITY) == set(TRACKCOM)
     for n, vf in dmc.VISUAL_FIDELITY.items():
         assert snv.registry.REGISTRY[n].visual_fidelity is vf
-    assert set(dmc.TRACKCOM_BASES) == {"DMCQuadrupedWalk", *CONTINUATION}
+    assert set(dmc.TRACKCOM_BASES) == {"DMCQuadrupedWalk", *CONTINUATION, *HUMANOID}
     from stable_envs.envs.dmcontrol._aligned import DMCAlignedSemantics
 
     assert dmc.TRACKCOM_BASES["DMCQuadrupedWalk"] == (DMCAlignedSemantics, dmc._TranscribedQuadrupedModel)
@@ -245,6 +249,10 @@ def test_a_cell_is_a_declaration_and_overrides_no_renderer_method(name):
         from stable_envs.envs.dmcontrol._continuation import DMCContinuationSemantics
 
         expected = (DMCContinuationSemantics,)
+    elif name in HUMANOID:
+        from stable_envs.envs.dmcontrol._humanoid import DMCHumanoidSemantics
+
+        expected = (DMCHumanoidSemantics,)
     elif name in RECOVERED:
         from stable_envs.envs.dmcontrol._first_family import FirstFamilySemantics
 
