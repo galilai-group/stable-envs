@@ -1,0 +1,124 @@
+{
+  "status": "REFERENCE_PROFILE_SMOKE_PASS_NOT_CANDIDATE_ACCEPTANCE",
+  "swm_commit": "176d54532b3c0a251a4f509b74f2fdacc143a63d",
+  "profile": {
+    "python": "3.12.11",
+    "numpy": "2.2.6",
+    "gymnasium": "1.2.3",
+    "gymnasium-robotics": "1.4.2",
+    "mujoco": "3.8.1",
+    "torch": "2.10.0",
+    "torchvision": "0.25.0",
+    "tensordict": "0.14.2"
+  },
+  "upstream_constraints": [
+    "mujoco>=2.2.0",
+    "numpy>=1.21.0",
+    "gymnasium>=1.2.0",
+    "PettingZoo>=1.23.0",
+    "Jinja2>=3.0.3",
+    "imageio",
+    "setuptools",
+    "packaging",
+    "pytest==7.0.1; extra == \"testing\"",
+    "mujoco_py_cython3; extra == \"testing\"",
+    "PettingZoo>=1.23.0; extra == \"testing\"",
+    "Jinja2>=3.0.3; extra == \"testing\"",
+    "mujoco_py_cython3; extra == \"mujoco-py\"",
+    "mujoco_py<2.2,>=2.1; extra == \"mujoco-py-original\"",
+    "cython<3; extra == \"mujoco-py-original\""
+  ],
+  "profile_selection": "Four simulator package versions and torch/torchvision from pinned SWM uv.lock; existing Python interpreter",
+  "unmodified_mujoco_utils_wheel_record": true,
+  "mujoco_utils_sha256": "66ccc17dee5da893b88c101cfcffe1b2122f6fa72d64b35568ce37e1b0630dfc",
+  "results": {
+    "direct_upstream": {
+      "class": "MujocoFetchPickAndPlaceEnv",
+      "constructor": "PASS",
+      "resets": [
+        {
+          "seed": 0,
+          "qpos_sha256": "af50b1d64c54c352e994f3a67f11d6507030117345fa592a12316068ef7aee73",
+          "qvel_sha256": "ec29da77341d2e36b64da9032adb6bcb47e2dd7eb06703ecd681fcd0470a5354",
+          "goal": [
+            1.4359147724808996,
+            0.8729277138033084,
+            0.4248922232488584
+          ],
+          "observation_kind": "dict"
+        },
+        {
+          "seed": 17,
+          "qpos_sha256": "691c5f1ea3f9219699b5d595bc2b7caf92e84e7d532d7c19dfabe5a4eaec3d81",
+          "qvel_sha256": "ec29da77341d2e36b64da9032adb6bcb47e2dd7eb06703ecd681fcd0470a5354",
+          "goal": [
+            1.3592570649305256,
+            0.7095250231192732,
+            0.6175662478409822
+          ],
+          "observation_kind": "dict"
+        },
+        {
+          "seed": 42,
+          "qpos_sha256": "86f2b146bdbfd35dffd896fd960efdc527488dcd4197443a7840c9894d8bbce4",
+          "qvel_sha256": "ec29da77341d2e36b64da9032adb6bcb47e2dd7eb06703ecd681fcd0470a5354",
+          "goal": [
+            1.2201869050871128,
+            0.8917877461110186,
+            0.4248922232488584
+          ],
+          "observation_kind": "dict"
+        }
+      ],
+      "slide_joint_numpy_dtype": "int32",
+      "slide_joint_integer": 2,
+      "numpy_scalar_equals_enum": true,
+      "enum_equals_numpy_scalar": true,
+      "enum_tuple_membership": true
+    },
+    "pinned_swm": {
+      "class": "MujocoFetchPickAndPlaceEnv",
+      "constructor": "PASS",
+      "resets": [
+        {
+          "seed": 0,
+          "qpos_sha256": "af50b1d64c54c352e994f3a67f11d6507030117345fa592a12316068ef7aee73",
+          "qvel_sha256": "ec29da77341d2e36b64da9032adb6bcb47e2dd7eb06703ecd681fcd0470a5354",
+          "goal": [
+            1.4359147724808996,
+            0.8729277138033084,
+            0.4248922232488584
+          ],
+          "observation_kind": "ndarray"
+        },
+        {
+          "seed": 17,
+          "qpos_sha256": "691c5f1ea3f9219699b5d595bc2b7caf92e84e7d532d7c19dfabe5a4eaec3d81",
+          "qvel_sha256": "ec29da77341d2e36b64da9032adb6bcb47e2dd7eb06703ecd681fcd0470a5354",
+          "goal": [
+            1.3592570649305256,
+            0.7095250231192732,
+            0.6175662478409822
+          ],
+          "observation_kind": "ndarray"
+        },
+        {
+          "seed": 42,
+          "qpos_sha256": "86f2b146bdbfd35dffd896fd960efdc527488dcd4197443a7840c9894d8bbce4",
+          "qvel_sha256": "ec29da77341d2e36b64da9032adb6bcb47e2dd7eb06703ecd681fcd0470a5354",
+          "goal": [
+            1.2201869050871128,
+            0.8917877461110186,
+            0.4248922232488584
+          ],
+          "observation_kind": "ndarray"
+        }
+      ],
+      "slide_joint_numpy_dtype": "int32",
+      "slide_joint_integer": 2,
+      "numpy_scalar_equals_enum": true,
+      "enum_equals_numpy_scalar": true,
+      "enum_tuple_membership": true
+    }
+  }
+}

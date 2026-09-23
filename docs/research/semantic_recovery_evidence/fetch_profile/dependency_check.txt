@@ -1,0 +1,3 @@
+Using Python 3.12.11 environment at: /private/tmp/fetch-authority-swm-lock
+Checked 56 packages in 0.49ms
+All installed packages are compatible
