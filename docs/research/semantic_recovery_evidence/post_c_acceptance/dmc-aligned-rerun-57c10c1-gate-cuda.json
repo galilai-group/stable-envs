@@ -1,0 +1,572 @@
+{
+  "swm_commit": "176d54532b3c0a251a4f509b74f2fdacc143a63d",
+  "device": "cuda",
+  "execution_mode": "DELEGATED_CPU",
+  "platform": "Linux-5.14.0-570.62.1.0.1.el9_6.x86_64-x86_64-with-glibc2.34",
+  "versions": {
+    "torch": "2.14.0+cu126",
+    "numpy": "2.5.3",
+    "dm-control": "1.0.44",
+    "mujoco": "3.11.0",
+    "tensordict": "0.14.2",
+    "stable-worldmodel": "0.1.1"
+  },
+  "mappings": {
+    "ball_in_cup": "DMCBallInCupCatch",
+    "finger": "DMCFingerTurnHard",
+    "manipulator": "DMCManipulatorBringBall",
+    "quadruped": "DMCQuadrupedWalk"
+  },
+  "state_omission_experiments": {
+    "ball_in_cup": {
+      "warmstart": {
+        "prefix_steps": 6,
+        "snapshot_contact_count": 1,
+        "snapshot_constraint_count": 4,
+        "different_history": "9 actions",
+        "continuation_steps": 8,
+        "max_observable_error_without_field": 2.942091015256665e-15,
+        "max_error_with_schema": 0.0
+      }
+    },
+    "finger": {
+      "warmstart": {
+        "prefix_steps": 7,
+        "snapshot_contact_count": 1,
+        "snapshot_constraint_count": 4,
+        "different_history": "9 actions",
+        "continuation_steps": 8,
+        "max_observable_error_without_field": 1.389999226830696e-13,
+        "max_error_with_schema": 0.0
+      },
+      "model/target_site_xz": {
+        "prefix_steps": 7,
+        "snapshot_contact_count": 1,
+        "snapshot_constraint_count": 4,
+        "different_history": "reset seed 991",
+        "continuation_steps": 8,
+        "max_observable_error_without_field": 15.0,
+        "max_error_with_schema": 0.0
+      }
+    },
+    "manipulator": {
+      "warmstart": {
+        "prefix_steps": 1,
+        "snapshot_contact_count": 0,
+        "snapshot_constraint_count": 1,
+        "different_history": "9 actions",
+        "continuation_steps": 8,
+        "max_observable_error_without_field": 1.4210854715202004e-13,
+        "max_error_with_schema": 0.0
+      },
+      "model/target_body_xz": {
+        "prefix_steps": 1,
+        "snapshot_contact_count": 0,
+        "snapshot_constraint_count": 1,
+        "different_history": "reset seed 991",
+        "continuation_steps": 8,
+        "max_observable_error_without_field": 0.198537215590477,
+        "max_error_with_schema": 0.0
+      },
+      "model/target_body_qwqy": {
+        "prefix_steps": 1,
+        "snapshot_contact_count": 0,
+        "snapshot_constraint_count": 1,
+        "different_history": "reset seed 991",
+        "continuation_steps": 8,
+        "max_observable_error_without_field": 1.0803415477275848,
+        "max_error_with_schema": 0.0
+      }
+    },
+    "quadruped": {
+      "warmstart": {
+        "prefix_steps": 1,
+        "snapshot_contact_count": 1,
+        "snapshot_constraint_count": 8,
+        "different_history": "9 actions",
+        "continuation_steps": 8,
+        "max_observable_error_without_field": 2.313704783318826e-13,
+        "max_error_with_schema": 0.0
+      },
+      "activation": {
+        "prefix_steps": 1,
+        "snapshot_contact_count": 1,
+        "snapshot_constraint_count": 8,
+        "different_history": "9 actions",
+        "continuation_steps": 8,
+        "max_observable_error_without_field": 2456.575482787585,
+        "max_error_with_schema": 0.0
+      }
+    }
+  },
+  "construction": {
+    "ball_in_cup": {
+      "numeric_model_arrays_exact": 583,
+      "nq": 4,
+      "nv": 4,
+      "na": 0,
+      "action_dim": 2,
+      "observation_dim": 8,
+      "control_timestep": 0.02,
+      "step_limit": 1000
+    },
+    "finger": {
+      "numeric_model_arrays_exact": 583,
+      "nq": 3,
+      "nv": 3,
+      "na": 0,
+      "action_dim": 2,
+      "observation_dim": 12,
+      "control_timestep": 0.02,
+      "step_limit": 1000
+    },
+    "manipulator": {
+      "numeric_model_arrays_exact": 583,
+      "nq": 11,
+      "nv": 11,
+      "na": 0,
+      "action_dim": 5,
+      "observation_dim": 44,
+      "control_timestep": 0.01,
+      "step_limit": 1000
+    },
+    "quadruped": {
+      "numeric_model_arrays_exact": 583,
+      "nq": 23,
+      "nv": 22,
+      "na": 12,
+      "action_dim": 12,
+      "observation_dim": 78,
+      "control_timestep": 0.02,
+      "step_limit": 1000
+    }
+  },
+  "cases": [
+    {
+      "domain": "ball_in_cup",
+      "batch": 1,
+      "seed": 0,
+      "reset": true,
+      "snapshot_independent": true,
+      "roundtrip": true,
+      "steps": 32,
+      "different_history_steps": 8,
+      "full_state_render": true,
+      "max_error": 0.0
+    },
+    {
+      "domain": "ball_in_cup",
+      "batch": 1,
+      "seed": 17,
+      "reset": true,
+      "snapshot_independent": true,
+      "roundtrip": true,
+      "steps": 32,
+      "different_history_steps": 8,
+      "full_state_render": true,
+      "max_error": 0.0
+    },
+    {
+      "domain": "ball_in_cup",
+      "batch": 1,
+      "seed": 42,
+      "reset": true,
+      "snapshot_independent": true,
+      "roundtrip": true,
+      "steps": 32,
+      "different_history_steps": 8,
+      "full_state_render": true,
+      "max_error": 0.0
+    },
+    {
+      "domain": "ball_in_cup",
+      "batch": 1,
+      "lifecycle_public_steps": 502,
+      "implicit_reset_rng_changes": true,
+      "lifecycle_replay": true
+    },
+    {
+      "domain": "ball_in_cup",
+      "batch": 3,
+      "seed": 0,
+      "reset": true,
+      "snapshot_independent": true,
+      "roundtrip": true,
+      "steps": 32,
+      "different_history_steps": 8,
+      "full_state_render": true,
+      "max_error": 0.0
+    },
+    {
+      "domain": "ball_in_cup",
+      "batch": 3,
+      "seed": 17,
+      "reset": true,
+      "snapshot_independent": true,
+      "roundtrip": true,
+      "steps": 32,
+      "different_history_steps": 8,
+      "full_state_render": true,
+      "max_error": 0.0
+    },
+    {
+      "domain": "ball_in_cup",
+      "batch": 3,
+      "seed": 42,
+      "reset": true,
+      "snapshot_independent": true,
+      "roundtrip": true,
+      "steps": 32,
+      "different_history_steps": 8,
+      "full_state_render": true,
+      "max_error": 0.0
+    },
+    {
+      "domain": "ball_in_cup",
+      "batch": 3,
+      "lifecycle_public_steps": 502,
+      "implicit_reset_rng_changes": true,
+      "lifecycle_replay": true
+    },
+    {
+      "domain": "finger",
+      "batch": 1,
+      "seed": 0,
+      "reset": true,
+      "snapshot_independent": true,
+      "roundtrip": true,
+      "steps": 32,
+      "different_history_steps": 8,
+      "full_state_render": true,
+      "max_error": 0.0
+    },
+    {
+      "domain": "finger",
+      "batch": 1,
+      "seed": 17,
+      "reset": true,
+      "snapshot_independent": true,
+      "roundtrip": true,
+      "steps": 32,
+      "different_history_steps": 8,
+      "full_state_render": true,
+      "max_error": 0.0
+    },
+    {
+      "domain": "finger",
+      "batch": 1,
+      "seed": 42,
+      "reset": true,
+      "snapshot_independent": true,
+      "roundtrip": true,
+      "steps": 32,
+      "different_history_steps": 8,
+      "full_state_render": true,
+      "max_error": 0.0
+    },
+    {
+      "domain": "finger",
+      "batch": 1,
+      "lifecycle_public_steps": 502,
+      "implicit_reset_rng_changes": true,
+      "lifecycle_replay": true
+    },
+    {
+      "domain": "finger",
+      "batch": 3,
+      "seed": 0,
+      "reset": true,
+      "snapshot_independent": true,
+      "roundtrip": true,
+      "steps": 32,
+      "different_history_steps": 8,
+      "full_state_render": true,
+      "max_error": 0.0
+    },
+    {
+      "domain": "finger",
+      "batch": 3,
+      "seed": 17,
+      "reset": true,
+      "snapshot_independent": true,
+      "roundtrip": true,
+      "steps": 32,
+      "different_history_steps": 8,
+      "full_state_render": true,
+      "max_error": 0.0
+    },
+    {
+      "domain": "finger",
+      "batch": 3,
+      "seed": 42,
+      "reset": true,
+      "snapshot_independent": true,
+      "roundtrip": true,
+      "steps": 32,
+      "different_history_steps": 8,
+      "full_state_render": true,
+      "max_error": 0.0
+    },
+    {
+      "domain": "finger",
+      "batch": 3,
+      "lifecycle_public_steps": 502,
+      "implicit_reset_rng_changes": true,
+      "lifecycle_replay": true
+    },
+    {
+      "domain": "manipulator",
+      "batch": 1,
+      "seed": 0,
+      "reset": true,
+      "snapshot_independent": true,
+      "roundtrip": true,
+      "steps": 32,
+      "different_history_steps": 8,
+      "full_state_render": true,
+      "max_error": 0.0
+    },
+    {
+      "domain": "manipulator",
+      "batch": 1,
+      "seed": 17,
+      "reset": true,
+      "snapshot_independent": true,
+      "roundtrip": true,
+      "steps": 32,
+      "different_history_steps": 8,
+      "full_state_render": true,
+      "max_error": 0.0
+    },
+    {
+      "domain": "manipulator",
+      "batch": 1,
+      "seed": 42,
+      "reset": true,
+      "snapshot_independent": true,
+      "roundtrip": true,
+      "steps": 32,
+      "different_history_steps": 8,
+      "full_state_render": true,
+      "max_error": 0.0
+    },
+    {
+      "domain": "manipulator",
+      "batch": 1,
+      "lifecycle_public_steps": 502,
+      "implicit_reset_rng_changes": true,
+      "lifecycle_replay": true
+    },
+    {
+      "domain": "manipulator",
+      "batch": 3,
+      "seed": 0,
+      "reset": true,
+      "snapshot_independent": true,
+      "roundtrip": true,
+      "steps": 32,
+      "different_history_steps": 8,
+      "full_state_render": true,
+      "max_error": 0.0
+    },
+    {
+      "domain": "manipulator",
+      "batch": 3,
+      "seed": 17,
+      "reset": true,
+      "snapshot_independent": true,
+      "roundtrip": true,
+      "steps": 32,
+      "different_history_steps": 8,
+      "full_state_render": true,
+      "max_error": 0.0
+    },
+    {
+      "domain": "manipulator",
+      "batch": 3,
+      "seed": 42,
+      "reset": true,
+      "snapshot_independent": true,
+      "roundtrip": true,
+      "steps": 32,
+      "different_history_steps": 8,
+      "full_state_render": true,
+      "max_error": 0.0
+    },
+    {
+      "domain": "manipulator",
+      "batch": 3,
+      "lifecycle_public_steps": 502,
+      "implicit_reset_rng_changes": true,
+      "lifecycle_replay": true
+    },
+    {
+      "domain": "quadruped",
+      "batch": 1,
+      "seed": 0,
+      "reset": true,
+      "snapshot_independent": true,
+      "roundtrip": true,
+      "steps": 32,
+      "different_history_steps": 8,
+      "full_state_render": true,
+      "max_error": 0.0
+    },
+    {
+      "domain": "quadruped",
+      "batch": 1,
+      "seed": 17,
+      "reset": true,
+      "snapshot_independent": true,
+      "roundtrip": true,
+      "steps": 32,
+      "different_history_steps": 8,
+      "full_state_render": true,
+      "max_error": 0.0
+    },
+    {
+      "domain": "quadruped",
+      "batch": 1,
+      "seed": 42,
+      "reset": true,
+      "snapshot_independent": true,
+      "roundtrip": true,
+      "steps": 32,
+      "different_history_steps": 8,
+      "full_state_render": true,
+      "max_error": 0.0
+    },
+    {
+      "domain": "quadruped",
+      "batch": 1,
+      "lifecycle_public_steps": 502,
+      "implicit_reset_rng_changes": true,
+      "lifecycle_replay": true
+    },
+    {
+      "domain": "quadruped",
+      "batch": 3,
+      "seed": 0,
+      "reset": true,
+      "snapshot_independent": true,
+      "roundtrip": true,
+      "steps": 32,
+      "different_history_steps": 8,
+      "full_state_render": true,
+      "max_error": 0.0
+    },
+    {
+      "domain": "quadruped",
+      "batch": 3,
+      "seed": 17,
+      "reset": true,
+      "snapshot_independent": true,
+      "roundtrip": true,
+      "steps": 32,
+      "different_history_steps": 8,
+      "full_state_render": true,
+      "max_error": 0.0
+    },
+    {
+      "domain": "quadruped",
+      "batch": 3,
+      "seed": 42,
+      "reset": true,
+      "snapshot_independent": true,
+      "roundtrip": true,
+      "steps": 32,
+      "different_history_steps": 8,
+      "full_state_render": true,
+      "max_error": 0.0
+    },
+    {
+      "domain": "quadruped",
+      "batch": 3,
+      "lifecycle_public_steps": 502,
+      "implicit_reset_rng_changes": true,
+      "lifecycle_replay": true
+    }
+  ],
+  "positive_sparse_reward": {
+    "ball_in_cup": {
+      "reward": 2.0,
+      "success": 1.0
+    },
+    "finger": {
+      "reward": 2.0,
+      "success": NaN
+    }
+  },
+  "visual_only_variation": {
+    "ball_in_cup": {
+      "steps": 8,
+      "max_error": 0.0
+    },
+    "finger": {
+      "steps": 8,
+      "max_error": 0.0
+    },
+    "manipulator": {
+      "steps": 8,
+      "max_error": 0.0
+    },
+    "quadruped": {
+      "steps": 8,
+      "max_error": 0.0
+    }
+  },
+  "physical_variation": {
+    "ball_in_cup": {
+      "candidate": {
+        "gravity.x": [
+          1.25
+        ],
+        "gravity.y": [
+          -0.75
+        ],
+        "gravity.z": [
+          -7.5
+        ]
+      },
+      "steps": 32,
+      "max_reference_error": 0.0,
+      "max_observable_divergence_from_default": 0.8606160581111908
+    },
+    "finger": {
+      "candidate": {
+        "agent_physics.proximal_density": [
+          750.0
+        ]
+      },
+      "steps": 32,
+      "max_reference_error": 0.0,
+      "max_observable_divergence_from_default": 0.36593031883239746
+    },
+    "manipulator": {
+      "candidate": {
+        "agent_physics.upper_arm_density": [
+          850.0
+        ]
+      },
+      "steps": 32,
+      "max_reference_error": 0.0,
+      "max_observable_divergence_from_default": 0.05545616795111871
+    },
+    "quadruped": {
+      "candidate": {
+        "gravity.x": [
+          1.25
+        ],
+        "gravity.y": [
+          -0.75
+        ],
+        "gravity.z": [
+          -7.5
+        ]
+      },
+      "steps": 32,
+      "max_reference_error": 0.0,
+      "max_observable_divergence_from_default": 71.9767951965332
+    }
+  }
+}

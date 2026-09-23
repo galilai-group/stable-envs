@@ -1,0 +1,62 @@
+## SLURM PROLOG ###############################################################
+##    Job ID : 6626600
+##  Job Name : se-simple-cohort
+##  Nodelist : gpu2109
+##      CPUs : 
+##  Mem/Node : 32768 MB
+## Directory : /oscar/scratch/sboughan/se-semantic-recovery
+##   Job Started : Tue Sep 22 10:44:55 PM EDT 2026
+###############################################################################
+Tue Sep 22 22:44:55 2026       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 575.57.08              Driver Version: 575.57.08      CUDA Version: 12.9     |
+|-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA GeForce RTX 3090        On  |   00000000:61:00.0 Off |                  N/A |
+| 56%   42C    P8             39W /  350W |      19MiB /  24576MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+                                                                                         
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|    0   N/A  N/A          157345      G   /usr/libexec/Xorg                         5MiB |
++-----------------------------------------------------------------------------------------+
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+Users of this version of Gym should be able to simply replace 'import gym' with 'import gymnasium as gym' in the vast majority of cases.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+TwoRoom {'rows_sha256': '31186d8b6bcaedc4541fa62a38c44c46351e2dc49210c92d7c69776dec0ecf59', 'frame_sha256': 'ad6bde3489ecbf5a64173d71ceb442ef4ca27daf34d05910d03c32ed76eb62ab', 'shape': [4, 224, 224, 3]}
+Piecewise {'rows_sha256': '00002284ad907685bea60c5d729b4d7181c6253e771a875ee27c37fbb4a5a574', 'frame_sha256': '7b9c71849136dd8517cfc8e8f6f71352ac2a34ec19fef548aa9ce27bbb7a91a3', 'shape': [4, 224, 224, 3]}
+SimplePointMaze {'rows_sha256': '753f075bed071a15fa202d63c1615a5fdfc490cacd4b55711a343d2cb7d8dce2', 'frame_sha256': 'dc43fc1a7be5151af0880d2f21bced79a99a97ad609e61dbc2b0f8a75e36166d', 'shape': [4, 500, 500, 3]}
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+Users of this version of Gym should be able to simply replace 'import gym' with 'import gymnasium as gym' in the vast majority of cases.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+/oscar/scratch/sboughan/se-semantic-recovery/swm-reference/stable_worldmodel/envs/__init__.py:215: UserWarning: ale-py not found; ALE/* envs are unavailable. Install with: pip install 'stable-worldmodel[env]' or pip install ale-py.
+  from stable_worldmodel.envs import ale  # noqa: F401
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/se-semantic-recovery/navigation-rerun-bb517bd/scripts/recovery/native_navigation_gate.py", line 514, in <module>
+    main()
+  File "/oscar/scratch/sboughan/se-semantic-recovery/navigation-rerun-bb517bd/scripts/recovery/native_navigation_gate.py", line 505, in main
+    evidence = run_gate(args.device)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/oscar/scratch/sboughan/se-semantic-recovery/navigation-rerun-bb517bd/scripts/recovery/native_navigation_gate.py", line 490, in run_gate
+    evidence["boundaries"][domain] = _boundary_case(domain, device)
+                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/oscar/scratch/sboughan/se-semantic-recovery/navigation-rerun-bb517bd/scripts/recovery/native_navigation_gate.py", line 181, in _boundary_case
+    compare_state(got, expected)
+  File "/oscar/scratch/sboughan/se-semantic-recovery/navigation-rerun-bb517bd/tests/helpers/reference/semantics.py", line 23, in compare_state
+    torch.testing.assert_close(a, e, atol=atol, rtol=0, equal_nan=True, msg=lambda m: f"{key}: {m}")
+  File "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages/torch/testing/_comparison.py", line 1689, in assert_close
+    raise error_metas[0].to_error(msg)
+AssertionError: ('info', 'distance_to_target'): Tensor-likes are not equal!
+
+Mismatched elements: 1 / 1 (100.0%)
+Greatest absolute difference: 0.7803192138671875 at index (0,)
+Greatest relative difference: 0.004922586150551877 at index (0,)

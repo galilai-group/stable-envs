@@ -1,0 +1,79 @@
+## SLURM PROLOG ###############################################################
+##    Job ID : 6626742
+##  Job Name : se-dmc-humanoid
+##  Nodelist : gpu2109
+##      CPUs : 
+##  Mem/Node : 32768 MB
+## Directory : /oscar/scratch/sboughan/se-semantic-recovery
+##   Job Started : Tue Sep 22 10:45:34 PM EDT 2026
+###############################################################################
+Tue Sep 22 22:45:34 2026       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 575.57.08              Driver Version: 575.57.08      CUDA Version: 12.9     |
+|-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA GeForce RTX 3090        On  |   00000000:61:00.0 Off |                  N/A |
+| 30%   40C    P0            124W /  350W |      19MiB /  24576MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+                                                                                         
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|    0   N/A  N/A          157345      G   /usr/libexec/Xorg                         5MiB |
++-----------------------------------------------------------------------------------------+
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+Users of this version of Gym should be able to simply replace 'import gym' with 'import gymnasium as gym' in the vast majority of cases.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+Warp 1.17.0 initialized:
+   CUDA Toolkit 12.9, Driver 12.9
+   Devices:
+     "cpu"      : "x86_64"
+     "cuda:0"   : "NVIDIA GeForce RTX 3090" (24 GiB, sm_86, mempool enabled)
+   Kernel cache:
+     /oscar/scratch/sboughan/se-semantic-recovery/cache/warp/1.17.0
+Module mujoco_warp._src.render_util 9978d2d load on device 'cuda:0' took 24.68 ms  (cached)
+Module mujoco_warp._src.io c32a0eb load on device 'cuda:0' took 38.99 ms  (cached)
+Module mujoco_warp._src.bvh 7dab8b4 load on device 'cuda:0' took 45.90 ms  (cached)
+Module mujoco_warp._src.smooth b9cc505 load on device 'cuda:0' took 41.43 ms  (cached)
+Module render__locals___render_megakernel_016306ef e8381ee load on device 'cuda:0' took 2033.34 ms  (compiled)
+Module render__locals___render_megakernel_3b2b7e22 55b02da load on device 'cuda:0' took 1042.24 ms  (compiled)
+DMCHumanoidWalk {'rows_sha256': '216358698225a5a9daaacba852be12048f7e4ce660390e51ffe3fe97cac9f948', 'frame_sha256': '2c020229a8eb0c6748033f93fa4085b431308f7530f0784d89050d2ef67cc168', 'shape': [4, 84, 84, 3]}
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+Users of this version of Gym should be able to simply replace 'import gym' with 'import gymnasium as gym' in the vast majority of cases.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+/oscar/scratch/sboughan/se-semantic-recovery/swm-reference/stable_worldmodel/envs/__init__.py:215: UserWarning: ale-py not found; ALE/* envs are unavailable. Install with: pip install 'stable-worldmodel[env]' or pip install ale-py.
+  from stable_worldmodel.envs import ale  # noqa: F401
+Warp 1.17.0 initialized:
+   CUDA Toolkit 12.9, Driver 12.9
+   Devices:
+     "cpu"      : "x86_64"
+     "cuda:0"   : "NVIDIA GeForce RTX 3090" (24 GiB, sm_86, mempool enabled)
+   Kernel cache:
+     /oscar/scratch/sboughan/se-semantic-recovery/cache/warp/1.17.0
+Module mujoco_warp._src.render_util 9978d2d load on device 'cuda:0' took 11.49 ms  (cached)
+Module mujoco_warp._src.io c32a0eb load on device 'cuda:0' took 13.01 ms  (cached)
+Module mujoco_warp._src.bvh 7dab8b4 load on device 'cuda:0' took 15.83 ms  (cached)
+Module mujoco_warp._src.smooth b9cc505 load on device 'cuda:0' took 13.13 ms  (cached)
+Module render__locals___render_megakernel_016306ef e8381ee load on device 'cuda:0' took 7.98 ms  (cached)
+Module render__locals___render_megakernel_3b2b7e22 55b02da load on device 'cuda:0' took 6.30 ms  (cached)
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/se-semantic-recovery/dmc-humanoid-97436d6/scripts/recovery/dmc_humanoid_gate.py", line 412, in <module>
+    result = run_gate(args.device)
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/oscar/scratch/sboughan/se-semantic-recovery/dmc-humanoid-97436d6/scripts/recovery/dmc_humanoid_gate.py", line 390, in run_gate
+    divergence = max(
+                 ^^^^
+  File "/oscar/scratch/sboughan/se-semantic-recovery/dmc-humanoid-97436d6/scripts/recovery/dmc_humanoid_gate.py", line 391, in <genexpr>
+    _physical_error(varied, default)
+  File "/oscar/scratch/sboughan/se-semantic-recovery/dmc-humanoid-97436d6/scripts/recovery/dmc_humanoid_gate.py", line 158, in _physical_error
+    float((varied["reward"] - nominal["reward"]).abs().max()),
+           ~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~
+RuntimeError: Expected all tensors to be on the same device, but found at least two devices, cuda:0 and cpu!

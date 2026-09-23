@@ -1,0 +1,1809 @@
+## SLURM PROLOG ###############################################################
+##    Job ID : 6626669
+##  Job Name : se-simple-cohort
+##  Nodelist : gpu2101
+##      CPUs : 
+##  Mem/Node : 32768 MB
+## Directory : /oscar/scratch/sboughan/se-semantic-recovery
+##   Job Started : Tue Sep 22 10:45:34 PM EDT 2026
+###############################################################################
+Tue Sep 22 22:45:34 2026       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 575.57.08              Driver Version: 575.57.08      CUDA Version: 12.9     |
+|-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA GeForce RTX 3090        On  |   00000000:61:00.0 Off |                  N/A |
+| 30%   38C    P5             58W /  350W |      19MiB /  24576MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+                                                                                         
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|    0   N/A  N/A          157488      G   /usr/libexec/Xorg                         5MiB |
++-----------------------------------------------------------------------------------------+
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+Users of this version of Gym should be able to simply replace 'import gym' with 'import gymnasium as gym' in the vast majority of cases.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+DMCBallInCupCatch {'rows_sha256': '7410a7cfcdcfadd499f6c8d4a76048f4e8b48a46571a6d3998679c70de137a7a', 'frame_sha256': '496f3a43180339dd24af85275b8a5c221ef348da9f4a769109a26b5e1c16631f', 'shape': [4, 84, 84, 3]}
+DMCFingerTurnHard {'rows_sha256': 'f28f44de8729576be3d9a93f4942d5dd310668df68e3f3c326f4c1c641fd0c8e', 'frame_sha256': '82bf3852d3394bc117610fb26a26a7ece484b3c31b9595824a87ff6bd09d7478', 'shape': [4, 84, 84, 3]}
+DMCManipulatorBringBall {'rows_sha256': 'bb879bae0bd738c20af0ab465727514ef55f80b050829016acdb86aeddefc1e8', 'frame_sha256': 'bed5bce37ca6a93d099f6def67601204f2f312eb13beff8251af055058fc305b', 'shape': [4, 224, 224, 3]}
+/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages/mujoco_warp/_src/io.py:713: UserWarning: MULTICCD is enabled, but the scene contains CCD pairs without multicontact support: [('CAPSULE', 'CYLINDER')]. At most 1 contact will be generated for these pairs.
+  warnings.warn(
+Warp 1.17.0 initialized:
+   CUDA Toolkit 12.9, Driver 12.9
+   Devices:
+     "cpu"      : "x86_64"
+     "cuda:0"   : "NVIDIA GeForce RTX 3090" (24 GiB, sm_86, mempool enabled)
+   Kernel cache:
+     /oscar/scratch/sboughan/se-semantic-recovery/cache/warp/1.17.0
+Module mujoco_warp._src.render_util 9978d2d load on device 'cuda:0' took 17.71 ms  (cached)
+Module mujoco_warp._src.io c32a0eb load on device 'cuda:0' took 30.31 ms  (cached)
+Module mujoco_warp._src.bvh 7dab8b4 load on device 'cuda:0' took 18.61 ms  (cached)
+Module mujoco_warp._src.smooth b9cc505 load on device 'cuda:0' took 31.58 ms  (cached)
+Module render__locals___render_megakernel_fd092d93 447bb7d load on device 'cuda:0' took 21.79 ms  (cached)
+Module render__locals___render_megakernel_33f035e0 1d57e9b load on device 'cuda:0' took 23.17 ms  (cached)
+DMCQuadrupedWalk {'rows_sha256': 'c7dc6a4e5ebfb7ebc9fb37aa0bb99cc0eb6e03c44db23321f9931a43783cae6d', 'frame_sha256': '9a321e51b94d266e34a36235a702a3901ead9f77b0215911bd834e9e52f1846f', 'shape': [4, 224, 224, 3]}
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+Users of this version of Gym should be able to simply replace 'import gym' with 'import gymnasium as gym' in the vast majority of cases.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+/oscar/scratch/sboughan/se-semantic-recovery/swm-reference/stable_worldmodel/envs/__init__.py:215: UserWarning: ale-py not found; ALE/* envs are unavailable. Install with: pip install 'stable-worldmodel[env]' or pip install ale-py.
+  from stable_worldmodel.envs import ale  # noqa: F401
+DMC_OMISSION_RESULT {"action_seed": 200, "domain": "ball_in_cup", "error_with": 0.0, "error_without": 2.942091015256665e-15, "omitted_key": "warmstart", "prefix_steps": 6, "seed": 0}
+DMC_OMISSION_RESULT {"action_seed": 200, "domain": "finger", "error_with": 0.0, "error_without": 1.389999226830696e-13, "omitted_key": "warmstart", "prefix_steps": 7, "seed": 0}
+DMC_OMISSION_RESULT {"action_seed": 200, "domain": "finger", "error_with": 0.0, "error_without": 15.0, "omitted_key": "model/target_site_xz", "prefix_steps": 7, "seed": 0}
+DMC_OMISSION_RESULT {"action_seed": 200, "domain": "manipulator", "error_with": 0.0, "error_without": 1.4210854715202004e-13, "omitted_key": "warmstart", "prefix_steps": 1, "seed": 0}
+DMC_OMISSION_RESULT {"action_seed": 200, "domain": "manipulator", "error_with": 0.0, "error_without": 0.198537215590477, "omitted_key": "model/target_body_xz", "prefix_steps": 1, "seed": 0}
+DMC_OMISSION_RESULT {"action_seed": 200, "domain": "manipulator", "error_with": 0.0, "error_without": 1.0803415477275848, "omitted_key": "model/target_body_qwqy", "prefix_steps": 1, "seed": 0}
+/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages/mujoco_warp/_src/io.py:713: UserWarning: MULTICCD is enabled, but the scene contains CCD pairs without multicontact support: [('CAPSULE', 'CYLINDER')]. At most 1 contact will be generated for these pairs.
+  warnings.warn(
+Warp 1.17.0 initialized:
+   CUDA Toolkit 12.9, Driver 12.9
+   Devices:
+     "cpu"      : "x86_64"
+     "cuda:0"   : "NVIDIA GeForce RTX 3090" (24 GiB, sm_86, mempool enabled)
+   Kernel cache:
+     /oscar/scratch/sboughan/se-semantic-recovery/cache/warp/1.17.0
+Module mujoco_warp._src.render_util 9978d2d load on device 'cuda:0' took 8.82 ms  (cached)
+Module mujoco_warp._src.io c32a0eb load on device 'cuda:0' took 9.89 ms  (cached)
+Module mujoco_warp._src.bvh 7dab8b4 load on device 'cuda:0' took 7.87 ms  (cached)
+Module mujoco_warp._src.smooth b9cc505 load on device 'cuda:0' took 10.16 ms  (cached)
+Module render__locals___render_megakernel_fd092d93 447bb7d load on device 'cuda:0' took 6.69 ms  (cached)
+Module render__locals___render_megakernel_33f035e0 1d57e9b load on device 'cuda:0' took 7.44 ms  (cached)
+DMC_OMISSION_RESULT {"action_seed": 200, "domain": "quadruped", "error_with": 0.0, "error_without": 2.313704783318826e-13, "omitted_key": "warmstart", "prefix_steps": 1, "seed": 0}
+DMC_OMISSION_RESULT {"action_seed": 200, "domain": "quadruped", "error_with": 0.0, "error_without": 2456.575482787585, "omitted_key": "activation", "prefix_steps": 1, "seed": 0}
+{
+  "swm_commit": "176d54532b3c0a251a4f509b74f2fdacc143a63d",
+  "device": "cuda",
+  "execution_mode": "DELEGATED_CPU",
+  "platform": "Linux-5.14.0-570.62.1.0.1.el9_6.x86_64-x86_64-with-glibc2.34",
+  "versions": {
+    "torch": "2.14.0+cu126",
+    "numpy": "2.5.3",
+    "dm-control": "1.0.44",
+    "mujoco": "3.11.0",
+    "tensordict": "0.14.2",
+    "stable-worldmodel": "0.1.1"
+  },
+  "mappings": {
+    "ball_in_cup": "DMCBallInCupCatch",
+    "finger": "DMCFingerTurnHard",
+    "manipulator": "DMCManipulatorBringBall",
+    "quadruped": "DMCQuadrupedWalk"
+  },
+  "state_omission_experiments": {
+    "ball_in_cup": {
+      "warmstart": {
+        "prefix_steps": 6,
+        "snapshot_contact_count": 1,
+        "snapshot_constraint_count": 4,
+        "different_history": "9 actions",
+        "continuation_steps": 8,
+        "max_observable_error_without_field": 2.942091015256665e-15,
+        "max_error_with_schema": 0.0
+      }
+    },
+    "finger": {
+      "warmstart": {
+        "prefix_steps": 7,
+        "snapshot_contact_count": 1,
+        "snapshot_constraint_count": 4,
+        "different_history": "9 actions",
+        "continuation_steps": 8,
+        "max_observable_error_without_field": 1.389999226830696e-13,
+        "max_error_with_schema": 0.0
+      },
+      "model/target_site_xz": {
+        "prefix_steps": 7,
+        "snapshot_contact_count": 1,
+        "snapshot_constraint_count": 4,
+        "different_history": "reset seed 991",
+        "continuation_steps": 8,
+        "max_observable_error_without_field": 15.0,
+        "max_error_with_schema": 0.0
+      }
+    },
+    "manipulator": {
+      "warmstart": {
+        "prefix_steps": 1,
+        "snapshot_contact_count": 0,
+        "snapshot_constraint_count": 1,
+        "different_history": "9 actions",
+        "continuation_steps": 8,
+        "max_observable_error_without_field": 1.4210854715202004e-13,
+        "max_error_with_schema": 0.0
+      },
+      "model/target_body_xz": {
+        "prefix_steps": 1,
+        "snapshot_contact_count": 0,
+        "snapshot_constraint_count": 1,
+        "different_history": "reset seed 991",
+        "continuation_steps": 8,
+        "max_observable_error_without_field": 0.198537215590477,
+        "max_error_with_schema": 0.0
+      },
+      "model/target_body_qwqy": {
+        "prefix_steps": 1,
+        "snapshot_contact_count": 0,
+        "snapshot_constraint_count": 1,
+        "different_history": "reset seed 991",
+        "continuation_steps": 8,
+        "max_observable_error_without_field": 1.0803415477275848,
+        "max_error_with_schema": 0.0
+      }
+    },
+    "quadruped": {
+      "warmstart": {
+        "prefix_steps": 1,
+        "snapshot_contact_count": 1,
+        "snapshot_constraint_count": 8,
+        "different_history": "9 actions",
+        "continuation_steps": 8,
+        "max_observable_error_without_field": 2.313704783318826e-13,
+        "max_error_with_schema": 0.0
+      },
+      "activation": {
+        "prefix_steps": 1,
+        "snapshot_contact_count": 1,
+        "snapshot_constraint_count": 8,
+        "different_history": "9 actions",
+        "continuation_steps": 8,
+        "max_observable_error_without_field": 2456.575482787585,
+        "max_error_with_schema": 0.0
+      }
+    }
+  },
+  "construction": {
+    "ball_in_cup": {
+      "numeric_model_arrays_exact": 583,
+      "nq": 4,
+      "nv": 4,
+      "na": 0,
+      "action_dim": 2,
+      "observation_dim": 8,
+      "control_timestep": 0.02,
+      "step_limit": 1000
+    },
+    "finger": {
+      "numeric_model_arrays_exact": 583,
+      "nq": 3,
+      "nv": 3,
+      "na": 0,
+      "action_dim": 2,
+      "observation_dim": 12,
+      "control_timestep": 0.02,
+      "step_limit": 1000
+    },
+    "manipulator": {
+      "numeric_model_arrays_exact": 583,
+      "nq": 11,
+      "nv": 11,
+      "na": 0,
+      "action_dim": 5,
+      "observation_dim": 44,
+      "control_timestep": 0.01,
+      "step_limit": 1000
+    },
+    "quadruped": {
+      "numeric_model_arrays_exact": 583,
+      "nq": 23,
+      "nv": 22,
+      "na": 12,
+      "action_dim": 12,
+      "observation_dim": 78,
+      "control_timestep": 0.02,
+      "step_limit": 1000
+    }
+  },
+  "cases": [
+    {
+      "domain": "ball_in_cup",
+      "batch": 1,
+      "seed": 0,
+      "reset": true,
+      "snapshot_independent": true,
+      "roundtrip": true,
+      "steps": 32,
+      "different_history_steps": 8,
+      "full_state_render": true,
+      "max_error": 0.0
+    },
+    {
+      "domain": "ball_in_cup",
+      "batch": 1,
+      "seed": 17,
+      "reset": true,
+      "snapshot_independent": true,
+      "roundtrip": true,
+      "steps": 32,
+      "different_history_steps": 8,
+      "full_state_render": true,
+      "max_error": 0.0
+    },
+    {
+      "domain": "ball_in_cup",
+      "batch": 1,
+      "seed": 42,
+      "reset": true,
+      "snapshot_independent": true,
+      "roundtrip": true,
+      "steps": 32,
+      "different_history_steps": 8,
+      "full_state_render": true,
+      "max_error": 0.0
+    },
+    {
+      "domain": "ball_in_cup",
+      "batch": 1,
+      "lifecycle_public_steps": 502,
+      "implicit_reset_rng_changes": true,
+      "lifecycle_replay": true
+    },
+    {
+      "domain": "ball_in_cup",
+      "batch": 3,
+      "seed": 0,
+      "reset": true,
+      "snapshot_independent": true,
+      "roundtrip": true,
+      "steps": 32,
+      "different_history_steps": 8,
+      "full_state_render": true,
+      "max_error": 0.0
+    },
+    {
+      "domain": "ball_in_cup",
+      "batch": 3,
+      "seed": 17,
+      "reset": true,
+      "snapshot_independent": true,
+      "roundtrip": true,
+      "steps": 32,
+      "different_history_steps": 8,
+      "full_state_render": true,
+      "max_error": 0.0
+    },
+    {
+      "domain": "ball_in_cup",
+      "batch": 3,
+      "seed": 42,
+      "reset": true,
+      "snapshot_independent": true,
+      "roundtrip": true,
+      "steps": 32,
+      "different_history_steps": 8,
+      "full_state_render": true,
+      "max_error": 0.0
+    },
+    {
+      "domain": "ball_in_cup",
+      "batch": 3,
+      "lifecycle_public_steps": 502,
+      "implicit_reset_rng_changes": true,
+      "lifecycle_replay": true
+    },
+    {
+      "domain": "finger",
+      "batch": 1,
+      "seed": 0,
+      "reset": true,
+      "snapshot_independent": true,
+      "roundtrip": true,
+      "steps": 32,
+      "different_history_steps": 8,
+      "full_state_render": true,
+      "max_error": 0.0
+    },
+    {
+      "domain": "finger",
+      "batch": 1,
+      "seed": 17,
+      "reset": true,
+      "snapshot_independent": true,
+      "roundtrip": true,
+      "steps": 32,
+      "different_history_steps": 8,
+      "full_state_render": true,
+      "max_error": 0.0
+    },
+    {
+      "domain": "finger",
+      "batch": 1,
+      "seed": 42,
+      "reset": true,
+      "snapshot_independent": true,
+      "roundtrip": true,
+      "steps": 32,
+      "different_history_steps": 8,
+      "full_state_render": true,
+      "max_error": 0.0
+    },
+    {
+      "domain": "finger",
+      "batch": 1,
+      "lifecycle_public_steps": 502,
+      "implicit_reset_rng_changes": true,
+      "lifecycle_replay": true
+    },
+    {
+      "domain": "finger",
+      "batch": 3,
+      "seed": 0,
+      "reset": true,
+      "snapshot_independent": true,
+      "roundtrip": true,
+      "steps": 32,
+      "different_history_steps": 8,
+      "full_state_render": true,
+      "max_error": 0.0
+    },
+    {
+      "domain": "finger",
+      "batch": 3,
+      "seed": 17,
+      "reset": true,
+      "snapshot_independent": true,
+      "roundtrip": true,
+      "steps": 32,
+      "different_history_steps": 8,
+      "full_state_render": true,
+      "max_error": 0.0
+    },
+    {
+      "domain": "finger",
+      "batch": 3,
+      "seed": 42,
+      "reset": true,
+      "snapshot_independent": true,
+      "roundtrip": true,
+      "steps": 32,
+      "different_history_steps": 8,
+      "full_state_render": true,
+      "max_error": 0.0
+    },
+    {
+      "domain": "finger",
+      "batch": 3,
+      "lifecycle_public_steps": 502,
+      "implicit_reset_rng_changes": true,
+      "lifecycle_replay": true
+    },
+    {
+      "domain": "manipulator",
+      "batch": 1,
+      "seed": 0,
+      "reset": true,
+      "snapshot_independent": true,
+      "roundtrip": true,
+      "steps": 32,
+      "different_history_steps": 8,
+      "full_state_render": true,
+      "max_error": 0.0
+    },
+    {
+      "domain": "manipulator",
+      "batch": 1,
+      "seed": 17,
+      "reset": true,
+      "snapshot_independent": true,
+      "roundtrip": true,
+      "steps": 32,
+      "different_history_steps": 8,
+      "full_state_render": true,
+      "max_error": 0.0
+    },
+    {
+      "domain": "manipulator",
+      "batch": 1,
+      "seed": 42,
+      "reset": true,
+      "snapshot_independent": true,
+      "roundtrip": true,
+      "steps": 32,
+      "different_history_steps": 8,
+      "full_state_render": true,
+      "max_error": 0.0
+    },
+    {
+      "domain": "manipulator",
+      "batch": 1,
+      "lifecycle_public_steps": 502,
+      "implicit_reset_rng_changes": true,
+      "lifecycle_replay": true
+    },
+    {
+      "domain": "manipulator",
+      "batch": 3,
+      "seed": 0,
+      "reset": true,
+      "snapshot_independent": true,
+      "roundtrip": true,
+      "steps": 32,
+      "different_history_steps": 8,
+      "full_state_render": true,
+      "max_error": 0.0
+    },
+    {
+      "domain": "manipulator",
+      "batch": 3,
+      "seed": 17,
+      "reset": true,
+      "snapshot_independent": true,
+      "roundtrip": true,
+      "steps": 32,
+      "different_history_steps": 8,
+      "full_state_render": true,
+      "max_error": 0.0
+    },
+    {
+      "domain": "manipulator",
+      "batch": 3,
+      "seed": 42,
+      "reset": true,
+      "snapshot_independent": true,
+      "roundtrip": true,
+      "steps": 32,
+      "different_history_steps": 8,
+      "full_state_render": true,
+      "max_error": 0.0
+    },
+    {
+      "domain": "manipulator",
+      "batch": 3,
+      "lifecycle_public_steps": 502,
+      "implicit_reset_rng_changes": true,
+      "lifecycle_replay": true
+    },
+    {
+      "domain": "quadruped",
+      "batch": 1,
+      "seed": 0,
+      "reset": true,
+      "snapshot_independent": true,
+      "roundtrip": true,
+      "steps": 32,
+      "different_history_steps": 8,
+      "full_state_render": true,
+      "max_error": 0.0
+    },
+    {
+      "domain": "quadruped",
+      "batch": 1,
+      "seed": 17,
+      "reset": true,
+      "snapshot_independent": true,
+      "roundtrip": true,
+      "steps": 32,
+      "different_history_steps": 8,
+      "full_state_render": true,
+      "max_error": 0.0
+    },
+    {
+      "domain": "quadruped",
+      "batch": 1,
+      "seed": 42,
+      "reset": true,
+      "snapshot_independent": true,
+      "roundtrip": true,
+      "steps": 32,
+      "different_history_steps": 8,
+      "full_state_render": true,
+      "max_error": 0.0
+    },
+    {
+      "domain": "quadruped",
+      "batch": 1,
+      "lifecycle_public_steps": 502,
+      "implicit_reset_rng_changes": true,
+      "lifecycle_replay": true
+    },
+    {
+      "domain": "quadruped",
+      "batch": 3,
+      "seed": 0,
+      "reset": true,
+      "snapshot_independent": true,
+      "roundtrip": true,
+      "steps": 32,
+      "different_history_steps": 8,
+      "full_state_render": true,
+      "max_error": 0.0
+    },
+    {
+      "domain": "quadruped",
+      "batch": 3,
+      "seed": 17,
+      "reset": true,
+      "snapshot_independent": true,
+      "roundtrip": true,
+      "steps": 32,
+      "different_history_steps": 8,
+      "full_state_render": true,
+      "max_error": 0.0
+    },
+    {
+      "domain": "quadruped",
+      "batch": 3,
+      "seed": 42,
+      "reset": true,
+      "snapshot_independent": true,
+      "roundtrip": true,
+      "steps": 32,
+      "different_history_steps": 8,
+      "full_state_render": true,
+      "max_error": 0.0
+    },
+    {
+      "domain": "quadruped",
+      "batch": 3,
+      "lifecycle_public_steps": 502,
+      "implicit_reset_rng_changes": true,
+      "lifecycle_replay": true
+    }
+  ],
+  "positive_sparse_reward": {
+    "ball_in_cup": {
+      "reward": 2.0,
+      "success": 1.0
+    },
+    "finger": {
+      "reward": 2.0,
+      "success": NaN
+    }
+  },
+  "visual_only_variation": {
+    "ball_in_cup": {
+      "steps": 8,
+      "max_error": 0.0
+    },
+    "finger": {
+      "steps": 8,
+      "max_error": 0.0
+    },
+    "manipulator": {
+      "steps": 8,
+      "max_error": 0.0
+    },
+    "quadruped": {
+      "steps": 8,
+      "max_error": 0.0
+    }
+  },
+  "physical_variation": {
+    "ball_in_cup": {
+      "candidate": {
+        "gravity.x": [
+          1.25
+        ],
+        "gravity.y": [
+          -0.75
+        ],
+        "gravity.z": [
+          -7.5
+        ]
+      },
+      "steps": 32,
+      "max_reference_error": 0.0,
+      "max_observable_divergence_from_default": 0.8606160581111908
+    },
+    "finger": {
+      "candidate": {
+        "agent_physics.proximal_density": [
+          750.0
+        ]
+      },
+      "steps": 32,
+      "max_reference_error": 0.0,
+      "max_observable_divergence_from_default": 0.36593031883239746
+    },
+    "manipulator": {
+      "candidate": {
+        "agent_physics.upper_arm_density": [
+          850.0
+        ]
+      },
+      "steps": 32,
+      "max_reference_error": 0.0,
+      "max_observable_divergence_from_default": 0.05545616795111871
+    },
+    "quadruped": {
+      "candidate": {
+        "gravity.x": [
+          1.25
+        ],
+        "gravity.y": [
+          -0.75
+        ],
+        "gravity.z": [
+          -7.5
+        ]
+      },
+      "steps": 32,
+      "max_reference_error": 0.0,
+      "max_observable_divergence_from_default": 71.9767951965332
+    }
+  }
+}
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+Users of this version of Gym should be able to simply replace 'import gym' with 'import gymnasium as gym' in the vast majority of cases.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+DMCBallInCupCatch {'rows_sha256': '7410a7cfcdcfadd499f6c8d4a76048f4e8b48a46571a6d3998679c70de137a7a', 'frame_sha256': '496f3a43180339dd24af85275b8a5c221ef348da9f4a769109a26b5e1c16631f', 'shape': [4, 84, 84, 3]}
+DMCFingerTurnHard {'rows_sha256': 'f28f44de8729576be3d9a93f4942d5dd310668df68e3f3c326f4c1c641fd0c8e', 'frame_sha256': '82bf3852d3394bc117610fb26a26a7ece484b3c31b9595824a87ff6bd09d7478', 'shape': [4, 84, 84, 3]}
+DMCManipulatorBringBall {'rows_sha256': 'bb879bae0bd738c20af0ab465727514ef55f80b050829016acdb86aeddefc1e8', 'frame_sha256': 'bed5bce37ca6a93d099f6def67601204f2f312eb13beff8251af055058fc305b', 'shape': [4, 224, 224, 3]}
+/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages/mujoco_warp/_src/io.py:713: UserWarning: MULTICCD is enabled, but the scene contains CCD pairs without multicontact support: [('CAPSULE', 'CYLINDER')]. At most 1 contact will be generated for these pairs.
+  warnings.warn(
+Warp 1.17.0 initialized:
+   CUDA Toolkit 12.9, Driver 12.9
+   Devices:
+     "cpu"      : "x86_64"
+     "cuda:0"   : "NVIDIA GeForce RTX 3090" (24 GiB, sm_86, mempool enabled)
+   Kernel cache:
+     /oscar/scratch/sboughan/se-semantic-recovery/cache/warp/1.17.0
+Module mujoco_warp._src.render_util 9978d2d load on device 'cuda:0' took 7.16 ms  (cached)
+Module mujoco_warp._src.io c32a0eb load on device 'cuda:0' took 9.89 ms  (cached)
+Module mujoco_warp._src.bvh 7dab8b4 load on device 'cuda:0' took 5.96 ms  (cached)
+Module mujoco_warp._src.smooth b9cc505 load on device 'cuda:0' took 9.65 ms  (cached)
+Module render__locals___render_megakernel_fd092d93 447bb7d load on device 'cuda:0' took 9.21 ms  (cached)
+Module render__locals___render_megakernel_33f035e0 1d57e9b load on device 'cuda:0' took 6.39 ms  (cached)
+DMCQuadrupedWalk {'rows_sha256': 'c7dc6a4e5ebfb7ebc9fb37aa0bb99cc0eb6e03c44db23321f9931a43783cae6d', 'frame_sha256': '9a321e51b94d266e34a36235a702a3901ead9f77b0215911bd834e9e52f1846f', 'shape': [4, 224, 224, 3]}
+FAMILY_FROZEN_RENDERER_GATE_PASS dmc-aligned-rerun-57c10c1 4 cells
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+Users of this version of Gym should be able to simply replace 'import gym' with 'import gymnasium as gym' in the vast majority of cases.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+/oscar/scratch/sboughan/se-semantic-recovery/swm-reference/stable_worldmodel/envs/__init__.py:215: UserWarning: ale-py not found; ALE/* envs are unavailable. Install with: pip install 'stable-worldmodel[env]' or pip install ale-py.
+  from stable_worldmodel.envs import ale  # noqa: F401
+{
+  "swm_commit": "176d54532b3c0a251a4f509b74f2fdacc143a63d",
+  "device": "cuda",
+  "execution_mode": "DELEGATED_CPU",
+  "platform": "Linux-5.14.0-570.62.1.0.1.el9_6.x86_64-x86_64-with-glibc2.34",
+  "versions": {
+    "torch": "2.14.0+cu126",
+    "numpy": "2.5.3",
+    "dm-control": "1.0.44",
+    "mujoco": "3.11.0",
+    "tensordict": "0.14.2",
+    "stable-worldmodel": "0.1.1"
+  },
+  "cases": [
+    {
+      "batch": 1,
+      "seed": 0,
+      "reset": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "reward_done_error": 0.0
+    },
+    {
+      "batch": 1,
+      "seed": 17,
+      "reset": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "reward_done_error": 0.0
+    },
+    {
+      "batch": 1,
+      "seed": 42,
+      "reset": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "reward_done_error": 0.0
+    },
+    {
+      "batch": 1,
+      "positive_reward": 2.0,
+      "terminated": false,
+      "truncated": false
+    },
+    {
+      "batch": 1,
+      "time_limit_public_steps": 502,
+      "target_changes_on_implicit_reset": true,
+      "lifecycle_rng_replay": true
+    },
+    {
+      "batch": 3,
+      "seed": 0,
+      "reset": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "reward_done_error": 0.0
+    },
+    {
+      "batch": 3,
+      "seed": 17,
+      "reset": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "reward_done_error": 0.0
+    },
+    {
+      "batch": 3,
+      "seed": 42,
+      "reset": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "reward_done_error": 0.0
+    },
+    {
+      "batch": 3,
+      "positive_reward": 2.0,
+      "terminated": false,
+      "truncated": false
+    },
+    {
+      "batch": 3,
+      "time_limit_public_steps": 502,
+      "target_changes_on_implicit_reset": true,
+      "lifecycle_rng_replay": true
+    }
+  ],
+  "physical_variation": {
+    "arm_density": 650,
+    "finger_density": 1350,
+    "steps": 32,
+    "max_error": 0.0
+  }
+}
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+Users of this version of Gym should be able to simply replace 'import gym' with 'import gymnasium as gym' in the vast majority of cases.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+/oscar/scratch/sboughan/se-semantic-recovery/swm-reference/stable_worldmodel/envs/__init__.py:215: UserWarning: ale-py not found; ALE/* envs are unavailable. Install with: pip install 'stable-worldmodel[env]' or pip install ale-py.
+  from stable_worldmodel.envs import ale  # noqa: F401
+{
+  "swm_commit": "176d54532b3c0a251a4f509b74f2fdacc143a63d",
+  "device": "cuda",
+  "execution_mode": "DELEGATED_CPU",
+  "platform": "Linux-5.14.0-570.62.1.0.1.el9_6.x86_64-x86_64-with-glibc2.34",
+  "versions": {
+    "torch": "2.14.0+cu126",
+    "numpy": "2.5.3",
+    "dm-control": "1.0.44",
+    "mujoco": "3.11.0",
+    "tensordict": "0.14.2",
+    "stable-worldmodel": "0.1.1"
+  },
+  "mappings": {
+    "acrobot": "DMCAcrobotBalance",
+    "pendulum": "DMCPendulumSwingup",
+    "cartpole": "DMCCartpoleSwingup"
+  },
+  "excluded_mapping": {
+    "DMCCartpoleBalance": "historical default is sparse swing-up, not dense balance"
+  },
+  "cases": [
+    {
+      "domain": "acrobot",
+      "stable_env": "DMCAcrobotBalance",
+      "batch": 1,
+      "seed": 0,
+      "reset": true,
+      "independent_snapshot": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "reward_done_error": 0.0
+    },
+    {
+      "domain": "acrobot",
+      "stable_env": "DMCAcrobotBalance",
+      "batch": 1,
+      "seed": 17,
+      "reset": true,
+      "independent_snapshot": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "reward_done_error": 0.0
+    },
+    {
+      "domain": "acrobot",
+      "stable_env": "DMCAcrobotBalance",
+      "batch": 1,
+      "seed": 42,
+      "reset": true,
+      "independent_snapshot": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "reward_done_error": 0.0
+    },
+    {
+      "domain": "acrobot",
+      "batch": 1,
+      "positive_reward": 2.0,
+      "terminated": false,
+      "truncated": false
+    },
+    {
+      "domain": "acrobot",
+      "batch": 1,
+      "dmc_step_limit": 1000,
+      "action_repeat": 2,
+      "boundary_public_steps": 502,
+      "implicit_reset_rng_changes": true,
+      "lifecycle_rng_replay": true
+    },
+    {
+      "domain": "acrobot",
+      "stable_env": "DMCAcrobotBalance",
+      "batch": 3,
+      "seed": 0,
+      "reset": true,
+      "independent_snapshot": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "reward_done_error": 0.0
+    },
+    {
+      "domain": "acrobot",
+      "stable_env": "DMCAcrobotBalance",
+      "batch": 3,
+      "seed": 17,
+      "reset": true,
+      "independent_snapshot": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "reward_done_error": 0.0
+    },
+    {
+      "domain": "acrobot",
+      "stable_env": "DMCAcrobotBalance",
+      "batch": 3,
+      "seed": 42,
+      "reset": true,
+      "independent_snapshot": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "reward_done_error": 0.0
+    },
+    {
+      "domain": "acrobot",
+      "batch": 3,
+      "positive_reward": 2.0,
+      "terminated": false,
+      "truncated": false
+    },
+    {
+      "domain": "acrobot",
+      "batch": 3,
+      "dmc_step_limit": 1000,
+      "action_repeat": 2,
+      "boundary_public_steps": 502,
+      "implicit_reset_rng_changes": true,
+      "lifecycle_rng_replay": true
+    },
+    {
+      "domain": "pendulum",
+      "stable_env": "DMCPendulumSwingup",
+      "batch": 1,
+      "seed": 0,
+      "reset": true,
+      "independent_snapshot": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "reward_done_error": 0.0
+    },
+    {
+      "domain": "pendulum",
+      "stable_env": "DMCPendulumSwingup",
+      "batch": 1,
+      "seed": 17,
+      "reset": true,
+      "independent_snapshot": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "reward_done_error": 0.0
+    },
+    {
+      "domain": "pendulum",
+      "stable_env": "DMCPendulumSwingup",
+      "batch": 1,
+      "seed": 42,
+      "reset": true,
+      "independent_snapshot": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "reward_done_error": 0.0
+    },
+    {
+      "domain": "pendulum",
+      "batch": 1,
+      "positive_reward": 2.0,
+      "terminated": false,
+      "truncated": false
+    },
+    {
+      "domain": "pendulum",
+      "batch": 1,
+      "dmc_step_limit": 1000,
+      "action_repeat": 2,
+      "boundary_public_steps": 502,
+      "implicit_reset_rng_changes": true,
+      "lifecycle_rng_replay": true
+    },
+    {
+      "domain": "pendulum",
+      "stable_env": "DMCPendulumSwingup",
+      "batch": 3,
+      "seed": 0,
+      "reset": true,
+      "independent_snapshot": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "reward_done_error": 0.0
+    },
+    {
+      "domain": "pendulum",
+      "stable_env": "DMCPendulumSwingup",
+      "batch": 3,
+      "seed": 17,
+      "reset": true,
+      "independent_snapshot": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "reward_done_error": 0.0
+    },
+    {
+      "domain": "pendulum",
+      "stable_env": "DMCPendulumSwingup",
+      "batch": 3,
+      "seed": 42,
+      "reset": true,
+      "independent_snapshot": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "reward_done_error": 0.0
+    },
+    {
+      "domain": "pendulum",
+      "batch": 3,
+      "positive_reward": 2.0,
+      "terminated": false,
+      "truncated": false
+    },
+    {
+      "domain": "pendulum",
+      "batch": 3,
+      "dmc_step_limit": 1000,
+      "action_repeat": 2,
+      "boundary_public_steps": 502,
+      "implicit_reset_rng_changes": true,
+      "lifecycle_rng_replay": true
+    },
+    {
+      "domain": "cartpole",
+      "stable_env": "DMCCartpoleSwingup",
+      "batch": 1,
+      "seed": 0,
+      "reset": true,
+      "independent_snapshot": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "reward_done_error": 0.0
+    },
+    {
+      "domain": "cartpole",
+      "stable_env": "DMCCartpoleSwingup",
+      "batch": 1,
+      "seed": 17,
+      "reset": true,
+      "independent_snapshot": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "reward_done_error": 0.0
+    },
+    {
+      "domain": "cartpole",
+      "stable_env": "DMCCartpoleSwingup",
+      "batch": 1,
+      "seed": 42,
+      "reset": true,
+      "independent_snapshot": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "reward_done_error": 0.0
+    },
+    {
+      "domain": "cartpole",
+      "batch": 1,
+      "positive_reward": 2.0,
+      "terminated": false,
+      "truncated": false
+    },
+    {
+      "domain": "cartpole",
+      "batch": 1,
+      "dmc_step_limit": 1000,
+      "action_repeat": 2,
+      "boundary_public_steps": 502,
+      "implicit_reset_rng_changes": true,
+      "lifecycle_rng_replay": true
+    },
+    {
+      "domain": "cartpole",
+      "stable_env": "DMCCartpoleSwingup",
+      "batch": 3,
+      "seed": 0,
+      "reset": true,
+      "independent_snapshot": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "reward_done_error": 0.0
+    },
+    {
+      "domain": "cartpole",
+      "stable_env": "DMCCartpoleSwingup",
+      "batch": 3,
+      "seed": 17,
+      "reset": true,
+      "independent_snapshot": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "reward_done_error": 0.0
+    },
+    {
+      "domain": "cartpole",
+      "stable_env": "DMCCartpoleSwingup",
+      "batch": 3,
+      "seed": 42,
+      "reset": true,
+      "independent_snapshot": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "reward_done_error": 0.0
+    },
+    {
+      "domain": "cartpole",
+      "batch": 3,
+      "positive_reward": 2.0,
+      "terminated": false,
+      "truncated": false
+    },
+    {
+      "domain": "cartpole",
+      "batch": 3,
+      "dmc_step_limit": 1000,
+      "action_repeat": 2,
+      "boundary_public_steps": 502,
+      "implicit_reset_rng_changes": true,
+      "lifecycle_rng_replay": true
+    }
+  ],
+  "visual_only_variation": {
+    "acrobot": {
+      "leaf": "light.diffuse_scale",
+      "nominal_gravity_exact": true,
+      "steps": 8,
+      "max_error": 0.0
+    },
+    "pendulum": {
+      "leaf": "light.diffuse_scale",
+      "nominal_gravity_exact": true,
+      "steps": 8,
+      "max_error": 0.0
+    },
+    "cartpole": {
+      "leaf": "light.diffuse_scale",
+      "nominal_gravity_exact": true,
+      "steps": 8,
+      "max_error": 0.0
+    }
+  },
+  "physical_variation": {
+    "acrobot": {
+      "gravity": [
+        1.25,
+        -0.75,
+        -7.5
+      ],
+      "steps": 32,
+      "max_error": 0.0
+    },
+    "pendulum": {
+      "gravity": [
+        1.25,
+        -0.75,
+        -7.5
+      ],
+      "steps": 32,
+      "max_error": 0.0
+    },
+    "cartpole": {
+      "gravity": [
+        1.25,
+        -0.75,
+        -7.5
+      ],
+      "steps": 32,
+      "max_error": 0.0
+    }
+  }
+}
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+Users of this version of Gym should be able to simply replace 'import gym' with 'import gymnasium as gym' in the vast majority of cases.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+/oscar/scratch/sboughan/se-semantic-recovery/swm-reference/stable_worldmodel/envs/__init__.py:215: UserWarning: ale-py not found; ALE/* envs are unavailable. Install with: pip install 'stable-worldmodel[env]' or pip install ale-py.
+  from stable_worldmodel.envs import ale  # noqa: F401
+Warp 1.17.0 initialized:
+   CUDA Toolkit 12.9, Driver 12.9
+   Devices:
+     "cpu"      : "x86_64"
+     "cuda:0"   : "NVIDIA GeForce RTX 3090" (24 GiB, sm_86, mempool enabled)
+   Kernel cache:
+     /oscar/scratch/sboughan/se-semantic-recovery/cache/warp/1.17.0
+Module mujoco_warp._src.render_util 9978d2d load on device 'cuda:0' took 7.81 ms  (cached)
+Module mujoco_warp._src.io c32a0eb load on device 'cuda:0' took 9.80 ms  (cached)
+Module mujoco_warp._src.bvh 7dab8b4 load on device 'cuda:0' took 7.33 ms  (cached)
+Module mujoco_warp._src.smooth b9cc505 load on device 'cuda:0' took 10.08 ms  (cached)
+Module render__locals___render_megakernel_e16ee0c1 04e0bd4 load on device 'cuda:0' took 16.72 ms  (cached)
+Module render__locals___render_megakernel_00b7e313 a1e3bb1 load on device 'cuda:0' took 16.97 ms  (cached)
+{
+  "swm_commit": "176d54532b3c0a251a4f509b74f2fdacc143a63d",
+  "device": "cuda",
+  "execution_mode": "DELEGATED_CPU",
+  "platform": "Linux-5.14.0-570.62.1.0.1.el9_6.x86_64-x86_64-with-glibc2.34",
+  "versions": {
+    "torch": "2.14.0+cu126",
+    "numpy": "2.5.3",
+    "dm-control": "1.0.44",
+    "mujoco": "3.11.0",
+    "tensordict": "0.14.2",
+    "stable-worldmodel": "0.1.1"
+  },
+  "mappings": {
+    "cheetah": "DMCCheetahRun",
+    "hopper": "DMCHopperHop",
+    "walker": "DMCWalkerWalk"
+  },
+  "task_identity": {
+    "cheetah": "CustomCheetah(goal='run', move_speed=10): default branch delegates to Cheetah.get_reward",
+    "hopper": "CustomHopper(goal='hop', hopping=True): default branch delegates to Hopper.get_reward",
+    "walker": "CustomPlanarWalker(goal='walk', move_speed=1): default branch delegates to PlanarWalker.get_reward"
+  },
+  "state_schema": {
+    "common": [
+      "qpos",
+      "qvel",
+      "time",
+      "lifecycle counters",
+      "task.cumulative_reward",
+      "MT19937 state"
+    ],
+    "domain_specific": {
+      "cheetah": [
+        "qacc_warmstart"
+      ],
+      "hopper": [
+        "qacc_warmstart"
+      ],
+      "walker": [
+        "qacc_warmstart"
+      ]
+    },
+    "omitted": {
+      "ctrl": "different histories retain different values; the next public action overwrites control",
+      "qacc": "derived by forward/step and exact without restoration",
+      "act": "all three models have na=0",
+      "task_cache": "goal/speed/hopping are persistent task configuration; timeout_progress is reset-only and unread"
+    }
+  },
+  "cases": [
+    {
+      "domain": "cheetah",
+      "batch": 1,
+      "seed": 0,
+      "reset": true,
+      "independent_snapshot": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "warmstart_restored": true,
+      "control_omission_proved": true,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "max_output_error": 0.0
+    },
+    {
+      "domain": "cheetah",
+      "batch": 1,
+      "seed": 17,
+      "reset": true,
+      "independent_snapshot": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "warmstart_restored": true,
+      "control_omission_proved": true,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "max_output_error": 0.0
+    },
+    {
+      "domain": "cheetah",
+      "batch": 1,
+      "seed": 42,
+      "reset": true,
+      "independent_snapshot": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "warmstart_restored": true,
+      "control_omission_proved": true,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "max_output_error": 0.0
+    },
+    {
+      "domain": "cheetah",
+      "batch": 1,
+      "positive_reward_min": 2.0,
+      "terminated": false,
+      "truncated": false
+    },
+    {
+      "domain": "cheetah",
+      "batch": 1,
+      "dmc_step_limit": 2500,
+      "action_repeat": 2,
+      "boundary_public_steps": 1252,
+      "implicit_reset_rng_changes": true,
+      "lifecycle_rng_replay": true
+    },
+    {
+      "domain": "cheetah",
+      "batch": 3,
+      "seed": 0,
+      "reset": true,
+      "independent_snapshot": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "warmstart_restored": true,
+      "control_omission_proved": true,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "max_output_error": 0.0
+    },
+    {
+      "domain": "cheetah",
+      "batch": 3,
+      "seed": 17,
+      "reset": true,
+      "independent_snapshot": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "warmstart_restored": true,
+      "control_omission_proved": true,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "max_output_error": 0.0
+    },
+    {
+      "domain": "cheetah",
+      "batch": 3,
+      "seed": 42,
+      "reset": true,
+      "independent_snapshot": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "warmstart_restored": true,
+      "control_omission_proved": true,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "max_output_error": 0.0
+    },
+    {
+      "domain": "cheetah",
+      "batch": 3,
+      "positive_reward_min": 2.0,
+      "terminated": false,
+      "truncated": false
+    },
+    {
+      "domain": "cheetah",
+      "batch": 3,
+      "dmc_step_limit": 2500,
+      "action_repeat": 2,
+      "boundary_public_steps": 1252,
+      "implicit_reset_rng_changes": true,
+      "lifecycle_rng_replay": true
+    },
+    {
+      "domain": "hopper",
+      "batch": 1,
+      "seed": 0,
+      "reset": true,
+      "independent_snapshot": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "warmstart_restored": true,
+      "control_omission_proved": true,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "max_output_error": 0.0
+    },
+    {
+      "domain": "hopper",
+      "batch": 1,
+      "seed": 17,
+      "reset": true,
+      "independent_snapshot": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "warmstart_restored": true,
+      "control_omission_proved": true,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "max_output_error": 0.0
+    },
+    {
+      "domain": "hopper",
+      "batch": 1,
+      "seed": 42,
+      "reset": true,
+      "independent_snapshot": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "warmstart_restored": true,
+      "control_omission_proved": true,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "max_output_error": 0.0
+    },
+    {
+      "domain": "hopper",
+      "batch": 1,
+      "positive_reward_min": 2.0,
+      "terminated": false,
+      "truncated": false
+    },
+    {
+      "domain": "hopper",
+      "batch": 1,
+      "dmc_step_limit": 1000,
+      "action_repeat": 2,
+      "boundary_public_steps": 502,
+      "implicit_reset_rng_changes": true,
+      "lifecycle_rng_replay": true
+    },
+    {
+      "domain": "hopper",
+      "batch": 3,
+      "seed": 0,
+      "reset": true,
+      "independent_snapshot": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "warmstart_restored": true,
+      "control_omission_proved": true,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "max_output_error": 0.0
+    },
+    {
+      "domain": "hopper",
+      "batch": 3,
+      "seed": 17,
+      "reset": true,
+      "independent_snapshot": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "warmstart_restored": true,
+      "control_omission_proved": true,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "max_output_error": 0.0
+    },
+    {
+      "domain": "hopper",
+      "batch": 3,
+      "seed": 42,
+      "reset": true,
+      "independent_snapshot": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "warmstart_restored": true,
+      "control_omission_proved": true,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "max_output_error": 0.0
+    },
+    {
+      "domain": "hopper",
+      "batch": 3,
+      "positive_reward_min": 2.0,
+      "terminated": false,
+      "truncated": false
+    },
+    {
+      "domain": "hopper",
+      "batch": 3,
+      "dmc_step_limit": 1000,
+      "action_repeat": 2,
+      "boundary_public_steps": 502,
+      "implicit_reset_rng_changes": true,
+      "lifecycle_rng_replay": true
+    },
+    {
+      "domain": "walker",
+      "batch": 1,
+      "seed": 0,
+      "reset": true,
+      "independent_snapshot": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "warmstart_restored": true,
+      "control_omission_proved": true,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "max_output_error": 0.0
+    },
+    {
+      "domain": "walker",
+      "batch": 1,
+      "seed": 17,
+      "reset": true,
+      "independent_snapshot": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "warmstart_restored": true,
+      "control_omission_proved": true,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "max_output_error": 0.0
+    },
+    {
+      "domain": "walker",
+      "batch": 1,
+      "seed": 42,
+      "reset": true,
+      "independent_snapshot": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "warmstart_restored": true,
+      "control_omission_proved": true,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "max_output_error": 0.0
+    },
+    {
+      "domain": "walker",
+      "batch": 1,
+      "positive_reward_min": 0.3333333333333333,
+      "terminated": false,
+      "truncated": false
+    },
+    {
+      "domain": "walker",
+      "batch": 1,
+      "dmc_step_limit": 1000,
+      "action_repeat": 2,
+      "boundary_public_steps": 502,
+      "implicit_reset_rng_changes": true,
+      "lifecycle_rng_replay": true
+    },
+    {
+      "domain": "walker",
+      "batch": 3,
+      "seed": 0,
+      "reset": true,
+      "independent_snapshot": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "warmstart_restored": true,
+      "control_omission_proved": true,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "max_output_error": 0.0
+    },
+    {
+      "domain": "walker",
+      "batch": 3,
+      "seed": 17,
+      "reset": true,
+      "independent_snapshot": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "warmstart_restored": true,
+      "control_omission_proved": true,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "max_output_error": 0.0
+    },
+    {
+      "domain": "walker",
+      "batch": 3,
+      "seed": 42,
+      "reset": true,
+      "independent_snapshot": true,
+      "roundtrip": true,
+      "one_step": true,
+      "steps": 32,
+      "two_history_steps": 8,
+      "warmstart_restored": true,
+      "control_omission_proved": true,
+      "full_state_render": true,
+      "max_state_error": 0.0,
+      "max_output_error": 0.0
+    },
+    {
+      "domain": "walker",
+      "batch": 3,
+      "positive_reward_min": 0.3333333333333333,
+      "terminated": false,
+      "truncated": false
+    },
+    {
+      "domain": "walker",
+      "batch": 3,
+      "dmc_step_limit": 1000,
+      "action_repeat": 2,
+      "boundary_public_steps": 502,
+      "implicit_reset_rng_changes": true,
+      "lifecycle_rng_replay": true
+    }
+  ],
+  "construction": {
+    "cheetah": {
+      "numeric_model_arrays_exact": 583,
+      "control_timestep": 0.01,
+      "dmc_step_limit": 2500,
+      "action_dim": 6
+    },
+    "hopper": {
+      "numeric_model_arrays_exact": 583,
+      "control_timestep": 0.02,
+      "dmc_step_limit": 1000,
+      "action_dim": 4
+    },
+    "walker": {
+      "numeric_model_arrays_exact": 583,
+      "control_timestep": 0.025,
+      "dmc_step_limit": 1000,
+      "action_dim": 6
+    }
+  },
+  "warmstart_experiment": {
+    "cheetah": {
+      "seed": 0,
+      "history_steps_before_snapshot": 5,
+      "different_history_steps": 9,
+      "continuation_steps": 8,
+      "max_observable_error_without_warmstart": 1.4654943925052066e-14,
+      "max_error_with_schema": 0.0
+    },
+    "hopper": {
+      "seed": 0,
+      "history_steps_before_snapshot": 5,
+      "different_history_steps": 9,
+      "continuation_steps": 8,
+      "max_observable_error_without_warmstart": 2.042810365310288e-14,
+      "max_error_with_schema": 0.0
+    },
+    "walker": {
+      "seed": 0,
+      "history_steps_before_snapshot": 2,
+      "different_history_steps": 9,
+      "continuation_steps": 8,
+      "max_observable_error_without_warmstart": 2.2493118478905672e-13,
+      "max_error_with_schema": 0.0
+    }
+  },
+  "action_validation": {
+    "cheetah": {
+      "shape_and_nonfinite_rejected": true,
+      "finite_out_of_bounds_matches_historical_passthrough": true
+    },
+    "hopper": {
+      "shape_and_nonfinite_rejected": true,
+      "finite_out_of_bounds_matches_historical_passthrough": true
+    },
+    "walker": {
+      "shape_and_nonfinite_rejected": true,
+      "finite_out_of_bounds_matches_historical_passthrough": true
+    }
+  },
+  "visual_only_variation": {
+    "cheetah": {
+      "nominal_gravity_exact": true,
+      "steps": 8,
+      "max_error": 0.0
+    },
+    "hopper": {
+      "nominal_gravity_exact": true,
+      "steps": 8,
+      "max_error": 0.0
+    },
+    "walker": {
+      "nominal_gravity_exact": true,
+      "steps": 8,
+      "max_error": 0.0
+    }
+  },
+  "physical_variation": {
+    "cheetah": {
+      "gravity": [
+        1.25,
+        -0.75,
+        -7.5
+      ],
+      "steps": 32,
+      "max_error": 0.0
+    },
+    "hopper": {
+      "gravity": [
+        1.25,
+        -0.75,
+        -7.5
+      ],
+      "steps": 32,
+      "max_error": 0.0
+    },
+    "walker": {
+      "gravity": [
+        1.25,
+        -0.75,
+        -7.5
+      ],
+      "steps": 32,
+      "max_error": 0.0
+    }
+  }
+}
+FAMILY_GPU_GATE_PASS dmc-aligned-rerun-57c10c1
