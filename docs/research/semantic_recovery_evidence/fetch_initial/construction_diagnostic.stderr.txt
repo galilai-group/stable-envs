@@ -1,0 +1,29 @@
+AdroitHandRelocateDense-v1, AdroitHandHammerDense-v1, AdroitHandDoorDense-v1 environment's reward functions were updated in v1.2.1 without an environment version update. Therefore, use gymnasium-robotics==1.2.0 for v1 reproducibility or use v2 in gymnasium-robotics>=1.4.3. See https://github.com/Farama-Foundation/Gymnasium-Robotics/pull/220 for more details
+Traceback (most recent call last):
+  File "/private/tmp/stable-envs-fetch-recovery/docs/research/semantic_recovery_evidence/fetch_initial/construction_diagnostic.py", line 17, in <module>
+    env=gym.make('FetchPickAndPlace-v4')
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/samib/se8-fetch-venv/lib/python3.12/site-packages/gymnasium/envs/registration.py", line 735, in make
+    env = env_creator(**env_spec_kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/samib/se8-fetch-venv/lib/python3.12/site-packages/gymnasium_robotics/envs/fetch/pick_and_place.py", line 146, in __init__
+    MujocoFetchEnv.__init__(
+  File "/Users/samib/se8-fetch-venv/lib/python3.12/site-packages/gymnasium_robotics/envs/fetch/fetch_env.py", line 293, in __init__
+    super().__init__(default_camera_config=default_camera_config, **kwargs)
+  File "/Users/samib/se8-fetch-venv/lib/python3.12/site-packages/gymnasium_robotics/envs/fetch/fetch_env.py", line 69, in __init__
+    super().__init__(n_actions=4, **kwargs)
+  File "/Users/samib/se8-fetch-venv/lib/python3.12/site-packages/gymnasium_robotics/envs/robot_env.py", line 280, in __init__
+    super().__init__(**kwargs)
+  File "/Users/samib/se8-fetch-venv/lib/python3.12/site-packages/gymnasium_robotics/envs/robot_env.py", line 78, in __init__
+    self._initialize_simulation()
+  File "/Users/samib/se8-fetch-venv/lib/python3.12/site-packages/gymnasium_robotics/envs/robot_env.py", line 300, in _initialize_simulation
+    self._env_setup(initial_qpos=self.initial_qpos)
+  File "/Users/samib/se8-fetch-venv/lib/python3.12/site-packages/gymnasium_robotics/envs/fetch/fetch_env.py", line 406, in _env_setup
+    self._utils.set_joint_qpos(self.model, self.data, name, value)
+  File "/private/tmp/stable-envs-fetch-recovery/docs/research/semantic_recovery_evidence/fetch_initial/construction_diagnostic.py", line 15, in diagnose
+    return original(model,data,name,value)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/samib/se8-fetch-venv/lib/python3.12/site-packages/gymnasium_robotics/utils/mujoco_utils.py", line 142, in set_joint_qpos
+    assert joint_type in (mujoco.mjtJoint.mjJNT_HINGE, mujoco.mjtJoint.mjJNT_SLIDE)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError
