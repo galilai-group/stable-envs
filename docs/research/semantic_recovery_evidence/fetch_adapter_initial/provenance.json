@@ -1,0 +1,12 @@
+{
+  "source_proof_commit": "0381906f9916cba2fe42001714d37263731d7747",
+  "command": "PYTHONPATH=.:/Users/samib/stable-worldmodel /private/tmp/fetch-authority-swm-lock/bin/python scripts/recovery/fetch_pickandplace_adapter_probe.py",
+  "exit_code": 0,
+  "status": "ADAPTER_ONLY_NOT_PUBLIC_ENVIRONMENT_ACCEPTANCE",
+  "source_sha256": {
+    "stable_envs/_adapters/fetch_pickandplace.py": "a4cc9c91d0ec2be5516c62da0f02479c8f46c14a5f9b18c550c7a3db3430ac62",
+    "scripts/recovery/fetch_pickandplace_adapter_probe.py": "9966bd18e57c8e66c31d9a24006bde361a290d97dbecbcd491516b1e490f6d41"
+  },
+  "public_environment_integrated": false,
+  "representative_cpu_gate_complete": false
+}
