@@ -86,7 +86,15 @@ def _omission_experiments(domain, env, reference):
         error_with = max(
             _max_error(actual, wanted) for actual, wanted in zip(good, expected, strict=True)
         )
-        assert error_without > 0 and error_with == 0
+        diagnostic = {
+            "domain": domain,
+            "omitted_key": "/".join(omitted_key),
+            "error_without": error_without,
+            "error_with": error_with,
+        }
+        print("DMC_OMISSION_RESULT", json.dumps(diagnostic, sort_keys=True), flush=True)
+        assert error_with == 0, ("Restored continuation differs", diagnostic)
+        assert error_without > 0, ("Omission witness has no observable effect", diagnostic)
         results["/".join(omitted_key)] = {
             "prefix_steps": prefix,
             "different_history": "reset seed 991" if omitted_key[0] == "model" else "9 actions",
