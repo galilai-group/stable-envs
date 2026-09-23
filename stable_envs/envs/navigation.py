@@ -888,7 +888,12 @@ class _HiddenTargetSemantics:
         agent = state['agent', 'position']
         target = state['target', 'position']
         observation = self._observation(agent, target)
-        distance = torch.linalg.vector_norm(agent - target, dim=1)
+        # The historical env owns one CPU tensor per lane and calls ``float(torch.norm(...))``.
+        # Preserve that reduction order before placing the scalar outputs on the requested device.
+        host_delta = (agent - target).detach().cpu()
+        distance = torch.tensor(
+            [float(torch.norm(row)) for row in host_delta], dtype=torch.float64, device=self.device
+        )
         n = int(state.batch_size[0])
         return StepResult(
             {
@@ -901,7 +906,7 @@ class _HiddenTargetSemantics:
                     'proprio': agent.clone(),
                     'state': agent.clone(),
                     'goal_state': target.clone(),
-                    'distance_to_target': distance.to(torch.float64),
+                    'distance_to_target': distance,
                 },
             },
             batch_size=[n],
