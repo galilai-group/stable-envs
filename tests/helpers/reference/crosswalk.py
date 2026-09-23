@@ -31,6 +31,7 @@ SYMBOLIC_IDS = tuple(sorted(k for k, v in SWM_IDS.items() if not v))
 #: Frozen-oracle / support-matrix cell spelling -> live class name.
 HISTORICAL_CLASS_NAMES: dict[str, str] = {
     "DMCAcrobotSwingup": "DMCAcrobotBalance",
+    "DMCHumanoidStand": "DMCHumanoidWalk",
     "AntmazeGiantNavigate": "AntMazeGiantNavigate",
     "AntmazeGiantStitch": "AntMazeGiantStitch",
     "AntmazeLargeExplore": "AntMazeLargeExplore",

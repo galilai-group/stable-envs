@@ -10,8 +10,9 @@ mechanisms that carry it are named in ``VISUAL_NOTE``.
 from __future__ import annotations
 
 from ._cells import _AT, _AT_MEASURED_WITH, _AT_VERSIONS, trackcom_cell  # noqa: F401
+from ._humanoid import DMCHumanoidSemantics
 
-VISUAL_FIDELITY: dict[str, dict] = {
+_FROZEN_STAND_VISUAL_FIDELITY: dict[str, dict] = {
     "DMCHumanoidStand": {
         "mean_abs": 6.26,
         "within8_frac": 0.735,
@@ -31,4 +32,23 @@ VISUAL_FIDELITY: dict[str, dict] = {
     },
 }
 
-DMCHumanoidStand = trackcom_cell("DMCHumanoidStand", "humanoid", "stand", 0, VISUAL_FIDELITY["DMCHumanoidStand"])
+VISUAL_FIDELITY: dict[str, dict] = {
+    "DMCHumanoidWalk": _FROZEN_STAND_VISUAL_FIDELITY["DMCHumanoidStand"]
+}
+
+DMCHumanoidWalk = trackcom_cell(
+    "DMCHumanoidWalk",
+    "humanoid",
+    "walk",
+    0,
+    VISUAL_FIDELITY["DMCHumanoidWalk"],
+    bases=(DMCHumanoidSemantics,),
+)
+DMCHumanoidWalk.name = "dmc-humanoid-walk"
+DMCHumanoidWalk.reference_id = "dm_control/humanoid-walk"
+DMCHumanoidWalk.__doc__ = """Historical SWM Humanoid Walk using authoritative CPU physics.
+
+The public identity names Humanoid(move_speed=1, pure_state=False), selected by
+swm/HumanoidDMControl-v0. Full State includes physical, RNG and lifecycle fields.
+CUDA selects State/render placement; simulation remains delegated to CPU.
+"""

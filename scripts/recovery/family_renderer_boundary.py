@@ -20,6 +20,7 @@ COHORTS = {
     "native_classic_remaining": ("Acrobot", "MountainCar", "MountainCarContinuous"),
     "native_navigation": ("TwoRoom", "Piecewise", "SimplePointMaze"),
     "dmc_aligned": ("DMCBallInCupCatch", "DMCFingerTurnHard", "DMCManipulatorBringBall", "DMCQuadrupedWalk"),
+    "dmc_humanoid": ("DMCHumanoidWalk",),
     "ogbench": ("PointMazeLargeNavigate",),
 }
 
@@ -36,8 +37,13 @@ def main():
         corpus_name = {
             "PointMazeLargeNavigate": "PointmazeLargeNavigate",
             "DMCAcrobotBalance": "DMCAcrobotSwingup",
+            "DMCHumanoidWalk": "DMCHumanoidStand",
         }.get(name, name)
-        lookup_name = "DMCAcrobotSwingup" if args.historical_baseline and name == "DMCAcrobotBalance" else name
+        historical_names = {
+            "DMCAcrobotBalance": "DMCAcrobotSwingup",
+            "DMCHumanoidWalk": "DMCHumanoidStand",
+        }
+        lookup_name = historical_names.get(name, name) if args.historical_baseline else name
         corpus_paths = {
             "DMCManipulatorBringBall": "step7/dmc-manipulator/corpus/states/DMCManipulatorBringBall.npz",
             "DMCQuadrupedWalk": "step7/dmc-quadruped/phase1/corpus/states/DMCQuadrupedWalk.npz",

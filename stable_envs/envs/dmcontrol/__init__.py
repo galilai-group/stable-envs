@@ -102,7 +102,7 @@ from .cartpole import DMCCartpoleBalance, DMCCartpoleSwingup  # noqa: F401
 from .cheetah import DMCCheetahRun  # noqa: F401
 from .finger import ALL_EXACT_FLOOR, DMCFingerSpin, DMCFingerTurnEasy, DMCFingerTurnHard  # noqa: F401
 from .hopper import DMCHopperHop  # noqa: F401
-from .humanoid import DMCHumanoidStand  # noqa: F401
+from .humanoid import DMCHumanoidWalk  # noqa: F401
 from .manipulator import (  # noqa: F401
     _REGISTERED_SMALL_TARGET,
     RENDER_INVARIANT_DIMS,
