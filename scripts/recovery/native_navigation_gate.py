@@ -114,7 +114,9 @@ def _diagnostic_case(env, ref, domain, case):
                 context[label]["goal"] = _diagnostic_value(state[goal, "position"])
             except Exception as snapshot_error:
                 context[label]["snapshot_error"] = repr(snapshot_error)
-        context["candidate_variation"] = _diagnostic_value(env._style)
+        context["candidate_variation"] = {
+            path: _diagnostic_value(env._style[path]) for path in env._style.paths
+        }
         print("NAVIGATION_FAILURE_CONTEXT " + json.dumps(context), flush=True)
         raise
     finally:
