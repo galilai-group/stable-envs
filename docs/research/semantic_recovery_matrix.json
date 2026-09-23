@@ -586,7 +586,7 @@
       "rng_lifecycle": "UNTESTED",
       "variation_parity": "UNTESTED",
       "execution_mode": null,
-      "adapter_status": "NOT_IMPLEMENTED",
+      "adapter_status": "PRIVATE_PROTOTYPE_TESTED_NOT_PUBLICLY_INTEGRATED",
       "renderer_regression": "PENDING",
       "oracle_corpus": null,
       "reference_cpu_benchmark": "NOT_RUN",
@@ -594,8 +594,10 @@
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Reference profile resolved: Python3.12.11/NumPy2.2.6/Gymnasium1.2.3/Robotics1.4.2/MuJoCo3.8.1 constructs and resets unmodified pinned SWM and direct upstream. Candidate State necessity, full CPU semantic gate and renderer preservation remain unproved.",
-        "No dynamics/reward/done; qpos+goal renderer projection cannot restore velocities or episode horizon."
+        "Private DELEGATED_CPU adapter passes 12 exact default cases (32 steps plus 8 after different histories), seeded reset, snapshots, State roundtrip, action clipping, trajectory reward/success, TimeLimit 49/50/51 and simulator-reset RNG replay. Public environment integration and the complete representative CPU gate remain unfinished; no promotion.",
+        "Provisional State includes qpos, qvel, warmstart, explicit gripper controller position/quaternion cache, goal, elapsed TimeLimit and named PCG64 state. Source omissions witness warmstart/controller-cache necessity. RNG cached-integer component minimality, final family schema and Variation-space RNG remain unproved.",
+        "Candidate reward/success threshold tests and meaningful physical/visual Variation remain outstanding. Existing full renderer has no CPU mover backend and requires MuJoCo>=3.11/MJWarp, separate from the3.8.1 simulator authority; full/private render equality, non-mutation and frozen full CPU renderer preservation remain unaccepted.",
+        "Public Fetch class still has no recovered dynamics/reward/done; qpos+goal renderer projection cannot restore velocities or episode horizon."
       ],
       "test": "tests/unit/test_full_state_contract.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
@@ -603,9 +605,26 @@
       "worktree_base": "907c6e0f45f0763ac736cea006fb762c6e802ba2",
       "evidence": [
         "docs/research/fetch_representative_initial_audit.md",
-        "docs/research/fetch_authoritative_profile.md"
+        "docs/research/fetch_authoritative_profile.md",
+        "docs/research/fetch_representative_state_experiments.md",
+        "docs/research/fetch_representative_adapter_initial.md",
+        "docs/research/semantic_recovery_evidence/fetch_adapter_initial/provenance.json",
+        "docs/research/semantic_recovery_evidence/fetch_adapter_initial/adapter_probe.json"
       ],
-      "reference_profile_status": "PASS_CONSTRUCTOR_RESET_ONLY"
+      "reference_profile_status": "PASS_CONSTRUCTOR_RESET_ONLY",
+      "private_adapter_evidence": {
+        "execution_mode": "DELEGATED_CPU",
+        "implementation_commit": "d4bdf75f",
+        "strict_probe_commit": "3986fd3de17f1337c2147b1397ff308e07a5eeb9",
+        "status": "ADAPTER_ONLY_NOT_PUBLIC_ENVIRONMENT_ACCEPTANCE",
+        "state_schema": "PROVISIONAL",
+        "cases": 12,
+        "trajectory_steps": 32,
+        "restored_continuation_steps": 8,
+        "comparison": "exact_values_shapes_dtypes",
+        "public_environment_integrated": false,
+        "representative_cpu_gate_complete": false
+      }
     },
     {
       "historical_id": "swm/FetchPickAndPlaceDense-v3",
@@ -1774,24 +1793,23 @@
       "family": "navigation",
       "owner": "native_navigation",
       "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
-      "state_status": "INCOMPLETE",
-      "action_parity": "PASS_EXACT_CPU_DEFAULT_FLOAT32",
-      "reset_parity": "PASS_CPU_SEEDED_DEFAULT_AND_SCOPED_OPTIONS; other options explicitly refused",
-      "step_parity": "PASS_EXACT_CPU; CUDA_STATE_PENDING",
-      "reward_parity": "PASS_EXACT_CPU_INCLUDING_STRICT_SUCCESS_BOUNDARIES",
-      "terminated_truncated_parity": "PASS_EXACT_CPU; no source horizon or auto-reset",
+      "state_status": "VERIFIED",
+      "action_parity": "PASS_EXACT_CPU_AND_CUDA_DEFAULT_FLOAT32",
+      "reset_parity": "PASS_CPU_AND_CUDA_SEEDED_DEFAULT_AND_SCOPED_OPTIONS; other options explicitly refused",
+      "step_parity": "PASS_EXACT_CPU_AND_CUDA",
+      "reward_parity": "PASS_EXACT_CPU_AND_CUDA_INCLUDING_STRICT_SUCCESS_BOUNDARIES",
+      "terminated_truncated_parity": "PASS_EXACT_CPU_AND_CUDA; no source horizon or auto-reset",
       "rng_lifecycle": "PASS_SEEDED_RESET_AND_TWO_HISTORIES; no step RNG; unseeded reset uses fresh external entropy upstream",
-      "variation_parity": "PASS_CPU_COMBINED_NONDEFAULT_DYNAMICS_WITH_DEFAULT_DIVERGENCE; complete historical surface remains uncertified",
+      "variation_parity": "PASS_CPU_AND_CUDA_COMBINED_NONDEFAULT_DYNAMICS_WITH_DEFAULT_DIVERGENCE; complete historical surface remains uncertified",
       "execution_mode": "NATIVE_TORCH",
       "adapter_status": "NATIVE_IMPLEMENTED_HISTORICAL_DEFAULT",
-      "renderer_regression": "PASS_THREE_CELL_FROZEN_CPU; SPM private historical hidden-goal translation; OSCAR_NOT_ACCEPTED: latest job failed before candidate frozen renderer comparison",
+      "renderer_regression": "PASS_SCOPED_CPU_CUDA: four frozen rows per accepted class byte-identical to baseline within each device profile; SimplePointMaze uses private historical hidden-goal projection",
       "oracle_corpus": "tests/fixtures/semantics/native_navigation/manifest.json",
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Oscar diagnostic job 6628945 isolates Piecewise zone_boundary_right, seed5/B1/lane0/step1: identical restored agent[112,50] and target[190,190], but CUDA candidate picks bias[2,0] and advances to[114,50], reference picks[0,2] and advances to[112,52]. No production correction or complete corrected Oscar gate yet.",
         "Complete sampled reset options, historical Variation surface and sibling variants remain uncertified",
         "Unseeded reset draws fresh external entropy in pinned source; no restored-unseeded-reset replay claim",
         "All-42 renderer certification and paired benchmarks remain unrun"
@@ -1800,7 +1818,7 @@
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "audit_status": "SOURCE_AUDITED_NOT_VERIFIED",
       "audit_report": "docs/research/native_navigation_recovery.md",
-      "recovery_status": "CPU_PASSED_OSCAR_PENDING",
+      "recovery_status": "ACCEPTED_CPU_AND_OSCAR",
       "cohort": "remaining-simple-and-source-aligned",
       "worktree_base": "152cb2402bd44063f414865faff6d28e4ccb67c2",
       "planned_gate": "scripts/recovery/native_navigation_gate.py",
@@ -1817,7 +1835,13 @@
         "docs/research/semantic_recovery_evidence/blocker_cleanup/acceptance.json",
         "docs/research/semantic_recovery_evidence/blocker_cleanup/simple-6628945.out",
         "docs/research/semantic_recovery_evidence/blocker_cleanup/navigation-failure-context.json",
-        "docs/research/semantic_recovery_evidence/blocker_cleanup/piecewise-zone-arithmetic-4ad7d20.json"
+        "docs/research/semantic_recovery_evidence/blocker_cleanup/piecewise-zone-arithmetic-4ad7d20.json",
+        "docs/research/semantic_recovery_evidence/navigation_zone_acceptance/acceptance.json",
+        "docs/research/semantic_recovery_evidence/navigation_zone_acceptance/navigation_cpu.json",
+        "docs/research/semantic_recovery_evidence/navigation_zone_acceptance/navigation-zone-fix-6ee8d8cb-gate-cuda.json",
+        "docs/research/semantic_recovery_evidence/navigation_zone_acceptance/navigation-zone-fix-6ee8d8cb-renderer-baseline-cuda.json",
+        "docs/research/semantic_recovery_evidence/navigation_zone_acceptance/navigation-zone-fix-6ee8d8cb-renderer-cuda.json",
+        "docs/research/semantic_recovery_evidence/navigation_zone_acceptance/simple-6642897.out"
       ],
       "verification_scope": {
         "classes": [
@@ -1837,15 +1861,15 @@
         "atol": 0,
         "rtol": 0,
         "same_persistent_variation_required": true,
-        "status": "CPU_PASSED_OSCAR_PENDING"
+        "status": "ACCEPTED_CPU_AND_OSCAR"
       },
-      "oscar_job": 6626600,
-      "oscar_result": "FAILED",
+      "oscar_job": 6642897,
+      "oscar_result": "PASS",
       "prior_oscar_failure": {
         "job_id": 6611139,
         "failure": "Native navigation exact CUDA output mismatch in info.distance_to_target: absolute difference 7.62939453125e-06. No tolerance relaxation; remaining navigation gate and candidate renderer comparison did not run."
       },
-      "acceptance_revision": "bb517bdd6e9bac07dfb56fde42b0bc9f249a5110",
+      "acceptance_revision": "6ee8d8cb54031ff61eb1de24eafd1dd5c066fc3e",
       "latest_oscar_failure": {
         "job_id": 6626600,
         "kind": "EXACT_BOUNDARY_OUTPUT_MISMATCH",
@@ -1856,7 +1880,14 @@
       },
       "diagnostic_job": 6628945,
       "diagnostic_revision": "1f717d12847cbcb998ad6c0bcc7ce7386249e560",
-      "diagnostic_root_cause": "CUDA float64 scalar-denominator division at (112-14)/196 gives the representable value immediately below 0.5; scaling by2 then truncation selects column0 instead of source column1. Restored State and goals match."
+      "diagnostic_root_cause": "CUDA float64 scalar-denominator division at (112-14)/196 gives the representable value immediately below 0.5; scaling by2 then truncation selects column0 instead of source column1. Restored State and goals match.",
+      "verified_classes": [
+        "Piecewise"
+      ],
+      "diagnostic_resolution": {
+        "commit": "6ee8d8cb54031ff61eb1de24eafd1dd5c066fc3e",
+        "description": "Tensor-denominator float64 zone division matches historical boundary selection; full CPU/Oscar gates and expanded boundary continuations pass"
+      }
     },
     {
       "historical_id": "swm/PushT-Discrete-v1",
@@ -2111,41 +2142,40 @@
       "family": "navigation",
       "owner": "native_navigation",
       "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
-      "state_status": "INCOMPLETE",
-      "action_parity": "PASS_EXACT_CPU; SimplePointMaze float16/float32/float64 and blocked promotion gated",
-      "reset_parity": "PASS_CPU_SEEDED_DEFAULT_AND_SCOPED_OPTIONS; other options explicitly refused",
-      "step_parity": "PASS_EXACT_CPU; CUDA_STATE_PENDING",
-      "reward_parity": "PASS_EXACT_CPU_INCLUDING_STRICT_SUCCESS_BOUNDARIES",
-      "terminated_truncated_parity": "PASS_EXACT_CPU; no source horizon or auto-reset",
+      "state_status": "VERIFIED",
+      "action_parity": "PASS_EXACT_CPU_AND_CUDA; SimplePointMaze float16/float32/float64 and blocked promotion gated",
+      "reset_parity": "PASS_CPU_AND_CUDA_SEEDED_DEFAULT_AND_SCOPED_OPTIONS; other options explicitly refused",
+      "step_parity": "PASS_EXACT_CPU_AND_CUDA",
+      "reward_parity": "PASS_EXACT_CPU_AND_CUDA_INCLUDING_STRICT_SUCCESS_BOUNDARIES",
+      "terminated_truncated_parity": "PASS_EXACT_CPU_AND_CUDA; no source horizon or auto-reset",
       "rng_lifecycle": "PASS_SEEDED_RESET_AND_TWO_HISTORIES; no step RNG; unseeded reset uses fresh external entropy upstream",
-      "variation_parity": "PASS_CPU_COMBINED_NONDEFAULT_DYNAMICS_WITH_DEFAULT_DIVERGENCE; complete historical surface remains uncertified",
+      "variation_parity": "PASS_CPU_AND_CUDA_COMBINED_NONDEFAULT_DYNAMICS_WITH_DEFAULT_DIVERGENCE; complete historical surface remains uncertified",
       "execution_mode": "NATIVE_TORCH",
       "adapter_status": "NATIVE_IMPLEMENTED_HISTORICAL_DEFAULT",
-      "renderer_regression": "PASS_THREE_CELL_FROZEN_CPU; SPM private historical hidden-goal translation; OSCAR_NOT_ACCEPTED: latest job failed before candidate frozen renderer comparison",
+      "renderer_regression": "PASS_SCOPED_CPU_CUDA: four frozen rows per accepted class byte-identical to baseline within each device profile; SimplePointMaze uses private historical hidden-goal projection",
       "oracle_corpus": "tests/fixtures/semantics/native_navigation/manifest.json",
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Oscar diagnostic job 6628945 isolates Piecewise zone_boundary_right, seed5/B1/lane0/step1: identical restored agent[112,50] and target[190,190], but CUDA candidate picks bias[2,0] and advances to[114,50], reference picks[0,2] and advances to[112,52]. No production correction or complete corrected Oscar gate yet.",
         "Complete sampled reset options, historical Variation surface and sibling variants remain uncertified",
         "Unseeded reset draws fresh external entropy in pinned source; no restored-unseeded-reset replay claim",
-        "SimplePointMaze exact cached goal image requires Matplotlib Agg; CPU profile3.10.9 tested, Oscar profile3.11.1 pending",
         "All-42 renderer certification and paired benchmarks remain unrun"
       ],
       "test": "tests/integration/test_native_navigation_gate.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "audit_status": "SOURCE_AUDITED_NOT_VERIFIED",
       "audit_report": "docs/research/native_navigation_recovery.md",
-      "recovery_status": "CPU_PASSED_OSCAR_PENDING",
+      "recovery_status": "ACCEPTED_CPU_AND_OSCAR",
       "blocker": {
-        "status": "OPEN",
+        "status": "RESOLVED",
         "kind": "DEFAULT_VISUAL_IDENTITY_MISMATCH",
         "reference": "SimplePointMazeEnv(show_goal=True)",
-        "candidate": "SimplePointMaze.reference_kwargs show_goal=False",
+        "candidate": "SimplePointMaze historical default show_goal=True; cached image and reward goal distinguished",
         "resolution_cohort": "native navigation",
-        "permanent_skip": false
+        "permanent_skip": false,
+        "resolution": "Full CPU gate with Matplotlib3.10.9 and Oscar gate with Matplotlib3.11.1 pass exact comparisons within each profile"
       },
       "cohort": "remaining-simple-and-source-aligned",
       "worktree_base": "152cb2402bd44063f414865faff6d28e4ccb67c2",
@@ -2163,7 +2193,13 @@
         "docs/research/semantic_recovery_evidence/blocker_cleanup/acceptance.json",
         "docs/research/semantic_recovery_evidence/blocker_cleanup/simple-6628945.out",
         "docs/research/semantic_recovery_evidence/blocker_cleanup/navigation-failure-context.json",
-        "docs/research/semantic_recovery_evidence/blocker_cleanup/piecewise-zone-arithmetic-4ad7d20.json"
+        "docs/research/semantic_recovery_evidence/blocker_cleanup/piecewise-zone-arithmetic-4ad7d20.json",
+        "docs/research/semantic_recovery_evidence/navigation_zone_acceptance/acceptance.json",
+        "docs/research/semantic_recovery_evidence/navigation_zone_acceptance/navigation_cpu.json",
+        "docs/research/semantic_recovery_evidence/navigation_zone_acceptance/navigation-zone-fix-6ee8d8cb-gate-cuda.json",
+        "docs/research/semantic_recovery_evidence/navigation_zone_acceptance/navigation-zone-fix-6ee8d8cb-renderer-baseline-cuda.json",
+        "docs/research/semantic_recovery_evidence/navigation_zone_acceptance/navigation-zone-fix-6ee8d8cb-renderer-cuda.json",
+        "docs/research/semantic_recovery_evidence/navigation_zone_acceptance/simple-6642897.out"
       ],
       "verification_scope": {
         "classes": [
@@ -2183,15 +2219,15 @@
         "atol": 0,
         "rtol": 0,
         "same_persistent_variation_required": true,
-        "status": "CPU_PASSED_OSCAR_PENDING"
+        "status": "ACCEPTED_CPU_AND_OSCAR"
       },
-      "oscar_job": 6626600,
-      "oscar_result": "FAILED",
+      "oscar_job": 6642897,
+      "oscar_result": "PASS",
       "prior_oscar_failure": {
         "job_id": 6611139,
         "failure": "Native navigation exact CUDA output mismatch in info.distance_to_target: absolute difference 7.62939453125e-06. No tolerance relaxation; remaining navigation gate and candidate renderer comparison did not run."
       },
-      "acceptance_revision": "bb517bdd6e9bac07dfb56fde42b0bc9f249a5110",
+      "acceptance_revision": "6ee8d8cb54031ff61eb1de24eafd1dd5c066fc3e",
       "latest_oscar_failure": {
         "job_id": 6626600,
         "kind": "EXACT_BOUNDARY_OUTPUT_MISMATCH",
@@ -2202,7 +2238,14 @@
       },
       "diagnostic_job": 6628945,
       "diagnostic_revision": "1f717d12847cbcb998ad6c0bcc7ce7386249e560",
-      "diagnostic_root_cause": "CUDA float64 scalar-denominator division at (112-14)/196 gives the representable value immediately below 0.5; scaling by2 then truncation selects column0 instead of source column1. Restored State and goals match."
+      "diagnostic_root_cause": "CUDA float64 scalar-denominator division at (112-14)/196 gives the representable value immediately below 0.5; scaling by2 then truncation selects column0 instead of source column1. Restored State and goals match.",
+      "verified_classes": [
+        "SimplePointMaze"
+      ],
+      "diagnostic_resolution": {
+        "commit": "6ee8d8cb54031ff61eb1de24eafd1dd5c066fc3e",
+        "description": "Tensor-denominator float64 zone division matches historical boundary selection; full CPU/Oscar gates and expanded boundary continuations pass"
+      }
     },
     {
       "historical_id": "swm/TwoRoom-v1",
@@ -2213,24 +2256,23 @@
       "family": "navigation",
       "owner": "native_navigation",
       "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
-      "state_status": "INCOMPLETE",
-      "action_parity": "PASS_EXACT_CPU_DEFAULT_FLOAT32",
-      "reset_parity": "PASS_CPU_SEEDED_DEFAULT_AND_SCOPED_OPTIONS; other options explicitly refused",
-      "step_parity": "PASS_EXACT_CPU; CUDA_STATE_PENDING",
-      "reward_parity": "PASS_EXACT_CPU_INCLUDING_STRICT_SUCCESS_BOUNDARIES",
-      "terminated_truncated_parity": "PASS_EXACT_CPU; no source horizon or auto-reset",
+      "state_status": "VERIFIED",
+      "action_parity": "PASS_EXACT_CPU_AND_CUDA_DEFAULT_FLOAT32",
+      "reset_parity": "PASS_CPU_AND_CUDA_SEEDED_DEFAULT_AND_SCOPED_OPTIONS; other options explicitly refused",
+      "step_parity": "PASS_EXACT_CPU_AND_CUDA",
+      "reward_parity": "PASS_EXACT_CPU_AND_CUDA_INCLUDING_STRICT_SUCCESS_BOUNDARIES",
+      "terminated_truncated_parity": "PASS_EXACT_CPU_AND_CUDA; no source horizon or auto-reset",
       "rng_lifecycle": "PASS_SEEDED_RESET_AND_TWO_HISTORIES; no step RNG; unseeded reset uses fresh external entropy upstream",
-      "variation_parity": "PASS_CPU_COMBINED_NONDEFAULT_DYNAMICS_WITH_DEFAULT_DIVERGENCE; complete historical surface remains uncertified",
+      "variation_parity": "PASS_CPU_AND_CUDA_COMBINED_NONDEFAULT_DYNAMICS_WITH_DEFAULT_DIVERGENCE; complete historical surface remains uncertified",
       "execution_mode": "NATIVE_TORCH",
       "adapter_status": "NATIVE_IMPLEMENTED_HISTORICAL_DEFAULT",
-      "renderer_regression": "PASS_THREE_CELL_FROZEN_CPU; SPM private historical hidden-goal translation; OSCAR_NOT_ACCEPTED: latest job failed before candidate frozen renderer comparison",
+      "renderer_regression": "PASS_SCOPED_CPU_CUDA: four frozen rows per accepted class byte-identical to baseline within each device profile; SimplePointMaze uses private historical hidden-goal projection",
       "oracle_corpus": "tests/fixtures/semantics/native_navigation/manifest.json",
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Oscar diagnostic job 6628945 isolates Piecewise zone_boundary_right, seed5/B1/lane0/step1: identical restored agent[112,50] and target[190,190], but CUDA candidate picks bias[2,0] and advances to[114,50], reference picks[0,2] and advances to[112,52]. No production correction or complete corrected Oscar gate yet.",
         "Complete sampled reset options, historical Variation surface and sibling variants remain uncertified",
         "Unseeded reset draws fresh external entropy in pinned source; no restored-unseeded-reset replay claim",
         "All-42 renderer certification and paired benchmarks remain unrun"
@@ -2239,7 +2281,7 @@
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "audit_status": "SOURCE_AUDITED_NOT_VERIFIED",
       "audit_report": "docs/research/native_navigation_recovery.md",
-      "recovery_status": "CPU_PASSED_OSCAR_PENDING",
+      "recovery_status": "ACCEPTED_CPU_AND_OSCAR",
       "cohort": "remaining-simple-and-source-aligned",
       "worktree_base": "152cb2402bd44063f414865faff6d28e4ccb67c2",
       "planned_gate": "scripts/recovery/native_navigation_gate.py",
@@ -2256,7 +2298,13 @@
         "docs/research/semantic_recovery_evidence/blocker_cleanup/acceptance.json",
         "docs/research/semantic_recovery_evidence/blocker_cleanup/simple-6628945.out",
         "docs/research/semantic_recovery_evidence/blocker_cleanup/navigation-failure-context.json",
-        "docs/research/semantic_recovery_evidence/blocker_cleanup/piecewise-zone-arithmetic-4ad7d20.json"
+        "docs/research/semantic_recovery_evidence/blocker_cleanup/piecewise-zone-arithmetic-4ad7d20.json",
+        "docs/research/semantic_recovery_evidence/navigation_zone_acceptance/acceptance.json",
+        "docs/research/semantic_recovery_evidence/navigation_zone_acceptance/navigation_cpu.json",
+        "docs/research/semantic_recovery_evidence/navigation_zone_acceptance/navigation-zone-fix-6ee8d8cb-gate-cuda.json",
+        "docs/research/semantic_recovery_evidence/navigation_zone_acceptance/navigation-zone-fix-6ee8d8cb-renderer-baseline-cuda.json",
+        "docs/research/semantic_recovery_evidence/navigation_zone_acceptance/navigation-zone-fix-6ee8d8cb-renderer-cuda.json",
+        "docs/research/semantic_recovery_evidence/navigation_zone_acceptance/simple-6642897.out"
       ],
       "verification_scope": {
         "classes": [
@@ -2276,15 +2324,15 @@
         "atol": 0,
         "rtol": 0,
         "same_persistent_variation_required": true,
-        "status": "CPU_PASSED_OSCAR_PENDING"
+        "status": "ACCEPTED_CPU_AND_OSCAR"
       },
-      "oscar_job": 6626600,
-      "oscar_result": "FAILED",
+      "oscar_job": 6642897,
+      "oscar_result": "PASS",
       "prior_oscar_failure": {
         "job_id": 6611139,
         "failure": "Native navigation exact CUDA output mismatch in info.distance_to_target: absolute difference 7.62939453125e-06. No tolerance relaxation; remaining navigation gate and candidate renderer comparison did not run."
       },
-      "acceptance_revision": "bb517bdd6e9bac07dfb56fde42b0bc9f249a5110",
+      "acceptance_revision": "6ee8d8cb54031ff61eb1de24eafd1dd5c066fc3e",
       "latest_oscar_failure": {
         "job_id": 6626600,
         "kind": "EXACT_BOUNDARY_OUTPUT_MISMATCH",
@@ -2295,7 +2343,14 @@
       },
       "diagnostic_job": 6628945,
       "diagnostic_revision": "1f717d12847cbcb998ad6c0bcc7ce7386249e560",
-      "diagnostic_root_cause": "CUDA float64 scalar-denominator division at (112-14)/196 gives the representable value immediately below 0.5; scaling by2 then truncation selects column0 instead of source column1. Restored State and goals match."
+      "diagnostic_root_cause": "CUDA float64 scalar-denominator division at (112-14)/196 gives the representable value immediately below 0.5; scaling by2 then truncation selects column0 instead of source column1. Restored State and goals match.",
+      "verified_classes": [
+        "TwoRoom"
+      ],
+      "diagnostic_resolution": {
+        "commit": "6ee8d8cb54031ff61eb1de24eafd1dd5c066fc3e",
+        "description": "Tensor-denominator float64 zone division matches historical boundary selection; full CPU/Oscar gates and expanded boundary continuations pass"
+      }
     },
     {
       "historical_id": "swm/WalkerDMControl-v0",
@@ -2379,5 +2434,5 @@
       ]
     }
   ],
-  "checkpoint": "Checkpoint A: Humanoid accepted after complete Oscar6628919 semantic/render/regression gate; 18 VERIFIED / 24 INCOMPLETE, all 12 historical DMC defaults accepted within bounded scopes. Navigation exact failure isolated to Piecewise zone boundary, uncorrected and unaccepted. Fetch authoritative reference profile constructs/resets; candidate CPU gate remains unproved. PushT parked. See docs/research/oscar_blocker_cleanup_checkpoint.md"
+  "checkpoint": "Navigation corrected full Oscar 6642897 gate accepted: 21 VERIFIED / 21 INCOMPLETE; DMC historical defaults remain 12/12 accepted. Representative Fetch source omission evidence and tested private adapter integrated; public integration, final State certification, threshold, Variation and full renderer gates remain incomplete. PushT parked. See docs/research/navigation_fetch_checkpoint.md"
 }
