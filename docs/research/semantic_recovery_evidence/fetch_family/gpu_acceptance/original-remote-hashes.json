@@ -1,0 +1,58 @@
+{
+  "original/fetch-family-0dd0271f-PickAndPlace-baseline.json": {
+    "remote_path": "/oscar/scratch/sboughan/se-semantic-recovery/fetch-family-0dd0271f-PickAndPlace-baseline.json",
+    "sha256": "d9cdc10ae45de54d4103e4f6fb9f65e71433c0e56e330c9d887fbcc006059ee4"
+  },
+  "original/fetch-family-0dd0271f-PickAndPlace-candidate.json": {
+    "remote_path": "/oscar/scratch/sboughan/se-semantic-recovery/fetch-family-0dd0271f-PickAndPlace-candidate.json",
+    "sha256": "d9cdc10ae45de54d4103e4f6fb9f65e71433c0e56e330c9d887fbcc006059ee4"
+  },
+  "original/fetch-family-0dd0271f-PickAndPlace-gate.json": {
+    "remote_path": "/oscar/scratch/sboughan/se-semantic-recovery/fetch-family-0dd0271f-PickAndPlace-gate.json",
+    "sha256": "61e7983680027b5ce6a2b9116d408493c7fbb568e49df5c6623e60e7eb59e54c"
+  },
+  "original/fetch-family-0dd0271f-Push-baseline.json": {
+    "remote_path": "/oscar/scratch/sboughan/se-semantic-recovery/fetch-family-0dd0271f-Push-baseline.json",
+    "sha256": "7d29bd5bbf5a521c5e06ffd21a07eff475ccbea1541f82a5d1d87080e1ac417e"
+  },
+  "original/fetch-family-0dd0271f-Push-candidate.json": {
+    "remote_path": "/oscar/scratch/sboughan/se-semantic-recovery/fetch-family-0dd0271f-Push-candidate.json",
+    "sha256": "7d29bd5bbf5a521c5e06ffd21a07eff475ccbea1541f82a5d1d87080e1ac417e"
+  },
+  "original/fetch-family-0dd0271f-Push-gate.json": {
+    "remote_path": "/oscar/scratch/sboughan/se-semantic-recovery/fetch-family-0dd0271f-Push-gate.json",
+    "sha256": "8fcac38f68ce3a0f2eef0f0cf60572d38431365ee6b3218b91f553a250a9e185"
+  },
+  "original/fetch-family-0dd0271f-Reach-baseline.json": {
+    "remote_path": "/oscar/scratch/sboughan/se-semantic-recovery/fetch-family-0dd0271f-Reach-baseline.json",
+    "sha256": "1f7c6e5c54bada5a281efeb04b76dbe65fa9c8cbe380b7eb9bc29580e0c58435"
+  },
+  "original/fetch-family-0dd0271f-Reach-candidate.json": {
+    "remote_path": "/oscar/scratch/sboughan/se-semantic-recovery/fetch-family-0dd0271f-Reach-candidate.json",
+    "sha256": "1f7c6e5c54bada5a281efeb04b76dbe65fa9c8cbe380b7eb9bc29580e0c58435"
+  },
+  "original/fetch-family-0dd0271f-Reach-gate.json": {
+    "remote_path": "/oscar/scratch/sboughan/se-semantic-recovery/fetch-family-0dd0271f-Reach-gate.json",
+    "sha256": "dc30bcc78e9cf52852474e63e71d406423589dd3ad7c4f558c25cc26708f28bf"
+  },
+  "original/fetch-family-0dd0271f-Slide-baseline.json": {
+    "remote_path": "/oscar/scratch/sboughan/se-semantic-recovery/fetch-family-0dd0271f-Slide-baseline.json",
+    "sha256": "44ce4d68dda071eaabed2bf2147be57858909892420af9e0f2b9a827bbc31d90"
+  },
+  "original/fetch-family-0dd0271f-Slide-candidate.json": {
+    "remote_path": "/oscar/scratch/sboughan/se-semantic-recovery/fetch-family-0dd0271f-Slide-candidate.json",
+    "sha256": "44ce4d68dda071eaabed2bf2147be57858909892420af9e0f2b9a827bbc31d90"
+  },
+  "original/fetch-family-0dd0271f-Slide-gate.json": {
+    "remote_path": "/oscar/scratch/sboughan/se-semantic-recovery/fetch-family-0dd0271f-Slide-gate.json",
+    "sha256": "de6de00feadab5b5373053e4153f89bb059c759327b5ce5bc09e7bd20a963992"
+  },
+  "original/fetch-family-6649686.out": {
+    "remote_path": "/oscar/scratch/sboughan/se-semantic-recovery/logs/fetch-family-6649686.out",
+    "sha256": "da8c7591a99a6c52c2acc636325e505605971625325faa77e1482155af6dbea1"
+  },
+  "source-identity.json": {
+    "remote_path": "/oscar/scratch/sboughan/se-semantic-recovery/fetch-family-identity-6652487.json",
+    "sha256": "b8e8c93264905991b6f24322aa832166a11881ba2ceb86bc9b1d05cc2479eb9b"
+  }
+}

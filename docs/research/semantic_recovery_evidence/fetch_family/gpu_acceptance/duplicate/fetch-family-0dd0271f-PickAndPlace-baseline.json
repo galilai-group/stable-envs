@@ -1,0 +1,12 @@
+{
+  "FetchPickAndPlace": {
+    "rows_sha256": "c3005446d3e26f6fe5ef14b043742361fe596814a5475c9981847e43979ba7a0",
+    "frame_sha256": "ba263cfd07aad449e2b526df8a8ef9c46c61fcd156c37ffae75f589d23a0b975",
+    "shape": [
+      4,
+      480,
+      480,
+      3
+    ]
+  }
+}

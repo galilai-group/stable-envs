@@ -1,0 +1,12 @@
+{
+  "FetchPush": {
+    "rows_sha256": "fb333f657ec987c794c82514be05dd64ddd2c2260db532cac1006ad8e35309c8",
+    "frame_sha256": "507ef79de5218c04325ab0bbd8cf62b25cd2dcb772abf3a89b53080e0b9004bc",
+    "shape": [
+      4,
+      480,
+      480,
+      3
+    ]
+  }
+}

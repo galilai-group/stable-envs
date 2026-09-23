@@ -587,17 +587,16 @@
       "variation_parity": "PASS_BOUNDED: object mass8 changes dynamics; agent/block/goal start and block angle ordering; persistent versus reset mass; object.color physical invariance and GPU frame effect; seeded object.color",
       "execution_mode": "DELEGATED_CPU",
       "adapter_status": "IMPLEMENTED_PUBLIC_HISTORICAL_DEFAULT",
-      "renderer_regression": "PASS_OSCAR_FULL_PRIVATE_NONMUTATION_AND_FROZEN_BASELINE_EQUALITY; CPU_FULL_RENDERING_UNSUPPORTED",
+      "renderer_regression": "PASS_OSCAR_6649686_AND_6652487_FROZEN_FULL_PRIVATE_NONMUTATION_DENSE_DICT_FRAMES",
       "oracle_corpus": null,
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Original representative backend acceptance remains closed. Family CPU expansion passes; eleven sibling promotions await Oscar job 6649686. SWM observation integration is DEFERRED.",
-        "CPU full rendering is explicitly unsupported (CPU_BACKEND_MISSING). CPU physics authority uses MuJoCo3.8.1; GPU renderer profile is separately certified, without a physics parity claim.",
-        "Persistent renderer defaults are preserved; SWM five-leaf default appearance randomization and full theoretical Variation surface remain uncertified. Seeded object-color sampling tested; unseeded visual reset draws fresh external entropy and is not replayable.",
-        "Arbitrary externally injected simulator forces, other reset options/tasks, full upstream image similarity and final paired benchmarks remain outside scope."
+        "SWM observation integration DEFERRED; flat/Dict learner packaging remains SWM-owned.",
+        "CPU full rendering unsupported (CPU_BACKEND_MISSING); CPU physics pinned MuJoCo3.8.1; GPU profile certifies rendering only.",
+        "Bounded Variation only; full historical default appearance randomization, nondefault task kwargs, external forces, upstream-image similarity and final benchmarks remain uncertified."
       ],
       "test": "scripts/recovery/fetch_public_gate.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
@@ -617,7 +616,9 @@
         "docs/research/semantic_recovery_evidence/fetch_public/fetch-public-bf9101cb-renderer-gate.json",
         "docs/research/semantic_recovery_evidence/fetch_public/fetch-public-bf9101cb-renderer-baseline.json",
         "docs/research/semantic_recovery_evidence/fetch_public/fetch-public-bf9101cb-renderer-candidate.json",
-        "docs/research/semantic_recovery_evidence/fetch_public/fetch-6646530.out"
+        "docs/research/semantic_recovery_evidence/fetch_public/fetch-6646530.out",
+        "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json",
+        "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-PickAndPlace-gate.json"
       ],
       "reference_profile_status": "PASS_COMPLETE_BOUNDED_PUBLIC_CPU_SEMANTICS",
       "private_adapter_evidence": {
@@ -722,10 +723,16 @@
         "same_persistent_variation_required": true,
         "state_schema": "SUFFICIENT_NAMED_NOT_MINIMAL",
         "cpu_renderer": "CPU_BACKEND_MISSING",
-        "gpu_profile_scope": "RENDERER_ONLY"
+        "gpu_profile_scope": "RENDERER_ONLY",
+        "backend_acceptance": "VERIFIED",
+        "observation_integration": "DEFERRED"
       },
-      "observation_integration": "DEFERRED_SWM_OWNED",
-      "family_candidate_evidence": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json"
+      "observation_integration": "DEFERRED",
+      "family_acceptance_evidence": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json",
+      "family_oscar_jobs": [
+        6649686,
+        6652487
+      ]
     },
     {
       "historical_id": "swm/FetchPickAndPlaceDense-v3",
@@ -735,7 +742,7 @@
       "family": "fetch",
       "owner": "fetch-family",
       "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
-      "state_status": "INCOMPLETE",
+      "state_status": "VERIFIED",
       "action_parity": "PASS_EXACT_PUBLIC_CPU_FLOAT32_FLOAT64_CLIPPING_BOUNDARIES_SIMULTANEOUS_CONTROLS",
       "reset_parity": "PASS_EXACT_PUBLIC_CPU_SEEDED_REPEATED_SEED_MOCAP_AND_RESET_VARIATION_ORDER",
       "step_parity": "PASS_EXACT_PUBLIC_CPU_32_STEPS_PLUS_8_RESTORED_STEPS",
@@ -744,28 +751,26 @@
       "rng_lifecycle": "PASS_COMPLETE_PCG64_SIMULATOR_REPLAY_FIXED_VARIATION_AND_SEPARATE_SEEDED_VISUAL_RNG",
       "variation_parity": "PASS_BOUNDED_CPU: agent.start_position, block.angle, block.mass, block.start_position, goal.start_position, object.color, table.color; physical mass where applicable; visual physics nonmutation; persistent versus reset settings",
       "execution_mode": "DELEGATED_CPU",
-      "adapter_status": "IMPLEMENTED_PUBLIC_GPU_GATE_PENDING",
-      "renderer_regression": "PENDING_OSCAR_FAMILY_JOB_6649686",
+      "adapter_status": "IMPLEMENTED_PUBLIC_HISTORICAL_DEFAULT",
+      "renderer_regression": "PASS_OSCAR_6649686_AND_6652487_FROZEN_FULL_PRIVATE_NONMUTATION_DENSE_DICT_FRAMES",
       "oracle_corpus": null,
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Required Oscar frozen-renderer/full-State/alias-frame gate pending at QOSGrpGRES; no backend promotion.",
-        "SWM observation integration DEFERRED; historical Dict container is not a stable-envs backend responsibility.",
-        "CPU full rendering unsupported. CPU physics pinned to MuJoCo3.8.1; GPU profile renderer-only.",
-        "Bounded Variation only; full historical appearance randomization, task kwargs, external forces and final benchmarks uncertified."
+        "SWM observation integration DEFERRED; flat/Dict learner packaging remains SWM-owned.",
+        "CPU full rendering unsupported (CPU_BACKEND_MISSING); CPU physics pinned MuJoCo3.8.1; GPU profile certifies rendering only.",
+        "Bounded Variation only; full historical default appearance randomization, nondefault task kwargs, external forces, upstream-image similarity and final benchmarks remain uncertified."
       ],
       "test": "scripts/recovery/fetch_public_gate.py; scripts/recovery/fetch_alias_gate.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "execution_candidate": "DELEGATED",
-      "observation_integration": "DEFERRED_SWM_OWNED",
-      "family_candidate_evidence": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json",
-      "recovery_status": "CPU_COMPLETE_OSCAR_RENDERER_PENDING",
+      "observation_integration": "DEFERRED",
+      "recovery_status": "ACCEPTED_CPU_SEMANTICS_AND_OSCAR_RENDERER",
       "implementation_commit": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92",
       "oscar_job": 6649686,
-      "oscar_result": "PENDING_QOSGrpGRES",
+      "oscar_result": "PASS_RENDERER_ONLY",
       "cpu_renderer_support": "CPU_BACKEND_MISSING",
       "state_schema": {
         "qpos": {
@@ -861,7 +866,9 @@
         "docs/research/semantic_recovery_evidence/fetch_family/public-contract.json",
         "docs/research/semantic_recovery_evidence/fetch_family/public-contract.out",
         "docs/research/semantic_recovery_evidence/fetch_family/shared-legacy-tests.out",
-        "docs/research/semantic_recovery_evidence/fetch_family/start_audit.json"
+        "docs/research/semantic_recovery_evidence/fetch_family/start_audit.json",
+        "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json",
+        "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-PickAndPlace-gate.json"
       ],
       "verification_scope": {
         "classes": [
@@ -888,9 +895,19 @@
         "atol": 0,
         "rtol": 0,
         "same_persistent_variation_required": true,
-        "backend_acceptance": "GPU_PENDING",
-        "observation_integration": "DEFERRED"
-      }
+        "backend_acceptance": "VERIFIED",
+        "observation_integration": "DEFERRED",
+        "gpu_profile_scope": "RENDERER_ONLY"
+      },
+      "verified_classes": [
+        "FetchPickAndPlaceDense"
+      ],
+      "family_acceptance_evidence": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json",
+      "acceptance_revision": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92",
+      "family_oscar_jobs": [
+        6649686,
+        6652487
+      ]
     },
     {
       "historical_id": "swm/FetchPickAndPlaceDict-v3",
@@ -900,7 +917,7 @@
       "family": "fetch",
       "owner": "fetch-family",
       "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
-      "state_status": "INCOMPLETE",
+      "state_status": "VERIFIED",
       "action_parity": "PASS_EXACT_PUBLIC_CPU_FLOAT32_FLOAT64_CLIPPING_BOUNDARIES_SIMULTANEOUS_CONTROLS",
       "reset_parity": "PASS_EXACT_PUBLIC_CPU_SEEDED_REPEATED_SEED_MOCAP_AND_RESET_VARIATION_ORDER",
       "step_parity": "PASS_EXACT_PUBLIC_CPU_32_STEPS_PLUS_8_RESTORED_STEPS",
@@ -909,28 +926,26 @@
       "rng_lifecycle": "PASS_COMPLETE_PCG64_SIMULATOR_REPLAY_FIXED_VARIATION_AND_SEPARATE_SEEDED_VISUAL_RNG",
       "variation_parity": "PASS_BOUNDED_CPU: agent.start_position, block.angle, block.mass, block.start_position, goal.start_position, object.color, table.color; physical mass where applicable; visual physics nonmutation; persistent versus reset settings",
       "execution_mode": "DELEGATED_CPU",
-      "adapter_status": "IMPLEMENTED_PUBLIC_GPU_GATE_PENDING",
-      "renderer_regression": "PENDING_OSCAR_FAMILY_JOB_6649686",
+      "adapter_status": "IMPLEMENTED_PUBLIC_HISTORICAL_DEFAULT",
+      "renderer_regression": "PASS_OSCAR_6649686_AND_6652487_FROZEN_FULL_PRIVATE_NONMUTATION_DENSE_DICT_FRAMES",
       "oracle_corpus": null,
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Required Oscar frozen-renderer/full-State/alias-frame gate pending at QOSGrpGRES; no backend promotion.",
-        "SWM observation integration DEFERRED; historical Dict container is not a stable-envs backend responsibility.",
-        "CPU full rendering unsupported. CPU physics pinned to MuJoCo3.8.1; GPU profile renderer-only.",
-        "Bounded Variation only; full historical appearance randomization, task kwargs, external forces and final benchmarks uncertified."
+        "SWM observation integration DEFERRED; flat/Dict learner packaging remains SWM-owned.",
+        "CPU full rendering unsupported (CPU_BACKEND_MISSING); CPU physics pinned MuJoCo3.8.1; GPU profile certifies rendering only.",
+        "Bounded Variation only; full historical default appearance randomization, nondefault task kwargs, external forces, upstream-image similarity and final benchmarks remain uncertified."
       ],
       "test": "scripts/recovery/fetch_public_gate.py; scripts/recovery/fetch_alias_gate.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "execution_candidate": "DELEGATED",
-      "observation_integration": "DEFERRED_SWM_OWNED",
-      "family_candidate_evidence": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json",
-      "recovery_status": "CPU_COMPLETE_OSCAR_RENDERER_PENDING",
+      "observation_integration": "DEFERRED",
+      "recovery_status": "ACCEPTED_CPU_SEMANTICS_AND_OSCAR_RENDERER",
       "implementation_commit": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92",
       "oscar_job": 6649686,
-      "oscar_result": "PENDING_QOSGrpGRES",
+      "oscar_result": "PASS_RENDERER_ONLY",
       "cpu_renderer_support": "CPU_BACKEND_MISSING",
       "state_schema": {
         "qpos": {
@@ -1026,7 +1041,9 @@
         "docs/research/semantic_recovery_evidence/fetch_family/public-contract.json",
         "docs/research/semantic_recovery_evidence/fetch_family/public-contract.out",
         "docs/research/semantic_recovery_evidence/fetch_family/shared-legacy-tests.out",
-        "docs/research/semantic_recovery_evidence/fetch_family/start_audit.json"
+        "docs/research/semantic_recovery_evidence/fetch_family/start_audit.json",
+        "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json",
+        "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-PickAndPlace-gate.json"
       ],
       "verification_scope": {
         "classes": [
@@ -1053,9 +1070,19 @@
         "atol": 0,
         "rtol": 0,
         "same_persistent_variation_required": true,
-        "backend_acceptance": "GPU_PENDING",
-        "observation_integration": "DEFERRED"
-      }
+        "backend_acceptance": "VERIFIED",
+        "observation_integration": "DEFERRED",
+        "gpu_profile_scope": "RENDERER_ONLY"
+      },
+      "verified_classes": [
+        "FetchPickAndPlaceDict"
+      ],
+      "family_acceptance_evidence": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json",
+      "acceptance_revision": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92",
+      "family_oscar_jobs": [
+        6649686,
+        6652487
+      ]
     },
     {
       "historical_id": "swm/FetchPush-v3",
@@ -1065,7 +1092,7 @@
       "family": "fetch",
       "owner": "fetch-family",
       "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
-      "state_status": "INCOMPLETE",
+      "state_status": "VERIFIED",
       "action_parity": "PASS_EXACT_PUBLIC_CPU_FLOAT32_FLOAT64_CLIPPING_BOUNDARIES_SIMULTANEOUS_CONTROLS",
       "reset_parity": "PASS_EXACT_PUBLIC_CPU_SEEDED_REPEATED_SEED_MOCAP_AND_RESET_VARIATION_ORDER",
       "step_parity": "PASS_EXACT_PUBLIC_CPU_32_STEPS_PLUS_8_RESTORED_STEPS",
@@ -1074,28 +1101,26 @@
       "rng_lifecycle": "PASS_COMPLETE_PCG64_SIMULATOR_REPLAY_FIXED_VARIATION_AND_SEPARATE_SEEDED_VISUAL_RNG",
       "variation_parity": "PASS_BOUNDED_CPU: agent.start_position, block.angle, block.mass, block.start_position, goal.start_position, object.color, table.color; physical mass where applicable; visual physics nonmutation; persistent versus reset settings",
       "execution_mode": "DELEGATED_CPU",
-      "adapter_status": "IMPLEMENTED_PUBLIC_GPU_GATE_PENDING",
-      "renderer_regression": "PENDING_OSCAR_FAMILY_JOB_6649686",
+      "adapter_status": "IMPLEMENTED_PUBLIC_HISTORICAL_DEFAULT",
+      "renderer_regression": "PASS_OSCAR_6649686_AND_6652487_FROZEN_FULL_PRIVATE_NONMUTATION_DENSE_DICT_FRAMES",
       "oracle_corpus": null,
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Required Oscar frozen-renderer/full-State/alias-frame gate pending at QOSGrpGRES; no backend promotion.",
-        "SWM observation integration DEFERRED; historical Dict container is not a stable-envs backend responsibility.",
-        "CPU full rendering unsupported. CPU physics pinned to MuJoCo3.8.1; GPU profile renderer-only.",
-        "Bounded Variation only; full historical appearance randomization, task kwargs, external forces and final benchmarks uncertified."
+        "SWM observation integration DEFERRED; flat/Dict learner packaging remains SWM-owned.",
+        "CPU full rendering unsupported (CPU_BACKEND_MISSING); CPU physics pinned MuJoCo3.8.1; GPU profile certifies rendering only.",
+        "Bounded Variation only; full historical default appearance randomization, nondefault task kwargs, external forces, upstream-image similarity and final benchmarks remain uncertified."
       ],
       "test": "scripts/recovery/fetch_public_gate.py; scripts/recovery/fetch_alias_gate.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "execution_candidate": "DELEGATED",
-      "observation_integration": "DEFERRED_SWM_OWNED",
-      "family_candidate_evidence": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json",
-      "recovery_status": "CPU_COMPLETE_OSCAR_RENDERER_PENDING",
+      "observation_integration": "DEFERRED",
+      "recovery_status": "ACCEPTED_CPU_SEMANTICS_AND_OSCAR_RENDERER",
       "implementation_commit": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92",
       "oscar_job": 6649686,
-      "oscar_result": "PENDING_QOSGrpGRES",
+      "oscar_result": "PASS_RENDERER_ONLY",
       "cpu_renderer_support": "CPU_BACKEND_MISSING",
       "state_schema": {
         "qpos": {
@@ -1191,7 +1216,9 @@
         "docs/research/semantic_recovery_evidence/fetch_family/public-contract.json",
         "docs/research/semantic_recovery_evidence/fetch_family/public-contract.out",
         "docs/research/semantic_recovery_evidence/fetch_family/shared-legacy-tests.out",
-        "docs/research/semantic_recovery_evidence/fetch_family/start_audit.json"
+        "docs/research/semantic_recovery_evidence/fetch_family/start_audit.json",
+        "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json",
+        "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Push-gate.json"
       ],
       "verification_scope": {
         "classes": [
@@ -1218,9 +1245,19 @@
         "atol": 0,
         "rtol": 0,
         "same_persistent_variation_required": true,
-        "backend_acceptance": "GPU_PENDING",
-        "observation_integration": "DEFERRED"
-      }
+        "backend_acceptance": "VERIFIED",
+        "observation_integration": "DEFERRED",
+        "gpu_profile_scope": "RENDERER_ONLY"
+      },
+      "verified_classes": [
+        "FetchPush"
+      ],
+      "family_acceptance_evidence": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json",
+      "acceptance_revision": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92",
+      "family_oscar_jobs": [
+        6649686,
+        6652487
+      ]
     },
     {
       "historical_id": "swm/FetchPushDense-v3",
@@ -1230,7 +1267,7 @@
       "family": "fetch",
       "owner": "fetch-family",
       "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
-      "state_status": "INCOMPLETE",
+      "state_status": "VERIFIED",
       "action_parity": "PASS_EXACT_PUBLIC_CPU_FLOAT32_FLOAT64_CLIPPING_BOUNDARIES_SIMULTANEOUS_CONTROLS",
       "reset_parity": "PASS_EXACT_PUBLIC_CPU_SEEDED_REPEATED_SEED_MOCAP_AND_RESET_VARIATION_ORDER",
       "step_parity": "PASS_EXACT_PUBLIC_CPU_32_STEPS_PLUS_8_RESTORED_STEPS",
@@ -1239,28 +1276,26 @@
       "rng_lifecycle": "PASS_COMPLETE_PCG64_SIMULATOR_REPLAY_FIXED_VARIATION_AND_SEPARATE_SEEDED_VISUAL_RNG",
       "variation_parity": "PASS_BOUNDED_CPU: agent.start_position, block.angle, block.mass, block.start_position, goal.start_position, object.color, table.color; physical mass where applicable; visual physics nonmutation; persistent versus reset settings",
       "execution_mode": "DELEGATED_CPU",
-      "adapter_status": "IMPLEMENTED_PUBLIC_GPU_GATE_PENDING",
-      "renderer_regression": "PENDING_OSCAR_FAMILY_JOB_6649686",
+      "adapter_status": "IMPLEMENTED_PUBLIC_HISTORICAL_DEFAULT",
+      "renderer_regression": "PASS_OSCAR_6649686_AND_6652487_FROZEN_FULL_PRIVATE_NONMUTATION_DENSE_DICT_FRAMES",
       "oracle_corpus": null,
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Required Oscar frozen-renderer/full-State/alias-frame gate pending at QOSGrpGRES; no backend promotion.",
-        "SWM observation integration DEFERRED; historical Dict container is not a stable-envs backend responsibility.",
-        "CPU full rendering unsupported. CPU physics pinned to MuJoCo3.8.1; GPU profile renderer-only.",
-        "Bounded Variation only; full historical appearance randomization, task kwargs, external forces and final benchmarks uncertified."
+        "SWM observation integration DEFERRED; flat/Dict learner packaging remains SWM-owned.",
+        "CPU full rendering unsupported (CPU_BACKEND_MISSING); CPU physics pinned MuJoCo3.8.1; GPU profile certifies rendering only.",
+        "Bounded Variation only; full historical default appearance randomization, nondefault task kwargs, external forces, upstream-image similarity and final benchmarks remain uncertified."
       ],
       "test": "scripts/recovery/fetch_public_gate.py; scripts/recovery/fetch_alias_gate.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "execution_candidate": "DELEGATED",
-      "observation_integration": "DEFERRED_SWM_OWNED",
-      "family_candidate_evidence": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json",
-      "recovery_status": "CPU_COMPLETE_OSCAR_RENDERER_PENDING",
+      "observation_integration": "DEFERRED",
+      "recovery_status": "ACCEPTED_CPU_SEMANTICS_AND_OSCAR_RENDERER",
       "implementation_commit": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92",
       "oscar_job": 6649686,
-      "oscar_result": "PENDING_QOSGrpGRES",
+      "oscar_result": "PASS_RENDERER_ONLY",
       "cpu_renderer_support": "CPU_BACKEND_MISSING",
       "state_schema": {
         "qpos": {
@@ -1356,7 +1391,9 @@
         "docs/research/semantic_recovery_evidence/fetch_family/public-contract.json",
         "docs/research/semantic_recovery_evidence/fetch_family/public-contract.out",
         "docs/research/semantic_recovery_evidence/fetch_family/shared-legacy-tests.out",
-        "docs/research/semantic_recovery_evidence/fetch_family/start_audit.json"
+        "docs/research/semantic_recovery_evidence/fetch_family/start_audit.json",
+        "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json",
+        "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Push-gate.json"
       ],
       "verification_scope": {
         "classes": [
@@ -1383,9 +1420,19 @@
         "atol": 0,
         "rtol": 0,
         "same_persistent_variation_required": true,
-        "backend_acceptance": "GPU_PENDING",
-        "observation_integration": "DEFERRED"
-      }
+        "backend_acceptance": "VERIFIED",
+        "observation_integration": "DEFERRED",
+        "gpu_profile_scope": "RENDERER_ONLY"
+      },
+      "verified_classes": [
+        "FetchPushDense"
+      ],
+      "family_acceptance_evidence": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json",
+      "acceptance_revision": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92",
+      "family_oscar_jobs": [
+        6649686,
+        6652487
+      ]
     },
     {
       "historical_id": "swm/FetchPushDict-v3",
@@ -1395,7 +1442,7 @@
       "family": "fetch",
       "owner": "fetch-family",
       "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
-      "state_status": "INCOMPLETE",
+      "state_status": "VERIFIED",
       "action_parity": "PASS_EXACT_PUBLIC_CPU_FLOAT32_FLOAT64_CLIPPING_BOUNDARIES_SIMULTANEOUS_CONTROLS",
       "reset_parity": "PASS_EXACT_PUBLIC_CPU_SEEDED_REPEATED_SEED_MOCAP_AND_RESET_VARIATION_ORDER",
       "step_parity": "PASS_EXACT_PUBLIC_CPU_32_STEPS_PLUS_8_RESTORED_STEPS",
@@ -1404,28 +1451,26 @@
       "rng_lifecycle": "PASS_COMPLETE_PCG64_SIMULATOR_REPLAY_FIXED_VARIATION_AND_SEPARATE_SEEDED_VISUAL_RNG",
       "variation_parity": "PASS_BOUNDED_CPU: agent.start_position, block.angle, block.mass, block.start_position, goal.start_position, object.color, table.color; physical mass where applicable; visual physics nonmutation; persistent versus reset settings",
       "execution_mode": "DELEGATED_CPU",
-      "adapter_status": "IMPLEMENTED_PUBLIC_GPU_GATE_PENDING",
-      "renderer_regression": "PENDING_OSCAR_FAMILY_JOB_6649686",
+      "adapter_status": "IMPLEMENTED_PUBLIC_HISTORICAL_DEFAULT",
+      "renderer_regression": "PASS_OSCAR_6649686_AND_6652487_FROZEN_FULL_PRIVATE_NONMUTATION_DENSE_DICT_FRAMES",
       "oracle_corpus": null,
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Required Oscar frozen-renderer/full-State/alias-frame gate pending at QOSGrpGRES; no backend promotion.",
-        "SWM observation integration DEFERRED; historical Dict container is not a stable-envs backend responsibility.",
-        "CPU full rendering unsupported. CPU physics pinned to MuJoCo3.8.1; GPU profile renderer-only.",
-        "Bounded Variation only; full historical appearance randomization, task kwargs, external forces and final benchmarks uncertified."
+        "SWM observation integration DEFERRED; flat/Dict learner packaging remains SWM-owned.",
+        "CPU full rendering unsupported (CPU_BACKEND_MISSING); CPU physics pinned MuJoCo3.8.1; GPU profile certifies rendering only.",
+        "Bounded Variation only; full historical default appearance randomization, nondefault task kwargs, external forces, upstream-image similarity and final benchmarks remain uncertified."
       ],
       "test": "scripts/recovery/fetch_public_gate.py; scripts/recovery/fetch_alias_gate.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "execution_candidate": "DELEGATED",
-      "observation_integration": "DEFERRED_SWM_OWNED",
-      "family_candidate_evidence": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json",
-      "recovery_status": "CPU_COMPLETE_OSCAR_RENDERER_PENDING",
+      "observation_integration": "DEFERRED",
+      "recovery_status": "ACCEPTED_CPU_SEMANTICS_AND_OSCAR_RENDERER",
       "implementation_commit": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92",
       "oscar_job": 6649686,
-      "oscar_result": "PENDING_QOSGrpGRES",
+      "oscar_result": "PASS_RENDERER_ONLY",
       "cpu_renderer_support": "CPU_BACKEND_MISSING",
       "state_schema": {
         "qpos": {
@@ -1521,7 +1566,9 @@
         "docs/research/semantic_recovery_evidence/fetch_family/public-contract.json",
         "docs/research/semantic_recovery_evidence/fetch_family/public-contract.out",
         "docs/research/semantic_recovery_evidence/fetch_family/shared-legacy-tests.out",
-        "docs/research/semantic_recovery_evidence/fetch_family/start_audit.json"
+        "docs/research/semantic_recovery_evidence/fetch_family/start_audit.json",
+        "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json",
+        "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Push-gate.json"
       ],
       "verification_scope": {
         "classes": [
@@ -1548,9 +1595,19 @@
         "atol": 0,
         "rtol": 0,
         "same_persistent_variation_required": true,
-        "backend_acceptance": "GPU_PENDING",
-        "observation_integration": "DEFERRED"
-      }
+        "backend_acceptance": "VERIFIED",
+        "observation_integration": "DEFERRED",
+        "gpu_profile_scope": "RENDERER_ONLY"
+      },
+      "verified_classes": [
+        "FetchPushDict"
+      ],
+      "family_acceptance_evidence": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json",
+      "acceptance_revision": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92",
+      "family_oscar_jobs": [
+        6649686,
+        6652487
+      ]
     },
     {
       "historical_id": "swm/FetchReach-v3",
@@ -1560,7 +1617,7 @@
       "family": "fetch",
       "owner": "fetch-family",
       "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
-      "state_status": "INCOMPLETE",
+      "state_status": "VERIFIED",
       "action_parity": "PASS_EXACT_PUBLIC_CPU_FLOAT32_FLOAT64_CLIPPING_BOUNDARIES_SIMULTANEOUS_CONTROLS",
       "reset_parity": "PASS_EXACT_PUBLIC_CPU_SEEDED_REPEATED_SEED_MOCAP_AND_RESET_VARIATION_ORDER",
       "step_parity": "PASS_EXACT_PUBLIC_CPU_32_STEPS_PLUS_8_RESTORED_STEPS",
@@ -1569,28 +1626,26 @@
       "rng_lifecycle": "PASS_COMPLETE_PCG64_SIMULATOR_REPLAY_FIXED_VARIATION_AND_SEPARATE_SEEDED_VISUAL_RNG",
       "variation_parity": "PASS_BOUNDED_CPU: agent.start_position, goal.start_position, table.color; physical mass where applicable; visual physics nonmutation; persistent versus reset settings",
       "execution_mode": "DELEGATED_CPU",
-      "adapter_status": "IMPLEMENTED_PUBLIC_GPU_GATE_PENDING",
-      "renderer_regression": "PENDING_OSCAR_FAMILY_JOB_6649686",
+      "adapter_status": "IMPLEMENTED_PUBLIC_HISTORICAL_DEFAULT",
+      "renderer_regression": "PASS_OSCAR_6649686_AND_6652487_FROZEN_FULL_PRIVATE_NONMUTATION_DENSE_DICT_FRAMES",
       "oracle_corpus": null,
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Required Oscar frozen-renderer/full-State/alias-frame gate pending at QOSGrpGRES; no backend promotion.",
-        "SWM observation integration DEFERRED; historical Dict container is not a stable-envs backend responsibility.",
-        "CPU full rendering unsupported. CPU physics pinned to MuJoCo3.8.1; GPU profile renderer-only.",
-        "Bounded Variation only; full historical appearance randomization, task kwargs, external forces and final benchmarks uncertified."
+        "SWM observation integration DEFERRED; flat/Dict learner packaging remains SWM-owned.",
+        "CPU full rendering unsupported (CPU_BACKEND_MISSING); CPU physics pinned MuJoCo3.8.1; GPU profile certifies rendering only.",
+        "Bounded Variation only; full historical default appearance randomization, nondefault task kwargs, external forces, upstream-image similarity and final benchmarks remain uncertified."
       ],
       "test": "scripts/recovery/fetch_public_gate.py; scripts/recovery/fetch_alias_gate.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "execution_candidate": "DELEGATED",
-      "observation_integration": "DEFERRED_SWM_OWNED",
-      "family_candidate_evidence": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json",
-      "recovery_status": "CPU_COMPLETE_OSCAR_RENDERER_PENDING",
+      "observation_integration": "DEFERRED",
+      "recovery_status": "ACCEPTED_CPU_SEMANTICS_AND_OSCAR_RENDERER",
       "implementation_commit": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92",
       "oscar_job": 6649686,
-      "oscar_result": "PENDING_QOSGrpGRES",
+      "oscar_result": "PASS_RENDERER_ONLY",
       "cpu_renderer_support": "CPU_BACKEND_MISSING",
       "state_schema": {
         "qpos": {
@@ -1686,7 +1741,9 @@
         "docs/research/semantic_recovery_evidence/fetch_family/public-contract.json",
         "docs/research/semantic_recovery_evidence/fetch_family/public-contract.out",
         "docs/research/semantic_recovery_evidence/fetch_family/shared-legacy-tests.out",
-        "docs/research/semantic_recovery_evidence/fetch_family/start_audit.json"
+        "docs/research/semantic_recovery_evidence/fetch_family/start_audit.json",
+        "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json",
+        "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Reach-gate.json"
       ],
       "verification_scope": {
         "classes": [
@@ -1713,9 +1770,19 @@
         "atol": 0,
         "rtol": 0,
         "same_persistent_variation_required": true,
-        "backend_acceptance": "GPU_PENDING",
-        "observation_integration": "DEFERRED"
-      }
+        "backend_acceptance": "VERIFIED",
+        "observation_integration": "DEFERRED",
+        "gpu_profile_scope": "RENDERER_ONLY"
+      },
+      "verified_classes": [
+        "FetchReach"
+      ],
+      "family_acceptance_evidence": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json",
+      "acceptance_revision": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92",
+      "family_oscar_jobs": [
+        6649686,
+        6652487
+      ]
     },
     {
       "historical_id": "swm/FetchReachDense-v3",
@@ -1725,7 +1792,7 @@
       "family": "fetch",
       "owner": "fetch-family",
       "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
-      "state_status": "INCOMPLETE",
+      "state_status": "VERIFIED",
       "action_parity": "PASS_EXACT_PUBLIC_CPU_FLOAT32_FLOAT64_CLIPPING_BOUNDARIES_SIMULTANEOUS_CONTROLS",
       "reset_parity": "PASS_EXACT_PUBLIC_CPU_SEEDED_REPEATED_SEED_MOCAP_AND_RESET_VARIATION_ORDER",
       "step_parity": "PASS_EXACT_PUBLIC_CPU_32_STEPS_PLUS_8_RESTORED_STEPS",
@@ -1734,28 +1801,26 @@
       "rng_lifecycle": "PASS_COMPLETE_PCG64_SIMULATOR_REPLAY_FIXED_VARIATION_AND_SEPARATE_SEEDED_VISUAL_RNG",
       "variation_parity": "PASS_BOUNDED_CPU: agent.start_position, goal.start_position, table.color; physical mass where applicable; visual physics nonmutation; persistent versus reset settings",
       "execution_mode": "DELEGATED_CPU",
-      "adapter_status": "IMPLEMENTED_PUBLIC_GPU_GATE_PENDING",
-      "renderer_regression": "PENDING_OSCAR_FAMILY_JOB_6649686",
+      "adapter_status": "IMPLEMENTED_PUBLIC_HISTORICAL_DEFAULT",
+      "renderer_regression": "PASS_OSCAR_6649686_AND_6652487_FROZEN_FULL_PRIVATE_NONMUTATION_DENSE_DICT_FRAMES",
       "oracle_corpus": null,
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Required Oscar frozen-renderer/full-State/alias-frame gate pending at QOSGrpGRES; no backend promotion.",
-        "SWM observation integration DEFERRED; historical Dict container is not a stable-envs backend responsibility.",
-        "CPU full rendering unsupported. CPU physics pinned to MuJoCo3.8.1; GPU profile renderer-only.",
-        "Bounded Variation only; full historical appearance randomization, task kwargs, external forces and final benchmarks uncertified."
+        "SWM observation integration DEFERRED; flat/Dict learner packaging remains SWM-owned.",
+        "CPU full rendering unsupported (CPU_BACKEND_MISSING); CPU physics pinned MuJoCo3.8.1; GPU profile certifies rendering only.",
+        "Bounded Variation only; full historical default appearance randomization, nondefault task kwargs, external forces, upstream-image similarity and final benchmarks remain uncertified."
       ],
       "test": "scripts/recovery/fetch_public_gate.py; scripts/recovery/fetch_alias_gate.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "execution_candidate": "DELEGATED",
-      "observation_integration": "DEFERRED_SWM_OWNED",
-      "family_candidate_evidence": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json",
-      "recovery_status": "CPU_COMPLETE_OSCAR_RENDERER_PENDING",
+      "observation_integration": "DEFERRED",
+      "recovery_status": "ACCEPTED_CPU_SEMANTICS_AND_OSCAR_RENDERER",
       "implementation_commit": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92",
       "oscar_job": 6649686,
-      "oscar_result": "PENDING_QOSGrpGRES",
+      "oscar_result": "PASS_RENDERER_ONLY",
       "cpu_renderer_support": "CPU_BACKEND_MISSING",
       "state_schema": {
         "qpos": {
@@ -1851,7 +1916,9 @@
         "docs/research/semantic_recovery_evidence/fetch_family/public-contract.json",
         "docs/research/semantic_recovery_evidence/fetch_family/public-contract.out",
         "docs/research/semantic_recovery_evidence/fetch_family/shared-legacy-tests.out",
-        "docs/research/semantic_recovery_evidence/fetch_family/start_audit.json"
+        "docs/research/semantic_recovery_evidence/fetch_family/start_audit.json",
+        "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json",
+        "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Reach-gate.json"
       ],
       "verification_scope": {
         "classes": [
@@ -1878,9 +1945,19 @@
         "atol": 0,
         "rtol": 0,
         "same_persistent_variation_required": true,
-        "backend_acceptance": "GPU_PENDING",
-        "observation_integration": "DEFERRED"
-      }
+        "backend_acceptance": "VERIFIED",
+        "observation_integration": "DEFERRED",
+        "gpu_profile_scope": "RENDERER_ONLY"
+      },
+      "verified_classes": [
+        "FetchReachDense"
+      ],
+      "family_acceptance_evidence": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json",
+      "acceptance_revision": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92",
+      "family_oscar_jobs": [
+        6649686,
+        6652487
+      ]
     },
     {
       "historical_id": "swm/FetchReachDict-v3",
@@ -1890,7 +1967,7 @@
       "family": "fetch",
       "owner": "fetch-family",
       "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
-      "state_status": "INCOMPLETE",
+      "state_status": "VERIFIED",
       "action_parity": "PASS_EXACT_PUBLIC_CPU_FLOAT32_FLOAT64_CLIPPING_BOUNDARIES_SIMULTANEOUS_CONTROLS",
       "reset_parity": "PASS_EXACT_PUBLIC_CPU_SEEDED_REPEATED_SEED_MOCAP_AND_RESET_VARIATION_ORDER",
       "step_parity": "PASS_EXACT_PUBLIC_CPU_32_STEPS_PLUS_8_RESTORED_STEPS",
@@ -1899,28 +1976,26 @@
       "rng_lifecycle": "PASS_COMPLETE_PCG64_SIMULATOR_REPLAY_FIXED_VARIATION_AND_SEPARATE_SEEDED_VISUAL_RNG",
       "variation_parity": "PASS_BOUNDED_CPU: agent.start_position, goal.start_position, table.color; physical mass where applicable; visual physics nonmutation; persistent versus reset settings",
       "execution_mode": "DELEGATED_CPU",
-      "adapter_status": "IMPLEMENTED_PUBLIC_GPU_GATE_PENDING",
-      "renderer_regression": "PENDING_OSCAR_FAMILY_JOB_6649686",
+      "adapter_status": "IMPLEMENTED_PUBLIC_HISTORICAL_DEFAULT",
+      "renderer_regression": "PASS_OSCAR_6649686_AND_6652487_FROZEN_FULL_PRIVATE_NONMUTATION_DENSE_DICT_FRAMES",
       "oracle_corpus": null,
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Required Oscar frozen-renderer/full-State/alias-frame gate pending at QOSGrpGRES; no backend promotion.",
-        "SWM observation integration DEFERRED; historical Dict container is not a stable-envs backend responsibility.",
-        "CPU full rendering unsupported. CPU physics pinned to MuJoCo3.8.1; GPU profile renderer-only.",
-        "Bounded Variation only; full historical appearance randomization, task kwargs, external forces and final benchmarks uncertified."
+        "SWM observation integration DEFERRED; flat/Dict learner packaging remains SWM-owned.",
+        "CPU full rendering unsupported (CPU_BACKEND_MISSING); CPU physics pinned MuJoCo3.8.1; GPU profile certifies rendering only.",
+        "Bounded Variation only; full historical default appearance randomization, nondefault task kwargs, external forces, upstream-image similarity and final benchmarks remain uncertified."
       ],
       "test": "scripts/recovery/fetch_public_gate.py; scripts/recovery/fetch_alias_gate.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "execution_candidate": "DELEGATED",
-      "observation_integration": "DEFERRED_SWM_OWNED",
-      "family_candidate_evidence": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json",
-      "recovery_status": "CPU_COMPLETE_OSCAR_RENDERER_PENDING",
+      "observation_integration": "DEFERRED",
+      "recovery_status": "ACCEPTED_CPU_SEMANTICS_AND_OSCAR_RENDERER",
       "implementation_commit": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92",
       "oscar_job": 6649686,
-      "oscar_result": "PENDING_QOSGrpGRES",
+      "oscar_result": "PASS_RENDERER_ONLY",
       "cpu_renderer_support": "CPU_BACKEND_MISSING",
       "state_schema": {
         "qpos": {
@@ -2016,7 +2091,9 @@
         "docs/research/semantic_recovery_evidence/fetch_family/public-contract.json",
         "docs/research/semantic_recovery_evidence/fetch_family/public-contract.out",
         "docs/research/semantic_recovery_evidence/fetch_family/shared-legacy-tests.out",
-        "docs/research/semantic_recovery_evidence/fetch_family/start_audit.json"
+        "docs/research/semantic_recovery_evidence/fetch_family/start_audit.json",
+        "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json",
+        "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Reach-gate.json"
       ],
       "verification_scope": {
         "classes": [
@@ -2043,9 +2120,19 @@
         "atol": 0,
         "rtol": 0,
         "same_persistent_variation_required": true,
-        "backend_acceptance": "GPU_PENDING",
-        "observation_integration": "DEFERRED"
-      }
+        "backend_acceptance": "VERIFIED",
+        "observation_integration": "DEFERRED",
+        "gpu_profile_scope": "RENDERER_ONLY"
+      },
+      "verified_classes": [
+        "FetchReachDict"
+      ],
+      "family_acceptance_evidence": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json",
+      "acceptance_revision": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92",
+      "family_oscar_jobs": [
+        6649686,
+        6652487
+      ]
     },
     {
       "historical_id": "swm/FetchSlide-v3",
@@ -2055,7 +2142,7 @@
       "family": "fetch",
       "owner": "fetch-family",
       "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
-      "state_status": "INCOMPLETE",
+      "state_status": "VERIFIED",
       "action_parity": "PASS_EXACT_PUBLIC_CPU_FLOAT32_FLOAT64_CLIPPING_BOUNDARIES_SIMULTANEOUS_CONTROLS",
       "reset_parity": "PASS_EXACT_PUBLIC_CPU_SEEDED_REPEATED_SEED_MOCAP_AND_RESET_VARIATION_ORDER",
       "step_parity": "PASS_EXACT_PUBLIC_CPU_32_STEPS_PLUS_8_RESTORED_STEPS",
@@ -2064,28 +2151,26 @@
       "rng_lifecycle": "PASS_COMPLETE_PCG64_SIMULATOR_REPLAY_FIXED_VARIATION_AND_SEPARATE_SEEDED_VISUAL_RNG",
       "variation_parity": "PASS_BOUNDED_CPU: agent.start_position, block.angle, block.mass, block.start_position, goal.start_position, object.color, table.color; physical mass where applicable; visual physics nonmutation; persistent versus reset settings",
       "execution_mode": "DELEGATED_CPU",
-      "adapter_status": "IMPLEMENTED_PUBLIC_GPU_GATE_PENDING",
-      "renderer_regression": "PENDING_OSCAR_FAMILY_JOB_6649686",
+      "adapter_status": "IMPLEMENTED_PUBLIC_HISTORICAL_DEFAULT",
+      "renderer_regression": "PASS_OSCAR_6649686_AND_6652487_FROZEN_FULL_PRIVATE_NONMUTATION_DENSE_DICT_FRAMES",
       "oracle_corpus": null,
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Required Oscar frozen-renderer/full-State/alias-frame gate pending at QOSGrpGRES; no backend promotion.",
-        "SWM observation integration DEFERRED; historical Dict container is not a stable-envs backend responsibility.",
-        "CPU full rendering unsupported. CPU physics pinned to MuJoCo3.8.1; GPU profile renderer-only.",
-        "Bounded Variation only; full historical appearance randomization, task kwargs, external forces and final benchmarks uncertified."
+        "SWM observation integration DEFERRED; flat/Dict learner packaging remains SWM-owned.",
+        "CPU full rendering unsupported (CPU_BACKEND_MISSING); CPU physics pinned MuJoCo3.8.1; GPU profile certifies rendering only.",
+        "Bounded Variation only; full historical default appearance randomization, nondefault task kwargs, external forces, upstream-image similarity and final benchmarks remain uncertified."
       ],
       "test": "scripts/recovery/fetch_public_gate.py; scripts/recovery/fetch_alias_gate.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "execution_candidate": "DELEGATED",
-      "observation_integration": "DEFERRED_SWM_OWNED",
-      "family_candidate_evidence": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json",
-      "recovery_status": "CPU_COMPLETE_OSCAR_RENDERER_PENDING",
+      "observation_integration": "DEFERRED",
+      "recovery_status": "ACCEPTED_CPU_SEMANTICS_AND_OSCAR_RENDERER",
       "implementation_commit": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92",
       "oscar_job": 6649686,
-      "oscar_result": "PENDING_QOSGrpGRES",
+      "oscar_result": "PASS_RENDERER_ONLY",
       "cpu_renderer_support": "CPU_BACKEND_MISSING",
       "state_schema": {
         "qpos": {
@@ -2181,7 +2266,9 @@
         "docs/research/semantic_recovery_evidence/fetch_family/public-contract.json",
         "docs/research/semantic_recovery_evidence/fetch_family/public-contract.out",
         "docs/research/semantic_recovery_evidence/fetch_family/shared-legacy-tests.out",
-        "docs/research/semantic_recovery_evidence/fetch_family/start_audit.json"
+        "docs/research/semantic_recovery_evidence/fetch_family/start_audit.json",
+        "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json",
+        "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Slide-gate.json"
       ],
       "verification_scope": {
         "classes": [
@@ -2208,9 +2295,19 @@
         "atol": 0,
         "rtol": 0,
         "same_persistent_variation_required": true,
-        "backend_acceptance": "GPU_PENDING",
-        "observation_integration": "DEFERRED"
-      }
+        "backend_acceptance": "VERIFIED",
+        "observation_integration": "DEFERRED",
+        "gpu_profile_scope": "RENDERER_ONLY"
+      },
+      "verified_classes": [
+        "FetchSlide"
+      ],
+      "family_acceptance_evidence": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json",
+      "acceptance_revision": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92",
+      "family_oscar_jobs": [
+        6649686,
+        6652487
+      ]
     },
     {
       "historical_id": "swm/FetchSlideDense-v3",
@@ -2220,7 +2317,7 @@
       "family": "fetch",
       "owner": "fetch-family",
       "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
-      "state_status": "INCOMPLETE",
+      "state_status": "VERIFIED",
       "action_parity": "PASS_EXACT_PUBLIC_CPU_FLOAT32_FLOAT64_CLIPPING_BOUNDARIES_SIMULTANEOUS_CONTROLS",
       "reset_parity": "PASS_EXACT_PUBLIC_CPU_SEEDED_REPEATED_SEED_MOCAP_AND_RESET_VARIATION_ORDER",
       "step_parity": "PASS_EXACT_PUBLIC_CPU_32_STEPS_PLUS_8_RESTORED_STEPS",
@@ -2229,28 +2326,26 @@
       "rng_lifecycle": "PASS_COMPLETE_PCG64_SIMULATOR_REPLAY_FIXED_VARIATION_AND_SEPARATE_SEEDED_VISUAL_RNG",
       "variation_parity": "PASS_BOUNDED_CPU: agent.start_position, block.angle, block.mass, block.start_position, goal.start_position, object.color, table.color; physical mass where applicable; visual physics nonmutation; persistent versus reset settings",
       "execution_mode": "DELEGATED_CPU",
-      "adapter_status": "IMPLEMENTED_PUBLIC_GPU_GATE_PENDING",
-      "renderer_regression": "PENDING_OSCAR_FAMILY_JOB_6649686",
+      "adapter_status": "IMPLEMENTED_PUBLIC_HISTORICAL_DEFAULT",
+      "renderer_regression": "PASS_OSCAR_6649686_AND_6652487_FROZEN_FULL_PRIVATE_NONMUTATION_DENSE_DICT_FRAMES",
       "oracle_corpus": null,
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Required Oscar frozen-renderer/full-State/alias-frame gate pending at QOSGrpGRES; no backend promotion.",
-        "SWM observation integration DEFERRED; historical Dict container is not a stable-envs backend responsibility.",
-        "CPU full rendering unsupported. CPU physics pinned to MuJoCo3.8.1; GPU profile renderer-only.",
-        "Bounded Variation only; full historical appearance randomization, task kwargs, external forces and final benchmarks uncertified."
+        "SWM observation integration DEFERRED; flat/Dict learner packaging remains SWM-owned.",
+        "CPU full rendering unsupported (CPU_BACKEND_MISSING); CPU physics pinned MuJoCo3.8.1; GPU profile certifies rendering only.",
+        "Bounded Variation only; full historical default appearance randomization, nondefault task kwargs, external forces, upstream-image similarity and final benchmarks remain uncertified."
       ],
       "test": "scripts/recovery/fetch_public_gate.py; scripts/recovery/fetch_alias_gate.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "execution_candidate": "DELEGATED",
-      "observation_integration": "DEFERRED_SWM_OWNED",
-      "family_candidate_evidence": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json",
-      "recovery_status": "CPU_COMPLETE_OSCAR_RENDERER_PENDING",
+      "observation_integration": "DEFERRED",
+      "recovery_status": "ACCEPTED_CPU_SEMANTICS_AND_OSCAR_RENDERER",
       "implementation_commit": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92",
       "oscar_job": 6649686,
-      "oscar_result": "PENDING_QOSGrpGRES",
+      "oscar_result": "PASS_RENDERER_ONLY",
       "cpu_renderer_support": "CPU_BACKEND_MISSING",
       "state_schema": {
         "qpos": {
@@ -2346,7 +2441,9 @@
         "docs/research/semantic_recovery_evidence/fetch_family/public-contract.json",
         "docs/research/semantic_recovery_evidence/fetch_family/public-contract.out",
         "docs/research/semantic_recovery_evidence/fetch_family/shared-legacy-tests.out",
-        "docs/research/semantic_recovery_evidence/fetch_family/start_audit.json"
+        "docs/research/semantic_recovery_evidence/fetch_family/start_audit.json",
+        "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json",
+        "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Slide-gate.json"
       ],
       "verification_scope": {
         "classes": [
@@ -2373,9 +2470,19 @@
         "atol": 0,
         "rtol": 0,
         "same_persistent_variation_required": true,
-        "backend_acceptance": "GPU_PENDING",
-        "observation_integration": "DEFERRED"
-      }
+        "backend_acceptance": "VERIFIED",
+        "observation_integration": "DEFERRED",
+        "gpu_profile_scope": "RENDERER_ONLY"
+      },
+      "verified_classes": [
+        "FetchSlideDense"
+      ],
+      "family_acceptance_evidence": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json",
+      "acceptance_revision": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92",
+      "family_oscar_jobs": [
+        6649686,
+        6652487
+      ]
     },
     {
       "historical_id": "swm/FetchSlideDict-v3",
@@ -2385,7 +2492,7 @@
       "family": "fetch",
       "owner": "fetch-family",
       "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
-      "state_status": "INCOMPLETE",
+      "state_status": "VERIFIED",
       "action_parity": "PASS_EXACT_PUBLIC_CPU_FLOAT32_FLOAT64_CLIPPING_BOUNDARIES_SIMULTANEOUS_CONTROLS",
       "reset_parity": "PASS_EXACT_PUBLIC_CPU_SEEDED_REPEATED_SEED_MOCAP_AND_RESET_VARIATION_ORDER",
       "step_parity": "PASS_EXACT_PUBLIC_CPU_32_STEPS_PLUS_8_RESTORED_STEPS",
@@ -2394,28 +2501,26 @@
       "rng_lifecycle": "PASS_COMPLETE_PCG64_SIMULATOR_REPLAY_FIXED_VARIATION_AND_SEPARATE_SEEDED_VISUAL_RNG",
       "variation_parity": "PASS_BOUNDED_CPU: agent.start_position, block.angle, block.mass, block.start_position, goal.start_position, object.color, table.color; physical mass where applicable; visual physics nonmutation; persistent versus reset settings",
       "execution_mode": "DELEGATED_CPU",
-      "adapter_status": "IMPLEMENTED_PUBLIC_GPU_GATE_PENDING",
-      "renderer_regression": "PENDING_OSCAR_FAMILY_JOB_6649686",
+      "adapter_status": "IMPLEMENTED_PUBLIC_HISTORICAL_DEFAULT",
+      "renderer_regression": "PASS_OSCAR_6649686_AND_6652487_FROZEN_FULL_PRIVATE_NONMUTATION_DENSE_DICT_FRAMES",
       "oracle_corpus": null,
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Required Oscar frozen-renderer/full-State/alias-frame gate pending at QOSGrpGRES; no backend promotion.",
-        "SWM observation integration DEFERRED; historical Dict container is not a stable-envs backend responsibility.",
-        "CPU full rendering unsupported. CPU physics pinned to MuJoCo3.8.1; GPU profile renderer-only.",
-        "Bounded Variation only; full historical appearance randomization, task kwargs, external forces and final benchmarks uncertified."
+        "SWM observation integration DEFERRED; flat/Dict learner packaging remains SWM-owned.",
+        "CPU full rendering unsupported (CPU_BACKEND_MISSING); CPU physics pinned MuJoCo3.8.1; GPU profile certifies rendering only.",
+        "Bounded Variation only; full historical default appearance randomization, nondefault task kwargs, external forces, upstream-image similarity and final benchmarks remain uncertified."
       ],
       "test": "scripts/recovery/fetch_public_gate.py; scripts/recovery/fetch_alias_gate.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "execution_candidate": "DELEGATED",
-      "observation_integration": "DEFERRED_SWM_OWNED",
-      "family_candidate_evidence": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json",
-      "recovery_status": "CPU_COMPLETE_OSCAR_RENDERER_PENDING",
+      "observation_integration": "DEFERRED",
+      "recovery_status": "ACCEPTED_CPU_SEMANTICS_AND_OSCAR_RENDERER",
       "implementation_commit": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92",
       "oscar_job": 6649686,
-      "oscar_result": "PENDING_QOSGrpGRES",
+      "oscar_result": "PASS_RENDERER_ONLY",
       "cpu_renderer_support": "CPU_BACKEND_MISSING",
       "state_schema": {
         "qpos": {
@@ -2511,7 +2616,9 @@
         "docs/research/semantic_recovery_evidence/fetch_family/public-contract.json",
         "docs/research/semantic_recovery_evidence/fetch_family/public-contract.out",
         "docs/research/semantic_recovery_evidence/fetch_family/shared-legacy-tests.out",
-        "docs/research/semantic_recovery_evidence/fetch_family/start_audit.json"
+        "docs/research/semantic_recovery_evidence/fetch_family/start_audit.json",
+        "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json",
+        "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Slide-gate.json"
       ],
       "verification_scope": {
         "classes": [
@@ -2538,9 +2645,19 @@
         "atol": 0,
         "rtol": 0,
         "same_persistent_variation_required": true,
-        "backend_acceptance": "GPU_PENDING",
-        "observation_integration": "DEFERRED"
-      }
+        "backend_acceptance": "VERIFIED",
+        "observation_integration": "DEFERRED",
+        "gpu_profile_scope": "RENDERER_ONLY"
+      },
+      "verified_classes": [
+        "FetchSlideDict"
+      ],
+      "family_acceptance_evidence": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json",
+      "acceptance_revision": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92",
+      "family_oscar_jobs": [
+        6649686,
+        6652487
+      ]
     },
     {
       "historical_id": "swm/FingerDMControl-v0",
@@ -4010,16 +4127,31 @@
     }
   ],
   "checkpoint": "42-row implementation source map and 21-row closure audit complete. Exactly FetchPickAndPlace representative accepted: 22 VERIFIED / 20 INCOMPLETE. CPU semantics DELEGATED_CPU, CPU full rendering unsupported, Oscar GPU renderer and frozen baseline gates passed. Fetch siblings and other families remain unaccepted; PushT parked.",
-  "fetch_family_candidate": {
+  "fetch_family_acceptance": {
     "implementation_commit": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92",
     "report": "docs/research/fetch_family_recovery.md",
     "cpu": "PASS",
-    "gpu": "PENDING_QOSGrpGRES",
-    "oscar_job": 6649686,
-    "newly_verified": [],
+    "gpu": "PASS",
+    "oscar_jobs": [
+      6649686,
+      6652487
+    ],
+    "newly_verified": [
+      "swm/FetchPickAndPlaceDense-v3",
+      "swm/FetchPickAndPlaceDict-v3",
+      "swm/FetchPush-v3",
+      "swm/FetchPushDense-v3",
+      "swm/FetchPushDict-v3",
+      "swm/FetchReach-v3",
+      "swm/FetchReachDense-v3",
+      "swm/FetchReachDict-v3",
+      "swm/FetchSlide-v3",
+      "swm/FetchSlideDense-v3",
+      "swm/FetchSlideDict-v3"
+    ],
     "counts": {
-      "VERIFIED": 22,
-      "INCOMPLETE": 20
+      "VERIFIED": 33,
+      "INCOMPLETE": 9
     }
   }
 }

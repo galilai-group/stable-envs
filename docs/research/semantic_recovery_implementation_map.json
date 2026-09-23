@@ -3751,7 +3751,7 @@
           "env_id": "FetchPickAndPlace-v4"
         },
         "constructor_signature": "self, env_id, init_value=None, resolution=224, render_mode=None, flatten=True, **kwargs",
-        "accepted_task": "MujocoFetchPickAndPlaceEnv; sparse; object present; gripper unblocked; flatten=True",
+        "accepted_task": "PickAndPlace; sparse; backend only; SWM observation integration DEFERRED",
         "source_constructor": "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py:FetchWrapper.__init__"
       },
       "state_schema": {
@@ -3846,10 +3846,10 @@
           "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py"
         ]
       },
-      "accepted_variation_scope": "PASS_BOUNDED: object mass8 changes dynamics; agent/block/goal start and block angle ordering; persistent versus reset mass; object.color physical invariance and GPU frame effect; seeded object.color",
+      "accepted_variation_scope": "PASS_BOUNDED: object mass8 changes dynamics; agent/block/goal start and block angle ordering; persistent versus reset mass; object.color physical invariance and GPU frame effect; seeded object.color; GPU visual frame/nonmutation gate PASS",
       "execution_mode": "DELEGATED_CPU",
       "evidence_manifest": {
-        "acceptance": "docs/research/semantic_recovery_evidence/fetch_public/acceptance.json",
+        "acceptance": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json",
         "artifacts": [
           {
             "path": "docs/research/fetch_representative_initial_audit.md",
@@ -3906,6 +3906,146 @@
           {
             "path": "docs/research/semantic_recovery_evidence/fetch_public/fetch-6646530.out",
             "sha256": "575e045a106608a82a6a4a7f8c650d53f41b5773159a927a44cc77ed96c50009"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json",
+            "sha256": "6b037d62b08d14ec89a07fee36bdc672276f9b42d6d30e735c9dc43ef447329c"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-PickAndPlace-baseline.json",
+            "sha256": "d9cdc10ae45de54d4103e4f6fb9f65e71433c0e56e330c9d887fbcc006059ee4"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-PickAndPlace-candidate.json",
+            "sha256": "d9cdc10ae45de54d4103e4f6fb9f65e71433c0e56e330c9d887fbcc006059ee4"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-PickAndPlace-gate.json",
+            "sha256": "7bb59375cb0bc7057b5a7393f20987eaaaa725c296fa679d366144afe626de95"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Push-baseline.json",
+            "sha256": "7d29bd5bbf5a521c5e06ffd21a07eff475ccbea1541f82a5d1d87080e1ac417e"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Push-candidate.json",
+            "sha256": "7d29bd5bbf5a521c5e06ffd21a07eff475ccbea1541f82a5d1d87080e1ac417e"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Push-gate.json",
+            "sha256": "ddf24b634a68c20c83302248aec71f5a0bd4badc3fc09d7b46826402e9699f2b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Reach-baseline.json",
+            "sha256": "1f7c6e5c54bada5a281efeb04b76dbe65fa9c8cbe380b7eb9bc29580e0c58435"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Reach-candidate.json",
+            "sha256": "1f7c6e5c54bada5a281efeb04b76dbe65fa9c8cbe380b7eb9bc29580e0c58435"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Reach-gate.json",
+            "sha256": "0e993559e7f4239ff9f04034d304c5c5d8e369e34232251336fda361abdcc563"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Slide-baseline.json",
+            "sha256": "44ce4d68dda071eaabed2bf2147be57858909892420af9e0f2b9a827bbc31d90"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Slide-candidate.json",
+            "sha256": "44ce4d68dda071eaabed2bf2147be57858909892420af9e0f2b9a827bbc31d90"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Slide-gate.json",
+            "sha256": "899309246dae1e8e8163d316a5068323ab54639660e17a0055223841c0012c77"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-6652487.out",
+            "sha256": "1de374d60685847f10b8052c5abd83181d18496ebb1c38add826c144f7f7974c"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/oscar_fetch_family_normgpu-0dd0271f.sbatch",
+            "sha256": "e03da194123052d4e4c34e857fe10620cf634a59a3e3a6caae6e5c36f8069af5"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate-remote-hashes.json",
+            "sha256": "89aeac63ef544a04e91b6c58d585430790e15d8a58bea793e3b0b98522cc9071"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-PickAndPlace-baseline.json",
+            "sha256": "d9cdc10ae45de54d4103e4f6fb9f65e71433c0e56e330c9d887fbcc006059ee4"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-PickAndPlace-candidate.json",
+            "sha256": "d9cdc10ae45de54d4103e4f6fb9f65e71433c0e56e330c9d887fbcc006059ee4"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-PickAndPlace-gate.json",
+            "sha256": "61e7983680027b5ce6a2b9116d408493c7fbb568e49df5c6623e60e7eb59e54c"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Push-baseline.json",
+            "sha256": "7d29bd5bbf5a521c5e06ffd21a07eff475ccbea1541f82a5d1d87080e1ac417e"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Push-candidate.json",
+            "sha256": "7d29bd5bbf5a521c5e06ffd21a07eff475ccbea1541f82a5d1d87080e1ac417e"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Push-gate.json",
+            "sha256": "8fcac38f68ce3a0f2eef0f0cf60572d38431365ee6b3218b91f553a250a9e185"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Reach-baseline.json",
+            "sha256": "1f7c6e5c54bada5a281efeb04b76dbe65fa9c8cbe380b7eb9bc29580e0c58435"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Reach-candidate.json",
+            "sha256": "1f7c6e5c54bada5a281efeb04b76dbe65fa9c8cbe380b7eb9bc29580e0c58435"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Reach-gate.json",
+            "sha256": "dc30bcc78e9cf52852474e63e71d406423589dd3ad7c4f558c25cc26708f28bf"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Slide-baseline.json",
+            "sha256": "44ce4d68dda071eaabed2bf2147be57858909892420af9e0f2b9a827bbc31d90"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Slide-candidate.json",
+            "sha256": "44ce4d68dda071eaabed2bf2147be57858909892420af9e0f2b9a827bbc31d90"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Slide-gate.json",
+            "sha256": "de6de00feadab5b5373053e4153f89bb059c759327b5ce5bc09e7bd20a963992"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-6649686.out",
+            "sha256": "da8c7591a99a6c52c2acc636325e505605971625325faa77e1482155af6dbea1"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original-remote-hashes.json",
+            "sha256": "1c5e819fded63332f3c39d7e4f49a624b27522e6741cb4dbdedc8563139552ca"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/regression.out",
+            "sha256": "5c64ccfbc240d353a1b994c100c1d29728e09683b87d4ded4a25ecf11f090570"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/scheduler.txt",
+            "sha256": "00a361607865f285fe40e64bf3645218e99606c412969db041bdd9f7af7bf90a"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/source-identity.json",
+            "sha256": "b8e8c93264905991b6f24322aa832166a11881ba2ceb86bc9b1d05cc2479eb9b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/final-readiness.out",
+            "sha256": "9632c23250934de5e8dd370e7efeef46999c6601f7a818d8e1fbb1727155a4c2"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/final-review.json",
+            "sha256": "20b45bd5cbf7b31717402c8593f531e17031ffe031bc7138e326859b1b8eb4c8"
           }
         ]
       },
@@ -3932,14 +4072,11 @@
         }
       },
       "known_limitations": [
-        "Original representative backend acceptance remains closed. Family CPU expansion passes; eleven sibling promotions await Oscar job 6649686. SWM observation integration is DEFERRED.",
-        "CPU full rendering is explicitly unsupported (CPU_BACKEND_MISSING). CPU physics authority uses MuJoCo3.8.1; GPU renderer profile is separately certified, without a physics parity claim.",
-        "Persistent renderer defaults are preserved; SWM five-leaf default appearance randomization and full theoretical Variation surface remain uncertified. Seeded object-color sampling tested; unseeded visual reset draws fresh external entropy and is not replayable.",
-        "Arbitrary externally injected simulator forces, other reset options/tasks, full upstream image similarity and final paired benchmarks remain outside scope."
+        "SWM observation integration DEFERRED; flat/Dict learner packaging remains SWM-owned.",
+        "CPU full rendering unsupported (CPU_BACKEND_MISSING); CPU physics pinned MuJoCo3.8.1; GPU profile certifies rendering only.",
+        "Bounded Variation only; full historical default appearance randomization, nondefault task kwargs, external forces, upstream-image similarity and final benchmarks remain uncertified."
       ],
-      "remaining_gates": [
-        "None within accepted representative scope; review before any sibling expansion."
-      ],
+      "remaining_gates": [],
       "closure_code_check": {
         "covered_revision": "bf9101cbcddbb88566879ae40ce4e1cda0e65550",
         "source_hashes_match_cpu_and_renderer_revision": true
@@ -3949,11 +4086,22 @@
         "actual_success_marker": "FETCH_GPU_GATE_PASS fetch-public-bf9101cb"
       },
       "observation_integration": "DEFERRED",
-      "family_candidate_evidence": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json"
+      "family_acceptance_evidence": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json",
+      "family_closure_evidence": {
+        "terminal_log": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-6649686.out",
+        "terminal_log_sha256": "da8c7591a99a6c52c2acc636325e505605971625325faa77e1482155af6dbea1",
+        "actual_success_marker": "FETCH_FAMILY_GPU_GATE_PASS fetch-family-0dd0271f",
+        "renderer_manifest": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-PickAndPlace-candidate.json",
+        "renderer_sha256": "d9cdc10ae45de54d4103e4f6fb9f65e71433c0e56e330c9d887fbcc006059ee4",
+        "separate_baseline": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-PickAndPlace-baseline.json",
+        "baseline_equality": "PASS_BYTE_IDENTICAL",
+        "gate": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-PickAndPlace-gate.json",
+        "duplicate_gate": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-PickAndPlace-gate.json"
+      }
     },
     {
       "historical_id": "swm/FetchPickAndPlaceDense-v3",
-      "current_status": "INCOMPLETE",
+      "current_status": "VERIFIED",
       "family": "fetch",
       "pinned_swm_commit": "176d54532b3c0a251a4f509b74f2fdacc143a63d",
       "swm_implementation": {
@@ -3974,13 +4122,15 @@
       "stable_envs_classes": [
         "FetchPickAndPlaceDense"
       ],
-      "accepted_classes": [],
+      "accepted_classes": [
+        "FetchPickAndPlaceDense"
+      ],
       "historical_task_default_kwargs": {
         "registration_kwargs": {
           "env_id": "FetchPickAndPlaceDense-v4"
         },
         "constructor_signature": "self, env_id, init_value=None, resolution=224, render_mode=None, flatten=True, **kwargs",
-        "accepted_task": null,
+        "accepted_task": "PickAndPlace; dense; backend only; SWM observation integration DEFERRED",
         "source_constructor": "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py:FetchWrapper.__init__",
         "candidate_task": {
           "has_object": true,
@@ -3995,7 +4145,7 @@
         }
       },
       "state_schema": {
-        "status": "PROVED_CPU_PENDING_RENDERER",
+        "status": "ACCEPTED_BOUNDED_SUFFICIENT",
         "fields": {
           "qpos": {
             "width": 22,
@@ -4069,14 +4219,13 @@
         "terminated": false,
         "truncation": "elapsed_steps >= 50"
       },
-      "accepted_variation_scope": "NOT_PROMOTED; CPU proved PASS_BOUNDED_CPU: agent.start_position, block.angle, block.mass, block.start_position, goal.start_position, object.color, table.color; physical mass where applicable; visual physics nonmutation; persistent versus reset settings",
+      "accepted_variation_scope": "PASS_BOUNDED_CPU: agent.start_position, block.angle, block.mass, block.start_position, goal.start_position, object.color, table.color; physical mass where applicable; visual physics nonmutation; persistent versus reset settings; GPU visual frame/nonmutation gate PASS",
       "execution_mode": "DELEGATED_CPU",
       "evidence_manifest": {
-        "candidate": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json",
         "artifacts": [
           {
             "path": "docs/research/fetch_family_recovery.md",
-            "sha256": "8b8bde43529eec45bd39c64b1aecfc716e622298be4dc8ab7bed5d9d9cd891ec"
+            "sha256": "ccaf31f9ce93fbca68266b0471af232596d418f51c1ca1fdb28a6abf64540956"
           },
           {
             "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlace-alias.json",
@@ -4196,7 +4345,7 @@
           },
           {
             "path": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json",
-            "sha256": "d0b5042eda5f2fb86d75482139a46f165d9ee01ae3108024a95d9c24bdb82255"
+            "sha256": "d67e901aece7f44ac4a8b90e4a17949a4a6a3987fcf9a623327135f8baa12e03"
           },
           {
             "path": "docs/research/semantic_recovery_evidence/fetch_family/diff-review.json",
@@ -4237,31 +4386,202 @@
           {
             "path": "docs/research/semantic_recovery_evidence/fetch_family/final-readiness.out",
             "sha256": "ff6a9d715c246b50fc3caabc87f59ee760435b2e0d9e9d8603e285442f075494"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json",
+            "sha256": "6b037d62b08d14ec89a07fee36bdc672276f9b42d6d30e735c9dc43ef447329c"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-PickAndPlace-baseline.json",
+            "sha256": "d9cdc10ae45de54d4103e4f6fb9f65e71433c0e56e330c9d887fbcc006059ee4"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-PickAndPlace-candidate.json",
+            "sha256": "d9cdc10ae45de54d4103e4f6fb9f65e71433c0e56e330c9d887fbcc006059ee4"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-PickAndPlace-gate.json",
+            "sha256": "7bb59375cb0bc7057b5a7393f20987eaaaa725c296fa679d366144afe626de95"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Push-baseline.json",
+            "sha256": "7d29bd5bbf5a521c5e06ffd21a07eff475ccbea1541f82a5d1d87080e1ac417e"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Push-candidate.json",
+            "sha256": "7d29bd5bbf5a521c5e06ffd21a07eff475ccbea1541f82a5d1d87080e1ac417e"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Push-gate.json",
+            "sha256": "ddf24b634a68c20c83302248aec71f5a0bd4badc3fc09d7b46826402e9699f2b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Reach-baseline.json",
+            "sha256": "1f7c6e5c54bada5a281efeb04b76dbe65fa9c8cbe380b7eb9bc29580e0c58435"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Reach-candidate.json",
+            "sha256": "1f7c6e5c54bada5a281efeb04b76dbe65fa9c8cbe380b7eb9bc29580e0c58435"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Reach-gate.json",
+            "sha256": "0e993559e7f4239ff9f04034d304c5c5d8e369e34232251336fda361abdcc563"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Slide-baseline.json",
+            "sha256": "44ce4d68dda071eaabed2bf2147be57858909892420af9e0f2b9a827bbc31d90"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Slide-candidate.json",
+            "sha256": "44ce4d68dda071eaabed2bf2147be57858909892420af9e0f2b9a827bbc31d90"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Slide-gate.json",
+            "sha256": "899309246dae1e8e8163d316a5068323ab54639660e17a0055223841c0012c77"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-6652487.out",
+            "sha256": "1de374d60685847f10b8052c5abd83181d18496ebb1c38add826c144f7f7974c"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/oscar_fetch_family_normgpu-0dd0271f.sbatch",
+            "sha256": "e03da194123052d4e4c34e857fe10620cf634a59a3e3a6caae6e5c36f8069af5"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate-remote-hashes.json",
+            "sha256": "89aeac63ef544a04e91b6c58d585430790e15d8a58bea793e3b0b98522cc9071"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-PickAndPlace-baseline.json",
+            "sha256": "d9cdc10ae45de54d4103e4f6fb9f65e71433c0e56e330c9d887fbcc006059ee4"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-PickAndPlace-candidate.json",
+            "sha256": "d9cdc10ae45de54d4103e4f6fb9f65e71433c0e56e330c9d887fbcc006059ee4"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-PickAndPlace-gate.json",
+            "sha256": "61e7983680027b5ce6a2b9116d408493c7fbb568e49df5c6623e60e7eb59e54c"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Push-baseline.json",
+            "sha256": "7d29bd5bbf5a521c5e06ffd21a07eff475ccbea1541f82a5d1d87080e1ac417e"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Push-candidate.json",
+            "sha256": "7d29bd5bbf5a521c5e06ffd21a07eff475ccbea1541f82a5d1d87080e1ac417e"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Push-gate.json",
+            "sha256": "8fcac38f68ce3a0f2eef0f0cf60572d38431365ee6b3218b91f553a250a9e185"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Reach-baseline.json",
+            "sha256": "1f7c6e5c54bada5a281efeb04b76dbe65fa9c8cbe380b7eb9bc29580e0c58435"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Reach-candidate.json",
+            "sha256": "1f7c6e5c54bada5a281efeb04b76dbe65fa9c8cbe380b7eb9bc29580e0c58435"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Reach-gate.json",
+            "sha256": "dc30bcc78e9cf52852474e63e71d406423589dd3ad7c4f558c25cc26708f28bf"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Slide-baseline.json",
+            "sha256": "44ce4d68dda071eaabed2bf2147be57858909892420af9e0f2b9a827bbc31d90"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Slide-candidate.json",
+            "sha256": "44ce4d68dda071eaabed2bf2147be57858909892420af9e0f2b9a827bbc31d90"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Slide-gate.json",
+            "sha256": "de6de00feadab5b5373053e4153f89bb059c759327b5ce5bc09e7bd20a963992"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-6649686.out",
+            "sha256": "da8c7591a99a6c52c2acc636325e505605971625325faa77e1482155af6dbea1"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original-remote-hashes.json",
+            "sha256": "1c5e819fded63332f3c39d7e4f49a624b27522e6741cb4dbdedc8563139552ca"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/regression.out",
+            "sha256": "5c64ccfbc240d353a1b994c100c1d29728e09683b87d4ded4a25ecf11f090570"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/scheduler.txt",
+            "sha256": "00a361607865f285fe40e64bf3645218e99606c412969db041bdd9f7af7bf90a"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/source-identity.json",
+            "sha256": "b8e8c93264905991b6f24322aa832166a11881ba2ceb86bc9b1d05cc2479eb9b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/final-readiness.out",
+            "sha256": "9632c23250934de5e8dd370e7efeef46999c6601f7a818d8e1fbb1727155a4c2"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/final-review.json",
+            "sha256": "20b45bd5cbf7b31717402c8593f531e17031ffe031bc7138e326859b1b8eb4c8"
           }
-        ]
+        ],
+        "acceptance": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json"
       },
       "cpu_semantic_result": "PASS_EXACT_CPU_FAMILY_GATE",
       "gpu_semantic_result": {
         "status": "NOT_CLAIMED",
         "note": "Separate GPU profile is renderer-only"
       },
-      "frozen_renderer_result": "PENDING_OSCAR_JOB_6649686_QOSGrpGRES",
+      "frozen_renderer_result": {
+        "cpu": "CPU_BACKEND_MISSING",
+        "gpu": "PASS",
+        "jobs": [
+          6649686,
+          6652487
+        ],
+        "task": "PickAndPlace"
+      },
       "known_limitations": [
-        "Required Oscar frozen-renderer/full-State/alias-frame gate pending at QOSGrpGRES; no backend promotion.",
-        "SWM observation integration DEFERRED; historical Dict container is not a stable-envs backend responsibility.",
-        "CPU full rendering unsupported. CPU physics pinned to MuJoCo3.8.1; GPU profile renderer-only.",
-        "Bounded Variation only; full historical appearance randomization, task kwargs, external forces and final benchmarks uncertified."
+        "SWM observation integration DEFERRED; flat/Dict learner packaging remains SWM-owned.",
+        "CPU full rendering unsupported (CPU_BACKEND_MISSING); CPU physics pinned MuJoCo3.8.1; GPU profile certifies rendering only.",
+        "Bounded Variation only; full historical default appearance randomization, nondefault task kwargs, external forces, upstream-image similarity and final benchmarks remain uncertified."
       ],
-      "remaining_gates": [
-        "Oscar frozen renderer and full/private State-render/alias-frame gates; require downloaded hash checks and actual terminal marker."
-      ],
-      "closure_code_check": "Family production diff inspected independently; shared machinery and all other accepted family code unchanged.",
+      "remaining_gates": [],
+      "closure_code_check": {
+        "covered_revision": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92",
+        "no_production_changes_during_promotion": true
+      },
       "observation_integration": "DEFERRED",
-      "family_candidate_evidence": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json"
+      "family_acceptance_evidence": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json",
+      "family_closure_evidence": {
+        "terminal_log": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-6649686.out",
+        "terminal_log_sha256": "da8c7591a99a6c52c2acc636325e505605971625325faa77e1482155af6dbea1",
+        "actual_success_marker": "FETCH_FAMILY_GPU_GATE_PASS fetch-family-0dd0271f",
+        "renderer_manifest": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-PickAndPlace-candidate.json",
+        "renderer_sha256": "d9cdc10ae45de54d4103e4f6fb9f65e71433c0e56e330c9d887fbcc006059ee4",
+        "separate_baseline": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-PickAndPlace-baseline.json",
+        "baseline_equality": "PASS_BYTE_IDENTICAL",
+        "gate": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-PickAndPlace-gate.json",
+        "duplicate_gate": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-PickAndPlace-gate.json"
+      },
+      "closure_evidence": {
+        "terminal_log": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-6649686.out",
+        "terminal_log_sha256": "da8c7591a99a6c52c2acc636325e505605971625325faa77e1482155af6dbea1",
+        "actual_success_marker": "FETCH_FAMILY_GPU_GATE_PASS fetch-family-0dd0271f",
+        "renderer_manifest": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-PickAndPlace-candidate.json",
+        "renderer_sha256": "d9cdc10ae45de54d4103e4f6fb9f65e71433c0e56e330c9d887fbcc006059ee4",
+        "separate_baseline": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-PickAndPlace-baseline.json",
+        "baseline_equality": "PASS_BYTE_IDENTICAL",
+        "gate": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-PickAndPlace-gate.json",
+        "duplicate_gate": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-PickAndPlace-gate.json"
+      }
     },
     {
       "historical_id": "swm/FetchPickAndPlaceDict-v3",
-      "current_status": "INCOMPLETE",
+      "current_status": "VERIFIED",
       "family": "fetch",
       "pinned_swm_commit": "176d54532b3c0a251a4f509b74f2fdacc143a63d",
       "swm_implementation": {
@@ -4282,14 +4602,16 @@
       "stable_envs_classes": [
         "FetchPickAndPlaceDict"
       ],
-      "accepted_classes": [],
+      "accepted_classes": [
+        "FetchPickAndPlaceDict"
+      ],
       "historical_task_default_kwargs": {
         "registration_kwargs": {
           "env_id": "FetchPickAndPlace-v4",
           "flatten": false
         },
         "constructor_signature": "self, env_id, init_value=None, resolution=224, render_mode=None, flatten=True, **kwargs",
-        "accepted_task": null,
+        "accepted_task": "PickAndPlace; sparse; backend only; SWM observation integration DEFERRED",
         "source_constructor": "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py:FetchWrapper.__init__",
         "candidate_task": {
           "has_object": true,
@@ -4304,7 +4626,7 @@
         }
       },
       "state_schema": {
-        "status": "PROVED_CPU_PENDING_RENDERER",
+        "status": "ACCEPTED_BOUNDED_SUFFICIENT",
         "fields": {
           "qpos": {
             "width": 22,
@@ -4378,14 +4700,13 @@
         "terminated": false,
         "truncation": "elapsed_steps >= 50"
       },
-      "accepted_variation_scope": "NOT_PROMOTED; CPU proved PASS_BOUNDED_CPU: agent.start_position, block.angle, block.mass, block.start_position, goal.start_position, object.color, table.color; physical mass where applicable; visual physics nonmutation; persistent versus reset settings",
+      "accepted_variation_scope": "PASS_BOUNDED_CPU: agent.start_position, block.angle, block.mass, block.start_position, goal.start_position, object.color, table.color; physical mass where applicable; visual physics nonmutation; persistent versus reset settings; GPU visual frame/nonmutation gate PASS",
       "execution_mode": "DELEGATED_CPU",
       "evidence_manifest": {
-        "candidate": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json",
         "artifacts": [
           {
             "path": "docs/research/fetch_family_recovery.md",
-            "sha256": "8b8bde43529eec45bd39c64b1aecfc716e622298be4dc8ab7bed5d9d9cd891ec"
+            "sha256": "ccaf31f9ce93fbca68266b0471af232596d418f51c1ca1fdb28a6abf64540956"
           },
           {
             "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlace-alias.json",
@@ -4505,7 +4826,7 @@
           },
           {
             "path": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json",
-            "sha256": "d0b5042eda5f2fb86d75482139a46f165d9ee01ae3108024a95d9c24bdb82255"
+            "sha256": "d67e901aece7f44ac4a8b90e4a17949a4a6a3987fcf9a623327135f8baa12e03"
           },
           {
             "path": "docs/research/semantic_recovery_evidence/fetch_family/diff-review.json",
@@ -4546,31 +4867,202 @@
           {
             "path": "docs/research/semantic_recovery_evidence/fetch_family/final-readiness.out",
             "sha256": "ff6a9d715c246b50fc3caabc87f59ee760435b2e0d9e9d8603e285442f075494"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json",
+            "sha256": "6b037d62b08d14ec89a07fee36bdc672276f9b42d6d30e735c9dc43ef447329c"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-PickAndPlace-baseline.json",
+            "sha256": "d9cdc10ae45de54d4103e4f6fb9f65e71433c0e56e330c9d887fbcc006059ee4"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-PickAndPlace-candidate.json",
+            "sha256": "d9cdc10ae45de54d4103e4f6fb9f65e71433c0e56e330c9d887fbcc006059ee4"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-PickAndPlace-gate.json",
+            "sha256": "7bb59375cb0bc7057b5a7393f20987eaaaa725c296fa679d366144afe626de95"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Push-baseline.json",
+            "sha256": "7d29bd5bbf5a521c5e06ffd21a07eff475ccbea1541f82a5d1d87080e1ac417e"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Push-candidate.json",
+            "sha256": "7d29bd5bbf5a521c5e06ffd21a07eff475ccbea1541f82a5d1d87080e1ac417e"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Push-gate.json",
+            "sha256": "ddf24b634a68c20c83302248aec71f5a0bd4badc3fc09d7b46826402e9699f2b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Reach-baseline.json",
+            "sha256": "1f7c6e5c54bada5a281efeb04b76dbe65fa9c8cbe380b7eb9bc29580e0c58435"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Reach-candidate.json",
+            "sha256": "1f7c6e5c54bada5a281efeb04b76dbe65fa9c8cbe380b7eb9bc29580e0c58435"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Reach-gate.json",
+            "sha256": "0e993559e7f4239ff9f04034d304c5c5d8e369e34232251336fda361abdcc563"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Slide-baseline.json",
+            "sha256": "44ce4d68dda071eaabed2bf2147be57858909892420af9e0f2b9a827bbc31d90"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Slide-candidate.json",
+            "sha256": "44ce4d68dda071eaabed2bf2147be57858909892420af9e0f2b9a827bbc31d90"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Slide-gate.json",
+            "sha256": "899309246dae1e8e8163d316a5068323ab54639660e17a0055223841c0012c77"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-6652487.out",
+            "sha256": "1de374d60685847f10b8052c5abd83181d18496ebb1c38add826c144f7f7974c"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/oscar_fetch_family_normgpu-0dd0271f.sbatch",
+            "sha256": "e03da194123052d4e4c34e857fe10620cf634a59a3e3a6caae6e5c36f8069af5"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate-remote-hashes.json",
+            "sha256": "89aeac63ef544a04e91b6c58d585430790e15d8a58bea793e3b0b98522cc9071"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-PickAndPlace-baseline.json",
+            "sha256": "d9cdc10ae45de54d4103e4f6fb9f65e71433c0e56e330c9d887fbcc006059ee4"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-PickAndPlace-candidate.json",
+            "sha256": "d9cdc10ae45de54d4103e4f6fb9f65e71433c0e56e330c9d887fbcc006059ee4"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-PickAndPlace-gate.json",
+            "sha256": "61e7983680027b5ce6a2b9116d408493c7fbb568e49df5c6623e60e7eb59e54c"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Push-baseline.json",
+            "sha256": "7d29bd5bbf5a521c5e06ffd21a07eff475ccbea1541f82a5d1d87080e1ac417e"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Push-candidate.json",
+            "sha256": "7d29bd5bbf5a521c5e06ffd21a07eff475ccbea1541f82a5d1d87080e1ac417e"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Push-gate.json",
+            "sha256": "8fcac38f68ce3a0f2eef0f0cf60572d38431365ee6b3218b91f553a250a9e185"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Reach-baseline.json",
+            "sha256": "1f7c6e5c54bada5a281efeb04b76dbe65fa9c8cbe380b7eb9bc29580e0c58435"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Reach-candidate.json",
+            "sha256": "1f7c6e5c54bada5a281efeb04b76dbe65fa9c8cbe380b7eb9bc29580e0c58435"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Reach-gate.json",
+            "sha256": "dc30bcc78e9cf52852474e63e71d406423589dd3ad7c4f558c25cc26708f28bf"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Slide-baseline.json",
+            "sha256": "44ce4d68dda071eaabed2bf2147be57858909892420af9e0f2b9a827bbc31d90"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Slide-candidate.json",
+            "sha256": "44ce4d68dda071eaabed2bf2147be57858909892420af9e0f2b9a827bbc31d90"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Slide-gate.json",
+            "sha256": "de6de00feadab5b5373053e4153f89bb059c759327b5ce5bc09e7bd20a963992"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-6649686.out",
+            "sha256": "da8c7591a99a6c52c2acc636325e505605971625325faa77e1482155af6dbea1"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original-remote-hashes.json",
+            "sha256": "1c5e819fded63332f3c39d7e4f49a624b27522e6741cb4dbdedc8563139552ca"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/regression.out",
+            "sha256": "5c64ccfbc240d353a1b994c100c1d29728e09683b87d4ded4a25ecf11f090570"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/scheduler.txt",
+            "sha256": "00a361607865f285fe40e64bf3645218e99606c412969db041bdd9f7af7bf90a"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/source-identity.json",
+            "sha256": "b8e8c93264905991b6f24322aa832166a11881ba2ceb86bc9b1d05cc2479eb9b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/final-readiness.out",
+            "sha256": "9632c23250934de5e8dd370e7efeef46999c6601f7a818d8e1fbb1727155a4c2"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/final-review.json",
+            "sha256": "20b45bd5cbf7b31717402c8593f531e17031ffe031bc7138e326859b1b8eb4c8"
           }
-        ]
+        ],
+        "acceptance": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json"
       },
       "cpu_semantic_result": "PASS_EXACT_CPU_FAMILY_GATE",
       "gpu_semantic_result": {
         "status": "NOT_CLAIMED",
         "note": "Separate GPU profile is renderer-only"
       },
-      "frozen_renderer_result": "PENDING_OSCAR_JOB_6649686_QOSGrpGRES",
+      "frozen_renderer_result": {
+        "cpu": "CPU_BACKEND_MISSING",
+        "gpu": "PASS",
+        "jobs": [
+          6649686,
+          6652487
+        ],
+        "task": "PickAndPlace"
+      },
       "known_limitations": [
-        "Required Oscar frozen-renderer/full-State/alias-frame gate pending at QOSGrpGRES; no backend promotion.",
-        "SWM observation integration DEFERRED; historical Dict container is not a stable-envs backend responsibility.",
-        "CPU full rendering unsupported. CPU physics pinned to MuJoCo3.8.1; GPU profile renderer-only.",
-        "Bounded Variation only; full historical appearance randomization, task kwargs, external forces and final benchmarks uncertified."
+        "SWM observation integration DEFERRED; flat/Dict learner packaging remains SWM-owned.",
+        "CPU full rendering unsupported (CPU_BACKEND_MISSING); CPU physics pinned MuJoCo3.8.1; GPU profile certifies rendering only.",
+        "Bounded Variation only; full historical default appearance randomization, nondefault task kwargs, external forces, upstream-image similarity and final benchmarks remain uncertified."
       ],
-      "remaining_gates": [
-        "Oscar frozen renderer and full/private State-render/alias-frame gates; require downloaded hash checks and actual terminal marker."
-      ],
-      "closure_code_check": "Family production diff inspected independently; shared machinery and all other accepted family code unchanged.",
+      "remaining_gates": [],
+      "closure_code_check": {
+        "covered_revision": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92",
+        "no_production_changes_during_promotion": true
+      },
       "observation_integration": "DEFERRED",
-      "family_candidate_evidence": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json"
+      "family_acceptance_evidence": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json",
+      "family_closure_evidence": {
+        "terminal_log": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-6649686.out",
+        "terminal_log_sha256": "da8c7591a99a6c52c2acc636325e505605971625325faa77e1482155af6dbea1",
+        "actual_success_marker": "FETCH_FAMILY_GPU_GATE_PASS fetch-family-0dd0271f",
+        "renderer_manifest": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-PickAndPlace-candidate.json",
+        "renderer_sha256": "d9cdc10ae45de54d4103e4f6fb9f65e71433c0e56e330c9d887fbcc006059ee4",
+        "separate_baseline": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-PickAndPlace-baseline.json",
+        "baseline_equality": "PASS_BYTE_IDENTICAL",
+        "gate": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-PickAndPlace-gate.json",
+        "duplicate_gate": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-PickAndPlace-gate.json"
+      },
+      "closure_evidence": {
+        "terminal_log": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-6649686.out",
+        "terminal_log_sha256": "da8c7591a99a6c52c2acc636325e505605971625325faa77e1482155af6dbea1",
+        "actual_success_marker": "FETCH_FAMILY_GPU_GATE_PASS fetch-family-0dd0271f",
+        "renderer_manifest": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-PickAndPlace-candidate.json",
+        "renderer_sha256": "d9cdc10ae45de54d4103e4f6fb9f65e71433c0e56e330c9d887fbcc006059ee4",
+        "separate_baseline": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-PickAndPlace-baseline.json",
+        "baseline_equality": "PASS_BYTE_IDENTICAL",
+        "gate": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-PickAndPlace-gate.json",
+        "duplicate_gate": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-PickAndPlace-gate.json"
+      }
     },
     {
       "historical_id": "swm/FetchPush-v3",
-      "current_status": "INCOMPLETE",
+      "current_status": "VERIFIED",
       "family": "fetch",
       "pinned_swm_commit": "176d54532b3c0a251a4f509b74f2fdacc143a63d",
       "swm_implementation": {
@@ -4591,13 +5083,15 @@
       "stable_envs_classes": [
         "FetchPush"
       ],
-      "accepted_classes": [],
+      "accepted_classes": [
+        "FetchPush"
+      ],
       "historical_task_default_kwargs": {
         "registration_kwargs": {
           "env_id": "FetchPush-v4"
         },
         "constructor_signature": "self, env_id, init_value=None, resolution=224, render_mode=None, flatten=True, **kwargs",
-        "accepted_task": null,
+        "accepted_task": "Push; sparse; backend only; SWM observation integration DEFERRED",
         "source_constructor": "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py:FetchWrapper.__init__",
         "candidate_task": {
           "has_object": true,
@@ -4612,7 +5106,7 @@
         }
       },
       "state_schema": {
-        "status": "PROVED_CPU_PENDING_RENDERER",
+        "status": "ACCEPTED_BOUNDED_SUFFICIENT",
         "fields": {
           "qpos": {
             "width": 22,
@@ -4686,14 +5180,13 @@
         "terminated": false,
         "truncation": "elapsed_steps >= 50"
       },
-      "accepted_variation_scope": "NOT_PROMOTED; CPU proved PASS_BOUNDED_CPU: agent.start_position, block.angle, block.mass, block.start_position, goal.start_position, object.color, table.color; physical mass where applicable; visual physics nonmutation; persistent versus reset settings",
+      "accepted_variation_scope": "PASS_BOUNDED_CPU: agent.start_position, block.angle, block.mass, block.start_position, goal.start_position, object.color, table.color; physical mass where applicable; visual physics nonmutation; persistent versus reset settings; GPU visual frame/nonmutation gate PASS",
       "execution_mode": "DELEGATED_CPU",
       "evidence_manifest": {
-        "candidate": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json",
         "artifacts": [
           {
             "path": "docs/research/fetch_family_recovery.md",
-            "sha256": "8b8bde43529eec45bd39c64b1aecfc716e622298be4dc8ab7bed5d9d9cd891ec"
+            "sha256": "ccaf31f9ce93fbca68266b0471af232596d418f51c1ca1fdb28a6abf64540956"
           },
           {
             "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlace-alias.json",
@@ -4813,7 +5306,7 @@
           },
           {
             "path": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json",
-            "sha256": "d0b5042eda5f2fb86d75482139a46f165d9ee01ae3108024a95d9c24bdb82255"
+            "sha256": "d67e901aece7f44ac4a8b90e4a17949a4a6a3987fcf9a623327135f8baa12e03"
           },
           {
             "path": "docs/research/semantic_recovery_evidence/fetch_family/diff-review.json",
@@ -4854,31 +5347,202 @@
           {
             "path": "docs/research/semantic_recovery_evidence/fetch_family/final-readiness.out",
             "sha256": "ff6a9d715c246b50fc3caabc87f59ee760435b2e0d9e9d8603e285442f075494"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json",
+            "sha256": "6b037d62b08d14ec89a07fee36bdc672276f9b42d6d30e735c9dc43ef447329c"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-PickAndPlace-baseline.json",
+            "sha256": "d9cdc10ae45de54d4103e4f6fb9f65e71433c0e56e330c9d887fbcc006059ee4"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-PickAndPlace-candidate.json",
+            "sha256": "d9cdc10ae45de54d4103e4f6fb9f65e71433c0e56e330c9d887fbcc006059ee4"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-PickAndPlace-gate.json",
+            "sha256": "7bb59375cb0bc7057b5a7393f20987eaaaa725c296fa679d366144afe626de95"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Push-baseline.json",
+            "sha256": "7d29bd5bbf5a521c5e06ffd21a07eff475ccbea1541f82a5d1d87080e1ac417e"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Push-candidate.json",
+            "sha256": "7d29bd5bbf5a521c5e06ffd21a07eff475ccbea1541f82a5d1d87080e1ac417e"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Push-gate.json",
+            "sha256": "ddf24b634a68c20c83302248aec71f5a0bd4badc3fc09d7b46826402e9699f2b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Reach-baseline.json",
+            "sha256": "1f7c6e5c54bada5a281efeb04b76dbe65fa9c8cbe380b7eb9bc29580e0c58435"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Reach-candidate.json",
+            "sha256": "1f7c6e5c54bada5a281efeb04b76dbe65fa9c8cbe380b7eb9bc29580e0c58435"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Reach-gate.json",
+            "sha256": "0e993559e7f4239ff9f04034d304c5c5d8e369e34232251336fda361abdcc563"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Slide-baseline.json",
+            "sha256": "44ce4d68dda071eaabed2bf2147be57858909892420af9e0f2b9a827bbc31d90"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Slide-candidate.json",
+            "sha256": "44ce4d68dda071eaabed2bf2147be57858909892420af9e0f2b9a827bbc31d90"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Slide-gate.json",
+            "sha256": "899309246dae1e8e8163d316a5068323ab54639660e17a0055223841c0012c77"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-6652487.out",
+            "sha256": "1de374d60685847f10b8052c5abd83181d18496ebb1c38add826c144f7f7974c"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/oscar_fetch_family_normgpu-0dd0271f.sbatch",
+            "sha256": "e03da194123052d4e4c34e857fe10620cf634a59a3e3a6caae6e5c36f8069af5"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate-remote-hashes.json",
+            "sha256": "89aeac63ef544a04e91b6c58d585430790e15d8a58bea793e3b0b98522cc9071"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-PickAndPlace-baseline.json",
+            "sha256": "d9cdc10ae45de54d4103e4f6fb9f65e71433c0e56e330c9d887fbcc006059ee4"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-PickAndPlace-candidate.json",
+            "sha256": "d9cdc10ae45de54d4103e4f6fb9f65e71433c0e56e330c9d887fbcc006059ee4"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-PickAndPlace-gate.json",
+            "sha256": "61e7983680027b5ce6a2b9116d408493c7fbb568e49df5c6623e60e7eb59e54c"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Push-baseline.json",
+            "sha256": "7d29bd5bbf5a521c5e06ffd21a07eff475ccbea1541f82a5d1d87080e1ac417e"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Push-candidate.json",
+            "sha256": "7d29bd5bbf5a521c5e06ffd21a07eff475ccbea1541f82a5d1d87080e1ac417e"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Push-gate.json",
+            "sha256": "8fcac38f68ce3a0f2eef0f0cf60572d38431365ee6b3218b91f553a250a9e185"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Reach-baseline.json",
+            "sha256": "1f7c6e5c54bada5a281efeb04b76dbe65fa9c8cbe380b7eb9bc29580e0c58435"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Reach-candidate.json",
+            "sha256": "1f7c6e5c54bada5a281efeb04b76dbe65fa9c8cbe380b7eb9bc29580e0c58435"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Reach-gate.json",
+            "sha256": "dc30bcc78e9cf52852474e63e71d406423589dd3ad7c4f558c25cc26708f28bf"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Slide-baseline.json",
+            "sha256": "44ce4d68dda071eaabed2bf2147be57858909892420af9e0f2b9a827bbc31d90"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Slide-candidate.json",
+            "sha256": "44ce4d68dda071eaabed2bf2147be57858909892420af9e0f2b9a827bbc31d90"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Slide-gate.json",
+            "sha256": "de6de00feadab5b5373053e4153f89bb059c759327b5ce5bc09e7bd20a963992"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-6649686.out",
+            "sha256": "da8c7591a99a6c52c2acc636325e505605971625325faa77e1482155af6dbea1"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original-remote-hashes.json",
+            "sha256": "1c5e819fded63332f3c39d7e4f49a624b27522e6741cb4dbdedc8563139552ca"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/regression.out",
+            "sha256": "5c64ccfbc240d353a1b994c100c1d29728e09683b87d4ded4a25ecf11f090570"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/scheduler.txt",
+            "sha256": "00a361607865f285fe40e64bf3645218e99606c412969db041bdd9f7af7bf90a"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/source-identity.json",
+            "sha256": "b8e8c93264905991b6f24322aa832166a11881ba2ceb86bc9b1d05cc2479eb9b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/final-readiness.out",
+            "sha256": "9632c23250934de5e8dd370e7efeef46999c6601f7a818d8e1fbb1727155a4c2"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/final-review.json",
+            "sha256": "20b45bd5cbf7b31717402c8593f531e17031ffe031bc7138e326859b1b8eb4c8"
           }
-        ]
+        ],
+        "acceptance": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json"
       },
       "cpu_semantic_result": "PASS_EXACT_CPU_FAMILY_GATE",
       "gpu_semantic_result": {
         "status": "NOT_CLAIMED",
         "note": "Separate GPU profile is renderer-only"
       },
-      "frozen_renderer_result": "PENDING_OSCAR_JOB_6649686_QOSGrpGRES",
+      "frozen_renderer_result": {
+        "cpu": "CPU_BACKEND_MISSING",
+        "gpu": "PASS",
+        "jobs": [
+          6649686,
+          6652487
+        ],
+        "task": "Push"
+      },
       "known_limitations": [
-        "Required Oscar frozen-renderer/full-State/alias-frame gate pending at QOSGrpGRES; no backend promotion.",
-        "SWM observation integration DEFERRED; historical Dict container is not a stable-envs backend responsibility.",
-        "CPU full rendering unsupported. CPU physics pinned to MuJoCo3.8.1; GPU profile renderer-only.",
-        "Bounded Variation only; full historical appearance randomization, task kwargs, external forces and final benchmarks uncertified."
+        "SWM observation integration DEFERRED; flat/Dict learner packaging remains SWM-owned.",
+        "CPU full rendering unsupported (CPU_BACKEND_MISSING); CPU physics pinned MuJoCo3.8.1; GPU profile certifies rendering only.",
+        "Bounded Variation only; full historical default appearance randomization, nondefault task kwargs, external forces, upstream-image similarity and final benchmarks remain uncertified."
       ],
-      "remaining_gates": [
-        "Oscar frozen renderer and full/private State-render/alias-frame gates; require downloaded hash checks and actual terminal marker."
-      ],
-      "closure_code_check": "Family production diff inspected independently; shared machinery and all other accepted family code unchanged.",
+      "remaining_gates": [],
+      "closure_code_check": {
+        "covered_revision": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92",
+        "no_production_changes_during_promotion": true
+      },
       "observation_integration": "DEFERRED",
-      "family_candidate_evidence": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json"
+      "family_acceptance_evidence": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json",
+      "family_closure_evidence": {
+        "terminal_log": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-6649686.out",
+        "terminal_log_sha256": "da8c7591a99a6c52c2acc636325e505605971625325faa77e1482155af6dbea1",
+        "actual_success_marker": "FETCH_FAMILY_GPU_GATE_PASS fetch-family-0dd0271f",
+        "renderer_manifest": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Push-candidate.json",
+        "renderer_sha256": "7d29bd5bbf5a521c5e06ffd21a07eff475ccbea1541f82a5d1d87080e1ac417e",
+        "separate_baseline": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Push-baseline.json",
+        "baseline_equality": "PASS_BYTE_IDENTICAL",
+        "gate": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Push-gate.json",
+        "duplicate_gate": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Push-gate.json"
+      },
+      "closure_evidence": {
+        "terminal_log": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-6649686.out",
+        "terminal_log_sha256": "da8c7591a99a6c52c2acc636325e505605971625325faa77e1482155af6dbea1",
+        "actual_success_marker": "FETCH_FAMILY_GPU_GATE_PASS fetch-family-0dd0271f",
+        "renderer_manifest": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Push-candidate.json",
+        "renderer_sha256": "7d29bd5bbf5a521c5e06ffd21a07eff475ccbea1541f82a5d1d87080e1ac417e",
+        "separate_baseline": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Push-baseline.json",
+        "baseline_equality": "PASS_BYTE_IDENTICAL",
+        "gate": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Push-gate.json",
+        "duplicate_gate": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Push-gate.json"
+      }
     },
     {
       "historical_id": "swm/FetchPushDense-v3",
-      "current_status": "INCOMPLETE",
+      "current_status": "VERIFIED",
       "family": "fetch",
       "pinned_swm_commit": "176d54532b3c0a251a4f509b74f2fdacc143a63d",
       "swm_implementation": {
@@ -4899,13 +5563,15 @@
       "stable_envs_classes": [
         "FetchPushDense"
       ],
-      "accepted_classes": [],
+      "accepted_classes": [
+        "FetchPushDense"
+      ],
       "historical_task_default_kwargs": {
         "registration_kwargs": {
           "env_id": "FetchPushDense-v4"
         },
         "constructor_signature": "self, env_id, init_value=None, resolution=224, render_mode=None, flatten=True, **kwargs",
-        "accepted_task": null,
+        "accepted_task": "Push; dense; backend only; SWM observation integration DEFERRED",
         "source_constructor": "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py:FetchWrapper.__init__",
         "candidate_task": {
           "has_object": true,
@@ -4920,7 +5586,7 @@
         }
       },
       "state_schema": {
-        "status": "PROVED_CPU_PENDING_RENDERER",
+        "status": "ACCEPTED_BOUNDED_SUFFICIENT",
         "fields": {
           "qpos": {
             "width": 22,
@@ -4994,14 +5660,13 @@
         "terminated": false,
         "truncation": "elapsed_steps >= 50"
       },
-      "accepted_variation_scope": "NOT_PROMOTED; CPU proved PASS_BOUNDED_CPU: agent.start_position, block.angle, block.mass, block.start_position, goal.start_position, object.color, table.color; physical mass where applicable; visual physics nonmutation; persistent versus reset settings",
+      "accepted_variation_scope": "PASS_BOUNDED_CPU: agent.start_position, block.angle, block.mass, block.start_position, goal.start_position, object.color, table.color; physical mass where applicable; visual physics nonmutation; persistent versus reset settings; GPU visual frame/nonmutation gate PASS",
       "execution_mode": "DELEGATED_CPU",
       "evidence_manifest": {
-        "candidate": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json",
         "artifacts": [
           {
             "path": "docs/research/fetch_family_recovery.md",
-            "sha256": "8b8bde43529eec45bd39c64b1aecfc716e622298be4dc8ab7bed5d9d9cd891ec"
+            "sha256": "ccaf31f9ce93fbca68266b0471af232596d418f51c1ca1fdb28a6abf64540956"
           },
           {
             "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlace-alias.json",
@@ -5121,7 +5786,7 @@
           },
           {
             "path": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json",
-            "sha256": "d0b5042eda5f2fb86d75482139a46f165d9ee01ae3108024a95d9c24bdb82255"
+            "sha256": "d67e901aece7f44ac4a8b90e4a17949a4a6a3987fcf9a623327135f8baa12e03"
           },
           {
             "path": "docs/research/semantic_recovery_evidence/fetch_family/diff-review.json",
@@ -5162,31 +5827,202 @@
           {
             "path": "docs/research/semantic_recovery_evidence/fetch_family/final-readiness.out",
             "sha256": "ff6a9d715c246b50fc3caabc87f59ee760435b2e0d9e9d8603e285442f075494"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json",
+            "sha256": "6b037d62b08d14ec89a07fee36bdc672276f9b42d6d30e735c9dc43ef447329c"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-PickAndPlace-baseline.json",
+            "sha256": "d9cdc10ae45de54d4103e4f6fb9f65e71433c0e56e330c9d887fbcc006059ee4"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-PickAndPlace-candidate.json",
+            "sha256": "d9cdc10ae45de54d4103e4f6fb9f65e71433c0e56e330c9d887fbcc006059ee4"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-PickAndPlace-gate.json",
+            "sha256": "7bb59375cb0bc7057b5a7393f20987eaaaa725c296fa679d366144afe626de95"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Push-baseline.json",
+            "sha256": "7d29bd5bbf5a521c5e06ffd21a07eff475ccbea1541f82a5d1d87080e1ac417e"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Push-candidate.json",
+            "sha256": "7d29bd5bbf5a521c5e06ffd21a07eff475ccbea1541f82a5d1d87080e1ac417e"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Push-gate.json",
+            "sha256": "ddf24b634a68c20c83302248aec71f5a0bd4badc3fc09d7b46826402e9699f2b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Reach-baseline.json",
+            "sha256": "1f7c6e5c54bada5a281efeb04b76dbe65fa9c8cbe380b7eb9bc29580e0c58435"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Reach-candidate.json",
+            "sha256": "1f7c6e5c54bada5a281efeb04b76dbe65fa9c8cbe380b7eb9bc29580e0c58435"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Reach-gate.json",
+            "sha256": "0e993559e7f4239ff9f04034d304c5c5d8e369e34232251336fda361abdcc563"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Slide-baseline.json",
+            "sha256": "44ce4d68dda071eaabed2bf2147be57858909892420af9e0f2b9a827bbc31d90"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Slide-candidate.json",
+            "sha256": "44ce4d68dda071eaabed2bf2147be57858909892420af9e0f2b9a827bbc31d90"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Slide-gate.json",
+            "sha256": "899309246dae1e8e8163d316a5068323ab54639660e17a0055223841c0012c77"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-6652487.out",
+            "sha256": "1de374d60685847f10b8052c5abd83181d18496ebb1c38add826c144f7f7974c"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/oscar_fetch_family_normgpu-0dd0271f.sbatch",
+            "sha256": "e03da194123052d4e4c34e857fe10620cf634a59a3e3a6caae6e5c36f8069af5"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate-remote-hashes.json",
+            "sha256": "89aeac63ef544a04e91b6c58d585430790e15d8a58bea793e3b0b98522cc9071"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-PickAndPlace-baseline.json",
+            "sha256": "d9cdc10ae45de54d4103e4f6fb9f65e71433c0e56e330c9d887fbcc006059ee4"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-PickAndPlace-candidate.json",
+            "sha256": "d9cdc10ae45de54d4103e4f6fb9f65e71433c0e56e330c9d887fbcc006059ee4"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-PickAndPlace-gate.json",
+            "sha256": "61e7983680027b5ce6a2b9116d408493c7fbb568e49df5c6623e60e7eb59e54c"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Push-baseline.json",
+            "sha256": "7d29bd5bbf5a521c5e06ffd21a07eff475ccbea1541f82a5d1d87080e1ac417e"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Push-candidate.json",
+            "sha256": "7d29bd5bbf5a521c5e06ffd21a07eff475ccbea1541f82a5d1d87080e1ac417e"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Push-gate.json",
+            "sha256": "8fcac38f68ce3a0f2eef0f0cf60572d38431365ee6b3218b91f553a250a9e185"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Reach-baseline.json",
+            "sha256": "1f7c6e5c54bada5a281efeb04b76dbe65fa9c8cbe380b7eb9bc29580e0c58435"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Reach-candidate.json",
+            "sha256": "1f7c6e5c54bada5a281efeb04b76dbe65fa9c8cbe380b7eb9bc29580e0c58435"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Reach-gate.json",
+            "sha256": "dc30bcc78e9cf52852474e63e71d406423589dd3ad7c4f558c25cc26708f28bf"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Slide-baseline.json",
+            "sha256": "44ce4d68dda071eaabed2bf2147be57858909892420af9e0f2b9a827bbc31d90"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Slide-candidate.json",
+            "sha256": "44ce4d68dda071eaabed2bf2147be57858909892420af9e0f2b9a827bbc31d90"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Slide-gate.json",
+            "sha256": "de6de00feadab5b5373053e4153f89bb059c759327b5ce5bc09e7bd20a963992"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-6649686.out",
+            "sha256": "da8c7591a99a6c52c2acc636325e505605971625325faa77e1482155af6dbea1"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original-remote-hashes.json",
+            "sha256": "1c5e819fded63332f3c39d7e4f49a624b27522e6741cb4dbdedc8563139552ca"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/regression.out",
+            "sha256": "5c64ccfbc240d353a1b994c100c1d29728e09683b87d4ded4a25ecf11f090570"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/scheduler.txt",
+            "sha256": "00a361607865f285fe40e64bf3645218e99606c412969db041bdd9f7af7bf90a"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/source-identity.json",
+            "sha256": "b8e8c93264905991b6f24322aa832166a11881ba2ceb86bc9b1d05cc2479eb9b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/final-readiness.out",
+            "sha256": "9632c23250934de5e8dd370e7efeef46999c6601f7a818d8e1fbb1727155a4c2"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/final-review.json",
+            "sha256": "20b45bd5cbf7b31717402c8593f531e17031ffe031bc7138e326859b1b8eb4c8"
           }
-        ]
+        ],
+        "acceptance": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json"
       },
       "cpu_semantic_result": "PASS_EXACT_CPU_FAMILY_GATE",
       "gpu_semantic_result": {
         "status": "NOT_CLAIMED",
         "note": "Separate GPU profile is renderer-only"
       },
-      "frozen_renderer_result": "PENDING_OSCAR_JOB_6649686_QOSGrpGRES",
+      "frozen_renderer_result": {
+        "cpu": "CPU_BACKEND_MISSING",
+        "gpu": "PASS",
+        "jobs": [
+          6649686,
+          6652487
+        ],
+        "task": "Push"
+      },
       "known_limitations": [
-        "Required Oscar frozen-renderer/full-State/alias-frame gate pending at QOSGrpGRES; no backend promotion.",
-        "SWM observation integration DEFERRED; historical Dict container is not a stable-envs backend responsibility.",
-        "CPU full rendering unsupported. CPU physics pinned to MuJoCo3.8.1; GPU profile renderer-only.",
-        "Bounded Variation only; full historical appearance randomization, task kwargs, external forces and final benchmarks uncertified."
+        "SWM observation integration DEFERRED; flat/Dict learner packaging remains SWM-owned.",
+        "CPU full rendering unsupported (CPU_BACKEND_MISSING); CPU physics pinned MuJoCo3.8.1; GPU profile certifies rendering only.",
+        "Bounded Variation only; full historical default appearance randomization, nondefault task kwargs, external forces, upstream-image similarity and final benchmarks remain uncertified."
       ],
-      "remaining_gates": [
-        "Oscar frozen renderer and full/private State-render/alias-frame gates; require downloaded hash checks and actual terminal marker."
-      ],
-      "closure_code_check": "Family production diff inspected independently; shared machinery and all other accepted family code unchanged.",
+      "remaining_gates": [],
+      "closure_code_check": {
+        "covered_revision": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92",
+        "no_production_changes_during_promotion": true
+      },
       "observation_integration": "DEFERRED",
-      "family_candidate_evidence": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json"
+      "family_acceptance_evidence": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json",
+      "family_closure_evidence": {
+        "terminal_log": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-6649686.out",
+        "terminal_log_sha256": "da8c7591a99a6c52c2acc636325e505605971625325faa77e1482155af6dbea1",
+        "actual_success_marker": "FETCH_FAMILY_GPU_GATE_PASS fetch-family-0dd0271f",
+        "renderer_manifest": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Push-candidate.json",
+        "renderer_sha256": "7d29bd5bbf5a521c5e06ffd21a07eff475ccbea1541f82a5d1d87080e1ac417e",
+        "separate_baseline": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Push-baseline.json",
+        "baseline_equality": "PASS_BYTE_IDENTICAL",
+        "gate": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Push-gate.json",
+        "duplicate_gate": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Push-gate.json"
+      },
+      "closure_evidence": {
+        "terminal_log": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-6649686.out",
+        "terminal_log_sha256": "da8c7591a99a6c52c2acc636325e505605971625325faa77e1482155af6dbea1",
+        "actual_success_marker": "FETCH_FAMILY_GPU_GATE_PASS fetch-family-0dd0271f",
+        "renderer_manifest": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Push-candidate.json",
+        "renderer_sha256": "7d29bd5bbf5a521c5e06ffd21a07eff475ccbea1541f82a5d1d87080e1ac417e",
+        "separate_baseline": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Push-baseline.json",
+        "baseline_equality": "PASS_BYTE_IDENTICAL",
+        "gate": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Push-gate.json",
+        "duplicate_gate": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Push-gate.json"
+      }
     },
     {
       "historical_id": "swm/FetchPushDict-v3",
-      "current_status": "INCOMPLETE",
+      "current_status": "VERIFIED",
       "family": "fetch",
       "pinned_swm_commit": "176d54532b3c0a251a4f509b74f2fdacc143a63d",
       "swm_implementation": {
@@ -5207,14 +6043,16 @@
       "stable_envs_classes": [
         "FetchPushDict"
       ],
-      "accepted_classes": [],
+      "accepted_classes": [
+        "FetchPushDict"
+      ],
       "historical_task_default_kwargs": {
         "registration_kwargs": {
           "env_id": "FetchPush-v4",
           "flatten": false
         },
         "constructor_signature": "self, env_id, init_value=None, resolution=224, render_mode=None, flatten=True, **kwargs",
-        "accepted_task": null,
+        "accepted_task": "Push; sparse; backend only; SWM observation integration DEFERRED",
         "source_constructor": "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py:FetchWrapper.__init__",
         "candidate_task": {
           "has_object": true,
@@ -5229,7 +6067,7 @@
         }
       },
       "state_schema": {
-        "status": "PROVED_CPU_PENDING_RENDERER",
+        "status": "ACCEPTED_BOUNDED_SUFFICIENT",
         "fields": {
           "qpos": {
             "width": 22,
@@ -5303,14 +6141,13 @@
         "terminated": false,
         "truncation": "elapsed_steps >= 50"
       },
-      "accepted_variation_scope": "NOT_PROMOTED; CPU proved PASS_BOUNDED_CPU: agent.start_position, block.angle, block.mass, block.start_position, goal.start_position, object.color, table.color; physical mass where applicable; visual physics nonmutation; persistent versus reset settings",
+      "accepted_variation_scope": "PASS_BOUNDED_CPU: agent.start_position, block.angle, block.mass, block.start_position, goal.start_position, object.color, table.color; physical mass where applicable; visual physics nonmutation; persistent versus reset settings; GPU visual frame/nonmutation gate PASS",
       "execution_mode": "DELEGATED_CPU",
       "evidence_manifest": {
-        "candidate": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json",
         "artifacts": [
           {
             "path": "docs/research/fetch_family_recovery.md",
-            "sha256": "8b8bde43529eec45bd39c64b1aecfc716e622298be4dc8ab7bed5d9d9cd891ec"
+            "sha256": "ccaf31f9ce93fbca68266b0471af232596d418f51c1ca1fdb28a6abf64540956"
           },
           {
             "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlace-alias.json",
@@ -5430,7 +6267,7 @@
           },
           {
             "path": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json",
-            "sha256": "d0b5042eda5f2fb86d75482139a46f165d9ee01ae3108024a95d9c24bdb82255"
+            "sha256": "d67e901aece7f44ac4a8b90e4a17949a4a6a3987fcf9a623327135f8baa12e03"
           },
           {
             "path": "docs/research/semantic_recovery_evidence/fetch_family/diff-review.json",
@@ -5471,31 +6308,202 @@
           {
             "path": "docs/research/semantic_recovery_evidence/fetch_family/final-readiness.out",
             "sha256": "ff6a9d715c246b50fc3caabc87f59ee760435b2e0d9e9d8603e285442f075494"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json",
+            "sha256": "6b037d62b08d14ec89a07fee36bdc672276f9b42d6d30e735c9dc43ef447329c"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-PickAndPlace-baseline.json",
+            "sha256": "d9cdc10ae45de54d4103e4f6fb9f65e71433c0e56e330c9d887fbcc006059ee4"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-PickAndPlace-candidate.json",
+            "sha256": "d9cdc10ae45de54d4103e4f6fb9f65e71433c0e56e330c9d887fbcc006059ee4"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-PickAndPlace-gate.json",
+            "sha256": "7bb59375cb0bc7057b5a7393f20987eaaaa725c296fa679d366144afe626de95"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Push-baseline.json",
+            "sha256": "7d29bd5bbf5a521c5e06ffd21a07eff475ccbea1541f82a5d1d87080e1ac417e"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Push-candidate.json",
+            "sha256": "7d29bd5bbf5a521c5e06ffd21a07eff475ccbea1541f82a5d1d87080e1ac417e"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Push-gate.json",
+            "sha256": "ddf24b634a68c20c83302248aec71f5a0bd4badc3fc09d7b46826402e9699f2b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Reach-baseline.json",
+            "sha256": "1f7c6e5c54bada5a281efeb04b76dbe65fa9c8cbe380b7eb9bc29580e0c58435"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Reach-candidate.json",
+            "sha256": "1f7c6e5c54bada5a281efeb04b76dbe65fa9c8cbe380b7eb9bc29580e0c58435"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Reach-gate.json",
+            "sha256": "0e993559e7f4239ff9f04034d304c5c5d8e369e34232251336fda361abdcc563"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Slide-baseline.json",
+            "sha256": "44ce4d68dda071eaabed2bf2147be57858909892420af9e0f2b9a827bbc31d90"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Slide-candidate.json",
+            "sha256": "44ce4d68dda071eaabed2bf2147be57858909892420af9e0f2b9a827bbc31d90"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Slide-gate.json",
+            "sha256": "899309246dae1e8e8163d316a5068323ab54639660e17a0055223841c0012c77"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-6652487.out",
+            "sha256": "1de374d60685847f10b8052c5abd83181d18496ebb1c38add826c144f7f7974c"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/oscar_fetch_family_normgpu-0dd0271f.sbatch",
+            "sha256": "e03da194123052d4e4c34e857fe10620cf634a59a3e3a6caae6e5c36f8069af5"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate-remote-hashes.json",
+            "sha256": "89aeac63ef544a04e91b6c58d585430790e15d8a58bea793e3b0b98522cc9071"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-PickAndPlace-baseline.json",
+            "sha256": "d9cdc10ae45de54d4103e4f6fb9f65e71433c0e56e330c9d887fbcc006059ee4"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-PickAndPlace-candidate.json",
+            "sha256": "d9cdc10ae45de54d4103e4f6fb9f65e71433c0e56e330c9d887fbcc006059ee4"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-PickAndPlace-gate.json",
+            "sha256": "61e7983680027b5ce6a2b9116d408493c7fbb568e49df5c6623e60e7eb59e54c"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Push-baseline.json",
+            "sha256": "7d29bd5bbf5a521c5e06ffd21a07eff475ccbea1541f82a5d1d87080e1ac417e"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Push-candidate.json",
+            "sha256": "7d29bd5bbf5a521c5e06ffd21a07eff475ccbea1541f82a5d1d87080e1ac417e"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Push-gate.json",
+            "sha256": "8fcac38f68ce3a0f2eef0f0cf60572d38431365ee6b3218b91f553a250a9e185"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Reach-baseline.json",
+            "sha256": "1f7c6e5c54bada5a281efeb04b76dbe65fa9c8cbe380b7eb9bc29580e0c58435"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Reach-candidate.json",
+            "sha256": "1f7c6e5c54bada5a281efeb04b76dbe65fa9c8cbe380b7eb9bc29580e0c58435"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Reach-gate.json",
+            "sha256": "dc30bcc78e9cf52852474e63e71d406423589dd3ad7c4f558c25cc26708f28bf"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Slide-baseline.json",
+            "sha256": "44ce4d68dda071eaabed2bf2147be57858909892420af9e0f2b9a827bbc31d90"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Slide-candidate.json",
+            "sha256": "44ce4d68dda071eaabed2bf2147be57858909892420af9e0f2b9a827bbc31d90"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Slide-gate.json",
+            "sha256": "de6de00feadab5b5373053e4153f89bb059c759327b5ce5bc09e7bd20a963992"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-6649686.out",
+            "sha256": "da8c7591a99a6c52c2acc636325e505605971625325faa77e1482155af6dbea1"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original-remote-hashes.json",
+            "sha256": "1c5e819fded63332f3c39d7e4f49a624b27522e6741cb4dbdedc8563139552ca"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/regression.out",
+            "sha256": "5c64ccfbc240d353a1b994c100c1d29728e09683b87d4ded4a25ecf11f090570"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/scheduler.txt",
+            "sha256": "00a361607865f285fe40e64bf3645218e99606c412969db041bdd9f7af7bf90a"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/source-identity.json",
+            "sha256": "b8e8c93264905991b6f24322aa832166a11881ba2ceb86bc9b1d05cc2479eb9b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/final-readiness.out",
+            "sha256": "9632c23250934de5e8dd370e7efeef46999c6601f7a818d8e1fbb1727155a4c2"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/final-review.json",
+            "sha256": "20b45bd5cbf7b31717402c8593f531e17031ffe031bc7138e326859b1b8eb4c8"
           }
-        ]
+        ],
+        "acceptance": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json"
       },
       "cpu_semantic_result": "PASS_EXACT_CPU_FAMILY_GATE",
       "gpu_semantic_result": {
         "status": "NOT_CLAIMED",
         "note": "Separate GPU profile is renderer-only"
       },
-      "frozen_renderer_result": "PENDING_OSCAR_JOB_6649686_QOSGrpGRES",
+      "frozen_renderer_result": {
+        "cpu": "CPU_BACKEND_MISSING",
+        "gpu": "PASS",
+        "jobs": [
+          6649686,
+          6652487
+        ],
+        "task": "Push"
+      },
       "known_limitations": [
-        "Required Oscar frozen-renderer/full-State/alias-frame gate pending at QOSGrpGRES; no backend promotion.",
-        "SWM observation integration DEFERRED; historical Dict container is not a stable-envs backend responsibility.",
-        "CPU full rendering unsupported. CPU physics pinned to MuJoCo3.8.1; GPU profile renderer-only.",
-        "Bounded Variation only; full historical appearance randomization, task kwargs, external forces and final benchmarks uncertified."
+        "SWM observation integration DEFERRED; flat/Dict learner packaging remains SWM-owned.",
+        "CPU full rendering unsupported (CPU_BACKEND_MISSING); CPU physics pinned MuJoCo3.8.1; GPU profile certifies rendering only.",
+        "Bounded Variation only; full historical default appearance randomization, nondefault task kwargs, external forces, upstream-image similarity and final benchmarks remain uncertified."
       ],
-      "remaining_gates": [
-        "Oscar frozen renderer and full/private State-render/alias-frame gates; require downloaded hash checks and actual terminal marker."
-      ],
-      "closure_code_check": "Family production diff inspected independently; shared machinery and all other accepted family code unchanged.",
+      "remaining_gates": [],
+      "closure_code_check": {
+        "covered_revision": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92",
+        "no_production_changes_during_promotion": true
+      },
       "observation_integration": "DEFERRED",
-      "family_candidate_evidence": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json"
+      "family_acceptance_evidence": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json",
+      "family_closure_evidence": {
+        "terminal_log": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-6649686.out",
+        "terminal_log_sha256": "da8c7591a99a6c52c2acc636325e505605971625325faa77e1482155af6dbea1",
+        "actual_success_marker": "FETCH_FAMILY_GPU_GATE_PASS fetch-family-0dd0271f",
+        "renderer_manifest": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Push-candidate.json",
+        "renderer_sha256": "7d29bd5bbf5a521c5e06ffd21a07eff475ccbea1541f82a5d1d87080e1ac417e",
+        "separate_baseline": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Push-baseline.json",
+        "baseline_equality": "PASS_BYTE_IDENTICAL",
+        "gate": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Push-gate.json",
+        "duplicate_gate": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Push-gate.json"
+      },
+      "closure_evidence": {
+        "terminal_log": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-6649686.out",
+        "terminal_log_sha256": "da8c7591a99a6c52c2acc636325e505605971625325faa77e1482155af6dbea1",
+        "actual_success_marker": "FETCH_FAMILY_GPU_GATE_PASS fetch-family-0dd0271f",
+        "renderer_manifest": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Push-candidate.json",
+        "renderer_sha256": "7d29bd5bbf5a521c5e06ffd21a07eff475ccbea1541f82a5d1d87080e1ac417e",
+        "separate_baseline": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Push-baseline.json",
+        "baseline_equality": "PASS_BYTE_IDENTICAL",
+        "gate": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Push-gate.json",
+        "duplicate_gate": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Push-gate.json"
+      }
     },
     {
       "historical_id": "swm/FetchReach-v3",
-      "current_status": "INCOMPLETE",
+      "current_status": "VERIFIED",
       "family": "fetch",
       "pinned_swm_commit": "176d54532b3c0a251a4f509b74f2fdacc143a63d",
       "swm_implementation": {
@@ -5516,13 +6524,15 @@
       "stable_envs_classes": [
         "FetchReach"
       ],
-      "accepted_classes": [],
+      "accepted_classes": [
+        "FetchReach"
+      ],
       "historical_task_default_kwargs": {
         "registration_kwargs": {
           "env_id": "FetchReach-v4"
         },
         "constructor_signature": "self, env_id, init_value=None, resolution=224, render_mode=None, flatten=True, **kwargs",
-        "accepted_task": null,
+        "accepted_task": "Reach; sparse; backend only; SWM observation integration DEFERRED",
         "source_constructor": "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py:FetchWrapper.__init__",
         "candidate_task": {
           "has_object": false,
@@ -5537,7 +6547,7 @@
         }
       },
       "state_schema": {
-        "status": "PROVED_CPU_PENDING_RENDERER",
+        "status": "ACCEPTED_BOUNDED_SUFFICIENT",
         "fields": {
           "qpos": {
             "width": 15,
@@ -5611,14 +6621,13 @@
         "terminated": false,
         "truncation": "elapsed_steps >= 50"
       },
-      "accepted_variation_scope": "NOT_PROMOTED; CPU proved PASS_BOUNDED_CPU: agent.start_position, goal.start_position, table.color; physical mass where applicable; visual physics nonmutation; persistent versus reset settings",
+      "accepted_variation_scope": "PASS_BOUNDED_CPU: agent.start_position, goal.start_position, table.color; physical mass where applicable; visual physics nonmutation; persistent versus reset settings; GPU visual frame/nonmutation gate PASS",
       "execution_mode": "DELEGATED_CPU",
       "evidence_manifest": {
-        "candidate": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json",
         "artifacts": [
           {
             "path": "docs/research/fetch_family_recovery.md",
-            "sha256": "8b8bde43529eec45bd39c64b1aecfc716e622298be4dc8ab7bed5d9d9cd891ec"
+            "sha256": "ccaf31f9ce93fbca68266b0471af232596d418f51c1ca1fdb28a6abf64540956"
           },
           {
             "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlace-alias.json",
@@ -5738,7 +6747,7 @@
           },
           {
             "path": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json",
-            "sha256": "d0b5042eda5f2fb86d75482139a46f165d9ee01ae3108024a95d9c24bdb82255"
+            "sha256": "d67e901aece7f44ac4a8b90e4a17949a4a6a3987fcf9a623327135f8baa12e03"
           },
           {
             "path": "docs/research/semantic_recovery_evidence/fetch_family/diff-review.json",
@@ -5779,31 +6788,202 @@
           {
             "path": "docs/research/semantic_recovery_evidence/fetch_family/final-readiness.out",
             "sha256": "ff6a9d715c246b50fc3caabc87f59ee760435b2e0d9e9d8603e285442f075494"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json",
+            "sha256": "6b037d62b08d14ec89a07fee36bdc672276f9b42d6d30e735c9dc43ef447329c"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-PickAndPlace-baseline.json",
+            "sha256": "d9cdc10ae45de54d4103e4f6fb9f65e71433c0e56e330c9d887fbcc006059ee4"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-PickAndPlace-candidate.json",
+            "sha256": "d9cdc10ae45de54d4103e4f6fb9f65e71433c0e56e330c9d887fbcc006059ee4"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-PickAndPlace-gate.json",
+            "sha256": "7bb59375cb0bc7057b5a7393f20987eaaaa725c296fa679d366144afe626de95"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Push-baseline.json",
+            "sha256": "7d29bd5bbf5a521c5e06ffd21a07eff475ccbea1541f82a5d1d87080e1ac417e"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Push-candidate.json",
+            "sha256": "7d29bd5bbf5a521c5e06ffd21a07eff475ccbea1541f82a5d1d87080e1ac417e"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Push-gate.json",
+            "sha256": "ddf24b634a68c20c83302248aec71f5a0bd4badc3fc09d7b46826402e9699f2b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Reach-baseline.json",
+            "sha256": "1f7c6e5c54bada5a281efeb04b76dbe65fa9c8cbe380b7eb9bc29580e0c58435"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Reach-candidate.json",
+            "sha256": "1f7c6e5c54bada5a281efeb04b76dbe65fa9c8cbe380b7eb9bc29580e0c58435"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Reach-gate.json",
+            "sha256": "0e993559e7f4239ff9f04034d304c5c5d8e369e34232251336fda361abdcc563"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Slide-baseline.json",
+            "sha256": "44ce4d68dda071eaabed2bf2147be57858909892420af9e0f2b9a827bbc31d90"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Slide-candidate.json",
+            "sha256": "44ce4d68dda071eaabed2bf2147be57858909892420af9e0f2b9a827bbc31d90"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Slide-gate.json",
+            "sha256": "899309246dae1e8e8163d316a5068323ab54639660e17a0055223841c0012c77"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-6652487.out",
+            "sha256": "1de374d60685847f10b8052c5abd83181d18496ebb1c38add826c144f7f7974c"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/oscar_fetch_family_normgpu-0dd0271f.sbatch",
+            "sha256": "e03da194123052d4e4c34e857fe10620cf634a59a3e3a6caae6e5c36f8069af5"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate-remote-hashes.json",
+            "sha256": "89aeac63ef544a04e91b6c58d585430790e15d8a58bea793e3b0b98522cc9071"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-PickAndPlace-baseline.json",
+            "sha256": "d9cdc10ae45de54d4103e4f6fb9f65e71433c0e56e330c9d887fbcc006059ee4"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-PickAndPlace-candidate.json",
+            "sha256": "d9cdc10ae45de54d4103e4f6fb9f65e71433c0e56e330c9d887fbcc006059ee4"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-PickAndPlace-gate.json",
+            "sha256": "61e7983680027b5ce6a2b9116d408493c7fbb568e49df5c6623e60e7eb59e54c"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Push-baseline.json",
+            "sha256": "7d29bd5bbf5a521c5e06ffd21a07eff475ccbea1541f82a5d1d87080e1ac417e"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Push-candidate.json",
+            "sha256": "7d29bd5bbf5a521c5e06ffd21a07eff475ccbea1541f82a5d1d87080e1ac417e"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Push-gate.json",
+            "sha256": "8fcac38f68ce3a0f2eef0f0cf60572d38431365ee6b3218b91f553a250a9e185"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Reach-baseline.json",
+            "sha256": "1f7c6e5c54bada5a281efeb04b76dbe65fa9c8cbe380b7eb9bc29580e0c58435"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Reach-candidate.json",
+            "sha256": "1f7c6e5c54bada5a281efeb04b76dbe65fa9c8cbe380b7eb9bc29580e0c58435"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Reach-gate.json",
+            "sha256": "dc30bcc78e9cf52852474e63e71d406423589dd3ad7c4f558c25cc26708f28bf"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Slide-baseline.json",
+            "sha256": "44ce4d68dda071eaabed2bf2147be57858909892420af9e0f2b9a827bbc31d90"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Slide-candidate.json",
+            "sha256": "44ce4d68dda071eaabed2bf2147be57858909892420af9e0f2b9a827bbc31d90"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Slide-gate.json",
+            "sha256": "de6de00feadab5b5373053e4153f89bb059c759327b5ce5bc09e7bd20a963992"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-6649686.out",
+            "sha256": "da8c7591a99a6c52c2acc636325e505605971625325faa77e1482155af6dbea1"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original-remote-hashes.json",
+            "sha256": "1c5e819fded63332f3c39d7e4f49a624b27522e6741cb4dbdedc8563139552ca"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/regression.out",
+            "sha256": "5c64ccfbc240d353a1b994c100c1d29728e09683b87d4ded4a25ecf11f090570"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/scheduler.txt",
+            "sha256": "00a361607865f285fe40e64bf3645218e99606c412969db041bdd9f7af7bf90a"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/source-identity.json",
+            "sha256": "b8e8c93264905991b6f24322aa832166a11881ba2ceb86bc9b1d05cc2479eb9b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/final-readiness.out",
+            "sha256": "9632c23250934de5e8dd370e7efeef46999c6601f7a818d8e1fbb1727155a4c2"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/final-review.json",
+            "sha256": "20b45bd5cbf7b31717402c8593f531e17031ffe031bc7138e326859b1b8eb4c8"
           }
-        ]
+        ],
+        "acceptance": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json"
       },
       "cpu_semantic_result": "PASS_EXACT_CPU_FAMILY_GATE",
       "gpu_semantic_result": {
         "status": "NOT_CLAIMED",
         "note": "Separate GPU profile is renderer-only"
       },
-      "frozen_renderer_result": "PENDING_OSCAR_JOB_6649686_QOSGrpGRES",
+      "frozen_renderer_result": {
+        "cpu": "CPU_BACKEND_MISSING",
+        "gpu": "PASS",
+        "jobs": [
+          6649686,
+          6652487
+        ],
+        "task": "Reach"
+      },
       "known_limitations": [
-        "Required Oscar frozen-renderer/full-State/alias-frame gate pending at QOSGrpGRES; no backend promotion.",
-        "SWM observation integration DEFERRED; historical Dict container is not a stable-envs backend responsibility.",
-        "CPU full rendering unsupported. CPU physics pinned to MuJoCo3.8.1; GPU profile renderer-only.",
-        "Bounded Variation only; full historical appearance randomization, task kwargs, external forces and final benchmarks uncertified."
+        "SWM observation integration DEFERRED; flat/Dict learner packaging remains SWM-owned.",
+        "CPU full rendering unsupported (CPU_BACKEND_MISSING); CPU physics pinned MuJoCo3.8.1; GPU profile certifies rendering only.",
+        "Bounded Variation only; full historical default appearance randomization, nondefault task kwargs, external forces, upstream-image similarity and final benchmarks remain uncertified."
       ],
-      "remaining_gates": [
-        "Oscar frozen renderer and full/private State-render/alias-frame gates; require downloaded hash checks and actual terminal marker."
-      ],
-      "closure_code_check": "Family production diff inspected independently; shared machinery and all other accepted family code unchanged.",
+      "remaining_gates": [],
+      "closure_code_check": {
+        "covered_revision": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92",
+        "no_production_changes_during_promotion": true
+      },
       "observation_integration": "DEFERRED",
-      "family_candidate_evidence": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json"
+      "family_acceptance_evidence": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json",
+      "family_closure_evidence": {
+        "terminal_log": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-6649686.out",
+        "terminal_log_sha256": "da8c7591a99a6c52c2acc636325e505605971625325faa77e1482155af6dbea1",
+        "actual_success_marker": "FETCH_FAMILY_GPU_GATE_PASS fetch-family-0dd0271f",
+        "renderer_manifest": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Reach-candidate.json",
+        "renderer_sha256": "1f7c6e5c54bada5a281efeb04b76dbe65fa9c8cbe380b7eb9bc29580e0c58435",
+        "separate_baseline": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Reach-baseline.json",
+        "baseline_equality": "PASS_BYTE_IDENTICAL",
+        "gate": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Reach-gate.json",
+        "duplicate_gate": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Reach-gate.json"
+      },
+      "closure_evidence": {
+        "terminal_log": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-6649686.out",
+        "terminal_log_sha256": "da8c7591a99a6c52c2acc636325e505605971625325faa77e1482155af6dbea1",
+        "actual_success_marker": "FETCH_FAMILY_GPU_GATE_PASS fetch-family-0dd0271f",
+        "renderer_manifest": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Reach-candidate.json",
+        "renderer_sha256": "1f7c6e5c54bada5a281efeb04b76dbe65fa9c8cbe380b7eb9bc29580e0c58435",
+        "separate_baseline": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Reach-baseline.json",
+        "baseline_equality": "PASS_BYTE_IDENTICAL",
+        "gate": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Reach-gate.json",
+        "duplicate_gate": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Reach-gate.json"
+      }
     },
     {
       "historical_id": "swm/FetchReachDense-v3",
-      "current_status": "INCOMPLETE",
+      "current_status": "VERIFIED",
       "family": "fetch",
       "pinned_swm_commit": "176d54532b3c0a251a4f509b74f2fdacc143a63d",
       "swm_implementation": {
@@ -5824,13 +7004,15 @@
       "stable_envs_classes": [
         "FetchReachDense"
       ],
-      "accepted_classes": [],
+      "accepted_classes": [
+        "FetchReachDense"
+      ],
       "historical_task_default_kwargs": {
         "registration_kwargs": {
           "env_id": "FetchReachDense-v4"
         },
         "constructor_signature": "self, env_id, init_value=None, resolution=224, render_mode=None, flatten=True, **kwargs",
-        "accepted_task": null,
+        "accepted_task": "Reach; dense; backend only; SWM observation integration DEFERRED",
         "source_constructor": "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py:FetchWrapper.__init__",
         "candidate_task": {
           "has_object": false,
@@ -5845,7 +7027,7 @@
         }
       },
       "state_schema": {
-        "status": "PROVED_CPU_PENDING_RENDERER",
+        "status": "ACCEPTED_BOUNDED_SUFFICIENT",
         "fields": {
           "qpos": {
             "width": 15,
@@ -5919,14 +7101,13 @@
         "terminated": false,
         "truncation": "elapsed_steps >= 50"
       },
-      "accepted_variation_scope": "NOT_PROMOTED; CPU proved PASS_BOUNDED_CPU: agent.start_position, goal.start_position, table.color; physical mass where applicable; visual physics nonmutation; persistent versus reset settings",
+      "accepted_variation_scope": "PASS_BOUNDED_CPU: agent.start_position, goal.start_position, table.color; physical mass where applicable; visual physics nonmutation; persistent versus reset settings; GPU visual frame/nonmutation gate PASS",
       "execution_mode": "DELEGATED_CPU",
       "evidence_manifest": {
-        "candidate": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json",
         "artifacts": [
           {
             "path": "docs/research/fetch_family_recovery.md",
-            "sha256": "8b8bde43529eec45bd39c64b1aecfc716e622298be4dc8ab7bed5d9d9cd891ec"
+            "sha256": "ccaf31f9ce93fbca68266b0471af232596d418f51c1ca1fdb28a6abf64540956"
           },
           {
             "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlace-alias.json",
@@ -6046,7 +7227,7 @@
           },
           {
             "path": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json",
-            "sha256": "d0b5042eda5f2fb86d75482139a46f165d9ee01ae3108024a95d9c24bdb82255"
+            "sha256": "d67e901aece7f44ac4a8b90e4a17949a4a6a3987fcf9a623327135f8baa12e03"
           },
           {
             "path": "docs/research/semantic_recovery_evidence/fetch_family/diff-review.json",
@@ -6087,31 +7268,202 @@
           {
             "path": "docs/research/semantic_recovery_evidence/fetch_family/final-readiness.out",
             "sha256": "ff6a9d715c246b50fc3caabc87f59ee760435b2e0d9e9d8603e285442f075494"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json",
+            "sha256": "6b037d62b08d14ec89a07fee36bdc672276f9b42d6d30e735c9dc43ef447329c"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-PickAndPlace-baseline.json",
+            "sha256": "d9cdc10ae45de54d4103e4f6fb9f65e71433c0e56e330c9d887fbcc006059ee4"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-PickAndPlace-candidate.json",
+            "sha256": "d9cdc10ae45de54d4103e4f6fb9f65e71433c0e56e330c9d887fbcc006059ee4"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-PickAndPlace-gate.json",
+            "sha256": "7bb59375cb0bc7057b5a7393f20987eaaaa725c296fa679d366144afe626de95"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Push-baseline.json",
+            "sha256": "7d29bd5bbf5a521c5e06ffd21a07eff475ccbea1541f82a5d1d87080e1ac417e"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Push-candidate.json",
+            "sha256": "7d29bd5bbf5a521c5e06ffd21a07eff475ccbea1541f82a5d1d87080e1ac417e"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Push-gate.json",
+            "sha256": "ddf24b634a68c20c83302248aec71f5a0bd4badc3fc09d7b46826402e9699f2b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Reach-baseline.json",
+            "sha256": "1f7c6e5c54bada5a281efeb04b76dbe65fa9c8cbe380b7eb9bc29580e0c58435"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Reach-candidate.json",
+            "sha256": "1f7c6e5c54bada5a281efeb04b76dbe65fa9c8cbe380b7eb9bc29580e0c58435"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Reach-gate.json",
+            "sha256": "0e993559e7f4239ff9f04034d304c5c5d8e369e34232251336fda361abdcc563"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Slide-baseline.json",
+            "sha256": "44ce4d68dda071eaabed2bf2147be57858909892420af9e0f2b9a827bbc31d90"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Slide-candidate.json",
+            "sha256": "44ce4d68dda071eaabed2bf2147be57858909892420af9e0f2b9a827bbc31d90"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Slide-gate.json",
+            "sha256": "899309246dae1e8e8163d316a5068323ab54639660e17a0055223841c0012c77"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-6652487.out",
+            "sha256": "1de374d60685847f10b8052c5abd83181d18496ebb1c38add826c144f7f7974c"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/oscar_fetch_family_normgpu-0dd0271f.sbatch",
+            "sha256": "e03da194123052d4e4c34e857fe10620cf634a59a3e3a6caae6e5c36f8069af5"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate-remote-hashes.json",
+            "sha256": "89aeac63ef544a04e91b6c58d585430790e15d8a58bea793e3b0b98522cc9071"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-PickAndPlace-baseline.json",
+            "sha256": "d9cdc10ae45de54d4103e4f6fb9f65e71433c0e56e330c9d887fbcc006059ee4"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-PickAndPlace-candidate.json",
+            "sha256": "d9cdc10ae45de54d4103e4f6fb9f65e71433c0e56e330c9d887fbcc006059ee4"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-PickAndPlace-gate.json",
+            "sha256": "61e7983680027b5ce6a2b9116d408493c7fbb568e49df5c6623e60e7eb59e54c"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Push-baseline.json",
+            "sha256": "7d29bd5bbf5a521c5e06ffd21a07eff475ccbea1541f82a5d1d87080e1ac417e"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Push-candidate.json",
+            "sha256": "7d29bd5bbf5a521c5e06ffd21a07eff475ccbea1541f82a5d1d87080e1ac417e"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Push-gate.json",
+            "sha256": "8fcac38f68ce3a0f2eef0f0cf60572d38431365ee6b3218b91f553a250a9e185"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Reach-baseline.json",
+            "sha256": "1f7c6e5c54bada5a281efeb04b76dbe65fa9c8cbe380b7eb9bc29580e0c58435"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Reach-candidate.json",
+            "sha256": "1f7c6e5c54bada5a281efeb04b76dbe65fa9c8cbe380b7eb9bc29580e0c58435"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Reach-gate.json",
+            "sha256": "dc30bcc78e9cf52852474e63e71d406423589dd3ad7c4f558c25cc26708f28bf"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Slide-baseline.json",
+            "sha256": "44ce4d68dda071eaabed2bf2147be57858909892420af9e0f2b9a827bbc31d90"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Slide-candidate.json",
+            "sha256": "44ce4d68dda071eaabed2bf2147be57858909892420af9e0f2b9a827bbc31d90"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Slide-gate.json",
+            "sha256": "de6de00feadab5b5373053e4153f89bb059c759327b5ce5bc09e7bd20a963992"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-6649686.out",
+            "sha256": "da8c7591a99a6c52c2acc636325e505605971625325faa77e1482155af6dbea1"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original-remote-hashes.json",
+            "sha256": "1c5e819fded63332f3c39d7e4f49a624b27522e6741cb4dbdedc8563139552ca"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/regression.out",
+            "sha256": "5c64ccfbc240d353a1b994c100c1d29728e09683b87d4ded4a25ecf11f090570"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/scheduler.txt",
+            "sha256": "00a361607865f285fe40e64bf3645218e99606c412969db041bdd9f7af7bf90a"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/source-identity.json",
+            "sha256": "b8e8c93264905991b6f24322aa832166a11881ba2ceb86bc9b1d05cc2479eb9b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/final-readiness.out",
+            "sha256": "9632c23250934de5e8dd370e7efeef46999c6601f7a818d8e1fbb1727155a4c2"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/final-review.json",
+            "sha256": "20b45bd5cbf7b31717402c8593f531e17031ffe031bc7138e326859b1b8eb4c8"
           }
-        ]
+        ],
+        "acceptance": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json"
       },
       "cpu_semantic_result": "PASS_EXACT_CPU_FAMILY_GATE",
       "gpu_semantic_result": {
         "status": "NOT_CLAIMED",
         "note": "Separate GPU profile is renderer-only"
       },
-      "frozen_renderer_result": "PENDING_OSCAR_JOB_6649686_QOSGrpGRES",
+      "frozen_renderer_result": {
+        "cpu": "CPU_BACKEND_MISSING",
+        "gpu": "PASS",
+        "jobs": [
+          6649686,
+          6652487
+        ],
+        "task": "Reach"
+      },
       "known_limitations": [
-        "Required Oscar frozen-renderer/full-State/alias-frame gate pending at QOSGrpGRES; no backend promotion.",
-        "SWM observation integration DEFERRED; historical Dict container is not a stable-envs backend responsibility.",
-        "CPU full rendering unsupported. CPU physics pinned to MuJoCo3.8.1; GPU profile renderer-only.",
-        "Bounded Variation only; full historical appearance randomization, task kwargs, external forces and final benchmarks uncertified."
+        "SWM observation integration DEFERRED; flat/Dict learner packaging remains SWM-owned.",
+        "CPU full rendering unsupported (CPU_BACKEND_MISSING); CPU physics pinned MuJoCo3.8.1; GPU profile certifies rendering only.",
+        "Bounded Variation only; full historical default appearance randomization, nondefault task kwargs, external forces, upstream-image similarity and final benchmarks remain uncertified."
       ],
-      "remaining_gates": [
-        "Oscar frozen renderer and full/private State-render/alias-frame gates; require downloaded hash checks and actual terminal marker."
-      ],
-      "closure_code_check": "Family production diff inspected independently; shared machinery and all other accepted family code unchanged.",
+      "remaining_gates": [],
+      "closure_code_check": {
+        "covered_revision": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92",
+        "no_production_changes_during_promotion": true
+      },
       "observation_integration": "DEFERRED",
-      "family_candidate_evidence": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json"
+      "family_acceptance_evidence": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json",
+      "family_closure_evidence": {
+        "terminal_log": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-6649686.out",
+        "terminal_log_sha256": "da8c7591a99a6c52c2acc636325e505605971625325faa77e1482155af6dbea1",
+        "actual_success_marker": "FETCH_FAMILY_GPU_GATE_PASS fetch-family-0dd0271f",
+        "renderer_manifest": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Reach-candidate.json",
+        "renderer_sha256": "1f7c6e5c54bada5a281efeb04b76dbe65fa9c8cbe380b7eb9bc29580e0c58435",
+        "separate_baseline": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Reach-baseline.json",
+        "baseline_equality": "PASS_BYTE_IDENTICAL",
+        "gate": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Reach-gate.json",
+        "duplicate_gate": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Reach-gate.json"
+      },
+      "closure_evidence": {
+        "terminal_log": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-6649686.out",
+        "terminal_log_sha256": "da8c7591a99a6c52c2acc636325e505605971625325faa77e1482155af6dbea1",
+        "actual_success_marker": "FETCH_FAMILY_GPU_GATE_PASS fetch-family-0dd0271f",
+        "renderer_manifest": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Reach-candidate.json",
+        "renderer_sha256": "1f7c6e5c54bada5a281efeb04b76dbe65fa9c8cbe380b7eb9bc29580e0c58435",
+        "separate_baseline": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Reach-baseline.json",
+        "baseline_equality": "PASS_BYTE_IDENTICAL",
+        "gate": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Reach-gate.json",
+        "duplicate_gate": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Reach-gate.json"
+      }
     },
     {
       "historical_id": "swm/FetchReachDict-v3",
-      "current_status": "INCOMPLETE",
+      "current_status": "VERIFIED",
       "family": "fetch",
       "pinned_swm_commit": "176d54532b3c0a251a4f509b74f2fdacc143a63d",
       "swm_implementation": {
@@ -6132,14 +7484,16 @@
       "stable_envs_classes": [
         "FetchReachDict"
       ],
-      "accepted_classes": [],
+      "accepted_classes": [
+        "FetchReachDict"
+      ],
       "historical_task_default_kwargs": {
         "registration_kwargs": {
           "env_id": "FetchReach-v4",
           "flatten": false
         },
         "constructor_signature": "self, env_id, init_value=None, resolution=224, render_mode=None, flatten=True, **kwargs",
-        "accepted_task": null,
+        "accepted_task": "Reach; sparse; backend only; SWM observation integration DEFERRED",
         "source_constructor": "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py:FetchWrapper.__init__",
         "candidate_task": {
           "has_object": false,
@@ -6154,7 +7508,7 @@
         }
       },
       "state_schema": {
-        "status": "PROVED_CPU_PENDING_RENDERER",
+        "status": "ACCEPTED_BOUNDED_SUFFICIENT",
         "fields": {
           "qpos": {
             "width": 15,
@@ -6228,14 +7582,13 @@
         "terminated": false,
         "truncation": "elapsed_steps >= 50"
       },
-      "accepted_variation_scope": "NOT_PROMOTED; CPU proved PASS_BOUNDED_CPU: agent.start_position, goal.start_position, table.color; physical mass where applicable; visual physics nonmutation; persistent versus reset settings",
+      "accepted_variation_scope": "PASS_BOUNDED_CPU: agent.start_position, goal.start_position, table.color; physical mass where applicable; visual physics nonmutation; persistent versus reset settings; GPU visual frame/nonmutation gate PASS",
       "execution_mode": "DELEGATED_CPU",
       "evidence_manifest": {
-        "candidate": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json",
         "artifacts": [
           {
             "path": "docs/research/fetch_family_recovery.md",
-            "sha256": "8b8bde43529eec45bd39c64b1aecfc716e622298be4dc8ab7bed5d9d9cd891ec"
+            "sha256": "ccaf31f9ce93fbca68266b0471af232596d418f51c1ca1fdb28a6abf64540956"
           },
           {
             "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlace-alias.json",
@@ -6355,7 +7708,7 @@
           },
           {
             "path": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json",
-            "sha256": "d0b5042eda5f2fb86d75482139a46f165d9ee01ae3108024a95d9c24bdb82255"
+            "sha256": "d67e901aece7f44ac4a8b90e4a17949a4a6a3987fcf9a623327135f8baa12e03"
           },
           {
             "path": "docs/research/semantic_recovery_evidence/fetch_family/diff-review.json",
@@ -6396,31 +7749,202 @@
           {
             "path": "docs/research/semantic_recovery_evidence/fetch_family/final-readiness.out",
             "sha256": "ff6a9d715c246b50fc3caabc87f59ee760435b2e0d9e9d8603e285442f075494"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json",
+            "sha256": "6b037d62b08d14ec89a07fee36bdc672276f9b42d6d30e735c9dc43ef447329c"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-PickAndPlace-baseline.json",
+            "sha256": "d9cdc10ae45de54d4103e4f6fb9f65e71433c0e56e330c9d887fbcc006059ee4"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-PickAndPlace-candidate.json",
+            "sha256": "d9cdc10ae45de54d4103e4f6fb9f65e71433c0e56e330c9d887fbcc006059ee4"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-PickAndPlace-gate.json",
+            "sha256": "7bb59375cb0bc7057b5a7393f20987eaaaa725c296fa679d366144afe626de95"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Push-baseline.json",
+            "sha256": "7d29bd5bbf5a521c5e06ffd21a07eff475ccbea1541f82a5d1d87080e1ac417e"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Push-candidate.json",
+            "sha256": "7d29bd5bbf5a521c5e06ffd21a07eff475ccbea1541f82a5d1d87080e1ac417e"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Push-gate.json",
+            "sha256": "ddf24b634a68c20c83302248aec71f5a0bd4badc3fc09d7b46826402e9699f2b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Reach-baseline.json",
+            "sha256": "1f7c6e5c54bada5a281efeb04b76dbe65fa9c8cbe380b7eb9bc29580e0c58435"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Reach-candidate.json",
+            "sha256": "1f7c6e5c54bada5a281efeb04b76dbe65fa9c8cbe380b7eb9bc29580e0c58435"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Reach-gate.json",
+            "sha256": "0e993559e7f4239ff9f04034d304c5c5d8e369e34232251336fda361abdcc563"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Slide-baseline.json",
+            "sha256": "44ce4d68dda071eaabed2bf2147be57858909892420af9e0f2b9a827bbc31d90"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Slide-candidate.json",
+            "sha256": "44ce4d68dda071eaabed2bf2147be57858909892420af9e0f2b9a827bbc31d90"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Slide-gate.json",
+            "sha256": "899309246dae1e8e8163d316a5068323ab54639660e17a0055223841c0012c77"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-6652487.out",
+            "sha256": "1de374d60685847f10b8052c5abd83181d18496ebb1c38add826c144f7f7974c"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/oscar_fetch_family_normgpu-0dd0271f.sbatch",
+            "sha256": "e03da194123052d4e4c34e857fe10620cf634a59a3e3a6caae6e5c36f8069af5"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate-remote-hashes.json",
+            "sha256": "89aeac63ef544a04e91b6c58d585430790e15d8a58bea793e3b0b98522cc9071"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-PickAndPlace-baseline.json",
+            "sha256": "d9cdc10ae45de54d4103e4f6fb9f65e71433c0e56e330c9d887fbcc006059ee4"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-PickAndPlace-candidate.json",
+            "sha256": "d9cdc10ae45de54d4103e4f6fb9f65e71433c0e56e330c9d887fbcc006059ee4"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-PickAndPlace-gate.json",
+            "sha256": "61e7983680027b5ce6a2b9116d408493c7fbb568e49df5c6623e60e7eb59e54c"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Push-baseline.json",
+            "sha256": "7d29bd5bbf5a521c5e06ffd21a07eff475ccbea1541f82a5d1d87080e1ac417e"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Push-candidate.json",
+            "sha256": "7d29bd5bbf5a521c5e06ffd21a07eff475ccbea1541f82a5d1d87080e1ac417e"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Push-gate.json",
+            "sha256": "8fcac38f68ce3a0f2eef0f0cf60572d38431365ee6b3218b91f553a250a9e185"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Reach-baseline.json",
+            "sha256": "1f7c6e5c54bada5a281efeb04b76dbe65fa9c8cbe380b7eb9bc29580e0c58435"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Reach-candidate.json",
+            "sha256": "1f7c6e5c54bada5a281efeb04b76dbe65fa9c8cbe380b7eb9bc29580e0c58435"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Reach-gate.json",
+            "sha256": "dc30bcc78e9cf52852474e63e71d406423589dd3ad7c4f558c25cc26708f28bf"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Slide-baseline.json",
+            "sha256": "44ce4d68dda071eaabed2bf2147be57858909892420af9e0f2b9a827bbc31d90"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Slide-candidate.json",
+            "sha256": "44ce4d68dda071eaabed2bf2147be57858909892420af9e0f2b9a827bbc31d90"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Slide-gate.json",
+            "sha256": "de6de00feadab5b5373053e4153f89bb059c759327b5ce5bc09e7bd20a963992"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-6649686.out",
+            "sha256": "da8c7591a99a6c52c2acc636325e505605971625325faa77e1482155af6dbea1"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original-remote-hashes.json",
+            "sha256": "1c5e819fded63332f3c39d7e4f49a624b27522e6741cb4dbdedc8563139552ca"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/regression.out",
+            "sha256": "5c64ccfbc240d353a1b994c100c1d29728e09683b87d4ded4a25ecf11f090570"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/scheduler.txt",
+            "sha256": "00a361607865f285fe40e64bf3645218e99606c412969db041bdd9f7af7bf90a"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/source-identity.json",
+            "sha256": "b8e8c93264905991b6f24322aa832166a11881ba2ceb86bc9b1d05cc2479eb9b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/final-readiness.out",
+            "sha256": "9632c23250934de5e8dd370e7efeef46999c6601f7a818d8e1fbb1727155a4c2"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/final-review.json",
+            "sha256": "20b45bd5cbf7b31717402c8593f531e17031ffe031bc7138e326859b1b8eb4c8"
           }
-        ]
+        ],
+        "acceptance": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json"
       },
       "cpu_semantic_result": "PASS_EXACT_CPU_FAMILY_GATE",
       "gpu_semantic_result": {
         "status": "NOT_CLAIMED",
         "note": "Separate GPU profile is renderer-only"
       },
-      "frozen_renderer_result": "PENDING_OSCAR_JOB_6649686_QOSGrpGRES",
+      "frozen_renderer_result": {
+        "cpu": "CPU_BACKEND_MISSING",
+        "gpu": "PASS",
+        "jobs": [
+          6649686,
+          6652487
+        ],
+        "task": "Reach"
+      },
       "known_limitations": [
-        "Required Oscar frozen-renderer/full-State/alias-frame gate pending at QOSGrpGRES; no backend promotion.",
-        "SWM observation integration DEFERRED; historical Dict container is not a stable-envs backend responsibility.",
-        "CPU full rendering unsupported. CPU physics pinned to MuJoCo3.8.1; GPU profile renderer-only.",
-        "Bounded Variation only; full historical appearance randomization, task kwargs, external forces and final benchmarks uncertified."
+        "SWM observation integration DEFERRED; flat/Dict learner packaging remains SWM-owned.",
+        "CPU full rendering unsupported (CPU_BACKEND_MISSING); CPU physics pinned MuJoCo3.8.1; GPU profile certifies rendering only.",
+        "Bounded Variation only; full historical default appearance randomization, nondefault task kwargs, external forces, upstream-image similarity and final benchmarks remain uncertified."
       ],
-      "remaining_gates": [
-        "Oscar frozen renderer and full/private State-render/alias-frame gates; require downloaded hash checks and actual terminal marker."
-      ],
-      "closure_code_check": "Family production diff inspected independently; shared machinery and all other accepted family code unchanged.",
+      "remaining_gates": [],
+      "closure_code_check": {
+        "covered_revision": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92",
+        "no_production_changes_during_promotion": true
+      },
       "observation_integration": "DEFERRED",
-      "family_candidate_evidence": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json"
+      "family_acceptance_evidence": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json",
+      "family_closure_evidence": {
+        "terminal_log": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-6649686.out",
+        "terminal_log_sha256": "da8c7591a99a6c52c2acc636325e505605971625325faa77e1482155af6dbea1",
+        "actual_success_marker": "FETCH_FAMILY_GPU_GATE_PASS fetch-family-0dd0271f",
+        "renderer_manifest": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Reach-candidate.json",
+        "renderer_sha256": "1f7c6e5c54bada5a281efeb04b76dbe65fa9c8cbe380b7eb9bc29580e0c58435",
+        "separate_baseline": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Reach-baseline.json",
+        "baseline_equality": "PASS_BYTE_IDENTICAL",
+        "gate": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Reach-gate.json",
+        "duplicate_gate": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Reach-gate.json"
+      },
+      "closure_evidence": {
+        "terminal_log": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-6649686.out",
+        "terminal_log_sha256": "da8c7591a99a6c52c2acc636325e505605971625325faa77e1482155af6dbea1",
+        "actual_success_marker": "FETCH_FAMILY_GPU_GATE_PASS fetch-family-0dd0271f",
+        "renderer_manifest": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Reach-candidate.json",
+        "renderer_sha256": "1f7c6e5c54bada5a281efeb04b76dbe65fa9c8cbe380b7eb9bc29580e0c58435",
+        "separate_baseline": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Reach-baseline.json",
+        "baseline_equality": "PASS_BYTE_IDENTICAL",
+        "gate": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Reach-gate.json",
+        "duplicate_gate": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Reach-gate.json"
+      }
     },
     {
       "historical_id": "swm/FetchSlide-v3",
-      "current_status": "INCOMPLETE",
+      "current_status": "VERIFIED",
       "family": "fetch",
       "pinned_swm_commit": "176d54532b3c0a251a4f509b74f2fdacc143a63d",
       "swm_implementation": {
@@ -6441,13 +7965,15 @@
       "stable_envs_classes": [
         "FetchSlide"
       ],
-      "accepted_classes": [],
+      "accepted_classes": [
+        "FetchSlide"
+      ],
       "historical_task_default_kwargs": {
         "registration_kwargs": {
           "env_id": "FetchSlide-v4"
         },
         "constructor_signature": "self, env_id, init_value=None, resolution=224, render_mode=None, flatten=True, **kwargs",
-        "accepted_task": null,
+        "accepted_task": "Slide; sparse; backend only; SWM observation integration DEFERRED",
         "source_constructor": "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py:FetchWrapper.__init__",
         "candidate_task": {
           "has_object": true,
@@ -6466,7 +7992,7 @@
         }
       },
       "state_schema": {
-        "status": "PROVED_CPU_PENDING_RENDERER",
+        "status": "ACCEPTED_BOUNDED_SUFFICIENT",
         "fields": {
           "qpos": {
             "width": 22,
@@ -6540,14 +8066,13 @@
         "terminated": false,
         "truncation": "elapsed_steps >= 50"
       },
-      "accepted_variation_scope": "NOT_PROMOTED; CPU proved PASS_BOUNDED_CPU: agent.start_position, block.angle, block.mass, block.start_position, goal.start_position, object.color, table.color; physical mass where applicable; visual physics nonmutation; persistent versus reset settings",
+      "accepted_variation_scope": "PASS_BOUNDED_CPU: agent.start_position, block.angle, block.mass, block.start_position, goal.start_position, object.color, table.color; physical mass where applicable; visual physics nonmutation; persistent versus reset settings; GPU visual frame/nonmutation gate PASS",
       "execution_mode": "DELEGATED_CPU",
       "evidence_manifest": {
-        "candidate": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json",
         "artifacts": [
           {
             "path": "docs/research/fetch_family_recovery.md",
-            "sha256": "8b8bde43529eec45bd39c64b1aecfc716e622298be4dc8ab7bed5d9d9cd891ec"
+            "sha256": "ccaf31f9ce93fbca68266b0471af232596d418f51c1ca1fdb28a6abf64540956"
           },
           {
             "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlace-alias.json",
@@ -6667,7 +8192,7 @@
           },
           {
             "path": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json",
-            "sha256": "d0b5042eda5f2fb86d75482139a46f165d9ee01ae3108024a95d9c24bdb82255"
+            "sha256": "d67e901aece7f44ac4a8b90e4a17949a4a6a3987fcf9a623327135f8baa12e03"
           },
           {
             "path": "docs/research/semantic_recovery_evidence/fetch_family/diff-review.json",
@@ -6708,31 +8233,202 @@
           {
             "path": "docs/research/semantic_recovery_evidence/fetch_family/final-readiness.out",
             "sha256": "ff6a9d715c246b50fc3caabc87f59ee760435b2e0d9e9d8603e285442f075494"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json",
+            "sha256": "6b037d62b08d14ec89a07fee36bdc672276f9b42d6d30e735c9dc43ef447329c"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-PickAndPlace-baseline.json",
+            "sha256": "d9cdc10ae45de54d4103e4f6fb9f65e71433c0e56e330c9d887fbcc006059ee4"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-PickAndPlace-candidate.json",
+            "sha256": "d9cdc10ae45de54d4103e4f6fb9f65e71433c0e56e330c9d887fbcc006059ee4"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-PickAndPlace-gate.json",
+            "sha256": "7bb59375cb0bc7057b5a7393f20987eaaaa725c296fa679d366144afe626de95"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Push-baseline.json",
+            "sha256": "7d29bd5bbf5a521c5e06ffd21a07eff475ccbea1541f82a5d1d87080e1ac417e"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Push-candidate.json",
+            "sha256": "7d29bd5bbf5a521c5e06ffd21a07eff475ccbea1541f82a5d1d87080e1ac417e"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Push-gate.json",
+            "sha256": "ddf24b634a68c20c83302248aec71f5a0bd4badc3fc09d7b46826402e9699f2b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Reach-baseline.json",
+            "sha256": "1f7c6e5c54bada5a281efeb04b76dbe65fa9c8cbe380b7eb9bc29580e0c58435"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Reach-candidate.json",
+            "sha256": "1f7c6e5c54bada5a281efeb04b76dbe65fa9c8cbe380b7eb9bc29580e0c58435"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Reach-gate.json",
+            "sha256": "0e993559e7f4239ff9f04034d304c5c5d8e369e34232251336fda361abdcc563"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Slide-baseline.json",
+            "sha256": "44ce4d68dda071eaabed2bf2147be57858909892420af9e0f2b9a827bbc31d90"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Slide-candidate.json",
+            "sha256": "44ce4d68dda071eaabed2bf2147be57858909892420af9e0f2b9a827bbc31d90"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Slide-gate.json",
+            "sha256": "899309246dae1e8e8163d316a5068323ab54639660e17a0055223841c0012c77"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-6652487.out",
+            "sha256": "1de374d60685847f10b8052c5abd83181d18496ebb1c38add826c144f7f7974c"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/oscar_fetch_family_normgpu-0dd0271f.sbatch",
+            "sha256": "e03da194123052d4e4c34e857fe10620cf634a59a3e3a6caae6e5c36f8069af5"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate-remote-hashes.json",
+            "sha256": "89aeac63ef544a04e91b6c58d585430790e15d8a58bea793e3b0b98522cc9071"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-PickAndPlace-baseline.json",
+            "sha256": "d9cdc10ae45de54d4103e4f6fb9f65e71433c0e56e330c9d887fbcc006059ee4"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-PickAndPlace-candidate.json",
+            "sha256": "d9cdc10ae45de54d4103e4f6fb9f65e71433c0e56e330c9d887fbcc006059ee4"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-PickAndPlace-gate.json",
+            "sha256": "61e7983680027b5ce6a2b9116d408493c7fbb568e49df5c6623e60e7eb59e54c"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Push-baseline.json",
+            "sha256": "7d29bd5bbf5a521c5e06ffd21a07eff475ccbea1541f82a5d1d87080e1ac417e"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Push-candidate.json",
+            "sha256": "7d29bd5bbf5a521c5e06ffd21a07eff475ccbea1541f82a5d1d87080e1ac417e"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Push-gate.json",
+            "sha256": "8fcac38f68ce3a0f2eef0f0cf60572d38431365ee6b3218b91f553a250a9e185"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Reach-baseline.json",
+            "sha256": "1f7c6e5c54bada5a281efeb04b76dbe65fa9c8cbe380b7eb9bc29580e0c58435"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Reach-candidate.json",
+            "sha256": "1f7c6e5c54bada5a281efeb04b76dbe65fa9c8cbe380b7eb9bc29580e0c58435"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Reach-gate.json",
+            "sha256": "dc30bcc78e9cf52852474e63e71d406423589dd3ad7c4f558c25cc26708f28bf"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Slide-baseline.json",
+            "sha256": "44ce4d68dda071eaabed2bf2147be57858909892420af9e0f2b9a827bbc31d90"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Slide-candidate.json",
+            "sha256": "44ce4d68dda071eaabed2bf2147be57858909892420af9e0f2b9a827bbc31d90"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Slide-gate.json",
+            "sha256": "de6de00feadab5b5373053e4153f89bb059c759327b5ce5bc09e7bd20a963992"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-6649686.out",
+            "sha256": "da8c7591a99a6c52c2acc636325e505605971625325faa77e1482155af6dbea1"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original-remote-hashes.json",
+            "sha256": "1c5e819fded63332f3c39d7e4f49a624b27522e6741cb4dbdedc8563139552ca"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/regression.out",
+            "sha256": "5c64ccfbc240d353a1b994c100c1d29728e09683b87d4ded4a25ecf11f090570"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/scheduler.txt",
+            "sha256": "00a361607865f285fe40e64bf3645218e99606c412969db041bdd9f7af7bf90a"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/source-identity.json",
+            "sha256": "b8e8c93264905991b6f24322aa832166a11881ba2ceb86bc9b1d05cc2479eb9b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/final-readiness.out",
+            "sha256": "9632c23250934de5e8dd370e7efeef46999c6601f7a818d8e1fbb1727155a4c2"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/final-review.json",
+            "sha256": "20b45bd5cbf7b31717402c8593f531e17031ffe031bc7138e326859b1b8eb4c8"
           }
-        ]
+        ],
+        "acceptance": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json"
       },
       "cpu_semantic_result": "PASS_EXACT_CPU_FAMILY_GATE",
       "gpu_semantic_result": {
         "status": "NOT_CLAIMED",
         "note": "Separate GPU profile is renderer-only"
       },
-      "frozen_renderer_result": "PENDING_OSCAR_JOB_6649686_QOSGrpGRES",
+      "frozen_renderer_result": {
+        "cpu": "CPU_BACKEND_MISSING",
+        "gpu": "PASS",
+        "jobs": [
+          6649686,
+          6652487
+        ],
+        "task": "Slide"
+      },
       "known_limitations": [
-        "Required Oscar frozen-renderer/full-State/alias-frame gate pending at QOSGrpGRES; no backend promotion.",
-        "SWM observation integration DEFERRED; historical Dict container is not a stable-envs backend responsibility.",
-        "CPU full rendering unsupported. CPU physics pinned to MuJoCo3.8.1; GPU profile renderer-only.",
-        "Bounded Variation only; full historical appearance randomization, task kwargs, external forces and final benchmarks uncertified."
+        "SWM observation integration DEFERRED; flat/Dict learner packaging remains SWM-owned.",
+        "CPU full rendering unsupported (CPU_BACKEND_MISSING); CPU physics pinned MuJoCo3.8.1; GPU profile certifies rendering only.",
+        "Bounded Variation only; full historical default appearance randomization, nondefault task kwargs, external forces, upstream-image similarity and final benchmarks remain uncertified."
       ],
-      "remaining_gates": [
-        "Oscar frozen renderer and full/private State-render/alias-frame gates; require downloaded hash checks and actual terminal marker."
-      ],
-      "closure_code_check": "Family production diff inspected independently; shared machinery and all other accepted family code unchanged.",
+      "remaining_gates": [],
+      "closure_code_check": {
+        "covered_revision": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92",
+        "no_production_changes_during_promotion": true
+      },
       "observation_integration": "DEFERRED",
-      "family_candidate_evidence": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json"
+      "family_acceptance_evidence": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json",
+      "family_closure_evidence": {
+        "terminal_log": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-6649686.out",
+        "terminal_log_sha256": "da8c7591a99a6c52c2acc636325e505605971625325faa77e1482155af6dbea1",
+        "actual_success_marker": "FETCH_FAMILY_GPU_GATE_PASS fetch-family-0dd0271f",
+        "renderer_manifest": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Slide-candidate.json",
+        "renderer_sha256": "44ce4d68dda071eaabed2bf2147be57858909892420af9e0f2b9a827bbc31d90",
+        "separate_baseline": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Slide-baseline.json",
+        "baseline_equality": "PASS_BYTE_IDENTICAL",
+        "gate": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Slide-gate.json",
+        "duplicate_gate": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Slide-gate.json"
+      },
+      "closure_evidence": {
+        "terminal_log": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-6649686.out",
+        "terminal_log_sha256": "da8c7591a99a6c52c2acc636325e505605971625325faa77e1482155af6dbea1",
+        "actual_success_marker": "FETCH_FAMILY_GPU_GATE_PASS fetch-family-0dd0271f",
+        "renderer_manifest": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Slide-candidate.json",
+        "renderer_sha256": "44ce4d68dda071eaabed2bf2147be57858909892420af9e0f2b9a827bbc31d90",
+        "separate_baseline": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Slide-baseline.json",
+        "baseline_equality": "PASS_BYTE_IDENTICAL",
+        "gate": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Slide-gate.json",
+        "duplicate_gate": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Slide-gate.json"
+      }
     },
     {
       "historical_id": "swm/FetchSlideDense-v3",
-      "current_status": "INCOMPLETE",
+      "current_status": "VERIFIED",
       "family": "fetch",
       "pinned_swm_commit": "176d54532b3c0a251a4f509b74f2fdacc143a63d",
       "swm_implementation": {
@@ -6753,13 +8449,15 @@
       "stable_envs_classes": [
         "FetchSlideDense"
       ],
-      "accepted_classes": [],
+      "accepted_classes": [
+        "FetchSlideDense"
+      ],
       "historical_task_default_kwargs": {
         "registration_kwargs": {
           "env_id": "FetchSlideDense-v4"
         },
         "constructor_signature": "self, env_id, init_value=None, resolution=224, render_mode=None, flatten=True, **kwargs",
-        "accepted_task": null,
+        "accepted_task": "Slide; dense; backend only; SWM observation integration DEFERRED",
         "source_constructor": "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py:FetchWrapper.__init__",
         "candidate_task": {
           "has_object": true,
@@ -6778,7 +8476,7 @@
         }
       },
       "state_schema": {
-        "status": "PROVED_CPU_PENDING_RENDERER",
+        "status": "ACCEPTED_BOUNDED_SUFFICIENT",
         "fields": {
           "qpos": {
             "width": 22,
@@ -6852,14 +8550,13 @@
         "terminated": false,
         "truncation": "elapsed_steps >= 50"
       },
-      "accepted_variation_scope": "NOT_PROMOTED; CPU proved PASS_BOUNDED_CPU: agent.start_position, block.angle, block.mass, block.start_position, goal.start_position, object.color, table.color; physical mass where applicable; visual physics nonmutation; persistent versus reset settings",
+      "accepted_variation_scope": "PASS_BOUNDED_CPU: agent.start_position, block.angle, block.mass, block.start_position, goal.start_position, object.color, table.color; physical mass where applicable; visual physics nonmutation; persistent versus reset settings; GPU visual frame/nonmutation gate PASS",
       "execution_mode": "DELEGATED_CPU",
       "evidence_manifest": {
-        "candidate": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json",
         "artifacts": [
           {
             "path": "docs/research/fetch_family_recovery.md",
-            "sha256": "8b8bde43529eec45bd39c64b1aecfc716e622298be4dc8ab7bed5d9d9cd891ec"
+            "sha256": "ccaf31f9ce93fbca68266b0471af232596d418f51c1ca1fdb28a6abf64540956"
           },
           {
             "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlace-alias.json",
@@ -6979,7 +8676,7 @@
           },
           {
             "path": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json",
-            "sha256": "d0b5042eda5f2fb86d75482139a46f165d9ee01ae3108024a95d9c24bdb82255"
+            "sha256": "d67e901aece7f44ac4a8b90e4a17949a4a6a3987fcf9a623327135f8baa12e03"
           },
           {
             "path": "docs/research/semantic_recovery_evidence/fetch_family/diff-review.json",
@@ -7020,31 +8717,202 @@
           {
             "path": "docs/research/semantic_recovery_evidence/fetch_family/final-readiness.out",
             "sha256": "ff6a9d715c246b50fc3caabc87f59ee760435b2e0d9e9d8603e285442f075494"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json",
+            "sha256": "6b037d62b08d14ec89a07fee36bdc672276f9b42d6d30e735c9dc43ef447329c"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-PickAndPlace-baseline.json",
+            "sha256": "d9cdc10ae45de54d4103e4f6fb9f65e71433c0e56e330c9d887fbcc006059ee4"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-PickAndPlace-candidate.json",
+            "sha256": "d9cdc10ae45de54d4103e4f6fb9f65e71433c0e56e330c9d887fbcc006059ee4"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-PickAndPlace-gate.json",
+            "sha256": "7bb59375cb0bc7057b5a7393f20987eaaaa725c296fa679d366144afe626de95"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Push-baseline.json",
+            "sha256": "7d29bd5bbf5a521c5e06ffd21a07eff475ccbea1541f82a5d1d87080e1ac417e"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Push-candidate.json",
+            "sha256": "7d29bd5bbf5a521c5e06ffd21a07eff475ccbea1541f82a5d1d87080e1ac417e"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Push-gate.json",
+            "sha256": "ddf24b634a68c20c83302248aec71f5a0bd4badc3fc09d7b46826402e9699f2b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Reach-baseline.json",
+            "sha256": "1f7c6e5c54bada5a281efeb04b76dbe65fa9c8cbe380b7eb9bc29580e0c58435"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Reach-candidate.json",
+            "sha256": "1f7c6e5c54bada5a281efeb04b76dbe65fa9c8cbe380b7eb9bc29580e0c58435"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Reach-gate.json",
+            "sha256": "0e993559e7f4239ff9f04034d304c5c5d8e369e34232251336fda361abdcc563"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Slide-baseline.json",
+            "sha256": "44ce4d68dda071eaabed2bf2147be57858909892420af9e0f2b9a827bbc31d90"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Slide-candidate.json",
+            "sha256": "44ce4d68dda071eaabed2bf2147be57858909892420af9e0f2b9a827bbc31d90"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Slide-gate.json",
+            "sha256": "899309246dae1e8e8163d316a5068323ab54639660e17a0055223841c0012c77"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-6652487.out",
+            "sha256": "1de374d60685847f10b8052c5abd83181d18496ebb1c38add826c144f7f7974c"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/oscar_fetch_family_normgpu-0dd0271f.sbatch",
+            "sha256": "e03da194123052d4e4c34e857fe10620cf634a59a3e3a6caae6e5c36f8069af5"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate-remote-hashes.json",
+            "sha256": "89aeac63ef544a04e91b6c58d585430790e15d8a58bea793e3b0b98522cc9071"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-PickAndPlace-baseline.json",
+            "sha256": "d9cdc10ae45de54d4103e4f6fb9f65e71433c0e56e330c9d887fbcc006059ee4"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-PickAndPlace-candidate.json",
+            "sha256": "d9cdc10ae45de54d4103e4f6fb9f65e71433c0e56e330c9d887fbcc006059ee4"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-PickAndPlace-gate.json",
+            "sha256": "61e7983680027b5ce6a2b9116d408493c7fbb568e49df5c6623e60e7eb59e54c"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Push-baseline.json",
+            "sha256": "7d29bd5bbf5a521c5e06ffd21a07eff475ccbea1541f82a5d1d87080e1ac417e"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Push-candidate.json",
+            "sha256": "7d29bd5bbf5a521c5e06ffd21a07eff475ccbea1541f82a5d1d87080e1ac417e"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Push-gate.json",
+            "sha256": "8fcac38f68ce3a0f2eef0f0cf60572d38431365ee6b3218b91f553a250a9e185"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Reach-baseline.json",
+            "sha256": "1f7c6e5c54bada5a281efeb04b76dbe65fa9c8cbe380b7eb9bc29580e0c58435"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Reach-candidate.json",
+            "sha256": "1f7c6e5c54bada5a281efeb04b76dbe65fa9c8cbe380b7eb9bc29580e0c58435"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Reach-gate.json",
+            "sha256": "dc30bcc78e9cf52852474e63e71d406423589dd3ad7c4f558c25cc26708f28bf"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Slide-baseline.json",
+            "sha256": "44ce4d68dda071eaabed2bf2147be57858909892420af9e0f2b9a827bbc31d90"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Slide-candidate.json",
+            "sha256": "44ce4d68dda071eaabed2bf2147be57858909892420af9e0f2b9a827bbc31d90"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Slide-gate.json",
+            "sha256": "de6de00feadab5b5373053e4153f89bb059c759327b5ce5bc09e7bd20a963992"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-6649686.out",
+            "sha256": "da8c7591a99a6c52c2acc636325e505605971625325faa77e1482155af6dbea1"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original-remote-hashes.json",
+            "sha256": "1c5e819fded63332f3c39d7e4f49a624b27522e6741cb4dbdedc8563139552ca"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/regression.out",
+            "sha256": "5c64ccfbc240d353a1b994c100c1d29728e09683b87d4ded4a25ecf11f090570"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/scheduler.txt",
+            "sha256": "00a361607865f285fe40e64bf3645218e99606c412969db041bdd9f7af7bf90a"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/source-identity.json",
+            "sha256": "b8e8c93264905991b6f24322aa832166a11881ba2ceb86bc9b1d05cc2479eb9b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/final-readiness.out",
+            "sha256": "9632c23250934de5e8dd370e7efeef46999c6601f7a818d8e1fbb1727155a4c2"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/final-review.json",
+            "sha256": "20b45bd5cbf7b31717402c8593f531e17031ffe031bc7138e326859b1b8eb4c8"
           }
-        ]
+        ],
+        "acceptance": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json"
       },
       "cpu_semantic_result": "PASS_EXACT_CPU_FAMILY_GATE",
       "gpu_semantic_result": {
         "status": "NOT_CLAIMED",
         "note": "Separate GPU profile is renderer-only"
       },
-      "frozen_renderer_result": "PENDING_OSCAR_JOB_6649686_QOSGrpGRES",
+      "frozen_renderer_result": {
+        "cpu": "CPU_BACKEND_MISSING",
+        "gpu": "PASS",
+        "jobs": [
+          6649686,
+          6652487
+        ],
+        "task": "Slide"
+      },
       "known_limitations": [
-        "Required Oscar frozen-renderer/full-State/alias-frame gate pending at QOSGrpGRES; no backend promotion.",
-        "SWM observation integration DEFERRED; historical Dict container is not a stable-envs backend responsibility.",
-        "CPU full rendering unsupported. CPU physics pinned to MuJoCo3.8.1; GPU profile renderer-only.",
-        "Bounded Variation only; full historical appearance randomization, task kwargs, external forces and final benchmarks uncertified."
+        "SWM observation integration DEFERRED; flat/Dict learner packaging remains SWM-owned.",
+        "CPU full rendering unsupported (CPU_BACKEND_MISSING); CPU physics pinned MuJoCo3.8.1; GPU profile certifies rendering only.",
+        "Bounded Variation only; full historical default appearance randomization, nondefault task kwargs, external forces, upstream-image similarity and final benchmarks remain uncertified."
       ],
-      "remaining_gates": [
-        "Oscar frozen renderer and full/private State-render/alias-frame gates; require downloaded hash checks and actual terminal marker."
-      ],
-      "closure_code_check": "Family production diff inspected independently; shared machinery and all other accepted family code unchanged.",
+      "remaining_gates": [],
+      "closure_code_check": {
+        "covered_revision": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92",
+        "no_production_changes_during_promotion": true
+      },
       "observation_integration": "DEFERRED",
-      "family_candidate_evidence": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json"
+      "family_acceptance_evidence": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json",
+      "family_closure_evidence": {
+        "terminal_log": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-6649686.out",
+        "terminal_log_sha256": "da8c7591a99a6c52c2acc636325e505605971625325faa77e1482155af6dbea1",
+        "actual_success_marker": "FETCH_FAMILY_GPU_GATE_PASS fetch-family-0dd0271f",
+        "renderer_manifest": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Slide-candidate.json",
+        "renderer_sha256": "44ce4d68dda071eaabed2bf2147be57858909892420af9e0f2b9a827bbc31d90",
+        "separate_baseline": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Slide-baseline.json",
+        "baseline_equality": "PASS_BYTE_IDENTICAL",
+        "gate": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Slide-gate.json",
+        "duplicate_gate": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Slide-gate.json"
+      },
+      "closure_evidence": {
+        "terminal_log": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-6649686.out",
+        "terminal_log_sha256": "da8c7591a99a6c52c2acc636325e505605971625325faa77e1482155af6dbea1",
+        "actual_success_marker": "FETCH_FAMILY_GPU_GATE_PASS fetch-family-0dd0271f",
+        "renderer_manifest": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Slide-candidate.json",
+        "renderer_sha256": "44ce4d68dda071eaabed2bf2147be57858909892420af9e0f2b9a827bbc31d90",
+        "separate_baseline": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Slide-baseline.json",
+        "baseline_equality": "PASS_BYTE_IDENTICAL",
+        "gate": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Slide-gate.json",
+        "duplicate_gate": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Slide-gate.json"
+      }
     },
     {
       "historical_id": "swm/FetchSlideDict-v3",
-      "current_status": "INCOMPLETE",
+      "current_status": "VERIFIED",
       "family": "fetch",
       "pinned_swm_commit": "176d54532b3c0a251a4f509b74f2fdacc143a63d",
       "swm_implementation": {
@@ -7065,14 +8933,16 @@
       "stable_envs_classes": [
         "FetchSlideDict"
       ],
-      "accepted_classes": [],
+      "accepted_classes": [
+        "FetchSlideDict"
+      ],
       "historical_task_default_kwargs": {
         "registration_kwargs": {
           "env_id": "FetchSlide-v4",
           "flatten": false
         },
         "constructor_signature": "self, env_id, init_value=None, resolution=224, render_mode=None, flatten=True, **kwargs",
-        "accepted_task": null,
+        "accepted_task": "Slide; sparse; backend only; SWM observation integration DEFERRED",
         "source_constructor": "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py:FetchWrapper.__init__",
         "candidate_task": {
           "has_object": true,
@@ -7091,7 +8961,7 @@
         }
       },
       "state_schema": {
-        "status": "PROVED_CPU_PENDING_RENDERER",
+        "status": "ACCEPTED_BOUNDED_SUFFICIENT",
         "fields": {
           "qpos": {
             "width": 22,
@@ -7165,14 +9035,13 @@
         "terminated": false,
         "truncation": "elapsed_steps >= 50"
       },
-      "accepted_variation_scope": "NOT_PROMOTED; CPU proved PASS_BOUNDED_CPU: agent.start_position, block.angle, block.mass, block.start_position, goal.start_position, object.color, table.color; physical mass where applicable; visual physics nonmutation; persistent versus reset settings",
+      "accepted_variation_scope": "PASS_BOUNDED_CPU: agent.start_position, block.angle, block.mass, block.start_position, goal.start_position, object.color, table.color; physical mass where applicable; visual physics nonmutation; persistent versus reset settings; GPU visual frame/nonmutation gate PASS",
       "execution_mode": "DELEGATED_CPU",
       "evidence_manifest": {
-        "candidate": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json",
         "artifacts": [
           {
             "path": "docs/research/fetch_family_recovery.md",
-            "sha256": "8b8bde43529eec45bd39c64b1aecfc716e622298be4dc8ab7bed5d9d9cd891ec"
+            "sha256": "ccaf31f9ce93fbca68266b0471af232596d418f51c1ca1fdb28a6abf64540956"
           },
           {
             "path": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlace-alias.json",
@@ -7292,7 +9161,7 @@
           },
           {
             "path": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json",
-            "sha256": "d0b5042eda5f2fb86d75482139a46f165d9ee01ae3108024a95d9c24bdb82255"
+            "sha256": "d67e901aece7f44ac4a8b90e4a17949a4a6a3987fcf9a623327135f8baa12e03"
           },
           {
             "path": "docs/research/semantic_recovery_evidence/fetch_family/diff-review.json",
@@ -7333,27 +9202,198 @@
           {
             "path": "docs/research/semantic_recovery_evidence/fetch_family/final-readiness.out",
             "sha256": "ff6a9d715c246b50fc3caabc87f59ee760435b2e0d9e9d8603e285442f075494"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json",
+            "sha256": "6b037d62b08d14ec89a07fee36bdc672276f9b42d6d30e735c9dc43ef447329c"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-PickAndPlace-baseline.json",
+            "sha256": "d9cdc10ae45de54d4103e4f6fb9f65e71433c0e56e330c9d887fbcc006059ee4"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-PickAndPlace-candidate.json",
+            "sha256": "d9cdc10ae45de54d4103e4f6fb9f65e71433c0e56e330c9d887fbcc006059ee4"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-PickAndPlace-gate.json",
+            "sha256": "7bb59375cb0bc7057b5a7393f20987eaaaa725c296fa679d366144afe626de95"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Push-baseline.json",
+            "sha256": "7d29bd5bbf5a521c5e06ffd21a07eff475ccbea1541f82a5d1d87080e1ac417e"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Push-candidate.json",
+            "sha256": "7d29bd5bbf5a521c5e06ffd21a07eff475ccbea1541f82a5d1d87080e1ac417e"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Push-gate.json",
+            "sha256": "ddf24b634a68c20c83302248aec71f5a0bd4badc3fc09d7b46826402e9699f2b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Reach-baseline.json",
+            "sha256": "1f7c6e5c54bada5a281efeb04b76dbe65fa9c8cbe380b7eb9bc29580e0c58435"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Reach-candidate.json",
+            "sha256": "1f7c6e5c54bada5a281efeb04b76dbe65fa9c8cbe380b7eb9bc29580e0c58435"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Reach-gate.json",
+            "sha256": "0e993559e7f4239ff9f04034d304c5c5d8e369e34232251336fda361abdcc563"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Slide-baseline.json",
+            "sha256": "44ce4d68dda071eaabed2bf2147be57858909892420af9e0f2b9a827bbc31d90"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Slide-candidate.json",
+            "sha256": "44ce4d68dda071eaabed2bf2147be57858909892420af9e0f2b9a827bbc31d90"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Slide-gate.json",
+            "sha256": "899309246dae1e8e8163d316a5068323ab54639660e17a0055223841c0012c77"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-6652487.out",
+            "sha256": "1de374d60685847f10b8052c5abd83181d18496ebb1c38add826c144f7f7974c"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/oscar_fetch_family_normgpu-0dd0271f.sbatch",
+            "sha256": "e03da194123052d4e4c34e857fe10620cf634a59a3e3a6caae6e5c36f8069af5"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate-remote-hashes.json",
+            "sha256": "89aeac63ef544a04e91b6c58d585430790e15d8a58bea793e3b0b98522cc9071"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-PickAndPlace-baseline.json",
+            "sha256": "d9cdc10ae45de54d4103e4f6fb9f65e71433c0e56e330c9d887fbcc006059ee4"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-PickAndPlace-candidate.json",
+            "sha256": "d9cdc10ae45de54d4103e4f6fb9f65e71433c0e56e330c9d887fbcc006059ee4"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-PickAndPlace-gate.json",
+            "sha256": "61e7983680027b5ce6a2b9116d408493c7fbb568e49df5c6623e60e7eb59e54c"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Push-baseline.json",
+            "sha256": "7d29bd5bbf5a521c5e06ffd21a07eff475ccbea1541f82a5d1d87080e1ac417e"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Push-candidate.json",
+            "sha256": "7d29bd5bbf5a521c5e06ffd21a07eff475ccbea1541f82a5d1d87080e1ac417e"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Push-gate.json",
+            "sha256": "8fcac38f68ce3a0f2eef0f0cf60572d38431365ee6b3218b91f553a250a9e185"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Reach-baseline.json",
+            "sha256": "1f7c6e5c54bada5a281efeb04b76dbe65fa9c8cbe380b7eb9bc29580e0c58435"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Reach-candidate.json",
+            "sha256": "1f7c6e5c54bada5a281efeb04b76dbe65fa9c8cbe380b7eb9bc29580e0c58435"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Reach-gate.json",
+            "sha256": "dc30bcc78e9cf52852474e63e71d406423589dd3ad7c4f558c25cc26708f28bf"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Slide-baseline.json",
+            "sha256": "44ce4d68dda071eaabed2bf2147be57858909892420af9e0f2b9a827bbc31d90"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Slide-candidate.json",
+            "sha256": "44ce4d68dda071eaabed2bf2147be57858909892420af9e0f2b9a827bbc31d90"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Slide-gate.json",
+            "sha256": "de6de00feadab5b5373053e4153f89bb059c759327b5ce5bc09e7bd20a963992"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-6649686.out",
+            "sha256": "da8c7591a99a6c52c2acc636325e505605971625325faa77e1482155af6dbea1"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original-remote-hashes.json",
+            "sha256": "1c5e819fded63332f3c39d7e4f49a624b27522e6741cb4dbdedc8563139552ca"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/regression.out",
+            "sha256": "5c64ccfbc240d353a1b994c100c1d29728e09683b87d4ded4a25ecf11f090570"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/scheduler.txt",
+            "sha256": "00a361607865f285fe40e64bf3645218e99606c412969db041bdd9f7af7bf90a"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/source-identity.json",
+            "sha256": "b8e8c93264905991b6f24322aa832166a11881ba2ceb86bc9b1d05cc2479eb9b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/final-readiness.out",
+            "sha256": "9632c23250934de5e8dd370e7efeef46999c6601f7a818d8e1fbb1727155a4c2"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/final-review.json",
+            "sha256": "20b45bd5cbf7b31717402c8593f531e17031ffe031bc7138e326859b1b8eb4c8"
           }
-        ]
+        ],
+        "acceptance": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json"
       },
       "cpu_semantic_result": "PASS_EXACT_CPU_FAMILY_GATE",
       "gpu_semantic_result": {
         "status": "NOT_CLAIMED",
         "note": "Separate GPU profile is renderer-only"
       },
-      "frozen_renderer_result": "PENDING_OSCAR_JOB_6649686_QOSGrpGRES",
+      "frozen_renderer_result": {
+        "cpu": "CPU_BACKEND_MISSING",
+        "gpu": "PASS",
+        "jobs": [
+          6649686,
+          6652487
+        ],
+        "task": "Slide"
+      },
       "known_limitations": [
-        "Required Oscar frozen-renderer/full-State/alias-frame gate pending at QOSGrpGRES; no backend promotion.",
-        "SWM observation integration DEFERRED; historical Dict container is not a stable-envs backend responsibility.",
-        "CPU full rendering unsupported. CPU physics pinned to MuJoCo3.8.1; GPU profile renderer-only.",
-        "Bounded Variation only; full historical appearance randomization, task kwargs, external forces and final benchmarks uncertified."
+        "SWM observation integration DEFERRED; flat/Dict learner packaging remains SWM-owned.",
+        "CPU full rendering unsupported (CPU_BACKEND_MISSING); CPU physics pinned MuJoCo3.8.1; GPU profile certifies rendering only.",
+        "Bounded Variation only; full historical default appearance randomization, nondefault task kwargs, external forces, upstream-image similarity and final benchmarks remain uncertified."
       ],
-      "remaining_gates": [
-        "Oscar frozen renderer and full/private State-render/alias-frame gates; require downloaded hash checks and actual terminal marker."
-      ],
-      "closure_code_check": "Family production diff inspected independently; shared machinery and all other accepted family code unchanged.",
+      "remaining_gates": [],
+      "closure_code_check": {
+        "covered_revision": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92",
+        "no_production_changes_during_promotion": true
+      },
       "observation_integration": "DEFERRED",
-      "family_candidate_evidence": "docs/research/semantic_recovery_evidence/fetch_family/coverage.json"
+      "family_acceptance_evidence": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json",
+      "family_closure_evidence": {
+        "terminal_log": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-6649686.out",
+        "terminal_log_sha256": "da8c7591a99a6c52c2acc636325e505605971625325faa77e1482155af6dbea1",
+        "actual_success_marker": "FETCH_FAMILY_GPU_GATE_PASS fetch-family-0dd0271f",
+        "renderer_manifest": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Slide-candidate.json",
+        "renderer_sha256": "44ce4d68dda071eaabed2bf2147be57858909892420af9e0f2b9a827bbc31d90",
+        "separate_baseline": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Slide-baseline.json",
+        "baseline_equality": "PASS_BYTE_IDENTICAL",
+        "gate": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Slide-gate.json",
+        "duplicate_gate": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Slide-gate.json"
+      },
+      "closure_evidence": {
+        "terminal_log": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-6649686.out",
+        "terminal_log_sha256": "da8c7591a99a6c52c2acc636325e505605971625325faa77e1482155af6dbea1",
+        "actual_success_marker": "FETCH_FAMILY_GPU_GATE_PASS fetch-family-0dd0271f",
+        "renderer_manifest": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Slide-candidate.json",
+        "renderer_sha256": "44ce4d68dda071eaabed2bf2147be57858909892420af9e0f2b9a827bbc31d90",
+        "separate_baseline": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Slide-baseline.json",
+        "baseline_equality": "PASS_BYTE_IDENTICAL",
+        "gate": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Slide-gate.json",
+        "duplicate_gate": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/duplicate/fetch-family-0dd0271f-Slide-gate.json"
+      }
     },
     {
       "historical_id": "swm/FingerDMControl-v0",
@@ -12339,8 +14379,8 @@
     }
   ],
   "current_counts": {
-    "VERIFIED": 22,
-    "INCOMPLETE": 20
+    "VERIFIED": 33,
+    "INCOMPLETE": 9
   },
   "updates": [
     {
@@ -12356,6 +14396,16 @@
       "counts": {
         "VERIFIED": 22,
         "INCOMPLETE": 20
+      },
+      "observation_integration": "DEFERRED"
+    },
+    {
+      "kind": "FETCH_FAMILY_GPU_ACCEPTED",
+      "starting_head": "6f3cc85d6ef40007ae5eae99ea66e0fa60abf446",
+      "acceptance": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json",
+      "counts": {
+        "VERIFIED": 33,
+        "INCOMPLETE": 9
       },
       "observation_integration": "DEFERRED"
     }

@@ -121,12 +121,27 @@ the entire historical default five-leaf randomization surface is not certified.
 
 ## Renderer gate
 
-GPU gate status: **BLOCKED / PENDING at QOSGrpGRES, StartTime Unknown**.
-No GPU output or terminal marker has arrived. The job remains queued.
-Per the requested GPU-blocker stop condition, no new row is promoted.
-Final matrix: **22 VERIFIED / 20 INCOMPLETE** (eleven Fetch candidates await this gate). Oscar job `6649686`, immutable stage
-`fetch-family-0dd0271f`, archive SHA256
-`9829af3404ba7458ecb2e5e8195c3ac98f943a1e8c1f83114fb5a7b4305c4bbb`.
+GPU gate status: **PASS**. Original Oscar job **6649686** completed 0:0 in
+2:48 on NVIDIA RTX A5000; the user-authorized duplicate **6652487** completed
+0:0 in 4:49 on NVIDIA RTX A5500. Both emitted the exact marker
+`FETCH_FAMILY_GPU_GATE_PASS fetch-family-0dd0271f`.
+All four task baseline/candidate JSON pairs are byte-identical within each run.
+Every full/private equality, snapshot/live-state nonmutation, compact refusal,
+task-appropriate visual Variation and Dense/Dict canonical/varied-frame check passed.
+The original 22 closures remain intact; eleven candidates are now promoted:
+**33 VERIFIED / 9 INCOMPLETE**. SWM observation integration remains **DEFERRED**.
+
+Immutable source stage `fetch-family-0dd0271f` and all 189 staged files match archive
+SHA256 `9829af3404ba7458ecb2e5e8195c3ac98f943a1e8c1f83114fb5a7b4305c4bbb`.
+Raw logs, all 24 GPU JSON files, scheduler records and remote/local hash manifests
+are in `semantic_recovery_evidence/fetch_family/gpu_acceptance/`.
+`acceptance.json` records per-task results and both profiles. Original accepted
+representative evidence in `fetch_public/` remains unchanged.
+The duplicate uses partition `gpu` and QOS `norm-gpu`, with job-specific output
+paths and the identical immutable driver. Its runner is retained as evidence.
+No production, test driver, fixtures, thresholds or shared machinery changed
+in this promotion checkpoint.
+
 The accepted runner uses `3090-gcondo` / `cs-3090-gcondo`, with the existing
 `geforce3090|a5000|a5500` feature constraint for this small workload.
 
@@ -163,8 +178,9 @@ pixels have their explicit separate profiles/gates. Legacy renderer construction
 tests now construct FetchBase directly, preserving their original renderer-only
 assertions while all public registrations acquire the semantic mixin.
 
-Post-metadata readiness/promotion rerun: **29 passed**, recorded in
-`final-readiness.out`. No shared-contract review is requested. PushT remains separate and parked;
+The prior CPU checkpoint post-metadata readiness/promotion rerun was **29 passed**,
+recorded in `final-readiness.out`. GPU-promotion checks are recorded separately
+in `gpu_acceptance/regression.out` and `gpu_acceptance/final-readiness.out`. No shared-contract review is requested. PushT remains separate and parked;
 OGBench Cube/Scene, Craftax and Rocket are untouched. Full historical Variation,
 arbitrary externally injected forces, nondefault upstream task kwargs,
 upstream-image similarity and final paired benchmarks remain outside scope.

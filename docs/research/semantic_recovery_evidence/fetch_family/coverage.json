@@ -1,5 +1,5 @@
 {
-  "status": "CPU_COMPLETE_GPU_PENDING",
+  "status": "PASS",
   "implementation_commit": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92",
   "starting_sha": "c3e03f198e91c632a42ea81e69b474093d0a7e84",
   "starting_counts": {
@@ -7,10 +7,22 @@
     "INCOMPLETE": 20
   },
   "current_counts": {
-    "VERIFIED": 22,
-    "INCOMPLETE": 20
+    "VERIFIED": 33,
+    "INCOMPLETE": 9
   },
-  "newly_verified": [],
+  "newly_verified": [
+    "swm/FetchPickAndPlaceDense-v3",
+    "swm/FetchPickAndPlaceDict-v3",
+    "swm/FetchPush-v3",
+    "swm/FetchPushDense-v3",
+    "swm/FetchPushDict-v3",
+    "swm/FetchReach-v3",
+    "swm/FetchReachDense-v3",
+    "swm/FetchReachDict-v3",
+    "swm/FetchSlide-v3",
+    "swm/FetchSlideDense-v3",
+    "swm/FetchSlideDict-v3"
+  ],
   "cpu_cases": 96,
   "alias_cases": 48,
   "public_contract_registrations": 12,
@@ -25,10 +37,10 @@
   "gpu_semantics": "NOT_CLAIMED_SEPARATE_RENDERER_PROFILE",
   "cpu_full_renderer": "CPU_BACKEND_MISSING",
   "gpu_job": 6649686,
-  "gpu_status": "PENDING",
-  "gpu_reason": "QOSGrpGRES",
-  "gpu_start_time": "Unknown",
-  "gpu_terminal_marker_received": false,
+  "gpu_status": "PASS",
+  "gpu_reason": null,
+  "gpu_start_time": "See gpu_acceptance/scheduler.txt",
+  "gpu_terminal_marker_received": true,
   "renderer_baseline": "6d80b68b8b3ccd07d4207be94cbf4f0760758a06",
   "renderer_baseline_unchanged": true,
   "representative_driver": "bf9101cbcddbb88566879ae40ce4e1cda0e65550",
@@ -47,12 +59,16 @@
       "equivalence_proof": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlace-alias.json",
       "equivalence_sha256": "8c5e5e39217416f83ab9034fd0cf1e507b2e966ffc14c5d89abc2c93c0b0d390",
       "equivalence_reason": "Same source physical constructor, task-specific State schema, restoration, RNG and lifecycle. Dense changes reward_type only. Dict changes no backend constructor parameters; observation packaging is SWM-owned.",
-      "gpu_renderer": "PENDING",
+      "gpu_renderer": "PASS",
       "gpu_job": 6649686,
-      "required_gpu_proof": "fetch-family-0dd0271f-PickAndPlace-gate.json plus frozen baseline/candidate equality and FETCH_FAMILY_GPU_GATE_PASS marker",
       "renderer_deduplication_reason": "Same SCENE, qpos/goal projection and unmodified FetchBase; candidate driver explicitly compares canonical and varied Dense/Dict frames to sparse.",
       "observation_integration": "DEFERRED",
-      "backend_status": "VERIFIED_PREVIOUS_CHECKPOINT"
+      "backend_status": "VERIFIED",
+      "gpu_jobs": [
+        6649686,
+        6652487
+      ],
+      "gpu_proof": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-PickAndPlace-gate.json"
     },
     "swm/FetchPickAndPlaceDense-v3": {
       "task": "PickAndPlace",
@@ -64,12 +80,16 @@
       "equivalence_proof": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlace-alias.json",
       "equivalence_sha256": "8c5e5e39217416f83ab9034fd0cf1e507b2e966ffc14c5d89abc2c93c0b0d390",
       "equivalence_reason": "Same source physical constructor, task-specific State schema, restoration, RNG and lifecycle. Dense changes reward_type only. Dict changes no backend constructor parameters; observation packaging is SWM-owned.",
-      "gpu_renderer": "PENDING",
+      "gpu_renderer": "PASS",
       "gpu_job": 6649686,
-      "required_gpu_proof": "fetch-family-0dd0271f-PickAndPlace-gate.json plus frozen baseline/candidate equality and FETCH_FAMILY_GPU_GATE_PASS marker",
       "renderer_deduplication_reason": "Same SCENE, qpos/goal projection and unmodified FetchBase; candidate driver explicitly compares canonical and varied Dense/Dict frames to sparse.",
       "observation_integration": "DEFERRED",
-      "backend_status": "INCOMPLETE_GPU_PENDING"
+      "backend_status": "VERIFIED",
+      "gpu_jobs": [
+        6649686,
+        6652487
+      ],
+      "gpu_proof": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-PickAndPlace-gate.json"
     },
     "swm/FetchPickAndPlaceDict-v3": {
       "task": "PickAndPlace",
@@ -81,12 +101,16 @@
       "equivalence_proof": "docs/research/semantic_recovery_evidence/fetch_family/PickAndPlace-alias.json",
       "equivalence_sha256": "8c5e5e39217416f83ab9034fd0cf1e507b2e966ffc14c5d89abc2c93c0b0d390",
       "equivalence_reason": "Same source physical constructor, task-specific State schema, restoration, RNG and lifecycle. Dense changes reward_type only. Dict changes no backend constructor parameters; observation packaging is SWM-owned.",
-      "gpu_renderer": "PENDING",
+      "gpu_renderer": "PASS",
       "gpu_job": 6649686,
-      "required_gpu_proof": "fetch-family-0dd0271f-PickAndPlace-gate.json plus frozen baseline/candidate equality and FETCH_FAMILY_GPU_GATE_PASS marker",
       "renderer_deduplication_reason": "Same SCENE, qpos/goal projection and unmodified FetchBase; candidate driver explicitly compares canonical and varied Dense/Dict frames to sparse.",
       "observation_integration": "DEFERRED",
-      "backend_status": "INCOMPLETE_GPU_PENDING"
+      "backend_status": "VERIFIED",
+      "gpu_jobs": [
+        6649686,
+        6652487
+      ],
+      "gpu_proof": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-PickAndPlace-gate.json"
     },
     "swm/FetchReach-v3": {
       "task": "Reach",
@@ -98,12 +122,16 @@
       "equivalence_proof": "docs/research/semantic_recovery_evidence/fetch_family/Reach-alias.json",
       "equivalence_sha256": "83c12861a5c580c2b77f99edd1ee919bf3be8aa46b88b2236b5d11e8d45746bd",
       "equivalence_reason": "Same source physical constructor, task-specific State schema, restoration, RNG and lifecycle. Dense changes reward_type only. Dict changes no backend constructor parameters; observation packaging is SWM-owned.",
-      "gpu_renderer": "PENDING",
+      "gpu_renderer": "PASS",
       "gpu_job": 6649686,
-      "required_gpu_proof": "fetch-family-0dd0271f-Reach-gate.json plus frozen baseline/candidate equality and FETCH_FAMILY_GPU_GATE_PASS marker",
       "renderer_deduplication_reason": "Same SCENE, qpos/goal projection and unmodified FetchBase; candidate driver explicitly compares canonical and varied Dense/Dict frames to sparse.",
       "observation_integration": "DEFERRED",
-      "backend_status": "INCOMPLETE_GPU_PENDING"
+      "backend_status": "VERIFIED",
+      "gpu_jobs": [
+        6649686,
+        6652487
+      ],
+      "gpu_proof": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Reach-gate.json"
     },
     "swm/FetchReachDense-v3": {
       "task": "Reach",
@@ -115,12 +143,16 @@
       "equivalence_proof": "docs/research/semantic_recovery_evidence/fetch_family/Reach-alias.json",
       "equivalence_sha256": "83c12861a5c580c2b77f99edd1ee919bf3be8aa46b88b2236b5d11e8d45746bd",
       "equivalence_reason": "Same source physical constructor, task-specific State schema, restoration, RNG and lifecycle. Dense changes reward_type only. Dict changes no backend constructor parameters; observation packaging is SWM-owned.",
-      "gpu_renderer": "PENDING",
+      "gpu_renderer": "PASS",
       "gpu_job": 6649686,
-      "required_gpu_proof": "fetch-family-0dd0271f-Reach-gate.json plus frozen baseline/candidate equality and FETCH_FAMILY_GPU_GATE_PASS marker",
       "renderer_deduplication_reason": "Same SCENE, qpos/goal projection and unmodified FetchBase; candidate driver explicitly compares canonical and varied Dense/Dict frames to sparse.",
       "observation_integration": "DEFERRED",
-      "backend_status": "INCOMPLETE_GPU_PENDING"
+      "backend_status": "VERIFIED",
+      "gpu_jobs": [
+        6649686,
+        6652487
+      ],
+      "gpu_proof": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Reach-gate.json"
     },
     "swm/FetchReachDict-v3": {
       "task": "Reach",
@@ -132,12 +164,16 @@
       "equivalence_proof": "docs/research/semantic_recovery_evidence/fetch_family/Reach-alias.json",
       "equivalence_sha256": "83c12861a5c580c2b77f99edd1ee919bf3be8aa46b88b2236b5d11e8d45746bd",
       "equivalence_reason": "Same source physical constructor, task-specific State schema, restoration, RNG and lifecycle. Dense changes reward_type only. Dict changes no backend constructor parameters; observation packaging is SWM-owned.",
-      "gpu_renderer": "PENDING",
+      "gpu_renderer": "PASS",
       "gpu_job": 6649686,
-      "required_gpu_proof": "fetch-family-0dd0271f-Reach-gate.json plus frozen baseline/candidate equality and FETCH_FAMILY_GPU_GATE_PASS marker",
       "renderer_deduplication_reason": "Same SCENE, qpos/goal projection and unmodified FetchBase; candidate driver explicitly compares canonical and varied Dense/Dict frames to sparse.",
       "observation_integration": "DEFERRED",
-      "backend_status": "INCOMPLETE_GPU_PENDING"
+      "backend_status": "VERIFIED",
+      "gpu_jobs": [
+        6649686,
+        6652487
+      ],
+      "gpu_proof": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Reach-gate.json"
     },
     "swm/FetchPush-v3": {
       "task": "Push",
@@ -149,12 +185,16 @@
       "equivalence_proof": "docs/research/semantic_recovery_evidence/fetch_family/Push-alias.json",
       "equivalence_sha256": "e41d6a549377b3a169ef44f5e58725b3992eb3c31d0357e8d22425ca1931a11b",
       "equivalence_reason": "Same source physical constructor, task-specific State schema, restoration, RNG and lifecycle. Dense changes reward_type only. Dict changes no backend constructor parameters; observation packaging is SWM-owned.",
-      "gpu_renderer": "PENDING",
+      "gpu_renderer": "PASS",
       "gpu_job": 6649686,
-      "required_gpu_proof": "fetch-family-0dd0271f-Push-gate.json plus frozen baseline/candidate equality and FETCH_FAMILY_GPU_GATE_PASS marker",
       "renderer_deduplication_reason": "Same SCENE, qpos/goal projection and unmodified FetchBase; candidate driver explicitly compares canonical and varied Dense/Dict frames to sparse.",
       "observation_integration": "DEFERRED",
-      "backend_status": "INCOMPLETE_GPU_PENDING"
+      "backend_status": "VERIFIED",
+      "gpu_jobs": [
+        6649686,
+        6652487
+      ],
+      "gpu_proof": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Push-gate.json"
     },
     "swm/FetchPushDense-v3": {
       "task": "Push",
@@ -166,12 +206,16 @@
       "equivalence_proof": "docs/research/semantic_recovery_evidence/fetch_family/Push-alias.json",
       "equivalence_sha256": "e41d6a549377b3a169ef44f5e58725b3992eb3c31d0357e8d22425ca1931a11b",
       "equivalence_reason": "Same source physical constructor, task-specific State schema, restoration, RNG and lifecycle. Dense changes reward_type only. Dict changes no backend constructor parameters; observation packaging is SWM-owned.",
-      "gpu_renderer": "PENDING",
+      "gpu_renderer": "PASS",
       "gpu_job": 6649686,
-      "required_gpu_proof": "fetch-family-0dd0271f-Push-gate.json plus frozen baseline/candidate equality and FETCH_FAMILY_GPU_GATE_PASS marker",
       "renderer_deduplication_reason": "Same SCENE, qpos/goal projection and unmodified FetchBase; candidate driver explicitly compares canonical and varied Dense/Dict frames to sparse.",
       "observation_integration": "DEFERRED",
-      "backend_status": "INCOMPLETE_GPU_PENDING"
+      "backend_status": "VERIFIED",
+      "gpu_jobs": [
+        6649686,
+        6652487
+      ],
+      "gpu_proof": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Push-gate.json"
     },
     "swm/FetchPushDict-v3": {
       "task": "Push",
@@ -183,12 +227,16 @@
       "equivalence_proof": "docs/research/semantic_recovery_evidence/fetch_family/Push-alias.json",
       "equivalence_sha256": "e41d6a549377b3a169ef44f5e58725b3992eb3c31d0357e8d22425ca1931a11b",
       "equivalence_reason": "Same source physical constructor, task-specific State schema, restoration, RNG and lifecycle. Dense changes reward_type only. Dict changes no backend constructor parameters; observation packaging is SWM-owned.",
-      "gpu_renderer": "PENDING",
+      "gpu_renderer": "PASS",
       "gpu_job": 6649686,
-      "required_gpu_proof": "fetch-family-0dd0271f-Push-gate.json plus frozen baseline/candidate equality and FETCH_FAMILY_GPU_GATE_PASS marker",
       "renderer_deduplication_reason": "Same SCENE, qpos/goal projection and unmodified FetchBase; candidate driver explicitly compares canonical and varied Dense/Dict frames to sparse.",
       "observation_integration": "DEFERRED",
-      "backend_status": "INCOMPLETE_GPU_PENDING"
+      "backend_status": "VERIFIED",
+      "gpu_jobs": [
+        6649686,
+        6652487
+      ],
+      "gpu_proof": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Push-gate.json"
     },
     "swm/FetchSlide-v3": {
       "task": "Slide",
@@ -200,12 +248,16 @@
       "equivalence_proof": "docs/research/semantic_recovery_evidence/fetch_family/Slide-alias.json",
       "equivalence_sha256": "76e09aaba8426d96d1e911a7b06b8a4d74ec0a2d3601b153aad8d52aa0608b20",
       "equivalence_reason": "Same source physical constructor, task-specific State schema, restoration, RNG and lifecycle. Dense changes reward_type only. Dict changes no backend constructor parameters; observation packaging is SWM-owned.",
-      "gpu_renderer": "PENDING",
+      "gpu_renderer": "PASS",
       "gpu_job": 6649686,
-      "required_gpu_proof": "fetch-family-0dd0271f-Slide-gate.json plus frozen baseline/candidate equality and FETCH_FAMILY_GPU_GATE_PASS marker",
       "renderer_deduplication_reason": "Same SCENE, qpos/goal projection and unmodified FetchBase; candidate driver explicitly compares canonical and varied Dense/Dict frames to sparse.",
       "observation_integration": "DEFERRED",
-      "backend_status": "INCOMPLETE_GPU_PENDING"
+      "backend_status": "VERIFIED",
+      "gpu_jobs": [
+        6649686,
+        6652487
+      ],
+      "gpu_proof": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Slide-gate.json"
     },
     "swm/FetchSlideDense-v3": {
       "task": "Slide",
@@ -217,12 +269,16 @@
       "equivalence_proof": "docs/research/semantic_recovery_evidence/fetch_family/Slide-alias.json",
       "equivalence_sha256": "76e09aaba8426d96d1e911a7b06b8a4d74ec0a2d3601b153aad8d52aa0608b20",
       "equivalence_reason": "Same source physical constructor, task-specific State schema, restoration, RNG and lifecycle. Dense changes reward_type only. Dict changes no backend constructor parameters; observation packaging is SWM-owned.",
-      "gpu_renderer": "PENDING",
+      "gpu_renderer": "PASS",
       "gpu_job": 6649686,
-      "required_gpu_proof": "fetch-family-0dd0271f-Slide-gate.json plus frozen baseline/candidate equality and FETCH_FAMILY_GPU_GATE_PASS marker",
       "renderer_deduplication_reason": "Same SCENE, qpos/goal projection and unmodified FetchBase; candidate driver explicitly compares canonical and varied Dense/Dict frames to sparse.",
       "observation_integration": "DEFERRED",
-      "backend_status": "INCOMPLETE_GPU_PENDING"
+      "backend_status": "VERIFIED",
+      "gpu_jobs": [
+        6649686,
+        6652487
+      ],
+      "gpu_proof": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Slide-gate.json"
     },
     "swm/FetchSlideDict-v3": {
       "task": "Slide",
@@ -234,12 +290,21 @@
       "equivalence_proof": "docs/research/semantic_recovery_evidence/fetch_family/Slide-alias.json",
       "equivalence_sha256": "76e09aaba8426d96d1e911a7b06b8a4d74ec0a2d3601b153aad8d52aa0608b20",
       "equivalence_reason": "Same source physical constructor, task-specific State schema, restoration, RNG and lifecycle. Dense changes reward_type only. Dict changes no backend constructor parameters; observation packaging is SWM-owned.",
-      "gpu_renderer": "PENDING",
+      "gpu_renderer": "PASS",
       "gpu_job": 6649686,
-      "required_gpu_proof": "fetch-family-0dd0271f-Slide-gate.json plus frozen baseline/candidate equality and FETCH_FAMILY_GPU_GATE_PASS marker",
       "renderer_deduplication_reason": "Same SCENE, qpos/goal projection and unmodified FetchBase; candidate driver explicitly compares canonical and varied Dense/Dict frames to sparse.",
       "observation_integration": "DEFERRED",
-      "backend_status": "INCOMPLETE_GPU_PENDING"
+      "backend_status": "VERIFIED",
+      "gpu_jobs": [
+        6649686,
+        6652487
+      ],
+      "gpu_proof": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/original/fetch-family-0dd0271f-Slide-gate.json"
     }
-  }
+  },
+  "gpu_jobs": [
+    6649686,
+    6652487
+  ],
+  "acceptance": "docs/research/semantic_recovery_evidence/fetch_family/gpu_acceptance/acceptance.json"
 }
