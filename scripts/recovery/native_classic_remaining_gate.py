@@ -228,8 +228,14 @@ def _continuous_dtype_flag_necessity(device):
             wrong["task", "state_is_float32"].fill_(True)
             env.set_state(wrong)
             got_wrong, expected = env.step(action), ref.step(action)
-            position_error = float((got_wrong["state", "position"] - expected["state", "position"]).abs().max())
-            observation_error = float((got_wrong["observation"] - expected["observation"]).abs().max())
+            position_error = float((
+                got_wrong["state", "position"].detach().cpu()
+                - expected["state", "position"].detach().cpu()
+            ).abs().max())
+            observation_error = float((
+                got_wrong["observation"].detach().cpu()
+                - expected["observation"].detach().cpu()
+            ).abs().max())
             assert position_error > 0 or observation_error > 0
 
             env.set_state(snapshot)
