@@ -1,10 +1,9 @@
 """The twelve Fetch cells after the Fetch layout, in two tiers.
 
-The sparse PickAndPlace representative now has delegated CPU semantics and
-imports without the optional GPU renderer dependencies. The eleven siblings
-still use FetchBase's renderer-only contract. These legacy renderer tests cover
-that base and unchanged frozen declarations; the public PickAndPlace gate lives
-in scripts/recovery/fetch_public_gate.py.
+All twelve Fetch cells use parameterized delegated CPU semantics. These legacy
+renderer tests construct FetchBase directly to protect its unchanged renderer
+contract; the full public family gates live in scripts/recovery/fetch_public_gate.py
+and scripts/recovery/fetch_alias_gate.py.
 
 **Tier 1 reads the SOURCE.** That ``FetchBase`` derives ``Env``, that its constructor takes
 ``num_envs=``, that it assigns ``state_layout`` per instance and
@@ -153,14 +152,14 @@ def test_twelve_cells_are_declared_as_data_and_not_as_twelve_class_bodies():
     assert len(CLASSES) == 4, sorted(CLASSES)  # _Cache, _Bundle, _Ctx, FetchBase — and no cell
 
 
-def test_renderer_dependencies_are_checked_lazily_and_only_one_cell_has_semantics():
+def test_renderer_dependencies_are_checked_lazily_and_all_cells_share_semantics():
     """CPU physics imports independently; mesh rendering still requires its backend."""
     helper = next(n for n in TREE.body if isinstance(n, ast.FunctionDef) and n.name == "_require_gpu_renderer")
     assert any(isinstance(n, ast.Raise) for n in ast.walk(helper))
     assert not any(isinstance(n, ast.If) and any(isinstance(x, ast.Raise) for x in ast.walk(n)) for n in TREE.body)
     maker = next(n for n in TREE.body if isinstance(n, ast.FunctionDef) and n.name == "_make_classes")
-    assert 'cname == "FetchPickAndPlace"' in ast.unparse(maker) or "cname == 'FetchPickAndPlace'" in ast.unparse(maker)
-    assert "(_PickAndPlaceSemantics, FetchBase)" in ast.unparse(maker)
+    assert "(_FetchSemantics, FetchBase)" in ast.unparse(maker)
+    assert "if cname" not in ast.unparse(maker)
 
 
 def test_the_module_level_caches_split_egl_from_device_memory():
@@ -194,10 +193,15 @@ def pool(scene, ref_id, state_dim, nq, n=512):
     return pools[scene]
 F._state_pool = pool
 
+def legacy_class(name):
+    public = getattr(F, name)
+    return type(name, (F.FetchBase,), dict(SCENE=public.SCENE, REF_ID=public.REF_ID,
+                __doc__=public.__doc__))
+
 out = {}
 for name in ("FetchReach", "FetchPush"):
     corpus = np.load(f"{states_dir}/{name}.npz")["states"].astype(np.float32)[:6]
-    env = getattr(snv, name)(num_envs=6, device="cpu")
+    env = legacy_class(name)(num_envs=6, device="cpu")
     env._set_render_state(corpus)
     st = env.state
     rec = {
@@ -232,7 +236,7 @@ for name in ("FetchReach", "FetchPush"):
         env._render(); rec["closed_refuses_render"] = False
     except RuntimeError:
         rec["closed_refuses_render"] = True
-    e2 = getattr(snv, name)(num_envs=2, device="cpu")
+    e2 = legacy_class(name)(num_envs=2, device="cpu")
     rec["constructed_num_envs"] = int(e2.num_envs)
     e2.close()
     out[name] = rec

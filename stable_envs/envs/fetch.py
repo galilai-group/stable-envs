@@ -1238,7 +1238,7 @@ CELLS = (
 )
 
 
-from ._fetch_semantics import PickAndPlaceSemantics as _PickAndPlaceSemantics
+from ._fetch_semantics import FetchSemantics as _FetchSemantics
 
 
 def _make_classes() -> dict[str, type]:
@@ -1261,7 +1261,7 @@ def _make_classes() -> dict[str, type]:
         made[cname] = register(
             type(
                 cname,
-                (_PickAndPlaceSemantics, FetchBase) if cname == "FetchPickAndPlace" else (FetchBase,),
+                (_FetchSemantics, FetchBase),
                 dict(
                     SCENE=scene,
                     REF_ID=ref,
@@ -1270,10 +1270,8 @@ def _make_classes() -> dict[str, type]:
                     reference_id=ref,
                     __module__=__name__,
                     __doc__=(
-                        f"gymnasium-robotics {ref}. State is qpos plus the "
-                        f"3-D goal; the {suffix or 'sparse'} variant differs from its siblings in the "
-                        f"reward and the observation container, neither of which reaches the renderer, so "
-                        f"it shares the {scene} plate and model."
+                        f"gymnasium-robotics {ref}. Full restorable State; private qpos/goal rendering. "
+                        f"SWM observation integration DEFERRED. Shares the {scene} renderer."
                     ),
                 ),
             )

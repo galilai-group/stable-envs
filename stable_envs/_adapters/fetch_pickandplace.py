@@ -1,4 +1,4 @@
-"""Private delegated semantics for the sparse historical FetchPickAndPlace only.
+"""Private parameterized Fetch semantics; observation packaging belongs to SWM.
 
 The source-proof report establishes warmstart and the gripper controller cache.
 No SWM code or opaque MuJoCo state serialization is used at runtime.
@@ -35,30 +35,49 @@ def _integer(words):
     return sum(int(word) << (32 * i) for i, word in enumerate(words))
 
 
-class FetchPickAndPlaceAdapter:
+def state_fields(nq, nv):
+    fields = dict(FIELDS)
+    fields.update(qpos=(nq, torch.float64), qvel=(nv, torch.float64), warmstart=(nv, torch.float64))
+    return fields
+
+
+class FetchAdapter:
     execution_mode = "DELEGATED_CPU"
 
-    def __init__(self, num_envs, device="cpu", seed=0):
+    def __init__(self, num_envs, device="cpu", seed=0, task="PickAndPlace", reward_type="sparse"):
         import gymnasium as gym
         import mujoco
         from gymnasium_robotics.envs.fetch.pick_and_place import MujocoFetchPickAndPlaceEnv
+        from gymnasium_robotics.envs.fetch.push import MujocoFetchPushEnv
+        from gymnasium_robotics.envs.fetch.reach import MujocoFetchReachEnv
+        from gymnasium_robotics.envs.fetch.slide import MujocoFetchSlideEnv
+
+        cls = {
+            "PickAndPlace": MujocoFetchPickAndPlaceEnv,
+            "Reach": MujocoFetchReachEnv,
+            "Push": MujocoFetchPushEnv,
+            "Slide": MujocoFetchSlideEnv,
+        }[task]
 
         self.num_envs, self.device = int(num_envs), torch.device(device)
         self._mujoco = mujoco
-        self.envs = [
-            gym.wrappers.TimeLimit(MujocoFetchPickAndPlaceEnv(reward_type="sparse"), 50) for _ in range(self.num_envs)
-        ]
+        self.envs = [gym.wrappers.TimeLimit(cls(reward_type=reward_type), 50) for _ in range(self.num_envs)]
+        model = self.envs[0].unwrapped.model
+        self.fields = state_fields(model.nq, model.nv)
+        self.has_object = self.envs[0].unwrapped.has_object
         self._gripper = [
             mujoco.mj_name2id(e.unwrapped.model, mujoco.mjtObj.mjOBJ_BODY, "robot0:gripper_link") for e in self.envs
         ]
         self._object = [mujoco.mj_name2id(e.unwrapped.model, mujoco.mjtObj.mjOBJ_BODY, "object0") for e in self.envs]
-        self._mass = np.array([e.unwrapped.model.body_mass[i] for e, i in zip(self.envs, self._object)])
+        self._mass = np.array(
+            [e.unwrapped.model.body_mass[i] if i >= 0 else 0.0 for e, i in zip(self.envs, self._object)]
+        )
         self._closed = False
         self.reset(seed=seed)
 
     def _check_open(self):
         if self._closed:
-            raise RuntimeError("FetchPickAndPlaceAdapter is closed")
+            raise RuntimeError("FetchAdapter is closed")
 
     def configure_object_mass(self, values):
         self._mass = np.asarray(values, np.float64).reshape(self.num_envs).copy()
@@ -86,7 +105,8 @@ class FetchPickAndPlaceAdapter:
             if "block.mass" in values:
                 self._mass[lane] = float(np.asarray(values["block.mass"]).reshape(-1)[0])
             # Historical SWM applies the current mass after upstream reset.
-            e.unwrapped.model.body_mass[self._object[lane]] = self._mass[lane]
+            if self.has_object:
+                e.unwrapped.model.body_mass[self._object[lane]] = self._mass[lane]
             if changed:
                 self._mujoco.mj_forward(u.model, u.data)
         return self.get_state()
@@ -115,7 +135,7 @@ class FetchPickAndPlaceAdapter:
                 ("rng", "uinteger"): [r["uinteger"]],
             }
             row = TensorDict({}, batch_size=[], device=self.device)
-            for key, (_, dtype) in FIELDS.items():
+            for key, (_, dtype) in self.fields.items():
                 row[key] = torch.as_tensor(values[key], dtype=dtype, device=self.device).clone()
             rows.append(row)
         return torch.stack(rows)
@@ -125,7 +145,7 @@ class FetchPickAndPlaceAdapter:
         if not isinstance(state, TensorDict) or state.batch_size != torch.Size([self.num_envs]):
             raise TypeError("Fetch requires full TensorDict State with batch [num_envs]")
         keys = state.keys(True, True)
-        for key, (width, dtype) in FIELDS.items():
+        for key, (width, dtype) in self.fields.items():
             if key not in keys:
                 raise ValueError(f"Full State missing {key}")
             value = state[key]
@@ -174,27 +194,13 @@ class FetchPickAndPlaceAdapter:
             raise ValueError("Fetch action must have shape (num_envs,4)")
         # Preserve public dtype: upstream multiplication before concatenation is observable.
         outputs = [e.step(actions[lane]) for lane, e in enumerate(self.envs)]
-        observations = [np.concatenate([o["observation"], o["desired_goal"]]).astype(np.float32) for o, *_ in outputs]
-        observation = torch.as_tensor(np.stack(observations), device=self.device)
-        info = TensorDict(
-            {
-                "proprio": torch.as_tensor(np.stack([x[0]["observation"] for x in outputs]), device=self.device),
-                "state": observation.clone(),
-                "goal_state": torch.as_tensor(np.stack([x[0]["desired_goal"] for x in outputs]), device=self.device),
-                "is_success": torch.as_tensor(np.array([x[4]["is_success"] for x in outputs]), device=self.device),
-            },
-            [self.num_envs],
-            device=self.device,
-        )
         return TensorDict(
             {
                 "state": self.get_state(),
-                "observation": observation,
                 "reward": torch.as_tensor(np.array([x[1] for x in outputs]), device=self.device),
                 "terminated": torch.as_tensor(np.array([x[2] for x in outputs]), device=self.device),
                 "truncated": torch.as_tensor(np.array([x[3] for x in outputs]), device=self.device),
-                "success": info["is_success"].clone(),
-                "info": info,
+                "success": torch.as_tensor(np.array([x[4]["is_success"] for x in outputs]), device=self.device),
             },
             [self.num_envs],
             device=self.device,
@@ -205,3 +211,7 @@ class FetchPickAndPlaceAdapter:
             for e in self.envs:
                 e.close()
             self._closed = True
+
+
+# Compatibility name for the accepted representative private probe.
+FetchPickAndPlaceAdapter = FetchAdapter

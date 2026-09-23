@@ -14,10 +14,22 @@ import numpy as np
 import stable_worldmodel
 import torch
 
-from scripts.recovery.fetch_pickandplace_adapter_probe import compare_output, compare_state, exact_array, oracle
+from scripts.recovery.fetch_pickandplace_adapter_probe import compare_state, exact_array, oracle
 from stable_envs.envs.fetch import FetchPickAndPlace
 
+TASK = "PickAndPlace"
+SUFFIX = ""
+ID = "swm/FetchPickAndPlace-v3"
+
 PIN = "176d54532b3c0a251a4f509b74f2fdacc143a63d"
+
+
+def compare_output(out, expected):
+    # SWM's observations and info["state"] are deliberately outside this gate.
+    assert set(out.keys()) == {"state", "reward", "success", "terminated", "truncated"}
+    for key, index in (("reward", 1), ("terminated", 2), ("truncated", 3)):
+        exact_array(out[key].cpu().numpy(), np.asarray([r[index] for r in expected]), key)
+    exact_array(out["success"].cpu().numpy(), np.asarray([r[4]["is_success"] for r in expected]), "success")
 
 
 def full_compare(state, refs):
@@ -29,7 +41,9 @@ def full_compare(state, refs):
         )
         # compare_state independently extracts all older fields; also enforce
         # their complete declared tensor shapes/dtypes at the public boundary.
-    from stable_envs._adapters.fetch_pickandplace import FIELDS
+    from stable_envs._adapters.fetch_pickandplace import state_fields
+
+    FIELDS = state_fields(refs[0].unwrapped.model.nq, refs[0].unwrapped.model.nv)
 
     assert set(state.keys(True, True)) == set(FIELDS)
     for key, (width, dtype) in FIELDS.items():
@@ -43,7 +57,7 @@ def equal_state(a, b):
 
 
 def case(seed, batch, dtype):
-    refs = [gym.make("swm/FetchPickAndPlace-v3") for _ in range(batch)]
+    refs = [gym.make(ID) for _ in range(batch)]
     a = FetchPickAndPlace(batch, device="cpu", seed=seed)
     b = FetchPickAndPlace(batch, device="cpu", seed=seed + 999)
     rng = np.random.default_rng(20000 + seed)
@@ -92,7 +106,7 @@ def case(seed, batch, dtype):
         for i, e in enumerate(refs):
             e.reset(seed=seed + i, options={"variation": []})
         full_compare(b.reset(seed=seed), refs)
-        for bad in (torch.zeros(batch, 25), b._unpack_render_state(torch.zeros(batch, 25))):
+        for bad in (torch.zeros(batch, b.state_dim), b._unpack_render_state(torch.zeros(batch, b.state_dim))):
             try:
                 b.set_state(bad)
             except (ValueError, TypeError):
@@ -131,9 +145,11 @@ def case(seed, batch, dtype):
 
 
 def boundary():
+    if TASK == "Reach":
+        return reach_boundary()
     rows = []
     for distance in (0.0, np.nextafter(0.05, 0.0), 0.05, np.nextafter(0.05, np.inf), 0.2):
-        e = gym.make("swm/FetchPickAndPlace-v3")
+        e = gym.make(ID)
         a = FetchPickAndPlace(device="cpu", seed=17)
         try:
             e.reset(seed=17, options={"variation": []})
@@ -143,9 +159,8 @@ def boundary():
             u.data.qvel[:] = 0
             mujoco.mj_forward(u.model, u.data)
             # An independent upstream probe determines post-action achieved_goal.
-            from gymnasium_robotics.envs.fetch.pick_and_place import MujocoFetchPickAndPlaceEnv
-
-            probe = MujocoFetchPickAndPlaceEnv()
+            probe_env = gym.make(ID)
+            probe = probe_env.unwrapped
             probe.reset(seed=17)
             probe.data.qpos[:] = u.data.qpos
             probe.data.qvel[:] = u.data.qvel
@@ -175,7 +190,7 @@ def boundary():
             full_compare(out["state"], [e])
             got = float(np.linalg.norm(r[4]["proprio"][3:6] - u.goal))
             assert got == distance, (got, distance)
-            assert float(r[1]) == (-1.0 if distance > 0.05 else 0.0)
+            assert float(r[1]) == (-distance if SUFFIX == "Dense" else -1.0 if distance > 0.05 else 0.0)
             assert float(r[4]["is_success"]) == float(distance < 0.05)
             assert r[2] is False
             rows.append(
@@ -193,8 +208,50 @@ def boundary():
     return rows
 
 
+def reach_boundary():
+    # Reach uses the gripper site, without a free object that can be placed at x=0.
+    # Exercise the exact upstream functions at adjacent float64 distances, and
+    # separately exercise public step on the achievable near-threshold states.
+    rows = []
+    e = gym.make(ID)
+    a = FetchPickAndPlace(seed=17)
+    try:
+        for distance in (0.0, np.nextafter(0.05, 0.0), 0.05, np.nextafter(0.05, np.inf), 0.2):
+            achieved, goal = np.zeros(3), np.array([distance, 0.0, 0.0])
+            for u in (e.unwrapped, a._simulator.envs[0].unwrapped):
+                assert float(u.compute_reward(achieved, goal, {})) == (
+                    -distance if SUFFIX == "Dense" else -float(distance > 0.05)
+                )
+                assert float(u._is_success(achieved, goal)) == float(distance < 0.05)
+            e.reset(seed=17, options={"variation": []})
+            a.reset(seed=17)
+            u = e.unwrapped
+            u.goal = u._get_obs()["achieved_goal"] + np.array([distance, 0.0, 0.0])
+            state = a.get_state()
+            state["goal"][0] = torch.from_numpy(u.goal.copy())
+            a.set_state(state)
+            r = e.step(np.zeros(4))
+            out = a.step(np.zeros((1, 4)))
+            compare_output(out, [r])
+            full_compare(out["state"], [e])
+            got = float(np.linalg.norm(r[4]["proprio"][:3] - u.goal))
+            assert float(r[1]) == (-got if SUFFIX == "Dense" else -float(got > 0.05))
+            rows.append(
+                dict(
+                    distance_hex=float(distance).hex(),
+                    direct_rule_exact=True,
+                    public_step_distance_hex=got.hex(),
+                    public_step_exact=True,
+                )
+            )
+        return rows
+    finally:
+        a.close()
+        e.close()
+
+
 def lifecycle():
-    e = gym.make("swm/FetchPickAndPlace-v3")
+    e = gym.make(ID)
     a = FetchPickAndPlace(seed=17)
     b = FetchPickAndPlace(seed=999)
     try:
@@ -235,9 +292,14 @@ def variation():
         ),
         ("visual", {"object.color": [0.2, 0.8, 0.3]}),
     ]
+    if TASK == "Reach":
+        configurations = [
+            ("start_goal", {"agent.start_position": [1.32, 0.72], "goal.start_position": [1.25, 0.8, 0.4247]}),
+            ("visual", {"table.color": [0.2, 0.8, 0.3]}),
+        ]
     for name, values in configurations:
-        e = gym.make("swm/FetchPickAndPlace-v3")
-        d = gym.make("swm/FetchPickAndPlace-v3")
+        e = gym.make(ID)
+        d = gym.make(ID)
         a = FetchPickAndPlace(seed=17)
         b = FetchPickAndPlace(seed=999)
         options = {"variation": [], "variation_values": {k: np.asarray(v, np.float64) for k, v in values.items()}}
@@ -275,7 +337,7 @@ def variation():
             equal_state(b.get_state(), anchor_snapshot)
             e.reset(seed=42, options={"variation": []})
             full_compare(b.reset(seed=42), [e])
-            assert (
+            assert TASK == "Reach" or (
                 b._simulator.envs[0].unwrapped.model.body_mass[b._simulator._object[0]]
                 == e.unwrapped.model.body_mass[e.unwrapped.model.body("object0").id]
             )
@@ -297,38 +359,40 @@ def variation():
             e.close()
             d.close()
     # Persistent set_variation corresponds to SWM init_value, unlike a one-reset override.
-    e = gym.make("swm/FetchPickAndPlace-v3", init_value={"block.mass": np.array([8.0])})
-    a = FetchPickAndPlace(seed=17)
-    try:
-        a.set_variation({"block.mass": [8.0]})
-        for seed in (17, 42):
-            e.reset(seed=seed, options={"variation": []})
-            full_compare(a.reset(seed=seed), [e])
-            for action in np.random.default_rng(seed).uniform(-1, 1, (8, 1, 4)):
-                r = e.step(action[0])
-                out = a.step(action)
-                compare_output(out, [r])
-                full_compare(out["state"], [e])
-        results.append(
-            dict(kind="persistent_mass", values={"block.mass": [8.0]}, resets=2, steps_per_reset=8, exact=True)
-        )
-    finally:
-        e.close()
-        a.close()
+    if TASK != "Reach":
+        e = gym.make(ID, init_value={"block.mass": np.array([8.0])})
+        a = FetchPickAndPlace(seed=17)
+        try:
+            a.set_variation({"block.mass": [8.0]})
+            for seed in (17, 42):
+                e.reset(seed=seed, options={"variation": []})
+                full_compare(a.reset(seed=seed), [e])
+                for action in np.random.default_rng(seed).uniform(-1, 1, (8, 1, 4)):
+                    r = e.step(action[0])
+                    out = a.step(action)
+                    compare_output(out, [r])
+                    full_compare(out["state"], [e])
+            results.append(
+                dict(kind="persistent_mass", values={"block.mass": [8.0]}, resets=2, steps_per_reset=8, exact=True)
+            )
+        finally:
+            e.close()
+            a.close()
     samples = []
     for seed in (0, 17, 42):
-        e = gym.make("swm/FetchPickAndPlace-v3")
+        e = gym.make(ID)
         a = FetchPickAndPlace(seed=seed)
         try:
-            options = {"variation": ["object.color"]}
+            visual_key = "table.color" if TASK == "Reach" else "object.color"
+            options = {"variation": [visual_key]}
             e.reset(seed=seed, options=options)
             full_compare(a.reset(seed=seed, options=options), [e])
             w = e
             while not hasattr(w, "variation_space"):
                 w = w.env
-            color = w.variation_space["object"]["color"].value
+            color = w.variation_space[visual_key.split(".")[0]]["color"].value
             layout = {k: (o, n) for k, o, n in a.variation_space.flat_layout()}
-            off, _ = layout["object.color"]
+            off, _ = layout[visual_key]
             exact_array(a.get_style()[0, off : off + 3].numpy(), color.astype(np.float32), "sampled_color")
             samples.append(dict(seed=seed, color=color.tolist(), simulator_rng_independent=True, exact=True))
         finally:
@@ -354,6 +418,9 @@ def main(output):
     assert versions["mujoco"] == "3.8.1" and versions["gymnasium-robotics"] == "1.4.2"
     result = dict(
         status="PASS",
+        task=TASK,
+        historical_id=ID,
+        observation_integration="DEFERRED",
         swm_commit=PIN,
         profile=dict(python=platform.python_version(), versions=versions),
         cases=[case(s, b, d) for s in (0, 17, 42) for b in (1, 3) for d in (np.float32, np.float64)],
@@ -376,7 +443,7 @@ def main(output):
             )
             for k in state.keys(True, True)
         }
-        fp = output.with_name("canonical_state.json")
+        fp = output.with_name(f"canonical-{TASK}.json")
         fp.write_text(json.dumps(fixture, indent=2) + "\n")
         result["canonical_state_sha256"] = hashlib.sha256(fp.read_bytes()).hexdigest()
     finally:
@@ -388,4 +455,12 @@ def main(output):
 if __name__ == "__main__":
     p = argparse.ArgumentParser()
     p.add_argument("--output", type=Path, required=True)
-    main(p.parse_args().output)
+    p.add_argument("--task", choices=("PickAndPlace", "Reach", "Push", "Slide"), default="PickAndPlace")
+    p.add_argument("--suffix", choices=("", "Dense", "Dict"), default="")
+    args = p.parse_args()
+    TASK, SUFFIX = args.task, args.suffix
+    ID = f"swm/Fetch{TASK}{SUFFIX}-v3"
+    import stable_envs.envs.fetch as fetch
+
+    FetchPickAndPlace = getattr(fetch, f"Fetch{TASK}{SUFFIX}")
+    main(args.output)

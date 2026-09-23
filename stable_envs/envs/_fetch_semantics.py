@@ -1,4 +1,4 @@
-"""Public sparse PickAndPlace semantics; renderer dependencies stay optional."""
+"""Public parameterized Fetch semantics; renderer dependencies stay optional."""
 
 from __future__ import annotations
 
@@ -6,12 +6,12 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from .._adapters.fetch_pickandplace import FIELDS, FetchPickAndPlaceAdapter
+from .._adapters.fetch_pickandplace import FetchAdapter
 from ..env import Env
 from ..spaces import Box, Dict
 
 
-class PickAndPlaceSemantics:
+class FetchSemantics:
     execution_mode = "DELEGATED_CPU"
     action_dim = 4
     action_dtype = torch.float32
@@ -28,12 +28,20 @@ class PickAndPlaceSemantics:
 
     def __init__(self, num_envs=1, size=None, supersample=None, device="cpu", backend="auto", seed=0):
         device = Env.resolve_device(device)
-        self._simulator = FetchPickAndPlaceAdapter(num_envs, device, seed)
+        self._simulator = FetchAdapter(
+            num_envs, device, seed, self.SCENE, "dense" if "Dense" in self.REF_ID else "sparse"
+        )
+        self._has_object = self._simulator.has_object
+        self._nq = self._simulator.fields["qpos"][0]
+        self._reset_keys = set(type(self)._reset_keys)
+        if not self._has_object:
+            self._reset_keys -= {"block.mass", "block.angle", "block.start_position", "object.color"}
+        self._reset_keys.add("table.color")
         self._configured_mass = self._simulator._mass.copy()
-        self.state_dim = 25  # Private frozen renderer width only.
+        self.state_dim = self._nq + 3  # Private frozen renderer width only.
         from .fetch import GOAL_NAMES, OBJECT_JOINT, ROBOT_JOINTS
 
-        self.state_names = (*ROBOT_JOINTS, *OBJECT_JOINT, *GOAL_NAMES)
+        self.state_names = (*ROBOT_JOINTS, *(OBJECT_JOINT if self._has_object else ()), *GOAL_NAMES)
         Env.__init__(
             self,
             num_envs=num_envs,
@@ -51,7 +59,6 @@ class PickAndPlaceSemantics:
 
         m = self._simulator.envs[0].unwrapped.model
         floor = _effective_rgba(m, m.geom("floor0").id)[:3]
-        obj = _effective_rgba(m, m.geom("object0").id)[:3]
         table = next(
             _effective_rgba(m, g)[:3]
             for g in range(m.ngeom)
@@ -62,7 +69,9 @@ class PickAndPlaceSemantics:
             for g in range(m.ngeom)
             if np.allclose(_effective_rgba(m, g)[:3], BLUE, atol=2e-3)
         )
-        colors = dict(floor=floor, table=table, object=obj, arm=arm, goal=m.site_rgba[m.site("target0").id, :3])
+        colors = dict(floor=floor, table=table, arm=arm, goal=m.site_rgba[m.site("target0").id, :3])
+        if self._has_object:
+            colors["object"] = _effective_rgba(m, m.geom("object0").id)[:3]
         result = {
             k: Dict({"color": Box(low=0.0, high=1.0, shape=(3,), init_value=v.tolist())}) for k, v in colors.items()
         }
@@ -77,27 +86,32 @@ class PickAndPlaceSemantics:
                 ]
             }
         )
-        result["block"] = Dict(
-            {"mass": Box(low=0.01, high=50.0, shape=(1,), init_value=self._simulator._mass[:1].tolist())}
-        )
+        if self._has_object:
+            result["block"] = Dict(
+                {"mass": Box(low=0.01, high=50.0, shape=(1,), init_value=self._simulator._mass[:1].tolist())}
+            )
         return Dict(result)
 
     def _layout(self):
         return tuple(
-            (key if isinstance(key, tuple) else (key,), width, 0 if key == "qpos" else 22 if key == "goal" else None)
-            for key, (width, _) in FIELDS.items()
+            (
+                key if isinstance(key, tuple) else (key,),
+                width,
+                0 if key == "qpos" else self._nq if key == "goal" else None,
+            )
+            for key, (width, _) in self._simulator.fields.items()
         )
 
     def _layout_dtypes(self):
-        return {key if isinstance(key, tuple) else (key,): dtype for key, (_, dtype) in FIELDS.items()}
+        return {key if isinstance(key, tuple) else (key,): dtype for key, (_, dtype) in self._simulator.fields.items()}
 
     def _pack_render_state(self, state):
         return torch.cat([state["qpos"], state["goal"]], dim=-1).to(device=self.device, dtype=torch.float32)
 
     def _unpack_render_state(self, rows):
-        rows = torch.as_tensor(rows, device=self.device).reshape(-1, 25)
+        rows = torch.as_tensor(rows, device=self.device).reshape(-1, self.state_dim)
         return TensorDict(
-            {"qpos": rows[:, :22].clone(), "goal": rows[:, 22:].clone()}, [len(rows)], device=self.device
+            {"qpos": rows[:, : self._nq].clone(), "goal": rows[:, self._nq :].clone()}, [len(rows)], device=self.device
         )
 
     def reset(self, seed=None, options=None):
@@ -115,7 +129,7 @@ class PickAndPlaceSemantics:
         for lane in range(self.B):
             v = {}
             if sampled:
-                spaces = _historical_sampling_tree()
+                spaces = _historical_sampling_tree(self._has_object)
                 spaces.seed(None if seed is None else int(seed) + lane)
                 for key in sampled:
                     node = spaces
@@ -124,19 +138,16 @@ class PickAndPlaceSemantics:
                     v[key] = node.sample()
             v.update(explicit)
             values.append(v)
-        if any("object.color" in v for v in values):
-            Env.set_variation(
-                self,
-                {
-                    "object.color": np.stack([v["object.color"] for v in values]),
-                    "block.mass": self._simulator._mass[:, None],
-                },
-            )
+        for key in ("object.color", "table.color"):
+            if any(key in v for v in values):
+                Env.set_variation(self, {key: np.stack([v[key] for v in values])})
         self._simulator.configure_object_mass(self._configured_mass)
         state = self._simulator.reset(seed, values)
-        # Persist the selected physical Variation alongside the full State.
-        off = next(off for name, off, _ in self.variation_space.flat_layout() if name == "block.mass")
-        self._style.values[:, off] = torch.as_tensor(self._simulator._mass, device=self.device, dtype=torch.float32)
+        if self._has_object:
+            off = next(off for name, off, _ in self.variation_space.flat_layout() if name == "block.mass")
+            self._style.values[:, off] = torch.as_tensor(
+                self._simulator._mass, device=self.device, dtype=torch.float32
+            )
         return state
 
     def get_state(self):
@@ -153,6 +164,8 @@ class PickAndPlaceSemantics:
 
     def set_variation(self, variation=None, **overrides):
         result = super().set_variation(variation, **overrides)
+        if not self._has_object:
+            return result
         layout = {name: (off, width) for name, off, width in self.variation_space.flat_layout()}
         off, _ = layout["block.mass"]
         self._configured_mass = self.get_style()[:, off].cpu().numpy().astype(np.float64).copy()
@@ -175,14 +188,14 @@ class PickAndPlaceSemantics:
         super()._close()
 
 
-def _historical_sampling_tree():
+def _historical_sampling_tree(has_object=True):
     """Upstream Gymnasium seeding tree; only bounded leaves are exposed here."""
     import gymnasium as gym
 
     def box(lo, hi, shape):
         return gym.spaces.Box(lo, hi, shape=shape, dtype=np.float64)
 
-    return gym.spaces.Dict(
+    tree = gym.spaces.Dict(
         {
             "table": gym.spaces.Dict({"color": box(0.0, 1.0, (3,))}),
             "object": gym.spaces.Dict({"color": box(0.0, 1.0, (3,))}),
@@ -209,3 +222,7 @@ def _historical_sampling_tree():
             ),
         }
     )
+
+    if not has_object:
+        del tree.spaces["block"]
+    return tree

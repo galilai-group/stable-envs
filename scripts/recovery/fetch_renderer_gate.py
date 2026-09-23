@@ -19,14 +19,14 @@ def digest(data):
 
 def main(args):
     assert torch.cuda.is_available()
-    path = Path("tests/fixtures/regression/join/step4/states/FetchPickAndPlace.npz")
+    path = Path(f"tests/fixtures/regression/join/step4/states/Fetch{args.task}.npz")
     with np.load(path) as archive:
         rows = archive["states"][:4].copy()
-    with se.make("FetchPickAndPlace", num_envs=4, device="cuda") as env:
+    with se.make(f"Fetch{args.task}", num_envs=4, device="cuda") as env:
         render = getattr(env, "_render", env.render)
         frame = render(rows).cpu().numpy()
         frozen = {
-            "FetchPickAndPlace": {
+            f"Fetch{args.task}": {
                 "rows_sha256": digest(rows.tobytes()),
                 "frame_sha256": digest(frame.tobytes()),
                 "shape": list(frame.shape),
@@ -41,7 +41,7 @@ def main(args):
         state[tuple(name.split("."))] = torch.tensor(
             spec["values"], dtype=getattr(torch, spec["dtype"]), device="cuda"
         )
-    with se.make("FetchPickAndPlace", num_envs=3, device="cuda") as env:
+    with se.make(f"Fetch{args.task}", num_envs=3, device="cuda") as env:
         original = state.clone()
         live = env.get_state()
         full = env.render(state).clone()
@@ -57,15 +57,38 @@ def main(args):
                 pass
             else:
                 raise AssertionError("compact renderer state restored")
-        env.set_variation({"object.color": [0.2, 0.8, 0.3]})
+        visual_key = "table.color" if args.task == "Reach" else "object.color"
+        env.set_variation({visual_key: [0.2, 0.8, 0.3]})
         varied = env.render(state)
         assert not torch.equal(full, varied), "object.color must affect frame"
         assert torch.equal(varied, env._render(env._pack_render_state(state)))
         for key in state.keys(True, True):
             assert torch.equal(state[key], original[key]), key
             assert torch.equal(live[key], env.get_state()[key]), key
+    aliases = {}
+    for suffix in ("Dense", "Dict"):
+        with se.make(f"Fetch{args.task}{suffix}", num_envs=3, device="cuda") as alias:
+            live = alias.get_state()
+            assert torch.equal(alias._pack_render_state(state), torch.cat([state["qpos"], state["goal"]], -1).float())
+            alias_frame = alias.render(state)
+            assert torch.equal(alias_frame, full)
+            alias.set_variation({visual_key: [0.2, 0.8, 0.3]})
+            assert torch.equal(alias.render(state), varied)
+            for key in state.keys(True, True):
+                assert torch.equal(state[key], original[key])
+                assert torch.equal(live[key], alias.get_state()[key])
+            aliases[f"Fetch{args.task}{suffix}"] = dict(
+                frame_sha256=digest(alias_frame.cpu().numpy().tobytes()),
+                identical_canonical_frame=True,
+                identical_varied_frame=True,
+                nonmutation=True,
+                coverage_reason="Same SCENE, renderer inheritance, defaults and qpos/goal projection; reward and alias name do not enter renderer.",
+            )
     result = {
         "status": "PASS",
+        "task": args.task,
+        "aliases": aliases,
+        "observation_integration": "DEFERRED",
         "gpu": torch.cuda.get_device_name(),
         "fixture_sha256": digest(args.fixture.read_bytes()),
         "profile_versions": {
@@ -86,7 +109,8 @@ def main(args):
         "snapshot_nonmutation": True,
         "simulator_nonmutation": True,
         "compact_restoration_refused": True,
-        "object_color_changes_only_frame": True,
+        "visual_leaf": visual_key,
+        "visual_changes_only_frame": True,
         "canonical_frame_sha256": digest(full.cpu().numpy().tobytes()),
         "cpu_renderer": "CPU_BACKEND_MISSING",
     }
@@ -96,6 +120,7 @@ def main(args):
 
 if __name__ == "__main__":
     p = argparse.ArgumentParser()
+    p.add_argument("--task", default="PickAndPlace")
     p.add_argument("--baseline", action="store_true")
     p.add_argument("--output", type=Path, required=True)
     p.add_argument("--fixture", type=Path)
