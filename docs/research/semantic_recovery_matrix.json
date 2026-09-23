@@ -594,7 +594,7 @@
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Representative recovery selected; pinned SWM maps to upstream FetchPickAndPlace-v4 sparse/flat. Initial local reference construction fails in Gymnasium Robotics joint-type tuple membership; candidate restoration contract and gate are not yet established.",
+        "Reference profile resolved: Python3.12.11/NumPy2.2.6/Gymnasium1.2.3/Robotics1.4.2/MuJoCo3.8.1 constructs and resets unmodified pinned SWM and direct upstream. Candidate State necessity, full CPU semantic gate and renderer preservation remain unproved.",
         "No dynamics/reward/done; qpos+goal renderer projection cannot restore velocities or episode horizon."
       ],
       "test": "tests/unit/test_full_state_contract.py",
@@ -602,8 +602,10 @@
       "execution_candidate": "DELEGATED",
       "worktree_base": "907c6e0f45f0763ac736cea006fb762c6e802ba2",
       "evidence": [
-        "docs/research/fetch_representative_initial_audit.md"
-      ]
+        "docs/research/fetch_representative_initial_audit.md",
+        "docs/research/fetch_authoritative_profile.md"
+      ],
+      "reference_profile_status": "PASS_CONSTRUCTOR_RESET_ONLY"
     },
     {
       "historical_id": "swm/FetchPickAndPlaceDense-v3",
@@ -1119,24 +1121,23 @@
       "family": "dmcontrol",
       "owner": "dmc_humanoid",
       "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
-      "state_status": "INCOMPLETE",
-      "action_parity": "PASS_EXACT_CPU_DEFAULT_AND_FINITE_PASSTHROUGH",
-      "reset_parity": "PASS_SEEDED_DEFAULT_CPU",
-      "step_parity": "PASS_EXACT_CPU; CUDA_STATE_PENDING",
-      "reward_parity": "PASS_EXACT_CPU_INCLUDING_POSITIVE_REWARD",
-      "terminated_truncated_parity": "PASS_EXACT_CPU_THROUGH_DMC_IMPLICIT_RESET",
-      "rng_lifecycle": "PASS_CPU_TWO_HISTORIES_REPLAY_ACROSS_IMPLICIT_RESET",
-      "variation_parity": "PASS_CPU_NONDEFAULT_GRAVITY_AND_VISUAL_ONLY_PRESERVATION; complete surface uncertified",
+      "state_status": "VERIFIED",
+      "action_parity": "PASS_EXACT_CPU_AND_CUDA_STATE_DEFAULT_AND_FINITE_PASSTHROUGH",
+      "reset_parity": "PASS_SEEDED_DEFAULT_CPU_AND_CUDA_STATE",
+      "step_parity": "PASS_EXACT_CPU_AND_CUDA_STATE",
+      "reward_parity": "PASS_EXACT_CPU_AND_CUDA_STATE_INCLUDING_POSITIVE_REWARD",
+      "terminated_truncated_parity": "PASS_EXACT_CPU_AND_CUDA_STATE_THROUGH_DMC_IMPLICIT_RESET",
+      "rng_lifecycle": "PASS_CPU_AND_CUDA_STATE_TWO_HISTORIES_REPLAY_ACROSS_IMPLICIT_RESET",
+      "variation_parity": "PASS_CPU_AND_CUDA_STATE_NONDEFAULT_GRAVITY_AND_VISUAL_ONLY_PRESERVATION; complete surface uncertified",
       "execution_mode": "DELEGATED_CPU",
       "adapter_status": "IMPLEMENTED_HISTORICAL_DEFAULT",
-      "renderer_regression": "PASS_FROZEN_CPU: four private Stand-corpus rows byte-identical; OSCAR_NOT_ACCEPTED: latest job failed before candidate frozen renderer comparison",
+      "renderer_regression": "PASS_SCOPED_CPU_CUDA: four frozen private Stand-corpus rows byte-identical to baseline within each profile; accepted public identity is Walk",
       "oracle_corpus": "tests/fixtures/semantics/dmc_humanoid/manifest.json",
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "dmc_humanoid_gate._physical_error subtracts CUDA candidate and CPU nominal reward tensors. This is a gate diagnostic failure, not demonstrated production semantic mismatch. Full Oscar acceptance remains required; no replacement queued.",
         "Complete historical reset options and Variation surface remain uncertified",
         "Immutable Stand renderer evidence remains private; public identity is Walk",
         "All-42 renderer certification and paired benchmarks remain unrun"
@@ -1146,7 +1147,7 @@
       "execution_candidate": "DELEGATED",
       "audit_status": "SOURCE_AUDITED_NOT_VERIFIED",
       "audit_report": "docs/research/dmc_humanoid_recovery.md",
-      "recovery_status": "CPU_PASSED_OSCAR_PENDING",
+      "recovery_status": "ACCEPTED_CPU_AND_OSCAR",
       "blocker": {
         "status": "RESOLVED",
         "kind": "DEFAULT_TASK_IDENTITY_MISMATCH",
@@ -1154,10 +1155,10 @@
         "candidate": "DMCHumanoidWalk",
         "resolution_cohort": "remaining DMC",
         "permanent_skip": false,
-        "resolution": "Historical Walk task now implemented; required Oscar acceptance still outstanding"
+        "resolution": "Historical Walk task implemented and accepted on CPU and Oscar within the recorded default scope"
       },
       "implementation_commit": "97436d6ae92835d34a01fd5bd758cbc30ff0cca7",
-      "oscar_result": "FAILED",
+      "oscar_result": "PASS",
       "state_schema": "qpos[28], qvel[27], qacc_warmstart[27], time, lifecycle step_count/reset_next_step, cumulative_reward, MT19937 keys/position/has_gauss/cached_gaussian",
       "verification_scope": {
         "classes": [
@@ -1177,7 +1178,7 @@
         "atol": 0,
         "rtol": 0,
         "same_persistent_variation_required": true,
-        "status": "CPU_PASSED_OSCAR_PENDING"
+        "status": "ACCEPTED_CPU_AND_OSCAR"
       },
       "evidence": [
         "docs/research/dmc_humanoid_recovery.md",
@@ -1187,17 +1188,30 @@
         "docs/research/semantic_recovery_evidence/checkpoint_c/oscar_reruns.json",
         "docs/research/semantic_recovery_evidence/post_c_acceptance/acceptance.json",
         "docs/research/semantic_recovery_evidence/post_c_acceptance/humanoid-6626742.out",
-        "docs/research/semantic_recovery_evidence/post_c_acceptance/dmc-humanoid-97436d6-renderer-baseline-cuda.json"
+        "docs/research/semantic_recovery_evidence/post_c_acceptance/dmc-humanoid-97436d6-renderer-baseline-cuda.json",
+        "docs/research/semantic_recovery_evidence/blocker_cleanup/acceptance.json",
+        "docs/research/semantic_recovery_evidence/blocker_cleanup/humanoid-6628919.out",
+        "docs/research/semantic_recovery_evidence/blocker_cleanup/dmc-humanoid-rerun-07d7098-aligned-regression-cuda.json",
+        "docs/research/semantic_recovery_evidence/blocker_cleanup/dmc-humanoid-rerun-07d7098-continuation-regression-cuda.json",
+        "docs/research/semantic_recovery_evidence/blocker_cleanup/dmc-humanoid-rerun-07d7098-first-family-regression-cuda.json",
+        "docs/research/semantic_recovery_evidence/blocker_cleanup/dmc-humanoid-rerun-07d7098-gate-cuda.json",
+        "docs/research/semantic_recovery_evidence/blocker_cleanup/dmc-humanoid-rerun-07d7098-reacher-regression-cuda.json",
+        "docs/research/semantic_recovery_evidence/blocker_cleanup/dmc-humanoid-rerun-07d7098-renderer-baseline-cuda.json",
+        "docs/research/semantic_recovery_evidence/blocker_cleanup/dmc-humanoid-rerun-07d7098-renderer-cuda.json"
       ],
-      "oscar_job": 6626742,
-      "latest_oscar_failure": {
+      "oscar_job": 6628919,
+      "prior_oscar_failure": {
         "job_id": 6626742,
         "kind": "GATE_DIAGNOSTIC_DEVICE_MISMATCH",
         "failure": "dmc_humanoid_gate._physical_error subtracts CUDA candidate and CPU nominal reward tensors. This is a gate diagnostic failure, not demonstrated production semantic mismatch.",
         "semantic_json_complete": false,
         "candidate_renderer_compared": false,
         "replacement_job_queued": false
-      }
+      },
+      "acceptance_revision": "07d709841ea2e57fae334e7ef541559a6617236a",
+      "verified_classes": [
+        "DMCHumanoidWalk"
+      ]
     },
     {
       "historical_id": "swm/ManipulatorDMControl-v0",
@@ -1777,7 +1791,7 @@
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Boundary compare_state failed in info.distance_to_target: absolute difference 0.7803192138671875, relative difference 0.004922586150551877. Log does not label the failing domain/probe; root cause unproved. Full Oscar acceptance remains required; no replacement queued.",
+        "Oscar diagnostic job 6628945 isolates Piecewise zone_boundary_right, seed5/B1/lane0/step1: identical restored agent[112,50] and target[190,190], but CUDA candidate picks bias[2,0] and advances to[114,50], reference picks[0,2] and advances to[112,52]. No production correction or complete corrected Oscar gate yet.",
         "Complete sampled reset options, historical Variation surface and sibling variants remain uncertified",
         "Unseeded reset draws fresh external entropy in pinned source; no restored-unseeded-reset replay claim",
         "All-42 renderer certification and paired benchmarks remain unrun"
@@ -1799,7 +1813,11 @@
         "docs/research/semantic_recovery_evidence/checkpoint_c/oscar_reruns.json",
         "docs/research/semantic_recovery_evidence/post_c_acceptance/acceptance.json",
         "docs/research/semantic_recovery_evidence/post_c_acceptance/simple-6626600.out",
-        "docs/research/semantic_recovery_evidence/post_c_acceptance/navigation-rerun-bb517bd-renderer-baseline-cuda.json"
+        "docs/research/semantic_recovery_evidence/post_c_acceptance/navigation-rerun-bb517bd-renderer-baseline-cuda.json",
+        "docs/research/semantic_recovery_evidence/blocker_cleanup/acceptance.json",
+        "docs/research/semantic_recovery_evidence/blocker_cleanup/simple-6628945.out",
+        "docs/research/semantic_recovery_evidence/blocker_cleanup/navigation-failure-context.json",
+        "docs/research/semantic_recovery_evidence/blocker_cleanup/piecewise-zone-arithmetic-4ad7d20.json"
       ],
       "verification_scope": {
         "classes": [
@@ -1835,7 +1853,10 @@
         "semantic_json_complete": false,
         "candidate_renderer_compared": false,
         "replacement_job_queued": false
-      }
+      },
+      "diagnostic_job": 6628945,
+      "diagnostic_revision": "1f717d12847cbcb998ad6c0bcc7ce7386249e560",
+      "diagnostic_root_cause": "CUDA float64 scalar-denominator division at (112-14)/196 gives the representable value immediately below 0.5; scaling by2 then truncation selects column0 instead of source column1. Restored State and goals match."
     },
     {
       "historical_id": "swm/PushT-Discrete-v1",
@@ -2107,7 +2128,7 @@
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Boundary compare_state failed in info.distance_to_target: absolute difference 0.7803192138671875, relative difference 0.004922586150551877. Log does not label the failing domain/probe; root cause unproved. Full Oscar acceptance remains required; no replacement queued.",
+        "Oscar diagnostic job 6628945 isolates Piecewise zone_boundary_right, seed5/B1/lane0/step1: identical restored agent[112,50] and target[190,190], but CUDA candidate picks bias[2,0] and advances to[114,50], reference picks[0,2] and advances to[112,52]. No production correction or complete corrected Oscar gate yet.",
         "Complete sampled reset options, historical Variation surface and sibling variants remain uncertified",
         "Unseeded reset draws fresh external entropy in pinned source; no restored-unseeded-reset replay claim",
         "SimplePointMaze exact cached goal image requires Matplotlib Agg; CPU profile3.10.9 tested, Oscar profile3.11.1 pending",
@@ -2138,7 +2159,11 @@
         "docs/research/semantic_recovery_evidence/checkpoint_c/oscar_reruns.json",
         "docs/research/semantic_recovery_evidence/post_c_acceptance/acceptance.json",
         "docs/research/semantic_recovery_evidence/post_c_acceptance/simple-6626600.out",
-        "docs/research/semantic_recovery_evidence/post_c_acceptance/navigation-rerun-bb517bd-renderer-baseline-cuda.json"
+        "docs/research/semantic_recovery_evidence/post_c_acceptance/navigation-rerun-bb517bd-renderer-baseline-cuda.json",
+        "docs/research/semantic_recovery_evidence/blocker_cleanup/acceptance.json",
+        "docs/research/semantic_recovery_evidence/blocker_cleanup/simple-6628945.out",
+        "docs/research/semantic_recovery_evidence/blocker_cleanup/navigation-failure-context.json",
+        "docs/research/semantic_recovery_evidence/blocker_cleanup/piecewise-zone-arithmetic-4ad7d20.json"
       ],
       "verification_scope": {
         "classes": [
@@ -2174,7 +2199,10 @@
         "semantic_json_complete": false,
         "candidate_renderer_compared": false,
         "replacement_job_queued": false
-      }
+      },
+      "diagnostic_job": 6628945,
+      "diagnostic_revision": "1f717d12847cbcb998ad6c0bcc7ce7386249e560",
+      "diagnostic_root_cause": "CUDA float64 scalar-denominator division at (112-14)/196 gives the representable value immediately below 0.5; scaling by2 then truncation selects column0 instead of source column1. Restored State and goals match."
     },
     {
       "historical_id": "swm/TwoRoom-v1",
@@ -2202,7 +2230,7 @@
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Boundary compare_state failed in info.distance_to_target: absolute difference 0.7803192138671875, relative difference 0.004922586150551877. Log does not label the failing domain/probe; root cause unproved. Full Oscar acceptance remains required; no replacement queued.",
+        "Oscar diagnostic job 6628945 isolates Piecewise zone_boundary_right, seed5/B1/lane0/step1: identical restored agent[112,50] and target[190,190], but CUDA candidate picks bias[2,0] and advances to[114,50], reference picks[0,2] and advances to[112,52]. No production correction or complete corrected Oscar gate yet.",
         "Complete sampled reset options, historical Variation surface and sibling variants remain uncertified",
         "Unseeded reset draws fresh external entropy in pinned source; no restored-unseeded-reset replay claim",
         "All-42 renderer certification and paired benchmarks remain unrun"
@@ -2224,7 +2252,11 @@
         "docs/research/semantic_recovery_evidence/checkpoint_c/oscar_reruns.json",
         "docs/research/semantic_recovery_evidence/post_c_acceptance/acceptance.json",
         "docs/research/semantic_recovery_evidence/post_c_acceptance/simple-6626600.out",
-        "docs/research/semantic_recovery_evidence/post_c_acceptance/navigation-rerun-bb517bd-renderer-baseline-cuda.json"
+        "docs/research/semantic_recovery_evidence/post_c_acceptance/navigation-rerun-bb517bd-renderer-baseline-cuda.json",
+        "docs/research/semantic_recovery_evidence/blocker_cleanup/acceptance.json",
+        "docs/research/semantic_recovery_evidence/blocker_cleanup/simple-6628945.out",
+        "docs/research/semantic_recovery_evidence/blocker_cleanup/navigation-failure-context.json",
+        "docs/research/semantic_recovery_evidence/blocker_cleanup/piecewise-zone-arithmetic-4ad7d20.json"
       ],
       "verification_scope": {
         "classes": [
@@ -2260,7 +2292,10 @@
         "semantic_json_complete": false,
         "candidate_renderer_compared": false,
         "replacement_job_queued": false
-      }
+      },
+      "diagnostic_job": 6628945,
+      "diagnostic_revision": "1f717d12847cbcb998ad6c0bcc7ce7386249e560",
+      "diagnostic_root_cause": "CUDA float64 scalar-denominator division at (112-14)/196 gives the representable value immediately below 0.5; scaling by2 then truncation selects column0 instead of source column1. Restored State and goals match."
     },
     {
       "historical_id": "swm/WalkerDMControl-v0",
@@ -2344,5 +2379,5 @@
       ]
     }
   ],
-  "checkpoint": "Post-C checkpoint A: classic and aligned DMC independently accepted; 17 VERIFIED / 25 INCOMPLETE. Four CPU-passed rows await Oscar acceptance after navigation and Humanoid job failures; no replacement jobs queued. PushT explicitly parked. FetchPickAndPlace representative source audit begun; construction blocked by upstream dependency profile. See docs/research/fetch_start_checkpoint.md"
+  "checkpoint": "Checkpoint A: Humanoid accepted after complete Oscar6628919 semantic/render/regression gate; 18 VERIFIED / 24 INCOMPLETE, all 12 historical DMC defaults accepted within bounded scopes. Navigation exact failure isolated to Piecewise zone boundary, uncorrected and unaccepted. Fetch authoritative reference profile constructs/resets; candidate CPU gate remains unproved. PushT parked. See docs/research/oscar_blocker_cleanup_checkpoint.md"
 }

@@ -1,0 +1,10 @@
+## SLURM PROLOG ###############################################################
+##    Job ID : 6628994
+##  Job Name : se-piecewise-diag
+##  Nodelist : gpu2264
+##      CPUs : 
+##  Mem/Node : 4096 MB
+## Directory : /oscar/scratch/sboughan/se-semantic-recovery
+##   Job Started : Tue Sep 22 11:31:06 PM EDT 2026
+###############################################################################
+PIECEWISE_ZONE_ARITHMETIC_COMPLETE

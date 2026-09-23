@@ -1,0 +1,90 @@
+{
+  "torch": "2.14.0+cu126",
+  "cuda": "12.6",
+  "devices": {
+    "cpu": {
+      "positions": [
+        111.99999237060547,
+        112.0,
+        112.00000762939453
+      ],
+      "numerator": [
+        97.99999237060547,
+        98.0,
+        98.00000762939453
+      ],
+      "scalar_division_hex": [
+        "0x1.fffffd6343eb2p-2",
+        "0x1.0000000000000p-1",
+        "0x1.0000014e5e0a7p-1"
+      ],
+      "tensor_division_hex": [
+        "0x1.fffffd6343eb2p-2",
+        "0x1.0000000000000p-1",
+        "0x1.0000014e5e0a7p-1"
+      ],
+      "python_division_hex": [
+        "0x1.fffffd6343eb2p-2",
+        "0x1.0000000000000p-1",
+        "0x1.0000014e5e0a7p-1"
+      ],
+      "original_index": [
+        0,
+        1,
+        1
+      ],
+      "tensor_denominator_index": [
+        0,
+        1,
+        1
+      ],
+      "source_index": [
+        0,
+        1,
+        1
+      ]
+    },
+    "cuda": {
+      "positions": [
+        111.99999237060547,
+        112.0,
+        112.00000762939453
+      ],
+      "numerator": [
+        97.99999237060547,
+        98.0,
+        98.00000762939453
+      ],
+      "scalar_division_hex": [
+        "0x1.fffffd6343eb1p-2",
+        "0x1.fffffffffffffp-2",
+        "0x1.0000014e5e0a7p-1"
+      ],
+      "tensor_division_hex": [
+        "0x1.fffffd6343eb2p-2",
+        "0x1.0000000000000p-1",
+        "0x1.0000014e5e0a7p-1"
+      ],
+      "python_division_hex": [
+        "0x1.fffffd6343eb2p-2",
+        "0x1.0000000000000p-1",
+        "0x1.0000014e5e0a7p-1"
+      ],
+      "original_index": [
+        0,
+        0,
+        1
+      ],
+      "tensor_denominator_index": [
+        0,
+        1,
+        1
+      ],
+      "source_index": [
+        0,
+        1,
+        1
+      ]
+    }
+  }
+}
