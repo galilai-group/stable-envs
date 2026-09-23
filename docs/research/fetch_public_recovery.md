@@ -83,8 +83,16 @@ renders these in a separate MuJoCo >=3.11/MJWarp profile, compares public/full
 and private/projected frames, checks snapshot/simulator non-mutation, checks
 object color changes frames, and compares unchanged frozen renderer rows against
 baseline/renderer-v0 in separate processes. Physics under the renderer profile
-is not a semantic authority claim. Acceptance remains pending until the actual
-Oscar terminal marker and complete renderer JSON are recorded.
+is not a semantic authority claim. Acceptance passed in Oscar job **6646530**, immutable renderer-driver revision
+`bf9101cbcddbb88566879ae40ce4e1cda0e65550`. CPU-certified production is unchanged
+from `32849a4f514833b8684c344143ea5660a3b7ef7b`. The job completed in 64 seconds
+on NVIDIA RTX A5000 in `3090-gcondo` / `cs-3090-gcondo`. Baseline/candidate
+frozen four-row 480x480 frames match exactly, with SHA-256
+`ba263cfd07aad449e2b526df8a8ef9c46c61fcd156c37ffae75f589d23a0b975`.
+Full/private equality, snapshot and simulator non-mutation, compact restoration
+refusal and visual-only object-color frame change all pass. The renderer profile
+uses MuJoCo/MJWarp 3.11.0, Warp1.17.0, Robotics1.4.2, NumPy2.5.3 and
+Torch2.14.0+cu126. CPU full rendering remains explicitly unsupported.
 
 The expanded `cpu-v3.json` gate additionally restores the reset anchor from a
 simulator with a different agent-start history, then resets without explicit
@@ -96,3 +104,17 @@ before execution; its revision remains preserved and is not acceptance evidence.
 Legacy Fetch source checks pass (10); seven renderer-construction tests skip in
 the local general test environment without Robotics. CPU semantic tests run in
 the separate pinned authority profile and do not skip.
+
+Oscar job 6646436 reached the baseline but exposed a driver API mismatch: the
+baseline names its entry point render, while the recovered API uses _render.
+The corrected driver uses the established getattr fallback; it changes no
+renderer or fixture. Its failed log is preserved. The RTX3090-only constraint
+was broadened within the same authorized partition after the cluster reported
+3090 nodes draining/invalid; baseline and candidate ran on the same A5000 and
+interpreter. All three real terminal markers are retained in the passing log.
+
+Exactly `swm/FetchPickAndPlace-v3` is now VERIFIED, for **22 VERIFIED / 20
+INCOMPLETE**. The acceptance manifest and SHA256SUMS are under
+`semantic_recovery_evidence/fetch_public/`. Eleven Fetch siblings remain
+unaccepted. Shared contracts, prior accepted families, failed diagnostics,
+frozen fixtures and historical baseline/audit hashes are unchanged. No push.

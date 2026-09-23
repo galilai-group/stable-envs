@@ -778,39 +778,58 @@
     },
     "candidate:stable_envs/_adapters/fetch_pickandplace.py": {
       "path": "stable_envs/_adapters/fetch_pickandplace.py",
-      "sha256": "a4cc9c91d0ec2be5516c62da0f02479c8f46c14a5f9b18c550c7a3db3430ac62",
+      "sha256": "b0ec9ccd03b33ee28602c670a44baac31b2f81571339551c124e56faed568970",
       "methods": {
         "FetchPickAndPlaceAdapter.__init__": {
-          "line": 38,
-          "end_line": 53,
+          "line": 41,
+          "end_line": 57,
           "signature": "self, num_envs, device='cpu', seed=0",
-          "source": "def __init__(self, num_envs, device='cpu', seed=0):\n        import gymnasium as gym\n        import mujoco\n        from gymnasium_robotics.envs.fetch.pick_and_place import MujocoFetchPickAndPlaceEnv\n\n        self.num_envs, self.device = int(num_envs), torch.device(device)\n        self._mujoco = mujoco\n        self.envs = [gym.wrappers.TimeLimit(MujocoFetchPickAndPlaceEnv(reward_type='sparse'), 50)\n                     for _ in range(self.num_envs)]\n        self._gripper = [mujoco.mj_name2id(e.unwrapped.model, mujoco.mjtObj.mjOBJ_BODY,\n                                          'robot0:gripper_link') for e in self.envs]\n        self._object = [mujoco.mj_name2id(e.unwrapped.model, mujoco.mjtObj.mjOBJ_BODY,\n                                         'object0') for e in self.envs]\n        self._mass = np.array([e.unwrapped.model.body_mass[i] for e,i in zip(self.envs,self._object)])\n        self._closed = False\n        self.reset(seed=seed)"
+          "source": "def __init__(self, num_envs, device=\"cpu\", seed=0):\n        import gymnasium as gym\n        import mujoco\n        from gymnasium_robotics.envs.fetch.pick_and_place import MujocoFetchPickAndPlaceEnv\n\n        self.num_envs, self.device = int(num_envs), torch.device(device)\n        self._mujoco = mujoco\n        self.envs = [\n            gym.wrappers.TimeLimit(MujocoFetchPickAndPlaceEnv(reward_type=\"sparse\"), 50) for _ in range(self.num_envs)\n        ]\n        self._gripper = [\n            mujoco.mj_name2id(e.unwrapped.model, mujoco.mjtObj.mjOBJ_BODY, \"robot0:gripper_link\") for e in self.envs\n        ]\n        self._object = [mujoco.mj_name2id(e.unwrapped.model, mujoco.mjtObj.mjOBJ_BODY, \"object0\") for e in self.envs]\n        self._mass = np.array([e.unwrapped.model.body_mass[i] for e, i in zip(self.envs, self._object)])\n        self._closed = False\n        self.reset(seed=seed)"
+        },
+        "FetchPickAndPlaceAdapter._check_open": {
+          "line": 59,
+          "end_line": 61,
+          "signature": "self",
+          "source": "def _check_open(self):\n        if self._closed:\n            raise RuntimeError(\"FetchPickAndPlaceAdapter is closed\")"
+        },
+        "FetchPickAndPlaceAdapter.configure_object_mass": {
+          "line": 63,
+          "end_line": 64,
+          "signature": "self, values",
+          "source": "def configure_object_mass(self, values):\n        self._mass = np.asarray(values, np.float64).reshape(self.num_envs).copy()"
         },
         "FetchPickAndPlaceAdapter.reset": {
-          "line": 62,
-          "end_line": 68,
-          "signature": "self, seed=None",
-          "source": "def reset(self, seed=None):\n        self._check_open()\n        for lane,e in enumerate(self.envs):\n            e.reset(seed=None if seed is None else int(seed)+lane)\n            # Historical SWM applies the current mass after upstream reset.\n            e.unwrapped.model.body_mass[self._object[lane]] = self._mass[lane]\n        return self.get_state()"
+          "line": 67,
+          "end_line": 92,
+          "signature": "self, seed=None, variations=None",
+          "source": "def reset(self, seed=None, variations=None):\n        self._check_open()\n        for lane, e in enumerate(self.envs):\n            values = {} if variations is None else variations[lane]\n            u = e.unwrapped\n            if \"agent.start_position\" in values:\n                u.initial_gripper_xpos[:2] = values[\"agent.start_position\"]\n            e.reset(seed=None if seed is None else int(seed) + lane)\n            changed = False\n            if \"block.start_position\" in values:\n                u.data.qpos[15:17] = values[\"block.start_position\"]\n                changed = True\n            if \"block.angle\" in values:\n                angle = float(np.asarray(values[\"block.angle\"]).reshape(-1)[0])\n                u.data.qpos[18:22] = [np.cos(angle / 2), 0, 0, np.sin(angle / 2)]\n                changed = True\n            if \"goal.start_position\" in values:\n                u.goal = np.asarray(values[\"goal.start_position\"], np.float64).copy()\n                changed = True\n            if \"block.mass\" in values:\n                self._mass[lane] = float(np.asarray(values[\"block.mass\"]).reshape(-1)[0])\n            # Historical SWM applies the current mass after upstream reset.\n            e.unwrapped.model.body_mass[self._object[lane]] = self._mass[lane]\n            if changed:\n                self._mujoco.mj_forward(u.model, u.data)\n        return self.get_state()"
         },
         "FetchPickAndPlaceAdapter.get_state": {
-          "line": 70,
-          "end_line": 90,
+          "line": 94,
+          "end_line": 121,
           "signature": "self",
-          "source": "def get_state(self):\n        self._check_open()\n        rows=[]\n        for e,i in zip(self.envs,self._gripper):\n            u=e.unwrapped; r=u.np_random.bit_generator.state\n            if r['bit_generator'] != 'PCG64': raise ValueError('Fetch requires PCG64 RNG')\n            values={\n                'qpos':u.data.qpos.copy(), 'qvel':u.data.qvel.copy(),\n                'warmstart':u.data.qacc_warmstart.copy(),\n                ('controller','position'):u.data.xpos[i].copy(),\n                ('controller','quaternion'):u.data.xquat[i].copy(),\n                'goal':u.goal.copy(), ('lifecycle','elapsed_steps'):[e._elapsed_steps],\n                ('rng','state_words'):_words(r['state']['state']),\n                ('rng','increment_words'):_words(r['state']['inc']),\n                ('rng','has_uint32'):[r['has_uint32']], ('rng','uinteger'):[r['uinteger']],\n            }\n            row=TensorDict({},batch_size=[],device=self.device)\n            for key,(_,dtype) in FIELDS.items():\n                row[key]=torch.as_tensor(values[key],dtype=dtype,device=self.device).clone()\n            rows.append(row)\n        return torch.stack(rows)"
+          "source": "def get_state(self):\n        self._check_open()\n        rows = []\n        for e, i in zip(self.envs, self._gripper):\n            u = e.unwrapped\n            r = u.np_random.bit_generator.state\n            if r[\"bit_generator\"] != \"PCG64\":\n                raise ValueError(\"Fetch requires PCG64 RNG\")\n            values = {\n                \"qpos\": u.data.qpos.copy(),\n                \"qvel\": u.data.qvel.copy(),\n                \"time\": [u.data.time],\n                (\"task\", \"initial_gripper_xpos\"): u.initial_gripper_xpos.copy(),\n                \"warmstart\": u.data.qacc_warmstart.copy(),\n                (\"controller\", \"position\"): u.data.xpos[i].copy(),\n                (\"controller\", \"quaternion\"): u.data.xquat[i].copy(),\n                \"goal\": u.goal.copy(),\n                (\"lifecycle\", \"elapsed_steps\"): [e._elapsed_steps],\n                (\"rng\", \"state_words\"): _words(r[\"state\"][\"state\"]),\n                (\"rng\", \"increment_words\"): _words(r[\"state\"][\"inc\"]),\n                (\"rng\", \"has_uint32\"): [r[\"has_uint32\"]],\n                (\"rng\", \"uinteger\"): [r[\"uinteger\"]],\n            }\n            row = TensorDict({}, batch_size=[], device=self.device)\n            for key, (_, dtype) in FIELDS.items():\n                row[key] = torch.as_tensor(values[key], dtype=dtype, device=self.device).clone()\n            rows.append(row)\n        return torch.stack(rows)"
         },
         "FetchPickAndPlaceAdapter.set_state": {
-          "line": 92,
-          "end_line": 125,
+          "line": 123,
+          "end_line": 166,
           "signature": "self, state",
-          "source": "def set_state(self,state):\n        self._check_open()\n        if not isinstance(state,TensorDict) or state.batch_size != torch.Size([self.num_envs]):\n            raise TypeError('Fetch requires full TensorDict State with batch [num_envs]')\n        keys=state.keys(True,True)\n        for key,(width,dtype) in FIELDS.items():\n            if key not in keys: raise ValueError(f'Full State missing {key}')\n            value=state[key]\n            if value.shape != (self.num_envs,width) or value.dtype != dtype or not torch.isfinite(value).all():\n                raise ValueError(f'Invalid State field {key}')\n        for key in (('rng','state_words'),('rng','increment_words'),('rng','uinteger')):\n            if ((state[key]<0)|(state[key]>0xffffffff)).any(): raise ValueError(f'Invalid PCG64 field {key}')\n        if ((state['rng','has_uint32']<0)|(state['rng','has_uint32']>1)).any():\n            raise ValueError('Invalid PCG64 has_uint32')\n        if (state['lifecycle','elapsed_steps']<0).any(): raise ValueError('Negative elapsed_steps')\n        host=state.cpu()\n        for lane,(e,i) in enumerate(zip(self.envs,self._gripper)):\n            row,u=host[lane],e.unwrapped\n            u.data.qpos[:]=row['qpos'].numpy();u.data.qvel[:]=row['qvel'].numpy()\n            u.goal=row['goal'].numpy().copy()\n            # Controller overwrites mocap and ctrl before every public step.\n            # Applied-force arrays remain zero under this registration's API.\n            u.data.qfrc_applied[:]=0;u.data.xfrc_applied[:]=0\n            self._mujoco.mj_forward(u.model,u.data)\n            u.data.qacc_warmstart[:]=row['warmstart'].numpy()\n            u.data.xpos[i]=row['controller','position'].numpy()\n            u.data.xquat[i]=row['controller','quaternion'].numpy()\n            e._elapsed_steps=row['lifecycle','elapsed_steps'].item()\n            u.np_random.bit_generator.state={\n                'bit_generator':'PCG64',\n                'state':{'state':_integer(row['rng','state_words'].tolist()),\n                         'inc':_integer(row['rng','increment_words'].tolist())},\n                'has_uint32':row['rng','has_uint32'].item(),'uinteger':row['rng','uinteger'].item(),\n            }"
+          "source": "def set_state(self, state):\n        self._check_open()\n        if not isinstance(state, TensorDict) or state.batch_size != torch.Size([self.num_envs]):\n            raise TypeError(\"Fetch requires full TensorDict State with batch [num_envs]\")\n        keys = state.keys(True, True)\n        for key, (width, dtype) in FIELDS.items():\n            if key not in keys:\n                raise ValueError(f\"Full State missing {key}\")\n            value = state[key]\n            if value.shape != (self.num_envs, width) or value.dtype != dtype or not torch.isfinite(value).all():\n                raise ValueError(f\"Invalid State field {key}\")\n        for key in ((\"rng\", \"state_words\"), (\"rng\", \"increment_words\"), (\"rng\", \"uinteger\")):\n            if ((state[key] < 0) | (state[key] > 0xFFFFFFFF)).any():\n                raise ValueError(f\"Invalid PCG64 field {key}\")\n        if ((state[\"rng\", \"has_uint32\"] < 0) | (state[\"rng\", \"has_uint32\"] > 1)).any():\n            raise ValueError(\"Invalid PCG64 has_uint32\")\n        if (state[\"lifecycle\", \"elapsed_steps\"] < 0).any():\n            raise ValueError(\"Negative elapsed_steps\")\n        host = state.cpu()\n        for lane, (e, i) in enumerate(zip(self.envs, self._gripper)):\n            row, u = host[lane], e.unwrapped\n            u.data.qpos[:] = row[\"qpos\"].numpy()\n            u.data.qvel[:] = row[\"qvel\"].numpy()\n            u.goal = row[\"goal\"].numpy().copy()\n            u.data.time = row[\"time\"].item()\n            u.initial_gripper_xpos[:] = row[\"task\", \"initial_gripper_xpos\"].numpy()\n            # Controller overwrites mocap and ctrl before every public step.\n            # Applied-force arrays remain zero under this registration's API.\n            u.data.qfrc_applied[:] = 0\n            u.data.xfrc_applied[:] = 0\n            self._mujoco.mj_forward(u.model, u.data)\n            u.data.qacc_warmstart[:] = row[\"warmstart\"].numpy()\n            u.data.xpos[i] = row[\"controller\", \"position\"].numpy()\n            u.data.xquat[i] = row[\"controller\", \"quaternion\"].numpy()\n            e._elapsed_steps = row[\"lifecycle\", \"elapsed_steps\"].item()\n            u.np_random.bit_generator.state = {\n                \"bit_generator\": \"PCG64\",\n                \"state\": {\n                    \"state\": _integer(row[\"rng\", \"state_words\"].tolist()),\n                    \"inc\": _integer(row[\"rng\", \"increment_words\"].tolist()),\n                },\n                \"has_uint32\": row[\"rng\", \"has_uint32\"].item(),\n                \"uinteger\": row[\"rng\", \"uinteger\"].item(),\n            }"
         },
         "FetchPickAndPlaceAdapter.step": {
-          "line": 127,
-          "end_line": 149,
+          "line": 168,
+          "end_line": 201,
           "signature": "self, actions",
-          "source": "def step(self,actions):\n        self._check_open()\n        if torch.is_tensor(actions): actions=actions.detach().cpu().numpy()\n        actions=np.asarray(actions)\n        if actions.shape != (self.num_envs,4): raise ValueError('Fetch action must have shape (num_envs,4)')\n        # Preserve public dtype: upstream multiplication before concatenation is observable.\n        outputs=[e.step(actions[lane]) for lane,e in enumerate(self.envs)]\n        observations=[np.concatenate([o['observation'],o['desired_goal']]).astype(np.float32)\n                      for o,*_ in outputs]\n        observation=torch.as_tensor(np.stack(observations),device=self.device)\n        info=TensorDict({\n            'proprio':torch.as_tensor(np.stack([x[0]['observation'] for x in outputs]),device=self.device),\n            'state':observation.clone(),\n            'goal_state':torch.as_tensor(np.stack([x[0]['desired_goal'] for x in outputs]),device=self.device),\n            'is_success':torch.as_tensor(np.array([x[4]['is_success'] for x in outputs]),device=self.device),\n        },[self.num_envs],device=self.device)\n        return TensorDict({\n            'state':self.get_state(), 'observation':observation,\n            'reward':torch.as_tensor(np.array([x[1] for x in outputs]),device=self.device),\n            'terminated':torch.as_tensor(np.array([x[2] for x in outputs]),device=self.device),\n            'truncated':torch.as_tensor(np.array([x[3] for x in outputs]),device=self.device),\n            'success':info['is_success'].clone(),'info':info,\n        },[self.num_envs],device=self.device)"
+          "source": "def step(self, actions):\n        self._check_open()\n        if torch.is_tensor(actions):\n            actions = actions.detach().cpu().numpy()\n        actions = np.asarray(actions)\n        if actions.shape != (self.num_envs, 4):\n            raise ValueError(\"Fetch action must have shape (num_envs,4)\")\n        # Preserve public dtype: upstream multiplication before concatenation is observable.\n        outputs = [e.step(actions[lane]) for lane, e in enumerate(self.envs)]\n        observations = [np.concatenate([o[\"observation\"], o[\"desired_goal\"]]).astype(np.float32) for o, *_ in outputs]\n        observation = torch.as_tensor(np.stack(observations), device=self.device)\n        info = TensorDict(\n            {\n                \"proprio\": torch.as_tensor(np.stack([x[0][\"observation\"] for x in outputs]), device=self.device),\n                \"state\": observation.clone(),\n                \"goal_state\": torch.as_tensor(np.stack([x[0][\"desired_goal\"] for x in outputs]), device=self.device),\n                \"is_success\": torch.as_tensor(np.array([x[4][\"is_success\"] for x in outputs]), device=self.device),\n            },\n            [self.num_envs],\n            device=self.device,\n        )\n        return TensorDict(\n            {\n                \"state\": self.get_state(),\n                \"observation\": observation,\n                \"reward\": torch.as_tensor(np.array([x[1] for x in outputs]), device=self.device),\n                \"terminated\": torch.as_tensor(np.array([x[2] for x in outputs]), device=self.device),\n                \"truncated\": torch.as_tensor(np.array([x[3] for x in outputs]), device=self.device),\n                \"success\": info[\"is_success\"].clone(),\n                \"info\": info,\n            },\n            [self.num_envs],\n            device=self.device,\n        )"
+        },
+        "FetchPickAndPlaceAdapter.close": {
+          "line": 203,
+          "end_line": 207,
+          "signature": "self",
+          "source": "def close(self):\n        if not self._closed:\n            for e in self.envs:\n                e.close()\n            self._closed = True"
         }
-      }
+      },
+      "implementation_commit": "bf9101cbcddbb88566879ae40ce4e1cda0e65550"
     },
     "swm:stable_worldmodel/envs/dmcontrol/finger.py": {
       "path": "stable_worldmodel/envs/dmcontrol/finger.py",
@@ -1351,6 +1370,91 @@
         }
       },
       "url": "https://github.com/galilai-group/stable-worldmodel/blob/176d54532b3c0a251a4f509b74f2fdacc143a63d/stable_worldmodel/envs/dmcontrol/walker.py"
+    },
+    "candidate:stable_envs/envs/_fetch_semantics.py": {
+      "path": "stable_envs/envs/_fetch_semantics.py",
+      "sha256": "2d1f6ade715996005e1b8aa07276b5c463a7aed21021c971c1e0db9f9f2740d9",
+      "methods": {
+        "PickAndPlaceSemantics.__init__": {
+          "line": 29,
+          "end_line": 45,
+          "signature": "self, num_envs=1, size=None, supersample=None, device='cpu', backend='auto', seed=0",
+          "source": "def __init__(self, num_envs=1, size=None, supersample=None, device=\"cpu\", backend=\"auto\", seed=0):\n        device = Env.resolve_device(device)\n        self._simulator = FetchPickAndPlaceAdapter(num_envs, device, seed)\n        self._configured_mass = self._simulator._mass.copy()\n        self.state_dim = 25  # Private frozen renderer width only.\n        from .fetch import GOAL_NAMES, OBJECT_JOINT, ROBOT_JOINTS\n\n        self.state_names = (*ROBOT_JOINTS, *OBJECT_JOINT, *GOAL_NAMES)\n        Env.__init__(\n            self,\n            num_envs=num_envs,\n            size=size,\n            supersample=1 if supersample is None else supersample,\n            device=device,\n            backend=backend,\n            seed=seed,\n        )"
+        },
+        "PickAndPlaceSemantics.make_variation_space": {
+          "line": 47,
+          "end_line": 83,
+          "signature": "self",
+          "source": "def make_variation_space(self):\n        # Derive precisely the existing renderer defaults without compiling its\n        # surgical model or allocating a GL/MJWarp context in the CPU profile.\n        from .fetch import BLUE, _effective_rgba\n\n        m = self._simulator.envs[0].unwrapped.model\n        floor = _effective_rgba(m, m.geom(\"floor0\").id)[:3]\n        obj = _effective_rgba(m, m.geom(\"object0\").id)[:3]\n        table = next(\n            _effective_rgba(m, g)[:3]\n            for g in range(m.ngeom)\n            if m.geom_matid[g] >= 0 and m.material(int(m.geom_matid[g])).name == \"table_mat\"\n        )\n        arm = next(\n            _effective_rgba(m, g)[:3]\n            for g in range(m.ngeom)\n            if np.allclose(_effective_rgba(m, g)[:3], BLUE, atol=2e-3)\n        )\n        colors = dict(floor=floor, table=table, object=obj, arm=arm, goal=m.site_rgba[m.site(\"target0\").id, :3])\n        result = {\n            k: Dict({\"color\": Box(low=0.0, high=1.0, shape=(3,), init_value=v.tolist())}) for k, v in colors.items()\n        }\n        result[\"light\"] = Dict({\"diffuse\": Box(low=0.0, high=2.0, shape=(1,), init_value=[1.0])})\n        result[\"camera\"] = Dict(\n            {\n                k: Box(low=lo, high=hi, shape=(1,), init_value=[v])\n                for k, lo, hi, v in [\n                    (\"distance_scale\", 0.6, 1.6, 1.0),\n                    (\"azimuth_delta\", -25.0, 25.0, 0.0),\n                    (\"elevation_delta\", -20.0, 20.0, 0.0),\n                ]\n            }\n        )\n        result[\"block\"] = Dict(\n            {\"mass\": Box(low=0.01, high=50.0, shape=(1,), init_value=self._simulator._mass[:1].tolist())}\n        )\n        return Dict(result)"
+        },
+        "PickAndPlaceSemantics._layout": {
+          "line": 85,
+          "end_line": 89,
+          "signature": "self",
+          "source": "def _layout(self):\n        return tuple(\n            (key if isinstance(key, tuple) else (key,), width, 0 if key == \"qpos\" else 22 if key == \"goal\" else None)\n            for key, (width, _) in FIELDS.items()\n        )"
+        },
+        "PickAndPlaceSemantics._layout_dtypes": {
+          "line": 91,
+          "end_line": 92,
+          "signature": "self",
+          "source": "def _layout_dtypes(self):\n        return {key if isinstance(key, tuple) else (key,): dtype for key, (_, dtype) in FIELDS.items()}"
+        },
+        "PickAndPlaceSemantics._pack_render_state": {
+          "line": 94,
+          "end_line": 95,
+          "signature": "self, state",
+          "source": "def _pack_render_state(self, state):\n        return torch.cat([state[\"qpos\"], state[\"goal\"]], dim=-1).to(device=self.device, dtype=torch.float32)"
+        },
+        "PickAndPlaceSemantics._unpack_render_state": {
+          "line": 97,
+          "end_line": 101,
+          "signature": "self, rows",
+          "source": "def _unpack_render_state(self, rows):\n        rows = torch.as_tensor(rows, device=self.device).reshape(-1, 25)\n        return TensorDict(\n            {\"qpos\": rows[:, :22].clone(), \"goal\": rows[:, 22:].clone()}, [len(rows)], device=self.device\n        )"
+        },
+        "PickAndPlaceSemantics.reset": {
+          "line": 103,
+          "end_line": 140,
+          "signature": "self, seed=None, options=None",
+          "source": "def reset(self, seed=None, options=None):\n        self._check_open(\"reset\")\n        options = options or {}\n        if set(options) - {\"variation\", \"variation_values\"}:\n            raise ValueError(\"Unsupported Fetch reset option\")\n        sampled = options.get(\"variation\", [])\n        explicit = options.get(\"variation_values\", {})\n        if (set(sampled) | set(explicit)) - self._reset_keys:\n            raise ValueError(\"Uncertified Fetch reset Variation\")\n        # Variation reset uses its own Gymnasium space tree and reseeds even\n        # for seed=None, as SWM does. It never consumes simulator PCG64.\n        values = []\n        for lane in range(self.B):\n            v = {}\n            if sampled:\n                spaces = _historical_sampling_tree()\n                spaces.seed(None if seed is None else int(seed) + lane)\n                for key in sampled:\n                    node = spaces\n                    for part in key.split(\".\"):\n                        node = node[part]\n                    v[key] = node.sample()\n            v.update(explicit)\n            values.append(v)\n        if any(\"object.color\" in v for v in values):\n            Env.set_variation(\n                self,\n                {\n                    \"object.color\": np.stack([v[\"object.color\"] for v in values]),\n                    \"block.mass\": self._simulator._mass[:, None],\n                },\n            )\n        self._simulator.configure_object_mass(self._configured_mass)\n        state = self._simulator.reset(seed, values)\n        # Persist the selected physical Variation alongside the full State.\n        off = next(off for name, off, _ in self.variation_space.flat_layout() if name == \"block.mass\")\n        self._style.values[:, off] = torch.as_tensor(self._simulator._mass, device=self.device, dtype=torch.float32)\n        return state"
+        },
+        "PickAndPlaceSemantics.get_state": {
+          "line": 142,
+          "end_line": 144,
+          "signature": "self",
+          "source": "def get_state(self):\n        self._check_open(\"get_state\")\n        return self._simulator.get_state()"
+        },
+        "PickAndPlaceSemantics.set_state": {
+          "line": 146,
+          "end_line": 148,
+          "signature": "self, state",
+          "source": "def set_state(self, state):\n        self._check_open(\"set_state\")\n        self._simulator.set_state(state)"
+        },
+        "PickAndPlaceSemantics.step": {
+          "line": 150,
+          "end_line": 152,
+          "signature": "self, actions",
+          "source": "def step(self, actions):\n        self._check_open(\"step\")\n        return self._simulator.step(actions)"
+        },
+        "PickAndPlaceSemantics.set_variation": {
+          "line": 154,
+          "end_line": 160,
+          "signature": "self, variation=None, **overrides",
+          "source": "def set_variation(self, variation=None, **overrides):\n        result = super().set_variation(variation, **overrides)\n        layout = {name: (off, width) for name, off, width in self.variation_space.flat_layout()}\n        off, _ = layout[\"block.mass\"]\n        self._configured_mass = self.get_style()[:, off].cpu().numpy().astype(np.float64).copy()\n        self._simulator.configure_object_mass(self._configured_mass)\n        return result"
+        },
+        "PickAndPlaceSemantics._render": {
+          "line": 162,
+          "end_line": 171,
+          "signature": "self, *args, **kwargs",
+          "source": "def _render(self, *args, **kwargs):\n        if self.device.type != \"cuda\":\n            raise NotImplementedError(\"CPU_BACKEND_MISSING: Fetch full mesh rendering requires CUDA/MJWarp\")\n        if not hasattr(self, \"_b\"):\n            from .fetch import _build_bundle, _require_gpu_renderer\n\n            _require_gpu_renderer()\n            self._b = _build_bundle(self.SCENE)\n            self._check_plate_is_constant()\n        return super()._render(*args, **kwargs)"
+        },
+        "PickAndPlaceSemantics._close": {
+          "line": 173,
+          "end_line": 175,
+          "signature": "self",
+          "source": "def _close(self):\n        self._simulator.close()\n        super()._close()"
+        }
+      },
+      "implementation_commit": "bf9101cbcddbb88566879ae40ce4e1cda0e65550"
     }
   },
   "rows": [
@@ -3596,7 +3700,7 @@
     },
     {
       "historical_id": "swm/FetchPickAndPlace-v3",
-      "current_status": "INCOMPLETE",
+      "current_status": "VERIFIED",
       "family": "fetch",
       "pinned_swm_commit": "176d54532b3c0a251a4f509b74f2fdacc143a63d",
       "swm_implementation": {
@@ -3611,62 +3715,141 @@
         "repository": "https://github.com/Farama-Foundation/Gymnasium-Robotics",
         "package": "gymnasium-robotics",
         "pinned_lock_version": "1.4.2",
-        "tested_profile_versions": {},
+        "tested_profile_versions": {
+          "cpu_semantics": {
+            "python": "3.12.11",
+            "versions": {
+              "numpy": "2.2.6",
+              "gymnasium": "1.2.3",
+              "gymnasium-robotics": "1.4.2",
+              "mujoco": "3.8.1",
+              "torch": "2.10.0",
+              "tensordict": "0.14.2"
+            }
+          },
+          "gpu_renderer": {
+            "torch": "2.14.0+cu126",
+            "numpy": "2.5.3",
+            "gymnasium": "1.3.0",
+            "gymnasium-robotics": "1.4.2",
+            "mujoco": "3.11.0",
+            "mujoco-warp": "3.11.0",
+            "warp-lang": "1.17.0",
+            "tensordict": "0.14.2"
+          }
+        },
         "version_scope": "Lock version is historical provenance, not a claim of candidate certification; tested CPU/GPU versions remain in evidence."
       },
       "stable_envs_classes": [
         "FetchPickAndPlace"
       ],
-      "accepted_classes": [],
+      "accepted_classes": [
+        "FetchPickAndPlace"
+      ],
       "historical_task_default_kwargs": {
         "registration_kwargs": {
           "env_id": "FetchPickAndPlace-v4"
         },
         "constructor_signature": "self, env_id, init_value=None, resolution=224, render_mode=None, flatten=True, **kwargs",
-        "accepted_task": null,
+        "accepted_task": "MujocoFetchPickAndPlaceEnv; sparse; object present; gripper unblocked; flatten=True",
         "source_constructor": "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py:FetchWrapper.__init__"
       },
       "state_schema": {
-        "status": "PROVISIONAL",
-        "corpus_fields": {},
+        "status": "ACCEPTED_BOUNDED_SUFFICIENT",
+        "fields": {
+          "qpos": {
+            "width": 22,
+            "dtype": "float64"
+          },
+          "qvel": {
+            "width": 21,
+            "dtype": "float64"
+          },
+          "time": {
+            "width": 1,
+            "dtype": "float64"
+          },
+          "task.initial_gripper_xpos": {
+            "width": 3,
+            "dtype": "float64"
+          },
+          "warmstart": {
+            "width": 21,
+            "dtype": "float64"
+          },
+          "controller.position": {
+            "width": 3,
+            "dtype": "float64"
+          },
+          "controller.quaternion": {
+            "width": 4,
+            "dtype": "float64"
+          },
+          "goal": {
+            "width": 3,
+            "dtype": "float64"
+          },
+          "lifecycle.elapsed_steps": {
+            "width": 1,
+            "dtype": "int64"
+          },
+          "rng.state_words": {
+            "width": 4,
+            "dtype": "int64"
+          },
+          "rng.increment_words": {
+            "width": 4,
+            "dtype": "int64"
+          },
+          "rng.has_uint32": {
+            "width": 1,
+            "dtype": "int64"
+          },
+          "rng.uinteger": {
+            "width": 1,
+            "dtype": "int64"
+          }
+        },
         "candidate_source_catalog": [
-          "candidate:stable_envs/_adapters/fetch_pickandplace.py"
+          "candidate:stable_envs/_adapters/fetch_pickandplace.py",
+          "candidate:stable_envs/envs/_fetch_semantics.py"
         ],
-        "note": "Full TensorDict simulator snapshot; restore under the same persistent Variation"
+        "note": "Complete named PCG64 is atomic; time retained as inexpensive documented field; reset anchor retained for future reset sampling."
       },
       "restoration_order": [
-        "qpos/qvel/goal; zero unsupported external applied forces",
+        "Validate full named TensorDict shapes/dtypes/finiteness",
+        "Restore qpos/qvel/time, goal, initial_gripper_xpos; clear external forces",
         "mj_forward",
-        "warmstart",
-        "controller cached position/quaternion",
-        "TimeLimit and complete named PCG64"
+        "Restore qacc_warmstart",
+        "Restore cached gripper position/quaternion",
+        "Restore TimeLimit elapsed steps and complete named PCG64"
       ],
       "action_scaling_clipping_repeat": {
         "summary": "Clip [-1,1]; XYZ *0.05; fixed quaternion [1,0,1,0]; duplicate gripper command; 20 substeps, dt0.04; preserve input dtype.",
-        "parity": "UNTESTED",
+        "parity": "PASS_EXACT_PUBLIC_CPU_FLOAT32_FLOAT64_CLIPPING_BOUNDARIES_SIMULTANEOUS_CONTROLS",
         "source_catalog": [
           "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py"
         ]
       },
       "reset_rng_semantics": {
-        "reset_parity": "UNTESTED",
-        "rng_lifecycle": "UNTESTED",
+        "reset_parity": "PASS_EXACT_PUBLIC_CPU_SEEDED_REPEATED_SEED_MOCAP_AND_RESET_VARIATION_ORDER",
+        "rng_lifecycle": "PASS_COMPLETE_PCG64_SIMULATOR_REPLAY_FIXED_VARIATION_AND_SEPARATE_SEEDED_VISUAL_RNG",
         "source_catalog": [
           "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py"
         ],
         "rng_structure_policy": "Complete documented named RNG state is atomic; individual-word minimality is not required."
       },
       "reward_success_terminated_truncated": {
-        "reward": "UNTESTED",
-        "lifecycle": "UNTESTED",
+        "reward": "PASS_EXACT_PUBLIC_CPU_SPARSE_REWARD_AND_SUCCESS_THRESHOLDS",
+        "lifecycle": "PASS_EXACT_PUBLIC_CPU_49_50_51_AND_RESTORED_BOUNDARY",
         "source_catalog": [
           "swm:stable_worldmodel/envs/gymnasium_robotics/fetch.py"
         ]
       },
-      "accepted_variation_scope": "UNTESTED",
-      "execution_mode": null,
+      "accepted_variation_scope": "PASS_BOUNDED: object mass8 changes dynamics; agent/block/goal start and block angle ordering; persistent versus reset mass; object.color physical invariance and GPU frame effect; seeded object.color",
+      "execution_mode": "DELEGATED_CPU",
       "evidence_manifest": {
-        "oracle": null,
+        "acceptance": "docs/research/semantic_recovery_evidence/fetch_public/acceptance.json",
         "artifacts": [
           {
             "path": "docs/research/fetch_representative_initial_audit.md",
@@ -3691,29 +3874,80 @@
           {
             "path": "docs/research/semantic_recovery_evidence/fetch_adapter_initial/adapter_probe.json",
             "sha256": "c8fbce8b0d439df55021634c3f149cdc1daeda96c110f36caded331f5e706ec6"
+          },
+          {
+            "path": "docs/research/fetch_public_recovery.md",
+            "sha256": "ba9256ccfebbe17606b84e5d4dec982a611dc18d937371af5b7f2d1c82fa8655"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_public/acceptance.json",
+            "sha256": "e23721c6141b520c3a66f8f560567b420b50952bf2d081975ae6a882897b4d04"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_public/cpu-v3.json",
+            "sha256": "c74db2ea0745048caa2e1275a9321612f353a92f92da0d14121b61f51baf8a46"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_public/provenance-v3.json",
+            "sha256": "290f43862bf7db2aa42fb842ebe18749ae6ff7960ed03c598b57c546729cc1a3"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_public/fetch-public-bf9101cb-renderer-gate.json",
+            "sha256": "53aa7e0db5a5bfb051da6659571e5426e6d7ad4babef27bb444b1ba9f6b4e6b1"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_public/fetch-public-bf9101cb-renderer-baseline.json",
+            "sha256": "d9cdc10ae45de54d4103e4f6fb9f65e71433c0e56e330c9d887fbcc006059ee4"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_public/fetch-public-bf9101cb-renderer-candidate.json",
+            "sha256": "d9cdc10ae45de54d4103e4f6fb9f65e71433c0e56e330c9d887fbcc006059ee4"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/fetch_public/fetch-6646530.out",
+            "sha256": "575e045a106608a82a6a4a7f8c650d53f41b5773159a927a44cc77ed96c50009"
           }
         ]
       },
-      "cpu_semantic_result": "NOT_ACCEPTED",
+      "cpu_semantic_result": "PASS_EXACT_PUBLIC_CPU_32_STEPS_PLUS_8_RESTORED_STEPS",
       "gpu_semantic_result": {
-        "status": "NOT_ACCEPTED",
-        "job": null,
-        "note": "CUDA State placement is not GPU physics for DELEGATED_CPU."
+        "status": "NOT_CLAIMED",
+        "note": "DELEGATED_CPU; separate GPU profile certifies renderer only."
       },
-      "frozen_renderer_result": "PENDING",
+      "frozen_renderer_result": {
+        "cpu": "CPU_BACKEND_MISSING",
+        "gpu": "PASS",
+        "job": 6646530,
+        "cells": {
+          "FetchPickAndPlace": {
+            "rows_sha256": "c3005446d3e26f6fe5ef14b043742361fe596814a5475c9981847e43979ba7a0",
+            "frame_sha256": "ba263cfd07aad449e2b526df8a8ef9c46c61fcd156c37ffae75f589d23a0b975",
+            "shape": [
+              4,
+              480,
+              480,
+              3
+            ]
+          }
+        }
+      },
       "known_limitations": [
-        "Private DELEGATED_CPU adapter passes 12 exact default cases (32 steps plus 8 after different histories), seeded reset, snapshots, State roundtrip, action clipping, trajectory reward/success, TimeLimit 49/50/51 and simulator-reset RNG replay. Public environment integration and the complete representative CPU gate remain unfinished; no promotion.",
-        "Provisional State includes qpos, qvel, warmstart, explicit gripper controller position/quaternion cache, goal, elapsed TimeLimit and named PCG64 state. Source omissions witness warmstart/controller-cache necessity. RNG cached-integer component minimality, final family schema and Variation-space RNG remain unproved.",
-        "Candidate reward/success threshold tests and meaningful physical/visual Variation remain outstanding. Existing full renderer has no CPU mover backend and requires MuJoCo>=3.11/MJWarp, separate from the3.8.1 simulator authority; full/private render equality, non-mutation and frozen full CPU renderer preservation remain unaccepted.",
-        "Public Fetch class still has no recovered dynamics/reward/done; qpos+goal renderer projection cannot restore velocities or episode horizon."
+        "Acceptance is only sparse flattened FetchPickAndPlace historical default and the explicitly bounded Variation subset; eleven siblings unaccepted.",
+        "CPU full rendering is explicitly unsupported (CPU_BACKEND_MISSING). CPU physics authority uses MuJoCo3.8.1; GPU renderer profile is separately certified, without a physics parity claim.",
+        "Persistent renderer defaults are preserved; SWM five-leaf default appearance randomization and full theoretical Variation surface remain uncertified. Seeded object-color sampling tested; unseeded visual reset draws fresh external entropy and is not replayable.",
+        "Arbitrary externally injected simulator forces, other reset options/tasks, full upstream image similarity and final paired benchmarks remain outside scope."
       ],
       "remaining_gates": [
-        "Private DELEGATED_CPU adapter passes 12 exact default cases (32 steps plus 8 after different histories), seeded reset, snapshots, State roundtrip, action clipping, trajectory reward/success, TimeLimit 49/50/51 and simulator-reset RNG replay. Public environment integration and the complete representative CPU gate remain unfinished; no promotion.",
-        "Provisional State includes qpos, qvel, warmstart, explicit gripper controller position/quaternion cache, goal, elapsed TimeLimit and named PCG64 state. Source omissions witness warmstart/controller-cache necessity. RNG cached-integer component minimality, final family schema and Variation-space RNG remain unproved.",
-        "Candidate reward/success threshold tests and meaningful physical/visual Variation remain outstanding. Existing full renderer has no CPU mover backend and requires MuJoCo>=3.11/MJWarp, separate from the3.8.1 simulator authority; full/private render equality, non-mutation and frozen full CPU renderer preservation remain unaccepted.",
-        "Public Fetch class still has no recovered dynamics/reward/done; qpos+goal renderer projection cannot restore velocities or episode horizon."
+        "None within accepted representative scope; review before any sibling expansion."
       ],
-      "closure_code_check": null
+      "closure_code_check": {
+        "covered_revision": "bf9101cbcddbb88566879ae40ce4e1cda0e65550",
+        "source_hashes_match_cpu_and_renderer_revision": true
+      },
+      "closure_evidence": {
+        "terminal_log": "docs/research/semantic_recovery_evidence/fetch_public/fetch-6646530.out",
+        "actual_success_marker": "FETCH_GPU_GATE_PASS fetch-public-bf9101cb"
+      }
     },
     {
       "historical_id": "swm/FetchPickAndPlaceDense-v3",
@@ -9624,6 +9858,18 @@
         "baseline_equality": "PASS: direct dictionary equality",
         "later_code": "Production AST unchanged at latest covering gate; DMC later regression coverage in job 6628919."
       }
+    }
+  ],
+  "current_counts": {
+    "VERIFIED": 22,
+    "INCOMPLETE": 20
+  },
+  "updates": [
+    {
+      "scope": "FetchPickAndPlace only",
+      "implementation_commit": "bf9101cbcddbb88566879ae40ce4e1cda0e65550",
+      "acceptance_manifest": "docs/research/semantic_recovery_evidence/fetch_public/acceptance.json",
+      "note": "Phase A 21-row closure audit remains immutable in audit; current row statuses include the one later promotion."
     }
   ]
 }

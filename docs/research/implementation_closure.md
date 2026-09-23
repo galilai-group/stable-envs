@@ -40,7 +40,8 @@ atomic named State component. The earlier checkpoint's individual cached-word
 minimality question is not an acceptance requirement under the current user
 instruction. Existing experiments and failed diagnostics remain unmodified.
 
-Reproduce the map and closure checks with:
+Reproduce the original Phase A map and closure checks at commit `f51d26eb`
+(before the later Fetch promotion) with:
 
 ```sh
 .venv/bin/python scripts/recovery/build_implementation_map.py --swm /Users/samib/stable-worldmodel

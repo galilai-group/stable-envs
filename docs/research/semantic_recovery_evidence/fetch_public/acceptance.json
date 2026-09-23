@@ -1,0 +1,65 @@
+{
+  "status": "PASS",
+  "source_commit": "bf9101cbcddbb88566879ae40ce4e1cda0e65550",
+  "job_id": 6646530,
+  "stage": "fetch-public-bf9101cb",
+  "archive_sha256": "db6e760ba77f8414a1bea356becebfc1306f564473db30be335bf49855dd69b9",
+  "archive_remote_hash_verified": true,
+  "partition": "3090-gcondo",
+  "qos": "cs-3090-gcondo",
+  "gpu_features": "geforce3090|a5000|a5500",
+  "cpu_source_commit": "32849a4f514833b8684c344143ea5660a3b7ef7b",
+  "gpu_feature_reason": "RTX3090 nodes draining/invalid; small renderer gate also fits 22GB GPUs in same authorized partition",
+  "actual_gpu": "NVIDIA RTX A5000",
+  "actual_terminal_marker": "FETCH_GPU_GATE_PASS fetch-public-bf9101cb",
+  "frozen_renderer": {
+    "FetchPickAndPlace": {
+      "rows_sha256": "c3005446d3e26f6fe5ef14b043742361fe596814a5475c9981847e43979ba7a0",
+      "frame_sha256": "ba263cfd07aad449e2b526df8a8ef9c46c61fcd156c37ffae75f589d23a0b975",
+      "shape": [
+        4,
+        480,
+        480,
+        3
+      ]
+    }
+  },
+  "cpu_semantic": "PASS_EXACT_PUBLIC_12_CASES_PLUS_BOUNDARIES_LIFECYCLE_VARIATION",
+  "cpu_renderer": "CPU_BACKEND_MISSING",
+  "gpu_semantic": "NOT_CLAIMED_SEPARATE_RENDERER_PROFILE",
+  "gpu_renderer": "PASS",
+  "cpu_profile": {
+    "python": "3.12.11",
+    "versions": {
+      "numpy": "2.2.6",
+      "gymnasium": "1.2.3",
+      "gymnasium-robotics": "1.4.2",
+      "mujoco": "3.8.1",
+      "torch": "2.10.0",
+      "tensordict": "0.14.2"
+    }
+  },
+  "renderer_profile": {
+    "torch": "2.14.0+cu126",
+    "numpy": "2.5.3",
+    "gymnasium": "1.3.0",
+    "gymnasium-robotics": "1.4.2",
+    "mujoco": "3.11.0",
+    "mujoco-warp": "3.11.0",
+    "warp-lang": "1.17.0",
+    "tensordict": "0.14.2"
+  },
+  "newly_verified": [
+    "swm/FetchPickAndPlace-v3"
+  ],
+  "counts": {
+    "VERIFIED": 22,
+    "INCOMPLETE": 20
+  },
+  "downloaded_artifact_hashes_match_oscar": true,
+  "baseline_candidate_json_byte_identical": true,
+  "readiness_tests": "8 passed",
+  "legacy_fetch_source_tests": "10 passed; 7 local renderer-construction skips, separately covered by Oscar renderer acceptance",
+  "driver_sha256": "82bb65a79c7fc686c37a5bd9aeb359910877964b6e8e74ef2d1fcb7e0abf4687",
+  "runner_sha256": "fbb331fbb0a75d17a167a6b1439dafc2fc9b1242e64ee41ecba6dfe477b9dd65"
+}
