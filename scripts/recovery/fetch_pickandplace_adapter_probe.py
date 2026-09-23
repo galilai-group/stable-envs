@@ -2,7 +2,8 @@
 import importlib.metadata
 import json
 import platform
-import sys
+import subprocess
+from pathlib import Path
 import numpy as np
 import torch
 import gymnasium as gym
@@ -37,12 +38,19 @@ def compare_state(state,expected):
         for f in ('has_uint32','uinteger'):assert row['rng',f].item()==r['rng'][f]
 
 
+def exact_array(actual,expected,label):
+    actual,expected=np.asarray(actual),np.asarray(expected)
+    assert actual.shape==expected.shape,(label,'shape',actual.shape,expected.shape)
+    assert actual.dtype==expected.dtype,(label,'dtype',actual.dtype,expected.dtype)
+    assert np.array_equal(actual,expected),label
+
+
 def compare_output(out,refs):
     for lane,r in enumerate(refs):
         for key,index in [('observation',0),('reward',1),('terminated',2),('truncated',3)]:
-            assert np.array_equal(out[key][lane].cpu().numpy(),np.asarray(r[index])),(lane,key)
+            exact_array(out[key][lane].cpu().numpy(),r[index],(lane,key))
         for f in ('proprio','state','goal_state','is_success'):
-            assert np.array_equal(out['info',f][lane].cpu().numpy(),r[4][f]),(lane,'info',f)
+            exact_array(out['info',f][lane].cpu().numpy(),r[4][f],(lane,'info',f))
 
 
 def case(seed,batch,dtype):
@@ -96,7 +104,11 @@ def lifecycle():
     finally:a.close();b.close();e.close()
 
 if __name__=='__main__':
-    result={'status':'ADAPTER_ONLY_NOT_PUBLIC_ENVIRONMENT_ACCEPTANCE','profile':{'python':platform.python_version(),'versions':{k:importlib.metadata.version(k) for k in ('numpy','gymnasium','gymnasium-robotics','mujoco')}},
+    root=Path(stable_worldmodel.__file__).resolve().parents[1]
+    pin=subprocess.check_output(['git','-C',str(root),'rev-parse','HEAD'],text=True).strip()
+    assert pin=='176d54532b3c0a251a4f509b74f2fdacc143a63d'
+    assert not subprocess.check_output(['git','-C',str(root),'status','--short','--untracked-files=no'],text=True)
+    result={'status':'ADAPTER_ONLY_NOT_PUBLIC_ENVIRONMENT_ACCEPTANCE','swm_commit':pin,'swm_tracked_clean':True,'visual_variations':False,'comparison':'exact_values_shapes_dtypes','profile':{'python':platform.python_version(),'versions':{k:importlib.metadata.version(k) for k in ('numpy','gymnasium','gymnasium-robotics','mujoco')}},
        'cases':[case(s,b,d) for s in (0,17,42) for b in (1,3) for d in (np.float32,np.float64)],
        'lifecycle':lifecycle(),
        'outstanding':['public environment integration','reward threshold candidate gate','Variation gate','full/private render equality','render non-mutation','frozen renderer preservation']}
