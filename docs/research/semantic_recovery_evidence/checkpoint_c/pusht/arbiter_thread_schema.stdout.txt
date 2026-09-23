@@ -1,0 +1,10 @@
+cpArbiterThread error undefined type name
+cpArbiterThread
+^
+cpComponentNode error undefined type name
+cpComponentNode
+^
+struct cpArbiterThread [('next', "<ctype 'struct cpArbiter *'>"), ('prev', "<ctype 'struct cpArbiter *'>")]
+struct cpComponentNode error undefined struct/union name
+struct cpComponentNode
+       ^

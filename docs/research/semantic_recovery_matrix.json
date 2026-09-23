@@ -21,14 +21,14 @@
       "variation_parity": "PASS_CPU_NONDEFAULT_ALL_DOMAIN_PHYSICS_LEAVES; full historical surface remains uncertified",
       "execution_mode": "DELEGATED_CPU",
       "adapter_status": "IMPLEMENTED_HISTORICAL_DEFAULT",
-      "renderer_regression": "PASS_THREE_CELL_FROZEN_CPU; OSCAR_INCOMPLETE: job failed after baseline capture and before candidate frame comparison",
+      "renderer_regression": "PASS_THREE_CELL_FROZEN_CPU; OSCAR_PENDING: prior attempt failed before candidate frame comparison; new immutable rerun awaits acceptance",
       "oracle_corpus": "tests/fixtures/semantics/native_classic_remaining/manifest.json",
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Gate bug: continuous MountainCar omission diagnostic subtracts CUDA candidate and CPU reference tensors before completing semantic or renderer acceptance.",
+        "Gate diagnostic now compares host tensors; full CPU gate passes; complete Oscar rerun queued.",
         "Complete historical Variation surface and task kwargs remain uncertified",
         "Legacy physical-only transition/unroll and sim_state/set_sim_state explicitly refused",
         "All-42 renderer certification and paired benchmarks remain unrun"
@@ -42,12 +42,13 @@
       "worktree_base": "152cb2402bd44063f414865faff6d28e4ccb67c2",
       "planned_gate": "scripts/recovery/native_classic_remaining_gate.py",
       "implementation_commit": "b3b6da79555020a3fe9ae046c3f6b4a2bef8a153",
-      "oscar_job": 6608718,
+      "oscar_job": 6626587,
       "evidence": [
         "docs/research/native_classic_remaining.md",
         "docs/research/semantic_recovery_evidence/native_classic_remaining_cpu.json",
         "docs/research/semantic_recovery_evidence/native_classic_remaining_renderer_cpu.json",
-        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/simple-6608718.out"
+        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/simple-6608718.out",
+        "docs/research/semantic_recovery_evidence/checkpoint_c/oscar_reruns.json"
       ],
       "verification_scope": {
         "classes": [
@@ -69,8 +70,12 @@
         "same_persistent_variation_required": true,
         "status": "CPU_PASSED_OSCAR_PENDING"
       },
-      "oscar_result": "FAILED",
-      "oscar_failure": "Gate bug: continuous MountainCar omission diagnostic subtracts CUDA candidate and CPU reference tensors before completing semantic or renderer acceptance."
+      "oscar_result": "PENDING",
+      "prior_oscar_failure": {
+        "job_id": 6608718,
+        "failure": "Gate bug: continuous MountainCar omission diagnostic subtracts CUDA candidate and CPU reference tensors before completing semantic or renderer acceptance."
+      },
+      "acceptance_revision": "98c65cbe6690404bf04a463e72003ba924b6c989"
     },
     {
       "historical_id": "swm/AcrobotDMControl-v0",
@@ -156,14 +161,14 @@
       "variation_parity": "PASS_CPU_NONDEFAULT_PHYSICS_AND_VISUAL_ONLY; complete historical surface remains uncertified",
       "execution_mode": "DELEGATED_CPU",
       "adapter_status": "IMPLEMENTED_HISTORICAL_DEFAULT",
-      "renderer_regression": "PASS_FOUR_CELL_FROZEN_CPU; OSCAR_INCOMPLETE: job failed after baseline capture and before candidate frame comparison",
+      "renderer_regression": "PASS_FOUR_CELL_FROZEN_CPU; OSCAR_PENDING: prior attempt failed before candidate frame comparison; new immutable rerun awaits acceptance",
       "oracle_corpus": "tests/fixtures/semantics/dmc_aligned/manifest.json",
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "DMC omission assertion failed: error_without > 0 and error_with == 0. Log does not identify the domain/field or either value; profile-specific cause remains unresolved.",
+        "Oscar CPU diagnostic isolated a zero Ball-in-Cup omission witness with exact restoration; prefix6 has a nonzero witness on both observed profiles. Full CPU gate passes; complete Oscar rerun queued.",
         "Complete historical reset options, Variation surface and sibling tasks remain uncertified",
         "All-42 renderer certification and paired benchmarks remain unrun"
       ],
@@ -181,7 +186,8 @@
         "docs/research/dmc_aligned_recovery.md",
         "docs/research/semantic_recovery_evidence/dmc_aligned_cpu.json",
         "docs/research/semantic_recovery_evidence/dmc_aligned_renderer_cpu.json",
-        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/simple-6610032.out"
+        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/simple-6610032.out",
+        "docs/research/semantic_recovery_evidence/checkpoint_c/oscar_reruns.json"
       ],
       "verification_scope": {
         "classes": [
@@ -203,9 +209,13 @@
         "same_persistent_variation_required": true,
         "status": "CPU_PASSED_OSCAR_PENDING"
       },
-      "oscar_job": 6610032,
-      "oscar_result": "FAILED",
-      "oscar_failure": "DMC omission assertion failed: error_without > 0 and error_with == 0. Log does not identify the domain/field or either value; profile-specific cause remains unresolved."
+      "oscar_job": 6626669,
+      "oscar_result": "PENDING",
+      "prior_oscar_failure": {
+        "job_id": 6610032,
+        "failure": "DMC omission assertion failed: error_without > 0 and error_with == 0. Log does not identify the domain/field or either value; profile-specific cause remains unresolved."
+      },
+      "acceptance_revision": "57c10c17f1bf74ce565ff80e5f44292e3fc827ad"
     },
     {
       "historical_id": "swm/CartPoleControl-v1",
@@ -931,14 +941,14 @@
       "variation_parity": "PASS_CPU_NONDEFAULT_PHYSICS_AND_VISUAL_ONLY; complete historical surface remains uncertified",
       "execution_mode": "DELEGATED_CPU",
       "adapter_status": "IMPLEMENTED_HISTORICAL_DEFAULT",
-      "renderer_regression": "PASS_FOUR_CELL_FROZEN_CPU; OSCAR_INCOMPLETE: job failed after baseline capture and before candidate frame comparison",
+      "renderer_regression": "PASS_FOUR_CELL_FROZEN_CPU; OSCAR_PENDING: prior attempt failed before candidate frame comparison; new immutable rerun awaits acceptance",
       "oracle_corpus": "tests/fixtures/semantics/dmc_aligned/manifest.json",
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "DMC omission assertion failed: error_without > 0 and error_with == 0. Log does not identify the domain/field or either value; profile-specific cause remains unresolved.",
+        "Oscar CPU diagnostic isolated a zero Ball-in-Cup omission witness with exact restoration; prefix6 has a nonzero witness on both observed profiles. Full CPU gate passes; complete Oscar rerun queued.",
         "Complete historical reset options, Variation surface and sibling tasks remain uncertified",
         "All-42 renderer certification and paired benchmarks remain unrun"
       ],
@@ -956,7 +966,8 @@
         "docs/research/dmc_aligned_recovery.md",
         "docs/research/semantic_recovery_evidence/dmc_aligned_cpu.json",
         "docs/research/semantic_recovery_evidence/dmc_aligned_renderer_cpu.json",
-        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/simple-6610032.out"
+        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/simple-6610032.out",
+        "docs/research/semantic_recovery_evidence/checkpoint_c/oscar_reruns.json"
       ],
       "verification_scope": {
         "classes": [
@@ -978,9 +989,13 @@
         "same_persistent_variation_required": true,
         "status": "CPU_PASSED_OSCAR_PENDING"
       },
-      "oscar_job": 6610032,
-      "oscar_result": "FAILED",
-      "oscar_failure": "DMC omission assertion failed: error_without > 0 and error_with == 0. Log does not identify the domain/field or either value; profile-specific cause remains unresolved."
+      "oscar_job": 6626669,
+      "oscar_result": "PENDING",
+      "prior_oscar_failure": {
+        "job_id": 6610032,
+        "failure": "DMC omission assertion failed: error_without > 0 and error_with == 0. Log does not identify the domain/field or either value; profile-specific cause remains unresolved."
+      },
+      "acceptance_revision": "57c10c17f1bf74ce565ff80e5f44292e3fc827ad"
     },
     {
       "historical_id": "swm/HopperDMControl-v0",
@@ -1066,46 +1081,79 @@
     {
       "historical_id": "swm/HumanoidDMControl-v0",
       "stable_envs_classes": [
-        "DMCHumanoidStand"
+        "DMCHumanoidWalk"
       ],
       "family": "dmcontrol",
-      "owner": "coordinator",
+      "owner": "dmc_humanoid",
       "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
       "state_status": "INCOMPLETE",
-      "action_parity": "UNTESTED",
-      "reset_parity": "UNTESTED",
-      "step_parity": "UNTESTED",
-      "reward_parity": "UNTESTED",
-      "terminated_truncated_parity": "UNTESTED",
-      "rng_lifecycle": "UNTESTED",
-      "variation_parity": "UNTESTED",
-      "execution_mode": null,
-      "adapter_status": "NOT_IMPLEMENTED",
-      "renderer_regression": "PENDING",
-      "oracle_corpus": null,
+      "action_parity": "PASS_EXACT_CPU_DEFAULT_AND_FINITE_PASSTHROUGH",
+      "reset_parity": "PASS_SEEDED_DEFAULT_CPU",
+      "step_parity": "PASS_EXACT_CPU; CUDA_STATE_PENDING",
+      "reward_parity": "PASS_EXACT_CPU_INCLUDING_POSITIVE_REWARD",
+      "terminated_truncated_parity": "PASS_EXACT_CPU_THROUGH_DMC_IMPLICIT_RESET",
+      "rng_lifecycle": "PASS_CPU_TWO_HISTORIES_REPLAY_ACROSS_IMPLICIT_RESET",
+      "variation_parity": "PASS_CPU_NONDEFAULT_GRAVITY_AND_VISUAL_ONLY_PRESERVATION; complete surface uncertified",
+      "execution_mode": "DELEGATED_CPU",
+      "adapter_status": "IMPLEMENTED_HISTORICAL_DEFAULT",
+      "renderer_regression": "PASS_FROZEN_CPU: four private Stand-corpus rows byte-identical; OSCAR_PENDING",
+      "oracle_corpus": "tests/fixtures/semantics/dmc_humanoid/manifest.json",
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Missing qvel and executable dynamics.",
-        "Reset samples rollout states rather than reference reset.",
-        "SWM constructor defaults to walk; crosswalk names DMCHumanoidStand."
+        "Required Oscar Humanoid semantic gate, frozen renderer comparison and earlier DMC/Reacher regressions pending",
+        "Complete historical reset options and Variation surface remain uncertified",
+        "Immutable Stand renderer evidence remains private; public identity is Walk",
+        "All-42 renderer certification and paired benchmarks remain unrun"
       ],
-      "test": "tests/unit/test_full_state_contract.py",
+      "test": "tests/integration/test_dmc_humanoid_semantics.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "execution_candidate": "DELEGATED",
       "audit_status": "SOURCE_AUDITED_NOT_VERIFIED",
-      "audit_report": "docs/research/dmc_continuation_recovery.md",
-      "recovery_status": "BLOCKED_TASK_IDENTITY",
+      "audit_report": "docs/research/dmc_humanoid_recovery.md",
+      "recovery_status": "CPU_PASSED_OSCAR_PENDING",
       "blocker": {
-        "status": "OPEN",
+        "status": "RESOLVED",
         "kind": "DEFAULT_TASK_IDENTITY_MISMATCH",
         "reference": "Humanoid walk, move_speed=1, pure_state=False",
-        "candidate": "DMCHumanoidStand",
+        "candidate": "DMCHumanoidWalk",
         "resolution_cohort": "remaining DMC",
-        "permanent_skip": false
-      }
+        "permanent_skip": false,
+        "resolution": "Historical Walk task now implemented; required Oscar acceptance still outstanding"
+      },
+      "implementation_commit": "97436d6ae92835d34a01fd5bd758cbc30ff0cca7",
+      "oscar_result": "PENDING",
+      "state_schema": "qpos[28], qvel[27], qacc_warmstart[27], time, lifecycle step_count/reset_next_step, cumulative_reward, MT19937 keys/position/has_gauss/cached_gaussian",
+      "verification_scope": {
+        "classes": [
+          "DMCHumanoidWalk"
+        ],
+        "seeds": [
+          0,
+          17,
+          42
+        ],
+        "batches": [
+          1,
+          3
+        ],
+        "trajectory_steps": 32,
+        "different_history_steps": 8,
+        "atol": 0,
+        "rtol": 0,
+        "same_persistent_variation_required": true,
+        "status": "CPU_PASSED_OSCAR_PENDING"
+      },
+      "evidence": [
+        "docs/research/dmc_humanoid_recovery.md",
+        "docs/research/semantic_recovery_evidence/dmc_humanoid_cpu.json",
+        "docs/research/semantic_recovery_evidence/dmc_humanoid_renderer_baseline_cpu.json",
+        "docs/research/semantic_recovery_evidence/dmc_humanoid_renderer_cpu.json",
+        "docs/research/semantic_recovery_evidence/checkpoint_c/oscar_reruns.json"
+      ],
+      "oscar_job": 6626742
     },
     {
       "historical_id": "swm/ManipulatorDMControl-v0",
@@ -1125,14 +1173,14 @@
       "variation_parity": "PASS_CPU_NONDEFAULT_PHYSICS_AND_VISUAL_ONLY; complete historical surface remains uncertified",
       "execution_mode": "DELEGATED_CPU",
       "adapter_status": "IMPLEMENTED_HISTORICAL_DEFAULT",
-      "renderer_regression": "PASS_FOUR_CELL_FROZEN_CPU; OSCAR_INCOMPLETE: job failed after baseline capture and before candidate frame comparison",
+      "renderer_regression": "PASS_FOUR_CELL_FROZEN_CPU; OSCAR_PENDING: prior attempt failed before candidate frame comparison; new immutable rerun awaits acceptance",
       "oracle_corpus": "tests/fixtures/semantics/dmc_aligned/manifest.json",
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "DMC omission assertion failed: error_without > 0 and error_with == 0. Log does not identify the domain/field or either value; profile-specific cause remains unresolved.",
+        "Oscar CPU diagnostic isolated a zero Ball-in-Cup omission witness with exact restoration; prefix6 has a nonzero witness on both observed profiles. Full CPU gate passes; complete Oscar rerun queued.",
         "Complete historical reset options, Variation surface and sibling tasks remain uncertified",
         "All-42 renderer certification and paired benchmarks remain unrun"
       ],
@@ -1150,7 +1198,8 @@
         "docs/research/dmc_aligned_recovery.md",
         "docs/research/semantic_recovery_evidence/dmc_aligned_cpu.json",
         "docs/research/semantic_recovery_evidence/dmc_aligned_renderer_cpu.json",
-        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/simple-6610032.out"
+        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/simple-6610032.out",
+        "docs/research/semantic_recovery_evidence/checkpoint_c/oscar_reruns.json"
       ],
       "verification_scope": {
         "classes": [
@@ -1172,9 +1221,13 @@
         "same_persistent_variation_required": true,
         "status": "CPU_PASSED_OSCAR_PENDING"
       },
-      "oscar_job": 6610032,
-      "oscar_result": "FAILED",
-      "oscar_failure": "DMC omission assertion failed: error_without > 0 and error_with == 0. Log does not identify the domain/field or either value; profile-specific cause remains unresolved."
+      "oscar_job": 6626669,
+      "oscar_result": "PENDING",
+      "prior_oscar_failure": {
+        "job_id": 6610032,
+        "failure": "DMC omission assertion failed: error_without > 0 and error_with == 0. Log does not identify the domain/field or either value; profile-specific cause remains unresolved."
+      },
+      "acceptance_revision": "57c10c17f1bf74ce565ff80e5f44292e3fc827ad"
     },
     {
       "historical_id": "swm/MountainCarContinuousControl-v0",
@@ -1194,14 +1247,14 @@
       "variation_parity": "PASS_CPU_NONDEFAULT_ALL_DOMAIN_PHYSICS_LEAVES; full historical surface remains uncertified",
       "execution_mode": "DELEGATED_CPU",
       "adapter_status": "IMPLEMENTED_HISTORICAL_DEFAULT",
-      "renderer_regression": "PASS_THREE_CELL_FROZEN_CPU; OSCAR_INCOMPLETE: job failed after baseline capture and before candidate frame comparison",
+      "renderer_regression": "PASS_THREE_CELL_FROZEN_CPU; OSCAR_PENDING: prior attempt failed before candidate frame comparison; new immutable rerun awaits acceptance",
       "oracle_corpus": "tests/fixtures/semantics/native_classic_remaining/manifest.json",
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Gate bug: continuous MountainCar omission diagnostic subtracts CUDA candidate and CPU reference tensors before completing semantic or renderer acceptance.",
+        "Gate diagnostic now compares host tensors; full CPU gate passes; complete Oscar rerun queued.",
         "Complete historical Variation surface and task kwargs remain uncertified",
         "Legacy physical-only transition/unroll and sim_state/set_sim_state explicitly refused",
         "All-42 renderer certification and paired benchmarks remain unrun"
@@ -1215,12 +1268,13 @@
       "worktree_base": "152cb2402bd44063f414865faff6d28e4ccb67c2",
       "planned_gate": "scripts/recovery/native_classic_remaining_gate.py",
       "implementation_commit": "b3b6da79555020a3fe9ae046c3f6b4a2bef8a153",
-      "oscar_job": 6608718,
+      "oscar_job": 6626587,
       "evidence": [
         "docs/research/native_classic_remaining.md",
         "docs/research/semantic_recovery_evidence/native_classic_remaining_cpu.json",
         "docs/research/semantic_recovery_evidence/native_classic_remaining_renderer_cpu.json",
-        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/simple-6608718.out"
+        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/simple-6608718.out",
+        "docs/research/semantic_recovery_evidence/checkpoint_c/oscar_reruns.json"
       ],
       "verification_scope": {
         "classes": [
@@ -1242,8 +1296,12 @@
         "same_persistent_variation_required": true,
         "status": "CPU_PASSED_OSCAR_PENDING"
       },
-      "oscar_result": "FAILED",
-      "oscar_failure": "Gate bug: continuous MountainCar omission diagnostic subtracts CUDA candidate and CPU reference tensors before completing semantic or renderer acceptance."
+      "oscar_result": "PENDING",
+      "prior_oscar_failure": {
+        "job_id": 6608718,
+        "failure": "Gate bug: continuous MountainCar omission diagnostic subtracts CUDA candidate and CPU reference tensors before completing semantic or renderer acceptance."
+      },
+      "acceptance_revision": "98c65cbe6690404bf04a463e72003ba924b6c989"
     },
     {
       "historical_id": "swm/MountainCarControl-v0",
@@ -1263,14 +1321,14 @@
       "variation_parity": "PASS_CPU_NONDEFAULT_ALL_DOMAIN_PHYSICS_LEAVES; full historical surface remains uncertified",
       "execution_mode": "DELEGATED_CPU",
       "adapter_status": "IMPLEMENTED_HISTORICAL_DEFAULT",
-      "renderer_regression": "PASS_THREE_CELL_FROZEN_CPU; OSCAR_INCOMPLETE: job failed after baseline capture and before candidate frame comparison",
+      "renderer_regression": "PASS_THREE_CELL_FROZEN_CPU; OSCAR_PENDING: prior attempt failed before candidate frame comparison; new immutable rerun awaits acceptance",
       "oracle_corpus": "tests/fixtures/semantics/native_classic_remaining/manifest.json",
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Gate bug: continuous MountainCar omission diagnostic subtracts CUDA candidate and CPU reference tensors before completing semantic or renderer acceptance.",
+        "Gate diagnostic now compares host tensors; full CPU gate passes; complete Oscar rerun queued.",
         "Complete historical Variation surface and task kwargs remain uncertified",
         "Legacy physical-only transition/unroll and sim_state/set_sim_state explicitly refused",
         "All-42 renderer certification and paired benchmarks remain unrun"
@@ -1284,12 +1342,13 @@
       "worktree_base": "152cb2402bd44063f414865faff6d28e4ccb67c2",
       "planned_gate": "scripts/recovery/native_classic_remaining_gate.py",
       "implementation_commit": "b3b6da79555020a3fe9ae046c3f6b4a2bef8a153",
-      "oscar_job": 6608718,
+      "oscar_job": 6626587,
       "evidence": [
         "docs/research/native_classic_remaining.md",
         "docs/research/semantic_recovery_evidence/native_classic_remaining_cpu.json",
         "docs/research/semantic_recovery_evidence/native_classic_remaining_renderer_cpu.json",
-        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/simple-6608718.out"
+        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/simple-6608718.out",
+        "docs/research/semantic_recovery_evidence/checkpoint_c/oscar_reruns.json"
       ],
       "verification_scope": {
         "classes": [
@@ -1311,8 +1370,12 @@
         "same_persistent_variation_required": true,
         "status": "CPU_PASSED_OSCAR_PENDING"
       },
-      "oscar_result": "FAILED",
-      "oscar_failure": "Gate bug: continuous MountainCar omission diagnostic subtracts CUDA candidate and CPU reference tensors before completing semantic or renderer acceptance."
+      "oscar_result": "PENDING",
+      "prior_oscar_failure": {
+        "job_id": 6608718,
+        "failure": "Gate bug: continuous MountainCar omission diagnostic subtracts CUDA candidate and CPU reference tensors before completing semantic or renderer acceptance."
+      },
+      "acceptance_revision": "98c65cbe6690404bf04a463e72003ba924b6c989"
     },
     {
       "historical_id": "swm/OGBCube-v0",
@@ -1637,14 +1700,14 @@
       "variation_parity": "PASS_CPU_COMBINED_NONDEFAULT_DYNAMICS_WITH_DEFAULT_DIVERGENCE; complete historical surface remains uncertified",
       "execution_mode": "NATIVE_TORCH",
       "adapter_status": "NATIVE_IMPLEMENTED_HISTORICAL_DEFAULT",
-      "renderer_regression": "PASS_THREE_CELL_FROZEN_CPU; SPM private historical hidden-goal translation; OSCAR_INCOMPLETE: job failed after baseline capture and before candidate frame comparison",
+      "renderer_regression": "PASS_THREE_CELL_FROZEN_CPU; SPM private historical hidden-goal translation; OSCAR_PENDING: prior attempt failed before candidate frame comparison; new immutable rerun awaits acceptance",
       "oracle_corpus": "tests/fixtures/semantics/native_navigation/manifest.json",
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Native navigation exact CUDA output mismatch in info.distance_to_target: absolute difference 7.62939453125e-06. No tolerance relaxation; remaining navigation gate and candidate renderer comparison did not run.",
+        "Family-local source-ordered CPU norm fixes the numeric output path; full CPU gate passes; complete Oscar rerun queued.",
         "Complete sampled reset options, historical Variation surface and sibling variants remain uncertified",
         "Unseeded reset draws fresh external entropy in pinned source; no restored-unseeded-reset replay claim",
         "All-42 renderer certification and paired benchmarks remain unrun"
@@ -1657,12 +1720,13 @@
       "cohort": "remaining-simple-and-source-aligned",
       "worktree_base": "152cb2402bd44063f414865faff6d28e4ccb67c2",
       "planned_gate": "scripts/recovery/native_navigation_gate.py",
-      "implementation_commit": "9fed5402631660c0764229182ed2a71c9a7a8e83",
+      "implementation_commit": "bb517bdd6e9bac07dfb56fde42b0bc9f249a5110",
       "evidence": [
         "docs/research/native_navigation_recovery.md",
         "docs/research/semantic_recovery_evidence/native_navigation_cpu.json",
         "docs/research/semantic_recovery_evidence/native_navigation_renderer_cpu.json",
-        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/simple-6611139.out"
+        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/simple-6611139.out",
+        "docs/research/semantic_recovery_evidence/checkpoint_c/oscar_reruns.json"
       ],
       "verification_scope": {
         "classes": [
@@ -1684,9 +1748,13 @@
         "same_persistent_variation_required": true,
         "status": "CPU_PASSED_OSCAR_PENDING"
       },
-      "oscar_job": 6611139,
-      "oscar_result": "FAILED",
-      "oscar_failure": "Native navigation exact CUDA output mismatch in info.distance_to_target: absolute difference 7.62939453125e-06. No tolerance relaxation; remaining navigation gate and candidate renderer comparison did not run."
+      "oscar_job": 6626600,
+      "oscar_result": "PENDING",
+      "prior_oscar_failure": {
+        "job_id": 6611139,
+        "failure": "Native navigation exact CUDA output mismatch in info.distance_to_target: absolute difference 7.62939453125e-06. No tolerance relaxation; remaining navigation gate and candidate renderer comparison did not run."
+      },
+      "acceptance_revision": "bb517bdd6e9bac07dfb56fde42b0bc9f249a5110"
     },
     {
       "historical_id": "swm/PushT-Discrete-v1",
@@ -1716,12 +1784,28 @@
         "Stable actions are absolute PD targets in [0,512], not normalized relative commands.",
         "Native solver is approximate; step omits reward/done.",
         "get_state loses agent velocity; complete Pymunk state is not established.",
-        "Both SWM variants map to same continuous stable class; discrete decoding absent."
+        "Both SWM variants map to same continuous stable class; discrete decoding absent.",
+        "C3: supported body/space/arbiter reconstruction is exact for one wall contact but simultaneous contacts still differ; opaque body bias and internal collision bookkeeping remain untested. No sufficient explicit State yet."
       ],
       "test": "tests/unit/test_full_state_contract.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "audit_status": "SOURCE_AUDITED_NOT_VERIFIED",
-      "audit_report": "docs/research/native_verification.md"
+      "audit_report": "docs/research/native_verification.md",
+      "evidence": [
+        "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/PROFILE.md"
+      ],
+      "blocker": {
+        "status": "OPEN",
+        "kind": "FULL_STATE_NOT_ESTABLISHED",
+        "scope": "Both historical PushT registrations; independent certification remains required",
+        "observed_error_with_exposed_contact_restore": 0.10992291186727243,
+        "untested_candidates": [
+          "body v_bias/w_bias",
+          "active solver bookkeeping",
+          "broadphase collision IDs/cache"
+        ],
+        "permanent_skip": false
+      }
     },
     {
       "historical_id": "swm/PushT-v1",
@@ -1750,12 +1834,28 @@
       "remaining_issues": [
         "Stable actions are absolute PD targets in [0,512], not normalized relative commands.",
         "Native solver is approximate; step omits reward/done.",
-        "get_state loses agent velocity; complete Pymunk state is not established."
+        "get_state loses agent velocity; complete Pymunk state is not established.",
+        "C3: supported body/space/arbiter reconstruction is exact for one wall contact but simultaneous contacts still differ; opaque body bias and internal collision bookkeeping remain untested. No sufficient explicit State yet."
       ],
       "test": "tests/unit/test_full_state_contract.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "audit_status": "SOURCE_AUDITED_NOT_VERIFIED",
-      "audit_report": "docs/research/native_verification.md"
+      "audit_report": "docs/research/native_verification.md",
+      "evidence": [
+        "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/PROFILE.md"
+      ],
+      "blocker": {
+        "status": "OPEN",
+        "kind": "FULL_STATE_NOT_ESTABLISHED",
+        "scope": "Both historical PushT registrations; independent certification remains required",
+        "observed_error_with_exposed_contact_restore": 0.10992291186727243,
+        "untested_candidates": [
+          "body v_bias/w_bias",
+          "active solver bookkeeping",
+          "broadphase collision IDs/cache"
+        ],
+        "permanent_skip": false
+      }
     },
     {
       "historical_id": "swm/QuadrupedDMControl-v0",
@@ -1775,14 +1875,14 @@
       "variation_parity": "PASS_CPU_NONDEFAULT_PHYSICS_AND_VISUAL_ONLY; complete historical surface remains uncertified",
       "execution_mode": "DELEGATED_CPU",
       "adapter_status": "IMPLEMENTED_HISTORICAL_DEFAULT",
-      "renderer_regression": "PASS_FOUR_CELL_FROZEN_CPU; OSCAR_INCOMPLETE: job failed after baseline capture and before candidate frame comparison",
+      "renderer_regression": "PASS_FOUR_CELL_FROZEN_CPU; OSCAR_PENDING: prior attempt failed before candidate frame comparison; new immutable rerun awaits acceptance",
       "oracle_corpus": "tests/fixtures/semantics/dmc_aligned/manifest.json",
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "DMC omission assertion failed: error_without > 0 and error_with == 0. Log does not identify the domain/field or either value; profile-specific cause remains unresolved.",
+        "Oscar CPU diagnostic isolated a zero Ball-in-Cup omission witness with exact restoration; prefix6 has a nonzero witness on both observed profiles. Full CPU gate passes; complete Oscar rerun queued.",
         "Complete historical reset options, Variation surface and sibling tasks remain uncertified",
         "All-42 renderer certification and paired benchmarks remain unrun"
       ],
@@ -1800,7 +1900,8 @@
         "docs/research/dmc_aligned_recovery.md",
         "docs/research/semantic_recovery_evidence/dmc_aligned_cpu.json",
         "docs/research/semantic_recovery_evidence/dmc_aligned_renderer_cpu.json",
-        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/simple-6610032.out"
+        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/simple-6610032.out",
+        "docs/research/semantic_recovery_evidence/checkpoint_c/oscar_reruns.json"
       ],
       "verification_scope": {
         "classes": [
@@ -1822,9 +1923,13 @@
         "same_persistent_variation_required": true,
         "status": "CPU_PASSED_OSCAR_PENDING"
       },
-      "oscar_job": 6610032,
-      "oscar_result": "FAILED",
-      "oscar_failure": "DMC omission assertion failed: error_without > 0 and error_with == 0. Log does not identify the domain/field or either value; profile-specific cause remains unresolved."
+      "oscar_job": 6626669,
+      "oscar_result": "PENDING",
+      "prior_oscar_failure": {
+        "job_id": 6610032,
+        "failure": "DMC omission assertion failed: error_without > 0 and error_with == 0. Log does not identify the domain/field or either value; profile-specific cause remains unresolved."
+      },
+      "acceptance_revision": "57c10c17f1bf74ce565ff80e5f44292e3fc827ad"
     },
     {
       "historical_id": "swm/ReacherDMControl-v0",
@@ -1898,14 +2003,14 @@
       "variation_parity": "PASS_CPU_COMBINED_NONDEFAULT_DYNAMICS_WITH_DEFAULT_DIVERGENCE; complete historical surface remains uncertified",
       "execution_mode": "NATIVE_TORCH",
       "adapter_status": "NATIVE_IMPLEMENTED_HISTORICAL_DEFAULT",
-      "renderer_regression": "PASS_THREE_CELL_FROZEN_CPU; SPM private historical hidden-goal translation; OSCAR_INCOMPLETE: job failed after baseline capture and before candidate frame comparison",
+      "renderer_regression": "PASS_THREE_CELL_FROZEN_CPU; SPM private historical hidden-goal translation; OSCAR_PENDING: prior attempt failed before candidate frame comparison; new immutable rerun awaits acceptance",
       "oracle_corpus": "tests/fixtures/semantics/native_navigation/manifest.json",
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Native navigation exact CUDA output mismatch in info.distance_to_target: absolute difference 7.62939453125e-06. No tolerance relaxation; remaining navigation gate and candidate renderer comparison did not run.",
+        "Family-local source-ordered CPU norm fixes the numeric output path; full CPU gate passes; complete Oscar rerun queued.",
         "Complete sampled reset options, historical Variation surface and sibling variants remain uncertified",
         "Unseeded reset draws fresh external entropy in pinned source; no restored-unseeded-reset replay claim",
         "SimplePointMaze exact cached goal image requires Matplotlib Agg; CPU profile3.10.9 tested, Oscar profile3.11.1 pending",
@@ -1927,12 +2032,13 @@
       "cohort": "remaining-simple-and-source-aligned",
       "worktree_base": "152cb2402bd44063f414865faff6d28e4ccb67c2",
       "planned_gate": "scripts/recovery/native_navigation_gate.py",
-      "implementation_commit": "9fed5402631660c0764229182ed2a71c9a7a8e83",
+      "implementation_commit": "bb517bdd6e9bac07dfb56fde42b0bc9f249a5110",
       "evidence": [
         "docs/research/native_navigation_recovery.md",
         "docs/research/semantic_recovery_evidence/native_navigation_cpu.json",
         "docs/research/semantic_recovery_evidence/native_navigation_renderer_cpu.json",
-        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/simple-6611139.out"
+        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/simple-6611139.out",
+        "docs/research/semantic_recovery_evidence/checkpoint_c/oscar_reruns.json"
       ],
       "verification_scope": {
         "classes": [
@@ -1954,9 +2060,13 @@
         "same_persistent_variation_required": true,
         "status": "CPU_PASSED_OSCAR_PENDING"
       },
-      "oscar_job": 6611139,
-      "oscar_result": "FAILED",
-      "oscar_failure": "Native navigation exact CUDA output mismatch in info.distance_to_target: absolute difference 7.62939453125e-06. No tolerance relaxation; remaining navigation gate and candidate renderer comparison did not run."
+      "oscar_job": 6626600,
+      "oscar_result": "PENDING",
+      "prior_oscar_failure": {
+        "job_id": 6611139,
+        "failure": "Native navigation exact CUDA output mismatch in info.distance_to_target: absolute difference 7.62939453125e-06. No tolerance relaxation; remaining navigation gate and candidate renderer comparison did not run."
+      },
+      "acceptance_revision": "bb517bdd6e9bac07dfb56fde42b0bc9f249a5110"
     },
     {
       "historical_id": "swm/TwoRoom-v1",
@@ -1977,14 +2087,14 @@
       "variation_parity": "PASS_CPU_COMBINED_NONDEFAULT_DYNAMICS_WITH_DEFAULT_DIVERGENCE; complete historical surface remains uncertified",
       "execution_mode": "NATIVE_TORCH",
       "adapter_status": "NATIVE_IMPLEMENTED_HISTORICAL_DEFAULT",
-      "renderer_regression": "PASS_THREE_CELL_FROZEN_CPU; SPM private historical hidden-goal translation; OSCAR_INCOMPLETE: job failed after baseline capture and before candidate frame comparison",
+      "renderer_regression": "PASS_THREE_CELL_FROZEN_CPU; SPM private historical hidden-goal translation; OSCAR_PENDING: prior attempt failed before candidate frame comparison; new immutable rerun awaits acceptance",
       "oracle_corpus": "tests/fixtures/semantics/native_navigation/manifest.json",
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Native navigation exact CUDA output mismatch in info.distance_to_target: absolute difference 7.62939453125e-06. No tolerance relaxation; remaining navigation gate and candidate renderer comparison did not run.",
+        "Family-local source-ordered CPU norm fixes the numeric output path; full CPU gate passes; complete Oscar rerun queued.",
         "Complete sampled reset options, historical Variation surface and sibling variants remain uncertified",
         "Unseeded reset draws fresh external entropy in pinned source; no restored-unseeded-reset replay claim",
         "All-42 renderer certification and paired benchmarks remain unrun"
@@ -1997,12 +2107,13 @@
       "cohort": "remaining-simple-and-source-aligned",
       "worktree_base": "152cb2402bd44063f414865faff6d28e4ccb67c2",
       "planned_gate": "scripts/recovery/native_navigation_gate.py",
-      "implementation_commit": "9fed5402631660c0764229182ed2a71c9a7a8e83",
+      "implementation_commit": "bb517bdd6e9bac07dfb56fde42b0bc9f249a5110",
       "evidence": [
         "docs/research/native_navigation_recovery.md",
         "docs/research/semantic_recovery_evidence/native_navigation_cpu.json",
         "docs/research/semantic_recovery_evidence/native_navigation_renderer_cpu.json",
-        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/simple-6611139.out"
+        "docs/research/semantic_recovery_evidence/oscar_backlog_20260923/simple-6611139.out",
+        "docs/research/semantic_recovery_evidence/checkpoint_c/oscar_reruns.json"
       ],
       "verification_scope": {
         "classes": [
@@ -2024,9 +2135,13 @@
         "same_persistent_variation_required": true,
         "status": "CPU_PASSED_OSCAR_PENDING"
       },
-      "oscar_job": 6611139,
-      "oscar_result": "FAILED",
-      "oscar_failure": "Native navigation exact CUDA output mismatch in info.distance_to_target: absolute difference 7.62939453125e-06. No tolerance relaxation; remaining navigation gate and candidate renderer comparison did not run."
+      "oscar_job": 6626600,
+      "oscar_result": "PENDING",
+      "prior_oscar_failure": {
+        "job_id": 6611139,
+        "failure": "Native navigation exact CUDA output mismatch in info.distance_to_target: absolute difference 7.62939453125e-06. No tolerance relaxation; remaining navigation gate and candidate renderer comparison did not run."
+      },
+      "acceptance_revision": "bb517bdd6e9bac07dfb56fde42b0bc9f249a5110"
     },
     {
       "historical_id": "swm/WalkerDMControl-v0",
@@ -2110,5 +2225,5 @@
       ]
     }
   ],
-  "checkpoint": "Oscar checkpoint B: 10 VERIFIED / 32 INCOMPLETE; five bounded default slices accepted, ten CPU-passed rows still await acceptance after failed Oscar gates; see docs/research/oscar_acceptance_checkpoint_b.md"
+  "checkpoint": "Checkpoints C2/C3: Humanoid Walk CPU gate and frozen renderer pass; PushT simultaneous-contact State remains unresolved; 10 VERIFIED / 32 INCOMPLETE with 11 CPU-passed registrations awaiting Oscar. See docs/research/semantic_recovery_checkpoint_c.md"
 }

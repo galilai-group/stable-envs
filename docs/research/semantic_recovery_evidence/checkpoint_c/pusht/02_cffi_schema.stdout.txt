@@ -1,0 +1,7 @@
+cpBody kind struct fields []
+cpSpace kind struct fields []
+cpArbiter kind struct fields [('e', "<ctype 'double'>"), ('u', "<ctype 'double'>"), ('surface_vr', "<ctype 'struct cpVect'>"), ('data', "<ctype 'void *'>"), ('a', "<ctype 'struct cpShape *'>"), ('b', "<ctype 'struct cpShape *'>"), ('body_a', "<ctype 'struct cpBody *'>"), ('body_b', "<ctype 'struct cpBody *'>"), ('thread_a', "<ctype 'struct cpArbiterThread'>"), ('thread_b', "<ctype 'struct cpArbiterThread'>"), ('count', "<ctype 'int'>"), ('contacts', "<ctype 'struct cpContact *'>"), ('n', "<ctype 'struct cpVect'>"), ('handlerAB', "<ctype 'struct cpCollisionHandler *'>"), ('handlerBA', "<ctype 'struct cpCollisionHandler *'>"), ('handlerA', "<ctype 'struct cpCollisionHandler *'>"), ('handlerB', "<ctype 'struct cpCollisionHandler *'>"), ('swapped', "<ctype 'unsigned char'>"), ('stamp', "<ctype 'unsigned int'>"), ('state', "<ctype 'enum cpArbiterState'>"), ('processCollision', "<ctype 'unsigned char'>")]
+cpContact kind struct fields [('r1', "<ctype 'struct cpVect'>"), ('r2', "<ctype 'struct cpVect'>"), ('nMass', "<ctype 'double'>"), ('tMass', "<ctype 'double'>"), ('bounce', "<ctype 'double'>"), ('jnAcc', "<ctype 'double'>"), ('jtAcc', "<ctype 'double'>"), ('jBias', "<ctype 'double'>"), ('bias', "<ctype 'double'>"), ('hash', "<ctype 'uintptr_t'>")]
+cpCollisionInfo error undefined type name
+cpCollisionInfo
+^

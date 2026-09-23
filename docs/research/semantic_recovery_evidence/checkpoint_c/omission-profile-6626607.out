@@ -1,0 +1,26 @@
+## SLURM PROLOG ###############################################################
+##    Job ID : 6626607
+##  Job Name : se-dmc-omission-probe
+##  Nodelist : node1830
+##      CPUs : 
+##  Mem/Node : 8192 MB
+## Directory : /oscar/scratch/sboughan/se-semantic-recovery
+##   Job Started : Tue Sep 22 08:49:24 PM EDT 2026
+###############################################################################
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+Users of this version of Gym should be able to simply replace 'import gym' with 'import gymnasium as gym' in the vast majority of cases.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+DIAGNOSTIC_ONLY {"platform": "Linux-5.14.0-570.62.1.0.1.el9_6.x86_64-x86_64-with-glibc2.34", "versions": {"torch": "2.14.0+cu126", "numpy": "2.5.3", "mujoco": "3.11.0", "dm-control": "1.0.44"}}
+/oscar/scratch/sboughan/se-semantic-recovery/swm-reference/stable_worldmodel/envs/__init__.py:215: UserWarning: ale-py not found; ALE/* envs are unavailable. Install with: pip install 'stable-worldmodel[env]' or pip install ale-py.
+  from stable_worldmodel.envs import ale  # noqa: F401
+DOMAIN ball_in_cup
+DMC_OMISSION_RESULT {"domain": "ball_in_cup", "error_with": 0.0, "error_without": 0.0, "omitted_key": "warmstart"}
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/se-semantic-recovery/dmc_omission_profile_probe-c6ae835.py", line 14, in <module>
+    print(json.dumps(_omission_experiments(domain, env, reference)), flush=True)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/oscar/scratch/sboughan/se-semantic-recovery/dmc-aligned-diagnostic-c6ae835/scripts/recovery/dmc_aligned_gate.py", line 97, in _omission_experiments
+    assert error_without > 0, ("Omission witness has no observable effect", diagnostic)
+           ^^^^^^^^^^^^^^^^^
+AssertionError: ('Omission witness has no observable effect', {'domain': 'ball_in_cup', 'omitted_key': 'warmstart', 'error_without': 0.0, 'error_with': 0.0})
