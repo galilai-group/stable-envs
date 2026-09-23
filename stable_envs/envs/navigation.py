@@ -1551,7 +1551,11 @@ class _PiecewiseBase(_TorchNavBase):
         # floats. A float32 evaluation lands on the other side of the zone boundary for positions
         # within an ulp of it, which picks a different bias and diverges immediately rather than by
         # an ulp — the one place in this env where the dtype of an intermediate is load-bearing.
-        idx = ((pos.double() - float(BORDER)) / play * GRID_N).trunc().long().clamp(0, GRID_N - 1)
+        offset = pos.double() - float(BORDER)
+        # A tensor denominator retains division semantics on CUDA. Scalar division can multiply
+        # by a rounded reciprocal, moving an exact zone boundary below its source-side index.
+        denominator = torch.full_like(offset, play)
+        idx = (offset / denominator * GRID_N).trunc().long().clamp(0, GRID_N - 1)
         zone = idx[:, 1] * GRID_N + idx[:, 0]
         n = int(pos.shape[0])
         biases = torch.stack([sty[f"zones.bias_{i}"].reshape(n, 2) for i in range(N_ZONES)], dim=1)

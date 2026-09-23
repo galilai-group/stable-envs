@@ -285,6 +285,53 @@ def _boundary_case(domain, device):
             ref.close()
 
 
+def _piecewise_zone_boundaries(device):
+    """Check both internal zone planes and their intersection with source continuation."""
+    middle = np.float32(112.0)
+    neighbours = (
+        np.nextafter(middle, np.float32(-np.inf)),
+        middle,
+        np.nextafter(middle, np.float32(np.inf)),
+    )
+    coordinates = (np.float32(50.0), *neighbours, np.float32(174.0))
+    positions = [(x, y) for x in coordinates for y in coordinates if x in neighbours or y in neighbours]
+    cases = []
+    for batch in (1, 3):
+        ref = NativeNavigationReference("piecewise", batch)
+        with se.make("Piecewise", num_envs=batch, device=device) as env:
+            try:
+                with _diagnostic_case(env, ref, "piecewise", "all_zone_boundaries"):
+                    check_reset_matches_reference(env, ref, seed=5)
+                    for index in range(len(positions)):
+                        rows = [positions[(index + lane) % len(positions)] for lane in range(batch)]
+                        _probe(f"zone_planes_{index}_positions_{rows}")
+                        state = ref.get_state()
+                        state["agent", "position"] = torch.tensor(rows, dtype=torch.float32)
+                        state["target", "position"] = torch.full((batch, 2), 190.0, dtype=torch.float32)
+                        env.set_state(state)
+                        ref.set_state(state)
+                        compare_state(env.get_state(), ref.get_state())
+                        actions = _actions("piecewise", 701 + index, 8, batch)
+                        actions[0].fill(0)
+                        steps = check_step_matches_reference(env, ref, actions)
+                        cases.append({
+                            "batch": batch,
+                            "seed": 5,
+                            "positions": np.asarray(rows).tolist(),
+                            "steps": len(steps),
+                            "first_action_zero": True,
+                            "max_error": 0.0,
+                        })
+            finally:
+                ref.close()
+    return {
+        "internal_boundaries": {"x": 112.0, "y": 112.0},
+        "float32_boundary_neighbours": [float(x) for x in neighbours],
+        "covers_both_sides_and_intersection": True,
+        "cases": cases,
+    }
+
+
 def _reward_and_lifecycle(domain, device):
     ref = NativeNavigationReference(domain, 1)
     with se.make(CASES[domain]["stable_env"], num_envs=1, device=device) as env:
@@ -604,6 +651,7 @@ def run_gate(device="cpu"):
     evidence["simple_point_maze_goal_distinction"] = _simple_goal_distinction(device)
     evidence["simple_point_maze_action_dtypes"] = _simple_action_dtypes(device)
     evidence["simple_point_maze_reward_boundary"] = _simple_reward_boundary(device)
+    evidence["piecewise_zone_boundaries"] = _piecewise_zone_boundaries(device)
     return evidence
 
 
