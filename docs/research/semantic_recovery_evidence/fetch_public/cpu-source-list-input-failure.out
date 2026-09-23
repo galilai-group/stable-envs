@@ -1,0 +1,58 @@
+/Users/samib/stable-worldmodel/stable_worldmodel/envs/__init__.py:215: UserWarning: ale-py not found; ALE/* envs are unavailable. Install with: pip install 'stable-worldmodel[env]' or pip install ale-py.
+  from stable_worldmodel.envs import ale  # noqa: F401
+AdroitHandRelocateDense-v1, AdroitHandHammerDense-v1, AdroitHandDoorDense-v1 environment's reward functions were updated in v1.2.1 without an environment version update. Therefore, use gymnasium-robotics==1.2.0 for v1 reproducibility or use v2 in gymnasium-robotics>=1.4.3. See https://github.com/Farama-Foundation/Gymnasium-Robotics/pull/220 for more details
+/private/tmp/fetch-authority-swm-lock/lib/python3.12/site-packages/gymnasium/spaces/box.py:424: UserWarning: [33mWARN: Casting input x to numpy array.[0m
+  gym.logger.warn("Casting input x to numpy array.")
+Traceback (most recent call last):
+  File "/private/tmp/stable-envs-semantic-recovery/scripts/recovery/fetch_public_gate.py", line 208, in <module>
+    p=argparse.ArgumentParser();p.add_argument('--output',type=Path,required=True);main(p.parse_args().output)
+                                                                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/private/tmp/stable-envs-semantic-recovery/scripts/recovery/fetch_public_gate.py", line 194, in main
+    threshold=boundary(),lifecycle=lifecycle(),variation=variation(),execution_mode='DELEGATED_CPU',
+                                                         ^^^^^^^^^^^
+  File "/private/tmp/stable-envs-semantic-recovery/scripts/recovery/fetch_public_gate.py", line 160, in variation
+    r=e.step(action[0]);base=d.step(action[0]);out=(a if step<32 else b).step(action)
+      ^^^^^^^^^^^^^^^^^
+  File "/private/tmp/fetch-authority-swm-lock/lib/python3.12/site-packages/gymnasium/wrappers/common.py", line 393, in step
+    return super().step(action)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/private/tmp/fetch-authority-swm-lock/lib/python3.12/site-packages/gymnasium/core.py", line 327, in step
+    return self.env.step(action)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/private/tmp/fetch-authority-swm-lock/lib/python3.12/site-packages/gymnasium/wrappers/common.py", line 283, in step
+    return env_step_passive_checker(self.env, action)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/private/tmp/fetch-authority-swm-lock/lib/python3.12/site-packages/gymnasium/utils/passive_env_checker.py", line 207, in env_step_passive_checker
+    result = env.step(action)
+             ^^^^^^^^^^^^^^^^
+  File "/Users/samib/stable-worldmodel/stable_worldmodel/envs/gymnasium_robotics/fetch.py", line 297, in step
+    obs, reward, terminated, truncated, info = super().step(action)
+                                               ^^^^^^^^^^^^^^^^^^^^
+  File "/private/tmp/fetch-authority-swm-lock/lib/python3.12/site-packages/gymnasium/core.py", line 327, in step
+    return self.env.step(action)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/private/tmp/fetch-authority-swm-lock/lib/python3.12/site-packages/gymnasium/wrappers/common.py", line 125, in step
+    observation, reward, terminated, truncated, info = self.env.step(action)
+                                                       ^^^^^^^^^^^^^^^^^^^^^
+  File "/private/tmp/fetch-authority-swm-lock/lib/python3.12/site-packages/gymnasium/wrappers/common.py", line 393, in step
+    return super().step(action)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/private/tmp/fetch-authority-swm-lock/lib/python3.12/site-packages/gymnasium/core.py", line 327, in step
+    return self.env.step(action)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/private/tmp/fetch-authority-swm-lock/lib/python3.12/site-packages/gymnasium/wrappers/common.py", line 283, in step
+    return env_step_passive_checker(self.env, action)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/private/tmp/fetch-authority-swm-lock/lib/python3.12/site-packages/gymnasium/utils/passive_env_checker.py", line 207, in env_step_passive_checker
+    result = env.step(action)
+             ^^^^^^^^^^^^^^^^
+  File "/private/tmp/fetch-authority-swm-lock/lib/python3.12/site-packages/gymnasium_robotics/envs/robot_env.py", line 144, in step
+    "is_success": self._is_success(obs["achieved_goal"], self.goal),
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/private/tmp/fetch-authority-swm-lock/lib/python3.12/site-packages/gymnasium_robotics/envs/fetch/fetch_env.py", line 169, in _is_success
+    d = goal_distance(achieved_goal, desired_goal)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/private/tmp/fetch-authority-swm-lock/lib/python3.12/site-packages/gymnasium_robotics/envs/fetch/fetch_env.py", line 17, in goal_distance
+    assert goal_a.shape == goal_b.shape
+                           ^^^^^^^^^^^^
+AttributeError: 'list' object has no attribute 'shape'

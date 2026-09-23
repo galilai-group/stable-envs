@@ -115,37 +115,17 @@ from .._mujoco_gl import configure_mujoco_gl
 
 configure_mujoco_gl()
 
-# THE DEPENDENCY CHECK, and why it is at module scope. ``mujoco_warp`` needs ``mujoco >= 3.11``, and
-# the shared environment this repo's suite runs in carries 3.9 with neither ``mujoco_warp`` nor its
-# own dependency ``warp`` installed — and it cannot get them without moving all 25 OGBench parity
-# numbers onto a different MuJoCo. So on that interpreter this family CANNOT render, and the only
-# question is whether it fails LOUDLY HERE or quietly at the first frame. A lazy import inside
-# ``render`` chose the second: all 12 classes registered and then every test failed with
-# ``ModuleNotFoundError: No module named 'warp'``, 300 failures for one missing wheel. Raising here
-# removes exactly these envs and puts the reason in ``stable_envs.envs.import_errors()``, which is the
-# mechanism the package already has for an optional dependency (``dm_control`` does the same).
-#
-# All three conditions are checked, because any one of them alone is the wrong answer: ``mujoco_warp``
-# present without ``warp`` is the failure actually observed, and both present against ``mujoco`` 3.9
-# fails later still, inside ``put_model``. The checks are ``find_spec`` and a version read rather than
-# imports, because importing ``warp`` costs ~2 s on every ``import stable_envs``.
-import importlib.util as _ilu
+def _require_gpu_renderer():
+    """Simulation may use MuJoCo 3.8.1; mesh rendering has a separate profile."""
+    import importlib.util
 
-import mujoco as _mj
+    import mujoco
 
-_VENV = "/mnt/vast/home/randall.balestriero/venvs/se-fetch"
-_missing = [_m for _m in ("warp", "mujoco_warp") if _ilu.find_spec(_m) is None]
-_mjver = tuple(int(x) for x in str(_mj.__version__).split(".")[:2])
-if _missing or _mjver < (3, 11):  # pragma: no cover
-    raise ImportError(
-        "the Fetch family renders its 18 robot meshes with mujoco_warp's batch raytracer, which this "
-        "interpreter cannot run: "
-        + (f"missing {', '.join(_missing)}; " if _missing else "")
-        + f"mujoco is {_mj.__version__} and mujoco_warp requires >= 3.11. The envs were measured in "
-        f"{_VENV}, built with `python -m venv --system-site-packages` so that only mujoco is shadowed "
-        f"and gymnasium, gymnasium-robotics, torch, triton and scipy stay shared. See "
-        f"docs/research/fetch.md"
-    )
+    missing = [name for name in ("warp", "mujoco_warp") if importlib.util.find_spec(name) is None]
+    if missing or tuple(int(x) for x in mujoco.__version__.split(".")[:2]) < (3, 11):
+        raise ImportError("Fetch GPU rendering requires MuJoCo >=3.11, warp and mujoco_warp; "
+                          "CPU simulation is supported independently. Missing: " + ", ".join(missing))
+
 
 from ..env import Env
 from ..registry import register
@@ -705,6 +685,7 @@ class FetchBase(Env):
         packed row is ``qpos`` then the 3-D goal, exactly the packed float32 layout every frozen corpus and
         certification check speaks.
         """
+        _require_gpu_renderer()
         b = _build_bundle(self.SCENE)
         self.state_dim = len(b.state_names)
         self.state_names = b.state_names
@@ -1257,6 +1238,9 @@ CELLS = (
 )
 
 
+from ._fetch_semantics import PickAndPlaceSemantics as _PickAndPlaceSemantics
+
+
 def _make_classes() -> dict[str, type]:
     """The twelve cells, from ``CELLS``. DATA, not twelve class bodies (see ``FetchBase``).
 
@@ -1277,7 +1261,7 @@ def _make_classes() -> dict[str, type]:
         made[cname] = register(
             type(
                 cname,
-                (FetchBase,),
+                (_PickAndPlaceSemantics, FetchBase) if cname == "FetchPickAndPlace" else (FetchBase,),
                 dict(
                     SCENE=scene,
                     REF_ID=ref,
