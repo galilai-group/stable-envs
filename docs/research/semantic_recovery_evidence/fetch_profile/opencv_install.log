@@ -1,0 +1,7 @@
+Using Python 3.12.11 environment at: /private/tmp/fetch-authority-swm-lock
+Resolved 2 packages in 309ms
+Downloading opencv-python-headless (35.6MiB)
+ Downloading opencv-python-headless
+Prepared 1 package in 6.29s
+Installed 1 package in 5ms
+ + opencv-python-headless==4.11.0.86
