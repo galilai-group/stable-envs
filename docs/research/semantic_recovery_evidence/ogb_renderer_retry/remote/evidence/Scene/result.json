@@ -1,0 +1,527 @@
+{
+  "family": "Scene",
+  "status": "PASS",
+  "versions": {
+    "mujoco": "3.12.0",
+    "ogbench": "1.2.1",
+    "numpy": "2.2.6",
+    "gymnasium": "1.2.3",
+    "dm-control": "1.0.41",
+    "torch": "2.14.0+cu126",
+    "mujoco-warp": "3.12.0",
+    "warp-lang": "1.17.0"
+  },
+  "gpu": "NVIDIA L40S",
+  "cases": [
+    {
+      "family": "Scene",
+      "label": "default-0",
+      "seed": 0,
+      "kind": "default",
+      "full": "Scene-default-0-full.npz",
+      "render": "Scene-default-0-render.npz",
+      "comparison": {
+        "exact": true,
+        "different_channels": 0,
+        "max_abs": 0
+      },
+      "source_visual_residual": {
+        "source_exact_fraction": 0.807175,
+        "source_max_abs": 207
+      },
+      "nonmutation": true,
+      "full_private_exact": true
+    },
+    {
+      "family": "Scene",
+      "label": "default-17",
+      "seed": 17,
+      "kind": "default",
+      "full": "Scene-default-17-full.npz",
+      "render": "Scene-default-17-render.npz",
+      "comparison": {
+        "exact": true,
+        "different_channels": 0,
+        "max_abs": 0
+      },
+      "source_visual_residual": {
+        "source_exact_fraction": 0.765475,
+        "source_max_abs": 219
+      },
+      "nonmutation": true,
+      "full_private_exact": true
+    },
+    {
+      "family": "Scene",
+      "label": "default-42",
+      "seed": 42,
+      "kind": "default",
+      "full": "Scene-default-42-full.npz",
+      "render": "Scene-default-42-render.npz",
+      "comparison": {
+        "exact": true,
+        "different_channels": 0,
+        "max_abs": 0
+      },
+      "source_visual_residual": {
+        "source_exact_fraction": 0.7955,
+        "source_max_abs": 207
+      },
+      "nonmutation": true,
+      "full_private_exact": true
+    },
+    {
+      "family": "Scene",
+      "label": "visual-base",
+      "seed": 17,
+      "kind": "default",
+      "full": "Scene-visual-base-full.npz",
+      "render": "Scene-visual-base-render.npz",
+      "comparison": {
+        "exact": true,
+        "different_channels": 0,
+        "max_abs": 0
+      },
+      "source_visual_residual": {
+        "source_exact_fraction": 0.81015,
+        "source_max_abs": 207
+      },
+      "nonmutation": true,
+      "full_private_exact": true
+    },
+    {
+      "family": "Scene",
+      "label": "agent",
+      "seed": 17,
+      "kind": "variation",
+      "full": "Scene-agent-full.npz",
+      "render": "Scene-agent-render.npz",
+      "comparison_base": "visual-base",
+      "physics_unchanged": true,
+      "comparison": {
+        "exact": true,
+        "different_channels": 0,
+        "max_abs": 0
+      },
+      "source_visual_residual": {
+        "source_exact_fraction": 0.81185,
+        "source_max_abs": 207
+      },
+      "nonmutation": true,
+      "full_private_exact": true
+    },
+    {
+      "family": "Scene",
+      "label": "cube",
+      "seed": 17,
+      "kind": "variation",
+      "full": "Scene-cube-full.npz",
+      "render": "Scene-cube-render.npz",
+      "comparison_base": "visual-base",
+      "physics_unchanged": true,
+      "comparison": {
+        "exact": true,
+        "different_channels": 0,
+        "max_abs": 0
+      },
+      "source_visual_residual": {
+        "source_exact_fraction": 0.8101,
+        "source_max_abs": 207
+      },
+      "nonmutation": true,
+      "full_private_exact": true
+    },
+    {
+      "family": "Scene",
+      "label": "floor",
+      "seed": 17,
+      "kind": "variation",
+      "full": "Scene-floor-full.npz",
+      "render": "Scene-floor-render.npz",
+      "comparison_base": "visual-base",
+      "physics_unchanged": true,
+      "comparison": {
+        "exact": true,
+        "different_channels": 0,
+        "max_abs": 0
+      },
+      "source_visual_residual": {
+        "source_exact_fraction": 0.809725,
+        "source_max_abs": 207
+      },
+      "nonmutation": true,
+      "full_private_exact": true
+    },
+    {
+      "family": "Scene",
+      "label": "camera",
+      "seed": 17,
+      "kind": "variation",
+      "full": "Scene-camera-full.npz",
+      "render": "Scene-camera-render.npz",
+      "comparison_base": "visual-base",
+      "physics_unchanged": true,
+      "comparison": {
+        "exact": true,
+        "different_channels": 0,
+        "max_abs": 0
+      },
+      "source_visual_residual": {
+        "source_exact_fraction": 0.830525,
+        "source_max_abs": 207
+      },
+      "nonmutation": true,
+      "full_private_exact": true
+    },
+    {
+      "family": "Scene",
+      "label": "light",
+      "seed": 17,
+      "kind": "variation",
+      "full": "Scene-light-full.npz",
+      "render": "Scene-light-render.npz",
+      "comparison_base": "visual-base",
+      "physics_unchanged": true,
+      "comparison": {
+        "exact": true,
+        "different_channels": 0,
+        "max_abs": 0
+      },
+      "source_visual_residual": {
+        "source_exact_fraction": 0.81055,
+        "source_max_abs": 207
+      },
+      "nonmutation": true,
+      "full_private_exact": true
+    },
+    {
+      "family": "Scene",
+      "label": "size-low",
+      "seed": 17,
+      "kind": "variation",
+      "full": "Scene-size-low-full.npz",
+      "render": "Scene-size-low-render.npz",
+      "comparison_base": "visual-base",
+      "physics_unchanged": false,
+      "comparison": {
+        "exact": true,
+        "different_channels": 0,
+        "max_abs": 0
+      },
+      "source_visual_residual": {
+        "source_exact_fraction": 0.810075,
+        "source_max_abs": 207
+      },
+      "nonmutation": true,
+      "full_private_exact": true
+    },
+    {
+      "family": "Scene",
+      "label": "size-high",
+      "seed": 17,
+      "kind": "variation",
+      "full": "Scene-size-high-full.npz",
+      "render": "Scene-size-high-render.npz",
+      "comparison_base": "visual-base",
+      "physics_unchanged": false,
+      "comparison": {
+        "exact": true,
+        "different_channels": 0,
+        "max_abs": 0
+      },
+      "source_visual_residual": {
+        "source_exact_fraction": 0.8095,
+        "source_max_abs": 207
+      },
+      "nonmutation": true,
+      "full_private_exact": true
+    },
+    {
+      "family": "Scene",
+      "label": "locks",
+      "seed": 17,
+      "kind": "variation",
+      "full": "Scene-locks-full.npz",
+      "render": "Scene-locks-render.npz",
+      "comparison_base": "buttons-00",
+      "physics_unchanged": true,
+      "comparison": {
+        "exact": true,
+        "different_channels": 0,
+        "max_abs": 0
+      },
+      "source_visual_residual": {
+        "source_exact_fraction": 0.806175,
+        "source_max_abs": 233
+      },
+      "nonmutation": true,
+      "full_private_exact": true
+    },
+    {
+      "family": "Scene",
+      "label": "buttons-00",
+      "seed": 17,
+      "kind": "buttons",
+      "full": "Scene-buttons-00-full.npz",
+      "render": "Scene-buttons-00-render.npz",
+      "comparison": {
+        "exact": true,
+        "different_channels": 0,
+        "max_abs": 0
+      },
+      "source_visual_residual": {
+        "source_exact_fraction": 0.80785,
+        "source_max_abs": 207
+      },
+      "nonmutation": true,
+      "full_private_exact": true
+    },
+    {
+      "family": "Scene",
+      "label": "buttons-01",
+      "seed": 17,
+      "kind": "buttons",
+      "full": "Scene-buttons-01-full.npz",
+      "render": "Scene-buttons-01-render.npz",
+      "comparison": {
+        "exact": true,
+        "different_channels": 0,
+        "max_abs": 0
+      },
+      "source_visual_residual": {
+        "source_exact_fraction": 0.808225,
+        "source_max_abs": 207
+      },
+      "nonmutation": true,
+      "full_private_exact": true
+    },
+    {
+      "family": "Scene",
+      "label": "buttons-10",
+      "seed": 17,
+      "kind": "buttons",
+      "full": "Scene-buttons-10-full.npz",
+      "render": "Scene-buttons-10-render.npz",
+      "comparison": {
+        "exact": true,
+        "different_channels": 0,
+        "max_abs": 0
+      },
+      "source_visual_residual": {
+        "source_exact_fraction": 0.809775,
+        "source_max_abs": 207
+      },
+      "nonmutation": true,
+      "full_private_exact": true
+    },
+    {
+      "family": "Scene",
+      "label": "buttons-11",
+      "seed": 17,
+      "kind": "buttons",
+      "full": "Scene-buttons-11-full.npz",
+      "render": "Scene-buttons-11-render.npz",
+      "comparison": {
+        "exact": true,
+        "different_channels": 0,
+        "max_abs": 0
+      },
+      "source_visual_residual": {
+        "source_exact_fraction": 0.81015,
+        "source_max_abs": 207
+      },
+      "nonmutation": true,
+      "full_private_exact": true
+    },
+    {
+      "family": "Scene",
+      "label": "contact-button-20",
+      "seed": 17,
+      "kind": "contact",
+      "full": "Scene-contact-button-20-full.npz",
+      "render": "Scene-contact-button-20-render.npz",
+      "comparison": {
+        "exact": true,
+        "different_channels": 0,
+        "max_abs": 0
+      },
+      "source_visual_residual": {
+        "source_exact_fraction": 0.6952,
+        "source_max_abs": 228
+      },
+      "nonmutation": true,
+      "full_private_exact": true
+    },
+    {
+      "family": "Scene",
+      "label": "contact-button-50",
+      "seed": 17,
+      "kind": "contact",
+      "full": "Scene-contact-button-50-full.npz",
+      "render": "Scene-contact-button-50-render.npz",
+      "contacts": [
+        "button_0 / ur5e/robotiq/left_pad",
+        "button_0 / ur5e/robotiq/right_pad"
+      ],
+      "comparison": {
+        "exact": true,
+        "different_channels": 0,
+        "max_abs": 0
+      },
+      "source_visual_residual": {
+        "source_exact_fraction": 0.697375,
+        "source_max_abs": 228
+      },
+      "nonmutation": true,
+      "full_private_exact": true
+    },
+    {
+      "family": "Scene",
+      "label": "contact-drawer-20",
+      "seed": 17,
+      "kind": "contact",
+      "full": "Scene-contact-drawer-20-full.npz",
+      "render": "Scene-contact-drawer-20-render.npz",
+      "comparison": {
+        "exact": true,
+        "different_channels": 0,
+        "max_abs": 0
+      },
+      "source_visual_residual": {
+        "source_exact_fraction": 0.752075,
+        "source_max_abs": 207
+      },
+      "nonmutation": true,
+      "full_private_exact": true
+    },
+    {
+      "family": "Scene",
+      "label": "contact-drawer-50",
+      "seed": 17,
+      "kind": "contact",
+      "full": "Scene-contact-drawer-50-full.npz",
+      "render": "Scene-contact-drawer-50-render.npz",
+      "contacts": [
+        "drawer_base / ur5e/robotiq/left_coupler",
+        "drawer_link / ur5e/robotiq/left_coupler",
+        "drawer_link / ur5e/robotiq/left_pad",
+        "drawer_link / ur5e/robotiq/right_pad"
+      ],
+      "comparison": {
+        "exact": true,
+        "different_channels": 0,
+        "max_abs": 0
+      },
+      "source_visual_residual": {
+        "source_exact_fraction": 0.76135,
+        "source_max_abs": 207
+      },
+      "nonmutation": true,
+      "full_private_exact": true
+    },
+    {
+      "family": "Scene",
+      "label": "contact-window-20",
+      "seed": 17,
+      "kind": "contact",
+      "full": "Scene-contact-window-20-full.npz",
+      "render": "Scene-contact-window-20-render.npz",
+      "comparison": {
+        "exact": true,
+        "different_channels": 0,
+        "max_abs": 0
+      },
+      "source_visual_residual": {
+        "source_exact_fraction": 0.827675,
+        "source_max_abs": 208
+      },
+      "nonmutation": true,
+      "full_private_exact": true
+    },
+    {
+      "family": "Scene",
+      "label": "contact-window-50",
+      "seed": 17,
+      "kind": "contact",
+      "full": "Scene-contact-window-50-full.npz",
+      "render": "Scene-contact-window-50-render.npz",
+      "contacts": [
+        "windowb_a / ur5e/robotiq/left_pad",
+        "windowb_a / ur5e/robotiq/right_pad"
+      ],
+      "comparison": {
+        "exact": true,
+        "different_channels": 0,
+        "max_abs": 0
+      },
+      "source_visual_residual": {
+        "source_exact_fraction": 0.78755,
+        "source_max_abs": 239
+      },
+      "nonmutation": true,
+      "full_private_exact": true
+    }
+  ],
+  "resources_before": {
+    "created": {},
+    "closed": {},
+    "release_failed": {},
+    "evicted": {},
+    "retained": 0
+  },
+  "context_instrumentation": [
+    "dm_control._render.base.ContextBase.__init__",
+    "dm_control._render.base.ContextBase._free_unconditionally",
+    "mujoco.egl.GLContext.__init__",
+    "mujoco.egl.GLContext.free",
+    "mujoco.glfw.GLContext.__init__",
+    "mujoco.glfw.GLContext.free",
+    "mujoco.rendering.classic.renderer.Renderer.__init__",
+    "mujoco.rendering.classic.renderer.Renderer.close"
+  ],
+  "batch_order_exact": true,
+  "chunk_size_exact": true,
+  "independent_environment_exact": true,
+  "visual_changes": {
+    "agent": true,
+    "cube": true,
+    "floor": true,
+    "camera": true,
+    "light": true,
+    "size-low": true,
+    "size-high": true,
+    "locks": true
+  },
+  "resources_after": {
+    "created": {},
+    "closed": {},
+    "release_failed": {},
+    "evicted": {
+      "ogbench.ctx": 46,
+      "ogbench.plate": 30
+    },
+    "retained": 0
+  },
+  "context_lifetime": {
+    "context_created": 51,
+    "context_freed": 0,
+    "context_live": 51,
+    "context_peak_live": 51,
+    "renderer_created": 51,
+    "renderer_closed": 0,
+    "patched": [
+      "dm_control._render.base.ContextBase.__init__",
+      "dm_control._render.base.ContextBase._free_unconditionally",
+      "mujoco.egl.GLContext.__init__",
+      "mujoco.egl.GLContext.free",
+      "mujoco.glfw.GLContext.__init__",
+      "mujoco.glfw.GLContext.free",
+      "mujoco.rendering.classic.renderer.Renderer.__init__",
+      "mujoco.rendering.classic.renderer.Renderer.close"
+    ]
+  },
+  "no_context_released": true,
+  "process_lifetime_plate_rigs": 29,
+  "process_lifetime_renderer_refs": 29,
+  "resource_policy": "Frozen process-lifetime EGL rigs retained; per-instance close releases only instance tables. Repeated/independent calls add no rig for existing configurations."
+}
