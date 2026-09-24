@@ -1,0 +1,24 @@
+{
+  "scope": "Development evidence before final expanded execution-profile signature. Not final CPU acceptance or promotion evidence. Final acceptance is separately recorded.",
+  "results": {
+    "semantics-initial": "FAILED: inherited close hook absent; corrected to adapter.close",
+    "semantics-second": "FAILED: TensorDict clone cannot add uint32; public keys changed losslessly to range-validated int64",
+    "semantics-third": "52 passed, 221.06s",
+    "production-smoke": "all four B=3 reset/step/clone/restore passed",
+    "rendering-initial": "26 passed, 105.31s",
+    "cpu-final": "81 passed, 316.97s, before expanded profile signature and supplementary batch/invariant tests",
+    "cpu-batch-invariants": "8 passed, 53 deselected, 67.59s; before expanded profile signature"
+  },
+  "files": {
+    "semantics-initial.log": "e36c949aaf26dca854eaa828cadcc6fb6b7ef59cb031348c5199483dc090d2aa",
+    "semantics-second.log": "c7b18dbe13940111d1c1bdcf4f53a586b252cb94dbaf0c4010c3772c29acbfa7",
+    "semantics-third.log": "6f059bbf98eff3c66d75af59dce928afd1007c3b7f246dd543cc506ee6d12d15",
+    "production-smoke.log": "b4d5f9f3bc3915db7e84d406b8816f72d167a116b516548e133ce23e0fd641b1",
+    "rendering-initial.log": "d6c344fd52e3737ba4bd92a98fa34086b36e0c170ca6c8da358cd991c9fb187b",
+    "cpu-final.log": "c5098aaddfd50679441cac3ca7c394e30915f56e26b2803b2f793b2e418217e5",
+    "cpu-final.xml": "221fd6ebf6c7c0ed84afe14b335165e8a5964a5150c631d6f703ea7f9aac7d46",
+    "cpu-batch-invariants.log": "a7d5a65230af1fa3500c78f370fe401738aeca1507135944381c1c6f84eb2319",
+    "cpu-batch-invariants.xml": "35f4d41777a8a9072bb0b1e7ebf34193fb59eb0926ace8b3b13d1c193fb626b1"
+  },
+  "promotion": false
+}
