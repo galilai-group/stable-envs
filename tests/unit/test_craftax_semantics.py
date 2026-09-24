@@ -20,6 +20,7 @@ from tests.helpers.reference.craftax_source import (
     fixture,
     oracle,
     restore_oracle,
+    symbolic_output,
 )
 
 DEVICE = os.environ.get("CRAFTAX_DEVICE", "cpu")
@@ -30,8 +31,10 @@ DEVICE = os.environ.get("CRAFTAX_DEVICE", "cpu")
 def test_source_reset_all_actions_and_reset_replay(name, seed):
     source = oracle(name)
     with se.make(name, device=DEVICE) as env:
-        source.reset(seed=seed)
+        initial_output, _ = source.reset(seed=seed)
         state = env.reset(seed=seed)
+        if "Symbolic" in name:
+            np.testing.assert_array_equal(symbolic_output(env), initial_output)
         assert_engine(source, env, state)
         for action in range(source.action_space.n):
             output, reward, done, truncated, _ = source.step(action)
@@ -42,8 +45,7 @@ def test_source_reset_all_actions_and_reset_replay(name, seed):
             assert bool(actual["truncated"][0]) == truncated
             # Learner output stays upstream; prove a symbolic projection of complete State is exact.
             if "Symbolic" in name:
-                _, restored = env._simulator.validate(actual["state"])
-                np.testing.assert_array_equal(np.asarray(env._simulator.output_fn(restored[0])), output)
+                np.testing.assert_array_equal(symbolic_output(env, state=actual["state"]), output)
             if done:
                 break
         snap = env.get_state()
@@ -85,7 +87,7 @@ def test_recorded_gameplay_different_history_continuation(name, case):
         assert bool(result["terminated"][0]) == done
         assert bool(result["truncated"][0]) == truncated
         if "Symbolic" in name:
-            np.testing.assert_array_equal(np.asarray(env._simulator.output_fn(env._simulator.states[0])), output)
+            np.testing.assert_array_equal(symbolic_output(env), output)
         frozen = result["state"].clone()
         env.reset(seed=42)
         env.set_state(frozen)
@@ -178,7 +180,7 @@ def test_full_symbolic_preserves_source_values_outside_declared_box():
         restore_oracle(source, env, state)
         expected, _, _, _, _ = source.step(0)
         env.step([0])
-        actual = np.asarray(env._simulator.output_fn(env._simulator.states[0]))
+        actual = symbolic_output(env)
         np.testing.assert_array_equal(actual, expected)
         assert actual.shape == (8268,) and actual.dtype == np.float32
         assert actual.max() >= 2
@@ -199,9 +201,7 @@ def test_batch_matches_three_independent_source_instances(name):
                 assert_engine(source, env, result["state"][lane : lane + 1])
                 assert float(result["reward"][lane]) == expected[lane][1]
                 if "Symbolic" in name:
-                    np.testing.assert_array_equal(
-                        np.asarray(env._simulator.output_fn(env._simulator.states[lane])), expected[lane][0]
-                    )
+                    np.testing.assert_array_equal(symbolic_output(env, lane=lane), expected[lane][0])
 
 
 @pytest.mark.parametrize("name", NAMES)
@@ -238,8 +238,6 @@ def test_invalid_source_invariants_leave_all_lanes_unchanged(name):
 def test_symbolic_order_chunk_nonmutation_and_exhaustive_restore(name, tmp_path):
     import jax
 
-    from stable_envs._adapters.craftax import decode
-
     with se.make(name, num_envs=3, device=DEVICE) as env:
         state = env.reset(seed=17)
         snapshots = state.clone()
@@ -248,7 +246,9 @@ def test_symbolic_order_chunk_nonmutation_and_exhaustive_restore(name, tmp_path)
             _, decoded = env._simulator.validate(batch)
             values = []
             for start in range(0, len(decoded), chunk):
-                values.extend(np.asarray(env._simulator.output_fn(s)) for s in decoded[start : start + chunk])
+                values.extend(
+                    symbolic_output(env, lane=i, state=batch) for i in range(start, min(start + chunk, len(decoded)))
+                )
             return np.stack(values)
 
         expected = output(state, 3)
@@ -273,8 +273,7 @@ def test_symbolic_order_chunk_nonmutation_and_exhaustive_restore(name, tmp_path)
         expected_terminal = np.asarray(
             jax.jit(source._env.get_obs, backend=os.environ.get("CRAFTAX_JAX_BACKEND", "cpu"))(source._state)
         )
-        row = {k: terminal[("engine", *k)][0].cpu().numpy() for k in env._simulator.engine}
-        actual_terminal = np.asarray(env._simulator.output_fn(decode(env._simulator.template, row)))
+        actual_terminal = symbolic_output(env, state=terminal)
         np.savez_compressed(
             tmp_path / (name + "-terminal-paths.npz"),
             eager=eager_terminal,
@@ -285,3 +284,31 @@ def test_symbolic_order_chunk_nonmutation_and_exhaustive_restore(name, tmp_path)
         np.testing.assert_array_equal(expected_terminal, actual_terminal)
         assert_state_equal(state, env.get_state())
     assert env._simulator.states is None and env._simulator.keys == []
+
+
+def test_full_symbolic_preserves_reset_output_cache():
+    source = oracle("CraftaxSymbolic")
+    expected, _ = source.reset(seed=0)
+    with se.make("CraftaxSymbolic", num_envs=3, device=DEVICE) as env:
+        state = env.reset(seed=0)
+        np.testing.assert_array_equal(symbolic_output(env), expected)
+        assert ("source_cache", "last_symbolic") in state.keys(True, True)
+        original = state.clone()
+        env.step([0, 1, 5])
+        env.reset(seed=999)
+        env.set_state(state)
+        assert_state_equal(original, env.get_state())
+        np.testing.assert_array_equal(symbolic_output(env), expected)
+        for value in [float("nan"), float("inf")]:
+            bad = state.clone()
+            bad["source_cache", "last_symbolic"][-1, 0] = value
+            with pytest.raises(ValueError):
+                env.set_state(bad)
+            assert_state_equal(original, env.get_state())
+        bad = state.clone()
+        bad["source_cache", "last_symbolic"] = bad["source_cache", "last_symbolic"].to(torch.float64)
+        with pytest.raises(ValueError):
+            env.set_state(bad)
+        assert_state_equal(original, env.get_state())
+        state["source_cache", "last_symbolic"].zero_()
+        assert_state_equal(original, env.get_state())

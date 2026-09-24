@@ -38,6 +38,7 @@ def main():
         fixture,
         oracle,
         restore_oracle,
+        symbolic_output,
     )
 
     def collect_numpy(value):
@@ -50,7 +51,11 @@ def main():
     def capture(label, env, source, expected):
         full = env.get_state()
         assert_engine(source, env, full)
-        actual = collect_numpy(env._simulator.output_fn(env._simulator.states[0]))
+        actual = (
+            collect_numpy(env._simulator.output_fn(env._simulator.states[0]))
+            if env.PIXELS
+            else symbolic_output(env, state=full)
+        )
         arrays = {"state/" + "/".join(k): collect_numpy(v) for k, v in full.items(True, True)}
         arrays["source_output"], arrays["candidate_output"] = expected, actual
         if env.PIXELS:

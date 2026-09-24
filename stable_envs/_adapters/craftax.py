@@ -111,6 +111,8 @@ class CraftaxAdapter:
         if isinstance(batch, bool) or not isinstance(batch, int) or batch < 1:
             raise ValueError("num_envs must be a positive integer")
         self.classic, self.pixels, self.num_envs = classic, pixels, batch
+        self.retains_symbolic_output = not classic and not pixels
+        self.symbolic_cache = None
         self.device = torch.device(device)
         if self.device.type not in {"cpu", "cuda"}:
             raise ValueError("Craftax supports CPU or CUDA through its pinned JAX profile")
@@ -136,6 +138,8 @@ class CraftaxAdapter:
             "static": dataclasses.asdict(self.upstream.static_env_params),
             "engine": [(key, list(v.shape), str(v.dtype)) for key, v in self.engine.items()],
         }
+        if self.retains_symbolic_output:
+            descriptor["source_cache"] = "last_symbolic:float32[8268]; exact source-returned output"
         self.signature = np.frombuffer(
             hashlib.sha256(json.dumps(descriptor, sort_keys=True).encode()).digest(), np.uint8
         ).copy()
@@ -153,6 +157,8 @@ class CraftaxAdapter:
                 ("lifecycle", "truncated"): ((), torch.bool),
             }
         )
+        if self.retains_symbolic_output:
+            self.fields["source_cache", "last_symbolic"] = ((8268,), torch.float32)
         self.keys = [jax.random.PRNGKey(s) for s in self.seeds(seed)]
         self.states = None
         self.reward = np.zeros(batch, np.float32)
@@ -173,6 +179,8 @@ class CraftaxAdapter:
         keys = self.keys if seed is None else [jax.random.PRNGKey(s) for s in self.seeds(seed)]
         results = [self.reset_fn(k) for k in keys]
         jax.block_until_ready(results)
+        cached = np.stack([np.asarray(x[0]) for x in results]) if self.retains_symbolic_output else None
+        self.symbolic_cache = cached
         self.states = [x[1] for x in results]
         self.keys = [x[2] for x in results]
         self.reward.fill(0)
@@ -195,6 +203,8 @@ class CraftaxAdapter:
                 ("lifecycle", "truncated"): self.truncated.copy(),
             }
         )
+        if self.retains_symbolic_output:
+            values["source_cache", "last_symbolic"] = self.symbolic_cache.copy()
         return TensorDict(
             {
                 k: torch.from_numpy(v.astype(np.int64) if v.dtype == np.uint32 else v.copy()).to(self.device)
@@ -323,7 +333,9 @@ class CraftaxAdapter:
         rewards = arrays["lifecycle", "reward"].copy()
         terminated = arrays["lifecycle", "terminated"].copy()
         truncated = arrays["lifecycle", "truncated"].copy()
+        cached = arrays["source_cache", "last_symbolic"].copy() if self.retains_symbolic_output else None
         self.states, self.keys = decoded, keys
+        self.symbolic_cache = cached
         self.reward, self.terminated, self.truncated = rewards, terminated, truncated
 
     def step(self, actions):
@@ -348,6 +360,8 @@ class CraftaxAdapter:
             self.step_fn(key, state, int(action)) for key, state, action in zip(self.keys, self.states, a, strict=True)
         ]
         jax.block_until_ready(results)
+        cached = np.stack([np.asarray(r[0]) for r in results]) if self.retains_symbolic_output else None
+        self.symbolic_cache = cached
         self.states = [r[1] for r in results]
         self.keys = [r[5] for r in results]
         self.reward = np.asarray([float(r[2]) for r in results], np.float32)
@@ -355,5 +369,6 @@ class CraftaxAdapter:
         return self.get_state()
 
     def close(self):
+        self.symbolic_cache = None
         self.states = None
         self.keys = []

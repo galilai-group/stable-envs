@@ -40,7 +40,7 @@ for name in CraftaxClassicPixels CraftaxClassicSymbolic CraftaxPixels CraftaxSym
   if [[ "$name" == CraftaxClassicSymbolic ]]; then count=17; fi
   if [[ "$name" == CraftaxSymbolic ]]; then
     selector='CraftaxSymbolic or full_symbolic_preserves'
-    count=18
+    count=19
   fi
   if "$py" -m pytest -xq tests/unit/test_craftax_semantics.py tests/unit/test_craftax_rendering.py \
        -k "$selector" --basetemp="$run/evidence/$name-pytest-tmp" \

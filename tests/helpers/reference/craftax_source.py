@@ -48,7 +48,12 @@ def fixture(env, name, case):
                 state[key] = torch.from_numpy(arrays[flat].copy()).to(device=env.device, dtype=state[key].dtype)
     a = env._simulator
     row = {k: state[("engine", *k)][0].cpu().numpy() for k in a.engine}
-    done = bool(np.asarray(a.terminal_fn(decode(a.template, row))))
+    decoded = decode(a.template, row)
+    done = bool(np.asarray(a.terminal_fn(decoded)))
+    if a.retains_symbolic_output:
+        state["source_cache", "last_symbolic"] = torch.from_numpy(np.asarray(a.output_fn(decoded)).copy())[None].to(
+            env.device
+        )
     state["lifecycle", "terminated"].fill_(done)
     return state
 
@@ -60,6 +65,8 @@ def restore_oracle(source, env, state):
 
     source._state = decode(source._state, {k: state[("engine", *k)][0].cpu().numpy() for k in env._simulator.engine})
     source._key = jnp.asarray(state["rng", "wrapper_key"][0].cpu().numpy().astype(np.uint32))
+    if env._simulator.retains_symbolic_output:
+        source._last_obs = state["source_cache", "last_symbolic"][0].cpu().numpy().copy()
 
 
 def assert_engine(source, env, state):
@@ -74,3 +81,14 @@ def assert_state_equal(a, b):
     assert set(a.keys(True, True)) == set(b.keys(True, True))
     for key in a.keys(True, True):
         assert torch.equal(a[key], b[key]), key
+
+
+def symbolic_output(env, lane=0, state=None):
+    """Test-side learner output selection; full symbolic retains the source cache."""
+    from stable_envs._adapters.craftax import decode
+
+    state = env.get_state() if state is None else state
+    if env._simulator.retains_symbolic_output:
+        return state["source_cache", "last_symbolic"][lane].cpu().numpy().copy()
+    row = {k: state[("engine", *k)][lane].cpu().numpy() for k in env._simulator.engine}
+    return np.asarray(env._simulator.output_fn(decode(env._simulator.template, row)))
