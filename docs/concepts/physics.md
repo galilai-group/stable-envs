@@ -1,83 +1,29 @@
-# Why physics is separate
+# Physics and rendering have separate acceptance gates
 
-Every `Env` has `reset`, `render`, `get_state`, `set_state` and a `variation_space`. Variation is
-persistent environment configuration and may include physics, geometry, reset and task knobs as well
-as appearance. Batched dynamics are optional: `step` / `transition` / `unroll` exist on every class
-so an incomplete / render-only cell can raise with the exact reason instead of an `AttributeError`,
-and only cells that override them ship a simulator (native or delegated to an upstream one).
-`env.has_dynamics` is the check, and `hasattr(env, "step")` is always true. The call-shape difference
-— stateful `step` vs functional `transition` / `unroll` — is [Stateful vs functional](dynamics.md).
+A registration can have an accurate renderer and an incomplete simulator State.
+The rendering claim concerns pixels from a fixed input; the simulation claim
+concerns reset, actions, task behavior and faithful continuation from a checkpoint.
+Neither result implies the other.
 
-The rest of this page is why that split exists: a renderer can be bit-exact against the official
-frame, and a contact solver cannot.
+Calling the authoritative upstream simulator/controller is the intended path.
+A new environment does not need a second implementation of its physics. Exact
+restoration still requires all relevant engine, controller, task, lifecycle and
+RNG state, in the correct restore order.
 
-## The two halves have incompatible fidelity stories
+PushT illustrates the failure boundary: its historical semantic recovery remains
+incomplete because matching exposed body fields and inspected numeric contact
+caches did not reproduce different-history contact continuation. Approximate
+solver agreement and matching frames do not satisfy that requirement. A safe,
+reviewed engine snapshot mechanism is needed before that work resumes.
 
-A renderer can be bit-exact against the reference. This repo's PushT is: **100% of interior pixels are
-byte-identical** to `gym_pusht` on states drawn from the env's own reset distribution. That is a
-verifiable claim with a number attached, and the number is 1.0.
+Renderer-only capability remains useful, but those cells must refuse operations
+that would claim a full simulator checkpoint. Functional dynamics are optional,
+and an accepted delegated stateful backend may refuse transition/unroll.
 
-A contact solver cannot make that claim. Contact is chaotic — a solver that differs in iteration order,
-warm-starting, or the last bit of a normal impulse diverges from the reference within a few hundred
-steps, and no amount of care removes that. The honest bound on a reimplemented rigid-body solver is
-statistical agreement over short horizons, not equality.
+A GPU renderer can coexist with authoritative CPU physics. Record the separate
+dependency profiles and device claims; passing GPU pixel comparisons does not
+certify physics under the GPU profile. Do not relax semantic comparisons because
+a reimplemented contact solver diverges.
 
-Conflating them is how "our env matches the original" ends up resting on the half that does not. A
-combined port reports one aggregate number, that number is dominated by whichever half is easier to
-measure, and the physics divergence hides inside it. Splitting them means the rendering claim can be
-exact and the dynamics claim can be absent, which is more useful than one claim that is neither.
-
-## The common case needs no simulator
-
-The workload this repo is built for is re-rendering states you already have:
-
-- a stored dataset of trajectories, kept as states rather than as frames;
-- a planner or world model that produced imagined states and wants to look at them;
-- an evaluation that resets to recorded states;
-- any of the above at a different resolution, or with different configuration, than whatever was recorded.
-
-None of that runs dynamics. The states exist; the question is only how fast they become pixels. Making
-`step` part of the contract would force every env to port a simulator before it could serve any of these,
-which is a large amount of work for a capability the use case does not need.
-
-## Where dynamics do live
-
-The reference CPU simulator stays the definition of the dynamics. It is used, unchanged, to produce the
-states in the first place — the gallery's side-by-side video is driven by a real `gym_pusht` rollout, and
-the states it visited are what both renderers are fed.
-
-Where a batched GPU simulator genuinely exists for an env, it can be offered as an optional `step`. It is
-still not the definition of anything: the reference is.
-
-PushT has one — a batched port of Chipmunk's sequential-impulse solver, 1.07 M env-steps/s at batch
-16,384 against the official env's 2,340. It is offered exactly on the terms above: the renderer's claim
-is bit-exactness, the simulator's claim is a *distribution*. Measured over 16 episodes × 100 steps from
-identical states under identical actions, the block tracks pymunk to a **median 0.68 px** (mean 20.7,
-p90 33.6 — a few episodes diverge on chaotic contact), while the kinematic agent, which no contact acts
-on, integrates to a **max of 9.5e-5 px** (mean 4.0e-5). That last number is the control: it separates an
-integration bug from a
-solver difference, and without it the block numbers cannot be interpreted. `check_step_matches_reference`
-in `stable_envs.testing.conformance` produces all of it.
-
-## What this costs
-
-Two things, and both are real.
-
-**Closed-loop-on-GPU is per-env, not a property of the repo.** For the 18 envs that ship a `step` it
-works end to end; for the other 37 anything that needs the next state has to call the reference env, at
-reference speed.
-Rendering is orders of magnitude faster than the CPU renderer at 96px everywhere; stepping is faster only where
-someone did the work, and doing that work means accepting a statistical fidelity claim in place of an
-exact one.
-
-**A state you cannot produce is a state you cannot render.** The thesis is about the frame being a
-function of the state, not about the state being cheap to obtain. For a dataset that already exists, that
-distinction does not bite. For generating new data from scratch, it does, and the reference simulator's
-throughput is the binding constraint.
-
-## The corollary that makes the split checkable
-
-If the frame really is a function of the compact state, then two *reference* envs driven to the same
-state through different histories must render the same pixels. That is a property of the official
-environment, provable without our renderer existing, and the conformance suite tests it directly. It
-caught two real bugs in how PushT is driven — see [Testing and conformance](../testing.md#state-sufficiency).
+See the [environment](../adding/environment.md), [task](../adding/task.md) and
+[renderer](../adding/renderer.md) guides for independent tests and promotion gates.

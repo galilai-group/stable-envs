@@ -1,11 +1,10 @@
 # Testing and conformance
 
-The claim "you never need to store frames again" is only worth making if the regenerated frame is the
-frame you would have stored. That is an empirical question with a number attached, not a design
-intention, and the suite is where the number comes from.
-
-Every check below corresponds to a specific way the claim can be false. The suite is parameterised over
-the registry (`snv.list_envs()`), so an env added tomorrow is covered without editing a test.
+Test simulator, task and renderer claims separately. Start with the
+[contributor guides](adding/index.md), which distinguish fast development checks
+from final acceptance. Registry-wide renderer tests do not prove a new task or
+exhaustive State: add independent semantic/restoration witnesses for each registration.
+A skipped required gate leaves the registration incomplete.
 
 Markers: `unit`, `integration`, `gpu`, `regression`, `slow`. The extra markers
 `reference`, `smoke` and `selftest` stay. Directory markers are applied automatically, so a
@@ -23,7 +22,7 @@ sbatch scripts/run_smoke_tests.sbatch --fast   # one env per render backend     
 sbatch scripts/run_unit_tests.sbatch           # CPU contracts + CPU regression
 ```
 
-`tests/unit/` renders nothing: the style batching rule, the dataset indexing and episode
+`tests/unit/` includes CPU rendering and contract checks: the style batching rule, the dataset indexing and episode
 boundaries, the policy and rollout API, the corrector's refusals, the benchmark scripts' guards,
 and the repository's own citations, docs nav and launcher agreement. `tests/regression/` is
 the frozen regression oracle (corpora, digests, declarations, provenance). Green on
@@ -290,7 +289,7 @@ Neither is a rendering bug and neither would have been found by comparing pixels
 | `Env.visual_fidelity` | — | the visual tier's own thresholds, set from the SPREAD over independent state draws; required in full, or `register()` refuses the class |
 
 If a new env cannot reach interior 1.0, the right move is to find the constant that is wrong — see the
-[measured-constants table](adding-an-env.md#step-2-find-the-references-real-constants) for the five that
+[measured-constants table](adding/renderer.md#identify-authority) for the five that
 were wrong in PushT — not to lower the bar. The [visual tier](concepts/fidelity-tiers.md) is not an
 escape from that: it is for an env whose *renderer* provably cannot be the official one, it makes a
 weaker and separately-stated claim, and it disqualifies the env from the use the strong claim licenses.

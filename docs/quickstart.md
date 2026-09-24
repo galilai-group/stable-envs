@@ -1,105 +1,59 @@
 # Quickstart
 
-Install the core, construct an environment by **class name**, and render. Optional extras add families; they are not required to draw PushT.
+Install the core and construct an accepted environment by class name. See
+[Install](install.md) for optional extras and pinned dependency profiles.
 
 ```bash
 pip install stable-envs
 ```
 
-Family extras, pins, and the nvdiffrast source build: [Install](install.md). From a clone, `pip install -e .` — see [Contributing](https://github.com/galilai-group/stable-envs/blob/main/CONTRIBUTING.md).
-
-Five nouns — **Env**, **State**, **Action**, **Variation**, **Frame** — and two usage modes:
-
 ```python
+import numpy as np
 import stable_envs as snv
 
-env = snv.PushT(num_envs=64)                 # device="auto" → CUDA if available, else CPU
-state = env.reset(seed=0)                    # State
-pixels = env.render(state)                   # Frame: (64, H, W, 3) uint8
-action = env.action_spec.sample(env.num_envs, env.rng)
-
-out = env.step(action)                       # STATEFUL: writes env.state
-state = out["state"]
-nxt = env.transition(state, action)          # FUNCTIONAL: env.state is untouched
-traj = env.unroll(state, action[None])       # known actions, time first
-env.close()
-```
-
-`num_envs` is how many copies this object holds. `len(env) == env.num_envs`. A short last batch (`n <= num_envs`) is accepted by `set_state` / `render` and draws exactly those rows.
-
-The same object as a context manager — `close()` is idempotent and correctness never depends on `__del__`:
-
-```python
-with snv.PushT(num_envs=8) as env:
-    state = env.reset(seed=0)
+with snv.CartPole(num_envs=2, device="cpu") as env:
+    state = env.reset(seed=17)
     pixels = env.render(state)
+    action = np.array([[0], [1]], dtype=np.int64)
+    out = env.step(action)
+    assert env.set_state(state) is None
+    assert (env.step(action) == out).all()
 ```
 
-## Strings are secondary
+`num_envs` is the simulator batch size. `close()` is idempotent; a context manager
+closes its owned resources. Renderer short-batch support does not change a
+backend's full-State batch requirements.
 
-```python
-env = snv.make("PushT", num_envs=8)
-info = snv.info("PushT")          # metadata, no construction, no GPU — not a snv.Spec
-names = snv.list_envs()           # canonical class names this interpreter imported
-snv.list_envs(family="dmcontrol")
-snv.list_families()
-```
+## State and frames
 
-An unknown name raises with the registered class names. Strings are those class names, not sibling-library ids.
+`get_state()` returns an independent exhaustive TensorDict snapshot. `state` is
+its alias. Named fields include physical, task, lifecycle and RNG state as needed
+by the family. `state_spec` describes those fields; `action_spec` describes actions;
+`frame_spec` describes uint8 `(H,W,3)` output without the batch axis.
 
-## Stateful step, functional dynamics
+`render(state)` projects internally to private RenderState. Compact renderer rows
+can omit fields needed for continuation and are refused by `set_state`. There is
+no public `pack_render_state` or `unpack_render_state` API. See [State](concepts/state.md).
 
-```python
-state = env.reset(seed=0)
-action = env.action_spec.sample(env.num_envs, env.rng)
+`step` returns State and defined reward/done semantics. Optional functional
+`transition`/`unroll` are not available on every simulator; accepted delegated
+CartPole refuses them. Renderer-only cells refuse full simulator operations.
+See [dynamics](concepts/dynamics.md).
 
-out = env.step(action)                    # writes env.state; returns a StepResult TensorDict
-state = out["state"]                      # always
-# out["reward"] / out["terminated"] exist only where that env defines those semantics
-nxt = env.transition(state, action)       # does not touch env.state
-traj = env.unroll(state, actions)         # actions are (T, num_envs, …), time first
-```
+## Registration, Variation and downstream use
 
-`unroll` is open-loop known actions, not a policy rollout. Cells without a batched simulator raise `NotImplementedError` from `step` / `transition` and keep `reset` / `render` working. See [dynamics](concepts/dynamics.md).
+Class names are canonical: `snv.make("CartPole", num_envs=2, device="cpu")`.
+`snv.list_envs()` lists imports available in the current interpreter;
+`snv.import_errors()` explains missing optional families. `snv.info("CartPole")`
+returns metadata without constructing the environment.
 
-## Specs
+Variation includes appearance, physics, reset and task configuration. Consult the
+family's bounded support and scope before using `set_variation` or reset options;
+see [Variation](concepts/variation-spaces.md).
 
-```python
-env.state_spec          # nested, mirrors TensorDict keys
-env.action_spec         # raises on renderer-only cells
-env.frame_spec          # (H, W, 3) uint8 — what render() produces
-env.variation_spec      # flat Variation row
-```
+Stable-worldmodel owns learner input selection, observation packaging and dataset
+filtering. Full State is a replay checkpoint and may contain privileged fields;
+observation integration remains deferred. See [sibling projects](concepts/worldmodel.md).
 
-PushT's public state is grouped by entity — `state["agent", "position"]`, `state["agent", "velocity"]`, `state["block", "position"]`, `state["block", "angle"]` — not the compact render row. `env.pack_render_state(state)` / `env.unpack_render_state(rows)` convert; that packed layout is the frozen certification layout and **may omit dynamics-only fields**.
-
-## Variation / configuration
-
-```python
-env.variation_spec                    # flat row contract
-env.variation_dim, env.variation_names
-row = env.default_variation()         # official configuration
-rows = env.sample_variation(env.num_envs)
-pixels = env.render(state, variation={"block.color": [220, 40, 40]})
-pixels = env.render(state, variation=rows)
-```
-
-A mapping overrides named leaves; a `(variation_dim,)` or `(B, variation_dim)` row is the full
-configuration. Defaults are the official picture. Leaves may be render-only, dynamics-only,
-reset/task, or both. See [Variation](concepts/variation-spaces.md).
-
-## Logging
-
-```python
-snv.set(verbose="INFO", default_device="auto")
-cfg = snv.get_config()           # verbose, default_device
-```
-
-## Next
-
-- [Environment listing](environments.md)
-- [State, Variation, Frame](concepts/state.md)
-- [Lifecycle](concepts/lifecycle.md)
-- [Sibling projects](concepts/worldmodel.md)
-- [Adding an environment](adding-an-env.md)
-- Examples: `python examples/render.py --help`
+Next: [lifecycle](concepts/lifecycle.md), [environment listing](environments.md),
+and [adding an environment, task or renderer](adding/index.md).

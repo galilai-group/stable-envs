@@ -1,25 +1,31 @@
 # `stable_envs.env`
 
-The contract every environment implements. Concrete classes (`snv.PushT`, …) are the primary API; this module is the shared `Env` they inherit.
+Concrete classes such as `snv.CartPole` are the primary API. The shared `Env`
+provides the simulator/rendering boundary; family adapters implement authoritative
+simulation without adding a shared Observation class.
 
-Public vocabulary:
+- `reset`, `get_state` and `state` return independent exhaustive State snapshots
+  where simulator semantics are supported.
+- `set_state(full_state)` restores all required fields and returns `None`.
+- `step` returns State and the task's defined reward/success/done values.
+- `transition` and `unroll` are optional; delegated families may explicitly refuse.
+- `render(full_state)` projects internally and returns a uint8 Frame.
+- `close` and context-manager methods implement resource ownership.
+- State/action/frame/Variation specs describe shapes and dtypes; family validators
+  enforce complete schemas and semantic constraints before restoration.
 
-- `Env` — `reset`, stateful `step`, functional `transition` / `unroll`, `render`, `close`
-- `State` — instantaneous dynamic world state; alias for `tensordict.TensorDict`
-- `Action` — intervention at a timestep
-- `Variation` / `VariationLike` — persistent environment configuration (not appearance-only); `render(..., variation=)` accepts a mapping or a flat / batched row
-- `Frame` — pixels from `render`; described by `frame_spec`
-- `StepResult` — TensorDict `step` returns; always has `"state"`
-- `pack_render_state` / `unpack_render_state` / `render_state_dim` / `render_state_names` — public State ↔ compact render row (not always lossless)
+State is a TensorDict checkpoint, potentially privileged, not the learner
+observation. Variation can affect physics, reset, task or appearance.
 
-Developer / internal (used by env implementations and tests; not taught in the user guide):
+Contributor/internal interfaces include `_pack_render_state`,
+`_unpack_render_state`, `_get_render_state`, `_set_render_state`, `_render`,
+`state_dim`/`state_names`, `scene`, and style helpers. Compact RenderState layouts
+are not full State schemas. The old public `pack_render_state`/`unpack_render_state`
+methods are absent. Renderer input shape/finite-value checks do not replace
+full-State restoration validation.
 
-- `StyleTensor`, `resolve_style`, `style_dim` / `style_names` / `default_style` / `get_style` / `set_style` / `sample_style`
-- `pack` / `unpack` / `state_dim` / `state_names` — the same compact render row, implementation names
-- `scene()` — Scene2D builders only; tile and ray-cast families override `render` instead
-
-See [State, Action, Variation, Frame](../concepts/state.md) and [Lifecycle](../concepts/lifecycle.md).
-
-`check_states` is the second thing to read. Every entry point that turns numbers into pixels used to go through `torch.as_tensor(states, ...).reshape(-1, state_dim)`, and that reshape is the most dangerous line in the package: hand it a frame stack whose size happens to divide by `state_dim` and it succeeds, then renders a plausible-looking picture built out of pixel bytes read as coordinates. The rule that replaces it is on the SHAPE rather than on the size: a state array is 2-D and its last axis is exactly `state_dim`. `render` relaxes only the rank, because "arbitrary leading dims" is its documented contract. NaN and inf are refused with the offending rows and named columns, and a batch SHORTER than the env's is accepted and rendered, because that is the last batch of every ordinary epoch.
+See [State](../concepts/state.md), [lifecycle](../concepts/lifecycle.md) and
+[adding a component](../adding/index.md). Existing source comments about compact
+renderer layouts should be read within this private rendering boundary.
 
 ::: stable_envs.env

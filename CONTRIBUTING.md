@@ -42,27 +42,27 @@ and say which it was.
 
 What each check rules out: [Testing](docs/testing.md).
 
-## Adding an environment
+## Adding a component
 
-[Adding an environment](docs/adding-an-env.md) is the worked procedure, with a checklist at the end.
-The short version: drop a module in `stable_envs/envs/` (auto-discovered), implement `scene()` or
-override `render()`, bridge to the official renderer with `reference_env` / `reference_set_state` /
-`reference_render`, and run the suite — it is parameterised over `snv.list_envs()`, so a new env is
-covered without editing a test.
+Choose the [environment, task, or renderer guide](docs/adding/index.md).
+Simulation calls the authoritative upstream backend; full State is a replay checkpoint.
+Compact RenderState and learner observation packaging have different responsibilities.
+Each guide separates local development tests from final promotion evidence.
 
-Construct with `num_envs=`. The public base class is `Env`.
+Construct with `num_envs=`. Concrete classes register by unique class name.
+Do not promote a registration from renderer parity or a sibling's passing task alone.
 
 ## Pull requests
 
-- Do not relax `parity_interior_min` to make a test pass. It may be lowered only together with a
-  `parity_note` naming the mechanism, which the test then prints.
+- Do not relax a parity criterion or modify a frozen fixture to make a test pass. A proposed
+  change to a fidelity claim requires independent evidence and review.
 - Do not release an EGL context or close a `mujoco.Renderer`. Releasing one corrupts rendering in
   every other live context in the process, silently, and the damage surfaces later as pixel
   differences in an unrelated env. `stable_envs/testing/resource_guard.py` fails the test that does it.
 - Do not create contexts, renderers or envs per state, per style value or per call. Context
   creation that scales with the batch means a per-environment value is being turned into a
   per-environment *scene*.
-- Calibrate against the official renderer, never against a reading of its source. The method,
+- Read the authoritative source, then validate its interpretation against the official renderer. The method,
   and the defects that produced it, are in
   [Fidelity methodology](docs/concepts/fidelity-methodology.md).
 

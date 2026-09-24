@@ -4,21 +4,21 @@
 
 **A batched environment library for research: explicit state, dynamics, and variation, with fast state-driven rendering across CPU and GPU.**
 
-Store compact render state, not frames. Choose the camera, the resolution and the configuration **afterwards**. On PushT the compact render state is 5 floats per step against a 96×96×3 frame: 20 bytes against 27,648, and 100% of the interior pixels are bit-identical to the official `gym_pusht` renderer.
+Keep exhaustive State for replay and branching; generate frames when needed. Compact RenderState is a private renderer projection, separate from simulator State and downstream learner observations.
 
 Authors: **Randall Balestriero**, **Sami BuGhanem**.
 
 ```python
 import stable_envs as snv
 
-with snv.PushT(num_envs=64) as env:
+with snv.CartPole(num_envs=64) as env:
     state = env.reset(seed=0)
     pixels = env.render(state)                 # Frame
     out = env.step(env.action_spec.sample(64, env.rng))
     state = out["state"]
 ```
 
-Concrete classes are canonical. `snv.make("PushT", …)` is the string API for those class names. The full walkthrough is the [Quickstart](quickstart.md).
+Concrete classes are canonical. `snv.make("CartPole", …)` is the string API for those class names. The full walkthrough is the [Quickstart](quickstart.md).
 
 <div class="grid cards" markdown>
 
@@ -33,44 +33,21 @@ Concrete classes are canonical. `snv.make("PushT", …)` is the string API for t
 - **[Limitations](concepts/limitations.md)** — devices, extras, accepted limits
 - **[Throughput](benchmarks.md)** — methodology, then the measured tables
 - **[Gallery](gallery.md)** — official renderer and ours, same states
-- **[Adding an environment](adding-an-env.md)** — the worked PushT port
+- **[Adding a component](adding/index.md)** — environment, task and renderer responsibilities
 
 </div>
 
-The storage win is universal (compact state vs raw pixels). The *speed* win is per-family and is **not** universal — against nvJPEG on the GPU it is a wash. [Throughput](benchmarks.md) says which families beat which read path, including the ones that do not.
+Storage and throughput benefits depend on the family and the retained State. [Throughput](benchmarks.md) describes the measured workloads and their limits.
 
-## Keep your training loop. Delete your image dataset.
+## State and pixels have different responsibilities
 
-Rendering is a drop-in: `render` is a pure function of state. Stepping is optional and is **not** the same claim — a contact solver cannot be bit-exact the way a rasterizer can. [Why physics is separate](concepts/physics.md).
+`render(full_state)` produces pixels without advancing simulation. Stable-worldmodel
+selects and packages learner-visible frames, proprioception and goals. Exhaustive
+State may contain privileged information; it is not the learner observation.
 
-=== "Before"
-
-    ```python
-    ds = ImageFolder("frames/", transform=to_tensor)
-    loader = DataLoader(ds, batch_size=1024, num_workers=8)
-    for frames, target in loader:
-        frames = frames.cuda(non_blocking=True)
-        loss = mse(net(frames), target)
-    ```
-
-=== "After"
-
-    ```python
-    with snv.PushT(num_envs=1024, device="cuda") as env:
-        ds = TensorDataset(states)
-        loader = DataLoader(ds, batch_size=1024)
-        for (s,) in loader:
-            frames = env.render(env.unpack_render_state(s))
-            loss = mse(net(frames), target)
-    ```
-
-Side-by-side on identical recorded states:
-
-<video controls muted loop playsinline width="100%" poster="assets/media/PushT/grid.png">
-  <source src="assets/media/PushT/sidebyside.mp4" type="video/mp4">
-</video>
-
-More in the [Gallery](gallery.md). Fidelity claims, including the visual tier, are in [Fidelity tiers](concepts/fidelity-tiers.md).
+Renderer fidelity and simulator restoration need independent evidence. See
+[State](concepts/state.md), [the gallery](gallery.md), and
+[the contributor guides](adding/index.md).
 
 ## How it works
 

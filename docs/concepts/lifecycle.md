@@ -1,44 +1,34 @@
 # Lifecycle and resource ownership
 
-Resource lifetime is explicit. Correctness must not depend on `__del__`.
+Use an environment as a context manager or call `close()` explicitly. Close is
+idempotent; correctness must not depend on a finalizer. Closed instances refuse
+further operations rather than silently creating a new backend.
 
 ```python
-env = snv.PushT(num_envs=8, device="cpu")
-state = env.reset(seed=0)
-pixels = env.render(state)
-env.close()
-env.close()                            # idempotent
+import stable_envs as snv
+
+with snv.CartPole(num_envs=2, device="cpu") as env:
+    state = env.reset(seed=17)
+    frame = env.render(state)
+assert env.closed
 ```
 
-Or:
+An instance releases only resources it owns. Shared process-lifetime rendering
+contexts/caches must not be destroyed by a single instance's close path. Follow
+the resource guard and backend ownership rules in the [renderer guide](../adding/renderer.md).
 
-```python
-with snv.PushT(num_envs=8, device="cpu") as env:
-    state = env.reset(seed=0)
-    pixels = env.render(state)
-```
+`num_envs` is the simulator batch size; `len(env) == env.num_envs`.
+Restoration must satisfy that backend's batch contract. Supported renderers can
+accept smaller batches; this does not imply that full-State restoration accepts
+any batch size. `out=` requires the documented contiguous uint8 output layout.
+Public rendering accepts full State or the current live State; compact rows are
+private renderer inputs.
 
-`close()` releases renderer resources (EGL contexts, atlases, device buffers, MJWarp/nvdiff runners). A closed env refuses `reset` / `render` / `step` with a message that says to build a new one, rather than drawing through a backend that no longer exists.
+Reset seeding is source-specific. Do not assume `reset(None)` always continues a
+single generator: some sources reseed reset/Variation generators with fresh
+entropy. State and reset anchors must capture the promised replay scope.
 
-`env.closed` is the flag. There is no "reopen".
-
-## Constructor
-
-```python
-snv.PushT(num_envs=64, device="cuda", size=None, supersample=1, backend="auto", seed=0)
-```
-
-- `num_envs` is how many copies this object holds.
-- `env.device` is a `torch.device`.
-- `env.size` is the frame size; `None` means the class default (`default_size`).
-- `len(env) == num_envs`.
-
-Short batches (`n <= num_envs`) keep working exactly as `set_state` documents: the last batch of an epoch is rendered, not dropped.
-
-## What `reset` does
-
-`reset(seed=0)` draws `num_envs` states from the env's own reset distribution, writes them into the held buffer, and returns the public `State`. Passing `seed` re-seeds `env.rng`, so `reset(seed=0)` twice is the same draw. Omitting `seed` continues the generator.
-
-## Render
-
-`render` accepts a `State`, packed rows, or nothing (the currently held state). The output is `(n, H, W, 3)` uint8 on `env.device`. `out=` must be a contiguous uint8 buffer; a strided destination is refused rather than filled, because the renderer writes linearly through a flat view.
+A registration's own TimeLimit belongs to its lifecycle State. A caller-supplied
+training/collection cap belongs to that caller's wrapper. Trace construction to
+decide ownership, retain elapsed steps where needed, and compare termination and
+truncation separately. See the [task guide](../adding/task.md).

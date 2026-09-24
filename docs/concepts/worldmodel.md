@@ -1,29 +1,31 @@
-# Sibling projects
+# Sibling projects and observation ownership
 
-`stable-envs` is the canonical environment layer. It owns Env / State / Action / Variation / Frame,
-with stateful `reset` / `step` and functional `transition` / `unroll` / `render`.
+Stable-envs owns the simulator and task: exhaustive State, reset/get/set/step,
+actions, reward/success/termination/truncation, RNG, bounded Variation,
+State-to-RenderState projection and rendering. Delegating to the authoritative
+upstream simulator is the intended implementation.
 
-`stable-worldmodel` is a sibling that may later depend on this package. The installed
-`stable-envs` runtime has **zero knowledge** of `stable-worldmodel`: no SWM ids in the registry,
-no interop adapters, no `snv.make("swm/...")`.
+Stable-worldmodel owns learner-visible observations: pixel/proprioception/goal
+selection, flat/dict packaging, model input keys and dataset filtering. An
+exhaustive State can contain privileged information and is not the default learner
+input. Stable-envs does not add an Observation class or a State-filtering layer.
 
 ```text
-stable-worldmodel          (policy, planning, collection — later)
-        ↓  may depend
-   stable-envs             (environments; zero runtime knowledge the other way)
-
-stable-datasets            dataset/storage API
-stable-pretraining         training API
+stable-worldmodel    learner observation selection, models, collection
+        ↓           observation integration remains deferred
+   stable-envs      simulator/task State, actions, Variation, rendering
+        ↓
+ upstream simulator authoritative dynamics/controllers/task behavior
 ```
 
-Do not look for `env.rollout(policy, …)` here. Planning, policy rollouts, dataset storage and
-training are deliberately outside this API. Other [stable-*](https://github.com/galilai-group)
-projects provide tools in those areas.
+The stable-envs runtime does not import stable-worldmodel. There is no
+`snv.make("swm/...")` lookup API. Historical registration correspondence and
+evidence do not establish a runtime observation-container integration.
 
-The packages may be used together by ordinary Python and data conventions. There is no runtime
-interop contract. Historical correspondence (the 42-id inventory, VariationMaps) lives in
-regression fixtures and the research archive, not in the shipped lookup.
+Policy-driven rollouts, planning, datasets and training belong downstream.
+`unroll`, where supported, consumes known actions rather than a policy.
 
 - [stable-worldmodel](https://github.com/galilai-group/stable-worldmodel)
 - [stable-datasets](https://github.com/galilai-group/stable-datasets)
 - [stable-pretraining](https://github.com/galilai-group/stable-pretraining)
+- [Contributor responsibilities](../adding/index.md)

@@ -1,0 +1,10 @@
+RUN docs/adding/environment.md 0
+RUN docs/adding/index.md 0
+RUN docs/adding/task.md 0
+AdroitHandRelocateDense-v1, AdroitHandHammerDense-v1, AdroitHandDoorDense-v1 environment's reward functions were updated in v1.2.1 without an environment version update. Therefore, use gymnasium-robotics==1.2.0 for v1 reproducibility or use v2 in gymnasium-robotics>=1.4.3. See https://github.com/Farama-Foundation/Gymnasium-Robotics/pull/220 for more details
+RUN docs/adding/renderer.md 0
+RUN docs/concepts/state.md 0
+RUN docs/concepts/dynamics.md 0
+RUN docs/concepts/lifecycle.md 0
+RUN docs/quickstart.md 0
+DOC_EXAMPLES_PASS

@@ -1,0 +1,30 @@
+
+[31m │  ⚠  Warning from the Material for MkDocs team[0m
+[31m │[0m
+[31m │[0m  MkDocs 2.0, the underlying framework of Material for MkDocs,
+[31m │[0m  will introduce backward-incompatible changes, including:
+[31m │[0m
+[31m │  × [0mAll plugins will stop working – the plugin system has been removed
+[31m │  × [0mAll theme overrides will break – the theming system has been rewritten
+[31m │  × [0mNo migration path exists – existing projects cannot be upgraded
+[31m │  × [0mClosed contribution model – community members can't report bugs
+[31m │  × [0mCurrently unlicensed – unsuitable for production use
+[31m │[0m
+[31m │[0m  Our full analysis:
+[31m │[0m
+[31m │[0m  [4mhttps://squidfunk.github.io/mkdocs-material/blog/2026/02/18/mkdocs-2.0/[0m
+[0m
+INFO    -  Cleaning site directory
+INFO    -  Building documentation to directory: /private/tmp/stable-envs-onboarding-site
+WARNING -  Doc file 'research/environment_semantics_audit.md' contains a link '../../stable_envs/env.py', but the target '../stable_envs/env.py' is not found among documentation files.
+WARNING -  Doc file 'research/environment_semantics_audit.md' contains a link '../../stable_envs/envs/classic_control.py', but the target '../stable_envs/envs/classic_control.py' is not found among documentation files.
+WARNING -  Doc file 'research/environment_semantics_audit.md' contains a link '../../stable_envs/envs/pusht.py', but the target '../stable_envs/envs/pusht.py' is not found among documentation files.
+WARNING -  Doc file 'research/environment_semantics_audit.md' contains a link '../../stable_envs/envs/navigation.py', but the target '../stable_envs/envs/navigation.py' is not found among documentation files.
+WARNING -  Doc file 'research/fetch_authoritative_profile.md' contains an unrecognized relative link 'semantic_recovery_evidence/fetch_profile/', it was left as is.
+WARNING -  Doc file 'research/fetch_representative_adapter_initial.md' contains an unrecognized relative link 'semantic_recovery_evidence/fetch_adapter_initial/', it was left as is.
+WARNING -  Doc file 'research/fetch_representative_initial_audit.md' contains an unrecognized relative link 'semantic_recovery_evidence/fetch_initial/', it was left as is.
+WARNING -  Doc file 'research/fetch_representative_state_experiments.md' contains an unrecognized relative link 'semantic_recovery_evidence/fetch_state_proof/', it was left as is.
+WARNING -  Doc file 'research/first_family_recovery.md' contains an unrecognized relative link 'semantic_recovery_evidence/', it was left as is.
+WARNING -  Doc file 'research/semantic_recovery_checkpoint_c.md' contains an unrecognized relative link 'semantic_recovery_evidence/checkpoint_c/', it was left as is.
+
+Aborted with 10 warnings in strict mode!

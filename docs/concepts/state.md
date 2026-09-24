@@ -1,104 +1,62 @@
-# State, Action, Variation, and Frame
+# State, RenderState, Action, Variation, and Frame
 
-Five nouns, two usage modes.
-
-| noun | what it is |
+| Value | Meaning |
 |---|---|
-| **Env** | a batched environment class (`snv.PushT`, …); owns the relationship among the others |
-| **State** | instantaneous dynamic world state: a `tensordict.TensorDict` grouped by entity |
-| **Action** | intervention at a timestep |
-| **Variation** | persistent / episode-level environment configuration (appearance, geometry, morphology, physics, reset distributions, task configuration) |
-| **Frame** | rendered observation: `(B, H, W, 3)` uint8 from `render` |
+| **Env** | Batched simulator/task and rendering interface |
+| **State** | Independent TensorDict checkpoint of all future-relevant simulator, task, RNG and lifecycle fields under the declared persistent configuration |
+| **RenderState** | Private projection sufficient for rendering; may omit dynamics fields |
+| **Action** | Intervention at a timestep, with source-defined dtype/bounds/scaling |
+| **Variation** | Bounded persistent or reset configuration: physics, geometry, task or appearance |
+| **Frame** | Rendered `(B,H,W,3)` uint8 pixels |
+| **Learner observation** | Downstream selection/packaging of frames, proprioception, goals or other inputs in stable-worldmodel |
 
-Two ways to use an Env:
+`snv.State` and `snv.StepResult` are aliases for `tensordict.TensorDict`.
+State may contain privileged information. It is not necessarily the learner's
+observation and must not be exposed to learners by default.
 
 ```python
+import numpy as np
 import stable_envs as snv
 
-with snv.PushT(num_envs=64) as env:          # device="auto" → CUDA if available, else CPU
-    state = env.reset(seed=0)                # State
-    action = env.action_spec.sample(64, env.rng)
-
-    out = env.step(action)                   # STATEFUL: writes env.state
-    state = out["state"]
-    nxt = env.transition(state, action)      # FUNCTIONAL: env.state is untouched
-    traj = env.unroll(state, action[None])   # FUNCTIONAL, known actions, time first
-    frame = env.render(state)                # Frame
+with snv.CartPole(num_envs=2, device="cpu") as env:
+    state = env.reset(seed=17)
+    assert state["x"].shape == (2, 1)
+    assert state["lifecycle", "elapsed_steps"].shape == (2, 1)
+    out = env.step(np.array([[0], [1]], dtype=np.int64))
+    frame = env.render(out["state"])
+    assert env.set_state(state) is None
 ```
 
-`reset` / `step` return State-oriented values. Pixels come from `render`. There is no Gym-shaped "observation" on `step`.
+`get_state()` and its `state` alias return independent snapshots. `set_state()`
+restores a validated full State and returns `None`. State keys/dtypes are
+family-specific and described by `state_spec`; persistent configuration must be
+compatible between the saved and receiving instances.
 
-## State
+## Compact RenderState is private
 
-`snv.State` is an alias for `tensordict.TensorDict`, not a subclass.
+Renderer implementations use `_pack_render_state`, `_unpack_render_state`,
+`_get_render_state`, `_set_render_state` and `_render`. Compact rows are often
+float32 and retain frozen layouts. Decoding a lossy row does not invent omitted
+velocities, lifecycle or RNG fields. Such rows and partial dictionaries must be
+refused by `set_state()`.
 
-```python
-state = env.reset(seed=0)          # batch size [num_envs]
-state["agent", "position"]         # PushT: (num_envs, 2)
-state["agent", "velocity"]         # dynamics-only; may be absent from the render row
-state["block", "angle"]            # (num_envs, 1)
-```
+Applications render full snapshots with `env.render(state)`. The old public
+`pack_render_state`/`unpack_render_state` names are not supported. Contributor
+examples for testing the private boundary are in the [renderer guide](../adding/renderer.md).
+Pixel equality is not proof of exact future simulation.
 
-Trivial cells may expose a single key (`{"x": (d,)}`) rather than an entity tree.
+## Specifications and results
 
-## Compact render state is not the full State
+`state_spec` is a CompositeSpec mirroring State fields. `action_spec`, `frame_spec`
+and `variation_spec` describe per-environment values without the batch dimension.
+A Spec carries shape, dtype, device and applicable bounds/names. It is descriptive;
+the backend must still validate source-specific semantic constraints.
 
-Every renderer and frozen corpus speaks a compact float32 row used to **regenerate pixels**. That row is *render state*. It is not always a lossless / Markov dump of public State — dynamics-only fields can be omitted.
+`step(actions)` returns a StepResult containing `state` and the environment's
+defined reward, success and termination/truncation information. Existing families
+may carry additional reference diagnostic fields; those are not a learner
+observation-selection API. Renderer-only cells do not fabricate simulator results.
 
-```python
-row = env.pack_render_state(state)     # (n, render_state_dim) float32
-state = env.unpack_render_state(row)   # entity-grouped view; omitted fields come back as zeros
-env.render_state_dim
-env.render_state_names                 # column labels of that row
-```
-
-PushT's agent velocity is public State (`state["agent", "velocity"]`) and is **dropped** by `pack_render_state`, because the frozen row never carried it. That is why `transition` can be a pure function of the State it is given.
-
-`unpack_render_state` **copies**. Mutating `state["agent", "position"]` does not silently change the next `step`.
-
-## Frame
-
-```python
-frame = env.render(state)          # (num_envs, H, W, 3) uint8 on env.device
-env.frame_spec                     # (H, W, 3) uint8 — what render produces
-```
-
-`frame_spec` is not what `reset` / `step` return. Those carry State.
-
-## Variation
-
-```python
-env.variation_spec
-env.variation_dim, env.variation_names
-env.default_variation()
-env.sample_variation(env.num_envs)
-frame = env.render(state, variation={"block.color": [220, 40, 40]})
-```
-
-Defaults are the official configuration. Domain randomisation is a tensor, not a loop. See [Variation](variation-spaces.md).
-
-## Specs
-
-One `Spec` dataclass (`shape`, `dtype`, `low`, `high`, `device`, `names`, `discrete_n`) plus `CompositeSpec` as a nested dict of Specs.
-
-```python
-env.state_spec                     # CompositeSpec mirroring TensorDict keys
-env.action_spec                    # per-environment action; renderer-only cells raise
-env.frame_spec                     # (H, W, 3) uint8
-env.variation_spec                 # flat Variation row (one Spec, not a tree)
-```
-
-`snv.Spec` describes tensor contracts. `snv.info("PushT")` is environment **metadata** (family, domain, slug) — it is not a `Spec`.
-
-`shape` is the **per-environment** shape, without the batch axis. `sample(num_envs, rng)` draws uniformly inside the bounds; an unbounded continuous spec refuses rather than inventing a distribution — reachable states come from `env.sample_states`.
-
-## StepResult
-
-`env.step(actions)` returns a TensorDict (`snv.StepResult`, the same type as `State`):
-
-```python
-out = env.step(action)
-state = out["state"]               # always present
-```
-
-`reward` / `terminated` / `truncated` (or a combined `done`) exist **only where that environment defines those semantics**. They are not fabricated for renderer-only cells. PushT currently returns `{"state": …}` only.
+Variation includes physics/task/reset leaves as well as appearance. See
+[Variation](variation-spaces.md), [dynamics](dynamics.md) and the
+[contributor layer overview](../adding/index.md).

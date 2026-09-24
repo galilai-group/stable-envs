@@ -8,7 +8,7 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-black.svg)](LICENSE)
 [![Python 3.10–3.12](https://img.shields.io/badge/python-3.10--3.12-black.svg)](pyproject.toml)
 
-Store compact render state, not frames. Choose the camera, the resolution and the configuration **afterwards**. On PushT the compact render state is 5 floats per step against a 96×96×3 frame — 20 bytes against 27,648 — and the default picture is the official configuration, bit for bit on interior pixels.
+Keep exhaustive State for replay and branching. Render frames from State when needed. Compact RenderState is a private renderer projection and does not replace a simulator checkpoint.
 
 Authors: **Randall Balestriero**, **Sami BuGhanem**.
 
@@ -33,25 +33,25 @@ Editable install (from a clone) lives under [Contributing](CONTRIBUTING.md).
 ```python
 import stable_envs as snv
 
-with snv.PushT(num_envs=64) as env:          # device="auto" → CUDA if available, else CPU
+with snv.CartPole(num_envs=64) as env:          # device="auto" → CUDA if available, else CPU
     state = env.reset(seed=0)                # State
-    pixels = env.render(state)               # Frame: (64, 96, 96, 3) uint8
+    pixels = env.render(state)               # Frame: (64, H, W, 3) uint8
     action = env.action_spec.sample(64, env.rng)
     out = env.step(action)                   # stateful
     state = out["state"]
-    nxt = env.transition(state, action)      # functional: env.state is untouched
+    env.set_state(state)                    # restores full State; returns None
 ```
 
 Concrete classes are canonical. Strings are those class names:
 
 ```python
-env = snv.make("PushT", num_envs=64)
+env = snv.make("CartPole", num_envs=64)
 print(snv.list_envs())
-print(snv.info("PushT"))
+print(snv.info("CartPole"))
 snv.set(verbose="INFO", default_device="auto")
 ```
 
-`step(actions)` is stateful. `transition` / `unroll` are pure in `state` and take **known** actions — not a policy. There is no `env.rollout(policy=...)`. Planning, datasets and training belong to sibling [stable-*](https://github.com/galilai-group) projects.
+`step(actions)` is stateful. Optional `transition` / `unroll` take known actions; delegated CartPole explicitly refuses them. There is no `env.rollout(policy=...)`. Planning, datasets and training belong to sibling [stable-*](https://github.com/galilai-group) projects.
 
 Full walkthrough: [Quickstart](docs/quickstart.md).
 
@@ -62,7 +62,7 @@ snv.Env, snv.State, snv.StepResult, snv.VariationLike
 snv.Dynamics, snv.Spec, snv.CompositeSpec
 snv.make, snv.info, snv.list_envs, snv.list_families, snv.import_errors
 snv.set, snv.get_config, snv.__version__
-snv.PushT / snv.CartPole / …                  concrete env classes
+snv.CartPole / snv.Pendulum / …                  concrete env classes
 ```
 
 `stable_envs.testing` is a public measurement library; it is not advertised at `snv.*`. There is no runtime interop contract with other stable-* packages.
@@ -91,18 +91,13 @@ Historical training loops, GPU sweeps and paper tables stay under [`docs/researc
 
 ## Keep your training loop. Delete your image dataset.
 
-`render` is a pure function of state. Same states in, same pixels out — for most families byte-identical to the official renderer on interior pixels. Stepping is optional: many cells are renderer-only, and a contact solver cannot make a bit-exactness claim the way a rasterizer can ([why](docs/concepts/physics.md)).
+`render(full_state)` produces frames without advancing simulation. Learner-visible
+observation selection and dataset filtering belong to stable-worldmodel. Renderer
+parity and exact simulation/restoration are separate acceptance gates.
 
-```python
-import stable_envs as snv
-from torch.utils.data import DataLoader, TensorDataset
-
-with snv.PushT(num_envs=256, device="cuda") as env:
-    ds = TensorDataset(states)  # your compact states, in RAM
-    loader = DataLoader(ds, batch_size=256)
-    for (batch,) in loader:
-        frames = env.render(env.unpack_render_state(batch))  # or env.set_state(batch).render()
-```
+For contributor-only compact corpus handling, see the
+[renderer guide](docs/adding/renderer.md). Public applications keep full State
+snapshots; compact rows cannot be used to restore omitted simulator fields.
 
 Side-by-side against the official renderer, same recorded states: [Gallery](docs/gallery.md).
 
@@ -128,7 +123,7 @@ mkdocs serve
 |---|---|
 | [Home](docs/index.md) | claim, quickstart, where to go |
 | [Install](docs/install.md) | extras, pins, nvdiffrast |
-| [Adding an environment](docs/adding-an-env.md) | the worked PushT port |
+| [Adding a component](docs/adding/index.md) | environment, task and renderer guides |
 | [Testing](docs/testing.md) | what each check rules out |
 | [Research archive](docs/research/index.md) | per-family studies, including the no-gos |
 
