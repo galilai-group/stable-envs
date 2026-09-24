@@ -1,0 +1,43 @@
+{
+  "result": "PRESERVATION_PASS",
+  "stage_a": "FAIL_NO_COMPLIANT_RESET_DELEGATION",
+  "stage_b": "NOT_STARTED",
+  "start": "434cc72974360ab98e47cad7aebcc8b1b62bb1de",
+  "rng_checkpoint": "434cc72974360ab98e47cad7aebcc8b1b62bb1de",
+  "documentation_checkpoint": "03adc1ab79bae71e3e62db2e5c4cb19f20723166",
+  "branch": "repair/environment-semantics",
+  "worktree": "/private/tmp/stable-envs-semantic-recovery",
+  "starting_status": "clean",
+  "unchanged_starting_files": 2010,
+  "accepted_artifacts": 170,
+  "terminal_logs": 11,
+  "manifests": {
+    "fetch_family": 75,
+    "ogb_rng_feasibility": 27
+  },
+  "matrix": {
+    "VERIFIED": 33,
+    "INCOMPLETE": 9
+  },
+  "production_swm_imports": [],
+  "production_diff": "",
+  "push_performed_this_checkpoint": false,
+  "changed_inventory": [
+    "docs/research/ogbench_dependency_boundary.md",
+    "docs/research/semantic_recovery_evidence/ogb_dependency_boundary/SHA256SUMS",
+    "docs/research/semantic_recovery_evidence/ogb_dependency_boundary/audit.log",
+    "docs/research/semantic_recovery_evidence/ogb_dependency_boundary/audit.py",
+    "docs/research/semantic_recovery_evidence/ogb_dependency_boundary/closure.json",
+    "docs/research/semantic_recovery_evidence/ogb_dependency_boundary/closure.log",
+    "docs/research/semantic_recovery_evidence/ogb_dependency_boundary/closure.py",
+    "docs/research/semantic_recovery_evidence/ogb_dependency_boundary/cube.exact.diff",
+    "docs/research/semantic_recovery_evidence/ogb_dependency_boundary/cube.normalized.diff",
+    "docs/research/semantic_recovery_evidence/ogb_dependency_boundary/dependency_graph.json",
+    "docs/research/semantic_recovery_evidence/ogb_dependency_boundary/formatting.log",
+    "docs/research/semantic_recovery_evidence/ogb_dependency_boundary/mkdocs.log",
+    "docs/research/semantic_recovery_evidence/ogb_dependency_boundary/provenance.json",
+    "docs/research/semantic_recovery_evidence/ogb_dependency_boundary/scene.exact.diff",
+    "docs/research/semantic_recovery_evidence/ogb_dependency_boundary/scene.normalized.diff",
+    "docs/research/semantic_recovery_evidence/ogb_dependency_boundary/shared-tests.log"
+  ]
+}
