@@ -1,0 +1,398 @@
+{
+  "registration": "swm/CraftaxClassicSymbolic-v1",
+  "name": "CraftaxClassicSymbolic",
+  "status": "PASS",
+  "cases": [
+    {
+      "label": "reset-0",
+      "state_exact": true,
+      "required_output_exact": true,
+      "normalized_float_output_exact": true,
+      "output_shape": [
+        1345
+      ],
+      "output_dtype": "float32",
+      "output_min": 0.0,
+      "output_max": 1.0,
+      "nonmutation": true,
+      "array_file": "reset-0.npz"
+    },
+    {
+      "label": "reset-17",
+      "state_exact": true,
+      "required_output_exact": true,
+      "normalized_float_output_exact": true,
+      "output_shape": [
+        1345
+      ],
+      "output_dtype": "float32",
+      "output_min": 0.0,
+      "output_max": 1.0,
+      "nonmutation": true,
+      "array_file": "reset-17.npz"
+    },
+    {
+      "label": "reset-42",
+      "state_exact": true,
+      "required_output_exact": true,
+      "normalized_float_output_exact": true,
+      "output_shape": [
+        1345
+      ],
+      "output_dtype": "float32",
+      "output_min": 0.0,
+      "output_max": 1.0,
+      "nonmutation": true,
+      "array_file": "reset-42.npz"
+    },
+    {
+      "label": "mine_tree",
+      "state_exact": true,
+      "required_output_exact": true,
+      "normalized_float_output_exact": true,
+      "output_shape": [
+        1345
+      ],
+      "output_dtype": "float32",
+      "output_min": 0.0,
+      "output_max": 1.0,
+      "nonmutation": true,
+      "array_file": "mine_tree.npz"
+    },
+    {
+      "label": "craft",
+      "state_exact": true,
+      "required_output_exact": true,
+      "normalized_float_output_exact": true,
+      "output_shape": [
+        1345
+      ],
+      "output_dtype": "float32",
+      "output_min": 0.0,
+      "output_max": 1.0,
+      "nonmutation": true,
+      "array_file": "craft.npz"
+    },
+    {
+      "label": "combat",
+      "state_exact": true,
+      "required_output_exact": true,
+      "normalized_float_output_exact": true,
+      "output_shape": [
+        1345
+      ],
+      "output_dtype": "float32",
+      "output_min": 0.0,
+      "output_max": 1.0,
+      "nonmutation": true,
+      "array_file": "combat.npz"
+    },
+    {
+      "label": "damage",
+      "state_exact": true,
+      "required_output_exact": true,
+      "normalized_float_output_exact": true,
+      "output_shape": [
+        1345
+      ],
+      "output_dtype": "float32",
+      "output_min": 0.0,
+      "output_max": 1.0,
+      "nonmutation": true,
+      "array_file": "damage.npz"
+    },
+    {
+      "label": "night",
+      "state_exact": true,
+      "required_output_exact": true,
+      "normalized_float_output_exact": true,
+      "output_shape": [
+        1345
+      ],
+      "output_dtype": "float32",
+      "output_min": 0.0,
+      "output_max": 1.0,
+      "nonmutation": true,
+      "array_file": "night.npz"
+    },
+    {
+      "label": "terminal",
+      "state_exact": true,
+      "required_output_exact": true,
+      "normalized_float_output_exact": true,
+      "output_shape": [
+        1345
+      ],
+      "output_dtype": "float32",
+      "output_min": 0.0,
+      "output_max": 1.0,
+      "nonmutation": true,
+      "array_file": "terminal.npz"
+    },
+    {
+      "label": "near_limit",
+      "state_exact": true,
+      "required_output_exact": true,
+      "normalized_float_output_exact": true,
+      "output_shape": [
+        1345
+      ],
+      "output_dtype": "float32",
+      "output_min": 0.0,
+      "output_max": 1.0,
+      "nonmutation": true,
+      "array_file": "near_limit.npz"
+    },
+    {
+      "label": "stochastic_grass",
+      "state_exact": true,
+      "required_output_exact": true,
+      "normalized_float_output_exact": true,
+      "output_shape": [
+        1345
+      ],
+      "output_dtype": "float32",
+      "output_min": 0.0,
+      "output_max": 1.0,
+      "nonmutation": true,
+      "array_file": "stochastic_grass.npz"
+    }
+  ],
+  "profile": {
+    "python": "3.12.11",
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "packages": {
+      "craftax": "1.5.0",
+      "jax": "0.10.1",
+      "jaxlib": "0.10.1",
+      "flax": "0.12.7",
+      "gymnax": "0.0.9",
+      "chex": "0.1.92",
+      "numpy": "2.2.6",
+      "torch": "2.14.0",
+      "tensordict": "0.14.2"
+    },
+    "devices": [
+      "cpu:0"
+    ],
+    "backend": "cpu",
+    "x64": false,
+    "prng": "threefry2x32",
+    "threefry_partitionable": true,
+    "environment": {
+      "JAX_PLATFORMS": "cpu",
+      "JAX_ENABLE_X64": null,
+      "XLA_FLAGS": null,
+      "XLA_PYTHON_CLIENT_PREALLOCATE": "false"
+    }
+  },
+  "performance": {
+    "constructor_seconds_in_current_process": 0.6028397080954164,
+    "batches": {
+      "1": {
+        "step": {
+          "first_seconds": 1.09277837513946,
+          "warm_median_seconds": 0.005219208542257547,
+          "warm_p95_seconds": 0.005963572720065712,
+          "warm_calls_per_second": 191.59993165696616,
+          "samples_seconds": [
+            1.09277837513946,
+            0.006196165923029184,
+            0.0056792921386659145,
+            0.00531162484548986,
+            0.005265457788482308,
+            0.005012040957808495,
+            0.0052617499604821205,
+            0.004981500096619129,
+            0.004997000098228455,
+            0.005176667124032974,
+            0.004887792048975825
+          ]
+        },
+        "reset": {
+          "first_seconds": 0.005566666834056377,
+          "warm_median_seconds": 0.0054031460313126445,
+          "warm_p95_seconds": 0.005520145525224507,
+          "warm_calls_per_second": 185.0773594133378,
+          "samples_seconds": [
+            0.005566666834056377,
+            0.005528582958504558,
+            0.005323708988726139,
+            0.005400917027145624,
+            0.005496583180502057,
+            0.005405375035479665,
+            0.005434209015220404,
+            0.005385207943618298,
+            0.0055098331067711115,
+            0.005335834110155702,
+            0.0053185829892754555
+          ]
+        },
+        "get_state": {
+          "first_seconds": 0.0003843340091407299,
+          "warm_median_seconds": 0.00037429213989526033,
+          "warm_p95_seconds": 0.00038517325883731247,
+          "warm_calls_per_second": 2671.7098581868004,
+          "samples_seconds": [
+            0.0003843340091407299,
+            0.00038729188963770866,
+            0.0003735839854925871,
+            0.00037454208359122276,
+            0.0003716251812875271,
+            0.00038258382119238377,
+            0.0003740421961992979,
+            0.0003714999184012413,
+            0.00037670787423849106,
+            0.00037991697899997234,
+            0.0003673748578876257
+          ]
+        },
+        "set_state": {
+          "first_seconds": 0.005772416014224291,
+          "warm_median_seconds": 0.005397416418418288,
+          "warm_p95_seconds": 0.0055731528322212395,
+          "warm_calls_per_second": 185.2738277868599,
+          "samples_seconds": [
+            0.005772416014224291,
+            0.005549709079787135,
+            0.00559233408421278,
+            0.005527083994820714,
+            0.005423666909337044,
+            0.005487458081915975,
+            0.005360125098377466,
+            0.005371165927499533,
+            0.00534699996933341,
+            0.005310708889737725,
+            0.005341416923329234
+          ]
+        },
+        "symbolic_output": {
+          "first_seconds": 7.987488061189651e-05,
+          "warm_median_seconds": 3.8207974284887314e-05,
+          "warm_p95_seconds": 4.8227410297840826e-05,
+          "warm_calls_per_second": 26172.546928130065,
+          "samples_seconds": [
+            7.987488061189651e-05,
+            5.270889960229397e-05,
+            4.05418686568737e-05,
+            4.2750034481287e-05,
+            3.89590859413147e-05,
+            3.8499943912029266e-05,
+            3.791600465774536e-05,
+            3.7665944546461105e-05,
+            3.7040794268250465e-05,
+            3.700004890561104e-05,
+            3.7458958104252815e-05
+          ]
+        },
+        "pixel_render": {
+          "status": "SOURCE_EXPLICITLY_UNSUPPORTED"
+        }
+      },
+      "3": {
+        "step": {
+          "first_seconds": 0.00598004087805748,
+          "warm_median_seconds": 0.005627271020784974,
+          "warm_p95_seconds": 0.005725681001786142,
+          "warm_calls_per_second": 177.70603127277587,
+          "samples_seconds": [
+            0.00598004087805748,
+            0.005778874969109893,
+            0.005660333903506398,
+            0.005654667038470507,
+            0.005660666152834892,
+            0.005642417119815946,
+            0.005589250009506941,
+            0.005585167091339827,
+            0.00554908299818635,
+            0.005596875213086605,
+            0.005612124921754003
+          ]
+        },
+        "reset": {
+          "first_seconds": 0.006953082978725433,
+          "warm_median_seconds": 0.006898437510244548,
+          "warm_p95_seconds": 0.007038962154183537,
+          "warm_calls_per_second": 144.9603621856321,
+          "samples_seconds": [
+            0.006953082978725433,
+            0.006936707999557257,
+            0.0068741668947041035,
+            0.006854499923065305,
+            0.0069137089885771275,
+            0.006883166031911969,
+            0.007017333060503006,
+            0.00686820806004107,
+            0.0068706669844686985,
+            0.0070251659490168095,
+            0.007050249958410859
+          ]
+        },
+        "get_state": {
+          "first_seconds": 0.0005089999176561832,
+          "warm_median_seconds": 0.0005023120902478695,
+          "warm_p95_seconds": 0.0005162582150660455,
+          "warm_calls_per_second": 1990.7942082511747,
+          "samples_seconds": [
+            0.0005089999176561832,
+            0.0005074578803032637,
+            0.0005012080073356628,
+            0.0005034161731600761,
+            0.0005170830991119146,
+            0.0005060841795057058,
+            0.0004944170359522104,
+            0.0004924999084323645,
+            0.0005152500234544277,
+            0.0004930410068482161,
+            0.0004998329095542431
+          ]
+        },
+        "set_state": {
+          "first_seconds": 0.007493750192224979,
+          "warm_median_seconds": 0.0071409165393561125,
+          "warm_p95_seconds": 0.007276791706681251,
+          "warm_calls_per_second": 140.03804616517317,
+          "samples_seconds": [
+            0.007493750192224979,
+            0.0073266669642180204,
+            0.007170208031311631,
+            0.007181625114753842,
+            0.007124083116650581,
+            0.007215833058580756,
+            0.0070882500149309635,
+            0.007138250162824988,
+            0.007143582915887237,
+            0.007121165981516242,
+            0.00712816696614027
+          ]
+        },
+        "symbolic_output": {
+          "first_seconds": 0.00010083313100039959,
+          "warm_median_seconds": 7.131253369152546e-05,
+          "warm_p95_seconds": 7.400182075798512e-05,
+          "warm_calls_per_second": 14022.78040387221,
+          "samples_seconds": [
+            0.00010083313100039959,
+            7.279193960130215e-05,
+            7.420801557600498e-05,
+            7.212487980723381e-05,
+            7.374980486929417e-05,
+            7.11251050233841e-05,
+            7.149996235966682e-05,
+            7.045804522931576e-05,
+            6.983289495110512e-05,
+            6.966688670217991e-05,
+            6.899982690811157e-05
+          ]
+        },
+        "pixel_render": {
+          "status": "SOURCE_EXPLICITLY_UNSUPPORTED"
+        }
+      }
+    },
+    "public_execution": "JIT only, matching SWM; scalar source kernels with explicit public batching"
+  },
+  "resource_policy": "Instance close drops State/keys; bounded family/device kernel cache and upstream texture/JIT caches are process-lifetime runtime resources, never semantic State.",
+  "cross_device_exactness": "NOT_CLAIMED; compare preserved CPU/GPU arrays separately",
+  "marker": "CRAFTAX_CRAFTAXCLASSICSYMBOLIC_CPU_GATE_PASS"
+}

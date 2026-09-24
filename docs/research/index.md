@@ -80,3 +80,6 @@ Milestone write-ups and generated tables. They use the project's internal names
 - [v0.1 release-surface contract](v0_release_surface.md)
 - [Historical throughput tables](throughput.md)
 - [Variation collapses](variation_collapses.md)
+
+- [Craftax source and candidate-State audit](craftax_source_audit.md)
+- [Craftax CPU recovery checkpoint and GPU resumption](craftax_recovery_checkpoint.md)

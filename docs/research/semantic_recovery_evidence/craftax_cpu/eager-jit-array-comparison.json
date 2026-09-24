@@ -1,0 +1,30 @@
+{
+  "Classic": {
+    "reset": {
+      "engine_state_differences": [],
+      "output_exact": true,
+      "output_mismatch_count": 0,
+      "output_max_abs_difference": 0.0
+    },
+    "step": {
+      "engine_state_differences": [],
+      "output_exact": true,
+      "output_mismatch_count": 0,
+      "output_max_abs_difference": 0.0
+    }
+  },
+  "Full": {
+    "reset": {
+      "engine_state_differences": [],
+      "output_exact": true,
+      "output_mismatch_count": 0,
+      "output_max_abs_difference": 0.0
+    },
+    "step": {
+      "engine_state_differences": [],
+      "output_exact": false,
+      "output_mismatch_count": 5,
+      "output_max_abs_difference": 5.960464477539063e-08
+    }
+  }
+}

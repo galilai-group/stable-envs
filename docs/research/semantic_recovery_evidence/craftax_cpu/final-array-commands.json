@@ -1,0 +1,86 @@
+[
+  {
+    "argv": [
+      "/private/tmp/craftax-recovery-312/bin/python",
+      "scripts/recovery/craftax_gate.py",
+      "--name",
+      "CraftaxClassicPixels",
+      "--device",
+      "cpu",
+      "--performance",
+      "--output",
+      "/private/tmp/stable-envs-semantic-recovery/docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxClassicPixels"
+    ],
+    "environment": {
+      "JAX_PLATFORMS": "cpu",
+      "MPLCONFIGDIR": "/private/tmp/craftax-mpl",
+      "PYTHONPATH": "/private/tmp/stable-envs-semantic-recovery"
+    },
+    "log": "final-CraftaxClassicPixels-arrays.log",
+    "exit_code": 0,
+    "elapsed_seconds": 12.7309730052948
+  },
+  {
+    "argv": [
+      "/private/tmp/craftax-recovery-312/bin/python",
+      "scripts/recovery/craftax_gate.py",
+      "--name",
+      "CraftaxClassicSymbolic",
+      "--device",
+      "cpu",
+      "--performance",
+      "--output",
+      "/private/tmp/stable-envs-semantic-recovery/docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxClassicSymbolic"
+    ],
+    "environment": {
+      "JAX_PLATFORMS": "cpu",
+      "MPLCONFIGDIR": "/private/tmp/craftax-mpl",
+      "PYTHONPATH": "/private/tmp/stable-envs-semantic-recovery"
+    },
+    "log": "final-CraftaxClassicSymbolic-arrays.log",
+    "exit_code": 0,
+    "elapsed_seconds": 9.73517107963562
+  },
+  {
+    "argv": [
+      "/private/tmp/craftax-recovery-312/bin/python",
+      "scripts/recovery/craftax_gate.py",
+      "--name",
+      "CraftaxPixels",
+      "--device",
+      "cpu",
+      "--performance",
+      "--output",
+      "/private/tmp/stable-envs-semantic-recovery/docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxPixels"
+    ],
+    "environment": {
+      "JAX_PLATFORMS": "cpu",
+      "MPLCONFIGDIR": "/private/tmp/craftax-mpl",
+      "PYTHONPATH": "/private/tmp/stable-envs-semantic-recovery"
+    },
+    "log": "final-CraftaxPixels-arrays.log",
+    "exit_code": 0,
+    "elapsed_seconds": 23.587385177612305
+  },
+  {
+    "argv": [
+      "/private/tmp/craftax-recovery-312/bin/python",
+      "scripts/recovery/craftax_gate.py",
+      "--name",
+      "CraftaxSymbolic",
+      "--device",
+      "cpu",
+      "--performance",
+      "--output",
+      "/private/tmp/stable-envs-semantic-recovery/docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxSymbolic"
+    ],
+    "environment": {
+      "JAX_PLATFORMS": "cpu",
+      "MPLCONFIGDIR": "/private/tmp/craftax-mpl",
+      "PYTHONPATH": "/private/tmp/stable-envs-semantic-recovery"
+    },
+    "log": "final-CraftaxSymbolic-arrays.log",
+    "exit_code": 0,
+    "elapsed_seconds": 18.155409812927246
+  }
+]

@@ -1,0 +1,53 @@
+{
+  "status": "CRAFTAX_COMPONENT_SOURCE_PROOF_PASS",
+  "correction": "Two shared engines, four concrete configurations. Full Symbolic adds an upstream reset key split before generate_world; the initial audit's only-get_obs-differs statement was too broad. Delegation has preserved that difference from the first implementation.",
+  "records": [
+    {
+      "engine": "Classic",
+      "symbolic_reset_definition": "    def reset_env(\n        self, rng: chex.PRNGKey, params: EnvParams\n    ) -> Tuple[chex.Array, EnvState]:\n        state = generate_world(rng, params, self.static_env_params)\n\n        return self.get_obs(state), state\n",
+      "source_path": "/private/tmp/craftax-recovery-312/lib/python3.12/site-packages/craftax/craftax_classic/envs/craftax_symbolic_env.py",
+      "source_sha256": "c455fb3fecd1fc0579544ecd18e60676fafd61edce6bd73fca964477652f08f5",
+      "cases": [
+        {
+          "seed": 0,
+          "same_seed_world_exact": true,
+          "shared_state_six_step_continuation_exact": true
+        },
+        {
+          "seed": 17,
+          "same_seed_world_exact": true,
+          "shared_state_six_step_continuation_exact": true
+        },
+        {
+          "seed": 42,
+          "same_seed_world_exact": true,
+          "shared_state_six_step_continuation_exact": true
+        }
+      ]
+    },
+    {
+      "engine": "Full",
+      "symbolic_reset_definition": "    def reset_env(\n        self, rng: chex.PRNGKey, params: EnvParams\n    ) -> Tuple[chex.Array, EnvState]:\n        rng, _rng = jax.random.split(rng)\n        state = generate_world(_rng, params, self.static_env_params)\n\n        return self.get_obs(state), state\n",
+      "source_path": "/private/tmp/craftax-recovery-312/lib/python3.12/site-packages/craftax/craftax/envs/craftax_symbolic_env.py",
+      "source_sha256": "a45f35d61b336e4b114147380f8295973550ffd8ed84dce829ebc0789d4df8a0",
+      "cases": [
+        {
+          "seed": 0,
+          "same_seed_world_exact": false,
+          "shared_state_six_step_continuation_exact": true
+        },
+        {
+          "seed": 17,
+          "same_seed_world_exact": false,
+          "shared_state_six_step_continuation_exact": true
+        },
+        {
+          "seed": 42,
+          "same_seed_world_exact": false,
+          "shared_state_six_step_continuation_exact": true
+        }
+      ]
+    }
+  ],
+  "production_change_required": false
+}

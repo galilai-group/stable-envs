@@ -3391,8 +3391,18 @@
         "repository": "https://github.com/MichaelTMatthews/Craftax",
         "package": "craftax",
         "pinned_lock_version": "1.5.0",
-        "tested_profile_versions": {},
-        "version_scope": "Lock version is historical provenance, not a claim of candidate certification; tested CPU/GPU versions remain in evidence."
+        "tested_profile_versions": {
+          "craftax": "1.5.0",
+          "jax": "0.10.1",
+          "jaxlib": "0.10.1",
+          "flax": "0.12.7",
+          "gymnax": "0.0.9",
+          "chex": "0.1.92",
+          "numpy": "2.2.6",
+          "torch": "2.14.0",
+          "tensordict": "0.14.2"
+        },
+        "version_scope": "Exact pinned CPU profile; GPU locked but not yet executed"
       },
       "stable_envs_classes": [
         "CraftaxClassic"
@@ -3402,59 +3412,78 @@
         "registration_kwargs": {},
         "constructor_signature": "self, **kwargs",
         "accepted_task": null,
-        "source_constructor": "swm:stable_worldmodel/envs/craftax/craftax.py:CraftaxClassicPixelsWrapper.__init__"
+        "source_constructor": "swm:stable_worldmodel/envs/craftax/craftax.py:CraftaxClassicPixelsWrapper.__init__",
+        "candidate_task": "registered no-auto-reset defaults; fixed engine and presentation"
       },
       "state_schema": {
-        "status": "UNPROVED",
-        "corpus_fields": {},
-        "candidate_source_catalog": [],
-        "note": "Full TensorDict simulator snapshot; restore under the same persistent Variation"
+        "status": "CPU_PROVED_GPU_PENDING",
+        "complete_schema": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxClassicPixels/schema.json",
+        "numeric_engine_leaves": 49,
+        "source_cache": null,
+        "note": "Every shape has a leading public batch dimension; uint32 keys encoded losslessly as int64 words"
       },
       "restoration_order": [
-        "UNPROVED: no accepted full public State restoration; inspect pinned methods before implementation"
+        "Validate complete batch exact keys/shapes/dtypes/signature/fixed parameters/key ranges/source invariants/lifecycle",
+        "Decode every immutable engine lane; allocate retained keys/lifecycle and full-symbolic source cache",
+        "Atomically replace all lanes; no reset, step, world generation or history replay"
       ],
       "action_scaling_clipping_repeat": {
-        "summary": "UNACCEPTED: pinned wrapper step implementation indexed below; no candidate parity claim.",
-        "parity": "UNTESTED",
+        "summary": "Exact upstream discrete IDs, scalar JIT per batch lane; integer validation, no scaling/clipping",
+        "parity": "PASS_EXACT_CPU",
         "source_catalog": [
           "swm:stable_worldmodel/envs/craftax/craftax.py"
         ]
       },
       "reset_rng_semantics": {
-        "reset_parity": "UNTESTED",
-        "rng_lifecycle": "UNTESTED",
+        "reset_parity": "PASS_EXACT_CPU",
+        "rng_lifecycle": "PASS_EXACT_CPU_WRAPPER_AND_ENGINE_KEYS_THREEFRY_LEGACY_WORDS",
         "source_catalog": [
           "swm:stable_worldmodel/envs/craftax/craftax.py"
         ],
         "rng_structure_policy": "Complete documented named RNG state is atomic; individual-word minimality is not required."
       },
       "reward_success_terminated_truncated": {
-        "reward": "UNTESTED",
-        "lifecycle": "UNTESTED",
+        "reward": "PASS_EXACT_CPU",
+        "lifecycle": "PASS_EXACT_CPU_TERMINATED_LIMIT_DEATH_TRUNCATED_FALSE_NO_AUTORESET",
         "source_catalog": [
           "swm:stable_worldmodel/envs/craftax/craftax.py"
         ]
       },
-      "accepted_variation_scope": "UNTESTED",
-      "execution_mode": null,
+      "accepted_variation_scope": "NONE_REGISTERED_FIXED_DEFAULTS_CPU_VALIDATED_GPU_PENDING",
+      "execution_mode": "DELEGATED_CPU",
       "evidence_manifest": {
-        "oracle": null,
-        "artifacts": []
+        "oracle": "docs/research/semantic_recovery_evidence/craftax_source_audit/SHA256SUMS",
+        "artifacts": [
+          "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxClassicPixels-cpu-acceptance.json",
+          "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxClassicPixels/result.json",
+          "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxClassicPixels/schema.json",
+          "docs/research/semantic_recovery_evidence/craftax_gpu_prepared/bundle.json"
+        ]
       },
-      "cpu_semantic_result": "NOT_ACCEPTED",
+      "cpu_semantic_result": "PASS_EXACT_CPU",
       "gpu_semantic_result": {
-        "status": "NOT_ACCEPTED",
+        "status": "BLOCKED_SSH_AUTHENTICATION_NOT_SUBMITTED",
         "job": null,
-        "note": "CUDA State placement is not GPU physics for DELEGATED_CPU."
+        "note": "Candidate executes upstream JAX on GPU; pending independent registration gate, no GPU acceptance claim"
       },
-      "frozen_renderer_result": "PENDING",
+      "frozen_renderer_result": "PASS_EXACT_CPU_SOURCE_UINT8; legacy atlas contract preserved separately",
       "known_limitations": [
-        "Local visible tiles/inventory are a lossy render projection, not game state; no dynamics."
+        "GPU unaccepted; CPU/GPU equality unclaimed",
+        "Fixed registered configuration; no Variation, eager public mode, MPS, or alternate rendering sizes",
+        "Legacy stable_envs_classes is frozen crosswalk; candidate_classes identifies the new implementation"
       ],
       "remaining_gates": [
-        "Local visible tiles/inventory are a lossy render projection, not game state; no dynamics."
+        "Oscar independent GPU acceptance after authentication",
+        "Download and independently verify all remote arrays, hashes, terminal logs before promotion"
       ],
-      "closure_code_check": null
+      "closure_code_check": {
+        "production_swm_imports": false,
+        "copied_game_logic": false,
+        "shared_contract_change": false
+      },
+      "candidate_classes": [
+        "CraftaxClassicPixels"
+      ]
     },
     {
       "historical_id": "swm/CraftaxClassicSymbolic-v1",
@@ -3473,8 +3502,18 @@
         "repository": "https://github.com/MichaelTMatthews/Craftax",
         "package": "craftax",
         "pinned_lock_version": "1.5.0",
-        "tested_profile_versions": {},
-        "version_scope": "Lock version is historical provenance, not a claim of candidate certification; tested CPU/GPU versions remain in evidence."
+        "tested_profile_versions": {
+          "craftax": "1.5.0",
+          "jax": "0.10.1",
+          "jaxlib": "0.10.1",
+          "flax": "0.12.7",
+          "gymnax": "0.0.9",
+          "chex": "0.1.92",
+          "numpy": "2.2.6",
+          "torch": "2.14.0",
+          "tensordict": "0.14.2"
+        },
+        "version_scope": "Exact pinned CPU profile; GPU locked but not yet executed"
       },
       "stable_envs_classes": [],
       "accepted_classes": [],
@@ -3482,59 +3521,78 @@
         "registration_kwargs": {},
         "constructor_signature": "self, **kwargs",
         "accepted_task": null,
-        "source_constructor": "swm:stable_worldmodel/envs/craftax/craftax.py:CraftaxClassicSymbolicWrapper.__init__"
+        "source_constructor": "swm:stable_worldmodel/envs/craftax/craftax.py:CraftaxClassicSymbolicWrapper.__init__",
+        "candidate_task": "registered no-auto-reset defaults; fixed engine and presentation"
       },
       "state_schema": {
-        "status": "UNPROVED",
-        "corpus_fields": {},
-        "candidate_source_catalog": [],
-        "note": "Full TensorDict simulator snapshot; restore under the same persistent Variation"
+        "status": "CPU_PROVED_GPU_PENDING",
+        "complete_schema": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxClassicSymbolic/schema.json",
+        "numeric_engine_leaves": 49,
+        "source_cache": null,
+        "note": "Every shape has a leading public batch dimension; uint32 keys encoded losslessly as int64 words"
       },
       "restoration_order": [
-        "UNPROVED: no accepted full public State restoration; inspect pinned methods before implementation"
+        "Validate complete batch exact keys/shapes/dtypes/signature/fixed parameters/key ranges/source invariants/lifecycle",
+        "Decode every immutable engine lane; allocate retained keys/lifecycle and full-symbolic source cache",
+        "Atomically replace all lanes; no reset, step, world generation or history replay"
       ],
       "action_scaling_clipping_repeat": {
-        "summary": "UNACCEPTED: pinned wrapper step implementation indexed below; no candidate parity claim.",
-        "parity": "UNTESTED",
+        "summary": "Exact upstream discrete IDs, scalar JIT per batch lane; integer validation, no scaling/clipping",
+        "parity": "PASS_EXACT_CPU",
         "source_catalog": [
           "swm:stable_worldmodel/envs/craftax/craftax.py"
         ]
       },
       "reset_rng_semantics": {
-        "reset_parity": "UNTESTED",
-        "rng_lifecycle": "UNTESTED",
+        "reset_parity": "PASS_EXACT_CPU",
+        "rng_lifecycle": "PASS_EXACT_CPU_WRAPPER_AND_ENGINE_KEYS_THREEFRY_LEGACY_WORDS",
         "source_catalog": [
           "swm:stable_worldmodel/envs/craftax/craftax.py"
         ],
         "rng_structure_policy": "Complete documented named RNG state is atomic; individual-word minimality is not required."
       },
       "reward_success_terminated_truncated": {
-        "reward": "UNTESTED",
-        "lifecycle": "UNTESTED",
+        "reward": "PASS_EXACT_CPU",
+        "lifecycle": "PASS_EXACT_CPU_TERMINATED_LIMIT_DEATH_TRUNCATED_FALSE_NO_AUTORESET",
         "source_catalog": [
           "swm:stable_worldmodel/envs/craftax/craftax.py"
         ]
       },
-      "accepted_variation_scope": "UNTESTED",
-      "execution_mode": null,
+      "accepted_variation_scope": "NONE_REGISTERED_FIXED_DEFAULTS_CPU_VALIDATED_GPU_PENDING",
+      "execution_mode": "DELEGATED_CPU",
       "evidence_manifest": {
-        "oracle": null,
-        "artifacts": []
+        "oracle": "docs/research/semantic_recovery_evidence/craftax_source_audit/SHA256SUMS",
+        "artifacts": [
+          "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxClassicSymbolic-cpu-acceptance.json",
+          "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxClassicSymbolic/result.json",
+          "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxClassicSymbolic/schema.json",
+          "docs/research/semantic_recovery_evidence/craftax_gpu_prepared/bundle.json"
+        ]
       },
-      "cpu_semantic_result": "NOT_ACCEPTED",
+      "cpu_semantic_result": "PASS_EXACT_CPU",
       "gpu_semantic_result": {
-        "status": "NOT_ACCEPTED",
+        "status": "BLOCKED_SSH_AUTHENTICATION_NOT_SUBMITTED",
         "job": null,
-        "note": "CUDA State placement is not GPU physics for DELEGATED_CPU."
+        "note": "Candidate executes upstream JAX on GPU; pending independent registration gate, no GPU acceptance claim"
       },
-      "frozen_renderer_result": "PENDING",
+      "frozen_renderer_result": "PASS_EXACT_CPU_SYMBOLIC; source pixel refusal preserved",
       "known_limitations": [
-        "No stable-envs symbolic class in frozen crosswalk."
+        "GPU unaccepted; CPU/GPU equality unclaimed",
+        "Fixed registered configuration; no Variation, eager public mode, MPS, or alternate rendering sizes",
+        "Legacy stable_envs_classes is frozen crosswalk; candidate_classes identifies the new implementation"
       ],
       "remaining_gates": [
-        "No stable-envs symbolic class in frozen crosswalk."
+        "Oscar independent GPU acceptance after authentication",
+        "Download and independently verify all remote arrays, hashes, terminal logs before promotion"
       ],
-      "closure_code_check": null
+      "closure_code_check": {
+        "production_swm_imports": false,
+        "copied_game_logic": false,
+        "shared_contract_change": false
+      },
+      "candidate_classes": [
+        "CraftaxClassicSymbolic"
+      ]
     },
     {
       "historical_id": "swm/CraftaxPixels-v1",
@@ -3553,8 +3611,18 @@
         "repository": "https://github.com/MichaelTMatthews/Craftax",
         "package": "craftax",
         "pinned_lock_version": "1.5.0",
-        "tested_profile_versions": {},
-        "version_scope": "Lock version is historical provenance, not a claim of candidate certification; tested CPU/GPU versions remain in evidence."
+        "tested_profile_versions": {
+          "craftax": "1.5.0",
+          "jax": "0.10.1",
+          "jaxlib": "0.10.1",
+          "flax": "0.12.7",
+          "gymnax": "0.0.9",
+          "chex": "0.1.92",
+          "numpy": "2.2.6",
+          "torch": "2.14.0",
+          "tensordict": "0.14.2"
+        },
+        "version_scope": "Exact pinned CPU profile; GPU locked but not yet executed"
       },
       "stable_envs_classes": [
         "CraftaxFull"
@@ -3564,59 +3632,78 @@
         "registration_kwargs": {},
         "constructor_signature": "self, **kwargs",
         "accepted_task": null,
-        "source_constructor": "swm:stable_worldmodel/envs/craftax/craftax.py:CraftaxPixelsWrapper.__init__"
+        "source_constructor": "swm:stable_worldmodel/envs/craftax/craftax.py:CraftaxPixelsWrapper.__init__",
+        "candidate_task": "registered no-auto-reset defaults; fixed engine and presentation"
       },
       "state_schema": {
-        "status": "UNPROVED",
-        "corpus_fields": {},
-        "candidate_source_catalog": [],
-        "note": "Full TensorDict simulator snapshot; restore under the same persistent Variation"
+        "status": "CPU_PROVED_GPU_PENDING",
+        "complete_schema": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxPixels/schema.json",
+        "numeric_engine_leaves": 84,
+        "source_cache": null,
+        "note": "Every shape has a leading public batch dimension; uint32 keys encoded losslessly as int64 words"
       },
       "restoration_order": [
-        "UNPROVED: no accepted full public State restoration; inspect pinned methods before implementation"
+        "Validate complete batch exact keys/shapes/dtypes/signature/fixed parameters/key ranges/source invariants/lifecycle",
+        "Decode every immutable engine lane; allocate retained keys/lifecycle and full-symbolic source cache",
+        "Atomically replace all lanes; no reset, step, world generation or history replay"
       ],
       "action_scaling_clipping_repeat": {
-        "summary": "UNACCEPTED: pinned wrapper step implementation indexed below; no candidate parity claim.",
-        "parity": "UNTESTED",
+        "summary": "Exact upstream discrete IDs, scalar JIT per batch lane; integer validation, no scaling/clipping",
+        "parity": "PASS_EXACT_CPU",
         "source_catalog": [
           "swm:stable_worldmodel/envs/craftax/craftax.py"
         ]
       },
       "reset_rng_semantics": {
-        "reset_parity": "UNTESTED",
-        "rng_lifecycle": "UNTESTED",
+        "reset_parity": "PASS_EXACT_CPU",
+        "rng_lifecycle": "PASS_EXACT_CPU_WRAPPER_AND_ENGINE_KEYS_THREEFRY_LEGACY_WORDS",
         "source_catalog": [
           "swm:stable_worldmodel/envs/craftax/craftax.py"
         ],
         "rng_structure_policy": "Complete documented named RNG state is atomic; individual-word minimality is not required."
       },
       "reward_success_terminated_truncated": {
-        "reward": "UNTESTED",
-        "lifecycle": "UNTESTED",
+        "reward": "PASS_EXACT_CPU",
+        "lifecycle": "PASS_EXACT_CPU_TERMINATED_LIMIT_DEATH_TRUNCATED_FALSE_NO_AUTORESET",
         "source_catalog": [
           "swm:stable_worldmodel/envs/craftax/craftax.py"
         ]
       },
-      "accepted_variation_scope": "UNTESTED",
-      "execution_mode": null,
+      "accepted_variation_scope": "NONE_REGISTERED_FIXED_DEFAULTS_CPU_VALIDATED_GPU_PENDING",
+      "execution_mode": "DELEGATED_CPU",
       "evidence_manifest": {
-        "oracle": null,
-        "artifacts": []
+        "oracle": "docs/research/semantic_recovery_evidence/craftax_source_audit/SHA256SUMS",
+        "artifacts": [
+          "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxPixels-cpu-acceptance.json",
+          "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxPixels/result.json",
+          "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxPixels/schema.json",
+          "docs/research/semantic_recovery_evidence/craftax_gpu_prepared/bundle.json"
+        ]
       },
-      "cpu_semantic_result": "NOT_ACCEPTED",
+      "cpu_semantic_result": "PASS_EXACT_CPU",
       "gpu_semantic_result": {
-        "status": "NOT_ACCEPTED",
+        "status": "BLOCKED_SSH_AUTHENTICATION_NOT_SUBMITTED",
         "job": null,
-        "note": "CUDA State placement is not GPU physics for DELEGATED_CPU."
+        "note": "Candidate executes upstream JAX on GPU; pending independent registration gate, no GPU acceptance claim"
       },
-      "frozen_renderer_result": "PENDING",
+      "frozen_renderer_result": "PASS_EXACT_CPU_SOURCE_UINT8; legacy atlas contract preserved separately",
       "known_limitations": [
-        "Local visible tiles/inventory are a lossy render projection, not game state; no dynamics."
+        "GPU unaccepted; CPU/GPU equality unclaimed",
+        "Fixed registered configuration; no Variation, eager public mode, MPS, or alternate rendering sizes",
+        "Legacy stable_envs_classes is frozen crosswalk; candidate_classes identifies the new implementation"
       ],
       "remaining_gates": [
-        "Local visible tiles/inventory are a lossy render projection, not game state; no dynamics."
+        "Oscar independent GPU acceptance after authentication",
+        "Download and independently verify all remote arrays, hashes, terminal logs before promotion"
       ],
-      "closure_code_check": null
+      "closure_code_check": {
+        "production_swm_imports": false,
+        "copied_game_logic": false,
+        "shared_contract_change": false
+      },
+      "candidate_classes": [
+        "CraftaxPixels"
+      ]
     },
     {
       "historical_id": "swm/CraftaxSymbolic-v1",
@@ -3635,8 +3722,18 @@
         "repository": "https://github.com/MichaelTMatthews/Craftax",
         "package": "craftax",
         "pinned_lock_version": "1.5.0",
-        "tested_profile_versions": {},
-        "version_scope": "Lock version is historical provenance, not a claim of candidate certification; tested CPU/GPU versions remain in evidence."
+        "tested_profile_versions": {
+          "craftax": "1.5.0",
+          "jax": "0.10.1",
+          "jaxlib": "0.10.1",
+          "flax": "0.12.7",
+          "gymnax": "0.0.9",
+          "chex": "0.1.92",
+          "numpy": "2.2.6",
+          "torch": "2.14.0",
+          "tensordict": "0.14.2"
+        },
+        "version_scope": "Exact pinned CPU profile; GPU locked but not yet executed"
       },
       "stable_envs_classes": [],
       "accepted_classes": [],
@@ -3644,59 +3741,78 @@
         "registration_kwargs": {},
         "constructor_signature": "self, **kwargs",
         "accepted_task": null,
-        "source_constructor": "swm:stable_worldmodel/envs/craftax/craftax.py:CraftaxSymbolicWrapper.__init__"
+        "source_constructor": "swm:stable_worldmodel/envs/craftax/craftax.py:CraftaxSymbolicWrapper.__init__",
+        "candidate_task": "registered no-auto-reset defaults; fixed engine and presentation"
       },
       "state_schema": {
-        "status": "UNPROVED",
-        "corpus_fields": {},
-        "candidate_source_catalog": [],
-        "note": "Full TensorDict simulator snapshot; restore under the same persistent Variation"
+        "status": "CPU_PROVED_GPU_PENDING",
+        "complete_schema": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxSymbolic/schema.json",
+        "numeric_engine_leaves": 84,
+        "source_cache": "float32[8268] last_symbolic",
+        "note": "Every shape has a leading public batch dimension; uint32 keys encoded losslessly as int64 words"
       },
       "restoration_order": [
-        "UNPROVED: no accepted full public State restoration; inspect pinned methods before implementation"
+        "Validate complete batch exact keys/shapes/dtypes/signature/fixed parameters/key ranges/source invariants/lifecycle",
+        "Decode every immutable engine lane; allocate retained keys/lifecycle and full-symbolic source cache",
+        "Atomically replace all lanes; no reset, step, world generation or history replay"
       ],
       "action_scaling_clipping_repeat": {
-        "summary": "UNACCEPTED: pinned wrapper step implementation indexed below; no candidate parity claim.",
-        "parity": "UNTESTED",
+        "summary": "Exact upstream discrete IDs, scalar JIT per batch lane; integer validation, no scaling/clipping",
+        "parity": "PASS_EXACT_CPU",
         "source_catalog": [
           "swm:stable_worldmodel/envs/craftax/craftax.py"
         ]
       },
       "reset_rng_semantics": {
-        "reset_parity": "UNTESTED",
-        "rng_lifecycle": "UNTESTED",
+        "reset_parity": "PASS_EXACT_CPU",
+        "rng_lifecycle": "PASS_EXACT_CPU_WRAPPER_AND_ENGINE_KEYS_THREEFRY_LEGACY_WORDS",
         "source_catalog": [
           "swm:stable_worldmodel/envs/craftax/craftax.py"
         ],
         "rng_structure_policy": "Complete documented named RNG state is atomic; individual-word minimality is not required."
       },
       "reward_success_terminated_truncated": {
-        "reward": "UNTESTED",
-        "lifecycle": "UNTESTED",
+        "reward": "PASS_EXACT_CPU",
+        "lifecycle": "PASS_EXACT_CPU_TERMINATED_LIMIT_DEATH_TRUNCATED_FALSE_NO_AUTORESET",
         "source_catalog": [
           "swm:stable_worldmodel/envs/craftax/craftax.py"
         ]
       },
-      "accepted_variation_scope": "UNTESTED",
-      "execution_mode": null,
+      "accepted_variation_scope": "NONE_REGISTERED_FIXED_DEFAULTS_CPU_VALIDATED_GPU_PENDING",
+      "execution_mode": "DELEGATED_CPU",
       "evidence_manifest": {
-        "oracle": null,
-        "artifacts": []
+        "oracle": "docs/research/semantic_recovery_evidence/craftax_source_audit/SHA256SUMS",
+        "artifacts": [
+          "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxSymbolic-cpu-acceptance.json",
+          "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxSymbolic/result.json",
+          "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxSymbolic/schema.json",
+          "docs/research/semantic_recovery_evidence/craftax_gpu_prepared/bundle.json"
+        ]
       },
-      "cpu_semantic_result": "NOT_ACCEPTED",
+      "cpu_semantic_result": "PASS_EXACT_CPU",
       "gpu_semantic_result": {
-        "status": "NOT_ACCEPTED",
+        "status": "BLOCKED_SSH_AUTHENTICATION_NOT_SUBMITTED",
         "job": null,
-        "note": "CUDA State placement is not GPU physics for DELEGATED_CPU."
+        "note": "Candidate executes upstream JAX on GPU; pending independent registration gate, no GPU acceptance claim"
       },
-      "frozen_renderer_result": "PENDING",
+      "frozen_renderer_result": "PASS_EXACT_CPU_SYMBOLIC; source pixel refusal preserved",
       "known_limitations": [
-        "No stable-envs symbolic class in frozen crosswalk."
+        "GPU unaccepted; CPU/GPU equality unclaimed",
+        "Fixed registered configuration; no Variation, eager public mode, MPS, or alternate rendering sizes",
+        "Legacy stable_envs_classes is frozen crosswalk; candidate_classes identifies the new implementation"
       ],
       "remaining_gates": [
-        "No stable-envs symbolic class in frozen crosswalk."
+        "Oscar independent GPU acceptance after authentication",
+        "Download and independently verify all remote arrays, hashes, terminal logs before promotion"
       ],
-      "closure_code_check": null
+      "closure_code_check": {
+        "production_swm_imports": false,
+        "copied_game_logic": false,
+        "shared_contract_change": false
+      },
+      "candidate_classes": [
+        "CraftaxSymbolic"
+      ]
     },
     {
       "historical_id": "swm/FetchPickAndPlace-v3",
@@ -14665,6 +14781,15 @@
         "docs/research/semantic_recovery_evidence/ogb_renderer_retry/Scene-acceptance.json"
       ],
       "note": "Independent Cube and Scene acceptance; unified MuJoCo 3.12 profile, DELEGATED_CPU physics, unchanged frozen GPU renderer."
+    },
+    {
+      "checkpoint": "craftax_cpu_gpu_pending",
+      "report": "docs/research/craftax_recovery_checkpoint.md",
+      "counts": {
+        "VERIFIED": 35,
+        "INCOMPLETE": 7
+      },
+      "promotion": false
     }
   ]
 }

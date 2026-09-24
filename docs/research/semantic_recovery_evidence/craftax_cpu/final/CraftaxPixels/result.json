@@ -1,0 +1,452 @@
+{
+  "registration": "swm/CraftaxPixels-v1",
+  "name": "CraftaxPixels",
+  "status": "PASS",
+  "cases": [
+    {
+      "label": "reset-0",
+      "state_exact": true,
+      "required_output_exact": true,
+      "normalized_float_output_exact": true,
+      "output_shape": [
+        130,
+        110,
+        3
+      ],
+      "output_dtype": "float32",
+      "output_min": 0.0,
+      "output_max": 1.0,
+      "nonmutation": true,
+      "array_file": "reset-0.npz"
+    },
+    {
+      "label": "reset-17",
+      "state_exact": true,
+      "required_output_exact": true,
+      "normalized_float_output_exact": true,
+      "output_shape": [
+        130,
+        110,
+        3
+      ],
+      "output_dtype": "float32",
+      "output_min": 0.0,
+      "output_max": 1.0,
+      "nonmutation": true,
+      "array_file": "reset-17.npz"
+    },
+    {
+      "label": "reset-42",
+      "state_exact": true,
+      "required_output_exact": true,
+      "normalized_float_output_exact": true,
+      "output_shape": [
+        130,
+        110,
+        3
+      ],
+      "output_dtype": "float32",
+      "output_min": 0.0,
+      "output_max": 1.0,
+      "nonmutation": true,
+      "array_file": "reset-42.npz"
+    },
+    {
+      "label": "mine_tree",
+      "state_exact": true,
+      "required_output_exact": true,
+      "normalized_float_output_exact": true,
+      "output_shape": [
+        130,
+        110,
+        3
+      ],
+      "output_dtype": "float32",
+      "output_min": 0.0,
+      "output_max": 1.0,
+      "nonmutation": true,
+      "array_file": "mine_tree.npz"
+    },
+    {
+      "label": "craft",
+      "state_exact": true,
+      "required_output_exact": true,
+      "normalized_float_output_exact": true,
+      "output_shape": [
+        130,
+        110,
+        3
+      ],
+      "output_dtype": "float32",
+      "output_min": 0.0,
+      "output_max": 1.0,
+      "nonmutation": true,
+      "array_file": "craft.npz"
+    },
+    {
+      "label": "combat",
+      "state_exact": true,
+      "required_output_exact": true,
+      "normalized_float_output_exact": true,
+      "output_shape": [
+        130,
+        110,
+        3
+      ],
+      "output_dtype": "float32",
+      "output_min": 0.0,
+      "output_max": 1.0,
+      "nonmutation": true,
+      "array_file": "combat.npz"
+    },
+    {
+      "label": "damage",
+      "state_exact": true,
+      "required_output_exact": true,
+      "normalized_float_output_exact": true,
+      "output_shape": [
+        130,
+        110,
+        3
+      ],
+      "output_dtype": "float32",
+      "output_min": 0.0,
+      "output_max": 1.0,
+      "nonmutation": true,
+      "array_file": "damage.npz"
+    },
+    {
+      "label": "night",
+      "state_exact": true,
+      "required_output_exact": true,
+      "normalized_float_output_exact": true,
+      "output_shape": [
+        130,
+        110,
+        3
+      ],
+      "output_dtype": "float32",
+      "output_min": 0.0,
+      "output_max": 1.0,
+      "nonmutation": true,
+      "array_file": "night.npz"
+    },
+    {
+      "label": "terminal",
+      "state_exact": true,
+      "required_output_exact": true,
+      "normalized_float_output_exact": true,
+      "output_shape": [
+        130,
+        110,
+        3
+      ],
+      "output_dtype": "float32",
+      "output_min": 0.0,
+      "output_max": 1.0,
+      "nonmutation": true,
+      "array_file": "terminal.npz"
+    },
+    {
+      "label": "near_limit",
+      "state_exact": true,
+      "required_output_exact": true,
+      "normalized_float_output_exact": true,
+      "output_shape": [
+        130,
+        110,
+        3
+      ],
+      "output_dtype": "float32",
+      "output_min": 0.0,
+      "output_max": 1.0,
+      "nonmutation": true,
+      "array_file": "near_limit.npz"
+    },
+    {
+      "label": "stochastic_grass",
+      "state_exact": true,
+      "required_output_exact": true,
+      "normalized_float_output_exact": true,
+      "output_shape": [
+        130,
+        110,
+        3
+      ],
+      "output_dtype": "float32",
+      "output_min": 0.0,
+      "output_max": 1.0,
+      "nonmutation": true,
+      "array_file": "stochastic_grass.npz"
+    }
+  ],
+  "profile": {
+    "python": "3.12.11",
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "packages": {
+      "craftax": "1.5.0",
+      "jax": "0.10.1",
+      "jaxlib": "0.10.1",
+      "flax": "0.12.7",
+      "gymnax": "0.0.9",
+      "chex": "0.1.92",
+      "numpy": "2.2.6",
+      "torch": "2.14.0",
+      "tensordict": "0.14.2"
+    },
+    "devices": [
+      "cpu:0"
+    ],
+    "backend": "cpu",
+    "x64": false,
+    "prng": "threefry2x32",
+    "threefry_partitionable": true,
+    "environment": {
+      "JAX_PLATFORMS": "cpu",
+      "JAX_ENABLE_X64": null,
+      "XLA_FLAGS": null,
+      "XLA_PYTHON_CLIENT_PREALLOCATE": "false"
+    }
+  },
+  "performance": {
+    "constructor_seconds_in_current_process": 2.4417151249945164,
+    "batches": {
+      "1": {
+        "step": {
+          "first_seconds": 0.007523958804085851,
+          "warm_median_seconds": 0.0063687709625810385,
+          "warm_p95_seconds": 0.0065884995157830415,
+          "warm_calls_per_second": 157.01616620779456,
+          "samples_seconds": [
+            0.007523958804085851,
+            0.00662937480956316,
+            0.006379625061526895,
+            0.006451584165915847,
+            0.0064347919542342424,
+            0.0062490839045494795,
+            0.006357916863635182,
+            0.00625858292914927,
+            0.0065385408233851194,
+            0.006351749878376722,
+            0.006318792002275586
+          ]
+        },
+        "reset": {
+          "first_seconds": 0.008512458996847272,
+          "warm_median_seconds": 0.008381666499190032,
+          "warm_p95_seconds": 0.008531807793769986,
+          "warm_calls_per_second": 119.30801590550466,
+          "samples_seconds": [
+            0.008512458996847272,
+            0.008563832845538855,
+            0.008335332851856947,
+            0.008449665969237685,
+            0.008492666063830256,
+            0.008388832909986377,
+            0.008374500088393688,
+            0.0082051248755306,
+            0.008433207869529724,
+            0.00836341711692512,
+            0.008298833156004548
+          ]
+        },
+        "get_state": {
+          "first_seconds": 0.0005622920580208302,
+          "warm_median_seconds": 0.0005614995025098324,
+          "warm_p95_seconds": 0.000602720573078841,
+          "warm_calls_per_second": 1780.9454781885386,
+          "samples_seconds": [
+            0.0005622920580208302,
+            0.0005689579993486404,
+            0.0006298332009464502,
+            0.0005695829167962074,
+            0.0005631670355796814,
+            0.0005627910140901804,
+            0.0005602079909294844,
+            0.0005572920199483633,
+            0.000559540931135416,
+            0.0005541669670492411,
+            0.0005502910353243351
+          ]
+        },
+        "set_state": {
+          "first_seconds": 0.006645542103797197,
+          "warm_median_seconds": 0.006218437571078539,
+          "warm_p95_seconds": 0.006291941506788135,
+          "warm_calls_per_second": 160.81209927247977,
+          "samples_seconds": [
+            0.006645542103797197,
+            0.006337166065350175,
+            0.006221583113074303,
+            0.006220499984920025,
+            0.006216375157237053,
+            0.006148957880213857,
+            0.0062108749989420176,
+            0.00616554100997746,
+            0.006222166819497943,
+            0.006236667046323419,
+            0.006138624856248498
+          ]
+        },
+        "symbolic_output": {
+          "first_seconds": 0.14148929109796882,
+          "warm_median_seconds": 0.00010316655971109867,
+          "warm_p95_seconds": 0.00012686696136370297,
+          "warm_calls_per_second": 9693.06336084424,
+          "samples_seconds": [
+            0.14148929109796882,
+            0.00013766693882644176,
+            0.00011366698890924454,
+            0.0001063330564647913,
+            0.00010612513870000839,
+            0.00010179099626839161,
+            8.883303962647915e-05,
+            9.154202416539192e-05,
+            9.358301758766174e-05,
+            9.245914407074451e-05,
+            0.00010454212315380573
+          ]
+        },
+        "pixel_render": {
+          "first_seconds": 0.011173415929079056,
+          "warm_median_seconds": 0.010428478592075408,
+          "warm_p95_seconds": 0.010553471057210117,
+          "warm_calls_per_second": 95.89126459538394,
+          "samples_seconds": [
+            0.011173415929079056,
+            0.010564833879470825,
+            0.010474375216290355,
+            0.010218375129625201,
+            0.010450541041791439,
+            0.010406416142359376,
+            0.01053958316333592,
+            0.010282000061124563,
+            0.010481416014954448,
+            0.010171707952395082,
+            0.010211332933977246
+          ]
+        }
+      },
+      "3": {
+        "step": {
+          "first_seconds": 0.010600541951134801,
+          "warm_median_seconds": 0.009413458406925201,
+          "warm_p95_seconds": 0.009584905987139791,
+          "warm_calls_per_second": 106.23088314325899,
+          "samples_seconds": [
+            0.010600541951134801,
+            0.009677249938249588,
+            0.009440666064620018,
+            0.009472041158005595,
+            0.009340125136077404,
+            0.009390916908159852,
+            0.00943599990569055,
+            0.00925083295442164,
+            0.009281457867473364,
+            0.009297707816585898,
+            0.009444874944165349
+          ]
+        },
+        "reset": {
+          "first_seconds": 0.016490125097334385,
+          "warm_median_seconds": 0.016035438049584627,
+          "warm_p95_seconds": 0.01626459733815864,
+          "warm_calls_per_second": 62.361876046529545,
+          "samples_seconds": [
+            0.016490125097334385,
+            0.015842458000406623,
+            0.016077165957540274,
+            0.015728875063359737,
+            0.01606658403761685,
+            0.016004292061552405,
+            0.015981625067070127,
+            0.016368415905162692,
+            0.016137707978487015,
+            0.015892874915152788,
+            0.01610037498176098
+          ]
+        },
+        "get_state": {
+          "first_seconds": 0.0008330000564455986,
+          "warm_median_seconds": 0.0008154999231919646,
+          "warm_p95_seconds": 0.0008816024637781084,
+          "warm_calls_per_second": 1226.2416850830346,
+          "samples_seconds": [
+            0.0008330000564455986,
+            0.0008610000368207693,
+            0.0008431661408394575,
+            0.0008187498897314072,
+            0.0008122499566525221,
+            0.0008109579794108868,
+            0.0008482080884277821,
+            0.0008069588802754879,
+            0.0008026668801903725,
+            0.000806666910648346,
+            0.0008984589949250221
+          ]
+        },
+        "set_state": {
+          "first_seconds": 0.010350124910473824,
+          "warm_median_seconds": 0.01000264601316303,
+          "warm_p95_seconds": 0.010142864275258035,
+          "warm_calls_per_second": 99.97354686790327,
+          "samples_seconds": [
+            0.010350124910473824,
+            0.01015945803374052,
+            0.009997833985835314,
+            0.010088082868605852,
+            0.010122583014890552,
+            0.010007458040490746,
+            0.01001399988308549,
+            0.009907084051519632,
+            0.00970458285883069,
+            0.009728792123496532,
+            0.00968337501399219
+          ]
+        },
+        "symbolic_output": {
+          "first_seconds": 0.0002402078825980425,
+          "warm_median_seconds": 0.00019227107986807823,
+          "warm_p95_seconds": 0.000206187495496124,
+          "warm_calls_per_second": 5200.990188883964,
+          "samples_seconds": [
+            0.0002402078825980425,
+            0.0002000001259148121,
+            0.00021012499928474426,
+            0.0001924170646816492,
+            0.0002013749908655882,
+            0.00019183289259672165,
+            0.00019212509505450726,
+            0.00018841703422367573,
+            0.00018333294428884983,
+            0.00019770883955061436,
+            0.0001888340339064598
+          ]
+        },
+        "pixel_render": {
+          "first_seconds": 0.019000916043296456,
+          "warm_median_seconds": 0.018779812497086823,
+          "warm_p95_seconds": 0.019037099950946868,
+          "warm_calls_per_second": 53.248667959550865,
+          "samples_seconds": [
+            0.019000916043296456,
+            0.019045500084757805,
+            0.0188037920743227,
+            0.018993958132341504,
+            0.01867870893329382,
+            0.01854175003245473,
+            0.01860304083675146,
+            0.01877500000409782,
+            0.0190268331207335,
+            0.018784624990075827,
+            0.018449291121214628
+          ]
+        }
+      }
+    },
+    "public_execution": "JIT only, matching SWM; scalar source kernels with explicit public batching"
+  },
+  "resource_policy": "Instance close drops State/keys; bounded family/device kernel cache and upstream texture/JIT caches are process-lifetime runtime resources, never semantic State.",
+  "cross_device_exactness": "NOT_CLAIMED; compare preserved CPU/GPU arrays separately",
+  "marker": "CRAFTAX_CRAFTAXPIXELS_CPU_GATE_PASS"
+}

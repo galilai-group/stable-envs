@@ -1,0 +1,452 @@
+{
+  "registration": "swm/CraftaxClassicPixels-v1",
+  "name": "CraftaxClassicPixels",
+  "status": "PASS",
+  "cases": [
+    {
+      "label": "reset-0",
+      "state_exact": true,
+      "required_output_exact": true,
+      "normalized_float_output_exact": true,
+      "output_shape": [
+        63,
+        63,
+        3
+      ],
+      "output_dtype": "float32",
+      "output_min": 0.0,
+      "output_max": 1.0,
+      "nonmutation": true,
+      "array_file": "reset-0.npz"
+    },
+    {
+      "label": "reset-17",
+      "state_exact": true,
+      "required_output_exact": true,
+      "normalized_float_output_exact": true,
+      "output_shape": [
+        63,
+        63,
+        3
+      ],
+      "output_dtype": "float32",
+      "output_min": 0.0,
+      "output_max": 1.0,
+      "nonmutation": true,
+      "array_file": "reset-17.npz"
+    },
+    {
+      "label": "reset-42",
+      "state_exact": true,
+      "required_output_exact": true,
+      "normalized_float_output_exact": true,
+      "output_shape": [
+        63,
+        63,
+        3
+      ],
+      "output_dtype": "float32",
+      "output_min": 0.0,
+      "output_max": 1.0,
+      "nonmutation": true,
+      "array_file": "reset-42.npz"
+    },
+    {
+      "label": "mine_tree",
+      "state_exact": true,
+      "required_output_exact": true,
+      "normalized_float_output_exact": false,
+      "output_shape": [
+        63,
+        63,
+        3
+      ],
+      "output_dtype": "float32",
+      "output_min": 0.0,
+      "output_max": 1.0,
+      "nonmutation": true,
+      "array_file": "mine_tree.npz"
+    },
+    {
+      "label": "craft",
+      "state_exact": true,
+      "required_output_exact": true,
+      "normalized_float_output_exact": false,
+      "output_shape": [
+        63,
+        63,
+        3
+      ],
+      "output_dtype": "float32",
+      "output_min": 0.0,
+      "output_max": 1.0,
+      "nonmutation": true,
+      "array_file": "craft.npz"
+    },
+    {
+      "label": "combat",
+      "state_exact": true,
+      "required_output_exact": true,
+      "normalized_float_output_exact": false,
+      "output_shape": [
+        63,
+        63,
+        3
+      ],
+      "output_dtype": "float32",
+      "output_min": 0.0,
+      "output_max": 1.0,
+      "nonmutation": true,
+      "array_file": "combat.npz"
+    },
+    {
+      "label": "damage",
+      "state_exact": true,
+      "required_output_exact": true,
+      "normalized_float_output_exact": false,
+      "output_shape": [
+        63,
+        63,
+        3
+      ],
+      "output_dtype": "float32",
+      "output_min": 0.0,
+      "output_max": 1.0,
+      "nonmutation": true,
+      "array_file": "damage.npz"
+    },
+    {
+      "label": "night",
+      "state_exact": true,
+      "required_output_exact": true,
+      "normalized_float_output_exact": false,
+      "output_shape": [
+        63,
+        63,
+        3
+      ],
+      "output_dtype": "float32",
+      "output_min": 0.0,
+      "output_max": 1.0,
+      "nonmutation": true,
+      "array_file": "night.npz"
+    },
+    {
+      "label": "terminal",
+      "state_exact": true,
+      "required_output_exact": true,
+      "normalized_float_output_exact": true,
+      "output_shape": [
+        63,
+        63,
+        3
+      ],
+      "output_dtype": "float32",
+      "output_min": 0.0,
+      "output_max": 1.0,
+      "nonmutation": true,
+      "array_file": "terminal.npz"
+    },
+    {
+      "label": "near_limit",
+      "state_exact": true,
+      "required_output_exact": true,
+      "normalized_float_output_exact": false,
+      "output_shape": [
+        63,
+        63,
+        3
+      ],
+      "output_dtype": "float32",
+      "output_min": 0.0,
+      "output_max": 1.0,
+      "nonmutation": true,
+      "array_file": "near_limit.npz"
+    },
+    {
+      "label": "stochastic_grass",
+      "state_exact": true,
+      "required_output_exact": true,
+      "normalized_float_output_exact": false,
+      "output_shape": [
+        63,
+        63,
+        3
+      ],
+      "output_dtype": "float32",
+      "output_min": 0.0,
+      "output_max": 1.0,
+      "nonmutation": true,
+      "array_file": "stochastic_grass.npz"
+    }
+  ],
+  "profile": {
+    "python": "3.12.11",
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "packages": {
+      "craftax": "1.5.0",
+      "jax": "0.10.1",
+      "jaxlib": "0.10.1",
+      "flax": "0.12.7",
+      "gymnax": "0.0.9",
+      "chex": "0.1.92",
+      "numpy": "2.2.6",
+      "torch": "2.14.0",
+      "tensordict": "0.14.2"
+    },
+    "devices": [
+      "cpu:0"
+    ],
+    "backend": "cpu",
+    "x64": false,
+    "prng": "threefry2x32",
+    "threefry_partitionable": true,
+    "environment": {
+      "JAX_PLATFORMS": "cpu",
+      "JAX_ENABLE_X64": null,
+      "XLA_FLAGS": null,
+      "XLA_PYTHON_CLIENT_PREALLOCATE": "false"
+    }
+  },
+  "performance": {
+    "constructor_seconds_in_current_process": 0.7632244168780744,
+    "batches": {
+      "1": {
+        "step": {
+          "first_seconds": 1.4033417501486838,
+          "warm_median_seconds": 0.005356146022677422,
+          "warm_p95_seconds": 0.005890625051688403,
+          "warm_calls_per_second": 186.70140727420304,
+          "samples_seconds": [
+            1.4033417501486838,
+            0.006052625132724643,
+            0.005509291077032685,
+            0.005358250113204122,
+            0.005305707920342684,
+            0.00569262495264411,
+            0.005186332855373621,
+            0.005396250169724226,
+            0.0053540419321507215,
+            0.005350332939997315,
+            0.005058999871835113
+          ]
+        },
+        "reset": {
+          "first_seconds": 0.005690707825124264,
+          "warm_median_seconds": 0.005476312479004264,
+          "warm_p95_seconds": 0.005585435370448977,
+          "warm_calls_per_second": 182.6046274448214,
+          "samples_seconds": [
+            0.005690707825124264,
+            0.005514167016372085,
+            0.005477583035826683,
+            0.005519083002582192,
+            0.005379250040277839,
+            0.005475041922181845,
+            0.005580416182056069,
+            0.005420665955170989,
+            0.005589541979134083,
+            0.005390249891206622,
+            0.005401749862357974
+          ]
+        },
+        "get_state": {
+          "first_seconds": 0.0003921668976545334,
+          "warm_median_seconds": 0.00037447945214807987,
+          "warm_p95_seconds": 0.0003847643733024597,
+          "warm_calls_per_second": 2670.3734858183125,
+          "samples_seconds": [
+            0.0003921668976545334,
+            0.00039070798084139824,
+            0.0003774999640882015,
+            0.00037254183553159237,
+            0.0003714160993695259,
+            0.00036820885725319386,
+            0.0003758328966796398,
+            0.0003732498735189438,
+            0.00036820885725319386,
+            0.00037570903077721596,
+            0.0003772501368075609
+          ]
+        },
+        "set_state": {
+          "first_seconds": 0.005762416170910001,
+          "warm_median_seconds": 0.005395374959334731,
+          "warm_p95_seconds": 0.005518184998072684,
+          "warm_calls_per_second": 185.34393022487978,
+          "samples_seconds": [
+            0.005762416170910001,
+            0.0054806252010166645,
+            0.0055252909660339355,
+            0.005509499926120043,
+            0.00541049987077713,
+            0.005421082954853773,
+            0.005369999911636114,
+            0.005374666070565581,
+            0.005358333000913262,
+            0.005380250047892332,
+            0.005327916005626321
+          ]
+        },
+        "symbolic_output": {
+          "first_seconds": 0.07517558382824063,
+          "warm_median_seconds": 3.8062455132603645e-05,
+          "warm_p95_seconds": 6.220433861017224e-05,
+          "warm_calls_per_second": 26272.608966398944,
+          "samples_seconds": [
+            0.07517558382824063,
+            7.566693238914013e-05,
+            4.575005732476711e-05,
+            4.4416170567274094e-05,
+            3.8125086575746536e-05,
+            3.7250109016895294e-05,
+            3.74161172658205e-05,
+            4.158308729529381e-05,
+            3.7667108699679375e-05,
+            3.712484613060951e-05,
+            3.7999823689460754e-05
+          ]
+        },
+        "pixel_render": {
+          "first_seconds": 0.008408416993916035,
+          "warm_median_seconds": 0.007522521074861288,
+          "warm_p95_seconds": 0.00795756713487208,
+          "warm_calls_per_second": 132.93415731885332,
+          "samples_seconds": [
+            0.008408416993916035,
+            0.007851167116314173,
+            0.007462207926437259,
+            0.007465667091310024,
+            0.007896333932876587,
+            0.007387374993413687,
+            0.0073007079772651196,
+            0.007888750173151493,
+            0.007579375058412552,
+            0.008007667027413845,
+            0.007388292113319039
+          ]
+        }
+      },
+      "3": {
+        "step": {
+          "first_seconds": 0.006292583886533976,
+          "warm_median_seconds": 0.006113396026194096,
+          "warm_p95_seconds": 0.006221364287193864,
+          "warm_calls_per_second": 163.57520365363138,
+          "samples_seconds": [
+            0.006292583886533976,
+            0.006190791027620435,
+            0.006067583104595542,
+            0.006220333045348525,
+            0.0060982920695096254,
+            0.006128499982878566,
+            0.006073374999687076,
+            0.00622220803052187,
+            0.006003458984196186,
+            0.006057291990146041,
+            0.0061447499319911
+          ]
+        },
+        "reset": {
+          "first_seconds": 0.007358957780525088,
+          "warm_median_seconds": 0.007029791478998959,
+          "warm_p95_seconds": 0.007410266785882413,
+          "warm_calls_per_second": 142.25173008153007,
+          "samples_seconds": [
+            0.007358957780525088,
+            0.007353707915171981,
+            0.006978500168770552,
+            0.007238625083118677,
+            0.0071296668611466885,
+            0.00703058298677206,
+            0.0074565422255545855,
+            0.0069220419973134995,
+            0.007028999971225858,
+            0.006944375112652779,
+            0.0070162920746952295
+          ]
+        },
+        "get_state": {
+          "first_seconds": 0.0005222498439252377,
+          "warm_median_seconds": 0.0004998125368729234,
+          "warm_p95_seconds": 0.0005118372268043458,
+          "warm_calls_per_second": 2000.7501337531446,
+          "samples_seconds": [
+            0.0005222498439252377,
+            0.0005076660308986902,
+            0.0005152500234544277,
+            0.0004996249917894602,
+            0.0005045831203460693,
+            0.0004999169614166021,
+            0.0004952079616487026,
+            0.000495583051815629,
+            0.0005046660080552101,
+            0.0004997081123292446,
+            0.0004947499837726355
+          ]
+        },
+        "set_state": {
+          "first_seconds": 0.0076976248528808355,
+          "warm_median_seconds": 0.007376062450930476,
+          "warm_p95_seconds": 0.007574893895071,
+          "warm_calls_per_second": 135.5736894383062,
+          "samples_seconds": [
+            0.0076976248528808355,
+            0.007600750075653195,
+            0.00738675007596612,
+            0.007439959095790982,
+            0.00754329189658165,
+            0.007531000068411231,
+            0.007365374825894833,
+            0.007281540893018246,
+            0.007255333010107279,
+            0.007159584201872349,
+            0.007228708826005459
+          ]
+        },
+        "symbolic_output": {
+          "first_seconds": 0.00010058400221168995,
+          "warm_median_seconds": 7.260439451783895e-05,
+          "warm_p95_seconds": 9.988286765292283e-05,
+          "warm_calls_per_second": 13773.270979545174,
+          "samples_seconds": [
+            0.00010058400221168995,
+            7.3291826993227e-05,
+            8.116615936160088e-05,
+            7.875007577240467e-05,
+            7.19169620424509e-05,
+            7.008318789303303e-05,
+            0.00011458294466137886,
+            8.191610686480999e-05,
+            7.02079851180315e-05,
+            6.983289495110512e-05,
+            6.816699169576168e-05
+          ]
+        },
+        "pixel_render": {
+          "first_seconds": 0.011739457957446575,
+          "warm_median_seconds": 0.011371063068509102,
+          "warm_p95_seconds": 0.011652362497989089,
+          "warm_calls_per_second": 87.94252516014876,
+          "samples_seconds": [
+            0.011739457957446575,
+            0.011572459014132619,
+            0.011669124942272902,
+            0.01163187506608665,
+            0.011333666974678636,
+            0.011356584029272199,
+            0.011313291965052485,
+            0.011385542107746005,
+            0.011483791982755065,
+            0.01133633404970169,
+            0.011247250018641353
+          ]
+        }
+      }
+    },
+    "public_execution": "JIT only, matching SWM; scalar source kernels with explicit public batching"
+  },
+  "resource_policy": "Instance close drops State/keys; bounded family/device kernel cache and upstream texture/JIT caches are process-lifetime runtime resources, never semantic State.",
+  "cross_device_exactness": "NOT_CLAIMED; compare preserved CPU/GPU arrays separately",
+  "marker": "CRAFTAX_CRAFTAXCLASSICPIXELS_CPU_GATE_PASS"
+}

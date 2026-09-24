@@ -1,0 +1,35 @@
+[
+  {
+    "argv": [
+      "/private/tmp/craftax-recovery-312/bin/python",
+      "scripts/recovery/craftax_execution_probe.py",
+      "--classic",
+      "--output",
+      "/private/tmp/stable-envs-semantic-recovery/docs/research/semantic_recovery_evidence/craftax_cpu/execution-Classic"
+    ],
+    "environment": {
+      "JAX_PLATFORMS": "cpu",
+      "MPLCONFIGDIR": "/private/tmp/craftax-mpl",
+      "PYTHONPATH": "/private/tmp/stable-envs-semantic-recovery"
+    },
+    "log": "Classic-execution.log",
+    "exit_code": 0,
+    "elapsed_seconds": 13.86247992515564
+  },
+  {
+    "argv": [
+      "/private/tmp/craftax-recovery-312/bin/python",
+      "scripts/recovery/craftax_execution_probe.py",
+      "--output",
+      "/private/tmp/stable-envs-semantic-recovery/docs/research/semantic_recovery_evidence/craftax_cpu/execution-Full"
+    ],
+    "environment": {
+      "JAX_PLATFORMS": "cpu",
+      "MPLCONFIGDIR": "/private/tmp/craftax-mpl",
+      "PYTHONPATH": "/private/tmp/stable-envs-semantic-recovery"
+    },
+    "log": "Full-execution.log",
+    "exit_code": 0,
+    "elapsed_seconds": 30.568758010864258
+  }
+]

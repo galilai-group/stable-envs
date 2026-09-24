@@ -1,0 +1,38 @@
+{
+  "starting_commit": "bcf8699d9983f95e97b3c71607521a61c354247b",
+  "commits_before_containing_evidence_commit": [
+    {
+      "sha": "f5b3b1a2232bcb7447349a2ba5ceec202e868109",
+      "subject": "Audit authoritative Craftax engines and prove numeric source-state replay"
+    },
+    {
+      "sha": "692d7562d950f3496b8784e851f49ddc0617f203",
+      "subject": "Delegate four Craftax configurations to upstream with exhaustive atomic State"
+    },
+    {
+      "sha": "067ea24eedb56c9a1052fc3da5bb710e4e666eef",
+      "subject": "Preserve Craftax CPU source replay and development evidence"
+    },
+    {
+      "sha": "8feb596028ad542ecda16514c1f93ff90d5e0d44",
+      "subject": "Integrate upstream Craftax rendering and pin independent registration gates"
+    },
+    {
+      "sha": "f8c0a37bd7e68b7fb578fc16942cd11c45d4d292",
+      "subject": "Use the source JIT boundary for terminal symbolic parity and audit preservation"
+    },
+    {
+      "sha": "79d1e4ac62876346ff5d2fc4a6baa30c9b53b6dc",
+      "subject": "Prove the full Craftax symbolic source-output cache is required for exact reset replay"
+    },
+    {
+      "sha": "2953735e5eabae96b796843a376abd7150781de4",
+      "subject": "Retain full Craftax symbolic source output losslessly in exhaustive State"
+    },
+    {
+      "sha": "b6a8242f5ff5a9cae5e9e883a15611d779c2c99c",
+      "subject": "Preserve both source and candidate arrays before Craftax gate assertions"
+    }
+  ],
+  "containing_evidence_commit": "Exact final HEAD returned in the final handoff; this file is part of that commit."
+}

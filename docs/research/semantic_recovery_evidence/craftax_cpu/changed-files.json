@@ -1,0 +1,1121 @@
+{
+  "scope": "Complete changed-file inventory from starting Cube/Scene checkpoint through containing Craftax evidence commit",
+  "files": [
+    {
+      "path": "docs/research/craftax_cached_symbolic_audit.md",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/craftax_recovery_checkpoint.md",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/craftax_source_audit.md",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/index.md",
+      "status": "M"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/Classic-execution.log",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxClassicPixels-arrays.log",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxClassicPixels-cpu-acceptance.json",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxClassicPixels/SHA256SUMS",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxClassicPixels/combat.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxClassicPixels/craft.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxClassicPixels/damage.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxClassicPixels/mine_tree.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxClassicPixels/near_limit.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxClassicPixels/night.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxClassicPixels/profile.json",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxClassicPixels/reset-0.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxClassicPixels/reset-17.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxClassicPixels/reset-42.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxClassicPixels/result.json",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxClassicPixels/schema.json",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxClassicPixels/stochastic_grass.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxClassicPixels/terminal.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxClassicSymbolic-arrays.log",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxClassicSymbolic-cpu-acceptance.json",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxClassicSymbolic/SHA256SUMS",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxClassicSymbolic/combat.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxClassicSymbolic/craft.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxClassicSymbolic/damage.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxClassicSymbolic/mine_tree.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxClassicSymbolic/near_limit.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxClassicSymbolic/night.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxClassicSymbolic/profile.json",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxClassicSymbolic/reset-0.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxClassicSymbolic/reset-17.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxClassicSymbolic/reset-42.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxClassicSymbolic/result.json",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxClassicSymbolic/schema.json",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxClassicSymbolic/stochastic_grass.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxClassicSymbolic/terminal.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxPixels-arrays.log",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxPixels-cpu-acceptance.json",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxPixels/SHA256SUMS",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxPixels/combat.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxPixels/craft.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxPixels/damage.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxPixels/mine_tree.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxPixels/near_limit.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxPixels/night.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxPixels/profile.json",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxPixels/reset-0.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxPixels/reset-17.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxPixels/reset-42.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxPixels/result.json",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxPixels/schema.json",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxPixels/stochastic_grass.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxPixels/terminal.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxSymbolic-arrays.log",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxSymbolic-cpu-acceptance.json",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxSymbolic/profile.json",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxSymbolic/reset-0.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxSymbolic/schema.json",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/Full-execution.log",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/SHA256SUMS",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/acceptance-summary.json",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/changed-files.json",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/collection-commands-initial.json",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/collection-commands.json",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/collection.log",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/commands.json",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/commits.json",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/component-proof.log",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/component-proof/Craftax-same-state-0.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/component-proof/Craftax-same-state-17.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/component-proof/Craftax-same-state-42.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/component-proof/CraftaxClassic-same-state-0.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/component-proof/CraftaxClassic-same-state-17.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/component-proof/CraftaxClassic-same-state-42.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/component-proof/result.json",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/cpu-acceptance.log",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/cpu-acceptance.xml",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/cpu-batch-invariants.log",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/cpu-batch-invariants.xml",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/cpu-final.log",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/cpu-final.xml",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/cross-presentation-engine-comparison.json",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/development.json",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/eager-jit-array-comparison.json",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/execution-Classic/eager-reset.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/execution-Classic/eager-step.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/execution-Classic/jit-reset.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/execution-Classic/jit-step.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/execution-Classic/result.json",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/execution-Full/eager-reset.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/execution-Full/eager-step.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/execution-Full/jit-reset.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/execution-Full/jit-step.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/execution-Full/result.json",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/execution-commands.json",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final-CraftaxClassicPixels-arrays.log",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final-CraftaxClassicSymbolic-arrays.log",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final-CraftaxPixels-arrays.log",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final-CraftaxSymbolic-arrays.log",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final-acceptance.log",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final-acceptance.xml",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final-array-commands.json",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final-docs.log",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final-format.log",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final-lint.log",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final-pytest-tmp/test_symbolic_order_chunk_nonm0/CraftaxClassicSymbolic-terminal-paths.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final-pytest-tmp/test_symbolic_order_chunk_nonm1/CraftaxSymbolic-terminal-paths.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final-whitespace.log",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxClassicPixels/SHA256SUMS",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxClassicPixels/combat.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxClassicPixels/craft.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxClassicPixels/damage.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxClassicPixels/mine_tree.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxClassicPixels/near_limit.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxClassicPixels/night.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxClassicPixels/profile.json",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxClassicPixels/reset-0.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxClassicPixels/reset-17.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxClassicPixels/reset-42.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxClassicPixels/result.json",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxClassicPixels/schema.json",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxClassicPixels/stochastic_grass.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxClassicPixels/terminal.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxClassicSymbolic/SHA256SUMS",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxClassicSymbolic/combat.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxClassicSymbolic/craft.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxClassicSymbolic/damage.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxClassicSymbolic/mine_tree.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxClassicSymbolic/near_limit.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxClassicSymbolic/night.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxClassicSymbolic/profile.json",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxClassicSymbolic/reset-0.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxClassicSymbolic/reset-17.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxClassicSymbolic/reset-42.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxClassicSymbolic/result.json",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxClassicSymbolic/schema.json",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxClassicSymbolic/stochastic_grass.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxClassicSymbolic/terminal.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxPixels/SHA256SUMS",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxPixels/combat.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxPixels/craft.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxPixels/damage.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxPixels/mine_tree.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxPixels/near_limit.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxPixels/night.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxPixels/profile.json",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxPixels/reset-0.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxPixels/reset-17.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxPixels/reset-42.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxPixels/result.json",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxPixels/schema.json",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxPixels/stochastic_grass.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxPixels/terminal.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxSymbolic/SHA256SUMS",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxSymbolic/combat.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxSymbolic/craft.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxSymbolic/damage.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxSymbolic/mine_tree.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxSymbolic/near_limit.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxSymbolic/night.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxSymbolic/profile.json",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxSymbolic/reset-0.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxSymbolic/reset-17.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxSymbolic/reset-42.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxSymbolic/result.json",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxSymbolic/schema.json",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxSymbolic/stochastic_grass.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxSymbolic/terminal.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/freeze.txt",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/full-symbolic-boundary.log",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/full-symbolic-boundary/reset-0.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/full-symbolic-boundary/reset-17.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/full-symbolic-boundary/reset-42.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/full-symbolic-boundary/result.json",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/full-symbolic-cache-proposal.log",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/full-symbolic-cache-proposal/reset-0.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/full-symbolic-cache-proposal/reset-17.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/full-symbolic-cache-proposal/reset-42.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/full-symbolic-cache-proposal/result.json",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/full-symbolic-final-tmp/test_symbolic_order_chunk_nonm0/CraftaxSymbolic-terminal-paths.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/full-symbolic-final.log",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/full-symbolic-final.xml",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/oscar-auth-check.log",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/preservation-final.json",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/preservation.json",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/production-smoke.log",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/record_checkpoint.py",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/rendering-initial.log",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/semantics-initial.log",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/semantics-second.log",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/semantics-third.log",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/shared-tests-final.log",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/shared-tests.log",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/symbolic-invariance-final.log",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/symbolic-invariance-final.xml",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/symbolic-invariance.log",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/symbolic-invariance.xml",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/symbolic-terminal-paths/test_symbolic_order_chunk_nonm0/CraftaxClassicSymbolic-terminal-paths.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/symbolic-terminal-paths/test_symbolic_order_chunk_nonm1/CraftaxSymbolic-terminal-paths.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_gpu_prepared/SHA256SUMS",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_gpu_prepared/build_bundle.py",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_gpu_prepared/bundle.json",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_gpu_prepared/gate.sbatch",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_gpu_prepared/superseded-f8c0a37b/SHA256SUMS",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_gpu_prepared/superseded-f8c0a37b/bundle.json",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_gpu_prepared/superseded-f8c0a37b/gate.sbatch",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_gpu_prepared/superseded.json",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_source_audit/Classic-initial.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_source_audit/CraftaxClassicPixelsWrapper-combat.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_source_audit/CraftaxClassicPixelsWrapper-craft.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_source_audit/CraftaxClassicPixelsWrapper-damage.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_source_audit/CraftaxClassicPixelsWrapper-mine_tree.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_source_audit/CraftaxClassicPixelsWrapper-near_limit.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_source_audit/CraftaxClassicPixelsWrapper-night.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_source_audit/CraftaxClassicPixelsWrapper-stochastic_grass.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_source_audit/CraftaxClassicPixelsWrapper-terminal.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_source_audit/CraftaxClassicSymbolicWrapper-combat.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_source_audit/CraftaxClassicSymbolicWrapper-craft.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_source_audit/CraftaxClassicSymbolicWrapper-damage.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_source_audit/CraftaxClassicSymbolicWrapper-mine_tree.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_source_audit/CraftaxClassicSymbolicWrapper-near_limit.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_source_audit/CraftaxClassicSymbolicWrapper-night.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_source_audit/CraftaxClassicSymbolicWrapper-stochastic_grass.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_source_audit/CraftaxClassicSymbolicWrapper-terminal.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_source_audit/CraftaxPixelsWrapper-combat.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_source_audit/CraftaxPixelsWrapper-craft.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_source_audit/CraftaxPixelsWrapper-damage.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_source_audit/CraftaxPixelsWrapper-mine_tree.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_source_audit/CraftaxPixelsWrapper-near_limit.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_source_audit/CraftaxPixelsWrapper-night.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_source_audit/CraftaxPixelsWrapper-stochastic_grass.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_source_audit/CraftaxPixelsWrapper-terminal.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_source_audit/CraftaxSymbolicWrapper-combat.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_source_audit/CraftaxSymbolicWrapper-craft.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_source_audit/CraftaxSymbolicWrapper-damage.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_source_audit/CraftaxSymbolicWrapper-mine_tree.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_source_audit/CraftaxSymbolicWrapper-near_limit.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_source_audit/CraftaxSymbolicWrapper-night.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_source_audit/CraftaxSymbolicWrapper-stochastic_grass.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_source_audit/CraftaxSymbolicWrapper-terminal.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_source_audit/Full-initial.npz",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_source_audit/SHA256SUMS",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_source_audit/candidate-engine-schema.json",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_source_audit/commands.json",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_source_audit/output-boundary.json",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_source_audit/output-probe.log",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_source_audit/output_probe.py",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_source_audit/profile.json",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_source_audit/provenance.json",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_source_audit/provenance.log",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_source_audit/provenance.py",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_source_audit/replay-probe-initial-harness-error.log",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_source_audit/replay-probe.log",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_source_audit/replay-results.json",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_source_audit/replay_probe.py",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_source_audit/schema-probe.log",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_source_audit/schema_probe.py",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_source_audit/start.json",
+      "status": "A"
+    },
+    {
+      "path": "docs/research/semantic_recovery_implementation_map.json",
+      "status": "M"
+    },
+    {
+      "path": "docs/research/semantic_recovery_matrix.json",
+      "status": "M"
+    },
+    {
+      "path": "pyproject.toml",
+      "status": "M"
+    },
+    {
+      "path": "scripts/recovery/craftax_cached_symbolic_probe.py",
+      "status": "A"
+    },
+    {
+      "path": "scripts/recovery/craftax_component_probe.py",
+      "status": "A"
+    },
+    {
+      "path": "scripts/recovery/craftax_execution_probe.py",
+      "status": "A"
+    },
+    {
+      "path": "scripts/recovery/craftax_gate.py",
+      "status": "A"
+    },
+    {
+      "path": "scripts/recovery/craftax_output_boundary_probe.py",
+      "status": "A"
+    },
+    {
+      "path": "scripts/recovery/craftax_preservation.py",
+      "status": "A"
+    },
+    {
+      "path": "scripts/recovery/oscar_craftax_gate.sbatch",
+      "status": "A"
+    },
+    {
+      "path": "scripts/recovery/profiles/craftax-gpu.in",
+      "status": "A"
+    },
+    {
+      "path": "scripts/recovery/profiles/craftax-gpu.txt",
+      "status": "A"
+    },
+    {
+      "path": "stable_envs/_adapters/craftax.py",
+      "status": "A"
+    },
+    {
+      "path": "stable_envs/_adapters/craftax_render.py",
+      "status": "A"
+    },
+    {
+      "path": "stable_envs/envs/craftax_semantics.py",
+      "status": "A"
+    },
+    {
+      "path": "tests/helpers/reference/craftax_source.py",
+      "status": "A"
+    },
+    {
+      "path": "tests/unit/test_craftax_rendering.py",
+      "status": "A"
+    },
+    {
+      "path": "tests/unit/test_craftax_semantics.py",
+      "status": "A"
+    }
+  ]
+}

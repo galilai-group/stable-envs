@@ -1,0 +1,31 @@
+{
+  "status": "CRAFTAX_PRESERVATION_PASS",
+  "starting_commit": "bcf8699d9983f95e97b3c71607521a61c354247b",
+  "unchanged_starting_files": 2455,
+  "allowed_starting_changes": [
+    "docs/research/index.md",
+    "docs/research/semantic_recovery_implementation_map.json",
+    "docs/research/semantic_recovery_matrix.json",
+    "pyproject.toml"
+  ],
+  "previously_accepted_rows_unchanged": 35,
+  "non_craftax_rows_unchanged": 38,
+  "accepted_artifacts": 170,
+  "accepted_terminal_logs": 11,
+  "cube_scene_acceptances": "all gates PASS; all referenced artifact hashes exact",
+  "manifests": {
+    "ogb_renderer_retry/GPU-SHA256SUMS": 173,
+    "ogb_renderer_retry/SHA256SUMS": 193,
+    "craftax_source_audit/SHA256SUMS": 51
+  },
+  "mutable_manifest_entries_resolved_at_original_commit": [],
+  "upstream_source_files_unchanged": 74,
+  "matrix_counts": {
+    "VERIFIED": 35,
+    "INCOMPLETE": 7
+  },
+  "production_swm_imports": [],
+  "shared_contract_changes": [],
+  "frozen_renderer_changed": false,
+  "push_performed": false
+}

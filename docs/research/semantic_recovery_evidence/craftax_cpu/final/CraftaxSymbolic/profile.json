@@ -1,0 +1,28 @@
+{
+  "python": "3.12.11",
+  "platform": "macOS-26.6.2-arm64-arm-64bit",
+  "packages": {
+    "craftax": "1.5.0",
+    "jax": "0.10.1",
+    "jaxlib": "0.10.1",
+    "flax": "0.12.7",
+    "gymnax": "0.0.9",
+    "chex": "0.1.92",
+    "numpy": "2.2.6",
+    "torch": "2.14.0",
+    "tensordict": "0.14.2"
+  },
+  "devices": [
+    "cpu:0"
+  ],
+  "backend": "cpu",
+  "x64": false,
+  "prng": "threefry2x32",
+  "threefry_partitionable": true,
+  "environment": {
+    "JAX_PLATFORMS": "cpu",
+    "JAX_ENABLE_X64": null,
+    "XLA_FLAGS": null,
+    "XLA_PYTHON_CLIENT_PREALLOCATE": "false"
+  }
+}

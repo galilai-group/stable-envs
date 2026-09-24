@@ -1,0 +1,63 @@
+{
+  "historical_id": "swm/CraftaxPixels-v1",
+  "status": "CPU_PASS_GPU_PENDING",
+  "cpu_tests": 28,
+  "exact_array_cases": 11,
+  "actual_arrays_independently_rechecked": true,
+  "gpu_job": null,
+  "gpu_status": "BLOCKED_SSH_AUTHENTICATION_NOT_SUBMITTED",
+  "source_commit": "b6a8242f5ff5a9cae5e9e883a15611d779c2c99c",
+  "production_commit": "2953735e5eabae96b796843a376abd7150781de4",
+  "source_archive_sha256": "49235ccf34ee8ba947addbf866225f1fd87ddbefa4bec68b60bc7eeb9a206834",
+  "profile": {
+    "python": "3.12.11",
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "packages": {
+      "craftax": "1.5.0",
+      "jax": "0.10.1",
+      "jaxlib": "0.10.1",
+      "flax": "0.12.7",
+      "gymnax": "0.0.9",
+      "chex": "0.1.92",
+      "numpy": "2.2.6",
+      "torch": "2.14.0",
+      "tensordict": "0.14.2"
+    },
+    "devices": [
+      "cpu:0"
+    ],
+    "backend": "cpu",
+    "x64": false,
+    "prng": "threefry2x32",
+    "threefry_partitionable": true,
+    "environment": {
+      "JAX_PLATFORMS": "cpu",
+      "JAX_ENABLE_X64": null,
+      "XLA_FLAGS": null,
+      "XLA_PYTHON_CLIENT_PREALLOCATE": "false"
+    }
+  },
+  "schema": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxPixels/schema.json",
+  "artifacts": {
+    "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxPixels/SHA256SUMS": "2ac14ec17a25aa4aff78284f63e4d8107dcf0c4cb442119c4a071d461a18b383",
+    "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxPixels/combat.npz": "d3cab8d9ede0ecb9403b229528ecdd2817c8641eda18304ab000b2b51ab77923",
+    "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxPixels/craft.npz": "3526991d96400bee3d2e28ac00240804c8090850d9c7af82dfed860de2f38f7a",
+    "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxPixels/damage.npz": "85dd0c6da50479f4b525bbf0ff4343f3492b08ea21dfa37f6d14962a1adef010",
+    "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxPixels/mine_tree.npz": "5b640c91dd08a6e5e486c1a3467152a87146d7d4faaeef6f277b911763db232f",
+    "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxPixels/near_limit.npz": "a1f03a231a2f308c0dee90a365c9bbcab5df27d789d43828057bad0327cf0baa",
+    "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxPixels/night.npz": "5f2bdd0050f151b95a38ad391bc9c7c8b51b842472f46afac106a83823691a34",
+    "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxPixels/profile.json": "fa1f371e7a9fbb0b03c7aea1b7d9198c6a94c462ba8b328b31baacbf4e026bbe",
+    "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxPixels/reset-0.npz": "72e72e4f58657aa983817daa4b528a3212f79450e68a675988d41e376cdd5c67",
+    "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxPixels/reset-17.npz": "dc0b547b3bc78751fad4643c767830858f312062ea8cf49de970b153f8a9a7e9",
+    "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxPixels/reset-42.npz": "6abeb35a52243e0ec68c0ee05aa5132f40e508b54f6e28404e2214b0985dec09",
+    "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxPixels/result.json": "51ba2e1e433344062648f66aa4ebbc1541fbfe4636e2949247d0321501e2e6d1",
+    "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxPixels/schema.json": "502827b27500ad97b966ad959703f7a143d66566a834545143dbfff2631c9750",
+    "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxPixels/stochastic_grass.npz": "0f8dcf513e5399fccb61864ad847899cd24be85a9a5702654434a7ecce99109b",
+    "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxPixels/terminal.npz": "50da372cb0a3cc00a4da6cf80cd980ab8fa23cc9af1e45144459e72705260d83"
+  },
+  "test_xml": {
+    "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final-acceptance.xml",
+    "sha256": "c6a03d3582a0e58fea735394eb5ae0bdced9bb6de49e9f49f3dd1efcbb4ef0a0"
+  },
+  "promotion": false
+}

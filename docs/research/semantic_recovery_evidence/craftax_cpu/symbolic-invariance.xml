@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="2" time="12.158" timestamp="2026-09-24T19:04:22.822592-04:00" hostname="Mac.lan"><testcase classname="tests.unit.test_craftax_semantics" name="test_symbolic_order_chunk_nonmutation_and_exhaustive_restore[CraftaxClassicSymbolic]" time="4.317" /><testcase classname="tests.unit.test_craftax_semantics" name="test_symbolic_order_chunk_nonmutation_and_exhaustive_restore[CraftaxSymbolic]" time="7.254"><failure message="AssertionError: &#10;Arrays are not equal&#10;&#10;Mismatched elements: 4 / 8268 (0.0484%)&#10;Max absolute difference among violations: 5.9604645e-08&#10;Max relative difference among violations: 6.622738e-08&#10; ACTUAL: array([0., 0., 0., ..., 0., 1., 0.], shape=(8268,), dtype=float32)&#10; DESIRED: array([0., 0., 0., ..., 0., 1., 0.], shape=(8268,), dtype=float32)">name = 'CraftaxSymbolic'
+
+    @pytest.mark.parametrize("name", ["CraftaxClassicSymbolic", "CraftaxSymbolic"])
+    def test_symbolic_order_chunk_nonmutation_and_exhaustive_restore(name):
+        from stable_envs._adapters.craftax import decode
+    
+        with se.make(name, num_envs=3, device=DEVICE) as env:
+            state = env.reset(seed=17)
+            snapshots = state.clone()
+    
+            def output(batch, chunk):
+                _, decoded = env._simulator.validate(batch)
+                values = []
+                for start in range(0, len(decoded), chunk):
+                    values.extend(np.asarray(env._simulator.output_fn(s)) for s in decoded[start : start + chunk])
+                return np.stack(values)
+    
+            expected = output(state, 3)
+            np.testing.assert_array_equal(expected, output(state, 1))
+            np.testing.assert_array_equal(expected, output(state, 2))
+            np.testing.assert_array_equal(expected[[2, 0, 1]], output(state[[2, 0, 1]], 2))
+            assert expected.dtype == np.float32
+            assert expected.shape == (3, 1345 if env.CLASSIC else 8268)
+            assert_state_equal(state, snapshots)
+            assert_state_equal(state, env.get_state())
+            with pytest.raises(TypeError):
+                env.set_state(torch.from_numpy(expected))
+            assert_state_equal(state, env.get_state())
+            # Terminal symbolic output remains exact and does not consume either key.
+            source = oracle(name)
+            source.reset(seed=999)
+            with se.make(name, device=DEVICE) as single:
+                single.reset(seed=999)
+                terminal = fixture(single, name, "terminal")
+            restore_oracle(source, env, terminal)
+            expected_terminal = np.asarray(source._env.get_obs(source._state))
+            row = {k: terminal[("engine", *k)][0].cpu().numpy() for k in env._simulator.engine}
+&gt;           np.testing.assert_array_equal(
+                expected_terminal, np.asarray(env._simulator.output_fn(decode(env._simulator.template, row)))
+            )
+E           AssertionError: 
+E           Arrays are not equal
+E           
+E           Mismatched elements: 4 / 8268 (0.0484%)
+E           Max absolute difference among violations: 5.9604645e-08
+E           Max relative difference among violations: 6.622738e-08
+E            ACTUAL: array([0., 0., 0., ..., 0., 1., 0.], shape=(8268,), dtype=float32)
+E            DESIRED: array([0., 0., 0., ..., 0., 1., 0.], shape=(8268,), dtype=float32)
+
+tests/unit/test_craftax_semantics.py:272: AssertionError</failure></testcase></testsuite></testsuites>
