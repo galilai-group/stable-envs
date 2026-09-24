@@ -1,0 +1,39 @@
+{
+  "result": "PASS",
+  "review_method": "Separate final diff, scope, method-AST and preservation inspection; no delegated reviewer",
+  "starting_commit": "72612563590f12a081d940394496795a6c024577",
+  "expected_individual_paths": [
+    "docs/research/ogbench_cpu_closeout.md",
+    "docs/research/ogbench_renderer_checkpoint.md",
+    "docs/research/ogbench_renderer_closeout.md",
+    "docs/research/semantic_recovery_implementation_map.json",
+    "docs/research/semantic_recovery_matrix.json",
+    "pyproject.toml",
+    "scripts/recovery/ogbench_renderer_bundle.py",
+    "scripts/recovery/ogbench_renderer_gate.py",
+    "scripts/recovery/ogbench_renderer_gate.sbatch",
+    "stable_envs/_adapters/ogbench_render_state.py",
+    "stable_envs/envs/ogbench/manipulation_renderer.py",
+    "stable_envs/envs/ogbench/manipulation_semantics.py",
+    "tests/unit/test_ogbench_render_state.py"
+  ],
+  "expected_evidence_prefix": "docs/research/semantic_recovery_evidence/ogb_renderer_closeout/",
+  "actual_changed_count": 218,
+  "unexpected_paths": [],
+  "changed_public_adapter_methods": [
+    "render"
+  ],
+  "added_public_adapter_methods": [
+    "_render",
+    "to_render_state"
+  ],
+  "cpu_compatibility_core_unchanged": true,
+  "frozen_renderer_unchanged": true,
+  "shared_contract_changes": [],
+  "other_family_changes": [],
+  "frozen_threshold_changes": [],
+  "oracle_changes": [],
+  "promotion_performed": false,
+  "single_job_submitted": 6669720,
+  "corrected_bundle_submitted": false
+}

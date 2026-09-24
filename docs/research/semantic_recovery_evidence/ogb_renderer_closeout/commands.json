@@ -62,6 +62,55 @@
   },
   {
     "command": "Remote commands are exactly scripts/recovery/ogbench_renderer_gate.sbatch; one submission only",
-    "result": "NOT_SUBMITTED_YET"
+    "result": "FAILED job 6669720 at CPU conftest collection; GPU renderers not started"
+  },
+  {
+    "command": "ssh sboughan@sshcampus.ccv.brown.edu 'cd /oscar/scratch/sboughan/se-semantic-recovery/ogb-renderer-294675f0; sha256sum -c SHA256SUMS; sbatch --parsable --chdir=/oscar/scratch/sboughan/se-semantic-recovery/ogb-renderer-294675f0 --output=/oscar/scratch/sboughan/se-semantic-recovery/ogb-renderer-294675f0/slurm-%j.log gate.sbatch'",
+    "result": "Uploaded hashes OK; submitted job 6669720 exactly once",
+    "log": "submission.log"
+  },
+  {
+    "command": "sacct -j 6669720 --format=JobID,State,ExitCode,Elapsed,MaxRSS,Reason; inspect real job/family logs and sha256sum evidence.tar.gz",
+    "result": "FAILED 1:0 after 00:00:57; exact marker OGB_CUBE_SCENE_GPU_GATE_FAIL",
+    "log": "remote-final-status.log"
+  },
+  {
+    "command": "scp actual evidence.tar.gz, evidence.tar.gz.sha256 and slurm-6669720.log; verify archive SHA and every SHA256SUMS.evidence entry",
+    "result": "PASS integrity only, 12 files; no GPU frames",
+    "log": "remote-verification.json"
+  },
+  {
+    "command": ".venv/bin/python scripts/recovery/ogbench_renderer_bundle.py --commit 294675f0 --oracle-repo /Users/samib/stable-worldmodel --output /private/tmp/ogb-renderer-294675f0-complete",
+    "result": "Built complete tracked-tree replacement archive locally; NOT SUBMITTED",
+    "log": "corrected-bundle-build.log"
+  },
+  {
+    "command": "Extract corrected source and oracle to /private/tmp/ogb-renderer-complete-check/{source,oracle}; from source, use MUJOCO_GL=disable SDL_VIDEODRIVER=dummy PYTHONPATH=.:/private/tmp/ogb-renderer-complete-check/oracle /private/tmp/ogb-render-unified-312/bin/python with pytest fallback sys.path as above; assert stable_envs and stable_worldmodel import from these fresh extracted directories; pytest -q tests/unit/test_ogbench_manipulation_cpu.py tests/unit/test_ogbench_render_state.py",
+    "result": "92 passed, 0 skipped, 77.98s",
+    "log": "corrected-bundle-cpu.log"
+  },
+  {
+    "command": "Shared suite repeated after final matrix/map outcome edits; same six files listed above",
+    "result": "129 passed, 9 skipped, 0.94s",
+    "log": "shared-tests-final.log"
+  },
+  {
+    "command": ".venv/bin/python docs/research/semantic_recovery_evidence/ogb_renderer_closeout/preservation.py",
+    "result": "PRESERVATION_PASS after final outcome edits",
+    "log": "preservation-final.log"
+  },
+  {
+    "command": ".venv/bin/mkdocs build --strict --site-dir /private/tmp/ogb-renderer-docs-final",
+    "result": "PASS after generating the linked final checksum manifest",
+    "log": "mkdocs-final.log"
+  },
+  {
+    "command": "ruff check and ruff format --check on all 10 changed/new Python files; bash -n scripts/recovery/ogbench_renderer_gate.sbatch; git diff --check 72612563590f12a081d940394496795a6c024577 -- . ':(exclude)*.log' ':(exclude)docs/research/semantic_recovery_evidence/ogb_renderer_closeout/remote/**'",
+    "result": "PASS; raw remote evidence preserved verbatim",
+    "logs": [
+      "lint-final.log",
+      "format-final.log",
+      "whitespace-final.log"
+    ]
   }
 ]

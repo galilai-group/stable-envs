@@ -1,0 +1,11 @@
+Using Python 3.12.8 environment at: run-6669720/profile
+Resolved 3 packages in 150ms
+Downloading numpy (15.8MiB)
+Downloading dm-control (53.8MiB)
+ Downloaded numpy
+ Downloaded dm-control
+Prepared 3 packages in 6.41s
+Installed 3 packages in 4.07s
+ + dm-control==1.0.41
+ + gymnasium==1.2.3
+ + numpy==2.2.6

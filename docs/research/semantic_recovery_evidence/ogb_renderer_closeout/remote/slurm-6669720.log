@@ -1,0 +1,16 @@
+## SLURM PROLOG ###############################################################
+##    Job ID : 6669720
+##  Job Name : ogb-cube-scene-gate
+##  Nodelist : gpu2708
+##      CPUs : 
+##  Mem/Node : 65536 MB
+## Directory : /oscar/scratch/sboughan/se-semantic-recovery/ogb-renderer-294675f0
+##   Job Started : Thu Sep 24 12:02:36 PM EDT 2026
+###############################################################################
+source.tar.gz: OK
+oracle.tar.gz: OK
+gate.sbatch: OK
+bundle.json: OK
+/oscar/scratch/sboughan/se-semantic-recovery/ogb-renderer-294675f0/run-6669720/oracle/stable_worldmodel/envs/__init__.py:215: UserWarning: ale-py not found; ALE/* envs are unavailable. Install with: pip install 'stable-worldmodel[env]' or pip install ale-py.
+  from stable_worldmodel.envs import ale  # noqa: F401
+OGB_CUBE_SCENE_GPU_GATE_FAIL

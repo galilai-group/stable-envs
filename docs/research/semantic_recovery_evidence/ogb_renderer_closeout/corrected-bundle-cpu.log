@@ -1,0 +1,26 @@
+/private/tmp/ogb-renderer-complete-check/oracle/stable_worldmodel/envs/__init__.py:215: UserWarning: ale-py not found; ALE/* envs are unavailable. Install with: pip install 'stable-worldmodel[env]' or pip install ale-py.
+  from stable_worldmodel.envs import ale  # noqa: F401
+PACKAGED_SOURCE /private/tmp/ogb-renderer-complete-check/source/stable_envs/__init__.py
+PACKAGED_ORACLE /private/tmp/ogb-renderer-complete-check/oracle/stable_worldmodel/__init__.py
+........................................................................ [ 78%]
+....................                                                     [100%]
+=============================== warnings summary ===============================
+tests/unit/test_ogbench_manipulation_cpu.py: 86 warnings
+tests/unit/test_ogbench_render_state.py: 6 warnings
+  /private/tmp/fetch-authority-swm-lock/lib/python3.12/site-packages/gymnasium/spaces/box.py:236: UserWarning: [33mWARN: Box low's precision lowered by casting to float32, current low.dtype=float64[0m
+    gym.logger.warn(
+
+tests/unit/test_ogbench_manipulation_cpu.py: 86 warnings
+tests/unit/test_ogbench_render_state.py: 6 warnings
+  /private/tmp/fetch-authority-swm-lock/lib/python3.12/site-packages/gymnasium/spaces/box.py:306: UserWarning: [33mWARN: Box high's precision lowered by casting to float32, current high.dtype=float64[0m
+    gym.logger.warn(
+
+tests/unit/test_ogbench_manipulation_cpu.py: 62 warnings
+  /private/tmp/fetch-authority-swm-lock/lib/python3.12/site-packages/gymnasium/spaces/box.py:424: UserWarning: [33mWARN: Casting input x to numpy array.[0m
+    gym.logger.warn("Casting input x to numpy array.")
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+------------------------------ stable-envs safety ------------------------------
+resources: 0 EGL contexts created, 0 released, 0 live (peak 0); renderers 0 created / 0 closed
+node: cis1b1zs2j3.ad.brown.edu slurm=? reason=none reference-renderer={}
+92 passed, 246 warnings in 77.98s (0:01:17)

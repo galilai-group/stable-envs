@@ -1,0 +1,23 @@
+{
+  "status": "REMOTE_DOWNLOAD_HASH_VERIFIED",
+  "job": 6669720,
+  "archive_sha256": "14e52fc42e7278f53138902c7f57db75992112ddc51139888738b4bde4333c61",
+  "slurm_log_sha256": "2da5ab6c40134c089af2207df90ea509958001bf30a115ba6e729b69fc0e699f",
+  "files": {
+    "./bundle.json": "7df8bb8390f72da155707ebdbd2346127e91df675618d3d46e2c7184f7c8e974",
+    "./Cube/cpu.log": "dffb5499463e2ad1157d7be6f2c519af90eb957e86df222fdbb1feee572ecdf7",
+    "./Cube/exits.json": "d4f8d52518b8dff4db5a1aed155f30f0df0cdbad212a7a8f451e6b2339f6ed25",
+    "./gate.sbatch": "88aa1d237de31ab2f9a783d1ab26473e9186af39e1b1cdd1014dc7272790b134",
+    "./nvidia-smi.txt": "50940ee629766702124117425484f61401fc3b74d4197a2046342562aaf9cbb8",
+    "./pip.txt": "f748ea2de9128dbd29f12ca6139d62d5042cda8234346edcd646ed7f775ddda2",
+    "./profile-install.log": "fc14a2628b4d9f88c83106abf4fda847cd0ec13d69dadbcbb23c186aa610180b",
+    "./profile.json": "a1973e3e8a6fb8a4577381e74308a64d212f9c6269f2d8f1fbf12d6ee4fe3f92",
+    "./Scene/cpu.log": "dffb5499463e2ad1157d7be6f2c519af90eb957e86df222fdbb1feee572ecdf7",
+    "./Scene/exits.json": "d4f8d52518b8dff4db5a1aed155f30f0df0cdbad212a7a8f451e6b2339f6ed25",
+    "./SHA256SUMS": "83c542515b5aea768b6ddedb85afda6fbb1e710f5e22a765ccbe75812bc81a00",
+    "./terminal.txt": "f8f5cfbc2879d070c5267ad23bfbbdd70f4f8cf033ed5bf47a0782fb8a02a499"
+  },
+  "gpu_frames_produced": 0,
+  "family_renderer_results": "NOT_RUN: prerequisite CPU test collection failed",
+  "terminal": "OGB_CUBE_SCENE_GPU_GATE_FAIL"
+}

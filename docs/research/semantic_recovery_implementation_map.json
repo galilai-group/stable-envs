@@ -11483,32 +11483,50 @@
           {
             "path": "docs/research/semantic_recovery_evidence/ogb_cpu_compatibility/SHA256SUMS",
             "sha256": "a731f3425d0ec43f937923927d7552a51e5c1ed22892fa2671624e0c059b56fd"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/ogb_renderer_closeout/unified-312-local-final.log",
+            "sha256": "171f01f209605340f92576b5052470bdb405808f519cc6968575511b788a2743"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/ogb_renderer_closeout/model-input-audit.json",
+            "sha256": "3772c05c0e78e3a70f2c119283a5341168eacf1f2fae60394e291ef450ade350"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/ogb_renderer_closeout/remote-verification.json",
+            "sha256": "d30825f765bd2b01e18e69c58b753044b37c03fb81c705e40d62ed703fa72cd0"
           }
         ]
       },
       "cpu_semantic_result": "PASS_EXACT_CPU_FAMILY_GATE",
       "gpu_semantic_result": {
         "status": "NOT_ACCEPTED",
-        "job": null,
-        "note": "GPU renderer evidence pending; delegated CPU physics remains a separate claim."
+        "job": 6669720,
+        "note": "FAILED test-bundle packaging prerequisite; renderer not run. No GPU-physics claim."
       },
       "frozen_renderer_result": "PENDING",
       "known_limitations": [
-        "Renderer integration and exact frozen-baseline comparison pending.",
-        "Unified MuJoCo 3.12 profile passes the CPU suite; renderer/GPU acceptance still pending.",
-        "GPU evidence and registration promotion pending; no GPU-physics claim."
+        "Renderer integration is implemented and local model/RenderState gates passed; exact frozen pixel acceptance remains pending.",
+        "Oscar job 6669720 failed during CPU test collection because the selective source archive omitted tests/fixtures/regression/support_matrix.json; both GPU renderer processes were skipped.",
+        "A corrected complete tracked-tree bundle is prepared for review; no second job submitted.",
+        "Registration promotion and unified-profile GPU acceptance remain pending; physics is DELEGATED_CPU."
       ],
       "remaining_gates": [
-        "Renderer integration and exact frozen-baseline comparison pending.",
-        "Unified MuJoCo 3.12 profile passes the CPU suite; renderer/GPU acceptance still pending.",
-        "GPU evidence and registration promotion pending; no GPU-physics claim."
+        "Renderer integration is implemented and local model/RenderState gates passed; exact frozen pixel acceptance remains pending.",
+        "Oscar job 6669720 failed during CPU test collection because the selective source archive omitted tests/fixtures/regression/support_matrix.json; both GPU renderer processes were skipped.",
+        "A corrected complete tracked-tree bundle is prepared for review; no second job submitted.",
+        "Registration promotion and unified-profile GPU acceptance remain pending; physics is DELEGATED_CPU."
       ],
       "closure_code_check": {
         "production_implementation": "complete",
         "implementation_commit": "14456339ec7f1b28ad698fc3158fe9e4ed8f6d1e",
         "cpu_evidence_commit": "72612563590f12a081d940394496795a6c024577",
         "registration_promotion": "INCOMPLETE",
-        "production_swm_imports": false
+        "production_swm_imports": false,
+        "renderer_implementation": "complete; GPU acceptance pending",
+        "renderer_implementation_commit": "2f4b2a6e5c0bc1ed8455d8235c1eb0e26ce70ff7",
+        "local_renderer_evidence_commit": "457afa0b401a3fa757c94eb8a8b6a3de3074585c",
+        "renderstate_schema": "docs/research/semantic_recovery_evidence/ogb_renderer_closeout/renderstate-schema.json"
       },
       "source_preflight": {
         "status": "BLOCKED_RESET_GATE",
@@ -11910,32 +11928,50 @@
           {
             "path": "docs/research/semantic_recovery_evidence/ogb_cpu_compatibility/SHA256SUMS",
             "sha256": "a731f3425d0ec43f937923927d7552a51e5c1ed22892fa2671624e0c059b56fd"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/ogb_renderer_closeout/unified-312-local-final.log",
+            "sha256": "171f01f209605340f92576b5052470bdb405808f519cc6968575511b788a2743"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/ogb_renderer_closeout/model-input-audit.json",
+            "sha256": "3772c05c0e78e3a70f2c119283a5341168eacf1f2fae60394e291ef450ade350"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/ogb_renderer_closeout/remote-verification.json",
+            "sha256": "d30825f765bd2b01e18e69c58b753044b37c03fb81c705e40d62ed703fa72cd0"
           }
         ]
       },
       "cpu_semantic_result": "PASS_EXACT_CPU_FAMILY_GATE",
       "gpu_semantic_result": {
         "status": "NOT_ACCEPTED",
-        "job": null,
-        "note": "GPU renderer evidence pending; delegated CPU physics remains a separate claim."
+        "job": 6669720,
+        "note": "FAILED test-bundle packaging prerequisite; renderer not run. No GPU-physics claim."
       },
       "frozen_renderer_result": "PENDING",
       "known_limitations": [
-        "Renderer integration and exact frozen-baseline comparison pending.",
-        "Unified MuJoCo 3.12 profile passes the CPU suite; renderer/GPU acceptance still pending.",
-        "GPU evidence and registration promotion pending; no GPU-physics claim."
+        "Renderer integration is implemented and local model/RenderState gates passed; exact frozen pixel acceptance remains pending.",
+        "Oscar job 6669720 failed during CPU test collection because the selective source archive omitted tests/fixtures/regression/support_matrix.json; both GPU renderer processes were skipped.",
+        "A corrected complete tracked-tree bundle is prepared for review; no second job submitted.",
+        "Registration promotion and unified-profile GPU acceptance remain pending; physics is DELEGATED_CPU."
       ],
       "remaining_gates": [
-        "Renderer integration and exact frozen-baseline comparison pending.",
-        "Unified MuJoCo 3.12 profile passes the CPU suite; renderer/GPU acceptance still pending.",
-        "GPU evidence and registration promotion pending; no GPU-physics claim."
+        "Renderer integration is implemented and local model/RenderState gates passed; exact frozen pixel acceptance remains pending.",
+        "Oscar job 6669720 failed during CPU test collection because the selective source archive omitted tests/fixtures/regression/support_matrix.json; both GPU renderer processes were skipped.",
+        "A corrected complete tracked-tree bundle is prepared for review; no second job submitted.",
+        "Registration promotion and unified-profile GPU acceptance remain pending; physics is DELEGATED_CPU."
       ],
       "closure_code_check": {
         "production_implementation": "complete",
         "implementation_commit": "14456339ec7f1b28ad698fc3158fe9e4ed8f6d1e",
         "cpu_evidence_commit": "72612563590f12a081d940394496795a6c024577",
         "registration_promotion": "INCOMPLETE",
-        "production_swm_imports": false
+        "production_swm_imports": false,
+        "renderer_implementation": "complete; GPU acceptance pending",
+        "renderer_implementation_commit": "2f4b2a6e5c0bc1ed8455d8235c1eb0e26ce70ff7",
+        "local_renderer_evidence_commit": "457afa0b401a3fa757c94eb8a8b6a3de3074585c",
+        "renderstate_schema": "docs/research/semantic_recovery_evidence/ogb_renderer_closeout/renderstate-schema.json"
       },
       "source_preflight": {
         "status": "BLOCKED_RESET_GATE_AND_FROZEN_CONSTRUCTOR",

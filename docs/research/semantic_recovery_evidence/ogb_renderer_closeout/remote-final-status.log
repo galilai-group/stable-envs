@@ -1,0 +1,30 @@
+################################################################################
+# I UNDERSTAND AND CONSENT TO THE FOLLOWING:                                   #
+#                                                                              #
+# I am accessing a private information system operated by Brown University,    #
+# for use as authorized by and in compliance with applicable Brown University  #
+# policies. Unauthorized use of this information system is prohibited and      #
+# subject to criminal, civil, security, or administrative proceedings and/or   #
+# penalties. BY USING THIS INFORMATION SYSTEM I EXPRESSLY CONSENT TO THE       #
+# MONITORING AND RECORDING OF MY USE OF THIS SYSTEM AND I REPRESENT THAT I AM  #
+# COMPETENT TO PROVIDE SUCH CONSENT. I acknowledge that at any time, Brown may #
+# for any lawful purpose monitor, intercept, search, seize, disclose or use    #
+# any communication or data transiting or stored on this system as permitted   #
+# by Brown University policy and applicable law.                               #
+#                                                                              #
+# I AGREE TO REPORT ANY UNAUTHORIZED USE OF THIS SYSTEM TO THE BROWN           #
+# INFORMATION SECURITY INCIDENT RESPONSE TEAM (401-863-4357).                  #
+################################################################################
+/user/sboughan/.bashrc: line 51: module: command not found
+/user/sboughan/.bashrc: line 51: module: command not found
+JobID             State ExitCode    Elapsed     MaxRSS                 Reason 
+------------ ---------- -------- ---------- ---------- ---------------------- 
+6669720          FAILED      1:0   00:00:57                              None 
+6669720.bat+     FAILED      1:0   00:00:57   1346572K                        
+6669720.ext+  COMPLETED      0:0   00:00:57                                   
+OGB_CUBE_SCENE_GPU_GATE_FAIL
+{"cpu_exit":4,"gpu_exit":99}
+{"cpu_exit":4,"gpu_exit":99}
+14e52fc42e7278f53138902c7f57db75992112ddc51139888738b4bde4333c61  run-6669720/evidence.tar.gz
+2da5ab6c40134c089af2207df90ea509958001bf30a115ba6e729b69fc0e699f  slurm-6669720.log
+14e52fc42e7278f53138902c7f57db75992112ddc51139888738b4bde4333c61  evidence.tar.gz

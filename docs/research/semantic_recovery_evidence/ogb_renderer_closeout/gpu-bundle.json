@@ -1,0 +1,106 @@
+{
+  "starting_checkpoint": "72612563590f12a081d940394496795a6c024577",
+  "cpu_implementation": "14456339ec7f1b28ad698fc3158fe9e4ed8f6d1e",
+  "cpu_evidence": "72612563590f12a081d940394496795a6c024577",
+  "renderer_implementation": "2f4b2a6e5c0bc1ed8455d8235c1eb0e26ce70ff7",
+  "local_evidence": "294675f039e9b7f867c4bff15aac2b5f2e572bf6",
+  "source_archive_sha256": "21bff09fc8d3e9f0b14bba291736af5dba82c42a4a7bea3cae89d2f162dab27e",
+  "oracle_commit": "176d54532b3c0a251a4f509b74f2fdacc143a63d",
+  "oracle_archive_sha256": "9d8fefcd19337522f3f5cf37379703c48fc2974e958f22f9c849a8c3a9b33b7d",
+  "frozen_renderer_sha256": "bac4b1ea3e29a04faa5eeec33de0c212cb87bbf488ae0466ea762bd3a140576a",
+  "scripts": {
+    "scripts/recovery/ogbench_renderer_gate.py": "56598049e53974d1597b7ebff3082699cece47a9d6cd858609c307157fdf7009",
+    "scripts/recovery/ogbench_renderer_gate.sbatch": "88aa1d237de31ab2f9a783d1ab26473e9186af39e1b1cdd1014dc7272790b134"
+  },
+  "profile": {
+    "strategy": "unified_3.12_candidate_pending_gpu",
+    "cpu_authority": {
+      "python": "3.12.11",
+      "mujoco": "3.8.1",
+      "ogbench": "1.2.1",
+      "numpy": "2.2.6",
+      "gymnasium": "1.2.3",
+      "dm-control": "1.0.41"
+    },
+    "local_unified": {
+      "python": "3.12.11",
+      "mujoco": "3.12.0",
+      "ogbench": "1.2.1",
+      "numpy": "2.2.6",
+      "gymnasium": "1.2.3",
+      "dm-control": "1.0.41",
+      "torch": "2.10.0",
+      "tensordict": "0.14.2"
+    },
+    "gpu_required": {
+      "python": "3.12.8",
+      "mujoco": "3.12.0",
+      "ogbench": "1.2.1",
+      "numpy": "2.2.6",
+      "gymnasium": "1.2.3",
+      "dm-control": "1.0.41",
+      "mujoco-warp": "3.12.0",
+      "warp-lang": "1.17.0",
+      "torch": "2.14.0+cu126",
+      "tensordict": "0.14.2"
+    },
+    "gpu_inherited_environment": "/oscar/scratch/sboughan/venvs/se7-ogb",
+    "isolated_overrides": [
+      "numpy==2.2.6",
+      "gymnasium==1.2.3",
+      "dm-control==1.0.41"
+    ],
+    "physics": "DELEGATED_CPU",
+    "cross_version_physics_identity_claimed": false,
+    "gpu_profile_physics_claim": "conditional on exact per-family Linux CPU gate inside the GPU job"
+  },
+  "expected_terminal_marker": "OGB_CUBE_SCENE_GPU_GATE_PASS",
+  "expected_family_markers": [
+    "OGB_CUBE_GPU_GATE_PASS",
+    "OGB_SCENE_GPU_GATE_PASS"
+  ],
+  "expected_evidence": {
+    "global": [
+      "profile.json",
+      "nvidia-smi.txt",
+      "terminal.txt",
+      "SHA256SUMS.evidence"
+    ],
+    "per_family": [
+      "cpu.log",
+      "cpu.xml",
+      "gpu.log",
+      "result.json",
+      "exits.json",
+      "*-baseline.npy",
+      "*-full.npy",
+      "*-render.npy",
+      "*-source.npy"
+    ]
+  },
+  "remote_directory": "/oscar/scratch/sboughan/se-semantic-recovery/ogb-renderer-294675f0",
+  "submission_policy": "Exactly one job, no requeue; no automatic resubmission",
+  "initial_local_evidence": "457afa0b401a3fa757c94eb8a8b6a3de3074585c",
+  "source_archive_paths": [
+    "stable_envs",
+    "pyproject.toml",
+    "tests/conftest.py",
+    "tests/helpers",
+    "tests/unit/test_ogbench_manipulation_cpu.py",
+    "tests/unit/test_ogbench_render_state.py",
+    "docs/research/semantic_recovery_evidence/ogb_rng_feasibility/ownership.py",
+    "docs/research/semantic_recovery_evidence/ogb_manipulation_preflight/probe.py",
+    "docs/research/semantic_recovery_evidence/ogb_renderer_closeout/fixtures",
+    "docs/research/semantic_recovery_evidence/ogb_renderer_closeout/profile.json",
+    "scripts/recovery/ogbench_renderer_gate.py",
+    "scripts/recovery/ogbench_renderer_gate.sbatch"
+  ],
+  "cpu_selection": {
+    "Cube": 45,
+    "Scene": 48,
+    "unique_tests": 92,
+    "shared_isolation_test_runs": 2
+  },
+  "superseded_staging_directory": "/oscar/scratch/sboughan/se-semantic-recovery/ogb-renderer-457afa0b",
+  "superseded_staging_jobs_submitted": 0
+}

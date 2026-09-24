@@ -3197,9 +3197,10 @@
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Renderer integration and exact frozen-baseline comparison pending.",
-        "Unified MuJoCo 3.12 profile passes the CPU suite; renderer/GPU acceptance still pending.",
-        "GPU evidence and registration promotion pending; no GPU-physics claim."
+        "Renderer integration is implemented and local model/RenderState gates passed; exact frozen pixel acceptance remains pending.",
+        "Oscar job 6669720 failed during CPU test collection because the selective source archive omitted tests/fixtures/regression/support_matrix.json; both GPU renderer processes were skipped.",
+        "A corrected complete tracked-tree bundle is prepared for review; no second job submitted.",
+        "Registration promotion and unified-profile GPU acceptance remain pending; physics is DELEGATED_CPU."
       ],
       "test": "tests/unit/test_ogbench_manipulation_cpu.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
@@ -3264,7 +3265,10 @@
         "docs/research/semantic_recovery_evidence/ogb_cpu_compatibility/cpu-tests.log",
         "docs/research/semantic_recovery_evidence/ogb_cpu_compatibility/ownership.json",
         "docs/research/semantic_recovery_evidence/ogb_cpu_compatibility/state-schema.json",
-        "docs/research/semantic_recovery_evidence/ogb_renderer_closeout/cpu-closure.log"
+        "docs/research/semantic_recovery_evidence/ogb_renderer_closeout/cpu-closure.log",
+        "docs/research/semantic_recovery_evidence/ogb_renderer_closeout/unified-312-local-final.log",
+        "docs/research/semantic_recovery_evidence/ogb_renderer_closeout/model-input-audit.json",
+        "docs/research/semantic_recovery_evidence/ogb_renderer_closeout/remote-verification.json"
       ]
     },
     {
@@ -3359,9 +3363,10 @@
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Renderer integration and exact frozen-baseline comparison pending.",
-        "Unified MuJoCo 3.12 profile passes the CPU suite; renderer/GPU acceptance still pending.",
-        "GPU evidence and registration promotion pending; no GPU-physics claim."
+        "Renderer integration is implemented and local model/RenderState gates passed; exact frozen pixel acceptance remains pending.",
+        "Oscar job 6669720 failed during CPU test collection because the selective source archive omitted tests/fixtures/regression/support_matrix.json; both GPU renderer processes were skipped.",
+        "A corrected complete tracked-tree bundle is prepared for review; no second job submitted.",
+        "Registration promotion and unified-profile GPU acceptance remain pending; physics is DELEGATED_CPU."
       ],
       "test": "tests/unit/test_ogbench_manipulation_cpu.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
@@ -3435,7 +3440,10 @@
         "docs/research/semantic_recovery_evidence/ogb_cpu_compatibility/cpu-tests.log",
         "docs/research/semantic_recovery_evidence/ogb_cpu_compatibility/ownership.json",
         "docs/research/semantic_recovery_evidence/ogb_cpu_compatibility/state-schema.json",
-        "docs/research/semantic_recovery_evidence/ogb_renderer_closeout/cpu-closure.log"
+        "docs/research/semantic_recovery_evidence/ogb_renderer_closeout/cpu-closure.log",
+        "docs/research/semantic_recovery_evidence/ogb_renderer_closeout/unified-312-local-final.log",
+        "docs/research/semantic_recovery_evidence/ogb_renderer_closeout/model-input-audit.json",
+        "docs/research/semantic_recovery_evidence/ogb_renderer_closeout/remote-verification.json"
       ]
     },
     {

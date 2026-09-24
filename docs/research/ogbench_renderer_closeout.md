@@ -1,7 +1,8 @@
 # Cube/Scene renderer integration checkpoint
 
 Both registrations remain **INCOMPLETE**. CPU semantics and exhaustive State passed;
-renderer integration is implemented, with Oscar GPU acceptance pending. The matrix
+renderer integration is implemented. Oscar job **6669720** failed at a test-bundle
+packaging prerequisite; neither GPU renderer ran. GPU acceptance remains pending. The matrix
 remains **33 VERIFIED / 9 INCOMPLETE**. No other family is in this checkpoint.
 
 ## Profiles and supported execution
@@ -127,3 +128,28 @@ Only exact per-family evidence, the complete terminal marker, hash verification,
 and readiness/taxonomy gates can justify promotion. A pending or failed job is
 not acceptance. GPU status and exact resumption commands are recorded in the
 checkpoint handoff after submission. No push is authorized or performed.
+
+## Oscar outcome and resubmission boundary
+
+Job **6669720** ran once on `gpu2708` (NVIDIA L40S), `gpu` / `norm-gpu`,
+no requeue. It ended **FAILED**, exit `1:0`, after 57 seconds. Both CPU
+selectors exited 4 during `conftest` loading. The archive lacked
+`tests/fixtures/regression/support_matrix.json`, read transitively through
+`tests.helpers.reference.crosswalk`. This was an archive preparation error,
+not evidence of a CPU semantic or renderer mismatch. Both renderer exits are
+99 (not started); no baseline or candidate frames were produced. The exact
+terminal marker is `OGB_CUBE_SCENE_GPU_GATE_FAIL`.
+
+The actual remote archive and all 12 contained files were downloaded and their
+hashes verified against the remote hashes. See
+[verification](semantic_recovery_evidence/ogb_renderer_closeout/remote-verification.json)
+and [outcome](semantic_recovery_evidence/ogb_renderer_closeout/gpu-outcome.json).
+No success marker exists, and neither registration is promoted.
+
+The correction changes only archive composition: `ogbench_renderer_bundle.py`
+archives the entire tracked source tree, including transitive harness fixtures.
+The corrected bundle uses the same committed production code, oracle, runner,
+profile and comparisons. It is prepared locally at
+`/private/tmp/ogb-renderer-294675f0-complete`; no second job has been submitted.
+A fresh extraction is tested locally before the resubmission review.
+Exact commands and hashes are in the checkpoint handoff.
