@@ -174,11 +174,49 @@ class ManipulationSemantics:
             values["scene", "cur_button_states"] = rows[:, -2:].clone()
         return TensorDict(values, batch_size=[len(rows)], device=self.device)
 
-    def render(self, state=None, **kwargs):
-        self._check_open("render")
-        raise NotImplementedError(
-            "Cube/Scene CPU mesh rendering is unavailable; renderer/GPU acceptance remains pending"
+    def to_render_state(self, state=None, *, size=None, supersample=None):
+        from ..._adapters import ogbench_render_state as pixels
+
+        self._check_open("to_render_state")
+        state = self.get_state() if state is None else state
+        self._simulator.validate(state)
+        return pixels.project(
+            self.CELL, state, self.size if size is None else size, self.ss if supersample is None else supersample
         )
+
+    def render(self, state=None, *, size=None, supersample=None, backend=None, chunk_size=None, out=None):
+        from ..._adapters import ogbench_render_state as pixels
+        from . import manipulation_renderer
+
+        self._check_open("render")
+        if any(value is not None and type(value) is not int for value in (size, supersample)):
+            raise ValueError("Render size and supersample must be integers")
+        if state is None or isinstance(state, TensorDict) and "physics" in state.keys():
+            state = self.to_render_state(state, size=size, supersample=supersample)
+        else:
+            pixels.validate(self.CELL, state)
+            state = state.clone()
+            if size is not None:
+                state["renderer", "size"].fill_(size)
+            if supersample is not None:
+                state["renderer", "supersample"].fill_(supersample)
+        result = manipulation_renderer.render(
+            self.CELL, state, self.device, self.backend if backend is None else backend, chunk_size
+        )
+        if out is not None:
+            if (
+                out.shape != result.shape
+                or out.dtype != result.dtype
+                or out.device != result.device
+                or not out.is_contiguous()
+            ):
+                raise ValueError("out must match the contiguous uint8 frame batch on the renderer device")
+            out.copy_(result)
+            return out
+        return result
+
+    def _render(self, state=None, **kwargs):
+        return self.render(state, **kwargs)
 
     def sample_states(self, batch, rng=None):
         self._check_open("sample_states")
