@@ -1,0 +1,25 @@
+{
+  "status": "PRESERVATION_PASS",
+  "starting_commit": "72612563590f12a081d940394496795a6c024577",
+  "unchanged_starting_files": 2054,
+  "allowed_starting_changes": [
+    "docs/research/semantic_recovery_implementation_map.json",
+    "docs/research/semantic_recovery_matrix.json",
+    "pyproject.toml",
+    "stable_envs/envs/ogbench/manipulation_semantics.py"
+  ],
+  "accepted_rows_unchanged": 33,
+  "accepted_artifacts": 170,
+  "accepted_terminal_logs": 11,
+  "manifests": {
+    "fetch_family": 75,
+    "ogb_rng_feasibility": 27,
+    "ogb_dependency_boundary": 15,
+    "ogb_cpu_compatibility": 34
+  },
+  "source_files_unchanged": 485,
+  "production_swm_imports": [],
+  "shared_contract_changes": [],
+  "frozen_renderer_changed": false,
+  "push_performed": false
+}

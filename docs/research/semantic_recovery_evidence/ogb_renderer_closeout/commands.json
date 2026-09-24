@@ -1,0 +1,67 @@
+[
+  {
+    "command": "MUJOCO_GL=disable SDL_VIDEODRIVER=dummy PYTHONPATH=.:/Users/samib/stable-worldmodel /private/tmp/ogb-manip-authority-swm-lock/bin/python -c 'import sys; sys.path.append(\"/private/tmp/stable-envs-semantic-recovery/.venv/lib/python3.12/site-packages\"); import pytest; raise SystemExit(pytest.main([\"-q\", \"tests/unit/test_ogbench_manipulation_cpu.py\"]))'",
+    "result": "86 passed",
+    "log": "cpu-closure.log"
+  },
+  {
+    "command": "Same command with /private/tmp/ogb-render-unified-312/bin/python",
+    "result": "86 passed",
+    "log": "unified-312-cpu.log"
+  },
+  {
+    "command": "Same unified command with tests/unit/test_ogbench_render_state.py appended to pytest arguments",
+    "result": "92 passed",
+    "log": "unified-312-local-final.log"
+  },
+  {
+    "command": "Unified command selecting only tests/unit/test_ogbench_render_state.py after integer override validation",
+    "result": "6 passed",
+    "log": "renderstate-final.log"
+  },
+  {
+    "command": ".venv/bin/python -m pytest -q tests/unit/test_full_state_contract.py tests/unit/test_semantic_harness.py tests/unit/test_replacement_readiness.py tests/unit/test_swm_matrix.py tests/unit/test_repo_contracts.py tests/unit/test_variation_maps_newcells.py",
+    "result": "129 passed, 9 skipped",
+    "log": "shared-tests.log"
+  },
+  {
+    "command": "MUJOCO_GL=disable SDL_VIDEODRIVER=dummy PYTHONPATH=.:/Users/samib/stable-worldmodel /private/tmp/ogb-render-unified-312/bin/python scripts/recovery/ogbench_renderer_gate.py --generate docs/research/semantic_recovery_evidence/ogb_renderer_closeout/fixtures",
+    "result": "OGB_RENDER_FIXTURES_PASS 35",
+    "log": "fixtures.log"
+  },
+  {
+    "command": "Same CPU environment python docs/research/semantic_recovery_evidence/ogb_renderer_closeout/model-input-audit.py",
+    "result": "35/35 exact model inputs",
+    "log": "model-input-audit.json"
+  },
+  {
+    "command": ".venv/bin/python docs/research/semantic_recovery_evidence/ogb_renderer_closeout/preservation.py",
+    "result": "PRESERVATION_PASS",
+    "log": "preservation.json"
+  },
+  {
+    "command": ".venv/bin/mkdocs build --strict --site-dir /private/tmp/ogb-renderer-docs",
+    "result": "PASS",
+    "log": "mkdocs-strict.log"
+  },
+  {
+    "command": "ruff check and ruff format --check on new/modified implementation, tests, gate, and closeout Python files",
+    "result": "PASS",
+    "logs": [
+      "lint.log",
+      "format.log"
+    ]
+  },
+  {
+    "command": "git diff --check -- . ':(exclude)*.log'",
+    "result": "PASS; raw logs preserved verbatim"
+  },
+  {
+    "command": "bash -n scripts/recovery/ogbench_renderer_gate.sbatch",
+    "result": "PASS"
+  },
+  {
+    "command": "Remote commands are exactly scripts/recovery/ogbench_renderer_gate.sbatch; one submission only",
+    "result": "NOT_SUBMITTED_YET"
+  }
+]

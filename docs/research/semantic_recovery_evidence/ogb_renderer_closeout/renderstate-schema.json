@@ -1,0 +1,385 @@
+{
+  "Cube": {
+    "signature": [
+      192,
+      44,
+      126,
+      143,
+      58,
+      178,
+      38,
+      211,
+      247,
+      77,
+      90,
+      119,
+      248,
+      98,
+      199,
+      197,
+      84,
+      245,
+      224,
+      66,
+      29,
+      59,
+      119,
+      204,
+      95,
+      152,
+      31,
+      77,
+      104,
+      45,
+      171,
+      194
+    ],
+    "leaves": [
+      {
+        "key": [
+          "renderer",
+          "signature"
+        ],
+        "shape": [
+          32
+        ],
+        "dtype": "torch.uint8"
+      },
+      {
+        "key": [
+          "renderer",
+          "size"
+        ],
+        "shape": [
+          1
+        ],
+        "dtype": "torch.int64"
+      },
+      {
+        "key": [
+          "renderer",
+          "supersample"
+        ],
+        "shape": [
+          1
+        ],
+        "dtype": "torch.int64"
+      },
+      {
+        "key": [
+          "renderer",
+          "camera"
+        ],
+        "shape": [
+          1
+        ],
+        "dtype": "torch.int64"
+      },
+      {
+        "key": [
+          "pose",
+          "qpos"
+        ],
+        "shape": [
+          21
+        ],
+        "dtype": "torch.float64"
+      },
+      {
+        "key": [
+          "pose",
+          "mocap_pos"
+        ],
+        "shape": [
+          3
+        ],
+        "dtype": "torch.float64"
+      },
+      {
+        "key": [
+          "pose",
+          "mocap_quat"
+        ],
+        "shape": [
+          4
+        ],
+        "dtype": "torch.float64"
+      },
+      {
+        "key": [
+          "appearance",
+          "cube.size"
+        ],
+        "shape": [
+          1
+        ],
+        "dtype": "torch.float64"
+      },
+      {
+        "key": [
+          "appearance",
+          "agent.color"
+        ],
+        "shape": [
+          3
+        ],
+        "dtype": "torch.float64"
+      },
+      {
+        "key": [
+          "appearance",
+          "camera.angle_delta"
+        ],
+        "shape": [
+          1,
+          2
+        ],
+        "dtype": "torch.float64"
+      },
+      {
+        "key": [
+          "appearance",
+          "light.intensity"
+        ],
+        "shape": [
+          1
+        ],
+        "dtype": "torch.float64"
+      },
+      {
+        "key": [
+          "appearance",
+          "floor.color"
+        ],
+        "shape": [
+          2,
+          3
+        ],
+        "dtype": "torch.float64"
+      },
+      {
+        "key": [
+          "appearance",
+          "cube.color"
+        ],
+        "shape": [
+          1,
+          3
+        ],
+        "dtype": "torch.float64"
+      },
+      {
+        "key": [
+          "appearance",
+          "target_alpha"
+        ],
+        "shape": [
+          1
+        ],
+        "dtype": "torch.float32"
+      }
+    ]
+  },
+  "Scene": {
+    "signature": [
+      51,
+      120,
+      6,
+      79,
+      102,
+      95,
+      145,
+      129,
+      93,
+      48,
+      162,
+      253,
+      180,
+      40,
+      210,
+      47,
+      117,
+      53,
+      134,
+      229,
+      124,
+      33,
+      43,
+      190,
+      42,
+      192,
+      42,
+      152,
+      121,
+      177,
+      25,
+      208
+    ],
+    "leaves": [
+      {
+        "key": [
+          "renderer",
+          "signature"
+        ],
+        "shape": [
+          32
+        ],
+        "dtype": "torch.uint8"
+      },
+      {
+        "key": [
+          "renderer",
+          "size"
+        ],
+        "shape": [
+          1
+        ],
+        "dtype": "torch.int64"
+      },
+      {
+        "key": [
+          "renderer",
+          "supersample"
+        ],
+        "shape": [
+          1
+        ],
+        "dtype": "torch.int64"
+      },
+      {
+        "key": [
+          "renderer",
+          "camera"
+        ],
+        "shape": [
+          1
+        ],
+        "dtype": "torch.int64"
+      },
+      {
+        "key": [
+          "pose",
+          "qpos"
+        ],
+        "shape": [
+          25
+        ],
+        "dtype": "torch.float64"
+      },
+      {
+        "key": [
+          "pose",
+          "mocap_pos"
+        ],
+        "shape": [
+          3
+        ],
+        "dtype": "torch.float64"
+      },
+      {
+        "key": [
+          "pose",
+          "mocap_quat"
+        ],
+        "shape": [
+          4
+        ],
+        "dtype": "torch.float64"
+      },
+      {
+        "key": [
+          "appearance",
+          "cube.size"
+        ],
+        "shape": [
+          1
+        ],
+        "dtype": "torch.float64"
+      },
+      {
+        "key": [
+          "appearance",
+          "agent.color"
+        ],
+        "shape": [
+          3
+        ],
+        "dtype": "torch.float64"
+      },
+      {
+        "key": [
+          "appearance",
+          "camera.angle_delta"
+        ],
+        "shape": [
+          1,
+          2
+        ],
+        "dtype": "torch.float64"
+      },
+      {
+        "key": [
+          "appearance",
+          "light.intensity"
+        ],
+        "shape": [
+          1
+        ],
+        "dtype": "torch.float64"
+      },
+      {
+        "key": [
+          "appearance",
+          "floor.color"
+        ],
+        "shape": [
+          2,
+          3
+        ],
+        "dtype": "torch.float64"
+      },
+      {
+        "key": [
+          "appearance",
+          "cube.color"
+        ],
+        "shape": [
+          1,
+          3
+        ],
+        "dtype": "torch.float64"
+      },
+      {
+        "key": [
+          "appearance",
+          "target_alpha"
+        ],
+        "shape": [
+          1
+        ],
+        "dtype": "torch.float32"
+      },
+      {
+        "key": [
+          "appearance",
+          "lock_color"
+        ],
+        "shape": [
+          2,
+          3
+        ],
+        "dtype": "torch.float64"
+      },
+      {
+        "key": [
+          "pose",
+          "buttons"
+        ],
+        "shape": [
+          2
+        ],
+        "dtype": "torch.int64"
+      }
+    ]
+  }
+}
