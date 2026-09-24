@@ -1,0 +1,134 @@
+{
+  "CraftaxClassicPixelsWrapper": [
+    {
+      "fixture": "mine_tree",
+      "float_exact": false,
+      "max_float_abs": 5.960464477539063e-08,
+      "frame_exact": true,
+      "different_channels": 0,
+      "max_uint8_abs": 0
+    },
+    {
+      "fixture": "craft",
+      "float_exact": false,
+      "max_float_abs": 5.960464477539063e-08,
+      "frame_exact": true,
+      "different_channels": 0,
+      "max_uint8_abs": 0
+    },
+    {
+      "fixture": "combat",
+      "float_exact": false,
+      "max_float_abs": 5.960464477539063e-08,
+      "frame_exact": true,
+      "different_channels": 0,
+      "max_uint8_abs": 0
+    },
+    {
+      "fixture": "damage",
+      "float_exact": false,
+      "max_float_abs": 5.960464477539063e-08,
+      "frame_exact": true,
+      "different_channels": 0,
+      "max_uint8_abs": 0
+    },
+    {
+      "fixture": "night",
+      "float_exact": false,
+      "max_float_abs": 5.960464477539063e-08,
+      "frame_exact": true,
+      "different_channels": 0,
+      "max_uint8_abs": 0
+    },
+    {
+      "fixture": "terminal",
+      "float_exact": false,
+      "max_float_abs": 5.960464477539063e-08,
+      "frame_exact": true,
+      "different_channels": 0,
+      "max_uint8_abs": 0
+    },
+    {
+      "fixture": "near_limit",
+      "float_exact": false,
+      "max_float_abs": 5.960464477539063e-08,
+      "frame_exact": true,
+      "different_channels": 0,
+      "max_uint8_abs": 0
+    },
+    {
+      "fixture": "stochastic_grass",
+      "float_exact": false,
+      "max_float_abs": 5.960464477539063e-08,
+      "frame_exact": true,
+      "different_channels": 0,
+      "max_uint8_abs": 0
+    }
+  ],
+  "CraftaxPixelsWrapper": [
+    {
+      "fixture": "mine_tree",
+      "float_exact": true,
+      "max_float_abs": 0.0,
+      "frame_exact": true,
+      "different_channels": 0,
+      "max_uint8_abs": 0
+    },
+    {
+      "fixture": "craft",
+      "float_exact": true,
+      "max_float_abs": 0.0,
+      "frame_exact": true,
+      "different_channels": 0,
+      "max_uint8_abs": 0
+    },
+    {
+      "fixture": "combat",
+      "float_exact": true,
+      "max_float_abs": 0.0,
+      "frame_exact": true,
+      "different_channels": 0,
+      "max_uint8_abs": 0
+    },
+    {
+      "fixture": "damage",
+      "float_exact": true,
+      "max_float_abs": 0.0,
+      "frame_exact": true,
+      "different_channels": 0,
+      "max_uint8_abs": 0
+    },
+    {
+      "fixture": "night",
+      "float_exact": true,
+      "max_float_abs": 0.0,
+      "frame_exact": true,
+      "different_channels": 0,
+      "max_uint8_abs": 0
+    },
+    {
+      "fixture": "terminal",
+      "float_exact": true,
+      "max_float_abs": 0.0,
+      "frame_exact": true,
+      "different_channels": 0,
+      "max_uint8_abs": 0
+    },
+    {
+      "fixture": "near_limit",
+      "float_exact": true,
+      "max_float_abs": 0.0,
+      "frame_exact": true,
+      "different_channels": 0,
+      "max_uint8_abs": 0
+    },
+    {
+      "fixture": "stochastic_grass",
+      "float_exact": true,
+      "max_float_abs": 0.0,
+      "frame_exact": true,
+      "different_channels": 0,
+      "max_uint8_abs": 0
+    }
+  ]
+}

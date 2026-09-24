@@ -1,0 +1,12 @@
+BEGIN Craftax-Classic-Symbolic-v1
+Matplotlib is building the font cache; this may take a moment.
+Processing Craftax-Classic textures. This will take a minute but will be cached for future use.
+Textures loaded and saved to cache.
+RESET 0.4498535410966724
+SCHEMA Classic 53 20952
+BEGIN Craftax-Symbolic-v1
+Processing Craftax textures. This will take a minute but will be cached for future use.
+Textures loaded and saved to cache.
+RESET 1.4271049581002444
+SCHEMA Full 88 273276
+CRAFTAX_SCHEMA_PROBE_PASS

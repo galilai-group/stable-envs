@@ -1,0 +1,14 @@
+Loading Craftax-Classic textures from cache.
+Textures successfully loaded from cache.
+BEGIN CraftaxClassicSymbolicWrapper
+Traceback (most recent call last):
+  File "/private/tmp/stable-envs-semantic-recovery/docs/research/semantic_recovery_evidence/craftax_source_audit/replay_probe.py", line 143, in <module>
+    if __name__=='__main__':main()
+                            ^^^^^^
+  File "/private/tmp/stable-envs-semantic-recovery/docs/research/semantic_recovery_evidence/craftax_source_audit/replay_probe.py", line 109, in main
+    snap=pack(a);frozen=snap.clone();restore(b,snap);td_equal(snap,pack(b))
+                                                     ^^^^^^^^^^^^^^^^^^^^^^
+  File "/private/tmp/stable-envs-semantic-recovery/docs/research/semantic_recovery_evidence/craftax_source_audit/replay_probe.py", line 66, in td_equal
+    assert a.keys(True,True)==b.keys(True,True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError

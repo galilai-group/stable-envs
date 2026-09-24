@@ -1,0 +1,18 @@
+{
+  "starting_head": "bcf8699d9983f95e97b3c71607521a61c354247b",
+  "cube_scene_promotion_report_commit": "bcf8699d9983f95e97b3c71607521a61c354247b",
+  "branch": "repair/environment-semantics",
+  "worktree": "/private/tmp/stable-envs-semantic-recovery",
+  "initial_status": "clean (git status --short empty before audit directory creation)",
+  "matrix_counts": {
+    "VERIFIED": 35,
+    "INCOMPLETE": 7
+  },
+  "cube_scene_acceptance": "Both acceptance manifests and all artifact hashes resolve; all three GPU PASS markers resolve",
+  "sealed_manifests": {
+    "GPU-SHA256SUMS": 173,
+    "SHA256SUMS": 193
+  },
+  "push_performed": false,
+  "scope": "Four Craftax registrations; Stage A/B only until authoritative-source replay passes; no PushT/Rocket work"
+}
