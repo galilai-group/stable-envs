@@ -47,15 +47,22 @@ PY
 status=0
 for family in Cube Scene; do
     mkdir "$run/evidence/$family"
+    if [ "$family" = Cube ]; then
+        selection='Cube or interleaved'
+        expected=45
+    else
+        selection='Scene or interleaved or button or drawer or window'
+        expected=48
+    fi
     cpu=0
-    MUJOCO_GL=disable "$python" -m pytest -q tests/unit/test_ogbench_manipulation_cpu.py tests/unit/test_ogbench_render_state.py -k "$family" --junitxml="$run/evidence/$family/cpu.xml" > "$run/evidence/$family/cpu.log" 2>&1 || cpu=$?
+    MUJOCO_GL=disable "$python" -m pytest -q tests/unit/test_ogbench_manipulation_cpu.py tests/unit/test_ogbench_render_state.py -k "$selection" --junitxml="$run/evidence/$family/cpu.xml" > "$run/evidence/$family/cpu.log" 2>&1 || cpu=$?
     if [ "$cpu" -eq 0 ]; then
-        "$python" - "$run/evidence/$family/cpu.xml" <<'PY' || cpu=$?
+        "$python" - "$run/evidence/$family/cpu.xml" "$expected" <<'PY' || cpu=$?
 import sys,xml.etree.ElementTree as ET
 root=ET.parse(sys.argv[1]).getroot()
 cases=list(root.iter('testcase'))
-assert len(cases)==46,len(cases)
-assert not any(list(c) for c in cases), 'CPU gate contains skips/failures/errors'
+assert len(cases)==int(sys.argv[2]),len(cases)
+assert not any(c.find(n) is not None for c in cases for n in ['skipped','failure','error']), 'CPU gate contains skips/failures/errors'
 print('OGB_FAMILY_CPU_GATE_PASS',sys.argv[1],flush=True)
 PY
     fi
