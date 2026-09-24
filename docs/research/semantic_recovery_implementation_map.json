@@ -11405,7 +11405,15 @@
         "repository": "https://github.com/seohongpark/ogbench",
         "package": "ogbench",
         "pinned_lock_version": "1.2.1",
-        "tested_profile_versions": {},
+        "tested_profile_versions": {
+          "ogbench": "1.2.1",
+          "mujoco": "3.8.1",
+          "numpy": "2.2.6",
+          "gymnasium": "1.2.3",
+          "dm-control": "1.0.41",
+          "torch": "2.10.0",
+          "tensordict": "0.14.2"
+        },
         "version_scope": "Lock version is historical provenance, not a claim of candidate certification; tested CPU/GPU versions remain in evidence."
       },
       "stable_envs_classes": [
@@ -11419,60 +11427,89 @@
         "source_constructor": "swm:stable_worldmodel/envs/ogbench/cube_env.py:CubeEnv.__init__"
       },
       "state_schema": {
-        "status": "UNPROVED",
-        "corpus_fields": {},
-        "candidate_source_catalog": [],
-        "note": "Full TensorDict simulator snapshot; restore under the same persistent Variation"
+        "status": "ACCEPTED_BOUNDED",
+        "scope": "Complete public CPU State; registration remains INCOMPLETE pending renderer/GPU.",
+        "schema_file": "docs/research/semantic_recovery_evidence/ogb_cpu_compatibility/state-schema.json",
+        "family": "Cube",
+        "leaf_count": 139
       },
       "restoration_order": [
-        "UNPROVED: no accepted full public State restoration; inspect pinned methods before implementation"
+        "Validate all lanes and complete schema/invariants",
+        "Construct temporary upstream-based instances and compile matching model; restore pending MJCF and Variation anchors",
+        "Restore task/lifecycle/Scene target/button values and authoritative damping/colors",
+        "Restore official MuJoCo integration union, forward, reapply integration",
+        "Restore cached site poses and immediate-output caches",
+        "Restore all RNGs last; compare every leaf; atomically swap complete batch"
       ],
       "action_scaling_clipping_repeat": {
-        "summary": "UNACCEPTED: pinned wrapper step implementation indexed below; no candidate parity claim.",
-        "parity": "UNTESTED",
+        "summary": "Inherited OGBench step and controller: clipped 5-vector, scales [0.05,0.05,0.05,0.3,1.0], mj_step(nstep=25), float32/64 parity.",
+        "parity": "PASS_EXACT_CPU_FAMILY_GATE",
         "source_catalog": [
           "swm:stable_worldmodel/envs/ogbench/cube_env.py"
         ]
       },
       "reset_rng_semantics": {
-        "reset_parity": "UNTESTED",
-        "rng_lifecycle": "UNTESTED",
+        "reset_parity": "PASS_EXACT_CPU_FAMILY_GATE",
+        "rng_lifecycle": "PASS_EXACT_CPU_FAMILY_GATE",
         "source_catalog": [
           "swm:stable_worldmodel/envs/ogbench/cube_env.py"
         ],
         "rng_structure_policy": "Complete documented named RNG state is atomic; individual-word minimality is not required."
       },
       "reward_success_terminated_truncated": {
-        "reward": "UNTESTED",
-        "lifecycle": "UNTESTED",
+        "reward": "PASS_EXACT_CPU_FAMILY_GATE",
+        "lifecycle": "PASS_EXACT_CPU_FAMILY_GATE",
         "source_catalog": [
           "swm:stable_worldmodel/envs/ogbench/cube_env.py"
         ]
       },
-      "accepted_variation_scope": "UNTESTED",
-      "execution_mode": null,
+      "accepted_variation_scope": "CPU registered physical/reset/appearance configuration passed; pixels pending. See CPU report for supported leaves.",
+      "execution_mode": "DELEGATED_CPU",
       "evidence_manifest": {
         "oracle": null,
-        "artifacts": []
+        "artifacts": [
+          {
+            "path": "docs/research/semantic_recovery_evidence/ogb_cpu_compatibility/cpu-tests.log",
+            "sha256": "3f1ae2bd04494c697d605fcb07fa1fe8d2d5eb0b66af72a6e6551d51791eb720"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/ogb_cpu_compatibility/ownership.json",
+            "sha256": "e4fe1a92527d4e372430555d34450240d53bb609b98a44f51face871edb15fda"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/ogb_cpu_compatibility/state-schema.json",
+            "sha256": "97b52646f3f3448d007afe64e4a355ae8ba1bd24e31967357665fe45f2c9aab4"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/ogb_cpu_compatibility/SHA256SUMS",
+            "sha256": "a731f3425d0ec43f937923927d7552a51e5c1ed22892fa2671624e0c059b56fd"
+          }
+        ]
       },
-      "cpu_semantic_result": "NOT_ACCEPTED",
+      "cpu_semantic_result": "PASS_EXACT_CPU_FAMILY_GATE",
       "gpu_semantic_result": {
         "status": "NOT_ACCEPTED",
         "job": null,
-        "note": "CUDA State placement is not GPU physics for DELEGATED_CPU."
+        "note": "GPU renderer evidence pending; delegated CPU physics remains a separate claim."
       },
       "frozen_renderer_result": "PENDING",
       "known_limitations": [
-        "No stable dynamics; render state deliberately drops qvel.",
-        "Cube.reset seed parameter is not forwarded; fixed-seed oracle needs explicit global/variation/simulator RNG control.",
-        "Fresh unseeded action-space generators during goal settling prevent demonstrated exact reset-State replay; family-specific entropy/oracle conditioning needs review. See source_preflight."
+        "Renderer integration and exact frozen-baseline comparison pending.",
+        "Unified MuJoCo 3.12 profile passes the CPU suite; renderer/GPU acceptance still pending.",
+        "GPU evidence and registration promotion pending; no GPU-physics claim."
       ],
       "remaining_gates": [
-        "No stable dynamics; render state deliberately drops qvel.",
-        "Cube.reset seed parameter is not forwarded; fixed-seed oracle needs explicit global/variation/simulator RNG control.",
-        "Review reset entropy handling before adapter implementation and full CPU/GPU acceptance; bounded source contact continuation is not certification."
+        "Renderer integration and exact frozen-baseline comparison pending.",
+        "Unified MuJoCo 3.12 profile passes the CPU suite; renderer/GPU acceptance still pending.",
+        "GPU evidence and registration promotion pending; no GPU-physics claim."
       ],
-      "closure_code_check": null,
+      "closure_code_check": {
+        "production_implementation": "complete",
+        "implementation_commit": "14456339ec7f1b28ad698fc3158fe9e4ed8f6d1e",
+        "cpu_evidence_commit": "72612563590f12a081d940394496795a6c024577",
+        "registration_promotion": "INCOMPLETE",
+        "production_swm_imports": false
+      },
       "source_preflight": {
         "status": "BLOCKED_RESET_GATE",
         "scope": "Pinned CPU authoritative source diagnostics only; no production adapter or promotion",
@@ -11795,7 +11832,15 @@
         "repository": "https://github.com/seohongpark/ogbench",
         "package": "ogbench",
         "pinned_lock_version": "1.2.1",
-        "tested_profile_versions": {},
+        "tested_profile_versions": {
+          "ogbench": "1.2.1",
+          "mujoco": "3.8.1",
+          "numpy": "2.2.6",
+          "gymnasium": "1.2.3",
+          "dm-control": "1.0.41",
+          "torch": "2.10.0",
+          "tensordict": "0.14.2"
+        },
         "version_scope": "Lock version is historical provenance, not a claim of candidate certification; tested CPU/GPU versions remain in evidence."
       },
       "stable_envs_classes": [
@@ -11809,62 +11854,89 @@
         "source_constructor": "swm:stable_worldmodel/envs/ogbench/scene_env.py:SceneEnv.__init__"
       },
       "state_schema": {
-        "status": "UNPROVED",
-        "corpus_fields": {},
-        "candidate_source_catalog": [],
-        "note": "Full TensorDict simulator snapshot; restore under the same persistent Variation"
+        "status": "ACCEPTED_BOUNDED",
+        "scope": "Complete public CPU State; registration remains INCOMPLETE pending renderer/GPU.",
+        "schema_file": "docs/research/semantic_recovery_evidence/ogb_cpu_compatibility/state-schema.json",
+        "family": "Scene",
+        "leaf_count": 132
       },
       "restoration_order": [
-        "UNPROVED: no accepted full public State restoration; inspect pinned methods before implementation"
+        "Validate all lanes and complete schema/invariants",
+        "Construct temporary upstream-based instances and compile matching model; restore pending MJCF and Variation anchors",
+        "Restore task/lifecycle/Scene target/button values and authoritative damping/colors",
+        "Restore official MuJoCo integration union, forward, reapply integration",
+        "Restore cached site poses and immediate-output caches",
+        "Restore all RNGs last; compare every leaf; atomically swap complete batch"
       ],
       "action_scaling_clipping_repeat": {
-        "summary": "UNACCEPTED: pinned wrapper step implementation indexed below; no candidate parity claim.",
-        "parity": "UNTESTED",
+        "summary": "Inherited OGBench step and controller: clipped 5-vector, scales [0.05,0.05,0.05,0.3,1.0], mj_step(nstep=25), float32/64 parity.",
+        "parity": "PASS_EXACT_CPU_FAMILY_GATE",
         "source_catalog": [
           "swm:stable_worldmodel/envs/ogbench/scene_env.py"
         ]
       },
       "reset_rng_semantics": {
-        "reset_parity": "UNTESTED",
-        "rng_lifecycle": "UNTESTED",
+        "reset_parity": "PASS_EXACT_CPU_FAMILY_GATE",
+        "rng_lifecycle": "PASS_EXACT_CPU_FAMILY_GATE",
         "source_catalog": [
           "swm:stable_worldmodel/envs/ogbench/scene_env.py"
         ],
         "rng_structure_policy": "Complete documented named RNG state is atomic; individual-word minimality is not required."
       },
       "reward_success_terminated_truncated": {
-        "reward": "UNTESTED",
-        "lifecycle": "UNTESTED",
+        "reward": "PASS_EXACT_CPU_FAMILY_GATE",
+        "lifecycle": "PASS_EXACT_CPU_FAMILY_GATE",
         "source_catalog": [
           "swm:stable_worldmodel/envs/ogbench/scene_env.py"
         ]
       },
-      "accepted_variation_scope": "UNTESTED",
-      "execution_mode": null,
+      "accepted_variation_scope": "CPU registered physical/reset/appearance configuration passed; pixels pending. See CPU report for supported leaves.",
+      "execution_mode": "DELEGATED_CPU",
       "evidence_manifest": {
         "oracle": null,
-        "artifacts": []
+        "artifacts": [
+          {
+            "path": "docs/research/semantic_recovery_evidence/ogb_cpu_compatibility/cpu-tests.log",
+            "sha256": "3f1ae2bd04494c697d605fcb07fa1fe8d2d5eb0b66af72a6e6551d51791eb720"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/ogb_cpu_compatibility/ownership.json",
+            "sha256": "e4fe1a92527d4e372430555d34450240d53bb609b98a44f51face871edb15fda"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/ogb_cpu_compatibility/state-schema.json",
+            "sha256": "97b52646f3f3448d007afe64e4a355ae8ba1bd24e31967357665fe45f2c9aab4"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/ogb_cpu_compatibility/SHA256SUMS",
+            "sha256": "a731f3425d0ec43f937923927d7552a51e5c1ed22892fa2671624e0c059b56fd"
+          }
+        ]
       },
-      "cpu_semantic_result": "NOT_ACCEPTED",
+      "cpu_semantic_result": "PASS_EXACT_CPU_FAMILY_GATE",
       "gpu_semantic_result": {
         "status": "NOT_ACCEPTED",
         "job": null,
-        "note": "CUDA State placement is not GPU physics for DELEGATED_CPU."
+        "note": "GPU renderer evidence pending; delegated CPU physics remains a separate claim."
       },
       "frozen_renderer_result": "PENDING",
       "known_limitations": [
-        "No stable dynamics; render state deliberately drops qvel.",
-        "Pinned SWM Scene.reset(options.state) calls set_state without required button kwargs: source-level KeyError path; live reproduction pending.",
-        "Existing renderer Scene constructor omits required env_type under OGBench 1.2.1; reproduced on frozen baseline during first-cohort checks (see first_family_recovery.md)",
-        "Fresh unseeded action-space generators during goal settling prevent demonstrated exact reset-State replay; family-specific entropy/oracle conditioning needs review. See source_preflight."
+        "Renderer integration and exact frozen-baseline comparison pending.",
+        "Unified MuJoCo 3.12 profile passes the CPU suite; renderer/GPU acceptance still pending.",
+        "GPU evidence and registration promotion pending; no GPU-physics claim."
       ],
       "remaining_gates": [
-        "No stable dynamics; render state deliberately drops qvel.",
-        "Pinned SWM Scene.reset(options.state) calls set_state without required button kwargs: source-level KeyError path; live reproduction pending.",
-        "Existing renderer Scene constructor omits required env_type under OGBench 1.2.1; reproduced on frozen baseline during first-cohort checks (see first_family_recovery.md)",
-        "Review reset entropy handling before adapter implementation and full CPU/GPU acceptance; bounded source contact continuation is not certification."
+        "Renderer integration and exact frozen-baseline comparison pending.",
+        "Unified MuJoCo 3.12 profile passes the CPU suite; renderer/GPU acceptance still pending.",
+        "GPU evidence and registration promotion pending; no GPU-physics claim."
       ],
-      "closure_code_check": null,
+      "closure_code_check": {
+        "production_implementation": "complete",
+        "implementation_commit": "14456339ec7f1b28ad698fc3158fe9e4ed8f6d1e",
+        "cpu_evidence_commit": "72612563590f12a081d940394496795a6c024577",
+        "registration_promotion": "INCOMPLETE",
+        "production_swm_imports": false
+      },
       "source_preflight": {
         "status": "BLOCKED_RESET_GATE_AND_FROZEN_CONSTRUCTOR",
         "scope": "Pinned CPU authoritative source diagnostics only; no production adapter or promotion",

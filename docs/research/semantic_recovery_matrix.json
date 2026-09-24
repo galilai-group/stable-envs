@@ -3181,15 +3181,15 @@
       "owner": "coordinator",
       "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
       "state_status": "INCOMPLETE",
-      "action_parity": "UNTESTED",
-      "reset_parity": "UNTESTED",
-      "step_parity": "UNTESTED",
-      "reward_parity": "UNTESTED",
-      "terminated_truncated_parity": "UNTESTED",
-      "rng_lifecycle": "UNTESTED",
-      "variation_parity": "UNTESTED",
-      "execution_mode": null,
-      "adapter_status": "NOT_IMPLEMENTED",
+      "action_parity": "PASS_EXACT_CPU_FAMILY_GATE",
+      "reset_parity": "PASS_EXACT_CPU_FAMILY_GATE",
+      "step_parity": "PASS_EXACT_CPU_FAMILY_GATE",
+      "reward_parity": "PASS_EXACT_CPU_FAMILY_GATE",
+      "terminated_truncated_parity": "PASS_EXACT_CPU_FAMILY_GATE",
+      "rng_lifecycle": "PASS_EXACT_CPU_FAMILY_GATE",
+      "variation_parity": "PASS_EXACT_CPU_FAMILY_GATE",
+      "execution_mode": "DELEGATED_CPU",
+      "adapter_status": "IMPLEMENTED_PUBLIC_HISTORICAL_DEFAULT",
       "renderer_regression": "PENDING",
       "oracle_corpus": null,
       "reference_cpu_benchmark": "NOT_RUN",
@@ -3197,11 +3197,11 @@
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "No stable dynamics; render state deliberately drops qvel.",
-        "Cube.reset seed parameter is not forwarded; fixed-seed oracle needs explicit global/variation/simulator RNG control.",
-        "Fresh unseeded action-space generators during goal settling prevent demonstrated exact reset-State replay; family-specific entropy/oracle conditioning needs review. See source_preflight."
+        "Renderer integration and exact frozen-baseline comparison pending.",
+        "Unified MuJoCo 3.12 profile passes the CPU suite; renderer/GPU acceptance still pending.",
+        "GPU evidence and registration promotion pending; no GPU-physics claim."
       ],
-      "test": "tests/unit/test_full_state_contract.py",
+      "test": "tests/unit/test_ogbench_manipulation_cpu.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "execution_candidate": "DELEGATED",
       "source_preflight": {
@@ -3258,7 +3258,14 @@
             "sha256": "7b123c91020d9102d5cea1dd91a270c6d77509755827a37c40d55a5fa4a6cd72"
           }
         ]
-      }
+      },
+      "implementation_commit": "14456339ec7f1b28ad698fc3158fe9e4ed8f6d1e",
+      "evidence": [
+        "docs/research/semantic_recovery_evidence/ogb_cpu_compatibility/cpu-tests.log",
+        "docs/research/semantic_recovery_evidence/ogb_cpu_compatibility/ownership.json",
+        "docs/research/semantic_recovery_evidence/ogb_cpu_compatibility/state-schema.json",
+        "docs/research/semantic_recovery_evidence/ogb_renderer_closeout/cpu-closure.log"
+      ]
     },
     {
       "historical_id": "swm/OGBMaze-v0",
@@ -3336,15 +3343,15 @@
       "owner": "coordinator",
       "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
       "state_status": "INCOMPLETE",
-      "action_parity": "UNTESTED",
-      "reset_parity": "UNTESTED",
-      "step_parity": "UNTESTED",
-      "reward_parity": "UNTESTED",
-      "terminated_truncated_parity": "UNTESTED",
-      "rng_lifecycle": "UNTESTED",
-      "variation_parity": "UNTESTED",
-      "execution_mode": null,
-      "adapter_status": "NOT_IMPLEMENTED",
+      "action_parity": "PASS_EXACT_CPU_FAMILY_GATE",
+      "reset_parity": "PASS_EXACT_CPU_FAMILY_GATE",
+      "step_parity": "PASS_EXACT_CPU_FAMILY_GATE",
+      "reward_parity": "PASS_EXACT_CPU_FAMILY_GATE",
+      "terminated_truncated_parity": "PASS_EXACT_CPU_FAMILY_GATE",
+      "rng_lifecycle": "PASS_EXACT_CPU_FAMILY_GATE",
+      "variation_parity": "PASS_EXACT_CPU_FAMILY_GATE",
+      "execution_mode": "DELEGATED_CPU",
+      "adapter_status": "IMPLEMENTED_PUBLIC_HISTORICAL_DEFAULT",
       "renderer_regression": "PENDING",
       "oracle_corpus": null,
       "reference_cpu_benchmark": "NOT_RUN",
@@ -3352,12 +3359,11 @@
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "No stable dynamics; render state deliberately drops qvel.",
-        "Pinned SWM Scene.reset(options.state) calls set_state without required button kwargs: source-level KeyError path; live reproduction pending.",
-        "Existing renderer Scene constructor omits required env_type under OGBench 1.2.1; reproduced on frozen baseline during first-cohort checks (see first_family_recovery.md)",
-        "Fresh unseeded action-space generators during goal settling prevent demonstrated exact reset-State replay; family-specific entropy/oracle conditioning needs review. See source_preflight."
+        "Renderer integration and exact frozen-baseline comparison pending.",
+        "Unified MuJoCo 3.12 profile passes the CPU suite; renderer/GPU acceptance still pending.",
+        "GPU evidence and registration promotion pending; no GPU-physics claim."
       ],
-      "test": "tests/unit/test_full_state_contract.py",
+      "test": "tests/unit/test_ogbench_manipulation_cpu.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "execution_candidate": "DELEGATED",
       "recovery_status": "BLOCKED_CONSTRUCTOR",
@@ -3423,7 +3429,14 @@
             "sha256": "7b123c91020d9102d5cea1dd91a270c6d77509755827a37c40d55a5fa4a6cd72"
           }
         ]
-      }
+      },
+      "implementation_commit": "14456339ec7f1b28ad698fc3158fe9e4ed8f6d1e",
+      "evidence": [
+        "docs/research/semantic_recovery_evidence/ogb_cpu_compatibility/cpu-tests.log",
+        "docs/research/semantic_recovery_evidence/ogb_cpu_compatibility/ownership.json",
+        "docs/research/semantic_recovery_evidence/ogb_cpu_compatibility/state-schema.json",
+        "docs/research/semantic_recovery_evidence/ogb_renderer_closeout/cpu-closure.log"
+      ]
     },
     {
       "historical_id": "swm/PFRocketLanding-v0",

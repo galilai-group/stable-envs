@@ -1,0 +1,563 @@
+{
+  "profile": {
+    "mujoco": "3.8.1",
+    "ogbench": "1.2.1",
+    "numpy": "2.2.6",
+    "gymnasium": "1.2.3",
+    "dm-control": "1.0.41",
+    "torch": "2.10.0",
+    "tensordict": "0.14.2"
+  },
+  "units": "milliseconds except explicitly named throughput/ratios",
+  "timing_scope": "CPU wall time; no GPU, no optimization; per-call batched throughput",
+  "rows": [
+    {
+      "family": "Cube",
+      "batch": 1,
+      "cold_definition": "First public operation of its kind on each of five newly constructed adapters, in this already-loaded process; not fresh-process import timing.",
+      "constructor": {
+        "n": 5,
+        "first_ms": 498.937499942258,
+        "median_ms": 199.36058414168656,
+        "p95_ms": 444.40420814789826,
+        "max_ms": 498.937499942258,
+        "operations_per_second": 5.016036666953659
+      },
+      "cold": {
+        "step": {
+          "n": 5,
+          "first_ms": 1.4737090095877647,
+          "median_ms": 1.2298750225454569,
+          "p95_ms": 1.4441588427871466,
+          "max_ms": 1.4737090095877647,
+          "operations_per_second": 813.09074635105
+        },
+        "get_state": {
+          "n": 5,
+          "first_ms": 0.7919999770820141,
+          "median_ms": 0.7653331849724054,
+          "p95_ms": 0.7881833706051111,
+          "max_ms": 0.7919999770820141,
+          "operations_per_second": 1306.6204623494218
+        },
+        "set_state_same": {
+          "n": 5,
+          "first_ms": 208.48249993287027,
+          "median_ms": 204.0734589099884,
+          "p95_ms": 231.51043276302516,
+          "max_ms": 237.2674159705639,
+          "operations_per_second": 4.900196259431632
+        },
+        "set_state_physical_change": {
+          "n": 5,
+          "first_ms": 198.02170805633068,
+          "median_ms": 198.02170805633068,
+          "p95_ms": 283.698149677366,
+          "max_ms": 302.9947078321129,
+          "operations_per_second": 5.049951390761324
+        }
+      },
+      "warm": {
+        "step": {
+          "n": 30,
+          "first_ms": 1.1530828196555376,
+          "median_ms": 1.1849170550704002,
+          "p95_ms": 1.306804025080055,
+          "max_ms": 1.3942078221589327,
+          "operations_per_second": 843.9409287940297
+        },
+        "get_state": {
+          "n": 30,
+          "first_ms": 0.8145419415086508,
+          "median_ms": 0.7214373908936977,
+          "p95_ms": 0.8127293665893376,
+          "max_ms": 0.8145419415086508,
+          "operations_per_second": 1386.1216685223733
+        },
+        "set_state_same": {
+          "n": 30,
+          "first_ms": 221.17191599681973,
+          "median_ms": 181.3892499776557,
+          "p95_ms": 233.28095882898197,
+          "max_ms": 236.0226670280099,
+          "operations_per_second": 5.5130058706521154,
+          "relative_to_step": 153.0818120993952,
+          "individual_world_restores_per_second": 5.5130058706521154
+        },
+        "set_state_physical_change": {
+          "n": 30,
+          "first_ms": 181.64754193276167,
+          "median_ms": 180.84893701598048,
+          "p95_ms": 231.98502933373675,
+          "max_ms": 234.10220793448389,
+          "operations_per_second": 5.529476791514878,
+          "relative_to_step": 152.62581987667954,
+          "individual_world_restores_per_second": 5.529476791514878
+        }
+      },
+      "instrumented_restore_stages": {
+        "validation": {
+          "n": 10,
+          "first_ms": 1.207208028063178,
+          "median_ms": 1.1971869971603155,
+          "p95_ms": 2.762446319684384,
+          "max_ms": 3.7710838951170444,
+          "operations_per_second": 835.2913975610861,
+          "calls_per_restore": 1.0,
+          "mean_ms_per_batched_restore": 1.4844874385744333
+        },
+        "constructor": {
+          "n": 10,
+          "first_ms": 62.34887498430908,
+          "median_ms": 63.42904199846089,
+          "p95_ms": 81.40415425878015,
+          "max_ms": 89.9634170345962,
+          "operations_per_second": 15.765648802078157,
+          "calls_per_restore": 1.0,
+          "mean_ms_per_batched_restore": 66.66915421374142
+        },
+        "compilation": {
+          "n": 10,
+          "first_ms": 96.56437509693205,
+          "median_ms": 96.90102050080895,
+          "p95_ms": 117.21189655363558,
+          "max_ms": 123.27845906838775,
+          "operations_per_second": 10.319808757758663,
+          "calls_per_restore": 1.0,
+          "mean_ms_per_batched_restore": 102.09160025697201
+        },
+        "state_row_copy": {
+          "n": 10,
+          "first_ms": 0.5037500523030758,
+          "median_ms": 0.5120416171848774,
+          "p95_ms": 1.028000121004879,
+          "max_ms": 1.193749951198697,
+          "operations_per_second": 1952.966255941928,
+          "calls_per_restore": 1.0,
+          "mean_ms_per_batched_restore": 0.5941916024312377
+        },
+        "other_reconstruction_and_swap_mean_ms": 31.604837509803474
+      },
+      "tensordict_clone": {
+        "n": 100,
+        "first_ms": 6.025083130225539,
+        "median_ms": 0.29764603823423386,
+        "p95_ms": 0.35678382264450187,
+        "max_ms": 6.025083130225539,
+        "operations_per_second": 3359.695314382265
+      },
+      "exact_restores": true
+    },
+    {
+      "family": "Cube",
+      "batch": 3,
+      "cold_definition": "First public operation of its kind on each of five newly constructed adapters, in this already-loaded process; not fresh-process import timing.",
+      "constructor": {
+        "n": 5,
+        "first_ms": 606.936665950343,
+        "median_ms": 611.3526250701398,
+        "p95_ms": 656.7879915703088,
+        "max_ms": 667.8665832150728,
+        "operations_per_second": 1.6357171933060255
+      },
+      "cold": {
+        "step": {
+          "n": 5,
+          "first_ms": 3.5295418929308653,
+          "median_ms": 3.2742919865995646,
+          "p95_ms": 3.518325136974454,
+          "max_ms": 3.5295418929308653,
+          "operations_per_second": 305.4095371129456
+        },
+        "get_state": {
+          "n": 5,
+          "first_ms": 1.8066249322146177,
+          "median_ms": 1.7811660654842854,
+          "p95_ms": 1.8042917363345623,
+          "max_ms": 1.8066249322146177,
+          "operations_per_second": 561.4299639871634
+        },
+        "set_state_same": {
+          "n": 5,
+          "first_ms": 604.0170409251004,
+          "median_ms": 590.344208991155,
+          "p95_ms": 611.0261081252247,
+          "max_ms": 612.7783749252558,
+          "operations_per_second": 1.693927008632658
+        },
+        "set_state_physical_change": {
+          "n": 5,
+          "first_ms": 601.3790830038488,
+          "median_ms": 601.3790830038488,
+          "p95_ms": 668.2291997596622,
+          "max_ms": 672.2752079367638,
+          "operations_per_second": 1.6628446653067248
+        }
+      },
+      "warm": {
+        "step": {
+          "n": 30,
+          "first_ms": 3.0951248481869698,
+          "median_ms": 3.073542029596865,
+          "p95_ms": 3.2347810571081936,
+          "max_ms": 3.3388331066817045,
+          "operations_per_second": 325.3575159768233
+        },
+        "get_state": {
+          "n": 30,
+          "first_ms": 1.663916977122426,
+          "median_ms": 1.7652914393693209,
+          "p95_ms": 1.9133464782498777,
+          "max_ms": 2.0292920526117086,
+          "operations_per_second": 566.478700172741
+        },
+        "set_state_same": {
+          "n": 30,
+          "first_ms": 611.6416249424219,
+          "median_ms": 591.219041030854,
+          "p95_ms": 615.0937791680917,
+          "max_ms": 635.0820830557495,
+          "operations_per_second": 1.6914204898685137,
+          "relative_to_step": 192.35755858799823,
+          "individual_world_restores_per_second": 5.074261469605541
+        },
+        "set_state_physical_change": {
+          "n": 30,
+          "first_ms": 538.5171670932323,
+          "median_ms": 593.3067504083738,
+          "p95_ms": 617.7054563653655,
+          "max_ms": 777.4250421207398,
+          "operations_per_second": 1.6854687719492467,
+          "relative_to_step": 193.03681052514958,
+          "individual_world_restores_per_second": 5.05640631584774
+        }
+      },
+      "instrumented_restore_stages": {
+        "validation": {
+          "n": 10,
+          "first_ms": 2.045457949861884,
+          "median_ms": 1.9197289366275072,
+          "p95_ms": 2.0681685768067837,
+          "max_ms": 2.0867499988526106,
+          "operations_per_second": 520.9068743615204,
+          "calls_per_restore": 1.0,
+          "mean_ms_per_batched_restore": 1.952220662496984
+        },
+        "constructor": {
+          "n": 30,
+          "first_ms": 62.188209034502506,
+          "median_ms": 63.03558289073408,
+          "p95_ms": 92.21310263965266,
+          "max_ms": 121.68587511405349,
+          "operations_per_second": 15.864055730767188,
+          "calls_per_restore": 3.0,
+          "mean_ms_per_batched_restore": 200.1996961189434
+        },
+        "compilation": {
+          "n": 30,
+          "first_ms": 97.16370794922113,
+          "median_ms": 98.24908361770213,
+          "p95_ms": 101.76857704063877,
+          "max_ms": 103.87941705994308,
+          "operations_per_second": 10.17821198100034,
+          "calls_per_restore": 3.0,
+          "mean_ms_per_batched_restore": 295.4375082626939
+        },
+        "state_row_copy": {
+          "n": 30,
+          "first_ms": 0.4256658721715212,
+          "median_ms": 0.5052079213783145,
+          "p95_ms": 0.716335827019065,
+          "max_ms": 0.8389581926167011,
+          "operations_per_second": 1979.383057319821,
+          "calls_per_restore": 3.0,
+          "mean_ms_per_batched_restore": 1.5571832656860352
+        },
+        "other_reconstruction_and_swap_mean_ms": 76.99298751540482
+      },
+      "tensordict_clone": {
+        "n": 100,
+        "first_ms": 0.449958024546504,
+        "median_ms": 0.30029157642275095,
+        "p95_ms": 0.3474020049907267,
+        "max_ms": 0.449958024546504,
+        "operations_per_second": 3330.096741016133
+      },
+      "exact_restores": true
+    },
+    {
+      "family": "Scene",
+      "batch": 1,
+      "cold_definition": "First public operation of its kind on each of five newly constructed adapters, in this already-loaded process; not fresh-process import timing.",
+      "constructor": {
+        "n": 5,
+        "first_ms": 298.1313341297209,
+        "median_ms": 216.29483392462134,
+        "p95_ms": 290.28518390841776,
+        "max_ms": 298.1313341297209,
+        "operations_per_second": 4.623318929330044
+      },
+      "cold": {
+        "step": {
+          "n": 5,
+          "first_ms": 1.5115421265363693,
+          "median_ms": 1.5102499164640903,
+          "p95_ms": 1.5156084671616554,
+          "max_ms": 1.516625052317977,
+          "operations_per_second": 662.1420660901439
+        },
+        "get_state": {
+          "n": 5,
+          "first_ms": 0.6900420412421227,
+          "median_ms": 0.7367080543190241,
+          "p95_ms": 0.7721577771008015,
+          "max_ms": 0.7776659913361073,
+          "operations_per_second": 1357.3898020218467
+        },
+        "set_state_same": {
+          "n": 5,
+          "first_ms": 217.07524987868965,
+          "median_ms": 211.8139169178903,
+          "p95_ms": 251.27401719801128,
+          "max_ms": 259.8237090278417,
+          "operations_per_second": 4.721125101461818
+        },
+        "set_state_physical_change": {
+          "n": 5,
+          "first_ms": 212.06895797513425,
+          "median_ms": 254.94616688229144,
+          "p95_ms": 261.6588748525828,
+          "max_ms": 261.72962482087314,
+          "operations_per_second": 3.922396685656779
+        }
+      },
+      "warm": {
+        "step": {
+          "n": 30,
+          "first_ms": 1.5127910301089287,
+          "median_ms": 1.4005625853314996,
+          "p95_ms": 1.5049912501126528,
+          "max_ms": 1.5899171121418476,
+          "operations_per_second": 713.9987962503723
+        },
+        "get_state": {
+          "n": 30,
+          "first_ms": 0.6765411235392094,
+          "median_ms": 0.7051459979265928,
+          "p95_ms": 0.7519750157371162,
+          "max_ms": 0.8571671787649393,
+          "operations_per_second": 1418.1460335028407
+        },
+        "set_state_same": {
+          "n": 30,
+          "first_ms": 210.4824159760028,
+          "median_ms": 211.75245894119143,
+          "p95_ms": 262.9878107807599,
+          "max_ms": 280.16675007529557,
+          "operations_per_second": 4.722495337245284,
+          "relative_to_step": 151.19100078706705,
+          "individual_world_restores_per_second": 4.722495337245284
+        },
+        "set_state_physical_change": {
+          "n": 30,
+          "first_ms": 259.09824995324016,
+          "median_ms": 212.26122905500233,
+          "p95_ms": 265.1348187588155,
+          "max_ms": 267.054749885574,
+          "operations_per_second": 4.711175962054164,
+          "relative_to_step": 151.55426203589622,
+          "individual_world_restores_per_second": 4.711175962054164
+        }
+      },
+      "instrumented_restore_stages": {
+        "validation": {
+          "n": 10,
+          "first_ms": 1.164417015388608,
+          "median_ms": 1.1965000303462148,
+          "p95_ms": 1.2791854911483824,
+          "max_ms": 1.2870421633124352,
+          "operations_per_second": 835.7709775491136,
+          "calls_per_restore": 1.0,
+          "mean_ms_per_batched_restore": 1.2078539934009314
+        },
+        "constructor": {
+          "n": 10,
+          "first_ms": 63.57404193840921,
+          "median_ms": 62.24400002975017,
+          "p95_ms": 66.66176455328241,
+          "max_ms": 69.18808305636048,
+          "operations_per_second": 16.06580553181093,
+          "calls_per_restore": 1.0,
+          "mean_ms_per_batched_restore": 63.104250049218535
+        },
+        "compilation": {
+          "n": 10,
+          "first_ms": 117.55658290348947,
+          "median_ms": 109.36214600224048,
+          "p95_ms": 114.78038310306147,
+          "max_ms": 117.55658290348947,
+          "operations_per_second": 9.1439317584305,
+          "calls_per_restore": 1.0,
+          "mean_ms_per_batched_restore": 110.18054592423141
+        },
+        "state_row_copy": {
+          "n": 10,
+          "first_ms": 0.4363749176263809,
+          "median_ms": 0.43641647789627314,
+          "p95_ms": 0.4695541691035032,
+          "max_ms": 0.4700419958680868,
+          "operations_per_second": 2291.38919048258,
+          "calls_per_restore": 1.0,
+          "mean_ms_per_batched_restore": 0.43893340043723583
+        },
+        "other_reconstruction_and_swap_mean_ms": 56.60814167931676
+      },
+      "tensordict_clone": {
+        "n": 100,
+        "first_ms": 0.3650838043540716,
+        "median_ms": 0.2860624808818102,
+        "p95_ms": 0.31600161455571646,
+        "max_ms": 0.3650838043540716,
+        "operations_per_second": 3495.739801030254
+      },
+      "exact_restores": true
+    },
+    {
+      "family": "Scene",
+      "batch": 3,
+      "cold_definition": "First public operation of its kind on each of five newly constructed adapters, in this already-loaded process; not fresh-process import timing.",
+      "constructor": {
+        "n": 5,
+        "first_ms": 691.1853749770671,
+        "median_ms": 691.1853749770671,
+        "p95_ms": 827.9323833994567,
+        "max_ms": 849.3158749770373,
+        "operations_per_second": 1.446789871723167
+      },
+      "cold": {
+        "step": {
+          "n": 5,
+          "first_ms": 3.908208105713129,
+          "median_ms": 3.9250829722732306,
+          "p95_ms": 4.138208506628871,
+          "max_ms": 4.180166870355606,
+          "operations_per_second": 254.771684334827
+        },
+        "get_state": {
+          "n": 5,
+          "first_ms": 1.7770000267773867,
+          "median_ms": 1.7788750119507313,
+          "p95_ms": 1.8437499646097422,
+          "max_ms": 1.8472499214112759,
+          "operations_per_second": 562.1530423901961
+        },
+        "set_state_same": {
+          "n": 5,
+          "first_ms": 706.720249960199,
+          "median_ms": 706.720249960199,
+          "p95_ms": 765.5944410245866,
+          "max_ms": 777.393541065976,
+          "operations_per_second": 1.4149870476420026
+        },
+        "set_state_physical_change": {
+          "n": 5,
+          "first_ms": 708.3205410744995,
+          "median_ms": 721.2138331960887,
+          "p95_ms": 734.6925417426974,
+          "max_ms": 737.1744168922305,
+          "operations_per_second": 1.386551330509648
+        }
+      },
+      "warm": {
+        "step": {
+          "n": 30,
+          "first_ms": 3.881333861500025,
+          "median_ms": 3.752666525542736,
+          "p95_ms": 3.9417035644873972,
+          "max_ms": 3.946583019569516,
+          "operations_per_second": 266.4771818101725
+        },
+        "get_state": {
+          "n": 30,
+          "first_ms": 1.7798750195652246,
+          "median_ms": 1.7713750712573528,
+          "p95_ms": 1.885060907807201,
+          "max_ms": 1.9249999895691872,
+          "operations_per_second": 564.5331788993635
+        },
+        "set_state_same": {
+          "n": 30,
+          "first_ms": 773.6227079294622,
+          "median_ms": 705.6228959700093,
+          "p95_ms": 783.148206002079,
+          "max_ms": 814.4710001070052,
+          "operations_per_second": 1.4171875738602768,
+          "relative_to_step": 188.0324007388206,
+          "individual_world_restores_per_second": 4.2515627215808305
+        },
+        "set_state_physical_change": {
+          "n": 30,
+          "first_ms": 746.3845000602305,
+          "median_ms": 702.1400625817478,
+          "p95_ms": 759.7572001046501,
+          "max_ms": 783.0816667992622,
+          "operations_per_second": 1.4242172656022933,
+          "relative_to_step": 187.1043051128023,
+          "individual_world_restores_per_second": 4.27265179680688
+        }
+      },
+      "instrumented_restore_stages": {
+        "validation": {
+          "n": 10,
+          "first_ms": 2.103665843605995,
+          "median_ms": 2.176729030907154,
+          "p95_ms": 2.352641336619854,
+          "max_ms": 2.3681658785790205,
+          "operations_per_second": 459.4049079150881,
+          "calls_per_restore": 1.0,
+          "mean_ms_per_batched_restore": 2.1801247959956527
+        },
+        "constructor": {
+          "n": 30,
+          "first_ms": 63.88025009073317,
+          "median_ms": 63.47827101126313,
+          "p95_ms": 69.43910422269255,
+          "max_ms": 72.26920803077519,
+          "operations_per_second": 15.753422140665538,
+          "calls_per_restore": 3.0,
+          "mean_ms_per_batched_restore": 193.2180375792086
+        },
+        "compilation": {
+          "n": 30,
+          "first_ms": 117.47604119591415,
+          "median_ms": 111.41270853113383,
+          "p95_ms": 118.83525226730852,
+          "max_ms": 137.85695796832442,
+          "operations_per_second": 8.975636740045271,
+          "calls_per_restore": 3.0,
+          "mean_ms_per_batched_restore": 339.36250004917383
+        },
+        "state_row_copy": {
+          "n": 30,
+          "first_ms": 0.4356668796390295,
+          "median_ms": 0.4456250462681055,
+          "p95_ms": 0.4907064139842987,
+          "max_ms": 0.5001670215278864,
+          "operations_per_second": 2244.0390376943956,
+          "calls_per_restore": 3.0,
+          "mean_ms_per_batched_restore": 1.348245912231505
+        },
+        "other_reconstruction_and_swap_mean_ms": 182.15064578689635
+      },
+      "tensordict_clone": {
+        "n": 100,
+        "first_ms": 0.462499912828207,
+        "median_ms": 0.2952085342258215,
+        "p95_ms": 0.3338353824801743,
+        "max_ms": 0.462499912828207,
+        "operations_per_second": 3387.4359446364924
+      },
+      "exact_restores": true
+    }
+  ]
+}
