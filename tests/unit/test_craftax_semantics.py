@@ -163,3 +163,114 @@ def test_independent_instances_and_step_never_calls_set_state(name, monkeypatch)
             b.set_state(torch.zeros((1, 1345)))
         with pytest.raises(ValueError):
             b.set_variation(day_length=10)
+
+
+def test_full_symbolic_preserves_source_values_outside_declared_box():
+    # SWM declares [0,1], but upstream includes books/2 and enchantment enums.
+    # This is an output-contract finding, not permission to clamp observations.
+    source = oracle("CraftaxSymbolic")
+    with se.make("CraftaxSymbolic", device=DEVICE) as env:
+        source.reset(seed=17)
+        state = env.reset(seed=17)
+        state["engine", "inventory", "books"].fill_(4)
+        state["engine", "sword_enchantment"].fill_(2)
+        env.set_state(state)
+        restore_oracle(source, env, state)
+        expected, _, _, _, _ = source.step(0)
+        env.step([0])
+        actual = np.asarray(env._simulator.output_fn(env._simulator.states[0]))
+        np.testing.assert_array_equal(actual, expected)
+        assert actual.shape == (8268,) and actual.dtype == np.float32
+        assert actual.max() >= 2
+
+
+@pytest.mark.parametrize("name", NAMES)
+def test_batch_matches_three_independent_source_instances(name):
+    sources = [oracle(name) for _ in range(3)]
+    with se.make(name, num_envs=3, device=DEVICE) as env:
+        state = env.reset(seed=17)
+        for lane, source in enumerate(sources):
+            source.reset(seed=17 + lane)
+            assert_engine(source, env, state[lane : lane + 1])
+        for actions in [[0, 5, 1], [2, 0, 3], [5, 4, 0]]:
+            expected = [source.step(action) for source, action in zip(sources, actions, strict=True)]
+            result = env.step(actions)
+            for lane, source in enumerate(sources):
+                assert_engine(source, env, result["state"][lane : lane + 1])
+                assert float(result["reward"][lane]) == expected[lane][1]
+                if "Symbolic" in name:
+                    np.testing.assert_array_equal(
+                        np.asarray(env._simulator.output_fn(env._simulator.states[lane])), expected[lane][0]
+                    )
+
+
+@pytest.mark.parametrize("name", NAMES)
+def test_invalid_source_invariants_leave_all_lanes_unchanged(name):
+    with se.make(name, num_envs=3, device=DEVICE) as env:
+        good = env.reset(seed=17)
+        for key, value in [
+            (("rng", "wrapper_key"), 2**32),
+            (("engine", "state_rng"), -1),
+            (("engine", "player_position"), 999),
+            (("engine", "player_direction"), 0),
+            (("engine", "inventory", "wood"), 100),
+            (("engine", "growing_plants_age"), -1),
+        ]:
+            bad = good.clone()
+            bad[key][-1].fill_(value)
+            with pytest.raises(ValueError):
+                env.set_state(bad)
+            assert_state_equal(good, env.get_state())
+        bad = good.clone()
+        bad["engine", "mob_map"][-1].fill_(True)
+        with pytest.raises(ValueError):
+            env.set_state(bad)
+        assert_state_equal(good, env.get_state())
+        if not env.CLASSIC:
+            bad = good.clone()
+            bad["engine", "potion_mapping"][-1].fill_(0)
+            with pytest.raises(ValueError):
+                env.set_state(bad)
+            assert_state_equal(good, env.get_state())
+
+
+@pytest.mark.parametrize("name", ["CraftaxClassicSymbolic", "CraftaxSymbolic"])
+def test_symbolic_order_chunk_nonmutation_and_exhaustive_restore(name):
+    from stable_envs._adapters.craftax import decode
+
+    with se.make(name, num_envs=3, device=DEVICE) as env:
+        state = env.reset(seed=17)
+        snapshots = state.clone()
+
+        def output(batch, chunk):
+            _, decoded = env._simulator.validate(batch)
+            values = []
+            for start in range(0, len(decoded), chunk):
+                values.extend(np.asarray(env._simulator.output_fn(s)) for s in decoded[start : start + chunk])
+            return np.stack(values)
+
+        expected = output(state, 3)
+        np.testing.assert_array_equal(expected, output(state, 1))
+        np.testing.assert_array_equal(expected, output(state, 2))
+        np.testing.assert_array_equal(expected[[2, 0, 1]], output(state[[2, 0, 1]], 2))
+        assert expected.dtype == np.float32
+        assert expected.shape == (3, 1345 if env.CLASSIC else 8268)
+        assert_state_equal(state, snapshots)
+        assert_state_equal(state, env.get_state())
+        with pytest.raises(TypeError):
+            env.set_state(torch.from_numpy(expected))
+        assert_state_equal(state, env.get_state())
+        # Terminal symbolic output remains exact and does not consume either key.
+        source = oracle(name)
+        source.reset(seed=999)
+        with se.make(name, device=DEVICE) as single:
+            single.reset(seed=999)
+            terminal = fixture(single, name, "terminal")
+        restore_oracle(source, env, terminal)
+        expected_terminal = np.asarray(source._env.get_obs(source._state))
+        row = {k: terminal[("engine", *k)][0].cpu().numpy() for k in env._simulator.engine}
+        np.testing.assert_array_equal(
+            expected_terminal, np.asarray(env._simulator.output_fn(decode(env._simulator.template, row)))
+        )
+        assert_state_equal(state, env.get_state())
+    assert env._simulator.states is None and env._simulator.keys == []

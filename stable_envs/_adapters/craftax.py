@@ -7,6 +7,7 @@ import hashlib
 import importlib
 import importlib.metadata
 import json
+import sys
 from functools import lru_cache
 
 import numpy as np
@@ -20,6 +21,10 @@ PROFILE = {
     "flax": "0.12.7",
     "gymnax": "0.0.9",
     "numpy": "2.2.6",
+    "gymnasium": "1.2.3",
+    "chex": "0.1.92",
+    "torch": "2.14.0",
+    "tensordict": "0.14.2",
 }
 
 
@@ -55,9 +60,11 @@ def decode(template, values, prefix=()):
 def check_profile():
     import jax
 
+    if sys.version_info[:2] != (3, 12):
+        raise RuntimeError("Craftax recovery is pinned to Python 3.12")
     for name, version in PROFILE.items():
         actual = importlib.metadata.version(name)
-        if actual != version:
+        if (actual.split("+")[0] if name == "torch" else actual) != version:
             raise RuntimeError(f"Craftax recovery requires {name}=={version}; installed {actual}")
     if jax.config.jax_enable_x64 or jax.config.jax_default_prng_impl != "threefry2x32":
         raise RuntimeError("Craftax requires x64 disabled and the threefry2x32 PRNG")
@@ -119,6 +126,7 @@ class CraftaxAdapter:
             "schema": 1,
             "key_encoding": "legacy uint32 words stored losslessly as int64 in [0, 2**32)",
             "profile": PROFILE,
+            "python": "3.12",
             "classic": classic,
             "pixels": pixels,
             "platform": self.platform,

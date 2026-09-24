@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import torch
+from tensordict import TensorDict
 
 from ..env import Env
 from ..registry import register
@@ -28,7 +29,12 @@ class CraftaxSemantics(Env):
     def __init__(self, num_envs=1, size=None, supersample=1, device="cpu", backend="auto", seed=0):
         from .._adapters.craftax import CraftaxAdapter
 
-        if size is not None and (type(size) is not int or size != self.default_size) or supersample != 1:
+        if (
+            size is not None
+            and (type(size) is not int or size != self.default_size)
+            or type(supersample) is not int
+            or supersample != 1
+        ):
             raise ValueError("Craftax recovery supports only the registered tile size and supersample=1")
         if backend not in {"auto", "jax"}:
             raise ValueError("Craftax semantics delegates to the upstream JAX backend")
@@ -97,8 +103,54 @@ class CraftaxSemantics(Env):
         finally:
             self.set_state(saved)
 
-    def render(self, state=None, **kwargs):
-        raise NotImplementedError("Craftax rendering integration is pending; symbolic variants do not produce frames")
+    def _render_options(self, size=None, supersample=None, backend=None):
+        self._check_open("render")
+        if not self.PIXELS:
+            raise NotImplementedError("Craftax symbolic registrations do not produce pixel frames")
+        if size is not None and (type(size) is not int or size != self.default_size):
+            raise ValueError("Craftax recovery supports only the registered tile size")
+        if supersample is not None and (type(supersample) is not int or supersample != 1):
+            raise ValueError("Craftax recovery supports supersample=1")
+        if backend not in {None, "auto", "jax"}:
+            raise ValueError("Craftax rendering uses the upstream JAX backend")
+
+    @property
+    def frame_spec(self):
+        if not self.PIXELS:
+            raise NotImplementedError("Craftax symbolic registrations do not have a pixel Frame spec")
+        return super().frame_spec
+
+    def to_render_state(self, state=None, *, size=None, supersample=None):
+        from .._adapters.craftax_render import project
+
+        self._render_options(size, supersample)
+        return project(self._simulator, self.get_state() if state is None else state)
+
+    def _pack_render_state(self, state):
+        return self.to_render_state(state)
+
+    def render(self, state=None, *, size=None, supersample=None, backend=None, chunk_size=None, out=None):
+        from .._adapters.craftax_render import render
+
+        self._render_options(size, supersample, backend)
+        if state is None or isinstance(state, TensorDict) and "engine" in state.keys():
+            state = self.to_render_state(state)
+        result = render(self._simulator, state, chunk_size)
+        if out is not None:
+            if (
+                not torch.is_tensor(out)
+                or out.shape != result.shape
+                or out.dtype != result.dtype
+                or out.device != result.device
+                or not out.is_contiguous()
+            ):
+                raise ValueError("out must match the contiguous uint8 frame batch on the environment device")
+            out.copy_(result)
+            return out
+        return result
+
+    def _render(self, state=None, **kwargs):
+        return self.render(state, **kwargs)
 
     def sample_states(self, batch, rng=None):
         raise NotImplementedError("Craftax snapshot sampling requires an explicit upstream trajectory")
