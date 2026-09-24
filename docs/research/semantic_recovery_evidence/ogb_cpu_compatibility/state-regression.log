@@ -1,0 +1,43 @@
+......                                                                   [100%]
+=============================== warnings summary ===============================
+../../../Users/samib/stable-worldmodel/stable_worldmodel/envs/__init__.py:215
+  /Users/samib/stable-worldmodel/stable_worldmodel/envs/__init__.py:215: UserWarning: ale-py not found; ALE/* envs are unavailable. Install with: pip install 'stable-worldmodel[env]' or pip install ale-py.
+    from stable_worldmodel.envs import ale  # noqa: F401
+
+tests/unit/test_ogbench_manipulation_cpu.py::test_state_roundtrip_reset_replay_and_atomic_validation[Cube]
+tests/unit/test_ogbench_manipulation_cpu.py::test_state_roundtrip_reset_replay_and_atomic_validation[Scene]
+tests/unit/test_ogbench_manipulation_cpu.py::test_variation_anchors_model_restore_and_rejections[Cube]
+tests/unit/test_ogbench_manipulation_cpu.py::test_variation_anchors_model_restore_and_rejections[Scene]
+tests/unit/test_ogbench_manipulation_cpu.py::test_solver_and_cached_pose_fields_are_behaviorally_relevant[Cube]
+tests/unit/test_ogbench_manipulation_cpu.py::test_solver_and_cached_pose_fields_are_behaviorally_relevant[Scene]
+  /private/tmp/fetch-authority-swm-lock/lib/python3.12/site-packages/gymnasium/spaces/box.py:236: UserWarning: [33mWARN: Box low's precision lowered by casting to float32, current low.dtype=float64[0m
+    gym.logger.warn(
+
+tests/unit/test_ogbench_manipulation_cpu.py::test_state_roundtrip_reset_replay_and_atomic_validation[Cube]
+tests/unit/test_ogbench_manipulation_cpu.py::test_state_roundtrip_reset_replay_and_atomic_validation[Scene]
+tests/unit/test_ogbench_manipulation_cpu.py::test_variation_anchors_model_restore_and_rejections[Cube]
+tests/unit/test_ogbench_manipulation_cpu.py::test_variation_anchors_model_restore_and_rejections[Scene]
+tests/unit/test_ogbench_manipulation_cpu.py::test_solver_and_cached_pose_fields_are_behaviorally_relevant[Cube]
+tests/unit/test_ogbench_manipulation_cpu.py::test_solver_and_cached_pose_fields_are_behaviorally_relevant[Scene]
+  /private/tmp/fetch-authority-swm-lock/lib/python3.12/site-packages/gymnasium/spaces/box.py:306: UserWarning: [33mWARN: Box high's precision lowered by casting to float32, current high.dtype=float64[0m
+    gym.logger.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+==================================== PASSES ====================================
+______ test_solver_and_cached_pose_fields_are_behaviorally_relevant[Cube] ______
+----------------------------- Captured stdout call -----------------------------
+WARMSTART_SENSITIVITY Cube 1.3010426069826053e-18
+_____ test_solver_and_cached_pose_fields_are_behaviorally_relevant[Scene] ______
+----------------------------- Captured stdout call -----------------------------
+WARMSTART_SENSITIVITY Scene 0.00014860199580035705
+------------------------------ stable-envs safety ------------------------------
+resources: 0 EGL contexts created, 0 released, 0 live (peak 0); renderers 0 created / 0 closed
+node: cis1b1zs2j3.ad.brown.edu slurm=? reason=none reference-renderer={}
+=========================== short test summary info ============================
+PASSED tests/unit/test_ogbench_manipulation_cpu.py::test_state_roundtrip_reset_replay_and_atomic_validation[Cube]
+PASSED tests/unit/test_ogbench_manipulation_cpu.py::test_state_roundtrip_reset_replay_and_atomic_validation[Scene]
+PASSED tests/unit/test_ogbench_manipulation_cpu.py::test_variation_anchors_model_restore_and_rejections[Cube]
+PASSED tests/unit/test_ogbench_manipulation_cpu.py::test_variation_anchors_model_restore_and_rejections[Scene]
+PASSED tests/unit/test_ogbench_manipulation_cpu.py::test_solver_and_cached_pose_fields_are_behaviorally_relevant[Cube]
+PASSED tests/unit/test_ogbench_manipulation_cpu.py::test_solver_and_cached_pose_fields_are_behaviorally_relevant[Scene]
+6 passed, 59 deselected, 13 warnings in 22.52s

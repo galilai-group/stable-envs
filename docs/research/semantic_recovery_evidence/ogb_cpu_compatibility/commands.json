@@ -1,0 +1,195 @@
+[
+  {
+    "log": "cpu-tests.log",
+    "argv": [
+      "/private/tmp/ogb-manip-authority-swm-lock/bin/python",
+      "-c",
+      "import sys; sys.path.append('/private/tmp/stable-envs-semantic-recovery/.venv/lib/python3.12/site-packages'); import pytest; sys.exit(pytest.main(['-q', '-rA', 'tests/unit/test_ogbench_manipulation_cpu.py']))"
+    ],
+    "cwd": "/private/tmp/stable-envs-semantic-recovery",
+    "environment": {
+      "MUJOCO_GL": "disable",
+      "SDL_VIDEODRIVER": "dummy",
+      "PYTHONPATH": "/Users/samib/stable-worldmodel:."
+    },
+    "returncode": 0,
+    "seconds": 110.61
+  },
+  {
+    "log": "shared-tests.log",
+    "argv": [
+      "/private/tmp/stable-envs-semantic-recovery/.venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "tests/unit/test_full_state_contract.py",
+      "tests/unit/test_semantic_harness.py",
+      "tests/unit/test_replacement_readiness.py",
+      "tests/unit/test_swm_matrix.py",
+      "tests/unit/test_repo_contracts.py"
+    ],
+    "cwd": "/private/tmp/stable-envs-semantic-recovery",
+    "environment": {
+      "MUJOCO_GL": "disable",
+      "SDL_VIDEODRIVER": "dummy",
+      "PYTHONPATH": "/Users/samib/stable-worldmodel:."
+    },
+    "returncode": 0,
+    "seconds": 5.23
+  },
+  {
+    "log": "family-structure-tests.log",
+    "argv": [
+      "/private/tmp/stable-envs-semantic-recovery/.venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "tests/unit/test_envs_ogbench.py",
+      "-k",
+      "not lifecycle and not dataset and not private_projection and not renderer_only and not private_render"
+    ],
+    "cwd": "/private/tmp/stable-envs-semantic-recovery",
+    "environment": {
+      "MUJOCO_GL": "disable",
+      "SDL_VIDEODRIVER": "dummy",
+      "PYTHONPATH": "/Users/samib/stable-worldmodel:."
+    },
+    "returncode": 0,
+    "seconds": 3.118
+  },
+  {
+    "log": "ruff.log",
+    "argv": [
+      "/private/tmp/stable-envs-semantic-recovery/.venv/bin/ruff",
+      "check",
+      "stable_envs/_adapters/ogbench_manipulation.py",
+      "stable_envs/_adapters/ogbench_manipulation_compat.py",
+      "stable_envs/envs/ogbench/manipulation_semantics.py",
+      "stable_envs/envs/ogbench/__init__.py",
+      "tests/unit/test_ogbench_manipulation_cpu.py",
+      "tests/unit/test_envs_ogbench.py",
+      "docs/research/semantic_recovery_evidence/ogb_cpu_compatibility/audit.py",
+      "docs/research/semantic_recovery_evidence/ogb_cpu_compatibility/run_checks.py"
+    ],
+    "cwd": "/private/tmp/stable-envs-semantic-recovery",
+    "environment": {
+      "MUJOCO_GL": "disable",
+      "SDL_VIDEODRIVER": "dummy",
+      "PYTHONPATH": "/Users/samib/stable-worldmodel:."
+    },
+    "returncode": 0,
+    "seconds": 0.053
+  },
+  {
+    "log": "format.log",
+    "argv": [
+      "/private/tmp/stable-envs-semantic-recovery/.venv/bin/ruff",
+      "format",
+      "--check",
+      "stable_envs/_adapters/ogbench_manipulation.py",
+      "stable_envs/_adapters/ogbench_manipulation_compat.py",
+      "stable_envs/envs/ogbench/manipulation_semantics.py",
+      "stable_envs/envs/ogbench/__init__.py",
+      "tests/unit/test_ogbench_manipulation_cpu.py",
+      "tests/unit/test_envs_ogbench.py",
+      "docs/research/semantic_recovery_evidence/ogb_cpu_compatibility/audit.py",
+      "docs/research/semantic_recovery_evidence/ogb_cpu_compatibility/run_checks.py"
+    ],
+    "cwd": "/private/tmp/stable-envs-semantic-recovery",
+    "environment": {
+      "MUJOCO_GL": "disable",
+      "SDL_VIDEODRIVER": "dummy",
+      "PYTHONPATH": "/Users/samib/stable-worldmodel:."
+    },
+    "returncode": 0,
+    "seconds": 0.013
+  },
+  {
+    "log": "docs.log",
+    "argv": [
+      "/private/tmp/stable-envs-semantic-recovery/.venv/bin/python",
+      "-m",
+      "mkdocs",
+      "build",
+      "--strict",
+      "--site-dir",
+      "/private/tmp/stable-envs-ogb-cpu-site"
+    ],
+    "cwd": "/private/tmp/stable-envs-semantic-recovery",
+    "environment": {
+      "MUJOCO_GL": "disable",
+      "SDL_VIDEODRIVER": "dummy",
+      "PYTHONPATH": "/Users/samib/stable-worldmodel:."
+    },
+    "returncode": 0,
+    "seconds": 6.48
+  },
+  {
+    "log": "whitespace.log",
+    "argv": [
+      "git",
+      "diff",
+      "--cached",
+      "--check",
+      "--",
+      ".",
+      ":(exclude)**/*.log"
+    ],
+    "cwd": "/private/tmp/stable-envs-semantic-recovery",
+    "environment": {
+      "MUJOCO_GL": "disable",
+      "SDL_VIDEODRIVER": "dummy",
+      "PYTHONPATH": "/Users/samib/stable-worldmodel:."
+    },
+    "returncode": 0,
+    "seconds": 0.019
+  },
+  {
+    "log": "audit.log",
+    "argv": [
+      "/private/tmp/ogb-manip-authority-swm-lock/bin/python",
+      "docs/research/semantic_recovery_evidence/ogb_cpu_compatibility/audit.py"
+    ],
+    "cwd": "/private/tmp/stable-envs-semantic-recovery",
+    "environment": {
+      "MUJOCO_GL": "disable",
+      "SDL_VIDEODRIVER": "dummy",
+      "PYTHONPATH": "/Users/samib/stable-worldmodel:."
+    },
+    "returncode": 0,
+    "seconds": 6.781
+  },
+  {
+    "log": "audit-lint.log",
+    "argv": [
+      ".venv/bin/ruff",
+      "check",
+      "docs/research/semantic_recovery_evidence/ogb_cpu_compatibility/audit.py"
+    ],
+    "cwd": "/private/tmp/stable-envs-semantic-recovery",
+    "environment": {
+      "MUJOCO_GL": "disable",
+      "SDL_VIDEODRIVER": "dummy",
+      "PYTHONPATH": "/Users/samib/stable-worldmodel:."
+    },
+    "returncode": 0,
+    "seconds": 0.014
+  },
+  {
+    "log": "audit-format.log",
+    "argv": [
+      ".venv/bin/ruff",
+      "format",
+      "--check",
+      "docs/research/semantic_recovery_evidence/ogb_cpu_compatibility/audit.py"
+    ],
+    "cwd": "/private/tmp/stable-envs-semantic-recovery",
+    "environment": {
+      "MUJOCO_GL": "disable",
+      "SDL_VIDEODRIVER": "dummy",
+      "PYTHONPATH": "/Users/samib/stable-worldmodel:."
+    },
+    "returncode": 0,
+    "seconds": 0.012
+  }
+]

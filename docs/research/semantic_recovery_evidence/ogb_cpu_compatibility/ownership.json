@@ -1,0 +1,1758 @@
+{
+  "production_files": {
+    "stable_envs/_adapters/ogbench_manipulation_compat.py": {
+      "sha256": "861d0683ada72c2266fdec537dbf9604ba3028faa8d3f1adcd7e17b28e0736b5",
+      "physical_lines": 302
+    },
+    "stable_envs/_adapters/ogbench_manipulation.py": {
+      "sha256": "fc77f8beb8366539026cf9b64f3d8756dad054edd0e53a92c994dd368d9c94de",
+      "physical_lines": 402
+    },
+    "stable_envs/envs/ogbench/manipulation_semantics.py": {
+      "sha256": "4b46de5fccd194855e3d7273d959fb538cc9d6c485eb30161f83455ce3226bb5",
+      "physical_lines": 210
+    }
+  },
+  "all_production_methods": [
+    {
+      "file": "stable_envs/_adapters/ogbench_manipulation_compat.py",
+      "class": null,
+      "name": "nodes",
+      "line": 27,
+      "physical_lines": 5,
+      "normalized_lines": 5,
+      "method_sha256": "f96b0a28cc6d71d430fad94b95ddc07253ec5cf9457c5162c276fe2bebe55918"
+    },
+    {
+      "file": "stable_envs/_adapters/ogbench_manipulation_compat.py",
+      "class": null,
+      "name": "variation_tree",
+      "line": 34,
+      "physical_lines": 45,
+      "normalized_lines": 10,
+      "method_sha256": "06933f18f4b65e8788b93984792c66d03a5c15b65aaee0a0f5e701a2d5a700a3"
+    },
+    {
+      "file": "stable_envs/_adapters/ogbench_manipulation_compat.py",
+      "class": "Compatibility",
+      "name": "__init__",
+      "line": 82,
+      "physical_lines": 23,
+      "normalized_lines": 17,
+      "method_sha256": "911fcdd0acf2516fc9b3bb8f19f647a4bbb1eab808892c42ea208a3dcdd36c88"
+    },
+    {
+      "file": "stable_envs/_adapters/ogbench_manipulation_compat.py",
+      "class": "Compatibility",
+      "name": "_seed_owned",
+      "line": 106,
+      "physical_lines": 9,
+      "normalized_lines": 9,
+      "method_sha256": "dab6cc30ee626df663c47d97645cda0b611158857605753be9e2dfd3420057cb"
+    },
+    {
+      "file": "stable_envs/_adapters/ogbench_manipulation_compat.py",
+      "class": "Compatibility",
+      "name": "action_space",
+      "line": 117,
+      "physical_lines": 5,
+      "normalized_lines": 6,
+      "method_sha256": "e6fcd20f4e19f6c0d11bacd6c337f77776b5ff3483b80110470ad2fb55b0c80a"
+    },
+    {
+      "file": "stable_envs/_adapters/ogbench_manipulation_compat.py",
+      "class": "Compatibility",
+      "name": "validate_options",
+      "line": 123,
+      "physical_lines": 22,
+      "normalized_lines": 22,
+      "method_sha256": "21951d5544bc6e36800b27af9498dc1935d8e96c9f7918e89fd8cfcb4ebda53e"
+    },
+    {
+      "file": "stable_envs/_adapters/ogbench_manipulation_compat.py",
+      "class": "Compatibility",
+      "name": "validate_task",
+      "line": 146,
+      "physical_lines": 33,
+      "normalized_lines": 24,
+      "method_sha256": "8ae57d68a43555754d6d7d862867cf3245d1d97ee00b056444e04899f8116943"
+    },
+    {
+      "file": "stable_envs/_adapters/ogbench_manipulation_compat.py",
+      "class": "Compatibility",
+      "name": "reset",
+      "line": 180,
+      "physical_lines": 21,
+      "normalized_lines": 16,
+      "method_sha256": "1f8f288557ac0a85ecb0ab7fa472f7dc6a028e900bf26c583830027ad1d936ca"
+    },
+    {
+      "file": "stable_envs/_adapters/ogbench_manipulation_compat.py",
+      "class": "Compatibility",
+      "name": "initialize_arm",
+      "line": 202,
+      "physical_lines": 12,
+      "normalized_lines": 11,
+      "method_sha256": "bff429ac702d3c2a3ae07748b294ce6ac576f2f8d8a5081feb90b55b81b62a1f"
+    },
+    {
+      "file": "stable_envs/_adapters/ogbench_manipulation_compat.py",
+      "class": "Compatibility",
+      "name": "initialize_episode",
+      "line": 215,
+      "physical_lines": 5,
+      "normalized_lines": 5,
+      "method_sha256": "771b38c7e398c011481ee73f5cad4b28e8242cf760178a810e85e207d404b0be"
+    },
+    {
+      "file": "stable_envs/_adapters/ogbench_manipulation_compat.py",
+      "class": "Compatibility",
+      "name": "_cube_colors_from_variation",
+      "line": 221,
+      "physical_lines": 6,
+      "normalized_lines": 6,
+      "method_sha256": "787a3c3d8f687874822428f9dd97cf58313087f87a9f7ac79b77ffd1f525ae7e"
+    },
+    {
+      "file": "stable_envs/_adapters/ogbench_manipulation_compat.py",
+      "class": "Compatibility",
+      "name": "post_step",
+      "line": 228,
+      "physical_lines": 3,
+      "normalized_lines": 3,
+      "method_sha256": "381e9f1832b2e31707fafae383d7c22f9b40dc98798508d5d09d7eebd40ac7d2"
+    },
+    {
+      "file": "stable_envs/_adapters/ogbench_manipulation_compat.py",
+      "class": "Compatibility",
+      "name": "get_reset_info",
+      "line": 232,
+      "physical_lines": 5,
+      "normalized_lines": 5,
+      "method_sha256": "c080d57eb058c1e0842385c0b45d3ba51981ae64d5664eca1742f6bb21b60f46"
+    },
+    {
+      "file": "stable_envs/_adapters/ogbench_manipulation_compat.py",
+      "class": "Compatibility",
+      "name": "get_step_info",
+      "line": 238,
+      "physical_lines": 2,
+      "normalized_lines": 2,
+      "method_sha256": "bb673edb90cf1dd01b5752bac743457f4b59f965ee56cb06d8b7d239999f8961"
+    },
+    {
+      "file": "stable_envs/_adapters/ogbench_manipulation_compat.py",
+      "class": "Compatibility",
+      "name": "_output_info",
+      "line": 241,
+      "physical_lines": 3,
+      "normalized_lines": 3,
+      "method_sha256": "cfc61d1d5d4dc74e4497bfaaec1c9a8db92dbd07581891e7fc0e96fc75528ee2"
+    },
+    {
+      "file": "stable_envs/_adapters/ogbench_manipulation_compat.py",
+      "class": "Compatibility",
+      "name": "modify_mjcf_model",
+      "line": 245,
+      "physical_lines": 38,
+      "normalized_lines": 37,
+      "method_sha256": "60c0f5abb42f565476ee2f8241c1a40d239c3f8d3c17e944e8fde7a64912757b"
+    },
+    {
+      "file": "stable_envs/_adapters/ogbench_manipulation_compat.py",
+      "class": "Compatibility",
+      "name": "compile_model_and_data",
+      "line": 284,
+      "physical_lines": 3,
+      "normalized_lines": 3,
+      "method_sha256": "87338a09090ccca0b3ca35ba3752850fee9eb5ffb17117340d1f3ca4fae9aff2"
+    },
+    {
+      "file": "stable_envs/_adapters/ogbench_manipulation_compat.py",
+      "class": "CompatibleScene",
+      "name": "_apply_button_states",
+      "line": 296,
+      "physical_lines": 7,
+      "normalized_lines": 7,
+      "method_sha256": "6ce95dc511512f3f581615d762b2d3c6c4f905c92449dc2ab302eefeeb77cee5"
+    },
+    {
+      "file": "stable_envs/_adapters/ogbench_manipulation.py",
+      "class": null,
+      "name": "pcg_encode",
+      "line": 35,
+      "physical_lines": 8,
+      "normalized_lines": 3,
+      "method_sha256": "300a087046147adb0d57ac322f3fc95be5ddff691064373ffee7cc96a77fe43d"
+    },
+    {
+      "file": "stable_envs/_adapters/ogbench_manipulation.py",
+      "class": null,
+      "name": "pcg_decode",
+      "line": 45,
+      "physical_lines": 7,
+      "normalized_lines": 7,
+      "method_sha256": "f936e8c847b08fa36bbbbbe312a079f32f9f78caed0816653893d4a0a6ace7df"
+    },
+    {
+      "file": "stable_envs/_adapters/ogbench_manipulation.py",
+      "class": null,
+      "name": "rngs",
+      "line": 54,
+      "physical_lines": 11,
+      "normalized_lines": 2,
+      "method_sha256": "b8a1ca3f0f998c7b2685b324e0c6ffd1cd2406a363ad410942578c8ddefd2ef9"
+    },
+    {
+      "file": "stable_envs/_adapters/ogbench_manipulation.py",
+      "class": null,
+      "name": "site_ids",
+      "line": 67,
+      "physical_lines": 7,
+      "normalized_lines": 7,
+      "method_sha256": "46ed381146dd53000ddcdaece888b5fe5d5adb8e3993e8233673eb5c9aa35466"
+    },
+    {
+      "file": "stable_envs/_adapters/ogbench_manipulation.py",
+      "class": null,
+      "name": "task_values",
+      "line": 76,
+      "physical_lines": 12,
+      "normalized_lines": 9,
+      "method_sha256": "72617b0f5fc440b587e329914e346aad9649bbe0371825b4e66fed418d09b995"
+    },
+    {
+      "file": "stable_envs/_adapters/ogbench_manipulation.py",
+      "class": null,
+      "name": "task_payload",
+      "line": 90,
+      "physical_lines": 11,
+      "normalized_lines": 10,
+      "method_sha256": "eec4c192623519a63f5686690febd7b0854b3fbf2b36f76d3b1c7ee30936a984"
+    },
+    {
+      "file": "stable_envs/_adapters/ogbench_manipulation.py",
+      "class": "OGBManipulationAdapter",
+      "name": "__init__",
+      "line": 106,
+      "physical_lines": 18,
+      "normalized_lines": 12,
+      "method_sha256": "55abbc72a3c059aa9634ce5bdd33bb92139b68c2b12594d8608f068b084c4912"
+    },
+    {
+      "file": "stable_envs/_adapters/ogbench_manipulation.py",
+      "class": "OGBManipulationAdapter",
+      "name": "_check_open",
+      "line": 125,
+      "physical_lines": 3,
+      "normalized_lines": 3,
+      "method_sha256": "207a4468e5b46cac4bd69092e75e11296f0402d2373e61720c4ca8711a3bd4a0"
+    },
+    {
+      "file": "stable_envs/_adapters/ogbench_manipulation.py",
+      "class": "OGBManipulationAdapter",
+      "name": "reset",
+      "line": 129,
+      "physical_lines": 8,
+      "normalized_lines": 8,
+      "method_sha256": "101b5770db57494130167e3cfdc88c3c47b643ee2e74402f1bd6a7414091bca4"
+    },
+    {
+      "file": "stable_envs/_adapters/ogbench_manipulation.py",
+      "class": "OGBManipulationAdapter",
+      "name": "_row",
+      "line": 138,
+      "physical_lines": 56,
+      "normalized_lines": 30,
+      "method_sha256": "b48d33308448a385769160dc6d3b75fcb4c1ab58169483a89c232e2914abe719"
+    },
+    {
+      "file": "stable_envs/_adapters/ogbench_manipulation.py",
+      "class": "OGBManipulationAdapter",
+      "name": "get_state",
+      "line": 195,
+      "physical_lines": 3,
+      "normalized_lines": 3,
+      "method_sha256": "bd339909c3f9def8fe7dfaa39cbb98404230518ba8540bbf9619380acdef3620"
+    },
+    {
+      "file": "stable_envs/_adapters/ogbench_manipulation.py",
+      "class": "OGBManipulationAdapter",
+      "name": "validate",
+      "line": 199,
+      "physical_lines": 80,
+      "normalized_lines": 56,
+      "method_sha256": "83178430c38376456e9d1b39fa16b8bd8ee697fe77d06ed970ca4b7face7c363"
+    },
+    {
+      "file": "stable_envs/_adapters/ogbench_manipulation.py",
+      "class": "OGBManipulationAdapter",
+      "name": "_restore",
+      "line": 280,
+      "physical_lines": 65,
+      "normalized_lines": 53,
+      "method_sha256": "b319a27888173b33a0ec7fe7ad734da76458cda7d8999142199a300fe75ca35a"
+    },
+    {
+      "file": "stable_envs/_adapters/ogbench_manipulation.py",
+      "class": "OGBManipulationAdapter",
+      "name": "set_state",
+      "line": 346,
+      "physical_lines": 14,
+      "normalized_lines": 14,
+      "method_sha256": "84c88dd2e149177870c4454f49f44221be7e0eacb5f5f4a828c036d173d47d9f"
+    },
+    {
+      "file": "stable_envs/_adapters/ogbench_manipulation.py",
+      "class": "OGBManipulationAdapter",
+      "name": "configure",
+      "line": 361,
+      "physical_lines": 12,
+      "normalized_lines": 12,
+      "method_sha256": "5fbe7b84f35ad67e848bd4bf3fa947a08002957d0dd517f8bb0f2e7707054f06"
+    },
+    {
+      "file": "stable_envs/_adapters/ogbench_manipulation.py",
+      "class": "OGBManipulationAdapter",
+      "name": "step",
+      "line": 374,
+      "physical_lines": 23,
+      "normalized_lines": 9,
+      "method_sha256": "cb1d2e777c6da009f261cb2f27aae0613219c15c145687288b602336c9392d20"
+    },
+    {
+      "file": "stable_envs/_adapters/ogbench_manipulation.py",
+      "class": "OGBManipulationAdapter",
+      "name": "close",
+      "line": 398,
+      "physical_lines": 5,
+      "normalized_lines": 5,
+      "method_sha256": "cb3526e10243b28b4f8fe6b535bb54e96837701cc54932115964ea4f04c4390e"
+    },
+    {
+      "file": "stable_envs/envs/ogbench/manipulation_semantics.py",
+      "class": "ManipulationSemantics",
+      "name": "__init__",
+      "line": 22,
+      "physical_lines": 26,
+      "normalized_lines": 10,
+      "method_sha256": "d62fa50b2bc871389036463dfd85cbf4b5cbb24b830202b1487ebf0880dbd72a"
+    },
+    {
+      "file": "stable_envs/envs/ogbench/manipulation_semantics.py",
+      "class": "ManipulationSemantics",
+      "name": "make_variation_space",
+      "line": 49,
+      "physical_lines": 8,
+      "normalized_lines": 7,
+      "method_sha256": "a1d2d24c4eb5f1ceed9ba19a3ffe70f795e40f76366c47b9b743021bcf7192e1"
+    },
+    {
+      "file": "stable_envs/envs/ogbench/manipulation_semantics.py",
+      "class": "ManipulationSemantics",
+      "name": "_sync_style",
+      "line": 58,
+      "physical_lines": 15,
+      "normalized_lines": 5,
+      "method_sha256": "0233d2eb3743bee298bf45db9664cbce9a98a31c0037b7197dd8988c9fd55fad"
+    },
+    {
+      "file": "stable_envs/envs/ogbench/manipulation_semantics.py",
+      "class": "ManipulationSemantics",
+      "name": "_layout",
+      "line": 74,
+      "physical_lines": 9,
+      "normalized_lines": 3,
+      "method_sha256": "e69898cd922efee159ef19661ade5706d93f09cbd4d6cf458e8441d26a85faa9"
+    },
+    {
+      "file": "stable_envs/envs/ogbench/manipulation_semantics.py",
+      "class": "ManipulationSemantics",
+      "name": "_layout_dtypes",
+      "line": 84,
+      "physical_lines": 2,
+      "normalized_lines": 2,
+      "method_sha256": "e7e2decc360419dc1b0b6e466c5cc215b6481fb9d851ad12c723eab72f0ed229"
+    },
+    {
+      "file": "stable_envs/envs/ogbench/manipulation_semantics.py",
+      "class": "ManipulationSemantics",
+      "name": "state_spec",
+      "line": 88,
+      "physical_lines": 8,
+      "normalized_lines": 9,
+      "method_sha256": "ea9629c14af83aad136b50c2cc4a780c52b28adcb3a2f3d20b6d2be623b02618"
+    },
+    {
+      "file": "stable_envs/envs/ogbench/manipulation_semantics.py",
+      "class": "ManipulationSemantics",
+      "name": "reset",
+      "line": 97,
+      "physical_lines": 5,
+      "normalized_lines": 5,
+      "method_sha256": "507ff2fb93883fdeacabb7c2c399e40ca941f4986acd31261f77bcb90588c22b"
+    },
+    {
+      "file": "stable_envs/envs/ogbench/manipulation_semantics.py",
+      "class": "ManipulationSemantics",
+      "name": "get_state",
+      "line": 103,
+      "physical_lines": 3,
+      "normalized_lines": 3,
+      "method_sha256": "00ceccc064c747693741e819f01c8e9f55966e27c7eb28f82ff7eb16a9db467c"
+    },
+    {
+      "file": "stable_envs/envs/ogbench/manipulation_semantics.py",
+      "class": "ManipulationSemantics",
+      "name": "set_state",
+      "line": 107,
+      "physical_lines": 4,
+      "normalized_lines": 4,
+      "method_sha256": "bde2aa4146bb441ab3e5b56da211ea9807d7d4cb13987067401394fd85a015c2"
+    },
+    {
+      "file": "stable_envs/envs/ogbench/manipulation_semantics.py",
+      "class": "ManipulationSemantics",
+      "name": "step",
+      "line": 112,
+      "physical_lines": 3,
+      "normalized_lines": 3,
+      "method_sha256": "82a6a564b489f5c31efc282fe6d7ec71eb9425721d05b795fc7d68326f08f17d"
+    },
+    {
+      "file": "stable_envs/envs/ogbench/manipulation_semantics.py",
+      "class": "ManipulationSemantics",
+      "name": "set_variation",
+      "line": 116,
+      "physical_lines": 44,
+      "normalized_lines": 29,
+      "method_sha256": "608c5ce570081b015b71072e4741b729fcc0d48f99dc7e0b2bae27a9e2ef4e84"
+    },
+    {
+      "file": "stable_envs/envs/ogbench/manipulation_semantics.py",
+      "class": "ManipulationSemantics",
+      "name": "_pack_render_state",
+      "line": 161,
+      "physical_lines": 5,
+      "normalized_lines": 5,
+      "method_sha256": "a8ab76a8504b3c199d64c73a8a518abb51dab44c7cf2b97235d99ef56f763884"
+    },
+    {
+      "file": "stable_envs/envs/ogbench/manipulation_semantics.py",
+      "class": "ManipulationSemantics",
+      "name": "_unpack_render_state",
+      "line": 167,
+      "physical_lines": 9,
+      "normalized_lines": 6,
+      "method_sha256": "d5f8b123a300f2953212cd162b6437e3b01223f73c16d656417687e1e9442c4e"
+    },
+    {
+      "file": "stable_envs/envs/ogbench/manipulation_semantics.py",
+      "class": "ManipulationSemantics",
+      "name": "render",
+      "line": 177,
+      "physical_lines": 5,
+      "normalized_lines": 3,
+      "method_sha256": "0fb7cd77d6d66b5b87f830142b0112ed9ab8b1e0ba786b2bf1ce8f414f761870"
+    },
+    {
+      "file": "stable_envs/envs/ogbench/manipulation_semantics.py",
+      "class": "ManipulationSemantics",
+      "name": "sample_states",
+      "line": 183,
+      "physical_lines": 3,
+      "normalized_lines": 3,
+      "method_sha256": "0583303476dd241ffeb3181825aab034f0463d9cbdc6d45cde61d827bc4d0705"
+    },
+    {
+      "file": "stable_envs/envs/ogbench/manipulation_semantics.py",
+      "class": "ManipulationSemantics",
+      "name": "_close",
+      "line": 187,
+      "physical_lines": 3,
+      "normalized_lines": 3,
+      "method_sha256": "33e3f1efb19cdd97914038731b73152e7cb9102ae8363c8079b67578fdbfdbac"
+    }
+  ],
+  "compatibility_methods": [
+    {
+      "file": "stable_envs/_adapters/ogbench_manipulation_compat.py",
+      "class": "Compatibility",
+      "name": "__init__",
+      "line": 82,
+      "physical_lines": 23,
+      "normalized_lines": 17,
+      "method_sha256": "911fcdd0acf2516fc9b3bb8f19f647a4bbb1eab808892c42ea208a3dcdd36c88",
+      "category": 2,
+      "reason": "Registered constructor/configuration and stable-envs Variation tree",
+      "provenance": {
+        "Cube": {
+          "__init__": {
+            "swm": {
+              "owner": "stable_worldmodel.envs.ogbench.cube_env.CubeEnv",
+              "file": "/Users/samib/stable-worldmodel/stable_worldmodel/envs/ogbench/cube_env.py",
+              "line": 95,
+              "file_sha256": "143e5e81f424ff7a4d7fdde287dee88b722c09082a6fc9e68721839788e94c19",
+              "method_sha256": "1ae87f480ac090820fb65fadc1bfe099e7e4b1cd35f4640b60306394b4269c5b",
+              "physical_lines": 227,
+              "normalized_lines": 25
+            },
+            "upstream": {
+              "owner": "ogbench.manipspace.envs.cube_env.CubeEnv",
+              "file": "/private/tmp/ogb-manip-authority-swm-lock/lib/python3.12/site-packages/ogbench/manipspace/envs/cube_env.py",
+              "line": 17,
+              "file_sha256": "6f8457ffd634f6620411c788c86e871f44ea5b5b5eecf76cd694fc04d12d678d",
+              "method_sha256": "91be941411058cde39d5cb2e20f2f8664baaf96e66dd03955494dac456555981",
+              "physical_lines": 57,
+              "normalized_lines": 20
+            }
+          }
+        },
+        "Scene": {
+          "__init__": {
+            "swm": {
+              "owner": "stable_worldmodel.envs.ogbench.scene_env.SceneEnv",
+              "file": "/Users/samib/stable-worldmodel/stable_worldmodel/envs/ogbench/scene_env.py",
+              "line": 22,
+              "file_sha256": "d0eebdce0131f86e3247736c601f97c2b11d0dbfad56fca998df3192f08a7b9f",
+              "method_sha256": "7364cefbc5ea72db5fe0eb41ccdc8e09ef6e9b8c5759accab219b91296e5649f",
+              "physical_lines": 199,
+              "normalized_lines": 26
+            },
+            "upstream": {
+              "owner": "ogbench.manipspace.envs.scene_env.SceneEnv",
+              "file": "/private/tmp/ogb-manip-authority-swm-lock/lib/python3.12/site-packages/ogbench/manipspace/envs/scene_env.py",
+              "line": 20,
+              "file_sha256": "b03395bc50d7a65fcd45a3141fe6cca419f07cbe7422d397003d824fdfcb7c54",
+              "method_sha256": "27769356a640ac87c61cc1a35b0837307aef5d54852973e149f10655b3cb1368",
+              "physical_lines": 36,
+              "normalized_lines": 20
+            }
+          }
+        }
+      }
+    },
+    {
+      "file": "stable_envs/_adapters/ogbench_manipulation_compat.py",
+      "class": "Compatibility",
+      "name": "_seed_owned",
+      "line": 106,
+      "physical_lines": 9,
+      "normalized_lines": 9,
+      "method_sha256": "dab6cc30ee626df663c47d97645cda0b611158857605753be9e2dfd3420057cb",
+      "category": 3,
+      "reason": "Design A per-instance ownership, before any implicit reset",
+      "provenance": {
+        "Cube": {
+          "reset": {
+            "swm": {
+              "owner": "stable_worldmodel.envs.ogbench.cube_env.CubeEnv",
+              "file": "/Users/samib/stable-worldmodel/stable_worldmodel/envs/ogbench/cube_env.py",
+              "line": 776,
+              "file_sha256": "143e5e81f424ff7a4d7fdde287dee88b722c09082a6fc9e68721839788e94c19",
+              "method_sha256": "9afaa8310271973f60e9625a67ac1ee003b1ab4a1f18dbd87125ad27c5005fa3",
+              "physical_lines": 67,
+              "normalized_lines": 17
+            },
+            "upstream": {
+              "owner": "ogbench.manipspace.envs.manipspace_env.ManipSpaceEnv",
+              "file": "/private/tmp/ogb-manip-authority-swm-lock/lib/python3.12/site-packages/ogbench/manipspace/envs/manipspace_env.py",
+              "line": 282,
+              "file_sha256": "03524eb1c95155bbc2ec3d29e9836fccffe8eb9fce1be15b6f0e7062cc1bb5fd",
+              "method_sha256": "9d912246c08bc6b4ce86fc428f0e82ca66a79cf4cb0a22ad54ad199d66ebb4fa",
+              "physical_lines": 31,
+              "normalized_lines": 22
+            }
+          }
+        },
+        "Scene": {
+          "reset": {
+            "swm": {
+              "owner": "stable_worldmodel.envs.ogbench.scene_env.SceneEnv",
+              "file": "/Users/samib/stable-worldmodel/stable_worldmodel/envs/ogbench/scene_env.py",
+              "line": 316,
+              "file_sha256": "d0eebdce0131f86e3247736c601f97c2b11d0dbfad56fca998df3192f08a7b9f",
+              "method_sha256": "c0b177860c913f023ab4e07792ea922424fa61ef67296cea37693302eed7d99d",
+              "physical_lines": 30,
+              "normalized_lines": 17
+            },
+            "upstream": {
+              "owner": "ogbench.manipspace.envs.manipspace_env.ManipSpaceEnv",
+              "file": "/private/tmp/ogb-manip-authority-swm-lock/lib/python3.12/site-packages/ogbench/manipspace/envs/manipspace_env.py",
+              "line": 282,
+              "file_sha256": "03524eb1c95155bbc2ec3d29e9836fccffe8eb9fce1be15b6f0e7062cc1bb5fd",
+              "method_sha256": "9d912246c08bc6b4ce86fc428f0e82ca66a79cf4cb0a22ad54ad199d66ebb4fa",
+              "physical_lines": 31,
+              "normalized_lines": 22
+            }
+          }
+        }
+      }
+    },
+    {
+      "file": "stable_envs/_adapters/ogbench_manipulation_compat.py",
+      "class": "Compatibility",
+      "name": "action_space",
+      "line": 117,
+      "physical_lines": 5,
+      "normalized_lines": 6,
+      "method_sha256": "e6fcd20f4e19f6c0d11bacd6c337f77776b5ff3483b80110470ad2fb55b0c80a",
+      "category": 3,
+      "reason": "Memoize genuine upstream Box; own complete PCG64",
+      "provenance": {
+        "Cube": {
+          "action_space": {
+            "swm": {
+              "owner": "ogbench.manipspace.envs.manipspace_env.ManipSpaceEnv",
+              "file": "/private/tmp/ogb-manip-authority-swm-lock/lib/python3.12/site-packages/ogbench/manipspace/envs/manipspace_env.py",
+              "line": 144,
+              "file_sha256": "03524eb1c95155bbc2ec3d29e9836fccffe8eb9fce1be15b6f0e7062cc1bb5fd",
+              "method_sha256": "1709418778b09f74e4e0db4669c178087abd30e310f3a90456eceb34434e2472",
+              "physical_lines": 8,
+              "normalized_lines": 3
+            },
+            "upstream": {
+              "owner": "ogbench.manipspace.envs.manipspace_env.ManipSpaceEnv",
+              "file": "/private/tmp/ogb-manip-authority-swm-lock/lib/python3.12/site-packages/ogbench/manipspace/envs/manipspace_env.py",
+              "line": 144,
+              "file_sha256": "03524eb1c95155bbc2ec3d29e9836fccffe8eb9fce1be15b6f0e7062cc1bb5fd",
+              "method_sha256": "1709418778b09f74e4e0db4669c178087abd30e310f3a90456eceb34434e2472",
+              "physical_lines": 8,
+              "normalized_lines": 3
+            }
+          }
+        },
+        "Scene": {
+          "action_space": {
+            "swm": {
+              "owner": "ogbench.manipspace.envs.manipspace_env.ManipSpaceEnv",
+              "file": "/private/tmp/ogb-manip-authority-swm-lock/lib/python3.12/site-packages/ogbench/manipspace/envs/manipspace_env.py",
+              "line": 144,
+              "file_sha256": "03524eb1c95155bbc2ec3d29e9836fccffe8eb9fce1be15b6f0e7062cc1bb5fd",
+              "method_sha256": "1709418778b09f74e4e0db4669c178087abd30e310f3a90456eceb34434e2472",
+              "physical_lines": 8,
+              "normalized_lines": 3
+            },
+            "upstream": {
+              "owner": "ogbench.manipspace.envs.manipspace_env.ManipSpaceEnv",
+              "file": "/private/tmp/ogb-manip-authority-swm-lock/lib/python3.12/site-packages/ogbench/manipspace/envs/manipspace_env.py",
+              "line": 144,
+              "file_sha256": "03524eb1c95155bbc2ec3d29e9836fccffe8eb9fce1be15b6f0e7062cc1bb5fd",
+              "method_sha256": "1709418778b09f74e4e0db4669c178087abd30e310f3a90456eceb34434e2472",
+              "physical_lines": 8,
+              "normalized_lines": 3
+            }
+          }
+        }
+      }
+    },
+    {
+      "file": "stable_envs/_adapters/ogbench_manipulation_compat.py",
+      "class": "Compatibility",
+      "name": "validate_options",
+      "line": 123,
+      "physical_lines": 22,
+      "normalized_lines": 22,
+      "method_sha256": "21951d5544bc6e36800b27af9498dc1935d8e96c9f7918e89fd8cfcb4ebda53e",
+      "category": 2,
+      "reason": "Restrict options before mutation",
+      "provenance": {
+        "Cube": {
+          "reset": {
+            "swm": {
+              "owner": "stable_worldmodel.envs.ogbench.cube_env.CubeEnv",
+              "file": "/Users/samib/stable-worldmodel/stable_worldmodel/envs/ogbench/cube_env.py",
+              "line": 776,
+              "file_sha256": "143e5e81f424ff7a4d7fdde287dee88b722c09082a6fc9e68721839788e94c19",
+              "method_sha256": "9afaa8310271973f60e9625a67ac1ee003b1ab4a1f18dbd87125ad27c5005fa3",
+              "physical_lines": 67,
+              "normalized_lines": 17
+            },
+            "upstream": {
+              "owner": "ogbench.manipspace.envs.manipspace_env.ManipSpaceEnv",
+              "file": "/private/tmp/ogb-manip-authority-swm-lock/lib/python3.12/site-packages/ogbench/manipspace/envs/manipspace_env.py",
+              "line": 282,
+              "file_sha256": "03524eb1c95155bbc2ec3d29e9836fccffe8eb9fce1be15b6f0e7062cc1bb5fd",
+              "method_sha256": "9d912246c08bc6b4ce86fc428f0e82ca66a79cf4cb0a22ad54ad199d66ebb4fa",
+              "physical_lines": 31,
+              "normalized_lines": 22
+            }
+          }
+        },
+        "Scene": {
+          "reset": {
+            "swm": {
+              "owner": "stable_worldmodel.envs.ogbench.scene_env.SceneEnv",
+              "file": "/Users/samib/stable-worldmodel/stable_worldmodel/envs/ogbench/scene_env.py",
+              "line": 316,
+              "file_sha256": "d0eebdce0131f86e3247736c601f97c2b11d0dbfad56fca998df3192f08a7b9f",
+              "method_sha256": "c0b177860c913f023ab4e07792ea922424fa61ef67296cea37693302eed7d99d",
+              "physical_lines": 30,
+              "normalized_lines": 17
+            },
+            "upstream": {
+              "owner": "ogbench.manipspace.envs.manipspace_env.ManipSpaceEnv",
+              "file": "/private/tmp/ogb-manip-authority-swm-lock/lib/python3.12/site-packages/ogbench/manipspace/envs/manipspace_env.py",
+              "line": 282,
+              "file_sha256": "03524eb1c95155bbc2ec3d29e9836fccffe8eb9fce1be15b6f0e7062cc1bb5fd",
+              "method_sha256": "9d912246c08bc6b4ce86fc428f0e82ca66a79cf4cb0a22ad54ad199d66ebb4fa",
+              "physical_lines": 31,
+              "normalized_lines": 22
+            }
+          }
+        }
+      }
+    },
+    {
+      "file": "stable_envs/_adapters/ogbench_manipulation_compat.py",
+      "class": "Compatibility",
+      "name": "validate_task",
+      "line": 146,
+      "physical_lines": 33,
+      "normalized_lines": 24,
+      "method_sha256": "8ae57d68a43555754d6d7d862867cf3245d1d97ee00b056444e04899f8116943",
+      "category": 2,
+      "reason": "Validate supported numeric task payload",
+      "provenance": {
+        "Cube": {
+          "set_tasks": {
+            "swm": {
+              "owner": "stable_worldmodel.envs.ogbench.cube_env.CubeEnv",
+              "file": "/Users/samib/stable-worldmodel/stable_worldmodel/envs/ogbench/cube_env.py",
+              "line": 323,
+              "file_sha256": "143e5e81f424ff7a4d7fdde287dee88b722c09082a6fc9e68721839788e94c19",
+              "method_sha256": "98ead77db9e3cdd8a1456761f3c995fe3651811572b0dd99367fba55373e9161",
+              "physical_lines": 452,
+              "normalized_lines": 13
+            },
+            "upstream": {
+              "owner": "ogbench.manipspace.envs.cube_env.CubeEnv",
+              "file": "/private/tmp/ogb-manip-authority-swm-lock/lib/python3.12/site-packages/ogbench/manipspace/envs/cube_env.py",
+              "line": 75,
+              "file_sha256": "6f8457ffd634f6620411c788c86e871f44ea5b5b5eecf76cd694fc04d12d678d",
+              "method_sha256": "1adbcff6dda7f8938bbb6fd8f4f87a2425e9e9b770ae4c9da1a8c74aa72d2123",
+              "physical_lines": 434,
+              "normalized_lines": 13
+            }
+          },
+          "reset": {
+            "swm": {
+              "owner": "stable_worldmodel.envs.ogbench.cube_env.CubeEnv",
+              "file": "/Users/samib/stable-worldmodel/stable_worldmodel/envs/ogbench/cube_env.py",
+              "line": 776,
+              "file_sha256": "143e5e81f424ff7a4d7fdde287dee88b722c09082a6fc9e68721839788e94c19",
+              "method_sha256": "9afaa8310271973f60e9625a67ac1ee003b1ab4a1f18dbd87125ad27c5005fa3",
+              "physical_lines": 67,
+              "normalized_lines": 17
+            },
+            "upstream": {
+              "owner": "ogbench.manipspace.envs.manipspace_env.ManipSpaceEnv",
+              "file": "/private/tmp/ogb-manip-authority-swm-lock/lib/python3.12/site-packages/ogbench/manipspace/envs/manipspace_env.py",
+              "line": 282,
+              "file_sha256": "03524eb1c95155bbc2ec3d29e9836fccffe8eb9fce1be15b6f0e7062cc1bb5fd",
+              "method_sha256": "9d912246c08bc6b4ce86fc428f0e82ca66a79cf4cb0a22ad54ad199d66ebb4fa",
+              "physical_lines": 31,
+              "normalized_lines": 22
+            }
+          }
+        },
+        "Scene": {
+          "set_tasks": {
+            "swm": {
+              "owner": "stable_worldmodel.envs.ogbench.scene_env.SceneEnv",
+              "file": "/Users/samib/stable-worldmodel/stable_worldmodel/envs/ogbench/scene_env.py",
+              "line": 234,
+              "file_sha256": "d0eebdce0131f86e3247736c601f97c2b11d0dbfad56fca998df3192f08a7b9f",
+              "method_sha256": "899cef05cff506d27f8296ce2f60df1e7fbebcc11e608e38b656fb5ac58e9b1d",
+              "physical_lines": 81,
+              "normalized_lines": 4
+            },
+            "upstream": {
+              "owner": "ogbench.manipspace.envs.scene_env.SceneEnv",
+              "file": "/private/tmp/ogb-manip-authority-swm-lock/lib/python3.12/site-packages/ogbench/manipspace/envs/scene_env.py",
+              "line": 62,
+              "file_sha256": "b03395bc50d7a65fcd45a3141fe6cca419f07cbe7422d397003d824fdfcb7c54",
+              "method_sha256": "cb3d73bf88bf855724e38842db788fc71fc08531f81d1dd428b97f6d4b6dcf1c",
+              "physical_lines": 81,
+              "normalized_lines": 4
+            }
+          },
+          "reset": {
+            "swm": {
+              "owner": "stable_worldmodel.envs.ogbench.scene_env.SceneEnv",
+              "file": "/Users/samib/stable-worldmodel/stable_worldmodel/envs/ogbench/scene_env.py",
+              "line": 316,
+              "file_sha256": "d0eebdce0131f86e3247736c601f97c2b11d0dbfad56fca998df3192f08a7b9f",
+              "method_sha256": "c0b177860c913f023ab4e07792ea922424fa61ef67296cea37693302eed7d99d",
+              "physical_lines": 30,
+              "normalized_lines": 17
+            },
+            "upstream": {
+              "owner": "ogbench.manipspace.envs.manipspace_env.ManipSpaceEnv",
+              "file": "/private/tmp/ogb-manip-authority-swm-lock/lib/python3.12/site-packages/ogbench/manipspace/envs/manipspace_env.py",
+              "line": 282,
+              "file_sha256": "03524eb1c95155bbc2ec3d29e9836fccffe8eb9fce1be15b6f0e7062cc1bb5fd",
+              "method_sha256": "9d912246c08bc6b4ce86fc428f0e82ca66a79cf4cb0a22ad54ad199d66ebb4fa",
+              "physical_lines": 31,
+              "normalized_lines": 22
+            }
+          }
+        }
+      }
+    },
+    {
+      "file": "stable_envs/_adapters/ogbench_manipulation_compat.py",
+      "class": "Compatibility",
+      "name": "reset",
+      "line": 180,
+      "physical_lines": 21,
+      "normalized_lines": 16,
+      "method_sha256": "1f8f288557ac0a85ecb0ab7fa472f7dc6a028e900bf26c583830027ad1d936ca",
+      "category": 3,
+      "reason": "Owned RNG/Variation prelude then delegate whole reset",
+      "provenance": {
+        "Cube": {
+          "reset": {
+            "swm": {
+              "owner": "stable_worldmodel.envs.ogbench.cube_env.CubeEnv",
+              "file": "/Users/samib/stable-worldmodel/stable_worldmodel/envs/ogbench/cube_env.py",
+              "line": 776,
+              "file_sha256": "143e5e81f424ff7a4d7fdde287dee88b722c09082a6fc9e68721839788e94c19",
+              "method_sha256": "9afaa8310271973f60e9625a67ac1ee003b1ab4a1f18dbd87125ad27c5005fa3",
+              "physical_lines": 67,
+              "normalized_lines": 17
+            },
+            "upstream": {
+              "owner": "ogbench.manipspace.envs.manipspace_env.ManipSpaceEnv",
+              "file": "/private/tmp/ogb-manip-authority-swm-lock/lib/python3.12/site-packages/ogbench/manipspace/envs/manipspace_env.py",
+              "line": 282,
+              "file_sha256": "03524eb1c95155bbc2ec3d29e9836fccffe8eb9fce1be15b6f0e7062cc1bb5fd",
+              "method_sha256": "9d912246c08bc6b4ce86fc428f0e82ca66a79cf4cb0a22ad54ad199d66ebb4fa",
+              "physical_lines": 31,
+              "normalized_lines": 22
+            }
+          }
+        },
+        "Scene": {
+          "reset": {
+            "swm": {
+              "owner": "stable_worldmodel.envs.ogbench.scene_env.SceneEnv",
+              "file": "/Users/samib/stable-worldmodel/stable_worldmodel/envs/ogbench/scene_env.py",
+              "line": 316,
+              "file_sha256": "d0eebdce0131f86e3247736c601f97c2b11d0dbfad56fca998df3192f08a7b9f",
+              "method_sha256": "c0b177860c913f023ab4e07792ea922424fa61ef67296cea37693302eed7d99d",
+              "physical_lines": 30,
+              "normalized_lines": 17
+            },
+            "upstream": {
+              "owner": "ogbench.manipspace.envs.manipspace_env.ManipSpaceEnv",
+              "file": "/private/tmp/ogb-manip-authority-swm-lock/lib/python3.12/site-packages/ogbench/manipspace/envs/manipspace_env.py",
+              "line": 282,
+              "file_sha256": "03524eb1c95155bbc2ec3d29e9836fccffe8eb9fce1be15b6f0e7062cc1bb5fd",
+              "method_sha256": "9d912246c08bc6b4ce86fc428f0e82ca66a79cf4cb0a22ad54ad199d66ebb4fa",
+              "physical_lines": 31,
+              "normalized_lines": 22
+            }
+          }
+        }
+      }
+    },
+    {
+      "file": "stable_envs/_adapters/ogbench_manipulation_compat.py",
+      "class": "Compatibility",
+      "name": "initialize_arm",
+      "line": 202,
+      "physical_lines": 12,
+      "normalized_lines": 11,
+      "method_sha256": "bff429ac702d3c2a3ae07748b294ce6ac576f2f8d8a5081feb90b55b81b62a1f",
+      "category": 4,
+      "reason": "Only unavoidable reset algorithm body: Variation position replaces uniform draw",
+      "provenance": {
+        "Cube": {
+          "initialize_arm": {
+            "swm": {
+              "owner": "stable_worldmodel.envs.ogbench.cube_env.CubeEnv",
+              "file": "/Users/samib/stable-worldmodel/stable_worldmodel/envs/ogbench/cube_env.py",
+              "line": 1197,
+              "file_sha256": "143e5e81f424ff7a4d7fdde287dee88b722c09082a6fc9e68721839788e94c19",
+              "method_sha256": "99190bf5698fc8103d84eb6b5e159be58375c21cc92c34524dd41f5da0513a3f",
+              "physical_lines": 19,
+              "normalized_lines": 11
+            },
+            "upstream": {
+              "owner": "ogbench.manipspace.envs.manipspace_env.ManipSpaceEnv",
+              "file": "/private/tmp/ogb-manip-authority-swm-lock/lib/python3.12/site-packages/ogbench/manipspace/envs/manipspace_env.py",
+              "line": 343,
+              "file_sha256": "03524eb1c95155bbc2ec3d29e9836fccffe8eb9fce1be15b6f0e7062cc1bb5fd",
+              "method_sha256": "f5b11be9de487a50f2eb36dac15a0f0f7ac3b07f05fbc623c3ed4b30455a4ad9",
+              "physical_lines": 19,
+              "normalized_lines": 11
+            }
+          }
+        },
+        "Scene": {
+          "initialize_arm": {
+            "swm": {
+              "owner": "stable_worldmodel.envs.ogbench.scene_env.SceneEnv",
+              "file": "/Users/samib/stable-worldmodel/stable_worldmodel/envs/ogbench/scene_env.py",
+              "line": 912,
+              "file_sha256": "d0eebdce0131f86e3247736c601f97c2b11d0dbfad56fca998df3192f08a7b9f",
+              "method_sha256": "99190bf5698fc8103d84eb6b5e159be58375c21cc92c34524dd41f5da0513a3f",
+              "physical_lines": 19,
+              "normalized_lines": 11
+            },
+            "upstream": {
+              "owner": "ogbench.manipspace.envs.manipspace_env.ManipSpaceEnv",
+              "file": "/private/tmp/ogb-manip-authority-swm-lock/lib/python3.12/site-packages/ogbench/manipspace/envs/manipspace_env.py",
+              "line": 343,
+              "file_sha256": "03524eb1c95155bbc2ec3d29e9836fccffe8eb9fce1be15b6f0e7062cc1bb5fd",
+              "method_sha256": "f5b11be9de487a50f2eb36dac15a0f0f7ac3b07f05fbc623c3ed4b30455a4ad9",
+              "physical_lines": 19,
+              "normalized_lines": 11
+            }
+          }
+        }
+      }
+    },
+    {
+      "file": "stable_envs/_adapters/ogbench_manipulation_compat.py",
+      "class": "Compatibility",
+      "name": "initialize_episode",
+      "line": 215,
+      "physical_lines": 5,
+      "normalized_lines": 5,
+      "method_sha256": "771b38c7e398c011481ee73f5cad4b28e8242cf760178a810e85e207d404b0be",
+      "category": 3,
+      "reason": "Initialize immediate-output caches then delegate entire episode",
+      "provenance": {
+        "Cube": {
+          "initialize_episode": {
+            "swm": {
+              "owner": "stable_worldmodel.envs.ogbench.cube_env.CubeEnv",
+              "file": "/Users/samib/stable-worldmodel/stable_worldmodel/envs/ogbench/cube_env.py",
+              "line": 1066,
+              "file_sha256": "143e5e81f424ff7a4d7fdde287dee88b722c09082a6fc9e68721839788e94c19",
+              "method_sha256": "f7d3eb054ac55a4609725cb0b8ed5b37fecdb6755d5ee9729c33e885943cd1db",
+              "physical_lines": 130,
+              "normalized_lines": 62
+            },
+            "upstream": {
+              "owner": "ogbench.manipspace.envs.cube_env.CubeEnv",
+              "file": "/private/tmp/ogb-manip-authority-swm-lock/lib/python3.12/site-packages/ogbench/manipspace/envs/cube_env.py",
+              "line": 563,
+              "file_sha256": "6f8457ffd634f6620411c788c86e871f44ea5b5b5eecf76cd694fc04d12d678d",
+              "method_sha256": "f8ab8b3731b774d95bf7368404d1fd12ac800fa30580f3bf57e397e4931052cf",
+              "physical_lines": 83,
+              "normalized_lines": 57
+            }
+          }
+        },
+        "Scene": {
+          "initialize_episode": {
+            "swm": {
+              "owner": "stable_worldmodel.envs.ogbench.scene_env.SceneEnv",
+              "file": "/Users/samib/stable-worldmodel/stable_worldmodel/envs/ogbench/scene_env.py",
+              "line": 585,
+              "file_sha256": "d0eebdce0131f86e3247736c601f97c2b11d0dbfad56fca998df3192f08a7b9f",
+              "method_sha256": "8bf12285c5d863457f6ff031d5766aac36a9dcf2dcc7b6082baa8dbc432fbf01",
+              "physical_lines": 162,
+              "normalized_lines": 86
+            },
+            "upstream": {
+              "owner": "ogbench.manipspace.envs.scene_env.SceneEnv",
+              "file": "/private/tmp/ogb-manip-authority-swm-lock/lib/python3.12/site-packages/ogbench/manipspace/envs/scene_env.py",
+              "line": 237,
+              "file_sha256": "b03395bc50d7a65fcd45a3141fe6cca419f07cbe7422d397003d824fdfcb7c54",
+              "method_sha256": "97811cec4c04f054a1b1fc294ead4580707bde4d60d8209ff28f9c5a9250f293",
+              "physical_lines": 118,
+              "normalized_lines": 81
+            }
+          }
+        }
+      }
+    },
+    {
+      "file": "stable_envs/_adapters/ogbench_manipulation_compat.py",
+      "class": "Compatibility",
+      "name": "_cube_colors_from_variation",
+      "line": 221,
+      "physical_lines": 6,
+      "normalized_lines": 6,
+      "method_sha256": "787a3c3d8f687874822428f9dd97cf58313087f87a9f7ac79b77ffd1f525ae7e",
+      "category": 2,
+      "reason": "Configure registered cube and target colors",
+      "provenance": {
+        "Cube": {
+          "initialize_episode": {
+            "swm": {
+              "owner": "stable_worldmodel.envs.ogbench.cube_env.CubeEnv",
+              "file": "/Users/samib/stable-worldmodel/stable_worldmodel/envs/ogbench/cube_env.py",
+              "line": 1066,
+              "file_sha256": "143e5e81f424ff7a4d7fdde287dee88b722c09082a6fc9e68721839788e94c19",
+              "method_sha256": "f7d3eb054ac55a4609725cb0b8ed5b37fecdb6755d5ee9729c33e885943cd1db",
+              "physical_lines": 130,
+              "normalized_lines": 62
+            },
+            "upstream": {
+              "owner": "ogbench.manipspace.envs.cube_env.CubeEnv",
+              "file": "/private/tmp/ogb-manip-authority-swm-lock/lib/python3.12/site-packages/ogbench/manipspace/envs/cube_env.py",
+              "line": 563,
+              "file_sha256": "6f8457ffd634f6620411c788c86e871f44ea5b5b5eecf76cd694fc04d12d678d",
+              "method_sha256": "f8ab8b3731b774d95bf7368404d1fd12ac800fa30580f3bf57e397e4931052cf",
+              "physical_lines": 83,
+              "normalized_lines": 57
+            }
+          },
+          "post_step": {
+            "swm": {
+              "owner": "stable_worldmodel.envs.ogbench.cube_env.CubeEnv",
+              "file": "/Users/samib/stable-worldmodel/stable_worldmodel/envs/ogbench/cube_env.py",
+              "line": 1361,
+              "file_sha256": "143e5e81f424ff7a4d7fdde287dee88b722c09082a6fc9e68721839788e94c19",
+              "method_sha256": "102526c6b931d5bacc6db574d8a3331e16a171c82a2a342eb1356300f9c866ea",
+              "physical_lines": 33,
+              "normalized_lines": 13
+            },
+            "upstream": {
+              "owner": "ogbench.manipspace.envs.cube_env.CubeEnv",
+              "file": "/private/tmp/ogb-manip-authority-swm-lock/lib/python3.12/site-packages/ogbench/manipspace/envs/cube_env.py",
+              "line": 722,
+              "file_sha256": "6f8457ffd634f6620411c788c86e871f44ea5b5b5eecf76cd694fc04d12d678d",
+              "method_sha256": "3a88dd475611f0a1715aa66f0fb1ae47c79e37d5dffd189dfdf8f6edf81d337d",
+              "physical_lines": 23,
+              "normalized_lines": 19
+            }
+          }
+        },
+        "Scene": {
+          "initialize_episode": {
+            "swm": {
+              "owner": "stable_worldmodel.envs.ogbench.scene_env.SceneEnv",
+              "file": "/Users/samib/stable-worldmodel/stable_worldmodel/envs/ogbench/scene_env.py",
+              "line": 585,
+              "file_sha256": "d0eebdce0131f86e3247736c601f97c2b11d0dbfad56fca998df3192f08a7b9f",
+              "method_sha256": "8bf12285c5d863457f6ff031d5766aac36a9dcf2dcc7b6082baa8dbc432fbf01",
+              "physical_lines": 162,
+              "normalized_lines": 86
+            },
+            "upstream": {
+              "owner": "ogbench.manipspace.envs.scene_env.SceneEnv",
+              "file": "/private/tmp/ogb-manip-authority-swm-lock/lib/python3.12/site-packages/ogbench/manipspace/envs/scene_env.py",
+              "line": 237,
+              "file_sha256": "b03395bc50d7a65fcd45a3141fe6cca419f07cbe7422d397003d824fdfcb7c54",
+              "method_sha256": "97811cec4c04f054a1b1fc294ead4580707bde4d60d8209ff28f9c5a9250f293",
+              "physical_lines": 118,
+              "normalized_lines": 81
+            }
+          },
+          "post_step": {
+            "swm": {
+              "owner": "stable_worldmodel.envs.ogbench.scene_env.SceneEnv",
+              "file": "/Users/samib/stable-worldmodel/stable_worldmodel/envs/ogbench/scene_env.py",
+              "line": 997,
+              "file_sha256": "d0eebdce0131f86e3247736c601f97c2b11d0dbfad56fca998df3192f08a7b9f",
+              "method_sha256": "88405cdcfe4bf5bb6c2624bd934a481bee6e1177b72cd8b89080186b2c3e4d71",
+              "physical_lines": 84,
+              "normalized_lines": 37
+            },
+            "upstream": {
+              "owner": "ogbench.manipspace.envs.scene_env.SceneEnv",
+              "file": "/private/tmp/ogb-manip-authority-swm-lock/lib/python3.12/site-packages/ogbench/manipspace/envs/scene_env.py",
+              "line": 503,
+              "file_sha256": "b03395bc50d7a65fcd45a3141fe6cca419f07cbe7422d397003d824fdfcb7c54",
+              "method_sha256": "24f6470e4f06d21d548af3fbfa912a621276e9df507be578684bb92a524cfb35",
+              "physical_lines": 66,
+              "normalized_lines": 43
+            }
+          }
+        }
+      }
+    },
+    {
+      "file": "stable_envs/_adapters/ogbench_manipulation_compat.py",
+      "class": "Compatibility",
+      "name": "post_step",
+      "line": 228,
+      "physical_lines": 3,
+      "normalized_lines": 3,
+      "method_sha256": "381e9f1832b2e31707fafae383d7c22f9b40dc98798508d5d09d7eebd40ac7d2",
+      "category": 3,
+      "reason": "Delegate physics/success/button changes then apply cube color",
+      "provenance": {
+        "Cube": {
+          "post_step": {
+            "swm": {
+              "owner": "stable_worldmodel.envs.ogbench.cube_env.CubeEnv",
+              "file": "/Users/samib/stable-worldmodel/stable_worldmodel/envs/ogbench/cube_env.py",
+              "line": 1361,
+              "file_sha256": "143e5e81f424ff7a4d7fdde287dee88b722c09082a6fc9e68721839788e94c19",
+              "method_sha256": "102526c6b931d5bacc6db574d8a3331e16a171c82a2a342eb1356300f9c866ea",
+              "physical_lines": 33,
+              "normalized_lines": 13
+            },
+            "upstream": {
+              "owner": "ogbench.manipspace.envs.cube_env.CubeEnv",
+              "file": "/private/tmp/ogb-manip-authority-swm-lock/lib/python3.12/site-packages/ogbench/manipspace/envs/cube_env.py",
+              "line": 722,
+              "file_sha256": "6f8457ffd634f6620411c788c86e871f44ea5b5b5eecf76cd694fc04d12d678d",
+              "method_sha256": "3a88dd475611f0a1715aa66f0fb1ae47c79e37d5dffd189dfdf8f6edf81d337d",
+              "physical_lines": 23,
+              "normalized_lines": 19
+            }
+          }
+        },
+        "Scene": {
+          "post_step": {
+            "swm": {
+              "owner": "stable_worldmodel.envs.ogbench.scene_env.SceneEnv",
+              "file": "/Users/samib/stable-worldmodel/stable_worldmodel/envs/ogbench/scene_env.py",
+              "line": 997,
+              "file_sha256": "d0eebdce0131f86e3247736c601f97c2b11d0dbfad56fca998df3192f08a7b9f",
+              "method_sha256": "88405cdcfe4bf5bb6c2624bd934a481bee6e1177b72cd8b89080186b2c3e4d71",
+              "physical_lines": 84,
+              "normalized_lines": 37
+            },
+            "upstream": {
+              "owner": "ogbench.manipspace.envs.scene_env.SceneEnv",
+              "file": "/private/tmp/ogb-manip-authority-swm-lock/lib/python3.12/site-packages/ogbench/manipspace/envs/scene_env.py",
+              "line": 503,
+              "file_sha256": "b03395bc50d7a65fcd45a3141fe6cca419f07cbe7422d397003d824fdfcb7c54",
+              "method_sha256": "24f6470e4f06d21d548af3fbfa912a621276e9df507be578684bb92a524cfb35",
+              "physical_lines": 66,
+              "normalized_lines": 43
+            }
+          }
+        }
+      }
+    },
+    {
+      "file": "stable_envs/_adapters/ogbench_manipulation_compat.py",
+      "class": "Compatibility",
+      "name": "get_reset_info",
+      "line": 232,
+      "physical_lines": 5,
+      "normalized_lines": 5,
+      "method_sha256": "c080d57eb058c1e0842385c0b45d3ba51981ae64d5664eca1742f6bb21b60f46",
+      "category": 3,
+      "reason": "Delegate observations/info then adapt output keys",
+      "provenance": {
+        "Cube": {
+          "get_reset_info": {
+            "swm": {
+              "owner": "stable_worldmodel.envs.ogbench.cube_env.CubeEnv",
+              "file": "/Users/samib/stable-worldmodel/stable_worldmodel/envs/ogbench/cube_env.py",
+              "line": 1395,
+              "file_sha256": "143e5e81f424ff7a4d7fdde287dee88b722c09082a6fc9e68721839788e94c19",
+              "method_sha256": "cc4e13c7b62491a3c33b3193d82ad33ad4dc8c928eb6333462f93a33a1f525f5",
+              "physical_lines": 20,
+              "normalized_lines": 6
+            },
+            "upstream": {
+              "owner": "ogbench.manipspace.envs.manipspace_env.ManipSpaceEnv",
+              "file": "/private/tmp/ogb-manip-authority-swm-lock/lib/python3.12/site-packages/ogbench/manipspace/envs/manipspace_env.py",
+              "line": 484,
+              "file_sha256": "03524eb1c95155bbc2ec3d29e9836fccffe8eb9fce1be15b6f0e7062cc1bb5fd",
+              "method_sha256": "725a3a21463c7900d6942d51e60fe7f4f5c29cdb892161a921a9d04e8fa5e7d9",
+              "physical_lines": 7,
+              "normalized_lines": 7
+            }
+          }
+        },
+        "Scene": {
+          "get_reset_info": {
+            "swm": {
+              "owner": "stable_worldmodel.envs.ogbench.scene_env.SceneEnv",
+              "file": "/Users/samib/stable-worldmodel/stable_worldmodel/envs/ogbench/scene_env.py",
+              "line": 1082,
+              "file_sha256": "d0eebdce0131f86e3247736c601f97c2b11d0dbfad56fca998df3192f08a7b9f",
+              "method_sha256": "fe3f0fe9a11d339e6840aa10884c328d95f3dafad38e4b3fe35295a3f31986b5",
+              "physical_lines": 6,
+              "normalized_lines": 6
+            },
+            "upstream": {
+              "owner": "ogbench.manipspace.envs.manipspace_env.ManipSpaceEnv",
+              "file": "/private/tmp/ogb-manip-authority-swm-lock/lib/python3.12/site-packages/ogbench/manipspace/envs/manipspace_env.py",
+              "line": 484,
+              "file_sha256": "03524eb1c95155bbc2ec3d29e9836fccffe8eb9fce1be15b6f0e7062cc1bb5fd",
+              "method_sha256": "725a3a21463c7900d6942d51e60fe7f4f5c29cdb892161a921a9d04e8fa5e7d9",
+              "physical_lines": 7,
+              "normalized_lines": 7
+            }
+          }
+        }
+      }
+    },
+    {
+      "file": "stable_envs/_adapters/ogbench_manipulation_compat.py",
+      "class": "Compatibility",
+      "name": "get_step_info",
+      "line": 238,
+      "physical_lines": 2,
+      "normalized_lines": 2,
+      "method_sha256": "bb673edb90cf1dd01b5752bac743457f4b59f965ee56cb06d8b7d239999f8961",
+      "category": 3,
+      "reason": "Delegate info then adapt output keys",
+      "provenance": {
+        "Cube": {
+          "get_step_info": {
+            "swm": {
+              "owner": "stable_worldmodel.envs.ogbench.cube_env.CubeEnv",
+              "file": "/Users/samib/stable-worldmodel/stable_worldmodel/envs/ogbench/cube_env.py",
+              "line": 1416,
+              "file_sha256": "143e5e81f424ff7a4d7fdde287dee88b722c09082a6fc9e68721839788e94c19",
+              "method_sha256": "03eb20a02cf8abfb6df9b7de7c42c3b8832e3a9df72f1d77d61f496b8075694f",
+              "physical_lines": 20,
+              "normalized_lines": 6
+            },
+            "upstream": {
+              "owner": "ogbench.manipspace.envs.manipspace_env.ManipSpaceEnv",
+              "file": "/private/tmp/ogb-manip-authority-swm-lock/lib/python3.12/site-packages/ogbench/manipspace/envs/manipspace_env.py",
+              "line": 492,
+              "file_sha256": "03524eb1c95155bbc2ec3d29e9836fccffe8eb9fce1be15b6f0e7062cc1bb5fd",
+              "method_sha256": "3b7c9cf7f154308e995a3dcf5544586cf91f7107b7e606222837978bc3790e79",
+              "physical_lines": 3,
+              "normalized_lines": 3
+            }
+          }
+        },
+        "Scene": {
+          "get_step_info": {
+            "swm": {
+              "owner": "stable_worldmodel.envs.ogbench.scene_env.SceneEnv",
+              "file": "/Users/samib/stable-worldmodel/stable_worldmodel/envs/ogbench/scene_env.py",
+              "line": 1089,
+              "file_sha256": "d0eebdce0131f86e3247736c601f97c2b11d0dbfad56fca998df3192f08a7b9f",
+              "method_sha256": "12b45844ee34d6546f5b5483176fc90ae931963237ab6f174003573ee779d541",
+              "physical_lines": 6,
+              "normalized_lines": 6
+            },
+            "upstream": {
+              "owner": "ogbench.manipspace.envs.manipspace_env.ManipSpaceEnv",
+              "file": "/private/tmp/ogb-manip-authority-swm-lock/lib/python3.12/site-packages/ogbench/manipspace/envs/manipspace_env.py",
+              "line": 492,
+              "file_sha256": "03524eb1c95155bbc2ec3d29e9836fccffe8eb9fce1be15b6f0e7062cc1bb5fd",
+              "method_sha256": "3b7c9cf7f154308e995a3dcf5544586cf91f7107b7e606222837978bc3790e79",
+              "physical_lines": 3,
+              "normalized_lines": 3
+            }
+          }
+        }
+      }
+    },
+    {
+      "file": "stable_envs/_adapters/ogbench_manipulation_compat.py",
+      "class": "Compatibility",
+      "name": "_output_info",
+      "line": 241,
+      "physical_lines": 3,
+      "normalized_lines": 3,
+      "method_sha256": "cfc61d1d5d4dc74e4497bfaaec1c9a8db92dbd07581891e7fc0e96fc75528ee2",
+      "category": 2,
+      "reason": "Registered env_name/target/success output boundary",
+      "provenance": {
+        "Cube": {
+          "get_reset_info": {
+            "swm": {
+              "owner": "stable_worldmodel.envs.ogbench.cube_env.CubeEnv",
+              "file": "/Users/samib/stable-worldmodel/stable_worldmodel/envs/ogbench/cube_env.py",
+              "line": 1395,
+              "file_sha256": "143e5e81f424ff7a4d7fdde287dee88b722c09082a6fc9e68721839788e94c19",
+              "method_sha256": "cc4e13c7b62491a3c33b3193d82ad33ad4dc8c928eb6333462f93a33a1f525f5",
+              "physical_lines": 20,
+              "normalized_lines": 6
+            },
+            "upstream": {
+              "owner": "ogbench.manipspace.envs.manipspace_env.ManipSpaceEnv",
+              "file": "/private/tmp/ogb-manip-authority-swm-lock/lib/python3.12/site-packages/ogbench/manipspace/envs/manipspace_env.py",
+              "line": 484,
+              "file_sha256": "03524eb1c95155bbc2ec3d29e9836fccffe8eb9fce1be15b6f0e7062cc1bb5fd",
+              "method_sha256": "725a3a21463c7900d6942d51e60fe7f4f5c29cdb892161a921a9d04e8fa5e7d9",
+              "physical_lines": 7,
+              "normalized_lines": 7
+            }
+          },
+          "get_step_info": {
+            "swm": {
+              "owner": "stable_worldmodel.envs.ogbench.cube_env.CubeEnv",
+              "file": "/Users/samib/stable-worldmodel/stable_worldmodel/envs/ogbench/cube_env.py",
+              "line": 1416,
+              "file_sha256": "143e5e81f424ff7a4d7fdde287dee88b722c09082a6fc9e68721839788e94c19",
+              "method_sha256": "03eb20a02cf8abfb6df9b7de7c42c3b8832e3a9df72f1d77d61f496b8075694f",
+              "physical_lines": 20,
+              "normalized_lines": 6
+            },
+            "upstream": {
+              "owner": "ogbench.manipspace.envs.manipspace_env.ManipSpaceEnv",
+              "file": "/private/tmp/ogb-manip-authority-swm-lock/lib/python3.12/site-packages/ogbench/manipspace/envs/manipspace_env.py",
+              "line": 492,
+              "file_sha256": "03524eb1c95155bbc2ec3d29e9836fccffe8eb9fce1be15b6f0e7062cc1bb5fd",
+              "method_sha256": "3b7c9cf7f154308e995a3dcf5544586cf91f7107b7e606222837978bc3790e79",
+              "physical_lines": 3,
+              "normalized_lines": 3
+            }
+          }
+        },
+        "Scene": {
+          "get_reset_info": {
+            "swm": {
+              "owner": "stable_worldmodel.envs.ogbench.scene_env.SceneEnv",
+              "file": "/Users/samib/stable-worldmodel/stable_worldmodel/envs/ogbench/scene_env.py",
+              "line": 1082,
+              "file_sha256": "d0eebdce0131f86e3247736c601f97c2b11d0dbfad56fca998df3192f08a7b9f",
+              "method_sha256": "fe3f0fe9a11d339e6840aa10884c328d95f3dafad38e4b3fe35295a3f31986b5",
+              "physical_lines": 6,
+              "normalized_lines": 6
+            },
+            "upstream": {
+              "owner": "ogbench.manipspace.envs.manipspace_env.ManipSpaceEnv",
+              "file": "/private/tmp/ogb-manip-authority-swm-lock/lib/python3.12/site-packages/ogbench/manipspace/envs/manipspace_env.py",
+              "line": 484,
+              "file_sha256": "03524eb1c95155bbc2ec3d29e9836fccffe8eb9fce1be15b6f0e7062cc1bb5fd",
+              "method_sha256": "725a3a21463c7900d6942d51e60fe7f4f5c29cdb892161a921a9d04e8fa5e7d9",
+              "physical_lines": 7,
+              "normalized_lines": 7
+            }
+          },
+          "get_step_info": {
+            "swm": {
+              "owner": "stable_worldmodel.envs.ogbench.scene_env.SceneEnv",
+              "file": "/Users/samib/stable-worldmodel/stable_worldmodel/envs/ogbench/scene_env.py",
+              "line": 1089,
+              "file_sha256": "d0eebdce0131f86e3247736c601f97c2b11d0dbfad56fca998df3192f08a7b9f",
+              "method_sha256": "12b45844ee34d6546f5b5483176fc90ae931963237ab6f174003573ee779d541",
+              "physical_lines": 6,
+              "normalized_lines": 6
+            },
+            "upstream": {
+              "owner": "ogbench.manipspace.envs.manipspace_env.ManipSpaceEnv",
+              "file": "/private/tmp/ogb-manip-authority-swm-lock/lib/python3.12/site-packages/ogbench/manipspace/envs/manipspace_env.py",
+              "line": 492,
+              "file_sha256": "03524eb1c95155bbc2ec3d29e9836fccffe8eb9fce1be15b6f0e7062cc1bb5fd",
+              "method_sha256": "3b7c9cf7f154308e995a3dcf5544586cf91f7107b7e606222837978bc3790e79",
+              "physical_lines": 3,
+              "normalized_lines": 3
+            }
+          }
+        }
+      }
+    },
+    {
+      "file": "stable_envs/_adapters/ogbench_manipulation_compat.py",
+      "class": "Compatibility",
+      "name": "modify_mjcf_model",
+      "line": 245,
+      "physical_lines": 38,
+      "normalized_lines": 37,
+      "method_sha256": "60c0f5abb42f565476ee2f8241c1a40d239c3f8d3c17e944e8fde7a64912757b",
+      "category": 2,
+      "reason": "Existing MJCF hook: size, material, floor, camera, light and source dirty predicate",
+      "provenance": {
+        "Cube": {
+          "modify_mjcf_model": {
+            "swm": {
+              "owner": "stable_worldmodel.envs.ogbench.cube_env.CubeEnv",
+              "file": "/Users/samib/stable-worldmodel/stable_worldmodel/envs/ogbench/cube_env.py",
+              "line": 951,
+              "file_sha256": "143e5e81f424ff7a4d7fdde287dee88b722c09082a6fc9e68721839788e94c19",
+              "method_sha256": "f6d49ffa3bbaa72676ffb7543545f6843aaf131067f79bdae72e7a4ce7da784a",
+              "physical_lines": 114,
+              "normalized_lines": 39
+            },
+            "upstream": {
+              "owner": "ogbench.manipspace.envs.env.CustomMuJoCoEnv",
+              "file": "/private/tmp/ogb-manip-authority-swm-lock/lib/python3.12/site-packages/ogbench/manipspace/envs/env.py",
+              "line": 61,
+              "file_sha256": "c656f4733a1ad4cb07289bc58ac1ac0f7da378e1f2714dc80a5ed8c0b3028c38",
+              "method_sha256": "dec63b42e29330bd008c62bd5dd7ee83a7da376568b0834c28b54c336ba98cc9",
+              "physical_lines": 14,
+              "normalized_lines": 2
+            }
+          },
+          "add_objects": {
+            "swm": {
+              "owner": "stable_worldmodel.envs.ogbench.cube_env.CubeEnv",
+              "file": "/Users/samib/stable-worldmodel/stable_worldmodel/envs/ogbench/cube_env.py",
+              "line": 844,
+              "file_sha256": "143e5e81f424ff7a4d7fdde287dee88b722c09082a6fc9e68721839788e94c19",
+              "method_sha256": "5fe65490a83b8ef3c92330d611609dcf8ad7993de5d323da57e5ad5193922b04",
+              "physical_lines": 78,
+              "normalized_lines": 23
+            },
+            "upstream": {
+              "owner": "ogbench.manipspace.envs.cube_env.CubeEnv",
+              "file": "/private/tmp/ogb-manip-authority-swm-lock/lib/python3.12/site-packages/ogbench/manipspace/envs/cube_env.py",
+              "line": 510,
+              "file_sha256": "6f8457ffd634f6620411c788c86e871f44ea5b5b5eecf76cd694fc04d12d678d",
+              "method_sha256": "1d00b0f5ba24b4d3c8cd4d99e47fe3dcaba7ff1725677cc7874be4597fd67e24",
+              "physical_lines": 39,
+              "normalized_lines": 23
+            }
+          }
+        },
+        "Scene": {
+          "modify_mjcf_model": {
+            "swm": {
+              "owner": "stable_worldmodel.envs.ogbench.scene_env.SceneEnv",
+              "file": "/Users/samib/stable-worldmodel/stable_worldmodel/envs/ogbench/scene_env.py",
+              "line": 484,
+              "file_sha256": "d0eebdce0131f86e3247736c601f97c2b11d0dbfad56fca998df3192f08a7b9f",
+              "method_sha256": "a08c2039cbb84bc060c2a2c75e92765e2b1ae29ff833b57878fdae23998e3b33",
+              "physical_lines": 100,
+              "normalized_lines": 39
+            },
+            "upstream": {
+              "owner": "ogbench.manipspace.envs.env.CustomMuJoCoEnv",
+              "file": "/private/tmp/ogb-manip-authority-swm-lock/lib/python3.12/site-packages/ogbench/manipspace/envs/env.py",
+              "line": 61,
+              "file_sha256": "c656f4733a1ad4cb07289bc58ac1ac0f7da378e1f2714dc80a5ed8c0b3028c38",
+              "method_sha256": "dec63b42e29330bd008c62bd5dd7ee83a7da376568b0834c28b54c336ba98cc9",
+              "physical_lines": 14,
+              "normalized_lines": 2
+            }
+          },
+          "add_objects": {
+            "swm": {
+              "owner": "stable_worldmodel.envs.ogbench.scene_env.SceneEnv",
+              "file": "/Users/samib/stable-worldmodel/stable_worldmodel/envs/ogbench/scene_env.py",
+              "line": 347,
+              "file_sha256": "d0eebdce0131f86e3247736c601f97c2b11d0dbfad56fca998df3192f08a7b9f",
+              "method_sha256": "34dc4fd87a79dbfc6252a87bd75fd50d7419b9f087428a201ad609fd36c70141",
+              "physical_lines": 53,
+              "normalized_lines": 21
+            },
+            "upstream": {
+              "owner": "ogbench.manipspace.envs.scene_env.SceneEnv",
+              "file": "/private/tmp/ogb-manip-authority-swm-lock/lib/python3.12/site-packages/ogbench/manipspace/envs/scene_env.py",
+              "line": 144,
+              "file_sha256": "b03395bc50d7a65fcd45a3141fe6cca419f07cbe7422d397003d824fdfcb7c54",
+              "method_sha256": "7c576a25fc45ea16d206e24bef3b6ee022a385c00ce08eb6d8453dfbcb11ecc5",
+              "physical_lines": 35,
+              "normalized_lines": 21
+            }
+          }
+        }
+      }
+    },
+    {
+      "file": "stable_envs/_adapters/ogbench_manipulation_compat.py",
+      "class": "Compatibility",
+      "name": "compile_model_and_data",
+      "line": 284,
+      "physical_lines": 3,
+      "normalized_lines": 3,
+      "method_sha256": "87338a09090ccca0b3ca35ba3752850fee9eb5ffb17117340d1f3ca4fae9aff2",
+      "category": 3,
+      "reason": "Delegate compilation then track exact compiled configuration",
+      "provenance": {
+        "Cube": {
+          "modify_mjcf_model": {
+            "swm": {
+              "owner": "stable_worldmodel.envs.ogbench.cube_env.CubeEnv",
+              "file": "/Users/samib/stable-worldmodel/stable_worldmodel/envs/ogbench/cube_env.py",
+              "line": 951,
+              "file_sha256": "143e5e81f424ff7a4d7fdde287dee88b722c09082a6fc9e68721839788e94c19",
+              "method_sha256": "f6d49ffa3bbaa72676ffb7543545f6843aaf131067f79bdae72e7a4ce7da784a",
+              "physical_lines": 114,
+              "normalized_lines": 39
+            },
+            "upstream": {
+              "owner": "ogbench.manipspace.envs.env.CustomMuJoCoEnv",
+              "file": "/private/tmp/ogb-manip-authority-swm-lock/lib/python3.12/site-packages/ogbench/manipspace/envs/env.py",
+              "line": 61,
+              "file_sha256": "c656f4733a1ad4cb07289bc58ac1ac0f7da378e1f2714dc80a5ed8c0b3028c38",
+              "method_sha256": "dec63b42e29330bd008c62bd5dd7ee83a7da376568b0834c28b54c336ba98cc9",
+              "physical_lines": 14,
+              "normalized_lines": 2
+            }
+          },
+          "compile_model_and_data": {
+            "swm": {
+              "owner": "ogbench.manipspace.envs.env.CustomMuJoCoEnv",
+              "file": "/private/tmp/ogb-manip-authority-swm-lock/lib/python3.12/site-packages/ogbench/manipspace/envs/env.py",
+              "line": 148,
+              "file_sha256": "c656f4733a1ad4cb07289bc58ac1ac0f7da378e1f2714dc80a5ed8c0b3028c38",
+              "method_sha256": "9dc3354b7bc266ac4b8231f0446fe1214d797d6348e19844879cd7834d149507",
+              "physical_lines": 31,
+              "normalized_lines": 15
+            },
+            "upstream": {
+              "owner": "ogbench.manipspace.envs.env.CustomMuJoCoEnv",
+              "file": "/private/tmp/ogb-manip-authority-swm-lock/lib/python3.12/site-packages/ogbench/manipspace/envs/env.py",
+              "line": 148,
+              "file_sha256": "c656f4733a1ad4cb07289bc58ac1ac0f7da378e1f2714dc80a5ed8c0b3028c38",
+              "method_sha256": "9dc3354b7bc266ac4b8231f0446fe1214d797d6348e19844879cd7834d149507",
+              "physical_lines": 31,
+              "normalized_lines": 15
+            }
+          }
+        },
+        "Scene": {
+          "modify_mjcf_model": {
+            "swm": {
+              "owner": "stable_worldmodel.envs.ogbench.scene_env.SceneEnv",
+              "file": "/Users/samib/stable-worldmodel/stable_worldmodel/envs/ogbench/scene_env.py",
+              "line": 484,
+              "file_sha256": "d0eebdce0131f86e3247736c601f97c2b11d0dbfad56fca998df3192f08a7b9f",
+              "method_sha256": "a08c2039cbb84bc060c2a2c75e92765e2b1ae29ff833b57878fdae23998e3b33",
+              "physical_lines": 100,
+              "normalized_lines": 39
+            },
+            "upstream": {
+              "owner": "ogbench.manipspace.envs.env.CustomMuJoCoEnv",
+              "file": "/private/tmp/ogb-manip-authority-swm-lock/lib/python3.12/site-packages/ogbench/manipspace/envs/env.py",
+              "line": 61,
+              "file_sha256": "c656f4733a1ad4cb07289bc58ac1ac0f7da378e1f2714dc80a5ed8c0b3028c38",
+              "method_sha256": "dec63b42e29330bd008c62bd5dd7ee83a7da376568b0834c28b54c336ba98cc9",
+              "physical_lines": 14,
+              "normalized_lines": 2
+            }
+          },
+          "compile_model_and_data": {
+            "swm": {
+              "owner": "ogbench.manipspace.envs.env.CustomMuJoCoEnv",
+              "file": "/private/tmp/ogb-manip-authority-swm-lock/lib/python3.12/site-packages/ogbench/manipspace/envs/env.py",
+              "line": 148,
+              "file_sha256": "c656f4733a1ad4cb07289bc58ac1ac0f7da378e1f2714dc80a5ed8c0b3028c38",
+              "method_sha256": "9dc3354b7bc266ac4b8231f0446fe1214d797d6348e19844879cd7834d149507",
+              "physical_lines": 31,
+              "normalized_lines": 15
+            },
+            "upstream": {
+              "owner": "ogbench.manipspace.envs.env.CustomMuJoCoEnv",
+              "file": "/private/tmp/ogb-manip-authority-swm-lock/lib/python3.12/site-packages/ogbench/manipspace/envs/env.py",
+              "line": 148,
+              "file_sha256": "c656f4733a1ad4cb07289bc58ac1ac0f7da378e1f2714dc80a5ed8c0b3028c38",
+              "method_sha256": "9dc3354b7bc266ac4b8231f0446fe1214d797d6348e19844879cd7834d149507",
+              "physical_lines": 31,
+              "normalized_lines": 15
+            }
+          }
+        }
+      }
+    },
+    {
+      "file": "stable_envs/_adapters/ogbench_manipulation_compat.py",
+      "class": "CompatibleScene",
+      "name": "_apply_button_states",
+      "line": 296,
+      "physical_lines": 7,
+      "normalized_lines": 7,
+      "method_sha256": "6ce95dc511512f3f581615d762b2d3c6c4f905c92449dc2ab302eefeeb77cee5",
+      "category": 3,
+      "reason": "Delegate damping/forward then configure registered lock colors",
+      "provenance": {
+        "Scene": {
+          "_apply_button_states": {
+            "swm": {
+              "owner": "stable_worldmodel.envs.ogbench.scene_env.SceneEnv",
+              "file": "/Users/samib/stable-worldmodel/stable_worldmodel/envs/ogbench/scene_env.py",
+              "line": 443,
+              "file_sha256": "d0eebdce0131f86e3247736c601f97c2b11d0dbfad56fca998df3192f08a7b9f",
+              "method_sha256": "7000172c45ab8a490c6ca6245debddf04296f6ca0d552189b949629467e9d9f2",
+              "physical_lines": 40,
+              "normalized_lines": 20
+            },
+            "upstream": {
+              "owner": "ogbench.manipspace.envs.scene_env.SceneEnv",
+              "file": "/private/tmp/ogb-manip-authority-swm-lock/lib/python3.12/site-packages/ogbench/manipspace/envs/scene_env.py",
+              "line": 207,
+              "file_sha256": "b03395bc50d7a65fcd45a3141fe6cca419f07cbe7422d397003d824fdfcb7c54",
+              "method_sha256": "12868063061696ee33a71aa0514e27e0f55c2bfe529c96cd1d23a0c2ddb2a22e",
+              "physical_lines": 29,
+              "normalized_lines": 17
+            }
+          }
+        }
+      }
+    }
+  ],
+  "compatibility_module_function_lines": {
+    "physical": 247,
+    "normalized": 191,
+    "interpretation": "Conservative total of ALL new compatibility functions, including validation, ownership, tree configuration and delegation; not an exact copied-line detector."
+  },
+  "category4_copied_algorithm": {
+    "method": "initialize_arm",
+    "physical": 12,
+    "normalized": 11,
+    "exact_executable_ast_equals_both_swm_families": true
+  },
+  "upstream_delegated": {
+    "Cube": {
+      "step": {
+        "owner": "ogbench.manipspace.envs.manipspace_env.ManipSpaceEnv",
+        "file": "/private/tmp/ogb-manip-authority-swm-lock/lib/python3.12/site-packages/ogbench/manipspace/envs/manipspace_env.py",
+        "line": 314,
+        "file_sha256": "03524eb1c95155bbc2ec3d29e9836fccffe8eb9fce1be15b6f0e7062cc1bb5fd",
+        "method_sha256": "6622929581da2ae3214802eb16238a08bcdf3778e7e89668a37fd6a79a4d4f81",
+        "physical_lines": 28,
+        "normalized_lines": 22
+      },
+      "set_tasks": {
+        "owner": "ogbench.manipspace.envs.cube_env.CubeEnv",
+        "file": "/private/tmp/ogb-manip-authority-swm-lock/lib/python3.12/site-packages/ogbench/manipspace/envs/cube_env.py",
+        "line": 75,
+        "file_sha256": "6f8457ffd634f6620411c788c86e871f44ea5b5b5eecf76cd694fc04d12d678d",
+        "method_sha256": "1adbcff6dda7f8938bbb6fd8f4f87a2425e9e9b770ae4c9da1a8c74aa72d2123",
+        "physical_lines": 434,
+        "normalized_lines": 13
+      },
+      "add_objects": {
+        "owner": "ogbench.manipspace.envs.cube_env.CubeEnv",
+        "file": "/private/tmp/ogb-manip-authority-swm-lock/lib/python3.12/site-packages/ogbench/manipspace/envs/cube_env.py",
+        "line": 510,
+        "file_sha256": "6f8457ffd634f6620411c788c86e871f44ea5b5b5eecf76cd694fc04d12d678d",
+        "method_sha256": "1d00b0f5ba24b4d3c8cd4d99e47fe3dcaba7ff1725677cc7874be4597fd67e24",
+        "physical_lines": 39,
+        "normalized_lines": 23
+      },
+      "compute_observation": {
+        "owner": "ogbench.manipspace.envs.cube_env.CubeEnv",
+        "file": "/private/tmp/ogb-manip-authority-swm-lock/lib/python3.12/site-packages/ogbench/manipspace/envs/cube_env.py",
+        "line": 766,
+        "file_sha256": "6f8457ffd634f6620411c788c86e871f44ea5b5b5eecf76cd694fc04d12d678d",
+        "method_sha256": "1a270ac750d0e2db90ee54ca17fc7a123f3eac6436840031609af54debb53509",
+        "physical_lines": 29,
+        "normalized_lines": 12
+      },
+      "compute_oracle_observation": {
+        "owner": "ogbench.manipspace.envs.cube_env.CubeEnv",
+        "file": "/private/tmp/ogb-manip-authority-swm-lock/lib/python3.12/site-packages/ogbench/manipspace/envs/cube_env.py",
+        "line": 796,
+        "file_sha256": "6f8457ffd634f6620411c788c86e871f44ea5b5b5eecf76cd694fc04d12d678d",
+        "method_sha256": "03e9f6ce52852758aa78ac2c4bee30e03e8fd817b27f450f3b35bef3a57a9c3d",
+        "physical_lines": 11,
+        "normalized_lines": 8
+      },
+      "compute_reward": {
+        "owner": "ogbench.manipspace.envs.cube_env.CubeEnv",
+        "file": "/private/tmp/ogb-manip-authority-swm-lock/lib/python3.12/site-packages/ogbench/manipspace/envs/cube_env.py",
+        "line": 808,
+        "file_sha256": "6f8457ffd634f6620411c788c86e871f44ea5b5b5eecf76cd694fc04d12d678d",
+        "method_sha256": "e5d11c1ae3bd6da7c2245cca4547b57725ed8e5771f0d3fafefa1c1dee9ba9fa",
+        "physical_lines": 8,
+        "normalized_lines": 6
+      },
+      "_compute_successes": {
+        "owner": "ogbench.manipspace.envs.cube_env.CubeEnv",
+        "file": "/private/tmp/ogb-manip-authority-swm-lock/lib/python3.12/site-packages/ogbench/manipspace/envs/cube_env.py",
+        "line": 709,
+        "file_sha256": "6f8457ffd634f6620411c788c86e871f44ea5b5b5eecf76cd694fc04d12d678d",
+        "method_sha256": "b966b5bf479b6943699f4ce3a51514ba791668587082bf6df93f103c9e51e516",
+        "physical_lines": 12,
+        "normalized_lines": 10
+      },
+      "post_compilation_objects": {
+        "owner": "ogbench.manipspace.envs.cube_env.CubeEnv",
+        "file": "/private/tmp/ogb-manip-authority-swm-lock/lib/python3.12/site-packages/ogbench/manipspace/envs/cube_env.py",
+        "line": 550,
+        "file_sha256": "6f8457ffd634f6620411c788c86e871f44ea5b5b5eecf76cd694fc04d12d678d",
+        "method_sha256": "ab7e165910cfdb3dcaea50c7dfdbd99dfd460f7879a447c700084faef423cff3",
+        "physical_lines": 12,
+        "normalized_lines": 4
+      }
+    },
+    "Scene": {
+      "step": {
+        "owner": "ogbench.manipspace.envs.manipspace_env.ManipSpaceEnv",
+        "file": "/private/tmp/ogb-manip-authority-swm-lock/lib/python3.12/site-packages/ogbench/manipspace/envs/manipspace_env.py",
+        "line": 314,
+        "file_sha256": "03524eb1c95155bbc2ec3d29e9836fccffe8eb9fce1be15b6f0e7062cc1bb5fd",
+        "method_sha256": "6622929581da2ae3214802eb16238a08bcdf3778e7e89668a37fd6a79a4d4f81",
+        "physical_lines": 28,
+        "normalized_lines": 22
+      },
+      "set_tasks": {
+        "owner": "ogbench.manipspace.envs.scene_env.SceneEnv",
+        "file": "/private/tmp/ogb-manip-authority-swm-lock/lib/python3.12/site-packages/ogbench/manipspace/envs/scene_env.py",
+        "line": 62,
+        "file_sha256": "b03395bc50d7a65fcd45a3141fe6cca419f07cbe7422d397003d824fdfcb7c54",
+        "method_sha256": "cb3d73bf88bf855724e38842db788fc71fc08531f81d1dd428b97f6d4b6dcf1c",
+        "physical_lines": 81,
+        "normalized_lines": 4
+      },
+      "add_objects": {
+        "owner": "ogbench.manipspace.envs.scene_env.SceneEnv",
+        "file": "/private/tmp/ogb-manip-authority-swm-lock/lib/python3.12/site-packages/ogbench/manipspace/envs/scene_env.py",
+        "line": 144,
+        "file_sha256": "b03395bc50d7a65fcd45a3141fe6cca419f07cbe7422d397003d824fdfcb7c54",
+        "method_sha256": "7c576a25fc45ea16d206e24bef3b6ee022a385c00ce08eb6d8453dfbcb11ecc5",
+        "physical_lines": 35,
+        "normalized_lines": 21
+      },
+      "compute_observation": {
+        "owner": "ogbench.manipspace.envs.scene_env.SceneEnv",
+        "file": "/private/tmp/ogb-manip-authority-swm-lock/lib/python3.12/site-packages/ogbench/manipspace/envs/scene_env.py",
+        "line": 630,
+        "file_sha256": "b03395bc50d7a65fcd45a3141fe6cca419f07cbe7422d397003d824fdfcb7c54",
+        "method_sha256": "b7a264e509d75cbfa2852e44d9dfa2e6c07c5d15fb81383be4602fe01467aa45",
+        "physical_lines": 49,
+        "normalized_lines": 19
+      },
+      "compute_oracle_observation": {
+        "owner": "ogbench.manipspace.envs.scene_env.SceneEnv",
+        "file": "/private/tmp/ogb-manip-authority-swm-lock/lib/python3.12/site-packages/ogbench/manipspace/envs/scene_env.py",
+        "line": 680,
+        "file_sha256": "b03395bc50d7a65fcd45a3141fe6cca419f07cbe7422d397003d824fdfcb7c54",
+        "method_sha256": "c81bc96c55f884a78da89693f489853e33ba3d906328757c49ea2d3848b1d7ed",
+        "physical_lines": 20,
+        "normalized_lines": 12
+      },
+      "compute_reward": {
+        "owner": "ogbench.manipspace.envs.scene_env.SceneEnv",
+        "file": "/private/tmp/ogb-manip-authority-swm-lock/lib/python3.12/site-packages/ogbench/manipspace/envs/scene_env.py",
+        "line": 701,
+        "file_sha256": "b03395bc50d7a65fcd45a3141fe6cca419f07cbe7422d397003d824fdfcb7c54",
+        "method_sha256": "53fe104ecd8a35c547b6ccfd41b88a51d06ec95b877ccfad9a6c120db88cbde0",
+        "physical_lines": 9,
+        "normalized_lines": 7
+      },
+      "_compute_successes": {
+        "owner": "ogbench.manipspace.envs.scene_env.SceneEnv",
+        "file": "/private/tmp/ogb-manip-authority-swm-lock/lib/python3.12/site-packages/ogbench/manipspace/envs/scene_env.py",
+        "line": 485,
+        "file_sha256": "b03395bc50d7a65fcd45a3141fe6cca419f07cbe7422d397003d824fdfcb7c54",
+        "method_sha256": "a549d28c6c71eb1fab3343497d65c216dbe064824191d19c93c75c1dcbf03bb0",
+        "physical_lines": 17,
+        "normalized_lines": 13
+      },
+      "post_compilation_objects": {
+        "owner": "ogbench.manipspace.envs.scene_env.SceneEnv",
+        "file": "/private/tmp/ogb-manip-authority-swm-lock/lib/python3.12/site-packages/ogbench/manipspace/envs/scene_env.py",
+        "line": 180,
+        "file_sha256": "b03395bc50d7a65fcd45a3141fe6cca419f07cbe7422d397003d824fdfcb7c54",
+        "method_sha256": "1d140d9ffc859bdd77350e7fc9e35ae30dbe57e0cff30b412a85516a54b22a2b",
+        "physical_lines": 26,
+        "normalized_lines": 10
+      }
+    }
+  },
+  "hierarchy": {
+    "Cube": [
+      "stable_envs._adapters.ogbench_manipulation_compat.CompatibleCube",
+      "stable_envs._adapters.ogbench_manipulation_compat.Compatibility",
+      "ogbench.manipspace.envs.cube_env.CubeEnv",
+      "ogbench.manipspace.envs.manipspace_env.ManipSpaceEnv",
+      "ogbench.manipspace.envs.env.CustomMuJoCoEnv",
+      "gymnasium.core.Env",
+      "typing.Generic",
+      "abc.ABC",
+      "builtins.object"
+    ],
+    "Scene": [
+      "stable_envs._adapters.ogbench_manipulation_compat.CompatibleScene",
+      "stable_envs._adapters.ogbench_manipulation_compat.Compatibility",
+      "ogbench.manipspace.envs.scene_env.SceneEnv",
+      "ogbench.manipspace.envs.manipspace_env.ManipSpaceEnv",
+      "ogbench.manipspace.envs.env.CustomMuJoCoEnv",
+      "gymnasium.core.Env",
+      "typing.Generic",
+      "abc.ABC",
+      "builtins.object"
+    ]
+  },
+  "source_differences": {
+    "initialize_arm": "Only eff_pos assignment differs from upstream; no uniform position draws. Remaining yaw/Lie/IK/joints/mj_forward statements are source-identical.",
+    "modify_mjcf_model": "Registered configuration hook, not episode reset; preserves agent-color inverted dirty predicate and NumPy float32 size promotion. Tracks compiled versus pending MJCF values."
+  }
+}

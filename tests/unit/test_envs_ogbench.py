@@ -23,7 +23,6 @@ import pytest
 pytest.importorskip("torch")
 import torch  # noqa: E402
 
-import stable_envs as snv  # noqa: E402
 from stable_envs import registry as R  # noqa: E402
 from stable_envs.envs import ogbench as OGB  # noqa: E402
 from stable_envs.envs.ogbench import manipulation as MANIP  # noqa: E402
@@ -150,7 +149,7 @@ def test_every_cell_reports_its_canonical_module():
         if cell not in R.REGISTRY:
             continue
         cls = R.REGISTRY[cell]
-        assert cls.__module__ == "stable_envs.envs.ogbench.manipulation"
+        assert cls.__module__ == "stable_envs.envs.ogbench.manipulation_semantics"
         meta = R.info(cell)
         assert meta["family"] == "ogbench"
         assert meta["domain"] == cls.CELL.lower()
@@ -175,7 +174,8 @@ def test_a_maze_cell_is_a_declaration_and_overrides_no_renderer_method():
         callables = [k for k, v in vars(cls).items() if callable(v) and not k.startswith("__")]
         assert not callables, f"{cell} defines {callables}; a cell is a declaration"
     for cell in MANIP_CELLS:
-        assert R.REGISTRY[cell].__bases__ == (MANIP.OGBManipBase,)
+        assert R.REGISTRY[cell].__bases__[1] is MANIP.CELL_CLASSES[cell]
+        assert MANIP.CELL_CLASSES[cell].__bases__ == (MANIP.OGBManipBase,)
 
 
 # ============================================================ structural: the preserved declarations
@@ -258,21 +258,21 @@ def test_the_scene_carries_the_button_texture_bake_note_and_the_cube_does_not():
 
 
 @pytest.mark.parametrize("cell", MANIP_CELLS)
-def test_cpu_is_refused_rather_than_served_from_the_gpu(cell):
+def test_frozen_renderer_cpu_is_refused_rather_than_served_from_the_gpu(cell):
     """The honest-device-selection rule, with the measurement that justifies it in the message.
 
     Checked BEFORE anything is built, which is why this runs on a machine with no ``ogbench``: a
     caller who asked for a CPU env gets the reason rather than four seconds of construction.
     """
     with pytest.raises(ValueError, match="CPU3D-OGB-1") as e:
-        R.REGISTRY[cell](num_envs=1, device="cpu")
+        MANIP.CELL_CLASSES[cell](num_envs=1, device="cpu")
     msg = str(e.value)
     assert "no CPU backend" in msg and "Use device='cuda'" in msg
     assert f"{MANIP.SPEC[cell.replace('OGB', '')]['visible_tri']:,}" in msg, (
         "the refusal must quote THIS cell's triangle count, not its sibling's"
     )
     with pytest.raises(ValueError, match="CPU3D-OGB-1"):
-        snv.make(cell, num_envs=1, device="cpu")
+        MANIP.CELL_CLASSES[cell](num_envs=1, device="cpu")
 
 
 # =========================================================== structural: the shared texel substitution
