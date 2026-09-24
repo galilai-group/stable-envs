@@ -1,0 +1,98 @@
+{
+  "registration": "swm/CraftaxSymbolic-v1",
+  "status": "BLOCKED_EXACT_RESET_OUTPUT",
+  "cases": [
+    {
+      "seed": 0,
+      "engine_state_and_keys_exact": true,
+      "direct_reset_return_exact": true,
+      "standalone_source_and_candidate_exact": true,
+      "restored_standalone_exact": true,
+      "historical_reset_output_recomputed_exact": false,
+      "indices": [
+        8239,
+        8240,
+        8241,
+        8242,
+        8243
+      ],
+      "source_values": [
+        0.8999999761581421,
+        0.8999999761581421,
+        0.8999999761581421,
+        0.8999999761581421,
+        0.8999999761581421
+      ],
+      "candidate_values": [
+        0.9000000357627869,
+        0.9000000357627869,
+        0.9000000357627869,
+        0.9000000357627869,
+        0.9000000357627869
+      ],
+      "maximum_difference": 5.960464477539063e-08
+    },
+    {
+      "seed": 17,
+      "engine_state_and_keys_exact": true,
+      "direct_reset_return_exact": true,
+      "standalone_source_and_candidate_exact": true,
+      "restored_standalone_exact": true,
+      "historical_reset_output_recomputed_exact": false,
+      "indices": [
+        8239,
+        8240,
+        8241,
+        8242,
+        8243
+      ],
+      "source_values": [
+        0.8999999761581421,
+        0.8999999761581421,
+        0.8999999761581421,
+        0.8999999761581421,
+        0.8999999761581421
+      ],
+      "candidate_values": [
+        0.9000000357627869,
+        0.9000000357627869,
+        0.9000000357627869,
+        0.9000000357627869,
+        0.9000000357627869
+      ],
+      "maximum_difference": 5.960464477539063e-08
+    },
+    {
+      "seed": 42,
+      "engine_state_and_keys_exact": true,
+      "direct_reset_return_exact": true,
+      "standalone_source_and_candidate_exact": true,
+      "restored_standalone_exact": true,
+      "historical_reset_output_recomputed_exact": false,
+      "indices": [
+        8239,
+        8240,
+        8241,
+        8242,
+        8243
+      ],
+      "source_values": [
+        0.8999999761581421,
+        0.8999999761581421,
+        0.8999999761581421,
+        0.8999999761581421,
+        0.8999999761581421
+      ],
+      "candidate_values": [
+        0.9000000357627869,
+        0.9000000357627869,
+        0.9000000357627869,
+        0.9000000357627869,
+        0.9000000357627869
+      ],
+      "maximum_difference": 5.960464477539063e-08
+    }
+  ],
+  "finding": "Exhaustive engine State and both keys reproduce dynamics, but standalone output JIT does not reproduce every bit of fused reset output. SWM retains _last_obs; candidate discards the returned output. Derived-output classification is insufficient for this historical reset boundary.",
+  "scope": "CPU profile only. No tolerance relaxation, algorithm change, cached-observation schema addition, or promotion performed."
+}
