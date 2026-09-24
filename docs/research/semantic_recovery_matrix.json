@@ -3198,11 +3198,67 @@
       "similarity_metrics": null,
       "remaining_issues": [
         "No stable dynamics; render state deliberately drops qvel.",
-        "Cube.reset seed parameter is not forwarded; fixed-seed oracle needs explicit global/variation/simulator RNG control."
+        "Cube.reset seed parameter is not forwarded; fixed-seed oracle needs explicit global/variation/simulator RNG control.",
+        "Fresh unseeded action-space generators during goal settling prevent demonstrated exact reset-State replay; family-specific entropy/oracle conditioning needs review. See source_preflight."
       ],
       "test": "tests/unit/test_full_state_contract.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
-      "execution_candidate": "DELEGATED"
+      "execution_candidate": "DELEGATED",
+      "source_preflight": {
+        "status": "BLOCKED_RESET_GATE",
+        "scope": "Pinned CPU authoritative source diagnostics only; no production adapter or promotion",
+        "report": "docs/research/semantic_recovery_evidence/ogb_manipulation_preflight/README.md",
+        "candidate_schema": "docs/research/ogbench_manipulation_candidate_state.md",
+        "source_reset_pairs": "15/15 same-seed fixed-Variation task pairs differ",
+        "conditioned_persistent_rng_resets": "3/3 differ in MuJoCo controls and warmstart",
+        "candidate_different_history_continuation": "3/3 roundtrips and 24/24 subsequent State/source-output comparisons exact",
+        "candidate_unseeded_reset": "3/3 differ after restoring engine/task/environment/global RNG anchors",
+        "frozen_constructor": "Constructs; rendering untested",
+        "gpu": "NOT_RUN_CPU_PREFLIGHT_STOP",
+        "public_acceptance": "NOT_RUN; all public parity statuses remain untested",
+        "artifacts": [
+          {
+            "path": "docs/research/semantic_recovery_evidence/ogb_manipulation_preflight/probe.py",
+            "sha256": "b9052f3f12d9d6c6970b21519e98960d299018998929f9f6b49b2e0c865dc617"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/ogb_manipulation_preflight/probe.log",
+            "sha256": "e697b1802c7c73f2f3c6606d2784b627b17a2395cd39aee6d8141ac7a312eeda"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/ogb_manipulation_preflight/results.json",
+            "sha256": "72e7a48165b237033f9449565822ad938443c0c7f3030b1e170cf57eee6380ba"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/ogb_manipulation_preflight/provenance.json",
+            "sha256": "f9c9c4f964d41819b0e0f55db80905358077167f9bf07d613c2409c6df07895b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/ogb_manipulation_preflight/reset_effects.py",
+            "sha256": "2bd79635a4d8e75f70f63ab645f73464d1ce45e9a1f07854b416d6dfd0f54b01"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/ogb_manipulation_preflight/reset_effects.log",
+            "sha256": "dc2f36957b03f935645fb2fa0d1878245617d7f33ff5259c1fd12367064ab84b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/ogb_manipulation_preflight/reset_effects.json",
+            "sha256": "87be151139fd8fddf2288592c7cd47b08778f26e5c7d9e21a63456d3b53f84c2"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/ogb_manipulation_preflight/dependency_hashes.json",
+            "sha256": "cac4fdd685a04db0274d296ab063af072babee95d82b08fd7414c8288cc10abd"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/ogb_manipulation_preflight/README.md",
+            "sha256": "5819764b453beeb58c2cda4b37ca3b83f9a0053c61c092be62c6e3db9f7ba5ba"
+          },
+          {
+            "path": "docs/research/ogbench_manipulation_candidate_state.md",
+            "sha256": "7b123c91020d9102d5cea1dd91a270c6d77509755827a37c40d55a5fa4a6cd72"
+          }
+        ]
+      }
     },
     {
       "historical_id": "swm/OGBMaze-v0",
@@ -3298,7 +3354,8 @@
       "remaining_issues": [
         "No stable dynamics; render state deliberately drops qvel.",
         "Pinned SWM Scene.reset(options.state) calls set_state without required button kwargs: source-level KeyError path; live reproduction pending.",
-        "Existing renderer Scene constructor omits required env_type under OGBench 1.2.1; reproduced on frozen baseline during first-cohort checks (see first_family_recovery.md)"
+        "Existing renderer Scene constructor omits required env_type under OGBench 1.2.1; reproduced on frozen baseline during first-cohort checks (see first_family_recovery.md)",
+        "Fresh unseeded action-space generators during goal settling prevent demonstrated exact reset-State replay; family-specific entropy/oracle conditioning needs review. See source_preflight."
       ],
       "test": "tests/unit/test_full_state_contract.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
@@ -3311,6 +3368,61 @@
         "baseline_reproduced": true,
         "resolution_cohort": "OGBench manipulation",
         "permanent_skip": false
+      },
+      "source_preflight": {
+        "status": "BLOCKED_RESET_GATE_AND_FROZEN_CONSTRUCTOR",
+        "scope": "Pinned CPU authoritative source diagnostics only; no production adapter or promotion",
+        "report": "docs/research/semantic_recovery_evidence/ogb_manipulation_preflight/README.md",
+        "candidate_schema": "docs/research/ogbench_manipulation_candidate_state.md",
+        "source_reset_pairs": "15/15 same-seed fixed-Variation task pairs differ",
+        "conditioned_persistent_rng_resets": "3/3 differ in MuJoCo controls and warmstart",
+        "candidate_different_history_continuation": "3/3 roundtrips and 24/24 subsequent State/source-output comparisons exact",
+        "candidate_unseeded_reset": "3/3 differ after restoring engine/task/environment/global RNG anchors",
+        "frozen_constructor": "FAIL missing env_type (pre-existing)",
+        "gpu": "NOT_RUN_CPU_PREFLIGHT_STOP",
+        "public_acceptance": "NOT_RUN; all public parity statuses remain untested",
+        "artifacts": [
+          {
+            "path": "docs/research/semantic_recovery_evidence/ogb_manipulation_preflight/probe.py",
+            "sha256": "b9052f3f12d9d6c6970b21519e98960d299018998929f9f6b49b2e0c865dc617"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/ogb_manipulation_preflight/probe.log",
+            "sha256": "e697b1802c7c73f2f3c6606d2784b627b17a2395cd39aee6d8141ac7a312eeda"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/ogb_manipulation_preflight/results.json",
+            "sha256": "72e7a48165b237033f9449565822ad938443c0c7f3030b1e170cf57eee6380ba"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/ogb_manipulation_preflight/provenance.json",
+            "sha256": "f9c9c4f964d41819b0e0f55db80905358077167f9bf07d613c2409c6df07895b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/ogb_manipulation_preflight/reset_effects.py",
+            "sha256": "2bd79635a4d8e75f70f63ab645f73464d1ce45e9a1f07854b416d6dfd0f54b01"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/ogb_manipulation_preflight/reset_effects.log",
+            "sha256": "dc2f36957b03f935645fb2fa0d1878245617d7f33ff5259c1fd12367064ab84b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/ogb_manipulation_preflight/reset_effects.json",
+            "sha256": "87be151139fd8fddf2288592c7cd47b08778f26e5c7d9e21a63456d3b53f84c2"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/ogb_manipulation_preflight/dependency_hashes.json",
+            "sha256": "cac4fdd685a04db0274d296ab063af072babee95d82b08fd7414c8288cc10abd"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/ogb_manipulation_preflight/README.md",
+            "sha256": "5819764b453beeb58c2cda4b37ca3b83f9a0053c61c092be62c6e3db9f7ba5ba"
+          },
+          {
+            "path": "docs/research/ogbench_manipulation_candidate_state.md",
+            "sha256": "7b123c91020d9102d5cea1dd91a270c6d77509755827a37c40d55a5fa4a6cd72"
+          }
+        ]
       }
     },
     {

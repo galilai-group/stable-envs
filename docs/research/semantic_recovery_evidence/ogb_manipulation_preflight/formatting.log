@@ -1,0 +1,1 @@
+Formatting: ruff check and ruff format --check PASS. git diff --check PASS.
