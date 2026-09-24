@@ -29,7 +29,7 @@ def main():
     import torch
 
     import stable_envs as se
-    from stable_envs._adapters.craftax import kernel
+    from stable_envs._adapters.craftax import kernel, numeric_leaves
     from stable_envs._adapters.craftax_render import fields as draw_fields
     from tests.helpers.reference.craftax_source import (
         ACTIONS,
@@ -50,7 +50,6 @@ def main():
 
     def capture(label, env, source, expected):
         full = env.get_state()
-        assert_engine(source, env, full)
         actual = (
             collect_numpy(env._simulator.output_fn(env._simulator.states[0]))
             if env.PIXELS
@@ -58,6 +57,11 @@ def main():
         )
         arrays = {"state/" + "/".join(k): collect_numpy(v) for k, v in full.items(True, True)}
         arrays["source_output"], arrays["candidate_output"] = expected, actual
+        arrays.update({"source_engine/" + "/".join(k): collect_numpy(v) for k, v in numeric_leaves(source._state)})
+        arrays["source_wrapper_key"] = collect_numpy(source._key)
+        # Preserve both sides before assertions so failed GPU gates remain diagnosable.
+        np.savez_compressed(args.output / (label + ".npz"), **arrays)
+        assert_engine(source, env, full)
         if env.PIXELS:
             draw = env.to_render_state(full)
             candidate = collect_numpy(env.render(full))[0]
@@ -155,13 +159,14 @@ def main():
             if not bool(state["lifecycle", "terminated"][0]):
                 expected, reward, done, truncated, _ = source.step(action)
                 result = env.step([action])
-                assert float(result["reward"][0]) == reward
-                assert bool(result["terminated"][0]) == done and not truncated
             else:
                 expected = np.asarray(
                     jax.jit(source._env.get_obs, backend=os.environ["CRAFTAX_JAX_BACKEND"])(source._state)
                 )
             results.append(capture(case, env, source, expected))
+            if not bool(state["lifecycle", "terminated"][0]):
+                assert float(result["reward"][0]) == reward
+                assert bool(result["terminated"][0]) == done and not truncated
     performance = {"constructor_seconds_in_current_process": constructor_seconds, "batches": {}}
     if args.performance:
 
