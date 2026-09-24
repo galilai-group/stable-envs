@@ -235,7 +235,9 @@ def test_invalid_source_invariants_leave_all_lanes_unchanged(name):
 
 
 @pytest.mark.parametrize("name", ["CraftaxClassicSymbolic", "CraftaxSymbolic"])
-def test_symbolic_order_chunk_nonmutation_and_exhaustive_restore(name):
+def test_symbolic_order_chunk_nonmutation_and_exhaustive_restore(name, tmp_path):
+    import jax
+
     from stable_envs._adapters.craftax import decode
 
     with se.make(name, num_envs=3, device=DEVICE) as env:
@@ -267,10 +269,19 @@ def test_symbolic_order_chunk_nonmutation_and_exhaustive_restore(name):
             single.reset(seed=999)
             terminal = fixture(single, name, "terminal")
         restore_oracle(source, env, terminal)
-        expected_terminal = np.asarray(source._env.get_obs(source._state))
-        row = {k: terminal[("engine", *k)][0].cpu().numpy() for k in env._simulator.engine}
-        np.testing.assert_array_equal(
-            expected_terminal, np.asarray(env._simulator.output_fn(decode(env._simulator.template, row)))
+        eager_terminal = np.asarray(source._env.get_obs(source._state))
+        expected_terminal = np.asarray(
+            jax.jit(source._env.get_obs, backend=os.environ.get("CRAFTAX_JAX_BACKEND", "cpu"))(source._state)
         )
+        row = {k: terminal[("engine", *k)][0].cpu().numpy() for k in env._simulator.engine}
+        actual_terminal = np.asarray(env._simulator.output_fn(decode(env._simulator.template, row)))
+        np.savez_compressed(
+            tmp_path / (name + "-terminal-paths.npz"),
+            eager=eager_terminal,
+            source_jit=expected_terminal,
+            candidate_jit=actual_terminal,
+            **{"state/" + "/".join(k): v.cpu().numpy() for k, v in terminal.items(True, True)},
+        )
+        np.testing.assert_array_equal(expected_terminal, actual_terminal)
         assert_state_equal(state, env.get_state())
     assert env._simulator.states is None and env._simulator.keys == []
