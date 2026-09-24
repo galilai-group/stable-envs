@@ -19,7 +19,9 @@ met directly by the re-exports below. Every module-level name the package export
 this package, and the frozen measurement record checks that name by name, read off the
 baseline SOURCE so the list cannot drift from what that file actually had.
 
-The manipulation half lives at ``stable_envs.envs.ogbench.manipulation``.
+The frozen manipulation renderer lives at ``stable_envs.envs.ogbench.manipulation``.
+The two public manipulation registrations add CPU simulator semantics through
+``manipulation_semantics``; renderer/GPU acceptance remains pending.
 
 THE RE-EXPORTS ARE THE SAME OBJECTS, not copies, and that matters for two of them in particular:
 ``_SCENE_CACHE`` and ``_ENV_CACHE`` are mutated through this package by
@@ -31,6 +33,7 @@ copy fails loudly instead of quietly rendering the wrong thing.
 
 from __future__ import annotations
 
+from ...registry import REGISTRY, register
 from . import manipulation, maze  # noqa: F401  (imported for their registrations)
 
 # ---- the manipulation half: the two cells and what a reader of this package would look for ----
@@ -41,6 +44,7 @@ from .manipulation import (  # noqa: F401
     VISIBLE_GROUPS,
     OGBManipBase,
 )
+from .manipulation_semantics import CELL_CLASSES as _MANIPULATION_CPU_CLASSES
 
 # ---- the maze half: every module-level name ``stable_envs/envs/ogbench.py`` exported ----------
 from .maze import (  # noqa: F401
@@ -70,7 +74,13 @@ from .maze import (  # noqa: F401
 #: The 25 maze cells and the two manipulation cells, by name, so ``stable_envs.envs.ogbench.<Cell>``
 #: resolves exactly as it did historically. Taken from each module's own ``CELL_CLASSES`` rather than
 #: transcribed, so a cell cannot exist and be missing here.
-CELL_CLASSES = {**maze.CELL_CLASSES, **manipulation.CELL_CLASSES}
+# Select the CPU semantic registrations at package construction. The renderer-only
+# classes and their implementation remain unchanged in the frozen module.
+for _name, _cls in _MANIPULATION_CPU_CLASSES.items():
+    assert REGISTRY[_name] is manipulation.CELL_CLASSES[_name]
+    del REGISTRY[_name]
+    register(_cls)
+CELL_CLASSES = {**maze.CELL_CLASSES, **_MANIPULATION_CPU_CLASSES}
 globals().update(CELL_CLASSES)
 
 __all__ = ["OGBenchMaze", "OGBManipBase", "maze", "manipulation", *sorted(CELL_CLASSES)]

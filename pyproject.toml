@@ -48,7 +48,7 @@ box2d = ["gymnasium[box2d]>=1.0", "pygame"]
 # Navigation dynamics and the public renderer remain native Torch.
 navigation = ["matplotlib>=3.10"]
 minigrid = ["minigrid"]
-ogbench = ["mujoco>=3.11,<3.13", "ogbench"]
+ogbench = ["mujoco>=3.11,<3.13", "ogbench==1.2.1"]
 highway = ["highway-env"]
 craftax = ["craftax", "jax"]
 minihack = ["minihack", "nle"]
