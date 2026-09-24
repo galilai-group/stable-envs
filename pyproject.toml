@@ -54,6 +54,9 @@ ogbench-manipulation = ["ogbench==1.2.1", "mujoco==3.12.0", "numpy==2.2.6", "gym
 ogbench-manipulation-gpu = ["ogbench==1.2.1", "mujoco==3.12.0", "numpy==2.2.6", "gymnasium==1.2.3", "dm-control==1.0.41", "mujoco-warp==3.12.0", "warp-lang==1.17.0"]
 highway = ["highway-env"]
 craftax = ["craftax", "jax"]
+# Audited registered Craftax semantics; legacy atlas renderer extra remains separate.
+craftax-semantics = ["craftax==1.5.0", "jax==0.10.1", "jaxlib==0.10.1", "flax==0.12.7", "gymnax==0.0.9", "numpy==2.2.6"]
+craftax-semantics-gpu = ["craftax==1.5.0", "jax[cuda12]==0.10.1", "jaxlib==0.10.1", "flax==0.12.7", "gymnax==0.0.9", "numpy==2.2.6"]
 minihack = ["minihack", "nle"]
 sokoban = ["gym-sokoban", "imageio"]
 dmcontrol = ["dm-control>=1.0.44", "mujoco>=3.11,<3.13"]
