@@ -25,6 +25,7 @@ Per-family studies:
 - [MiniGrid and BabyAI](minigrid.md)
 - [Crafter](crafter.md)
 - [OGBench mazes](ogbench.md)
+- [OGBench Cube/Scene acceptance](ogbench_renderer_acceptance.md)
 - [D4RL maze2d / PointMaze](maze2d.md)
 - [Overcooked (JaxMARL)](overcooked.md)
 - [Griddly](griddly.md)

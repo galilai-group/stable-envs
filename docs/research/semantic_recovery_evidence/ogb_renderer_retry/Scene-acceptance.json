@@ -1,0 +1,134 @@
+{
+  "historical_id": "swm/OGBScene-v0",
+  "status": "ACCEPTED",
+  "family": "Scene",
+  "execution_mode": "DELEGATED_CPU",
+  "implementation_commit": "14456339ec7f1b28ad698fc3158fe9e4ed8f6d1e",
+  "cpu_evidence_commit": "72612563590f12a081d940394496795a6c024577",
+  "renderer_implementation_commit": "2f4b2a6e5c0bc1ed8455d8235c1eb0e26ce70ff7",
+  "tested_source_commit": "294675f039e9b7f867c4bff15aac2b5f2e572bf6",
+  "gpu_evidence_commit": "3af3c63446f6b6ef1f261a8fb0b85e584db4e749",
+  "pinned_oracle": "176d54532b3c0a251a4f509b74f2fdacc143a63d",
+  "oracle_conditioning": "Approved Design A per-instance entropy ownership; immutable SWM oracle and upstream OGBench semantics",
+  "job": 6669909,
+  "cpu_test_count": 48,
+  "renderer_case_count": 22,
+  "gates": {
+    "dependency_ownership": "PASS",
+    "cpu_semantics": "PASS",
+    "exhaustive_state": "PASS",
+    "rng_reset_replay": "PASS",
+    "contact_different_history_continuation": "PASS",
+    "full_private_renderer_equality": "PASS",
+    "frozen_baseline_exact": "PASS",
+    "gpu": "PASS",
+    "readiness_taxonomy": "PASS"
+  },
+  "profile_model": "UNIFIED_MUJOCO_3_12",
+  "profile": {
+    "mujoco": "3.12.0",
+    "mujoco-warp": "3.12.0",
+    "warp-lang": "1.17.0",
+    "ogbench": "1.2.1",
+    "numpy": "2.2.6",
+    "gymnasium": "1.2.3",
+    "dm-control": "1.0.41",
+    "torch": "2.14.0+cu126",
+    "tensordict": "0.14.2"
+  },
+  "scope": {
+    "classes": [
+      "OGBScene"
+    ],
+    "configuration": "scene",
+    "ob_type": "states",
+    "reward_mode": "registered task defaults and CPU-tested reward_task_id routes",
+    "seeds": [
+      0,
+      17,
+      42
+    ],
+    "task_ids": "All source tasks and custom numeric payloads in CPU gate; renderer tasks 1,2,5",
+    "batches": [
+      1,
+      3
+    ],
+    "action_dtypes": [
+      "float32",
+      "float64"
+    ],
+    "render_backend": "mjwarp",
+    "camera": "front_pixels",
+    "render_size": 200,
+    "supersample": 1,
+    "renderstate_leaves": 16,
+    "physics_backend": "CPU",
+    "source_mujoco_fidelity": "Existing visual tier, not exact source MuJoCo pixels",
+    "frozen_baseline_atol": 0,
+    "frozen_baseline_rtol": 0,
+    "default_registered_semantics": true,
+    "unsupported_modes": [
+      "data_collection",
+      "multiview",
+      "render_goal",
+      "historical dataset sample_states",
+      "four historical Cube start/goal Variation controls"
+    ]
+  },
+  "readiness": "PARTIAL: four historical Cube controls refused; registered Scene default accepted",
+  "frozen_renderer_sha256": "bac4b1ea3e29a04faa5eeec33de0c212cb87bbf488ae0466ea762bd3a140576a",
+  "remote_archive_sha256": "6f584dc2f29f592b75c77eaf2237e4879d7b07eb5ec5add517fd8a5147581cd4",
+  "artifacts": [
+    {
+      "path": "docs/research/semantic_recovery_evidence/ogb_renderer_retry/remote/evidence/Scene/cpu.log",
+      "sha256": "75713bca80354876491fc45c4885202317517eaabaf9b9e842c1012ed4ee0002"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/ogb_renderer_retry/remote/evidence/Scene/cpu.xml",
+      "sha256": "e755dee9ea607d086ad564864b3b1668e4a0d02be0c82f9dfd14f2af1775c800"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/ogb_renderer_retry/remote/evidence/Scene/gpu.log",
+      "sha256": "c7e124d99b2fd4edf65511ce1018fc50c54dff1684c39a4e4ae103076b7157e9"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/ogb_renderer_retry/remote/evidence/Scene/result.json",
+      "sha256": "410ae601772323acd8547eb88a35accb0377a5ce633ba716e7a8b19aea1ab5c0"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/ogb_renderer_retry/remote/evidence/Scene/exits.json",
+      "sha256": "c7fa6abf116d0ee527ed5d47209690116641ec797728300f673e8b71b8fd58b5"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/ogb_renderer_retry/remote/evidence/terminal.txt",
+      "sha256": "6d19359cd94a1b7ac664f82929c0c0a95b9bb71d357ec0909486c4a8f426dad0"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/ogb_renderer_retry/verified-gpu.json",
+      "sha256": "a806a8a117f2598ce43a263071a3bf328239e91f58a5ddf18d95553d40bd9886"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/ogb_renderer_retry/readiness-gate.log",
+      "sha256": "72a45fe97a4542b6c943e07376e4fa8bc0824bec5236e6f0dc74258765610d75"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/ogb_renderer_retry/GPU-SHA256SUMS",
+      "sha256": "f3385f1cb8b51d4a7de395f8f032a169ceb05c9378f953f4462b061db2049f0f"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/ogb_cpu_compatibility/ownership.json",
+      "sha256": "e4fe1a92527d4e372430555d34450240d53bb609b98a44f51face871edb15fda"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/ogb_cpu_compatibility/state-schema.json",
+      "sha256": "97b52646f3f3448d007afe64e4a355ae8ba1bd24e31967357665fe45f2c9aab4"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/ogb_rng_feasibility/replay_results.json",
+      "sha256": "52215b33722143b79020779f4889a162e6e8c0168afea08a14d701e1ba353c24"
+    }
+  ],
+  "resource_policy": "Frozen process-lifetime EGL rigs retained; per-instance close releases only instance tables. Repeated/independent calls add no rig for existing configurations.",
+  "promotion_is_independent": true,
+  "other_family_evidence_required": false
+}

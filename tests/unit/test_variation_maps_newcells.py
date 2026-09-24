@@ -217,17 +217,17 @@ def test_rocket_pad_color_default_is_white_not_the_declared_two_hundred():
 
 
 @pytest.mark.parametrize("swm_id", ["swm/OGBCube-v0", "swm/OGBScene-v0"])
-def test_ogb_maps_authorized_cube_and_floor_colours(swm_id):
-    """These two cells declare `make_variation_space() -> Dict({})`. That is a deliberate state, not
-    a gap: the test pins it so that adding the first style dim is a conscious act with a declaration
-    change, rather than something that drifts in."""
+def test_ogb_maps_recovered_public_configuration(swm_id):
+    """The public semantic adapter has a wider configuration than the frozen renderer."""
     m = _map_for(swm_id)
-    assert set(m.pairs()) == {"cube.color", "floor.color"}
+    cell = "OGBCube" if "Cube" in swm_id else "OGBScene"
+    assert set(m.pairs()) == set(RECORDED_OURS_LEAVES[cell])
+    assert len(m.pairs()) == (11 if cell == "OGBCube" else 8)
     assert set(m.swm_only) == set(RECORDED_SWM_LEAVES[swm_id]) - set(m.pairs())
 
 
 @pytest.mark.parametrize("swm_id", ["swm/OGBCube-v0", "swm/OGBScene-v0"])
-def test_ogb_state_leaves_are_classified_not_applicable(swm_id):
+def test_ogb_reset_configuration_scope_is_explicit(swm_id):
     for leaf in (
         "agent.ee_start_position",
         "cube.start_position",
@@ -236,15 +236,14 @@ def test_ogb_state_leaves_are_classified_not_applicable(swm_id):
         "cube.goal_yaw",
     ):
         rec = LEAF_CLASSIFICATION[swm_id]["leaves"][leaf]
-        assert rec["classification"] == "not_applicable", (
-            f"{swm_id}:{leaf} reaches the frame only through qpos/mocap, which is our state"
-        )
+        expected = "unsupported" if "Scene" in swm_id and leaf.startswith("cube.") else "mapped"
+        assert rec["classification"] == expected
 
 
 @pytest.mark.parametrize("swm_id", ["swm/OGBCube-v0", "swm/OGBScene-v0"])
 def test_ogb_agent_color_records_the_upstream_dirty_flag_defect(swm_id):
     rec = LEAF_CLASSIFICATION[swm_id]["leaves"]["agent.color"]
-    assert rec["classification"] == "dead_upstream"
+    assert rec["classification"] == "mapped"
     assert "allclose" in rec["reason"], (
         "the reason must name the inverted dirty-flag test, because the leaf is dead only in "
         "isolation and live when co-varied -- a reader who does not know that will mis-file it"
@@ -254,7 +253,7 @@ def test_ogb_agent_color_records_the_upstream_dirty_flag_defect(swm_id):
 def test_lock_color_is_scene_only():
     assert "lock_color" in RECORDED_SWM_LEAVES["swm/OGBScene-v0"]
     assert "lock_color" not in RECORDED_SWM_LEAVES["swm/OGBCube-v0"]
-    assert "lock_color" in _map_for("swm/OGBScene-v0").swm_only
+    assert "lock_color" in _map_for("swm/OGBScene-v0").pairs()
     assert "lock_color" not in _map_for("swm/OGBCube-v0").swm_only
 
 
@@ -663,22 +662,22 @@ def test_the_colour_write_touches_only_the_cube_geoms():
 
 
 def _ogb_space(cell):
-    """The real `make_variation_space` for one OGB cell, with no CUDA.
-
-    `OGBManipBase.__init__` refuses a non-cuda device, but `make_variation_space` only needs the
-    cached bundle, which is mujoco + ogbench on the CPU. Called unbound on a stub carrying `CELL`,
-    so this is the shipped code path and not a copy of it.
-    """
+    """Frozen internal color layout through the recovered model-provider boundary, without CUDA."""
     import types
 
     pytest.importorskip("ogbench")
+    from stable_envs.envs.ogbench import OGBCube, OGBScene
     from stable_envs.envs.ogbench.manipulation import OGBManipBase
+    from stable_envs.envs.ogbench.manipulation_renderer import configured_bundle
 
-    return OGBManipBase.make_variation_space(types.SimpleNamespace(CELL=cell))
+    cls = OGBCube if cell == "Cube" else OGBScene
+    with cls(seed=0) as env:
+        token, _ = configured_bundle(cell, env.to_render_state()[0])
+    return OGBManipBase.make_variation_space(types.SimpleNamespace(CELL=token))
 
 
 @pytest.mark.parametrize("cell", ["Cube", "Scene"])
-def test_our_cube_colour_leaf_is_flat_three_and_floor_colour_is_two_by_three(cell):
+def test_frozen_cube_colour_leaf_is_flat_three_and_floor_colour_is_two_by_three(cell):
     """One shape, decided once. swm declares `cube.color` as `(num_cubes, 3)` and both registered
     cells are one-cube configurations, so we carry the leaf FLAT: a leading axis of length 1 buys
     nothing and costs a shape the Box, the style row and the swm value would each spell differently.

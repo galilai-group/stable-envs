@@ -5,7 +5,7 @@ is tracked separately in [the recovery matrix](semantic_recovery_matrix.json);
 these architecture statuses do not certify task parity. Status is **derived** from
 `tests/helpers/reference/readiness.py`, not from prose beside the table.
 
-<!-- readiness-counts READY=0 PARTIAL=22 INCOMPLETE=18 SYMBOLIC=2 -->
+<!-- readiness-counts READY=1 PARTIAL=23 INCOMPLETE=16 SYMBOLIC=2 -->
 
 `READY` means:
 
@@ -65,12 +65,12 @@ renderer sharing the same historical registration can remain incomplete.
 
 | status | count |
 |---|---|
-| READY | 0 |
-| PARTIAL | 22 |
-| INCOMPLETE | 18 |
+| READY | 1 |
+| PARTIAL | 23 |
+| INCOMPLETE | 16 |
 | SYMBOLIC | 2 |
 
-Execution: NATIVE 5 · DELEGATED_CPU 17 · INCOMPLETE 18 · SYMBOLIC 2.
+Execution: NATIVE 5 · DELEGATED_CPU 19 · INCOMPLETE 16 · SYMBOLIC 2.
 
 ## Per historical cell
 
@@ -108,9 +108,9 @@ exact default task being `VERIFIED`. Full Variation surfaces remain uncertified.
 | `swm/ManipulatorDMControl-v0` | `DMCManipulatorBringBall` | DELEGATED_CPU | PARTIAL | Exact CPU historical default; complete Variation surface and sibling tasks uncertified |
 | `swm/MountainCarContinuousControl-v0` | `MountainCarContinuous` | DELEGATED_CPU | PARTIAL | Exact CPU default; full historical Variation surface remains uncertified |
 | `swm/MountainCarControl-v0` | `MountainCar` | DELEGATED_CPU | PARTIAL | Exact CPU default; full historical Variation surface remains uncertified |
-| `swm/OGBCube-v0` | `OGBCube` | INCOMPLETE | INCOMPLETE | no SE step; size/light/camera; reset poses |
+| `swm/OGBCube-v0` | `OGBCube` | DELEGATED_CPU | READY | All 11 public configuration leaves mapped; exact accepted scope in Cube/Scene recovery report |
 | `swm/OGBMaze-v0` | `PointMazeLargeNavigate` (default only) | DELEGATED_CPU | PARTIAL | other maze configurations/tasks and complete appearance surface |
-| `swm/OGBScene-v0` | `OGBScene` | INCOMPLETE | INCOMPLETE | **BLOCKED** default constructor omits required `env_type`; no global skip |
+| `swm/OGBScene-v0` | `OGBScene` | DELEGATED_CPU | PARTIAL | Eight public leaves mapped; four historical Cube start/goal controls explicitly refused; registered Scene task default accepted |
 | `swm/PFRocketLanding-v0` | `PyFlytRocketLanding` | INCOMPLETE | INCOMPLETE | no SE step; start height/offset/tilt |
 | `swm/PendulumControl-v1` | `Pendulum` | DELEGATED_CPU | PARTIAL | Gymnasium Pendulum-v1; full Variation surface remains uncertified |
 | `swm/PendulumDMControl-v0` | `DMCPendulumSwingup` | DELEGATED_CPU | PARTIAL | SwingUp; complete historical Variation surface remains uncertified |

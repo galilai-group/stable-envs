@@ -23,17 +23,10 @@ the bucket is a MEASUREMENT rather than a reading of the upstream docstring:
 the structured table is what the docs page and ``leaf_classification.json`` are generated from.
 See ``docs/research/step8_variations_newcells.md``.
 
-WHY FOUR OF THE FIVE IDS MAP NOTHING BUT STATE
----------------------------------------------
-``OGBCube``/``OGBScene`` declare ``make_variation_space() -> Dict({})``. That is not an oversight
-and it is not laziness: their frame is a MuJoCo-baked static plate composited with one mujoco_warp
-launch for the movers, and BOTH halves are built from a single compiled ``MjModel`` whose appearance
-arrays ``_appearance_digest`` asserts never change. swm applies ``floor.color``, ``agent.color``,
-``cube.size``, ``camera.angle_delta`` and ``light.intensity`` by rewriting the MJCF XML and
-RECOMPILING (``CubeEnv.modify_mjcf_model`` -> ``mark_dirty`` -> ``compile_model``), so honouring them
-per environment means one compiled model, one plate rig and one captured mujoco_warp graph PER
-APPEARANCE VECTOR. Which of those are cheap and which are a renderer change is recorded leaf by leaf
-below, measured rather than guessed.
+Cube/Scene recovery now maps the registered public semantic adapters. Their
+independent compiled models feed the unchanged frozen renderer; historical model
+probes below remain provenance. Reset configuration is part of Variation. Scene's
+four historical Cube start/goal controls remain explicitly outside public scope.
 """
 
 from __future__ import annotations
@@ -144,12 +137,15 @@ _OGB_APPEARANCE = {
     ),
 }
 
-_OGB_MAPPED = ("cube.color", "floor.color")
-_OGB_CUBE_SWM_ONLY = {
-    **_OGB_STATE_LEAVES,
-    **{k: v for k, v in _OGB_APPEARANCE.items() if k not in (*_OGB_MAPPED, "lock_color")},
+_OGB_CUBE_MAPPED = tuple(sorted((*_OGB_STATE_LEAVES, *(k for k in _OGB_APPEARANCE if k != "lock_color"))))
+_OGB_SCENE_MAPPED = tuple(sorted(("agent.ee_start_position", *_OGB_APPEARANCE)))
+_OGB_SCENE_SWM_ONLY = {
+    k: "The historical Cube start/goal control is not exposed by the registered Scene adapter. "
+    "Scene initialization is task-driven; exhaustive State and task restoration do not certify "
+    "these four public Variation controls. Explicit use continues to refuse."
+    for k in _OGB_STATE_LEAVES
+    if k != "agent.ee_start_position"
 }
-_OGB_SCENE_SWM_ONLY = {**_OGB_STATE_LEAVES, **{k: v for k, v in _OGB_APPEARANCE.items() if k not in _OGB_MAPPED}}
 
 
 # ====================================================================== Rocket
@@ -184,12 +180,11 @@ _ROCKET_SWM_ONLY = {
 NEWCELL_VARIATION_MAPS: dict[str, VariationMap] = {
     "OGBCube": VariationMap(
         swm_id="swm/OGBCube-v0",
-        identical=_OGB_MAPPED,
-        swm_only=_OGB_CUBE_SWM_ONLY,
+        identical=_OGB_CUBE_MAPPED,
     ),
     "OGBScene": VariationMap(
         swm_id="swm/OGBScene-v0",
-        identical=_OGB_MAPPED,
+        identical=_OGB_SCENE_MAPPED,
         swm_only=_OGB_SCENE_SWM_ONLY,
     ),
     "PFRocketLanding": VariationMap(
@@ -282,92 +277,34 @@ LEAF_CLASSIFICATION: dict[str, dict] = {
             ),
         },
     },
-    "swm/OGBCube-v0": {
-        "our_envs": ["OGBCube"],
-        "leaves": {
-            **{
-                k: _cls("not_applicable", v, PROBES["ogb_model"] + " -- 0 appearance arrays changed")
-                for k, v in _OGB_STATE_LEAVES.items()
-            },
-            "floor.color": _cls(
-                "mapped",
-                "Checker RGB pairs update a private texture and plate cache key",
-                PROBES["ogb_model"] + " -- changes tex_data only (1 row, max 235)",
-                mechanism="quantised plate cache key; unchanged marker texels",
-            ),
-            "light.intensity": _cls(
-                "unsupported",
-                _OGB_APPEARANCE["light.intensity"],
-                PROBES["ogb_model"] + " -- changes light_diffuse only (1 row)",
-                mechanism="per-world model array in the mjwarp context; escalation candidate",
-            ),
-            "camera.angle_delta": _cls(
-                "unsupported",
-                _OGB_APPEARANCE["camera.angle_delta"],
-                PROBES["ogb_model"] + " -- changes cam_mat0 and cam_quat",
-                mechanism="per-world camera; escalation candidate",
-            ),
-            "cube.size": _cls(
-                "unsupported",
-                _OGB_APPEARANCE["cube.size"],
-                PROBES["ogb_model"] + " -- geom_size on 2 MOVER geoms + 12 derived",
-                mechanism="per-world geom_size; escalation candidate",
-            ),
-            "agent.color": _cls(
-                "dead_upstream",
-                _OGB_APPEARANCE["agent.color"],
-                PROBES["ogb_agent_color"] + " -- 0 model arrays changed when applied "
-                "alone; mat_rgba rows 8 and 9 move only when co-varied",
-                mechanism="inverted dirty-flag test in CubeEnv.modify_mjcf_model; conditionally dead",
-            ),
-            "cube.color": _cls(
-                "mapped",
-                "Per-world cube and goal-marker RGB; preserves each geom alpha",
-                PROBES["ogb_model"] + " -- geom_rgba on 2 MOVER geoms, no recompile",
-                mechanism="per-world rgba upload, including default restores",
-            ),
-        },
-    },
-    "swm/OGBScene-v0": {
-        "our_envs": ["OGBScene"],
-        "leaves": {
-            **{k: _cls("not_applicable", v, PROBES["ogb_model"]) for k, v in _OGB_STATE_LEAVES.items()},
-            "floor.color": _cls(
-                "mapped",
-                "Checker RGB pairs update a private texture and plate cache key",
-                PROBES["ogb_model"] + " -- changes tex_data only",
-            ),
-            "light.intensity": _cls(
-                "unsupported", _OGB_APPEARANCE["light.intensity"], PROBES["ogb_model"] + " -- changes light_diffuse"
-            ),
-            "camera.angle_delta": _cls(
-                "unsupported",
-                _OGB_APPEARANCE["camera.angle_delta"],
-                PROBES["ogb_model"] + " -- changes cam_mat0 and cam_quat",
-            ),
-            "cube.size": _cls(
-                "unsupported", _OGB_APPEARANCE["cube.size"], PROBES["ogb_model"] + " -- geom_size on 2 MOVER geoms"
-            ),
-            "agent.color": _cls(
-                "dead_upstream",
-                _OGB_APPEARANCE["agent.color"],
-                PROBES["ogb_agent_color"] + " -- 0 model arrays changed beyond the "
-                "measured Scene reset-noise set when applied alone",
-                mechanism="inverted dirty-flag test in CubeEnv.modify_mjcf_model; conditionally dead",
-            ),
-            "cube.color": _cls(
-                "mapped",
-                "Per-world cube and goal-marker RGB; preserves each geom alpha",
-                PROBES["ogb_model"] + " -- geom_rgba on 3 MOVER geoms",
-            ),
-            "lock_color": _cls(
-                "unsupported",
-                _OGB_APPEARANCE["lock_color"],
-                PROBES["ogb_model"] + " -- mat_rgba on 2 materials carried by 6 MOVER geoms; " + PROBES["scene_noise"],
-            ),
-        },
-    },
 }
+
+
+# The recovery records supersede only the two manipulation cells. Other families'
+# classifications and immutable historical probe files remain unchanged.
+for _family, _mapped in [("Cube", _OGB_CUBE_MAPPED), ("Scene", _OGB_SCENE_MAPPED)]:
+    _evidence = (
+        "docs/research/semantic_recovery_evidence/ogb_renderer_retry/remote/evidence/"
+        + _family
+        + "/result.json and cpu.log: exact source physics arrays and frozen pixels"
+    )
+    _leaves = {
+        k: _cls(
+            "mapped",
+            "Identical public persistent/reset configuration and source behavior; exhaustive State "
+            "carries its current/anchor values, and named RenderState carries its pixel effect.",
+            _evidence,
+        )
+        for k in _mapped
+    }
+    _leaves["agent.color"]["reason"] = (
+        "Mapped with the source's inverted np.allclose dirty predicate preserved: pending MJCF "
+        "color is distinct from compiled color. Repeated/co-varied application changes pixels; "
+        "an isolated pending change must not be rendered before source compilation."
+    )
+    if _family == "Scene":
+        _leaves.update({k: _cls("unsupported", v, _evidence) for k, v in _OGB_SCENE_SWM_ONLY.items()})
+    LEAF_CLASSIFICATION["swm/OGB" + _family + "-v0"] = {"our_envs": ["OGB" + _family], "leaves": _leaves}
 
 
 # ====================================================================== the leaf inventory
@@ -712,8 +649,8 @@ CRAFTAX_NO_LEAVES = {
 #: leaf account for itself; without this, an OUR-side leaf can exist with no statement of whether
 #: swm has a counterpart, which is the same gap in the other direction.
 RECORDED_OURS_LEAVES: dict[str, tuple[str, ...]] = {
-    "OGBCube": ("cube.color", "floor.color"),
-    "OGBScene": ("cube.color", "floor.color"),
+    "OGBCube": _OGB_CUBE_MAPPED,
+    "OGBScene": _OGB_SCENE_MAPPED,
     "PointmazeLargeNavigate": (
         "agent.color",
         "agent.scale",

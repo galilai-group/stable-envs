@@ -11390,7 +11390,7 @@
     },
     {
       "historical_id": "swm/OGBCube-v0",
-      "current_status": "INCOMPLETE",
+      "current_status": "VERIFIED",
       "family": "ogbench",
       "pinned_swm_commit": "176d54532b3c0a251a4f509b74f2fdacc143a63d",
       "swm_implementation": {
@@ -11406,29 +11406,33 @@
         "package": "ogbench",
         "pinned_lock_version": "1.2.1",
         "tested_profile_versions": {
+          "mujoco": "3.12.0",
+          "mujoco-warp": "3.12.0",
+          "warp-lang": "1.17.0",
           "ogbench": "1.2.1",
-          "mujoco": "3.8.1",
           "numpy": "2.2.6",
           "gymnasium": "1.2.3",
           "dm-control": "1.0.41",
-          "torch": "2.10.0",
+          "torch": "2.14.0+cu126",
           "tensordict": "0.14.2"
         },
-        "version_scope": "Lock version is historical provenance, not a claim of candidate certification; tested CPU/GPU versions remain in evidence."
+        "version_scope": "Exact local CPU oracle comparisons under 3.8.1 and 3.12.0; Oscar 3.12.0 CPU semantics and frozen GPU renderer passed in one profile. No cross-version bit-identity or GPU-physics claim."
       },
       "stable_envs_classes": [
         "OGBCube"
       ],
-      "accepted_classes": [],
+      "accepted_classes": [
+        "OGBCube"
+      ],
       "historical_task_default_kwargs": {
         "registration_kwargs": {},
         "constructor_signature": "self, env_type='single', ob_type='states', permute_blocks=True, multiview=False, height=224, width=224, *args, **kwargs",
-        "accepted_task": null,
+        "accepted_task": "single",
         "source_constructor": "swm:stable_worldmodel/envs/ogbench/cube_env.py:CubeEnv.__init__"
       },
       "state_schema": {
         "status": "ACCEPTED_BOUNDED",
-        "scope": "Complete public CPU State; registration remains INCOMPLETE pending renderer/GPU.",
+        "scope": "Complete exhaustive public State accepted under the recorded CPU and unified renderer profiles.",
         "schema_file": "docs/research/semantic_recovery_evidence/ogb_cpu_compatibility/state-schema.json",
         "family": "Cube",
         "leaf_count": 139
@@ -11463,10 +11467,10 @@
           "swm:stable_worldmodel/envs/ogbench/cube_env.py"
         ]
       },
-      "accepted_variation_scope": "CPU registered physical/reset/appearance configuration passed; pixels pending. See CPU report for supported leaves.",
+      "accepted_variation_scope": "All 11 public Cube leaves mapped; conditional source agent-color dirty behavior preserved.",
       "execution_mode": "DELEGATED_CPU",
       "evidence_manifest": {
-        "oracle": null,
+        "oracle": "176d54532b3c0a251a4f509b74f2fdacc143a63d",
         "artifacts": [
           {
             "path": "docs/research/semantic_recovery_evidence/ogb_cpu_compatibility/cpu-tests.log",
@@ -11495,38 +11499,46 @@
           {
             "path": "docs/research/semantic_recovery_evidence/ogb_renderer_closeout/remote-verification.json",
             "sha256": "d30825f765bd2b01e18e69c58b753044b37c03fb81c705e40d62ed703fa72cd0"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/ogb_renderer_retry/Cube-acceptance.json",
+            "sha256": "f6b173b8bd55ba4fa4eab8a4ba9d6c876c472e32f89af176c8cef9a44361f800"
           }
         ]
       },
       "cpu_semantic_result": "PASS_EXACT_CPU_FAMILY_GATE",
       "gpu_semantic_result": {
-        "status": "NOT_ACCEPTED",
-        "job": 6669720,
-        "note": "FAILED test-bundle packaging prerequisite; renderer not run. No GPU-physics claim."
+        "status": "PASS",
+        "job": 6669909,
+        "note": "Unified profile: CPU physics semantics and GPU rendering both passed; dynamics remain DELEGATED_CPU."
       },
-      "frozen_renderer_result": "PENDING",
+      "frozen_renderer_result": {
+        "cpu": "CPU_BACKEND_MISSING",
+        "gpu": "PASS_EXACT",
+        "job": 6669909,
+        "frames": 13,
+        "baseline_sha256": "bac4b1ea3e29a04faa5eeec33de0c212cb87bbf488ae0466ea762bd3a140576a",
+        "source_fidelity_tier": "visual"
+      },
       "known_limitations": [
-        "Renderer integration is implemented and local model/RenderState gates passed; exact frozen pixel acceptance remains pending.",
-        "Oscar job 6669720 failed during CPU test collection because the selective source archive omitted tests/fixtures/regression/support_matrix.json; both GPU renderer processes were skipped.",
-        "A corrected complete tracked-tree bundle is prepared for review; no second job submitted.",
-        "Registration promotion and unified-profile GPU acceptance remain pending; physics is DELEGATED_CPU."
+        "CPU mesh rendering explicitly unsupported; physics is DELEGATED_CPU, including when State tensors use CUDA.",
+        "Exact candidate/frozen frame equality; source MuJoCo retains the established visual-tier residuals.",
+        "Process-lifetime EGL plate rigs retained by the frozen policy; memory is not bounded over arbitrarily many static configurations.",
+        "Historical data collection, multiview, render-goal and dataset sampling modes remain refused."
       ],
-      "remaining_gates": [
-        "Renderer integration is implemented and local model/RenderState gates passed; exact frozen pixel acceptance remains pending.",
-        "Oscar job 6669720 failed during CPU test collection because the selective source archive omitted tests/fixtures/regression/support_matrix.json; both GPU renderer processes were skipped.",
-        "A corrected complete tracked-tree bundle is prepared for review; no second job submitted.",
-        "Registration promotion and unified-profile GPU acceptance remain pending; physics is DELEGATED_CPU."
-      ],
+      "remaining_gates": [],
       "closure_code_check": {
         "production_implementation": "complete",
         "implementation_commit": "14456339ec7f1b28ad698fc3158fe9e4ed8f6d1e",
         "cpu_evidence_commit": "72612563590f12a081d940394496795a6c024577",
-        "registration_promotion": "INCOMPLETE",
+        "registration_promotion": "VERIFIED",
         "production_swm_imports": false,
-        "renderer_implementation": "complete; GPU acceptance pending",
+        "renderer_implementation": "complete; GPU acceptance passed",
         "renderer_implementation_commit": "2f4b2a6e5c0bc1ed8455d8235c1eb0e26ce70ff7",
         "local_renderer_evidence_commit": "457afa0b401a3fa757c94eb8a8b6a3de3074585c",
-        "renderstate_schema": "docs/research/semantic_recovery_evidence/ogb_renderer_closeout/renderstate-schema.json"
+        "renderstate_schema": "docs/research/semantic_recovery_evidence/ogb_renderer_closeout/renderstate-schema.json",
+        "gpu_evidence_commit": "3af3c63446f6b6ef1f261a8fb0b85e584db4e749",
+        "gpu_acceptance": "docs/research/semantic_recovery_evidence/ogb_renderer_retry/Cube-acceptance.json"
       },
       "source_preflight": {
         "status": "BLOCKED_RESET_GATE",
@@ -11835,7 +11847,7 @@
     },
     {
       "historical_id": "swm/OGBScene-v0",
-      "current_status": "INCOMPLETE",
+      "current_status": "VERIFIED",
       "family": "ogbench",
       "pinned_swm_commit": "176d54532b3c0a251a4f509b74f2fdacc143a63d",
       "swm_implementation": {
@@ -11851,29 +11863,33 @@
         "package": "ogbench",
         "pinned_lock_version": "1.2.1",
         "tested_profile_versions": {
+          "mujoco": "3.12.0",
+          "mujoco-warp": "3.12.0",
+          "warp-lang": "1.17.0",
           "ogbench": "1.2.1",
-          "mujoco": "3.8.1",
           "numpy": "2.2.6",
           "gymnasium": "1.2.3",
           "dm-control": "1.0.41",
-          "torch": "2.10.0",
+          "torch": "2.14.0+cu126",
           "tensordict": "0.14.2"
         },
-        "version_scope": "Lock version is historical provenance, not a claim of candidate certification; tested CPU/GPU versions remain in evidence."
+        "version_scope": "Exact local CPU oracle comparisons under 3.8.1 and 3.12.0; Oscar 3.12.0 CPU semantics and frozen GPU renderer passed in one profile. No cross-version bit-identity or GPU-physics claim."
       },
       "stable_envs_classes": [
         "OGBScene"
       ],
-      "accepted_classes": [],
+      "accepted_classes": [
+        "OGBScene"
+      ],
       "historical_task_default_kwargs": {
         "registration_kwargs": {},
         "constructor_signature": "self, env_type='scene', ob_type='states', permute_blocks=True, multiview=False, *args, **kwargs",
-        "accepted_task": null,
+        "accepted_task": "scene",
         "source_constructor": "swm:stable_worldmodel/envs/ogbench/scene_env.py:SceneEnv.__init__"
       },
       "state_schema": {
         "status": "ACCEPTED_BOUNDED",
-        "scope": "Complete public CPU State; registration remains INCOMPLETE pending renderer/GPU.",
+        "scope": "Complete exhaustive public State accepted under the recorded CPU and unified renderer profiles.",
         "schema_file": "docs/research/semantic_recovery_evidence/ogb_cpu_compatibility/state-schema.json",
         "family": "Scene",
         "leaf_count": 132
@@ -11908,10 +11924,10 @@
           "swm:stable_worldmodel/envs/ogbench/scene_env.py"
         ]
       },
-      "accepted_variation_scope": "CPU registered physical/reset/appearance configuration passed; pixels pending. See CPU report for supported leaves.",
+      "accepted_variation_scope": "Eight public Scene leaves mapped; four historical Cube start/goal controls remain refused. All lock/button visuals and supported camera/light/size/color leaves passed.",
       "execution_mode": "DELEGATED_CPU",
       "evidence_manifest": {
-        "oracle": null,
+        "oracle": "176d54532b3c0a251a4f509b74f2fdacc143a63d",
         "artifacts": [
           {
             "path": "docs/research/semantic_recovery_evidence/ogb_cpu_compatibility/cpu-tests.log",
@@ -11940,38 +11956,47 @@
           {
             "path": "docs/research/semantic_recovery_evidence/ogb_renderer_closeout/remote-verification.json",
             "sha256": "d30825f765bd2b01e18e69c58b753044b37c03fb81c705e40d62ed703fa72cd0"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/ogb_renderer_retry/Scene-acceptance.json",
+            "sha256": "44880258a000353b18f283b421c6a5ad2136f46c239aacd7b4214cd22ec6c444"
           }
         ]
       },
       "cpu_semantic_result": "PASS_EXACT_CPU_FAMILY_GATE",
       "gpu_semantic_result": {
-        "status": "NOT_ACCEPTED",
-        "job": 6669720,
-        "note": "FAILED test-bundle packaging prerequisite; renderer not run. No GPU-physics claim."
+        "status": "PASS",
+        "job": 6669909,
+        "note": "Unified profile: CPU physics semantics and GPU rendering both passed; dynamics remain DELEGATED_CPU."
       },
-      "frozen_renderer_result": "PENDING",
+      "frozen_renderer_result": {
+        "cpu": "CPU_BACKEND_MISSING",
+        "gpu": "PASS_EXACT",
+        "job": 6669909,
+        "frames": 22,
+        "baseline_sha256": "bac4b1ea3e29a04faa5eeec33de0c212cb87bbf488ae0466ea762bd3a140576a",
+        "source_fidelity_tier": "visual"
+      },
       "known_limitations": [
-        "Renderer integration is implemented and local model/RenderState gates passed; exact frozen pixel acceptance remains pending.",
-        "Oscar job 6669720 failed during CPU test collection because the selective source archive omitted tests/fixtures/regression/support_matrix.json; both GPU renderer processes were skipped.",
-        "A corrected complete tracked-tree bundle is prepared for review; no second job submitted.",
-        "Registration promotion and unified-profile GPU acceptance remain pending; physics is DELEGATED_CPU."
+        "CPU mesh rendering explicitly unsupported; physics is DELEGATED_CPU, including when State tensors use CUDA.",
+        "Exact candidate/frozen frame equality; source MuJoCo retains the established visual-tier residuals.",
+        "Process-lifetime EGL plate rigs retained by the frozen policy; memory is not bounded over arbitrarily many static configurations.",
+        "Historical data collection, multiview, render-goal and dataset sampling modes remain refused.",
+        "Four historical Cube start/goal Variation controls are explicitly refused; registered Scene initialization remains task-driven."
       ],
-      "remaining_gates": [
-        "Renderer integration is implemented and local model/RenderState gates passed; exact frozen pixel acceptance remains pending.",
-        "Oscar job 6669720 failed during CPU test collection because the selective source archive omitted tests/fixtures/regression/support_matrix.json; both GPU renderer processes were skipped.",
-        "A corrected complete tracked-tree bundle is prepared for review; no second job submitted.",
-        "Registration promotion and unified-profile GPU acceptance remain pending; physics is DELEGATED_CPU."
-      ],
+      "remaining_gates": [],
       "closure_code_check": {
         "production_implementation": "complete",
         "implementation_commit": "14456339ec7f1b28ad698fc3158fe9e4ed8f6d1e",
         "cpu_evidence_commit": "72612563590f12a081d940394496795a6c024577",
-        "registration_promotion": "INCOMPLETE",
+        "registration_promotion": "VERIFIED",
         "production_swm_imports": false,
-        "renderer_implementation": "complete; GPU acceptance pending",
+        "renderer_implementation": "complete; GPU acceptance passed",
         "renderer_implementation_commit": "2f4b2a6e5c0bc1ed8455d8235c1eb0e26ce70ff7",
         "local_renderer_evidence_commit": "457afa0b401a3fa757c94eb8a8b6a3de3074585c",
-        "renderstate_schema": "docs/research/semantic_recovery_evidence/ogb_renderer_closeout/renderstate-schema.json"
+        "renderstate_schema": "docs/research/semantic_recovery_evidence/ogb_renderer_closeout/renderstate-schema.json",
+        "gpu_evidence_commit": "3af3c63446f6b6ef1f261a8fb0b85e584db4e749",
+        "gpu_acceptance": "docs/research/semantic_recovery_evidence/ogb_renderer_retry/Scene-acceptance.json"
       },
       "source_preflight": {
         "status": "BLOCKED_RESET_GATE_AND_FROZEN_CONSTRUCTOR",
@@ -14601,8 +14626,8 @@
     }
   ],
   "current_counts": {
-    "VERIFIED": 33,
-    "INCOMPLETE": 9
+    "VERIFIED": 35,
+    "INCOMPLETE": 7
   },
   "updates": [
     {
@@ -14630,6 +14655,16 @@
         "INCOMPLETE": 9
       },
       "observation_integration": "DEFERRED"
+    },
+    {
+      "kind": "OGBENCH_MANIPULATION_ACCEPTED",
+      "job": 6669909,
+      "gpu_evidence_commit": "3af3c63446f6b6ef1f261a8fb0b85e584db4e749",
+      "manifests": [
+        "docs/research/semantic_recovery_evidence/ogb_renderer_retry/Cube-acceptance.json",
+        "docs/research/semantic_recovery_evidence/ogb_renderer_retry/Scene-acceptance.json"
+      ],
+      "note": "Independent Cube and Scene acceptance; unified MuJoCo 3.12 profile, DELEGATED_CPU physics, unchanged frozen GPU renderer."
     }
   ]
 }

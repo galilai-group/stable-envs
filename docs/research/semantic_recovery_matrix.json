@@ -3180,7 +3180,7 @@
       "family": "ogbench",
       "owner": "coordinator",
       "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
-      "state_status": "INCOMPLETE",
+      "state_status": "VERIFIED",
       "action_parity": "PASS_EXACT_CPU_FAMILY_GATE",
       "reset_parity": "PASS_EXACT_CPU_FAMILY_GATE",
       "step_parity": "PASS_EXACT_CPU_FAMILY_GATE",
@@ -3190,17 +3190,17 @@
       "variation_parity": "PASS_EXACT_CPU_FAMILY_GATE",
       "execution_mode": "DELEGATED_CPU",
       "adapter_status": "IMPLEMENTED_PUBLIC_HISTORICAL_DEFAULT",
-      "renderer_regression": "PENDING",
-      "oracle_corpus": null,
+      "renderer_regression": "PASS_EXACT_FROZEN_BASELINE_FULL_PRIVATE_GPU",
+      "oracle_corpus": "docs/research/semantic_recovery_evidence/ogb_renderer_retry/Cube-acceptance.json",
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Renderer integration is implemented and local model/RenderState gates passed; exact frozen pixel acceptance remains pending.",
-        "Oscar job 6669720 failed during CPU test collection because the selective source archive omitted tests/fixtures/regression/support_matrix.json; both GPU renderer processes were skipped.",
-        "A corrected complete tracked-tree bundle is prepared for review; no second job submitted.",
-        "Registration promotion and unified-profile GPU acceptance remain pending; physics is DELEGATED_CPU."
+        "CPU mesh rendering explicitly unsupported; physics is DELEGATED_CPU, including when State tensors use CUDA.",
+        "Exact candidate/frozen frame equality; source MuJoCo retains the established visual-tier residuals.",
+        "Process-lifetime EGL plate rigs retained by the frozen policy; memory is not bounded over arbitrarily many static configurations.",
+        "Historical data collection, multiview, render-goal and dataset sampling modes remain refused."
       ],
       "test": "tests/unit/test_ogbench_manipulation_cpu.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
@@ -3268,8 +3268,61 @@
         "docs/research/semantic_recovery_evidence/ogb_renderer_closeout/cpu-closure.log",
         "docs/research/semantic_recovery_evidence/ogb_renderer_closeout/unified-312-local-final.log",
         "docs/research/semantic_recovery_evidence/ogb_renderer_closeout/model-input-audit.json",
-        "docs/research/semantic_recovery_evidence/ogb_renderer_closeout/remote-verification.json"
-      ]
+        "docs/research/semantic_recovery_evidence/ogb_renderer_closeout/remote-verification.json",
+        "docs/research/semantic_recovery_evidence/ogb_renderer_retry/Cube-acceptance.json",
+        "docs/research/semantic_recovery_evidence/ogb_renderer_retry/verified-gpu.json",
+        "docs/research/semantic_recovery_evidence/ogb_renderer_retry/remote/evidence/Cube/result.json",
+        "docs/research/semantic_recovery_evidence/ogb_renderer_retry/remote/evidence/Cube/cpu.log",
+        "docs/research/semantic_recovery_evidence/ogb_renderer_retry/remote/evidence/Cube/gpu.log"
+      ],
+      "oscar_job": 6669909,
+      "oscar_result": "PASS_UNIFIED_CPU_AND_GPU_RENDERER",
+      "cpu_renderer_support": "CPU_BACKEND_MISSING",
+      "verified_classes": [
+        "OGBCube"
+      ],
+      "verification_scope": {
+        "classes": [
+          "OGBCube"
+        ],
+        "configuration": "single",
+        "ob_type": "states",
+        "reward_mode": "registered task defaults and CPU-tested reward_task_id routes",
+        "seeds": [
+          0,
+          17,
+          42
+        ],
+        "task_ids": "All source tasks and custom numeric payloads in CPU gate; renderer tasks 1,2,5",
+        "batches": [
+          1,
+          3
+        ],
+        "action_dtypes": [
+          "float32",
+          "float64"
+        ],
+        "render_backend": "mjwarp",
+        "camera": "front_pixels",
+        "render_size": 224,
+        "supersample": 1,
+        "renderstate_leaves": 14,
+        "physics_backend": "CPU",
+        "source_mujoco_fidelity": "Existing visual tier, not exact source MuJoCo pixels",
+        "frozen_baseline_atol": 0,
+        "frozen_baseline_rtol": 0,
+        "default_registered_semantics": true,
+        "unsupported_modes": [
+          "data_collection",
+          "multiview",
+          "render_goal",
+          "historical dataset sample_states"
+        ]
+      },
+      "family_acceptance_evidence": "docs/research/semantic_recovery_evidence/ogb_renderer_retry/Cube-acceptance.json",
+      "acceptance_revision": "294675f039e9b7f867c4bff15aac2b5f2e572bf6",
+      "renderer_implementation_commit": "2f4b2a6e5c0bc1ed8455d8235c1eb0e26ce70ff7",
+      "gpu_evidence_commit": "3af3c63446f6b6ef1f261a8fb0b85e584db4e749"
     },
     {
       "historical_id": "swm/OGBMaze-v0",
@@ -3346,7 +3399,7 @@
       "family": "ogbench",
       "owner": "coordinator",
       "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
-      "state_status": "INCOMPLETE",
+      "state_status": "VERIFIED",
       "action_parity": "PASS_EXACT_CPU_FAMILY_GATE",
       "reset_parity": "PASS_EXACT_CPU_FAMILY_GATE",
       "step_parity": "PASS_EXACT_CPU_FAMILY_GATE",
@@ -3356,17 +3409,18 @@
       "variation_parity": "PASS_EXACT_CPU_FAMILY_GATE",
       "execution_mode": "DELEGATED_CPU",
       "adapter_status": "IMPLEMENTED_PUBLIC_HISTORICAL_DEFAULT",
-      "renderer_regression": "PENDING",
-      "oracle_corpus": null,
+      "renderer_regression": "PASS_EXACT_FROZEN_BASELINE_FULL_PRIVATE_GPU",
+      "oracle_corpus": "docs/research/semantic_recovery_evidence/ogb_renderer_retry/Scene-acceptance.json",
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Renderer integration is implemented and local model/RenderState gates passed; exact frozen pixel acceptance remains pending.",
-        "Oscar job 6669720 failed during CPU test collection because the selective source archive omitted tests/fixtures/regression/support_matrix.json; both GPU renderer processes were skipped.",
-        "A corrected complete tracked-tree bundle is prepared for review; no second job submitted.",
-        "Registration promotion and unified-profile GPU acceptance remain pending; physics is DELEGATED_CPU."
+        "CPU mesh rendering explicitly unsupported; physics is DELEGATED_CPU, including when State tensors use CUDA.",
+        "Exact candidate/frozen frame equality; source MuJoCo retains the established visual-tier residuals.",
+        "Process-lifetime EGL plate rigs retained by the frozen policy; memory is not bounded over arbitrarily many static configurations.",
+        "Historical data collection, multiview, render-goal and dataset sampling modes remain refused.",
+        "Four historical Cube start/goal Variation controls are explicitly refused; registered Scene initialization remains task-driven."
       ],
       "test": "tests/unit/test_ogbench_manipulation_cpu.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
@@ -3443,8 +3497,62 @@
         "docs/research/semantic_recovery_evidence/ogb_renderer_closeout/cpu-closure.log",
         "docs/research/semantic_recovery_evidence/ogb_renderer_closeout/unified-312-local-final.log",
         "docs/research/semantic_recovery_evidence/ogb_renderer_closeout/model-input-audit.json",
-        "docs/research/semantic_recovery_evidence/ogb_renderer_closeout/remote-verification.json"
-      ]
+        "docs/research/semantic_recovery_evidence/ogb_renderer_closeout/remote-verification.json",
+        "docs/research/semantic_recovery_evidence/ogb_renderer_retry/Scene-acceptance.json",
+        "docs/research/semantic_recovery_evidence/ogb_renderer_retry/verified-gpu.json",
+        "docs/research/semantic_recovery_evidence/ogb_renderer_retry/remote/evidence/Scene/result.json",
+        "docs/research/semantic_recovery_evidence/ogb_renderer_retry/remote/evidence/Scene/cpu.log",
+        "docs/research/semantic_recovery_evidence/ogb_renderer_retry/remote/evidence/Scene/gpu.log"
+      ],
+      "oscar_job": 6669909,
+      "oscar_result": "PASS_UNIFIED_CPU_AND_GPU_RENDERER",
+      "cpu_renderer_support": "CPU_BACKEND_MISSING",
+      "verified_classes": [
+        "OGBScene"
+      ],
+      "verification_scope": {
+        "classes": [
+          "OGBScene"
+        ],
+        "configuration": "scene",
+        "ob_type": "states",
+        "reward_mode": "registered task defaults and CPU-tested reward_task_id routes",
+        "seeds": [
+          0,
+          17,
+          42
+        ],
+        "task_ids": "All source tasks and custom numeric payloads in CPU gate; renderer tasks 1,2,5",
+        "batches": [
+          1,
+          3
+        ],
+        "action_dtypes": [
+          "float32",
+          "float64"
+        ],
+        "render_backend": "mjwarp",
+        "camera": "front_pixels",
+        "render_size": 200,
+        "supersample": 1,
+        "renderstate_leaves": 16,
+        "physics_backend": "CPU",
+        "source_mujoco_fidelity": "Existing visual tier, not exact source MuJoCo pixels",
+        "frozen_baseline_atol": 0,
+        "frozen_baseline_rtol": 0,
+        "default_registered_semantics": true,
+        "unsupported_modes": [
+          "data_collection",
+          "multiview",
+          "render_goal",
+          "historical dataset sample_states",
+          "four historical Cube start/goal Variation controls"
+        ]
+      },
+      "family_acceptance_evidence": "docs/research/semantic_recovery_evidence/ogb_renderer_retry/Scene-acceptance.json",
+      "acceptance_revision": "294675f039e9b7f867c4bff15aac2b5f2e572bf6",
+      "renderer_implementation_commit": "2f4b2a6e5c0bc1ed8455d8235c1eb0e26ce70ff7",
+      "gpu_evidence_commit": "3af3c63446f6b6ef1f261a8fb0b85e584db4e749"
     },
     {
       "historical_id": "swm/PFRocketLanding-v0",
@@ -4285,6 +4393,20 @@
     "counts": {
       "VERIFIED": 33,
       "INCOMPLETE": 9
+    }
+  },
+  "ogbench_manipulation_acceptance": {
+    "job": 6669909,
+    "report": "docs/research/ogbench_renderer_acceptance.md",
+    "source_commit": "294675f039e9b7f867c4bff15aac2b5f2e572bf6",
+    "gpu_evidence_commit": "3af3c63446f6b6ef1f261a8fb0b85e584db4e749",
+    "independent_manifests": [
+      "docs/research/semantic_recovery_evidence/ogb_renderer_retry/Cube-acceptance.json",
+      "docs/research/semantic_recovery_evidence/ogb_renderer_retry/Scene-acceptance.json"
+    ],
+    "counts": {
+      "VERIFIED": 35,
+      "INCOMPLETE": 7
     }
   }
 }
