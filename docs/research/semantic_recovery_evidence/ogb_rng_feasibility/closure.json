@@ -1,0 +1,26 @@
+{
+  "status": "PASS",
+  "starting_sha": "f9e62ac9f3d9f9179eebfacbf3c4c45a9898fcc3",
+  "documentation_sha": "03adc1ab79bae71e3e62db2e5c4cb19f20723166",
+  "branch": "repair/environment-semantics",
+  "worktree": "/private/tmp/stable-envs-semantic-recovery",
+  "starting_status": "clean",
+  "matrix_counts": {
+    "VERIFIED": 33,
+    "INCOMPLETE": 9
+  },
+  "all_starting_tracked_files_byte_identical": 1981,
+  "accepted_artifact_count": 170,
+  "terminal_log_count": 11,
+  "fetch_manifest_count": 75,
+  "production_renderer_shared_matrix_diff": "",
+  "markers": {
+    "trace.log": "OGB_ENTROPY_TRACE_COMPLETE",
+    "semantic-preservation.log": "OGB_FIXED_TAPE_SEMANTIC_PRESERVATION_PASS_PATCHES_REMOVED",
+    "gates.log": "OGB_RNG_UNPATCHED_REPLAY_AND_THREADED_ISOLATION_PASS",
+    "codec.log": "OGB_NUMERIC_RNG_REPLAY_PASS six_resets=exact malformed_rejections=8",
+    "schedules.log": "OGB_DIFFERENT_SEED_ROUND_ROBIN_AND_CONCURRENT_ISOLATION_PASS"
+  },
+  "source_hashes_verified": true,
+  "push_performed": false
+}
