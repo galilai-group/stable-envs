@@ -1,0 +1,2612 @@
+{
+  "status": "FEASIBILITY_DIAGNOSTIC_ONLY",
+  "cases": {
+    "free_flight_0": {
+      "continuation_actions": [
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      ],
+      "raw_engine_continuation_after_public_terminal": false,
+      "initial_contacts": 0,
+      "initial_height": 447.46685770679596,
+      "routes": {
+        "memory": {
+          "different_history_steps": 35,
+          "different_history_contacts": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "immediate_differences": {
+            "diagnostic/cached_links": {
+              "count": 20,
+              "max_abs": 0.128143310546875
+            }
+          },
+          "trajectory_differences": {}
+        },
+        "file": {
+          "different_history_steps": 35,
+          "different_history_contacts": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "immediate_differences": {
+            "diagnostic/cached_links": {
+              "count": 20,
+              "max_abs": 0.128143310546875
+            }
+          },
+          "trajectory_differences": {}
+        },
+        "numeric": {
+          "different_history_steps": 35,
+          "different_history_contacts": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "immediate_differences": {
+            "diagnostic/cached_links": {
+              "count": 20,
+              "max_abs": 0.128143310546875
+            }
+          },
+          "trajectory_differences": {}
+        }
+      }
+    },
+    "free_flight_17": {
+      "continuation_actions": [
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      ],
+      "raw_engine_continuation_after_public_terminal": false,
+      "initial_contacts": 0,
+      "initial_height": 447.46685770679596,
+      "routes": {
+        "memory": {
+          "different_history_steps": 35,
+          "different_history_contacts": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "immediate_differences": {
+            "diagnostic/cached_links": {
+              "count": 20,
+              "max_abs": 0.128143310546875
+            }
+          },
+          "trajectory_differences": {}
+        },
+        "file": {
+          "different_history_steps": 35,
+          "different_history_contacts": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "immediate_differences": {
+            "diagnostic/cached_links": {
+              "count": 20,
+              "max_abs": 0.128143310546875
+            }
+          },
+          "trajectory_differences": {}
+        },
+        "numeric": {
+          "different_history_steps": 35,
+          "different_history_contacts": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "immediate_differences": {
+            "diagnostic/cached_links": {
+              "count": 20,
+              "max_abs": 0.128143310546875
+            }
+          },
+          "trajectory_differences": {}
+        }
+      }
+    },
+    "free_flight_42": {
+      "continuation_actions": [
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      ],
+      "raw_engine_continuation_after_public_terminal": false,
+      "initial_contacts": 0,
+      "initial_height": 447.46685770679596,
+      "routes": {
+        "memory": {
+          "different_history_steps": 35,
+          "different_history_contacts": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "immediate_differences": {
+            "diagnostic/cached_links": {
+              "count": 20,
+              "max_abs": 0.128143310546875
+            }
+          },
+          "trajectory_differences": {}
+        },
+        "file": {
+          "different_history_steps": 35,
+          "different_history_contacts": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "immediate_differences": {
+            "diagnostic/cached_links": {
+              "count": 20,
+              "max_abs": 0.128143310546875
+            }
+          },
+          "trajectory_differences": {}
+        },
+        "numeric": {
+          "different_history_steps": 35,
+          "different_history_contacts": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "immediate_differences": {
+            "diagnostic/cached_links": {
+              "count": 20,
+              "max_abs": 0.128143310546875
+            }
+          },
+          "trajectory_differences": {}
+        }
+      }
+    },
+    "thrust_rotation": {
+      "continuation_actions": [
+        [
+          0.15,
+          -0.1,
+          0.2,
+          1.0,
+          0.5,
+          0.1,
+          -0.1
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.15,
+          -0.1,
+          0.2,
+          1.0,
+          0.5,
+          0.1,
+          -0.1
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.15,
+          -0.1,
+          0.2,
+          1.0,
+          0.5,
+          0.1,
+          -0.1
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.15,
+          -0.1,
+          0.2,
+          1.0,
+          0.5,
+          0.1,
+          -0.1
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      ],
+      "raw_engine_continuation_after_public_terminal": false,
+      "initial_contacts": 0,
+      "initial_height": 439.3146819303187,
+      "routes": {
+        "memory": {
+          "different_history_steps": 35,
+          "different_history_contacts": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "immediate_differences": {
+            "diagnostic/cached_links": {
+              "count": 183,
+              "max_abs": 0.09796142578125
+            }
+          },
+          "trajectory_differences": {
+            "wrapper/state": {
+              "count": 104,
+              "max_abs": 1.831813977887231e-05
+            },
+            "wrapper/reward": {
+              "count": 8,
+              "max_abs": 0.00020266653983025407
+            },
+            "wrapper/ang_vel": {
+              "count": 24,
+              "max_abs": 7.649055507957803e-06
+            },
+            "wrapper/ang_pos": {
+              "count": 24,
+              "max_abs": 1.526390761077967e-06
+            },
+            "wrapper/lin_vel": {
+              "count": 24,
+              "max_abs": 1.831813977887231e-05
+            },
+            "wrapper/lin_pos": {
+              "count": 24,
+              "max_abs": 4.388730637355331e-06
+            },
+            "wrapper/ground_lin_vel": {
+              "count": 24,
+              "max_abs": 2.2690220787685567e-05
+            },
+            "wrapper/previous_ang_vel": {
+              "count": 24,
+              "max_abs": 7.648359006802441e-06
+            },
+            "wrapper/previous_lin_vel": {
+              "count": 24,
+              "max_abs": 1.978514926753716e-05
+            },
+            "wrapper/previous_lin_pos": {
+              "count": 24,
+              "max_abs": 4.217117679850392e-06
+            },
+            "wrapper/previous_ground_lin_vel": {
+              "count": 24,
+              "max_abs": 2.2725810463669616e-05
+            },
+            "drone/state": {
+              "count": 96,
+              "max_abs": 1.831813977887231e-05
+            },
+            "bodies/local_body_velocities": {
+              "count": 24,
+              "max_abs": 1.7589383386862334e-05
+            },
+            "fin_0/local_surface_velocity": {
+              "count": 24,
+              "max_abs": 1.7589383386862334e-05
+            },
+            "fin_1/local_surface_velocity": {
+              "count": 24,
+              "max_abs": 3.2880226542464364e-05
+            },
+            "fin_2/local_surface_velocity": {
+              "count": 24,
+              "max_abs": 2.889603257538731e-05
+            },
+            "fin_3/local_surface_velocity": {
+              "count": 24,
+              "max_abs": 2.8893513886796285e-05
+            },
+            "physics/body_1/position": {
+              "count": 24,
+              "max_abs": 4.388730637355331e-06
+            },
+            "physics/body_1/quaternion": {
+              "count": 32,
+              "max_abs": 7.633083893392179e-07
+            },
+            "physics/body_1/linear_velocity": {
+              "count": 24,
+              "max_abs": 2.2690220787676026e-05
+            },
+            "physics/body_1/angular_velocity": {
+              "count": 24,
+              "max_abs": 7.648461820379537e-06
+            },
+            "diagnostic/cached_links": {
+              "count": 1434,
+              "max_abs": 4.7954709308489774e-05
+            }
+          }
+        },
+        "file": {
+          "different_history_steps": 35,
+          "different_history_contacts": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "immediate_differences": {
+            "diagnostic/cached_links": {
+              "count": 183,
+              "max_abs": 0.09796142578125
+            }
+          },
+          "trajectory_differences": {
+            "wrapper/state": {
+              "count": 104,
+              "max_abs": 1.831813977887231e-05
+            },
+            "wrapper/reward": {
+              "count": 8,
+              "max_abs": 0.00020266653983025407
+            },
+            "wrapper/ang_vel": {
+              "count": 24,
+              "max_abs": 7.649055507957803e-06
+            },
+            "wrapper/ang_pos": {
+              "count": 24,
+              "max_abs": 1.526390761077967e-06
+            },
+            "wrapper/lin_vel": {
+              "count": 24,
+              "max_abs": 1.831813977887231e-05
+            },
+            "wrapper/lin_pos": {
+              "count": 24,
+              "max_abs": 4.388730637355331e-06
+            },
+            "wrapper/ground_lin_vel": {
+              "count": 24,
+              "max_abs": 2.2690220787685567e-05
+            },
+            "wrapper/previous_ang_vel": {
+              "count": 24,
+              "max_abs": 7.648359006802441e-06
+            },
+            "wrapper/previous_lin_vel": {
+              "count": 24,
+              "max_abs": 1.978514926753716e-05
+            },
+            "wrapper/previous_lin_pos": {
+              "count": 24,
+              "max_abs": 4.217117679850392e-06
+            },
+            "wrapper/previous_ground_lin_vel": {
+              "count": 24,
+              "max_abs": 2.2725810463669616e-05
+            },
+            "drone/state": {
+              "count": 96,
+              "max_abs": 1.831813977887231e-05
+            },
+            "bodies/local_body_velocities": {
+              "count": 24,
+              "max_abs": 1.7589383386862334e-05
+            },
+            "fin_0/local_surface_velocity": {
+              "count": 24,
+              "max_abs": 1.7589383386862334e-05
+            },
+            "fin_1/local_surface_velocity": {
+              "count": 24,
+              "max_abs": 3.2880226542464364e-05
+            },
+            "fin_2/local_surface_velocity": {
+              "count": 24,
+              "max_abs": 2.889603257538731e-05
+            },
+            "fin_3/local_surface_velocity": {
+              "count": 24,
+              "max_abs": 2.8893513886796285e-05
+            },
+            "physics/body_1/position": {
+              "count": 24,
+              "max_abs": 4.388730637355331e-06
+            },
+            "physics/body_1/quaternion": {
+              "count": 32,
+              "max_abs": 7.633083893392179e-07
+            },
+            "physics/body_1/linear_velocity": {
+              "count": 24,
+              "max_abs": 2.2690220787676026e-05
+            },
+            "physics/body_1/angular_velocity": {
+              "count": 24,
+              "max_abs": 7.648461820379537e-06
+            },
+            "diagnostic/cached_links": {
+              "count": 1434,
+              "max_abs": 4.7954709308489774e-05
+            }
+          }
+        },
+        "numeric": {
+          "different_history_steps": 35,
+          "different_history_contacts": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "immediate_differences": {
+            "physics/body_1/quaternion": {
+              "count": 1,
+              "max_abs": 4.336808689942018e-19
+            },
+            "diagnostic/cached_links": {
+              "count": 183,
+              "max_abs": 0.09796142578125
+            }
+          },
+          "trajectory_differences": {
+            "wrapper/state": {
+              "count": 104,
+              "max_abs": 1.8318139778844555e-05
+            },
+            "wrapper/reward": {
+              "count": 8,
+              "max_abs": 0.00020266653983025407
+            },
+            "wrapper/ang_vel": {
+              "count": 24,
+              "max_abs": 7.649055507957803e-06
+            },
+            "wrapper/ang_pos": {
+              "count": 24,
+              "max_abs": 1.526390761077967e-06
+            },
+            "wrapper/lin_vel": {
+              "count": 24,
+              "max_abs": 1.8318139778844555e-05
+            },
+            "wrapper/lin_pos": {
+              "count": 24,
+              "max_abs": 4.388730637354789e-06
+            },
+            "wrapper/ground_lin_vel": {
+              "count": 24,
+              "max_abs": 2.2690220787685567e-05
+            },
+            "wrapper/previous_ang_vel": {
+              "count": 24,
+              "max_abs": 7.648359006802441e-06
+            },
+            "wrapper/previous_lin_vel": {
+              "count": 24,
+              "max_abs": 1.9785149267509405e-05
+            },
+            "wrapper/previous_lin_pos": {
+              "count": 24,
+              "max_abs": 4.21711767984985e-06
+            },
+            "wrapper/previous_ground_lin_vel": {
+              "count": 24,
+              "max_abs": 2.272581046364186e-05
+            },
+            "drone/state": {
+              "count": 96,
+              "max_abs": 1.8318139778844555e-05
+            },
+            "bodies/local_body_velocities": {
+              "count": 24,
+              "max_abs": 1.758938338683458e-05
+            },
+            "fin_0/local_surface_velocity": {
+              "count": 24,
+              "max_abs": 1.758938338683458e-05
+            },
+            "fin_1/local_surface_velocity": {
+              "count": 24,
+              "max_abs": 3.288022654243661e-05
+            },
+            "fin_2/local_surface_velocity": {
+              "count": 24,
+              "max_abs": 2.889603257538731e-05
+            },
+            "fin_3/local_surface_velocity": {
+              "count": 24,
+              "max_abs": 2.8893513886796285e-05
+            },
+            "physics/body_1/position": {
+              "count": 24,
+              "max_abs": 4.388730637354789e-06
+            },
+            "physics/body_1/quaternion": {
+              "count": 32,
+              "max_abs": 7.633083893392179e-07
+            },
+            "physics/body_1/linear_velocity": {
+              "count": 24,
+              "max_abs": 2.2690220787674508e-05
+            },
+            "physics/body_1/angular_velocity": {
+              "count": 24,
+              "max_abs": 7.648461820379537e-06
+            },
+            "diagnostic/cached_links": {
+              "count": 1434,
+              "max_abs": 4.7954709308489774e-05
+            }
+          }
+        }
+      }
+    },
+    "near_contact": {
+      "continuation_actions": [
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      ],
+      "raw_engine_continuation_after_public_terminal": false,
+      "initial_contacts": 0,
+      "initial_height": 4.791145304711372,
+      "routes": {
+        "memory": {
+          "different_history_steps": 35,
+          "different_history_contacts": [
+            2,
+            2,
+            2,
+            2,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4
+          ],
+          "immediate_differences": {
+            "diagnostic/cached_links": {
+              "count": 20,
+              "max_abs": 0.3359065055847168
+            }
+          },
+          "trajectory_differences": {
+            "wrapper/termination": {
+              "count": 1,
+              "max_abs": 1.0
+            },
+            "wrapper/state": {
+              "count": 145,
+              "max_abs": 82.62593806157845
+            },
+            "wrapper/reward": {
+              "count": 2,
+              "max_abs": 25.228588632559653
+            },
+            "wrapper/landing_pad_contact": {
+              "count": 1,
+              "max_abs": 1.0
+            },
+            "wrapper/ang_vel": {
+              "count": 33,
+              "max_abs": 1.7048760491880488
+            },
+            "wrapper/ang_pos": {
+              "count": 33,
+              "max_abs": 0.007104917621149525
+            },
+            "wrapper/lin_vel": {
+              "count": 34,
+              "max_abs": 82.62593806157845
+            },
+            "wrapper/lin_pos": {
+              "count": 34,
+              "max_abs": 1.67331034596197
+            },
+            "wrapper/ground_lin_vel": {
+              "count": 34,
+              "max_abs": 82.57904677223398
+            },
+            "wrapper/previous_lin_vel": {
+              "count": 12,
+              "max_abs": 0.10404341946501461
+            },
+            "wrapper/previous_lin_pos": {
+              "count": 12,
+              "max_abs": 2.016956446265082
+            },
+            "wrapper/previous_ground_lin_vel": {
+              "count": 12,
+              "max_abs": 0.10404341946501461
+            },
+            "aviary/physics_steps": {
+              "count": 12,
+              "max_abs": 6.0
+            },
+            "aviary/aviary_steps": {
+              "count": 12,
+              "max_abs": 3.0
+            },
+            "aviary/elapsed_time": {
+              "count": 12,
+              "max_abs": 0.025000000000000355
+            },
+            "aviary/contact_array": {
+              "count": 2,
+              "max_abs": 1.0
+            },
+            "drone/state": {
+              "count": 134,
+              "max_abs": 82.62593806157845
+            },
+            "bodies/local_body_velocities": {
+              "count": 34,
+              "max_abs": 82.67266726402912
+            },
+            "fin_0/local_surface_velocity": {
+              "count": 34,
+              "max_abs": 82.67266726402912
+            },
+            "fin_1/local_surface_velocity": {
+              "count": 34,
+              "max_abs": 82.63325038376736
+            },
+            "fin_2/local_surface_velocity": {
+              "count": 34,
+              "max_abs": 82.1166264808402
+            },
+            "fin_3/local_surface_velocity": {
+              "count": 34,
+              "max_abs": 83.30955206863491
+            },
+            "info/fatal_collision": {
+              "count": 1,
+              "max_abs": 1.0
+            },
+            "rng/state": {
+              "count": 48,
+              "max_abs": 2769276265.0
+            },
+            "physics/body_1/position": {
+              "count": 34,
+              "max_abs": 1.67331034596197
+            },
+            "physics/body_1/quaternion": {
+              "count": 44,
+              "max_abs": 0.003551812917529968
+            },
+            "physics/body_1/linear_velocity": {
+              "count": 34,
+              "max_abs": 82.57904677223398
+            },
+            "physics/body_1/angular_velocity": {
+              "count": 33,
+              "max_abs": 1.7048760491880488
+            },
+            "diagnostic/cached_links": {
+              "count": 910,
+              "max_abs": 83.22264467879427
+            }
+          }
+        },
+        "file": {
+          "different_history_steps": 35,
+          "different_history_contacts": [
+            0,
+            0,
+            2,
+            2,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4
+          ],
+          "immediate_differences": {
+            "diagnostic/cached_links": {
+              "count": 20,
+              "max_abs": 0.3359065055847168
+            }
+          },
+          "trajectory_differences": {
+            "wrapper/termination": {
+              "count": 1,
+              "max_abs": 1.0
+            },
+            "wrapper/state": {
+              "count": 145,
+              "max_abs": 82.62593806157845
+            },
+            "wrapper/reward": {
+              "count": 2,
+              "max_abs": 25.228588632559653
+            },
+            "wrapper/landing_pad_contact": {
+              "count": 1,
+              "max_abs": 1.0
+            },
+            "wrapper/ang_vel": {
+              "count": 33,
+              "max_abs": 1.7048760491880488
+            },
+            "wrapper/ang_pos": {
+              "count": 33,
+              "max_abs": 0.007104917621149525
+            },
+            "wrapper/lin_vel": {
+              "count": 34,
+              "max_abs": 82.62593806157845
+            },
+            "wrapper/lin_pos": {
+              "count": 34,
+              "max_abs": 1.67331034596197
+            },
+            "wrapper/ground_lin_vel": {
+              "count": 34,
+              "max_abs": 82.57904677223398
+            },
+            "wrapper/previous_lin_vel": {
+              "count": 12,
+              "max_abs": 0.10404341946501461
+            },
+            "wrapper/previous_lin_pos": {
+              "count": 12,
+              "max_abs": 2.016956446265082
+            },
+            "wrapper/previous_ground_lin_vel": {
+              "count": 12,
+              "max_abs": 0.10404341946501461
+            },
+            "aviary/physics_steps": {
+              "count": 12,
+              "max_abs": 6.0
+            },
+            "aviary/aviary_steps": {
+              "count": 12,
+              "max_abs": 3.0
+            },
+            "aviary/elapsed_time": {
+              "count": 12,
+              "max_abs": 0.025000000000000355
+            },
+            "aviary/contact_array": {
+              "count": 2,
+              "max_abs": 1.0
+            },
+            "drone/state": {
+              "count": 134,
+              "max_abs": 82.62593806157845
+            },
+            "bodies/local_body_velocities": {
+              "count": 34,
+              "max_abs": 82.67266726402912
+            },
+            "fin_0/local_surface_velocity": {
+              "count": 34,
+              "max_abs": 82.67266726402912
+            },
+            "fin_1/local_surface_velocity": {
+              "count": 34,
+              "max_abs": 82.63325038376736
+            },
+            "fin_2/local_surface_velocity": {
+              "count": 34,
+              "max_abs": 82.1166264808402
+            },
+            "fin_3/local_surface_velocity": {
+              "count": 34,
+              "max_abs": 83.30955206863491
+            },
+            "info/fatal_collision": {
+              "count": 1,
+              "max_abs": 1.0
+            },
+            "rng/state": {
+              "count": 48,
+              "max_abs": 2769276265.0
+            },
+            "physics/body_1/position": {
+              "count": 34,
+              "max_abs": 1.67331034596197
+            },
+            "physics/body_1/quaternion": {
+              "count": 44,
+              "max_abs": 0.003551812917529968
+            },
+            "physics/body_1/linear_velocity": {
+              "count": 34,
+              "max_abs": 82.57904677223398
+            },
+            "physics/body_1/angular_velocity": {
+              "count": 33,
+              "max_abs": 1.7048760491880488
+            },
+            "diagnostic/cached_links": {
+              "count": 910,
+              "max_abs": 83.22264467879427
+            }
+          }
+        },
+        "numeric": {
+          "different_history_steps": 35,
+          "different_history_contacts": [
+            0,
+            0,
+            2,
+            2,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4
+          ],
+          "immediate_differences": {
+            "diagnostic/cached_links": {
+              "count": 20,
+              "max_abs": 0.3359065055847168
+            }
+          },
+          "trajectory_differences": {
+            "wrapper/termination": {
+              "count": 1,
+              "max_abs": 1.0
+            },
+            "wrapper/state": {
+              "count": 145,
+              "max_abs": 82.62593806157845
+            },
+            "wrapper/reward": {
+              "count": 2,
+              "max_abs": 25.228588632559653
+            },
+            "wrapper/landing_pad_contact": {
+              "count": 1,
+              "max_abs": 1.0
+            },
+            "wrapper/ang_vel": {
+              "count": 33,
+              "max_abs": 1.7048760491880488
+            },
+            "wrapper/ang_pos": {
+              "count": 33,
+              "max_abs": 0.007104917621149525
+            },
+            "wrapper/lin_vel": {
+              "count": 34,
+              "max_abs": 82.62593806157845
+            },
+            "wrapper/lin_pos": {
+              "count": 34,
+              "max_abs": 1.67331034596197
+            },
+            "wrapper/ground_lin_vel": {
+              "count": 34,
+              "max_abs": 82.57904677223398
+            },
+            "wrapper/previous_lin_vel": {
+              "count": 12,
+              "max_abs": 0.10404341946501461
+            },
+            "wrapper/previous_lin_pos": {
+              "count": 12,
+              "max_abs": 2.016956446265082
+            },
+            "wrapper/previous_ground_lin_vel": {
+              "count": 12,
+              "max_abs": 0.10404341946501461
+            },
+            "aviary/physics_steps": {
+              "count": 12,
+              "max_abs": 6.0
+            },
+            "aviary/aviary_steps": {
+              "count": 12,
+              "max_abs": 3.0
+            },
+            "aviary/elapsed_time": {
+              "count": 12,
+              "max_abs": 0.025000000000000355
+            },
+            "aviary/contact_array": {
+              "count": 2,
+              "max_abs": 1.0
+            },
+            "drone/state": {
+              "count": 134,
+              "max_abs": 82.62593806157845
+            },
+            "bodies/local_body_velocities": {
+              "count": 34,
+              "max_abs": 82.67266726402912
+            },
+            "fin_0/local_surface_velocity": {
+              "count": 34,
+              "max_abs": 82.67266726402912
+            },
+            "fin_1/local_surface_velocity": {
+              "count": 34,
+              "max_abs": 82.63325038376736
+            },
+            "fin_2/local_surface_velocity": {
+              "count": 34,
+              "max_abs": 82.1166264808402
+            },
+            "fin_3/local_surface_velocity": {
+              "count": 34,
+              "max_abs": 83.30955206863491
+            },
+            "info/fatal_collision": {
+              "count": 1,
+              "max_abs": 1.0
+            },
+            "rng/state": {
+              "count": 48,
+              "max_abs": 2769276265.0
+            },
+            "physics/body_1/position": {
+              "count": 34,
+              "max_abs": 1.67331034596197
+            },
+            "physics/body_1/quaternion": {
+              "count": 44,
+              "max_abs": 0.003551812917529968
+            },
+            "physics/body_1/linear_velocity": {
+              "count": 34,
+              "max_abs": 82.57904677223398
+            },
+            "physics/body_1/angular_velocity": {
+              "count": 33,
+              "max_abs": 1.7048760491880488
+            },
+            "diagnostic/cached_links": {
+              "count": 910,
+              "max_abs": 83.22264467879427
+            }
+          }
+        }
+      }
+    },
+    "crash": {
+      "continuation_actions": [
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      ],
+      "raw_engine_continuation_after_public_terminal": true,
+      "initial_contacts": 2,
+      "initial_height": 2.4458051246633,
+      "routes": {
+        "memory": {
+          "different_history_steps": 35,
+          "different_history_contacts": [
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4
+          ],
+          "immediate_differences": {
+            "diagnostic/cached_links": {
+              "count": 180,
+              "max_abs": 0.08760957713707374
+            }
+          },
+          "trajectory_differences": {
+            "wrapper/truncation": {
+              "count": 2,
+              "max_abs": 1.0
+            },
+            "wrapper/state": {
+              "count": 104,
+              "max_abs": 5.862249695281215
+            },
+            "wrapper/reward": {
+              "count": 8,
+              "max_abs": 4.312914344525655
+            },
+            "wrapper/ang_vel": {
+              "count": 24,
+              "max_abs": 2.4646890381535886
+            },
+            "wrapper/ang_pos": {
+              "count": 24,
+              "max_abs": 0.021615854178315623
+            },
+            "wrapper/lin_vel": {
+              "count": 24,
+              "max_abs": 5.862249695281215
+            },
+            "wrapper/lin_pos": {
+              "count": 24,
+              "max_abs": 0.051416394317656836
+            },
+            "wrapper/ground_lin_vel": {
+              "count": 24,
+              "max_abs": 5.862150126095676
+            },
+            "wrapper/previous_ang_vel": {
+              "count": 21,
+              "max_abs": 2.4646890381535886
+            },
+            "wrapper/previous_lin_vel": {
+              "count": 21,
+              "max_abs": 5.862249695281215
+            },
+            "wrapper/previous_lin_pos": {
+              "count": 21,
+              "max_abs": 0.051416394317656836
+            },
+            "wrapper/previous_ground_lin_vel": {
+              "count": 21,
+              "max_abs": 5.862150126095676
+            },
+            "aviary/contact_array": {
+              "count": 4,
+              "max_abs": 1.0
+            },
+            "drone/state": {
+              "count": 96,
+              "max_abs": 5.862249695281215
+            },
+            "bodies/local_body_velocities": {
+              "count": 24,
+              "max_abs": 5.862937333776077
+            },
+            "fin_0/local_surface_velocity": {
+              "count": 24,
+              "max_abs": 5.862937333776077
+            },
+            "fin_1/local_surface_velocity": {
+              "count": 24,
+              "max_abs": 0.9341028967265057
+            },
+            "fin_2/local_surface_velocity": {
+              "count": 24,
+              "max_abs": 10.95126806341454
+            },
+            "fin_3/local_surface_velocity": {
+              "count": 24,
+              "max_abs": 10.883646034526278
+            },
+            "info/env_complete": {
+              "count": 2,
+              "max_abs": 1.0
+            },
+            "physics/body_1/position": {
+              "count": 24,
+              "max_abs": 0.051416394317656836
+            },
+            "physics/body_1/quaternion": {
+              "count": 32,
+              "max_abs": 0.010807686412224802
+            },
+            "physics/body_1/linear_velocity": {
+              "count": 24,
+              "max_abs": 5.862150126095676
+            },
+            "physics/body_1/angular_velocity": {
+              "count": 24,
+              "max_abs": 2.4660037086819724
+            },
+            "diagnostic/cached_links": {
+              "count": 1600,
+              "max_abs": 10.95702237665082
+            }
+          }
+        },
+        "file": {
+          "different_history_steps": 35,
+          "different_history_contacts": [
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4
+          ],
+          "immediate_differences": {
+            "diagnostic/cached_links": {
+              "count": 180,
+              "max_abs": 0.08760957713707374
+            }
+          },
+          "trajectory_differences": {
+            "wrapper/truncation": {
+              "count": 2,
+              "max_abs": 1.0
+            },
+            "wrapper/state": {
+              "count": 104,
+              "max_abs": 5.862249695281215
+            },
+            "wrapper/reward": {
+              "count": 8,
+              "max_abs": 4.312914344525655
+            },
+            "wrapper/ang_vel": {
+              "count": 24,
+              "max_abs": 2.4646890381535886
+            },
+            "wrapper/ang_pos": {
+              "count": 24,
+              "max_abs": 0.021615854178315623
+            },
+            "wrapper/lin_vel": {
+              "count": 24,
+              "max_abs": 5.862249695281215
+            },
+            "wrapper/lin_pos": {
+              "count": 24,
+              "max_abs": 0.051416394317656836
+            },
+            "wrapper/ground_lin_vel": {
+              "count": 24,
+              "max_abs": 5.862150126095676
+            },
+            "wrapper/previous_ang_vel": {
+              "count": 21,
+              "max_abs": 2.4646890381535886
+            },
+            "wrapper/previous_lin_vel": {
+              "count": 21,
+              "max_abs": 5.862249695281215
+            },
+            "wrapper/previous_lin_pos": {
+              "count": 21,
+              "max_abs": 0.051416394317656836
+            },
+            "wrapper/previous_ground_lin_vel": {
+              "count": 21,
+              "max_abs": 5.862150126095676
+            },
+            "aviary/contact_array": {
+              "count": 4,
+              "max_abs": 1.0
+            },
+            "drone/state": {
+              "count": 96,
+              "max_abs": 5.862249695281215
+            },
+            "bodies/local_body_velocities": {
+              "count": 24,
+              "max_abs": 5.862937333776077
+            },
+            "fin_0/local_surface_velocity": {
+              "count": 24,
+              "max_abs": 5.862937333776077
+            },
+            "fin_1/local_surface_velocity": {
+              "count": 24,
+              "max_abs": 0.9341028967265057
+            },
+            "fin_2/local_surface_velocity": {
+              "count": 24,
+              "max_abs": 10.95126806341454
+            },
+            "fin_3/local_surface_velocity": {
+              "count": 24,
+              "max_abs": 10.883646034526278
+            },
+            "info/env_complete": {
+              "count": 2,
+              "max_abs": 1.0
+            },
+            "physics/body_1/position": {
+              "count": 24,
+              "max_abs": 0.051416394317656836
+            },
+            "physics/body_1/quaternion": {
+              "count": 32,
+              "max_abs": 0.010807686412224802
+            },
+            "physics/body_1/linear_velocity": {
+              "count": 24,
+              "max_abs": 5.862150126095676
+            },
+            "physics/body_1/angular_velocity": {
+              "count": 24,
+              "max_abs": 2.4660037086819724
+            },
+            "diagnostic/cached_links": {
+              "count": 1600,
+              "max_abs": 10.95702237665082
+            }
+          }
+        },
+        "numeric": {
+          "different_history_steps": 35,
+          "different_history_contacts": [
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4
+          ],
+          "immediate_differences": {
+            "physics/body_1/quaternion": {
+              "count": 2,
+              "max_abs": 4.336808689942018e-19
+            },
+            "diagnostic/cached_links": {
+              "count": 189,
+              "max_abs": 0.08760957713707374
+            }
+          },
+          "trajectory_differences": {
+            "wrapper/state": {
+              "count": 104,
+              "max_abs": 5.920064459069673
+            },
+            "wrapper/reward": {
+              "count": 8,
+              "max_abs": 4.549935390544111
+            },
+            "wrapper/ang_vel": {
+              "count": 24,
+              "max_abs": 2.483144790253286
+            },
+            "wrapper/ang_pos": {
+              "count": 24,
+              "max_abs": 0.054571469987759205
+            },
+            "wrapper/lin_vel": {
+              "count": 24,
+              "max_abs": 5.920064459069673
+            },
+            "wrapper/lin_pos": {
+              "count": 24,
+              "max_abs": 0.12965727342771985
+            },
+            "wrapper/ground_lin_vel": {
+              "count": 24,
+              "max_abs": 5.903718522959341
+            },
+            "wrapper/previous_ang_vel": {
+              "count": 21,
+              "max_abs": 2.483144790253286
+            },
+            "wrapper/previous_lin_vel": {
+              "count": 21,
+              "max_abs": 5.920064459069673
+            },
+            "wrapper/previous_lin_pos": {
+              "count": 21,
+              "max_abs": 0.12965727342771985
+            },
+            "wrapper/previous_ground_lin_vel": {
+              "count": 21,
+              "max_abs": 5.903718522959341
+            },
+            "aviary/contact_array": {
+              "count": 2,
+              "max_abs": 1.0
+            },
+            "drone/state": {
+              "count": 96,
+              "max_abs": 5.920064459069673
+            },
+            "bodies/local_body_velocities": {
+              "count": 24,
+              "max_abs": 5.920896090574634
+            },
+            "fin_0/local_surface_velocity": {
+              "count": 24,
+              "max_abs": 5.920896090574634
+            },
+            "fin_1/local_surface_velocity": {
+              "count": 24,
+              "max_abs": 0.9550709187641806
+            },
+            "fin_2/local_surface_velocity": {
+              "count": 24,
+              "max_abs": 11.05186565300623
+            },
+            "fin_3/local_surface_velocity": {
+              "count": 24,
+              "max_abs": 10.974833955526273
+            },
+            "physics/body_1/position": {
+              "count": 24,
+              "max_abs": 0.12965727342771985
+            },
+            "physics/body_1/quaternion": {
+              "count": 32,
+              "max_abs": 0.027278256129459524
+            },
+            "physics/body_1/linear_velocity": {
+              "count": 24,
+              "max_abs": 5.903718522959341
+            },
+            "physics/body_1/angular_velocity": {
+              "count": 24,
+              "max_abs": 2.483645869334342
+            },
+            "diagnostic/cached_links": {
+              "count": 1600,
+              "max_abs": 11.03524069320026
+            }
+          }
+        }
+      }
+    },
+    "resting_contact": {
+      "continuation_actions": [
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      ],
+      "raw_engine_continuation_after_public_terminal": true,
+      "initial_contacts": 4,
+      "initial_height": 2.423947993626952,
+      "routes": {
+        "memory": {
+          "different_history_steps": 35,
+          "different_history_contacts": [
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4
+          ],
+          "immediate_differences": {
+            "diagnostic/cached_links": {
+              "count": 142,
+              "max_abs": 1.4901161193847656e-08
+            }
+          },
+          "trajectory_differences": {}
+        },
+        "file": {
+          "different_history_steps": 35,
+          "different_history_contacts": [
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4
+          ],
+          "immediate_differences": {
+            "diagnostic/cached_links": {
+              "count": 142,
+              "max_abs": 1.4901161193847656e-08
+            }
+          },
+          "trajectory_differences": {}
+        },
+        "numeric": {
+          "different_history_steps": 35,
+          "different_history_contacts": [
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4,
+            4
+          ],
+          "immediate_differences": {
+            "physics/body_1/quaternion": {
+              "count": 3,
+              "max_abs": 8.673617379884035e-19
+            },
+            "diagnostic/cached_links": {
+              "count": 132,
+              "max_abs": 1.4901161193847656e-08
+            }
+          },
+          "trajectory_differences": {
+            "wrapper/state": {
+              "count": 96,
+              "max_abs": 1.22934337619636e-12
+            },
+            "wrapper/reward": {
+              "count": 8,
+              "max_abs": 0.7085699805161774
+            },
+            "wrapper/ang_vel": {
+              "count": 24,
+              "max_abs": 5.213422007835932e-13
+            },
+            "wrapper/ang_pos": {
+              "count": 24,
+              "max_abs": 1.77115266897232e-15
+            },
+            "wrapper/lin_vel": {
+              "count": 24,
+              "max_abs": 1.22934337619636e-12
+            },
+            "wrapper/lin_pos": {
+              "count": 24,
+              "max_abs": 4.218847493575595e-15
+            },
+            "wrapper/ground_lin_vel": {
+              "count": 24,
+              "max_abs": 1.2379705651063667e-12
+            },
+            "wrapper/previous_ang_vel": {
+              "count": 21,
+              "max_abs": 5.213422007835932e-13
+            },
+            "wrapper/previous_lin_vel": {
+              "count": 21,
+              "max_abs": 1.22934337619636e-12
+            },
+            "wrapper/previous_lin_pos": {
+              "count": 21,
+              "max_abs": 4.218847493575595e-15
+            },
+            "wrapper/previous_ground_lin_vel": {
+              "count": 21,
+              "max_abs": 1.2379705651063667e-12
+            },
+            "drone/state": {
+              "count": 96,
+              "max_abs": 1.22934337619636e-12
+            },
+            "bodies/local_body_velocities": {
+              "count": 24,
+              "max_abs": 1.2293433757596087e-12
+            },
+            "fin_0/local_surface_velocity": {
+              "count": 24,
+              "max_abs": 1.2293433757596087e-12
+            },
+            "fin_1/local_surface_velocity": {
+              "count": 24,
+              "max_abs": 5.963814550960852e-13
+            },
+            "fin_2/local_surface_velocity": {
+              "count": 24,
+              "max_abs": 2.2986162292255613e-12
+            },
+            "fin_3/local_surface_velocity": {
+              "count": 24,
+              "max_abs": 2.298616229252031e-12
+            },
+            "physics/body_1/position": {
+              "count": 24,
+              "max_abs": 4.218847493575595e-15
+            },
+            "physics/body_1/quaternion": {
+              "count": 24,
+              "max_abs": 8.8557633448616e-16
+            },
+            "physics/body_1/linear_velocity": {
+              "count": 24,
+              "max_abs": 1.2379705651328365e-12
+            },
+            "physics/body_1/angular_velocity": {
+              "count": 24,
+              "max_abs": 5.214571736474698e-13
+            },
+            "diagnostic/cached_links": {
+              "count": 939,
+              "max_abs": 2.310377727078699e-12
+            }
+          }
+        }
+      }
+    }
+  },
+  "elapsed_seconds": 3.4243670841678977,
+  "numeric_exact": false,
+  "note": "Official snapshot handles/files are diagnostic controls only, never proposed public State. No acceptance or production implementation."
+}

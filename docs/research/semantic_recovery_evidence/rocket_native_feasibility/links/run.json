@@ -1,0 +1,8 @@
+{
+  "mode": "links",
+  "mask": 1,
+  "ordinary_step_patch": false,
+  "retained_numeric_engine_checkpoints": 7,
+  "public_state_implemented": false,
+  "note": "Same committed witness collectors/actions; native instrumentation is research-only."
+}

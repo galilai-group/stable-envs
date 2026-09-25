@@ -1,0 +1,47 @@
+{
+  "controls/thrust.bullet": {
+    "sha256": "a917819971fd4f7c0cfef8da917a99277a3281628be7598f5eff6dfb3836d7b0",
+    "bytes": 40324,
+    "reason": "Opaque research transfer only; typed inputs and continuation arrays retained; not public State."
+  },
+  "controls/landing_contact.bullet": {
+    "sha256": "dddf1ee628b3fabb5873b52a99443998c1ffff40f2415ec3d697bec4750e6bc3",
+    "bytes": 46692,
+    "reason": "Opaque research transfer only; typed inputs and continuation arrays retained; not public State."
+  },
+  "feasibility/thrust_rotation.bullet": {
+    "sha256": "a917819971fd4f7c0cfef8da917a99277a3281628be7598f5eff6dfb3836d7b0",
+    "bytes": 40324,
+    "reason": "Opaque research transfer only; typed inputs and continuation arrays retained; not public State."
+  },
+  "feasibility/resting_contact.bullet": {
+    "sha256": "ed083c34a8f2fedc656288da02a2680bf25b4d057364e2188df102b583634124",
+    "bytes": 49876,
+    "reason": "Opaque research transfer only; typed inputs and continuation arrays retained; not public State."
+  },
+  "feasibility/free_flight_0.bullet": {
+    "sha256": "b5e65998d1589be3b56a969da48c7934b2309b51fe7b0c61c1586535b6df0f44",
+    "bytes": 40324,
+    "reason": "Opaque research transfer only; typed inputs and continuation arrays retained; not public State."
+  },
+  "feasibility/free_flight_42.bullet": {
+    "sha256": "b5e65998d1589be3b56a969da48c7934b2309b51fe7b0c61c1586535b6df0f44",
+    "bytes": 40324,
+    "reason": "Opaque research transfer only; typed inputs and continuation arrays retained; not public State."
+  },
+  "feasibility/free_flight_17.bullet": {
+    "sha256": "b5e65998d1589be3b56a969da48c7934b2309b51fe7b0c61c1586535b6df0f44",
+    "bytes": 40324,
+    "reason": "Opaque research transfer only; typed inputs and continuation arrays retained; not public State."
+  },
+  "feasibility/crash.bullet": {
+    "sha256": "979a5ff8df85a6956c104f2edd91e4e889e7dd732f2fbb9132c7607758e019fb",
+    "bytes": 46692,
+    "reason": "Opaque research transfer only; typed inputs and continuation arrays retained; not public State."
+  },
+  "feasibility/near_contact.bullet": {
+    "sha256": "aea8e195c6a62b352552a410b3cce4b1b9bb50f7c253f509c83dff50893d6237",
+    "bytes": 40324,
+    "reason": "Opaque research transfer only; typed inputs and continuation arrays retained; not public State."
+  }
+}

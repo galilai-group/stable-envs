@@ -1,0 +1,320 @@
+{
+  "semantics": "Possible migration only, not faithful restoration",
+  "getter_change": "computeForwardKinematics=True during body/fin component state_update",
+  "differences_from_pinned_oracle": {
+    "resting_contact-reference": {
+      "wrapper/state": {
+        "count": 104,
+        "max_abs": 3.421227943957092e-11
+      },
+      "wrapper/reward": {
+        "count": 8,
+        "max_abs": 0.7085699804791776
+      },
+      "wrapper/ang_vel": {
+        "count": 24,
+        "max_abs": 4.354061664675115e-13
+      },
+      "wrapper/ang_pos": {
+        "count": 24,
+        "max_abs": 6.842958795091891e-11
+      },
+      "wrapper/lin_vel": {
+        "count": 24,
+        "max_abs": 1.0266725824514606e-12
+      },
+      "wrapper/lin_pos": {
+        "count": 24,
+        "max_abs": 4.171645667794266e-12
+      },
+      "wrapper/ground_lin_vel": {
+        "count": 24,
+        "max_abs": 1.0338195528311273e-12
+      },
+      "wrapper/previous_ang_vel": {
+        "count": 24,
+        "max_abs": 4.354061664675115e-13
+      },
+      "wrapper/previous_lin_vel": {
+        "count": 24,
+        "max_abs": 1.0266725824514606e-12
+      },
+      "wrapper/previous_lin_pos": {
+        "count": 24,
+        "max_abs": 4.171645667794266e-12
+      },
+      "wrapper/previous_ground_lin_vel": {
+        "count": 24,
+        "max_abs": 1.0338195528311273e-12
+      },
+      "drone/state": {
+        "count": 96,
+        "max_abs": 6.842958795091891e-11
+      },
+      "bodies/local_body_velocities": {
+        "count": 24,
+        "max_abs": 1.026910022237544e-12
+      },
+      "fin_0/local_surface_velocity": {
+        "count": 24,
+        "max_abs": 1.026910022237544e-12
+      },
+      "fin_1/local_surface_velocity": {
+        "count": 24,
+        "max_abs": 4.911627092051684e-13
+      },
+      "fin_2/local_surface_velocity": {
+        "count": 24,
+        "max_abs": 1.9206096969921173e-12
+      },
+      "fin_3/local_surface_velocity": {
+        "count": 24,
+        "max_abs": 1.919119951471938e-12
+      },
+      "physics/body_1/position": {
+        "count": 24,
+        "max_abs": 4.171645667794266e-12
+      },
+      "physics/body_1/quaternion": {
+        "count": 32,
+        "max_abs": 3.421227943957092e-11
+      },
+      "physics/body_1/linear_velocity": {
+        "count": 24,
+        "max_abs": 1.0338195528178924e-12
+      },
+      "physics/body_1/angular_velocity": {
+        "count": 24,
+        "max_abs": 4.3552985089485097e-13
+      },
+      "diagnostic/cached_links": {
+        "count": 1152,
+        "max_abs": 5.960464477539063e-08
+      }
+    },
+    "crash-reference": {
+      "wrapper/state": {
+        "count": 104,
+        "max_abs": 4.88123239961169e-06
+      },
+      "wrapper/reward": {
+        "count": 8,
+        "max_abs": 2.2779302879527563e-06
+      },
+      "wrapper/ang_vel": {
+        "count": 24,
+        "max_abs": 1.8410100844912236e-06
+      },
+      "wrapper/ang_pos": {
+        "count": 24,
+        "max_abs": 9.699514392624148e-09
+      },
+      "wrapper/lin_vel": {
+        "count": 24,
+        "max_abs": 4.88123239961169e-06
+      },
+      "wrapper/lin_pos": {
+        "count": 24,
+        "max_abs": 2.4987014323948897e-08
+      },
+      "wrapper/ground_lin_vel": {
+        "count": 24,
+        "max_abs": 4.85600484267934e-06
+      },
+      "wrapper/previous_ang_vel": {
+        "count": 21,
+        "max_abs": 1.8410100844912236e-06
+      },
+      "wrapper/previous_lin_vel": {
+        "count": 21,
+        "max_abs": 4.88123239961169e-06
+      },
+      "wrapper/previous_lin_pos": {
+        "count": 21,
+        "max_abs": 2.4987014323948897e-08
+      },
+      "wrapper/previous_ground_lin_vel": {
+        "count": 21,
+        "max_abs": 4.85600484267934e-06
+      },
+      "drone/state": {
+        "count": 96,
+        "max_abs": 4.88123239961169e-06
+      },
+      "bodies/local_body_velocities": {
+        "count": 24,
+        "max_abs": 0.0984700999651319
+      },
+      "fin_0/local_surface_velocity": {
+        "count": 24,
+        "max_abs": 0.09847009996513192
+      },
+      "fin_1/local_surface_velocity": {
+        "count": 24,
+        "max_abs": 0.015601908445004642
+      },
+      "fin_2/local_surface_velocity": {
+        "count": 24,
+        "max_abs": 0.18325316124519153
+      },
+      "fin_3/local_surface_velocity": {
+        "count": 24,
+        "max_abs": 0.18364969949285326
+      },
+      "physics/body_1/position": {
+        "count": 24,
+        "max_abs": 2.4987014323948897e-08
+      },
+      "physics/body_1/quaternion": {
+        "count": 32,
+        "max_abs": 4.831647092400776e-09
+      },
+      "physics/body_1/linear_velocity": {
+        "count": 24,
+        "max_abs": 4.85600484267934e-06
+      },
+      "physics/body_1/angular_velocity": {
+        "count": 24,
+        "max_abs": 1.8257168159507842e-06
+      },
+      "diagnostic/cached_links": {
+        "count": 1600,
+        "max_abs": 1.7322500348091125
+      }
+    },
+    "free_flight_42-reference": {
+      "diagnostic/cached_links": {
+        "count": 160,
+        "max_abs": 0.1356201171875
+      }
+    },
+    "thrust_rotation-reference": {
+      "wrapper/state": {
+        "count": 104,
+        "max_abs": 0.0007885330543750679
+      },
+      "wrapper/reward": {
+        "count": 8,
+        "max_abs": 0.013229327159354654
+      },
+      "wrapper/ang_vel": {
+        "count": 24,
+        "max_abs": 0.00041137972255356203
+      },
+      "wrapper/ang_pos": {
+        "count": 24,
+        "max_abs": 8.868460098245684e-05
+      },
+      "wrapper/lin_vel": {
+        "count": 24,
+        "max_abs": 0.0007885330543750679
+      },
+      "wrapper/lin_pos": {
+        "count": 24,
+        "max_abs": 0.00030311837297033464
+      },
+      "wrapper/ground_lin_vel": {
+        "count": 24,
+        "max_abs": 0.0013721300360068356
+      },
+      "wrapper/previous_ang_vel": {
+        "count": 24,
+        "max_abs": 0.0004122297904524397
+      },
+      "wrapper/previous_lin_vel": {
+        "count": 24,
+        "max_abs": 0.0007136296306959333
+      },
+      "wrapper/previous_lin_pos": {
+        "count": 24,
+        "max_abs": 0.0002916975819579695
+      },
+      "wrapper/previous_ground_lin_vel": {
+        "count": 24,
+        "max_abs": 0.001365155227765924
+      },
+      "drone/state": {
+        "count": 96,
+        "max_abs": 0.0007885330543750679
+      },
+      "bodies/local_body_velocities": {
+        "count": 24,
+        "max_abs": 0.005715332546445462
+      },
+      "fin_0/local_surface_velocity": {
+        "count": 24,
+        "max_abs": 0.005715332546445462
+      },
+      "fin_1/local_surface_velocity": {
+        "count": 24,
+        "max_abs": 0.0048925827473231265
+      },
+      "fin_2/local_surface_velocity": {
+        "count": 24,
+        "max_abs": 0.006563780380535289
+      },
+      "fin_3/local_surface_velocity": {
+        "count": 24,
+        "max_abs": 0.006554344550355751
+      },
+      "physics/body_1/position": {
+        "count": 24,
+        "max_abs": 0.00030311837297033464
+      },
+      "physics/body_1/quaternion": {
+        "count": 32,
+        "max_abs": 4.435184882808571e-05
+      },
+      "physics/body_1/linear_velocity": {
+        "count": 24,
+        "max_abs": 0.0013721300360069605
+      },
+      "physics/body_1/angular_velocity": {
+        "count": 24,
+        "max_abs": 0.000411343929944942
+      },
+      "diagnostic/cached_links": {
+        "count": 1600,
+        "max_abs": 0.09552369283949247
+      }
+    },
+    "free_flight_0-reference": {
+      "diagnostic/cached_links": {
+        "count": 160,
+        "max_abs": 0.1356201171875
+      }
+    },
+    "free_flight_17-reference": {
+      "diagnostic/cached_links": {
+        "count": 160,
+        "max_abs": 0.1356201171875
+      }
+    },
+    "near_contact-reference": {
+      "bodies/local_body_velocities": {
+        "count": 33,
+        "max_abs": 0.04672920245066403
+      },
+      "fin_0/local_surface_velocity": {
+        "count": 33,
+        "max_abs": 0.04672920245066403
+      },
+      "fin_1/local_surface_velocity": {
+        "count": 33,
+        "max_abs": 0.013814916263333532
+      },
+      "fin_2/local_surface_velocity": {
+        "count": 33,
+        "max_abs": 0.08739503647755553
+      },
+      "fin_3/local_surface_velocity": {
+        "count": 33,
+        "max_abs": 0.08690738984063762
+      },
+      "diagnostic/cached_links": {
+        "count": 2000,
+        "max_abs": 0.33633995056152344
+      }
+    }
+  }
+}
