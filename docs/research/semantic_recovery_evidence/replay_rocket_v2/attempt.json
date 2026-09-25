@@ -1,0 +1,5 @@
+{
+  "status": "COLLECTOR_ERROR_SUPERSEDED",
+  "final_evidence": "../replay_rocket_v3/result.json",
+  "reason": "Variation sampled/default value dtype mismatch; canonical numeric encoding fixed in final collector"
+}

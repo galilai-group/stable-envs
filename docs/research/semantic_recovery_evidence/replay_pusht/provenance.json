@@ -1,0 +1,43 @@
+{
+  "engine": "pusht",
+  "python": "3.12.11 (main, Jun  3 2025, 15:41:47) [Clang 17.0.0 (clang-1700.0.13.3)]",
+  "executable": "/private/tmp/pusht-authority-swm-lock/bin/python",
+  "packages": {
+    "numpy": "2.2.6",
+    "gymnasium": "1.2.3",
+    "pymunk": "7.2.0"
+  },
+  "sources": [
+    {
+      "path": "/private/tmp/fetch-authority-swm-lock/lib/python3.12/site-packages/gymnasium/spaces/dict.py",
+      "sha256": "7101051852bc9b2ac6dfacbcea444b0fe5c07b3b4f4f9e78387060dd5c17486a"
+    },
+    {
+      "path": "/private/tmp/fetch-authority-swm-lock/lib/python3.12/site-packages/gymnasium/utils/seeding.py",
+      "sha256": "eb2a223b92604b7d1df2a859338e4a175c60f3fb11b87f8f316f306f1b97de53"
+    },
+    {
+      "path": "/Users/samib/stable-worldmodel/stable_worldmodel/spaces.py",
+      "sha256": "73079b2a66dace087abc7c417691e3cc339887866915553e21d0936a362229eb"
+    },
+    {
+      "path": "/Users/samib/stable-worldmodel/stable_worldmodel/envs/__init__.py",
+      "sha256": "118a262677a647c6d6ef8889443b096abe082db4e365fc0a5b1249715e7e3c1a"
+    },
+    {
+      "path": "/private/tmp/pusht-authority-swm-lock/lib/python3.12/site-packages/pymunk/__init__.py",
+      "sha256": "66e5a5f1ed02693dee3c39f82caf332203dd3b5ef9ced6f30a7d976d39c5de36"
+    },
+    {
+      "path": "/Users/samib/stable-worldmodel/stable_worldmodel/envs/pusht/env.py",
+      "sha256": "c6d2104adc368ff1c352edc0e35ac74da9f07fda3a748ddbef0ba6b7a2d1daa2"
+    },
+    {
+      "path": "/Users/samib/stable-worldmodel/stable_worldmodel/envs/pusht/env_discrete.py",
+      "sha256": "eb4d93c4d6471a33684ff2f98c7c18521894f5c90863125d77ce12908f218586"
+    }
+  ],
+  "dict_seed_source": "    def seed(self, seed: int | dict[str, Any] | None = None) -> dict[str, int]:\n        \"\"\"Seed the PRNG of this space and all subspaces.\n\n        Depending on the type of seed, the subspaces will be seeded differently\n\n        * ``None`` - All the subspaces will use a random initial seed\n        * ``Int`` - The integer is used to seed the :class:`Dict` space that is used to generate seed values for each of the subspaces. Warning, this does not guarantee unique seeds for all subspaces, though is very unlikely.\n        * ``Dict`` - A dictionary of seeds for each subspace, requires a seed key for every subspace. This supports seeding of multiple composite subspaces (``Dict[\"space\": Dict[...], ...]`` with ``{\"space\": {...}, ...}``).\n\n        Args:\n            seed: An optional int or dictionary of subspace keys to int to seed each PRNG. See above for more details.\n\n        Returns:\n            A dictionary for the seed values of the subspaces\n        \"\"\"\n        if seed is None:\n            return {key: subspace.seed(None) for (key, subspace) in self.spaces.items()}\n        elif isinstance(seed, int):\n            super().seed(seed)\n            # Using `np.int32` will mean that the same key occurring is extremely low, even for large subspaces\n            subseeds = self.np_random.integers(\n                np.iinfo(np.int32).max, size=len(self.spaces)\n            )\n            return {\n                key: subspace.seed(int(subseed))\n                for (key, subspace), subseed in zip(self.spaces.items(), subseeds)\n            }\n        elif isinstance(seed, dict):\n            if seed.keys() != self.spaces.keys():\n                raise ValueError(\n                    f\"The seed keys: {seed.keys()} are not identical to space keys: {self.spaces.keys()}\"\n                )\n\n            return {key: self.spaces[key].seed(seed[key]) for key in seed.keys()}\n        else:\n            raise TypeError(\n                f\"Expected seed type: dict, int or None, actual type: {type(seed)}\"\n            )\n",
+  "entropy_source": "def np_random(seed: int | None = None) -> tuple[np.random.Generator, int]:\n    \"\"\"Returns a NumPy random number generator (RNG) along with seed value from the inputted seed.\n\n    If ``seed`` is ``None`` then a **random** seed will be generated as the RNG's initial seed.\n    This randomly selected seed is returned as the second value of the tuple.\n\n    .. py:currentmodule:: gymnasium.Env\n\n    This function is called in :meth:`reset` to reset an environment's initial RNG.\n\n    Args:\n        seed: The seed used to create the generator\n\n    Returns:\n        A NumPy-based Random Number Generator and generator seed\n\n    Raises:\n        Error: Seed must be a non-negative integer\n    \"\"\"\n    if seed is not None and not (isinstance(seed, int) and 0 <= seed):\n        if isinstance(seed, int) is False:\n            raise error.Error(\n                f\"Seed must be a python integer, actual type: {type(seed)}\"\n            )\n        else:\n            raise error.Error(\n                f\"Seed must be greater or equal to zero, actual value: {seed}\"\n            )\n\n    seed_seq = np.random.SeedSequence(seed)\n    np_seed = seed_seq.entropy\n    rng = RandomNumberGenerator(np.random.PCG64(seed_seq))\n    return rng, np_seed\n",
+  "patched_engine_loaded": false
+}

@@ -1,0 +1,195 @@
+/Users/samib/stable-worldmodel/stable_worldmodel/envs/__init__.py:215: UserWarning: ale-py not found; ALE/* envs are unavailable. Install with: pip install 'stable-worldmodel[env]' or pip install ale-py.
+  from stable_worldmodel.envs import ale  # noqa: F401
+pybullet build time: Sep  9 2026 00:21:04
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+reset_0 True True
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+thrust_0 True True
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+reset_17 True True
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+thrust_17 True True
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+reset_42 True True
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+thrust_42 True True
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+near_contact True True
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+crash True True
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+post_terminal_contact True True
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+landing True True
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+time_limit True True
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+render_variation True True
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
