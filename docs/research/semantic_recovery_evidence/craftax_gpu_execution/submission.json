@@ -1,0 +1,20 @@
+{
+  "job_id": 6679082,
+  "partition": "gpu",
+  "qos": "norm-gpu",
+  "node_last_observed": "gpu2110",
+  "last_verified_state": "RUNNING",
+  "submission_succeeded": true,
+  "uploaded_hashes_verified": [
+    "bundle.json",
+    "gate.sbatch",
+    "oracle.tar.gz",
+    "source.tar.gz"
+  ],
+  "remote_bundle": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu",
+  "source_commit": "b6a8242f5ff5a9cae5e9e883a15611d779c2c99c",
+  "source_archive_sha256": "49235ccf34ee8ba947addbf866225f1fd87ddbefa4bec68b60bc7eeb9a206834",
+  "acceptance": "PENDING_NO_TERMINAL_EVIDENCE",
+  "promotions": [],
+  "push_performed": false
+}

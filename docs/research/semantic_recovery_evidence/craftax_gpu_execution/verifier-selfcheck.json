@@ -1,0 +1,10 @@
+{
+  "scope": "Local verifier failure-path checks only; no GPU acceptance evidence",
+  "checks": [
+    "valid manifest accepted",
+    "corrupt payload refused",
+    "manifest traversal refused",
+    "missing GPU terminal marker refused"
+  ],
+  "status": "PASS"
+}

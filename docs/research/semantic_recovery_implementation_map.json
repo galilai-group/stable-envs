@@ -3402,7 +3402,7 @@
           "torch": "2.14.0",
           "tensordict": "0.14.2"
         },
-        "version_scope": "Exact pinned CPU profile; GPU locked but not yet executed"
+        "version_scope": "Exact pinned CPU profile; GPU job 6679082 submitted, actual runtime profile not yet retrieved"
       },
       "stable_envs_classes": [
         "CraftaxClassic"
@@ -3457,14 +3457,17 @@
           "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxClassicPixels-cpu-acceptance.json",
           "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxClassicPixels/result.json",
           "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxClassicPixels/schema.json",
-          "docs/research/semantic_recovery_evidence/craftax_gpu_prepared/bundle.json"
+          "docs/research/semantic_recovery_evidence/craftax_gpu_prepared/bundle.json",
+          "docs/research/semantic_recovery_evidence/craftax_gpu_execution/submission.json"
         ]
       },
       "cpu_semantic_result": "PASS_EXACT_CPU",
       "gpu_semantic_result": {
-        "status": "BLOCKED_SSH_AUTHENTICATION_NOT_SUBMITTED",
-        "job": null,
-        "note": "Candidate executes upstream JAX on GPU; pending independent registration gate, no GPU acceptance claim"
+        "status": "SUBMITTED_ACCEPTANCE_PENDING_MONITOR_AUTH_BLOCKED",
+        "job": 6679082,
+        "last_observed_state": "RUNNING",
+        "node_last_observed": "gpu2110",
+        "note": "No terminal evidence retrieved; no GPU acceptance claim"
       },
       "frozen_renderer_result": "PASS_EXACT_CPU_SOURCE_UINT8; legacy atlas contract preserved separately",
       "known_limitations": [
@@ -3473,7 +3476,7 @@
         "Legacy stable_envs_classes is frozen crosswalk; candidate_classes identifies the new implementation"
       ],
       "remaining_gates": [
-        "Oscar independent GPU acceptance after authentication",
+        "Retrieve Oscar job 6679082 terminal evidence after SSH authentication",
         "Download and independently verify all remote arrays, hashes, terminal logs before promotion"
       ],
       "closure_code_check": {
@@ -3513,7 +3516,7 @@
           "torch": "2.14.0",
           "tensordict": "0.14.2"
         },
-        "version_scope": "Exact pinned CPU profile; GPU locked but not yet executed"
+        "version_scope": "Exact pinned CPU profile; GPU job 6679082 submitted, actual runtime profile not yet retrieved"
       },
       "stable_envs_classes": [],
       "accepted_classes": [],
@@ -3566,14 +3569,17 @@
           "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxClassicSymbolic-cpu-acceptance.json",
           "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxClassicSymbolic/result.json",
           "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxClassicSymbolic/schema.json",
-          "docs/research/semantic_recovery_evidence/craftax_gpu_prepared/bundle.json"
+          "docs/research/semantic_recovery_evidence/craftax_gpu_prepared/bundle.json",
+          "docs/research/semantic_recovery_evidence/craftax_gpu_execution/submission.json"
         ]
       },
       "cpu_semantic_result": "PASS_EXACT_CPU",
       "gpu_semantic_result": {
-        "status": "BLOCKED_SSH_AUTHENTICATION_NOT_SUBMITTED",
-        "job": null,
-        "note": "Candidate executes upstream JAX on GPU; pending independent registration gate, no GPU acceptance claim"
+        "status": "SUBMITTED_ACCEPTANCE_PENDING_MONITOR_AUTH_BLOCKED",
+        "job": 6679082,
+        "last_observed_state": "RUNNING",
+        "node_last_observed": "gpu2110",
+        "note": "No terminal evidence retrieved; no GPU acceptance claim"
       },
       "frozen_renderer_result": "PASS_EXACT_CPU_SYMBOLIC; source pixel refusal preserved",
       "known_limitations": [
@@ -3582,7 +3588,7 @@
         "Legacy stable_envs_classes is frozen crosswalk; candidate_classes identifies the new implementation"
       ],
       "remaining_gates": [
-        "Oscar independent GPU acceptance after authentication",
+        "Retrieve Oscar job 6679082 terminal evidence after SSH authentication",
         "Download and independently verify all remote arrays, hashes, terminal logs before promotion"
       ],
       "closure_code_check": {
@@ -3622,7 +3628,7 @@
           "torch": "2.14.0",
           "tensordict": "0.14.2"
         },
-        "version_scope": "Exact pinned CPU profile; GPU locked but not yet executed"
+        "version_scope": "Exact pinned CPU profile; GPU job 6679082 submitted, actual runtime profile not yet retrieved"
       },
       "stable_envs_classes": [
         "CraftaxFull"
@@ -3677,14 +3683,17 @@
           "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxPixels-cpu-acceptance.json",
           "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxPixels/result.json",
           "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxPixels/schema.json",
-          "docs/research/semantic_recovery_evidence/craftax_gpu_prepared/bundle.json"
+          "docs/research/semantic_recovery_evidence/craftax_gpu_prepared/bundle.json",
+          "docs/research/semantic_recovery_evidence/craftax_gpu_execution/submission.json"
         ]
       },
       "cpu_semantic_result": "PASS_EXACT_CPU",
       "gpu_semantic_result": {
-        "status": "BLOCKED_SSH_AUTHENTICATION_NOT_SUBMITTED",
-        "job": null,
-        "note": "Candidate executes upstream JAX on GPU; pending independent registration gate, no GPU acceptance claim"
+        "status": "SUBMITTED_ACCEPTANCE_PENDING_MONITOR_AUTH_BLOCKED",
+        "job": 6679082,
+        "last_observed_state": "RUNNING",
+        "node_last_observed": "gpu2110",
+        "note": "No terminal evidence retrieved; no GPU acceptance claim"
       },
       "frozen_renderer_result": "PASS_EXACT_CPU_SOURCE_UINT8; legacy atlas contract preserved separately",
       "known_limitations": [
@@ -3693,7 +3702,7 @@
         "Legacy stable_envs_classes is frozen crosswalk; candidate_classes identifies the new implementation"
       ],
       "remaining_gates": [
-        "Oscar independent GPU acceptance after authentication",
+        "Retrieve Oscar job 6679082 terminal evidence after SSH authentication",
         "Download and independently verify all remote arrays, hashes, terminal logs before promotion"
       ],
       "closure_code_check": {
@@ -3733,7 +3742,7 @@
           "torch": "2.14.0",
           "tensordict": "0.14.2"
         },
-        "version_scope": "Exact pinned CPU profile; GPU locked but not yet executed"
+        "version_scope": "Exact pinned CPU profile; GPU job 6679082 submitted, actual runtime profile not yet retrieved"
       },
       "stable_envs_classes": [],
       "accepted_classes": [],
@@ -3786,14 +3795,17 @@
           "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxSymbolic-cpu-acceptance.json",
           "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxSymbolic/result.json",
           "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxSymbolic/schema.json",
-          "docs/research/semantic_recovery_evidence/craftax_gpu_prepared/bundle.json"
+          "docs/research/semantic_recovery_evidence/craftax_gpu_prepared/bundle.json",
+          "docs/research/semantic_recovery_evidence/craftax_gpu_execution/submission.json"
         ]
       },
       "cpu_semantic_result": "PASS_EXACT_CPU",
       "gpu_semantic_result": {
-        "status": "BLOCKED_SSH_AUTHENTICATION_NOT_SUBMITTED",
-        "job": null,
-        "note": "Candidate executes upstream JAX on GPU; pending independent registration gate, no GPU acceptance claim"
+        "status": "SUBMITTED_ACCEPTANCE_PENDING_MONITOR_AUTH_BLOCKED",
+        "job": 6679082,
+        "last_observed_state": "RUNNING",
+        "node_last_observed": "gpu2110",
+        "note": "No terminal evidence retrieved; no GPU acceptance claim"
       },
       "frozen_renderer_result": "PASS_EXACT_CPU_SYMBOLIC; source pixel refusal preserved",
       "known_limitations": [
@@ -3802,7 +3814,7 @@
         "Legacy stable_envs_classes is frozen crosswalk; candidate_classes identifies the new implementation"
       ],
       "remaining_gates": [
-        "Oscar independent GPU acceptance after authentication",
+        "Retrieve Oscar job 6679082 terminal evidence after SSH authentication",
         "Download and independently verify all remote arrays, hashes, terminal logs before promotion"
       ],
       "closure_code_check": {

@@ -474,7 +474,7 @@
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Oscar GPU semantics/rendering acceptance pending SSH authentication; registration remains INCOMPLETE",
+        "Oscar job 6679082 last observed RUNNING on gpu2110; terminal evidence retrieval blocked by SSH authentication; registration remains INCOMPLETE",
         "Legacy frozen crosswalk/atlas classes preserved; new candidate class is separately identified",
         "No cross-device exactness, public eager/vmap, arbitrary parameter or MPS claim"
       ],
@@ -485,15 +485,16 @@
         "CraftaxClassicPixels"
       ],
       "audit_report": "docs/research/craftax_recovery_checkpoint.md",
-      "recovery_status": "CPU_PASS_OSCAR_NOT_SUBMITTED",
+      "recovery_status": "CPU_PASS_OSCAR_SUBMITTED_ACCEPTANCE_PENDING",
       "evidence": [
         "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxClassicPixels-cpu-acceptance.json",
         "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxClassicPixels/result.json",
         "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxClassicPixels/schema.json",
-        "docs/research/semantic_recovery_evidence/craftax_gpu_prepared/bundle.json"
+        "docs/research/semantic_recovery_evidence/craftax_gpu_prepared/bundle.json",
+        "docs/research/semantic_recovery_evidence/craftax_gpu_execution/submission.json"
       ],
       "implementation_commit": "2953735e5eabae96b796843a376abd7150781de4",
-      "oscar_job": null
+      "oscar_job": 6679082
     },
     {
       "historical_id": "swm/CraftaxClassicSymbolic-v1",
@@ -518,7 +519,7 @@
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Oscar GPU semantics/rendering acceptance pending SSH authentication; registration remains INCOMPLETE",
+        "Oscar job 6679082 last observed RUNNING on gpu2110; terminal evidence retrieval blocked by SSH authentication; registration remains INCOMPLETE",
         "Legacy frozen crosswalk/atlas classes preserved; new candidate class is separately identified",
         "No cross-device exactness, public eager/vmap, arbitrary parameter or MPS claim"
       ],
@@ -529,15 +530,16 @@
         "CraftaxClassicSymbolic"
       ],
       "audit_report": "docs/research/craftax_recovery_checkpoint.md",
-      "recovery_status": "CPU_PASS_OSCAR_NOT_SUBMITTED",
+      "recovery_status": "CPU_PASS_OSCAR_SUBMITTED_ACCEPTANCE_PENDING",
       "evidence": [
         "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxClassicSymbolic-cpu-acceptance.json",
         "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxClassicSymbolic/result.json",
         "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxClassicSymbolic/schema.json",
-        "docs/research/semantic_recovery_evidence/craftax_gpu_prepared/bundle.json"
+        "docs/research/semantic_recovery_evidence/craftax_gpu_prepared/bundle.json",
+        "docs/research/semantic_recovery_evidence/craftax_gpu_execution/submission.json"
       ],
       "implementation_commit": "2953735e5eabae96b796843a376abd7150781de4",
-      "oscar_job": null
+      "oscar_job": 6679082
     },
     {
       "historical_id": "swm/CraftaxPixels-v1",
@@ -564,7 +566,7 @@
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Oscar GPU semantics/rendering acceptance pending SSH authentication; registration remains INCOMPLETE",
+        "Oscar job 6679082 last observed RUNNING on gpu2110; terminal evidence retrieval blocked by SSH authentication; registration remains INCOMPLETE",
         "Legacy frozen crosswalk/atlas classes preserved; new candidate class is separately identified",
         "No cross-device exactness, public eager/vmap, arbitrary parameter or MPS claim"
       ],
@@ -575,15 +577,16 @@
         "CraftaxPixels"
       ],
       "audit_report": "docs/research/craftax_recovery_checkpoint.md",
-      "recovery_status": "CPU_PASS_OSCAR_NOT_SUBMITTED",
+      "recovery_status": "CPU_PASS_OSCAR_SUBMITTED_ACCEPTANCE_PENDING",
       "evidence": [
         "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxPixels-cpu-acceptance.json",
         "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxPixels/result.json",
         "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxPixels/schema.json",
-        "docs/research/semantic_recovery_evidence/craftax_gpu_prepared/bundle.json"
+        "docs/research/semantic_recovery_evidence/craftax_gpu_prepared/bundle.json",
+        "docs/research/semantic_recovery_evidence/craftax_gpu_execution/submission.json"
       ],
       "implementation_commit": "2953735e5eabae96b796843a376abd7150781de4",
-      "oscar_job": null
+      "oscar_job": 6679082
     },
     {
       "historical_id": "swm/CraftaxSymbolic-v1",
@@ -608,7 +611,7 @@
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Oscar GPU semantics/rendering acceptance pending SSH authentication; registration remains INCOMPLETE",
+        "Oscar job 6679082 last observed RUNNING on gpu2110; terminal evidence retrieval blocked by SSH authentication; registration remains INCOMPLETE",
         "Legacy frozen crosswalk/atlas classes preserved; new candidate class is separately identified",
         "No cross-device exactness, public eager/vmap, arbitrary parameter or MPS claim"
       ],
@@ -619,15 +622,16 @@
         "CraftaxSymbolic"
       ],
       "audit_report": "docs/research/craftax_recovery_checkpoint.md",
-      "recovery_status": "CPU_PASS_OSCAR_NOT_SUBMITTED",
+      "recovery_status": "CPU_PASS_OSCAR_SUBMITTED_ACCEPTANCE_PENDING",
       "evidence": [
         "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxSymbolic-cpu-acceptance.json",
         "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxSymbolic/result.json",
         "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxSymbolic/schema.json",
-        "docs/research/semantic_recovery_evidence/craftax_gpu_prepared/bundle.json"
+        "docs/research/semantic_recovery_evidence/craftax_gpu_prepared/bundle.json",
+        "docs/research/semantic_recovery_evidence/craftax_gpu_execution/submission.json"
       ],
       "implementation_commit": "2953735e5eabae96b796843a376abd7150781de4",
-      "oscar_job": null
+      "oscar_job": 6679082
     },
     {
       "historical_id": "swm/FetchPickAndPlace-v3",

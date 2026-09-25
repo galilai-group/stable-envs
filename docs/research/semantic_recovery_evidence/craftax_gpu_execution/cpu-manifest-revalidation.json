@@ -1,0 +1,9 @@
+{
+  "status": "PASS",
+  "entries": 210,
+  "manifest_sha256": "d12c41b1ca918231b64776bede3f35e944d9f4287855d7adbfefdc45e20f2bfb",
+  "mutable_entries_resolved_at_starting_HEAD": [
+    "docs/research/semantic_recovery_implementation_map.json",
+    "docs/research/semantic_recovery_matrix.json"
+  ]
+}
