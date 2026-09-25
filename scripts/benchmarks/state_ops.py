@@ -102,6 +102,10 @@ def profile():
         "pybullet",
         "mujoco-warp",
         "warp-lang",
+        "matplotlib",
+        "pillow",
+        "pygame",
+        "glfw",
     ]
     versions = {}
     for name in names:
