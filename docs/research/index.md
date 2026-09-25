@@ -86,3 +86,4 @@ Milestone write-ups and generated tables. They use the project's internal names
 - [Craftax GPU submission and evidence retrieval](craftax_gpu_submission.md)
 - [Craftax final CPU/GPU acceptance](craftax_acceptance.md)
 - [Rocket source ownership and exact-state feasibility blocker](rocket_recovery_audit.md)
+- [State-operation benchmark methodology](state_operation_benchmarks.md)
