@@ -1,0 +1,38 @@
+{
+  "status": "VERIFIED",
+  "collectors": [
+    {
+      "path": "scripts/benchmarks/rendered_state_ops.py",
+      "sha256": "782d37a6f1e71fcb4bb916ad47e1fe89f5417fb938da92e9dddf5813e2dd7fed",
+      "match": true,
+      "containing_source_commit": "f66d8d2f844441ea9ddc9ae15c7a4460ea7a398a"
+    },
+    {
+      "path": "scripts/benchmarks/run_rendered_matrix.py",
+      "sha256": "3e5049b86543b125aecd9ad83623710bedde3d03bc99a9dd016baff291c99126",
+      "match": true,
+      "containing_source_commit": "f66d8d2f844441ea9ddc9ae15c7a4460ea7a398a"
+    },
+    {
+      "path": "scripts/research_replay/clone_diagnostic.py",
+      "sha256": "cdf68a620044effd6cdc6862a8388d629afdb7fbab44c7f0d22c51c5ab412ae3",
+      "match": true
+    },
+    {
+      "path": "scripts/research_replay/clone_ownership.py",
+      "sha256": "9dbbc6e214aae4bb1e80f857865170361f9beb334fda4e4a9c61dae8c4c55def",
+      "match": true
+    },
+    {
+      "path": "scripts/research_replay/rocket_replay.py",
+      "sha256": "2b72a70650f4ea7f4dbf39bc796eb194a044dde22917b7ae816fa1f3523796d3",
+      "match": true
+    },
+    {
+      "path": "scripts/research_replay/replay_feasibility.py",
+      "sha256": "f6bf500f080214fc69e5db26db73bc36ef9e778909e62f5c5acb402c4c7ff947",
+      "match": true
+    }
+  ],
+  "cpu_raw_metadata_preserved": true
+}

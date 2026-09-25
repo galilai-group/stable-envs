@@ -1,0 +1,33 @@
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+Users of this version of Gym should be able to simply replace 'import gym' with 'import gymnasium as gym' in the vast majority of cases.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+AdroitHandRelocateDense-v1, AdroitHandHammerDense-v1, AdroitHandDoorDense-v1 environment's reward functions were updated in v1.2.1 without an environment version update. Therefore, use gymnasium-robotics==1.2.0 for v1 reproducibility or use v2 in gymnasium-robotics>=1.4.3. See https://github.com/Farama-Foundation/Gymnasium-Robotics/pull/220 for more details
+Warp 1.17.0 initialized:
+   CUDA Toolkit 12.9, Driver 12.9
+   Devices:
+     "cpu"      : "x86_64"
+     "cuda:0"   : "NVIDIA GeForce RTX 3090" (24 GiB, sm_86, mempool enabled)
+   Kernel cache:
+     /oscar/scratch/sboughan/se-semantic-recovery/rendered-state-f66d8d2f/run-6703024/cache/warp/1.17.0
+Module mujoco_warp._src.render_util 9978d2d load on device 'cuda:0' took 7.07 ms  (cached)
+Module mujoco_warp._src.io c32a0eb load on device 'cuda:0' took 10.35 ms  (cached)
+Module mujoco_warp._src.bvh 7dab8b4 load on device 'cuda:0' took 7.26 ms  (cached)
+Module mujoco_warp._src.smooth b9cc505 load on device 'cuda:0' took 10.14 ms  (cached)
+Module render__locals___render_megakernel_4f3ce39e cb900b5 load on device 'cuda:0' took 6.68 ms  (cached)
+swm/FetchPushDense-v3 every baseline 79.722506
+swm/FetchPushDense-v3 every get 94.2717135
+swm/FetchPushDense-v3 every set 81.2925885
+swm/FetchPushDense-v3 every branch 101.168244
+swm/FetchPushDense-v3 four baseline 48.650517
+swm/FetchPushDense-v3 four get 63.8181845
+swm/FetchPushDense-v3 four set 50.7093465
+swm/FetchPushDense-v3 four branch 70.020844
+swm/FetchPushDense-v3 final baseline 40.9635015
+swm/FetchPushDense-v3 final get 55.5056025
+swm/FetchPushDense-v3 final set 42.621939
+swm/FetchPushDense-v3 final branch 62.3398675
+swm/FetchPushDense-v3 none baseline 38.553521
+swm/FetchPushDense-v3 none get 52.916164
+swm/FetchPushDense-v3 none set 40.057995
+swm/FetchPushDense-v3 none branch 59.6968795

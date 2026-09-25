@@ -1,0 +1,10 @@
+{
+  "job": 6703024,
+  "source_commit": "f66d8d2f844441ea9ddc9ae15c7a4460ea7a398a",
+  "starting_commit": "31153d38c800f44e5c4c0ae1acdd0edca4c5f656",
+  "oracle_commit": "176d54532b3c0a251a4f509b74f2fdacc143a63d",
+  "remote": "/oscar/scratch/sboughan/se-semantic-recovery/rendered-state-f66d8d2f",
+  "reused_oracle_archive": "/oscar/scratch/sboughan/se-semantic-recovery/state-bench-gpu-8d153702/oracle.tar.gz",
+  "source_archive_sha256": "cd8af0a7fd870256e326c98f16a324e63b3fdbb74ba604f1f5f844b5005a1d35",
+  "duplicate_submission": false
+}

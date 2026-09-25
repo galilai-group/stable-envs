@@ -1,0 +1,10 @@
+{
+  "job": 6703024,
+  "initial_partition": "3090-gcondo",
+  "initial_qos": "cs-3090-gcondo",
+  "initial_pending_reason": "QOSGrpGRES",
+  "action": "scontrol update JobId=6703024 Partition=gpu QOS=norm-gpu",
+  "same_job_id": true,
+  "duplicate_submitted": false,
+  "observed_running_node": "gpu2109"
+}

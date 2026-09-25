@@ -1,0 +1,34 @@
+/oscar/scratch/sboughan/se-semantic-recovery/ogb-renderer-294675f0-complete/run-6669909/profile/lib/python3.12/site-packages/gymnasium/spaces/box.py:236: UserWarning: [33mWARN: Box low's precision lowered by casting to float32, current low.dtype=float64[0m
+  gym.logger.warn(
+/oscar/scratch/sboughan/se-semantic-recovery/ogb-renderer-294675f0-complete/run-6669909/profile/lib/python3.12/site-packages/gymnasium/spaces/box.py:306: UserWarning: [33mWARN: Box high's precision lowered by casting to float32, current high.dtype=float64[0m
+  gym.logger.warn(
+Warp 1.17.0 initialized:
+   CUDA Toolkit 12.9, Driver 12.9
+   Devices:
+     "cpu"      : "x86_64"
+     "cuda:0"   : "NVIDIA GeForce RTX 3090" (24 GiB, sm_86, mempool enabled)
+   Kernel cache:
+     /oscar/scratch/sboughan/se-semantic-recovery/rendered-state-f66d8d2f/run-6703024/cache/warp/1.17.0
+/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco_warp/_src/io.py:709: UserWarning: MULTICCD is enabled, but the scene contains CCD pairs without multicontact support: [('CAPSULE', 'CYLINDER'), ('CAPSULE', 'MESH'), ('CYLINDER', 'BOX'), ('CYLINDER', 'MESH')]. At most 1 contact will be generated for these pairs.
+  warnings.warn(
+Module mujoco_warp._src.render_util f62a762 load on device 'cuda:0' took 950.25 ms  (compiled)
+Module mujoco_warp._src.io c728e4c load on device 'cuda:0' took 2264.40 ms  (compiled)
+Module mujoco_warp._src.bvh 97a6eba load on device 'cuda:0' took 1062.82 ms  (compiled)
+Module mujoco_warp._src.smooth d04e5a7 load on device 'cuda:0' took 4468.36 ms  (compiled)
+Module render__locals___render_megakernel_4e4c3b8e fc72102 load on device 'cuda:0' took 2472.18 ms  (compiled)
+swm/OGBCube-v0 every baseline 690.616728
+swm/OGBCube-v0 every get 810.531926
+swm/OGBCube-v0 every set 1289.672742
+swm/OGBCube-v0 every branch 1384.158298
+swm/OGBCube-v0 four baseline 294.849903
+swm/OGBCube-v0 four get 416.9780205
+swm/OGBCube-v0 four set 879.185479
+swm/OGBCube-v0 four branch 969.862669
+swm/OGBCube-v0 final baseline 191.078999
+swm/OGBCube-v0 final get 326.7761295
+swm/OGBCube-v0 final set 786.318381
+swm/OGBCube-v0 final branch 885.3006665
+swm/OGBCube-v0 none baseline 159.221489
+swm/OGBCube-v0 none get 283.935996
+swm/OGBCube-v0 none set 747.3315935
+swm/OGBCube-v0 none branch 839.545904

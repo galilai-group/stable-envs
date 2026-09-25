@@ -1,0 +1,20 @@
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+Users of this version of Gym should be able to simply replace 'import gym' with 'import gymnasium as gym' in the vast majority of cases.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+swm/ManipulatorDMControl-v0 every baseline 147.305104
+swm/ManipulatorDMControl-v0 every get 164.0163695
+swm/ManipulatorDMControl-v0 every set 148.670347
+swm/ManipulatorDMControl-v0 every branch 166.432211
+swm/ManipulatorDMControl-v0 four baseline 61.9086005
+swm/ManipulatorDMControl-v0 four get 78.356191
+swm/ManipulatorDMControl-v0 four set 63.3798775
+swm/ManipulatorDMControl-v0 four branch 81.094116
+swm/ManipulatorDMControl-v0 final baseline 40.0092885
+swm/ManipulatorDMControl-v0 final get 56.4701795
+swm/ManipulatorDMControl-v0 final set 41.4806655
+swm/ManipulatorDMControl-v0 final branch 59.11364
+swm/ManipulatorDMControl-v0 none baseline 33.378155
+swm/ManipulatorDMControl-v0 none get 49.6389715
+swm/ManipulatorDMControl-v0 none set 34.736497
+swm/ManipulatorDMControl-v0 none branch 52.417701

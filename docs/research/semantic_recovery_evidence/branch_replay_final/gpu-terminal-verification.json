@@ -1,0 +1,18 @@
+{
+  "terminal": {
+    "job": "6703024",
+    "state": "COMPLETED",
+    "exit_code": "0:0",
+    "elapsed": "02:16:34",
+    "node": "gpu2109",
+    "command": "sacct -X -n -P -j 6703024 --format=JobID,State,ExitCode,Elapsed,NodeList"
+  },
+  "registrations": 37,
+  "all_exit_codes_zero": true,
+  "all_source_commits_match": true,
+  "remote_result_hashes_verified": true,
+  "distribution_count": 624,
+  "raw_samples_per_distribution": 50,
+  "warmups_per_distribution": 10,
+  "plot_visually_inspected": true
+}

@@ -1,0 +1,20 @@
+{
+  "command": [
+    "git",
+    "diff",
+    "--check",
+    "31153d38c800f44e5c4c0ae1acdd0edca4c5f656",
+    "--",
+    ".",
+    ":(exclude)**/*.log",
+    ":(exclude)**/*.svg",
+    ":(exclude)**/nvidia-smi.txt"
+  ],
+  "exit_code": 0,
+  "excluded_raw_evidence": [
+    "*.log",
+    "*.svg",
+    "nvidia-smi.txt"
+  ],
+  "reason": "Raw command output and generated vector evidence remain byte-identical; source/docs/JSON checks include the rest of the complete task diff."
+}

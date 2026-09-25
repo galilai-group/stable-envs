@@ -1,0 +1,20 @@
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+Users of this version of Gym should be able to simply replace 'import gym' with 'import gymnasium as gym' in the vast majority of cases.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+swm/Piecewise-v0 every baseline 33.370675
+swm/Piecewise-v0 every get 38.432557
+swm/Piecewise-v0 every set 33.696433
+swm/Piecewise-v0 every branch 42.186346
+swm/Piecewise-v0 four baseline 20.6902355
+swm/Piecewise-v0 four get 25.962081
+swm/Piecewise-v0 four set 21.075433
+swm/Piecewise-v0 four branch 29.574996
+swm/Piecewise-v0 final baseline 17.4805335
+swm/Piecewise-v0 final get 22.5869595
+swm/Piecewise-v0 final set 17.888841
+swm/Piecewise-v0 final branch 26.354438
+swm/Piecewise-v0 none baseline 16.416204
+swm/Piecewise-v0 none get 21.448386
+swm/Piecewise-v0 none set 16.754742
+swm/Piecewise-v0 none branch 25.237725

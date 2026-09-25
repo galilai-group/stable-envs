@@ -1,0 +1,34 @@
+/oscar/scratch/sboughan/se-semantic-recovery/ogb-renderer-294675f0-complete/run-6669909/profile/lib/python3.12/site-packages/gymnasium/spaces/box.py:236: UserWarning: [33mWARN: Box low's precision lowered by casting to float32, current low.dtype=float64[0m
+  gym.logger.warn(
+/oscar/scratch/sboughan/se-semantic-recovery/ogb-renderer-294675f0-complete/run-6669909/profile/lib/python3.12/site-packages/gymnasium/spaces/box.py:306: UserWarning: [33mWARN: Box high's precision lowered by casting to float32, current high.dtype=float64[0m
+  gym.logger.warn(
+Warp 1.17.0 initialized:
+   CUDA Toolkit 12.9, Driver 12.9
+   Devices:
+     "cpu"      : "x86_64"
+     "cuda:0"   : "NVIDIA GeForce RTX 3090" (24 GiB, sm_86, mempool enabled)
+   Kernel cache:
+     /oscar/scratch/sboughan/se-semantic-recovery/rendered-state-f66d8d2f/run-6703024/cache/warp/1.17.0
+/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco_warp/_src/io.py:709: UserWarning: MULTICCD is enabled, but the scene contains CCD pairs without multicontact support: [('CAPSULE', 'CYLINDER'), ('CAPSULE', 'MESH'), ('CYLINDER', 'CYLINDER'), ('CYLINDER', 'BOX'), ('CYLINDER', 'MESH')]. At most 1 contact will be generated for these pairs.
+  warnings.warn(
+Module mujoco_warp._src.render_util f62a762 load on device 'cuda:0' took 8.96 ms  (cached)
+Module mujoco_warp._src.io c728e4c load on device 'cuda:0' took 11.45 ms  (cached)
+Module mujoco_warp._src.bvh 97a6eba load on device 'cuda:0' took 14.24 ms  (cached)
+Module mujoco_warp._src.smooth d04e5a7 load on device 'cuda:0' took 12.60 ms  (cached)
+Module render__locals___render_megakernel_69144a9a 00aaee5 load on device 'cuda:0' took 3056.53 ms  (compiled)
+swm/OGBScene-v0 every baseline 711.7572515
+swm/OGBScene-v0 every get 813.5045565
+swm/OGBScene-v0 every set 1458.0600345
+swm/OGBScene-v0 every branch 1546.5060475
+swm/OGBScene-v0 four baseline 301.1694765
+swm/OGBScene-v0 four get 415.902529
+swm/OGBScene-v0 four set 1038.9081805
+swm/OGBScene-v0 four branch 1140.57533
+swm/OGBScene-v0 final baseline 199.569249
+swm/OGBScene-v0 final get 317.632625
+swm/OGBScene-v0 final set 939.4828275
+swm/OGBScene-v0 final branch 1028.285681
+swm/OGBScene-v0 none baseline 160.1890145
+swm/OGBScene-v0 none get 279.065534
+swm/OGBScene-v0 none set 903.7871345
+swm/OGBScene-v0 none branch 989.989051

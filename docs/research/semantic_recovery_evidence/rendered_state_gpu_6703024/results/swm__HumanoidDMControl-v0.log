@@ -1,0 +1,33 @@
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+Users of this version of Gym should be able to simply replace 'import gym' with 'import gymnasium as gym' in the vast majority of cases.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+Warp 1.17.0 initialized:
+   CUDA Toolkit 12.9, Driver 12.9
+   Devices:
+     "cpu"      : "x86_64"
+     "cuda:0"   : "NVIDIA GeForce RTX 3090" (24 GiB, sm_86, mempool enabled)
+   Kernel cache:
+     /oscar/scratch/sboughan/se-semantic-recovery/rendered-state-f66d8d2f/run-6703024/cache/warp/1.17.0
+Module mujoco_warp._src.render_util 9978d2d load on device 'cuda:0' took 8.06 ms  (cached)
+Module mujoco_warp._src.io c32a0eb load on device 'cuda:0' took 11.80 ms  (cached)
+Module mujoco_warp._src.bvh 7dab8b4 load on device 'cuda:0' took 7.08 ms  (cached)
+Module mujoco_warp._src.smooth b9cc505 load on device 'cuda:0' took 12.66 ms  (cached)
+Module render__locals___render_megakernel_016306ef e8381ee load on device 'cuda:0' took 1460.35 ms  (compiled)
+Module render__locals___render_megakernel_3b2b7e22 55b02da load on device 'cuda:0' took 1052.29 ms  (compiled)
+swm/HumanoidDMControl-v0 every baseline 59.143411
+swm/HumanoidDMControl-v0 every get 71.7707725
+swm/HumanoidDMControl-v0 every set 60.0721665
+swm/HumanoidDMControl-v0 every branch 76.922629
+swm/HumanoidDMControl-v0 four baseline 39.33263
+swm/HumanoidDMControl-v0 four get 52.666591
+swm/HumanoidDMControl-v0 four set 40.610453
+swm/HumanoidDMControl-v0 four branch 57.362576
+swm/HumanoidDMControl-v0 final baseline 34.428022
+swm/HumanoidDMControl-v0 final get 47.786419
+swm/HumanoidDMControl-v0 final set 35.665795
+swm/HumanoidDMControl-v0 final branch 52.5545425
+swm/HumanoidDMControl-v0 none baseline 32.7731755
+swm/HumanoidDMControl-v0 none get 46.153432
+swm/HumanoidDMControl-v0 none set 34.076379
+swm/HumanoidDMControl-v0 none branch 50.938286

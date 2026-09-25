@@ -1,0 +1,20 @@
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+Users of this version of Gym should be able to simply replace 'import gym' with 'import gymnasium as gym' in the vast majority of cases.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+swm/MountainCarControl-v0 every baseline 204.108968
+swm/MountainCarControl-v0 every get 213.711481
+swm/MountainCarControl-v0 every set 204.61355
+swm/MountainCarControl-v0 every branch 212.5734925
+swm/MountainCarControl-v0 four baseline 62.334204
+swm/MountainCarControl-v0 four get 71.8573835
+swm/MountainCarControl-v0 four set 62.910821
+swm/MountainCarControl-v0 four branch 70.90828
+swm/MountainCarControl-v0 final baseline 26.739179
+swm/MountainCarControl-v0 final get 36.208017
+swm/MountainCarControl-v0 final set 27.377111
+swm/MountainCarControl-v0 final branch 35.354191
+swm/MountainCarControl-v0 none baseline 14.821325
+swm/MountainCarControl-v0 none get 24.303992
+swm/MountainCarControl-v0 none set 15.476141
+swm/MountainCarControl-v0 none branch 23.5231105

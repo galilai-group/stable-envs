@@ -1,0 +1,33 @@
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+Users of this version of Gym should be able to simply replace 'import gym' with 'import gymnasium as gym' in the vast majority of cases.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+Warp 1.17.0 initialized:
+   CUDA Toolkit 12.9, Driver 12.9
+   Devices:
+     "cpu"      : "x86_64"
+     "cuda:0"   : "NVIDIA GeForce RTX 3090" (24 GiB, sm_86, mempool enabled)
+   Kernel cache:
+     /oscar/scratch/sboughan/se-semantic-recovery/rendered-state-f66d8d2f/run-6703024/cache/warp/1.17.0
+Module mujoco_warp._src.render_util 9978d2d load on device 'cuda:0' took 8.79 ms  (cached)
+Module mujoco_warp._src.io c32a0eb load on device 'cuda:0' took 13.61 ms  (cached)
+Module mujoco_warp._src.bvh 7dab8b4 load on device 'cuda:0' took 11.62 ms  (cached)
+Module mujoco_warp._src.smooth b9cc505 load on device 'cuda:0' took 10.56 ms  (cached)
+Module render__locals___render_megakernel_e16ee0c1 04e0bd4 load on device 'cuda:0' took 5.85 ms  (cached)
+Module render__locals___render_megakernel_00b7e313 a1e3bb1 load on device 'cuda:0' took 7.85 ms  (cached)
+swm/HopperDMControl-v0 every baseline 47.7193835
+swm/HopperDMControl-v0 every get 60.917296
+swm/HopperDMControl-v0 every set 48.840517
+swm/HopperDMControl-v0 every branch 61.509923
+swm/HopperDMControl-v0 four baseline 29.8497165
+swm/HopperDMControl-v0 four get 43.100694
+swm/HopperDMControl-v0 four set 31.06781
+swm/HopperDMControl-v0 four branch 43.684805
+swm/HopperDMControl-v0 final baseline 25.383573
+swm/HopperDMControl-v0 final get 38.590197
+swm/HopperDMControl-v0 final set 26.604877
+swm/HopperDMControl-v0 final branch 39.2209435
+swm/HopperDMControl-v0 none baseline 23.8964265
+swm/HopperDMControl-v0 none get 37.1615555
+swm/HopperDMControl-v0 none set 25.117125
+swm/HopperDMControl-v0 none branch 37.7807415

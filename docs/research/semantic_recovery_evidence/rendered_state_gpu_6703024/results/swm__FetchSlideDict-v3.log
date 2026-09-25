@@ -1,0 +1,33 @@
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+Users of this version of Gym should be able to simply replace 'import gym' with 'import gymnasium as gym' in the vast majority of cases.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+AdroitHandRelocateDense-v1, AdroitHandHammerDense-v1, AdroitHandDoorDense-v1 environment's reward functions were updated in v1.2.1 without an environment version update. Therefore, use gymnasium-robotics==1.2.0 for v1 reproducibility or use v2 in gymnasium-robotics>=1.4.3. See https://github.com/Farama-Foundation/Gymnasium-Robotics/pull/220 for more details
+Warp 1.17.0 initialized:
+   CUDA Toolkit 12.9, Driver 12.9
+   Devices:
+     "cpu"      : "x86_64"
+     "cuda:0"   : "NVIDIA GeForce RTX 3090" (24 GiB, sm_86, mempool enabled)
+   Kernel cache:
+     /oscar/scratch/sboughan/se-semantic-recovery/rendered-state-f66d8d2f/run-6703024/cache/warp/1.17.0
+Module mujoco_warp._src.render_util 9978d2d load on device 'cuda:0' took 9.24 ms  (cached)
+Module mujoco_warp._src.io c32a0eb load on device 'cuda:0' took 10.76 ms  (cached)
+Module mujoco_warp._src.bvh 7dab8b4 load on device 'cuda:0' took 8.32 ms  (cached)
+Module mujoco_warp._src.smooth b9cc505 load on device 'cuda:0' took 10.76 ms  (cached)
+Module render__locals___render_megakernel_65c48287 3bacf37 load on device 'cuda:0' took 6.67 ms  (cached)
+swm/FetchSlideDict-v3 every baseline 81.9641355
+swm/FetchSlideDict-v3 every get 96.5961175
+swm/FetchSlideDict-v3 every set 83.596287
+swm/FetchSlideDict-v3 every branch 103.954163
+swm/FetchSlideDict-v3 four baseline 51.027331
+swm/FetchSlideDict-v3 four get 65.650944
+swm/FetchSlideDict-v3 four set 52.978656
+swm/FetchSlideDict-v3 four branch 74.245477
+swm/FetchSlideDict-v3 final baseline 43.705745
+swm/FetchSlideDict-v3 final get 58.448467
+swm/FetchSlideDict-v3 final set 45.3618065
+swm/FetchSlideDict-v3 final branch 66.626438
+swm/FetchSlideDict-v3 none baseline 41.1033895
+swm/FetchSlideDict-v3 none get 55.827556
+swm/FetchSlideDict-v3 none set 42.738611
+swm/FetchSlideDict-v3 none branch 63.947867

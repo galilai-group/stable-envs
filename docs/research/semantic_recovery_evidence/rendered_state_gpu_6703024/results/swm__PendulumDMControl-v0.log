@@ -1,0 +1,20 @@
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+Users of this version of Gym should be able to simply replace 'import gym' with 'import gymnasium as gym' in the vast majority of cases.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+swm/PendulumDMControl-v0 every baseline 142.246891
+swm/PendulumDMControl-v0 every get 155.6915215
+swm/PendulumDMControl-v0 every set 143.230685
+swm/PendulumDMControl-v0 every branch 153.858557
+swm/PendulumDMControl-v0 four baseline 50.1212095
+swm/PendulumDMControl-v0 four get 63.6023705
+swm/PendulumDMControl-v0 four set 51.309478
+swm/PendulumDMControl-v0 four branch 61.78723
+swm/PendulumDMControl-v0 final baseline 27.056511
+swm/PendulumDMControl-v0 final get 40.608942
+swm/PendulumDMControl-v0 final set 28.242795
+swm/PendulumDMControl-v0 final branch 38.719732
+swm/PendulumDMControl-v0 none baseline 19.275804
+swm/PendulumDMControl-v0 none get 32.773955
+swm/PendulumDMControl-v0 none set 20.470998
+swm/PendulumDMControl-v0 none branch 30.898075
