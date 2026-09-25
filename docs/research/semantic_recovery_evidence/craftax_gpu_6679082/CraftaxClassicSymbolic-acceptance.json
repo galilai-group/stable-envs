@@ -1,0 +1,264 @@
+{
+  "historical_id": "swm/CraftaxClassicSymbolic-v1",
+  "status": "ACCEPTED",
+  "accepted_classes": [
+    "CraftaxClassicSymbolic"
+  ],
+  "engine": "Classic",
+  "presentation": "symbolic",
+  "implementation_commit": "2953735e5eabae96b796843a376abd7150781de4",
+  "tested_source_commit": "b6a8242f5ff5a9cae5e9e883a15611d779c2c99c",
+  "cpu_checkpoint_commit": "28e23907f887c74edb56471f4011bbb819cdda5e",
+  "gpu_evidence_commit": "59ba52300cc2e9c05da2eea0a58b64c57008036f",
+  "oracle_commit": "176d54532b3c0a251a4f509b74f2fdacc143a63d",
+  "source_archive_sha256": "49235ccf34ee8ba947addbf866225f1fd87ddbefa4bec68b60bc7eeb9a206834",
+  "remote_archive_sha256": "8f26f97ca5509606a32ca88f65224836ee70dbe67f759a80a2c1d4add6e2e932",
+  "job": 6679082,
+  "cpu_tests": 17,
+  "gpu_tests": 17,
+  "cpu_exact_array_cases": 11,
+  "gpu_exact_array_cases": 11,
+  "gates": {
+    "source_ownership": "PASS",
+    "cpu_semantics": "PASS",
+    "gpu_semantics": "PASS",
+    "exhaustive_numeric_state": "PASS",
+    "atomic_restoration": "PASS",
+    "rng_replay_and_isolation": "PASS",
+    "reward_and_lifecycle": "PASS",
+    "presentation_contract": "PASS",
+    "independent_download_hash_and_array_verification": "PASS"
+  },
+  "gpu_profile": {
+    "python": "3.12.8",
+    "platform": "Linux-5.14.0-570.62.1.0.1.el9_6.x86_64-x86_64-with-glibc2.34",
+    "packages": {
+      "craftax": "1.5.0",
+      "jax": "0.10.1",
+      "jaxlib": "0.10.1",
+      "flax": "0.12.7",
+      "gymnax": "0.0.9",
+      "chex": "0.1.92",
+      "numpy": "2.2.6",
+      "torch": "2.14.0+cu126",
+      "tensordict": "0.14.2"
+    },
+    "devices": [
+      "cuda:0"
+    ],
+    "backend": "gpu",
+    "x64": false,
+    "prng": "threefry2x32",
+    "threefry_partitionable": true,
+    "environment": {
+      "JAX_PLATFORMS": "cuda",
+      "JAX_ENABLE_X64": "false",
+      "XLA_FLAGS": null,
+      "XLA_PYTHON_CLIENT_PREALLOCATE": "false"
+    },
+    "gpu": "NVIDIA GeForce RTX 3090",
+    "jax_memory_before": {
+      "num_allocs": 0,
+      "bytes_in_use": 0,
+      "peak_bytes_in_use": 0,
+      "largest_alloc_size": 0,
+      "bytes_limit": 18972033024,
+      "bytes_reserved": 0,
+      "peak_bytes_reserved": 0,
+      "largest_free_block_bytes": 0,
+      "pool_bytes": 0,
+      "peak_pool_bytes": 0
+    }
+  },
+  "cpu_profile": {
+    "python": "3.12.11",
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "packages": {
+      "craftax": "1.5.0",
+      "jax": "0.10.1",
+      "jaxlib": "0.10.1",
+      "flax": "0.12.7",
+      "gymnax": "0.0.9",
+      "chex": "0.1.92",
+      "numpy": "2.2.6",
+      "torch": "2.14.0",
+      "tensordict": "0.14.2"
+    },
+    "devices": [
+      "cpu:0"
+    ],
+    "backend": "cpu",
+    "x64": false,
+    "prng": "threefry2x32",
+    "threefry_partitionable": true,
+    "environment": {
+      "JAX_PLATFORMS": "cpu",
+      "JAX_ENABLE_X64": null,
+      "XLA_FLAGS": null,
+      "XLA_PYTHON_CLIENT_PREALLOCATE": "false"
+    }
+  },
+  "scope": {
+    "default_execution": "DELEGATED_CPU",
+    "accepted_devices": [
+      "cpu",
+      "cuda"
+    ],
+    "gpu_engine": "delegated real upstream JAX",
+    "configuration": "fixed registered no-auto-reset defaults",
+    "public_execution": "JIT scalar upstream kernels per batch lane",
+    "tested_batches": [
+      1,
+      3
+    ],
+    "seeds": [
+      0,
+      17,
+      42
+    ],
+    "variation": "NONE",
+    "state_schema": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxClassicSymbolic/schema.json",
+    "gpu_schema": "docs/research/semantic_recovery_evidence/craftax_gpu_6679082/remote/evidence/CraftaxClassicSymbolic/schema.json",
+    "cross_device_equality": "NOT_CLAIMED",
+    "unsupported": [
+      "MPS",
+      "public eager execution",
+      "vmap equivalence",
+      "arbitrary parameters",
+      "alternate rendering sizes",
+      "supersampling",
+      "pixel rendering"
+    ]
+  },
+  "promotion_is_independent": true,
+  "other_registration_evidence_required": false,
+  "artifacts": [
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxClassicSymbolic-cpu-acceptance.json",
+      "sha256": "8b430f9f6acf1ad5885693b5797d5756c4624b392d2d9899c0f2f18b77d43c38"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_cpu/final-acceptance.xml",
+      "sha256": "c6a03d3582a0e58fea735394eb5ae0bdced9bb6de49e9f49f3dd1efcbb4ef0a0"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_gpu_6679082/verified-gpu.json",
+      "sha256": "193accd64017dc704414cd8cb3ad1e3b11dd5eeb047d6850e5389146f1d5aa50"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_gpu_6679082/remote-terminal.txt",
+      "sha256": "f570d2f046aec993ad9b32c0be2c3b1883be6750d38aee14036ca4f03f8b9231"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_gpu_6679082/slurm-6679082.log",
+      "sha256": "32cef2d0c74e1ba5b9a72e01c2586449621350ff888a8d0fc45d6e5e9c0478e7"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_gpu_6679082/DOWNLOAD-SHA256SUMS",
+      "sha256": "4922bf19d854ee6cd1f0209e22a311a134214eaf5d33bb6133fdc95d262b5655"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_gpu_6679082/download-verification.json",
+      "sha256": "540d46380d8ec1eccd326cd66c12f829b0f75ae9595992d7e7c2732020d00b9e"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_gpu_6679082/preservation-before-promotion.json",
+      "sha256": "8d775b5ee553bbb303d4b15c8e34ee134e4db16e8fd6c3f9f25c032969fbb998"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_gpu_6679082/remote/evidence/CraftaxClassicSymbolic/SHA256SUMS",
+      "sha256": "9057295792297d8c6c86dc130803a0eafd116ba437051567ec7e45d0c2472756"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_gpu_6679082/remote/evidence/CraftaxClassicSymbolic/combat.npz",
+      "sha256": "03c5ac991343f41e730c9a37b652ce3ef950624d1c03b0df67d05d2af34a7092"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_gpu_6679082/remote/evidence/CraftaxClassicSymbolic/craft.npz",
+      "sha256": "21400fdcf38f02ab46bbb9d06e3af78f3aa0031aae872a921ec5c232688a8750"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_gpu_6679082/remote/evidence/CraftaxClassicSymbolic/damage.npz",
+      "sha256": "bc68906c0cefde3c2b73d6f9b50e0ca69fd29dd02a867e300bbd1e50dd44c76a"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_gpu_6679082/remote/evidence/CraftaxClassicSymbolic/mine_tree.npz",
+      "sha256": "c027350d9c99269483b0a72c3ae0ce6ac7617ce7acb93d1bf7b751760ba84445"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_gpu_6679082/remote/evidence/CraftaxClassicSymbolic/near_limit.npz",
+      "sha256": "b58234cdb2d4ba05665f6e2b7411c9ec2daf7416311088402e77fa74b6312157"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_gpu_6679082/remote/evidence/CraftaxClassicSymbolic/night.npz",
+      "sha256": "7864eb64f01ad0ee0c102f22481e1bd89f8c6cfa86fc53f8fdbbc1c0a21fc37a"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_gpu_6679082/remote/evidence/CraftaxClassicSymbolic/profile.json",
+      "sha256": "e73fc7350dd14545a33472967fe1036fec622c78fdf2399f253ab6c26dc0c097"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_gpu_6679082/remote/evidence/CraftaxClassicSymbolic/reset-0.npz",
+      "sha256": "cd167c46a184fd2e5451696c36f944457463008f329cf240b77f19ef03d4cc69"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_gpu_6679082/remote/evidence/CraftaxClassicSymbolic/reset-17.npz",
+      "sha256": "27c9b76bd25326ac18abaf9423d1d64e2deead84767f0bcdf41993c17e077340"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_gpu_6679082/remote/evidence/CraftaxClassicSymbolic/reset-42.npz",
+      "sha256": "e3d4b792e5b6a8de3193616132f452e0f04cb6c2970a96ddf26cbf432a9e1895"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_gpu_6679082/remote/evidence/CraftaxClassicSymbolic/result.json",
+      "sha256": "7404fc240f587e1cf38de94b2c786b4e9352eb11d226d19eda3d84853da489d7"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_gpu_6679082/remote/evidence/CraftaxClassicSymbolic/schema.json",
+      "sha256": "ebdd551f74780c35b6b4b3e469ba3f599c4b3e4d0054bf4072e2c04672cd9aa8"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_gpu_6679082/remote/evidence/CraftaxClassicSymbolic/stochastic_grass.npz",
+      "sha256": "1151c2f20574f26e580c906068e9e01842e2d26f057a7c9b0215eac67e89a4f4"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_gpu_6679082/remote/evidence/CraftaxClassicSymbolic/terminal.npz",
+      "sha256": "c80919ae4329aa709453f7b2432a3b0288432653a46827135d1eb64e863f704e"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_gpu_6679082/remote/evidence/CraftaxClassicSymbolic.xml",
+      "sha256": "5267cbf05dd674293d1a0d30cd04da5dba0f0dcb73021a6ef590924cfb6a4686"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_gpu_6679082/remote/evidence/CraftaxClassicSymbolic-tests.log",
+      "sha256": "01d9213c105fb9c804d588cfea9e040ec7948adfb41daeffe5e7e3d684760ab4"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_gpu_6679082/remote/evidence/CraftaxClassicSymbolic-arrays.log",
+      "sha256": "b247b292e08f57f832d57100c2c75b01f1b08fa0b44a30ab88f80a931aab78e3"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_gpu_6679082/remote/evidence/GPU-SHA256SUMS",
+      "sha256": "2a0f67bbd29ca4220703de8dd2b8ffe50ea43386cbdfe13240ca0fb8924c6000"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_gpu_6679082/remote/evidence/bundle.json",
+      "sha256": "1cf6c9f47f693f3a9654d8ae45e6480aada16294d699d0a2d0934ba92e313598"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_gpu_6679082/remote/evidence/SHA256SUMS",
+      "sha256": "e8234f627b09ab846dd6cef5ce2cde2a47541cd50b8ab604d9c1ee31e8bcd165"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_gpu_6679082/remote/evidence/nvidia-smi.txt",
+      "sha256": "e5a49efefe65ea2b17f290065b373f1ff3f68f922688d4381ce4faa9664cdd27"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/craftax_gpu_6679082/remote/evidence/freeze.txt",
+      "sha256": "74f83a49a070a36177109f9241f69680dd1303dc494b1100a4474da77e68079f"
+    }
+  ],
+  "production_swm_imports": false,
+  "copied_game_logic": false,
+  "shared_contract_change": false
+}

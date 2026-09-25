@@ -1,0 +1,87 @@
+import hashlib
+import json
+import subprocess
+from collections import Counter
+from pathlib import Path
+
+root = Path.cwd()
+e = root / 'docs/research/semantic_recovery_evidence/craftax_gpu_6679082'
+start = 'efb62d119ac94de2b4a090c88521cce60bbb4be8'
+origin = 'bcf8699d9983f95e97b3c71607521a61c354247b'
+mutable = {'docs/research/index.md', 'docs/research/semantic_recovery_matrix.json', 'docs/research/semantic_recovery_implementation_map.json'}
+
+def git(*args):
+    return subprocess.check_output(['git', *args])
+
+def sha(data):
+    return hashlib.sha256(data).hexdigest()
+
+unchanged = 0
+for line in git('ls-tree', '-r', start).decode().splitlines():
+    meta, rel = line.split('\t')
+    if rel in mutable:
+        continue
+    data = (root / rel).read_bytes()
+    assert hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest() == meta.split()[2], rel
+    unchanged += 1
+assert not git('diff', 'b6a8242f5ff5a9cae5e9e883a15611d779c2c99c', '--', 'stable_envs', 'tests', 'pyproject.toml')
+for filename in ['semantic_recovery_matrix.json', 'semantic_recovery_implementation_map.json']:
+    rel = 'docs/research/' + filename
+    old = json.loads(git('show', origin+':'+rel))
+    new = json.loads((root/rel).read_text())
+    oldrows = {r['historical_id']: r for r in old['rows']}
+    newrows = {r['historical_id']: r for r in new['rows']}
+    assert oldrows.keys() == newrows.keys()
+    assert all(newrows[k] == v for k, v in oldrows.items() if v['family'] != 'craftax')
+    for row in newrows.values():
+        if row['family'] == 'craftax':
+            assert row['accepted_classes'] == row['candidate_classes']
+            name = row['accepted_classes'][0]
+            a = json.loads((e/(name+'-acceptance.json')).read_text())
+            assert a['historical_id'] == row['historical_id'] and a['status'] == 'ACCEPTED'
+            assert a['other_registration_evidence_required'] is False
+            assert all(gate == 'PASS' for gate in a['gates'].values())
+            for item in a['artifacts']:
+                assert sha((root/item['path']).read_bytes()) == item['sha256'], item['path']
+    if filename == 'semantic_recovery_matrix.json':
+        counts = dict(Counter(r['state_status'] for r in newrows.values()))
+        assert counts == {'VERIFIED':39,'INCOMPLETE':3}, counts
+        incomplete = [r['historical_id'] for r in newrows.values() if r['state_status'] == 'INCOMPLETE']
+        assert set(incomplete) == {'swm/PushT-v1','swm/PushT-Discrete-v1','swm/PFRocketLanding-v0'}
+    else:
+        assert new['current_counts'] == counts
+historical = []
+manifest_counts = {}
+for rel, commit in [
+    ('craftax_cpu/SHA256SUMS', '28e23907f887c74edb56471f4011bbb819cdda5e'),
+    ('craftax_gpu_execution/SHA256SUMS', start),
+    ('craftax_gpu_6679082/DOWNLOAD-SHA256SUMS', None),
+]:
+    m = root/'docs/research/semantic_recovery_evidence'/rel
+    for line in m.read_text().splitlines():
+        expected, relative = line.split(maxsplit=1)
+        p = root/relative.lstrip('*')
+        if not p.exists():
+            p = m.parent/relative.lstrip('*')
+        data = p.read_bytes()
+        if sha(data) != expected:
+            key = str(p.relative_to(root))
+            assert key in mutable and commit is not None, key
+            data = git('show', commit+':'+key)
+            historical.append({'path':key,'commit':commit})
+        assert sha(data) == expected, str(p)
+    manifest_counts[rel] = len(m.read_text().splitlines())
+result = {
+    'status':'CRAFTAX_FINAL_PRESERVATION_PASS', 'starting_HEAD':start,
+    'starting_files_preserved_except_explicit_mutable_reports':unchanged,
+    'previously_accepted_rows_unchanged':35, 'non_craftax_rows_unchanged':38,
+    'production_and_tests_exactly_match_tested_source':True,
+    'all_registration_acceptance_hashes_exact':True,
+    'manifest_counts':manifest_counts, 'historical_mutable_entries':historical,
+    'matrix_counts':counts,'remaining_incomplete':incomplete,
+    'shared_contract_changes':[], 'push_performed':False,
+}
+out = e/'preservation-final.json'
+assert not out.exists()
+out.write_text(json.dumps(result,indent=2)+'\n')
+print(json.dumps(result,indent=2))

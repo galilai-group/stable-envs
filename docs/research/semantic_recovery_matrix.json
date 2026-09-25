@@ -457,26 +457,26 @@
       "family": "craftax",
       "owner": "craftax_recovery",
       "state_contract": "Exhaustive named numeric upstream engine State, fixed configuration, owned keys/lifecycle; full symbolic also retains exact source output cache",
-      "state_status": "INCOMPLETE",
-      "action_parity": "PASS_EXACT_CPU_ALL_SOURCE_IDS",
-      "reset_parity": "PASS_EXACT_CPU_SEEDS_0_17_42_AND_UNSEEDED_REPLAY",
-      "step_parity": "PASS_EXACT_CPU_SOURCE_GAMEPLAY_AND_BATCH",
-      "reward_parity": "PASS_EXACT_CPU_SOURCE_REWARDS_AND_ACHIEVEMENTS",
-      "terminated_truncated_parity": "PASS_EXACT_CPU_DEATH_LIMIT_NO_AUTORESET",
-      "rng_lifecycle": "PASS_EXACT_CPU_OWNED_KEYS_INDEPENDENT_RESTORE",
+      "state_status": "VERIFIED",
+      "action_parity": "PASS_EXACT_CPU_GPU_ALL_SOURCE_IDS",
+      "reset_parity": "PASS_EXACT_CPU_GPU_SEEDS_0_17_42_AND_UNSEEDED_REPLAY",
+      "step_parity": "PASS_EXACT_CPU_GPU_SOURCE_GAMEPLAY_AND_BATCH",
+      "reward_parity": "PASS_EXACT_CPU_GPU_SOURCE_REWARDS_AND_ACHIEVEMENTS",
+      "terminated_truncated_parity": "PASS_EXACT_CPU_GPU_DEATH_LIMIT_NO_AUTORESET",
+      "rng_lifecycle": "PASS_EXACT_CPU_GPU_OWNED_KEYS_INDEPENDENT_RESTORE",
       "variation_parity": "SOURCE_EXPOSES_NONE_FIXED_REGISTERED_DEFAULTS",
       "execution_mode": "DELEGATED_CPU",
-      "adapter_status": "IMPLEMENTED_CPU_PASS_GPU_PENDING",
-      "renderer_regression": "PASS_EXACT_CPU_SOURCE_UINT8_FRAME",
+      "adapter_status": "IMPLEMENTED_CPU_GPU_ACCEPTED",
+      "renderer_regression": "PASS_EXACT_CPU_GPU_SOURCE_UINT8_FRAME",
       "oracle_corpus": "docs/research/semantic_recovery_evidence/craftax_source_audit",
       "reference_cpu_benchmark": "SOURCE_EAGER_JIT_CHARACTERIZED_BOUNDED",
       "stable_cpu_benchmark": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxClassicPixels/result.json",
-      "stable_gpu_benchmark": "NOT_RUN",
+      "stable_gpu_benchmark": "docs/research/semantic_recovery_evidence/craftax_gpu_6679082/remote/evidence/CraftaxClassicPixels/result.json",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Oscar job 6679082 last observed RUNNING on gpu2110; terminal evidence retrieval blocked by SSH authentication; registration remains INCOMPLETE",
-        "Legacy frozen crosswalk/atlas classes preserved; new candidate class is separately identified",
-        "No cross-device exactness, public eager/vmap, arbitrary parameter or MPS claim"
+        "Fixed registered defaults only; no Variation, public eager/vmap, arbitrary parameters, MPS or alternate rendering sizes",
+        "CPU/GPU cross-device equality/restoration unclaimed; independent per-device exact oracle agreement accepted",
+        "Legacy frozen crosswalk/atlas classes preserved; accepted_classes identifies the recovered implementation"
       ],
       "test": "tests/unit/test_craftax_semantics.py; tests/unit/test_craftax_rendering.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
@@ -484,17 +484,25 @@
       "candidate_classes": [
         "CraftaxClassicPixels"
       ],
-      "audit_report": "docs/research/craftax_recovery_checkpoint.md",
-      "recovery_status": "CPU_PASS_OSCAR_SUBMITTED_ACCEPTANCE_PENDING",
+      "audit_report": "docs/research/craftax_acceptance.md",
+      "recovery_status": "ACCEPTED_INDEPENDENT_CPU_GPU_GATES",
       "evidence": [
         "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxClassicPixels-cpu-acceptance.json",
         "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxClassicPixels/result.json",
         "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxClassicPixels/schema.json",
         "docs/research/semantic_recovery_evidence/craftax_gpu_prepared/bundle.json",
-        "docs/research/semantic_recovery_evidence/craftax_gpu_execution/submission.json"
+        "docs/research/semantic_recovery_evidence/craftax_gpu_execution/submission.json",
+        "docs/research/semantic_recovery_evidence/craftax_gpu_6679082/CraftaxClassicPixels-acceptance.json"
       ],
       "implementation_commit": "2953735e5eabae96b796843a376abd7150781de4",
-      "oscar_job": 6679082
+      "oscar_job": 6679082,
+      "accepted_classes": [
+        "CraftaxClassicPixels"
+      ],
+      "accepted_devices": [
+        "cpu",
+        "cuda"
+      ]
     },
     {
       "historical_id": "swm/CraftaxClassicSymbolic-v1",
@@ -502,26 +510,26 @@
       "family": "craftax",
       "owner": "craftax_recovery",
       "state_contract": "Exhaustive named numeric upstream engine State, fixed configuration, owned keys/lifecycle; full symbolic also retains exact source output cache",
-      "state_status": "INCOMPLETE",
-      "action_parity": "PASS_EXACT_CPU_ALL_SOURCE_IDS",
-      "reset_parity": "PASS_EXACT_CPU_SEEDS_0_17_42_AND_UNSEEDED_REPLAY",
-      "step_parity": "PASS_EXACT_CPU_SOURCE_GAMEPLAY_AND_BATCH",
-      "reward_parity": "PASS_EXACT_CPU_SOURCE_REWARDS_AND_ACHIEVEMENTS",
-      "terminated_truncated_parity": "PASS_EXACT_CPU_DEATH_LIMIT_NO_AUTORESET",
-      "rng_lifecycle": "PASS_EXACT_CPU_OWNED_KEYS_INDEPENDENT_RESTORE",
+      "state_status": "VERIFIED",
+      "action_parity": "PASS_EXACT_CPU_GPU_ALL_SOURCE_IDS",
+      "reset_parity": "PASS_EXACT_CPU_GPU_SEEDS_0_17_42_AND_UNSEEDED_REPLAY",
+      "step_parity": "PASS_EXACT_CPU_GPU_SOURCE_GAMEPLAY_AND_BATCH",
+      "reward_parity": "PASS_EXACT_CPU_GPU_SOURCE_REWARDS_AND_ACHIEVEMENTS",
+      "terminated_truncated_parity": "PASS_EXACT_CPU_GPU_DEATH_LIMIT_NO_AUTORESET",
+      "rng_lifecycle": "PASS_EXACT_CPU_GPU_OWNED_KEYS_INDEPENDENT_RESTORE",
       "variation_parity": "SOURCE_EXPOSES_NONE_FIXED_REGISTERED_DEFAULTS",
       "execution_mode": "DELEGATED_CPU",
-      "adapter_status": "IMPLEMENTED_CPU_PASS_GPU_PENDING",
-      "renderer_regression": "PASS_EXACT_CPU_SYMBOLIC_SOURCE_OUTPUT; PIXEL_RENDER_SOURCE_UNSUPPORTED",
+      "adapter_status": "IMPLEMENTED_CPU_GPU_ACCEPTED",
+      "renderer_regression": "PASS_EXACT_CPU_GPU_SYMBOLIC_SOURCE_OUTPUT; PIXEL_RENDER_SOURCE_UNSUPPORTED",
       "oracle_corpus": "docs/research/semantic_recovery_evidence/craftax_source_audit",
       "reference_cpu_benchmark": "SOURCE_EAGER_JIT_CHARACTERIZED_BOUNDED",
       "stable_cpu_benchmark": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxClassicSymbolic/result.json",
-      "stable_gpu_benchmark": "NOT_RUN",
+      "stable_gpu_benchmark": "docs/research/semantic_recovery_evidence/craftax_gpu_6679082/remote/evidence/CraftaxClassicSymbolic/result.json",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Oscar job 6679082 last observed RUNNING on gpu2110; terminal evidence retrieval blocked by SSH authentication; registration remains INCOMPLETE",
-        "Legacy frozen crosswalk/atlas classes preserved; new candidate class is separately identified",
-        "No cross-device exactness, public eager/vmap, arbitrary parameter or MPS claim"
+        "Fixed registered defaults only; no Variation, public eager/vmap, arbitrary parameters, MPS or alternate rendering sizes",
+        "CPU/GPU cross-device equality/restoration unclaimed; independent per-device exact oracle agreement accepted",
+        "Legacy frozen crosswalk/atlas classes preserved; accepted_classes identifies the recovered implementation"
       ],
       "test": "tests/unit/test_craftax_semantics.py; tests/unit/test_craftax_rendering.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
@@ -529,17 +537,25 @@
       "candidate_classes": [
         "CraftaxClassicSymbolic"
       ],
-      "audit_report": "docs/research/craftax_recovery_checkpoint.md",
-      "recovery_status": "CPU_PASS_OSCAR_SUBMITTED_ACCEPTANCE_PENDING",
+      "audit_report": "docs/research/craftax_acceptance.md",
+      "recovery_status": "ACCEPTED_INDEPENDENT_CPU_GPU_GATES",
       "evidence": [
         "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxClassicSymbolic-cpu-acceptance.json",
         "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxClassicSymbolic/result.json",
         "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxClassicSymbolic/schema.json",
         "docs/research/semantic_recovery_evidence/craftax_gpu_prepared/bundle.json",
-        "docs/research/semantic_recovery_evidence/craftax_gpu_execution/submission.json"
+        "docs/research/semantic_recovery_evidence/craftax_gpu_execution/submission.json",
+        "docs/research/semantic_recovery_evidence/craftax_gpu_6679082/CraftaxClassicSymbolic-acceptance.json"
       ],
       "implementation_commit": "2953735e5eabae96b796843a376abd7150781de4",
-      "oscar_job": 6679082
+      "oscar_job": 6679082,
+      "accepted_classes": [
+        "CraftaxClassicSymbolic"
+      ],
+      "accepted_devices": [
+        "cpu",
+        "cuda"
+      ]
     },
     {
       "historical_id": "swm/CraftaxPixels-v1",
@@ -549,26 +565,26 @@
       "family": "craftax",
       "owner": "craftax_recovery",
       "state_contract": "Exhaustive named numeric upstream engine State, fixed configuration, owned keys/lifecycle; full symbolic also retains exact source output cache",
-      "state_status": "INCOMPLETE",
-      "action_parity": "PASS_EXACT_CPU_ALL_SOURCE_IDS",
-      "reset_parity": "PASS_EXACT_CPU_SEEDS_0_17_42_AND_UNSEEDED_REPLAY",
-      "step_parity": "PASS_EXACT_CPU_SOURCE_GAMEPLAY_AND_BATCH",
-      "reward_parity": "PASS_EXACT_CPU_SOURCE_REWARDS_AND_ACHIEVEMENTS",
-      "terminated_truncated_parity": "PASS_EXACT_CPU_DEATH_LIMIT_NO_AUTORESET",
-      "rng_lifecycle": "PASS_EXACT_CPU_OWNED_KEYS_INDEPENDENT_RESTORE",
+      "state_status": "VERIFIED",
+      "action_parity": "PASS_EXACT_CPU_GPU_ALL_SOURCE_IDS",
+      "reset_parity": "PASS_EXACT_CPU_GPU_SEEDS_0_17_42_AND_UNSEEDED_REPLAY",
+      "step_parity": "PASS_EXACT_CPU_GPU_SOURCE_GAMEPLAY_AND_BATCH",
+      "reward_parity": "PASS_EXACT_CPU_GPU_SOURCE_REWARDS_AND_ACHIEVEMENTS",
+      "terminated_truncated_parity": "PASS_EXACT_CPU_GPU_DEATH_LIMIT_NO_AUTORESET",
+      "rng_lifecycle": "PASS_EXACT_CPU_GPU_OWNED_KEYS_INDEPENDENT_RESTORE",
       "variation_parity": "SOURCE_EXPOSES_NONE_FIXED_REGISTERED_DEFAULTS",
       "execution_mode": "DELEGATED_CPU",
-      "adapter_status": "IMPLEMENTED_CPU_PASS_GPU_PENDING",
-      "renderer_regression": "PASS_EXACT_CPU_SOURCE_UINT8_FRAME",
+      "adapter_status": "IMPLEMENTED_CPU_GPU_ACCEPTED",
+      "renderer_regression": "PASS_EXACT_CPU_GPU_SOURCE_UINT8_FRAME",
       "oracle_corpus": "docs/research/semantic_recovery_evidence/craftax_source_audit",
       "reference_cpu_benchmark": "SOURCE_EAGER_JIT_CHARACTERIZED_BOUNDED",
       "stable_cpu_benchmark": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxPixels/result.json",
-      "stable_gpu_benchmark": "NOT_RUN",
+      "stable_gpu_benchmark": "docs/research/semantic_recovery_evidence/craftax_gpu_6679082/remote/evidence/CraftaxPixels/result.json",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Oscar job 6679082 last observed RUNNING on gpu2110; terminal evidence retrieval blocked by SSH authentication; registration remains INCOMPLETE",
-        "Legacy frozen crosswalk/atlas classes preserved; new candidate class is separately identified",
-        "No cross-device exactness, public eager/vmap, arbitrary parameter or MPS claim"
+        "Fixed registered defaults only; no Variation, public eager/vmap, arbitrary parameters, MPS or alternate rendering sizes",
+        "CPU/GPU cross-device equality/restoration unclaimed; independent per-device exact oracle agreement accepted",
+        "Legacy frozen crosswalk/atlas classes preserved; accepted_classes identifies the recovered implementation"
       ],
       "test": "tests/unit/test_craftax_semantics.py; tests/unit/test_craftax_rendering.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
@@ -576,17 +592,25 @@
       "candidate_classes": [
         "CraftaxPixels"
       ],
-      "audit_report": "docs/research/craftax_recovery_checkpoint.md",
-      "recovery_status": "CPU_PASS_OSCAR_SUBMITTED_ACCEPTANCE_PENDING",
+      "audit_report": "docs/research/craftax_acceptance.md",
+      "recovery_status": "ACCEPTED_INDEPENDENT_CPU_GPU_GATES",
       "evidence": [
         "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxPixels-cpu-acceptance.json",
         "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxPixels/result.json",
         "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxPixels/schema.json",
         "docs/research/semantic_recovery_evidence/craftax_gpu_prepared/bundle.json",
-        "docs/research/semantic_recovery_evidence/craftax_gpu_execution/submission.json"
+        "docs/research/semantic_recovery_evidence/craftax_gpu_execution/submission.json",
+        "docs/research/semantic_recovery_evidence/craftax_gpu_6679082/CraftaxPixels-acceptance.json"
       ],
       "implementation_commit": "2953735e5eabae96b796843a376abd7150781de4",
-      "oscar_job": 6679082
+      "oscar_job": 6679082,
+      "accepted_classes": [
+        "CraftaxPixels"
+      ],
+      "accepted_devices": [
+        "cpu",
+        "cuda"
+      ]
     },
     {
       "historical_id": "swm/CraftaxSymbolic-v1",
@@ -594,26 +618,26 @@
       "family": "craftax",
       "owner": "craftax_recovery",
       "state_contract": "Exhaustive named numeric upstream engine State, fixed configuration, owned keys/lifecycle; full symbolic also retains exact source output cache",
-      "state_status": "INCOMPLETE",
-      "action_parity": "PASS_EXACT_CPU_ALL_SOURCE_IDS",
-      "reset_parity": "PASS_EXACT_CPU_SEEDS_0_17_42_AND_UNSEEDED_REPLAY",
-      "step_parity": "PASS_EXACT_CPU_SOURCE_GAMEPLAY_AND_BATCH",
-      "reward_parity": "PASS_EXACT_CPU_SOURCE_REWARDS_AND_ACHIEVEMENTS",
-      "terminated_truncated_parity": "PASS_EXACT_CPU_DEATH_LIMIT_NO_AUTORESET",
-      "rng_lifecycle": "PASS_EXACT_CPU_OWNED_KEYS_INDEPENDENT_RESTORE",
+      "state_status": "VERIFIED",
+      "action_parity": "PASS_EXACT_CPU_GPU_ALL_SOURCE_IDS",
+      "reset_parity": "PASS_EXACT_CPU_GPU_SEEDS_0_17_42_AND_UNSEEDED_REPLAY",
+      "step_parity": "PASS_EXACT_CPU_GPU_SOURCE_GAMEPLAY_AND_BATCH",
+      "reward_parity": "PASS_EXACT_CPU_GPU_SOURCE_REWARDS_AND_ACHIEVEMENTS",
+      "terminated_truncated_parity": "PASS_EXACT_CPU_GPU_DEATH_LIMIT_NO_AUTORESET",
+      "rng_lifecycle": "PASS_EXACT_CPU_GPU_OWNED_KEYS_INDEPENDENT_RESTORE",
       "variation_parity": "SOURCE_EXPOSES_NONE_FIXED_REGISTERED_DEFAULTS",
       "execution_mode": "DELEGATED_CPU",
-      "adapter_status": "IMPLEMENTED_CPU_PASS_GPU_PENDING",
-      "renderer_regression": "PASS_EXACT_CPU_SYMBOLIC_SOURCE_OUTPUT; PIXEL_RENDER_SOURCE_UNSUPPORTED",
+      "adapter_status": "IMPLEMENTED_CPU_GPU_ACCEPTED",
+      "renderer_regression": "PASS_EXACT_CPU_GPU_SYMBOLIC_SOURCE_OUTPUT; PIXEL_RENDER_SOURCE_UNSUPPORTED",
       "oracle_corpus": "docs/research/semantic_recovery_evidence/craftax_source_audit",
       "reference_cpu_benchmark": "SOURCE_EAGER_JIT_CHARACTERIZED_BOUNDED",
       "stable_cpu_benchmark": "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxSymbolic/result.json",
-      "stable_gpu_benchmark": "NOT_RUN",
+      "stable_gpu_benchmark": "docs/research/semantic_recovery_evidence/craftax_gpu_6679082/remote/evidence/CraftaxSymbolic/result.json",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Oscar job 6679082 last observed RUNNING on gpu2110; terminal evidence retrieval blocked by SSH authentication; registration remains INCOMPLETE",
-        "Legacy frozen crosswalk/atlas classes preserved; new candidate class is separately identified",
-        "No cross-device exactness, public eager/vmap, arbitrary parameter or MPS claim"
+        "Fixed registered defaults only; no Variation, public eager/vmap, arbitrary parameters, MPS or alternate rendering sizes",
+        "CPU/GPU cross-device equality/restoration unclaimed; independent per-device exact oracle agreement accepted",
+        "Legacy frozen crosswalk/atlas classes preserved; accepted_classes identifies the recovered implementation"
       ],
       "test": "tests/unit/test_craftax_semantics.py; tests/unit/test_craftax_rendering.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
@@ -621,17 +645,25 @@
       "candidate_classes": [
         "CraftaxSymbolic"
       ],
-      "audit_report": "docs/research/craftax_recovery_checkpoint.md",
-      "recovery_status": "CPU_PASS_OSCAR_SUBMITTED_ACCEPTANCE_PENDING",
+      "audit_report": "docs/research/craftax_acceptance.md",
+      "recovery_status": "ACCEPTED_INDEPENDENT_CPU_GPU_GATES",
       "evidence": [
         "docs/research/semantic_recovery_evidence/craftax_cpu/CraftaxSymbolic-cpu-acceptance.json",
         "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxSymbolic/result.json",
         "docs/research/semantic_recovery_evidence/craftax_cpu/final/CraftaxSymbolic/schema.json",
         "docs/research/semantic_recovery_evidence/craftax_gpu_prepared/bundle.json",
-        "docs/research/semantic_recovery_evidence/craftax_gpu_execution/submission.json"
+        "docs/research/semantic_recovery_evidence/craftax_gpu_execution/submission.json",
+        "docs/research/semantic_recovery_evidence/craftax_gpu_6679082/CraftaxSymbolic-acceptance.json"
       ],
       "implementation_commit": "2953735e5eabae96b796843a376abd7150781de4",
-      "oscar_job": 6679082
+      "oscar_job": 6679082,
+      "accepted_classes": [
+        "CraftaxSymbolic"
+      ],
+      "accepted_devices": [
+        "cpu",
+        "cuda"
+      ]
     },
     {
       "historical_id": "swm/FetchPickAndPlace-v3",
@@ -4472,5 +4504,15 @@
       "VERIFIED": 35,
       "INCOMPLETE": 7
     }
+  },
+  "craftax_acceptance": {
+    "report": "docs/research/craftax_acceptance.md",
+    "job": 6679082,
+    "gpu_evidence_commit": "59ba52300cc2e9c05da2eea0a58b64c57008036f",
+    "counts": {
+      "VERIFIED": 39,
+      "INCOMPLETE": 3
+    },
+    "independent_registration_gates": true
   }
 }
