@@ -274,7 +274,7 @@ def run(args):
         "command": sys.argv,
         "profile": profile(),
         "batches": {},
-        "batch_64": "DEFERRED_RUNTIME: representative larger batch 16 measured; not emulated",
+        "batch_64": f"DEFERRED_RUNTIME: requested public batches {args.batches}; not emulated",
         "notes": [
             "Descriptive measurement, not acceptance or an optimization gate.",
             "Oracle native API is scalar; oracle/native timings use B=1, never an emulated batch.",
