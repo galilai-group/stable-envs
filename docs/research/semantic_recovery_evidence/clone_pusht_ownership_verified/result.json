@@ -1,0 +1,73 @@
+{
+  "records": [
+    {
+      "engine": "pusht",
+      "case": "free",
+      "method": "copy",
+      "source_identity": {
+        "native_space": 41828628224,
+        "agent": 41901501056,
+        "block": 41872548608
+      },
+      "clone_identity": {
+        "native_space": 41828628224,
+        "agent": 41901501056,
+        "block": 41872548608
+      },
+      "clone_usable_after_source_close": true,
+      "source_usable_after_clone_close": true
+    },
+    {
+      "engine": "pusht",
+      "case": "first_contact",
+      "method": "copy",
+      "source_identity": {
+        "native_space": 34390398592,
+        "agent": 34522699072,
+        "block": 34454149376
+      },
+      "clone_identity": {
+        "native_space": 34390398592,
+        "agent": 34522699072,
+        "block": 34454149376
+      },
+      "clone_usable_after_source_close": true,
+      "source_usable_after_clone_close": true
+    },
+    {
+      "engine": "pusht",
+      "case": "combined",
+      "method": "copy",
+      "source_identity": {
+        "native_space": 34383822848,
+        "agent": 34381056512,
+        "block": 34380759040
+      },
+      "clone_identity": {
+        "native_space": 34383822848,
+        "agent": 34381056512,
+        "block": 34380759040
+      },
+      "clone_usable_after_source_close": true,
+      "source_usable_after_clone_close": true
+    },
+    {
+      "engine": "pusht",
+      "case": "terminal",
+      "method": "copy",
+      "source_identity": {
+        "native_space": 45099975296,
+        "agent": 44979253760,
+        "block": 45031894912
+      },
+      "clone_identity": {
+        "native_space": 45099975296,
+        "agent": 44979253760,
+        "block": 45031894912
+      },
+      "clone_usable_after_source_close": true,
+      "source_usable_after_clone_close": true
+    }
+  ],
+  "scope": "Supplemental failed ownership/portability checks; no independent clone established"
+}

@@ -1,0 +1,257 @@
+{
+  "records": [
+    {
+      "engine": "rocket",
+      "case": "free",
+      "method": "copy",
+      "source_identity": {
+        "native_client": 0,
+        "owner_pid": 13542,
+        "python_engine": 5673804784
+      },
+      "clone_identity": {
+        "native_client": 0,
+        "owner_pid": 13542,
+        "python_engine": 5673804784
+      },
+      "clone_usable_after_source_close": false,
+      "error": "error('Not connected to physics server.')"
+    },
+    {
+      "engine": "rocket",
+      "case": "free",
+      "method": "deepcopy",
+      "source_identity": {
+        "native_client": 0,
+        "owner_pid": 13548,
+        "python_engine": 5610233808
+      },
+      "clone_identity": {
+        "native_client": 0,
+        "owner_pid": 13548,
+        "python_engine": 5634294848
+      },
+      "clone_usable_after_source_close": false,
+      "error": "error('Not connected to physics server.')"
+    },
+    {
+      "engine": "rocket",
+      "case": "free",
+      "method": "cloudpickle",
+      "source_identity": {
+        "native_client": 0,
+        "owner_pid": 13551,
+        "python_engine": 5605777264
+      },
+      "clone_identity": {
+        "native_client": 0,
+        "owner_pid": 13551,
+        "python_engine": 5630366144
+      },
+      "fresh_process": {
+        "identity": {
+          "native_client": 0,
+          "owner_pid": 13551,
+          "python_engine": 5242992592
+        },
+        "step_usable": false,
+        "error": "error('Not connected to physics server.')"
+      },
+      "diagnostic_pickle": {
+        "path": "/var/folders/t9/shschjkd3h9706xpq7s_88zc0000gn/T/se-clone-portability-n5tvjtva/candidate.pkl",
+        "sha256": "3a7ddf78bb39884a9ab599e4b64b3067843835c53d0237a99988d7476212dba0",
+        "bytes": 818689,
+        "not_public_state": true
+      },
+      "clone_usable_after_source_close": false,
+      "error": "error('Not connected to physics server.')"
+    },
+    {
+      "engine": "rocket",
+      "case": "first_contact",
+      "method": "copy",
+      "source_identity": {
+        "native_client": 0,
+        "owner_pid": 13557,
+        "python_engine": 5605087936
+      },
+      "clone_identity": {
+        "native_client": 0,
+        "owner_pid": 13557,
+        "python_engine": 5605087936
+      },
+      "clone_usable_after_source_close": true
+    },
+    {
+      "engine": "rocket",
+      "case": "first_contact",
+      "method": "deepcopy",
+      "source_identity": {
+        "native_client": 0,
+        "owner_pid": 13561,
+        "python_engine": 5606109456
+      },
+      "clone_identity": {
+        "native_client": 0,
+        "owner_pid": 13561,
+        "python_engine": 5632734128
+      },
+      "clone_usable_after_source_close": true
+    },
+    {
+      "engine": "rocket",
+      "case": "first_contact",
+      "method": "cloudpickle",
+      "source_identity": {
+        "native_client": 0,
+        "owner_pid": 13579,
+        "python_engine": 5627115088
+      },
+      "clone_identity": {
+        "native_client": 0,
+        "owner_pid": 13579,
+        "python_engine": 5666293664
+      },
+      "fresh_process": {
+        "identity": {
+          "native_client": 0,
+          "owner_pid": 13579,
+          "python_engine": 5666976688
+        },
+        "step_usable": true
+      },
+      "diagnostic_pickle": {
+        "path": "/var/folders/t9/shschjkd3h9706xpq7s_88zc0000gn/T/se-clone-portability-7nyeazna/candidate.pkl",
+        "sha256": "d2514f516707ae9b367ab705e67655ca9a58a7fb6e531bd68071db769b981c99",
+        "bytes": 818671,
+        "not_public_state": true
+      },
+      "clone_usable_after_source_close": true
+    },
+    {
+      "engine": "rocket",
+      "case": "combined",
+      "method": "copy",
+      "source_identity": {
+        "native_client": 0,
+        "owner_pid": 13589,
+        "python_engine": 5634695456
+      },
+      "clone_identity": {
+        "native_client": 0,
+        "owner_pid": 13589,
+        "python_engine": 5634695456
+      },
+      "clone_usable_after_source_close": true
+    },
+    {
+      "engine": "rocket",
+      "case": "combined",
+      "method": "deepcopy",
+      "source_identity": {
+        "native_client": 0,
+        "owner_pid": 13613,
+        "python_engine": 5256583680
+      },
+      "clone_identity": {
+        "native_client": 0,
+        "owner_pid": 13613,
+        "python_engine": 5666548928
+      },
+      "clone_usable_after_source_close": true
+    },
+    {
+      "engine": "rocket",
+      "case": "combined",
+      "method": "cloudpickle",
+      "source_identity": {
+        "native_client": 0,
+        "owner_pid": 13615,
+        "python_engine": 5642936176
+      },
+      "clone_identity": {
+        "native_client": 0,
+        "owner_pid": 13615,
+        "python_engine": 5667860896
+      },
+      "fresh_process": {
+        "identity": {
+          "native_client": 0,
+          "owner_pid": 13615,
+          "python_engine": 5604783360
+        },
+        "step_usable": true
+      },
+      "diagnostic_pickle": {
+        "path": "/var/folders/t9/shschjkd3h9706xpq7s_88zc0000gn/T/se-clone-portability-d2wjpmst/candidate.pkl",
+        "sha256": "ca10151c144140123894c07d7f0d78bfbd61d6d85a2065c022508003ee459e9e",
+        "bytes": 818658,
+        "not_public_state": true
+      },
+      "clone_usable_after_source_close": true
+    },
+    {
+      "engine": "rocket",
+      "case": "terminal",
+      "method": "copy",
+      "source_identity": {
+        "native_client": 0,
+        "owner_pid": 13634,
+        "python_engine": 5654917584
+      },
+      "clone_identity": {
+        "native_client": 0,
+        "owner_pid": 13634,
+        "python_engine": 5654917584
+      },
+      "clone_usable_after_source_close": true
+    },
+    {
+      "engine": "rocket",
+      "case": "terminal",
+      "method": "deepcopy",
+      "source_identity": {
+        "native_client": 0,
+        "owner_pid": 13637,
+        "python_engine": 5221012240
+      },
+      "clone_identity": {
+        "native_client": 0,
+        "owner_pid": 13637,
+        "python_engine": 5631791216
+      },
+      "clone_usable_after_source_close": true
+    },
+    {
+      "engine": "rocket",
+      "case": "terminal",
+      "method": "cloudpickle",
+      "source_identity": {
+        "native_client": 0,
+        "owner_pid": 13640,
+        "python_engine": 5601075440
+      },
+      "clone_identity": {
+        "native_client": 0,
+        "owner_pid": 13640,
+        "python_engine": 5625854192
+      },
+      "fresh_process": {
+        "identity": {
+          "native_client": 0,
+          "owner_pid": 13640,
+          "python_engine": 5675203328
+        },
+        "step_usable": true
+      },
+      "diagnostic_pickle": {
+        "path": "/var/folders/t9/shschjkd3h9706xpq7s_88zc0000gn/T/se-clone-portability-q26k7vfc/candidate.pkl",
+        "sha256": "10f75b9e495a00f57d44dff70f077588b09f21d8e15c5326bf41becf0022e2bf",
+        "bytes": 818668,
+        "not_public_state": true
+      },
+      "clone_usable_after_source_close": true
+    }
+  ],
+  "scope": "Supplemental failed ownership/portability checks; no independent clone established"
+}

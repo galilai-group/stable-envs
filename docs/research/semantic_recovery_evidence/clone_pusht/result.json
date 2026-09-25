@@ -1,0 +1,334 @@
+{
+  "profile": {
+    "numpy": "2.2.6",
+    "pymunk": "7.2.0",
+    "gymnasium": "1.2.3",
+    "cloudpickle": "3.1.2"
+  },
+  "command": [
+    "scripts/research_replay/clone_diagnostic.py",
+    "--engine",
+    "pusht",
+    "--output",
+    "/private/tmp/stable-envs-semantic-recovery/docs/research/semantic_recovery_evidence/clone_pusht"
+  ],
+  "records": [
+    {
+      "case": "free",
+      "classification": "ALIASED_NATIVE_ENGINE",
+      "clone_identity": {
+        "agent": 34586920512,
+        "block": 34714084096,
+        "native_space": 34593645312
+      },
+      "engine": "pusht",
+      "immediate_numeric_exact": true,
+      "immediate_pixels_exact": true,
+      "method": "copy",
+      "native_aliased": true,
+      "source_identity": {
+        "agent": 34586920512,
+        "block": 34714084096,
+        "native_space": 34593645312
+      },
+      "source_rng_unchanged_after_clone_draw": false,
+      "source_unchanged_after_clone_step": false,
+      "source_usable_after_clone_close": true,
+      "process_exit_code": 0
+    },
+    {
+      "case": "free",
+      "classification": "COPY_REJECTED",
+      "engine": "pusht",
+      "error": "TypeError(\"cannot pickle 'pygame.surface.Surface' object\")",
+      "exception_type": "TypeError",
+      "method": "deepcopy",
+      "source_identity": {
+        "agent": 32191923456,
+        "block": 32182190720,
+        "native_space": 32191481728
+      },
+      "process_exit_code": 0
+    },
+    {
+      "case": "free",
+      "classification": "SERIALIZATION_REJECTED",
+      "engine": "pusht",
+      "error": "AttributeError(\"Can't get local object 'Box.__init__.<locals>.<lambda>'\")",
+      "exception_type": "AttributeError",
+      "method": "pickle",
+      "source_identity": {
+        "agent": 46075159936,
+        "block": 46011157952,
+        "native_space": 46135887104
+      },
+      "process_exit_code": 0
+    },
+    {
+      "case": "free",
+      "classification": "SERIALIZATION_REJECTED",
+      "engine": "pusht",
+      "error": "TypeError(\"cannot pickle 'pygame.surface.Surface' object\")",
+      "exception_type": "TypeError",
+      "method": "cloudpickle",
+      "source_identity": {
+        "agent": 32873080832,
+        "block": 32769624576,
+        "native_space": 32788091904
+      },
+      "process_exit_code": 0
+    },
+    {
+      "case": "free",
+      "classification": "COPY_REJECTED",
+      "engine": "pusht",
+      "error": "TypeError(\"cannot pickle 'pygame.surface.Surface' object\")",
+      "exception_type": "TypeError",
+      "method": "engine_copy",
+      "source_identity": {
+        "agent": 43463402240,
+        "block": 43408359424,
+        "native_space": 43501130752
+      },
+      "process_exit_code": 0
+    },
+    {
+      "case": "first_contact",
+      "classification": "ALIASED_NATIVE_ENGINE",
+      "clone_identity": {
+        "agent": 52142393856,
+        "block": 52154481984,
+        "native_space": 52279266432
+      },
+      "engine": "pusht",
+      "immediate_numeric_exact": true,
+      "immediate_pixels_exact": true,
+      "method": "copy",
+      "native_aliased": true,
+      "source_identity": {
+        "agent": 52142393856,
+        "block": 52154481984,
+        "native_space": 52279266432
+      },
+      "source_rng_unchanged_after_clone_draw": false,
+      "source_unchanged_after_clone_step": false,
+      "source_usable_after_clone_close": true,
+      "process_exit_code": 0
+    },
+    {
+      "case": "first_contact",
+      "classification": "COPY_REJECTED",
+      "engine": "pusht",
+      "error": "TypeError(\"cannot pickle 'pygame.surface.Surface' object\")",
+      "exception_type": "TypeError",
+      "method": "deepcopy",
+      "source_identity": {
+        "agent": 48200574336,
+        "block": 48175810432,
+        "native_space": 48308648960
+      },
+      "process_exit_code": 0
+    },
+    {
+      "case": "first_contact",
+      "classification": "SERIALIZATION_REJECTED",
+      "engine": "pusht",
+      "error": "AttributeError(\"Can't get local object 'Box.__init__.<locals>.<lambda>'\")",
+      "exception_type": "AttributeError",
+      "method": "pickle",
+      "source_identity": {
+        "agent": 42057036608,
+        "block": 41935705408,
+        "native_space": 42014493184
+      },
+      "process_exit_code": 0
+    },
+    {
+      "case": "first_contact",
+      "classification": "SERIALIZATION_REJECTED",
+      "engine": "pusht",
+      "error": "TypeError(\"cannot pickle 'pygame.surface.Surface' object\")",
+      "exception_type": "TypeError",
+      "method": "cloudpickle",
+      "source_identity": {
+        "agent": 48451878208,
+        "block": 48356967040,
+        "native_space": 48368088192
+      },
+      "process_exit_code": 0
+    },
+    {
+      "case": "first_contact",
+      "classification": "COPY_REJECTED",
+      "engine": "pusht",
+      "error": "TypeError(\"cannot pickle 'pygame.surface.Surface' object\")",
+      "exception_type": "TypeError",
+      "method": "engine_copy",
+      "source_identity": {
+        "agent": 41184655424,
+        "block": 41314242944,
+        "native_space": 41162812032
+      },
+      "process_exit_code": 0
+    },
+    {
+      "case": "combined",
+      "classification": "ALIASED_NATIVE_ENGINE",
+      "clone_identity": {
+        "agent": 38937039552,
+        "block": 38933108992,
+        "native_space": 39056580096
+      },
+      "engine": "pusht",
+      "immediate_numeric_exact": true,
+      "immediate_pixels_exact": true,
+      "method": "copy",
+      "native_aliased": true,
+      "source_identity": {
+        "agent": 38937039552,
+        "block": 38933108992,
+        "native_space": 39056580096
+      },
+      "source_rng_unchanged_after_clone_draw": false,
+      "source_unchanged_after_clone_step": false,
+      "source_usable_after_clone_close": true,
+      "process_exit_code": 0
+    },
+    {
+      "case": "combined",
+      "classification": "COPY_REJECTED",
+      "engine": "pusht",
+      "error": "TypeError(\"cannot pickle 'pygame.surface.Surface' object\")",
+      "exception_type": "TypeError",
+      "method": "deepcopy",
+      "source_identity": {
+        "agent": 47258234752,
+        "block": 47383972352,
+        "native_space": 47232252288
+      },
+      "process_exit_code": 0
+    },
+    {
+      "case": "combined",
+      "classification": "SERIALIZATION_REJECTED",
+      "engine": "pusht",
+      "error": "AttributeError(\"Can't get local object 'Box.__init__.<locals>.<lambda>'\")",
+      "exception_type": "AttributeError",
+      "method": "pickle",
+      "source_identity": {
+        "agent": 52395280896,
+        "block": 52279530496,
+        "native_space": 52359925504
+      },
+      "process_exit_code": 0
+    },
+    {
+      "case": "combined",
+      "classification": "SERIALIZATION_REJECTED",
+      "engine": "pusht",
+      "error": "TypeError(\"cannot pickle 'pygame.surface.Surface' object\")",
+      "exception_type": "TypeError",
+      "method": "cloudpickle",
+      "source_identity": {
+        "agent": 51245429568,
+        "block": 51316551552,
+        "native_space": 51191512064
+      },
+      "process_exit_code": 0
+    },
+    {
+      "case": "combined",
+      "classification": "COPY_REJECTED",
+      "engine": "pusht",
+      "error": "TypeError(\"cannot pickle 'pygame.surface.Surface' object\")",
+      "exception_type": "TypeError",
+      "method": "engine_copy",
+      "source_identity": {
+        "agent": 49030461184,
+        "block": 49113879232,
+        "native_space": 48981766016
+      },
+      "process_exit_code": 0
+    },
+    {
+      "case": "terminal",
+      "classification": "ALIASED_NATIVE_ENGINE",
+      "clone_identity": {
+        "agent": 48640508224,
+        "block": 48764371904,
+        "native_space": 48636930688
+      },
+      "engine": "pusht",
+      "immediate_numeric_exact": true,
+      "immediate_pixels_exact": true,
+      "method": "copy",
+      "native_aliased": true,
+      "source_identity": {
+        "agent": 48640508224,
+        "block": 48764371904,
+        "native_space": 48636930688
+      },
+      "source_rng_unchanged_after_clone_draw": false,
+      "source_unchanged_after_clone_step": false,
+      "source_usable_after_clone_close": true,
+      "process_exit_code": 0
+    },
+    {
+      "case": "terminal",
+      "classification": "COPY_REJECTED",
+      "engine": "pusht",
+      "error": "TypeError(\"cannot pickle 'pygame.surface.Surface' object\")",
+      "exception_type": "TypeError",
+      "method": "deepcopy",
+      "source_identity": {
+        "agent": 48965010048,
+        "block": 48845473344,
+        "native_space": 48838479616
+      },
+      "process_exit_code": 0
+    },
+    {
+      "case": "terminal",
+      "classification": "SERIALIZATION_REJECTED",
+      "engine": "pusht",
+      "error": "AttributeError(\"Can't get local object 'Box.__init__.<locals>.<lambda>'\")",
+      "exception_type": "AttributeError",
+      "method": "pickle",
+      "source_identity": {
+        "agent": 53752117312,
+        "block": 53659813760,
+        "native_space": 53672477952
+      },
+      "process_exit_code": 0
+    },
+    {
+      "case": "terminal",
+      "classification": "SERIALIZATION_REJECTED",
+      "engine": "pusht",
+      "error": "TypeError(\"cannot pickle 'pygame.surface.Surface' object\")",
+      "exception_type": "TypeError",
+      "method": "cloudpickle",
+      "source_identity": {
+        "agent": 47939377728,
+        "block": 47814251200,
+        "native_space": 47809479296
+      },
+      "process_exit_code": 0
+    },
+    {
+      "case": "terminal",
+      "classification": "COPY_REJECTED",
+      "engine": "pusht",
+      "error": "TypeError(\"cannot pickle 'pygame.surface.Surface' object\")",
+      "exception_type": "TypeError",
+      "method": "engine_copy",
+      "source_identity": {
+        "agent": 45283117568,
+        "block": 45235826880,
+        "native_space": 4338839056
+      },
+      "process_exit_code": 0
+    }
+  ],
+  "production_changes": false
+}
