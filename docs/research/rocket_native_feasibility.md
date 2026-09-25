@@ -31,12 +31,17 @@ seeds 0/17/42 and sustained resting contact pass the official snapshot routes;
 this does not cover the failing transition into contact. Successful landing uses
 the preserved source-supported ceiling fixture, not a default-policy acceptance
 claim. All raw per-route results and numeric continuations are retained.
+Even the empty-manifold synchronization variant has near-contact reward error
+0.1697551170328957 and crash reward error 4.312914337371227 on the memory route;
+the crash continuation also differs in truncation on two recorded steps.
 
 ## Native path and fields
 
 Pinned source: [Bullet/PyBullet](https://github.com/bulletphysics/bullet3), PyBullet
 **3.2.7 source distribution**; its exact archive SHA and patched source/binary
 hashes are in `build-identity.json`. Do not substitute a moving repository HEAD.
+The bundled `btScalar.h` reports `BT_BULLET_VERSION 326`; its separate header
+identity is recorded in the final checkpoint's `native-engine-version.json`.
 PyFlyt 0.29.0 provenance and SWM `176d54532b3c0a251a4f509b74f2fdacc143a63d`
 remain those in the original provenance artifact.
 

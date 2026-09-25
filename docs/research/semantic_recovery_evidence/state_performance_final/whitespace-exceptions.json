@@ -1,0 +1,10 @@
+{
+  "docs/research/semantic_recovery_evidence/pusht_native_feasibility/Pymunk-LICENSE.txt": "Exact upstream CRLF notice",
+  "docs/research/semantic_recovery_evidence/rocket_native_feasibility/cache-extension-v1.patch": "Exact native patch context",
+  "docs/research/semantic_recovery_evidence/rocket_native_feasibility/cache-extension-v2.patch": "Exact native patch context",
+  "docs/research/semantic_recovery_evidence/state_performance_report/state-operation-costs.svg": "Unmodified Matplotlib vector export",
+  "docs/research/semantic_recovery_evidence/state_performance_final/whitespace-*.log": "Retained raw whitespace diagnostics include the reported original lines",
+  "docs/research/semantic_recovery_evidence/state_performance_gpu_6693308/nvidia-smi.txt": "Unmodified remote NVIDIA status output",
+  "docs/research/semantic_recovery_evidence/state_performance_gpu_6694195/nvidia-smi.txt": "Unmodified remote NVIDIA status output",
+  "docs/research/semantic_recovery_evidence/state_performance_cold_gpu_6694865/nvidia-smi.txt": "Unmodified remote NVIDIA status output"
+}

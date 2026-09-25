@@ -1,0 +1,7 @@
+{
+  "path": "/private/tmp/rocket-native-research/pybullet-3.2.7/src/LinearMath/btScalar.h",
+  "sha256": "547f1d06e02f36c52b857fdad02090bc33374682dc6fdc18ce5641a6a8ef9125",
+  "BT_BULLET_VERSION": 326,
+  "PyBullet_distribution_version": "3.2.7",
+  "note": "Literal bundled source version, not an inferred upstream Git tag."
+}

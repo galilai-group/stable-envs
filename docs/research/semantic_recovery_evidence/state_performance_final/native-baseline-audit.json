@@ -1,0 +1,59 @@
+{
+  "classic_control": {
+    "classification": "NONE",
+    "source_reason": "No snapshot API; exposed task arrays omit RNG/lifecycle/configuration. Private state assignment is not an exhaustive native operation.",
+    "files": {
+      "/Users/samib/stable-worldmodel/stable_worldmodel/envs/gymnasium_control/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "/Users/samib/stable-worldmodel/stable_worldmodel/envs/gymnasium_control/cartpole.py": "3421c8afa2ae1d453c23d8e815b5418adc1f77f46aa758e4fd32cccdb9e45087",
+      "/Users/samib/stable-worldmodel/stable_worldmodel/envs/gymnasium_control/mountain_car.py": "3e7d379f1297dfb5e179f87e8627d6af9a3194b83e0b0a61d5dd27eb737b9ce4",
+      "/Users/samib/stable-worldmodel/stable_worldmodel/envs/gymnasium_control/acrobot.py": "00ee7912d10e057ae5f34290fb0b609422101b0d8ee4070ea4bf99d3c6bac1c5",
+      "/Users/samib/stable-worldmodel/stable_worldmodel/envs/gymnasium_control/pendulum.py": "81140706a0b0c1f52f066ae76a02b906a29d69348c1ef5af4e4831db1461a124",
+      "/Users/samib/stable-worldmodel/stable_worldmodel/envs/gymnasium_control/base.py": "0354779da90bb8348241e5bd046a97f915cf979d94732931f1a121a933298599"
+    },
+    "like_for_like_exhaustive_state": false
+  },
+  "navigation": {
+    "classification": "NONE",
+    "source_reason": "Private _set_state methods are observation/task-position setters, not exhaustive engine snapshots.",
+    "files": {
+      "/Users/samib/stable-worldmodel/stable_worldmodel/envs/simple_point_maze.py": "b69891f8571b032530dcf154d1d80fcbdfe5ae3635d74a10db67cf50811c7a65",
+      "/Users/samib/stable-worldmodel/stable_worldmodel/envs/piecewise/piecewise_env.py": "e4de33b87adb1ce90f65515d69412c7af3a259e4396ba1470dfb675cee72118b",
+      "/Users/samib/stable-worldmodel/stable_worldmodel/envs/two_room/env.py": "5e1d392de5b02472062dbe872aded67fd465fcc8f7eaa1c02a753b2fc31c61f0"
+    },
+    "like_for_like_exhaustive_state": false
+  },
+  "dmcontrol": {
+    "classification": "NATIVE_PARTIAL",
+    "source_reason": "Default Physics.get_state concatenates qpos/qvel/act/plugin; explicit sig=mjSTATE_INTEGRATION also carries integration user/warm-start state. Supplement benchmarks the latter. Neither includes task RNG/lifecycle/model mutation.",
+    "files": {
+      "/private/tmp/stable-envs-semantic-recovery/.venv/lib/python3.12/site-packages/dm_control/mujoco/engine.py": "ea0f71b4d79d802d2eda50a7320fa876be856798231d755f04966adc3c1e8e3d"
+    },
+    "like_for_like_exhaustive_state": false
+  },
+  "fetch": {
+    "classification": "NATIVE_PARTIAL",
+    "source_reason": "mjSTATE_INTEGRATION excludes wrapper/task/RNG and mutable MjModel configuration.",
+    "files": {
+      "/private/tmp/fetch-authority-swm-lock/lib/python3.12/site-packages/mujoco/include/mujoco/mjdata.h": "1be8300051e0ecfb69c4c88b2d190d7f23c32a713434fb19cec7b06d254ecd16",
+      "/private/tmp/fetch-authority-swm-lock/lib/python3.12/site-packages/mujoco/include/mujoco/mujoco.h": "d5ccfb227eb06586edfb4def5812a8082c1cbdf8e6dc5c3176abd9772a57fd07"
+    },
+    "like_for_like_exhaustive_state": false
+  },
+  "ogbench": {
+    "classification": "NATIVE_PARTIAL",
+    "source_reason": "mjSTATE_INTEGRATION excludes task goals, RNG, wrapper outputs and model configuration.",
+    "files": {
+      "/private/tmp/ogb-render-unified-312/lib/python3.12/site-packages/mujoco/include/mujoco/mjdata.h": "93aaee9927e47fce4ac2f0f07dc90aad6769b8a9a401e262bd87135c29c90ec5",
+      "/private/tmp/ogb-render-unified-312/lib/python3.12/site-packages/mujoco/include/mujoco/mujoco.h": "c7378e471cb951f4ff4bd4801139be41495a3df82c5ae643c4134ded850fb7ef"
+    },
+    "like_for_like_exhaustive_state": false
+  },
+  "craftax": {
+    "classification": "NATIVE_PARTIAL",
+    "source_reason": "CraftaxWrapper._state is explicit upstream EnvState; _key, _last_obs and _last_info are separate. jnp.array(copy=True) tree copy/install owns numeric storage but excludes those wrapper fields.",
+    "files": {
+      "/Users/samib/stable-worldmodel/stable_worldmodel/envs/craftax/craftax.py": "9a98a16f166086531be32c593216cd181b988b2d9493803cf9c074e961e9e2d4"
+    },
+    "like_for_like_exhaustive_state": false
+  }
+}

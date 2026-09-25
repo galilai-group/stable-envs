@@ -12,6 +12,18 @@ ROOT = Path(__file__).resolve().parents[2]
 EVIDENCE = ROOT / "docs/research/semantic_recovery_evidence"
 
 
+def compare(left, right):
+    assert set(left.files) == set(right.files)
+    return {
+        key: {
+            "count": int(np.count_nonzero(left[key] != right[key])),
+            "max_abs": float(np.abs(left[key].astype(float) - right[key].astype(float)).max()),
+        }
+        for key in left.files
+        if not np.array_equal(left[key], right[key])
+    }
+
+
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--output", type=Path, required=True)
@@ -29,6 +41,7 @@ def main():
                     assert np.array_equal(x[key], y[key], equal_nan=True), (path.name, key)
                     comparisons += 1
     rocket = {}
+    rocket_array_pairs = 0
     for directory in r.iterdir():
         path = directory / "feasibility/result.json"
         if not path.exists():
@@ -38,6 +51,39 @@ def main():
             name: {route: len(v["trajectory_differences"]) for route, v in case["routes"].items()}
             for name, case in result["cases"].items()
         }
+        for folder, case_key in [
+            (directory / "feasibility", "cases"),
+            (directory / "controls", "landing_contact_replay"),
+        ]:
+            records = json.loads((folder / "result.json").read_text())
+            cases = records[case_key] if case_key == "cases" else {"landing_contact": records[case_key]}
+            for name, case in cases.items():
+                with (
+                    np.load(folder / (name + "-snapshot.npz")) as snapshot,
+                    np.load(folder / (name + "-reference.npz")) as reference,
+                ):
+                    for mode, record in case["routes"].items():
+                        with (
+                            np.load(folder / f"{name}-{mode}-immediate.npz") as immediate,
+                            np.load(folder / f"{name}-{mode}.npz") as replay,
+                        ):
+                            assert compare(snapshot, immediate) == record["immediate_differences"]
+                            assert compare(reference, replay) == record["trajectory_differences"]
+                            rocket_array_pairs += 2
+            if case_key == "landing_contact_replay":
+                with (
+                    np.load(folder / "independent-reference.npz") as left,
+                    np.load(folder / "independent-restored.npz") as right,
+                ):
+                    assert (
+                        compare(left, right) == records["independent_official_file_restore"]["trajectory_differences"]
+                    )
+                with np.load(folder / "source-frame-restore.npz") as frames:
+                    assert (
+                        np.count_nonzero(frames["before"] != frames["after"])
+                        == records["official_restore_immediate_pixels"]["changed_channels"]
+                    )
+                rocket_array_pairs += 2
     best = json.loads((r / "v2-empty_contacts/feasibility/result.json").read_text())
     assert best["cases"]["near_contact"]["routes"]["memory"]["trajectory_differences"]
     assert best["cases"]["crash"]["routes"]["memory"]["trajectory_differences"]
@@ -63,6 +109,7 @@ def main():
         json.dumps(
             dict(
                 rocket_original_baseline_leaf_comparisons=comparisons,
+                rocket_native_array_pairs=rocket_array_pairs,
                 rocket_differing_trajectory_leaf_counts=rocket,
                 pusht_arrays_checked=checked,
                 pusht_clean_independent_controls=len(positives),

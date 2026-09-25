@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "/private/tmp/stable-envs-semantic-recovery/scripts/research_native/verify_native_evidence.py", line 140, in <module>
+    main()
+  File "/private/tmp/stable-envs-semantic-recovery/scripts/research_native/verify_native_evidence.py", line 31, in main
+    assert not a.output.exists()
+           ^^^^^^^^^^^^^^^^^^^^^
+AssertionError

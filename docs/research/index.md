@@ -87,3 +87,7 @@ Milestone write-ups and generated tables. They use the project's internal names
 - [Craftax final CPU/GPU acceptance](craftax_acceptance.md)
 - [Rocket source ownership and exact-state feasibility blocker](rocket_recovery_audit.md)
 - [State-operation benchmark methodology](state_operation_benchmarks.md)
+- [Rocket native-cache restoration experiments](rocket_native_feasibility.md)
+- [PushT native-cache restoration experiments](pusht_native_feasibility.md)
+- [State-operation performance results](semantic_recovery_evidence/state_performance_report/report.md)
+- [State performance and native feasibility checkpoint](state_performance_checkpoint.md)

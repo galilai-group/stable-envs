@@ -1,0 +1,76 @@
+/Users/samib/stable-worldmodel/stable_worldmodel/envs/__init__.py:215: UserWarning: ale-py not found; ALE/* envs are unavailable. Install with: pip install 'stable-worldmodel[env]' or pip install ale-py.
+  from stable_worldmodel.envs import ale  # noqa: F401
+objc[3475]: Class SDLApplication is implemented in both /private/tmp/pusht-authority-swm-lock/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x13d730890) and /private/tmp/pusht-authority-swm-lock/lib/python3.12/site-packages/pygame/.dylibs/libSDL2-2.0.0.dylib (0x14132d2c8). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[3475]: Class SDLAppDelegate is implemented in both /private/tmp/pusht-authority-swm-lock/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x13d7308e0) and /private/tmp/pusht-authority-swm-lock/lib/python3.12/site-packages/pygame/.dylibs/libSDL2-2.0.0.dylib (0x14132d318). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[3475]: Class SDLTranslatorResponder is implemented in both /private/tmp/pusht-authority-swm-lock/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x13d730958) and /private/tmp/pusht-authority-swm-lock/lib/python3.12/site-packages/pygame/.dylibs/libSDL2-2.0.0.dylib (0x14132d390). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[3475]: Class SDLMessageBoxPresenter is implemented in both /private/tmp/pusht-authority-swm-lock/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x13d730980) and /private/tmp/pusht-authority-swm-lock/lib/python3.12/site-packages/pygame/.dylibs/libSDL2-2.0.0.dylib (0x14132d3b8). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[3475]: Class SDL_cocoametalview is implemented in both /private/tmp/pusht-authority-swm-lock/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x13d7309d0) and /private/tmp/pusht-authority-swm-lock/lib/python3.12/site-packages/pygame/.dylibs/libSDL2-2.0.0.dylib (0x14132d408). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[3475]: Class SDLOpenGLContext is implemented in both /private/tmp/pusht-authority-swm-lock/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x13d730a20) and /private/tmp/pusht-authority-swm-lock/lib/python3.12/site-packages/pygame/.dylibs/libSDL2-2.0.0.dylib (0x14132d458). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[3475]: Class SDL_ShapeData is implemented in both /private/tmp/pusht-authority-swm-lock/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x13d730a98) and /private/tmp/pusht-authority-swm-lock/lib/python3.12/site-packages/pygame/.dylibs/libSDL2-2.0.0.dylib (0x14132d4d0). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[3475]: Class SDL_CocoaClosure is implemented in both /private/tmp/pusht-authority-swm-lock/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x13d730ae8) and /private/tmp/pusht-authority-swm-lock/lib/python3.12/site-packages/pygame/.dylibs/libSDL2-2.0.0.dylib (0x14132d520). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[3475]: Class SDL_VideoData is implemented in both /private/tmp/pusht-authority-swm-lock/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x13d730b38) and /private/tmp/pusht-authority-swm-lock/lib/python3.12/site-packages/pygame/.dylibs/libSDL2-2.0.0.dylib (0x14132d570). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[3475]: Class SDL_WindowData is implemented in both /private/tmp/pusht-authority-swm-lock/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x13d730b88) and /private/tmp/pusht-authority-swm-lock/lib/python3.12/site-packages/pygame/.dylibs/libSDL2-2.0.0.dylib (0x14132d5c0). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[3475]: Class SDLWindow is implemented in both /private/tmp/pusht-authority-swm-lock/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x13d730bb0) and /private/tmp/pusht-authority-swm-lock/lib/python3.12/site-packages/pygame/.dylibs/libSDL2-2.0.0.dylib (0x14132d5e8). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[3475]: Class Cocoa_WindowListener is implemented in both /private/tmp/pusht-authority-swm-lock/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x13d730bd8) and /private/tmp/pusht-authority-swm-lock/lib/python3.12/site-packages/pygame/.dylibs/libSDL2-2.0.0.dylib (0x14132d610). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[3475]: Class SDLView is implemented in both /private/tmp/pusht-authority-swm-lock/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x13d730c50) and /private/tmp/pusht-authority-swm-lock/lib/python3.12/site-packages/pygame/.dylibs/libSDL2-2.0.0.dylib (0x14132d688). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[3475]: Class METAL_RenderData is implemented in both /private/tmp/pusht-authority-swm-lock/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x13d730cc8) and /private/tmp/pusht-authority-swm-lock/lib/python3.12/site-packages/pygame/.dylibs/libSDL2-2.0.0.dylib (0x14132d700). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[3475]: Class METAL_TextureData is implemented in both /private/tmp/pusht-authority-swm-lock/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x13d730d18) and /private/tmp/pusht-authority-swm-lock/lib/python3.12/site-packages/pygame/.dylibs/libSDL2-2.0.0.dylib (0x14132d750). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[3475]: Class SDL_RumbleMotor is implemented in both /private/tmp/pusht-authority-swm-lock/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x13d730d40) and /private/tmp/pusht-authority-swm-lock/lib/python3.12/site-packages/pygame/.dylibs/libSDL2-2.0.0.dylib (0x14132d778). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+objc[3475]: Class SDL_RumbleContext is implemented in both /private/tmp/pusht-authority-swm-lock/lib/python3.12/site-packages/cv2/.dylibs/libSDL2-2.0.0.dylib (0x13d730d90) and /private/tmp/pusht-authority-swm-lock/lib/python3.12/site-packages/pygame/.dylibs/libSDL2-2.0.0.dylib (0x14132d7c8). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+/private/tmp/fetch-authority-swm-lock/lib/python3.12/site-packages/gymnasium/spaces/box.py:424: UserWarning: [33mWARN: Casting input x to numpy array.[0m
+  gym.logger.warn("Casting input x to numpy array.")
+free clean_independent True None
+free existing_numeric_cache True None
+free plus_bias True None
+free plus_body_cache True None
+free plus_active_order True None
+first_contact clean_independent True None
+first_contact existing_numeric_cache True None
+first_contact plus_bias True None
+first_contact plus_body_cache True None
+first_contact plus_active_order True None
+sustained clean_independent True None
+sustained existing_numeric_cache True None
+sustained plus_bias True None
+sustained plus_body_cache True None
+sustained plus_active_order True None
+separation_recontact clean_independent True None
+separation_recontact existing_numeric_cache False None
+separation_recontact plus_bias True None
+separation_recontact plus_body_cache True None
+separation_recontact plus_active_order True None
+corner_contact clean_independent True None
+corner_contact existing_numeric_cache False None
+corner_contact plus_bias True None
+corner_contact plus_body_cache True None
+corner_contact plus_active_order True None
+edge_contact clean_independent True None
+edge_contact existing_numeric_cache False None
+edge_contact plus_bias True None
+edge_contact plus_body_cache True None
+edge_contact plus_active_order True None
+resting clean_independent True None
+resting existing_numeric_cache True None
+resting plus_bias True None
+resting plus_body_cache True None
+resting plus_active_order True None
+success_boundary clean_independent True None
+success_boundary existing_numeric_cache True None
+success_boundary plus_bias True None
+success_boundary plus_body_cache True None
+success_boundary plus_active_order True None
+preserved_wall clean_independent True None
+preserved_wall existing_numeric_cache True None
+preserved_wall plus_bias True None
+preserved_wall plus_body_cache True None
+preserved_wall plus_active_order True None
+preserved_agent_block clean_independent True None
+preserved_agent_block existing_numeric_cache True None
+preserved_agent_block plus_bias True None
+preserved_agent_block plus_body_cache True None
+preserved_agent_block plus_active_order True None
+preserved_multiple_contact clean_independent True None
+preserved_multiple_contact existing_numeric_cache False None
+preserved_multiple_contact plus_bias False None
+preserved_multiple_contact plus_body_cache False None
+preserved_multiple_contact plus_active_order False None

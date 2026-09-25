@@ -1,0 +1,32 @@
+{
+  "immutable_raw_results_retained": true,
+  "notes": [
+    {
+      "issue": "Oscar job 6693308 inherited normal-profile site-packages in child profiles.",
+      "affected": "Four Craftax, twelve Fetch, Cube and Scene registrations",
+      "resolution": "Use the isolated-profile results from job 6694195 for those registrations. Retain the original failed/superseded records."
+    },
+    {
+      "issue": "Initial CPU OGBMaze lacked ogbench; SimplePointMaze lacked the pinned Matplotlib dependency directory.",
+      "resolution": "OGBMaze uses the existing ogb-render-unified-312 profile. SimplePointMaze uses normal Python plus /private/tmp/native-nav-py312-deps (Matplotlib 3.10.9). Fresh retries preserve both initial failures."
+    },
+    {
+      "issue": "The original raw batch_64 explanatory string generically mentions batch 16, including the two manipulation registrations.",
+      "resolution": "Actual batch_size fields and result keys are authoritative: Cube/Scene measured 1 and 4; other registrations measured 1 and 16. B64 was not measured. The future label was fixed in 9d83fe9758041313f01d47c2fc9a3211d5d2e0d2; original samples are unchanged."
+    },
+    {
+      "issue": "The main harness's cold_first_call_ns is the first measured call after checkpoint preparation, so it does not capture all first-use JIT work.",
+      "resolution": "Separate fresh-process Craftax public/oracle initialization runs cover all four registrations on CPU and GPU. Main warm samples remain valid. Constructor, reset, first step, first explicit get/set and second-step order are explicit."
+    },
+    {
+      "issue": "DMC's default Physics.get_state signature is a narrower subset than its optional integration-state signature.",
+      "resolution": "Keep the default-signature timings as a lower-scope reference and use the separate explicit mjSTATE_INTEGRATION timings as the closest tested native subset. Both remain NATIVE_PARTIAL."
+    },
+    {
+      "issue": "Classic Craftax CPU second step after first set_state still incurred initialization-scale latency.",
+      "resolution": "The fresh-process second-step field is not a steady-state estimate. Report the observed call order and costs; use the separate repeated warm measurements for steady-state performance. No engine change is inferred or made."
+    }
+  ],
+  "production_optimizations": [],
+  "semantic_promotions": []
+}

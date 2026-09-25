@@ -1,0 +1,427 @@
+{
+  "rocket_original_baseline_leaf_comparisons": 5096,
+  "rocket_native_array_pairs": 550,
+  "rocket_differing_trajectory_leaf_counts": {
+    "v2-baseline": {
+      "free_flight_0": {
+        "memory": 0,
+        "file": 0,
+        "numeric": 0
+      },
+      "free_flight_17": {
+        "memory": 0,
+        "file": 0,
+        "numeric": 0
+      },
+      "free_flight_42": {
+        "memory": 0,
+        "file": 0,
+        "numeric": 0
+      },
+      "thrust_rotation": {
+        "memory": 22,
+        "file": 22,
+        "numeric": 22
+      },
+      "near_contact": {
+        "memory": 29,
+        "file": 29,
+        "numeric": 29
+      },
+      "crash": {
+        "memory": 25,
+        "file": 25,
+        "numeric": 23
+      },
+      "resting_contact": {
+        "memory": 0,
+        "file": 0,
+        "numeric": 22
+      }
+    },
+    "activation": {
+      "free_flight_0": {
+        "memory": 0,
+        "file": 0,
+        "numeric": 0
+      },
+      "free_flight_17": {
+        "memory": 0,
+        "file": 0,
+        "numeric": 0
+      },
+      "free_flight_42": {
+        "memory": 0,
+        "file": 0,
+        "numeric": 0
+      },
+      "thrust_rotation": {
+        "memory": 0,
+        "file": 0,
+        "numeric": 21
+      },
+      "near_contact": {
+        "memory": 29,
+        "file": 29,
+        "numeric": 29
+      },
+      "crash": {
+        "memory": 25,
+        "file": 25,
+        "numeric": 23
+      },
+      "resting_contact": {
+        "memory": 0,
+        "file": 0,
+        "numeric": 22
+      }
+    },
+    "baseline-2": {
+      "free_flight_0": {
+        "memory": 0,
+        "file": 0,
+        "numeric": 0
+      },
+      "free_flight_17": {
+        "memory": 0,
+        "file": 0,
+        "numeric": 0
+      },
+      "free_flight_42": {
+        "memory": 0,
+        "file": 0,
+        "numeric": 0
+      },
+      "thrust_rotation": {
+        "memory": 22,
+        "file": 22,
+        "numeric": 22
+      },
+      "near_contact": {
+        "memory": 29,
+        "file": 29,
+        "numeric": 29
+      },
+      "crash": {
+        "memory": 25,
+        "file": 25,
+        "numeric": 23
+      },
+      "resting_contact": {
+        "memory": 0,
+        "file": 0,
+        "numeric": 22
+      }
+    },
+    "links": {
+      "free_flight_0": {
+        "memory": 0,
+        "file": 0,
+        "numeric": 0
+      },
+      "free_flight_17": {
+        "memory": 0,
+        "file": 0,
+        "numeric": 0
+      },
+      "free_flight_42": {
+        "memory": 0,
+        "file": 0,
+        "numeric": 0
+      },
+      "thrust_rotation": {
+        "memory": 0,
+        "file": 0,
+        "numeric": 21
+      },
+      "near_contact": {
+        "memory": 29,
+        "file": 29,
+        "numeric": 29
+      },
+      "crash": {
+        "memory": 25,
+        "file": 25,
+        "numeric": 23
+      },
+      "resting_contact": {
+        "memory": 0,
+        "file": 0,
+        "numeric": 22
+      }
+    },
+    "colliders": {
+      "free_flight_0": {
+        "memory": 0,
+        "file": 0,
+        "numeric": 0
+      },
+      "free_flight_17": {
+        "memory": 0,
+        "file": 0,
+        "numeric": 0
+      },
+      "free_flight_42": {
+        "memory": 0,
+        "file": 0,
+        "numeric": 0
+      },
+      "thrust_rotation": {
+        "memory": 0,
+        "file": 0,
+        "numeric": 21
+      },
+      "near_contact": {
+        "memory": 29,
+        "file": 29,
+        "numeric": 29
+      },
+      "crash": {
+        "memory": 25,
+        "file": 25,
+        "numeric": 23
+      },
+      "resting_contact": {
+        "memory": 0,
+        "file": 0,
+        "numeric": 22
+      }
+    },
+    "velocities": {
+      "free_flight_0": {
+        "memory": 0,
+        "file": 0,
+        "numeric": 0
+      },
+      "free_flight_17": {
+        "memory": 0,
+        "file": 0,
+        "numeric": 0
+      },
+      "free_flight_42": {
+        "memory": 0,
+        "file": 0,
+        "numeric": 0
+      },
+      "thrust_rotation": {
+        "memory": 0,
+        "file": 0,
+        "numeric": 21
+      },
+      "near_contact": {
+        "memory": 29,
+        "file": 29,
+        "numeric": 29
+      },
+      "crash": {
+        "memory": 25,
+        "file": 25,
+        "numeric": 23
+      },
+      "resting_contact": {
+        "memory": 0,
+        "file": 0,
+        "numeric": 22
+      }
+    },
+    "v2-empty_contacts": {
+      "free_flight_0": {
+        "memory": 0,
+        "file": 0,
+        "numeric": 0
+      },
+      "free_flight_17": {
+        "memory": 0,
+        "file": 0,
+        "numeric": 0
+      },
+      "free_flight_42": {
+        "memory": 0,
+        "file": 0,
+        "numeric": 0
+      },
+      "thrust_rotation": {
+        "memory": 0,
+        "file": 0,
+        "numeric": 21
+      },
+      "near_contact": {
+        "memory": 18,
+        "file": 18,
+        "numeric": 29
+      },
+      "crash": {
+        "memory": 25,
+        "file": 25,
+        "numeric": 23
+      },
+      "resting_contact": {
+        "memory": 0,
+        "file": 0,
+        "numeric": 22
+      }
+    },
+    "v2-activation": {
+      "free_flight_0": {
+        "memory": 0,
+        "file": 0,
+        "numeric": 0
+      },
+      "free_flight_17": {
+        "memory": 0,
+        "file": 0,
+        "numeric": 0
+      },
+      "free_flight_42": {
+        "memory": 0,
+        "file": 0,
+        "numeric": 0
+      },
+      "thrust_rotation": {
+        "memory": 0,
+        "file": 0,
+        "numeric": 21
+      },
+      "near_contact": {
+        "memory": 29,
+        "file": 29,
+        "numeric": 29
+      },
+      "crash": {
+        "memory": 25,
+        "file": 25,
+        "numeric": 23
+      },
+      "resting_contact": {
+        "memory": 0,
+        "file": 0,
+        "numeric": 22
+      }
+    },
+    "interpolation": {
+      "free_flight_0": {
+        "memory": 0,
+        "file": 0,
+        "numeric": 0
+      },
+      "free_flight_17": {
+        "memory": 0,
+        "file": 0,
+        "numeric": 0
+      },
+      "free_flight_42": {
+        "memory": 0,
+        "file": 0,
+        "numeric": 0
+      },
+      "thrust_rotation": {
+        "memory": 0,
+        "file": 0,
+        "numeric": 21
+      },
+      "near_contact": {
+        "memory": 29,
+        "file": 29,
+        "numeric": 29
+      },
+      "crash": {
+        "memory": 25,
+        "file": 25,
+        "numeric": 23
+      },
+      "resting_contact": {
+        "memory": 0,
+        "file": 0,
+        "numeric": 22
+      }
+    },
+    "v2-pre_contacts": {
+      "free_flight_0": {
+        "memory": 0,
+        "file": 0,
+        "numeric": 0
+      },
+      "free_flight_17": {
+        "memory": 0,
+        "file": 0,
+        "numeric": 0
+      },
+      "free_flight_42": {
+        "memory": 0,
+        "file": 0,
+        "numeric": 0
+      },
+      "thrust_rotation": {
+        "memory": 0,
+        "file": 0,
+        "numeric": 21
+      },
+      "near_contact": {
+        "memory": 29,
+        "file": 29,
+        "numeric": 29
+      },
+      "crash": {
+        "memory": 25,
+        "file": 25,
+        "numeric": 23
+      },
+      "resting_contact": {
+        "memory": 0,
+        "file": 0,
+        "numeric": 22
+      }
+    },
+    "skip_reconstruction": {
+      "free_flight_0": {
+        "memory": 22,
+        "file": 22,
+        "numeric": 0
+      },
+      "free_flight_17": {
+        "memory": 22,
+        "file": 22,
+        "numeric": 0
+      },
+      "free_flight_42": {
+        "memory": 22,
+        "file": 22,
+        "numeric": 0
+      },
+      "thrust_rotation": {
+        "memory": 22,
+        "file": 22,
+        "numeric": 22
+      },
+      "near_contact": {
+        "memory": 29,
+        "file": 22,
+        "numeric": 29
+      },
+      "crash": {
+        "memory": 25,
+        "file": 25,
+        "numeric": 22
+      },
+      "resting_contact": {
+        "memory": 22,
+        "file": 22,
+        "numeric": 22
+      }
+    }
+  },
+  "pusht_arrays_checked": 55,
+  "pusht_clean_independent_controls": 11,
+  "pusht_remaining_counterexample": {
+    "case": "preserved_multiple_contact",
+    "mode": "plus_active_order",
+    "max_output_delta": 0.04628662980150011,
+    "reward_delta": 0.04140655071182664,
+    "done_exact": true,
+    "native_immediate_exact": true,
+    "immediate_pixels_exact": true,
+    "contact_cache_exact": true
+  },
+  "rocket_classification": "EXACT_RESTORE_NOT_YET_FEASIBLE",
+  "pusht_classification": "EXACT_RESTORE_NOT_YET_FEASIBLE"
+}

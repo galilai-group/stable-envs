@@ -1,0 +1,4 @@
+/Users/samib/.matplotlib is not a writable directory
+Matplotlib created a temporary cache directory at /var/folders/t9/shschjkd3h9706xpq7s_88zc0000gn/T/matplotlib-n0ss6cgm because there was an issue with the default path (/Users/samib/.matplotlib); it is highly recommended to set the MPLCONFIGDIR environment variable to a writable directory, in particular to speed up the import of Matplotlib and to better support multiprocessing.
+Matplotlib is building the font cache; this may take a moment.
+PASS: 39 CPU and GPU registration records
