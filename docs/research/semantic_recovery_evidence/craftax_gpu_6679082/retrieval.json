@@ -1,0 +1,17 @@
+{
+  "starting_HEAD": "efb62d119ac94de2b4a090c88521cce60bbb4be8",
+  "starting_branch": "repair/environment-semantics",
+  "starting_worktree": "/private/tmp/stable-envs-semantic-recovery",
+  "starting_tracked_clean": true,
+  "cube_scene_containing_commit": "bcf8699d9983f95e97b3c71607521a61c354247b",
+  "source_commit": "b6a8242f5ff5a9cae5e9e883a15611d779c2c99c",
+  "job": 6679082,
+  "skills": "Six required current Oscar SKILL.md files reread over SSH before scheduler access",
+  "download_command": "scp -o BatchMode=yes -o ConnectTimeout=10 -o ControlPath=/private/tmp/stable-envs-oscar-control sboughan@sshcampus.ccv.brown.edu:/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/{craftax-evidence-6679082.tar.gz,slurm-6679082.log} [local evidence directory]",
+  "terminal_command": "sacct -j 6679082 --format=JobIDRaw,State,ExitCode,Elapsed,NodeList --parsable2; sha256sum [remote archive]",
+  "verify_command": "/private/tmp/craftax-recovery-312/bin/python scripts/recovery/verify_craftax_gpu.py --evidence docs/research/semantic_recovery_evidence/craftax_gpu_6679082/remote/evidence --slurm-log docs/research/semantic_recovery_evidence/craftax_gpu_6679082/slurm-6679082.log --sacct docs/research/semantic_recovery_evidence/craftax_gpu_6679082/remote-terminal.txt --job 6679082 --output docs/research/semantic_recovery_evidence/craftax_gpu_6679082/verified-gpu.json",
+  "verify_result": "All four independently PASS; 79 hashes, 92 tests, 44 exact saved-array cases",
+  "promotion_performed": false,
+  "new_submissions": 0,
+  "push_performed": false
+}

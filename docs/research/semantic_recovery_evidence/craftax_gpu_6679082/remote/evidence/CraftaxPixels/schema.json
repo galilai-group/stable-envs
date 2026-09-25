@@ -1,0 +1,1630 @@
+{
+  "state": [
+    {
+      "key": [
+        "engine",
+        "map"
+      ],
+      "shape": [
+        9,
+        48,
+        48
+      ],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "engine",
+        "item_map"
+      ],
+      "shape": [
+        9,
+        48,
+        48
+      ],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "engine",
+        "mob_map"
+      ],
+      "shape": [
+        9,
+        48,
+        48
+      ],
+      "dtype": "torch.bool"
+    },
+    {
+      "key": [
+        "engine",
+        "light_map"
+      ],
+      "shape": [
+        9,
+        48,
+        48
+      ],
+      "dtype": "torch.float32"
+    },
+    {
+      "key": [
+        "engine",
+        "down_ladders"
+      ],
+      "shape": [
+        9,
+        2
+      ],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "engine",
+        "up_ladders"
+      ],
+      "shape": [
+        9,
+        2
+      ],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "engine",
+        "chests_opened"
+      ],
+      "shape": [
+        9
+      ],
+      "dtype": "torch.bool"
+    },
+    {
+      "key": [
+        "engine",
+        "monsters_killed"
+      ],
+      "shape": [
+        9
+      ],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "engine",
+        "player_position"
+      ],
+      "shape": [
+        2
+      ],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "engine",
+        "player_level"
+      ],
+      "shape": [],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "engine",
+        "player_direction"
+      ],
+      "shape": [],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "engine",
+        "player_health"
+      ],
+      "shape": [],
+      "dtype": "torch.float32"
+    },
+    {
+      "key": [
+        "engine",
+        "player_food"
+      ],
+      "shape": [],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "engine",
+        "player_drink"
+      ],
+      "shape": [],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "engine",
+        "player_energy"
+      ],
+      "shape": [],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "engine",
+        "player_mana"
+      ],
+      "shape": [],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "engine",
+        "is_sleeping"
+      ],
+      "shape": [],
+      "dtype": "torch.bool"
+    },
+    {
+      "key": [
+        "engine",
+        "is_resting"
+      ],
+      "shape": [],
+      "dtype": "torch.bool"
+    },
+    {
+      "key": [
+        "engine",
+        "player_recover"
+      ],
+      "shape": [],
+      "dtype": "torch.float32"
+    },
+    {
+      "key": [
+        "engine",
+        "player_hunger"
+      ],
+      "shape": [],
+      "dtype": "torch.float32"
+    },
+    {
+      "key": [
+        "engine",
+        "player_thirst"
+      ],
+      "shape": [],
+      "dtype": "torch.float32"
+    },
+    {
+      "key": [
+        "engine",
+        "player_fatigue"
+      ],
+      "shape": [],
+      "dtype": "torch.float32"
+    },
+    {
+      "key": [
+        "engine",
+        "player_recover_mana"
+      ],
+      "shape": [],
+      "dtype": "torch.float32"
+    },
+    {
+      "key": [
+        "engine",
+        "player_xp"
+      ],
+      "shape": [],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "engine",
+        "player_dexterity"
+      ],
+      "shape": [],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "engine",
+        "player_strength"
+      ],
+      "shape": [],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "engine",
+        "player_intelligence"
+      ],
+      "shape": [],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "engine",
+        "inventory",
+        "wood"
+      ],
+      "shape": [],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "engine",
+        "inventory",
+        "stone"
+      ],
+      "shape": [],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "engine",
+        "inventory",
+        "coal"
+      ],
+      "shape": [],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "engine",
+        "inventory",
+        "iron"
+      ],
+      "shape": [],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "engine",
+        "inventory",
+        "diamond"
+      ],
+      "shape": [],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "engine",
+        "inventory",
+        "sapling"
+      ],
+      "shape": [],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "engine",
+        "inventory",
+        "pickaxe"
+      ],
+      "shape": [],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "engine",
+        "inventory",
+        "sword"
+      ],
+      "shape": [],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "engine",
+        "inventory",
+        "bow"
+      ],
+      "shape": [],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "engine",
+        "inventory",
+        "arrows"
+      ],
+      "shape": [],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "engine",
+        "inventory",
+        "armour"
+      ],
+      "shape": [
+        4
+      ],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "engine",
+        "inventory",
+        "torches"
+      ],
+      "shape": [],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "engine",
+        "inventory",
+        "ruby"
+      ],
+      "shape": [],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "engine",
+        "inventory",
+        "sapphire"
+      ],
+      "shape": [],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "engine",
+        "inventory",
+        "potions"
+      ],
+      "shape": [
+        6
+      ],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "engine",
+        "inventory",
+        "books"
+      ],
+      "shape": [],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "engine",
+        "melee_mobs",
+        "position"
+      ],
+      "shape": [
+        9,
+        3,
+        2
+      ],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "engine",
+        "melee_mobs",
+        "health"
+      ],
+      "shape": [
+        9,
+        3
+      ],
+      "dtype": "torch.float32"
+    },
+    {
+      "key": [
+        "engine",
+        "melee_mobs",
+        "mask"
+      ],
+      "shape": [
+        9,
+        3
+      ],
+      "dtype": "torch.bool"
+    },
+    {
+      "key": [
+        "engine",
+        "melee_mobs",
+        "attack_cooldown"
+      ],
+      "shape": [
+        9,
+        3
+      ],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "engine",
+        "melee_mobs",
+        "type_id"
+      ],
+      "shape": [
+        9,
+        3
+      ],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "engine",
+        "passive_mobs",
+        "position"
+      ],
+      "shape": [
+        9,
+        3,
+        2
+      ],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "engine",
+        "passive_mobs",
+        "health"
+      ],
+      "shape": [
+        9,
+        3
+      ],
+      "dtype": "torch.float32"
+    },
+    {
+      "key": [
+        "engine",
+        "passive_mobs",
+        "mask"
+      ],
+      "shape": [
+        9,
+        3
+      ],
+      "dtype": "torch.bool"
+    },
+    {
+      "key": [
+        "engine",
+        "passive_mobs",
+        "attack_cooldown"
+      ],
+      "shape": [
+        9,
+        3
+      ],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "engine",
+        "passive_mobs",
+        "type_id"
+      ],
+      "shape": [
+        9,
+        3
+      ],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "engine",
+        "ranged_mobs",
+        "position"
+      ],
+      "shape": [
+        9,
+        2,
+        2
+      ],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "engine",
+        "ranged_mobs",
+        "health"
+      ],
+      "shape": [
+        9,
+        2
+      ],
+      "dtype": "torch.float32"
+    },
+    {
+      "key": [
+        "engine",
+        "ranged_mobs",
+        "mask"
+      ],
+      "shape": [
+        9,
+        2
+      ],
+      "dtype": "torch.bool"
+    },
+    {
+      "key": [
+        "engine",
+        "ranged_mobs",
+        "attack_cooldown"
+      ],
+      "shape": [
+        9,
+        2
+      ],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "engine",
+        "ranged_mobs",
+        "type_id"
+      ],
+      "shape": [
+        9,
+        2
+      ],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "engine",
+        "mob_projectiles",
+        "position"
+      ],
+      "shape": [
+        9,
+        3,
+        2
+      ],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "engine",
+        "mob_projectiles",
+        "health"
+      ],
+      "shape": [
+        9,
+        3
+      ],
+      "dtype": "torch.float32"
+    },
+    {
+      "key": [
+        "engine",
+        "mob_projectiles",
+        "mask"
+      ],
+      "shape": [
+        9,
+        3
+      ],
+      "dtype": "torch.bool"
+    },
+    {
+      "key": [
+        "engine",
+        "mob_projectiles",
+        "attack_cooldown"
+      ],
+      "shape": [
+        9,
+        3
+      ],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "engine",
+        "mob_projectiles",
+        "type_id"
+      ],
+      "shape": [
+        9,
+        3
+      ],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "engine",
+        "mob_projectile_directions"
+      ],
+      "shape": [
+        9,
+        3,
+        2
+      ],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "engine",
+        "player_projectiles",
+        "position"
+      ],
+      "shape": [
+        9,
+        3,
+        2
+      ],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "engine",
+        "player_projectiles",
+        "health"
+      ],
+      "shape": [
+        9,
+        3
+      ],
+      "dtype": "torch.float32"
+    },
+    {
+      "key": [
+        "engine",
+        "player_projectiles",
+        "mask"
+      ],
+      "shape": [
+        9,
+        3
+      ],
+      "dtype": "torch.bool"
+    },
+    {
+      "key": [
+        "engine",
+        "player_projectiles",
+        "attack_cooldown"
+      ],
+      "shape": [
+        9,
+        3
+      ],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "engine",
+        "player_projectiles",
+        "type_id"
+      ],
+      "shape": [
+        9,
+        3
+      ],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "engine",
+        "player_projectile_directions"
+      ],
+      "shape": [
+        9,
+        3,
+        2
+      ],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "engine",
+        "growing_plants_positions"
+      ],
+      "shape": [
+        10,
+        2
+      ],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "engine",
+        "growing_plants_age"
+      ],
+      "shape": [
+        10
+      ],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "engine",
+        "growing_plants_mask"
+      ],
+      "shape": [
+        10
+      ],
+      "dtype": "torch.bool"
+    },
+    {
+      "key": [
+        "engine",
+        "potion_mapping"
+      ],
+      "shape": [
+        6
+      ],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "engine",
+        "learned_spells"
+      ],
+      "shape": [
+        2
+      ],
+      "dtype": "torch.bool"
+    },
+    {
+      "key": [
+        "engine",
+        "sword_enchantment"
+      ],
+      "shape": [],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "engine",
+        "bow_enchantment"
+      ],
+      "shape": [],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "engine",
+        "armour_enchantments"
+      ],
+      "shape": [
+        4
+      ],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "engine",
+        "boss_progress"
+      ],
+      "shape": [],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "engine",
+        "boss_timesteps_to_spawn_this_round"
+      ],
+      "shape": [],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "engine",
+        "light_level"
+      ],
+      "shape": [],
+      "dtype": "torch.float32"
+    },
+    {
+      "key": [
+        "engine",
+        "achievements"
+      ],
+      "shape": [
+        67
+      ],
+      "dtype": "torch.bool"
+    },
+    {
+      "key": [
+        "engine",
+        "state_rng"
+      ],
+      "shape": [
+        2
+      ],
+      "dtype": "torch.int64"
+    },
+    {
+      "key": [
+        "engine",
+        "timestep"
+      ],
+      "shape": [],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "params",
+        "max_timesteps"
+      ],
+      "shape": [],
+      "dtype": "torch.int64"
+    },
+    {
+      "key": [
+        "params",
+        "day_length"
+      ],
+      "shape": [],
+      "dtype": "torch.int64"
+    },
+    {
+      "key": [
+        "params",
+        "always_diamond"
+      ],
+      "shape": [],
+      "dtype": "torch.bool"
+    },
+    {
+      "key": [
+        "params",
+        "mob_despawn_distance"
+      ],
+      "shape": [],
+      "dtype": "torch.int64"
+    },
+    {
+      "key": [
+        "params",
+        "max_attribute"
+      ],
+      "shape": [],
+      "dtype": "torch.int64"
+    },
+    {
+      "key": [
+        "params",
+        "god_mode"
+      ],
+      "shape": [],
+      "dtype": "torch.bool"
+    },
+    {
+      "key": [
+        "static",
+        "map_size",
+        "0"
+      ],
+      "shape": [],
+      "dtype": "torch.int64"
+    },
+    {
+      "key": [
+        "static",
+        "map_size",
+        "1"
+      ],
+      "shape": [],
+      "dtype": "torch.int64"
+    },
+    {
+      "key": [
+        "static",
+        "num_levels"
+      ],
+      "shape": [],
+      "dtype": "torch.int64"
+    },
+    {
+      "key": [
+        "static",
+        "max_melee_mobs"
+      ],
+      "shape": [],
+      "dtype": "torch.int64"
+    },
+    {
+      "key": [
+        "static",
+        "max_passive_mobs"
+      ],
+      "shape": [],
+      "dtype": "torch.int64"
+    },
+    {
+      "key": [
+        "static",
+        "max_growing_plants"
+      ],
+      "shape": [],
+      "dtype": "torch.int64"
+    },
+    {
+      "key": [
+        "static",
+        "max_ranged_mobs"
+      ],
+      "shape": [],
+      "dtype": "torch.int64"
+    },
+    {
+      "key": [
+        "static",
+        "max_mob_projectiles"
+      ],
+      "shape": [],
+      "dtype": "torch.int64"
+    },
+    {
+      "key": [
+        "static",
+        "max_player_projectiles"
+      ],
+      "shape": [],
+      "dtype": "torch.int64"
+    },
+    {
+      "key": [
+        "meta",
+        "signature"
+      ],
+      "shape": [
+        32
+      ],
+      "dtype": "torch.uint8"
+    },
+    {
+      "key": [
+        "rng",
+        "wrapper_key"
+      ],
+      "shape": [
+        2
+      ],
+      "dtype": "torch.int64"
+    },
+    {
+      "key": [
+        "lifecycle",
+        "reward"
+      ],
+      "shape": [],
+      "dtype": "torch.float32"
+    },
+    {
+      "key": [
+        "lifecycle",
+        "terminated"
+      ],
+      "shape": [],
+      "dtype": "torch.bool"
+    },
+    {
+      "key": [
+        "lifecycle",
+        "truncated"
+      ],
+      "shape": [],
+      "dtype": "torch.bool"
+    }
+  ],
+  "render_fields": [
+    {
+      "key": [
+        "draw",
+        "map"
+      ],
+      "shape": [
+        9,
+        48,
+        48
+      ],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "draw",
+        "item_map"
+      ],
+      "shape": [
+        9,
+        48,
+        48
+      ],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "draw",
+        "light_map"
+      ],
+      "shape": [
+        9,
+        48,
+        48
+      ],
+      "dtype": "torch.float32"
+    },
+    {
+      "key": [
+        "draw",
+        "monsters_killed"
+      ],
+      "shape": [
+        9
+      ],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "draw",
+        "player_position"
+      ],
+      "shape": [
+        2
+      ],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "draw",
+        "player_level"
+      ],
+      "shape": [],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "draw",
+        "player_direction"
+      ],
+      "shape": [],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "draw",
+        "player_health"
+      ],
+      "shape": [],
+      "dtype": "torch.float32"
+    },
+    {
+      "key": [
+        "draw",
+        "player_food"
+      ],
+      "shape": [],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "draw",
+        "player_drink"
+      ],
+      "shape": [],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "draw",
+        "player_energy"
+      ],
+      "shape": [],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "draw",
+        "player_mana"
+      ],
+      "shape": [],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "draw",
+        "is_sleeping"
+      ],
+      "shape": [],
+      "dtype": "torch.bool"
+    },
+    {
+      "key": [
+        "draw",
+        "player_xp"
+      ],
+      "shape": [],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "draw",
+        "player_dexterity"
+      ],
+      "shape": [],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "draw",
+        "player_strength"
+      ],
+      "shape": [],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "draw",
+        "player_intelligence"
+      ],
+      "shape": [],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "draw",
+        "inventory",
+        "wood"
+      ],
+      "shape": [],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "draw",
+        "inventory",
+        "stone"
+      ],
+      "shape": [],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "draw",
+        "inventory",
+        "coal"
+      ],
+      "shape": [],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "draw",
+        "inventory",
+        "iron"
+      ],
+      "shape": [],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "draw",
+        "inventory",
+        "diamond"
+      ],
+      "shape": [],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "draw",
+        "inventory",
+        "sapling"
+      ],
+      "shape": [],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "draw",
+        "inventory",
+        "pickaxe"
+      ],
+      "shape": [],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "draw",
+        "inventory",
+        "sword"
+      ],
+      "shape": [],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "draw",
+        "inventory",
+        "bow"
+      ],
+      "shape": [],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "draw",
+        "inventory",
+        "arrows"
+      ],
+      "shape": [],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "draw",
+        "inventory",
+        "armour"
+      ],
+      "shape": [
+        4
+      ],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "draw",
+        "inventory",
+        "torches"
+      ],
+      "shape": [],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "draw",
+        "inventory",
+        "ruby"
+      ],
+      "shape": [],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "draw",
+        "inventory",
+        "sapphire"
+      ],
+      "shape": [],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "draw",
+        "inventory",
+        "potions"
+      ],
+      "shape": [
+        6
+      ],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "draw",
+        "inventory",
+        "books"
+      ],
+      "shape": [],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "draw",
+        "melee_mobs",
+        "position"
+      ],
+      "shape": [
+        9,
+        3,
+        2
+      ],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "draw",
+        "melee_mobs",
+        "mask"
+      ],
+      "shape": [
+        9,
+        3
+      ],
+      "dtype": "torch.bool"
+    },
+    {
+      "key": [
+        "draw",
+        "melee_mobs",
+        "type_id"
+      ],
+      "shape": [
+        9,
+        3
+      ],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "draw",
+        "passive_mobs",
+        "position"
+      ],
+      "shape": [
+        9,
+        3,
+        2
+      ],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "draw",
+        "passive_mobs",
+        "mask"
+      ],
+      "shape": [
+        9,
+        3
+      ],
+      "dtype": "torch.bool"
+    },
+    {
+      "key": [
+        "draw",
+        "passive_mobs",
+        "type_id"
+      ],
+      "shape": [
+        9,
+        3
+      ],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "draw",
+        "ranged_mobs",
+        "position"
+      ],
+      "shape": [
+        9,
+        2,
+        2
+      ],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "draw",
+        "ranged_mobs",
+        "mask"
+      ],
+      "shape": [
+        9,
+        2
+      ],
+      "dtype": "torch.bool"
+    },
+    {
+      "key": [
+        "draw",
+        "ranged_mobs",
+        "type_id"
+      ],
+      "shape": [
+        9,
+        2
+      ],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "draw",
+        "mob_projectiles",
+        "position"
+      ],
+      "shape": [
+        9,
+        3,
+        2
+      ],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "draw",
+        "mob_projectiles",
+        "mask"
+      ],
+      "shape": [
+        9,
+        3
+      ],
+      "dtype": "torch.bool"
+    },
+    {
+      "key": [
+        "draw",
+        "mob_projectiles",
+        "type_id"
+      ],
+      "shape": [
+        9,
+        3
+      ],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "draw",
+        "mob_projectile_directions"
+      ],
+      "shape": [
+        9,
+        3,
+        2
+      ],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "draw",
+        "player_projectiles",
+        "position"
+      ],
+      "shape": [
+        9,
+        3,
+        2
+      ],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "draw",
+        "player_projectiles",
+        "mask"
+      ],
+      "shape": [
+        9,
+        3
+      ],
+      "dtype": "torch.bool"
+    },
+    {
+      "key": [
+        "draw",
+        "player_projectiles",
+        "type_id"
+      ],
+      "shape": [
+        9,
+        3
+      ],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "draw",
+        "player_projectile_directions"
+      ],
+      "shape": [
+        9,
+        3,
+        2
+      ],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "draw",
+        "learned_spells"
+      ],
+      "shape": [
+        2
+      ],
+      "dtype": "torch.bool"
+    },
+    {
+      "key": [
+        "draw",
+        "sword_enchantment"
+      ],
+      "shape": [],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "draw",
+        "bow_enchantment"
+      ],
+      "shape": [],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "draw",
+        "armour_enchantments"
+      ],
+      "shape": [
+        4
+      ],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "draw",
+        "boss_timesteps_to_spawn_this_round"
+      ],
+      "shape": [],
+      "dtype": "torch.int32"
+    },
+    {
+      "key": [
+        "draw",
+        "light_level"
+      ],
+      "shape": [],
+      "dtype": "torch.float32"
+    },
+    {
+      "key": [
+        "draw",
+        "state_rng"
+      ],
+      "shape": [
+        2
+      ],
+      "dtype": "torch.int64"
+    }
+  ],
+  "render_signature": {
+    "key": [
+      "renderer",
+      "signature"
+    ],
+    "shape": [
+      32
+    ],
+    "dtype": "torch.uint8"
+  },
+  "params": {
+    "max_timesteps": 100000,
+    "day_length": 300,
+    "always_diamond": false,
+    "mob_despawn_distance": 14,
+    "max_attribute": 5,
+    "god_mode": false,
+    "fractal_noise_angles": [
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  "static": {
+    "map_size": [
+      48,
+      48
+    ],
+    "num_levels": 9,
+    "max_melee_mobs": 3,
+    "max_passive_mobs": 3,
+    "max_growing_plants": 10,
+    "max_ranged_mobs": 2,
+    "max_mob_projectiles": 3,
+    "max_player_projectiles": 3
+  }
+}

@@ -1,0 +1,411 @@
+{
+  "registration": "swm/CraftaxClassicSymbolic-v1",
+  "name": "CraftaxClassicSymbolic",
+  "status": "PASS",
+  "cases": [
+    {
+      "label": "reset-0",
+      "state_exact": true,
+      "required_output_exact": true,
+      "normalized_float_output_exact": true,
+      "output_shape": [
+        1345
+      ],
+      "output_dtype": "float32",
+      "output_min": 0.0,
+      "output_max": 1.0,
+      "nonmutation": true,
+      "array_file": "reset-0.npz"
+    },
+    {
+      "label": "reset-17",
+      "state_exact": true,
+      "required_output_exact": true,
+      "normalized_float_output_exact": true,
+      "output_shape": [
+        1345
+      ],
+      "output_dtype": "float32",
+      "output_min": 0.0,
+      "output_max": 1.0,
+      "nonmutation": true,
+      "array_file": "reset-17.npz"
+    },
+    {
+      "label": "reset-42",
+      "state_exact": true,
+      "required_output_exact": true,
+      "normalized_float_output_exact": true,
+      "output_shape": [
+        1345
+      ],
+      "output_dtype": "float32",
+      "output_min": 0.0,
+      "output_max": 1.0,
+      "nonmutation": true,
+      "array_file": "reset-42.npz"
+    },
+    {
+      "label": "mine_tree",
+      "state_exact": true,
+      "required_output_exact": true,
+      "normalized_float_output_exact": true,
+      "output_shape": [
+        1345
+      ],
+      "output_dtype": "float32",
+      "output_min": 0.0,
+      "output_max": 1.0,
+      "nonmutation": true,
+      "array_file": "mine_tree.npz"
+    },
+    {
+      "label": "craft",
+      "state_exact": true,
+      "required_output_exact": true,
+      "normalized_float_output_exact": true,
+      "output_shape": [
+        1345
+      ],
+      "output_dtype": "float32",
+      "output_min": 0.0,
+      "output_max": 1.0,
+      "nonmutation": true,
+      "array_file": "craft.npz"
+    },
+    {
+      "label": "combat",
+      "state_exact": true,
+      "required_output_exact": true,
+      "normalized_float_output_exact": true,
+      "output_shape": [
+        1345
+      ],
+      "output_dtype": "float32",
+      "output_min": 0.0,
+      "output_max": 1.0,
+      "nonmutation": true,
+      "array_file": "combat.npz"
+    },
+    {
+      "label": "damage",
+      "state_exact": true,
+      "required_output_exact": true,
+      "normalized_float_output_exact": true,
+      "output_shape": [
+        1345
+      ],
+      "output_dtype": "float32",
+      "output_min": 0.0,
+      "output_max": 1.0,
+      "nonmutation": true,
+      "array_file": "damage.npz"
+    },
+    {
+      "label": "night",
+      "state_exact": true,
+      "required_output_exact": true,
+      "normalized_float_output_exact": true,
+      "output_shape": [
+        1345
+      ],
+      "output_dtype": "float32",
+      "output_min": 0.0,
+      "output_max": 1.0,
+      "nonmutation": true,
+      "array_file": "night.npz"
+    },
+    {
+      "label": "terminal",
+      "state_exact": true,
+      "required_output_exact": true,
+      "normalized_float_output_exact": true,
+      "output_shape": [
+        1345
+      ],
+      "output_dtype": "float32",
+      "output_min": 0.0,
+      "output_max": 1.0,
+      "nonmutation": true,
+      "array_file": "terminal.npz"
+    },
+    {
+      "label": "near_limit",
+      "state_exact": true,
+      "required_output_exact": true,
+      "normalized_float_output_exact": true,
+      "output_shape": [
+        1345
+      ],
+      "output_dtype": "float32",
+      "output_min": 0.0,
+      "output_max": 1.0,
+      "nonmutation": true,
+      "array_file": "near_limit.npz"
+    },
+    {
+      "label": "stochastic_grass",
+      "state_exact": true,
+      "required_output_exact": true,
+      "normalized_float_output_exact": true,
+      "output_shape": [
+        1345
+      ],
+      "output_dtype": "float32",
+      "output_min": 0.0,
+      "output_max": 1.0,
+      "nonmutation": true,
+      "array_file": "stochastic_grass.npz"
+    }
+  ],
+  "profile": {
+    "python": "3.12.8",
+    "platform": "Linux-5.14.0-570.62.1.0.1.el9_6.x86_64-x86_64-with-glibc2.34",
+    "packages": {
+      "craftax": "1.5.0",
+      "jax": "0.10.1",
+      "jaxlib": "0.10.1",
+      "flax": "0.12.7",
+      "gymnax": "0.0.9",
+      "chex": "0.1.92",
+      "numpy": "2.2.6",
+      "torch": "2.14.0+cu126",
+      "tensordict": "0.14.2"
+    },
+    "devices": [
+      "cuda:0"
+    ],
+    "backend": "gpu",
+    "x64": false,
+    "prng": "threefry2x32",
+    "threefry_partitionable": true,
+    "environment": {
+      "JAX_PLATFORMS": "cuda",
+      "JAX_ENABLE_X64": "false",
+      "XLA_FLAGS": null,
+      "XLA_PYTHON_CLIENT_PREALLOCATE": "false"
+    },
+    "gpu": "NVIDIA GeForce RTX 3090",
+    "jax_memory_before": {
+      "num_allocs": 0,
+      "bytes_in_use": 0,
+      "peak_bytes_in_use": 0,
+      "largest_alloc_size": 0,
+      "bytes_limit": 18972033024,
+      "bytes_reserved": 0,
+      "peak_bytes_reserved": 0,
+      "largest_free_block_bytes": 0,
+      "pool_bytes": 0,
+      "peak_pool_bytes": 0
+    }
+  },
+  "performance": {
+    "constructor_seconds_in_current_process": 4.222840610891581,
+    "batches": {
+      "1": {
+        "step": {
+          "first_seconds": 8.633671954274178,
+          "warm_median_seconds": 0.026084259152412415,
+          "warm_p95_seconds": 0.026711191236972808,
+          "warm_calls_per_second": 38.33729737758393,
+          "samples_seconds": [
+            8.633671954274178,
+            0.0268700048327446,
+            0.025994637981057167,
+            0.026041710749268532,
+            0.026015570387244225,
+            0.025625674054026604,
+            0.026126807555556297,
+            0.025711603462696075,
+            0.02651708573102951,
+            0.026142597198486328,
+            0.026270676404237747
+          ]
+        },
+        "reset": {
+          "first_seconds": 0.022465340793132782,
+          "warm_median_seconds": 0.02133585326373577,
+          "warm_p95_seconds": 0.021804259158670902,
+          "warm_calls_per_second": 46.869463697507,
+          "samples_seconds": [
+            0.022465340793132782,
+            0.02149691805243492,
+            0.021198468282818794,
+            0.021520797163248062,
+            0.021254761144518852,
+            0.021298468112945557,
+            0.021234219893813133,
+            0.021373238414525986,
+            0.02124773897230625,
+            0.02176978625357151,
+            0.021832464262843132
+          ]
+        },
+        "get_state": {
+          "first_seconds": 0.0025393888354301453,
+          "warm_median_seconds": 0.0025504091754555702,
+          "warm_p95_seconds": 0.0025938228704035283,
+          "warm_calls_per_second": 392.0939469727926,
+          "samples_seconds": [
+            0.0025393888354301453,
+            0.0025534480810165405,
+            0.002569347620010376,
+            0.0025669075548648834,
+            0.0025543570518493652,
+            0.002543726935982704,
+            0.0025473702698946,
+            0.0025469884276390076,
+            0.002539677545428276,
+            0.0025254283100366592,
+            0.0026138480752706528
+          ]
+        },
+        "set_state": {
+          "first_seconds": 0.025351546704769135,
+          "warm_median_seconds": 0.024627456441521645,
+          "warm_p95_seconds": 0.02521084137260914,
+          "warm_calls_per_second": 40.60508653723614,
+          "samples_seconds": [
+            0.025351546704769135,
+            0.024837316945195198,
+            0.02441997267305851,
+            0.02447875402867794,
+            0.024504872038960457,
+            0.024609960615634918,
+            0.02446918375790119,
+            0.025516452267766,
+            0.02464495226740837,
+            0.02477738820016384,
+            0.024764761328697205
+          ]
+        },
+        "symbolic_output": {
+          "first_seconds": 0.0007236432284116745,
+          "warm_median_seconds": 0.0003913063555955887,
+          "warm_p95_seconds": 0.0004484938457608223,
+          "warm_calls_per_second": 2555.542443152879,
+          "samples_seconds": [
+            0.0007236432284116745,
+            0.00046398863196372986,
+            0.0004295557737350464,
+            0.00041809678077697754,
+            0.00042749568819999695,
+            0.000407535582780838,
+            0.00037507712841033936,
+            0.00034350715577602386,
+            0.0003425274044275284,
+            0.00035097822546958923,
+            0.0003414880484342575
+          ]
+        },
+        "pixel_render": {
+          "status": "SOURCE_EXPLICITLY_UNSUPPORTED"
+        }
+      },
+      "3": {
+        "step": {
+          "first_seconds": 0.04427878372371197,
+          "warm_median_seconds": 0.044334583915770054,
+          "warm_p95_seconds": 0.04471382601186633,
+          "warm_calls_per_second": 22.555754710585983,
+          "samples_seconds": [
+            0.04427878372371197,
+            0.04443587362766266,
+            0.044732870534062386,
+            0.04427013732492924,
+            0.04469054937362671,
+            0.04441312327980995,
+            0.044313764199614525,
+            0.04424448683857918,
+            0.044064417481422424,
+            0.043872227892279625,
+            0.04435540363192558
+          ]
+        },
+        "reset": {
+          "first_seconds": 0.03386617265641689,
+          "warm_median_seconds": 0.033098882995545864,
+          "warm_p95_seconds": 0.033385105710476634,
+          "warm_calls_per_second": 30.212499924380246,
+          "samples_seconds": [
+            0.03386617265641689,
+            0.0330097321420908,
+            0.03337103687226772,
+            0.033047549426555634,
+            0.033346597105264664,
+            0.03322726860642433,
+            0.03284226916730404,
+            0.033150216564536095,
+            0.03339661657810211,
+            0.032946862280368805,
+            0.03292153216898441
+          ]
+        },
+        "get_state": {
+          "first_seconds": 0.0032303016632795334,
+          "warm_median_seconds": 0.0032124416902661324,
+          "warm_p95_seconds": 0.0032825701870024203,
+          "warm_calls_per_second": 311.2896968776282,
+          "samples_seconds": [
+            0.0032303016632795334,
+            0.0032817721366882324,
+            0.0032160039991140366,
+            0.003214312717318535,
+            0.0032832231372594833,
+            0.003209661692380905,
+            0.003201393410563469,
+            0.0032641440629959106,
+            0.00321057066321373,
+            0.003191433846950531,
+            0.00320294126868248
+          ]
+        },
+        "set_state": {
+          "first_seconds": 0.04403574578464031,
+          "warm_median_seconds": 0.04263486806303263,
+          "warm_p95_seconds": 0.04328416995704174,
+          "warm_calls_per_second": 23.454980522551892,
+          "samples_seconds": [
+            0.04403574578464031,
+            0.042604491114616394,
+            0.04320248402655125,
+            0.043351003900170326,
+            0.04263447783887386,
+            0.04276124760508537,
+            0.042986905202269554,
+            0.04236377030611038,
+            0.0420015137642622,
+            0.042221181094646454,
+            0.04263525828719139
+          ]
+        },
+        "symbolic_output": {
+          "first_seconds": 0.00140460766851902,
+          "warm_median_seconds": 0.0009560370817780495,
+          "warm_p95_seconds": 0.0011196089908480642,
+          "warm_calls_per_second": 1045.9845324620544,
+          "samples_seconds": [
+            0.00140460766851902,
+            0.0011922214180231094,
+            0.0010308604687452316,
+            0.000950084999203682,
+            0.0009559914469718933,
+            0.0009568631649017334,
+            0.0009437724947929382,
+            0.0009454730898141861,
+            0.0009540412575006485,
+            0.0009560827165842056,
+            0.0009647216647863388
+          ]
+        },
+        "pixel_render": {
+          "status": "SOURCE_EXPLICITLY_UNSUPPORTED"
+        }
+      }
+    },
+    "public_execution": "JIT only, matching SWM; scalar source kernels with explicit public batching"
+  },
+  "resource_policy": "Instance close drops State/keys; bounded family/device kernel cache and upstream texture/JIT caches are process-lifetime runtime resources, never semantic State.",
+  "cross_device_exactness": "NOT_CLAIMED; compare preserved CPU/GPU arrays separately",
+  "marker": "CRAFTAX_CRAFTAXCLASSICSYMBOLIC_GPU_GATE_PASS"
+}

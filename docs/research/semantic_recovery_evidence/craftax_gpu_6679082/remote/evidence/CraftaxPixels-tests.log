@@ -1,0 +1,13 @@
+............................                                             [100%]
+=============================== warnings summary ===============================
+tests/unit/test_craftax_semantics.py: 32 warnings
+tests/unit/test_craftax_rendering.py: 24 warnings
+  /oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/jax/_src/pjit.py:430: DeprecationWarning: backend and device argument on jit is deprecated. You can use `jax.device_put(..., jax.local_devices(backend="cpu")[0])` on the inputs to the jitted function to get the same behavior.
+    jit_info = _parse_jit_arguments(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+------------------------------ stable-envs safety ------------------------------
+resources: 0 EGL contexts created, 0 released, 0 live (peak 0); renderers 0 created / 0 closed
+resource guard: mujoco not importable, EGL accounting NOT active for this run
+node: gpu2110 slurm=mix reason=none reference-renderer={}
+28 passed, 64 deselected, 56 warnings in 1321.44s (0:22:01)
