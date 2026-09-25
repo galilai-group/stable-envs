@@ -28,8 +28,14 @@ Each case times construction separately. Each operation records its first call,
 ten warmups, at least fifty measured calls and, for fast operations, additional
 samples up to 1000 until 0.25 seconds of measured operation time. Counts are CLI
 parameters recorded with results; expensive larger batches may use a documented
-smaller count. JIT compilation can occur in construction/first calls and is not
-reported as warm steady-state cost. Every call is materialized: CUDA is
+smaller count. The main harness's first-call field means first **measured** call:
+checkpoint preparation has already exercised step/restore. `cold_craftax.py`
+therefore measures constructor, first explicit reset/step/get/set and a second
+step in separate fresh public/oracle processes for every Craftax registration
+and device. Constructor/reset may internally invoke other operations; exact call
+order is recorded. Interpreter startup and the initial hardware probe are
+excluded. JIT compilation is included when first triggered and is not reported
+as warm steady-state cost. Every call is materialized: CUDA is
 synchronized before/after timing, JAX outputs are blocked, and returned values
 remain live. Report median and p95 latency, median-derived calls/second, mean,
 coefficient of variation and raw samples. Large variance is descriptive evidence,
@@ -77,7 +83,7 @@ actions, construction cost and reproduction command accompany each case.
 | Fetch / OGBench | MuJoCo `mjSTATE_INTEGRATION` get/set | `NATIVE_PARTIAL` | Omits wrapper/task/RNG/configuration and output caches |
 | Craftax | Explicit copy/install of upstream JAX engine-state pytree | `NATIVE_PARTIAL` | Omits wrapper key, lifecycle and immediate-output caches |
 | Rocket diagnostic | PyBullet `saveState/restoreState` | `OPAQUE_SAME_PROCESS_NON_EQUIVALENT` | Known different-history failure; never an exhaustive baseline |
-| PushT research | Pymunk space-copy machinery | Unaccepted; classify from retained native research | Body copies are not complete State |
+| PushT research | Typed body-cache and active-contact-order accessors | `NATIVE_PARTIAL` | Research subset only; complete restoration still fails |
 
 Native ratios are explicitly marked non-equivalent lower-bound comparisons. The
 harness does not relabel shallow references, body pose copies or opaque handles
@@ -98,3 +104,9 @@ operations visible. Validate timing accounting with
 Reconstruction-heavy restoration and large State/step ratios should be recorded
 for the later post-42/42 optimization pass. No production fast paths or shared
 State-contract changes belong in this initial baseline.
+
+`report_state_matrix.py` combines completed per-registration JSON files into
+machine-readable and Markdown tables. Pass GPU result roots in chronological
+order so a completed, corrected profile supersedes its earlier failed attempt;
+retain both raw runs. The report refuses missing CPU or GPU registration coverage.
+It does not substitute a sibling registration's measurement.
