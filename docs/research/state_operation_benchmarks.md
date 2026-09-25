@@ -79,7 +79,7 @@ actions, construction cost and reproduction command accompany each case.
 | --- | --- | --- | --- |
 | Classic control | No native snapshot API | `NONE` | No |
 | Simple navigation | No native snapshot API | `NONE` | No |
-| DMC | `Physics.get_state/set_state` | `NATIVE_PARTIAL` | Omits RNG, task/lifecycle/model changes and warm-start fields |
+| DMC | `Physics.get_state/set_state(sig=mjSTATE_INTEGRATION)` supplement; default signature also retained | `NATIVE_PARTIAL` | Integration signature still omits RNG, task/lifecycle/model changes; default signature additionally omits warm starts |
 | Fetch / OGBench | MuJoCo `mjSTATE_INTEGRATION` get/set | `NATIVE_PARTIAL` | Omits wrapper/task/RNG/configuration and output caches |
 | Craftax | Explicit copy/install of upstream JAX engine-state pytree | `NATIVE_PARTIAL` | Omits wrapper key, lifecycle and immediate-output caches |
 | Rocket diagnostic | PyBullet `saveState/restoreState` | `OPAQUE_SAME_PROCESS_NON_EQUIVALENT` | Known different-history failure; never an exhaustive baseline |
@@ -89,6 +89,11 @@ Native ratios are explicitly marked non-equivalent lower-bound comparisons. The
 harness does not relabel shallow references, body pose copies or opaque handles
 as exhaustive snapshots. `NATIVE_EQUIVALENT` requires source and behavioral proof,
 not just a similarly named method.
+
+`native_dmc_integration.py` adds the explicit integration-signature baseline to
+the initial default-signature measurements. Both are retained; the report uses
+the more complete integration signature as the closest native subset. The source
+audit records exact package header/wrapper paths and hashes for every family.
 
 ## Adding future coverage
 

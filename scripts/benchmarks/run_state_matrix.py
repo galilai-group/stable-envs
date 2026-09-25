@@ -16,7 +16,9 @@ from state_ops import catalog
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--output", type=Path, required=True)
-    p.add_argument("--profile", action="append", default=[], help="normal/fetch/manipulation/craftax=/path/to/python")
+    p.add_argument(
+        "--profile", action="append", default=[], help="normal/fetch/manipulation/ogbench/craftax=/path/to/python"
+    )
     p.add_argument("--only", default=".*")
     p.add_argument("--device", default="cpu", choices=["cpu", "cuda"])
     p.add_argument("--render-only", action="store_true")
@@ -37,9 +39,12 @@ def main():
             if "Fetch" in registration
             else "manipulation"
             if registration in ["swm/OGBCube-v0", "swm/OGBScene-v0"]
+            else "ogbench"
+            if registration == "swm/OGBMaze-v0"
             else "normal"
         )
-        py = profiles.get(family, sys.executable)
+        fallback = profiles.get("manipulation", sys.executable) if family == "ogbench" else sys.executable
+        py = profiles.get(family, fallback)
         name = registration.replace("/", "__")
         # Four lanes provide an actual larger public batch for costly reconstruction.
         batches = [1, 4] if family == "manipulation" else [1, 16]
