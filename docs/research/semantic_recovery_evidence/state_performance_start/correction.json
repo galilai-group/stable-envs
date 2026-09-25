@@ -1,0 +1,26 @@
+{
+  "supersedes_metadata_only": "docs/research/semantic_recovery_evidence/rocket_source_audit/commands.json",
+  "original_sha256": "a5649e0340be654552f43ee038054a009e08062657b45a4f1254899fd18dcb9e",
+  "cause": "Substring match for verify_rocket_audit also matched that filename in the Ruff command arguments.",
+  "original_sealed_evidence_unchanged": true,
+  "corrections": [
+    {
+      "command": ".venv/bin/ruff check scripts/recovery/rocket_feasibility.py scripts/recovery/rocket_snapshot_controls.py scripts/recovery/verify_rocket_audit.py",
+      "old_result": "PASS: ROCKET_BLOCKER_AND_PRESERVATION_VERIFIED; 49 array comparisons, 41 source hashes, 39 accepted rows preserved, six Craftax/Cube/Scene acceptance manifests, 102 final Craftax seal entries and 87 download entries",
+      "original_tool_exit_code": 0,
+      "original_tool_output": "All checks passed!",
+      "fresh_exit_code": 0,
+      "fresh_stdout": "All checks passed!\n",
+      "fresh_stderr": ""
+    },
+    {
+      "command": ".venv/bin/ruff format --check scripts/recovery/rocket_feasibility.py scripts/recovery/rocket_snapshot_controls.py scripts/recovery/verify_rocket_audit.py",
+      "old_result": "PASS: ROCKET_BLOCKER_AND_PRESERVATION_VERIFIED; 49 array comparisons, 41 source hashes, 39 accepted rows preserved, six Craftax/Cube/Scene acceptance manifests, 102 final Craftax seal entries and 87 download entries",
+      "original_tool_exit_code": 0,
+      "original_tool_output": "3 files already formatted",
+      "fresh_exit_code": 0,
+      "fresh_stdout": "3 files already formatted\n",
+      "fresh_stderr": ""
+    }
+  ]
+}

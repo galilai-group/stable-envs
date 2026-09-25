@@ -1,0 +1,56 @@
+{
+  "working_directory": "/private/tmp/stable-envs-semantic-recovery",
+  "note": "Collectors refuse existing output directories. Use fresh paths when reproducing; preserve committed evidence. Development runs precede final mass-complete collector and are not acceptance evidence.",
+  "checks": [
+    {
+      "command": "PYTHONDONTWRITEBYTECODE=1 NUMBA_CACHE_DIR=/private/tmp/rocket-numba PYTHONPATH=/Users/samib/stable-worldmodel /Users/samib/se7-rocket-venv/bin/python scripts/recovery/rocket_feasibility.py --output docs/research/semantic_recovery_evidence/rocket_source_audit/feasibility-final",
+      "result": "Completed; seven cases; exact continuation fails as documented",
+      "log": "docs/research/semantic_recovery_evidence/rocket_source_audit/feasibility-final.log"
+    },
+    {
+      "command": "PYTHONDONTWRITEBYTECODE=1 NUMBA_CACHE_DIR=/private/tmp/rocket-numba PYTHONPATH=/Users/samib/stable-worldmodel /Users/samib/se7-rocket-venv/bin/python scripts/recovery/rocket_snapshot_controls.py --output docs/research/semantic_recovery_evidence/rocket_source_audit/controls-final",
+      "result": "Completed; clean independent control exact; official independent restore and immediate pixels diverge; alternate-config successful landing recorded",
+      "log": "docs/research/semantic_recovery_evidence/rocket_source_audit/controls-final.log"
+    },
+    {
+      "command": "/private/tmp/craftax-recovery-312/bin/python scripts/recovery/verify_rocket_audit.py --output docs/research/semantic_recovery_evidence/rocket_source_audit/preservation-final.json",
+      "result": "PASS: ROCKET_BLOCKER_AND_PRESERVATION_VERIFIED; 49 array comparisons, 41 source hashes, 39 accepted rows preserved, six Craftax/Cube/Scene acceptance manifests, 102 final Craftax seal entries and 87 download entries",
+      "log": "docs/research/semantic_recovery_evidence/rocket_source_audit/preservation-final.log"
+    },
+    {
+      "command": ".venv/bin/python -m pytest -q tests/unit/test_full_state_contract.py tests/unit/test_semantic_harness.py tests/unit/test_replacement_readiness.py tests/unit/test_swm_matrix.py tests/unit/test_repo_contracts.py tests/unit/test_variation_maps_newcells.py tests/unit/test_ogbench_manipulation_acceptance.py",
+      "result": "131 passed, 11 skipped, 1 warning; repeated after final bookkeeping changes with same result",
+      "log": "docs/research/semantic_recovery_evidence/rocket_source_audit/shared-tests.log",
+      "final_log": "docs/research/semantic_recovery_evidence/rocket_source_audit/shared-tests-final.log",
+      "warning": "Optional ale-py absent in oracle; unrelated ALE registrations not under recovery"
+    },
+    {
+      "command": ".venv/bin/ruff check scripts/recovery/rocket_feasibility.py scripts/recovery/rocket_snapshot_controls.py scripts/recovery/verify_rocket_audit.py",
+      "result": "All checks passed!",
+      "exit_code": 0,
+      "log": "docs/research/semantic_recovery_evidence/state_performance_start/ruff-check.stdout.txt"
+    },
+    {
+      "command": ".venv/bin/ruff format --check scripts/recovery/rocket_feasibility.py scripts/recovery/rocket_snapshot_controls.py scripts/recovery/verify_rocket_audit.py",
+      "result": "3 files already formatted",
+      "exit_code": 0,
+      "log": "docs/research/semantic_recovery_evidence/state_performance_start/ruff-format.stdout.txt"
+    },
+    {
+      "command": ".venv/bin/mkdocs build --strict --site-dir /private/tmp/stable-envs-rocket-audit-docs",
+      "result": "PASS: exit 0, strict build in 7.08 seconds",
+      "log": "docs/research/semantic_recovery_evidence/rocket_source_audit/docs-build.log"
+    },
+    {
+      "command": "git diff --cached --check",
+      "result": "PASS: complete staged diff, including raw evidence logs"
+    }
+  ],
+  "not_run": {
+    "production_acceptance": "Blocked before production by exact engine-state feasibility",
+    "gpu": "No job submitted; Stage B CPU failure prevents backend gate",
+    "performance": "No public adapter; all required public throughput/batching measurements deferred"
+  },
+  "promotion": false,
+  "push_performed": false
+}
