@@ -1,0 +1,16 @@
+{
+  "starting_HEAD": "badc193af3ee450ac486a75270bc88f47d9a1816",
+  "final_craftax_containing_commit": "badc193af3ee450ac486a75270bc88f47d9a1816",
+  "branch": "repair/environment-semantics",
+  "worktree": "/private/tmp/stable-envs-semantic-recovery",
+  "starting_clean": true,
+  "matrix_counts": {
+    "VERIFIED": 39,
+    "INCOMPLETE": 3
+  },
+  "four_craftax_acceptances_and_artifact_hashes": "PASS",
+  "craftax_final_manifest_entries": 102,
+  "craftax_download_manifest_entries": 87,
+  "job_6679082_accounting_archive_markers": "PASS",
+  "push_performed": false
+}

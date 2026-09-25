@@ -3675,12 +3675,18 @@
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "No dynamics; renderer pose/velocity omits fuel, noisy actuators, lifecycle/task state.",
-        "Direct PyFlyt landing env is not the SWM subclass reward/reset implementation."
+        "Stage B fails: named numeric restore and official PyBullet 3.2.7 memory/file snapshots change cached link state and exact continuation, including reward and termination near contact.",
+        "Requires engine-supported complete typed numeric export/import of cached link/collider transforms, velocities, dynamic masses/inertias and contact/solver state across independent instances.",
+        "Production, complete reset RNG, atomic validation, renderer/backend, Variation and performance gates not entered; no promotion."
       ],
       "test": "tests/unit/test_full_state_contract.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
-      "execution_candidate": "DELEGATED"
+      "execution_candidate": "DELEGATED",
+      "recovery_status": "BLOCKED_EXACT_PYBULLET_STATE",
+      "audit_report": "docs/research/rocket_recovery_audit.md",
+      "feasibility_evidence": "docs/research/semantic_recovery_evidence/rocket_source_audit/feasibility-final/result.json",
+      "feasibility_controls": "docs/research/semantic_recovery_evidence/rocket_source_audit/controls-final/result.json",
+      "source_provenance": "docs/research/semantic_recovery_evidence/rocket_source_audit/provenance.json"
     },
     {
       "historical_id": "swm/PendulumControl-v1",

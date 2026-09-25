@@ -12227,7 +12227,10 @@
         "repository": "https://github.com/jjshoots/PyFlyt",
         "package": "pyflyt",
         "pinned_lock_version": null,
-        "tested_profile_versions": {},
+        "tested_profile_versions": {
+          "PyFlyt": "0.29.0",
+          "pybullet": "3.2.7"
+        },
         "version_scope": "Lock version is historical provenance, not a claim of candidate certification; tested CPU/GPU versions remain in evidence."
       },
       "stable_envs_classes": [
@@ -12241,13 +12244,15 @@
         "source_constructor": "swm:stable_worldmodel/envs/rocket_landing/pyflyt_rocketlanding.py:RocketLandingEnv.__init__"
       },
       "state_schema": {
-        "status": "UNPROVED",
+        "status": "BLOCKED_EXACT_ENGINE_RESTORE",
         "corpus_fields": {},
         "candidate_source_catalog": [],
-        "note": "Full TensorDict simulator snapshot; restore under the same persistent Variation"
+        "note": "91 private numeric probe leaves; incomplete engine and reset RNG coverage; not an accepted public TensorDict State.",
+        "candidate_schema": "docs/research/semantic_recovery_evidence/rocket_source_audit/feasibility-final/candidate-schema.json",
+        "classification": "docs/research/semantic_recovery_evidence/rocket_source_audit/state-inventory.json"
       },
       "restoration_order": [
-        "UNPROVED: no accepted full public State restoration; inspect pinned methods before implementation"
+        "UNACCEPTED private probe: official or numeric engine restore; explicitly restore mass/inertia; Python task/actuator/cache fields; info; PCG64 last. Missing exact engine cache/contact restoration blocks production."
       ],
       "action_scaling_clipping_repeat": {
         "summary": "UNACCEPTED: pinned wrapper step implementation indexed below; no candidate parity claim.",
@@ -12285,14 +12290,21 @@
       },
       "frozen_renderer_result": "PENDING",
       "known_limitations": [
-        "No dynamics; renderer pose/velocity omits fuel, noisy actuators, lifecycle/task state.",
-        "Direct PyFlyt landing env is not the SWM subclass reward/reset implementation."
+        "Stage B fails: named numeric restore and official PyBullet 3.2.7 memory/file snapshots change cached link state and exact continuation, including reward and termination near contact.",
+        "Requires engine-supported complete typed numeric export/import of cached link/collider transforms, velocities, dynamic masses/inertias and contact/solver state across independent instances.",
+        "Production, complete reset RNG, atomic validation, renderer/backend, Variation and performance gates not entered; no promotion."
       ],
       "remaining_gates": [
-        "No dynamics; renderer pose/velocity omits fuel, noisy actuators, lifecycle/task state.",
-        "Direct PyFlyt landing env is not the SWM subclass reward/reset implementation."
+        "Stage B fails: named numeric restore and official PyBullet 3.2.7 memory/file snapshots change cached link state and exact continuation, including reward and termination near contact.",
+        "Requires engine-supported complete typed numeric export/import of cached link/collider transforms, velocities, dynamic masses/inertias and contact/solver state across independent instances.",
+        "Production, complete reset RNG, atomic validation, renderer/backend, Variation and performance gates not entered; no promotion."
       ],
-      "closure_code_check": null
+      "closure_code_check": null,
+      "recovery_status": "BLOCKED_EXACT_PYBULLET_STATE",
+      "audit_report": "docs/research/rocket_recovery_audit.md",
+      "feasibility_evidence": "docs/research/semantic_recovery_evidence/rocket_source_audit/feasibility-final/result.json",
+      "feasibility_controls": "docs/research/semantic_recovery_evidence/rocket_source_audit/controls-final/result.json",
+      "source_provenance": "docs/research/semantic_recovery_evidence/rocket_source_audit/provenance.json"
     },
     {
       "historical_id": "swm/PendulumControl-v1",

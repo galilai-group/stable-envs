@@ -1,0 +1,112 @@
+/Users/samib/stable-worldmodel/stable_worldmodel/envs/__init__.py:215: UserWarning: ale-py not found; ALE/* envs are unavailable. Install with: pip install 'stable-worldmodel[env]' or pip install ale-py.
+  from stable_worldmodel.envs import ale  # noqa: F401
+pybullet build time: Sep  9 2026 00:21:04
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+{
+  "free_flight_0": {
+    "memory": [],
+    "file": [],
+    "numeric": []
+  },
+  "free_flight_17": {
+    "memory": [],
+    "file": [],
+    "numeric": []
+  },
+  "free_flight_42": {
+    "memory": [],
+    "file": [],
+    "numeric": []
+  },
+  "thrust_rotation": {
+    "memory": [
+      "wrapper/state",
+      "wrapper/reward",
+      "wrapper/ang_vel",
+      "wrapper/ang_pos",
+      "wrapper/lin_vel"
+    ],
+    "file": [
+      "wrapper/state",
+      "wrapper/reward",
+      "wrapper/ang_vel",
+      "wrapper/ang_pos",
+      "wrapper/lin_vel"
+    ],
+    "numeric": [
+      "wrapper/state",
+      "wrapper/reward",
+      "wrapper/ang_vel",
+      "wrapper/ang_pos",
+      "wrapper/lin_vel"
+    ]
+  },
+  "near_contact": {
+    "memory": [
+      "wrapper/termination",
+      "wrapper/state",
+      "wrapper/reward",
+      "wrapper/landing_pad_contact",
+      "wrapper/ang_vel"
+    ],
+    "file": [
+      "wrapper/termination",
+      "wrapper/state",
+      "wrapper/reward",
+      "wrapper/landing_pad_contact",
+      "wrapper/ang_vel"
+    ],
+    "numeric": [
+      "wrapper/termination",
+      "wrapper/state",
+      "wrapper/reward",
+      "wrapper/landing_pad_contact",
+      "wrapper/ang_vel"
+    ]
+  },
+  "crash": {
+    "memory": [
+      "wrapper/truncation",
+      "wrapper/state",
+      "wrapper/reward",
+      "wrapper/ang_vel",
+      "wrapper/ang_pos"
+    ],
+    "file": [
+      "wrapper/truncation",
+      "wrapper/state",
+      "wrapper/reward",
+      "wrapper/ang_vel",
+      "wrapper/ang_pos"
+    ],
+    "numeric": [
+      "wrapper/state",
+      "wrapper/reward",
+      "wrapper/ang_vel",
+      "wrapper/ang_pos",
+      "wrapper/lin_vel"
+    ]
+  },
+  "resting_contact": {
+    "memory": [],
+    "file": [],
+    "numeric": [
+      "wrapper/state",
+      "wrapper/reward",
+      "wrapper/ang_vel",
+      "wrapper/ang_pos",
+      "wrapper/lin_vel"
+    ]
+  }
+}
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
