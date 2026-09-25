@@ -1,0 +1,15 @@
+{
+  "original_job": 6693308,
+  "original_terminal_state": "FAILED",
+  "original_exit_code": "1:0",
+  "original_elapsed": "00:12:00",
+  "original_node": "gpu2114",
+  "cause": "Driver launched through normal-python, which added normal profile site-packages to inherited PYTHONPATH. This overrode child Craftax, Fetch and manipulation package versions.",
+  "superseded_registrations_regex": "Craftax|Fetch|OGBCube|OGBScene",
+  "retry_job": 6694195,
+  "retry_script": "retry-profiles.sbatch",
+  "fix": "Launch stdlib-only dispatcher using raw Python with source+oracle PYTHONPATH; each child uses its own pinned environment.",
+  "new_output_directory": "run-6694195",
+  "duplicate_active_job": false,
+  "production_changes": false
+}

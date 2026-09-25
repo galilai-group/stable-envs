@@ -1,0 +1,17 @@
+Loading Craftax-Classic textures from cache.
+Textures successfully loaded from cache.
+swm/CraftaxClassicPixels-v1 1 reset 5577125.0
+swm/CraftaxClassicPixels-v1 1 step 5311229.0
+swm/CraftaxClassicPixels-v1 1 get_state 442625.0
+swm/CraftaxClassicPixels-v1 1 set_state_same 5720208.0
+swm/CraftaxClassicPixels-v1 1 set_state_independent 5898896.0
+swm/CraftaxClassicPixels-v1 1 get_then_set 6043291.5
+swm/CraftaxClassicPixels-v1 1 branch_cycle 59048062.5
+swm/CraftaxClassicPixels-v1 16 reset 17939542.0
+swm/CraftaxClassicPixels-v1 16 step 13300937.5
+swm/CraftaxClassicPixels-v1 16 get_state 1753083.0
+swm/CraftaxClassicPixels-v1 16 set_state_same 20437895.5
+swm/CraftaxClassicPixels-v1 16 set_state_independent 20495833.5
+swm/CraftaxClassicPixels-v1 16 get_then_set 21978021.0
+swm/CraftaxClassicPixels-v1 16 branch_cycle 152892729.0
+STATE_BENCHMARK_COMPLETE swm/CraftaxClassicPixels-v1

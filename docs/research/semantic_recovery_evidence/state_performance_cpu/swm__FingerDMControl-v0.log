@@ -1,0 +1,17 @@
+swm/FingerDMControl-v0 1 reset 318500.0
+swm/FingerDMControl-v0 1 step 315625.0
+swm/FingerDMControl-v0 1 get_state 147209.0
+swm/FingerDMControl-v0 1 set_state_same 165895.5
+swm/FingerDMControl-v0 1 set_state_independent 166145.5
+swm/FingerDMControl-v0 1 get_then_set 302729.5
+swm/FingerDMControl-v0 1 branch_cycle 3441333.0
+swm/FingerDMControl-v0 16 reset 4138875.0
+swm/FingerDMControl-v0 16 step 3252333.0
+swm/FingerDMControl-v0 16 get_state 1560021.0
+swm/FingerDMControl-v0 16 set_state_same 1288458.5
+swm/FingerDMControl-v0 16 set_state_independent 1273521.0
+swm/FingerDMControl-v0 16 get_then_set 2793708.0
+swm/FingerDMControl-v0 16 branch_cycle 34974937.5
+/Users/samib/stable-worldmodel/stable_worldmodel/envs/__init__.py:215: UserWarning: ale-py not found; ALE/* envs are unavailable. Install with: pip install 'stable-worldmodel[env]' or pip install ale-py.
+  from stable_worldmodel.envs import ale  # noqa: F401
+STATE_BENCHMARK_COMPLETE swm/FingerDMControl-v0

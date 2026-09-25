@@ -1,0 +1,19 @@
+swm/CartPoleControl-v1 1 reset 140520.5
+swm/CartPoleControl-v1 1 step 172417.0
+swm/CartPoleControl-v1 1 get_state 121250.0
+swm/CartPoleControl-v1 1 set_state_same 108562.5
+swm/CartPoleControl-v1 1 set_state_independent 107854.0
+swm/CartPoleControl-v1 1 get_then_set 220479.0
+swm/CartPoleControl-v1 1 branch_cycle 1807521.0
+swm/CartPoleControl-v1 16 reset 1447458.0
+swm/CartPoleControl-v1 16 step 1364062.5
+swm/CartPoleControl-v1 16 get_state 1199833.0
+/private/tmp/stable-envs-semantic-recovery/.venv/lib/python3.12/site-packages/gymnasium/envs/classic_control/cartpole.py:213: UserWarning: [33mWARN: You are calling 'step()' even though this environment has already returned terminated = True. You should always call 'reset()' once you receive 'terminated = True' -- any further steps are undefined behavior.[0m
+  logger.warn(
+swm/CartPoleControl-v1 16 set_state_same 654771.5
+swm/CartPoleControl-v1 16 set_state_independent 672166.5
+swm/CartPoleControl-v1 16 get_then_set 1853667.0
+swm/CartPoleControl-v1 16 branch_cycle 17010625.5
+/Users/samib/stable-worldmodel/stable_worldmodel/envs/__init__.py:215: UserWarning: ale-py not found; ALE/* envs are unavailable. Install with: pip install 'stable-worldmodel[env]' or pip install ale-py.
+  from stable_worldmodel.envs import ale  # noqa: F401
+STATE_BENCHMARK_COMPLETE swm/CartPoleControl-v1

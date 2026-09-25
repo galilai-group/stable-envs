@@ -1,0 +1,17 @@
+swm/HopperDMControl-v0 1 reset 257645.5
+swm/HopperDMControl-v0 1 step 264896.0
+swm/HopperDMControl-v0 1 get_state 125333.5
+swm/HopperDMControl-v0 1 set_state_same 142542.0
+swm/HopperDMControl-v0 1 set_state_independent 141958.0
+swm/HopperDMControl-v0 1 get_then_set 258562.5
+swm/HopperDMControl-v0 1 branch_cycle 2913500.0
+swm/HopperDMControl-v0 16 reset 3310916.5
+swm/HopperDMControl-v0 16 step 2635208.0
+swm/HopperDMControl-v0 16 get_state 1327084.0
+swm/HopperDMControl-v0 16 set_state_same 1103250.0
+swm/HopperDMControl-v0 16 set_state_independent 1105125.0
+swm/HopperDMControl-v0 16 get_then_set 2428542.0
+swm/HopperDMControl-v0 16 branch_cycle 29451333.5
+/Users/samib/stable-worldmodel/stable_worldmodel/envs/__init__.py:215: UserWarning: ale-py not found; ALE/* envs are unavailable. Install with: pip install 'stable-worldmodel[env]' or pip install ale-py.
+  from stable_worldmodel.envs import ale  # noqa: F401
+STATE_BENCHMARK_COMPLETE swm/HopperDMControl-v0

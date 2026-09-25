@@ -1,0 +1,17 @@
+swm/CartpoleDMControl-v0 1 reset 245042.0
+swm/CartpoleDMControl-v0 1 step 294666.5
+swm/CartpoleDMControl-v0 1 get_state 144687.5
+swm/CartpoleDMControl-v0 1 set_state_same 143562.5
+swm/CartpoleDMControl-v0 1 set_state_independent 146062.5
+swm/CartpoleDMControl-v0 1 get_then_set 259833.0
+swm/CartpoleDMControl-v0 1 branch_cycle 2570208.0
+swm/CartpoleDMControl-v0 16 reset 3129750.0
+swm/CartpoleDMControl-v0 16 step 2421354.0
+swm/CartpoleDMControl-v0 16 get_state 1557291.0
+swm/CartpoleDMControl-v0 16 set_state_same 1132584.0
+swm/CartpoleDMControl-v0 16 set_state_independent 1133708.5
+swm/CartpoleDMControl-v0 16 get_then_set 2616292.0
+swm/CartpoleDMControl-v0 16 branch_cycle 26849021.0
+/Users/samib/stable-worldmodel/stable_worldmodel/envs/__init__.py:215: UserWarning: ale-py not found; ALE/* envs are unavailable. Install with: pip install 'stable-worldmodel[env]' or pip install ale-py.
+  from stable_worldmodel.envs import ale  # noqa: F401
+STATE_BENCHMARK_COMPLETE swm/CartpoleDMControl-v0

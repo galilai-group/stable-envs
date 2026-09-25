@@ -1,0 +1,284 @@
+{
+  "schema": 1,
+  "registration": "swm/BallInCupDMControl-v0",
+  "stable_envs_class": "DMCBallInCupCatch",
+  "family": "dmcontrol",
+  "execution_mode": "DELEGATED_CPU",
+  "device": "cuda",
+  "oracle_commit": "176d54532b3c0a251a4f509b74f2fdacc143a63d",
+  "source_commit": "8d153702",
+  "command": [
+    "/oscar/scratch/sboughan/se-semantic-recovery/state-bench-gpu-8d153702/run-6693308/source/scripts/benchmarks/state_ops.py",
+    "--registration",
+    "swm/BallInCupDMControl-v0",
+    "--output",
+    "/oscar/scratch/sboughan/se-semantic-recovery/state-bench-gpu-8d153702/run-6693308/results/swm__BallInCupDMControl-v0",
+    "--device",
+    "cuda",
+    "--batches",
+    "1",
+    "16",
+    "--warmup",
+    "10",
+    "--iterations",
+    "50",
+    "--render-only"
+  ],
+  "profile": {
+    "python": "3.12.9",
+    "executable": "/oscar/scratch/sboughan/venvs/se6-verify-vis311/bin/python",
+    "platform": "Linux-5.14.0-570.62.1.0.1.el9_6.x86_64-x86_64-with-glibc2.34",
+    "cpu": "AMD EPYC 7413 24-Core Processor",
+    "gpu": "NVIDIA GeForce RTX 3090",
+    "packages": {
+      "torch": "2.14.0+cu126",
+      "tensordict": "0.14.2",
+      "numpy": "2.5.3",
+      "gymnasium": "1.3.0",
+      "mujoco": "3.11.0",
+      "dm-control": "1.0.44",
+      "ogbench": "1.2.1",
+      "craftax": "1.6.1",
+      "jax": "0.11.1",
+      "jaxlib": "0.11.1",
+      "flax": "0.12.9",
+      "pymunk": "7.3.0",
+      "mujoco-warp": "3.11.0",
+      "warp-lang": "1.17.0"
+    },
+    "torch_threads": 1,
+    "environment": {
+      "MUJOCO_GL": "egl",
+      "JAX_PLATFORMS": "cuda",
+      "JAX_ENABLE_X64": "false",
+      "CRAFTAX_JAX_BACKEND": "gpu",
+      "OMP_NUM_THREADS": "1",
+      "SLURM_JOB_ID": "6693308"
+    }
+  },
+  "batches": {
+    "1": {
+      "batch_size": 1,
+      "operations": {
+        "to_render_state": {
+          "status": "UNSUPPORTED",
+          "reason": "'DMCBallInCupCatch' object has no attribute 'to_render_state'"
+        },
+        "render": {
+          "status": "MEASURED",
+          "median_ns": 5338344.0,
+          "p95_ns": 5446429.45,
+          "operations_per_second": 187.3240090934567,
+          "mean_ns": 5348278.28,
+          "coefficient_of_variation": 0.008222085322576265,
+          "cold_first_call_ns": 725353102,
+          "warmup_iterations": 10,
+          "measured_iterations": 50,
+          "samples_ns": [
+            5531907,
+            5326439,
+            5359018,
+            5360908,
+            5495256,
+            5357809,
+            5339338,
+            5336328,
+            5331299,
+            5321159,
+            5300929,
+            5314159,
+            5322859,
+            5346608,
+            5365098,
+            5358848,
+            5349038,
+            5354638,
+            5289259,
+            5338419,
+            5322818,
+            5327208,
+            5342149,
+            5415927,
+            5352458,
+            5328069,
+            5324598,
+            5348099,
+            5384458,
+            5332729,
+            5312469,
+            5356508,
+            5320049,
+            5330188,
+            5342328,
+            5338269,
+            5471386,
+            5337858,
+            5325328,
+            5353228,
+            5358318,
+            5325319,
+            5342688,
+            5349768,
+            5307489,
+            5332258,
+            5358838,
+            5320099,
+            5334878,
+            5318819
+          ],
+          "construction_included": false,
+          "cold_first_call_may_include_compilation": true,
+          "warm_compilation_included": false,
+          "prepare_excluded": false,
+          "result_type": "Tensor"
+        }
+      },
+      "cold_construction_ns": 770494470,
+      "state_size": {
+        "numeric_payload_bytes": 5130,
+        "serialized_npz_uncompressed_bytes": 8114,
+        "leaf_count": 11,
+        "format": "named numeric NPZ, no pickle",
+        "sha256": "d8a77c00ddfd4a73f3ec7352fed1f84683da38e714aa1fd9c70b3acde7965af4"
+      },
+      "implementation": "stable_envs._adapters.dmcontrol_aligned.DMCAlignedAdapter",
+      "status": "MEASURED"
+    },
+    "16": {
+      "batch_size": 16,
+      "operations": {
+        "to_render_state": {
+          "status": "UNSUPPORTED",
+          "reason": "'DMCBallInCupCatch' object has no attribute 'to_render_state'"
+        },
+        "render": {
+          "status": "MEASURED",
+          "median_ns": 6564684.0,
+          "p95_ns": 6605887.45,
+          "operations_per_second": 152.33025687146556,
+          "mean_ns": 6566001.34,
+          "coefficient_of_variation": 0.003512733996660438,
+          "cold_first_call_ns": 69433429,
+          "warmup_iterations": 10,
+          "measured_iterations": 50,
+          "samples_ns": [
+            6551384,
+            6604304,
+            6628133,
+            6571075,
+            6527634,
+            6545554,
+            6572924,
+            6603864,
+            6567864,
+            6550545,
+            6607183,
+            6594744,
+            6551964,
+            6551454,
+            6526874,
+            6547385,
+            6554594,
+            6640223,
+            6557825,
+            6547255,
+            6586174,
+            6568354,
+            6582804,
+            6586194,
+            6554784,
+            6551744,
+            6534245,
+            6578584,
+            6546144,
+            6563964,
+            6578254,
+            6574294,
+            6565404,
+            6546375,
+            6552634,
+            6545895,
+            6565414,
+            6552094,
+            6557494,
+            6568274,
+            6553925,
+            6566384,
+            6547714,
+            6566354,
+            6539055,
+            6570194,
+            6573854,
+            6555524,
+            6591284,
+            6573874
+          ],
+          "construction_included": false,
+          "cold_first_call_may_include_compilation": true,
+          "warm_compilation_included": false,
+          "prepare_excluded": false,
+          "result_type": "Tensor"
+        }
+      },
+      "cold_construction_ns": 1365955052,
+      "state_size": {
+        "numeric_payload_bytes": 82080,
+        "serialized_npz_uncompressed_bytes": 85064,
+        "leaf_count": 11,
+        "format": "named numeric NPZ, no pickle",
+        "sha256": "cfd78571bc9d2ef170e73af007b9c15cecf9c013f26c6e37f155fd52fb8a72e9"
+      },
+      "implementation": "stable_envs._adapters.dmcontrol_aligned.DMCAlignedAdapter",
+      "status": "MEASURED"
+    }
+  },
+  "batch_64": "DEFERRED_RUNTIME: representative larger batch 16 measured; not emulated",
+  "notes": [
+    "Descriptive measurement, not acceptance or an optimization gate.",
+    "Oracle native API is scalar; oracle/native timings use B=1, never an emulated batch.",
+    "No extra render call in dynamics; required pixel observations inside oracle step are identified."
+  ],
+  "actions_lane_zero": [
+    [
+      -0.5453279550656607,
+      -0.36648332058049427
+    ],
+    [
+      0.5947309146654682,
+      0.3525093415019491
+    ],
+    [
+      -0.217780898796182,
+      -0.33437214426723094
+    ],
+    [
+      0.19661750717437965,
+      -0.6265316287925733
+    ],
+    [
+      0.3455120880292426,
+      0.8836057305398743
+    ],
+    [
+      -0.503508570740858,
+      0.8977623036666365
+    ],
+    [
+      0.3344749062007448,
+      -0.8082041288117758
+    ],
+    [
+      -0.11632066766437443,
+      0.7729598386550354
+    ],
+    [
+      0.3949069997640442,
+      -0.3470542718597758
+    ],
+    [
+      0.467856326660133,
+      -0.5597300889090275
+    ]
+  ],
+  "status": "COMPLETE"
+}

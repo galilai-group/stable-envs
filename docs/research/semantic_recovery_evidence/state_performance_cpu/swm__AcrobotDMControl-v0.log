@@ -1,0 +1,17 @@
+swm/AcrobotDMControl-v0 1 reset 235250.0
+swm/AcrobotDMControl-v0 1 step 229166.5
+swm/AcrobotDMControl-v0 1 get_state 124645.5
+swm/AcrobotDMControl-v0 1 set_state_same 140167.0
+swm/AcrobotDMControl-v0 1 set_state_independent 139270.5
+swm/AcrobotDMControl-v0 1 get_then_set 256042.0
+swm/AcrobotDMControl-v0 1 branch_cycle 2485250.0
+swm/AcrobotDMControl-v0 16 reset 2971833.0
+swm/AcrobotDMControl-v0 16 step 2365500.0
+swm/AcrobotDMControl-v0 16 get_state 1336416.5
+swm/AcrobotDMControl-v0 16 set_state_same 1085542.0
+swm/AcrobotDMControl-v0 16 set_state_independent 1083791.0
+swm/AcrobotDMControl-v0 16 get_then_set 2402750.5
+swm/AcrobotDMControl-v0 16 branch_cycle 26145895.5
+/Users/samib/stable-worldmodel/stable_worldmodel/envs/__init__.py:215: UserWarning: ale-py not found; ALE/* envs are unavailable. Install with: pip install 'stable-worldmodel[env]' or pip install ale-py.
+  from stable_worldmodel.envs import ale  # noqa: F401
+STATE_BENCHMARK_COMPLETE swm/AcrobotDMControl-v0

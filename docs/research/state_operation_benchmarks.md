@@ -65,8 +65,10 @@ as unsupported, not replaced by a private packed renderer row. CPU renderer
 refusals are retained and required CUDA measurements run on Oscar. Symbolic
 Craftax has no renderer. Authoritative pixel-Craftax `step` intrinsically produces
 a pixel observation: its timing explicitly includes that required output, even
-though the benchmark makes no extra render call. This differs from exhaustive
-State-only stepping and is not a like-for-like observation-production comparison.
+though the benchmark makes no extra render call. The public Craftax adapter also
+delegates to that upstream step and blocks its complete returned tuple, including
+the intrinsic observation, before exporting State. Its public return type is
+State rather than Gym observations; this is not an identical-output comparison.
 
 State sizes include both numeric tensor payload bytes and an uncompressed NPZ
 encoding with named keys and dtype/shape metadata. No pickle is used. Serialization
@@ -89,6 +91,9 @@ Native ratios are explicitly marked non-equivalent lower-bound comparisons. The
 harness does not relabel shallow references, body pose copies or opaque handles
 as exhaustive snapshots. `NATIVE_EQUIVALENT` requires source and behavioral proof,
 not just a similarly named method.
+Here "lower bound" describes the captured semantic subset, not a mathematical
+latency bound: native copying or synchronization can cost more than a public
+operation. A ratio below one does not establish exhaustive-State superiority.
 
 `native_dmc_integration.py` adds the explicit integration-signature baseline to
 the initial default-signature measurements. Both are retained; the report uses

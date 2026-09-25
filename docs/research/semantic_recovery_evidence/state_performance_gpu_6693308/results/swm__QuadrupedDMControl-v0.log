@@ -1,0 +1,20 @@
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+Users of this version of Gym should be able to simply replace 'import gym' with 'import gymnasium as gym' in the vast majority of cases.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+Warp 1.17.0 initialized:
+   CUDA Toolkit 12.9, Driver 12.9
+   Devices:
+     "cpu"      : "x86_64"
+     "cuda:0"   : "NVIDIA GeForce RTX 3090" (24 GiB, sm_86, mempool enabled)
+   Kernel cache:
+     /oscar/scratch/sboughan/se-semantic-recovery/state-bench-gpu-8d153702/run-6693308/cache/warp/1.17.0
+/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages/mujoco_warp/_src/io.py:713: UserWarning: MULTICCD is enabled, but the scene contains CCD pairs without multicontact support: [('CAPSULE', 'CYLINDER')]. At most 1 contact will be generated for these pairs.
+  warnings.warn(
+Module mujoco_warp._src.render_util 9978d2d load on device 'cuda:0' took 5.90 ms  (cached)
+Module mujoco_warp._src.io c32a0eb load on device 'cuda:0' took 7.34 ms  (cached)
+Module mujoco_warp._src.bvh 7dab8b4 load on device 'cuda:0' took 5.69 ms  (cached)
+Module mujoco_warp._src.smooth b9cc505 load on device 'cuda:0' took 8.77 ms  (cached)
+Module render__locals___render_megakernel_fd092d93 447bb7d load on device 'cuda:0' took 1526.71 ms  (compiled)
+Module render__locals___render_megakernel_33f035e0 1d57e9b load on device 'cuda:0' took 1173.79 ms  (compiled)
+STATE_BENCHMARK_COMPLETE swm/QuadrupedDMControl-v0

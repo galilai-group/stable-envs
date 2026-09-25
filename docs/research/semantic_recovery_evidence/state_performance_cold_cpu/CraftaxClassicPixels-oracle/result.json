@@ -1,0 +1,46 @@
+{
+  "registration": "swm/CraftaxClassicPixels-v1",
+  "device": "cpu",
+  "kind": "oracle",
+  "batch_size": 1,
+  "profile": {
+    "python": "3.12.11",
+    "executable": "/private/tmp/craftax-recovery-312/bin/python",
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "cpu": "Apple M5 Pro",
+    "gpu": null,
+    "packages": {
+      "torch": "2.14.0",
+      "tensordict": "0.14.2",
+      "numpy": "2.2.6",
+      "gymnasium": "1.2.3",
+      "craftax": "1.5.0",
+      "jax": "0.10.1",
+      "jaxlib": "0.10.1",
+      "flax": "0.12.7"
+    },
+    "torch_threads": 1,
+    "environment": {
+      "MUJOCO_GL": "disable",
+      "JAX_PLATFORMS": "cpu",
+      "JAX_ENABLE_X64": null,
+      "CRAFTAX_JAX_BACKEND": "cpu",
+      "OMP_NUM_THREADS": "1",
+      "SLURM_JOB_ID": null
+    }
+  },
+  "measurements": {
+    "construction": 2073925292,
+    "first_explicit_reset": 808635250,
+    "first_explicit_step": 1573440625,
+    "second_step_after_compilation": 591209
+  },
+  "call_order": [
+    "construction",
+    "first_explicit_reset",
+    "first_explicit_step",
+    "second_step_after_compilation"
+  ],
+  "note": "Fresh process. First public calls in this order; constructor/reset may internally call other operations. Compilation is included when first triggered. Warm benchmark checkpoint preparation already exercised step/set, so its first-call field alone is not a JIT cold-start measurement.",
+  "status": "COMPLETE"
+}

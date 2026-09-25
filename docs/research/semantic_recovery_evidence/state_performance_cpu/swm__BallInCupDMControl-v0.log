@@ -1,0 +1,17 @@
+swm/BallInCupDMControl-v0 1 reset 247125.0
+swm/BallInCupDMControl-v0 1 step 278292.0
+swm/BallInCupDMControl-v0 1 get_state 124875.0
+swm/BallInCupDMControl-v0 1 set_state_same 146375.0
+swm/BallInCupDMControl-v0 1 set_state_independent 143041.5
+swm/BallInCupDMControl-v0 1 get_then_set 258792.0
+swm/BallInCupDMControl-v0 1 branch_cycle 3025084.0
+swm/BallInCupDMControl-v0 16 reset 3027083.0
+swm/BallInCupDMControl-v0 16 step 3005000.0
+swm/BallInCupDMControl-v0 16 get_state 1345854.5
+swm/BallInCupDMControl-v0 16 set_state_same 1138792.0
+swm/BallInCupDMControl-v0 16 set_state_independent 1141083.0
+swm/BallInCupDMControl-v0 16 get_then_set 2445833.5
+swm/BallInCupDMControl-v0 16 branch_cycle 33175291.5
+/Users/samib/stable-worldmodel/stable_worldmodel/envs/__init__.py:215: UserWarning: ale-py not found; ALE/* envs are unavailable. Install with: pip install 'stable-worldmodel[env]' or pip install ale-py.
+  from stable_worldmodel.envs import ale  # noqa: F401
+STATE_BENCHMARK_COMPLETE swm/BallInCupDMControl-v0

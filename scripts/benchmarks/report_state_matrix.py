@@ -37,7 +37,11 @@ def plot_costs(rows, output):
         for row, x, y in zip(items, step, restore, strict=True):
             if "OGBCube" in row["registration"] or "OGBScene" in row["registration"]:
                 axis.annotate(
-                    row["registration"].split("/")[1], (x, y), xytext=(5, 5), textcoords="offset points", fontsize=8
+                    row["registration"].split("/")[1],
+                    (x, y),
+                    xytext=(5, -14 if "OGBCube" in row["registration"] else 8),
+                    textcoords="offset points",
+                    fontsize=8,
                 )
     axis.set(
         xscale="log",
@@ -217,7 +221,7 @@ def main():
         "",
         "## Oracle and closest native baseline (CPU B1)",
         "",
-        "Every native comparison is a strict subset and is **not like-for-like exhaustive State**. NONE means no comparable native interface. DMC uses Physics get/set with the explicit integration signature; its original default-signature lower bound is also retained in raw results. Fetch/OGBench use MuJoCo integration state; Craftax copies/installs its engine pytree. Pixel oracle steps intrinsically create observations, while stable-envs dynamics returns State; this output-cost distinction remains visible.",
+        "Every native comparison is a strict subset and is **not like-for-like exhaustive State**. NONE means no comparable native interface. DMC uses Physics get/set with the explicit integration signature; its original default-signature lower bound is also retained in raw results. Fetch/OGBench use MuJoCo integration state; Craftax copies/installs its engine pytree. Pixel Craftax intrinsically generates observations in both upstream and delegated public steps; the public API then exports State rather than returning the Gym observation. No extra standalone render call is timed inside step.",
         "",
         "| Registration | Oracle reset µs | Oracle step µs | Native class | Native get / set µs | Public/native get / set |",
         "|---|---:|---:|---|---:|---:|",
@@ -256,7 +260,7 @@ def main():
         "",
         "## Fresh-process Craftax initialization",
         "",
-        "One fresh process per registration/device/API kind, with a separate compilation-cache path. Seconds below include compilation when first triggered; interpreter startup and hardware probing are excluded. Call order is constructor → reset → step → public get/set → second step. Constructor/reset can internally invoke other operations. Oracle cold steps use action 0; public cold steps use the recorded script's fixed action seed. Warm benchmark oracle/public actions are matched separately. These are individual cold observations, not p95 estimates; the repeated warm measurements above provide distributions.",
+        "One fresh process per registration/device/API kind, with a separate compilation-cache path. Seconds below include compilation when first triggered; interpreter startup and hardware probing are excluded. Call order is constructor → reset → step → public get/set → second step. Constructor/reset can internally invoke other operations. The second step can still incur initialization work after restoration (visible for Classic CPU); it is not labelled steady-state. Oracle cold steps use action 0; public cold steps use the recorded script's fixed action seed. Warm benchmark oracle/public actions are matched separately. These are individual cold observations, not p95 estimates; the repeated warm measurements above provide distributions.",
         "",
         "| Registration | Device | API | Constructor s | First reset s | First step s | Second step s | First set s |",
         "|---|---|---|---:|---:|---:|---:|---:|",

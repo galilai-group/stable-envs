@@ -1,0 +1,18 @@
+AdroitHandRelocateDense-v1, AdroitHandHammerDense-v1, AdroitHandDoorDense-v1 environment's reward functions were updated in v1.2.1 without an environment version update. Therefore, use gymnasium-robotics==1.2.0 for v1 reproducibility or use v2 in gymnasium-robotics>=1.4.3. See https://github.com/Farama-Foundation/Gymnasium-Robotics/pull/220 for more details
+swm/FetchReachDict-v3 1 reset 318958.0
+swm/FetchReachDict-v3 1 step 655959.0
+swm/FetchReachDict-v3 1 get_state 133584.0
+swm/FetchReachDict-v3 1 set_state_same 190375.0
+swm/FetchReachDict-v3 1 set_state_independent 189958.0
+swm/FetchReachDict-v3 1 get_then_set 316458.0
+swm/FetchReachDict-v3 1 branch_cycle 7290291.5
+swm/FetchReachDict-v3 16 reset 4168729.0
+swm/FetchReachDict-v3 16 step 9438125.0
+swm/FetchReachDict-v3 16 get_state 1340167.0
+swm/FetchReachDict-v3 16 set_state_same 1369875.0
+swm/FetchReachDict-v3 16 set_state_independent 1361625.0
+swm/FetchReachDict-v3 16 get_then_set 2504917.0
+swm/FetchReachDict-v3 16 branch_cycle 98510083.5
+/Users/samib/stable-worldmodel/stable_worldmodel/envs/__init__.py:215: UserWarning: ale-py not found; ALE/* envs are unavailable. Install with: pip install 'stable-worldmodel[env]' or pip install ale-py.
+  from stable_worldmodel.envs import ale  # noqa: F401
+STATE_BENCHMARK_COMPLETE swm/FetchReachDict-v3

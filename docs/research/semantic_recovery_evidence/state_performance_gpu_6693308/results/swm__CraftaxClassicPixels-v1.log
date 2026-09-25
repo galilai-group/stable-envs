@@ -1,0 +1,58 @@
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+Users of this version of Gym should be able to simply replace 'import gym' with 'import gymnasium as gym' in the vast majority of cases.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+/oscar/scratch/sboughan/venvs/se-step4-swm/lib/python3.12/site-packages/jaxlib/plugin_support.py:114: RuntimeWarning: JAX plugin jax_cuda12_plugin version 0.10.1 is installed, but it is not compatible with the installed jaxlib version 0.11.1, so it will not be used.
+  warnings.warn(
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/se-semantic-recovery/state-bench-gpu-8d153702/run-6693308/source/scripts/benchmarks/state_ops.py", line 302, in run
+    a = se.make(name, num_envs=batch, device=args.device)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/oscar/scratch/sboughan/se-semantic-recovery/state-bench-gpu-8d153702/run-6693308/source/stable_envs/__init__.py", line 49, in make
+    return _make(name, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/oscar/scratch/sboughan/se-semantic-recovery/state-bench-gpu-8d153702/run-6693308/source/stable_envs/registry.py", line 249, in make
+    return _resolve(name)(**kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/oscar/scratch/sboughan/se-semantic-recovery/state-bench-gpu-8d153702/run-6693308/source/stable_envs/envs/craftax_semantics.py", line 41, in __init__
+    self._simulator = CraftaxAdapter(self.CLASSIC, self.PIXELS, num_envs, self.resolve_device(device), seed)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/oscar/scratch/sboughan/se-semantic-recovery/state-bench-gpu-8d153702/run-6693308/source/stable_envs/_adapters/craftax.py", line 120, in __init__
+    self.upstream, self.reset_fn, self.step_fn, self.output_fn, self.terminal_fn, self.template = kernel(
+                                                                                                  ^^^^^^^
+  File "/oscar/scratch/sboughan/se-semantic-recovery/state-bench-gpu-8d153702/run-6693308/source/stable_envs/_adapters/craftax.py", line 81, in kernel
+    check_profile()
+  File "/oscar/scratch/sboughan/se-semantic-recovery/state-bench-gpu-8d153702/run-6693308/source/stable_envs/_adapters/craftax.py", line 68, in check_profile
+    raise RuntimeError(f"Craftax recovery requires {name}=={version}; installed {actual}")
+RuntimeError: Craftax recovery requires craftax==1.5.0; installed 1.6.1
+
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/se-semantic-recovery/state-bench-gpu-8d153702/run-6693308/source/scripts/benchmarks/state_ops.py", line 302, in run
+    a = se.make(name, num_envs=batch, device=args.device)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/oscar/scratch/sboughan/se-semantic-recovery/state-bench-gpu-8d153702/run-6693308/source/stable_envs/__init__.py", line 49, in make
+    return _make(name, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/oscar/scratch/sboughan/se-semantic-recovery/state-bench-gpu-8d153702/run-6693308/source/stable_envs/registry.py", line 249, in make
+    return _resolve(name)(**kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/oscar/scratch/sboughan/se-semantic-recovery/state-bench-gpu-8d153702/run-6693308/source/stable_envs/envs/craftax_semantics.py", line 41, in __init__
+    self._simulator = CraftaxAdapter(self.CLASSIC, self.PIXELS, num_envs, self.resolve_device(device), seed)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/oscar/scratch/sboughan/se-semantic-recovery/state-bench-gpu-8d153702/run-6693308/source/stable_envs/_adapters/craftax.py", line 120, in __init__
+    self.upstream, self.reset_fn, self.step_fn, self.output_fn, self.terminal_fn, self.template = kernel(
+                                                                                                  ^^^^^^^
+  File "/oscar/scratch/sboughan/se-semantic-recovery/state-bench-gpu-8d153702/run-6693308/source/stable_envs/_adapters/craftax.py", line 81, in kernel
+    check_profile()
+  File "/oscar/scratch/sboughan/se-semantic-recovery/state-bench-gpu-8d153702/run-6693308/source/stable_envs/_adapters/craftax.py", line 68, in check_profile
+    raise RuntimeError(f"Craftax recovery requires {name}=={version}; installed {actual}")
+RuntimeError: Craftax recovery requires craftax==1.5.0; installed 1.6.1
+
+Loading Craftax-Classic textures from cache.
+Textures successfully loaded from cache.
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/se-semantic-recovery/state-bench-gpu-8d153702/run-6693308/source/scripts/benchmarks/state_ops.py", line 408, in run
+    raise ValueError("Include batch 1 for matched authoritative actions")
+ValueError: Include batch 1 for matched authoritative actions
+
+STATE_BENCHMARK_INCOMPLETE swm/CraftaxClassicPixels-v1

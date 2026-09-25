@@ -1,0 +1,3 @@
+#!/bin/bash
+export PYTHONPATH="$PYTHONPATH:/private/tmp/native-nav-py312-deps"
+exec /private/tmp/stable-envs-semantic-recovery/.venv/bin/python "$@"

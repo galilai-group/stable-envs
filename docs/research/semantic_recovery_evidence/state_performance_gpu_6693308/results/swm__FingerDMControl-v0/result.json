@@ -1,0 +1,284 @@
+{
+  "schema": 1,
+  "registration": "swm/FingerDMControl-v0",
+  "stable_envs_class": "DMCFingerTurnHard",
+  "family": "dmcontrol",
+  "execution_mode": "DELEGATED_CPU",
+  "device": "cuda",
+  "oracle_commit": "176d54532b3c0a251a4f509b74f2fdacc143a63d",
+  "source_commit": "8d153702",
+  "command": [
+    "/oscar/scratch/sboughan/se-semantic-recovery/state-bench-gpu-8d153702/run-6693308/source/scripts/benchmarks/state_ops.py",
+    "--registration",
+    "swm/FingerDMControl-v0",
+    "--output",
+    "/oscar/scratch/sboughan/se-semantic-recovery/state-bench-gpu-8d153702/run-6693308/results/swm__FingerDMControl-v0",
+    "--device",
+    "cuda",
+    "--batches",
+    "1",
+    "16",
+    "--warmup",
+    "10",
+    "--iterations",
+    "50",
+    "--render-only"
+  ],
+  "profile": {
+    "python": "3.12.9",
+    "executable": "/oscar/scratch/sboughan/venvs/se6-verify-vis311/bin/python",
+    "platform": "Linux-5.14.0-570.62.1.0.1.el9_6.x86_64-x86_64-with-glibc2.34",
+    "cpu": "AMD EPYC 7413 24-Core Processor",
+    "gpu": "NVIDIA GeForce RTX 3090",
+    "packages": {
+      "torch": "2.14.0+cu126",
+      "tensordict": "0.14.2",
+      "numpy": "2.5.3",
+      "gymnasium": "1.3.0",
+      "mujoco": "3.11.0",
+      "dm-control": "1.0.44",
+      "ogbench": "1.2.1",
+      "craftax": "1.6.1",
+      "jax": "0.11.1",
+      "jaxlib": "0.11.1",
+      "flax": "0.12.9",
+      "pymunk": "7.3.0",
+      "mujoco-warp": "3.11.0",
+      "warp-lang": "1.17.0"
+    },
+    "torch_threads": 1,
+    "environment": {
+      "MUJOCO_GL": "egl",
+      "JAX_PLATFORMS": "cuda",
+      "JAX_ENABLE_X64": "false",
+      "CRAFTAX_JAX_BACKEND": "gpu",
+      "OMP_NUM_THREADS": "1",
+      "SLURM_JOB_ID": "6693308"
+    }
+  },
+  "batches": {
+    "1": {
+      "batch_size": 1,
+      "operations": {
+        "to_render_state": {
+          "status": "UNSUPPORTED",
+          "reason": "'DMCFingerTurnHard' object has no attribute 'to_render_state'"
+        },
+        "render": {
+          "status": "MEASURED",
+          "median_ns": 5040311.0,
+          "p95_ns": 5087461.55,
+          "operations_per_second": 198.40045584488735,
+          "mean_ns": 5048607.12,
+          "coefficient_of_variation": 0.006347096784612746,
+          "cold_first_call_ns": 754501787,
+          "warmup_iterations": 10,
+          "measured_iterations": 50,
+          "samples_ns": [
+            5234668,
+            5075229,
+            5063041,
+            5075111,
+            5043951,
+            5036780,
+            5047300,
+            5059980,
+            5033491,
+            5052431,
+            5045580,
+            5039890,
+            5037310,
+            5072240,
+            5035801,
+            5069480,
+            5039901,
+            5055560,
+            5047350,
+            5044970,
+            5110080,
+            5036860,
+            5035400,
+            5042391,
+            5022340,
+            5032580,
+            5031001,
+            5053370,
+            5097470,
+            5039491,
+            5032360,
+            5039360,
+            5040721,
+            5042850,
+            5030871,
+            5027211,
+            5037780,
+            5022881,
+            5030531,
+            5046570,
+            5026621,
+            5028070,
+            5028160,
+            5024381,
+            5027810,
+            5047571,
+            5057871,
+            5052500,
+            5028580,
+            5046610
+          ],
+          "construction_included": false,
+          "cold_first_call_may_include_compilation": true,
+          "warm_compilation_included": false,
+          "prepare_excluded": false,
+          "result_type": "Tensor"
+        }
+      },
+      "cold_construction_ns": 854155297,
+      "state_size": {
+        "numeric_payload_bytes": 5122,
+        "serialized_npz_uncompressed_bytes": 8392,
+        "leaf_count": 12,
+        "format": "named numeric NPZ, no pickle",
+        "sha256": "ba8a57cb4602a8579d8ab190e934534b46aef665b7cafc00278166385b6e29f9"
+      },
+      "implementation": "stable_envs._adapters.dmcontrol_aligned.DMCAlignedAdapter",
+      "status": "MEASURED"
+    },
+    "16": {
+      "batch_size": 16,
+      "operations": {
+        "to_render_state": {
+          "status": "UNSUPPORTED",
+          "reason": "'DMCFingerTurnHard' object has no attribute 'to_render_state'"
+        },
+        "render": {
+          "status": "MEASURED",
+          "median_ns": 5887851.0,
+          "p95_ns": 5915154.45,
+          "operations_per_second": 169.84125447468014,
+          "mean_ns": 5889429.5,
+          "coefficient_of_variation": 0.0022698997863101543,
+          "cold_first_call_ns": 34199625,
+          "warmup_iterations": 10,
+          "measured_iterations": 50,
+          "samples_ns": [
+            5907290,
+            5890600,
+            5885160,
+            5883531,
+            5880480,
+            5935810,
+            5878670,
+            5895370,
+            5893541,
+            5894831,
+            5921589,
+            5868341,
+            5899940,
+            5897020,
+            5893620,
+            5891680,
+            5890851,
+            5878770,
+            5892560,
+            5883511,
+            5881100,
+            5886480,
+            5875720,
+            5885691,
+            5889781,
+            5888410,
+            5879360,
+            5893691,
+            5884681,
+            5899570,
+            5884870,
+            5900310,
+            5868181,
+            5875500,
+            5905680,
+            5887791,
+            5877200,
+            5897800,
+            5879550,
+            5891521,
+            5878540,
+            5868520,
+            5872321,
+            5883900,
+            5887911,
+            5886311,
+            5882510,
+            5892470,
+            5927040,
+            5895900
+          ],
+          "construction_included": false,
+          "cold_first_call_may_include_compilation": true,
+          "warm_compilation_included": false,
+          "prepare_excluded": false,
+          "result_type": "Tensor"
+        }
+      },
+      "cold_construction_ns": 1423475113,
+      "state_size": {
+        "numeric_payload_bytes": 81952,
+        "serialized_npz_uncompressed_bytes": 85222,
+        "leaf_count": 12,
+        "format": "named numeric NPZ, no pickle",
+        "sha256": "65eef5752286a2d975dd637afd03a0e0bd1853de04852aa78e8948b26d9d6348"
+      },
+      "implementation": "stable_envs._adapters.dmcontrol_aligned.DMCAlignedAdapter",
+      "status": "MEASURED"
+    }
+  },
+  "batch_64": "DEFERRED_RUNTIME: representative larger batch 16 measured; not emulated",
+  "notes": [
+    "Descriptive measurement, not acceptance or an optimization gate.",
+    "Oracle native API is scalar; oracle/native timings use B=1, never an emulated batch.",
+    "No extra render call in dynamics; required pixel observations inside oracle step are identified."
+  ],
+  "actions_lane_zero": [
+    [
+      -0.5453279550656607,
+      -0.36648332058049427
+    ],
+    [
+      0.5947309146654682,
+      0.3525093415019491
+    ],
+    [
+      -0.217780898796182,
+      -0.33437214426723094
+    ],
+    [
+      0.19661750717437965,
+      -0.6265316287925733
+    ],
+    [
+      0.3455120880292426,
+      0.8836057305398743
+    ],
+    [
+      -0.503508570740858,
+      0.8977623036666365
+    ],
+    [
+      0.3344749062007448,
+      -0.8082041288117758
+    ],
+    [
+      -0.11632066766437443,
+      0.7729598386550354
+    ],
+    [
+      0.3949069997640442,
+      -0.3470542718597758
+    ],
+    [
+      0.467856326660133,
+      -0.5597300889090275
+    ]
+  ],
+  "status": "COMPLETE"
+}

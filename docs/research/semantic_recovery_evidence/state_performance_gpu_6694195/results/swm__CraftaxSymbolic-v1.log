@@ -1,0 +1,17 @@
+Loading Craftax textures from cache.
+Textures successfully loaded from cache.
+swm/CraftaxSymbolic-v1 1 reset 37783372.5
+swm/CraftaxSymbolic-v1 1 step 41118244.0
+swm/CraftaxSymbolic-v1 1 get_state 12558066.0
+swm/CraftaxSymbolic-v1 1 set_state_same 44422180.0
+swm/CraftaxSymbolic-v1 1 set_state_independent 44528309.0
+swm/CraftaxSymbolic-v1 1 get_then_set 56796872.0
+swm/CraftaxSymbolic-v1 1 branch_cycle 472082225.0
+swm/CraftaxSymbolic-v1 16 reset 244697219.0
+swm/CraftaxSymbolic-v1 16 step 289637287.0
+swm/CraftaxSymbolic-v1 16 get_state 141364165.0
+swm/CraftaxSymbolic-v1 16 set_state_same 353183639.0
+swm/CraftaxSymbolic-v1 16 set_state_independent 353331393.0
+swm/CraftaxSymbolic-v1 16 get_then_set 483336770.5
+swm/CraftaxSymbolic-v1 16 branch_cycle 3464403815.5
+STATE_BENCHMARK_COMPLETE swm/CraftaxSymbolic-v1

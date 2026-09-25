@@ -1,0 +1,23 @@
+swm/TwoRoom-v1 1 reset 482083.0
+swm/TwoRoom-v1 1 step 232542.0
+swm/TwoRoom-v1 1 get_state 48833.0
+swm/TwoRoom-v1 1 set_state_same 43875.0
+swm/TwoRoom-v1 1 set_state_independent 43875.0
+swm/TwoRoom-v1 1 get_then_set 84354.5
+swm/TwoRoom-v1 1 branch_cycle 2380417.0
+swm/TwoRoom-v1 16 reset 6268479.0
+swm/TwoRoom-v1 16 step 265542.0
+swm/TwoRoom-v1 16 get_state 50687.5
+swm/TwoRoom-v1 16 set_state_same 44437.5
+swm/TwoRoom-v1 16 set_state_independent 44084.0
+swm/TwoRoom-v1 16 get_then_set 85208.0
+swm/TwoRoom-v1 16 branch_cycle 2709250.0
+/Users/samib/stable-worldmodel/stable_worldmodel/envs/__init__.py:215: UserWarning: ale-py not found; ALE/* envs are unavailable. Install with: pip install 'stable-worldmodel[env]' or pip install ale-py.
+  from stable_worldmodel.envs import ale  # noqa: F401
+/private/tmp/stable-envs-semantic-recovery/.venv/lib/python3.12/site-packages/gymnasium/utils/passive_env_checker.py:129: UserWarning: [33mWARN: The obs returned by the `reset()` method was expecting a numpy array, actual type: <class 'torch.Tensor'>[0m
+  logger.warn(
+/private/tmp/stable-envs-semantic-recovery/.venv/lib/python3.12/site-packages/gymnasium/spaces/box.py:415: UserWarning: [33mWARN: Casting input x to numpy array.[0m
+  gym.logger.warn("Casting input x to numpy array.")
+/private/tmp/stable-envs-semantic-recovery/.venv/lib/python3.12/site-packages/gymnasium/utils/passive_env_checker.py:129: UserWarning: [33mWARN: The obs returned by the `step()` method was expecting a numpy array, actual type: <class 'torch.Tensor'>[0m
+  logger.warn(
+STATE_BENCHMARK_COMPLETE swm/TwoRoom-v1
