@@ -1,0 +1,3672 @@
+{
+  "status": "REPLAY_BOUND_BLOCKER_REJECTED_CONTROLS",
+  "records": [
+    {
+      "seed": 0,
+      "dtype": "float32",
+      "invalid_control": "ignition",
+      "equal_rejected_call_count": false,
+      "rejected_calls": [
+        1,
+        2
+      ],
+      "last_action_equal": true,
+      "prefixes": [
+        [
+          [
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        ],
+        [
+          [
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        ]
+      ],
+      "immediate_91_numeric_fields_exact": true,
+      "public_step_count_before": 0,
+      "physics_steps_before": 20,
+      "aviary_steps_before": 10,
+      "next_zero_action_differences": {
+        "wrapper/state": {
+          "count": 2,
+          "max_abs": 0.003417414328993118
+        },
+        "wrapper/reward": {
+          "count": 1,
+          "max_abs": 1.7096621695245062e-05
+        },
+        "wrapper/lin_vel": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "wrapper/lin_pos": {
+          "count": 1,
+          "max_abs": 8.548310847800167e-05
+        },
+        "wrapper/ground_lin_vel": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "wrapper/previous_lin_vel": {
+          "count": 1,
+          "max_abs": 0.003418943597957025
+        },
+        "wrapper/previous_lin_pos": {
+          "count": 1,
+          "max_abs": 5.700146823528485e-05
+        },
+        "wrapper/previous_ground_lin_vel": {
+          "count": 1,
+          "max_abs": 0.003418943597957025
+        },
+        "drone/state": {
+          "count": 2,
+          "max_abs": 0.003417414328993118
+        },
+        "bodies/local_body_velocities": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_0/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_1/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_2/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_3/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "physics/body_1/position": {
+          "count": 1,
+          "max_abs": 8.548310847800167e-05
+        },
+        "physics/body_1/linear_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "diagnostic/cached_links": {
+          "count": 30,
+          "max_abs": 0.003417414328993118
+        }
+      },
+      "migrated_task_exact_to_source": true
+    },
+    {
+      "seed": 0,
+      "dtype": "float32",
+      "invalid_control": "throttle",
+      "equal_rejected_call_count": false,
+      "rejected_calls": [
+        1,
+        2
+      ],
+      "last_action_equal": true,
+      "prefixes": [
+        [
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0
+          ]
+        ],
+        [
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0
+          ]
+        ]
+      ],
+      "immediate_91_numeric_fields_exact": true,
+      "public_step_count_before": 0,
+      "physics_steps_before": 20,
+      "aviary_steps_before": 10,
+      "next_zero_action_differences": {
+        "wrapper/state": {
+          "count": 2,
+          "max_abs": 0.003417414328993118
+        },
+        "wrapper/reward": {
+          "count": 1,
+          "max_abs": 1.7096621695245062e-05
+        },
+        "wrapper/lin_vel": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "wrapper/lin_pos": {
+          "count": 1,
+          "max_abs": 8.548310847800167e-05
+        },
+        "wrapper/ground_lin_vel": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "wrapper/previous_lin_vel": {
+          "count": 1,
+          "max_abs": 0.003418943597957025
+        },
+        "wrapper/previous_lin_pos": {
+          "count": 1,
+          "max_abs": 5.700146823528485e-05
+        },
+        "wrapper/previous_ground_lin_vel": {
+          "count": 1,
+          "max_abs": 0.003418943597957025
+        },
+        "drone/state": {
+          "count": 2,
+          "max_abs": 0.003417414328993118
+        },
+        "bodies/local_body_velocities": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_0/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_1/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_2/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_3/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "physics/body_1/position": {
+          "count": 1,
+          "max_abs": 8.548310847800167e-05
+        },
+        "physics/body_1/linear_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "diagnostic/cached_links": {
+          "count": 30,
+          "max_abs": 0.003417414328993118
+        }
+      },
+      "migrated_task_exact_to_source": true
+    },
+    {
+      "seed": 0,
+      "dtype": "float32",
+      "invalid_control": "gimbal",
+      "equal_rejected_call_count": false,
+      "rejected_calls": [
+        1,
+        2
+      ],
+      "last_action_equal": true,
+      "prefixes": [
+        [
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0
+          ]
+        ],
+        [
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0
+          ]
+        ]
+      ],
+      "immediate_91_numeric_fields_exact": true,
+      "public_step_count_before": 0,
+      "physics_steps_before": 20,
+      "aviary_steps_before": 10,
+      "next_zero_action_differences": {
+        "wrapper/state": {
+          "count": 2,
+          "max_abs": 0.003417414328993118
+        },
+        "wrapper/reward": {
+          "count": 1,
+          "max_abs": 1.7096621695245062e-05
+        },
+        "wrapper/lin_vel": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "wrapper/lin_pos": {
+          "count": 1,
+          "max_abs": 8.548310847800167e-05
+        },
+        "wrapper/ground_lin_vel": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "wrapper/previous_lin_vel": {
+          "count": 1,
+          "max_abs": 0.003418943597957025
+        },
+        "wrapper/previous_lin_pos": {
+          "count": 1,
+          "max_abs": 5.700146823528485e-05
+        },
+        "wrapper/previous_ground_lin_vel": {
+          "count": 1,
+          "max_abs": 0.003418943597957025
+        },
+        "drone/state": {
+          "count": 2,
+          "max_abs": 0.003417414328993118
+        },
+        "bodies/local_body_velocities": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_0/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_1/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_2/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_3/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "physics/body_1/position": {
+          "count": 1,
+          "max_abs": 8.548310847800167e-05
+        },
+        "physics/body_1/linear_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "diagnostic/cached_links": {
+          "count": 30,
+          "max_abs": 0.003417414328993118
+        }
+      },
+      "migrated_task_exact_to_source": true
+    },
+    {
+      "seed": 0,
+      "dtype": "float64",
+      "invalid_control": "ignition",
+      "equal_rejected_call_count": false,
+      "rejected_calls": [
+        1,
+        2
+      ],
+      "last_action_equal": true,
+      "prefixes": [
+        [
+          [
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        ],
+        [
+          [
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        ]
+      ],
+      "immediate_91_numeric_fields_exact": true,
+      "public_step_count_before": 0,
+      "physics_steps_before": 20,
+      "aviary_steps_before": 10,
+      "next_zero_action_differences": {
+        "wrapper/state": {
+          "count": 2,
+          "max_abs": 0.003417414328993118
+        },
+        "wrapper/reward": {
+          "count": 1,
+          "max_abs": 1.7096621695245062e-05
+        },
+        "wrapper/lin_vel": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "wrapper/lin_pos": {
+          "count": 1,
+          "max_abs": 8.548310847800167e-05
+        },
+        "wrapper/ground_lin_vel": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "wrapper/previous_lin_vel": {
+          "count": 1,
+          "max_abs": 0.003418943597957025
+        },
+        "wrapper/previous_lin_pos": {
+          "count": 1,
+          "max_abs": 5.700146823528485e-05
+        },
+        "wrapper/previous_ground_lin_vel": {
+          "count": 1,
+          "max_abs": 0.003418943597957025
+        },
+        "drone/state": {
+          "count": 2,
+          "max_abs": 0.003417414328993118
+        },
+        "bodies/local_body_velocities": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_0/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_1/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_2/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_3/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "physics/body_1/position": {
+          "count": 1,
+          "max_abs": 8.548310847800167e-05
+        },
+        "physics/body_1/linear_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "diagnostic/cached_links": {
+          "count": 30,
+          "max_abs": 0.003417414328993118
+        }
+      },
+      "migrated_task_exact_to_source": true
+    },
+    {
+      "seed": 0,
+      "dtype": "float64",
+      "invalid_control": "throttle",
+      "equal_rejected_call_count": false,
+      "rejected_calls": [
+        1,
+        2
+      ],
+      "last_action_equal": true,
+      "prefixes": [
+        [
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0
+          ]
+        ],
+        [
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0
+          ]
+        ]
+      ],
+      "immediate_91_numeric_fields_exact": true,
+      "public_step_count_before": 0,
+      "physics_steps_before": 20,
+      "aviary_steps_before": 10,
+      "next_zero_action_differences": {
+        "wrapper/state": {
+          "count": 2,
+          "max_abs": 0.003417414328993118
+        },
+        "wrapper/reward": {
+          "count": 1,
+          "max_abs": 1.7096621695245062e-05
+        },
+        "wrapper/lin_vel": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "wrapper/lin_pos": {
+          "count": 1,
+          "max_abs": 8.548310847800167e-05
+        },
+        "wrapper/ground_lin_vel": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "wrapper/previous_lin_vel": {
+          "count": 1,
+          "max_abs": 0.003418943597957025
+        },
+        "wrapper/previous_lin_pos": {
+          "count": 1,
+          "max_abs": 5.700146823528485e-05
+        },
+        "wrapper/previous_ground_lin_vel": {
+          "count": 1,
+          "max_abs": 0.003418943597957025
+        },
+        "drone/state": {
+          "count": 2,
+          "max_abs": 0.003417414328993118
+        },
+        "bodies/local_body_velocities": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_0/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_1/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_2/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_3/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "physics/body_1/position": {
+          "count": 1,
+          "max_abs": 8.548310847800167e-05
+        },
+        "physics/body_1/linear_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "diagnostic/cached_links": {
+          "count": 30,
+          "max_abs": 0.003417414328993118
+        }
+      },
+      "migrated_task_exact_to_source": true
+    },
+    {
+      "seed": 0,
+      "dtype": "float64",
+      "invalid_control": "gimbal",
+      "equal_rejected_call_count": false,
+      "rejected_calls": [
+        1,
+        2
+      ],
+      "last_action_equal": true,
+      "prefixes": [
+        [
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0
+          ]
+        ],
+        [
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0
+          ]
+        ]
+      ],
+      "immediate_91_numeric_fields_exact": true,
+      "public_step_count_before": 0,
+      "physics_steps_before": 20,
+      "aviary_steps_before": 10,
+      "next_zero_action_differences": {
+        "wrapper/state": {
+          "count": 2,
+          "max_abs": 0.003417414328993118
+        },
+        "wrapper/reward": {
+          "count": 1,
+          "max_abs": 1.7096621695245062e-05
+        },
+        "wrapper/lin_vel": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "wrapper/lin_pos": {
+          "count": 1,
+          "max_abs": 8.548310847800167e-05
+        },
+        "wrapper/ground_lin_vel": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "wrapper/previous_lin_vel": {
+          "count": 1,
+          "max_abs": 0.003418943597957025
+        },
+        "wrapper/previous_lin_pos": {
+          "count": 1,
+          "max_abs": 5.700146823528485e-05
+        },
+        "wrapper/previous_ground_lin_vel": {
+          "count": 1,
+          "max_abs": 0.003418943597957025
+        },
+        "drone/state": {
+          "count": 2,
+          "max_abs": 0.003417414328993118
+        },
+        "bodies/local_body_velocities": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_0/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_1/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_2/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_3/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "physics/body_1/position": {
+          "count": 1,
+          "max_abs": 8.548310847800167e-05
+        },
+        "physics/body_1/linear_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "diagnostic/cached_links": {
+          "count": 30,
+          "max_abs": 0.003417414328993118
+        }
+      },
+      "migrated_task_exact_to_source": true
+    },
+    {
+      "seed": 0,
+      "dtype": "float64",
+      "invalid_control": "ignition",
+      "equal_rejected_call_count": true,
+      "rejected_calls": [
+        3,
+        3
+      ],
+      "last_action_equal": true,
+      "prefixes": [
+        [
+          [
+            0.5,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            -0.4583333333333333,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        ],
+        [
+          [
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        ]
+      ],
+      "immediate_91_numeric_fields_exact": true,
+      "public_step_count_before": 0,
+      "physics_steps_before": 20,
+      "aviary_steps_before": 10,
+      "next_zero_action_differences": {
+        "wrapper/state": {
+          "count": 7,
+          "max_abs": 0.0004015837397325629
+        },
+        "wrapper/reward": {
+          "count": 1,
+          "max_abs": 0.0005432316374118784
+        },
+        "wrapper/ang_vel": {
+          "count": 1,
+          "max_abs": 0.000123172883321884
+        },
+        "wrapper/ang_pos": {
+          "count": 1,
+          "max_abs": 3.086921268801779e-06
+        },
+        "wrapper/lin_vel": {
+          "count": 2,
+          "max_abs": 0.0004015837397325629
+        },
+        "wrapper/lin_pos": {
+          "count": 2,
+          "max_abs": 7.668214640335272e-06
+        },
+        "wrapper/ground_lin_vel": {
+          "count": 2,
+          "max_abs": 0.00030598668944543234
+        },
+        "wrapper/previous_ang_vel": {
+          "count": 1,
+          "max_abs": 0.00012342121299299737
+        },
+        "wrapper/previous_lin_vel": {
+          "count": 2,
+          "max_abs": 0.0003702294646108721
+        },
+        "wrapper/previous_lin_pos": {
+          "count": 2,
+          "max_abs": 5.117056264838954e-06
+        },
+        "wrapper/previous_ground_lin_vel": {
+          "count": 2,
+          "max_abs": 0.00030659003562467967
+        },
+        "drone/state": {
+          "count": 6,
+          "max_abs": 0.0004015837397325629
+        },
+        "bodies/local_body_velocities": {
+          "count": 2,
+          "max_abs": 0.00041747735899393
+        },
+        "fin_0/local_surface_velocity": {
+          "count": 2,
+          "max_abs": 0.00041747735899393
+        },
+        "fin_1/local_surface_velocity": {
+          "count": 2,
+          "max_abs": 0.00017113159235019432
+        },
+        "fin_2/local_surface_velocity": {
+          "count": 2,
+          "max_abs": 0.0006701049648122712
+        },
+        "fin_3/local_surface_velocity": {
+          "count": 2,
+          "max_abs": 0.0006701049205618903
+        },
+        "physics/body_1/position": {
+          "count": 2,
+          "max_abs": 7.668214640335272e-06
+        },
+        "physics/body_1/quaternion": {
+          "count": 2,
+          "max_abs": 1.5434606344002767e-06
+        },
+        "physics/body_1/linear_velocity": {
+          "count": 2,
+          "max_abs": 0.00030598668944543234
+        },
+        "physics/body_1/angular_velocity": {
+          "count": 1,
+          "max_abs": 0.000123172883321884
+        },
+        "diagnostic/cached_links": {
+          "count": 107,
+          "max_abs": 0.000574508003353277
+        }
+      },
+      "migrated_task_exact_to_source": true
+    },
+    {
+      "seed": 0,
+      "dtype": "float64",
+      "invalid_control": "throttle",
+      "equal_rejected_call_count": true,
+      "rejected_calls": [
+        3,
+        3
+      ],
+      "last_action_equal": true,
+      "prefixes": [
+        [
+          [
+            0.5,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0
+          ],
+          [
+            -0.4583333333333333,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0
+          ]
+        ],
+        [
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0
+          ]
+        ]
+      ],
+      "immediate_91_numeric_fields_exact": true,
+      "public_step_count_before": 0,
+      "physics_steps_before": 20,
+      "aviary_steps_before": 10,
+      "next_zero_action_differences": {
+        "wrapper/state": {
+          "count": 7,
+          "max_abs": 0.0004015837397325629
+        },
+        "wrapper/reward": {
+          "count": 1,
+          "max_abs": 0.0005432316374118784
+        },
+        "wrapper/ang_vel": {
+          "count": 1,
+          "max_abs": 0.000123172883321884
+        },
+        "wrapper/ang_pos": {
+          "count": 1,
+          "max_abs": 3.086921268801779e-06
+        },
+        "wrapper/lin_vel": {
+          "count": 2,
+          "max_abs": 0.0004015837397325629
+        },
+        "wrapper/lin_pos": {
+          "count": 2,
+          "max_abs": 7.668214640335272e-06
+        },
+        "wrapper/ground_lin_vel": {
+          "count": 2,
+          "max_abs": 0.00030598668944543234
+        },
+        "wrapper/previous_ang_vel": {
+          "count": 1,
+          "max_abs": 0.00012342121299299737
+        },
+        "wrapper/previous_lin_vel": {
+          "count": 2,
+          "max_abs": 0.0003702294646108721
+        },
+        "wrapper/previous_lin_pos": {
+          "count": 2,
+          "max_abs": 5.117056264838954e-06
+        },
+        "wrapper/previous_ground_lin_vel": {
+          "count": 2,
+          "max_abs": 0.00030659003562467967
+        },
+        "drone/state": {
+          "count": 6,
+          "max_abs": 0.0004015837397325629
+        },
+        "bodies/local_body_velocities": {
+          "count": 2,
+          "max_abs": 0.00041747735899393
+        },
+        "fin_0/local_surface_velocity": {
+          "count": 2,
+          "max_abs": 0.00041747735899393
+        },
+        "fin_1/local_surface_velocity": {
+          "count": 2,
+          "max_abs": 0.00017113159235019432
+        },
+        "fin_2/local_surface_velocity": {
+          "count": 2,
+          "max_abs": 0.0006701049648122712
+        },
+        "fin_3/local_surface_velocity": {
+          "count": 2,
+          "max_abs": 0.0006701049205618903
+        },
+        "physics/body_1/position": {
+          "count": 2,
+          "max_abs": 7.668214640335272e-06
+        },
+        "physics/body_1/quaternion": {
+          "count": 2,
+          "max_abs": 1.5434606344002767e-06
+        },
+        "physics/body_1/linear_velocity": {
+          "count": 2,
+          "max_abs": 0.00030598668944543234
+        },
+        "physics/body_1/angular_velocity": {
+          "count": 1,
+          "max_abs": 0.000123172883321884
+        },
+        "diagnostic/cached_links": {
+          "count": 107,
+          "max_abs": 0.000574508003353277
+        }
+      },
+      "migrated_task_exact_to_source": true
+    },
+    {
+      "seed": 0,
+      "dtype": "float64",
+      "invalid_control": "gimbal",
+      "equal_rejected_call_count": true,
+      "rejected_calls": [
+        3,
+        3
+      ],
+      "last_action_equal": true,
+      "prefixes": [
+        [
+          [
+            0.5,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0
+          ],
+          [
+            -0.4583333333333333,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0
+          ]
+        ],
+        [
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0
+          ]
+        ]
+      ],
+      "immediate_91_numeric_fields_exact": true,
+      "public_step_count_before": 0,
+      "physics_steps_before": 20,
+      "aviary_steps_before": 10,
+      "next_zero_action_differences": {
+        "wrapper/state": {
+          "count": 7,
+          "max_abs": 0.0004015837397325629
+        },
+        "wrapper/reward": {
+          "count": 1,
+          "max_abs": 0.0005432316374118784
+        },
+        "wrapper/ang_vel": {
+          "count": 1,
+          "max_abs": 0.000123172883321884
+        },
+        "wrapper/ang_pos": {
+          "count": 1,
+          "max_abs": 3.086921268801779e-06
+        },
+        "wrapper/lin_vel": {
+          "count": 2,
+          "max_abs": 0.0004015837397325629
+        },
+        "wrapper/lin_pos": {
+          "count": 2,
+          "max_abs": 7.668214640335272e-06
+        },
+        "wrapper/ground_lin_vel": {
+          "count": 2,
+          "max_abs": 0.00030598668944543234
+        },
+        "wrapper/previous_ang_vel": {
+          "count": 1,
+          "max_abs": 0.00012342121299299737
+        },
+        "wrapper/previous_lin_vel": {
+          "count": 2,
+          "max_abs": 0.0003702294646108721
+        },
+        "wrapper/previous_lin_pos": {
+          "count": 2,
+          "max_abs": 5.117056264838954e-06
+        },
+        "wrapper/previous_ground_lin_vel": {
+          "count": 2,
+          "max_abs": 0.00030659003562467967
+        },
+        "drone/state": {
+          "count": 6,
+          "max_abs": 0.0004015837397325629
+        },
+        "bodies/local_body_velocities": {
+          "count": 2,
+          "max_abs": 0.00041747735899393
+        },
+        "fin_0/local_surface_velocity": {
+          "count": 2,
+          "max_abs": 0.00041747735899393
+        },
+        "fin_1/local_surface_velocity": {
+          "count": 2,
+          "max_abs": 0.00017113159235019432
+        },
+        "fin_2/local_surface_velocity": {
+          "count": 2,
+          "max_abs": 0.0006701049648122712
+        },
+        "fin_3/local_surface_velocity": {
+          "count": 2,
+          "max_abs": 0.0006701049205618903
+        },
+        "physics/body_1/position": {
+          "count": 2,
+          "max_abs": 7.668214640335272e-06
+        },
+        "physics/body_1/quaternion": {
+          "count": 2,
+          "max_abs": 1.5434606344002767e-06
+        },
+        "physics/body_1/linear_velocity": {
+          "count": 2,
+          "max_abs": 0.00030598668944543234
+        },
+        "physics/body_1/angular_velocity": {
+          "count": 1,
+          "max_abs": 0.000123172883321884
+        },
+        "diagnostic/cached_links": {
+          "count": 107,
+          "max_abs": 0.000574508003353277
+        }
+      },
+      "migrated_task_exact_to_source": true
+    },
+    {
+      "seed": 17,
+      "dtype": "float32",
+      "invalid_control": "ignition",
+      "equal_rejected_call_count": false,
+      "rejected_calls": [
+        1,
+        2
+      ],
+      "last_action_equal": true,
+      "prefixes": [
+        [
+          [
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        ],
+        [
+          [
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        ]
+      ],
+      "immediate_91_numeric_fields_exact": true,
+      "public_step_count_before": 0,
+      "physics_steps_before": 20,
+      "aviary_steps_before": 10,
+      "next_zero_action_differences": {
+        "wrapper/state": {
+          "count": 2,
+          "max_abs": 0.003417414328993118
+        },
+        "wrapper/reward": {
+          "count": 1,
+          "max_abs": 1.7096621695245062e-05
+        },
+        "wrapper/lin_vel": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "wrapper/lin_pos": {
+          "count": 1,
+          "max_abs": 8.548310847800167e-05
+        },
+        "wrapper/ground_lin_vel": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "wrapper/previous_lin_vel": {
+          "count": 1,
+          "max_abs": 0.003418943597957025
+        },
+        "wrapper/previous_lin_pos": {
+          "count": 1,
+          "max_abs": 5.700146823528485e-05
+        },
+        "wrapper/previous_ground_lin_vel": {
+          "count": 1,
+          "max_abs": 0.003418943597957025
+        },
+        "drone/state": {
+          "count": 2,
+          "max_abs": 0.003417414328993118
+        },
+        "bodies/local_body_velocities": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_0/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_1/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_2/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_3/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "physics/body_1/position": {
+          "count": 1,
+          "max_abs": 8.548310847800167e-05
+        },
+        "physics/body_1/linear_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "diagnostic/cached_links": {
+          "count": 30,
+          "max_abs": 0.003417414328993118
+        }
+      },
+      "migrated_task_exact_to_source": true
+    },
+    {
+      "seed": 17,
+      "dtype": "float32",
+      "invalid_control": "throttle",
+      "equal_rejected_call_count": false,
+      "rejected_calls": [
+        1,
+        2
+      ],
+      "last_action_equal": true,
+      "prefixes": [
+        [
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0
+          ]
+        ],
+        [
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0
+          ]
+        ]
+      ],
+      "immediate_91_numeric_fields_exact": true,
+      "public_step_count_before": 0,
+      "physics_steps_before": 20,
+      "aviary_steps_before": 10,
+      "next_zero_action_differences": {
+        "wrapper/state": {
+          "count": 2,
+          "max_abs": 0.003417414328993118
+        },
+        "wrapper/reward": {
+          "count": 1,
+          "max_abs": 1.7096621695245062e-05
+        },
+        "wrapper/lin_vel": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "wrapper/lin_pos": {
+          "count": 1,
+          "max_abs": 8.548310847800167e-05
+        },
+        "wrapper/ground_lin_vel": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "wrapper/previous_lin_vel": {
+          "count": 1,
+          "max_abs": 0.003418943597957025
+        },
+        "wrapper/previous_lin_pos": {
+          "count": 1,
+          "max_abs": 5.700146823528485e-05
+        },
+        "wrapper/previous_ground_lin_vel": {
+          "count": 1,
+          "max_abs": 0.003418943597957025
+        },
+        "drone/state": {
+          "count": 2,
+          "max_abs": 0.003417414328993118
+        },
+        "bodies/local_body_velocities": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_0/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_1/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_2/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_3/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "physics/body_1/position": {
+          "count": 1,
+          "max_abs": 8.548310847800167e-05
+        },
+        "physics/body_1/linear_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "diagnostic/cached_links": {
+          "count": 30,
+          "max_abs": 0.003417414328993118
+        }
+      },
+      "migrated_task_exact_to_source": true
+    },
+    {
+      "seed": 17,
+      "dtype": "float32",
+      "invalid_control": "gimbal",
+      "equal_rejected_call_count": false,
+      "rejected_calls": [
+        1,
+        2
+      ],
+      "last_action_equal": true,
+      "prefixes": [
+        [
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0
+          ]
+        ],
+        [
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0
+          ]
+        ]
+      ],
+      "immediate_91_numeric_fields_exact": true,
+      "public_step_count_before": 0,
+      "physics_steps_before": 20,
+      "aviary_steps_before": 10,
+      "next_zero_action_differences": {
+        "wrapper/state": {
+          "count": 2,
+          "max_abs": 0.003417414328993118
+        },
+        "wrapper/reward": {
+          "count": 1,
+          "max_abs": 1.7096621695245062e-05
+        },
+        "wrapper/lin_vel": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "wrapper/lin_pos": {
+          "count": 1,
+          "max_abs": 8.548310847800167e-05
+        },
+        "wrapper/ground_lin_vel": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "wrapper/previous_lin_vel": {
+          "count": 1,
+          "max_abs": 0.003418943597957025
+        },
+        "wrapper/previous_lin_pos": {
+          "count": 1,
+          "max_abs": 5.700146823528485e-05
+        },
+        "wrapper/previous_ground_lin_vel": {
+          "count": 1,
+          "max_abs": 0.003418943597957025
+        },
+        "drone/state": {
+          "count": 2,
+          "max_abs": 0.003417414328993118
+        },
+        "bodies/local_body_velocities": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_0/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_1/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_2/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_3/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "physics/body_1/position": {
+          "count": 1,
+          "max_abs": 8.548310847800167e-05
+        },
+        "physics/body_1/linear_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "diagnostic/cached_links": {
+          "count": 30,
+          "max_abs": 0.003417414328993118
+        }
+      },
+      "migrated_task_exact_to_source": true
+    },
+    {
+      "seed": 17,
+      "dtype": "float64",
+      "invalid_control": "ignition",
+      "equal_rejected_call_count": false,
+      "rejected_calls": [
+        1,
+        2
+      ],
+      "last_action_equal": true,
+      "prefixes": [
+        [
+          [
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        ],
+        [
+          [
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        ]
+      ],
+      "immediate_91_numeric_fields_exact": true,
+      "public_step_count_before": 0,
+      "physics_steps_before": 20,
+      "aviary_steps_before": 10,
+      "next_zero_action_differences": {
+        "wrapper/state": {
+          "count": 2,
+          "max_abs": 0.003417414328993118
+        },
+        "wrapper/reward": {
+          "count": 1,
+          "max_abs": 1.7096621695245062e-05
+        },
+        "wrapper/lin_vel": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "wrapper/lin_pos": {
+          "count": 1,
+          "max_abs": 8.548310847800167e-05
+        },
+        "wrapper/ground_lin_vel": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "wrapper/previous_lin_vel": {
+          "count": 1,
+          "max_abs": 0.003418943597957025
+        },
+        "wrapper/previous_lin_pos": {
+          "count": 1,
+          "max_abs": 5.700146823528485e-05
+        },
+        "wrapper/previous_ground_lin_vel": {
+          "count": 1,
+          "max_abs": 0.003418943597957025
+        },
+        "drone/state": {
+          "count": 2,
+          "max_abs": 0.003417414328993118
+        },
+        "bodies/local_body_velocities": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_0/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_1/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_2/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_3/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "physics/body_1/position": {
+          "count": 1,
+          "max_abs": 8.548310847800167e-05
+        },
+        "physics/body_1/linear_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "diagnostic/cached_links": {
+          "count": 30,
+          "max_abs": 0.003417414328993118
+        }
+      },
+      "migrated_task_exact_to_source": true
+    },
+    {
+      "seed": 17,
+      "dtype": "float64",
+      "invalid_control": "throttle",
+      "equal_rejected_call_count": false,
+      "rejected_calls": [
+        1,
+        2
+      ],
+      "last_action_equal": true,
+      "prefixes": [
+        [
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0
+          ]
+        ],
+        [
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0
+          ]
+        ]
+      ],
+      "immediate_91_numeric_fields_exact": true,
+      "public_step_count_before": 0,
+      "physics_steps_before": 20,
+      "aviary_steps_before": 10,
+      "next_zero_action_differences": {
+        "wrapper/state": {
+          "count": 2,
+          "max_abs": 0.003417414328993118
+        },
+        "wrapper/reward": {
+          "count": 1,
+          "max_abs": 1.7096621695245062e-05
+        },
+        "wrapper/lin_vel": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "wrapper/lin_pos": {
+          "count": 1,
+          "max_abs": 8.548310847800167e-05
+        },
+        "wrapper/ground_lin_vel": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "wrapper/previous_lin_vel": {
+          "count": 1,
+          "max_abs": 0.003418943597957025
+        },
+        "wrapper/previous_lin_pos": {
+          "count": 1,
+          "max_abs": 5.700146823528485e-05
+        },
+        "wrapper/previous_ground_lin_vel": {
+          "count": 1,
+          "max_abs": 0.003418943597957025
+        },
+        "drone/state": {
+          "count": 2,
+          "max_abs": 0.003417414328993118
+        },
+        "bodies/local_body_velocities": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_0/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_1/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_2/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_3/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "physics/body_1/position": {
+          "count": 1,
+          "max_abs": 8.548310847800167e-05
+        },
+        "physics/body_1/linear_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "diagnostic/cached_links": {
+          "count": 30,
+          "max_abs": 0.003417414328993118
+        }
+      },
+      "migrated_task_exact_to_source": true
+    },
+    {
+      "seed": 17,
+      "dtype": "float64",
+      "invalid_control": "gimbal",
+      "equal_rejected_call_count": false,
+      "rejected_calls": [
+        1,
+        2
+      ],
+      "last_action_equal": true,
+      "prefixes": [
+        [
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0
+          ]
+        ],
+        [
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0
+          ]
+        ]
+      ],
+      "immediate_91_numeric_fields_exact": true,
+      "public_step_count_before": 0,
+      "physics_steps_before": 20,
+      "aviary_steps_before": 10,
+      "next_zero_action_differences": {
+        "wrapper/state": {
+          "count": 2,
+          "max_abs": 0.003417414328993118
+        },
+        "wrapper/reward": {
+          "count": 1,
+          "max_abs": 1.7096621695245062e-05
+        },
+        "wrapper/lin_vel": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "wrapper/lin_pos": {
+          "count": 1,
+          "max_abs": 8.548310847800167e-05
+        },
+        "wrapper/ground_lin_vel": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "wrapper/previous_lin_vel": {
+          "count": 1,
+          "max_abs": 0.003418943597957025
+        },
+        "wrapper/previous_lin_pos": {
+          "count": 1,
+          "max_abs": 5.700146823528485e-05
+        },
+        "wrapper/previous_ground_lin_vel": {
+          "count": 1,
+          "max_abs": 0.003418943597957025
+        },
+        "drone/state": {
+          "count": 2,
+          "max_abs": 0.003417414328993118
+        },
+        "bodies/local_body_velocities": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_0/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_1/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_2/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_3/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "physics/body_1/position": {
+          "count": 1,
+          "max_abs": 8.548310847800167e-05
+        },
+        "physics/body_1/linear_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "diagnostic/cached_links": {
+          "count": 30,
+          "max_abs": 0.003417414328993118
+        }
+      },
+      "migrated_task_exact_to_source": true
+    },
+    {
+      "seed": 17,
+      "dtype": "float64",
+      "invalid_control": "ignition",
+      "equal_rejected_call_count": true,
+      "rejected_calls": [
+        3,
+        3
+      ],
+      "last_action_equal": true,
+      "prefixes": [
+        [
+          [
+            0.5,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            -0.4583333333333333,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        ],
+        [
+          [
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        ]
+      ],
+      "immediate_91_numeric_fields_exact": true,
+      "public_step_count_before": 0,
+      "physics_steps_before": 20,
+      "aviary_steps_before": 10,
+      "next_zero_action_differences": {
+        "wrapper/state": {
+          "count": 7,
+          "max_abs": 0.0004015837397325629
+        },
+        "wrapper/reward": {
+          "count": 1,
+          "max_abs": 0.0005432316374118784
+        },
+        "wrapper/ang_vel": {
+          "count": 1,
+          "max_abs": 0.000123172883321884
+        },
+        "wrapper/ang_pos": {
+          "count": 1,
+          "max_abs": 3.086921268801779e-06
+        },
+        "wrapper/lin_vel": {
+          "count": 2,
+          "max_abs": 0.0004015837397325629
+        },
+        "wrapper/lin_pos": {
+          "count": 2,
+          "max_abs": 7.668214640335272e-06
+        },
+        "wrapper/ground_lin_vel": {
+          "count": 2,
+          "max_abs": 0.00030598668944543234
+        },
+        "wrapper/previous_ang_vel": {
+          "count": 1,
+          "max_abs": 0.00012342121299299737
+        },
+        "wrapper/previous_lin_vel": {
+          "count": 2,
+          "max_abs": 0.0003702294646108721
+        },
+        "wrapper/previous_lin_pos": {
+          "count": 2,
+          "max_abs": 5.117056264838954e-06
+        },
+        "wrapper/previous_ground_lin_vel": {
+          "count": 2,
+          "max_abs": 0.00030659003562467967
+        },
+        "drone/state": {
+          "count": 6,
+          "max_abs": 0.0004015837397325629
+        },
+        "bodies/local_body_velocities": {
+          "count": 2,
+          "max_abs": 0.00041747735899393
+        },
+        "fin_0/local_surface_velocity": {
+          "count": 2,
+          "max_abs": 0.00041747735899393
+        },
+        "fin_1/local_surface_velocity": {
+          "count": 2,
+          "max_abs": 0.00017113159235019432
+        },
+        "fin_2/local_surface_velocity": {
+          "count": 2,
+          "max_abs": 0.0006701049648122712
+        },
+        "fin_3/local_surface_velocity": {
+          "count": 2,
+          "max_abs": 0.0006701049205618903
+        },
+        "physics/body_1/position": {
+          "count": 2,
+          "max_abs": 7.668214640335272e-06
+        },
+        "physics/body_1/quaternion": {
+          "count": 2,
+          "max_abs": 1.5434606344002767e-06
+        },
+        "physics/body_1/linear_velocity": {
+          "count": 2,
+          "max_abs": 0.00030598668944543234
+        },
+        "physics/body_1/angular_velocity": {
+          "count": 1,
+          "max_abs": 0.000123172883321884
+        },
+        "diagnostic/cached_links": {
+          "count": 107,
+          "max_abs": 0.000574508003353277
+        }
+      },
+      "migrated_task_exact_to_source": true
+    },
+    {
+      "seed": 17,
+      "dtype": "float64",
+      "invalid_control": "throttle",
+      "equal_rejected_call_count": true,
+      "rejected_calls": [
+        3,
+        3
+      ],
+      "last_action_equal": true,
+      "prefixes": [
+        [
+          [
+            0.5,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0
+          ],
+          [
+            -0.4583333333333333,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0
+          ]
+        ],
+        [
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0
+          ]
+        ]
+      ],
+      "immediate_91_numeric_fields_exact": true,
+      "public_step_count_before": 0,
+      "physics_steps_before": 20,
+      "aviary_steps_before": 10,
+      "next_zero_action_differences": {
+        "wrapper/state": {
+          "count": 7,
+          "max_abs": 0.0004015837397325629
+        },
+        "wrapper/reward": {
+          "count": 1,
+          "max_abs": 0.0005432316374118784
+        },
+        "wrapper/ang_vel": {
+          "count": 1,
+          "max_abs": 0.000123172883321884
+        },
+        "wrapper/ang_pos": {
+          "count": 1,
+          "max_abs": 3.086921268801779e-06
+        },
+        "wrapper/lin_vel": {
+          "count": 2,
+          "max_abs": 0.0004015837397325629
+        },
+        "wrapper/lin_pos": {
+          "count": 2,
+          "max_abs": 7.668214640335272e-06
+        },
+        "wrapper/ground_lin_vel": {
+          "count": 2,
+          "max_abs": 0.00030598668944543234
+        },
+        "wrapper/previous_ang_vel": {
+          "count": 1,
+          "max_abs": 0.00012342121299299737
+        },
+        "wrapper/previous_lin_vel": {
+          "count": 2,
+          "max_abs": 0.0003702294646108721
+        },
+        "wrapper/previous_lin_pos": {
+          "count": 2,
+          "max_abs": 5.117056264838954e-06
+        },
+        "wrapper/previous_ground_lin_vel": {
+          "count": 2,
+          "max_abs": 0.00030659003562467967
+        },
+        "drone/state": {
+          "count": 6,
+          "max_abs": 0.0004015837397325629
+        },
+        "bodies/local_body_velocities": {
+          "count": 2,
+          "max_abs": 0.00041747735899393
+        },
+        "fin_0/local_surface_velocity": {
+          "count": 2,
+          "max_abs": 0.00041747735899393
+        },
+        "fin_1/local_surface_velocity": {
+          "count": 2,
+          "max_abs": 0.00017113159235019432
+        },
+        "fin_2/local_surface_velocity": {
+          "count": 2,
+          "max_abs": 0.0006701049648122712
+        },
+        "fin_3/local_surface_velocity": {
+          "count": 2,
+          "max_abs": 0.0006701049205618903
+        },
+        "physics/body_1/position": {
+          "count": 2,
+          "max_abs": 7.668214640335272e-06
+        },
+        "physics/body_1/quaternion": {
+          "count": 2,
+          "max_abs": 1.5434606344002767e-06
+        },
+        "physics/body_1/linear_velocity": {
+          "count": 2,
+          "max_abs": 0.00030598668944543234
+        },
+        "physics/body_1/angular_velocity": {
+          "count": 1,
+          "max_abs": 0.000123172883321884
+        },
+        "diagnostic/cached_links": {
+          "count": 107,
+          "max_abs": 0.000574508003353277
+        }
+      },
+      "migrated_task_exact_to_source": true
+    },
+    {
+      "seed": 17,
+      "dtype": "float64",
+      "invalid_control": "gimbal",
+      "equal_rejected_call_count": true,
+      "rejected_calls": [
+        3,
+        3
+      ],
+      "last_action_equal": true,
+      "prefixes": [
+        [
+          [
+            0.5,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0
+          ],
+          [
+            -0.4583333333333333,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0
+          ]
+        ],
+        [
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0
+          ]
+        ]
+      ],
+      "immediate_91_numeric_fields_exact": true,
+      "public_step_count_before": 0,
+      "physics_steps_before": 20,
+      "aviary_steps_before": 10,
+      "next_zero_action_differences": {
+        "wrapper/state": {
+          "count": 7,
+          "max_abs": 0.0004015837397325629
+        },
+        "wrapper/reward": {
+          "count": 1,
+          "max_abs": 0.0005432316374118784
+        },
+        "wrapper/ang_vel": {
+          "count": 1,
+          "max_abs": 0.000123172883321884
+        },
+        "wrapper/ang_pos": {
+          "count": 1,
+          "max_abs": 3.086921268801779e-06
+        },
+        "wrapper/lin_vel": {
+          "count": 2,
+          "max_abs": 0.0004015837397325629
+        },
+        "wrapper/lin_pos": {
+          "count": 2,
+          "max_abs": 7.668214640335272e-06
+        },
+        "wrapper/ground_lin_vel": {
+          "count": 2,
+          "max_abs": 0.00030598668944543234
+        },
+        "wrapper/previous_ang_vel": {
+          "count": 1,
+          "max_abs": 0.00012342121299299737
+        },
+        "wrapper/previous_lin_vel": {
+          "count": 2,
+          "max_abs": 0.0003702294646108721
+        },
+        "wrapper/previous_lin_pos": {
+          "count": 2,
+          "max_abs": 5.117056264838954e-06
+        },
+        "wrapper/previous_ground_lin_vel": {
+          "count": 2,
+          "max_abs": 0.00030659003562467967
+        },
+        "drone/state": {
+          "count": 6,
+          "max_abs": 0.0004015837397325629
+        },
+        "bodies/local_body_velocities": {
+          "count": 2,
+          "max_abs": 0.00041747735899393
+        },
+        "fin_0/local_surface_velocity": {
+          "count": 2,
+          "max_abs": 0.00041747735899393
+        },
+        "fin_1/local_surface_velocity": {
+          "count": 2,
+          "max_abs": 0.00017113159235019432
+        },
+        "fin_2/local_surface_velocity": {
+          "count": 2,
+          "max_abs": 0.0006701049648122712
+        },
+        "fin_3/local_surface_velocity": {
+          "count": 2,
+          "max_abs": 0.0006701049205618903
+        },
+        "physics/body_1/position": {
+          "count": 2,
+          "max_abs": 7.668214640335272e-06
+        },
+        "physics/body_1/quaternion": {
+          "count": 2,
+          "max_abs": 1.5434606344002767e-06
+        },
+        "physics/body_1/linear_velocity": {
+          "count": 2,
+          "max_abs": 0.00030598668944543234
+        },
+        "physics/body_1/angular_velocity": {
+          "count": 1,
+          "max_abs": 0.000123172883321884
+        },
+        "diagnostic/cached_links": {
+          "count": 107,
+          "max_abs": 0.000574508003353277
+        }
+      },
+      "migrated_task_exact_to_source": true
+    },
+    {
+      "seed": 42,
+      "dtype": "float32",
+      "invalid_control": "ignition",
+      "equal_rejected_call_count": false,
+      "rejected_calls": [
+        1,
+        2
+      ],
+      "last_action_equal": true,
+      "prefixes": [
+        [
+          [
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        ],
+        [
+          [
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        ]
+      ],
+      "immediate_91_numeric_fields_exact": true,
+      "public_step_count_before": 0,
+      "physics_steps_before": 20,
+      "aviary_steps_before": 10,
+      "next_zero_action_differences": {
+        "wrapper/state": {
+          "count": 2,
+          "max_abs": 0.003417414328993118
+        },
+        "wrapper/reward": {
+          "count": 1,
+          "max_abs": 1.7096621695245062e-05
+        },
+        "wrapper/lin_vel": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "wrapper/lin_pos": {
+          "count": 1,
+          "max_abs": 8.548310847800167e-05
+        },
+        "wrapper/ground_lin_vel": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "wrapper/previous_lin_vel": {
+          "count": 1,
+          "max_abs": 0.003418943597957025
+        },
+        "wrapper/previous_lin_pos": {
+          "count": 1,
+          "max_abs": 5.700146823528485e-05
+        },
+        "wrapper/previous_ground_lin_vel": {
+          "count": 1,
+          "max_abs": 0.003418943597957025
+        },
+        "drone/state": {
+          "count": 2,
+          "max_abs": 0.003417414328993118
+        },
+        "bodies/local_body_velocities": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_0/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_1/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_2/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_3/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "physics/body_1/position": {
+          "count": 1,
+          "max_abs": 8.548310847800167e-05
+        },
+        "physics/body_1/linear_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "diagnostic/cached_links": {
+          "count": 30,
+          "max_abs": 0.003417414328993118
+        }
+      },
+      "migrated_task_exact_to_source": true
+    },
+    {
+      "seed": 42,
+      "dtype": "float32",
+      "invalid_control": "throttle",
+      "equal_rejected_call_count": false,
+      "rejected_calls": [
+        1,
+        2
+      ],
+      "last_action_equal": true,
+      "prefixes": [
+        [
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0
+          ]
+        ],
+        [
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0
+          ]
+        ]
+      ],
+      "immediate_91_numeric_fields_exact": true,
+      "public_step_count_before": 0,
+      "physics_steps_before": 20,
+      "aviary_steps_before": 10,
+      "next_zero_action_differences": {
+        "wrapper/state": {
+          "count": 2,
+          "max_abs": 0.003417414328993118
+        },
+        "wrapper/reward": {
+          "count": 1,
+          "max_abs": 1.7096621695245062e-05
+        },
+        "wrapper/lin_vel": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "wrapper/lin_pos": {
+          "count": 1,
+          "max_abs": 8.548310847800167e-05
+        },
+        "wrapper/ground_lin_vel": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "wrapper/previous_lin_vel": {
+          "count": 1,
+          "max_abs": 0.003418943597957025
+        },
+        "wrapper/previous_lin_pos": {
+          "count": 1,
+          "max_abs": 5.700146823528485e-05
+        },
+        "wrapper/previous_ground_lin_vel": {
+          "count": 1,
+          "max_abs": 0.003418943597957025
+        },
+        "drone/state": {
+          "count": 2,
+          "max_abs": 0.003417414328993118
+        },
+        "bodies/local_body_velocities": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_0/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_1/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_2/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_3/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "physics/body_1/position": {
+          "count": 1,
+          "max_abs": 8.548310847800167e-05
+        },
+        "physics/body_1/linear_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "diagnostic/cached_links": {
+          "count": 30,
+          "max_abs": 0.003417414328993118
+        }
+      },
+      "migrated_task_exact_to_source": true
+    },
+    {
+      "seed": 42,
+      "dtype": "float32",
+      "invalid_control": "gimbal",
+      "equal_rejected_call_count": false,
+      "rejected_calls": [
+        1,
+        2
+      ],
+      "last_action_equal": true,
+      "prefixes": [
+        [
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0
+          ]
+        ],
+        [
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0
+          ]
+        ]
+      ],
+      "immediate_91_numeric_fields_exact": true,
+      "public_step_count_before": 0,
+      "physics_steps_before": 20,
+      "aviary_steps_before": 10,
+      "next_zero_action_differences": {
+        "wrapper/state": {
+          "count": 2,
+          "max_abs": 0.003417414328993118
+        },
+        "wrapper/reward": {
+          "count": 1,
+          "max_abs": 1.7096621695245062e-05
+        },
+        "wrapper/lin_vel": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "wrapper/lin_pos": {
+          "count": 1,
+          "max_abs": 8.548310847800167e-05
+        },
+        "wrapper/ground_lin_vel": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "wrapper/previous_lin_vel": {
+          "count": 1,
+          "max_abs": 0.003418943597957025
+        },
+        "wrapper/previous_lin_pos": {
+          "count": 1,
+          "max_abs": 5.700146823528485e-05
+        },
+        "wrapper/previous_ground_lin_vel": {
+          "count": 1,
+          "max_abs": 0.003418943597957025
+        },
+        "drone/state": {
+          "count": 2,
+          "max_abs": 0.003417414328993118
+        },
+        "bodies/local_body_velocities": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_0/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_1/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_2/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_3/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "physics/body_1/position": {
+          "count": 1,
+          "max_abs": 8.548310847800167e-05
+        },
+        "physics/body_1/linear_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "diagnostic/cached_links": {
+          "count": 30,
+          "max_abs": 0.003417414328993118
+        }
+      },
+      "migrated_task_exact_to_source": true
+    },
+    {
+      "seed": 42,
+      "dtype": "float64",
+      "invalid_control": "ignition",
+      "equal_rejected_call_count": false,
+      "rejected_calls": [
+        1,
+        2
+      ],
+      "last_action_equal": true,
+      "prefixes": [
+        [
+          [
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        ],
+        [
+          [
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        ]
+      ],
+      "immediate_91_numeric_fields_exact": true,
+      "public_step_count_before": 0,
+      "physics_steps_before": 20,
+      "aviary_steps_before": 10,
+      "next_zero_action_differences": {
+        "wrapper/state": {
+          "count": 2,
+          "max_abs": 0.003417414328993118
+        },
+        "wrapper/reward": {
+          "count": 1,
+          "max_abs": 1.7096621695245062e-05
+        },
+        "wrapper/lin_vel": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "wrapper/lin_pos": {
+          "count": 1,
+          "max_abs": 8.548310847800167e-05
+        },
+        "wrapper/ground_lin_vel": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "wrapper/previous_lin_vel": {
+          "count": 1,
+          "max_abs": 0.003418943597957025
+        },
+        "wrapper/previous_lin_pos": {
+          "count": 1,
+          "max_abs": 5.700146823528485e-05
+        },
+        "wrapper/previous_ground_lin_vel": {
+          "count": 1,
+          "max_abs": 0.003418943597957025
+        },
+        "drone/state": {
+          "count": 2,
+          "max_abs": 0.003417414328993118
+        },
+        "bodies/local_body_velocities": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_0/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_1/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_2/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_3/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "physics/body_1/position": {
+          "count": 1,
+          "max_abs": 8.548310847800167e-05
+        },
+        "physics/body_1/linear_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "diagnostic/cached_links": {
+          "count": 30,
+          "max_abs": 0.003417414328993118
+        }
+      },
+      "migrated_task_exact_to_source": true
+    },
+    {
+      "seed": 42,
+      "dtype": "float64",
+      "invalid_control": "throttle",
+      "equal_rejected_call_count": false,
+      "rejected_calls": [
+        1,
+        2
+      ],
+      "last_action_equal": true,
+      "prefixes": [
+        [
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0
+          ]
+        ],
+        [
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0
+          ]
+        ]
+      ],
+      "immediate_91_numeric_fields_exact": true,
+      "public_step_count_before": 0,
+      "physics_steps_before": 20,
+      "aviary_steps_before": 10,
+      "next_zero_action_differences": {
+        "wrapper/state": {
+          "count": 2,
+          "max_abs": 0.003417414328993118
+        },
+        "wrapper/reward": {
+          "count": 1,
+          "max_abs": 1.7096621695245062e-05
+        },
+        "wrapper/lin_vel": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "wrapper/lin_pos": {
+          "count": 1,
+          "max_abs": 8.548310847800167e-05
+        },
+        "wrapper/ground_lin_vel": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "wrapper/previous_lin_vel": {
+          "count": 1,
+          "max_abs": 0.003418943597957025
+        },
+        "wrapper/previous_lin_pos": {
+          "count": 1,
+          "max_abs": 5.700146823528485e-05
+        },
+        "wrapper/previous_ground_lin_vel": {
+          "count": 1,
+          "max_abs": 0.003418943597957025
+        },
+        "drone/state": {
+          "count": 2,
+          "max_abs": 0.003417414328993118
+        },
+        "bodies/local_body_velocities": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_0/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_1/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_2/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_3/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "physics/body_1/position": {
+          "count": 1,
+          "max_abs": 8.548310847800167e-05
+        },
+        "physics/body_1/linear_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "diagnostic/cached_links": {
+          "count": 30,
+          "max_abs": 0.003417414328993118
+        }
+      },
+      "migrated_task_exact_to_source": true
+    },
+    {
+      "seed": 42,
+      "dtype": "float64",
+      "invalid_control": "gimbal",
+      "equal_rejected_call_count": false,
+      "rejected_calls": [
+        1,
+        2
+      ],
+      "last_action_equal": true,
+      "prefixes": [
+        [
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0
+          ]
+        ],
+        [
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0
+          ]
+        ]
+      ],
+      "immediate_91_numeric_fields_exact": true,
+      "public_step_count_before": 0,
+      "physics_steps_before": 20,
+      "aviary_steps_before": 10,
+      "next_zero_action_differences": {
+        "wrapper/state": {
+          "count": 2,
+          "max_abs": 0.003417414328993118
+        },
+        "wrapper/reward": {
+          "count": 1,
+          "max_abs": 1.7096621695245062e-05
+        },
+        "wrapper/lin_vel": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "wrapper/lin_pos": {
+          "count": 1,
+          "max_abs": 8.548310847800167e-05
+        },
+        "wrapper/ground_lin_vel": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "wrapper/previous_lin_vel": {
+          "count": 1,
+          "max_abs": 0.003418943597957025
+        },
+        "wrapper/previous_lin_pos": {
+          "count": 1,
+          "max_abs": 5.700146823528485e-05
+        },
+        "wrapper/previous_ground_lin_vel": {
+          "count": 1,
+          "max_abs": 0.003418943597957025
+        },
+        "drone/state": {
+          "count": 2,
+          "max_abs": 0.003417414328993118
+        },
+        "bodies/local_body_velocities": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_0/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_1/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_2/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "fin_3/local_surface_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "physics/body_1/position": {
+          "count": 1,
+          "max_abs": 8.548310847800167e-05
+        },
+        "physics/body_1/linear_velocity": {
+          "count": 1,
+          "max_abs": 0.003417414328993118
+        },
+        "diagnostic/cached_links": {
+          "count": 30,
+          "max_abs": 0.003417414328993118
+        }
+      },
+      "migrated_task_exact_to_source": true
+    },
+    {
+      "seed": 42,
+      "dtype": "float64",
+      "invalid_control": "ignition",
+      "equal_rejected_call_count": true,
+      "rejected_calls": [
+        3,
+        3
+      ],
+      "last_action_equal": true,
+      "prefixes": [
+        [
+          [
+            0.5,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            -0.4583333333333333,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        ],
+        [
+          [
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        ]
+      ],
+      "immediate_91_numeric_fields_exact": true,
+      "public_step_count_before": 0,
+      "physics_steps_before": 20,
+      "aviary_steps_before": 10,
+      "next_zero_action_differences": {
+        "wrapper/state": {
+          "count": 7,
+          "max_abs": 0.0004015837397325629
+        },
+        "wrapper/reward": {
+          "count": 1,
+          "max_abs": 0.0005432316374118784
+        },
+        "wrapper/ang_vel": {
+          "count": 1,
+          "max_abs": 0.000123172883321884
+        },
+        "wrapper/ang_pos": {
+          "count": 1,
+          "max_abs": 3.086921268801779e-06
+        },
+        "wrapper/lin_vel": {
+          "count": 2,
+          "max_abs": 0.0004015837397325629
+        },
+        "wrapper/lin_pos": {
+          "count": 2,
+          "max_abs": 7.668214640335272e-06
+        },
+        "wrapper/ground_lin_vel": {
+          "count": 2,
+          "max_abs": 0.00030598668944543234
+        },
+        "wrapper/previous_ang_vel": {
+          "count": 1,
+          "max_abs": 0.00012342121299299737
+        },
+        "wrapper/previous_lin_vel": {
+          "count": 2,
+          "max_abs": 0.0003702294646108721
+        },
+        "wrapper/previous_lin_pos": {
+          "count": 2,
+          "max_abs": 5.117056264838954e-06
+        },
+        "wrapper/previous_ground_lin_vel": {
+          "count": 2,
+          "max_abs": 0.00030659003562467967
+        },
+        "drone/state": {
+          "count": 6,
+          "max_abs": 0.0004015837397325629
+        },
+        "bodies/local_body_velocities": {
+          "count": 2,
+          "max_abs": 0.00041747735899393
+        },
+        "fin_0/local_surface_velocity": {
+          "count": 2,
+          "max_abs": 0.00041747735899393
+        },
+        "fin_1/local_surface_velocity": {
+          "count": 2,
+          "max_abs": 0.00017113159235019432
+        },
+        "fin_2/local_surface_velocity": {
+          "count": 2,
+          "max_abs": 0.0006701049648122712
+        },
+        "fin_3/local_surface_velocity": {
+          "count": 2,
+          "max_abs": 0.0006701049205618903
+        },
+        "physics/body_1/position": {
+          "count": 2,
+          "max_abs": 7.668214640335272e-06
+        },
+        "physics/body_1/quaternion": {
+          "count": 2,
+          "max_abs": 1.5434606344002767e-06
+        },
+        "physics/body_1/linear_velocity": {
+          "count": 2,
+          "max_abs": 0.00030598668944543234
+        },
+        "physics/body_1/angular_velocity": {
+          "count": 1,
+          "max_abs": 0.000123172883321884
+        },
+        "diagnostic/cached_links": {
+          "count": 107,
+          "max_abs": 0.000574508003353277
+        }
+      },
+      "migrated_task_exact_to_source": true
+    },
+    {
+      "seed": 42,
+      "dtype": "float64",
+      "invalid_control": "throttle",
+      "equal_rejected_call_count": true,
+      "rejected_calls": [
+        3,
+        3
+      ],
+      "last_action_equal": true,
+      "prefixes": [
+        [
+          [
+            0.5,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0
+          ],
+          [
+            -0.4583333333333333,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0
+          ]
+        ],
+        [
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0,
+            0.0
+          ]
+        ]
+      ],
+      "immediate_91_numeric_fields_exact": true,
+      "public_step_count_before": 0,
+      "physics_steps_before": 20,
+      "aviary_steps_before": 10,
+      "next_zero_action_differences": {
+        "wrapper/state": {
+          "count": 7,
+          "max_abs": 0.0004015837397325629
+        },
+        "wrapper/reward": {
+          "count": 1,
+          "max_abs": 0.0005432316374118784
+        },
+        "wrapper/ang_vel": {
+          "count": 1,
+          "max_abs": 0.000123172883321884
+        },
+        "wrapper/ang_pos": {
+          "count": 1,
+          "max_abs": 3.086921268801779e-06
+        },
+        "wrapper/lin_vel": {
+          "count": 2,
+          "max_abs": 0.0004015837397325629
+        },
+        "wrapper/lin_pos": {
+          "count": 2,
+          "max_abs": 7.668214640335272e-06
+        },
+        "wrapper/ground_lin_vel": {
+          "count": 2,
+          "max_abs": 0.00030598668944543234
+        },
+        "wrapper/previous_ang_vel": {
+          "count": 1,
+          "max_abs": 0.00012342121299299737
+        },
+        "wrapper/previous_lin_vel": {
+          "count": 2,
+          "max_abs": 0.0003702294646108721
+        },
+        "wrapper/previous_lin_pos": {
+          "count": 2,
+          "max_abs": 5.117056264838954e-06
+        },
+        "wrapper/previous_ground_lin_vel": {
+          "count": 2,
+          "max_abs": 0.00030659003562467967
+        },
+        "drone/state": {
+          "count": 6,
+          "max_abs": 0.0004015837397325629
+        },
+        "bodies/local_body_velocities": {
+          "count": 2,
+          "max_abs": 0.00041747735899393
+        },
+        "fin_0/local_surface_velocity": {
+          "count": 2,
+          "max_abs": 0.00041747735899393
+        },
+        "fin_1/local_surface_velocity": {
+          "count": 2,
+          "max_abs": 0.00017113159235019432
+        },
+        "fin_2/local_surface_velocity": {
+          "count": 2,
+          "max_abs": 0.0006701049648122712
+        },
+        "fin_3/local_surface_velocity": {
+          "count": 2,
+          "max_abs": 0.0006701049205618903
+        },
+        "physics/body_1/position": {
+          "count": 2,
+          "max_abs": 7.668214640335272e-06
+        },
+        "physics/body_1/quaternion": {
+          "count": 2,
+          "max_abs": 1.5434606344002767e-06
+        },
+        "physics/body_1/linear_velocity": {
+          "count": 2,
+          "max_abs": 0.00030598668944543234
+        },
+        "physics/body_1/angular_velocity": {
+          "count": 1,
+          "max_abs": 0.000123172883321884
+        },
+        "diagnostic/cached_links": {
+          "count": 107,
+          "max_abs": 0.000574508003353277
+        }
+      },
+      "migrated_task_exact_to_source": true
+    },
+    {
+      "seed": 42,
+      "dtype": "float64",
+      "invalid_control": "gimbal",
+      "equal_rejected_call_count": true,
+      "rejected_calls": [
+        3,
+        3
+      ],
+      "last_action_equal": true,
+      "prefixes": [
+        [
+          [
+            0.5,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0
+          ],
+          [
+            -0.4583333333333333,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0
+          ]
+        ],
+        [
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            2.0,
+            0.0
+          ]
+        ]
+      ],
+      "immediate_91_numeric_fields_exact": true,
+      "public_step_count_before": 0,
+      "physics_steps_before": 20,
+      "aviary_steps_before": 10,
+      "next_zero_action_differences": {
+        "wrapper/state": {
+          "count": 7,
+          "max_abs": 0.0004015837397325629
+        },
+        "wrapper/reward": {
+          "count": 1,
+          "max_abs": 0.0005432316374118784
+        },
+        "wrapper/ang_vel": {
+          "count": 1,
+          "max_abs": 0.000123172883321884
+        },
+        "wrapper/ang_pos": {
+          "count": 1,
+          "max_abs": 3.086921268801779e-06
+        },
+        "wrapper/lin_vel": {
+          "count": 2,
+          "max_abs": 0.0004015837397325629
+        },
+        "wrapper/lin_pos": {
+          "count": 2,
+          "max_abs": 7.668214640335272e-06
+        },
+        "wrapper/ground_lin_vel": {
+          "count": 2,
+          "max_abs": 0.00030598668944543234
+        },
+        "wrapper/previous_ang_vel": {
+          "count": 1,
+          "max_abs": 0.00012342121299299737
+        },
+        "wrapper/previous_lin_vel": {
+          "count": 2,
+          "max_abs": 0.0003702294646108721
+        },
+        "wrapper/previous_lin_pos": {
+          "count": 2,
+          "max_abs": 5.117056264838954e-06
+        },
+        "wrapper/previous_ground_lin_vel": {
+          "count": 2,
+          "max_abs": 0.00030659003562467967
+        },
+        "drone/state": {
+          "count": 6,
+          "max_abs": 0.0004015837397325629
+        },
+        "bodies/local_body_velocities": {
+          "count": 2,
+          "max_abs": 0.00041747735899393
+        },
+        "fin_0/local_surface_velocity": {
+          "count": 2,
+          "max_abs": 0.00041747735899393
+        },
+        "fin_1/local_surface_velocity": {
+          "count": 2,
+          "max_abs": 0.00017113159235019432
+        },
+        "fin_2/local_surface_velocity": {
+          "count": 2,
+          "max_abs": 0.0006701049648122712
+        },
+        "fin_3/local_surface_velocity": {
+          "count": 2,
+          "max_abs": 0.0006701049205618903
+        },
+        "physics/body_1/position": {
+          "count": 2,
+          "max_abs": 7.668214640335272e-06
+        },
+        "physics/body_1/quaternion": {
+          "count": 2,
+          "max_abs": 1.5434606344002767e-06
+        },
+        "physics/body_1/linear_velocity": {
+          "count": 2,
+          "max_abs": 0.00030598668944543234
+        },
+        "physics/body_1/angular_velocity": {
+          "count": 1,
+          "max_abs": 0.000123172883321884
+        },
+        "diagnostic/cached_links": {
+          "count": 107,
+          "max_abs": 0.000574508003353277
+        }
+      },
+      "migrated_task_exact_to_source": true
+    }
+  ],
+  "horizon": {
+    "default_max_steps": 1200,
+    "successful_physical_action_bound": 1202,
+    "rejected_calls": 4096,
+    "public_step_count": 0,
+    "physics_steps": 20,
+    "aviary_steps": 10,
+    "terminated": false,
+    "truncated": false
+  },
+  "versions": {
+    "PyFlyt": "0.29.0",
+    "pybullet": "3.2.7",
+    "numpy": "2.5.3",
+    "gymnasium": "1.3.0"
+  },
+  "source_hashes": {
+    "/Users/samib/se7-rocket-venv/lib/python3.12/site-packages/stable_worldmodel/envs/rocket_landing/pyflyt_rocketlanding.py": "5ede3640ce1e2add32b6b0a6c36e190bb1130e38bb258ab182af12a6fbedee23",
+    "/private/tmp/stable-envs-semantic-recovery/stable_envs/_adapters/rocket_task.py": "f2c2e97188296453c5378dcd7abdfe0b0addb9ecbc3ec6117669336fa6a9674b",
+    "/private/tmp/stable-envs-semantic-recovery/stable_envs/_adapters/rocket_spaces.py": "f4f9d630413af8823e8b3a499e25a5ccbf764af25cb4ac555d58fb80a18cfe78",
+    "/Users/samib/se7-rocket-venv/lib/python3.12/site-packages/PyFlyt/core/aviary.py": "ec47b50a22dc532d2a4aba616b9d0c784d58740a79d7b0d806acb3564558fa83",
+    "/Users/samib/se7-rocket-venv/lib/python3.12/site-packages/PyFlyt/core/drones/rocket.py": "744f7b5380853ba3511f18a62a3520a24f82ffcd45c81e62f69ee42b7ee32943",
+    "/Users/samib/se7-rocket-venv/lib/python3.12/site-packages/PyFlyt/core/abstractions/boosters.py": "9f63987768da5ad9eceee41876aef653418e66190e46bc61169b7fc45bf60ee3",
+    "/Users/samib/se7-rocket-venv/lib/python3.12/site-packages/PyFlyt/core/abstractions/gimbals.py": "e938897cf455efcf14001a2d1d44b8d2b61a7f8e972b63c1556c8b32d9a8f878",
+    "/Users/samib/se7-rocket-venv/lib/python3.12/site-packages/PyFlyt/core/abstractions/lifting_surfaces.py": "b05127d71abc4fa801ab59af3fc8318a8be4a8c46d5d889264bc6e0fc6fa34a9",
+    "/Users/samib/se7-rocket-venv/lib/python3.12/site-packages/PyFlyt/core/abstractions/boring_bodies.py": "5c183f692405c3ba609dd4644aff3bcdaece52dbc219d4a8c683da93f142db6e",
+    "/Users/samib/se7-rocket-venv/lib/python3.12/site-packages/PyFlyt/gym_envs/rocket_envs/rocket_base_env.py": "882103b066662c6b7b1f9fa148d976ef7d4872e7e235a0d9ab0f97836b215492"
+  },
+  "interpretation": "The 1202 bound covers successful physics-advancing calls, not side-effecting rejected controls. Equal rejected-call count, identical final controls, and identical 91 named numeric diagnostics can hide different accumulated native forces. A rejected-call counter plus final caches is insufficient. This refutes the current bounded recipe, not every conceivable numeric restoration algorithm.",
+  "production_public_adapter_accepted": false,
+  "shared_contract_changes": false
+}

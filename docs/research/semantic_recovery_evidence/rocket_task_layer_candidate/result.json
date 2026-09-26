@@ -1,0 +1,254 @@
+{
+  "status": "PRIVATE_TASK_LAYER_PARITY_PASS",
+  "records": [
+    {
+      "seed": 0,
+      "dtype": "float32",
+      "options": {},
+      "reset_91_fields_exact": true,
+      "three_step_91_fields_exact": true
+    },
+    {
+      "seed": 0,
+      "dtype": "float32",
+      "options": {
+        "variation": [
+          "all"
+        ]
+      },
+      "reset_91_fields_exact": true,
+      "three_step_91_fields_exact": true
+    },
+    {
+      "seed": 0,
+      "dtype": "float32",
+      "options": {
+        "variation": [
+          "environment"
+        ]
+      },
+      "reset_91_fields_exact": true,
+      "three_step_91_fields_exact": true
+    },
+    {
+      "seed": 0,
+      "dtype": "float32",
+      "options": {
+        "variation": [
+          "rocket.body_color",
+          "pad.color"
+        ]
+      },
+      "reset_91_fields_exact": true,
+      "three_step_91_fields_exact": true
+    },
+    {
+      "seed": 0,
+      "dtype": "float64",
+      "options": {},
+      "reset_91_fields_exact": true,
+      "three_step_91_fields_exact": true
+    },
+    {
+      "seed": 0,
+      "dtype": "float64",
+      "options": {
+        "variation": [
+          "all"
+        ]
+      },
+      "reset_91_fields_exact": true,
+      "three_step_91_fields_exact": true
+    },
+    {
+      "seed": 0,
+      "dtype": "float64",
+      "options": {
+        "variation": [
+          "environment"
+        ]
+      },
+      "reset_91_fields_exact": true,
+      "three_step_91_fields_exact": true
+    },
+    {
+      "seed": 0,
+      "dtype": "float64",
+      "options": {
+        "variation": [
+          "rocket.body_color",
+          "pad.color"
+        ]
+      },
+      "reset_91_fields_exact": true,
+      "three_step_91_fields_exact": true
+    },
+    {
+      "seed": 17,
+      "dtype": "float32",
+      "options": {},
+      "reset_91_fields_exact": true,
+      "three_step_91_fields_exact": true
+    },
+    {
+      "seed": 17,
+      "dtype": "float32",
+      "options": {
+        "variation": [
+          "all"
+        ]
+      },
+      "reset_91_fields_exact": true,
+      "three_step_91_fields_exact": true
+    },
+    {
+      "seed": 17,
+      "dtype": "float32",
+      "options": {
+        "variation": [
+          "environment"
+        ]
+      },
+      "reset_91_fields_exact": true,
+      "three_step_91_fields_exact": true
+    },
+    {
+      "seed": 17,
+      "dtype": "float32",
+      "options": {
+        "variation": [
+          "rocket.body_color",
+          "pad.color"
+        ]
+      },
+      "reset_91_fields_exact": true,
+      "three_step_91_fields_exact": true
+    },
+    {
+      "seed": 17,
+      "dtype": "float64",
+      "options": {},
+      "reset_91_fields_exact": true,
+      "three_step_91_fields_exact": true
+    },
+    {
+      "seed": 17,
+      "dtype": "float64",
+      "options": {
+        "variation": [
+          "all"
+        ]
+      },
+      "reset_91_fields_exact": true,
+      "three_step_91_fields_exact": true
+    },
+    {
+      "seed": 17,
+      "dtype": "float64",
+      "options": {
+        "variation": [
+          "environment"
+        ]
+      },
+      "reset_91_fields_exact": true,
+      "three_step_91_fields_exact": true
+    },
+    {
+      "seed": 17,
+      "dtype": "float64",
+      "options": {
+        "variation": [
+          "rocket.body_color",
+          "pad.color"
+        ]
+      },
+      "reset_91_fields_exact": true,
+      "three_step_91_fields_exact": true
+    },
+    {
+      "seed": 42,
+      "dtype": "float32",
+      "options": {},
+      "reset_91_fields_exact": true,
+      "three_step_91_fields_exact": true
+    },
+    {
+      "seed": 42,
+      "dtype": "float32",
+      "options": {
+        "variation": [
+          "all"
+        ]
+      },
+      "reset_91_fields_exact": true,
+      "three_step_91_fields_exact": true
+    },
+    {
+      "seed": 42,
+      "dtype": "float32",
+      "options": {
+        "variation": [
+          "environment"
+        ]
+      },
+      "reset_91_fields_exact": true,
+      "three_step_91_fields_exact": true
+    },
+    {
+      "seed": 42,
+      "dtype": "float32",
+      "options": {
+        "variation": [
+          "rocket.body_color",
+          "pad.color"
+        ]
+      },
+      "reset_91_fields_exact": true,
+      "three_step_91_fields_exact": true
+    },
+    {
+      "seed": 42,
+      "dtype": "float64",
+      "options": {},
+      "reset_91_fields_exact": true,
+      "three_step_91_fields_exact": true
+    },
+    {
+      "seed": 42,
+      "dtype": "float64",
+      "options": {
+        "variation": [
+          "all"
+        ]
+      },
+      "reset_91_fields_exact": true,
+      "three_step_91_fields_exact": true
+    },
+    {
+      "seed": 42,
+      "dtype": "float64",
+      "options": {
+        "variation": [
+          "environment"
+        ]
+      },
+      "reset_91_fields_exact": true,
+      "three_step_91_fields_exact": true
+    },
+    {
+      "seed": 42,
+      "dtype": "float64",
+      "options": {
+        "variation": [
+          "rocket.body_color",
+          "pad.color"
+        ]
+      },
+      "reset_91_fields_exact": true,
+      "three_step_91_fields_exact": true
+    }
+  ],
+  "source_sha256": "5ede3640ce1e2add32b6b0a6c36e190bb1130e38bb258ab182af12a6fbedee23",
+  "candidate_sha256": "f2c2e97188296453c5378dcd7abdfe0b0addb9ecbc3ec6117669336fa6a9674b",
+  "scope": "Private migration only; no public State/SimulatorAdapter/registration acceptance"
+}
