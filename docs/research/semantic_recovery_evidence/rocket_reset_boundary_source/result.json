@@ -1,0 +1,224 @@
+{
+  "status": "SOURCE_RESET_BOUNDARY_CONFIRMED",
+  "classification": "SEEDED_REPLAYABLE_FRESH_UNSEEDED_ENTROPY",
+  "source_sha256": "5ede3640ce1e2add32b6b0a6c36e190bb1130e38bb258ab182af12a6fbedee23",
+  "records": [
+    {
+      "mode": null,
+      "seed": 0,
+      "seeded_reset_exact": true,
+      "goal_reset_reconstructed_exact": true,
+      "goal_shape": [
+        480,
+        480,
+        3
+      ],
+      "goal_bytes": 691200,
+      "goal_sha256": "65b095f8650bf6f8d9be6e7529fe0808bfd6068dad62aa31b2e02031e5e587d6",
+      "owned_main_rng_identity_preserved": true,
+      "fresh_unseeded_value_paths": [
+        "environment.sky_color",
+        "environment.start_height_ratio",
+        "environment.start_horizontal_offset",
+        "environment.start_tilt",
+        "pad.color",
+        "rocket.body_color",
+        "rocket.booster_color",
+        "rocket.fin_color",
+        "rocket.leg_color"
+      ],
+      "fresh_unseeded_rng_paths": [
+        "environment.sky_color",
+        "environment.start_height_ratio",
+        "environment.start_horizontal_offset",
+        "environment.start_tilt",
+        "pad.color",
+        "rocket.body_color",
+        "rocket.booster_color",
+        "rocket.fin_color",
+        "rocket.leg_color"
+      ]
+    },
+    {
+      "mode": null,
+      "seed": 17,
+      "seeded_reset_exact": true,
+      "goal_reset_reconstructed_exact": true,
+      "goal_shape": [
+        480,
+        480,
+        3
+      ],
+      "goal_bytes": 691200,
+      "goal_sha256": "65b095f8650bf6f8d9be6e7529fe0808bfd6068dad62aa31b2e02031e5e587d6",
+      "owned_main_rng_identity_preserved": true,
+      "fresh_unseeded_value_paths": [
+        "environment.sky_color",
+        "environment.start_height_ratio",
+        "environment.start_horizontal_offset",
+        "environment.start_tilt",
+        "pad.color",
+        "rocket.body_color",
+        "rocket.booster_color",
+        "rocket.fin_color",
+        "rocket.leg_color"
+      ],
+      "fresh_unseeded_rng_paths": [
+        "environment.sky_color",
+        "environment.start_height_ratio",
+        "environment.start_horizontal_offset",
+        "environment.start_tilt",
+        "pad.color",
+        "rocket.body_color",
+        "rocket.booster_color",
+        "rocket.fin_color",
+        "rocket.leg_color"
+      ]
+    },
+    {
+      "mode": null,
+      "seed": 42,
+      "seeded_reset_exact": true,
+      "goal_reset_reconstructed_exact": true,
+      "goal_shape": [
+        480,
+        480,
+        3
+      ],
+      "goal_bytes": 691200,
+      "goal_sha256": "65b095f8650bf6f8d9be6e7529fe0808bfd6068dad62aa31b2e02031e5e587d6",
+      "owned_main_rng_identity_preserved": true,
+      "fresh_unseeded_value_paths": [
+        "environment.sky_color",
+        "environment.start_height_ratio",
+        "environment.start_horizontal_offset",
+        "environment.start_tilt",
+        "pad.color",
+        "rocket.body_color",
+        "rocket.booster_color",
+        "rocket.fin_color",
+        "rocket.leg_color"
+      ],
+      "fresh_unseeded_rng_paths": [
+        "environment.sky_color",
+        "environment.start_height_ratio",
+        "environment.start_horizontal_offset",
+        "environment.start_tilt",
+        "pad.color",
+        "rocket.body_color",
+        "rocket.booster_color",
+        "rocket.fin_color",
+        "rocket.leg_color"
+      ]
+    },
+    {
+      "mode": "rgb_array",
+      "seed": 0,
+      "seeded_reset_exact": true,
+      "goal_reset_reconstructed_exact": true,
+      "goal_shape": [
+        480,
+        480,
+        3
+      ],
+      "goal_bytes": 691200,
+      "goal_sha256": "c3ece32b6ea9d2c7de211dc1cba8efb2519e78585c38096b326a809ec69b6803",
+      "owned_main_rng_identity_preserved": true,
+      "fresh_unseeded_value_paths": [
+        "environment.sky_color",
+        "environment.start_height_ratio",
+        "environment.start_horizontal_offset",
+        "environment.start_tilt",
+        "pad.color",
+        "rocket.body_color",
+        "rocket.booster_color",
+        "rocket.fin_color",
+        "rocket.leg_color"
+      ],
+      "fresh_unseeded_rng_paths": [
+        "environment.sky_color",
+        "environment.start_height_ratio",
+        "environment.start_horizontal_offset",
+        "environment.start_tilt",
+        "pad.color",
+        "rocket.body_color",
+        "rocket.booster_color",
+        "rocket.fin_color",
+        "rocket.leg_color"
+      ]
+    },
+    {
+      "mode": "rgb_array",
+      "seed": 17,
+      "seeded_reset_exact": true,
+      "goal_reset_reconstructed_exact": true,
+      "goal_shape": [
+        480,
+        480,
+        3
+      ],
+      "goal_bytes": 691200,
+      "goal_sha256": "5727e62729b558f45e604e02226c96e0c53affa4ab7a92c4eeabef14611f4512",
+      "owned_main_rng_identity_preserved": true,
+      "fresh_unseeded_value_paths": [
+        "environment.sky_color",
+        "environment.start_height_ratio",
+        "environment.start_horizontal_offset",
+        "environment.start_tilt",
+        "pad.color",
+        "rocket.body_color",
+        "rocket.booster_color",
+        "rocket.fin_color",
+        "rocket.leg_color"
+      ],
+      "fresh_unseeded_rng_paths": [
+        "environment.sky_color",
+        "environment.start_height_ratio",
+        "environment.start_horizontal_offset",
+        "environment.start_tilt",
+        "pad.color",
+        "rocket.body_color",
+        "rocket.booster_color",
+        "rocket.fin_color",
+        "rocket.leg_color"
+      ]
+    },
+    {
+      "mode": "rgb_array",
+      "seed": 42,
+      "seeded_reset_exact": true,
+      "goal_reset_reconstructed_exact": true,
+      "goal_shape": [
+        480,
+        480,
+        3
+      ],
+      "goal_bytes": 691200,
+      "goal_sha256": "771678278a58b038e766c2488236e4f0fe884adee476dc3e61c25868e18b75c6",
+      "owned_main_rng_identity_preserved": true,
+      "fresh_unseeded_value_paths": [
+        "environment.sky_color",
+        "environment.start_height_ratio",
+        "environment.start_horizontal_offset",
+        "environment.start_tilt",
+        "pad.color",
+        "rocket.body_color",
+        "rocket.booster_color",
+        "rocket.fin_color",
+        "rocket.leg_color"
+      ],
+      "fresh_unseeded_rng_paths": [
+        "environment.sky_color",
+        "environment.start_height_ratio",
+        "environment.start_horizontal_offset",
+        "environment.start_tilt",
+        "pad.color",
+        "rocket.body_color",
+        "rocket.booster_color",
+        "rocket.fin_color",
+        "rocket.leg_color"
+      ]
+    }
+  ],
+  "scope": "Source-only; all-selected nine leaves at registered resolution. No production State or complete renderer/Variation acceptance. Does not justify dropping goal cache in unaudited cases."
+}
