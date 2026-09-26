@@ -98,3 +98,10 @@ Milestone write-ups and generated tables. They use the project's internal names
 - [Whole-environment clone diagnostics](clone_diagnostics.md)
 - [Replay-backed restoration feasibility and blockers](replay_feasibility.md)
 - [Rendered State, clone and replay checkpoint](branch_replay_checkpoint.md)
+
+- [Reset reproducibility at external entropy boundaries](reset_replay_semantics.md):
+  additive classifications preserving existing accepted scopes and Rocket's
+  authoritative fresh unseeded Variation entropy requirement.
+- [Rocket production recovery: pending renderer preflight](rocket_production_pending.md):
+  sealed starting checkpoint and source-frame capture; approval-service block,
+  no production changes or promotion.

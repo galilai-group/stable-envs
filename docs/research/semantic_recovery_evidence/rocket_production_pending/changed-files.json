@@ -1,0 +1,113 @@
+{
+  "base_commit": "3d0a799d329bb00fbecbf708e970be18a14ce611",
+  "files": [
+    {
+      "path": "docs/research/index.md",
+      "bytes": 5173,
+      "sha256": "6d00ffbdebc8ec949ff3ad5ae75bf4a7b7c3ab9baaf53fe354533256772c550f"
+    },
+    {
+      "path": "docs/research/reset_replay_classification.json",
+      "bytes": 21101,
+      "sha256": "d458019339710b8ea2c1a1259fa87dbf81f8b377c6609c5889e72bb4254e7cde"
+    },
+    {
+      "path": "docs/research/reset_replay_semantics.md",
+      "bytes": 2498,
+      "sha256": "a6ccb551f81c8053c7905f184644a8df9e126386b8505cc6f2307f72844359e3"
+    },
+    {
+      "path": "docs/research/rocket_production_pending.md",
+      "bytes": 6979,
+      "sha256": "ac5b70b10e4a1301fac40dede754a41b2d32fbf3f3807037017bb1f8bd96d5e9"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/rocket_production_pending/preservation.json",
+      "bytes": 644,
+      "sha256": "4a5efa88dc1f1d07ce62b2eb897d9752d8273bc336aa7e1f0493df4435851c3e"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/rocket_production_pending/validation-logs.json.gz",
+      "bytes": 33253,
+      "sha256": "6c65db3d4b176fb360dee667b2387f3626b4769717bb66168539278778c1dff9"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/rocket_production_pending/validation.json",
+      "bytes": 13858,
+      "sha256": "41a97426ed34ddfbc8aec976b50c38da6c844c8aec6a1f141b875994fcdb654a"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/rocket_production_start/SHA256SUMS",
+      "bytes": 278,
+      "sha256": "b029fc0bcc46edbd171b0be4439cdc745100d996c8f9f3563bf1676ddcfe9c7c"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/rocket_production_start/checkpoint-and-growth.json",
+      "bytes": 1085,
+      "sha256": "0d947fce1852f9beac36beaa757c39e71c62812a0e065e89671978d5b33b0a72"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/rocket_production_start/measure-growth.py",
+      "bytes": 2755,
+      "sha256": "c2f82283601e8a58e897bca5c5ff0322cc00ec0af88eec217e166f7b751b25ff"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/rocket_production_start/prior-checkpoint-verification.json",
+      "bytes": 1124,
+      "sha256": "d43d9d5d408de06f841b865508881daa799ab60d5fcad5cc7acd8e7ca26ae868"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/rocket_renderer_preflight_source/setup-failure.log",
+      "bytes": 961,
+      "sha256": "44195e86aec19fdbd8a049af9a5f860e3e175202bd28edd24f02065945a6eeb5"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/rocket_renderer_preflight_source_v2/SHA256SUMS",
+      "bytes": 162,
+      "sha256": "796a84726485c7d49924ab1227ec08c0bcbc797ae748a2be28718c0d5ebd5801"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/rocket_renderer_preflight_source_v2/run.log",
+      "bytes": 1184,
+      "sha256": "73c54d679c6531537e29a97c5077b4acc9d2fcbd725acea90c415c1350821f0b"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/rocket_renderer_preflight_source_v2/source-frames.npz",
+      "bytes": 1234809,
+      "sha256": "83eff154e896abd1af1ccedf9cb02f58e6477f9608ba456ff512519a142373a4"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/rocket_renderer_preflight_source_v2/source.json",
+      "bytes": 52131,
+      "sha256": "b62bc6342f8471ff0a1ea103c8798d7bb295657c904f130cb2a9c03cac030624"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/rocket_renderer_preflight_submission/UPLOAD-SHA256SUMS",
+      "bytes": 242,
+      "sha256": "eb03f8661973886fca80606a975df6c2f33faa0b7e8632858c17c03a6939bd4c"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/rocket_renderer_preflight_submission/preflight.sbatch",
+      "bytes": 1407,
+      "sha256": "fe66d9cf77d0bccb91b8b250f0a0340b92158a3014f1f00608127e30e39c2d70"
+    },
+    {
+      "path": "docs/research/semantic_recovery_evidence/rocket_renderer_preflight_submission/prepared.json",
+      "bytes": 12981,
+      "sha256": "4adbbcfd92d3859fbed660ab95ace995cc3a98db9c922623c6d793be1de15001"
+    },
+    {
+      "path": "scripts/research_rocket_production/renderer_preflight.py",
+      "bytes": 8776,
+      "sha256": "d3513f62b85ddc45a1b0eb18abc7848c710f2085eececeda4721d60a7f89c2d0"
+    },
+    {
+      "path": "scripts/research_rocket_production/verify_pending.py",
+      "bytes": 3374,
+      "sha256": "c5c8240dd1e9cfeb538f17fe20e40d4650a40b9f32c07528f70cc218ffb3f091"
+    }
+  ],
+  "generated_inventory_path": "docs/research/semantic_recovery_evidence/rocket_production_pending/changed-files.json",
+  "generated_seal_path": "docs/research/semantic_recovery_evidence/rocket_production_pending/REPOSITORY-SHA256SUMS",
+  "note": "Uncommitted working-tree inventory, including ignored raw logs. Inventory and its seal are named separately to avoid self-hashes. No production changes."
+}
