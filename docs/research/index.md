@@ -105,3 +105,6 @@ Milestone write-ups and generated tables. They use the project's internal names
 - [Rocket production recovery: pending renderer preflight](rocket_production_pending.md):
   sealed starting checkpoint and source-frame capture; approval-service block,
   no production changes or promotion.
+- [Rocket recovery checkpoint: rejected-control replay blocker](rocket_recovery_checkpoint.md):
+  passing Oscar renderer preflight, exact private task migration, and a source
+  counterexample outside the successful-step replay bound; 39/3 unchanged.

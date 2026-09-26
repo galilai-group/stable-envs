@@ -1,0 +1,17 @@
+{
+  "core_passed": 95,
+  "core_skipped": 2,
+  "broad_passed": 253,
+  "broad_skipped": 61,
+  "broad_failed": 112,
+  "broad_failed_test_ids_exactly_equal_original_commit": true,
+  "new_failures": [],
+  "ruff": "PASS",
+  "format": "PASS",
+  "whitespace": "PASS",
+  "strict_docs": "PASS",
+  "private_task_cases": 24,
+  "rejected_controls_blocker_cases": 27,
+  "gpu_preflight": "PASS_6721727",
+  "promotion": false
+}
