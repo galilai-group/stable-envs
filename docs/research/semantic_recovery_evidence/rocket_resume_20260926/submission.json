@@ -1,0 +1,15 @@
+{
+  "original_start": "3d0a799d329bb00fbecbf708e970be18a14ce611",
+  "submission_source_commit": "3e24542c4453e5682d12481d6a458144e049d60f",
+  "job": 6721727,
+  "partition": "3090-gcondo",
+  "qos": "cs-3090-gcondo",
+  "remote_bundle": "/oscar/scratch/sboughan/se-semantic-recovery/rocket-render-preflight-3d0a799d",
+  "archive_manifest": "docs/research/semantic_recovery_evidence/rocket_renderer_preflight_submission/UPLOAD-SHA256SUMS",
+  "upload_verified": true,
+  "duplicate_rocket_jobs_before_submit": [],
+  "missing_worktree_link_repaired": true,
+  "missing_tracked_files_restored_from_original_head": 528,
+  "existing_source_and_uncommitted_work_overwritten": false,
+  "no_push": true
+}
