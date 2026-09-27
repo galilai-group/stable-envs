@@ -108,3 +108,12 @@ Milestone write-ups and generated tables. They use the project's internal names
 - [Rocket recovery checkpoint: rejected-control replay blocker](rocket_recovery_checkpoint.md):
   passing Oscar renderer preflight, exact private task migration, and a source
   counterexample outside the successful-step replay bound; 39/3 unchanged.
+- [Rocket atomic invalid-action boundary](rocket_action_boundary.md):
+  supported controls preserve source parity; rejected controls leave no mutation.
+- [Rocket bounded replay State candidate](rocket_replay_state.md):
+  fixed numeric restoration recipe on official PyFlyt/PyBullet; renderer acceptance blocked.
+- [Rocket public candidate CPU evidence](rocket_public_cpu_evidence.md):
+  revision-qualified trajectory, continuation, Variation and unit-test results.
+- [Rocket public renderer blocker checkpoint](rocket_public_renderer_blocker.md):
+  204 semantic checkpoints completed; five frozen visual groups fail; sequence
+  stopped at 39 VERIFIED / 3 INCOMPLETE.

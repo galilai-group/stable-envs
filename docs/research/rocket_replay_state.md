@@ -1,7 +1,8 @@
 # Rocket replay State candidate
 
-This implementation is pending complete acceptance. The committed matrix remains
-39 VERIFIED / 3 INCOMPLETE until all required gates pass.
+This candidate is blocked by frozen-renderer acceptance in Oscar job 6732132.
+The matrix remains **39 VERIFIED / 3 INCOMPLETE**. See the
+[public renderer blocker checkpoint](rocket_public_renderer_blocker.md).
 
 The public factory class `PyFlytRocketLanding` delegates CPU dynamics to the
 migrated SWM-local task on official PyFlyt 0.29.0 / PyBullet 3.2.7. Its optional
