@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import importlib.metadata as md
+import inspect
 import json
 import os
 import sys
@@ -44,6 +45,17 @@ def main():
     device = "cuda" if args.gpu else "cpu"
     resolution = 480 if args.gpu else 64
     versions = {k: md.version(k) for k in ["PyFlyt", "pybullet", "numpy", "gymnasium", "torch", "tensordict"]}
+    production_hashes = {
+        str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest()
+        for p in sorted(ROOT.glob("stable_envs/_adapters/rocket*.py"))
+        + [ROOT / "stable_envs/envs/rocket_semantics.py", ROOT / "stable_envs/envs/rocket_landing.py"]
+    }
+    oracle_path = Path(inspect.getfile(Oracle))
+    result["oracle_source"] = {
+        "path": str(oracle_path),
+        "sha256": hashlib.sha256(oracle_path.read_bytes()).hexdigest(),
+    }
+    assert result["oracle_source"]["sha256"] == "5ede3640ce1e2add32b6b0a6c36e190bb1130e38bb258ab182af12a6fbedee23"
     active = {}
     start = time.perf_counter()
 
@@ -241,14 +253,12 @@ def main():
             versions=versions,
             elapsed_seconds=time.perf_counter() - start,
             restore_diagnostics=timings,
-            production_hashes={
-                str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest()
-                for p in sorted(ROOT.glob("stable_envs/_adapters/rocket*.py"))
-                + [ROOT / "stable_envs/envs/rocket_semantics.py", ROOT / "stable_envs/envs/rocket_landing.py"]
-            },
+            production_hashes=production_hashes,
         )
         (args.output / "result.json").write_text(json.dumps(result, indent=2) + "\n")
         print(result["status"], len(records), flush=True)
+    if result["status"] not in {"PUBLIC_GPU_PASS", "PUBLIC_CPU_TRAJECTORIES_PASS"}:
+        raise SystemExit(2)
 
 
 if __name__ == "__main__":

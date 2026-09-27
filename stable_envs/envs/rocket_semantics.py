@@ -150,6 +150,19 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
             device=self.device,
         )
 
+    def _pack_render_state(self, state):
+        if isinstance(state, TensorDict) and "current" in state.keys():
+            return self.to_render_state(state)["renderer", "pose"]
+        if isinstance(state, TensorDict):
+            return state["renderer", "pose"].to(device=self.device, dtype=torch.float32).clone()
+        return torch.as_tensor(state, device=self.device, dtype=torch.float32).reshape(-1, 13).clone()
+
+    def _unpack_render_state(self, rows):
+        rows = torch.as_tensor(rows, device=self.device, dtype=torch.float32).reshape(-1, 13)
+        # Appearance and all simulator leaves remain absent. This incomplete
+        # projection cannot be passed to set_state or impersonate full State.
+        return TensorDict({("renderer", "pose"): rows.clone()}, [len(rows)], device=self.device)
+
     def resolve_style(self, style=None, variation=None, batch=None):
         if style is None:
             style = self.to_render_state()["renderer", "style"]

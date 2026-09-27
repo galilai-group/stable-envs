@@ -1,0 +1,8 @@
+{
+  "status": "SUPERSEDED_NOT_ACCEPTANCE",
+  "loaded_candidate": "be53af620383b11de56a2f7389938c8e71a66c60",
+  "reason": "Render projection layout corrected during gate execution; interrupted to validate the corrected revision. Production hashes in result.json were captured at shutdown by the original harness and must not be treated as hashes of loaded modules.",
+  "signal": "SIGINT",
+  "user_task_cancelled": false,
+  "promoted": false
+}

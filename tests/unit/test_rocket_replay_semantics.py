@@ -119,3 +119,14 @@ def test_render_projection_matches_actual_engine_materials(pair):
     rgba = e.get_state()["render", "rgba"].numpy()
     for material, source in [(1, 0), (4, 1), (8, 2), (3, 3), (12, 4)]:
         np.testing.assert_allclose(materials[:, material], rgba[:, source, :3], rtol=0, atol=1e-7)
+
+
+def test_compact_projection_cannot_restore_physics(pair):
+    e = pair[0]
+    saved = e.get_state()
+    rows = e._pack_render_state(saved)
+    assert torch.equal(rows, saved["current", "wrapper", "state"][:, :13].float())
+    for incomplete in (rows, e._unpack_render_state(rows), e.to_render_state(saved)):
+        with pytest.raises((ValueError, TypeError)):
+            e.set_state(incomplete)
+        exact(saved, e.get_state())
