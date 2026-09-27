@@ -130,3 +130,24 @@ def test_compact_projection_cannot_restore_physics(pair):
         with pytest.raises((ValueError, TypeError)):
             e.set_state(incomplete)
         exact(saved, e.get_state())
+
+
+def test_variation_getter_tracks_reset_and_restore(pair):
+    e, destination = pair
+    e.reset(seed=17, options={"variation": ["all"]})
+    actual = e.get_variation()
+    for key, offset, width in e.variation_space.flat_layout():
+        for lane, replay in enumerate(e._simulator.envs):
+            value = np.asarray(replay.env.variation_space._walk(key).value).reshape(-1)
+            np.testing.assert_array_equal(actual[lane, offset : offset + width].numpy(), value.astype(np.float32))
+    destination.set_state(e.get_state())
+    assert torch.equal(actual, destination.get_variation())
+    anchor = e.set_variation({"environment.start_tilt": np.array([0.1, -0.1], np.float32)})
+    assert anchor.shape == actual.shape
+    assert torch.equal(actual, e.get_variation())  # Persistent change applies on reset.
+    anchor.zero_()
+    e.reset(seed=17)
+    for replay in e._simulator.envs:
+        np.testing.assert_array_equal(
+            replay.env.variation_space._walk("environment.start_tilt").value, np.array([0.1, -0.1], np.float32)
+        )

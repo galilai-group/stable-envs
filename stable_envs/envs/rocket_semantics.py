@@ -85,6 +85,22 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
         self._check_open("step")
         return self._simulator.step(actions)
 
+    def _variation_rows(self, attribute):
+        rows = [
+            np.concatenate(
+                [
+                    np.asarray(getattr(env.env.variation_space._walk(key), attribute)).reshape(-1)
+                    for key, _, _ in self.variation_space.flat_layout()
+                ]
+            )
+            for env in self._simulator.envs
+        ]
+        return torch.as_tensor(np.stack(rows), dtype=torch.float32, device=self.device)
+
+    def get_variation(self):
+        self._check_open("get_variation")
+        return self._variation_rows("value")
+
     def set_variation(self, variation=None, **overrides):
         self._check_open("set_variation")
         if isinstance(variation, dict):
@@ -119,7 +135,7 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
                     raise ValueError(f"Invalid Rocket Variation range: {key}")
                 values[i][key] = converted.copy()
         self._simulator.configure(values)
-        return self.get_state()
+        return self._variation_rows("init_value")
 
     def to_render_state(self, state=None, *, size=None, supersample=None):
         self._check_open("to_render_state")
