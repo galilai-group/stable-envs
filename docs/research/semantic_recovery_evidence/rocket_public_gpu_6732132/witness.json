@@ -1,0 +1,92 @@
+{
+  "registration": "swm/PFRocketLanding-v0",
+  "public_factory": "stable_envs.make(\"PyFlytRocketLanding\", device=\"cuda\", size=480, simulator_config=config, seed=0)",
+  "oracle_factory": "stable_worldmodel.envs.rocket_landing.pyflyt_rocketlanding.RocketLandingEnv(**config)",
+  "config": {
+    "ceiling": 500000.0,
+    "render_mode": "rgb_array",
+    "render_resolution": [
+      480,
+      480
+    ]
+  },
+  "reset": {
+    "seed": 0,
+    "options": {
+      "accelerate_drop": false
+    }
+  },
+  "actions": {
+    "dtype": "float32",
+    "value": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "repeat": 600
+  },
+  "source_record": {
+    "label": "horizon_600",
+    "seed": 0,
+    "dtype": "float32",
+    "public_step": 600,
+    "physical_actions": 600,
+    "post_terminal": 0,
+    "contact": 0.0,
+    "success": false,
+    "terminated": false,
+    "truncated": false,
+    "state_bytes": 768719,
+    "exact_source_numeric": true,
+    "independent_restore_exact": true,
+    "immediate_pixels_exact": true,
+    "metrics": {
+      "mean_abs": 10.60954861111111,
+      "exact_frac": 0.9452907986111111,
+      "within8_frac": 0.9494227430555555,
+      "max_abs": 255,
+      "interior_frac": 0.9605911759450142,
+      "interior_exact_frac": 0.9556939913520479,
+      "interior_mean_abs": 9.49431712485084,
+      "interior_px": 220399,
+      "interior_bad_px": 9765,
+      "ssim": 0.9389397148054979
+    }
+  },
+  "verified_frame": {
+    "index": 19,
+    "label": "horizon_600",
+    "seed": 0,
+    "dtype": "float32",
+    "mse_uint8": 2213.1296947337964,
+    "mse_normalized": 0.03403505874254204,
+    "mae_rgb_uint8": 10.345930266203704,
+    "metrics": {
+      "mean_abs": 10.60954861111111,
+      "exact_frac": 0.9452907986111111,
+      "within8_frac": 0.9494227430555555,
+      "max_abs": 255,
+      "interior_frac": 0.9605911759450142,
+      "interior_exact_frac": 0.9556939913520479,
+      "interior_mean_abs": 9.49431712485084,
+      "interior_px": 220399,
+      "interior_bad_px": 9765,
+      "ssim": 0.9389397148054524
+    },
+    "ours_sha256": "257f72efe4822aef0fd1399969c5eb47459f35119b94375da2e235c049a26107",
+    "oracle_sha256": "3fd4dbd6577673d801273ebefc3d5c9470806f71dd6581b25993304ab9f4dc30"
+  },
+  "frame_index": 19,
+  "scope": "One failing frame pair at the earliest failing sampled checkpoint. Not a claim of globally minimal failure step or default flight configuration. This source-supported high-ceiling diagnostic keeps the rocket airborne to exercise the registered 1202-step physical bound.",
+  "failing_policy": "mean per-pixel maximum absolute RGB-channel difference <= 10.0",
+  "decision": "10.60954861111111 > 10.0",
+  "other_limits_pass": true,
+  "full_State_vs_RenderState_and_restore_frame_equal": true,
+  "exact_source_numeric": true,
+  "frozen_renderer_unchanged": true,
+  "next_decision": "Authorize a separate Rocket-local renderer investigation under the existing frozen limits; no renderer changes or threshold relaxation were performed in this stopped sequence."
+}

@@ -1,0 +1,32 @@
+{
+  "job_id": 6732132,
+  "state": "FAILED",
+  "exit_code": "2:0",
+  "elapsed": "00:31:20",
+  "node": "gpu1504",
+  "partition": "gpu",
+  "qos": "norm-gpu",
+  "start": "2026-09-26T22:46:42",
+  "end": "2026-09-26T23:18:02",
+  "gpu": "NVIDIA A40",
+  "cpu": "AMD EPYC 7413 24-Core Processor (two sockets)",
+  "dynamics": "Official PyFlyt/PyBullet CPU",
+  "status": "FROZEN_RENDERER_ACCEPTANCE_BLOCKER",
+  "semantic_checkpoints": 204,
+  "visual_groups": 41,
+  "failed_visual_groups": 5,
+  "persistent_variation_and_independent_suffix_followups": "NOT_RUN: gate exited 2 before conditional followups",
+  "performance_job": {
+    "job_id": 6732153,
+    "state": "CANCELLED",
+    "exit_code": "0:0",
+    "elapsed": "00:00:00",
+    "node": "None assigned",
+    "start": null,
+    "end": "2026-09-26T23:18:12",
+    "reason": "afterok dependency failed; job did not execute"
+  },
+  "download_archive_sha256": "2a45803574b5321fa1c5bd3a23be8ae4f6d3a0c4c764f11cbec7a53ee30aed12",
+  "promotion": false,
+  "sequence_stopped": true
+}
