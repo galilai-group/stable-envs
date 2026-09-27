@@ -107,3 +107,15 @@ def test_seeded_future_reset_and_fresh_entropy(pair):
 def test_cpu_render_explicitly_unsupported(pair):
     with pytest.raises(NotImplementedError, match="no CPU"):
         pair[0].render()
+
+
+def test_render_projection_matches_actual_engine_materials(pair):
+    from stable_envs.envs import rocket_landing as frozen
+
+    e = pair[0]
+    e.reset(seed=17, options={"variation": ["all"]})
+    projected = e.to_render_state()
+    materials = frozen.material_table(projected["renderer", "style"].numpy())
+    rgba = e.get_state()["render", "rgba"].numpy()
+    for material, source in [(1, 0), (4, 1), (8, 2), (3, 3), (12, 4)]:
+        np.testing.assert_allclose(materials[:, material], rgba[:, source, :3], rtol=0, atol=1e-7)

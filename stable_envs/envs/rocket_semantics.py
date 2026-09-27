@@ -126,15 +126,15 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
         state = self.get_state() if state is None else state
         self._simulator.validate(state)
         rgba = state["render", "rgba"]
-        style = torch.cat(
-            [
-                rgba[:, :5, :3].reshape(self.B, 15) * 255,
-                torch.isclose(
-                    rgba[:, 5], torch.tensor(frozen.IGNITION_RGBA, device=rgba.device, dtype=rgba.dtype)
-                ).all(-1, keepdim=True),
-            ],
-            -1,
-        ).to(torch.float32)
+        style = torch.zeros((self.B, 16), dtype=torch.float32, device=rgba.device)
+        # The frozen renderer's layout is alphabetical, not source/corpus order.
+        layout = frozen.style_layout()
+        for index, name in enumerate(frozen.CORPUS_STYLE_PATHS[:5]):
+            offset, width = layout[name]
+            style[:, offset : offset + width] = rgba[:, index, :3] * 255
+        style[:, layout["flame.ignited"][0]] = torch.isclose(
+            rgba[:, 5], torch.tensor(frozen.IGNITION_RGBA, device=rgba.device, dtype=rgba.dtype)
+        ).all(-1)
         return TensorDict(
             {
                 ("renderer", "pose"): state["current", "wrapper", "state"][:, :13].to(torch.float32).clone(),
