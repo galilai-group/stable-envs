@@ -1,0 +1,14 @@
+{
+  "commit": "8e02586e39ada5eb12f9ac115ea034d4861b47e2",
+  "archive_sha256": "e4b919e3c8a5183ba2413cac13dac1ec24d9bd5b13fd81d695160dee8a05a87b",
+  "production_hashes": {
+    "stable_envs/_adapters/rocket.py": "2189cf91364b092ad88ddfe9c342a243c6448ecd3096b11e1845c982a208a913",
+    "stable_envs/_adapters/rocket_actions.py": "60a9916dce5a974b20d4c745e1740a9377f73449909035678d9c842b71105273",
+    "stable_envs/_adapters/rocket_numeric.py": "cbab5bd70d7f755b206c8bbc47943418541b34649d718d83ff96ee37ba1c0b61",
+    "stable_envs/_adapters/rocket_replay.py": "eacd4280dd1fbd2a348d40d5cee8eca6f7f30242c7dff5720bbbf62e2bdfd340",
+    "stable_envs/_adapters/rocket_spaces.py": "f4f9d630413af8823e8b3a499e25a5ccbf764af25cb4ac555d58fb80a18cfe78",
+    "stable_envs/_adapters/rocket_task.py": "0b6f54d75c48f2c8aa9daf8444303e1f2e2b2d0867796829c1b3dec972753bb3",
+    "stable_envs/envs/rocket_semantics.py": "3b3fec6f99ca9928fd0589a047db15931f5404e6c3bef6e8c8102836b80b4c61",
+    "stable_envs/envs/rocket_landing.py": "c2434034aeb2964acaf91aecc65498b3115dd0d03d8f67e9ea1f5d1a4979fb63"
+  }
+}

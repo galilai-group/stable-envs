@@ -1,0 +1,11 @@
+{
+  "purpose": "supporting CPU evidence; no promotion",
+  "platform": "Apple M5 macOS CPU",
+  "python": "/Users/samib/se7-rocket-venv/bin/python",
+  "PYTHONPATH": ".",
+  "harness": "scripts/research_rocket_production/public_gate.py",
+  "case_count": 204,
+  "scope_note": "Earlier candidate, loaded source hashes in result.json. Not acceptance of the final production revision.",
+  "source_hash_authority": "result.json startup production_hashes when present; schema inventory has no loaded-source hash map",
+  "no_gpu_claim": true
+}
