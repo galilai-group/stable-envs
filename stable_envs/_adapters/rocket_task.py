@@ -27,6 +27,7 @@ from gymnasium.spaces import Box
 from PyFlyt.gym_envs.rocket_envs.rocket_base_env import RocketBaseEnv
 
 from . import rocket_spaces as source_spaces
+from .rocket_actions import validate_action
 from .rocket_spaces import nodes
 
 
@@ -436,6 +437,7 @@ class RocketLandingEnv(RocketBaseEnv):
         Returns:
             state, reward, terminated, truncated, info
         """
+        validate_action(action)
         state, reward, terminated, truncated, info = super().step(action)
         info["goal"] = self.current_goal
         return state, reward, terminated, truncated, dict(info)

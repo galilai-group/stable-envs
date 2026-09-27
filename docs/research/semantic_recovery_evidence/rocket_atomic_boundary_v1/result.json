@@ -1,0 +1,97 @@
+{
+  "status": "ATOMIC_BOUNDARY_PASS",
+  "records": [
+    {
+      "seed": 0,
+      "dtype": "float32",
+      "valid_controls": 156,
+      "invalid_calls": 144,
+      "exceptions": {
+        "AssertionError": 51,
+        "ValueError": 78,
+        "TypeError": 15
+      },
+      "immediate_numeric_rng_pixels_exact": true,
+      "next_three_valid_steps_exact": true
+    },
+    {
+      "seed": 0,
+      "dtype": "float64",
+      "valid_controls": 156,
+      "invalid_calls": 144,
+      "exceptions": {
+        "AssertionError": 51,
+        "ValueError": 78,
+        "TypeError": 15
+      },
+      "immediate_numeric_rng_pixels_exact": true,
+      "next_three_valid_steps_exact": true
+    },
+    {
+      "seed": 17,
+      "dtype": "float32",
+      "valid_controls": 156,
+      "invalid_calls": 144,
+      "exceptions": {
+        "AssertionError": 51,
+        "ValueError": 78,
+        "TypeError": 15
+      },
+      "immediate_numeric_rng_pixels_exact": true,
+      "next_three_valid_steps_exact": true
+    },
+    {
+      "seed": 17,
+      "dtype": "float64",
+      "valid_controls": 156,
+      "invalid_calls": 144,
+      "exceptions": {
+        "AssertionError": 51,
+        "ValueError": 78,
+        "TypeError": 15
+      },
+      "immediate_numeric_rng_pixels_exact": true,
+      "next_three_valid_steps_exact": true
+    },
+    {
+      "seed": 42,
+      "dtype": "float32",
+      "valid_controls": 156,
+      "invalid_calls": 144,
+      "exceptions": {
+        "AssertionError": 51,
+        "ValueError": 78,
+        "TypeError": 15
+      },
+      "immediate_numeric_rng_pixels_exact": true,
+      "next_three_valid_steps_exact": true
+    },
+    {
+      "seed": 42,
+      "dtype": "float64",
+      "valid_controls": 156,
+      "invalid_calls": 144,
+      "exceptions": {
+        "AssertionError": 51,
+        "ValueError": 78,
+        "TypeError": 15
+      },
+      "immediate_numeric_rng_pixels_exact": true,
+      "next_three_valid_steps_exact": true
+    }
+  ],
+  "blocker": null,
+  "versions": {
+    "PyFlyt": "0.29.0",
+    "pybullet": "3.2.7",
+    "numpy": "2.5.3",
+    "gymnasium": "1.3.0"
+  },
+  "hashes": {
+    "stable_envs/_adapters/rocket_actions.py": "60a9916dce5a974b20d4c745e1740a9377f73449909035678d9c842b71105273",
+    "stable_envs/_adapters/rocket_task.py": "0b6f54d75c48f2c8aa9daf8444303e1f2e2b2d0867796829c1b3dec972753bb3",
+    "stable_envs/_adapters/rocket_spaces.py": "f4f9d630413af8823e8b3a499e25a5ccbf764af25cb4ac555d58fb80a18cfe78",
+    "scripts/research_rocket_production/action_boundary_gate.py": "fd1e8812720a907db1147f6e05c4dd01eb74d5cf19f33b41449bc0d0dc495544"
+  },
+  "scope": "Private migrated task boundary; public State/adapter acceptance still required"
+}
