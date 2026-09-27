@@ -29,7 +29,7 @@ from stable_envs.testing.conformance import pixel_agreement, ssim
 
 def equal(a, b):
     assert set(a.keys(True, True)) == set(b.keys(True, True))
-    bad = [str(k) for k in a.keys(True, True) if not torch.equal(a[k], b[k])]
+    bad = [str(k) for k in a.keys(True, True) if not torch.equal(a[k].cpu(), b[k].cpu())]
     assert not bad, bad
 
 
@@ -73,9 +73,16 @@ def main():
         assert np.array_equal(frame, dest._simulator.envs[0].env.render())
         equal(projected, dest.to_render_state())
         if args.gpu:
-            ours = e.render(saved)
-            assert torch.equal(ours, e.render(projected))
+            # Dynamics execute on CPU. At every checkpoint, exercise CUDA State
+            # restore, full-State render, projected render, and restored rendering.
+            # Intermediate source trajectories need not copy every full cache to
+            # CUDA; that would measure transfer overhead, not additional physics.
+            cuda_saved = dest.get_state()
+            ours = dest.render(saved)
+            assert torch.equal(ours, dest.render(dest.to_render_state(cuda_saved)))
+            dest.set_state(cuda_saved)
             assert torch.equal(ours, dest.render())
+            equal(cuda_saved, dest.get_state())
             equal(saved, e.get_state())
             metrics = pixel_agreement(ours.cpu().numpy(), frame[None])
             metrics["ssim"] = ssim(ours.cpu().numpy(), frame[None])
@@ -154,7 +161,7 @@ def main():
                     config = dict(config, render_mode="rgb_array", render_resolution=(resolution, resolution))
                     oracle = Oracle(**config)
                     e = stable_envs.make(
-                        "PyFlytRocketLanding", device=device, size=resolution, simulator_config=config, seed=seed
+                        "PyFlytRocketLanding", device="cpu", size=resolution, simulator_config=config, seed=seed
                     )
                     dest = stable_envs.make(
                         "PyFlytRocketLanding", device=device, size=resolution, simulator_config=config, seed=42
@@ -187,7 +194,7 @@ def main():
         # Each leaf, each parent, and parent/leaf overlap; independent combined all above.
         e = stable_envs.make(
             "PyFlytRocketLanding",
-            device=device,
+            device="cpu",
             size=resolution,
             simulator_config={"render_mode": "rgb_array", "render_resolution": (resolution, resolution)},
         )
