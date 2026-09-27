@@ -80,7 +80,6 @@ def main():
             cuda_saved = dest.get_state()
             ours = dest.render(saved)
             assert torch.equal(ours, dest.render(dest.to_render_state(cuda_saved)))
-            dest.set_state(cuda_saved)
             assert torch.equal(ours, dest.render())
             equal(cuda_saved, dest.get_state())
             equal(saved, e.get_state())
@@ -116,7 +115,9 @@ def main():
             action = np.array([[0.15, -0.1, 0.2, 1, 0.5, 0.1, -0.1]], dtype=dtype)
             equal(e.step(action), dest.step(action))
         e.set_state(saved)
-        dest.set_state(saved)
+        dest.set_state(cuda_saved if args.gpu else saved)
+        if args.gpu:
+            assert torch.equal(ours, dest.render())
         equal(saved, e.get_state())
         # Invalid State must not affect the engine, including after partial staging.
         corrupt = saved.clone()
@@ -139,7 +140,8 @@ def main():
         equal(saved, dest.get_state())
         equal(e.step(np.zeros((1, 7), dtype=dtype)), dest.step(np.zeros((1, 7), dtype=dtype)))
         e.set_state(saved)
-        dest.set_state(saved)
+        # Keep destination's differing suffix history until the next independent
+        # restore. A redundant second restore here adds no coverage.
 
     try:
         for seed in [0, 17, 42]:

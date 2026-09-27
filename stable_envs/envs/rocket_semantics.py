@@ -101,6 +101,31 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
         self._check_open("get_variation")
         return self._variation_rows("value")
 
+    def sample_variation(self, batch=None, paths=None, rng=None):
+        """Draw external configurations with valid integer RGB leaves.
+
+        Like the shared helper, this uses the caller's configuration generator
+        (or Env's metadata generator), not the simulator's reset RNG streams.
+        Authoritative episode randomization remains reset(options={"variation": ...}).
+        """
+        self._check_open("sample_variation")
+        batch = self.B if batch is None else batch
+        if type(batch) is not int or batch < 1:
+            raise ValueError("Variation sample batch must be a positive integer")
+        if paths is not None and set(paths) - set(self.variation_names):
+            raise KeyError("Unknown Rocket Variation sample path")
+        rng = self.rng if rng is None else rng
+        result = np.tile(self.default_variation(), (batch, 1))
+        for key, offset, width in self.variation_space.flat_layout():
+            if paths is not None and key not in paths:
+                continue
+            node = self.variation_space._walk(key)
+            low = np.asarray(node.low, np.float64).reshape(-1)
+            high = np.asarray(node.high, np.float64).reshape(-1)
+            values = rng.uniform(low, high + (1 if node.dtype.kind == "u" else 0), (batch, width))
+            result[:, offset : offset + width] = np.floor(values) if node.dtype.kind == "u" else values
+        return result.astype(np.float32)
+
     def set_variation(self, variation=None, **overrides):
         self._check_open("set_variation")
         if isinstance(variation, dict):
@@ -125,6 +150,15 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
             if value.shape != (self.B, *node.shape) or not np.isfinite(value).all():
                 raise ValueError(f"Invalid Rocket Variation shape/value: {key}")
             for i in range(self.B):
+                if node.shape == ():
+                    # The source stores scalar initial values verbatim. In
+                    # particular, Python/NumPy float64 height must not round
+                    # through the declared float32 sampling distribution.
+                    converted = raw if type(raw) is float else value[i].copy()
+                    if not node.contains(converted):
+                        raise ValueError(f"Invalid Rocket Variation range: {key}")
+                    values[i][key] = copy.deepcopy(converted)
+                    continue
                 converted = value[i].astype(node.dtype)
                 if (
                     np.any(converted < node.low)

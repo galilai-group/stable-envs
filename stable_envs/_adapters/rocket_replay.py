@@ -80,7 +80,7 @@ def decode_value(value, code):
     converted = value.astype(DTYPES[code])
     if not np.array_equal(converted, value):
         raise ValueError("Lossy Variation representation")
-    return converted.copy()
+    return converted.copy() if value.shape else converted[()]
 
 
 class RocketReplay:

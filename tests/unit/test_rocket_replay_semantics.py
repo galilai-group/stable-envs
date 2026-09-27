@@ -151,3 +151,37 @@ def test_variation_getter_tracks_reset_and_restore(pair):
         np.testing.assert_array_equal(
             replay.env.variation_space._walk("environment.start_tilt").value, np.array([0.1, -0.1], np.float32)
         )
+
+
+@pytest.mark.parametrize("scalar_type", [float, np.float32, np.float64])
+def test_persistent_height_preserves_source_precision(pair, scalar_type):
+    from stable_worldmodel.envs.rocket_landing.pyflyt_rocketlanding import RocketLandingEnv as Oracle
+
+    e, destination = pair
+    height = scalar_type(0.8123456789012345)
+    e.set_variation({"environment.start_height_ratio": height})
+    e.reset(seed=17)
+    source = Oracle()
+    try:
+        source.variation_space["environment"]["start_height_ratio"].set_init_value(height)
+        source.reset(seed=17)
+        np.testing.assert_array_equal(e._simulator.envs[0].env.state, source.state)
+        saved = e.get_state()
+        assert saved["variation", "environment", "start_height_ratio", "value"][0].item() == float(height)
+        destination.set_state(saved)
+        exact(saved, destination.get_state())
+        source.step(np.zeros(7))
+        e.step(np.zeros((2, 7)))
+        np.testing.assert_array_equal(e._simulator.envs[0].env.state, source.state)
+    finally:
+        source.close()
+
+
+def test_sampled_configurations_are_supported_and_restorable(pair):
+    e, destination = pair
+    sampled = e.sample_variation(rng=np.random.default_rng(17))
+    e.set_variation(sampled)
+    e.reset(seed=17)
+    assert torch.equal(e.get_variation(), torch.from_numpy(sampled))
+    destination.set_state(e.get_state())
+    exact(e.step(np.zeros((2, 7))), destination.step(np.zeros((2, 7))))
