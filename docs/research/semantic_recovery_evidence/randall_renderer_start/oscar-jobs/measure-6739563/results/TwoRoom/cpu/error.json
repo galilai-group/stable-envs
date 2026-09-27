@@ -1,0 +1,10 @@
+{
+  "status": "ERROR",
+  "traceback": "Traceback (most recent call last):\n  File \"/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739563/source/scripts/benchmarks/renderer_table/collect.py\", line 266, in main\n    cpu(row, args.output)\n  File \"/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739563/source/scripts/benchmarks/renderer_table/collect.py\", line 112, in cpu\n    env.reset(seed, **reset_kw)\n  File \"/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739563/source/stable_envs/envs/navigation.py\", line 835, in reset\n    raise NotImplementedError(\nNotImplementedError: TwoRoom.reset does not certify variation_values ['agent.color', 'background.color', 'door.color', 'target.color', 'wall.border_color', 'wall.color']\n",
+  "command": [
+    "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739563/source/scripts/benchmarks/renderer_table/collect.py",
+    "swm/TwoRoom-v1",
+    "cpu",
+    "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739563/results/TwoRoom/cpu"
+  ]
+}

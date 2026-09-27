@@ -1,0 +1,195 @@
+{
+  "swm/AcrobotControl-v1": {
+    "cpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_AcrobotControl-v1/cpu.json",
+    "gpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_AcrobotControl-v1/gpu.json"
+  },
+  "swm/AcrobotDMControl-v0": {
+    "cpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_AcrobotDMControl-v0/cpu.json",
+    "gpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_AcrobotDMControl-v0/gpu.json",
+    "gl": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_AcrobotDMControl-v0/gl.json"
+  },
+  "swm/BallInCupDMControl-v0": {
+    "cpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_BallInCupDMControl-v0/cpu.json",
+    "gpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_BallInCupDMControl-v0/gpu.json",
+    "gl": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_BallInCupDMControl-v0/gl.json"
+  },
+  "swm/CartPoleControl-v1": {
+    "cpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_CartPoleControl-v1/cpu.json",
+    "gpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_CartPoleControl-v1/gpu.json"
+  },
+  "swm/CartpoleDMControl-v0": {
+    "cpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_CartpoleDMControl-v0/cpu.json",
+    "gpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_CartpoleDMControl-v0/gpu.json",
+    "gl": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_CartpoleDMControl-v0/gl.json"
+  },
+  "swm/CheetahDMControl-v0": {
+    "cpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_CheetahDMControl-v0/cpu.json",
+    "gpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_CheetahDMControl-v0/gpu.json",
+    "gl": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_CheetahDMControl-v0/gl.json"
+  },
+  "swm/CraftaxClassicPixels-v1": {
+    "cpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_CraftaxClassicPixels-v1/cpu.json",
+    "gpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_CraftaxClassicPixels-v1/gpu.json"
+  },
+  "swm/CraftaxClassicSymbolic-v1": {
+    "cpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_CraftaxClassicSymbolic-v1/cpu.json",
+    "gpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_CraftaxClassicSymbolic-v1/gpu.json"
+  },
+  "swm/CraftaxPixels-v1": {
+    "cpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_CraftaxPixels-v1/cpu.json",
+    "gpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_CraftaxPixels-v1/gpu.json"
+  },
+  "swm/CraftaxSymbolic-v1": {
+    "cpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_CraftaxSymbolic-v1/cpu.json",
+    "gpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_CraftaxSymbolic-v1/gpu.json"
+  },
+  "swm/FetchPickAndPlace-v3": {
+    "cpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_FetchPickAndPlace-v3/cpu.json",
+    "gpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_FetchPickAndPlace-v3/gpu.json",
+    "gl": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_FetchPickAndPlace-v3/gl.json"
+  },
+  "swm/FetchPickAndPlaceDense-v3": {
+    "cpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_FetchPickAndPlaceDense-v3/cpu.json",
+    "gpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_FetchPickAndPlaceDense-v3/gpu.json",
+    "gl": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_FetchPickAndPlaceDense-v3/gl.json"
+  },
+  "swm/FetchPickAndPlaceDict-v3": {
+    "cpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_FetchPickAndPlaceDict-v3/cpu.json",
+    "gpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_FetchPickAndPlaceDict-v3/gpu.json",
+    "gl": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_FetchPickAndPlaceDict-v3/gl.json"
+  },
+  "swm/FetchPush-v3": {
+    "cpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_FetchPush-v3/cpu.json",
+    "gpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_FetchPush-v3/gpu.json",
+    "gl": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_FetchPush-v3/gl.json"
+  },
+  "swm/FetchPushDense-v3": {
+    "cpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_FetchPushDense-v3/cpu.json",
+    "gpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_FetchPushDense-v3/gpu.json",
+    "gl": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_FetchPushDense-v3/gl.json"
+  },
+  "swm/FetchPushDict-v3": {
+    "cpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_FetchPushDict-v3/cpu.json",
+    "gpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_FetchPushDict-v3/gpu.json",
+    "gl": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_FetchPushDict-v3/gl.json"
+  },
+  "swm/FetchReach-v3": {
+    "cpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_FetchReach-v3/cpu.json",
+    "gpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_FetchReach-v3/gpu.json",
+    "gl": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_FetchReach-v3/gl.json"
+  },
+  "swm/FetchReachDense-v3": {
+    "cpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_FetchReachDense-v3/cpu.json",
+    "gpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_FetchReachDense-v3/gpu.json",
+    "gl": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_FetchReachDense-v3/gl.json"
+  },
+  "swm/FetchReachDict-v3": {
+    "cpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_FetchReachDict-v3/cpu.json",
+    "gpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_FetchReachDict-v3/gpu.json",
+    "gl": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_FetchReachDict-v3/gl.json"
+  },
+  "swm/FetchSlide-v3": {
+    "cpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_FetchSlide-v3/cpu.json",
+    "gpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_FetchSlide-v3/gpu.json",
+    "gl": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_FetchSlide-v3/gl.json"
+  },
+  "swm/FetchSlideDense-v3": {
+    "cpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_FetchSlideDense-v3/cpu.json",
+    "gpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_FetchSlideDense-v3/gpu.json",
+    "gl": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_FetchSlideDense-v3/gl.json"
+  },
+  "swm/FetchSlideDict-v3": {
+    "cpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_FetchSlideDict-v3/cpu.json",
+    "gpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_FetchSlideDict-v3/gpu.json",
+    "gl": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_FetchSlideDict-v3/gl.json"
+  },
+  "swm/FingerDMControl-v0": {
+    "cpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_FingerDMControl-v0/cpu.json",
+    "gpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_FingerDMControl-v0/gpu.json",
+    "gl": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_FingerDMControl-v0/gl.json"
+  },
+  "swm/HopperDMControl-v0": {
+    "cpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_HopperDMControl-v0/cpu.json",
+    "gpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_HopperDMControl-v0/gpu.json",
+    "gl": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_HopperDMControl-v0/gl.json"
+  },
+  "swm/HumanoidDMControl-v0": {
+    "cpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_HumanoidDMControl-v0/cpu.json",
+    "gpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_HumanoidDMControl-v0/gpu.json",
+    "gl": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_HumanoidDMControl-v0/gl.json"
+  },
+  "swm/ManipulatorDMControl-v0": {
+    "cpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_ManipulatorDMControl-v0/cpu.json",
+    "gpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_ManipulatorDMControl-v0/gpu.json",
+    "gl": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_ManipulatorDMControl-v0/gl.json"
+  },
+  "swm/MountainCarContinuousControl-v0": {
+    "cpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_MountainCarContinuousControl-v0/cpu.json",
+    "gpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_MountainCarContinuousControl-v0/gpu.json"
+  },
+  "swm/MountainCarControl-v0": {
+    "cpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_MountainCarControl-v0/cpu.json",
+    "gpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_MountainCarControl-v0/gpu.json"
+  },
+  "swm/OGBCube-v0": {
+    "cpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_OGBCube-v0/cpu.json",
+    "gpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_OGBCube-v0/gpu.json",
+    "gl": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_OGBCube-v0/gl.json"
+  },
+  "swm/OGBMaze-v0": {
+    "cpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_OGBMaze-v0/cpu.json",
+    "gpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_OGBMaze-v0/gpu.json",
+    "gl": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_OGBMaze-v0/gl.json"
+  },
+  "swm/OGBScene-v0": {
+    "cpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_OGBScene-v0/cpu.json",
+    "gpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_OGBScene-v0/gpu.json",
+    "gl": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_OGBScene-v0/gl.json"
+  },
+  "swm/PFRocketLanding-v0": {
+    "cpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_PFRocketLanding-v0/cpu.json",
+    "gpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_PFRocketLanding-v0/gpu.json"
+  },
+  "swm/PendulumControl-v1": {
+    "cpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_PendulumControl-v1/cpu.json",
+    "gpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_PendulumControl-v1/gpu.json"
+  },
+  "swm/PendulumDMControl-v0": {
+    "cpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_PendulumDMControl-v0/cpu.json",
+    "gpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_PendulumDMControl-v0/gpu.json",
+    "gl": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_PendulumDMControl-v0/gl.json"
+  },
+  "swm/Piecewise-v0": {
+    "cpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_Piecewise-v0/cpu.json",
+    "gpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_Piecewise-v0/gpu.json"
+  },
+  "swm/PushT-Discrete-v1": {
+    "probe": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_PushT-Discrete-v1/probe.json"
+  },
+  "swm/PushT-v1": {
+    "probe": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_PushT-v1/probe.json"
+  },
+  "swm/QuadrupedDMControl-v0": {
+    "cpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_QuadrupedDMControl-v0/cpu.json",
+    "gpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_QuadrupedDMControl-v0/gpu.json",
+    "gl": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_QuadrupedDMControl-v0/gl.json"
+  },
+  "swm/ReacherDMControl-v0": {
+    "cpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_ReacherDMControl-v0/cpu.json",
+    "gpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_ReacherDMControl-v0/gpu.json",
+    "gl": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_ReacherDMControl-v0/gl.json"
+  },
+  "swm/SimplePointMaze-v0": {
+    "cpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_SimplePointMaze-v0/cpu.json",
+    "gpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_SimplePointMaze-v0/gpu.json"
+  },
+  "swm/TwoRoom-v1": {
+    "cpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_TwoRoom-v1/cpu.json",
+    "gpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_TwoRoom-v1/gpu.json"
+  },
+  "swm/WalkerDMControl-v0": {
+    "cpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_WalkerDMControl-v0/cpu.json",
+    "gpu": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_WalkerDMControl-v0/gpu.json",
+    "gl": "docs/research/semantic_recovery_evidence/randall_renderer_measurements/swm_WalkerDMControl-v0/gl.json"
+  }
+}

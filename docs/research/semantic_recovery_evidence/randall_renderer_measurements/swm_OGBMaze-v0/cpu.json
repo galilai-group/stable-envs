@@ -1,0 +1,4771 @@
+{
+  "registration": "swm/OGBMaze-v0",
+  "status": "COMPLETE",
+  "family": "ogbench",
+  "name": "PointMazeLargeNavigate",
+  "phase": "cpu",
+  "oracle_commit": "176d54532b3c0a251a4f509b74f2fdacc143a63d",
+  "profile": {
+    "host": "gpu1504.oscar.ccv.brown.edu",
+    "cpu": "AMD EPYC 7413 24-Core Processor",
+    "gpu": "NVIDIA A40",
+    "python": "3.12.9",
+    "packages": {
+      "torch": {
+        "version": "2.14.0+cu126",
+        "path": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages"
+      },
+      "numpy": {
+        "version": "2.5.3",
+        "path": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages"
+      },
+      "tensordict": {
+        "version": "0.14.2",
+        "path": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages"
+      },
+      "gymnasium": {
+        "version": "1.3.0",
+        "path": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages"
+      },
+      "mujoco": {
+        "version": "3.11.0",
+        "path": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages"
+      },
+      "dm-control": {
+        "version": "1.0.44",
+        "path": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages"
+      },
+      "ogbench": {
+        "version": "1.2.1",
+        "path": "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages"
+      },
+      "craftax": {
+        "version": "1.6.1",
+        "path": "/oscar/scratch/sboughan/venvs/se-step4-swm/lib/python3.12/site-packages"
+      },
+      "jax": {
+        "version": "0.11.1",
+        "path": "/oscar/scratch/sboughan/venvs/se-step4-swm/lib/python3.12/site-packages"
+      },
+      "jaxlib": {
+        "version": "0.11.1",
+        "path": "/oscar/scratch/sboughan/venvs/se-step4-swm/lib/python3.12/site-packages"
+      },
+      "flax": {
+        "version": "0.12.9",
+        "path": "/oscar/scratch/sboughan/venvs/se-step4-swm/lib/python3.12/site-packages"
+      },
+      "pymunk": {
+        "version": "7.3.0",
+        "path": "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages"
+      },
+      "pygame": {
+        "version": "2.6.1",
+        "path": "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages"
+      }
+    },
+    "torch_threads": 1,
+    "environment": {
+      "SLURM_JOB_ID": "6739861",
+      "MUJOCO_GL": "glfw",
+      "PYOPENGL_PLATFORM": "glx",
+      "LIBGL_ALWAYS_SOFTWARE": "1",
+      "GALLIUM_DRIVER": "llvmpipe",
+      "DISPLAY": ":4961",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "LP_NUM_THREADS": "1",
+      "JAX_PLATFORMS": null,
+      "CRAFTAX_JAX_BACKEND": null,
+      "CUDA_VISIBLE_DEVICES": "0"
+    }
+  },
+  "frames": [
+    {
+      "index": 0,
+      "case": 0,
+      "step": 0,
+      "seed": 0,
+      "action_dtype": "float32",
+      "prefix_hash": "3fb8e2a5df713e79221069065d9c5846407c74f6611e9f9b5abbf6aa901f1577",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "f0094b1ac344486c19801ef0a55531056ca6f9cf5df4185127098cf50b317647",
+        "oracle_state_hash": "f0094b1ac344486c19801ef0a55531056ca6f9cf5df4185127098cf50b317647",
+        "compared_leaves": 14,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/ogbench_maze_semantics.py"
+      },
+      "state_file": "frame-0000-state.npz",
+      "state_hash": "f0094b1ac344486c19801ef0a55531056ca6f9cf5df4185127098cf50b317647",
+      "oracle_file": "frame-0000-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "0244ed6477a2115ced44d38df101df36e2faf18810b892916b65044c08883b81",
+      "render_kwargs": {
+        "style": [
+          [
+            0.699999988079071,
+            0.5,
+            0.30000001192092896,
+            1.0,
+            1.0,
+            -90.0,
+            1.0,
+            1.0,
+            1.0,
+            0.0,
+            1.0,
+            1.0,
+            1.0
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          164.001982,
+          162.486093,
+          162.806944
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 163.09833966666665,
+          "median": 162.806944,
+          "p95": 163.8824782,
+          "maximum": 164.001982,
+          "minimum": 162.486093,
+          "std": 0.652259376319129
+        },
+        "first_call_ms": 1612.336616,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          1.896179,
+          1.879809,
+          1.891269
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 1.8890856666666667,
+          "median": 1.891269,
+          "p95": 1.895688,
+          "maximum": 1.896179,
+          "minimum": 1.879809,
+          "std": 0.006859029733780784
+        },
+        "first_call_ms": 625.461869,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 0.10175565681746554,
+        "mse_uint8": 6616.661584555697,
+        "mae_rgb": 48.51544563137755,
+        "mean_max_channel_abs": 68.63488520408163,
+        "exact_fraction": 0.5300940688775511,
+        "within8_fraction": 0.5300940688775511,
+        "ssim": 0.6264411260800112,
+        "max_channel_abs": 230.0,
+        "candidate_sha256": "99f5a49ee5e8f87ee9d164a4d91577a0c520b16d4f4cccea6f690a072b7432dd",
+        "oracle_sha256": "0244ed6477a2115ced44d38df101df36e2faf18810b892916b65044c08883b81",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 1,
+      "case": 0,
+      "step": 1,
+      "seed": 0,
+      "action_dtype": "float32",
+      "prefix_hash": "66faf46468dc8a6e66bb16addad603ced43ca0352878a73c0fcc48ce3f2c4442",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "fed7aa55785a7e7df9e8364792897f99ae4d91b168d5699a456371e55435e811",
+        "oracle_state_hash": "fed7aa55785a7e7df9e8364792897f99ae4d91b168d5699a456371e55435e811",
+        "compared_leaves": 14,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/ogbench_maze_semantics.py"
+      },
+      "state_file": "frame-0001-state.npz",
+      "state_hash": "fed7aa55785a7e7df9e8364792897f99ae4d91b168d5699a456371e55435e811",
+      "oracle_file": "frame-0001-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "f68b6eb4deee06d5c7bfdb5f896e6820c9ce11095ece55d6757d9331afd7bcd8",
+      "render_kwargs": {
+        "style": [
+          [
+            0.699999988079071,
+            0.5,
+            0.30000001192092896,
+            1.0,
+            1.0,
+            -90.0,
+            1.0,
+            1.0,
+            1.0,
+            0.0,
+            1.0,
+            1.0,
+            1.0
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          165.055272,
+          165.478642,
+          165.262062
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 165.26532533333332,
+          "median": 165.262062,
+          "p95": 165.456984,
+          "maximum": 165.478642,
+          "minimum": 165.055272,
+          "std": 0.17285548151241753
+        },
+        "first_call_ms": 161.240725,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          1.848919,
+          1.868649,
+          1.862739
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 1.860102333333333,
+          "median": 1.862739,
+          "p95": 1.868058,
+          "maximum": 1.868649,
+          "minimum": 1.848919,
+          "std": 0.008267697516371911
+        },
+        "first_call_ms": 2.820158,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 0.10176891344773203,
+        "mse_uint8": 6617.523596938776,
+        "mae_rgb": 48.51910607993197,
+        "mean_max_channel_abs": 68.63982780612245,
+        "exact_fraction": 0.5300940688775511,
+        "within8_fraction": 0.5300940688775511,
+        "ssim": 0.6264019910865971,
+        "max_channel_abs": 230.0,
+        "candidate_sha256": "c2e59cd635a2fd3384ce59f7faec0f19b6a2149bb35e8e00c8e29132be0fdcb3",
+        "oracle_sha256": "f68b6eb4deee06d5c7bfdb5f896e6820c9ce11095ece55d6757d9331afd7bcd8",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 2,
+      "case": 0,
+      "step": 8,
+      "seed": 0,
+      "action_dtype": "float32",
+      "prefix_hash": "58426bb61e221d2075b9e3293158bd828e633e6ad2a2225631e5d6170deb9623",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "c76db9bc7341c50ba1563f67536224882750a355ad61c4b0c5d9faee2a9f6477",
+        "oracle_state_hash": "c76db9bc7341c50ba1563f67536224882750a355ad61c4b0c5d9faee2a9f6477",
+        "compared_leaves": 14,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/ogbench_maze_semantics.py"
+      },
+      "state_file": "frame-0002-state.npz",
+      "state_hash": "c76db9bc7341c50ba1563f67536224882750a355ad61c4b0c5d9faee2a9f6477",
+      "oracle_file": "frame-0002-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "1efcf068e0ef15c040da0e1b69a657076ab67ef2d200401d8c905a4538506460",
+      "render_kwargs": {
+        "style": [
+          [
+            0.699999988079071,
+            0.5,
+            0.30000001192092896,
+            1.0,
+            1.0,
+            -90.0,
+            1.0,
+            1.0,
+            1.0,
+            0.0,
+            1.0,
+            1.0,
+            1.0
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          166.960071,
+          163.440033,
+          162.000984
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 164.133696,
+          "median": 163.440033,
+          "p95": 166.6080672,
+          "maximum": 166.960071,
+          "minimum": 162.000984,
+          "std": 2.0831086123978304
+        },
+        "first_call_ms": 160.240015,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          1.858129,
+          1.854309,
+          1.848209
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 1.853549,
+          "median": 1.854309,
+          "p95": 1.8577469999999998,
+          "maximum": 1.858129,
+          "minimum": 1.848209,
+          "std": 0.004085323324617826
+        },
+        "first_call_ms": 2.867228,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 0.10176195927717492,
+        "mse_uint8": 6617.0714019983,
+        "mae_rgb": 48.518388605442176,
+        "mean_max_channel_abs": 68.63905054209184,
+        "exact_fraction": 0.5300940688775511,
+        "within8_fraction": 0.5300940688775511,
+        "ssim": 0.6262144920199249,
+        "max_channel_abs": 234.0,
+        "candidate_sha256": "3a960da3236e0084cfad73a45e46723be075ab895acdeb39c17f0efe86c56cac",
+        "oracle_sha256": "1efcf068e0ef15c040da0e1b69a657076ab67ef2d200401d8c905a4538506460",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 3,
+      "case": 0,
+      "step": 32,
+      "seed": 0,
+      "action_dtype": "float32",
+      "prefix_hash": "527124bfd0602e9275f3e243ccae530d2a6f3c9e36100ed53a1c635bf2762b6a",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "645f5ef9324edfb6b94b90fa7880b68f803dfa5bb03f7903259759a3d5bb4dd1",
+        "oracle_state_hash": "645f5ef9324edfb6b94b90fa7880b68f803dfa5bb03f7903259759a3d5bb4dd1",
+        "compared_leaves": 14,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/ogbench_maze_semantics.py"
+      },
+      "state_file": "frame-0003-state.npz",
+      "state_hash": "645f5ef9324edfb6b94b90fa7880b68f803dfa5bb03f7903259759a3d5bb4dd1",
+      "oracle_file": "frame-0003-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "35e731cb1f60841073fd5caeb2f7f14b3e3077403add10b6c812373b740f5a92",
+      "render_kwargs": {
+        "style": [
+          [
+            0.699999988079071,
+            0.5,
+            0.30000001192092896,
+            1.0,
+            1.0,
+            -90.0,
+            1.0,
+            1.0,
+            1.0,
+            0.0,
+            1.0,
+            1.0,
+            1.0
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          163.805973,
+          163.605623,
+          162.734984
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 163.38219333333333,
+          "median": 163.605623,
+          "p95": 163.785938,
+          "maximum": 163.805973,
+          "minimum": 162.734984,
+          "std": 0.46489781779823025
+        },
+        "first_call_ms": 158.963166,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          1.894728,
+          1.977809,
+          1.902539
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 1.9250253333333334,
+          "median": 1.902539,
+          "p95": 1.9702819999999999,
+          "maximum": 1.977809,
+          "minimum": 1.894728,
+          "std": 0.03745966301978108
+        },
+        "first_call_ms": 2.778819,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 0.10176007239088446,
+        "mse_uint8": 6616.9487072172615,
+        "mae_rgb": 48.51702673256803,
+        "mean_max_channel_abs": 68.63632015306122,
+        "exact_fraction": 0.5300940688775511,
+        "within8_fraction": 0.5300940688775511,
+        "ssim": 0.6261925449632244,
+        "max_channel_abs": 229.0,
+        "candidate_sha256": "c873242398d498809c2c50a234b9eefa9afca11710e76f1c71faf31f20f20bb7",
+        "oracle_sha256": "35e731cb1f60841073fd5caeb2f7f14b3e3077403add10b6c812373b740f5a92",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 4,
+      "case": 0,
+      "step": 64,
+      "seed": 0,
+      "action_dtype": "float32",
+      "prefix_hash": "3bccfc12e92a284c24fc05cdca545b0318f07913411309aa5a01e9376347554d",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "b95d498d3062f8b233a4bc4905866029d6fde4d7dce491f5fbdd52a433f53e9f",
+        "oracle_state_hash": "b95d498d3062f8b233a4bc4905866029d6fde4d7dce491f5fbdd52a433f53e9f",
+        "compared_leaves": 14,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/ogbench_maze_semantics.py"
+      },
+      "state_file": "frame-0004-state.npz",
+      "state_hash": "b95d498d3062f8b233a4bc4905866029d6fde4d7dce491f5fbdd52a433f53e9f",
+      "oracle_file": "frame-0004-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "a13d11e3d05e2d84833ad0576770324ebe05ef8494847a2939b1e3cc1c8f7d80",
+      "render_kwargs": {
+        "style": [
+          [
+            0.699999988079071,
+            0.5,
+            0.30000001192092896,
+            1.0,
+            1.0,
+            -90.0,
+            1.0,
+            1.0,
+            1.0,
+            0.0,
+            1.0,
+            1.0,
+            1.0
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          166.278422,
+          165.172572,
+          166.908001
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 166.11966500000003,
+          "median": 166.278422,
+          "p95": 166.8450431,
+          "maximum": 166.908001,
+          "minimum": 165.172572,
+          "std": 0.7173243303169583
+        },
+        "first_call_ms": 161.954464,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          1.84911,
+          1.873068,
+          1.858719
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 1.8602990000000001,
+          "median": 1.858719,
+          "p95": 1.8716331,
+          "maximum": 1.873068,
+          "minimum": 1.84911,
+          "std": 0.00984441435535905
+        },
+        "first_call_ms": 2.740699,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 0.10179149733831443,
+        "mse_uint8": 6618.992114423894,
+        "mae_rgb": 48.521411298894556,
+        "mean_max_channel_abs": 68.64379384566327,
+        "exact_fraction": 0.5300940688775511,
+        "within8_fraction": 0.5300940688775511,
+        "ssim": 0.6268310596509615,
+        "max_channel_abs": 230.0,
+        "candidate_sha256": "ae2bf0d5148b2ddbe5c51c630c40c55e622400fa17f5c7394b35a62f00edd52f",
+        "oracle_sha256": "a13d11e3d05e2d84833ad0576770324ebe05ef8494847a2939b1e3cc1c8f7d80",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 5,
+      "case": 0,
+      "step": 128,
+      "seed": 0,
+      "action_dtype": "float32",
+      "prefix_hash": "a79b8026c2d441ecfc91958a323c97eafca111230238655f9fce52020130c6e5",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "cfc57ec730e9a93b3d111c6d40835bbb6d519e4a27f0c33df0c7631830f22054",
+        "oracle_state_hash": "cfc57ec730e9a93b3d111c6d40835bbb6d519e4a27f0c33df0c7631830f22054",
+        "compared_leaves": 14,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/ogbench_maze_semantics.py"
+      },
+      "state_file": "frame-0005-state.npz",
+      "state_hash": "cfc57ec730e9a93b3d111c6d40835bbb6d519e4a27f0c33df0c7631830f22054",
+      "oracle_file": "frame-0005-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "7028af6c913981426df9d2ce8d8a33988bc51435a71c51e7e1cd422df1627696",
+      "render_kwargs": {
+        "style": [
+          [
+            0.699999988079071,
+            0.5,
+            0.30000001192092896,
+            1.0,
+            1.0,
+            -90.0,
+            1.0,
+            1.0,
+            1.0,
+            0.0,
+            1.0,
+            1.0,
+            1.0
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          164.865583,
+          165.000772,
+          165.178562
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 165.01497233333333,
+          "median": 165.000772,
+          "p95": 165.160783,
+          "maximum": 165.178562,
+          "minimum": 164.865583,
+          "std": 0.1281670803036283
+        },
+        "first_call_ms": 160.441615,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          1.853039,
+          2.002389,
+          1.858239
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 1.9045556666666668,
+          "median": 1.858239,
+          "p95": 1.987974,
+          "maximum": 2.002389,
+          "minimum": 1.853039,
+          "std": 0.06921117844844298
+        },
+        "first_call_ms": 2.808458,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 0.1018109710183093,
+        "mse_uint8": 6620.258390465561,
+        "mae_rgb": 48.513744951105444,
+        "mean_max_channel_abs": 68.64116310586735,
+        "exact_fraction": 0.5300940688775511,
+        "within8_fraction": 0.5300940688775511,
+        "ssim": 0.627563172224506,
+        "max_channel_abs": 232.0,
+        "candidate_sha256": "f3a078a532bdda5a291d81a06c4924814311071c3a3b0ebcd29474177ddc6120",
+        "oracle_sha256": "7028af6c913981426df9d2ce8d8a33988bc51435a71c51e7e1cd422df1627696",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 6,
+      "case": 1,
+      "step": 0,
+      "seed": 0,
+      "action_dtype": "float64",
+      "prefix_hash": "e72c4a53967d1c882ccee3ef33e2431f05a11b7e8d4cc62b50b544da108afc49",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "f0094b1ac344486c19801ef0a55531056ca6f9cf5df4185127098cf50b317647",
+        "oracle_state_hash": "f0094b1ac344486c19801ef0a55531056ca6f9cf5df4185127098cf50b317647",
+        "compared_leaves": 14,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/ogbench_maze_semantics.py"
+      },
+      "state_file": "frame-0006-state.npz",
+      "state_hash": "f0094b1ac344486c19801ef0a55531056ca6f9cf5df4185127098cf50b317647",
+      "oracle_file": "frame-0006-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "0244ed6477a2115ced44d38df101df36e2faf18810b892916b65044c08883b81",
+      "render_kwargs": {
+        "style": [
+          [
+            0.699999988079071,
+            0.5,
+            0.30000001192092896,
+            1.0,
+            1.0,
+            -90.0,
+            1.0,
+            1.0,
+            1.0,
+            0.0,
+            1.0,
+            1.0,
+            1.0
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          160.038685,
+          161.557234,
+          160.349365
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 160.648428,
+          "median": 160.349365,
+          "p95": 161.43644709999998,
+          "maximum": 161.557234,
+          "minimum": 160.038685,
+          "std": 0.6550199868843702
+        },
+        "first_call_ms": 676.233909,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          1.885389,
+          1.876239,
+          1.874038
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 1.8785553333333336,
+          "median": 1.876239,
+          "p95": 1.884474,
+          "maximum": 1.885389,
+          "minimum": 1.874038,
+          "std": 0.004914966960440515
+        },
+        "first_call_ms": 2.829138,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 0.10175565681746554,
+        "mse_uint8": 6616.661584555697,
+        "mae_rgb": 48.51544563137755,
+        "mean_max_channel_abs": 68.63488520408163,
+        "exact_fraction": 0.5300940688775511,
+        "within8_fraction": 0.5300940688775511,
+        "ssim": 0.6264411260800112,
+        "max_channel_abs": 230.0,
+        "candidate_sha256": "99f5a49ee5e8f87ee9d164a4d91577a0c520b16d4f4cccea6f690a072b7432dd",
+        "oracle_sha256": "0244ed6477a2115ced44d38df101df36e2faf18810b892916b65044c08883b81",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 7,
+      "case": 1,
+      "step": 1,
+      "seed": 0,
+      "action_dtype": "float64",
+      "prefix_hash": "9dbc26106da36edacb55f4e64a582034f4470038b057e5066a850bdd6ab794a4",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "15c719d0e0e10c2e48ddbc029b16beb760dba3bade2b9416aefc2e754b1e30d2",
+        "oracle_state_hash": "15c719d0e0e10c2e48ddbc029b16beb760dba3bade2b9416aefc2e754b1e30d2",
+        "compared_leaves": 14,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/ogbench_maze_semantics.py"
+      },
+      "state_file": "frame-0007-state.npz",
+      "state_hash": "15c719d0e0e10c2e48ddbc029b16beb760dba3bade2b9416aefc2e754b1e30d2",
+      "oracle_file": "frame-0007-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "f68b6eb4deee06d5c7bfdb5f896e6820c9ce11095ece55d6757d9331afd7bcd8",
+      "render_kwargs": {
+        "style": [
+          [
+            0.699999988079071,
+            0.5,
+            0.30000001192092896,
+            1.0,
+            1.0,
+            -90.0,
+            1.0,
+            1.0,
+            1.0,
+            0.0,
+            1.0,
+            1.0,
+            1.0
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          159.124645,
+          161.651715,
+          160.799894
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 160.52541799999997,
+          "median": 160.799894,
+          "p95": 161.5665329,
+          "maximum": 161.651715,
+          "minimum": 159.124645,
+          "std": 1.04976934042897
+        },
+        "first_call_ms": 156.909478,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          1.899869,
+          1.899069,
+          1.909649
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 1.9028623333333332,
+          "median": 1.899869,
+          "p95": 1.908671,
+          "maximum": 1.909649,
+          "minimum": 1.899069,
+          "std": 0.0048099988449986945
+        },
+        "first_call_ms": 2.747788,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 0.10176891344773203,
+        "mse_uint8": 6617.523596938776,
+        "mae_rgb": 48.51910607993197,
+        "mean_max_channel_abs": 68.63982780612245,
+        "exact_fraction": 0.5300940688775511,
+        "within8_fraction": 0.5300940688775511,
+        "ssim": 0.6264019910865971,
+        "max_channel_abs": 230.0,
+        "candidate_sha256": "c2e59cd635a2fd3384ce59f7faec0f19b6a2149bb35e8e00c8e29132be0fdcb3",
+        "oracle_sha256": "f68b6eb4deee06d5c7bfdb5f896e6820c9ce11095ece55d6757d9331afd7bcd8",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 8,
+      "case": 1,
+      "step": 8,
+      "seed": 0,
+      "action_dtype": "float64",
+      "prefix_hash": "43377750c12819b680bba188c2c2128247597d004f11d8db3a18b81212ab6adc",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "1a70e839a039972e3eab3706e75cbfad668f5c5b15f4f5f9a27b1a4f44719bd1",
+        "oracle_state_hash": "1a70e839a039972e3eab3706e75cbfad668f5c5b15f4f5f9a27b1a4f44719bd1",
+        "compared_leaves": 14,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/ogbench_maze_semantics.py"
+      },
+      "state_file": "frame-0008-state.npz",
+      "state_hash": "1a70e839a039972e3eab3706e75cbfad668f5c5b15f4f5f9a27b1a4f44719bd1",
+      "oracle_file": "frame-0008-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "1efcf068e0ef15c040da0e1b69a657076ab67ef2d200401d8c905a4538506460",
+      "render_kwargs": {
+        "style": [
+          [
+            0.699999988079071,
+            0.5,
+            0.30000001192092896,
+            1.0,
+            1.0,
+            -90.0,
+            1.0,
+            1.0,
+            1.0,
+            0.0,
+            1.0,
+            1.0,
+            1.0
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          159.384485,
+          160.732425,
+          162.140434
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 160.752448,
+          "median": 160.732425,
+          "p95": 161.9996331,
+          "maximum": 162.140434,
+          "minimum": 159.384485,
+          "std": 1.125200548953232
+        },
+        "first_call_ms": 156.978687,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          1.890558,
+          2.078129,
+          1.888569
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 1.9524186666666665,
+          "median": 1.890558,
+          "p95": 2.0593719,
+          "maximum": 2.078129,
+          "minimum": 1.888569,
+          "std": 0.08889433787867988
+        },
+        "first_call_ms": 2.725259,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 0.10176195927717492,
+        "mse_uint8": 6617.0714019983,
+        "mae_rgb": 48.518388605442176,
+        "mean_max_channel_abs": 68.63905054209184,
+        "exact_fraction": 0.5300940688775511,
+        "within8_fraction": 0.5300940688775511,
+        "ssim": 0.6262144920199249,
+        "max_channel_abs": 234.0,
+        "candidate_sha256": "3a960da3236e0084cfad73a45e46723be075ab895acdeb39c17f0efe86c56cac",
+        "oracle_sha256": "1efcf068e0ef15c040da0e1b69a657076ab67ef2d200401d8c905a4538506460",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 9,
+      "case": 1,
+      "step": 32,
+      "seed": 0,
+      "action_dtype": "float64",
+      "prefix_hash": "84465400c6fd33a8a8b2dbdefe8ada6ae77e95e656c0ae946d42952ac6995b80",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "218d6eed1502fcad147e2174739f5dbe06420a610222e5c0660f170541e4a25d",
+        "oracle_state_hash": "218d6eed1502fcad147e2174739f5dbe06420a610222e5c0660f170541e4a25d",
+        "compared_leaves": 14,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/ogbench_maze_semantics.py"
+      },
+      "state_file": "frame-0009-state.npz",
+      "state_hash": "218d6eed1502fcad147e2174739f5dbe06420a610222e5c0660f170541e4a25d",
+      "oracle_file": "frame-0009-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "35e731cb1f60841073fd5caeb2f7f14b3e3077403add10b6c812373b740f5a92",
+      "render_kwargs": {
+        "style": [
+          [
+            0.699999988079071,
+            0.5,
+            0.30000001192092896,
+            1.0,
+            1.0,
+            -90.0,
+            1.0,
+            1.0,
+            1.0,
+            0.0,
+            1.0,
+            1.0,
+            1.0
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          160.235145,
+          159.770006,
+          159.456275
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 159.82047533333332,
+          "median": 159.770006,
+          "p95": 160.18863109999998,
+          "maximum": 160.235145,
+          "minimum": 159.456275,
+          "std": 0.3199687322539782
+        },
+        "first_call_ms": 156.242348,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          1.896089,
+          1.879709,
+          1.884309
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 1.8867023333333333,
+          "median": 1.884309,
+          "p95": 1.894911,
+          "maximum": 1.896089,
+          "minimum": 1.879709,
+          "std": 0.006897928835688385
+        },
+        "first_call_ms": 3.152608,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 0.10176007239088446,
+        "mse_uint8": 6616.9487072172615,
+        "mae_rgb": 48.51702673256803,
+        "mean_max_channel_abs": 68.63632015306122,
+        "exact_fraction": 0.5300940688775511,
+        "within8_fraction": 0.5300940688775511,
+        "ssim": 0.6261925449632244,
+        "max_channel_abs": 229.0,
+        "candidate_sha256": "c873242398d498809c2c50a234b9eefa9afca11710e76f1c71faf31f20f20bb7",
+        "oracle_sha256": "35e731cb1f60841073fd5caeb2f7f14b3e3077403add10b6c812373b740f5a92",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 10,
+      "case": 1,
+      "step": 64,
+      "seed": 0,
+      "action_dtype": "float64",
+      "prefix_hash": "6ad7d02f8ae7e39619d93ced2e2a5a530896b9194d171a782e55ff61f332132f",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "91ee4372d2773ed430b3834a56a623b82d401a70edf02f370e4fcac97550c0d1",
+        "oracle_state_hash": "91ee4372d2773ed430b3834a56a623b82d401a70edf02f370e4fcac97550c0d1",
+        "compared_leaves": 14,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/ogbench_maze_semantics.py"
+      },
+      "state_file": "frame-0010-state.npz",
+      "state_hash": "91ee4372d2773ed430b3834a56a623b82d401a70edf02f370e4fcac97550c0d1",
+      "oracle_file": "frame-0010-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "a13d11e3d05e2d84833ad0576770324ebe05ef8494847a2939b1e3cc1c8f7d80",
+      "render_kwargs": {
+        "style": [
+          [
+            0.699999988079071,
+            0.5,
+            0.30000001192092896,
+            1.0,
+            1.0,
+            -90.0,
+            1.0,
+            1.0,
+            1.0,
+            0.0,
+            1.0,
+            1.0,
+            1.0
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          163.640843,
+          162.751994,
+          162.346583
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 162.91314,
+          "median": 162.751994,
+          "p95": 163.55195809999998,
+          "maximum": 163.640843,
+          "minimum": 162.346583,
+          "std": 0.5405264482502143
+        },
+        "first_call_ms": 160.592485,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          1.875639,
+          1.884829,
+          1.904269
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 1.888245666666667,
+          "median": 1.884829,
+          "p95": 1.902325,
+          "maximum": 1.904269,
+          "minimum": 1.875639,
+          "std": 0.011935226106874617
+        },
+        "first_call_ms": 3.152678,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 0.10179149733831443,
+        "mse_uint8": 6618.992114423894,
+        "mae_rgb": 48.521411298894556,
+        "mean_max_channel_abs": 68.64379384566327,
+        "exact_fraction": 0.5300940688775511,
+        "within8_fraction": 0.5300940688775511,
+        "ssim": 0.6268310596509615,
+        "max_channel_abs": 230.0,
+        "candidate_sha256": "ae2bf0d5148b2ddbe5c51c630c40c55e622400fa17f5c7394b35a62f00edd52f",
+        "oracle_sha256": "a13d11e3d05e2d84833ad0576770324ebe05ef8494847a2939b1e3cc1c8f7d80",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 11,
+      "case": 1,
+      "step": 128,
+      "seed": 0,
+      "action_dtype": "float64",
+      "prefix_hash": "14e14a0c3a6ad9cf3f1123f1b515bb5614608c9304a2ce3f194c7a2983047d20",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "251ebc438ef60def3b76c5bce9279e554a3fede2ba3063022f4eb7e1212cdad6",
+        "oracle_state_hash": "251ebc438ef60def3b76c5bce9279e554a3fede2ba3063022f4eb7e1212cdad6",
+        "compared_leaves": 14,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/ogbench_maze_semantics.py"
+      },
+      "state_file": "frame-0011-state.npz",
+      "state_hash": "251ebc438ef60def3b76c5bce9279e554a3fede2ba3063022f4eb7e1212cdad6",
+      "oracle_file": "frame-0011-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "7028af6c913981426df9d2ce8d8a33988bc51435a71c51e7e1cd422df1627696",
+      "render_kwargs": {
+        "style": [
+          [
+            0.699999988079071,
+            0.5,
+            0.30000001192092896,
+            1.0,
+            1.0,
+            -90.0,
+            1.0,
+            1.0,
+            1.0,
+            0.0,
+            1.0,
+            1.0,
+            1.0
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          162.296854,
+          163.984213,
+          161.078454
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 162.45317366666666,
+          "median": 162.296854,
+          "p95": 163.8154771,
+          "maximum": 163.984213,
+          "minimum": 161.078454,
+          "std": 1.1914097308539884
+        },
+        "first_call_ms": 158.040916,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          1.884649,
+          1.869989,
+          1.870919
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 1.8751856666666666,
+          "median": 1.870919,
+          "p95": 1.883276,
+          "maximum": 1.884649,
+          "minimum": 1.869989,
+          "std": 0.006702349505127985
+        },
+        "first_call_ms": 3.007738,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 0.1018109710183093,
+        "mse_uint8": 6620.258390465561,
+        "mae_rgb": 48.513744951105444,
+        "mean_max_channel_abs": 68.64116310586735,
+        "exact_fraction": 0.5300940688775511,
+        "within8_fraction": 0.5300940688775511,
+        "ssim": 0.627563172224506,
+        "max_channel_abs": 232.0,
+        "candidate_sha256": "f3a078a532bdda5a291d81a06c4924814311071c3a3b0ebcd29474177ddc6120",
+        "oracle_sha256": "7028af6c913981426df9d2ce8d8a33988bc51435a71c51e7e1cd422df1627696",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 12,
+      "case": 2,
+      "step": 0,
+      "seed": 17,
+      "action_dtype": "float32",
+      "prefix_hash": "3fb8e2a5df713e79221069065d9c5846407c74f6611e9f9b5abbf6aa901f1577",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "bc78f09a199eed94cd272ddcf53b7a59365f69f9305ced37d8c503dfd8e4707a",
+        "oracle_state_hash": "bc78f09a199eed94cd272ddcf53b7a59365f69f9305ced37d8c503dfd8e4707a",
+        "compared_leaves": 14,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/ogbench_maze_semantics.py"
+      },
+      "state_file": "frame-0012-state.npz",
+      "state_hash": "bc78f09a199eed94cd272ddcf53b7a59365f69f9305ced37d8c503dfd8e4707a",
+      "oracle_file": "frame-0012-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "ea1d16d86a0a056ac99c759b3c9726d3d1ed3995b966a92aedbd04ed268971b6",
+      "render_kwargs": {
+        "style": [
+          [
+            0.699999988079071,
+            0.5,
+            0.30000001192092896,
+            1.0,
+            1.0,
+            -90.0,
+            1.0,
+            1.0,
+            1.0,
+            0.0,
+            1.0,
+            1.0,
+            1.0
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          165.780875,
+          171.078081,
+          165.538854
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 167.4659366666667,
+          "median": 165.780875,
+          "p95": 170.5483604,
+          "maximum": 171.078081,
+          "minimum": 165.538854,
+          "std": 2.556082100237828
+        },
+        "first_call_ms": 727.514409,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          1.896688,
+          1.897649,
+          1.901419
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 1.8985853333333331,
+          "median": 1.897649,
+          "p95": 1.901042,
+          "maximum": 1.901419,
+          "minimum": 1.896688,
+          "std": 0.002041752569621412
+        },
+        "first_call_ms": 2.959128,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 0.10212046889834364,
+        "mse_uint8": 6640.383490114796,
+        "mae_rgb": 48.398650085034014,
+        "mean_max_channel_abs": 68.58633609693878,
+        "exact_fraction": 0.5300940688775511,
+        "within8_fraction": 0.5300940688775511,
+        "ssim": 0.6274391570678031,
+        "max_channel_abs": 224.0,
+        "candidate_sha256": "e406367b92ffd843ef653db4244deab436e1cda7dba317b28b8f9f866db6fbbd",
+        "oracle_sha256": "ea1d16d86a0a056ac99c759b3c9726d3d1ed3995b966a92aedbd04ed268971b6",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 13,
+      "case": 2,
+      "step": 1,
+      "seed": 17,
+      "action_dtype": "float32",
+      "prefix_hash": "5b472acc5d972a6354bec8ce1d9a0f5d951f9582a3176ab22adfcef968269130",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "40559caee403ff2525d747ae2b97680d47ec5b0cfa7508d19dae4e1d614dd1f0",
+        "oracle_state_hash": "40559caee403ff2525d747ae2b97680d47ec5b0cfa7508d19dae4e1d614dd1f0",
+        "compared_leaves": 14,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/ogbench_maze_semantics.py"
+      },
+      "state_file": "frame-0013-state.npz",
+      "state_hash": "40559caee403ff2525d747ae2b97680d47ec5b0cfa7508d19dae4e1d614dd1f0",
+      "oracle_file": "frame-0013-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "1afe63b34fee108790232bdaef475b3ff3b60add4dba0c9432d93d36e3896aa1",
+      "render_kwargs": {
+        "style": [
+          [
+            0.699999988079071,
+            0.5,
+            0.30000001192092896,
+            1.0,
+            1.0,
+            -90.0,
+            1.0,
+            1.0,
+            1.0,
+            0.0,
+            1.0,
+            1.0,
+            1.0
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          165.182555,
+          164.907675,
+          167.020574
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 165.70360133333335,
+          "median": 165.182555,
+          "p95": 166.83677210000002,
+          "maximum": 167.020574,
+          "minimum": 164.907675,
+          "std": 0.9379774365304436
+        },
+        "first_call_ms": 161.284907,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          1.849639,
+          1.861349,
+          1.874269
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 1.8617523333333335,
+          "median": 1.861349,
+          "p95": 1.872977,
+          "maximum": 1.874269,
+          "minimum": 1.849639,
+          "std": 0.010059199217079276
+        },
+        "first_call_ms": 3.028068,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 0.10210477369052195,
+        "mse_uint8": 6639.362909226191,
+        "mae_rgb": 48.39166135204081,
+        "mean_max_channel_abs": 68.57796556122449,
+        "exact_fraction": 0.5300940688775511,
+        "within8_fraction": 0.5301139987244898,
+        "ssim": 0.6274189441555175,
+        "max_channel_abs": 224.0,
+        "candidate_sha256": "3f62b201d68b94be66e0ab61bd5e08c9ccfc8843b87c96525db933575455d6d0",
+        "oracle_sha256": "1afe63b34fee108790232bdaef475b3ff3b60add4dba0c9432d93d36e3896aa1",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 14,
+      "case": 2,
+      "step": 8,
+      "seed": 17,
+      "action_dtype": "float32",
+      "prefix_hash": "42a46486d612d2fe3134a7d53bb0e7f45aaf1ddeb77309816a6d94f7f9632c62",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "e2d9d0cd8cf60835fc71e8b6ed2922687bb9eba190b71a0bb51f766acf45d282",
+        "oracle_state_hash": "e2d9d0cd8cf60835fc71e8b6ed2922687bb9eba190b71a0bb51f766acf45d282",
+        "compared_leaves": 14,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/ogbench_maze_semantics.py"
+      },
+      "state_file": "frame-0014-state.npz",
+      "state_hash": "e2d9d0cd8cf60835fc71e8b6ed2922687bb9eba190b71a0bb51f766acf45d282",
+      "oracle_file": "frame-0014-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "ad4e988787d4537aea465680f1a18eb183d3dd5d3986be1cad9bbd8d547dbe74",
+      "render_kwargs": {
+        "style": [
+          [
+            0.699999988079071,
+            0.5,
+            0.30000001192092896,
+            1.0,
+            1.0,
+            -90.0,
+            1.0,
+            1.0,
+            1.0,
+            0.0,
+            1.0,
+            1.0,
+            1.0
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          164.196885,
+          168.912953,
+          172.9888
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 168.69954599999997,
+          "median": 168.912953,
+          "p95": 172.5812153,
+          "maximum": 172.9888,
+          "minimum": 164.196885,
+          "std": 3.5924549871958913
+        },
+        "first_call_ms": 161.484547,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          1.856149,
+          1.872499,
+          1.910518
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 1.879722,
+          "median": 1.872499,
+          "p95": 1.9067161,
+          "maximum": 1.910518,
+          "minimum": 1.856149,
+          "std": 0.022776096197548834
+        },
+        "first_call_ms": 2.784088,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 0.10210295137254248,
+        "mse_uint8": 6639.244412999575,
+        "mae_rgb": 48.39130925807823,
+        "mean_max_channel_abs": 68.57389987244898,
+        "exact_fraction": 0.5300940688775511,
+        "within8_fraction": 0.5301139987244898,
+        "ssim": 0.6275522782779842,
+        "max_channel_abs": 224.0,
+        "candidate_sha256": "d9078e64e0cddeb0709a0cd3da9c67622cd98ac7f0727d462e7c37e755836eb5",
+        "oracle_sha256": "ad4e988787d4537aea465680f1a18eb183d3dd5d3986be1cad9bbd8d547dbe74",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 15,
+      "case": 2,
+      "step": 32,
+      "seed": 17,
+      "action_dtype": "float32",
+      "prefix_hash": "7d65206a745670856076416e0400d80ea9809d1149fd6734be29c0a6598720cc",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "2e7ed62ea8f9c221b1388defe15898fcba4539d8bb2cbc52ba037f97c480b6a8",
+        "oracle_state_hash": "2e7ed62ea8f9c221b1388defe15898fcba4539d8bb2cbc52ba037f97c480b6a8",
+        "compared_leaves": 14,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/ogbench_maze_semantics.py"
+      },
+      "state_file": "frame-0015-state.npz",
+      "state_hash": "2e7ed62ea8f9c221b1388defe15898fcba4539d8bb2cbc52ba037f97c480b6a8",
+      "oracle_file": "frame-0015-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "e42b9f1e05a242b2a42a119b3663b21494c8c921ea52352560f9f8eb3e72e27d",
+      "render_kwargs": {
+        "style": [
+          [
+            0.699999988079071,
+            0.5,
+            0.30000001192092896,
+            1.0,
+            1.0,
+            -90.0,
+            1.0,
+            1.0,
+            1.0,
+            0.0,
+            1.0,
+            1.0,
+            1.0
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          174.00105,
+          171.57758,
+          173.18713
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 172.92192,
+          "median": 173.18713,
+          "p95": 173.919658,
+          "maximum": 174.00105,
+          "minimum": 171.57758,
+          "std": 1.0069935346697365
+        },
+        "first_call_ms": 168.652343,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          1.886509,
+          1.864019,
+          1.868679
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 1.873069,
+          "median": 1.868679,
+          "p95": 1.884726,
+          "maximum": 1.886509,
+          "minimum": 1.864019,
+          "std": 0.009692062044099083
+        },
+        "first_call_ms": 2.784328,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 0.10214506268193552,
+        "mse_uint8": 6641.982700892857,
+        "mae_rgb": 48.413212159863946,
+        "mean_max_channel_abs": 68.61270328443878,
+        "exact_fraction": 0.5300940688775511,
+        "within8_fraction": 0.5300940688775511,
+        "ssim": 0.6273306651600096,
+        "max_channel_abs": 224.0,
+        "candidate_sha256": "3c437d2a446440e4998ba905cbee689b7ccc24a94fff20f181d8a13b0d1eac4a",
+        "oracle_sha256": "e42b9f1e05a242b2a42a119b3663b21494c8c921ea52352560f9f8eb3e72e27d",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 16,
+      "case": 2,
+      "step": 64,
+      "seed": 17,
+      "action_dtype": "float32",
+      "prefix_hash": "47f793dfa55567529153843bfdf50bb9106990a77897450c7f193c40f1889b69",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "65d994ba4fd5664044a27586468187ce4b64f40f421f6f261adbe1d5efa93c50",
+        "oracle_state_hash": "65d994ba4fd5664044a27586468187ce4b64f40f421f6f261adbe1d5efa93c50",
+        "compared_leaves": 14,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/ogbench_maze_semantics.py"
+      },
+      "state_file": "frame-0016-state.npz",
+      "state_hash": "65d994ba4fd5664044a27586468187ce4b64f40f421f6f261adbe1d5efa93c50",
+      "oracle_file": "frame-0016-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "21e079f574f58b842e08c010000067e51be8e12266556d1d702346c6c2b71356",
+      "render_kwargs": {
+        "style": [
+          [
+            0.699999988079071,
+            0.5,
+            0.30000001192092896,
+            1.0,
+            1.0,
+            -90.0,
+            1.0,
+            1.0,
+            1.0,
+            0.0,
+            1.0,
+            1.0,
+            1.0
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          172.75205,
+          170.866271,
+          170.061002
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 171.22644100000002,
+          "median": 170.866271,
+          "p95": 172.56347209999998,
+          "maximum": 172.75205,
+          "minimum": 170.061002,
+          "std": 1.1277489839649568
+        },
+        "first_call_ms": 168.001673,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          1.900839,
+          1.870039,
+          1.882928
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 1.8846019999999999,
+          "median": 1.882928,
+          "p95": 1.8990479,
+          "maximum": 1.900839,
+          "minimum": 1.870039,
+          "std": 0.012629639926247545
+        },
+        "first_call_ms": 2.788938,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 0.10207429172649451,
+        "mse_uint8": 6637.380819515306,
+        "mae_rgb": 48.378985969387756,
+        "mean_max_channel_abs": 68.55137914540816,
+        "exact_fraction": 0.5300940688775511,
+        "within8_fraction": 0.5301139987244898,
+        "ssim": 0.627290159426126,
+        "max_channel_abs": 224.0,
+        "candidate_sha256": "ae55dd65b8c79bc865d95e8d39ddf36519d61ed9736950b650707ef1c1db2207",
+        "oracle_sha256": "21e079f574f58b842e08c010000067e51be8e12266556d1d702346c6c2b71356",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 17,
+      "case": 2,
+      "step": 128,
+      "seed": 17,
+      "action_dtype": "float32",
+      "prefix_hash": "9f44ba38721bba1ce5398bc84b7b60436a4cfb091ab2fb2e3c39e231b250c165",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "d98d6d9eac46bb491340ff5e7d8a2e418706392366d7460e0e1caacb3941a827",
+        "oracle_state_hash": "d98d6d9eac46bb491340ff5e7d8a2e418706392366d7460e0e1caacb3941a827",
+        "compared_leaves": 14,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/ogbench_maze_semantics.py"
+      },
+      "state_file": "frame-0017-state.npz",
+      "state_hash": "d98d6d9eac46bb491340ff5e7d8a2e418706392366d7460e0e1caacb3941a827",
+      "oracle_file": "frame-0017-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "d22370b02940cbbd259c49de5f2cbefb9ce83a0b7e85bcfcde2f1722dad360c5",
+      "render_kwargs": {
+        "style": [
+          [
+            0.699999988079071,
+            0.5,
+            0.30000001192092896,
+            1.0,
+            1.0,
+            -90.0,
+            1.0,
+            1.0,
+            1.0,
+            0.0,
+            1.0,
+            1.0,
+            1.0
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          169.165072,
+          168.126793,
+          167.634434
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 168.30876633333335,
+          "median": 168.126793,
+          "p95": 169.0612441,
+          "maximum": 169.165072,
+          "minimum": 167.634434,
+          "std": 0.6379910617421655
+        },
+        "first_call_ms": 165.011985,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          1.868059,
+          1.846288,
+          1.867388
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 1.8605783333333334,
+          "median": 1.867388,
+          "p95": 1.8679918999999998,
+          "maximum": 1.868059,
+          "minimum": 1.846288,
+          "std": 0.010108504021642175
+        },
+        "first_call_ms": 2.721808,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 0.10204608242398265,
+        "mse_uint8": 6635.546509619473,
+        "mae_rgb": 48.359541082057824,
+        "mean_max_channel_abs": 68.51375159438776,
+        "exact_fraction": 0.5300940688775511,
+        "within8_fraction": 0.5300940688775511,
+        "ssim": 0.6277841958725525,
+        "max_channel_abs": 224.0,
+        "candidate_sha256": "83e278a8663cf0971b4618f00da9cdd1a78c09c0d181f07e237652a9e95866b4",
+        "oracle_sha256": "d22370b02940cbbd259c49de5f2cbefb9ce83a0b7e85bcfcde2f1722dad360c5",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 18,
+      "case": 3,
+      "step": 0,
+      "seed": 17,
+      "action_dtype": "float64",
+      "prefix_hash": "e72c4a53967d1c882ccee3ef33e2431f05a11b7e8d4cc62b50b544da108afc49",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "bc78f09a199eed94cd272ddcf53b7a59365f69f9305ced37d8c503dfd8e4707a",
+        "oracle_state_hash": "bc78f09a199eed94cd272ddcf53b7a59365f69f9305ced37d8c503dfd8e4707a",
+        "compared_leaves": 14,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/ogbench_maze_semantics.py"
+      },
+      "state_file": "frame-0018-state.npz",
+      "state_hash": "bc78f09a199eed94cd272ddcf53b7a59365f69f9305ced37d8c503dfd8e4707a",
+      "oracle_file": "frame-0018-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "ea1d16d86a0a056ac99c759b3c9726d3d1ed3995b966a92aedbd04ed268971b6",
+      "render_kwargs": {
+        "style": [
+          [
+            0.699999988079071,
+            0.5,
+            0.30000001192092896,
+            1.0,
+            1.0,
+            -90.0,
+            1.0,
+            1.0,
+            1.0,
+            0.0,
+            1.0,
+            1.0,
+            1.0
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          170.363861,
+          171.479871,
+          170.555282
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 170.79967133333335,
+          "median": 170.555282,
+          "p95": 171.3874121,
+          "maximum": 171.479871,
+          "minimum": 170.363861,
+          "std": 0.48728102070593565
+        },
+        "first_call_ms": 673.232042,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          1.846399,
+          1.913288,
+          2.013069
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 1.924252,
+          "median": 1.913288,
+          "p95": 2.0030909,
+          "maximum": 2.013069,
+          "minimum": 1.846399,
+          "std": 0.06848298668039153
+        },
+        "first_call_ms": 2.704838,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 0.10212046889834364,
+        "mse_uint8": 6640.383490114796,
+        "mae_rgb": 48.398650085034014,
+        "mean_max_channel_abs": 68.58633609693878,
+        "exact_fraction": 0.5300940688775511,
+        "within8_fraction": 0.5300940688775511,
+        "ssim": 0.6274391570678031,
+        "max_channel_abs": 224.0,
+        "candidate_sha256": "e406367b92ffd843ef653db4244deab436e1cda7dba317b28b8f9f866db6fbbd",
+        "oracle_sha256": "ea1d16d86a0a056ac99c759b3c9726d3d1ed3995b966a92aedbd04ed268971b6",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 19,
+      "case": 3,
+      "step": 1,
+      "seed": 17,
+      "action_dtype": "float64",
+      "prefix_hash": "2418cd4c59018018aa01d1df54c27ae21bd322a47eba45029cccd5af30966832",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "7c1cf978b622383acd8d95ee66aca27ffc8671c0ce6f25c3671762e159334063",
+        "oracle_state_hash": "7c1cf978b622383acd8d95ee66aca27ffc8671c0ce6f25c3671762e159334063",
+        "compared_leaves": 14,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/ogbench_maze_semantics.py"
+      },
+      "state_file": "frame-0019-state.npz",
+      "state_hash": "7c1cf978b622383acd8d95ee66aca27ffc8671c0ce6f25c3671762e159334063",
+      "oracle_file": "frame-0019-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "1afe63b34fee108790232bdaef475b3ff3b60add4dba0c9432d93d36e3896aa1",
+      "render_kwargs": {
+        "style": [
+          [
+            0.699999988079071,
+            0.5,
+            0.30000001192092896,
+            1.0,
+            1.0,
+            -90.0,
+            1.0,
+            1.0,
+            1.0,
+            0.0,
+            1.0,
+            1.0,
+            1.0
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          170.377242,
+          170.689641,
+          169.459633
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 170.17550533333332,
+          "median": 170.377242,
+          "p95": 170.6584011,
+          "maximum": 170.689641,
+          "minimum": 169.459633,
+          "std": 0.5220173573259367
+        },
+        "first_call_ms": 167.243894,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          1.872338,
+          1.874089,
+          1.871269
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 1.8725653333333332,
+          "median": 1.872338,
+          "p95": 1.8739138999999998,
+          "maximum": 1.874089,
+          "minimum": 1.871269,
+          "std": 0.0011624285880096222
+        },
+        "first_call_ms": 2.771878,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 0.10210477369052195,
+        "mse_uint8": 6639.362909226191,
+        "mae_rgb": 48.39166135204081,
+        "mean_max_channel_abs": 68.57796556122449,
+        "exact_fraction": 0.5300940688775511,
+        "within8_fraction": 0.5301139987244898,
+        "ssim": 0.6274189441555175,
+        "max_channel_abs": 224.0,
+        "candidate_sha256": "3f62b201d68b94be66e0ab61bd5e08c9ccfc8843b87c96525db933575455d6d0",
+        "oracle_sha256": "1afe63b34fee108790232bdaef475b3ff3b60add4dba0c9432d93d36e3896aa1",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 20,
+      "case": 3,
+      "step": 8,
+      "seed": 17,
+      "action_dtype": "float64",
+      "prefix_hash": "25dab27729cb080df650577edb14007dcb0065c1035347c76f293b756a4672d4",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "f723efec2667f5879a3cbd29a9f6417091953235c7f4f5af8e9b79f7307f68aa",
+        "oracle_state_hash": "f723efec2667f5879a3cbd29a9f6417091953235c7f4f5af8e9b79f7307f68aa",
+        "compared_leaves": 14,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/ogbench_maze_semantics.py"
+      },
+      "state_file": "frame-0020-state.npz",
+      "state_hash": "f723efec2667f5879a3cbd29a9f6417091953235c7f4f5af8e9b79f7307f68aa",
+      "oracle_file": "frame-0020-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "ad4e988787d4537aea465680f1a18eb183d3dd5d3986be1cad9bbd8d547dbe74",
+      "render_kwargs": {
+        "style": [
+          [
+            0.699999988079071,
+            0.5,
+            0.30000001192092896,
+            1.0,
+            1.0,
+            -90.0,
+            1.0,
+            1.0,
+            1.0,
+            0.0,
+            1.0,
+            1.0,
+            1.0
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          170.113662,
+          170.722721,
+          170.206781
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 170.34772133333334,
+          "median": 170.206781,
+          "p95": 170.671127,
+          "maximum": 170.722721,
+          "minimum": 170.113662,
+          "std": 0.2678760279685784
+        },
+        "first_call_ms": 167.913833,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          1.854239,
+          1.849128,
+          1.849609
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 1.850992,
+          "median": 1.849609,
+          "p95": 1.8537759999999999,
+          "maximum": 1.854239,
+          "minimum": 1.849128,
+          "std": 0.002304357755789326
+        },
+        "first_call_ms": 2.820048,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 0.10210295137254248,
+        "mse_uint8": 6639.244412999575,
+        "mae_rgb": 48.39130925807823,
+        "mean_max_channel_abs": 68.57389987244898,
+        "exact_fraction": 0.5300940688775511,
+        "within8_fraction": 0.5301139987244898,
+        "ssim": 0.6275522782779842,
+        "max_channel_abs": 224.0,
+        "candidate_sha256": "d9078e64e0cddeb0709a0cd3da9c67622cd98ac7f0727d462e7c37e755836eb5",
+        "oracle_sha256": "ad4e988787d4537aea465680f1a18eb183d3dd5d3986be1cad9bbd8d547dbe74",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 21,
+      "case": 3,
+      "step": 32,
+      "seed": 17,
+      "action_dtype": "float64",
+      "prefix_hash": "1ead8fa03aa5356b9462aaee41b77d25744af18d3d1ab958308c46b0f18b9d7e",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "981bd3dc88634492683464479d80f4ddda09aac17742fbea71f69b142be66a27",
+        "oracle_state_hash": "981bd3dc88634492683464479d80f4ddda09aac17742fbea71f69b142be66a27",
+        "compared_leaves": 14,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/ogbench_maze_semantics.py"
+      },
+      "state_file": "frame-0021-state.npz",
+      "state_hash": "981bd3dc88634492683464479d80f4ddda09aac17742fbea71f69b142be66a27",
+      "oracle_file": "frame-0021-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "e42b9f1e05a242b2a42a119b3663b21494c8c921ea52352560f9f8eb3e72e27d",
+      "render_kwargs": {
+        "style": [
+          [
+            0.699999988079071,
+            0.5,
+            0.30000001192092896,
+            1.0,
+            1.0,
+            -90.0,
+            1.0,
+            1.0,
+            1.0,
+            0.0,
+            1.0,
+            1.0,
+            1.0
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          170.898772,
+          171.432681,
+          170.632162
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 170.98787166666668,
+          "median": 170.898772,
+          "p95": 171.3792901,
+          "maximum": 171.432681,
+          "minimum": 170.632162,
+          "std": 0.3328280139354617
+        },
+        "first_call_ms": 170.573292,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          1.852519,
+          1.860988,
+          1.885858
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 1.866455,
+          "median": 1.860988,
+          "p95": 1.8833710000000001,
+          "maximum": 1.885858,
+          "minimum": 1.852519,
+          "std": 0.014148929217435496
+        },
+        "first_call_ms": 2.713779,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 0.10214506268193552,
+        "mse_uint8": 6641.982700892857,
+        "mae_rgb": 48.413212159863946,
+        "mean_max_channel_abs": 68.61270328443878,
+        "exact_fraction": 0.5300940688775511,
+        "within8_fraction": 0.5300940688775511,
+        "ssim": 0.6273306651600096,
+        "max_channel_abs": 224.0,
+        "candidate_sha256": "3c437d2a446440e4998ba905cbee689b7ccc24a94fff20f181d8a13b0d1eac4a",
+        "oracle_sha256": "e42b9f1e05a242b2a42a119b3663b21494c8c921ea52352560f9f8eb3e72e27d",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 22,
+      "case": 3,
+      "step": 64,
+      "seed": 17,
+      "action_dtype": "float64",
+      "prefix_hash": "7ddcecb61f06f8095c4686669845d6a07f2ce6e40b6b6c289e6dc47f024fc279",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "f181967a04995f540d8856c716eabfda374cc2341742e9aec053777a7c778998",
+        "oracle_state_hash": "f181967a04995f540d8856c716eabfda374cc2341742e9aec053777a7c778998",
+        "compared_leaves": 14,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/ogbench_maze_semantics.py"
+      },
+      "state_file": "frame-0022-state.npz",
+      "state_hash": "f181967a04995f540d8856c716eabfda374cc2341742e9aec053777a7c778998",
+      "oracle_file": "frame-0022-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "21e079f574f58b842e08c010000067e51be8e12266556d1d702346c6c2b71356",
+      "render_kwargs": {
+        "style": [
+          [
+            0.699999988079071,
+            0.5,
+            0.30000001192092896,
+            1.0,
+            1.0,
+            -90.0,
+            1.0,
+            1.0,
+            1.0,
+            0.0,
+            1.0,
+            1.0,
+            1.0
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          175.430329,
+          178.807386,
+          174.225449
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 176.154388,
+          "median": 175.430329,
+          "p95": 178.4696803,
+          "maximum": 178.807386,
+          "minimum": 174.225449,
+          "std": 1.9393697850251983
+        },
+        "first_call_ms": 166.022264,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          1.859749,
+          1.876029,
+          1.869739
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 1.8685056666666666,
+          "median": 1.869739,
+          "p95": 1.8754,
+          "maximum": 1.876029,
+          "minimum": 1.859749,
+          "std": 0.006703254599239195
+        },
+        "first_call_ms": 2.769198,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 0.10207429172649451,
+        "mse_uint8": 6637.380819515306,
+        "mae_rgb": 48.378985969387756,
+        "mean_max_channel_abs": 68.55137914540816,
+        "exact_fraction": 0.5300940688775511,
+        "within8_fraction": 0.5301139987244898,
+        "ssim": 0.627290159426126,
+        "max_channel_abs": 224.0,
+        "candidate_sha256": "ae55dd65b8c79bc865d95e8d39ddf36519d61ed9736950b650707ef1c1db2207",
+        "oracle_sha256": "21e079f574f58b842e08c010000067e51be8e12266556d1d702346c6c2b71356",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 23,
+      "case": 3,
+      "step": 128,
+      "seed": 17,
+      "action_dtype": "float64",
+      "prefix_hash": "08e0261f9016d3524e867c35c973d2f0becd36a519a80f2d8e9261cd0b15e498",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "d6199d305966fba2855af9b4da65056eb7a1e0c783e30467313d7435fd58f7ea",
+        "oracle_state_hash": "d6199d305966fba2855af9b4da65056eb7a1e0c783e30467313d7435fd58f7ea",
+        "compared_leaves": 14,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/ogbench_maze_semantics.py"
+      },
+      "state_file": "frame-0023-state.npz",
+      "state_hash": "d6199d305966fba2855af9b4da65056eb7a1e0c783e30467313d7435fd58f7ea",
+      "oracle_file": "frame-0023-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "d22370b02940cbbd259c49de5f2cbefb9ce83a0b7e85bcfcde2f1722dad360c5",
+      "render_kwargs": {
+        "style": [
+          [
+            0.699999988079071,
+            0.5,
+            0.30000001192092896,
+            1.0,
+            1.0,
+            -90.0,
+            1.0,
+            1.0,
+            1.0,
+            0.0,
+            1.0,
+            1.0,
+            1.0
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          163.745596,
+          162.644437,
+          163.361306
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 163.25044633333334,
+          "median": 163.361306,
+          "p95": 163.707167,
+          "maximum": 163.745596,
+          "minimum": 162.644437,
+          "std": 0.456329694475629
+        },
+        "first_call_ms": 163.507856,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          1.851299,
+          1.866009,
+          1.867749
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 1.8616856666666666,
+          "median": 1.866009,
+          "p95": 1.867575,
+          "maximum": 1.867749,
+          "minimum": 1.851299,
+          "std": 0.007378754788053506
+        },
+        "first_call_ms": 2.981399,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 0.10204608242398265,
+        "mse_uint8": 6635.546509619473,
+        "mae_rgb": 48.359541082057824,
+        "mean_max_channel_abs": 68.51375159438776,
+        "exact_fraction": 0.5300940688775511,
+        "within8_fraction": 0.5300940688775511,
+        "ssim": 0.6277841958725525,
+        "max_channel_abs": 224.0,
+        "candidate_sha256": "83e278a8663cf0971b4618f00da9cdd1a78c09c0d181f07e237652a9e95866b4",
+        "oracle_sha256": "d22370b02940cbbd259c49de5f2cbefb9ce83a0b7e85bcfcde2f1722dad360c5",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 24,
+      "case": 4,
+      "step": 0,
+      "seed": 42,
+      "action_dtype": "float32",
+      "prefix_hash": "3fb8e2a5df713e79221069065d9c5846407c74f6611e9f9b5abbf6aa901f1577",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "17873b7bac95c06fdff9fcb13f3f293a198050dca54bdbe4b51b8a70f713fa9e",
+        "oracle_state_hash": "17873b7bac95c06fdff9fcb13f3f293a198050dca54bdbe4b51b8a70f713fa9e",
+        "compared_leaves": 14,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/ogbench_maze_semantics.py"
+      },
+      "state_file": "frame-0024-state.npz",
+      "state_hash": "17873b7bac95c06fdff9fcb13f3f293a198050dca54bdbe4b51b8a70f713fa9e",
+      "oracle_file": "frame-0024-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "daf3d7be436eaf6a97c18de9bb218257e62c493d2f8ab4ed0017d5d5c158a6d2",
+      "render_kwargs": {
+        "style": [
+          [
+            0.699999988079071,
+            0.5,
+            0.30000001192092896,
+            1.0,
+            1.0,
+            -90.0,
+            1.0,
+            1.0,
+            1.0,
+            0.0,
+            1.0,
+            1.0,
+            1.0
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          157.85016,
+          156.199221,
+          158.915509
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 157.6549633333333,
+          "median": 157.85016,
+          "p95": 158.80897409999997,
+          "maximum": 158.915509,
+          "minimum": 156.199221,
+          "std": 1.1174767495700069
+        },
+        "first_call_ms": 635.872456,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          1.867429,
+          1.867079,
+          1.871229
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 1.8685789999999998,
+          "median": 1.867429,
+          "p95": 1.870849,
+          "maximum": 1.871229,
+          "minimum": 1.867079,
+          "std": 0.001879272909044023
+        },
+        "first_call_ms": 2.731738,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 0.10091344615869223,
+        "mse_uint8": 6561.896836468963,
+        "mae_rgb": 48.1685334289966,
+        "mean_max_channel_abs": 68.48860012755102,
+        "exact_fraction": 0.5300940688775511,
+        "within8_fraction": 0.5300940688775511,
+        "ssim": 0.6258091197338429,
+        "max_channel_abs": 224.0,
+        "candidate_sha256": "2c9da625a1c280145fd6577bab27bc00e63888e81bd0ec8572def9e96916f78d",
+        "oracle_sha256": "daf3d7be436eaf6a97c18de9bb218257e62c493d2f8ab4ed0017d5d5c158a6d2",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 25,
+      "case": 4,
+      "step": 1,
+      "seed": 42,
+      "action_dtype": "float32",
+      "prefix_hash": "c059e9a88008601d54062b1e3eb9b1c46c6cfcb03b9170b8da3b4dfa613edcff",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "2b3576de92acf406827cce0490db077c562f942afcefb71cdfc834055067cdde",
+        "oracle_state_hash": "2b3576de92acf406827cce0490db077c562f942afcefb71cdfc834055067cdde",
+        "compared_leaves": 14,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/ogbench_maze_semantics.py"
+      },
+      "state_file": "frame-0025-state.npz",
+      "state_hash": "2b3576de92acf406827cce0490db077c562f942afcefb71cdfc834055067cdde",
+      "oracle_file": "frame-0025-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "2c2ac277ffa33c67af5c24e7e2d3b8eb80962026c0e15b288fe52b449c92b2a2",
+      "render_kwargs": {
+        "style": [
+          [
+            0.699999988079071,
+            0.5,
+            0.30000001192092896,
+            1.0,
+            1.0,
+            -90.0,
+            1.0,
+            1.0,
+            1.0,
+            0.0,
+            1.0,
+            1.0,
+            1.0
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          155.058542,
+          155.305131,
+          157.14395
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 155.83587433333332,
+          "median": 155.305131,
+          "p95": 156.9600681,
+          "maximum": 157.14395,
+          "minimum": 155.058542,
+          "std": 0.9304113771245974
+        },
+        "first_call_ms": 151.275194,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          1.872909,
+          1.875089,
+          1.884099
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 1.8773656666666667,
+          "median": 1.875089,
+          "p95": 1.883198,
+          "maximum": 1.884099,
+          "minimum": 1.872909,
+          "std": 0.0048436510563371095
+        },
+        "first_call_ms": 2.807928,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 0.10086419463618782,
+        "mse_uint8": 6558.694256218112,
+        "mae_rgb": 48.15440981079932,
+        "mean_max_channel_abs": 68.47488839285714,
+        "exact_fraction": 0.5300940688775511,
+        "within8_fraction": 0.5300940688775511,
+        "ssim": 0.625961713973477,
+        "max_channel_abs": 224.0,
+        "candidate_sha256": "9178f78b44b9eefb4cc3e6f309d159723df0c501f554ce452dceeb96505cd494",
+        "oracle_sha256": "2c2ac277ffa33c67af5c24e7e2d3b8eb80962026c0e15b288fe52b449c92b2a2",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 26,
+      "case": 4,
+      "step": 8,
+      "seed": 42,
+      "action_dtype": "float32",
+      "prefix_hash": "2d7ff9492f2d830ca5e7eaf88cf7455722e3926d270f823b3ef05ed9e94ad79c",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "e25b3b561d0cbd1e03a69e4ee414598f138d17cc18561d1ce04f0abc8060185c",
+        "oracle_state_hash": "e25b3b561d0cbd1e03a69e4ee414598f138d17cc18561d1ce04f0abc8060185c",
+        "compared_leaves": 14,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/ogbench_maze_semantics.py"
+      },
+      "state_file": "frame-0026-state.npz",
+      "state_hash": "e25b3b561d0cbd1e03a69e4ee414598f138d17cc18561d1ce04f0abc8060185c",
+      "oracle_file": "frame-0026-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "72b82d10e3fe9cfb84c54da9629e510b1b78b409cfe0543cb157e90ea8223084",
+      "render_kwargs": {
+        "style": [
+          [
+            0.699999988079071,
+            0.5,
+            0.30000001192092896,
+            1.0,
+            1.0,
+            -90.0,
+            1.0,
+            1.0,
+            1.0,
+            0.0,
+            1.0,
+            1.0,
+            1.0
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          155.259081,
+          157.51043,
+          156.13253
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 156.30068033333336,
+          "median": 156.13253,
+          "p95": 157.37264000000002,
+          "maximum": 157.51043,
+          "minimum": 155.259081,
+          "std": 0.9267682129854404
+        },
+        "first_call_ms": 150.813504,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          1.869099,
+          1.856858,
+          1.874089
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 1.866682,
+          "median": 1.869099,
+          "p95": 1.8735899999999999,
+          "maximum": 1.874089,
+          "minimum": 1.856858,
+          "std": 0.007239164638731939
+        },
+        "first_call_ms": 2.705539,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 0.1009292175816405,
+        "mse_uint8": 6562.922373246173,
+        "mae_rgb": 48.16925090348639,
+        "mean_max_channel_abs": 68.48299984056122,
+        "exact_fraction": 0.5300940688775511,
+        "within8_fraction": 0.5300940688775511,
+        "ssim": 0.6260604962831088,
+        "max_channel_abs": 224.0,
+        "candidate_sha256": "5d8bc1cd5a63f200f649cb0ed0446747ba56f9d9ef30e9078eb33f5e7849ae57",
+        "oracle_sha256": "72b82d10e3fe9cfb84c54da9629e510b1b78b409cfe0543cb157e90ea8223084",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 27,
+      "case": 4,
+      "step": 32,
+      "seed": 42,
+      "action_dtype": "float32",
+      "prefix_hash": "f71f675ee9f4a032642319e13f180e31e6f7aac7cef37ce09763ee3c43fa041b",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "9ad8683229f633c3ea9cde81707e9868475ec53f08c64b0301a35f0f1b59ddbb",
+        "oracle_state_hash": "9ad8683229f633c3ea9cde81707e9868475ec53f08c64b0301a35f0f1b59ddbb",
+        "compared_leaves": 14,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/ogbench_maze_semantics.py"
+      },
+      "state_file": "frame-0027-state.npz",
+      "state_hash": "9ad8683229f633c3ea9cde81707e9868475ec53f08c64b0301a35f0f1b59ddbb",
+      "oracle_file": "frame-0027-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "9ab8dad46bee50ab41d19fc355ba59cc5710da52dada3c0bbf7dc2b1d9b9daa6",
+      "render_kwargs": {
+        "style": [
+          [
+            0.699999988079071,
+            0.5,
+            0.30000001192092896,
+            1.0,
+            1.0,
+            -90.0,
+            1.0,
+            1.0,
+            1.0,
+            0.0,
+            1.0,
+            1.0,
+            1.0
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          153.660583,
+          150.171544,
+          153.855572
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 152.56256633333334,
+          "median": 153.660583,
+          "p95": 153.8360731,
+          "maximum": 153.855572,
+          "minimum": 150.171544,
+          "std": 1.6925810716977592
+        },
+        "first_call_ms": 149.635354,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          2.571238,
+          1.928839,
+          1.928969
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 2.143015333333333,
+          "median": 1.928969,
+          "p95": 2.5070111,
+          "maximum": 2.571238,
+          "minimum": 1.928839,
+          "std": 0.30279915610883446
+        },
+        "first_call_ms": 4.142757,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 0.10089846610621374,
+        "mse_uint8": 6560.922758556548,
+        "mae_rgb": 48.164029283588434,
+        "mean_max_channel_abs": 68.46781329719387,
+        "exact_fraction": 0.5300940688775511,
+        "within8_fraction": 0.5300940688775511,
+        "ssim": 0.6265110713298783,
+        "max_channel_abs": 224.0,
+        "candidate_sha256": "77a3d725048d5232147cc8846e804f53aeb99780485841982b569c0fa6ae5176",
+        "oracle_sha256": "9ab8dad46bee50ab41d19fc355ba59cc5710da52dada3c0bbf7dc2b1d9b9daa6",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 28,
+      "case": 4,
+      "step": 64,
+      "seed": 42,
+      "action_dtype": "float32",
+      "prefix_hash": "18898602ce2002a76510a8604a10999de3133e4314c7dc57ce40b78f6324ee37",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "cf3b3dcb7f421a3864656c8eb31a70a023a8cf6b688e8923122ee210201c0d7f",
+        "oracle_state_hash": "cf3b3dcb7f421a3864656c8eb31a70a023a8cf6b688e8923122ee210201c0d7f",
+        "compared_leaves": 14,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/ogbench_maze_semantics.py"
+      },
+      "state_file": "frame-0028-state.npz",
+      "state_hash": "cf3b3dcb7f421a3864656c8eb31a70a023a8cf6b688e8923122ee210201c0d7f",
+      "oracle_file": "frame-0028-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "9ca4422742ffc940e23905a9b9c1a030ea830557aba37e4cb10cca96ac61d4c3",
+      "render_kwargs": {
+        "style": [
+          [
+            0.699999988079071,
+            0.5,
+            0.30000001192092896,
+            1.0,
+            1.0,
+            -90.0,
+            1.0,
+            1.0,
+            1.0,
+            0.0,
+            1.0,
+            1.0,
+            1.0
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          153.780912,
+          154.907142,
+          154.911482
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 154.53317866666666,
+          "median": 154.907142,
+          "p95": 154.911048,
+          "maximum": 154.911482,
+          "minimum": 153.780912,
+          "std": 0.531935812063406
+        },
+        "first_call_ms": 152.607773,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          1.891339,
+          1.881279,
+          1.879359
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 1.8839923333333335,
+          "median": 1.881279,
+          "p95": 1.890333,
+          "maximum": 1.891339,
+          "minimum": 1.879359,
+          "std": 0.005253680191594859
+        },
+        "first_call_ms": 2.804349,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 0.10095515728758823,
+        "mse_uint8": 6564.609102625425,
+        "mae_rgb": 48.17564174107143,
+        "mean_max_channel_abs": 68.48618861607143,
+        "exact_fraction": 0.5300940688775511,
+        "within8_fraction": 0.5300940688775511,
+        "ssim": 0.6262458119099682,
+        "max_channel_abs": 224.0,
+        "candidate_sha256": "48bc3839d4558b4d5f3cd65ab8befe35703fa64e26da50d5ae7fc3badde57651",
+        "oracle_sha256": "9ca4422742ffc940e23905a9b9c1a030ea830557aba37e4cb10cca96ac61d4c3",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 29,
+      "case": 4,
+      "step": 128,
+      "seed": 42,
+      "action_dtype": "float32",
+      "prefix_hash": "53bbac87d07d8a25364764124681707e8fe29fdc9d6cd57f19fa3cc700ee5a12",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "3915b28edc80bcb816ecde19b63c3a558c2c038f644863a6f39da8615496965b",
+        "oracle_state_hash": "3915b28edc80bcb816ecde19b63c3a558c2c038f644863a6f39da8615496965b",
+        "compared_leaves": 14,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/ogbench_maze_semantics.py"
+      },
+      "state_file": "frame-0029-state.npz",
+      "state_hash": "3915b28edc80bcb816ecde19b63c3a558c2c038f644863a6f39da8615496965b",
+      "oracle_file": "frame-0029-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "e1f6bc334088dc00e373654aab048ef5fdada16e9b1e1546f9cc6c80e23c7d27",
+      "render_kwargs": {
+        "style": [
+          [
+            0.699999988079071,
+            0.5,
+            0.30000001192092896,
+            1.0,
+            1.0,
+            -90.0,
+            1.0,
+            1.0,
+            1.0,
+            0.0,
+            1.0,
+            1.0,
+            1.0
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          151.271764,
+          151.907643,
+          150.734504
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 151.30463699999999,
+          "median": 151.271764,
+          "p95": 151.8440551,
+          "maximum": 151.907643,
+          "minimum": 150.734504,
+          "std": 0.4794957448035121
+        },
+        "first_call_ms": 146.860626,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          1.866759,
+          1.864599,
+          1.871799
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 1.8677190000000001,
+          "median": 1.866759,
+          "p95": 1.871295,
+          "maximum": 1.871799,
+          "minimum": 1.864599,
+          "std": 0.003016753221594394
+        },
+        "first_call_ms": 2.796508,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 0.10073570359516354,
+        "mse_uint8": 6550.33912627551,
+        "mae_rgb": 48.12226296768708,
+        "mean_max_channel_abs": 68.44050940688776,
+        "exact_fraction": 0.5300940688775511,
+        "within8_fraction": 0.5300940688775511,
+        "ssim": 0.625847795377195,
+        "max_channel_abs": 224.0,
+        "candidate_sha256": "ca904479e3b51b21d5587a3ea78a06714663e8ff6742b36b3560028ef4881966",
+        "oracle_sha256": "e1f6bc334088dc00e373654aab048ef5fdada16e9b1e1546f9cc6c80e23c7d27",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 30,
+      "case": 5,
+      "step": 0,
+      "seed": 42,
+      "action_dtype": "float64",
+      "prefix_hash": "e72c4a53967d1c882ccee3ef33e2431f05a11b7e8d4cc62b50b544da108afc49",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "17873b7bac95c06fdff9fcb13f3f293a198050dca54bdbe4b51b8a70f713fa9e",
+        "oracle_state_hash": "17873b7bac95c06fdff9fcb13f3f293a198050dca54bdbe4b51b8a70f713fa9e",
+        "compared_leaves": 14,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/ogbench_maze_semantics.py"
+      },
+      "state_file": "frame-0030-state.npz",
+      "state_hash": "17873b7bac95c06fdff9fcb13f3f293a198050dca54bdbe4b51b8a70f713fa9e",
+      "oracle_file": "frame-0030-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "daf3d7be436eaf6a97c18de9bb218257e62c493d2f8ab4ed0017d5d5c158a6d2",
+      "render_kwargs": {
+        "style": [
+          [
+            0.699999988079071,
+            0.5,
+            0.30000001192092896,
+            1.0,
+            1.0,
+            -90.0,
+            1.0,
+            1.0,
+            1.0,
+            0.0,
+            1.0,
+            1.0,
+            1.0
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          161.992457,
+          161.655477,
+          161.096927
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 161.58162033333332,
+          "median": 161.655477,
+          "p95": 161.958759,
+          "maximum": 161.992457,
+          "minimum": 161.096927,
+          "std": 0.3693098072832044
+        },
+        "first_call_ms": 642.788171,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          1.889018,
+          1.866669,
+          1.865609
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 1.8737653333333333,
+          "median": 1.866669,
+          "p95": 1.8867831000000002,
+          "maximum": 1.889018,
+          "minimum": 1.865609,
+          "std": 0.010793942138481649
+        },
+        "first_call_ms": 2.759608,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 0.10091344615869223,
+        "mse_uint8": 6561.896836468963,
+        "mae_rgb": 48.1685334289966,
+        "mean_max_channel_abs": 68.48860012755102,
+        "exact_fraction": 0.5300940688775511,
+        "within8_fraction": 0.5300940688775511,
+        "ssim": 0.6258091197338429,
+        "max_channel_abs": 224.0,
+        "candidate_sha256": "2c9da625a1c280145fd6577bab27bc00e63888e81bd0ec8572def9e96916f78d",
+        "oracle_sha256": "daf3d7be436eaf6a97c18de9bb218257e62c493d2f8ab4ed0017d5d5c158a6d2",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 31,
+      "case": 5,
+      "step": 1,
+      "seed": 42,
+      "action_dtype": "float64",
+      "prefix_hash": "3662b4978b0978ccb23fb44c182c715c10d414ce9f8d270a67717a92c1e13234",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "ca2b6cafe6095ee6c5bcdac8278f028d89454633970db5996d09f27a5ddf10f0",
+        "oracle_state_hash": "ca2b6cafe6095ee6c5bcdac8278f028d89454633970db5996d09f27a5ddf10f0",
+        "compared_leaves": 14,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/ogbench_maze_semantics.py"
+      },
+      "state_file": "frame-0031-state.npz",
+      "state_hash": "ca2b6cafe6095ee6c5bcdac8278f028d89454633970db5996d09f27a5ddf10f0",
+      "oracle_file": "frame-0031-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "2c2ac277ffa33c67af5c24e7e2d3b8eb80962026c0e15b288fe52b449c92b2a2",
+      "render_kwargs": {
+        "style": [
+          [
+            0.699999988079071,
+            0.5,
+            0.30000001192092896,
+            1.0,
+            1.0,
+            -90.0,
+            1.0,
+            1.0,
+            1.0,
+            0.0,
+            1.0,
+            1.0,
+            1.0
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          161.843867,
+          163.173206,
+          159.680008
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 161.56569366666665,
+          "median": 161.843867,
+          "p95": 163.04027209999998,
+          "maximum": 163.173206,
+          "minimum": 159.680008,
+          "std": 1.4395933151031104
+        },
+        "first_call_ms": 157.63652,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          1.879748,
+          1.877279,
+          1.871769
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 1.8762653333333332,
+          "median": 1.877279,
+          "p95": 1.8795011,
+          "maximum": 1.879748,
+          "minimum": 1.871769,
+          "std": 0.003335341095333738
+        },
+        "first_call_ms": 2.749299,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 0.10086419463618782,
+        "mse_uint8": 6558.694256218112,
+        "mae_rgb": 48.15440981079932,
+        "mean_max_channel_abs": 68.47488839285714,
+        "exact_fraction": 0.5300940688775511,
+        "within8_fraction": 0.5300940688775511,
+        "ssim": 0.625961713973477,
+        "max_channel_abs": 224.0,
+        "candidate_sha256": "9178f78b44b9eefb4cc3e6f309d159723df0c501f554ce452dceeb96505cd494",
+        "oracle_sha256": "2c2ac277ffa33c67af5c24e7e2d3b8eb80962026c0e15b288fe52b449c92b2a2",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 32,
+      "case": 5,
+      "step": 8,
+      "seed": 42,
+      "action_dtype": "float64",
+      "prefix_hash": "822339561f5fe0da3c7b9f1a97850154a61634114f7782a4129a08562e835ada",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "65ab5eaa0cb429d5a4e1203fcfbf3857a18131f67a83c2059d1a0aacd3ea8941",
+        "oracle_state_hash": "65ab5eaa0cb429d5a4e1203fcfbf3857a18131f67a83c2059d1a0aacd3ea8941",
+        "compared_leaves": 14,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/ogbench_maze_semantics.py"
+      },
+      "state_file": "frame-0032-state.npz",
+      "state_hash": "65ab5eaa0cb429d5a4e1203fcfbf3857a18131f67a83c2059d1a0aacd3ea8941",
+      "oracle_file": "frame-0032-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "72b82d10e3fe9cfb84c54da9629e510b1b78b409cfe0543cb157e90ea8223084",
+      "render_kwargs": {
+        "style": [
+          [
+            0.699999988079071,
+            0.5,
+            0.30000001192092896,
+            1.0,
+            1.0,
+            -90.0,
+            1.0,
+            1.0,
+            1.0,
+            0.0,
+            1.0,
+            1.0,
+            1.0
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          160.158518,
+          161.765887,
+          161.758177
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 161.2275273333333,
+          "median": 161.758177,
+          "p95": 161.76511599999998,
+          "maximum": 161.765887,
+          "minimum": 160.158518,
+          "std": 0.7559103020378091
+        },
+        "first_call_ms": 159.428658,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          1.833429,
+          1.858949,
+          1.851019
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 1.847799,
+          "median": 1.851019,
+          "p95": 1.858156,
+          "maximum": 1.858949,
+          "minimum": 1.833429,
+          "std": 0.010664392465896337
+        },
+        "first_call_ms": 2.713328,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 0.1009292175816405,
+        "mse_uint8": 6562.922373246173,
+        "mae_rgb": 48.16925090348639,
+        "mean_max_channel_abs": 68.48299984056122,
+        "exact_fraction": 0.5300940688775511,
+        "within8_fraction": 0.5300940688775511,
+        "ssim": 0.6260604962831088,
+        "max_channel_abs": 224.0,
+        "candidate_sha256": "5d8bc1cd5a63f200f649cb0ed0446747ba56f9d9ef30e9078eb33f5e7849ae57",
+        "oracle_sha256": "72b82d10e3fe9cfb84c54da9629e510b1b78b409cfe0543cb157e90ea8223084",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 33,
+      "case": 5,
+      "step": 32,
+      "seed": 42,
+      "action_dtype": "float64",
+      "prefix_hash": "8a8f6cebae63889098d7420f97c751acef455516922df550b62580aa9918ed54",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "7439dc7c5e02728a7ec11c38e64587cb2c1a0f2287b358f2a7105d4200543d3b",
+        "oracle_state_hash": "7439dc7c5e02728a7ec11c38e64587cb2c1a0f2287b358f2a7105d4200543d3b",
+        "compared_leaves": 14,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/ogbench_maze_semantics.py"
+      },
+      "state_file": "frame-0033-state.npz",
+      "state_hash": "7439dc7c5e02728a7ec11c38e64587cb2c1a0f2287b358f2a7105d4200543d3b",
+      "oracle_file": "frame-0033-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "9ab8dad46bee50ab41d19fc355ba59cc5710da52dada3c0bbf7dc2b1d9b9daa6",
+      "render_kwargs": {
+        "style": [
+          [
+            0.699999988079071,
+            0.5,
+            0.30000001192092896,
+            1.0,
+            1.0,
+            -90.0,
+            1.0,
+            1.0,
+            1.0,
+            0.0,
+            1.0,
+            1.0,
+            1.0
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          159.476348,
+          158.52313,
+          160.187609
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 159.39569566666668,
+          "median": 159.476348,
+          "p95": 160.1164829,
+          "maximum": 160.187609,
+          "minimum": 158.52313,
+          "std": 0.6819096638677457
+        },
+        "first_call_ms": 154.444252,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          1.878968,
+          1.892669,
+          1.880939
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 1.8841919999999999,
+          "median": 1.880939,
+          "p95": 1.8914959999999998,
+          "maximum": 1.892669,
+          "minimum": 1.878968,
+          "std": 0.006047911871051025
+        },
+        "first_call_ms": 2.919728,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 0.10089846610621374,
+        "mse_uint8": 6560.922758556548,
+        "mae_rgb": 48.164029283588434,
+        "mean_max_channel_abs": 68.46781329719387,
+        "exact_fraction": 0.5300940688775511,
+        "within8_fraction": 0.5300940688775511,
+        "ssim": 0.6265110713298783,
+        "max_channel_abs": 224.0,
+        "candidate_sha256": "77a3d725048d5232147cc8846e804f53aeb99780485841982b569c0fa6ae5176",
+        "oracle_sha256": "9ab8dad46bee50ab41d19fc355ba59cc5710da52dada3c0bbf7dc2b1d9b9daa6",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 34,
+      "case": 5,
+      "step": 64,
+      "seed": 42,
+      "action_dtype": "float64",
+      "prefix_hash": "eb1717bf171a9ff5a537dfe6e78efb19b12405e25aa5b263bfeee67ee92825a8",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "443002492f2f75745ff74286498fa17e5ae930255c2e3a8d12308236f221930c",
+        "oracle_state_hash": "443002492f2f75745ff74286498fa17e5ae930255c2e3a8d12308236f221930c",
+        "compared_leaves": 14,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/ogbench_maze_semantics.py"
+      },
+      "state_file": "frame-0034-state.npz",
+      "state_hash": "443002492f2f75745ff74286498fa17e5ae930255c2e3a8d12308236f221930c",
+      "oracle_file": "frame-0034-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "9ca4422742ffc940e23905a9b9c1a030ea830557aba37e4cb10cca96ac61d4c3",
+      "render_kwargs": {
+        "style": [
+          [
+            0.699999988079071,
+            0.5,
+            0.30000001192092896,
+            1.0,
+            1.0,
+            -90.0,
+            1.0,
+            1.0,
+            1.0,
+            0.0,
+            1.0,
+            1.0,
+            1.0
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          162.037617,
+          162.910417,
+          162.716256
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 162.55476333333334,
+          "median": 162.716256,
+          "p95": 162.8910009,
+          "maximum": 162.910417,
+          "minimum": 162.037617,
+          "std": 0.3741700781198515
+        },
+        "first_call_ms": 159.807748,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          1.867648,
+          1.967438,
+          1.867069
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 1.9007183333333335,
+          "median": 1.867648,
+          "p95": 1.957459,
+          "maximum": 1.967438,
+          "minimum": 1.867069,
+          "std": 0.04717852089198595
+        },
+        "first_call_ms": 2.770968,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 0.10095515728758823,
+        "mse_uint8": 6564.609102625425,
+        "mae_rgb": 48.17564174107143,
+        "mean_max_channel_abs": 68.48618861607143,
+        "exact_fraction": 0.5300940688775511,
+        "within8_fraction": 0.5300940688775511,
+        "ssim": 0.6262458119099682,
+        "max_channel_abs": 224.0,
+        "candidate_sha256": "48bc3839d4558b4d5f3cd65ab8befe35703fa64e26da50d5ae7fc3badde57651",
+        "oracle_sha256": "9ca4422742ffc940e23905a9b9c1a030ea830557aba37e4cb10cca96ac61d4c3",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 35,
+      "case": 5,
+      "step": 128,
+      "seed": 42,
+      "action_dtype": "float64",
+      "prefix_hash": "64d270eb7770d22f139f2cdf834ca71116d9351b1fd1d62e6e95bad223705803",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "15b7bf37d89d3bf69d32370f0f0cf8f0e1426eea033572cf609998a6c71926f1",
+        "oracle_state_hash": "15b7bf37d89d3bf69d32370f0f0cf8f0e1426eea033572cf609998a6c71926f1",
+        "compared_leaves": 14,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/ogbench_maze_semantics.py"
+      },
+      "state_file": "frame-0035-state.npz",
+      "state_hash": "15b7bf37d89d3bf69d32370f0f0cf8f0e1426eea033572cf609998a6c71926f1",
+      "oracle_file": "frame-0035-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "e1f6bc334088dc00e373654aab048ef5fdada16e9b1e1546f9cc6c80e23c7d27",
+      "render_kwargs": {
+        "style": [
+          [
+            0.699999988079071,
+            0.5,
+            0.30000001192092896,
+            1.0,
+            1.0,
+            -90.0,
+            1.0,
+            1.0,
+            1.0,
+            0.0,
+            1.0,
+            1.0,
+            1.0
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          157.937079,
+          160.466628,
+          159.003479
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 159.13572866666667,
+          "median": 159.003479,
+          "p95": 160.3203131,
+          "maximum": 160.466628,
+          "minimum": 157.937079,
+          "std": 1.03690951601391
+        },
+        "first_call_ms": 155.034712,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          1.876879,
+          1.902069,
+          1.883449
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 1.8874656666666665,
+          "median": 1.883449,
+          "p95": 1.900207,
+          "maximum": 1.902069,
+          "minimum": 1.876879,
+          "std": 0.010668777916060619
+        },
+        "first_call_ms": 2.747088,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 0.10073570359516354,
+        "mse_uint8": 6550.33912627551,
+        "mae_rgb": 48.12226296768708,
+        "mean_max_channel_abs": 68.44050940688776,
+        "exact_fraction": 0.5300940688775511,
+        "within8_fraction": 0.5300940688775511,
+        "ssim": 0.625847795377195,
+        "max_channel_abs": 224.0,
+        "candidate_sha256": "ca904479e3b51b21d5587a3ea78a06714663e8ff6742b36b3560028ef4881966",
+        "oracle_sha256": "e1f6bc334088dc00e373654aab048ef5fdada16e9b1e1546f9cc6c80e23c7d27",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 36,
+      "case": 6,
+      "step": 0,
+      "seed": 17,
+      "action_dtype": "float32",
+      "prefix_hash": "3fb8e2a5df713e79221069065d9c5846407c74f6611e9f9b5abbf6aa901f1577",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "bc78f09a199eed94cd272ddcf53b7a59365f69f9305ced37d8c503dfd8e4707a",
+        "oracle_state_hash": "bc78f09a199eed94cd272ddcf53b7a59365f69f9305ced37d8c503dfd8e4707a",
+        "compared_leaves": 14,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/ogbench_maze_semantics.py"
+      },
+      "state_file": "frame-0036-state.npz",
+      "state_hash": "bc78f09a199eed94cd272ddcf53b7a59365f69f9305ced37d8c503dfd8e4707a",
+      "oracle_file": "frame-0036-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "cdb9f5f9dd4c3112255e2bdf07089eae1a6623cf4d8e750e5b45c7e8007ee0b1",
+      "render_kwargs": {
+        "style": [
+          [
+            0.3499999940395355,
+            0.3499999940395355,
+            0.3499999940395355,
+            1.0,
+            1.0,
+            -90.0,
+            1.0,
+            1.0,
+            1.0,
+            0.0,
+            0.3499999940395355,
+            0.3499999940395355,
+            0.3499999940395355
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          171.247451,
+          173.68975,
+          173.598439
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 172.84521333333336,
+          "median": 173.598439,
+          "p95": 173.6806189,
+          "maximum": 173.68975,
+          "minimum": 171.247451,
+          "std": 1.1304034029331673
+        },
+        "first_call_ms": 731.536315,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          1.865869,
+          1.864829,
+          1.868638
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 1.8664453333333333,
+          "median": 1.865869,
+          "p95": 1.8683611,
+          "maximum": 1.868638,
+          "minimum": 1.864829,
+          "std": 0.0016075323394016611
+        },
+        "first_call_ms": 476.417207,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 0.1030834820652117,
+        "mse_uint8": 6703.003421290391,
+        "mae_rgb": 55.22489503613946,
+        "mean_max_channel_abs": 75.35903619260205,
+        "exact_fraction": 0.08928571428571429,
+        "within8_fraction": 0.0914779974489796,
+        "ssim": 0.6057910431995922,
+        "max_channel_abs": 224.0,
+        "candidate_sha256": "d85b39935d5cea4225e89627d22f7c9443034d40a2adffd34f3a3ce42e334aa5",
+        "oracle_sha256": "cdb9f5f9dd4c3112255e2bdf07089eae1a6623cf4d8e750e5b45c7e8007ee0b1",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 37,
+      "case": 6,
+      "step": 1,
+      "seed": 17,
+      "action_dtype": "float32",
+      "prefix_hash": "5b472acc5d972a6354bec8ce1d9a0f5d951f9582a3176ab22adfcef968269130",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "40559caee403ff2525d747ae2b97680d47ec5b0cfa7508d19dae4e1d614dd1f0",
+        "oracle_state_hash": "40559caee403ff2525d747ae2b97680d47ec5b0cfa7508d19dae4e1d614dd1f0",
+        "compared_leaves": 14,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/ogbench_maze_semantics.py"
+      },
+      "state_file": "frame-0037-state.npz",
+      "state_hash": "40559caee403ff2525d747ae2b97680d47ec5b0cfa7508d19dae4e1d614dd1f0",
+      "oracle_file": "frame-0037-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "3344dd42ac3f73e22ae54b83978b7d4a8222258c2732cb2ec63564f5917fa8c6",
+      "render_kwargs": {
+        "style": [
+          [
+            0.3499999940395355,
+            0.3499999940395355,
+            0.3499999940395355,
+            1.0,
+            1.0,
+            -90.0,
+            1.0,
+            1.0,
+            1.0,
+            0.0,
+            0.3499999940395355,
+            0.3499999940395355,
+            0.3499999940395355
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          173.860259,
+          172.87801,
+          170.414201
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 172.38415666666666,
+          "median": 172.87801,
+          "p95": 173.76203410000002,
+          "maximum": 173.860259,
+          "minimum": 170.414201,
+          "std": 1.4495395294079576
+        },
+        "first_call_ms": 171.99418,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          1.867048,
+          1.880268,
+          1.869089
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 1.872135,
+          "median": 1.869089,
+          "p95": 1.8791501,
+          "maximum": 1.880268,
+          "minimum": 1.867048,
+          "std": 0.005810948689040955
+        },
+        "first_call_ms": 2.704468,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 0.10306516387192131,
+        "mse_uint8": 6701.812280771684,
+        "mae_rgb": 55.21542171556123,
+        "mean_max_channel_abs": 75.34761639030613,
+        "exact_fraction": 0.08928571428571429,
+        "within8_fraction": 0.09149792729591837,
+        "ssim": 0.6058710422780768,
+        "max_channel_abs": 224.0,
+        "candidate_sha256": "6e18cbe7c954c079087bf20a67c5bf0aef47124148e38e40a010150503ead131",
+        "oracle_sha256": "3344dd42ac3f73e22ae54b83978b7d4a8222258c2732cb2ec63564f5917fa8c6",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 38,
+      "case": 6,
+      "step": 8,
+      "seed": 17,
+      "action_dtype": "float32",
+      "prefix_hash": "42a46486d612d2fe3134a7d53bb0e7f45aaf1ddeb77309816a6d94f7f9632c62",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "e2d9d0cd8cf60835fc71e8b6ed2922687bb9eba190b71a0bb51f766acf45d282",
+        "oracle_state_hash": "e2d9d0cd8cf60835fc71e8b6ed2922687bb9eba190b71a0bb51f766acf45d282",
+        "compared_leaves": 14,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/ogbench_maze_semantics.py"
+      },
+      "state_file": "frame-0038-state.npz",
+      "state_hash": "e2d9d0cd8cf60835fc71e8b6ed2922687bb9eba190b71a0bb51f766acf45d282",
+      "oracle_file": "frame-0038-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "bffa6e3338bd5dfc06602bc4700079d8632e1d8fb94610fbbf4258cc96254de5",
+      "render_kwargs": {
+        "style": [
+          [
+            0.3499999940395355,
+            0.3499999940395355,
+            0.3499999940395355,
+            1.0,
+            1.0,
+            -90.0,
+            1.0,
+            1.0,
+            1.0,
+            0.0,
+            0.3499999940395355,
+            0.3499999940395355,
+            0.3499999940395355
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          172.990608,
+          173.251958,
+          176.742262
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 174.328276,
+          "median": 173.251958,
+          "p95": 176.3932316,
+          "maximum": 176.742262,
+          "minimum": 172.990608,
+          "std": 1.7102772215388578
+        },
+        "first_call_ms": 167.967673,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          1.874562,
+          1.861161,
+          1.872972
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 1.869565,
+          "median": 1.872972,
+          "p95": 1.874403,
+          "maximum": 1.874562,
+          "minimum": 1.861161,
+          "std": 0.005977872363977004
+        },
+        "first_call_ms": 2.695462,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 0.10305079037333886,
+        "mse_uint8": 6700.877644026361,
+        "mae_rgb": 55.20396205357143,
+        "mean_max_channel_abs": 75.33332669005102,
+        "exact_fraction": 0.08928571428571429,
+        "within8_fraction": 0.09149792729591837,
+        "ssim": 0.6059969930651179,
+        "max_channel_abs": 224.0,
+        "candidate_sha256": "565ba37e550ea4166a005458cc2296e9a5964858218effb1de4ba9aaa946d8b4",
+        "oracle_sha256": "bffa6e3338bd5dfc06602bc4700079d8632e1d8fb94610fbbf4258cc96254de5",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 39,
+      "case": 6,
+      "step": 32,
+      "seed": 17,
+      "action_dtype": "float32",
+      "prefix_hash": "7d65206a745670856076416e0400d80ea9809d1149fd6734be29c0a6598720cc",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "2e7ed62ea8f9c221b1388defe15898fcba4539d8bb2cbc52ba037f97c480b6a8",
+        "oracle_state_hash": "2e7ed62ea8f9c221b1388defe15898fcba4539d8bb2cbc52ba037f97c480b6a8",
+        "compared_leaves": 14,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/ogbench_maze_semantics.py"
+      },
+      "state_file": "frame-0039-state.npz",
+      "state_hash": "2e7ed62ea8f9c221b1388defe15898fcba4539d8bb2cbc52ba037f97c480b6a8",
+      "oracle_file": "frame-0039-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "eaef2dc727831b81a3e91ade3540904c6d570968725efc29025718e6d810012f",
+      "render_kwargs": {
+        "style": [
+          [
+            0.3499999940395355,
+            0.3499999940395355,
+            0.3499999940395355,
+            1.0,
+            1.0,
+            -90.0,
+            1.0,
+            1.0,
+            1.0,
+            0.0,
+            0.3499999940395355,
+            0.3499999940395355,
+            0.3499999940395355
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          173.219118,
+          171.367577,
+          172.425508
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 172.337401,
+          "median": 172.425508,
+          "p95": 173.139757,
+          "maximum": 173.219118,
+          "minimum": 171.367577,
+          "std": 0.7584515591022705
+        },
+        "first_call_ms": 170.931086,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          1.879481,
+          1.874442,
+          1.886212
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 1.880045,
+          "median": 1.879481,
+          "p95": 1.8855389,
+          "maximum": 1.886212,
+          "minimum": 1.874442,
+          "std": 0.00482160395166037
+        },
+        "first_call_ms": 2.512932,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 0.10315428121820625,
+        "mse_uint8": 6707.607136213861,
+        "mae_rgb": 55.2795028167517,
+        "mean_max_channel_abs": 75.42476482780613,
+        "exact_fraction": 0.08928571428571429,
+        "within8_fraction": 0.0914779974489796,
+        "ssim": 0.6056981974430539,
+        "max_channel_abs": 224.0,
+        "candidate_sha256": "fb829ff772963f168eb9eb127cde747665632576da1970aeeea73625c3e7540a",
+        "oracle_sha256": "eaef2dc727831b81a3e91ade3540904c6d570968725efc29025718e6d810012f",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 40,
+      "case": 6,
+      "step": 64,
+      "seed": 17,
+      "action_dtype": "float32",
+      "prefix_hash": "47f793dfa55567529153843bfdf50bb9106990a77897450c7f193c40f1889b69",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "65d994ba4fd5664044a27586468187ce4b64f40f421f6f261adbe1d5efa93c50",
+        "oracle_state_hash": "65d994ba4fd5664044a27586468187ce4b64f40f421f6f261adbe1d5efa93c50",
+        "compared_leaves": 14,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/ogbench_maze_semantics.py"
+      },
+      "state_file": "frame-0040-state.npz",
+      "state_hash": "65d994ba4fd5664044a27586468187ce4b64f40f421f6f261adbe1d5efa93c50",
+      "oracle_file": "frame-0040-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "f5b89f672aeeb8e99215cde1661dae2b26051b5c75511f5dd5441c812207ae11",
+      "render_kwargs": {
+        "style": [
+          [
+            0.3499999940395355,
+            0.3499999940395355,
+            0.3499999940395355,
+            1.0,
+            1.0,
+            -90.0,
+            1.0,
+            1.0,
+            1.0,
+            0.0,
+            0.3499999940395355,
+            0.3499999940395355,
+            0.3499999940395355
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          168.620175,
+          168.128523,
+          169.299195
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 168.682631,
+          "median": 168.620175,
+          "p95": 169.231293,
+          "maximum": 169.299195,
+          "minimum": 168.128523,
+          "std": 0.47996096844639247
+        },
+        "first_call_ms": 164.4475,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          1.886902,
+          1.878692,
+          1.876102
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 1.8805653333333332,
+          "median": 1.878692,
+          "p95": 1.8860810000000001,
+          "maximum": 1.886902,
+          "minimum": 1.876102,
+          "std": 0.004603768987350406
+        },
+        "first_call_ms": 3.074374,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 0.10296892133078721,
+        "mse_uint8": 6695.554109534439,
+        "mae_rgb": 55.14071136267007,
+        "mean_max_channel_abs": 75.25579958545919,
+        "exact_fraction": 0.08928571428571429,
+        "within8_fraction": 0.09149792729591837,
+        "ssim": 0.6065050163023192,
+        "max_channel_abs": 224.0,
+        "candidate_sha256": "bdfccd38dcc90e8556784b92a2a17173210aa22edd668dbe105a0e701a96d9cb",
+        "oracle_sha256": "f5b89f672aeeb8e99215cde1661dae2b26051b5c75511f5dd5441c812207ae11",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 41,
+      "case": 6,
+      "step": 128,
+      "seed": 17,
+      "action_dtype": "float32",
+      "prefix_hash": "9f44ba38721bba1ce5398bc84b7b60436a4cfb091ab2fb2e3c39e231b250c165",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "d98d6d9eac46bb491340ff5e7d8a2e418706392366d7460e0e1caacb3941a827",
+        "oracle_state_hash": "d98d6d9eac46bb491340ff5e7d8a2e418706392366d7460e0e1caacb3941a827",
+        "compared_leaves": 14,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/ogbench_maze_semantics.py"
+      },
+      "state_file": "frame-0041-state.npz",
+      "state_hash": "d98d6d9eac46bb491340ff5e7d8a2e418706392366d7460e0e1caacb3941a827",
+      "oracle_file": "frame-0041-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "833995fcce8bf92591465c0c5e9b3c11ff220f37eb504168ff39075688de35b2",
+      "render_kwargs": {
+        "style": [
+          [
+            0.3499999940395355,
+            0.3499999940395355,
+            0.3499999940395355,
+            1.0,
+            1.0,
+            -90.0,
+            1.0,
+            1.0,
+            1.0,
+            0.0,
+            0.3499999940395355,
+            0.3499999940395355,
+            0.3499999940395355
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          166.919782,
+          166.487612,
+          167.553423
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 166.986939,
+          "median": 166.919782,
+          "p95": 167.4900589,
+          "maximum": 167.553423,
+          "minimum": 166.487612,
+          "std": 0.4376991500387749
+        },
+        "first_call_ms": 163.87983,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          2.007492,
+          1.876111,
+          1.889391
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 1.9243313333333332,
+          "median": 1.889391,
+          "p95": 1.9956819000000001,
+          "maximum": 2.007492,
+          "minimum": 1.876111,
+          "std": 0.059052868743939
+        },
+        "first_call_ms": 2.747753,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 0.10292322361951316,
+        "mse_uint8": 6692.582615858843,
+        "mae_rgb": 55.090840242346935,
+        "mean_max_channel_abs": 75.19001116071429,
+        "exact_fraction": 0.08928571428571429,
+        "within8_fraction": 0.0914779974489796,
+        "ssim": 0.6075187716459078,
+        "max_channel_abs": 224.0,
+        "candidate_sha256": "c33b829158ca77f6ad93ea5dd6102eda463b6763e19a82579086dba1ed912313",
+        "oracle_sha256": "833995fcce8bf92591465c0c5e9b3c11ff220f37eb504168ff39075688de35b2",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    }
+  ],
+  "recipes": [
+    {
+      "case": 0,
+      "seed": 0,
+      "action_dtype": "float32",
+      "reset_options": {},
+      "reset_count": 1,
+      "simulator_config": null,
+      "label": "trajectory",
+      "action_generator": "numpy.default_rng(90000+seed).uniform(action_space.low, high) or integers(0,n)",
+      "actions_file": "actions-0.npy",
+      "actions_hash": "a79b8026c2d441ecfc91958a323c97eafca111230238655f9fce52020130c6e5",
+      "camera": "source default",
+      "checkpoints": [
+        0,
+        1,
+        8,
+        32,
+        64,
+        128
+      ],
+      "constructor": {
+        "num_envs": 1,
+        "seed": 0
+      }
+    },
+    {
+      "case": 1,
+      "seed": 0,
+      "action_dtype": "float64",
+      "reset_options": {},
+      "reset_count": 1,
+      "simulator_config": null,
+      "label": "trajectory",
+      "action_generator": "numpy.default_rng(90000+seed).uniform(action_space.low, high) or integers(0,n)",
+      "actions_file": "actions-1.npy",
+      "actions_hash": "14e14a0c3a6ad9cf3f1123f1b515bb5614608c9304a2ce3f194c7a2983047d20",
+      "camera": "source default",
+      "checkpoints": [
+        0,
+        1,
+        8,
+        32,
+        64,
+        128
+      ],
+      "constructor": {
+        "num_envs": 1,
+        "seed": 0
+      }
+    },
+    {
+      "case": 2,
+      "seed": 17,
+      "action_dtype": "float32",
+      "reset_options": {},
+      "reset_count": 1,
+      "simulator_config": null,
+      "label": "trajectory",
+      "action_generator": "numpy.default_rng(90000+seed).uniform(action_space.low, high) or integers(0,n)",
+      "actions_file": "actions-2.npy",
+      "actions_hash": "9f44ba38721bba1ce5398bc84b7b60436a4cfb091ab2fb2e3c39e231b250c165",
+      "camera": "source default",
+      "checkpoints": [
+        0,
+        1,
+        8,
+        32,
+        64,
+        128
+      ],
+      "constructor": {
+        "num_envs": 1,
+        "seed": 17
+      }
+    },
+    {
+      "case": 3,
+      "seed": 17,
+      "action_dtype": "float64",
+      "reset_options": {},
+      "reset_count": 1,
+      "simulator_config": null,
+      "label": "trajectory",
+      "action_generator": "numpy.default_rng(90000+seed).uniform(action_space.low, high) or integers(0,n)",
+      "actions_file": "actions-3.npy",
+      "actions_hash": "08e0261f9016d3524e867c35c973d2f0becd36a519a80f2d8e9261cd0b15e498",
+      "camera": "source default",
+      "checkpoints": [
+        0,
+        1,
+        8,
+        32,
+        64,
+        128
+      ],
+      "constructor": {
+        "num_envs": 1,
+        "seed": 17
+      }
+    },
+    {
+      "case": 4,
+      "seed": 42,
+      "action_dtype": "float32",
+      "reset_options": {},
+      "reset_count": 1,
+      "simulator_config": null,
+      "label": "trajectory",
+      "action_generator": "numpy.default_rng(90000+seed).uniform(action_space.low, high) or integers(0,n)",
+      "actions_file": "actions-4.npy",
+      "actions_hash": "53bbac87d07d8a25364764124681707e8fe29fdc9d6cd57f19fa3cc700ee5a12",
+      "camera": "source default",
+      "checkpoints": [
+        0,
+        1,
+        8,
+        32,
+        64,
+        128
+      ],
+      "constructor": {
+        "num_envs": 1,
+        "seed": 42
+      }
+    },
+    {
+      "case": 5,
+      "seed": 42,
+      "action_dtype": "float64",
+      "reset_options": {},
+      "reset_count": 1,
+      "simulator_config": null,
+      "label": "trajectory",
+      "action_generator": "numpy.default_rng(90000+seed).uniform(action_space.low, high) or integers(0,n)",
+      "actions_file": "actions-5.npy",
+      "actions_hash": "64d270eb7770d22f139f2cdf834ca71116d9351b1fd1d62e6e95bad223705803",
+      "camera": "source default",
+      "checkpoints": [
+        0,
+        1,
+        8,
+        32,
+        64,
+        128
+      ],
+      "constructor": {
+        "num_envs": 1,
+        "seed": 42
+      }
+    },
+    {
+      "case": 6,
+      "seed": 17,
+      "action_dtype": "float32",
+      "reset_options": {
+        "variation": [],
+        "variation_values": {
+          "agent.color": [
+            0.35,
+            0.35,
+            0.35
+          ],
+          "wall.color": [
+            0.35,
+            0.35,
+            0.35
+          ]
+        }
+      },
+      "reset_count": 1,
+      "simulator_config": null,
+      "label": "trajectory",
+      "action_generator": "numpy.default_rng(90000+seed).uniform(action_space.low, high) or integers(0,n)",
+      "actions_file": "actions-6.npy",
+      "actions_hash": "9f44ba38721bba1ce5398bc84b7b60436a4cfb091ab2fb2e3c39e231b250c165",
+      "camera": "source default",
+      "checkpoints": [
+        0,
+        1,
+        8,
+        32,
+        64,
+        128
+      ],
+      "constructor": {
+        "num_envs": 1,
+        "seed": 17
+      }
+    }
+  ]
+}

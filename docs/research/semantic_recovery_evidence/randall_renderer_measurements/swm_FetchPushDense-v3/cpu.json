@@ -1,0 +1,2603 @@
+{
+  "registration": "swm/FetchPushDense-v3",
+  "status": "COMPLETE",
+  "family": "fetch",
+  "name": "FetchPushDense",
+  "phase": "cpu",
+  "oracle_commit": "176d54532b3c0a251a4f509b74f2fdacc143a63d",
+  "profile": {
+    "host": "gpu1505.oscar.ccv.brown.edu",
+    "cpu": "AMD EPYC 7413 24-Core Processor",
+    "gpu": "NVIDIA A40",
+    "python": "3.12.9",
+    "packages": {
+      "torch": {
+        "version": "2.14.0+cu126",
+        "path": "/oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages"
+      },
+      "numpy": {
+        "version": "2.2.6",
+        "path": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739712/fetch-cpu-overlay"
+      },
+      "tensordict": {
+        "version": "0.14.2",
+        "path": "/oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages"
+      },
+      "gymnasium": {
+        "version": "1.2.3",
+        "path": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739712/fetch-cpu-overlay"
+      },
+      "mujoco": {
+        "version": "3.8.1",
+        "path": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739712/fetch-cpu-overlay"
+      },
+      "dm-control": {
+        "version": "1.0.45",
+        "path": "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages"
+      },
+      "gymnasium-robotics": {
+        "version": "1.4.2",
+        "path": "/oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages"
+      },
+      "ogbench": {
+        "version": "1.2.1",
+        "path": "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages"
+      },
+      "craftax": {
+        "version": "1.6.1",
+        "path": "/oscar/scratch/sboughan/venvs/se-step4-swm/lib/python3.12/site-packages"
+      },
+      "jax": {
+        "version": "0.11.1",
+        "path": "/oscar/scratch/sboughan/venvs/se-step4-swm/lib/python3.12/site-packages"
+      },
+      "jaxlib": {
+        "version": "0.11.1",
+        "path": "/oscar/scratch/sboughan/venvs/se-step4-swm/lib/python3.12/site-packages"
+      },
+      "flax": {
+        "version": "0.12.9",
+        "path": "/oscar/scratch/sboughan/venvs/se-step4-swm/lib/python3.12/site-packages"
+      },
+      "pymunk": {
+        "version": "7.3.0",
+        "path": "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages"
+      },
+      "pygame": {
+        "version": "2.6.1",
+        "path": "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages"
+      }
+    },
+    "torch_threads": 1,
+    "environment": {
+      "SLURM_JOB_ID": "6740049",
+      "MUJOCO_GL": "glfw",
+      "PYOPENGL_PLATFORM": "glx",
+      "LIBGL_ALWAYS_SOFTWARE": "1",
+      "GALLIUM_DRIVER": "llvmpipe",
+      "DISPLAY": ":149",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "LP_NUM_THREADS": "1",
+      "JAX_PLATFORMS": null,
+      "CRAFTAX_JAX_BACKEND": null,
+      "CUDA_VISIBLE_DEVICES": "0"
+    }
+  },
+  "frames": [
+    {
+      "index": 0,
+      "case": 0,
+      "step": 0,
+      "seed": 0,
+      "action_dtype": "float32",
+      "prefix_hash": "4b35f94aa0d3bb584f39f908c788fe3144ee7b60a58cca242a5c67fbb7016d79",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "scripts/recovery/fetch_public_gate.py:full_compare",
+        "candidate_state_hash": "31d7d13ca0b210241f7ad0140ce17d26502d0fca973856684c5d2ba446396cb6",
+        "oracle_state_hash": "4763fa85edf44d715bd43b2df7462822aad54ed5eebde70bd16369bd5cd24e27",
+        "compared": "all public Fetch fields, controller caches, time, reset anchor, lifecycle and PCG64"
+      },
+      "state_file": "frame-0000-state.npz",
+      "state_hash": "31d7d13ca0b210241f7ad0140ce17d26502d0fca973856684c5d2ba446396cb6",
+      "oracle_file": "frame-0000-oracle.npy",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "d628fdb4565685f118e36d91ba74704240bb7bcd67a78205355e5f4146fc95fc",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          15.429063,
+          15.130784,
+          15.143914
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 15.234587,
+          "median": 15.143914,
+          "p95": 15.4005481,
+          "maximum": 15.429063,
+          "minimum": 15.130784,
+          "std": 0.13761973007046094
+        },
+        "first_call_ms": 326.283792,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "CPU_BACKEND_MISSING: Fetch full mesh rendering requires CUDA/MJWarp"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 1,
+      "case": 0,
+      "step": 1,
+      "seed": 0,
+      "action_dtype": "float32",
+      "prefix_hash": "56a4eee442ef3a23e9dc2c8749758f2ea7aa1bfa0f1d2ee826df6c98eafaf33c",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "scripts/recovery/fetch_public_gate.py:full_compare",
+        "candidate_state_hash": "ff732afb8d9dbf98555db331e3e942bf5e9e2c5fefe092d2d74a76265fad12bf",
+        "oracle_state_hash": "5dfc997c969a45755083419e775f7ab8d85c039e970e524ee37e895f4fa5431b",
+        "compared": "all public Fetch fields, controller caches, time, reset anchor, lifecycle and PCG64"
+      },
+      "state_file": "frame-0001-state.npz",
+      "state_hash": "ff732afb8d9dbf98555db331e3e942bf5e9e2c5fefe092d2d74a76265fad12bf",
+      "oracle_file": "frame-0001-oracle.npy",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "2275cbc9dfa027562cf7fd913257ee21da46a58741eecae0ca4125430985c57e",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          15.789291,
+          15.756111,
+          16.090049
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 15.878483666666668,
+          "median": 15.789291,
+          "p95": 16.0599732,
+          "maximum": 16.090049,
+          "minimum": 15.756111,
+          "std": 0.15021128630772793
+        },
+        "first_call_ms": 17.222594,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "CPU_BACKEND_MISSING: Fetch full mesh rendering requires CUDA/MJWarp"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 2,
+      "case": 0,
+      "step": 10,
+      "seed": 0,
+      "action_dtype": "float32",
+      "prefix_hash": "f2db6ddecc6ef04f6e48285dcb74ead855db21dfef2bfa138b1b916829c2d333",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "scripts/recovery/fetch_public_gate.py:full_compare",
+        "candidate_state_hash": "d1d53203092263f560047808d49c980484e14b878ba0b0e9cdba5cc2b6698b88",
+        "oracle_state_hash": "fd6dba0858c28e9721090b07fa07536c2d7744f77cdfaa5e3299caca633306d2",
+        "compared": "all public Fetch fields, controller caches, time, reset anchor, lifecycle and PCG64"
+      },
+      "state_file": "frame-0002-state.npz",
+      "state_hash": "d1d53203092263f560047808d49c980484e14b878ba0b0e9cdba5cc2b6698b88",
+      "oracle_file": "frame-0002-oracle.npy",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "75f8bc1f8f42279c0e85d3cc8b664898931f9a609284bd2653a0aceb09fa85f0",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          15.734811,
+          16.784616,
+          16.285948
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 16.26845833333333,
+          "median": 16.285948,
+          "p95": 16.7347492,
+          "maximum": 16.784616,
+          "minimum": 15.734811,
+          "std": 0.42875949034109473
+        },
+        "first_call_ms": 15.93488,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "CPU_BACKEND_MISSING: Fetch full mesh rendering requires CUDA/MJWarp"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 3,
+      "case": 0,
+      "step": 25,
+      "seed": 0,
+      "action_dtype": "float32",
+      "prefix_hash": "1313eb01f590d7b4fc8bc0a7635bb55103ccb44baa65981e54b1529c94e5f6d6",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "scripts/recovery/fetch_public_gate.py:full_compare",
+        "candidate_state_hash": "3f900d0a51a99837cae5f0fdf0a9c3abc55f499d7f13cd824a51c0a8931d49e9",
+        "oracle_state_hash": "f38432a2c5ba191b5d5276e5a951fe7c301aa5c9402f3ac2c826137d92795f57",
+        "compared": "all public Fetch fields, controller caches, time, reset anchor, lifecycle and PCG64"
+      },
+      "state_file": "frame-0003-state.npz",
+      "state_hash": "3f900d0a51a99837cae5f0fdf0a9c3abc55f499d7f13cd824a51c0a8931d49e9",
+      "oracle_file": "frame-0003-oracle.npy",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "1763a2930e5af301e6783c3c933ee713c86cd6702dcab8c890ac4ef24c1e6460",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          15.90539,
+          16.281248,
+          16.305678
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 16.164105333333335,
+          "median": 16.281248,
+          "p95": 16.303235,
+          "maximum": 16.305678,
+          "minimum": 15.90539,
+          "std": 0.18321103314908632
+        },
+        "first_call_ms": 19.002614,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "CPU_BACKEND_MISSING: Fetch full mesh rendering requires CUDA/MJWarp"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 4,
+      "case": 0,
+      "step": 49,
+      "seed": 0,
+      "action_dtype": "float32",
+      "prefix_hash": "ee4e3da4fb86d5e1bbaf9e92799124a305078e812305bd8405519bbb011761fb",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "scripts/recovery/fetch_public_gate.py:full_compare",
+        "candidate_state_hash": "ce4266a3582f9e469cdd1a751db77b07642c37f01a2ba0a235d98730d3ef14be",
+        "oracle_state_hash": "8928bb7aef38df734b0cf02f1342429d91abc9a79d57d76ea7e15ed399df581b",
+        "compared": "all public Fetch fields, controller caches, time, reset anchor, lifecycle and PCG64"
+      },
+      "state_file": "frame-0004-state.npz",
+      "state_hash": "ce4266a3582f9e469cdd1a751db77b07642c37f01a2ba0a235d98730d3ef14be",
+      "oracle_file": "frame-0004-oracle.npy",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "605b41a7c183780617e7d61fc8cdf92ea89e3b130798a7fcc5b1069884a4bd3d",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          16.311278,
+          17.020284,
+          16.534107
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 16.621889666666668,
+          "median": 16.534107,
+          "p95": 16.9716663,
+          "maximum": 17.020284,
+          "minimum": 16.311278,
+          "std": 0.29603121956344747
+        },
+        "first_call_ms": 16.446297,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "CPU_BACKEND_MISSING: Fetch full mesh rendering requires CUDA/MJWarp"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 5,
+      "case": 0,
+      "step": 50,
+      "seed": 0,
+      "action_dtype": "float32",
+      "prefix_hash": "9d91e45f64e1790a8adf458b052008e7225154dfa9c0d72207cdaf1ebc501855",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "scripts/recovery/fetch_public_gate.py:full_compare",
+        "candidate_state_hash": "350fa2ea46a62d49b00c7baab46b4e11b73c6f22d5348cebe144149c6e804a6d",
+        "oracle_state_hash": "90d69decd26cd4d21231a0f80cfa6fb686bbca5acf88c26c7ce124d6c54296b8",
+        "compared": "all public Fetch fields, controller caches, time, reset anchor, lifecycle and PCG64"
+      },
+      "state_file": "frame-0005-state.npz",
+      "state_hash": "350fa2ea46a62d49b00c7baab46b4e11b73c6f22d5348cebe144149c6e804a6d",
+      "oracle_file": "frame-0005-oracle.npy",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "3f61e49583559e19b35eb7bbb1b7e1ffe9ae24eb450ded36431563e54ad92b07",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          15.824351,
+          15.81634,
+          16.088599
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 15.909763333333332,
+          "median": 15.824351,
+          "p95": 16.062174199999998,
+          "maximum": 16.088599,
+          "minimum": 15.81634,
+          "std": 0.12649819704731774
+        },
+        "first_call_ms": 16.330768,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "CPU_BACKEND_MISSING: Fetch full mesh rendering requires CUDA/MJWarp"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 6,
+      "case": 1,
+      "step": 0,
+      "seed": 0,
+      "action_dtype": "float64",
+      "prefix_hash": "db32636928d5c6607a57482759015abc3136f3bbfb98dbbee767cf5481b9d6fb",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "scripts/recovery/fetch_public_gate.py:full_compare",
+        "candidate_state_hash": "31d7d13ca0b210241f7ad0140ce17d26502d0fca973856684c5d2ba446396cb6",
+        "oracle_state_hash": "4763fa85edf44d715bd43b2df7462822aad54ed5eebde70bd16369bd5cd24e27",
+        "compared": "all public Fetch fields, controller caches, time, reset anchor, lifecycle and PCG64"
+      },
+      "state_file": "frame-0006-state.npz",
+      "state_hash": "31d7d13ca0b210241f7ad0140ce17d26502d0fca973856684c5d2ba446396cb6",
+      "oracle_file": "frame-0006-oracle.npy",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "d628fdb4565685f118e36d91ba74704240bb7bcd67a78205355e5f4146fc95fc",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          16.02849,
+          15.326274,
+          15.173294
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 15.509352666666667,
+          "median": 15.326274,
+          "p95": 15.958268400000001,
+          "maximum": 16.02849,
+          "minimum": 15.173294,
+          "std": 0.37236039732615145
+        },
+        "first_call_ms": 287.947335,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "CPU_BACKEND_MISSING: Fetch full mesh rendering requires CUDA/MJWarp"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 7,
+      "case": 1,
+      "step": 1,
+      "seed": 0,
+      "action_dtype": "float64",
+      "prefix_hash": "f2877b2a99f8026bd373edc8fce7eee75b608c8085cce02acd2168e65403d66f",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "scripts/recovery/fetch_public_gate.py:full_compare",
+        "candidate_state_hash": "350c8d9a6316a88f200e117d089a14a40e61a95aff87aa2601684e7be902c8fa",
+        "oracle_state_hash": "29b37ee7538b80ec0fa45b427431ea5aecf42e76be8d52ae1ba72e65122e8649",
+        "compared": "all public Fetch fields, controller caches, time, reset anchor, lifecycle and PCG64"
+      },
+      "state_file": "frame-0007-state.npz",
+      "state_hash": "350c8d9a6316a88f200e117d089a14a40e61a95aff87aa2601684e7be902c8fa",
+      "oracle_file": "frame-0007-oracle.npy",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "2275cbc9dfa027562cf7fd913257ee21da46a58741eecae0ca4125430985c57e",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          16.595527,
+          16.552477,
+          17.396282
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 16.848095333333333,
+          "median": 16.595527,
+          "p95": 17.3162065,
+          "maximum": 17.396282,
+          "minimum": 16.552477,
+          "std": 0.38802473439918145
+        },
+        "first_call_ms": 16.646116,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "CPU_BACKEND_MISSING: Fetch full mesh rendering requires CUDA/MJWarp"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 8,
+      "case": 1,
+      "step": 10,
+      "seed": 0,
+      "action_dtype": "float64",
+      "prefix_hash": "18bd5fc83bcffd57aaed01a496b6ee06a458b31ea5d5afba724659e2cb0ea7ba",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "scripts/recovery/fetch_public_gate.py:full_compare",
+        "candidate_state_hash": "49335f3ece1cb79366e33dd23b06db60931ef07b9c33add91b943a04bb3c0bf9",
+        "oracle_state_hash": "b123ec478b7f28f6563ba2cb8a1c2606977152ec8e3d3776a8584420c8eedad7",
+        "compared": "all public Fetch fields, controller caches, time, reset anchor, lifecycle and PCG64"
+      },
+      "state_file": "frame-0008-state.npz",
+      "state_hash": "49335f3ece1cb79366e33dd23b06db60931ef07b9c33add91b943a04bb3c0bf9",
+      "oracle_file": "frame-0008-oracle.npy",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "75f8bc1f8f42279c0e85d3cc8b664898931f9a609284bd2653a0aceb09fa85f0",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          15.974559,
+          16.195569,
+          16.634347
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 16.268158333333332,
+          "median": 16.195569,
+          "p95": 16.5904692,
+          "maximum": 16.634347,
+          "minimum": 15.974559,
+          "std": 0.27420425443008023
+        },
+        "first_call_ms": 16.611947,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "CPU_BACKEND_MISSING: Fetch full mesh rendering requires CUDA/MJWarp"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 9,
+      "case": 1,
+      "step": 25,
+      "seed": 0,
+      "action_dtype": "float64",
+      "prefix_hash": "7be1a7618cbc5558750b1283bcd5f114ff276ea6e3c2067784f3d5be24742fca",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "scripts/recovery/fetch_public_gate.py:full_compare",
+        "candidate_state_hash": "e7d044b0a7c7cf64d2cba991d2c5377c78d6b643ca89c96ccd55e383a3da9247",
+        "oracle_state_hash": "8fa6e01ed09f12f388ed10c1d323b705fc673f0e7b5a3eda57b8488bbc1ec9fb",
+        "compared": "all public Fetch fields, controller caches, time, reset anchor, lifecycle and PCG64"
+      },
+      "state_file": "frame-0009-state.npz",
+      "state_hash": "e7d044b0a7c7cf64d2cba991d2c5377c78d6b643ca89c96ccd55e383a3da9247",
+      "oracle_file": "frame-0009-oracle.npy",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "1763a2930e5af301e6783c3c933ee713c86cd6702dcab8c890ac4ef24c1e6460",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          16.260368,
+          16.153549,
+          15.90681
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 16.106908999999998,
+          "median": 16.153549,
+          "p95": 16.249686099999998,
+          "maximum": 16.260368,
+          "minimum": 15.90681,
+          "std": 0.14805918195325365
+        },
+        "first_call_ms": 16.549087,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "CPU_BACKEND_MISSING: Fetch full mesh rendering requires CUDA/MJWarp"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 10,
+      "case": 1,
+      "step": 49,
+      "seed": 0,
+      "action_dtype": "float64",
+      "prefix_hash": "fb511973e60982ca7509bbdaa26ae5ae52e8e304f05152f79284cedf4d5df91e",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "scripts/recovery/fetch_public_gate.py:full_compare",
+        "candidate_state_hash": "9136307b4931e78ef5661e6852d0fac0947db09468648ea90c3b34a415fa5ab4",
+        "oracle_state_hash": "815c4d49956d2f07c5d0bb6ac9558cd623e82ae42e66a2471352c1dfda663e3d",
+        "compared": "all public Fetch fields, controller caches, time, reset anchor, lifecycle and PCG64"
+      },
+      "state_file": "frame-0010-state.npz",
+      "state_hash": "9136307b4931e78ef5661e6852d0fac0947db09468648ea90c3b34a415fa5ab4",
+      "oracle_file": "frame-0010-oracle.npy",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "605b41a7c183780617e7d61fc8cdf92ea89e3b130798a7fcc5b1069884a4bd3d",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          16.031449,
+          15.899381,
+          16.898195
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 16.276341666666667,
+          "median": 16.031449,
+          "p95": 16.8115204,
+          "maximum": 16.898195,
+          "minimum": 15.899381,
+          "std": 0.4430099060512714
+        },
+        "first_call_ms": 17.743691,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "CPU_BACKEND_MISSING: Fetch full mesh rendering requires CUDA/MJWarp"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 11,
+      "case": 1,
+      "step": 50,
+      "seed": 0,
+      "action_dtype": "float64",
+      "prefix_hash": "5e67cd39c87e2beeadac5b7abbd69a42722ad67fce88217e7953e3e0f5915203",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "scripts/recovery/fetch_public_gate.py:full_compare",
+        "candidate_state_hash": "c7b66386622d709511917d9b6f72c3b048202b7201ce06791a5a573d1e9ae74b",
+        "oracle_state_hash": "5839a0c285db5ce550021418f38ea6ed0c7256883eb0eeea54acb4747574b3ab",
+        "compared": "all public Fetch fields, controller caches, time, reset anchor, lifecycle and PCG64"
+      },
+      "state_file": "frame-0011-state.npz",
+      "state_hash": "c7b66386622d709511917d9b6f72c3b048202b7201ce06791a5a573d1e9ae74b",
+      "oracle_file": "frame-0011-oracle.npy",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "3f61e49583559e19b35eb7bbb1b7e1ffe9ae24eb450ded36431563e54ad92b07",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          16.824765,
+          16.379548,
+          16.599317
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 16.60121,
+          "median": 16.599317,
+          "p95": 16.8022202,
+          "maximum": 16.824765,
+          "minimum": 16.379548,
+          "std": 0.1817640079131911
+        },
+        "first_call_ms": 16.406238,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "CPU_BACKEND_MISSING: Fetch full mesh rendering requires CUDA/MJWarp"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 12,
+      "case": 2,
+      "step": 0,
+      "seed": 17,
+      "action_dtype": "float32",
+      "prefix_hash": "4b35f94aa0d3bb584f39f908c788fe3144ee7b60a58cca242a5c67fbb7016d79",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "scripts/recovery/fetch_public_gate.py:full_compare",
+        "candidate_state_hash": "fb94831bfd706f3ee89588e5384591a4dc955ad5663fd5ae96012cc987faa340",
+        "oracle_state_hash": "e3880ef0267e8da5fb0265ff7f08fe82dea1a5ffca73a163e0ad70d117163637",
+        "compared": "all public Fetch fields, controller caches, time, reset anchor, lifecycle and PCG64"
+      },
+      "state_file": "frame-0012-state.npz",
+      "state_hash": "fb94831bfd706f3ee89588e5384591a4dc955ad5663fd5ae96012cc987faa340",
+      "oracle_file": "frame-0012-oracle.npy",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "5915c679ebb07516e553df5aa5a9d66ae3ebd99ef24273b6789113c03dbc7745",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          16.074339,
+          17.263293,
+          15.96215
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 16.433260666666666,
+          "median": 16.074339,
+          "p95": 17.1443976,
+          "maximum": 17.263293,
+          "minimum": 15.96215,
+          "std": 0.5887058397956968
+        },
+        "first_call_ms": 289.466307,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "CPU_BACKEND_MISSING: Fetch full mesh rendering requires CUDA/MJWarp"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 13,
+      "case": 2,
+      "step": 1,
+      "seed": 17,
+      "action_dtype": "float32",
+      "prefix_hash": "fb1714978d1c38652906eaf0e60b1fc292df3e8d711ee6b447f770a96be19d6c",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "scripts/recovery/fetch_public_gate.py:full_compare",
+        "candidate_state_hash": "c0bfc7fdc370ffbd993a8d3580399e50fae2eb1b3fed27d3e96a110b036acbeb",
+        "oracle_state_hash": "1544081b5cb4cc589ea9017f9934260511ce8d4d07946b05143dcb63cc739855",
+        "compared": "all public Fetch fields, controller caches, time, reset anchor, lifecycle and PCG64"
+      },
+      "state_file": "frame-0013-state.npz",
+      "state_hash": "c0bfc7fdc370ffbd993a8d3580399e50fae2eb1b3fed27d3e96a110b036acbeb",
+      "oracle_file": "frame-0013-oracle.npy",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "c7fe11e984a2a655cda82050400059b881cde93ee7a5f0d418ae6cad2b90ed10",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          16.040279,
+          16.001969,
+          16.573627
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 16.205291666666668,
+          "median": 16.040279,
+          "p95": 16.5202922,
+          "maximum": 16.573627,
+          "minimum": 16.001969,
+          "std": 0.26092157488580436
+        },
+        "first_call_ms": 16.503847,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "CPU_BACKEND_MISSING: Fetch full mesh rendering requires CUDA/MJWarp"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 14,
+      "case": 2,
+      "step": 10,
+      "seed": 17,
+      "action_dtype": "float32",
+      "prefix_hash": "2e2fb99e779cd8e82646e2cc14146b480878413eba558edfa913eb0a8d12f309",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "scripts/recovery/fetch_public_gate.py:full_compare",
+        "candidate_state_hash": "af2c47f1c0e7009bec6ea5971ea480f7b8952f2a0eb01f2cd91675a8a6054d4d",
+        "oracle_state_hash": "6056d03984d69195d7d9385c62c5a52e5d413f78c63cd2e865f80b89eddc34fc",
+        "compared": "all public Fetch fields, controller caches, time, reset anchor, lifecycle and PCG64"
+      },
+      "state_file": "frame-0014-state.npz",
+      "state_hash": "af2c47f1c0e7009bec6ea5971ea480f7b8952f2a0eb01f2cd91675a8a6054d4d",
+      "oracle_file": "frame-0014-oracle.npy",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "0ff18a0809cea8b6b5a8c86fb848e4f441c8a2118eebfc74a89a0673514f85b0",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          16.865235,
+          16.517847,
+          16.488987
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 16.624023,
+          "median": 16.517847,
+          "p95": 16.8304962,
+          "maximum": 16.865235,
+          "minimum": 16.488987,
+          "std": 0.17096909390881038
+        },
+        "first_call_ms": 17.519042,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "CPU_BACKEND_MISSING: Fetch full mesh rendering requires CUDA/MJWarp"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 15,
+      "case": 2,
+      "step": 25,
+      "seed": 17,
+      "action_dtype": "float32",
+      "prefix_hash": "4c2b2dc4cc23d3c2d5f46105f65836ff0eea5edc4140811fa3cfcfa300e37d48",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "scripts/recovery/fetch_public_gate.py:full_compare",
+        "candidate_state_hash": "03495be917d48ef7634ad7a307636e2f4a85f352834844911d3154c48625e96b",
+        "oracle_state_hash": "d9641f1b15151e0cce5c00822c8da517b58bf24ff12e4de2bdd16edddab49fe3",
+        "compared": "all public Fetch fields, controller caches, time, reset anchor, lifecycle and PCG64"
+      },
+      "state_file": "frame-0015-state.npz",
+      "state_hash": "03495be917d48ef7634ad7a307636e2f4a85f352834844911d3154c48625e96b",
+      "oracle_file": "frame-0015-oracle.npy",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "259eba9d5c6d73cddc9a4abbd99f3dffbdd7644661d6c236a70c68cf972c048a",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          16.455237,
+          16.414498,
+          16.557137
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 16.475624,
+          "median": 16.455237,
+          "p95": 16.546947,
+          "maximum": 16.557137,
+          "minimum": 16.414498,
+          "std": 0.05998996253263358
+        },
+        "first_call_ms": 16.464808,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "CPU_BACKEND_MISSING: Fetch full mesh rendering requires CUDA/MJWarp"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 16,
+      "case": 2,
+      "step": 49,
+      "seed": 17,
+      "action_dtype": "float32",
+      "prefix_hash": "35f96f495ebcdcbae495a50b49ce31c8b6e50ef8f7d58354a84c1c42495d9617",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "scripts/recovery/fetch_public_gate.py:full_compare",
+        "candidate_state_hash": "29a9418f68a27eedb8a5c8b08c1f95889350aa8d7ccd0c4b0906f5f8ee241fed",
+        "oracle_state_hash": "a795ceaa3d4ee38b7b8c1114883849256d1ca607c486f522abe394b1a252ec51",
+        "compared": "all public Fetch fields, controller caches, time, reset anchor, lifecycle and PCG64"
+      },
+      "state_file": "frame-0016-state.npz",
+      "state_hash": "29a9418f68a27eedb8a5c8b08c1f95889350aa8d7ccd0c4b0906f5f8ee241fed",
+      "oracle_file": "frame-0016-oracle.npy",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "91ed8990dfc88dcaab6c5c273ca6eb61d0f220c3254e90b28450660d6eeff290",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          16.736716,
+          16.298538,
+          15.9366
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 16.323951333333333,
+          "median": 16.298538,
+          "p95": 16.692898200000002,
+          "maximum": 16.736716,
+          "minimum": 15.9366,
+          "std": 0.32713991043317
+        },
+        "first_call_ms": 16.881685,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "CPU_BACKEND_MISSING: Fetch full mesh rendering requires CUDA/MJWarp"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 17,
+      "case": 2,
+      "step": 50,
+      "seed": 17,
+      "action_dtype": "float32",
+      "prefix_hash": "26148e5863da4f540f743d5cd6598f7c4adfb107865aa7b05a633689da81c7e3",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "scripts/recovery/fetch_public_gate.py:full_compare",
+        "candidate_state_hash": "da5f05bb0496aa67fe90317f54de01c97bb242a4aa00f77f9826052e610467de",
+        "oracle_state_hash": "6432308a573632b2129d5432395290da92f319920ccfc3f1bdf5be50862e32de",
+        "compared": "all public Fetch fields, controller caches, time, reset anchor, lifecycle and PCG64"
+      },
+      "state_file": "frame-0017-state.npz",
+      "state_hash": "da5f05bb0496aa67fe90317f54de01c97bb242a4aa00f77f9826052e610467de",
+      "oracle_file": "frame-0017-oracle.npy",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "9a54944883f89c1b5f01dcece075904a70357730ba10f3812fa150ac84a86daa",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          16.151509,
+          16.626006,
+          16.556857
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 16.444790666666666,
+          "median": 16.556857,
+          "p95": 16.6190911,
+          "maximum": 16.626006,
+          "minimum": 16.151509,
+          "std": 0.20929404841408056
+        },
+        "first_call_ms": 16.823226,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "CPU_BACKEND_MISSING: Fetch full mesh rendering requires CUDA/MJWarp"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 18,
+      "case": 3,
+      "step": 0,
+      "seed": 17,
+      "action_dtype": "float64",
+      "prefix_hash": "db32636928d5c6607a57482759015abc3136f3bbfb98dbbee767cf5481b9d6fb",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "scripts/recovery/fetch_public_gate.py:full_compare",
+        "candidate_state_hash": "fb94831bfd706f3ee89588e5384591a4dc955ad5663fd5ae96012cc987faa340",
+        "oracle_state_hash": "e3880ef0267e8da5fb0265ff7f08fe82dea1a5ffca73a163e0ad70d117163637",
+        "compared": "all public Fetch fields, controller caches, time, reset anchor, lifecycle and PCG64"
+      },
+      "state_file": "frame-0018-state.npz",
+      "state_hash": "fb94831bfd706f3ee89588e5384591a4dc955ad5663fd5ae96012cc987faa340",
+      "oracle_file": "frame-0018-oracle.npy",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "5915c679ebb07516e553df5aa5a9d66ae3ebd99ef24273b6789113c03dbc7745",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          16.01284,
+          16.079829,
+          15.656311
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 15.916326666666668,
+          "median": 16.01284,
+          "p95": 16.0731301,
+          "maximum": 16.079829,
+          "minimum": 15.656311,
+          "std": 0.18588166794017688
+        },
+        "first_call_ms": 293.481236,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "CPU_BACKEND_MISSING: Fetch full mesh rendering requires CUDA/MJWarp"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 19,
+      "case": 3,
+      "step": 1,
+      "seed": 17,
+      "action_dtype": "float64",
+      "prefix_hash": "3d18be824cf4012275258b7d710160ded2a287131134f6768c1712d5fd5ada91",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "scripts/recovery/fetch_public_gate.py:full_compare",
+        "candidate_state_hash": "f1aa6152a1f651b9dbd992ba3bfa4d3f29bac7a5091a2bc68114d1f818caaee7",
+        "oracle_state_hash": "29857a8a0496b46e893abd4f145bdf6dbcbdf5f7220e9dec63643c100275ec78",
+        "compared": "all public Fetch fields, controller caches, time, reset anchor, lifecycle and PCG64"
+      },
+      "state_file": "frame-0019-state.npz",
+      "state_hash": "f1aa6152a1f651b9dbd992ba3bfa4d3f29bac7a5091a2bc68114d1f818caaee7",
+      "oracle_file": "frame-0019-oracle.npy",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "c7fe11e984a2a655cda82050400059b881cde93ee7a5f0d418ae6cad2b90ed10",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          16.477918,
+          16.210298,
+          16.150099
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 16.27943833333333,
+          "median": 16.210298,
+          "p95": 16.451155999999997,
+          "maximum": 16.477918,
+          "minimum": 16.150099,
+          "std": 0.14248184319492058
+        },
+        "first_call_ms": 17.094004,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "CPU_BACKEND_MISSING: Fetch full mesh rendering requires CUDA/MJWarp"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 20,
+      "case": 3,
+      "step": 10,
+      "seed": 17,
+      "action_dtype": "float64",
+      "prefix_hash": "eb7760e037a6569c59fb1c0e31ea6276c6a91cf5203442aea567f7e729a4997a",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "scripts/recovery/fetch_public_gate.py:full_compare",
+        "candidate_state_hash": "0d4be9ecda3bd8b075ad18223c1eb568b958999bf26fa898ac327f02e1a382da",
+        "oracle_state_hash": "545c9b439d2349949f0cd5b5adfa44202556a18fce5463d42e50b8f4eea97627",
+        "compared": "all public Fetch fields, controller caches, time, reset anchor, lifecycle and PCG64"
+      },
+      "state_file": "frame-0020-state.npz",
+      "state_hash": "0d4be9ecda3bd8b075ad18223c1eb568b958999bf26fa898ac327f02e1a382da",
+      "oracle_file": "frame-0020-oracle.npy",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "0ff18a0809cea8b6b5a8c86fb848e4f441c8a2118eebfc74a89a0673514f85b0",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          16.684486,
+          16.794896,
+          16.911915
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 16.797099,
+          "median": 16.794896,
+          "p95": 16.900213100000002,
+          "maximum": 16.911915,
+          "minimum": 16.684486,
+          "std": 0.09286056722132771
+        },
+        "first_call_ms": 16.821076,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "CPU_BACKEND_MISSING: Fetch full mesh rendering requires CUDA/MJWarp"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 21,
+      "case": 3,
+      "step": 25,
+      "seed": 17,
+      "action_dtype": "float64",
+      "prefix_hash": "c3c72448b4e6cb5823a126f3079613b48bd2914ce08a72843bfa0cd687edaedd",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "scripts/recovery/fetch_public_gate.py:full_compare",
+        "candidate_state_hash": "e72f792aa7e6f6b43cfc94abdd775d47c8ba126096b0899d8f2005a09f1c5adb",
+        "oracle_state_hash": "4af6baca78947e69f05a3fb0dd0eaaaffe5911ac5b81bce257940a81c73aa0dd",
+        "compared": "all public Fetch fields, controller caches, time, reset anchor, lifecycle and PCG64"
+      },
+      "state_file": "frame-0021-state.npz",
+      "state_hash": "e72f792aa7e6f6b43cfc94abdd775d47c8ba126096b0899d8f2005a09f1c5adb",
+      "oracle_file": "frame-0021-oracle.npy",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "259eba9d5c6d73cddc9a4abbd99f3dffbdd7644661d6c236a70c68cf972c048a",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          16.327298,
+          16.636127,
+          16.463377
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 16.47560066666667,
+          "median": 16.463377,
+          "p95": 16.618851999999997,
+          "maximum": 16.636127,
+          "minimum": 16.327298,
+          "std": 0.12637484277691033
+        },
+        "first_call_ms": 16.649046,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "CPU_BACKEND_MISSING: Fetch full mesh rendering requires CUDA/MJWarp"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 22,
+      "case": 3,
+      "step": 49,
+      "seed": 17,
+      "action_dtype": "float64",
+      "prefix_hash": "cfab0fc724379f4ea6ba7d9a75ada9745033dfd6ebbb0b2bd21d9e654e5a1850",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "scripts/recovery/fetch_public_gate.py:full_compare",
+        "candidate_state_hash": "16075c04b0458f55986f202ee76e72e6f357fd85b1657fb5bf0d8b011d1156b1",
+        "oracle_state_hash": "7877b45057bb285d728aa536241e8f8e4b718de845e1ee6b210500cab69250be",
+        "compared": "all public Fetch fields, controller caches, time, reset anchor, lifecycle and PCG64"
+      },
+      "state_file": "frame-0022-state.npz",
+      "state_hash": "16075c04b0458f55986f202ee76e72e6f357fd85b1657fb5bf0d8b011d1156b1",
+      "oracle_file": "frame-0022-oracle.npy",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "91ed8990dfc88dcaab6c5c273ca6eb61d0f220c3254e90b28450660d6eeff290",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          16.508157,
+          16.617607,
+          16.331018
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 16.485594000000003,
+          "median": 16.508157,
+          "p95": 16.606662,
+          "maximum": 16.617607,
+          "minimum": 16.331018,
+          "std": 0.11808226075353831
+        },
+        "first_call_ms": 16.544677,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "CPU_BACKEND_MISSING: Fetch full mesh rendering requires CUDA/MJWarp"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 23,
+      "case": 3,
+      "step": 50,
+      "seed": 17,
+      "action_dtype": "float64",
+      "prefix_hash": "50176c2534c536200da2b600f126c95523260c1f7eb0cdd37959c6d7d9f1369c",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "scripts/recovery/fetch_public_gate.py:full_compare",
+        "candidate_state_hash": "1f8c003d152c168fbd18cd906f60998f4dc387285ea25333218ad82c76c103db",
+        "oracle_state_hash": "e06c2000a73fb6135eef5d86123403882d8758d1f2ccddf14ca2cfec1d345aa7",
+        "compared": "all public Fetch fields, controller caches, time, reset anchor, lifecycle and PCG64"
+      },
+      "state_file": "frame-0023-state.npz",
+      "state_hash": "1f8c003d152c168fbd18cd906f60998f4dc387285ea25333218ad82c76c103db",
+      "oracle_file": "frame-0023-oracle.npy",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "0816b0ac4aea525bed2a4f28eae060263f82ca5391f4501f13094bd354430290",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          17.334123,
+          16.348528,
+          16.716956
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 16.799869,
+          "median": 16.716956,
+          "p95": 17.2724063,
+          "maximum": 17.334123,
+          "minimum": 16.348528,
+          "std": 0.40661636315901845
+        },
+        "first_call_ms": 16.552027,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "CPU_BACKEND_MISSING: Fetch full mesh rendering requires CUDA/MJWarp"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 24,
+      "case": 4,
+      "step": 0,
+      "seed": 42,
+      "action_dtype": "float32",
+      "prefix_hash": "4b35f94aa0d3bb584f39f908c788fe3144ee7b60a58cca242a5c67fbb7016d79",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "scripts/recovery/fetch_public_gate.py:full_compare",
+        "candidate_state_hash": "9689e8c265035f4ff29af142f75c20c21dba6972062aabefc28eb24912b4f4d9",
+        "oracle_state_hash": "80ed48a5c493fb7b13e2be5a6dde25b9268b9bb2c9b21754f4f883ebd186a60b",
+        "compared": "all public Fetch fields, controller caches, time, reset anchor, lifecycle and PCG64"
+      },
+      "state_file": "frame-0024-state.npz",
+      "state_hash": "9689e8c265035f4ff29af142f75c20c21dba6972062aabefc28eb24912b4f4d9",
+      "oracle_file": "frame-0024-oracle.npy",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "7097d1420cd6c3db71a10cea6230a0621d009db3d344806b5c5bf7c55fd809b7",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          15.506302,
+          15.402982,
+          15.634412
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 15.514565333333332,
+          "median": 15.506302,
+          "p95": 15.621601,
+          "maximum": 15.634412,
+          "minimum": 15.402982,
+          "std": 0.09466140795253113
+        },
+        "first_call_ms": 335.109307,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "CPU_BACKEND_MISSING: Fetch full mesh rendering requires CUDA/MJWarp"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 25,
+      "case": 4,
+      "step": 1,
+      "seed": 42,
+      "action_dtype": "float32",
+      "prefix_hash": "91e2162908dd1808ac39f53d9ce669bb9440df6fad8054abcd1f42ed9b727263",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "scripts/recovery/fetch_public_gate.py:full_compare",
+        "candidate_state_hash": "bd748cbe46d2cdf8e36fc53a5e18096633aba5c30391e303694a390433744db0",
+        "oracle_state_hash": "58802c1f0b696f217c49f57422059b9c88636e52ecc552c2d386f8cb46eaef7f",
+        "compared": "all public Fetch fields, controller caches, time, reset anchor, lifecycle and PCG64"
+      },
+      "state_file": "frame-0025-state.npz",
+      "state_hash": "bd748cbe46d2cdf8e36fc53a5e18096633aba5c30391e303694a390433744db0",
+      "oracle_file": "frame-0025-oracle.npy",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "ff9235028b1e97cae7d3324949539b74f983f7cdacf28b17e0eeb7983200ca4b",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          16.206909,
+          15.95361,
+          15.968659
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 16.043059333333336,
+          "median": 15.968659,
+          "p95": 16.183084,
+          "maximum": 16.206909,
+          "minimum": 15.95361,
+          "std": 0.11602198943974161
+        },
+        "first_call_ms": 16.400098,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "CPU_BACKEND_MISSING: Fetch full mesh rendering requires CUDA/MJWarp"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 26,
+      "case": 4,
+      "step": 10,
+      "seed": 42,
+      "action_dtype": "float32",
+      "prefix_hash": "dec30477106e83b594129a47f036931b3b7568529386d538ed006a38a002a138",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "scripts/recovery/fetch_public_gate.py:full_compare",
+        "candidate_state_hash": "3cbbbad2c7748d6d4c3f0b8e30723e2ecc3f7dcedd5b16ecc26f77254a521b9d",
+        "oracle_state_hash": "9e91966f4b4809fe9f411dfef066a8f819d108f7a481a33a10c3055cace1cb10",
+        "compared": "all public Fetch fields, controller caches, time, reset anchor, lifecycle and PCG64"
+      },
+      "state_file": "frame-0026-state.npz",
+      "state_hash": "3cbbbad2c7748d6d4c3f0b8e30723e2ecc3f7dcedd5b16ecc26f77254a521b9d",
+      "oracle_file": "frame-0026-oracle.npy",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "94f0050e9d1e3fdb4305150e22881ef248b0447742d6d2e5ecc4f157e0cb7b93",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          16.287448,
+          15.799691,
+          16.117939
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 16.068359333333333,
+          "median": 16.117939,
+          "p95": 16.2704971,
+          "maximum": 16.287448,
+          "minimum": 15.799691,
+          "std": 0.20218857579387578
+        },
+        "first_call_ms": 16.250928,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "CPU_BACKEND_MISSING: Fetch full mesh rendering requires CUDA/MJWarp"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 27,
+      "case": 4,
+      "step": 25,
+      "seed": 42,
+      "action_dtype": "float32",
+      "prefix_hash": "d66863d5a1f2c7a35a083e3a71fc52529d126e3842d442e9ac001070fbeee69d",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "scripts/recovery/fetch_public_gate.py:full_compare",
+        "candidate_state_hash": "63734781b4db36cb1db1510934235c82c693380292cf26c40d5406cae2688d1a",
+        "oracle_state_hash": "d228cd27f62119b60ed30127249dd98d15eae40bb4f46754b4b94871004d0546",
+        "compared": "all public Fetch fields, controller caches, time, reset anchor, lifecycle and PCG64"
+      },
+      "state_file": "frame-0027-state.npz",
+      "state_hash": "63734781b4db36cb1db1510934235c82c693380292cf26c40d5406cae2688d1a",
+      "oracle_file": "frame-0027-oracle.npy",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "622847b22095120ba4e33950fa9afeb2ef29d350008cc4bd29e1eec5d1b31b53",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          16.078019,
+          16.467827,
+          16.142499
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 16.229448333333334,
+          "median": 16.142499,
+          "p95": 16.4352942,
+          "maximum": 16.467827,
+          "minimum": 16.078019,
+          "std": 0.17060228435620478
+        },
+        "first_call_ms": 16.492307,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "CPU_BACKEND_MISSING: Fetch full mesh rendering requires CUDA/MJWarp"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 28,
+      "case": 4,
+      "step": 49,
+      "seed": 42,
+      "action_dtype": "float32",
+      "prefix_hash": "0eabe530e7ee6a43f3dc9ea52de13f2fc877ca3a64e8f281702b08fca51d9c54",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "scripts/recovery/fetch_public_gate.py:full_compare",
+        "candidate_state_hash": "d70fca8e8301c950190dcae3065792c8353bab78f949147c5f5875732983daf2",
+        "oracle_state_hash": "c2b0e27b7ce5289f244c10186f4dbc398dcc9e4c2fb6764316a8ce0554f140a6",
+        "compared": "all public Fetch fields, controller caches, time, reset anchor, lifecycle and PCG64"
+      },
+      "state_file": "frame-0028-state.npz",
+      "state_hash": "d70fca8e8301c950190dcae3065792c8353bab78f949147c5f5875732983daf2",
+      "oracle_file": "frame-0028-oracle.npy",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "563ceb9f357ea60e40c6b2d5041eafe9e33f23690ca47ed608825f4eda4c8c7e",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          15.613372,
+          15.770411,
+          15.531231
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 15.638338,
+          "median": 15.613372,
+          "p95": 15.7547071,
+          "maximum": 15.770411,
+          "minimum": 15.531231,
+          "std": 0.0992278320062804
+        },
+        "first_call_ms": 16.533687,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "CPU_BACKEND_MISSING: Fetch full mesh rendering requires CUDA/MJWarp"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 29,
+      "case": 4,
+      "step": 50,
+      "seed": 42,
+      "action_dtype": "float32",
+      "prefix_hash": "d1c20a5bbeff0b0290aadc2d37a4b7f990ff4acf98bd4aa8f55870a87426230a",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "scripts/recovery/fetch_public_gate.py:full_compare",
+        "candidate_state_hash": "30e922d1cfadec150f778e3bcffccc39ffe20978778a6f752834495d2a0af926",
+        "oracle_state_hash": "350bd55dd9978991f75072e790adef5a27d9c97f432e29bea32b700038e4be98",
+        "compared": "all public Fetch fields, controller caches, time, reset anchor, lifecycle and PCG64"
+      },
+      "state_file": "frame-0029-state.npz",
+      "state_hash": "30e922d1cfadec150f778e3bcffccc39ffe20978778a6f752834495d2a0af926",
+      "oracle_file": "frame-0029-oracle.npy",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "a4510b67d00677a3dcae27952e163bb80aac6e70901df78600d3445d7130bd74",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          15.577252,
+          18.267118,
+          16.04127
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 16.628546666666665,
+          "median": 16.04127,
+          "p95": 18.0445332,
+          "maximum": 18.267118,
+          "minimum": 15.577252,
+          "std": 1.174028729602285
+        },
+        "first_call_ms": 15.752981,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "CPU_BACKEND_MISSING: Fetch full mesh rendering requires CUDA/MJWarp"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 30,
+      "case": 5,
+      "step": 0,
+      "seed": 42,
+      "action_dtype": "float64",
+      "prefix_hash": "db32636928d5c6607a57482759015abc3136f3bbfb98dbbee767cf5481b9d6fb",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "scripts/recovery/fetch_public_gate.py:full_compare",
+        "candidate_state_hash": "9689e8c265035f4ff29af142f75c20c21dba6972062aabefc28eb24912b4f4d9",
+        "oracle_state_hash": "80ed48a5c493fb7b13e2be5a6dde25b9268b9bb2c9b21754f4f883ebd186a60b",
+        "compared": "all public Fetch fields, controller caches, time, reset anchor, lifecycle and PCG64"
+      },
+      "state_file": "frame-0030-state.npz",
+      "state_hash": "9689e8c265035f4ff29af142f75c20c21dba6972062aabefc28eb24912b4f4d9",
+      "oracle_file": "frame-0030-oracle.npy",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "7097d1420cd6c3db71a10cea6230a0621d009db3d344806b5c5bf7c55fd809b7",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          14.874525,
+          14.869295,
+          14.862906
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 14.868908666666668,
+          "median": 14.869295,
+          "p95": 14.874002,
+          "maximum": 14.874525,
+          "minimum": 14.862906,
+          "std": 0.004751296688507295
+        },
+        "first_call_ms": 286.787959,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "CPU_BACKEND_MISSING: Fetch full mesh rendering requires CUDA/MJWarp"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 31,
+      "case": 5,
+      "step": 1,
+      "seed": 42,
+      "action_dtype": "float64",
+      "prefix_hash": "f1342cd96512f5a5b86bd4cfa8b6d079e4d268e1b8e98ecd5b36bab291290628",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "scripts/recovery/fetch_public_gate.py:full_compare",
+        "candidate_state_hash": "c3bacc864ddc9eef2d0cabebc94c9a4d0a5c494b387712226903c1e80db77d3b",
+        "oracle_state_hash": "65837f79fb4520bf45f89f2a0d94ffd2c297edd6e1ec6c891e74ffb27d62c0de",
+        "compared": "all public Fetch fields, controller caches, time, reset anchor, lifecycle and PCG64"
+      },
+      "state_file": "frame-0031-state.npz",
+      "state_hash": "c3bacc864ddc9eef2d0cabebc94c9a4d0a5c494b387712226903c1e80db77d3b",
+      "oracle_file": "frame-0031-oracle.npy",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "ff9235028b1e97cae7d3324949539b74f983f7cdacf28b17e0eeb7983200ca4b",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          15.599071,
+          15.631062,
+          15.608241
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 15.612791333333334,
+          "median": 15.608241,
+          "p95": 15.6287799,
+          "maximum": 15.631062,
+          "minimum": 15.599071,
+          "std": 0.013450778672214002
+        },
+        "first_call_ms": 16.055249,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "CPU_BACKEND_MISSING: Fetch full mesh rendering requires CUDA/MJWarp"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 32,
+      "case": 5,
+      "step": 10,
+      "seed": 42,
+      "action_dtype": "float64",
+      "prefix_hash": "ebf6039e807398e86c7603c6a318e87250bb68a53e508b721d54a21bcaeb7e9d",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "scripts/recovery/fetch_public_gate.py:full_compare",
+        "candidate_state_hash": "e26975b0c920d535bcdbd096bbb62d260c13fb0cb89bea59c2750440c2761a35",
+        "oracle_state_hash": "6e935d687956040b68bd0134a9559595d2125fa01e94f3a817db42adf45e7b5f",
+        "compared": "all public Fetch fields, controller caches, time, reset anchor, lifecycle and PCG64"
+      },
+      "state_file": "frame-0032-state.npz",
+      "state_hash": "e26975b0c920d535bcdbd096bbb62d260c13fb0cb89bea59c2750440c2761a35",
+      "oracle_file": "frame-0032-oracle.npy",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "94f0050e9d1e3fdb4305150e22881ef248b0447742d6d2e5ecc4f157e0cb7b93",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          15.468542,
+          18.472558,
+          15.634891
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 16.525330333333333,
+          "median": 15.634891,
+          "p95": 18.1887913,
+          "maximum": 18.472558,
+          "minimum": 15.468542,
+          "std": 1.3785716489237048
+        },
+        "first_call_ms": 15.738191,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "CPU_BACKEND_MISSING: Fetch full mesh rendering requires CUDA/MJWarp"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 33,
+      "case": 5,
+      "step": 25,
+      "seed": 42,
+      "action_dtype": "float64",
+      "prefix_hash": "24740c0085c65071672862ed21afea2a5fc93dc7d52a0a50196ea690c4dff850",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "scripts/recovery/fetch_public_gate.py:full_compare",
+        "candidate_state_hash": "7302b385378bd5d4ca918d0cfc171373b5f77e4c082e09e54231b9eb5397cc9d",
+        "oracle_state_hash": "c816d3c3b56ed54ea7b28b65c211f3b5ddf33013b8cef7e69a070506f12906f7",
+        "compared": "all public Fetch fields, controller caches, time, reset anchor, lifecycle and PCG64"
+      },
+      "state_file": "frame-0033-state.npz",
+      "state_hash": "7302b385378bd5d4ca918d0cfc171373b5f77e4c082e09e54231b9eb5397cc9d",
+      "oracle_file": "frame-0033-oracle.npy",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "622847b22095120ba4e33950fa9afeb2ef29d350008cc4bd29e1eec5d1b31b53",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          15.558212,
+          15.531382,
+          15.543352
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 15.544315333333332,
+          "median": 15.543352,
+          "p95": 15.556726,
+          "maximum": 15.558212,
+          "minimum": 15.531382,
+          "std": 0.010974462274854708
+        },
+        "first_call_ms": 16.215158,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "CPU_BACKEND_MISSING: Fetch full mesh rendering requires CUDA/MJWarp"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 34,
+      "case": 5,
+      "step": 49,
+      "seed": 42,
+      "action_dtype": "float64",
+      "prefix_hash": "d80b0f3166548595e073ca021f38b89dd32dace022b0b4885f0a42ec8f28289a",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "scripts/recovery/fetch_public_gate.py:full_compare",
+        "candidate_state_hash": "c6c78cf69082e45ab6836d3a3ff26a14f1235b2967a56f5de4dae245ff1f5c9f",
+        "oracle_state_hash": "7c08910fa300ff30d6dd6e7367a2bbc21f558c9f127c198990c6d553a106a1fa",
+        "compared": "all public Fetch fields, controller caches, time, reset anchor, lifecycle and PCG64"
+      },
+      "state_file": "frame-0034-state.npz",
+      "state_hash": "c6c78cf69082e45ab6836d3a3ff26a14f1235b2967a56f5de4dae245ff1f5c9f",
+      "oracle_file": "frame-0034-oracle.npy",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "b78aa59b28a950a6a80be745dbf4f244e3a46f2fee922fe974d7631f82e2cc0f",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          15.598122,
+          15.774261,
+          15.579011
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 15.650464666666666,
+          "median": 15.598122,
+          "p95": 15.756647099999999,
+          "maximum": 15.774261,
+          "minimum": 15.579011,
+          "std": 0.0878842294928704
+        },
+        "first_call_ms": 16.586316,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "CPU_BACKEND_MISSING: Fetch full mesh rendering requires CUDA/MJWarp"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 35,
+      "case": 5,
+      "step": 50,
+      "seed": 42,
+      "action_dtype": "float64",
+      "prefix_hash": "16e9388d56d8fb80eb6fdc8230772eea3724bf9c90a675348a826f8afb5cfc1e",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "scripts/recovery/fetch_public_gate.py:full_compare",
+        "candidate_state_hash": "2cadcda6e435e430ab67606b936ef80b7ce522fd0ef84235d569418a3f24a5a5",
+        "oracle_state_hash": "11e98338c8069f61273bd29e5c628437dac8757f0ad6c0d7f4ce963e142f0b80",
+        "compared": "all public Fetch fields, controller caches, time, reset anchor, lifecycle and PCG64"
+      },
+      "state_file": "frame-0035-state.npz",
+      "state_hash": "2cadcda6e435e430ab67606b936ef80b7ce522fd0ef84235d569418a3f24a5a5",
+      "oracle_file": "frame-0035-oracle.npy",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "a4510b67d00677a3dcae27952e163bb80aac6e70901df78600d3445d7130bd74",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          15.559041,
+          15.575272,
+          15.877
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 15.670437666666666,
+          "median": 15.575272,
+          "p95": 15.8468272,
+          "maximum": 15.877,
+          "minimum": 15.559041,
+          "std": 0.14621185429445271
+        },
+        "first_call_ms": 15.867551,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "CPU_BACKEND_MISSING: Fetch full mesh rendering requires CUDA/MJWarp"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 36,
+      "case": 6,
+      "step": 0,
+      "seed": 17,
+      "action_dtype": "float32",
+      "prefix_hash": "4b35f94aa0d3bb584f39f908c788fe3144ee7b60a58cca242a5c67fbb7016d79",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "scripts/recovery/fetch_public_gate.py:full_compare",
+        "candidate_state_hash": "fb94831bfd706f3ee89588e5384591a4dc955ad5663fd5ae96012cc987faa340",
+        "oracle_state_hash": "e3880ef0267e8da5fb0265ff7f08fe82dea1a5ffca73a163e0ad70d117163637",
+        "compared": "all public Fetch fields, controller caches, time, reset anchor, lifecycle and PCG64"
+      },
+      "state_file": "frame-0036-state.npz",
+      "state_hash": "fb94831bfd706f3ee89588e5384591a4dc955ad5663fd5ae96012cc987faa340",
+      "oracle_file": "frame-0036-oracle.npy",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "27417a9614b9b675ff448db53ad91226471fc1e2829a83d4871644f056b40df3",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          15.187723,
+          15.181604,
+          15.130154
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 15.166493666666666,
+          "median": 15.181604,
+          "p95": 15.1871111,
+          "maximum": 15.187723,
+          "minimum": 15.130154,
+          "std": 0.02581716574081884
+        },
+        "first_call_ms": 272.357172,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "CPU_BACKEND_MISSING: Fetch full mesh rendering requires CUDA/MJWarp"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 37,
+      "case": 6,
+      "step": 1,
+      "seed": 17,
+      "action_dtype": "float32",
+      "prefix_hash": "fb1714978d1c38652906eaf0e60b1fc292df3e8d711ee6b447f770a96be19d6c",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "scripts/recovery/fetch_public_gate.py:full_compare",
+        "candidate_state_hash": "c0bfc7fdc370ffbd993a8d3580399e50fae2eb1b3fed27d3e96a110b036acbeb",
+        "oracle_state_hash": "1544081b5cb4cc589ea9017f9934260511ce8d4d07946b05143dcb63cc739855",
+        "compared": "all public Fetch fields, controller caches, time, reset anchor, lifecycle and PCG64"
+      },
+      "state_file": "frame-0037-state.npz",
+      "state_hash": "c0bfc7fdc370ffbd993a8d3580399e50fae2eb1b3fed27d3e96a110b036acbeb",
+      "oracle_file": "frame-0037-oracle.npy",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "dcd0f7336d8f56efb03c033e5352e3f9eff057a74c1ffbdc3ccc67f994d9450b",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          15.87967,
+          16.068499,
+          16.07853
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 16.008899666666668,
+          "median": 16.068499,
+          "p95": 16.0775269,
+          "maximum": 16.07853,
+          "minimum": 15.87967,
+          "std": 0.0914708889951086
+        },
+        "first_call_ms": 16.628527,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "CPU_BACKEND_MISSING: Fetch full mesh rendering requires CUDA/MJWarp"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 38,
+      "case": 6,
+      "step": 10,
+      "seed": 17,
+      "action_dtype": "float32",
+      "prefix_hash": "2e2fb99e779cd8e82646e2cc14146b480878413eba558edfa913eb0a8d12f309",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "scripts/recovery/fetch_public_gate.py:full_compare",
+        "candidate_state_hash": "af2c47f1c0e7009bec6ea5971ea480f7b8952f2a0eb01f2cd91675a8a6054d4d",
+        "oracle_state_hash": "6056d03984d69195d7d9385c62c5a52e5d413f78c63cd2e865f80b89eddc34fc",
+        "compared": "all public Fetch fields, controller caches, time, reset anchor, lifecycle and PCG64"
+      },
+      "state_file": "frame-0038-state.npz",
+      "state_hash": "af2c47f1c0e7009bec6ea5971ea480f7b8952f2a0eb01f2cd91675a8a6054d4d",
+      "oracle_file": "frame-0038-oracle.npy",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "c2a7185d629d089eee9d3aa297e5132a48026d75156b4b057952680d81a09a4f",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          16.01822,
+          15.874071,
+          15.916111
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 15.936134000000001,
+          "median": 15.916111,
+          "p95": 16.0080091,
+          "maximum": 16.01822,
+          "minimum": 15.874071,
+          "std": 0.06052781149741494
+        },
+        "first_call_ms": 16.109309,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "CPU_BACKEND_MISSING: Fetch full mesh rendering requires CUDA/MJWarp"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 39,
+      "case": 6,
+      "step": 25,
+      "seed": 17,
+      "action_dtype": "float32",
+      "prefix_hash": "4c2b2dc4cc23d3c2d5f46105f65836ff0eea5edc4140811fa3cfcfa300e37d48",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "scripts/recovery/fetch_public_gate.py:full_compare",
+        "candidate_state_hash": "03495be917d48ef7634ad7a307636e2f4a85f352834844911d3154c48625e96b",
+        "oracle_state_hash": "d9641f1b15151e0cce5c00822c8da517b58bf24ff12e4de2bdd16edddab49fe3",
+        "compared": "all public Fetch fields, controller caches, time, reset anchor, lifecycle and PCG64"
+      },
+      "state_file": "frame-0039-state.npz",
+      "state_hash": "03495be917d48ef7634ad7a307636e2f4a85f352834844911d3154c48625e96b",
+      "oracle_file": "frame-0039-oracle.npy",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "51fbff3d35584ef8367d0c3a3b2ffa067953625902a13f8c2f8ae26127642896",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          15.655351,
+          15.667132,
+          16.138269
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 15.820250666666666,
+          "median": 15.667132,
+          "p95": 16.0911553,
+          "maximum": 16.138269,
+          "minimum": 15.655351,
+          "std": 0.224924347640614
+        },
+        "first_call_ms": 16.538137,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "CPU_BACKEND_MISSING: Fetch full mesh rendering requires CUDA/MJWarp"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 40,
+      "case": 6,
+      "step": 49,
+      "seed": 17,
+      "action_dtype": "float32",
+      "prefix_hash": "35f96f495ebcdcbae495a50b49ce31c8b6e50ef8f7d58354a84c1c42495d9617",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "scripts/recovery/fetch_public_gate.py:full_compare",
+        "candidate_state_hash": "29a9418f68a27eedb8a5c8b08c1f95889350aa8d7ccd0c4b0906f5f8ee241fed",
+        "oracle_state_hash": "a795ceaa3d4ee38b7b8c1114883849256d1ca607c486f522abe394b1a252ec51",
+        "compared": "all public Fetch fields, controller caches, time, reset anchor, lifecycle and PCG64"
+      },
+      "state_file": "frame-0040-state.npz",
+      "state_hash": "29a9418f68a27eedb8a5c8b08c1f95889350aa8d7ccd0c4b0906f5f8ee241fed",
+      "oracle_file": "frame-0040-oracle.npy",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "e17cce55d14115b896d8de5cf23c00eb038c77689c22a5938d14c5ba42ab0348",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          15.673172,
+          15.518793,
+          15.828811
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 15.673592,
+          "median": 15.673172,
+          "p95": 15.8132471,
+          "maximum": 15.828811,
+          "minimum": 15.518793,
+          "std": 0.12656466695198393
+        },
+        "first_call_ms": 16.280689,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "CPU_BACKEND_MISSING: Fetch full mesh rendering requires CUDA/MJWarp"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 41,
+      "case": 6,
+      "step": 50,
+      "seed": 17,
+      "action_dtype": "float32",
+      "prefix_hash": "26148e5863da4f540f743d5cd6598f7c4adfb107865aa7b05a633689da81c7e3",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "scripts/recovery/fetch_public_gate.py:full_compare",
+        "candidate_state_hash": "da5f05bb0496aa67fe90317f54de01c97bb242a4aa00f77f9826052e610467de",
+        "oracle_state_hash": "6432308a573632b2129d5432395290da92f319920ccfc3f1bdf5be50862e32de",
+        "compared": "all public Fetch fields, controller caches, time, reset anchor, lifecycle and PCG64"
+      },
+      "state_file": "frame-0041-state.npz",
+      "state_hash": "da5f05bb0496aa67fe90317f54de01c97bb242a4aa00f77f9826052e610467de",
+      "oracle_file": "frame-0041-oracle.npy",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "6305c7d0fe5e845eca88edb10915c34aa3028f9a19cc5095a4833a54e0d441e7",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          15.817621,
+          19.583252,
+          15.841
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 17.080624333333336,
+          "median": 15.841,
+          "p95": 19.2090268,
+          "maximum": 19.583252,
+          "minimum": 15.817621,
+          "std": 1.769650732561718
+        },
+        "first_call_ms": 16.07114,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "CPU_BACKEND_MISSING: Fetch full mesh rendering requires CUDA/MJWarp"
+      },
+      "candidate_render_nonmutation": true
+    }
+  ],
+  "recipes": [
+    {
+      "case": 0,
+      "seed": 0,
+      "action_dtype": "float32",
+      "reset_options": {
+        "variation": []
+      },
+      "reset_count": 1,
+      "simulator_config": null,
+      "label": "trajectory",
+      "action_generator": "numpy.default_rng(90000+seed).uniform(action_space.low, high) or integers(0,n)",
+      "actions_file": "actions-0.npy",
+      "actions_hash": "9d91e45f64e1790a8adf458b052008e7225154dfa9c0d72207cdaf1ebc501855",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "checkpoints": [
+        0,
+        1,
+        10,
+        25,
+        49,
+        50
+      ],
+      "constructor": {
+        "num_envs": 1,
+        "seed": 0
+      }
+    },
+    {
+      "case": 1,
+      "seed": 0,
+      "action_dtype": "float64",
+      "reset_options": {
+        "variation": []
+      },
+      "reset_count": 1,
+      "simulator_config": null,
+      "label": "trajectory",
+      "action_generator": "numpy.default_rng(90000+seed).uniform(action_space.low, high) or integers(0,n)",
+      "actions_file": "actions-1.npy",
+      "actions_hash": "5e67cd39c87e2beeadac5b7abbd69a42722ad67fce88217e7953e3e0f5915203",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "checkpoints": [
+        0,
+        1,
+        10,
+        25,
+        49,
+        50
+      ],
+      "constructor": {
+        "num_envs": 1,
+        "seed": 0
+      }
+    },
+    {
+      "case": 2,
+      "seed": 17,
+      "action_dtype": "float32",
+      "reset_options": {
+        "variation": []
+      },
+      "reset_count": 1,
+      "simulator_config": null,
+      "label": "trajectory",
+      "action_generator": "numpy.default_rng(90000+seed).uniform(action_space.low, high) or integers(0,n)",
+      "actions_file": "actions-2.npy",
+      "actions_hash": "26148e5863da4f540f743d5cd6598f7c4adfb107865aa7b05a633689da81c7e3",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "checkpoints": [
+        0,
+        1,
+        10,
+        25,
+        49,
+        50
+      ],
+      "constructor": {
+        "num_envs": 1,
+        "seed": 17
+      }
+    },
+    {
+      "case": 3,
+      "seed": 17,
+      "action_dtype": "float64",
+      "reset_options": {
+        "variation": []
+      },
+      "reset_count": 1,
+      "simulator_config": null,
+      "label": "trajectory",
+      "action_generator": "numpy.default_rng(90000+seed).uniform(action_space.low, high) or integers(0,n)",
+      "actions_file": "actions-3.npy",
+      "actions_hash": "50176c2534c536200da2b600f126c95523260c1f7eb0cdd37959c6d7d9f1369c",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "checkpoints": [
+        0,
+        1,
+        10,
+        25,
+        49,
+        50
+      ],
+      "constructor": {
+        "num_envs": 1,
+        "seed": 17
+      }
+    },
+    {
+      "case": 4,
+      "seed": 42,
+      "action_dtype": "float32",
+      "reset_options": {
+        "variation": []
+      },
+      "reset_count": 1,
+      "simulator_config": null,
+      "label": "trajectory",
+      "action_generator": "numpy.default_rng(90000+seed).uniform(action_space.low, high) or integers(0,n)",
+      "actions_file": "actions-4.npy",
+      "actions_hash": "d1c20a5bbeff0b0290aadc2d37a4b7f990ff4acf98bd4aa8f55870a87426230a",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "checkpoints": [
+        0,
+        1,
+        10,
+        25,
+        49,
+        50
+      ],
+      "constructor": {
+        "num_envs": 1,
+        "seed": 42
+      }
+    },
+    {
+      "case": 5,
+      "seed": 42,
+      "action_dtype": "float64",
+      "reset_options": {
+        "variation": []
+      },
+      "reset_count": 1,
+      "simulator_config": null,
+      "label": "trajectory",
+      "action_generator": "numpy.default_rng(90000+seed).uniform(action_space.low, high) or integers(0,n)",
+      "actions_file": "actions-5.npy",
+      "actions_hash": "16e9388d56d8fb80eb6fdc8230772eea3724bf9c90a675348a826f8afb5cfc1e",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "checkpoints": [
+        0,
+        1,
+        10,
+        25,
+        49,
+        50
+      ],
+      "constructor": {
+        "num_envs": 1,
+        "seed": 42
+      }
+    },
+    {
+      "case": 6,
+      "seed": 17,
+      "action_dtype": "float32",
+      "reset_options": {
+        "variation": [],
+        "variation_values": {
+          "object.color": [
+            0.35,
+            0.35,
+            0.35
+          ],
+          "table.color": [
+            0.35,
+            0.35,
+            0.35
+          ]
+        }
+      },
+      "reset_count": 1,
+      "simulator_config": null,
+      "label": "trajectory",
+      "action_generator": "numpy.default_rng(90000+seed).uniform(action_space.low, high) or integers(0,n)",
+      "actions_file": "actions-6.npy",
+      "actions_hash": "26148e5863da4f540f743d5cd6598f7c4adfb107865aa7b05a633689da81c7e3",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "checkpoints": [
+        0,
+        1,
+        10,
+        25,
+        49,
+        50
+      ],
+      "constructor": {
+        "num_envs": 1,
+        "seed": 17
+      }
+    }
+  ]
+}

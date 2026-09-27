@@ -1,0 +1,175 @@
+{
+  "registration": "swm/PushT-v1",
+  "status": "INCOMPLETE",
+  "family": "pusht",
+  "name": "PushT",
+  "measurement_status": "NONCOMPARABLE",
+  "profile": {
+    "host": "node1802.oscar.ccv.brown.edu",
+    "cpu": "Intel(R) Xeon(R) Platinum 8268 CPU @ 2.90GHz",
+    "gpu": null,
+    "python": "3.12.9",
+    "packages": {
+      "torch": {
+        "version": "2.14.0+cu126",
+        "path": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages"
+      },
+      "numpy": {
+        "version": "2.5.3",
+        "path": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages"
+      },
+      "tensordict": {
+        "version": "0.14.2",
+        "path": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages"
+      },
+      "gymnasium": {
+        "version": "1.3.0",
+        "path": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages"
+      },
+      "mujoco": {
+        "version": "3.11.0",
+        "path": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages"
+      },
+      "dm-control": {
+        "version": "1.0.44",
+        "path": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages"
+      },
+      "ogbench": {
+        "version": "1.2.1",
+        "path": "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages"
+      },
+      "craftax": {
+        "version": "1.6.1",
+        "path": "/oscar/scratch/sboughan/venvs/se-step4-swm/lib/python3.12/site-packages"
+      },
+      "jax": {
+        "version": "0.11.1",
+        "path": "/oscar/scratch/sboughan/venvs/se-step4-swm/lib/python3.12/site-packages"
+      },
+      "jaxlib": {
+        "version": "0.11.1",
+        "path": "/oscar/scratch/sboughan/venvs/se-step4-swm/lib/python3.12/site-packages"
+      },
+      "flax": {
+        "version": "0.12.9",
+        "path": "/oscar/scratch/sboughan/venvs/se-step4-swm/lib/python3.12/site-packages"
+      },
+      "pymunk": {
+        "version": "7.2.0",
+        "path": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739950/pusht-overlay"
+      },
+      "pygame": {
+        "version": "2.6.1",
+        "path": "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages"
+      }
+    },
+    "torch_threads": 1,
+    "environment": {
+      "SLURM_JOB_ID": "6739950",
+      "MUJOCO_GL": "egl",
+      "PYOPENGL_PLATFORM": "egl",
+      "LIBGL_ALWAYS_SOFTWARE": null,
+      "GALLIUM_DRIVER": null,
+      "DISPLAY": ":5050",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "LP_NUM_THREADS": "1",
+      "JAX_PLATFORMS": null,
+      "CRAFTAX_JAX_BACKEND": null,
+      "CUDA_VISIBLE_DEVICES": null
+    }
+  },
+  "records": [
+    {
+      "seed": 0,
+      "actual_action_prefix": [],
+      "candidate_state_hash": "b18ca5a80ae1adc9159f9e2e00eeec801d02f1c1a0dc06088edd0dffc85be0c4",
+      "candidate_pose": [
+        304.78466796875,
+        157.91468811035156,
+        112.29206085205078,
+        104.95829010009766,
+        1.9683349132537842
+      ],
+      "oracle_pose": [
+        235.7827122332356,
+        303.60737773694973,
+        383.7717999951891,
+        318.03596539366947,
+        4.969469195953559
+      ],
+      "candidate_pose_hash": "3d525108859209a40c311dcabeb27e2727aad44e7d034c38ff43f5d749f08292",
+      "oracle_pose_hash": "a6611457724ed91eab9a906d096209862d0946fbd3976565084b54a7178c0d93",
+      "exact_numeric_pose_equal": false
+    },
+    {
+      "seed": 17,
+      "actual_action_prefix": [],
+      "candidate_state_hash": "7c98cced1bcb77ceb572e07175fbc60ee11d96c3dc36812b1f6d6df69b4a2ee6",
+      "candidate_pose": [
+        388.0299072265625,
+        114.38923645019531,
+        267.3233642578125,
+        210.42398071289062,
+        -1.7910724878311157
+      ],
+      "oracle_pose": [
+        277.4099140628561,
+        187.05915365200764,
+        340.1450563016937,
+        298.6106871273805,
+        -3.8137545105128323
+      ],
+      "candidate_pose_hash": "0aa512e85c76194a5f14a4dd0e7ee6e215bdda7fb3bc76354f363716a1f90bde",
+      "oracle_pose_hash": "83be4e5049ab28326bb71d293c9cfe93b5feea2b0e813a7ac7a2114741988d05",
+      "exact_numeric_pose_equal": false
+    },
+    {
+      "seed": 42,
+      "actual_action_prefix": [],
+      "candidate_state_hash": "250e9d4298e1d8a32554a37dd7d25088bd07687b58a7cb160525dcbeee7ecae5",
+      "candidate_pose": [
+        359.5824279785156,
+        225.55137634277344,
+        357.5793762207031,
+        309.2104187011719,
+        -2.549858808517456
+      ],
+      "oracle_pose": [
+        281.8691105304458,
+        104.93927620590564,
+        268.8204400647797,
+        356.61757712885924,
+        -2.0782223517796634
+      ],
+      "candidate_pose_hash": "f72088e6acc0a6f45dba4a70040434538f2be9661e2d2a4b86af2e73a15552fd",
+      "oracle_pose_hash": "025bdc8f16bd38194a555412fa157abf1db7893b65a6a89ed3af18f348d436b3",
+      "exact_numeric_pose_equal": false
+    }
+  ],
+  "source_action_space": "Box(-1.0, 1.0, (2,), float32)",
+  "candidate_action_spec": "Spec(shape=(2,), dtype=float32, bounds=[0, 512])",
+  "same_resolution": 224,
+  "source_relative": true,
+  "no_pose_teleport": true,
+  "no_new_replay": true,
+  "cells": {
+    "cpu": {
+      "status": "NONCOMPARABLE",
+      "reason": "The current candidate maps to gym_pusht-style absolute-target PushT, not the pinned SWM relative-action reset/step path. All three identical-seed default resets differ numerically before any action. No accepted exhaustive SWM State-equivalence witness exists; installing source poses would not establish matching hidden contact/RNG/task continuation."
+    },
+    "gpu": {
+      "status": "NONCOMPARABLE",
+      "reason": "The current candidate maps to gym_pusht-style absolute-target PushT, not the pinned SWM relative-action reset/step path. All three identical-seed default resets differ numerically before any action. No accepted exhaustive SWM State-equivalence witness exists; installing source poses would not establish matching hidden contact/RNG/task continuation."
+    },
+    "original": {
+      "status": "NONCOMPARABLE",
+      "reason": "The current candidate maps to gym_pusht-style absolute-target PushT, not the pinned SWM relative-action reset/step path. All three identical-seed default resets differ numerically before any action. No accepted exhaustive SWM State-equivalence witness exists; installing source poses would not establish matching hidden contact/RNG/task continuation."
+    }
+  },
+  "source_hashes": {
+    "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739950/source/stable_envs/envs/pusht.py": "5ddf68bd8d76445e4004d07c126b402869c6979e0bd90d304bb8c7addd090e5a",
+    "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739950/oracle/stable_worldmodel/envs/pusht/env.py": "c6d2104adc368ff1c352edc0e35ac74da9f07fda3a748ddbef0ba6b7a2d1daa2"
+  }
+}

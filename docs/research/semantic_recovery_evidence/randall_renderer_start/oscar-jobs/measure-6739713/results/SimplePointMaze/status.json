@@ -1,0 +1,16 @@
+{
+  "registration": "swm/SimplePointMaze-v0",
+  "phases": {
+    "cpu": {
+      "returncode": 1,
+      "command": [
+        "/oscar/scratch/sboughan/venvs/se6-verify-vis311/bin/python",
+        "-m",
+        "scripts.benchmarks.renderer_table.collect",
+        "swm/SimplePointMaze-v0",
+        "cpu",
+        "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739713/results/SimplePointMaze/cpu"
+      ]
+    }
+  }
+}

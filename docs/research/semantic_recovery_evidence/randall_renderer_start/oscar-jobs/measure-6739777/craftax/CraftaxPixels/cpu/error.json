@@ -1,0 +1,10 @@
+{
+  "status": "ERROR",
+  "traceback": "Traceback (most recent call last):\n  File \"/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739777/source/scripts/benchmarks/renderer_table/collect.py\", line 358, in main\n    cpu(row, args.output)\n  File \"/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739777/source/scripts/benchmarks/renderer_table/collect.py\", line 204, in cpu\n    out = env.step(action)\n          ^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739777/source/stable_envs/envs/craftax_semantics.py\", line 88, in step\n    state = self._simulator.step(actions)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739777/source/stable_envs/_adapters/craftax.py\", line 348, in step\n    raise RuntimeError(\"Craftax terminal State requires explicit reset\")\nRuntimeError: Craftax terminal State requires explicit reset\n",
+  "command": [
+    "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739777/source/scripts/benchmarks/renderer_table/collect.py",
+    "swm/CraftaxPixels-v1",
+    "cpu",
+    "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739777/craftax/CraftaxPixels/cpu"
+  ]
+}

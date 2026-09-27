@@ -1,0 +1,130 @@
+[
+  {
+    "registration": "swm/AcrobotControl-v1",
+    "phases": {
+      "cpu": {
+        "returncode": 1,
+        "command": [
+          "/oscar/scratch/sboughan/venvs/se6-verify-vis311/bin/python",
+          "-m",
+          "scripts.benchmarks.renderer_table.collect",
+          "swm/AcrobotControl-v1",
+          "cpu",
+          "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739546/results/Acrobot/cpu"
+        ]
+      }
+    }
+  },
+  {
+    "registration": "swm/CartPoleControl-v1",
+    "phases": {
+      "cpu": {
+        "returncode": 1,
+        "command": [
+          "/oscar/scratch/sboughan/venvs/se6-verify-vis311/bin/python",
+          "-m",
+          "scripts.benchmarks.renderer_table.collect",
+          "swm/CartPoleControl-v1",
+          "cpu",
+          "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739546/results/CartPole/cpu"
+        ]
+      }
+    }
+  },
+  {
+    "registration": "swm/MountainCarContinuousControl-v0",
+    "phases": {
+      "cpu": {
+        "returncode": 1,
+        "command": [
+          "/oscar/scratch/sboughan/venvs/se6-verify-vis311/bin/python",
+          "-m",
+          "scripts.benchmarks.renderer_table.collect",
+          "swm/MountainCarContinuousControl-v0",
+          "cpu",
+          "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739546/results/MountainCarContinuous/cpu"
+        ]
+      }
+    }
+  },
+  {
+    "registration": "swm/MountainCarControl-v0",
+    "phases": {
+      "cpu": {
+        "returncode": 1,
+        "command": [
+          "/oscar/scratch/sboughan/venvs/se6-verify-vis311/bin/python",
+          "-m",
+          "scripts.benchmarks.renderer_table.collect",
+          "swm/MountainCarControl-v0",
+          "cpu",
+          "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739546/results/MountainCar/cpu"
+        ]
+      }
+    }
+  },
+  {
+    "registration": "swm/PendulumControl-v1",
+    "phases": {
+      "cpu": {
+        "returncode": 1,
+        "command": [
+          "/oscar/scratch/sboughan/venvs/se6-verify-vis311/bin/python",
+          "-m",
+          "scripts.benchmarks.renderer_table.collect",
+          "swm/PendulumControl-v1",
+          "cpu",
+          "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739546/results/Pendulum/cpu"
+        ]
+      }
+    }
+  },
+  {
+    "registration": "swm/Piecewise-v0",
+    "phases": {
+      "cpu": {
+        "returncode": 1,
+        "command": [
+          "/oscar/scratch/sboughan/venvs/se6-verify-vis311/bin/python",
+          "-m",
+          "scripts.benchmarks.renderer_table.collect",
+          "swm/Piecewise-v0",
+          "cpu",
+          "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739546/results/Piecewise/cpu"
+        ]
+      }
+    }
+  },
+  {
+    "registration": "swm/SimplePointMaze-v0",
+    "phases": {
+      "cpu": {
+        "returncode": 1,
+        "command": [
+          "/oscar/scratch/sboughan/venvs/se6-verify-vis311/bin/python",
+          "-m",
+          "scripts.benchmarks.renderer_table.collect",
+          "swm/SimplePointMaze-v0",
+          "cpu",
+          "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739546/results/SimplePointMaze/cpu"
+        ]
+      }
+    }
+  },
+  {
+    "registration": "swm/TwoRoom-v1",
+    "phases": {
+      "cpu": {
+        "returncode": 1,
+        "command": [
+          "/oscar/scratch/sboughan/venvs/se6-verify-vis311/bin/python",
+          "-m",
+          "scripts.benchmarks.renderer_table.collect",
+          "swm/TwoRoom-v1",
+          "cpu",
+          "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739546/results/TwoRoom/cpu"
+        ]
+      }
+    }
+  }
+]

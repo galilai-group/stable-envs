@@ -1,0 +1,12 @@
+{
+  "status": "PASS",
+  "registrations": 42,
+  "matrix_unchanged": true,
+  "preserved_files": 122,
+  "retained_artifacts": {
+    "files": 2013,
+    "matched_state_action_pairs": 1488,
+    "independently_recomputed_backend_frames": 2120
+  },
+  "summary_sha256": "cc1f12b6a31dc7a536a4abada6168c867a8311a820e3dc7574bf92b7dc522d29"
+}

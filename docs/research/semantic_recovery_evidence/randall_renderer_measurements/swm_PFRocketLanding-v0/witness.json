@@ -1,0 +1,6 @@
+{
+  "index": 21,
+  "backend": "gpu",
+  "mse_normalized": 0.03481760351698777,
+  "difference": "absolute RGB difference, uint8, no amplification"
+}

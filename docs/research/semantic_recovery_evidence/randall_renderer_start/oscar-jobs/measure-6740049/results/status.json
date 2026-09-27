@@ -1,0 +1,350 @@
+[
+  {
+    "registration": "swm/FetchPickAndPlace-v3",
+    "phases": {
+      "cpu": {
+        "returncode": 0,
+        "command": [
+          "/oscar/scratch/sboughan/venvs/se6-verify-fetch311/bin/python",
+          "-m",
+          "scripts.benchmarks.renderer_table.collect",
+          "swm/FetchPickAndPlace-v3",
+          "cpu",
+          "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/results/FetchPickAndPlace/cpu"
+        ]
+      },
+      "gpu": {
+        "returncode": 0,
+        "command": [
+          "/oscar/scratch/sboughan/venvs/se6-verify-fetch311/bin/python",
+          "-m",
+          "scripts.benchmarks.renderer_table.collect",
+          "swm/FetchPickAndPlace-v3",
+          "gpu",
+          "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/results/FetchPickAndPlace/gpu",
+          "--corpus",
+          "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/results/FetchPickAndPlace/cpu"
+        ]
+      }
+    }
+  },
+  {
+    "registration": "swm/FetchPickAndPlaceDense-v3",
+    "phases": {
+      "cpu": {
+        "returncode": 0,
+        "command": [
+          "/oscar/scratch/sboughan/venvs/se6-verify-fetch311/bin/python",
+          "-m",
+          "scripts.benchmarks.renderer_table.collect",
+          "swm/FetchPickAndPlaceDense-v3",
+          "cpu",
+          "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/results/FetchPickAndPlaceDense/cpu"
+        ]
+      },
+      "gpu": {
+        "returncode": 0,
+        "command": [
+          "/oscar/scratch/sboughan/venvs/se6-verify-fetch311/bin/python",
+          "-m",
+          "scripts.benchmarks.renderer_table.collect",
+          "swm/FetchPickAndPlaceDense-v3",
+          "gpu",
+          "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/results/FetchPickAndPlaceDense/gpu",
+          "--corpus",
+          "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/results/FetchPickAndPlaceDense/cpu"
+        ]
+      }
+    }
+  },
+  {
+    "registration": "swm/FetchPickAndPlaceDict-v3",
+    "phases": {
+      "cpu": {
+        "returncode": 0,
+        "command": [
+          "/oscar/scratch/sboughan/venvs/se6-verify-fetch311/bin/python",
+          "-m",
+          "scripts.benchmarks.renderer_table.collect",
+          "swm/FetchPickAndPlaceDict-v3",
+          "cpu",
+          "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/results/FetchPickAndPlaceDict/cpu"
+        ]
+      },
+      "gpu": {
+        "returncode": 0,
+        "command": [
+          "/oscar/scratch/sboughan/venvs/se6-verify-fetch311/bin/python",
+          "-m",
+          "scripts.benchmarks.renderer_table.collect",
+          "swm/FetchPickAndPlaceDict-v3",
+          "gpu",
+          "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/results/FetchPickAndPlaceDict/gpu",
+          "--corpus",
+          "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/results/FetchPickAndPlaceDict/cpu"
+        ]
+      }
+    }
+  },
+  {
+    "registration": "swm/FetchPush-v3",
+    "phases": {
+      "cpu": {
+        "returncode": 0,
+        "command": [
+          "/oscar/scratch/sboughan/venvs/se6-verify-fetch311/bin/python",
+          "-m",
+          "scripts.benchmarks.renderer_table.collect",
+          "swm/FetchPush-v3",
+          "cpu",
+          "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/results/FetchPush/cpu"
+        ]
+      },
+      "gpu": {
+        "returncode": 0,
+        "command": [
+          "/oscar/scratch/sboughan/venvs/se6-verify-fetch311/bin/python",
+          "-m",
+          "scripts.benchmarks.renderer_table.collect",
+          "swm/FetchPush-v3",
+          "gpu",
+          "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/results/FetchPush/gpu",
+          "--corpus",
+          "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/results/FetchPush/cpu"
+        ]
+      }
+    }
+  },
+  {
+    "registration": "swm/FetchPushDense-v3",
+    "phases": {
+      "cpu": {
+        "returncode": 0,
+        "command": [
+          "/oscar/scratch/sboughan/venvs/se6-verify-fetch311/bin/python",
+          "-m",
+          "scripts.benchmarks.renderer_table.collect",
+          "swm/FetchPushDense-v3",
+          "cpu",
+          "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/results/FetchPushDense/cpu"
+        ]
+      },
+      "gpu": {
+        "returncode": 0,
+        "command": [
+          "/oscar/scratch/sboughan/venvs/se6-verify-fetch311/bin/python",
+          "-m",
+          "scripts.benchmarks.renderer_table.collect",
+          "swm/FetchPushDense-v3",
+          "gpu",
+          "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/results/FetchPushDense/gpu",
+          "--corpus",
+          "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/results/FetchPushDense/cpu"
+        ]
+      }
+    }
+  },
+  {
+    "registration": "swm/FetchPushDict-v3",
+    "phases": {
+      "cpu": {
+        "returncode": 0,
+        "command": [
+          "/oscar/scratch/sboughan/venvs/se6-verify-fetch311/bin/python",
+          "-m",
+          "scripts.benchmarks.renderer_table.collect",
+          "swm/FetchPushDict-v3",
+          "cpu",
+          "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/results/FetchPushDict/cpu"
+        ]
+      },
+      "gpu": {
+        "returncode": 0,
+        "command": [
+          "/oscar/scratch/sboughan/venvs/se6-verify-fetch311/bin/python",
+          "-m",
+          "scripts.benchmarks.renderer_table.collect",
+          "swm/FetchPushDict-v3",
+          "gpu",
+          "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/results/FetchPushDict/gpu",
+          "--corpus",
+          "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/results/FetchPushDict/cpu"
+        ]
+      }
+    }
+  },
+  {
+    "registration": "swm/FetchReach-v3",
+    "phases": {
+      "cpu": {
+        "returncode": 0,
+        "command": [
+          "/oscar/scratch/sboughan/venvs/se6-verify-fetch311/bin/python",
+          "-m",
+          "scripts.benchmarks.renderer_table.collect",
+          "swm/FetchReach-v3",
+          "cpu",
+          "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/results/FetchReach/cpu"
+        ]
+      },
+      "gpu": {
+        "returncode": 0,
+        "command": [
+          "/oscar/scratch/sboughan/venvs/se6-verify-fetch311/bin/python",
+          "-m",
+          "scripts.benchmarks.renderer_table.collect",
+          "swm/FetchReach-v3",
+          "gpu",
+          "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/results/FetchReach/gpu",
+          "--corpus",
+          "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/results/FetchReach/cpu"
+        ]
+      }
+    }
+  },
+  {
+    "registration": "swm/FetchReachDense-v3",
+    "phases": {
+      "cpu": {
+        "returncode": 0,
+        "command": [
+          "/oscar/scratch/sboughan/venvs/se6-verify-fetch311/bin/python",
+          "-m",
+          "scripts.benchmarks.renderer_table.collect",
+          "swm/FetchReachDense-v3",
+          "cpu",
+          "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/results/FetchReachDense/cpu"
+        ]
+      },
+      "gpu": {
+        "returncode": 0,
+        "command": [
+          "/oscar/scratch/sboughan/venvs/se6-verify-fetch311/bin/python",
+          "-m",
+          "scripts.benchmarks.renderer_table.collect",
+          "swm/FetchReachDense-v3",
+          "gpu",
+          "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/results/FetchReachDense/gpu",
+          "--corpus",
+          "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/results/FetchReachDense/cpu"
+        ]
+      }
+    }
+  },
+  {
+    "registration": "swm/FetchReachDict-v3",
+    "phases": {
+      "cpu": {
+        "returncode": 0,
+        "command": [
+          "/oscar/scratch/sboughan/venvs/se6-verify-fetch311/bin/python",
+          "-m",
+          "scripts.benchmarks.renderer_table.collect",
+          "swm/FetchReachDict-v3",
+          "cpu",
+          "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/results/FetchReachDict/cpu"
+        ]
+      },
+      "gpu": {
+        "returncode": 0,
+        "command": [
+          "/oscar/scratch/sboughan/venvs/se6-verify-fetch311/bin/python",
+          "-m",
+          "scripts.benchmarks.renderer_table.collect",
+          "swm/FetchReachDict-v3",
+          "gpu",
+          "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/results/FetchReachDict/gpu",
+          "--corpus",
+          "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/results/FetchReachDict/cpu"
+        ]
+      }
+    }
+  },
+  {
+    "registration": "swm/FetchSlide-v3",
+    "phases": {
+      "cpu": {
+        "returncode": 0,
+        "command": [
+          "/oscar/scratch/sboughan/venvs/se6-verify-fetch311/bin/python",
+          "-m",
+          "scripts.benchmarks.renderer_table.collect",
+          "swm/FetchSlide-v3",
+          "cpu",
+          "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/results/FetchSlide/cpu"
+        ]
+      },
+      "gpu": {
+        "returncode": 0,
+        "command": [
+          "/oscar/scratch/sboughan/venvs/se6-verify-fetch311/bin/python",
+          "-m",
+          "scripts.benchmarks.renderer_table.collect",
+          "swm/FetchSlide-v3",
+          "gpu",
+          "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/results/FetchSlide/gpu",
+          "--corpus",
+          "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/results/FetchSlide/cpu"
+        ]
+      }
+    }
+  },
+  {
+    "registration": "swm/FetchSlideDense-v3",
+    "phases": {
+      "cpu": {
+        "returncode": 0,
+        "command": [
+          "/oscar/scratch/sboughan/venvs/se6-verify-fetch311/bin/python",
+          "-m",
+          "scripts.benchmarks.renderer_table.collect",
+          "swm/FetchSlideDense-v3",
+          "cpu",
+          "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/results/FetchSlideDense/cpu"
+        ]
+      },
+      "gpu": {
+        "returncode": 0,
+        "command": [
+          "/oscar/scratch/sboughan/venvs/se6-verify-fetch311/bin/python",
+          "-m",
+          "scripts.benchmarks.renderer_table.collect",
+          "swm/FetchSlideDense-v3",
+          "gpu",
+          "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/results/FetchSlideDense/gpu",
+          "--corpus",
+          "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/results/FetchSlideDense/cpu"
+        ]
+      }
+    }
+  },
+  {
+    "registration": "swm/FetchSlideDict-v3",
+    "phases": {
+      "cpu": {
+        "returncode": 0,
+        "command": [
+          "/oscar/scratch/sboughan/venvs/se6-verify-fetch311/bin/python",
+          "-m",
+          "scripts.benchmarks.renderer_table.collect",
+          "swm/FetchSlideDict-v3",
+          "cpu",
+          "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/results/FetchSlideDict/cpu"
+        ]
+      },
+      "gpu": {
+        "returncode": 0,
+        "command": [
+          "/oscar/scratch/sboughan/venvs/se6-verify-fetch311/bin/python",
+          "-m",
+          "scripts.benchmarks.renderer_table.collect",
+          "swm/FetchSlideDict-v3",
+          "gpu",
+          "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/results/FetchSlideDict/gpu",
+          "--corpus",
+          "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/results/FetchSlideDict/cpu"
+        ]
+      }
+    }
+  }
+]

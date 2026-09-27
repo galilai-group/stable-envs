@@ -1,0 +1,90 @@
+## SLURM PROLOG ###############################################################
+##    Job ID : 6739861
+##  Job Name : se-randall-measure
+##  Nodelist : gpu1504
+##      CPUs : 
+##  Mem/Node : 32768 MB
+## Directory : /oscar/home/sboughan
+##   Job Started : Sun Sep 27 12:57:24 PM EDT 2026
+###############################################################################
+{
+  "executable": "/oscar/scratch/sboughan/venvs/se6-verify-vis311/bin/python",
+  "host": "gpu1504.oscar.ccv.brown.edu",
+  "environment": {
+    "MUJOCO_GL": "glfw",
+    "DISPLAY": ":4961",
+    "LIBGL_ALWAYS_SOFTWARE": "1",
+    "GALLIUM_DRIVER": "llvmpipe",
+    "CUDA_VISIBLE_DEVICES": "0"
+  },
+  "versions": {
+    "torch": {
+      "version": "2.14.0+cu126",
+      "path": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages"
+    },
+    "numpy": {
+      "version": "2.5.3",
+      "path": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages"
+    },
+    "tensordict": {
+      "version": "0.14.2",
+      "path": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages"
+    },
+    "mujoco": {
+      "version": "3.11.0",
+      "path": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages"
+    },
+    "dm-control": {
+      "version": "1.0.44",
+      "path": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages"
+    },
+    "gymnasium": {
+      "version": "1.3.0",
+      "path": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages"
+    },
+    "ogbench": {
+      "version": "1.2.1",
+      "path": "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages"
+    },
+    "craftax": {
+      "version": "1.6.1",
+      "path": "/oscar/scratch/sboughan/venvs/se-step4-swm/lib/python3.12/site-packages"
+    },
+    "jax": {
+      "version": "0.11.1",
+      "path": "/oscar/scratch/sboughan/venvs/se-step4-swm/lib/python3.12/site-packages"
+    },
+    "jaxlib": {
+      "version": "0.11.1",
+      "path": "/oscar/scratch/sboughan/venvs/se-step4-swm/lib/python3.12/site-packages"
+    },
+    "flax": {
+      "version": "0.12.9",
+      "path": "/oscar/scratch/sboughan/venvs/se-step4-swm/lib/python3.12/site-packages"
+    },
+    "pymunk": {
+      "version": "7.3.0",
+      "path": "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages"
+    },
+    "glfw": {
+      "version": "2.10.2",
+      "path": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages"
+    },
+    "PyOpenGL": {
+      "version": "3.1.10",
+      "path": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages"
+    }
+  },
+  "gl_renderer": "llvmpipe (LLVM 19.1.7, 256 bits)",
+  "gl_vendor": "Mesa",
+  "frame_shape": [
+    64,
+    64,
+    3
+  ],
+  "software_cpu_gl_proven": true
+}
+{"registration": "swm/SimplePointMaze-v0", "phases": {"cpu": {"returncode": 0, "command": ["/oscar/scratch/sboughan/venvs/se6-verify-vis311/bin/python", "-m", "scripts.benchmarks.renderer_table.collect", "swm/SimplePointMaze-v0", "cpu", "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/results/SimplePointMaze/cpu"]}}}
+{"registration": "swm/SimplePointMaze-v0", "phases": {"cpu": {"returncode": 0, "command": ["/oscar/scratch/sboughan/venvs/se6-verify-vis311/bin/python", "-m", "scripts.benchmarks.renderer_table.collect", "swm/SimplePointMaze-v0", "cpu", "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/results/SimplePointMaze/cpu"]}, "gpu": {"returncode": 0, "command": ["/oscar/scratch/sboughan/venvs/se6-verify-vis311/bin/python", "-m", "scripts.benchmarks.renderer_table.collect", "swm/SimplePointMaze-v0", "gpu", "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/results/SimplePointMaze/gpu", "--corpus", "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/results/SimplePointMaze/cpu"]}}}
+{"registration": "swm/OGBMaze-v0", "phases": {"cpu": {"returncode": 0, "command": ["/oscar/scratch/sboughan/venvs/se6-verify-vis311/bin/python", "-m", "scripts.benchmarks.renderer_table.collect", "swm/OGBMaze-v0", "cpu", "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/maze/PointMazeLargeNavigate/cpu"]}}}
+{"registration": "swm/OGBMaze-v0", "phases": {"cpu": {"returncode": 0, "command": ["/oscar/scratch/sboughan/venvs/se6-verify-vis311/bin/python", "-m", "scripts.benchmarks.renderer_table.collect", "swm/OGBMaze-v0", "cpu", "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/maze/PointMazeLargeNavigate/cpu"]}, "gpu": {"returncode": 0, "command": ["/oscar/scratch/sboughan/venvs/se6-verify-vis311/bin/python", "-m", "scripts.benchmarks.renderer_table.collect", "swm/OGBMaze-v0", "gpu", "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/maze/PointMazeLargeNavigate/gpu", "--corpus", "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/maze/PointMazeLargeNavigate/cpu"]}}}

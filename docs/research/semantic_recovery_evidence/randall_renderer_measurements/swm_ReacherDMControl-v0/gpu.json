@@ -1,0 +1,1862 @@
+{
+  "registration": "swm/ReacherDMControl-v0",
+  "status": "COMPLETE",
+  "family": "dmcontrol",
+  "name": "DMCReacherHard",
+  "phase": "gpu",
+  "profile": {
+    "host": "gpu1503.oscar.ccv.brown.edu",
+    "cpu": "AMD EPYC 7532 32-Core Processor",
+    "gpu": "NVIDIA RTX A6000",
+    "python": "3.12.9",
+    "packages": {
+      "torch": {
+        "version": "2.14.0+cu126",
+        "path": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages"
+      },
+      "numpy": {
+        "version": "2.5.3",
+        "path": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages"
+      },
+      "tensordict": {
+        "version": "0.14.2",
+        "path": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages"
+      },
+      "gymnasium": {
+        "version": "1.3.0",
+        "path": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages"
+      },
+      "mujoco": {
+        "version": "3.11.0",
+        "path": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages"
+      },
+      "dm-control": {
+        "version": "1.0.44",
+        "path": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages"
+      },
+      "ogbench": {
+        "version": "1.2.1",
+        "path": "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages"
+      },
+      "craftax": {
+        "version": "1.6.1",
+        "path": "/oscar/scratch/sboughan/venvs/se-step4-swm/lib/python3.12/site-packages"
+      },
+      "jax": {
+        "version": "0.11.1",
+        "path": "/oscar/scratch/sboughan/venvs/se-step4-swm/lib/python3.12/site-packages"
+      },
+      "jaxlib": {
+        "version": "0.11.1",
+        "path": "/oscar/scratch/sboughan/venvs/se-step4-swm/lib/python3.12/site-packages"
+      },
+      "flax": {
+        "version": "0.12.9",
+        "path": "/oscar/scratch/sboughan/venvs/se-step4-swm/lib/python3.12/site-packages"
+      },
+      "pymunk": {
+        "version": "7.3.0",
+        "path": "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages"
+      },
+      "pygame": {
+        "version": "2.6.1",
+        "path": "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages"
+      }
+    },
+    "torch_threads": 1,
+    "environment": {
+      "SLURM_JOB_ID": "6739564",
+      "MUJOCO_GL": "egl",
+      "PYOPENGL_PLATFORM": "egl",
+      "LIBGL_ALWAYS_SOFTWARE": null,
+      "GALLIUM_DRIVER": null,
+      "DISPLAY": ":4664",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "LP_NUM_THREADS": "1",
+      "JAX_PLATFORMS": null,
+      "CRAFTAX_JAX_BACKEND": null,
+      "CUDA_VISIBLE_DEVICES": "0"
+    }
+  },
+  "frames": [
+    {
+      "index": 0,
+      "state_hash": "07817c1d276a7bd63280e13f4694cf60ef742b9d3b1d782009abe0d63cda2f3d",
+      "camera": 0,
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "gpu_timing": {
+        "samples_ms": [
+          10.769341,
+          10.754841,
+          10.73293,
+          10.72101,
+          10.72119
+        ],
+        "statistics_ms": {
+          "count": 5,
+          "mean": 10.739862400000002,
+          "median": 10.73293,
+          "p95": 10.766441,
+          "maximum": 10.769341,
+          "minimum": 10.72101,
+          "std": 0.01921185047412186
+        },
+        "first_call_ms": 1090.309649,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_to_cpu_timing": {
+        "samples_ms": [
+          10.889209,
+          10.872229,
+          10.892449,
+          10.915369,
+          10.85139
+        ],
+        "statistics_ms": {
+          "count": 5,
+          "mean": 10.8841292,
+          "median": 10.889209,
+          "p95": 10.910785,
+          "maximum": 10.915369,
+          "minimum": 10.85139,
+          "std": 0.021374838108392517
+        },
+        "first_call_ms": 10.849329,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_quality": {
+        "mse_normalized": 0.00022577331586229264,
+        "mse_uint8": 14.680909863945578,
+        "mae_rgb": 2.567176870748299,
+        "mean_max_channel_abs": 3.6750438456632653,
+        "exact_fraction": 0.10012755102040816,
+        "within8_fraction": 0.9363440688775511,
+        "ssim": 0.9958091307779601,
+        "max_channel_abs": 109.0,
+        "candidate_sha256": "78ff532c70ef9bd20a860015981e1b0be87ad5498a640d8120126713c7ee3ec6",
+        "oracle_sha256": "518601357054bc6551401e19fe87b6af073af15fec1b198d2cd72a6c5e49aae7",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "supplied_and_live_state_nonmutation": true
+    },
+    {
+      "index": 1,
+      "state_hash": "c7be7d32c9a42cac0df748c9032960054be47d3ab34ed67d6783909e6b091fd4",
+      "camera": 0,
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "gpu_timing": {
+        "samples_ms": [
+          10.727911,
+          10.700351,
+          10.69894,
+          10.705951,
+          10.72925
+        ],
+        "statistics_ms": {
+          "count": 5,
+          "mean": 10.7124806,
+          "median": 10.705951,
+          "p95": 10.7289822,
+          "maximum": 10.72925,
+          "minimum": 10.69894,
+          "std": 0.013359795965508063
+        },
+        "first_call_ms": 11.611805,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_to_cpu_timing": {
+        "samples_ms": [
+          10.8721,
+          10.765201,
+          10.76052,
+          10.868039,
+          10.874239
+        ],
+        "statistics_ms": {
+          "count": 5,
+          "mean": 10.828019800000002,
+          "median": 10.868039,
+          "p95": 10.873811199999999,
+          "maximum": 10.874239,
+          "minimum": 10.76052,
+          "std": 0.05326019054190475
+        },
+        "first_call_ms": 10.76645,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_quality": {
+        "mse_normalized": 0.00022675849343005178,
+        "mse_uint8": 14.744971035289115,
+        "mae_rgb": 2.564831792091837,
+        "mean_max_channel_abs": 3.671795280612245,
+        "exact_fraction": 0.09994818239795919,
+        "within8_fraction": 0.9366430165816326,
+        "ssim": 0.9957502656544845,
+        "max_channel_abs": 102.0,
+        "candidate_sha256": "badce111a3dbf1c43225efc9579aa7ae848f9ec406a12e9aa19eb452a78ea38c",
+        "oracle_sha256": "aa62da9a56908f6f0356835061a5b6b01cf135da808c3efa9da2f55a4e2ba18b",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "supplied_and_live_state_nonmutation": true
+    },
+    {
+      "index": 2,
+      "state_hash": "adee6f70dcc11e90bc022f6eabc4f1160c2eaa692794e1fca42ea06b8aca6118",
+      "camera": 0,
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "gpu_timing": {
+        "samples_ms": [
+          10.70591,
+          10.717541,
+          10.71633,
+          10.691051,
+          10.71091
+        ],
+        "statistics_ms": {
+          "count": 5,
+          "mean": 10.7083484,
+          "median": 10.71091,
+          "p95": 10.7172988,
+          "maximum": 10.717541,
+          "minimum": 10.691051,
+          "std": 0.009590802564957831
+        },
+        "first_call_ms": 11.441276,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_to_cpu_timing": {
+        "samples_ms": [
+          10.77329,
+          10.89053,
+          10.86184,
+          10.7382,
+          10.74413
+        ],
+        "statistics_ms": {
+          "count": 5,
+          "mean": 10.801598,
+          "median": 10.77329,
+          "p95": 10.884792000000001,
+          "maximum": 10.89053,
+          "minimum": 10.7382,
+          "std": 0.06270760636477844
+        },
+        "first_call_ms": 10.7819,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_quality": {
+        "mse_normalized": 0.00021935745294849966,
+        "mse_uint8": 14.26371837797619,
+        "mae_rgb": 2.5521298363095237,
+        "mean_max_channel_abs": 3.655373086734694,
+        "exact_fraction": 0.10028698979591837,
+        "within8_fraction": 0.9348294005102041,
+        "ssim": 0.9962356002104098,
+        "max_channel_abs": 85.0,
+        "candidate_sha256": "726674bf7da6ec624ed0d788e0ed65274f3be266b84fba7838f8c242b2710290",
+        "oracle_sha256": "edad5dcc4c67e0647fe5ddc97587028faa9677053dbf6ffafaf11a4d43b38407",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "supplied_and_live_state_nonmutation": true
+    },
+    {
+      "index": 3,
+      "state_hash": "c3707ab41eed0f743d787c904bc8810f1350f93eeb365d81d26252fb3486a2bb",
+      "camera": 0,
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "gpu_timing": {
+        "samples_ms": [
+          10.686781,
+          10.72346,
+          10.693141,
+          10.69557,
+          10.695541
+        ],
+        "statistics_ms": {
+          "count": 5,
+          "mean": 10.6988986,
+          "median": 10.695541,
+          "p95": 10.717882,
+          "maximum": 10.72346,
+          "minimum": 10.686781,
+          "std": 0.012693318031152923
+        },
+        "first_call_ms": 11.470385,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_to_cpu_timing": {
+        "samples_ms": [
+          10.86932,
+          10.735111,
+          10.73822,
+          10.73711,
+          10.74296
+        ],
+        "statistics_ms": {
+          "count": 5,
+          "mean": 10.7645442,
+          "median": 10.73822,
+          "p95": 10.844048,
+          "maximum": 10.86932,
+          "minimum": 10.735111,
+          "std": 0.05245142143507657
+        },
+        "first_call_ms": 10.748591,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_quality": {
+        "mse_normalized": 0.00022847220996241634,
+        "mse_uint8": 14.856405452806122,
+        "mae_rgb": 2.568060427295918,
+        "mean_max_channel_abs": 3.676678093112245,
+        "exact_fraction": 0.10020727040816327,
+        "within8_fraction": 0.9355668048469388,
+        "ssim": 0.9957487298170733,
+        "max_channel_abs": 102.0,
+        "candidate_sha256": "62a9fe10bf908d55cf5e468dc76fc1c78c1d3541f20eb4e49716a014cb8d0440",
+        "oracle_sha256": "d927b81a85e2dd9901bef59bf6e8785348323488e6a7821bff1a630823eca498",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "supplied_and_live_state_nonmutation": true
+    },
+    {
+      "index": 4,
+      "state_hash": "c1c6809186558c0ae2b37faafc9c5970c96240fc117e452516cf030a0abea638",
+      "camera": 0,
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "gpu_timing": {
+        "samples_ms": [
+          10.681961,
+          11.445165,
+          10.773,
+          10.702941,
+          10.70253
+        ],
+        "statistics_ms": {
+          "count": 5,
+          "mean": 10.861119399999998,
+          "median": 10.702941,
+          "p95": 11.310732,
+          "maximum": 11.445165,
+          "minimum": 10.681961,
+          "std": 0.2936470765545607
+        },
+        "first_call_ms": 11.526805,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_to_cpu_timing": {
+        "samples_ms": [
+          10.76187,
+          10.76936,
+          10.888509,
+          10.877159,
+          10.86284
+        ],
+        "statistics_ms": {
+          "count": 5,
+          "mean": 10.8319476,
+          "median": 10.86284,
+          "p95": 10.886239000000002,
+          "maximum": 10.888509,
+          "minimum": 10.76187,
+          "std": 0.05481912208928575
+        },
+        "first_call_ms": 10.76944,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_quality": {
+        "mse_normalized": 0.00022923385040290623,
+        "mse_uint8": 14.90593112244898,
+        "mae_rgb": 2.587611607142857,
+        "mean_max_channel_abs": 3.705516581632653,
+        "exact_fraction": 0.10002790178571429,
+        "within8_fraction": 0.9326570471938775,
+        "ssim": 0.9964021848905433,
+        "max_channel_abs": 115.0,
+        "candidate_sha256": "5d045b1473db6c16d3801dab0ee40bb628dcd3d4685905d536c602be93c773cf",
+        "oracle_sha256": "7e3f4f7da80d741055c637747f2b729452bdaf8acaa35a2f5b12aa932423c1a3",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "supplied_and_live_state_nonmutation": true
+    },
+    {
+      "index": 5,
+      "state_hash": "149dd9d658273146f53f0cf10cb815d1512228b51141bb815ae0396b807abb1f",
+      "camera": 0,
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "gpu_timing": {
+        "samples_ms": [
+          10.678081,
+          10.70454,
+          10.691901,
+          10.69264,
+          10.708451
+        ],
+        "statistics_ms": {
+          "count": 5,
+          "mean": 10.6951226,
+          "median": 10.69264,
+          "p95": 10.7076688,
+          "maximum": 10.708451,
+          "minimum": 10.678081,
+          "std": 0.01070786448550762
+        },
+        "first_call_ms": 11.447726,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_to_cpu_timing": {
+        "samples_ms": [
+          10.79089,
+          10.73964,
+          10.73069,
+          10.872829,
+          10.85115
+        ],
+        "statistics_ms": {
+          "count": 5,
+          "mean": 10.797039799999999,
+          "median": 10.79089,
+          "p95": 10.8684932,
+          "maximum": 10.872829,
+          "minimum": 10.73069,
+          "std": 0.05728310330420329
+        },
+        "first_call_ms": 10.75953,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_quality": {
+        "mse_normalized": 0.00021312375031712032,
+        "mse_uint8": 13.858371864370747,
+        "mae_rgb": 2.5870336415816326,
+        "mean_max_channel_abs": 3.698162468112245,
+        "exact_fraction": 0.10006776147959184,
+        "within8_fraction": 0.9321986607142857,
+        "ssim": 0.9968586919843286,
+        "max_channel_abs": 91.0,
+        "candidate_sha256": "2703821327a1ec61b2404b1b917a0e2a99d15f472e30145ec4745364244a7aed",
+        "oracle_sha256": "ab31f1e297e844f6e9a4b194254e9f4fd680f0155d36234113b627b9f90a42aa",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "supplied_and_live_state_nonmutation": true
+    },
+    {
+      "index": 6,
+      "state_hash": "86182821ec5e5c22857e3f754526f7b55cb80dfa17594bba60b22a339e12c1e0",
+      "camera": 0,
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "gpu_timing": {
+        "samples_ms": [
+          10.682331,
+          10.689961,
+          10.673231,
+          10.66721,
+          10.676911
+        ],
+        "statistics_ms": {
+          "count": 5,
+          "mean": 10.6779288,
+          "median": 10.676911,
+          "p95": 10.688435,
+          "maximum": 10.689961,
+          "minimum": 10.66721,
+          "std": 0.007773687886711052
+        },
+        "first_call_ms": 11.427666,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_to_cpu_timing": {
+        "samples_ms": [
+          10.77902,
+          10.74454,
+          10.75134,
+          10.86008,
+          10.85811
+        ],
+        "statistics_ms": {
+          "count": 5,
+          "mean": 10.798618,
+          "median": 10.77902,
+          "p95": 10.859686,
+          "maximum": 10.86008,
+          "minimum": 10.74454,
+          "std": 0.05071606546253342
+        },
+        "first_call_ms": 10.73936,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_quality": {
+        "mse_normalized": 0.0002235330406672473,
+        "mse_uint8": 14.535235969387756,
+        "mae_rgb": 2.587093431122449,
+        "mean_max_channel_abs": 3.698162468112245,
+        "exact_fraction": 0.09970902423469388,
+        "within8_fraction": 0.9328164859693877,
+        "ssim": 0.9966184241067376,
+        "max_channel_abs": 100.0,
+        "candidate_sha256": "aa3e42bc272cd79fdccea660b786dfa6fc1de998a639dd46b3adb1242fc07deb",
+        "oracle_sha256": "882fbbbd7a3e1e50f42dc17465c904395267f47eb07fac33713207df40f9e1e2",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "supplied_and_live_state_nonmutation": true
+    },
+    {
+      "index": 7,
+      "state_hash": "99ab6389a091cb20051babadad06bdb1e57f70972d918ae52767bbc50ad80214",
+      "camera": 0,
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "gpu_timing": {
+        "samples_ms": [
+          10.671031,
+          10.678211,
+          10.66461,
+          10.682051,
+          10.69411
+        ],
+        "statistics_ms": {
+          "count": 5,
+          "mean": 10.678002600000001,
+          "median": 10.678211,
+          "p95": 10.6916982,
+          "maximum": 10.69411,
+          "minimum": 10.66461,
+          "std": 0.010038388806975164
+        },
+        "first_call_ms": 11.419246,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_to_cpu_timing": {
+        "samples_ms": [
+          10.83106,
+          13.82206,
+          11.081808,
+          10.75176,
+          10.835999
+        ],
+        "statistics_ms": {
+          "count": 5,
+          "mean": 11.464537400000001,
+          "median": 10.835999,
+          "p95": 13.2740096,
+          "maximum": 13.82206,
+          "minimum": 10.75176,
+          "std": 1.1839594893129748
+        },
+        "first_call_ms": 10.74765,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_quality": {
+        "mse_normalized": 0.00021922402539447153,
+        "mse_uint8": 14.25504225127551,
+        "mae_rgb": 2.582556069302721,
+        "mean_max_channel_abs": 3.688576211734694,
+        "exact_fraction": 0.10022720025510204,
+        "within8_fraction": 0.9327566964285714,
+        "ssim": 0.9966967069472744,
+        "max_channel_abs": 98.0,
+        "candidate_sha256": "29a1457430a27f2e8437a2086952014d6b280137d09644fab66de5b0376375b3",
+        "oracle_sha256": "bfd0a40c2390334c02913b70d87394a4e62b241327f3377de57cad2ba2b3b191",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "supplied_and_live_state_nonmutation": true
+    },
+    {
+      "index": 8,
+      "state_hash": "ccee5abcd499f04b1c7d7e2de964e915fcd28fd726dde29576d7b88fa07dcb7f",
+      "camera": 0,
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "gpu_timing": {
+        "samples_ms": [
+          10.67882,
+          10.678211,
+          10.68136,
+          10.675611,
+          10.685941
+        ],
+        "statistics_ms": {
+          "count": 5,
+          "mean": 10.679988599999998,
+          "median": 10.67882,
+          "p95": 10.685024799999999,
+          "maximum": 10.685941,
+          "minimum": 10.675611,
+          "std": 0.0034928691129213164
+        },
+        "first_call_ms": 11.405296,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_to_cpu_timing": {
+        "samples_ms": [
+          10.876219,
+          10.75796,
+          10.73846,
+          10.84319,
+          10.85872
+        ],
+        "statistics_ms": {
+          "count": 5,
+          "mean": 10.8149098,
+          "median": 10.84319,
+          "p95": 10.8727192,
+          "maximum": 10.876219,
+          "minimum": 10.73846,
+          "std": 0.05579565033369541
+        },
+        "first_call_ms": 10.734491,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_quality": {
+        "mse_normalized": 0.0002213616247152456,
+        "mse_uint8": 14.394039647108844,
+        "mae_rgb": 2.5833466198979593,
+        "mean_max_channel_abs": 3.6904695471938775,
+        "exact_fraction": 0.10014748086734694,
+        "within8_fraction": 0.9327766262755102,
+        "ssim": 0.996653238695516,
+        "max_channel_abs": 112.0,
+        "candidate_sha256": "4510797a3005e4a0f8df2254a1ed0b7d5150c15c9830b4227ba792e7f50ac409",
+        "oracle_sha256": "8c90b2f54054019e2134084e1af60f36974a60a812a1b1f4089be7b1112e4a38",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "supplied_and_live_state_nonmutation": true
+    },
+    {
+      "index": 9,
+      "state_hash": "417310a0a7b01c9b14248b16c948bb86fe65b6b5a91e0d5009fc4ed0db5689d3",
+      "camera": 0,
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "gpu_timing": {
+        "samples_ms": [
+          10.682131,
+          10.71028,
+          10.691951,
+          10.675421,
+          10.681251
+        ],
+        "statistics_ms": {
+          "count": 5,
+          "mean": 10.6882068,
+          "median": 10.682131,
+          "p95": 10.706614199999999,
+          "maximum": 10.71028,
+          "minimum": 10.675421,
+          "std": 0.012247615056001408
+        },
+        "first_call_ms": 11.380086,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_to_cpu_timing": {
+        "samples_ms": [
+          10.71578,
+          10.884859,
+          10.85348,
+          10.888869,
+          10.871999
+        ],
+        "statistics_ms": {
+          "count": 5,
+          "mean": 10.8429974,
+          "median": 10.871999,
+          "p95": 10.888067,
+          "maximum": 10.888869,
+          "minimum": 10.71578,
+          "std": 0.06479481739954192
+        },
+        "first_call_ms": 10.77827,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_quality": {
+        "mse_normalized": 0.00021251934188708162,
+        "mse_uint8": 13.819070206207483,
+        "mae_rgb": 2.5580955038265305,
+        "mean_max_channel_abs": 3.6519252232142856,
+        "exact_fraction": 0.10034677933673469,
+        "within8_fraction": 0.9349888392857143,
+        "ssim": 0.9967999820638358,
+        "max_channel_abs": 106.0,
+        "candidate_sha256": "37cf158129b0a94f1e3d303a47d8ddd19b2cf4e0e4f65c50e0a83e291fa09687",
+        "oracle_sha256": "3def96cab0003fb01a8b93a76ae3971203fd4877ce1699a3c722c6da97c00405",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "supplied_and_live_state_nonmutation": true
+    },
+    {
+      "index": 10,
+      "state_hash": "83a21d0d271c697b4e52851fd2af1830e988f1556cf0fc7a26758cefe07b8b09",
+      "camera": 0,
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "gpu_timing": {
+        "samples_ms": [
+          10.679201,
+          10.69275,
+          10.650061,
+          10.70042,
+          10.698571
+        ],
+        "statistics_ms": {
+          "count": 5,
+          "mean": 10.6842006,
+          "median": 10.69275,
+          "p95": 10.7000502,
+          "maximum": 10.70042,
+          "minimum": 10.650061,
+          "std": 0.01861815168699566
+        },
+        "first_call_ms": 11.419646,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_to_cpu_timing": {
+        "samples_ms": [
+          10.865479,
+          10.86765,
+          10.868219,
+          10.71634,
+          10.737371
+        ],
+        "statistics_ms": {
+          "count": 5,
+          "mean": 10.8110118,
+          "median": 10.865479,
+          "p95": 10.8681052,
+          "maximum": 10.868219,
+          "minimum": 10.71634,
+          "std": 0.06904048442298173
+        },
+        "first_call_ms": 10.73567,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_quality": {
+        "mse_normalized": 0.00021848935652692453,
+        "mse_uint8": 14.207270408163266,
+        "mae_rgb": 2.600592580782313,
+        "mean_max_channel_abs": 3.7181919642857144,
+        "exact_fraction": 0.09833386479591837,
+        "within8_fraction": 0.9324178890306123,
+        "ssim": 0.9964111580954174,
+        "max_channel_abs": 88.0,
+        "candidate_sha256": "20012efa79617110f2c4168a22e5c4adb46376b3eb455f1cc42646cc960f5d00",
+        "oracle_sha256": "61ca0d52170a7097691a4ccd2432b4d0657fa8607cf1b62d2600841bd5e51335",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "supplied_and_live_state_nonmutation": true
+    },
+    {
+      "index": 11,
+      "state_hash": "13fa947ab1662e9d248cac313811be348619bad29ed1c9275d82609111b98270",
+      "camera": 0,
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "gpu_timing": {
+        "samples_ms": [
+          10.68667,
+          10.718011,
+          10.72919,
+          10.69092,
+          10.663091
+        ],
+        "statistics_ms": {
+          "count": 5,
+          "mean": 10.697576399999999,
+          "median": 10.69092,
+          "p95": 10.7269542,
+          "maximum": 10.72919,
+          "minimum": 10.663091,
+          "std": 0.02353504883020217
+        },
+        "first_call_ms": 11.464545,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_to_cpu_timing": {
+        "samples_ms": [
+          10.73811,
+          10.73361,
+          10.71734,
+          10.727761,
+          10.70769
+        ],
+        "statistics_ms": {
+          "count": 5,
+          "mean": 10.724902199999999,
+          "median": 10.727761,
+          "p95": 10.737210000000001,
+          "maximum": 10.73811,
+          "minimum": 10.70769,
+          "std": 0.011062469858038396
+        },
+        "first_call_ms": 10.75125,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_quality": {
+        "mse_normalized": 0.00021555466549364846,
+        "mse_uint8": 14.01644212372449,
+        "mae_rgb": 2.5802043473639458,
+        "mean_max_channel_abs": 3.6894929846938775,
+        "exact_fraction": 0.09956951530612244,
+        "within8_fraction": 0.9325573979591837,
+        "ssim": 0.9966673790405128,
+        "max_channel_abs": 95.0,
+        "candidate_sha256": "ce273aa1c6c2920f9d20034519119fdb504f76ddee1eed7c0fd1c779d9482c34",
+        "oracle_sha256": "ba4a60c36191c5643fc993288fa1fca2f31893c47e8e09b3f6c97f9bb65612e7",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "supplied_and_live_state_nonmutation": true
+    },
+    {
+      "index": 12,
+      "state_hash": "5c40d489c3a4e86d92fd4d6f50c4d67f5105643291c2ed23ccbea7583393b13d",
+      "camera": 0,
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "gpu_timing": {
+        "samples_ms": [
+          10.69488,
+          10.689821,
+          10.69365,
+          10.726051,
+          10.705211
+        ],
+        "statistics_ms": {
+          "count": 5,
+          "mean": 10.7019226,
+          "median": 10.69488,
+          "p95": 10.721883,
+          "maximum": 10.726051,
+          "minimum": 10.689821,
+          "std": 0.013095618421441616
+        },
+        "first_call_ms": 11.423316,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_to_cpu_timing": {
+        "samples_ms": [
+          10.72717,
+          10.745081,
+          10.820109,
+          10.87052,
+          10.864609
+        ],
+        "statistics_ms": {
+          "count": 5,
+          "mean": 10.805497800000001,
+          "median": 10.820109,
+          "p95": 10.8693378,
+          "maximum": 10.87052,
+          "minimum": 10.72717,
+          "std": 0.05953308592505536
+        },
+        "first_call_ms": 10.76226,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_quality": {
+        "mse_normalized": 0.00021773864774668038,
+        "mse_uint8": 14.158455569727892,
+        "mae_rgb": 2.582469706632653,
+        "mean_max_channel_abs": 3.6927016900510203,
+        "exact_fraction": 0.09954958545918367,
+        "within8_fraction": 0.9324976084183674,
+        "ssim": 0.9966806927333223,
+        "max_channel_abs": 90.0,
+        "candidate_sha256": "3da346778885a891b048539b664a0a0a21f16ea44160a32da7ec340b56a9540e",
+        "oracle_sha256": "684f81bdeee0d42769970cacab207762e58f93a3a262f08053c56a9e31d71ced",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "supplied_and_live_state_nonmutation": true
+    },
+    {
+      "index": 13,
+      "state_hash": "d0563b8f6792b09eec88671327bf22bb08b572357f70bba083dd94f89353e8b8",
+      "camera": 0,
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "gpu_timing": {
+        "samples_ms": [
+          10.756771,
+          10.680131,
+          10.695031,
+          10.68443,
+          10.698481
+        ],
+        "statistics_ms": {
+          "count": 5,
+          "mean": 10.7029688,
+          "median": 10.695031,
+          "p95": 10.745113,
+          "maximum": 10.756771,
+          "minimum": 10.680131,
+          "std": 0.02772391731628148
+        },
+        "first_call_ms": 11.403836,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_to_cpu_timing": {
+        "samples_ms": [
+          10.86538,
+          10.87368,
+          10.882159,
+          10.899209,
+          10.899559
+        ],
+        "statistics_ms": {
+          "count": 5,
+          "mean": 10.883997400000002,
+          "median": 10.882159,
+          "p95": 10.899489,
+          "maximum": 10.899559,
+          "minimum": 10.86538,
+          "std": 0.013638124571949177
+        },
+        "first_call_ms": 10.74505,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_quality": {
+        "mse_normalized": 0.00021862380573144292,
+        "mse_uint8": 14.216012967687075,
+        "mae_rgb": 2.586296237244898,
+        "mean_max_channel_abs": 3.696747448979592,
+        "exact_fraction": 0.099609375,
+        "within8_fraction": 0.9323182397959183,
+        "ssim": 0.9965993325089885,
+        "max_channel_abs": 88.0,
+        "candidate_sha256": "e5e25d89faf564621f22df832ec0b2a17b2063d00309a85b4acbc21eaf6df643",
+        "oracle_sha256": "a791b9cf4af5bac08cdc772c5f95fb2b2dd61a0177c25d78ac2b665e8d89fd9c",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "supplied_and_live_state_nonmutation": true
+    },
+    {
+      "index": 14,
+      "state_hash": "42ddd6045ac3c7bb70a56a9c0176e052052a45f74d30bda64f178236b705d165",
+      "camera": 0,
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "gpu_timing": {
+        "samples_ms": [
+          10.683331,
+          10.676241,
+          10.672341,
+          10.66108,
+          10.663621
+        ],
+        "statistics_ms": {
+          "count": 5,
+          "mean": 10.6713228,
+          "median": 10.672341,
+          "p95": 10.681913,
+          "maximum": 10.683331,
+          "minimum": 10.66108,
+          "std": 0.00816890402440892
+        },
+        "first_call_ms": 11.407696,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_to_cpu_timing": {
+        "samples_ms": [
+          10.729121,
+          10.873429,
+          10.855659,
+          10.84271,
+          10.878619
+        ],
+        "statistics_ms": {
+          "count": 5,
+          "mean": 10.835907599999999,
+          "median": 10.855659,
+          "p95": 10.877581000000001,
+          "maximum": 10.878619,
+          "minimum": 10.729121,
+          "std": 0.05490334695662945
+        },
+        "first_call_ms": 10.80913,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_quality": {
+        "mse_normalized": 0.00021145999249372956,
+        "mse_uint8": 13.750186011904763,
+        "mae_rgb": 2.5824032738095237,
+        "mean_max_channel_abs": 3.685845822704082,
+        "exact_fraction": 0.09931042729591837,
+        "within8_fraction": 0.9332150829081632,
+        "ssim": 0.9967380882175118,
+        "max_channel_abs": 77.0,
+        "candidate_sha256": "b22e85191800965dad507c3a6e43577961ff538baaf6207f26304da12ef4d853",
+        "oracle_sha256": "7c6f06c8528210274873304ee1865005f960a72a6056c1f52bea6006f1b61c0e",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "supplied_and_live_state_nonmutation": true
+    },
+    {
+      "index": 15,
+      "state_hash": "4758693ddefb956a483132e61af7b02a216dbd7e5e71eb5a5fc585cc32adb409",
+      "camera": 0,
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "gpu_timing": {
+        "samples_ms": [
+          10.663751,
+          10.666901,
+          10.67716,
+          10.683121,
+          10.648471
+        ],
+        "statistics_ms": {
+          "count": 5,
+          "mean": 10.6678808,
+          "median": 10.666901,
+          "p95": 10.6819288,
+          "maximum": 10.683121,
+          "minimum": 10.648471,
+          "std": 0.011942552832623238
+        },
+        "first_call_ms": 11.425926,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_to_cpu_timing": {
+        "samples_ms": [
+          10.71856,
+          10.86506,
+          10.73754,
+          10.73105,
+          10.74256
+        ],
+        "statistics_ms": {
+          "count": 5,
+          "mean": 10.758954,
+          "median": 10.73754,
+          "p95": 10.84056,
+          "maximum": 10.86506,
+          "minimum": 10.71856,
+          "std": 0.05365839043430209
+        },
+        "first_call_ms": 14.585935,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_quality": {
+        "mse_normalized": 0.00022781457354183505,
+        "mse_uint8": 14.813642644557824,
+        "mae_rgb": 2.5911458333333335,
+        "mean_max_channel_abs": 3.7081273915816326,
+        "exact_fraction": 0.09972895408163265,
+        "within8_fraction": 0.9324976084183674,
+        "ssim": 0.9963115997971537,
+        "max_channel_abs": 107.0,
+        "candidate_sha256": "2c9dcaa1862f8a45a8eea8fbb21fb94d78260c2aef634b81c045ab239fe6cbb7",
+        "oracle_sha256": "86953426023bb27393258c95e6c985532fba41b91df498ce41710d1fc8f9ac07",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "supplied_and_live_state_nonmutation": true
+    },
+    {
+      "index": 16,
+      "state_hash": "05544277c86fe5dc347eb67d867d042b9f0f37499614f936f9ccefd3326ef5bf",
+      "camera": 0,
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "gpu_timing": {
+        "samples_ms": [
+          10.704861,
+          10.68054,
+          10.686341,
+          10.694831,
+          10.681181
+        ],
+        "statistics_ms": {
+          "count": 5,
+          "mean": 10.689550800000001,
+          "median": 10.686341,
+          "p95": 10.702855,
+          "maximum": 10.704861,
+          "minimum": 10.68054,
+          "std": 0.009206884606640436
+        },
+        "first_call_ms": 11.467366,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_to_cpu_timing": {
+        "samples_ms": [
+          10.84632,
+          10.875309,
+          10.861369,
+          10.85703,
+          10.72806
+        ],
+        "statistics_ms": {
+          "count": 5,
+          "mean": 10.8336176,
+          "median": 10.85703,
+          "p95": 10.872520999999999,
+          "maximum": 10.875309,
+          "minimum": 10.72806,
+          "std": 0.053591438482653415
+        },
+        "first_call_ms": 10.7427,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_quality": {
+        "mse_normalized": 0.00021494678345194287,
+        "mse_uint8": 13.976914593962585,
+        "mae_rgb": 2.592600712159864,
+        "mean_max_channel_abs": 3.7062539859693877,
+        "exact_fraction": 0.09921077806122448,
+        "within8_fraction": 0.9326371173469388,
+        "ssim": 0.9967077140049051,
+        "max_channel_abs": 86.0,
+        "candidate_sha256": "3e76002b24d87eeb6600cc0387bc404c64af65eabf4417bdcf40b393fcc0c07f",
+        "oracle_sha256": "b5b5175f3040dfaae3fa41592b469df1174d9d6f5205bb143537f0ef60f00b2d",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "supplied_and_live_state_nonmutation": true
+    },
+    {
+      "index": 17,
+      "state_hash": "715dce995337c25eb44115ac122a6f5f6491fe68a16b991a07e3ecde352c9ff9",
+      "camera": 0,
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "gpu_timing": {
+        "samples_ms": [
+          10.682541,
+          10.646121,
+          10.69369,
+          10.694371,
+          10.678431
+        ],
+        "statistics_ms": {
+          "count": 5,
+          "mean": 10.679030800000001,
+          "median": 10.682541,
+          "p95": 10.6942348,
+          "maximum": 10.694371,
+          "minimum": 10.646121,
+          "std": 0.017583799821426323
+        },
+        "first_call_ms": 11.406416,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_to_cpu_timing": {
+        "samples_ms": [
+          10.71812,
+          10.74018,
+          10.8642,
+          10.76149,
+          10.78249
+        ],
+        "statistics_ms": {
+          "count": 5,
+          "mean": 10.773296000000002,
+          "median": 10.76149,
+          "p95": 10.847858,
+          "maximum": 10.8642,
+          "minimum": 10.71812,
+          "std": 0.0502563606322621
+        },
+        "first_call_ms": 10.75303,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_quality": {
+        "mse_normalized": 0.00022994420398878506,
+        "mse_uint8": 14.952121864370747,
+        "mae_rgb": 2.5906741602891157,
+        "mean_max_channel_abs": 3.7090242346938775,
+        "exact_fraction": 0.0999282525510204,
+        "within8_fraction": 0.9318000637755102,
+        "ssim": 0.9960730159831022,
+        "max_channel_abs": 119.0,
+        "candidate_sha256": "770497f3394604c0d7787479ae88c896bce0c148e9d59a5750a8d4b0aef60072",
+        "oracle_sha256": "e81359af47350e9d21ba597e111739e28940e13b2c786f3d9fcc1d6e895c63e9",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "supplied_and_live_state_nonmutation": true
+    },
+    {
+      "index": 18,
+      "state_hash": "86182821ec5e5c22857e3f754526f7b55cb80dfa17594bba60b22a339e12c1e0",
+      "camera": 0,
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "gpu_timing": {
+        "samples_ms": [
+          10.688871,
+          10.70366,
+          10.661651,
+          10.66811,
+          10.687191
+        ],
+        "statistics_ms": {
+          "count": 5,
+          "mean": 10.681896599999998,
+          "median": 10.687191,
+          "p95": 10.7007022,
+          "maximum": 10.70366,
+          "minimum": 10.661651,
+          "std": 0.015167551979142414
+        },
+        "first_call_ms": 309.618199,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_to_cpu_timing": {
+        "samples_ms": [
+          10.75649,
+          10.74535,
+          10.730881,
+          10.70449,
+          10.7833
+        ],
+        "statistics_ms": {
+          "count": 5,
+          "mean": 10.7441022,
+          "median": 10.74535,
+          "p95": 10.777938,
+          "maximum": 10.7833,
+          "minimum": 10.70449,
+          "std": 0.026212243844432853
+        },
+        "first_call_ms": 10.7397,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_quality": {
+        "mse_normalized": 0.00020878183789855813,
+        "mse_uint8": 13.57603900935374,
+        "mae_rgb": 2.572265625,
+        "mean_max_channel_abs": 3.6589604591836733,
+        "exact_fraction": 0.10168207908163265,
+        "within8_fraction": 0.9330955038265306,
+        "ssim": 0.9961702408502906,
+        "max_channel_abs": 96.0,
+        "candidate_sha256": "e651b695227087b49be5bacb14e9898cc05c317a2811171e0c5dc4ff2109196c",
+        "oracle_sha256": "0dbce63c23d2ff2b67a493ab87c16a1869f4ff5cf9fdf60d58a1d4176d5ad185",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "supplied_and_live_state_nonmutation": true
+    },
+    {
+      "index": 19,
+      "state_hash": "99ab6389a091cb20051babadad06bdb1e57f70972d918ae52767bbc50ad80214",
+      "camera": 0,
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "gpu_timing": {
+        "samples_ms": [
+          10.664071,
+          10.66449,
+          10.671631,
+          10.645971,
+          10.66829
+        ],
+        "statistics_ms": {
+          "count": 5,
+          "mean": 10.6628906,
+          "median": 10.66449,
+          "p95": 10.6709628,
+          "maximum": 10.671631,
+          "minimum": 10.645971,
+          "std": 0.008896880365611572
+        },
+        "first_call_ms": 11.435225,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_to_cpu_timing": {
+        "samples_ms": [
+          10.85344,
+          10.875049,
+          10.78946,
+          10.71329,
+          10.85424
+        ],
+        "statistics_ms": {
+          "count": 5,
+          "mean": 10.8170958,
+          "median": 10.85344,
+          "p95": 10.8708872,
+          "maximum": 10.875049,
+          "minimum": 10.71329,
+          "std": 0.05932713951101984
+        },
+        "first_call_ms": 10.725181,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_quality": {
+        "mse_normalized": 0.0002034019285818903,
+        "mse_uint8": 13.226210406037415,
+        "mae_rgb": 2.5664660395408165,
+        "mean_max_channel_abs": 3.6496532206632653,
+        "exact_fraction": 0.10176179846938775,
+        "within8_fraction": 0.9330357142857143,
+        "ssim": 0.996385907599319,
+        "max_channel_abs": 70.0,
+        "candidate_sha256": "3d25b592fc7fbae35ccb9b72a57691b62fdd25f7fbe15ea7de7d5c6b5a35ed18",
+        "oracle_sha256": "012ee37ae4f34fc66a6ed45e74e93a9ff257b6d57d5d4e3a425a7dd150f21624",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "supplied_and_live_state_nonmutation": true
+    },
+    {
+      "index": 20,
+      "state_hash": "ccee5abcd499f04b1c7d7e2de964e915fcd28fd726dde29576d7b88fa07dcb7f",
+      "camera": 0,
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "gpu_timing": {
+        "samples_ms": [
+          10.659711,
+          10.642031,
+          10.662461,
+          10.626991,
+          10.651011
+        ],
+        "statistics_ms": {
+          "count": 5,
+          "mean": 10.648441,
+          "median": 10.651011,
+          "p95": 10.661911,
+          "maximum": 10.662461,
+          "minimum": 10.626991,
+          "std": 0.012894718298590341
+        },
+        "first_call_ms": 11.445686,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_to_cpu_timing": {
+        "samples_ms": [
+          10.847909,
+          10.70935,
+          10.699901,
+          10.6996,
+          10.83981
+        ],
+        "statistics_ms": {
+          "count": 5,
+          "mean": 10.759314,
+          "median": 10.70935,
+          "p95": 10.8462892,
+          "maximum": 10.847909,
+          "minimum": 10.6996,
+          "std": 0.06916754687279254
+        },
+        "first_call_ms": 10.73442,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_quality": {
+        "mse_normalized": 0.00020771656293236252,
+        "mse_uint8": 13.506769504676871,
+        "mae_rgb": 2.5697478210034013,
+        "mean_max_channel_abs": 3.6550741390306123,
+        "exact_fraction": 0.10174186862244898,
+        "within8_fraction": 0.9330955038265306,
+        "ssim": 0.9962172513924111,
+        "max_channel_abs": 108.0,
+        "candidate_sha256": "704106c0938923f15c5da0f6d492485edafe94877a33b90b3b135a33b11eb9b8",
+        "oracle_sha256": "79e31d8261608ee09fa7f128efcd0b27c0c45567ec52dc5d8e77a13486b813fb",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "supplied_and_live_state_nonmutation": true
+    },
+    {
+      "index": 21,
+      "state_hash": "417310a0a7b01c9b14248b16c948bb86fe65b6b5a91e0d5009fc4ed0db5689d3",
+      "camera": 0,
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "gpu_timing": {
+        "samples_ms": [
+          10.656461,
+          10.691821,
+          10.7007,
+          10.670281,
+          10.67598
+        ],
+        "statistics_ms": {
+          "count": 5,
+          "mean": 10.679048599999998,
+          "median": 10.67598,
+          "p95": 10.698924199999999,
+          "maximum": 10.7007,
+          "minimum": 10.656461,
+          "std": 0.015674208836173927
+        },
+        "first_call_ms": 11.463626,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_to_cpu_timing": {
+        "samples_ms": [
+          10.73167,
+          10.72532,
+          10.707661,
+          10.71271,
+          10.70668
+        ],
+        "statistics_ms": {
+          "count": 5,
+          "mean": 10.7168082,
+          "median": 10.71271,
+          "p95": 10.7304,
+          "maximum": 10.73167,
+          "minimum": 10.70668,
+          "std": 0.009963641751889504
+        },
+        "first_call_ms": 10.73212,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_quality": {
+        "mse_normalized": 0.00019901608519224686,
+        "mse_uint8": 12.94102093962585,
+        "mae_rgb": 2.543048469387755,
+        "mean_max_channel_abs": 3.6141382334183674,
+        "exact_fraction": 0.10184151785714286,
+        "within8_fraction": 0.935546875,
+        "ssim": 0.9965381470640315,
+        "max_channel_abs": 73.0,
+        "candidate_sha256": "2f0f8c2da1d96e9b68419c50bd490a19a3277e597f45791d2875ae322281b8e1",
+        "oracle_sha256": "b799582024b7350eeedc3dee13313dd7e08d3019fcf8ee85dfc2f408e232a2bd",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "supplied_and_live_state_nonmutation": true
+    },
+    {
+      "index": 22,
+      "state_hash": "83a21d0d271c697b4e52851fd2af1830e988f1556cf0fc7a26758cefe07b8b09",
+      "camera": 0,
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "gpu_timing": {
+        "samples_ms": [
+          10.673401,
+          10.660141,
+          10.66667,
+          10.645111,
+          10.675181
+        ],
+        "statistics_ms": {
+          "count": 5,
+          "mean": 10.664100800000002,
+          "median": 10.66667,
+          "p95": 10.674825,
+          "maximum": 10.675181,
+          "minimum": 10.645111,
+          "std": 0.010882627079892175
+        },
+        "first_call_ms": 11.496306,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_to_cpu_timing": {
+        "samples_ms": [
+          10.71923,
+          10.725501,
+          10.84331,
+          10.84012,
+          10.83184
+        ],
+        "statistics_ms": {
+          "count": 5,
+          "mean": 10.7920002,
+          "median": 10.83184,
+          "p95": 10.842672,
+          "maximum": 10.84331,
+          "minimum": 10.71923,
+          "std": 0.057014149122477015
+        },
+        "first_call_ms": 10.7621,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_quality": {
+        "mse_normalized": 0.0002034062195139494,
+        "mse_uint8": 13.226489423894558,
+        "mae_rgb": 2.5819581738945576,
+        "mean_max_channel_abs": 3.6716159119897958,
+        "exact_fraction": 0.0996890943877551,
+        "within8_fraction": 0.932975924744898,
+        "ssim": 0.9963930942426249,
+        "max_channel_abs": 62.0,
+        "candidate_sha256": "2b1ad20d54792c330c75d9e0dd965537a34905cb9d8c30a449da89cbe96568d4",
+        "oracle_sha256": "cc8dc9afed0e7cc15a33d762129ae1780dbb96269eed27700969d33857474e41",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "supplied_and_live_state_nonmutation": true
+    },
+    {
+      "index": 23,
+      "state_hash": "13fa947ab1662e9d248cac313811be348619bad29ed1c9275d82609111b98270",
+      "camera": 0,
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "gpu_timing": {
+        "samples_ms": [
+          10.656471,
+          10.643861,
+          10.6625,
+          10.644171,
+          10.656381
+        ],
+        "statistics_ms": {
+          "count": 5,
+          "mean": 10.6526768,
+          "median": 10.656381,
+          "p95": 10.6612942,
+          "maximum": 10.6625,
+          "minimum": 10.643861,
+          "std": 0.007411872540728148
+        },
+        "first_call_ms": 11.408006,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_to_cpu_timing": {
+        "samples_ms": [
+          10.982839,
+          10.72348,
+          10.72742,
+          10.736781,
+          10.714391
+        ],
+        "statistics_ms": {
+          "count": 5,
+          "mean": 10.7769822,
+          "median": 10.72742,
+          "p95": 10.9336274,
+          "maximum": 10.982839,
+          "minimum": 10.714391,
+          "std": 0.10317917811147738
+        },
+        "first_call_ms": 10.74962,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_quality": {
+        "mse_normalized": 0.0002042440750810128,
+        "mse_uint8": 13.280970982142858,
+        "mae_rgb": 2.56726987670068,
+        "mean_max_channel_abs": 3.648796237244898,
+        "exact_fraction": 0.10094467474489796,
+        "within8_fraction": 0.9328762755102041,
+        "ssim": 0.9963218838628948,
+        "max_channel_abs": 84.0,
+        "candidate_sha256": "cba7bb72db8fc36af2516a02ed9ea44667589f873062ace8c2072ba4f774dc5e",
+        "oracle_sha256": "f05f5e6c8c8aa7b9e61754971730347409f03891d865fdc3930ef1dbab2865af",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "supplied_and_live_state_nonmutation": true
+    }
+  ],
+  "corpus_result_sha256": "f1da6b96c73b878839f1edf02ae52bb90efc9228c49b7523a983317e36e952e0"
+}

@@ -1,0 +1,28 @@
+Loading Craftax-Classic textures from cache.
+Textures successfully loaded from cache.
+CraftaxClassicPixels 0 GPU measured
+CraftaxClassicPixels 1 GPU measured
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740021/source/scripts/benchmarks/renderer_table/collect.py", line 432, in <module>
+    main()
+  File "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740021/source/scripts/benchmarks/renderer_table/collect.py", line 425, in main
+    gpu(row, args.corpus, args.output)
+  File "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740021/source/scripts/benchmarks/renderer_table/collect.py", line 353, in gpu
+    np.testing.assert_array_equal(cpu_leaves[key], gpu_leaves[key], err_msg=key)
+  File "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/numpy/_utils/__init__.py", line 86, in wrapper
+    return fun(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/numpy/testing/_private/utils.py", line 1057, in assert_array_equal
+    assert_array_compare(operator.__eq__, actual, desired, err_msg=err_msg,
+  File "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/numpy/testing/_private/utils.py", line 921, in assert_array_compare
+    raise AssertionError(msg)
+AssertionError: 
+Arrays are not equal
+engine/light_level
+Mismatched elements: 1 / 1 (100%)
+Max absolute difference among violations: 5.9604645e-08
+Max relative difference among violations: 7.321443e-08
+ ACTUAL: array([0.814111], dtype=float32)
+ DESIRED: array([0.814111], dtype=float32)

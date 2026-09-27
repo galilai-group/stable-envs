@@ -1,0 +1,9 @@
+## SLURM PROLOG ###############################################################
+##    Job ID : 6740040
+##  Job Name : se-randall-measure
+##  Nodelist : gpu1504
+##      CPUs : 
+##  Mem/Node : 32768 MB
+## Directory : /oscar/home/sboughan
+##   Job Started : Sun Sep 27 01:28:12 PM EDT 2026
+###############################################################################

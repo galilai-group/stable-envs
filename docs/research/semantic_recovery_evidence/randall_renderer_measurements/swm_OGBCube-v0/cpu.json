@@ -1,0 +1,3556 @@
+{
+  "registration": "swm/OGBCube-v0",
+  "status": "COMPLETE",
+  "family": "ogbench",
+  "name": "OGBCube",
+  "phase": "cpu",
+  "oracle_commit": "176d54532b3c0a251a4f509b74f2fdacc143a63d",
+  "profile": {
+    "host": "gpu1504.oscar.ccv.brown.edu",
+    "cpu": "AMD EPYC 7413 24-Core Processor",
+    "gpu": "NVIDIA A40",
+    "python": "3.12.8",
+    "packages": {
+      "torch": {
+        "version": "2.14.0+cu126",
+        "path": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages"
+      },
+      "numpy": {
+        "version": "2.2.6",
+        "path": "/oscar/scratch/sboughan/se-semantic-recovery/ogb-renderer-294675f0-complete/run-6669909/profile/lib/python3.12/site-packages"
+      },
+      "tensordict": {
+        "version": "0.14.2",
+        "path": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages"
+      },
+      "gymnasium": {
+        "version": "1.2.3",
+        "path": "/oscar/scratch/sboughan/se-semantic-recovery/ogb-renderer-294675f0-complete/run-6669909/profile/lib/python3.12/site-packages"
+      },
+      "mujoco": {
+        "version": "3.12.0",
+        "path": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages"
+      },
+      "dm-control": {
+        "version": "1.0.41",
+        "path": "/oscar/scratch/sboughan/se-semantic-recovery/ogb-renderer-294675f0-complete/run-6669909/profile/lib/python3.12/site-packages"
+      },
+      "gymnasium-robotics": {
+        "version": "1.4.2",
+        "path": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages"
+      },
+      "ogbench": {
+        "version": "1.2.1",
+        "path": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages"
+      },
+      "pymunk": {
+        "version": "7.3.0",
+        "path": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages"
+      },
+      "pygame": {
+        "version": "2.6.1",
+        "path": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages"
+      }
+    },
+    "torch_threads": 1,
+    "environment": {
+      "SLURM_JOB_ID": "6739777",
+      "MUJOCO_GL": "glfw",
+      "PYOPENGL_PLATFORM": "glx",
+      "LIBGL_ALWAYS_SOFTWARE": "1",
+      "GALLIUM_DRIVER": "llvmpipe",
+      "DISPLAY": ":4877",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "LP_NUM_THREADS": "1",
+      "JAX_PLATFORMS": null,
+      "CRAFTAX_JAX_BACKEND": null,
+      "CUDA_VISIBLE_DEVICES": "0"
+    }
+  },
+  "frames": [
+    {
+      "index": 0,
+      "case": 0,
+      "step": 0,
+      "seed": 0,
+      "action_dtype": "float32",
+      "prefix_hash": "c211d6996db6e9d553a1ac15d28e5c3e8e6925574d90f8bcd235de82a065ef70",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "tests/unit/test_ogbench_manipulation_cpu.py:assert_oracle",
+        "candidate_state_hash": "bef11a38168b85c6029c09333db21048c6354c5a7daa48e6dfcea6546b5215ac",
+        "oracle_state_hash": "65f685c2d045b0105570d170804266c687e674c9d511ef83aae6ec2effca9722",
+        "compared": "engine, observation, reset/step info, model arrays, PCG64, task MT19937, action-space and Variation entropy ownership"
+      },
+      "state_file": "frame-0000-state.npz",
+      "state_hash": "bef11a38168b85c6029c09333db21048c6354c5a7daa48e6dfcea6546b5215ac",
+      "oracle_file": "frame-0000-oracle.npy",
+      "camera": "front_pixels",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "f1423d61862bc556b889a8b2a65b05d777823ee4d6040f0cd19f0d857d8623bd",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          184.185506,
+          185.386055
+        ],
+        "statistics_ms": {
+          "count": 2,
+          "mean": 184.7857805,
+          "median": 184.7857805,
+          "p95": 185.32602755,
+          "maximum": 185.386055,
+          "minimum": 184.185506,
+          "std": 0.6002744999999976
+        },
+        "first_call_ms": 9214.015602,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "Cube/Scene CPU mesh rendering is unavailable; renderer/GPU execution requires CUDA"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 1,
+      "case": 0,
+      "step": 1,
+      "seed": 0,
+      "action_dtype": "float32",
+      "prefix_hash": "c06268e06ad3b3ba46816e96732c25e92342e24d3075ad80dc8ce2e7fe7cc231",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "tests/unit/test_ogbench_manipulation_cpu.py:assert_oracle",
+        "candidate_state_hash": "947e7bf814e1f34e345f10fd3dfc3742492454ebbbaca36974d0d38e61f9ec9c",
+        "oracle_state_hash": "11951105192737e849f8ed89095b005c1f986ae91d23540ef79548d4514e9c88",
+        "compared": "engine, observation, reset/step info, model arrays, PCG64, task MT19937, action-space and Variation entropy ownership"
+      },
+      "state_file": "frame-0001-state.npz",
+      "state_hash": "947e7bf814e1f34e345f10fd3dfc3742492454ebbbaca36974d0d38e61f9ec9c",
+      "oracle_file": "frame-0001-oracle.npy",
+      "camera": "front_pixels",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "e6d496e9410809dfe89d8e4460de517d4e80520e95d2f06a62a3eaced8789dac",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          184.462076,
+          186.155595
+        ],
+        "statistics_ms": {
+          "count": 2,
+          "mean": 185.3088355,
+          "median": 185.3088355,
+          "p95": 186.07091905000001,
+          "maximum": 186.155595,
+          "minimum": 184.462076,
+          "std": 0.8467595000000046
+        },
+        "first_call_ms": 185.027296,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "Cube/Scene CPU mesh rendering is unavailable; renderer/GPU execution requires CUDA"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 2,
+      "case": 0,
+      "step": 12,
+      "seed": 0,
+      "action_dtype": "float32",
+      "prefix_hash": "ebecb7479d4836bb22ab1f26200123a254c9e53a8512260f48ad1ce344518c94",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "tests/unit/test_ogbench_manipulation_cpu.py:assert_oracle",
+        "candidate_state_hash": "900f92ea725dbc23746fbdccbed30190d482d2b2177fd38cd77c15b6dc69612e",
+        "oracle_state_hash": "115a9727b39386bb1b638b4b6f399962948fe3109a3ee9609ea9862d53ac3d12",
+        "compared": "engine, observation, reset/step info, model arrays, PCG64, task MT19937, action-space and Variation entropy ownership"
+      },
+      "state_file": "frame-0002-state.npz",
+      "state_hash": "900f92ea725dbc23746fbdccbed30190d482d2b2177fd38cd77c15b6dc69612e",
+      "oracle_file": "frame-0002-oracle.npy",
+      "camera": "front_pixels",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "e831eb2bde6abdddc75c13ecc0687e2a148850f19974f9041720c0eef5c87b4f",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          205.683826,
+          205.029856
+        ],
+        "statistics_ms": {
+          "count": 2,
+          "mean": 205.356841,
+          "median": 205.356841,
+          "p95": 205.6511275,
+          "maximum": 205.683826,
+          "minimum": 205.029856,
+          "std": 0.32698500000000763
+        },
+        "first_call_ms": 207.176976,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "Cube/Scene CPU mesh rendering is unavailable; renderer/GPU execution requires CUDA"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 3,
+      "case": 0,
+      "step": 24,
+      "seed": 0,
+      "action_dtype": "float32",
+      "prefix_hash": "2bbbb75126dbe2857fc14f04da36f122f3e70e0d44120b7d8ca012b7214d362e",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "tests/unit/test_ogbench_manipulation_cpu.py:assert_oracle",
+        "candidate_state_hash": "65c052b4d3d061ae7da499e582dd7e5b59396c5c8a5ca28ca4704aac481affc0",
+        "oracle_state_hash": "5baa948c76d1ae9d59613ac4474bd3de6cdd6aa09c0ad56465a788fd53001a61",
+        "compared": "engine, observation, reset/step info, model arrays, PCG64, task MT19937, action-space and Variation entropy ownership"
+      },
+      "state_file": "frame-0003-state.npz",
+      "state_hash": "65c052b4d3d061ae7da499e582dd7e5b59396c5c8a5ca28ca4704aac481affc0",
+      "oracle_file": "frame-0003-oracle.npy",
+      "camera": "front_pixels",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "fcea95236cb1986d203959db48d2b60651a34b73e6e0cf65e2933503ca709ed5",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          213.795902,
+          206.555686
+        ],
+        "statistics_ms": {
+          "count": 2,
+          "mean": 210.175794,
+          "median": 210.175794,
+          "p95": 213.4338912,
+          "maximum": 213.795902,
+          "minimum": 206.555686,
+          "std": 3.620108000000002
+        },
+        "first_call_ms": 204.491856,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "Cube/Scene CPU mesh rendering is unavailable; renderer/GPU execution requires CUDA"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 4,
+      "case": 0,
+      "step": 32,
+      "seed": 0,
+      "action_dtype": "float32",
+      "prefix_hash": "54842e464b31e7bda61109db5e5e4a3c4ac74850a4832ae5a6452a20c1b36ce2",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "tests/unit/test_ogbench_manipulation_cpu.py:assert_oracle",
+        "candidate_state_hash": "99c2f5ac47c298d5ab1ecf984065d67c405a31eacac37dc329a0d5aa47743097",
+        "oracle_state_hash": "172d9c73c973258a476ebf996a8bde00ca0b976bd918941e560d6166f883f1ef",
+        "compared": "engine, observation, reset/step info, model arrays, PCG64, task MT19937, action-space and Variation entropy ownership"
+      },
+      "state_file": "frame-0004-state.npz",
+      "state_hash": "99c2f5ac47c298d5ab1ecf984065d67c405a31eacac37dc329a0d5aa47743097",
+      "oracle_file": "frame-0004-oracle.npy",
+      "camera": "front_pixels",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "765c489e81619e86f21a10c0b1c217d909cbc2312d4ffe10204c9aed632f81d0",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          206.389895,
+          205.979046
+        ],
+        "statistics_ms": {
+          "count": 2,
+          "mean": 206.1844705,
+          "median": 206.1844705,
+          "p95": 206.36935255,
+          "maximum": 206.389895,
+          "minimum": 205.979046,
+          "std": 0.20542449999999235
+        },
+        "first_call_ms": 205.426766,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "Cube/Scene CPU mesh rendering is unavailable; renderer/GPU execution requires CUDA"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 5,
+      "case": 0,
+      "step": 50,
+      "seed": 0,
+      "action_dtype": "float32",
+      "prefix_hash": "6ab897b63d442e1d9642929128fc69a4a4e2fe6bffe6d1b756953ec15e94b9bd",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "tests/unit/test_ogbench_manipulation_cpu.py:assert_oracle",
+        "candidate_state_hash": "5288c243b1b64b508a7a9323459d04ff490f685ff9f92ecd78d0c6c59c8e17af",
+        "oracle_state_hash": "50b19508d79eff6e5089464379e56946dc9fa14a8ff4f873c0950afb5bd6e980",
+        "compared": "engine, observation, reset/step info, model arrays, PCG64, task MT19937, action-space and Variation entropy ownership"
+      },
+      "state_file": "frame-0005-state.npz",
+      "state_hash": "5288c243b1b64b508a7a9323459d04ff490f685ff9f92ecd78d0c6c59c8e17af",
+      "oracle_file": "frame-0005-oracle.npy",
+      "camera": "front_pixels",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "58ca4af0c41157f579c6231a76ed05a8f2be46c7f62fabc6096b329a67d86ae3",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          193.684612,
+          193.860281
+        ],
+        "statistics_ms": {
+          "count": 2,
+          "mean": 193.7724465,
+          "median": 193.7724465,
+          "p95": 193.85149754999998,
+          "maximum": 193.860281,
+          "minimum": 193.684612,
+          "std": 0.0878344999999996
+        },
+        "first_call_ms": 189.350973,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "Cube/Scene CPU mesh rendering is unavailable; renderer/GPU execution requires CUDA"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 6,
+      "case": 1,
+      "step": 0,
+      "seed": 0,
+      "action_dtype": "float64",
+      "prefix_hash": "4dc01c4a5423be776bd43c910d4e81ec8cb3daacff372492f4dfed06acccb0de",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "tests/unit/test_ogbench_manipulation_cpu.py:assert_oracle",
+        "candidate_state_hash": "bef11a38168b85c6029c09333db21048c6354c5a7daa48e6dfcea6546b5215ac",
+        "oracle_state_hash": "65f685c2d045b0105570d170804266c687e674c9d511ef83aae6ec2effca9722",
+        "compared": "engine, observation, reset/step info, model arrays, PCG64, task MT19937, action-space and Variation entropy ownership"
+      },
+      "state_file": "frame-0006-state.npz",
+      "state_hash": "bef11a38168b85c6029c09333db21048c6354c5a7daa48e6dfcea6546b5215ac",
+      "oracle_file": "frame-0006-oracle.npy",
+      "camera": "front_pixels",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "f1423d61862bc556b889a8b2a65b05d777823ee4d6040f0cd19f0d857d8623bd",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          189.254853,
+          189.090234
+        ],
+        "statistics_ms": {
+          "count": 2,
+          "mean": 189.17254350000002,
+          "median": 189.17254350000002,
+          "p95": 189.24662204999998,
+          "maximum": 189.254853,
+          "minimum": 189.090234,
+          "std": 0.08230949999999382
+        },
+        "first_call_ms": 1503.631443,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "Cube/Scene CPU mesh rendering is unavailable; renderer/GPU execution requires CUDA"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 7,
+      "case": 1,
+      "step": 1,
+      "seed": 0,
+      "action_dtype": "float64",
+      "prefix_hash": "9e32caff5c0c671cd8aa2015c88ebcc093ad8ef9baf61a7ac14d4d712441aa91",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "tests/unit/test_ogbench_manipulation_cpu.py:assert_oracle",
+        "candidate_state_hash": "9875f5c99c0b9181994bbd77e986ac7bd4470737888cf1f9c346b295f3abb0e4",
+        "oracle_state_hash": "d57e4d0b401af491a512e66d0b4d66062dfe58a722f022ffc540126d4451fc0b",
+        "compared": "engine, observation, reset/step info, model arrays, PCG64, task MT19937, action-space and Variation entropy ownership"
+      },
+      "state_file": "frame-0007-state.npz",
+      "state_hash": "9875f5c99c0b9181994bbd77e986ac7bd4470737888cf1f9c346b295f3abb0e4",
+      "oracle_file": "frame-0007-oracle.npy",
+      "camera": "front_pixels",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "e6d496e9410809dfe89d8e4460de517d4e80520e95d2f06a62a3eaced8789dac",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          187.063935,
+          187.224954
+        ],
+        "statistics_ms": {
+          "count": 2,
+          "mean": 187.1444445,
+          "median": 187.1444445,
+          "p95": 187.21690304999998,
+          "maximum": 187.224954,
+          "minimum": 187.063935,
+          "std": 0.08050950000000512
+        },
+        "first_call_ms": 186.987965,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "Cube/Scene CPU mesh rendering is unavailable; renderer/GPU execution requires CUDA"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 8,
+      "case": 1,
+      "step": 12,
+      "seed": 0,
+      "action_dtype": "float64",
+      "prefix_hash": "b2ee73aa07cf9a300b29a1c68d32ce7088b620980b0344e1c1558dee2f75339d",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "tests/unit/test_ogbench_manipulation_cpu.py:assert_oracle",
+        "candidate_state_hash": "d0065425ce35b2fb2107d83520df0413da0b20d19e86510fdbdf2b737a9eb6e7",
+        "oracle_state_hash": "ff475e01fcb425537d6c2298af583efe74d3c54d9ba219ce9fcab35461e44818",
+        "compared": "engine, observation, reset/step info, model arrays, PCG64, task MT19937, action-space and Variation entropy ownership"
+      },
+      "state_file": "frame-0008-state.npz",
+      "state_hash": "d0065425ce35b2fb2107d83520df0413da0b20d19e86510fdbdf2b737a9eb6e7",
+      "oracle_file": "frame-0008-oracle.npy",
+      "camera": "front_pixels",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "e831eb2bde6abdddc75c13ecc0687e2a148850f19974f9041720c0eef5c87b4f",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          207.872875,
+          208.113705
+        ],
+        "statistics_ms": {
+          "count": 2,
+          "mean": 207.99329,
+          "median": 207.99329,
+          "p95": 208.1016635,
+          "maximum": 208.113705,
+          "minimum": 207.872875,
+          "std": 0.12041500000000838
+        },
+        "first_call_ms": 208.375105,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "Cube/Scene CPU mesh rendering is unavailable; renderer/GPU execution requires CUDA"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 9,
+      "case": 1,
+      "step": 24,
+      "seed": 0,
+      "action_dtype": "float64",
+      "prefix_hash": "a07e7de15a6e1c9796d7a2345683ac528e32422274e96e6d92e5af3ae0fb6642",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "tests/unit/test_ogbench_manipulation_cpu.py:assert_oracle",
+        "candidate_state_hash": "4916e19393eb7a267c73003c4e17cfc09ac7bd2905c4ca8b0a6a6eca076db543",
+        "oracle_state_hash": "b6433ce0a00cbadad110ff25c4ddaad0de53b70078405044ed731ff8cb5217e8",
+        "compared": "engine, observation, reset/step info, model arrays, PCG64, task MT19937, action-space and Variation entropy ownership"
+      },
+      "state_file": "frame-0009-state.npz",
+      "state_hash": "4916e19393eb7a267c73003c4e17cfc09ac7bd2905c4ca8b0a6a6eca076db543",
+      "oracle_file": "frame-0009-oracle.npy",
+      "camera": "front_pixels",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "fcea95236cb1986d203959db48d2b60651a34b73e6e0cf65e2933503ca709ed5",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          209.143914,
+          211.053584
+        ],
+        "statistics_ms": {
+          "count": 2,
+          "mean": 210.098749,
+          "median": 210.098749,
+          "p95": 210.9581005,
+          "maximum": 211.053584,
+          "minimum": 209.143914,
+          "std": 0.9548350000000028
+        },
+        "first_call_ms": 205.175146,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "Cube/Scene CPU mesh rendering is unavailable; renderer/GPU execution requires CUDA"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 10,
+      "case": 1,
+      "step": 32,
+      "seed": 0,
+      "action_dtype": "float64",
+      "prefix_hash": "cf7654f65b826adcb4aff7d1a6c2068d1c86dbb0c7e0104cc7051398cf5cca02",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "tests/unit/test_ogbench_manipulation_cpu.py:assert_oracle",
+        "candidate_state_hash": "de49f3daf8201b217585b3b10da10e53f86d9293fac15ebd266537fb5f6219f6",
+        "oracle_state_hash": "02a9892f68498dfd65ec94d741dbb58a242e765d5a23608d445bf6ce8be63afc",
+        "compared": "engine, observation, reset/step info, model arrays, PCG64, task MT19937, action-space and Variation entropy ownership"
+      },
+      "state_file": "frame-0010-state.npz",
+      "state_hash": "de49f3daf8201b217585b3b10da10e53f86d9293fac15ebd266537fb5f6219f6",
+      "oracle_file": "frame-0010-oracle.npy",
+      "camera": "front_pixels",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "ba01f5bce6fce33b86e7009dd492d54939c08d78cbba5e8afbd9546deeb0d750",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          210.123984,
+          211.046134
+        ],
+        "statistics_ms": {
+          "count": 2,
+          "mean": 210.585059,
+          "median": 210.585059,
+          "p95": 211.0000265,
+          "maximum": 211.046134,
+          "minimum": 210.123984,
+          "std": 0.4610749999999939
+        },
+        "first_call_ms": 212.823363,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "Cube/Scene CPU mesh rendering is unavailable; renderer/GPU execution requires CUDA"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 11,
+      "case": 1,
+      "step": 50,
+      "seed": 0,
+      "action_dtype": "float64",
+      "prefix_hash": "5d546440c8656e8f3671191863a6a6ceaf1acc29af7ffc289772486378a018fd",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "tests/unit/test_ogbench_manipulation_cpu.py:assert_oracle",
+        "candidate_state_hash": "414dcc11ef60e0eec3c2b058ef69e1852b86bb88bc4e40438153cbaffa5dc9e8",
+        "oracle_state_hash": "a0bbedaa903093a96a04a43e7173e7c30a41746e1a3f6f3feb213b74c15c4e9b",
+        "compared": "engine, observation, reset/step info, model arrays, PCG64, task MT19937, action-space and Variation entropy ownership"
+      },
+      "state_file": "frame-0011-state.npz",
+      "state_hash": "414dcc11ef60e0eec3c2b058ef69e1852b86bb88bc4e40438153cbaffa5dc9e8",
+      "oracle_file": "frame-0011-oracle.npy",
+      "camera": "front_pixels",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "9095930d5dbcc685450dcc38fdaae48651f077c298a60cc29af6652cf1aa7fd1",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          195.776601,
+          196.67654
+        ],
+        "statistics_ms": {
+          "count": 2,
+          "mean": 196.22657049999998,
+          "median": 196.22657049999998,
+          "p95": 196.63154304999998,
+          "maximum": 196.67654,
+          "minimum": 195.776601,
+          "std": 0.4499694999999946
+        },
+        "first_call_ms": 195.121171,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "Cube/Scene CPU mesh rendering is unavailable; renderer/GPU execution requires CUDA"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 12,
+      "case": 2,
+      "step": 0,
+      "seed": 17,
+      "action_dtype": "float32",
+      "prefix_hash": "c211d6996db6e9d553a1ac15d28e5c3e8e6925574d90f8bcd235de82a065ef70",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "tests/unit/test_ogbench_manipulation_cpu.py:assert_oracle",
+        "candidate_state_hash": "9fa7b7a19d3d2b452ef858bc6f0921568059d9d751f389ff62a81177ccae2fe6",
+        "oracle_state_hash": "c17997523c87fb56fe3dbaf7319915eb3d99af48108f6b833329aff06c3ddb8a",
+        "compared": "engine, observation, reset/step info, model arrays, PCG64, task MT19937, action-space and Variation entropy ownership"
+      },
+      "state_file": "frame-0012-state.npz",
+      "state_hash": "9fa7b7a19d3d2b452ef858bc6f0921568059d9d751f389ff62a81177ccae2fe6",
+      "oracle_file": "frame-0012-oracle.npy",
+      "camera": "front_pixels",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "bcccfee7f140bfaa6aa805331293720c547592ad1bb5f0a46ea15ed9d88b3f67",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          186.886145,
+          187.338864
+        ],
+        "statistics_ms": {
+          "count": 2,
+          "mean": 187.1125045,
+          "median": 187.1125045,
+          "p95": 187.31622805,
+          "maximum": 187.338864,
+          "minimum": 186.886145,
+          "std": 0.22635950000000093
+        },
+        "first_call_ms": 662.949287,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "Cube/Scene CPU mesh rendering is unavailable; renderer/GPU execution requires CUDA"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 13,
+      "case": 2,
+      "step": 1,
+      "seed": 17,
+      "action_dtype": "float32",
+      "prefix_hash": "55fa9029bcce37cadb0727ad04b59da25c27b8ba019bba52ebc109a55c7bb2f5",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "tests/unit/test_ogbench_manipulation_cpu.py:assert_oracle",
+        "candidate_state_hash": "e194c024f3eaa52881081938cbdc1512df3923f2dc6fa459f117efaa63723a81",
+        "oracle_state_hash": "7b8785d4f98556b5eea21732ddc2f9542cb4f636af94e5a2394272ddfaabd032",
+        "compared": "engine, observation, reset/step info, model arrays, PCG64, task MT19937, action-space and Variation entropy ownership"
+      },
+      "state_file": "frame-0013-state.npz",
+      "state_hash": "e194c024f3eaa52881081938cbdc1512df3923f2dc6fa459f117efaa63723a81",
+      "oracle_file": "frame-0013-oracle.npy",
+      "camera": "front_pixels",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "234c49310a39b40f049e70ec6eb5bf4e02536b2fda26088e8eb53b2f586fd67d",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          187.119194,
+          187.146245
+        ],
+        "statistics_ms": {
+          "count": 2,
+          "mean": 187.1327195,
+          "median": 187.1327195,
+          "p95": 187.14489245,
+          "maximum": 187.146245,
+          "minimum": 187.119194,
+          "std": 0.013525500000000079
+        },
+        "first_call_ms": 184.250246,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "Cube/Scene CPU mesh rendering is unavailable; renderer/GPU execution requires CUDA"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 14,
+      "case": 2,
+      "step": 12,
+      "seed": 17,
+      "action_dtype": "float32",
+      "prefix_hash": "4c34a9c5d3d54030110569b1c6cac577a5e1b10ee78238fa1189aa4020636a2e",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "tests/unit/test_ogbench_manipulation_cpu.py:assert_oracle",
+        "candidate_state_hash": "597965bf5ccf9d54620225481b5c0df49a001f8fdab302b9a0efa6118c46c581",
+        "oracle_state_hash": "e90b189e08891b3e9d52eecd2e62c16db11c8c58bbc15e24cc6d382600ef4cea",
+        "compared": "engine, observation, reset/step info, model arrays, PCG64, task MT19937, action-space and Variation entropy ownership"
+      },
+      "state_file": "frame-0014-state.npz",
+      "state_hash": "597965bf5ccf9d54620225481b5c0df49a001f8fdab302b9a0efa6118c46c581",
+      "oracle_file": "frame-0014-oracle.npy",
+      "camera": "front_pixels",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "0e766d087b8aab0ae0d756355a5ddb01ad977f33edae36b14f40d38fe5caf91c",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          211.766723,
+          209.646594
+        ],
+        "statistics_ms": {
+          "count": 2,
+          "mean": 210.7066585,
+          "median": 210.7066585,
+          "p95": 211.66071655000002,
+          "maximum": 211.766723,
+          "minimum": 209.646594,
+          "std": 1.06006450000001
+        },
+        "first_call_ms": 206.783616,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "Cube/Scene CPU mesh rendering is unavailable; renderer/GPU execution requires CUDA"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 15,
+      "case": 2,
+      "step": 24,
+      "seed": 17,
+      "action_dtype": "float32",
+      "prefix_hash": "afbc1152e20f1d139c28f4c55480fbbfc6f80f031c870e054a88b11e0023d827",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "tests/unit/test_ogbench_manipulation_cpu.py:assert_oracle",
+        "candidate_state_hash": "cec34eca226ebebad4231639677b8e3b410720fc232e3b4ad2c5603774e9c759",
+        "oracle_state_hash": "08c0296660fbcedf0d799fe6f822619e6296ae480ff14af4be56ae918938d2f6",
+        "compared": "engine, observation, reset/step info, model arrays, PCG64, task MT19937, action-space and Variation entropy ownership"
+      },
+      "state_file": "frame-0015-state.npz",
+      "state_hash": "cec34eca226ebebad4231639677b8e3b410720fc232e3b4ad2c5603774e9c759",
+      "oracle_file": "frame-0015-oracle.npy",
+      "camera": "front_pixels",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "6e5f1e89b63ac518f6020d2d276e854d3d0d16946f1bd0ccb6f410d7d0325e7c",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          211.723693,
+          209.968284
+        ],
+        "statistics_ms": {
+          "count": 2,
+          "mean": 210.8459885,
+          "median": 210.8459885,
+          "p95": 211.63592255,
+          "maximum": 211.723693,
+          "minimum": 209.968284,
+          "std": 0.877704499999993
+        },
+        "first_call_ms": 208.119025,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "Cube/Scene CPU mesh rendering is unavailable; renderer/GPU execution requires CUDA"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 16,
+      "case": 2,
+      "step": 32,
+      "seed": 17,
+      "action_dtype": "float32",
+      "prefix_hash": "cae63b76889e4a6c90b28f3ed1e67e629d35e928401b53fef47e6d4826c718e8",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "tests/unit/test_ogbench_manipulation_cpu.py:assert_oracle",
+        "candidate_state_hash": "5a3af7ddf160f1175750c336c9e71768d224069aee2a07c4ceec55fa5e52dbef",
+        "oracle_state_hash": "428aba745ae2a49a420b803035418c7f559a42b8313c2fc38e84ceef35f6abe7",
+        "compared": "engine, observation, reset/step info, model arrays, PCG64, task MT19937, action-space and Variation entropy ownership"
+      },
+      "state_file": "frame-0016-state.npz",
+      "state_hash": "5a3af7ddf160f1175750c336c9e71768d224069aee2a07c4ceec55fa5e52dbef",
+      "oracle_file": "frame-0016-oracle.npy",
+      "camera": "front_pixels",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "b95c57dc0dcfa91874c292d9cac03f9496bbea957fd7eeeb9e45761f689b4f0f",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          210.795863,
+          211.927114
+        ],
+        "statistics_ms": {
+          "count": 2,
+          "mean": 211.3614885,
+          "median": 211.3614885,
+          "p95": 211.87055145,
+          "maximum": 211.927114,
+          "minimum": 210.795863,
+          "std": 0.5656254999999959
+        },
+        "first_call_ms": 206.703355,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "Cube/Scene CPU mesh rendering is unavailable; renderer/GPU execution requires CUDA"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 17,
+      "case": 2,
+      "step": 50,
+      "seed": 17,
+      "action_dtype": "float32",
+      "prefix_hash": "ec0a2ee1f967eb89bc035615fb54f5d93ff89419d351d95acc0ed78c6e02df89",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "tests/unit/test_ogbench_manipulation_cpu.py:assert_oracle",
+        "candidate_state_hash": "dc635ccfdbaa8f833c483ae463f66f86976af63b1d5bca27a1b7e9123b2b1a0d",
+        "oracle_state_hash": "843eb2b66a2b6e57458bedcc111c827b18f61200125f4348f118ca5bce8b1999",
+        "compared": "engine, observation, reset/step info, model arrays, PCG64, task MT19937, action-space and Variation entropy ownership"
+      },
+      "state_file": "frame-0017-state.npz",
+      "state_hash": "dc635ccfdbaa8f833c483ae463f66f86976af63b1d5bca27a1b7e9123b2b1a0d",
+      "oracle_file": "frame-0017-oracle.npy",
+      "camera": "front_pixels",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "8d3e520975313c212085ab879291481be619b317ecd3d7adb9a311cce3d5f75a",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          196.76283,
+          197.02472
+        ],
+        "statistics_ms": {
+          "count": 2,
+          "mean": 196.893775,
+          "median": 196.893775,
+          "p95": 197.0116255,
+          "maximum": 197.02472,
+          "minimum": 196.76283,
+          "std": 0.13094499999999698
+        },
+        "first_call_ms": 195.561111,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "Cube/Scene CPU mesh rendering is unavailable; renderer/GPU execution requires CUDA"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 18,
+      "case": 3,
+      "step": 0,
+      "seed": 17,
+      "action_dtype": "float64",
+      "prefix_hash": "4dc01c4a5423be776bd43c910d4e81ec8cb3daacff372492f4dfed06acccb0de",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "tests/unit/test_ogbench_manipulation_cpu.py:assert_oracle",
+        "candidate_state_hash": "9fa7b7a19d3d2b452ef858bc6f0921568059d9d751f389ff62a81177ccae2fe6",
+        "oracle_state_hash": "c17997523c87fb56fe3dbaf7319915eb3d99af48108f6b833329aff06c3ddb8a",
+        "compared": "engine, observation, reset/step info, model arrays, PCG64, task MT19937, action-space and Variation entropy ownership"
+      },
+      "state_file": "frame-0018-state.npz",
+      "state_hash": "9fa7b7a19d3d2b452ef858bc6f0921568059d9d751f389ff62a81177ccae2fe6",
+      "oracle_file": "frame-0018-oracle.npy",
+      "camera": "front_pixels",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "bcccfee7f140bfaa6aa805331293720c547592ad1bb5f0a46ea15ed9d88b3f67",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          179.247567,
+          182.120486
+        ],
+        "statistics_ms": {
+          "count": 2,
+          "mean": 180.68402650000002,
+          "median": 180.68402650000002,
+          "p95": 181.97684005,
+          "maximum": 182.120486,
+          "minimum": 179.247567,
+          "std": 1.436459499999998
+        },
+        "first_call_ms": 754.235196,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "Cube/Scene CPU mesh rendering is unavailable; renderer/GPU execution requires CUDA"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 19,
+      "case": 3,
+      "step": 1,
+      "seed": 17,
+      "action_dtype": "float64",
+      "prefix_hash": "9cddb694cd9a7e2f563a2af4d82982a13def813a0f7425d01ec2e429b8fbda8e",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "tests/unit/test_ogbench_manipulation_cpu.py:assert_oracle",
+        "candidate_state_hash": "03d502d5e2484a51fb75678ff04624fd8f073669b2e95b6fa5c1d095cf02177a",
+        "oracle_state_hash": "55f18a6e321418ffa22d5cd1913dedfa5d16063c69472887d19c3c3f92d2f886",
+        "compared": "engine, observation, reset/step info, model arrays, PCG64, task MT19937, action-space and Variation entropy ownership"
+      },
+      "state_file": "frame-0019-state.npz",
+      "state_hash": "03d502d5e2484a51fb75678ff04624fd8f073669b2e95b6fa5c1d095cf02177a",
+      "oracle_file": "frame-0019-oracle.npy",
+      "camera": "front_pixels",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "234c49310a39b40f049e70ec6eb5bf4e02536b2fda26088e8eb53b2f586fd67d",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          187.595113,
+          183.566845
+        ],
+        "statistics_ms": {
+          "count": 2,
+          "mean": 185.580979,
+          "median": 185.580979,
+          "p95": 187.3936996,
+          "maximum": 187.595113,
+          "minimum": 183.566845,
+          "std": 2.0141339999999985
+        },
+        "first_call_ms": 180.098267,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "Cube/Scene CPU mesh rendering is unavailable; renderer/GPU execution requires CUDA"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 20,
+      "case": 3,
+      "step": 12,
+      "seed": 17,
+      "action_dtype": "float64",
+      "prefix_hash": "97d6d12fb23a07fef83bdb8bc828487b8a037c9ad7a096d824f32743257adc1d",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "tests/unit/test_ogbench_manipulation_cpu.py:assert_oracle",
+        "candidate_state_hash": "422f6c6256a4f8b91b837766e4f1619860af5073c9a1659e660643452f98101f",
+        "oracle_state_hash": "b45dfb0e6f48b9ead032caf343f321a175e06b3568047bd1f97988e27fa1f9bd",
+        "compared": "engine, observation, reset/step info, model arrays, PCG64, task MT19937, action-space and Variation entropy ownership"
+      },
+      "state_file": "frame-0020-state.npz",
+      "state_hash": "422f6c6256a4f8b91b837766e4f1619860af5073c9a1659e660643452f98101f",
+      "oracle_file": "frame-0020-oracle.npy",
+      "camera": "front_pixels",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "0e766d087b8aab0ae0d756355a5ddb01ad977f33edae36b14f40d38fe5caf91c",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          204.950945,
+          209.882803
+        ],
+        "statistics_ms": {
+          "count": 2,
+          "mean": 207.416874,
+          "median": 207.416874,
+          "p95": 209.6362101,
+          "maximum": 209.882803,
+          "minimum": 204.950945,
+          "std": 2.4659290000000027
+        },
+        "first_call_ms": 205.723845,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "Cube/Scene CPU mesh rendering is unavailable; renderer/GPU execution requires CUDA"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 21,
+      "case": 3,
+      "step": 24,
+      "seed": 17,
+      "action_dtype": "float64",
+      "prefix_hash": "8f6487eae819475ea37807f62c3e42617f1ff693352f7c0c7bcaa0943f2cda54",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "tests/unit/test_ogbench_manipulation_cpu.py:assert_oracle",
+        "candidate_state_hash": "11a9878afb963aff35fa6f8d6445c63040662cda7cbbb78786e68cec5cf864d4",
+        "oracle_state_hash": "d3c0720b62f138e44f43f6d0cc0b143689c976c3c13119598cff05da616975a1",
+        "compared": "engine, observation, reset/step info, model arrays, PCG64, task MT19937, action-space and Variation entropy ownership"
+      },
+      "state_file": "frame-0021-state.npz",
+      "state_hash": "11a9878afb963aff35fa6f8d6445c63040662cda7cbbb78786e68cec5cf864d4",
+      "oracle_file": "frame-0021-oracle.npy",
+      "camera": "front_pixels",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "6e5f1e89b63ac518f6020d2d276e854d3d0d16946f1bd0ccb6f410d7d0325e7c",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          208.790303,
+          222.539077
+        ],
+        "statistics_ms": {
+          "count": 2,
+          "mean": 215.66469,
+          "median": 215.66469,
+          "p95": 221.8516383,
+          "maximum": 222.539077,
+          "minimum": 208.790303,
+          "std": 6.874386999999999
+        },
+        "first_call_ms": 202.657906,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "Cube/Scene CPU mesh rendering is unavailable; renderer/GPU execution requires CUDA"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 22,
+      "case": 3,
+      "step": 32,
+      "seed": 17,
+      "action_dtype": "float64",
+      "prefix_hash": "81b57b226434326a2fecdd0c0eaa3090c0d1a2349bf950a1c66c00ec18a8d4fc",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "tests/unit/test_ogbench_manipulation_cpu.py:assert_oracle",
+        "candidate_state_hash": "76116fa98c149ba90015de6dff374468309512f1c6513a545591907c44c92975",
+        "oracle_state_hash": "4a4e932364db1e1940cb1ad0e1c7841bb3451dd7e99d8e7d1484536fcb6c95fa",
+        "compared": "engine, observation, reset/step info, model arrays, PCG64, task MT19937, action-space and Variation entropy ownership"
+      },
+      "state_file": "frame-0022-state.npz",
+      "state_hash": "76116fa98c149ba90015de6dff374468309512f1c6513a545591907c44c92975",
+      "oracle_file": "frame-0022-oracle.npy",
+      "camera": "front_pixels",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "b95c57dc0dcfa91874c292d9cac03f9496bbea957fd7eeeb9e45761f689b4f0f",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          206.288575,
+          207.013154
+        ],
+        "statistics_ms": {
+          "count": 2,
+          "mean": 206.6508645,
+          "median": 206.6508645,
+          "p95": 206.97692504999998,
+          "maximum": 207.013154,
+          "minimum": 206.288575,
+          "std": 0.3622894999999886
+        },
+        "first_call_ms": 206.479385,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "Cube/Scene CPU mesh rendering is unavailable; renderer/GPU execution requires CUDA"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 23,
+      "case": 3,
+      "step": 50,
+      "seed": 17,
+      "action_dtype": "float64",
+      "prefix_hash": "0eb60a797f6b095bda984539836af65a4c34dd24c0ba648d2501e22a7c430946",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "tests/unit/test_ogbench_manipulation_cpu.py:assert_oracle",
+        "candidate_state_hash": "747713c9bcc7d157c7c316952744f08b76de769db4457c3dfda2320f886344a6",
+        "oracle_state_hash": "2eeb7c07bf6cb7c5c6759c472c78e0ccad2d56524727b4afb2a7431ab4adfabe",
+        "compared": "engine, observation, reset/step info, model arrays, PCG64, task MT19937, action-space and Variation entropy ownership"
+      },
+      "state_file": "frame-0023-state.npz",
+      "state_hash": "747713c9bcc7d157c7c316952744f08b76de769db4457c3dfda2320f886344a6",
+      "oracle_file": "frame-0023-oracle.npy",
+      "camera": "front_pixels",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "8d3e520975313c212085ab879291481be619b317ecd3d7adb9a311cce3d5f75a",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          193.499321,
+          192.953271
+        ],
+        "statistics_ms": {
+          "count": 2,
+          "mean": 193.226296,
+          "median": 193.226296,
+          "p95": 193.47201850000002,
+          "maximum": 193.499321,
+          "minimum": 192.953271,
+          "std": 0.27302500000000407
+        },
+        "first_call_ms": 193.51285,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "Cube/Scene CPU mesh rendering is unavailable; renderer/GPU execution requires CUDA"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 24,
+      "case": 4,
+      "step": 0,
+      "seed": 42,
+      "action_dtype": "float32",
+      "prefix_hash": "c211d6996db6e9d553a1ac15d28e5c3e8e6925574d90f8bcd235de82a065ef70",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "tests/unit/test_ogbench_manipulation_cpu.py:assert_oracle",
+        "candidate_state_hash": "68cd8bdac79d0ab335336aa5e504c81497425191a98a356962e6cf56dcbcfde3",
+        "oracle_state_hash": "00800f9785a421255c130c98c24afbc5dddee815df1486ebba66b41b74f73678",
+        "compared": "engine, observation, reset/step info, model arrays, PCG64, task MT19937, action-space and Variation entropy ownership"
+      },
+      "state_file": "frame-0024-state.npz",
+      "state_hash": "68cd8bdac79d0ab335336aa5e504c81497425191a98a356962e6cf56dcbcfde3",
+      "oracle_file": "frame-0024-oracle.npy",
+      "camera": "front_pixels",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "30a27207ccea4096031a88348f76b135970a8b03886b2e1753d0c6dfc486acbf",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          189.209842,
+          189.154893
+        ],
+        "statistics_ms": {
+          "count": 2,
+          "mean": 189.1823675,
+          "median": 189.1823675,
+          "p95": 189.20709455,
+          "maximum": 189.209842,
+          "minimum": 189.154893,
+          "std": 0.02747450000001095
+        },
+        "first_call_ms": 680.050016,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "Cube/Scene CPU mesh rendering is unavailable; renderer/GPU execution requires CUDA"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 25,
+      "case": 4,
+      "step": 1,
+      "seed": 42,
+      "action_dtype": "float32",
+      "prefix_hash": "1a4fea26a77fc4a99d447f848f49512fbda296b7cd559a3fcaf163724f49e22f",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "tests/unit/test_ogbench_manipulation_cpu.py:assert_oracle",
+        "candidate_state_hash": "3660215e5811e51d32387967c8fc3051b4396cae671dd9a97052e4ed78ff5aea",
+        "oracle_state_hash": "fa415d5359c1dc5909310c192de7ac6a8b9c05587e90ceb42997693a12f6313f",
+        "compared": "engine, observation, reset/step info, model arrays, PCG64, task MT19937, action-space and Variation entropy ownership"
+      },
+      "state_file": "frame-0025-state.npz",
+      "state_hash": "3660215e5811e51d32387967c8fc3051b4396cae671dd9a97052e4ed78ff5aea",
+      "oracle_file": "frame-0025-oracle.npy",
+      "camera": "front_pixels",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "b775133709147c3e36a7feb1679adfaa0c71701a6f21ff8bd46f13620895bb6c",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          189.074043,
+          190.974191
+        ],
+        "statistics_ms": {
+          "count": 2,
+          "mean": 190.024117,
+          "median": 190.024117,
+          "p95": 190.87918359999998,
+          "maximum": 190.974191,
+          "minimum": 189.074043,
+          "std": 0.9500740000000008
+        },
+        "first_call_ms": 188.950352,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "Cube/Scene CPU mesh rendering is unavailable; renderer/GPU execution requires CUDA"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 26,
+      "case": 4,
+      "step": 12,
+      "seed": 42,
+      "action_dtype": "float32",
+      "prefix_hash": "1440c97f2fa9bcaea660ad3b75593cc91c00130c0a9f05369aeb5876543a45d6",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "tests/unit/test_ogbench_manipulation_cpu.py:assert_oracle",
+        "candidate_state_hash": "633033d5ff77d2dd35328cca0dfe5d16f577a69d29c0450558bcbd77d32fd42b",
+        "oracle_state_hash": "67973741e92e89049b651196d58a987b748166c920c873fabbfc304caf4b32b9",
+        "compared": "engine, observation, reset/step info, model arrays, PCG64, task MT19937, action-space and Variation entropy ownership"
+      },
+      "state_file": "frame-0026-state.npz",
+      "state_hash": "633033d5ff77d2dd35328cca0dfe5d16f577a69d29c0450558bcbd77d32fd42b",
+      "oracle_file": "frame-0026-oracle.npy",
+      "camera": "front_pixels",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "dd22754847fad20490a7e9b9984f79f7232ba323632699b0d3b6fc9d5162d363",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          210.370733,
+          210.710103
+        ],
+        "statistics_ms": {
+          "count": 2,
+          "mean": 210.540418,
+          "median": 210.540418,
+          "p95": 210.6931345,
+          "maximum": 210.710103,
+          "minimum": 210.370733,
+          "std": 0.1696850000000012
+        },
+        "first_call_ms": 210.752663,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "Cube/Scene CPU mesh rendering is unavailable; renderer/GPU execution requires CUDA"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 27,
+      "case": 4,
+      "step": 24,
+      "seed": 42,
+      "action_dtype": "float32",
+      "prefix_hash": "9abf44a96687e99d1b87675d71c3f8ae53a75ac5019878dbcb3c03888c1b0279",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "tests/unit/test_ogbench_manipulation_cpu.py:assert_oracle",
+        "candidate_state_hash": "240076ded377d2ac2db977f9e161a02365722b1865d2863b7be977bc561c4670",
+        "oracle_state_hash": "729fb5ba883fada9ccb571a69ba33797b68982496236c15fefbe46052170834e",
+        "compared": "engine, observation, reset/step info, model arrays, PCG64, task MT19937, action-space and Variation entropy ownership"
+      },
+      "state_file": "frame-0027-state.npz",
+      "state_hash": "240076ded377d2ac2db977f9e161a02365722b1865d2863b7be977bc561c4670",
+      "oracle_file": "frame-0027-oracle.npy",
+      "camera": "front_pixels",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "08419fb4352601405295cba57feccad27fb1d2ed6d31f5342b7a6b16fcc2cf51",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          213.445602,
+          215.50653
+        ],
+        "statistics_ms": {
+          "count": 2,
+          "mean": 214.476066,
+          "median": 214.476066,
+          "p95": 215.4034836,
+          "maximum": 215.50653,
+          "minimum": 213.445602,
+          "std": 1.030463999999995
+        },
+        "first_call_ms": 212.025972,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "Cube/Scene CPU mesh rendering is unavailable; renderer/GPU execution requires CUDA"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 28,
+      "case": 4,
+      "step": 32,
+      "seed": 42,
+      "action_dtype": "float32",
+      "prefix_hash": "8ccfb82c497f9ff5f5ac2c144dd2b4a0da5a126553f68b8c6875ddc47e6e028d",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "tests/unit/test_ogbench_manipulation_cpu.py:assert_oracle",
+        "candidate_state_hash": "a78f121fe0d4cb8798661451b5490108c9f55d926c471b10d53c88839f2aab6b",
+        "oracle_state_hash": "2a99ad8b149faf1c0585787c529b7b05d2734ed4d3216ada8b180a8fde4f191c",
+        "compared": "engine, observation, reset/step info, model arrays, PCG64, task MT19937, action-space and Variation entropy ownership"
+      },
+      "state_file": "frame-0028-state.npz",
+      "state_hash": "a78f121fe0d4cb8798661451b5490108c9f55d926c471b10d53c88839f2aab6b",
+      "oracle_file": "frame-0028-oracle.npy",
+      "camera": "front_pixels",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "0248d3507078d95791e1dc1fe319413e8ce2d041258d708a9b51cc3f6dfe887b",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          213.784321,
+          213.097472
+        ],
+        "statistics_ms": {
+          "count": 2,
+          "mean": 213.4408965,
+          "median": 213.4408965,
+          "p95": 213.74997855,
+          "maximum": 213.784321,
+          "minimum": 213.097472,
+          "std": 0.3434244999999976
+        },
+        "first_call_ms": 209.922863,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "Cube/Scene CPU mesh rendering is unavailable; renderer/GPU execution requires CUDA"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 29,
+      "case": 4,
+      "step": 50,
+      "seed": 42,
+      "action_dtype": "float32",
+      "prefix_hash": "8b52fa745726989bf81a00554f6abd2c1f33bd9885f7afa648540955a11a10c7",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "tests/unit/test_ogbench_manipulation_cpu.py:assert_oracle",
+        "candidate_state_hash": "f0a31dea42a2d2ca705d4d5011dc21fd18ff7e3079d8b18bc138bef03fa58ee9",
+        "oracle_state_hash": "78e7a495d848374868161de624536ce5f561981cbb5f1ab9a97595157fd0f141",
+        "compared": "engine, observation, reset/step info, model arrays, PCG64, task MT19937, action-space and Variation entropy ownership"
+      },
+      "state_file": "frame-0029-state.npz",
+      "state_hash": "f0a31dea42a2d2ca705d4d5011dc21fd18ff7e3079d8b18bc138bef03fa58ee9",
+      "oracle_file": "frame-0029-oracle.npy",
+      "camera": "front_pixels",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "6bc70e33c0c758bf88054d12990aa6514a5ae4cdac04c60ecdc9e7ce88c56080",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          204.019876,
+          202.846606
+        ],
+        "statistics_ms": {
+          "count": 2,
+          "mean": 203.433241,
+          "median": 203.433241,
+          "p95": 203.96121250000002,
+          "maximum": 204.019876,
+          "minimum": 202.846606,
+          "std": 0.5866350000000011
+        },
+        "first_call_ms": 196.2585,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "Cube/Scene CPU mesh rendering is unavailable; renderer/GPU execution requires CUDA"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 30,
+      "case": 5,
+      "step": 0,
+      "seed": 42,
+      "action_dtype": "float64",
+      "prefix_hash": "4dc01c4a5423be776bd43c910d4e81ec8cb3daacff372492f4dfed06acccb0de",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "tests/unit/test_ogbench_manipulation_cpu.py:assert_oracle",
+        "candidate_state_hash": "68cd8bdac79d0ab335336aa5e504c81497425191a98a356962e6cf56dcbcfde3",
+        "oracle_state_hash": "00800f9785a421255c130c98c24afbc5dddee815df1486ebba66b41b74f73678",
+        "compared": "engine, observation, reset/step info, model arrays, PCG64, task MT19937, action-space and Variation entropy ownership"
+      },
+      "state_file": "frame-0030-state.npz",
+      "state_hash": "68cd8bdac79d0ab335336aa5e504c81497425191a98a356962e6cf56dcbcfde3",
+      "oracle_file": "frame-0030-oracle.npy",
+      "camera": "front_pixels",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "30a27207ccea4096031a88348f76b135970a8b03886b2e1753d0c6dfc486acbf",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          184.433905,
+          184.037275
+        ],
+        "statistics_ms": {
+          "count": 2,
+          "mean": 184.23559,
+          "median": 184.23559,
+          "p95": 184.4140735,
+          "maximum": 184.433905,
+          "minimum": 184.037275,
+          "std": 0.198315000000008
+        },
+        "first_call_ms": 610.049388,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "Cube/Scene CPU mesh rendering is unavailable; renderer/GPU execution requires CUDA"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 31,
+      "case": 5,
+      "step": 1,
+      "seed": 42,
+      "action_dtype": "float64",
+      "prefix_hash": "17dd8dfb6ca9d0a0e80a65a5b8e661f1b9cde3bef8e614eb8c553feebb5ae707",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "tests/unit/test_ogbench_manipulation_cpu.py:assert_oracle",
+        "candidate_state_hash": "d2b6cd49dd5f5f1e8cb94144c02cc71db9e730eec6f05a57280b5fb2ded2291f",
+        "oracle_state_hash": "d6946684e3ba42483b942a45f81bb4c75ba8c78b222388d0aa630af2d218203c",
+        "compared": "engine, observation, reset/step info, model arrays, PCG64, task MT19937, action-space and Variation entropy ownership"
+      },
+      "state_file": "frame-0031-state.npz",
+      "state_hash": "d2b6cd49dd5f5f1e8cb94144c02cc71db9e730eec6f05a57280b5fb2ded2291f",
+      "oracle_file": "frame-0031-oracle.npy",
+      "camera": "front_pixels",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "b775133709147c3e36a7feb1679adfaa0c71701a6f21ff8bd46f13620895bb6c",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          187.573704,
+          188.029753
+        ],
+        "statistics_ms": {
+          "count": 2,
+          "mean": 187.8017285,
+          "median": 187.8017285,
+          "p95": 188.00695055,
+          "maximum": 188.029753,
+          "minimum": 187.573704,
+          "std": 0.22802450000000363
+        },
+        "first_call_ms": 184.115835,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "Cube/Scene CPU mesh rendering is unavailable; renderer/GPU execution requires CUDA"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 32,
+      "case": 5,
+      "step": 12,
+      "seed": 42,
+      "action_dtype": "float64",
+      "prefix_hash": "677a1978cdb3bd075ea718b101c71c74df77414ccac345bfcfe602948b834279",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "tests/unit/test_ogbench_manipulation_cpu.py:assert_oracle",
+        "candidate_state_hash": "ee5dd440178d36092175a71e4a474ee1094a4fb65876d5517c7ecb5164c21d54",
+        "oracle_state_hash": "e0a31e9d14e9e876355d53de70f460e43443a1f36aed60d1f3281b2582314d76",
+        "compared": "engine, observation, reset/step info, model arrays, PCG64, task MT19937, action-space and Variation entropy ownership"
+      },
+      "state_file": "frame-0032-state.npz",
+      "state_hash": "ee5dd440178d36092175a71e4a474ee1094a4fb65876d5517c7ecb5164c21d54",
+      "oracle_file": "frame-0032-oracle.npy",
+      "camera": "front_pixels",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "dd22754847fad20490a7e9b9984f79f7232ba323632699b0d3b6fc9d5162d363",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          208.715564,
+          211.339572
+        ],
+        "statistics_ms": {
+          "count": 2,
+          "mean": 210.027568,
+          "median": 210.027568,
+          "p95": 211.2083716,
+          "maximum": 211.339572,
+          "minimum": 208.715564,
+          "std": 1.3120040000000017
+        },
+        "first_call_ms": 205.944895,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "Cube/Scene CPU mesh rendering is unavailable; renderer/GPU execution requires CUDA"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 33,
+      "case": 5,
+      "step": 24,
+      "seed": 42,
+      "action_dtype": "float64",
+      "prefix_hash": "e482fe5c12ddf9fb22b6ed4cbe5c195d38728cda6e9e3cd6b05057f5f5caec55",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "tests/unit/test_ogbench_manipulation_cpu.py:assert_oracle",
+        "candidate_state_hash": "9cdaeb482ecbf591b56a546f05d048298064a7c0771e4eeaf169a87392ac8540",
+        "oracle_state_hash": "9bf37d5bf2460bdf8004e9187472a3323efec71a0a2b95095c77014d5e077bea",
+        "compared": "engine, observation, reset/step info, model arrays, PCG64, task MT19937, action-space and Variation entropy ownership"
+      },
+      "state_file": "frame-0033-state.npz",
+      "state_hash": "9cdaeb482ecbf591b56a546f05d048298064a7c0771e4eeaf169a87392ac8540",
+      "oracle_file": "frame-0033-oracle.npy",
+      "camera": "front_pixels",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "08419fb4352601405295cba57feccad27fb1d2ed6d31f5342b7a6b16fcc2cf51",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          211.461852,
+          210.060732
+        ],
+        "statistics_ms": {
+          "count": 2,
+          "mean": 210.761292,
+          "median": 210.761292,
+          "p95": 211.391796,
+          "maximum": 211.461852,
+          "minimum": 210.060732,
+          "std": 0.7005599999999959
+        },
+        "first_call_ms": 210.389502,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "Cube/Scene CPU mesh rendering is unavailable; renderer/GPU execution requires CUDA"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 34,
+      "case": 5,
+      "step": 32,
+      "seed": 42,
+      "action_dtype": "float64",
+      "prefix_hash": "6e9c354f64081bee063a9e9daa8dfcb56123671ccda87346256667d7f73ecd3b",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "tests/unit/test_ogbench_manipulation_cpu.py:assert_oracle",
+        "candidate_state_hash": "c1ae504d7287395ed32d662b7b362d407b92c318f525af87b6b0ddc1cf48452b",
+        "oracle_state_hash": "7514cb87544f6b8fd9ca7bdfff1944b10fed40ec2311c1e1b2fd13499ab25b15",
+        "compared": "engine, observation, reset/step info, model arrays, PCG64, task MT19937, action-space and Variation entropy ownership"
+      },
+      "state_file": "frame-0034-state.npz",
+      "state_hash": "c1ae504d7287395ed32d662b7b362d407b92c318f525af87b6b0ddc1cf48452b",
+      "oracle_file": "frame-0034-oracle.npy",
+      "camera": "front_pixels",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "0248d3507078d95791e1dc1fe319413e8ce2d041258d708a9b51cc3f6dfe887b",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          210.155183,
+          211.430232
+        ],
+        "statistics_ms": {
+          "count": 2,
+          "mean": 210.7927075,
+          "median": 210.7927075,
+          "p95": 211.36647954999998,
+          "maximum": 211.430232,
+          "minimum": 210.155183,
+          "std": 0.6375244999999978
+        },
+        "first_call_ms": 206.994784,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "Cube/Scene CPU mesh rendering is unavailable; renderer/GPU execution requires CUDA"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 35,
+      "case": 5,
+      "step": 50,
+      "seed": 42,
+      "action_dtype": "float64",
+      "prefix_hash": "c3b195b781c55ec58cb5b995e2dfe482122ddb1f6600e9cd8360bbf3177de0ab",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "tests/unit/test_ogbench_manipulation_cpu.py:assert_oracle",
+        "candidate_state_hash": "713f437d5b972c647081cdc5eddabe8ef0c951777e897c986958059e89083651",
+        "oracle_state_hash": "9c01078031baf12468bbdff8e3d5abf7771993bdf43838a433e4eada57c95f00",
+        "compared": "engine, observation, reset/step info, model arrays, PCG64, task MT19937, action-space and Variation entropy ownership"
+      },
+      "state_file": "frame-0035-state.npz",
+      "state_hash": "713f437d5b972c647081cdc5eddabe8ef0c951777e897c986958059e89083651",
+      "oracle_file": "frame-0035-oracle.npy",
+      "camera": "front_pixels",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "6bc70e33c0c758bf88054d12990aa6514a5ae4cdac04c60ecdc9e7ce88c56080",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          197.937449,
+          196.769489
+        ],
+        "statistics_ms": {
+          "count": 2,
+          "mean": 197.353469,
+          "median": 197.353469,
+          "p95": 197.87905099999998,
+          "maximum": 197.937449,
+          "minimum": 196.769489,
+          "std": 0.5839799999999968
+        },
+        "first_call_ms": 194.716961,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "Cube/Scene CPU mesh rendering is unavailable; renderer/GPU execution requires CUDA"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 36,
+      "case": 6,
+      "step": 0,
+      "seed": 17,
+      "action_dtype": "float64",
+      "prefix_hash": "4dc01c4a5423be776bd43c910d4e81ec8cb3daacff372492f4dfed06acccb0de",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "tests/unit/test_ogbench_manipulation_cpu.py:assert_oracle",
+        "candidate_state_hash": "521daa4769c5e9018141c4d528f2fd1d498b20ee9bdc59f1f738078446ef5457",
+        "oracle_state_hash": "bd00f589b649bc6952665378ebcd839d2aa79426a6f138e9c055555823549365",
+        "compared": "engine, observation, reset/step info, model arrays, PCG64, task MT19937, action-space and Variation entropy ownership"
+      },
+      "state_file": "frame-0036-state.npz",
+      "state_hash": "521daa4769c5e9018141c4d528f2fd1d498b20ee9bdc59f1f738078446ef5457",
+      "oracle_file": "frame-0036-oracle.npy",
+      "camera": "front_pixels",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "c1c4b0932f3b26d621e07fb307004ad0617fb50afd401b834db29961c881dd6c",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          187.193203,
+          188.369163
+        ],
+        "statistics_ms": {
+          "count": 2,
+          "mean": 187.781183,
+          "median": 187.781183,
+          "p95": 188.310365,
+          "maximum": 188.369163,
+          "minimum": 187.193203,
+          "std": 0.5879799999999875
+        },
+        "first_call_ms": 694.540719,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "Cube/Scene CPU mesh rendering is unavailable; renderer/GPU execution requires CUDA"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 37,
+      "case": 6,
+      "step": 1,
+      "seed": 17,
+      "action_dtype": "float64",
+      "prefix_hash": "2198179ba634be4c1461bc35aac4e63376c399310ccd88e349f6e593b83aeb16",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "tests/unit/test_ogbench_manipulation_cpu.py:assert_oracle",
+        "candidate_state_hash": "d02a3ea736d477b41146933dea7d910c227d71e539cefcc4a85b6f60eff3f243",
+        "oracle_state_hash": "948ce79abc3c2be161a0f18b5ef2b0352507af7602c810c7248b7054ef0474e9",
+        "compared": "engine, observation, reset/step info, model arrays, PCG64, task MT19937, action-space and Variation entropy ownership"
+      },
+      "state_file": "frame-0037-state.npz",
+      "state_hash": "d02a3ea736d477b41146933dea7d910c227d71e539cefcc4a85b6f60eff3f243",
+      "oracle_file": "frame-0037-oracle.npy",
+      "camera": "front_pixels",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "81809a17fffd33a03cda1192284304118cbb363489d3924997736e22479b15df",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          188.550763,
+          187.049614
+        ],
+        "statistics_ms": {
+          "count": 2,
+          "mean": 187.8001885,
+          "median": 187.8001885,
+          "p95": 188.47570555,
+          "maximum": 188.550763,
+          "minimum": 187.049614,
+          "std": 0.750574499999999
+        },
+        "first_call_ms": 185.822244,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "Cube/Scene CPU mesh rendering is unavailable; renderer/GPU execution requires CUDA"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 38,
+      "case": 6,
+      "step": 12,
+      "seed": 17,
+      "action_dtype": "float64",
+      "prefix_hash": "8cc39c9da6ebc8913e9ce5d59d364e2f709c0c5b627724bccb0eb4ec75f7cb1d",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "tests/unit/test_ogbench_manipulation_cpu.py:assert_oracle",
+        "candidate_state_hash": "378a7b3930cd24f59de99bc3e40f702f53a3c3992086b790bc9ac3588ab7c1df",
+        "oracle_state_hash": "edd0d9178cf57fa36226628bf8a4cfa12650d33fa70b178c3893f90e2329659b",
+        "compared": "engine, observation, reset/step info, model arrays, PCG64, task MT19937, action-space and Variation entropy ownership"
+      },
+      "state_file": "frame-0038-state.npz",
+      "state_hash": "378a7b3930cd24f59de99bc3e40f702f53a3c3992086b790bc9ac3588ab7c1df",
+      "oracle_file": "frame-0038-oracle.npy",
+      "camera": "front_pixels",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "c9a4a1c4b665a1e1ffcca8e0a65ea10e19305058e9afb17c590b7889762e9bdb",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          191.976272,
+          192.034471
+        ],
+        "statistics_ms": {
+          "count": 2,
+          "mean": 192.0053715,
+          "median": 192.0053715,
+          "p95": 192.03156105,
+          "maximum": 192.034471,
+          "minimum": 191.976272,
+          "std": 0.029099500000000944
+        },
+        "first_call_ms": 188.798533,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "Cube/Scene CPU mesh rendering is unavailable; renderer/GPU execution requires CUDA"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 39,
+      "case": 7,
+      "step": 0,
+      "seed": 17,
+      "action_dtype": "float64",
+      "prefix_hash": "4dc01c4a5423be776bd43c910d4e81ec8cb3daacff372492f4dfed06acccb0de",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "tests/unit/test_ogbench_manipulation_cpu.py:assert_oracle",
+        "candidate_state_hash": "d9e5e8434d221fcf7798f845f24801cf1e25f9b0549c8b4c7efdac415777465b",
+        "oracle_state_hash": "028bbaf94deb6bf0f16fd8b9a641c4809a6015bb47ed0c1b14f9685466f09d7e",
+        "compared": "engine, observation, reset/step info, model arrays, PCG64, task MT19937, action-space and Variation entropy ownership"
+      },
+      "state_file": "frame-0039-state.npz",
+      "state_hash": "d9e5e8434d221fcf7798f845f24801cf1e25f9b0549c8b4c7efdac415777465b",
+      "oracle_file": "frame-0039-oracle.npy",
+      "camera": "front_pixels",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "7a46b61ba38145e961e68d14682ab0cc11e1358333fbac1b5bc0f7c7ad41228a",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          186.941668,
+          186.550128
+        ],
+        "statistics_ms": {
+          "count": 2,
+          "mean": 186.745898,
+          "median": 186.745898,
+          "p95": 186.922091,
+          "maximum": 186.941668,
+          "minimum": 186.550128,
+          "std": 0.195769999999996
+        },
+        "first_call_ms": 647.505097,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "Cube/Scene CPU mesh rendering is unavailable; renderer/GPU execution requires CUDA"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 40,
+      "case": 7,
+      "step": 1,
+      "seed": 17,
+      "action_dtype": "float64",
+      "prefix_hash": "2198179ba634be4c1461bc35aac4e63376c399310ccd88e349f6e593b83aeb16",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "tests/unit/test_ogbench_manipulation_cpu.py:assert_oracle",
+        "candidate_state_hash": "855aff10cf07d782ed554d425499410d50283bc015d76d9b1708ee4f4601d7a8",
+        "oracle_state_hash": "cc719f07d1a66b6e6765d01192b67afc28f311fe84af6d57864f53f6fae23b44",
+        "compared": "engine, observation, reset/step info, model arrays, PCG64, task MT19937, action-space and Variation entropy ownership"
+      },
+      "state_file": "frame-0040-state.npz",
+      "state_hash": "855aff10cf07d782ed554d425499410d50283bc015d76d9b1708ee4f4601d7a8",
+      "oracle_file": "frame-0040-oracle.npy",
+      "camera": "front_pixels",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "9423909f7410def56b37844ad396515702dbd03fbc72cb0192d3f3e2c21d2113",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          187.086098,
+          188.363847
+        ],
+        "statistics_ms": {
+          "count": 2,
+          "mean": 187.72497249999998,
+          "median": 187.72497249999998,
+          "p95": 188.29995954999998,
+          "maximum": 188.363847,
+          "minimum": 187.086098,
+          "std": 0.6388745
+        },
+        "first_call_ms": 185.591889,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "Cube/Scene CPU mesh rendering is unavailable; renderer/GPU execution requires CUDA"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 41,
+      "case": 7,
+      "step": 12,
+      "seed": 17,
+      "action_dtype": "float64",
+      "prefix_hash": "8cc39c9da6ebc8913e9ce5d59d364e2f709c0c5b627724bccb0eb4ec75f7cb1d",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "tests/unit/test_ogbench_manipulation_cpu.py:assert_oracle",
+        "candidate_state_hash": "6adf089e2fe1293e27578b7c5f7f6a3693fd4da564240b604ba08195c16ccb78",
+        "oracle_state_hash": "f9c079207c4301129a2003284df2c7b812e1c51f57661c64ea63cf085850078b",
+        "compared": "engine, observation, reset/step info, model arrays, PCG64, task MT19937, action-space and Variation entropy ownership"
+      },
+      "state_file": "frame-0041-state.npz",
+      "state_hash": "6adf089e2fe1293e27578b7c5f7f6a3693fd4da564240b604ba08195c16ccb78",
+      "oracle_file": "frame-0041-oracle.npy",
+      "camera": "front_pixels",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "049effa710c83609eae029bfa4807c084cbd214a8894f7e66e5b4f7888ffd86a",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          189.848897,
+          189.876956
+        ],
+        "statistics_ms": {
+          "count": 2,
+          "mean": 189.86292650000001,
+          "median": 189.86292650000001,
+          "p95": 189.87555305,
+          "maximum": 189.876956,
+          "minimum": 189.848897,
+          "std": 0.014029500000006578
+        },
+        "first_call_ms": 187.515008,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "Cube/Scene CPU mesh rendering is unavailable; renderer/GPU execution requires CUDA"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 42,
+      "case": 8,
+      "step": 0,
+      "seed": 17,
+      "action_dtype": "float64",
+      "prefix_hash": "4dc01c4a5423be776bd43c910d4e81ec8cb3daacff372492f4dfed06acccb0de",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "tests/unit/test_ogbench_manipulation_cpu.py:assert_oracle",
+        "candidate_state_hash": "1f72d37e871c5dabd17b09510d4b3c24f66832eca211343b0d9f98bc9a1360fe",
+        "oracle_state_hash": "e7a5eb1474782272e097556aae14b953a233f71806c2f7e872fdc7029de96d1a",
+        "compared": "engine, observation, reset/step info, model arrays, PCG64, task MT19937, action-space and Variation entropy ownership"
+      },
+      "state_file": "frame-0042-state.npz",
+      "state_hash": "1f72d37e871c5dabd17b09510d4b3c24f66832eca211343b0d9f98bc9a1360fe",
+      "oracle_file": "frame-0042-oracle.npy",
+      "camera": "front_pixels",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "0175f2f770f761bb85b6592b98e4fe94792f3d6a0238c59c03fbe1374243943c",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          188.452158,
+          188.811687
+        ],
+        "statistics_ms": {
+          "count": 2,
+          "mean": 188.6319225,
+          "median": 188.6319225,
+          "p95": 188.79371055000001,
+          "maximum": 188.811687,
+          "minimum": 188.452158,
+          "std": 0.17976450000000455
+        },
+        "first_call_ms": 667.636952,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "Cube/Scene CPU mesh rendering is unavailable; renderer/GPU execution requires CUDA"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 43,
+      "case": 8,
+      "step": 1,
+      "seed": 17,
+      "action_dtype": "float64",
+      "prefix_hash": "2198179ba634be4c1461bc35aac4e63376c399310ccd88e349f6e593b83aeb16",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "tests/unit/test_ogbench_manipulation_cpu.py:assert_oracle",
+        "candidate_state_hash": "a91ba622a81eb48fa7413ba2cafb5004599e885a65169c6b8841466523b59c63",
+        "oracle_state_hash": "0526096c720fff5f2ac6f6f5aba6135bc9d41e632bf7041cc7c16891f3505559",
+        "compared": "engine, observation, reset/step info, model arrays, PCG64, task MT19937, action-space and Variation entropy ownership"
+      },
+      "state_file": "frame-0043-state.npz",
+      "state_hash": "a91ba622a81eb48fa7413ba2cafb5004599e885a65169c6b8841466523b59c63",
+      "oracle_file": "frame-0043-oracle.npy",
+      "camera": "front_pixels",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "fdb454fe02f67fcf3fcce02400406ff666a63ecb6b174d56be56799480b22e8b",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          188.699747,
+          188.825608
+        ],
+        "statistics_ms": {
+          "count": 2,
+          "mean": 188.7626775,
+          "median": 188.7626775,
+          "p95": 188.81931494999998,
+          "maximum": 188.825608,
+          "minimum": 188.699747,
+          "std": 0.06293049999999312
+        },
+        "first_call_ms": 186.252539,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "Cube/Scene CPU mesh rendering is unavailable; renderer/GPU execution requires CUDA"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 44,
+      "case": 8,
+      "step": 12,
+      "seed": 17,
+      "action_dtype": "float64",
+      "prefix_hash": "8cc39c9da6ebc8913e9ce5d59d364e2f709c0c5b627724bccb0eb4ec75f7cb1d",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "tests/unit/test_ogbench_manipulation_cpu.py:assert_oracle",
+        "candidate_state_hash": "529c021c17585d5635708b7017213ec674ddb2624599da7f0b7f6042ef0ecdad",
+        "oracle_state_hash": "b277bea3b1b793e55f8b865426b125032c5497d62f22ba918b7982862db73803",
+        "compared": "engine, observation, reset/step info, model arrays, PCG64, task MT19937, action-space and Variation entropy ownership"
+      },
+      "state_file": "frame-0044-state.npz",
+      "state_hash": "529c021c17585d5635708b7017213ec674ddb2624599da7f0b7f6042ef0ecdad",
+      "oracle_file": "frame-0044-oracle.npy",
+      "camera": "front_pixels",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "591be92089e3c2e06287a770142ba9f0241b253ba05b4b97d66c2ccf73c1763d",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          190.189607,
+          190.200216
+        ],
+        "statistics_ms": {
+          "count": 2,
+          "mean": 190.1949115,
+          "median": 190.1949115,
+          "p95": 190.19968555,
+          "maximum": 190.200216,
+          "minimum": 190.189607,
+          "std": 0.005304500000008261
+        },
+        "first_call_ms": 187.654147,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "Cube/Scene CPU mesh rendering is unavailable; renderer/GPU execution requires CUDA"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 45,
+      "case": 9,
+      "step": 0,
+      "seed": 17,
+      "action_dtype": "float64",
+      "prefix_hash": "4dc01c4a5423be776bd43c910d4e81ec8cb3daacff372492f4dfed06acccb0de",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "tests/unit/test_ogbench_manipulation_cpu.py:assert_oracle",
+        "candidate_state_hash": "e5d4b08ff41dce4f1878bd7991b90208ab3384e250e1b6146ab48c5a8487f383",
+        "oracle_state_hash": "787fbba26c6af7bad3c5772dc26854024a7bfa3cc5b247eae3ec9b0bef729989",
+        "compared": "engine, observation, reset/step info, model arrays, PCG64, task MT19937, action-space and Variation entropy ownership"
+      },
+      "state_file": "frame-0045-state.npz",
+      "state_hash": "e5d4b08ff41dce4f1878bd7991b90208ab3384e250e1b6146ab48c5a8487f383",
+      "oracle_file": "frame-0045-oracle.npy",
+      "camera": "front_pixels",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "7ba2b34ea87b35690b8b18f73a4b5d47b411078e40c379ebbda11529c4fac0e0",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          186.613998,
+          186.141659
+        ],
+        "statistics_ms": {
+          "count": 2,
+          "mean": 186.37782850000002,
+          "median": 186.37782850000002,
+          "p95": 186.59038105000002,
+          "maximum": 186.613998,
+          "minimum": 186.141659,
+          "std": 0.23616950000000259
+        },
+        "first_call_ms": 605.811217,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "Cube/Scene CPU mesh rendering is unavailable; renderer/GPU execution requires CUDA"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 46,
+      "case": 9,
+      "step": 1,
+      "seed": 17,
+      "action_dtype": "float64",
+      "prefix_hash": "2198179ba634be4c1461bc35aac4e63376c399310ccd88e349f6e593b83aeb16",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "tests/unit/test_ogbench_manipulation_cpu.py:assert_oracle",
+        "candidate_state_hash": "961c162fdfd457db3b47cb615788ddf051e7be172741f0f2c98921caecd6348a",
+        "oracle_state_hash": "a22fcf90e799e4f5ac6c3b6e8807b7251f88752cb76aea72fe627ce17ba3c4cb",
+        "compared": "engine, observation, reset/step info, model arrays, PCG64, task MT19937, action-space and Variation entropy ownership"
+      },
+      "state_file": "frame-0046-state.npz",
+      "state_hash": "961c162fdfd457db3b47cb615788ddf051e7be172741f0f2c98921caecd6348a",
+      "oracle_file": "frame-0046-oracle.npy",
+      "camera": "front_pixels",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "5ac7b8ac49c2a1cc57bd888bc2699b4f16ef6d66934e990c28fec112c115fc83",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          186.265949,
+          187.837367
+        ],
+        "statistics_ms": {
+          "count": 2,
+          "mean": 187.051658,
+          "median": 187.051658,
+          "p95": 187.7587961,
+          "maximum": 187.837367,
+          "minimum": 186.265949,
+          "std": 0.7857089999999971
+        },
+        "first_call_ms": 184.313259,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "Cube/Scene CPU mesh rendering is unavailable; renderer/GPU execution requires CUDA"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 47,
+      "case": 9,
+      "step": 12,
+      "seed": 17,
+      "action_dtype": "float64",
+      "prefix_hash": "8cc39c9da6ebc8913e9ce5d59d364e2f709c0c5b627724bccb0eb4ec75f7cb1d",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "tests/unit/test_ogbench_manipulation_cpu.py:assert_oracle",
+        "candidate_state_hash": "dc1e9539df79520870186a4fa4d9f2876f6df169791d856a5a807572b575b117",
+        "oracle_state_hash": "9e2f50a0f623a756246422ac2141c7f0cd8c8890a958317e831c328c44d067d8",
+        "compared": "engine, observation, reset/step info, model arrays, PCG64, task MT19937, action-space and Variation entropy ownership"
+      },
+      "state_file": "frame-0047-state.npz",
+      "state_hash": "dc1e9539df79520870186a4fa4d9f2876f6df169791d856a5a807572b575b117",
+      "oracle_file": "frame-0047-oracle.npy",
+      "camera": "front_pixels",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "a43d6cbf7c40e86996a37d5e0d4ef6e9ef39eaec7c6c8eb3a73d2b69ea89ab4e",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          191.366496,
+          190.780607
+        ],
+        "statistics_ms": {
+          "count": 2,
+          "mean": 191.0735515,
+          "median": 191.0735515,
+          "p95": 191.33720155,
+          "maximum": 191.366496,
+          "minimum": 190.780607,
+          "std": 0.2929445000000044
+        },
+        "first_call_ms": 186.479289,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "Cube/Scene CPU mesh rendering is unavailable; renderer/GPU execution requires CUDA"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 48,
+      "case": 10,
+      "step": 0,
+      "seed": 17,
+      "action_dtype": "float64",
+      "prefix_hash": "4dc01c4a5423be776bd43c910d4e81ec8cb3daacff372492f4dfed06acccb0de",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "tests/unit/test_ogbench_manipulation_cpu.py:assert_oracle",
+        "candidate_state_hash": "7a4d664f9e449f8fffbf2a4176e93dda6591df9c338c6d4d8e1b9c84c01e0d21",
+        "oracle_state_hash": "67eea36f01a07e5a6e6287efef489c30657ef1174ccb5d6174c000f993ab71f8",
+        "compared": "engine, observation, reset/step info, model arrays, PCG64, task MT19937, action-space and Variation entropy ownership"
+      },
+      "state_file": "frame-0048-state.npz",
+      "state_hash": "7a4d664f9e449f8fffbf2a4176e93dda6591df9c338c6d4d8e1b9c84c01e0d21",
+      "oracle_file": "frame-0048-oracle.npy",
+      "camera": "front_pixels",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "1ca54ea889e3bc4ed764b86a1323b430b74933a993abe2665a6d2cf6a92f5f07",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          187.538677,
+          188.498548
+        ],
+        "statistics_ms": {
+          "count": 2,
+          "mean": 188.01861250000002,
+          "median": 188.01861250000002,
+          "p95": 188.45055445,
+          "maximum": 188.498548,
+          "minimum": 187.538677,
+          "std": 0.4799354999999963
+        },
+        "first_call_ms": 617.793102,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "Cube/Scene CPU mesh rendering is unavailable; renderer/GPU execution requires CUDA"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 49,
+      "case": 10,
+      "step": 1,
+      "seed": 17,
+      "action_dtype": "float64",
+      "prefix_hash": "2198179ba634be4c1461bc35aac4e63376c399310ccd88e349f6e593b83aeb16",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "tests/unit/test_ogbench_manipulation_cpu.py:assert_oracle",
+        "candidate_state_hash": "16096c3b81963e1ffce55d40f636612fa31ac1f0781017b3485b5e2884e3761b",
+        "oracle_state_hash": "aae918e3a52992df9339980b0f09ce16cea42c18563d331889fbbb804f8a51c7",
+        "compared": "engine, observation, reset/step info, model arrays, PCG64, task MT19937, action-space and Variation entropy ownership"
+      },
+      "state_file": "frame-0049-state.npz",
+      "state_hash": "16096c3b81963e1ffce55d40f636612fa31ac1f0781017b3485b5e2884e3761b",
+      "oracle_file": "frame-0049-oracle.npy",
+      "camera": "front_pixels",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "fff50cceb2c9f1fcb2b3fa9d9b749de6c6a3d5aaf6aa0ad2c97bdb08a5ff4681",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          189.407857,
+          191.721056
+        ],
+        "statistics_ms": {
+          "count": 2,
+          "mean": 190.5644565,
+          "median": 190.5644565,
+          "p95": 191.60539605,
+          "maximum": 191.721056,
+          "minimum": 189.407857,
+          "std": 1.1565994999999987
+        },
+        "first_call_ms": 184.052179,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "Cube/Scene CPU mesh rendering is unavailable; renderer/GPU execution requires CUDA"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 50,
+      "case": 10,
+      "step": 12,
+      "seed": 17,
+      "action_dtype": "float64",
+      "prefix_hash": "8cc39c9da6ebc8913e9ce5d59d364e2f709c0c5b627724bccb0eb4ec75f7cb1d",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "tests/unit/test_ogbench_manipulation_cpu.py:assert_oracle",
+        "candidate_state_hash": "c91f3d7b5721fec018c9b8af58e6074ce0e575e6d8892954abd7e988f1ac50c8",
+        "oracle_state_hash": "f90a171b5cc9fd5366e5b06376c8dbc936524dc96f4d67c3fb8e790ba85a35e6",
+        "compared": "engine, observation, reset/step info, model arrays, PCG64, task MT19937, action-space and Variation entropy ownership"
+      },
+      "state_file": "frame-0050-state.npz",
+      "state_hash": "c91f3d7b5721fec018c9b8af58e6074ce0e575e6d8892954abd7e988f1ac50c8",
+      "oracle_file": "frame-0050-oracle.npy",
+      "camera": "front_pixels",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "1a5d8574dacbb656b3c5c59258820335eb74deab8fe488b06247788438d2fc0e",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          191.962266,
+          190.958647
+        ],
+        "statistics_ms": {
+          "count": 2,
+          "mean": 191.46045650000002,
+          "median": 191.46045650000002,
+          "p95": 191.91208505,
+          "maximum": 191.962266,
+          "minimum": 190.958647,
+          "std": 0.5018094999999931
+        },
+        "first_call_ms": 188.662728,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "Cube/Scene CPU mesh rendering is unavailable; renderer/GPU execution requires CUDA"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 51,
+      "case": 11,
+      "step": 0,
+      "seed": 17,
+      "action_dtype": "float64",
+      "prefix_hash": "4dc01c4a5423be776bd43c910d4e81ec8cb3daacff372492f4dfed06acccb0de",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "tests/unit/test_ogbench_manipulation_cpu.py:assert_oracle",
+        "candidate_state_hash": "98ed741c77fa360ad57ca7d9507575c8cf809ccaa5d61769ab6472d2154d07b7",
+        "oracle_state_hash": "8f14e24ceb7c74fbbc88519303225322043b95a5c7243ce1994735025e56a511",
+        "compared": "engine, observation, reset/step info, model arrays, PCG64, task MT19937, action-space and Variation entropy ownership"
+      },
+      "state_file": "frame-0051-state.npz",
+      "state_hash": "98ed741c77fa360ad57ca7d9507575c8cf809ccaa5d61769ab6472d2154d07b7",
+      "oracle_file": "frame-0051-oracle.npy",
+      "camera": "front_pixels",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "94adc4d83ac61fb16604a042bf5b397d3a7c217d6a2f255ced5338a378f48e7a",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          186.478259,
+          185.620519
+        ],
+        "statistics_ms": {
+          "count": 2,
+          "mean": 186.04938900000002,
+          "median": 186.04938900000002,
+          "p95": 186.435372,
+          "maximum": 186.478259,
+          "minimum": 185.620519,
+          "std": 0.4288700000000034
+        },
+        "first_call_ms": 624.778829,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "Cube/Scene CPU mesh rendering is unavailable; renderer/GPU execution requires CUDA"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 52,
+      "case": 11,
+      "step": 1,
+      "seed": 17,
+      "action_dtype": "float64",
+      "prefix_hash": "2198179ba634be4c1461bc35aac4e63376c399310ccd88e349f6e593b83aeb16",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "tests/unit/test_ogbench_manipulation_cpu.py:assert_oracle",
+        "candidate_state_hash": "2504b0a80cfe16526fe395928464cbecd09a60a3122c68a2cfcbaca72042540f",
+        "oracle_state_hash": "08652b7b32d98311e5bae7280598e442f6109aaf446c1494dfde55c808207880",
+        "compared": "engine, observation, reset/step info, model arrays, PCG64, task MT19937, action-space and Variation entropy ownership"
+      },
+      "state_file": "frame-0052-state.npz",
+      "state_hash": "2504b0a80cfe16526fe395928464cbecd09a60a3122c68a2cfcbaca72042540f",
+      "oracle_file": "frame-0052-oracle.npy",
+      "camera": "front_pixels",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "aaac09444824847a883b556db0b76d6a514b791cfd1e96307adae6651e0966a6",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          186.590248,
+          186.750988
+        ],
+        "statistics_ms": {
+          "count": 2,
+          "mean": 186.670618,
+          "median": 186.670618,
+          "p95": 186.742951,
+          "maximum": 186.750988,
+          "minimum": 186.590248,
+          "std": 0.08037000000000205
+        },
+        "first_call_ms": 183.778569,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "Cube/Scene CPU mesh rendering is unavailable; renderer/GPU execution requires CUDA"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 53,
+      "case": 11,
+      "step": 12,
+      "seed": 17,
+      "action_dtype": "float64",
+      "prefix_hash": "8cc39c9da6ebc8913e9ce5d59d364e2f709c0c5b627724bccb0eb4ec75f7cb1d",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "tests/unit/test_ogbench_manipulation_cpu.py:assert_oracle",
+        "candidate_state_hash": "de3f63d23c15536102f189dbaa3cbb3399bb3ef5e55152ec5163559515eca7e2",
+        "oracle_state_hash": "09056e17bdd24164f5bf12fdb8b512be0b791e24e42a2e77a759e8c215228186",
+        "compared": "engine, observation, reset/step info, model arrays, PCG64, task MT19937, action-space and Variation entropy ownership"
+      },
+      "state_file": "frame-0053-state.npz",
+      "state_hash": "de3f63d23c15536102f189dbaa3cbb3399bb3ef5e55152ec5163559515eca7e2",
+      "oracle_file": "frame-0053-oracle.npy",
+      "camera": "front_pixels",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "b0d62da2d90db65ee426d13bc54d36e35b3090ad998f907b1dc9e5cf33b34caa",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          191.108337,
+          188.956447
+        ],
+        "statistics_ms": {
+          "count": 2,
+          "mean": 190.03239200000002,
+          "median": 190.03239200000002,
+          "p95": 191.0007425,
+          "maximum": 191.108337,
+          "minimum": 188.956447,
+          "std": 1.0759450000000044
+        },
+        "first_call_ms": 185.630799,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "Cube/Scene CPU mesh rendering is unavailable; renderer/GPU execution requires CUDA"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 54,
+      "case": 12,
+      "step": 0,
+      "seed": 17,
+      "action_dtype": "float64",
+      "prefix_hash": "4dc01c4a5423be776bd43c910d4e81ec8cb3daacff372492f4dfed06acccb0de",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "tests/unit/test_ogbench_manipulation_cpu.py:assert_oracle",
+        "candidate_state_hash": "61577dd3a88241bbef79a94002b093a5f661ba35b6f825739ae3127f08962df6",
+        "oracle_state_hash": "0c33c562f662e308cbb0628d145b0d26c6f98e83f3b9600a2bd02588d12ef8c8",
+        "compared": "engine, observation, reset/step info, model arrays, PCG64, task MT19937, action-space and Variation entropy ownership"
+      },
+      "state_file": "frame-0054-state.npz",
+      "state_hash": "61577dd3a88241bbef79a94002b093a5f661ba35b6f825739ae3127f08962df6",
+      "oracle_file": "frame-0054-oracle.npy",
+      "camera": "front_pixels",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "512a2ded555722623539bf496b2e8548c16939f7069701f1a383adc7fbb428ec",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          186.332368,
+          189.334788
+        ],
+        "statistics_ms": {
+          "count": 2,
+          "mean": 187.833578,
+          "median": 187.833578,
+          "p95": 189.184667,
+          "maximum": 189.334788,
+          "minimum": 186.332368,
+          "std": 1.5012100000000004
+        },
+        "first_call_ms": 642.461823,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "Cube/Scene CPU mesh rendering is unavailable; renderer/GPU execution requires CUDA"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 55,
+      "case": 12,
+      "step": 1,
+      "seed": 17,
+      "action_dtype": "float64",
+      "prefix_hash": "2198179ba634be4c1461bc35aac4e63376c399310ccd88e349f6e593b83aeb16",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "tests/unit/test_ogbench_manipulation_cpu.py:assert_oracle",
+        "candidate_state_hash": "26e2a9aac7a4ac60433647fa6eda060ea777d744db8327d1be8180cc37a4e227",
+        "oracle_state_hash": "45739c4188b85db16f354e5a84ca4834579146aab114cc8594898d4fcaee8ebf",
+        "compared": "engine, observation, reset/step info, model arrays, PCG64, task MT19937, action-space and Variation entropy ownership"
+      },
+      "state_file": "frame-0055-state.npz",
+      "state_hash": "26e2a9aac7a4ac60433647fa6eda060ea777d744db8327d1be8180cc37a4e227",
+      "oracle_file": "frame-0055-oracle.npy",
+      "camera": "front_pixels",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "e6d8e4a7d1355bdf671c1835e886c2ef664214b9c0e2fe6fca57f3a60ae07ed7",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          187.000608,
+          188.201598
+        ],
+        "statistics_ms": {
+          "count": 2,
+          "mean": 187.601103,
+          "median": 187.601103,
+          "p95": 188.1415485,
+          "maximum": 188.201598,
+          "minimum": 187.000608,
+          "std": 0.6004949999999951
+        },
+        "first_call_ms": 186.360888,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "Cube/Scene CPU mesh rendering is unavailable; renderer/GPU execution requires CUDA"
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 56,
+      "case": 12,
+      "step": 12,
+      "seed": 17,
+      "action_dtype": "float64",
+      "prefix_hash": "8cc39c9da6ebc8913e9ce5d59d364e2f709c0c5b627724bccb0eb4ec75f7cb1d",
+      "proof": {
+        "kind": "ACCEPTED_SEMANTIC_WITNESS",
+        "equal": true,
+        "helper": "tests/unit/test_ogbench_manipulation_cpu.py:assert_oracle",
+        "candidate_state_hash": "a846217479888ac8b90a2d52f860bda66d32a22e2179f4ec8de55f279b7f9d00",
+        "oracle_state_hash": "206aee97763fb6281f5d9285096f1543d43ae737e9d465f1dd0a25a79529a184",
+        "compared": "engine, observation, reset/step info, model arrays, PCG64, task MT19937, action-space and Variation entropy ownership"
+      },
+      "state_file": "frame-0056-state.npz",
+      "state_hash": "a846217479888ac8b90a2d52f860bda66d32a22e2179f4ec8de55f279b7f9d00",
+      "oracle_file": "frame-0056-oracle.npy",
+      "camera": "front_pixels",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "oracle_sha256": "2df6c3c79fcd7b8246c3ddaac871bfe8fdfb7bc985200087c8c523efb5121259",
+      "render_kwargs": {},
+      "original_timing": {
+        "samples_ms": [
+          191.802337,
+          191.909836
+        ],
+        "statistics_ms": {
+          "count": 2,
+          "mean": 191.8560865,
+          "median": 191.8560865,
+          "p95": 191.90446105,
+          "maximum": 191.909836,
+          "minimum": 191.802337,
+          "std": 0.05374950000000922
+        },
+        "first_call_ms": 190.835596,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "Mesa llvmpipe software OpenGL",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "status": "UNSUPPORTED",
+        "reason": "Cube/Scene CPU mesh rendering is unavailable; renderer/GPU execution requires CUDA"
+      },
+      "candidate_render_nonmutation": true
+    }
+  ],
+  "recipes": [
+    {
+      "case": 0,
+      "seed": 0,
+      "action_dtype": "float32",
+      "reset_options": {
+        "task_id": 1,
+        "variation": []
+      },
+      "reset_count": 1,
+      "simulator_config": null,
+      "label": "trajectory",
+      "action_generator": "special.contact_action: accepted source-observation controller, commands shared exactly with candidate",
+      "actions_file": "actions-0.npy",
+      "actions_hash": "6ab897b63d442e1d9642929128fc69a4a4e2fe6bffe6d1b756953ec15e94b9bd",
+      "camera": "front_pixels",
+      "checkpoints": [
+        0,
+        1,
+        12,
+        24,
+        32,
+        50
+      ],
+      "constructor": {
+        "num_envs": 1,
+        "seed": 0
+      },
+      "interaction": "cube"
+    },
+    {
+      "case": 1,
+      "seed": 0,
+      "action_dtype": "float64",
+      "reset_options": {
+        "task_id": 1,
+        "variation": []
+      },
+      "reset_count": 1,
+      "simulator_config": null,
+      "label": "trajectory",
+      "action_generator": "special.contact_action: accepted source-observation controller, commands shared exactly with candidate",
+      "actions_file": "actions-1.npy",
+      "actions_hash": "5d546440c8656e8f3671191863a6a6ceaf1acc29af7ffc289772486378a018fd",
+      "camera": "front_pixels",
+      "checkpoints": [
+        0,
+        1,
+        12,
+        24,
+        32,
+        50
+      ],
+      "constructor": {
+        "num_envs": 1,
+        "seed": 0
+      },
+      "interaction": "cube"
+    },
+    {
+      "case": 2,
+      "seed": 17,
+      "action_dtype": "float32",
+      "reset_options": {
+        "task_id": 1,
+        "variation": []
+      },
+      "reset_count": 1,
+      "simulator_config": null,
+      "label": "trajectory",
+      "action_generator": "special.contact_action: accepted source-observation controller, commands shared exactly with candidate",
+      "actions_file": "actions-2.npy",
+      "actions_hash": "ec0a2ee1f967eb89bc035615fb54f5d93ff89419d351d95acc0ed78c6e02df89",
+      "camera": "front_pixels",
+      "checkpoints": [
+        0,
+        1,
+        12,
+        24,
+        32,
+        50
+      ],
+      "constructor": {
+        "num_envs": 1,
+        "seed": 17
+      },
+      "interaction": "cube"
+    },
+    {
+      "case": 3,
+      "seed": 17,
+      "action_dtype": "float64",
+      "reset_options": {
+        "task_id": 1,
+        "variation": []
+      },
+      "reset_count": 1,
+      "simulator_config": null,
+      "label": "trajectory",
+      "action_generator": "special.contact_action: accepted source-observation controller, commands shared exactly with candidate",
+      "actions_file": "actions-3.npy",
+      "actions_hash": "0eb60a797f6b095bda984539836af65a4c34dd24c0ba648d2501e22a7c430946",
+      "camera": "front_pixels",
+      "checkpoints": [
+        0,
+        1,
+        12,
+        24,
+        32,
+        50
+      ],
+      "constructor": {
+        "num_envs": 1,
+        "seed": 17
+      },
+      "interaction": "cube"
+    },
+    {
+      "case": 4,
+      "seed": 42,
+      "action_dtype": "float32",
+      "reset_options": {
+        "task_id": 1,
+        "variation": []
+      },
+      "reset_count": 1,
+      "simulator_config": null,
+      "label": "trajectory",
+      "action_generator": "special.contact_action: accepted source-observation controller, commands shared exactly with candidate",
+      "actions_file": "actions-4.npy",
+      "actions_hash": "8b52fa745726989bf81a00554f6abd2c1f33bd9885f7afa648540955a11a10c7",
+      "camera": "front_pixels",
+      "checkpoints": [
+        0,
+        1,
+        12,
+        24,
+        32,
+        50
+      ],
+      "constructor": {
+        "num_envs": 1,
+        "seed": 42
+      },
+      "interaction": "cube"
+    },
+    {
+      "case": 5,
+      "seed": 42,
+      "action_dtype": "float64",
+      "reset_options": {
+        "task_id": 1,
+        "variation": []
+      },
+      "reset_count": 1,
+      "simulator_config": null,
+      "label": "trajectory",
+      "action_generator": "special.contact_action: accepted source-observation controller, commands shared exactly with candidate",
+      "actions_file": "actions-5.npy",
+      "actions_hash": "c3b195b781c55ec58cb5b995e2dfe482122ddb1f6600e9cd8360bbf3177de0ab",
+      "camera": "front_pixels",
+      "checkpoints": [
+        0,
+        1,
+        12,
+        24,
+        32,
+        50
+      ],
+      "constructor": {
+        "num_envs": 1,
+        "seed": 42
+      },
+      "interaction": "cube"
+    },
+    {
+      "case": 6,
+      "seed": 17,
+      "action_dtype": "float64",
+      "reset_options": {
+        "task_id": 1,
+        "variation": [],
+        "variation_values": {
+          "agent.color": [
+            0.2,
+            0.7,
+            0.3
+          ]
+        }
+      },
+      "reset_count": 2,
+      "simulator_config": null,
+      "label": "agent",
+      "action_generator": "numpy.default_rng(90000+seed).uniform(action_space.low, high) or integers(0,n)",
+      "actions_file": "actions-6.npy",
+      "actions_hash": "8cc39c9da6ebc8913e9ce5d59d364e2f709c0c5b627724bccb0eb4ec75f7cb1d",
+      "camera": "front_pixels",
+      "checkpoints": [
+        0,
+        1,
+        12
+      ],
+      "constructor": {
+        "num_envs": 1,
+        "seed": 17
+      }
+    },
+    {
+      "case": 7,
+      "seed": 17,
+      "action_dtype": "float64",
+      "reset_options": {
+        "task_id": 1,
+        "variation": [],
+        "variation_values": {
+          "cube.color": [
+            [
+              0.1,
+              0.8,
+              0.3
+            ]
+          ]
+        }
+      },
+      "reset_count": 2,
+      "simulator_config": null,
+      "label": "cube",
+      "action_generator": "numpy.default_rng(90000+seed).uniform(action_space.low, high) or integers(0,n)",
+      "actions_file": "actions-7.npy",
+      "actions_hash": "8cc39c9da6ebc8913e9ce5d59d364e2f709c0c5b627724bccb0eb4ec75f7cb1d",
+      "camera": "front_pixels",
+      "checkpoints": [
+        0,
+        1,
+        12
+      ],
+      "constructor": {
+        "num_envs": 1,
+        "seed": 17
+      }
+    },
+    {
+      "case": 8,
+      "seed": 17,
+      "action_dtype": "float64",
+      "reset_options": {
+        "task_id": 1,
+        "variation": [],
+        "variation_values": {
+          "floor.color": [
+            [
+              0.7,
+              0.15,
+              0.2
+            ],
+            [
+              0.12,
+              0.6,
+              0.8
+            ]
+          ]
+        }
+      },
+      "reset_count": 2,
+      "simulator_config": null,
+      "label": "floor",
+      "action_generator": "numpy.default_rng(90000+seed).uniform(action_space.low, high) or integers(0,n)",
+      "actions_file": "actions-8.npy",
+      "actions_hash": "8cc39c9da6ebc8913e9ce5d59d364e2f709c0c5b627724bccb0eb4ec75f7cb1d",
+      "camera": "front_pixels",
+      "checkpoints": [
+        0,
+        1,
+        12
+      ],
+      "constructor": {
+        "num_envs": 1,
+        "seed": 17
+      }
+    },
+    {
+      "case": 9,
+      "seed": 17,
+      "action_dtype": "float64",
+      "reset_options": {
+        "task_id": 1,
+        "variation": [],
+        "variation_values": {
+          "camera.angle_delta": [
+            [
+              4.0,
+              -3.0
+            ]
+          ]
+        }
+      },
+      "reset_count": 2,
+      "simulator_config": null,
+      "label": "camera",
+      "action_generator": "numpy.default_rng(90000+seed).uniform(action_space.low, high) or integers(0,n)",
+      "actions_file": "actions-9.npy",
+      "actions_hash": "8cc39c9da6ebc8913e9ce5d59d364e2f709c0c5b627724bccb0eb4ec75f7cb1d",
+      "camera": "front_pixels",
+      "checkpoints": [
+        0,
+        1,
+        12
+      ],
+      "constructor": {
+        "num_envs": 1,
+        "seed": 17
+      }
+    },
+    {
+      "case": 10,
+      "seed": 17,
+      "action_dtype": "float64",
+      "reset_options": {
+        "task_id": 1,
+        "variation": [],
+        "variation_values": {
+          "light.intensity": [
+            0.9
+          ]
+        }
+      },
+      "reset_count": 2,
+      "simulator_config": null,
+      "label": "light",
+      "action_generator": "numpy.default_rng(90000+seed).uniform(action_space.low, high) or integers(0,n)",
+      "actions_file": "actions-10.npy",
+      "actions_hash": "8cc39c9da6ebc8913e9ce5d59d364e2f709c0c5b627724bccb0eb4ec75f7cb1d",
+      "camera": "front_pixels",
+      "checkpoints": [
+        0,
+        1,
+        12
+      ],
+      "constructor": {
+        "num_envs": 1,
+        "seed": 17
+      }
+    },
+    {
+      "case": 11,
+      "seed": 17,
+      "action_dtype": "float64",
+      "reset_options": {
+        "task_id": 1,
+        "variation": [],
+        "variation_values": {
+          "cube.size": [
+            0.01
+          ]
+        }
+      },
+      "reset_count": 2,
+      "simulator_config": null,
+      "label": "size-low",
+      "action_generator": "numpy.default_rng(90000+seed).uniform(action_space.low, high) or integers(0,n)",
+      "actions_file": "actions-11.npy",
+      "actions_hash": "8cc39c9da6ebc8913e9ce5d59d364e2f709c0c5b627724bccb0eb4ec75f7cb1d",
+      "camera": "front_pixels",
+      "checkpoints": [
+        0,
+        1,
+        12
+      ],
+      "constructor": {
+        "num_envs": 1,
+        "seed": 17
+      }
+    },
+    {
+      "case": 12,
+      "seed": 17,
+      "action_dtype": "float64",
+      "reset_options": {
+        "task_id": 1,
+        "variation": [],
+        "variation_values": {
+          "cube.size": [
+            0.03
+          ]
+        }
+      },
+      "reset_count": 2,
+      "simulator_config": null,
+      "label": "size-high",
+      "action_generator": "numpy.default_rng(90000+seed).uniform(action_space.low, high) or integers(0,n)",
+      "actions_file": "actions-12.npy",
+      "actions_hash": "8cc39c9da6ebc8913e9ce5d59d364e2f709c0c5b627724bccb0eb4ec75f7cb1d",
+      "camera": "front_pixels",
+      "checkpoints": [
+        0,
+        1,
+        12
+      ],
+      "constructor": {
+        "num_envs": 1,
+        "seed": 17
+      }
+    }
+  ]
+}

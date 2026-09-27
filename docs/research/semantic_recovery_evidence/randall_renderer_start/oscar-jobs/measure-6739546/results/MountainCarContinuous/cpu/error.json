@@ -1,0 +1,10 @@
+{
+  "status": "ERROR",
+  "traceback": "Traceback (most recent call last):\n  File \"/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739546/source/scripts/benchmarks/renderer_table/collect.py\", line 256, in main\n    cpu(row, args.output)\n  File \"/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739546/source/scripts/benchmarks/renderer_table/collect.py\", line 125, in cpu\n    if name in CLASSIC or name.startswith(\"Fetch\"):\n               ^^^^^^^\nNameError: name 'CLASSIC' is not defined\n",
+  "command": [
+    "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739546/source/scripts/benchmarks/renderer_table/collect.py",
+    "swm/MountainCarContinuousControl-v0",
+    "cpu",
+    "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739546/results/MountainCarContinuous/cpu"
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "status": "ERROR",
+  "traceback": "Traceback (most recent call last):\n  File \"/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739712/source/scripts/benchmarks/renderer_table/collect.py\", line 339, in main\n    cpu(row, args.output)\n  File \"/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739712/source/scripts/benchmarks/renderer_table/collect.py\", line 196, in cpu\n    assert bridge.snapshot() == oracle_before, \"oracle render mutated continuation State\"\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: oracle render mutated continuation State\n",
+  "command": [
+    "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739712/source/scripts/benchmarks/renderer_table/collect.py",
+    "swm/FetchPickAndPlaceDense-v3",
+    "cpu",
+    "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739712/results/FetchPickAndPlaceDense/cpu"
+  ]
+}

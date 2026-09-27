@@ -1,0 +1,15 @@
+{
+  "status": "PASS",
+  "summary_rows": 42,
+  "csv_rows": 42,
+  "matched_checkpoints": 1488,
+  "supported_timing_cells": 98,
+  "independently_recomputed_quality_frames": 2120,
+  "verifier_tests": 16,
+  "ruff": "PASS",
+  "all_report_links_resolve": true,
+  "all_numeric_table_cells_derived_from_summary": true,
+  "precommit_existing_tracked_diff_empty": true,
+  "push_performed": false,
+  "stop_after_checkpoint": true
+}

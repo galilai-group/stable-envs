@@ -1,0 +1,195 @@
+{
+  "swm/AcrobotControl-v1": {
+    "cpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739563/results/Acrobot/cpu/result.json",
+    "gpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739563/results/Acrobot/gpu/result.json"
+  },
+  "swm/AcrobotDMControl-v0": {
+    "cpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739564/results/DMCAcrobotBalance/cpu/result.json",
+    "gpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739564/results/DMCAcrobotBalance/gpu/result.json",
+    "gl": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739564/cpu-gl.json"
+  },
+  "swm/BallInCupDMControl-v0": {
+    "cpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739564/results/DMCBallInCupCatch/cpu/result.json",
+    "gpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739564/results/DMCBallInCupCatch/gpu/result.json",
+    "gl": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739564/cpu-gl.json"
+  },
+  "swm/CartPoleControl-v1": {
+    "cpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739563/results/CartPole/cpu/result.json",
+    "gpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739563/results/CartPole/gpu/result.json"
+  },
+  "swm/CartpoleDMControl-v0": {
+    "cpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739564/results/DMCCartpoleSwingup/cpu/result.json",
+    "gpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739564/results/DMCCartpoleSwingup/gpu/result.json",
+    "gl": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739564/cpu-gl.json"
+  },
+  "swm/CheetahDMControl-v0": {
+    "cpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739564/results/DMCCheetahRun/cpu/result.json",
+    "gpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739564/results/DMCCheetahRun/gpu/result.json",
+    "gl": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739564/cpu-gl.json"
+  },
+  "swm/CraftaxClassicPixels-v1": {
+    "cpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739949/craftax/CraftaxClassicPixels/cpu/result.json",
+    "gpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740040/CraftaxClassicPixels-gpu/result.json"
+  },
+  "swm/CraftaxClassicSymbolic-v1": {
+    "cpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739949/craftax/CraftaxClassicSymbolic/cpu/result.json",
+    "gpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739949/craftax/CraftaxClassicSymbolic/gpu/result.json"
+  },
+  "swm/CraftaxPixels-v1": {
+    "cpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739949/craftax/CraftaxPixels/cpu/result.json",
+    "gpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740040/CraftaxPixels-gpu/result.json"
+  },
+  "swm/CraftaxSymbolic-v1": {
+    "cpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739949/craftax/CraftaxSymbolic/cpu/result.json",
+    "gpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739949/craftax/CraftaxSymbolic/gpu/result.json"
+  },
+  "swm/FetchPickAndPlace-v3": {
+    "cpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/results/FetchPickAndPlace/cpu/result.json",
+    "gpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/results/FetchPickAndPlace/gpu/result.json",
+    "gl": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/cpu-gl.json"
+  },
+  "swm/FetchPickAndPlaceDense-v3": {
+    "cpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/results/FetchPickAndPlaceDense/cpu/result.json",
+    "gpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/results/FetchPickAndPlaceDense/gpu/result.json",
+    "gl": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/cpu-gl.json"
+  },
+  "swm/FetchPickAndPlaceDict-v3": {
+    "cpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/results/FetchPickAndPlaceDict/cpu/result.json",
+    "gpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/results/FetchPickAndPlaceDict/gpu/result.json",
+    "gl": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/cpu-gl.json"
+  },
+  "swm/FetchPush-v3": {
+    "cpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/results/FetchPush/cpu/result.json",
+    "gpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/results/FetchPush/gpu/result.json",
+    "gl": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/cpu-gl.json"
+  },
+  "swm/FetchPushDense-v3": {
+    "cpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/results/FetchPushDense/cpu/result.json",
+    "gpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/results/FetchPushDense/gpu/result.json",
+    "gl": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/cpu-gl.json"
+  },
+  "swm/FetchPushDict-v3": {
+    "cpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/results/FetchPushDict/cpu/result.json",
+    "gpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/results/FetchPushDict/gpu/result.json",
+    "gl": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/cpu-gl.json"
+  },
+  "swm/FetchReach-v3": {
+    "cpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/results/FetchReach/cpu/result.json",
+    "gpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/results/FetchReach/gpu/result.json",
+    "gl": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/cpu-gl.json"
+  },
+  "swm/FetchReachDense-v3": {
+    "cpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/results/FetchReachDense/cpu/result.json",
+    "gpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/results/FetchReachDense/gpu/result.json",
+    "gl": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/cpu-gl.json"
+  },
+  "swm/FetchReachDict-v3": {
+    "cpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/results/FetchReachDict/cpu/result.json",
+    "gpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/results/FetchReachDict/gpu/result.json",
+    "gl": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/cpu-gl.json"
+  },
+  "swm/FetchSlide-v3": {
+    "cpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/results/FetchSlide/cpu/result.json",
+    "gpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/results/FetchSlide/gpu/result.json",
+    "gl": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/cpu-gl.json"
+  },
+  "swm/FetchSlideDense-v3": {
+    "cpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/results/FetchSlideDense/cpu/result.json",
+    "gpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/results/FetchSlideDense/gpu/result.json",
+    "gl": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/cpu-gl.json"
+  },
+  "swm/FetchSlideDict-v3": {
+    "cpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/results/FetchSlideDict/cpu/result.json",
+    "gpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/results/FetchSlideDict/gpu/result.json",
+    "gl": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6740049/cpu-gl.json"
+  },
+  "swm/FingerDMControl-v0": {
+    "cpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739564/results/DMCFingerTurnHard/cpu/result.json",
+    "gpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739564/results/DMCFingerTurnHard/gpu/result.json",
+    "gl": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739564/cpu-gl.json"
+  },
+  "swm/HopperDMControl-v0": {
+    "cpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739564/results/DMCHopperHop/cpu/result.json",
+    "gpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739564/results/DMCHopperHop/gpu/result.json",
+    "gl": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739564/cpu-gl.json"
+  },
+  "swm/HumanoidDMControl-v0": {
+    "cpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739564/results/DMCHumanoidWalk/cpu/result.json",
+    "gpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739564/results/DMCHumanoidWalk/gpu/result.json",
+    "gl": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739564/cpu-gl.json"
+  },
+  "swm/ManipulatorDMControl-v0": {
+    "cpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739564/results/DMCManipulatorBringBall/cpu/result.json",
+    "gpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739564/results/DMCManipulatorBringBall/gpu/result.json",
+    "gl": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739564/cpu-gl.json"
+  },
+  "swm/MountainCarContinuousControl-v0": {
+    "cpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739563/results/MountainCarContinuous/cpu/result.json",
+    "gpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739563/results/MountainCarContinuous/gpu/result.json"
+  },
+  "swm/MountainCarControl-v0": {
+    "cpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739563/results/MountainCar/cpu/result.json",
+    "gpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739563/results/MountainCar/gpu/result.json"
+  },
+  "swm/OGBCube-v0": {
+    "cpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739777/manipulation/OGBCube/cpu/result.json",
+    "gpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739908/cube-gpu/result.json",
+    "gl": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739777/cpu-gl.json"
+  },
+  "swm/OGBMaze-v0": {
+    "cpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/maze/PointMazeLargeNavigate/cpu/result.json",
+    "gpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/maze/PointMazeLargeNavigate/gpu/result.json",
+    "gl": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/cpu-gl.json"
+  },
+  "swm/OGBScene-v0": {
+    "cpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739777/manipulation/OGBScene/cpu/result.json",
+    "gpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739908/scene-gpu/result.json",
+    "gl": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739777/cpu-gl.json"
+  },
+  "swm/PFRocketLanding-v0": {
+    "cpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739777/rocket/PyFlytRocketLanding/cpu/result.json",
+    "gpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739777/rocket/PyFlytRocketLanding/gpu/result.json"
+  },
+  "swm/PendulumControl-v1": {
+    "cpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739563/results/Pendulum/cpu/result.json",
+    "gpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739563/results/Pendulum/gpu/result.json"
+  },
+  "swm/PendulumDMControl-v0": {
+    "cpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739564/results/DMCPendulumSwingup/cpu/result.json",
+    "gpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739564/results/DMCPendulumSwingup/gpu/result.json",
+    "gl": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739564/cpu-gl.json"
+  },
+  "swm/Piecewise-v0": {
+    "cpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739713/results/Piecewise/cpu/result.json",
+    "gpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739713/results/Piecewise/gpu/result.json"
+  },
+  "swm/PushT-Discrete-v1": {
+    "probe": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739950/pusht/PushT-Discrete-v1.json"
+  },
+  "swm/PushT-v1": {
+    "probe": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739950/pusht/PushT-v1.json"
+  },
+  "swm/QuadrupedDMControl-v0": {
+    "cpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739564/results/DMCQuadrupedWalk/cpu/result.json",
+    "gpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739564/results/DMCQuadrupedWalk/gpu/result.json",
+    "gl": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739564/cpu-gl.json"
+  },
+  "swm/ReacherDMControl-v0": {
+    "cpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739564/results/DMCReacherHard/cpu/result.json",
+    "gpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739564/results/DMCReacherHard/gpu/result.json",
+    "gl": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739564/cpu-gl.json"
+  },
+  "swm/SimplePointMaze-v0": {
+    "cpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/results/SimplePointMaze/cpu/result.json",
+    "gpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/results/SimplePointMaze/gpu/result.json"
+  },
+  "swm/TwoRoom-v1": {
+    "cpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739713/results/TwoRoom/cpu/result.json",
+    "gpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739713/results/TwoRoom/gpu/result.json"
+  },
+  "swm/WalkerDMControl-v0": {
+    "cpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739564/results/DMCWalkerWalk/cpu/result.json",
+    "gpu": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739564/results/DMCWalkerWalk/gpu/result.json",
+    "gl": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739564/cpu-gl.json"
+  }
+}

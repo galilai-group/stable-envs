@@ -1,0 +1,16 @@
+{
+  "registration": "swm/TwoRoom-v1",
+  "phases": {
+    "cpu": {
+      "returncode": 1,
+      "command": [
+        "/oscar/scratch/sboughan/venvs/se6-verify-vis311/bin/python",
+        "-m",
+        "scripts.benchmarks.renderer_table.collect",
+        "swm/TwoRoom-v1",
+        "cpu",
+        "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739563/results/TwoRoom/cpu"
+      ]
+    }
+  }
+}

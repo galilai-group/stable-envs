@@ -1,0 +1,94 @@
+## SLURM PROLOG ###############################################################
+##    Job ID : 6739950
+##  Job Name : se-randall-measure
+##  Nodelist : node1802
+##      CPUs : 
+##  Mem/Node : 32768 MB
+## Directory : /oscar/home/sboughan
+##   Job Started : Sun Sep 27 01:09:42 PM EDT 2026
+###############################################################################
+{
+  "executable": "/oscar/scratch/sboughan/venvs/se6-verify-vis311/bin/python",
+  "host": "node1802.oscar.ccv.brown.edu",
+  "environment": {
+    "MUJOCO_GL": "glfw",
+    "DISPLAY": ":5050",
+    "LIBGL_ALWAYS_SOFTWARE": "1",
+    "GALLIUM_DRIVER": "llvmpipe",
+    "CUDA_VISIBLE_DEVICES": null
+  },
+  "versions": {
+    "torch": {
+      "version": "2.14.0+cu126",
+      "path": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages"
+    },
+    "numpy": {
+      "version": "2.5.3",
+      "path": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages"
+    },
+    "tensordict": {
+      "version": "0.14.2",
+      "path": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages"
+    },
+    "mujoco": {
+      "version": "3.11.0",
+      "path": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages"
+    },
+    "dm-control": {
+      "version": "1.0.44",
+      "path": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages"
+    },
+    "gymnasium": {
+      "version": "1.3.0",
+      "path": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages"
+    },
+    "ogbench": {
+      "version": "1.2.1",
+      "path": "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages"
+    },
+    "craftax": {
+      "version": "1.6.1",
+      "path": "/oscar/scratch/sboughan/venvs/se-step4-swm/lib/python3.12/site-packages"
+    },
+    "jax": {
+      "version": "0.11.1",
+      "path": "/oscar/scratch/sboughan/venvs/se-step4-swm/lib/python3.12/site-packages"
+    },
+    "jaxlib": {
+      "version": "0.11.1",
+      "path": "/oscar/scratch/sboughan/venvs/se-step4-swm/lib/python3.12/site-packages"
+    },
+    "flax": {
+      "version": "0.12.9",
+      "path": "/oscar/scratch/sboughan/venvs/se-step4-swm/lib/python3.12/site-packages"
+    },
+    "pymunk": {
+      "version": "7.3.0",
+      "path": "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages"
+    },
+    "glfw": {
+      "version": "2.10.2",
+      "path": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages"
+    },
+    "PyOpenGL": {
+      "version": "3.1.10",
+      "path": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages"
+    }
+  },
+  "gl_renderer": "llvmpipe (LLVM 19.1.7, 256 bits)",
+  "gl_vendor": "Mesa",
+  "frame_shape": [
+    64,
+    64,
+    3
+  ],
+  "software_cpu_gl_proven": true
+}
+/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739950/oracle/stable_worldmodel/envs/__init__.py:215: UserWarning: ale-py not found; ALE/* envs are unavailable. Install with: pip install 'stable-worldmodel[env]' or pip install ale-py.
+  from stable_worldmodel.envs import ale  # noqa: F401
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+Users of this version of Gym should be able to simply replace 'import gym' with 'import gymnasium as gym' in the vast majority of cases.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages/gymnasium/spaces/box.py:415: UserWarning: [33mWARN: Casting input x to numpy array.[0m
+  gym.logger.warn("Casting input x to numpy array.")

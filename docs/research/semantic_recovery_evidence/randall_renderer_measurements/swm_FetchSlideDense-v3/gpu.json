@@ -1,0 +1,3030 @@
+{
+  "registration": "swm/FetchSlideDense-v3",
+  "status": "COMPLETE",
+  "family": "fetch",
+  "name": "FetchSlideDense",
+  "phase": "gpu",
+  "profile": {
+    "host": "gpu1505.oscar.ccv.brown.edu",
+    "cpu": "AMD EPYC 7413 24-Core Processor",
+    "gpu": "NVIDIA A40",
+    "python": "3.12.9",
+    "packages": {
+      "torch": {
+        "version": "2.14.0+cu126",
+        "path": "/oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages"
+      },
+      "numpy": {
+        "version": "2.5.3",
+        "path": "/oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages"
+      },
+      "tensordict": {
+        "version": "0.14.2",
+        "path": "/oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages"
+      },
+      "gymnasium": {
+        "version": "1.3.0",
+        "path": "/oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages"
+      },
+      "mujoco": {
+        "version": "3.11.0",
+        "path": "/oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages"
+      },
+      "dm-control": {
+        "version": "1.0.45",
+        "path": "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages"
+      },
+      "gymnasium-robotics": {
+        "version": "1.4.2",
+        "path": "/oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages"
+      },
+      "ogbench": {
+        "version": "1.2.1",
+        "path": "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages"
+      },
+      "craftax": {
+        "version": "1.6.1",
+        "path": "/oscar/scratch/sboughan/venvs/se-step4-swm/lib/python3.12/site-packages"
+      },
+      "jax": {
+        "version": "0.11.1",
+        "path": "/oscar/scratch/sboughan/venvs/se-step4-swm/lib/python3.12/site-packages"
+      },
+      "jaxlib": {
+        "version": "0.11.1",
+        "path": "/oscar/scratch/sboughan/venvs/se-step4-swm/lib/python3.12/site-packages"
+      },
+      "flax": {
+        "version": "0.12.9",
+        "path": "/oscar/scratch/sboughan/venvs/se-step4-swm/lib/python3.12/site-packages"
+      },
+      "pymunk": {
+        "version": "7.3.0",
+        "path": "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages"
+      },
+      "pygame": {
+        "version": "2.6.1",
+        "path": "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages"
+      }
+    },
+    "torch_threads": 1,
+    "environment": {
+      "SLURM_JOB_ID": "6740049",
+      "MUJOCO_GL": "egl",
+      "PYOPENGL_PLATFORM": "egl",
+      "LIBGL_ALWAYS_SOFTWARE": null,
+      "GALLIUM_DRIVER": null,
+      "DISPLAY": ":149",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "LP_NUM_THREADS": "1",
+      "JAX_PLATFORMS": null,
+      "CRAFTAX_JAX_BACKEND": null,
+      "CUDA_VISIBLE_DEVICES": "0"
+    }
+  },
+  "frames": [
+    {
+      "index": 0,
+      "state_hash": "9f59ab351e9a342a8056aaab7305559ceb2a1f56f55bf0feb891bf680081abe4",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "gpu_timing": {
+        "samples_ms": [
+          2.873646,
+          2.836227,
+          2.884576
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 2.8648163333333336,
+          "median": 2.873646,
+          "p95": 2.883483,
+          "maximum": 2.884576,
+          "minimum": 2.836227,
+          "std": 0.0207023140467168
+        },
+        "first_call_ms": 13247.917183,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_to_cpu_timing": {
+        "samples_ms": [
+          2.859376,
+          2.998916,
+          2.949266
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 2.935852666666667,
+          "median": 2.949266,
+          "p95": 2.993951,
+          "maximum": 2.998916,
+          "minimum": 2.859376,
+          "std": 0.05775113870931216
+        },
+        "first_call_ms": 3.000956,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_quality": {
+        "mse_normalized": 0.00039174391161693434,
+        "mse_uint8": 25.473147852891156,
+        "mae_rgb": 0.6596380739795918,
+        "mean_max_channel_abs": 0.8364955357142857,
+        "exact_fraction": 0.9284119897959183,
+        "within8_fraction": 0.9789341517857143,
+        "ssim": 0.9858542130725244,
+        "max_channel_abs": 169.0,
+        "candidate_sha256": "c04be94a14f512e213b3f3522e40032381566ab175a6034709fb7a580c7a42ed",
+        "oracle_sha256": "ee4128df921fd5d111f070777e33ff6f5bf024501e0568bc3004c0a155eb248d",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "supplied_and_live_state_nonmutation": true
+    },
+    {
+      "index": 1,
+      "state_hash": "e452eac57b17ac03cf97855793bc8bc435ed2549bbfc7098f2d7972d803e6a45",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "gpu_timing": {
+        "samples_ms": [
+          2.820957,
+          2.928126,
+          2.795786
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 2.8482896666666666,
+          "median": 2.820957,
+          "p95": 2.9174091,
+          "maximum": 2.928126,
+          "minimum": 2.795786,
+          "std": 0.05738045486245476
+        },
+        "first_call_ms": 3.505454,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_to_cpu_timing": {
+        "samples_ms": [
+          3.026066,
+          3.090265,
+          2.921846
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 3.012725666666667,
+          "median": 3.026066,
+          "p95": 3.0838451,
+          "maximum": 3.090265,
+          "minimum": 2.921846,
+          "std": 0.06940083217720733
+        },
+        "first_call_ms": 3.234754,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_quality": {
+        "mse_normalized": 0.0005106429826832693,
+        "mse_uint8": 33.20455994897959,
+        "mae_rgb": 0.9190449617346939,
+        "mean_max_channel_abs": 1.132174744897959,
+        "exact_fraction": 0.91796875,
+        "within8_fraction": 0.9682118941326531,
+        "ssim": 0.967269384368824,
+        "max_channel_abs": 145.0,
+        "candidate_sha256": "047a4013ceec76b7566b2bf438d31f752277691a606df4a7c333762fa905ff2d",
+        "oracle_sha256": "dd8108833c117b4701ac02760c60a335a73c2ecba2d7c819c601af1bc9319daa",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "supplied_and_live_state_nonmutation": true
+    },
+    {
+      "index": 2,
+      "state_hash": "1818b716932dd8e3588feb7d201b62c73b1e1f0ba02dd0fa314c312e32071def",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "gpu_timing": {
+        "samples_ms": [
+          3.103015,
+          2.796747,
+          2.818106
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 2.9059559999999998,
+          "median": 2.818106,
+          "p95": 3.0745241,
+          "maximum": 3.103015,
+          "minimum": 2.796747,
+          "std": 0.13961432312147157
+        },
+        "first_call_ms": 3.559423,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_to_cpu_timing": {
+        "samples_ms": [
+          3.040496,
+          2.927606,
+          3.375024
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 3.1143753333333333,
+          "median": 3.040496,
+          "p95": 3.3415711999999997,
+          "maximum": 3.375024,
+          "minimum": 2.927606,
+          "std": 0.18998128609827739
+        },
+        "first_call_ms": 3.035815,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_quality": {
+        "mse_normalized": 0.000495942453778897,
+        "mse_uint8": 32.248658056972786,
+        "mae_rgb": 0.9127604166666666,
+        "mean_max_channel_abs": 1.1242227359693877,
+        "exact_fraction": 0.9174505739795918,
+        "within8_fraction": 0.968132174744898,
+        "ssim": 0.9658042204624816,
+        "max_channel_abs": 140.0,
+        "candidate_sha256": "62651e75a84083e784294bef44a2542e9c01007173f6d37103d8f89c4229caea",
+        "oracle_sha256": "8473a475b046c8d52e2040aacd43b29c8f91b1d0c2f6be61a9f0ab09794d96d1",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "supplied_and_live_state_nonmutation": true
+    },
+    {
+      "index": 3,
+      "state_hash": "2b73ab5b6a6da24662f030f4b68bbb20dad6842dd8d3cf5bdb4a3ae1678b9de1",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "gpu_timing": {
+        "samples_ms": [
+          3.730482,
+          3.437714,
+          3.192654
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 3.4536166666666666,
+          "median": 3.437714,
+          "p95": 3.7012052,
+          "maximum": 3.730482,
+          "minimum": 3.192654,
+          "std": 0.2198551197210461
+        },
+        "first_call_ms": 3.905831,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_to_cpu_timing": {
+        "samples_ms": [
+          3.211115,
+          3.083775,
+          3.166765
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 3.1538850000000003,
+          "median": 3.166765,
+          "p95": 3.20668,
+          "maximum": 3.211115,
+          "minimum": 3.083775,
+          "std": 0.05277808699324612
+        },
+        "first_call_ms": 3.176394,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_quality": {
+        "mse_normalized": 0.0005098649958349352,
+        "mse_uint8": 33.153971354166664,
+        "mae_rgb": 0.9328164859693877,
+        "mean_max_channel_abs": 1.1435347576530612,
+        "exact_fraction": 0.9164540816326531,
+        "within8_fraction": 0.9673349808673469,
+        "ssim": 0.9650480506859349,
+        "max_channel_abs": 131.0,
+        "candidate_sha256": "1562f53b6f5f0a1114f259505c61b456717e9d1a68db1ebde86b681a20d16052",
+        "oracle_sha256": "8ad00ded289cc664830ff228b486b444dccc3aca553af358113d841241c9c13f",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "supplied_and_live_state_nonmutation": true
+    },
+    {
+      "index": 4,
+      "state_hash": "9db3423f96ff669b19806ef72d8eb729c9d0df7f140864a211b63146cb856b5b",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "gpu_timing": {
+        "samples_ms": [
+          3.099025,
+          3.086975,
+          3.003296
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 3.063098666666667,
+          "median": 3.086975,
+          "p95": 3.09782,
+          "maximum": 3.099025,
+          "minimum": 3.003296,
+          "std": 0.042572055234494866
+        },
+        "first_call_ms": 3.347804,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_to_cpu_timing": {
+        "samples_ms": [
+          2.938316,
+          3.680382,
+          3.217725
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 3.278807666666667,
+          "median": 3.217725,
+          "p95": 3.6341162999999996,
+          "maximum": 3.680382,
+          "minimum": 2.938316,
+          "std": 0.3060106819642448
+        },
+        "first_call_ms": 3.325614,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_quality": {
+        "mse_normalized": 0.0005234089142192825,
+        "mse_uint8": 34.03466464710884,
+        "mae_rgb": 0.8832243835034014,
+        "mean_max_channel_abs": 1.0816326530612246,
+        "exact_fraction": 0.9185267857142857,
+        "within8_fraction": 0.970085299744898,
+        "ssim": 0.9688212669014228,
+        "max_channel_abs": 229.0,
+        "candidate_sha256": "8745fefda45560ef7eff699fd01405759fd2eedd7c5476148d461a306ab26cef",
+        "oracle_sha256": "388be09290c3369dc143ff6cf067f9d717656cefb58135e031fd1c9f3a80bce4",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "supplied_and_live_state_nonmutation": true
+    },
+    {
+      "index": 5,
+      "state_hash": "2c11ec3ec6908a3bbc556ceaad5cfde810647e4b817f526c784aac9b5862b32b",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "gpu_timing": {
+        "samples_ms": [
+          3.147685,
+          2.827787,
+          2.835527
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 2.9369996666666665,
+          "median": 2.835527,
+          "p95": 3.1164692,
+          "maximum": 3.147685,
+          "minimum": 2.827787,
+          "std": 0.14901053466412675
+        },
+        "first_call_ms": 3.420054,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_to_cpu_timing": {
+        "samples_ms": [
+          3.465793,
+          3.005966,
+          2.908216
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 3.1266583333333333,
+          "median": 3.005966,
+          "p95": 3.4198103,
+          "maximum": 3.465793,
+          "minimum": 2.908216,
+          "std": 0.243102183215664
+        },
+        "first_call_ms": 2.959736,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_quality": {
+        "mse_normalized": 0.0005035046085427635,
+        "mse_uint8": 32.7403871704932,
+        "mae_rgb": 0.8820750956632653,
+        "mean_max_channel_abs": 1.0815728635204083,
+        "exact_fraction": 0.9188257334183674,
+        "within8_fraction": 0.9701450892857143,
+        "ssim": 0.9682451688783451,
+        "max_channel_abs": 149.0,
+        "candidate_sha256": "d2529c0e949cbb02ce7c146d223357d8677d7d3d79b5d3e49f93e2e1ead3c7f2",
+        "oracle_sha256": "c2e1b6aba3f3fcbe6f99013a30fb732602590da8ae859f1840c843cef2aa2d08",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "supplied_and_live_state_nonmutation": true
+    },
+    {
+      "index": 6,
+      "state_hash": "9f59ab351e9a342a8056aaab7305559ceb2a1f56f55bf0feb891bf680081abe4",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "gpu_timing": {
+        "samples_ms": [
+          2.815047,
+          2.804617,
+          2.967006
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 2.862223333333333,
+          "median": 2.815047,
+          "p95": 2.9518101,
+          "maximum": 2.967006,
+          "minimum": 2.804617,
+          "std": 0.0742147858149275
+        },
+        "first_call_ms": 3.473923,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_to_cpu_timing": {
+        "samples_ms": [
+          2.840137,
+          3.022015,
+          2.828357
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 2.8968363333333333,
+          "median": 2.840137,
+          "p95": 3.0038272,
+          "maximum": 3.022015,
+          "minimum": 2.828357,
+          "std": 0.08864523315378499
+        },
+        "first_call_ms": 2.873216,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_quality": {
+        "mse_normalized": 0.00039174391161693434,
+        "mse_uint8": 25.473147852891156,
+        "mae_rgb": 0.6596380739795918,
+        "mean_max_channel_abs": 0.8364955357142857,
+        "exact_fraction": 0.9284119897959183,
+        "within8_fraction": 0.9789341517857143,
+        "ssim": 0.9858542130725244,
+        "max_channel_abs": 169.0,
+        "candidate_sha256": "c04be94a14f512e213b3f3522e40032381566ab175a6034709fb7a580c7a42ed",
+        "oracle_sha256": "ee4128df921fd5d111f070777e33ff6f5bf024501e0568bc3004c0a155eb248d",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "supplied_and_live_state_nonmutation": true
+    },
+    {
+      "index": 7,
+      "state_hash": "dc49c712cb7d0c0d98e34d77e8dc021881a8db584f767c5eae416bedbae5c7c9",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "gpu_timing": {
+        "samples_ms": [
+          2.815237,
+          2.819927,
+          2.802677
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 2.812613666666666,
+          "median": 2.815237,
+          "p95": 2.819458,
+          "maximum": 2.819927,
+          "minimum": 2.802677,
+          "std": 0.007282491942246691
+        },
+        "first_call_ms": 3.656363,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_to_cpu_timing": {
+        "samples_ms": [
+          2.890476,
+          2.896636,
+          2.880166
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 2.8890926666666665,
+          "median": 2.890476,
+          "p95": 2.89602,
+          "maximum": 2.896636,
+          "minimum": 2.880166,
+          "std": 0.006794626962207382
+        },
+        "first_call_ms": 2.877817,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_quality": {
+        "mse_normalized": 0.0005106429826832693,
+        "mse_uint8": 33.20455994897959,
+        "mae_rgb": 0.9190449617346939,
+        "mean_max_channel_abs": 1.132174744897959,
+        "exact_fraction": 0.91796875,
+        "within8_fraction": 0.9682118941326531,
+        "ssim": 0.967269384368824,
+        "max_channel_abs": 145.0,
+        "candidate_sha256": "047a4013ceec76b7566b2bf438d31f752277691a606df4a7c333762fa905ff2d",
+        "oracle_sha256": "dd8108833c117b4701ac02760c60a335a73c2ecba2d7c819c601af1bc9319daa",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "supplied_and_live_state_nonmutation": true
+    },
+    {
+      "index": 8,
+      "state_hash": "6aeaacd04c53540f1c6ae05b6c346cb8501e9901692edee6ab00dbc4282fba0c",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "gpu_timing": {
+        "samples_ms": [
+          3.382284,
+          3.057186,
+          2.840867
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 3.0934456666666663,
+          "median": 3.057186,
+          "p95": 3.3497741999999997,
+          "maximum": 3.382284,
+          "minimum": 2.840867,
+          "std": 0.222514665497705
+        },
+        "first_call_ms": 3.235035,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_to_cpu_timing": {
+        "samples_ms": [
+          2.851637,
+          2.987015,
+          2.836447
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 2.8916996666666663,
+          "median": 2.851637,
+          "p95": 2.9734772,
+          "maximum": 2.987015,
+          "minimum": 2.836447,
+          "std": 0.06768280727695089
+        },
+        "first_call_ms": 2.881456,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_quality": {
+        "mse_normalized": 0.000495942453778897,
+        "mse_uint8": 32.248658056972786,
+        "mae_rgb": 0.9127604166666666,
+        "mean_max_channel_abs": 1.1242227359693877,
+        "exact_fraction": 0.9174505739795918,
+        "within8_fraction": 0.968132174744898,
+        "ssim": 0.9658042204624816,
+        "max_channel_abs": 140.0,
+        "candidate_sha256": "62651e75a84083e784294bef44a2542e9c01007173f6d37103d8f89c4229caea",
+        "oracle_sha256": "8473a475b046c8d52e2040aacd43b29c8f91b1d0c2f6be61a9f0ab09794d96d1",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "supplied_and_live_state_nonmutation": true
+    },
+    {
+      "index": 9,
+      "state_hash": "9d11d123206ed1502eb48608670a51a7f86e3c2d7aa67da8d9b24fd9af45c29b",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "gpu_timing": {
+        "samples_ms": [
+          2.833397,
+          2.836246,
+          2.861817
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 2.8438200000000005,
+          "median": 2.836246,
+          "p95": 2.8592598999999996,
+          "maximum": 2.861817,
+          "minimum": 2.833397,
+          "std": 0.012778842070651913
+        },
+        "first_call_ms": 3.366894,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_to_cpu_timing": {
+        "samples_ms": [
+          2.890187,
+          2.963845,
+          3.551013
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 3.1350150000000006,
+          "median": 2.963845,
+          "p95": 3.4922962,
+          "maximum": 3.551013,
+          "minimum": 2.890187,
+          "std": 0.2956880419676567
+        },
+        "first_call_ms": 2.916596,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_quality": {
+        "mse_normalized": 0.0005098649958349352,
+        "mse_uint8": 33.153971354166664,
+        "mae_rgb": 0.9328164859693877,
+        "mean_max_channel_abs": 1.1435347576530612,
+        "exact_fraction": 0.9164540816326531,
+        "within8_fraction": 0.9673349808673469,
+        "ssim": 0.9650480506859349,
+        "max_channel_abs": 131.0,
+        "candidate_sha256": "1562f53b6f5f0a1114f259505c61b456717e9d1a68db1ebde86b681a20d16052",
+        "oracle_sha256": "8ad00ded289cc664830ff228b486b444dccc3aca553af358113d841241c9c13f",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "supplied_and_live_state_nonmutation": true
+    },
+    {
+      "index": 10,
+      "state_hash": "34e1963dca5a79482b43ffbebd3478a3c58966db2b0d8231d683613a98d7ca72",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "gpu_timing": {
+        "samples_ms": [
+          3.264534,
+          2.878017,
+          2.860796
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 3.0011156666666667,
+          "median": 2.878017,
+          "p95": 3.2258823,
+          "maximum": 3.264534,
+          "minimum": 2.860796,
+          "std": 0.18639752226953607
+        },
+        "first_call_ms": 3.874532,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_to_cpu_timing": {
+        "samples_ms": [
+          2.898976,
+          2.900546,
+          2.882286
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 2.893936,
+          "median": 2.898976,
+          "p95": 2.9003889999999997,
+          "maximum": 2.900546,
+          "minimum": 2.882286,
+          "std": 0.008262691248416932
+        },
+        "first_call_ms": 2.909196,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_quality": {
+        "mse_normalized": 0.0005234089142192825,
+        "mse_uint8": 34.03466464710884,
+        "mae_rgb": 0.8832243835034014,
+        "mean_max_channel_abs": 1.0816326530612246,
+        "exact_fraction": 0.9185267857142857,
+        "within8_fraction": 0.970085299744898,
+        "ssim": 0.9688212669014228,
+        "max_channel_abs": 229.0,
+        "candidate_sha256": "8745fefda45560ef7eff699fd01405759fd2eedd7c5476148d461a306ab26cef",
+        "oracle_sha256": "388be09290c3369dc143ff6cf067f9d717656cefb58135e031fd1c9f3a80bce4",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "supplied_and_live_state_nonmutation": true
+    },
+    {
+      "index": 11,
+      "state_hash": "c53ed1cd762f1493f106a9f6f0396b5f6d88921c813b94386bd7b8f229989dd5",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "gpu_timing": {
+        "samples_ms": [
+          2.815977,
+          2.826796,
+          2.833357
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 2.8253766666666666,
+          "median": 2.826796,
+          "p95": 2.8327009,
+          "maximum": 2.833357,
+          "minimum": 2.815977,
+          "std": 0.0071659835488382525
+        },
+        "first_call_ms": 3.353514,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_to_cpu_timing": {
+        "samples_ms": [
+          2.871756,
+          2.991346,
+          2.855266
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 2.9061226666666666,
+          "median": 2.871756,
+          "p95": 2.979387,
+          "maximum": 2.991346,
+          "minimum": 2.855266,
+          "std": 0.060636855862494204
+        },
+        "first_call_ms": 2.930976,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_quality": {
+        "mse_normalized": 0.0005035046085427635,
+        "mse_uint8": 32.7403871704932,
+        "mae_rgb": 0.8820750956632653,
+        "mean_max_channel_abs": 1.0815728635204083,
+        "exact_fraction": 0.9188257334183674,
+        "within8_fraction": 0.9701450892857143,
+        "ssim": 0.9682451688783451,
+        "max_channel_abs": 149.0,
+        "candidate_sha256": "d2529c0e949cbb02ce7c146d223357d8677d7d3d79b5d3e49f93e2e1ead3c7f2",
+        "oracle_sha256": "c2e1b6aba3f3fcbe6f99013a30fb732602590da8ae859f1840c843cef2aa2d08",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "supplied_and_live_state_nonmutation": true
+    },
+    {
+      "index": 12,
+      "state_hash": "966f375ae4b6502d5922fb42f05a21c86cf4c994308bde5f0af06a2549732b29",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "gpu_timing": {
+        "samples_ms": [
+          2.809297,
+          2.806196,
+          2.824887
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 2.8134599999999996,
+          "median": 2.809297,
+          "p95": 2.823328,
+          "maximum": 2.824887,
+          "minimum": 2.806196,
+          "std": 0.008178683553400677
+        },
+        "first_call_ms": 3.658793,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_to_cpu_timing": {
+        "samples_ms": [
+          2.989346,
+          2.833287,
+          3.470884
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 3.097839,
+          "median": 2.989346,
+          "p95": 3.4227301999999997,
+          "maximum": 3.470884,
+          "minimum": 2.833287,
+          "std": 0.2713675636340251
+        },
+        "first_call_ms": 2.857947,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_quality": {
+        "mse_normalized": 0.0004277287916800708,
+        "mse_uint8": 27.8130646789966,
+        "mae_rgb": 0.6759606186224489,
+        "mean_max_channel_abs": 0.8542729591836735,
+        "exact_fraction": 0.9284518494897959,
+        "within8_fraction": 0.9787946428571429,
+        "ssim": 0.9856402678664183,
+        "max_channel_abs": 169.0,
+        "candidate_sha256": "c98d349b2a4e6c352cc537a070a5fa650061653c3ee5da74f4e9663a11ebd7ef",
+        "oracle_sha256": "591590350afed06e54f1a516b3ebaf2b62c82b438c6e029532cf95f9d99cd6aa",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "supplied_and_live_state_nonmutation": true
+    },
+    {
+      "index": 13,
+      "state_hash": "10b6ab426637ba76c83806dae7a955fdad821096eaa0ed27fa92755378d84a35",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "gpu_timing": {
+        "samples_ms": [
+          2.908106,
+          2.889877,
+          3.513844
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 3.103942333333334,
+          "median": 2.908106,
+          "p95": 3.4532702,
+          "maximum": 3.513844,
+          "minimum": 2.889877,
+          "std": 0.2899397711736393
+        },
+        "first_call_ms": 3.552712,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_to_cpu_timing": {
+        "samples_ms": [
+          2.858126,
+          2.860556,
+          2.849086
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 2.8559226666666664,
+          "median": 2.858126,
+          "p95": 2.8603129999999997,
+          "maximum": 2.860556,
+          "minimum": 2.849086,
+          "std": 0.004934992964083745
+        },
+        "first_call_ms": 3.042795,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_quality": {
+        "mse_normalized": 0.0005735642909124434,
+        "mse_uint8": 37.296018016581634,
+        "mae_rgb": 0.9272494153911565,
+        "mean_max_channel_abs": 1.1375757334183674,
+        "exact_fraction": 0.9171914859693877,
+        "within8_fraction": 0.9687101403061225,
+        "ssim": 0.9675952234238412,
+        "max_channel_abs": 241.0,
+        "candidate_sha256": "86affc85b202a27383c8b75a7b8d6c68896435758f3169081472b3a89fb54f74",
+        "oracle_sha256": "bbd8dad153eba3a92fcdb05abd16945a9b4bfa416b7038a3de436b325acb54c5",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "supplied_and_live_state_nonmutation": true
+    },
+    {
+      "index": 14,
+      "state_hash": "40d9ddf5c5ae5b4e71c49fd7fe47efa05feddb3768c93505aa6a8820bd87172e",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "gpu_timing": {
+        "samples_ms": [
+          2.793647,
+          2.786356,
+          2.931306
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 2.8371030000000004,
+          "median": 2.793647,
+          "p95": 2.9175401,
+          "maximum": 2.931306,
+          "minimum": 2.786356,
+          "std": 0.06667805024643925
+        },
+        "first_call_ms": 3.584694,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_to_cpu_timing": {
+        "samples_ms": [
+          3.312394,
+          3.011775,
+          2.882846
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 3.0690049999999993,
+          "median": 3.011775,
+          "p95": 3.2823320999999996,
+          "maximum": 3.312394,
+          "minimum": 2.882846,
+          "std": 0.1799709712722212
+        },
+        "first_call_ms": 2.875696,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_quality": {
+        "mse_normalized": 0.0005102552663222151,
+        "mse_uint8": 33.17934869260204,
+        "mae_rgb": 0.9165537308673469,
+        "mean_max_channel_abs": 1.1250996492346939,
+        "exact_fraction": 0.917610012755102,
+        "within8_fraction": 0.9685905612244898,
+        "ssim": 0.9673710516603857,
+        "max_channel_abs": 152.0,
+        "candidate_sha256": "dacf90c6a6bcad90a42c61986b5d9e0c3bd9e81ca37f571126264eafc33e6d71",
+        "oracle_sha256": "f3887092f75bf0c1b60c50af9a0c71f190bfbb1931fc0ce7f17844a809640bf7",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "supplied_and_live_state_nonmutation": true
+    },
+    {
+      "index": 15,
+      "state_hash": "077c335e78b78969a95549b029db1fffd1ff808af02e5e4edd356f49c43c50c8",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "gpu_timing": {
+        "samples_ms": [
+          2.845407,
+          2.842787,
+          2.821867
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 2.836687,
+          "median": 2.842787,
+          "p95": 2.8451449999999996,
+          "maximum": 2.845407,
+          "minimum": 2.821867,
+          "std": 0.010533767923524045
+        },
+        "first_call_ms": 3.490453,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_to_cpu_timing": {
+        "samples_ms": [
+          2.860596,
+          3.360444,
+          3.009726
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 3.076922,
+          "median": 3.009726,
+          "p95": 3.3253722000000003,
+          "maximum": 3.360444,
+          "minimum": 2.860596,
+          "std": 0.20952085431288223
+        },
+        "first_call_ms": 2.910486,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_quality": {
+        "mse_normalized": 0.0005058052632817833,
+        "mse_uint8": 32.88998724489796,
+        "mae_rgb": 0.9175435799319728,
+        "mean_max_channel_abs": 1.1173270089285714,
+        "exact_fraction": 0.9178093112244898,
+        "within8_fraction": 0.9677734375,
+        "ssim": 0.9661555293022247,
+        "max_channel_abs": 165.0,
+        "candidate_sha256": "c334f23c59e49aa1a976822ee8a94e92273877b8368489ed1df1f26cfe57c471",
+        "oracle_sha256": "745a56412c25af41e1621699f89bcb6585d8a0e9c6a74481436f38f14c505ed7",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "supplied_and_live_state_nonmutation": true
+    },
+    {
+      "index": 16,
+      "state_hash": "8497466e415ca00d41f61f7678735baadaf5bad345e1ef2ab192ca4a25abce7e",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "gpu_timing": {
+        "samples_ms": [
+          2.790166,
+          2.784627,
+          2.811847
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 2.7955466666666666,
+          "median": 2.790166,
+          "p95": 2.8096789,
+          "maximum": 2.811847,
+          "minimum": 2.784627,
+          "std": 0.011745801528867988
+        },
+        "first_call_ms": 3.826241,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_to_cpu_timing": {
+        "samples_ms": [
+          2.838356,
+          2.832467,
+          2.999505
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 2.8901093333333336,
+          "median": 2.838356,
+          "p95": 2.9833901000000003,
+          "maximum": 2.999505,
+          "minimum": 2.832467,
+          "std": 0.07739176956383818
+        },
+        "first_call_ms": 2.873496,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_quality": {
+        "mse_normalized": 0.0004877052945361151,
+        "mse_uint8": 31.713036777210885,
+        "mae_rgb": 0.8917277848639455,
+        "mean_max_channel_abs": 1.0886479591836735,
+        "exact_fraction": 0.9178093112244898,
+        "within8_fraction": 0.9687101403061225,
+        "ssim": 0.9676742862329241,
+        "max_channel_abs": 151.0,
+        "candidate_sha256": "80ccb9086ab960cdf0e7595f52035bff93a7606b0d8b1903f624d2e49f0db51e",
+        "oracle_sha256": "cd2e59775aca7c52319b4661d782be8ea0ceebfea64fbce9744e818be7e12d63",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "supplied_and_live_state_nonmutation": true
+    },
+    {
+      "index": 17,
+      "state_hash": "7cd50e4a5b5c5c10b1448dcdc8e3899817b99ebb5c1bb6189f56a3bbbbb229ed",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "gpu_timing": {
+        "samples_ms": [
+          2.808607,
+          2.803597,
+          2.800896
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 2.8043666666666667,
+          "median": 2.803597,
+          "p95": 2.808106,
+          "maximum": 2.808607,
+          "minimum": 2.800896,
+          "std": 0.0031947008554097187
+        },
+        "first_call_ms": 3.414634,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_to_cpu_timing": {
+        "samples_ms": [
+          2.865207,
+          2.870806,
+          2.862826
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 2.866279666666667,
+          "median": 2.865207,
+          "p95": 2.8702461,
+          "maximum": 2.870806,
+          "minimum": 2.862826,
+          "std": 0.003344952449421172
+        },
+        "first_call_ms": 2.926986,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_quality": {
+        "mse_normalized": 0.0005085963102561286,
+        "mse_uint8": 33.07147507440476,
+        "mae_rgb": 0.9030147215136054,
+        "mean_max_channel_abs": 1.0989516900510203,
+        "exact_fraction": 0.9180086096938775,
+        "within8_fraction": 0.9684909119897959,
+        "ssim": 0.9665453580726472,
+        "max_channel_abs": 189.0,
+        "candidate_sha256": "6ffc8139decd30b25683b1c78b504e4186fb2eba67485bf07e21e5cff3d1443a",
+        "oracle_sha256": "eb7392aafb5aa9ee0936f881bbf196f5cac66e42dd68a8b3c24ae3316d19c221",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "supplied_and_live_state_nonmutation": true
+    },
+    {
+      "index": 18,
+      "state_hash": "966f375ae4b6502d5922fb42f05a21c86cf4c994308bde5f0af06a2549732b29",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "gpu_timing": {
+        "samples_ms": [
+          3.196234,
+          2.841307,
+          2.793947
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 2.9438293333333334,
+          "median": 2.841307,
+          "p95": 3.1607413,
+          "maximum": 3.196234,
+          "minimum": 2.793947,
+          "std": 0.17952126933659476
+        },
+        "first_call_ms": 3.493694,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_to_cpu_timing": {
+        "samples_ms": [
+          2.863556,
+          3.053946,
+          2.864146
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 2.927216,
+          "median": 2.864146,
+          "p95": 3.034966,
+          "maximum": 3.053946,
+          "minimum": 2.863556,
+          "std": 0.08961196609084447
+        },
+        "first_call_ms": 2.891336,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_quality": {
+        "mse_normalized": 0.0004277287916800708,
+        "mse_uint8": 27.8130646789966,
+        "mae_rgb": 0.6759606186224489,
+        "mean_max_channel_abs": 0.8542729591836735,
+        "exact_fraction": 0.9284518494897959,
+        "within8_fraction": 0.9787946428571429,
+        "ssim": 0.9856402678664183,
+        "max_channel_abs": 169.0,
+        "candidate_sha256": "c98d349b2a4e6c352cc537a070a5fa650061653c3ee5da74f4e9663a11ebd7ef",
+        "oracle_sha256": "591590350afed06e54f1a516b3ebaf2b62c82b438c6e029532cf95f9d99cd6aa",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "supplied_and_live_state_nonmutation": true
+    },
+    {
+      "index": 19,
+      "state_hash": "a7103f2f49536c02e0a708c44eb1057e05b027602e51f66889fcbb15a1cfd623",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "gpu_timing": {
+        "samples_ms": [
+          2.912236,
+          2.811917,
+          3.156825
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 2.9603260000000002,
+          "median": 2.912236,
+          "p95": 3.1323661,
+          "maximum": 3.156825,
+          "minimum": 2.811917,
+          "std": 0.1448559472740648
+        },
+        "first_call_ms": 3.532703,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_to_cpu_timing": {
+        "samples_ms": [
+          2.868287,
+          2.833996,
+          2.859716
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 2.8539996666666667,
+          "median": 2.859716,
+          "p95": 2.8674299,
+          "maximum": 2.868287,
+          "minimum": 2.833996,
+          "std": 0.014571102002098432
+        },
+        "first_call_ms": 3.025306,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_quality": {
+        "mse_normalized": 0.0005735642909124434,
+        "mse_uint8": 37.296018016581634,
+        "mae_rgb": 0.9272494153911565,
+        "mean_max_channel_abs": 1.1375757334183674,
+        "exact_fraction": 0.9171914859693877,
+        "within8_fraction": 0.9687101403061225,
+        "ssim": 0.9675952234238412,
+        "max_channel_abs": 241.0,
+        "candidate_sha256": "86affc85b202a27383c8b75a7b8d6c68896435758f3169081472b3a89fb54f74",
+        "oracle_sha256": "bbd8dad153eba3a92fcdb05abd16945a9b4bfa416b7038a3de436b325acb54c5",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "supplied_and_live_state_nonmutation": true
+    },
+    {
+      "index": 20,
+      "state_hash": "06b005e2c5a36fe68be800122f8f12397a0254f19706eb3b3b3e7a2f896d8d0c",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "gpu_timing": {
+        "samples_ms": [
+          2.818466,
+          2.809407,
+          2.798836
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 2.8089030000000004,
+          "median": 2.809407,
+          "p95": 2.8175601,
+          "maximum": 2.818466,
+          "minimum": 2.798836,
+          "std": 0.008021834245773563
+        },
+        "first_call_ms": 3.823091,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_to_cpu_timing": {
+        "samples_ms": [
+          2.834746,
+          2.849647,
+          3.539394
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 3.0745956666666667,
+          "median": 2.849647,
+          "p95": 3.4704193,
+          "maximum": 3.539394,
+          "minimum": 2.834746,
+          "std": 0.3287183474773233
+        },
+        "first_call_ms": 2.864046,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_quality": {
+        "mse_normalized": 0.0005102552663222151,
+        "mse_uint8": 33.17934869260204,
+        "mae_rgb": 0.9165537308673469,
+        "mean_max_channel_abs": 1.1250996492346939,
+        "exact_fraction": 0.917610012755102,
+        "within8_fraction": 0.9685905612244898,
+        "ssim": 0.9673710516603857,
+        "max_channel_abs": 152.0,
+        "candidate_sha256": "dacf90c6a6bcad90a42c61986b5d9e0c3bd9e81ca37f571126264eafc33e6d71",
+        "oracle_sha256": "f3887092f75bf0c1b60c50af9a0c71f190bfbb1931fc0ce7f17844a809640bf7",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "supplied_and_live_state_nonmutation": true
+    },
+    {
+      "index": 21,
+      "state_hash": "8d035eb89d9e01b7694a7668b23b3a09f3835a727890ff9173f966ac5853b6f5",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "gpu_timing": {
+        "samples_ms": [
+          2.826767,
+          2.835886,
+          2.828157
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 2.83027,
+          "median": 2.828157,
+          "p95": 2.8351131,
+          "maximum": 2.835886,
+          "minimum": 2.826767,
+          "std": 0.004011451690680909
+        },
+        "first_call_ms": 3.499933,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_to_cpu_timing": {
+        "samples_ms": [
+          2.882906,
+          2.886416,
+          3.019316
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 2.929546,
+          "median": 2.886416,
+          "p95": 3.006026,
+          "maximum": 3.019316,
+          "minimum": 2.882906,
+          "std": 0.06349314766177516
+        },
+        "first_call_ms": 2.936036,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_quality": {
+        "mse_normalized": 0.0005089843331123298,
+        "mse_uint8": 33.096706260629254,
+        "mae_rgb": 0.9187061543367347,
+        "mean_max_channel_abs": 1.118502869897959,
+        "exact_fraction": 0.9178292410714286,
+        "within8_fraction": 0.9677734375,
+        "ssim": 0.9661390922627124,
+        "max_channel_abs": 165.0,
+        "candidate_sha256": "d2736cbb48c4bde74de89206c361eca511455b38f697f302466c2d18c86981e3",
+        "oracle_sha256": "52a61f9c6021f9ab6e086d925878546ea1eb756e1b18b0b81864924e5003e1c8",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "supplied_and_live_state_nonmutation": true
+    },
+    {
+      "index": 22,
+      "state_hash": "bf887ba4a3ed6860908fb643beed115dcb99db295e874f9d51fdc56adcd9af10",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "gpu_timing": {
+        "samples_ms": [
+          2.781657,
+          3.212175,
+          3.010006
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 3.001279333333333,
+          "median": 3.010006,
+          "p95": 3.1919581,
+          "maximum": 3.212175,
+          "minimum": 2.781657,
+          "std": 0.1758665272573366
+        },
+        "first_call_ms": 3.007216,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_to_cpu_timing": {
+        "samples_ms": [
+          3.017936,
+          2.834687,
+          2.831567
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 2.8947300000000005,
+          "median": 2.834687,
+          "p95": 2.9996111,
+          "maximum": 3.017936,
+          "minimum": 2.831567,
+          "std": 0.08712910890167533
+        },
+        "first_call_ms": 2.906786,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_quality": {
+        "mse_normalized": 0.0004903516758010395,
+        "mse_uint8": 31.885117718962587,
+        "mae_rgb": 0.8921728847789115,
+        "mean_max_channel_abs": 1.0890664859693877,
+        "exact_fraction": 0.9178093112244898,
+        "within8_fraction": 0.9687300701530612,
+        "ssim": 0.967662281499206,
+        "max_channel_abs": 151.0,
+        "candidate_sha256": "ed5a99f7f9714022b72db34be754ee33116532b94859bf6d69c666e921b36eb9",
+        "oracle_sha256": "a76eb0c83fa9b712adf6c6022394b65fbf64c0f745a31ceec282a1530132b924",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "supplied_and_live_state_nonmutation": true
+    },
+    {
+      "index": 23,
+      "state_hash": "7bec9058b01b7b7eab2db17f6b21d43ac4509857e6fc0ac77306ba54eded250d",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "gpu_timing": {
+        "samples_ms": [
+          2.823367,
+          2.814506,
+          2.808677
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 2.815516666666667,
+          "median": 2.814506,
+          "p95": 2.8224809,
+          "maximum": 2.823367,
+          "minimum": 2.808677,
+          "std": 0.006039597687116556
+        },
+        "first_call_ms": 3.498293,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_to_cpu_timing": {
+        "samples_ms": [
+          2.853247,
+          2.985926,
+          2.833956
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 2.8910430000000003,
+          "median": 2.853247,
+          "p95": 2.9726581,
+          "maximum": 2.985926,
+          "minimum": 2.833956,
+          "std": 0.06755305784838066
+        },
+        "first_call_ms": 3.025376,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_quality": {
+        "mse_normalized": 0.0005110194608889307,
+        "mse_uint8": 33.22904044430272,
+        "mae_rgb": 0.9032140199829932,
+        "mean_max_channel_abs": 1.0991509885204083,
+        "exact_fraction": 0.9180285395408163,
+        "within8_fraction": 0.9685108418367347,
+        "ssim": 0.9665351466097941,
+        "max_channel_abs": 189.0,
+        "candidate_sha256": "01a9c78574bf79744aa8c69625ad8555b2e6898392fd6ca93f9e76b279f6eb25",
+        "oracle_sha256": "0a6a26e62e772e07f721d58957f5694fcc541f89319fc623075bec8d773adbaf",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "supplied_and_live_state_nonmutation": true
+    },
+    {
+      "index": 24,
+      "state_hash": "d871060d0ef3bead12f505ad1abc2c24006df839df5fffe85943cc6e878825a9",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "gpu_timing": {
+        "samples_ms": [
+          2.968106,
+          2.793667,
+          2.796647
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 2.8528066666666665,
+          "median": 2.796647,
+          "p95": 2.9509601,
+          "maximum": 2.968106,
+          "minimum": 2.793667,
+          "std": 0.08153801690145661
+        },
+        "first_call_ms": 3.965871,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_to_cpu_timing": {
+        "samples_ms": [
+          3.025185,
+          2.890156,
+          2.851447
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 2.9222626666666667,
+          "median": 2.890156,
+          "p95": 3.0116821,
+          "maximum": 3.025185,
+          "minimum": 2.851447,
+          "std": 0.0744730452102564
+        },
+        "first_call_ms": 2.865917,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_quality": {
+        "mse_normalized": 0.0003752287271117597,
+        "mse_uint8": 24.399247980442176,
+        "mae_rgb": 0.6468563988095238,
+        "mean_max_channel_abs": 0.8236806441326531,
+        "exact_fraction": 0.9287707270408163,
+        "within8_fraction": 0.9790935905612245,
+        "ssim": 0.985943878582091,
+        "max_channel_abs": 169.0,
+        "candidate_sha256": "ed95683ae3f47c700d9b3c26d640fb35e4c0e28051eeac28baa03a4d4cc68c08",
+        "oracle_sha256": "b43bdedac063e001f3b8df8b83b3000d74debc85c198f554a7bfd2bee6729abe",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "supplied_and_live_state_nonmutation": true
+    },
+    {
+      "index": 25,
+      "state_hash": "462dda9afb53f54b9e3086fb54d4a1911019527fd22826598549b5ffc90c318e",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "gpu_timing": {
+        "samples_ms": [
+          2.798646,
+          2.901896,
+          2.843837
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 2.8481263333333335,
+          "median": 2.843837,
+          "p95": 2.8960901,
+          "maximum": 2.901896,
+          "minimum": 2.798646,
+          "std": 0.04226061531602297
+        },
+        "first_call_ms": 3.280465,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_to_cpu_timing": {
+        "samples_ms": [
+          2.859356,
+          2.859376,
+          2.836347
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 2.8516929999999996,
+          "median": 2.859356,
+          "p95": 2.8593740000000003,
+          "maximum": 2.859376,
+          "minimum": 2.836347,
+          "std": 0.010851263735928084
+        },
+        "first_call_ms": 3.605003,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_quality": {
+        "mse_normalized": 0.0004883242104031154,
+        "mse_uint8": 31.753281781462587,
+        "mae_rgb": 0.9061304209183674,
+        "mean_max_channel_abs": 1.1208944515306123,
+        "exact_fraction": 0.9178691007653061,
+        "within8_fraction": 0.9680723852040817,
+        "ssim": 0.9660854023233655,
+        "max_channel_abs": 129.0,
+        "candidate_sha256": "43aa180c4a895130b80a039342605b05654936186c23b2fa2f91050e9e4f03c0",
+        "oracle_sha256": "a1acc1057a44d59cf33b6adfd1e3e258cd0acc22c64d2828a14d52a513c6a7fc",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "supplied_and_live_state_nonmutation": true
+    },
+    {
+      "index": 26,
+      "state_hash": "83588a563edd947f067d98987460be7cc15d385e4ea296f9ba66d23db24cbfe2",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "gpu_timing": {
+        "samples_ms": [
+          3.296124,
+          3.132655,
+          2.836087
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 3.088288666666667,
+          "median": 3.132655,
+          "p95": 3.2797771,
+          "maximum": 3.296124,
+          "minimum": 2.836087,
+          "std": 0.1904114649775293
+        },
+        "first_call_ms": 3.389283,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_to_cpu_timing": {
+        "samples_ms": [
+          3.040166,
+          2.878946,
+          3.003186
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 2.974099333333333,
+          "median": 3.003186,
+          "p95": 3.036468,
+          "maximum": 3.040166,
+          "minimum": 2.878946,
+          "std": 0.06895649707524949
+        },
+        "first_call_ms": 2.894406,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_quality": {
+        "mse_normalized": 0.0005268520807015616,
+        "mse_uint8": 34.25855654761905,
+        "mae_rgb": 0.940343324829932,
+        "mean_max_channel_abs": 1.151446906887755,
+        "exact_fraction": 0.9180484693877551,
+        "within8_fraction": 0.9675143494897959,
+        "ssim": 0.9649823596436439,
+        "max_channel_abs": 148.0,
+        "candidate_sha256": "5fa5ffd2de0652ec4544b69bae14089960759fc05a6cbf97b3ee6f9b825d370e",
+        "oracle_sha256": "c075c650e7b68adc9ea48d501ebe3f56f8bad7b6656447a341a1e48a433cd9d0",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "supplied_and_live_state_nonmutation": true
+    },
+    {
+      "index": 27,
+      "state_hash": "e417ce8e51e928a6ef5de4e22f1c756a3dcb9ba7a225fb57f567c254cfb4237a",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "gpu_timing": {
+        "samples_ms": [
+          2.842766,
+          5.612613,
+          3.207655
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 3.8876779999999997,
+          "median": 3.207655,
+          "p95": 5.372117199999999,
+          "maximum": 5.612613,
+          "minimum": 2.842766,
+          "std": 1.228776237088212
+        },
+        "first_call_ms": 3.415004,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_to_cpu_timing": {
+        "samples_ms": [
+          3.408734,
+          2.955256,
+          2.899776
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 3.0879220000000003,
+          "median": 2.955256,
+          "p95": 3.3633862,
+          "maximum": 3.408734,
+          "minimum": 2.899776,
+          "std": 0.2279762591557872
+        },
+        "first_call_ms": 3.154455,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_quality": {
+        "mse_normalized": 0.00042679653560770707,
+        "mse_uint8": 27.752444727891156,
+        "mae_rgb": 0.8353528911564626,
+        "mean_max_channel_abs": 1.029117506377551,
+        "exact_fraction": 0.9178691007653061,
+        "within8_fraction": 0.9694475446428571,
+        "ssim": 0.9705475923757545,
+        "max_channel_abs": 192.0,
+        "candidate_sha256": "32238c2b1752348285cf05a499d253e38a44f0af100594577e6a379e91e3d003",
+        "oracle_sha256": "b885f3564772d69894ae03d2e8f02df02d22189b26a9e4e066c75dbc39d6474e",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "supplied_and_live_state_nonmutation": true
+    },
+    {
+      "index": 28,
+      "state_hash": "bb7bc78b0452daad5f70fec821f6c821e04b372a61e2cac0611a9d185d771cf5",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "gpu_timing": {
+        "samples_ms": [
+          2.852606,
+          2.843467,
+          2.828676
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 2.841583,
+          "median": 2.843467,
+          "p95": 2.8516921,
+          "maximum": 2.852606,
+          "minimum": 2.828676,
+          "std": 0.009859794352148853
+        },
+        "first_call_ms": 3.546983,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_to_cpu_timing": {
+        "samples_ms": [
+          2.879146,
+          2.869626,
+          3.073185
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 2.940652333333333,
+          "median": 2.879146,
+          "p95": 3.0537811,
+          "maximum": 3.073185,
+          "minimum": 2.869626,
+          "std": 0.09379530336618978
+        },
+        "first_call_ms": 2.910546,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_quality": {
+        "mse_normalized": 0.0005250231219938956,
+        "mse_uint8": 34.139628507653065,
+        "mae_rgb": 0.9409943664965986,
+        "mean_max_channel_abs": 1.1470025510204083,
+        "exact_fraction": 0.9169921875,
+        "within8_fraction": 0.9672154017857143,
+        "ssim": 0.9649529614789017,
+        "max_channel_abs": 149.0,
+        "candidate_sha256": "1d4d47b0c1bd3527e8a430c2a158bad6f4e4533f47f21ca5f780e564fd7e2f9e",
+        "oracle_sha256": "0f5b470b958eb28f8d61290b5e08319828ff11f495405814ff6fe975492a4e73",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "supplied_and_live_state_nonmutation": true
+    },
+    {
+      "index": 29,
+      "state_hash": "c044f0cef808a16e6041c3ad2fd7a3e7176d2e3fe702dc302867c4d7e00f62c0",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "gpu_timing": {
+        "samples_ms": [
+          2.819487,
+          2.829856,
+          2.835937
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 2.8284266666666666,
+          "median": 2.829856,
+          "p95": 2.8353289,
+          "maximum": 2.835937,
+          "minimum": 2.819487,
+          "std": 0.00679131162262156
+        },
+        "first_call_ms": 3.533063,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_to_cpu_timing": {
+        "samples_ms": [
+          2.886146,
+          2.878416,
+          2.878746
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 2.8811026666666666,
+          "median": 2.878746,
+          "p95": 2.885406,
+          "maximum": 2.886146,
+          "minimum": 2.878416,
+          "std": 0.00356871903567032
+        },
+        "first_call_ms": 3.274954,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_quality": {
+        "mse_normalized": 0.0005480605232288994,
+        "mse_uint8": 35.63763552295919,
+        "mae_rgb": 0.9422167304421769,
+        "mean_max_channel_abs": 1.1414819834183674,
+        "exact_fraction": 0.9172512755102041,
+        "within8_fraction": 0.9678531568877551,
+        "ssim": 0.9657355795769105,
+        "max_channel_abs": 149.0,
+        "candidate_sha256": "3844ad2df3092ce572c362431699b14d6a1ff509f0ac9bab16b1345f24277bd1",
+        "oracle_sha256": "7eabe7b01684785aac8bc5c099fc1ca6dea30be98e0363af57333f0f857b7924",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "supplied_and_live_state_nonmutation": true
+    },
+    {
+      "index": 30,
+      "state_hash": "d871060d0ef3bead12f505ad1abc2c24006df839df5fffe85943cc6e878825a9",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "gpu_timing": {
+        "samples_ms": [
+          2.991786,
+          2.784867,
+          2.930916
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 2.902523,
+          "median": 2.930916,
+          "p95": 2.985699,
+          "maximum": 2.991786,
+          "minimum": 2.784867,
+          "std": 0.08682737654680102
+        },
+        "first_call_ms": 3.194045,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_to_cpu_timing": {
+        "samples_ms": [
+          2.902496,
+          2.989796,
+          2.872557
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 2.921616333333333,
+          "median": 2.902496,
+          "p95": 2.981066,
+          "maximum": 2.989796,
+          "minimum": 2.872557,
+          "std": 0.049735541552852904
+        },
+        "first_call_ms": 3.220375,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_quality": {
+        "mse_normalized": 0.0003752287271117597,
+        "mse_uint8": 24.399247980442176,
+        "mae_rgb": 0.6468563988095238,
+        "mean_max_channel_abs": 0.8236806441326531,
+        "exact_fraction": 0.9287707270408163,
+        "within8_fraction": 0.9790935905612245,
+        "ssim": 0.985943878582091,
+        "max_channel_abs": 169.0,
+        "candidate_sha256": "ed95683ae3f47c700d9b3c26d640fb35e4c0e28051eeac28baa03a4d4cc68c08",
+        "oracle_sha256": "b43bdedac063e001f3b8df8b83b3000d74debc85c198f554a7bfd2bee6729abe",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "supplied_and_live_state_nonmutation": true
+    },
+    {
+      "index": 31,
+      "state_hash": "00e1329028e840c733f0374222ce433641d39438bc2e0f7f000ab083c4650eed",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "gpu_timing": {
+        "samples_ms": [
+          3.215155,
+          3.022186,
+          3.021776
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 3.0863723333333333,
+          "median": 3.022186,
+          "p95": 3.1958581,
+          "maximum": 3.215155,
+          "minimum": 3.021776,
+          "std": 0.09106325073022362
+        },
+        "first_call_ms": 3.245975,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_to_cpu_timing": {
+        "samples_ms": [
+          2.870136,
+          2.833007,
+          2.848827
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 2.850656666666667,
+          "median": 2.848827,
+          "p95": 2.8680051,
+          "maximum": 2.870136,
+          "minimum": 2.833007,
+          "std": 0.015212964215504632
+        },
+        "first_call_ms": 2.923336,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_quality": {
+        "mse_normalized": 0.0004883242104031154,
+        "mse_uint8": 31.753281781462587,
+        "mae_rgb": 0.9061304209183674,
+        "mean_max_channel_abs": 1.1208944515306123,
+        "exact_fraction": 0.9178691007653061,
+        "within8_fraction": 0.9680723852040817,
+        "ssim": 0.9660854023233655,
+        "max_channel_abs": 129.0,
+        "candidate_sha256": "43aa180c4a895130b80a039342605b05654936186c23b2fa2f91050e9e4f03c0",
+        "oracle_sha256": "a1acc1057a44d59cf33b6adfd1e3e258cd0acc22c64d2828a14d52a513c6a7fc",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "supplied_and_live_state_nonmutation": true
+    },
+    {
+      "index": 32,
+      "state_hash": "015545653807c0ce6e2dfa7b7e25463e367f44addf8aa7c1e6651169fcc39a70",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "gpu_timing": {
+        "samples_ms": [
+          2.885376,
+          3.271115,
+          2.916266
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 3.024252333333333,
+          "median": 2.916266,
+          "p95": 3.2356301,
+          "maximum": 3.271115,
+          "minimum": 2.885376,
+          "std": 0.175013199826629
+        },
+        "first_call_ms": 3.637212,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_to_cpu_timing": {
+        "samples_ms": [
+          2.847496,
+          2.846527,
+          2.832166
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 2.8420629999999996,
+          "median": 2.846527,
+          "p95": 2.8473991,
+          "maximum": 2.847496,
+          "minimum": 2.832166,
+          "std": 0.0070094078209218535
+        },
+        "first_call_ms": 2.926696,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_quality": {
+        "mse_normalized": 0.0005268400252257765,
+        "mse_uint8": 34.25777264030612,
+        "mae_rgb": 0.9403300382653061,
+        "mean_max_channel_abs": 1.1514269770408163,
+        "exact_fraction": 0.9180484693877551,
+        "within8_fraction": 0.9675143494897959,
+        "ssim": 0.9649827489702502,
+        "max_channel_abs": 148.0,
+        "candidate_sha256": "5fa5ffd2de0652ec4544b69bae14089960759fc05a6cbf97b3ee6f9b825d370e",
+        "oracle_sha256": "342895aef3801711f7c5f9c593e7bb874fec558b64c51356717e104fe9f308c2",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "supplied_and_live_state_nonmutation": true
+    },
+    {
+      "index": 33,
+      "state_hash": "96157ded7447b31c31a36dcf29018f4a59f7119e6bc83c8e5ad480dda319ab34",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "gpu_timing": {
+        "samples_ms": [
+          2.829707,
+          2.831406,
+          2.835157
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 2.8320900000000004,
+          "median": 2.831406,
+          "p95": 2.8347819000000003,
+          "maximum": 2.835157,
+          "minimum": 2.829707,
+          "std": 0.0022769156037646798
+        },
+        "first_call_ms": 3.692412,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_to_cpu_timing": {
+        "samples_ms": [
+          2.885456,
+          2.889346,
+          2.919846
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 2.898216,
+          "median": 2.889346,
+          "p95": 2.916796,
+          "maximum": 2.919846,
+          "minimum": 2.885456,
+          "std": 0.015376945947315666
+        },
+        "first_call_ms": 2.913917,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_quality": {
+        "mse_normalized": 0.00042679653560770707,
+        "mse_uint8": 27.752444727891156,
+        "mae_rgb": 0.8353528911564626,
+        "mean_max_channel_abs": 1.029117506377551,
+        "exact_fraction": 0.9178691007653061,
+        "within8_fraction": 0.9694475446428571,
+        "ssim": 0.9705475923757545,
+        "max_channel_abs": 192.0,
+        "candidate_sha256": "32238c2b1752348285cf05a499d253e38a44f0af100594577e6a379e91e3d003",
+        "oracle_sha256": "b885f3564772d69894ae03d2e8f02df02d22189b26a9e4e066c75dbc39d6474e",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "supplied_and_live_state_nonmutation": true
+    },
+    {
+      "index": 34,
+      "state_hash": "2d895f9d27f0290941094c2d1a62cb1a2f9e0fb4e148b3ccd5c9fb9cdcb7b692",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "gpu_timing": {
+        "samples_ms": [
+          2.825877,
+          2.815027,
+          2.841627
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 2.827510333333334,
+          "median": 2.825877,
+          "p95": 2.840052,
+          "maximum": 2.841627,
+          "minimum": 2.815027,
+          "std": 0.01092064812891401
+        },
+        "first_call_ms": 3.492904,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_to_cpu_timing": {
+        "samples_ms": [
+          2.883096,
+          2.951046,
+          2.851046
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 2.8950626666666666,
+          "median": 2.883096,
+          "p95": 2.944251,
+          "maximum": 2.951046,
+          "minimum": 2.851046,
+          "std": 0.04169253197183171
+        },
+        "first_call_ms": 2.884397,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_quality": {
+        "mse_normalized": 0.0005250231219938956,
+        "mse_uint8": 34.139628507653065,
+        "mae_rgb": 0.9409943664965986,
+        "mean_max_channel_abs": 1.1470025510204083,
+        "exact_fraction": 0.9169921875,
+        "within8_fraction": 0.9672154017857143,
+        "ssim": 0.9649529614789017,
+        "max_channel_abs": 149.0,
+        "candidate_sha256": "1d4d47b0c1bd3527e8a430c2a158bad6f4e4533f47f21ca5f780e564fd7e2f9e",
+        "oracle_sha256": "0f5b470b958eb28f8d61290b5e08319828ff11f495405814ff6fe975492a4e73",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "supplied_and_live_state_nonmutation": true
+    },
+    {
+      "index": 35,
+      "state_hash": "b59bc6f0612ffb8ce72ccb6e7883821729483e17ed8a601b0d2b361e89f0cf32",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "gpu_timing": {
+        "samples_ms": [
+          3.135556,
+          2.881246,
+          2.868626
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 2.9618093333333335,
+          "median": 2.881246,
+          "p95": 3.1101249999999996,
+          "maximum": 3.135556,
+          "minimum": 2.868626,
+          "std": 0.12296542666764321
+        },
+        "first_call_ms": 3.456414,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_to_cpu_timing": {
+        "samples_ms": [
+          2.838016,
+          2.860937,
+          2.863046
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 2.8539996666666667,
+          "median": 2.860937,
+          "p95": 2.8628351000000003,
+          "maximum": 2.863046,
+          "minimum": 2.838016,
+          "std": 0.01133490686135334
+        },
+        "first_call_ms": 2.931727,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_quality": {
+        "mse_normalized": 0.0005480605232288994,
+        "mse_uint8": 35.63763552295919,
+        "mae_rgb": 0.9422167304421769,
+        "mean_max_channel_abs": 1.1414819834183674,
+        "exact_fraction": 0.9172512755102041,
+        "within8_fraction": 0.9678531568877551,
+        "ssim": 0.9657355795769105,
+        "max_channel_abs": 149.0,
+        "candidate_sha256": "3844ad2df3092ce572c362431699b14d6a1ff509f0ac9bab16b1345f24277bd1",
+        "oracle_sha256": "7eabe7b01684785aac8bc5c099fc1ca6dea30be98e0363af57333f0f857b7924",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "supplied_and_live_state_nonmutation": true
+    },
+    {
+      "index": 36,
+      "state_hash": "966f375ae4b6502d5922fb42f05a21c86cf4c994308bde5f0af06a2549732b29",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "gpu_timing": {
+        "samples_ms": [
+          2.834296,
+          2.823527,
+          2.791087
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 2.816303333333334,
+          "median": 2.823527,
+          "p95": 2.8332191,
+          "maximum": 2.834296,
+          "minimum": 2.791087,
+          "std": 0.018364647928984516
+        },
+        "first_call_ms": 3.298864,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_to_cpu_timing": {
+        "samples_ms": [
+          2.885786,
+          2.861017,
+          2.869166
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 2.8719896666666664,
+          "median": 2.869166,
+          "p95": 2.884124,
+          "maximum": 2.885786,
+          "minimum": 2.861017,
+          "std": 0.010307138637317796
+        },
+        "first_call_ms": 3.366264,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_quality": {
+        "mse_normalized": 0.05556169240572046,
+        "mse_uint8": 3612.899048681973,
+        "mae_rgb": 33.35440582482993,
+        "mean_max_channel_abs": 33.535375478316325,
+        "exact_fraction": 0.6132413903061225,
+        "within8_fraction": 0.6594985650510204,
+        "ssim": 0.775151288463194,
+        "max_channel_abs": 201.0,
+        "candidate_sha256": "c98d349b2a4e6c352cc537a070a5fa650061653c3ee5da74f4e9663a11ebd7ef",
+        "oracle_sha256": "0ef21d826f9a4065f4b0db06c0986b50cfa83ab663eae64c0ad8a5150c370634",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "supplied_and_live_state_nonmutation": true
+    },
+    {
+      "index": 37,
+      "state_hash": "10b6ab426637ba76c83806dae7a955fdad821096eaa0ed27fa92755378d84a35",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "gpu_timing": {
+        "samples_ms": [
+          2.837897,
+          2.792136,
+          2.799587
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 2.8098733333333334,
+          "median": 2.799587,
+          "p95": 2.834066,
+          "maximum": 2.837897,
+          "minimum": 2.792136,
+          "std": 0.02004783895807441
+        },
+        "first_call_ms": 3.404514,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_to_cpu_timing": {
+        "samples_ms": [
+          2.870327,
+          2.853627,
+          2.842676
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 2.8555433333333333,
+          "median": 2.853627,
+          "p95": 2.8686570000000002,
+          "maximum": 2.870327,
+          "minimum": 2.842676,
+          "std": 0.011369511872645335
+        },
+        "first_call_ms": 2.856797,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_quality": {
+        "mse_normalized": 0.05586305151145425,
+        "mse_uint8": 3632.494924532313,
+        "mae_rgb": 33.44907259778912,
+        "mean_max_channel_abs": 33.66581632653061,
+        "exact_fraction": 0.6102519132653061,
+        "within8_fraction": 0.6572464923469388,
+        "ssim": 0.7675390723547426,
+        "max_channel_abs": 250.0,
+        "candidate_sha256": "86affc85b202a27383c8b75a7b8d6c68896435758f3169081472b3a89fb54f74",
+        "oracle_sha256": "5f74dec924ca6f15465aa61a6fea9a17ed39691da2c69406098d636ebeb7a4eb",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "supplied_and_live_state_nonmutation": true
+    },
+    {
+      "index": 38,
+      "state_hash": "40d9ddf5c5ae5b4e71c49fd7fe47efa05feddb3768c93505aa6a8820bd87172e",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "gpu_timing": {
+        "samples_ms": [
+          2.772317,
+          2.790327,
+          2.793596
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 2.785413333333333,
+          "median": 2.790327,
+          "p95": 2.7932691,
+          "maximum": 2.793596,
+          "minimum": 2.772317,
+          "std": 0.009356176225122853
+        },
+        "first_call_ms": 2.998126,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_to_cpu_timing": {
+        "samples_ms": [
+          2.863466,
+          2.838466,
+          3.008676
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 2.9035359999999995,
+          "median": 2.863466,
+          "p95": 2.9941549999999997,
+          "maximum": 3.008676,
+          "minimum": 2.838466,
+          "std": 0.07504249773739323
+        },
+        "first_call_ms": 2.861736,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_quality": {
+        "mse_normalized": 0.05586825947699341,
+        "mse_uint8": 3632.8335724914964,
+        "mae_rgb": 33.478980654761905,
+        "mean_max_channel_abs": 33.68801817602041,
+        "exact_fraction": 0.6090760522959183,
+        "within8_fraction": 0.6561902104591837,
+        "ssim": 0.76612587711725,
+        "max_channel_abs": 212.0,
+        "candidate_sha256": "dacf90c6a6bcad90a42c61986b5d9e0c3bd9e81ca37f571126264eafc33e6d71",
+        "oracle_sha256": "f11dc0f7f51d898083220ccf629bbd498f9e33d9370ba538570ee5682ad15f90",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "supplied_and_live_state_nonmutation": true
+    },
+    {
+      "index": 39,
+      "state_hash": "077c335e78b78969a95549b029db1fffd1ff808af02e5e4edd356f49c43c50c8",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "gpu_timing": {
+        "samples_ms": [
+          2.826916,
+          2.811116,
+          2.820296
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 2.819442666666667,
+          "median": 2.820296,
+          "p95": 2.826254,
+          "maximum": 2.826916,
+          "minimum": 2.811116,
+          "std": 0.006478484047642287
+        },
+        "first_call_ms": 3.036566,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_to_cpu_timing": {
+        "samples_ms": [
+          3.027996,
+          2.888076,
+          2.899076
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 2.938382666666667,
+          "median": 2.899076,
+          "p95": 3.015104,
+          "maximum": 3.027996,
+          "minimum": 2.888076,
+          "std": 0.06352512433850266
+        },
+        "first_call_ms": 2.890276,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_quality": {
+        "mse_normalized": 0.055788636328714496,
+        "mse_uint8": 3627.6560772746598,
+        "mae_rgb": 33.43967899659864,
+        "mean_max_channel_abs": 33.64337531887755,
+        "exact_fraction": 0.6102120535714286,
+        "within8_fraction": 0.6561304209183674,
+        "ssim": 0.7660757014202385,
+        "max_channel_abs": 201.0,
+        "candidate_sha256": "c334f23c59e49aa1a976822ee8a94e92273877b8368489ed1df1f26cfe57c471",
+        "oracle_sha256": "a6472ad9636da752985b5e474edf8b65a0f9f8c1d323468b7c95cf4aff18479d",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "supplied_and_live_state_nonmutation": true
+    },
+    {
+      "index": 40,
+      "state_hash": "8497466e415ca00d41f61f7678735baadaf5bad345e1ef2ab192ca4a25abce7e",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "gpu_timing": {
+        "samples_ms": [
+          2.779938,
+          2.797357,
+          2.806127
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 2.7944739999999997,
+          "median": 2.797357,
+          "p95": 2.80525,
+          "maximum": 2.806127,
+          "minimum": 2.779938,
+          "std": 0.01088423009067093
+        },
+        "first_call_ms": 2.963666,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_to_cpu_timing": {
+        "samples_ms": [
+          2.866876,
+          2.849406,
+          2.837457
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 2.8512463333333335,
+          "median": 2.849406,
+          "p95": 2.865129,
+          "maximum": 2.866876,
+          "minimum": 2.837457,
+          "std": 0.01208054938964094
+        },
+        "first_call_ms": 2.882467,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_quality": {
+        "mse_normalized": 0.056157674058185364,
+        "mse_uint8": 3651.6527556335036,
+        "mae_rgb": 33.609162414965986,
+        "mean_max_channel_abs": 33.806760204081634,
+        "exact_fraction": 0.6079799107142857,
+        "within8_fraction": 0.6551139987244898,
+        "ssim": 0.7659615584458037,
+        "max_channel_abs": 201.0,
+        "candidate_sha256": "80ccb9086ab960cdf0e7595f52035bff93a7606b0d8b1903f624d2e49f0db51e",
+        "oracle_sha256": "63e52d157dbe502bdca61df34485581f1310901cde6a11858b3b87bac819730f",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "supplied_and_live_state_nonmutation": true
+    },
+    {
+      "index": 41,
+      "state_hash": "7cd50e4a5b5c5c10b1448dcdc8e3899817b99ebb5c1bb6189f56a3bbbbb229ed",
+      "camera": "MujocoFetchEnv free camera: distance=2.5 azimuth=132 elevation=-14 lookat=(1.3,.75,.55)",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "gpu_timing": {
+        "samples_ms": [
+          2.808176,
+          3.005796,
+          2.818117
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 2.8773630000000003,
+          "median": 2.818117,
+          "p95": 2.9870281000000003,
+          "maximum": 3.005796,
+          "minimum": 2.808176,
+          "std": 0.09090648120275406
+        },
+        "first_call_ms": 2.929076,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_to_cpu_timing": {
+        "samples_ms": [
+          2.841687,
+          2.841376,
+          2.808507
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 2.8305233333333333,
+          "median": 2.841376,
+          "p95": 2.8416558999999997,
+          "maximum": 2.841687,
+          "minimum": 2.808507,
+          "std": 0.015568416325653865
+        },
+        "first_call_ms": 2.986575,
+        "warmups": 10,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "gpu_quality": {
+        "mse_normalized": 0.05604042127471903,
+        "mse_uint8": 3644.0283933886053,
+        "mae_rgb": 33.54990433673469,
+        "mean_max_channel_abs": 33.746173469387756,
+        "exact_fraction": 0.6088568239795918,
+        "within8_fraction": 0.6556720344387755,
+        "ssim": 0.7659925218219352,
+        "max_channel_abs": 201.0,
+        "candidate_sha256": "6ffc8139decd30b25683b1c78b504e4186fb2eba67485bf07e21e5cff3d1443a",
+        "oracle_sha256": "d5efb87515f4b2f790cc8cdfe5f5b34c32b7e6c12ff7b1e4fe45c3f50d8aadc0",
+        "shape": [
+          224,
+          224,
+          3
+        ]
+      },
+      "supplied_and_live_state_nonmutation": true
+    }
+  ],
+  "corpus_result_sha256": "6a2c0e167b14ea56d78f88ed1156e62342d8f37d65be6d62cb8fa6491e1f88e9"
+}

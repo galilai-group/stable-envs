@@ -1,0 +1,88 @@
+{
+  "registration": "swm/CraftaxClassicSymbolic-v1",
+  "status": "COMPLETE",
+  "family": "craftax",
+  "name": "CraftaxClassicSymbolic",
+  "phase": "cpu",
+  "oracle_commit": "176d54532b3c0a251a4f509b74f2fdacc143a63d",
+  "profile": {
+    "host": "gpu1504.oscar.ccv.brown.edu",
+    "cpu": "AMD EPYC 7413 24-Core Processor",
+    "gpu": "NVIDIA A40",
+    "python": "3.12.8",
+    "packages": {
+      "torch": {
+        "version": "2.14.0+cu126",
+        "path": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages"
+      },
+      "numpy": {
+        "version": "2.2.6",
+        "path": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages"
+      },
+      "tensordict": {
+        "version": "0.14.2",
+        "path": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages"
+      },
+      "gymnasium": {
+        "version": "1.2.3",
+        "path": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages"
+      },
+      "craftax": {
+        "version": "1.5.0",
+        "path": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages"
+      },
+      "jax": {
+        "version": "0.10.1",
+        "path": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages"
+      },
+      "jaxlib": {
+        "version": "0.10.1",
+        "path": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages"
+      },
+      "flax": {
+        "version": "0.12.7",
+        "path": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages"
+      },
+      "pygame": {
+        "version": "2.6.1",
+        "path": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages"
+      }
+    },
+    "torch_threads": 1,
+    "environment": {
+      "SLURM_JOB_ID": "6739949",
+      "MUJOCO_GL": "glfw",
+      "PYOPENGL_PLATFORM": "glx",
+      "LIBGL_ALWAYS_SOFTWARE": "1",
+      "GALLIUM_DRIVER": "llvmpipe",
+      "DISPLAY": ":5049",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "LP_NUM_THREADS": "1",
+      "JAX_PLATFORMS": "cpu",
+      "CRAFTAX_JAX_BACKEND": "cpu",
+      "CUDA_VISIBLE_DEVICES": "0"
+    }
+  },
+  "frames": [],
+  "recipes": [],
+  "semantic_witness": {
+    "kind": "ACCEPTED_SEMANTIC_WITNESS",
+    "equal": true,
+    "helper": "tests/helpers/reference/craftax_source.py:assert_engine",
+    "candidate_state_hash": "983ae30aab8c8980b5263942caedf7a417a8f2e1a3b016dd349e9d8cbe89043b",
+    "oracle_state_hash": "5dfe23c361d0706b4e5dd41fb6bb39376ff67d07b4e75de5690020e20f9da8d5",
+    "compared": "all numeric upstream engine pytree leaves and wrapper PRNG key; source output cache retained in render nonmutation hash"
+  },
+  "unavailable": {
+    "original": {
+      "status": "NOT IMPLEMENTED",
+      "reason": "render is only supported for Pixels variants; symbolic envs do not produce a frame."
+    },
+    "cpu": {
+      "status": "NOT IMPLEMENTED",
+      "reason": "Craftax symbolic registrations do not produce pixel frames"
+    }
+  }
+}

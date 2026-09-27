@@ -1,0 +1,5915 @@
+{
+  "registration": "swm/SimplePointMaze-v0",
+  "status": "COMPLETE",
+  "family": "navigation",
+  "name": "SimplePointMaze",
+  "phase": "cpu",
+  "oracle_commit": "176d54532b3c0a251a4f509b74f2fdacc143a63d",
+  "profile": {
+    "host": "gpu1504.oscar.ccv.brown.edu",
+    "cpu": "AMD EPYC 7413 24-Core Processor",
+    "gpu": "NVIDIA A40",
+    "python": "3.12.9",
+    "packages": {
+      "torch": {
+        "version": "2.14.0+cu126",
+        "path": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages"
+      },
+      "numpy": {
+        "version": "2.5.3",
+        "path": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages"
+      },
+      "tensordict": {
+        "version": "0.14.2",
+        "path": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages"
+      },
+      "gymnasium": {
+        "version": "1.3.0",
+        "path": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages"
+      },
+      "mujoco": {
+        "version": "3.11.0",
+        "path": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages"
+      },
+      "dm-control": {
+        "version": "1.0.44",
+        "path": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages"
+      },
+      "ogbench": {
+        "version": "1.2.1",
+        "path": "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages"
+      },
+      "craftax": {
+        "version": "1.6.1",
+        "path": "/oscar/scratch/sboughan/venvs/se-step4-swm/lib/python3.12/site-packages"
+      },
+      "jax": {
+        "version": "0.11.1",
+        "path": "/oscar/scratch/sboughan/venvs/se-step4-swm/lib/python3.12/site-packages"
+      },
+      "jaxlib": {
+        "version": "0.11.1",
+        "path": "/oscar/scratch/sboughan/venvs/se-step4-swm/lib/python3.12/site-packages"
+      },
+      "flax": {
+        "version": "0.12.9",
+        "path": "/oscar/scratch/sboughan/venvs/se-step4-swm/lib/python3.12/site-packages"
+      },
+      "pymunk": {
+        "version": "7.3.0",
+        "path": "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages"
+      },
+      "pygame": {
+        "version": "2.6.1",
+        "path": "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages"
+      }
+    },
+    "torch_threads": 1,
+    "environment": {
+      "SLURM_JOB_ID": "6739861",
+      "MUJOCO_GL": "glfw",
+      "PYOPENGL_PLATFORM": "glx",
+      "LIBGL_ALWAYS_SOFTWARE": "1",
+      "GALLIUM_DRIVER": "llvmpipe",
+      "DISPLAY": ":4961",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "LP_NUM_THREADS": "1",
+      "JAX_PLATFORMS": null,
+      "CRAFTAX_JAX_BACKEND": null,
+      "CUDA_VISIBLE_DEVICES": "0"
+    }
+  },
+  "frames": [
+    {
+      "index": 0,
+      "case": 0,
+      "step": 0,
+      "seed": 0,
+      "action_dtype": "float32",
+      "prefix_hash": "3fb8e2a5df713e79221069065d9c5846407c74f6611e9f9b5abbf6aa901f1577",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "cc6a0e4573cc819ee265482689052ad15d01a9c124de3e938bdbbc521138c475",
+        "oracle_state_hash": "cc6a0e4573cc819ee265482689052ad15d01a9c124de3e938bdbbc521138c475",
+        "compared_leaves": 4,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/native_navigation_semantics.py"
+      },
+      "state_file": "frame-0000-state.npz",
+      "state_hash": "cc6a0e4573cc819ee265482689052ad15d01a9c124de3e938bdbbc521138c475",
+      "oracle_file": "frame-0000-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        500,
+        500,
+        3
+      ],
+      "oracle_sha256": "545d2d6e1acadaf77bd10b99a98297944cb45405ef1cda860975966e2137cc40",
+      "render_kwargs": {
+        "style": [
+          [
+            255.0,
+            0.0,
+            0.0,
+            0.10000000149011612,
+            1.0,
+            255.0,
+            255.0,
+            255.0,
+            0.0,
+            255.0,
+            0.0,
+            0.20000000298023224,
+            0.0,
+            0.0,
+            0.0,
+            5.0,
+            1.035264492034912,
+            3.455474853515625,
+            3.002354621887207,
+            3.4422965049743652,
+            1.5345234870910645,
+            2.9165356159210205,
+            2.142178535461426,
+            2.783087968826294,
+            1.2603342533111572,
+            3.453317880630493,
+            1.504300832748413,
+            2.397299289703369,
+            1.289385199546814,
+            0.8406872749328613,
+            1.2444018125534058,
+            1.0428158044815063,
+            0.6597925424575806,
+            1.3639332056045532,
+            1.1124801635742188,
+            1.0994874238967896,
+            0.9639119505882263,
+            0.6164624691009521,
+            0.7141286134719849,
+            0.6556037068367004
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          12.799012,
+          12.625842,
+          12.768551
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 12.731135,
+          "median": 12.768551,
+          "p95": 12.795965899999999,
+          "maximum": 12.799012,
+          "minimum": 12.625842,
+          "std": 0.07548478882971468
+        },
+        "first_call_ms": 12.852992,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          7.495129,
+          7.49263,
+          7.469159
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 7.485639333333334,
+          "median": 7.49263,
+          "p95": 7.4948791,
+          "maximum": 7.495129,
+          "minimum": 7.469159,
+          "std": 0.011697928316111715
+        },
+        "first_call_ms": 9.206707,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 1.857353325643983e-05,
+        "mse_uint8": 1.207744,
+        "mae_rgb": 0.020101333333333332,
+        "mean_max_channel_abs": 0.03004,
+        "exact_fraction": 0.999096,
+        "within8_fraction": 0.99934,
+        "ssim": 0.9996285985425979,
+        "max_channel_abs": 124.0,
+        "candidate_sha256": "22a53f8ff83825b0b08de599039213e84b64b597be42a146ad3b8dbf5d1196c4",
+        "oracle_sha256": "545d2d6e1acadaf77bd10b99a98297944cb45405ef1cda860975966e2137cc40",
+        "shape": [
+          500,
+          500,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 1,
+      "case": 0,
+      "step": 1,
+      "seed": 0,
+      "action_dtype": "float32",
+      "prefix_hash": "1dedf5d74b825ef646bd8806d397904c94061db2c44e851aecfc49f408ac1faf",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "f367ed398073c541df66bbfb46b593ad6acb3e8c57c3a37f73dc8e195df0bfc2",
+        "oracle_state_hash": "f367ed398073c541df66bbfb46b593ad6acb3e8c57c3a37f73dc8e195df0bfc2",
+        "compared_leaves": 4,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/native_navigation_semantics.py"
+      },
+      "state_file": "frame-0001-state.npz",
+      "state_hash": "f367ed398073c541df66bbfb46b593ad6acb3e8c57c3a37f73dc8e195df0bfc2",
+      "oracle_file": "frame-0001-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        500,
+        500,
+        3
+      ],
+      "oracle_sha256": "8bc652fe06d878bdbf3f397d398a3d28df821a2c808eebc1f22e1313ee3a336f",
+      "render_kwargs": {
+        "style": [
+          [
+            255.0,
+            0.0,
+            0.0,
+            0.10000000149011612,
+            1.0,
+            255.0,
+            255.0,
+            255.0,
+            0.0,
+            255.0,
+            0.0,
+            0.20000000298023224,
+            0.0,
+            0.0,
+            0.0,
+            5.0,
+            1.035264492034912,
+            3.455474853515625,
+            3.002354621887207,
+            3.4422965049743652,
+            1.5345234870910645,
+            2.9165356159210205,
+            2.142178535461426,
+            2.783087968826294,
+            1.2603342533111572,
+            3.453317880630493,
+            1.504300832748413,
+            2.397299289703369,
+            1.289385199546814,
+            0.8406872749328613,
+            1.2444018125534058,
+            1.0428158044815063,
+            0.6597925424575806,
+            1.3639332056045532,
+            1.1124801635742188,
+            1.0994874238967896,
+            0.9639119505882263,
+            0.6164624691009521,
+            0.7141286134719849,
+            0.6556037068367004
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          12.991151,
+          12.810031,
+          13.155411
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 12.985531,
+          "median": 12.991151,
+          "p95": 13.138985,
+          "maximum": 13.155411,
+          "minimum": 12.810031,
+          "std": 0.14105678383781023
+        },
+        "first_call_ms": 14.24519,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          7.505049,
+          7.605699,
+          7.447979
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 7.519575666666667,
+          "median": 7.505049,
+          "p95": 7.595634,
+          "maximum": 7.605699,
+          "minimum": 7.447979,
+          "std": 0.06520310643588165
+        },
+        "first_call_ms": 7.894889,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 1.9975455594002304e-05,
+        "mse_uint8": 1.298904,
+        "mae_rgb": 0.020856,
+        "mean_max_channel_abs": 0.031172,
+        "exact_fraction": 0.999096,
+        "within8_fraction": 0.999348,
+        "ssim": 0.999599489871314,
+        "max_channel_abs": 126.0,
+        "candidate_sha256": "608474acdc25b6e0c0d0f7269ceaa0ea1c1bbd82d3f33ce4dd093b53262e9f88",
+        "oracle_sha256": "8bc652fe06d878bdbf3f397d398a3d28df821a2c808eebc1f22e1313ee3a336f",
+        "shape": [
+          500,
+          500,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 2,
+      "case": 0,
+      "step": 8,
+      "seed": 0,
+      "action_dtype": "float32",
+      "prefix_hash": "87b88bacfbfb31d93580fac47ddd9cab292c549f6d104b51525929a99cb46663",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "6d0be5f0871f0762cf54dd66bcca6f99de789ac76c45336e34d61f1ddf152e63",
+        "oracle_state_hash": "6d0be5f0871f0762cf54dd66bcca6f99de789ac76c45336e34d61f1ddf152e63",
+        "compared_leaves": 4,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/native_navigation_semantics.py"
+      },
+      "state_file": "frame-0002-state.npz",
+      "state_hash": "6d0be5f0871f0762cf54dd66bcca6f99de789ac76c45336e34d61f1ddf152e63",
+      "oracle_file": "frame-0002-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        500,
+        500,
+        3
+      ],
+      "oracle_sha256": "d7962ac6f1bdd14a190e81b4ae3922132169d8b5655dec8674e3b493d3dd62fb",
+      "render_kwargs": {
+        "style": [
+          [
+            255.0,
+            0.0,
+            0.0,
+            0.10000000149011612,
+            1.0,
+            255.0,
+            255.0,
+            255.0,
+            0.0,
+            255.0,
+            0.0,
+            0.20000000298023224,
+            0.0,
+            0.0,
+            0.0,
+            5.0,
+            1.035264492034912,
+            3.455474853515625,
+            3.002354621887207,
+            3.4422965049743652,
+            1.5345234870910645,
+            2.9165356159210205,
+            2.142178535461426,
+            2.783087968826294,
+            1.2603342533111572,
+            3.453317880630493,
+            1.504300832748413,
+            2.397299289703369,
+            1.289385199546814,
+            0.8406872749328613,
+            1.2444018125534058,
+            1.0428158044815063,
+            0.6597925424575806,
+            1.3639332056045532,
+            1.1124801635742188,
+            1.0994874238967896,
+            0.9639119505882263,
+            0.6164624691009521,
+            0.7141286134719849,
+            0.6556037068367004
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          12.762291,
+          12.947162,
+          13.068871
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 12.926108,
+          "median": 12.947162,
+          "p95": 13.0567001,
+          "maximum": 13.068871,
+          "minimum": 12.762291,
+          "std": 0.12604305424999313
+        },
+        "first_call_ms": 13.90678,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          7.43307,
+          7.475789,
+          7.5262
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 7.478352999999999,
+          "median": 7.475789,
+          "p95": 7.5211589000000005,
+          "maximum": 7.5262,
+          "minimum": 7.43307,
+          "std": 0.03806336643896174
+        },
+        "first_call_ms": 7.896249,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 1.9057285659361783e-05,
+        "mse_uint8": 1.2392,
+        "mae_rgb": 0.019818666666666665,
+        "mean_max_channel_abs": 0.029616,
+        "exact_fraction": 0.9991,
+        "within8_fraction": 0.999376,
+        "ssim": 0.9996462535152405,
+        "max_channel_abs": 131.0,
+        "candidate_sha256": "5afa0488c320bf771887e62657fd731667c1f94b580f7c95e10d1019cf434425",
+        "oracle_sha256": "d7962ac6f1bdd14a190e81b4ae3922132169d8b5655dec8674e3b493d3dd62fb",
+        "shape": [
+          500,
+          500,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 3,
+      "case": 0,
+      "step": 32,
+      "seed": 0,
+      "action_dtype": "float32",
+      "prefix_hash": "c2c4f7ac8fbc20af37aee9ff399d9a5123eaf4bf78603446701b7d81cd216ca3",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "43c7f0e5ebc28d409475fb362fb3a5dee500ade36ffdf7f09ed0349611fea003",
+        "oracle_state_hash": "43c7f0e5ebc28d409475fb362fb3a5dee500ade36ffdf7f09ed0349611fea003",
+        "compared_leaves": 4,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/native_navigation_semantics.py"
+      },
+      "state_file": "frame-0003-state.npz",
+      "state_hash": "43c7f0e5ebc28d409475fb362fb3a5dee500ade36ffdf7f09ed0349611fea003",
+      "oracle_file": "frame-0003-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        500,
+        500,
+        3
+      ],
+      "oracle_sha256": "7901a85518a283916698d90909e6a4a15d597aa5acfe93b0f91109e760076c1f",
+      "render_kwargs": {
+        "style": [
+          [
+            255.0,
+            0.0,
+            0.0,
+            0.10000000149011612,
+            1.0,
+            255.0,
+            255.0,
+            255.0,
+            0.0,
+            255.0,
+            0.0,
+            0.20000000298023224,
+            0.0,
+            0.0,
+            0.0,
+            5.0,
+            1.035264492034912,
+            3.455474853515625,
+            3.002354621887207,
+            3.4422965049743652,
+            1.5345234870910645,
+            2.9165356159210205,
+            2.142178535461426,
+            2.783087968826294,
+            1.2603342533111572,
+            3.453317880630493,
+            1.504300832748413,
+            2.397299289703369,
+            1.289385199546814,
+            0.8406872749328613,
+            1.2444018125534058,
+            1.0428158044815063,
+            0.6597925424575806,
+            1.3639332056045532,
+            1.1124801635742188,
+            1.0994874238967896,
+            0.9639119505882263,
+            0.6164624691009521,
+            0.7141286134719849,
+            0.6556037068367004
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          12.752211,
+          12.944101,
+          13.044881
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 12.913730999999999,
+          "median": 12.944101,
+          "p95": 13.034803,
+          "maximum": 13.044881,
+          "minimum": 12.752211,
+          "std": 0.12139655376766915
+        },
+        "first_call_ms": 14.655149,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          7.530558,
+          7.495569,
+          7.493069
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 7.506398666666667,
+          "median": 7.495569,
+          "p95": 7.5270591,
+          "maximum": 7.530558,
+          "minimum": 7.493069,
+          "std": 0.017113689263926233
+        },
+        "first_call_ms": 8.032778,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 1.8478595412021016e-05,
+        "mse_uint8": 1.2015706666666666,
+        "mae_rgb": 0.019597333333333335,
+        "mean_max_channel_abs": 0.029284,
+        "exact_fraction": 0.999112,
+        "within8_fraction": 0.999368,
+        "ssim": 0.9996544165499949,
+        "max_channel_abs": 125.0,
+        "candidate_sha256": "11a2219be0ea63cbf3def08aaece14ab2e72ee6d68a688e19f5aef192c645787",
+        "oracle_sha256": "7901a85518a283916698d90909e6a4a15d597aa5acfe93b0f91109e760076c1f",
+        "shape": [
+          500,
+          500,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 4,
+      "case": 0,
+      "step": 64,
+      "seed": 0,
+      "action_dtype": "float32",
+      "prefix_hash": "437ff047bfb9905dcb80a142700037eeb6d49ed26ff4c47921531538b6ad5757",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "1cb37e482d7164c1276ae5539449b04341aa7a77709df3a917c21712e7534753",
+        "oracle_state_hash": "1cb37e482d7164c1276ae5539449b04341aa7a77709df3a917c21712e7534753",
+        "compared_leaves": 4,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/native_navigation_semantics.py"
+      },
+      "state_file": "frame-0004-state.npz",
+      "state_hash": "1cb37e482d7164c1276ae5539449b04341aa7a77709df3a917c21712e7534753",
+      "oracle_file": "frame-0004-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        500,
+        500,
+        3
+      ],
+      "oracle_sha256": "2d3916fbb84073d1762c4ba18e216aa19cebc07228ae66275b2660086ee02776",
+      "render_kwargs": {
+        "style": [
+          [
+            255.0,
+            0.0,
+            0.0,
+            0.10000000149011612,
+            1.0,
+            255.0,
+            255.0,
+            255.0,
+            0.0,
+            255.0,
+            0.0,
+            0.20000000298023224,
+            0.0,
+            0.0,
+            0.0,
+            5.0,
+            1.035264492034912,
+            3.455474853515625,
+            3.002354621887207,
+            3.4422965049743652,
+            1.5345234870910645,
+            2.9165356159210205,
+            2.142178535461426,
+            2.783087968826294,
+            1.2603342533111572,
+            3.453317880630493,
+            1.504300832748413,
+            2.397299289703369,
+            1.289385199546814,
+            0.8406872749328613,
+            1.2444018125534058,
+            1.0428158044815063,
+            0.6597925424575806,
+            1.3639332056045532,
+            1.1124801635742188,
+            1.0994874238967896,
+            0.9639119505882263,
+            0.6164624691009521,
+            0.7141286134719849,
+            0.6556037068367004
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          12.720401,
+          12.895091,
+          12.888162
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 12.834551333333335,
+          "median": 12.888162,
+          "p95": 12.8943981,
+          "maximum": 12.895091,
+          "minimum": 12.720401,
+          "std": 0.08076602714150409
+        },
+        "first_call_ms": 14.201239,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          7.447329,
+          7.4703,
+          7.47939
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 7.465673,
+          "median": 7.4703,
+          "p95": 7.478481,
+          "maximum": 7.47939,
+          "minimum": 7.447329,
+          "std": 0.013491572110025033
+        },
+        "first_call_ms": 7.865239,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 1.8688237857234398e-05,
+        "mse_uint8": 1.2152026666666667,
+        "mae_rgb": 0.020066666666666667,
+        "mean_max_channel_abs": 0.029988,
+        "exact_fraction": 0.999092,
+        "within8_fraction": 0.999348,
+        "ssim": 0.9996312633474402,
+        "max_channel_abs": 128.0,
+        "candidate_sha256": "64dc88d0c88bdb9a88757a700f752d1dd436c9ba92bf2947617a72a3d209fad9",
+        "oracle_sha256": "2d3916fbb84073d1762c4ba18e216aa19cebc07228ae66275b2660086ee02776",
+        "shape": [
+          500,
+          500,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 5,
+      "case": 0,
+      "step": 128,
+      "seed": 0,
+      "action_dtype": "float32",
+      "prefix_hash": "37aaf69e76e3dc9b431c2341d03b406be50b981dfcc282cdbddda88904f81473",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "f7a47190dbc2207a59a7c47b0e9d165958a292a66a9a1804b1279667d293294a",
+        "oracle_state_hash": "f7a47190dbc2207a59a7c47b0e9d165958a292a66a9a1804b1279667d293294a",
+        "compared_leaves": 4,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/native_navigation_semantics.py"
+      },
+      "state_file": "frame-0005-state.npz",
+      "state_hash": "f7a47190dbc2207a59a7c47b0e9d165958a292a66a9a1804b1279667d293294a",
+      "oracle_file": "frame-0005-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        500,
+        500,
+        3
+      ],
+      "oracle_sha256": "c8cfd8c4fc0c6fd4b9cd3f62245e27980ac80da700c2c9cc1c427c29cc8e4a00",
+      "render_kwargs": {
+        "style": [
+          [
+            255.0,
+            0.0,
+            0.0,
+            0.10000000149011612,
+            1.0,
+            255.0,
+            255.0,
+            255.0,
+            0.0,
+            255.0,
+            0.0,
+            0.20000000298023224,
+            0.0,
+            0.0,
+            0.0,
+            5.0,
+            1.035264492034912,
+            3.455474853515625,
+            3.002354621887207,
+            3.4422965049743652,
+            1.5345234870910645,
+            2.9165356159210205,
+            2.142178535461426,
+            2.783087968826294,
+            1.2603342533111572,
+            3.453317880630493,
+            1.504300832748413,
+            2.397299289703369,
+            1.289385199546814,
+            0.8406872749328613,
+            1.2444018125534058,
+            1.0428158044815063,
+            0.6597925424575806,
+            1.3639332056045532,
+            1.1124801635742188,
+            1.0994874238967896,
+            0.9639119505882263,
+            0.6164624691009521,
+            0.7141286134719849,
+            0.6556037068367004
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          13.006811,
+          12.823831,
+          12.864752
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 12.898464666666667,
+          "median": 12.864752,
+          "p95": 12.9926051,
+          "maximum": 13.006811,
+          "minimum": 12.823831,
+          "std": 0.07841270313894055
+        },
+        "first_call_ms": 13.613701,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          7.450379,
+          7.47784,
+          7.443949
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 7.4573893333333325,
+          "median": 7.450379,
+          "p95": 7.475093899999999,
+          "maximum": 7.47784,
+          "minimum": 7.443949,
+          "std": 0.014697132380917648
+        },
+        "first_call_ms": 8.144909,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 2.0412497757272842e-05,
+        "mse_uint8": 1.3273226666666667,
+        "mae_rgb": 0.020992,
+        "mean_max_channel_abs": 0.031376,
+        "exact_fraction": 0.9991,
+        "within8_fraction": 0.99936,
+        "ssim": 0.9995951391173802,
+        "max_channel_abs": 125.0,
+        "candidate_sha256": "b22e58153254316aec7116ee0a3fea902bd57758af428b4eb7374fc2ed742927",
+        "oracle_sha256": "c8cfd8c4fc0c6fd4b9cd3f62245e27980ac80da700c2c9cc1c427c29cc8e4a00",
+        "shape": [
+          500,
+          500,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 6,
+      "case": 1,
+      "step": 0,
+      "seed": 0,
+      "action_dtype": "float64",
+      "prefix_hash": "e72c4a53967d1c882ccee3ef33e2431f05a11b7e8d4cc62b50b544da108afc49",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "cc6a0e4573cc819ee265482689052ad15d01a9c124de3e938bdbbc521138c475",
+        "oracle_state_hash": "cc6a0e4573cc819ee265482689052ad15d01a9c124de3e938bdbbc521138c475",
+        "compared_leaves": 4,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/native_navigation_semantics.py"
+      },
+      "state_file": "frame-0006-state.npz",
+      "state_hash": "cc6a0e4573cc819ee265482689052ad15d01a9c124de3e938bdbbc521138c475",
+      "oracle_file": "frame-0006-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        500,
+        500,
+        3
+      ],
+      "oracle_sha256": "545d2d6e1acadaf77bd10b99a98297944cb45405ef1cda860975966e2137cc40",
+      "render_kwargs": {
+        "style": [
+          [
+            255.0,
+            0.0,
+            0.0,
+            0.10000000149011612,
+            1.0,
+            255.0,
+            255.0,
+            255.0,
+            0.0,
+            255.0,
+            0.0,
+            0.20000000298023224,
+            0.0,
+            0.0,
+            0.0,
+            5.0,
+            1.035264492034912,
+            3.455474853515625,
+            3.002354621887207,
+            3.4422965049743652,
+            1.5345234870910645,
+            2.9165356159210205,
+            2.142178535461426,
+            2.783087968826294,
+            1.2603342533111572,
+            3.453317880630493,
+            1.504300832748413,
+            2.397299289703369,
+            1.289385199546814,
+            0.8406872749328613,
+            1.2444018125534058,
+            1.0428158044815063,
+            0.6597925424575806,
+            1.3639332056045532,
+            1.1124801635742188,
+            1.0994874238967896,
+            0.9639119505882263,
+            0.6164624691009521,
+            0.7141286134719849,
+            0.6556037068367004
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          12.835192,
+          12.692121,
+          12.836582
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 12.787965,
+          "median": 12.835192,
+          "p95": 12.836443,
+          "maximum": 12.836582,
+          "minimum": 12.692121,
+          "std": 0.06777431803173403
+        },
+        "first_call_ms": 12.823431,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          7.486299,
+          7.420299,
+          7.50831
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 7.471635999999999,
+          "median": 7.486299,
+          "p95": 7.5061089,
+          "maximum": 7.50831,
+          "minimum": 7.420299,
+          "std": 0.03739640541549407
+        },
+        "first_call_ms": 8.003198,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 1.857353325643983e-05,
+        "mse_uint8": 1.207744,
+        "mae_rgb": 0.020101333333333332,
+        "mean_max_channel_abs": 0.03004,
+        "exact_fraction": 0.999096,
+        "within8_fraction": 0.99934,
+        "ssim": 0.9996285985425979,
+        "max_channel_abs": 124.0,
+        "candidate_sha256": "22a53f8ff83825b0b08de599039213e84b64b597be42a146ad3b8dbf5d1196c4",
+        "oracle_sha256": "545d2d6e1acadaf77bd10b99a98297944cb45405ef1cda860975966e2137cc40",
+        "shape": [
+          500,
+          500,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 7,
+      "case": 1,
+      "step": 1,
+      "seed": 0,
+      "action_dtype": "float64",
+      "prefix_hash": "7a5d1efb85aa692611e30fec0be51e318a1958e430a54e1652f1d4ef672cb16a",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "275b7a0b9b483d4e31670cd713cbc3925692d1585eb73c69ae3ad2becb81ce03",
+        "oracle_state_hash": "275b7a0b9b483d4e31670cd713cbc3925692d1585eb73c69ae3ad2becb81ce03",
+        "compared_leaves": 4,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/native_navigation_semantics.py"
+      },
+      "state_file": "frame-0007-state.npz",
+      "state_hash": "275b7a0b9b483d4e31670cd713cbc3925692d1585eb73c69ae3ad2becb81ce03",
+      "oracle_file": "frame-0007-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        500,
+        500,
+        3
+      ],
+      "oracle_sha256": "8bc652fe06d878bdbf3f397d398a3d28df821a2c808eebc1f22e1313ee3a336f",
+      "render_kwargs": {
+        "style": [
+          [
+            255.0,
+            0.0,
+            0.0,
+            0.10000000149011612,
+            1.0,
+            255.0,
+            255.0,
+            255.0,
+            0.0,
+            255.0,
+            0.0,
+            0.20000000298023224,
+            0.0,
+            0.0,
+            0.0,
+            5.0,
+            1.035264492034912,
+            3.455474853515625,
+            3.002354621887207,
+            3.4422965049743652,
+            1.5345234870910645,
+            2.9165356159210205,
+            2.142178535461426,
+            2.783087968826294,
+            1.2603342533111572,
+            3.453317880630493,
+            1.504300832748413,
+            2.397299289703369,
+            1.289385199546814,
+            0.8406872749328613,
+            1.2444018125534058,
+            1.0428158044815063,
+            0.6597925424575806,
+            1.3639332056045532,
+            1.1124801635742188,
+            1.0994874238967896,
+            0.9639119505882263,
+            0.6164624691009521,
+            0.7141286134719849,
+            0.6556037068367004
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          12.646982,
+          12.818461,
+          12.700572
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 12.722005000000001,
+          "median": 12.700572,
+          "p95": 12.806672099999998,
+          "maximum": 12.818461,
+          "minimum": 12.646982,
+          "std": 0.0716277040304005
+        },
+        "first_call_ms": 13.8333,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          7.478939,
+          7.431369,
+          7.49432
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 7.468209333333334,
+          "median": 7.478939,
+          "p95": 7.4927819,
+          "maximum": 7.49432,
+          "minimum": 7.431369,
+          "std": 0.02679616154518313
+        },
+        "first_call_ms": 8.111698,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 1.9975455594002304e-05,
+        "mse_uint8": 1.298904,
+        "mae_rgb": 0.020856,
+        "mean_max_channel_abs": 0.031172,
+        "exact_fraction": 0.999096,
+        "within8_fraction": 0.999348,
+        "ssim": 0.999599489871314,
+        "max_channel_abs": 126.0,
+        "candidate_sha256": "608474acdc25b6e0c0d0f7269ceaa0ea1c1bbd82d3f33ce4dd093b53262e9f88",
+        "oracle_sha256": "8bc652fe06d878bdbf3f397d398a3d28df821a2c808eebc1f22e1313ee3a336f",
+        "shape": [
+          500,
+          500,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 8,
+      "case": 1,
+      "step": 8,
+      "seed": 0,
+      "action_dtype": "float64",
+      "prefix_hash": "7dba9c609b2b7352632f4a2878cadfaab25ff4c83d70d6b5105a690e721f0748",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "125e329a06a6949a63ab2771c92a7ec0249029f87d7a50820b4c376172563d7d",
+        "oracle_state_hash": "125e329a06a6949a63ab2771c92a7ec0249029f87d7a50820b4c376172563d7d",
+        "compared_leaves": 4,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/native_navigation_semantics.py"
+      },
+      "state_file": "frame-0008-state.npz",
+      "state_hash": "125e329a06a6949a63ab2771c92a7ec0249029f87d7a50820b4c376172563d7d",
+      "oracle_file": "frame-0008-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        500,
+        500,
+        3
+      ],
+      "oracle_sha256": "d7962ac6f1bdd14a190e81b4ae3922132169d8b5655dec8674e3b493d3dd62fb",
+      "render_kwargs": {
+        "style": [
+          [
+            255.0,
+            0.0,
+            0.0,
+            0.10000000149011612,
+            1.0,
+            255.0,
+            255.0,
+            255.0,
+            0.0,
+            255.0,
+            0.0,
+            0.20000000298023224,
+            0.0,
+            0.0,
+            0.0,
+            5.0,
+            1.035264492034912,
+            3.455474853515625,
+            3.002354621887207,
+            3.4422965049743652,
+            1.5345234870910645,
+            2.9165356159210205,
+            2.142178535461426,
+            2.783087968826294,
+            1.2603342533111572,
+            3.453317880630493,
+            1.504300832748413,
+            2.397299289703369,
+            1.289385199546814,
+            0.8406872749328613,
+            1.2444018125534058,
+            1.0428158044815063,
+            0.6597925424575806,
+            1.3639332056045532,
+            1.1124801635742188,
+            1.0994874238967896,
+            0.9639119505882263,
+            0.6164624691009521,
+            0.7141286134719849,
+            0.6556037068367004
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          12.799062,
+          12.879261,
+          12.831472
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 12.836598333333333,
+          "median": 12.831472,
+          "p95": 12.8744821,
+          "maximum": 12.879261,
+          "minimum": 12.799062,
+          "std": 0.03294115329223053
+        },
+        "first_call_ms": 13.6679,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          7.46866,
+          7.500679,
+          7.472929
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 7.4807559999999995,
+          "median": 7.472929,
+          "p95": 7.497904,
+          "maximum": 7.500679,
+          "minimum": 7.46866,
+          "std": 0.014195082176584996
+        },
+        "first_call_ms": 8.072588,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 1.9057285659361783e-05,
+        "mse_uint8": 1.2392,
+        "mae_rgb": 0.019818666666666665,
+        "mean_max_channel_abs": 0.029616,
+        "exact_fraction": 0.9991,
+        "within8_fraction": 0.999376,
+        "ssim": 0.9996462535152405,
+        "max_channel_abs": 131.0,
+        "candidate_sha256": "5afa0488c320bf771887e62657fd731667c1f94b580f7c95e10d1019cf434425",
+        "oracle_sha256": "d7962ac6f1bdd14a190e81b4ae3922132169d8b5655dec8674e3b493d3dd62fb",
+        "shape": [
+          500,
+          500,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 9,
+      "case": 1,
+      "step": 32,
+      "seed": 0,
+      "action_dtype": "float64",
+      "prefix_hash": "ca9477155f0abecc24e5c62ce74fe7e6b2b1ca71efca6bdda7b1754faaff29b9",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "bbc7a44c04c121f3c2dfc5aa31906ea8e318decc16d671532896cf5f427987a2",
+        "oracle_state_hash": "bbc7a44c04c121f3c2dfc5aa31906ea8e318decc16d671532896cf5f427987a2",
+        "compared_leaves": 4,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/native_navigation_semantics.py"
+      },
+      "state_file": "frame-0009-state.npz",
+      "state_hash": "bbc7a44c04c121f3c2dfc5aa31906ea8e318decc16d671532896cf5f427987a2",
+      "oracle_file": "frame-0009-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        500,
+        500,
+        3
+      ],
+      "oracle_sha256": "7901a85518a283916698d90909e6a4a15d597aa5acfe93b0f91109e760076c1f",
+      "render_kwargs": {
+        "style": [
+          [
+            255.0,
+            0.0,
+            0.0,
+            0.10000000149011612,
+            1.0,
+            255.0,
+            255.0,
+            255.0,
+            0.0,
+            255.0,
+            0.0,
+            0.20000000298023224,
+            0.0,
+            0.0,
+            0.0,
+            5.0,
+            1.035264492034912,
+            3.455474853515625,
+            3.002354621887207,
+            3.4422965049743652,
+            1.5345234870910645,
+            2.9165356159210205,
+            2.142178535461426,
+            2.783087968826294,
+            1.2603342533111572,
+            3.453317880630493,
+            1.504300832748413,
+            2.397299289703369,
+            1.289385199546814,
+            0.8406872749328613,
+            1.2444018125534058,
+            1.0428158044815063,
+            0.6597925424575806,
+            1.3639332056045532,
+            1.1124801635742188,
+            1.0994874238967896,
+            0.9639119505882263,
+            0.6164624691009521,
+            0.7141286134719849,
+            0.6556037068367004
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          12.684021,
+          12.829622,
+          12.654971
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 12.722871333333336,
+          "median": 12.684021,
+          "p95": 12.8150619,
+          "maximum": 12.829622,
+          "minimum": 12.654971,
+          "std": 0.07641009641111321
+        },
+        "first_call_ms": 14.531139,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          7.467629,
+          7.499079,
+          7.449649
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 7.472119,
+          "median": 7.467629,
+          "p95": 7.495934,
+          "maximum": 7.499079,
+          "minimum": 7.449649,
+          "std": 0.02042794328038604
+        },
+        "first_call_ms": 7.854988,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 1.8478595412021016e-05,
+        "mse_uint8": 1.2015706666666666,
+        "mae_rgb": 0.019597333333333335,
+        "mean_max_channel_abs": 0.029284,
+        "exact_fraction": 0.999112,
+        "within8_fraction": 0.999368,
+        "ssim": 0.9996544165499949,
+        "max_channel_abs": 125.0,
+        "candidate_sha256": "11a2219be0ea63cbf3def08aaece14ab2e72ee6d68a688e19f5aef192c645787",
+        "oracle_sha256": "7901a85518a283916698d90909e6a4a15d597aa5acfe93b0f91109e760076c1f",
+        "shape": [
+          500,
+          500,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 10,
+      "case": 1,
+      "step": 64,
+      "seed": 0,
+      "action_dtype": "float64",
+      "prefix_hash": "17921ca9f162c40cec0458d4a29259cfdc6d43974d5c3ac7129810be237bfc12",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "5811bc376fa45416f36eac228b0a81ac82d1de410127cd8aae9a786f2e8415ab",
+        "oracle_state_hash": "5811bc376fa45416f36eac228b0a81ac82d1de410127cd8aae9a786f2e8415ab",
+        "compared_leaves": 4,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/native_navigation_semantics.py"
+      },
+      "state_file": "frame-0010-state.npz",
+      "state_hash": "5811bc376fa45416f36eac228b0a81ac82d1de410127cd8aae9a786f2e8415ab",
+      "oracle_file": "frame-0010-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        500,
+        500,
+        3
+      ],
+      "oracle_sha256": "9a3a5e6c3b263c2b1fd357d8f2746e03ae8cd32d142ae6432a62ab2080f61ba3",
+      "render_kwargs": {
+        "style": [
+          [
+            255.0,
+            0.0,
+            0.0,
+            0.10000000149011612,
+            1.0,
+            255.0,
+            255.0,
+            255.0,
+            0.0,
+            255.0,
+            0.0,
+            0.20000000298023224,
+            0.0,
+            0.0,
+            0.0,
+            5.0,
+            1.035264492034912,
+            3.455474853515625,
+            3.002354621887207,
+            3.4422965049743652,
+            1.5345234870910645,
+            2.9165356159210205,
+            2.142178535461426,
+            2.783087968826294,
+            1.2603342533111572,
+            3.453317880630493,
+            1.504300832748413,
+            2.397299289703369,
+            1.289385199546814,
+            0.8406872749328613,
+            1.2444018125534058,
+            1.0428158044815063,
+            0.6597925424575806,
+            1.3639332056045532,
+            1.1124801635742188,
+            1.0994874238967896,
+            0.9639119505882263,
+            0.6164624691009521,
+            0.7141286134719849,
+            0.6556037068367004
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          12.978451,
+          12.654172,
+          12.857671
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 12.830098000000001,
+          "median": 12.857671,
+          "p95": 12.966372999999999,
+          "maximum": 12.978451,
+          "minimum": 12.654172,
+          "std": 0.13381434952201451
+        },
+        "first_call_ms": 14.107069,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          7.473729,
+          7.452629,
+          7.543739
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 7.4900323333333345,
+          "median": 7.473729,
+          "p95": 7.536738000000001,
+          "maximum": 7.543739,
+          "minimum": 7.452629,
+          "std": 0.03894104118907081
+        },
+        "first_call_ms": 8.401288,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 1.870624118928617e-05,
+        "mse_uint8": 1.2163733333333333,
+        "mae_rgb": 0.020069333333333335,
+        "mean_max_channel_abs": 0.029992,
+        "exact_fraction": 0.999092,
+        "within8_fraction": 0.999348,
+        "ssim": 0.9996311212775288,
+        "max_channel_abs": 128.0,
+        "candidate_sha256": "64dc88d0c88bdb9a88757a700f752d1dd436c9ba92bf2947617a72a3d209fad9",
+        "oracle_sha256": "9a3a5e6c3b263c2b1fd357d8f2746e03ae8cd32d142ae6432a62ab2080f61ba3",
+        "shape": [
+          500,
+          500,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 11,
+      "case": 1,
+      "step": 128,
+      "seed": 0,
+      "action_dtype": "float64",
+      "prefix_hash": "07af790abf1e0e345e464b10594fcbc1dba4f31d98434605593ee4979d9ea696",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "5b5f20d6fd1133c1897a57e5a4143b08ffd85dc47876eb5b5e4bdc49eb5cfa4b",
+        "oracle_state_hash": "5b5f20d6fd1133c1897a57e5a4143b08ffd85dc47876eb5b5e4bdc49eb5cfa4b",
+        "compared_leaves": 4,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/native_navigation_semantics.py"
+      },
+      "state_file": "frame-0011-state.npz",
+      "state_hash": "5b5f20d6fd1133c1897a57e5a4143b08ffd85dc47876eb5b5e4bdc49eb5cfa4b",
+      "oracle_file": "frame-0011-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        500,
+        500,
+        3
+      ],
+      "oracle_sha256": "ec97f4cc8083683f8b63281115961d84083ff925ab87ece032c807314188a596",
+      "render_kwargs": {
+        "style": [
+          [
+            255.0,
+            0.0,
+            0.0,
+            0.10000000149011612,
+            1.0,
+            255.0,
+            255.0,
+            255.0,
+            0.0,
+            255.0,
+            0.0,
+            0.20000000298023224,
+            0.0,
+            0.0,
+            0.0,
+            5.0,
+            1.035264492034912,
+            3.455474853515625,
+            3.002354621887207,
+            3.4422965049743652,
+            1.5345234870910645,
+            2.9165356159210205,
+            2.142178535461426,
+            2.783087968826294,
+            1.2603342533111572,
+            3.453317880630493,
+            1.504300832748413,
+            2.397299289703369,
+            1.289385199546814,
+            0.8406872749328613,
+            1.2444018125534058,
+            1.0428158044815063,
+            0.6597925424575806,
+            1.3639332056045532,
+            1.1124801635742188,
+            1.0994874238967896,
+            0.9639119505882263,
+            0.6164624691009521,
+            0.7141286134719849,
+            0.6556037068367004
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          12.868982,
+          12.701071,
+          12.889692
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 12.819915,
+          "median": 12.868982,
+          "p95": 12.887621,
+          "maximum": 12.889692,
+          "minimum": 12.701071,
+          "std": 0.08445964826274525
+        },
+        "first_call_ms": 14.664399,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          7.459239,
+          7.516589,
+          7.460469
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 7.478765666666667,
+          "median": 7.460469,
+          "p95": 7.510977,
+          "maximum": 7.516589,
+          "minimum": 7.459239,
+          "std": 0.026749849013073253
+        },
+        "first_call_ms": 7.978958,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 2.042049468153274e-05,
+        "mse_uint8": 1.3278426666666667,
+        "mae_rgb": 0.020994666666666665,
+        "mean_max_channel_abs": 0.03138,
+        "exact_fraction": 0.9991,
+        "within8_fraction": 0.99936,
+        "ssim": 0.9995950618276723,
+        "max_channel_abs": 125.0,
+        "candidate_sha256": "b22e58153254316aec7116ee0a3fea902bd57758af428b4eb7374fc2ed742927",
+        "oracle_sha256": "ec97f4cc8083683f8b63281115961d84083ff925ab87ece032c807314188a596",
+        "shape": [
+          500,
+          500,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 12,
+      "case": 2,
+      "step": 0,
+      "seed": 17,
+      "action_dtype": "float32",
+      "prefix_hash": "3fb8e2a5df713e79221069065d9c5846407c74f6611e9f9b5abbf6aa901f1577",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "a827e460a8ffe12c6ed36ef6462910c3d564092f779083b452b4dab2822559c3",
+        "oracle_state_hash": "a827e460a8ffe12c6ed36ef6462910c3d564092f779083b452b4dab2822559c3",
+        "compared_leaves": 4,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/native_navigation_semantics.py"
+      },
+      "state_file": "frame-0012-state.npz",
+      "state_hash": "a827e460a8ffe12c6ed36ef6462910c3d564092f779083b452b4dab2822559c3",
+      "oracle_file": "frame-0012-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        500,
+        500,
+        3
+      ],
+      "oracle_sha256": "b6cab1a8e9e7e4a6817038dc7dcf0426d0914cd949753ea7803a1688ef8564dc",
+      "render_kwargs": {
+        "style": [
+          [
+            255.0,
+            0.0,
+            0.0,
+            0.10000000149011612,
+            1.0,
+            255.0,
+            255.0,
+            255.0,
+            0.0,
+            255.0,
+            0.0,
+            0.20000000298023224,
+            0.0,
+            0.0,
+            0.0,
+            5.0,
+            1.035264492034912,
+            3.455474853515625,
+            3.002354621887207,
+            3.4422965049743652,
+            1.5345234870910645,
+            2.9165356159210205,
+            2.142178535461426,
+            2.783087968826294,
+            1.2603342533111572,
+            3.453317880630493,
+            1.504300832748413,
+            2.397299289703369,
+            1.289385199546814,
+            0.8406872749328613,
+            1.2444018125534058,
+            1.0428158044815063,
+            0.6597925424575806,
+            1.3639332056045532,
+            1.1124801635742188,
+            1.0994874238967896,
+            0.9639119505882263,
+            0.6164624691009521,
+            0.7141286134719849,
+            0.6556037068367004
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          12.963362,
+          13.17713,
+          12.981751
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 13.040747666666666,
+          "median": 12.981751,
+          "p95": 13.1575921,
+          "maximum": 13.17713,
+          "minimum": 12.963362,
+          "std": 0.09672863920726332
+        },
+        "first_call_ms": 12.735882,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          7.430929,
+          7.49391,
+          7.525539
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 7.483459333333333,
+          "median": 7.49391,
+          "p95": 7.5223761,
+          "maximum": 7.525539,
+          "minimum": 7.430929,
+          "std": 0.039324931450106335
+        },
+        "first_call_ms": 7.981668,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 1.9093620402409325e-05,
+        "mse_uint8": 1.2415626666666666,
+        "mae_rgb": 0.019824,
+        "mean_max_channel_abs": 0.029624,
+        "exact_fraction": 0.9991,
+        "within8_fraction": 0.999372,
+        "ssim": 0.9996462050464789,
+        "max_channel_abs": 134.0,
+        "candidate_sha256": "4b1611f31ca8e44f4793feedbf3b4ad02cba5133eff36ba7152e3ef21f0de3d9",
+        "oracle_sha256": "b6cab1a8e9e7e4a6817038dc7dcf0426d0914cd949753ea7803a1688ef8564dc",
+        "shape": [
+          500,
+          500,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 13,
+      "case": 2,
+      "step": 1,
+      "seed": 17,
+      "action_dtype": "float32",
+      "prefix_hash": "8cf4af13f25b62b7644050645a49aae54a0f167c80317472815f8ab79f83c385",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "123cd82f9939d376200e61a2238a8a378cd66e78dbe85525cc452d693d23c099",
+        "oracle_state_hash": "123cd82f9939d376200e61a2238a8a378cd66e78dbe85525cc452d693d23c099",
+        "compared_leaves": 4,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/native_navigation_semantics.py"
+      },
+      "state_file": "frame-0013-state.npz",
+      "state_hash": "123cd82f9939d376200e61a2238a8a378cd66e78dbe85525cc452d693d23c099",
+      "oracle_file": "frame-0013-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        500,
+        500,
+        3
+      ],
+      "oracle_sha256": "ed9614fe5c729ba0f79776e0a5dc1d1f1eccef40017fcd70fa4eb937a2485896",
+      "render_kwargs": {
+        "style": [
+          [
+            255.0,
+            0.0,
+            0.0,
+            0.10000000149011612,
+            1.0,
+            255.0,
+            255.0,
+            255.0,
+            0.0,
+            255.0,
+            0.0,
+            0.20000000298023224,
+            0.0,
+            0.0,
+            0.0,
+            5.0,
+            1.035264492034912,
+            3.455474853515625,
+            3.002354621887207,
+            3.4422965049743652,
+            1.5345234870910645,
+            2.9165356159210205,
+            2.142178535461426,
+            2.783087968826294,
+            1.2603342533111572,
+            3.453317880630493,
+            1.504300832748413,
+            2.397299289703369,
+            1.289385199546814,
+            0.8406872749328613,
+            1.2444018125534058,
+            1.0428158044815063,
+            0.6597925424575806,
+            1.3639332056045532,
+            1.1124801635742188,
+            1.0994874238967896,
+            0.9639119505882263,
+            0.6164624691009521,
+            0.7141286134719849,
+            0.6556037068367004
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          12.670422,
+          12.899051,
+          12.711282
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 12.760251666666667,
+          "median": 12.711282,
+          "p95": 12.8802741,
+          "maximum": 12.899051,
+          "minimum": 12.670422,
+          "std": 0.0995534231801642
+        },
+        "first_call_ms": 15.079928,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          7.477599,
+          7.4405,
+          7.494579
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 7.470892666666667,
+          "median": 7.477599,
+          "p95": 7.492881,
+          "maximum": 7.494579,
+          "minimum": 7.4405,
+          "std": 0.022581197788327127
+        },
+        "first_call_ms": 7.879718,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 1.9639830834294503e-05,
+        "mse_uint8": 1.27708,
+        "mae_rgb": 0.020696,
+        "mean_max_channel_abs": 0.030932,
+        "exact_fraction": 0.999088,
+        "within8_fraction": 0.999356,
+        "ssim": 0.9996077466005792,
+        "max_channel_abs": 124.0,
+        "candidate_sha256": "627f7d66038ae3885edb2722608708bdddf9735d39386965b8be8fb50a1889bb",
+        "oracle_sha256": "ed9614fe5c729ba0f79776e0a5dc1d1f1eccef40017fcd70fa4eb937a2485896",
+        "shape": [
+          500,
+          500,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 14,
+      "case": 2,
+      "step": 8,
+      "seed": 17,
+      "action_dtype": "float32",
+      "prefix_hash": "37aa86de4d90b54be2c38af91c8734e3ef43701f0c5fca054908c3be4657ba2f",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "7d48ea18306628dabd2cb977a1e4c05c28e1cf09754cd35a45bb5a64aa255471",
+        "oracle_state_hash": "7d48ea18306628dabd2cb977a1e4c05c28e1cf09754cd35a45bb5a64aa255471",
+        "compared_leaves": 4,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/native_navigation_semantics.py"
+      },
+      "state_file": "frame-0014-state.npz",
+      "state_hash": "7d48ea18306628dabd2cb977a1e4c05c28e1cf09754cd35a45bb5a64aa255471",
+      "oracle_file": "frame-0014-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        500,
+        500,
+        3
+      ],
+      "oracle_sha256": "4db28e2038f7f69355014f1fd169264e1b9f5acc324037ddfe6f722becdc2668",
+      "render_kwargs": {
+        "style": [
+          [
+            255.0,
+            0.0,
+            0.0,
+            0.10000000149011612,
+            1.0,
+            255.0,
+            255.0,
+            255.0,
+            0.0,
+            255.0,
+            0.0,
+            0.20000000298023224,
+            0.0,
+            0.0,
+            0.0,
+            5.0,
+            1.035264492034912,
+            3.455474853515625,
+            3.002354621887207,
+            3.4422965049743652,
+            1.5345234870910645,
+            2.9165356159210205,
+            2.142178535461426,
+            2.783087968826294,
+            1.2603342533111572,
+            3.453317880630493,
+            1.504300832748413,
+            2.397299289703369,
+            1.289385199546814,
+            0.8406872749328613,
+            1.2444018125534058,
+            1.0428158044815063,
+            0.6597925424575806,
+            1.3639332056045532,
+            1.1124801635742188,
+            1.0994874238967896,
+            0.9639119505882263,
+            0.6164624691009521,
+            0.7141286134719849,
+            0.6556037068367004
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          13.050871,
+          12.708041,
+          12.879681
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 12.879531,
+          "median": 12.879681,
+          "p95": 13.033752,
+          "maximum": 13.050871,
+          "minimum": 12.708041,
+          "std": 0.13995980160984364
+        },
+        "first_call_ms": 13.647231,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          7.433369,
+          7.42775,
+          7.42161
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 7.427576333333334,
+          "median": 7.42775,
+          "p95": 7.4328071,
+          "maximum": 7.433369,
+          "minimum": 7.42161,
+          "std": 0.004802162036231256
+        },
+        "first_call_ms": 7.847829,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 2.1962055619633476e-05,
+        "mse_uint8": 1.4280826666666666,
+        "mae_rgb": 0.021554666666666666,
+        "mean_max_channel_abs": 0.03222,
+        "exact_fraction": 0.999108,
+        "within8_fraction": 0.999356,
+        "ssim": 0.9995747195694799,
+        "max_channel_abs": 131.0,
+        "candidate_sha256": "16b664144bb10619951303211447d0765f9ddc23421e1496bdfe5636f21b0e74",
+        "oracle_sha256": "4db28e2038f7f69355014f1fd169264e1b9f5acc324037ddfe6f722becdc2668",
+        "shape": [
+          500,
+          500,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 15,
+      "case": 2,
+      "step": 32,
+      "seed": 17,
+      "action_dtype": "float32",
+      "prefix_hash": "b6749a1999d50441d90d20c79e6613d7f35e78570bc90199fc94f15f4fb810d9",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "20b6aa768fc245f3c293a59540621d5ab1573db6c4aed2a5cbf6dad3e7068f61",
+        "oracle_state_hash": "20b6aa768fc245f3c293a59540621d5ab1573db6c4aed2a5cbf6dad3e7068f61",
+        "compared_leaves": 4,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/native_navigation_semantics.py"
+      },
+      "state_file": "frame-0015-state.npz",
+      "state_hash": "20b6aa768fc245f3c293a59540621d5ab1573db6c4aed2a5cbf6dad3e7068f61",
+      "oracle_file": "frame-0015-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        500,
+        500,
+        3
+      ],
+      "oracle_sha256": "f09a4a1de4f144d9c18cb76f926a7225336ac652023203adbe2ca217a6ca1106",
+      "render_kwargs": {
+        "style": [
+          [
+            255.0,
+            0.0,
+            0.0,
+            0.10000000149011612,
+            1.0,
+            255.0,
+            255.0,
+            255.0,
+            0.0,
+            255.0,
+            0.0,
+            0.20000000298023224,
+            0.0,
+            0.0,
+            0.0,
+            5.0,
+            1.035264492034912,
+            3.455474853515625,
+            3.002354621887207,
+            3.4422965049743652,
+            1.5345234870910645,
+            2.9165356159210205,
+            2.142178535461426,
+            2.783087968826294,
+            1.2603342533111572,
+            3.453317880630493,
+            1.504300832748413,
+            2.397299289703369,
+            1.289385199546814,
+            0.8406872749328613,
+            1.2444018125534058,
+            1.0428158044815063,
+            0.6597925424575806,
+            1.3639332056045532,
+            1.1124801635742188,
+            1.0994874238967896,
+            0.9639119505882263,
+            0.6164624691009521,
+            0.7141286134719849,
+            0.6556037068367004
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          12.745581,
+          12.862602,
+          12.694951
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 12.767711333333333,
+          "median": 12.745581,
+          "p95": 12.8508999,
+          "maximum": 12.862602,
+          "minimum": 12.694951,
+          "std": 0.07020934501110918
+        },
+        "first_call_ms": 13.92967,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          7.398779,
+          7.435839,
+          7.41454
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 7.416385999999999,
+          "median": 7.41454,
+          "p95": 7.4337091,
+          "maximum": 7.435839,
+          "minimum": 7.398779,
+          "std": 0.015185885705702512
+        },
+        "first_call_ms": 7.844059,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 2.0678446751249517e-05,
+        "mse_uint8": 1.344616,
+        "mae_rgb": 0.021101333333333333,
+        "mean_max_channel_abs": 0.03154,
+        "exact_fraction": 0.999092,
+        "within8_fraction": 0.99936,
+        "ssim": 0.9995879679612054,
+        "max_channel_abs": 125.0,
+        "candidate_sha256": "d08f8e1cdd5f04ad2b0d7f65fdf430b67f7b5883ab46f6549e12cf870d4fa979",
+        "oracle_sha256": "f09a4a1de4f144d9c18cb76f926a7225336ac652023203adbe2ca217a6ca1106",
+        "shape": [
+          500,
+          500,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 16,
+      "case": 2,
+      "step": 64,
+      "seed": 17,
+      "action_dtype": "float32",
+      "prefix_hash": "532d8ca1e3da6981fc216720181a93a336204482a2a861146e63371a76f9d10e",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "f1e9a137edc9a638a941a367ec2f0ca5262f94950b3eca348425efc21c2f79a2",
+        "oracle_state_hash": "f1e9a137edc9a638a941a367ec2f0ca5262f94950b3eca348425efc21c2f79a2",
+        "compared_leaves": 4,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/native_navigation_semantics.py"
+      },
+      "state_file": "frame-0016-state.npz",
+      "state_hash": "f1e9a137edc9a638a941a367ec2f0ca5262f94950b3eca348425efc21c2f79a2",
+      "oracle_file": "frame-0016-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        500,
+        500,
+        3
+      ],
+      "oracle_sha256": "b58757b27915bfc39baf8cf935ea0993c43b6a0b8356afdbbf7a381b4f68e516",
+      "render_kwargs": {
+        "style": [
+          [
+            255.0,
+            0.0,
+            0.0,
+            0.10000000149011612,
+            1.0,
+            255.0,
+            255.0,
+            255.0,
+            0.0,
+            255.0,
+            0.0,
+            0.20000000298023224,
+            0.0,
+            0.0,
+            0.0,
+            5.0,
+            1.035264492034912,
+            3.455474853515625,
+            3.002354621887207,
+            3.4422965049743652,
+            1.5345234870910645,
+            2.9165356159210205,
+            2.142178535461426,
+            2.783087968826294,
+            1.2603342533111572,
+            3.453317880630493,
+            1.504300832748413,
+            2.397299289703369,
+            1.289385199546814,
+            0.8406872749328613,
+            1.2444018125534058,
+            1.0428158044815063,
+            0.6597925424575806,
+            1.3639332056045532,
+            1.1124801635742188,
+            1.0994874238967896,
+            0.9639119505882263,
+            0.6164624691009521,
+            0.7141286134719849,
+            0.6556037068367004
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          13.057311,
+          12.674782,
+          13.018051
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 12.916714666666666,
+          "median": 13.018051,
+          "p95": 13.053385,
+          "maximum": 13.057311,
+          "minimum": 12.674782,
+          "std": 0.17182141562357364
+        },
+        "first_call_ms": 13.6365,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          7.437769,
+          7.463559,
+          7.378009
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 7.426445666666666,
+          "median": 7.437769,
+          "p95": 7.46098,
+          "maximum": 7.463559,
+          "minimum": 7.378009,
+          "std": 0.03583168089213193
+        },
+        "first_call_ms": 7.809488,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 5.857312315775985e-05,
+        "mse_uint8": 3.8087173333333335,
+        "mae_rgb": 0.027122666666666666,
+        "mean_max_channel_abs": 0.040572,
+        "exact_fraction": 0.999192,
+        "within8_fraction": 0.999428,
+        "ssim": 0.9995620148792937,
+        "max_channel_abs": 241.0,
+        "candidate_sha256": "2aa6b7337acc189434016cb08adaa0cabc15234e0c3cdeaf42ba46dabf126778",
+        "oracle_sha256": "b58757b27915bfc39baf8cf935ea0993c43b6a0b8356afdbbf7a381b4f68e516",
+        "shape": [
+          500,
+          500,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 17,
+      "case": 2,
+      "step": 128,
+      "seed": 17,
+      "action_dtype": "float32",
+      "prefix_hash": "c9c9276f8d36bd724d057007096ba3b3bf3002b3cd0409d8af5f1350eb293b56",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "144570550084a71c19e1a124ae0ec351fc86c7d1316cb067e41439144df6c1bf",
+        "oracle_state_hash": "144570550084a71c19e1a124ae0ec351fc86c7d1316cb067e41439144df6c1bf",
+        "compared_leaves": 4,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/native_navigation_semantics.py"
+      },
+      "state_file": "frame-0017-state.npz",
+      "state_hash": "144570550084a71c19e1a124ae0ec351fc86c7d1316cb067e41439144df6c1bf",
+      "oracle_file": "frame-0017-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        500,
+        500,
+        3
+      ],
+      "oracle_sha256": "2cd0f406a5ae16a706cf9eba786fafa9e3064cc8eb307fa718657ef98e38021d",
+      "render_kwargs": {
+        "style": [
+          [
+            255.0,
+            0.0,
+            0.0,
+            0.10000000149011612,
+            1.0,
+            255.0,
+            255.0,
+            255.0,
+            0.0,
+            255.0,
+            0.0,
+            0.20000000298023224,
+            0.0,
+            0.0,
+            0.0,
+            5.0,
+            1.035264492034912,
+            3.455474853515625,
+            3.002354621887207,
+            3.4422965049743652,
+            1.5345234870910645,
+            2.9165356159210205,
+            2.142178535461426,
+            2.783087968826294,
+            1.2603342533111572,
+            3.453317880630493,
+            1.504300832748413,
+            2.397299289703369,
+            1.289385199546814,
+            0.8406872749328613,
+            1.2444018125534058,
+            1.0428158044815063,
+            0.6597925424575806,
+            1.3639332056045532,
+            1.1124801635742188,
+            1.0994874238967896,
+            0.9639119505882263,
+            0.6164624691009521,
+            0.7141286134719849,
+            0.6556037068367004
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          12.861091,
+          12.670142,
+          12.991491
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 12.840907999999999,
+          "median": 12.861091,
+          "p95": 12.978451,
+          "maximum": 12.991491,
+          "minimum": 12.670142,
+          "std": 0.13196416197084204
+        },
+        "first_call_ms": 14.337329,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          7.459149,
+          7.450579,
+          7.44033
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 7.4500193333333335,
+          "median": 7.450579,
+          "p95": 7.458292,
+          "maximum": 7.459149,
+          "minimum": 7.44033,
+          "std": 0.007693010261847245
+        },
+        "first_call_ms": 7.900928,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 1.8428399333589644e-05,
+        "mse_uint8": 1.1983066666666666,
+        "mae_rgb": 0.019986666666666666,
+        "mean_max_channel_abs": 0.029868,
+        "exact_fraction": 0.999084,
+        "within8_fraction": 0.999348,
+        "ssim": 0.9996328371079087,
+        "max_channel_abs": 126.0,
+        "candidate_sha256": "43a5d0a377568e429926a6edac466d62b5153e5e10261afd4a226f16b3335d97",
+        "oracle_sha256": "2cd0f406a5ae16a706cf9eba786fafa9e3064cc8eb307fa718657ef98e38021d",
+        "shape": [
+          500,
+          500,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 18,
+      "case": 3,
+      "step": 0,
+      "seed": 17,
+      "action_dtype": "float64",
+      "prefix_hash": "e72c4a53967d1c882ccee3ef33e2431f05a11b7e8d4cc62b50b544da108afc49",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "a827e460a8ffe12c6ed36ef6462910c3d564092f779083b452b4dab2822559c3",
+        "oracle_state_hash": "a827e460a8ffe12c6ed36ef6462910c3d564092f779083b452b4dab2822559c3",
+        "compared_leaves": 4,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/native_navigation_semantics.py"
+      },
+      "state_file": "frame-0018-state.npz",
+      "state_hash": "a827e460a8ffe12c6ed36ef6462910c3d564092f779083b452b4dab2822559c3",
+      "oracle_file": "frame-0018-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        500,
+        500,
+        3
+      ],
+      "oracle_sha256": "b6cab1a8e9e7e4a6817038dc7dcf0426d0914cd949753ea7803a1688ef8564dc",
+      "render_kwargs": {
+        "style": [
+          [
+            255.0,
+            0.0,
+            0.0,
+            0.10000000149011612,
+            1.0,
+            255.0,
+            255.0,
+            255.0,
+            0.0,
+            255.0,
+            0.0,
+            0.20000000298023224,
+            0.0,
+            0.0,
+            0.0,
+            5.0,
+            1.035264492034912,
+            3.455474853515625,
+            3.002354621887207,
+            3.4422965049743652,
+            1.5345234870910645,
+            2.9165356159210205,
+            2.142178535461426,
+            2.783087968826294,
+            1.2603342533111572,
+            3.453317880630493,
+            1.504300832748413,
+            2.397299289703369,
+            1.289385199546814,
+            0.8406872749328613,
+            1.2444018125534058,
+            1.0428158044815063,
+            0.6597925424575806,
+            1.3639332056045532,
+            1.1124801635742188,
+            1.0994874238967896,
+            0.9639119505882263,
+            0.6164624691009521,
+            0.7141286134719849,
+            0.6556037068367004
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          13.461951,
+          12.779802,
+          12.837822
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 13.026525,
+          "median": 12.837822,
+          "p95": 13.3995381,
+          "maximum": 13.461951,
+          "minimum": 12.779802,
+          "std": 0.30880245163858366
+        },
+        "first_call_ms": 12.744391,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          7.449309,
+          7.459479,
+          7.453879
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 7.454222333333334,
+          "median": 7.453879,
+          "p95": 7.458919,
+          "maximum": 7.459479,
+          "minimum": 7.449309,
+          "std": 0.004158976904106049
+        },
+        "first_call_ms": 7.908259,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 1.9093620402409325e-05,
+        "mse_uint8": 1.2415626666666666,
+        "mae_rgb": 0.019824,
+        "mean_max_channel_abs": 0.029624,
+        "exact_fraction": 0.9991,
+        "within8_fraction": 0.999372,
+        "ssim": 0.9996462050464789,
+        "max_channel_abs": 134.0,
+        "candidate_sha256": "4b1611f31ca8e44f4793feedbf3b4ad02cba5133eff36ba7152e3ef21f0de3d9",
+        "oracle_sha256": "b6cab1a8e9e7e4a6817038dc7dcf0426d0914cd949753ea7803a1688ef8564dc",
+        "shape": [
+          500,
+          500,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 19,
+      "case": 3,
+      "step": 1,
+      "seed": 17,
+      "action_dtype": "float64",
+      "prefix_hash": "4607c4dccc9b0483d9004fa3a9c63a16328a576a8a6184d9c44acec64487e138",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "4c1e660708df7d879fd1ac5e12a0af033ce534b762a217596abbb5b4c8c9c803",
+        "oracle_state_hash": "4c1e660708df7d879fd1ac5e12a0af033ce534b762a217596abbb5b4c8c9c803",
+        "compared_leaves": 4,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/native_navigation_semantics.py"
+      },
+      "state_file": "frame-0019-state.npz",
+      "state_hash": "4c1e660708df7d879fd1ac5e12a0af033ce534b762a217596abbb5b4c8c9c803",
+      "oracle_file": "frame-0019-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        500,
+        500,
+        3
+      ],
+      "oracle_sha256": "ed9614fe5c729ba0f79776e0a5dc1d1f1eccef40017fcd70fa4eb937a2485896",
+      "render_kwargs": {
+        "style": [
+          [
+            255.0,
+            0.0,
+            0.0,
+            0.10000000149011612,
+            1.0,
+            255.0,
+            255.0,
+            255.0,
+            0.0,
+            255.0,
+            0.0,
+            0.20000000298023224,
+            0.0,
+            0.0,
+            0.0,
+            5.0,
+            1.035264492034912,
+            3.455474853515625,
+            3.002354621887207,
+            3.4422965049743652,
+            1.5345234870910645,
+            2.9165356159210205,
+            2.142178535461426,
+            2.783087968826294,
+            1.2603342533111572,
+            3.453317880630493,
+            1.504300832748413,
+            2.397299289703369,
+            1.289385199546814,
+            0.8406872749328613,
+            1.2444018125534058,
+            1.0428158044815063,
+            0.6597925424575806,
+            1.3639332056045532,
+            1.1124801635742188,
+            1.0994874238967896,
+            0.9639119505882263,
+            0.6164624691009521,
+            0.7141286134719849,
+            0.6556037068367004
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          12.682271,
+          12.833292,
+          12.706591
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 12.740718000000001,
+          "median": 12.706591,
+          "p95": 12.8206219,
+          "maximum": 12.833292,
+          "minimum": 12.682271,
+          "std": 0.06620838167986501
+        },
+        "first_call_ms": 14.19218,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          7.411769,
+          7.4007,
+          7.521399
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 7.444622666666667,
+          "median": 7.411769,
+          "p95": 7.5104359999999994,
+          "maximum": 7.521399,
+          "minimum": 7.4007,
+          "std": 0.054476812867698385
+        },
+        "first_call_ms": 7.841339,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 1.9639830834294503e-05,
+        "mse_uint8": 1.27708,
+        "mae_rgb": 0.020696,
+        "mean_max_channel_abs": 0.030932,
+        "exact_fraction": 0.999088,
+        "within8_fraction": 0.999356,
+        "ssim": 0.9996077466005792,
+        "max_channel_abs": 124.0,
+        "candidate_sha256": "627f7d66038ae3885edb2722608708bdddf9735d39386965b8be8fb50a1889bb",
+        "oracle_sha256": "ed9614fe5c729ba0f79776e0a5dc1d1f1eccef40017fcd70fa4eb937a2485896",
+        "shape": [
+          500,
+          500,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 20,
+      "case": 3,
+      "step": 8,
+      "seed": 17,
+      "action_dtype": "float64",
+      "prefix_hash": "3dbaf07473a23d9c29ab084afb997466bb1ff8e5eb8cc0c7cceaa45fe112cdab",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "03be99370bd4fd0ac760bdf2ef36f372d3bd05d1c57f65eac9375b660c659bc2",
+        "oracle_state_hash": "03be99370bd4fd0ac760bdf2ef36f372d3bd05d1c57f65eac9375b660c659bc2",
+        "compared_leaves": 4,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/native_navigation_semantics.py"
+      },
+      "state_file": "frame-0020-state.npz",
+      "state_hash": "03be99370bd4fd0ac760bdf2ef36f372d3bd05d1c57f65eac9375b660c659bc2",
+      "oracle_file": "frame-0020-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        500,
+        500,
+        3
+      ],
+      "oracle_sha256": "30a045c3282a4e589dcb28be181db497f3834795f1607e104b28221efa3e7d4a",
+      "render_kwargs": {
+        "style": [
+          [
+            255.0,
+            0.0,
+            0.0,
+            0.10000000149011612,
+            1.0,
+            255.0,
+            255.0,
+            255.0,
+            0.0,
+            255.0,
+            0.0,
+            0.20000000298023224,
+            0.0,
+            0.0,
+            0.0,
+            5.0,
+            1.035264492034912,
+            3.455474853515625,
+            3.002354621887207,
+            3.4422965049743652,
+            1.5345234870910645,
+            2.9165356159210205,
+            2.142178535461426,
+            2.783087968826294,
+            1.2603342533111572,
+            3.453317880630493,
+            1.504300832748413,
+            2.397299289703369,
+            1.289385199546814,
+            0.8406872749328613,
+            1.2444018125534058,
+            1.0428158044815063,
+            0.6597925424575806,
+            1.3639332056045532,
+            1.1124801635742188,
+            1.0994874238967896,
+            0.9639119505882263,
+            0.6164624691009521,
+            0.7141286134719849,
+            0.6556037068367004
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          12.729002,
+          12.864611,
+          12.771882
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 12.788498333333331,
+          "median": 12.771882,
+          "p95": 12.855338099999999,
+          "maximum": 12.864611,
+          "minimum": 12.729002,
+          "std": 0.05659521252033821
+        },
+        "first_call_ms": 14.259009,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          7.499559,
+          7.495949,
+          7.497959
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 7.4978223333333345,
+          "median": 7.497959,
+          "p95": 7.4993989999999995,
+          "maximum": 7.499559,
+          "minimum": 7.495949,
+          "std": 0.0014769412837193645
+        },
+        "first_call_ms": 7.815109,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 2.1966812764321414e-05,
+        "mse_uint8": 1.428392,
+        "mae_rgb": 0.021554666666666666,
+        "mean_max_channel_abs": 0.03222,
+        "exact_fraction": 0.999108,
+        "within8_fraction": 0.999356,
+        "ssim": 0.9995747016788241,
+        "max_channel_abs": 131.0,
+        "candidate_sha256": "16b664144bb10619951303211447d0765f9ddc23421e1496bdfe5636f21b0e74",
+        "oracle_sha256": "30a045c3282a4e589dcb28be181db497f3834795f1607e104b28221efa3e7d4a",
+        "shape": [
+          500,
+          500,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 21,
+      "case": 3,
+      "step": 32,
+      "seed": 17,
+      "action_dtype": "float64",
+      "prefix_hash": "75ad3036dbc431b211b2aa126c5df66bf12aec5236a58e9a6d3fbecc2eee5f4d",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "632c42e70b34e7b181806e3ffd33f52aa4e11fcfe5132d4eece36eabff2c95a7",
+        "oracle_state_hash": "632c42e70b34e7b181806e3ffd33f52aa4e11fcfe5132d4eece36eabff2c95a7",
+        "compared_leaves": 4,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/native_navigation_semantics.py"
+      },
+      "state_file": "frame-0021-state.npz",
+      "state_hash": "632c42e70b34e7b181806e3ffd33f52aa4e11fcfe5132d4eece36eabff2c95a7",
+      "oracle_file": "frame-0021-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        500,
+        500,
+        3
+      ],
+      "oracle_sha256": "cf7a379a8b48d56f8c68389f4628740fb48e19ed826a1d8b7436f94d6933476b",
+      "render_kwargs": {
+        "style": [
+          [
+            255.0,
+            0.0,
+            0.0,
+            0.10000000149011612,
+            1.0,
+            255.0,
+            255.0,
+            255.0,
+            0.0,
+            255.0,
+            0.0,
+            0.20000000298023224,
+            0.0,
+            0.0,
+            0.0,
+            5.0,
+            1.035264492034912,
+            3.455474853515625,
+            3.002354621887207,
+            3.4422965049743652,
+            1.5345234870910645,
+            2.9165356159210205,
+            2.142178535461426,
+            2.783087968826294,
+            1.2603342533111572,
+            3.453317880630493,
+            1.504300832748413,
+            2.397299289703369,
+            1.289385199546814,
+            0.8406872749328613,
+            1.2444018125534058,
+            1.0428158044815063,
+            0.6597925424575806,
+            1.3639332056045532,
+            1.1124801635742188,
+            1.0994874238967896,
+            0.9639119505882263,
+            0.6164624691009521,
+            0.7141286134719849,
+            0.6556037068367004
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          12.786901,
+          12.691881,
+          12.851332
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 12.776704666666667,
+          "median": 12.786901,
+          "p95": 12.844888899999999,
+          "maximum": 12.851332,
+          "minimum": 12.691881,
+          "std": 0.06549366005109833
+        },
+        "first_call_ms": 13.97362,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          7.432129,
+          7.45136,
+          7.471609
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 7.451699333333334,
+          "median": 7.45136,
+          "p95": 7.4695841,
+          "maximum": 7.471609,
+          "minimum": 7.432129,
+          "std": 0.01611942845002756
+        },
+        "first_call_ms": 7.837599,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 2.06640112777137e-05,
+        "mse_uint8": 1.3436773333333334,
+        "mae_rgb": 0.021096,
+        "mean_max_channel_abs": 0.031532,
+        "exact_fraction": 0.999092,
+        "within8_fraction": 0.99936,
+        "ssim": 0.9995881088967296,
+        "max_channel_abs": 125.0,
+        "candidate_sha256": "d08f8e1cdd5f04ad2b0d7f65fdf430b67f7b5883ab46f6549e12cf870d4fa979",
+        "oracle_sha256": "cf7a379a8b48d56f8c68389f4628740fb48e19ed826a1d8b7436f94d6933476b",
+        "shape": [
+          500,
+          500,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 22,
+      "case": 3,
+      "step": 64,
+      "seed": 17,
+      "action_dtype": "float64",
+      "prefix_hash": "cfe6c11ad928d1523a9b4da559259413884210403024a252d115b343b8c7c58f",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "ec27edb4b941037a72b75b0d7ef36ad1cbc4df87896107eff44fd556f3015cfb",
+        "oracle_state_hash": "ec27edb4b941037a72b75b0d7ef36ad1cbc4df87896107eff44fd556f3015cfb",
+        "compared_leaves": 4,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/native_navigation_semantics.py"
+      },
+      "state_file": "frame-0022-state.npz",
+      "state_hash": "ec27edb4b941037a72b75b0d7ef36ad1cbc4df87896107eff44fd556f3015cfb",
+      "oracle_file": "frame-0022-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        500,
+        500,
+        3
+      ],
+      "oracle_sha256": "7b363fa81b8ff22a4aea16fa61ec6287ccc2acfeeca26f0d1754304eaa686a96",
+      "render_kwargs": {
+        "style": [
+          [
+            255.0,
+            0.0,
+            0.0,
+            0.10000000149011612,
+            1.0,
+            255.0,
+            255.0,
+            255.0,
+            0.0,
+            255.0,
+            0.0,
+            0.20000000298023224,
+            0.0,
+            0.0,
+            0.0,
+            5.0,
+            1.035264492034912,
+            3.455474853515625,
+            3.002354621887207,
+            3.4422965049743652,
+            1.5345234870910645,
+            2.9165356159210205,
+            2.142178535461426,
+            2.783087968826294,
+            1.2603342533111572,
+            3.453317880630493,
+            1.504300832748413,
+            2.397299289703369,
+            1.289385199546814,
+            0.8406872749328613,
+            1.2444018125534058,
+            1.0428158044815063,
+            0.6597925424575806,
+            1.3639332056045532,
+            1.1124801635742188,
+            1.0994874238967896,
+            0.9639119505882263,
+            0.6164624691009521,
+            0.7141286134719849,
+            0.6556037068367004
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          12.965922,
+          12.777981,
+          12.949391
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 12.897764666666667,
+          "median": 12.949391,
+          "p95": 12.9642689,
+          "maximum": 12.965922,
+          "minimum": 12.777981,
+          "std": 0.0849682826719608
+        },
+        "first_call_ms": 13.76287,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          7.635299,
+          7.605059,
+          7.593149
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 7.611169,
+          "median": 7.605059,
+          "p95": 7.632275,
+          "maximum": 7.635299,
+          "minimum": 7.593149,
+          "std": 0.017741753013724257
+        },
+        "first_call_ms": 8.200018,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 5.8579725746507774e-05,
+        "mse_uint8": 3.8091466666666665,
+        "mae_rgb": 0.027125333333333335,
+        "mean_max_channel_abs": 0.040576,
+        "exact_fraction": 0.999192,
+        "within8_fraction": 0.999428,
+        "ssim": 0.9995619373121043,
+        "max_channel_abs": 241.0,
+        "candidate_sha256": "2aa6b7337acc189434016cb08adaa0cabc15234e0c3cdeaf42ba46dabf126778",
+        "oracle_sha256": "7b363fa81b8ff22a4aea16fa61ec6287ccc2acfeeca26f0d1754304eaa686a96",
+        "shape": [
+          500,
+          500,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 23,
+      "case": 3,
+      "step": 128,
+      "seed": 17,
+      "action_dtype": "float64",
+      "prefix_hash": "a376fa748dc34ff0ccc7916d23cb2414189677de288b6dafcc922ed2be7c503d",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "d31fd6e71a6f5cd34705403343d64a0d5109a9894af303b92f11c47405c86502",
+        "oracle_state_hash": "d31fd6e71a6f5cd34705403343d64a0d5109a9894af303b92f11c47405c86502",
+        "compared_leaves": 4,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/native_navigation_semantics.py"
+      },
+      "state_file": "frame-0023-state.npz",
+      "state_hash": "d31fd6e71a6f5cd34705403343d64a0d5109a9894af303b92f11c47405c86502",
+      "oracle_file": "frame-0023-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        500,
+        500,
+        3
+      ],
+      "oracle_sha256": "ea9ec80f743dc9ee86b97238bd4f557f1d97d3897dee5584be8bb38d565b6ed9",
+      "render_kwargs": {
+        "style": [
+          [
+            255.0,
+            0.0,
+            0.0,
+            0.10000000149011612,
+            1.0,
+            255.0,
+            255.0,
+            255.0,
+            0.0,
+            255.0,
+            0.0,
+            0.20000000298023224,
+            0.0,
+            0.0,
+            0.0,
+            5.0,
+            1.035264492034912,
+            3.455474853515625,
+            3.002354621887207,
+            3.4422965049743652,
+            1.5345234870910645,
+            2.9165356159210205,
+            2.142178535461426,
+            2.783087968826294,
+            1.2603342533111572,
+            3.453317880630493,
+            1.504300832748413,
+            2.397299289703369,
+            1.289385199546814,
+            0.8406872749328613,
+            1.2444018125534058,
+            1.0428158044815063,
+            0.6597925424575806,
+            1.3639332056045532,
+            1.1124801635742188,
+            1.0994874238967896,
+            0.9639119505882263,
+            0.6164624691009521,
+            0.7141286134719849,
+            0.6556037068367004
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          12.630522,
+          12.942581,
+          12.798681
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 12.790594666666665,
+          "median": 12.798681,
+          "p95": 12.928191,
+          "maximum": 12.942581,
+          "minimum": 12.630522,
+          "std": 0.12752580512804343
+        },
+        "first_call_ms": 14.180799,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          7.571559,
+          7.44283,
+          7.405619
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 7.473336,
+          "median": 7.44283,
+          "p95": 7.5586861,
+          "maximum": 7.571559,
+          "minimum": 7.405619,
+          "std": 0.07109609894126867
+        },
+        "first_call_ms": 7.872348,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 1.844562347814943e-05,
+        "mse_uint8": 1.1994266666666666,
+        "mae_rgb": 0.019992,
+        "mean_max_channel_abs": 0.029876,
+        "exact_fraction": 0.999084,
+        "within8_fraction": 0.999348,
+        "ssim": 0.9996326761110683,
+        "max_channel_abs": 126.0,
+        "candidate_sha256": "43a5d0a377568e429926a6edac466d62b5153e5e10261afd4a226f16b3335d97",
+        "oracle_sha256": "ea9ec80f743dc9ee86b97238bd4f557f1d97d3897dee5584be8bb38d565b6ed9",
+        "shape": [
+          500,
+          500,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 24,
+      "case": 4,
+      "step": 0,
+      "seed": 42,
+      "action_dtype": "float32",
+      "prefix_hash": "3fb8e2a5df713e79221069065d9c5846407c74f6611e9f9b5abbf6aa901f1577",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "26276685eb9fd022db0f7576f2e8d0b17d1854d5721a6b08800d8e9998368ee3",
+        "oracle_state_hash": "26276685eb9fd022db0f7576f2e8d0b17d1854d5721a6b08800d8e9998368ee3",
+        "compared_leaves": 4,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/native_navigation_semantics.py"
+      },
+      "state_file": "frame-0024-state.npz",
+      "state_hash": "26276685eb9fd022db0f7576f2e8d0b17d1854d5721a6b08800d8e9998368ee3",
+      "oracle_file": "frame-0024-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        500,
+        500,
+        3
+      ],
+      "oracle_sha256": "9fa1ef164f443825ed9fa835fc5b6362032e3b37bbaec40aeeead192c359f897",
+      "render_kwargs": {
+        "style": [
+          [
+            255.0,
+            0.0,
+            0.0,
+            0.10000000149011612,
+            1.0,
+            255.0,
+            255.0,
+            255.0,
+            0.0,
+            255.0,
+            0.0,
+            0.20000000298023224,
+            0.0,
+            0.0,
+            0.0,
+            5.0,
+            1.035264492034912,
+            3.455474853515625,
+            3.002354621887207,
+            3.4422965049743652,
+            1.5345234870910645,
+            2.9165356159210205,
+            2.142178535461426,
+            2.783087968826294,
+            1.2603342533111572,
+            3.453317880630493,
+            1.504300832748413,
+            2.397299289703369,
+            1.289385199546814,
+            0.8406872749328613,
+            1.2444018125534058,
+            1.0428158044815063,
+            0.6597925424575806,
+            1.3639332056045532,
+            1.1124801635742188,
+            1.0994874238967896,
+            0.9639119505882263,
+            0.6164624691009521,
+            0.7141286134719849,
+            0.6556037068367004
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          12.808262,
+          12.614071,
+          12.858912
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 12.760415,
+          "median": 12.808262,
+          "p95": 12.853847,
+          "maximum": 12.858912,
+          "minimum": 12.614071,
+          "std": 0.10552655393154242
+        },
+        "first_call_ms": 12.722672,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          7.453979,
+          7.453809,
+          7.500609
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 7.469465666666667,
+          "median": 7.453979,
+          "p95": 7.495946,
+          "maximum": 7.500609,
+          "minimum": 7.453809,
+          "std": 0.022021771550495634
+        },
+        "first_call_ms": 7.998878,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 1.879662693835704e-05,
+        "mse_uint8": 1.2222506666666666,
+        "mae_rgb": 0.020288,
+        "mean_max_channel_abs": 0.03032,
+        "exact_fraction": 0.9991,
+        "within8_fraction": 0.999336,
+        "ssim": 0.9996221235602887,
+        "max_channel_abs": 130.0,
+        "candidate_sha256": "519682a62e7af10158cf9cff0216569d7d5bd0b26e204ae8b514b834a98d036a",
+        "oracle_sha256": "9fa1ef164f443825ed9fa835fc5b6362032e3b37bbaec40aeeead192c359f897",
+        "shape": [
+          500,
+          500,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 25,
+      "case": 4,
+      "step": 1,
+      "seed": 42,
+      "action_dtype": "float32",
+      "prefix_hash": "f1cc003dd2e6e1b13926785878d0a0b2bd683b2af2aae5d6ee5a6cbda46e076c",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "129fb4dd7b17209e332a8b492dc4ccc3d4d906cbd2c36605c584b2070d22981b",
+        "oracle_state_hash": "129fb4dd7b17209e332a8b492dc4ccc3d4d906cbd2c36605c584b2070d22981b",
+        "compared_leaves": 4,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/native_navigation_semantics.py"
+      },
+      "state_file": "frame-0025-state.npz",
+      "state_hash": "129fb4dd7b17209e332a8b492dc4ccc3d4d906cbd2c36605c584b2070d22981b",
+      "oracle_file": "frame-0025-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        500,
+        500,
+        3
+      ],
+      "oracle_sha256": "21d6f54e6d1d8a8a8aaf0596848213a77f912463995cd060d14a7a74e5e4cfae",
+      "render_kwargs": {
+        "style": [
+          [
+            255.0,
+            0.0,
+            0.0,
+            0.10000000149011612,
+            1.0,
+            255.0,
+            255.0,
+            255.0,
+            0.0,
+            255.0,
+            0.0,
+            0.20000000298023224,
+            0.0,
+            0.0,
+            0.0,
+            5.0,
+            1.035264492034912,
+            3.455474853515625,
+            3.002354621887207,
+            3.4422965049743652,
+            1.5345234870910645,
+            2.9165356159210205,
+            2.142178535461426,
+            2.783087968826294,
+            1.2603342533111572,
+            3.453317880630493,
+            1.504300832748413,
+            2.397299289703369,
+            1.289385199546814,
+            0.8406872749328613,
+            1.2444018125534058,
+            1.0428158044815063,
+            0.6597925424575806,
+            1.3639332056045532,
+            1.1124801635742188,
+            1.0994874238967896,
+            0.9639119505882263,
+            0.6164624691009521,
+            0.7141286134719849,
+            0.6556037068367004
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          12.748092,
+          13.060461,
+          12.712301
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 12.840284666666667,
+          "median": 12.748092,
+          "p95": 13.0292241,
+          "maximum": 13.060461,
+          "minimum": 12.712301,
+          "std": 0.15637233821946336
+        },
+        "first_call_ms": 14.118839,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          7.481519,
+          7.504359,
+          7.533449
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 7.506442333333333,
+          "median": 7.504359,
+          "p95": 7.53054,
+          "maximum": 7.533449,
+          "minimum": 7.481519,
+          "std": 0.021251453806478672
+        },
+        "first_call_ms": 7.901519,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 1.8489052928360888e-05,
+        "mse_uint8": 1.2022506666666666,
+        "mae_rgb": 0.020106666666666665,
+        "mean_max_channel_abs": 0.030048,
+        "exact_fraction": 0.9991,
+        "within8_fraction": 0.999348,
+        "ssim": 0.9996312169172759,
+        "max_channel_abs": 126.0,
+        "candidate_sha256": "5115005eb25e0ebd523a44465c0f15411268b29d34913ea4196e7879cef5297a",
+        "oracle_sha256": "21d6f54e6d1d8a8a8aaf0596848213a77f912463995cd060d14a7a74e5e4cfae",
+        "shape": [
+          500,
+          500,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 26,
+      "case": 4,
+      "step": 8,
+      "seed": 42,
+      "action_dtype": "float32",
+      "prefix_hash": "aa7071f6e29ea50e84087b4b273cd5ef2f5e672bdace57a570ba59c4240473ce",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "44cf364d6f9f5a5a10012671cac807a4048967ffb307812e3727cacb10efc9f2",
+        "oracle_state_hash": "44cf364d6f9f5a5a10012671cac807a4048967ffb307812e3727cacb10efc9f2",
+        "compared_leaves": 4,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/native_navigation_semantics.py"
+      },
+      "state_file": "frame-0026-state.npz",
+      "state_hash": "44cf364d6f9f5a5a10012671cac807a4048967ffb307812e3727cacb10efc9f2",
+      "oracle_file": "frame-0026-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        500,
+        500,
+        3
+      ],
+      "oracle_sha256": "cde275cb7390b54c2979c7e28cd3b1413eb2639e49f59dbf06bc83c02e917875",
+      "render_kwargs": {
+        "style": [
+          [
+            255.0,
+            0.0,
+            0.0,
+            0.10000000149011612,
+            1.0,
+            255.0,
+            255.0,
+            255.0,
+            0.0,
+            255.0,
+            0.0,
+            0.20000000298023224,
+            0.0,
+            0.0,
+            0.0,
+            5.0,
+            1.035264492034912,
+            3.455474853515625,
+            3.002354621887207,
+            3.4422965049743652,
+            1.5345234870910645,
+            2.9165356159210205,
+            2.142178535461426,
+            2.783087968826294,
+            1.2603342533111572,
+            3.453317880630493,
+            1.504300832748413,
+            2.397299289703369,
+            1.289385199546814,
+            0.8406872749328613,
+            1.2444018125534058,
+            1.0428158044815063,
+            0.6597925424575806,
+            1.3639332056045532,
+            1.1124801635742188,
+            1.0994874238967896,
+            0.9639119505882263,
+            0.6164624691009521,
+            0.7141286134719849,
+            0.6556037068367004
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          12.734241,
+          13.015082,
+          12.887371
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 12.878898,
+          "median": 12.887371,
+          "p95": 13.0023109,
+          "maximum": 13.015082,
+          "minimum": 12.734241,
+          "std": 0.114809292936881
+        },
+        "first_call_ms": 14.076089,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          7.499209,
+          7.499329,
+          7.48227
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 7.493602666666667,
+          "median": 7.499209,
+          "p95": 7.4993170000000005,
+          "maximum": 7.499329,
+          "minimum": 7.48227,
+          "std": 0.008013555196595985
+        },
+        "first_call_ms": 8.072149,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 1.9462750224272714e-05,
+        "mse_uint8": 1.2655653333333334,
+        "mae_rgb": 0.020525333333333333,
+        "mean_max_channel_abs": 0.030676,
+        "exact_fraction": 0.999096,
+        "within8_fraction": 0.999352,
+        "ssim": 0.99961578405583,
+        "max_channel_abs": 128.0,
+        "candidate_sha256": "b24ac53a10b3eebe9a9d1211f38fae64d367809ab66ca7a8875ce43b264648ad",
+        "oracle_sha256": "cde275cb7390b54c2979c7e28cd3b1413eb2639e49f59dbf06bc83c02e917875",
+        "shape": [
+          500,
+          500,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 27,
+      "case": 4,
+      "step": 32,
+      "seed": 42,
+      "action_dtype": "float32",
+      "prefix_hash": "6ef070d354ee30b467d766dfd04d207697ed51ad1281ebcf4d20e0269011af8e",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "0a3a3172930e6e30baf6ed9310bde41a736950c4fb531cbaab1cc9364d02f0f1",
+        "oracle_state_hash": "0a3a3172930e6e30baf6ed9310bde41a736950c4fb531cbaab1cc9364d02f0f1",
+        "compared_leaves": 4,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/native_navigation_semantics.py"
+      },
+      "state_file": "frame-0027-state.npz",
+      "state_hash": "0a3a3172930e6e30baf6ed9310bde41a736950c4fb531cbaab1cc9364d02f0f1",
+      "oracle_file": "frame-0027-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        500,
+        500,
+        3
+      ],
+      "oracle_sha256": "1da8245557a92f4050d43175416e0b30ea71d97162a6cdeca519c3f1dcd7d93f",
+      "render_kwargs": {
+        "style": [
+          [
+            255.0,
+            0.0,
+            0.0,
+            0.10000000149011612,
+            1.0,
+            255.0,
+            255.0,
+            255.0,
+            0.0,
+            255.0,
+            0.0,
+            0.20000000298023224,
+            0.0,
+            0.0,
+            0.0,
+            5.0,
+            1.035264492034912,
+            3.455474853515625,
+            3.002354621887207,
+            3.4422965049743652,
+            1.5345234870910645,
+            2.9165356159210205,
+            2.142178535461426,
+            2.783087968826294,
+            1.2603342533111572,
+            3.453317880630493,
+            1.504300832748413,
+            2.397299289703369,
+            1.289385199546814,
+            0.8406872749328613,
+            1.2444018125534058,
+            1.0428158044815063,
+            0.6597925424575806,
+            1.3639332056045532,
+            1.1124801635742188,
+            1.0994874238967896,
+            0.9639119505882263,
+            0.6164624691009521,
+            0.7141286134719849,
+            0.6556037068367004
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          12.956534,
+          12.690893,
+          13.087374
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 12.911600333333334,
+          "median": 12.956534,
+          "p95": 13.07429,
+          "maximum": 13.087374,
+          "minimum": 12.690893,
+          "std": 0.16495165279627283
+        },
+        "first_call_ms": 13.589633,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          7.579876,
+          7.772336,
+          7.548486
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 7.633565999999999,
+          "median": 7.579876,
+          "p95": 7.75309,
+          "maximum": 7.772336,
+          "minimum": 7.548486,
+          "std": 0.09895846839289053
+        },
+        "first_call_ms": 7.874606,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 2.280489042675894e-05,
+        "mse_uint8": 1.482888,
+        "mae_rgb": 0.021826666666666668,
+        "mean_max_channel_abs": 0.032628,
+        "exact_fraction": 0.999108,
+        "within8_fraction": 0.999352,
+        "ssim": 0.9995667644011809,
+        "max_channel_abs": 131.0,
+        "candidate_sha256": "e393410d977b51629331c2ae4b67e67c88d5c5ee285506749dd19bc6c4507e73",
+        "oracle_sha256": "1da8245557a92f4050d43175416e0b30ea71d97162a6cdeca519c3f1dcd7d93f",
+        "shape": [
+          500,
+          500,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 28,
+      "case": 4,
+      "step": 64,
+      "seed": 42,
+      "action_dtype": "float32",
+      "prefix_hash": "8e6784765a78bdda3f9cbd2523faf1eeac1f8efbe7ffffa89bf15a7b64d26b44",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "46dcdedcbb1a36237ec47f8cb36198b8bd26e178c918db017289a76ce8a82bd3",
+        "oracle_state_hash": "46dcdedcbb1a36237ec47f8cb36198b8bd26e178c918db017289a76ce8a82bd3",
+        "compared_leaves": 4,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/native_navigation_semantics.py"
+      },
+      "state_file": "frame-0028-state.npz",
+      "state_hash": "46dcdedcbb1a36237ec47f8cb36198b8bd26e178c918db017289a76ce8a82bd3",
+      "oracle_file": "frame-0028-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        500,
+        500,
+        3
+      ],
+      "oracle_sha256": "e9246f8688fbcb9edbad3872b24bebe7385a26b6f8d2a4df34b438811d888e7e",
+      "render_kwargs": {
+        "style": [
+          [
+            255.0,
+            0.0,
+            0.0,
+            0.10000000149011612,
+            1.0,
+            255.0,
+            255.0,
+            255.0,
+            0.0,
+            255.0,
+            0.0,
+            0.20000000298023224,
+            0.0,
+            0.0,
+            0.0,
+            5.0,
+            1.035264492034912,
+            3.455474853515625,
+            3.002354621887207,
+            3.4422965049743652,
+            1.5345234870910645,
+            2.9165356159210205,
+            2.142178535461426,
+            2.783087968826294,
+            1.2603342533111572,
+            3.453317880630493,
+            1.504300832748413,
+            2.397299289703369,
+            1.289385199546814,
+            0.8406872749328613,
+            1.2444018125534058,
+            1.0428158044815063,
+            0.6597925424575806,
+            1.3639332056045532,
+            1.1124801635742188,
+            1.0994874238967896,
+            0.9639119505882263,
+            0.6164624691009521,
+            0.7141286134719849,
+            0.6556037068367004
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          13.251723,
+          12.882764,
+          12.996553
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 13.04368,
+          "median": 12.996553,
+          "p95": 13.226206,
+          "maximum": 13.251723,
+          "minimum": 12.882764,
+          "std": 0.15426903235797743
+        },
+        "first_call_ms": 13.623723,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          7.475316,
+          7.495057,
+          7.450216
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 7.473529666666667,
+          "median": 7.475316,
+          "p95": 7.4930829,
+          "maximum": 7.495057,
+          "minimum": 7.450216,
+          "std": 0.018349787652419517
+        },
+        "first_call_ms": 7.993176,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 1.87279354094579e-05,
+        "mse_uint8": 1.217784,
+        "mae_rgb": 0.020168,
+        "mean_max_channel_abs": 0.03014,
+        "exact_fraction": 0.9991,
+        "within8_fraction": 0.999344,
+        "ssim": 0.9996288728101044,
+        "max_channel_abs": 134.0,
+        "candidate_sha256": "5e0654d741c976dd9cc10524ac2899d74f9f98649b1ce0cfb2c83d5b614196a6",
+        "oracle_sha256": "e9246f8688fbcb9edbad3872b24bebe7385a26b6f8d2a4df34b438811d888e7e",
+        "shape": [
+          500,
+          500,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 29,
+      "case": 4,
+      "step": 128,
+      "seed": 42,
+      "action_dtype": "float32",
+      "prefix_hash": "af92a415f2092f9227ae36484116aa37c1d74e2e56c33df81d2bd57b141ae4ec",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "0afc14161dd42e8f3faf198bd6784a1b9590982b8ef12ce08ef96fcaf21684a2",
+        "oracle_state_hash": "0afc14161dd42e8f3faf198bd6784a1b9590982b8ef12ce08ef96fcaf21684a2",
+        "compared_leaves": 4,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/native_navigation_semantics.py"
+      },
+      "state_file": "frame-0029-state.npz",
+      "state_hash": "0afc14161dd42e8f3faf198bd6784a1b9590982b8ef12ce08ef96fcaf21684a2",
+      "oracle_file": "frame-0029-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        500,
+        500,
+        3
+      ],
+      "oracle_sha256": "3df1acdb1c3eaa9e2dd26a25e41d6c283d59e5bdfad782a66956fadf27cd695a",
+      "render_kwargs": {
+        "style": [
+          [
+            255.0,
+            0.0,
+            0.0,
+            0.10000000149011612,
+            1.0,
+            255.0,
+            255.0,
+            255.0,
+            0.0,
+            255.0,
+            0.0,
+            0.20000000298023224,
+            0.0,
+            0.0,
+            0.0,
+            5.0,
+            1.035264492034912,
+            3.455474853515625,
+            3.002354621887207,
+            3.4422965049743652,
+            1.5345234870910645,
+            2.9165356159210205,
+            2.142178535461426,
+            2.783087968826294,
+            1.2603342533111572,
+            3.453317880630493,
+            1.504300832748413,
+            2.397299289703369,
+            1.289385199546814,
+            0.8406872749328613,
+            1.2444018125534058,
+            1.0428158044815063,
+            0.6597925424575806,
+            1.3639332056045532,
+            1.1124801635742188,
+            1.0994874238967896,
+            0.9639119505882263,
+            0.6164624691009521,
+            0.7141286134719849,
+            0.6556037068367004
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          13.226553,
+          13.027524,
+          12.762443
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 13.005506666666667,
+          "median": 13.027524,
+          "p95": 13.2066501,
+          "maximum": 13.226553,
+          "minimum": 12.762443,
+          "std": 0.19011066119558417
+        },
+        "first_call_ms": 13.835813,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          7.490216,
+          7.501646,
+          7.476677
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 7.489513,
+          "median": 7.490216,
+          "p95": 7.500503,
+          "maximum": 7.501646,
+          "minimum": 7.476677,
+          "std": 0.010205664995481874
+        },
+        "first_call_ms": 7.961546,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 2.1025759323337174e-05,
+        "mse_uint8": 1.3672,
+        "mae_rgb": 0.021226666666666668,
+        "mean_max_channel_abs": 0.031728,
+        "exact_fraction": 0.9991,
+        "within8_fraction": 0.99934,
+        "ssim": 0.9995829532449235,
+        "max_channel_abs": 132.0,
+        "candidate_sha256": "7dc556165cbe920601e76d30d9dca5f3d5a5cc601b966b36f1fef6beb1e28a6b",
+        "oracle_sha256": "3df1acdb1c3eaa9e2dd26a25e41d6c283d59e5bdfad782a66956fadf27cd695a",
+        "shape": [
+          500,
+          500,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 30,
+      "case": 5,
+      "step": 0,
+      "seed": 42,
+      "action_dtype": "float64",
+      "prefix_hash": "e72c4a53967d1c882ccee3ef33e2431f05a11b7e8d4cc62b50b544da108afc49",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "26276685eb9fd022db0f7576f2e8d0b17d1854d5721a6b08800d8e9998368ee3",
+        "oracle_state_hash": "26276685eb9fd022db0f7576f2e8d0b17d1854d5721a6b08800d8e9998368ee3",
+        "compared_leaves": 4,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/native_navigation_semantics.py"
+      },
+      "state_file": "frame-0030-state.npz",
+      "state_hash": "26276685eb9fd022db0f7576f2e8d0b17d1854d5721a6b08800d8e9998368ee3",
+      "oracle_file": "frame-0030-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        500,
+        500,
+        3
+      ],
+      "oracle_sha256": "9fa1ef164f443825ed9fa835fc5b6362032e3b37bbaec40aeeead192c359f897",
+      "render_kwargs": {
+        "style": [
+          [
+            255.0,
+            0.0,
+            0.0,
+            0.10000000149011612,
+            1.0,
+            255.0,
+            255.0,
+            255.0,
+            0.0,
+            255.0,
+            0.0,
+            0.20000000298023224,
+            0.0,
+            0.0,
+            0.0,
+            5.0,
+            1.035264492034912,
+            3.455474853515625,
+            3.002354621887207,
+            3.4422965049743652,
+            1.5345234870910645,
+            2.9165356159210205,
+            2.142178535461426,
+            2.783087968826294,
+            1.2603342533111572,
+            3.453317880630493,
+            1.504300832748413,
+            2.397299289703369,
+            1.289385199546814,
+            0.8406872749328613,
+            1.2444018125534058,
+            1.0428158044815063,
+            0.6597925424575806,
+            1.3639332056045532,
+            1.1124801635742188,
+            1.0994874238967896,
+            0.9639119505882263,
+            0.6164624691009521,
+            0.7141286134719849,
+            0.6556037068367004
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          12.857884,
+          12.690283,
+          12.884743
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 12.81097,
+          "median": 12.857884,
+          "p95": 12.8820571,
+          "maximum": 12.884743,
+          "minimum": 12.690283,
+          "std": 0.08604016677110729
+        },
+        "first_call_ms": 12.787583,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          7.490946,
+          7.723926,
+          7.444206
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 7.553026,
+          "median": 7.490946,
+          "p95": 7.700628,
+          "maximum": 7.723926,
+          "minimum": 7.444206,
+          "std": 0.12234177373244157
+        },
+        "first_call_ms": 7.981486,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 1.879662693835704e-05,
+        "mse_uint8": 1.2222506666666666,
+        "mae_rgb": 0.020288,
+        "mean_max_channel_abs": 0.03032,
+        "exact_fraction": 0.9991,
+        "within8_fraction": 0.999336,
+        "ssim": 0.9996221235602887,
+        "max_channel_abs": 130.0,
+        "candidate_sha256": "519682a62e7af10158cf9cff0216569d7d5bd0b26e204ae8b514b834a98d036a",
+        "oracle_sha256": "9fa1ef164f443825ed9fa835fc5b6362032e3b37bbaec40aeeead192c359f897",
+        "shape": [
+          500,
+          500,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 31,
+      "case": 5,
+      "step": 1,
+      "seed": 42,
+      "action_dtype": "float64",
+      "prefix_hash": "e91ebbad3cc9cb02f75d56361c14ba6914df442bbfd9d3f9984f60a3e761764a",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "9b54c625e94e6dd15fc6a70bbc208ef39e0733da7af3b6150c8a212e3e672c73",
+        "oracle_state_hash": "9b54c625e94e6dd15fc6a70bbc208ef39e0733da7af3b6150c8a212e3e672c73",
+        "compared_leaves": 4,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/native_navigation_semantics.py"
+      },
+      "state_file": "frame-0031-state.npz",
+      "state_hash": "9b54c625e94e6dd15fc6a70bbc208ef39e0733da7af3b6150c8a212e3e672c73",
+      "oracle_file": "frame-0031-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        500,
+        500,
+        3
+      ],
+      "oracle_sha256": "21d6f54e6d1d8a8a8aaf0596848213a77f912463995cd060d14a7a74e5e4cfae",
+      "render_kwargs": {
+        "style": [
+          [
+            255.0,
+            0.0,
+            0.0,
+            0.10000000149011612,
+            1.0,
+            255.0,
+            255.0,
+            255.0,
+            0.0,
+            255.0,
+            0.0,
+            0.20000000298023224,
+            0.0,
+            0.0,
+            0.0,
+            5.0,
+            1.035264492034912,
+            3.455474853515625,
+            3.002354621887207,
+            3.4422965049743652,
+            1.5345234870910645,
+            2.9165356159210205,
+            2.142178535461426,
+            2.783087968826294,
+            1.2603342533111572,
+            3.453317880630493,
+            1.504300832748413,
+            2.397299289703369,
+            1.289385199546814,
+            0.8406872749328613,
+            1.2444018125534058,
+            1.0428158044815063,
+            0.6597925424575806,
+            1.3639332056045532,
+            1.1124801635742188,
+            1.0994874238967896,
+            0.9639119505882263,
+            0.6164624691009521,
+            0.7141286134719849,
+            0.6556037068367004
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          12.664713,
+          12.878613,
+          12.709744
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 12.751023333333334,
+          "median": 12.709744,
+          "p95": 12.8617261,
+          "maximum": 12.878613,
+          "minimum": 12.664713,
+          "std": 0.09207348521817847
+        },
+        "first_call_ms": 14.136293,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          7.686316,
+          7.412567,
+          7.485237
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 7.52804,
+          "median": 7.485237,
+          "p95": 7.6662080999999995,
+          "maximum": 7.686316,
+          "minimum": 7.412567,
+          "std": 0.11578342240867918
+        },
+        "first_call_ms": 7.882296,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 1.8489052928360888e-05,
+        "mse_uint8": 1.2022506666666666,
+        "mae_rgb": 0.020106666666666665,
+        "mean_max_channel_abs": 0.030048,
+        "exact_fraction": 0.9991,
+        "within8_fraction": 0.999348,
+        "ssim": 0.9996312169172759,
+        "max_channel_abs": 126.0,
+        "candidate_sha256": "5115005eb25e0ebd523a44465c0f15411268b29d34913ea4196e7879cef5297a",
+        "oracle_sha256": "21d6f54e6d1d8a8a8aaf0596848213a77f912463995cd060d14a7a74e5e4cfae",
+        "shape": [
+          500,
+          500,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 32,
+      "case": 5,
+      "step": 8,
+      "seed": 42,
+      "action_dtype": "float64",
+      "prefix_hash": "0bf5b9c6643e5462b988ee9abb670a350b206cb03308b62d9d7465e272fb7605",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "66c670d3b5f2ad67f9f18edb7e17c24c82dd58db8b02db6638d9c0901838e7d8",
+        "oracle_state_hash": "66c670d3b5f2ad67f9f18edb7e17c24c82dd58db8b02db6638d9c0901838e7d8",
+        "compared_leaves": 4,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/native_navigation_semantics.py"
+      },
+      "state_file": "frame-0032-state.npz",
+      "state_hash": "66c670d3b5f2ad67f9f18edb7e17c24c82dd58db8b02db6638d9c0901838e7d8",
+      "oracle_file": "frame-0032-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        500,
+        500,
+        3
+      ],
+      "oracle_sha256": "cde275cb7390b54c2979c7e28cd3b1413eb2639e49f59dbf06bc83c02e917875",
+      "render_kwargs": {
+        "style": [
+          [
+            255.0,
+            0.0,
+            0.0,
+            0.10000000149011612,
+            1.0,
+            255.0,
+            255.0,
+            255.0,
+            0.0,
+            255.0,
+            0.0,
+            0.20000000298023224,
+            0.0,
+            0.0,
+            0.0,
+            5.0,
+            1.035264492034912,
+            3.455474853515625,
+            3.002354621887207,
+            3.4422965049743652,
+            1.5345234870910645,
+            2.9165356159210205,
+            2.142178535461426,
+            2.783087968826294,
+            1.2603342533111572,
+            3.453317880630493,
+            1.504300832748413,
+            2.397299289703369,
+            1.289385199546814,
+            0.8406872749328613,
+            1.2444018125534058,
+            1.0428158044815063,
+            0.6597925424575806,
+            1.3639332056045532,
+            1.1124801635742188,
+            1.0994874238967896,
+            0.9639119505882263,
+            0.6164624691009521,
+            0.7141286134719849,
+            0.6556037068367004
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          12.650833,
+          12.876884,
+          12.639564
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 12.722427000000001,
+          "median": 12.650833,
+          "p95": 12.8542789,
+          "maximum": 12.876884,
+          "minimum": 12.639564,
+          "std": 0.10931444316588128
+        },
+        "first_call_ms": 14.987763,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          7.451276,
+          7.474296,
+          7.521556
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 7.4823759999999995,
+          "median": 7.474296,
+          "p95": 7.516830000000001,
+          "maximum": 7.521556,
+          "minimum": 7.451276,
+          "std": 0.0292550212214361
+        },
+        "first_call_ms": 8.086966,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 1.9462750224272714e-05,
+        "mse_uint8": 1.2655653333333334,
+        "mae_rgb": 0.020525333333333333,
+        "mean_max_channel_abs": 0.030676,
+        "exact_fraction": 0.999096,
+        "within8_fraction": 0.999352,
+        "ssim": 0.99961578405583,
+        "max_channel_abs": 128.0,
+        "candidate_sha256": "b24ac53a10b3eebe9a9d1211f38fae64d367809ab66ca7a8875ce43b264648ad",
+        "oracle_sha256": "cde275cb7390b54c2979c7e28cd3b1413eb2639e49f59dbf06bc83c02e917875",
+        "shape": [
+          500,
+          500,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 33,
+      "case": 5,
+      "step": 32,
+      "seed": 42,
+      "action_dtype": "float64",
+      "prefix_hash": "78b52f10e33a0355084bc17ce1702def50ec98b728241f9a4f43c909d1a09eb8",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "e18f9e4943ff4dc14612065d297d2a2c416bf646a26b8a02698ee5f989c1b970",
+        "oracle_state_hash": "e18f9e4943ff4dc14612065d297d2a2c416bf646a26b8a02698ee5f989c1b970",
+        "compared_leaves": 4,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/native_navigation_semantics.py"
+      },
+      "state_file": "frame-0033-state.npz",
+      "state_hash": "e18f9e4943ff4dc14612065d297d2a2c416bf646a26b8a02698ee5f989c1b970",
+      "oracle_file": "frame-0033-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        500,
+        500,
+        3
+      ],
+      "oracle_sha256": "1da8245557a92f4050d43175416e0b30ea71d97162a6cdeca519c3f1dcd7d93f",
+      "render_kwargs": {
+        "style": [
+          [
+            255.0,
+            0.0,
+            0.0,
+            0.10000000149011612,
+            1.0,
+            255.0,
+            255.0,
+            255.0,
+            0.0,
+            255.0,
+            0.0,
+            0.20000000298023224,
+            0.0,
+            0.0,
+            0.0,
+            5.0,
+            1.035264492034912,
+            3.455474853515625,
+            3.002354621887207,
+            3.4422965049743652,
+            1.5345234870910645,
+            2.9165356159210205,
+            2.142178535461426,
+            2.783087968826294,
+            1.2603342533111572,
+            3.453317880630493,
+            1.504300832748413,
+            2.397299289703369,
+            1.289385199546814,
+            0.8406872749328613,
+            1.2444018125534058,
+            1.0428158044815063,
+            0.6597925424575806,
+            1.3639332056045532,
+            1.1124801635742188,
+            1.0994874238967896,
+            0.9639119505882263,
+            0.6164624691009521,
+            0.7141286134719849,
+            0.6556037068367004
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          13.102304,
+          12.678164,
+          219.923669
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 81.901379,
+          "median": 13.102304,
+          "p95": 199.24153249999998,
+          "maximum": 219.923669,
+          "minimum": 12.678164,
+          "std": 97.59665081793868
+        },
+        "first_call_ms": 14.418102,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          7.436766,
+          7.462656,
+          7.431337
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 7.443586333333333,
+          "median": 7.436766,
+          "p95": 7.460067,
+          "maximum": 7.462656,
+          "minimum": 7.431337,
+          "std": 0.013665227168091732
+        },
+        "first_call_ms": 8.271856,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 2.280489042675894e-05,
+        "mse_uint8": 1.482888,
+        "mae_rgb": 0.021826666666666668,
+        "mean_max_channel_abs": 0.032628,
+        "exact_fraction": 0.999108,
+        "within8_fraction": 0.999352,
+        "ssim": 0.9995667644011809,
+        "max_channel_abs": 131.0,
+        "candidate_sha256": "e393410d977b51629331c2ae4b67e67c88d5c5ee285506749dd19bc6c4507e73",
+        "oracle_sha256": "1da8245557a92f4050d43175416e0b30ea71d97162a6cdeca519c3f1dcd7d93f",
+        "shape": [
+          500,
+          500,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 34,
+      "case": 5,
+      "step": 64,
+      "seed": 42,
+      "action_dtype": "float64",
+      "prefix_hash": "a90f40dede20c5a6e4985408bd7196ddd6a82149afe28f9068847284804bdc54",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "0a0477baefaec7a3ec82fcdfc185406bab59045ffe21ae1992e47e4e52249933",
+        "oracle_state_hash": "0a0477baefaec7a3ec82fcdfc185406bab59045ffe21ae1992e47e4e52249933",
+        "compared_leaves": 4,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/native_navigation_semantics.py"
+      },
+      "state_file": "frame-0034-state.npz",
+      "state_hash": "0a0477baefaec7a3ec82fcdfc185406bab59045ffe21ae1992e47e4e52249933",
+      "oracle_file": "frame-0034-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        500,
+        500,
+        3
+      ],
+      "oracle_sha256": "e9246f8688fbcb9edbad3872b24bebe7385a26b6f8d2a4df34b438811d888e7e",
+      "render_kwargs": {
+        "style": [
+          [
+            255.0,
+            0.0,
+            0.0,
+            0.10000000149011612,
+            1.0,
+            255.0,
+            255.0,
+            255.0,
+            0.0,
+            255.0,
+            0.0,
+            0.20000000298023224,
+            0.0,
+            0.0,
+            0.0,
+            5.0,
+            1.035264492034912,
+            3.455474853515625,
+            3.002354621887207,
+            3.4422965049743652,
+            1.5345234870910645,
+            2.9165356159210205,
+            2.142178535461426,
+            2.783087968826294,
+            1.2603342533111572,
+            3.453317880630493,
+            1.504300832748413,
+            2.397299289703369,
+            1.289385199546814,
+            0.8406872749328613,
+            1.2444018125534058,
+            1.0428158044815063,
+            0.6597925424575806,
+            1.3639332056045532,
+            1.1124801635742188,
+            1.0994874238967896,
+            0.9639119505882263,
+            0.6164624691009521,
+            0.7141286134719849,
+            0.6556037068367004
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          12.665224,
+          12.884083,
+          12.856504
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 12.801937,
+          "median": 12.856504,
+          "p95": 12.8813251,
+          "maximum": 12.884083,
+          "minimum": 12.665224,
+          "std": 0.09732414427057641
+        },
+        "first_call_ms": 13.880243,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          7.509656,
+          7.437456,
+          7.454977
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 7.467363,
+          "median": 7.454977,
+          "p95": 7.5041880999999995,
+          "maximum": 7.509656,
+          "minimum": 7.437456,
+          "std": 0.030749197788993658
+        },
+        "first_call_ms": 7.885066,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 1.87279354094579e-05,
+        "mse_uint8": 1.217784,
+        "mae_rgb": 0.020168,
+        "mean_max_channel_abs": 0.03014,
+        "exact_fraction": 0.9991,
+        "within8_fraction": 0.999344,
+        "ssim": 0.9996288728101044,
+        "max_channel_abs": 134.0,
+        "candidate_sha256": "5e0654d741c976dd9cc10524ac2899d74f9f98649b1ce0cfb2c83d5b614196a6",
+        "oracle_sha256": "e9246f8688fbcb9edbad3872b24bebe7385a26b6f8d2a4df34b438811d888e7e",
+        "shape": [
+          500,
+          500,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 35,
+      "case": 5,
+      "step": 128,
+      "seed": 42,
+      "action_dtype": "float64",
+      "prefix_hash": "5e47effbf4f643de688656f43d2b29c92194d2ffb2d4632c473737b012264bb0",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "96aa9a5545ce25a0f753ec98e27175bf0c281f0ef95825dc1951e250443f633d",
+        "oracle_state_hash": "96aa9a5545ce25a0f753ec98e27175bf0c281f0ef95825dc1951e250443f633d",
+        "compared_leaves": 4,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/native_navigation_semantics.py"
+      },
+      "state_file": "frame-0035-state.npz",
+      "state_hash": "96aa9a5545ce25a0f753ec98e27175bf0c281f0ef95825dc1951e250443f633d",
+      "oracle_file": "frame-0035-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        500,
+        500,
+        3
+      ],
+      "oracle_sha256": "80b921bdb55f93b1ed7685ad54d6780a2ded40b146b819af61670684bb17fb80",
+      "render_kwargs": {
+        "style": [
+          [
+            255.0,
+            0.0,
+            0.0,
+            0.10000000149011612,
+            1.0,
+            255.0,
+            255.0,
+            255.0,
+            0.0,
+            255.0,
+            0.0,
+            0.20000000298023224,
+            0.0,
+            0.0,
+            0.0,
+            5.0,
+            1.035264492034912,
+            3.455474853515625,
+            3.002354621887207,
+            3.4422965049743652,
+            1.5345234870910645,
+            2.9165356159210205,
+            2.142178535461426,
+            2.783087968826294,
+            1.2603342533111572,
+            3.453317880630493,
+            1.504300832748413,
+            2.397299289703369,
+            1.289385199546814,
+            0.8406872749328613,
+            1.2444018125534058,
+            1.0428158044815063,
+            0.6597925424575806,
+            1.3639332056045532,
+            1.1124801635742188,
+            1.0994874238967896,
+            0.9639119505882263,
+            0.6164624691009521,
+            0.7141286134719849,
+            0.6556037068367004
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          12.824343,
+          12.691124,
+          12.788983
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 12.76815,
+          "median": 12.788983,
+          "p95": 12.820807,
+          "maximum": 12.824343,
+          "minimum": 12.691124,
+          "std": 0.0563461676129502
+        },
+        "first_call_ms": 13.694223,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          7.575176,
+          7.588376,
+          7.444696
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 7.536082666666666,
+          "median": 7.575176,
+          "p95": 7.5870560000000005,
+          "maximum": 7.588376,
+          "minimum": 7.444696,
+          "std": 0.06484444017972707
+        },
+        "first_call_ms": 7.944566,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 2.1012390106369342e-05,
+        "mse_uint8": 1.3663306666666666,
+        "mae_rgb": 0.02122133333333333,
+        "mean_max_channel_abs": 0.03172,
+        "exact_fraction": 0.9991,
+        "within8_fraction": 0.99934,
+        "ssim": 0.9995831017602561,
+        "max_channel_abs": 132.0,
+        "candidate_sha256": "7dc556165cbe920601e76d30d9dca5f3d5a5cc601b966b36f1fef6beb1e28a6b",
+        "oracle_sha256": "80b921bdb55f93b1ed7685ad54d6780a2ded40b146b819af61670684bb17fb80",
+        "shape": [
+          500,
+          500,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 36,
+      "case": 6,
+      "step": 0,
+      "seed": 17,
+      "action_dtype": "float32",
+      "prefix_hash": "3fb8e2a5df713e79221069065d9c5846407c74f6611e9f9b5abbf6aa901f1577",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "c7717896a1e642f86de96888eeba916e596759a89e4363ee01e0cdbe3b6b0735",
+        "oracle_state_hash": "c7717896a1e642f86de96888eeba916e596759a89e4363ee01e0cdbe3b6b0735",
+        "compared_leaves": 4,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/native_navigation_semantics.py"
+      },
+      "state_file": "frame-0036-state.npz",
+      "state_hash": "c7717896a1e642f86de96888eeba916e596759a89e4363ee01e0cdbe3b6b0735",
+      "oracle_file": "frame-0036-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        500,
+        500,
+        3
+      ],
+      "oracle_sha256": "e42e226b59d82b61d44bcfdfaeaeeb2dc32bba431765a36398427bb777343ce4",
+      "render_kwargs": {
+        "style": [
+          [
+            255.0,
+            0.0,
+            0.0,
+            0.10000000149011612,
+            1.0,
+            255.0,
+            255.0,
+            255.0,
+            0.0,
+            255.0,
+            0.0,
+            0.20000000298023224,
+            0.0,
+            0.0,
+            0.0,
+            5.0,
+            1.035264492034912,
+            3.455474853515625,
+            3.002354621887207,
+            3.4422965049743652,
+            1.5345234870910645,
+            2.9165356159210205,
+            2.142178535461426,
+            2.783087968826294,
+            1.2603342533111572,
+            3.453317880630493,
+            1.504300832748413,
+            2.397299289703369,
+            1.289385199546814,
+            0.8406872749328613,
+            1.2444018125534058,
+            1.0428158044815063,
+            0.6597925424575806,
+            1.3639332056045532,
+            1.1124801635742188,
+            1.0994874238967896,
+            0.9639119505882263,
+            0.6164624691009521,
+            0.7141286134719849,
+            0.6556037068367004
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          12.981243,
+          12.780074,
+          12.878393
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 12.879903333333333,
+          "median": 12.878393,
+          "p95": 12.970958,
+          "maximum": 12.981243,
+          "minimum": 12.780074,
+          "std": 0.08213384389857475
+        },
+        "first_call_ms": 12.790483,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          7.534846,
+          7.478427,
+          7.506686
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 7.506653,
+          "median": 7.506686,
+          "p95": 7.53203,
+          "maximum": 7.534846,
+          "minimum": 7.478427,
+          "std": 0.023032972119695422
+        },
+        "first_call_ms": 8.071036,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 1.7606438549275918e-05,
+        "mse_uint8": 1.1448586666666667,
+        "mae_rgb": 0.019168,
+        "mean_max_channel_abs": 0.02864,
+        "exact_fraction": 0.99912,
+        "within8_fraction": 0.999408,
+        "ssim": 0.9996643742349777,
+        "max_channel_abs": 105.0,
+        "candidate_sha256": "6f0e4a101c3a1d7fc5501a6335d1ed80620605a12b0ba9b48d656b85c60bbbad",
+        "oracle_sha256": "e42e226b59d82b61d44bcfdfaeaeeb2dc32bba431765a36398427bb777343ce4",
+        "shape": [
+          500,
+          500,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 37,
+      "case": 6,
+      "step": 1,
+      "seed": 17,
+      "action_dtype": "float32",
+      "prefix_hash": "8cf4af13f25b62b7644050645a49aae54a0f167c80317472815f8ab79f83c385",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "449092408cfa542754129908d19ca82461fbba5b0a122077049e46a5021da9d4",
+        "oracle_state_hash": "449092408cfa542754129908d19ca82461fbba5b0a122077049e46a5021da9d4",
+        "compared_leaves": 4,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/native_navigation_semantics.py"
+      },
+      "state_file": "frame-0037-state.npz",
+      "state_hash": "449092408cfa542754129908d19ca82461fbba5b0a122077049e46a5021da9d4",
+      "oracle_file": "frame-0037-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        500,
+        500,
+        3
+      ],
+      "oracle_sha256": "ed8ff9327dd77024824a239e34fbdba4d5ec07513c52893b057bb05f840bfd25",
+      "render_kwargs": {
+        "style": [
+          [
+            255.0,
+            0.0,
+            0.0,
+            0.10000000149011612,
+            1.0,
+            255.0,
+            255.0,
+            255.0,
+            0.0,
+            255.0,
+            0.0,
+            0.20000000298023224,
+            0.0,
+            0.0,
+            0.0,
+            5.0,
+            1.035264492034912,
+            3.455474853515625,
+            3.002354621887207,
+            3.4422965049743652,
+            1.5345234870910645,
+            2.9165356159210205,
+            2.142178535461426,
+            2.783087968826294,
+            1.2603342533111572,
+            3.453317880630493,
+            1.504300832748413,
+            2.397299289703369,
+            1.289385199546814,
+            0.8406872749328613,
+            1.2444018125534058,
+            1.0428158044815063,
+            0.6597925424575806,
+            1.3639332056045532,
+            1.1124801635742188,
+            1.0994874238967896,
+            0.9639119505882263,
+            0.6164624691009521,
+            0.7141286134719849,
+            0.6556037068367004
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          12.863893,
+          12.952994,
+          12.939113
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 12.918666666666667,
+          "median": 12.939113,
+          "p95": 12.9516059,
+          "maximum": 12.952994,
+          "minimum": 12.863893,
+          "std": 0.039143211078750365
+        },
+        "first_call_ms": 14.352133,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          7.495776,
+          7.503447,
+          7.630636
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 7.5432863333333335,
+          "median": 7.503447,
+          "p95": 7.6179171,
+          "maximum": 7.630636,
+          "minimum": 7.495776,
+          "std": 0.061844882624909794
+        },
+        "first_call_ms": 8.111456,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 1.9445156990900935e-05,
+        "mse_uint8": 1.2644213333333334,
+        "mae_rgb": 0.020645333333333335,
+        "mean_max_channel_abs": 0.030856,
+        "exact_fraction": 0.999088,
+        "within8_fraction": 0.999352,
+        "ssim": 0.9996068297331624,
+        "max_channel_abs": 121.0,
+        "candidate_sha256": "1291de32e97e2c27f6f91d713fca1cbc9886d2d7f71b1480847991e0198c597c",
+        "oracle_sha256": "ed8ff9327dd77024824a239e34fbdba4d5ec07513c52893b057bb05f840bfd25",
+        "shape": [
+          500,
+          500,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 38,
+      "case": 6,
+      "step": 8,
+      "seed": 17,
+      "action_dtype": "float32",
+      "prefix_hash": "37aa86de4d90b54be2c38af91c8734e3ef43701f0c5fca054908c3be4657ba2f",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "622abed6beca528252947633166ca986de991afaace5fda7dad469166b9278cc",
+        "oracle_state_hash": "622abed6beca528252947633166ca986de991afaace5fda7dad469166b9278cc",
+        "compared_leaves": 4,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/native_navigation_semantics.py"
+      },
+      "state_file": "frame-0038-state.npz",
+      "state_hash": "622abed6beca528252947633166ca986de991afaace5fda7dad469166b9278cc",
+      "oracle_file": "frame-0038-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        500,
+        500,
+        3
+      ],
+      "oracle_sha256": "d9090b38383546bb7ff7936150304a74e29d1cde9d4dbe38a5ba787c88ebecd6",
+      "render_kwargs": {
+        "style": [
+          [
+            255.0,
+            0.0,
+            0.0,
+            0.10000000149011612,
+            1.0,
+            255.0,
+            255.0,
+            255.0,
+            0.0,
+            255.0,
+            0.0,
+            0.20000000298023224,
+            0.0,
+            0.0,
+            0.0,
+            5.0,
+            1.035264492034912,
+            3.455474853515625,
+            3.002354621887207,
+            3.4422965049743652,
+            1.5345234870910645,
+            2.9165356159210205,
+            2.142178535461426,
+            2.783087968826294,
+            1.2603342533111572,
+            3.453317880630493,
+            1.504300832748413,
+            2.397299289703369,
+            1.289385199546814,
+            0.8406872749328613,
+            1.2444018125534058,
+            1.0428158044815063,
+            0.6597925424575806,
+            1.3639332056045532,
+            1.1124801635742188,
+            1.0994874238967896,
+            0.9639119505882263,
+            0.6164624691009521,
+            0.7141286134719849,
+            0.6556037068367004
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          12.934004,
+          12.732273,
+          12.936874
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 12.867716999999999,
+          "median": 12.934004,
+          "p95": 12.936587,
+          "maximum": 12.936874,
+          "minimum": 12.732273,
+          "std": 0.09578053760898768
+        },
+        "first_call_ms": 13.992413,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          7.464706,
+          7.487146,
+          7.528856
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 7.493569333333333,
+          "median": 7.487146,
+          "p95": 7.524685,
+          "maximum": 7.528856,
+          "minimum": 7.464706,
+          "std": 0.02658006813802843
+        },
+        "first_call_ms": 7.967767,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 2.0079784698193e-05,
+        "mse_uint8": 1.305688,
+        "mae_rgb": 0.020781333333333332,
+        "mean_max_channel_abs": 0.03106,
+        "exact_fraction": 0.999088,
+        "within8_fraction": 0.999356,
+        "ssim": 0.9996078006152024,
+        "max_channel_abs": 132.0,
+        "candidate_sha256": "cf5499c73c850211a19f0fd8769a30db509c2bf0049afb4982e6a02babfe9e7e",
+        "oracle_sha256": "d9090b38383546bb7ff7936150304a74e29d1cde9d4dbe38a5ba787c88ebecd6",
+        "shape": [
+          500,
+          500,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 39,
+      "case": 6,
+      "step": 32,
+      "seed": 17,
+      "action_dtype": "float32",
+      "prefix_hash": "b6749a1999d50441d90d20c79e6613d7f35e78570bc90199fc94f15f4fb810d9",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "ddd0adcd3f06978f05f1d0989c1a4065517fef895381b866e006b653f0ae204f",
+        "oracle_state_hash": "ddd0adcd3f06978f05f1d0989c1a4065517fef895381b866e006b653f0ae204f",
+        "compared_leaves": 4,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/native_navigation_semantics.py"
+      },
+      "state_file": "frame-0039-state.npz",
+      "state_hash": "ddd0adcd3f06978f05f1d0989c1a4065517fef895381b866e006b653f0ae204f",
+      "oracle_file": "frame-0039-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        500,
+        500,
+        3
+      ],
+      "oracle_sha256": "d89c9b62e217a61547032b6461d0d1645990bcd84a80cf98a4b7d604503f6163",
+      "render_kwargs": {
+        "style": [
+          [
+            255.0,
+            0.0,
+            0.0,
+            0.10000000149011612,
+            1.0,
+            255.0,
+            255.0,
+            255.0,
+            0.0,
+            255.0,
+            0.0,
+            0.20000000298023224,
+            0.0,
+            0.0,
+            0.0,
+            5.0,
+            1.035264492034912,
+            3.455474853515625,
+            3.002354621887207,
+            3.4422965049743652,
+            1.5345234870910645,
+            2.9165356159210205,
+            2.142178535461426,
+            2.783087968826294,
+            1.2603342533111572,
+            3.453317880630493,
+            1.504300832748413,
+            2.397299289703369,
+            1.289385199546814,
+            0.8406872749328613,
+            1.2444018125534058,
+            1.0428158044815063,
+            0.6597925424575806,
+            1.3639332056045532,
+            1.1124801635742188,
+            1.0994874238967896,
+            0.9639119505882263,
+            0.6164624691009521,
+            0.7141286134719849,
+            0.6556037068367004
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          12.658323,
+          12.908774,
+          12.688554
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 12.751883666666666,
+          "median": 12.688554,
+          "p95": 12.886752,
+          "maximum": 12.908774,
+          "minimum": 12.658323,
+          "std": 0.11162261079289534
+        },
+        "first_call_ms": 14.082883,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          7.508407,
+          7.505637,
+          7.511256
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 7.5084333333333335,
+          "median": 7.508407,
+          "p95": 7.5109711,
+          "maximum": 7.511256,
+          "minimum": 7.505637,
+          "std": 0.0022940227161522874
+        },
+        "first_call_ms": 8.098436,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 1.9085213379469436e-05,
+        "mse_uint8": 1.241016,
+        "mae_rgb": 0.019874666666666665,
+        "mean_max_channel_abs": 0.0297,
+        "exact_fraction": 0.999092,
+        "within8_fraction": 0.999364,
+        "ssim": 0.9996429306918525,
+        "max_channel_abs": 136.0,
+        "candidate_sha256": "6bdd53c017b8d46f8924e298500aceea08ba04e79e96afe42cb9f4e3755cdfba",
+        "oracle_sha256": "d89c9b62e217a61547032b6461d0d1645990bcd84a80cf98a4b7d604503f6163",
+        "shape": [
+          500,
+          500,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 40,
+      "case": 6,
+      "step": 64,
+      "seed": 17,
+      "action_dtype": "float32",
+      "prefix_hash": "532d8ca1e3da6981fc216720181a93a336204482a2a861146e63371a76f9d10e",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "c84d5cf110c0a13e3eb64613ef944f2c83cb383e275c362c4c7be59e0d9e7cc7",
+        "oracle_state_hash": "c84d5cf110c0a13e3eb64613ef944f2c83cb383e275c362c4c7be59e0d9e7cc7",
+        "compared_leaves": 4,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/native_navigation_semantics.py"
+      },
+      "state_file": "frame-0040-state.npz",
+      "state_hash": "c84d5cf110c0a13e3eb64613ef944f2c83cb383e275c362c4c7be59e0d9e7cc7",
+      "oracle_file": "frame-0040-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        500,
+        500,
+        3
+      ],
+      "oracle_sha256": "5617d117aa110c4d9f3a6267d569886c99f684f6538e7e8c0775736c9d75c57e",
+      "render_kwargs": {
+        "style": [
+          [
+            255.0,
+            0.0,
+            0.0,
+            0.10000000149011612,
+            1.0,
+            255.0,
+            255.0,
+            255.0,
+            0.0,
+            255.0,
+            0.0,
+            0.20000000298023224,
+            0.0,
+            0.0,
+            0.0,
+            5.0,
+            1.035264492034912,
+            3.455474853515625,
+            3.002354621887207,
+            3.4422965049743652,
+            1.5345234870910645,
+            2.9165356159210205,
+            2.142178535461426,
+            2.783087968826294,
+            1.2603342533111572,
+            3.453317880630493,
+            1.504300832748413,
+            2.397299289703369,
+            1.289385199546814,
+            0.8406872749328613,
+            1.2444018125534058,
+            1.0428158044815063,
+            0.6597925424575806,
+            1.3639332056045532,
+            1.1124801635742188,
+            1.0994874238967896,
+            0.9639119505882263,
+            0.6164624691009521,
+            0.7141286134719849,
+            0.6556037068367004
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          12.939444,
+          12.745694,
+          13.007883
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 12.897673666666668,
+          "median": 12.939444,
+          "p95": 13.0010391,
+          "maximum": 13.007883,
+          "minimum": 12.745694,
+          "std": 0.11103854733179598
+        },
+        "first_call_ms": 13.922083,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          7.458916,
+          7.487517,
+          7.454827
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 7.467086666666667,
+          "median": 7.458916,
+          "p95": 7.4846569,
+          "maximum": 7.487517,
+          "minimum": 7.454827,
+          "std": 0.014542555262248812
+        },
+        "first_call_ms": 8.146726,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 1.8463175701653208e-05,
+        "mse_uint8": 1.200568,
+        "mae_rgb": 0.019896,
+        "mean_max_channel_abs": 0.029732,
+        "exact_fraction": 0.9991,
+        "within8_fraction": 0.999356,
+        "ssim": 0.9996409461205779,
+        "max_channel_abs": 129.0,
+        "candidate_sha256": "0f1b865fb3e9862c90ceee9b9780b77a5e4ad8c4a74ce5243b0b38f0611871f9",
+        "oracle_sha256": "5617d117aa110c4d9f3a6267d569886c99f684f6538e7e8c0775736c9d75c57e",
+        "shape": [
+          500,
+          500,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    },
+    {
+      "index": 41,
+      "case": 6,
+      "step": 128,
+      "seed": 17,
+      "action_dtype": "float32",
+      "prefix_hash": "c9c9276f8d36bd724d057007096ba3b3bf3002b3cd0409d8af5f1350eb293b56",
+      "proof": {
+        "kind": "EXACT_NUMERIC_STATE",
+        "candidate_state_hash": "6e52d799210ad7d67163eb466622cb2818ce73c0e3159e01458e275d1b7599e8",
+        "oracle_state_hash": "6e52d799210ad7d67163eb466622cb2818ce73c0e3159e01458e275d1b7599e8",
+        "compared_leaves": 4,
+        "equal": true,
+        "helper": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739861/source/tests/helpers/reference/native_navigation_semantics.py"
+      },
+      "state_file": "frame-0041-state.npz",
+      "state_hash": "6e52d799210ad7d67163eb466622cb2818ce73c0e3159e01458e275d1b7599e8",
+      "oracle_file": "frame-0041-oracle.npy",
+      "camera": "source default",
+      "shape": [
+        500,
+        500,
+        3
+      ],
+      "oracle_sha256": "258cfabe7cfc649e851a3cbbb3605e04f432918ea5e5b0fa89636e527c543e38",
+      "render_kwargs": {
+        "style": [
+          [
+            255.0,
+            0.0,
+            0.0,
+            0.10000000149011612,
+            1.0,
+            255.0,
+            255.0,
+            255.0,
+            0.0,
+            255.0,
+            0.0,
+            0.20000000298023224,
+            0.0,
+            0.0,
+            0.0,
+            5.0,
+            1.035264492034912,
+            3.455474853515625,
+            3.002354621887207,
+            3.4422965049743652,
+            1.5345234870910645,
+            2.9165356159210205,
+            2.142178535461426,
+            2.783087968826294,
+            1.2603342533111572,
+            3.453317880630493,
+            1.504300832748413,
+            2.397299289703369,
+            1.289385199546814,
+            0.8406872749328613,
+            1.2444018125534058,
+            1.0428158044815063,
+            0.6597925424575806,
+            1.3639332056045532,
+            1.1124801635742188,
+            1.0994874238967896,
+            0.9639119505882263,
+            0.6164624691009521,
+            0.7141286134719849,
+            0.6556037068367004
+          ]
+        ]
+      },
+      "original_timing": {
+        "samples_ms": [
+          12.948854,
+          12.859194,
+          12.918163
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 12.908737,
+          "median": 12.918163,
+          "p95": 12.945784900000001,
+          "maximum": 12.948854,
+          "minimum": 12.859194,
+          "std": 0.03720542977398152
+        },
+        "first_call_ms": 13.610364,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "original_backend": "CPU software raster",
+      "oracle_render_nonmutation": true,
+      "cpu_timing": {
+        "samples_ms": [
+          7.505177,
+          7.466536,
+          7.472336
+        ],
+        "statistics_ms": {
+          "count": 3,
+          "mean": 7.481349666666667,
+          "median": 7.472336,
+          "p95": 7.5018929,
+          "maximum": 7.505177,
+          "minimum": 7.466536,
+          "std": 0.017014040482952714
+        },
+        "first_call_ms": 7.933056,
+        "warmups": 10,
+        "synchronization": "eager materialized CPU array/Tensor (JAX block_until_ready if applicable)",
+        "output_location": "cpu",
+        "includes_reset_step_get_set_state": false
+      },
+      "cpu_quality": {
+        "mse_normalized": 2.402235037805972e-05,
+        "mse_uint8": 1.5620533333333333,
+        "mae_rgb": 0.022208,
+        "mean_max_channel_abs": 0.0332,
+        "exact_fraction": 0.999088,
+        "within8_fraction": 0.99936,
+        "ssim": 0.999547072137143,
+        "max_channel_abs": 129.0,
+        "candidate_sha256": "47a92b9e863d9e4b89e3e45479d6ef8874f5981510a0b5515bc59a7abd8ba787",
+        "oracle_sha256": "258cfabe7cfc649e851a3cbbb3605e04f432918ea5e5b0fa89636e527c543e38",
+        "shape": [
+          500,
+          500,
+          3
+        ]
+      },
+      "candidate_render_nonmutation": true
+    }
+  ],
+  "recipes": [
+    {
+      "case": 0,
+      "seed": 0,
+      "action_dtype": "float32",
+      "reset_options": {},
+      "reset_count": 1,
+      "simulator_config": null,
+      "label": "trajectory",
+      "action_generator": "numpy.default_rng(90000+seed).uniform(action_space.low, high) or integers(0,n)",
+      "actions_file": "actions-0.npy",
+      "actions_hash": "37aaf69e76e3dc9b431c2341d03b406be50b981dfcc282cdbddda88904f81473",
+      "camera": "source default",
+      "checkpoints": [
+        0,
+        1,
+        8,
+        32,
+        64,
+        128
+      ],
+      "constructor": {
+        "num_envs": 1,
+        "seed": 0
+      }
+    },
+    {
+      "case": 1,
+      "seed": 0,
+      "action_dtype": "float64",
+      "reset_options": {},
+      "reset_count": 1,
+      "simulator_config": null,
+      "label": "trajectory",
+      "action_generator": "numpy.default_rng(90000+seed).uniform(action_space.low, high) or integers(0,n)",
+      "actions_file": "actions-1.npy",
+      "actions_hash": "07af790abf1e0e345e464b10594fcbc1dba4f31d98434605593ee4979d9ea696",
+      "camera": "source default",
+      "checkpoints": [
+        0,
+        1,
+        8,
+        32,
+        64,
+        128
+      ],
+      "constructor": {
+        "num_envs": 1,
+        "seed": 0
+      }
+    },
+    {
+      "case": 2,
+      "seed": 17,
+      "action_dtype": "float32",
+      "reset_options": {},
+      "reset_count": 1,
+      "simulator_config": null,
+      "label": "trajectory",
+      "action_generator": "numpy.default_rng(90000+seed).uniform(action_space.low, high) or integers(0,n)",
+      "actions_file": "actions-2.npy",
+      "actions_hash": "c9c9276f8d36bd724d057007096ba3b3bf3002b3cd0409d8af5f1350eb293b56",
+      "camera": "source default",
+      "checkpoints": [
+        0,
+        1,
+        8,
+        32,
+        64,
+        128
+      ],
+      "constructor": {
+        "num_envs": 1,
+        "seed": 17
+      }
+    },
+    {
+      "case": 3,
+      "seed": 17,
+      "action_dtype": "float64",
+      "reset_options": {},
+      "reset_count": 1,
+      "simulator_config": null,
+      "label": "trajectory",
+      "action_generator": "numpy.default_rng(90000+seed).uniform(action_space.low, high) or integers(0,n)",
+      "actions_file": "actions-3.npy",
+      "actions_hash": "a376fa748dc34ff0ccc7916d23cb2414189677de288b6dafcc922ed2be7c503d",
+      "camera": "source default",
+      "checkpoints": [
+        0,
+        1,
+        8,
+        32,
+        64,
+        128
+      ],
+      "constructor": {
+        "num_envs": 1,
+        "seed": 17
+      }
+    },
+    {
+      "case": 4,
+      "seed": 42,
+      "action_dtype": "float32",
+      "reset_options": {},
+      "reset_count": 1,
+      "simulator_config": null,
+      "label": "trajectory",
+      "action_generator": "numpy.default_rng(90000+seed).uniform(action_space.low, high) or integers(0,n)",
+      "actions_file": "actions-4.npy",
+      "actions_hash": "af92a415f2092f9227ae36484116aa37c1d74e2e56c33df81d2bd57b141ae4ec",
+      "camera": "source default",
+      "checkpoints": [
+        0,
+        1,
+        8,
+        32,
+        64,
+        128
+      ],
+      "constructor": {
+        "num_envs": 1,
+        "seed": 42
+      }
+    },
+    {
+      "case": 5,
+      "seed": 42,
+      "action_dtype": "float64",
+      "reset_options": {},
+      "reset_count": 1,
+      "simulator_config": null,
+      "label": "trajectory",
+      "action_generator": "numpy.default_rng(90000+seed).uniform(action_space.low, high) or integers(0,n)",
+      "actions_file": "actions-5.npy",
+      "actions_hash": "5e47effbf4f643de688656f43d2b29c92194d2ffb2d4632c473737b012264bb0",
+      "camera": "source default",
+      "checkpoints": [
+        0,
+        1,
+        8,
+        32,
+        64,
+        128
+      ],
+      "constructor": {
+        "num_envs": 1,
+        "seed": 42
+      }
+    },
+    {
+      "case": 6,
+      "seed": 17,
+      "action_dtype": "float32",
+      "reset_options": {
+        "variation": [],
+        "variation_values": {
+          "agent.color": [
+            89,
+            89,
+            89
+          ],
+          "background.color": [
+            89,
+            89,
+            89
+          ],
+          "goal.color": [
+            89,
+            89,
+            89
+          ],
+          "walls.color": [
+            89,
+            89,
+            89
+          ]
+        }
+      },
+      "reset_count": 1,
+      "simulator_config": null,
+      "label": "trajectory",
+      "action_generator": "numpy.default_rng(90000+seed).uniform(action_space.low, high) or integers(0,n)",
+      "actions_file": "actions-6.npy",
+      "actions_hash": "c9c9276f8d36bd724d057007096ba3b3bf3002b3cd0409d8af5f1350eb293b56",
+      "camera": "source default",
+      "checkpoints": [
+        0,
+        1,
+        8,
+        32,
+        64,
+        128
+      ],
+      "constructor": {
+        "num_envs": 1,
+        "seed": 17
+      }
+    }
+  ]
+}

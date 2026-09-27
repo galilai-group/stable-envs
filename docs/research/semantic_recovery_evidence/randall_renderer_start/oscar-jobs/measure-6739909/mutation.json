@@ -1,0 +1,3882 @@
+{
+  "profile": {
+    "host": "node1807.oscar.ccv.brown.edu",
+    "cpu": "Intel(R) Xeon(R) Platinum 8268 CPU @ 2.90GHz",
+    "gpu": null,
+    "python": "3.12.9",
+    "packages": {
+      "torch": {
+        "version": "2.14.0+cu126",
+        "path": "/oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages"
+      },
+      "numpy": {
+        "version": "2.2.6",
+        "path": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739712/fetch-cpu-overlay"
+      },
+      "tensordict": {
+        "version": "0.14.2",
+        "path": "/oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages"
+      },
+      "gymnasium": {
+        "version": "1.2.3",
+        "path": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739712/fetch-cpu-overlay"
+      },
+      "mujoco": {
+        "version": "3.8.1",
+        "path": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739712/fetch-cpu-overlay"
+      },
+      "dm-control": {
+        "version": "1.0.45",
+        "path": "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages"
+      },
+      "gymnasium-robotics": {
+        "version": "1.4.2",
+        "path": "/oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages"
+      },
+      "ogbench": {
+        "version": "1.2.1",
+        "path": "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages"
+      },
+      "craftax": {
+        "version": "1.6.1",
+        "path": "/oscar/scratch/sboughan/venvs/se-step4-swm/lib/python3.12/site-packages"
+      },
+      "jax": {
+        "version": "0.11.1",
+        "path": "/oscar/scratch/sboughan/venvs/se-step4-swm/lib/python3.12/site-packages"
+      },
+      "jaxlib": {
+        "version": "0.11.1",
+        "path": "/oscar/scratch/sboughan/venvs/se-step4-swm/lib/python3.12/site-packages"
+      },
+      "flax": {
+        "version": "0.12.9",
+        "path": "/oscar/scratch/sboughan/venvs/se-step4-swm/lib/python3.12/site-packages"
+      },
+      "pymunk": {
+        "version": "7.3.0",
+        "path": "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages"
+      },
+      "pygame": {
+        "version": "2.6.1",
+        "path": "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages"
+      }
+    },
+    "torch_threads": 1,
+    "environment": {
+      "SLURM_JOB_ID": "6739909",
+      "MUJOCO_GL": "glfw",
+      "PYOPENGL_PLATFORM": "glx",
+      "LIBGL_ALWAYS_SOFTWARE": "1",
+      "GALLIUM_DRIVER": "llvmpipe",
+      "DISPLAY": ":5009",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "LP_NUM_THREADS": "1",
+      "JAX_PLATFORMS": null,
+      "CRAFTAX_JAX_BACKEND": null,
+      "CUDA_VISIBLE_DEVICES": null
+    }
+  },
+  "records": [
+    {
+      "registration": "swm/FetchPickAndPlace-v3",
+      "seed": 0,
+      "mode": "zero",
+      "action_dtype": "float32",
+      "step": 0,
+      "prefix_hash": "4b35f94aa0d3bb584f39f908c788fe3144ee7b60a58cca242a5c67fbb7016d79",
+      "before_hash": "be80b9689b3138ef28c2e15e2f4333b87d5c3e4a08f9880d2019559926312e95",
+      "after_hash": "be80b9689b3138ef28c2e15e2f4333b87d5c3e4a08f9880d2019559926312e95",
+      "changes": {}
+    },
+    {
+      "registration": "swm/FetchPickAndPlace-v3",
+      "seed": 0,
+      "mode": "zero",
+      "action_dtype": "float32",
+      "step": 1,
+      "prefix_hash": "7d2c7671dcda5adcc1b40bf6c46debee19f7574bdda3df7640aaa067ba6aba2b",
+      "before_hash": "3adf6a7a26aa7b7b1f9bb9f2368dc77ee96ab6b4960ad4deace83f7074666868",
+      "after_hash": "fb1fa51336584c448af5bf7399fcbfa6129924bb1a51466c7ee93c05c16783ce",
+      "changes": {
+        "position": {
+          "before": [
+            1.341969179720155,
+            0.749100653079592,
+            0.554574670509455
+          ],
+          "after": [
+            1.341970366361024,
+            0.7491006636815768,
+            0.5545677103090298
+          ],
+          "max_abs": 6.9602004251212435e-06
+        },
+        "quaternion": {
+          "before": [
+            0.7067756019074242,
+            1.5945423308686563e-05,
+            0.7074378051669518,
+            1.0710168051931025e-05
+          ],
+          "after": [
+            0.7067714752217176,
+            1.6117512117600884e-05,
+            0.7074419279602834,
+            1.0815731619410844e-05
+          ],
+          "max_abs": 4.126685706595801e-06
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlace-v3",
+      "seed": 0,
+      "mode": "zero",
+      "action_dtype": "float32",
+      "step": 10,
+      "prefix_hash": "f12760b7193c2e99398cca7c90dd5f50edd46ded9df2d442912dab645fee21cb",
+      "before_hash": "fb741bdb50958bd9cf553381087f781a52ca5a9fab74249834f368b5243f0d75",
+      "after_hash": "58f3c2b3813433f0df38ab924f010347a996643210458cc5338451ef2e5f60c8",
+      "changes": {
+        "position": {
+          "before": [
+            1.342138869939011,
+            0.7491024082747518,
+            0.5532791765971834
+          ],
+          "after": [
+            1.342139463540167,
+            0.7491024145312969,
+            0.5532744481962004
+          ],
+          "max_abs": 4.728400982978442e-06
+        },
+        "quaternion": {
+          "before": [
+            0.7065444415285933,
+            1.890289794173822e-05,
+            0.707668673618421,
+            1.2917943006463808e-05
+          ],
+          "after": [
+            0.7065445308002029,
+            1.8895344346684306e-05,
+            0.7076685844889054,
+            1.29134083411257e-05
+          ],
+          "max_abs": 8.927160954907976e-08
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlace-v3",
+      "seed": 0,
+      "mode": "zero",
+      "action_dtype": "float32",
+      "step": 25,
+      "prefix_hash": "334f1fe912fe10c1e5fac69c836d31dfe34e2f4e8ae034c694246f0a8811f2b2",
+      "before_hash": "db2c177ade5fa61ac117b8d0c94d535a3feddef72cfda57593569455e6fdee73",
+      "after_hash": "64829228f54ceb73460fe0a2d440c760173c9a228b5f9f7297f1ff737d1d1506",
+      "changes": {
+        "position": {
+          "before": [
+            1.3423667263247752,
+            0.749104961548378,
+            0.5512919079208956
+          ],
+          "after": [
+            1.342367310836063,
+            0.7491049677488372,
+            0.5512871764139244
+          ],
+          "max_abs": 4.7315069711117985e-06
+        },
+        "quaternion": {
+          "before": [
+            0.7065404496649976,
+            1.79429911041733e-05,
+            0.7076726591593369,
+            1.1982708491584419e-05
+          ],
+          "after": [
+            0.7065406476306475,
+            1.7942263887247298e-05,
+            0.7076724615103629,
+            1.198350997623195e-05
+          ],
+          "max_abs": 1.979656498729554e-07
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlace-v3",
+      "seed": 0,
+      "mode": "zero",
+      "action_dtype": "float32",
+      "step": 49,
+      "prefix_hash": "fd704b1c010598edb3606565ed1ad171a391072cfd597dc7068a67b153f8e081",
+      "before_hash": "31b42b2b69396c5612c57ae0d201221cd7d1d7a184b1331a232fe6e05870e341",
+      "after_hash": "348b8889d573a67a237a4269310874044caafbb57a1137906d4102023203555c",
+      "changes": {
+        "position": {
+          "before": [
+            1.3427427858781391,
+            0.7491091081374065,
+            0.5480742464687284
+          ],
+          "after": [
+            1.342743401039431,
+            0.7491091144876596,
+            0.54806943035312
+          ],
+          "max_abs": 4.816115608430316e-06
+        },
+        "quaternion": {
+          "before": [
+            0.7065455676412286,
+            1.710899650244702e-05,
+            0.7076675493691758,
+            1.1119432502604666e-05
+          ],
+          "after": [
+            0.7065457589441791,
+            1.710862141815115e-05,
+            0.7076673583694667,
+            1.1120679522174087e-05
+          ],
+          "max_abs": 1.9130295059177627e-07
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlace-v3",
+      "seed": 0,
+      "mode": "zero",
+      "action_dtype": "float32",
+      "step": 50,
+      "prefix_hash": "1b4bc522c4e379c2a0f3f44a7f5ec5614b2ba56ee70a83624780d4a9a111d1a0",
+      "before_hash": "32190c29c4b91d314498c532344b62b576a44958bf55134f52e4f68cc570b556",
+      "after_hash": "47b1e55ac97ed2644c0883cf0aebc7e7a4eed9e1c6a54b7f71c5777ebf365c93",
+      "changes": {
+        "position": {
+          "before": [
+            1.3427588672803132,
+            0.749109283138586,
+            0.5479389401701684
+          ],
+          "after": [
+            1.3427594836855061,
+            0.749109289495043,
+            0.5479341206361865
+          ],
+          "max_abs": 4.81953398190349e-06
+        },
+        "quaternion": {
+          "before": [
+            0.7065457741333266,
+            1.7073476591327212e-05,
+            0.7076673432058266,
+            1.1083391565612673e-05
+          ],
+          "after": [
+            0.7065459651164979,
+            1.7073114408764625e-05,
+            0.7076671525252782,
+            1.1084654496774232e-05
+          ],
+          "max_abs": 1.9098317127763664e-07
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlace-v3",
+      "seed": 0,
+      "mode": "random",
+      "action_dtype": "float32",
+      "step": 0,
+      "prefix_hash": "4b35f94aa0d3bb584f39f908c788fe3144ee7b60a58cca242a5c67fbb7016d79",
+      "before_hash": "be80b9689b3138ef28c2e15e2f4333b87d5c3e4a08f9880d2019559926312e95",
+      "after_hash": "be80b9689b3138ef28c2e15e2f4333b87d5c3e4a08f9880d2019559926312e95",
+      "changes": {}
+    },
+    {
+      "registration": "swm/FetchPickAndPlace-v3",
+      "seed": 0,
+      "mode": "random",
+      "action_dtype": "float32",
+      "step": 1,
+      "prefix_hash": "56a4eee442ef3a23e9dc2c8749758f2ea7aa1bfa0f1d2ee826df6c98eafaf33c",
+      "before_hash": "b6e22bbed6eddbf1a87c03f112eeb6bee3d648e85c3eb9ffdfccb7a39dcaf052",
+      "after_hash": "8b055312708992730df5c0a57fe1a061168a20ac693509a334bc754ef0375a46",
+      "changes": {
+        "position": {
+          "before": [
+            1.3553477058553718,
+            0.7227384755293742,
+            0.5806591028856019
+          ],
+          "after": [
+            1.355941171567268,
+            0.7215728595997105,
+            0.5818202131901479
+          ],
+          "max_abs": 0.001165615929663688
+        },
+        "quaternion": {
+          "before": [
+            0.712051026091397,
+            -0.0009020165107998315,
+            0.7021205613389624,
+            -0.0030397291759824505
+          ],
+          "after": [
+            0.7121239271287846,
+            -0.0008938583952341535,
+            0.7020467679774135,
+            -0.00300815563333383
+          ],
+          "max_abs": 7.37933615488906e-05
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlace-v3",
+      "seed": 0,
+      "mode": "random",
+      "action_dtype": "float32",
+      "step": 10,
+      "prefix_hash": "f2db6ddecc6ef04f6e48285dcb74ead855db21dfef2bfa138b1b916829c2d333",
+      "before_hash": "28e26e0cc63a35a0d187d2a211e741c01d7cbff36c28b2b5ec3e7a5fefa53407",
+      "after_hash": "e4667c85134ee3db987b0f39232d887a935d6e8e2d43cc33820b714924cc0efe",
+      "changes": {
+        "position": {
+          "before": [
+            1.430875439789086,
+            0.6958270143026146,
+            0.5521595643307654
+          ],
+          "after": [
+            1.4322634638931337,
+            0.6959313338675899,
+            0.5512758940531662
+          ],
+          "max_abs": 0.0013880241040478136
+        },
+        "quaternion": {
+          "before": [
+            0.7152693196056656,
+            -0.0003758746405158678,
+            0.6988487977164107,
+            -0.00013068829361140288
+          ],
+          "after": [
+            0.7154891843518325,
+            -0.0003973633333839294,
+            0.6986236787419003,
+            -0.0001570957178723513
+          ],
+          "max_abs": 0.00022511897451038543
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlace-v3",
+      "seed": 0,
+      "mode": "random",
+      "action_dtype": "float32",
+      "step": 25,
+      "prefix_hash": "1313eb01f590d7b4fc8bc0a7635bb55103ccb44baa65981e54b1529c94e5f6d6",
+      "before_hash": "696943f85c45e71c408abb7739a9ccf16fbae8c59b10663362fc8153ce5f4ac8",
+      "after_hash": "a40363a27c7d383a21ac903425bc5c30945f6cfd1ab86f2436fe2b23832c269e",
+      "changes": {
+        "position": {
+          "before": [
+            1.3777785063297876,
+            0.7515924006354483,
+            0.5449505629152557
+          ],
+          "after": [
+            1.3788774405856892,
+            0.7510398621739776,
+            0.5450854614020384
+          ],
+          "max_abs": 0.0010989342559015736
+        },
+        "quaternion": {
+          "before": [
+            0.7121677364214449,
+            -0.0003081803200610058,
+            0.7020082537673591,
+            -0.0011966067642235625
+          ],
+          "after": [
+            0.7122450982116645,
+            -0.000305515470517406,
+            0.7019297699252067,
+            -0.001193660965366587
+          ],
+          "max_abs": 7.848384215236592e-05
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlace-v3",
+      "seed": 0,
+      "mode": "random",
+      "action_dtype": "float32",
+      "step": 49,
+      "prefix_hash": "ee4e3da4fb86d5e1bbaf9e92799124a305078e812305bd8405519bbb011761fb",
+      "before_hash": "7e818bd2e4e2b119e8cd0c25bb757613b72d43cd99122a85773a772ac525110b",
+      "after_hash": "464a56605ca3efd1fd306b9fe206b114b3252d8253dae31dc277d45deb75b316",
+      "changes": {
+        "position": {
+          "before": [
+            1.2603228444623993,
+            0.8626050358002595,
+            0.43819716129105324
+          ],
+          "after": [
+            1.2597520359164798,
+            0.8623173635745253,
+            0.43828380694077707
+          ],
+          "max_abs": 0.00057080854591951
+        },
+        "quaternion": {
+          "before": [
+            0.7085154409394108,
+            -0.00013798203741613446,
+            0.7056952960471166,
+            6.954310524304175e-06
+          ],
+          "after": [
+            0.7090476223197976,
+            -0.00021639881129782018,
+            0.7051605602431721,
+            -8.2047128578705e-05
+          ],
+          "max_abs": 0.000534735803944475
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlace-v3",
+      "seed": 0,
+      "mode": "random",
+      "action_dtype": "float32",
+      "step": 50,
+      "prefix_hash": "9d91e45f64e1790a8adf458b052008e7225154dfa9c0d72207cdaf1ebc501855",
+      "before_hash": "bbb0a04ecef6ee5203f301754ddb47e3be425aa0e9f27969df49d6c27c5128f1",
+      "after_hash": "19d8926d4ec0917c8a6f450c934b3ed372c245448a6203812eba0413d6503951",
+      "changes": {
+        "position": {
+          "before": [
+            1.2432958669377578,
+            0.8542563950624366,
+            0.43965418183754407
+          ],
+          "after": [
+            1.242512534333489,
+            0.8541020113711835,
+            0.43958565250782067
+          ],
+          "max_abs": 0.0007833326042687716
+        },
+        "quaternion": {
+          "before": [
+            0.7123501278008008,
+            0.001956424795695598,
+            0.7018203080941995,
+            -0.0013126198094561559
+          ],
+          "after": [
+            0.7122845522104005,
+            0.0018107665631429543,
+            0.7018874155936229,
+            -0.0012221449128069217
+          ],
+          "max_abs": 0.0001456582325526437
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlace-v3",
+      "seed": 17,
+      "mode": "zero",
+      "action_dtype": "float32",
+      "step": 0,
+      "prefix_hash": "4b35f94aa0d3bb584f39f908c788fe3144ee7b60a58cca242a5c67fbb7016d79",
+      "before_hash": "4d1c468e9eb894530f37304bae4212826f080eee79ca5edb6f4cd76e6aef39b5",
+      "after_hash": "4d1c468e9eb894530f37304bae4212826f080eee79ca5edb6f4cd76e6aef39b5",
+      "changes": {}
+    },
+    {
+      "registration": "swm/FetchPickAndPlace-v3",
+      "seed": 17,
+      "mode": "zero",
+      "action_dtype": "float32",
+      "step": 1,
+      "prefix_hash": "7d2c7671dcda5adcc1b40bf6c46debee19f7574bdda3df7640aaa067ba6aba2b",
+      "before_hash": "22ce5237f1bdbefbc96494cab12590e6b7f3a9fbe93182f691ddaed4b6d4bd6f",
+      "after_hash": "e19da4e6671d47c045b4d2f548fd4201076e5d61dc10e918944bdab5db77f3b5",
+      "changes": {
+        "position": {
+          "before": [
+            1.341969179720155,
+            0.749100653079592,
+            0.554574670509455
+          ],
+          "after": [
+            1.341970366361024,
+            0.7491006636815768,
+            0.5545677103090298
+          ],
+          "max_abs": 6.9602004251212435e-06
+        },
+        "quaternion": {
+          "before": [
+            0.7067756019074242,
+            1.5945423308686563e-05,
+            0.7074378051669518,
+            1.0710168051931025e-05
+          ],
+          "after": [
+            0.7067714752217176,
+            1.6117512117600884e-05,
+            0.7074419279602834,
+            1.0815731619410844e-05
+          ],
+          "max_abs": 4.126685706595801e-06
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlace-v3",
+      "seed": 17,
+      "mode": "zero",
+      "action_dtype": "float32",
+      "step": 10,
+      "prefix_hash": "f12760b7193c2e99398cca7c90dd5f50edd46ded9df2d442912dab645fee21cb",
+      "before_hash": "c4b9674597d02214822a970ca761ee14025a7fa5f3a98aec1eeaae920e5b6a9d",
+      "after_hash": "a8158bf747a3e9fa2b7f76b21a19c1b1cb206e8ac68688ca70100b59391fad40",
+      "changes": {
+        "position": {
+          "before": [
+            1.342138869939011,
+            0.7491024082747518,
+            0.5532791765971834
+          ],
+          "after": [
+            1.342139463540167,
+            0.7491024145312969,
+            0.5532744481962004
+          ],
+          "max_abs": 4.728400982978442e-06
+        },
+        "quaternion": {
+          "before": [
+            0.7065444415285933,
+            1.890289794173822e-05,
+            0.707668673618421,
+            1.2917943006463808e-05
+          ],
+          "after": [
+            0.7065445308002029,
+            1.8895344346684306e-05,
+            0.7076685844889054,
+            1.29134083411257e-05
+          ],
+          "max_abs": 8.927160954907976e-08
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlace-v3",
+      "seed": 17,
+      "mode": "zero",
+      "action_dtype": "float32",
+      "step": 25,
+      "prefix_hash": "334f1fe912fe10c1e5fac69c836d31dfe34e2f4e8ae034c694246f0a8811f2b2",
+      "before_hash": "a12a2a74364ae5150c7df6ce43bf294a0bfc13cd7c4db422ada9a7c485c985db",
+      "after_hash": "38bbdbc1830e23499454492e5280cfaf949b6f11731bf0a6192a46160855eeee",
+      "changes": {
+        "position": {
+          "before": [
+            1.3423667263247752,
+            0.749104961548378,
+            0.5512919079208956
+          ],
+          "after": [
+            1.342367310836063,
+            0.7491049677488372,
+            0.5512871764139244
+          ],
+          "max_abs": 4.7315069711117985e-06
+        },
+        "quaternion": {
+          "before": [
+            0.7065404496649976,
+            1.79429911041733e-05,
+            0.7076726591593369,
+            1.1982708491584419e-05
+          ],
+          "after": [
+            0.7065406476306475,
+            1.7942263887247298e-05,
+            0.7076724615103629,
+            1.198350997623195e-05
+          ],
+          "max_abs": 1.979656498729554e-07
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlace-v3",
+      "seed": 17,
+      "mode": "zero",
+      "action_dtype": "float32",
+      "step": 49,
+      "prefix_hash": "fd704b1c010598edb3606565ed1ad171a391072cfd597dc7068a67b153f8e081",
+      "before_hash": "a793fa4939fb1450a25b92b23bb889f9f2f128b7b9b912b19d1f7d14bae305b4",
+      "after_hash": "21c6107c42b5842f006b95a4e924540fb01d54db3cb6cafab711e2d41d4f95d4",
+      "changes": {
+        "position": {
+          "before": [
+            1.3427427858781391,
+            0.7491091081374065,
+            0.5480742464687284
+          ],
+          "after": [
+            1.342743401039431,
+            0.7491091144876596,
+            0.54806943035312
+          ],
+          "max_abs": 4.816115608430316e-06
+        },
+        "quaternion": {
+          "before": [
+            0.7065455676412286,
+            1.710899650244702e-05,
+            0.7076675493691758,
+            1.1119432502604666e-05
+          ],
+          "after": [
+            0.7065457589441791,
+            1.710862141815115e-05,
+            0.7076673583694667,
+            1.1120679522174087e-05
+          ],
+          "max_abs": 1.9130295059177627e-07
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlace-v3",
+      "seed": 17,
+      "mode": "zero",
+      "action_dtype": "float32",
+      "step": 50,
+      "prefix_hash": "1b4bc522c4e379c2a0f3f44a7f5ec5614b2ba56ee70a83624780d4a9a111d1a0",
+      "before_hash": "c8f5a8d182d11f244c345b8108262207b92c0078581600e114cdec14b77aa0ca",
+      "after_hash": "7f8990a9e8af5527f27cfb7444d98e4e986821feb5806f4f495b714c6a7a82f8",
+      "changes": {
+        "position": {
+          "before": [
+            1.3427588672803132,
+            0.749109283138586,
+            0.5479389401701684
+          ],
+          "after": [
+            1.3427594836855061,
+            0.749109289495043,
+            0.5479341206361865
+          ],
+          "max_abs": 4.81953398190349e-06
+        },
+        "quaternion": {
+          "before": [
+            0.7065457741333266,
+            1.7073476591327212e-05,
+            0.7076673432058266,
+            1.1083391565612673e-05
+          ],
+          "after": [
+            0.7065459651164979,
+            1.7073114408764625e-05,
+            0.7076671525252782,
+            1.1084654496774232e-05
+          ],
+          "max_abs": 1.9098317127763664e-07
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlace-v3",
+      "seed": 17,
+      "mode": "random",
+      "action_dtype": "float32",
+      "step": 0,
+      "prefix_hash": "4b35f94aa0d3bb584f39f908c788fe3144ee7b60a58cca242a5c67fbb7016d79",
+      "before_hash": "4d1c468e9eb894530f37304bae4212826f080eee79ca5edb6f4cd76e6aef39b5",
+      "after_hash": "4d1c468e9eb894530f37304bae4212826f080eee79ca5edb6f4cd76e6aef39b5",
+      "changes": {}
+    },
+    {
+      "registration": "swm/FetchPickAndPlace-v3",
+      "seed": 17,
+      "mode": "random",
+      "action_dtype": "float32",
+      "step": 1,
+      "prefix_hash": "fb1714978d1c38652906eaf0e60b1fc292df3e8d711ee6b447f770a96be19d6c",
+      "before_hash": "5dfa0f9dd14fefa1baf5bae0f341e47ee5f593c147943e551dbfa7df90f5378a",
+      "after_hash": "3f360f107aaa5bbcbeb8075ffa589a288dc08cf09567625ed6e9afe70f586c54",
+      "changes": {
+        "position": {
+          "before": [
+            1.3651849586542277,
+            0.7585542356916324,
+            0.5370116557907174
+          ],
+          "after": [
+            1.3662490172718798,
+            0.7589724114203734,
+            0.5362105060673925
+          ],
+          "max_abs": 0.0010640586176520195
+        },
+        "quaternion": {
+          "before": [
+            0.7115230092233793,
+            0.0003841734449433242,
+            0.7026618156511192,
+            0.0011102172505868969
+          ],
+          "after": [
+            0.711582226701192,
+            0.00038148973370860477,
+            0.7026018654253406,
+            0.0010990038162430708
+          ],
+          "max_abs": 5.9950225778537813e-05
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlace-v3",
+      "seed": 17,
+      "mode": "random",
+      "action_dtype": "float32",
+      "step": 10,
+      "prefix_hash": "2e2fb99e779cd8e82646e2cc14146b480878413eba558edfa913eb0a8d12f309",
+      "before_hash": "9e804fb76787793a4ec0b5f0039e92923992cb1e1ecadd29ff5a0d8c1b14ebe4",
+      "after_hash": "5d94cc1d8b572e548f12bb16cd83df0e76ae9f72754275bb1d0afbe4042a9059",
+      "changes": {
+        "position": {
+          "before": [
+            1.3811236173735544,
+            0.7241554798776749,
+            0.5182979822654804
+          ],
+          "after": [
+            1.3813167202668144,
+            0.7246845661749527,
+            0.5178206981544697
+          ],
+          "max_abs": 0.0005290862972777699
+        },
+        "quaternion": {
+          "before": [
+            0.7066371123403854,
+            0.00044396607145947425,
+            0.7075738458135449,
+            0.001745588152770778
+          ],
+          "after": [
+            0.7066748905206692,
+            0.00043088423038957144,
+            0.7075362147446432,
+            0.001708294823077345
+          ],
+          "max_abs": 3.777818028383173e-05
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlace-v3",
+      "seed": 17,
+      "mode": "random",
+      "action_dtype": "float32",
+      "step": 25,
+      "prefix_hash": "4c2b2dc4cc23d3c2d5f46105f65836ff0eea5edc4140811fa3cfcfa300e37d48",
+      "before_hash": "3353e71f4f1ab50fa58a6ef78728116ebac7b1492e794a3959d4af5b3ea86a47",
+      "after_hash": "09f535fad881d9ef1f96b808443d9134b595f508a19e222a605205ee19de1a1f",
+      "changes": {
+        "position": {
+          "before": [
+            1.489362951522588,
+            0.8552007426433325,
+            0.46162430251025355
+          ],
+          "after": [
+            1.4897617993194372,
+            0.8551301265538453,
+            0.4610501953333196
+          ],
+          "max_abs": 0.0005741071769339579
+        },
+        "quaternion": {
+          "before": [
+            0.7115788866312658,
+            -0.001011618141700102,
+            0.702605310898572,
+            -0.0004917585431864283
+          ],
+          "after": [
+            0.7118263113943878,
+            -0.0009401657867630989,
+            0.7023547702971666,
+            -0.00044174174322030024
+          ],
+          "max_abs": 0.00025054060140539125
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlace-v3",
+      "seed": 17,
+      "mode": "random",
+      "action_dtype": "float32",
+      "step": 49,
+      "prefix_hash": "35f96f495ebcdcbae495a50b49ce31c8b6e50ef8f7d58354a84c1c42495d9617",
+      "before_hash": "25372dbd1ed14b0049fd844912b9fb2671abf8f226eb35718aaf2d083a567b2f",
+      "after_hash": "9c082c8876db30018dd389c2031a705a18f71c23648533799c2a3998b47902c3",
+      "changes": {
+        "position": {
+          "before": [
+            1.4657849816967108,
+            0.9912882354825131,
+            0.46257033434160694
+          ],
+          "after": [
+            1.465092411803107,
+            0.9914775118513722,
+            0.4612559936671853
+          ],
+          "max_abs": 0.0013143406744216546
+        },
+        "quaternion": {
+          "before": [
+            0.6980805411103397,
+            -0.004776814346601363,
+            0.7159897665288911,
+            -0.004403906640402258
+          ],
+          "after": [
+            0.6974630279383645,
+            -0.004947383642266365,
+            0.7165890831839885,
+            -0.004575359622515679
+          ],
+          "max_abs": 0.0006175131719752258
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlace-v3",
+      "seed": 17,
+      "mode": "random",
+      "action_dtype": "float32",
+      "step": 50,
+      "prefix_hash": "26148e5863da4f540f743d5cd6598f7c4adfb107865aa7b05a633689da81c7e3",
+      "before_hash": "7f94015b7dc0d3de4f22470afe5d246ff3c01928462aaca42bc6d72a543d3cb4",
+      "after_hash": "502f5eb4fa515cbd9058593b55a20231aa8b5961954870c43d8f2218236bfa7b",
+      "changes": {
+        "position": {
+          "before": [
+            1.4489388777014889,
+            0.9696370596800796,
+            0.44473559081320957
+          ],
+          "after": [
+            1.4483548029893922,
+            0.9686233169499536,
+            0.4442858741011775
+          ],
+          "max_abs": 0.0010137427301259994
+        },
+        "quaternion": {
+          "before": [
+            0.6734063283548332,
+            -0.01204952651760717,
+            0.7390548476149941,
+            -0.013291277558677247
+          ],
+          "after": [
+            0.6724281141127525,
+            -0.012285577206851334,
+            0.7399367399293529,
+            -0.013532067328500194
+          ],
+          "max_abs": 0.000978214242080666
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlace-v3",
+      "seed": 42,
+      "mode": "zero",
+      "action_dtype": "float32",
+      "step": 0,
+      "prefix_hash": "4b35f94aa0d3bb584f39f908c788fe3144ee7b60a58cca242a5c67fbb7016d79",
+      "before_hash": "4beabfda79954dc8f8bf03535961cddb0a0042aa16f02237606398b0d2b67c08",
+      "after_hash": "4beabfda79954dc8f8bf03535961cddb0a0042aa16f02237606398b0d2b67c08",
+      "changes": {}
+    },
+    {
+      "registration": "swm/FetchPickAndPlace-v3",
+      "seed": 42,
+      "mode": "zero",
+      "action_dtype": "float32",
+      "step": 1,
+      "prefix_hash": "7d2c7671dcda5adcc1b40bf6c46debee19f7574bdda3df7640aaa067ba6aba2b",
+      "before_hash": "93a7d84899fcff84cd344403a97ce3fdad8d237c6fe5bcef59798ec775d7ace5",
+      "after_hash": "35a96e1019df98caedc52e66727de3f8d3b4076ad8c5b7c7d638155eee78ce07",
+      "changes": {
+        "position": {
+          "before": [
+            1.341969179720155,
+            0.749100653079592,
+            0.554574670509455
+          ],
+          "after": [
+            1.341970366361024,
+            0.7491006636815768,
+            0.5545677103090298
+          ],
+          "max_abs": 6.9602004251212435e-06
+        },
+        "quaternion": {
+          "before": [
+            0.7067756019074242,
+            1.5945423308686563e-05,
+            0.7074378051669518,
+            1.0710168051931025e-05
+          ],
+          "after": [
+            0.7067714752217176,
+            1.6117512117600884e-05,
+            0.7074419279602834,
+            1.0815731619410844e-05
+          ],
+          "max_abs": 4.126685706595801e-06
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlace-v3",
+      "seed": 42,
+      "mode": "zero",
+      "action_dtype": "float32",
+      "step": 10,
+      "prefix_hash": "f12760b7193c2e99398cca7c90dd5f50edd46ded9df2d442912dab645fee21cb",
+      "before_hash": "ac769cdad8db81f3fc8b7a61b56ff35ecef7e709ccb21ff0ed2eea0969ece9f3",
+      "after_hash": "1c031e4bdcccf688974fab06f02e364ef1489da98a315dee36118ad7bfc38773",
+      "changes": {
+        "position": {
+          "before": [
+            1.342138869939011,
+            0.7491024082747518,
+            0.5532791765971834
+          ],
+          "after": [
+            1.342139463540167,
+            0.7491024145312969,
+            0.5532744481962004
+          ],
+          "max_abs": 4.728400982978442e-06
+        },
+        "quaternion": {
+          "before": [
+            0.7065444415285933,
+            1.890289794173822e-05,
+            0.707668673618421,
+            1.2917943006463808e-05
+          ],
+          "after": [
+            0.7065445308002029,
+            1.8895344346684306e-05,
+            0.7076685844889054,
+            1.29134083411257e-05
+          ],
+          "max_abs": 8.927160954907976e-08
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlace-v3",
+      "seed": 42,
+      "mode": "zero",
+      "action_dtype": "float32",
+      "step": 25,
+      "prefix_hash": "334f1fe912fe10c1e5fac69c836d31dfe34e2f4e8ae034c694246f0a8811f2b2",
+      "before_hash": "7397b6c9f58a6cb5bfeea5a38ade61cf6cd31ea94b798090c6c6ea658427c54e",
+      "after_hash": "5e041f0821d49fc27dbd81c023044242c3ce3d59279fbc2f340231d3c3f9e43a",
+      "changes": {
+        "position": {
+          "before": [
+            1.3423667263247752,
+            0.749104961548378,
+            0.5512919079208956
+          ],
+          "after": [
+            1.342367310836063,
+            0.7491049677488372,
+            0.5512871764139244
+          ],
+          "max_abs": 4.7315069711117985e-06
+        },
+        "quaternion": {
+          "before": [
+            0.7065404496649976,
+            1.79429911041733e-05,
+            0.7076726591593369,
+            1.1982708491584419e-05
+          ],
+          "after": [
+            0.7065406476306475,
+            1.7942263887247298e-05,
+            0.7076724615103629,
+            1.198350997623195e-05
+          ],
+          "max_abs": 1.979656498729554e-07
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlace-v3",
+      "seed": 42,
+      "mode": "zero",
+      "action_dtype": "float32",
+      "step": 49,
+      "prefix_hash": "fd704b1c010598edb3606565ed1ad171a391072cfd597dc7068a67b153f8e081",
+      "before_hash": "a23083a97beb3bea9d126ace062d76e09561ee2e412761c87ee820f2abb8be82",
+      "after_hash": "f81953d1360cb63b6eabe3a3d0506e99c5c68e23ab29e2059319a0de47163bbc",
+      "changes": {
+        "position": {
+          "before": [
+            1.3427427858781391,
+            0.7491091081374065,
+            0.5480742464687284
+          ],
+          "after": [
+            1.342743401039431,
+            0.7491091144876596,
+            0.54806943035312
+          ],
+          "max_abs": 4.816115608430316e-06
+        },
+        "quaternion": {
+          "before": [
+            0.7065455676412286,
+            1.710899650244702e-05,
+            0.7076675493691758,
+            1.1119432502604666e-05
+          ],
+          "after": [
+            0.7065457589441791,
+            1.710862141815115e-05,
+            0.7076673583694667,
+            1.1120679522174087e-05
+          ],
+          "max_abs": 1.9130295059177627e-07
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlace-v3",
+      "seed": 42,
+      "mode": "zero",
+      "action_dtype": "float32",
+      "step": 50,
+      "prefix_hash": "1b4bc522c4e379c2a0f3f44a7f5ec5614b2ba56ee70a83624780d4a9a111d1a0",
+      "before_hash": "79ca8650fa498d8dd9a31e66e058759fc52b3a06286a1ebf9d909b19cc2cf1b4",
+      "after_hash": "3a357bc974111790cf87c1959a18d323b6deb2ab2abd1b3bfa640c3c47b4c79e",
+      "changes": {
+        "position": {
+          "before": [
+            1.3427588672803132,
+            0.749109283138586,
+            0.5479389401701684
+          ],
+          "after": [
+            1.3427594836855061,
+            0.749109289495043,
+            0.5479341206361865
+          ],
+          "max_abs": 4.81953398190349e-06
+        },
+        "quaternion": {
+          "before": [
+            0.7065457741333266,
+            1.7073476591327212e-05,
+            0.7076673432058266,
+            1.1083391565612673e-05
+          ],
+          "after": [
+            0.7065459651164979,
+            1.7073114408764625e-05,
+            0.7076671525252782,
+            1.1084654496774232e-05
+          ],
+          "max_abs": 1.9098317127763664e-07
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlace-v3",
+      "seed": 42,
+      "mode": "random",
+      "action_dtype": "float32",
+      "step": 0,
+      "prefix_hash": "4b35f94aa0d3bb584f39f908c788fe3144ee7b60a58cca242a5c67fbb7016d79",
+      "before_hash": "4beabfda79954dc8f8bf03535961cddb0a0042aa16f02237606398b0d2b67c08",
+      "after_hash": "4beabfda79954dc8f8bf03535961cddb0a0042aa16f02237606398b0d2b67c08",
+      "changes": {}
+    },
+    {
+      "registration": "swm/FetchPickAndPlace-v3",
+      "seed": 42,
+      "mode": "random",
+      "action_dtype": "float32",
+      "step": 1,
+      "prefix_hash": "91e2162908dd1808ac39f53d9ce669bb9440df6fad8054abcd1f42ed9b727263",
+      "before_hash": "5ea72b0369172f42c1eb39f1b39823e7cbaa532b4dcda36958ca02fd5ef48f7d",
+      "after_hash": "e7ded70086bcb75c79ccbfa739782ee67149ca48792f6f58c70afb2dce533e00",
+      "changes": {
+        "position": {
+          "before": [
+            1.3605965909497308,
+            0.7421299463016403,
+            0.5771588811968409
+          ],
+          "after": [
+            1.361429287876742,
+            0.7418218931728298,
+            0.578161486394065
+          ],
+          "max_abs": 0.0010026051972240602
+        },
+        "quaternion": {
+          "before": [
+            0.7129979175651747,
+            -0.00019113727229081064,
+            0.7011657127453816,
+            -0.0007591340649050057
+          ],
+          "after": [
+            0.713073378316817,
+            -0.00018895322776280054,
+            0.7010889805889188,
+            -0.0007501528574774046
+          ],
+          "max_abs": 7.673215646286646e-05
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlace-v3",
+      "seed": 42,
+      "mode": "random",
+      "action_dtype": "float32",
+      "step": 10,
+      "prefix_hash": "dec30477106e83b594129a47f036931b3b7568529386d538ed006a38a002a138",
+      "before_hash": "3a1c352fe307a7474064c250ede556615840ec807e7d757da8f7156b2770db5c",
+      "after_hash": "e69cdd2e20477be00fbd1d6eb9c6f7b8edf5e1edd252406ee34da28f38bf25e6",
+      "changes": {
+        "position": {
+          "before": [
+            1.4797540780780034,
+            0.7966052483974676,
+            0.5262767107114863
+          ],
+          "after": [
+            1.4804686338890054,
+            0.7973119264344852,
+            0.5272523174384031
+          ],
+          "max_abs": 0.0009756067269167668
+        },
+        "quaternion": {
+          "before": [
+            0.7255099224194269,
+            0.0010665565877258781,
+            0.6882053177523023,
+            0.0027668656373580347
+          ],
+          "after": [
+            0.7255432507556498,
+            0.001061643118046629,
+            0.6881703382668279,
+            0.0027294187171159057
+          ],
+          "max_abs": 3.7446920242129034e-05
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlace-v3",
+      "seed": 42,
+      "mode": "random",
+      "action_dtype": "float32",
+      "step": 25,
+      "prefix_hash": "d66863d5a1f2c7a35a083e3a71fc52529d126e3842d442e9ac001070fbeee69d",
+      "before_hash": "71f2502eda6cee47f154b8d40d2efceefb13e0fa76fa6fc32a109d538a2a13b2",
+      "after_hash": "2a699b8810a2994a7fca5429f071170ef8d48e42ca5aa419ea0564672993f086",
+      "changes": {
+        "position": {
+          "before": [
+            1.4404853154871131,
+            0.8248156930189371,
+            0.6263154206584797
+          ],
+          "after": [
+            1.4396532366605679,
+            0.8252134803662738,
+            0.6254796250609354
+          ],
+          "max_abs": 0.0008357955975443199
+        },
+        "quaternion": {
+          "before": [
+            0.6971284056754491,
+            -0.0009269188921027793,
+            0.7169455882655842,
+            -0.000387670335825846
+          ],
+          "after": [
+            0.696747066608573,
+            -0.0009781609004659297,
+            0.717316091927639,
+            -0.00043890233587576266
+          ],
+          "max_abs": 0.0003813390668760963
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlace-v3",
+      "seed": 42,
+      "mode": "random",
+      "action_dtype": "float32",
+      "step": 49,
+      "prefix_hash": "0eabe530e7ee6a43f3dc9ea52de13f2fc877ca3a64e8f281702b08fca51d9c54",
+      "before_hash": "313463a65bb198704d032b48ee9dfee5af378aef4c3028a1a2fed8b9c96dc213",
+      "after_hash": "8bfddff0ec89db506d01b1bed2be27a860d921d4f74552ac6f390ded2165ddea",
+      "changes": {
+        "position": {
+          "before": [
+            1.4515376185003952,
+            0.7579041424722969,
+            0.5271533137772253
+          ],
+          "after": [
+            1.4521031010866596,
+            0.7571332798797895,
+            0.5271220229387061
+          ],
+          "max_abs": 0.0007708625925073598
+        },
+        "quaternion": {
+          "before": [
+            0.7147311327462282,
+            -5.9036317914965344e-05,
+            0.6993975388823642,
+            -0.0015770235567647744
+          ],
+          "after": [
+            0.7147102712228228,
+            -4.375015634022934e-05,
+            0.6994189499017266,
+            -0.0015358427290294392
+          ],
+          "max_abs": 4.118082773533517e-05
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlace-v3",
+      "seed": 42,
+      "mode": "random",
+      "action_dtype": "float32",
+      "step": 50,
+      "prefix_hash": "d1c20a5bbeff0b0290aadc2d37a4b7f990ff4acf98bd4aa8f55870a87426230a",
+      "before_hash": "21708ac2dea624ce920ef2f1390b4d536d239298eb07f07e53546f7dc80bbb43",
+      "after_hash": "2e5726d3af6bc3078043a09bdbd375a3ff9592ddb1e4ef6aa3624ff60a98dace",
+      "changes": {
+        "position": {
+          "before": [
+            1.452745119049385,
+            0.7773407456872851,
+            0.5142180407735633
+          ],
+          "after": [
+            1.4526594466061786,
+            0.7783937704902533,
+            0.5136505572040523
+          ],
+          "max_abs": 0.0010530248029682054
+        },
+        "quaternion": {
+          "before": [
+            0.7109317999461467,
+            0.0006876563441891789,
+            0.7032582487443692,
+            0.0018271636726769798
+          ],
+          "after": [
+            0.7108052662574019,
+            0.0006598526565874813,
+            0.7033862310593576,
+            0.0018022239948218988
+          ],
+          "max_abs": 0.0001279823149884507
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDense-v3",
+      "seed": 0,
+      "mode": "zero",
+      "action_dtype": "float32",
+      "step": 0,
+      "prefix_hash": "4b35f94aa0d3bb584f39f908c788fe3144ee7b60a58cca242a5c67fbb7016d79",
+      "before_hash": "be80b9689b3138ef28c2e15e2f4333b87d5c3e4a08f9880d2019559926312e95",
+      "after_hash": "be80b9689b3138ef28c2e15e2f4333b87d5c3e4a08f9880d2019559926312e95",
+      "changes": {}
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDense-v3",
+      "seed": 0,
+      "mode": "zero",
+      "action_dtype": "float32",
+      "step": 1,
+      "prefix_hash": "7d2c7671dcda5adcc1b40bf6c46debee19f7574bdda3df7640aaa067ba6aba2b",
+      "before_hash": "3adf6a7a26aa7b7b1f9bb9f2368dc77ee96ab6b4960ad4deace83f7074666868",
+      "after_hash": "fb1fa51336584c448af5bf7399fcbfa6129924bb1a51466c7ee93c05c16783ce",
+      "changes": {
+        "position": {
+          "before": [
+            1.341969179720155,
+            0.749100653079592,
+            0.554574670509455
+          ],
+          "after": [
+            1.341970366361024,
+            0.7491006636815768,
+            0.5545677103090298
+          ],
+          "max_abs": 6.9602004251212435e-06
+        },
+        "quaternion": {
+          "before": [
+            0.7067756019074242,
+            1.5945423308686563e-05,
+            0.7074378051669518,
+            1.0710168051931025e-05
+          ],
+          "after": [
+            0.7067714752217176,
+            1.6117512117600884e-05,
+            0.7074419279602834,
+            1.0815731619410844e-05
+          ],
+          "max_abs": 4.126685706595801e-06
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDense-v3",
+      "seed": 0,
+      "mode": "zero",
+      "action_dtype": "float32",
+      "step": 10,
+      "prefix_hash": "f12760b7193c2e99398cca7c90dd5f50edd46ded9df2d442912dab645fee21cb",
+      "before_hash": "fb741bdb50958bd9cf553381087f781a52ca5a9fab74249834f368b5243f0d75",
+      "after_hash": "58f3c2b3813433f0df38ab924f010347a996643210458cc5338451ef2e5f60c8",
+      "changes": {
+        "position": {
+          "before": [
+            1.342138869939011,
+            0.7491024082747518,
+            0.5532791765971834
+          ],
+          "after": [
+            1.342139463540167,
+            0.7491024145312969,
+            0.5532744481962004
+          ],
+          "max_abs": 4.728400982978442e-06
+        },
+        "quaternion": {
+          "before": [
+            0.7065444415285933,
+            1.890289794173822e-05,
+            0.707668673618421,
+            1.2917943006463808e-05
+          ],
+          "after": [
+            0.7065445308002029,
+            1.8895344346684306e-05,
+            0.7076685844889054,
+            1.29134083411257e-05
+          ],
+          "max_abs": 8.927160954907976e-08
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDense-v3",
+      "seed": 0,
+      "mode": "zero",
+      "action_dtype": "float32",
+      "step": 25,
+      "prefix_hash": "334f1fe912fe10c1e5fac69c836d31dfe34e2f4e8ae034c694246f0a8811f2b2",
+      "before_hash": "db2c177ade5fa61ac117b8d0c94d535a3feddef72cfda57593569455e6fdee73",
+      "after_hash": "64829228f54ceb73460fe0a2d440c760173c9a228b5f9f7297f1ff737d1d1506",
+      "changes": {
+        "position": {
+          "before": [
+            1.3423667263247752,
+            0.749104961548378,
+            0.5512919079208956
+          ],
+          "after": [
+            1.342367310836063,
+            0.7491049677488372,
+            0.5512871764139244
+          ],
+          "max_abs": 4.7315069711117985e-06
+        },
+        "quaternion": {
+          "before": [
+            0.7065404496649976,
+            1.79429911041733e-05,
+            0.7076726591593369,
+            1.1982708491584419e-05
+          ],
+          "after": [
+            0.7065406476306475,
+            1.7942263887247298e-05,
+            0.7076724615103629,
+            1.198350997623195e-05
+          ],
+          "max_abs": 1.979656498729554e-07
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDense-v3",
+      "seed": 0,
+      "mode": "zero",
+      "action_dtype": "float32",
+      "step": 49,
+      "prefix_hash": "fd704b1c010598edb3606565ed1ad171a391072cfd597dc7068a67b153f8e081",
+      "before_hash": "31b42b2b69396c5612c57ae0d201221cd7d1d7a184b1331a232fe6e05870e341",
+      "after_hash": "348b8889d573a67a237a4269310874044caafbb57a1137906d4102023203555c",
+      "changes": {
+        "position": {
+          "before": [
+            1.3427427858781391,
+            0.7491091081374065,
+            0.5480742464687284
+          ],
+          "after": [
+            1.342743401039431,
+            0.7491091144876596,
+            0.54806943035312
+          ],
+          "max_abs": 4.816115608430316e-06
+        },
+        "quaternion": {
+          "before": [
+            0.7065455676412286,
+            1.710899650244702e-05,
+            0.7076675493691758,
+            1.1119432502604666e-05
+          ],
+          "after": [
+            0.7065457589441791,
+            1.710862141815115e-05,
+            0.7076673583694667,
+            1.1120679522174087e-05
+          ],
+          "max_abs": 1.9130295059177627e-07
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDense-v3",
+      "seed": 0,
+      "mode": "zero",
+      "action_dtype": "float32",
+      "step": 50,
+      "prefix_hash": "1b4bc522c4e379c2a0f3f44a7f5ec5614b2ba56ee70a83624780d4a9a111d1a0",
+      "before_hash": "32190c29c4b91d314498c532344b62b576a44958bf55134f52e4f68cc570b556",
+      "after_hash": "47b1e55ac97ed2644c0883cf0aebc7e7a4eed9e1c6a54b7f71c5777ebf365c93",
+      "changes": {
+        "position": {
+          "before": [
+            1.3427588672803132,
+            0.749109283138586,
+            0.5479389401701684
+          ],
+          "after": [
+            1.3427594836855061,
+            0.749109289495043,
+            0.5479341206361865
+          ],
+          "max_abs": 4.81953398190349e-06
+        },
+        "quaternion": {
+          "before": [
+            0.7065457741333266,
+            1.7073476591327212e-05,
+            0.7076673432058266,
+            1.1083391565612673e-05
+          ],
+          "after": [
+            0.7065459651164979,
+            1.7073114408764625e-05,
+            0.7076671525252782,
+            1.1084654496774232e-05
+          ],
+          "max_abs": 1.9098317127763664e-07
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDense-v3",
+      "seed": 0,
+      "mode": "random",
+      "action_dtype": "float32",
+      "step": 0,
+      "prefix_hash": "4b35f94aa0d3bb584f39f908c788fe3144ee7b60a58cca242a5c67fbb7016d79",
+      "before_hash": "be80b9689b3138ef28c2e15e2f4333b87d5c3e4a08f9880d2019559926312e95",
+      "after_hash": "be80b9689b3138ef28c2e15e2f4333b87d5c3e4a08f9880d2019559926312e95",
+      "changes": {}
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDense-v3",
+      "seed": 0,
+      "mode": "random",
+      "action_dtype": "float32",
+      "step": 1,
+      "prefix_hash": "56a4eee442ef3a23e9dc2c8749758f2ea7aa1bfa0f1d2ee826df6c98eafaf33c",
+      "before_hash": "b6e22bbed6eddbf1a87c03f112eeb6bee3d648e85c3eb9ffdfccb7a39dcaf052",
+      "after_hash": "8b055312708992730df5c0a57fe1a061168a20ac693509a334bc754ef0375a46",
+      "changes": {
+        "position": {
+          "before": [
+            1.3553477058553718,
+            0.7227384755293742,
+            0.5806591028856019
+          ],
+          "after": [
+            1.355941171567268,
+            0.7215728595997105,
+            0.5818202131901479
+          ],
+          "max_abs": 0.001165615929663688
+        },
+        "quaternion": {
+          "before": [
+            0.712051026091397,
+            -0.0009020165107998315,
+            0.7021205613389624,
+            -0.0030397291759824505
+          ],
+          "after": [
+            0.7121239271287846,
+            -0.0008938583952341535,
+            0.7020467679774135,
+            -0.00300815563333383
+          ],
+          "max_abs": 7.37933615488906e-05
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDense-v3",
+      "seed": 0,
+      "mode": "random",
+      "action_dtype": "float32",
+      "step": 10,
+      "prefix_hash": "f2db6ddecc6ef04f6e48285dcb74ead855db21dfef2bfa138b1b916829c2d333",
+      "before_hash": "28e26e0cc63a35a0d187d2a211e741c01d7cbff36c28b2b5ec3e7a5fefa53407",
+      "after_hash": "e4667c85134ee3db987b0f39232d887a935d6e8e2d43cc33820b714924cc0efe",
+      "changes": {
+        "position": {
+          "before": [
+            1.430875439789086,
+            0.6958270143026146,
+            0.5521595643307654
+          ],
+          "after": [
+            1.4322634638931337,
+            0.6959313338675899,
+            0.5512758940531662
+          ],
+          "max_abs": 0.0013880241040478136
+        },
+        "quaternion": {
+          "before": [
+            0.7152693196056656,
+            -0.0003758746405158678,
+            0.6988487977164107,
+            -0.00013068829361140288
+          ],
+          "after": [
+            0.7154891843518325,
+            -0.0003973633333839294,
+            0.6986236787419003,
+            -0.0001570957178723513
+          ],
+          "max_abs": 0.00022511897451038543
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDense-v3",
+      "seed": 0,
+      "mode": "random",
+      "action_dtype": "float32",
+      "step": 25,
+      "prefix_hash": "1313eb01f590d7b4fc8bc0a7635bb55103ccb44baa65981e54b1529c94e5f6d6",
+      "before_hash": "696943f85c45e71c408abb7739a9ccf16fbae8c59b10663362fc8153ce5f4ac8",
+      "after_hash": "a40363a27c7d383a21ac903425bc5c30945f6cfd1ab86f2436fe2b23832c269e",
+      "changes": {
+        "position": {
+          "before": [
+            1.3777785063297876,
+            0.7515924006354483,
+            0.5449505629152557
+          ],
+          "after": [
+            1.3788774405856892,
+            0.7510398621739776,
+            0.5450854614020384
+          ],
+          "max_abs": 0.0010989342559015736
+        },
+        "quaternion": {
+          "before": [
+            0.7121677364214449,
+            -0.0003081803200610058,
+            0.7020082537673591,
+            -0.0011966067642235625
+          ],
+          "after": [
+            0.7122450982116645,
+            -0.000305515470517406,
+            0.7019297699252067,
+            -0.001193660965366587
+          ],
+          "max_abs": 7.848384215236592e-05
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDense-v3",
+      "seed": 0,
+      "mode": "random",
+      "action_dtype": "float32",
+      "step": 49,
+      "prefix_hash": "ee4e3da4fb86d5e1bbaf9e92799124a305078e812305bd8405519bbb011761fb",
+      "before_hash": "7e818bd2e4e2b119e8cd0c25bb757613b72d43cd99122a85773a772ac525110b",
+      "after_hash": "464a56605ca3efd1fd306b9fe206b114b3252d8253dae31dc277d45deb75b316",
+      "changes": {
+        "position": {
+          "before": [
+            1.2603228444623993,
+            0.8626050358002595,
+            0.43819716129105324
+          ],
+          "after": [
+            1.2597520359164798,
+            0.8623173635745253,
+            0.43828380694077707
+          ],
+          "max_abs": 0.00057080854591951
+        },
+        "quaternion": {
+          "before": [
+            0.7085154409394108,
+            -0.00013798203741613446,
+            0.7056952960471166,
+            6.954310524304175e-06
+          ],
+          "after": [
+            0.7090476223197976,
+            -0.00021639881129782018,
+            0.7051605602431721,
+            -8.2047128578705e-05
+          ],
+          "max_abs": 0.000534735803944475
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDense-v3",
+      "seed": 0,
+      "mode": "random",
+      "action_dtype": "float32",
+      "step": 50,
+      "prefix_hash": "9d91e45f64e1790a8adf458b052008e7225154dfa9c0d72207cdaf1ebc501855",
+      "before_hash": "bbb0a04ecef6ee5203f301754ddb47e3be425aa0e9f27969df49d6c27c5128f1",
+      "after_hash": "19d8926d4ec0917c8a6f450c934b3ed372c245448a6203812eba0413d6503951",
+      "changes": {
+        "position": {
+          "before": [
+            1.2432958669377578,
+            0.8542563950624366,
+            0.43965418183754407
+          ],
+          "after": [
+            1.242512534333489,
+            0.8541020113711835,
+            0.43958565250782067
+          ],
+          "max_abs": 0.0007833326042687716
+        },
+        "quaternion": {
+          "before": [
+            0.7123501278008008,
+            0.001956424795695598,
+            0.7018203080941995,
+            -0.0013126198094561559
+          ],
+          "after": [
+            0.7122845522104005,
+            0.0018107665631429543,
+            0.7018874155936229,
+            -0.0012221449128069217
+          ],
+          "max_abs": 0.0001456582325526437
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDense-v3",
+      "seed": 17,
+      "mode": "zero",
+      "action_dtype": "float32",
+      "step": 0,
+      "prefix_hash": "4b35f94aa0d3bb584f39f908c788fe3144ee7b60a58cca242a5c67fbb7016d79",
+      "before_hash": "4d1c468e9eb894530f37304bae4212826f080eee79ca5edb6f4cd76e6aef39b5",
+      "after_hash": "4d1c468e9eb894530f37304bae4212826f080eee79ca5edb6f4cd76e6aef39b5",
+      "changes": {}
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDense-v3",
+      "seed": 17,
+      "mode": "zero",
+      "action_dtype": "float32",
+      "step": 1,
+      "prefix_hash": "7d2c7671dcda5adcc1b40bf6c46debee19f7574bdda3df7640aaa067ba6aba2b",
+      "before_hash": "22ce5237f1bdbefbc96494cab12590e6b7f3a9fbe93182f691ddaed4b6d4bd6f",
+      "after_hash": "e19da4e6671d47c045b4d2f548fd4201076e5d61dc10e918944bdab5db77f3b5",
+      "changes": {
+        "position": {
+          "before": [
+            1.341969179720155,
+            0.749100653079592,
+            0.554574670509455
+          ],
+          "after": [
+            1.341970366361024,
+            0.7491006636815768,
+            0.5545677103090298
+          ],
+          "max_abs": 6.9602004251212435e-06
+        },
+        "quaternion": {
+          "before": [
+            0.7067756019074242,
+            1.5945423308686563e-05,
+            0.7074378051669518,
+            1.0710168051931025e-05
+          ],
+          "after": [
+            0.7067714752217176,
+            1.6117512117600884e-05,
+            0.7074419279602834,
+            1.0815731619410844e-05
+          ],
+          "max_abs": 4.126685706595801e-06
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDense-v3",
+      "seed": 17,
+      "mode": "zero",
+      "action_dtype": "float32",
+      "step": 10,
+      "prefix_hash": "f12760b7193c2e99398cca7c90dd5f50edd46ded9df2d442912dab645fee21cb",
+      "before_hash": "c4b9674597d02214822a970ca761ee14025a7fa5f3a98aec1eeaae920e5b6a9d",
+      "after_hash": "a8158bf747a3e9fa2b7f76b21a19c1b1cb206e8ac68688ca70100b59391fad40",
+      "changes": {
+        "position": {
+          "before": [
+            1.342138869939011,
+            0.7491024082747518,
+            0.5532791765971834
+          ],
+          "after": [
+            1.342139463540167,
+            0.7491024145312969,
+            0.5532744481962004
+          ],
+          "max_abs": 4.728400982978442e-06
+        },
+        "quaternion": {
+          "before": [
+            0.7065444415285933,
+            1.890289794173822e-05,
+            0.707668673618421,
+            1.2917943006463808e-05
+          ],
+          "after": [
+            0.7065445308002029,
+            1.8895344346684306e-05,
+            0.7076685844889054,
+            1.29134083411257e-05
+          ],
+          "max_abs": 8.927160954907976e-08
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDense-v3",
+      "seed": 17,
+      "mode": "zero",
+      "action_dtype": "float32",
+      "step": 25,
+      "prefix_hash": "334f1fe912fe10c1e5fac69c836d31dfe34e2f4e8ae034c694246f0a8811f2b2",
+      "before_hash": "a12a2a74364ae5150c7df6ce43bf294a0bfc13cd7c4db422ada9a7c485c985db",
+      "after_hash": "38bbdbc1830e23499454492e5280cfaf949b6f11731bf0a6192a46160855eeee",
+      "changes": {
+        "position": {
+          "before": [
+            1.3423667263247752,
+            0.749104961548378,
+            0.5512919079208956
+          ],
+          "after": [
+            1.342367310836063,
+            0.7491049677488372,
+            0.5512871764139244
+          ],
+          "max_abs": 4.7315069711117985e-06
+        },
+        "quaternion": {
+          "before": [
+            0.7065404496649976,
+            1.79429911041733e-05,
+            0.7076726591593369,
+            1.1982708491584419e-05
+          ],
+          "after": [
+            0.7065406476306475,
+            1.7942263887247298e-05,
+            0.7076724615103629,
+            1.198350997623195e-05
+          ],
+          "max_abs": 1.979656498729554e-07
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDense-v3",
+      "seed": 17,
+      "mode": "zero",
+      "action_dtype": "float32",
+      "step": 49,
+      "prefix_hash": "fd704b1c010598edb3606565ed1ad171a391072cfd597dc7068a67b153f8e081",
+      "before_hash": "a793fa4939fb1450a25b92b23bb889f9f2f128b7b9b912b19d1f7d14bae305b4",
+      "after_hash": "21c6107c42b5842f006b95a4e924540fb01d54db3cb6cafab711e2d41d4f95d4",
+      "changes": {
+        "position": {
+          "before": [
+            1.3427427858781391,
+            0.7491091081374065,
+            0.5480742464687284
+          ],
+          "after": [
+            1.342743401039431,
+            0.7491091144876596,
+            0.54806943035312
+          ],
+          "max_abs": 4.816115608430316e-06
+        },
+        "quaternion": {
+          "before": [
+            0.7065455676412286,
+            1.710899650244702e-05,
+            0.7076675493691758,
+            1.1119432502604666e-05
+          ],
+          "after": [
+            0.7065457589441791,
+            1.710862141815115e-05,
+            0.7076673583694667,
+            1.1120679522174087e-05
+          ],
+          "max_abs": 1.9130295059177627e-07
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDense-v3",
+      "seed": 17,
+      "mode": "zero",
+      "action_dtype": "float32",
+      "step": 50,
+      "prefix_hash": "1b4bc522c4e379c2a0f3f44a7f5ec5614b2ba56ee70a83624780d4a9a111d1a0",
+      "before_hash": "c8f5a8d182d11f244c345b8108262207b92c0078581600e114cdec14b77aa0ca",
+      "after_hash": "7f8990a9e8af5527f27cfb7444d98e4e986821feb5806f4f495b714c6a7a82f8",
+      "changes": {
+        "position": {
+          "before": [
+            1.3427588672803132,
+            0.749109283138586,
+            0.5479389401701684
+          ],
+          "after": [
+            1.3427594836855061,
+            0.749109289495043,
+            0.5479341206361865
+          ],
+          "max_abs": 4.81953398190349e-06
+        },
+        "quaternion": {
+          "before": [
+            0.7065457741333266,
+            1.7073476591327212e-05,
+            0.7076673432058266,
+            1.1083391565612673e-05
+          ],
+          "after": [
+            0.7065459651164979,
+            1.7073114408764625e-05,
+            0.7076671525252782,
+            1.1084654496774232e-05
+          ],
+          "max_abs": 1.9098317127763664e-07
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDense-v3",
+      "seed": 17,
+      "mode": "random",
+      "action_dtype": "float32",
+      "step": 0,
+      "prefix_hash": "4b35f94aa0d3bb584f39f908c788fe3144ee7b60a58cca242a5c67fbb7016d79",
+      "before_hash": "4d1c468e9eb894530f37304bae4212826f080eee79ca5edb6f4cd76e6aef39b5",
+      "after_hash": "4d1c468e9eb894530f37304bae4212826f080eee79ca5edb6f4cd76e6aef39b5",
+      "changes": {}
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDense-v3",
+      "seed": 17,
+      "mode": "random",
+      "action_dtype": "float32",
+      "step": 1,
+      "prefix_hash": "fb1714978d1c38652906eaf0e60b1fc292df3e8d711ee6b447f770a96be19d6c",
+      "before_hash": "5dfa0f9dd14fefa1baf5bae0f341e47ee5f593c147943e551dbfa7df90f5378a",
+      "after_hash": "3f360f107aaa5bbcbeb8075ffa589a288dc08cf09567625ed6e9afe70f586c54",
+      "changes": {
+        "position": {
+          "before": [
+            1.3651849586542277,
+            0.7585542356916324,
+            0.5370116557907174
+          ],
+          "after": [
+            1.3662490172718798,
+            0.7589724114203734,
+            0.5362105060673925
+          ],
+          "max_abs": 0.0010640586176520195
+        },
+        "quaternion": {
+          "before": [
+            0.7115230092233793,
+            0.0003841734449433242,
+            0.7026618156511192,
+            0.0011102172505868969
+          ],
+          "after": [
+            0.711582226701192,
+            0.00038148973370860477,
+            0.7026018654253406,
+            0.0010990038162430708
+          ],
+          "max_abs": 5.9950225778537813e-05
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDense-v3",
+      "seed": 17,
+      "mode": "random",
+      "action_dtype": "float32",
+      "step": 10,
+      "prefix_hash": "2e2fb99e779cd8e82646e2cc14146b480878413eba558edfa913eb0a8d12f309",
+      "before_hash": "9e804fb76787793a4ec0b5f0039e92923992cb1e1ecadd29ff5a0d8c1b14ebe4",
+      "after_hash": "5d94cc1d8b572e548f12bb16cd83df0e76ae9f72754275bb1d0afbe4042a9059",
+      "changes": {
+        "position": {
+          "before": [
+            1.3811236173735544,
+            0.7241554798776749,
+            0.5182979822654804
+          ],
+          "after": [
+            1.3813167202668144,
+            0.7246845661749527,
+            0.5178206981544697
+          ],
+          "max_abs": 0.0005290862972777699
+        },
+        "quaternion": {
+          "before": [
+            0.7066371123403854,
+            0.00044396607145947425,
+            0.7075738458135449,
+            0.001745588152770778
+          ],
+          "after": [
+            0.7066748905206692,
+            0.00043088423038957144,
+            0.7075362147446432,
+            0.001708294823077345
+          ],
+          "max_abs": 3.777818028383173e-05
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDense-v3",
+      "seed": 17,
+      "mode": "random",
+      "action_dtype": "float32",
+      "step": 25,
+      "prefix_hash": "4c2b2dc4cc23d3c2d5f46105f65836ff0eea5edc4140811fa3cfcfa300e37d48",
+      "before_hash": "3353e71f4f1ab50fa58a6ef78728116ebac7b1492e794a3959d4af5b3ea86a47",
+      "after_hash": "09f535fad881d9ef1f96b808443d9134b595f508a19e222a605205ee19de1a1f",
+      "changes": {
+        "position": {
+          "before": [
+            1.489362951522588,
+            0.8552007426433325,
+            0.46162430251025355
+          ],
+          "after": [
+            1.4897617993194372,
+            0.8551301265538453,
+            0.4610501953333196
+          ],
+          "max_abs": 0.0005741071769339579
+        },
+        "quaternion": {
+          "before": [
+            0.7115788866312658,
+            -0.001011618141700102,
+            0.702605310898572,
+            -0.0004917585431864283
+          ],
+          "after": [
+            0.7118263113943878,
+            -0.0009401657867630989,
+            0.7023547702971666,
+            -0.00044174174322030024
+          ],
+          "max_abs": 0.00025054060140539125
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDense-v3",
+      "seed": 17,
+      "mode": "random",
+      "action_dtype": "float32",
+      "step": 49,
+      "prefix_hash": "35f96f495ebcdcbae495a50b49ce31c8b6e50ef8f7d58354a84c1c42495d9617",
+      "before_hash": "25372dbd1ed14b0049fd844912b9fb2671abf8f226eb35718aaf2d083a567b2f",
+      "after_hash": "9c082c8876db30018dd389c2031a705a18f71c23648533799c2a3998b47902c3",
+      "changes": {
+        "position": {
+          "before": [
+            1.4657849816967108,
+            0.9912882354825131,
+            0.46257033434160694
+          ],
+          "after": [
+            1.465092411803107,
+            0.9914775118513722,
+            0.4612559936671853
+          ],
+          "max_abs": 0.0013143406744216546
+        },
+        "quaternion": {
+          "before": [
+            0.6980805411103397,
+            -0.004776814346601363,
+            0.7159897665288911,
+            -0.004403906640402258
+          ],
+          "after": [
+            0.6974630279383645,
+            -0.004947383642266365,
+            0.7165890831839885,
+            -0.004575359622515679
+          ],
+          "max_abs": 0.0006175131719752258
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDense-v3",
+      "seed": 17,
+      "mode": "random",
+      "action_dtype": "float32",
+      "step": 50,
+      "prefix_hash": "26148e5863da4f540f743d5cd6598f7c4adfb107865aa7b05a633689da81c7e3",
+      "before_hash": "7f94015b7dc0d3de4f22470afe5d246ff3c01928462aaca42bc6d72a543d3cb4",
+      "after_hash": "502f5eb4fa515cbd9058593b55a20231aa8b5961954870c43d8f2218236bfa7b",
+      "changes": {
+        "position": {
+          "before": [
+            1.4489388777014889,
+            0.9696370596800796,
+            0.44473559081320957
+          ],
+          "after": [
+            1.4483548029893922,
+            0.9686233169499536,
+            0.4442858741011775
+          ],
+          "max_abs": 0.0010137427301259994
+        },
+        "quaternion": {
+          "before": [
+            0.6734063283548332,
+            -0.01204952651760717,
+            0.7390548476149941,
+            -0.013291277558677247
+          ],
+          "after": [
+            0.6724281141127525,
+            -0.012285577206851334,
+            0.7399367399293529,
+            -0.013532067328500194
+          ],
+          "max_abs": 0.000978214242080666
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDense-v3",
+      "seed": 42,
+      "mode": "zero",
+      "action_dtype": "float32",
+      "step": 0,
+      "prefix_hash": "4b35f94aa0d3bb584f39f908c788fe3144ee7b60a58cca242a5c67fbb7016d79",
+      "before_hash": "4beabfda79954dc8f8bf03535961cddb0a0042aa16f02237606398b0d2b67c08",
+      "after_hash": "4beabfda79954dc8f8bf03535961cddb0a0042aa16f02237606398b0d2b67c08",
+      "changes": {}
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDense-v3",
+      "seed": 42,
+      "mode": "zero",
+      "action_dtype": "float32",
+      "step": 1,
+      "prefix_hash": "7d2c7671dcda5adcc1b40bf6c46debee19f7574bdda3df7640aaa067ba6aba2b",
+      "before_hash": "93a7d84899fcff84cd344403a97ce3fdad8d237c6fe5bcef59798ec775d7ace5",
+      "after_hash": "35a96e1019df98caedc52e66727de3f8d3b4076ad8c5b7c7d638155eee78ce07",
+      "changes": {
+        "position": {
+          "before": [
+            1.341969179720155,
+            0.749100653079592,
+            0.554574670509455
+          ],
+          "after": [
+            1.341970366361024,
+            0.7491006636815768,
+            0.5545677103090298
+          ],
+          "max_abs": 6.9602004251212435e-06
+        },
+        "quaternion": {
+          "before": [
+            0.7067756019074242,
+            1.5945423308686563e-05,
+            0.7074378051669518,
+            1.0710168051931025e-05
+          ],
+          "after": [
+            0.7067714752217176,
+            1.6117512117600884e-05,
+            0.7074419279602834,
+            1.0815731619410844e-05
+          ],
+          "max_abs": 4.126685706595801e-06
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDense-v3",
+      "seed": 42,
+      "mode": "zero",
+      "action_dtype": "float32",
+      "step": 10,
+      "prefix_hash": "f12760b7193c2e99398cca7c90dd5f50edd46ded9df2d442912dab645fee21cb",
+      "before_hash": "ac769cdad8db81f3fc8b7a61b56ff35ecef7e709ccb21ff0ed2eea0969ece9f3",
+      "after_hash": "1c031e4bdcccf688974fab06f02e364ef1489da98a315dee36118ad7bfc38773",
+      "changes": {
+        "position": {
+          "before": [
+            1.342138869939011,
+            0.7491024082747518,
+            0.5532791765971834
+          ],
+          "after": [
+            1.342139463540167,
+            0.7491024145312969,
+            0.5532744481962004
+          ],
+          "max_abs": 4.728400982978442e-06
+        },
+        "quaternion": {
+          "before": [
+            0.7065444415285933,
+            1.890289794173822e-05,
+            0.707668673618421,
+            1.2917943006463808e-05
+          ],
+          "after": [
+            0.7065445308002029,
+            1.8895344346684306e-05,
+            0.7076685844889054,
+            1.29134083411257e-05
+          ],
+          "max_abs": 8.927160954907976e-08
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDense-v3",
+      "seed": 42,
+      "mode": "zero",
+      "action_dtype": "float32",
+      "step": 25,
+      "prefix_hash": "334f1fe912fe10c1e5fac69c836d31dfe34e2f4e8ae034c694246f0a8811f2b2",
+      "before_hash": "7397b6c9f58a6cb5bfeea5a38ade61cf6cd31ea94b798090c6c6ea658427c54e",
+      "after_hash": "5e041f0821d49fc27dbd81c023044242c3ce3d59279fbc2f340231d3c3f9e43a",
+      "changes": {
+        "position": {
+          "before": [
+            1.3423667263247752,
+            0.749104961548378,
+            0.5512919079208956
+          ],
+          "after": [
+            1.342367310836063,
+            0.7491049677488372,
+            0.5512871764139244
+          ],
+          "max_abs": 4.7315069711117985e-06
+        },
+        "quaternion": {
+          "before": [
+            0.7065404496649976,
+            1.79429911041733e-05,
+            0.7076726591593369,
+            1.1982708491584419e-05
+          ],
+          "after": [
+            0.7065406476306475,
+            1.7942263887247298e-05,
+            0.7076724615103629,
+            1.198350997623195e-05
+          ],
+          "max_abs": 1.979656498729554e-07
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDense-v3",
+      "seed": 42,
+      "mode": "zero",
+      "action_dtype": "float32",
+      "step": 49,
+      "prefix_hash": "fd704b1c010598edb3606565ed1ad171a391072cfd597dc7068a67b153f8e081",
+      "before_hash": "a23083a97beb3bea9d126ace062d76e09561ee2e412761c87ee820f2abb8be82",
+      "after_hash": "f81953d1360cb63b6eabe3a3d0506e99c5c68e23ab29e2059319a0de47163bbc",
+      "changes": {
+        "position": {
+          "before": [
+            1.3427427858781391,
+            0.7491091081374065,
+            0.5480742464687284
+          ],
+          "after": [
+            1.342743401039431,
+            0.7491091144876596,
+            0.54806943035312
+          ],
+          "max_abs": 4.816115608430316e-06
+        },
+        "quaternion": {
+          "before": [
+            0.7065455676412286,
+            1.710899650244702e-05,
+            0.7076675493691758,
+            1.1119432502604666e-05
+          ],
+          "after": [
+            0.7065457589441791,
+            1.710862141815115e-05,
+            0.7076673583694667,
+            1.1120679522174087e-05
+          ],
+          "max_abs": 1.9130295059177627e-07
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDense-v3",
+      "seed": 42,
+      "mode": "zero",
+      "action_dtype": "float32",
+      "step": 50,
+      "prefix_hash": "1b4bc522c4e379c2a0f3f44a7f5ec5614b2ba56ee70a83624780d4a9a111d1a0",
+      "before_hash": "79ca8650fa498d8dd9a31e66e058759fc52b3a06286a1ebf9d909b19cc2cf1b4",
+      "after_hash": "3a357bc974111790cf87c1959a18d323b6deb2ab2abd1b3bfa640c3c47b4c79e",
+      "changes": {
+        "position": {
+          "before": [
+            1.3427588672803132,
+            0.749109283138586,
+            0.5479389401701684
+          ],
+          "after": [
+            1.3427594836855061,
+            0.749109289495043,
+            0.5479341206361865
+          ],
+          "max_abs": 4.81953398190349e-06
+        },
+        "quaternion": {
+          "before": [
+            0.7065457741333266,
+            1.7073476591327212e-05,
+            0.7076673432058266,
+            1.1083391565612673e-05
+          ],
+          "after": [
+            0.7065459651164979,
+            1.7073114408764625e-05,
+            0.7076671525252782,
+            1.1084654496774232e-05
+          ],
+          "max_abs": 1.9098317127763664e-07
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDense-v3",
+      "seed": 42,
+      "mode": "random",
+      "action_dtype": "float32",
+      "step": 0,
+      "prefix_hash": "4b35f94aa0d3bb584f39f908c788fe3144ee7b60a58cca242a5c67fbb7016d79",
+      "before_hash": "4beabfda79954dc8f8bf03535961cddb0a0042aa16f02237606398b0d2b67c08",
+      "after_hash": "4beabfda79954dc8f8bf03535961cddb0a0042aa16f02237606398b0d2b67c08",
+      "changes": {}
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDense-v3",
+      "seed": 42,
+      "mode": "random",
+      "action_dtype": "float32",
+      "step": 1,
+      "prefix_hash": "91e2162908dd1808ac39f53d9ce669bb9440df6fad8054abcd1f42ed9b727263",
+      "before_hash": "5ea72b0369172f42c1eb39f1b39823e7cbaa532b4dcda36958ca02fd5ef48f7d",
+      "after_hash": "e7ded70086bcb75c79ccbfa739782ee67149ca48792f6f58c70afb2dce533e00",
+      "changes": {
+        "position": {
+          "before": [
+            1.3605965909497308,
+            0.7421299463016403,
+            0.5771588811968409
+          ],
+          "after": [
+            1.361429287876742,
+            0.7418218931728298,
+            0.578161486394065
+          ],
+          "max_abs": 0.0010026051972240602
+        },
+        "quaternion": {
+          "before": [
+            0.7129979175651747,
+            -0.00019113727229081064,
+            0.7011657127453816,
+            -0.0007591340649050057
+          ],
+          "after": [
+            0.713073378316817,
+            -0.00018895322776280054,
+            0.7010889805889188,
+            -0.0007501528574774046
+          ],
+          "max_abs": 7.673215646286646e-05
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDense-v3",
+      "seed": 42,
+      "mode": "random",
+      "action_dtype": "float32",
+      "step": 10,
+      "prefix_hash": "dec30477106e83b594129a47f036931b3b7568529386d538ed006a38a002a138",
+      "before_hash": "3a1c352fe307a7474064c250ede556615840ec807e7d757da8f7156b2770db5c",
+      "after_hash": "e69cdd2e20477be00fbd1d6eb9c6f7b8edf5e1edd252406ee34da28f38bf25e6",
+      "changes": {
+        "position": {
+          "before": [
+            1.4797540780780034,
+            0.7966052483974676,
+            0.5262767107114863
+          ],
+          "after": [
+            1.4804686338890054,
+            0.7973119264344852,
+            0.5272523174384031
+          ],
+          "max_abs": 0.0009756067269167668
+        },
+        "quaternion": {
+          "before": [
+            0.7255099224194269,
+            0.0010665565877258781,
+            0.6882053177523023,
+            0.0027668656373580347
+          ],
+          "after": [
+            0.7255432507556498,
+            0.001061643118046629,
+            0.6881703382668279,
+            0.0027294187171159057
+          ],
+          "max_abs": 3.7446920242129034e-05
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDense-v3",
+      "seed": 42,
+      "mode": "random",
+      "action_dtype": "float32",
+      "step": 25,
+      "prefix_hash": "d66863d5a1f2c7a35a083e3a71fc52529d126e3842d442e9ac001070fbeee69d",
+      "before_hash": "71f2502eda6cee47f154b8d40d2efceefb13e0fa76fa6fc32a109d538a2a13b2",
+      "after_hash": "2a699b8810a2994a7fca5429f071170ef8d48e42ca5aa419ea0564672993f086",
+      "changes": {
+        "position": {
+          "before": [
+            1.4404853154871131,
+            0.8248156930189371,
+            0.6263154206584797
+          ],
+          "after": [
+            1.4396532366605679,
+            0.8252134803662738,
+            0.6254796250609354
+          ],
+          "max_abs": 0.0008357955975443199
+        },
+        "quaternion": {
+          "before": [
+            0.6971284056754491,
+            -0.0009269188921027793,
+            0.7169455882655842,
+            -0.000387670335825846
+          ],
+          "after": [
+            0.696747066608573,
+            -0.0009781609004659297,
+            0.717316091927639,
+            -0.00043890233587576266
+          ],
+          "max_abs": 0.0003813390668760963
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDense-v3",
+      "seed": 42,
+      "mode": "random",
+      "action_dtype": "float32",
+      "step": 49,
+      "prefix_hash": "0eabe530e7ee6a43f3dc9ea52de13f2fc877ca3a64e8f281702b08fca51d9c54",
+      "before_hash": "313463a65bb198704d032b48ee9dfee5af378aef4c3028a1a2fed8b9c96dc213",
+      "after_hash": "8bfddff0ec89db506d01b1bed2be27a860d921d4f74552ac6f390ded2165ddea",
+      "changes": {
+        "position": {
+          "before": [
+            1.4515376185003952,
+            0.7579041424722969,
+            0.5271533137772253
+          ],
+          "after": [
+            1.4521031010866596,
+            0.7571332798797895,
+            0.5271220229387061
+          ],
+          "max_abs": 0.0007708625925073598
+        },
+        "quaternion": {
+          "before": [
+            0.7147311327462282,
+            -5.9036317914965344e-05,
+            0.6993975388823642,
+            -0.0015770235567647744
+          ],
+          "after": [
+            0.7147102712228228,
+            -4.375015634022934e-05,
+            0.6994189499017266,
+            -0.0015358427290294392
+          ],
+          "max_abs": 4.118082773533517e-05
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDense-v3",
+      "seed": 42,
+      "mode": "random",
+      "action_dtype": "float32",
+      "step": 50,
+      "prefix_hash": "d1c20a5bbeff0b0290aadc2d37a4b7f990ff4acf98bd4aa8f55870a87426230a",
+      "before_hash": "21708ac2dea624ce920ef2f1390b4d536d239298eb07f07e53546f7dc80bbb43",
+      "after_hash": "2e5726d3af6bc3078043a09bdbd375a3ff9592ddb1e4ef6aa3624ff60a98dace",
+      "changes": {
+        "position": {
+          "before": [
+            1.452745119049385,
+            0.7773407456872851,
+            0.5142180407735633
+          ],
+          "after": [
+            1.4526594466061786,
+            0.7783937704902533,
+            0.5136505572040523
+          ],
+          "max_abs": 0.0010530248029682054
+        },
+        "quaternion": {
+          "before": [
+            0.7109317999461467,
+            0.0006876563441891789,
+            0.7032582487443692,
+            0.0018271636726769798
+          ],
+          "after": [
+            0.7108052662574019,
+            0.0006598526565874813,
+            0.7033862310593576,
+            0.0018022239948218988
+          ],
+          "max_abs": 0.0001279823149884507
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDict-v3",
+      "seed": 0,
+      "mode": "zero",
+      "action_dtype": "float32",
+      "step": 0,
+      "prefix_hash": "4b35f94aa0d3bb584f39f908c788fe3144ee7b60a58cca242a5c67fbb7016d79",
+      "before_hash": "be80b9689b3138ef28c2e15e2f4333b87d5c3e4a08f9880d2019559926312e95",
+      "after_hash": "be80b9689b3138ef28c2e15e2f4333b87d5c3e4a08f9880d2019559926312e95",
+      "changes": {}
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDict-v3",
+      "seed": 0,
+      "mode": "zero",
+      "action_dtype": "float32",
+      "step": 1,
+      "prefix_hash": "7d2c7671dcda5adcc1b40bf6c46debee19f7574bdda3df7640aaa067ba6aba2b",
+      "before_hash": "3adf6a7a26aa7b7b1f9bb9f2368dc77ee96ab6b4960ad4deace83f7074666868",
+      "after_hash": "fb1fa51336584c448af5bf7399fcbfa6129924bb1a51466c7ee93c05c16783ce",
+      "changes": {
+        "position": {
+          "before": [
+            1.341969179720155,
+            0.749100653079592,
+            0.554574670509455
+          ],
+          "after": [
+            1.341970366361024,
+            0.7491006636815768,
+            0.5545677103090298
+          ],
+          "max_abs": 6.9602004251212435e-06
+        },
+        "quaternion": {
+          "before": [
+            0.7067756019074242,
+            1.5945423308686563e-05,
+            0.7074378051669518,
+            1.0710168051931025e-05
+          ],
+          "after": [
+            0.7067714752217176,
+            1.6117512117600884e-05,
+            0.7074419279602834,
+            1.0815731619410844e-05
+          ],
+          "max_abs": 4.126685706595801e-06
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDict-v3",
+      "seed": 0,
+      "mode": "zero",
+      "action_dtype": "float32",
+      "step": 10,
+      "prefix_hash": "f12760b7193c2e99398cca7c90dd5f50edd46ded9df2d442912dab645fee21cb",
+      "before_hash": "fb741bdb50958bd9cf553381087f781a52ca5a9fab74249834f368b5243f0d75",
+      "after_hash": "58f3c2b3813433f0df38ab924f010347a996643210458cc5338451ef2e5f60c8",
+      "changes": {
+        "position": {
+          "before": [
+            1.342138869939011,
+            0.7491024082747518,
+            0.5532791765971834
+          ],
+          "after": [
+            1.342139463540167,
+            0.7491024145312969,
+            0.5532744481962004
+          ],
+          "max_abs": 4.728400982978442e-06
+        },
+        "quaternion": {
+          "before": [
+            0.7065444415285933,
+            1.890289794173822e-05,
+            0.707668673618421,
+            1.2917943006463808e-05
+          ],
+          "after": [
+            0.7065445308002029,
+            1.8895344346684306e-05,
+            0.7076685844889054,
+            1.29134083411257e-05
+          ],
+          "max_abs": 8.927160954907976e-08
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDict-v3",
+      "seed": 0,
+      "mode": "zero",
+      "action_dtype": "float32",
+      "step": 25,
+      "prefix_hash": "334f1fe912fe10c1e5fac69c836d31dfe34e2f4e8ae034c694246f0a8811f2b2",
+      "before_hash": "db2c177ade5fa61ac117b8d0c94d535a3feddef72cfda57593569455e6fdee73",
+      "after_hash": "64829228f54ceb73460fe0a2d440c760173c9a228b5f9f7297f1ff737d1d1506",
+      "changes": {
+        "position": {
+          "before": [
+            1.3423667263247752,
+            0.749104961548378,
+            0.5512919079208956
+          ],
+          "after": [
+            1.342367310836063,
+            0.7491049677488372,
+            0.5512871764139244
+          ],
+          "max_abs": 4.7315069711117985e-06
+        },
+        "quaternion": {
+          "before": [
+            0.7065404496649976,
+            1.79429911041733e-05,
+            0.7076726591593369,
+            1.1982708491584419e-05
+          ],
+          "after": [
+            0.7065406476306475,
+            1.7942263887247298e-05,
+            0.7076724615103629,
+            1.198350997623195e-05
+          ],
+          "max_abs": 1.979656498729554e-07
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDict-v3",
+      "seed": 0,
+      "mode": "zero",
+      "action_dtype": "float32",
+      "step": 49,
+      "prefix_hash": "fd704b1c010598edb3606565ed1ad171a391072cfd597dc7068a67b153f8e081",
+      "before_hash": "31b42b2b69396c5612c57ae0d201221cd7d1d7a184b1331a232fe6e05870e341",
+      "after_hash": "348b8889d573a67a237a4269310874044caafbb57a1137906d4102023203555c",
+      "changes": {
+        "position": {
+          "before": [
+            1.3427427858781391,
+            0.7491091081374065,
+            0.5480742464687284
+          ],
+          "after": [
+            1.342743401039431,
+            0.7491091144876596,
+            0.54806943035312
+          ],
+          "max_abs": 4.816115608430316e-06
+        },
+        "quaternion": {
+          "before": [
+            0.7065455676412286,
+            1.710899650244702e-05,
+            0.7076675493691758,
+            1.1119432502604666e-05
+          ],
+          "after": [
+            0.7065457589441791,
+            1.710862141815115e-05,
+            0.7076673583694667,
+            1.1120679522174087e-05
+          ],
+          "max_abs": 1.9130295059177627e-07
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDict-v3",
+      "seed": 0,
+      "mode": "zero",
+      "action_dtype": "float32",
+      "step": 50,
+      "prefix_hash": "1b4bc522c4e379c2a0f3f44a7f5ec5614b2ba56ee70a83624780d4a9a111d1a0",
+      "before_hash": "32190c29c4b91d314498c532344b62b576a44958bf55134f52e4f68cc570b556",
+      "after_hash": "47b1e55ac97ed2644c0883cf0aebc7e7a4eed9e1c6a54b7f71c5777ebf365c93",
+      "changes": {
+        "position": {
+          "before": [
+            1.3427588672803132,
+            0.749109283138586,
+            0.5479389401701684
+          ],
+          "after": [
+            1.3427594836855061,
+            0.749109289495043,
+            0.5479341206361865
+          ],
+          "max_abs": 4.81953398190349e-06
+        },
+        "quaternion": {
+          "before": [
+            0.7065457741333266,
+            1.7073476591327212e-05,
+            0.7076673432058266,
+            1.1083391565612673e-05
+          ],
+          "after": [
+            0.7065459651164979,
+            1.7073114408764625e-05,
+            0.7076671525252782,
+            1.1084654496774232e-05
+          ],
+          "max_abs": 1.9098317127763664e-07
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDict-v3",
+      "seed": 0,
+      "mode": "random",
+      "action_dtype": "float32",
+      "step": 0,
+      "prefix_hash": "4b35f94aa0d3bb584f39f908c788fe3144ee7b60a58cca242a5c67fbb7016d79",
+      "before_hash": "be80b9689b3138ef28c2e15e2f4333b87d5c3e4a08f9880d2019559926312e95",
+      "after_hash": "be80b9689b3138ef28c2e15e2f4333b87d5c3e4a08f9880d2019559926312e95",
+      "changes": {}
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDict-v3",
+      "seed": 0,
+      "mode": "random",
+      "action_dtype": "float32",
+      "step": 1,
+      "prefix_hash": "56a4eee442ef3a23e9dc2c8749758f2ea7aa1bfa0f1d2ee826df6c98eafaf33c",
+      "before_hash": "b6e22bbed6eddbf1a87c03f112eeb6bee3d648e85c3eb9ffdfccb7a39dcaf052",
+      "after_hash": "8b055312708992730df5c0a57fe1a061168a20ac693509a334bc754ef0375a46",
+      "changes": {
+        "position": {
+          "before": [
+            1.3553477058553718,
+            0.7227384755293742,
+            0.5806591028856019
+          ],
+          "after": [
+            1.355941171567268,
+            0.7215728595997105,
+            0.5818202131901479
+          ],
+          "max_abs": 0.001165615929663688
+        },
+        "quaternion": {
+          "before": [
+            0.712051026091397,
+            -0.0009020165107998315,
+            0.7021205613389624,
+            -0.0030397291759824505
+          ],
+          "after": [
+            0.7121239271287846,
+            -0.0008938583952341535,
+            0.7020467679774135,
+            -0.00300815563333383
+          ],
+          "max_abs": 7.37933615488906e-05
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDict-v3",
+      "seed": 0,
+      "mode": "random",
+      "action_dtype": "float32",
+      "step": 10,
+      "prefix_hash": "f2db6ddecc6ef04f6e48285dcb74ead855db21dfef2bfa138b1b916829c2d333",
+      "before_hash": "28e26e0cc63a35a0d187d2a211e741c01d7cbff36c28b2b5ec3e7a5fefa53407",
+      "after_hash": "e4667c85134ee3db987b0f39232d887a935d6e8e2d43cc33820b714924cc0efe",
+      "changes": {
+        "position": {
+          "before": [
+            1.430875439789086,
+            0.6958270143026146,
+            0.5521595643307654
+          ],
+          "after": [
+            1.4322634638931337,
+            0.6959313338675899,
+            0.5512758940531662
+          ],
+          "max_abs": 0.0013880241040478136
+        },
+        "quaternion": {
+          "before": [
+            0.7152693196056656,
+            -0.0003758746405158678,
+            0.6988487977164107,
+            -0.00013068829361140288
+          ],
+          "after": [
+            0.7154891843518325,
+            -0.0003973633333839294,
+            0.6986236787419003,
+            -0.0001570957178723513
+          ],
+          "max_abs": 0.00022511897451038543
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDict-v3",
+      "seed": 0,
+      "mode": "random",
+      "action_dtype": "float32",
+      "step": 25,
+      "prefix_hash": "1313eb01f590d7b4fc8bc0a7635bb55103ccb44baa65981e54b1529c94e5f6d6",
+      "before_hash": "696943f85c45e71c408abb7739a9ccf16fbae8c59b10663362fc8153ce5f4ac8",
+      "after_hash": "a40363a27c7d383a21ac903425bc5c30945f6cfd1ab86f2436fe2b23832c269e",
+      "changes": {
+        "position": {
+          "before": [
+            1.3777785063297876,
+            0.7515924006354483,
+            0.5449505629152557
+          ],
+          "after": [
+            1.3788774405856892,
+            0.7510398621739776,
+            0.5450854614020384
+          ],
+          "max_abs": 0.0010989342559015736
+        },
+        "quaternion": {
+          "before": [
+            0.7121677364214449,
+            -0.0003081803200610058,
+            0.7020082537673591,
+            -0.0011966067642235625
+          ],
+          "after": [
+            0.7122450982116645,
+            -0.000305515470517406,
+            0.7019297699252067,
+            -0.001193660965366587
+          ],
+          "max_abs": 7.848384215236592e-05
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDict-v3",
+      "seed": 0,
+      "mode": "random",
+      "action_dtype": "float32",
+      "step": 49,
+      "prefix_hash": "ee4e3da4fb86d5e1bbaf9e92799124a305078e812305bd8405519bbb011761fb",
+      "before_hash": "7e818bd2e4e2b119e8cd0c25bb757613b72d43cd99122a85773a772ac525110b",
+      "after_hash": "464a56605ca3efd1fd306b9fe206b114b3252d8253dae31dc277d45deb75b316",
+      "changes": {
+        "position": {
+          "before": [
+            1.2603228444623993,
+            0.8626050358002595,
+            0.43819716129105324
+          ],
+          "after": [
+            1.2597520359164798,
+            0.8623173635745253,
+            0.43828380694077707
+          ],
+          "max_abs": 0.00057080854591951
+        },
+        "quaternion": {
+          "before": [
+            0.7085154409394108,
+            -0.00013798203741613446,
+            0.7056952960471166,
+            6.954310524304175e-06
+          ],
+          "after": [
+            0.7090476223197976,
+            -0.00021639881129782018,
+            0.7051605602431721,
+            -8.2047128578705e-05
+          ],
+          "max_abs": 0.000534735803944475
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDict-v3",
+      "seed": 0,
+      "mode": "random",
+      "action_dtype": "float32",
+      "step": 50,
+      "prefix_hash": "9d91e45f64e1790a8adf458b052008e7225154dfa9c0d72207cdaf1ebc501855",
+      "before_hash": "bbb0a04ecef6ee5203f301754ddb47e3be425aa0e9f27969df49d6c27c5128f1",
+      "after_hash": "19d8926d4ec0917c8a6f450c934b3ed372c245448a6203812eba0413d6503951",
+      "changes": {
+        "position": {
+          "before": [
+            1.2432958669377578,
+            0.8542563950624366,
+            0.43965418183754407
+          ],
+          "after": [
+            1.242512534333489,
+            0.8541020113711835,
+            0.43958565250782067
+          ],
+          "max_abs": 0.0007833326042687716
+        },
+        "quaternion": {
+          "before": [
+            0.7123501278008008,
+            0.001956424795695598,
+            0.7018203080941995,
+            -0.0013126198094561559
+          ],
+          "after": [
+            0.7122845522104005,
+            0.0018107665631429543,
+            0.7018874155936229,
+            -0.0012221449128069217
+          ],
+          "max_abs": 0.0001456582325526437
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDict-v3",
+      "seed": 17,
+      "mode": "zero",
+      "action_dtype": "float32",
+      "step": 0,
+      "prefix_hash": "4b35f94aa0d3bb584f39f908c788fe3144ee7b60a58cca242a5c67fbb7016d79",
+      "before_hash": "4d1c468e9eb894530f37304bae4212826f080eee79ca5edb6f4cd76e6aef39b5",
+      "after_hash": "4d1c468e9eb894530f37304bae4212826f080eee79ca5edb6f4cd76e6aef39b5",
+      "changes": {}
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDict-v3",
+      "seed": 17,
+      "mode": "zero",
+      "action_dtype": "float32",
+      "step": 1,
+      "prefix_hash": "7d2c7671dcda5adcc1b40bf6c46debee19f7574bdda3df7640aaa067ba6aba2b",
+      "before_hash": "22ce5237f1bdbefbc96494cab12590e6b7f3a9fbe93182f691ddaed4b6d4bd6f",
+      "after_hash": "e19da4e6671d47c045b4d2f548fd4201076e5d61dc10e918944bdab5db77f3b5",
+      "changes": {
+        "position": {
+          "before": [
+            1.341969179720155,
+            0.749100653079592,
+            0.554574670509455
+          ],
+          "after": [
+            1.341970366361024,
+            0.7491006636815768,
+            0.5545677103090298
+          ],
+          "max_abs": 6.9602004251212435e-06
+        },
+        "quaternion": {
+          "before": [
+            0.7067756019074242,
+            1.5945423308686563e-05,
+            0.7074378051669518,
+            1.0710168051931025e-05
+          ],
+          "after": [
+            0.7067714752217176,
+            1.6117512117600884e-05,
+            0.7074419279602834,
+            1.0815731619410844e-05
+          ],
+          "max_abs": 4.126685706595801e-06
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDict-v3",
+      "seed": 17,
+      "mode": "zero",
+      "action_dtype": "float32",
+      "step": 10,
+      "prefix_hash": "f12760b7193c2e99398cca7c90dd5f50edd46ded9df2d442912dab645fee21cb",
+      "before_hash": "c4b9674597d02214822a970ca761ee14025a7fa5f3a98aec1eeaae920e5b6a9d",
+      "after_hash": "a8158bf747a3e9fa2b7f76b21a19c1b1cb206e8ac68688ca70100b59391fad40",
+      "changes": {
+        "position": {
+          "before": [
+            1.342138869939011,
+            0.7491024082747518,
+            0.5532791765971834
+          ],
+          "after": [
+            1.342139463540167,
+            0.7491024145312969,
+            0.5532744481962004
+          ],
+          "max_abs": 4.728400982978442e-06
+        },
+        "quaternion": {
+          "before": [
+            0.7065444415285933,
+            1.890289794173822e-05,
+            0.707668673618421,
+            1.2917943006463808e-05
+          ],
+          "after": [
+            0.7065445308002029,
+            1.8895344346684306e-05,
+            0.7076685844889054,
+            1.29134083411257e-05
+          ],
+          "max_abs": 8.927160954907976e-08
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDict-v3",
+      "seed": 17,
+      "mode": "zero",
+      "action_dtype": "float32",
+      "step": 25,
+      "prefix_hash": "334f1fe912fe10c1e5fac69c836d31dfe34e2f4e8ae034c694246f0a8811f2b2",
+      "before_hash": "a12a2a74364ae5150c7df6ce43bf294a0bfc13cd7c4db422ada9a7c485c985db",
+      "after_hash": "38bbdbc1830e23499454492e5280cfaf949b6f11731bf0a6192a46160855eeee",
+      "changes": {
+        "position": {
+          "before": [
+            1.3423667263247752,
+            0.749104961548378,
+            0.5512919079208956
+          ],
+          "after": [
+            1.342367310836063,
+            0.7491049677488372,
+            0.5512871764139244
+          ],
+          "max_abs": 4.7315069711117985e-06
+        },
+        "quaternion": {
+          "before": [
+            0.7065404496649976,
+            1.79429911041733e-05,
+            0.7076726591593369,
+            1.1982708491584419e-05
+          ],
+          "after": [
+            0.7065406476306475,
+            1.7942263887247298e-05,
+            0.7076724615103629,
+            1.198350997623195e-05
+          ],
+          "max_abs": 1.979656498729554e-07
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDict-v3",
+      "seed": 17,
+      "mode": "zero",
+      "action_dtype": "float32",
+      "step": 49,
+      "prefix_hash": "fd704b1c010598edb3606565ed1ad171a391072cfd597dc7068a67b153f8e081",
+      "before_hash": "a793fa4939fb1450a25b92b23bb889f9f2f128b7b9b912b19d1f7d14bae305b4",
+      "after_hash": "21c6107c42b5842f006b95a4e924540fb01d54db3cb6cafab711e2d41d4f95d4",
+      "changes": {
+        "position": {
+          "before": [
+            1.3427427858781391,
+            0.7491091081374065,
+            0.5480742464687284
+          ],
+          "after": [
+            1.342743401039431,
+            0.7491091144876596,
+            0.54806943035312
+          ],
+          "max_abs": 4.816115608430316e-06
+        },
+        "quaternion": {
+          "before": [
+            0.7065455676412286,
+            1.710899650244702e-05,
+            0.7076675493691758,
+            1.1119432502604666e-05
+          ],
+          "after": [
+            0.7065457589441791,
+            1.710862141815115e-05,
+            0.7076673583694667,
+            1.1120679522174087e-05
+          ],
+          "max_abs": 1.9130295059177627e-07
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDict-v3",
+      "seed": 17,
+      "mode": "zero",
+      "action_dtype": "float32",
+      "step": 50,
+      "prefix_hash": "1b4bc522c4e379c2a0f3f44a7f5ec5614b2ba56ee70a83624780d4a9a111d1a0",
+      "before_hash": "c8f5a8d182d11f244c345b8108262207b92c0078581600e114cdec14b77aa0ca",
+      "after_hash": "7f8990a9e8af5527f27cfb7444d98e4e986821feb5806f4f495b714c6a7a82f8",
+      "changes": {
+        "position": {
+          "before": [
+            1.3427588672803132,
+            0.749109283138586,
+            0.5479389401701684
+          ],
+          "after": [
+            1.3427594836855061,
+            0.749109289495043,
+            0.5479341206361865
+          ],
+          "max_abs": 4.81953398190349e-06
+        },
+        "quaternion": {
+          "before": [
+            0.7065457741333266,
+            1.7073476591327212e-05,
+            0.7076673432058266,
+            1.1083391565612673e-05
+          ],
+          "after": [
+            0.7065459651164979,
+            1.7073114408764625e-05,
+            0.7076671525252782,
+            1.1084654496774232e-05
+          ],
+          "max_abs": 1.9098317127763664e-07
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDict-v3",
+      "seed": 17,
+      "mode": "random",
+      "action_dtype": "float32",
+      "step": 0,
+      "prefix_hash": "4b35f94aa0d3bb584f39f908c788fe3144ee7b60a58cca242a5c67fbb7016d79",
+      "before_hash": "4d1c468e9eb894530f37304bae4212826f080eee79ca5edb6f4cd76e6aef39b5",
+      "after_hash": "4d1c468e9eb894530f37304bae4212826f080eee79ca5edb6f4cd76e6aef39b5",
+      "changes": {}
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDict-v3",
+      "seed": 17,
+      "mode": "random",
+      "action_dtype": "float32",
+      "step": 1,
+      "prefix_hash": "fb1714978d1c38652906eaf0e60b1fc292df3e8d711ee6b447f770a96be19d6c",
+      "before_hash": "5dfa0f9dd14fefa1baf5bae0f341e47ee5f593c147943e551dbfa7df90f5378a",
+      "after_hash": "3f360f107aaa5bbcbeb8075ffa589a288dc08cf09567625ed6e9afe70f586c54",
+      "changes": {
+        "position": {
+          "before": [
+            1.3651849586542277,
+            0.7585542356916324,
+            0.5370116557907174
+          ],
+          "after": [
+            1.3662490172718798,
+            0.7589724114203734,
+            0.5362105060673925
+          ],
+          "max_abs": 0.0010640586176520195
+        },
+        "quaternion": {
+          "before": [
+            0.7115230092233793,
+            0.0003841734449433242,
+            0.7026618156511192,
+            0.0011102172505868969
+          ],
+          "after": [
+            0.711582226701192,
+            0.00038148973370860477,
+            0.7026018654253406,
+            0.0010990038162430708
+          ],
+          "max_abs": 5.9950225778537813e-05
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDict-v3",
+      "seed": 17,
+      "mode": "random",
+      "action_dtype": "float32",
+      "step": 10,
+      "prefix_hash": "2e2fb99e779cd8e82646e2cc14146b480878413eba558edfa913eb0a8d12f309",
+      "before_hash": "9e804fb76787793a4ec0b5f0039e92923992cb1e1ecadd29ff5a0d8c1b14ebe4",
+      "after_hash": "5d94cc1d8b572e548f12bb16cd83df0e76ae9f72754275bb1d0afbe4042a9059",
+      "changes": {
+        "position": {
+          "before": [
+            1.3811236173735544,
+            0.7241554798776749,
+            0.5182979822654804
+          ],
+          "after": [
+            1.3813167202668144,
+            0.7246845661749527,
+            0.5178206981544697
+          ],
+          "max_abs": 0.0005290862972777699
+        },
+        "quaternion": {
+          "before": [
+            0.7066371123403854,
+            0.00044396607145947425,
+            0.7075738458135449,
+            0.001745588152770778
+          ],
+          "after": [
+            0.7066748905206692,
+            0.00043088423038957144,
+            0.7075362147446432,
+            0.001708294823077345
+          ],
+          "max_abs": 3.777818028383173e-05
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDict-v3",
+      "seed": 17,
+      "mode": "random",
+      "action_dtype": "float32",
+      "step": 25,
+      "prefix_hash": "4c2b2dc4cc23d3c2d5f46105f65836ff0eea5edc4140811fa3cfcfa300e37d48",
+      "before_hash": "3353e71f4f1ab50fa58a6ef78728116ebac7b1492e794a3959d4af5b3ea86a47",
+      "after_hash": "09f535fad881d9ef1f96b808443d9134b595f508a19e222a605205ee19de1a1f",
+      "changes": {
+        "position": {
+          "before": [
+            1.489362951522588,
+            0.8552007426433325,
+            0.46162430251025355
+          ],
+          "after": [
+            1.4897617993194372,
+            0.8551301265538453,
+            0.4610501953333196
+          ],
+          "max_abs": 0.0005741071769339579
+        },
+        "quaternion": {
+          "before": [
+            0.7115788866312658,
+            -0.001011618141700102,
+            0.702605310898572,
+            -0.0004917585431864283
+          ],
+          "after": [
+            0.7118263113943878,
+            -0.0009401657867630989,
+            0.7023547702971666,
+            -0.00044174174322030024
+          ],
+          "max_abs": 0.00025054060140539125
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDict-v3",
+      "seed": 17,
+      "mode": "random",
+      "action_dtype": "float32",
+      "step": 49,
+      "prefix_hash": "35f96f495ebcdcbae495a50b49ce31c8b6e50ef8f7d58354a84c1c42495d9617",
+      "before_hash": "25372dbd1ed14b0049fd844912b9fb2671abf8f226eb35718aaf2d083a567b2f",
+      "after_hash": "9c082c8876db30018dd389c2031a705a18f71c23648533799c2a3998b47902c3",
+      "changes": {
+        "position": {
+          "before": [
+            1.4657849816967108,
+            0.9912882354825131,
+            0.46257033434160694
+          ],
+          "after": [
+            1.465092411803107,
+            0.9914775118513722,
+            0.4612559936671853
+          ],
+          "max_abs": 0.0013143406744216546
+        },
+        "quaternion": {
+          "before": [
+            0.6980805411103397,
+            -0.004776814346601363,
+            0.7159897665288911,
+            -0.004403906640402258
+          ],
+          "after": [
+            0.6974630279383645,
+            -0.004947383642266365,
+            0.7165890831839885,
+            -0.004575359622515679
+          ],
+          "max_abs": 0.0006175131719752258
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDict-v3",
+      "seed": 17,
+      "mode": "random",
+      "action_dtype": "float32",
+      "step": 50,
+      "prefix_hash": "26148e5863da4f540f743d5cd6598f7c4adfb107865aa7b05a633689da81c7e3",
+      "before_hash": "7f94015b7dc0d3de4f22470afe5d246ff3c01928462aaca42bc6d72a543d3cb4",
+      "after_hash": "502f5eb4fa515cbd9058593b55a20231aa8b5961954870c43d8f2218236bfa7b",
+      "changes": {
+        "position": {
+          "before": [
+            1.4489388777014889,
+            0.9696370596800796,
+            0.44473559081320957
+          ],
+          "after": [
+            1.4483548029893922,
+            0.9686233169499536,
+            0.4442858741011775
+          ],
+          "max_abs": 0.0010137427301259994
+        },
+        "quaternion": {
+          "before": [
+            0.6734063283548332,
+            -0.01204952651760717,
+            0.7390548476149941,
+            -0.013291277558677247
+          ],
+          "after": [
+            0.6724281141127525,
+            -0.012285577206851334,
+            0.7399367399293529,
+            -0.013532067328500194
+          ],
+          "max_abs": 0.000978214242080666
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDict-v3",
+      "seed": 42,
+      "mode": "zero",
+      "action_dtype": "float32",
+      "step": 0,
+      "prefix_hash": "4b35f94aa0d3bb584f39f908c788fe3144ee7b60a58cca242a5c67fbb7016d79",
+      "before_hash": "4beabfda79954dc8f8bf03535961cddb0a0042aa16f02237606398b0d2b67c08",
+      "after_hash": "4beabfda79954dc8f8bf03535961cddb0a0042aa16f02237606398b0d2b67c08",
+      "changes": {}
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDict-v3",
+      "seed": 42,
+      "mode": "zero",
+      "action_dtype": "float32",
+      "step": 1,
+      "prefix_hash": "7d2c7671dcda5adcc1b40bf6c46debee19f7574bdda3df7640aaa067ba6aba2b",
+      "before_hash": "93a7d84899fcff84cd344403a97ce3fdad8d237c6fe5bcef59798ec775d7ace5",
+      "after_hash": "35a96e1019df98caedc52e66727de3f8d3b4076ad8c5b7c7d638155eee78ce07",
+      "changes": {
+        "position": {
+          "before": [
+            1.341969179720155,
+            0.749100653079592,
+            0.554574670509455
+          ],
+          "after": [
+            1.341970366361024,
+            0.7491006636815768,
+            0.5545677103090298
+          ],
+          "max_abs": 6.9602004251212435e-06
+        },
+        "quaternion": {
+          "before": [
+            0.7067756019074242,
+            1.5945423308686563e-05,
+            0.7074378051669518,
+            1.0710168051931025e-05
+          ],
+          "after": [
+            0.7067714752217176,
+            1.6117512117600884e-05,
+            0.7074419279602834,
+            1.0815731619410844e-05
+          ],
+          "max_abs": 4.126685706595801e-06
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDict-v3",
+      "seed": 42,
+      "mode": "zero",
+      "action_dtype": "float32",
+      "step": 10,
+      "prefix_hash": "f12760b7193c2e99398cca7c90dd5f50edd46ded9df2d442912dab645fee21cb",
+      "before_hash": "ac769cdad8db81f3fc8b7a61b56ff35ecef7e709ccb21ff0ed2eea0969ece9f3",
+      "after_hash": "1c031e4bdcccf688974fab06f02e364ef1489da98a315dee36118ad7bfc38773",
+      "changes": {
+        "position": {
+          "before": [
+            1.342138869939011,
+            0.7491024082747518,
+            0.5532791765971834
+          ],
+          "after": [
+            1.342139463540167,
+            0.7491024145312969,
+            0.5532744481962004
+          ],
+          "max_abs": 4.728400982978442e-06
+        },
+        "quaternion": {
+          "before": [
+            0.7065444415285933,
+            1.890289794173822e-05,
+            0.707668673618421,
+            1.2917943006463808e-05
+          ],
+          "after": [
+            0.7065445308002029,
+            1.8895344346684306e-05,
+            0.7076685844889054,
+            1.29134083411257e-05
+          ],
+          "max_abs": 8.927160954907976e-08
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDict-v3",
+      "seed": 42,
+      "mode": "zero",
+      "action_dtype": "float32",
+      "step": 25,
+      "prefix_hash": "334f1fe912fe10c1e5fac69c836d31dfe34e2f4e8ae034c694246f0a8811f2b2",
+      "before_hash": "7397b6c9f58a6cb5bfeea5a38ade61cf6cd31ea94b798090c6c6ea658427c54e",
+      "after_hash": "5e041f0821d49fc27dbd81c023044242c3ce3d59279fbc2f340231d3c3f9e43a",
+      "changes": {
+        "position": {
+          "before": [
+            1.3423667263247752,
+            0.749104961548378,
+            0.5512919079208956
+          ],
+          "after": [
+            1.342367310836063,
+            0.7491049677488372,
+            0.5512871764139244
+          ],
+          "max_abs": 4.7315069711117985e-06
+        },
+        "quaternion": {
+          "before": [
+            0.7065404496649976,
+            1.79429911041733e-05,
+            0.7076726591593369,
+            1.1982708491584419e-05
+          ],
+          "after": [
+            0.7065406476306475,
+            1.7942263887247298e-05,
+            0.7076724615103629,
+            1.198350997623195e-05
+          ],
+          "max_abs": 1.979656498729554e-07
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDict-v3",
+      "seed": 42,
+      "mode": "zero",
+      "action_dtype": "float32",
+      "step": 49,
+      "prefix_hash": "fd704b1c010598edb3606565ed1ad171a391072cfd597dc7068a67b153f8e081",
+      "before_hash": "a23083a97beb3bea9d126ace062d76e09561ee2e412761c87ee820f2abb8be82",
+      "after_hash": "f81953d1360cb63b6eabe3a3d0506e99c5c68e23ab29e2059319a0de47163bbc",
+      "changes": {
+        "position": {
+          "before": [
+            1.3427427858781391,
+            0.7491091081374065,
+            0.5480742464687284
+          ],
+          "after": [
+            1.342743401039431,
+            0.7491091144876596,
+            0.54806943035312
+          ],
+          "max_abs": 4.816115608430316e-06
+        },
+        "quaternion": {
+          "before": [
+            0.7065455676412286,
+            1.710899650244702e-05,
+            0.7076675493691758,
+            1.1119432502604666e-05
+          ],
+          "after": [
+            0.7065457589441791,
+            1.710862141815115e-05,
+            0.7076673583694667,
+            1.1120679522174087e-05
+          ],
+          "max_abs": 1.9130295059177627e-07
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDict-v3",
+      "seed": 42,
+      "mode": "zero",
+      "action_dtype": "float32",
+      "step": 50,
+      "prefix_hash": "1b4bc522c4e379c2a0f3f44a7f5ec5614b2ba56ee70a83624780d4a9a111d1a0",
+      "before_hash": "79ca8650fa498d8dd9a31e66e058759fc52b3a06286a1ebf9d909b19cc2cf1b4",
+      "after_hash": "3a357bc974111790cf87c1959a18d323b6deb2ab2abd1b3bfa640c3c47b4c79e",
+      "changes": {
+        "position": {
+          "before": [
+            1.3427588672803132,
+            0.749109283138586,
+            0.5479389401701684
+          ],
+          "after": [
+            1.3427594836855061,
+            0.749109289495043,
+            0.5479341206361865
+          ],
+          "max_abs": 4.81953398190349e-06
+        },
+        "quaternion": {
+          "before": [
+            0.7065457741333266,
+            1.7073476591327212e-05,
+            0.7076673432058266,
+            1.1083391565612673e-05
+          ],
+          "after": [
+            0.7065459651164979,
+            1.7073114408764625e-05,
+            0.7076671525252782,
+            1.1084654496774232e-05
+          ],
+          "max_abs": 1.9098317127763664e-07
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDict-v3",
+      "seed": 42,
+      "mode": "random",
+      "action_dtype": "float32",
+      "step": 0,
+      "prefix_hash": "4b35f94aa0d3bb584f39f908c788fe3144ee7b60a58cca242a5c67fbb7016d79",
+      "before_hash": "4beabfda79954dc8f8bf03535961cddb0a0042aa16f02237606398b0d2b67c08",
+      "after_hash": "4beabfda79954dc8f8bf03535961cddb0a0042aa16f02237606398b0d2b67c08",
+      "changes": {}
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDict-v3",
+      "seed": 42,
+      "mode": "random",
+      "action_dtype": "float32",
+      "step": 1,
+      "prefix_hash": "91e2162908dd1808ac39f53d9ce669bb9440df6fad8054abcd1f42ed9b727263",
+      "before_hash": "5ea72b0369172f42c1eb39f1b39823e7cbaa532b4dcda36958ca02fd5ef48f7d",
+      "after_hash": "e7ded70086bcb75c79ccbfa739782ee67149ca48792f6f58c70afb2dce533e00",
+      "changes": {
+        "position": {
+          "before": [
+            1.3605965909497308,
+            0.7421299463016403,
+            0.5771588811968409
+          ],
+          "after": [
+            1.361429287876742,
+            0.7418218931728298,
+            0.578161486394065
+          ],
+          "max_abs": 0.0010026051972240602
+        },
+        "quaternion": {
+          "before": [
+            0.7129979175651747,
+            -0.00019113727229081064,
+            0.7011657127453816,
+            -0.0007591340649050057
+          ],
+          "after": [
+            0.713073378316817,
+            -0.00018895322776280054,
+            0.7010889805889188,
+            -0.0007501528574774046
+          ],
+          "max_abs": 7.673215646286646e-05
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDict-v3",
+      "seed": 42,
+      "mode": "random",
+      "action_dtype": "float32",
+      "step": 10,
+      "prefix_hash": "dec30477106e83b594129a47f036931b3b7568529386d538ed006a38a002a138",
+      "before_hash": "3a1c352fe307a7474064c250ede556615840ec807e7d757da8f7156b2770db5c",
+      "after_hash": "e69cdd2e20477be00fbd1d6eb9c6f7b8edf5e1edd252406ee34da28f38bf25e6",
+      "changes": {
+        "position": {
+          "before": [
+            1.4797540780780034,
+            0.7966052483974676,
+            0.5262767107114863
+          ],
+          "after": [
+            1.4804686338890054,
+            0.7973119264344852,
+            0.5272523174384031
+          ],
+          "max_abs": 0.0009756067269167668
+        },
+        "quaternion": {
+          "before": [
+            0.7255099224194269,
+            0.0010665565877258781,
+            0.6882053177523023,
+            0.0027668656373580347
+          ],
+          "after": [
+            0.7255432507556498,
+            0.001061643118046629,
+            0.6881703382668279,
+            0.0027294187171159057
+          ],
+          "max_abs": 3.7446920242129034e-05
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDict-v3",
+      "seed": 42,
+      "mode": "random",
+      "action_dtype": "float32",
+      "step": 25,
+      "prefix_hash": "d66863d5a1f2c7a35a083e3a71fc52529d126e3842d442e9ac001070fbeee69d",
+      "before_hash": "71f2502eda6cee47f154b8d40d2efceefb13e0fa76fa6fc32a109d538a2a13b2",
+      "after_hash": "2a699b8810a2994a7fca5429f071170ef8d48e42ca5aa419ea0564672993f086",
+      "changes": {
+        "position": {
+          "before": [
+            1.4404853154871131,
+            0.8248156930189371,
+            0.6263154206584797
+          ],
+          "after": [
+            1.4396532366605679,
+            0.8252134803662738,
+            0.6254796250609354
+          ],
+          "max_abs": 0.0008357955975443199
+        },
+        "quaternion": {
+          "before": [
+            0.6971284056754491,
+            -0.0009269188921027793,
+            0.7169455882655842,
+            -0.000387670335825846
+          ],
+          "after": [
+            0.696747066608573,
+            -0.0009781609004659297,
+            0.717316091927639,
+            -0.00043890233587576266
+          ],
+          "max_abs": 0.0003813390668760963
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDict-v3",
+      "seed": 42,
+      "mode": "random",
+      "action_dtype": "float32",
+      "step": 49,
+      "prefix_hash": "0eabe530e7ee6a43f3dc9ea52de13f2fc877ca3a64e8f281702b08fca51d9c54",
+      "before_hash": "313463a65bb198704d032b48ee9dfee5af378aef4c3028a1a2fed8b9c96dc213",
+      "after_hash": "8bfddff0ec89db506d01b1bed2be27a860d921d4f74552ac6f390ded2165ddea",
+      "changes": {
+        "position": {
+          "before": [
+            1.4515376185003952,
+            0.7579041424722969,
+            0.5271533137772253
+          ],
+          "after": [
+            1.4521031010866596,
+            0.7571332798797895,
+            0.5271220229387061
+          ],
+          "max_abs": 0.0007708625925073598
+        },
+        "quaternion": {
+          "before": [
+            0.7147311327462282,
+            -5.9036317914965344e-05,
+            0.6993975388823642,
+            -0.0015770235567647744
+          ],
+          "after": [
+            0.7147102712228228,
+            -4.375015634022934e-05,
+            0.6994189499017266,
+            -0.0015358427290294392
+          ],
+          "max_abs": 4.118082773533517e-05
+        }
+      }
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDict-v3",
+      "seed": 42,
+      "mode": "random",
+      "action_dtype": "float32",
+      "step": 50,
+      "prefix_hash": "d1c20a5bbeff0b0290aadc2d37a4b7f990ff4acf98bd4aa8f55870a87426230a",
+      "before_hash": "21708ac2dea624ce920ef2f1390b4d536d239298eb07f07e53546f7dc80bbb43",
+      "after_hash": "2e5726d3af6bc3078043a09bdbd375a3ff9592ddb1e4ef6aa3624ff60a98dace",
+      "changes": {
+        "position": {
+          "before": [
+            1.452745119049385,
+            0.7773407456872851,
+            0.5142180407735633
+          ],
+          "after": [
+            1.4526594466061786,
+            0.7783937704902533,
+            0.5136505572040523
+          ],
+          "max_abs": 0.0010530248029682054
+        },
+        "quaternion": {
+          "before": [
+            0.7109317999461467,
+            0.0006876563441891789,
+            0.7032582487443692,
+            0.0018271636726769798
+          ],
+          "after": [
+            0.7108052662574019,
+            0.0006598526565874813,
+            0.7033862310593576,
+            0.0018022239948218988
+          ],
+          "max_abs": 0.0001279823149884507
+        }
+      }
+    }
+  ]
+}

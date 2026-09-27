@@ -1,0 +1,10 @@
+{
+  "status": "ERROR",
+  "traceback": "Traceback (most recent call last):\n  File \"/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739546/source/scripts/benchmarks/renderer_table/collect.py\", line 256, in main\n    cpu(row, args.output)\n  File \"/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739546/source/scripts/benchmarks/renderer_table/collect.py\", line 133, in cpu\n    timing, original = timed(bridge.render, samples=samples)\n                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739546/source/scripts/benchmarks/renderer_table/common.py\", line 181, in timed\n    result = call()\n             ^^^^^^\n  File \"/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739546/source/scripts/benchmarks/renderer_table/common.py\", line 172, in call\n    value = fn()\n            ^^^^\n  File \"/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739546/source/scripts/benchmarks/renderer_table/bridges.py\", line 92, in render\n    return self.source.render(\"rgb_array\")\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: PiecewiseEnv.render() takes 1 positional argument but 2 were given\n",
+  "command": [
+    "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739546/source/scripts/benchmarks/renderer_table/collect.py",
+    "swm/Piecewise-v0",
+    "cpu",
+    "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739546/results/Piecewise/cpu"
+  ]
+}

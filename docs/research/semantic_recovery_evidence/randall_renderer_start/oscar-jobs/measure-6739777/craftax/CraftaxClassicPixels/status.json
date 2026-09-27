@@ -1,0 +1,16 @@
+{
+  "registration": "swm/CraftaxClassicPixels-v1",
+  "phases": {
+    "cpu": {
+      "returncode": 1,
+      "command": [
+        "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/bin/python",
+        "-m",
+        "scripts.benchmarks.renderer_table.collect",
+        "swm/CraftaxClassicPixels-v1",
+        "cpu",
+        "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739777/craftax/CraftaxClassicPixels/cpu"
+      ]
+    }
+  }
+}

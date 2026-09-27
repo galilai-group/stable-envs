@@ -1,0 +1,81 @@
+/oscar/scratch/sboughan/se-semantic-recovery/ogb-renderer-294675f0-complete/run-6669909/profile/lib/python3.12/site-packages/gymnasium/spaces/box.py:236: UserWarning: [33mWARN: Box low's precision lowered by casting to float32, current low.dtype=float64[0m
+  gym.logger.warn(
+/oscar/scratch/sboughan/se-semantic-recovery/ogb-renderer-294675f0-complete/run-6669909/profile/lib/python3.12/site-packages/gymnasium/spaces/box.py:306: UserWarning: [33mWARN: Box high's precision lowered by casting to float32, current high.dtype=float64[0m
+  gym.logger.warn(
+/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco_warp/_src/io.py:709: UserWarning: MULTICCD is enabled, but the scene contains CCD pairs without multicontact support: [('CAPSULE', 'CYLINDER'), ('CAPSULE', 'MESH'), ('CYLINDER', 'BOX'), ('CYLINDER', 'MESH')]. At most 1 contact will be generated for these pairs.
+  warnings.warn(
+Warp 1.17.0 initialized:
+   CUDA Toolkit 12.9, Driver 12.9
+   Devices:
+     "cpu"      : "x86_64"
+     "cuda:0"   : "NVIDIA A40" (44 GiB, sm_86, mempool enabled)
+   Kernel cache:
+     /oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739908/warp-cache/1.17.0
+Module mujoco_warp._src.render_util f62a762 load on device 'cuda:0' took 828.04 ms  (compiled)
+Module mujoco_warp._src.io c728e4c load on device 'cuda:0' took 1739.74 ms  (compiled)
+Module mujoco_warp._src.bvh 97a6eba load on device 'cuda:0' took 891.69 ms  (compiled)
+Module mujoco_warp._src.smooth d04e5a7 load on device 'cuda:0' took 3405.49 ms  (compiled)
+Module render__locals___render_megakernel_4e4c3b8e fc72102 load on device 'cuda:0' took 1769.14 ms  (compiled)
+OGBCube 0 GPU measured
+OGBCube 1 GPU measured
+OGBCube 2 GPU measured
+OGBCube 3 GPU measured
+OGBCube 4 GPU measured
+OGBCube 5 GPU measured
+OGBCube 6 GPU measured
+OGBCube 7 GPU measured
+OGBCube 8 GPU measured
+OGBCube 9 GPU measured
+OGBCube 10 GPU measured
+OGBCube 11 GPU measured
+OGBCube 12 GPU measured
+OGBCube 13 GPU measured
+OGBCube 14 GPU measured
+OGBCube 15 GPU measured
+OGBCube 16 GPU measured
+OGBCube 17 GPU measured
+OGBCube 18 GPU measured
+OGBCube 19 GPU measured
+OGBCube 20 GPU measured
+OGBCube 21 GPU measured
+OGBCube 22 GPU measured
+OGBCube 23 GPU measured
+OGBCube 24 GPU measured
+OGBCube 25 GPU measured
+OGBCube 26 GPU measured
+OGBCube 27 GPU measured
+OGBCube 28 GPU measured
+OGBCube 29 GPU measured
+OGBCube 30 GPU measured
+OGBCube 31 GPU measured
+OGBCube 32 GPU measured
+OGBCube 33 GPU measured
+OGBCube 34 GPU measured
+OGBCube 35 GPU measured
+/oscar/scratch/sboughan/se-semantic-recovery/ogb-renderer-294675f0-complete/run-6669909/profile/lib/python3.12/site-packages/gymnasium/spaces/box.py:236: UserWarning: [33mWARN: Box low's precision lowered by casting to float32, current low.dtype=float64[0m
+  gym.logger.warn(
+/oscar/scratch/sboughan/se-semantic-recovery/ogb-renderer-294675f0-complete/run-6669909/profile/lib/python3.12/site-packages/gymnasium/spaces/box.py:306: UserWarning: [33mWARN: Box high's precision lowered by casting to float32, current high.dtype=float64[0m
+  gym.logger.warn(
+/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco_warp/_src/io.py:709: UserWarning: MULTICCD is enabled, but the scene contains CCD pairs without multicontact support: [('CAPSULE', 'CYLINDER'), ('CAPSULE', 'MESH'), ('CYLINDER', 'BOX'), ('CYLINDER', 'MESH')]. At most 1 contact will be generated for these pairs.
+  warnings.warn(
+OGBCube 36 GPU measured
+OGBCube 37 GPU measured
+OGBCube 38 GPU measured
+OGBCube 39 GPU measured
+OGBCube 40 GPU measured
+OGBCube 41 GPU measured
+OGBCube 42 GPU measured
+OGBCube 43 GPU measured
+OGBCube 44 GPU measured
+OGBCube 45 GPU measured
+OGBCube 46 GPU measured
+OGBCube 47 GPU measured
+OGBCube 48 GPU measured
+OGBCube 49 GPU measured
+OGBCube 50 GPU measured
+OGBCube 51 GPU measured
+OGBCube 52 GPU measured
+OGBCube 53 GPU measured
+OGBCube 54 GPU measured
+OGBCube 55 GPU measured
+OGBCube 56 GPU measured

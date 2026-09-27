@@ -1,0 +1,16 @@
+{
+  "registration": "swm/FetchReachDense-v3",
+  "phases": {
+    "cpu": {
+      "returncode": 1,
+      "command": [
+        "/oscar/scratch/sboughan/venvs/se6-verify-fetch311/bin/python",
+        "-m",
+        "scripts.benchmarks.renderer_table.collect",
+        "swm/FetchReachDense-v3",
+        "cpu",
+        "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739712/results/FetchReachDense/cpu"
+      ]
+    }
+  }
+}

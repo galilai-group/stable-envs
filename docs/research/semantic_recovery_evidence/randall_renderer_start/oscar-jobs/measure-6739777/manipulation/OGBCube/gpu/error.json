@@ -1,0 +1,12 @@
+{
+  "status": "ERROR",
+  "traceback": "Traceback (most recent call last):\n  File \"/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739777/source/scripts/benchmarks/renderer_table/collect.py\", line 360, in main\n    gpu(row, args.corpus, args.output)\n  File \"/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739777/source/scripts/benchmarks/renderer_table/collect.py\", line 309, in gpu\n    timing, image = timed(\n                    ^^^^^^\n  File \"/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739777/source/scripts/benchmarks/renderer_table/common.py\", line 181, in timed\n    result = call()\n             ^^^^^^\n  File \"/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739777/source/scripts/benchmarks/renderer_table/common.py\", line 172, in call\n    value = fn()\n            ^^^^\n  File \"/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739777/source/scripts/benchmarks/renderer_table/collect.py\", line 310, in <lambda>\n    lambda: public_render(env, state, **kwargs),\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739777/source/scripts/benchmarks/renderer_table/common.py\", line 162, in public_render\n    return env.render(env.to_render_state(state), **kwargs)\n                      ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739777/source/stable_envs/envs/ogbench/manipulation_semantics.py\", line 182, in to_render_state\n    self._simulator.validate(state)\n  File \"/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739777/source/stable_envs/_adapters/ogbench_manipulation.py\", line 205, in validate\n    raise ValueError(\"Full State has missing or extra leaves\")\nValueError: Full State has missing or extra leaves\n",
+  "command": [
+    "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739777/source/scripts/benchmarks/renderer_table/collect.py",
+    "swm/OGBCube-v0",
+    "gpu",
+    "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739777/manipulation/OGBCube/gpu",
+    "--corpus",
+    "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739777/manipulation/OGBCube/cpu"
+  ]
+}

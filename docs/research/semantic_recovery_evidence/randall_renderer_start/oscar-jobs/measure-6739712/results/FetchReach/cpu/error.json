@@ -1,0 +1,10 @@
+{
+  "status": "ERROR",
+  "traceback": "Traceback (most recent call last):\n  File \"/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739712/source/scripts/benchmarks/renderer_table/collect.py\", line 339, in main\n    cpu(row, args.output)\n  File \"/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739712/source/scripts/benchmarks/renderer_table/collect.py\", line 153, in cpu\n    env.reset(seed, **reset_kw)\n  File \"/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739712/source/stable_envs/envs/_fetch_semantics.py\", line 125, in reset\n    raise ValueError(\"Uncertified Fetch reset Variation\")\nValueError: Uncertified Fetch reset Variation\n",
+  "command": [
+    "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739712/source/scripts/benchmarks/renderer_table/collect.py",
+    "swm/FetchReach-v3",
+    "cpu",
+    "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586/measure-6739712/results/FetchReach/cpu"
+  ]
+}

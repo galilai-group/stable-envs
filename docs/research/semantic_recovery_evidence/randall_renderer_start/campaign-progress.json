@@ -1,0 +1,32 @@
+{
+  "status": "COMPLETE",
+  "source_archive_sha256": "d40d74326d5a2f54d59b9d1f64f5e680086e7917c28ca77e517f3ddf162a334a",
+  "remote_root": "/oscar/scratch/sboughan/se-semantic-recovery/randall-renderer-636bc586",
+  "jobs": {
+    "6739210": "Selected software GL/profile discovery only; no table timings.",
+    "6739546": "Excluded: initial harness errors.",
+    "6739547": "Excluded: initial harness errors and wrong DMC render arguments.",
+    "6739563": "Selected five classic-control rows; failed navigation attempts excluded.",
+    "6739564": "Selected all twelve DMC rows; initial OGBMaze variation recipe superseded by 6739861.",
+    "6739670": "Excluded: pip absent during Fetch setup; no completed measurements.",
+    "6739671": "Cancelled: initial Cube/Scene camera/reset recipe error; no selected measurements.",
+    "6739712": "Excluded entire Fetch cohort: uncontrolled source visual defaults/480-to-224 source raster; Reach unsupported object variation; PickAndPlace post-action source mutation.",
+    "6739713": "Selected TwoRoom/Piecewise; failed SimplePointMaze attempt superseded.",
+    "6739777": "Selected Cube/Scene CPU and Rocket CPU/GPU; old Cube/Scene GPU archive loader, Craftax and pymunk-7.3 PushT probes excluded.",
+    "6739860": "Selected source-only float64 PickAndPlace mutation diagnostic.",
+    "6739861": "Selected SimplePointMaze and OGBMaze CPU/GPU with corrected source options.",
+    "6739907": "Excluded from primary PickAndPlace timings: source raster was 480-to-224 and style mapping differed; replaced by 6740049.",
+    "6739908": "Selected Cube/Scene GPU retry; pinned gpu1504, lossless template-based loading of literal-slash State keys.",
+    "6739909": "Selected source-only float32 PickAndPlace mutation diagnostic.",
+    "6739949": "Selected all four Craftax CPU results and both symbolic GPU capability probes; pixel GPU cross-platform transplant errors excluded.",
+    "6739950": "Selected both independent PushT noncomparability probes under pymunk 7.2.0.",
+    "6740021": "Excluded failed Craftax strict replay attempt; CPU/GPU light_level difference led to per-checkpoint audit in 6740040.",
+    "6740040": "Selected strict per-checkpoint Craftax pixel GPU audit: only exact semantic matches timed; no signature edits.",
+    "6740041": "Cancelled superseded FetchReach retry after identifying source configuration/raster mismatch; excluded.",
+    "6740049": "Selected all twelve Fetch rows: identical explicit supported reset variations and native 224x224 source/candidate raster; PickAndPlace reset-only.",
+    "6740086": "Independent all-frame quality recomputation, hash checking and compact export; no timings measured here."
+  },
+  "production_unchanged": true,
+  "push_performed": false,
+  "final_manifest": "docs/research/semantic_recovery_evidence/randall_renderer_results/campaign-manifest.json"
+}

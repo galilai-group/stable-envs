@@ -1,0 +1,35 @@
+{
+  "ogbench_maze": {
+    "source_path": "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/ogbench/locomaze/maze.py",
+    "source_sha256": "2dc9c19fd6d0e0e2d27eae97430eaa0e816c6bc2221463bbde051ee9dc328714",
+    "source_version": "1.2.1",
+    "source_camera_lines": [
+      176,
+      186
+    ],
+    "camera_rule": {
+      "lookat_x": "2 * (maze_map.shape[1] - 3)",
+      "lookat_y": "2 * (maze_map.shape[0] - 3)",
+      "distance": "5 * (maze_map.shape[1] - 2)",
+      "elevation": -90
+    },
+    "camera_independent_of_observation_type": true,
+    "appearance_difference": "Source registered states mode keeps grid texture; candidate renderer constructs the pixel-mode encoded floor/lighting plate. Source lines 197-215 explicitly condition floor encoding on pixels. No source configuration is changed to improve MSE.",
+    "candidate_source_path": "stable_envs/envs/ogbench/maze.py",
+    "candidate_source_sha256": "7075f7b21b4c0342d9d66e1ab8660f0e984dbfaaa2cca851df22c20a72884f60"
+  },
+  "fetch": {
+    "source_wrapper": "stable_worldmodel/envs/gymnasium_robotics/fetch.py",
+    "candidate_source_path": "stable_envs/envs/fetch.py",
+    "camera": "Both derive FREE-camera defaults from gymnasium_robotics.envs.fetch.fetch_env.DEFAULT_CAMERA_CONFIG. Final cohort disables source-only randomized model-camera perturbations with explicit variation=[].",
+    "raster_resolution": [
+      224,
+      224
+    ],
+    "public_wrapper_resolution": [
+      224,
+      224
+    ],
+    "appearance": "Both public reset calls receive identical explicit supported options. The public candidate uses its actual style defaults/overrides; no full source-declared Variation mapping substitutes inactive source values."
+  }
+}
