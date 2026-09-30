@@ -1,0 +1,77 @@
+{
+  "scope": "Exact pinned stable-worldmodel RGB implementations and saved benchmark configurations only. CPU_ONLY is not a claim about all versions, forks, or future backends.",
+  "upstream": {
+    "url": "https://github.com/galilai-group/stable-worldmodel",
+    "commit": "176d54532b3c0a251a4f509b74f2fdacc143a63d",
+    "source_path": "/oscar/scratch/sboughan/se-semantic-recovery/render-rerun-df80c9c5-20260928T021357Z/run-6750648_2/oracle",
+    "proof": "Every copied SWM .py file byte-compared with git show at pinned commit; source_hashes.json records SHA256."
+  },
+  "packages": {
+    "stable-worldmodel": "0.0.6",
+    "gymnasium": "1.3.0",
+    "pygame": "2.6.1",
+    "torch": "2.14.0+cu126"
+  },
+  "registrations": {
+    "swm/AcrobotControl-v1": {
+      "status": "CPU_ONLY",
+      "evidence": "source/stable_worldmodel/envs/gymnasium_control/base.py:69 -> source/gymnasium_classic_control/acrobot.py:281; source_hashes.json",
+      "notes": "Pinned RGB path draws pygame/gfxdraw primitives into software pygame.Surface, then pygame.surfarray.pixels3d. SWM wrapper applies NumPy color replacements. No CUDA/OpenGL renderer selection in this call path. Human display acceleration would not accelerate these surface rasterization calls."
+    },
+    "swm/CartPoleControl-v1": {
+      "status": "CPU_ONLY",
+      "evidence": "source/stable_worldmodel/envs/gymnasium_control/base.py:69 -> source/gymnasium_classic_control/cartpole.py:248; source_hashes.json",
+      "notes": "Pinned RGB path draws pygame/gfxdraw primitives into software pygame.Surface, then pygame.surfarray.pixels3d. SWM wrapper applies NumPy color replacements. No CUDA/OpenGL renderer selection in this call path. Human display acceleration would not accelerate these surface rasterization calls."
+    },
+    "swm/MountainCarContinuousControl-v0": {
+      "status": "CPU_ONLY",
+      "evidence": "source/stable_worldmodel/envs/gymnasium_control/base.py:69 -> source/gymnasium_classic_control/continuous_mountain_car.py:199; source_hashes.json",
+      "notes": "Pinned RGB path draws pygame/gfxdraw primitives into software pygame.Surface, then pygame.surfarray.pixels3d. SWM wrapper applies NumPy color replacements. No CUDA/OpenGL renderer selection in this call path. Human display acceleration would not accelerate these surface rasterization calls."
+    },
+    "swm/MountainCarControl-v0": {
+      "status": "CPU_ONLY",
+      "evidence": "source/stable_worldmodel/envs/gymnasium_control/base.py:69 -> source/gymnasium_classic_control/mountain_car.py:175; source_hashes.json",
+      "notes": "Pinned RGB path draws pygame/gfxdraw primitives into software pygame.Surface, then pygame.surfarray.pixels3d. SWM wrapper applies NumPy color replacements. No CUDA/OpenGL renderer selection in this call path. Human display acceleration would not accelerate these surface rasterization calls."
+    },
+    "swm/PendulumControl-v1": {
+      "status": "CPU_ONLY",
+      "evidence": "source/stable_worldmodel/envs/gymnasium_control/base.py:69 -> source/gymnasium_classic_control/pendulum.py:173; source_hashes.json",
+      "notes": "Pinned RGB path draws pygame/gfxdraw primitives into software pygame.Surface, then pygame.surfarray.pixels3d. SWM wrapper applies NumPy color replacements. No CUDA/OpenGL renderer selection in this call path. Human display acceleration would not accelerate these surface rasterization calls."
+    },
+    "swm/SimplePointMaze-v0": {
+      "status": "CPU_ONLY",
+      "evidence": "source/stable_worldmodel/envs/simple_point_maze.py:314; source_hashes.json",
+      "notes": "Pinned RGB path creates Matplotlib patches, calls figure.canvas.draw and tostring_argb, then NumPy reshape. CPU Agg rasterization in the headless benchmark; no supported GPU RGB rasterizer configuration in this implementation."
+    },
+    "swm/TwoRoom-v1": {
+      "status": "CUDA_CONFIGURABLE",
+      "evidence": "source/stable_worldmodel/envs/two_room/env.py:282; source_hashes.json; supplemental/results/40/result.json: source CUDA execution verified on RTX A5500; 3090 timings pending",
+      "notes": "No constructor device argument. Unchanged upstream Torch rasterizer is configured by moving source-owned tensor buffers to CUDA and rendering under torch.device(cuda). Public render still copies image to CPU NumPy; that copy stays timed. No raster math replaced. Benchmark scopes the accepted saved default configurations, not all possible variations.",
+      "supplemental_runtime_evidence": "supplemental/results/40/result.json",
+      "supplemental_runtime_status": "PASS",
+      "runtime_result": "results/40/result.json",
+      "runtime_status": "COMPLETE"
+    },
+    "swm/Piecewise-v0": {
+      "status": "CUDA_CONFIGURABLE",
+      "evidence": "source/stable_worldmodel/envs/piecewise/piecewise_env.py:260; source_hashes.json; supplemental/results/34/result.json: source CUDA execution verified on RTX A5500; 3090 timings pending",
+      "notes": "No constructor device argument. Unchanged upstream Torch rasterizer is configured by moving source-owned tensor buffers to CUDA and rendering under torch.device(cuda). Public render still copies image to CPU NumPy; that copy stays timed. No raster math replaced. Benchmark scopes the accepted saved default configurations, not all possible variations. Optional render_bias_field uses Matplotlib on CPU and is outside the audited default configuration; this audit makes no general all-GPU claim for that variation.",
+      "supplemental_runtime_evidence": "supplemental/results/34/result.json",
+      "supplemental_runtime_status": "PASS",
+      "runtime_result": "results/34/result.json",
+      "runtime_status": "COMPLETE"
+    }
+  },
+  "runtime_gate": {
+    "job": "6805885_[34,40]",
+    "status": "PASS",
+    "batches": [
+      64,
+      128,
+      256
+    ],
+    "poses": 16,
+    "source_gpu_configuration": "Source-owned Torch buffers moved outside timers; same public source render under torch.device(cuda), including its .cpu().numpy() output path. CUDA output destination adds upload for source and preserves existing paired contract.",
+    "source_cpu_gpu_gap": "source_anchor_mse in results compares CUDA-source pixels against saved CPU-source oracle pixels at identical State; not a same-allocation CPU-vs-GPU timing ratio."
+  }
+}

@@ -1,0 +1,380 @@
+{
+  "registration": "swm/OGBScene-v0",
+  "device": "cuda",
+  "backend": "opengl",
+  "status": "COMPLETE",
+  "profile": {
+    "host": "gpu2106.oscar.ccv.brown.edu",
+    "cpu": "AMD EPYC 7532 32-Core Processor",
+    "gpu": "NVIDIA GeForce RTX 3090",
+    "python": "3.12.8",
+    "packages": {
+      "torch": {
+        "version": "2.14.0+cu126",
+        "path": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages"
+      },
+      "numpy": {
+        "version": "2.2.6",
+        "path": "/oscar/scratch/sboughan/se-semantic-recovery/ogb-renderer-294675f0-complete/run-6669909/profile/lib/python3.12/site-packages"
+      },
+      "tensordict": {
+        "version": "0.14.2",
+        "path": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages"
+      },
+      "gymnasium": {
+        "version": "1.2.3",
+        "path": "/oscar/scratch/sboughan/se-semantic-recovery/ogb-renderer-294675f0-complete/run-6669909/profile/lib/python3.12/site-packages"
+      },
+      "mujoco": {
+        "version": "3.12.0",
+        "path": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages"
+      },
+      "dm-control": {
+        "version": "1.0.41",
+        "path": "/oscar/scratch/sboughan/se-semantic-recovery/ogb-renderer-294675f0-complete/run-6669909/profile/lib/python3.12/site-packages"
+      },
+      "gymnasium-robotics": {
+        "version": "1.4.2",
+        "path": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages"
+      },
+      "ogbench": {
+        "version": "1.2.1",
+        "path": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages"
+      },
+      "pymunk": {
+        "version": "7.3.0",
+        "path": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages"
+      },
+      "pygame": {
+        "version": "2.6.1",
+        "path": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages"
+      }
+    },
+    "torch_threads": 1,
+    "environment": {
+      "SLURM_JOB_ID": "6800940",
+      "MUJOCO_GL": "egl",
+      "PYOPENGL_PLATFORM": "egl",
+      "LIBGL_ALWAYS_SOFTWARE": null,
+      "GALLIUM_DRIVER": null,
+      "DISPLAY": null,
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "LP_NUM_THREADS": "1",
+      "JAX_PLATFORMS": null,
+      "CRAFTAX_JAX_BACKEND": null,
+      "CUDA_VISIBLE_DEVICES": "0"
+    }
+  },
+  "measurements": [
+    {
+      "batch": 256,
+      "output_device": "cpu",
+      "paired_mse": {
+        "mean": 0.0,
+        "sd": 0.0,
+        "maximum": 0.0,
+        "samples": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "source_repeat_max_uint8": 0,
+      "source_repeat_mse_max": 0.0,
+      "ours": {
+        "count": 4,
+        "samples_ms": [
+          312.013673,
+          314.302068,
+          312.365731,
+          312.667649
+        ],
+        "mean_ms": 312.83728025,
+        "sd_ms": 1.0124336210265603,
+        "mean_ms_per_frame": 1.2220206259765625,
+        "sd_ms_per_frame": 0.003954818832135001,
+        "frames_per_second": 818.3167933036012
+      },
+      "source": {
+        "count": 4,
+        "samples_ms": [
+          195.541043,
+          197.308831,
+          195.131975,
+          199.345957
+        ],
+        "mean_ms": 196.8319515,
+        "sd_ms": 1.9238851808666535,
+        "mean_ms_per_frame": 0.768874810546875,
+        "sd_ms_per_frame": 0.007515176487760365,
+        "frames_per_second": 1300.601848679024
+      },
+      "speedup": 0.6291831694186326
+    },
+    {
+      "batch": 256,
+      "output_device": "cuda",
+      "paired_mse": {
+        "mean": 0.0,
+        "sd": 0.0,
+        "maximum": 0.0,
+        "samples": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "source_repeat_max_uint8": 0,
+      "source_repeat_mse_max": 0.0,
+      "ours": {
+        "count": 4,
+        "samples_ms": [
+          301.083667,
+          302.185209,
+          299.149319,
+          299.13188
+        ],
+        "mean_ms": 300.38751875,
+        "sd_ms": 1.5084296373297905,
+        "mean_ms_per_frame": 1.1733887451171876,
+        "sd_ms_per_frame": 0.005892303270819494,
+        "frames_per_second": 852.2324797824176
+      },
+      "source": {
+        "count": 4,
+        "samples_ms": [
+          191.175721,
+          190.728555,
+          191.39823,
+          190.427676
+        ],
+        "mean_ms": 190.9325455,
+        "sd_ms": 0.4368454011283722,
+        "mean_ms_per_frame": 0.745830255859375,
+        "sd_ms_per_frame": 0.001706427348157704,
+        "frames_per_second": 1340.7876552926384
+      },
+      "speedup": 0.6356207684477903
+    }
+  ],
+  "frames": [
+    {
+      "index": 0,
+      "case": 0,
+      "state_hash": "752ae399347de05a8998a7760d8a3b1f4d9ed58da1fd517dc95bef7716d6b8a9",
+      "state_file": "frame-0000-state.npz"
+    },
+    {
+      "index": 66,
+      "case": 11,
+      "state_hash": "5e3f7704f6a9353b569a19747b4ae6c44144a166f78303f9ff62e030ce4e7dcd",
+      "state_file": "frame-0066-state.npz"
+    },
+    {
+      "index": 133,
+      "case": 26,
+      "state_hash": "423f319146813b7b0841f59794d08ccb9ad479f0007723b563f49a74c6463163",
+      "state_file": "frame-0133-state.npz"
+    },
+    {
+      "index": 199,
+      "case": 26,
+      "state_hash": "56a584a77cf721d1e4df9cbbb8028bbf8d5d083d5800383d638fd53728f287cd",
+      "state_file": "frame-0199-state.npz"
+    },
+    {
+      "index": 266,
+      "case": 27,
+      "state_hash": "a73adce2620c4a30172bf813b35af673711f101d2bf2ec0cfea81fbb57de0965",
+      "state_file": "frame-0266-state.npz"
+    },
+    {
+      "index": 333,
+      "case": 27,
+      "state_hash": "0a24caca2721981a6f00188107cbb83c68d786cd40d0410363f85681ccc24859",
+      "state_file": "frame-0333-state.npz"
+    },
+    {
+      "index": 399,
+      "case": 28,
+      "state_hash": "78aec72a56ad47ce3ac457fb3d651e7a5fa0bf7ec16005f3440d7ef6f6700646",
+      "state_file": "frame-0399-state.npz"
+    },
+    {
+      "index": 466,
+      "case": 29,
+      "state_hash": "b4c95d3cb4fe26acc8ee72f7563facaf2569f235b89fcd7fa5f50aeb315d672e",
+      "state_file": "frame-0466-state.npz"
+    },
+    {
+      "index": 532,
+      "case": 29,
+      "state_hash": "0c101796ff344f36e863114a3859ae108e6f0bfd5032e631a2326169177ba0c2",
+      "state_file": "frame-0532-state.npz"
+    },
+    {
+      "index": 599,
+      "case": 30,
+      "state_hash": "20c1a782513c45a600bf58154e7fe01a0091ace0eb380a51263e64871c17f3d6",
+      "state_file": "frame-0599-state.npz"
+    },
+    {
+      "index": 666,
+      "case": 31,
+      "state_hash": "6965c7b5e27cc8e7a1deeba60070a4f0d976b0a05f4b529578e8fe6f785fb227",
+      "state_file": "frame-0666-state.npz"
+    },
+    {
+      "index": 732,
+      "case": 31,
+      "state_hash": "277158bdb397b000a1604fa3c9ee6449a87ae8740cc44c35d0ba8eb2258ba860",
+      "state_file": "frame-0732-state.npz"
+    },
+    {
+      "index": 799,
+      "case": 32,
+      "state_hash": "de1a9ef05e4e841e8963a7ecdfad2e620ef9ea852a9054026ad6b13a73503bb7",
+      "state_file": "frame-0799-state.npz"
+    },
+    {
+      "index": 865,
+      "case": 33,
+      "state_hash": "5fecf7859c333084abea04060f81d162a3d51f1ab86d696942d4938d5722af22",
+      "state_file": "frame-0865-state.npz"
+    },
+    {
+      "index": 932,
+      "case": 33,
+      "state_hash": "867c708ceb664ecd108fe02b6c996ce6c1284b6d5812f8ed8100a18bc6a4a375",
+      "state_file": "frame-0932-state.npz"
+    },
+    {
+      "index": 999,
+      "case": 34,
+      "state_hash": "f12564b25cfc5691befe767f2e0839fc07c520d08368b4394b00112795c60986",
+      "state_file": "frame-0999-state.npz"
+    }
+  ],
+  "harness_sha256": "c33317b5d4cc2bdd5b7b9090d081c3c0519184c89fe9cabfd3cd371eccbd685b",
+  "scope": "Saved States; no rollouts or setup timed; equal batch and output destination; single CPU thread.",
+  "source_batch_method": "Repeated upstream render, cycling the same saved poses; no cached images.",
+  "corpus": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-cpu-6754925_30/results",
+  "corpus_sha256": "3a8ef972a43528fd5911bc476a9aabca1467eed78e8c3a05a7d9f8c7d66c5123",
+  "independent_states": 16,
+  "source_anchor_mse": [
+    0.00012643701140586954,
+    0.00012089747533000129,
+    0.00011925720876585928,
+    0.00011151787773933104,
+    0.00011188350634371396,
+    0.0001124723824170191,
+    0.00012079674484172755,
+    0.00010844764834038192,
+    0.00010877021658336538,
+    0.00011222863001409715,
+    0.00011498628732538768,
+    0.00011223068050749712,
+    0.00010628360886838397,
+    0.00011856273228245547,
+    0.0001169370754837883,
+    0.00011847289504036909
+  ],
+  "source_render_paths": {
+    "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/scripts/benchmarks/renderer_table/special.py": "f50c5f4f7695aafe4dfefc257b42619faf3c1c3d0e555de6b2cf6ef938a8cc8d"
+  },
+  "opengl": {
+    "vendor": "NVIDIA Corporation",
+    "renderer": "NVIDIA GeForce RTX 3090/PCIe/SSE2"
+  },
+  "source_render_device": "cuda",
+  "source_gpu_supported": true,
+  "source_warmup_drift_mse": [
+    0.0,
+    0.0,
+    0.0,
+    2.5631167499679605e-10,
+    0.0,
+    2.5631167499679605e-10,
+    0.0,
+    2.5631167499679605e-10,
+    2.5631167499679605e-10,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "source_warm_repeat_max_uint8": 1,
+  "source_warm_repeat_mse": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    2.5631167499679605e-10,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "paired_mse": {
+    "samples": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "mean": 0.0,
+    "sd": 0.0,
+    "maximum": 0.0
+  },
+  "state_nonmutation_passed": true
+}

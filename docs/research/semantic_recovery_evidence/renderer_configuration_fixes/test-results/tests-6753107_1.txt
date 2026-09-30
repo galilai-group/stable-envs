@@ -1,0 +1,29 @@
+........                                                                 [100%]
+=============================== warnings summary ===============================
+final-tests/test_renderer_config_fixes.py::test_scene_button_materials_preserve_shading_and_independent_colors[lock_colors0]
+final-tests/test_renderer_config_fixes.py::test_scene_button_materials_preserve_shading_and_independent_colors[lock_colors1]
+final-tests/test_ogbench_render_state.py::test_named_render_state_boundary[Cube-OGBCube]
+final-tests/test_ogbench_render_state.py::test_named_render_state_boundary[Scene-OGBScene]
+final-tests/test_ogbench_render_state.py::test_render_model_configuration_no_steps_or_rng_mutation[Cube-OGBCube]
+final-tests/test_ogbench_render_state.py::test_render_model_configuration_no_steps_or_rng_mutation[Scene-OGBScene]
+final-tests/test_ogbench_render_state.py::test_renderstate_configuration_grouping[Cube-OGBCube]
+final-tests/test_ogbench_render_state.py::test_renderstate_configuration_grouping[Scene-OGBScene]
+  /oscar/scratch/sboughan/se-semantic-recovery/ogb-renderer-294675f0-complete/run-6669909/profile/lib/python3.12/site-packages/gymnasium/spaces/box.py:236: UserWarning: [33mWARN: Box low's precision lowered by casting to float32, current low.dtype=float64[0m
+    gym.logger.warn(
+
+final-tests/test_renderer_config_fixes.py::test_scene_button_materials_preserve_shading_and_independent_colors[lock_colors0]
+final-tests/test_renderer_config_fixes.py::test_scene_button_materials_preserve_shading_and_independent_colors[lock_colors1]
+final-tests/test_ogbench_render_state.py::test_named_render_state_boundary[Cube-OGBCube]
+final-tests/test_ogbench_render_state.py::test_named_render_state_boundary[Scene-OGBScene]
+final-tests/test_ogbench_render_state.py::test_render_model_configuration_no_steps_or_rng_mutation[Cube-OGBCube]
+final-tests/test_ogbench_render_state.py::test_render_model_configuration_no_steps_or_rng_mutation[Scene-OGBScene]
+final-tests/test_ogbench_render_state.py::test_renderstate_configuration_grouping[Cube-OGBCube]
+final-tests/test_ogbench_render_state.py::test_renderstate_configuration_grouping[Scene-OGBScene]
+  /oscar/scratch/sboughan/se-semantic-recovery/ogb-renderer-294675f0-complete/run-6669909/profile/lib/python3.12/site-packages/gymnasium/spaces/box.py:306: UserWarning: [33mWARN: Box high's precision lowered by casting to float32, current high.dtype=float64[0m
+    gym.logger.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+------------------------------ stable-envs safety ------------------------------
+resources: 0 EGL contexts created, 0 released, 0 live (peak 0); renderers 0 created / 0 closed
+node: node1940 slurm=alloc reason=none reference-renderer={}
+8 passed, 16 warnings in 21.81s

@@ -1,0 +1,219 @@
+{
+  "registration": "swm/Piecewise-v0",
+  "device": "cpu",
+  "backend": "auto",
+  "status": "COMPLETE",
+  "profile": {
+    "host": "node1831.oscar.ccv.brown.edu",
+    "cpu": "Intel(R) Xeon(R) Platinum 8268 CPU @ 2.90GHz",
+    "gpu": null,
+    "python": "3.12.9",
+    "packages": {
+      "torch": {
+        "version": "2.14.0+cu126",
+        "path": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages"
+      },
+      "numpy": {
+        "version": "2.5.3",
+        "path": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages"
+      },
+      "tensordict": {
+        "version": "0.14.2",
+        "path": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages"
+      },
+      "gymnasium": {
+        "version": "1.3.0",
+        "path": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages"
+      },
+      "mujoco": {
+        "version": "3.11.0",
+        "path": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages"
+      },
+      "dm-control": {
+        "version": "1.0.44",
+        "path": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages"
+      },
+      "ogbench": {
+        "version": "1.2.1",
+        "path": "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages"
+      },
+      "craftax": {
+        "version": "1.6.1",
+        "path": "/oscar/scratch/sboughan/venvs/se-step4-swm/lib/python3.12/site-packages"
+      },
+      "jax": {
+        "version": "0.11.1",
+        "path": "/oscar/scratch/sboughan/venvs/se-step4-swm/lib/python3.12/site-packages"
+      },
+      "jaxlib": {
+        "version": "0.11.1",
+        "path": "/oscar/scratch/sboughan/venvs/se-step4-swm/lib/python3.12/site-packages"
+      },
+      "flax": {
+        "version": "0.12.9",
+        "path": "/oscar/scratch/sboughan/venvs/se-step4-swm/lib/python3.12/site-packages"
+      },
+      "pymunk": {
+        "version": "7.3.0",
+        "path": "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages"
+      },
+      "pygame": {
+        "version": "2.6.1",
+        "path": "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages"
+      }
+    },
+    "torch_threads": 1,
+    "environment": {
+      "SLURM_JOB_ID": "6795489",
+      "MUJOCO_GL": "glfw",
+      "PYOPENGL_PLATFORM": "glx",
+      "LIBGL_ALWAYS_SOFTWARE": "1",
+      "GALLIUM_DRIVER": "llvmpipe",
+      "DISPLAY": ":589",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "LP_NUM_THREADS": "1",
+      "JAX_PLATFORMS": null,
+      "CRAFTAX_JAX_BACKEND": null,
+      "CUDA_VISIBLE_DEVICES": ""
+    }
+  },
+  "measurements": [
+    {
+      "batch": 1,
+      "output_device": "cpu",
+      "ours": {
+        "count": 12,
+        "samples_ms": [
+          2.703718,
+          2.364069,
+          2.225736,
+          1.960384,
+          1.721383,
+          1.691052,
+          1.536984,
+          1.521804,
+          1.397097,
+          1.418997,
+          1.261623,
+          1.390796
+        ],
+        "mean_ms": 1.7661369166666667,
+        "sd_ms": 0.45302079820918084,
+        "mean_ms_per_frame": 1.7661369166666667,
+        "sd_ms_per_frame": 0.45302079820918084,
+        "frames_per_second": 566.2075179807455
+      },
+      "source": {
+        "count": 12,
+        "samples_ms": [
+          5.587912,
+          5.575443,
+          4.875865,
+          4.385786,
+          3.925695,
+          3.659566,
+          3.35744,
+          3.243509,
+          3.023766,
+          2.921492,
+          2.929222,
+          2.824247
+        ],
+        "mean_ms": 3.859161916666667,
+        "sd_ms": 1.0194999938733298,
+        "mean_ms_per_frame": 3.859161916666667,
+        "sd_ms_per_frame": 1.0194999938733298,
+        "frames_per_second": 259.1236184419402
+      },
+      "speedup": 2.1850864903216496
+    },
+    {
+      "batch": 64,
+      "output_device": "cpu",
+      "ours": {
+        "count": 6,
+        "samples_ms": [
+          51.867168,
+          58.594718,
+          42.383114,
+          48.650281,
+          42.864207,
+          48.690172
+        ],
+        "mean_ms": 48.84161,
+        "sd_ms": 6.029563405944713,
+        "mean_ms_per_frame": 0.76315015625,
+        "sd_ms_per_frame": 0.09421192821788614,
+        "frames_per_second": 1310.3581147304521
+      },
+      "source": {
+        "count": 6,
+        "samples_ms": [
+          183.592009,
+          183.116297,
+          185.263396,
+          179.65736,
+          179.815654,
+          181.500917
+        ],
+        "mean_ms": 182.1576055,
+        "sd_ms": 2.2266450816207537,
+        "mean_ms_per_frame": 2.8462125859375,
+        "sd_ms_per_frame": 0.034791329400324277,
+        "frames_per_second": 351.3441002055772
+      },
+      "speedup": 3.729557758231147
+    }
+  ],
+  "frames": [
+    {
+      "index": 0,
+      "case": 0,
+      "state_hash": "76e5ac0d93120b27aed803a6b7aa9c3c73571f2de549355c35e53641a592ad4f",
+      "state_file": "frame-0000-state.npz"
+    },
+    {
+      "index": 333,
+      "case": 9,
+      "state_hash": "7f098b717a597afe4a0f3909e0dacb8c7da9e2064ccc315c98c099d5ac72a912",
+      "state_file": "frame-0333-state.npz"
+    },
+    {
+      "index": 666,
+      "case": 13,
+      "state_hash": "29897398ac9ba639d65626e6037c0d3629943a03dfe9893d409e9c22978c8cab",
+      "state_file": "frame-0666-state.npz"
+    },
+    {
+      "index": 999,
+      "case": 16,
+      "state_hash": "e5d803bca5dbcc1b2d854e65c743151a9aae08705f34507f74f7b46c868e0850",
+      "state_file": "frame-0999-state.npz"
+    }
+  ],
+  "harness_sha256": "c8f28ac634ec127a266f3b3550581289035e9d3e7e00e828667114cfa406216e",
+  "scope": "Saved States; no rollouts or setup timed; equal batch and output destination; single CPU thread.",
+  "source_batch_method": "Repeated upstream render, cycling the same saved poses; no cached images.",
+  "corpus": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-cpu-6754925_34/results",
+  "corpus_sha256": "e1a54477d064894629ca2917f061d944e754923e2fd685781fd317ff918862ae",
+  "independent_states": 4,
+  "source_render_paths": {
+    "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/scripts/benchmarks/renderer_table/bridges.py": "8f17dbf1c3a4f14343766359f4f3a9fa5af41a808ff400801a624aded319476b"
+  },
+  "source_render_device": "cpu",
+  "source_gpu_supported": false,
+  "paired_mse": {
+    "samples": [
+      0.0,
+      1.0216504902614639e-10,
+      0.0,
+      0.0
+    ],
+    "mean": 2.5541262256536598e-11,
+    "sd": 5.1082524513073195e-11,
+    "maximum": 1.0216504902614639e-10
+  },
+  "state_nonmutation_passed": true
+}

@@ -1,0 +1,454 @@
+{
+  "registration": "swm/CartPoleControl-v1",
+  "device": "cpu",
+  "backend": "auto",
+  "status": "COMPLETE",
+  "profile": {
+    "host": "node2356.oscar.ccv.brown.edu",
+    "cpu": "AMD EPYC 9684X 96-Core Processor",
+    "gpu": null,
+    "python": "3.12.9",
+    "packages": {
+      "torch": {
+        "version": "2.14.0+cu126",
+        "path": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages"
+      },
+      "numpy": {
+        "version": "2.5.3",
+        "path": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages"
+      },
+      "tensordict": {
+        "version": "0.14.2",
+        "path": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages"
+      },
+      "gymnasium": {
+        "version": "1.3.0",
+        "path": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages"
+      },
+      "mujoco": {
+        "version": "3.11.0",
+        "path": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages"
+      },
+      "dm-control": {
+        "version": "1.0.44",
+        "path": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages"
+      },
+      "ogbench": {
+        "version": "1.2.1",
+        "path": "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages"
+      },
+      "craftax": {
+        "version": "1.6.1",
+        "path": "/oscar/scratch/sboughan/venvs/se-step4-swm/lib/python3.12/site-packages"
+      },
+      "jax": {
+        "version": "0.11.1",
+        "path": "/oscar/scratch/sboughan/venvs/se-step4-swm/lib/python3.12/site-packages"
+      },
+      "jaxlib": {
+        "version": "0.11.1",
+        "path": "/oscar/scratch/sboughan/venvs/se-step4-swm/lib/python3.12/site-packages"
+      },
+      "flax": {
+        "version": "0.12.9",
+        "path": "/oscar/scratch/sboughan/venvs/se-step4-swm/lib/python3.12/site-packages"
+      },
+      "pymunk": {
+        "version": "7.3.0",
+        "path": "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages"
+      },
+      "pygame": {
+        "version": "2.6.1",
+        "path": "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages"
+      }
+    },
+    "torch_threads": 1,
+    "environment": {
+      "SLURM_JOB_ID": "6796507",
+      "MUJOCO_GL": "glfw",
+      "PYOPENGL_PLATFORM": "glx",
+      "LIBGL_ALWAYS_SOFTWARE": "1",
+      "GALLIUM_DRIVER": "llvmpipe",
+      "DISPLAY": ":1607",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "LP_NUM_THREADS": "1",
+      "JAX_PLATFORMS": null,
+      "CRAFTAX_JAX_BACKEND": null,
+      "CUDA_VISIBLE_DEVICES": ""
+    }
+  },
+  "measurements": [
+    {
+      "batch": 1,
+      "output_device": "cpu",
+      "paired_mse": {
+        "mean": 0.0,
+        "sd": 0.0,
+        "maximum": 0.0,
+        "samples": [
+          0.0
+        ]
+      },
+      "ours": {
+        "count": 12,
+        "samples_ms": [
+          12.814764,
+          12.751964,
+          12.672024,
+          12.806304,
+          12.653224,
+          12.732723,
+          12.635334,
+          12.765224,
+          12.662693,
+          12.761024,
+          12.659894,
+          12.734964
+        ],
+        "mean_ms": 12.720844666666666,
+        "sd_ms": 0.06207150747079514,
+        "mean_ms_per_frame": 12.720844666666666,
+        "sd_ms_per_frame": 0.06207150747079514,
+        "frames_per_second": 78.61113205952205
+      },
+      "source": {
+        "count": 12,
+        "samples_ms": [
+          1.795454,
+          1.673593,
+          1.751043,
+          1.654493,
+          1.750133,
+          1.649493,
+          1.733143,
+          1.662053,
+          1.746134,
+          1.659543,
+          1.743053,
+          1.668073
+        ],
+        "mean_ms": 1.707184,
+        "sd_ms": 0.05054832910645559,
+        "mean_ms_per_frame": 1.707184,
+        "sd_ms_per_frame": 0.05054832910645559,
+        "frames_per_second": 585.7599415177274
+      },
+      "speedup": 0.1342036668739031
+    },
+    {
+      "batch": 64,
+      "output_device": "cpu",
+      "paired_mse": {
+        "mean": 8.529474507667992e-06,
+        "sd": 1.5273395955885414e-05,
+        "maximum": 3.6337946943483284e-05,
+        "samples": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          3.284429065743945e-05,
+          0.0,
+          3.6337946943483284e-05,
+          0.0,
+          0.0,
+          0.0,
+          3.347453970695032e-05,
+          0.0,
+          0.0,
+          3.3814814814814814e-05,
+          0.0
+        ]
+      },
+      "ours": {
+        "count": 3,
+        "samples_ms": [
+          84.562417,
+          88.835494,
+          86.53029
+        ],
+        "mean_ms": 86.64273366666666,
+        "sd_ms": 2.1387565185435053,
+        "mean_ms_per_frame": 1.3537927135416665,
+        "sd_ms_per_frame": 0.03341807060224227,
+        "frames_per_second": 738.6655209451476
+      },
+      "source": {
+        "count": 3,
+        "samples_ms": [
+          605.269211,
+          603.637838,
+          606.532733
+        ],
+        "mean_ms": 605.146594,
+        "sd_ms": 1.4513374734268503,
+        "mean_ms_per_frame": 9.45541553125,
+        "sd_ms_per_frame": 0.022677148022294535,
+        "frames_per_second": 105.75949800355316
+      },
+      "speedup": 6.984389439143621
+    },
+    {
+      "batch": 128,
+      "output_device": "cpu",
+      "paired_mse": {
+        "mean": 8.529474507667992e-06,
+        "sd": 1.5273395955885414e-05,
+        "maximum": 3.6337946943483284e-05,
+        "samples": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          3.284429065743945e-05,
+          0.0,
+          3.6337946943483284e-05,
+          0.0,
+          0.0,
+          0.0,
+          3.347453970695032e-05,
+          0.0,
+          0.0,
+          3.3814814814814814e-05,
+          0.0
+        ]
+      },
+      "ours": {
+        "count": 3,
+        "samples_ms": [
+          167.770741,
+          165.886108,
+          167.923371
+        ],
+        "mean_ms": 167.19340666666668,
+        "sd_ms": 1.1347230200037004,
+        "mean_ms_per_frame": 1.3061984895833334,
+        "sd_ms_per_frame": 0.00886502359377891,
+        "frames_per_second": 765.5804289890059
+      },
+      "source": {
+        "count": 3,
+        "samples_ms": [
+          1192.188438,
+          1199.384901,
+          1185.620325
+        ],
+        "mean_ms": 1192.397888,
+        "sd_ms": 6.884677922155668,
+        "mean_ms_per_frame": 9.3156085,
+        "sd_ms_per_frame": 0.05378654626684116,
+        "frames_per_second": 107.34671814514319
+      },
+      "speedup": 7.13184755172363
+    },
+    {
+      "batch": 256,
+      "output_device": "cpu",
+      "paired_mse": {
+        "mean": 8.529474507667992e-06,
+        "sd": 1.5273395955885414e-05,
+        "maximum": 3.6337946943483284e-05,
+        "samples": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          3.284429065743945e-05,
+          0.0,
+          3.6337946943483284e-05,
+          0.0,
+          0.0,
+          0.0,
+          3.347453970695032e-05,
+          0.0,
+          0.0,
+          3.3814814814814814e-05,
+          0.0
+        ]
+      },
+      "ours": {
+        "count": 3,
+        "samples_ms": [
+          322.887449,
+          317.335547,
+          318.51525
+        ],
+        "mean_ms": 319.5794153333333,
+        "sd_ms": 2.9249341611226605,
+        "mean_ms_per_frame": 1.2483570911458333,
+        "sd_ms_per_frame": 0.011425524066885392,
+        "frames_per_second": 801.0528454499562
+      },
+      "source": {
+        "count": 3,
+        "samples_ms": [
+          2418.309769,
+          2420.883664,
+          2435.364201
+        ],
+        "mean_ms": 2424.8525446666667,
+        "sd_ms": 9.193879650089801,
+        "mean_ms_per_frame": 9.472080252604167,
+        "sd_ms_per_frame": 0.03591359238316329,
+        "frames_per_second": 105.57342984135603
+      },
+      "speedup": 7.5876368386789075
+    }
+  ],
+  "frames": [
+    {
+      "index": 0,
+      "case": 0,
+      "state_hash": "214b61e5f1f98e0169613c3d00f604177283056ad7ed42f5ec27d8deb7b9bdad",
+      "state_file": "frame-0000-state.npz"
+    },
+    {
+      "index": 66,
+      "case": 6,
+      "state_hash": "81bd68928268f23ebf464c339809b37a96db62fadbd0d3481f5e16ae8b5efc62",
+      "state_file": "frame-0066-state.npz"
+    },
+    {
+      "index": 133,
+      "case": 9,
+      "state_hash": "911c7c92f17481eedafac917b41a0274009f726fa6239c3599e320e27d5e9ffa",
+      "state_file": "frame-0133-state.npz"
+    },
+    {
+      "index": 199,
+      "case": 13,
+      "state_hash": "fc75fc01adb25e9357a8586fe9d7dedc9f7237c4b001b5acc70890253483fa57",
+      "state_file": "frame-0199-state.npz"
+    },
+    {
+      "index": 266,
+      "case": 16,
+      "state_hash": "6989b4bf5657f0fe4dc65743dec7389268fd144cd5668b2413ed68dd8fc6c342",
+      "state_file": "frame-0266-state.npz"
+    },
+    {
+      "index": 333,
+      "case": 19,
+      "state_hash": "7763fda6691ca5c7b2677e8df139473e3009fe4a776f77b333d86b3d78a42cb0",
+      "state_file": "frame-0333-state.npz"
+    },
+    {
+      "index": 399,
+      "case": 21,
+      "state_hash": "c801b5471b857f30533bf98139e5ce2414175edefda7c1c43759153161a9b198",
+      "state_file": "frame-0399-state.npz"
+    },
+    {
+      "index": 466,
+      "case": 23,
+      "state_hash": "7b60901b5b1f7113765babb88274120ee68a9fa37c2fcdc6f1ba2d645aee5d0c",
+      "state_file": "frame-0466-state.npz"
+    },
+    {
+      "index": 532,
+      "case": 26,
+      "state_hash": "3ac17c3664d528312c72d8cc61f11969ea179bf63c01c45d3fe302223f26c3fc",
+      "state_file": "frame-0532-state.npz"
+    },
+    {
+      "index": 599,
+      "case": 30,
+      "state_hash": "85231cd3a52822c780f2f739debcd263d7e4bb0291377e15da8f921a4f238e9c",
+      "state_file": "frame-0599-state.npz"
+    },
+    {
+      "index": 666,
+      "case": 32,
+      "state_hash": "d802da48ef7ed00f3988ce0becbe2a0b66fda8002ff3d62b361f22572ef82717",
+      "state_file": "frame-0666-state.npz"
+    },
+    {
+      "index": 732,
+      "case": 35,
+      "state_hash": "5dea818943ba0575cd8d6988373da156f2d40d09bd6654fd0d1990dff42123c2",
+      "state_file": "frame-0732-state.npz"
+    },
+    {
+      "index": 799,
+      "case": 36,
+      "state_hash": "51a43cf4f7c0435f39b473abeb526d55fc250b4c4f80fe256ae522a05f8ba761",
+      "state_file": "frame-0799-state.npz"
+    },
+    {
+      "index": 865,
+      "case": 37,
+      "state_hash": "5cb97a1ea681fbdf47092e23c9238b1210d1e10e9cc04fae1c4fb721ffb345f8",
+      "state_file": "frame-0865-state.npz"
+    },
+    {
+      "index": 932,
+      "case": 39,
+      "state_hash": "31cd46a6e2b682c207c63f27a31b98d40684e7ec91a50ed4645a8b631750b43b",
+      "state_file": "frame-0932-state.npz"
+    },
+    {
+      "index": 999,
+      "case": 42,
+      "state_hash": "3469c89b1fec770fb5c743810af59f229128070dfb7cc5639bc821761d1bce27",
+      "state_file": "frame-0999-state.npz"
+    }
+  ],
+  "harness_sha256": "54f29161aae95d660dce0e053d2de652845dd075fc93302e9418676b2c6c7230",
+  "scope": "Saved States; no rollouts or setup timed; equal batch and output destination; single CPU thread.",
+  "source_batch_method": "Repeated upstream render, cycling the same saved poses; no cached images.",
+  "corpus": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-cpu-6754925_3/results",
+  "corpus_sha256": "7dd856c735cefa04c0238fd9f59c3587e95b693cb763d8b7a1071bce3143b2a4",
+  "independent_states": 16,
+  "source_anchor_mse": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "source_render_paths": {
+    "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/scripts/benchmarks/renderer_table/bridges.py": "8f17dbf1c3a4f14343766359f4f3a9fa5af41a808ff400801a624aded319476b"
+  },
+  "source_render_device": "cpu",
+  "source_gpu_supported": false,
+  "paired_mse": {
+    "samples": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      3.284429065743945e-05,
+      0.0,
+      3.6337946943483284e-05,
+      0.0,
+      0.0,
+      0.0,
+      3.347453970695032e-05,
+      0.0,
+      0.0,
+      3.3814814814814814e-05,
+      0.0
+    ],
+    "mean": 8.529474507667992e-06,
+    "sd": 1.5273395955885414e-05,
+    "maximum": 3.6337946943483284e-05
+  },
+  "state_nonmutation_passed": true
+}

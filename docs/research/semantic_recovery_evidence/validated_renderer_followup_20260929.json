@@ -1,0 +1,23 @@
+{
+  "status": "COMPLETE",
+  "scene_gates": {
+    "v1_3090": "PASS",
+    "v1_supplemental": "PASS",
+    "v2_3090": "PASS",
+    "v2_supplemental": "PASS",
+    "scene_render_overhead_20260929_cpu_70": "PASS",
+    "scene_render_overhead_20260929_cpu_72": "PASS",
+    "scene_render_kinematics_20260929_cpu_72": "PASS"
+  },
+  "production_sha256": {
+    "stable_envs/envs/ogbench/manipulation_opengl.py": "4f4ce161af00b4237f3d40e287e6e4007f6eef17639f96204c16facb2764dfa1",
+    "stable_envs/render/cpu3d.py": "df9daed3a582c96ca8bc69aa1b87e4c68ac8240ff89e2f48d501eda6625b1b0d",
+    "stable_envs/envs/dmcontrol/trackcom.py": "70df467b4527bdc1644741578b01bf656dba455563eb54b861437ac2c9ecbe8f",
+    "stable_envs/envs/dmcontrol/humanoid.py": "e7d836a9057b41d3c14f7bba7ea51e7c75f85a1099dff9bbc10bd639ffbb7704"
+  },
+  "unit_tests": "69 passed, 2 optional skipped; staged Scene code hash matches adopted code",
+  "oscar_humanoid_boundary_tests": "3 passed",
+  "csv_rows": 42,
+  "push": false,
+  "scope": "Warm rendering; 16 distinct saved States; batches64/128/256; no semantic acceptance promotion"
+}

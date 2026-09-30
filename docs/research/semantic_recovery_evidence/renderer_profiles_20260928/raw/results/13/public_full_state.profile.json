@@ -1,0 +1,1799 @@
+{
+  "scope": "Separate instrumented calls; not timing samples. Python cumulative times overlap; CUDA operator times are not disjoint wall times.",
+  "python_functions": [
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/renderer-profiles-df80c9c5-20260928/profile_all.py",
+      "line": 299,
+      "function": "<lambda>",
+      "primitive_calls": 3,
+      "calls": 3,
+      "self_ms": 0.0044859999999999995,
+      "cumulative_ms": 130.54613500000002
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/renderer-profiles-df80c9c5-20260928/profile_all.py",
+      "line": 283,
+      "function": "one",
+      "primitive_calls": 3,
+      "calls": 3,
+      "self_ms": 0.008143,
+      "cumulative_ms": 130.541649
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/scripts/benchmarks/renderer_table/common.py",
+      "line": 172,
+      "function": "public_render",
+      "primitive_calls": 3,
+      "calls": 3,
+      "self_ms": 0.096456,
+      "cumulative_ms": 130.53350600000002
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/stable_envs/envs/craftax_semantics.py",
+      "line": 123,
+      "function": "to_render_state",
+      "primitive_calls": 3,
+      "calls": 3,
+      "self_ms": 0.024398000000000003,
+      "cumulative_ms": 99.445074
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/stable_envs/_adapters/craftax_render.py",
+      "line": 87,
+      "function": "project",
+      "primitive_calls": 3,
+      "calls": 3,
+      "self_ms": 0.374323,
+      "cumulative_ms": 99.40679700000001
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/stable_envs/_adapters/craftax.py",
+      "line": 217,
+      "function": "validate",
+      "primitive_calls": 3,
+      "calls": 3,
+      "self_ms": 1.923208,
+      "cumulative_ms": 95.23265
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/stable_envs/_adapters/craftax.py",
+      "line": 60,
+      "function": "check_profile",
+      "primitive_calls": 3,
+      "calls": 3,
+      "self_ms": 0.05555500000000001,
+      "cumulative_ms": 60.347887
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/importlib/metadata/__init__.py",
+      "line": 882,
+      "function": "version",
+      "primitive_calls": 30,
+      "calls": 30,
+      "self_ms": 0.028573,
+      "cumulative_ms": 60.280565
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/importlib/metadata/__init__.py",
+      "line": 464,
+      "function": "version",
+      "primitive_calls": 30,
+      "calls": 30,
+      "self_ms": 0.141208,
+      "cumulative_ms": 52.183967
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/importlib/metadata/__init__.py",
+      "line": 436,
+      "function": "metadata",
+      "primitive_calls": 30,
+      "calls": 30,
+      "self_ms": 0.17354000000000003,
+      "cumulative_ms": 51.86464
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/stable_envs/_adapters/craftax.py",
+      "line": 42,
+      "function": "decode",
+      "primitive_calls": 6,
+      "calls": 360,
+      "self_ms": 2.4474590000000003,
+      "cumulative_ms": 46.63479
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/jax/_src/numpy/array_constructors.py",
+      "line": 373,
+      "function": "asarray",
+      "primitive_calls": 294,
+      "calls": 294,
+      "self_ms": 0.341501,
+      "cumulative_ms": 38.433723
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/jax/_src/numpy/array_constructors.py",
+      "line": 106,
+      "function": "array",
+      "primitive_calls": 294,
+      "calls": 294,
+      "self_ms": 0.5898650000000001,
+      "cumulative_ms": 38.092222
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/jax/_src/lax/lax.py",
+      "line": 1596,
+      "function": "stage",
+      "primitive_calls": 294,
+      "calls": 294,
+      "self_ms": 0.7153320000000001,
+      "cumulative_ms": 37.28484
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/jax/_src/core.py",
+      "line": 627,
+      "function": "bind",
+      "primitive_calls": 294,
+      "calls": 294,
+      "self_ms": 1.9719630000000001,
+      "cumulative_ms": 36.569508
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/email/__init__.py",
+      "line": 31,
+      "function": "message_from_string",
+      "primitive_calls": 30,
+      "calls": 30,
+      "self_ms": 0.107393,
+      "cumulative_ms": 33.085109
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/email/parser.py",
+      "line": 56,
+      "function": "parsestr",
+      "primitive_calls": 30,
+      "calls": 30,
+      "self_ms": 0.262975,
+      "cumulative_ms": 32.971908
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/email/parser.py",
+      "line": 41,
+      "function": "parse",
+      "primitive_calls": 30,
+      "calls": 30,
+      "self_ms": 0.152515,
+      "cumulative_ms": 32.708933
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/stable_envs/envs/craftax_semantics.py",
+      "line": 132,
+      "function": "render",
+      "primitive_calls": 3,
+      "calls": 3,
+      "self_ms": 0.231717,
+      "cumulative_ms": 30.990385000000003
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/stable_envs/_adapters/craftax_render.py",
+      "line": 129,
+      "function": "render",
+      "primitive_calls": 3,
+      "calls": 3,
+      "self_ms": 1.5503820000000001,
+      "cumulative_ms": 30.734882000000002
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/email/feedparser.py",
+      "line": 171,
+      "function": "feed",
+      "primitive_calls": 90,
+      "calls": 90,
+      "self_ms": 0.10291800000000001,
+      "cumulative_ms": 30.709721000000002
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/email/feedparser.py",
+      "line": 176,
+      "function": "_call_parse",
+      "primitive_calls": 120,
+      "calls": 120,
+      "self_ms": 0.30879100000000004,
+      "cumulative_ms": 29.015544000000002
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/email/feedparser.py",
+      "line": 216,
+      "function": "_parsegen",
+      "primitive_calls": 120,
+      "calls": 120,
+      "self_ms": 5.170731000000001,
+      "cumulative_ms": 28.706753000000003
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/stable_envs/_adapters/craftax_render.py",
+      "line": 97,
+      "function": "restore_draw",
+      "primitive_calls": 3,
+      "calls": 3,
+      "self_ms": 0.865237,
+      "cumulative_ms": 28.288110000000003
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/jax/_src/lax/lax.py",
+      "line": 5310,
+      "function": "_stage_bind_with_trace",
+      "primitive_calls": 294,
+      "calls": 294,
+      "self_ms": 0.14708700000000002,
+      "cumulative_ms": 27.151723000000004
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/jax/_src/core.py",
+      "line": 1207,
+      "function": "stage_value",
+      "primitive_calls": 294,
+      "calls": 294,
+      "self_ms": 0.28683500000000006,
+      "cumulative_ms": 27.004636
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/jax/_src/core.py",
+      "line": 1212,
+      "function": "process_primitive",
+      "primitive_calls": 294,
+      "calls": 294,
+      "self_ms": 0.474205,
+      "cumulative_ms": 26.537630000000004
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/jax/_src/lax/lax.py",
+      "line": 5297,
+      "function": "_stage_impl",
+      "primitive_calls": 294,
+      "calls": 294,
+      "self_ms": 0.34952300000000003,
+      "cumulative_ms": 25.54392
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/jax/_src/dispatch.py",
+      "line": 82,
+      "function": "apply_primitive",
+      "primitive_calls": 294,
+      "calls": 294,
+      "self_ms": 22.311116000000002,
+      "cumulative_ms": 25.091287
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/importlib/metadata/__init__.py",
+      "line": 811,
+      "function": "read_text",
+      "primitive_calls": 30,
+      "calls": 30,
+      "self_ms": 0.187344,
+      "cumulative_ms": 11.102069
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/pathlib.py",
+      "line": 1022,
+      "function": "read_text",
+      "primitive_calls": 30,
+      "calls": 30,
+      "self_ms": 0.086803,
+      "cumulative_ms": 10.615944
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method _io.open>",
+      "primitive_calls": 60,
+      "calls": 60,
+      "self_ms": 8.644703,
+      "cumulative_ms": 9.567415
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/pathlib.py",
+      "line": 1005,
+      "function": "open",
+      "primitive_calls": 30,
+      "calls": 30,
+      "self_ms": 0.024862,
+      "cumulative_ms": 9.21301
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/email/feedparser.py",
+      "line": 127,
+      "function": "__next__",
+      "primitive_calls": 12087,
+      "calls": 12087,
+      "self_ms": 2.752141,
+      "cumulative_ms": 9.186367
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/email/feedparser.py",
+      "line": 469,
+      "function": "_parse_headers",
+      "primitive_calls": 30,
+      "calls": 30,
+      "self_ms": 3.0505000000000004,
+      "cumulative_ms": 8.471461000000001
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/importlib/metadata/__init__.py",
+      "line": 856,
+      "function": "distribution",
+      "primitive_calls": 30,
+      "calls": 30,
+      "self_ms": 0.027622,
+      "cumulative_ms": 8.068025
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/importlib/metadata/__init__.py",
+      "line": 383,
+      "function": "from_name",
+      "primitive_calls": 30,
+      "calls": 30,
+      "self_ms": 0.17669800000000002,
+      "cumulative_ms": 8.040403
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method builtins.next>",
+      "primitive_calls": 30,
+      "calls": 30,
+      "self_ms": 0.20320300000000002,
+      "cumulative_ms": 7.604354000000001
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/importlib/metadata/_adapters.py",
+      "line": 46,
+      "function": "__init__",
+      "primitive_calls": 30,
+      "calls": 30,
+      "self_ms": 0.035050000000000005,
+      "cumulative_ms": 7.3622890000000005
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/importlib/metadata/_adapters.py",
+      "line": 63,
+      "function": "_repair_headers",
+      "primitive_calls": 30,
+      "calls": 30,
+      "self_ms": 0.43469,
+      "cumulative_ms": 7.3272390000000005
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/email/feedparser.py",
+      "line": 77,
+      "function": "readline",
+      "primitive_calls": 12087,
+      "calls": 12087,
+      "self_ms": 5.031646,
+      "cumulative_ms": 6.434226000000001
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/importlib/metadata/_adapters.py",
+      "line": 64,
+      "function": "redent",
+      "primitive_calls": 1758,
+      "calls": 1758,
+      "self_ms": 0.221052,
+      "cumulative_ms": 5.812721000000001
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/textwrap.py",
+      "line": 419,
+      "function": "dedent",
+      "primitive_calls": 3,
+      "calls": 3,
+      "self_ms": 0.312437,
+      "cumulative_ms": 5.5916690000000004
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/importlib/metadata/__init__.py",
+      "line": 794,
+      "function": "<genexpr>",
+      "primitive_calls": 240,
+      "calls": 240,
+      "self_ms": 0.24277800000000002,
+      "cumulative_ms": 5.493474
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/importlib/metadata/__init__.py",
+      "line": 692,
+      "function": "search",
+      "primitive_calls": 210,
+      "calls": 210,
+      "self_ms": 0.23890800000000004,
+      "cumulative_ms": 5.219825
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method numpy.asarray>",
+      "primitive_calls": 1776,
+      "calls": 2076,
+      "self_ms": 2.406533,
+      "cumulative_ms": 4.858941000000001
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/jax/_src/core.py",
+      "line": 628,
+      "function": "<genexpr>",
+      "primitive_calls": 588,
+      "calls": 588,
+      "self_ms": 0.219253,
+      "cumulative_ms": 3.829883
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/jax/_src/core.py",
+      "line": 2094,
+      "function": "_typeof_with_argument_info",
+      "primitive_calls": 294,
+      "calls": 294,
+      "self_ms": 0.11702800000000001,
+      "cumulative_ms": 3.61063
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'cpu' of 'torch._C.TensorBase' objects>",
+      "primitive_calls": 312,
+      "calls": 312,
+      "self_ms": 3.576422,
+      "cumulative_ms": 3.576422
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/tensordict/base.py",
+      "line": 657,
+      "function": "__getitem__",
+      "primitive_calls": 405,
+      "calls": 405,
+      "self_ms": 0.33465700000000004,
+      "cumulative_ms": 3.5198570000000005
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/jax/_src/core.py",
+      "line": 1851,
+      "function": "typeof",
+      "primitive_calls": 294,
+      "calls": 294,
+      "self_ms": 0.26248200000000005,
+      "cumulative_ms": 3.493602
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/email/_policybase.py",
+      "line": 301,
+      "function": "header_source_parse",
+      "primitive_calls": 1758,
+      "calls": 1758,
+      "self_ms": 1.9875,
+      "cumulative_ms": 3.454589
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/jax/_src/core.py",
+      "line": 2391,
+      "function": "__new__",
+      "primitive_calls": 588,
+      "calls": 588,
+      "self_ms": 1.7417440000000002,
+      "cumulative_ms": 3.3021220000000002
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/jax/_src/abstract_arrays.py",
+      "line": 64,
+      "function": "_make_shaped_array_for_numpy_array",
+      "primitive_calls": 294,
+      "calls": 294,
+      "self_ms": 0.7278910000000001,
+      "cumulative_ms": 3.141277
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'sub' of 're.Pattern' objects>",
+      "primitive_calls": 36,
+      "calls": 36,
+      "self_ms": 3.0795170000000005,
+      "cumulative_ms": 3.0795170000000005
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/jax/_src/core.py",
+      "line": 630,
+      "function": "<genexpr>",
+      "primitive_calls": 588,
+      "calls": 588,
+      "self_ms": 0.20420600000000003,
+      "cumulative_ms": 2.9185030000000003
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/email/message.py",
+      "line": 494,
+      "function": "get",
+      "primitive_calls": 180,
+      "calls": 180,
+      "self_ms": 1.466105,
+      "cumulative_ms": 2.7572060000000005
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/jax/_src/core.py",
+      "line": 2111,
+      "function": "canonicalize_value",
+      "primitive_calls": 294,
+      "calls": 294,
+      "self_ms": 0.34949399999999997,
+      "cumulative_ms": 2.714297
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/jax/_src/array.py",
+      "line": 409,
+      "function": "__array__",
+      "primitive_calls": 300,
+      "calls": 300,
+      "self_ms": 0.4643820000000001,
+      "cumulative_ms": 2.671631
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'append' of 'list' objects>",
+      "primitive_calls": 16707,
+      "calls": 16707,
+      "self_ms": 2.560424,
+      "cumulative_ms": 2.560424
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/tensordict/base.py",
+      "line": 8567,
+      "function": "_get_tuple_maybe_non_tensor",
+      "primitive_calls": 405,
+      "calls": 405,
+      "self_ms": 0.382233,
+      "cumulative_ms": 2.5322670000000005
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/importlib/metadata/__init__.py",
+      "line": 695,
+      "function": "mtime",
+      "primitive_calls": 210,
+      "calls": 210,
+      "self_ms": 0.494338,
+      "cumulative_ms": 2.340795
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/jax/_src/core.py",
+      "line": 2104,
+      "function": "canonicalize_value_dtype",
+      "primitive_calls": 294,
+      "calls": 294,
+      "self_ms": 0.271814,
+      "cumulative_ms": 2.2474510000000003
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/email/feedparser.py",
+      "line": 100,
+      "function": "push",
+      "primitive_calls": 90,
+      "calls": 90,
+      "self_ms": 0.276944,
+      "cumulative_ms": 2.2473790000000005
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/email/message.py",
+      "line": 596,
+      "function": "get_content_type",
+      "primitive_calls": 120,
+      "calls": 120,
+      "self_ms": 0.11544600000000001,
+      "cumulative_ms": 2.228053
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/tensordict/_td.py",
+      "line": 5005,
+      "function": "__iter__",
+      "primitive_calls": 318,
+      "calls": 318,
+      "self_ms": 0.088242,
+      "cumulative_ms": 2.1523470000000002
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/stable_envs/_adapters/craftax.py",
+      "line": 253,
+      "function": "validate_engine",
+      "primitive_calls": 6,
+      "calls": 6,
+      "self_ms": 0.7220050000000001,
+      "cumulative_ms": 2.1262820000000002
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/tensordict/_td.py",
+      "line": 5006,
+      "function": "_iter",
+      "primitive_calls": 318,
+      "calls": 318,
+      "self_ms": 0.086231,
+      "cumulative_ms": 2.064105
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/jax/_src/profiler.py",
+      "line": 424,
+      "function": "wrapper",
+      "primitive_calls": 300,
+      "calls": 300,
+      "self_ms": 0.893491,
+      "cumulative_ms": 1.9880259999999998
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'findall' of 're.Pattern' objects>",
+      "primitive_calls": 3,
+      "calls": 3,
+      "self_ms": 1.9874459999999998,
+      "cumulative_ms": 1.9874459999999998
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/tensordict/_td.py",
+      "line": 5017,
+      "function": "<genexpr>",
+      "primitive_calls": 318,
+      "calls": 318,
+      "self_ms": 0.127551,
+      "cumulative_ms": 1.9778740000000001
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/tensordict/_td.py",
+      "line": 259,
+      "function": "__init__",
+      "primitive_calls": 3,
+      "calls": 3,
+      "self_ms": 0.170498,
+      "cumulative_ms": 1.894365
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/jax/_src/dtypes.py",
+      "line": 379,
+      "function": "canonicalize_value",
+      "primitive_calls": 294,
+      "calls": 294,
+      "self_ms": 0.484366,
+      "cumulative_ms": 1.8884610000000002
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'match' of 're.Pattern' objects>",
+      "primitive_calls": 4731,
+      "calls": 4731,
+      "self_ms": 1.862441,
+      "cumulative_ms": 1.862441
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/tensordict/_td.py",
+      "line": 5034,
+      "function": "_iter_helper",
+      "primitive_calls": 318,
+      "calls": 837,
+      "self_ms": 0.595852,
+      "cumulative_ms": 1.8202800000000001
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/jax/_src/literals.py",
+      "line": 148,
+      "function": "weak_type",
+      "primitive_calls": 294,
+      "calls": 294,
+      "self_ms": 0.10067700000000002,
+      "cumulative_ms": 1.7918550000000002
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method posix.stat>",
+      "primitive_calls": 210,
+      "calls": 210,
+      "self_ms": 1.728963,
+      "cumulative_ms": 1.728963
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/email/message.py",
+      "line": 620,
+      "function": "get_content_maintype",
+      "primitive_calls": 90,
+      "calls": 90,
+      "self_ms": 0.065421,
+      "cumulative_ms": 1.7262730000000002
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/re/__init__.py",
+      "line": 179,
+      "function": "sub",
+      "primitive_calls": 33,
+      "calls": 33,
+      "self_ms": 0.039911,
+      "cumulative_ms": 1.7204960000000002
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/importlib/metadata/__init__.py",
+      "line": 701,
+      "function": "lookup",
+      "primitive_calls": 30,
+      "calls": 30,
+      "self_ms": 0.032956,
+      "cumulative_ms": 1.697158
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/jax/_src/literals.py",
+      "line": 138,
+      "function": "aval",
+      "primitive_calls": 294,
+      "calls": 294,
+      "self_ms": 0.39068500000000006,
+      "cumulative_ms": 1.6911780000000003
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/importlib/metadata/__init__.py",
+      "line": 707,
+      "function": "__init__",
+      "primitive_calls": 30,
+      "calls": 30,
+      "self_ms": 0.131087,
+      "cumulative_ms": 1.664202
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/tensordict/base.py",
+      "line": 8137,
+      "function": "set",
+      "primitive_calls": 96,
+      "calls": 96,
+      "self_ms": 0.062789,
+      "cumulative_ms": 1.613779
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method builtins.isinstance>",
+      "primitive_calls": 7020,
+      "calls": 7020,
+      "self_ms": 1.5558610000000002,
+      "cumulative_ms": 1.6078700000000001
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'readlines' of '_io._IOBase' objects>",
+      "primitive_calls": 120,
+      "calls": 120,
+      "self_ms": 1.546038,
+      "cumulative_ms": 1.546038
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/tensordict/_td.py",
+      "line": 2970,
+      "function": "_get_tuple",
+      "primitive_calls": 405,
+      "calls": 1020,
+      "self_ms": 1.230188,
+      "cumulative_ms": 1.5427400000000002
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/email/feedparser.py",
+      "line": 182,
+      "function": "close",
+      "primitive_calls": 30,
+      "calls": 30,
+      "self_ms": 0.051096,
+      "cumulative_ms": 1.445505
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/tensordict/_td.py",
+      "line": 2661,
+      "function": "_set_tuple",
+      "primitive_calls": 96,
+      "calls": 252,
+      "self_ms": 0.279368,
+      "cumulative_ms": 1.43289
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'popleft' of 'collections.deque' objects>",
+      "primitive_calls": 11967,
+      "calls": 11967,
+      "self_ms": 1.4025800000000002,
+      "cumulative_ms": 1.4025800000000002
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/importlib/metadata/__init__.py",
+      "line": 678,
+      "function": "children",
+      "primitive_calls": 30,
+      "calls": 30,
+      "self_ms": 0.190816,
+      "cumulative_ms": 1.3618270000000001
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/jax/_src/abstract_arrays.py",
+      "line": 131,
+      "function": "_canonicalize_ndarray_dtype",
+      "primitive_calls": 294,
+      "calls": 294,
+      "self_ms": 0.38499300000000003,
+      "cumulative_ms": 1.333418
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'lower' of 'str' objects>",
+      "primitive_calls": 9183,
+      "calls": 9183,
+      "self_ms": 1.2634170000000002,
+      "cumulative_ms": 1.2634170000000002
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'read' of '_io.TextIOWrapper' objects>",
+      "primitive_calls": 30,
+      "calls": 30,
+      "self_ms": 0.74868,
+      "cumulative_ms": 1.1487280000000002
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/numpy/_core/fromnumeric.py",
+      "line": 2477,
+      "function": "any",
+      "primitive_calls": 252,
+      "calls": 252,
+      "self_ms": 0.174801,
+      "cumulative_ms": 1.1227610000000001
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/numpy/_core/fromnumeric.py",
+      "line": 89,
+      "function": "_wrapreduction_any_all",
+      "primitive_calls": 312,
+      "calls": 312,
+      "self_ms": 0.388257,
+      "cumulative_ms": 1.121981
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/jax/_src/array.py",
+      "line": 606,
+      "function": "_value",
+      "primitive_calls": 300,
+      "calls": 300,
+      "self_ms": 0.8450190000000001,
+      "cumulative_ms": 1.094535
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'reduce' of 'numpy.ufunc' objects>",
+      "primitive_calls": 627,
+      "calls": 627,
+      "self_ms": 1.094327,
+      "cumulative_ms": 1.094327
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/importlib/metadata/__init__.py",
+      "line": 347,
+      "function": "__new__",
+      "primitive_calls": 30,
+      "calls": 30,
+      "self_ms": 0.512339,
+      "cumulative_ms": 1.0709810000000002
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/email/message.py",
+      "line": 243,
+      "function": "get_payload",
+      "primitive_calls": 30,
+      "calls": 30,
+      "self_ms": 0.090867,
+      "cumulative_ms": 1.06786
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/jax/_src/core.py",
+      "line": 2047,
+      "function": "canonicalize_shape",
+      "primitive_calls": 588,
+      "calls": 588,
+      "self_ms": 0.7091430000000001,
+      "cumulative_ms": 0.9912970000000001
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'all' of 'numpy.ndarray' objects>",
+      "primitive_calls": 315,
+      "calls": 315,
+      "self_ms": 0.191977,
+      "cumulative_ms": 0.9572080000000001
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/importlib/metadata/__init__.py",
+      "line": 728,
+      "function": "search",
+      "primitive_calls": 210,
+      "calls": 210,
+      "self_ms": 0.37217200000000006,
+      "cumulative_ms": 0.942964
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/pathlib.py",
+      "line": 447,
+      "function": "__fspath__",
+      "primitive_calls": 30,
+      "calls": 30,
+      "self_ms": 0.026864000000000002,
+      "cumulative_ms": 0.890735
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method builtins.getattr>",
+      "primitive_calls": 4185,
+      "calls": 4185,
+      "self_ms": 0.8863510000000001,
+      "cumulative_ms": 0.8863510000000001
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/pathlib.py",
+      "line": 437,
+      "function": "__str__",
+      "primitive_calls": 30,
+      "calls": 30,
+      "self_ms": 0.10601700000000001,
+      "cumulative_ms": 0.863871
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/importlib/metadata/__init__.py",
+      "line": 415,
+      "function": "<genexpr>",
+      "primitive_calls": 60,
+      "calls": 60,
+      "self_ms": 0.065739,
+      "cumulative_ms": 0.8586020000000001
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'startswith' of 'str' objects>",
+      "primitive_calls": 4173,
+      "calls": 4173,
+      "self_ms": 0.842647,
+      "cumulative_ms": 0.842647
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/tensordict/base.py",
+      "line": 18253,
+      "function": "_is_tensor_collection",
+      "primitive_calls": 873,
+      "calls": 873,
+      "self_ms": 0.377496,
+      "cumulative_ms": 0.835628
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/torch/compiler/__init__.py",
+      "line": 583,
+      "function": "is_compiling",
+      "primitive_calls": 2115,
+      "calls": 2115,
+      "self_ms": 0.6534300000000001,
+      "cumulative_ms": 0.8208320000000001
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/numpy/_core/_methods.py",
+      "line": 67,
+      "function": "_all",
+      "primitive_calls": 315,
+      "calls": 315,
+      "self_ms": 0.105994,
+      "cumulative_ms": 0.765231
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/tensordict/_td.py",
+      "line": 2600,
+      "function": "_set_str",
+      "primitive_calls": 117,
+      "calls": 117,
+      "self_ms": 0.091674,
+      "cumulative_ms": 0.7632450000000001
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/email/message.py",
+      "line": 511,
+      "function": "set_raw",
+      "primitive_calls": 1758,
+      "calls": 1758,
+      "self_ms": 0.48025400000000007,
+      "cumulative_ms": 0.7596700000000001
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/importlib/metadata/__init__.py",
+      "line": 685,
+      "function": "zip_children",
+      "primitive_calls": 30,
+      "calls": 30,
+      "self_ms": 0.033420000000000005,
+      "cumulative_ms": 0.758646
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'clone' of 'torch._C.TensorBase' objects>",
+      "primitive_calls": 93,
+      "calls": 93,
+      "self_ms": 0.7540370000000001,
+      "cumulative_ms": 0.7540370000000001
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/zipfile/_path/__init__.py",
+      "line": 272,
+      "function": "__init__",
+      "primitive_calls": 30,
+      "calls": 30,
+      "self_ms": 0.025862,
+      "cumulative_ms": 0.725226
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/tensordict/utils.py",
+      "line": 2855,
+      "function": "_unravel_key_to_tuple",
+      "primitive_calls": 501,
+      "calls": 501,
+      "self_ms": 0.22798200000000002,
+      "cumulative_ms": 0.715149
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/jax/_src/literals.py",
+      "line": 127,
+      "function": "__new__",
+      "primitive_calls": 294,
+      "calls": 294,
+      "self_ms": 0.187287,
+      "cumulative_ms": 0.710018
+    },
+    {
+      "file": "<frozen importlib._bootstrap_external>",
+      "line": 1548,
+      "function": "find_distributions",
+      "primitive_calls": 30,
+      "calls": 30,
+      "self_ms": 0.080033,
+      "cumulative_ms": 0.7055440000000001
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/pathlib.py",
+      "line": 551,
+      "function": "drive",
+      "primitive_calls": 30,
+      "calls": 30,
+      "self_ms": 0.05799000000000001,
+      "cumulative_ms": 0.702022
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/zipfile/_path/__init__.py",
+      "line": 145,
+      "function": "make",
+      "primitive_calls": 30,
+      "calls": 30,
+      "self_ms": 0.049836000000000005,
+      "cumulative_ms": 0.6993640000000001
+    }
+  ],
+  "torch_operators": [
+    {
+      "name": "public_full_state",
+      "calls": 1,
+      "cpu_total_us": 34581.409999999996,
+      "cpu_self_us": 30176.656999999963,
+      "device_total_us": 131.07600000000093,
+      "device_self_us": 0.0,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::detach",
+      "calls": 208,
+      "cpu_total_us": 308.70899999999165,
+      "cpu_self_us": 154.33899999999085,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "detach",
+      "calls": 208,
+      "cpu_total_us": 154.3700000000008,
+      "cpu_self_us": 154.3700000000008,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::to",
+      "calls": 210,
+      "cpu_total_us": 3401.79800000001,
+      "cpu_self_us": 112.10700000001088,
+      "device_total_us": 101.3179999999993,
+      "device_self_us": 0.0,
+      "cpu_memory_bytes": 37787,
+      "device_memory_bytes": 12800
+    },
+    {
+      "name": "aten::_to_copy",
+      "calls": 106,
+      "cpu_total_us": 3289.690999999999,
+      "cpu_self_us": 329.048000000048,
+      "device_total_us": 101.3179999999993,
+      "device_self_us": 0.0,
+      "cpu_memory_bytes": 37787,
+      "device_memory_bytes": 12800
+    },
+    {
+      "name": "aten::empty_strided",
+      "calls": 137,
+      "cpu_total_us": 262.39799999998286,
+      "cpu_self_us": 262.39799999998286,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 37787,
+      "device_memory_bytes": 44544
+    },
+    {
+      "name": "aten::copy_",
+      "calls": 137,
+      "cpu_total_us": 3055.44999999997,
+      "cpu_self_us": 518.5139999999428,
+      "device_total_us": 131.07600000000093,
+      "device_self_us": 131.07600000000093,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "Unrecognized",
+      "calls": 1,
+      "cpu_total_us": 1201.9889999999996,
+      "cpu_self_us": 1201.9889999999996,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "cudaStreamIsCapturing",
+      "calls": 106,
+      "cpu_total_us": 65.17799999999261,
+      "cpu_self_us": 65.17799999999261,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "cudaMemcpyAsync",
+      "calls": 137,
+      "cpu_total_us": 1164.2820000000174,
+      "cpu_self_us": 1164.2820000000174,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "public_full_state",
+      "calls": 2,
+      "cpu_total_us": 0,
+      "cpu_self_us": 0,
+      "device_total_us": 38140.31,
+      "device_self_us": 38140.31,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "Memcpy DtoH (Device -> Pageable)",
+      "calls": 104,
+      "cpu_total_us": 0,
+      "cpu_self_us": 0,
+      "device_total_us": 99.59000000000015,
+      "device_self_us": 99.59000000000015,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "cudaStreamSynchronize",
+      "calls": 106,
+      "cpu_total_us": 105.48700000001736,
+      "cpu_self_us": 105.48700000001736,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::resolve_conj",
+      "calls": 104,
+      "cpu_total_us": 10.293999999999869,
+      "cpu_self_us": 10.293999999999869,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::resolve_neg",
+      "calls": 104,
+      "cpu_total_us": 7.97899999999936,
+      "cpu_self_us": 7.97899999999936,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "Memcpy HtoD (Pinned -> Device)",
+      "calls": 98,
+      "cpu_total_us": 0,
+      "cpu_self_us": 0,
+      "device_total_us": 40.926999999988766,
+      "device_self_us": 40.926999999988766,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "Memcpy DtoD (Device -> Device)",
+      "calls": 129,
+      "cpu_total_us": 0,
+      "cpu_self_us": 0,
+      "device_total_us": 124.77000000001499,
+      "device_self_us": 124.77000000001499,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "cuLaunchKernel",
+      "calls": 73,
+      "cpu_total_us": 219.5100000000275,
+      "cpu_self_us": 219.5100000000275,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "loop_or_fusion",
+      "calls": 1,
+      "cpu_total_us": 0,
+      "cpu_self_us": 0,
+      "device_total_us": 1.1530000000020664,
+      "device_self_us": 1.1530000000020664,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "Memcpy DtoH (Device -> Pinned)",
+      "calls": 2,
+      "cpu_total_us": 0,
+      "cpu_self_us": 0,
+      "device_total_us": 3.776000000001659,
+      "device_self_us": 3.776000000001659,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::clone",
+      "calls": 31,
+      "cpu_total_us": 438.507999999998,
+      "cpu_self_us": 81.30299999999625,
+      "device_total_us": 29.75800000000163,
+      "device_self_us": 0.0,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 31744
+    },
+    {
+      "name": "aten::lift_fresh",
+      "calls": 32,
+      "cpu_total_us": 9.502000000007683,
+      "cpu_self_us": 9.502000000007683,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "Memcpy HtoD (Pageable -> Device)",
+      "calls": 2,
+      "cpu_total_us": 0,
+      "cpu_self_us": 0,
+      "device_total_us": 1.727999999999156,
+      "device_self_us": 1.727999999999156,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "memcpy32_post",
+      "calls": 5,
+      "cpu_total_us": 0,
+      "cpu_self_us": 0,
+      "device_total_us": 4.608000000000175,
+      "device_self_us": 4.608000000000175,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "loop_broadcast_fusion_1",
+      "calls": 1,
+      "cpu_total_us": 0,
+      "cpu_self_us": 0,
+      "device_total_us": 0.8960000000006403,
+      "device_self_us": 0.8960000000006403,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "wrapped_iota",
+      "calls": 1,
+      "cpu_total_us": 0,
+      "cpu_self_us": 0,
+      "device_total_us": 0.7989999999990687,
+      "device_self_us": 0.7989999999990687,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "loop_broadcast_fusion",
+      "calls": 1,
+      "cpu_total_us": 0,
+      "cpu_self_us": 0,
+      "device_total_us": 1.1519999999945867,
+      "device_self_us": 1.1519999999945867,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "loop_add_fusion",
+      "calls": 17,
+      "cpu_total_us": 0,
+      "cpu_self_us": 0,
+      "device_total_us": 22.976000000002387,
+      "device_self_us": 22.976000000002387,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "loop_add_fusion_1",
+      "calls": 28,
+      "cpu_total_us": 0,
+      "cpu_self_us": 0,
+      "device_total_us": 27.426000000014028,
+      "device_self_us": 27.426000000014028,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "loop_add_fusion_13",
+      "calls": 1,
+      "cpu_total_us": 0,
+      "cpu_self_us": 0,
+      "device_total_us": 1.2799999999988358,
+      "device_self_us": 1.2799999999988358,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "wrapped_iota_1",
+      "calls": 3,
+      "cpu_total_us": 0,
+      "cpu_self_us": 0,
+      "device_total_us": 2.688000000001921,
+      "device_self_us": 2.688000000001921,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "input_reduce_fusion",
+      "calls": 9,
+      "cpu_total_us": 0,
+      "cpu_self_us": 0,
+      "device_total_us": 11.361000000004424,
+      "device_self_us": 11.361000000004424,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "loop_dynamic_update_slice_fusion",
+      "calls": 6,
+      "cpu_total_us": 0,
+      "cpu_self_us": 0,
+      "device_total_us": 8.383999999998196,
+      "device_self_us": 8.383999999998196,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "wrapped_iota_3",
+      "calls": 1,
+      "cpu_total_us": 0,
+      "cpu_self_us": 0,
+      "device_total_us": 0.8960000000006403,
+      "device_self_us": 0.8960000000006403,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "input_reduce_fusion_2",
+      "calls": 2,
+      "cpu_total_us": 0,
+      "cpu_self_us": 0,
+      "device_total_us": 2.52900000000227,
+      "device_self_us": 2.52900000000227,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "loop_dynamic_update_slice_fusion_2",
+      "calls": 2,
+      "cpu_total_us": 0,
+      "cpu_self_us": 0,
+      "device_total_us": 2.7519999999931315,
+      "device_self_us": 2.7519999999931315,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "loop_dynamic_update_slice_fusion_3",
+      "calls": 3,
+      "cpu_total_us": 0,
+      "cpu_self_us": 0,
+      "device_total_us": 4.416000000004715,
+      "device_self_us": 4.416000000004715,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "loop_add_fusion_15",
+      "calls": 1,
+      "cpu_total_us": 0,
+      "cpu_self_us": 0,
+      "device_total_us": 1.407999999995809,
+      "device_self_us": 1.407999999995809,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "loop_add_fusion_14",
+      "calls": 1,
+      "cpu_total_us": 0,
+      "cpu_self_us": 0,
+      "device_total_us": 1.1520000000018626,
+      "device_self_us": 1.1520000000018626,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "loop_convert_fusion",
+      "calls": 1,
+      "cpu_total_us": 0,
+      "cpu_self_us": 0,
+      "device_total_us": 0.8960000000006403,
+      "device_self_us": 0.8960000000006403,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "loop_add_multiply_fusion_3",
+      "calls": 1,
+      "cpu_total_us": 0,
+      "cpu_self_us": 0,
+      "device_total_us": 1.0240000000048894,
+      "device_self_us": 1.0240000000048894,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "loop_select_fusion",
+      "calls": 1,
+      "cpu_total_us": 0,
+      "cpu_self_us": 0,
+      "device_total_us": 0.9279999999998836,
+      "device_self_us": 0.9279999999998836,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "loop_multiply_fusion_11",
+      "calls": 1,
+      "cpu_total_us": 0,
+      "cpu_self_us": 0,
+      "device_total_us": 1.2160000000003492,
+      "device_self_us": 1.2160000000003492,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "loop_select_fusion_1",
+      "calls": 1,
+      "cpu_total_us": 0,
+      "cpu_self_us": 0,
+      "device_total_us": 0.8949999999967986,
+      "device_self_us": 0.8949999999967986,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "loop_multiply_fusion_10",
+      "calls": 1,
+      "cpu_total_us": 0,
+      "cpu_self_us": 0,
+      "device_total_us": 1.2159999999930733,
+      "device_self_us": 1.2159999999930733,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "loop_select_fusion_2",
+      "calls": 1,
+      "cpu_total_us": 0,
+      "cpu_self_us": 0,
+      "device_total_us": 0.9609999999956926,
+      "device_self_us": 0.9609999999956926,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "loop_multiply_fusion_9",
+      "calls": 1,
+      "cpu_total_us": 0,
+      "cpu_self_us": 0,
+      "device_total_us": 1.2160000000003492,
+      "device_self_us": 1.2160000000003492,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "loop_select_fusion_3",
+      "calls": 1,
+      "cpu_total_us": 0,
+      "cpu_self_us": 0,
+      "device_total_us": 0.9270000000033178,
+      "device_self_us": 0.9270000000033178,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "loop_multiply_fusion_8",
+      "calls": 1,
+      "cpu_total_us": 0,
+      "cpu_self_us": 0,
+      "device_total_us": 1.184000000001106,
+      "device_self_us": 1.184000000001106,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "loop_select_fusion_4",
+      "calls": 1,
+      "cpu_total_us": 0,
+      "cpu_self_us": 0,
+      "device_total_us": 0.9269999999960419,
+      "device_self_us": 0.9269999999960419,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "loop_multiply_fusion_7",
+      "calls": 1,
+      "cpu_total_us": 0,
+      "cpu_self_us": 0,
+      "device_total_us": 1.184000000001106,
+      "device_self_us": 1.184000000001106,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "loop_select_fusion_5",
+      "calls": 1,
+      "cpu_total_us": 0,
+      "cpu_self_us": 0,
+      "device_total_us": 0.9609999999956926,
+      "device_self_us": 0.9609999999956926,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "loop_add_multiply_fusion_2",
+      "calls": 1,
+      "cpu_total_us": 0,
+      "cpu_self_us": 0,
+      "device_total_us": 1.0560000000041327,
+      "device_self_us": 1.0560000000041327,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "loop_add_multiply_fusion_1",
+      "calls": 1,
+      "cpu_total_us": 0,
+      "cpu_self_us": 0,
+      "device_total_us": 1.0230000000010477,
+      "device_self_us": 1.0230000000010477,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "loop_add_multiply_fusion",
+      "calls": 1,
+      "cpu_total_us": 0,
+      "cpu_self_us": 0,
+      "device_total_us": 1.055000000000291,
+      "device_self_us": 1.055000000000291,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "loop_multiply_fusion_6",
+      "calls": 1,
+      "cpu_total_us": 0,
+      "cpu_self_us": 0,
+      "device_total_us": 1.18399999999383,
+      "device_self_us": 1.18399999999383,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "loop_add_fusion_12",
+      "calls": 1,
+      "cpu_total_us": 0,
+      "cpu_self_us": 0,
+      "device_total_us": 1.0249999999941792,
+      "device_self_us": 1.0249999999941792,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "loop_multiply_fusion_5",
+      "calls": 1,
+      "cpu_total_us": 0,
+      "cpu_self_us": 0,
+      "device_total_us": 1.18399999999383,
+      "device_self_us": 1.18399999999383,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "loop_add_fusion_11",
+      "calls": 1,
+      "cpu_total_us": 0,
+      "cpu_self_us": 0,
+      "device_total_us": 1.0239999999976135,
+      "device_self_us": 1.0239999999976135,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "loop_multiply_fusion_4",
+      "calls": 1,
+      "cpu_total_us": 0,
+      "cpu_self_us": 0,
+      "device_total_us": 1.2160000000003492,
+      "device_self_us": 1.2160000000003492,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "loop_add_fusion_10",
+      "calls": 1,
+      "cpu_total_us": 0,
+      "cpu_self_us": 0,
+      "device_total_us": 1.0240000000048894,
+      "device_self_us": 1.0240000000048894,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "loop_multiply_fusion_3",
+      "calls": 1,
+      "cpu_total_us": 0,
+      "cpu_self_us": 0,
+      "device_total_us": 1.2160000000003492,
+      "device_self_us": 1.2160000000003492,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "loop_add_fusion_9",
+      "calls": 1,
+      "cpu_total_us": 0,
+      "cpu_self_us": 0,
+      "device_total_us": 1.0559999999968568,
+      "device_self_us": 1.0559999999968568,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "loop_multiply_fusion_2",
+      "calls": 1,
+      "cpu_total_us": 0,
+      "cpu_self_us": 0,
+      "device_total_us": 1.18399999999383,
+      "device_self_us": 1.18399999999383,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "loop_add_fusion_8",
+      "calls": 1,
+      "cpu_total_us": 0,
+      "cpu_self_us": 0,
+      "device_total_us": 1.0239999999976135,
+      "device_self_us": 1.0239999999976135,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "loop_multiply_fusion_1",
+      "calls": 1,
+      "cpu_total_us": 0,
+      "cpu_self_us": 0,
+      "device_total_us": 1.2479999999995925,
+      "device_self_us": 1.2479999999995925,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "loop_add_fusion_7",
+      "calls": 1,
+      "cpu_total_us": 0,
+      "cpu_self_us": 0,
+      "device_total_us": 1.0240000000048894,
+      "device_self_us": 1.0240000000048894,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "loop_multiply_fusion",
+      "calls": 1,
+      "cpu_total_us": 0,
+      "cpu_self_us": 0,
+      "device_total_us": 1.2479999999995925,
+      "device_self_us": 1.2479999999995925,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "loop_add_fusion_6",
+      "calls": 1,
+      "cpu_total_us": 0,
+      "cpu_self_us": 0,
+      "device_total_us": 1.0560000000041327,
+      "device_self_us": 1.0560000000041327,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "input_concatenate_fusion",
+      "calls": 1,
+      "cpu_total_us": 0,
+      "cpu_self_us": 0,
+      "device_total_us": 2.5279999999984284,
+      "device_self_us": 2.5279999999984284,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "cudaDeviceSynchronize",
+      "calls": 2,
+      "cpu_total_us": 11.017000000007101,
+      "cpu_self_us": 11.017000000007101,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    }
+  ],
+  "cuda_kernel_events_observed": true,
+  "coverage_limit": "Torch trace can miss external OpenGL, Warp and JAX kernels; wall timing includes their completed rendering."
+}

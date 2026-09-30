@@ -1,0 +1,3176 @@
+{
+  "registration": "swm/OGBScene-v0",
+  "device": "cuda",
+  "backend": "opengl",
+  "status": "COMPLETE",
+  "profile": {
+    "host": "gpu2106.oscar.ccv.brown.edu",
+    "cpu": "AMD EPYC 7532 32-Core Processor",
+    "gpu": "NVIDIA GeForce RTX 3090",
+    "python": "3.12.8",
+    "packages": {
+      "torch": {
+        "version": "2.14.0+cu126",
+        "path": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages"
+      },
+      "numpy": {
+        "version": "2.2.6",
+        "path": "/oscar/scratch/sboughan/se-semantic-recovery/ogb-renderer-294675f0-complete/run-6669909/profile/lib/python3.12/site-packages"
+      },
+      "tensordict": {
+        "version": "0.14.2",
+        "path": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages"
+      },
+      "gymnasium": {
+        "version": "1.2.3",
+        "path": "/oscar/scratch/sboughan/se-semantic-recovery/ogb-renderer-294675f0-complete/run-6669909/profile/lib/python3.12/site-packages"
+      },
+      "mujoco": {
+        "version": "3.12.0",
+        "path": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages"
+      },
+      "dm-control": {
+        "version": "1.0.41",
+        "path": "/oscar/scratch/sboughan/se-semantic-recovery/ogb-renderer-294675f0-complete/run-6669909/profile/lib/python3.12/site-packages"
+      },
+      "gymnasium-robotics": {
+        "version": "1.4.2",
+        "path": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages"
+      },
+      "ogbench": {
+        "version": "1.2.1",
+        "path": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages"
+      },
+      "pymunk": {
+        "version": "7.3.0",
+        "path": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages"
+      },
+      "pygame": {
+        "version": "2.6.1",
+        "path": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages"
+      }
+    },
+    "torch_threads": 1,
+    "environment": {
+      "SLURM_JOB_ID": "6810313",
+      "MUJOCO_GL": "egl",
+      "PYOPENGL_PLATFORM": "egl",
+      "LIBGL_ALWAYS_SOFTWARE": null,
+      "GALLIUM_DRIVER": null,
+      "DISPLAY": null,
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "LP_NUM_THREADS": "1",
+      "JAX_PLATFORMS": null,
+      "CRAFTAX_JAX_BACKEND": null,
+      "CUDA_VISIBLE_DEVICES": "0"
+    }
+  },
+  "measurements": [
+    {
+      "batch": 256,
+      "output_device": "cpu",
+      "paired_mse": {
+        "mean": 0.0,
+        "sd": 0.0,
+        "maximum": 0.0,
+        "samples": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "source_repeat_max_uint8": 0,
+      "source_repeat_mse_max": 0.0,
+      "ours": {
+        "count": 7,
+        "samples_ms": [
+          186.334521,
+          188.662906,
+          188.587246,
+          186.267712,
+          188.417028,
+          191.957013,
+          186.039813
+        ],
+        "mean_ms": 188.03803414285713,
+        "sd_ms": 2.090574696963284,
+        "mean_ms_per_frame": 0.7345235708705357,
+        "sd_ms_per_frame": 0.008166307410012829,
+        "frames_per_second": 1361.4266984173557
+      },
+      "source": {
+        "count": 7,
+        "samples_ms": [
+          185.341189,
+          185.05424,
+          187.319055,
+          185.551956,
+          184.923151,
+          185.311459,
+          185.14376
+        ],
+        "mean_ms": 185.52068714285713,
+        "sd_ms": 0.8193287028829196,
+        "mean_ms_per_frame": 0.7246901841517857,
+        "sd_ms_per_frame": 0.0032005027456364047,
+        "frames_per_second": 1379.9000205452637
+      },
+      "speedup": 0.9866125647852311,
+      "telemetry": {
+        "ours": {
+          "label": "ours_b256_cpu",
+          "status": "COMPLETE",
+          "error": null,
+          "host": "gpu2106.oscar.ccv.brown.edu",
+          "pid": 807751,
+          "gpu_uuid": "GPU-7bbfe8a4-3bcc-b7d5-8d04-2d5a0fdb732a",
+          "gpu_name": "NVIDIA GeForce RTX 3090",
+          "pci_bus_id": "00000000:E1:00.0",
+          "started_utc": "2026-09-29T17:48:31.316475+00:00",
+          "ended_utc": "2026-09-29T17:48:43.370356+00:00",
+          "started_monotonic_ns": 13104606333596598,
+          "ended_monotonic_ns": 13104618387474058,
+          "phase_seconds": 12.05387746,
+          "render_calls": 64,
+          "process_cpu_seconds": 11.989367668,
+          "process_cpu_duty_percent": 99.46482123935579,
+          "poll_interval_ms": 200,
+          "edge_exclusion_seconds": 1,
+          "sample_count_total": 59,
+          "sample_count_retained": 49,
+          "metrics": {
+            "gpu_busy_percent": {
+              "count": 49,
+              "mean": 37.36734693877551,
+              "sd": 0.4870779177494948,
+              "p95": 38.0,
+              "min": 37.0,
+              "max": 38.0
+            },
+            "memory_busy_percent": {
+              "count": 49,
+              "mean": 10.653061224489797,
+              "sd": 0.4809288065886704,
+              "p95": 11.0,
+              "min": 10.0,
+              "max": 11.0
+            },
+            "vram_used_mib": {
+              "count": 49,
+              "mean": 2686.0,
+              "sd": 0.0,
+              "p95": 2686.0,
+              "min": 2686.0,
+              "max": 2686.0
+            },
+            "vram_total_mib": {
+              "count": 49,
+              "mean": 24576.0,
+              "sd": 0.0,
+              "p95": 24576.0,
+              "min": 24576.0,
+              "max": 24576.0
+            },
+            "power_watts": {
+              "count": 49,
+              "mean": 156.1565306122449,
+              "sd": 0.6789561565999954,
+              "p95": 156.69,
+              "min": 153.7,
+              "max": 156.74
+            },
+            "power_limit_watts": {
+              "count": 49,
+              "mean": 350.0,
+              "sd": 0.0,
+              "p95": 350.0,
+              "min": 350.0,
+              "max": 350.0
+            },
+            "temperature_c": {
+              "count": 49,
+              "mean": 49.44897959183673,
+              "sd": 0.5025445456953674,
+              "p95": 50.0,
+              "min": 49.0,
+              "max": 50.0
+            },
+            "graphics_clock_mhz": {
+              "count": 49,
+              "mean": 1695.0,
+              "sd": 0.0,
+              "p95": 1695.0,
+              "min": 1695.0,
+              "max": 1695.0
+            },
+            "sm_clock_mhz": {
+              "count": 49,
+              "mean": 1695.0,
+              "sd": 0.0,
+              "p95": 1695.0,
+              "min": 1695.0,
+              "max": 1695.0
+            },
+            "memory_clock_mhz": {
+              "count": 49,
+              "mean": 9501.0,
+              "sd": 0.0,
+              "p95": 9501.0,
+              "min": 9501.0,
+              "max": 9501.0
+            }
+          },
+          "possible_cross_process_contamination": true,
+          "other_gpu_pids": [
+            157494
+          ],
+          "process_snapshot_count": 7,
+          "process_visibility_complete": true,
+          "process_attribution_limit": "Device-wide counters. Process lists sampled every 2 s can miss short-lived competitors; absence of another PID is not proof of exclusive execution.",
+          "sampler_command": [
+            "/usr/bin/nvidia-smi",
+            "--id=GPU-7bbfe8a4-3bcc-b7d5-8d04-2d5a0fdb732a",
+            "--query-gpu=timestamp,uuid,pci.bus_id,name,utilization.gpu,utilization.memory,memory.used,memory.total,power.draw,power.limit,temperature.gpu,clocks.current.graphics,clocks.current.sm,clocks.current.memory,pstate",
+            "--format=csv,noheader,nounits",
+            "--loop-ms=200"
+          ],
+          "sampler_returncode": 0,
+          "parse_errors": [],
+          "interpretation": "GPU busy% is time activity; memory busy% is time device memory was read/written, not bandwidth saturation. Neither measures SM occupancy, FLOPs, MFU, or separate graphics/compute/copy-engine saturation. Polls can repeat the same hardware sampling window. Phase timings include telemetry overhead; use independent uninstrumented paired timings for FPS.",
+          "sources": [
+            "https://docs.nvidia.com/deploy/nvidia-smi/index.html#utilization",
+            "https://docs.nvidia.com/nsight-systems/UserGuide/index.html#gpu-metrics"
+          ]
+        },
+        "source": {
+          "label": "source_b256_cpu",
+          "status": "COMPLETE",
+          "error": null,
+          "host": "gpu2106.oscar.ccv.brown.edu",
+          "pid": 807751,
+          "gpu_uuid": "GPU-7bbfe8a4-3bcc-b7d5-8d04-2d5a0fdb732a",
+          "gpu_name": "NVIDIA GeForce RTX 3090",
+          "pci_bus_id": "00000000:E1:00.0",
+          "started_utc": "2026-09-29T17:48:44.065234+00:00",
+          "ended_utc": "2026-09-29T17:48:56.153647+00:00",
+          "started_monotonic_ns": 13104619082356144,
+          "ended_monotonic_ns": 13104631170765031,
+          "phase_seconds": 12.088408887,
+          "render_calls": 65,
+          "process_cpu_seconds": 12.056486417000002,
+          "process_cpu_duty_percent": 99.73592496499413,
+          "poll_interval_ms": 200,
+          "edge_exclusion_seconds": 1,
+          "sample_count_total": 58,
+          "sample_count_retained": 48,
+          "metrics": {
+            "gpu_busy_percent": {
+              "count": 48,
+              "mean": 38.270833333333336,
+              "sd": 0.8929888454030007,
+              "p95": 40.0,
+              "min": 37.0,
+              "max": 40.0
+            },
+            "memory_busy_percent": {
+              "count": 48,
+              "mean": 10.791666666666666,
+              "sd": 0.4104140790860576,
+              "p95": 11.0,
+              "min": 10.0,
+              "max": 11.0
+            },
+            "vram_used_mib": {
+              "count": 48,
+              "mean": 2686.0,
+              "sd": 0.0,
+              "p95": 2686.0,
+              "min": 2686.0,
+              "max": 2686.0
+            },
+            "vram_total_mib": {
+              "count": 48,
+              "mean": 24576.0,
+              "sd": 0.0,
+              "p95": 24576.0,
+              "min": 24576.0,
+              "max": 24576.0
+            },
+            "power_watts": {
+              "count": 48,
+              "mean": 157.266875,
+              "sd": 1.0431665301256863,
+              "p95": 157.65,
+              "min": 152.36,
+              "max": 157.66
+            },
+            "power_limit_watts": {
+              "count": 48,
+              "mean": 350.0,
+              "sd": 0.0,
+              "p95": 350.0,
+              "min": 350.0,
+              "max": 350.0
+            },
+            "temperature_c": {
+              "count": 48,
+              "mean": 50.0,
+              "sd": 0.0,
+              "p95": 50.0,
+              "min": 50.0,
+              "max": 50.0
+            },
+            "graphics_clock_mhz": {
+              "count": 48,
+              "mean": 1695.0,
+              "sd": 0.0,
+              "p95": 1695.0,
+              "min": 1695.0,
+              "max": 1695.0
+            },
+            "sm_clock_mhz": {
+              "count": 48,
+              "mean": 1695.0,
+              "sd": 0.0,
+              "p95": 1695.0,
+              "min": 1695.0,
+              "max": 1695.0
+            },
+            "memory_clock_mhz": {
+              "count": 48,
+              "mean": 9501.0,
+              "sd": 0.0,
+              "p95": 9501.0,
+              "min": 9501.0,
+              "max": 9501.0
+            }
+          },
+          "possible_cross_process_contamination": true,
+          "other_gpu_pids": [
+            157494
+          ],
+          "process_snapshot_count": 7,
+          "process_visibility_complete": true,
+          "process_attribution_limit": "Device-wide counters. Process lists sampled every 2 s can miss short-lived competitors; absence of another PID is not proof of exclusive execution.",
+          "sampler_command": [
+            "/usr/bin/nvidia-smi",
+            "--id=GPU-7bbfe8a4-3bcc-b7d5-8d04-2d5a0fdb732a",
+            "--query-gpu=timestamp,uuid,pci.bus_id,name,utilization.gpu,utilization.memory,memory.used,memory.total,power.draw,power.limit,temperature.gpu,clocks.current.graphics,clocks.current.sm,clocks.current.memory,pstate",
+            "--format=csv,noheader,nounits",
+            "--loop-ms=200"
+          ],
+          "sampler_returncode": 0,
+          "parse_errors": [],
+          "interpretation": "GPU busy% is time activity; memory busy% is time device memory was read/written, not bandwidth saturation. Neither measures SM occupancy, FLOPs, MFU, or separate graphics/compute/copy-engine saturation. Polls can repeat the same hardware sampling window. Phase timings include telemetry overhead; use independent uninstrumented paired timings for FPS.",
+          "sources": [
+            "https://docs.nvidia.com/deploy/nvidia-smi/index.html#utilization",
+            "https://docs.nvidia.com/nsight-systems/UserGuide/index.html#gpu-metrics"
+          ]
+        }
+      }
+    },
+    {
+      "batch": 256,
+      "output_device": "cuda",
+      "paired_mse": {
+        "mean": 1.6019479687299753e-11,
+        "sd": 6.407791874919901e-11,
+        "maximum": 2.5631167499679605e-10,
+        "samples": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          2.5631167499679605e-10,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "source_repeat_max_uint8": 0,
+      "source_repeat_mse_max": 0.0,
+      "ours": {
+        "count": 7,
+        "samples_ms": [
+          185.347928,
+          186.424641,
+          182.821536,
+          186.151603,
+          185.369708,
+          183.352291,
+          185.245969
+        ],
+        "mean_ms": 184.95909657142857,
+        "sd_ms": 1.3615535740832763,
+        "mean_ms_per_frame": 0.7224964709821429,
+        "sd_ms_per_frame": 0.005318568648762798,
+        "frames_per_second": 1384.0898055053833
+      },
+      "source": {
+        "count": 7,
+        "samples_ms": [
+          186.994637,
+          185.689836,
+          186.6634,
+          186.731458,
+          186.758028,
+          186.60163,
+          186.621019
+        ],
+        "mean_ms": 186.58000114285716,
+        "sd_ms": 0.41393543346453604,
+        "mean_ms_per_frame": 0.7288281294642858,
+        "sd_ms_per_frame": 0.001616935286970844,
+        "frames_per_second": 1372.0655934822864
+      },
+      "speedup": 1.0087635839570757,
+      "telemetry": {
+        "ours": {
+          "label": "ours_b256_cuda",
+          "status": "COMPLETE",
+          "error": null,
+          "host": "gpu2106.oscar.ccv.brown.edu",
+          "pid": 807751,
+          "gpu_uuid": "GPU-7bbfe8a4-3bcc-b7d5-8d04-2d5a0fdb732a",
+          "gpu_name": "NVIDIA GeForce RTX 3090",
+          "pci_bus_id": "00000000:E1:00.0",
+          "started_utc": "2026-09-29T17:48:59.847740+00:00",
+          "ended_utc": "2026-09-29T17:49:11.891355+00:00",
+          "started_monotonic_ns": 13104634864861721,
+          "ended_monotonic_ns": 13104646908473080,
+          "phase_seconds": 12.043611359,
+          "render_calls": 65,
+          "process_cpu_seconds": 12.044805166000003,
+          "process_cpu_duty_percent": 100.0099123673491,
+          "poll_interval_ms": 200,
+          "edge_exclusion_seconds": 1,
+          "sample_count_total": 58,
+          "sample_count_retained": 48,
+          "metrics": {
+            "gpu_busy_percent": {
+              "count": 48,
+              "mean": 37.104166666666664,
+              "sd": 0.6915780085022742,
+              "p95": 38.0,
+              "min": 36.0,
+              "max": 38.0
+            },
+            "memory_busy_percent": {
+              "count": 48,
+              "mean": 10.604166666666666,
+              "sd": 0.49420399497827033,
+              "p95": 11.0,
+              "min": 10.0,
+              "max": 11.0
+            },
+            "vram_used_mib": {
+              "count": 48,
+              "mean": 2716.0,
+              "sd": 0.0,
+              "p95": 2716.0,
+              "min": 2716.0,
+              "max": 2716.0
+            },
+            "vram_total_mib": {
+              "count": 48,
+              "mean": 24576.0,
+              "sd": 0.0,
+              "p95": 24576.0,
+              "min": 24576.0,
+              "max": 24576.0
+            },
+            "power_watts": {
+              "count": 48,
+              "mean": 157.10458333333332,
+              "sd": 0.76731906407914,
+              "p95": 157.57,
+              "min": 154.27,
+              "max": 157.77
+            },
+            "power_limit_watts": {
+              "count": 48,
+              "mean": 350.0,
+              "sd": 0.0,
+              "p95": 350.0,
+              "min": 350.0,
+              "max": 350.0
+            },
+            "temperature_c": {
+              "count": 48,
+              "mean": 50.0,
+              "sd": 0.0,
+              "p95": 50.0,
+              "min": 50.0,
+              "max": 50.0
+            },
+            "graphics_clock_mhz": {
+              "count": 48,
+              "mean": 1695.0,
+              "sd": 0.0,
+              "p95": 1695.0,
+              "min": 1695.0,
+              "max": 1695.0
+            },
+            "sm_clock_mhz": {
+              "count": 48,
+              "mean": 1695.0,
+              "sd": 0.0,
+              "p95": 1695.0,
+              "min": 1695.0,
+              "max": 1695.0
+            },
+            "memory_clock_mhz": {
+              "count": 48,
+              "mean": 9501.0,
+              "sd": 0.0,
+              "p95": 9501.0,
+              "min": 9501.0,
+              "max": 9501.0
+            }
+          },
+          "possible_cross_process_contamination": true,
+          "other_gpu_pids": [
+            157494
+          ],
+          "process_snapshot_count": 7,
+          "process_visibility_complete": true,
+          "process_attribution_limit": "Device-wide counters. Process lists sampled every 2 s can miss short-lived competitors; absence of another PID is not proof of exclusive execution.",
+          "sampler_command": [
+            "/usr/bin/nvidia-smi",
+            "--id=GPU-7bbfe8a4-3bcc-b7d5-8d04-2d5a0fdb732a",
+            "--query-gpu=timestamp,uuid,pci.bus_id,name,utilization.gpu,utilization.memory,memory.used,memory.total,power.draw,power.limit,temperature.gpu,clocks.current.graphics,clocks.current.sm,clocks.current.memory,pstate",
+            "--format=csv,noheader,nounits",
+            "--loop-ms=200"
+          ],
+          "sampler_returncode": 0,
+          "parse_errors": [],
+          "interpretation": "GPU busy% is time activity; memory busy% is time device memory was read/written, not bandwidth saturation. Neither measures SM occupancy, FLOPs, MFU, or separate graphics/compute/copy-engine saturation. Polls can repeat the same hardware sampling window. Phase timings include telemetry overhead; use independent uninstrumented paired timings for FPS.",
+          "sources": [
+            "https://docs.nvidia.com/deploy/nvidia-smi/index.html#utilization",
+            "https://docs.nvidia.com/nsight-systems/UserGuide/index.html#gpu-metrics"
+          ]
+        },
+        "source": {
+          "label": "source_b256_cuda",
+          "status": "COMPLETE",
+          "error": null,
+          "host": "gpu2106.oscar.ccv.brown.edu",
+          "pid": 807751,
+          "gpu_uuid": "GPU-7bbfe8a4-3bcc-b7d5-8d04-2d5a0fdb732a",
+          "gpu_name": "NVIDIA GeForce RTX 3090",
+          "pci_bus_id": "00000000:E1:00.0",
+          "started_utc": "2026-09-29T17:49:12.515494+00:00",
+          "ended_utc": "2026-09-29T17:49:24.547019+00:00",
+          "started_monotonic_ns": 13104647532616429,
+          "ended_monotonic_ns": 13104659564136727,
+          "phase_seconds": 12.031520298,
+          "render_calls": 64,
+          "process_cpu_seconds": 12.031846242,
+          "process_cpu_duty_percent": 100.0027090840719,
+          "poll_interval_ms": 200,
+          "edge_exclusion_seconds": 1,
+          "sample_count_total": 58,
+          "sample_count_retained": 49,
+          "metrics": {
+            "gpu_busy_percent": {
+              "count": 49,
+              "mean": 38.83673469387755,
+              "sd": 0.9207546446509289,
+              "p95": 40.0,
+              "min": 37.0,
+              "max": 40.0
+            },
+            "memory_busy_percent": {
+              "count": 49,
+              "mean": 10.63265306122449,
+              "sd": 0.4870779177494948,
+              "p95": 11.0,
+              "min": 10.0,
+              "max": 11.0
+            },
+            "vram_used_mib": {
+              "count": 49,
+              "mean": 2716.0,
+              "sd": 0.0,
+              "p95": 2716.0,
+              "min": 2716.0,
+              "max": 2716.0
+            },
+            "vram_total_mib": {
+              "count": 49,
+              "mean": 24576.0,
+              "sd": 0.0,
+              "p95": 24576.0,
+              "min": 24576.0,
+              "max": 24576.0
+            },
+            "power_watts": {
+              "count": 49,
+              "mean": 157.60102040816327,
+              "sd": 1.0687809350258939,
+              "p95": 158.29,
+              "min": 152.61,
+              "max": 158.35
+            },
+            "power_limit_watts": {
+              "count": 49,
+              "mean": 350.0,
+              "sd": 0.0,
+              "p95": 350.0,
+              "min": 350.0,
+              "max": 350.0
+            },
+            "temperature_c": {
+              "count": 49,
+              "mean": 50.0,
+              "sd": 0.0,
+              "p95": 50.0,
+              "min": 50.0,
+              "max": 50.0
+            },
+            "graphics_clock_mhz": {
+              "count": 49,
+              "mean": 1695.0,
+              "sd": 0.0,
+              "p95": 1695.0,
+              "min": 1695.0,
+              "max": 1695.0
+            },
+            "sm_clock_mhz": {
+              "count": 49,
+              "mean": 1695.0,
+              "sd": 0.0,
+              "p95": 1695.0,
+              "min": 1695.0,
+              "max": 1695.0
+            },
+            "memory_clock_mhz": {
+              "count": 49,
+              "mean": 9501.0,
+              "sd": 0.0,
+              "p95": 9501.0,
+              "min": 9501.0,
+              "max": 9501.0
+            }
+          },
+          "possible_cross_process_contamination": true,
+          "other_gpu_pids": [
+            157494
+          ],
+          "process_snapshot_count": 7,
+          "process_visibility_complete": true,
+          "process_attribution_limit": "Device-wide counters. Process lists sampled every 2 s can miss short-lived competitors; absence of another PID is not proof of exclusive execution.",
+          "sampler_command": [
+            "/usr/bin/nvidia-smi",
+            "--id=GPU-7bbfe8a4-3bcc-b7d5-8d04-2d5a0fdb732a",
+            "--query-gpu=timestamp,uuid,pci.bus_id,name,utilization.gpu,utilization.memory,memory.used,memory.total,power.draw,power.limit,temperature.gpu,clocks.current.graphics,clocks.current.sm,clocks.current.memory,pstate",
+            "--format=csv,noheader,nounits",
+            "--loop-ms=200"
+          ],
+          "sampler_returncode": 0,
+          "parse_errors": [],
+          "interpretation": "GPU busy% is time activity; memory busy% is time device memory was read/written, not bandwidth saturation. Neither measures SM occupancy, FLOPs, MFU, or separate graphics/compute/copy-engine saturation. Polls can repeat the same hardware sampling window. Phase timings include telemetry overhead; use independent uninstrumented paired timings for FPS.",
+          "sources": [
+            "https://docs.nvidia.com/deploy/nvidia-smi/index.html#utilization",
+            "https://docs.nvidia.com/nsight-systems/UserGuide/index.html#gpu-metrics"
+          ]
+        }
+      }
+    },
+    {
+      "batch": 512,
+      "output_device": "cpu",
+      "paired_mse": {
+        "mean": 1.6019479687299753e-11,
+        "sd": 6.407791874919901e-11,
+        "maximum": 2.5631167499679605e-10,
+        "samples": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          2.5631167499679605e-10,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "source_repeat_max_uint8": 0,
+      "source_repeat_mse_max": 0.0,
+      "ours": {
+        "count": 7,
+        "samples_ms": [
+          381.954507,
+          384.147392,
+          380.343728,
+          380.816984,
+          382.508473,
+          380.614286,
+          382.722791
+        ],
+        "mean_ms": 381.8725944285714,
+        "sd_ms": 1.374995482582991,
+        "mean_ms_per_frame": 0.7458449109933035,
+        "sd_ms_per_frame": 0.0026855380519199045,
+        "frames_per_second": 1340.7613101069726
+      },
+      "source": {
+        "count": 7,
+        "samples_ms": [
+          370.348945,
+          371.811435,
+          371.854355,
+          370.302725,
+          368.647737,
+          368.357159,
+          371.531787
+        ],
+        "mean_ms": 370.4077347142857,
+        "sd_ms": 1.4516378261055891,
+        "mean_ms_per_frame": 0.7234526068638393,
+        "sd_ms_per_frame": 0.0028352301291124787,
+        "frames_per_second": 1382.2605524016165
+      },
+      "speedup": 0.9699772649790658
+    },
+    {
+      "batch": 512,
+      "output_device": "cuda",
+      "paired_mse": {
+        "mean": 0.0,
+        "sd": 0.0,
+        "maximum": 0.0,
+        "samples": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "source_repeat_max_uint8": 0,
+      "source_repeat_mse_max": 0.0,
+      "ours": {
+        "count": 7,
+        "samples_ms": [
+          370.708753,
+          372.097643,
+          370.974991,
+          373.105237,
+          371.347009,
+          370.062587,
+          374.1337
+        ],
+        "mean_ms": 371.77570285714285,
+        "sd_ms": 1.4334993813102195,
+        "mean_ms_per_frame": 0.7261244196428571,
+        "sd_ms_per_frame": 0.0027998034791215224,
+        "frames_per_second": 1377.1744524056194
+      },
+      "source": {
+        "count": 7,
+        "samples_ms": [
+          374.893154,
+          373.406295,
+          376.674663,
+          375.039283,
+          376.674362,
+          375.066583,
+          375.052004
+        ],
+        "mean_ms": 375.25804914285715,
+        "sd_ms": 1.132979207697036,
+        "mean_ms_per_frame": 0.7329258772321429,
+        "sd_ms_per_frame": 0.0022128500150332734,
+        "frames_per_second": 1364.3944511502978
+      },
+      "speedup": 1.0093667936310846
+    },
+    {
+      "batch": 1024,
+      "output_device": "cpu",
+      "paired_mse": {
+        "mean": 0.0,
+        "sd": 0.0,
+        "maximum": 0.0,
+        "samples": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "source_repeat_max_uint8": 0,
+      "source_repeat_mse_max": 0.0,
+      "ours": {
+        "count": 7,
+        "samples_ms": [
+          759.166705,
+          764.065832,
+          761.578709,
+          761.076603,
+          757.11336,
+          762.458014,
+          762.237885
+        ],
+        "mean_ms": 761.0995868571429,
+        "sd_ms": 2.3020201392020714,
+        "mean_ms_per_frame": 0.7432613152901786,
+        "sd_ms_per_frame": 0.002248066542189523,
+        "frames_per_second": 1345.4218313643667
+      },
+      "source": {
+        "count": 7,
+        "samples_ms": [
+          740.305863,
+          739.862066,
+          739.773487,
+          740.171504,
+          738.680684,
+          739.641147,
+          739.786037
+        ],
+        "mean_ms": 739.7458268571429,
+        "sd_ms": 0.5253922609655313,
+        "mean_ms_per_frame": 0.7224080340401786,
+        "sd_ms_per_frame": 0.0005130783798491516,
+        "frames_per_second": 1384.259245301226
+      },
+      "speedup": 0.9719435401506689,
+      "telemetry": {
+        "source": {
+          "label": "source_b1024_cpu",
+          "status": "COMPLETE",
+          "error": null,
+          "host": "gpu2106.oscar.ccv.brown.edu",
+          "pid": 807751,
+          "gpu_uuid": "GPU-7bbfe8a4-3bcc-b7d5-8d04-2d5a0fdb732a",
+          "gpu_name": "NVIDIA GeForce RTX 3090",
+          "pci_bus_id": "00000000:E1:00.0",
+          "started_utc": "2026-09-29T17:49:50.667762+00:00",
+          "ended_utc": "2026-09-29T17:50:03.281111+00:00",
+          "started_monotonic_ns": 13104685684884035,
+          "ended_monotonic_ns": 13104698298228867,
+          "phase_seconds": 12.613344832,
+          "render_calls": 17,
+          "process_cpu_seconds": 12.618674071000001,
+          "process_cpu_duty_percent": 100.04225079922084,
+          "poll_interval_ms": 200,
+          "edge_exclusion_seconds": 1,
+          "sample_count_total": 61,
+          "sample_count_retained": 51,
+          "metrics": {
+            "gpu_busy_percent": {
+              "count": 51,
+              "mean": 38.568627450980394,
+              "sd": 1.9105486328359644,
+              "p95": 40.0,
+              "min": 31.0,
+              "max": 40.0
+            },
+            "memory_busy_percent": {
+              "count": 51,
+              "mean": 10.823529411764707,
+              "sd": 0.47773977657051653,
+              "p95": 11.0,
+              "min": 9.0,
+              "max": 11.0
+            },
+            "vram_used_mib": {
+              "count": 51,
+              "mean": 2954.0,
+              "sd": 0.0,
+              "p95": 2954.0,
+              "min": 2954.0,
+              "max": 2954.0
+            },
+            "vram_total_mib": {
+              "count": 51,
+              "mean": 24576.0,
+              "sd": 0.0,
+              "p95": 24576.0,
+              "min": 24576.0,
+              "max": 24576.0
+            },
+            "power_watts": {
+              "count": 51,
+              "mean": 158.09666666666666,
+              "sd": 0.649534192068953,
+              "p95": 158.57999999999998,
+              "min": 154.12,
+              "max": 158.6
+            },
+            "power_limit_watts": {
+              "count": 51,
+              "mean": 350.0,
+              "sd": 0.0,
+              "p95": 350.0,
+              "min": 350.0,
+              "max": 350.0
+            },
+            "temperature_c": {
+              "count": 51,
+              "mean": 50.627450980392155,
+              "sd": 0.488294350314459,
+              "p95": 51.0,
+              "min": 50.0,
+              "max": 51.0
+            },
+            "graphics_clock_mhz": {
+              "count": 51,
+              "mean": 1695.0,
+              "sd": 0.0,
+              "p95": 1695.0,
+              "min": 1695.0,
+              "max": 1695.0
+            },
+            "sm_clock_mhz": {
+              "count": 51,
+              "mean": 1695.0,
+              "sd": 0.0,
+              "p95": 1695.0,
+              "min": 1695.0,
+              "max": 1695.0
+            },
+            "memory_clock_mhz": {
+              "count": 51,
+              "mean": 9501.0,
+              "sd": 0.0,
+              "p95": 9501.0,
+              "min": 9501.0,
+              "max": 9501.0
+            }
+          },
+          "possible_cross_process_contamination": true,
+          "other_gpu_pids": [
+            157494
+          ],
+          "process_snapshot_count": 7,
+          "process_visibility_complete": true,
+          "process_attribution_limit": "Device-wide counters. Process lists sampled every 2 s can miss short-lived competitors; absence of another PID is not proof of exclusive execution.",
+          "sampler_command": [
+            "/usr/bin/nvidia-smi",
+            "--id=GPU-7bbfe8a4-3bcc-b7d5-8d04-2d5a0fdb732a",
+            "--query-gpu=timestamp,uuid,pci.bus_id,name,utilization.gpu,utilization.memory,memory.used,memory.total,power.draw,power.limit,temperature.gpu,clocks.current.graphics,clocks.current.sm,clocks.current.memory,pstate",
+            "--format=csv,noheader,nounits",
+            "--loop-ms=200"
+          ],
+          "sampler_returncode": 0,
+          "parse_errors": [],
+          "interpretation": "GPU busy% is time activity; memory busy% is time device memory was read/written, not bandwidth saturation. Neither measures SM occupancy, FLOPs, MFU, or separate graphics/compute/copy-engine saturation. Polls can repeat the same hardware sampling window. Phase timings include telemetry overhead; use independent uninstrumented paired timings for FPS.",
+          "sources": [
+            "https://docs.nvidia.com/deploy/nvidia-smi/index.html#utilization",
+            "https://docs.nvidia.com/nsight-systems/UserGuide/index.html#gpu-metrics"
+          ]
+        },
+        "ours": {
+          "label": "ours_b1024_cpu",
+          "status": "COMPLETE",
+          "error": null,
+          "host": "gpu2106.oscar.ccv.brown.edu",
+          "pid": 807751,
+          "gpu_uuid": "GPU-7bbfe8a4-3bcc-b7d5-8d04-2d5a0fdb732a",
+          "gpu_name": "NVIDIA GeForce RTX 3090",
+          "pci_bus_id": "00000000:E1:00.0",
+          "started_utc": "2026-09-29T17:50:04.407413+00:00",
+          "ended_utc": "2026-09-29T17:50:16.581319+00:00",
+          "started_monotonic_ns": 13104699424534460,
+          "ended_monotonic_ns": 13104711598436378,
+          "phase_seconds": 12.173901918,
+          "render_calls": 16,
+          "process_cpu_seconds": 12.185645924999989,
+          "process_cpu_duty_percent": 100.09646871708917,
+          "poll_interval_ms": 200,
+          "edge_exclusion_seconds": 1,
+          "sample_count_total": 59,
+          "sample_count_retained": 49,
+          "metrics": {
+            "gpu_busy_percent": {
+              "count": 49,
+              "mean": 36.857142857142854,
+              "sd": 1.118033988749895,
+              "p95": 38.0,
+              "min": 35.0,
+              "max": 38.0
+            },
+            "memory_busy_percent": {
+              "count": 49,
+              "mean": 10.306122448979592,
+              "sd": 1.2111303541295122,
+              "p95": 11.0,
+              "min": 8.0,
+              "max": 11.0
+            },
+            "vram_used_mib": {
+              "count": 49,
+              "mean": 2954.0,
+              "sd": 0.0,
+              "p95": 2954.0,
+              "min": 2954.0,
+              "max": 2954.0
+            },
+            "vram_total_mib": {
+              "count": 49,
+              "mean": 24576.0,
+              "sd": 0.0,
+              "p95": 24576.0,
+              "min": 24576.0,
+              "max": 24576.0
+            },
+            "power_watts": {
+              "count": 49,
+              "mean": 156.30530612244897,
+              "sd": 1.0231061814412992,
+              "p95": 157.21,
+              "min": 152.08,
+              "max": 157.28
+            },
+            "power_limit_watts": {
+              "count": 49,
+              "mean": 350.0,
+              "sd": 0.0,
+              "p95": 350.0,
+              "min": 350.0,
+              "max": 350.0
+            },
+            "temperature_c": {
+              "count": 49,
+              "mean": 50.0,
+              "sd": 0.0,
+              "p95": 50.0,
+              "min": 50.0,
+              "max": 50.0
+            },
+            "graphics_clock_mhz": {
+              "count": 49,
+              "mean": 1695.0,
+              "sd": 0.0,
+              "p95": 1695.0,
+              "min": 1695.0,
+              "max": 1695.0
+            },
+            "sm_clock_mhz": {
+              "count": 49,
+              "mean": 1695.0,
+              "sd": 0.0,
+              "p95": 1695.0,
+              "min": 1695.0,
+              "max": 1695.0
+            },
+            "memory_clock_mhz": {
+              "count": 49,
+              "mean": 9501.0,
+              "sd": 0.0,
+              "p95": 9501.0,
+              "min": 9501.0,
+              "max": 9501.0
+            }
+          },
+          "possible_cross_process_contamination": true,
+          "other_gpu_pids": [
+            157494
+          ],
+          "process_snapshot_count": 7,
+          "process_visibility_complete": true,
+          "process_attribution_limit": "Device-wide counters. Process lists sampled every 2 s can miss short-lived competitors; absence of another PID is not proof of exclusive execution.",
+          "sampler_command": [
+            "/usr/bin/nvidia-smi",
+            "--id=GPU-7bbfe8a4-3bcc-b7d5-8d04-2d5a0fdb732a",
+            "--query-gpu=timestamp,uuid,pci.bus_id,name,utilization.gpu,utilization.memory,memory.used,memory.total,power.draw,power.limit,temperature.gpu,clocks.current.graphics,clocks.current.sm,clocks.current.memory,pstate",
+            "--format=csv,noheader,nounits",
+            "--loop-ms=200"
+          ],
+          "sampler_returncode": 0,
+          "parse_errors": [],
+          "interpretation": "GPU busy% is time activity; memory busy% is time device memory was read/written, not bandwidth saturation. Neither measures SM occupancy, FLOPs, MFU, or separate graphics/compute/copy-engine saturation. Polls can repeat the same hardware sampling window. Phase timings include telemetry overhead; use independent uninstrumented paired timings for FPS.",
+          "sources": [
+            "https://docs.nvidia.com/deploy/nvidia-smi/index.html#utilization",
+            "https://docs.nvidia.com/nsight-systems/UserGuide/index.html#gpu-metrics"
+          ]
+        }
+      }
+    },
+    {
+      "batch": 1024,
+      "output_device": "cuda",
+      "paired_mse": {
+        "mean": 1.6019479687299753e-11,
+        "sd": 6.407791874919901e-11,
+        "maximum": 2.5631167499679605e-10,
+        "samples": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          2.5631167499679605e-10,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "source_repeat_max_uint8": 0,
+      "source_repeat_mse_max": 0.0,
+      "ours": {
+        "count": 7,
+        "samples_ms": [
+          738.843627,
+          737.601476,
+          749.363475,
+          740.453076,
+          735.999057,
+          740.488606,
+          740.948363
+        ],
+        "mean_ms": 740.52824,
+        "sd_ms": 4.2849050639067015,
+        "mean_ms_per_frame": 0.723172109375,
+        "sd_ms_per_frame": 0.004184477601471388,
+        "frames_per_second": 1382.79669118358
+      },
+      "source": {
+        "count": 7,
+        "samples_ms": [
+          740.901973,
+          742.680581,
+          743.841583,
+          745.67772,
+          742.208724,
+          744.048031,
+          747.097591
+        ],
+        "mean_ms": 743.7794575714286,
+        "sd_ms": 2.10729099728363,
+        "mean_ms_per_frame": 0.7263471265345982,
+        "sd_ms_per_frame": 0.0020579013645347947,
+        "frames_per_second": 1376.7521939144985
+      },
+      "speedup": 1.0043904032227435,
+      "telemetry": {
+        "source": {
+          "label": "source_b1024_cuda",
+          "status": "COMPLETE",
+          "error": null,
+          "host": "gpu2106.oscar.ccv.brown.edu",
+          "pid": 807751,
+          "gpu_uuid": "GPU-7bbfe8a4-3bcc-b7d5-8d04-2d5a0fdb732a",
+          "gpu_name": "NVIDIA GeForce RTX 3090",
+          "pci_bus_id": "00000000:E1:00.0",
+          "started_utc": "2026-09-29T17:50:30.147835+00:00",
+          "ended_utc": "2026-09-29T17:50:42.225477+00:00",
+          "started_monotonic_ns": 13104725164957325,
+          "ended_monotonic_ns": 13104737242594284,
+          "phase_seconds": 12.077636959,
+          "render_calls": 16,
+          "process_cpu_seconds": 12.08800395099999,
+          "process_cpu_duty_percent": 100.08583626114267,
+          "poll_interval_ms": 200,
+          "edge_exclusion_seconds": 1,
+          "sample_count_total": 58,
+          "sample_count_retained": 48,
+          "metrics": {
+            "gpu_busy_percent": {
+              "count": 48,
+              "mean": 39.25,
+              "sd": 0.5259237061407777,
+              "p95": 40.0,
+              "min": 38.0,
+              "max": 40.0
+            },
+            "memory_busy_percent": {
+              "count": 48,
+              "mean": 10.916666666666666,
+              "sd": 0.4038818730469177,
+              "p95": 11.0,
+              "min": 9.0,
+              "max": 11.0
+            },
+            "vram_used_mib": {
+              "count": 48,
+              "mean": 3072.0,
+              "sd": 0.0,
+              "p95": 3072.0,
+              "min": 3072.0,
+              "max": 3072.0
+            },
+            "vram_total_mib": {
+              "count": 48,
+              "mean": 24576.0,
+              "sd": 0.0,
+              "p95": 24576.0,
+              "min": 24576.0,
+              "max": 24576.0
+            },
+            "power_watts": {
+              "count": 48,
+              "mean": 157.830625,
+              "sd": 0.7063011420006973,
+              "p95": 158.8945,
+              "min": 154.47,
+              "max": 159.01
+            },
+            "power_limit_watts": {
+              "count": 48,
+              "mean": 350.0,
+              "sd": 0.0,
+              "p95": 350.0,
+              "min": 350.0,
+              "max": 350.0
+            },
+            "temperature_c": {
+              "count": 48,
+              "mean": 50.041666666666664,
+              "sd": 0.20194093652345885,
+              "p95": 50.0,
+              "min": 50.0,
+              "max": 51.0
+            },
+            "graphics_clock_mhz": {
+              "count": 48,
+              "mean": 1696.25,
+              "sd": 4.189652907981961,
+              "p95": 1710.0,
+              "min": 1695.0,
+              "max": 1710.0
+            },
+            "sm_clock_mhz": {
+              "count": 48,
+              "mean": 1696.25,
+              "sd": 4.189652907981961,
+              "p95": 1710.0,
+              "min": 1695.0,
+              "max": 1710.0
+            },
+            "memory_clock_mhz": {
+              "count": 48,
+              "mean": 9501.0,
+              "sd": 0.0,
+              "p95": 9501.0,
+              "min": 9501.0,
+              "max": 9501.0
+            }
+          },
+          "possible_cross_process_contamination": true,
+          "other_gpu_pids": [
+            157494
+          ],
+          "process_snapshot_count": 7,
+          "process_visibility_complete": true,
+          "process_attribution_limit": "Device-wide counters. Process lists sampled every 2 s can miss short-lived competitors; absence of another PID is not proof of exclusive execution.",
+          "sampler_command": [
+            "/usr/bin/nvidia-smi",
+            "--id=GPU-7bbfe8a4-3bcc-b7d5-8d04-2d5a0fdb732a",
+            "--query-gpu=timestamp,uuid,pci.bus_id,name,utilization.gpu,utilization.memory,memory.used,memory.total,power.draw,power.limit,temperature.gpu,clocks.current.graphics,clocks.current.sm,clocks.current.memory,pstate",
+            "--format=csv,noheader,nounits",
+            "--loop-ms=200"
+          ],
+          "sampler_returncode": 0,
+          "parse_errors": [],
+          "interpretation": "GPU busy% is time activity; memory busy% is time device memory was read/written, not bandwidth saturation. Neither measures SM occupancy, FLOPs, MFU, or separate graphics/compute/copy-engine saturation. Polls can repeat the same hardware sampling window. Phase timings include telemetry overhead; use independent uninstrumented paired timings for FPS.",
+          "sources": [
+            "https://docs.nvidia.com/deploy/nvidia-smi/index.html#utilization",
+            "https://docs.nvidia.com/nsight-systems/UserGuide/index.html#gpu-metrics"
+          ]
+        },
+        "ours": {
+          "label": "ours_b1024_cuda",
+          "status": "COMPLETE",
+          "error": null,
+          "host": "gpu2106.oscar.ccv.brown.edu",
+          "pid": 807751,
+          "gpu_uuid": "GPU-7bbfe8a4-3bcc-b7d5-8d04-2d5a0fdb732a",
+          "gpu_name": "NVIDIA GeForce RTX 3090",
+          "pci_bus_id": "00000000:E1:00.0",
+          "started_utc": "2026-09-29T17:50:43.439313+00:00",
+          "ended_utc": "2026-09-29T17:50:56.160551+00:00",
+          "started_monotonic_ns": 13104738456434271,
+          "ended_monotonic_ns": 13104751177668635,
+          "phase_seconds": 12.721234364,
+          "render_calls": 17,
+          "process_cpu_seconds": 12.652632558999983,
+          "process_cpu_duty_percent": 99.46072996505626,
+          "poll_interval_ms": 200,
+          "edge_exclusion_seconds": 1,
+          "sample_count_total": 62,
+          "sample_count_retained": 52,
+          "metrics": {
+            "gpu_busy_percent": {
+              "count": 52,
+              "mean": 36.44230769230769,
+              "sd": 0.5015060275070906,
+              "p95": 37.0,
+              "min": 36.0,
+              "max": 37.0
+            },
+            "memory_busy_percent": {
+              "count": 52,
+              "mean": 11.0,
+              "sd": 0.0,
+              "p95": 11.0,
+              "min": 11.0,
+              "max": 11.0
+            },
+            "vram_used_mib": {
+              "count": 52,
+              "mean": 3072.0,
+              "sd": 0.0,
+              "p95": 3072.0,
+              "min": 3072.0,
+              "max": 3072.0
+            },
+            "vram_total_mib": {
+              "count": 52,
+              "mean": 24576.0,
+              "sd": 0.0,
+              "p95": 24576.0,
+              "min": 24576.0,
+              "max": 24576.0
+            },
+            "power_watts": {
+              "count": 52,
+              "mean": 157.0223076923077,
+              "sd": 0.935115837187712,
+              "p95": 157.5565,
+              "min": 152.53,
+              "max": 157.65
+            },
+            "power_limit_watts": {
+              "count": 52,
+              "mean": 350.0,
+              "sd": 0.0,
+              "p95": 350.0,
+              "min": 350.0,
+              "max": 350.0
+            },
+            "temperature_c": {
+              "count": 52,
+              "mean": 50.0,
+              "sd": 0.0,
+              "p95": 50.0,
+              "min": 50.0,
+              "max": 50.0
+            },
+            "graphics_clock_mhz": {
+              "count": 52,
+              "mean": 1695.0,
+              "sd": 0.0,
+              "p95": 1695.0,
+              "min": 1695.0,
+              "max": 1695.0
+            },
+            "sm_clock_mhz": {
+              "count": 52,
+              "mean": 1695.0,
+              "sd": 0.0,
+              "p95": 1695.0,
+              "min": 1695.0,
+              "max": 1695.0
+            },
+            "memory_clock_mhz": {
+              "count": 52,
+              "mean": 9501.0,
+              "sd": 0.0,
+              "p95": 9501.0,
+              "min": 9501.0,
+              "max": 9501.0
+            }
+          },
+          "possible_cross_process_contamination": true,
+          "other_gpu_pids": [
+            157494
+          ],
+          "process_snapshot_count": 8,
+          "process_visibility_complete": true,
+          "process_attribution_limit": "Device-wide counters. Process lists sampled every 2 s can miss short-lived competitors; absence of another PID is not proof of exclusive execution.",
+          "sampler_command": [
+            "/usr/bin/nvidia-smi",
+            "--id=GPU-7bbfe8a4-3bcc-b7d5-8d04-2d5a0fdb732a",
+            "--query-gpu=timestamp,uuid,pci.bus_id,name,utilization.gpu,utilization.memory,memory.used,memory.total,power.draw,power.limit,temperature.gpu,clocks.current.graphics,clocks.current.sm,clocks.current.memory,pstate",
+            "--format=csv,noheader,nounits",
+            "--loop-ms=200"
+          ],
+          "sampler_returncode": 0,
+          "parse_errors": [],
+          "interpretation": "GPU busy% is time activity; memory busy% is time device memory was read/written, not bandwidth saturation. Neither measures SM occupancy, FLOPs, MFU, or separate graphics/compute/copy-engine saturation. Polls can repeat the same hardware sampling window. Phase timings include telemetry overhead; use independent uninstrumented paired timings for FPS.",
+          "sources": [
+            "https://docs.nvidia.com/deploy/nvidia-smi/index.html#utilization",
+            "https://docs.nvidia.com/nsight-systems/UserGuide/index.html#gpu-metrics"
+          ]
+        }
+      }
+    },
+    {
+      "batch": 2048,
+      "output_device": "cpu",
+      "paired_mse": {
+        "mean": 1.6019479687299753e-11,
+        "sd": 6.407791874919901e-11,
+        "maximum": 2.5631167499679605e-10,
+        "samples": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          2.5631167499679605e-10,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "source_repeat_max_uint8": 0,
+      "source_repeat_mse_max": 0.0,
+      "ours": {
+        "count": 7,
+        "samples_ms": [
+          1518.576852,
+          1517.407441,
+          1518.268074,
+          1518.2692,
+          1515.642293,
+          1521.019391,
+          1515.764911
+        ],
+        "mean_ms": 1517.8497374285714,
+        "sd_ms": 1.8412537382585001,
+        "mean_ms_per_frame": 0.7411375671037946,
+        "sd_ms_per_frame": 0.0008990496768840333,
+        "frames_per_second": 1349.277171184
+      },
+      "source": {
+        "count": 7,
+        "samples_ms": [
+          1483.368726,
+          1484.967536,
+          1473.928131,
+          1475.256152,
+          1484.014804,
+          1482.636274,
+          1484.313431
+        ],
+        "mean_ms": 1481.2121505714285,
+        "sd_ms": 4.596838251689782,
+        "mean_ms_per_frame": 0.7232481203962053,
+        "sd_ms_per_frame": 0.0022445499275829013,
+        "frames_per_second": 1382.6513637563082
+      },
+      "speedup": 0.975862177952337
+    },
+    {
+      "batch": 2048,
+      "output_device": "cuda",
+      "paired_mse": {
+        "mean": 1.6019479687299753e-11,
+        "sd": 6.407791874919901e-11,
+        "maximum": 2.5631167499679605e-10,
+        "samples": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          2.5631167499679605e-10,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "source_repeat_max_uint8": 0,
+      "source_repeat_mse_max": 0.0,
+      "ours": {
+        "count": 7,
+        "samples_ms": [
+          1475.38709,
+          1477.675482,
+          1474.646485,
+          1475.919076,
+          1471.683297,
+          1476.283886,
+          1473.705593
+        ],
+        "mean_ms": 1475.042987,
+        "sd_ms": 1.9403243932865184,
+        "mean_ms_per_frame": 0.7202358334960938,
+        "sd_ms_per_frame": 0.0009474240201594328,
+        "frames_per_second": 1388.4341121239472
+      },
+      "source": {
+        "count": 7,
+        "samples_ms": [
+          1493.021685,
+          1497.974827,
+          1495.674914,
+          1497.477251,
+          1487.404418,
+          1485.095522,
+          1487.40856
+        ],
+        "mean_ms": 1492.0081681428571,
+        "sd_ms": 5.324780339107147,
+        "mean_ms_per_frame": 0.7285196133510045,
+        "sd_ms_per_frame": 0.0025999903999546618,
+        "frames_per_second": 1372.6466407681942
+      },
+      "speedup": 1.0115014825278832
+    },
+    {
+      "batch": 4096,
+      "output_device": "cpu",
+      "paired_mse": {
+        "mean": 0.0,
+        "sd": 0.0,
+        "maximum": 0.0,
+        "samples": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "source_repeat_max_uint8": 0,
+      "source_repeat_mse_max": 0.0,
+      "ours": {
+        "count": 7,
+        "samples_ms": [
+          3027.64752,
+          3025.905131,
+          3030.589939,
+          3035.422261,
+          3033.895081,
+          3025.861147,
+          3028.569749
+        ],
+        "mean_ms": 3029.6986897142856,
+        "sd_ms": 3.780716852455284,
+        "mean_ms_per_frame": 0.7396725316685268,
+        "sd_ms_per_frame": 0.0009230265753064658,
+        "frames_per_second": 1351.949622550179
+      },
+      "source": {
+        "count": 7,
+        "samples_ms": [
+          2964.646889,
+          2963.908684,
+          2947.397256,
+          2962.051026,
+          2959.174015,
+          2963.690774,
+          2959.734832
+        ],
+        "mean_ms": 2960.0862108571428,
+        "sd_ms": 5.975360572058754,
+        "mean_ms_per_frame": 0.7226772975725446,
+        "sd_ms_per_frame": 0.0014588282646627818,
+        "frames_per_second": 1383.743481854177
+      },
+      "speedup": 0.977023299678785,
+      "telemetry": {
+        "ours": {
+          "label": "ours_b4096_cpu",
+          "status": "COMPLETE",
+          "error": null,
+          "host": "gpu2106.oscar.ccv.brown.edu",
+          "pid": 807751,
+          "gpu_uuid": "GPU-7bbfe8a4-3bcc-b7d5-8d04-2d5a0fdb732a",
+          "gpu_name": "NVIDIA GeForce RTX 3090",
+          "pci_bus_id": "00000000:E1:00.0",
+          "started_utc": "2026-09-29T17:53:09.395885+00:00",
+          "ended_utc": "2026-09-29T17:53:21.519079+00:00",
+          "started_monotonic_ns": 13104884412999926,
+          "ended_monotonic_ns": 13104896536196978,
+          "phase_seconds": 12.123197052,
+          "render_calls": 4,
+          "process_cpu_seconds": 12.099497627999995,
+          "process_cpu_duty_percent": 99.80451176452588,
+          "poll_interval_ms": 200,
+          "edge_exclusion_seconds": 1,
+          "sample_count_total": 59,
+          "sample_count_retained": 49,
+          "metrics": {
+            "gpu_busy_percent": {
+              "count": 49,
+              "mean": 37.265306122448976,
+              "sd": 0.8844845533812719,
+              "p95": 38.0,
+              "min": 36.0,
+              "max": 38.0
+            },
+            "memory_busy_percent": {
+              "count": 49,
+              "mean": 10.918367346938776,
+              "sd": 0.2766416675862441,
+              "p95": 11.0,
+              "min": 10.0,
+              "max": 11.0
+            },
+            "vram_used_mib": {
+              "count": 49,
+              "mean": 4016.0,
+              "sd": 0.0,
+              "p95": 4016.0,
+              "min": 4016.0,
+              "max": 4016.0
+            },
+            "vram_total_mib": {
+              "count": 49,
+              "mean": 24576.0,
+              "sd": 0.0,
+              "p95": 24576.0,
+              "min": 24576.0,
+              "max": 24576.0
+            },
+            "power_watts": {
+              "count": 49,
+              "mean": 157.54183673469387,
+              "sd": 2.0702532790593,
+              "p95": 161.26,
+              "min": 153.69,
+              "max": 162.06
+            },
+            "power_limit_watts": {
+              "count": 49,
+              "mean": 350.0,
+              "sd": 0.0,
+              "p95": 350.0,
+              "min": 350.0,
+              "max": 350.0
+            },
+            "temperature_c": {
+              "count": 49,
+              "mean": 50.08163265306123,
+              "sd": 0.2766416675862441,
+              "p95": 51.0,
+              "min": 50.0,
+              "max": 51.0
+            },
+            "graphics_clock_mhz": {
+              "count": 49,
+              "mean": 1699.2857142857142,
+              "sd": 10.606601717798213,
+              "p95": 1725.0,
+              "min": 1695.0,
+              "max": 1725.0
+            },
+            "sm_clock_mhz": {
+              "count": 49,
+              "mean": 1699.2857142857142,
+              "sd": 10.606601717798213,
+              "p95": 1725.0,
+              "min": 1695.0,
+              "max": 1725.0
+            },
+            "memory_clock_mhz": {
+              "count": 49,
+              "mean": 9501.0,
+              "sd": 0.0,
+              "p95": 9501.0,
+              "min": 9501.0,
+              "max": 9501.0
+            }
+          },
+          "possible_cross_process_contamination": true,
+          "other_gpu_pids": [
+            157494
+          ],
+          "process_snapshot_count": 7,
+          "process_visibility_complete": true,
+          "process_attribution_limit": "Device-wide counters. Process lists sampled every 2 s can miss short-lived competitors; absence of another PID is not proof of exclusive execution.",
+          "sampler_command": [
+            "/usr/bin/nvidia-smi",
+            "--id=GPU-7bbfe8a4-3bcc-b7d5-8d04-2d5a0fdb732a",
+            "--query-gpu=timestamp,uuid,pci.bus_id,name,utilization.gpu,utilization.memory,memory.used,memory.total,power.draw,power.limit,temperature.gpu,clocks.current.graphics,clocks.current.sm,clocks.current.memory,pstate",
+            "--format=csv,noheader,nounits",
+            "--loop-ms=200"
+          ],
+          "sampler_returncode": 0,
+          "parse_errors": [],
+          "interpretation": "GPU busy% is time activity; memory busy% is time device memory was read/written, not bandwidth saturation. Neither measures SM occupancy, FLOPs, MFU, or separate graphics/compute/copy-engine saturation. Polls can repeat the same hardware sampling window. Phase timings include telemetry overhead; use independent uninstrumented paired timings for FPS.",
+          "sources": [
+            "https://docs.nvidia.com/deploy/nvidia-smi/index.html#utilization",
+            "https://docs.nvidia.com/nsight-systems/UserGuide/index.html#gpu-metrics"
+          ]
+        },
+        "source": {
+          "label": "source_b4096_cpu",
+          "status": "COMPLETE",
+          "error": null,
+          "host": "gpu2106.oscar.ccv.brown.edu",
+          "pid": 807751,
+          "gpu_uuid": "GPU-7bbfe8a4-3bcc-b7d5-8d04-2d5a0fdb732a",
+          "gpu_name": "NVIDIA GeForce RTX 3090",
+          "pci_bus_id": "00000000:E1:00.0",
+          "started_utc": "2026-09-29T17:53:24.925122+00:00",
+          "ended_utc": "2026-09-29T17:53:39.807157+00:00",
+          "started_monotonic_ns": 13104899942243750,
+          "ended_monotonic_ns": 13104914824274684,
+          "phase_seconds": 14.882030934,
+          "render_calls": 5,
+          "process_cpu_seconds": 14.994925437000006,
+          "process_cpu_duty_percent": 100.75859607805333,
+          "poll_interval_ms": 200,
+          "edge_exclusion_seconds": 1,
+          "sample_count_total": 72,
+          "sample_count_retained": 62,
+          "metrics": {
+            "gpu_busy_percent": {
+              "count": 62,
+              "mean": 32.95161290322581,
+              "sd": 11.24310706042995,
+              "p95": 40.0,
+              "min": 8.0,
+              "max": 40.0
+            },
+            "memory_busy_percent": {
+              "count": 62,
+              "mean": 9.096774193548388,
+              "sd": 3.18659938697879,
+              "p95": 11.0,
+              "min": 2.0,
+              "max": 11.0
+            },
+            "vram_used_mib": {
+              "count": 62,
+              "mean": 4016.0,
+              "sd": 0.0,
+              "p95": 4016.0,
+              "min": 4016.0,
+              "max": 4016.0
+            },
+            "vram_total_mib": {
+              "count": 62,
+              "mean": 24576.0,
+              "sd": 0.0,
+              "p95": 24576.0,
+              "min": 24576.0,
+              "max": 24576.0
+            },
+            "power_watts": {
+              "count": 62,
+              "mean": 157.7741935483871,
+              "sd": 1.3591517947856915,
+              "p95": 159.07,
+              "min": 153.5,
+              "max": 159.13
+            },
+            "power_limit_watts": {
+              "count": 62,
+              "mean": 350.0,
+              "sd": 0.0,
+              "p95": 350.0,
+              "min": 350.0,
+              "max": 350.0
+            },
+            "temperature_c": {
+              "count": 62,
+              "mean": 50.0,
+              "sd": 0.0,
+              "p95": 50.0,
+              "min": 50.0,
+              "max": 50.0
+            },
+            "graphics_clock_mhz": {
+              "count": 62,
+              "mean": 1694.516129032258,
+              "sd": 2.6719056592496293,
+              "p95": 1695.0,
+              "min": 1680.0,
+              "max": 1695.0
+            },
+            "sm_clock_mhz": {
+              "count": 62,
+              "mean": 1694.516129032258,
+              "sd": 2.6719056592496293,
+              "p95": 1695.0,
+              "min": 1680.0,
+              "max": 1695.0
+            },
+            "memory_clock_mhz": {
+              "count": 62,
+              "mean": 9501.0,
+              "sd": 0.0,
+              "p95": 9501.0,
+              "min": 9501.0,
+              "max": 9501.0
+            }
+          },
+          "possible_cross_process_contamination": true,
+          "other_gpu_pids": [
+            157494
+          ],
+          "process_snapshot_count": 8,
+          "process_visibility_complete": true,
+          "process_attribution_limit": "Device-wide counters. Process lists sampled every 2 s can miss short-lived competitors; absence of another PID is not proof of exclusive execution.",
+          "sampler_command": [
+            "/usr/bin/nvidia-smi",
+            "--id=GPU-7bbfe8a4-3bcc-b7d5-8d04-2d5a0fdb732a",
+            "--query-gpu=timestamp,uuid,pci.bus_id,name,utilization.gpu,utilization.memory,memory.used,memory.total,power.draw,power.limit,temperature.gpu,clocks.current.graphics,clocks.current.sm,clocks.current.memory,pstate",
+            "--format=csv,noheader,nounits",
+            "--loop-ms=200"
+          ],
+          "sampler_returncode": 0,
+          "parse_errors": [],
+          "interpretation": "GPU busy% is time activity; memory busy% is time device memory was read/written, not bandwidth saturation. Neither measures SM occupancy, FLOPs, MFU, or separate graphics/compute/copy-engine saturation. Polls can repeat the same hardware sampling window. Phase timings include telemetry overhead; use independent uninstrumented paired timings for FPS.",
+          "sources": [
+            "https://docs.nvidia.com/deploy/nvidia-smi/index.html#utilization",
+            "https://docs.nvidia.com/nsight-systems/UserGuide/index.html#gpu-metrics"
+          ]
+        }
+      }
+    },
+    {
+      "batch": 4096,
+      "output_device": "cuda",
+      "paired_mse": {
+        "mean": 1.6019479687299753e-11,
+        "sd": 6.407791874919901e-11,
+        "maximum": 2.5631167499679605e-10,
+        "samples": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          2.5631167499679605e-10,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "source_repeat_max_uint8": 0,
+      "source_repeat_mse_max": 0.0,
+      "ours": {
+        "count": 7,
+        "samples_ms": [
+          2942.665238,
+          2945.503648,
+          2938.773414,
+          2976.598876,
+          3004.665944,
+          2966.401985,
+          2956.387021
+        ],
+        "mean_ms": 2961.570875142857,
+        "sd_ms": 23.340025971807876,
+        "mean_ms_per_frame": 0.7230397644391741,
+        "sd_ms_per_frame": 0.005698248528273407,
+        "frames_per_second": 1383.049797787609
+      },
+      "source": {
+        "count": 7,
+        "samples_ms": [
+          3097.2368,
+          3110.961246,
+          3094.123911,
+          3132.30517,
+          3048.564993,
+          3007.332785,
+          2956.336002
+        ],
+        "mean_ms": 3063.8372724285714,
+        "sd_ms": 63.145141754572194,
+        "mean_ms_per_frame": 0.7480071465890067,
+        "sd_ms_per_frame": 0.015416294373674852,
+        "frames_per_second": 1336.885622764579
+      },
+      "speedup": 1.034531132833612,
+      "telemetry": {
+        "ours": {
+          "label": "ours_b4096_cuda",
+          "status": "COMPLETE",
+          "error": null,
+          "host": "gpu2106.oscar.ccv.brown.edu",
+          "pid": 807751,
+          "gpu_uuid": "GPU-7bbfe8a4-3bcc-b7d5-8d04-2d5a0fdb732a",
+          "gpu_name": "NVIDIA GeForce RTX 3090",
+          "pci_bus_id": "00000000:E1:00.0",
+          "started_utc": "2026-09-29T17:54:33.048517+00:00",
+          "ended_utc": "2026-09-29T17:54:47.868526+00:00",
+          "started_monotonic_ns": 13104968065638915,
+          "ended_monotonic_ns": 13104982885643604,
+          "phase_seconds": 14.820004689,
+          "render_calls": 5,
+          "process_cpu_seconds": 14.782122926,
+          "process_cpu_duty_percent": 99.74438764497748,
+          "poll_interval_ms": 200,
+          "edge_exclusion_seconds": 1,
+          "sample_count_total": 72,
+          "sample_count_retained": 62,
+          "metrics": {
+            "gpu_busy_percent": {
+              "count": 62,
+              "mean": 37.32258064516129,
+              "sd": 0.7191569187024551,
+              "p95": 38.0,
+              "min": 36.0,
+              "max": 38.0
+            },
+            "memory_busy_percent": {
+              "count": 62,
+              "mean": 11.0,
+              "sd": 0.0,
+              "p95": 11.0,
+              "min": 11.0,
+              "max": 11.0
+            },
+            "vram_used_mib": {
+              "count": 62,
+              "mean": 4486.0,
+              "sd": 0.0,
+              "p95": 4486.0,
+              "min": 4486.0,
+              "max": 4486.0
+            },
+            "vram_total_mib": {
+              "count": 62,
+              "mean": 24576.0,
+              "sd": 0.0,
+              "p95": 24576.0,
+              "min": 24576.0,
+              "max": 24576.0
+            },
+            "power_watts": {
+              "count": 62,
+              "mean": 157.755,
+              "sd": 1.299217608194494,
+              "p95": 159.63,
+              "min": 151.97,
+              "max": 159.92
+            },
+            "power_limit_watts": {
+              "count": 62,
+              "mean": 350.0,
+              "sd": 0.0,
+              "p95": 350.0,
+              "min": 350.0,
+              "max": 350.0
+            },
+            "temperature_c": {
+              "count": 62,
+              "mean": 50.0,
+              "sd": 0.0,
+              "p95": 50.0,
+              "min": 50.0,
+              "max": 50.0
+            },
+            "graphics_clock_mhz": {
+              "count": 62,
+              "mean": 1697.4193548387098,
+              "sd": 5.562015164641096,
+              "p95": 1710.0,
+              "min": 1695.0,
+              "max": 1710.0
+            },
+            "sm_clock_mhz": {
+              "count": 62,
+              "mean": 1697.4193548387098,
+              "sd": 5.562015164641096,
+              "p95": 1710.0,
+              "min": 1695.0,
+              "max": 1710.0
+            },
+            "memory_clock_mhz": {
+              "count": 62,
+              "mean": 9501.0,
+              "sd": 0.0,
+              "p95": 9501.0,
+              "min": 9501.0,
+              "max": 9501.0
+            }
+          },
+          "possible_cross_process_contamination": true,
+          "other_gpu_pids": [
+            157494
+          ],
+          "process_snapshot_count": 9,
+          "process_visibility_complete": true,
+          "process_attribution_limit": "Device-wide counters. Process lists sampled every 2 s can miss short-lived competitors; absence of another PID is not proof of exclusive execution.",
+          "sampler_command": [
+            "/usr/bin/nvidia-smi",
+            "--id=GPU-7bbfe8a4-3bcc-b7d5-8d04-2d5a0fdb732a",
+            "--query-gpu=timestamp,uuid,pci.bus_id,name,utilization.gpu,utilization.memory,memory.used,memory.total,power.draw,power.limit,temperature.gpu,clocks.current.graphics,clocks.current.sm,clocks.current.memory,pstate",
+            "--format=csv,noheader,nounits",
+            "--loop-ms=200"
+          ],
+          "sampler_returncode": 0,
+          "parse_errors": [],
+          "interpretation": "GPU busy% is time activity; memory busy% is time device memory was read/written, not bandwidth saturation. Neither measures SM occupancy, FLOPs, MFU, or separate graphics/compute/copy-engine saturation. Polls can repeat the same hardware sampling window. Phase timings include telemetry overhead; use independent uninstrumented paired timings for FPS.",
+          "sources": [
+            "https://docs.nvidia.com/deploy/nvidia-smi/index.html#utilization",
+            "https://docs.nvidia.com/nsight-systems/UserGuide/index.html#gpu-metrics"
+          ]
+        },
+        "source": {
+          "label": "source_b4096_cuda",
+          "status": "COMPLETE",
+          "error": null,
+          "host": "gpu2106.oscar.ccv.brown.edu",
+          "pid": 807751,
+          "gpu_uuid": "GPU-7bbfe8a4-3bcc-b7d5-8d04-2d5a0fdb732a",
+          "gpu_name": "NVIDIA GeForce RTX 3090",
+          "pci_bus_id": "00000000:E1:00.0",
+          "started_utc": "2026-09-29T17:54:51.435612+00:00",
+          "ended_utc": "2026-09-29T17:55:03.648043+00:00",
+          "started_monotonic_ns": 13104986452733966,
+          "ended_monotonic_ns": 13104998665161427,
+          "phase_seconds": 12.212427461,
+          "render_calls": 4,
+          "process_cpu_seconds": 12.108849528000007,
+          "process_cpu_duty_percent": 99.15186449761306,
+          "poll_interval_ms": 200,
+          "edge_exclusion_seconds": 1,
+          "sample_count_total": 59,
+          "sample_count_retained": 49,
+          "metrics": {
+            "gpu_busy_percent": {
+              "count": 49,
+              "mean": 39.16326530612245,
+              "sd": 0.7457361792078965,
+              "p95": 40.0,
+              "min": 38.0,
+              "max": 40.0
+            },
+            "memory_busy_percent": {
+              "count": 49,
+              "mean": 11.0,
+              "sd": 0.0,
+              "p95": 11.0,
+              "min": 11.0,
+              "max": 11.0
+            },
+            "vram_used_mib": {
+              "count": 49,
+              "mean": 4486.0,
+              "sd": 0.0,
+              "p95": 4486.0,
+              "min": 4486.0,
+              "max": 4486.0
+            },
+            "vram_total_mib": {
+              "count": 49,
+              "mean": 24576.0,
+              "sd": 0.0,
+              "p95": 24576.0,
+              "min": 24576.0,
+              "max": 24576.0
+            },
+            "power_watts": {
+              "count": 49,
+              "mean": 157.77489795918368,
+              "sd": 2.693716548476733,
+              "p95": 162.57,
+              "min": 150.83,
+              "max": 162.73
+            },
+            "power_limit_watts": {
+              "count": 49,
+              "mean": 350.0,
+              "sd": 0.0,
+              "p95": 350.0,
+              "min": 350.0,
+              "max": 350.0
+            },
+            "temperature_c": {
+              "count": 49,
+              "mean": 50.204081632653065,
+              "sd": 0.40720550896397784,
+              "p95": 51.0,
+              "min": 50.0,
+              "max": 51.0
+            },
+            "graphics_clock_mhz": {
+              "count": 49,
+              "mean": 1701.1224489795918,
+              "sd": 12.216165268919335,
+              "p95": 1725.0,
+              "min": 1695.0,
+              "max": 1725.0
+            },
+            "sm_clock_mhz": {
+              "count": 49,
+              "mean": 1701.1224489795918,
+              "sd": 12.216165268919335,
+              "p95": 1725.0,
+              "min": 1695.0,
+              "max": 1725.0
+            },
+            "memory_clock_mhz": {
+              "count": 49,
+              "mean": 9501.0,
+              "sd": 0.0,
+              "p95": 9501.0,
+              "min": 9501.0,
+              "max": 9501.0
+            }
+          },
+          "possible_cross_process_contamination": true,
+          "other_gpu_pids": [
+            157494
+          ],
+          "process_snapshot_count": 7,
+          "process_visibility_complete": true,
+          "process_attribution_limit": "Device-wide counters. Process lists sampled every 2 s can miss short-lived competitors; absence of another PID is not proof of exclusive execution.",
+          "sampler_command": [
+            "/usr/bin/nvidia-smi",
+            "--id=GPU-7bbfe8a4-3bcc-b7d5-8d04-2d5a0fdb732a",
+            "--query-gpu=timestamp,uuid,pci.bus_id,name,utilization.gpu,utilization.memory,memory.used,memory.total,power.draw,power.limit,temperature.gpu,clocks.current.graphics,clocks.current.sm,clocks.current.memory,pstate",
+            "--format=csv,noheader,nounits",
+            "--loop-ms=200"
+          ],
+          "sampler_returncode": 0,
+          "parse_errors": [],
+          "interpretation": "GPU busy% is time activity; memory busy% is time device memory was read/written, not bandwidth saturation. Neither measures SM occupancy, FLOPs, MFU, or separate graphics/compute/copy-engine saturation. Polls can repeat the same hardware sampling window. Phase timings include telemetry overhead; use independent uninstrumented paired timings for FPS.",
+          "sources": [
+            "https://docs.nvidia.com/deploy/nvidia-smi/index.html#utilization",
+            "https://docs.nvidia.com/nsight-systems/UserGuide/index.html#gpu-metrics"
+          ]
+        }
+      }
+    },
+    {
+      "batch": 8192,
+      "output_device": "cpu",
+      "paired_mse": {
+        "mean": 1.6019479687299753e-11,
+        "sd": 6.407791874919901e-11,
+        "maximum": 2.5631167499679605e-10,
+        "samples": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          2.5631167499679605e-10,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "source_repeat_max_uint8": 0,
+      "source_repeat_mse_max": 0.0,
+      "ours": {
+        "count": 7,
+        "samples_ms": [
+          6118.552296,
+          6112.654657,
+          6072.312433,
+          6064.405777,
+          6069.455202,
+          6059.276081,
+          6061.502469
+        ],
+        "mean_ms": 6079.736987857143,
+        "sd_ms": 24.957405838003165,
+        "mean_ms_per_frame": 0.7421553940255301,
+        "sd_ms_per_frame": 0.0030465583298343707,
+        "frames_per_second": 1347.4267088134916
+      },
+      "source": {
+        "count": 7,
+        "samples_ms": [
+          6030.207561,
+          6012.675461,
+          5972.828444,
+          5934.608535,
+          5958.773859,
+          5897.4185,
+          5929.304067
+        ],
+        "mean_ms": 5962.259489571428,
+        "sd_ms": 47.14790928259213,
+        "mean_ms_per_frame": 0.7278148790980747,
+        "sd_ms_per_frame": 0.005755360019847672,
+        "frames_per_second": 1373.9757577355706
+      },
+      "speedup": 0.9806772071686081
+    },
+    {
+      "batch": 8192,
+      "output_device": "cuda",
+      "paired_mse": {
+        "mean": 0.0,
+        "sd": 0.0,
+        "maximum": 0.0,
+        "samples": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "source_repeat_max_uint8": 0,
+      "source_repeat_mse_max": 0.0,
+      "ours": {
+        "count": 7,
+        "samples_ms": [
+          5908.159602,
+          5910.224808,
+          5865.771482,
+          5901.582226,
+          5857.320468,
+          5894.032442,
+          5851.07221
+        ],
+        "mean_ms": 5884.023319714286,
+        "sd_ms": 25.19762995094847,
+        "mean_ms_per_frame": 0.7182645653948103,
+        "sd_ms_per_frame": 0.0030758825623716395,
+        "frames_per_second": 1392.244652150322
+      },
+      "source": {
+        "count": 7,
+        "samples_ms": [
+          5985.739641,
+          5939.493458,
+          5890.236294,
+          5953.501092,
+          6012.402168,
+          6032.703191,
+          5844.964402
+        ],
+        "mean_ms": 5951.291463714286,
+        "sd_ms": 66.74118872415119,
+        "mean_ms_per_frame": 0.7264760087541853,
+        "sd_ms_per_frame": 0.008147117764178612,
+        "frames_per_second": 1376.5079478878783
+      },
+      "speedup": 1.011432338103525
+    },
+    {
+      "batch": 16384,
+      "output_device": "cpu",
+      "paired_mse": {
+        "mean": 0.0,
+        "sd": 0.0,
+        "maximum": 0.0,
+        "samples": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "source_repeat_max_uint8": 0,
+      "source_repeat_mse_max": 0.0,
+      "ours": {
+        "count": 7,
+        "samples_ms": [
+          12108.182019,
+          12120.721015,
+          12038.914459,
+          12118.433898,
+          12075.745394,
+          12150.125252,
+          12046.653859
+        ],
+        "mean_ms": 12094.110842285714,
+        "sd_ms": 41.3751538205965,
+        "mean_ms_per_frame": 0.7381659449637277,
+        "sd_ms_per_frame": 0.002525338978307892,
+        "frames_per_second": 1354.7089334352027
+      },
+      "source": {
+        "count": 7,
+        "samples_ms": [
+          11810.438819,
+          11905.168356,
+          11875.658682,
+          11908.728433,
+          11973.294995,
+          12104.62278,
+          11885.882707
+        ],
+        "mean_ms": 11923.399253142858,
+        "sd_ms": 93.38617257173884,
+        "mean_ms_per_frame": 0.7277465364467076,
+        "sd_ms_per_frame": 0.005699839634505544,
+        "frames_per_second": 1374.1047877501362
+      },
+      "speedup": 0.9858847342008821,
+      "telemetry": {
+        "source": {
+          "label": "source_b16384_cpu",
+          "status": "COMPLETE",
+          "error": null,
+          "host": "gpu2106.oscar.ccv.brown.edu",
+          "pid": 807751,
+          "gpu_uuid": "GPU-7bbfe8a4-3bcc-b7d5-8d04-2d5a0fdb732a",
+          "gpu_name": "NVIDIA GeForce RTX 3090",
+          "pci_bus_id": "00000000:E1:00.0",
+          "started_utc": "2026-09-29T18:01:51.832072+00:00",
+          "ended_utc": "2026-09-29T18:02:03.886816+00:00",
+          "started_monotonic_ns": 13105406849193878,
+          "ended_monotonic_ns": 13105418903929449,
+          "phase_seconds": 12.054735571,
+          "render_calls": 1,
+          "process_cpu_seconds": 12.000481659000002,
+          "process_cpu_duty_percent": 99.54993693822271,
+          "poll_interval_ms": 200,
+          "edge_exclusion_seconds": 1,
+          "sample_count_total": 58,
+          "sample_count_retained": 48,
+          "metrics": {
+            "gpu_busy_percent": {
+              "count": 48,
+              "mean": 39.604166666666664,
+              "sd": 0.49420399497827033,
+              "p95": 40.0,
+              "min": 39.0,
+              "max": 40.0
+            },
+            "memory_busy_percent": {
+              "count": 48,
+              "mean": 11.0,
+              "sd": 0.0,
+              "p95": 11.0,
+              "min": 11.0,
+              "max": 11.0
+            },
+            "vram_used_mib": {
+              "count": 48,
+              "mean": 8242.0,
+              "sd": 0.0,
+              "p95": 8242.0,
+              "min": 8242.0,
+              "max": 8242.0
+            },
+            "vram_total_mib": {
+              "count": 48,
+              "mean": 24576.0,
+              "sd": 0.0,
+              "p95": 24576.0,
+              "min": 24576.0,
+              "max": 24576.0
+            },
+            "power_watts": {
+              "count": 48,
+              "mean": 154.1225,
+              "sd": 1.0159609223511927,
+              "p95": 155.82850000000002,
+              "min": 151.41,
+              "max": 155.86
+            },
+            "power_limit_watts": {
+              "count": 48,
+              "mean": 350.0,
+              "sd": 0.0,
+              "p95": 350.0,
+              "min": 350.0,
+              "max": 350.0
+            },
+            "temperature_c": {
+              "count": 48,
+              "mean": 50.0,
+              "sd": 0.0,
+              "p95": 50.0,
+              "min": 50.0,
+              "max": 50.0
+            },
+            "graphics_clock_mhz": {
+              "count": 48,
+              "mean": 1654.6875,
+              "sd": 7.026261528283002,
+              "p95": 1665.0,
+              "min": 1650.0,
+              "max": 1665.0
+            },
+            "sm_clock_mhz": {
+              "count": 48,
+              "mean": 1654.6875,
+              "sd": 7.026261528283002,
+              "p95": 1665.0,
+              "min": 1650.0,
+              "max": 1665.0
+            },
+            "memory_clock_mhz": {
+              "count": 48,
+              "mean": 9501.0,
+              "sd": 0.0,
+              "p95": 9501.0,
+              "min": 9501.0,
+              "max": 9501.0
+            }
+          },
+          "possible_cross_process_contamination": true,
+          "other_gpu_pids": [
+            157494
+          ],
+          "process_snapshot_count": 7,
+          "process_visibility_complete": true,
+          "process_attribution_limit": "Device-wide counters. Process lists sampled every 2 s can miss short-lived competitors; absence of another PID is not proof of exclusive execution.",
+          "sampler_command": [
+            "/usr/bin/nvidia-smi",
+            "--id=GPU-7bbfe8a4-3bcc-b7d5-8d04-2d5a0fdb732a",
+            "--query-gpu=timestamp,uuid,pci.bus_id,name,utilization.gpu,utilization.memory,memory.used,memory.total,power.draw,power.limit,temperature.gpu,clocks.current.graphics,clocks.current.sm,clocks.current.memory,pstate",
+            "--format=csv,noheader,nounits",
+            "--loop-ms=200"
+          ],
+          "sampler_returncode": 0,
+          "parse_errors": [],
+          "interpretation": "GPU busy% is time activity; memory busy% is time device memory was read/written, not bandwidth saturation. Neither measures SM occupancy, FLOPs, MFU, or separate graphics/compute/copy-engine saturation. Polls can repeat the same hardware sampling window. Phase timings include telemetry overhead; use independent uninstrumented paired timings for FPS.",
+          "sources": [
+            "https://docs.nvidia.com/deploy/nvidia-smi/index.html#utilization",
+            "https://docs.nvidia.com/nsight-systems/UserGuide/index.html#gpu-metrics"
+          ]
+        },
+        "ours": {
+          "label": "ours_b16384_cpu",
+          "status": "COMPLETE",
+          "error": null,
+          "host": "gpu2106.oscar.ccv.brown.edu",
+          "pid": 807751,
+          "gpu_uuid": "GPU-7bbfe8a4-3bcc-b7d5-8d04-2d5a0fdb732a",
+          "gpu_name": "NVIDIA GeForce RTX 3090",
+          "pci_bus_id": "00000000:E1:00.0",
+          "started_utc": "2026-09-29T18:02:16.445340+00:00",
+          "ended_utc": "2026-09-29T18:02:28.535233+00:00",
+          "started_monotonic_ns": 13105431462462115,
+          "ended_monotonic_ns": 13105443552348850,
+          "phase_seconds": 12.089886735,
+          "render_calls": 1,
+          "process_cpu_seconds": 12.107683840999925,
+          "process_cpu_duty_percent": 100.14720655693492,
+          "poll_interval_ms": 200,
+          "edge_exclusion_seconds": 1,
+          "sample_count_total": 58,
+          "sample_count_retained": 48,
+          "metrics": {
+            "gpu_busy_percent": {
+              "count": 48,
+              "mean": 36.979166666666664,
+              "sd": 1.2963054429487055,
+              "p95": 38.0,
+              "min": 34.0,
+              "max": 38.0
+            },
+            "memory_busy_percent": {
+              "count": 48,
+              "mean": 11.0,
+              "sd": 0.0,
+              "p95": 11.0,
+              "min": 11.0,
+              "max": 11.0
+            },
+            "vram_used_mib": {
+              "count": 48,
+              "mean": 8242.0,
+              "sd": 0.0,
+              "p95": 8242.0,
+              "min": 8242.0,
+              "max": 8242.0
+            },
+            "vram_total_mib": {
+              "count": 48,
+              "mean": 24576.0,
+              "sd": 0.0,
+              "p95": 24576.0,
+              "min": 24576.0,
+              "max": 24576.0
+            },
+            "power_watts": {
+              "count": 48,
+              "mean": 163.91895833333334,
+              "sd": 13.167777763626994,
+              "p95": 198.82199999999997,
+              "min": 158.03,
+              "max": 203.12
+            },
+            "power_limit_watts": {
+              "count": 48,
+              "mean": 350.0,
+              "sd": 0.0,
+              "p95": 350.0,
+              "min": 350.0,
+              "max": 350.0
+            },
+            "temperature_c": {
+              "count": 48,
+              "mean": 50.354166666666664,
+              "sd": 0.6681057163555408,
+              "p95": 52.0,
+              "min": 50.0,
+              "max": 52.0
+            },
+            "graphics_clock_mhz": {
+              "count": 48,
+              "mean": 1709.6875,
+              "sd": 51.914478056847436,
+              "p95": 1740.0,
+              "min": 1695.0,
+              "max": 1950.0
+            },
+            "sm_clock_mhz": {
+              "count": 48,
+              "mean": 1709.6875,
+              "sd": 51.914478056847436,
+              "p95": 1740.0,
+              "min": 1695.0,
+              "max": 1950.0
+            },
+            "memory_clock_mhz": {
+              "count": 48,
+              "mean": 9501.0,
+              "sd": 0.0,
+              "p95": 9501.0,
+              "min": 9501.0,
+              "max": 9501.0
+            }
+          },
+          "possible_cross_process_contamination": true,
+          "other_gpu_pids": [
+            157494
+          ],
+          "process_snapshot_count": 7,
+          "process_visibility_complete": true,
+          "process_attribution_limit": "Device-wide counters. Process lists sampled every 2 s can miss short-lived competitors; absence of another PID is not proof of exclusive execution.",
+          "sampler_command": [
+            "/usr/bin/nvidia-smi",
+            "--id=GPU-7bbfe8a4-3bcc-b7d5-8d04-2d5a0fdb732a",
+            "--query-gpu=timestamp,uuid,pci.bus_id,name,utilization.gpu,utilization.memory,memory.used,memory.total,power.draw,power.limit,temperature.gpu,clocks.current.graphics,clocks.current.sm,clocks.current.memory,pstate",
+            "--format=csv,noheader,nounits",
+            "--loop-ms=200"
+          ],
+          "sampler_returncode": 0,
+          "parse_errors": [],
+          "interpretation": "GPU busy% is time activity; memory busy% is time device memory was read/written, not bandwidth saturation. Neither measures SM occupancy, FLOPs, MFU, or separate graphics/compute/copy-engine saturation. Polls can repeat the same hardware sampling window. Phase timings include telemetry overhead; use independent uninstrumented paired timings for FPS.",
+          "sources": [
+            "https://docs.nvidia.com/deploy/nvidia-smi/index.html#utilization",
+            "https://docs.nvidia.com/nsight-systems/UserGuide/index.html#gpu-metrics"
+          ]
+        }
+      }
+    },
+    {
+      "batch": 16384,
+      "output_device": "cuda",
+      "paired_mse": {
+        "mean": 1.6019479687299753e-11,
+        "sd": 6.407791874919901e-11,
+        "maximum": 2.5631167499679605e-10,
+        "samples": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          2.5631167499679605e-10,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "source_repeat_max_uint8": 0,
+      "source_repeat_mse_max": 0.0,
+      "ours": {
+        "count": 7,
+        "samples_ms": [
+          11772.381764,
+          11723.069915,
+          11696.770291,
+          11737.391252,
+          11709.658633,
+          11755.415271,
+          11707.086808
+        ],
+        "mean_ms": 11728.824847714286,
+        "sd_ms": 27.622873562230122,
+        "mean_ms_per_frame": 0.7158706572091239,
+        "sd_ms_per_frame": 0.0016859664039447096,
+        "frames_per_second": 1396.9003896577854
+      },
+      "source": {
+        "count": 7,
+        "samples_ms": [
+          11914.881838,
+          11858.573376,
+          11948.544251,
+          11788.473952,
+          11954.699042,
+          11773.414986,
+          11942.820992
+        ],
+        "mean_ms": 11883.058348142857,
+        "sd_ms": 76.99836504039821,
+        "mean_ms_per_frame": 0.7252843230067662,
+        "sd_ms_per_frame": 0.0046996072412352425,
+        "frames_per_second": 1378.7696332031032
+      },
+      "speedup": 1.0131499534208346,
+      "telemetry": {
+        "source": {
+          "label": "source_b16384_cuda",
+          "status": "COMPLETE",
+          "error": null,
+          "host": "gpu2106.oscar.ccv.brown.edu",
+          "pid": 807751,
+          "gpu_uuid": "GPU-7bbfe8a4-3bcc-b7d5-8d04-2d5a0fdb732a",
+          "gpu_name": "NVIDIA GeForce RTX 3090",
+          "pci_bus_id": "00000000:E1:00.0",
+          "started_utc": "2026-09-29T18:05:56.074912+00:00",
+          "ended_utc": "2026-09-29T18:06:19.894582+00:00",
+          "started_monotonic_ns": 13105651092033754,
+          "ended_monotonic_ns": 13105674911699942,
+          "phase_seconds": 23.819666188,
+          "render_calls": 2,
+          "process_cpu_seconds": 23.769080787999883,
+          "process_cpu_duty_percent": 99.78763178458982,
+          "poll_interval_ms": 200,
+          "edge_exclusion_seconds": 1,
+          "sample_count_total": 114,
+          "sample_count_retained": 105,
+          "metrics": {
+            "gpu_busy_percent": {
+              "count": 105,
+              "mean": 37.21904761904762,
+              "sd": 8.430691358160182,
+              "p95": 40.0,
+              "min": 0.0,
+              "max": 41.0
+            },
+            "memory_busy_percent": {
+              "count": 105,
+              "mean": 10.514285714285714,
+              "sd": 2.370143965581504,
+              "p95": 11.0,
+              "min": 0.0,
+              "max": 12.0
+            },
+            "vram_used_mib": {
+              "count": 105,
+              "mean": 10118.0,
+              "sd": 0.0,
+              "p95": 10118.0,
+              "min": 10118.0,
+              "max": 10118.0
+            },
+            "vram_total_mib": {
+              "count": 105,
+              "mean": 24576.0,
+              "sd": 0.0,
+              "p95": 24576.0,
+              "min": 24576.0,
+              "max": 24576.0
+            },
+            "power_watts": {
+              "count": 105,
+              "mean": 164.55257142857144,
+              "sd": 11.65842556237362,
+              "p95": 194.63,
+              "min": 148.73,
+              "max": 205.11
+            },
+            "power_limit_watts": {
+              "count": 105,
+              "mean": 350.0,
+              "sd": 0.0,
+              "p95": 350.0,
+              "min": 350.0,
+              "max": 350.0
+            },
+            "temperature_c": {
+              "count": 105,
+              "mean": 51.08571428571429,
+              "sd": 0.7735319310485175,
+              "p95": 53.0,
+              "min": 49.0,
+              "max": 53.0
+            },
+            "graphics_clock_mhz": {
+              "count": 105,
+              "mean": 1734.5714285714287,
+              "sd": 73.34099194107685,
+              "p95": 1950.0,
+              "min": 1695.0,
+              "max": 1950.0
+            },
+            "sm_clock_mhz": {
+              "count": 105,
+              "mean": 1734.5714285714287,
+              "sd": 73.34099194107685,
+              "p95": 1950.0,
+              "min": 1695.0,
+              "max": 1950.0
+            },
+            "memory_clock_mhz": {
+              "count": 105,
+              "mean": 9501.0,
+              "sd": 0.0,
+              "p95": 9501.0,
+              "min": 9501.0,
+              "max": 9501.0
+            }
+          },
+          "possible_cross_process_contamination": true,
+          "other_gpu_pids": [
+            157494
+          ],
+          "process_snapshot_count": 13,
+          "process_visibility_complete": true,
+          "process_attribution_limit": "Device-wide counters. Process lists sampled every 2 s can miss short-lived competitors; absence of another PID is not proof of exclusive execution.",
+          "sampler_command": [
+            "/usr/bin/nvidia-smi",
+            "--id=GPU-7bbfe8a4-3bcc-b7d5-8d04-2d5a0fdb732a",
+            "--query-gpu=timestamp,uuid,pci.bus_id,name,utilization.gpu,utilization.memory,memory.used,memory.total,power.draw,power.limit,temperature.gpu,clocks.current.graphics,clocks.current.sm,clocks.current.memory,pstate",
+            "--format=csv,noheader,nounits",
+            "--loop-ms=200"
+          ],
+          "sampler_returncode": 0,
+          "parse_errors": [],
+          "interpretation": "GPU busy% is time activity; memory busy% is time device memory was read/written, not bandwidth saturation. Neither measures SM occupancy, FLOPs, MFU, or separate graphics/compute/copy-engine saturation. Polls can repeat the same hardware sampling window. Phase timings include telemetry overhead; use independent uninstrumented paired timings for FPS.",
+          "sources": [
+            "https://docs.nvidia.com/deploy/nvidia-smi/index.html#utilization",
+            "https://docs.nvidia.com/nsight-systems/UserGuide/index.html#gpu-metrics"
+          ]
+        },
+        "ours": {
+          "label": "ours_b16384_cuda",
+          "status": "COMPLETE",
+          "error": null,
+          "host": "gpu2106.oscar.ccv.brown.edu",
+          "pid": 807751,
+          "gpu_uuid": "GPU-7bbfe8a4-3bcc-b7d5-8d04-2d5a0fdb732a",
+          "gpu_name": "NVIDIA GeForce RTX 3090",
+          "pci_bus_id": "00000000:E1:00.0",
+          "started_utc": "2026-09-29T18:06:32.045557+00:00",
+          "ended_utc": "2026-09-29T18:06:55.525185+00:00",
+          "started_monotonic_ns": 13105687062679700,
+          "ended_monotonic_ns": 13105710542302962,
+          "phase_seconds": 23.479623262,
+          "render_calls": 2,
+          "process_cpu_seconds": 23.51723329100014,
+          "process_cpu_duty_percent": 100.16018156927163,
+          "poll_interval_ms": 200,
+          "edge_exclusion_seconds": 1,
+          "sample_count_total": 113,
+          "sample_count_retained": 103,
+          "metrics": {
+            "gpu_busy_percent": {
+              "count": 103,
+              "mean": 38.66019417475728,
+              "sd": 5.614325860144502,
+              "p95": 38.0,
+              "min": 35.0,
+              "max": 63.0
+            },
+            "memory_busy_percent": {
+              "count": 103,
+              "mean": 10.524271844660195,
+              "sd": 1.9445482372377918,
+              "p95": 11.0,
+              "min": 2.0,
+              "max": 11.0
+            },
+            "vram_used_mib": {
+              "count": 103,
+              "mean": 10118.0,
+              "sd": 0.0,
+              "p95": 10118.0,
+              "min": 10118.0,
+              "max": 10118.0
+            },
+            "vram_total_mib": {
+              "count": 103,
+              "mean": 24576.0,
+              "sd": 0.0,
+              "p95": 24576.0,
+              "min": 24576.0,
+              "max": 24576.0
+            },
+            "power_watts": {
+              "count": 103,
+              "mean": 165.44194174757283,
+              "sd": 14.039816074590794,
+              "p95": 200.81,
+              "min": 155.55,
+              "max": 204.1
+            },
+            "power_limit_watts": {
+              "count": 103,
+              "mean": 350.0,
+              "sd": 0.0,
+              "p95": 350.0,
+              "min": 350.0,
+              "max": 350.0
+            },
+            "temperature_c": {
+              "count": 103,
+              "mean": 51.15533980582524,
+              "sd": 0.6379698430606763,
+              "p95": 53.0,
+              "min": 50.0,
+              "max": 53.0
+            },
+            "graphics_clock_mhz": {
+              "count": 103,
+              "mean": 1726.6019417475727,
+              "sd": 78.58807221348458,
+              "p95": 1950.0,
+              "min": 1695.0,
+              "max": 1950.0
+            },
+            "sm_clock_mhz": {
+              "count": 103,
+              "mean": 1726.6019417475727,
+              "sd": 78.58807221348458,
+              "p95": 1950.0,
+              "min": 1695.0,
+              "max": 1950.0
+            },
+            "memory_clock_mhz": {
+              "count": 103,
+              "mean": 9501.0,
+              "sd": 0.0,
+              "p95": 9501.0,
+              "min": 9501.0,
+              "max": 9501.0
+            }
+          },
+          "possible_cross_process_contamination": true,
+          "other_gpu_pids": [
+            157494
+          ],
+          "process_snapshot_count": 13,
+          "process_visibility_complete": true,
+          "process_attribution_limit": "Device-wide counters. Process lists sampled every 2 s can miss short-lived competitors; absence of another PID is not proof of exclusive execution.",
+          "sampler_command": [
+            "/usr/bin/nvidia-smi",
+            "--id=GPU-7bbfe8a4-3bcc-b7d5-8d04-2d5a0fdb732a",
+            "--query-gpu=timestamp,uuid,pci.bus_id,name,utilization.gpu,utilization.memory,memory.used,memory.total,power.draw,power.limit,temperature.gpu,clocks.current.graphics,clocks.current.sm,clocks.current.memory,pstate",
+            "--format=csv,noheader,nounits",
+            "--loop-ms=200"
+          ],
+          "sampler_returncode": 0,
+          "parse_errors": [],
+          "interpretation": "GPU busy% is time activity; memory busy% is time device memory was read/written, not bandwidth saturation. Neither measures SM occupancy, FLOPs, MFU, or separate graphics/compute/copy-engine saturation. Polls can repeat the same hardware sampling window. Phase timings include telemetry overhead; use independent uninstrumented paired timings for FPS.",
+          "sources": [
+            "https://docs.nvidia.com/deploy/nvidia-smi/index.html#utilization",
+            "https://docs.nvidia.com/nsight-systems/UserGuide/index.html#gpu-metrics"
+          ]
+        }
+      }
+    }
+  ],
+  "frames": [
+    {
+      "index": 0,
+      "case": 0,
+      "state_hash": "752ae399347de05a8998a7760d8a3b1f4d9ed58da1fd517dc95bef7716d6b8a9",
+      "state_file": "frame-0000-state.npz"
+    },
+    {
+      "index": 66,
+      "case": 11,
+      "state_hash": "5e3f7704f6a9353b569a19747b4ae6c44144a166f78303f9ff62e030ce4e7dcd",
+      "state_file": "frame-0066-state.npz"
+    },
+    {
+      "index": 133,
+      "case": 26,
+      "state_hash": "423f319146813b7b0841f59794d08ccb9ad479f0007723b563f49a74c6463163",
+      "state_file": "frame-0133-state.npz"
+    },
+    {
+      "index": 199,
+      "case": 26,
+      "state_hash": "56a584a77cf721d1e4df9cbbb8028bbf8d5d083d5800383d638fd53728f287cd",
+      "state_file": "frame-0199-state.npz"
+    },
+    {
+      "index": 266,
+      "case": 27,
+      "state_hash": "a73adce2620c4a30172bf813b35af673711f101d2bf2ec0cfea81fbb57de0965",
+      "state_file": "frame-0266-state.npz"
+    },
+    {
+      "index": 333,
+      "case": 27,
+      "state_hash": "0a24caca2721981a6f00188107cbb83c68d786cd40d0410363f85681ccc24859",
+      "state_file": "frame-0333-state.npz"
+    },
+    {
+      "index": 399,
+      "case": 28,
+      "state_hash": "78aec72a56ad47ce3ac457fb3d651e7a5fa0bf7ec16005f3440d7ef6f6700646",
+      "state_file": "frame-0399-state.npz"
+    },
+    {
+      "index": 466,
+      "case": 29,
+      "state_hash": "b4c95d3cb4fe26acc8ee72f7563facaf2569f235b89fcd7fa5f50aeb315d672e",
+      "state_file": "frame-0466-state.npz"
+    },
+    {
+      "index": 532,
+      "case": 29,
+      "state_hash": "0c101796ff344f36e863114a3859ae108e6f0bfd5032e631a2326169177ba0c2",
+      "state_file": "frame-0532-state.npz"
+    },
+    {
+      "index": 599,
+      "case": 30,
+      "state_hash": "20c1a782513c45a600bf58154e7fe01a0091ace0eb380a51263e64871c17f3d6",
+      "state_file": "frame-0599-state.npz"
+    },
+    {
+      "index": 666,
+      "case": 31,
+      "state_hash": "6965c7b5e27cc8e7a1deeba60070a4f0d976b0a05f4b529578e8fe6f785fb227",
+      "state_file": "frame-0666-state.npz"
+    },
+    {
+      "index": 732,
+      "case": 31,
+      "state_hash": "277158bdb397b000a1604fa3c9ee6449a87ae8740cc44c35d0ba8eb2258ba860",
+      "state_file": "frame-0732-state.npz"
+    },
+    {
+      "index": 799,
+      "case": 32,
+      "state_hash": "de1a9ef05e4e841e8963a7ecdfad2e620ef9ea852a9054026ad6b13a73503bb7",
+      "state_file": "frame-0799-state.npz"
+    },
+    {
+      "index": 865,
+      "case": 33,
+      "state_hash": "5fecf7859c333084abea04060f81d162a3d51f1ab86d696942d4938d5722af22",
+      "state_file": "frame-0865-state.npz"
+    },
+    {
+      "index": 932,
+      "case": 33,
+      "state_hash": "867c708ceb664ecd108fe02b6c996ce6c1284b6d5812f8ed8100a18bc6a4a375",
+      "state_file": "frame-0932-state.npz"
+    },
+    {
+      "index": 999,
+      "case": 34,
+      "state_hash": "f12564b25cfc5691befe767f2e0839fc07c520d08368b4394b00112795c60986",
+      "state_file": "frame-0999-state.npz"
+    }
+  ],
+  "harness_sha256": "c1def14e390efebb92408717228c2921a2529cfd76246bddab7d2ce9ce64ac68",
+  "scope": "Saved States; no rollouts or setup timed; equal batch and output destination; single CPU thread.",
+  "source_batch_method": "Repeated upstream render, cycling the same saved poses; no cached images.",
+  "corpus": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-cpu-6754925_30/results",
+  "corpus_sha256": "3a8ef972a43528fd5911bc476a9aabca1467eed78e8c3a05a7d9f8c7d66c5123",
+  "independent_states": 16,
+  "source_anchor_mse": [
+    0.00012643701140586954,
+    0.00012089747533000129,
+    0.00011925720876585928,
+    0.00011151787773933104,
+    0.00011188350634371396,
+    0.0001124723824170191,
+    0.00012079674484172755,
+    0.00010844764834038192,
+    0.00010877021658336538,
+    0.00011222863001409715,
+    0.00011498628732538768,
+    0.00011223068050749712,
+    0.00010628360886838397,
+    0.00011856273228245547,
+    0.0001169370754837883,
+    0.00011847289504036909
+  ],
+  "source_render_paths": {
+    "/oscar/scratch/sboughan/se-semantic-recovery/scene-render-kinematics-20260929/source/scripts/benchmarks/renderer_table/special.py": "f50c5f4f7695aafe4dfefc257b42619faf3c1c3d0e555de6b2cf6ef938a8cc8d"
+  },
+  "opengl": {
+    "vendor": "NVIDIA Corporation",
+    "renderer": "NVIDIA GeForce RTX 3090/PCIe/SSE2"
+  },
+  "source_render_device": "cuda",
+  "source_gpu_supported": true,
+  "source_warmup_drift_mse": [
+    0.0,
+    0.0,
+    0.0,
+    2.5631167499679605e-10,
+    0.0,
+    2.5631167499679605e-10,
+    0.0,
+    2.5631167499679605e-10,
+    2.5631167499679605e-10,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "source_warm_repeat_max_uint8": 1,
+  "source_warm_repeat_mse": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    2.5631167499679605e-10,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "paired_mse": {
+    "samples": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "mean": 0.0,
+    "sd": 0.0,
+    "maximum": 0.0
+  },
+  "state_nonmutation_passed": true
+}

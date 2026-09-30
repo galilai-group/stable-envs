@@ -1,0 +1,16 @@
+...                                                                      [100%]
+=============================== warnings summary ===============================
+final-tests/test_renderer_config_fixes.py: 15 warnings
+  /oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages/dm_control/mujoco/index.py:381: DeprecationWarning: Setting the shape on a NumPy array has been deprecated in NumPy 2.5.
+  As an alternative, you can create a new view using np.reshape (with copy=False if needed).
+    key_item.shape = original_shape
+
+final-tests/test_renderer_config_fixes.py::test_maze_observation_modes_have_separate_textures_and_cache_entries
+  /oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages/gymnasium/utils/passive_env_checker.py:157: UserWarning: [33mWARN: The obs returned by the `reset()` method is not within the observation space.[0m
+    logger.warn(f"{pre} is not within the observation space.")
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+------------------------------ stable-envs safety ------------------------------
+resources: 4 EGL contexts created, 0 released, 4 live (peak 4); renderers 4 created / 0 closed
+node: node1805 slurm=alloc reason=none reference-renderer={}
+3 passed, 2 deselected, 16 warnings in 21.65s

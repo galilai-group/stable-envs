@@ -1,0 +1,13 @@
+{
+  "status": "PASS",
+  "mujoco": "3.12.0",
+  "button_color_cases": 16,
+  "fallback_checks": [
+    "cam_mode",
+    "light_mode",
+    "wrap_type",
+    "mjtVisFlag.mjVIS_CONTACTPOINT",
+    "mjtVisFlag.mjVIS_ACTUATOR",
+    "sleep"
+  ]
+}

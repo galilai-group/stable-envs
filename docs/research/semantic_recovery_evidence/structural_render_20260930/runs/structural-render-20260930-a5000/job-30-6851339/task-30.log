@@ -1,0 +1,9 @@
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/se-semantic-recovery/structural-render-20260930-a5000/profile_oscar.py", line 153, in <module>
+    child(Path(sys.argv[2]))
+  File "/oscar/scratch/sboughan/se-semantic-recovery/structural-render-20260930-a5000/profile_oscar.py", line 27, in child
+    module.main()
+  File "/oscar/scratch/sboughan/se-semantic-recovery/structural-render-20260930-a5000/profile_all.py", line 165, in main
+    assert "3090" in torch.cuda.get_device_name()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError

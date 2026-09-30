@@ -1,0 +1,9 @@
+## SLURM PROLOG ###############################################################
+##    Job ID : 6800850
+##  Job Name : se-ogb-work-profile
+##  Nodelist : gpu2101
+##      CPUs : 
+##  Mem/Node : 32768 MB
+## Directory : /oscar/home/sboughan
+##   Job Started : Tue Sep 29 11:05:22 AM EDT 2026
+###############################################################################

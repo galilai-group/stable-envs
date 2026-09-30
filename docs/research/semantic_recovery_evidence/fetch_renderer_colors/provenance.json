@@ -1,0 +1,14 @@
+{
+  "head": "df80c9c54590afa9fc0482a4dcb241d21f6b63a3",
+  "branch": "repair/environment-semantics",
+  "report_archive_sha256": "a2a89b815eaeeb603a931bb1862eaf2e86ce303897a49f9047c793e3b5e8ccb0",
+  "source_files": {
+    "stable_envs/envs/_fetch_semantics.py": "75dbde2eda3cffe285963db824135539d60efd90858c72c35f6da15ccffdd08b",
+    "scripts/benchmarks/renderer_table/collect.py": "3aa011665c949f5a2b48b03c461c17e3981ebc30f1577a153143e129ad187d26",
+    "scripts/benchmarks/renderer_table/fetch_colors.py": "3a225698068b05091e3e36736f7e8aff5283b63d0f082d5013fb208622dedebb"
+  },
+  "oscar_root": "/oscar/scratch/sboughan/se-semantic-recovery/fetch-color-fix-df80c9c5-20260928T032545Z",
+  "cpu_job": "6751747",
+  "gpu_job": "6751848",
+  "export_job": "6751874"
+}

@@ -1,0 +1,41 @@
+{
+  "batch": 4096,
+  "process": 3404744,
+  "before": {
+    "hits": 1503,
+    "misses": 31,
+    "evictions": 0,
+    "active_evictions": 0,
+    "entries": 31,
+    "retained_bytes": {
+      "0": 5901385728
+    },
+    "budget_bytes": {
+      "0": 6324011008
+    }
+  },
+  "after": {
+    "hits": 1695,
+    "misses": 31,
+    "evictions": 0,
+    "active_evictions": 0,
+    "entries": 31,
+    "retained_bytes": {
+      "0": 5901385728
+    },
+    "budget_bytes": {
+      "0": 6324011008
+    }
+  },
+  "samples_ms": [
+    2219.92214,
+    2714.29654,
+    2226.147683
+  ],
+  "image_sha256": [
+    "23800b996c5a289ba66cd995c000d0f7455210828cbbe3805c5e609fe6f12e86",
+    "23800b996c5a289ba66cd995c000d0f7455210828cbbe3805c5e609fe6f12e86",
+    "23800b996c5a289ba66cd995c000d0f7455210828cbbe3805c5e609fe6f12e86"
+  ],
+  "nvidia_memory": "3404744, 12031\n"
+}

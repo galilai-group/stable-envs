@@ -99,8 +99,13 @@ def test_render_model_configuration_no_steps_or_rng_mutation(family, cls):
         for name in ["geom_size", "body_mass", "body_inertia", "cam_pos", "cam_quat", "light_diffuse"]:
             assert np.array_equal(getattr(source.model, name), getattr(b.model, name)), name
         # Scene button tables intentionally place the private model at a known base.
-        arm_materials = [source.model.material("ur5e/robotiq/" + n).id for n in ["black", "pad_gray"]]
-        assert np.array_equal(source.model.mat_rgba[arm_materials], b.model.mat_rgba[arm_materials])
+        # The render-only Scene model adds two button materials. Compare named
+        # materials; insertion can renumber unrelated compiled material IDs.
+        for name in ["black", "pad_gray"]:
+            assert np.array_equal(
+                source.model.material("ur5e/robotiq/" + name).rgba,
+                b.model.material("ur5e/robotiq/" + name).rgba,
+            )
         assert b.cam >= 0 and b.nbuttons == (2 if family == "Scene" else 0)
         # Exercise the actual frozen style API without claiming a GPU render.
         obj = object.__new__(renderer._ConfiguredRenderer)

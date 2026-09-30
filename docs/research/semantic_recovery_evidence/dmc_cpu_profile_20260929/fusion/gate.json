@@ -1,0 +1,11 @@
+{
+  "status": "PASS_DIAGNOSTIC_ONLY",
+  "registration_statuses": {
+    "swm/HumanoidDMControl-v0": "COMPLETE",
+    "swm/ManipulatorDMControl-v0": "COMPLETE",
+    "swm/BallInCupDMControl-v0": "COMPLETE",
+    "swm/FingerDMControl-v0": "COMPLETE"
+  },
+  "comparisons": 12,
+  "note": "All exact image/predicate and State gates passed; not adopted into production due to limited improvement and compiler/cold-start cost."
+}

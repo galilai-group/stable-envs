@@ -1,0 +1,673 @@
+{
+  "registration": "swm/CraftaxClassicPixels-v1",
+  "device": "cuda",
+  "backend": "auto",
+  "status": "COMPLETE",
+  "profile": {
+    "host": "gpu2105.oscar.ccv.brown.edu",
+    "cpu": "AMD EPYC 7532 32-Core Processor",
+    "gpu": "NVIDIA GeForce RTX 3090",
+    "python": "3.12.8",
+    "packages": {
+      "torch": {
+        "version": "2.14.0+cu126",
+        "path": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages"
+      },
+      "numpy": {
+        "version": "2.2.6",
+        "path": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages"
+      },
+      "tensordict": {
+        "version": "0.14.2",
+        "path": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages"
+      },
+      "gymnasium": {
+        "version": "1.2.3",
+        "path": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages"
+      },
+      "craftax": {
+        "version": "1.5.0",
+        "path": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages"
+      },
+      "jax": {
+        "version": "0.10.1",
+        "path": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages"
+      },
+      "jaxlib": {
+        "version": "0.10.1",
+        "path": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages"
+      },
+      "flax": {
+        "version": "0.12.7",
+        "path": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages"
+      },
+      "pygame": {
+        "version": "2.6.1",
+        "path": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages"
+      }
+    },
+    "torch_threads": 1,
+    "environment": {
+      "SLURM_JOB_ID": "6796906",
+      "MUJOCO_GL": "egl",
+      "PYOPENGL_PLATFORM": "egl",
+      "LIBGL_ALWAYS_SOFTWARE": null,
+      "GALLIUM_DRIVER": null,
+      "DISPLAY": null,
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "LP_NUM_THREADS": "1",
+      "JAX_PLATFORMS": "cuda",
+      "CRAFTAX_JAX_BACKEND": "gpu",
+      "CUDA_VISIBLE_DEVICES": "0"
+    }
+  },
+  "measurements": [
+    {
+      "batch": 1,
+      "output_device": "cpu",
+      "paired_mse": {
+        "mean": 0.0,
+        "sd": 0.0,
+        "maximum": 0.0,
+        "samples": [
+          0.0
+        ]
+      },
+      "source_repeat_max_uint8": 0,
+      "source_repeat_mse_max": 0.0,
+      "ours": {
+        "count": 12,
+        "samples_ms": [
+          10.458562,
+          10.444651,
+          10.337382,
+          10.994128,
+          10.353512,
+          12.518171,
+          10.73048,
+          11.794985,
+          10.475981,
+          10.161922,
+          10.121893,
+          10.557371
+        ],
+        "mean_ms": 10.745753166666667,
+        "sd_ms": 0.7158188171202433,
+        "mean_ms_per_frame": 10.745753166666667,
+        "sd_ms_per_frame": 0.7158188171202433,
+        "frames_per_second": 93.06001957145271
+      },
+      "source": {
+        "count": 12,
+        "samples_ms": [
+          0.635617,
+          0.532537,
+          0.573127,
+          0.533168,
+          0.552977,
+          0.529758,
+          0.568547,
+          0.522288,
+          0.656337,
+          0.528408,
+          0.542797,
+          0.518638
+        ],
+        "mean_ms": 0.5578499166666666,
+        "sd_ms": 0.04477593168709021,
+        "mean_ms_per_frame": 0.5578499166666666,
+        "sd_ms_per_frame": 0.04477593168709021,
+        "frames_per_second": 1792.59684392412
+      },
+      "speedup": 0.05191352416293326
+    },
+    {
+      "batch": 1,
+      "output_device": "cuda",
+      "paired_mse": {
+        "mean": 0.0,
+        "sd": 0.0,
+        "maximum": 0.0,
+        "samples": [
+          0.0
+        ]
+      },
+      "source_repeat_max_uint8": 0,
+      "source_repeat_mse_max": 0.0,
+      "ours": {
+        "count": 12,
+        "samples_ms": [
+          10.466591,
+          10.360402,
+          10.188482,
+          10.357011,
+          10.031813,
+          10.082293,
+          10.026213,
+          10.111133,
+          9.990383,
+          10.022963,
+          9.974274,
+          10.016673
+        ],
+        "mean_ms": 10.135685916666667,
+        "sd_ms": 0.16842385317161646,
+        "mean_ms_per_frame": 10.135685916666667,
+        "sd_ms_per_frame": 0.16842385317161646,
+        "frames_per_second": 98.66130503863039
+      },
+      "source": {
+        "count": 12,
+        "samples_ms": [
+          0.525277,
+          0.434978,
+          0.454508,
+          0.430088,
+          0.455208,
+          0.424008,
+          0.440768,
+          0.421458,
+          0.440818,
+          0.420368,
+          0.454798,
+          0.425718
+        ],
+        "mean_ms": 0.44399958333333334,
+        "sd_ms": 0.02869054454775945,
+        "mean_ms_per_frame": 0.44399958333333334,
+        "sd_ms_per_frame": 0.02869054454775945,
+        "frames_per_second": 2252.2543658543223
+      },
+      "speedup": 0.04380557832827479
+    },
+    {
+      "batch": 64,
+      "output_device": "cpu",
+      "paired_mse": {
+        "mean": 0.0,
+        "sd": 0.0,
+        "maximum": 0.0,
+        "samples": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "source_repeat_max_uint8": 0,
+      "source_repeat_mse_max": 0.0,
+      "ours": {
+        "count": 3,
+        "samples_ms": [
+          545.099646,
+          569.266944,
+          572.29249
+        ],
+        "mean_ms": 562.2196933333333,
+        "sd_ms": 14.90337202351231,
+        "mean_ms_per_frame": 8.784682708333333,
+        "sd_ms_per_frame": 0.23286518786737984,
+        "frames_per_second": 113.83450412516085
+      },
+      "source": {
+        "count": 3,
+        "samples_ms": [
+          1.694062,
+          1.026785,
+          1.731862
+        ],
+        "mean_ms": 1.4842363333333333,
+        "sd_ms": 0.3966150549037861,
+        "mean_ms_per_frame": 0.023191192708333332,
+        "sd_ms_per_frame": 0.006197110232871658,
+        "frames_per_second": 43119.817621138056
+      },
+      "speedup": 0.002639957922024171
+    },
+    {
+      "batch": 64,
+      "output_device": "cuda",
+      "paired_mse": {
+        "mean": 0.0,
+        "sd": 0.0,
+        "maximum": 0.0,
+        "samples": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "source_repeat_max_uint8": 0,
+      "source_repeat_mse_max": 0.0,
+      "ours": {
+        "count": 3,
+        "samples_ms": [
+          572.638899,
+          582.654741,
+          564.909244
+        ],
+        "mean_ms": 573.4009613333333,
+        "sd_ms": 8.897259139429753,
+        "mean_ms_per_frame": 8.959390020833332,
+        "sd_ms_per_frame": 0.1390196740535899,
+        "frames_per_second": 111.6147413690768
+      },
+      "source": {
+        "count": 3,
+        "samples_ms": [
+          1.727312,
+          0.724207,
+          1.773152
+        ],
+        "mean_ms": 1.4082236666666668,
+        "sd_ms": 0.5928190504769,
+        "mean_ms_per_frame": 0.022003494791666668,
+        "sd_ms_per_frame": 0.009262797663701562,
+        "frames_per_second": 45447.32595745325
+      },
+      "speedup": 0.0024559143803877036
+    },
+    {
+      "batch": 128,
+      "output_device": "cpu",
+      "paired_mse": {
+        "mean": 0.0,
+        "sd": 0.0,
+        "maximum": 0.0,
+        "samples": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "source_repeat_max_uint8": 0,
+      "source_repeat_mse_max": 0.0,
+      "ours": {
+        "count": 3,
+        "samples_ms": [
+          1143.174769,
+          1130.112289,
+          1135.093676
+        ],
+        "mean_ms": 1136.1269113333333,
+        "sd_ms": 6.592251313332695,
+        "mean_ms_per_frame": 8.875991494791666,
+        "sd_ms_per_frame": 0.05150196338541168,
+        "frames_per_second": 112.66346983171276
+      },
+      "source": {
+        "count": 3,
+        "samples_ms": [
+          2.605848,
+          1.410423,
+          3.250655
+        ],
+        "mean_ms": 2.422308666666667,
+        "sd_ms": 0.93374432722043,
+        "mean_ms_per_frame": 0.018924286458333335,
+        "sd_ms_per_frame": 0.007294877556409609,
+        "frames_per_second": 52842.15086268939
+      },
+      "speedup": 0.002132075776485128
+    },
+    {
+      "batch": 128,
+      "output_device": "cuda",
+      "paired_mse": {
+        "mean": 0.0,
+        "sd": 0.0,
+        "maximum": 0.0,
+        "samples": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "source_repeat_max_uint8": 0,
+      "source_repeat_mse_max": 0.0,
+      "ours": {
+        "count": 3,
+        "samples_ms": [
+          1134.30954,
+          1126.302506,
+          1123.185261
+        ],
+        "mean_ms": 1127.9324356666666,
+        "sd_ms": 5.738457881362358,
+        "mean_ms_per_frame": 8.811972153645833,
+        "sd_ms_per_frame": 0.04483170219814342,
+        "frames_per_second": 113.48197458684248
+      },
+      "source": {
+        "count": 3,
+        "samples_ms": [
+          3.781452,
+          0.804007,
+          4.45454
+        ],
+        "mean_ms": 3.013333,
+        "sd_ms": 1.9427050457140937,
+        "mean_ms_per_frame": 0.0235416640625,
+        "sd_ms_per_frame": 0.015177383169641357,
+        "frames_per_second": 42477.880805075314
+      },
+      "speedup": 0.0026715545228726077
+    },
+    {
+      "batch": 256,
+      "output_device": "cpu",
+      "paired_mse": {
+        "mean": 0.0,
+        "sd": 0.0,
+        "maximum": 0.0,
+        "samples": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "source_repeat_max_uint8": 0,
+      "source_repeat_mse_max": 0.0,
+      "ours": {
+        "count": 3,
+        "samples_ms": [
+          2215.121745,
+          2302.700403,
+          2303.688648
+        ],
+        "mean_ms": 2273.8369319999997,
+        "sd_ms": 50.851244285452125,
+        "mean_ms_per_frame": 8.882175515624999,
+        "sd_ms_per_frame": 0.19863767299004736,
+        "frames_per_second": 112.58503034992486
+      },
+      "source": {
+        "count": 3,
+        "samples_ms": [
+          6.325441,
+          2.301449,
+          6.168892
+        ],
+        "mean_ms": 4.931927333333333,
+        "sd_ms": 2.27940542553367,
+        "mean_ms_per_frame": 0.019265341145833333,
+        "sd_ms_per_frame": 0.0089039274434909,
+        "frames_per_second": 51906.68529720159
+      },
+      "speedup": 0.002168989017605302
+    },
+    {
+      "batch": 256,
+      "output_device": "cuda",
+      "paired_mse": {
+        "mean": 0.0,
+        "sd": 0.0,
+        "maximum": 0.0,
+        "samples": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "source_repeat_max_uint8": 0,
+      "source_repeat_mse_max": 0.0,
+      "ours": {
+        "count": 3,
+        "samples_ms": [
+          2356.700854,
+          2375.675106,
+          2372.167983
+        ],
+        "mean_ms": 2368.1813143333334,
+        "sd_ms": 10.095826119402552,
+        "mean_ms_per_frame": 9.250708259114583,
+        "sd_ms_per_frame": 0.03943682077891622,
+        "frames_per_second": 108.09983106047206
+      },
+      "source": {
+        "count": 3,
+        "samples_ms": [
+          8.420912,
+          1.161465,
+          8.305302
+        ],
+        "mean_ms": 5.9625596666666665,
+        "sd_ms": 4.1582717463805,
+        "mean_ms_per_frame": 0.023291248697916666,
+        "sd_ms_per_frame": 0.016243249009298827,
+        "frames_per_second": 42934.58083633992
+      },
+      "speedup": 0.002517780049432231
+    }
+  ],
+  "frames": [
+    {
+      "index": 0,
+      "case": 0,
+      "state_hash": "f9808da181b785b2619406c4c58e19662f9820134690d41f5675baca0cb4a2d7",
+      "state_file": "frame-0000-state.npz"
+    },
+    {
+      "index": 66,
+      "case": 3,
+      "state_hash": "fbc56d813c5a4133da540dbfce4700b914c0a5e28d8515572fb1908ad9b18b35",
+      "state_file": "frame-0066-state.npz"
+    },
+    {
+      "index": 133,
+      "case": 4,
+      "state_hash": "f27ced8978217af9018750831664e068832cab60f95a84107c515bb168dc8222",
+      "state_file": "frame-0133-state.npz"
+    },
+    {
+      "index": 199,
+      "case": 5,
+      "state_hash": "449479839dce50528c6138e73f8fea8dfadc56326392a1f2496eac6125f87f2b",
+      "state_file": "frame-0199-state.npz"
+    },
+    {
+      "index": 266,
+      "case": 5,
+      "state_hash": "06382db482d8bf0835fa7143b91d3b1f0d7a88fe195cafc07275a1b41fc0dd2c",
+      "state_file": "frame-0266-state.npz"
+    },
+    {
+      "index": 333,
+      "case": 6,
+      "state_hash": "998c6a0c876146178e0b208767bdfd15c964ce6574c02670fd41f81c159aa88e",
+      "state_file": "frame-0333-state.npz"
+    },
+    {
+      "index": 399,
+      "case": 7,
+      "state_hash": "2d5e1aef96e86fdd5f7f6b10734764502fcf348d9946261e4abf48965eba7e96",
+      "state_file": "frame-0399-state.npz"
+    },
+    {
+      "index": 466,
+      "case": 7,
+      "state_hash": "b1746a548afb27c92a0ef7c539ba8a3e9d3b4a61b4a96747fd73991b7f8c8bb7",
+      "state_file": "frame-0466-state.npz"
+    },
+    {
+      "index": 532,
+      "case": 8,
+      "state_hash": "9d91232bcdb244c80d00fa6dc1926a74db49ece445eb2c1a0c3d4eca223b027a",
+      "state_file": "frame-0532-state.npz"
+    },
+    {
+      "index": 599,
+      "case": 9,
+      "state_hash": "0d3c6bb215d290d1a711392b9cf1b5674f7808bb42786b8df63d2215b5414a91",
+      "state_file": "frame-0599-state.npz"
+    },
+    {
+      "index": 666,
+      "case": 10,
+      "state_hash": "c6488ad003f738837162a4bff181c88b66144e8860994973cf63644b3eb68922",
+      "state_file": "frame-0666-state.npz"
+    },
+    {
+      "index": 732,
+      "case": 10,
+      "state_hash": "ef419fa436ce50ba67b6edb0af5e541191cd97dd21b1927da19af0bcc04e1687",
+      "state_file": "frame-0732-state.npz"
+    },
+    {
+      "index": 799,
+      "case": 11,
+      "state_hash": "f8c7f5652dbf1b4831da2a25b621b221884dbdaa853b6838e2c4b8d7d830d9d8",
+      "state_file": "frame-0799-state.npz"
+    },
+    {
+      "index": 865,
+      "case": 12,
+      "state_hash": "36c9ee5c826970436b40ba607a06eb83178713d41dcb4f7f3518e88bce0e2127",
+      "state_file": "frame-0865-state.npz"
+    },
+    {
+      "index": 932,
+      "case": 13,
+      "state_hash": "cfb1de0aab882f81966ad3681a89e06cfebd521e3073d69ccf22e2513b0e601b",
+      "state_file": "frame-0932-state.npz"
+    },
+    {
+      "index": 999,
+      "case": 13,
+      "state_hash": "822f5de555113addef3cd9f407bbfb214ad4d2f0792b70111ed1303623713fce",
+      "state_file": "frame-0999-state.npz"
+    }
+  ],
+  "harness_sha256": "929be64e49bdedd0ed7dfa2905f707d5d1d27b6f7923326a9964846019b39c7a",
+  "scope": "Saved States; no rollouts or setup timed; equal batch and output destination; single CPU thread.",
+  "source_batch_method": "jax.jit(jax.vmap(upstream.get_obs)); uint8 conversion; compilation excluded; checked against scalar source.",
+  "corpus": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-gpu-craftax-v3-6755516_6/results",
+  "corpus_sha256": "358171960eb2b9a9199586a80b54ee64b619c14828cf1f29cea1921adc7ff5f0",
+  "independent_states": 16,
+  "source_anchor_mse": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "source_render_paths": {
+    "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/craftax/craftax_classic/envs/craftax_pixels_env.py": "6fa6a620748326aaeda8415e16aa18e7e0151096a839959b58264d0d7f465cd1"
+  },
+  "source_render_device": "cuda",
+  "source_gpu_supported": true,
+  "paired_mse": {
+    "samples": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "mean": 0.0,
+    "sd": 0.0,
+    "maximum": 0.0
+  },
+  "state_nonmutation_passed": true
+}

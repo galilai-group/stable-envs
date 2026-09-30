@@ -43,6 +43,10 @@ DMCHumanoidWalk = trackcom_cell(
     0,
     VISUAL_FIDELITY["DMCHumanoidWalk"],
     bases=(DMCHumanoidSemantics,),
+    # CPU bounds/intersections operate on many temporary ray arrays. Four worlds
+    # keep their working set smaller: 1.44x in the B64 Oscar chunk sweep with
+    # byte-identical output. Other trackcom cells retain their measured default.
+    CPU_RENDER_CHUNK=4,
 )
 DMCHumanoidWalk.name = "dmc-humanoid-walk"
 DMCHumanoidWalk.reference_id = "dm_control/humanoid-walk"

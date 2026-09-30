@@ -19,13 +19,13 @@ from . import rocket_landing as frozen
 class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
     """Official Rocket dynamics with bounded replay State; frozen renderer, VISUAL TIER.
 
-    CPU dynamics use PyFlyt 0.29.0/PyBullet 3.2.7. GPU pixels retain the frozen
-    renderer's measured residual; a CPU rendering request is unsupported.
+    CPU dynamics use PyFlyt 0.29.0/PyBullet 3.2.7. Explicit body and camera
+    poses drive CPU TinyRenderer or the family-local CUDA rendering path.
     """
 
     requires_cuda = False
     execution_mode = "DELEGATED_CPU"
-    cpu_render_support = "CPU_BACKEND_MISSING"
+    cpu_render_support = "SUPPORTED_TINYRENDERER"
     action_dim = 7
     action_dtype = torch.float64
     action_low = (-1.0, -1.0, -1.0, 0.0, 0.0, -1.0, -1.0)
@@ -185,7 +185,7 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
         style[:, layout["flame.ignited"][0]] = torch.isclose(
             rgba[:, 5], torch.tensor(frozen.IGNITION_RGBA, device=rgba.device, dtype=rgba.dtype)
         ).all(-1)
-        return TensorDict(
+        result = TensorDict(
             {
                 ("renderer", "pose"): state["current", "wrapper", "state"][:, :13].to(torch.float32).clone(),
                 ("renderer", "style"): style,
@@ -199,6 +199,10 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
             [self.B],
             device=self.device,
         )
+        from . import rocket_render
+
+        result.update(rocket_render.project(state))
+        return result
 
     def _pack_render_state(self, state):
         if isinstance(state, TensorDict) and "current" in state.keys():
@@ -223,19 +227,38 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
 
     def render(self, state=None, *, size=None, supersample=None, backend=None, chunk_size=None, out=None):
         self._check_open("render")
-        if self.device.type != "cuda":
-            raise NotImplementedError("Rocket has no CPU textured-triangle renderer")
-        if backend not in (None, "auto", "nvdiffrast"):
-            raise ValueError("Rocket renderer requires nvdiffrast")
+        from . import rocket_render
+
+        backend = self.backend if backend is None else backend
+        allowed = ("auto", "tiny") if self.device.type == "cpu" else ("auto", "nvdiffrast")
+        if backend not in allowed:
+            raise ValueError("Rocket CPU rendering uses tiny; CUDA rendering uses nvdiffrast")
         for value in (size, supersample, chunk_size):
             if value is not None and (type(value) is not int or value < 1):
                 raise ValueError("Render dimensions/chunk must be positive integers")
         if state is None or isinstance(state, TensorDict) and "current" in state.keys():
             state = self.to_render_state(state, size=size, supersample=supersample)
         keys = {("renderer", k) for k in ["pose", "style", "size", "supersample"]}
-        if not isinstance(state, TensorDict) or state.ndim != 1 or set(state.keys(True, True)) != keys:
+        complete_keys = keys | {("renderer", k) for k in rocket_render.FIELDS}
+        if (
+            not isinstance(state, TensorDict)
+            or state.ndim != 1
+            or set(state.keys(True, True)) not in (keys, complete_keys)
+        ):
             raise ValueError("Invalid Rocket RenderState")
         b = state.batch_size[0]
+        if b < 1:
+            raise ValueError("Rocket RenderState batch must be nonempty")
+        complete = set(state.keys(True, True)) == complete_keys
+        if not complete and self.device.type == "cpu":
+            raise ValueError("Rocket CPU rendering requires explicit body and cached camera poses")
+        if complete:
+            for key, shape in rocket_render.FIELDS.items():
+                value = state["renderer", key]
+                if value.shape != (b, *shape) or value.dtype != torch.float64 or not torch.isfinite(value).all():
+                    raise ValueError("Invalid Rocket RenderState leaf: " + key)
+            if (state["renderer", "rgba"] < 0).any() or (state["renderer", "rgba"] > 1).any():
+                raise ValueError("Rocket RenderState rgba must lie in [0, 1]")
         for key, shape, dtype in [
             ("pose", (b, 13), torch.float32),
             ("style", (b, 16), torch.float32),
@@ -257,17 +280,21 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
         ):
             raise ValueError("RenderState requires uniform positive output dimensions")
         chunk = b if chunk_size is None else chunk_size
-        frames = torch.cat(
-            [
-                frozen.PyFlytRocketLanding._render(
-                    self,
-                    state["renderer", "pose"][i : i + chunk],
-                    size=resolution,
-                    supersample=ss,
-                    style=state["renderer", "style"][i : i + chunk],
-                )
-                for i in range(0, b, chunk)
-            ]
+        frames = (
+            rocket_render.render(self, state, resolution, ss, chunk_size)
+            if complete
+            else torch.cat(
+                [
+                    frozen.PyFlytRocketLanding._render(
+                        self,
+                        state["renderer", "pose"][i : i + chunk],
+                        size=resolution,
+                        supersample=ss,
+                        style=state["renderer", "style"][i : i + chunk],
+                    )
+                    for i in range(0, b, chunk)
+                ]
+            )
         )
         if out is not None:
             if out.shape != frames.shape or out.dtype != frames.dtype or out.device != frames.device:
@@ -277,7 +304,12 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
         return frames
 
     def _close(self):
-        self._simulator.close()
+        from . import rocket_render
+
+        try:
+            rocket_render.close(self)
+        finally:
+            self._simulator.close()
 
 
 if "PyFlytRocketLanding" in REGISTRY:

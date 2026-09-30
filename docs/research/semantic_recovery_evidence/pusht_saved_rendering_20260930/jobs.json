@@ -1,0 +1,36 @@
+{
+  "initial_array": 6841777,
+  "initial_status": "FAILED",
+  "initial_reasons": {
+    "0": "Source pose-only installation missed collision-debug pixels; exact image gate rejected it.",
+    "1": "Namespace loader omitted original PushTDiscrete export."
+  },
+  "retry_array": 6841807,
+  "remote_root": "/oscar/scratch/sboughan/se-semantic-recovery/pusht-saved-rendering-v2-20260930",
+  "tasks": {
+    "0": {
+      "registration": "swm/PushT-v1",
+      "partition": "gpu",
+      "qos": "norm-gpu",
+      "host": "gpu2116",
+      "status": "COMPLETED 0:0"
+    },
+    "1": {
+      "registration": "swm/PushT-Discrete-v1",
+      "partition": "3090-gcondo",
+      "qos": "cs-3090-gcondo",
+      "host": "gpu2110",
+      "scheduler_update": "Moved while pending from gpu/norm-gpu to authorized 3090 condo allocation.",
+      "status": "CPU COMPLETE; GPU sweep cancelled after preserving partial results to release condo quota for 6845526"
+    }
+  },
+  "gpu_backup": 6844392,
+  "gpu_backup_status": "CANCELLED: superseded pending backup",
+  "gpu_bounded_validation_retry": 6845526,
+  "gpu_retry_root": "/oscar/scratch/sboughan/se-semantic-recovery/pusht-saved-rendering-v3-20260930",
+  "v3_change": "Post-timing checks chunked at 32 images. Timed ours/original function ASTs identical to v2; 5 unit tests pass, including exact MSE reductions and tail-pixel corruption detection.",
+  "extension_attempt": "Oscar denied extension of 6841807_1 from 45 to 60 minutes. A fresh retry has 60 minutes.",
+  "gpu_bounded_validation_retry_status": "COMPLETED 0:0 in 00:06:17; peak RSS 3585064 KiB",
+  "selected_discrete_gpu": "run-1/cuda/result.json from job 6845526",
+  "v2_v3_discrete_frame_mse": "All 1024 floats exactly identical"
+}

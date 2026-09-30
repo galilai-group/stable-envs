@@ -1,0 +1,197 @@
+{
+  "registration": "swm/CraftaxPixels-v1",
+  "device": "cpu",
+  "backend": "auto",
+  "status": "COMPLETE",
+  "profile": {
+    "host": "node1831.oscar.ccv.brown.edu",
+    "cpu": "Intel(R) Xeon(R) Platinum 8268 CPU @ 2.90GHz",
+    "gpu": null,
+    "python": "3.12.8",
+    "packages": {
+      "torch": {
+        "version": "2.14.0+cu126",
+        "path": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages"
+      },
+      "numpy": {
+        "version": "2.2.6",
+        "path": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages"
+      },
+      "tensordict": {
+        "version": "0.14.2",
+        "path": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages"
+      },
+      "gymnasium": {
+        "version": "1.2.3",
+        "path": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages"
+      },
+      "craftax": {
+        "version": "1.5.0",
+        "path": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages"
+      },
+      "jax": {
+        "version": "0.10.1",
+        "path": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages"
+      },
+      "jaxlib": {
+        "version": "0.10.1",
+        "path": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages"
+      },
+      "flax": {
+        "version": "0.12.7",
+        "path": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages"
+      },
+      "pygame": {
+        "version": "2.6.1",
+        "path": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages"
+      }
+    },
+    "torch_threads": 1,
+    "environment": {
+      "SLURM_JOB_ID": "6795463",
+      "MUJOCO_GL": "glfw",
+      "PYOPENGL_PLATFORM": "glx",
+      "LIBGL_ALWAYS_SOFTWARE": "1",
+      "GALLIUM_DRIVER": "llvmpipe",
+      "DISPLAY": ":563",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "LP_NUM_THREADS": "1",
+      "JAX_PLATFORMS": "cpu",
+      "CRAFTAX_JAX_BACKEND": "cpu",
+      "CUDA_VISIBLE_DEVICES": ""
+    }
+  },
+  "measurements": [
+    {
+      "batch": 1,
+      "output_device": "cpu",
+      "ours": {
+        "count": 12,
+        "samples_ms": [
+          11.897897,
+          12.774738,
+          12.128494,
+          11.123047,
+          11.76437,
+          12.162061,
+          11.551575,
+          12.674594,
+          11.625815,
+          12.673253,
+          12.613319,
+          12.995298
+        ],
+        "mean_ms": 12.16537175,
+        "sd_ms": 0.5851213631688459,
+        "mean_ms_per_frame": 12.16537175,
+        "sd_ms_per_frame": 0.5851213631688459,
+        "frames_per_second": 82.20052954814143
+      },
+      "source": {
+        "count": 12,
+        "samples_ms": [
+          3.36964,
+          2.711254,
+          3.296672,
+          3.09478,
+          3.799942,
+          3.037025,
+          3.251731,
+          2.787673,
+          3.135974,
+          2.827814,
+          3.105001,
+          3.078451
+        ],
+        "mean_ms": 3.124663083333333,
+        "sd_ms": 0.2931895006024907,
+        "mean_ms_per_frame": 3.124663083333333,
+        "sd_ms_per_frame": 0.2931895006024907,
+        "frames_per_second": 320.0345039866565
+      },
+      "speedup": 0.25684896010952835
+    },
+    {
+      "batch": 64,
+      "output_device": "cpu",
+      "ours": {
+        "count": 3,
+        "samples_ms": [
+          543.275925,
+          621.478579,
+          625.229026
+        ],
+        "mean_ms": 596.6611766666666,
+        "sd_ms": 46.270998312225245,
+        "mean_ms_per_frame": 9.322830885416666,
+        "sd_ms_per_frame": 0.7229843486285195,
+        "frames_per_second": 107.26355677697214
+      },
+      "source": {
+        "count": 3,
+        "samples_ms": [
+          55.718598,
+          59.236178,
+          70.91211
+        ],
+        "mean_ms": 61.95562866666667,
+        "sd_ms": 7.953443321597339,
+        "mean_ms_per_frame": 0.9680566979166667,
+        "sd_ms_per_frame": 0.12427255189995842,
+        "frames_per_second": 1032.9973462836192
+      },
+      "speedup": 0.10383720458031255
+    }
+  ],
+  "frames": [
+    {
+      "index": 0,
+      "case": 0,
+      "state_hash": "d0ff567a84fd348fed017f0c2eb39af8383133ac552571141878aca513c21268",
+      "state_file": "frame-0000-state.npz"
+    },
+    {
+      "index": 333,
+      "case": 6,
+      "state_hash": "52b983d99b6d7b00abb5374925b0b4e5623c825098e4c404a3f6db79c3599015",
+      "state_file": "frame-0333-state.npz"
+    },
+    {
+      "index": 666,
+      "case": 9,
+      "state_hash": "76386c87fa1106155dc33aef6afa691f3ff9361e5cf88aef91f0fe6765c79487",
+      "state_file": "frame-0666-state.npz"
+    },
+    {
+      "index": 999,
+      "case": 12,
+      "state_hash": "a73091ba31e96dbe772d481087caee5dcbed196803de0f778dceb54e07f819bc",
+      "state_file": "frame-0999-state.npz"
+    }
+  ],
+  "harness_sha256": "c8f28ac634ec127a266f3b3550581289035e9d3e7e00e828667114cfa406216e",
+  "scope": "Saved States; no rollouts or setup timed; equal batch and output destination; single CPU thread.",
+  "source_batch_method": "jax.jit(jax.vmap(upstream.get_obs)); uint8 conversion; compilation excluded; checked against scalar source.",
+  "corpus": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-cpu-craftax-retry-6755173_8/results",
+  "corpus_sha256": "3bedbc368c14751ea25778559287c10c0c7001538b91c7728176163febab212d",
+  "independent_states": 4,
+  "source_render_paths": {
+    "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/craftax/craftax/envs/craftax_pixels_env.py": "798fca58a1eb54ddabce56e724f61fc3a861642276c6581c8206e9325caa2873"
+  },
+  "source_render_device": "cpu",
+  "source_gpu_supported": true,
+  "paired_mse": {
+    "samples": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "mean": 0.0,
+    "sd": 0.0,
+    "maximum": 0.0
+  },
+  "state_nonmutation_passed": true
+}

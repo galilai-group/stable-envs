@@ -1,0 +1,1999 @@
+{
+  "scope": "Separate instrumented calls; not timing samples. Python cumulative times overlap; CUDA operator times are not disjoint wall times.",
+  "python_functions": [
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/renderer-profiles-df80c9c5-20260928/profile_all.py",
+      "line": 299,
+      "function": "<lambda>",
+      "primitive_calls": 3,
+      "calls": 3,
+      "self_ms": 0.007193000000000001,
+      "cumulative_ms": 80.82002800000001
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/renderer-profiles-df80c9c5-20260928/profile_all.py",
+      "line": 283,
+      "function": "one",
+      "primitive_calls": 3,
+      "calls": 3,
+      "self_ms": 0.025372,
+      "cumulative_ms": 80.81283499999999
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/stable_envs/env.py",
+      "line": 178,
+      "function": "render",
+      "primitive_calls": 3,
+      "calls": 3,
+      "self_ms": 0.035515,
+      "cumulative_ms": 80.787463
+    },
+    {
+      "file": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages/torch/utils/_contextlib.py",
+      "line": 120,
+      "function": "decorate_context",
+      "primitive_calls": 3,
+      "calls": 3,
+      "self_ms": 0.09760400000000001,
+      "cumulative_ms": 80.22385500000001
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/stable_envs/envs/dmcontrol/suite.py",
+      "line": 923,
+      "function": "_render",
+      "primitive_calls": 3,
+      "calls": 3,
+      "self_ms": 0.8650380000000001,
+      "cumulative_ms": 80.02036500000001
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/stable_envs/envs/dmcontrol/suite.py",
+      "line": 1037,
+      "function": "_render_group",
+      "primitive_calls": 3,
+      "calls": 3,
+      "self_ms": 5.037424000000001,
+      "cumulative_ms": 74.85064700000001
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/stable_envs/envs/dmcontrol/suite.py",
+      "line": 894,
+      "function": "_cast",
+      "primitive_calls": 6,
+      "calls": 6,
+      "self_ms": 0.018088,
+      "cumulative_ms": 31.455351999999998
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/stable_envs/render/raycast3d.py",
+      "line": 1349,
+      "function": "cast_nearest",
+      "primitive_calls": 6,
+      "calls": 6,
+      "self_ms": 0.061362,
+      "cumulative_ms": 31.437264
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/stable_envs/render/raycast3d.py",
+      "line": 662,
+      "function": "cast_nearest_torch",
+      "primitive_calls": 6,
+      "calls": 6,
+      "self_ms": 3.379462,
+      "cumulative_ms": 31.369986
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/stable_envs/render/raycast3d.py",
+      "line": 404,
+      "function": "intersect",
+      "primitive_calls": 21,
+      "calls": 21,
+      "self_ms": 0.278708,
+      "cumulative_ms": 26.382266
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/stable_envs/envs/dmcontrol/suite.py",
+      "line": 901,
+      "function": "_occluded",
+      "primitive_calls": 6,
+      "calls": 6,
+      "self_ms": 1.016575,
+      "cumulative_ms": 25.377558
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/stable_envs/render/raycast3d.py",
+      "line": 1370,
+      "function": "any_blocking",
+      "primitive_calls": 6,
+      "calls": 6,
+      "self_ms": 0.045911,
+      "cumulative_ms": 23.817227
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/stable_envs/render/raycast3d.py",
+      "line": 756,
+      "function": "any_blocking_torch",
+      "primitive_calls": 6,
+      "calls": 6,
+      "self_ms": 1.903021,
+      "cumulative_ms": 23.764169000000003
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/stable_envs/render/raycast3d.py",
+      "line": 297,
+      "function": "_capsule",
+      "primitive_calls": 12,
+      "calls": 12,
+      "self_ms": 7.567955,
+      "cumulative_ms": 19.270067
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/stable_envs/render/raycast3d.py",
+      "line": 642,
+      "function": "_rays_near",
+      "primitive_calls": 24,
+      "calls": 24,
+      "self_ms": 4.252369000000001,
+      "cumulative_ms": 18.132753
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/stable_envs/envs/dmcontrol/suite.py",
+      "line": 1132,
+      "function": "_reflect",
+      "primitive_calls": 3,
+      "calls": 3,
+      "self_ms": 0.832273,
+      "cumulative_ms": 17.87535
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method torch.cross>",
+      "primitive_calls": 24,
+      "calls": 24,
+      "self_ms": 8.473673000000002,
+      "cumulative_ms": 8.473673000000002
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/stable_envs/render/primitives.py",
+      "line": 74,
+      "function": "dot3",
+      "primitive_calls": 144,
+      "calls": 144,
+      "self_ms": 8.105887000000001,
+      "cumulative_ms": 8.105887000000001
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/stable_envs/render/raycast3d.py",
+      "line": 371,
+      "function": "_box",
+      "primitive_calls": 9,
+      "calls": 9,
+      "self_ms": 1.2767000000000002,
+      "cumulative_ms": 6.721516
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/stable_envs/render/primitives.py",
+      "line": 91,
+      "function": "mtv3",
+      "primitive_calls": 42,
+      "calls": 42,
+      "self_ms": 5.082992000000001,
+      "cumulative_ms": 6.002213
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/stable_envs/envs/dmcontrol/_shading.py",
+      "line": 150,
+      "function": "_shade",
+      "primitive_calls": 6,
+      "calls": 6,
+      "self_ms": 1.18176,
+      "cumulative_ms": 5.512987000000001
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/stable_envs/render/primitives.py",
+      "line": 79,
+      "function": "mv3",
+      "primitive_calls": 24,
+      "calls": 24,
+      "self_ms": 2.879711,
+      "cumulative_ms": 3.334937
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/stable_envs/envs/dmcontrol/_shading.py",
+      "line": 126,
+      "function": "_light_geometry",
+      "primitive_calls": 12,
+      "calls": 12,
+      "self_ms": 0.877617,
+      "cumulative_ms": 2.458253
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method torch.stack>",
+      "primitive_calls": 108,
+      "calls": 108,
+      "self_ms": 2.365622,
+      "cumulative_ms": 2.365622
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/stable_envs/spaces.py",
+      "line": 186,
+      "function": "flat_layout",
+      "primitive_calls": 18,
+      "calls": 18,
+      "self_ms": 0.3433,
+      "cumulative_ms": 2.0702570000000002
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method torch.where>",
+      "primitive_calls": 165,
+      "calls": 165,
+      "self_ms": 2.015911,
+      "cumulative_ms": 2.015911
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/stable_envs/envs/dmcontrol/suite.py",
+      "line": 986,
+      "function": "_mover_idx",
+      "primitive_calls": 3,
+      "calls": 3,
+      "self_ms": 0.051673000000000004,
+      "cumulative_ms": 2.001452
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/stable_envs/envs/dmcontrol/_shading.py",
+      "line": 120,
+      "function": "_dot",
+      "primitive_calls": 42,
+      "calls": 42,
+      "self_ms": 1.751651,
+      "cumulative_ms": 1.751651
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/stable_envs/render/raycast3d.py",
+      "line": 1815,
+      "function": "screen_span",
+      "primitive_calls": 3,
+      "calls": 3,
+      "self_ms": 0.378106,
+      "cumulative_ms": 1.7115810000000002
+    },
+    {
+      "file": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages/torch/_tensor.py",
+      "line": 32,
+      "function": "wrapped",
+      "primitive_calls": 120,
+      "calls": 120,
+      "self_ms": 0.23724800000000001,
+      "cumulative_ms": 1.3223900000000002
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/stable_envs/envs/dmcontrol/suite.py",
+      "line": 161,
+      "function": "PLATE_PATHS",
+      "primitive_calls": 12,
+      "calls": 12,
+      "self_ms": 0.045416,
+      "cumulative_ms": 1.300264
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method torch.sqrt>",
+      "primitive_calls": 120,
+      "calls": 120,
+      "self_ms": 1.280543,
+      "cumulative_ms": 1.280543
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method torch.clamp>",
+      "primitive_calls": 171,
+      "calls": 171,
+      "self_ms": 1.2659440000000002,
+      "cumulative_ms": 1.2659440000000002
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method torch.nonzero>",
+      "primitive_calls": 30,
+      "calls": 30,
+      "self_ms": 1.122973,
+      "cumulative_ms": 1.122973
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/stable_envs/envs/dmcontrol/suite.py",
+      "line": 192,
+      "function": "_scene",
+      "primitive_calls": 3,
+      "calls": 3,
+      "self_ms": 0.012763000000000002,
+      "cumulative_ms": 1.011246
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/stable_envs/render/raycast3d.py",
+      "line": 535,
+      "function": "_unit_rays",
+      "primitive_calls": 12,
+      "calls": 12,
+      "self_ms": 0.612515,
+      "cumulative_ms": 0.958142
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/stable_envs/envs/dmcontrol/suite.py",
+      "line": 175,
+      "function": "_plate_key",
+      "primitive_calls": 3,
+      "calls": 3,
+      "self_ms": 0.15776900000000002,
+      "cumulative_ms": 0.9542680000000001
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'gather' of 'torch._C.TensorBase' objects>",
+      "primitive_calls": 24,
+      "calls": 24,
+      "self_ms": 0.9435070000000001,
+      "cumulative_ms": 0.9435070000000001
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/stable_envs/env.py",
+      "line": 968,
+      "function": "resolve_style",
+      "primitive_calls": 3,
+      "calls": 3,
+      "self_ms": 0.018016,
+      "cumulative_ms": 0.9350220000000001
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/stable_envs/_style.py",
+      "line": 171,
+      "function": "from_space",
+      "primitive_calls": 3,
+      "calls": 3,
+      "self_ms": 0.040779,
+      "cumulative_ms": 0.9161590000000001
+    },
+    {
+      "file": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages/numpy/_core/fromnumeric.py",
+      "line": 3325,
+      "function": "prod",
+      "primitive_calls": 165,
+      "calls": 165,
+      "self_ms": 0.15188500000000002,
+      "cumulative_ms": 0.87353
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'sum' of 'torch._C.TensorBase' objects>",
+      "primitive_calls": 27,
+      "calls": 27,
+      "self_ms": 0.8471450000000001,
+      "cumulative_ms": 0.8471450000000001
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/stable_envs/envs/dmcontrol/_shading.py",
+      "line": 116,
+      "function": "_norm",
+      "primitive_calls": 24,
+      "calls": 24,
+      "self_ms": 0.31524800000000003,
+      "cumulative_ms": 0.798724
+    },
+    {
+      "file": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages/numpy/lib/_arraysetops_impl.py",
+      "line": 145,
+      "function": "unique",
+      "primitive_calls": 3,
+      "calls": 3,
+      "self_ms": 0.080129,
+      "cumulative_ms": 0.7897000000000001
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/stable_envs/render/primitives.py",
+      "line": 137,
+      "function": "bound_radius_tensor",
+      "primitive_calls": 24,
+      "calls": 24,
+      "self_ms": 0.40474200000000005,
+      "cumulative_ms": 0.755908
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'pow' of 'torch._C.TensorBase' objects>",
+      "primitive_calls": 102,
+      "calls": 102,
+      "self_ms": 0.727404,
+      "cumulative_ms": 0.727404
+    },
+    {
+      "file": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages/numpy/_core/fromnumeric.py",
+      "line": 66,
+      "function": "_wrapreduction",
+      "primitive_calls": 165,
+      "calls": 165,
+      "self_ms": 0.286116,
+      "cumulative_ms": 0.721645
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/stable_envs/render/raycast3d.py",
+      "line": 146,
+      "function": "project",
+      "primitive_calls": 3,
+      "calls": 3,
+      "self_ms": 0.23070500000000002,
+      "cumulative_ms": 0.7126210000000001
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/stable_envs/envs/dmcontrol/suite.py",
+      "line": 788,
+      "function": "_fk",
+      "primitive_calls": 3,
+      "calls": 3,
+      "self_ms": 0.17045100000000002,
+      "cumulative_ms": 0.546396
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/stable_envs/env.py",
+      "line": 260,
+      "function": "render_states_arg",
+      "primitive_calls": 3,
+      "calls": 3,
+      "self_ms": 0.073311,
+      "cumulative_ms": 0.524915
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/stable_envs/spaces.py",
+      "line": 154,
+      "function": "names",
+      "primitive_calls": 18,
+      "calls": 108,
+      "self_ms": 0.255079,
+      "cumulative_ms": 0.476492
+    },
+    {
+      "file": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages/numpy/lib/_arraysetops_impl.py",
+      "line": 350,
+      "function": "_unique1d",
+      "primitive_calls": 3,
+      "calls": 3,
+      "self_ms": 0.19914300000000001,
+      "cumulative_ms": 0.455565
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'any' of 'torch._C.TensorBase' objects>",
+      "primitive_calls": 33,
+      "calls": 33,
+      "self_ms": 0.44357,
+      "cumulative_ms": 0.44357
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method torch.zeros_like>",
+      "primitive_calls": 117,
+      "calls": 117,
+      "self_ms": 0.42243300000000006,
+      "cumulative_ms": 0.42243300000000006
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/stable_envs/env.py",
+      "line": 312,
+      "function": "check_states",
+      "primitive_calls": 3,
+      "calls": 3,
+      "self_ms": 0.067371,
+      "cumulative_ms": 0.421984
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method torch.zeros>",
+      "primitive_calls": 24,
+      "calls": 24,
+      "self_ms": 0.41967000000000004,
+      "cumulative_ms": 0.41967000000000004
+    },
+    {
+      "file": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages/numpy/_core/fromnumeric.py",
+      "line": 48,
+      "function": "_wrapfunc",
+      "primitive_calls": 45,
+      "calls": 45,
+      "self_ms": 0.043172,
+      "cumulative_ms": 0.40818800000000005
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'unsqueeze' of 'torch._C.TensorBase' objects>",
+      "primitive_calls": 114,
+      "calls": 114,
+      "self_ms": 0.40709300000000004,
+      "cumulative_ms": 0.40709300000000004
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'abs' of 'torch._C.TensorBase' objects>",
+      "primitive_calls": 54,
+      "calls": 54,
+      "self_ms": 0.40093100000000004,
+      "cumulative_ms": 0.40093100000000004
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'to' of 'torch._C.TensorBase' objects>",
+      "primitive_calls": 12,
+      "calls": 12,
+      "self_ms": 0.39731900000000003,
+      "cumulative_ms": 0.39731900000000003
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'clone' of 'torch._C.TensorBase' objects>",
+      "primitive_calls": 3,
+      "calls": 3,
+      "self_ms": 0.32968600000000003,
+      "cumulative_ms": 0.32968600000000003
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/stable_envs/spaces.py",
+      "line": 203,
+      "function": "flat_dim",
+      "primitive_calls": 3,
+      "calls": 3,
+      "self_ms": 0.003795,
+      "cumulative_ms": 0.303895
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'reduce' of 'numpy.ufunc' objects>",
+      "primitive_calls": 168,
+      "calls": 168,
+      "self_ms": 0.29865,
+      "cumulative_ms": 0.29865
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'clamp' of 'torch._C.TensorBase' objects>",
+      "primitive_calls": 36,
+      "calls": 36,
+      "self_ms": 0.28859,
+      "cumulative_ms": 0.28859
+    },
+    {
+      "file": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages/torch/_tensor.py",
+      "line": 1120,
+      "function": "__rdiv__",
+      "primitive_calls": 15,
+      "calls": 15,
+      "self_ms": 0.17587400000000003,
+      "cumulative_ms": 0.283967
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'reshape' of 'torch._C.TensorBase' objects>",
+      "primitive_calls": 81,
+      "calls": 81,
+      "self_ms": 0.278749,
+      "cumulative_ms": 0.278749
+    },
+    {
+      "file": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages/numpy/_core/fromnumeric.py",
+      "line": 3620,
+      "function": "round",
+      "primitive_calls": 27,
+      "calls": 27,
+      "self_ms": 0.039962000000000004,
+      "cumulative_ms": 0.263255
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'max' of 'torch._C.TensorBase' objects>",
+      "primitive_calls": 15,
+      "calls": 15,
+      "self_ms": 0.26107199999999997,
+      "cumulative_ms": 0.26107199999999997
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/stable_envs/env.py",
+      "line": 233,
+      "function": "_nonfinite_report",
+      "primitive_calls": 3,
+      "calls": 3,
+      "self_ms": 0.059325,
+      "cumulative_ms": 0.256278
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method torch.full_like>",
+      "primitive_calls": 30,
+      "calls": 30,
+      "self_ms": 0.252602,
+      "cumulative_ms": 0.252602
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'view' of 'torch._C.TensorBase' objects>",
+      "primitive_calls": 54,
+      "calls": 54,
+      "self_ms": 0.24903100000000003,
+      "cumulative_ms": 0.24903100000000003
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/stable_envs/spaces.py",
+      "line": 162,
+      "function": "_walk",
+      "primitive_calls": 162,
+      "calls": 162,
+      "self_ms": 0.13162000000000001,
+      "cumulative_ms": 0.243042
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'scatter_' of 'torch._C.TensorBase' objects>",
+      "primitive_calls": 15,
+      "calls": 15,
+      "self_ms": 0.23720700000000003,
+      "cumulative_ms": 0.23720700000000003
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method torch.all>",
+      "primitive_calls": 12,
+      "calls": 12,
+      "self_ms": 0.233805,
+      "cumulative_ms": 0.233805
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/stable_envs/envs/_plate_texels.py",
+      "line": 151,
+      "function": "texel_key",
+      "primitive_calls": 3,
+      "calls": 3,
+      "self_ms": 0.018463000000000004,
+      "cumulative_ms": 0.22351200000000002
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method torch.isfinite>",
+      "primitive_calls": 6,
+      "calls": 6,
+      "self_ms": 0.22255000000000003,
+      "cumulative_ms": 0.22255000000000003
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/stable_envs/render/raycast3d.py",
+      "line": 1873,
+      "function": "_expand_tile",
+      "primitive_calls": 3,
+      "calls": 3,
+      "self_ms": 0.168697,
+      "cumulative_ms": 0.199375
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'round' of 'numpy.ndarray' objects>",
+      "primitive_calls": 27,
+      "calls": 27,
+      "self_ms": 0.19501100000000002,
+      "cumulative_ms": 0.19501100000000002
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method torch.round>",
+      "primitive_calls": 3,
+      "calls": 3,
+      "self_ms": 0.191536,
+      "cumulative_ms": 0.191536
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method builtins.isinstance>",
+      "primitive_calls": 291,
+      "calls": 291,
+      "self_ms": 0.088928,
+      "cumulative_ms": 0.18830300000000003
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'argmax' of 'torch._C.TensorBase' objects>",
+      "primitive_calls": 9,
+      "calls": 9,
+      "self_ms": 0.180273,
+      "cumulative_ms": 0.180273
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'expand' of 'torch._C.TensorBase' objects>",
+      "primitive_calls": 39,
+      "calls": 39,
+      "self_ms": 0.178521,
+      "cumulative_ms": 0.178521
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method torch.minimum>",
+      "primitive_calls": 21,
+      "calls": 21,
+      "self_ms": 0.176598,
+      "cumulative_ms": 0.176598
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'expand_as' of 'torch._C.TensorBase' objects>",
+      "primitive_calls": 36,
+      "calls": 36,
+      "self_ms": 0.176205,
+      "cumulative_ms": 0.176205
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/stable_envs/envs/_plate_texels.py",
+      "line": 48,
+      "function": "quantise",
+      "primitive_calls": 6,
+      "calls": 6,
+      "self_ms": 0.040876,
+      "cumulative_ms": 0.168672
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/stable_envs/_style.py",
+      "line": 127,
+      "function": "__getitem__",
+      "primitive_calls": 27,
+      "calls": 27,
+      "self_ms": 0.128037,
+      "cumulative_ms": 0.15881
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'min' of 'torch._C.TensorBase' objects>",
+      "primitive_calls": 9,
+      "calls": 9,
+      "self_ms": 0.153411,
+      "cumulative_ms": 0.153411
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/stable_envs/envs/dmcontrol/suite.py",
+      "line": 889,
+      "function": "<lambda>",
+      "primitive_calls": 12,
+      "calls": 12,
+      "self_ms": 0.012591,
+      "cumulative_ms": 0.152611
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method torch.full>",
+      "primitive_calls": 6,
+      "calls": 6,
+      "self_ms": 0.143129,
+      "cumulative_ms": 0.143129
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method torch.tensor>",
+      "primitive_calls": 12,
+      "calls": 12,
+      "self_ms": 0.14002,
+      "cumulative_ms": 0.14002
+    },
+    {
+      "file": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages/numpy/_core/numeric.py",
+      "line": 1489,
+      "function": "moveaxis",
+      "primitive_calls": 6,
+      "calls": 6,
+      "self_ms": 0.045612,
+      "cumulative_ms": 0.13937000000000002
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method torch.maximum>",
+      "primitive_calls": 21,
+      "calls": 21,
+      "self_ms": 0.13728,
+      "cumulative_ms": 0.13728
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method builtins.getattr>",
+      "primitive_calls": 216,
+      "calls": 216,
+      "self_ms": 0.135057,
+      "cumulative_ms": 0.135057
+    },
+    {
+      "file": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages/numpy/_core/_internal.py",
+      "line": 409,
+      "function": "_promote_fields",
+      "primitive_calls": 3,
+      "calls": 3,
+      "self_ms": 0.098731,
+      "cumulative_ms": 0.129133
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'squeeze' of 'torch._C.TensorBase' objects>",
+      "primitive_calls": 24,
+      "calls": 24,
+      "self_ms": 0.111975,
+      "cumulative_ms": 0.111975
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/stable_envs/render/_resources.py",
+      "line": 302,
+      "function": "get",
+      "primitive_calls": 12,
+      "calls": 12,
+      "self_ms": 0.075875,
+      "cumulative_ms": 0.11034900000000002
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'reciprocal' of 'torch._C.TensorBase' objects>",
+      "primitive_calls": 15,
+      "calls": 15,
+      "self_ms": 0.10809300000000001,
+      "cumulative_ms": 0.10809300000000001
+    },
+    {
+      "file": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages/numpy/_core/fromnumeric.py",
+      "line": 2245,
+      "function": "clip",
+      "primitive_calls": 6,
+      "calls": 6,
+      "self_ms": 0.011186000000000001,
+      "cumulative_ms": 0.10591800000000001
+    },
+    {
+      "file": "<frozen abc>",
+      "line": 117,
+      "function": "__instancecheck__",
+      "primitive_calls": 168,
+      "calls": 168,
+      "self_ms": 0.04199,
+      "cumulative_ms": 0.099375
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/stable_envs/render/raycast3d.py",
+      "line": 788,
+      "function": "<genexpr>",
+      "primitive_calls": 18,
+      "calls": 18,
+      "self_ms": 0.098978,
+      "cumulative_ms": 0.098978
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method torch.sign>",
+      "primitive_calls": 9,
+      "calls": 9,
+      "self_ms": 0.08843000000000001,
+      "cumulative_ms": 0.08843000000000001
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method torch.ones>",
+      "primitive_calls": 6,
+      "calls": 6,
+      "self_ms": 0.086976,
+      "cumulative_ms": 0.086976
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'clip' of 'numpy.ndarray' objects>",
+      "primitive_calls": 6,
+      "calls": 6,
+      "self_ms": 0.008641000000000001,
+      "cumulative_ms": 0.086079
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/stable_envs/render/raycast3d.py",
+      "line": 709,
+      "function": "<genexpr>",
+      "primitive_calls": 18,
+      "calls": 18,
+      "self_ms": 0.081246,
+      "cumulative_ms": 0.081246
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method torch.as_tensor>",
+      "primitive_calls": 6,
+      "calls": 6,
+      "self_ms": 0.080429,
+      "cumulative_ms": 0.080429
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method builtins.hasattr>",
+      "primitive_calls": 162,
+      "calls": 162,
+      "self_ms": 0.058665,
+      "cumulative_ms": 0.07899300000000001
+    },
+    {
+      "file": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages/numpy/_core/_methods.py",
+      "line": 96,
+      "function": "_clip",
+      "primitive_calls": 6,
+      "calls": 6,
+      "self_ms": 0.05507000000000001,
+      "cumulative_ms": 0.07743799999999999
+    },
+    {
+      "file": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages/numpy/_core/numeric.py",
+      "line": 1427,
+      "function": "normalize_axis_tuple",
+      "primitive_calls": 12,
+      "calls": 12,
+      "self_ms": 0.051766000000000006,
+      "cumulative_ms": 0.07435300000000002
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method torch.cat>",
+      "primitive_calls": 6,
+      "calls": 6,
+      "self_ms": 0.073328,
+      "cumulative_ms": 0.073328
+    },
+    {
+      "file": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages/numpy/lib/_arraysetops_impl.py",
+      "line": 335,
+      "function": "reshape_uniq",
+      "primitive_calls": 3,
+      "calls": 3,
+      "self_ms": 0.010924000000000001,
+      "cumulative_ms": 0.071353
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method torch.arange>",
+      "primitive_calls": 3,
+      "calls": 3,
+      "self_ms": 0.065034,
+      "cumulative_ms": 0.065034
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method builtins.any>",
+      "primitive_calls": 12,
+      "calls": 12,
+      "self_ms": 0.018928000000000004,
+      "cumulative_ms": 0.062349999999999996
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'view' of 'numpy.ndarray' objects>",
+      "primitive_calls": 6,
+      "calls": 6,
+      "self_ms": 0.03935,
+      "cumulative_ms": 0.060142
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'split' of 'str' objects>",
+      "primitive_calls": 162,
+      "calls": 162,
+      "self_ms": 0.058444,
+      "cumulative_ms": 0.058444
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method _abc._abc_instancecheck>",
+      "primitive_calls": 168,
+      "calls": 168,
+      "self_ms": 0.057385,
+      "cumulative_ms": 0.057385
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'append' of 'list' objects>",
+      "primitive_calls": 276,
+      "calls": 276,
+      "self_ms": 0.055949000000000006,
+      "cumulative_ms": 0.055949000000000006
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/stable_envs/envs/dmcontrol/base.py",
+      "line": 475,
+      "function": "_var",
+      "primitive_calls": 27,
+      "calls": 27,
+      "self_ms": 0.028621000000000004,
+      "cumulative_ms": 0.055665000000000006
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'items' of 'dict' objects>",
+      "primitive_calls": 273,
+      "calls": 273,
+      "self_ms": 0.054667,
+      "cumulative_ms": 0.054667
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'astype' of 'numpy.ndarray' objects>",
+      "primitive_calls": 18,
+      "calls": 18,
+      "self_ms": 0.053001000000000006,
+      "cumulative_ms": 0.053001000000000006
+    },
+    {
+      "file": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages/gymnasium/spaces/dict.py",
+      "line": 205,
+      "function": "__getitem__",
+      "primitive_calls": 324,
+      "calls": 324,
+      "self_ms": 0.052978,
+      "cumulative_ms": 0.052978
+    }
+  ],
+  "torch_operators": [
+    {
+      "name": "prepared_render",
+      "calls": 1,
+      "cpu_total_us": 40273.784,
+      "cpu_self_us": 12224.895999999972,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::reshape",
+      "calls": 99,
+      "cpu_total_us": 254.63800000001027,
+      "cpu_self_us": 135.99899999997353,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::view",
+      "calls": 129,
+      "cpu_total_us": 188.72500000004447,
+      "cpu_self_us": 188.72500000004447,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::isfinite",
+      "calls": 2,
+      "cpu_total_us": 103.48900000000026,
+      "cpu_self_us": 15.535000000000196,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 34,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::abs",
+      "calls": 40,
+      "cpu_total_us": 350.9880000000048,
+      "cpu_self_us": 206.169999999997,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 630424,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::empty",
+      "calls": 101,
+      "cpu_total_us": 119.22600000001103,
+      "cpu_self_us": 119.22600000001103,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 891443,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::ne",
+      "calls": 4,
+      "cpu_total_us": 52.58399999999699,
+      "cpu_self_us": 34.943999999996834,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 1492,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::to",
+      "calls": 310,
+      "cpu_total_us": 1393.3409999999499,
+      "cpu_self_us": 244.51299999995007,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 154496,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::_to_copy",
+      "calls": 186,
+      "cpu_total_us": 1148.828,
+      "cpu_self_us": 548.5790000000322,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 154496,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::empty_strided",
+      "calls": 236,
+      "cpu_total_us": 332.19499999999823,
+      "cpu_self_us": 332.19499999999823,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 1158716,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::copy_",
+      "calls": 187,
+      "cpu_total_us": 452.45399999998045,
+      "cpu_self_us": 452.45399999998045,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::eq",
+      "calls": 2,
+      "cpu_total_us": 8.668000000000063,
+      "cpu_self_us": 8.668000000000063,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 34,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::mul",
+      "calls": 591,
+      "cpu_total_us": 4266.100999999938,
+      "cpu_self_us": 3756.785999999949,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 8505358,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::bitwise_not",
+      "calls": 2,
+      "cpu_total_us": 13.38500000000073,
+      "cpu_self_us": 13.38500000000073,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 773,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::any",
+      "calls": 11,
+      "cpu_total_us": 165.3369999999918,
+      "cpu_self_us": 121.41299999999353,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 124967,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::as_strided",
+      "calls": 1452,
+      "cpu_total_us": 932.4550000000847,
+      "cpu_self_us": 932.4550000000847,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::fill_",
+      "calls": 47,
+      "cpu_total_us": 533.4320000000039,
+      "cpu_self_us": 533.4320000000039,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::is_nonzero",
+      "calls": 5,
+      "cpu_total_us": 35.59200000000186,
+      "cpu_self_us": 12.91199999999833,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::item",
+      "calls": 8,
+      "cpu_total_us": 28.472000000003447,
+      "cpu_self_us": 17.84200000000294,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::_local_scalar_dense",
+      "calls": 8,
+      "cpu_total_us": 10.630000000000507,
+      "cpu_self_us": 10.630000000000507,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::detach",
+      "calls": 4,
+      "cpu_total_us": 13.680999999999983,
+      "cpu_self_us": 5.535999999999888,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "detach",
+      "calls": 4,
+      "cpu_total_us": 8.145000000000095,
+      "cpu_self_us": 8.145000000000095,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::slice",
+      "calls": 55,
+      "cpu_total_us": 226.32100000000457,
+      "cpu_self_us": 190.0649999999963,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::cat",
+      "calls": 38,
+      "cpu_total_us": 695.8620000000043,
+      "cpu_self_us": 695.8620000000043,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 728608,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::resolve_conj",
+      "calls": 2,
+      "cpu_total_us": 1.0639999999999645,
+      "cpu_self_us": 1.0639999999999645,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::resolve_neg",
+      "calls": 2,
+      "cpu_total_us": 0.5080000000000382,
+      "cpu_self_us": 0.5080000000000382,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::lift_fresh",
+      "calls": 5,
+      "cpu_total_us": 5.927999999999884,
+      "cpu_self_us": 5.927999999999884,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::index",
+      "calls": 56,
+      "cpu_total_us": 2126.544999999999,
+      "cpu_self_us": 1931.7430000000224,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 1234885,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::expand",
+      "calls": 43,
+      "cpu_total_us": 186.89300000000912,
+      "cpu_self_us": 141.09299999999826,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::detach_",
+      "calls": 4,
+      "cpu_total_us": 6.416999999999916,
+      "cpu_self_us": 2.8300000000001546,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "detach_",
+      "calls": 4,
+      "cpu_total_us": 3.5869999999997617,
+      "cpu_self_us": 3.5869999999997617,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::arange",
+      "calls": 2,
+      "cpu_total_us": 33.73100000000022,
+      "cpu_self_us": 17.168000000000347,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 16,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::resize_",
+      "calls": 1,
+      "cpu_total_us": 1.94399999999996,
+      "cpu_self_us": 1.94399999999996,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 8,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::unsqueeze",
+      "calls": 145,
+      "cpu_total_us": 414.94700000001694,
+      "cpu_self_us": 308.5599999999995,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::sub",
+      "calls": 74,
+      "cpu_total_us": 1325.325999999996,
+      "cpu_self_us": 1273.3299999999972,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 2286552,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::add",
+      "calls": 385,
+      "cpu_total_us": 2004.4829999999838,
+      "cpu_self_us": 1945.4589999999812,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 6022960,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::where",
+      "calls": 58,
+      "cpu_total_us": 836.5150000000053,
+      "cpu_self_us": 753.6410000000028,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 738248,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::select",
+      "calls": 1110,
+      "cpu_total_us": 3461.4599999999973,
+      "cpu_self_us": 2817.0139999999105,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::stack",
+      "calls": 36,
+      "cpu_total_us": 1056.4290000000115,
+      "cpu_self_us": 172.17500000000337,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 728336,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::clamp_min",
+      "calls": 1,
+      "cpu_total_us": 6.591000000000349,
+      "cpu_self_us": 6.591000000000349,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 64,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::div",
+      "calls": 32,
+      "cpu_total_us": 674.006999999996,
+      "cpu_self_us": 653.7929999999951,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 1058992,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::rsub",
+      "calls": 1,
+      "cpu_total_us": 12.25799999999981,
+      "cpu_self_us": 5.020999999999731,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 64,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::amin",
+      "calls": 2,
+      "cpu_total_us": 17.541999999999916,
+      "cpu_self_us": 15.022999999999683,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 8,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::floor",
+      "calls": 2,
+      "cpu_total_us": 8.0,
+      "cpu_self_us": 8.0,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 8,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::amax",
+      "calls": 2,
+      "cpu_total_us": 13.97000000000071,
+      "cpu_self_us": 12.499000000000251,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 8,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::ceil",
+      "calls": 2,
+      "cpu_total_us": 6.514000000000124,
+      "cpu_self_us": 6.514000000000124,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 8,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::max",
+      "calls": 5,
+      "cpu_total_us": 107.21100000000297,
+      "cpu_self_us": 69.03200000000015,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 26320,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::all",
+      "calls": 5,
+      "cpu_total_us": 96.61500000000251,
+      "cpu_self_us": 89.24900000000116,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 5,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::clamp",
+      "calls": 69,
+      "cpu_total_us": 674.6900000000142,
+      "cpu_self_us": 652.1260000000375,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 1064036,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::clone",
+      "calls": 1,
+      "cpu_total_us": 108.95499999999993,
+      "cpu_self_us": 5.519999999999982,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 602112,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::gather",
+      "calls": 8,
+      "cpu_total_us": 309.650000000001,
+      "cpu_self_us": 307.3630000000062,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 372144,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::full",
+      "calls": 2,
+      "cpu_total_us": 35.801000000000386,
+      "cpu_self_us": 9.328999999999269,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 119168,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::zeros",
+      "calls": 8,
+      "cpu_total_us": 191.61599999999635,
+      "cpu_self_us": 33.54499999998916,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 617683,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::zero_",
+      "calls": 47,
+      "cpu_total_us": 167.76399999998694,
+      "cpu_self_us": 60.915999999984706,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::le",
+      "calls": 20,
+      "cpu_total_us": 270.09600000000955,
+      "cpu_self_us": 247.2220000000102,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 160791,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::pow",
+      "calls": 34,
+      "cpu_total_us": 305.5059999999921,
+      "cpu_self_us": 274.2309999999825,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 156432,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::result_type",
+      "calls": 30,
+      "cpu_total_us": 16.22000000000662,
+      "cpu_self_us": 16.22000000000662,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::sqrt",
+      "calls": 40,
+      "cpu_total_us": 548.6090000000131,
+      "cpu_self_us": 548.6090000000131,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 608292,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::expand_as",
+      "calls": 12,
+      "cpu_total_us": 103.95900000000711,
+      "cpu_self_us": 37.7600000000034,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::cross",
+      "calls": 8,
+      "cpu_total_us": 3157.8729999999987,
+      "cpu_self_us": 23.709000000000742,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 1142088,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::linalg_cross",
+      "calls": 8,
+      "cpu_total_us": 3134.163999999998,
+      "cpu_self_us": 3088.585999999996,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 1142088,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::ge",
+      "calls": 13,
+      "cpu_total_us": 293.3550000000023,
+      "cpu_self_us": 210.31100000000242,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 98378,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::__and__",
+      "calls": 82,
+      "cpu_total_us": 434.6939999999995,
+      "cpu_self_us": 113.19299999998293,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 263252,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::bitwise_and",
+      "calls": 82,
+      "cpu_total_us": 321.5010000000166,
+      "cpu_self_us": 321.5010000000166,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 263252,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::nonzero",
+      "calls": 10,
+      "cpu_total_us": 398.43500000000677,
+      "cpu_self_us": 352.23600000000624,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 97752,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::as_strided_",
+      "calls": 34,
+      "cpu_total_us": 52.72300000000541,
+      "cpu_self_us": 52.72300000000541,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::lt",
+      "calls": 37,
+      "cpu_total_us": 315.1560000000063,
+      "cpu_self_us": 273.96500000001106,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 118689,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::full_like",
+      "calls": 10,
+      "cpu_total_us": 105.63199999999688,
+      "cpu_self_us": 30.58300000000054,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 71132,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::empty_like",
+      "calls": 49,
+      "cpu_total_us": 198.4439999999995,
+      "cpu_self_us": 117.47899999998845,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 402108,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::reciprocal",
+      "calls": 5,
+      "cpu_total_us": 32.77999999999702,
+      "cpu_self_us": 32.77999999999702,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 30352,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::neg",
+      "calls": 37,
+      "cpu_total_us": 148.61800000001404,
+      "cpu_self_us": 148.61800000001404,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 252844,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::minimum",
+      "calls": 7,
+      "cpu_total_us": 52.567999999992935,
+      "cpu_self_us": 52.567999999992935,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 62364,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::unsqueeze_",
+      "calls": 12,
+      "cpu_total_us": 32.26499999999851,
+      "cpu_self_us": 19.8799999999992,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::squeeze_",
+      "calls": 12,
+      "cpu_total_us": 26.47400000000198,
+      "cpu_self_us": 19.99000000000069,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::maximum",
+      "calls": 7,
+      "cpu_total_us": 43.254000000001724,
+      "cpu_self_us": 43.254000000001724,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 62364,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::min",
+      "calls": 3,
+      "cpu_total_us": 67.79899999999998,
+      "cpu_self_us": 45.18800000000192,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 26304,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::gt",
+      "calls": 66,
+      "cpu_total_us": 836.5120000000261,
+      "cpu_self_us": 476.2450000000272,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 133758,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::argmax",
+      "calls": 3,
+      "cpu_total_us": 55.14299999999912,
+      "cpu_self_us": 55.14299999999912,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 17536,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::zeros_like",
+      "calls": 39,
+      "cpu_total_us": 267.8470000000116,
+      "cpu_self_us": 91.06700000002365,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 330976,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::sign",
+      "calls": 3,
+      "cpu_total_us": 18.600000000001273,
+      "cpu_self_us": 18.600000000001273,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 8768,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::scatter_",
+      "calls": 5,
+      "cpu_total_us": 69.01100000000133,
+      "cpu_self_us": 67.74500000000262,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::index_put_",
+      "calls": 14,
+      "cpu_total_us": 727.0040000000026,
+      "cpu_self_us": 43.1570000000047,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::_index_put_impl_",
+      "calls": 14,
+      "cpu_total_us": 683.8469999999979,
+      "cpu_self_us": 648.9159999999811,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::scalar_tensor",
+      "calls": 3,
+      "cpu_total_us": 8.64100000000417,
+      "cpu_self_us": 8.64100000000417,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 24,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::squeeze",
+      "calls": 8,
+      "cpu_total_us": 39.621000000001914,
+      "cpu_self_us": 33.802000000006046,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::__ior__",
+      "calls": 4,
+      "cpu_total_us": 62.39299999999639,
+      "cpu_self_us": 31.65899999999965,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::bitwise_or_",
+      "calls": 4,
+      "cpu_total_us": 30.73399999999674,
+      "cpu_self_us": 30.73399999999674,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::_reshape_alias",
+      "calls": 2,
+      "cpu_total_us": 2.7079999999950815,
+      "cpu_self_us": 2.7079999999950815,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::sum",
+      "calls": 9,
+      "cpu_total_us": 588.8420000000006,
+      "cpu_self_us": 247.67300000000614,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 610224,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::ones",
+      "calls": 2,
+      "cpu_total_us": 15.905000000002474,
+      "cpu_self_us": 8.517000000003463,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 4048,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::round",
+      "calls": 1,
+      "cpu_total_us": 317.6389999999956,
+      "cpu_self_us": 317.6389999999956,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 602112,
+      "device_memory_bytes": 0
+    }
+  ],
+  "cuda_kernel_events_observed": false,
+  "coverage_limit": "Torch trace can miss external OpenGL, Warp and JAX kernels; wall timing includes their completed rendering."
+}

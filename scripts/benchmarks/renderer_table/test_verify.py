@@ -13,6 +13,24 @@ from scripts.benchmarks.renderer_table.common import METRICS, catalog, distribut
 from scripts.benchmarks.renderer_table.verify import validate
 
 
+def test_fetch_appearance_is_archived_independently_of_simulator_state():
+    from scripts.benchmarks.renderer_table.collect import kwargs_json, render_kwargs
+
+    class FetchPushDict:
+        def __init__(self):
+            self.style = torch.tensor([[0.35, 0.35, 0.35, 0.5, 0.5, 0.5]])
+
+        def get_style(self):
+            return self.style
+
+    env = FetchPushDict()
+    saved = render_kwargs(env, None)
+    expected = env.get_style().clone()
+    env.style.fill_(0.93)
+    restored = torch.tensor(json.loads(json.dumps(kwargs_json(saved)))["style"], dtype=torch.float32)
+    assert torch.equal(restored, expected)
+
+
 def test_state_archive_preserves_literal_separators(tmp_path):
     from scripts.benchmarks.renderer_table.common import equal_state, load_state, save_state, state_arrays
 

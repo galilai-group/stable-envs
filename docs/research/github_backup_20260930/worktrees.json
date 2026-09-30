@@ -1,0 +1,465 @@
+[
+  {
+    "path": "/Users/samib/stable-envs",
+    "exists": true,
+    "branch": "refs/heads/sami/pre-step6-baseline",
+    "tracked_changes": 0,
+    "untracked": 6324,
+    "sample": [
+      "STEP_06_AGENT_BRIEFS/00_COORDINATOR.md",
+      "STEP_06_AGENT_BRIEFS/01_TEXTURE_REFERENCE_FIDELITY.md",
+      "STEP_06_AGENT_BRIEFS/02_REACHER_CORRECTNESS.md",
+      "STEP_06_AGENT_BRIEFS/03_RAYCAST3D.md",
+      "STEP_06_AGENT_BRIEFS/04_FETCH_GPU.md"
+    ]
+  },
+  {
+    "path": "/private/tmp/stable-envs-dmc-recovery",
+    "exists": true,
+    "branch": "refs/heads/repair/dmcontrol",
+    "unavailable_git_metadata": true
+  },
+  {
+    "path": "/private/tmp/stable-envs-fetch-proof",
+    "exists": true,
+    "branch": "refs/heads/repair/fetch-pickandplace-proof",
+    "unavailable_git_metadata": true
+  },
+  {
+    "path": "/private/tmp/stable-envs-fetch-recovery",
+    "exists": true,
+    "branch": "refs/heads/repair/fetch-representative",
+    "unavailable_git_metadata": true
+  },
+  {
+    "path": "/private/tmp/stable-envs-humanoid-baseline",
+    "exists": true,
+    "branch": null,
+    "unavailable_git_metadata": true
+  },
+  {
+    "path": "/private/tmp/stable-envs-native-recovery",
+    "exists": true,
+    "branch": "refs/heads/audit/native-envs",
+    "unavailable_git_metadata": true
+  },
+  {
+    "path": "/private/tmp/stable-envs-navigation-recovery",
+    "exists": true,
+    "branch": "refs/heads/repair/native-navigation",
+    "unavailable_git_metadata": true
+  },
+  {
+    "path": "/private/tmp/stable-envs-ogbench-recovery",
+    "exists": true,
+    "branch": "refs/heads/repair/ogbench",
+    "unavailable_git_metadata": true
+  },
+  {
+    "path": "/private/tmp/stable-envs-semantic-recovery",
+    "exists": true,
+    "branch": "refs/heads/repair/environment-semantics",
+    "tracked_changes": 2864,
+    "untracked": 10,
+    "sample": [
+      " D .github/workflows/docs.yml",
+      " D .github/workflows/extras-smoke.yml",
+      " D .github/workflows/pre-commit.yml",
+      " D .github/workflows/regression.yml",
+      " D .github/workflows/release.yml",
+      "docs/research/fetch_renderer_color_fix.md",
+      "docs/research/semantic_recovery_evidence/fetch_renderer_colors/FetchPushDict-0040-fixed.png",
+      "docs/research/semantic_recovery_evidence/fetch_renderer_colors/FetchPushDict-0040-old.png",
+      "docs/research/semantic_recovery_evidence/fetch_renderer_colors/FetchPushDict-0040-source_gpu.png",
+      "docs/research/semantic_recovery_evidence/fetch_renderer_colors/fetch_color_differences.csv"
+    ]
+  },
+  {
+    "path": "/private/var/folders/t9/shschjkd3h9706xpq7s_88zc0000gn/T/step9-envs-mujoco-bench-21cb30678b7a",
+    "exists": true,
+    "branch": null,
+    "unavailable_git_metadata": true
+  },
+  {
+    "path": "/Users/samib/stable-envs-step6-cpu-3d",
+    "exists": true,
+    "branch": "refs/heads/step6/cpu-3d",
+    "tracked_changes": 0,
+    "untracked": 0,
+    "sample": []
+  },
+  {
+    "path": "/Users/samib/stable-envs-step6-fetch-gpu",
+    "exists": true,
+    "branch": "refs/heads/step6/fetch-gpu",
+    "tracked_changes": 0,
+    "untracked": 0,
+    "sample": []
+  },
+  {
+    "path": "/Users/samib/stable-envs-step6-gfxdraw",
+    "exists": true,
+    "branch": "refs/heads/step6/gfxdraw",
+    "tracked_changes": 0,
+    "untracked": 0,
+    "sample": []
+  },
+  {
+    "path": "/Users/samib/stable-envs-step6-integration",
+    "exists": true,
+    "branch": "refs/heads/step6/integration",
+    "tracked_changes": 0,
+    "untracked": 0,
+    "sample": []
+  },
+  {
+    "path": "/Users/samib/stable-envs-step6-lance",
+    "exists": true,
+    "branch": "refs/heads/step6/lance-baseline",
+    "tracked_changes": 0,
+    "untracked": 1,
+    "sample": [
+      ".se6_commit"
+    ]
+  },
+  {
+    "path": "/Users/samib/stable-envs-step6-raster2d",
+    "exists": true,
+    "branch": "refs/heads/step6/raster2d",
+    "tracked_changes": 0,
+    "untracked": 0,
+    "sample": []
+  },
+  {
+    "path": "/Users/samib/stable-envs-step6-raycast3d",
+    "exists": true,
+    "branch": "refs/heads/step6/raycast3d",
+    "tracked_changes": 0,
+    "untracked": 0,
+    "sample": []
+  },
+  {
+    "path": "/Users/samib/stable-envs-step6-reacher-correctness",
+    "exists": true,
+    "branch": "refs/heads/step6/reacher-correctness",
+    "tracked_changes": 0,
+    "untracked": 0,
+    "sample": []
+  },
+  {
+    "path": "/Users/samib/stable-envs-step6-report",
+    "exists": true,
+    "branch": "refs/heads/step6/report",
+    "tracked_changes": 0,
+    "untracked": 0,
+    "sample": []
+  },
+  {
+    "path": "/Users/samib/stable-envs-step6-texture-fidelity",
+    "exists": true,
+    "branch": "refs/heads/step6/texture-fidelity",
+    "tracked_changes": 0,
+    "untracked": 12,
+    "sample": [
+      "examples/results/step6/texture-fidelity/localize311/frames/DMCCheetahRun.npz",
+      "examples/results/step6/texture-fidelity/localize311/frames/DMCHopperHop.npz",
+      "examples/results/step6/texture-fidelity/localize311/frames/DMCHumanoidStand.npz",
+      "examples/results/step6/texture-fidelity/localize311/frames/DMCWalkerWalk.npz",
+      "examples/results/step6/texture-fidelity/localize312/frames/DMCCheetahRun.npz"
+    ]
+  },
+  {
+    "path": "/Users/samib/stable-envs-step6-tilemap",
+    "exists": true,
+    "branch": "refs/heads/step6/tilemap",
+    "tracked_changes": 0,
+    "untracked": 0,
+    "sample": []
+  },
+  {
+    "path": "/Users/samib/stable-envs-step6-verify",
+    "exists": true,
+    "branch": "refs/heads/step6/integration-verify",
+    "tracked_changes": 0,
+    "untracked": 0,
+    "sample": []
+  },
+  {
+    "path": "/Users/samib/stable-envs-step7-closure",
+    "exists": true,
+    "branch": "refs/heads/step7/closure2",
+    "tracked_changes": 0,
+    "untracked": 0,
+    "sample": []
+  },
+  {
+    "path": "/Users/samib/stable-envs-step7-craftax-classic-full",
+    "exists": true,
+    "branch": "refs/heads/step7/craftax-classic-full",
+    "tracked_changes": 0,
+    "untracked": 0,
+    "sample": []
+  },
+  {
+    "path": "/Users/samib/stable-envs-step7-craftax-full",
+    "exists": true,
+    "branch": "refs/heads/step7/craftax-full",
+    "tracked_changes": 0,
+    "untracked": 1,
+    "sample": [
+      "scratch/step7/craftax-full/_pool.pkl"
+    ]
+  },
+  {
+    "path": "/Users/samib/stable-envs-step7-dmc-manipulator",
+    "exists": true,
+    "branch": "refs/heads/step7/dmc-manipulator",
+    "tracked_changes": 0,
+    "untracked": 0,
+    "sample": []
+  },
+  {
+    "path": "/Users/samib/stable-envs-step7-dmc-quadruped",
+    "exists": true,
+    "branch": "refs/heads/step7/dmc-quadruped",
+    "tracked_changes": 0,
+    "untracked": 4,
+    "sample": [
+      "examples/results/step7/dmc-quadruped/phase1/gpu/localize_311/frames/DMCQuadrupedWalk.npz",
+      "examples/results/step7/dmc-quadruped/phase1/gpu/localize_312/frames/DMCQuadrupedWalk.npz",
+      "examples/results/step7/dmc-quadruped/phase1/gpu/localize_312/sheets/DMCQuadrupedWalk_check.png",
+      "examples/results/step7/dmc-quadruped/phase1/gpu/localize_312/sheets/DMCQuadrupedWalk_frozen.png"
+    ]
+  },
+  {
+    "path": "/Users/samib/stable-envs-step7-integration",
+    "exists": true,
+    "branch": "refs/heads/step7/integration",
+    "tracked_changes": 0,
+    "untracked": 0,
+    "sample": []
+  },
+  {
+    "path": "/Users/samib/stable-envs-step7-ogb-manipulation",
+    "exists": true,
+    "branch": "refs/heads/step7/ogb-manipulation",
+    "tracked_changes": 0,
+    "untracked": 0,
+    "sample": []
+  },
+  {
+    "path": "/Users/samib/stable-envs-step7-rocket-landing",
+    "exists": true,
+    "branch": "refs/heads/step7/rocket-landing",
+    "tracked_changes": 0,
+    "untracked": 0,
+    "sample": []
+  },
+  {
+    "path": "/Users/samib/stable-envs-step8-integration",
+    "exists": true,
+    "branch": "refs/heads/step8/integration",
+    "tracked_changes": 0,
+    "untracked": 3,
+    "sample": [
+      "STEP_08_AGENT_BRIEFS/00_COORDINATOR_PLAN.md",
+      "STEP_08_AGENT_BRIEFS/AGENT_COMMON.md",
+      "STEP_08_HANDOFF.md"
+    ]
+  },
+  {
+    "path": "/Users/samib/stable-envs-step9-benchmarks",
+    "exists": true,
+    "branch": "refs/heads/step9/benchmarks",
+    "tracked_changes": 0,
+    "untracked": 0,
+    "sample": []
+  },
+  {
+    "path": "/Users/samib/stable-envs-step9-cleanup",
+    "exists": true,
+    "branch": "refs/heads/step9/cleanup",
+    "tracked_changes": 0,
+    "untracked": 0,
+    "sample": []
+  },
+  {
+    "path": "/Users/samib/stable-envs-step9-docs-examples",
+    "exists": true,
+    "branch": "refs/heads/step9/docs-examples",
+    "tracked_changes": 0,
+    "untracked": 0,
+    "sample": []
+  },
+  {
+    "path": "/Users/samib/stable-envs-step9-envs-classic-nav",
+    "exists": true,
+    "branch": "refs/heads/step9/envs-classic-nav",
+    "tracked_changes": 0,
+    "untracked": 0,
+    "sample": []
+  },
+  {
+    "path": "/Users/samib/stable-envs-step9-envs-craftax-rocket",
+    "exists": true,
+    "branch": "refs/heads/step9/envs-craftax-rocket",
+    "tracked_changes": 0,
+    "untracked": 0,
+    "sample": []
+  },
+  {
+    "path": "/Users/samib/stable-envs-step9-envs-dmcontrol",
+    "exists": true,
+    "branch": "refs/heads/step9/envs-dmcontrol",
+    "tracked_changes": 0,
+    "untracked": 0,
+    "sample": []
+  },
+  {
+    "path": "/Users/samib/stable-envs-step9-envs-fetch",
+    "exists": true,
+    "branch": "refs/heads/step9/envs-fetch",
+    "tracked_changes": 0,
+    "untracked": 0,
+    "sample": []
+  },
+  {
+    "path": "/Users/samib/stable-envs-step9-envs-mujoco",
+    "exists": true,
+    "branch": "refs/heads/step9/envs-mujoco",
+    "tracked_changes": 0,
+    "untracked": 0,
+    "sample": []
+  },
+  {
+    "path": "/Users/samib/stable-envs-step9-envs-ogbench",
+    "exists": true,
+    "branch": "refs/heads/step9/envs-ogbench",
+    "tracked_changes": 0,
+    "untracked": 0,
+    "sample": []
+  },
+  {
+    "path": "/Users/samib/stable-envs-step9-foundation",
+    "exists": true,
+    "branch": "refs/heads/step9/foundation",
+    "tracked_changes": 0,
+    "untracked": 0,
+    "sample": []
+  },
+  {
+    "path": "/Users/samib/stable-envs-step9-integration",
+    "exists": true,
+    "branch": "refs/heads/v0-draft",
+    "tracked_changes": 0,
+    "untracked": 0,
+    "sample": []
+  },
+  {
+    "path": "/Users/samib/stable-envs-step9-interop",
+    "exists": true,
+    "branch": "refs/heads/step9/interop",
+    "tracked_changes": 0,
+    "untracked": 0,
+    "sample": []
+  },
+  {
+    "path": "/Users/samib/stable-envs-step9-packaging-ci",
+    "exists": true,
+    "branch": "refs/heads/step9/packaging-ci",
+    "tracked_changes": 0,
+    "untracked": 0,
+    "sample": []
+  },
+  {
+    "path": "/Users/samib/stable-envs-step9-render-2d",
+    "exists": true,
+    "branch": "refs/heads/step9/render-2d",
+    "tracked_changes": 0,
+    "untracked": 0,
+    "sample": []
+  },
+  {
+    "path": "/Users/samib/stable-envs-step9-render-3d",
+    "exists": true,
+    "branch": "refs/heads/step9/render-3d",
+    "tracked_changes": 0,
+    "untracked": 0,
+    "sample": []
+  },
+  {
+    "path": "/Users/samib/stable-envs-step9-render-mjwarp-nvdiff",
+    "exists": true,
+    "branch": "refs/heads/step9/render-mjwarp-nvdiff",
+    "tracked_changes": 0,
+    "untracked": 0,
+    "sample": []
+  },
+  {
+    "path": "/Users/samib/stable-envs-step9-testing",
+    "exists": true,
+    "branch": "refs/heads/step9/testing",
+    "tracked_changes": 0,
+    "untracked": 0,
+    "sample": []
+  },
+  {
+    "path": "/Users/samib/stable-envs-v0-api",
+    "exists": true,
+    "branch": "refs/heads/v0/api-surface",
+    "tracked_changes": 0,
+    "untracked": 0,
+    "sample": []
+  },
+  {
+    "path": "/Users/samib/stable-envs-v0-archive",
+    "exists": true,
+    "branch": "refs/heads/v0/archaeology",
+    "tracked_changes": 0,
+    "untracked": 0,
+    "sample": []
+  },
+  {
+    "path": "/Users/samib/stable-envs-v0-ci",
+    "exists": true,
+    "branch": "refs/heads/v0/ci-packaging",
+    "tracked_changes": 0,
+    "untracked": 0,
+    "sample": []
+  },
+  {
+    "path": "/Users/samib/stable-envs-v0-docs",
+    "exists": true,
+    "branch": "refs/heads/v0/docs-product",
+    "tracked_changes": 0,
+    "untracked": 0,
+    "sample": []
+  },
+  {
+    "path": "/Users/samib/stable-envs-v0-format",
+    "exists": true,
+    "branch": "refs/heads/v0/format",
+    "tracked_changes": 0,
+    "untracked": 0,
+    "sample": []
+  },
+  {
+    "path": "/Users/samib/stable-envs/.worktrees/render-config-fixes",
+    "exists": true,
+    "branch": "refs/heads/repair/render-config-fixes",
+    "tracked_changes": 18,
+    "untracked": 1586,
+    "sample": [
+      " M scripts/benchmarks/renderer_table/collect.py",
+      " M scripts/benchmarks/renderer_table/special.py",
+      " M scripts/benchmarks/renderer_table/test_verify.py",
+      " M stable_envs/_adapters/ogbench_render_state.py",
+      " M stable_envs/envs/_fetch_semantics.py",
+      "docs/research/dmc_cpu_bounds_components.md",
+      "docs/research/dmc_cpu_performance.md",
+      "docs/research/fetch_renderer_color_fix.md",
+      "docs/research/humanoid_chunk4_residual_profile.md",
+      "docs/research/ogbench_context_cache.md"
+    ]
+  }
+]

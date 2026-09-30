@@ -1,0 +1,15 @@
+## SLURM PROLOG ###############################################################
+##    Job ID : 6851311
+##  Job Name : se-structural-cpu
+##  Nodelist : node1831
+##      CPUs : 
+##  Mem/Node : 32768 MB
+## Directory : /oscar/home/sboughan
+##   Job Started : Wed Sep 30 12:23:56 PM EDT 2026
+###############################################################################
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/se-semantic-recovery/structural-render-20260930/profile_oscar.py", line 155, in <module>
+    main()
+  File "/oscar/scratch/sboughan/se-semantic-recovery/structural-render-20260930/profile_oscar.py", line 112, in main
+    assert not output.exists(), "Never overwrite evidence; retry into a new campaign directory."
+AssertionError: Never overwrite evidence; retry into a new campaign directory.

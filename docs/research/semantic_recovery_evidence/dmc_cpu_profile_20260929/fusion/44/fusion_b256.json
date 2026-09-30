@@ -1,0 +1,51 @@
+{
+  "batch": 256,
+  "baseline_image_sha256": "eeefdb5286f6ccd43c2f26902e761d4922e5351444a744c21a76e0f644411578",
+  "compilation_and_differential_warmup_ms": 37553.923420608044,
+  "predicate_checks": {
+    "calls": 264,
+    "different_predicates": 0
+  },
+  "graphs_before_timing": {
+    "calls_captured": 153,
+    "unique_graphs": 3
+  },
+  "paired_mse": 4.790279060970793e-05,
+  "graphs_after_timing": {
+    "calls_captured": 153,
+    "unique_graphs": 3
+  },
+  "timings": {
+    "baseline": {
+      "samples_ms": [
+        22989.47613313794,
+        23364.031333476305,
+        23290.171269327402
+      ],
+      "mean_ms": 23214.559578647215,
+      "sd_ms": 198.395426738534,
+      "fps": 11.027562212960058
+    },
+    "candidate": {
+      "samples_ms": [
+        18334.233105182648,
+        18022.807639092207,
+        18516.103230416775
+      ],
+      "mean_ms": 18291.047991563875,
+      "sd_ms": 249.46713337384423,
+      "fps": 13.99591757225017
+    },
+    "source": {
+      "samples_ms": [
+        16811.882209032774,
+        17032.22220018506,
+        16429.799787700176
+      ],
+      "mean_ms": 16757.968065639336,
+      "sd_ms": 304.80853319651845,
+      "fps": 15.276315063811605
+    }
+  },
+  "status": "PASS"
+}

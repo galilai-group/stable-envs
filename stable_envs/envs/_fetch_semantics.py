@@ -138,9 +138,7 @@ class FetchSemantics:
                     v[key] = node.sample()
             v.update(explicit)
             values.append(v)
-        for key in ("object.color", "table.color"):
-            if any(key in v for v in values):
-                Env.set_variation(self, {key: np.stack([v[key] for v in values])})
+        self._reset_visual_colors(values)
         self._simulator.configure_object_mass(self._configured_mass)
         state = self._simulator.reset(seed, values)
         if self._has_object:
@@ -149,6 +147,53 @@ class FetchSemantics:
                 self._simulator._mass, device=self.device, dtype=torch.float32
             )
         return state
+
+    def _reset_visual_colors(self, values):
+        """Match pinned SWM's material unbinding before applying reset colors.
+
+        The first active visual reset detaches table, floor and object materials,
+        even when only one color was requested. Their geom colors then become
+        visible; notably floor grey changes from material 0.2 to geom 0.5.
+        Keep these appearance-only model changes across resets as SWM does, and
+        project their effective colors into the existing separately stored style.
+        """
+        from .fetch import _effective_rgba
+
+        if not any("table.color" in v or "object.color" in v for v in values):
+            return
+        if not hasattr(self, "_visual_geoms"):
+            self._visual_geoms = []
+            for env in self._simulator.envs:
+                m = env.unwrapped.model
+                groups = {}
+                for name, materials in {
+                    "table.color": {"table_mat"},
+                    "floor.color": {"floor_mat"},
+                    "object.color": {"block_mat", "puck_mat"},
+                }.items():
+                    groups[name] = [
+                        g
+                        for g in range(m.ngeom)
+                        if m.geom_matid[g] >= 0 and m.material(int(m.geom_matid[g])).name in materials
+                    ]
+                self._visual_geoms.append(groups)
+        style = self.get_style().clone()
+        layout = {name: (off, width) for name, off, width in self.variation_space.flat_layout()}
+        for lane, (env, groups, selected) in enumerate(zip(self._simulator.envs, self._visual_geoms, values)):
+            if not ({"table.color", "object.color"} & selected.keys()):
+                continue
+            m = env.unwrapped.model
+            for name, geoms in groups.items():
+                if not geoms:
+                    continue
+                m.geom_matid[geoms] = -1
+                if name in selected:
+                    m.geom_rgba[geoms, :3] = selected[name]
+                off, width = layout[name]
+                style[lane, off : off + width] = torch.as_tensor(
+                    _effective_rgba(m, geoms[0])[:3], device=self.device, dtype=style.dtype
+                )
+        Env.set_variation(self, style)
 
     def get_state(self):
         self._check_open("get_state")
@@ -173,6 +218,11 @@ class FetchSemantics:
         return result
 
     def _render(self, *args, **kwargs):
+        backend = kwargs.pop("backend", self.backend)
+        if backend == "opengl":
+            from . import fetch_opengl
+
+            return fetch_opengl.render(self, *args, **kwargs)
         if self.device.type != "cuda":
             raise NotImplementedError("CPU_BACKEND_MISSING: Fetch full mesh rendering requires CUDA/MJWarp")
         if not hasattr(self, "_b"):

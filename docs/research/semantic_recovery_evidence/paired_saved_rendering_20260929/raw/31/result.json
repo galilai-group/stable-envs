@@ -1,0 +1,139 @@
+{
+  "registration": "swm/PFRocketLanding-v0",
+  "device": "cuda",
+  "backend": "auto",
+  "status": "ERROR",
+  "profile": {
+    "host": "gpu2101.oscar.ccv.brown.edu",
+    "cpu": "AMD EPYC 7532 32-Core Processor",
+    "gpu": "NVIDIA GeForce RTX 3090",
+    "python": "3.12.9",
+    "packages": {
+      "torch": {
+        "version": "2.14.0+cu126",
+        "path": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages"
+      },
+      "numpy": {
+        "version": "2.5.3",
+        "path": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages"
+      },
+      "tensordict": {
+        "version": "0.14.2",
+        "path": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages"
+      },
+      "gymnasium": {
+        "version": "1.3.0",
+        "path": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages"
+      },
+      "mujoco": {
+        "version": "3.11.0",
+        "path": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages"
+      },
+      "dm-control": {
+        "version": "1.0.44",
+        "path": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages"
+      },
+      "ogbench": {
+        "version": "1.2.1",
+        "path": "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages"
+      },
+      "craftax": {
+        "version": "1.6.1",
+        "path": "/oscar/scratch/sboughan/venvs/se-step4-swm/lib/python3.12/site-packages"
+      },
+      "jax": {
+        "version": "0.11.1",
+        "path": "/oscar/scratch/sboughan/venvs/se-step4-swm/lib/python3.12/site-packages"
+      },
+      "jaxlib": {
+        "version": "0.11.1",
+        "path": "/oscar/scratch/sboughan/venvs/se-step4-swm/lib/python3.12/site-packages"
+      },
+      "flax": {
+        "version": "0.12.9",
+        "path": "/oscar/scratch/sboughan/venvs/se-step4-swm/lib/python3.12/site-packages"
+      },
+      "pymunk": {
+        "version": "7.3.0",
+        "path": "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages"
+      },
+      "pybullet": {
+        "version": "3.2.7",
+        "path": "/oscar/scratch/sboughan/venvs/se7-rocket/lib/python3.12/site-packages"
+      },
+      "PyFlyt": {
+        "version": "0.29.0",
+        "path": "/oscar/scratch/sboughan/venvs/se7-rocket/lib/python3.12/site-packages"
+      },
+      "nvdiffrast": {
+        "version": "0.4.0",
+        "path": "/oscar/scratch/sboughan/venvs/se7-rocket/lib/python3.12/site-packages"
+      },
+      "pygame": {
+        "version": "2.6.1",
+        "path": "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages"
+      }
+    },
+    "torch_threads": 1,
+    "environment": {
+      "SLURM_JOB_ID": "6796221",
+      "MUJOCO_GL": "egl",
+      "PYOPENGL_PLATFORM": "egl",
+      "LIBGL_ALWAYS_SOFTWARE": null,
+      "GALLIUM_DRIVER": null,
+      "DISPLAY": null,
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "LP_NUM_THREADS": "1",
+      "JAX_PLATFORMS": null,
+      "CRAFTAX_JAX_BACKEND": null,
+      "CUDA_VISIBLE_DEVICES": "0"
+    }
+  },
+  "measurements": [],
+  "frames": [
+    {
+      "index": 0,
+      "case": 0,
+      "state_hash": "5d3a4be0e7b296026fb1af1530c9eb119122fc5303176253437ada4c080f23c0",
+      "state_file": "frame-0000-state.npz"
+    },
+    {
+      "index": 66,
+      "case": 22,
+      "state_hash": "78eae23065457fcdf738d9f4db8019e06e46455e33609c94bee447c2d22c63da",
+      "state_file": "frame-0066-state.npz"
+    },
+    {
+      "index": 132,
+      "case": 44,
+      "state_hash": "c3eb37e459865f167c293ea11af9c82bd53017996f277c63525d9fd7b0f9c889",
+      "state_file": "frame-0132-state.npz"
+    },
+    {
+      "index": 199,
+      "case": 67,
+      "state_hash": "39dbc15ed503768a1b1e271972e1ec071c3916e28dc894f88455bef02788736f",
+      "state_file": "frame-0199-state.npz"
+    },
+    {
+      "index": 241,
+      "case": 72,
+      "state_hash": "2ce05694b6565b5fafceba2a89940470026ad01e064949eef886628cf30f1652",
+      "state_file": "frame-0241-state.npz"
+    },
+    {
+      "index": 284,
+      "case": 72,
+      "state_hash": "bf67cbc1c90f8a75386f33665dc5542ee66a3cd22f308a01ea0bc72b7f0ad4f3",
+      "state_file": "frame-0284-state.npz"
+    }
+  ],
+  "harness_sha256": "929be64e49bdedd0ed7dfa2905f707d5d1d27b6f7923326a9964846019b39c7a",
+  "scope": "Saved States; no rollouts or setup timed; equal batch and output destination; single CPU thread.",
+  "source_batch_method": "Repeated upstream render, cycling the same saved poses; no cached images.",
+  "corpus": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-cpu-6754925_31/results",
+  "corpus_sha256": "5e63106e86ad1e3fa492e4ef79a251cde4827f7050b9d9027da3fadea5de8f5c",
+  "error": "Traceback (most recent call last):\n  File \"/oscar/scratch/sboughan/se-semantic-recovery/renderer-paired-df80c9c5-20260929-full/profile_all.py\", line 240, in main\n    owner, fn, capture = source_instance(row, f, recipe, state, env)\n                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/se-semantic-recovery/renderer-paired-df80c9c5-20260929-full/profile_all.py\", line 71, in source_instance\n    adapter.set_state(state)\n  File \"/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/stable_envs/_adapters/rocket.py\", line 66, in set_state\n    staged.append(env.reconstruct(row))\n                  ^^^^^^^^^^^^^^^^^^^^\n  File \"/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/stable_envs/_adapters/rocket_replay.py\", line 322, in reconstruct\n    raise ValueError(\"Rocket replay mismatch: \" + \", \".join(mismatch))\nValueError: Rocket replay mismatch: current/wrapper/state, current/wrapper/ang_vel, current/wrapper/lin_vel, current/wrapper/ground_lin_vel, current/wrapper/previous_ang_vel, current/wrapper/previous_lin_vel, current/wrapper/previous_ground_lin_vel, current/drone/state\n"
+}

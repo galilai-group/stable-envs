@@ -1,0 +1,29 @@
+## SLURM PROLOG ###############################################################
+##    Job ID : 6845526
+##  Job Name : se-pusht-saved
+##  Nodelist : gpu2110
+##      CPUs : 
+##  Mem/Node : 24576 MB
+## Directory : /oscar/scratch/sboughan/se-semantic-recovery/pusht-saved-rendering-v3-20260930
+##   Job Started : Wed Sep 30 10:10:31 AM EDT 2026
+###############################################################################
+/oscar/scratch/sboughan/se-semantic-recovery/render-rerun-df80c9c5-20260928T021357Z/run-6750648_2/oracle/stable_worldmodel/envs/__init__.py:215: UserWarning: ale-py not found; ALE/* envs are unavailable. Install with: pip install 'stable-worldmodel[env]' or pip install ale-py.
+  from stable_worldmodel.envs import ale  # noqa: F401
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+Users of this version of Gym should be able to simply replace 'import gym' with 'import gymnasium as gym' in the vast majority of cases.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages/gymnasium/spaces/box.py:415: UserWarning: [33mWARN: Casting input x to numpy array.[0m
+  gym.logger.warn("Casting input x to numpy array.")
+swm/PushT-Discrete-v1 cuda 64 cpu 14486.289458617372
+swm/PushT-Discrete-v1 cuda 64 cuda 18810.409546282845
+swm/PushT-Discrete-v1 cuda 128 cpu 23792.385019473957
+swm/PushT-Discrete-v1 cuda 128 cuda 33163.50807308188
+swm/PushT-Discrete-v1 cuda 256 cpu 28288.73661495912
+swm/PushT-Discrete-v1 cuda 256 cuda 62111.29533071752
+swm/PushT-Discrete-v1 cuda 512 cpu 27853.062690988056
+swm/PushT-Discrete-v1 cuda 512 cuda 104662.03209132394
+swm/PushT-Discrete-v1 cuda 1024 cpu 31547.814193761234
+swm/PushT-Discrete-v1 cuda 1024 cuda 158447.90375280145
+swm/PushT-Discrete-v1 cuda 2048 cpu 34034.617545837704
+swm/PushT-Discrete-v1 cuda 2048 cuda 244144.95738992695

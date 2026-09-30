@@ -165,8 +165,17 @@ DEFAULT_VARIATION_PATHS = {
 #                                          plate. Its texture and GL context are MUTATED per bake,
 #                                          so `_apply_floor` writes the floor it wants on every
 #                                          bake rather than trusting what the last bake left.
-_CTX_CACHE = _RES.BoundedCache(4, name="ogbench.ctx", on_evict=MW.release_cached_ctx)
-_CTX_CACHE_MAX = 4
+from .context_cache import ContextCache, allocation_bytes
+
+
+def _release_context(context):
+    # A previous compositor may still have queued reads of the Warp buffers.
+    torch.cuda.synchronize(context.rc.rgb_data.device.ordinal)
+    context.wp.synchronize_device(context.rc.rgb_data.device)
+    MW.release_cached_ctx(context)
+
+
+_CTX_CACHE = ContextCache(on_evict=_release_context, memory_info=torch.cuda.mem_get_info)
 _PLATE_CACHE_MAX = 8
 _PLATE_CACHE = _RES.BoundedCache(_PLATE_CACHE_MAX, name="ogbench.plate")
 _BUNDLE_CACHE: dict = {}
@@ -544,14 +553,29 @@ def _frame(c: _Ctx) -> None:
 
 
 def _context(cell: str, res: int, nworld: int) -> _Ctx:
+    import warp as wp
+
+    key = (torch.cuda.current_device(), cell, int(res), int(nworld))
+    hit = _CTX_CACHE.get(key)
+    if hit is not None:
+        return hit
+    _CTX_CACHE.prepare(key)
+    free_before, _ = torch.cuda.mem_get_info()
+    c = _build_context(cell, res, nworld)
+    wp.synchronize()
+    free_after, _ = torch.cuda.mem_get_info()
+    try:
+        return _CTX_CACHE.put(key, c, max(allocation_bytes(c), free_before - free_after))
+    except BaseException:
+        MW.release_cached_ctx(c)
+        raise
+
+
+def _build_context(cell: str, res: int, nworld: int) -> _Ctx:
     import mujoco
     import mujoco_warp as mjw
     import warp as wp
 
-    key = (cell, int(res), int(nworld))
-    hit = _CTX_CACHE.get(key)
-    if hit is not None:
-        return hit
     b = _bundle(cell)
     # A DEEP COPY, and this is not tidiness. `_bundle.model` is the reference env's OWN MjModel -- the
     # object `reference_render` and `_bake_plate` render the reference through. `prepare_model`
@@ -618,7 +642,6 @@ def _context(cell: str, res: int, nworld: int) -> _Ctx:
             _frame(c)
         c.graph = cap.graph
     c.button_tables = _ctx_button_tables(b, m, res, device="cuda")
-    _CTX_CACHE.put(key, c)
     return c
 
 

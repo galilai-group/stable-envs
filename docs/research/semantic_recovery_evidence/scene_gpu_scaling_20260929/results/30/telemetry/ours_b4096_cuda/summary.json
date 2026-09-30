@@ -1,0 +1,125 @@
+{
+  "label": "ours_b4096_cuda",
+  "status": "COMPLETE",
+  "error": null,
+  "host": "gpu2106.oscar.ccv.brown.edu",
+  "pid": 807751,
+  "gpu_uuid": "GPU-7bbfe8a4-3bcc-b7d5-8d04-2d5a0fdb732a",
+  "gpu_name": "NVIDIA GeForce RTX 3090",
+  "pci_bus_id": "00000000:E1:00.0",
+  "started_utc": "2026-09-29T17:54:33.048517+00:00",
+  "ended_utc": "2026-09-29T17:54:47.868526+00:00",
+  "started_monotonic_ns": 13104968065638915,
+  "ended_monotonic_ns": 13104982885643604,
+  "phase_seconds": 14.820004689,
+  "render_calls": 5,
+  "process_cpu_seconds": 14.782122926,
+  "process_cpu_duty_percent": 99.74438764497748,
+  "poll_interval_ms": 200,
+  "edge_exclusion_seconds": 1,
+  "sample_count_total": 72,
+  "sample_count_retained": 62,
+  "metrics": {
+    "gpu_busy_percent": {
+      "count": 62,
+      "mean": 37.32258064516129,
+      "sd": 0.7191569187024551,
+      "p95": 38.0,
+      "min": 36.0,
+      "max": 38.0
+    },
+    "memory_busy_percent": {
+      "count": 62,
+      "mean": 11.0,
+      "sd": 0.0,
+      "p95": 11.0,
+      "min": 11.0,
+      "max": 11.0
+    },
+    "vram_used_mib": {
+      "count": 62,
+      "mean": 4486.0,
+      "sd": 0.0,
+      "p95": 4486.0,
+      "min": 4486.0,
+      "max": 4486.0
+    },
+    "vram_total_mib": {
+      "count": 62,
+      "mean": 24576.0,
+      "sd": 0.0,
+      "p95": 24576.0,
+      "min": 24576.0,
+      "max": 24576.0
+    },
+    "power_watts": {
+      "count": 62,
+      "mean": 157.755,
+      "sd": 1.299217608194494,
+      "p95": 159.63,
+      "min": 151.97,
+      "max": 159.92
+    },
+    "power_limit_watts": {
+      "count": 62,
+      "mean": 350.0,
+      "sd": 0.0,
+      "p95": 350.0,
+      "min": 350.0,
+      "max": 350.0
+    },
+    "temperature_c": {
+      "count": 62,
+      "mean": 50.0,
+      "sd": 0.0,
+      "p95": 50.0,
+      "min": 50.0,
+      "max": 50.0
+    },
+    "graphics_clock_mhz": {
+      "count": 62,
+      "mean": 1697.4193548387098,
+      "sd": 5.562015164641096,
+      "p95": 1710.0,
+      "min": 1695.0,
+      "max": 1710.0
+    },
+    "sm_clock_mhz": {
+      "count": 62,
+      "mean": 1697.4193548387098,
+      "sd": 5.562015164641096,
+      "p95": 1710.0,
+      "min": 1695.0,
+      "max": 1710.0
+    },
+    "memory_clock_mhz": {
+      "count": 62,
+      "mean": 9501.0,
+      "sd": 0.0,
+      "p95": 9501.0,
+      "min": 9501.0,
+      "max": 9501.0
+    }
+  },
+  "possible_cross_process_contamination": true,
+  "other_gpu_pids": [
+    157494
+  ],
+  "process_snapshot_count": 9,
+  "process_visibility_complete": true,
+  "process_attribution_limit": "Device-wide counters. Process lists sampled every 2 s can miss short-lived competitors; absence of another PID is not proof of exclusive execution.",
+  "sampler_command": [
+    "/usr/bin/nvidia-smi",
+    "--id=GPU-7bbfe8a4-3bcc-b7d5-8d04-2d5a0fdb732a",
+    "--query-gpu=timestamp,uuid,pci.bus_id,name,utilization.gpu,utilization.memory,memory.used,memory.total,power.draw,power.limit,temperature.gpu,clocks.current.graphics,clocks.current.sm,clocks.current.memory,pstate",
+    "--format=csv,noheader,nounits",
+    "--loop-ms=200"
+  ],
+  "sampler_returncode": 0,
+  "parse_errors": [],
+  "interpretation": "GPU busy% is time activity; memory busy% is time device memory was read/written, not bandwidth saturation. Neither measures SM occupancy, FLOPs, MFU, or separate graphics/compute/copy-engine saturation. Polls can repeat the same hardware sampling window. Phase timings include telemetry overhead; use independent uninstrumented paired timings for FPS.",
+  "sources": [
+    "https://docs.nvidia.com/deploy/nvidia-smi/index.html#utilization",
+    "https://docs.nvidia.com/nsight-systems/UserGuide/index.html#gpu-metrics"
+  ]
+}

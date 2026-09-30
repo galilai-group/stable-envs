@@ -1,0 +1,9 @@
+## SLURM PROLOG ###############################################################
+##    Job ID : 6851339
+##  Job Name : se-structural-gpu
+##  Nodelist : gpu2605
+##      CPUs : 
+##  Mem/Node : 32768 MB
+## Directory : /oscar/home/sboughan
+##   Job Started : Wed Sep 30 12:26:57 PM EDT 2026
+###############################################################################

@@ -1,0 +1,1329 @@
+{
+  "scope": "Separate instrumented calls; not timing samples. Python cumulative times overlap; CUDA operator times are not disjoint wall times.",
+  "python_functions": [
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/renderer-profiles-df80c9c5-20260928/profile_all.py",
+      "line": 299,
+      "function": "<lambda>",
+      "primitive_calls": 3,
+      "calls": 3,
+      "self_ms": 0.005609,
+      "cumulative_ms": 137.291016
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/renderer-profiles-df80c9c5-20260928/profile_all.py",
+      "line": 283,
+      "function": "one",
+      "primitive_calls": 3,
+      "calls": 3,
+      "self_ms": 0.008772,
+      "cumulative_ms": 137.285407
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/stable_envs/envs/craftax_semantics.py",
+      "line": 123,
+      "function": "to_render_state",
+      "primitive_calls": 3,
+      "calls": 3,
+      "self_ms": 0.029373,
+      "cumulative_ms": 137.276635
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/stable_envs/_adapters/craftax_render.py",
+      "line": 87,
+      "function": "project",
+      "primitive_calls": 3,
+      "calls": 3,
+      "self_ms": 0.676674,
+      "cumulative_ms": 137.23139700000002
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/stable_envs/_adapters/craftax.py",
+      "line": 217,
+      "function": "validate",
+      "primitive_calls": 3,
+      "calls": 3,
+      "self_ms": 2.6580740000000005,
+      "cumulative_ms": 129.810185
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/stable_envs/_adapters/craftax.py",
+      "line": 60,
+      "function": "check_profile",
+      "primitive_calls": 3,
+      "calls": 3,
+      "self_ms": 0.056100000000000004,
+      "cumulative_ms": 61.18043600000001
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/importlib/metadata/__init__.py",
+      "line": 882,
+      "function": "version",
+      "primitive_calls": 30,
+      "calls": 30,
+      "self_ms": 0.030171000000000003,
+      "cumulative_ms": 61.112307
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/importlib/metadata/__init__.py",
+      "line": 464,
+      "function": "version",
+      "primitive_calls": 30,
+      "calls": 30,
+      "self_ms": 0.135745,
+      "cumulative_ms": 52.73193700000001
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/importlib/metadata/__init__.py",
+      "line": 436,
+      "function": "metadata",
+      "primitive_calls": 30,
+      "calls": 30,
+      "self_ms": 0.168646,
+      "cumulative_ms": 52.41336100000001
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/stable_envs/_adapters/craftax.py",
+      "line": 42,
+      "function": "decode",
+      "primitive_calls": 3,
+      "calls": 288,
+      "self_ms": 2.260026,
+      "cumulative_ms": 51.925332000000004
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/jax/_src/numpy/array_constructors.py",
+      "line": 373,
+      "function": "asarray",
+      "primitive_calls": 252,
+      "calls": 252,
+      "self_ms": 0.322145,
+      "cumulative_ms": 44.21546000000001
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/jax/_src/numpy/array_constructors.py",
+      "line": 106,
+      "function": "array",
+      "primitive_calls": 252,
+      "calls": 252,
+      "self_ms": 0.5804860000000001,
+      "cumulative_ms": 43.893315
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/jax/_src/lax/lax.py",
+      "line": 1596,
+      "function": "stage",
+      "primitive_calls": 252,
+      "calls": 252,
+      "self_ms": 0.689247,
+      "cumulative_ms": 43.120391
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/jax/_src/core.py",
+      "line": 627,
+      "function": "bind",
+      "primitive_calls": 252,
+      "calls": 252,
+      "self_ms": 1.745057,
+      "cumulative_ms": 42.431144
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/jax/_src/lax/lax.py",
+      "line": 5310,
+      "function": "_stage_bind_with_trace",
+      "primitive_calls": 252,
+      "calls": 252,
+      "self_ms": 0.13185200000000002,
+      "cumulative_ms": 34.16429300000001
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/jax/_src/core.py",
+      "line": 1207,
+      "function": "stage_value",
+      "primitive_calls": 252,
+      "calls": 252,
+      "self_ms": 0.247125,
+      "cumulative_ms": 34.032441000000006
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/jax/_src/core.py",
+      "line": 1212,
+      "function": "process_primitive",
+      "primitive_calls": 252,
+      "calls": 252,
+      "self_ms": 0.421955,
+      "cumulative_ms": 33.606876
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/email/__init__.py",
+      "line": 31,
+      "function": "message_from_string",
+      "primitive_calls": 30,
+      "calls": 30,
+      "self_ms": 0.10523700000000001,
+      "cumulative_ms": 33.225993
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/email/parser.py",
+      "line": 56,
+      "function": "parsestr",
+      "primitive_calls": 30,
+      "calls": 30,
+      "self_ms": 0.398409,
+      "cumulative_ms": 33.115168
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/jax/_src/lax/lax.py",
+      "line": 5297,
+      "function": "_stage_impl",
+      "primitive_calls": 252,
+      "calls": 252,
+      "self_ms": 0.369651,
+      "cumulative_ms": 32.734447
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/email/parser.py",
+      "line": 41,
+      "function": "parse",
+      "primitive_calls": 30,
+      "calls": 30,
+      "self_ms": 0.158016,
+      "cumulative_ms": 32.716759
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/jax/_src/dispatch.py",
+      "line": 82,
+      "function": "apply_primitive",
+      "primitive_calls": 252,
+      "calls": 252,
+      "self_ms": 29.823525000000004,
+      "cumulative_ms": 32.275116
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/email/feedparser.py",
+      "line": 171,
+      "function": "feed",
+      "primitive_calls": 90,
+      "calls": 90,
+      "self_ms": 0.10603000000000001,
+      "cumulative_ms": 30.668343
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/email/feedparser.py",
+      "line": 176,
+      "function": "_call_parse",
+      "primitive_calls": 120,
+      "calls": 120,
+      "self_ms": 0.31203000000000003,
+      "cumulative_ms": 28.934916
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/email/feedparser.py",
+      "line": 216,
+      "function": "_parsegen",
+      "primitive_calls": 120,
+      "calls": 120,
+      "self_ms": 5.222428000000001,
+      "cumulative_ms": 28.622886
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/importlib/metadata/__init__.py",
+      "line": 811,
+      "function": "read_text",
+      "primitive_calls": 30,
+      "calls": 30,
+      "self_ms": 0.171081,
+      "cumulative_ms": 10.792956000000002
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/pathlib.py",
+      "line": 1022,
+      "function": "read_text",
+      "primitive_calls": 30,
+      "calls": 30,
+      "self_ms": 0.085782,
+      "cumulative_ms": 10.317563
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/email/feedparser.py",
+      "line": 127,
+      "function": "__next__",
+      "primitive_calls": 12087,
+      "calls": 12087,
+      "self_ms": 2.645319,
+      "cumulative_ms": 9.112763000000001
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method _io.open>",
+      "primitive_calls": 60,
+      "calls": 60,
+      "self_ms": 8.180994,
+      "cumulative_ms": 9.081803
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/pathlib.py",
+      "line": 1005,
+      "function": "open",
+      "primitive_calls": 30,
+      "calls": 30,
+      "self_ms": 0.024591000000000002,
+      "cumulative_ms": 8.736396000000001
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/email/feedparser.py",
+      "line": 469,
+      "function": "_parse_headers",
+      "primitive_calls": 30,
+      "calls": 30,
+      "self_ms": 3.0004530000000003,
+      "cumulative_ms": 8.46832
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/importlib/metadata/__init__.py",
+      "line": 856,
+      "function": "distribution",
+      "primitive_calls": 30,
+      "calls": 30,
+      "self_ms": 0.027757,
+      "cumulative_ms": 8.350199000000002
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/importlib/metadata/__init__.py",
+      "line": 383,
+      "function": "from_name",
+      "primitive_calls": 30,
+      "calls": 30,
+      "self_ms": 0.181981,
+      "cumulative_ms": 8.322442
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/importlib/metadata/_adapters.py",
+      "line": 46,
+      "function": "__init__",
+      "primitive_calls": 30,
+      "calls": 30,
+      "self_ms": 0.034893,
+      "cumulative_ms": 8.084164000000001
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/importlib/metadata/_adapters.py",
+      "line": 63,
+      "function": "_repair_headers",
+      "primitive_calls": 30,
+      "calls": 30,
+      "self_ms": 0.55378,
+      "cumulative_ms": 8.049271000000001
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method builtins.next>",
+      "primitive_calls": 30,
+      "calls": 30,
+      "self_ms": 0.20802600000000002,
+      "cumulative_ms": 7.881551000000001
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/email/feedparser.py",
+      "line": 77,
+      "function": "readline",
+      "primitive_calls": 12087,
+      "calls": 12087,
+      "self_ms": 5.070317,
+      "cumulative_ms": 6.467444
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/importlib/metadata/_adapters.py",
+      "line": 64,
+      "function": "redent",
+      "primitive_calls": 1758,
+      "calls": 1758,
+      "self_ms": 0.24437699999999998,
+      "cumulative_ms": 6.239193
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/textwrap.py",
+      "line": 419,
+      "function": "dedent",
+      "primitive_calls": 3,
+      "calls": 3,
+      "self_ms": 0.307964,
+      "cumulative_ms": 5.994816
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/renderer-profiles-df80c9c5-20260928/profile_all.py",
+      "line": 26,
+      "function": "synchronize",
+      "primitive_calls": 3,
+      "calls": 3,
+      "self_ms": 0.004466,
+      "cumulative_ms": 5.732545
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/torch/cuda/__init__.py",
+      "line": 1271,
+      "function": "synchronize",
+      "primitive_calls": 3,
+      "calls": 3,
+      "self_ms": 0.017726000000000002,
+      "cumulative_ms": 5.728079
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/importlib/metadata/__init__.py",
+      "line": 794,
+      "function": "<genexpr>",
+      "primitive_calls": 240,
+      "calls": 240,
+      "self_ms": 0.244147,
+      "cumulative_ms": 5.692425
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method torch._C._cuda_synchronize>",
+      "primitive_calls": 3,
+      "calls": 3,
+      "self_ms": 5.602701000000001,
+      "cumulative_ms": 5.602701000000001
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/importlib/metadata/__init__.py",
+      "line": 692,
+      "function": "search",
+      "primitive_calls": 210,
+      "calls": 210,
+      "self_ms": 0.23381900000000003,
+      "cumulative_ms": 5.417464000000001
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method numpy.asarray>",
+      "primitive_calls": 1527,
+      "calls": 1782,
+      "self_ms": 2.287815,
+      "cumulative_ms": 4.503316
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'cpu' of 'torch._C.TensorBase' objects>",
+      "primitive_calls": 312,
+      "calls": 312,
+      "self_ms": 4.367213,
+      "cumulative_ms": 4.367213
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/tensordict/base.py",
+      "line": 657,
+      "function": "__getitem__",
+      "primitive_calls": 483,
+      "calls": 483,
+      "self_ms": 0.38940100000000005,
+      "cumulative_ms": 4.028115000000001
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/email/_policybase.py",
+      "line": 301,
+      "function": "header_source_parse",
+      "primitive_calls": 1758,
+      "calls": 1758,
+      "self_ms": 1.9908680000000003,
+      "cumulative_ms": 3.520254
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'sub' of 're.Pattern' objects>",
+      "primitive_calls": 36,
+      "calls": 36,
+      "self_ms": 3.5060750000000005,
+      "cumulative_ms": 3.5060750000000005
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/jax/_src/core.py",
+      "line": 628,
+      "function": "<genexpr>",
+      "primitive_calls": 504,
+      "calls": 504,
+      "self_ms": 0.19123400000000002,
+      "cumulative_ms": 3.4530890000000003
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/jax/_src/core.py",
+      "line": 2094,
+      "function": "_typeof_with_argument_info",
+      "primitive_calls": 252,
+      "calls": 252,
+      "self_ms": 0.108408,
+      "cumulative_ms": 3.261855
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/jax/_src/core.py",
+      "line": 1851,
+      "function": "typeof",
+      "primitive_calls": 252,
+      "calls": 252,
+      "self_ms": 0.23192200000000002,
+      "cumulative_ms": 3.1534470000000003
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/tensordict/_td.py",
+      "line": 259,
+      "function": "__init__",
+      "primitive_calls": 3,
+      "calls": 3,
+      "self_ms": 0.246922,
+      "cumulative_ms": 3.0337490000000003
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/jax/_src/core.py",
+      "line": 2391,
+      "function": "__new__",
+      "primitive_calls": 504,
+      "calls": 504,
+      "self_ms": 1.5387490000000001,
+      "cumulative_ms": 3.0311580000000005
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/tensordict/base.py",
+      "line": 8567,
+      "function": "_get_tuple_maybe_non_tensor",
+      "primitive_calls": 483,
+      "calls": 483,
+      "self_ms": 0.414536,
+      "cumulative_ms": 2.870238
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/jax/_src/abstract_arrays.py",
+      "line": 64,
+      "function": "_make_shaped_array_for_numpy_array",
+      "primitive_calls": 252,
+      "calls": 252,
+      "self_ms": 0.654155,
+      "cumulative_ms": 2.835835
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/email/message.py",
+      "line": 494,
+      "function": "get",
+      "primitive_calls": 180,
+      "calls": 180,
+      "self_ms": 1.4683670000000002,
+      "cumulative_ms": 2.7687790000000003
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/tensordict/base.py",
+      "line": 8137,
+      "function": "set",
+      "primitive_calls": 174,
+      "calls": 174,
+      "self_ms": 0.10691600000000001,
+      "cumulative_ms": 2.635459
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'append' of 'list' objects>",
+      "primitive_calls": 16701,
+      "calls": 16701,
+      "self_ms": 2.497837,
+      "cumulative_ms": 2.497837
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/jax/_src/core.py",
+      "line": 630,
+      "function": "<genexpr>",
+      "primitive_calls": 504,
+      "calls": 504,
+      "self_ms": 0.178825,
+      "cumulative_ms": 2.4727850000000005
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/jax/_src/array.py",
+      "line": 409,
+      "function": "__array__",
+      "primitive_calls": 255,
+      "calls": 255,
+      "self_ms": 0.41802300000000003,
+      "cumulative_ms": 2.430531
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/importlib/metadata/__init__.py",
+      "line": 695,
+      "function": "mtime",
+      "primitive_calls": 210,
+      "calls": 210,
+      "self_ms": 0.49176700000000007,
+      "cumulative_ms": 2.3770990000000003
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/tensordict/_td.py",
+      "line": 2661,
+      "function": "_set_tuple",
+      "primitive_calls": 174,
+      "calls": 441,
+      "self_ms": 0.435051,
+      "cumulative_ms": 2.317455
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/email/feedparser.py",
+      "line": 100,
+      "function": "push",
+      "primitive_calls": 90,
+      "calls": 90,
+      "self_ms": 0.289542,
+      "cumulative_ms": 2.301123
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/jax/_src/core.py",
+      "line": 2111,
+      "function": "canonicalize_value",
+      "primitive_calls": 252,
+      "calls": 252,
+      "self_ms": 0.28376,
+      "cumulative_ms": 2.29396
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/email/message.py",
+      "line": 596,
+      "function": "get_content_type",
+      "primitive_calls": 120,
+      "calls": 120,
+      "self_ms": 0.114516,
+      "cumulative_ms": 2.246812
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/stable_envs/_adapters/craftax.py",
+      "line": 253,
+      "function": "validate_engine",
+      "primitive_calls": 3,
+      "calls": 3,
+      "self_ms": 0.758007,
+      "cumulative_ms": 2.150418
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'findall' of 're.Pattern' objects>",
+      "primitive_calls": 3,
+      "calls": 3,
+      "self_ms": 2.0273120000000002,
+      "cumulative_ms": 2.0273120000000002
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/tensordict/_td.py",
+      "line": 5005,
+      "function": "__iter__",
+      "primitive_calls": 315,
+      "calls": 315,
+      "self_ms": 0.071325,
+      "cumulative_ms": 1.9491580000000002
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/re/__init__.py",
+      "line": 179,
+      "function": "sub",
+      "primitive_calls": 33,
+      "calls": 33,
+      "self_ms": 0.036739,
+      "cumulative_ms": 1.923788
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/jax/_src/core.py",
+      "line": 2104,
+      "function": "canonicalize_value_dtype",
+      "primitive_calls": 252,
+      "calls": 252,
+      "self_ms": 0.21075100000000002,
+      "cumulative_ms": 1.9073800000000003
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/tensordict/_td.py",
+      "line": 5006,
+      "function": "_iter",
+      "primitive_calls": 315,
+      "calls": 315,
+      "self_ms": 0.069986,
+      "cumulative_ms": 1.877833
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/importlib/metadata/__init__.py",
+      "line": 701,
+      "function": "lookup",
+      "primitive_calls": 30,
+      "calls": 30,
+      "self_ms": 0.034444,
+      "cumulative_ms": 1.8769090000000002
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/importlib/metadata/__init__.py",
+      "line": 707,
+      "function": "__init__",
+      "primitive_calls": 30,
+      "calls": 30,
+      "self_ms": 0.12572400000000003,
+      "cumulative_ms": 1.8424650000000002
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'match' of 're.Pattern' objects>",
+      "primitive_calls": 4731,
+      "calls": 4731,
+      "self_ms": 1.808235,
+      "cumulative_ms": 1.808235
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/tensordict/_td.py",
+      "line": 5017,
+      "function": "<genexpr>",
+      "primitive_calls": 315,
+      "calls": 315,
+      "self_ms": 0.11946700000000002,
+      "cumulative_ms": 1.807847
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/jax/_src/profiler.py",
+      "line": 424,
+      "function": "wrapper",
+      "primitive_calls": 255,
+      "calls": 255,
+      "self_ms": 0.9197500000000001,
+      "cumulative_ms": 1.7974780000000001
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'clone' of 'torch._C.TensorBase' objects>",
+      "primitive_calls": 171,
+      "calls": 171,
+      "self_ms": 1.783878,
+      "cumulative_ms": 1.783878
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method posix.stat>",
+      "primitive_calls": 210,
+      "calls": 210,
+      "self_ms": 1.7702490000000002,
+      "cumulative_ms": 1.7702490000000002
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/email/message.py",
+      "line": 620,
+      "function": "get_content_maintype",
+      "primitive_calls": 90,
+      "calls": 90,
+      "self_ms": 0.065333,
+      "cumulative_ms": 1.749417
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/tensordict/_td.py",
+      "line": 2970,
+      "function": "_get_tuple",
+      "primitive_calls": 483,
+      "calls": 1188,
+      "self_ms": 1.370305,
+      "cumulative_ms": 1.7314630000000002
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/tensordict/_td.py",
+      "line": 5034,
+      "function": "_iter_helper",
+      "primitive_calls": 315,
+      "calls": 795,
+      "self_ms": 0.598427,
+      "cumulative_ms": 1.6577080000000002
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/jax/_src/dtypes.py",
+      "line": 379,
+      "function": "canonicalize_value",
+      "primitive_calls": 252,
+      "calls": 252,
+      "self_ms": 0.45518400000000003,
+      "cumulative_ms": 1.619104
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'readlines' of '_io._IOBase' objects>",
+      "primitive_calls": 120,
+      "calls": 120,
+      "self_ms": 1.6033750000000002,
+      "cumulative_ms": 1.6033750000000002
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/jax/_src/literals.py",
+      "line": 148,
+      "function": "weak_type",
+      "primitive_calls": 252,
+      "calls": 252,
+      "self_ms": 0.09080600000000001,
+      "cumulative_ms": 1.598522
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/importlib/metadata/__init__.py",
+      "line": 678,
+      "function": "children",
+      "primitive_calls": 30,
+      "calls": 30,
+      "self_ms": 0.19190300000000002,
+      "cumulative_ms": 1.5668140000000002
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method builtins.isinstance>",
+      "primitive_calls": 6474,
+      "calls": 6474,
+      "self_ms": 1.505184,
+      "cumulative_ms": 1.5628830000000002
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/jax/_src/literals.py",
+      "line": 138,
+      "function": "aval",
+      "primitive_calls": 252,
+      "calls": 252,
+      "self_ms": 0.327146,
+      "cumulative_ms": 1.507716
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/email/feedparser.py",
+      "line": 182,
+      "function": "close",
+      "primitive_calls": 30,
+      "calls": 30,
+      "self_ms": 0.051823,
+      "cumulative_ms": 1.4733530000000001
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'popleft' of 'collections.deque' objects>",
+      "primitive_calls": 11967,
+      "calls": 11967,
+      "self_ms": 1.3971270000000002,
+      "cumulative_ms": 1.3971270000000002
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'read' of '_io.TextIOWrapper' objects>",
+      "primitive_calls": 30,
+      "calls": 30,
+      "self_ms": 0.863355,
+      "cumulative_ms": 1.325915
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/tensordict/_td.py",
+      "line": 2600,
+      "function": "_set_str",
+      "primitive_calls": 198,
+      "calls": 198,
+      "self_ms": 0.14652,
+      "cumulative_ms": 1.321731
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'lower' of 'str' objects>",
+      "primitive_calls": 9183,
+      "calls": 9183,
+      "self_ms": 1.270723,
+      "cumulative_ms": 1.270723
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/email/message.py",
+      "line": 243,
+      "function": "get_payload",
+      "primitive_calls": 30,
+      "calls": 30,
+      "self_ms": 0.09692500000000001,
+      "cumulative_ms": 1.24364
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/jax/_src/abstract_arrays.py",
+      "line": 131,
+      "function": "_canonicalize_ndarray_dtype",
+      "primitive_calls": 252,
+      "calls": 252,
+      "self_ms": 0.317819,
+      "cumulative_ms": 1.102745
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/importlib/metadata/__init__.py",
+      "line": 347,
+      "function": "__new__",
+      "primitive_calls": 30,
+      "calls": 30,
+      "self_ms": 0.512021,
+      "cumulative_ms": 1.0848550000000001
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'reduce' of 'numpy.ufunc' objects>",
+      "primitive_calls": 600,
+      "calls": 600,
+      "self_ms": 1.0132800000000002,
+      "cumulative_ms": 1.0132800000000002
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/numpy/_core/fromnumeric.py",
+      "line": 2477,
+      "function": "any",
+      "primitive_calls": 234,
+      "calls": 234,
+      "self_ms": 0.16326600000000002,
+      "cumulative_ms": 1.00311
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/torch/compiler/__init__.py",
+      "line": 583,
+      "function": "is_compiling",
+      "primitive_calls": 2544,
+      "calls": 2544,
+      "self_ms": 0.8048190000000001,
+      "cumulative_ms": 0.9947110000000001
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/numpy/_core/fromnumeric.py",
+      "line": 89,
+      "function": "_wrapreduction_any_all",
+      "primitive_calls": 282,
+      "calls": 282,
+      "self_ms": 0.34852600000000006,
+      "cumulative_ms": 0.9802020000000001
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/jax/_src/core.py",
+      "line": 2047,
+      "function": "canonicalize_shape",
+      "primitive_calls": 504,
+      "calls": 504,
+      "self_ms": 0.660244,
+      "cumulative_ms": 0.9729420000000001
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/importlib/metadata/__init__.py",
+      "line": 728,
+      "function": "search",
+      "primitive_calls": 210,
+      "calls": 210,
+      "self_ms": 0.369595,
+      "cumulative_ms": 0.929637
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/tensordict/utils.py",
+      "line": 2855,
+      "function": "_unravel_key_to_tuple",
+      "primitive_calls": 657,
+      "calls": 657,
+      "self_ms": 0.281961,
+      "cumulative_ms": 0.922313
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/importlib/metadata/__init__.py",
+      "line": 415,
+      "function": "<genexpr>",
+      "primitive_calls": 60,
+      "calls": 60,
+      "self_ms": 0.055912,
+      "cumulative_ms": 0.917521
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method builtins.getattr>",
+      "primitive_calls": 4101,
+      "calls": 4101,
+      "self_ms": 0.9127700000000001,
+      "cumulative_ms": 0.9127700000000001
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'all' of 'numpy.ndarray' objects>",
+      "primitive_calls": 318,
+      "calls": 318,
+      "self_ms": 0.18879100000000001,
+      "cumulative_ms": 0.903329
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/tensordict/base.py",
+      "line": 18253,
+      "function": "_is_tensor_collection",
+      "primitive_calls": 945,
+      "calls": 945,
+      "self_ms": 0.41031900000000004,
+      "cumulative_ms": 0.899334
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/tensordict/base.py",
+      "line": 14570,
+      "function": "_validate_value_generic",
+      "primitive_calls": 174,
+      "calls": 174,
+      "self_ms": 0.37214500000000006,
+      "cumulative_ms": 0.8987350000000001
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/jax/_src/array.py",
+      "line": 606,
+      "function": "_value",
+      "primitive_calls": 255,
+      "calls": 255,
+      "self_ms": 0.67049,
+      "cumulative_ms": 0.8777280000000001
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/pathlib.py",
+      "line": 447,
+      "function": "__fspath__",
+      "primitive_calls": 30,
+      "calls": 30,
+      "self_ms": 0.025900000000000003,
+      "cumulative_ms": 0.868735
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'startswith' of 'str' objects>",
+      "primitive_calls": 4170,
+      "calls": 4170,
+      "self_ms": 0.848805,
+      "cumulative_ms": 0.848805
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/pathlib.py",
+      "line": 437,
+      "function": "__str__",
+      "primitive_calls": 30,
+      "calls": 30,
+      "self_ms": 0.108363,
+      "cumulative_ms": 0.842835
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/tensordict/utils.py",
+      "line": 2749,
+      "function": "_pass_through",
+      "primitive_calls": 522,
+      "calls": 522,
+      "self_ms": 0.19415600000000002,
+      "cumulative_ms": 0.7772370000000001
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/importlib/metadata/__init__.py",
+      "line": 685,
+      "function": "zip_children",
+      "primitive_calls": 30,
+      "calls": 30,
+      "self_ms": 0.033171000000000006,
+      "cumulative_ms": 0.7584650000000001
+    },
+    {
+      "file": "<frozen importlib._bootstrap_external>",
+      "line": 1548,
+      "function": "find_distributions",
+      "primitive_calls": 30,
+      "calls": 30,
+      "self_ms": 0.07667500000000001,
+      "cumulative_ms": 0.75658
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/email/message.py",
+      "line": 511,
+      "function": "set_raw",
+      "primitive_calls": 1758,
+      "calls": 1758,
+      "self_ms": 0.48508400000000007,
+      "cumulative_ms": 0.747267
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'astype' of 'numpy.ndarray' objects>",
+      "primitive_calls": 252,
+      "calls": 252,
+      "self_ms": 0.7329690000000001,
+      "cumulative_ms": 0.7329690000000001
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/zipfile/_path/__init__.py",
+      "line": 272,
+      "function": "__init__",
+      "primitive_calls": 30,
+      "calls": 30,
+      "self_ms": 0.025047000000000003,
+      "cumulative_ms": 0.725294
+    },
+    {
+      "file": "/oscar/scratch/sboughan/se-semantic-recovery/stable-envs-craftax-b6a8242f-gpu/run-6679082/venv/lib/python3.12/site-packages/numpy/_core/_methods.py",
+      "line": 67,
+      "function": "_all",
+      "primitive_calls": 318,
+      "calls": 318,
+      "self_ms": 0.095736,
+      "cumulative_ms": 0.714538
+    },
+    {
+      "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/zipfile/_path/__init__.py",
+      "line": 145,
+      "function": "make",
+      "primitive_calls": 30,
+      "calls": 30,
+      "self_ms": 0.04682,
+      "cumulative_ms": 0.7002470000000001
+    }
+  ],
+  "torch_operators": [
+    {
+      "name": "prepare_validate",
+      "calls": 1,
+      "cpu_total_us": 32232.725,
+      "cpu_self_us": 28832.104999999992,
+      "device_total_us": 170.97900000002664,
+      "device_self_us": 0.0,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::detach",
+      "calls": 208,
+      "cpu_total_us": 302.45999999999367,
+      "cpu_self_us": 165.87799999998606,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "detach",
+      "calls": 208,
+      "cpu_total_us": 136.5820000000076,
+      "cpu_self_us": 136.5820000000076,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::to",
+      "calls": 209,
+      "cpu_total_us": 2286.783999999994,
+      "cpu_self_us": 103.11099999998078,
+      "device_total_us": 113.60400000000845,
+      "device_self_us": 0.0,
+      "cpu_memory_bytes": 273444,
+      "device_memory_bytes": 512
+    },
+    {
+      "name": "aten::_to_copy",
+      "calls": 105,
+      "cpu_total_us": 2183.6730000000134,
+      "cpu_self_us": 309.1230000000105,
+      "device_total_us": 113.60400000000845,
+      "device_self_us": 0.0,
+      "cpu_memory_bytes": 273444,
+      "device_memory_bytes": 512
+    },
+    {
+      "name": "aten::empty_strided",
+      "calls": 162,
+      "cpu_total_us": 377.1140000000196,
+      "cpu_self_us": 377.1140000000196,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 273444,
+      "device_memory_bytes": 276992
+    },
+    {
+      "name": "aten::copy_",
+      "calls": 162,
+      "cpu_total_us": 2116.6360000000022,
+      "cpu_self_us": 566.6539999999968,
+      "device_total_us": 170.97900000002664,
+      "device_self_us": 170.97900000002664,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "Unrecognized",
+      "calls": 1,
+      "cpu_total_us": 135.39300000000003,
+      "cpu_self_us": 135.39300000000003,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "cudaStreamIsCapturing",
+      "calls": 105,
+      "cpu_total_us": 49.141999999998006,
+      "cpu_self_us": 49.141999999998006,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "cudaMemcpyAsync",
+      "calls": 162,
+      "cpu_total_us": 1263.3699999999826,
+      "cpu_self_us": 1263.3699999999826,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "prepare_validate",
+      "calls": 2,
+      "cpu_total_us": 0,
+      "cpu_self_us": 0,
+      "device_total_us": 32697.932,
+      "device_self_us": 32697.932,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "Memcpy DtoH (Device -> Pageable)",
+      "calls": 104,
+      "cpu_total_us": 0,
+      "cpu_self_us": 0,
+      "device_total_us": 113.22000000001026,
+      "device_self_us": 113.22000000001026,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "cudaStreamSynchronize",
+      "calls": 105,
+      "cpu_total_us": 102.07700000002478,
+      "cpu_self_us": 102.07700000002478,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::resolve_conj",
+      "calls": 104,
+      "cpu_total_us": 11.77799999999479,
+      "cpu_self_us": 11.77799999999479,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::resolve_neg",
+      "calls": 104,
+      "cpu_total_us": 8.286000000007334,
+      "cpu_self_us": 8.286000000007334,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "Memcpy HtoD (Pinned -> Device)",
+      "calls": 84,
+      "cpu_total_us": 0,
+      "cpu_self_us": 0,
+      "device_total_us": 47.969000000011874,
+      "device_self_us": 47.969000000011874,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "Memcpy DtoD (Device -> Device)",
+      "calls": 141,
+      "cpu_total_us": 0,
+      "cpu_self_us": 0,
+      "device_total_us": 141.53500000000713,
+      "device_self_us": 141.53500000000713,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "cuLaunchKernel",
+      "calls": 1,
+      "cpu_total_us": 12.798999999999069,
+      "cpu_self_us": 12.798999999999069,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "loop_or_fusion",
+      "calls": 1,
+      "cpu_total_us": 0,
+      "cpu_self_us": 0,
+      "device_total_us": 1.0240000000012515,
+      "device_self_us": 1.0240000000012515,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "Memcpy DtoH (Device -> Pinned)",
+      "calls": 1,
+      "cpu_total_us": 0,
+      "cpu_self_us": 0,
+      "device_total_us": 1.1200000000026193,
+      "device_self_us": 1.1200000000026193,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "aten::clone",
+      "calls": 57,
+      "cpu_total_us": 766.4850000000151,
+      "cpu_self_us": 147.28499999999622,
+      "device_total_us": 57.37500000001819,
+      "device_self_us": 0.0,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 276480
+    },
+    {
+      "name": "aten::lift_fresh",
+      "calls": 1,
+      "cpu_total_us": 2.6640000000006694,
+      "cpu_self_us": 2.6640000000006694,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "Memcpy HtoD (Pageable -> Device)",
+      "calls": 1,
+      "cpu_total_us": 0,
+      "cpu_self_us": 0,
+      "device_total_us": 0.38399999999819556,
+      "device_self_us": 0.38399999999819556,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    },
+    {
+      "name": "cudaDeviceSynchronize",
+      "calls": 2,
+      "cpu_total_us": 11.608000000000175,
+      "cpu_self_us": 11.608000000000175,
+      "device_total_us": 0,
+      "device_self_us": 0,
+      "cpu_memory_bytes": 0,
+      "device_memory_bytes": 0
+    }
+  ],
+  "cuda_kernel_events_observed": true,
+  "coverage_limit": "Torch trace can miss external OpenGL, Warp and JAX kernels; wall timing includes their completed rendering."
+}

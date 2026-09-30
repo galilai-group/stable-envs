@@ -13,6 +13,38 @@ from .ogbench_manipulation_compat import CompatibleCube, CompatibleScene
 STATIC = ("cube.size", "agent.color", "camera.angle_delta", "light.intensity")
 
 
+class _RenderScene(CompatibleScene):
+    """Resolve independent button geom colors into render-only materials.
+
+    MuJoCo honors each button's geom RGB override; MJWarp takes material RGB.
+    The original shared btn_red material therefore makes both buttons red even
+    when one or both state bits select white. Separate otherwise identical
+    materials preserve the source specular/shininess/texture parameters.
+    """
+
+    def modify_mjcf_model(self, model):
+        model = super().modify_mjcf_model(model)
+        for i in range(2):
+            geom = model.find("geom", f"btngeom_{i}")
+            name = f"se_button_{i}"
+            material = model.find("material", name)
+            if material is None:
+                attrs = {k: v for k, v in geom.material.get_attributes().items() if k != "name"}
+                material = model.asset.add("material", name=name, **attrs)
+            geom.material = material
+        return model
+
+    def _apply_button_states(self):
+        super()._apply_button_states()
+        for i, geoms in enumerate(self._button_geom_ids_list):
+            rgba = self.model.geom_rgba[geoms[0]]
+            # MuJoCo's exact compiler-default RGBA means "use material".
+            # Preserve that source behavior for a lock color of exactly 0.5.
+            if np.array_equal(rgba, [0.5, 0.5, 0.5, 1.0]):
+                rgba = self.model.material("btn_red").rgba
+            self.model.material(f"se_button_{i}").rgba[:] = rgba
+
+
 def signature(family):
     return np.frombuffer(
         hashlib.sha256(f"ogb_pixels_v1|{family}|ogbench=1.2.1|camera=front_pixels".encode()).digest(), np.uint8
@@ -122,7 +154,7 @@ def validate(family, state):
 
 def build_model(family, row):
     """Compile render-only assets/configuration. Never reset or step physics."""
-    cls = CompatibleCube if family == "Cube" else CompatibleScene
+    cls = CompatibleCube if family == "Cube" else _RenderScene
     env = cls(seed=0)
     try:
         for name in STATIC:

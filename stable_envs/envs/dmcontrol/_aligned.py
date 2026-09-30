@@ -6,7 +6,7 @@ import torch
 from tensordict import TensorDict
 
 from ..._adapters.dmcontrol_aligned import ALIGNED_FIELDS, CONFIG, DMCAlignedAdapter
-from ...spaces import Box, Dict
+from ...spaces import Box, Dict, Discrete
 
 
 class DMCAlignedSemantics:
@@ -30,22 +30,37 @@ class DMCAlignedSemantics:
         base = super().make_variation_space()
         extra = {}
         if self.DOMAIN in ("ball_in_cup", "quadruped"):
-            extra["gravity"] = Dict({
-                "x": Box(low=-5.0, high=5.0, shape=(1,), init_value=[0.0]),
-                "y": Box(low=-5.0, high=5.0, shape=(1,), init_value=[0.0]),
-                "z": Box(low=-20.0, high=0.0, shape=(1,), init_value=[-9.81]),
-            })
+            extra["gravity"] = Dict(
+                {
+                    "x": Box(low=-5.0, high=5.0, shape=(1,), init_value=[0.0]),
+                    "y": Box(low=-5.0, high=5.0, shape=(1,), init_value=[0.0]),
+                    "z": Box(low=-20.0, high=0.0, shape=(1,), init_value=[-9.81]),
+                }
+            )
         elif self.DOMAIN == "finger":
-            extra["agent_physics"] = Dict({
-                "proximal_density": Box(
-                    low=500.0, high=1500.0, shape=(1,), init_value=[1000.0]
-                )
-            })
+            base["visibility"]["target"] = Discrete(2, init_value=0)
+            extra["agent_physics"] = Dict(
+                {"proximal_density": Box(low=500.0, high=1500.0, shape=(1,), init_value=[1000.0])}
+            )
         else:
-            extra["agent_physics"] = Dict({
-                "upper_arm_density": Box(low=500.0, high=1500.0, shape=(1,), init_value=[1000.0])
-            })
+            extra["agent_physics"] = Dict(
+                {"upper_arm_density": Box(low=500.0, high=1500.0, shape=(1,), init_value=[1000.0])}
+            )
         return Dict({**dict(base.items()), **extra})
+
+    @classmethod
+    def _hideable(cls):
+        entries = super()._hideable()
+        if cls.DOMAIN != "finger":
+            return entries
+        # SWM changes the target MATERIAL's alpha. Both the target marker and
+        # the moving tip site wear it; hiding just the target leaves a red dot.
+        model = cls._model()
+        material = model.material("target").id
+        sites = tuple(i for i in range(model.nsite) if model.site_matid[i] == material)
+        return tuple(
+            (kind, name, sites if kind == "site" and name == "target" else ids) for kind, name, ids in entries
+        )
 
     def set_variation(self, variation=None, **overrides):
         result = super().set_variation(variation, **overrides)
@@ -80,19 +95,14 @@ class DMCAlignedSemantics:
             elif self.DOMAIN == "finger" and key == ("model", "target_site_xz"):
                 render_offset = offset
                 offset += width
-            elif self.DOMAIN == "manipulator" and key in (
-                ("model", "target_body_xz"), ("model", "target_body_qwqy")
-            ):
+            elif self.DOMAIN == "manipulator" and key in (("model", "target_body_xz"), ("model", "target_body_qwqy")):
                 render_offset = offset
                 offset += width
             layout.append((key if isinstance(key, tuple) else (key,), width, render_offset))
         return tuple(layout)
 
     def _layout_dtypes(self):
-        return {
-            key if isinstance(key, tuple) else (key,): dtype
-            for key, (_, dtype) in self._resume_fields.items()
-        }
+        return {key if isinstance(key, tuple) else (key,): dtype for key, (_, dtype) in self._resume_fields.items()}
 
     def _pack_render_state(self, state):
         rows = [state["qpos"]]

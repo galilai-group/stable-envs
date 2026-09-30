@@ -1,0 +1,722 @@
+/oscar/scratch/sboughan/se-semantic-recovery/ogb-renderer-294675f0-complete/run-6669909/profile/lib/python3.12/site-packages/gymnasium/spaces/box.py:236: UserWarning: [33mWARN: Box low's precision lowered by casting to float32, current low.dtype=float64[0m
+  gym.logger.warn(
+/oscar/scratch/sboughan/se-semantic-recovery/ogb-renderer-294675f0-complete/run-6669909/profile/lib/python3.12/site-packages/gymnasium/spaces/box.py:306: UserWarning: [33mWARN: Box high's precision lowered by casting to float32, current high.dtype=float64[0m
+  gym.logger.warn(
+/oscar/scratch/sboughan/se-semantic-recovery/render-rerun-df80c9c5-20260928T021357Z/run-6750648_2/oracle/stable_worldmodel/envs/__init__.py:215: UserWarning: ale-py not found; ALE/* envs are unavailable. Install with: pip install 'stable-worldmodel[env]' or pip install ale-py.
+  from stable_worldmodel.envs import ale  # noqa: F401
+/oscar/scratch/sboughan/se-semantic-recovery/ogb-renderer-294675f0-complete/run-6669909/profile/lib/python3.12/site-packages/gymnasium/spaces/box.py:424: UserWarning: [33mWARN: Casting input x to numpy array.[0m
+  gym.logger.warn("Casting input x to numpy array.")
+/oscar/scratch/sboughan/se-semantic-recovery/ogb-renderer-294675f0-complete/run-6669909/profile/lib/python3.12/site-packages/gymnasium/spaces/box.py:236: UserWarning: [33mWARN: Box low's precision lowered by casting to float32, current low.dtype=float64[0m
+  gym.logger.warn(
+/oscar/scratch/sboughan/se-semantic-recovery/ogb-renderer-294675f0-complete/run-6669909/profile/lib/python3.12/site-packages/gymnasium/spaces/box.py:306: UserWarning: [33mWARN: Box high's precision lowered by casting to float32, current high.dtype=float64[0m
+  gym.logger.warn(
+/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco_warp/_src/io.py:709: UserWarning: MULTICCD is enabled, but the scene contains CCD pairs without multicontact support: [('CAPSULE', 'CYLINDER'), ('CAPSULE', 'MESH'), ('CYLINDER', 'BOX'), ('CYLINDER', 'MESH')]. At most 1 contact will be generated for these pairs.
+  warnings.warn(
+Warp 1.17.0 initialized:
+   CUDA Toolkit 12.9, Driver 12.9
+   Devices:
+     "cpu"      : "x86_64"
+     "cuda:0"   : "NVIDIA GeForce RTX 3090" (24 GiB, sm_86, mempool enabled)
+   Kernel cache:
+     /oscar/scratch/sboughan/se-semantic-recovery/ogb-work-profile-20260929/job-28-6800851/cache-28/warp/1.17.0
+Module mujoco_warp._src.render_util f62a762 load on device 'cuda:0' took 648.93 ms  (compiled)
+Module mujoco_warp._src.io c728e4c load on device 'cuda:0' took 495.45 ms  (compiled)
+Module mujoco_warp._src.bvh 97a6eba load on device 'cuda:0' took 490.74 ms  (compiled)
+Module mujoco_warp._src.smooth d04e5a7 load on device 'cuda:0' took 1333.47 ms  (compiled)
+Module render__locals___render_megakernel_f8171d77 4ce68ff load on device 'cuda:0' took 711.16 ms  (compiled)
+Module render__locals___render_megakernel_4e4c3b8e fc72102 load on device 'cuda:0' took 460.42 ms  (compiled)
+swm/OGBCube-v0 cuda 256 cpu 0.10849349415104137
+swm/OGBCube-v0 cuda 256 cuda 0.10824237304614842
+Exception ignored in: <function Renderer.__del__ at 0x7f2db41aefc0>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 343, in __del__
+    self.close()
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 329, in close
+    self._gl_context.free()
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+    EGL.eglDestroyContext(EGL_DISPLAY, self._context)
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+    raise self._errorClass(
+OpenGL.raw.EGL._errors.EGLError: EGLError(
+	err = EGL_NOT_INITIALIZED,
+	baseOperation = eglDestroyContext,
+	cArguments = (
+		<OpenGL._opaque.EGLDisplay_pointer object at 0x7f2d55520b50>,
+		<OpenGL._opaque.EGLContext_pointer object at 0x7f2d55523450>,
+	),
+	result = 0
+)
+Exception ignored in: <function GLContext.__del__ at 0x7f2db41ae980>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 138, in __del__
+    self.free()
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+    EGL.eglDestroyContext(EGL_DISPLAY, self._context)
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+    raise self._errorClass(
+OpenGL.raw.EGL._errors.EGLError: EGLError(
+	err = EGL_NOT_INITIALIZED,
+	baseOperation = eglDestroyContext,
+	cArguments = (
+		<OpenGL._opaque.EGLDisplay_pointer object at 0x7f2d55520b50>,
+		<OpenGL._opaque.EGLContext_pointer object at 0x7f2d55523450>,
+	),
+	result = 0
+)
+Exception ignored in: <function Renderer.__del__ at 0x7f2db41aefc0>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 343, in __del__
+    self.close()
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 329, in close
+    self._gl_context.free()
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+    EGL.eglDestroyContext(EGL_DISPLAY, self._context)
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+    raise self._errorClass(
+OpenGL.raw.EGL._errors.EGLError: EGLError(
+	err = EGL_NOT_INITIALIZED,
+	baseOperation = eglDestroyContext,
+	cArguments = (
+		<OpenGL._opaque.EGLDisplay_pointer object at 0x7f2d55520b50>,
+		<OpenGL._opaque.EGLContext_pointer object at 0x7f2c81aeb050>,
+	),
+	result = 0
+)
+Exception ignored in: <function GLContext.__del__ at 0x7f2db41ae980>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 138, in __del__
+    self.free()
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+    EGL.eglDestroyContext(EGL_DISPLAY, self._context)
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+    raise self._errorClass(
+OpenGL.raw.EGL._errors.EGLError: EGLError(
+	err = EGL_NOT_INITIALIZED,
+	baseOperation = eglDestroyContext,
+	cArguments = (
+		<OpenGL._opaque.EGLDisplay_pointer object at 0x7f2d55520b50>,
+		<OpenGL._opaque.EGLContext_pointer object at 0x7f2c81aeb050>,
+	),
+	result = 0
+)
+Exception ignored in: <function Renderer.__del__ at 0x7f2db41aefc0>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 343, in __del__
+    self.close()
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 329, in close
+    self._gl_context.free()
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+    EGL.eglDestroyContext(EGL_DISPLAY, self._context)
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+    raise self._errorClass(
+OpenGL.raw.EGL._errors.EGLError: EGLError(
+	err = EGL_NOT_INITIALIZED,
+	baseOperation = eglDestroyContext,
+	cArguments = (
+		<OpenGL._opaque.EGLDisplay_pointer object at 0x7f2d55520b50>,
+		<OpenGL._opaque.EGLContext_pointer object at 0x7f2d554da5d0>,
+	),
+	result = 0
+)
+Exception ignored in: <function GLContext.__del__ at 0x7f2db41ae980>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 138, in __del__
+    self.free()
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+    EGL.eglDestroyContext(EGL_DISPLAY, self._context)
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+    raise self._errorClass(
+OpenGL.raw.EGL._errors.EGLError: EGLError(
+	err = EGL_NOT_INITIALIZED,
+	baseOperation = eglDestroyContext,
+	cArguments = (
+		<OpenGL._opaque.EGLDisplay_pointer object at 0x7f2d55520b50>,
+		<OpenGL._opaque.EGLContext_pointer object at 0x7f2d554da5d0>,
+	),
+	result = 0
+)
+Exception ignored in: <function Renderer.__del__ at 0x7f2db41aefc0>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 343, in __del__
+    self.close()
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 329, in close
+    self._gl_context.free()
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+    EGL.eglDestroyContext(EGL_DISPLAY, self._context)
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+    raise self._errorClass(
+OpenGL.raw.EGL._errors.EGLError: EGLError(
+	err = EGL_NOT_INITIALIZED,
+	baseOperation = eglDestroyContext,
+	cArguments = (
+		<OpenGL._opaque.EGLDisplay_pointer object at 0x7f2d55520b50>,
+		<OpenGL._opaque.EGLContext_pointer object at 0x7f2c803b4bd0>,
+	),
+	result = 0
+)
+Exception ignored in: <function GLContext.__del__ at 0x7f2db41ae980>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 138, in __del__
+    self.free()
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+    EGL.eglDestroyContext(EGL_DISPLAY, self._context)
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+    raise self._errorClass(
+OpenGL.raw.EGL._errors.EGLError: EGLError(
+	err = EGL_NOT_INITIALIZED,
+	baseOperation = eglDestroyContext,
+	cArguments = (
+		<OpenGL._opaque.EGLDisplay_pointer object at 0x7f2d55520b50>,
+		<OpenGL._opaque.EGLContext_pointer object at 0x7f2c803b4bd0>,
+	),
+	result = 0
+)
+Exception ignored in: <function Renderer.__del__ at 0x7f2db41aefc0>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 343, in __del__
+    self.close()
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 329, in close
+    self._gl_context.free()
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+    EGL.eglDestroyContext(EGL_DISPLAY, self._context)
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+    raise self._errorClass(
+OpenGL.raw.EGL._errors.EGLError: EGLError(
+	err = EGL_NOT_INITIALIZED,
+	baseOperation = eglDestroyContext,
+	cArguments = (
+		<OpenGL._opaque.EGLDisplay_pointer object at 0x7f2d55520b50>,
+		<OpenGL._opaque.EGLContext_pointer object at 0x7f2c6a974c50>,
+	),
+	result = 0
+)
+Exception ignored in: <function GLContext.__del__ at 0x7f2db41ae980>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 138, in __del__
+    self.free()
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+    EGL.eglDestroyContext(EGL_DISPLAY, self._context)
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+    raise self._errorClass(
+OpenGL.raw.EGL._errors.EGLError: EGLError(
+	err = EGL_NOT_INITIALIZED,
+	baseOperation = eglDestroyContext,
+	cArguments = (
+		<OpenGL._opaque.EGLDisplay_pointer object at 0x7f2d55520b50>,
+		<OpenGL._opaque.EGLContext_pointer object at 0x7f2c6a974c50>,
+	),
+	result = 0
+)
+Exception ignored in: <function Renderer.__del__ at 0x7f2db41aefc0>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 343, in __del__
+    self.close()
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 329, in close
+    self._gl_context.free()
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+    EGL.eglDestroyContext(EGL_DISPLAY, self._context)
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+    raise self._errorClass(
+OpenGL.raw.EGL._errors.EGLError: EGLError(
+	err = EGL_NOT_INITIALIZED,
+	baseOperation = eglDestroyContext,
+	cArguments = (
+		<OpenGL._opaque.EGLDisplay_pointer object at 0x7f2d55520b50>,
+		<OpenGL._opaque.EGLContext_pointer object at 0x7f2c6445d9d0>,
+	),
+	result = 0
+)
+Exception ignored in: <function GLContext.__del__ at 0x7f2db41ae980>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 138, in __del__
+    self.free()
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+    EGL.eglDestroyContext(EGL_DISPLAY, self._context)
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+    raise self._errorClass(
+OpenGL.raw.EGL._errors.EGLError: EGLError(
+	err = EGL_NOT_INITIALIZED,
+	baseOperation = eglDestroyContext,
+	cArguments = (
+		<OpenGL._opaque.EGLDisplay_pointer object at 0x7f2d55520b50>,
+		<OpenGL._opaque.EGLContext_pointer object at 0x7f2c6445d9d0>,
+	),
+	result = 0
+)
+Exception ignored in: <function Renderer.__del__ at 0x7f2db41aefc0>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 343, in __del__
+    self.close()
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 329, in close
+    self._gl_context.free()
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+    EGL.eglDestroyContext(EGL_DISPLAY, self._context)
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+    raise self._errorClass(
+OpenGL.raw.EGL._errors.EGLError: EGLError(
+	err = EGL_NOT_INITIALIZED,
+	baseOperation = eglDestroyContext,
+	cArguments = (
+		<OpenGL._opaque.EGLDisplay_pointer object at 0x7f2d55520b50>,
+		<OpenGL._opaque.EGLContext_pointer object at 0x7f2c53687f50>,
+	),
+	result = 0
+)
+Exception ignored in: <function GLContext.__del__ at 0x7f2db41ae980>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 138, in __del__
+    self.free()
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+    EGL.eglDestroyContext(EGL_DISPLAY, self._context)
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+    raise self._errorClass(
+OpenGL.raw.EGL._errors.EGLError: EGLError(
+	err = EGL_NOT_INITIALIZED,
+	baseOperation = eglDestroyContext,
+	cArguments = (
+		<OpenGL._opaque.EGLDisplay_pointer object at 0x7f2d55520b50>,
+		<OpenGL._opaque.EGLContext_pointer object at 0x7f2c53687f50>,
+	),
+	result = 0
+)
+Exception ignored in: <function Renderer.__del__ at 0x7f2db41aefc0>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 343, in __del__
+    self.close()
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 329, in close
+    self._gl_context.free()
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+    EGL.eglDestroyContext(EGL_DISPLAY, self._context)
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+    raise self._errorClass(
+OpenGL.raw.EGL._errors.EGLError: EGLError(
+	err = EGL_NOT_INITIALIZED,
+	baseOperation = eglDestroyContext,
+	cArguments = (
+		<OpenGL._opaque.EGLDisplay_pointer object at 0x7f2d55520b50>,
+		<OpenGL._opaque.EGLContext_pointer object at 0x7f2c461b3d50>,
+	),
+	result = 0
+)
+Exception ignored in: <function GLContext.__del__ at 0x7f2db41ae980>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 138, in __del__
+    self.free()
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+    EGL.eglDestroyContext(EGL_DISPLAY, self._context)
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+    raise self._errorClass(
+OpenGL.raw.EGL._errors.EGLError: EGLError(
+	err = EGL_NOT_INITIALIZED,
+	baseOperation = eglDestroyContext,
+	cArguments = (
+		<OpenGL._opaque.EGLDisplay_pointer object at 0x7f2d55520b50>,
+		<OpenGL._opaque.EGLContext_pointer object at 0x7f2c461b3d50>,
+	),
+	result = 0
+)
+Exception ignored in: <function Renderer.__del__ at 0x7f2db41aefc0>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 343, in __del__
+    self.close()
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 329, in close
+    self._gl_context.free()
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+    EGL.eglDestroyContext(EGL_DISPLAY, self._context)
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+    raise self._errorClass(
+OpenGL.raw.EGL._errors.EGLError: EGLError(
+	err = EGL_NOT_INITIALIZED,
+	baseOperation = eglDestroyContext,
+	cArguments = (
+		<OpenGL._opaque.EGLDisplay_pointer object at 0x7f2d55520b50>,
+		<OpenGL._opaque.EGLContext_pointer object at 0x7f2c33ed6b50>,
+	),
+	result = 0
+)
+Exception ignored in: <function GLContext.__del__ at 0x7f2db41ae980>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 138, in __del__
+    self.free()
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+    EGL.eglDestroyContext(EGL_DISPLAY, self._context)
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+    raise self._errorClass(
+OpenGL.raw.EGL._errors.EGLError: EGLError(
+	err = EGL_NOT_INITIALIZED,
+	baseOperation = eglDestroyContext,
+	cArguments = (
+		<OpenGL._opaque.EGLDisplay_pointer object at 0x7f2d55520b50>,
+		<OpenGL._opaque.EGLContext_pointer object at 0x7f2c33ed6b50>,
+	),
+	result = 0
+)
+Exception ignored in: <function Renderer.__del__ at 0x7f2db41aefc0>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 343, in __del__
+    self.close()
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 329, in close
+    self._gl_context.free()
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+    EGL.eglDestroyContext(EGL_DISPLAY, self._context)
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+    raise self._errorClass(
+OpenGL.raw.EGL._errors.EGLError: EGLError(
+	err = EGL_NOT_INITIALIZED,
+	baseOperation = eglDestroyContext,
+	cArguments = (
+		<OpenGL._opaque.EGLDisplay_pointer object at 0x7f2d55520b50>,
+		<OpenGL._opaque.EGLContext_pointer object at 0x7f2c26aadad0>,
+	),
+	result = 0
+)
+Exception ignored in: <function GLContext.__del__ at 0x7f2db41ae980>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 138, in __del__
+    self.free()
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+    EGL.eglDestroyContext(EGL_DISPLAY, self._context)
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+    raise self._errorClass(
+OpenGL.raw.EGL._errors.EGLError: EGLError(
+	err = EGL_NOT_INITIALIZED,
+	baseOperation = eglDestroyContext,
+	cArguments = (
+		<OpenGL._opaque.EGLDisplay_pointer object at 0x7f2d55520b50>,
+		<OpenGL._opaque.EGLContext_pointer object at 0x7f2c26aadad0>,
+	),
+	result = 0
+)
+Exception ignored in: <function Renderer.__del__ at 0x7f2db41aefc0>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 343, in __del__
+    self.close()
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 329, in close
+    self._gl_context.free()
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+    EGL.eglDestroyContext(EGL_DISPLAY, self._context)
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+    raise self._errorClass(
+OpenGL.raw.EGL._errors.EGLError: EGLError(
+	err = EGL_NOT_INITIALIZED,
+	baseOperation = eglDestroyContext,
+	cArguments = (
+		<OpenGL._opaque.EGLDisplay_pointer object at 0x7f2d55520b50>,
+		<OpenGL._opaque.EGLContext_pointer object at 0x7f2c2c69ded0>,
+	),
+	result = 0
+)
+Exception ignored in: <function GLContext.__del__ at 0x7f2db41ae980>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 138, in __del__
+    self.free()
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+    EGL.eglDestroyContext(EGL_DISPLAY, self._context)
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+    raise self._errorClass(
+OpenGL.raw.EGL._errors.EGLError: EGLError(
+	err = EGL_NOT_INITIALIZED,
+	baseOperation = eglDestroyContext,
+	cArguments = (
+		<OpenGL._opaque.EGLDisplay_pointer object at 0x7f2d55520b50>,
+		<OpenGL._opaque.EGLContext_pointer object at 0x7f2c2c69ded0>,
+	),
+	result = 0
+)
+Exception ignored in: <function Renderer.__del__ at 0x7f2db41aefc0>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 343, in __del__
+    self.close()
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 329, in close
+    self._gl_context.free()
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+    EGL.eglDestroyContext(EGL_DISPLAY, self._context)
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+    raise self._errorClass(
+OpenGL.raw.EGL._errors.EGLError: EGLError(
+	err = EGL_NOT_INITIALIZED,
+	baseOperation = eglDestroyContext,
+	cArguments = (
+		<OpenGL._opaque.EGLDisplay_pointer object at 0x7f2d55520b50>,
+		<OpenGL._opaque.EGLContext_pointer object at 0x7f2c1f22fb50>,
+	),
+	result = 0
+)
+Exception ignored in: <function GLContext.__del__ at 0x7f2db41ae980>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 138, in __del__
+    self.free()
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+    EGL.eglDestroyContext(EGL_DISPLAY, self._context)
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+    raise self._errorClass(
+OpenGL.raw.EGL._errors.EGLError: EGLError(
+	err = EGL_NOT_INITIALIZED,
+	baseOperation = eglDestroyContext,
+	cArguments = (
+		<OpenGL._opaque.EGLDisplay_pointer object at 0x7f2d55520b50>,
+		<OpenGL._opaque.EGLContext_pointer object at 0x7f2c1f22fb50>,
+	),
+	result = 0
+)
+Exception ignored in: <function Renderer.__del__ at 0x7f2db41aefc0>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 343, in __del__
+    self.close()
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 329, in close
+    self._gl_context.free()
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+    EGL.eglDestroyContext(EGL_DISPLAY, self._context)
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+    raise self._errorClass(
+OpenGL.raw.EGL._errors.EGLError: EGLError(
+	err = EGL_NOT_INITIALIZED,
+	baseOperation = eglDestroyContext,
+	cArguments = (
+		<OpenGL._opaque.EGLDisplay_pointer object at 0x7f2d55520b50>,
+		<OpenGL._opaque.EGLContext_pointer object at 0x7f2c15cd0950>,
+	),
+	result = 0
+)
+Exception ignored in: <function GLContext.__del__ at 0x7f2db41ae980>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 138, in __del__
+    self.free()
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+    EGL.eglDestroyContext(EGL_DISPLAY, self._context)
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+    raise self._errorClass(
+OpenGL.raw.EGL._errors.EGLError: EGLError(
+	err = EGL_NOT_INITIALIZED,
+	baseOperation = eglDestroyContext,
+	cArguments = (
+		<OpenGL._opaque.EGLDisplay_pointer object at 0x7f2d55520b50>,
+		<OpenGL._opaque.EGLContext_pointer object at 0x7f2c15cd0950>,
+	),
+	result = 0
+)
+Exception ignored in: <function Renderer.__del__ at 0x7f2db41aefc0>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 343, in __del__
+    self.close()
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 329, in close
+    self._gl_context.free()
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+    EGL.eglDestroyContext(EGL_DISPLAY, self._context)
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+    raise self._errorClass(
+OpenGL.raw.EGL._errors.EGLError: EGLError(
+	err = EGL_NOT_INITIALIZED,
+	baseOperation = eglDestroyContext,
+	cArguments = (
+		<OpenGL._opaque.EGLDisplay_pointer object at 0x7f2d55520b50>,
+		<OpenGL._opaque.EGLContext_pointer object at 0x7f2c144869d0>,
+	),
+	result = 0
+)
+Exception ignored in: <function GLContext.__del__ at 0x7f2db41ae980>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 138, in __del__
+    self.free()
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+    EGL.eglDestroyContext(EGL_DISPLAY, self._context)
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+    raise self._errorClass(
+OpenGL.raw.EGL._errors.EGLError: EGLError(
+	err = EGL_NOT_INITIALIZED,
+	baseOperation = eglDestroyContext,
+	cArguments = (
+		<OpenGL._opaque.EGLDisplay_pointer object at 0x7f2d55520b50>,
+		<OpenGL._opaque.EGLContext_pointer object at 0x7f2c144869d0>,
+	),
+	result = 0
+)
+Exception ignored in: <function Renderer.__del__ at 0x7f2db41aefc0>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 343, in __del__
+    self.close()
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 329, in close
+    self._gl_context.free()
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+    EGL.eglDestroyContext(EGL_DISPLAY, self._context)
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+    raise self._errorClass(
+OpenGL.raw.EGL._errors.EGLError: EGLError(
+	err = EGL_NOT_INITIALIZED,
+	baseOperation = eglDestroyContext,
+	cArguments = (
+		<OpenGL._opaque.EGLDisplay_pointer object at 0x7f2d55520b50>,
+		<OpenGL._opaque.EGLContext_pointer object at 0x7f2bf6aadc50>,
+	),
+	result = 0
+)
+Exception ignored in: <function GLContext.__del__ at 0x7f2db41ae980>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 138, in __del__
+    self.free()
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+    EGL.eglDestroyContext(EGL_DISPLAY, self._context)
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+    raise self._errorClass(
+OpenGL.raw.EGL._errors.EGLError: EGLError(
+	err = EGL_NOT_INITIALIZED,
+	baseOperation = eglDestroyContext,
+	cArguments = (
+		<OpenGL._opaque.EGLDisplay_pointer object at 0x7f2d55520b50>,
+		<OpenGL._opaque.EGLContext_pointer object at 0x7f2bf6aadc50>,
+	),
+	result = 0
+)
+Exception ignored in: <function Renderer.__del__ at 0x7f2db41aefc0>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 343, in __del__
+    self.close()
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 329, in close
+    self._gl_context.free()
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+    EGL.eglDestroyContext(EGL_DISPLAY, self._context)
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+    raise self._errorClass(
+OpenGL.raw.EGL._errors.EGLError: EGLError(
+	err = EGL_NOT_INITIALIZED,
+	baseOperation = eglDestroyContext,
+	cArguments = (
+		<OpenGL._opaque.EGLDisplay_pointer object at 0x7f2d55520b50>,
+		<OpenGL._opaque.EGLContext_pointer object at 0x7f2be74df8d0>,
+	),
+	result = 0
+)
+Exception ignored in: <function GLContext.__del__ at 0x7f2db41ae980>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 138, in __del__
+    self.free()
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+    EGL.eglDestroyContext(EGL_DISPLAY, self._context)
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+    raise self._errorClass(
+OpenGL.raw.EGL._errors.EGLError: EGLError(
+	err = EGL_NOT_INITIALIZED,
+	baseOperation = eglDestroyContext,
+	cArguments = (
+		<OpenGL._opaque.EGLDisplay_pointer object at 0x7f2d55520b50>,
+		<OpenGL._opaque.EGLContext_pointer object at 0x7f2be74df8d0>,
+	),
+	result = 0
+)
+Exception ignored in: <function Renderer.__del__ at 0x7f2db41aefc0>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 343, in __del__
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 329, in close
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+OpenGL.raw.EGL._errors.EGLError: <exception str() failed>
+Exception ignored in: <function GLContext.__del__ at 0x7f2db41ae980>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 138, in __del__
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+OpenGL.raw.EGL._errors.EGLError: <exception str() failed>
+Exception ignored in: <function Renderer.__del__ at 0x7f2db41aefc0>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 343, in __del__
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 329, in close
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+OpenGL.raw.EGL._errors.EGLError: <exception str() failed>
+Exception ignored in: <function GLContext.__del__ at 0x7f2db41ae980>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 138, in __del__
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+OpenGL.raw.EGL._errors.EGLError: <exception str() failed>
+Exception ignored in: <function Renderer.__del__ at 0x7f2db41aefc0>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 343, in __del__
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 329, in close
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+OpenGL.raw.EGL._errors.EGLError: <exception str() failed>
+Exception ignored in: <function GLContext.__del__ at 0x7f2db41ae980>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 138, in __del__
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+OpenGL.raw.EGL._errors.EGLError: <exception str() failed>
+Exception ignored in: <function Renderer.__del__ at 0x7f2db41aefc0>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 343, in __del__
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 329, in close
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+OpenGL.raw.EGL._errors.EGLError: <exception str() failed>
+Exception ignored in: <function GLContext.__del__ at 0x7f2db41ae980>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 138, in __del__
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+OpenGL.raw.EGL._errors.EGLError: <exception str() failed>
+Exception ignored in: <function Renderer.__del__ at 0x7f2db41aefc0>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 343, in __del__
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 329, in close
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+OpenGL.raw.EGL._errors.EGLError: <exception str() failed>
+Exception ignored in: <function GLContext.__del__ at 0x7f2db41ae980>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 138, in __del__
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+OpenGL.raw.EGL._errors.EGLError: <exception str() failed>
+Exception ignored in: <function Renderer.__del__ at 0x7f2db41aefc0>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 343, in __del__
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 329, in close
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+OpenGL.raw.EGL._errors.EGLError: <exception str() failed>
+Exception ignored in: <function GLContext.__del__ at 0x7f2db41ae980>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 138, in __del__
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+OpenGL.raw.EGL._errors.EGLError: <exception str() failed>
+Exception ignored in: <function Renderer.__del__ at 0x7f2db41aefc0>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 343, in __del__
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 329, in close
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+OpenGL.raw.EGL._errors.EGLError: <exception str() failed>
+Exception ignored in: <function GLContext.__del__ at 0x7f2db41ae980>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 138, in __del__
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+OpenGL.raw.EGL._errors.EGLError: <exception str() failed>
+Exception ignored in: <function Renderer.__del__ at 0x7f2db41aefc0>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 343, in __del__
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 329, in close
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+OpenGL.raw.EGL._errors.EGLError: <exception str() failed>
+Exception ignored in: <function GLContext.__del__ at 0x7f2db41ae980>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 138, in __del__
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+OpenGL.raw.EGL._errors.EGLError: <exception str() failed>
+Exception ignored in: <function Renderer.__del__ at 0x7f2db41aefc0>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 343, in __del__
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 329, in close
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+OpenGL.raw.EGL._errors.EGLError: <exception str() failed>
+Exception ignored in: <function GLContext.__del__ at 0x7f2db41ae980>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 138, in __del__
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+  File "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+OpenGL.raw.EGL._errors.EGLError: <exception str() failed>

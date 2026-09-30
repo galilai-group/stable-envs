@@ -1,0 +1,51 @@
+{
+  "batch": 256,
+  "baseline_image_sha256": "cbd999177e6790d9ef56baa40767708f408e24725fd2807a9fc395586ec4d61a",
+  "compilation_and_differential_warmup_ms": 24109.296035021544,
+  "predicate_checks": {
+    "calls": 56,
+    "different_predicates": 0
+  },
+  "graphs_before_timing": {
+    "calls_captured": 153,
+    "unique_graphs": 3
+  },
+  "paired_mse": 9.222294028926931e-05,
+  "graphs_after_timing": {
+    "calls_captured": 153,
+    "unique_graphs": 3
+  },
+  "timings": {
+    "baseline": {
+      "samples_ms": [
+        17406.924672424793,
+        18139.95197415352,
+        17949.088498950005
+      ],
+      "mean_ms": 17831.988381842773,
+      "sd_ms": 380.2848726150169,
+      "fps": 14.356222902246234
+    },
+    "candidate": {
+      "samples_ms": [
+        12847.270995378494,
+        13523.554861545563,
+        12951.148830354214
+      ],
+      "mean_ms": 13107.324895759424,
+      "sd_ms": 364.1883983099388,
+      "fps": 19.531063892589017
+    },
+    "source": {
+      "samples_ms": [
+        11018.37319880724,
+        11200.30015707016,
+        11243.77692118287
+      ],
+      "mean_ms": 11154.150092353424,
+      "sd_ms": 119.57876429457237,
+      "fps": 22.951098728310757
+    }
+  },
+  "status": "PASS"
+}

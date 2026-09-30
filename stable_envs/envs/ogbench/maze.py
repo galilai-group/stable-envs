@@ -4,14 +4,17 @@ Rendering and Variation handling are provided by stable-envs. The exact historic
 ``swm/OGBMaze-v0`` default delegates point/large/navigate dynamics to OGBench / MuJoCo;
 the other cells still render stored states (``has_dynamics`` is False).
 
-Reference: ``ogbench``'s ``pointmaze`` / ``antmaze`` / ``humanoidmaze`` at ``ob_type='pixels'``, i.e. a
-MuJoCo 3-D scene under the top-down camera ``MazeEnv`` builds when no camera is named. All 25 names are
+Reference: ``ogbench``'s ``pointmaze`` / ``antmaze`` / ``humanoidmaze`` at ``ob_type='pixels'``, except
+the historical point/large/navigate registration, which uses ``states`` with a checker floor and
+visible goal. The registered renderer consumes that goal from the existing full State. These are
+MuJoCo 3-D scenes under the top-down camera ``MazeEnv`` builds when no camera is named. All 25 names are
 registered, but ``navigate`` / ``stitch`` / ``explore`` differ only in which offline dataset was
 collected from the env — they select a task, and the task never reaches the renderer. So the 25 names
 collapse to 11 scenes (3 bodies x 4 maze layouts, less ``humanoid-teleport``, which OGBench does not
 ship), and the baked plate is cached per scene so the names that share one share it.
 
-**The state is exactly ``qpos``, and that is measured, not asserted.** Rendering the same ``qpos`` with
+**For pixel-observation cells, the render input is exactly ``qpos``.** The historical state-observation
+registration also needs the three-coordinate goal. For the pixel-observation cells, rendering the same ``qpos`` with
 ``qvel`` scaled by 100 changes zero pixels; reaching the same ``qpos`` from a different rollout changes
 zero pixels; re-rendering changes zero pixels. So the state is 2 floats (pointmaze), 15 (antmaze, a free
 joint plus 8 hinges) or 28 (humanoidmaze, a free joint plus 21 hinges), against 224*224*3 = 150,528
@@ -228,33 +231,33 @@ def _mat_and_tex(m, g):
     return mat, tex
 
 
-def _build_reference(loco: str, maze: str, size: int):
-    """The official env, at ``ob_type='pixels'`` and the requested resolution. Needs EGL."""
+def _build_reference(loco: str, maze: str, size: int, ob_type: str = "pixels"):
+    """The official env with the requested observation/texture configuration."""
     import gymnasium
     import ogbench  # noqa: F401
 
     env = gymnasium.make(
-        f"{loco}maze-{maze}-v0", render_mode="rgb_array", ob_type="pixels", width=int(size), height=int(size)
+        f"{loco}maze-{maze}-v0", render_mode="rgb_array", ob_type=ob_type, width=int(size), height=int(size)
     )
     env.reset(options={"task_id": 1})
     return env
 
 
-#: (loco, maze, size) -> the ogbench env whose MjModel the renderer owns, plus the pristine values of
+#: (loco, maze, size, ob_type) -> the renderer's ogbench env, plus the pristine values of
 #: everything a variation mutates. One env per SCENE, not per variation: each ``mujoco.Renderer`` takes
 #: an EGL context, and re-baking 7 variation leaves across 25 registered names would otherwise open
 #: ~175 of them.
 _ENV_CACHE: dict = {}
 
 
-def _scene_env(loco: str, maze: str, size: int):
-    key = (loco, maze, int(size))
+def _scene_env(loco: str, maze: str, size: int, ob_type: str = "pixels"):
+    key = (loco, maze, int(size), ob_type)
     hit = _ENV_CACHE.get(key)
     if hit is not None:
         return hit
     import mujoco
 
-    env = _build_reference(loco, maze, size)
+    env = _build_reference(loco, maze, size, ob_type)
     u = env.unwrapped
     m = u.model
     m.vis.quality.offsamples = 4  # MuJoCo's default; what OGBench datasets hold
@@ -383,6 +386,9 @@ class OGBenchMaze(Env):
         """
         self.state_dim = len(BODY_STATE[self.LOCO])
         self.state_names = BODY_STATE[self.LOCO]
+        if getattr(self, "RENDER_OB_TYPE", "pixels") == "states":
+            self.state_dim += 3
+            self.state_names = (*self.state_names, "goal_x", "goal_y", "goal_z")
         self.state_layout = self.STATE_LAYOUT[self.LOCO]
         super().__init__(
             num_envs=num_envs,
@@ -393,8 +399,8 @@ class OGBenchMaze(Env):
             seed=seed,
         )
         sc = self._scene()
-        assert sc.model.nq == self.state_dim, (
-            f"{type(self).__name__}: model has nq={sc.model.nq} but state_dim={self.state_dim}"
+        assert sc.model.nq == len(BODY_STATE[self.LOCO]), (
+            f"{type(self).__name__}: model has nq={sc.model.nq} but expected {len(BODY_STATE[self.LOCO])}"
         )
         self._check_names(sc)
         if self.LOCO == "point":
@@ -421,7 +427,7 @@ class OGBenchMaze(Env):
                 got.append(nm)
         if self.LOCO == "point":
             got = list(BODY_STATE["point"])  # slide joints are named ballx/bally in the XML
-        assert tuple(got) == tuple(self.state_names), (
+        assert tuple(got) == tuple(self.state_names[: len(got)]), (
             f"{type(self).__name__}: state_names {self.state_names} do not match the model's joint layout {tuple(got)}"
         )
 
@@ -435,8 +441,11 @@ class OGBenchMaze(Env):
             q = rng.uniform(-4, 20, m.nq)
             d.qpos[:] = q
             mujoco.mj_kinematics(m, d)
-            want = d.geom_xpos[sc.agent_ids]
-            got = sc.geom_local_pos + np.concatenate([q[:2], [0.0]])
+            # States mode also draws the world-body goal. It is placed from
+            # State.task.goal_pos, not translated with the moving agent.
+            moving = np.array([m.geom_bodyid[g] != 0 for g in sc.agent_ids])
+            want = d.geom_xpos[np.asarray(sc.agent_ids)[moving]]
+            got = sc.geom_local_pos[moving] + np.concatenate([q[:2], [0.0]])
             assert np.abs(want - got).max() < 1e-9, (
                 f"pointmaze FK shortcut is wrong by {np.abs(want - got).max():.3e}; "
                 f"the sphere is not simply translated by qpos"
@@ -493,6 +502,7 @@ class OGBenchMaze(Env):
         return (
             self.LOCO,
             self.MAZE,
+            getattr(self, "RENDER_OB_TYPE", "pixels"),
             int(size),
             tuple(np.round(self._var(variation, "floor.tint"), 6)),
             tuple(np.round(self._var(variation, "walls.color"), 6)),
@@ -520,7 +530,7 @@ class OGBenchMaze(Env):
         """
         import mujoco
 
-        env, u, pr = _scene_env(self.LOCO, self.MAZE, size)
+        env, u, pr = _scene_env(self.LOCO, self.MAZE, size, getattr(self, "RENDER_OB_TYPE", "pixels"))
         m, d = u.model, u.data
         attr = "tex_rgb" if hasattr(m, "tex_rgb") else "tex_data"
 
@@ -628,7 +638,8 @@ class OGBenchMaze(Env):
             tex_rgb=np.ones((len(agent), 3)),
             spec=np.full(len(agent), MAT_SPECULAR),
         )
-        # two lights, both from the scene MuJoCo actually hands the rasterizer
+        # Pixel mode removes the torso light and zeros global ambient. States
+        # mode retains them, so its light table must come from the actual scene.
         L = nlight
         dirs = ldir / np.linalg.norm(ldir, axis=1, keepdims=True)
         ka = SHADE_AMBIENT / max(sum(_NOMINAL["amb"]), 1e-9)
@@ -641,6 +652,14 @@ class OGBenchMaze(Env):
             specular=np.array(_NOMINAL["spec"][:L]) * ks,
             exponent=SHADE_EXPONENT,
         )
+        if getattr(self, "RENDER_OB_TYPE", "pixels") == "states":
+            sc.lights = R3.Lights(
+                dirs=dirs,
+                ambient=np.array([np.mean(r.scene.lights[i].ambient) for i in range(L)]),
+                diffuse=np.array([np.mean(r.scene.lights[i].diffuse) for i in range(L)]),
+                specular=np.array([np.mean(r.scene.lights[i].specular) for i in range(L)]),
+                exponent=float(m.mat_shininess[selfmat]) * 128,
+            )
         return sc
 
     # ---- forward kinematics ----------------------------------------------
@@ -676,6 +695,9 @@ class OGBenchMaze(Env):
             pos = torch.zeros(B, P, 3, device=self.device)
             pos[:, :, :2] = states[:, None, :2]
             pos = pos + off.unsqueeze(0)
+            if getattr(self, "RENDER_OB_TYPE", "pixels") == "states":
+                target = sc.model.geom("target").id
+                pos[:, sc.agent_ids.index(target), :] = states[:, 2:5]
             eye = torch.eye(3, device=self.device).view(1, 1, 3, 3).expand(B, P, 3, 3)
             return pos, eye.contiguous()
         q = states.detach().cpu().numpy().astype(np.float64)
@@ -796,7 +818,7 @@ class OGBenchMaze(Env):
         xy += rng.uniform(-1.0, 1.0, xy.shape)
         q = np.tile(np.asarray(sc.model.qpos0, np.float64), (batch, 1))
         q[:, :2] = xy
-        if self.state_dim > 2:
+        if sc.model.nq > 2:
             yaw = rng.uniform(-np.pi, np.pi, batch)
             rp = rng.uniform(-0.15, 0.15, (batch, 2))
             cw, sw = np.cos(yaw / 2), np.sin(yaw / 2)
@@ -805,7 +827,13 @@ class OGBenchMaze(Env):
             q[:, 5] = rp[:, 1] * 0.5
             q[:, 6] = sw
             q[:, 3:7] /= np.linalg.norm(q[:, 3:7], axis=1, keepdims=True)
-            q[:, 7:] = q[:, 7:] + rng.uniform(-0.35, 0.35, (batch, self.state_dim - 7))
+            q[:, 7:] = q[:, 7:] + rng.uniform(-0.35, 0.35, (batch, sc.model.nq - 7))
+        if getattr(self, "RENDER_OB_TYPE", "pixels") == "states":
+            goals = np.tile(sc.model.geom("target").pos, (batch, 1))
+            goal_cells = cells[rng.integers(0, len(cells), batch)]
+            goals[:, 0] = goal_cells[:, 1] * sc.maze_unit - sc.offset[0]
+            goals[:, 1] = goal_cells[:, 0] * sc.maze_unit - sc.offset[1]
+            q = np.concatenate([q, goals], axis=-1)
         return q.astype(np.float32)
 
     # ---- reference bridge -------------------------------------------------
@@ -816,16 +844,18 @@ class OGBenchMaze(Env):
         ``test_state_is_sufficient`` builds two and drives them through different histories, so handing
         it the same object twice would make that test vacuous, and closing old ones corrupts live ones.
         """
-        return _build_reference(cls.LOCO, cls.MAZE, size)
+        return _build_reference(cls.LOCO, cls.MAZE, size, getattr(cls, "RENDER_OB_TYPE", "pixels"))
 
     @classmethod
     def reference_render(cls, env, states) -> np.ndarray:
-        """Official frames for the given ``qpos``. ``qvel`` is set to zero and is provably irrelevant:
-        scaling it by 100 changes zero pixels, which is what makes ``qpos`` alone the state."""
+        """Official frames for qpos, plus the goal in the registered states-observation mode."""
         u = env.unwrapped
         nv = u.model.nv
         out = []
         for st in np.asarray(states, np.float64):
+            if getattr(cls, "RENDER_OB_TYPE", "pixels") == "states":
+                u.model.geom("target").pos[:] = st[2:5]
+                st = st[:2]
             u.set_state(st, np.zeros(nv))
             out.append(u.render().copy())
         return np.stack(out)
@@ -834,6 +864,9 @@ class OGBenchMaze(Env):
 class _HistoricalDefaultSemantics:
     """Exact point/large/state semantics of the empty-kwargs SWM registration."""
 
+    # Pixel observations replace the XML checker with a position-encoding
+    # gradient. The registered simulator uses states, so its renderer must too.
+    RENDER_OB_TYPE = "states"
     action_dim = 2
     action_dtype = torch.float32
     action_low, action_high = -1.0, 1.0
@@ -845,7 +878,8 @@ class _HistoricalDefaultSemantics:
 
     def _layout(self):
         return tuple(
-            (key, width, 0 if key == ("root", "position") else None) for key, (width, _) in OGB_MAZE_FIELDS.items()
+            (key, width, {("root", "position"): 0, ("task", "goal_pos"): 2}.get(key))
+            for key, (width, _) in OGB_MAZE_FIELDS.items()
         )
 
     def _layout_dtypes(self):
@@ -854,11 +888,15 @@ class _HistoricalDefaultSemantics:
     def _pack_render_state(self, state):
         if not isinstance(state, TensorDict):
             raise TypeError("Expected full OGBMaze State")
-        return state["root", "position"].to(self.device, torch.float32)
+        return torch.cat([state["root", "position"], state["task", "goal_pos"]], dim=-1).to(self.device, torch.float32)
 
     def _unpack_render_state(self, rows):
-        rows = torch.as_tensor(rows, device=self.device).reshape(-1, 2)
-        return TensorDict({"root": {"position": rows.clone()}}, [len(rows)], device=self.device)
+        rows = torch.as_tensor(rows, device=self.device).reshape(-1, 5)
+        return TensorDict(
+            {("root", "position"): rows[:, :2].clone(), ("task", "goal_pos"): rows[:, 2:5].clone()},
+            [len(rows)],
+            device=self.device,
+        )
 
     def reset(self, seed=None):
         self._check_open("reset")

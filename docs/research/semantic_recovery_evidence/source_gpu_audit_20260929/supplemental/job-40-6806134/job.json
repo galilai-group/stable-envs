@@ -1,0 +1,8 @@
+{
+  "index": 40,
+  "registration": "swm/TwoRoom-v1",
+  "device": "cuda",
+  "tasks": [
+    40
+  ]
+}

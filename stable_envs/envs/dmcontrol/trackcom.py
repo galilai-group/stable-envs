@@ -182,6 +182,8 @@ class DMControlTrackCom(_DMCModel):
     #: ``SPECULAR_NOTE`` for what swimmer sets and why it is not set family-wide.
     RENDER_FLAGS: dict = {}
 
+    CPU_RENDER_CHUNK = C3.CPU_CHUNK
+
     def __init__(self, *a, **kw):
         super().__init__(*a, **kw)
         # DEVICE SELECTION IS HONEST. ``cuda`` gets MJWarp; ``cpu`` gets the CPU-native backend in
@@ -190,6 +192,8 @@ class DMControlTrackCom(_DMCModel):
         # rendering somewhere the caller did not ask for. Earlier ``device="cpu"`` rows for these cells were
         # MJWarp on the GPU behind a ``device="cpu"`` request (``DEVICE_NOT_HONOURED``); that path no
         # longer exists.
+        if self.backend == "opengl":
+            return  # The explicit fidelity backend owns a separate model/context.
         if self.device.type == "cuda":
             self._context(self.size)  # build and capture up front, not mid-render
         elif self.device.type == "cpu":
@@ -337,7 +341,7 @@ class DMControlTrackCom(_DMCModel):
                 mat[:, i] = sty[f"material.{name}"][:B]
         base = torch.as_tensor(pr["light_diffuse"], dtype=torch.float32, device=self.device)
         ldif = torch.clamp(base.unsqueeze(0) * sty["light.diffuse_scale"][:B].reshape(B, 1, 1), 0, 1)
-        C3.render(sc, cam, xp, xm, lp, ld, mat, ldif, out=buf)
+        C3.render(sc, cam, xp, xm, lp, ld, mat, ldif, out=buf, chunk_size=self.CPU_RENDER_CHUNK)
 
     # ---- render -----------------------------------------------------------
 
@@ -350,6 +354,7 @@ class DMControlTrackCom(_DMCModel):
         variation: dict | None = None,
         style=None,
         out=None,
+        backend=None,
     ) -> torch.Tensor:
         """``(...,state_dim)`` -> ``(...,H,W,3)`` uint8. Style may differ per environment."""
         s = self._render_state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
@@ -370,6 +375,11 @@ class DMControlTrackCom(_DMCModel):
         if out is None:
             out = torch.empty((B, size, size, 3), dtype=torch.uint8, device=self.device)
         buf = out.view(B, size, size, 3)
+        if (self.backend if backend is None else backend) == "opengl":
+            from . import trackcom_opengl
+
+            trackcom_opengl.render(self, s, sty, size, buf)
+            return buf.view(*lead, size, size, 3) if lead else buf
         if self.device.type == "cpu":
             self._render_cpu(s, sty, size, buf)
             return buf.view(*lead, size, size, 3) if lead else buf

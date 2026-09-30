@@ -1,0 +1,337 @@
+{
+  "registration": "swm/FetchPushDict-v3",
+  "device": "cuda",
+  "backend": "auto",
+  "status": "COMPLETE",
+  "profile": {
+    "host": "gpu2109.oscar.ccv.brown.edu",
+    "cpu": "AMD EPYC 7532 32-Core Processor",
+    "gpu": "NVIDIA GeForce RTX 3090",
+    "python": "3.12.9",
+    "packages": {
+      "torch": {
+        "version": "2.14.0+cu126",
+        "path": "/oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages"
+      },
+      "numpy": {
+        "version": "2.5.3",
+        "path": "/oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages"
+      },
+      "tensordict": {
+        "version": "0.14.2",
+        "path": "/oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages"
+      },
+      "gymnasium": {
+        "version": "1.3.0",
+        "path": "/oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages"
+      },
+      "mujoco": {
+        "version": "3.11.0",
+        "path": "/oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages"
+      },
+      "dm-control": {
+        "version": "1.0.45",
+        "path": "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages"
+      },
+      "gymnasium-robotics": {
+        "version": "1.4.2",
+        "path": "/oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages"
+      },
+      "ogbench": {
+        "version": "1.2.1",
+        "path": "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages"
+      },
+      "craftax": {
+        "version": "1.6.1",
+        "path": "/oscar/scratch/sboughan/venvs/se-step4-swm/lib/python3.12/site-packages"
+      },
+      "jax": {
+        "version": "0.11.1",
+        "path": "/oscar/scratch/sboughan/venvs/se-step4-swm/lib/python3.12/site-packages"
+      },
+      "jaxlib": {
+        "version": "0.11.1",
+        "path": "/oscar/scratch/sboughan/venvs/se-step4-swm/lib/python3.12/site-packages"
+      },
+      "flax": {
+        "version": "0.12.9",
+        "path": "/oscar/scratch/sboughan/venvs/se-step4-swm/lib/python3.12/site-packages"
+      },
+      "pymunk": {
+        "version": "7.3.0",
+        "path": "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages"
+      },
+      "pygame": {
+        "version": "2.6.1",
+        "path": "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages"
+      }
+    },
+    "torch_threads": 1,
+    "environment": {
+      "SLURM_JOB_ID": "6795209",
+      "MUJOCO_GL": "egl",
+      "PYOPENGL_PLATFORM": "egl",
+      "LIBGL_ALWAYS_SOFTWARE": null,
+      "GALLIUM_DRIVER": null,
+      "DISPLAY": null,
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "LP_NUM_THREADS": "1",
+      "JAX_PLATFORMS": null,
+      "CRAFTAX_JAX_BACKEND": null,
+      "CUDA_VISIBLE_DEVICES": "0"
+    }
+  },
+  "measurements": [
+    {
+      "batch": 1,
+      "output_device": "cpu",
+      "ours": {
+        "count": 12,
+        "samples_ms": [
+          2.637655,
+          2.742795,
+          2.615896,
+          2.713825,
+          2.629726,
+          2.687425,
+          2.608195,
+          2.706575,
+          2.616045,
+          1.80535,
+          1.69411,
+          1.833399
+        ],
+        "mean_ms": 2.4409163333333335,
+        "sd_ms": 0.40354314545340036,
+        "mean_ms_per_frame": 2.4409163333333335,
+        "sd_ms_per_frame": 0.40354314545340036,
+        "frames_per_second": 409.6822108746319
+      },
+      "source": {
+        "count": 12,
+        "samples_ms": [
+          0.896705,
+          0.717656,
+          0.832395,
+          0.713646,
+          0.827915,
+          0.697726,
+          0.846185,
+          0.708716,
+          0.838805,
+          0.566637,
+          0.620987,
+          0.499347
+        ],
+        "mean_ms": 0.73056,
+        "sd_ms": 0.12317132084141252,
+        "mean_ms_per_frame": 0.73056,
+        "sd_ms_per_frame": 0.12317132084141252,
+        "frames_per_second": 1368.8129653964083
+      },
+      "speedup": 0.29929743597657105
+    },
+    {
+      "batch": 1,
+      "output_device": "cuda",
+      "ours": {
+        "count": 12,
+        "samples_ms": [
+          1.66627,
+          1.74161,
+          1.656861,
+          1.77582,
+          1.653581,
+          1.75057,
+          1.661091,
+          1.74123,
+          1.650191,
+          1.75334,
+          1.644411,
+          1.75165
+        ],
+        "mean_ms": 1.7038854166666666,
+        "sd_ms": 0.051616960138132065,
+        "mean_ms_per_frame": 1.7038854166666666,
+        "sd_ms_per_frame": 0.051616960138132065,
+        "frames_per_second": 586.893925036528
+      },
+      "source": {
+        "count": 12,
+        "samples_ms": [
+          0.701716,
+          0.544667,
+          0.650206,
+          0.548037,
+          0.664426,
+          0.545597,
+          0.659966,
+          0.541057,
+          0.647806,
+          0.548817,
+          0.654916,
+          0.538287
+        ],
+        "mean_ms": 0.6037915,
+        "sd_ms": 0.06350815589928016,
+        "mean_ms_per_frame": 0.6037915,
+        "sd_ms_per_frame": 0.06350815589928016,
+        "frames_per_second": 1656.2008574151837
+      },
+      "speedup": 0.35436156333869284
+    },
+    {
+      "batch": 64,
+      "output_device": "cpu",
+      "ours": {
+        "count": 12,
+        "samples_ms": [
+          7.538067,
+          7.387419,
+          6.775172,
+          7.356369,
+          6.711353,
+          7.386268,
+          6.792512,
+          7.374088,
+          6.708603,
+          7.366609,
+          6.703152,
+          7.451969
+        ],
+        "mean_ms": 7.129298416666667,
+        "sd_ms": 0.34951412353319034,
+        "mean_ms_per_frame": 0.11139528776041667,
+        "sd_ms_per_frame": 0.005461158180206099,
+        "frames_per_second": 8977.040412613766
+      },
+      "source": {
+        "count": 12,
+        "samples_ms": [
+          27.762905,
+          27.256907,
+          30.34404,
+          28.492451,
+          27.487086,
+          27.642905,
+          30.753508,
+          27.337937,
+          27.552765,
+          27.796614,
+          30.068192,
+          27.373736
+        ],
+        "mean_ms": 28.3224205,
+        "sd_ms": 1.2940322497761156,
+        "mean_ms_per_frame": 0.4425378203125,
+        "sd_ms_per_frame": 0.020219253902751807,
+        "frames_per_second": 2259.693870444442
+      },
+      "speedup": 3.9726798970553214
+    },
+    {
+      "batch": 64,
+      "output_device": "cuda",
+      "ours": {
+        "count": 12,
+        "samples_ms": [
+          6.521754,
+          6.598023,
+          5.988747,
+          6.612223,
+          5.988527,
+          6.570263,
+          6.004457,
+          6.597343,
+          6.010207,
+          6.743562,
+          5.996896,
+          6.628533
+        ],
+        "mean_ms": 6.355044583333333,
+        "sd_ms": 0.31942342145652436,
+        "mean_ms_per_frame": 0.09929757161458333,
+        "sd_ms_per_frame": 0.004990990960258193,
+        "frames_per_second": 10070.739734516681
+      },
+      "source": {
+        "count": 12,
+        "samples_ms": [
+          29.362146,
+          32.04911,
+          29.206106,
+          29.364475,
+          29.335695,
+          31.594433,
+          29.692113,
+          28.123583,
+          29.159756,
+          31.849242,
+          28.61784,
+          28.646849
+        ],
+        "mean_ms": 29.750112333333334,
+        "sd_ms": 1.3265432114582163,
+        "mean_ms_per_frame": 0.46484550520833334,
+        "sd_ms_per_frame": 0.02072723767903463,
+        "frames_per_second": 2151.252381265518
+      },
+      "speedup": 4.681338099713043
+    }
+  ],
+  "frames": [
+    {
+      "index": 0,
+      "case": 0,
+      "state_hash": "31d7d13ca0b210241f7ad0140ce17d26502d0fca973856684c5d2ba446396cb6",
+      "state_file": "frame-0000-state.npz"
+    },
+    {
+      "index": 333,
+      "case": 12,
+      "state_hash": "5ab037e8f57d9593bfaab8ae7bdbabcb4e0a1bf0963565c544a47361cfcc6f13",
+      "state_file": "frame-0333-state.npz"
+    },
+    {
+      "index": 666,
+      "case": 19,
+      "state_hash": "6e56e390112da87bad6a209c96de2b728158160e1526b4d5a7423f667ff42ee3",
+      "state_file": "frame-0666-state.npz"
+    },
+    {
+      "index": 999,
+      "case": 25,
+      "state_hash": "5c54c076449b2d4bc7f3e4264d5f33a43a07b9d542e8f9b00ce806001587ca3a",
+      "state_file": "frame-0999-state.npz"
+    }
+  ],
+  "harness_sha256": "38b136dad5bb81bb624b266331b4ccd1cf3612284dac9c0a589ad5c986535bb9",
+  "scope": "Saved States; no rollouts or setup timed; equal batch and output destination; single CPU thread.",
+  "source_batch_method": "Repeated upstream render, cycling the same saved poses; no cached images.",
+  "corpus": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-cpu-6754925_15/results",
+  "corpus_sha256": "39e0c5f2e9713b3a176558e49e46b2e2d7f0f025e86a1abc09aa3532d6127372",
+  "independent_states": 4,
+  "source_render_paths": {
+    "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/scripts/benchmarks/renderer_table/bridges.py": "8f17dbf1c3a4f14343766359f4f3a9fa5af41a808ff400801a624aded319476b"
+  },
+  "opengl": {
+    "vendor": "NVIDIA Corporation",
+    "renderer": "NVIDIA GeForce RTX 3090/PCIe/SSE2"
+  },
+  "source_render_device": "cuda",
+  "source_gpu_supported": true,
+  "paired_mse": {
+    "samples": [
+      0.0004125361337345395,
+      0.0004065234141042038,
+      0.0004095919413517041,
+      0.00032885621568888996
+    ],
+    "mean": 0.0003893769262198343,
+    "sd": 4.042175230998812e-05,
+    "maximum": 0.0004125361337345395
+  },
+  "state_nonmutation_passed": true
+}

@@ -104,9 +104,30 @@ def test_seeded_future_reset_and_fresh_entropy(pair):
     exact(a.step(np.zeros((2, 7))), b.step(np.zeros((2, 7))))
 
 
-def test_cpu_render_explicitly_unsupported(pair):
-    with pytest.raises(NotImplementedError, match="no CPU"):
-        pair[0].render()
+def test_cpu_render_supplied_state_is_exact_and_nonmutating():
+    env = make("PyFlytRocketLanding", num_envs=2, simulator_config={"render_mode": "rgb_array"})
+    try:
+        state = env.get_state()
+        pixels = env.render(state)
+        expected = np.stack([sim.env.render() for sim in env._simulator.envs])
+        assert pixels.device.type == "cpu" and pixels.dtype == torch.uint8
+        np.testing.assert_array_equal(pixels.numpy(), expected)
+        exact(state, env.get_state())
+        projected = env.to_render_state(state)
+        before = projected.clone()
+        out = torch.empty_like(pixels)
+        assert env.render(projected, out=out).data_ptr() == out.data_ptr()
+        assert torch.equal(pixels, out)
+        exact(projected, before)
+        for i in range(env.B):
+            assert torch.equal(env.render(projected[i : i + 1])[0], pixels[i])
+        bad = projected.clone()
+        bad["renderer", "camera_pose"][-1, 0] = float("nan")
+        with pytest.raises(ValueError):
+            env.render(bad)
+        exact(state, env.get_state())
+    finally:
+        env.close()
 
 
 def test_render_projection_matches_actual_engine_materials(pair):

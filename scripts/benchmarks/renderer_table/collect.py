@@ -67,7 +67,12 @@ def candidate(row, device, seed, config=None):
 
 
 def render_kwargs(env, bridge):
-    if env.__class__.__name__.startswith(("Craftax", "Fetch")) or env.__class__.__name__ in {
+    if env.__class__.__name__.startswith("Fetch"):
+        # Fetch's simulator State excludes appearance. Persist the actual reset
+        # style alongside it; a fresh GPU env otherwise renders every saved State
+        # with default colors, including explicitly varied source frames.
+        return {"style": env.get_style().detach().clone()}
+    if env.__class__.__name__.startswith("Craftax") or env.__class__.__name__ in {
         "OGBCube",
         "OGBScene",
         "PyFlytRocketLanding",
@@ -84,7 +89,7 @@ def kwargs_json(kwargs):
     return {k: v.cpu().numpy().tolist() if torch.is_tensor(v) else v for k, v in kwargs.items()}
 
 
-def cpu(row, output):
+def cpu(row, output, *, target_frames=None, source_only=False):
     result = dict(row, phase="cpu", oracle_commit=PIN, profile=profile(), frames=[], recipes=[], status="RUNNING")
     write(output / "result.json", result)
     name = row["name"]
@@ -170,7 +175,34 @@ def cpu(row, output):
     samples = max(1, math.ceil(100 / frame_count))
     if name.startswith("Craftax"):
         samples = 10  # Terminal checkpoints can shorten the planned trajectory.
+    if target_frames is not None:
+        if target_frames < 1:
+            raise ValueError("target_frames must be positive")
+        # Retain every original stress recipe first, including contact, terminal,
+        # appearance, and high-ceiling cases. Extend with new seeds rather than
+        # counting repeated timings of one image as independent frames.
+        original_plans = plans
+        plans = [
+            (
+                seed + epoch * 1009,
+                dtype,
+                options
+                if epoch == 0 or name.startswith("FetchPickAndPlace")
+                else {**options, "_marks": list(range(101))},
+            )
+            for epoch in range(target_frames)
+            for seed, dtype, options in original_plans
+        ]
+        samples = 1
+        result["requested_frames"] = target_frames
+        result["sampling"] = (
+            "Original sparse stress recipes, then dense steps 0..100 with seeds incremented by 1009 per sweep. "
+            "PickAndPlace stays reset-only because source rendering mutates continuation caches after steps."
+        )
+    result["candidate_render_process"] = "separate" if source_only else "shared"
     for case, (seed, dtype, options) in enumerate(plans):
+        if target_frames is not None and len(result["frames"]) >= target_frames:
+            break
         bridge = Bridge(row, seed, options)
         env = candidate(row, "cpu", seed, options.get("_config"))
         try:
@@ -247,7 +279,7 @@ def cpu(row, output):
                 state = env.get_state()
                 state_before, oracle_before = state_hash(state), bridge.snapshot()
                 kw = render_kwargs(env, bridge)
-                timing, original = timed(bridge.render, samples=samples)
+                timing, original = timed(bridge.render, samples=samples, warmups=1 if target_frames else 10)
                 original = rgb(original)
                 assert bridge.snapshot() == oracle_before, "oracle render mutated continuation State"
                 index = len(result["frames"])
@@ -275,13 +307,14 @@ def cpu(row, output):
                     else "CPU software raster",
                     oracle_render_nonmutation=True,
                 )
-                try:
-                    timing, image = timed(lambda: public_render(env, state, **kw), samples=samples)
-                    image = rgb(image)
-                    record.update(cpu_timing=timing, cpu_quality=quality(image, original))
-                    np.save(output / (key + "-cpu.npy"), image, allow_pickle=False)
-                except NotImplementedError as e:
-                    record["cpu_timing"] = unavailable(str(e))
+                if not source_only:
+                    try:
+                        timing, image = timed(lambda: public_render(env, state, **kw), samples=samples)
+                        image = rgb(image)
+                        record.update(cpu_timing=timing, cpu_quality=quality(image, original))
+                        np.save(output / (key + "-cpu.npy"), image, allow_pickle=False)
+                    except NotImplementedError as e:
+                        record["cpu_timing"] = unavailable(str(e))
                 assert state_hash(env.get_state()) == state_before, "candidate renderer mutated live State"
                 assert state_hash(state) == state_before, "candidate renderer mutated supplied State"
                 bridge.proof(env)
@@ -289,7 +322,7 @@ def cpu(row, output):
                 result["frames"].append(record)
                 write(output / "result.json", result)
                 print(name, case, step, "matched", flush=True)
-                if done:
+                if done or (target_frames is not None and len(result["frames"]) >= target_frames):
                     break
             np.save(output / f"actions-{case}.npy", actions, allow_pickle=False)
             recipe["actions_hash"] = array_hash(actions)
@@ -302,6 +335,8 @@ def cpu(row, output):
         finally:
             env.close()
             bridge.close()
+    if target_frames is not None:
+        assert len(result["frames"]) == target_frames, "Insufficient distinct matched frames"
     result["status"] = "COMPLETE"
     write(output / "result.json", result)
     return result
@@ -452,12 +487,14 @@ def main():
     parser.add_argument("phase", choices=["cpu", "gpu"])
     parser.add_argument("output", type=Path)
     parser.add_argument("--corpus", type=Path)
+    parser.add_argument("--target-frames", type=int)
+    parser.add_argument("--source-only", action="store_true")
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=False)
     row = catalog()[args.registration]
     try:
         if args.phase == "cpu":
-            cpu(row, args.output)
+            cpu(row, args.output, target_frames=args.target_frames, source_only=args.source_only)
         else:
             gpu(row, args.corpus, args.output)
     except Exception:

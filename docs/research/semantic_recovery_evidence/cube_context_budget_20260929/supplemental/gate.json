@@ -1,0 +1,10 @@
+{
+  "status": "PASS",
+  "job": 6803878,
+  "hardware": "NVIDIA L40S",
+  "same_host": true,
+  "exact_images": true,
+  "warm_misses": 0,
+  "warm_evictions": 0,
+  "scope": "Supplemental batch256; RTX3090 gate remains separate"
+}

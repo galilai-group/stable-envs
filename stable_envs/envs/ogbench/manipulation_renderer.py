@@ -17,7 +17,7 @@ from ...env import Env
 from . import manipulation as frozen
 
 _LOCK = threading.RLock()
-FROZEN_SHA256 = "bac4b1ea3e29a04faa5eeec33de0c212cb87bbf488ae0466ea762bd3a140576a"
+FROZEN_SHA256 = "1c7c5b4a00581d5d6e412da38ce1d139595bd230050fb43cac7d339ec81e9e0b"
 
 
 def configuration_key(family, row):
@@ -97,9 +97,16 @@ class _ConfiguredRenderer(frozen.OGBManipBase):
 
 
 def render(family, state, device, backend="auto", chunk_size=None):
-    pixels.validate(family, state)
-    if backend not in ("auto", "mjwarp"):
-        raise ValueError("Cube/Scene rendering supports only the mjwarp backend")
+    if backend == "opengl":
+        from . import manipulation_opengl
+
+        return manipulation_opengl.render(family, state, device, chunk_size)
+    host = state.detach().cpu()
+    pixels.validate(family, host)
+    if backend not in ("auto", "mjwarp", "mjwarp_fidelity"):
+        raise ValueError("Cube/Scene rendering supports mjwarp, Cube mjwarp_fidelity, or explicit opengl backend")
+    if backend == "mjwarp_fidelity" and family != "Cube":
+        raise ValueError("mjwarp_fidelity is currently validated only for Cube")
     if torch.device(device).type != "cuda":
         raise NotImplementedError("Cube/Scene CPU mesh rendering is unavailable; renderer/GPU execution requires CUDA")
     if version("mujoco") != "3.12.0" or version("ogbench") != "1.2.1":
@@ -108,21 +115,46 @@ def render(family, state, device, backend="auto", chunk_size=None):
         raise ImportError("Cube/Scene frozen GPU rendering requires mujoco-warp==3.12.0 and warp-lang==1.17.0")
     if chunk_size is not None and (type(chunk_size) is not int or chunk_size < 1):
         raise ValueError("chunk_size must be a positive integer")
-    size, ss = (int(state["renderer", key][0, 0]) for key in ("size", "supersample"))
+    size, ss = (int(host["renderer", key][0, 0]) for key in ("size", "supersample"))
     result = torch.empty((len(state), size, size, 3), dtype=torch.uint8, device=device)
     # Frozen caches hold mutable render buffers; serialize users of this caller boundary.
-    with _LOCK:
+    import warp as wp
+
+    with _LOCK, torch.cuda.device(device), wp.ScopedDevice(str(device)):
         groups = {}
-        for i, row in enumerate(state):
+        for i, row in enumerate(host):
             groups.setdefault(configuration_key(family, row), []).append(i)
+        prepared = []
+        active = set()
+        device_index = torch.cuda.current_device()
         for indices in groups.values():
-            token, bundle = configured_bundle(family, state[indices[0]])
-            renderer = _ConfiguredRenderer(token, bundle, device, size, ss)
-            try:
-                limit = chunk_size or len(indices)
-                for start in range(0, len(indices), limit):
-                    selected = indices[start : start + limit]
-                    result[selected] = renderer.draw(state[selected])
-            finally:
-                renderer.close()
+            token, bundle = configured_bundle(family, host[indices[0]])
+            prepared.append((token, bundle, indices))
+            limit = chunk_size or len(indices)
+            for start in range(0, len(indices), limit):
+                count = min(limit, len(indices) - start)
+                for offset in range(0, count, frozen.MJW_CHUNK):
+                    n = min(frozen.MJW_CHUNK, count - offset)
+                    nw = 1 << (n - 1).bit_length()
+                    active.add((device_index, token, size * ss, nw))
+                    if backend == "mjwarp_fidelity":
+                        active.add((device_index, token + "/fidelity/opaque", size * ss, nw))
+        with frozen._CTX_CACHE.working_set(active):
+            for token, bundle, indices in prepared:
+                if backend == "mjwarp_fidelity":
+                    from . import manipulation_fidelity
+
+                    limit = chunk_size or len(indices)
+                    for start in range(0, len(indices), limit):
+                        selected = indices[start : start + limit]
+                        result[selected] = manipulation_fidelity.draw(token, bundle, state[selected], device, size, ss)
+                    continue
+                renderer = _ConfiguredRenderer(token, bundle, device, size, ss)
+                try:
+                    limit = chunk_size or len(indices)
+                    for start in range(0, len(indices), limit):
+                        selected = indices[start : start + limit]
+                        result[selected] = renderer.draw(state[selected])
+                finally:
+                    renderer.close()
     return result

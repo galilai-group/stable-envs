@@ -1,0 +1,689 @@
+{
+  "registration": "swm/PendulumDMControl-v0",
+  "device": "cuda",
+  "backend": "auto",
+  "status": "COMPLETE",
+  "profile": {
+    "host": "gpu2105.oscar.ccv.brown.edu",
+    "cpu": "AMD EPYC 7532 32-Core Processor",
+    "gpu": "NVIDIA GeForce RTX 3090",
+    "python": "3.12.9",
+    "packages": {
+      "torch": {
+        "version": "2.14.0+cu126",
+        "path": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages"
+      },
+      "numpy": {
+        "version": "2.5.3",
+        "path": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages"
+      },
+      "tensordict": {
+        "version": "0.14.2",
+        "path": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages"
+      },
+      "gymnasium": {
+        "version": "1.3.0",
+        "path": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages"
+      },
+      "mujoco": {
+        "version": "3.11.0",
+        "path": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages"
+      },
+      "dm-control": {
+        "version": "1.0.44",
+        "path": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages"
+      },
+      "ogbench": {
+        "version": "1.2.1",
+        "path": "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages"
+      },
+      "craftax": {
+        "version": "1.6.1",
+        "path": "/oscar/scratch/sboughan/venvs/se-step4-swm/lib/python3.12/site-packages"
+      },
+      "jax": {
+        "version": "0.11.1",
+        "path": "/oscar/scratch/sboughan/venvs/se-step4-swm/lib/python3.12/site-packages"
+      },
+      "jaxlib": {
+        "version": "0.11.1",
+        "path": "/oscar/scratch/sboughan/venvs/se-step4-swm/lib/python3.12/site-packages"
+      },
+      "flax": {
+        "version": "0.12.9",
+        "path": "/oscar/scratch/sboughan/venvs/se-step4-swm/lib/python3.12/site-packages"
+      },
+      "pymunk": {
+        "version": "7.3.0",
+        "path": "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages"
+      },
+      "pygame": {
+        "version": "2.6.1",
+        "path": "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages"
+      }
+    },
+    "torch_threads": 1,
+    "environment": {
+      "SLURM_JOB_ID": "6796862",
+      "MUJOCO_GL": "egl",
+      "PYOPENGL_PLATFORM": "egl",
+      "LIBGL_ALWAYS_SOFTWARE": null,
+      "GALLIUM_DRIVER": null,
+      "DISPLAY": null,
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "LP_NUM_THREADS": "1",
+      "JAX_PLATFORMS": null,
+      "CRAFTAX_JAX_BACKEND": null,
+      "CUDA_VISIBLE_DEVICES": "0"
+    }
+  },
+  "measurements": [
+    {
+      "batch": 1,
+      "output_device": "cpu",
+      "paired_mse": {
+        "mean": 4.4146539334688117e-05,
+        "sd": 0.0,
+        "maximum": 4.4146539334688117e-05,
+        "samples": [
+          4.4146539334688117e-05
+        ]
+      },
+      "ours": {
+        "count": 12,
+        "samples_ms": [
+          7.221128,
+          7.444837,
+          7.227138,
+          7.390567,
+          7.228247,
+          7.394937,
+          7.213297,
+          7.460477,
+          7.449006,
+          7.421827,
+          7.281067,
+          7.452527
+        ],
+        "mean_ms": 7.348754583333333,
+        "sd_ms": 0.10457056931387905,
+        "mean_ms_per_frame": 7.348754583333333,
+        "sd_ms_per_frame": 0.10457056931387905,
+        "frames_per_second": 136.07747934159593
+      },
+      "source": {
+        "count": 12,
+        "samples_ms": [
+          3.205995,
+          2.717598,
+          2.881807,
+          2.658868,
+          2.834068,
+          2.652048,
+          2.807228,
+          2.637558,
+          2.828318,
+          2.607618,
+          2.782748,
+          2.596648
+        ],
+        "mean_ms": 2.7675418333333335,
+        "sd_ms": 0.16909995592539254,
+        "mean_ms_per_frame": 2.7675418333333335,
+        "sd_ms_per_frame": 0.16909995592539254,
+        "frames_per_second": 361.33148484175274
+      },
+      "speedup": 0.3766001166524192
+    },
+    {
+      "batch": 1,
+      "output_device": "cuda",
+      "paired_mse": {
+        "mean": 4.4146539334688117e-05,
+        "sd": 0.0,
+        "maximum": 4.4146539334688117e-05,
+        "samples": [
+          4.4146539334688117e-05
+        ]
+      },
+      "ours": {
+        "count": 12,
+        "samples_ms": [
+          7.508037,
+          7.443186,
+          7.218228,
+          7.346937,
+          7.215688,
+          7.389617,
+          7.367487,
+          7.498506,
+          7.204198,
+          7.369847,
+          7.380227,
+          7.402647
+        ],
+        "mean_ms": 7.3620504166666665,
+        "sd_ms": 0.10295478593004558,
+        "mean_ms_per_frame": 7.3620504166666665,
+        "sd_ms_per_frame": 0.10295478593004558,
+        "frames_per_second": 135.83172396322334
+      },
+      "source": {
+        "count": 12,
+        "samples_ms": [
+          3.341975,
+          2.752438,
+          2.898547,
+          2.713968,
+          2.880267,
+          2.664768,
+          2.939397,
+          2.678628,
+          2.839358,
+          2.743808,
+          2.824028,
+          2.661898
+        ],
+        "mean_ms": 2.828256666666667,
+        "sd_ms": 0.18751486280260243,
+        "mean_ms_per_frame": 2.828256666666667,
+        "sd_ms_per_frame": 0.18751486280260243,
+        "frames_per_second": 353.57469913739556
+      },
+      "speedup": 0.38416697884381285
+    },
+    {
+      "batch": 64,
+      "output_device": "cpu",
+      "paired_mse": {
+        "mean": 5.842567572372086e-05,
+        "sd": 1.2595509864470245e-05,
+        "maximum": 8.385349646394505e-05,
+        "samples": [
+          4.4146539334688117e-05,
+          5.175282939973375e-05,
+          8.385349646394505e-05,
+          4.720270461125627e-05,
+          6.973520617397286e-05,
+          5.722478942557415e-05,
+          4.435148242303457e-05,
+          5.053747397651872e-05,
+          7.919078579144075e-05,
+          6.103922369601436e-05,
+          7.135390921074313e-05,
+          6.217580986643023e-05,
+          5.217129744054484e-05,
+          6.584098100024323e-05,
+          4.7062534163992394e-05,
+          4.717174860140134e-05
+        ]
+      },
+      "ours": {
+        "count": 6,
+        "samples_ms": [
+          17.377682,
+          17.385542,
+          16.358747,
+          17.589422,
+          16.373037,
+          17.8154
+        ],
+        "mean_ms": 17.149971666666666,
+        "sd_ms": 0.6281593411759999,
+        "mean_ms_per_frame": 0.26796830729166665,
+        "sd_ms_per_frame": 0.009814989705874999,
+        "frames_per_second": 3731.7845908977692
+      },
+      "source": {
+        "count": 6,
+        "samples_ms": [
+          170.526669,
+          168.412359,
+          171.754274,
+          171.274885,
+          168.847796,
+          169.454374
+        ],
+        "mean_ms": 170.0450595,
+        "sd_ms": 1.3501031700572779,
+        "mean_ms_per_frame": 2.6569540546875,
+        "sd_ms_per_frame": 0.021095362032144967,
+        "frames_per_second": 376.3708289331393
+      },
+      "speedup": 9.915180200006162
+    },
+    {
+      "batch": 64,
+      "output_device": "cuda",
+      "paired_mse": {
+        "mean": 5.842567572372086e-05,
+        "sd": 1.2595509864470245e-05,
+        "maximum": 8.385349646394505e-05,
+        "samples": [
+          4.4146539334688117e-05,
+          5.175282939973375e-05,
+          8.385349646394505e-05,
+          4.720270461125627e-05,
+          6.973520617397286e-05,
+          5.722478942557415e-05,
+          4.435148242303457e-05,
+          5.053747397651872e-05,
+          7.919078579144075e-05,
+          6.103922369601436e-05,
+          7.135390921074313e-05,
+          6.217580986643023e-05,
+          5.217129744054484e-05,
+          6.584098100024323e-05,
+          4.7062534163992394e-05,
+          4.717174860140134e-05
+        ]
+      },
+      "ours": {
+        "count": 6,
+        "samples_ms": [
+          16.322187,
+          16.963254,
+          15.449371,
+          16.894945,
+          15.418701,
+          16.783315
+        ],
+        "mean_ms": 16.3052955,
+        "sd_ms": 0.7110612410834246,
+        "mean_ms_per_frame": 0.2547702421875,
+        "sd_ms_per_frame": 0.01111033189192851,
+        "frames_per_second": 3925.10519051924
+      },
+      "source": {
+        "count": 6,
+        "samples_ms": [
+          170.790638,
+          171.088167,
+          173.703705,
+          171.500864,
+          171.769844,
+          172.417361
+        ],
+        "mean_ms": 171.87842983333334,
+        "sd_ms": 1.0568093012999908,
+        "mean_ms_per_frame": 2.6856004661458335,
+        "sd_ms_per_frame": 0.016512645332812357,
+        "frames_per_second": 372.3562058488628
+      },
+      "speedup": 10.5412643293299
+    },
+    {
+      "batch": 128,
+      "output_device": "cpu",
+      "paired_mse": {
+        "mean": 5.842567572372086e-05,
+        "sd": 1.2595509864470245e-05,
+        "maximum": 8.385349646394505e-05,
+        "samples": [
+          4.4146539334688117e-05,
+          5.175282939973375e-05,
+          8.385349646394505e-05,
+          4.720270461125627e-05,
+          6.973520617397286e-05,
+          5.722478942557415e-05,
+          4.435148242303457e-05,
+          5.053747397651872e-05,
+          7.919078579144075e-05,
+          6.103922369601436e-05,
+          7.135390921074313e-05,
+          6.217580986643023e-05,
+          5.217129744054484e-05,
+          6.584098100024323e-05,
+          4.7062534163992394e-05,
+          4.717174860140134e-05
+        ]
+      },
+      "ours": {
+        "count": 3,
+        "samples_ms": [
+          28.898461,
+          21.081586,
+          19.723592
+        ],
+        "mean_ms": 23.234546333333334,
+        "sd_ms": 4.951866712611552,
+        "mean_ms_per_frame": 0.18151989322916667,
+        "sd_ms_per_frame": 0.03868645869227775,
+        "frames_per_second": 5509.038057539578
+      },
+      "source": {
+        "count": 3,
+        "samples_ms": [
+          335.541443,
+          337.023996,
+          338.219361
+        ],
+        "mean_ms": 336.9282666666667,
+        "sd_ms": 1.3415231204218223,
+        "mean_ms_per_frame": 2.6322520833333334,
+        "sd_ms_per_frame": 0.010480649378295487,
+        "frames_per_second": 379.9028240234717
+      },
+      "speedup": 14.501176904121175
+    },
+    {
+      "batch": 128,
+      "output_device": "cuda",
+      "paired_mse": {
+        "mean": 5.842567572372086e-05,
+        "sd": 1.2595509864470245e-05,
+        "maximum": 8.385349646394505e-05,
+        "samples": [
+          4.4146539334688117e-05,
+          5.175282939973375e-05,
+          8.385349646394505e-05,
+          4.720270461125627e-05,
+          6.973520617397286e-05,
+          5.722478942557415e-05,
+          4.435148242303457e-05,
+          5.053747397651872e-05,
+          7.919078579144075e-05,
+          6.103922369601436e-05,
+          7.135390921074313e-05,
+          6.217580986643023e-05,
+          5.217129744054484e-05,
+          6.584098100024323e-05,
+          4.7062534163992394e-05,
+          4.717174860140134e-05
+        ]
+      },
+      "ours": {
+        "count": 3,
+        "samples_ms": [
+          19.249284,
+          19.629492,
+          17.895381
+        ],
+        "mean_ms": 18.924719,
+        "sd_ms": 0.9114779588662574,
+        "mean_ms_per_frame": 0.1478493671875,
+        "sd_ms_per_frame": 0.007120921553642636,
+        "frames_per_second": 6763.640717730076
+      },
+      "source": {
+        "count": 3,
+        "samples_ms": [
+          345.23156,
+          339.862853,
+          338.39522
+        ],
+        "mean_ms": 341.163211,
+        "sd_ms": 3.5989004355529284,
+        "mean_ms_per_frame": 2.6653375859375,
+        "sd_ms_per_frame": 0.028116409652757253,
+        "frames_per_second": 375.18699517692136
+      },
+      "speedup": 18.02738582274326
+    },
+    {
+      "batch": 256,
+      "output_device": "cpu",
+      "paired_mse": {
+        "mean": 5.842567572372086e-05,
+        "sd": 1.2595509864470245e-05,
+        "maximum": 8.385349646394505e-05,
+        "samples": [
+          4.4146539334688117e-05,
+          5.175282939973375e-05,
+          8.385349646394505e-05,
+          4.720270461125627e-05,
+          6.973520617397286e-05,
+          5.722478942557415e-05,
+          4.435148242303457e-05,
+          5.053747397651872e-05,
+          7.919078579144075e-05,
+          6.103922369601436e-05,
+          7.135390921074313e-05,
+          6.217580986643023e-05,
+          5.217129744054484e-05,
+          6.584098100024323e-05,
+          4.7062534163992394e-05,
+          4.717174860140134e-05
+        ]
+      },
+      "ours": {
+        "count": 3,
+        "samples_ms": [
+          31.576629,
+          31.949668,
+          30.642613
+        ],
+        "mean_ms": 31.389636666666668,
+        "sd_ms": 0.6732925016664988,
+        "mean_ms_per_frame": 0.12261576822916667,
+        "sd_ms_per_frame": 0.002630048834634761,
+        "frames_per_second": 8155.55792246082
+      },
+      "source": {
+        "count": 3,
+        "samples_ms": [
+          743.767591,
+          675.191357,
+          679.271609
+        ],
+        "mean_ms": 699.4101856666667,
+        "sd_ms": 38.468775260269176,
+        "mean_ms_per_frame": 2.732071037760417,
+        "sd_ms_per_frame": 0.15026865336042647,
+        "frames_per_second": 366.02269347276496
+      },
+      "speedup": 22.281563596732724
+    },
+    {
+      "batch": 256,
+      "output_device": "cuda",
+      "paired_mse": {
+        "mean": 5.842567572372086e-05,
+        "sd": 1.2595509864470245e-05,
+        "maximum": 8.385349646394505e-05,
+        "samples": [
+          4.4146539334688117e-05,
+          5.175282939973375e-05,
+          8.385349646394505e-05,
+          4.720270461125627e-05,
+          6.973520617397286e-05,
+          5.722478942557415e-05,
+          4.435148242303457e-05,
+          5.053747397651872e-05,
+          7.919078579144075e-05,
+          6.103922369601436e-05,
+          7.135390921074313e-05,
+          6.217580986643023e-05,
+          5.217129744054484e-05,
+          6.584098100024323e-05,
+          4.7062534163992394e-05,
+          4.717174860140134e-05
+        ]
+      },
+      "ours": {
+        "count": 3,
+        "samples_ms": [
+          24.460781,
+          24.60611,
+          23.478555
+        ],
+        "mean_ms": 24.181815333333333,
+        "sd_ms": 0.6133607844412079,
+        "mean_ms_per_frame": 0.09446021614583333,
+        "sd_ms_per_frame": 0.0023959405642234683,
+        "frames_per_second": 10586.467412441023
+      },
+      "source": {
+        "count": 3,
+        "samples_ms": [
+          693.653455,
+          679.534738,
+          694.098933
+        ],
+        "mean_ms": 689.0957086666666,
+        "sd_ms": 8.283038858339783,
+        "mean_ms_per_frame": 2.6917801119791664,
+        "sd_ms_per_frame": 0.032355620540389776,
+        "frames_per_second": 371.5013702455573
+      },
+      "speedup": 28.496442436924294
+    }
+  ],
+  "frames": [
+    {
+      "index": 0,
+      "case": 0,
+      "state_hash": "6f00fb50128547f0b3c0e8826260873a29d91f2c77d5c55383d4798282a29bae",
+      "state_file": "frame-0000-state.npz"
+    },
+    {
+      "index": 66,
+      "case": 4,
+      "state_hash": "72fdf6cb2ddf9ed04b6fb47eef7925ebeb3a379a87bfc82db2960f9fe29b6713",
+      "state_file": "frame-0066-state.npz"
+    },
+    {
+      "index": 133,
+      "case": 5,
+      "state_hash": "dab2492503fb212c2c4b04b90641462187af030054b6bdeee3b97e3ccdc5ff26",
+      "state_file": "frame-0133-state.npz"
+    },
+    {
+      "index": 199,
+      "case": 5,
+      "state_hash": "989ac9943eb522360d0c43cf51b1366a02a9bbed0552de20580103850ce87646",
+      "state_file": "frame-0199-state.npz"
+    },
+    {
+      "index": 266,
+      "case": 6,
+      "state_hash": "d9b3a5604145e9b16bd8f8490fd22d69da8f497649ec0684e4a11bf53868f50c",
+      "state_file": "frame-0266-state.npz"
+    },
+    {
+      "index": 333,
+      "case": 7,
+      "state_hash": "0152d2f9b1600315c7d8b9aa4aaff907ea591af1e71010f92360cc95268f248e",
+      "state_file": "frame-0333-state.npz"
+    },
+    {
+      "index": 399,
+      "case": 7,
+      "state_hash": "e7848321f5fb9156e62ce0d31e32ec4cb9ba95479b99f37ee7abf3479d84fee2",
+      "state_file": "frame-0399-state.npz"
+    },
+    {
+      "index": 466,
+      "case": 8,
+      "state_hash": "ae8d57e8f4ca827780c038dcb3e9fc940d657c0b4ec048121ed82e71d3dc0a78",
+      "state_file": "frame-0466-state.npz"
+    },
+    {
+      "index": 532,
+      "case": 9,
+      "state_hash": "3892f4a0367ef51c5398f16e91dd74b1dcb04ecaec27190d7cf813fee6686da7",
+      "state_file": "frame-0532-state.npz"
+    },
+    {
+      "index": 599,
+      "case": 9,
+      "state_hash": "cdae34e9625b3b3e53d99988b5ecd9b4244ba252012217c42a851196d1838abc",
+      "state_file": "frame-0599-state.npz"
+    },
+    {
+      "index": 666,
+      "case": 10,
+      "state_hash": "e04817087c644bf5ddd468a2d1daa2dece36b910075c5916e0674591093a5bd4",
+      "state_file": "frame-0666-state.npz"
+    },
+    {
+      "index": 732,
+      "case": 11,
+      "state_hash": "3194df3aa441a1a1a2c296f6d8b39b70c4fdaf8c90b0dd8456a1decd3b4e5381",
+      "state_file": "frame-0732-state.npz"
+    },
+    {
+      "index": 799,
+      "case": 11,
+      "state_hash": "2f166c97e6c50514eb271933b1195c74b87d709a2337b59da35024c830b5e6cc",
+      "state_file": "frame-0799-state.npz"
+    },
+    {
+      "index": 865,
+      "case": 12,
+      "state_hash": "a51a2ac8cf765a6eb2e6bc522cdb5632b0ad6e58ec5c0ecd372efe94886f2af0",
+      "state_file": "frame-0865-state.npz"
+    },
+    {
+      "index": 932,
+      "case": 12,
+      "state_hash": "441c3c8a88aae3099069919cf5288086bb60732202a866faf785f2907f27a95a",
+      "state_file": "frame-0932-state.npz"
+    },
+    {
+      "index": 999,
+      "case": 13,
+      "state_hash": "29dc754c4015ba142c766fbb60601ba248bdf11d7d4802a414b0fdc06703b06b",
+      "state_file": "frame-0999-state.npz"
+    }
+  ],
+  "harness_sha256": "54f29161aae95d660dce0e053d2de652845dd075fc93302e9418676b2c6c7230",
+  "scope": "Saved States; no rollouts or setup timed; equal batch and output destination; single CPU thread.",
+  "source_batch_method": "Repeated upstream render, cycling the same saved poses; no cached images.",
+  "corpus": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-cpu-6754925_33/results",
+  "corpus_sha256": "9c313d407ff75cb76952665bfafe34b6301adc83cd66c77c1c4d64d5055cf272",
+  "independent_states": 16,
+  "source_anchor_mse": [
+    1.74071875482219e-05,
+    1.8431800824905125e-05,
+    1.9966319861277843e-05,
+    1.6576177039443227e-05,
+    2.0300706066740423e-05,
+    1.7569425646075424e-05,
+    1.555023561712266e-05,
+    1.99337292106385e-05,
+    1.987038688024229e-05,
+    1.628531314486579e-05,
+    1.6853350817451162e-05,
+    1.894221740983975e-05,
+    1.4627480894318511e-05,
+    1.6818512535733246e-05,
+    1.5224022615582177e-05,
+    1.5660471705021878e-05
+  ],
+  "source_render_paths": {
+    "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-v12/scripts/benchmarks/renderer_table/bridges.py": "8f17dbf1c3a4f14343766359f4f3a9fa5af41a808ff400801a624aded319476b"
+  },
+  "opengl": {
+    "vendor": "NVIDIA Corporation",
+    "renderer": "NVIDIA GeForce RTX 3090/PCIe/SSE2"
+  },
+  "source_render_device": "cuda",
+  "source_gpu_supported": true,
+  "paired_mse": {
+    "samples": [
+      4.4146539334688117e-05,
+      5.175282939973375e-05,
+      8.385349646394505e-05,
+      4.720270461125627e-05,
+      6.973520617397286e-05,
+      5.722478942557415e-05,
+      4.435148242303457e-05,
+      5.053747397651872e-05,
+      7.919078579144075e-05,
+      6.103922369601436e-05,
+      7.135390921074313e-05,
+      6.217580986643023e-05,
+      5.217129744054484e-05,
+      6.584098100024323e-05,
+      4.7062534163992394e-05,
+      4.717174860140134e-05
+    ],
+    "mean": 5.842567572372086e-05,
+    "sd": 1.2595509864470245e-05,
+    "maximum": 8.385349646394505e-05
+  },
+  "state_nonmutation_passed": true
+}

@@ -1,0 +1,245 @@
+{
+  "base_commit": "df80c9c54590afa9fc0482a4dcb241d21f6b63a3",
+  "source_pin": "176d54532b3c0a251a4f509b74f2fdacc143a63d",
+  "campaign": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928",
+  "registrations": {
+    "swm/AcrobotControl-v1": {
+      "source_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-cpu-6754925_0/results",
+      "ours_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/ours-cpu-6755088_0/results",
+      "ours_gpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/ours-gpu-6755089_0/results"
+    },
+    "swm/AcrobotDMControl-v0": {
+      "source_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-cpu-6754925_1/results",
+      "ours_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/ours-cpu-6755088_1/results",
+      "ours_gpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/ours-gpu-6755089_1/results",
+      "source_gpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-gpu-6755087_1/results"
+    },
+    "swm/BallInCupDMControl-v0": {
+      "source_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-cpu-6754925_2/results",
+      "ours_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/ours-cpu-6755088_2/results",
+      "ours_gpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/ours-gpu-6755089_2/results",
+      "source_gpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-gpu-6755087_2/results"
+    },
+    "swm/CartPoleControl-v1": {
+      "source_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-cpu-6754925_3/results",
+      "ours_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/ours-cpu-6755088_3/results",
+      "ours_gpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/ours-gpu-6755089_3/results"
+    },
+    "swm/CartpoleDMControl-v0": {
+      "source_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-cpu-6754925_4/results",
+      "ours_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/ours-cpu-6755088_4/results",
+      "ours_gpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/ours-gpu-6755089_4/results",
+      "source_gpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-gpu-6755087_4/results"
+    },
+    "swm/CheetahDMControl-v0": {
+      "source_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-cpu-6754925_5/results",
+      "ours_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/ours-cpu-6755088_5/results",
+      "ours_gpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/ours-gpu-6755089_5/results",
+      "source_gpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-gpu-6755087_5/results"
+    },
+    "swm/CraftaxClassicPixels-v1": {
+      "source_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-cpu-craftax-retry-6755173_6/results",
+      "ours_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/craftax-ours-cpu-6755517_6/results",
+      "ours_gpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/craftax-ours-gpu-6755727_6/results",
+      "source_gpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-gpu-craftax-v3-6755516_6/results"
+    },
+    "swm/CraftaxClassicSymbolic-v1": {
+      "source_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-cpu-craftax-retry-6755173_7/results",
+      "ours_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/craftax-ours-cpu-6755517_7/results",
+      "scope": "NO_RGB: symbolic observation registration"
+    },
+    "swm/CraftaxPixels-v1": {
+      "source_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-cpu-craftax-retry-6755173_8/results",
+      "ours_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/craftax-ours-cpu-6755517_8/results",
+      "ours_gpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/craftax-ours-gpu-6755727_8/results",
+      "source_gpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-gpu-craftax-v3-6755516_8/results"
+    },
+    "swm/CraftaxSymbolic-v1": {
+      "source_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-cpu-craftax-retry-6755173_9/results",
+      "ours_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/craftax-ours-cpu-6755517_9/results",
+      "scope": "NO_RGB: symbolic observation registration"
+    },
+    "swm/FetchPickAndPlace-v3": {
+      "source_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-cpu-6754925_10/results",
+      "ours_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/fetch-cpu-v7-6755758_10/results",
+      "ours_gpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/ours-gpu-6755089_10/results",
+      "source_gpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-gpu-6755087_10/results",
+      "scope": "RESET_ONLY: 1000 independent reset frames; source render mutates continuation caches after actions"
+    },
+    "swm/FetchPickAndPlaceDense-v3": {
+      "source_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-cpu-6754925_11/results",
+      "ours_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/fetch-cpu-v7-6755758_11/results",
+      "ours_gpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/ours-gpu-6755089_11/results",
+      "source_gpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-gpu-6755087_11/results",
+      "scope": "RESET_ONLY: 1000 independent reset frames; source render mutates continuation caches after actions"
+    },
+    "swm/FetchPickAndPlaceDict-v3": {
+      "source_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-cpu-6754925_12/results",
+      "ours_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/fetch-cpu-v7-6755758_12/results",
+      "ours_gpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/ours-gpu-6755089_12/results",
+      "source_gpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-gpu-6755087_12/results",
+      "scope": "RESET_ONLY: 1000 independent reset frames; source render mutates continuation caches after actions"
+    },
+    "swm/FetchPush-v3": {
+      "source_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-cpu-6754925_13/results",
+      "ours_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/fetch-cpu-v7-6755649_13/results",
+      "ours_gpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/ours-gpu-6755089_13/results",
+      "source_gpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-gpu-6755087_13/results"
+    },
+    "swm/FetchPushDense-v3": {
+      "source_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-cpu-6754925_14/results",
+      "ours_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/fetch-cpu-v7-6755758_14/results",
+      "ours_gpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/ours-gpu-v8-6756048_14/results",
+      "source_gpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-gpu-6755087_14/results"
+    },
+    "swm/FetchPushDict-v3": {
+      "source_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-cpu-6754925_15/results",
+      "ours_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/fetch-cpu-v7-6755758_15/results",
+      "ours_gpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/ours-gpu-6755089_15/results",
+      "source_gpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-gpu-6755087_15/results"
+    },
+    "swm/FetchReach-v3": {
+      "source_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-cpu-6754925_16/results",
+      "ours_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/fetch-cpu-v7-6755758_16/results",
+      "ours_gpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/ours-gpu-6755089_16/results",
+      "source_gpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-gpu-6755087_16/results"
+    },
+    "swm/FetchReachDense-v3": {
+      "source_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-cpu-6754925_17/results",
+      "ours_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/fetch-cpu-v7-6755758_17/results",
+      "ours_gpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/ours-gpu-v8-6756048_17/results",
+      "source_gpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-gpu-6755087_17/results"
+    },
+    "swm/FetchReachDict-v3": {
+      "source_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-cpu-6754925_18/results",
+      "ours_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/fetch-cpu-v7-6755758_18/results",
+      "ours_gpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/ours-gpu-v8-6756048_18/results",
+      "source_gpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-gpu-6755087_18/results"
+    },
+    "swm/FetchSlide-v3": {
+      "source_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-cpu-6754925_19/results",
+      "ours_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/fetch-cpu-v7-6755758_19/results",
+      "ours_gpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/ours-gpu-v8-6756048_19/results",
+      "source_gpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-gpu-6755087_19/results"
+    },
+    "swm/FetchSlideDense-v3": {
+      "source_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-cpu-6754925_20/results",
+      "ours_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/fetch-cpu-v7-6755758_20/results",
+      "ours_gpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/ours-gpu-v8-6756048_20/results",
+      "source_gpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-gpu-6755087_20/results"
+    },
+    "swm/FetchSlideDict-v3": {
+      "source_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-cpu-6754925_21/results",
+      "ours_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/fetch-cpu-v7-6755758_21/results",
+      "ours_gpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/ours-gpu-v8-6756048_21/results",
+      "source_gpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-gpu-6755087_21/results"
+    },
+    "swm/FingerDMControl-v0": {
+      "source_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-cpu-6754925_22/results",
+      "ours_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/ours-cpu-6755088_22/results",
+      "ours_gpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/ours-gpu-v8-6756048_22/results",
+      "source_gpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-gpu-6755087_22/results"
+    },
+    "swm/HopperDMControl-v0": {
+      "source_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-cpu-6754925_23/results",
+      "ours_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/ours-cpu-6755088_23/results",
+      "ours_gpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/ours-gpu-v8-6756048_23/results",
+      "source_gpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-gpu-6755087_23/results"
+    },
+    "swm/HumanoidDMControl-v0": {
+      "source_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-cpu-6754925_24/results",
+      "ours_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/ours-cpu-6755088_24/results",
+      "ours_gpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/ours-gpu-v8-6756048_24/results",
+      "source_gpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-gpu-6755087_24/results"
+    },
+    "swm/ManipulatorDMControl-v0": {
+      "source_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-cpu-6754925_25/results",
+      "ours_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/ours-cpu-6755088_25/results",
+      "ours_gpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/ours-gpu-v8-6756048_25/results",
+      "source_gpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-gpu-6755087_25/results"
+    },
+    "swm/MountainCarContinuousControl-v0": {
+      "source_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-cpu-6754925_26/results",
+      "ours_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/ours-cpu-6755088_26/results",
+      "ours_gpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/ours-gpu-v8-6756048_26/results"
+    },
+    "swm/MountainCarControl-v0": {
+      "source_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-cpu-6754925_27/results",
+      "ours_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/ours-cpu-6755088_27/results",
+      "ours_gpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/ours-gpu-v8-6756048_27/results"
+    },
+    "swm/OGBCube-v0": {
+      "source_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-cpu-6754925_28/results",
+      "ours_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/ours-cpu-v8-6755942_28/results",
+      "ours_gpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/cube-fidelity-v11-6756179_28/results",
+      "source_gpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-gpu-exact-v4-6756505_28/results"
+    },
+    "swm/OGBMaze-v0": {
+      "source_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-cpu-6754925_29/results",
+      "ours_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/ours-cpu-6755088_29/results",
+      "ours_gpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/ours-gpu-v8-6756048_29/results",
+      "source_gpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-gpu-6755087_29/results"
+    },
+    "swm/OGBScene-v0": {
+      "source_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-cpu-6754925_30/results",
+      "ours_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/ours-cpu-v8-6755944_30/results",
+      "ours_gpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/ours-gpu-v8-6755945_30/results",
+      "source_gpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-gpu-exact-v4-6756505_30/results"
+    },
+    "swm/PFRocketLanding-v0": {
+      "source_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-cpu-6754925_31/results",
+      "ours_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/rocket-cpu-v10-6756157_31/results",
+      "ours_gpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/rocket-gpu-v10-6756158_31/results"
+    },
+    "swm/PendulumControl-v1": {
+      "source_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-cpu-6754925_32/results",
+      "ours_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/ours-cpu-6755088_32/results",
+      "ours_gpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/ours-gpu-v8-6756048_32/results"
+    },
+    "swm/PendulumDMControl-v0": {
+      "source_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-cpu-6754925_33/results",
+      "ours_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/ours-cpu-6755088_33/results",
+      "ours_gpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/ours-gpu-v12-6756626_33/results",
+      "source_gpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-gpu-6755087_33/results"
+    },
+    "swm/Piecewise-v0": {
+      "source_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-cpu-6754925_34/results",
+      "ours_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/ours-cpu-6755088_34/results",
+      "ours_gpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/ours-gpu-v8-6756048_34/results"
+    },
+    "swm/PushT-Discrete-v1": {
+      "scope": "NONCOMPARABLE: source-compatible full-State/action recovery is incomplete; no matched-state claim"
+    },
+    "swm/PushT-v1": {
+      "scope": "NONCOMPARABLE: source-compatible full-State/action recovery is incomplete; no matched-state claim"
+    },
+    "swm/QuadrupedDMControl-v0": {
+      "source_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-cpu-6754925_35/results",
+      "ours_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/ours-cpu-6755088_35/results",
+      "ours_gpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/ours-gpu-v12-6756626_35/results",
+      "source_gpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-gpu-dmc-v1-6756466_35/results"
+    },
+    "swm/ReacherDMControl-v0": {
+      "source_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-cpu-6754925_36/results",
+      "ours_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/ours-cpu-6755088_36/results",
+      "ours_gpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/ours-gpu-v8-6756048_36/results",
+      "source_gpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-gpu-6755087_36/results"
+    },
+    "swm/SimplePointMaze-v0": {
+      "source_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-cpu-6754925_37/results",
+      "ours_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/ours-cpu-6755088_37/results",
+      "ours_gpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/ours-gpu-v8-6756048_37/results"
+    },
+    "swm/TwoRoom-v1": {
+      "source_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-cpu-6754925_38/results",
+      "ours_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/ours-cpu-6755088_38/results",
+      "ours_gpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/ours-gpu-v8-6756048_38/results"
+    },
+    "swm/WalkerDMControl-v0": {
+      "source_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-cpu-6754925_39/results",
+      "ours_cpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/ours-cpu-6755088_39/results",
+      "ours_gpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/ours-gpu-6755089_39/results",
+      "source_gpu": "/oscar/scratch/sboughan/se-semantic-recovery/render-parity-df80c9c5-20260928/source-gpu-6755087_39/results"
+    }
+  }
+}

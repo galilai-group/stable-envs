@@ -1,0 +1,219 @@
+[
+  {
+    "command": [
+      "/usr/bin/nvidia-smi",
+      "--id=GPU-7bbfe8a4-3bcc-b7d5-8d04-2d5a0fdb732a",
+      "-q",
+      "-x"
+    ],
+    "returncode": 0,
+    "stderr": "",
+    "utc": "2026-09-29T17:49:12.481720+00:00",
+    "monotonic_ns": 13104647498881687,
+    "processes": [
+      {
+        "pid": 157494,
+        "type": "G",
+        "name": "/usr/libexec/Xorg",
+        "used_memory": "5 MiB"
+      },
+      {
+        "pid": 807751,
+        "type": "C+G",
+        "name": "/oscar/scratch/sboughan/se-semantic-recovery/ogb-renderer-294675f0-complete/run-6669909/profile/bin/python",
+        "used_memory": "2681 MiB"
+      }
+    ],
+    "gpu_uuid": "GPU-7bbfe8a4-3bcc-b7d5-8d04-2d5a0fdb732a",
+    "name": "NVIDIA GeForce RTX 3090",
+    "driver_version": "575.57.08",
+    "pci_bus_id": "00000000:E1:00.0",
+    "process_visibility": "reported"
+  },
+  {
+    "command": [
+      "/usr/bin/nvidia-smi",
+      "--id=GPU-7bbfe8a4-3bcc-b7d5-8d04-2d5a0fdb732a",
+      "-q",
+      "-x"
+    ],
+    "returncode": 0,
+    "stderr": "",
+    "utc": "2026-09-29T17:49:14.644413+00:00",
+    "monotonic_ns": 13104649661561410,
+    "processes": [
+      {
+        "pid": 157494,
+        "type": "G",
+        "name": "/usr/libexec/Xorg",
+        "used_memory": "5 MiB"
+      },
+      {
+        "pid": 807751,
+        "type": "C+G",
+        "name": "/oscar/scratch/sboughan/se-semantic-recovery/ogb-renderer-294675f0-complete/run-6669909/profile/bin/python",
+        "used_memory": "2681 MiB"
+      }
+    ],
+    "gpu_uuid": "GPU-7bbfe8a4-3bcc-b7d5-8d04-2d5a0fdb732a",
+    "name": "NVIDIA GeForce RTX 3090",
+    "driver_version": "575.57.08",
+    "pci_bus_id": "00000000:E1:00.0",
+    "process_visibility": "reported"
+  },
+  {
+    "command": [
+      "/usr/bin/nvidia-smi",
+      "--id=GPU-7bbfe8a4-3bcc-b7d5-8d04-2d5a0fdb732a",
+      "-q",
+      "-x"
+    ],
+    "returncode": 0,
+    "stderr": "",
+    "utc": "2026-09-29T17:49:16.765323+00:00",
+    "monotonic_ns": 13104651782466326,
+    "processes": [
+      {
+        "pid": 157494,
+        "type": "G",
+        "name": "/usr/libexec/Xorg",
+        "used_memory": "5 MiB"
+      },
+      {
+        "pid": 807751,
+        "type": "C+G",
+        "name": "/oscar/scratch/sboughan/se-semantic-recovery/ogb-renderer-294675f0-complete/run-6669909/profile/bin/python",
+        "used_memory": "2681 MiB"
+      }
+    ],
+    "gpu_uuid": "GPU-7bbfe8a4-3bcc-b7d5-8d04-2d5a0fdb732a",
+    "name": "NVIDIA GeForce RTX 3090",
+    "driver_version": "575.57.08",
+    "pci_bus_id": "00000000:E1:00.0",
+    "process_visibility": "reported"
+  },
+  {
+    "command": [
+      "/usr/bin/nvidia-smi",
+      "--id=GPU-7bbfe8a4-3bcc-b7d5-8d04-2d5a0fdb732a",
+      "-q",
+      "-x"
+    ],
+    "returncode": 0,
+    "stderr": "",
+    "utc": "2026-09-29T17:49:18.886921+00:00",
+    "monotonic_ns": 13104653904075667,
+    "processes": [
+      {
+        "pid": 157494,
+        "type": "G",
+        "name": "/usr/libexec/Xorg",
+        "used_memory": "5 MiB"
+      },
+      {
+        "pid": 807751,
+        "type": "C+G",
+        "name": "/oscar/scratch/sboughan/se-semantic-recovery/ogb-renderer-294675f0-complete/run-6669909/profile/bin/python",
+        "used_memory": "2681 MiB"
+      }
+    ],
+    "gpu_uuid": "GPU-7bbfe8a4-3bcc-b7d5-8d04-2d5a0fdb732a",
+    "name": "NVIDIA GeForce RTX 3090",
+    "driver_version": "575.57.08",
+    "pci_bus_id": "00000000:E1:00.0",
+    "process_visibility": "reported"
+  },
+  {
+    "command": [
+      "/usr/bin/nvidia-smi",
+      "--id=GPU-7bbfe8a4-3bcc-b7d5-8d04-2d5a0fdb732a",
+      "-q",
+      "-x"
+    ],
+    "returncode": 0,
+    "stderr": "",
+    "utc": "2026-09-29T17:49:21.007506+00:00",
+    "monotonic_ns": 13104656024659275,
+    "processes": [
+      {
+        "pid": 157494,
+        "type": "G",
+        "name": "/usr/libexec/Xorg",
+        "used_memory": "5 MiB"
+      },
+      {
+        "pid": 807751,
+        "type": "C+G",
+        "name": "/oscar/scratch/sboughan/se-semantic-recovery/ogb-renderer-294675f0-complete/run-6669909/profile/bin/python",
+        "used_memory": "2681 MiB"
+      }
+    ],
+    "gpu_uuid": "GPU-7bbfe8a4-3bcc-b7d5-8d04-2d5a0fdb732a",
+    "name": "NVIDIA GeForce RTX 3090",
+    "driver_version": "575.57.08",
+    "pci_bus_id": "00000000:E1:00.0",
+    "process_visibility": "reported"
+  },
+  {
+    "command": [
+      "/usr/bin/nvidia-smi",
+      "--id=GPU-7bbfe8a4-3bcc-b7d5-8d04-2d5a0fdb732a",
+      "-q",
+      "-x"
+    ],
+    "returncode": 0,
+    "stderr": "",
+    "utc": "2026-09-29T17:49:23.126537+00:00",
+    "monotonic_ns": 13104658143669924,
+    "processes": [
+      {
+        "pid": 157494,
+        "type": "G",
+        "name": "/usr/libexec/Xorg",
+        "used_memory": "5 MiB"
+      },
+      {
+        "pid": 807751,
+        "type": "C+G",
+        "name": "/oscar/scratch/sboughan/se-semantic-recovery/ogb-renderer-294675f0-complete/run-6669909/profile/bin/python",
+        "used_memory": "2681 MiB"
+      }
+    ],
+    "gpu_uuid": "GPU-7bbfe8a4-3bcc-b7d5-8d04-2d5a0fdb732a",
+    "name": "NVIDIA GeForce RTX 3090",
+    "driver_version": "575.57.08",
+    "pci_bus_id": "00000000:E1:00.0",
+    "process_visibility": "reported"
+  },
+  {
+    "command": [
+      "/usr/bin/nvidia-smi",
+      "--id=GPU-7bbfe8a4-3bcc-b7d5-8d04-2d5a0fdb732a",
+      "-q",
+      "-x"
+    ],
+    "returncode": 0,
+    "stderr": "",
+    "utc": "2026-09-29T17:49:24.688521+00:00",
+    "monotonic_ns": 13104659705677919,
+    "processes": [
+      {
+        "pid": 157494,
+        "type": "G",
+        "name": "/usr/libexec/Xorg",
+        "used_memory": "5 MiB"
+      },
+      {
+        "pid": 807751,
+        "type": "C+G",
+        "name": "/oscar/scratch/sboughan/se-semantic-recovery/ogb-renderer-294675f0-complete/run-6669909/profile/bin/python",
+        "used_memory": "2681 MiB"
+      }
+    ],
+    "gpu_uuid": "GPU-7bbfe8a4-3bcc-b7d5-8d04-2d5a0fdb732a",
+    "name": "NVIDIA GeForce RTX 3090",
+    "driver_version": "575.57.08",
+    "pci_bus_id": "00000000:E1:00.0",
+    "process_visibility": "reported"
+  }
+]

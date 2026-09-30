@@ -567,6 +567,8 @@ def render(
     mat_rgb: torch.Tensor,
     light_diffuse: torch.Tensor,
     out: torch.Tensor | None = None,
+    *,
+    chunk_size: int = CPU_CHUNK,
 ) -> torch.Tensor:
     """``(B,H,W,3)`` uint8.
 
@@ -574,12 +576,14 @@ def render(
     ``light_pos``/``light_dir (B,L,3)``, ``mat_rgb (B,nmat,3)``, ``light_diffuse (B,L,3)`` — all
     float32 on the scene's device, all as MuJoCo's own ``mj_camlight`` produces them.
     """
+    if isinstance(chunk_size, bool) or not isinstance(chunk_size, int) or chunk_size <= 0:
+        raise ValueError("chunk_size must be a positive integer")
     B = int(cam_pos.shape[0])
     W = H = scene.res
     if out is None:
         out = torch.empty((B, H, W, 3), dtype=torch.uint8, device=scene.device)
-    for lo in range(0, B, CPU_CHUNK):
-        hi = min(B, lo + CPU_CHUNK)
+    for lo in range(0, B, chunk_size):
+        hi = min(B, lo + chunk_size)
         out[lo:hi] = _render_chunk(
             scene,
             cam_pos[lo:hi],

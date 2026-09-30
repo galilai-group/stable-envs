@@ -1,0 +1,9 @@
+{
+  "updated_unix": 1790700430.995318,
+  "rsync_returncode": 0,
+  "statuses": {
+    "34": "COMPLETE",
+    "40": "COMPLETE"
+  },
+  "gate": "PASS"
+}

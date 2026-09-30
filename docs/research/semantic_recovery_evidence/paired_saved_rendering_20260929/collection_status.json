@@ -1,0 +1,21 @@
+{
+  "updated_utc": "2026-09-29T15:03:41.953357+00:00",
+  "counts": {
+    "raw": {
+      "COMPLETE": 37,
+      "UNESTABLISHED": 2,
+      "NO_RGB": 2,
+      "ERROR": 1,
+      "NOT_RECEIVED": 0
+    },
+    "cpufull": {
+      "COMPLETE": 38,
+      "NO_RGB": 2,
+      "UNESTABLISHED": 2,
+      "NOT_RECEIVED": 0
+    }
+  },
+  "download_errors": [],
+  "export_returncode": 0,
+  "collector_elapsed_seconds": 1977.9741889580619
+}

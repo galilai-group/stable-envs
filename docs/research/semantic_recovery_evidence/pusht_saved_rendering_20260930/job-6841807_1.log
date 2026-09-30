@@ -1,0 +1,39 @@
+## SLURM PROLOG ###############################################################
+##    Job ID : 6841807
+##  Job Name : se-pusht-saved
+##  Nodelist : gpu2110
+##      CPUs : 
+##  Mem/Node : 24576 MB
+## Directory : /oscar/scratch/sboughan/se-semantic-recovery/pusht-saved-rendering-v2-20260930
+##   Job Started : Wed Sep 30 09:42:39 AM EDT 2026
+###############################################################################
+/oscar/scratch/sboughan/se-semantic-recovery/render-rerun-df80c9c5-20260928T021357Z/run-6750648_2/oracle/stable_worldmodel/envs/__init__.py:215: UserWarning: ale-py not found; ALE/* envs are unavailable. Install with: pip install 'stable-worldmodel[env]' or pip install ale-py.
+  from stable_worldmodel.envs import ale  # noqa: F401
+/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages/gymnasium/spaces/box.py:415: UserWarning: [33mWARN: Casting input x to numpy array.[0m
+  gym.logger.warn("Casting input x to numpy array.")
+/oscar/scratch/sboughan/se-semantic-recovery/render-rerun-df80c9c5-20260928T021357Z/run-6750648_2/oracle/stable_worldmodel/envs/__init__.py:215: UserWarning: ale-py not found; ALE/* envs are unavailable. Install with: pip install 'stable-worldmodel[env]' or pip install ale-py.
+  from stable_worldmodel.envs import ale  # noqa: F401
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+Users of this version of Gym should be able to simply replace 'import gym' with 'import gymnasium as gym' in the vast majority of cases.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages/gymnasium/spaces/box.py:415: UserWarning: [33mWARN: Casting input x to numpy array.[0m
+  gym.logger.warn("Casting input x to numpy array.")
+swm/PushT-Discrete-v1 cpu 64 cpu 1001.1558395845971
+swm/PushT-Discrete-v1 cpu 128 cpu 941.6866905575338
+swm/PushT-Discrete-v1 cpu 256 cpu 882.5068066104527
+/oscar/scratch/sboughan/se-semantic-recovery/render-rerun-df80c9c5-20260928T021357Z/run-6750648_2/oracle/stable_worldmodel/envs/__init__.py:215: UserWarning: ale-py not found; ALE/* envs are unavailable. Install with: pip install 'stable-worldmodel[env]' or pip install ale-py.
+  from stable_worldmodel.envs import ale  # noqa: F401
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+Users of this version of Gym should be able to simply replace 'import gym' with 'import gymnasium as gym' in the vast majority of cases.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages/gymnasium/spaces/box.py:415: UserWarning: [33mWARN: Casting input x to numpy array.[0m
+  gym.logger.warn("Casting input x to numpy array.")
+swm/PushT-Discrete-v1 cuda 64 cpu 13602.445703037976
+swm/PushT-Discrete-v1 cuda 64 cuda 18550.446140947042
+swm/PushT-Discrete-v1 cuda 128 cpu 21140.468025601
+swm/PushT-Discrete-v1 cuda 128 cuda 33230.701862139955
+swm/PushT-Discrete-v1 cuda 256 cpu 21079.44106438685
+swm/PushT-Discrete-v1 cuda 256 cuda 59777.38777368784
+[2026-09-30T10:10:28.406] error: *** JOB 6841807 ON gpu2110 CANCELLED AT 2026-09-30T10:10:28 DUE to SIGNAL Terminated ***

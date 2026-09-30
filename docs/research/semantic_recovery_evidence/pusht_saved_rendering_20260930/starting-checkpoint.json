@@ -1,0 +1,8 @@
+{
+  "branch": "repair/render-config-fixes",
+  "head": "df80c9c54590afa9fc0482a4dcb241d21f6b63a3",
+  "worktree": "/Users/samib/stable-envs/.worktrees/render-config-fixes",
+  "dirty": true,
+  "no_push": true,
+  "scope": "PushT renderer-only measurement; semantic matrix remains 39 VERIFIED / 3 INCOMPLETE; production renderer unchanged"
+}

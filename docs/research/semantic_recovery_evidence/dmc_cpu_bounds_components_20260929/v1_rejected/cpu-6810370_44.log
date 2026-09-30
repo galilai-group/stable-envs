@@ -1,0 +1,10 @@
+## SLURM PROLOG ###############################################################
+##    Job ID : 6810400
+##  Job Name : se-dmc-components-gate
+##  Nodelist : node2335
+##      CPUs : 
+##  Mem/Node : 32768 MB
+## Directory : /oscar/home/sboughan
+##   Job Started : Tue Sep 29 01:41:48 PM EDT 2026
+###############################################################################
+[2026-09-29T13:46:32.836] error: *** JOB 6810400 ON node2335 CANCELLED AT 2026-09-29T13:46:32 DUE to SIGNAL Terminated ***

@@ -13,7 +13,8 @@ class CraftaxBridge:
     def __init__(self, row, seed, options):
         from tests.helpers.reference.craftax_source import oracle
 
-        self.name, self.options = row["name"], options
+        self.name = row["name"]
+        self.options = {k: v for k, v in options.items() if not k.startswith("_")}
         self.source = oracle(self.name)
         self.camera = "registered pixel observation (no camera control)"
         self.helper = "tests/helpers/reference/craftax_source.py:assert_engine"

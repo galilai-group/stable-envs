@@ -1,0 +1,1778 @@
+"""OGBench MANIPULATION — CubeEnv and SceneEnv, on the Fetch pattern.
+
+Rendering and Variation handling are provided by stable-envs. Dynamics stay in OGBench / MuJoCo;
+these cells currently render stored states (``has_dynamics`` is False).
+
+Reference: OGBench's ``ManipSpaceEnv`` subclasses ``CubeEnv`` at **224 px** and ``SceneEnv`` at
+**200 px**, both ``ob_type='states'``, both rendered from the model camera ``front_pixels``. Not
+ogbench's ``cube-single-v0`` / ``scene-v0`` gymnasium ids: those wrap the same classes with different
+kwargs. This family constructs the classes directly, so the certified defaults are Cube at 224 px
+and Scene at 200 px from camera ``front_pixels``. (``SceneEnv`` renders at 200 px because it keeps
+the ogbench base default; collection scripts sometimes pass 224. The registered default is certified
+as it stands.)
+
+WHY THIS FAMILY IS A ``visual`` CELL AND FETCH IS NOT
+-----------------------------------------------------
+
+Structurally it is the Fetch pattern exactly: a plate baked through MuJoCo itself, MJWarp's batch
+ray-caster for the movers, composited by MJWarp's own segmentation buffer. Two of Fetch's four
+corrections are not needed (the camera is a MODEL camera, so nothing has to be recovered from
+``mjvScene``; ``texture_gaps`` is empty), a third is absent (no visible sites), and the fourth
+(``gl_rounding``) applies unchanged.
+
+What is different is the LIGHTING, and it was attributed term by term before this class was written
+(``tests/fixtures/regression/join/step7/ogb-manipulation/m1/``, ``m1b/``; jobs 6396646, 6397454, 6397621 on a
+3090). Raw MJWarp scored **0.0091** interior-exact against MuJoCo's EGL frames. One term explained
+almost all of it — ``mujoco_warp`` honours a spot cutoff MuJoCo discards — and that correction now
+lives in the SHARED path (``render/mjwarp.py::neutralise_illegal_spots``), because it is a property
+of the two renderers and not of this scene. It is worth **0.0091 -> 0.3507**. What remains, measured
+on top of it and in order:
+
+* the ``global`` DIRECTIONAL light, now the largest term (interior 0.347 -> 0.702 when neutralised);
+* the spot's DISTANCE attenuation (a further +0.113; MJWarp takes ``attenuation = 1``);
+* the headlight, which is a MOVER-pixel term rather than a floor one (interior +0.001, mover
+  exactness 0.757 -> 0.896).
+
+Those are why the tier is ``visual``. They are declared in ``visual_fidelity`` rather than chased:
+the coordinator bounded the attribution to one further pass and this class was written at the tier
+the evidence supported.
+
+WHERE THE FIDELITY ACTUALLY COMES FROM
+--------------------------------------
+
+The interior mask on this scene keeps 0.41 (Cube) / 0.28 (Scene) of pixels, and most of what it
+keeps is the floor -- which is the plate, baked through MuJoCo itself and composited in wherever
+MJWarp did not hit a MOVER. Getting that composite right is the single largest fidelity term in this
+family, larger than every lighting correction put together: an earlier version masked with
+``seg >= 0``, which is true wherever MJWarp hit ANYTHING, so the plate was used only on sky and the
+cell scored 0.351 interior-exact. With the mover LUT it scores **0.958** (Cube) and **0.922**
+(Scene), and whole-frame exactness is **0.872** and **0.775**. All four are measured, on three
+independent 64-state draws, and are the numbers in ``visual_fidelity``.
+
+STATE
+-----
+
+``(qpos, mocap_pos)`` — and for the Scene, two extra dimensions for the button bits.
+Measured in phase 0: the frame is a bit-exact function of exactly that, verified by imposing a state
+from one episode onto a DIFFERENT episode (different seed, recompiled model) and getting an identical
+frame. The mocap pose is what positions the translucent goal marker, and it is not in the
+observation, so a caller has to read it off ``data``.
+
+Two things are deliberately NOT in the state, for two different reasons. **``qvel``** reaches no
+pixel — the mover pass runs ``kinematics``, which reads ``qpos`` and the mocap pose — and Gate A
+measured exactly that: carrying it, 20 of 48 dimensions moved no pixel. OGBench's
+``reset(options={'state'})`` contract is still ``concat(qpos, qvel)``; the RENDER state is the part
+that reaches a pixel. **``mocap_quat``** is CONSTANT under the registered distribution: over 520
+states spanning both cells, all five task ids and 12 steps per episode it has exactly one unique
+row, the identity, because ``initialize_episode`` writes ``lie.SO3.identity().wxyz`` and nothing in
+task mode rotates the goal marker. A dimension that never varies cannot be shown to matter and the
+repo's ``check_state_dims_matter`` reports it dead, so it is supplied as a constant instead.
+``fetch.py`` made the same call when it dropped mocap from its own state.
+
+The Scene's two button bits are not in ``qpos`` either. They are required keyword arguments of
+``SceneEnv.set_state`` — so that API exposes them — and they drive ``geom_rgba`` of the two
+buttons and ``mat_rgba`` of the drawer/window handles, worth 1.0-2.2 % of pixels. (OGBench's
+``reset(options={'state': ...})`` cannot supply them and raises ``KeyError``; recorded as an upstream
+defect.)
+
+STEP 9
+------
+
+This module is the manipulation half of the ``stable_envs.envs.ogbench`` PACKAGE.
+
+Three things are added and nothing else changes:
+
+  * ``num_envs=`` (contract §2);
+  * a public entity-grouped :data:`State` over the UNCHANGED packed row (contract §3):
+    ``{"qpos": (nq,), "mocap": {"position": (3,)}}`` plus ``{"buttons": (2,)}`` on the Scene.
+    Nothing is hidden and nothing about the packed row moved;
+  * ``close()``, which drops this instance's index tables and then refuses to render, WITHOUT
+    releasing any shared EGL context or mujoco_warp graph — the rule ``_PlateRig`` exists to enforce.
+
+The one deletion is a duplication: the texel substitution was lifted out of this file into
+``envs/_plate_texels.py`` (for ``dmcontrol`` to share) is now CALLED here instead of being kept
+alongside a second copy. ``mj_quantise``, ``_grid_texture``, ``_floor_key`` and ``_apply_floor`` keep
+their names and their behaviour; their bodies are the shared functions.
+
+NO DYNAMICS, declared rather than omitted: there is no batched simulator for these cells in this
+package, so ``has_dynamics`` is False and ``step``/``transition`` raise ``Env``'s precise refusal.
+``reset`` and ``render`` work — on CUDA; ``device="cpu"`` is refused outright (``CPU3D-OGB-1``).
+"""
+
+from __future__ import annotations
+
+import copy
+
+import numpy as np
+import torch
+
+from ...env import Env
+from ...registry import register
+from ...render import _resources as _RES
+from ...render import mjwarp as MW
+from ...spaces import Box, Dict
+from .._plate_texels import quantise as _quantise
+from .._plate_texels import substitute as _substitute
+from .._plate_texels import texel_key as _texel_key
+from .._plate_texels import texel_slots as _texel_slots
+
+#: Groups ``mujoco.Renderer`` draws at the env's own ``MjvOption`` (``geomgroup = [1,1,1,0,0,0]``).
+VISIBLE_GROUPS = (0, 1, 2)
+
+
+def IDENTITY_QUAT(nmocap: int) -> np.ndarray:
+    """``(nmocap, 4)`` of ``(1,0,0,0)``. The only mocap orientation this family's distribution has."""
+    q = np.zeros((int(nmocap), 4), np.float64)
+    q[:, 0] = 1.0
+    return q
+
+
+#: MJWarp worlds per launch. Same constant and the same reason as Fetch: a context is per (res,
+#: nworld) and an unbounded batch would build one per batch size.
+MJW_CHUNK = 256
+#: The leaves CubeEnv/SceneEnv resample on every reset by default (`CubeEnv.DEFAULT_VARIATIONS`).
+#: They are drawn explicitly from the caller's `rng` so a state draw is reproducible; see
+#: `_variation_values`.
+DEFAULT_VARIATION_PATHS = {
+    "Cube": ("cube.start_position", "cube.start_yaw", "cube.goal_position", "cube.goal_yaw"),
+    "Scene": ("cube.start_position", "cube.start_yaw", "cube.goal_position", "cube.goal_yaw"),
+}
+# ---- MODULE CACHES, and what each one is allowed to remember --------------------------------
+#
+# All four are keyed by CELL, not by renderer instance, and none of them is per-`OGBManipBase`.
+# That is deliberate -- an EGL context and a mujoco_warp graph are process resources -- but it is
+# also the reason a style leaf has to be written with more care here than in an env that owns its
+# own buffers, so the rule is written down once:
+#
+#   _BUNDLE_CACHE   (cell)                 immutable reference model, pristine arrays, cube geom
+#                                          ids, grid-texture masks, the declared variation defaults.
+#                                          Never
+#                                          varies with style; read-only after construction.
+#   _CTX_CACHE      (cell, res, nworld)    the mujoco_warp context. Its per-world `geom_rgba` is
+#                                          MUTABLE and SHARED across renders, across chunks and
+#                                          across renderer instances, so every per-world appearance
+#                                          leaf must be written for EVERY world of EVERY chunk of
+#                                          EVERY render -- INCLUDING when the requested value is the
+#                                          registered default. Skipping the default upload is what
+#                                          leaks a previous render's cube colour into this one, so
+#                                          `_cube_colours` never returns `None` for a cell that has
+#                                          cube geoms.
+#   _PLATE_CACHE    (cell, res, device,    baked static plates. `floorkey` is the QUANTISED floor
+#                    floorkey)             colour -- the bytes MuJoCo would store -- and is `None`
+#                                          for the default, so the default plate keeps exactly the
+#                                          key it had before `floor.color` existed.
+#   _PLATE_RIGS     (cell, res)            the private (model, data, renderer) triple that bakes a
+#                                          plate. Its texture and GL context are MUTATED per bake,
+#                                          so `_apply_floor` writes the floor it wants on every
+#                                          bake rather than trusting what the last bake left.
+from .context_cache import ContextCache, allocation_bytes
+
+
+def _release_context(context):
+    # A previous compositor may still have queued reads of the Warp buffers.
+    torch.cuda.synchronize(context.rc.rgb_data.device.ordinal)
+    context.wp.synchronize_device(context.rc.rgb_data.device)
+    MW.release_cached_ctx(context)
+
+
+_CTX_CACHE = ContextCache(on_evict=_release_context, memory_info=torch.cuda.mem_get_info)
+_PLATE_CACHE_MAX = 8
+_PLATE_CACHE = _RES.BoundedCache(_PLATE_CACHE_MAX, name="ogbench.plate")
+_BUNDLE_CACHE: dict = {}
+_REF_CACHE: dict = {}
+
+
+import contextlib as _contextlib
+
+
+@_contextlib.contextmanager
+def _seeded_action_space(u, seed: int):
+    """Give the env a STABLE, seeded action space for the duration of the block.
+
+    THE DEFECT THIS WORKS AROUND IS UPSTREAM AND IS WHY `sample_states` was not reproducible.
+    `ManipSpaceEnv.action_space` is a PROPERTY that constructs a brand-new `gym.spaces.Box` on every
+    access, each with its own OS-seeded RNG -- verified: two consecutive accesses return different
+    objects. `initialize_episode` then calls `self.step(self.action_space.sample())` twice to settle
+    the scene, so every `reset()` consumes two actions from a generator nothing can seed, and
+    `reset(seed=...)` cannot make a reset reproducible. Seeding `env.action_space` or
+    `env.unwrapped.action_space` from outside seeds a throwaway.
+
+    Because the property is a data descriptor on a base class, an instance attribute cannot shadow
+    it; the override has to be on the class that defines it, and is undone in `finally`. Scoped to
+    this block only, so nothing outside state sampling sees a changed env.
+    """
+    owner = next((k for k in type(u).__mro__ if "action_space" in k.__dict__), None)
+    if owner is None:
+        yield
+        return
+    original = owner.__dict__["action_space"]
+    box = u.action_space
+    box.seed(int(seed))
+    try:
+        setattr(owner, "action_space", box)
+        yield
+    finally:
+        setattr(owner, "action_space", original)
+
+
+def _reference_env(cell: str, size: int | None = None, role: str = "render"):
+    """The OGBench reference env. Needs ``ogbench`` and a GL backend.
+
+    Cached per (cell, size, ROLE) because each ``mujoco.Renderer`` holds a GL context and this family
+    would otherwise open one per call. The env is reset once so the model is compiled.
+
+    THE ROLE IS THE FIX FOR A RENDERER CHURN THAT IS UPSTREAM AND STRUCTURAL. OGBench recompiles on
+    every reset, and `manipspace/envs/env.py:170-172` closes its `mujoco.Renderer` and builds a new
+    one each time it does -- but only if one already exists, because the renderer is created lazily
+    on the first `render()`. So an env that is ONLY reset never opens one and never closes one, and
+    an env that is only rendered and state-written never closes one either: measured on CPU, five
+    `set_state` + `render` cycles the way `reference_render` drives it produce 1 birth and 0 closes,
+    while a single reset AFTER a render produces a close and a rebirth.
+
+    The churn came from one env doing both jobs. `sample_states` resets its env 64 times per draw and
+    `reference_env()` handed out THE SAME INSTANCE whenever it was called without a size, so every
+    draw after the first reference render closed a renderer -- four of them in the gate run, which
+    the resource guard attributes to whichever test was running when the collector woke up. Splitting
+    the roles means the sampling env is never rendered and the rendering env is never reset.
+    """
+    key = (cell, int(size) if size else None, str(role))
+    hit = _REF_CACHE.get(key)
+    if hit is not None:
+        return hit
+    kw = {}
+    if size:
+        kw = {"width": int(size), "height": int(size)}
+    env = _construct_reference(cell, kw)
+    env.reset(seed=0)
+    _REF_CACHE[key] = env
+    return env
+
+
+def _construct_reference(cell: str, kw: dict):
+    """Build the certified reference env from OGBench constructors."""
+    return _ogbench_make(cell, kw)
+
+
+def _ogbench_make(cell: str, kw: dict):
+    """Upstream OGBench construction at the certified size / observation type."""
+    size = int(kw.get("height") or kw.get("width") or SPEC[cell]["size"])
+    if cell == "Cube":
+        from ogbench.manipspace.envs.cube_env import CubeEnv
+
+        return CubeEnv(env_type="single", ob_type="states", height=size, width=size)
+    if cell == "Scene":
+        from ogbench.manipspace.envs.scene_env import SceneEnv
+
+        return SceneEnv(ob_type="states", height=size, width=size)
+    raise KeyError(f"no OGBench constructor for {cell!r}")
+
+
+class _Bundle:
+    """The mover set and the state layout, resolved once per cell; the MjModel, always fresh.
+
+    `model` and `data` are PROPERTIES, not stored handles, and that is not style. Every dirty
+    `reset()` runs `compile_model_and_data`, which REBINDS `_model` and `_data` to new objects
+    (phase 0 measured `model_object_reused: False` on every reset). A bundle that cached them went
+    stale the first time anything reset the env -- and `sample_states` resets it 64 times -- so the
+    plate would be baked from, and the button colours written into, a model the env had already
+    discarded. Caught by a test that passed alone and failed after any test that resets.
+
+    The derived facts below are cached because they are properties of the MJCF, not of a particular
+    compilation: the same scene recompiles to the same geom ids, the same movers and the same state
+    layout. Only the array handles move.
+    """
+
+    __slots__ = (
+        "cam",
+        "movers",
+        "nq",
+        "nv",
+        "nmocap",
+        "nbuttons",
+        "state_names",
+        "pristine",
+        "size",
+        "unwrapped",
+        "button_tables",
+        "cube_geoms",
+        "grid_tex",
+        "var_defaults",
+    )
+
+    @property
+    def model(self):
+        return self.unwrapped.model
+
+    @property
+    def data(self):
+        return self.unwrapped.data
+
+
+def _movers(m) -> list[int]:
+    """Geoms on a body with degrees of freedom, or on a mocap body. Everything else is the plate.
+
+    The mocap bodies matter: the translucent goal marker is a mocap geom and moves with the goal, so
+    a plate that treated it as static would bake the goal into the floor.
+    """
+    out = []
+    for i in range(m.ngeom):
+        b = int(m.geom_bodyid[i])
+        while b > 0:
+            if int(m.body_dofnum[b]) > 0 or int(m.body_mocapid[b]) >= 0:
+                out.append(i)
+                break
+            b = int(m.body_parentid[b])
+    return out
+
+
+def _bundle(cell: str) -> _Bundle:
+    hit = _BUNDLE_CACHE.get(cell)
+    if hit is not None:
+        return hit
+    import mujoco
+
+    spec = SPEC[cell]
+    env = _reference_env(cell, role="sample")
+    u = env.unwrapped
+    m = u.model
+    b = _Bundle()
+    b.unwrapped = u
+    b.size = int(u._render_height)
+    b.cam = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_CAMERA, spec["camera"])
+    assert b.cam >= 0, f"{cell}: no camera {spec['camera']!r}"
+    b.movers = _movers(m)
+    b.nq, b.nv, b.nmocap = int(m.nq), int(m.nv), int(m.nmocap)
+    b.nbuttons = int(getattr(u, "_num_buttons", 0) or 0)
+    # mocap_quat is NOT in the state either, and for a different reason from qvel: it is CONSTANT
+    # under the registered distribution. Measured over 520 states spanning both cells, all five task
+    # ids and 12 steps per episode, `data.mocap_quat` has exactly ONE unique row -- the identity
+    # (1,0,0,0) -- because `initialize_episode` writes `lie.SO3.identity().wxyz` and nothing in task
+    # mode ever rotates the goal marker. A dimension that never varies in the distribution the cell
+    # is certified on is not a state dimension: it cannot be perturbed to show it matters, and the
+    # repo's own `check_state_dims_matter` reports it dead. The renderer still needs a value, so
+    # `_split` and `reference_render` supply the identity explicitly.
+    #
+    # qvel is NOT in the state. It reaches no pixel -- MJWarp's mover pass runs `kinematics`, which
+    # reads qpos and the mocap pose and nothing else -- and Gate A measured exactly that: with qvel
+    # carried, 20 of 48 dimensions moved no pixel under a 0.05 perturbation. `check_state_dims_matter`
+    # would correctly fail that, and fetch.py made the same call for the same reason when it dropped
+    # mocap from ITS state. OGBench's `reset(options={'state'})` contract is concat(qpos, qvel), which
+    # is why the split helper still understands qvel; the RENDER state is the part that reaches a pixel.
+    names = (
+        [f"qpos[{i}]" for i in range(b.nq)]
+        + [f"mocap_pos[{i}]" for i in range(3 * b.nmocap)]
+        + [f"button_state_{i}" for i in range(b.nbuttons)]
+    )
+    b.state_names = tuple(names)
+    b.pristine = {
+        "geom_group": np.array(m.geom_group, copy=True),
+        "geom_rgba": np.array(m.geom_rgba, copy=True),
+        "mat_rgba": np.array(m.mat_rgba, copy=True),
+    }
+    b.button_tables = _button_tables(u, m, b.nbuttons)
+    b.var_defaults = _variation_defaults(u)
+    b.cube_geoms = _cube_geoms(u, m)
+    b.grid_tex = _grid_texture(m, b.var_defaults["floor.color"])
+    _BUNDLE_CACHE[cell] = b
+    return b
+
+
+#: A float colour as MuJoCo's own texture compiler stores it: ``int(255 * v)``, TRUNCATED. Not
+#: rounded, and the difference is visible: the default floor's 0.16 becomes 40, where rounding gives
+#: 41, and 0.18 becomes 45 where rounding gives 46. Measured against the compiled ``tex_data`` of
+#: both cells at six default channels and five probe channels; every one truncates.
+#:
+#: THIS IS NOW THE SHARED FUNCTION AND NOT A SECOND COPY OF IT. was lifted this file's texel
+#: substitution into ``envs/_plate_texels.py`` so that ``dmcontrol`` could run the same code -- and
+#: left the original standing here, so the one family the helper was extracted FROM was the one
+#: family not running it. Now ``mj_quantise`` IS ``_plate_texels.quantise``, the
+#: same function object, and the exported name is kept because probes and call sites reach for it.
+mj_quantise = _quantise
+
+
+def _variation_defaults(u) -> dict:
+    """The appearance leaves we offer, at their declared init values.
+
+    Read from the live space rather than written down here, so our default IS the registered default
+    by construction and cannot drift from a later OGBench release.
+
+    SHAPE CONTRACT, decided once and enforced here so nothing downstream has to guess. CubeEnv
+    declares ``cube.color`` as ``(num_cubes, 3)`` and both registered cells are one-cube
+    configurations (``CubeEnv(env_type='single')`` and ``SceneEnv``, which pins ``_num_cubes = 1``),
+    so the leaf carries exactly one RGB triple. We carry it FLAT, as ``(3,)``: ``VariationMap`` pairs
+    leaves by dotted path and the layout helper moves them through ``flat_layout`` widths, so a
+    leading axis of length 1 buys nothing and costs a shape that the Box, the style row and the
+    upstream value would each spell differently. ``style_from_variation`` accepts the upstream
+    ``(1, 3)`` because it flattens before slicing; ``variation_from_style`` emits the flat ``(3,)``
+    back, which is the same flattening every multi-row leaf in that module already gets and is
+    recorded in findings.md as a boundary reshape rather than papered over here.
+
+    ``floor.color`` is ``(2, 3)`` on both sides -- the checker's two colours -- and stays shaped,
+    because the two rows are not interchangeable and a flat six-vector would let a caller swap them
+    silently.
+    """
+    vs = getattr(u, "variation_space", None)
+    ncube = int(getattr(u, "_num_cubes", 1) or 1)
+    assert ncube == 1, (
+        f"this cell has {ncube} cubes, and the (3,) cube.color contract assumes one. A multi-cube "
+        f"configuration needs the leaf widened to (num_cubes, 3) on BOTH sides, plus per-cube geom "
+        f"groups in _cube_geoms; it is not a shape that can be fixed at the Box alone"
+    )
+    out = {}
+    for path, fallback in (
+        ("cube.color", [[0.96, 0.26, 0.33]]),
+        ("floor.color", [[0.08, 0.11, 0.16], [0.15, 0.18, 0.25]]),
+    ):
+        val = None
+        if vs is not None:
+            node = vs
+            try:
+                for part in path.split("."):
+                    node = node[part]
+                val = np.asarray(node.value, np.float64)
+            except Exception:
+                val = None
+        out[path] = np.asarray(fallback, np.float64) if val is None else val
+    # upstream (num_cubes, 3) -> our flat (3,); asserted one cube above, so this cannot silently drop
+    # a second cube's colour.
+    out["cube.color"] = np.asarray(out["cube.color"], np.float64).reshape(-1)[:3]
+    out["floor.color"] = np.asarray(out["floor.color"], np.float64).reshape(2, 3)
+    return out
+
+
+def _cube_geoms(u, m) -> np.ndarray:
+    """The geoms ``initialize_episode`` paints with ``cube.color``.
+
+    MEASURED (both cells): rows 62 ``object_0`` and 63 ``target_object_0``, and both are MOVERS, so
+    this leaf never touches the baked plate. Resolved BY NAME rather than by the measured ids, since
+    an id is a property of one compilation and a name is a property of the MJCF. The alpha channel is
+    deliberately NOT part of this: ``object_0`` is opaque and ``target_object_0`` is the translucent
+    goal marker at alpha 0.2, and each geom's own alpha is preserved while writing only rgb.
+    """
+    import mujoco
+
+    ids = []
+    for lst in getattr(u, "_cube_geom_ids_list", []) or []:
+        ids.extend(int(g) for g in lst)
+    for i in range(int(getattr(u, "_num_cubes", 1) or 1)):
+        for nm in (f"object_{i}", f"target_object_{i}"):
+            g = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_GEOM, nm)
+            if g >= 0 and g not in ids:
+                ids.append(int(g))
+    return np.asarray(sorted(set(ids)), np.int64)
+
+
+def _grid_texture(m, floor_default) -> dict | None:
+    """Where the checker floor lives in ``tex_data``, and which texels are rgb1 / rgb2.
+
+    The registered default honours ``floor.color`` by rewriting the MJCF texture's rgb1/rgb2 and
+    RECOMPILING the scene. The plate does not need a recompile to reproduce that: the compiled
+    texture is a two-colour checker plus a mark colour, so the same picture is reached by
+    substituting the texels in a PRIVATE copy and re-uploading the texture to the renderer's own
+    context.
+
+    The masks are taken once, from the DEFAULT texture, so a later write cannot be confused by the
+    two requested colours happening to collide with each other. ``markrgb`` texels (204,204,204) are
+    deliberately left alone: the recompile does not touch them, and measured they are 1,023 of the
+    262,144.
+
+    VERIFIED, not assumed: rewriting these texels and calling ``mjr_uploadTexture`` gives a plate
+    BYTE-IDENTICAL to recompiling the whole model at the same floor.color -- tex_data 0 bytes
+    differing, 0 of 50,176 pixels differing (both cells).
+
+    THE ADDRESSING, THE MASKS AND THE ASSERTIONS ARE NOW ``_plate_texels.texel_slots``, which is the
+    same arithmetic this function used to spell itself: the texture id, ``tex_adr``, the channel
+    count, and one equality mask per default colour taken from the PRISTINE texture. That module was
+    extracted from THIS file for ``dmcontrol`` to share, and then this file kept its own
+    copy; The copy is gone. The returned dict is the shared one -- ``masks`` is a tuple in
+    leaf order where this used to spell ``mask1``/``mask2`` -- and nothing outside this module ever
+    read those keys.
+    """
+    return _texel_slots(m, "grid", np.asarray(floor_default, np.float64).reshape(2, 3))
+
+
+def _button_tables(u, m, nbuttons: int) -> dict | None:
+    """``{bit tuple: (geom_rgba, mat_rgba)}`` for every button combination, taken from SceneEnv.
+
+    The Scene's two button bits are state, and they reach the frame only through colours:
+    ``SceneEnv._apply_button_states`` writes ``geom_rgba`` of the two buttons and ``mat_rgba`` of the
+    drawer and window handles. They are model fields, so MJWarp reads them when the render context is
+    built -- which is why the first version of this cell carried the bits in the state and drew the
+    same picture whatever they were. Gate A caught it: both bits moved zero pixels.
+
+    The tables are captured by CALLING ``_apply_button_states`` rather than by reimplementing its
+    rule here. Reimplementing would be a second copy of a colour law that already exists, free to
+    drift from it silently; calling it means the only thing this file asserts is "these are the
+    colours SceneEnv produces for these bits", which is checkable by construction.
+    """
+    if not nbuttons:
+        return None
+    saved = list(getattr(u, "_cur_button_states", [0] * nbuttons))
+    out = {}
+    for code in range(1 << nbuttons):
+        bits = tuple((code >> k) & 1 for k in range(nbuttons))
+        u._cur_button_states = list(bits)
+        u._apply_button_states()
+        out[bits] = (np.array(m.geom_rgba, copy=True), np.array(m.mat_rgba, copy=True))
+    u._cur_button_states = saved
+    u._apply_button_states()
+    # The tables must actually DIFFER, or the bits are not colours and this design is wrong.
+    first = out[tuple([0] * nbuttons)]
+    assert any(not np.array_equal(first[0], v[0]) or not np.array_equal(first[1], v[1]) for v in out.values()), (
+        "button states produce identical colour tables: either SceneEnv's rule changed or this cell "
+        "is capturing the wrong arrays, and carrying the bits in the state would be a lie either way"
+    )
+    return out
+
+
+class _Ctx:
+    """An MJWarp render context plus the device views a render writes through."""
+
+    __slots__ = (
+        "wm",
+        "wd",
+        "rc",
+        "bgra",
+        "seg",
+        "graph",
+        "nworld",
+        "res",
+        "wp",
+        "mjw",
+        "prepared",
+        "baked",
+        "button_tables",
+    )
+
+
+def _frame(c: _Ctx) -> None:
+    c.mjw.kinematics(c.wm, c.wd)
+    c.mjw.camlight(c.wm, c.wd)
+    c.mjw.refit_bvh(c.wm, c.wd, c.rc)
+    c.mjw.render(c.wm, c.wd, c.rc)
+
+
+def _context(cell: str, res: int, nworld: int) -> _Ctx:
+    import warp as wp
+
+    key = (torch.cuda.current_device(), cell, int(res), int(nworld))
+    hit = _CTX_CACHE.get(key)
+    if hit is not None:
+        return hit
+    _CTX_CACHE.prepare(key)
+    free_before, _ = torch.cuda.mem_get_info()
+    c = _build_context(cell, res, nworld)
+    wp.synchronize()
+    free_after, _ = torch.cuda.mem_get_info()
+    try:
+        return _CTX_CACHE.put(key, c, max(allocation_bytes(c), free_before - free_after))
+    except BaseException:
+        MW.release_cached_ctx(c)
+        raise
+
+
+def _build_context(cell: str, res: int, nworld: int) -> _Ctx:
+    import mujoco
+    import mujoco_warp as mjw
+    import warp as wp
+
+    b = _bundle(cell)
+    # A DEEP COPY, and this is not tidiness. `_bundle.model` is the reference env's OWN MjModel -- the
+    # object `reference_render` and `_bake_plate` render the reference through. `prepare_model`
+    # mutates in place and is deliberately left applied for the life of the context (MJWarp reads
+    # geometry once, at `create_render_context`), so applying it to the shared model would move the
+    # REFERENCE as well as ours: the spot correction would rewrite the reference's own light and the
+    # cell would "agree" by corrupting the thing it is measured against. On this scene that happens
+    # to be invisible -- MuJoCo renders cutoff 100 and 180 identically, which is the whole finding --
+    # but agreeing by luck is not agreeing.
+    # THE COPY IS TAKEN AT KNOWN BUTTON BITS. `_ctx_button_tables` applies each combination as a
+    # delta against the all-zero-bits table, which is only correct if the copy itself is at all-zero
+    # bits -- and the reference env is at whatever bits its last reset chose. Those vary: measured
+    # over 40 resets, OGBScene starts at (0,0), (1,0) and (1,1), so roughly 40 % of processes would
+    # have built every table wrong, silently, because the disjointness assertion cannot see a
+    # wrong BASE. The reference is forced to all-zero, copied, and restored.
+    zero_bits = [0] * b.nbuttons
+    saved_bits = list(getattr(b.unwrapped, "_cur_button_states", []))
+    if b.nbuttons:
+        b.unwrapped._cur_button_states = list(zero_bits)
+        b.unwrapped._apply_button_states()
+    m = copy.deepcopy(b.model)
+    if b.nbuttons:
+        b.unwrapped._cur_button_states = list(saved_bits)
+        b.unwrapped._apply_button_states()
+    prepared = MW.prepare_model(m, VISIBLE_GROUPS)
+    # Textures MJWarp cannot sample at all. On OGBScene this is `btn_metal`, a 512x512 CUBE map on
+    # two UV-less button meshes, and without it mujoco_warp <= 3.12.0 dies with an illegal memory
+    # access before the first frame. A DECLARED residual: 0.139 % of pixels, interior_exact 1.0.
+    baked = MW.bake_unsamplable_textures(m, VISIBLE_GROUPS)
+    d0 = mujoco.MjData(m)
+    mujoco.mj_forward(m, d0)
+    c = _Ctx()
+    c.wp, c.mjw, c.nworld, c.res, c.prepared, c.baked = (wp, mjw, int(nworld), int(res), prepared, baked)
+    # geom_rgba and mat_rgba are PER WORLD, so the Scene's button bits can differ across the batch.
+    # Without this they are one shared array and every world in a launch would wear the same button
+    # colours whatever its state said.
+    c.wm = mjw.put_model(m, batch_sizes={"geom_rgba": int(nworld), "mat_rgba": int(nworld)})
+    c.wd = mjw.put_data(m, d0, nworld=int(nworld))
+    # THE CAPTURE IS INSIDE THE PATCH, for the reason fetch.py records: mujoco_warp defines its
+    # megakernel inside `render` from whatever `pack_rgba_to_uint32` is bound at that moment, so a
+    # graph captured outside this block replays a TRUNCATING kernel and the patch reaches only the
+    # warm-up frame.
+    with MW.gl_rounding():
+        c.rc = MW.create_render_context(
+            m,
+            nworld=int(nworld),
+            cam_res=(int(res), int(res)),
+            render_rgb=True,
+            render_seg=True,
+            cam_active=[i == b.cam for i in range(m.ncam)],
+            enabled_geom_groups=list(VISIBLE_GROUPS),
+            use_textures=True,
+            use_shadows=True,
+            render_skybox=True,
+        )
+        _frame(c)
+        wp.synchronize()
+        # VIEWS of the warp buffers. The channel swap is applied per render rather than here:
+        # `[..., [2,1,0]]` at construction is advanced indexing, which copies, and the object would
+        # then hold one frozen frame while every later render wrote into the buffer behind it.
+        c.bgra = wp.to_torch(c.rc.rgb_data).view(torch.uint8).reshape(int(nworld), int(res), int(res), 4)
+        c.seg = wp.to_torch(c.rc.seg_data).reshape(int(nworld), int(res), int(res), 2)[..., 0]
+        with wp.ScopedCapture() as cap:
+            _frame(c)
+        c.graph = cap.graph
+    c.button_tables = _ctx_button_tables(b, m, res, device="cuda")
+    return c
+
+
+def _ctx_button_tables(b: _Bundle, m, res: int, device: str = "cuda") -> dict | None:
+    """``{bit code: (geom_rgba, mat_rgba)}`` on the CONTEXT's model, as device tensors.
+
+    The tables in ``_bundle`` were captured from SceneEnv's ``_apply_button_states`` on the REFERENCE
+    model. The context renders through a deep copy that has had ``prepare_model`` and
+    ``bake_unsamplable_textures`` applied, so its ``mat_rgba`` already differs from the reference's by
+    the baked button texture. Copying the reference tables in wholesale would silently undo the bake
+    and put the crash back.
+
+    So each table is applied as a DELTA against the reference's own all-zero-bits table, on top of
+    the context model's current arrays. The two edits are disjoint by construction -- the bake
+    touches ``btn_metal``, the button rule touches the two button geoms and the two handle materials
+    -- and the assertion below states that rather than assuming it.
+    """
+    if not b.nbuttons or b.button_tables is None:
+        return None
+    # `m` was deep-copied from the reference while it was forced to all-zero bits (see `_context`),
+    # so the all-zero table is the right delta base. Asserted below rather than assumed.
+    base_g = np.array(m.geom_rgba, copy=True)
+    base_m = np.array(m.mat_rgba, copy=True)
+    zero = tuple([0] * b.nbuttons)
+    ref_g0, ref_m0 = b.button_tables[zero]
+    touched = sorted(
+        {int(i) for bits, (rg, rm) in b.button_tables.items() for i in np.nonzero(np.any(rg != ref_g0, axis=1))[0]}
+    )
+    assert np.array_equal(base_g[touched], ref_g0[touched]), (
+        "the context model was copied at button bits other than all-zero, so every delta below "
+        "would be applied to the wrong base; see _context's forced-zero block"
+    )
+    # WHAT THE BAKE CHANGED, measured against the right baseline. `base_m` is the context copy:
+    # all-zero bits PLUS the bake. `ref_m0` is all-zero bits WITHOUT it. Their difference is
+    # therefore exactly the bake, and nothing else.
+    #
+    # The first version compared `base_m` against `b.pristine["mat_rgba"]`, which was snapshotted at
+    # bundle time under whatever bits the env's last reset had chosen. On a Scene that started at
+    # (1,0) or (1,1) that difference included the two HANDLE materials -- which the button rule owns
+    # and the bake never touches -- so the assertion fired on a conflict that did not exist and
+    # killed job 6406972 after OGBCube had already measured cleanly.
+    baked_rows = np.nonzero(np.any(base_m != ref_m0, axis=1))[0]
+    out = {}
+    for bits, (rg, rm) in b.button_tables.items():
+        dg, dm = rg - ref_g0, rm - ref_m0
+        if len(baked_rows):
+            assert not np.any(dm[baked_rows]), (
+                f"the texture bake and the button colour rule both write material rows "
+                f"{sorted(set(baked_rows) & set(np.nonzero(np.any(dm, axis=1))[0]))}; applying one "
+                f"as a delta over the other would undo it"
+            )
+        code = sum(bit << k for k, bit in enumerate(bits))
+        out[code] = (
+            torch.as_tensor(base_g + dg, dtype=torch.float32, device=device),
+            torch.as_tensor(base_m + dm, dtype=torch.float32, device=device),
+        )
+    return out
+
+
+#: Per-cell facts. Native OGBench constructors are the certified reference.
+SPEC = {
+    # `visible_tri` is the phase-0 census figure for geoms in the rendered groups, used only in the
+    # device="cpu" refusal so the message quotes THIS cell's size rather than its sibling's.
+    # `state_dim` is a CONSTANT here, not `len(_bundle(cell).state_names)`. Calling `_bundle` from
+    # `_make_classes` meant `import stable_envs` built both OGBench environments: 4.4 s of import
+    # time, and without `ogbench` installed the module raised and BOTH ids vanished from the
+    # registry (76 instead of 78). A docstring is not worth either. `tests/unit/test_ogb_manip.py`
+    # asserts these agree with what `_bundle` computes, wherever ogbench IS importable.
+    "Cube": {
+        "camera": "front_pixels",
+        "size": 224,
+        "visible_tri": 193113,
+        "state_dim": 24,
+    },
+    "Scene": {
+        "camera": "front_pixels",
+        "size": 200,
+        "visible_tri": 196633,
+        "state_dim": 30,
+    },
+}
+
+
+class OGBManipBase(Env):
+    """Base for the two manipulation cells. ``CELL`` is set by the generated subclasses."""
+
+    family = "ogbench"
+    requires_cuda = True
+
+    CELL: str = ""
+    default_supersample = 1
+    fidelity_tier = "visual"
+
+    def __init__(
+        self,
+        num_envs: int = 1,
+        size: int | None = None,
+        supersample: int | None = None,
+        device: str | None = None,
+        backend: str = "auto",
+        seed: int = 0,
+    ):
+        """``num_envs`` environments on ``device`` (contract §2).
+
+        ``device`` is checked FIRST, before anything is built, because the CPU refusal is this
+        family's loudest declaration and a caller who asked for a CPU env should get the reason
+        rather than four seconds of OGBench environment construction followed by it.
+
+        ``state_dim``, ``state_names`` and ``state_layout`` are all read off the COMPILED MODEL here
+        rather than declared on the class: the widths are ``nq``, ``3 * nmocap`` and the cell's
+        button count, and every one of them is a property of the scene OGBench compiles.
+        """
+        device = Env.resolve_device(device)
+        if not str(device).startswith("cuda"):
+            # Honest device selection. There is no CPU backend for
+            # this family and the measurement that says why is CPU3D-OGB-1: the binding CPU bar
+            # leaves 0.75 ns per triangle for 193,113 triangles, while the span rasteriser's
+            # SETUP-ONLY floor -- transform, bbox, area, cull, no fill, no shade -- is 24 ns per
+            # triangle. That is 12.9x over `cores_cpu >= 1` before a single pixel is written, and
+            # 72x at the full measured 135 ns. Falling back to CUDA behind a device="cpu" request is
+            # what this rule exists to forbid.
+            tri = SPEC.get(self.CELL, {}).get("visible_tri")
+            raise ValueError(
+                f"{type(self).__name__} has no CPU backend (CPU3D-OGB-1): this scene is "
+                f"{tri:,} visible triangles at a median projected edge of ~0.7 px, and the "
+                f"certification CPU bar leaves under a nanosecond per triangle against a "
+                f"24 ns/triangle vertex-setup floor -- 9.9-12.9x short before a single pixel is "
+                f"filled. See tests/fixtures/regression/join/step7/ogb-manipulation/findings.md. "
+                f"Use device='cuda'."
+            )
+        b = _bundle(self.CELL)
+        self.state_dim = len(b.state_names)
+        self.state_names = b.state_names
+        # The public State, grouped by what the three halves ARE and in the packed row's own order:
+        # ``qpos`` is the simulator's configuration, ``mocap.position`` is where the translucent goal
+        # marker sits (a mocap body, not a joint -- which is exactly why it needed its own name in the
+        # state at all), and ``buttons`` are the Scene's two bits, which are neither and reach the
+        # frame only as colours. NOTHING IS HIDDEN: every packed column belongs to one of the keys, so
+        # no field has offset ``None``, ``_hidden_state`` is never consulted, and ``pack``/``unpack``
+        # round-trip the frozen layout bit for bit. There is no ``_live_state`` either -- the packed
+        # row IS this family's live state, since ``set_state`` writes it and ``render`` reads it.
+        self.state_layout = ((("qpos",), b.nq, 0), (("mocap", "position"), 3 * b.nmocap, b.nq)) + (
+            ((("buttons",), b.nbuttons, b.nq + 3 * b.nmocap),) if b.nbuttons else ()
+        )
+        super().__init__(
+            num_envs=num_envs,
+            size=size or b.size,
+            supersample=self.default_supersample if supersample is None else supersample,
+            device=device,
+            backend=backend,
+            seed=seed,
+        )
+        self._b = b
+        self._check_plate_is_constant()
+
+    def _close(self) -> None:
+        """Release what this INSTANCE owns: the per-instance device index tables and the style cache.
+
+        The mujoco_warp contexts in ``_CTX_CACHE``, the baked plates in ``_PLATE_CACHE``, the plate
+        rigs and every ``mujoco.Renderer`` they hold are NOT released, and that is this family's
+        policy rather than an oversight -- it is the rule ``_PlateRig`` and ``_KEEPALIVE`` exist to
+        enforce, because releasing one EGL context corrupts rendering in every other live context in
+        the process. What ``close()`` buys is the contract's other half: a closed env REFUSES to
+        render rather than handing back frames drawn through something a caller believes is gone.
+        """
+        self.__dict__.pop("_idx_cache", None)
+        self.__dict__.pop("_style_host_cache", None)
+
+    # ---- the assumption the whole design rests on, checked rather than assumed -------------
+
+    def _check_plate_is_constant(self) -> None:
+        """With every mover hidden, the frame must not depend on the state. Asserted, once per class.
+
+        Phase 0 measured it bit-static over 6 states, but "measured once in a probe" is not the same
+        as "true of the model this class just built", and Fetch's own history is the argument: a
+        site left in the static set made its plate depend on ``qpos[15:17]`` over 1123 pixels.
+        Cheap: two states, 128 px, one MuJoCo render each.
+        """
+        st = self.sample_states(2, rng=np.random.default_rng(0))
+        a = self._bake_plate(128, states=st[0])
+        c = self._bake_plate(128, states=st[1])
+        d = int((a.to(torch.int16) - c.to(torch.int16)).abs().max())
+        assert d == 0, (
+            f"{type(self).__name__}: the baked static plate differs by {d}/255 between two states "
+            f"with every mover hidden, so the floor and skybox are NOT a function of the appearance "
+            f"alone and the plate design is unsound for this scene"
+        )
+
+    # ---- state ----------------------------------------------------------------------------
+
+    def _split(self, s: np.ndarray):
+        """``(state_dim,)`` -> qpos, mocap_pos, mocap_quat, button bits. No qvel: see ``_bundle``."""
+        b = self._b
+        i = 0
+        qpos = s[i : i + b.nq]
+        i += b.nq
+        mp = s[i : i + 3 * b.nmocap].reshape(b.nmocap, 3)
+        i += 3 * b.nmocap
+        bits = s[i : i + b.nbuttons]
+        return qpos, mp, IDENTITY_QUAT(b.nmocap), bits
+
+    def _variation_values(self, rng: np.random.Generator) -> dict:
+        """Explicit values for the registered default variation leaves, drawn from ``rng``.
+
+        `reset_variation_space` is called with `seed=None`, so the leaves it resamples come
+        from OS entropy and no reset is reproducible. It does honour an explicit
+        `options['variation_values']`, which is the one handle that makes the draw ours. Uniform over
+        each leaf's own bounds, which is what `Box.sample` would have done, so the distribution is
+        unchanged and only its generator moves.
+        """
+        vs = getattr(self._b.unwrapped, "variation_space", None)
+        if vs is None:
+            return {}
+        out = {}
+        for path in DEFAULT_VARIATION_PATHS.get(self.CELL, ()):
+            node = vs
+            try:
+                for part in path.split("."):
+                    node = node[part]
+            except Exception:
+                continue
+            lo = np.asarray(node.low, np.float64)
+            hi = np.asarray(node.high, np.float64)
+            out[path] = rng.uniform(lo, hi).reshape(np.asarray(node.value).shape)
+        return out
+
+    def sample_states(self, batch: int, rng: np.random.Generator | None = None) -> np.ndarray:
+        """States a dataset would actually hold: reset, then 0-25 random actions.
+
+        Reset states alone do not exercise this env -- every one has the arm at its home pose and
+        only the cube moved -- so a fidelity number computed from them would say nothing about the
+        14 arm joints that are most of the picture. The same argument fetch.py records.
+        """
+        rng = np.random.default_rng(0) if rng is None else rng
+        b = self._b
+        env = _reference_env(self.CELL, role="sample")  # reset many times; never rendered
+        u = env.unwrapped
+        out = []
+        # THE GLOBAL NUMPY RNG IS SEEDED FROM `rng`, and this is not belt-and-braces. CubeEnv.reset
+        # calls `reset_variation_space(..., seed=None, ...)` and the task is picked
+        # with the module-level `np.random`, so two calls with the same `rng` drew DIFFERENT states
+        # and `test_seeded_sampling_reproduces_in_a_fresh_process` could not hold. Seeding the global
+        # generator is the only handle the reference exposes; its prior state is saved and restored so this
+        # function does not become a side effect on the caller's own draws.
+        gstate = np.random.get_state()
+        try:
+            for k in range(int(batch)):
+                sd = int(rng.integers(0, 1 << 30))
+                np.random.seed(int(rng.integers(0, 1 << 31)))
+                # THE SEED `reset` DROPS. `CubeEnv.reset(self, seed=None, ...)` and
+                # `SceneEnv.reset` accept `seed` and then call `super().reset(options=options, ...)`
+                # WITHOUT it (cube_env.py:822, scene_env.py:325), so `gym.Env.reset` never reseeds
+                # `self.np_random` and `reset(seed=...)` has no effect at all. Everything random in
+                # `initialize_episode` -- the arm's initial yaw, the cube jitter, the block
+                # permutation -- runs off that generator. Setting it directly is the only way to make
+                # a draw reproducible, and with it the whole reset is bit-reproducible (verified).
+                u.np_random = np.random.default_rng(sd)
+                with _seeded_action_space(u, sd):
+                    env.reset(seed=sd, options={"variation_values": self._variation_values(rng)})
+                    _m, d = u.model, u.data
+                    for _ in range(int(rng.integers(0, 26))):
+                        env.step(u.action_space.sample())
+                bits = [float(x) for x in list(getattr(u, "_cur_button_states", []))[: b.nbuttons]]
+                out.append(np.concatenate([d.qpos.copy(), d.mocap_pos.ravel().copy(), np.asarray(bits, np.float64)]))
+        finally:
+            np.random.set_state(gstate)
+        # FLOAT32, and this is a correctness requirement rather than a memory one.
+        # `StableEnv.set_state` stores the batch as float32, so `check_state_roundtrip` compares a
+        # float32 read-back against whatever this returns; returning float64 made
+        # `set_state(get_state())` differ by the narrowing error -- 1.17e-07, against a bound the
+        # suite spells as exactly 0.0. The state is carried in the dtype it round-trips in.
+        return np.stack(out).astype(np.float32)
+
+    # ---- variation ------------------------------------------------------------------------
+
+    def make_variation_space(self) -> Dict:
+        """The two appearance leaves this cell can honour without a per-world model array.
+
+        The reference offers six. Which ones are reachable is not a matter of taste: it is decided by
+        WHICH MODEL ARRAY each one writes and whether the geoms it writes are movers or plate, and
+        that was measured leaf by leaf (see docs/research/step8_variations_newcells.md).
+
+        ``cube.color`` writes ``geom_rgba`` on two MOVER geoms -- ``object_0`` and the translucent
+        ``target_object_0`` -- with no recompile, which is exactly what ``_upload_button_colours``
+        already does per world for the Scene buttons. ``floor.color`` writes the checker texture and
+        nothing else, and the floor is STATIC, so it is a property of the baked plate alone and costs
+        one cache key.
+
+        The other four are deliberately still OUT, and not because they are hard to spell:
+        ``light.intensity`` (``light_diffuse``), ``camera.angle_delta`` (``cam_mat0``/``cam_quat``)
+        and ``cube.size`` (``geom_size``) all need the value to differ PER WORLD inside one
+        mujoco_warp context, which this renderer cannot express; ``agent.color`` is dead upstream in
+        isolation (the dirty-flag test is inverted, so the colour never reaches the compiled
+        model). Those are recorded as escalations rather than quietly approximated.
+
+        The defaults are read from the reference variation space at bundle time, so "our default is
+        the registered default" is true by construction rather than by a copied literal.
+        """
+        d = _bundle(self.CELL).var_defaults
+        return Dict(
+            {
+                "cube": Dict({"color": Box(low=0.0, high=1.0, shape=(3,), init_value=d["cube.color"])}),
+                "floor": Dict({"color": Box(low=0.0, high=1.0, shape=(2, 3), init_value=d["floor.color"])}),
+            }
+        )
+
+    #: Style leaves that change the STATIC scene, so the batch is grouped by them and each group
+    #: gets its own baked plate. Everything else is a mover property, applied per world in the
+    #: mujoco_warp pass. The same split ``envs/ogbench.py`` already makes for its maze plates.
+    PLATE_PATHS = ("floor.color",)
+
+    def _style_host(self, sty) -> dict:
+        """``{path: (B, w) float64}`` -- the WHOLE style row, brought to the host in ONE transfer.
+
+        Both leaves are consumed on the host (a MuJoCo texture bake, and a small per-world table
+        assembled with numpy), so the values have to cross either way. They cross ONCE, for the whole
+        row, rather than once per leaf: a device-to-host copy of a nine-float row costs a
+        synchronisation, not bandwidth, and at B=1 a second sync is a measurable fraction of the
+        whole render. Measured on gpu2264: two syncs cost ~0.5 ms per render at B=1 and are lost in
+        the noise at B=4096, which is exactly the shape of a latency term.
+        """
+        v = sty.values
+        # MEMOISED ON THE TENSOR ITSELF, which is what makes a render loop at the default cost one
+        # sync in total rather than one per frame: `resolve_style(None, None)` hands back the env's
+        # OWN `_style` tensor, the same object every call, so the hit rate on the hot path is 1.
+        #
+        # This is a cache of a PURE READ and never a licence to skip an upload -- `_cube_colours` and
+        # `_apply_floor` are called unconditionally whether this hits or misses. The key is identity
+        # AND `_version`, so an in-place write to the style row invalidates it; the cache holds a
+        # strong reference to the tensor, so an `id()` freed and reused cannot alias a stale entry.
+        hit = self.__dict__.get("_style_host_cache")
+        if hit is not None and hit[0] is v and hit[1] == v._version:
+            return hit[2]
+        host = np.asarray(v.detach().cpu(), np.float64)
+        out = {p: host[:, o : o + w] for p, (o, w) in sty.layout.items()}
+        self.__dict__["_style_host_cache"] = (v, v._version, out)
+        return out
+
+    # ---- the plate ------------------------------------------------------------------------
+
+    def _plate(self, res: int, floor=None) -> torch.Tensor:
+        """The baked static plate for one floor colour, cached.
+
+        The key gained the floor colour when ``floor.color`` became offerable. It is keyed on the
+        QUANTISED colour -- the bytes MuJoCo would actually store -- rather than on the float, so two
+        requests that compile to the same texture share one bake instead of rendering it twice.
+        """
+        fq = self._floor_key(floor)
+        key = (self.CELL, int(res), str(self.device), fq)
+        hit = _PLATE_CACHE.get(key)
+        if hit is not None:
+            return hit
+        return _PLATE_CACHE.put(key, self._bake_plate(res, floor=floor))
+
+    def _floor_key(self, floor):
+        """The cache key for a floor colour: the bytes MuJoCo stores, or ``None`` for the default.
+
+        ``_plate_texels.texel_key``, which is the same rule -- quantise, and collapse to ``None``
+        whenever the request compiles to the default's own bytes, so the default plate keeps exactly
+        the key it had before ``floor.color`` existed. The ONE case where the shared helper differs
+        from the copy it replaces is a cell with no ``grid`` texture, where it answers ``None`` and
+        the copy answered the colour: on such a cell ``_apply_floor`` is a no-op, so the copy's key
+        distinguished plates that are the same picture. Neither registered cell is that cell -- both
+        carry the texture, asserted by ``texel_slots`` -- so no key any render produces has moved.
+        """
+        return _texel_key(self._b.grid_tex, floor)
+
+    def _bake_plate(self, res: int, states=None, floor=None) -> torch.Tensor:
+        """MuJoCo's own raster of the static scene: the floor plane and the skybox.
+
+        Exact because MuJoCo drew it -- and only reaching the frame where the mover LUT says MJWarp
+        did not hit a mover. Measured worth, three 64-state draws: interior-exact 0.958 (Cube) and
+        0.922 (Scene), whole-frame 0.872 and 0.775.
+
+        Drawn through the rig's PRIVATE model and data, so this mutates nothing the reference env or
+        anything else can see, and the "every appearance array is identical across resets" claim the
+        cached plate rests on is asserted here rather than assumed.
+        """
+        import mujoco
+
+        b = self._b
+        rig = _plate_rig(self.CELL, int(res))
+        live = b.model
+        shape = (int(live.ngeom), int(live.nq), int(live.nmocap))
+        assert shape == rig.shape, (
+            f"{self.CELL}: the env recompiled to a different model shape {shape} than the plate rig "
+            f"was built for {rig.shape}; the cached plate would be a picture of the old scene"
+        )
+        now = _appearance_digest(live, b.unwrapped._scene_option.sitegroup)
+        assert now == rig.appearance, (
+            f"{self.CELL}: an appearance array changed since the plate rig was built "
+            f"({rig.appearance} -> {now}). The cached plate is a picture of the scene as it was, so "
+            f"it is now wrong; phase 0 measured these arrays identical across resets and this "
+            f"assertion is what keeps that measurement honest"
+        )
+        self._apply_floor(rig, floor)
+        d = rig.data
+        if states is None:
+            d.qpos[:] = b.data.qpos
+            d.mocap_pos[:] = b.data.mocap_pos
+            d.mocap_quat[:] = b.data.mocap_quat
+        else:
+            qpos, mp, mq, _ = self._split(np.asarray(states, np.float64))
+            d.qpos[:] = qpos
+            d.mocap_pos[:] = mp
+            d.mocap_quat[:] = mq
+        d.qvel[:] = 0.0
+        mujoco.mj_forward(rig.model, d)
+        rig.renderer.update_scene(d, camera=b.cam, scene_option=b.unwrapped._scene_option)
+        return torch.as_tensor(rig.renderer.render().copy(), device=self.device)
+
+    def _apply_floor(self, rig, floor) -> None:
+        """Put one ``floor.color`` into the rig's PRIVATE texture, and onto the renderer's context.
+
+        The same picture is reached by rewriting the MJCF rgb1/rgb2 and recompiling the scene. A
+        recompile is exactly what this cell cannot afford -- it would invalidate the plate rig, the
+        appearance digest and the mujoco_warp graph all at once -- and it turns out not to be
+        necessary: the compiled texture is a two-colour checker plus an untouched mark colour, so
+        substituting the texels reaches the same bytes. VERIFIED byte-for-byte against a recompile,
+        on both cells: ``tex_data`` 0 bytes differing and the baked plate 0 of 50,176
+        pixels differing.
+
+        ``mjr_uploadTexture`` is the half that is easy to forget. ``mujoco.Renderer`` uploads
+        textures to its GL context when it is BUILT; writing ``tex_data`` afterwards changes the
+        model and not the context, so without the upload the plate would silently keep the old floor
+        and every floor.color would read as inert.
+
+        Written on EVERY bake, with no "it already looks like that" shortcut. The rig, its texture
+        and its GL context are one per (cell, res) for the life of the process and are reused by
+        every floor colour any renderer instance asks for, so "the texture is whatever the last bake
+        left" is the one state this must not have. A conditional upload would be correct only if
+        `rig.floor` could never disagree with the context, and it disagrees the moment a bake raises
+        between the texel write and the upload. The cost is one `mjr_uploadTexture` per plate-cache
+        MISS, never per render: a cache hit does not reach this function at all.
+
+        `rig.floor` is therefore a RECORD of what was last written -- useful when a plate looks wrong
+        and you want to know which colour the context actually holds -- and never a permission to
+        skip the write.
+
+        THE CURRENT CONTEXT IS THE LOAD-BEARING LINE. `mujoco.Renderer` calls
+        `self._gl_context.make_current()` in exactly two places -- its constructor and `render()` --
+        and `mjr_uploadTexture` is neither. Its `con` argument selects the MuJoCo texture id; the GL
+        calls it issues go to whatever context the THREAD currently has, which is the last rig that
+        rendered. This module keeps one rig per (cell, RESOLUTION), so there are two live contexts
+        the moment `_check_plate_is_constant` bakes at 128 while a render is working at 224 -- and an
+        upload made under the wrong one writes over an unrelated texture object in that context,
+        because GL texture names are per-context.
+
+        MEASURED, on gpu2264, before this line existed: a second `OGBManipBase` constructed after a
+        render with a custom floor failed its own `_check_plate_is_constant` with the two 128 px
+        plates differing by **219/255**, which reads as "the plate depends on the state" and is
+        really "the skybox texture of one context was overwritten by the floor upload of another".
+        Gate A caught it as `check_style_is_state`; it is invisible to any test that builds one
+        renderer at one resolution.
+
+        ALL THREE OF THOSE ARE NOW ``_plate_texels.substitute``'s, which is where they were written
+        already -- the unconditional write, the ``mjr_uploadTexture``, and the
+        ``make_current()`` before it -- after being lifted out of this very function. What stays here
+        is the only part that is this family's: which colour is meant when the caller passes ``None``
+        (the registered default, read off the variation space at bundle time) and the ``rig.floor``
+        record, which is a note of what was last written and never a permission to skip the write.
+        """
+        g = self._b.grid_tex
+        if g is None:
+            return
+        want = self._b.var_defaults["floor.color"] if floor is None else np.asarray(floor, np.float64)
+        want = want.reshape(2, 3)
+        _substitute(rig.model, rig.renderer, g, want)
+        rig.floor = want.copy()
+
+    # ---- render ---------------------------------------------------------------------------
+
+    @torch.no_grad()
+    def _render(
+        self,
+        states=None,
+        size: int | None = None,
+        supersample: int | None = None,
+        variation: dict | None = None,
+        style=None,
+        out=None,
+    ) -> torch.Tensor:
+        """``(...,state_dim)`` -> ``(...,H,W,3)`` uint8 on device.
+
+        One MJWarp launch per chunk for the movers, composited over the single baked plate by
+        MJWarp's own segmentation buffer -- not by a depth heuristic, so the arm being occluded by
+        the cube is resolved by the ray-caster that drew them.
+        """
+        s = self._render_state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
+        lead = tuple(s.shape[:-1])
+        s = s.reshape(-1, self.state_dim).to(torch.float32)
+        B = int(s.shape[0])
+        size = int(size or self.size)
+        ss = int(self.ss if supersample is None else supersample)
+        res = size * ss
+
+        if out is None:
+            out = torch.empty((B, size, size, 3), dtype=torch.uint8, device=self.device)
+        buf = out.view(B, size, size, 3)
+        sty = self.resolve_style(style, variation, batch=B)
+        # The batch is grouped by the plate-affecting half of the style, exactly as envs/ogbench.py
+        # groups its maze plates: environments sharing a floor colour share one bake. `_floor_plan`
+        # returns `gidx is None` for the common case of one floor across the batch, and that case
+        # then takes the ORIGINAL code path below -- one (res,res,3) plate broadcast over the whole
+        # chunk -- so "the registered default did not move" is the same arithmetic in the same order,
+        # not merely the same digest.
+        host = self._style_host(sty)
+        reps, gidx = self._floor_plan(host, B)
+        plates = self._floor_plates(reps, res)
+        plates1 = plates if ss == 1 else self._floor_plates(reps, size)
+        plate = plates[0] if gidx is None else None
+        plate1 = (plate if ss == 1 else plates1[0]) if gidx is None else None
+        cube = self._cube_colours(host, B)
+        lut = self._mover_lut()
+        b = self._b
+        nq, nmoc = b.nq, b.nmocap
+
+        for lo in range(0, B, MJW_CHUNK):
+            hi = min(lo + MJW_CHUNK, B)
+            n = hi - lo
+            nw = 1 if n <= 1 else min(MJW_CHUNK, 1 << (n - 1).bit_length())
+            c = _context(self.CELL, res, nw)
+            chunk = s[lo:hi]
+            wp = c.wp
+            wp.to_torch(c.wd.qpos)[:n] = chunk[:, :nq]
+            if nmoc:
+                # mocap_pos IS state; mocap_quat is NOT -- it is the identity everywhere in the
+                # registered distribution (see `_bundle`), so it is written as a constant rather
+                # than sliced out of a state vector that no longer carries it. Slicing it anyway is
+                # how job 6405900 died: `chunk[:, nq+3*nmoc : nq+7*nmoc]` is empty once the dim is
+                # dropped, and the reshape raised `shape '[64, 1, 4]' is invalid for input of size 0`.
+                mp = chunk[:, nq : nq + 3 * nmoc].reshape(n, nmoc, 3)
+                wp.to_torch(c.wd.mocap_pos)[:n] = mp
+                wp.to_torch(c.wd.mocap_quat)[:n] = self._identity_quat(nmoc, n)
+            if b.nbuttons:
+                self._upload_button_colours(c, chunk, n)
+            # AFTER the buttons, and that order is load-bearing: `_upload_button_colours` replaces
+            # the WHOLE `geom_rgba` row-block for each world from its table, so a cube colour written
+            # first would be overwritten by the button bake.
+            if cube is not None:
+                self._upload_cube_colours(c, cube[lo:hi], n)
+            # torch wrote the per-world arrays on its stream; warp replays the graph on its own.
+            # The two syncs bracket the launch so a frame can never be rendered from half-written
+            # state -- microseconds against the difference between deterministic and nearly so.
+            torch.cuda.synchronize()
+            wp.capture_launch(c.graph)
+            wp.synchronize()
+            rgb, seg = c.bgra[:n][..., [2, 1, 0]], c.seg[:n]
+            # THE MOVER LUT, not `seg >= 0`. The floor plane and the skybox are geoms too, so
+            # `seg >= 0` is true wherever MJWarp hit ANYTHING and the composite then takes MJWarp's
+            # floor over the baked plate -- which is the plate never being used except on sky. The
+            # first version of this cell did exactly that, and its "0.92-0.95 composite exactness"
+            # was measured by a probe that masked with the mover set while the renderer did not.
+            # `index_select` on the int32 segmentation rather than `lut[seg.long() + 1]`: the latter
+            # materialises a 64-bit copy of the whole frame stack to index with.
+            mv = lut.index_select(0, (seg + 1).reshape(-1)).view(seg.shape)
+            if gidx is None:
+                pl, pl1 = plate, plate1
+            else:
+                g = gidx[lo:hi]
+                pl = plates.index_select(0, g)
+                pl1 = pl if ss == 1 else plates1.index_select(0, g)
+            comp = torch.where(mv.unsqueeze(-1), rgb, pl)
+            if ss == 1:
+                buf[lo:hi] = comp
+            else:
+                small = (
+                    comp.to(torch.float32)
+                    .reshape(n, size, ss, size, ss, 3)
+                    .mean((2, 4))
+                    .round_()
+                    .clamp_(0, 255)
+                    .to(torch.uint8)
+                )
+                any_mv = mv.reshape(n, size, ss, size, ss).any(4).any(2)
+                buf[lo:hi] = torch.where(any_mv.unsqueeze(-1), small, pl1)
+        return buf.view(*lead, size, size, 3) if lead else buf
+
+    def _identity_quat(self, nmoc: int, n: int) -> torch.Tensor:
+        """``(n, nmoc, 4)`` of ``(1,0,0,0)`` on device, built once per (nmoc, batch)."""
+        cache = self.__dict__.setdefault("_idx_cache", {})
+        key = ("idq", int(nmoc), int(n))
+        hit = cache.get(key)
+        if hit is None:
+            q = torch.zeros((int(n), int(nmoc), 4), dtype=torch.float32, device=self.device)
+            q[..., 0] = 1.0
+            hit = cache[key] = q
+        return hit
+
+    def _mover_lut(self) -> torch.Tensor:
+        """``(ngeom+1,)`` bool: is this segmentation id a MOVER? Indexed, not searched.
+
+        `torch.isin(seg, movers)` touches the frame once per mover; a table lookup touches it once.
+        The +1 offset makes segmentation id -1 (nothing hit) index row 0, which is False, so sky
+        falls through to the plate like every other non-mover pixel.
+        """
+        cache = self.__dict__.setdefault("_idx_cache", {})
+        hit = cache.get("mover_lut")
+        if hit is None:
+            n = int(self._b.model.ngeom)
+            lut = torch.zeros(n + 1, dtype=torch.bool, device=self.device)
+            lut[torch.as_tensor(np.asarray(self._b.movers, np.int64) + 1, device=self.device)] = True
+            hit = cache["mover_lut"] = lut
+        return hit
+
+    def _floor_plan(self, host, B: int):
+        """``(reps, gidx)``: one ORIGINAL float representative per distinct floor colour, and which
+        environment belongs to which.
+
+        Computed ONCE per render and reused for every resolution, because a batch has exactly one
+        grouping: two groupings that disagreed would pair a chunk with the wrong plate, and there is
+        no arrangement of this code where that should be possible.
+
+        ``gidx`` is ``None`` when the whole batch shares one floor, which is the registered default
+        and every run that does not ask for per-environment floors. That case is not an optimisation
+        detail -- it keeps the default render on the pre-existing single-plate path, so "the default
+        did not move" is a property of the code and not only of a digest comparison.
+
+        Grouping is by the QUANTISED bytes -- the texture MuJoCo would compile -- so two floats that
+        compile to the same checker share one bake. The representative handed to the bake is an
+        ORIGINAL float row and never a byte pair decoded back to float: ``q/255`` re-quantised can
+        land one byte low (0.16 -> 40 -> 0.15686 -> 39), which would bake a plate one level off the
+        colour that keyed it. Bytes group; floats bake; the two never swap roles.
+        """
+        f = host["floor.color"]  # (B, 6)
+        q = mj_quantise(f.reshape(B, 2, 3)).reshape(B, 6)
+        uniq, first, inv = np.unique(q, axis=0, return_index=True, return_inverse=True)
+        reps = [f[i].reshape(2, 3) for i in first]
+        if len(uniq) == 1:
+            return reps, None
+        inv = np.asarray(inv, np.int64).reshape(-1)  # numpy >= 2.0 shapes this per input, not flat
+        return reps, torch.as_tensor(inv, device=self.device)
+
+    def _floor_plates(self, reps, res: int) -> torch.Tensor:
+        """``(G, res, res, 3)``: the baked plate for each floor group, from the module plate cache."""
+        if len(reps) == 1:
+            return self._plate(res, floor=reps[0]).unsqueeze(0)  # a VIEW: no copy on the hot path
+        return torch.stack([self._plate(res, floor=r) for r in reps])
+
+    def _cube_colours(self, host, B: int):
+        """``(B, len(cube_geoms), 4)`` rgba to write per world -- ALWAYS, defaults included.
+
+        Returning ``None`` for "this is the default anyway" is the defect the reviewer reproduced on
+        CPU, and it is not fixable with a tighter tolerance. `_CTX_CACHE` hands out one mutable
+        per-world `geom_rgba` per (cell, res, nworld), shared across renders, across chunks and
+        across renderer instances, and OGBCube has no button upload that would rewrite the block.
+        So a render that skipped the upload drew whatever colour some EARLIER render left in world
+        `i` -- a result that depends on batch size, chunk boundaries and process history. The only
+        value that is ``None`` here is "this cell has no cube geoms at all".
+
+        Each geom keeps its OWN alpha -- ``object_0`` is opaque, ``target_object_0`` is the
+        translucent goal marker -- taken from the pristine model, because the colour write is rgb and
+        leaves the alpha channel to the MJCF.
+        """
+        b = self._b
+        gids = b.cube_geoms
+        if gids is None or not len(gids):
+            return None
+        rgb = host["cube.color"]  # (B, 3)
+        base = np.asarray(b.pristine["geom_rgba"], np.float64)[gids]  # (G, 4), own alphas
+        out = np.broadcast_to(base, (B, len(gids), 4)).copy()
+        out[:, :, :3] = rgb[:, None, :]
+        return torch.as_tensor(out, dtype=torch.float32, device=self.device)
+
+    def _cube_geom_index(self) -> torch.Tensor:
+        cache = self.__dict__.setdefault("_idx_cache", {})
+        hit = cache.get("cube_geoms")
+        if hit is None:
+            hit = cache["cube_geoms"] = torch.as_tensor(np.asarray(self._b.cube_geoms, np.int64), device=self.device)
+        return hit
+
+    def _upload_cube_colours(self, c, rgba, n: int) -> None:
+        """Write each world's cube colour into the mujoco_warp context's per-world ``geom_rgba``.
+
+        The same route ``_upload_button_colours`` takes, and the reason ``cube.color`` is offerable
+        while ``cube.size`` is not: a colour is a per-world GEOM array the context already exposes,
+        whereas a size is a MODEL array shared by every world in the context.
+        """
+        geom = c.wp.to_torch(c.wm.geom_rgba)
+        idx = self._cube_geom_index()
+        geom[:n, idx] = rgba[:n]
+
+    def _upload_button_colours(self, c, chunk, n: int) -> None:
+        """Write each world's button colours from its own state bits.
+
+        The tables come from SceneEnv's ``_apply_button_states`` (see ``_button_tables``) and are
+        re-baked here through the context's copy, because that copy has had
+        ``bake_unsamplable_textures`` applied to it and its ``mat_rgba`` therefore differs from the
+        reference's by the baked button texture.
+        """
+        b = self._b
+        bits = chunk[:, -b.nbuttons :].round().clamp(0, 1).to(torch.int64).cpu().numpy()
+        codes = (bits * (1 << np.arange(b.nbuttons))).sum(1)
+        geom = c.wp.to_torch(c.wm.geom_rgba)
+        mat = c.wp.to_torch(c.wm.mat_rgba)
+        for code in np.unique(codes):
+            sel = torch.as_tensor(np.nonzero(codes == code)[0], device=self.device)
+            g, mt = c.button_tables[int(code)]
+            geom.index_copy_(0, sel, g.unsqueeze(0).expand(len(sel), *g.shape))
+            mat.index_copy_(0, sel, mt.unsqueeze(0).expand(len(sel), *mt.shape))
+
+    # ---- the reference --------------------------------------------------------------------
+
+    @classmethod
+    def reference_env(cls, size: int | None = None):
+        return _reference_env(cls.CELL, size, role="render")
+
+    @classmethod
+    def reference_render(cls, env, states) -> np.ndarray:
+        """The official frames for a state stack, through the reference ``render``.
+
+        The button bits go through ``SceneEnv.set_state``'s required keyword arguments, which is the
+        only way the reference exposes them; ``mocap_pos``/``mocap_quat`` are written directly because
+        nothing in the reference API takes them.
+        """
+        import mujoco
+
+        u = env.unwrapped
+        b = _bundle(cls.CELL)
+        out = []
+        for s in np.asarray(states, np.float64).reshape(-1, len(b.state_names)):
+            i = 0
+            qpos = s[i : i + b.nq]
+            i += b.nq
+            qvel = np.zeros(b.nv)
+            mp = s[i : i + 3 * b.nmocap].reshape(b.nmocap, 3)
+            i += 3 * b.nmocap
+            mq = IDENTITY_QUAT(b.nmocap)
+            bits = s[i : i + b.nbuttons]
+            if b.nbuttons:
+                u.set_state(qpos, qvel, **{f"button_state_{k}": int(round(float(bits[k]))) for k in range(b.nbuttons)})
+            else:
+                u.set_state(qpos, qvel)
+            u.data.mocap_pos[:] = mp
+            u.data.mocap_quat[:] = mq
+            mujoco.mj_forward(u.model, u.data)
+            out.append(u.render().copy())
+        return np.stack(out)
+
+
+_PLATE_RIGS: dict = {}
+
+#: EVERY Renderer ever built, held for the life of the PROCESS and never read back.
+#:
+#: `_PLATE_RIGS` already holds each rig, and a rig holds its renderer, so on paper this list is
+#: redundant. It is here because the measurement says otherwise: with the dict as the only owner, a
+#: rig built by `test_resolution_downsample_agrees_within_the_measured_bound` was collected during
+#: the NEXT test -- `__del__` -> `close()` -> a renderer the repo's rule says must never be closed
+#: (job 6437003 names the creation site and the collection site for all four). The four rows pass in
+#: isolation with 0 closes, so this is an ordering effect and not a property of any one test.
+#:
+#: I do not yet have the mechanism that drops the dict's reference, and this list is not a claim to
+#: have found it: it is the invariant the rule states -- created and NEVER released -- enforced
+#: directly rather than as a consequence of a cache I have already been wrong about once. It is
+#: bounded by the number of distinct (cell, resolution) pairs a process renders at, which is a
+#: handful, and explicitly NOT by batch size, which is what the rule forbids.
+_KEEPALIVE: list = []
+
+#: Model arrays the plate depends on, by prefix. `geom_rgba` and `mat_rgba` are EXCLUDED because
+#: SceneEnv's `_apply_button_states` writes them into the live model on every button change -- they are
+#: state wearing the shape of appearance, and the rig pins them itself (see `_plate_rig`).
+_APPEARANCE_PREFIXES = ("geom_", "mat_", "tex", "light_", "cam_", "mesh_", "body_", "site_", "hfield_", "skin_")
+_APPEARANCE_SKIP = ("geom_rgba", "mat_rgba", "geom_group")
+
+
+def _appearance_digest(m, sitegroup=None) -> str:
+    """A hash of every static-appearance array in an MjModel, so "the plate is bit-static" is CHECKED.
+
+    Phase 0 measured that a dirty reset recompiles this scene to identical appearance arrays and only
+    moves the array handles. The plate rig depends on that measurement being true for the life of the
+    process, and a measurement that nothing re-checks is an assumption. This turns it into an
+    assertion that fires loudly instead of baking a plate from geometry the env has since changed.
+    """
+    import hashlib
+
+    h = hashlib.blake2b(digest_size=16)
+    n = 0
+    # SITES THE RENDERER NEVER DRAWS ARE NOT APPEARANCE. `SceneEnv.reset` writes `site_pos` for the
+    # per-task target markers -- measured: rows 7 and 9, both group 5, move as the task changes -- and
+    # `scene_option.sitegroup` is [1,1,1,0,0,0], so groups 4 and 5 reach no pixel. Hashing them made
+    # the digest take four values over eight resets, which would fire `_bake_plate`'s assertion on any
+    # rig reused after a task-changing reset: a correct plate rejected for a marker nobody can see.
+    # Masked BY GROUP rather than skipped wholesale, so a site that IS drawn still moves the digest.
+    nsite = int(getattr(m, "nsite", 0) or 0)
+    drawn = None
+    if nsite and sitegroup is not None:
+        flags = np.asarray(sitegroup).ravel()
+        g = np.clip(np.asarray(m.site_group, int), 0, len(flags) - 1)
+        drawn = flags[g] != 0
+    for name in sorted(dir(m)):
+        if name.startswith("_") or name in _APPEARANCE_SKIP:
+            continue
+        if not name.startswith(_APPEARANCE_PREFIXES):
+            continue
+        try:
+            v = getattr(m, name)
+        except Exception:  # pragma: no cover - MjModel exposes only arrays here
+            continue
+        if isinstance(v, np.ndarray):
+            a = np.ascontiguousarray(v)
+            if drawn is not None and name.startswith("site_") and a.shape[:1] == (nsite,):
+                a = np.ascontiguousarray(a[drawn])
+            h.update(name.encode())
+            h.update(repr(a.shape).encode())
+            h.update(a.tobytes())
+            n += 1
+    assert n >= 20, (
+        f"appearance digest covered only {n} arrays -- an empty hash would certify staleness it never looked at"
+    )
+    return h.hexdigest()
+
+
+class _PlateRig:
+    """A PRIVATE (MjModel, MjData, Renderer) triple that bakes this cell's plate, built once.
+
+    ONE EGL context per (cell, resolution), for the life of the process, never released. The previous
+    version keyed the renderer on ``id(model)`` and evicted the old entry whenever a dirty reset
+    rebound the env's model -- which dropped the last reference to a live ``mujoco.Renderer``, so
+    ``__del__`` ran ``close()`` and freed its EGL context. Its docstring said "never closed" while the
+    code guaranteed the opposite: the gate run counted 14 contexts created and 8 released, and the
+    resource guard failed 11 of the 15 OGB rows because of it. Releasing one context corrupts
+    rendering in every other live context in the process, silently, which is the defect
+    ``envs/fetch.py`` and ``envs/ogbench.py`` both exist to avoid; ``fetch.py`` avoids it by owning
+    its model rather than borrowing one that rebinds, and this is the same answer.
+
+    Owning the model also removes two hazards the borrowed one carried. The rig renders its OWN
+    ``MjData``, so a bake no longer mutates the reference env's model and restores it afterwards --
+    nothing can leave the reference corrupted if a bake raises in between. And the rig pins the
+    button colours at the ALL-ZERO bits, the same convention ``_context`` takes its copy at, so the
+    plate is baked at a known appearance instead of at whichever bits the last reset happened to
+    choose; today's code baked whatever was live when the cache first filled.
+    """
+
+    __slots__ = ("model", "data", "renderer", "appearance", "shape", "floor")
+
+
+def _plate_rig(cell: str, res: int) -> _PlateRig:
+    import copy
+
+    import mujoco
+
+    key = (cell, int(res))
+    hit = _PLATE_RIGS.get(key)
+    if hit is not None:
+        return hit
+    b = _bundle(cell)
+    live = b.model
+    rig = _PlateRig()
+    rig.floor = None  # which floor.color the GL context currently holds
+    rig.appearance = _appearance_digest(live, b.unwrapped._scene_option.sitegroup)
+    rig.shape = (int(live.ngeom), int(live.nq), int(live.nmocap))
+    rig.model = copy.deepcopy(live)
+    # Movers are hidden for the life of the rig -- this model exists only to draw the static scene.
+    rig.model.geom_group[b.movers] = MW.HIDDEN_GROUP
+    zero = (b.button_tables or {}).get(tuple([0] * b.nbuttons))
+    if zero is not None:
+        rig.model.geom_rgba[:], rig.model.mat_rgba[:] = zero
+    else:
+        rig.model.geom_rgba[:] = b.pristine["geom_rgba"]
+        rig.model.mat_rgba[:] = b.pristine["mat_rgba"]
+    rig.data = mujoco.MjData(rig.model)
+    # THE OFFSCREEN BUFFER, RAISED ON OUR PRIVATE COPY -- this is the whole mechanism behind the four
+    # resource-guard rows. OGBench writes `visual.global.offwidth/offheight = render_width/height`
+    # when it compiles the scene (manipspace/envs/env.py:150), so the model serves exactly the
+    # registered size and no more. `mujoco.Renderer(m, height=res, width=res)` for any LARGER res
+    # raises `ValueError: Image width 224 > framebuffer width 200` -- AFTER `__new__` has allocated
+    # the object. The half-built Renderer is unreachable and unreferenced, so it is collected at some
+    # arbitrary later moment, `__del__` runs `close()`, and the guard charges that close to whichever
+    # test happened to be running. Measured on CPU: three constructions above the buffer, three
+    # allocations, three closes, and `_KEEPALIVE` never saw them because the line that appends is
+    # below the line that raised.
+    #
+    # That explains every fact the escalation listed: the closes are charged to tests that create
+    # nothing (collection is later), the rows pass alone (no earlier failed construction exists), a
+    # process-lifetime reference does not help (the object never reached it), and no EGL context is
+    # released (the constructor failed before it made one).
+    #
+    # Raising it here is correct rather than a workaround: the rig owns a PRIVATE deep copy, the
+    # reference env's own model keeps its 200 (verified), and a plate must be baked at whatever
+    # resolution the caller renders at -- `test_resolution_downsample_agrees_within_the_measured_bound`
+    # and `test_render_size_does_not_leak_into_later_calls` both ask for sizes the registered buffer
+    # cannot serve.
+    rig.model.vis.global_.offwidth = max(int(rig.model.vis.global_.offwidth), int(res))
+    rig.model.vis.global_.offheight = max(int(rig.model.vis.global_.offheight), int(res))
+    rig.renderer = mujoco.Renderer(rig.model, height=int(res), width=int(res))
+    _KEEPALIVE.append(rig.renderer)  # the rule, enforced directly: never released
+    _PLATE_RIGS[key] = rig  # never evicted; the renderer is never closed
+    if __debug__ and _os.environ.get("SE7_OGB_RIGDEBUG") == "1":  # diagnostics, off unless asked
+        import sys
+
+        mods = [n for n, m in sys.modules.items() if getattr(m, "__name__", None) == __name__ and m is not None]
+        print(
+            f"[rigdebug] built {key}: rigs={len(_PLATE_RIGS)} keepalive={len(_KEEPALIVE)} "
+            f"dict_id={id(_PLATE_RIGS)} module_copies={len(mods)} {mods}",
+            flush=True,
+        )
+    return rig
+
+
+#: MEASURED, not chosen. EIGHT independent draws of 64 states each on an RTX 3090 (job 6433493, its
+#: JSON and log committed under ``tests/fixtures/regression/join/step7/ogb-manipulation/m6/final8/``), taken
+#: THROUGH ``check_visual_fidelity`` -- the function that grades the declaration -- against OGBench's
+#: EGL frames at the registered resolution. One of the eight IS the graded draw: the check calls
+#: ``sample_states(n)`` with no rng, which is ``default_rng(0)``, the same fixed draw every run.
+#: The declared value is the WORST of the eight draws; the threshold beside it
+#: is a round number with margin, set by the same discipline ``envs/fetch.py`` states for its
+#: ``parity_interior_min``: a threshold is a contract about what the class guarantees, not a running
+#: best, and a threshold equal to a freshly measured value converts a comfortable margin into a
+#: tripwire for the next backend change. Filled in from the measurement; ``SE7_OGB_UNMEASURED=1``
+#: exists ONLY so the measuring process can import this module before the numbers exist, and it makes
+#: the placeholder impossible to mistake for evidence.
+import os as _os
+
+#: MEASURED by the Gate-F remeasure chain, job 6407605 on
+#: gpu2109 (RTX 3090), three independent 64-state draws per cell against OGBench's EGL frames at
+#: the registered resolution. The declared value is the WORST of the three and `draw_spread` carries
+#: the range; the thresholds were computed by that script under the family rule (x1.3 on the mean,
+#: the fractional floors a round 0.05 step below the worst draw), not set by hand here.
+#:
+#: These supersede the numbers this file carried before the mover-LUT fix. Those described a
+#: composite that never used its own baked plate on the floor, and the difference is the measure of
+#: that defect: interior-exact 0.351 -> 0.958 and all-exact 0.278 -> 0.872 on the Cube.
+_MEASURED: dict = {
+    "Cube": {
+        "all_exact_frac": 0.870012,
+        "draw_spread": {
+            "mean_abs": [3.265277, 3.309378],
+            "ssim": [0.919219, 0.926569],
+            "within8_frac": [0.91581, 0.917723],
+        },
+        "gate_draw_mean_abs": 3.295483,
+        "interior_exact_frac": 0.9578,
+        "interior_frac": 0.412552,
+        "job": "job 6433493 on gpu2109.oscar.ccv.brown.edu",
+        "mean_abs": 3.309378,
+        "ssim": 0.919219,
+        "within8_frac": 0.91581,
+    },
+    "Scene": {
+        "all_exact_frac": 0.773417,
+        "draw_spread": {
+            "mean_abs": [6.493273, 6.691589],
+            "ssim": [0.892792, 0.898809],
+            "within8_frac": [0.855483, 0.860345],
+        },
+        "gate_draw_mean_abs": 6.602667,
+        "interior_exact_frac": 0.912032,
+        "interior_frac": 0.278728,
+        "job": "job 6433493 on gpu2109.oscar.ccv.brown.edu",
+        "mean_abs": 6.691589,
+        "ssim": 0.892792,
+        "within8_frac": 0.855483,
+    },
+}
+#: OUR side: the batch raytracer that drew the movers.
+_UNMEASURED = str(_os.environ.get("SE7_OGB_UNMEASURED", "")) == "1"
+
+#: The REFERENCE side: OGBench's `render()` goes through `mujoco.Renderer`, so mujoco is the version
+#: the certifier must compare, and ogbench is named beside it because it is the package that compiles
+#: the scene these frames are of -- `tests/unit/test_declarations.py` requires a version declared here
+#: to be named in `measured_at` too, so the two cannot drift.
+_REFERENCE_VERSIONS = {"mujoco": "3.12.0", "ogbench": "1.2.1"}
+
+_MEASURED_WITH = {"mujoco_warp": "3.12.0"}
+
+
+def _fidelity(cell: str) -> dict:
+    if cell not in _MEASURED:
+        if not _UNMEASURED:
+            raise RuntimeError(
+                f"ogb_manip: {cell} has no MEASURED visual_fidelity. This module refuses to register "
+                f"a visual cell with invented numbers. Re-measure Gate-F fidelity, paste its "
+                f"worst-of-eight into _MEASURED, and re-import. Set SE7_OGB_UNMEASURED=1 only "
+                f"inside that measuring job."
+            )
+        return {
+            "mean_abs": -1.0,
+            "within8_frac": -1.0,
+            "ssim": -1.0,
+            "mean_abs_max": -1.0,
+            "within8_min": -1.0,
+            "ssim_min": -1.0,
+            "measured_at": "UNMEASURED PLACEHOLDER - SE7_OGB_UNMEASURED=1 is set, so these are "
+            "NOT measurements and this build must not ship or be certified.",
+        }
+    d = _MEASURED[cell]
+    spec = SPEC[cell]
+    lo_w, hi_w = d["draw_spread"]["within8_frac"]
+    lo_s, hi_s = d["draw_spread"]["ssim"]
+    return {
+        "mean_abs": float(d["mean_abs"]),
+        "within8_frac": float(d["within8_frac"]),
+        "ssim": float(d["ssim"]),
+        # Reported for honesty, threshold nowhere -- the DM Control convention. The interior mask on
+        # this scene keeps 0.41 (Cube) / 0.28 (Scene) of pixels, so unlike DM Control's speckled
+        # skybox it is defined here, but it is still a statement about the plate rather than about
+        # the mover pass.
+        # WORST of the three draws, like the three headline metrics -- not the mean. The first
+        # version declared means beside a `measured_at` that said "the WORST of the three", which is
+        # a small number and a wrong sentence (Cube interior 0.958115 mean vs 0.958007 worst).
+        "interior_exact_frac": float(d["interior_exact_frac"]),
+        "interior_frac": float(d["interior_frac"]),
+        "all_exact_frac": float(d["all_exact_frac"]),
+        "draw_spread": d["draw_spread"],
+        # THE FAMILY RULE, not a self-invented one: x1.3 on the mean, and the fractional floors a
+        # round step below the WORST draw. DM Control sets ceilings this way (mean 5.01 -> 6.50,
+        # 8.07 -> 10.5) precisely so a threshold is a contract rather than a tripwire on the next
+        # state draw, and the spread over three draws is what it is set clear of.
+        # x1.3 on the mean; the fractional floors the largest 0.05-grid value at least 0.04 BELOW
+        # the worst draw. The bare `floor(x*20)/20` this used before gave margins of 0.007-0.016
+        # whenever the worst draw sat just above a grid line -- a threshold that close to a measured
+        # value is the tripwire the family rule exists to avoid, and DM Control's own floors sit
+        # 0.04-0.06 under. Stated as a rule rather than nudged by feel.
+        "mean_abs_max": round(float(d["mean_abs"]) * 1.3, 1),
+        "within8_min": float(np.floor((lo_w - 0.04) * 20) / 20),
+        "ssim_min": float(np.floor((lo_s - 0.04) * 20) / 20),
+        "measured_at": (
+            # The reference version is NAMED here as well as declared in `reference_versions`:
+            # `tests/unit/test_declarations.py` requires the two to agree in words, because a
+            # version in a field nobody reads next to prose that names a different one is worse
+            # provenance than either alone.
+            f"mujoco 3.12.0 / ogbench 1.2.1 reference; {spec['size']} px, camera "
+            f"{spec['camera']}, 8 independent "
+            f"draws of 64 states from the "
+            f"env's own pool (reset + 0-25 random actions) on an RTX 3090 under MUJOCO_GL=egl, "
+            f"against OGBench's own render(); the declared value is the WORST of the eight and "
+            f"draw_spread carries the range, for mean_abs/within8_frac/ssim AND for "
+            f"interior_exact_frac, all_exact_frac and interior_frac. MEASURED THROUGH THE CHECK "
+            f"THAT GRADES IT, `check_visual_fidelity`, and one of the eight draws IS the draw the "
+            f"check takes -- it calls `sample_states(n)` with no rng, which is seed 0, the same "
+            f"fixed draw every time. The previous declaration was measured by a probe that averaged "
+            f"|diff| over the colour channels while `pixel_agreement` averages the per-pixel channel "
+            f"MAX, so it read 0.89/255 low and no widening rule could have covered the gap. The "
+            f"frame is a baked MuJoCo "
+            f"plate composited with "
+            f"MJWarp movers through the mover segmentation LUT, with gl_rounding and the shared "
+            f"out-of-range-spot correction applied. {d['job']}"
+        ),
+        # The REFERENCE side, which the certifier compares: mujoco is what OGBench's render() draws with.
+        "reference_versions": _REFERENCE_VERSIONS,
+        # OUR side, recorded and never compared: a bump of our own renderer that moves these numbers
+        # is a regression to be seen, not a reason to block the check.
+        "measured_with": _MEASURED_WITH,
+    }
+
+
+_RESIDUAL_NOTE = (
+    "THREE declared residuals, all attributed by measurement before this class was written, and all "
+    "structural to mujoco_warp rather than to this scene. (1) THE `global` DIRECTIONAL LIGHT is the "
+    "largest remaining term: neutralising it on both sides moves interior exactness 0.347 -> 0.702. "
+    "It is the castshadow light, and turning shadows OFF makes agreement worse, so the disagreement "
+    "is in the light and not in its shadow. (2) THE SPOT'S DISTANCE ATTENUATION: after the shared "
+    "out-of-range-cutoff correction, removing the spot entirely still adds +0.113, because MJWarp "
+    "takes attenuation = 1/(1,d,d^2).(1,0,0) = 1 and MuJoCo evidently does something else with the "
+    "same light_attenuation. (3) THE HEADLIGHT IS A MOVER-PIXEL TERM: interior barely moves (+0.001) "
+    "while mover exactness goes 0.757 -> 0.896, which is what a light along the camera axis does. "
+    "A fourth thing is NOT a residual and was checked: ambient. Zeroing it makes agreement WORSE, so "
+    "MJWarp already agrees with MuJoCo about it. "
+    "ALSO DECLARED, AND SEPARATE FROM THE SHADING: the translucent goal marker `target_object_0` "
+    "renders at alpha 0.2 and mujoco_warp's shader reads only color[0..2], so it has no alpha path "
+    "and would paint the marker opaque. Measured share of the frame: 0.61% (Cube) / 0.15% (Scene), "
+    "against the 1.2-1.5% Fetch already declares for the same mechanism. "
+    "WHERE THE RESIDUAL IS NOT: the floor. It is the baked plate, composited in wherever the mover "
+    "LUT says MJWarp did not hit a mover, and the measured result is interior-exact 0.958 (Cube) / "
+    "0.922 (Scene) and whole-frame 0.872 / 0.775 over three independent 64-state draws. An earlier "
+    "version of this cell masked with `seg >= 0` -- true wherever MJWarp hit ANYTHING, floor "
+    "included -- so the plate reached only the sky and the same scene scored 0.351 interior-exact. "
+    "That composite bug was worth more than every lighting term above combined."
+)
+
+
+#: The Scene carries one residual the Cube does not, and it is declared per geom because that is what
+#: the bake helper's record is for.
+_SCENE_BAKE_NOTE = (
+    " SCENE ONLY, A FOURTH DECLARED RESIDUAL: the material `btn_metal` wears a 512x512 CUBE map on "
+    "two UV-less button meshes (`stopbuttonrim`, geoms //unnamed_geom_8 and //unnamed_geom_20), and "
+    "mujoco_warp <= 3.12.0 indexes `mesh_texcoord` unconditionally in its MESH branch, so it dies "
+    "with an illegal memory access before the first frame rather than drawing the scene badly. The "
+    "texture is baked to its mean colour (0.523, 0.516, 0.512) through the shared "
+    "`bake_unsamplable_textures`. MEASURED cost, MuJoCo against MuJoCo over 8 states at 200 px so no "
+    "MJWarp term is mixed in: the two button geoms are 36 px/frame (0.090% of the frame), the bake "
+    "changes 55.5 px/frame (0.139%), max 37/255, mean 0.023/255 over the frame, and interior_exact "
+    "against the official frame is 1.00000 -- every changed pixel fails the 3x3-flat test, so the "
+    "residual is invisible to the interior metric. For scale, the alpha note Fetch already declares "
+    "is 1.2-1.5% of pixels. THE ZERO-PIXEL ALTERNATIVE EXISTS AND IS NOT TAKEN HERE: upstream "
+    "mujoco_warp guards that branch from 3.13.0 (58d8c77, PR #1608), so a venv bump removes the need "
+    "for this bake entirely -- to be measured, not assumed, since 3.13.0 moves more than one thing."
+)
+
+
+def _make_classes():
+    made = {}
+    for cell, spec in SPEC.items():
+        cname = f"OGB{cell}"
+        made[cname] = register(
+            type(
+                cname,
+                (OGBManipBase,),
+                dict(
+                    CELL=cell,
+                    domain=cell.lower(),
+                    name=f"ogb-{cell.lower()}",
+                    reference_id=None,
+                    default_size=spec["size"],
+                    visual_fidelity=_fidelity(cell),
+                    visual_note=_RESIDUAL_NOTE + (_SCENE_BAKE_NOTE if cell == "Scene" else ""),
+                    parity_interior_min=None,
+                    __doc__=(
+                        f"OGBench manipulation {cell}, fidelity_tier='visual'.\n\n"
+                        f"The frame is a MuJoCo-baked static plate composited with mujoco_warp's batch "
+                        f"ray-caster for the movers, at default_size={spec['size']} from the model "
+                        f"camera {spec['camera']!r}. State is (qpos, mocap_pos"
+                        + (", button bits)" if cell == "Scene" else ")")
+                        + f", {spec['state_dim']} dimensions. qvel is excluded because it "
+                        f"reaches no pixel and mocap_quat because it is the identity everywhere in the "
+                        f"registered distribution.\n\n"
+                        f"THIS IS A VISUAL TIER CELL, NOT A PARITY ONE. Three lighting terms in mujoco_warp "
+                        f"disagree with MuJoCo and are declared in visual_fidelity and visual_note rather "
+                        f"than chased: the global directional light, the spot's distance attenuation, and "
+                        f"the headlight on mover pixels. A fourth, the out-of-range spot cutoff, WAS fixed "
+                        f"and now lives in the shared render/mjwarp.py path. The translucent goal marker is "
+                        f"a fifth, separate residual: mujoco_warp has no alpha path.\n\n"
+                        f"There is NO CPU backend: device='cpu' raises rather than silently using the GPU "
+                        f"(CPU3D-OGB-1)."
+                    ),
+                ),
+            )
+        )
+    return made
+
+
+#: ``{name: class}`` for the two registered cells; see ``maze.CELL_CLASSES``.
+CELL_CLASSES = _make_classes()
+globals().update(CELL_CLASSES)

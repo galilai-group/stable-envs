@@ -1,0 +1,17 @@
+JobID|JobName|State|ExitCode|Elapsed|MaxRSS|NodeList|Partition
+6841777_0|se-pusht-saved|FAILED|1:0|00:00:39||gpu2108|gpu
+6841777_0.batch|batch|FAILED|1:0|00:00:39|1364488K|gpu2108|
+6841777_0.extern|extern|COMPLETED|0:0|00:00:39||gpu2108|
+6841777_1|se-pusht-saved|FAILED|1:0|00:00:17||gpu2113|gpu
+6841777_1.batch|batch|FAILED|1:0|00:00:17|930704K|gpu2113|
+6841777_1.extern|extern|COMPLETED|0:0|00:00:17||gpu2113|
+6841807_0|se-pusht-saved|COMPLETED|0:0|00:09:28||gpu2116|gpu
+6841807_0.batch|batch|COMPLETED|0:0|00:09:28|10058392K|gpu2116|
+6841807_0.extern|extern|COMPLETED|0:0|00:09:28||gpu2116|
+6841807_1|se-pusht-saved|CANCELLED by 140199055|0:0|00:27:49||gpu2110|3090-gcondo
+6841807_1.batch|batch|CANCELLED|0:15|00:27:50|6491184K|gpu2110|
+6841807_1.extern|extern|COMPLETED|0:0|00:27:51||gpu2110|
+6844392|se-pusht-saved|CANCELLED by 140199055|0:0|00:00:00||None assigned|gpu
+6845526|se-pusht-saved|COMPLETED|0:0|00:06:17||gpu2110|3090-gcondo
+6845526.batch|batch|COMPLETED|0:0|00:06:17|3585064K|gpu2110|
+6845526.extern|extern|COMPLETED|0:0|00:06:17||gpu2110|

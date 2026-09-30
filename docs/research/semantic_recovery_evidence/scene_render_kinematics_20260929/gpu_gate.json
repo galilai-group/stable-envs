@@ -1,0 +1,67 @@
+{
+  "status": "PASS",
+  "hardware": "NVIDIA GeForce RTX 3090",
+  "host": "gpu2106.oscar.ccv.brown.edu",
+  "measurements": [
+    {
+      "batch": 64,
+      "output_device": "cpu",
+      "old_fps": 1101.4981951686736,
+      "ours_fps": 1310.8640381599894,
+      "source_fps": 1346.1440133295741,
+      "speedup": 0.9737918270108986,
+      "mse": 0.0,
+      "max_baseline_delta": 0
+    },
+    {
+      "batch": 64,
+      "output_device": "cuda",
+      "old_fps": 1120.7296762721546,
+      "ours_fps": 1326.9315428898587,
+      "source_fps": 1330.4890042385898,
+      "speedup": 0.9973262001133434,
+      "mse": 0.0,
+      "max_baseline_delta": 0
+    },
+    {
+      "batch": 128,
+      "output_device": "cpu",
+      "old_fps": 1119.916637138587,
+      "ours_fps": 1338.968269715743,
+      "source_fps": 1368.3367798218792,
+      "speedup": 0.9785370746886163,
+      "mse": 0.0,
+      "max_baseline_delta": 0
+    },
+    {
+      "batch": 128,
+      "output_device": "cuda",
+      "old_fps": 1136.6434446661576,
+      "ours_fps": 1348.7059488749771,
+      "source_fps": 1352.8638771090739,
+      "speedup": 0.9969265730984098,
+      "mse": 1.6019479687299753e-11,
+      "max_baseline_delta": 1
+    },
+    {
+      "batch": 256,
+      "output_device": "cpu",
+      "old_fps": 1141.3977303179508,
+      "ours_fps": 1355.7873251626845,
+      "source_fps": 1370.1996943753525,
+      "speedup": 0.9894815556653307,
+      "mse": 0.0,
+      "max_baseline_delta": 1
+    },
+    {
+      "batch": 256,
+      "output_device": "cuda",
+      "old_fps": 1154.5877284056971,
+      "ours_fps": 1375.655712094239,
+      "source_fps": 1355.7122472158228,
+      "speedup": 1.0147106916820834,
+      "mse": 1.6019479687299753e-11,
+      "max_baseline_delta": 1
+    }
+  ]
+}

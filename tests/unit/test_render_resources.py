@@ -451,7 +451,7 @@ def test_family_device_caches_release_on_eviction():
     root = pathlib.Path(__file__).resolve().parents[2] / "stable_envs"
     checks = [
         (root / "envs" / "fetch.py", 'BoundedCache(6, name="fetch.ctx"', "release_cached_ctx"),
-        (root / "envs" / "ogbench" / "manipulation.py", 'BoundedCache(4, name="ogbench.ctx"', "release_cached_ctx"),
+        (root / "envs" / "ogbench" / "manipulation.py", 'ContextCache(on_evict=_release_context', "release_cached_ctx"),
         (root / "envs" / "robocasa.py", 'BoundedCache(4, name="robocasa.ctx"', "release_cached_ctx"),
         (root / "envs" / "robocasa.py", "BoundedCache(", "robocasa.correctors"),
         (root / "envs" / "humanoidbench.py", 'BoundedCache(32, name="humanoidbench.ctx"', "release_cached_ctx"),

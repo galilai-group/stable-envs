@@ -1,0 +1,213 @@
+"""Explicit fidelity renderer over candidate assets and named RenderState.
+
+No simulator reset, step, replay, or source-environment renderer is involved.
+CPU means verified software OpenGL; CUDA means verified NVIDIA OpenGL followed
+by a host readback and upload to the requested tensor device. This backend is
+serial across worlds, so its latency must not be presented as MJWarp throughput.
+"""
+
+from __future__ import annotations
+
+import hashlib
+import threading
+from functools import lru_cache
+from importlib.metadata import version
+
+import numpy as np
+import torch
+
+from stable_envs._adapters import ogbench_render_state as pixels
+from stable_envs._adapters.ogbench_manipulation_compat import MODEL_VALUES, CompatibleCube, CompatibleScene
+from stable_envs.render._resources import retain_process_lifetime
+
+_LOCK = threading.RLock()
+_CACHE = {}
+TILE_CAP = 16
+
+
+def _key(family, row, resolution):
+    h = hashlib.sha256(f"{family}:{resolution}:{TILE_CAP}".encode())
+    for k in MODEL_VALUES:
+        h.update(row["appearance", k].numpy().tobytes())
+    return h.hexdigest()
+
+
+def _renderer(family, row, resolution):
+    import mujoco
+    from OpenGL import GL
+
+    key = _key(family, row, resolution)
+    if key not in _CACHE:
+        env = (CompatibleCube if family == "Cube" else CompatibleScene)(seed=0)
+        for k in MODEL_VALUES:
+            env.variation_space._walk(k)._value = row["appearance", k].numpy().copy()
+        env._mjcf_model = env.modify_mjcf_model(env.build_mjcf_model())
+        env.compile_model_and_data()
+        env.model.vis.global_.offwidth = max(int(env.model.vis.global_.offwidth), resolution)
+        env.model.vis.global_.offheight = max(int(env.model.vis.global_.offheight), resolution)
+        renderer = mujoco.Renderer(env.model, height=resolution, width=resolution)
+        renderer._gl_context.make_current()
+        vendor = GL.glGetString(GL.GL_VENDOR).decode()
+        device = GL.glGetString(GL.GL_RENDERER).decode()
+        entry = (env, renderer, vendor, device)
+        retain_process_lifetime(
+            entry, "Cube/Scene fidelity OpenGL context: releasing one invalidates other live contexts"
+        )
+        _CACHE[key] = entry
+    return _CACHE[key]
+
+
+@lru_cache(maxsize=1)
+def _check_versions():
+    # Distribution metadata does not change during the lifetime of a renderer.
+    if version("mujoco") != "3.12.0" or version("ogbench") != "1.2.1":
+        raise ImportError("Cube/Scene OpenGL rendering requires mujoco==3.12.0 and ogbench==1.2.1")
+
+
+def _configuration_groups(host):
+    """Group exact model bytes without constructing a TensorDict for each row."""
+    parts = [
+        np.ascontiguousarray(host["appearance", name].numpy()).reshape(len(host), -1).view(np.uint8)
+        for name in MODEL_VALUES
+    ]
+    packed = np.concatenate(parts, axis=1)
+    groups = {}
+    for index, row in enumerate(packed):
+        groups.setdefault(row.tobytes(), []).append(index)
+    return groups.values()
+
+
+def _can_use_render_kinematics(env, renderer):
+    """Keep the fast update restricted to the audited fixed RGB scene."""
+    import mujoco
+
+    model = env.model
+    if model.nflex or model.nskin or model.nplugin or model.nsensor:
+        return False
+    if model.opt.enableflags & mujoco.mjtEnableBit.mjENBL_SLEEP:
+        return False
+    if np.any(model.cam_mode != mujoco.mjtCamLight.mjCAMLIGHT_FIXED):
+        return False
+    if np.any(model.light_mode != mujoco.mjtCamLight.mjCAMLIGHT_FIXED):
+        return False
+    if np.any(model.wrap_type != mujoco.mjtWrap.mjWRAP_JOINT):
+        return False
+    default = mujoco.MjvOption()
+    options = renderer._scene_option
+    return (
+        np.array_equal(options.flags, default.flags)
+        and options.frame == default.frame
+        and options.label == default.label
+    )
+
+
+def _apply_render_button_colors(env, lock_colors):
+    """Final CompatibleScene colors; no simulation update on this private model."""
+    for index, state in enumerate(env._cur_button_states):
+        color = lock_colors[index] if state == 0 else env._colors["white"][:3]
+        for gid in env._button_geom_ids_list[index]:
+            env.model.geom_rgba[gid] = [*color, 1.0]
+        env.model.material(("drawer_handle", "window_handle")[index]).rgba[:] = [*color, 1.0]
+
+
+def render(family, state, device, chunk_size=None):
+    import mujoco
+
+    # OpenGL consumes host model inputs anyway. Validate that same detached copy
+    # rather than synchronizing CUDA once for every scalar validation predicate.
+    host = state.detach().cpu()
+    pixels.validate(family, host)
+    _check_versions()
+    if chunk_size is not None and (type(chunk_size) is not int or chunk_size < 1):
+        raise ValueError("chunk_size must be a positive integer")
+    device = torch.device(device)
+    if device.type not in ("cpu", "cuda"):
+        raise ValueError("Cube/Scene OpenGL supports CPU software or NVIDIA GPU rendering")
+    size, ss = (int(host["renderer", k][0, 0]) for k in ("size", "supersample"))
+    poses = {name: host["pose", name].numpy() for name in ("qpos", "mocap_pos", "mocap_quat")}
+    cube_colors = host["appearance", "cube.color"].numpy()
+    if family == "Scene":
+        lock_colors = host["appearance", "lock_color"].numpy()
+        buttons = host["pose", "buttons"].numpy()
+    images = np.empty((len(host), size, size, 3), dtype=np.uint8)
+    high_resolution = np.empty((size * ss, size * ss, 3), dtype=np.uint8) if ss != 1 else None
+    with _LOCK:
+        for indices in _configuration_groups(host):
+            env, renderer, vendor, gl_device = _renderer(family, host[indices[0]], size * ss)
+            software = any(s in gl_device.lower() for s in ("llvmpipe", "softpipe", "swrast", "software rasterizer"))
+            if device.type == "cpu" and not software:
+                raise RuntimeError(
+                    f"CPU rendering requires software OpenGL, found {vendor}: {gl_device}. "
+                    "Launch a separate process with Mesa software rendering configured before importing MuJoCo."
+                )
+            if device.type == "cuda" and (software or "nvidia" not in vendor.lower()):
+                raise RuntimeError(f"CUDA rendering requires NVIDIA OpenGL, found {vendor}: {gl_device}")
+            atlas = Atlas(renderer, size * ss, min(TILE_CAP, len(indices)))
+            render_kinematics = family == "Scene" and _can_use_render_kinematics(env, renderer)
+            for index in indices:
+                for name, values in poses.items():
+                    getattr(env.data, name)[:] = values[index]
+                env.variation_space._walk("cube.color")._value = cube_colors[index].copy()
+                env._cube_colors_from_variation()
+                for ids in env._cube_target_geom_ids_list:
+                    env.model.geom_rgba[ids, 3] = 0.2
+                if family == "Scene":
+                    env.variation_space._walk("lock_color")._value = lock_colors[index].copy()
+                    env._cur_button_states = buttons[index].copy()
+                    if render_kinematics:
+                        _apply_render_button_colors(env, lock_colors[index])
+                        mujoco.mj_kinematics(env.model, env.data)
+                        mujoco.mj_camlight(env.model, env.data)
+                    else:
+                        # Upstream applies button physics and calls mj_forward.
+                        env._apply_button_states()
+                else:
+                    mujoco.mj_forward(env.model, env.data)
+                renderer.update_scene(env.data, camera="front_pixels")
+                if ss == 1:
+                    atlas.draw(images[index])
+                else:
+                    raise AssertionError("Diagnostic requires ss=1")
+                    renderer.render(out=high_resolution)
+                    images[index] = np.rint(high_resolution.reshape(size, ss, size, ss, 3).mean((1, 3)))
+            atlas.flush()
+    return torch.as_tensor(images, dtype=torch.uint8, device=device)
+
+
+class Atlas:
+    def __init__(self, renderer, size, capacity):
+        import mujoco
+        import math
+        self.renderer, self.size = renderer, size
+        self.cols = math.ceil(math.sqrt(capacity))
+        self.rows = math.ceil(capacity / self.cols)
+        self.capacity = capacity
+        self.pending = []
+        self.rect = mujoco.MjrRect(0, 0, self.cols * size, self.rows * size)
+        renderer._gl_context.make_current()
+        context = renderer._mjr_context
+        if context.offWidth != self.rect.width or context.offHeight != self.rect.height:
+            mujoco.mjr_resizeOffscreen(self.rect.width, self.rect.height, context)
+        self.buffer = np.empty((self.rect.height, self.rect.width, 3), dtype=np.uint8)
+
+    def draw(self, out):
+        import mujoco
+        if len(self.pending) == self.capacity:
+            self.flush()
+        slot = len(self.pending)
+        rect = mujoco.MjrRect((slot % self.cols) * self.size,
+                              (slot // self.cols) * self.size, self.size, self.size)
+        self.renderer._gl_context.make_current()
+        mujoco.mjr_render(rect, self.renderer._scene, self.renderer._mjr_context)
+        self.pending.append(out)
+
+    def flush(self):
+        import mujoco
+        if not self.pending:
+            return
+        self.renderer._gl_context.make_current()
+        mujoco.mjr_readPixels(self.buffer, None, self.rect, self.renderer._mjr_context)
+        for slot, out in enumerate(self.pending):
+            y, x = (slot // self.cols) * self.size, (slot % self.cols) * self.size
+            out[:] = self.buffer[y:y+self.size, x:x+self.size][::-1]
+        self.pending.clear()

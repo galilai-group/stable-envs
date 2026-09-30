@@ -1,0 +1,479 @@
+{
+  "status": "COMPLETE",
+  "name": "OGBCube",
+  "profile": {
+    "host": "gpu1503.oscar.ccv.brown.edu",
+    "cpu": "AMD EPYC 7532 32-Core Processor",
+    "gpu": "NVIDIA RTX A6000",
+    "python": "3.12.8",
+    "packages": {
+      "torch": {
+        "version": "2.14.0+cu126",
+        "path": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages"
+      },
+      "numpy": {
+        "version": "2.2.6",
+        "path": "/oscar/scratch/sboughan/se-semantic-recovery/ogb-renderer-294675f0-complete/run-6669909/profile/lib/python3.12/site-packages"
+      },
+      "tensordict": {
+        "version": "0.14.2",
+        "path": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages"
+      },
+      "gymnasium": {
+        "version": "1.2.3",
+        "path": "/oscar/scratch/sboughan/se-semantic-recovery/ogb-renderer-294675f0-complete/run-6669909/profile/lib/python3.12/site-packages"
+      },
+      "mujoco": {
+        "version": "3.12.0",
+        "path": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages"
+      },
+      "dm-control": {
+        "version": "1.0.41",
+        "path": "/oscar/scratch/sboughan/se-semantic-recovery/ogb-renderer-294675f0-complete/run-6669909/profile/lib/python3.12/site-packages"
+      },
+      "gymnasium-robotics": {
+        "version": "1.4.2",
+        "path": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages"
+      },
+      "ogbench": {
+        "version": "1.2.1",
+        "path": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages"
+      },
+      "pymunk": {
+        "version": "7.3.0",
+        "path": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages"
+      },
+      "pygame": {
+        "version": "2.6.1",
+        "path": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages"
+      }
+    },
+    "torch_threads": 1,
+    "environment": {
+      "SLURM_JOB_ID": "6756204",
+      "MUJOCO_GL": "egl",
+      "PYOPENGL_PLATFORM": "egl",
+      "LIBGL_ALWAYS_SOFTWARE": null,
+      "GALLIUM_DRIVER": null,
+      "DISPLAY": null,
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "LP_NUM_THREADS": "1",
+      "JAX_PLATFORMS": null,
+      "CRAFTAX_JAX_BACKEND": null,
+      "CUDA_VISIBLE_DEVICES": "0"
+    }
+  },
+  "measurements": [
+    {
+      "batch": 1,
+      "backend": "mjwarp",
+      "timing": {
+        "samples_ms": [
+          14.542886,
+          14.635525,
+          14.321397,
+          14.422256,
+          17.423829,
+          14.676705,
+          14.942664,
+          14.637485,
+          14.267477,
+          14.256408
+        ],
+        "statistics_ms": {
+          "count": 10,
+          "mean": 14.8126632,
+          "median": 14.589205499999998,
+          "p95": 16.30730475,
+          "maximum": 17.423829,
+          "minimum": 14.256408,
+          "std": 0.8938022632441478
+        },
+        "first_call_ms": 10390.983411,
+        "warmups": 3,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "mean_ms_per_frame": 14.8126632,
+      "frames_per_second": 67.50980471897856
+    },
+    {
+      "batch": 1,
+      "backend": "opengl",
+      "timing": {
+        "samples_ms": [
+          9.041008,
+          9.038618,
+          9.053077,
+          9.127907,
+          9.080967,
+          9.020898,
+          9.085738,
+          8.970019,
+          8.982008,
+          8.988778
+        ],
+        "statistics_ms": {
+          "count": 10,
+          "mean": 9.0389018,
+          "median": 9.039812999999999,
+          "p95": 9.10893095,
+          "maximum": 9.127907,
+          "minimum": 8.970019,
+          "std": 0.04786310267794995
+        },
+        "first_call_ms": 1286.244525,
+        "warmups": 3,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "mean_ms_per_frame": 9.0389018,
+      "frames_per_second": 110.63290896688358
+    },
+    {
+      "batch": 1,
+      "backend": "mjwarp_fidelity",
+      "timing": {
+        "samples_ms": [
+          19.02341,
+          18.481093,
+          18.489163,
+          18.710001,
+          18.365814,
+          18.594352,
+          18.402904,
+          18.520092,
+          18.653952,
+          18.611102
+        ],
+        "statistics_ms": {
+          "count": 10,
+          "mean": 18.5851883,
+          "median": 18.557222000000003,
+          "p95": 18.882375949999997,
+          "maximum": 19.02341,
+          "minimum": 18.365814,
+          "std": 0.1785349477379982
+        },
+        "first_call_ms": 3497.031848,
+        "warmups": 3,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "mean_ms_per_frame": 18.5851883,
+      "frames_per_second": 53.80628831185962
+    },
+    {
+      "batch": 8,
+      "backend": "mjwarp",
+      "timing": {
+        "samples_ms": [
+          16.187556,
+          16.256096,
+          16.376915,
+          19.915805,
+          16.907282,
+          16.661153,
+          16.194106,
+          16.246776,
+          16.327576,
+          16.279166
+        ],
+        "statistics_ms": {
+          "count": 10,
+          "mean": 16.735243099999998,
+          "median": 16.303371,
+          "p95": 18.561969649999995,
+          "maximum": 19.915805,
+          "minimum": 16.187556,
+          "std": 1.0823414946449614
+        },
+        "first_call_ms": 431.820141,
+        "warmups": 3,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "mean_ms_per_frame": 2.0919053874999998,
+      "frames_per_second": 478.0330917332178
+    },
+    {
+      "batch": 8,
+      "backend": "opengl",
+      "timing": {
+        "samples_ms": [
+          16.199386,
+          16.039127,
+          16.071677,
+          15.881148,
+          15.879838,
+          15.867888,
+          16.117317,
+          16.148676,
+          15.912658,
+          16.070657
+        ],
+        "statistics_ms": {
+          "count": 10,
+          "mean": 16.0188372,
+          "median": 16.054892000000002,
+          "p95": 16.1765665,
+          "maximum": 16.199386,
+          "minimum": 15.867888,
+          "std": 0.11721008624926434
+        },
+        "first_call_ms": 22.757999,
+        "warmups": 3,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "mean_ms_per_frame": 2.00235465,
+      "frames_per_second": 499.4120297320957
+    },
+    {
+      "batch": 8,
+      "backend": "mjwarp_fidelity",
+      "timing": {
+        "samples_ms": [
+          21.849273,
+          21.776154,
+          22.113052,
+          21.783264,
+          22.175171,
+          21.851864,
+          21.765974,
+          21.673764,
+          22.030563,
+          21.818273
+        ],
+        "statistics_ms": {
+          "count": 10,
+          "mean": 21.8837352,
+          "median": 21.833773,
+          "p95": 22.14721745,
+          "maximum": 22.175171,
+          "minimum": 21.673764,
+          "std": 0.15658605335776252
+        },
+        "first_call_ms": 421.049003,
+        "warmups": 3,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "mean_ms_per_frame": 2.7354669,
+      "frames_per_second": 365.5683057250665
+    },
+    {
+      "batch": 64,
+      "backend": "mjwarp",
+      "timing": {
+        "samples_ms": [
+          31.590128,
+          31.377018,
+          31.504307,
+          31.558218,
+          31.427258,
+          31.523438,
+          32.171074,
+          31.516967,
+          31.450718,
+          31.511738
+        ],
+        "statistics_ms": {
+          "count": 10,
+          "mean": 31.563086399999996,
+          "median": 31.5143525,
+          "p95": 31.909648299999997,
+          "maximum": 32.171074,
+          "minimum": 31.377018,
+          "std": 0.2111615502340323
+        },
+        "first_call_ms": 421.683189,
+        "warmups": 3,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "mean_ms_per_frame": 0.49317322499999994,
+      "frames_per_second": 2027.6850998956809
+    },
+    {
+      "batch": 64,
+      "backend": "opengl",
+      "timing": {
+        "samples_ms": [
+          73.168256,
+          75.663012,
+          73.760693,
+          74.068131,
+          73.770893,
+          74.104931,
+          74.29109,
+          73.405325,
+          74.19514,
+          84.787319
+        ],
+        "statistics_ms": {
+          "count": 10,
+          "mean": 75.121479,
+          "median": 74.086531,
+          "p95": 80.68138084999998,
+          "maximum": 84.787319,
+          "minimum": 73.168256,
+          "std": 3.2840275317965277
+        },
+        "first_call_ms": 73.531925,
+        "warmups": 3,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "mean_ms_per_frame": 1.173773109375,
+      "frames_per_second": 851.9534073603637
+    },
+    {
+      "batch": 64,
+      "backend": "mjwarp_fidelity",
+      "timing": {
+        "samples_ms": [
+          49.942711,
+          48.052822,
+          48.484379,
+          48.264481,
+          48.523559,
+          48.428039,
+          49.693412,
+          49.431694,
+          48.252181,
+          48.26263
+        ],
+        "statistics_ms": {
+          "count": 10,
+          "mean": 48.7335908,
+          "median": 48.456209,
+          "p95": 49.83052645,
+          "maximum": 49.942711,
+          "minimum": 48.052822,
+          "std": 0.6486314737047232
+        },
+        "first_call_ms": 437.790816,
+        "warmups": 3,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "mean_ms_per_frame": 0.76146235625,
+      "frames_per_second": 1313.2625556498085
+    },
+    {
+      "batch": 256,
+      "backend": "mjwarp",
+      "timing": {
+        "samples_ms": [
+          84.264933,
+          84.702859,
+          84.164543,
+          84.142163,
+          84.65444,
+          84.5325,
+          90.053279,
+          84.70343,
+          83.791655,
+          83.739576
+        ],
+        "statistics_ms": {
+          "count": 10,
+          "mean": 84.8749378,
+          "median": 84.3987165,
+          "p95": 87.64584694999999,
+          "maximum": 90.053279,
+          "minimum": 83.739576,
+          "std": 1.7583060065370202
+        },
+        "first_call_ms": 488.144625,
+        "warmups": 3,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "mean_ms_per_frame": 0.33154272578125,
+      "frames_per_second": 3016.202504951939
+    },
+    {
+      "batch": 256,
+      "backend": "opengl",
+      "timing": {
+        "samples_ms": [
+          420.553146,
+          423.921767,
+          420.229738,
+          423.501268,
+          421.48603,
+          422.939342,
+          426.930948,
+          429.332035,
+          445.836859,
+          438.374053
+        ],
+        "statistics_ms": {
+          "count": 10,
+          "mean": 427.3105186000001,
+          "median": 423.7115175,
+          "p95": 442.4785963,
+          "maximum": 445.836859,
+          "minimum": 420.229738,
+          "std": 8.029216043008782
+        },
+        "first_call_ms": 430.698447,
+        "warmups": 3,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "mean_ms_per_frame": 1.6691817132812503,
+      "frames_per_second": 599.095947459319
+    },
+    {
+      "batch": 256,
+      "backend": "mjwarp_fidelity",
+      "timing": {
+        "samples_ms": [
+          140.834895,
+          140.967463,
+          140.630046,
+          140.758696,
+          140.666396,
+          140.972584,
+          140.423417,
+          140.684506,
+          140.443287,
+          140.656506
+        ],
+        "statistics_ms": {
+          "count": 10,
+          "mean": 140.70377960000002,
+          "median": 140.675451,
+          "p95": 140.97027955000001,
+          "maximum": 140.972584,
+          "minimum": 140.423417,
+          "std": 0.17829521147983995
+        },
+        "first_call_ms": 583.007745,
+        "warmups": 3,
+        "synchronization": "torch.cuda.synchronize before and after every timed call",
+        "output_location": "cuda",
+        "includes_reset_step_get_set_state": false
+      },
+      "mean_ms_per_frame": 0.5496241390625001,
+      "frames_per_second": 1819.42518337297
+    }
+  ],
+  "scope": "Six real same-configuration poses repeated across batch sizes; throughput test, not additional independent quality frames"
+}

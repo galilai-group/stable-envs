@@ -1,0 +1,2177 @@
+{
+  "batch": 256,
+  "note": "Diagnostic wall times include wrappers. Draw/readback wall time includes driver work and GPU waits, not GPU kernel occupancy. Nested inclusive times must not be added.",
+  "ours": {
+    "samples": [
+      {
+        "wall_ms": 194.146049,
+        "cpu_ms": 192.75509
+      },
+      {
+        "wall_ms": 191.06674,
+        "cpu_ms": 189.740075
+      },
+      {
+        "wall_ms": 193.416954,
+        "cpu_ms": 192.070021
+      }
+    ],
+    "sections": {
+      "torch_wait": {
+        "calls": 6,
+        "inclusive_ms": 0.452244,
+        "exclusive_ms": 0.452244
+      },
+      "validate": {
+        "calls": 3,
+        "inclusive_ms": 3.8925229999999997,
+        "exclusive_ms": 3.8925229999999997
+      },
+      "group_configuration": {
+        "calls": 3,
+        "inclusive_ms": 0.643845,
+        "exclusive_ms": 0.643845
+      },
+      "renderer_lookup": {
+        "calls": 3,
+        "inclusive_ms": 0.170768,
+        "exclusive_ms": 0.170768
+      },
+      "button_colors": {
+        "calls": 768,
+        "inclusive_ms": 18.447043,
+        "exclusive_ms": 18.447043
+      },
+      "kinematics": {
+        "calls": 768,
+        "inclusive_ms": 5.872117000000008,
+        "exclusive_ms": 5.872117000000008
+      },
+      "camera_light": {
+        "calls": 768,
+        "inclusive_ms": 0.8266279999999997,
+        "exclusive_ms": 0.8266279999999997
+      },
+      "update_scene": {
+        "calls": 768,
+        "inclusive_ms": 13.498743999999986,
+        "exclusive_ms": 13.498743999999986
+      },
+      "draw_submit": {
+        "calls": 768,
+        "inclusive_ms": 277.11447999999973,
+        "exclusive_ms": 277.11447999999973
+      },
+      "readback": {
+        "calls": 768,
+        "inclusive_ms": 162.88069799999985,
+        "exclusive_ms": 162.88069799999985
+      },
+      "draw_readback": {
+        "calls": 768,
+        "inclusive_ms": 481.4683899999998,
+        "exclusive_ms": 41.473212000000004
+      },
+      "render_boundary": {
+        "calls": 3,
+        "inclusive_ms": 569.471494,
+        "exclusive_ms": 44.651436000000004
+      }
+    },
+    "functions": [
+      {
+        "file": "/oscar/scratch/sboughan/se-semantic-recovery/ogb-renderer-294675f0-complete/run-6669909/profile/lib/python3.12/site-packages/numpy/_core/numeric.py",
+        "line": 2475,
+        "function": "array_equal",
+        "calls": 1,
+        "self_ms": 0.01094,
+        "cumulative_ms": 0.021470000000000003
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/_td.py",
+        "line": 1701,
+        "function": "_index_tensordict",
+        "calls": 4,
+        "self_ms": 0.0597,
+        "cumulative_ms": 0.204398
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/torch/_utils.py",
+        "line": 878,
+        "function": "_get_device_index",
+        "calls": 2,
+        "self_ms": 0.00556,
+        "cumulative_ms": 0.0761
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/torch/_utils.py",
+        "line": 819,
+        "function": "_get_available_device_type",
+        "calls": 3,
+        "self_ms": 0.0034000000000000002,
+        "cumulative_ms": 0.06353
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/torch/_utils.py",
+        "line": 836,
+        "function": "_get_device_attr",
+        "calls": 2,
+        "self_ms": 0.00751,
+        "cumulative_ms": 0.06313
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method torch._C._cuda_exchangeDevice>",
+        "calls": 1,
+        "self_ms": 0.00152,
+        "cumulative_ms": 0.00152
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method torch._C._cuda_maybeExchangeDevice>",
+        "calls": 1,
+        "self_ms": 0.00115,
+        "cumulative_ms": 0.00115
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method torch._C._cuda_getDevice>",
+        "calls": 2,
+        "self_ms": 0.00265,
+        "cumulative_ms": 0.00265
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method torch._C._cuda_getDeviceCount>",
+        "calls": 3,
+        "self_ms": 0.00248,
+        "cumulative_ms": 0.00248
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method torch._C._cuda_isInBadFork>",
+        "calls": 5,
+        "self_ms": 0.00386,
+        "cumulative_ms": 0.00386
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method torch._C._cuda_getCurrentStream>",
+        "calls": 1,
+        "self_ms": 0.0013300000000000002,
+        "cumulative_ms": 0.0013300000000000002
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method torch._C._cuda_synchronize>",
+        "calls": 1,
+        "self_ms": 0.009970000000000001,
+        "cumulative_ms": 0.009970000000000001
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<method 'contiguous' of 'torch._C.TensorBase' objects>",
+        "calls": 1,
+        "self_ms": 0.00287,
+        "cumulative_ms": 0.00287
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<method 'numpy' of 'torch._C.TensorBase' objects>",
+        "calls": 16,
+        "self_ms": 0.044338,
+        "cumulative_ms": 0.044338
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<method 'to' of 'torch._C.TensorBase' objects>",
+        "calls": 17,
+        "self_ms": 3.09104,
+        "cumulative_ms": 3.09104
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<method 'abs' of 'torch._C.TensorBase' objects>",
+        "calls": 1,
+        "self_ms": 0.0063100000000000005,
+        "cumulative_ms": 0.0063100000000000005
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<method 'all' of 'torch._C.TensorBase' objects>",
+        "calls": 16,
+        "self_ms": 0.10422000000000001,
+        "cumulative_ms": 0.10422000000000001
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<method 'detach' of 'torch._C.TensorBase' objects>",
+        "calls": 16,
+        "self_ms": 0.036730000000000006,
+        "cumulative_ms": 0.036730000000000006
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method torch.as_tensor>",
+        "calls": 2,
+        "self_ms": 2.812831,
+        "cumulative_ms": 2.812831
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method torch.any>",
+        "calls": 11,
+        "self_ms": 0.05494,
+        "cumulative_ms": 0.05494
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method torch.ones>",
+        "calls": 2,
+        "self_ms": 0.01818,
+        "cumulative_ms": 0.01818
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method torch.all>",
+        "calls": 4,
+        "self_ms": 0.023469,
+        "cumulative_ms": 0.023469
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method torch.allclose>",
+        "calls": 2,
+        "self_ms": 0.10578000000000001,
+        "cumulative_ms": 0.10578000000000001
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method torch.isfinite>",
+        "calls": 16,
+        "self_ms": 0.22566800000000004,
+        "cumulative_ms": 0.22566800000000004
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/torch/cuda/_utils.py",
+        "line": 605,
+        "function": "_get_device_index",
+        "calls": 2,
+        "self_ms": 0.010339000000000001,
+        "cumulative_ms": 0.089839
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/torch/cuda/__init__.py",
+        "line": 563,
+        "function": "_lazy_init",
+        "calls": 4,
+        "self_ms": 0.0029100000000000003,
+        "cumulative_ms": 0.009219999999999999
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/_td.py",
+        "line": 2600,
+        "function": "_set_str",
+        "calls": 38,
+        "self_ms": 0.01601,
+        "cumulative_ms": 0.01601
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/utils.py",
+        "line": 1136,
+        "function": "_parse_to",
+        "calls": 1,
+        "self_ms": 0.02177,
+        "cumulative_ms": 0.03293000000000001
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/utils.py",
+        "line": 2214,
+        "function": "_getitem_batch_size",
+        "calls": 1,
+        "self_ms": 0.0019,
+        "cumulative_ms": 0.0022700000000000003
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method tensordict._C._unravel_key_to_tuple>",
+        "calls": 51,
+        "self_ms": 0.048150000000000005,
+        "cumulative_ms": 0.048150000000000005
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/_td.py",
+        "line": 357,
+        "function": "_new_unsafe",
+        "calls": 12,
+        "self_ms": 0.060779,
+        "cumulative_ms": 0.10992800000000001
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/_td.py",
+        "line": 1439,
+        "function": "_apply_nest",
+        "calls": 8,
+        "self_ms": 0.15719,
+        "cumulative_ms": 0.5294760000000001
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/_td.py",
+        "line": 5006,
+        "function": "_iter",
+        "calls": 20,
+        "self_ms": 0.00815,
+        "cumulative_ms": 0.156199
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/_td.py",
+        "line": 5034,
+        "function": "_iter_helper",
+        "calls": 39,
+        "self_ms": 0.043449,
+        "cumulative_ms": 0.132919
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/_td.py",
+        "line": 5061,
+        "function": "_items",
+        "calls": 4,
+        "self_ms": 0.004560000000000001,
+        "cumulative_ms": 0.013900000000000001
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/base.py",
+        "line": 5930,
+        "function": "_get_names_idx",
+        "calls": 4,
+        "self_ms": 0.0024100000000000002,
+        "cumulative_ms": 0.0034100000000000003
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/base.py",
+        "line": 9560,
+        "function": "_items_list",
+        "calls": 1,
+        "self_ms": 0.009170000000000001,
+        "cumulative_ms": 0.11548900000000001
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/base.py",
+        "line": 17388,
+        "function": "to",
+        "calls": 1,
+        "self_ms": 0.037970000000000004,
+        "cumulative_ms": 0.757375
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/base.py",
+        "line": 657,
+        "function": "__getitem__",
+        "calls": 52,
+        "self_ms": 0.06919,
+        "cumulative_ms": 0.785996
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method mujoco._functions.mj_kinematics>",
+        "calls": 256,
+        "self_ms": 1.836897,
+        "cumulative_ms": 1.836897
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method mujoco._functions.mj_camlight>",
+        "calls": 256,
+        "self_ms": 0.200959,
+        "cumulative_ms": 0.200959
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method mujoco._functions.mj_name2id>",
+        "calls": 256,
+        "self_ms": 0.321208,
+        "cumulative_ms": 0.321208
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method mujoco._functions.mjv_updateScene>",
+        "calls": 256,
+        "self_ms": 1.432506,
+        "cumulative_ms": 1.432506
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method mujoco._render.mjr_readPixels>",
+        "calls": 256,
+        "self_ms": 60.40166800000001,
+        "cumulative_ms": 60.40166800000001
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method mujoco._render.mjr_render>",
+        "calls": 256,
+        "self_ms": 91.882017,
+        "cumulative_ms": 91.882017
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py",
+        "line": 255,
+        "function": "update_scene",
+        "calls": 256,
+        "self_ms": 2.345439,
+        "cumulative_ms": 4.426538000000001
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py",
+        "line": 132,
+        "function": "render",
+        "calls": 256,
+        "self_ms": 7.609,
+        "cumulative_ms": 165.890422
+      },
+      {
+        "file": "/oscar/scratch/sboughan/se-semantic-recovery/scene-render-kinematics-20260929/source/stable_envs/_adapters/ogbench_render_state.py",
+        "line": 54,
+        "function": "fields",
+        "calls": 1,
+        "self_ms": 0.00705,
+        "cumulative_ms": 0.00705
+      },
+      {
+        "file": "/oscar/scratch/sboughan/se-semantic-recovery/scene-render-kinematics-20260929/source/stable_envs/_adapters/ogbench_render_state.py",
+        "line": 103,
+        "function": "validate",
+        "calls": 1,
+        "self_ms": 0.488774,
+        "cumulative_ms": 1.7513580000000002
+      },
+      {
+        "file": "/oscar/scratch/sboughan/se-semantic-recovery/scene-render-kinematics-20260929/source/stable_envs/envs/ogbench/manipulation_opengl.py",
+        "line": 103,
+        "function": "_apply_render_button_colors",
+        "calls": 2,
+        "self_ms": 9.954353000000001,
+        "cumulative_ms": 9.957093
+      },
+      {
+        "file": "/oscar/scratch/sboughan/se-semantic-recovery/scene-render-kinematics-20260929/source/stable_envs/envs/ogbench/manipulation_opengl.py",
+        "line": 34,
+        "function": "_renderer",
+        "calls": 1,
+        "self_ms": 0.008789,
+        "cumulative_ms": 0.10576900000000002
+      },
+      {
+        "file": "/oscar/scratch/sboughan/se-semantic-recovery/scene-render-kinematics-20260929/source/stable_envs/envs/ogbench/manipulation_opengl.py",
+        "line": 66,
+        "function": "_configuration_groups",
+        "calls": 1,
+        "self_ms": 0.33562800000000004,
+        "cumulative_ms": 0.6639360000000001
+      },
+      {
+        "file": "/oscar/scratch/sboughan/se-semantic-recovery/scene-render-kinematics-20260929/source/stable_envs/envs/ogbench/manipulation_opengl.py",
+        "line": 79,
+        "function": "_can_use_render_kinematics",
+        "calls": 1,
+        "self_ms": 0.14615999999999998,
+        "cumulative_ms": 0.219179
+      },
+      {
+        "file": "/oscar/scratch/sboughan/se-semantic-recovery/scene-render-kinematics-20260929/source/stable_envs/envs/ogbench/manipulation_opengl.py",
+        "line": 125,
+        "function": "<genexpr>",
+        "calls": 3,
+        "self_ms": 0.021110000000000004,
+        "cumulative_ms": 0.04241
+      },
+      {
+        "file": "/oscar/scratch/sboughan/se-semantic-recovery/scene-render-kinematics-20260929/source/stable_envs/envs/ogbench/manipulation_opengl.py",
+        "line": 136,
+        "function": "<genexpr>",
+        "calls": 5,
+        "self_ms": 0.0032800000000000004,
+        "cumulative_ms": 0.004710000000000001
+      },
+      {
+        "file": "/oscar/scratch/sboughan/se-semantic-recovery/scene-render-kinematics-20260929/source/stable_envs/envs/ogbench/manipulation_opengl.py",
+        "line": 27,
+        "function": "_key",
+        "calls": 1,
+        "self_ms": 0.01849,
+        "cumulative_ms": 0.09479
+      },
+      {
+        "file": "/oscar/scratch/sboughan/se-semantic-recovery/scene-render-kinematics-20260929/source/stable_envs/_adapters/ogbench_render_state.py",
+        "line": 48,
+        "function": "signature",
+        "calls": 1,
+        "self_ms": 0.016610000000000003,
+        "cumulative_ms": 0.05883000000000001
+      },
+      {
+        "file": "/oscar/scratch/sboughan/se-semantic-recovery/scene-render-kinematics-20260929/source/stable_envs/envs/ogbench/manipulation_semantics.py",
+        "line": 192,
+        "function": "<genexpr>",
+        "calls": 3,
+        "self_ms": 0.00075,
+        "cumulative_ms": 0.00075
+      },
+      {
+        "file": "/oscar/scratch/sboughan/se-semantic-recovery/scene-render-kinematics-20260929/source/stable_envs/_adapters/ogbench_manipulation_compat.py",
+        "line": 221,
+        "function": "_cube_colors_from_variation",
+        "calls": 256,
+        "self_ms": 3.1248150000000003,
+        "cumulative_ms": 3.311455
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/ogbench/manipspace/envs/env.py",
+        "line": 291,
+        "function": "model",
+        "calls": 2305,
+        "self_ms": 0.30256900000000003,
+        "cumulative_ms": 0.30256900000000003
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/ogbench/manipspace/envs/env.py",
+        "line": 298,
+        "function": "data",
+        "calls": 1536,
+        "self_ms": 0.21814700000000004,
+        "cumulative_ms": 0.21814700000000004
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/OpenGL/error.py",
+        "line": 208,
+        "function": "glCheckError",
+        "calls": 256,
+        "self_ms": 0.333548,
+        "cumulative_ms": 0.333548
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py",
+        "line": 119,
+        "function": "make_current",
+        "calls": 256,
+        "self_ms": 1.5867170000000002,
+        "cumulative_ms": 4.888744000000001
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/OpenGL/_opaque.py",
+        "line": 9,
+        "function": "from_param",
+        "calls": 1024,
+        "self_ms": 0.42547900000000005,
+        "cumulative_ms": 2.968479
+      },
+      {
+        "file": "/oscar/scratch/sboughan/se-semantic-recovery/scene-render-kinematics-20260929/source/stable_envs/spaces.py",
+        "line": 37,
+        "function": "value",
+        "calls": 256,
+        "self_ms": 0.031140000000000004,
+        "cumulative_ms": 0.031140000000000004
+      },
+      {
+        "file": "/oscar/scratch/sboughan/se-semantic-recovery/ogb-renderer-294675f0-complete/run-6669909/profile/lib/python3.12/site-packages/gymnasium/spaces/dict.py",
+        "line": 203,
+        "function": "__getitem__",
+        "calls": 1280,
+        "self_ms": 0.377548,
+        "cumulative_ms": 0.377548
+      },
+      {
+        "file": "/oscar/scratch/sboughan/se-semantic-recovery/scene-render-kinematics-20260929/source/stable_envs/spaces.py",
+        "line": 162,
+        "function": "_walk",
+        "calls": 512,
+        "self_ms": 0.639236,
+        "cumulative_ms": 1.311633
+      },
+      {
+        "file": "/oscar/scratch/sboughan/se-semantic-recovery/scene-render-kinematics-20260929/source/stable_envs/env.py",
+        "line": 1332,
+        "function": "_check_open",
+        "calls": 1,
+        "self_ms": 0.0005000000000000001,
+        "cumulative_ms": 0.0005000000000000001
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/base.py",
+        "line": 631,
+        "function": "__len__",
+        "calls": 25,
+        "self_ms": 0.01305,
+        "cumulative_ms": 0.018099999999999998
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/base.py",
+        "line": 6374,
+        "function": "cpu",
+        "calls": 1,
+        "self_ms": 0.003920000000000001,
+        "cumulative_ms": 0.7783740000000001
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/base.py",
+        "line": 18290,
+        "function": "_default_is_leaf",
+        "calls": 76,
+        "self_ms": 0.03291,
+        "cumulative_ms": 0.15676900000000002
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/base.py",
+        "line": 17539,
+        "function": "to",
+        "calls": 16,
+        "self_ms": 0.009070000000000002,
+        "cumulative_ms": 0.22082900000000003
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/base.py",
+        "line": 17571,
+        "function": "get",
+        "calls": 16,
+        "self_ms": 0.0063300000000000006,
+        "cumulative_ms": 0.01183
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/base.py",
+        "line": 18093,
+        "function": "detach",
+        "calls": 16,
+        "self_ms": 0.010130000000000002,
+        "cumulative_ms": 0.04686
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/base.py",
+        "line": 18084,
+        "function": "detach",
+        "calls": 1,
+        "self_ms": 0.00601,
+        "cumulative_ms": 0.330328
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/base.py",
+        "line": 18355,
+        "function": "__call__",
+        "calls": 38,
+        "self_ms": 0.012849,
+        "cumulative_ms": 0.090828
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/base.py",
+        "line": 11658,
+        "function": "_fast_apply",
+        "calls": 2,
+        "self_ms": 0.01514,
+        "cumulative_ms": 0.545066
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/base.py",
+        "line": 17857,
+        "function": "_has_mps",
+        "calls": 12,
+        "self_ms": 0.027549000000000004,
+        "cumulative_ms": 0.031299
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/base.py",
+        "line": 18253,
+        "function": "_is_tensor_collection",
+        "calls": 96,
+        "self_ms": 0.071259,
+        "cumulative_ms": 0.14710900000000002
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/base.py",
+        "line": 17866,
+        "function": "_sync_all",
+        "calls": 1,
+        "self_ms": 0.00721,
+        "cumulative_ms": 0.11730900000000001
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/base.py",
+        "line": 8567,
+        "function": "_get_tuple_maybe_non_tensor",
+        "calls": 51,
+        "self_ms": 0.066139,
+        "cumulative_ms": 0.388788
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/base.py",
+        "line": 7313,
+        "function": "is_consolidated",
+        "calls": 1,
+        "self_ms": 0.00048000000000000007,
+        "cumulative_ms": 0.0008900000000000001
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/base.py",
+        "line": 17139,
+        "function": "is_locked",
+        "calls": 5,
+        "self_ms": 0.0014500000000000001,
+        "cumulative_ms": 0.0014500000000000001
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<method 'disable' of '_lsprof.Profiler' objects>",
+        "calls": 1,
+        "self_ms": 0.065139,
+        "cumulative_ms": 0.065139
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/_td.py",
+        "line": 3853,
+        "function": "items",
+        "calls": 16,
+        "self_ms": 0.01348,
+        "cumulative_ms": 0.119828
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/_td.py",
+        "line": 3835,
+        "function": "_nested_keys",
+        "calls": 1,
+        "self_ms": 0.00365,
+        "cumulative_ms": 0.00406
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/utils.py",
+        "line": 2744,
+        "function": "is_non_tensor",
+        "calls": 3,
+        "self_ms": 0.0024500000000000004,
+        "cumulative_ms": 0.0069500000000000004
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/utils.py",
+        "line": 2749,
+        "function": "_pass_through",
+        "calls": 54,
+        "self_ms": 0.029750000000000002,
+        "cumulative_ms": 0.11899000000000001
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/utils.py",
+        "line": 775,
+        "function": "_is_tensorclass",
+        "calls": 5,
+        "self_ms": 0.0025800000000000003,
+        "cumulative_ms": 0.0045000000000000005
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/utils.py",
+        "line": 766,
+        "function": "is_tensorclass",
+        "calls": 5,
+        "self_ms": 0.00575,
+        "cumulative_ms": 0.01183
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/_td.py",
+        "line": 2964,
+        "function": "_get_str",
+        "calls": 102,
+        "self_ms": 0.023710000000000002,
+        "cumulative_ms": 0.023710000000000002
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/_td.py",
+        "line": 2463,
+        "function": "_has_names",
+        "calls": 12,
+        "self_ms": 0.0034500000000000004,
+        "cumulative_ms": 0.0034500000000000004
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/_td.py",
+        "line": 5005,
+        "function": "__iter__",
+        "calls": 20,
+        "self_ms": 0.00911,
+        "cumulative_ms": 0.165309
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/utils.py",
+        "line": 2777,
+        "function": "_is_non_tensor",
+        "calls": 3,
+        "self_ms": 0.00208,
+        "cumulative_ms": 0.0045000000000000005
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/utils.py",
+        "line": 2855,
+        "function": "_unravel_key_to_tuple",
+        "calls": 51,
+        "self_ms": 0.03343,
+        "cumulative_ms": 0.11345000000000001
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/_td.py",
+        "line": 4989,
+        "function": "__init__",
+        "calls": 1,
+        "self_ms": 0.00041000000000000005,
+        "cumulative_ms": 0.00041000000000000005
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/_td.py",
+        "line": 5017,
+        "function": "<genexpr>",
+        "calls": 20,
+        "self_ms": 0.012430000000000002,
+        "cumulative_ms": 0.14804900000000001
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/base.py",
+        "line": 183,
+        "function": "_sync_cuda_transfer",
+        "calls": 1,
+        "self_ms": 0.007650000000000001,
+        "cumulative_ms": 0.088119
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/utils.py",
+        "line": 2756,
+        "function": "_is_unbatched",
+        "calls": 51,
+        "self_ms": 0.040440000000000004,
+        "cumulative_ms": 0.08161900000000001
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/utils.py",
+        "line": 2792,
+        "function": "_pass_through_cls",
+        "calls": 54,
+        "self_ms": 0.0363,
+        "cumulative_ms": 0.08924
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/_td.py",
+        "line": 3807,
+        "function": "keys",
+        "calls": 2,
+        "self_ms": 0.00798,
+        "cumulative_ms": 0.01633
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/utils.py",
+        "line": 623,
+        "function": "_get_item",
+        "calls": 16,
+        "self_ms": 0.03709900000000001,
+        "cumulative_ms": 0.03709900000000001
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/utils.py",
+        "line": 1009,
+        "function": "func_as_decorator",
+        "calls": 1,
+        "self_ms": 0.012339,
+        "cumulative_ms": 0.7744540000000001
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/_td.py",
+        "line": 2534,
+        "function": "device",
+        "calls": 5,
+        "self_ms": 0.0012100000000000001,
+        "cumulative_ms": 0.0012100000000000001
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/_td.py",
+        "line": 2554,
+        "function": "batch_size",
+        "calls": 33,
+        "self_ms": 0.00677,
+        "cumulative_ms": 0.00677
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/_td.py",
+        "line": 5053,
+        "function": "_combine_keys",
+        "calls": 19,
+        "self_ms": 0.00486,
+        "cumulative_ms": 0.00486
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/utils.py",
+        "line": 878,
+        "function": "__init__",
+        "calls": 1,
+        "self_ms": 0.00038,
+        "cumulative_ms": 0.00038
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/torch/compiler/__init__.py",
+        "line": 583,
+        "function": "is_compiling",
+        "calls": 270,
+        "self_ms": 0.126759,
+        "cumulative_ms": 0.154619
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/utils.py",
+        "line": 893,
+        "function": "__contains__",
+        "calls": 1,
+        "self_ms": 0.00283,
+        "cumulative_ms": 0.00295
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/_td.py",
+        "line": 1485,
+        "function": "make_result",
+        "calls": 8,
+        "self_ms": 0.011470000000000001,
+        "cumulative_ms": 0.098668
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/_td.py",
+        "line": 2970,
+        "function": "_get_tuple",
+        "calls": 102,
+        "self_ms": 0.17219900000000002,
+        "cumulative_ms": 0.20985900000000002
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/_td.py",
+        "line": 3687,
+        "function": "empty",
+        "calls": 8,
+        "self_ms": 0.014000000000000002,
+        "cumulative_ms": 0.084748
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/_td.py",
+        "line": 1710,
+        "function": "_check_for_invalid_index",
+        "calls": 4,
+        "self_ms": 0.0007100000000000001,
+        "cumulative_ms": 0.0007100000000000001
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/_td.py",
+        "line": 3873,
+        "function": "fast_iter",
+        "calls": 4,
+        "self_ms": 0.04016,
+        "cumulative_ms": 0.10410900000000001
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/utils.py",
+        "line": 833,
+        "function": "newfun",
+        "calls": 3,
+        "self_ms": 0.014870000000000001,
+        "cumulative_ms": 0.465747
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/torch/backends/cuda/__init__.py",
+        "line": 43,
+        "function": "is_built",
+        "calls": 1,
+        "self_ms": 0.00052,
+        "cumulative_ms": 0.00052
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/torch/_jit_internal.py",
+        "line": 104,
+        "function": "is_scripting",
+        "calls": 274,
+        "self_ms": 0.028630000000000003,
+        "cumulative_ms": 0.028630000000000003
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/torch/cuda/streams.py",
+        "line": 37,
+        "function": "__new__",
+        "calls": 1,
+        "self_ms": 0.00514,
+        "cumulative_ms": 0.00904
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/torch/cuda/streams.py",
+        "line": 183,
+        "function": "__new__",
+        "calls": 1,
+        "self_ms": 0.0038900000000000002,
+        "cumulative_ms": 0.00887
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/torch/cuda/streams.py",
+        "line": 245,
+        "function": "synchronize",
+        "calls": 1,
+        "self_ms": 0.00318,
+        "cumulative_ms": 0.00581
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/torch/cuda/streams.py",
+        "line": 199,
+        "function": "record",
+        "calls": 1,
+        "self_ms": 0.006,
+        "cumulative_ms": 0.065789
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/torch/cuda/__init__.py",
+        "line": 514,
+        "function": "is_initialized",
+        "calls": 5,
+        "self_ms": 0.0046300000000000004,
+        "cumulative_ms": 0.00849
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/torch/cuda/__init__.py",
+        "line": 200,
+        "function": "_is_compiled",
+        "calls": 3,
+        "self_ms": 0.00226,
+        "cumulative_ms": 0.00472
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/torch/cuda/__init__.py",
+        "line": 205,
+        "function": "_nvml_based_avail",
+        "calls": 3,
+        "self_ms": 0.0050100000000000006,
+        "cumulative_ms": 0.04644
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/torch/cuda/__init__.py",
+        "line": 712,
+        "function": "__init__",
+        "calls": 1,
+        "self_ms": 0.00215,
+        "cumulative_ms": 0.066839
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/torch/cuda/__init__.py",
+        "line": 209,
+        "function": "is_available",
+        "calls": 3,
+        "self_ms": 0.006490000000000001,
+        "cumulative_ms": 0.06013
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/torch/cuda/__init__.py",
+        "line": 716,
+        "function": "__enter__",
+        "calls": 1,
+        "self_ms": 0.0036400000000000004,
+        "cumulative_ms": 0.0051600000000000005
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/torch/cuda/__init__.py",
+        "line": 719,
+        "function": "__exit__",
+        "calls": 1,
+        "self_ms": 0.0018800000000000002,
+        "cumulative_ms": 0.00303
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/torch/cuda/__init__.py",
+        "line": 1265,
+        "function": "current_device",
+        "calls": 2,
+        "self_ms": 0.00288,
+        "cumulative_ms": 0.00749
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method torch._C._nn._parse_to>",
+        "calls": 1,
+        "self_ms": 0.00932,
+        "cumulative_ms": 0.00932
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method torch._C._linalg.linalg_vector_norm>",
+        "calls": 2,
+        "self_ms": 0.04136,
+        "cumulative_ms": 0.04136
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<function Event.record at 0x7f6a03bb4e00>",
+        "calls": 1,
+        "self_ms": 0.012859,
+        "cumulative_ms": 0.012859
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<function Event.synchronize at 0x7f6a03bb5080>",
+        "calls": 1,
+        "self_ms": 0.0026300000000000004,
+        "cumulative_ms": 0.0026300000000000004
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/torch/cuda/__init__.py",
+        "line": 1297,
+        "function": "current_stream",
+        "calls": 1,
+        "self_ms": 0.01027,
+        "cumulative_ms": 0.04693
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/torch/cuda/__init__.py",
+        "line": 1271,
+        "function": "synchronize",
+        "calls": 1,
+        "self_ms": 0.01386,
+        "cumulative_ms": 0.10497900000000002
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/torch/_utils.py",
+        "line": 852,
+        "function": "_get_current_device_index",
+        "calls": 2,
+        "self_ms": 0.00602,
+        "cumulative_ms": 0.06915
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/torch/_utils.py",
+        "line": 854,
+        "function": "<lambda>",
+        "calls": 2,
+        "self_ms": 0.0016300000000000002,
+        "cumulative_ms": 0.009120000000000001
+      },
+      {
+        "file": "/oscar/scratch/sboughan/se-semantic-recovery/ogb-renderer-294675f0-complete/run-6669909/profile/lib/python3.12/site-packages/numpy/lib/_twodim_base_impl.py",
+        "line": 45,
+        "function": "_flip_dispatcher",
+        "calls": 256,
+        "self_ms": 0.096359,
+        "cumulative_ms": 0.096359
+      },
+      {
+        "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/ctypes/__init__.py",
+        "line": 517,
+        "function": "cast",
+        "calls": 1024,
+        "self_ms": 2.543,
+        "cumulative_ms": 2.543
+      },
+      {
+        "file": "/oscar/scratch/sboughan/se-semantic-recovery/ogb-renderer-294675f0-complete/run-6669909/profile/lib/python3.12/site-packages/numpy/lib/_twodim_base_impl.py",
+        "line": 105,
+        "function": "flipud",
+        "calls": 256,
+        "self_ms": 0.661227,
+        "cumulative_ms": 0.7284470000000001
+      },
+      {
+        "file": "/oscar/scratch/sboughan/se-semantic-recovery/ogb-renderer-294675f0-complete/run-6669909/profile/lib/python3.12/site-packages/numpy/_core/numeric.py",
+        "line": 2456,
+        "function": "_array_equal_dispatcher",
+        "calls": 1,
+        "self_ms": 0.00019,
+        "cumulative_ms": 0.00019
+      },
+      {
+        "file": "/oscar/scratch/sboughan/se-semantic-recovery/ogb-renderer-294675f0-complete/run-6669909/profile/lib/python3.12/site-packages/numpy/_core/fromnumeric.py",
+        "line": 2472,
+        "function": "_any_dispatcher",
+        "calls": 3,
+        "self_ms": 0.00063,
+        "cumulative_ms": 0.00063
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<method 'all' of 'numpy.ndarray' objects>",
+        "calls": 1,
+        "self_ms": 0.0029000000000000002,
+        "cumulative_ms": 0.008570000000000001
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<method 'copy' of 'numpy.ndarray' objects>",
+        "calls": 1025,
+        "self_ms": 0.9288510000000001,
+        "cumulative_ms": 0.9288510000000001
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<method 'reshape' of 'numpy.ndarray' objects>",
+        "calls": 5,
+        "self_ms": 0.00601,
+        "cumulative_ms": 0.00601
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<method 'tobytes' of 'numpy.ndarray' objects>",
+        "calls": 261,
+        "self_ms": 0.08888,
+        "cumulative_ms": 0.08888
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<method 'view' of 'numpy.ndarray' objects>",
+        "calls": 5,
+        "self_ms": 0.01023,
+        "cumulative_ms": 0.01023
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method numpy.asarray>",
+        "calls": 2,
+        "self_ms": 0.00106,
+        "cumulative_ms": 0.00106
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method numpy.asanyarray>",
+        "calls": 257,
+        "self_ms": 0.06812,
+        "cumulative_ms": 0.06812
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method numpy.ascontiguousarray>",
+        "calls": 5,
+        "self_ms": 0.0013300000000000002,
+        "cumulative_ms": 0.0013300000000000002
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method numpy.empty>",
+        "calls": 1,
+        "self_ms": 0.01365,
+        "cumulative_ms": 0.01365
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method numpy.frombuffer>",
+        "calls": 1,
+        "self_ms": 0.01285,
+        "cumulative_ms": 0.01285
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<method 'reduce' of 'numpy.ufunc' objects>",
+        "calls": 4,
+        "self_ms": 0.034979,
+        "cumulative_ms": 0.034979
+      },
+      {
+        "file": "/oscar/scratch/sboughan/se-semantic-recovery/ogb-renderer-294675f0-complete/run-6669909/profile/lib/python3.12/site-packages/numpy/_core/_methods.py",
+        "line": 67,
+        "function": "_all",
+        "calls": 1,
+        "self_ms": 0.00135,
+        "cumulative_ms": 0.0056700000000000006
+      },
+      {
+        "file": "/oscar/scratch/sboughan/se-semantic-recovery/ogb-renderer-294675f0-complete/run-6669909/profile/lib/python3.12/site-packages/numpy/_core/multiarray.py",
+        "line": 180,
+        "function": "concatenate",
+        "calls": 1,
+        "self_ms": 0.0002,
+        "cumulative_ms": 0.0002
+      },
+      {
+        "file": "/oscar/scratch/sboughan/se-semantic-recovery/ogb-renderer-294675f0-complete/run-6669909/profile/lib/python3.12/site-packages/numpy/_core/fromnumeric.py",
+        "line": 2477,
+        "function": "any",
+        "calls": 3,
+        "self_ms": 0.00741,
+        "cumulative_ms": 0.050049
+      },
+      {
+        "file": "/oscar/scratch/sboughan/se-semantic-recovery/ogb-renderer-294675f0-complete/run-6669909/profile/lib/python3.12/site-packages/numpy/_core/fromnumeric.py",
+        "line": 89,
+        "function": "_wrapreduction_any_all",
+        "calls": 3,
+        "self_ms": 0.01077,
+        "cumulative_ms": 0.042639
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method _hashlib.openssl_sha256>",
+        "calls": 2,
+        "self_ms": 0.012830000000000001,
+        "cumulative_ms": 0.012830000000000001
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<method 'update' of '_hashlib.HASH' objects>",
+        "calls": 5,
+        "self_ms": 0.0025,
+        "cumulative_ms": 0.0025
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<method 'digest' of '_hashlib.HASH' objects>",
+        "calls": 1,
+        "self_ms": 0.004540000000000001,
+        "cumulative_ms": 0.004540000000000001
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<method 'hexdigest' of '_hashlib.HASH' objects>",
+        "calls": 1,
+        "self_ms": 0.00238,
+        "cumulative_ms": 0.00238
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<method 'append' of 'list' objects>",
+        "calls": 288,
+        "self_ms": 0.075689,
+        "cumulative_ms": 0.075689
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<method 'get' of 'dict' objects>",
+        "calls": 237,
+        "self_ms": 0.06887000000000001,
+        "cumulative_ms": 0.06887000000000001
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<method 'setdefault' of 'dict' objects>",
+        "calls": 256,
+        "self_ms": 0.08853000000000001,
+        "cumulative_ms": 0.08853000000000001
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<method 'pop' of 'dict' objects>",
+        "calls": 6,
+        "self_ms": 0.00215,
+        "cumulative_ms": 0.00215
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<method 'keys' of 'dict' objects>",
+        "calls": 1,
+        "self_ms": 0.00106,
+        "cumulative_ms": 0.00106
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<method 'items' of 'dict' objects>",
+        "calls": 284,
+        "self_ms": 0.179399,
+        "cumulative_ms": 0.179399
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<method 'values' of 'dict' objects>",
+        "calls": 1,
+        "self_ms": 0.0004900000000000001,
+        "cumulative_ms": 0.0004900000000000001
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method __new__ of type object at 0x7f6b12e80680>",
+        "calls": 14,
+        "self_ms": 0.014160000000000002,
+        "cumulative_ms": 0.014160000000000002
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<method 'encode' of 'str' objects>",
+        "calls": 5,
+        "self_ms": 0.006580000000000001,
+        "cumulative_ms": 0.006580000000000001
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<method 'split' of 'str' objects>",
+        "calls": 512,
+        "self_ms": 0.378299,
+        "cumulative_ms": 0.378299
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<method 'lower' of 'str' objects>",
+        "calls": 7,
+        "self_ms": 0.00395,
+        "cumulative_ms": 0.00395
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<method 'rpartition' of 'str' objects>",
+        "calls": 3,
+        "self_ms": 0.0037600000000000003,
+        "cumulative_ms": 0.0037600000000000003
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method builtins.any>",
+        "calls": 2,
+        "self_ms": 0.00564,
+        "cumulative_ms": 0.0111
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method builtins.getattr>",
+        "calls": 780,
+        "self_ms": 0.6299880000000001,
+        "cumulative_ms": 0.6299880000000001
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method builtins.hasattr>",
+        "calls": 8,
+        "self_ms": 0.005070000000000001,
+        "cumulative_ms": 0.005070000000000001
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method builtins.isinstance>",
+        "calls": 694,
+        "self_ms": 0.38661500000000004,
+        "cumulative_ms": 0.427885
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method builtins.len>",
+        "calls": 151,
+        "self_ms": 0.03362,
+        "cumulative_ms": 0.05172000000000001
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method builtins.min>",
+        "calls": 1,
+        "self_ms": 0.0022800000000000003,
+        "cumulative_ms": 0.0022800000000000003
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<method '__exit__' of '_thread.RLock' objects>",
+        "calls": 1,
+        "self_ms": 0.00202,
+        "cumulative_ms": 0.00202
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method _abc._abc_instancecheck>",
+        "calls": 54,
+        "self_ms": 0.025130000000000003,
+        "cumulative_ms": 0.025130000000000003
+      },
+      {
+        "file": "<frozen os>",
+        "line": 808,
+        "function": "getenv",
+        "calls": 3,
+        "self_ms": 0.00327,
+        "cumulative_ms": 0.04143
+      },
+      {
+        "file": "<frozen os>",
+        "line": 791,
+        "function": "encode",
+        "calls": 3,
+        "self_ms": 0.005880000000000001,
+        "cumulative_ms": 0.0115
+      },
+      {
+        "file": "<frozen os>",
+        "line": 709,
+        "function": "__getitem__",
+        "calls": 3,
+        "self_ms": 0.01944,
+        "cumulative_ms": 0.030940000000000006
+      },
+      {
+        "file": "<frozen _collections_abc>",
+        "line": 804,
+        "function": "get",
+        "calls": 3,
+        "self_ms": 0.007220000000000001,
+        "cumulative_ms": 0.03816
+      },
+      {
+        "file": "<frozen abc>",
+        "line": 117,
+        "function": "__instancecheck__",
+        "calls": 54,
+        "self_ms": 0.01614,
+        "cumulative_ms": 0.04127
+      },
+      {
+        "file": "<frozen importlib._bootstrap>",
+        "line": 1390,
+        "function": "_handle_fromlist",
+        "calls": 4,
+        "self_ms": 0.00797,
+        "cumulative_ms": 0.01089
+      },
+      {
+        "file": "<frozen importlib._bootstrap>",
+        "line": 645,
+        "function": "parent",
+        "calls": 3,
+        "self_ms": 0.008110000000000001,
+        "cumulative_ms": 0.011870000000000002
+      }
+    ]
+  },
+  "source": {
+    "samples": [
+      {
+        "wall_ms": 188.594836,
+        "cpu_ms": 188.59998
+      },
+      {
+        "wall_ms": 188.429577,
+        "cpu_ms": 188.668454
+      },
+      {
+        "wall_ms": 188.622506,
+        "cpu_ms": 188.893586
+      }
+    ],
+    "sections": {
+      "torch_wait": {
+        "calls": 6,
+        "inclusive_ms": 0.5739559999999999,
+        "exclusive_ms": 0.5739559999999999
+      },
+      "update_scene": {
+        "calls": 768,
+        "inclusive_ms": 16.04517200000003,
+        "exclusive_ms": 16.04517200000003
+      },
+      "draw_submit": {
+        "calls": 768,
+        "inclusive_ms": 284.8186940000002,
+        "exclusive_ms": 284.8186940000002
+      },
+      "readback": {
+        "calls": 768,
+        "inclusive_ms": 162.78267699999978,
+        "exclusive_ms": 162.78267699999978
+      },
+      "draw_readback": {
+        "calls": 768,
+        "inclusive_ms": 527.9628660000001,
+        "exclusive_ms": 80.36149499999992
+      }
+    },
+    "functions": [
+      {
+        "file": "/oscar/scratch/sboughan/se-semantic-recovery/scene-render-kinematics-20260929/source/scripts/benchmarks/renderer_table/common.py",
+        "line": 119,
+        "function": "rgb",
+        "calls": 256,
+        "self_ms": 0.752437,
+        "cumulative_ms": 1.4265550000000002
+      },
+      {
+        "file": "/oscar/scratch/sboughan/se-semantic-recovery/ogb-renderer-294675f0-complete/run-6669909/profile/lib/python3.12/site-packages/numpy/_core/shape_base.py",
+        "line": 380,
+        "function": "stack",
+        "calls": 1,
+        "self_ms": 3.475327,
+        "cumulative_ms": 3.5007770000000002
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/torch/_utils.py",
+        "line": 878,
+        "function": "_get_device_index",
+        "calls": 1,
+        "self_ms": 0.00316,
+        "cumulative_ms": 0.084139
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/torch/_utils.py",
+        "line": 819,
+        "function": "_get_available_device_type",
+        "calls": 1,
+        "self_ms": 0.00186,
+        "cumulative_ms": 0.048009
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/torch/_utils.py",
+        "line": 836,
+        "function": "_get_device_attr",
+        "calls": 1,
+        "self_ms": 0.00808,
+        "cumulative_ms": 0.07489900000000001
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method torch._C._cuda_exchangeDevice>",
+        "calls": 1,
+        "self_ms": 0.0017500000000000003,
+        "cumulative_ms": 0.0017500000000000003
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method torch._C._cuda_maybeExchangeDevice>",
+        "calls": 1,
+        "self_ms": 0.00125,
+        "cumulative_ms": 0.00125
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method torch._C._cuda_getDevice>",
+        "calls": 1,
+        "self_ms": 0.01254,
+        "cumulative_ms": 0.01254
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method torch._C._cuda_getDeviceCount>",
+        "calls": 1,
+        "self_ms": 0.0023100000000000004,
+        "cumulative_ms": 0.0023100000000000004
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method torch._C._cuda_isInBadFork>",
+        "calls": 2,
+        "self_ms": 0.0022400000000000002,
+        "cumulative_ms": 0.0022400000000000002
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method torch._C._cuda_synchronize>",
+        "calls": 1,
+        "self_ms": 0.02197,
+        "cumulative_ms": 0.02197
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<method 'contiguous' of 'torch._C.TensorBase' objects>",
+        "calls": 1,
+        "self_ms": 0.0019200000000000003,
+        "cumulative_ms": 0.0019200000000000003
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<method 'to' of 'torch._C.TensorBase' objects>",
+        "calls": 1,
+        "self_ms": 0.03221,
+        "cumulative_ms": 0.03221
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method torch.from_numpy>",
+        "calls": 1,
+        "self_ms": 0.046119,
+        "cumulative_ms": 0.046119
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/torch/cuda/_utils.py",
+        "line": 605,
+        "function": "_get_device_index",
+        "calls": 1,
+        "self_ms": 0.00798,
+        "cumulative_ms": 0.09435900000000001
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/torch/cuda/__init__.py",
+        "line": 563,
+        "function": "_lazy_init",
+        "calls": 2,
+        "self_ms": 0.0022,
+        "cumulative_ms": 0.008950000000000001
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method mujoco._functions.mj_name2id>",
+        "calls": 256,
+        "self_ms": 0.619816,
+        "cumulative_ms": 0.619816
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method mujoco._functions.mjv_updateScene>",
+        "calls": 256,
+        "self_ms": 1.607007,
+        "cumulative_ms": 1.607007
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method mujoco._render.mjr_readPixels>",
+        "calls": 256,
+        "self_ms": 54.373938,
+        "cumulative_ms": 54.373938
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method mujoco._render.mjr_render>",
+        "calls": 256,
+        "self_ms": 96.47575300000001,
+        "cumulative_ms": 96.47575300000001
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py",
+        "line": 255,
+        "function": "update_scene",
+        "calls": 256,
+        "self_ms": 2.70702,
+        "cumulative_ms": 5.100643
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py",
+        "line": 132,
+        "function": "render",
+        "calls": 256,
+        "self_ms": 8.006245,
+        "cumulative_ms": 176.734271
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/ogbench/manipspace/envs/env.py",
+        "line": 369,
+        "function": "render",
+        "calls": 256,
+        "self_ms": 1.172799,
+        "cumulative_ms": 183.10953100000003
+      },
+      {
+        "file": "/oscar/scratch/sboughan/se-semantic-recovery/render-rerun-df80c9c5-20260928T021357Z/run-6750648_2/oracle/stable_worldmodel/envs/ogbench/scene_env.py",
+        "line": 1299,
+        "function": "render",
+        "calls": 256,
+        "self_ms": 0.7519440000000001,
+        "cumulative_ms": 184.37139200000001
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/ogbench/manipspace/envs/manipspace_env.py",
+        "line": 502,
+        "function": "render",
+        "calls": 256,
+        "self_ms": 0.5099170000000001,
+        "cumulative_ms": 183.619448
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py",
+        "line": 122,
+        "function": "disable_depth_rendering",
+        "calls": 256,
+        "self_ms": 0.06736800000000001,
+        "cumulative_ms": 0.06736800000000001
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py",
+        "line": 129,
+        "function": "disable_segmentation_rendering",
+        "calls": 256,
+        "self_ms": 0.03445,
+        "cumulative_ms": 0.03445
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/OpenGL/error.py",
+        "line": 208,
+        "function": "glCheckError",
+        "calls": 256,
+        "self_ms": 0.603647,
+        "cumulative_ms": 0.603647
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/mujoco/egl/__init__.py",
+        "line": 119,
+        "function": "make_current",
+        "calls": 256,
+        "self_ms": 12.465331,
+        "cumulative_ms": 16.11942
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/OpenGL/_opaque.py",
+        "line": 9,
+        "function": "from_param",
+        "calls": 1024,
+        "self_ms": 0.413076,
+        "cumulative_ms": 3.050442
+      },
+      {
+        "file": "/oscar/scratch/sboughan/se-semantic-recovery/scene-render-kinematics-20260929/source/scripts/benchmarks/renderer_table/special.py",
+        "line": 93,
+        "function": "render",
+        "calls": 256,
+        "self_ms": 0.309968,
+        "cumulative_ms": 184.68136
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<method 'disable' of '_lsprof.Profiler' objects>",
+        "calls": 1,
+        "self_ms": 0.067209,
+        "cumulative_ms": 0.067209
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/torch/_jit_internal.py",
+        "line": 104,
+        "function": "is_scripting",
+        "calls": 2,
+        "self_ms": 0.00045000000000000004,
+        "cumulative_ms": 0.00045000000000000004
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/torch/cuda/__init__.py",
+        "line": 514,
+        "function": "is_initialized",
+        "calls": 2,
+        "self_ms": 0.00451,
+        "cumulative_ms": 0.006750000000000001
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/torch/cuda/__init__.py",
+        "line": 200,
+        "function": "_is_compiled",
+        "calls": 1,
+        "self_ms": 0.0013800000000000002,
+        "cumulative_ms": 0.0032600000000000003
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/torch/cuda/__init__.py",
+        "line": 205,
+        "function": "_nvml_based_avail",
+        "calls": 1,
+        "self_ms": 0.00416,
+        "cumulative_ms": 0.036088999999999996
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/torch/cuda/__init__.py",
+        "line": 712,
+        "function": "__init__",
+        "calls": 1,
+        "self_ms": 0.00338,
+        "cumulative_ms": 0.097739
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/torch/cuda/__init__.py",
+        "line": 209,
+        "function": "is_available",
+        "calls": 1,
+        "self_ms": 0.00449,
+        "cumulative_ms": 0.046149
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/torch/cuda/__init__.py",
+        "line": 716,
+        "function": "__enter__",
+        "calls": 1,
+        "self_ms": 0.0023100000000000004,
+        "cumulative_ms": 0.00406
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/torch/cuda/__init__.py",
+        "line": 719,
+        "function": "__exit__",
+        "calls": 1,
+        "self_ms": 0.0022500000000000003,
+        "cumulative_ms": 0.0035000000000000005
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/torch/cuda/__init__.py",
+        "line": 1265,
+        "function": "current_device",
+        "calls": 1,
+        "self_ms": 0.00212,
+        "cumulative_ms": 0.015680000000000003
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/torch/cuda/__init__.py",
+        "line": 1271,
+        "function": "synchronize",
+        "calls": 1,
+        "self_ms": 0.01715,
+        "cumulative_ms": 0.152349
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/torch/_utils.py",
+        "line": 852,
+        "function": "_get_current_device_index",
+        "calls": 1,
+        "self_ms": 0.00529,
+        "cumulative_ms": 0.080189
+      },
+      {
+        "file": "/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/torch/_utils.py",
+        "line": 854,
+        "function": "<lambda>",
+        "calls": 1,
+        "self_ms": 0.00144,
+        "cumulative_ms": 0.017120000000000003
+      },
+      {
+        "file": "/oscar/scratch/sboughan/se-semantic-recovery/scene-render-kinematics-20260929/source/scripts/benchmarks/renderer_table/common.py",
+        "line": 55,
+        "function": "array",
+        "calls": 256,
+        "self_ms": 0.233209,
+        "cumulative_ms": 0.602298
+      },
+      {
+        "file": "/oscar/scratch/sboughan/se-semantic-recovery/ogb-renderer-294675f0-complete/run-6669909/profile/lib/python3.12/site-packages/numpy/lib/_twodim_base_impl.py",
+        "line": 45,
+        "function": "_flip_dispatcher",
+        "calls": 256,
+        "self_ms": 0.105978,
+        "cumulative_ms": 0.105978
+      },
+      {
+        "file": "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/ctypes/__init__.py",
+        "line": 517,
+        "function": "cast",
+        "calls": 1024,
+        "self_ms": 2.6373660000000005,
+        "cumulative_ms": 2.6373660000000005
+      },
+      {
+        "file": "/oscar/scratch/sboughan/se-semantic-recovery/ogb-renderer-294675f0-complete/run-6669909/profile/lib/python3.12/site-packages/numpy/lib/_twodim_base_impl.py",
+        "line": 105,
+        "function": "flipud",
+        "calls": 256,
+        "self_ms": 0.708694,
+        "cumulative_ms": 0.774263
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<method 'copy' of 'numpy.ndarray' objects>",
+        "calls": 256,
+        "self_ms": 0.31589900000000004,
+        "cumulative_ms": 0.31589900000000004
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method numpy.asarray>",
+        "calls": 256,
+        "self_ms": 0.05664000000000001,
+        "cumulative_ms": 0.05664000000000001
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method numpy.asanyarray>",
+        "calls": 512,
+        "self_ms": 0.08890900000000002,
+        "cumulative_ms": 0.08890900000000002
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method numpy.ascontiguousarray>",
+        "calls": 256,
+        "self_ms": 0.07182,
+        "cumulative_ms": 0.07182
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method numpy.empty>",
+        "calls": 256,
+        "self_ms": 0.562775,
+        "cumulative_ms": 0.562775
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method numpy.lib.array_utils.normalize_axis_index>",
+        "calls": 1,
+        "self_ms": 0.0010000000000000002,
+        "cumulative_ms": 0.0010000000000000002
+      },
+      {
+        "file": "/oscar/scratch/sboughan/se-semantic-recovery/ogb-renderer-294675f0-complete/run-6669909/profile/lib/python3.12/site-packages/numpy/_core/shape_base.py",
+        "line": 370,
+        "function": "_stack_dispatcher",
+        "calls": 1,
+        "self_ms": 0.00185,
+        "cumulative_ms": 0.01835
+      },
+      {
+        "file": "/oscar/scratch/sboughan/se-semantic-recovery/ogb-renderer-294675f0-complete/run-6669909/profile/lib/python3.12/site-packages/numpy/_core/multiarray.py",
+        "line": 180,
+        "function": "concatenate",
+        "calls": 1,
+        "self_ms": 0.00022,
+        "cumulative_ms": 0.00022
+      },
+      {
+        "file": "/oscar/scratch/sboughan/se-semantic-recovery/ogb-renderer-294675f0-complete/run-6669909/profile/lib/python3.12/site-packages/numpy/_core/shape_base.py",
+        "line": 208,
+        "function": "_arrays_for_stack_dispatcher",
+        "calls": 1,
+        "self_ms": 0.015380000000000001,
+        "cumulative_ms": 0.0165
+      },
+      {
+        "file": "/oscar/scratch/sboughan/se-semantic-recovery/scene-gpu-scaling-20260929/profile_all.py",
+        "line": 394,
+        "function": "<lambda>",
+        "calls": 1,
+        "self_ms": 0.00344,
+        "cumulative_ms": 190.147366
+      },
+      {
+        "file": "/oscar/scratch/sboughan/se-semantic-recovery/scene-gpu-scaling-20260929/profile_all.py",
+        "line": 385,
+        "function": "original",
+        "calls": 1,
+        "self_ms": 0.43663500000000005,
+        "cumulative_ms": 190.14392600000002
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<method 'encode' of 'str' objects>",
+        "calls": 1,
+        "self_ms": 0.00416,
+        "cumulative_ms": 0.00416
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<method 'lower' of 'str' objects>",
+        "calls": 1,
+        "self_ms": 0.00169,
+        "cumulative_ms": 0.00169
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method builtins.hasattr>",
+        "calls": 2,
+        "self_ms": 0.003,
+        "cumulative_ms": 0.003
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method builtins.isinstance>",
+        "calls": 776,
+        "self_ms": 0.481959,
+        "cumulative_ms": 0.481959
+      },
+      {
+        "file": "~",
+        "line": 0,
+        "function": "<built-in method builtins.len>",
+        "calls": 1,
+        "self_ms": 0.0008900000000000001,
+        "cumulative_ms": 0.0008900000000000001
+      },
+      {
+        "file": "<frozen os>",
+        "line": 808,
+        "function": "getenv",
+        "calls": 1,
+        "self_ms": 0.00183,
+        "cumulative_ms": 0.031929
+      },
+      {
+        "file": "<frozen os>",
+        "line": 791,
+        "function": "encode",
+        "calls": 1,
+        "self_ms": 0.004390000000000001,
+        "cumulative_ms": 0.00868
+      },
+      {
+        "file": "<frozen os>",
+        "line": 709,
+        "function": "__getitem__",
+        "calls": 1,
+        "self_ms": 0.015469,
+        "cumulative_ms": 0.024149000000000004
+      },
+      {
+        "file": "<frozen _collections_abc>",
+        "line": 804,
+        "function": "get",
+        "calls": 1,
+        "self_ms": 0.00595,
+        "cumulative_ms": 0.030099
+      }
+    ]
+  }
+}

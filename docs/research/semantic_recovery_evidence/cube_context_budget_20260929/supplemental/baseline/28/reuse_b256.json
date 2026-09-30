@@ -1,0 +1,27 @@
+{
+  "batch": 256,
+  "process": 4076705,
+  "before": {
+    "hits": 181,
+    "misses": 29,
+    "evictions": 25,
+    "entries": 4
+  },
+  "after": {
+    "hits": 199,
+    "misses": 47,
+    "evictions": 43,
+    "entries": 4
+  },
+  "samples_ms": [
+    2450.481423,
+    1689.14873,
+    1697.385923
+  ],
+  "image_sha256": [
+    "47e7919b752e537f93ca04fb52e8ae85eeb09cce2bf13c122fafdcb73ac597f3",
+    "47e7919b752e537f93ca04fb52e8ae85eeb09cce2bf13c122fafdcb73ac597f3",
+    "47e7919b752e537f93ca04fb52e8ae85eeb09cce2bf13c122fafdcb73ac597f3"
+  ],
+  "nvidia_memory": "4076705, 5507\n"
+}

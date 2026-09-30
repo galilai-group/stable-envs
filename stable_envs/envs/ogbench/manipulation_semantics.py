@@ -193,7 +193,7 @@ class ManipulationSemantics:
             raise ValueError("Render size and supersample must be integers")
         if state is None or isinstance(state, TensorDict) and "physics" in state.keys():
             state = self.to_render_state(state, size=size, supersample=supersample)
-        else:
+        elif size is not None or supersample is not None:
             pixels.validate(self.CELL, state)
             state = state.clone()
             if size is not None:

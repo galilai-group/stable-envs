@@ -1,0 +1,18 @@
+{
+  "status": "PASS",
+  "registrations": [
+    "swm/PushT-v1",
+    "swm/PushT-Discrete-v1"
+  ],
+  "semantic_promotions": 0,
+  "frames_per_registration": 1024,
+  "other_40_csv_rows_unchanged": true,
+  "source_gpu_columns_unavailable": true,
+  "production_code_unchanged": true,
+  "v2_v3_discrete_mse_exact": true,
+  "unit_tests_passed": 5,
+  "semantic_matrix": {
+    "VERIFIED": 39,
+    "INCOMPLETE": 3
+  }
+}

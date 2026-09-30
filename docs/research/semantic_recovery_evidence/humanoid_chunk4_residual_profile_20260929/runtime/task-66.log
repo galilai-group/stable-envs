@@ -1,0 +1,15 @@
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+Users of this version of Gym should be able to simply replace 'import gym' with 'import gymnasium as gym' in the vast majority of cases.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+Failed to create /oscar/scratch/sboughan/se-semantic-recovery/humanoid-chunk4-residual-profile-20260929/job-66-6810114/cache-66/xdg for shader cache (No such file or directory)---disabling.
+Failed to create /oscar/scratch/sboughan/se-semantic-recovery/humanoid-chunk4-residual-profile-20260929/job-66-6810114/cache-66/xdg for shader cache (No such file or directory)---disabling.
+/oscar/scratch/sboughan/se-semantic-recovery/render-rerun-df80c9c5-20260928T021357Z/run-6750648_2/oracle/stable_worldmodel/envs/__init__.py:215: UserWarning: ale-py not found; ALE/* envs are unavailable. Install with: pip install 'stable-worldmodel[env]' or pip install ale-py.
+  from stable_worldmodel.envs import ale  # noqa: F401
+/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages/gymnasium/spaces/box.py:415: UserWarning: [33mWARN: Casting input x to numpy array.[0m
+  gym.logger.warn("Casting input x to numpy array.")
+USDT:2026-09-29 13:38:48 3762520:3762520 SyncActivityProfilerHandler.cpp:39] profiler_start
+USDT:2026-09-29 13:38:55 3762520:3762520 SyncActivityProfilerHandler.cpp:46] profiler_stop
+ERROR:2026-09-29 13:38:55 3762520:3762520 DeviceProperties.cpp:56] gpuGetDeviceCount failed with code 35
+swm/HumanoidDMControl-v0 cpu 64 cpu 1.1600457470195598
+swm/HumanoidDMControl-v0 cpu 256 cpu 1.1345868473528302

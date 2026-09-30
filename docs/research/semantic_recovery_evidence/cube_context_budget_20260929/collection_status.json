@@ -1,0 +1,9 @@
+{
+  "updated_unix": 1790697346.859931,
+  "statuses": {
+    "baseline": "COMPLETE",
+    "candidate": "COMPLETE"
+  },
+  "download_errors": [],
+  "gate": "PASS: exact images, same host/States, zero warm misses/evictions; inspect speedups separately"
+}

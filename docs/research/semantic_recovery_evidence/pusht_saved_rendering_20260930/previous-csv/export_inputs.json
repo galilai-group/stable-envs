@@ -1,0 +1,15 @@
+{
+  "cube_gate": "../cube_context_budget_20260929",
+  "source_gpu_audit": "../source_gpu_audit_20260929/audit.json",
+  "result_overlays": [
+    "../source_gpu_audit_20260929/results/34/result.json",
+    "../source_gpu_audit_20260929/results/40/result.json",
+    "../dmc_cpu_profile_20260929/humanoid_chunk_gate/candidate/66/result.json",
+    "../scene_render_overhead_20260929/cpu-candidate/70/result.json",
+    "../scene_render_kinematics_20260929/candidate/72/result.json",
+    "../dmc_cpu_bounds_components_20260929/v2_cpu/candidate/results/44/result.json",
+    "../dmc_cpu_bounds_components_20260929/v2_cpu/candidate/results/64/result.json",
+    "../dmc_cpu_bounds_components_20260929/v2_cpu/candidate/results/67/result.json",
+    "../scene_gpu_scaling_20260929/results/30/result.json"
+  ]
+}

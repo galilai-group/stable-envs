@@ -652,6 +652,22 @@ def _rays_near(
     The second term drops rays whose whole bound lies behind the origin, where ``intersect``'s own
     ``t > 0`` would reject them anyway.
     """
+    if o.device.type == "cpu":
+        # Separate components avoid packed (B,N,3) offset/cross temporaries and
+        # strided reads in the following dot products. Keep the original
+        # arithmetic order; CUDA retains its existing expression below.
+        x, y, z = (pos_k[..., j] - o[..., j] for j in range(3))
+        dx, dy, dz = (d[..., j] for j in range(3))
+        # CPU torch.cross contracts the first multiply with the subtraction.
+        # addcmul retains that rounding; separate mul/sub differs at tangency.
+        cx = torch.addcmul(-z * dy, y, dz)
+        cy = torch.addcmul(-x * dz, z, dx)
+        cz = torch.addcmul(-y * dx, x, dy)
+        r0 = rad * _BOUND_SLACK_REL + _BOUND_SLACK_ABS
+        r2 = r0 * r0 + _BOUND_SLACK_NOISE * (x * x + y * y + z * z)
+        return ((cx * cx + cy * cy + cz * cz) <= r2 * dd) & (
+            x * dx + y * dy + z * dz + torch.sqrt(r2 * dd) >= 0
+        )
     oc = pos_k - o
     cr = torch.cross(oc.expand_as(d), d, dim=-1)
     r0 = rad * _BOUND_SLACK_REL + _BOUND_SLACK_ABS

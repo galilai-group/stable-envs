@@ -1,0 +1,102 @@
+registration,device,backend,status,host,cpu,gpu,result
+swm/AcrobotControl-v1,cpu,auto,COMPLETE,node1805.oscar.ccv.brown.edu,Intel(R) Xeon(R) Platinum 8268 CPU @ 2.90GHz,,raw/results/0/result.json
+swm/AcrobotControl-v1,cuda,auto,COMPLETE,gpu1506.oscar.ccv.brown.edu,AMD EPYC 7413 24-Core Processor,NVIDIA A40,raw/results/1/result.json
+swm/AcrobotDMControl-v0,cpu,auto,COMPLETE,node1812.oscar.ccv.brown.edu,Intel(R) Xeon(R) Platinum 8268 CPU @ 2.90GHz,,raw/results/2/result.json
+swm/AcrobotDMControl-v0,cuda,auto,COMPLETE,gpu3102.oscar.ccv.brown.edu,AMD EPYC 9554 64-Core Processor,NVIDIA L40S,raw/results/3/result.json
+swm/BallInCupDMControl-v0,cpu,auto,COMPLETE,node1809.oscar.ccv.brown.edu,Intel(R) Xeon(R) Platinum 8268 CPU @ 2.90GHz,,raw/results/4/result.json
+swm/BallInCupDMControl-v0,cuda,auto,COMPLETE,gpu1506.oscar.ccv.brown.edu,AMD EPYC 7413 24-Core Processor,NVIDIA A40,raw/results/5/result.json
+swm/CartPoleControl-v1,cpu,auto,COMPLETE,node1818.oscar.ccv.brown.edu,Intel(R) Xeon(R) Platinum 8268 CPU @ 2.90GHz,,raw/results/6/result.json
+swm/CartPoleControl-v1,cuda,auto,COMPLETE,gpu1506.oscar.ccv.brown.edu,AMD EPYC 7413 24-Core Processor,NVIDIA A40,raw/results/7/result.json
+swm/CartpoleDMControl-v0,cpu,auto,COMPLETE,node1818.oscar.ccv.brown.edu,Intel(R) Xeon(R) Platinum 8268 CPU @ 2.90GHz,,raw/results/8/result.json
+swm/CartpoleDMControl-v0,cuda,auto,COMPLETE,gpu3003.oscar.ccv.brown.edu,AMD EPYC 9554 64-Core Processor,NVIDIA L40S,raw/results/9/result.json
+swm/CheetahDMControl-v0,cpu,auto,COMPLETE,node1820.oscar.ccv.brown.edu,Intel(R) Xeon(R) Platinum 8268 CPU @ 2.90GHz,,raw/results/10/result.json
+swm/CheetahDMControl-v0,cuda,auto,COMPLETE,gpu1506.oscar.ccv.brown.edu,AMD EPYC 7413 24-Core Processor,NVIDIA A40,raw/results/11/result.json
+swm/CraftaxClassicPixels-v1,cpu,auto,COMPLETE,node1820.oscar.ccv.brown.edu,Intel(R) Xeon(R) Platinum 8268 CPU @ 2.90GHz,,raw/results/12/result.json
+swm/CraftaxClassicPixels-v1,cuda,auto,COMPLETE,gpu3003.oscar.ccv.brown.edu,AMD EPYC 9554 64-Core Processor,NVIDIA L40S,raw/results/13/result.json
+swm/CraftaxClassicSymbolic-v1,cpu,auto,NO_RGB,node1946.oscar.ccv.brown.edu,Intel(R) Xeon(R) Platinum 8268 CPU @ 2.90GHz,,raw/results/14/result.json
+swm/CraftaxClassicSymbolic-v1,cuda,auto,NO_RGB,gpu1506.oscar.ccv.brown.edu,AMD EPYC 7413 24-Core Processor,NVIDIA A40,raw/results/15/result.json
+swm/CraftaxPixels-v1,cpu,auto,COMPLETE,node1812.oscar.ccv.brown.edu,Intel(R) Xeon(R) Platinum 8268 CPU @ 2.90GHz,,raw/results/16/result.json
+swm/CraftaxPixels-v1,cuda,auto,COMPLETE,gpu3003.oscar.ccv.brown.edu,AMD EPYC 9554 64-Core Processor,NVIDIA L40S,raw/results/17/result.json
+swm/CraftaxSymbolic-v1,cpu,auto,NO_RGB,node1948.oscar.ccv.brown.edu,Intel(R) Xeon(R) Platinum 8268 CPU @ 2.90GHz,,raw/results/18/result.json
+swm/CraftaxSymbolic-v1,cuda,auto,NO_RGB,gpu1506.oscar.ccv.brown.edu,AMD EPYC 7413 24-Core Processor,NVIDIA A40,raw/results/19/result.json
+swm/FetchPickAndPlace-v3,cpu,opengl,COMPLETE,node1812.oscar.ccv.brown.edu,Intel(R) Xeon(R) Platinum 8268 CPU @ 2.90GHz,,raw/results/20/result.json
+swm/FetchPickAndPlace-v3,cuda,auto,COMPLETE,gpu3003.oscar.ccv.brown.edu,AMD EPYC 9554 64-Core Processor,NVIDIA L40S,raw/results/21/result.json
+swm/FetchPickAndPlace-v3,cuda,opengl,COMPLETE,gpu3003.oscar.ccv.brown.edu,AMD EPYC 9554 64-Core Processor,NVIDIA L40S,raw/results/22/result.json
+swm/FetchPickAndPlaceDense-v3,cpu,opengl,COMPLETE,node1820.oscar.ccv.brown.edu,Intel(R) Xeon(R) Platinum 8268 CPU @ 2.90GHz,,raw/results/23/result.json
+swm/FetchPickAndPlaceDense-v3,cuda,auto,COMPLETE,gpu1506.oscar.ccv.brown.edu,AMD EPYC 7413 24-Core Processor,NVIDIA A40,raw/results/24/result.json
+swm/FetchPickAndPlaceDense-v3,cuda,opengl,COMPLETE,gpu1506.oscar.ccv.brown.edu,AMD EPYC 7413 24-Core Processor,NVIDIA A40,raw/results/25/result.json
+swm/FetchPickAndPlaceDict-v3,cpu,opengl,COMPLETE,node1820.oscar.ccv.brown.edu,Intel(R) Xeon(R) Platinum 8268 CPU @ 2.90GHz,,raw/results/26/result.json
+swm/FetchPickAndPlaceDict-v3,cuda,auto,COMPLETE,gpu3001.oscar.ccv.brown.edu,AMD EPYC 9554 64-Core Processor,NVIDIA L40S,raw/results/27/result.json
+swm/FetchPickAndPlaceDict-v3,cuda,opengl,COMPLETE,gpu3001.oscar.ccv.brown.edu,AMD EPYC 9554 64-Core Processor,NVIDIA L40S,raw/results/28/result.json
+swm/FetchPush-v3,cpu,opengl,COMPLETE,node1946.oscar.ccv.brown.edu,Intel(R) Xeon(R) Platinum 8268 CPU @ 2.90GHz,,raw/results/29/result.json
+swm/FetchPush-v3,cuda,auto,COMPLETE,gpu1506.oscar.ccv.brown.edu,AMD EPYC 7413 24-Core Processor,NVIDIA A40,raw/results/30/result.json
+swm/FetchPush-v3,cuda,opengl,COMPLETE,gpu1506.oscar.ccv.brown.edu,AMD EPYC 7413 24-Core Processor,NVIDIA A40,raw/results/31/result.json
+swm/FetchPushDense-v3,cpu,opengl,COMPLETE,node1948.oscar.ccv.brown.edu,Intel(R) Xeon(R) Platinum 8268 CPU @ 2.90GHz,,raw/results/32/result.json
+swm/FetchPushDense-v3,cuda,auto,COMPLETE,gpu3001.oscar.ccv.brown.edu,AMD EPYC 9554 64-Core Processor,NVIDIA L40S,raw/results/33/result.json
+swm/FetchPushDense-v3,cuda,opengl,COMPLETE,gpu3001.oscar.ccv.brown.edu,AMD EPYC 9554 64-Core Processor,NVIDIA L40S,raw/results/34/result.json
+swm/FetchPushDict-v3,cpu,opengl,COMPLETE,node1949.oscar.ccv.brown.edu,Intel(R) Xeon(R) Platinum 8268 CPU @ 2.90GHz,,raw/results/35/result.json
+swm/FetchPushDict-v3,cuda,auto,COMPLETE,gpu1506.oscar.ccv.brown.edu,AMD EPYC 7413 24-Core Processor,NVIDIA A40,raw/results/36/result.json
+swm/FetchPushDict-v3,cuda,opengl,COMPLETE,gpu1506.oscar.ccv.brown.edu,AMD EPYC 7413 24-Core Processor,NVIDIA A40,raw/results/37/result.json
+swm/FetchReach-v3,cpu,opengl,COMPLETE,node1949.oscar.ccv.brown.edu,Intel(R) Xeon(R) Platinum 8268 CPU @ 2.90GHz,,raw/results/38/result.json
+swm/FetchReach-v3,cuda,auto,COMPLETE,gpu3001.oscar.ccv.brown.edu,AMD EPYC 9554 64-Core Processor,NVIDIA L40S,raw/results/39/result.json
+swm/FetchReach-v3,cuda,opengl,COMPLETE,gpu3001.oscar.ccv.brown.edu,AMD EPYC 9554 64-Core Processor,NVIDIA L40S,raw/results/40/result.json
+swm/FetchReachDense-v3,cpu,opengl,COMPLETE,node1949.oscar.ccv.brown.edu,Intel(R) Xeon(R) Platinum 8268 CPU @ 2.90GHz,,raw/results/41/result.json
+swm/FetchReachDense-v3,cuda,auto,COMPLETE,gpu3001.oscar.ccv.brown.edu,AMD EPYC 9554 64-Core Processor,NVIDIA L40S,raw/results/42/result.json
+swm/FetchReachDense-v3,cuda,opengl,COMPLETE,gpu3001.oscar.ccv.brown.edu,AMD EPYC 9554 64-Core Processor,NVIDIA L40S,raw/results/43/result.json
+swm/FetchReachDict-v3,cpu,opengl,COMPLETE,node1831.oscar.ccv.brown.edu,Intel(R) Xeon(R) Platinum 8268 CPU @ 2.90GHz,,raw/results/44/result.json
+swm/FetchReachDict-v3,cuda,auto,COMPLETE,gpu1506.oscar.ccv.brown.edu,AMD EPYC 7413 24-Core Processor,NVIDIA A40,raw/results/45/result.json
+swm/FetchReachDict-v3,cuda,opengl,COMPLETE,gpu1506.oscar.ccv.brown.edu,AMD EPYC 7413 24-Core Processor,NVIDIA A40,raw/results/46/result.json
+swm/FetchSlide-v3,cpu,opengl,COMPLETE,node1831.oscar.ccv.brown.edu,Intel(R) Xeon(R) Platinum 8268 CPU @ 2.90GHz,,raw/results/47/result.json
+swm/FetchSlide-v3,cuda,auto,COMPLETE,gpu3001.oscar.ccv.brown.edu,AMD EPYC 9554 64-Core Processor,NVIDIA L40S,raw/results/48/result.json
+swm/FetchSlide-v3,cuda,opengl,COMPLETE,gpu3001.oscar.ccv.brown.edu,AMD EPYC 9554 64-Core Processor,NVIDIA L40S,raw/results/49/result.json
+swm/FetchSlideDense-v3,cpu,opengl,COMPLETE,node1812.oscar.ccv.brown.edu,Intel(R) Xeon(R) Platinum 8268 CPU @ 2.90GHz,,raw/results/50/result.json
+swm/FetchSlideDense-v3,cuda,auto,COMPLETE,gpu1506.oscar.ccv.brown.edu,AMD EPYC 7413 24-Core Processor,NVIDIA A40,raw/results/51/result.json
+swm/FetchSlideDense-v3,cuda,opengl,COMPLETE,gpu1506.oscar.ccv.brown.edu,AMD EPYC 7413 24-Core Processor,NVIDIA A40,raw/results/52/result.json
+swm/FetchSlideDict-v3,cpu,opengl,COMPLETE,node1812.oscar.ccv.brown.edu,Intel(R) Xeon(R) Platinum 8268 CPU @ 2.90GHz,,raw/results/53/result.json
+swm/FetchSlideDict-v3,cuda,auto,COMPLETE,gpu3001.oscar.ccv.brown.edu,AMD EPYC 9554 64-Core Processor,NVIDIA L40S,raw/results/54/result.json
+swm/FetchSlideDict-v3,cuda,opengl,COMPLETE,gpu3001.oscar.ccv.brown.edu,AMD EPYC 9554 64-Core Processor,NVIDIA L40S,raw/results/55/result.json
+swm/FingerDMControl-v0,cpu,auto,COMPLETE,node1818.oscar.ccv.brown.edu,Intel(R) Xeon(R) Platinum 8268 CPU @ 2.90GHz,,raw/results/56/result.json
+swm/FingerDMControl-v0,cuda,auto,COMPLETE,gpu3001.oscar.ccv.brown.edu,AMD EPYC 9554 64-Core Processor,NVIDIA L40S,raw/results/57/result.json
+swm/HopperDMControl-v0,cpu,auto,COMPLETE,node1818.oscar.ccv.brown.edu,Intel(R) Xeon(R) Platinum 8268 CPU @ 2.90GHz,,raw/results/58/result.json
+swm/HopperDMControl-v0,cuda,auto,COMPLETE,gpu1506.oscar.ccv.brown.edu,AMD EPYC 7413 24-Core Processor,NVIDIA A40,raw/results/59/result.json
+swm/HumanoidDMControl-v0,cpu,auto,COMPLETE,node1820.oscar.ccv.brown.edu,Intel(R) Xeon(R) Platinum 8268 CPU @ 2.90GHz,,raw/results/60/result.json
+swm/HumanoidDMControl-v0,cuda,auto,COMPLETE,gpu3001.oscar.ccv.brown.edu,AMD EPYC 9554 64-Core Processor,NVIDIA L40S,raw/results/61/result.json
+swm/ManipulatorDMControl-v0,cpu,auto,COMPLETE,node1820.oscar.ccv.brown.edu,Intel(R) Xeon(R) Platinum 8268 CPU @ 2.90GHz,,raw/results/62/result.json
+swm/ManipulatorDMControl-v0,cuda,auto,COMPLETE,gpu3001.oscar.ccv.brown.edu,AMD EPYC 9554 64-Core Processor,NVIDIA L40S,raw/results/63/result.json
+swm/MountainCarContinuousControl-v0,cpu,auto,COMPLETE,node1809.oscar.ccv.brown.edu,Intel(R) Xeon(R) Platinum 8268 CPU @ 2.90GHz,,raw/results/64/result.json
+swm/MountainCarContinuousControl-v0,cuda,auto,COMPLETE,gpu1506.oscar.ccv.brown.edu,AMD EPYC 7413 24-Core Processor,NVIDIA A40,raw/results/65/result.json
+swm/MountainCarControl-v0,cpu,auto,COMPLETE,node1812.oscar.ccv.brown.edu,Intel(R) Xeon(R) Platinum 8268 CPU @ 2.90GHz,,raw/results/66/result.json
+swm/MountainCarControl-v0,cuda,auto,COMPLETE,gpu3001.oscar.ccv.brown.edu,AMD EPYC 9554 64-Core Processor,NVIDIA L40S,raw/results/67/result.json
+swm/OGBCube-v0,cpu,opengl,COMPLETE,node1942.oscar.ccv.brown.edu,Intel(R) Xeon(R) Platinum 8268 CPU @ 2.90GHz,,raw/results/68/result.json
+swm/OGBCube-v0,cuda,auto,COMPLETE,gpu1506.oscar.ccv.brown.edu,AMD EPYC 7413 24-Core Processor,NVIDIA A40,raw/results/69/result.json
+swm/OGBCube-v0,cuda,mjwarp_fidelity,COMPLETE,gpu1506.oscar.ccv.brown.edu,AMD EPYC 7413 24-Core Processor,NVIDIA A40,raw/results/70/result.json
+swm/OGBCube-v0,cuda,opengl,COMPLETE,gpu1506.oscar.ccv.brown.edu,AMD EPYC 7413 24-Core Processor,NVIDIA A40,raw/results/71/result.json
+swm/OGBMaze-v0,cpu,auto,COMPLETE,node1812.oscar.ccv.brown.edu,Intel(R) Xeon(R) Platinum 8268 CPU @ 2.90GHz,,raw/results/72/result.json
+swm/OGBMaze-v0,cuda,auto,COMPLETE,gpu3001.oscar.ccv.brown.edu,AMD EPYC 9554 64-Core Processor,NVIDIA L40S,raw/results/73/result.json
+swm/OGBScene-v0,cpu,opengl,COMPLETE,node1943.oscar.ccv.brown.edu,Intel(R) Xeon(R) Platinum 8268 CPU @ 2.90GHz,,raw/results/74/result.json
+swm/OGBScene-v0,cuda,auto,COMPLETE,gpu3102.oscar.ccv.brown.edu,AMD EPYC 9554 64-Core Processor,NVIDIA L40S,raw/results/75/result.json
+swm/OGBScene-v0,cuda,opengl,COMPLETE,gpu3102.oscar.ccv.brown.edu,AMD EPYC 9554 64-Core Processor,NVIDIA L40S,raw/results/76/result.json
+swm/PFRocketLanding-v0,cpu,auto,COMPLETE,node1812.oscar.ccv.brown.edu,Intel(R) Xeon(R) Platinum 8268 CPU @ 2.90GHz,,raw/results/77/result.json
+swm/PFRocketLanding-v0,cuda,auto,COMPLETE,gpu1506.oscar.ccv.brown.edu,AMD EPYC 7413 24-Core Processor,NVIDIA A40,raw/results/78/result.json
+swm/PendulumControl-v1,cpu,auto,COMPLETE,node1818.oscar.ccv.brown.edu,Intel(R) Xeon(R) Platinum 8268 CPU @ 2.90GHz,,raw/results/79/result.json
+swm/PendulumControl-v1,cuda,auto,COMPLETE,gpu1506.oscar.ccv.brown.edu,AMD EPYC 7413 24-Core Processor,NVIDIA A40,raw/results/80/result.json
+swm/PendulumDMControl-v0,cpu,auto,COMPLETE,node1946.oscar.ccv.brown.edu,Intel(R) Xeon(R) Platinum 8268 CPU @ 2.90GHz,,raw/results/81/result.json
+swm/PendulumDMControl-v0,cuda,auto,COMPLETE,gpu1506.oscar.ccv.brown.edu,AMD EPYC 7413 24-Core Processor,NVIDIA A40,raw/results/82/result.json
+swm/Piecewise-v0,cpu,auto,COMPLETE,node1809.oscar.ccv.brown.edu,Intel(R) Xeon(R) Platinum 8268 CPU @ 2.90GHz,,raw/results/83/result.json
+swm/Piecewise-v0,cuda,auto,COMPLETE,gpu1506.oscar.ccv.brown.edu,AMD EPYC 7413 24-Core Processor,NVIDIA A40,raw/results/84/result.json
+swm/PushT-Discrete-v1,cpu,auto,COMPLETE,node1812.oscar.ccv.brown.edu,Intel(R) Xeon(R) Platinum 8268 CPU @ 2.90GHz,,raw/results/85/result.json
+swm/PushT-Discrete-v1,cuda,auto,COMPLETE,gpu1506.oscar.ccv.brown.edu,AMD EPYC 7413 24-Core Processor,NVIDIA A40,raw/results/86/result.json
+swm/PushT-v1,cpu,auto,COMPLETE,node1831.oscar.ccv.brown.edu,Intel(R) Xeon(R) Platinum 8268 CPU @ 2.90GHz,,raw/results/87/result.json
+swm/PushT-v1,cuda,auto,COMPLETE,gpu1506.oscar.ccv.brown.edu,AMD EPYC 7413 24-Core Processor,NVIDIA A40,raw/results/88/result.json
+swm/QuadrupedDMControl-v0,cpu,auto,COMPLETE,node1831.oscar.ccv.brown.edu,Intel(R) Xeon(R) Platinum 8268 CPU @ 2.90GHz,,raw/results/89/result.json
+swm/QuadrupedDMControl-v0,cuda,auto,COMPLETE,gpu1506.oscar.ccv.brown.edu,AMD EPYC 7413 24-Core Processor,NVIDIA A40,raw/results/90/result.json
+swm/ReacherDMControl-v0,cpu,auto,COMPLETE,node1809.oscar.ccv.brown.edu,Intel(R) Xeon(R) Platinum 8268 CPU @ 2.90GHz,,raw/results/91/result.json
+swm/ReacherDMControl-v0,cuda,auto,COMPLETE,gpu1506.oscar.ccv.brown.edu,AMD EPYC 7413 24-Core Processor,NVIDIA A40,raw/results/92/result.json
+swm/SimplePointMaze-v0,cpu,auto,COMPLETE,node1812.oscar.ccv.brown.edu,Intel(R) Xeon(R) Platinum 8268 CPU @ 2.90GHz,,raw/results/93/result.json
+swm/SimplePointMaze-v0,cuda,auto,COMPLETE,gpu1506.oscar.ccv.brown.edu,AMD EPYC 7413 24-Core Processor,NVIDIA A40,raw/results/94/result.json
+swm/TwoRoom-v1,cpu,auto,COMPLETE,node1818.oscar.ccv.brown.edu,Intel(R) Xeon(R) Platinum 8268 CPU @ 2.90GHz,,raw/results/95/result.json
+swm/TwoRoom-v1,cuda,auto,COMPLETE,gpu1506.oscar.ccv.brown.edu,AMD EPYC 7413 24-Core Processor,NVIDIA A40,raw/results/96/result.json
+swm/WalkerDMControl-v0,cpu,auto,COMPLETE,node1812.oscar.ccv.brown.edu,Intel(R) Xeon(R) Platinum 8268 CPU @ 2.90GHz,,raw/results/97/result.json
+swm/WalkerDMControl-v0,cpu,opengl,COMPLETE,node1812.oscar.ccv.brown.edu,Intel(R) Xeon(R) Platinum 8268 CPU @ 2.90GHz,,raw/results/98/result.json
+swm/WalkerDMControl-v0,cuda,auto,COMPLETE,gpu1506.oscar.ccv.brown.edu,AMD EPYC 7413 24-Core Processor,NVIDIA A40,raw/results/99/result.json
+swm/WalkerDMControl-v0,cuda,opengl,COMPLETE,gpu1506.oscar.ccv.brown.edu,AMD EPYC 7413 24-Core Processor,NVIDIA A40,raw/results/100/result.json
