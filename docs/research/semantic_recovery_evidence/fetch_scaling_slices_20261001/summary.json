@@ -1,0 +1,26 @@
+{
+  "baseline_commit": "3f8a30f7e372391c38f791c72df0d55301523372",
+  "production_matches_final_gpu_stage": true,
+  "jobs": {
+    "profile_initial_failed": 6916221,
+    "profile_completed": 6916606,
+    "batch_sweep": 6916898,
+    "slices_pending_cancelled": 6916672,
+    "slices_batch64": 6916954,
+    "slices_final": 6917357
+  },
+  "local_tests": "278 passed, 4 CUDA-only skips; final selector suite rechecked: 84 passed, 4 CUDA skips",
+  "local_oracle": "20 passed, includes DMC/Reacher frozen oracle and semantic harness tests",
+  "gpu_tests": "114 passed, 1 optional Matplotlib skip on each GPU stage; includes four native GPU selector cases",
+  "fetch": "12 registrations independently pass CPU and CUDA-output gates at B64; final source revalidated at B3",
+  "gpu_scope": "Correctness only: batch64 NVIDIA RTX A5500; final source NVIDIA A40. No new GPU performance comparison.",
+  "production_executor": "Unchanged: bounded Fetch thread pool. Process execution is a measured candidate.",
+  "matrix": "39 VERIFIED / 3 INCOMPLETE; unchanged",
+  "limitations": [
+    "CPU profiling uses fixed eight-action chunks and a benchmark-only shard facade.",
+    "Process checks cover observations, reward/flags/success, qpos and qvel; not exhaustive State restoration or lifecycle acceptance.",
+    "No new renderer throughput/MSE table or simulation/render overlap is claimed.",
+    "Concurrent-thread cProfile output is retained but not used for percentage attribution; use serial/process profiles.",
+    "Engine-only rows bypass task/controller logic and are not equivalent task simulations."
+  ]
+}

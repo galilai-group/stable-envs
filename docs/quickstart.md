@@ -36,8 +36,8 @@ can omit fields needed for continuation and are refused by `set_state`. There is
 no public `pack_render_state` or `unpack_render_state` API. See [State](concepts/state.md).
 
 `step` accepts `[B,A]` actions or `[B,T,A]` action sequences. It returns the final
-State and defined task outputs, plus a frame by default. Sequences also capture
-State history by default; use `capture="states"` for physics-only execution. Renderer-only cells refuse full simulator operations.
+State and defined task outputs, plus a one-element frame history by default. The default also returns
+State history; use `frames=None` for physics-only execution. Renderer-only cells refuse full simulator operations.
 See [dynamics](concepts/dynamics.md).
 
 ## Registration, Variation and downstream use

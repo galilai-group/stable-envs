@@ -229,7 +229,7 @@ def test_these_cells_have_no_dynamics_and_say_so_precisely(envs, name):
     a = torch.zeros(env.num_envs, 1)
     st = env.state
     for call in (
-        lambda: env.step(a, capture="states"),
+        lambda: env.step(a, frames=None),
         lambda: branch_step(env, st, a),
         lambda: branch_steps(env, st, a.unsqueeze(0)),
         lambda: env.action_spec,

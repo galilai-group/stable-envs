@@ -108,7 +108,7 @@ def main():
                 equal(initial, old.get_state())
                 actions = np.random.default_rng(19).uniform(-1, 1, (gate_batch, 6, 4)).astype(np.float64)
                 expected = [old.step(actions[:, t]) for t in range(6)]
-                got = env.step(actions, capture="states")
+                got = env.step(actions, frames=None)
                 for t, reference in enumerate(expected):
                     equal(got["states"][:, t], reference["state"])
                     for key in ("reward", "terminated", "truncated", "success"):
@@ -116,14 +116,14 @@ def main():
                 frozen = got.clone()
                 env.set_state(initial)
                 env._simulator._set_workers(min(3, gate_batch))
-                threaded = env.step(actions, capture="states")
+                threaded = env.step(actions, frames=None)
                 equal(got, threaded)
                 equal(frozen, got)
                 # Different per-lane endpoints must skip, not step-and-restore.
                 env.set_state(initial)
                 for i, upstream in enumerate(env._simulator.envs):
                     upstream._max_episode_steps = i % 3 + 1
-                ended = env.step(actions, capture="states")
+                ended = env.step(actions, frames=None)
                 assert ended["valid"].sum(1).tolist() == [i % 3 + 1 for i in range(gate_batch)]
                 assert ended["state"]["lifecycle", "elapsed_steps"].flatten().tolist() == [
                     i % 3 + 1 for i in range(gate_batch)
@@ -142,9 +142,9 @@ def main():
             initial = env.reset(seed=17)
             actions = np.random.default_rng(31).uniform(-1, 1, (3, 4, 4)).astype(np.float32)
             steps = [env.step(actions[:, t]) for t in range(4)]
-            reference_frames = torch.stack([s["frame"] for s in steps], dim=1)
+            reference_frames = torch.stack([s["frames"][:, 0] for s in steps], dim=1)
             env.set_state(initial)
-            out = env.step(actions, capture="all_frames")
+            out = env.step(actions, states=None, frames=slice(None))
             assert torch.equal(out["frames"], reference_frames)
             env.set_state(initial)
             original_export = env._simulator.get_state
@@ -155,10 +155,10 @@ def main():
                 return original_export()
 
             env._simulator.get_state = counted
-            final = env.step(actions, capture="final_frame")
+            final = env.step(actions, states=None)
             assert len(exports) == 1, len(exports)
             equal(final["state"], out["state"])
-            assert torch.equal(final["frame"], reference_frames[:, -1])
+            assert torch.equal(final["frames"][:, 0], reference_frames[:, -1])
             report["gates"].append(
                 dict(env="FetchPush", frame_mse_vs_repeated_step=0.0, final_frame_snapshot_exports=len(exports))
             )
@@ -229,7 +229,7 @@ def main():
 
                 for stage, fn in [
                     ("source_task_steps", source_steps),
-                    ("steps_with_states", lambda: env.step(actions, capture="states")),
+                    ("steps_with_states", lambda: env.step(actions, frames=None)),
                 ]:
                     report["timings"].append(
                         dict(
@@ -246,7 +246,13 @@ def main():
                         ("steps_all_frames", "all_frames", count),
                     ]:
                         timing = measure(
-                            lambda: env.step(actions, capture=mode), setup, count, args.repeats, args.device
+                            lambda: env.step(
+                                actions, states=None, frames=slice(None) if mode == "all_frames" else slice(-1, None)
+                            ),
+                            setup,
+                            count,
+                            args.repeats,
+                            args.device,
                         )
                         timing["frames_per_second"] = [frames / t for t in timing["seconds"]]
                         report["timings"].append(

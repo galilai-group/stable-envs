@@ -1,0 +1,1125 @@
+{
+  "status": "PASS",
+  "host": "node1907.oscar.ccv.brown.edu",
+  "affinity": [
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31
+  ],
+  "mujoco": "3.11.0",
+  "gymnasium": "1.3.0",
+  "rows": [
+    {
+      "batch": 64,
+      "workers": 4,
+      "kind": "threads",
+      "steps_s_mean": 1370.340229804085,
+      "steps_s_sd": 7.861319041594488,
+      "samples": [
+        {
+          "seconds": 0.3714673947542906,
+          "worker_cpu_cores": 2.436897573739328,
+          "cpu_seconds": 0.905227993,
+          "voluntary_switches": 20505.0,
+          "involuntary_switches": 4.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        },
+        {
+          "seconds": 0.3736945278942585,
+          "worker_cpu_cores": 2.418915626336866,
+          "cpu_seconds": 0.9039355329999997,
+          "voluntary_switches": 20063.0,
+          "involuntary_switches": 0.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        },
+        {
+          "seconds": 0.3757521826773882,
+          "worker_cpu_cores": 2.4136351877925546,
+          "cpu_seconds": 0.9069286900000001,
+          "voluntary_switches": 20088.0,
+          "involuntary_switches": 2.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        }
+      ]
+    },
+    {
+      "batch": 64,
+      "workers": 8,
+      "kind": "threads",
+      "steps_s_mean": 1326.003104362234,
+      "steps_s_sd": 4.0829477151192775,
+      "samples": [
+        {
+          "seconds": 0.3847548570483923,
+          "worker_cpu_cores": 2.412426216320012,
+          "cpu_seconds": 0.9281927040000001,
+          "voluntary_switches": 21451.0,
+          "involuntary_switches": 2.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        },
+        {
+          "seconds": 0.3867982979863882,
+          "worker_cpu_cores": 2.4138019449942254,
+          "cpu_seconds": 0.9336544839999998,
+          "voluntary_switches": 21619.0,
+          "involuntary_switches": 3.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        },
+        {
+          "seconds": 0.3868224825710058,
+          "worker_cpu_cores": 2.4093585843447483,
+          "cpu_seconds": 0.9319940689999997,
+          "voluntary_switches": 21769.0,
+          "involuntary_switches": 0.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        }
+      ]
+    },
+    {
+      "batch": 64,
+      "workers": 4,
+      "kind": "async_shared",
+      "steps_s_mean": 2424.0838411529676,
+      "steps_s_sd": 0.8648850840080949,
+      "samples": [
+        {
+          "seconds": 0.21126413717865944,
+          "worker_cpu_cores": 3.830879655242091,
+          "cpu_seconds": 0.8093274850000007,
+          "voluntary_switches": 0.0,
+          "involuntary_switches": 0.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        },
+        {
+          "seconds": 0.2112501561641693,
+          "worker_cpu_cores": 3.8335975684232872,
+          "cpu_seconds": 0.8098480849999992,
+          "voluntary_switches": 0.0,
+          "involuntary_switches": 4.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        },
+        {
+          "seconds": 0.21112721040844917,
+          "worker_cpu_cores": 3.8358410762556585,
+          "cpu_seconds": 0.8098504260000006,
+          "voluntary_switches": 0.0,
+          "involuntary_switches": 1.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        }
+      ]
+    },
+    {
+      "batch": 64,
+      "workers": 8,
+      "kind": "async_shared",
+      "steps_s_mean": 4062.556269216644,
+      "steps_s_sd": 24.35141367385591,
+      "samples": [
+        {
+          "seconds": 0.12518662214279175,
+          "worker_cpu_cores": 6.678003741058175,
+          "cpu_seconds": 0.8359967309999995,
+          "voluntary_switches": 14.0,
+          "involuntary_switches": 0.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        },
+        {
+          "seconds": 0.12627673894166946,
+          "worker_cpu_cores": 6.624621969264012,
+          "cpu_seconds": 0.8365356589999998,
+          "voluntary_switches": 61.0,
+          "involuntary_switches": 9.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        },
+        {
+          "seconds": 0.12663274258375168,
+          "worker_cpu_cores": 6.6141453853931536,
+          "cpu_seconds": 0.8375673700000003,
+          "voluntary_switches": 50.0,
+          "involuntary_switches": 1.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        }
+      ]
+    },
+    {
+      "batch": 128,
+      "workers": 4,
+      "kind": "threads",
+      "steps_s_mean": 1382.7513061795992,
+      "steps_s_sd": 27.13096751607435,
+      "samples": [
+        {
+          "seconds": 0.7577121574431658,
+          "worker_cpu_cores": 2.409700914871428,
+          "cpu_seconds": 1.8258596790000001,
+          "voluntary_switches": 41022.0,
+          "involuntary_switches": 3.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        },
+        {
+          "seconds": 0.7318439353257418,
+          "worker_cpu_cores": 2.457808614891904,
+          "cpu_seconds": 1.7987323290000015,
+          "voluntary_switches": 41093.0,
+          "involuntary_switches": 2.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        },
+        {
+          "seconds": 0.7326784040778875,
+          "worker_cpu_cores": 2.458490315770947,
+          "cpu_seconds": 1.8012827609999993,
+          "voluntary_switches": 41253.0,
+          "involuntary_switches": 5.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        }
+      ]
+    },
+    {
+      "batch": 128,
+      "workers": 8,
+      "kind": "threads",
+      "steps_s_mean": 1328.9181812319653,
+      "steps_s_sd": 3.792831911992105,
+      "samples": [
+        {
+          "seconds": 0.7703189961612225,
+          "worker_cpu_cores": 2.4043372774522194,
+          "cpu_seconds": 1.8521066780000002,
+          "voluntary_switches": 43493.0,
+          "involuntary_switches": 4.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        },
+        {
+          "seconds": 0.7728647887706757,
+          "worker_cpu_cores": 2.409449545452827,
+          "cpu_seconds": 1.8621787139999997,
+          "voluntary_switches": 43892.0,
+          "involuntary_switches": 4.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        },
+        {
+          "seconds": 0.768483504652977,
+          "worker_cpu_cores": 2.4140872052130047,
+          "cpu_seconds": 1.8551861960000005,
+          "voluntary_switches": 43560.0,
+          "involuntary_switches": 5.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        }
+      ]
+    },
+    {
+      "batch": 128,
+      "workers": 4,
+      "kind": "async_shared",
+      "steps_s_mean": 2452.2523508634754,
+      "steps_s_sd": 0.3247352785659528,
+      "samples": [
+        {
+          "seconds": 0.4175460711121559,
+          "worker_cpu_cores": 3.8686872054559553,
+          "cpu_seconds": 1.6153551430000002,
+          "voluntary_switches": 0.0,
+          "involuntary_switches": 0.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        },
+        {
+          "seconds": 0.41763908229768276,
+          "worker_cpu_cores": 3.8692148496011707,
+          "cpu_seconds": 1.6159353389999995,
+          "voluntary_switches": 0.0,
+          "involuntary_switches": 4.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        },
+        {
+          "seconds": 0.4175407476723194,
+          "worker_cpu_cores": 3.8669166518500226,
+          "cpu_seconds": 1.6145952700000006,
+          "voluntary_switches": 0.0,
+          "involuntary_switches": 1.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        }
+      ]
+    },
+    {
+      "batch": 128,
+      "workers": 8,
+      "kind": "async_shared",
+      "steps_s_mean": 4261.254429117743,
+      "steps_s_sd": 3.6886686732068426,
+      "samples": [
+        {
+          "seconds": 0.24007593840360641,
+          "worker_cpu_cores": 6.891849870512238,
+          "cpu_seconds": 1.6545673249999988,
+          "voluntary_switches": 0.0,
+          "involuntary_switches": 9.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        },
+        {
+          "seconds": 0.2403569109737873,
+          "worker_cpu_cores": 6.873133355338239,
+          "cpu_seconds": 1.652005102000001,
+          "voluntary_switches": 0.0,
+          "involuntary_switches": 2.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        },
+        {
+          "seconds": 0.24048198573291302,
+          "worker_cpu_cores": 6.858252421583669,
+          "cpu_seconds": 1.649286161,
+          "voluntary_switches": 0.0,
+          "involuntary_switches": 0.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        }
+      ]
+    },
+    {
+      "batch": 256,
+      "workers": 4,
+      "kind": "threads",
+      "steps_s_mean": 1320.4820518453155,
+      "steps_s_sd": 37.89332671487309,
+      "samples": [
+        {
+          "seconds": 1.5711589623242617,
+          "worker_cpu_cores": 2.3945642606617006,
+          "cpu_seconds": 3.7622410990000006,
+          "voluntary_switches": 83576.0,
+          "involuntary_switches": 4.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        },
+        {
+          "seconds": 1.5015802066773176,
+          "worker_cpu_cores": 2.4478983997355614,
+          "cpu_seconds": 3.6757157849999995,
+          "voluntary_switches": 82633.0,
+          "involuntary_switches": 10.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        },
+        {
+          "seconds": 1.5826241709291935,
+          "worker_cpu_cores": 2.383384899135829,
+          "cpu_seconds": 3.7720025500000003,
+          "voluntary_switches": 83853.0,
+          "involuntary_switches": 5.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        }
+      ]
+    },
+    {
+      "batch": 256,
+      "workers": 8,
+      "kind": "threads",
+      "steps_s_mean": 1333.4529408029769,
+      "steps_s_sd": 1.8097792821459566,
+      "samples": [
+        {
+          "seconds": 1.535248026251793,
+          "worker_cpu_cores": 2.444753411709926,
+          "cpu_seconds": 3.7533028500000007,
+          "voluntary_switches": 88267.0,
+          "involuntary_switches": 2.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        },
+        {
+          "seconds": 1.5341559164226055,
+          "worker_cpu_cores": 2.4444663751940023,
+          "cpu_seconds": 3.7501925519999992,
+          "voluntary_switches": 88253.0,
+          "involuntary_switches": 1.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        },
+        {
+          "seconds": 1.5381883922964334,
+          "worker_cpu_cores": 2.4393902260555373,
+          "cpu_seconds": 3.7522417300000006,
+          "voluntary_switches": 87722.0,
+          "involuntary_switches": 0.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        }
+      ]
+    },
+    {
+      "batch": 256,
+      "workers": 4,
+      "kind": "async_shared",
+      "steps_s_mean": 2457.21983466518,
+      "steps_s_sd": 7.033272419724781,
+      "samples": [
+        {
+          "seconds": 0.8349607363343239,
+          "worker_cpu_cores": 3.9307234594153004,
+          "cpu_seconds": 3.281999754,
+          "voluntary_switches": 0.0,
+          "involuntary_switches": 2.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        },
+        {
+          "seconds": 0.8347195349633694,
+          "worker_cpu_cores": 3.929718259371932,
+          "cpu_seconds": 3.2802125980000008,
+          "voluntary_switches": 0.0,
+          "involuntary_switches": 0.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        },
+        {
+          "seconds": 0.8307201471179724,
+          "worker_cpu_cores": 3.928354622578528,
+          "cpu_seconds": 3.2633633300000016,
+          "voluntary_switches": 0.0,
+          "involuntary_switches": 5.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        }
+      ]
+    },
+    {
+      "batch": 256,
+      "workers": 8,
+      "kind": "async_shared",
+      "steps_s_mean": 4236.9075274838715,
+      "steps_s_sd": 18.33524728740235,
+      "samples": [
+        {
+          "seconds": 0.4813541192561388,
+          "worker_cpu_cores": 6.915366938469486,
+          "cpu_seconds": 3.3287403620000005,
+          "voluntary_switches": 0.0,
+          "involuntary_switches": 0.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        },
+        {
+          "seconds": 0.48324509896337986,
+          "worker_cpu_cores": 6.886233632039744,
+          "cpu_seconds": 3.327738653000001,
+          "voluntary_switches": 0.0,
+          "involuntary_switches": 8.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        },
+        {
+          "seconds": 0.4855331480503082,
+          "worker_cpu_cores": 6.8557513042448335,
+          "cpu_seconds": 3.3286945130000003,
+          "voluntary_switches": 0.0,
+          "involuntary_switches": 0.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        }
+      ]
+    },
+    {
+      "batch": 512,
+      "workers": 4,
+      "kind": "threads",
+      "steps_s_mean": 1359.4267279659432,
+      "steps_s_sd": 25.233387890078042,
+      "samples": [
+        {
+          "seconds": 2.952075069770217,
+          "worker_cpu_cores": 2.4758117115120983,
+          "cpu_seconds": 7.308782030999998,
+          "voluntary_switches": 164747.0,
+          "involuntary_switches": 1.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        },
+        {
+          "seconds": 3.059843646362424,
+          "worker_cpu_cores": 2.4287283638935886,
+          "cpu_seconds": 7.431529053000002,
+          "voluntary_switches": 166245.0,
+          "involuntary_switches": 12.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        },
+        {
+          "seconds": 3.0292472429573536,
+          "worker_cpu_cores": 2.4393589464113714,
+          "cpu_seconds": 7.389421363000002,
+          "voluntary_switches": 166243.0,
+          "involuntary_switches": 5.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        }
+      ]
+    },
+    {
+      "batch": 512,
+      "workers": 8,
+      "kind": "threads",
+      "steps_s_mean": 1340.6460216545042,
+      "steps_s_sd": 5.624934919721802,
+      "samples": [
+        {
+          "seconds": 3.053872175514698,
+          "worker_cpu_cores": 2.459450709895585,
+          "cpu_seconds": 7.510848089999998,
+          "voluntary_switches": 177306.0,
+          "involuntary_switches": 19.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        },
+        {
+          "seconds": 3.0687525663524866,
+          "worker_cpu_cores": 2.4476466556337,
+          "cpu_seconds": 7.511221955999998,
+          "voluntary_switches": 176941.0,
+          "involuntary_switches": 3.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        },
+        {
+          "seconds": 3.043213302269578,
+          "worker_cpu_cores": 2.4649159660959943,
+          "cpu_seconds": 7.501265056999998,
+          "voluntary_switches": 178222.0,
+          "involuntary_switches": 9.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        }
+      ]
+    },
+    {
+      "batch": 512,
+      "workers": 4,
+      "kind": "async_shared",
+      "steps_s_mean": 2149.4151138880493,
+      "steps_s_sd": 2.421027188694082,
+      "samples": [
+        {
+          "seconds": 1.9080561306327581,
+          "worker_cpu_cores": 3.570525908868687,
+          "cpu_seconds": 6.812763849999999,
+          "voluntary_switches": 0.0,
+          "involuntary_switches": 11.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        },
+        {
+          "seconds": 1.9048957116901875,
+          "worker_cpu_cores": 3.5741274287184233,
+          "cpu_seconds": 6.808340012,
+          "voluntary_switches": 0.0,
+          "involuntary_switches": 8.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        },
+        {
+          "seconds": 1.9039570596069098,
+          "worker_cpu_cores": 3.571138343531643,
+          "cpu_seconds": 6.799294059999998,
+          "voluntary_switches": 0.0,
+          "involuntary_switches": 6.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        }
+      ]
+    },
+    {
+      "batch": 512,
+      "workers": 8,
+      "kind": "async_shared",
+      "steps_s_mean": 4245.555034488233,
+      "steps_s_sd": 16.228828252203048,
+      "samples": [
+        {
+          "seconds": 0.9690381232649088,
+          "worker_cpu_cores": 6.927999409745318,
+          "cpu_seconds": 6.713495545999999,
+          "voluntary_switches": 0.0,
+          "involuntary_switches": 9.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        },
+        {
+          "seconds": 0.9629400465637445,
+          "worker_cpu_cores": 6.970228186013741,
+          "cpu_seconds": 6.711911853999997,
+          "voluntary_switches": 0.0,
+          "involuntary_switches": 16.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        },
+        {
+          "seconds": 0.9623712990432978,
+          "worker_cpu_cores": 6.99433917521387,
+          "cpu_seconds": 6.7311512780000005,
+          "voluntary_switches": 0.0,
+          "involuntary_switches": 9.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        }
+      ]
+    },
+    {
+      "batch": 1024,
+      "workers": 4,
+      "kind": "threads",
+      "steps_s_mean": 1358.9171069046808,
+      "steps_s_sd": 51.676026621486514,
+      "samples": [
+        {
+          "seconds": 6.304830685257912,
+          "worker_cpu_cores": 2.391965856158925,
+          "cpu_seconds": 15.080939728000002,
+          "voluntary_switches": 332577.0,
+          "involuntary_switches": 18.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        },
+        {
+          "seconds": 5.909956960007548,
+          "worker_cpu_cores": 2.4786285900432836,
+          "cpu_seconds": 14.648588286999999,
+          "voluntary_switches": 331802.0,
+          "involuntary_switches": 15.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        },
+        {
+          "seconds": 5.888040229678154,
+          "worker_cpu_cores": 2.48700365567992,
+          "cpu_seconds": 14.643577576000007,
+          "voluntary_switches": 332253.0,
+          "involuntary_switches": 22.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        }
+      ]
+    },
+    {
+      "batch": 1024,
+      "workers": 8,
+      "kind": "threads",
+      "steps_s_mean": 1328.6625110328885,
+      "steps_s_sd": 2.207702266715563,
+      "samples": [
+        {
+          "seconds": 6.177321661263704,
+          "worker_cpu_cores": 2.4823286069359503,
+          "cpu_seconds": 15.334142274000001,
+          "voluntary_switches": 355968.0,
+          "involuntary_switches": 25.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        },
+        {
+          "seconds": 6.158248411491513,
+          "worker_cpu_cores": 2.481647814576968,
+          "cpu_seconds": 15.282603711999997,
+          "voluntary_switches": 355401.0,
+          "involuntary_switches": 1.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        },
+        {
+          "seconds": 6.16126043908298,
+          "worker_cpu_cores": 2.4854707468394617,
+          "cpu_seconds": 15.313632585000004,
+          "voluntary_switches": 356621.0,
+          "involuntary_switches": 5.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        }
+      ]
+    },
+    {
+      "batch": 1024,
+      "workers": 4,
+      "kind": "async_shared",
+      "steps_s_mean": 2079.9389062465725,
+      "steps_s_sd": 4.468962190283041,
+      "samples": [
+        {
+          "seconds": 3.9353129137307405,
+          "worker_cpu_cores": 3.5599601350934775,
+          "cpu_seconds": 14.009557091999994,
+          "voluntary_switches": 0.0,
+          "involuntary_switches": 20.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        },
+        {
+          "seconds": 3.9482096806168556,
+          "worker_cpu_cores": 3.5683633992809702,
+          "cpu_seconds": 14.088646916999997,
+          "voluntary_switches": 0.0,
+          "involuntary_switches": 21.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        },
+        {
+          "seconds": 3.9322454761713743,
+          "worker_cpu_cores": 3.5634684138903725,
+          "cpu_seconds": 14.01243255,
+          "voluntary_switches": 0.0,
+          "involuntary_switches": 19.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        }
+      ]
+    },
+    {
+      "batch": 1024,
+      "workers": 8,
+      "kind": "async_shared",
+      "steps_s_mean": 4173.280631933199,
+      "steps_s_sd": 9.13932631451821,
+      "samples": [
+        {
+          "seconds": 1.9603952039033175,
+          "worker_cpu_cores": 6.995788034317373,
+          "cpu_seconds": 13.714509309999995,
+          "voluntary_switches": 0.0,
+          "involuntary_switches": 28.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        },
+        {
+          "seconds": 1.9605765044689178,
+          "worker_cpu_cores": 7.003180012972392,
+          "cpu_seconds": 13.730270190000002,
+          "voluntary_switches": 0.0,
+          "involuntary_switches": 20.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        },
+        {
+          "seconds": 1.9679394010454416,
+          "worker_cpu_cores": 6.973472174351325,
+          "cpu_seconds": 13.723370654,
+          "voluntary_switches": 0.0,
+          "involuntary_switches": 31.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        }
+      ]
+    },
+    {
+      "batch": 2048,
+      "workers": 4,
+      "kind": "threads",
+      "steps_s_mean": 1305.549698780793,
+      "steps_s_sd": 45.52098182552237,
+      "samples": [
+        {
+          "seconds": 12.952663509175181,
+          "worker_cpu_cores": 2.3891808344344647,
+          "cpu_seconds": 30.946255411,
+          "voluntary_switches": 669620.0,
+          "involuntary_switches": 15.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        },
+        {
+          "seconds": 12.093820687383413,
+          "worker_cpu_cores": 2.4775650892739316,
+          "cpu_seconds": 29.963227931000006,
+          "voluntary_switches": 664025.0,
+          "involuntary_switches": 25.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        },
+        {
+          "seconds": 12.63228589296341,
+          "worker_cpu_cores": 2.4237561093400344,
+          "cpu_seconds": 30.617580107999995,
+          "voluntary_switches": 670127.0,
+          "involuntary_switches": 15.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        }
+      ]
+    },
+    {
+      "batch": 2048,
+      "workers": 8,
+      "kind": "threads",
+      "steps_s_mean": 1319.111033814261,
+      "steps_s_sd": 3.8224922709511873,
+      "samples": [
+        {
+          "seconds": 12.408744283020496,
+          "worker_cpu_cores": 2.489733755354637,
+          "cpu_seconds": 30.894469503,
+          "voluntary_switches": 712461.0,
+          "involuntary_switches": 18.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        },
+        {
+          "seconds": 12.461016792804003,
+          "worker_cpu_cores": 2.4795099404602814,
+          "cpu_seconds": 30.897215006000017,
+          "voluntary_switches": 712636.0,
+          "involuntary_switches": 37.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        },
+        {
+          "seconds": 12.391905492171645,
+          "worker_cpu_cores": 2.488256278784482,
+          "cpu_seconds": 30.834236647,
+          "voluntary_switches": 712315.0,
+          "involuntary_switches": 8.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        }
+      ]
+    },
+    {
+      "batch": 2048,
+      "workers": 4,
+      "kind": "async_shared",
+      "steps_s_mean": 2460.0875672751154,
+      "steps_s_sd": 7.717537798054262,
+      "samples": [
+        {
+          "seconds": 6.648680245503783,
+          "worker_cpu_cores": 3.9524037054979244,
+          "cpu_seconds": 26.278268439,
+          "voluntary_switches": 0.0,
+          "involuntary_switches": 24.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        },
+        {
+          "seconds": 6.647106813266873,
+          "worker_cpu_cores": 3.952268613702093,
+          "cpu_seconds": 26.271151630000002,
+          "voluntary_switches": 0.0,
+          "involuntary_switches": 13.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        },
+        {
+          "seconds": 6.684120859950781,
+          "worker_cpu_cores": 3.9386322999841514,
+          "cpu_seconds": 26.326294315999988,
+          "voluntary_switches": 0.0,
+          "involuntary_switches": 20.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        }
+      ]
+    },
+    {
+      "batch": 2048,
+      "workers": 8,
+      "kind": "async_shared",
+      "steps_s_mean": 4253.781196459846,
+      "steps_s_sd": 3.3012132778191075,
+      "samples": [
+        {
+          "seconds": 3.852444190531969,
+          "worker_cpu_cores": 6.993137696896751,
+          "cpu_seconds": 26.940672694000003,
+          "voluntary_switches": 6.0,
+          "involuntary_switches": 28.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        },
+        {
+          "seconds": 3.848323682323098,
+          "worker_cpu_cores": 6.999644932605862,
+          "cpu_seconds": 26.936899362000005,
+          "voluntary_switches": 0.0,
+          "involuntary_switches": 44.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        },
+        {
+          "seconds": 3.8541329223662615,
+          "worker_cpu_cores": 6.983924734353535,
+          "cpu_seconds": 26.916974246000006,
+          "voluntary_switches": 0.0,
+          "involuntary_switches": 60.0,
+          "disk_blocks_in": 0.0,
+          "disk_blocks_out": 0.0
+        }
+      ]
+    }
+  ],
+  "gates": [
+    {
+      "batch": 64,
+      "kind": "threads",
+      "workers": 4,
+      "exact_task_qpos_qvel": "PASS"
+    },
+    {
+      "batch": 64,
+      "kind": "threads",
+      "workers": 8,
+      "exact_task_qpos_qvel": "PASS"
+    },
+    {
+      "batch": 64,
+      "kind": "async_shared",
+      "workers": 4,
+      "exact_task_qpos_qvel": "PASS"
+    },
+    {
+      "batch": 64,
+      "kind": "async_shared",
+      "workers": 8,
+      "exact_task_qpos_qvel": "PASS"
+    },
+    {
+      "batch": 128,
+      "kind": "threads",
+      "workers": 4,
+      "exact_task_qpos_qvel": "PASS"
+    },
+    {
+      "batch": 128,
+      "kind": "threads",
+      "workers": 8,
+      "exact_task_qpos_qvel": "PASS"
+    },
+    {
+      "batch": 128,
+      "kind": "async_shared",
+      "workers": 4,
+      "exact_task_qpos_qvel": "PASS"
+    },
+    {
+      "batch": 128,
+      "kind": "async_shared",
+      "workers": 8,
+      "exact_task_qpos_qvel": "PASS"
+    },
+    {
+      "batch": 256,
+      "kind": "threads",
+      "workers": 4,
+      "exact_task_qpos_qvel": "PASS"
+    },
+    {
+      "batch": 256,
+      "kind": "threads",
+      "workers": 8,
+      "exact_task_qpos_qvel": "PASS"
+    },
+    {
+      "batch": 256,
+      "kind": "async_shared",
+      "workers": 4,
+      "exact_task_qpos_qvel": "PASS"
+    },
+    {
+      "batch": 256,
+      "kind": "async_shared",
+      "workers": 8,
+      "exact_task_qpos_qvel": "PASS"
+    },
+    {
+      "batch": 512,
+      "kind": "threads",
+      "workers": 4,
+      "exact_task_qpos_qvel": "PASS"
+    },
+    {
+      "batch": 512,
+      "kind": "threads",
+      "workers": 8,
+      "exact_task_qpos_qvel": "PASS"
+    },
+    {
+      "batch": 512,
+      "kind": "async_shared",
+      "workers": 4,
+      "exact_task_qpos_qvel": "PASS"
+    },
+    {
+      "batch": 512,
+      "kind": "async_shared",
+      "workers": 8,
+      "exact_task_qpos_qvel": "PASS"
+    },
+    {
+      "batch": 1024,
+      "kind": "threads",
+      "workers": 4,
+      "exact_task_qpos_qvel": "PASS"
+    },
+    {
+      "batch": 1024,
+      "kind": "threads",
+      "workers": 8,
+      "exact_task_qpos_qvel": "PASS"
+    },
+    {
+      "batch": 1024,
+      "kind": "async_shared",
+      "workers": 4,
+      "exact_task_qpos_qvel": "PASS"
+    },
+    {
+      "batch": 1024,
+      "kind": "async_shared",
+      "workers": 8,
+      "exact_task_qpos_qvel": "PASS"
+    },
+    {
+      "batch": 2048,
+      "kind": "threads",
+      "workers": 4,
+      "exact_task_qpos_qvel": "PASS"
+    },
+    {
+      "batch": 2048,
+      "kind": "threads",
+      "workers": 8,
+      "exact_task_qpos_qvel": "PASS"
+    },
+    {
+      "batch": 2048,
+      "kind": "async_shared",
+      "workers": 4,
+      "exact_task_qpos_qvel": "PASS"
+    },
+    {
+      "batch": 2048,
+      "kind": "async_shared",
+      "workers": 8,
+      "exact_task_qpos_qvel": "PASS"
+    }
+  ],
+  "profiles": [
+    {
+      "batch": 256,
+      "workers": 4,
+      "kind": "threads",
+      "first_timestep_workers": [
+        "         70657 function calls (68127 primitive calls) in 0.244 seconds\n\n   Ordered by: internal time\n   List reduced from 104 to 25 due to restriction <25>\n\n   ncalls  tottime  percall  cumtime  percall filename:lineno(function)\n3840/3700    0.048    0.000    0.060    0.000 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/gymnasium_robotics/utils/mujoco_utils.py:180(get_joint_qpos)\n3840/3750    0.046    0.000    0.058    0.000 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/gymnasium_robotics/utils/mujoco_utils.py:201(get_joint_qvel)\n9728/8883    0.027    0.000    0.024    0.000 {built-in method mujoco._functions.mj_name2id}\n  512/502    0.012    0.000    0.014    0.000 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/gymnasium_robotics/utils/mujoco_utils.py:130(set_joint_qpos)\n      256    0.011    0.000    0.012    0.000 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/gymnasium_robotics/utils/rotations.py:162(mat2euler)\n     9472    0.009    0.000    0.009    0.000 {method 'copy' of 'numpy.ndarray' objects}\n  256/241    0.008    0.000    0.126    0.001 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/gymnasium_robotics/utils/mujoco_utils.py:23(robot_get_obs)\n  256/238    0.006    0.000    0.156    0.001 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/gymnasium_robotics/envs/fetch/fetch_env.py:312(generate_mujoco_observations)\n      256    0.006    0.000    0.006    0.000 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/gymnasium_robotics/utils/mujoco_utils.py:83(reset_mocap2body_xpos)\n  512/510    0.004    0.000    0.010    0.000 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/gymnasium_robotics/utils/mujoco_utils.py:228(get_site_xvelp)\n    256/3    0.004    0.000    0.001    0.000 {built-in method mujoco._functions.mj_step}\n     1546    0.004    0.000    0.004    0.000 {built-in method numpy.array}\n    257/2    0.004    0.000    0.243    0.121 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/gymnasium_robotics/envs/robot_env.py:114(step)\n      512    0.003    0.000    0.005    0.000 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/numpy/linalg/_linalg.py:2598(norm)\n      512    0.003    0.000    0.007    0.000 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/numpy/lib/_shape_base_impl.py:719(array_split)\n  256/238    0.003    0.000    0.179    0.001 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/gymnasium_robotics/envs/fetch/fetch_env.py:107(_get_obs)\n      256    0.003    0.000    0.005    0.000 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/gymnasium_robotics/envs/fetch/fetch_env.py:85(_set_action)\n      256    0.003    0.000    0.013    0.000 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/gymnasium_robotics/utils/mujoco_utils.py:51(mocap_set_action)\n  768/759    0.003    0.000    0.003    0.000 {built-in method mujoco._functions.mj_jacSite}\n   256/82    0.002    0.000    0.001    0.000 {built-in method mujoco._functions.mj_forward}\n      512    0.002    0.000    0.007    0.000 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/gymnasium_robotics/envs/fetch/fetch_env.py:16(goal_distance)\n      512    0.002    0.000    0.002    0.000 {method 'astype' of 'numpy.generic' objects}\n      256    0.002    0.000    0.002    0.000 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/numpy/_core/_methods.py:96(_clip)\n     4096    0.001    0.000    0.001    0.000 {method 'startswith' of 'str' objects}\n      512    0.001    0.000    0.003    0.000 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/gymnasium_robotics/utils/mujoco_utils.py:222(get_site_xpos)\n\n\n",
+        "",
+        "",
+        ""
+      ]
+    },
+    {
+      "batch": 256,
+      "workers": 8,
+      "kind": "threads",
+      "first_timestep_workers": [
+        "         62717 function calls (58379 primitive calls) in 0.202 seconds\n\n   Ordered by: internal time\n   List reduced from 104 to 25 due to restriction <25>\n\n   ncalls  tottime  percall  cumtime  percall filename:lineno(function)\n3470/2915    0.040    0.000    0.043    0.000 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/gymnasium_robotics/utils/mujoco_utils.py:180(get_joint_qpos)\n3465/3405    0.038    0.000    0.048    0.000 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/gymnasium_robotics/utils/mujoco_utils.py:201(get_joint_qvel)\n8791/6656    0.022    0.000    0.017    0.000 {built-in method mujoco._functions.mj_name2id}\n  468/455    0.010    0.000    0.012    0.000 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/gymnasium_robotics/utils/mujoco_utils.py:130(set_joint_qpos)\n      231    0.009    0.000    0.010    0.000 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/gymnasium_robotics/utils/rotations.py:162(mat2euler)\n     8287    0.007    0.000    0.007    0.000 {method 'copy' of 'numpy.ndarray' objects}\n  231/190    0.006    0.000    0.093    0.000 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/gymnasium_robotics/utils/mujoco_utils.py:23(robot_get_obs)\n  231/184    0.006    0.000    0.113    0.001 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/gymnasium_robotics/envs/fetch/fetch_env.py:312(generate_mujoco_observations)\n      236    0.006    0.000    0.006    0.000 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/gymnasium_robotics/utils/mujoco_utils.py:83(reset_mocap2body_xpos)\n  463/453    0.004    0.000    0.008    0.000 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/gymnasium_robotics/utils/mujoco_utils.py:228(get_site_xvelp)\n     1414    0.004    0.000    0.004    0.000 {built-in method numpy.array}\n    237/1    0.003    0.000    0.202    0.202 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/gymnasium_robotics/envs/robot_env.py:114(step)\n      472    0.003    0.000    0.006    0.000 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/numpy/lib/_shape_base_impl.py:719(array_split)\n      462    0.003    0.000    0.005    0.000 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/numpy/linalg/_linalg.py:2598(norm)\n  231/184    0.003    0.000    0.147    0.001 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/gymnasium_robotics/envs/fetch/fetch_env.py:107(_get_obs)\n      236    0.003    0.000    0.005    0.000 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/gymnasium_robotics/envs/fetch/fetch_env.py:85(_set_action)\n      236    0.003    0.000    0.011    0.000 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/gymnasium_robotics/utils/mujoco_utils.py:51(mocap_set_action)\n  694/688    0.002    0.000    0.002    0.000 {built-in method mujoco._functions.mj_jacSite}\n    240/1    0.002    0.000    0.201    0.201 {built-in method mujoco._functions.mj_step}\n    232/8    0.002    0.000    0.000    0.000 {built-in method mujoco._functions.mj_forward}\n      462    0.002    0.000    0.006    0.000 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/gymnasium_robotics/envs/fetch/fetch_env.py:16(goal_distance)\n      462    0.001    0.000    0.001    0.000 {method 'astype' of 'numpy.generic' objects}\n      236    0.001    0.000    0.001    0.000 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/numpy/_core/_methods.py:96(_clip)\n     3712    0.001    0.000    0.001    0.000 {method 'startswith' of 'str' objects}\n      236    0.001    0.000    0.001    0.000 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/numpy/_core/numeric.py:97(zeros_like)\n\n\n",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ]
+    },
+    {
+      "batch": 256,
+      "workers": 4,
+      "kind": "async_shared",
+      "first_timestep_workers": [
+        "         17638 function calls in 0.119 seconds\n\n   Ordered by: internal time\n   List reduced from 82 to 25 due to restriction <25>\n\n   ncalls  tottime  percall  cumtime  percall filename:lineno(function)\n       64    0.067    0.001    0.067    0.001 {built-in method mujoco._functions.mj_step}\n      960    0.010    0.000    0.012    0.000 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/gymnasium_robotics/utils/mujoco_utils.py:180(get_joint_qpos)\n      960    0.010    0.000    0.012    0.000 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/gymnasium_robotics/utils/mujoco_utils.py:201(get_joint_qvel)\n       64    0.003    0.000    0.003    0.000 {built-in method mujoco._functions.mj_forward}\n     2432    0.003    0.000    0.003    0.000 {built-in method mujoco._functions.mj_name2id}\n       64    0.002    0.000    0.003    0.000 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/gymnasium_robotics/utils/rotations.py:162(mat2euler)\n      128    0.002    0.000    0.003    0.000 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/gymnasium_robotics/utils/mujoco_utils.py:130(set_joint_qpos)\n     2368    0.002    0.000    0.002    0.000 {method 'copy' of 'numpy.ndarray' objects}\n       64    0.002    0.000    0.026    0.000 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/gymnasium_robotics/utils/mujoco_utils.py:23(robot_get_obs)\n       64    0.001    0.000    0.001    0.000 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/gymnasium_robotics/utils/mujoco_utils.py:83(reset_mocap2body_xpos)\n       64    0.001    0.000    0.034    0.001 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/gymnasium_robotics/envs/fetch/fetch_env.py:312(generate_mujoco_observations)\n      128    0.001    0.000    0.002    0.000 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/gymnasium_robotics/utils/mujoco_utils.py:228(get_site_xvelp)\n      385    0.001    0.000    0.001    0.000 {built-in method numpy.array}\n       64    0.001    0.000    0.118    0.002 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/gymnasium_robotics/envs/robot_env.py:114(step)\n      128    0.001    0.000    0.002    0.000 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/numpy/lib/_shape_base_impl.py:719(array_split)\n      128    0.001    0.000    0.001    0.000 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/numpy/linalg/_linalg.py:2598(norm)\n       64    0.001    0.000    0.035    0.001 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/gymnasium_robotics/envs/fetch/fetch_env.py:107(_get_obs)\n       64    0.001    0.000    0.003    0.000 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/gymnasium_robotics/utils/mujoco_utils.py:51(mocap_set_action)\n       64    0.001    0.000    0.001    0.000 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/gymnasium_robotics/envs/fetch/fetch_env.py:85(_set_action)\n      128    0.000    0.000    0.002    0.000 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/gymnasium_robotics/envs/fetch/fetch_env.py:16(goal_distance)\n      192    0.000    0.000    0.000    0.000 {built-in method mujoco._functions.mj_jacSite}\n      128    0.000    0.000    0.000    0.000 {method 'astype' of 'numpy.generic' objects}\n       64    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/numpy/_core/_methods.py:96(_clip)\n     1024    0.000    0.000    0.000    0.000 {method 'startswith' of 'str' objects}\n       64    0.000    0.000    0.001    0.000 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/gymnasium_robotics/utils/mujoco_utils.py:34(ctrl_set_action)\n\n\n",
+        null,
+        null,
+        null
+      ]
+    },
+    {
+      "batch": 256,
+      "workers": 8,
+      "kind": "async_shared",
+      "first_timestep_workers": [
+        "         8838 function calls in 0.067 seconds\n\n   Ordered by: internal time\n   List reduced from 82 to 25 due to restriction <25>\n\n   ncalls  tottime  percall  cumtime  percall filename:lineno(function)\n       32    0.033    0.001    0.033    0.001 {built-in method mujoco._functions.mj_step}\n      480    0.007    0.000    0.009    0.000 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/gymnasium_robotics/utils/mujoco_utils.py:180(get_joint_qpos)\n      480    0.007    0.000    0.009    0.000 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/gymnasium_robotics/utils/mujoco_utils.py:201(get_joint_qvel)\n     1216    0.003    0.000    0.003    0.000 {built-in method mujoco._functions.mj_name2id}\n       32    0.002    0.000    0.002    0.000 {built-in method mujoco._functions.mj_forward}\n       32    0.002    0.000    0.002    0.000 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/gymnasium_robotics/utils/rotations.py:162(mat2euler)\n     1184    0.001    0.000    0.001    0.000 {method 'copy' of 'numpy.ndarray' objects}\n       64    0.001    0.000    0.002    0.000 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/gymnasium_robotics/utils/mujoco_utils.py:130(set_joint_qpos)\n       32    0.001    0.000    0.019    0.001 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/gymnasium_robotics/utils/mujoco_utils.py:23(robot_get_obs)\n       32    0.001    0.000    0.001    0.000 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/gymnasium_robotics/utils/mujoco_utils.py:83(reset_mocap2body_xpos)\n       32    0.001    0.000    0.024    0.001 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/gymnasium_robotics/envs/fetch/fetch_env.py:312(generate_mujoco_observations)\n       64    0.001    0.000    0.001    0.000 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/gymnasium_robotics/utils/mujoco_utils.py:228(get_site_xvelp)\n      193    0.001    0.000    0.001    0.000 {built-in method numpy.array}\n       32    0.000    0.000    0.066    0.002 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/gymnasium_robotics/envs/robot_env.py:114(step)\n       64    0.000    0.000    0.001    0.000 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/numpy/linalg/_linalg.py:2598(norm)\n       32    0.000    0.000    0.002    0.000 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/gymnasium_robotics/utils/mujoco_utils.py:51(mocap_set_action)\n       64    0.000    0.000    0.001    0.000 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/numpy/lib/_shape_base_impl.py:719(array_split)\n       32    0.000    0.000    0.001    0.000 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/gymnasium_robotics/envs/fetch/fetch_env.py:85(_set_action)\n       32    0.000    0.000    0.024    0.001 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/gymnasium_robotics/envs/fetch/fetch_env.py:107(_get_obs)\n       96    0.000    0.000    0.000    0.000 {built-in method mujoco._functions.mj_jacSite}\n       64    0.000    0.000    0.001    0.000 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/gymnasium_robotics/envs/fetch/fetch_env.py:16(goal_distance)\n       64    0.000    0.000    0.000    0.000 {method 'astype' of 'numpy.generic' objects}\n       32    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/numpy/_core/_methods.py:96(_clip)\n       32    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/numpy/_core/numeric.py:97(zeros_like)\n       32    0.000    0.000    0.001    0.000 /oscar/scratch/sboughan/venvs/se-s3b-fetch311/lib/python3.12/site-packages/gymnasium_robotics/utils/mujoco_utils.py:34(ctrl_set_action)\n\n\n",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    }
+  ],
+  "scope": "CPU-only source task/shard transport diagnostic; no full State or renderer acceptance",
+  "cpu_topology": {
+    "24": {
+      "physical_package_id": "1",
+      "core_id": "0",
+      "thread_siblings_list": "24"
+    },
+    "25": {
+      "physical_package_id": "1",
+      "core_id": "1",
+      "thread_siblings_list": "25"
+    },
+    "26": {
+      "physical_package_id": "1",
+      "core_id": "2",
+      "thread_siblings_list": "26"
+    },
+    "27": {
+      "physical_package_id": "1",
+      "core_id": "3",
+      "thread_siblings_list": "27"
+    },
+    "28": {
+      "physical_package_id": "1",
+      "core_id": "4",
+      "thread_siblings_list": "28"
+    },
+    "29": {
+      "physical_package_id": "1",
+      "core_id": "5",
+      "thread_siblings_list": "29"
+    },
+    "30": {
+      "physical_package_id": "1",
+      "core_id": "6",
+      "thread_siblings_list": "30"
+    },
+    "31": {
+      "physical_package_id": "1",
+      "core_id": "9",
+      "thread_siblings_list": "31"
+    }
+  }
+}

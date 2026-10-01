@@ -39,13 +39,13 @@ def main(task, output):
                             snap = envs[0].get_state()
                             for env in envs[1:]:
                                 for other in actions[:11]:
-                                    env.step(other, capture="states")
+                                    env.step(other, frames=None)
                                 env.set_state(snap)
                                 equal_state(env.get_state(), snap)
                         outs = []
                         for env, group in zip(envs, refs):
                             expected = [ref.step(action[lane]) for lane, ref in enumerate(group)]
-                            out = env.step(action, capture="states")
+                            out = env.step(action, frames=None)
                             compare_output(out, expected)
                             full_compare(out["state"], group)
                             outs.append(out)

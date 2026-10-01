@@ -192,7 +192,7 @@ def test_persistent_height_preserves_source_precision(pair, scalar_type):
         destination.set_state(saved)
         exact(saved, destination.get_state())
         source.step(np.zeros(7))
-        e.step(np.zeros((2, 7)), capture="states")
+        e.step(np.zeros((2, 7)), frames=None)
         np.testing.assert_array_equal(e._simulator.envs[0].env.state, source.state)
     finally:
         source.close()
@@ -205,4 +205,4 @@ def test_sampled_configurations_are_supported_and_restorable(pair):
     e.reset(seed=17)
     assert torch.equal(e.get_variation(), torch.from_numpy(sampled))
     destination.set_state(e.get_state())
-    exact(e.step(np.zeros((2, 7)), capture="states"), destination.step(np.zeros((2, 7)), capture="states"))
+    exact(e.step(np.zeros((2, 7)), frames=None), destination.step(np.zeros((2, 7)), frames=None))

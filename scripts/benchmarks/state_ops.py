@@ -316,7 +316,7 @@ def run(args):
                 output["actions_lane_zero"] = [v.tolist() for v in source_actions]
             # Reach a nontrivial checkpoint using the public API.
             for action in actions[:2]:
-                a.step(action, capture="states")
+                a.step(action, frames=None)
             snapshot = a.get_state()
             payload = {
                 json.dumps(list(k) if isinstance(k, tuple) else [k]): v.detach().cpu().numpy()
@@ -338,7 +338,7 @@ def run(args):
 
             def divergence(target):
                 for action in actions[: args.history_steps]:
-                    target.step(action, capture="states")
+                    target.step(action, frames=None)
 
             def branch():
                 saved = a.get_state()
@@ -346,7 +346,7 @@ def run(args):
                 a.set_state(saved)
                 result = None
                 for action in actions[-2:]:
-                    result = a.step(action, capture="states")
+                    result = a.step(action, frames=None)
                 return result
 
             operations = (
@@ -354,7 +354,7 @@ def run(args):
                 if args.render_only
                 else [
                     ("reset", lambda: a.reset(seed=17), None),
-                    ("step", lambda: a.step(actions[-1], capture="states"), lambda: a.set_state(snapshot)),
+                    ("step", lambda: a.step(actions[-1], frames=None), lambda: a.set_state(snapshot)),
                     ("get_state", a.get_state, lambda: a.set_state(snapshot)),
                     ("set_state_same", lambda: a.set_state(snapshot), lambda: divergence(a)),
                     ("set_state_independent", lambda: b.set_state(snapshot), lambda: divergence(b)),

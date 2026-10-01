@@ -32,8 +32,8 @@ def _actions(n, seed=0):
 def test_step_is_stateful_and_returns_a_stepresult_carrying_the_state(env):
     env.reset(seed=0)
     before = env._get_render_state().clone()
-    out = env.step(_actions(6), capture="states")
-    assert set(out.keys()) == {"state"}, (
+    out = env.step(_actions(6), frames=None)
+    assert set(out.keys()) == {"state", "states", "valid", "state_valid"}, (
         "PushT has no reward and no termination in stable-envs and must omit them rather than fabricate zeros"
     )
     assert list(out.batch_size) == [6]
@@ -56,7 +56,7 @@ def test_snapshot_branch_equals_step_to_the_bit_on_the_same_state(env):
     st = env.reset(seed=2)
     a = _actions(6, 2)
     functional = branch_step(env, st, a)
-    stateful = env.step(a, capture="states")["state"]
+    stateful = env.step(a, frames=None)["state"]
     assert torch.equal(env._pack_render_state(functional), env._pack_render_state(stateful))
     assert torch.equal(functional["agent", "velocity"], stateful["agent", "velocity"])
 
@@ -98,7 +98,7 @@ def test_a_cell_without_dynamics_says_so_precisely():
 
     e = Renderless(num_envs=2, device="cpu")
     assert not e.has_dynamics
-    for call in (lambda: e.step(torch.zeros(2, 2), capture="states"), lambda: branch_step(e, e.reset(seed=0), torch.zeros(2, 2))):
+    for call in (lambda: e.step(torch.zeros(2, 2), frames=None), lambda: branch_step(e, e.reset(seed=0), torch.zeros(2, 2))):
         with pytest.raises(NotImplementedError) as exc:
             call()
         assert "full simulator semantics" in str(exc.value) and "Renderless" in str(exc.value)
@@ -110,7 +110,7 @@ def test_a_cell_without_dynamics_says_so_precisely():
 def test_the_step_result_is_built_by_the_shared_helper(env):
     """One helper, so forty cells cannot each get the batch size or the device subtly different."""
     env.reset(seed=0)
-    out = env.step(_actions(6), capture="states")
+    out = env.step(_actions(6), frames=None)
     assert isinstance(out, snv.StepResult)
     assert list(out.batch_size) == [6] and out.device == env.device
 
@@ -145,13 +145,13 @@ def test_a_cell_with_hidden_state_and_no_hook_fails_loudly_instead_of_reporting_
 def test_the_hook_reports_the_live_velocity_and_env_state_round_trips_through_step(env):
     env.reset(seed=6)
     assert float(env.state["agent", "velocity"].abs().max()) == 0.0
-    env.step(_actions(6, 6), capture="states")
+    env.step(_actions(6, 6), frames=None)
     live = env.state["agent", "velocity"]
     assert float(live.abs().max()) > 0.0, "after a step the agent is moving and state must say so"
     assert torch.equal(live, env._hidden_state()[("agent", "velocity")])
     # the whole point: state -> transition must reproduce the next step exactly
     a = _actions(6, 7)
-    assert torch.equal(env._pack_render_state(branch_step(env, env.state, a)), env._pack_render_state(env.step(a, capture="states")["state"]))
+    assert torch.equal(env._pack_render_state(branch_step(env, env.state, a)), env._pack_render_state(env.step(a, frames=None)["state"]))
 
 
 def test_pusht_declares_that_it_has_dynamics(env):

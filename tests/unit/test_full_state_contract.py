@@ -15,19 +15,19 @@ def test_full_snapshot_restores_future_and_has_no_aliases(name):
         action = torch.ones(2, env.action_dim, dtype=env.action_spec.dtype)
         if name == "PushT":
             action *= 250
-        env.step(action, capture="states")
+        env.step(action, frames=None)
         saved = env.get_state()
         assert isinstance(saved, TensorDict)
         for key in saved.keys(True, True):
             assert env.state_spec[key].dtype == saved[key].dtype
         frozen = saved.clone()
-        expected = env.step(action, capture="states")
+        expected = env.step(action, frames=None)
         for _ in range(3):
-            env.step(action, capture="states")
+            env.step(action, frames=None)
         assert (saved == frozen).all()
         assert env.set_state(saved) is None
         assert (env.get_state() == saved).all()
-        assert (env.step(action, capture="states") == expected).all()
+        assert (env.step(action, frames=None) == expected).all()
         for value in saved.values(True, True):
             value.zero_()
         assert (env.get_state() == expected["state"]).all()

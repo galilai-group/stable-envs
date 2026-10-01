@@ -1232,7 +1232,7 @@ def check_step_matches_reference(
             # ``step`` is stateful; what it RETURNS differs by cell (a StepResult TensorDict for a
             # migrated env, a packed tensor for the rest), so the reading is done by the
             # ``get_sim`` the caller supplied, which is the packed row on every path.
-            single.step(torch.as_tensor(a, dtype=torch.float32, device=dev).view(1, -1), capture="states")
+            single.step(torch.as_tensor(a, dtype=torch.float32, device=dev).view(1, -1), frames=None)
             gpu[i] = np.asarray(get_sim().detach().cpu().numpy(), np.float64).reshape(D)
 
         diffs.append(gpu - cpu)

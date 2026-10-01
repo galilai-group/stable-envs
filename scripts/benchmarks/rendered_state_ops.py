@@ -97,7 +97,7 @@ def run(a):
     rng = np.random.default_rng(12345)
     actions = [e.action_spec.sample(1, rng=rng) for _ in range(max(a.horizon, 10) + 2)]
     for x in actions[:2]:
-        e.step(x, capture="states")
+        e.step(x, frames=None)
     snapshot = e.get_state()
     synchronize()
     data["construction_and_preparation_seconds"] = time.perf_counter() - started
@@ -117,7 +117,7 @@ def run(a):
     def reset_prefix():
         e.reset(seed=17)
         for x in actions[:2]:
-            e.step(x, capture="states")
+            e.step(x, frames=None)
 
     def restore():
         e.set_state(snapshot)
@@ -128,10 +128,10 @@ def run(a):
     try:
         ops = data["operations"]
         for label, fn, prep in [
-            ("step_after_restore", lambda: e.step(actions[2], capture="states"), restore),
-            ("step_after_reset_prefix", lambda: e.step(actions[2], capture="states"), reset_prefix),
+            ("step_after_restore", lambda: e.step(actions[2], frames=None), restore),
+            ("step_after_reset_prefix", lambda: e.step(actions[2], frames=None), reset_prefix),
             ("get_state", e.get_state, restore),
-            ("set_state", restore, lambda: [e.step(x, capture="states") for x in actions[:8]]),
+            ("set_state", restore, lambda: [e.step(x, frames=None) for x in actions[:8]]),
             ("projection", lambda: project(snapshot), None),
             ("render_projected", lambda: e.render(projected), None),
             ("project_render_warm", lambda: frame(snapshot), None),
@@ -150,13 +150,13 @@ def run(a):
                     if mode == "branch":
                         checkpoint = e.get_state()
                         for x in actions[:8]:
-                            e.step(x, capture="states")
+                            e.step(x, frames=None)
                         e.set_state(checkpoint)
                     elif mode == "set":
                         e.set_state(snapshot)
                     value = None
                     for i, x in enumerate(actions[2 : 2 + a.horizon]):
-                        value = e.step(x, capture="states")["state"]
+                        value = e.step(x, frames=None)["state"]
                         if mode == "get":
                             value = e.get_state()
                         if scheduled(i, a.horizon, cadence):

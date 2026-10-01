@@ -12,7 +12,7 @@ Public surface::
     env   = snv.make("PushT")                   # strings are canonical class names
     state = env.reset(seed=0)                   # State: TensorDict, keys grouped by entity
     out   = env.step(actions)                   # stateful; read out["state"]
-    traj  = env.step(action_sequence, capture="states")  # [B, T, A] known actions
+    traj  = env.step(action_sequence, frames=None)  # [B, T, A] known actions
     px    = env.render(state)                   # Frame: (B,H,W,3) uint8 on device
     env.close()
 

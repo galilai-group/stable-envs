@@ -168,11 +168,11 @@ def test_unpack_and_state_never_alias_the_env_buffer():
     env = PushT(num_envs=4, device="cpu")
     env.reset(seed=0)
     a = torch.zeros(4, 2)
-    out = env.step(a, capture="states")
+    out = env.step(a, frames=None)
     snap = out["state"]["agent", "position"].clone()
     st = env.state
     snap2 = st["block", "position"].clone()
-    env.step(torch.full((4, 2), 300.0), capture="states")
+    env.step(torch.full((4, 2), 300.0), frames=None)
     assert torch.equal(out["state"]["agent", "position"], snap)
     assert torch.equal(st["block", "position"], snap2)
     td = env._unpack_render_state(env._get_render_state())

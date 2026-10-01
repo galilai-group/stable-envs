@@ -86,7 +86,7 @@ def _assert_bad_actions_rejected(env, action_dim):
         np.full((env.B, action_dim), np.inf),
     ):
         try:
-            env.step(action, capture="states")
+            env.step(action, frames=None)
         except ValueError:
             pass
         else:
@@ -118,19 +118,19 @@ def _warmstart_experiment(domain, env, reference):
     check_step_matches_reference(env, reference, actions[:prefix_steps])
     saved = env.get_state()
     for action in -actions[prefix_steps : prefix_steps + 9]:
-        env.step(action, capture="states")
+        env.step(action, frames=None)
     omitted = saved.clone()
     omitted["warmstart"] = env.get_state()["warmstart"]
     env.set_state(omitted)
     continuation = actions[prefix_steps : prefix_steps + 8]
-    bad_outputs = [env.step(action, capture="states") for action in continuation]
+    bad_outputs = [env.step(action, frames=None) for action in continuation]
     expected_outputs = [reference.step(action) for action in continuation]
     error_without = max(
         _max_error(actual, expected, exclude=(("state", "warmstart"),))
         for actual, expected in zip(bad_outputs, expected_outputs, strict=True)
     )
     env.set_state(saved)
-    good_outputs = [env.step(action, capture="states") for action in continuation]
+    good_outputs = [env.step(action, frames=None) for action in continuation]
     error_with_schema = max(
         _max_error(actual, expected)
         for actual, expected in zip(good_outputs, expected_outputs, strict=True)
@@ -224,7 +224,7 @@ def run_gate(device="cpu"):
 
                         other.reset(seed=seed + 991)
                         for action in -actions[:9]:
-                            other.step(action, capture="states")
+                            other.step(action, frames=None)
                         snapshot = env.get_state()
                         env.set_state(snapshot)
                         other.set_state(snapshot)
@@ -268,7 +268,7 @@ def run_gate(device="cpu"):
                     reward_state = _positive_state(domain, ref.get_state())
                     env.set_state(reward_state)
                     ref.set_state(reward_state)
-                    got, expected = env.step(np.zeros((batch, ref.action_dim)), capture="states"), ref.step(
+                    got, expected = env.step(np.zeros((batch, ref.action_dim)), frames=None), ref.step(
                         np.zeros((batch, ref.action_dim))
                     )
                     compare_state(got, expected)
@@ -314,7 +314,7 @@ def run_gate(device="cpu"):
                         _assert_bad_actions_rejected(env, ref.action_dim)
                         check_reset_matches_reference(env, ref, seed=31)
                         outside = np.full((1, ref.action_dim), 1.1)
-                        compare_state(env.step(outside, capture="states"), ref.step(outside))
+                        compare_state(env.step(outside, frames=None), ref.step(outside))
                         evidence.setdefault("action_validation", {})[domain] = {
                             "shape_and_nonfinite_rejected": True,
                             "finite_out_of_bounds_matches_historical_passthrough": True,

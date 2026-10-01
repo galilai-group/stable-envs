@@ -8,7 +8,7 @@ simulation without adding a shared Observation class.
   where simulator semantics are supported.
 - `set_state(full_state)` restores all required fields and returns `None`.
 - `step` returns State and the task's defined reward/success/done values.
-- `step(actions, capture=None)` accepts `[B,A]` or `[B,T,A]`. See [capture modes](../concepts/dynamics.md).
+- `step(actions, states=slice(None), frames=slice(-1,None))` accepts `[B,A]` or `[B,T,A]`. See [output selection](../concepts/dynamics.md).
 - `render(full_state)` projects internally and returns a uint8 Frame.
 - `close` and context-manager methods implement resource ownership.
 - State/action/frame/Variation specs describe shapes and dtypes; family validators

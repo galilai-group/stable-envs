@@ -1377,8 +1377,8 @@ def test_cuda_graph_step_matches_eager(env):
         # ``step`` is stateful and, for a migrated cell, returns a StepResult TensorDict
         # rather than the packed buffer. ``get_state()`` is the packed row on every path and is what
         # this comparison has always been about.
-        graphed.step(a, capture="states")
-        eager.step(a, capture="states")
+        graphed.step(a, frames=None)
+        eager.step(a, frames=None)
         sg = graphed.get_state().detach().cpu().numpy().copy()
         se_ = eager.get_state().detach().cpu().numpy().copy()
         worst = max(worst, float(np.abs(sg - se_).max()))
@@ -1403,8 +1403,8 @@ def test_cuda_graph_step_matches_eager(env):
     )
     eager.set_state(st2)
     a = torch.as_tensor(rng.uniform(lo, hi, (N, adim)).astype(np.float32), device="cuda")
-    graphed.step(a, capture="states")
-    eager.step(a, capture="states")
+    graphed.step(a, frames=None)
+    eager.step(a, frames=None)
     assert (
         np.abs(graphed.get_state().detach().cpu().numpy() - eager.get_state().detach().cpu().numpy()).max() == 0.0
     ), (

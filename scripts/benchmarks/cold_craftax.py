@@ -47,10 +47,10 @@ def main():
         try:
             timed("first_explicit_reset", lambda: env.reset(seed=17))
             action = env.action_spec.sample(1, rng=np.random.default_rng(12345))
-            timed("first_explicit_step", lambda: env.step(action, capture="states"))
+            timed("first_explicit_step", lambda: env.step(action, frames=None))
             state = timed("first_explicit_get_state", env.get_state)
             timed("first_explicit_set_state", lambda: env.set_state(state))
-            timed("second_step_after_compilation", lambda: env.step(action, capture="states"))
+            timed("second_step_after_compilation", lambda: env.step(action, frames=None))
         finally:
             env.close()
     else:

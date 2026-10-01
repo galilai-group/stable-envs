@@ -49,60 +49,74 @@ def _masked_outputs(result, active):
     return out
 
 
+def _selection(value, length, name):
+    if value is None:
+        return None
+    if not isinstance(value, slice):
+        raise TypeError(f"{name} must be a slice or None")
+    # Python handles clipping, negative indices/strides, and rejects zero strides.
+    return tuple(range(length)[value])
+
+
 @torch.no_grad()
-def step(env, actions, *, capture=None):
+def step(env, actions, *, states=slice(None), frames=slice(-1, None)):
     env._check_open("step")
     if not env.has_dynamics:
         from ._dynamics import no_dynamics
 
         no_dynamics(env, "step")
-    if capture not in (None, "states", "final_frame", "all_frames"):
-        raise ValueError('capture must be None, "states", "final_frame", or "all_frames"')
     acts, sequence = _actions(env, actions)
-    pixels = capture != "states"
-    if pixels and not getattr(env, "produces_rgb", True):
-        raise ValueError(f'{type(env).__name__} has no RGB output; use capture="states"')
     if not sequence:
-        out = env._step(acts)
-        if pixels:
-            frame = env.render(out["state"])
-            out["frame"] = frame
-            if capture == "all_frames":
-                out["frames"] = frame.unsqueeze(1)
-        return out
-
+        acts = acts.unsqueeze(1) if torch.is_tensor(acts) else np.expand_dims(acts, 1)
+    length = acts.shape[1]
+    state_indices = _selection(states, length, "states")
+    frame_indices = _selection(frames, length, "frames")
+    if frame_indices is not None and not getattr(env, "produces_rgb", True):
+        raise ValueError(f"{type(env).__name__} has no RGB output; use frames=None")
+    state_times, frame_times = set(state_indices or ()), set(frame_indices or ())
     if torch.is_tensor(acts) and acts.device.type != "cpu" and getattr(env, "execution_mode", None) == "DELEGATED_CPU":
-        # A supplied chunk needs one action transfer, not one synchronized transfer per timestep.
         acts = acts.detach().cpu().numpy()
-    history, states, frames, validity = [], [], [], []
-    advance = getattr(env, "_advance_without_snapshot", env._step) if capture == "final_frame" else env._step
+    history, saved_states, saved_frames, validity = [], {}, {}, []
+    advance = getattr(env, "_advance_without_snapshot", env._step)
     active = torch.ones(env.num_envs, dtype=torch.bool, device=env.device)
-    result = None
-    for t in range(acts.shape[1]):
+    result, live_state, live_frame = None, None, None
+    for t in range(length):
         validity.append(active.clone())
-        if bool(active.all()):
+        if t == 0 or bool(active.all()):
             result = advance(acts[:, t])
+            live_state, live_frame = result.get("state", None), None
         elif bool(active.any()):
-            # Family hook must actually skip these lanes, not step then restore them.
+            # Family hook actually skips finished lanes, without step/restore.
             result = advance(acts[:, t], active=active)
-        out = _masked_outputs(result, active)
-        history.append(out.exclude("state"))
-        if capture in (None, "states"):
-            states.append(out["state"])
-        if capture == "all_frames":
-            frames.append(env.render(out["state"]))
-        active = active & ~_done(result)
+            live_state, live_frame = result.get("state", None), None
+        history.append(_masked_outputs(result, active).exclude("state"))
+        if t in state_times or t in frame_times or t == length - 1:
+            if live_state is None:
+                live_state = env.get_state()
+            if t in state_times:
+                saved_states[t] = live_state
+            if t in frame_times:
+                if live_frame is None:
+                    live_frame = env.render(live_state)
+                saved_frames[t] = live_frame
+        if t + 1 < length:
+            active = active & ~_done(result)
 
-    # A [B] result can contain [B,T] histories alongside its [B] final State.
-    final_state = result["state"] if "state" in result.keys() else env.get_state()
-    result = TensorDict({"state": final_state}, [env.num_envs], device=env.device)
-    result.update(torch.stack(history, dim=1))
-    result["valid"] = torch.stack(validity, dim=1)
-    if states:
-        result["states"] = torch.stack(states, dim=1)
-    if frames:
-        result["frames"] = torch.stack(frames, dim=1)
-        result["frame"] = result["frames"][:, -1]
-    elif pixels:
-        result["frame"] = env.render(result["state"])
-    return result
+    out = TensorDict({"state": live_state}, [env.num_envs], device=env.device)
+    out.update(torch.stack(history, dim=1) if sequence else history[0])
+    out["valid"] = torch.stack(validity, dim=1)
+    if state_indices is not None:
+        out["states"] = (
+            torch.stack([saved_states[t] for t in state_indices], dim=1)
+            if state_indices
+            else live_state.unsqueeze(1)[:, :0].clone()
+        )
+        out["state_valid"] = out["valid"][:, list(state_indices)]
+    if frame_indices is not None:
+        out["frames"] = (
+            torch.stack([saved_frames[t] for t in frame_indices], dim=1)
+            if frame_indices
+            else torch.empty((env.num_envs, 0, *env.frame_spec.shape), dtype=env.frame_spec.dtype, device=env.device)
+        )
+        out["frame_valid"] = out["valid"][:, list(frame_indices)]
+    return out

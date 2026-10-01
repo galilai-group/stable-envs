@@ -44,11 +44,21 @@ def test_cartpole_action_and_step_result_contract():
     with se.make("CartPole", num_envs=1, device="cpu") as env:
         assert env.action_spec.dtype == torch.int64
         assert env.action_spec.discrete_n == 2
-        out = env.step(np.zeros((1, 1), np.int64), capture="states")
-        assert set(out.keys()) == {"state", "reward", "terminated", "truncated", "observation", "info_state"}
+        out = env.step(np.zeros((1, 1), np.int64), frames=None)
+        assert set(out.keys()) == {
+            "state",
+            "reward",
+            "terminated",
+            "truncated",
+            "observation",
+            "info_state",
+            "states",
+            "valid",
+            "state_valid",
+        }
         assert out["reward"].item() == 1.0
         with pytest.raises(AssertionError):
-            env.step(np.zeros((1, 1), np.float32), capture="states")
+            env.step(np.zeros((1, 1), np.float32), frames=None)
 
 
 def test_pendulum_action_clipping_and_zero_reward_state():
@@ -60,9 +70,9 @@ def test_pendulum_action_clipping_and_zero_reward_state():
         state["torque"].zero_()
         state["task", "has_last_u"].fill_(True)
         env.set_state(state)
-        out = env.step(np.zeros((1, 1), np.float32), capture="states")
+        out = env.step(np.zeros((1, 1), np.float32), frames=None)
         assert out["reward"].item() == 0.0
-        out = env.step(np.asarray([[3.25]], np.float64), capture="states")
+        out = env.step(np.asarray([[3.25]], np.float64), frames=None)
         assert out["state", "torque"].item() == 2.0
 
 

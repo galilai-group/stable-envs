@@ -158,7 +158,7 @@ def main():
             env.set_state(state)
             if not bool(state["lifecycle", "terminated"][0]):
                 expected, reward, done, truncated, _ = source.step(action)
-                result = env.step([action], capture="states")
+                result = env.step([action], frames=None)
             else:
                 expected = np.asarray(
                     jax.jit(source._env.get_obs, backend=os.environ["CRAFTAX_JAX_BACKEND"])(source._state)
@@ -192,7 +192,7 @@ def main():
             with se.make(args.name, num_envs=batch, device=args.device) as env:
                 state = env.reset(seed=17)
                 record = {
-                    "step": timed(lambda: env.step([0] * batch, capture="states")),
+                    "step": timed(lambda: env.step([0] * batch, frames=None)),
                     "reset": timed(lambda: env.reset(seed=17)),
                     "get_state": timed(env.get_state),
                     "set_state": timed(lambda: env.set_state(state)),

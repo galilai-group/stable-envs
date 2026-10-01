@@ -137,7 +137,7 @@ def test_state_roundtrip_reset_replay_and_atomic_validation(family):
         equal(saved, b.get_state())
         for i in range(6):
             action = torch.full((2, 5), 0.2 if i % 2 else -0.4, dtype=torch.float64 if i % 2 else torch.float32)
-            equal(a.step(action, capture="states"), b.step(action, capture="states"))
+            equal(a.step(action, frames=None), b.step(action, frames=None))
         equal(saved, immutable)
         a.set_state(saved)
         b.set_state(saved)
@@ -331,7 +331,7 @@ def test_step_delegation_substeps_and_no_implicit_restore(family):
             patch.object(mujoco, "mj_step", observe),
             patch.object(env._simulator, "set_state", side_effect=AssertionError("implicit restore")),
         ):
-            env.step(np.array([[2.0, -3.0, 0.2, 0.8, -0.7]], np.float64), capture="states")
+            env.step(np.array([[2.0, -3.0, 0.2, 0.8, -0.7]], np.float64), frames=None)
         assert records == [25] and raw.data.time == pytest.approx(before + 0.05)
         assert np.array_equal(raw.unnormalize_action(np.ones(5)), np.array([0.05, 0.05, 0.05, 0.3, 1.0]))
 
@@ -346,7 +346,7 @@ def test_contact_histories_oracle_and_independent_restore(interaction, oracle):
             a.reset(17, {"task_id": 1, "variation": []})
             raw.reset(seed=17, options={"task_id": 1, "variation": []})
             for _ in range(4):
-                b.step(np.array([[0.4, -0.3, 0.2, 0.6, -0.8]]), capture="states")
+                b.step(np.array([[0.4, -0.3, 0.2, 0.6, -0.8]]), frames=None)
             u = a._simulator.envs[0]
             if interaction == "cube":
                 target = u.data.joint("object_joint_0").qpos[:3].copy()
@@ -376,11 +376,11 @@ def test_contact_histories_oracle_and_independent_restore(interaction, oracle):
                     frozen = saved.clone()
                     b.set_state(saved)
                     equal(saved, b.get_state())
-                out = a.step(action[None], capture="states")
+                out = a.step(action[None], frames=None)
                 raw.step(action)
                 assert_oracle(u, raw, oracle)
                 if i >= 20:
-                    equal(out, b.step(action[None], capture="states"))
+                    equal(out, b.step(action[None], frames=None))
                 for contact in u.data.contact:
                     pair = tuple(
                         u.model.body(int(u.model.geom_bodyid[g])).name for g in (contact.geom1, contact.geom2)
@@ -423,7 +423,7 @@ def test_contact_histories_oracle_and_independent_restore(interaction, oracle):
             b.set_state(saved)
             for i in range(8):
                 action = np.array([[0.2, -0.3, -0.1, 0.35, 0.4]], np.float32 if i % 2 else np.float64)
-                equal(a.step(action, capture="states"), b.step(action, capture="states"))
+                equal(a.step(action, frames=None), b.step(action, frames=None))
     finally:
         raw.close()
 
@@ -442,7 +442,7 @@ def test_solver_and_cached_pose_fields_are_behaviorally_relevant(family):
             act = np.zeros((1, 5))
             act[0, :3] = np.clip((target - u.data.site_xpos[u._pinch_site_id]) / 0.05, -1, 1)
             act[0, 4] = 1 if family == "Scene" and i >= 9 else -1
-            a.step(act, capture="states")
+            a.step(act, frames=None)
         saved = a.get_state()
         b.set_state(saved)
         b._simulator.envs[0].data.site_xpos[u._pinch_site_id, 0] += 0.001
@@ -450,8 +450,8 @@ def test_solver_and_cached_pose_fields_are_behaviorally_relevant(family):
         if family == "Cube":
             action[0, :3] = np.clip((fixed_target - u.data.site_xpos[u._pinch_site_id]) / 0.05, -1, 1)
             action[0, 3:] = [0.0, -1.0]
-        baseline = a.step(action, capture="states")
-        changed = b.step(action, capture="states")
+        baseline = a.step(action, frames=None)
+        changed = b.step(action, frames=None)
         assert not torch.equal(baseline["state", "physics", "qpos"], changed["state", "physics", "qpos"])
         a.set_state(saved)
         b.set_state(saved)
@@ -459,7 +459,7 @@ def test_solver_and_cached_pose_fields_are_behaviorally_relevant(family):
             b._simulator.envs[0].data.qacc_warmstart[:] = 0
         else:
             b._simulator.envs[0].data.qacc_warmstart[:] += 1e6
-        baseline, changed = a.step(action, capture="states"), b.step(action, capture="states")
+        baseline, changed = a.step(action, frames=None), b.step(action, frames=None)
         assert not torch.equal(baseline["state", "physics", "qpos"], changed["state", "physics", "qpos"])
         print(
             "WARMSTART_SENSITIVITY",
@@ -504,7 +504,7 @@ def test_seed_metadata_is_not_needed_after_arbitrary_width_seed(family):
         state = a.get_state()
         b.set_state(state)
         equal(a.reset(), b.reset())
-        equal(a.step(np.zeros((1, 5)), capture="states"), b.step(np.zeros((1, 5)), capture="states"))
+        equal(a.step(np.zeros((1, 5)), frames=None), b.step(np.zeros((1, 5)), frames=None))
 
 
 @pytest.mark.parametrize("family", CLASSES)
@@ -520,7 +520,7 @@ def test_size_dtype_model_reconstruction_and_oracle(family, size, oracle):
             assert_oracle(a._simulator.envs[0], raw, oracle)
             b.set_state(a.get_state())
             equal(a.get_state(), b.get_state())
-            equal(a.step(np.ones((1, 5)) * 0.1, capture="states"), b.step(np.ones((1, 5)) * 0.1, capture="states"))
+            equal(a.step(np.ones((1, 5)) * 0.1, frames=None), b.step(np.ones((1, 5)) * 0.1, frames=None))
             equal(a.reset(), b.reset())
     finally:
         raw.close()

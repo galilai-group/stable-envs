@@ -1,0 +1,95 @@
+{
+  "status": "PASS",
+  "device": "cpu",
+  "host": "gpu2503.oscar.ccv.brown.edu",
+  "cpu_affinity": [
+    2,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15
+  ],
+  "baseline_sha256": "8947cb8324f68297aaa2fdbfb900503c9e6bbe26a981f805f96dd7d4f1f7af68",
+  "gpu": null,
+  "torch": "2.14.0+cu126",
+  "numpy": "2.5.3",
+  "gates": [
+    {
+      "env": "FetchReach",
+      "batch": 64,
+      "default_workers": 4,
+      "state_task_thread_and_endpoint": "PASS"
+    },
+    {
+      "env": "FetchReachDense",
+      "batch": 64,
+      "default_workers": 4,
+      "state_task_thread_and_endpoint": "PASS"
+    },
+    {
+      "env": "FetchReachDict",
+      "batch": 64,
+      "default_workers": 4,
+      "state_task_thread_and_endpoint": "PASS"
+    },
+    {
+      "env": "FetchPush",
+      "batch": 64,
+      "default_workers": 4,
+      "state_task_thread_and_endpoint": "PASS"
+    },
+    {
+      "env": "FetchPushDense",
+      "batch": 64,
+      "default_workers": 4,
+      "state_task_thread_and_endpoint": "PASS"
+    },
+    {
+      "env": "FetchPushDict",
+      "batch": 64,
+      "default_workers": 4,
+      "state_task_thread_and_endpoint": "PASS"
+    },
+    {
+      "env": "FetchSlide",
+      "batch": 64,
+      "default_workers": 4,
+      "state_task_thread_and_endpoint": "PASS"
+    },
+    {
+      "env": "FetchSlideDense",
+      "batch": 64,
+      "default_workers": 4,
+      "state_task_thread_and_endpoint": "PASS"
+    },
+    {
+      "env": "FetchSlideDict",
+      "batch": 64,
+      "default_workers": 4,
+      "state_task_thread_and_endpoint": "PASS"
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 64,
+      "default_workers": 4,
+      "state_task_thread_and_endpoint": "PASS"
+    },
+    {
+      "env": "FetchPickAndPlaceDense",
+      "batch": 64,
+      "default_workers": 4,
+      "state_task_thread_and_endpoint": "PASS"
+    },
+    {
+      "env": "FetchPickAndPlaceDict",
+      "batch": 64,
+      "default_workers": 4,
+      "state_task_thread_and_endpoint": "PASS"
+    }
+  ],
+  "timings": [],
+  "scope": "Known-action chunks; not closed-loop policy throughput. Frames use existing OpenGL backend."
+}

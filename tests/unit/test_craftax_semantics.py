@@ -40,7 +40,7 @@ def test_source_reset_all_actions_and_reset_replay(name, seed):
         assert_engine(source, env, state)
         for action in range(source.action_space.n):
             output, reward, done, truncated, _ = source.step(action)
-            actual = env.step(torch.tensor([action], dtype=torch.int32), capture="states")
+            actual = env.step(torch.tensor([action], dtype=torch.int32), frames=None)
             assert_engine(source, env, actual["state"])
             assert float(actual["reward"][0]) == reward
             assert bool(actual["terminated"][0]) == done
@@ -67,7 +67,7 @@ def test_recorded_gameplay_different_history_continuation(name, case):
         source.reset(seed=999)
         env.reset(seed=999)
         for action in [1, 3, 5]:
-            env.step([action], capture="states")
+            env.step([action], frames=None)
             source.step(action)
         state = fixture(env, name, case)
         restore_oracle(source, env, state)
@@ -75,7 +75,7 @@ def test_recorded_gameplay_different_history_continuation(name, case):
         assert_state_equal(state, env.get_state())
         if bool(state["lifecycle", "terminated"][0]):
             with pytest.raises(RuntimeError, match="terminal"):
-                env.step([0], capture="states")
+                env.step([0], frames=None)
             # Explicit terminal source State remains readable and restorable.
             np.testing.assert_array_equal(
                 np.asarray(source._env.get_obs(source._state)),
@@ -83,7 +83,7 @@ def test_recorded_gameplay_different_history_continuation(name, case):
             )
             return
         output, reward, done, truncated, _ = source.step(ACTIONS[case])
-        result = env.step([ACTIONS[case]], capture="states")
+        result = env.step([ACTIONS[case]], frames=None)
         assert_engine(source, env, result["state"])
         assert float(result["reward"][0]) == reward
         assert bool(result["terminated"][0]) == done
@@ -131,9 +131,9 @@ def test_batched_restore_is_atomic_and_owning(name):
             env.set_state(original[:2])
         for action in [[-1, 0, 0], [0.5, 0, 0], [0, 0, 999], [True, False, True], [0, 0]]:
             with pytest.raises(ValueError):
-                env.step(action, capture="states")
+                env.step(action, frames=None)
             assert_state_equal(original, env.get_state())
-        result = env.step([1, 2, 3], capture="states")["state"]
+        result = env.step([1, 2, 3], frames=None)["state"]
         env.set_state(original)
         assert_state_equal(result, branch_step(env, original, torch.tensor([1, 2, 3])))
         assert_state_equal(original, env.get_state())
@@ -158,10 +158,10 @@ def test_independent_instances_and_step_never_calls_set_state(name, monkeypatch)
 
         monkeypatch.setattr(a._simulator, "set_state", forbidden)
         for action in [5, 0, 1, 2]:
-            assert_state_equal(a.step([action], capture="states")["state"], b.step([action], capture="states")["state"])
+            assert_state_equal(a.step([action], frames=None)["state"], b.step([action], frames=None)["state"])
         a.reset(seed=2)
         before = b.get_state()
-        a.step([0], capture="states")
+        a.step([0], frames=None)
         assert_state_equal(before, b.get_state())
         with pytest.raises((TypeError, ValueError)):
             b.set_state(torch.zeros((1, 1345)))
@@ -181,7 +181,7 @@ def test_full_symbolic_preserves_source_values_outside_declared_box():
         env.set_state(state)
         restore_oracle(source, env, state)
         expected, _, _, _, _ = source.step(0)
-        env.step([0], capture="states")
+        env.step([0], frames=None)
         actual = symbolic_output(env)
         np.testing.assert_array_equal(actual, expected)
         assert actual.shape == (8268,) and actual.dtype == np.float32
@@ -198,7 +198,7 @@ def test_batch_matches_three_independent_source_instances(name):
             assert_engine(source, env, state[lane : lane + 1])
         for actions in [[0, 5, 1], [2, 0, 3], [5, 4, 0]]:
             expected = [source.step(action) for source, action in zip(sources, actions, strict=True)]
-            result = env.step(actions, capture="states")
+            result = env.step(actions, frames=None)
             for lane, source in enumerate(sources):
                 assert_engine(source, env, result["state"][lane : lane + 1])
                 assert float(result["reward"][lane]) == expected[lane][1]
@@ -296,7 +296,7 @@ def test_full_symbolic_preserves_reset_output_cache():
         np.testing.assert_array_equal(symbolic_output(env), expected)
         assert ("source_cache", "last_symbolic") in state.keys(True, True)
         original = state.clone()
-        env.step([0, 1, 5], capture="states")
+        env.step([0, 1, 5], frames=None)
         env.reset(seed=999)
         env.set_state(state)
         assert_state_equal(original, env.get_state())

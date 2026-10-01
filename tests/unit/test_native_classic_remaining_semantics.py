@@ -51,10 +51,20 @@ def test_remaining_discrete_action_contract(name):
     with se.make(name, num_envs=1, device="cpu") as env:
         assert env.action_spec.dtype == torch.int64
         assert env.action_spec.discrete_n == 3
-        out = env.step(np.ones((1, 1), np.int64), capture="states")
-        assert set(out.keys()) == {"state", "reward", "terminated", "truncated", "observation", "info_state"}
+        out = env.step(np.ones((1, 1), np.int64), frames=None)
+        assert set(out.keys()) == {
+            "state",
+            "reward",
+            "terminated",
+            "truncated",
+            "observation",
+            "info_state",
+            "states",
+            "valid",
+            "state_valid",
+        }
         with pytest.raises((AssertionError, TypeError)):
-            env.step(np.ones((1, 1), np.float32), capture="states")
+            env.step(np.ones((1, 1), np.float32), frames=None)
 
 
 def test_continuous_mountain_car_dtype_transition_and_unclipped_action_cost():
@@ -62,16 +72,16 @@ def test_continuous_mountain_car_dtype_transition_and_unclipped_action_cost():
         reset = env.reset(seed=17)
         assert not reset["task", "state_is_float32"].item()
         precise = np.asarray([[0.1234567890123]], np.float64)
-        out = env.step(precise, capture="states")
+        out = env.step(precise, frames=None)
         assert out["state", "task", "state_is_float32"].item()
         saved = out["state"]
-        expected = env.step(np.zeros((1, 1), np.float32), capture="states")
+        expected = env.step(np.zeros((1, 1), np.float32), frames=None)
         env.set_state(saved)
-        actual = env.step(np.zeros((1, 1), np.float32), capture="states")
+        actual = env.step(np.zeros((1, 1), np.float32), frames=None)
         assert (actual == expected).all()
 
         env.reset(seed=17)
-        clipped = env.step(np.asarray([[2.0]], np.float64), capture="states")
+        clipped = env.step(np.asarray([[2.0]], np.float64), frames=None)
         assert clipped["reward"].item() == -0.4
 
 

@@ -51,7 +51,7 @@ print(snv.info("CartPole"))
 snv.set(verbose="INFO", default_device="auto")
 ```
 
-`step(actions, capture=None)` advances live environments. Actions are `[B,A]` for one step or `[B,T,A]` for a sequence. The default returns a final frame and, for sequences, intermediate States. Use `capture="states"` to skip rendering, `"final_frame"` to omit intermediate history, or `"all_frames"` to capture every frame. There is no `env.rollout(policy=...)`. Planning, datasets and training belong to sibling [stable-*](https://github.com/galilai-group) projects.
+`step(actions, states=slice(None), frames=slice(-1, None))` advances live environments. Actions are `[B,A]` for one step or `[B,T,A]` for a sequence. Independent slices select State history and rendered frames; `None` disables either history. The final State is always returned. See [selection semantics](docs/concepts/dynamics.md). There is no `env.rollout(policy=...)`. Planning, datasets and training belong to sibling [stable-*](https://github.com/galilai-group) projects.
 
 Full walkthrough: [Quickstart](docs/quickstart.md).
 

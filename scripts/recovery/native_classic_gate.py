@@ -60,16 +60,16 @@ def _lifecycle_boundary(domain, env, ref, batch):
     zero = np.zeros((batch, 1), dtype=np.int64 if domain == "cartpole" else np.float32)
     limit = 500 if domain == "cartpole" else 200
     for _ in range(limit - 1):
-        got, expected = env.step(zero, capture="states"), ref.step(zero)
+        got, expected = env.step(zero, frames=None), ref.step(zero)
         compare_state(got, expected)
         assert not bool(got["truncated"].any())
     near_limit = env.get_state()
-    got, expected = env.step(zero, capture="states"), ref.step(zero)
+    got, expected = env.step(zero, frames=None), ref.step(zero)
     compare_state(got, expected)
     assert bool(got["truncated"].all())
     # Gymnasium TimeLimit does not latch or auto-reset.  It advances again and
     # continues returning truncated after the exact boundary.
-    post, expected_post = env.step(zero, capture="states"), ref.step(zero)
+    post, expected_post = env.step(zero, frames=None), ref.step(zero)
     compare_state(post, expected_post)
     assert bool(post["truncated"].all())
     return {"time_limit": limit, "first_truncated_step": limit, "post_truncation_advances": True}, near_limit
@@ -89,7 +89,7 @@ def _cartpole_terminal(env, ref, batch):
     zero = np.zeros((batch, 1), np.int64)
     rewards = []
     for _ in range(3):
-        got, expected = env.step(zero, capture="states"), ref.step(zero)
+        got, expected = env.step(zero, frames=None), ref.step(zero)
         compare_state(got, expected)
         assert bool(got["terminated"].all())
         rewards.append(float(got["reward"][0]))
@@ -107,7 +107,7 @@ def _pendulum_rewards(env, ref, batch):
     env.set_state(upright)
     ref.set_state(upright)
     zero = np.zeros((batch, 1), np.float32)
-    got, expected = env.step(zero, capture="states"), ref.step(zero)
+    got, expected = env.step(zero, frames=None), ref.step(zero)
     compare_state(got, expected)
     assert (got["reward"] == 0).all()
 
@@ -115,7 +115,7 @@ def _pendulum_rewards(env, ref, batch):
     costly["theta"].fill_(1.0)
     env.set_state(costly)
     ref.set_state(costly)
-    got, expected = env.step(zero, capture="states"), ref.step(zero)
+    got, expected = env.step(zero, frames=None), ref.step(zero)
     compare_state(got, expected)
     assert (got["reward"] < 0).all()
     return {"upright_reward": 0.0, "nonzero_cost_reward": float(got["reward"][0])}
@@ -139,20 +139,20 @@ def _action_semantics(domain, env, ref, batch):
     # Pendulum warns for a float64 action but accepts it, clips it, and keeps
     # the caller's precision in last_u.  Normalise last_u losslessly in State.
     action = np.full((batch, 1), 3.25, np.float64)
-    got, expected = env.step(action, capture="states"), ref.step(action)
+    got, expected = env.step(action, frames=None), ref.step(action)
     compare_state(got, expected)
     assert (got["state", "torque"] == 2.0).all()
 
     precise_value = 0.1234567890123
     precise = np.full((batch, 1), precise_value, np.float64)
-    got, expected = env.step(precise, capture="states"), ref.step(precise)
+    got, expected = env.step(precise, frames=None), ref.step(precise)
     compare_state(got, expected)
     assert (got["state", "torque"] == precise_value).all()
     saved = got["state"]
-    env.step(np.zeros((batch, 1), np.float32), capture="states")
+    env.step(np.zeros((batch, 1), np.float32), frames=None)
     env.set_state(saved)
     compare_state(env.get_state(), ref.get_state())
-    got, expected = env.step(np.zeros((batch, 1), np.float32), capture="states"), ref.step(np.zeros((batch, 1), np.float32))
+    got, expected = env.step(np.zeros((batch, 1), np.float32), frames=None), ref.step(np.zeros((batch, 1), np.float32))
     compare_state(got, expected)
     return {
         "float64_accepted": True,
@@ -246,7 +246,7 @@ def run_gate(device="cpu"):
                         other.reset(seed=seed + 991)
                         other_actions = _actions(domain, seed + 991, 9, batch)
                         for action in other_actions:
-                            other.step(action, capture="states")
+                            other.step(action, frames=None)
                         resume = env.get_state()
                         history = check_two_histories_same_state(env, other, resume, actions[:8])
 

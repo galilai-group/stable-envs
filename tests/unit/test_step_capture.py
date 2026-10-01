@@ -13,6 +13,7 @@ class Counter(snv.Env):
     action_dim = 1
     action_dtype = torch.int64
     state_dim = 1
+    frame_shape = (2, 2)
 
     def __init__(self, device="cpu"):
         super().__init__(num_envs=3, device=device)
@@ -41,26 +42,38 @@ class Counter(snv.Env):
         return state["position"].to(torch.uint8).reshape(3, 1, 1, 1).expand(3, 2, 2, 3).clone()
 
 
-@pytest.mark.parametrize("capture", [None, "states", "final_frame", "all_frames"])
+@pytest.mark.parametrize("states", [None, slice(None), slice(-1, None), slice(None, None, -1), slice(9, 12)])
+@pytest.mark.parametrize(
+    "frames", [None, slice(None), slice(-1, None), slice(None, None, 2), slice(None, None, -1), slice(9, 12)]
+)
 @pytest.mark.parametrize("sequence", [False, True])
-def test_capture_contract(capture, sequence):
+def test_slice_contract(states, frames, sequence):
     with Counter() as env:
-        actions = torch.ones((3, 4, 1) if sequence else (3, 1), dtype=torch.int64)
-        out = env.step(actions, capture=capture)
+        length = 4 if sequence else 1
+        actions = torch.ones((3, length, 1) if sequence else (3, 1), dtype=torch.int64)
+        out = env.step(actions, states=states, frames=frames)
+        positions = torch.tensor([[1, 1, 1, 1], [1, 2, 3, 3], [1, 2, 3, 4]])[:, :length]
+        valid = torch.tensor([[1, 0, 0, 0], [1, 1, 1, 0], [1, 1, 1, 1]], dtype=torch.bool)[:, :length]
         assert out.batch_size == torch.Size([3])
-        assert ("states" in out.keys()) == (sequence and capture in (None, "states"))
-        assert ("frame" in out.keys()) == (capture != "states")
-        assert ("frames" in out.keys()) == (capture == "all_frames")
-        assert env.render_calls == (0 if capture == "states" else 4 if sequence and capture == "all_frames" else 1)
-        assert torch.equal(out["state"]["position"], env.position)
-        if sequence:
-            assert out["valid"].tolist() == [[True, False, False, False], [True, True, True, False], [True] * 4]
-            assert env.calls.tolist() == [1, 3, 4]
-            assert out["reward"].tolist() == [[1, 0, 0, 0], [1, 2, 3, 0], [1, 2, 3, 4]]
-            if "states" in out.keys():
-                assert out["states"]["position"][:, :, 0].tolist() == [[1] * 4, [1, 2, 3, 3], [1, 2, 3, 4]]
+        assert ("states" in out.keys()) == (states is not None)
+        assert ("frames" in out.keys()) == (frames is not None)
+        assert "frame" not in out.keys()
+        assert env.render_calls == (0 if frames is None else len(range(length)[frames]))
+        assert torch.equal(out["state"]["position"], positions[:, -1:])
+        assert torch.equal(out["valid"], valid)
+        assert env.calls.tolist() == ([1, 3, 4] if sequence else [1, 1, 1])
+        if states is not None:
+            indices = list(range(length)[states])
+            assert out["states"].batch_size == torch.Size([3, len(indices)])
+            assert torch.equal(out["states"]["position"][:, :, 0], positions[:, indices])
+            assert torch.equal(out["state_valid"], valid[:, indices])
+        if frames is not None:
+            indices = list(range(length)[frames])
+            assert out["frames"].shape == (3, len(indices), 2, 2, 3)
+            assert torch.equal(out["frames"][:, :, 0, 0, 0], positions[:, indices].to(torch.uint8))
+            assert torch.equal(out["frame_valid"], valid[:, indices])
         held = out.clone()
-        env.step(torch.ones(3, 1, dtype=torch.int64), capture="states")
+        env.step(torch.ones(3, 1, dtype=torch.int64), frames=None)
         assert (out == held).all()
 
 
@@ -68,24 +81,57 @@ def test_capture_contract(capture, sequence):
 def test_invalid_shape_refused_before_mutation(shape):
     with Counter() as env:
         with pytest.raises(ValueError, match="actions must"):
-            env.step(torch.zeros(shape), capture="states")
+            env.step(torch.zeros(shape), frames=None)
         assert not env.calls.any()
 
 
-def test_invalid_capture_and_symbolic_refused_before_mutation():
+@pytest.mark.parametrize("name", ["states", "frames"])
+@pytest.mark.parametrize("selector", [-1, "all", [0, 1], slice(None, None, 0), slice(1.5, None)])
+def test_invalid_selectors_before_mutation(name, selector):
     with Counter() as env:
-        with pytest.raises(ValueError, match="capture must"):
-            env.step(torch.ones(3, 1), capture="invalid")
+        with pytest.raises((TypeError, ValueError)):
+            env.step(torch.ones(3, 1), **{name: selector})
+        assert not env.calls.any()
+
+
+def test_symbolic_requires_no_frame_selection_before_mutation():
+    with Counter() as env:
         env.produces_rgb = False
         with pytest.raises(ValueError, match="no RGB"):
             env.step(torch.ones(3, 1))
         assert not env.calls.any()
-        env.step(torch.ones(3, 1, dtype=torch.int64), capture="states")
+        with pytest.raises(ValueError, match="no RGB"):
+            env.step(torch.ones(3, 1, dtype=torch.int64), frames=slice(1, 1))
+        assert not env.calls.any()
+        env.step(torch.ones(3, 1, dtype=torch.int64), frames=None)
+        assert env.render_calls == 0
+
+
+def test_final_only_exports_one_snapshot_and_sparse_export_skips_unselected():
+    class CheapAdvance(Counter):
+        exports = 0
+
+        def get_state(self):
+            self.exports += 1
+            return super().get_state()
+
+        def _advance_without_snapshot(self, actions, *, active=None):
+            active = torch.ones(3, dtype=torch.bool) if active is None else active
+            self.position[active] += torch.as_tensor(actions)[active]
+            self.calls += active
+            return TensorDict({"terminated": self.position[:, 0] >= self.limit}, [3])
+
+    with CheapAdvance() as env:
+        env.step(torch.ones(3, 4, 1, dtype=torch.int64), states=None)
+        assert env.exports == 1
+    with CheapAdvance() as env:
+        env.step(torch.ones(3, 4, 1, dtype=torch.int64), states=slice(None, None, 2), frames=None)
+        assert env.exports == 3  # selected 0,2, plus mandatory final State
 
 
 def test_one_step_sequence_keeps_time_axis():
     with Counter() as env:
-        out = env.step(torch.ones(3, 1, 1, dtype=torch.int64), capture="states")
+        out = env.step(torch.ones(3, 1, 1, dtype=torch.int64), frames=None)
         assert out["states"].batch_size == torch.Size([3, 1])
         assert out["reward"].shape == (3, 1)
 
@@ -103,9 +149,9 @@ def test_accepted_classic_matches_repeated_steps(name, dtype):
     with snv.make(name, num_envs=3, device="cpu") as env:
         start = env.reset(seed=17)
         actions = np.zeros((3, 4, 1), dtype=dtype)
-        expected = [env.step(actions[:, t], capture="states").clone() for t in range(4)]
+        expected = [env.step(actions[:, t], frames=None).clone() for t in range(4)]
         env.set_state(start)
-        out = env.step(actions, capture="states")
+        out = env.step(actions, frames=None)
         for t, reference in enumerate(expected):
             assert (out["states"][:, t] == reference["state"]).all()
             assert torch.equal(out["reward"][:, t], reference["reward"])
@@ -126,7 +172,7 @@ def test_classic_stops_at_distinct_time_limits_without_step_or_reset(monkeypatch
                 return original(action)
 
             monkeypatch.setattr(upstream, "step", counted)
-        out = env.step(torch.zeros(3, 5, 1, dtype=torch.int64), capture="states")
+        out = env.step(torch.zeros(3, 5, 1, dtype=torch.int64), frames=None)
         assert calls == [1, 2, 3]
         assert out["valid"].sum(1).tolist() == calls
         assert out["state"]["lifecycle", "elapsed_steps"][:, 0].tolist() == calls
@@ -142,9 +188,9 @@ def test_navigation_sequence_matches_scalar_calls(name):
             state["target", "position"].fill_(0)
             env.set_state(state)
         actions = torch.zeros(3, 3, env.action_dim)
-        expected = [env.step(actions[:, t], capture="states")["state"] for t in range(3)]
+        expected = [env.step(actions[:, t], frames=None)["state"] for t in range(3)]
         env.set_state(state)
-        out = env.step(actions, capture="states")
+        out = env.step(actions, frames=None)
         for t in range(3):
             assert (out["states"][:, t] == expected[t]).all()
 
@@ -160,11 +206,20 @@ def test_gpu_sequence_frames_equal_repeated_steps(name):
         actions = torch.zeros(3, 3, env.action_dim, dtype=env.action_spec.dtype, device="cuda")
         reference = [env.step(actions[:, t]) for t in range(3)]
         env.set_state(initial)
-        result = env.step(actions, capture="all_frames")
-        assert result["frame"].device.type == "cuda"
-        assert torch.equal(result["frames"], torch.stack([out["frame"] for out in reference], dim=1))
+        result = env.step(actions, states=None, frames=slice(None))
+        assert result["frames"].device.type == "cuda"
+        assert torch.equal(result["frames"], torch.stack([out["frames"][:, 0] for out in reference], dim=1))
         assert (result["state"] == reference[-1]["state"]).all()
         env.set_state(initial)
-        final = env.step(actions, capture="final_frame")
+        final = env.step(actions, states=None)
         assert (final["state"] == result["state"]).all()
-        assert torch.equal(final["frame"], result["frame"])
+        assert torch.equal(final["frames"][:, 0], result["frames"][:, -1])
+
+        for selection in (slice(None, None, 2), slice(None, None, -1), slice(2, 2)):
+            env.set_state(initial)
+            selected = env.step(actions, states=selection, frames=selection)
+            indices = list(range(3)[selection])
+            assert torch.equal(selected["frames"], result["frames"][:, indices])
+            assert selected["states"].batch_size == torch.Size([3, len(indices)])
+            for j, t in enumerate(indices):
+                assert (selected["states"][:, j] == reference[t]["state"]).all()

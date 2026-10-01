@@ -90,7 +90,7 @@ def _assert_bad_actions_rejected(env):
         np.full((env.B, 21), np.inf),
     ):
         try:
-            env.step(action, capture="states")
+            env.step(action, frames=None)
         except ValueError:
             pass
         else:
@@ -107,7 +107,7 @@ def _warmstart_experiment(env, reference):
         [item.physics.data.ctrl.copy() for item in env._simulator.envs]
     )
     for action in -actions[1:10]:
-        env.step(action, capture="states")
+        env.step(action, frames=None)
     divergent_warmstart = env.get_state()["warmstart"].clone()
     assert not torch.equal(saved["warmstart"], divergent_warmstart)
     divergent_control = np.stack(
@@ -125,7 +125,7 @@ def _warmstart_experiment(env, reference):
     omitted["warmstart"] = divergent_warmstart
     env.set_state(omitted)
     continuation = actions[1:9]
-    bad_outputs = [env.step(action, capture="states") for action in continuation]
+    bad_outputs = [env.step(action, frames=None) for action in continuation]
     expected_outputs = [reference.step(action) for action in continuation]
     error_without = max(
         _max_error(actual, expected, exclude=(("state", "warmstart"),))
@@ -133,7 +133,7 @@ def _warmstart_experiment(env, reference):
     )
 
     env.set_state(saved)
-    good_outputs = [env.step(action, capture="states") for action in continuation]
+    good_outputs = [env.step(action, frames=None) for action in continuation]
     error_with = max(
         _max_error(actual, expected)
         for actual, expected in zip(good_outputs, expected_outputs, strict=True)
@@ -239,7 +239,7 @@ def run_gate(device="cpu"):
 
                     other.reset(seed=seed + 991)
                     for action in -actions[:9]:
-                        other.step(action, capture="states")
+                        other.step(action, frames=None)
                     snapshot = env.get_state()
                     env.set_state(snapshot)
                     other.set_state(snapshot)
@@ -279,7 +279,7 @@ def run_gate(device="cpu"):
 
                 check_reset_matches_reference(env, reference, seed=18)
                 zeros = np.zeros((batch, 21))
-                got, expected = env.step(zeros, capture="states"), reference.step(zeros)
+                got, expected = env.step(zeros, frames=None), reference.step(zeros)
                 compare_state(got, expected)
                 assert (got["reward"] > 0).all()
                 evidence["cases"].append(
@@ -296,7 +296,7 @@ def run_gate(device="cpu"):
                 rng_before = env.get_state().select("rng").clone()
                 boundary_state = None
                 for public_step in range(1, 503):
-                    got, expected = env.step(zeros, capture="states"), reference.step(zeros)
+                    got, expected = env.step(zeros, frames=None), reference.step(zeros)
                     compare_state(got, expected)
                     if public_step in (499, 500, 501, 502):
                         state = got["state"]
@@ -344,7 +344,7 @@ def run_gate(device="cpu"):
                     _assert_bad_actions_rejected(env)
                     check_reset_matches_reference(env, reference, seed=31)
                     outside = np.full((1, 21), 1.1)
-                    compare_state(env.step(outside, capture="states"), reference.step(outside))
+                    compare_state(env.step(outside, frames=None), reference.step(outside))
                     evidence["action_validation"] = {
                         "shape_and_nonfinite_rejected": True,
                         "finite_out_of_bounds_matches_historical_passthrough": True,
@@ -383,10 +383,10 @@ def run_gate(device="cpu"):
             actions = np.random.default_rng(11).uniform(-1, 1, (32, 1, 21))
             varied_outputs, nominal_outputs = [], []
             for action in actions:
-                got, expected = env.step(action, capture="states"), reference.step(action)
+                got, expected = env.step(action, frames=None), reference.step(action)
                 compare_state(got, expected)
                 varied_outputs.append(got)
-                nominal_outputs.append(nominal.step(action, capture="states"))
+                nominal_outputs.append(nominal.step(action, frames=None))
             divergence = max(
                 _physical_error(varied, default)
                 for varied, default in zip(varied_outputs, nominal_outputs, strict=True)

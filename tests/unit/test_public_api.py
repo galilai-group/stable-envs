@@ -204,7 +204,7 @@ def test_close_is_idempotent_and_a_closed_env_refuses_to_render():
         (lambda: env._render(st), "render"),
         (lambda: env._render(), "render"),
         (lambda: env.reset(seed=0), "reset"),
-        (lambda: env.step(torch.zeros(2, 2), capture="states"), "step"),
+        (lambda: env.step(torch.zeros(2, 2), frames=None), "step"),
     ):
         with pytest.raises(RuntimeError) as e:
             call()

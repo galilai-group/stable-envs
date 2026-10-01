@@ -26,7 +26,16 @@ PIN = "176d54532b3c0a251a4f509b74f2fdacc143a63d"
 
 def compare_output(out, expected):
     # SWM's observations and info["state"] are deliberately outside this gate.
-    assert set(out.keys()) == {"state", "reward", "success", "terminated", "truncated"}
+    assert set(out.keys()) == {
+        "state",
+        "reward",
+        "success",
+        "terminated",
+        "truncated",
+        "states",
+        "valid",
+        "state_valid",
+    }
     for key, index in (("reward", 1), ("terminated", 2), ("truncated", 3)):
         exact_array(out[key].cpu().numpy(), np.asarray([r[index] for r in expected]), key)
     exact_array(out["success"].cpu().numpy(), np.asarray([r[4]["is_success"] for r in expected]), "success")
@@ -85,19 +94,19 @@ def case(seed, batch, dtype):
         a._simulator.set_state = forbidden
         for action in actions[:32]:
             expected = [e.step(action[i]) for i, e in enumerate(refs)]
-            out = a.step(action, capture="states")
+            out = a.step(action, frames=None)
             compare_output(out, expected)
             full_compare(out["state"], refs)
             exact_array(out["success"].numpy(), np.array([r[4]["is_success"] for r in expected]), "success")
         a._simulator.set_state = original
         for action in actions[5:16]:
-            b.step(action, capture="states")
+            b.step(action, frames=None)
         snapshot = a.get_state()
         b.set_state(snapshot)
         equal_state(b.get_state(), snapshot)
         for action in actions[32:]:
             expected = [e.step(action[i]) for i, e in enumerate(refs)]
-            out = b.step(action, capture="states")
+            out = b.step(action, frames=None)
             compare_output(out, expected)
             full_compare(out["state"], refs)
         for e in refs:
@@ -185,7 +194,7 @@ def boundary():
             state["goal"][0] = torch.from_numpy(u.goal.copy())
             a.set_state(state)
             r = e.step(np.zeros(4))
-            out = a.step(np.zeros((1, 4)), capture="states")
+            out = a.step(np.zeros((1, 4)), frames=None)
             compare_output(out, [r])
             full_compare(out["state"], [e])
             got = float(np.linalg.norm(r[4]["proprio"][3:6] - u.goal))
@@ -231,7 +240,7 @@ def reach_boundary():
             state["goal"][0] = torch.from_numpy(u.goal.copy())
             a.set_state(state)
             r = e.step(np.zeros(4))
-            out = a.step(np.zeros((1, 4)), capture="states")
+            out = a.step(np.zeros((1, 4)), frames=None)
             compare_output(out, [r])
             full_compare(out["state"], [e])
             got = float(np.linalg.norm(r[4]["proprio"][:3] - u.goal))
@@ -261,11 +270,11 @@ def lifecycle():
             if step == 50:
                 b.set_state(a.get_state())
             r = e.step(np.zeros(4))
-            out = a.step(np.zeros((1, 4)), capture="states")
+            out = a.step(np.zeros((1, 4)), frames=None)
             compare_output(out, [r])
             full_compare(out["state"], [e])
             if step >= 50:
-                replay = b.step(np.zeros((1, 4)), capture="states")
+                replay = b.step(np.zeros((1, 4)), frames=None)
                 compare_output(replay, [r])
                 full_compare(replay["state"], [e])
             if step in (49, 50, 51):
@@ -313,12 +322,12 @@ def variation():
             for step, action in enumerate(actions):
                 if step == 32:
                     for other in actions[:11]:
-                        b.step(other, capture="states")
+                        b.step(other, frames=None)
                     b.set_state(a.get_state())
                     equal_state(a.get_state(), b.get_state())
                 r = e.step(action[0])
                 base = d.step(action[0])
-                out = (a if step < 32 else b).step(action, capture="states")
+                out = (a if step < 32 else b).step(action, frames=None)
                 compare_output(out, [r])
                 full_compare(out["state"], [e])
                 divergence = max(divergence, float(np.max(np.abs(r[4]["proprio"] - base[4]["proprio"]))))
@@ -369,7 +378,7 @@ def variation():
                 full_compare(a.reset(seed=seed), [e])
                 for action in np.random.default_rng(seed).uniform(-1, 1, (8, 1, 4)):
                     r = e.step(action[0])
-                    out = a.step(action, capture="states")
+                    out = a.step(action, frames=None)
                     compare_output(out, [r])
                     full_compare(out["state"], [e])
             results.append(
@@ -435,7 +444,7 @@ def main(output):
     e = FetchPickAndPlace(num_envs=3, seed=17)
     try:
         for i in range(8):
-            e.step(np.random.default_rng(i).uniform(-1, 1, (3, 4)), capture="states")
+            e.step(np.random.default_rng(i).uniform(-1, 1, (3, 4)), frames=None)
         state = e.get_state()
         fixture = {
             ".".join(k) if isinstance(k, tuple) else k: dict(

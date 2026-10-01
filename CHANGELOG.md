@@ -3,14 +3,14 @@
 ## Unreleased
 
 - Replace public `transition`, `unroll`, and `Dynamics` with a single stateful
-  `step(actions, capture=None)`: `[B,A]` for one transition, `[B,T,A]` for a sequence.
+  `step(actions, states=slice(None), frames=slice(-1,None))`: `[B,A]` for one transition, `[B,T,A]` for a sequence.
 - Capture final frames by default, with intermediate complete States for sequences.
-  Explicit modes are `states`, `final_frame`, and `all_frames`.
+  Independent slices select State/frame histories; `None` disables either.
 - Stop sequence lanes at termination/truncation, report a validity mask, and retain
   complete final checkpoints without silently resetting episodes.
 - Bulk-export Fetch State fields and avoid intermediate snapshot exports when only
   the final frame is requested. Large Fetch batches use a bounded persistent worker pool, respecting CPU affinity.
-- Migrate physics-only callers to explicit `capture="states"`.
+- Migrate physics-only callers to explicit `frames=None`.
 
 ## 0.1.0
 

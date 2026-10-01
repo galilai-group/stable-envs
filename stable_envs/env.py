@@ -1254,7 +1254,7 @@ class Env:
     def frame_spec(self) -> Spec:
         """The frames ``render`` produces: ``(H, W, 3)`` uint8. Square unless the env says otherwise.
 
-        Pixels come from ``render``, not from ``reset`` / ``step``. Those return State-oriented values.
+        ``step`` captures selected frames through ``render``; ``reset`` returns State.
         """
         h, w = getattr(self, "frame_shape", (self.size, self.size))
         return Spec(shape=(int(h), int(w), 3), dtype=torch.uint8, low=0, high=255, device=self.device)
@@ -1306,17 +1306,16 @@ class Env:
         self._set_render_state(self.sample_states(self.B, self.rng))
         return self.state
 
-    def step(self, actions, *, capture=None) -> TensorDict:
-        """Advance live environments with [B, A] or [B, T, A] actions.
+    def step(self, actions, *, states=slice(None), frames=slice(-1, None)) -> TensorDict:
+        """Advance [B,A] or [B,T,A] actions; select post-action States and frames.
 
-        capture=None returns a final frame, plus State history for sequences.
-        Explicit modes are "states" (no pixels), "final_frame", and "all_frames".
-        Every mode returns the full final State. Sequence lanes stop at their
-        first terminal/truncated transition; valid marks executed transitions.
+        Selectors are Python slices or None. Defaults retain every State and
+        render only the final endpoint. Selected outputs always keep a time axis.
+        The final State is always returned. valid marks executed transitions.
         """
         from ._stepping import step
 
-        return step(self, actions, capture=capture)
+        return step(self, actions, states=states, frames=frames)
 
     def _step(self, actions) -> TensorDict:
         """Family single-transition kernel; no rendering or sequence dispatch."""

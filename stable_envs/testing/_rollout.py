@@ -161,7 +161,7 @@ def sample(
     for t in range(int(steps)):
         a = policy.get_action(render_rows(), t=t)
         a = torch.as_tensor(a, device=env.device, dtype=torch.float32).reshape(B, -1)
-        env.step(a, capture="states")
+        env.step(a, frames=None)
         acts.append(a)
         st.append(render_rows().clone())
 

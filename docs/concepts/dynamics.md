@@ -1,72 +1,81 @@
-# Stepping and capture
+# Stepping and selecting outputs
 
-`step(actions, capture=None)` advances the live simulator. Supply one action per
-lane as `[B, A]`, or a sequence as `[B, T, A]`. `B` is `num_envs`, `T` is a positive
-sequence length, and `A` is the per-environment action dimension. Discrete actions
-use `A=1`; existing integer `[B]` inputs remain accepted as single steps. The
-single-step and sequence forms preserve the input action dtype.
+`step(actions, states=slice(None), frames=slice(-1, None))` advances the live
+simulator. Actions are `[B,A]` for one action per lane or `[B,T,A]` for a sequence.
+Discrete actions use `A=1`; integer `[B]` remains accepted for a single action.
+`T` must be positive. Input action dtype is preserved.
+
+`states` and `frames` independently select post-action outputs using Python
+slices; `None` disables that history. The default retains all States and renders
+only the final endpoint. The initial State is not included.
 
 ```python
 import torch
 import stable_envs as snv
 
 with snv.CartPole(num_envs=8, device="cpu") as env:
-    saved = env.reset(seed=17)
+    env.reset(seed=17)
     one = env.step(torch.zeros(8, 1, dtype=torch.int64))
-    frame = one["frame"]                 # [B, height, width, 3], uint8
-    env.set_state(saved)
+    frame = one["frames"][:, 0]          # [B,H,W,3]
     chunk = env.step(torch.zeros(8, 4, 1, dtype=torch.int64))
-    states = chunk["states"]            # complete States, batch [B, T]
     final_state = chunk["state"]        # complete State, batch [B]
-    final_frame = chunk["frame"]
+    states = chunk["states"]            # complete States, batch [B,T]
+    final_frame = chunk["frames"][:, 0]
 ```
 
-| capture | One action | Sequence |
+| Request | `states` | `frames` |
 | --- | --- | --- |
-| `None` | Final State and frame | State history, final State and final frame |
-| `"states"` | State, no rendering | State history and final State, no rendering |
-| `"final_frame"` | Final State and frame | Final State and frame, no intermediate history |
-| `"all_frames"` | Final State, frame and one-element frame history | Final State, every frame and final frame |
+| All States, final frame (default) | `slice(None)` | `slice(-1,None)` |
+| Only final State and frame | `None` | `slice(-1,None)` |
+| All States, no rendering | `slice(None)` | `None` |
+| Only final State, no rendering | `None` | `None` |
+| All States and frames | `slice(None)` | `slice(None)` |
+| States at 0,4,8…; frames at 3,7,11… | `slice(None,None,4)` | `slice(3,None,4)` |
 
-Every result is a TensorDict with batch `[B]` and a `state` entry. Applicable
-reward, termination, truncation, observation and other task outputs retain their
-family-specific fields. For sequences those outputs have an additional time
-axis: for example reward `[B,T]`. `states` is a nested TensorDict with batch
-`[B,T]`; `frames` is `[B,T,height,width,3]`. A sequence of length one still retains
-its time axis. Each captured State or image is **after** its corresponding action;
-the initial State is not included.
+Slices follow Python clipping, negative-index and negative-stride rules. For
+example, `slice(-1,None)` selects the last output; `slice(None,-1)` excludes it.
+A reverse slice changes output order, not simulation order. Integer selectors
+are intentionally not supported. Invalid selectors, zero strides and invalid
+action shapes fail before simulation advances.
 
-Sequence lanes stop after their first reported termination or truncation. `valid[B,T]`
-marks transitions actually executed, including the terminal transition. Remaining
-actions in that lane are not consumed. The sequence executor adds no resets;
-each control step retains the environment's established lifecycle behavior. Padded task outputs
-are zero; State/frame history holds the lane's final endpoint. Use `valid` when
-computing statistics. Final State/frame always describes that endpoint. Single
-steps retain each upstream environment's established lifecycle behavior.
+A single action behaves as length one for selection. Selected States always
+have batch `[B,K]`; selected frames always have shape `[B,K,H,W,3]`, including
+`K=1`. Empty slices return empty histories with `K=0` and perform no requested
+rendering; `None` omits that history entirely. The full final `state`, batch
+`[B]`, is always returned regardless of selections. There is no singular
+`frame` alias; use `frames[:,0]` for the default final-frame selection.
 
-Snapshots own their storage and remain unchanged by later calls. Internal buffers
-and worker scheduling are implementation details. Retaining all States or images
-costs memory proportional to `B*T`; submit bounded action chunks for long runs.
-Only use chunks whose actions are already known. A policy depending on the next
-image must wait for that image before supplying the next action.
+Task fields such as reward/termination preserve their family-specific names and
+dtypes. They retain their existing single-action shape, and acquire a time axis
+for action sequences. `valid` always has shape `[B,T]` (including `T=1`).
+`state_valid` and `frame_valid` select the matching validity columns in output
+order, making reverse/sparse selections unambiguous.
 
-`capture="states"` is the explicit physics-only path. Symbolic environments
-without RGB output require it. Other capture modes require a working renderer
-backend. There is no `transition`, `unroll`, or `step_sequence` method, and no
-public `Dynamics` protocol. To branch, construct an independent environment,
-restore a complete checkpoint with `set_state`, and call `step`.
+Within a sequence, each lane stops after its first reported termination or
+truncation. Remaining actions in that lane are not consumed. That terminal
+transition is valid; later task outputs are zero, and selected States/frames
+hold the final endpoint with validity false. The sequence executor adds no
+resets; each control step retains its established upstream lifecycle behavior.
+Ordinary single actions retain the upstream post-terminal behavior.
 
-For contributors, implement `_step(actions)` as a single-transition kernel.
-Families with terminal states also implement `_step(actions, active=mask)` to
-skip inactive lanes without stepping, restoring, or resetting them. The shared
-public `step` owns action-shape dispatch, histories and capture. Accepted delegated
-backends continue to call their authoritative upstream task/controller directly.
+Snapshots and frames own their storage and remain unchanged by later calls.
+Only selected frames are rendered. The dispatcher avoids unselected full State
+exports where the family supplies a task-only advance hook (currently Fetch);
+other families may still export State internally. A final State is always
+needed. Retained histories cost memory proportional to the selected output count.
 
-Renderer acceptance and simulator acceptance remain independent. This API does
-not promote incomplete simulator registrations or change their acceptance gates.
+Only submit action chunks whose actions are already known. A policy needing the
+next image must wait for it before supplying the next action. Selecting fewer
+frames does not skip physics steps. Symbolic environments without RGB support
+require `frames=None`: they have no image shape, even for an empty frame slice.
 
-Large Fetch batches use a persistent, bounded CPU worker pool selected internally.
-Batches below 64 remain serial; larger batches use at most four workers, capped
-by process CPU affinity where available. This is separate from renderer placement:
-Fetch physics remains the authoritative CPU simulator even with CUDA frames.
-Other families currently retain their existing execution strategies.
+There is no `capture`, `transition`, `unroll`, `step_sequence`, or public
+`Dynamics` protocol. Branch via an independent environment, `set_state`, and
+`step`. Contributors implement the private `_step` kernel; terminating families
+also support an active-lane mask, without stepping and restoring inactive lanes.
+
+Large Fetch batches currently use a persistent CPU thread pool: below 64 they
+remain serial; at least 64 use up to four workers, capped by CPU affinity.
+Fetch physics remains on CPU even with CUDA rendering. Other families retain
+their existing execution strategies. Profiling process executors does not by
+itself promote one into production or change simulator acceptance.

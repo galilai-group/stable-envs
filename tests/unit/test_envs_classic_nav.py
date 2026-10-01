@@ -155,7 +155,7 @@ def test_snapshot_branch_is_bit_identical_to_the_stateful_step(name):
     a = _actions(env, 4)
 
     functional = branch_step(env, env.state, a)
-    stateful = env.step(a, capture="states")["state"]
+    stateful = env.step(a, frames=None)["state"]
     assert torch.equal(env._pack_render_state(functional), env._pack_render_state(stateful))
     for k in FULL_KEYS[name]:
         assert torch.equal(functional[k], stateful[k]), f"{'.'.join(k)} differs"
@@ -185,7 +185,7 @@ def test_snapshot_branch_does_not_touch_the_env_and_unroll_is_repeated_transitio
 
     # ... and four steps of the stateful path land on exactly the same numbers.
     for t in range(4):
-        env.step(acts[t], capture="states")
+        env.step(acts[t], frames=None)
     for k in FULL_KEYS[name]:
         assert torch.equal(traj[3][k], env.state[k]), f"{'.'.join(k)} drifted over four steps"
     env.close()
@@ -211,8 +211,8 @@ def test_render_takes_a_state_a_packed_row_or_nothing_and_draws_the_same_frame(n
 def test_unrecovered_step_reports_only_its_implemented_state(name):
     env = _env(name, 2)
     env._set_render_state(env.sample_states(2, np.random.default_rng(3)))
-    out = env.step(_actions(env, 2), capture="states")
-    assert list(out.keys()) == ["state"], (
+    out = env.step(_actions(env, 2), frames=None)
+    assert set(out.keys()) == {"state", "states", "valid", "state_valid"}, (
         "these cells have no reward and no termination semantics in stable-envs; an absent key is "
         "the honest answer and a zero would read as a measured one"
     )
@@ -333,11 +333,11 @@ def test_snapshot_branch_still_equals_step_after_the_env_has_been_stepped(name):
     env = _env(name)
     env._set_render_state(env.sample_states(4, np.random.default_rng(5)))
     for _ in range(5):
-        env.step(_actions(env, 4, seed=5), capture="states")
+        env.step(_actions(env, 4, seed=5), frames=None)
 
     a = _actions(env, 4, seed=6)
     functional = branch_step(env, env.state, a)
-    stateful = env.step(a, capture="states")["state"]
+    stateful = env.step(a, frames=None)["state"]
     assert torch.equal(env._pack_render_state(functional), env._pack_render_state(stateful))
     for k in FULL_KEYS[name]:
         assert torch.equal(functional[k], stateful[k]), f"{'.'.join(k)} differs after five steps"
@@ -354,9 +354,9 @@ def test_a_step_result_is_not_a_view_of_the_env_that_produced_it(name):
     """
     env = _env(name)
     _initialize(env, name, 7)
-    out = env.step(_actions(env, 4, seed=7), capture="states")
+    out = env.step(_actions(env, 4, seed=7), frames=None)
     held = {k: out["state"][k].clone() for k in FULL_KEYS[name]}
-    env.step(_actions(env, 4, seed=8), capture="states")
+    env.step(_actions(env, 4, seed=8), frames=None)
     for k in FULL_KEYS[name]:
         assert torch.equal(out["state"][k], held[k]), (
             f"{'.'.join(k)} in a StepResult changed when the env was stepped again"
@@ -376,8 +376,8 @@ def test_step_returns_exactly_env_state(name):
     env = _env(name)
     _initialize(env, name, 9)
     for _ in range(3):
-        env.step(_actions(env, 4, seed=9), capture="states")
-    out = env.step(_actions(env, 4, seed=10), capture="states")
+        env.step(_actions(env, 4, seed=9), frames=None)
+    out = env.step(_actions(env, 4, seed=10), frames=None)
     held = env.state
     assert sorted(out["state"].keys()) == sorted(held.keys())
     for k in FULL_KEYS[name]:
@@ -390,16 +390,26 @@ def test_step_returns_exactly_env_state(name):
 def test_recovered_classic_refuses_the_legacy_pure_dynamics_path(name):
     with _env(name, 2) as env:
         state = env.reset(seed=17)
-        assert not hasattr(env, 'transition')
-        assert not hasattr(env, 'unroll')
+        assert not hasattr(env, "transition")
+        assert not hasattr(env, "unroll")
         assert (env.get_state() == state).all()
 
 
 @pytest.mark.parametrize("name", RECOVERED)
 def test_recovered_classic_reports_authoritative_outputs_and_typed_state(name):
     with _env(name, 2) as env:
-        result = env.step(_actions(env, 2), capture="states")
-        assert {"state", "reward", "terminated", "truncated", "observation", "info_state"} == set(result.keys())
+        result = env.step(_actions(env, 2), frames=None)
+        assert {
+            "state",
+            "reward",
+            "terminated",
+            "truncated",
+            "observation",
+            "info_state",
+            "states",
+            "valid",
+            "state_valid",
+        } == set(result.keys())
         assert result["reward"].dtype == torch.float64
         assert result["terminated"].dtype == result["truncated"].dtype == torch.bool
         assert env.execution_mode == "DELEGATED_CPU"
