@@ -23,7 +23,7 @@ The stable-envs runtime does not import stable-worldmodel. There is no
 evidence do not establish a runtime observation-container integration.
 
 Policy-driven rollouts, planning, datasets and training belong downstream.
-`unroll`, where supported, consumes known actions rather than a policy.
+`step` consumes supplied single actions or action sequences, never a policy.
 
 - [stable-worldmodel](https://github.com/galilai-group/stable-worldmodel)
 - [stable-datasets](https://github.com/galilai-group/stable-datasets)

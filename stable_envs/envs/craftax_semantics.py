@@ -83,9 +83,9 @@ class CraftaxSemantics(Env):
         self._check_open("set_state")
         self._simulator.set_state(state)
 
-    def step(self, actions):
+    def _step(self, actions, *, active=None):
         self._check_open("step")
-        state = self._simulator.step(actions)
+        state = self._simulator.step(actions, active=active)
         return self._step_result(
             state,
             reward=self._simulator.reward,
@@ -94,14 +94,9 @@ class CraftaxSemantics(Env):
             done=self._simulator.terminated,
         )
 
-    def transition(self, state, action):
-        self._check_open("transition")
-        saved = self.get_state()
-        try:
-            self.set_state(state)
-            return self.step(action)["state"]
-        finally:
-            self.set_state(saved)
+    @property
+    def produces_rgb(self):
+        return self.PIXELS
 
     def _render_options(self, size=None, supersample=None, backend=None):
         self._check_open("render")

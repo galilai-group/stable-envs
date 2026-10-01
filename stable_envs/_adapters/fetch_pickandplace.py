@@ -6,6 +6,9 @@ No SWM code or opaque MuJoCo state serialization is used at runtime.
 
 from __future__ import annotations
 
+import os
+from concurrent.futures import ThreadPoolExecutor
+
 import numpy as np
 import torch
 from tensordict import TensorDict
@@ -73,7 +76,28 @@ class FetchAdapter:
             [e.unwrapped.model.body_mass[i] if i >= 0 else 0.0 for e, i in zip(self.envs, self._object)]
         )
         self._closed = False
+        self._executor = None
+        self._workers = 1
         self.reset(seed=seed)
+        # The bounded 64/256-lane sweep found four workers useful and little
+        # benefit from eight. Respect scheduler affinity; leave cheap batches
+        # serial. Strategy remains private rather than another user API knob.
+        available = len(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else (os.cpu_count() or 1)
+        if self.num_envs >= 64 and available > 1:
+            self._set_workers(min(4, available))
+
+    def _set_workers(self, workers):
+        """Private measured executor choice; each task owns disjoint simulator lanes."""
+        self._check_open()
+        if type(workers) is not int or not 1 <= workers <= self.num_envs:
+            raise ValueError("workers must be an integer between 1 and num_envs")
+        if self._executor is not None:
+            self._executor.shutdown(wait=True)
+        self._workers = workers
+        self._executor = ThreadPoolExecutor(max_workers=workers) if workers > 1 else None
+
+    def _advance_shard(self, lanes, actions):
+        return [(lane, self.envs[lane].step(actions[lane])) for lane in lanes]
 
     def _check_open(self):
         if self._closed:
@@ -113,8 +137,12 @@ class FetchAdapter:
 
     def get_state(self):
         self._check_open()
-        rows = []
-        for e, i in zip(self.envs, self._gripper):
+        # Owned column arrays: one tensor conversion/transfer per field, not per lane.
+        columns = {
+            key: np.empty((self.num_envs, width), dtype=(np.float64 if dtype == torch.float64 else np.int64))
+            for key, (width, dtype) in self.fields.items()
+        }
+        for lane, (e, i) in enumerate(zip(self.envs, self._gripper)):
             u = e.unwrapped
             r = u.np_random.bit_generator.state
             if r["bit_generator"] != "PCG64":
@@ -134,11 +162,16 @@ class FetchAdapter:
                 ("rng", "has_uint32"): [r["has_uint32"]],
                 ("rng", "uinteger"): [r["uinteger"]],
             }
-            row = TensorDict({}, batch_size=[], device=self.device)
-            for key, (_, dtype) in self.fields.items():
-                row[key] = torch.as_tensor(values[key], dtype=dtype, device=self.device).clone()
-            rows.append(row)
-        return torch.stack(rows)
+            for key in self.fields:
+                columns[key][lane] = values[key]
+        return TensorDict(
+            {
+                key: torch.as_tensor(value, dtype=self.fields[key][1], device=self.device)
+                for key, value in columns.items()
+            },
+            [self.num_envs],
+            device=self.device,
+        )
 
     def set_state(self, state):
         self._check_open()
@@ -185,7 +218,14 @@ class FetchAdapter:
                 "uinteger": row["rng", "uinteger"].item(),
             }
 
-    def step(self, actions):
+    def step(self, actions, *, active=None):
+        out = self.advance(actions, active=active)
+        out["state"] = self.get_state()
+        return out
+
+    def advance(self, actions, *, active=None):
+        """Advance task/controller/physics without materializing a full snapshot."""
+        active = None if active is None else np.asarray(active.detach().cpu(), dtype=bool)
         self._check_open()
         if torch.is_tensor(actions):
             actions = actions.detach().cpu().numpy()
@@ -193,10 +233,31 @@ class FetchAdapter:
         if actions.shape != (self.num_envs, 4):
             raise ValueError("Fetch action must have shape (num_envs,4)")
         # Preserve public dtype: upstream multiplication before concatenation is observable.
-        outputs = [e.step(actions[lane]) for lane, e in enumerate(self.envs)]
+        lanes = np.arange(self.num_envs) if active is None else np.flatnonzero(active)
+        if self._executor is None:
+            updates = self._advance_shard(lanes, actions)
+        else:
+            futures = [
+                self._executor.submit(self._advance_shard, shard, actions)
+                for shard in np.array_split(lanes, self._workers)
+                if len(shard)
+            ]
+            updates = []
+            # Drain all workers even on failure, so no simulator keeps mutating after return.
+            errors = []
+            for future in futures:
+                try:
+                    updates.extend(future.result())
+                except Exception as error:
+                    errors.append(error)
+            if errors:
+                raise errors[0]
+        outputs = list(self._last_outputs) if active is not None else [None] * self.num_envs
+        for lane, output in updates:
+            outputs[lane] = output
+        self._last_outputs = outputs
         return TensorDict(
             {
-                "state": self.get_state(),
                 "reward": torch.as_tensor(np.array([x[1] for x in outputs]), device=self.device),
                 "terminated": torch.as_tensor(np.array([x[2] for x in outputs]), device=self.device),
                 "truncated": torch.as_tensor(np.array([x[3] for x in outputs]), device=self.device),
@@ -208,6 +269,9 @@ class FetchAdapter:
 
     def close(self):
         if not self._closed:
+            if self._executor is not None:
+                self._executor.shutdown(wait=True)
+                self._executor = None
             for e in self.envs:
                 e.close()
             self._closed = True

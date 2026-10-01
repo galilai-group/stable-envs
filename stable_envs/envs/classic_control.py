@@ -405,20 +405,9 @@ class _Classic(Env):
             ) from e
         return torch.cat(cols, dim=1)
 
-    @torch.no_grad()
-    def transition(self, state, action) -> TensorDict:
-        """``(state, action) -> next_state``. FUNCTIONAL: the env's own buffers are not touched.
-
-        The same ``_dynamics`` over the same float64 inputs that ``step`` uses, so the two agree to
-        the bit — eager, because a captured CUDA graph reads ``_sim``/``_render_state`` at fixed addresses
-        and this call may not write them.
-        """
-        sim = self._sim_from_state(state)
-        act = torch.as_tensor(action, device=self.device, dtype=torch.float32).reshape(-1, self.action_dim)
-        return self._state_td(self._dynamics(sim, act))
 
     @torch.no_grad()
-    def step(self, action) -> TensorDict:
+    def _step(self, action, *, active=None) -> TensorDict:
         """Advance every environment one control step. ``action`` is ``(B, action_dim)``.
 
         STATEFUL: it writes ``env.state``. Returns a :data:`~stable_envs.env.StepResult` carrying
@@ -785,7 +774,7 @@ class CartPole(ClassicControlSemantics, _Classic):
         rng = rng or self.rng
         return np.stack([rng.uniform(-2.4, 2.4, batch), rng.uniform(-0.2095, 0.2095, batch)], 1).astype(np.float32)
 
-    def step(self, action) -> TensorDict:
+    def _step(self, action, *, active=None) -> TensorDict:
         """One control step. ``action`` is integer ``(B,1)``: **0 push left, 1 push right**.
 
         Declared per env rather than inherited because the number means something different in each of
@@ -793,7 +782,7 @@ class CartPole(ClassicControlSemantics, _Classic):
         simulator to declare one — an inherited ``step`` reached through a base class is exactly how a
         checker ends up driving an env it knows nothing about.
         """
-        return super().step(action)
+        return super()._step(action, active=active)
 
     @classmethod
     def reference_set_state(cls, env, st) -> None:
@@ -978,10 +967,10 @@ class Pendulum(ClassicControlSemantics, _Classic):
         rng = rng or self.rng
         return np.stack([rng.uniform(-np.pi, np.pi, batch), rng.uniform(-2.0, 2.0, batch)], 1).astype(np.float32)
 
-    def step(self, action) -> TensorDict:
+    def _step(self, action, *, active=None) -> TensorDict:
         """One control step. ``action`` is ``(B,1)``: **a continuous torque, clipped to [-2, 2]** —
         and the value that gets DRAWN, since the torque arrow is part of the render state."""
-        return super().step(action)
+        return super()._step(action, active=active)
 
     @classmethod
     def reference_set_state(cls, env, st) -> None:
@@ -1209,10 +1198,10 @@ class Acrobot(ClassicControlSemantics, _Classic):
         rng = rng or self.rng
         return rng.uniform(-np.pi, np.pi, (batch, 2)).astype(np.float32)
 
-    def step(self, action) -> TensorDict:
+    def _step(self, action, *, active=None) -> TensorDict:
         """One control step. ``action`` is ``(B,1)``: **0 = -1 torque, 1 = 0, 2 = +1**, integer, applied
         to the ELBOW joint only — the shoulder is unactuated, which is the whole task."""
-        return super().step(action)
+        return super()._step(action, active=active)
 
     @classmethod
     def reference_set_state(cls, env, st) -> None:
@@ -1445,9 +1434,9 @@ class MountainCar(ClassicControlSemantics, _Classic):
         rng = rng or self.rng
         return rng.uniform(self.MINP, self.MAXP, (batch, 1)).astype(np.float32)
 
-    def step(self, action) -> TensorDict:
+    def _step(self, action, *, active=None) -> TensorDict:
         """One control step. ``action`` is ``(B,1)``: **0 push left, 1 coast, 2 push right**, integer."""
-        return super().step(action)
+        return super()._step(action, active=active)
 
     @classmethod
     def reference_set_state(cls, env, st) -> None:
@@ -1514,10 +1503,10 @@ class MountainCarContinuous(MountainCar):
         vel = torch.where((pos == np.float32(self.MINP)) & (vel < 0), torch.zeros_like(vel), vel)
         return torch.stack([pos.to(torch.float64), vel.to(torch.float64)], 1)
 
-    def step(self, action) -> TensorDict:
+    def _step(self, action, *, active=None) -> TensorDict:
         """One control step. ``action`` is ``(B,1)``: **a continuous force, clipped to [-1, 1]** — not
         MountainCar-v0's three-way push, which is the second thing these two envs do not share."""
-        return super().step(action)
+        return super()._step(action, active=active)
 
 
 # =============================================================================== bakes

@@ -179,6 +179,7 @@ class CraftaxAdapter:
         keys = self.keys if seed is None else [jax.random.PRNGKey(s) for s in self.seeds(seed)]
         results = [self.reset_fn(k) for k in keys]
         jax.block_until_ready(results)
+        self._last_outputs = results
         cached = np.stack([np.asarray(x[0]) for x in results]) if self.retains_symbolic_output else None
         self.symbolic_cache = cached
         self.states = [x[1] for x in results]
@@ -338,13 +339,14 @@ class CraftaxAdapter:
         self.symbolic_cache = cached
         self.reward, self.terminated, self.truncated = rewards, terminated, truncated
 
-    def step(self, actions):
+    def step(self, actions, *, active=None):
         import jax
 
         check_profile()
         if self.states is None:
             raise RuntimeError("Call reset before stepping Craftax")
-        if self.terminated.any():
+        active = np.ones(self.num_envs, bool) if active is None else np.asarray(active.detach().cpu(), dtype=bool)
+        if self.terminated[active].any():
             raise RuntimeError("Craftax terminal State requires explicit reset")
         a = np.asarray(actions.detach().cpu() if torch.is_tensor(actions) else actions)
         if a.shape == (self.num_envs, 1):
@@ -357,9 +359,11 @@ class CraftaxAdapter:
         ):
             raise ValueError("Craftax actions must be one valid discrete integer ID per lane")
         results = [
-            self.step_fn(key, state, int(action)) for key, state, action in zip(self.keys, self.states, a, strict=True)
+            self.step_fn(key, state, int(action)) if active[i] else self._last_outputs[i]
+            for i, (key, state, action) in enumerate(zip(self.keys, self.states, a, strict=True))
         ]
         jax.block_until_ready(results)
+        self._last_outputs = results
         cached = np.stack([np.asarray(r[0]) for r in results]) if self.retains_symbolic_output else None
         self.symbolic_cache = cached
         self.states = [r[1] for r in results]

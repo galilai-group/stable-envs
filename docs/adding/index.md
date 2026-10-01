@@ -48,8 +48,8 @@ transforms and ordinary velocities did not restore hidden contact history.
 
 The [environment interface](../api/env.md) supplies reset/get/set/step/close,
 State/action/frame specifications and `render(full_state)`. Renderer-only cells
-must refuse simulator operations. Functional `transition`/`unroll` are optional;
-a delegated environment can refuse them while providing exact stateful stepping.
+must refuse simulator operations. Implement a private `_step` kernel; the shared
+public `step` provides sequence execution and capture.
 
 ## Complete small starting example
 

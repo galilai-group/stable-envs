@@ -35,9 +35,9 @@ by the family. `state_spec` describes those fields; `action_spec` describes acti
 can omit fields needed for continuation and are refused by `set_state`. There is
 no public `pack_render_state` or `unpack_render_state` API. See [State](concepts/state.md).
 
-`step` returns State and defined reward/done semantics. Optional functional
-`transition`/`unroll` are not available on every simulator; accepted delegated
-CartPole refuses them. Renderer-only cells refuse full simulator operations.
+`step` accepts `[B,A]` actions or `[B,T,A]` action sequences. It returns the final
+State and defined task outputs, plus a frame by default. Sequences also capture
+State history by default; use `capture="states"` for physics-only execution. Renderer-only cells refuse full simulator operations.
 See [dynamics](concepts/dynamics.md).
 
 ## Registration, Variation and downstream use

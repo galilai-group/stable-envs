@@ -69,7 +69,7 @@ class IntegratorEnv(RenderOnlyEnv):
     action_low = -1.0
     action_high = 1.0
 
-    def step(self, actions):
+    def step(self, actions, *, capture=None):
         self._render_state += torch.as_tensor(actions, dtype=torch.float32).reshape(self.B, -1)
         return self._render_state
 

@@ -1,0 +1,27 @@
+{
+  "source": "Oscar sacct, inspected 2026-10-01",
+  "jobs": {
+    "6911109": {
+      "state": "FAILED",
+      "exit_code": "4:0",
+      "cause": "fixture omitted from archive"
+    },
+    "6911355": {
+      "state": "FAILED",
+      "exit_code": "1:0",
+      "cause": "optional Matplotlib unavailable"
+    },
+    "6911735": {
+      "state": "COMPLETED",
+      "exit_code": "0:0"
+    },
+    "6911954": {
+      "state": "COMPLETED",
+      "exit_code": "0:0"
+    },
+    "6912594": {
+      "state": "COMPLETED",
+      "exit_code": "0:0"
+    }
+  }
+}

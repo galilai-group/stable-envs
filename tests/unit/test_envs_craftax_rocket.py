@@ -25,9 +25,10 @@ import pytest
 import torch
 
 import stable_envs as snv
-from stable_envs import dynamics
+from stable_envs import _dynamics as dynamics
 from stable_envs.envs import _craftax_full, craftax
 from stable_envs.envs import rocket_landing as RL
+from tests.helpers.stepping import branch_step, branch_steps
 
 CRAFTAX = ("CraftaxClassic", "CraftaxFull")
 
@@ -228,9 +229,9 @@ def test_these_cells_have_no_dynamics_and_say_so_precisely(envs, name):
     a = torch.zeros(env.num_envs, 1)
     st = env.state
     for call in (
-        lambda: env.step(a),
-        lambda: env.transition(st, a),
-        lambda: env.unroll(st, a.unsqueeze(0)),
+        lambda: env.step(a, capture="states"),
+        lambda: branch_step(env, st, a),
+        lambda: branch_steps(env, st, a.unsqueeze(0)),
         lambda: env.action_spec,
     ):
         with pytest.raises(NotImplementedError) as e:

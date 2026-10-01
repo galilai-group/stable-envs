@@ -137,7 +137,7 @@ class DMCAlignedSemantics:
         self._check_open("set_state")
         self._simulator.set_state(state)
 
-    def step(self, actions):
+    def _step(self, actions):
         self._check_open("step")
         return self._simulator.step(actions)
 

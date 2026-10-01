@@ -109,9 +109,9 @@ class ManipulationSemantics:
         self._simulator.set_state(state)
         self._sync_style()
 
-    def step(self, actions):
+    def _step(self, actions, *, active=None):
         self._check_open("step")
-        return self._simulator.step(actions)
+        return self._simulator.step(actions, active=active)
 
     def set_variation(self, variation=None, **overrides):
         self._check_open("set_variation")

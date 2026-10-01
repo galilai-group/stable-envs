@@ -204,7 +204,7 @@ def test_close_is_idempotent_and_a_closed_env_refuses_to_render():
         (lambda: env._render(st), "render"),
         (lambda: env._render(), "render"),
         (lambda: env.reset(seed=0), "reset"),
-        (lambda: env.step(torch.zeros(2, 2)), "step"),
+        (lambda: env.step(torch.zeros(2, 2), capture="states"), "step"),
     ):
         with pytest.raises(RuntimeError) as e:
             call()
@@ -233,6 +233,6 @@ def test_testing_harness_asks_has_dynamics_not_hasattr_step():
     offenders = [
         str(p.relative_to(root.parent))
         for p in root.rglob("*.py")
-        if p.name != "dynamics.py" and re.search(r'hasattr\(\s*\w+\s*,\s*"step"\s*\)', p.read_text())
+        if p.name != "_dynamics.py" and re.search(r'hasattr\(\s*\w+\s*,\s*"step"\s*\)', p.read_text())
     ]
     assert offenders == [], offenders

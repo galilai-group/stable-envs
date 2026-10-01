@@ -93,14 +93,17 @@ class RocketAdapter:
             env.close()
         return self.get_state()
 
-    def step(self, actions):
+    def step(self, actions, *, active=None):
+        active = None if active is None else np.asarray(active.detach().cpu(), dtype=bool)
         if torch.is_tensor(actions):
             actions = actions.detach().cpu().numpy()
         if not isinstance(actions, np.ndarray) or actions.shape != (self.num_envs, 7):
             raise ValueError("Rocket actions require shape [num_envs, 7]")
         for action in actions:
             validate_action(action)
-        results = [env.step(action) for env, action in zip(self.envs, actions, strict=True)]
+        results = [env.step(action) if active is None or active[i] else self._last_outputs[i]
+                   for i, (env, action) in enumerate(zip(self.envs, actions, strict=True))]
+        self._last_outputs = results
         return TensorDict(
             dict(
                 state=self.get_state(),

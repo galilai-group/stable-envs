@@ -6,12 +6,12 @@ The getting-started examples use only the public `stable_envs` API:
 |---|---|
 | [`render.py`](render.py) | construct an env, `reset`, and `render(state)` |
 | [`batched_env.py`](batched_env.py) | `num_envs`, specs, short batches, lifecycle |
-| [`functional_dynamics.py`](functional_dynamics.py) | stateful `step` vs pure `transition` / `unroll` |
+| [`action_sequences.py`](action_sequences.py) | single actions, batch-first sequences and capture |
 
 ```bash
 python examples/render.py --help
 python examples/batched_env.py --help
-python examples/functional_dynamics.py --help
+python examples/action_sequences.py
 ```
 
 ## Training from compact state

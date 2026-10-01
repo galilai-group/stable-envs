@@ -76,10 +76,10 @@ def run_gate(device="cpu"):
                     steps = check_step_matches_reference(env, ref, actions)
                     other.reset(seed=seed + 991)
                     for action in -actions[:9]:
-                        other.step(action)
+                        other.step(action, capture="states")
                     snapshot = env.get_state()
                     frozen_snapshot = snapshot.clone()
-                    env.step(actions[0])
+                    env.step(actions[0], capture="states")
                     compare_state(snapshot, frozen_snapshot)
                     history = check_two_histories_same_state(env, other, snapshot, actions[:8])
                     # Goal and target geom are both restored; OGBench's vector goal setter updates
@@ -128,7 +128,7 @@ def run_gate(device="cpu"):
                 snapshot = ref.get_state()
                 other.reset(seed=777)
                 for action in np.random.default_rng(777).uniform(-1, 1, (7, batch, 2)).astype(np.float32):
-                    other.step(action)
+                    other.step(action, capture="states")
                 for first, second in zip(env._simulator.envs, other._simulator.envs, strict=True):
                     assert (
                         first.action_space.np_random.bit_generator.state
@@ -175,13 +175,13 @@ def run_gate(device="cpu"):
                 success_state["root", "velocity"].zero_()
                 env.set_state(success_state)
                 ref.set_state(success_state)
-                got, expected = env.step(np.zeros((batch, 2), np.float32)), ref.step(np.zeros((batch, 2), np.float32))
+                got, expected = env.step(np.zeros((batch, 2), np.float32), capture="states"), ref.step(np.zeros((batch, 2), np.float32))
                 compare_state(got, expected)
                 assert (got["reward"] == 1).all() and got["success"].bool().all()
                 assert got["terminated"].all() and not got["truncated"].any()
                 # Termination is a returned boundary, not an implicit reset or a step prohibition.
                 got, expected = (
-                    env.step(np.full((batch, 2), 0.25, np.float32)),
+                    env.step(np.full((batch, 2), 0.25, np.float32), capture="states"),
                     ref.step(np.full((batch, 2), 0.25, np.float32)),
                 )
                 compare_state(got, expected)
@@ -201,7 +201,7 @@ def run_gate(device="cpu"):
                 check_reset_matches_reference(env, ref, seed=5)
                 zeros = np.zeros((batch, 2), np.float32)
                 for _ in range(1001):
-                    got, expected = env.step(zeros), ref.step(zeros)
+                    got, expected = env.step(zeros, capture="states"), ref.step(zeros)
                     compare_state(got, expected)
                     assert not got["terminated"].any() and not got["truncated"].any()
                 elapsed = env.get_state()["simulator", "time"]

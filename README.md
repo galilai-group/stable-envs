@@ -51,7 +51,7 @@ print(snv.info("CartPole"))
 snv.set(verbose="INFO", default_device="auto")
 ```
 
-`step(actions)` is stateful. Optional `transition` / `unroll` take known actions; delegated CartPole explicitly refuses them. There is no `env.rollout(policy=...)`. Planning, datasets and training belong to sibling [stable-*](https://github.com/galilai-group) projects.
+`step(actions, capture=None)` advances live environments. Actions are `[B,A]` for one step or `[B,T,A]` for a sequence. The default returns a final frame and, for sequences, intermediate States. Use `capture="states"` to skip rendering, `"final_frame"` to omit intermediate history, or `"all_frames"` to capture every frame. There is no `env.rollout(policy=...)`. Planning, datasets and training belong to sibling [stable-*](https://github.com/galilai-group) projects.
 
 Full walkthrough: [Quickstart](docs/quickstart.md).
 
@@ -59,7 +59,7 @@ Full walkthrough: [Quickstart](docs/quickstart.md).
 
 ```text
 snv.Env, snv.State, snv.StepResult, snv.VariationLike
-snv.Dynamics, snv.Spec, snv.CompositeSpec
+snv.Spec, snv.CompositeSpec
 snv.make, snv.info, snv.list_envs, snv.list_families, snv.import_errors
 snv.set, snv.get_config, snv.__version__
 snv.CartPole / snv.Pendulum / …                  concrete env classes
@@ -71,7 +71,7 @@ snv.CartPole / snv.Pendulum / …                  concrete env classes
 |---|---|
 | Environment listing | [docs/environments.md](docs/environments.md) |
 | State, Action, Variation, Frame | [docs/concepts/state.md](docs/concepts/state.md) |
-| Stateful `step` vs functional `transition`/`unroll` | [docs/concepts/dynamics.md](docs/concepts/dynamics.md) |
+| Stepping, action sequences and capture | [docs/concepts/dynamics.md](docs/concepts/dynamics.md) |
 | `close()` / context manager | [docs/concepts/lifecycle.md](docs/concepts/lifecycle.md) |
 | Sibling projects | [docs/concepts/worldmodel.md](docs/concepts/worldmodel.md) |
 | Backend and device limitations | [docs/concepts/limitations.md](docs/concepts/limitations.md) |

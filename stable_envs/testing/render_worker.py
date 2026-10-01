@@ -76,7 +76,7 @@ def rollout_digests(env, n: int) -> dict:
     ``reset``, a CUDA generator whose default device changed. Four steps is enough — a seed that is
     going to differ differs at step one.
     """
-    from stable_envs.dynamics import has_dynamics
+    from stable_envs._dynamics import has_dynamics
 
     if not has_dynamics(env):
         return {}

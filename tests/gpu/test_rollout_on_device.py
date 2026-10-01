@@ -38,7 +38,7 @@ N, STEPS, SEED = 4, 4, 20260812
 
 #: Envs that DECLARE a step of their own. ``hasattr`` is too loose — it is inherited — and the claim
 #: being made is that this class ported its dynamics, not that some ancestor did.
-STEPPING = tuple(n for n, c in sorted(se.registry.REGISTRY.items()) if "step" in c.__dict__)
+STEPPING = tuple(n for n, c in sorted(se.registry.REGISTRY.items()) if "_step" in c.__dict__)
 
 #: Env modules that ship a simulator. If none of them imported, an empty sweep is a fact about the
 #: interpreter; if they did import and the sweep is still empty, the ports have gone missing.
@@ -175,7 +175,7 @@ def test_an_env_without_a_simulator_refuses_and_says_what_to_do_instead():
     your own states — rather than reading like a missing feature, and it must arrive before any work
     is done rather than as an ``AttributeError`` from inside a loop.
     """
-    without = [n for n, c in sorted(se.registry.REGISTRY.items()) if "step" not in c.__dict__]
+    without = [n for n, c in sorted(se.registry.REGISTRY.items()) if "_step" not in c.__dict__]
     assert without, (
         "every registered env now declares a step, which would make this check vacuous; if that is "
         "really true, delete it"

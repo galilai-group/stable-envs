@@ -123,7 +123,7 @@ def cpu(output):
                     assert torch.equal(saved["style"], saved_values)
                     env.set_variation(saved_values)
                     for action in np.random.default_rng(71).uniform(-1, 1, (3, 2, 4)):
-                        compare_output(env.step(action), [ref.step(action[lane]) for lane, ref in enumerate(refs)])
+                        compare_output(env.step(action, capture="states"), [ref.step(action[lane]) for lane, ref in enumerate(refs)])
                         full_compare(env.get_state(), refs)
                     results.append(dict(registration=row["registration"], case=case, reset=reset_index, colors=colors))
             finally:

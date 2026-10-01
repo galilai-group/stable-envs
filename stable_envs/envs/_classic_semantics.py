@@ -304,9 +304,12 @@ class ClassicControlAdapter:
             return [array[i, 0].item() for i in range(self.num_envs)]
         return [array[i] for i in range(self.num_envs)]
 
-    def step(self, actions) -> TensorDict:
+    def step(self, actions, *, active=None) -> TensorDict:
+        active = None if active is None else np.asarray(active.detach().cpu(), dtype=bool)
         self._check_open()
-        outputs = [env.step(action) for env, action in zip(self.envs, self._actions(actions), strict=True)]
+        outputs = [env.step(action) if active is None or active[i] else self._last_outputs[i]
+                   for i, (env, action) in enumerate(zip(self.envs, self._actions(actions), strict=True))]
+        self._last_outputs = outputs
         observations = np.stack([out[0] for out in outputs])
         return TensorDict(
             {
@@ -427,19 +430,12 @@ class ClassicControlSemantics:
         self._simulator.set_state(state)
         self._sync_authoritative_state(state)
 
-    def step(self, actions):
+    def _step(self, actions, *, active=None):
         self._check_open("step")
-        result = self._simulator.step(actions)
+        result = self._simulator.step(actions, active=active)
         self._sync_authoritative_state(result["state"])
         return result
 
-    def transition(self, state, action):
-        self._check_open("transition")
-        self._validate_state(state)
-        raise NotImplementedError(
-            f"{type(self).__name__}.transition is unavailable for the recovered delegated semantics; "
-            "use set_state(full_state) followed by step(action)."
-        )
 
     def _close(self):
         if hasattr(self, "_simulator"):

@@ -517,7 +517,7 @@ class Sokoban(Env):
         s.copy_(out.to(torch.float32))
 
     @torch.no_grad()
-    def step(self, action) -> TensorDict:
+    def _step(self, action) -> TensorDict:
         """Advance every environment one step. ``action`` is ``(B, 1)``, floored into ``[0, 9)``.
 
         STATEFUL: it writes ``env.state``. Returns a :data:`~stable_envs.env.StepResult` carrying
@@ -535,18 +535,6 @@ class Sokoban(Env):
         self._advance()
         return self._step_result(self._step_state())
 
-    @torch.no_grad()
-    def transition(self, state: TensorDict, action) -> TensorDict:
-        """``(state, action) -> next_state``. FUNCTIONAL: the env's own buffers are not touched.
-
-        Bit-identical to ``step`` on the same device for the same state by CONSTRUCTION: both call
-        ``_advance_into``, which is the whole transition, over buffers the caller names.
-        """
-        self._validate_state(state)
-        rows = self._pack_render_state(state).clone()
-        act = torch.as_tensor(action, device=self.device, dtype=torch.float32).reshape(-1, self.action_dim)
-        self._advance_into(rows, act)
-        return self._unpack_render_state(rows)
 
     def _close(self) -> None:
         """Drop what this INSTANCE holds. ``Env.close`` calls this once and is idempotent.

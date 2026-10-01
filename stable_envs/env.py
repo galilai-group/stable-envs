@@ -1,8 +1,7 @@
 """The contract every stable-envs environment implements.
 
 Five nouns: **Env**, **State**, **Action**, **Variation**, **Frame**.
-Two usage modes: **stateful** (``reset`` / ``step``) and **functional**
-(``transition`` / ``unroll`` / ``render``).
+Stateful simulation (``reset`` / ``step``) and explicit-State rendering (``render``).
 
     State
         instantaneous dynamic world state
@@ -33,7 +32,7 @@ configuration). Do not invent knobs; declare the ones the environment actually h
 
 Two state shapes, and they are not the same thing:
 
-  * **public State** — the ``TensorDict`` dynamics uses (``reset`` / ``step`` / ``transition``).
+  * **public State** — the ``TensorDict`` dynamics uses (``reset`` / ``step``).
     Keys are grouped by entity. It may carry dynamics-only fields the renderer never sees.
   * **compact render state** — the float32 row that regenerates frames. Reached through
     ``_pack_render_state`` / ``_unpack_render_state``. It is not always a lossless serialization
@@ -71,7 +70,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from . import dynamics as _dynamics
+from . import _dynamics
 from ._config import get_config as _get_config
 from ._style import StyleTensor
 from .spaces import Dict as VariationDict
@@ -545,7 +544,7 @@ class Env:
 
     Five nouns: **Env**, **State**, **Action**, **Variation**, **Frame**.
     Two usage modes: **stateful** (``reset`` / ``step``) and **functional**
-    (``transition`` / ``unroll`` / ``render``).
+    (``render``).
 
     ``frame = f(state, variation)``. Where native dynamics exist,
     ``next_state = g(state, action, variation)``. Variation may be stored on the env rather than
@@ -632,7 +631,7 @@ class Env:
     #:
     #: ``None`` for an offset means the field is REAL DYNAMICAL STATE THAT THE PACKED ROW DOES NOT
     #: CARRY — PushT's agent velocity is the motivating case. Such a field is part of the public state
-    #: (so ``transition`` can be pure), is filled with zeros by ``unpack`` (which is exactly the
+    #: (so a checkpoint can reproduce continuation), is filled with zeros by ``unpack`` (which is exactly the
     #: condition ``set_state`` puts the env in, and the reference's condition after ``reset``), and is
     #: dropped by ``pack``, so the packed row, its digests and every frozen corpus are untouched.
     #:
@@ -1177,7 +1176,7 @@ class Env:
                 f"None — real dynamical state that the packed row does not carry — and "
                 f"{type(self).__name__}._hidden_state() does not return it. Unfilled, it would be "
                 f"reported as ZEROS, which is a wrong answer rather than a failure: env.state would "
-                f"look fine and transition(env.state, action) would stop matching step(action). "
+                f"look fine while restoration would change subsequent step(action) results. "
                 f"Return {{{missing[0]!r}: <the live tensor>}} from _hidden_state()."
             )
         return td.clone()
@@ -1239,7 +1238,7 @@ class Env:
 
     @property
     def action_spec(self) -> Spec:
-        """What ``step``/``transition`` take. Envs with no simulator declare no ``action_dim``."""
+        """What ``step`` takes. Envs with no simulator declare no ``action_dim``."""
         dim = getattr(self, "action_dim", None)
         if dim is None:
             _dynamics.no_dynamics(self, "action_spec")
@@ -1307,26 +1306,24 @@ class Env:
         self._set_render_state(self.sample_states(self.B, self.rng))
         return self.state
 
-    def step(self, actions) -> TensorDict:
-        """Advance every environment one control step. STATEFUL: it writes ``env.state``.
+    def step(self, actions, *, capture=None) -> TensorDict:
+        """Advance live environments with [B, A] or [B, T, A] actions.
 
-        Returns a :data:`StepResult` holding at least ``"state"``, built with ``_step_result``. A
-        cell with no reward or termination semantics omits those keys rather than fabricating zeros
-        (contract §5).
+        capture=None returns a final frame, plus State history for sequences.
+        Explicit modes are "states" (no pixels), "final_frame", and "all_frames".
+        Every mode returns the full final State. Sequence lanes stop at their
+        first terminal/truncated transition; valid marks executed transitions.
         """
+        from ._stepping import step
+
+        return step(self, actions, capture=capture)
+
+    def _step(self, actions) -> TensorDict:
+        """Family single-transition kernel; no rendering or sequence dispatch."""
         _dynamics.no_dynamics(self, "step")
-
-    def transition(self, state: TensorDict, action) -> TensorDict:
-        """``(state, action) -> next_state``, PURE: the env's own buffers are not touched."""
-        _dynamics.no_dynamics(self, "transition")
-
-    def unroll(self, state: TensorDict, actions) -> TensorDict:
-        """``actions`` are ``(T, num_envs, ...)`` and KNOWN — open loop, never a policy rollout."""
-        return _dynamics.unroll_from_transition(self, state, actions)
 
     @property
     def has_dynamics(self) -> bool:
-        """True when this env ships a batched simulator, i.e. overrides ``step`` or ``transition``."""
         return _dynamics.has_dynamics(self)
 
     def _check_open(self, what: str) -> None:
@@ -1356,7 +1353,7 @@ class Env:
         return False
 
 
-#: ``dynamics.has_dynamics`` asks whether a class OVERRIDES ``step``/``transition``, and it needs the
+#: ``_dynamics.has_dynamics`` asks whether a class overrides ``_step``, and it needs the
 #: class they are inherited from to compare against. Set here rather than inside ``dynamics`` because
 #: ``env`` imports ``dynamics`` and not the other way round: the arrow stays one-way.
 Env._se_dynamics_base = Env

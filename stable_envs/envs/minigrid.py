@@ -553,24 +553,6 @@ class MiniGridTopDown(_TileEnv):
         """
         return {("agent", "carrying"): self._carry[: self._live_rows].reshape(-1, 1).to(torch.float32)}
 
-    @torch.no_grad()
-    def transition(self, state: TensorDict, action) -> TensorDict:
-        """``(state, action) -> next_state``. FUNCTIONAL: the env's own buffers are not touched.
-
-        Bit-identical to ``step`` on the same device for the same state, and identical by
-        CONSTRUCTION rather than by resemblance: both call ``_advance_into``, which is the whole
-        transition, over buffers the caller names. ``step`` passes the env's own three and may replay
-        them from a CUDA graph; this one passes three fresh ones, because a captured graph reads
-        FIXED ADDRESSES and this call may not write the env's.
-        """
-        self._validate_state(state)
-        rows = self._pack_render_state(state).clone()
-        carry = torch.as_tensor(state["agent", "carrying"], device=self.device).reshape(-1).round().to(torch.long)
-        act = torch.as_tensor(action, device=self.device, dtype=torch.float32).reshape(-1, self.action_dim)
-        self._advance_into(rows, carry, act)
-        out = self._unpack_render_state(rows)
-        out["agent", "carrying"] = carry.reshape(-1, 1).to(torch.float32)
-        return out
 
     def sim_state(self) -> torch.Tensor:
         """``(B, state_dim + 1)`` — the compact state with ``carrying`` appended."""
@@ -665,7 +647,7 @@ class MiniGridTopDown(_TileEnv):
         carry.copy_(torch.where(pick, cell, torch.where(drop, self._none, carry)))
 
     @torch.no_grad()
-    def step(self, action) -> TensorDict:
+    def _step(self, action) -> TensorDict:
         """Advance every environment one step. ``action`` is ``(B, 1)``, floored to ``[0, 7)``.
 
         STATEFUL: it writes ``env.state``. Returns a :data:`~stable_envs.env.StepResult` carrying

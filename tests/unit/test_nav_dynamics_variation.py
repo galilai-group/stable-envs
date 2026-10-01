@@ -4,6 +4,7 @@ import pytest
 import torch
 
 import stable_envs as snv
+from tests.helpers.stepping import branch_step
 
 pytestmark = pytest.mark.unit
 
@@ -13,9 +14,9 @@ def test_two_room_speed_scales_the_step():
     state = env.reset(seed=0)
     action = torch.tensor([[1.0, 0.0]])
     env.set_variation({"agent.speed": [1.0]})
-    slow = env.transition(state, action)
+    slow = branch_step(env, state, action)
     env.set_variation({"agent.speed": [5.0]})
-    fast = env.transition(state, action)
+    fast = branch_step(env, state, action)
     dx_slow = float((slow["agent", "position"] - state["agent", "position"])[0, 0])
     dx_fast = float((fast["agent", "position"] - state["agent", "position"])[0, 0])
     assert dx_fast > dx_slow > 0

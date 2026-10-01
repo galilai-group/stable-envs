@@ -910,9 +910,9 @@ class _HistoricalDefaultSemantics:
         self._check_open("set_state")
         self._simulator.set_state(state)
 
-    def step(self, actions):
+    def _step(self, actions, *, active=None):
         self._check_open("step")
-        return self._simulator.step(actions)
+        return self._simulator.step(actions, active=active)
 
     def _close(self):
         if hasattr(self, "_simulator"):

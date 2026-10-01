@@ -6,6 +6,7 @@ import torch
 
 import stable_envs as se
 from stable_envs.envs._classic_semantics import CLASSIC_FIELDS
+from tests.helpers.stepping import branch_step
 
 
 @pytest.mark.parametrize("domain,name", [("cartpole", "CartPole"), ("pendulum", "Pendulum")])
@@ -29,10 +30,10 @@ def test_recovered_classic_state_is_complete_independent_and_renderable(domain, 
             env.set_state(compact)
         with pytest.raises(ValueError, match="missing"):
             env.set_state(env._unpack_render_state(compact))
-        with pytest.raises(NotImplementedError, match="delegated semantics"):
-            env.transition(held, torch.zeros((2, 1)))
+        assert not hasattr(env, "transition")
+        assert not hasattr(env, "unroll")
         with pytest.raises(TypeError, match="full State"):
-            env.transition(compact, torch.zeros((2, 1)))
+            branch_step(env, compact, torch.zeros((2, 1)))
         with pytest.raises(NotImplementedError, match="get_state"):
             env.sim_state()
         with pytest.raises(NotImplementedError, match="set_state"):
@@ -43,11 +44,11 @@ def test_cartpole_action_and_step_result_contract():
     with se.make("CartPole", num_envs=1, device="cpu") as env:
         assert env.action_spec.dtype == torch.int64
         assert env.action_spec.discrete_n == 2
-        out = env.step(np.zeros((1, 1), np.int64))
+        out = env.step(np.zeros((1, 1), np.int64), capture="states")
         assert set(out.keys()) == {"state", "reward", "terminated", "truncated", "observation", "info_state"}
         assert out["reward"].item() == 1.0
         with pytest.raises(AssertionError):
-            env.step(np.zeros((1, 1), np.float32))
+            env.step(np.zeros((1, 1), np.float32), capture="states")
 
 
 def test_pendulum_action_clipping_and_zero_reward_state():
@@ -59,9 +60,9 @@ def test_pendulum_action_clipping_and_zero_reward_state():
         state["torque"].zero_()
         state["task", "has_last_u"].fill_(True)
         env.set_state(state)
-        out = env.step(np.zeros((1, 1), np.float32))
+        out = env.step(np.zeros((1, 1), np.float32), capture="states")
         assert out["reward"].item() == 0.0
-        out = env.step(np.asarray([[3.25]], np.float64))
+        out = env.step(np.asarray([[3.25]], np.float64), capture="states")
         assert out["state", "torque"].item() == 2.0
 
 

@@ -270,7 +270,7 @@ def cpu(row, output, *, target_frames=None, source_only=False):
                         actions[step - 1] = contact_action(bridge, options["_interaction"], step - 1, dtype)
                     action = actions[step - 1]
                     bridge.step(action)
-                    out = env.step(action)
+                    out = env.step(action, capture="states")
                     if name in CLASSIC or name.startswith(("Fetch", "Craftax")):
                         done = bool(out["terminated"].any() or out["truncated"].any())
                 if step not in marks and not done:
@@ -385,7 +385,7 @@ def gpu(row, corpus, output):
                     active_case, replay_step = f["case"], 0
                 actions = np.load(corpus / recipe["actions_file"], allow_pickle=False)
                 while replay_step < f["step"]:
-                    env.step(actions[replay_step])
+                    env.step(actions[replay_step], capture="states")
                     replay_step += 1
                 replayed = env.get_state()
                 cpu_leaves, gpu_leaves = state_arrays(state), state_arrays(replayed)

@@ -61,7 +61,7 @@ def run_gate(device="cpu"):
                     assert (saved == other.reset(seed=seed)).all()
                     other.reset(seed=seed + 991)
                     for action in -actions[:9]:
-                        other.step(action)
+                        other.step(action, capture="states")
                     snapshot = env.get_state()
                     history = check_two_histories_same_state(env, other, snapshot, actions[:8])
                     frame = env.render(snapshot)
@@ -102,7 +102,7 @@ def run_gate(device="cpu"):
                     reward_state["task", "target_pos"][i, :2] = torch.as_tensor(wrapper.info["finger_pos"])
                 env.set_state(reward_state)
                 ref.set_state(reward_state)
-                got, expected = env.step(np.zeros((batch, 2))), ref.step(np.zeros((batch, 2)))
+                got, expected = env.step(np.zeros((batch, 2)), capture="states"), ref.step(np.zeros((batch, 2)))
                 compare_state(got, expected)
                 assert (got["reward"] == 2).all()
                 evidence["cases"].append(dict(batch=batch, positive_reward=2.0, terminated=False, truncated=False))

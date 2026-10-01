@@ -735,19 +735,8 @@ class _GymReferencePort(Env):
         rows = rows.reshape(-1, self.state_dim)
         return rows, self._style.for_batch(int(rows.shape[0]), owner=f"{type(self).__name__}.{owner}")
 
-    @torch.no_grad()
-    def transition(self, state, action) -> TensorDict:
-        """``(state, action) -> next_state``. FUNCTIONAL: the env's own buffers are not touched.
 
-        The same ``_advance_rows`` the stateful ``step`` calls, over the same float32 rows, so the
-        two agree to the bit by construction rather than by resemblance.
-        """
-        self._validate_state(state)
-        rows, sty = self._rows_and_style(state, "transition")
-        act = torch.as_tensor(action, device=self.device, dtype=torch.float32).reshape(-1, self.action_dim)
-        return self._unpack_render_state(self._advance_rows(rows, act, sty))
-
-    #: EVERY CONCRETE CELL RE-DECLARES ``step`` as a one-line ``super().step(action)``, and that is
+    #: EVERY CONCRETE CELL RE-DECLARES ``step`` as a one-line ``super()._step(action, active=active)``, and that is
     #: not ceremony. ``test_gpu_step_tracks_the_reference_simulator`` guards on
     #: ``"step" in cls.__dict__`` rather than on ``hasattr``, deliberately: pointing the step checker
     #: at an inherited step it cannot drive has aborted the interpreter rather than failing one test.
@@ -755,7 +744,7 @@ class _GymReferencePort(Env):
     #: family once reported "no batched GPU simulator declared as checkable" while shipping one.
 
     @torch.no_grad()
-    def step(self, action) -> TensorDict:
+    def _step(self, action, *, active=None) -> TensorDict:
         """Advance every environment one control step. STATEFUL: it writes ``env.state``.
 
         Returns a :data:`~stable_envs.env.StepResult` carrying ``"state"`` and nothing else: a
@@ -764,7 +753,10 @@ class _GymReferencePort(Env):
         """
         self._check_open("step")
         act = torch.as_tensor(action, device=self.device, dtype=torch.float32).reshape(self.B, self.action_dim)
-        self._render_state.copy_(self._advance_rows(self._render_state, act, self._style))
+        next_rows = self._advance_rows(self._render_state, act, self._style)
+        if active is not None:
+            next_rows = torch.where(active[:, None], next_rows, self._render_state)
+        self._render_state.copy_(next_rows)
         return self._step_result(self.state)
 
     def _advance_rows(self, rows: torch.Tensor, action: torch.Tensor, sty) -> torch.Tensor:
@@ -913,24 +905,15 @@ class _HiddenTargetSemantics:
             device=self.device,
         )
 
-    @torch.no_grad()
-    def transition(self, state, action):
-        self._validate_state(state)
-        rows, sty = self._rows_and_style(state, 'transition')
-        act = torch.as_tensor(action, device=self.device, dtype=torch.float32).reshape(-1, self.action_dim)
-        agent = self._advance_rows(rows, act, sty)[:, :2]
-        target = torch.as_tensor(state['target', 'position'], device=self.device, dtype=torch.float32)
-        return TensorDict(
-            {'agent': {'position': agent}, 'target': {'position': target.clone()}},
-            batch_size=[int(agent.shape[0])],
-            device=self.device,
-        )
 
     @torch.no_grad()
-    def step(self, action):
+    def _step(self, action, *, active=None):
         self._check_open('step')
         act = torch.as_tensor(action, device=self.device, dtype=torch.float32).reshape(self.B, self.action_dim)
-        self._render_state.copy_(self._advance_rows(self._render_state, act, self._style))
+        next_rows = self._advance_rows(self._render_state, act, self._style)
+        if active is not None:
+            next_rows = torch.where(active[:, None], next_rows, self._render_state)
+        self._render_state.copy_(next_rows)
         return self._outputs(self.get_state())
 
 
@@ -1378,11 +1361,11 @@ class TwoRoom(_HiddenTargetSemantics, _TwoRoomBase):
     def make_variation_space(self) -> Dict:
         return Dict({"agent": Dict(self._agent_space()), **self._structure_space()})
 
-    def step(self, action) -> TensorDict:
+    def _step(self, action, *, active=None) -> TensorDict:
         """One control step; the implementation is :meth:`_GymReferencePort.step`. Declared here because the
         shared step check only sees a ``step`` in the concrete class's own ``__dict__`` — see the
         note above ``_GymReferencePort.step``."""
-        return super().step(action)
+        return super()._step(action, active=active)
 
     def _agent_sample_ok(self, value, lane):
         axis = int(self._style['wall.axis'][lane].item())
@@ -1464,11 +1447,11 @@ class TwoRoomTarget(_TwoRoomBase):
             }
         )
 
-    def step(self, action) -> TensorDict:
+    def _step(self, action, *, active=None) -> TensorDict:
         """One control step; the implementation is :meth:`_GymReferencePort.step`. Declared here because the
         shared step check only sees a ``step`` in the concrete class's own ``__dict__`` — see the
         note above ``_GymReferencePort.step``."""
-        return super().step(action)
+        return super()._step(action, active=active)
 
     def _dots(self, s, sl, k):
         """Target then agent: the reference's order, and visible where the two overlap."""
@@ -1591,11 +1574,11 @@ class Piecewise(_HiddenTargetSemantics, _PiecewiseBase):
     def make_variation_space(self) -> Dict:
         return Dict({**self._common_space(), "zones": Dict(self._zone_bias_space())})
 
-    def step(self, action) -> TensorDict:
+    def _step(self, action, *, active=None) -> TensorDict:
         """One control step; the implementation is :meth:`_GymReferencePort.step`. Declared here because the
         shared step check only sees a ``step`` in the concrete class's own ``__dict__`` — see the
         note above ``_GymReferencePort.step``."""
-        return super().step(action)
+        return super()._step(action, active=active)
 
     def base_image(self, sl, k) -> torch.Tensor:
         return self._paint(self._fill(k, sl("background.color")), self._border, sl("border.color"))
@@ -1621,11 +1604,11 @@ class PiecewiseZones(_PiecewiseBase):
         z = {**self._zone_bias_space(), **{f"color_{i}": RGBBox(init_value=ZONE_C[i]) for i in range(N_ZONES)}}
         return Dict({**self._common_space(), "zones": Dict(z)})
 
-    def step(self, action) -> TensorDict:
+    def _step(self, action, *, active=None) -> TensorDict:
         """One control step; the implementation is :meth:`_GymReferencePort.step`. Declared here because the
         shared step check only sees a ``step`` in the concrete class's own ``__dict__`` — see the
         note above ``_GymReferencePort.step``."""
-        return super().step(action)
+        return super()._step(action, active=active)
 
     def base_image(self, sl, k) -> torch.Tensor:
         img = self._fill(k, sl("background.color"))
@@ -2129,41 +2112,15 @@ class SimplePointMaze(_GymReferencePort):
         next_is_float64 = state_is_float64.reshape(-1) | (action_promotes & ~blocked64)
         return value, next_is_float64.reshape(-1, 1)
 
-    @torch.no_grad()
-    def transition(self, state, action):
-        self._validate_state(state)
-        n = int(state.batch_size[0])
-        sty = self._style.for_batch(n, owner='SimplePointMaze.transition')
-        agent, state_is_float64 = self._advance_agent(
-            torch.as_tensor(state['agent', 'position'], device=self.device, dtype=torch.float64).reshape(n, 2),
-            action,
-            sty,
-            torch.as_tensor(state['task', 'state_is_float64'], device=self.device, dtype=torch.bool),
-        )
-        return TensorDict(
-            {
-                'agent': {'position': agent},
-                'goal': {
-                    'position': torch.as_tensor(
-                        state['goal', 'position'], device=self.device, dtype=torch.float32
-                    ).reshape(n, 2).clone()
-                },
-                'task': {
-                    'cached_goal_agent_position': torch.as_tensor(
-                        state['task', 'cached_goal_agent_position'], device=self.device, dtype=torch.float32
-                    ).reshape(n, 2).clone(),
-                    'state_is_float64': state_is_float64,
-                },
-            },
-            batch_size=[n],
-            device=self.device,
-        )
 
-    def step(self, action) -> TensorDict:
+    def _step(self, action, *, active=None) -> TensorDict:
         self._check_open('step')
         agent, state_is_float64 = self._advance_agent(
             self._agent_position, action, self._style, self._state_is_float64
         )
+        if active is not None:
+            agent = torch.where(active[:, None], agent, self._agent_position)
+            state_is_float64 = torch.where(active[:, None], state_is_float64, self._state_is_float64)
         self._agent_position.copy_(agent)
         self._state_is_float64.copy_(state_is_float64)
         self._render_state[:, 0:2].copy_(agent.to(torch.float32))

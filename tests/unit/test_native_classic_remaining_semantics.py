@@ -6,6 +6,7 @@ import torch
 
 import stable_envs as se
 from stable_envs.envs._classic_semantics import CLASSIC_FIELDS
+from tests.helpers.stepping import branch_step
 
 CASES = (
     ("acrobot", "Acrobot"),
@@ -35,10 +36,10 @@ def test_remaining_classic_state_is_complete_independent_and_renderable(domain, 
             env.set_state(compact)
         with pytest.raises(ValueError, match="missing"):
             env.set_state(env._unpack_render_state(compact))
-        with pytest.raises(NotImplementedError, match="delegated semantics"):
-            env.transition(held, torch.zeros((2, 1)))
+        assert not hasattr(env, "transition")
+        assert not hasattr(env, "unroll")
         with pytest.raises(TypeError, match="full State"):
-            env.transition(compact, torch.zeros((2, 1)))
+            branch_step(env, compact, torch.zeros((2, 1)))
         with pytest.raises(NotImplementedError, match="get_state"):
             env.sim_state()
         with pytest.raises(NotImplementedError, match="set_state"):
@@ -50,10 +51,10 @@ def test_remaining_discrete_action_contract(name):
     with se.make(name, num_envs=1, device="cpu") as env:
         assert env.action_spec.dtype == torch.int64
         assert env.action_spec.discrete_n == 3
-        out = env.step(np.ones((1, 1), np.int64))
+        out = env.step(np.ones((1, 1), np.int64), capture="states")
         assert set(out.keys()) == {"state", "reward", "terminated", "truncated", "observation", "info_state"}
         with pytest.raises((AssertionError, TypeError)):
-            env.step(np.ones((1, 1), np.float32))
+            env.step(np.ones((1, 1), np.float32), capture="states")
 
 
 def test_continuous_mountain_car_dtype_transition_and_unclipped_action_cost():
@@ -61,16 +62,16 @@ def test_continuous_mountain_car_dtype_transition_and_unclipped_action_cost():
         reset = env.reset(seed=17)
         assert not reset["task", "state_is_float32"].item()
         precise = np.asarray([[0.1234567890123]], np.float64)
-        out = env.step(precise)
+        out = env.step(precise, capture="states")
         assert out["state", "task", "state_is_float32"].item()
         saved = out["state"]
-        expected = env.step(np.zeros((1, 1), np.float32))
+        expected = env.step(np.zeros((1, 1), np.float32), capture="states")
         env.set_state(saved)
-        actual = env.step(np.zeros((1, 1), np.float32))
+        actual = env.step(np.zeros((1, 1), np.float32), capture="states")
         assert (actual == expected).all()
 
         env.reset(seed=17)
-        clipped = env.step(np.asarray([[2.0]], np.float64))
+        clipped = env.step(np.asarray([[2.0]], np.float64), capture="states")
         assert clipped["reward"].item() == -0.4
 
 

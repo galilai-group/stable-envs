@@ -5,6 +5,7 @@ import torch
 from tensordict import TensorDict
 
 import stable_envs as se
+from tests.helpers.stepping import branch_step
 
 
 @pytest.mark.parametrize("name", ["CartPole", "Pendulum", "Acrobot", "PushT", "MiniGridEmpty", "TwoRoom"])
@@ -14,19 +15,19 @@ def test_full_snapshot_restores_future_and_has_no_aliases(name):
         action = torch.ones(2, env.action_dim, dtype=env.action_spec.dtype)
         if name == "PushT":
             action *= 250
-        env.step(action)
+        env.step(action, capture="states")
         saved = env.get_state()
         assert isinstance(saved, TensorDict)
         for key in saved.keys(True, True):
             assert env.state_spec[key].dtype == saved[key].dtype
         frozen = saved.clone()
-        expected = env.step(action)
+        expected = env.step(action, capture="states")
         for _ in range(3):
-            env.step(action)
+            env.step(action, capture="states")
         assert (saved == frozen).all()
         assert env.set_state(saved) is None
         assert (env.get_state() == saved).all()
-        assert (env.step(action) == expected).all()
+        assert (env.step(action, capture="states") == expected).all()
         for value in saved.values(True, True):
             value.zero_()
         assert (env.get_state() == expected["state"]).all()
@@ -43,7 +44,7 @@ def test_lossy_projection_is_rejected_and_full_state_renders(name):
             with pytest.raises((TypeError, ValueError)):
                 env.set_state(wrong)
             with pytest.raises((TypeError, ValueError)):
-                env.transition(wrong, torch.zeros(2, env.action_dim))
+                branch_step(env, wrong, torch.zeros(2, env.action_dim))
         for name in ("pack", "unpack", "pack_render_state", "unpack_render_state", "_state"):
             assert not hasattr(env, name)
 

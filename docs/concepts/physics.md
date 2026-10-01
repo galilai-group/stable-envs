@@ -17,8 +17,8 @@ solver agreement and matching frames do not satisfy that requirement. A safe,
 reviewed engine snapshot mechanism is needed before that work resumes.
 
 Renderer-only capability remains useful, but those cells must refuse operations
-that would claim a full simulator checkpoint. Functional dynamics are optional,
-and an accepted delegated stateful backend may refuse transition/unroll.
+that would claim a full simulator checkpoint. Accepted stateful simulators expose
+`step` with single actions or action sequences.
 
 A GPU renderer can coexist with authoritative CPU physics. Record the separate
 dependency profiles and device claims; passing GPU pixel comparisons does not

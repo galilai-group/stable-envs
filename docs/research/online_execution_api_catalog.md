@@ -1,5 +1,12 @@
 # Online execution API catalogue
 
+Update, 2026-10-01: the public API now accepts `[B,A]` or `[B,T,A]` in `step`,
+with explicit capture modes. Fetch State export is column-wise; large Fetch
+batches use a bounded persistent worker pool. Other execution strategies below
+remain the original audit/proposals. See [the API](../concepts/dynamics.md) and
+[the bounded Fetch evidence](semantic_recovery_evidence/online_stepping_20261001/summary.json).
+The original audit and its frozen companion outputs follow unchanged.
+
 Source audit, 2026-09-29, `repair/render-config-fixes` at
 `df80c9c54590afa9fc0482a4dcb241d21f6b63a3` plus the existing working-tree changes.
 The companion CSV lists all 42 historical registrations individually. The JSON

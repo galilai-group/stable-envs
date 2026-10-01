@@ -30,12 +30,14 @@ import inspect
 import numpy as np
 import pytest
 
+from tests.helpers.stepping import branch_step, branch_steps
+
 pytest.importorskip("torch")
 pytest.importorskip("tensordict")
 
 import torch
 
-from stable_envs import dynamics as D
+from stable_envs import _dynamics as D
 from stable_envs.registry import REGISTRY
 
 pytestmark = pytest.mark.unit
@@ -161,7 +163,7 @@ def test_a_cell_without_a_simulator_refuses_step_and_transition_by_name(name):
         env._set_render_state(env.sample_states(env.num_envs, np.random.default_rng(0)))
         if steppable:
             assert D.has_dynamics(env)
-            out = env.step(torch.zeros(env.num_envs, env.action_dim))
+            out = env.step(torch.zeros(env.num_envs, env.action_dim), capture="states")
             assert list(out.keys()) == ["state"], (
                 f"{name}: step fabricated {set(out.keys()) - {'state'}}; a cell with no reward or "
                 f"termination semantics omits the key (contract §5)"
@@ -169,8 +171,8 @@ def test_a_cell_without_a_simulator_refuses_step_and_transition_by_name(name):
             return
         assert not D.has_dynamics(env)
         for call in (
-            lambda: env.step(torch.zeros(env.num_envs, 1)),
-            lambda: env.transition(env.state, torch.zeros(env.num_envs, 1)),
+            lambda: env.step(torch.zeros(env.num_envs, 1), capture="states"),
+            lambda: branch_step(env, env.state, torch.zeros(env.num_envs, 1)),
         ):
             with pytest.raises(NotImplementedError) as e:
                 call()
@@ -202,7 +204,7 @@ STEPPABLE = [n for n in OWNED if any(b.__name__ in WITH_DYNAMICS for b in REGIST
 
 @pytest.mark.skipif(not STEPPABLE, reason="neither steppable family is constructible on this host")
 @pytest.mark.parametrize("name", STEPPABLE)
-def test_transition_is_pure_and_bit_identical_to_the_stateful_step(name):
+def test_snapshot_branch_is_pure_and_bit_identical_to_the_stateful_step(name):
     """The whole claim of the functional path, and the one that can go wrong silently.
 
     ``transition`` must not touch the env, and it must return exactly what ``step`` would have
@@ -218,14 +220,14 @@ def test_transition_is_pure_and_bit_identical_to_the_stateful_step(name):
         lo, hi = float(env.action_low), float(env.action_high)
         a = lo + (hi - lo) * torch.rand(4, env.action_dim, generator=g)
         held = env._get_render_state().clone()
-        functional = env.transition(env.state, a)
+        functional = branch_step(env, env.state, a)
         assert torch.equal(env._get_render_state(), held), f"{name}: transition wrote the env's buffer"
-        stateful = env.step(a)["state"]
+        stateful = env.step(a, capture="states")["state"]
         keys = [tuple(k) for k, _, _ in env._layout()]
         for k in keys:
             assert torch.equal(functional[k], stateful[k]), f"{name}: {k} differs"
         returned = stateful.clone()
-        env.step(a)
+        env.step(a, capture="states")
         for k in keys:
             assert torch.equal(stateful[k], returned[k]), f"{name}: returned State aliases env buffers"
     finally:
@@ -234,7 +236,7 @@ def test_transition_is_pure_and_bit_identical_to_the_stateful_step(name):
 
 @pytest.mark.skipif(not STEPPABLE, reason="neither steppable family is constructible on this host")
 @pytest.mark.parametrize("name", STEPPABLE)
-def test_unroll_is_repeated_transition_and_repeated_step(name):
+def test_snapshot_branch_sequence_matches_repeated_steps_and_repeated_step(name):
     """Open loop, time first, and the same answer three ways over four steps."""
     env = _constructible(name, REGISTRY[name], num_envs=4)
     try:
@@ -245,19 +247,19 @@ def test_unroll_is_repeated_transition_and_repeated_step(name):
         keys = [tuple(k) for k, _, _ in env._layout()]
 
         env._set_render_state(rows)
-        traj = env.unroll(env.state, A)
+        traj = branch_steps(env, env.state, A)
         assert tuple(traj.batch_size) == (4, 4)
 
         env._set_render_state(rows)
         cur = env.state
         for t in range(4):
-            cur = env.transition(cur, A[t])
+            cur = branch_step(env, cur, A[t])
             for k in keys:
                 assert torch.equal(traj[t][k], cur[k]), f"{env.name}: step {t}, key {k}"
 
         env._set_render_state(rows)
         for t in range(4):
-            env.step(A[t])
+            env.step(A[t], capture="states")
         for k in keys:
             assert torch.equal(traj[3][k], env.state[k]), f"{env.name}: {k} after four steps"
     finally:
@@ -284,12 +286,12 @@ def test_minigrids_carried_object_is_hidden_state_the_packed_row_does_not_carry(
         assert torch.all(env._unpack_render_state(env._get_render_state())["agent", "carrying"] == 0)
         # pickup is action 3; whatever it does to the four environments, env.state must report the
         # env's OWN carried codes and not the zeros unpack would fill in.
-        env.step(torch.full((4, 1), 3.0))
+        env.step(torch.full((4, 1), 3.0), capture="states")
         assert torch.equal(env.state["agent", "carrying"], env._carry.reshape(-1, 1).to(torch.float32))
         # and the functional path must still agree with the stateful one MID-TRAJECTORY
         a = torch.full((4, 1), 2.0)
-        functional = env.transition(env.state, a)
-        stateful = env.step(a)["state"]
+        functional = branch_step(env, env.state, a)
+        stateful = env.step(a, capture="states")["state"]
         assert torch.equal(functional["agent", "carrying"], stateful["agent", "carrying"])
         assert torch.equal(env._pack_render_state(functional), env._pack_render_state(stateful))
     finally:

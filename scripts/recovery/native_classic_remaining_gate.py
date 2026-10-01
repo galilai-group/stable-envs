@@ -74,7 +74,7 @@ def _candidate_restore_against_uninterrupted_reference(domain, env, ref, actions
     saved = env.get_state()
     compare_state(saved, ref.get_state())
     for action in actions[:5]:
-        env.step(action)
+        env.step(action, capture="states")
     env.set_state(saved)
     compare_state(env.get_state(), ref.get_state())
     return check_step_matches_reference(env, ref, actions)
@@ -85,14 +85,14 @@ def _lifecycle_boundary(domain, env, ref, batch):
     action = _zero(domain, batch)
     limit = CASES[domain]["limit"]
     for _ in range(limit - 1):
-        got, expected = env.step(action), ref.step(action)
+        got, expected = env.step(action, capture="states"), ref.step(action)
         compare_state(got, expected)
         assert not bool(got["truncated"].any())
     near_limit = env.get_state()
-    got, expected = env.step(action), ref.step(action)
+    got, expected = env.step(action, capture="states"), ref.step(action)
     compare_state(got, expected)
     assert bool(got["truncated"].all())
-    post, expected_post = env.step(action), ref.step(action)
+    post, expected_post = env.step(action, capture="states"), ref.step(action)
     compare_state(post, expected_post)
     assert bool(post["truncated"].all())
     return {"time_limit": limit, "first_truncated_step": limit, "post_truncation_advances": True}, near_limit
@@ -116,11 +116,11 @@ def _terminal_and_reward(domain, env, ref, batch):
         expected_reward = -1.0 if domain == "mountain_car" else 100.0
     env.set_state(state)
     ref.set_state(state)
-    got, expected = env.step(action), ref.step(action)
+    got, expected = env.step(action, capture="states"), ref.step(action)
     compare_state(got, expected)
     assert bool(got["terminated"].all())
     assert (got["reward"] == expected_reward).all()
-    post, expected_post = env.step(action), ref.step(action)
+    post, expected_post = env.step(action, capture="states"), ref.step(action)
     compare_state(post, expected_post)
     return {
         "terminal_reward": float(got["reward"][0]),
@@ -146,19 +146,19 @@ def _action_semantics(domain, env, ref, batch):
 
     precise_value = 0.1234567890123
     precise = np.full((batch, 1), precise_value, np.float64)
-    got, expected = env.step(precise), ref.step(precise)
+    got, expected = env.step(precise, capture="states"), ref.step(precise)
     compare_state(got, expected)
     assert bool(got["state", "task", "state_is_float32"].all())
     saved = got["state"]
-    env.step(np.zeros((batch, 1), np.float32))
+    env.step(np.zeros((batch, 1), np.float32), capture="states")
     env.set_state(saved)
     compare_state(env.get_state(), ref.get_state())
-    got, expected = env.step(np.zeros((batch, 1), np.float32)), ref.step(np.zeros((batch, 1), np.float32))
+    got, expected = env.step(np.zeros((batch, 1), np.float32), capture="states"), ref.step(np.zeros((batch, 1), np.float32))
     compare_state(got, expected)
 
     check_reset_matches_reference(env, ref, seed=82)
     out_of_range = np.full((batch, 1), 2.0, np.float64)
-    got, expected = env.step(out_of_range), ref.step(out_of_range)
+    got, expected = env.step(out_of_range, capture="states"), ref.step(out_of_range)
     compare_state(got, expected)
     assert (got["reward"] == -0.4).all()
     return {
@@ -227,7 +227,7 @@ def _continuous_dtype_flag_necessity(device):
             wrong = snapshot.clone()
             wrong["task", "state_is_float32"].fill_(True)
             env.set_state(wrong)
-            got_wrong, expected = env.step(action), ref.step(action)
+            got_wrong, expected = env.step(action, capture="states"), ref.step(action)
             position_error = float((
                 got_wrong["state", "position"].detach().cpu()
                 - expected["state", "position"].detach().cpu()
@@ -239,7 +239,7 @@ def _continuous_dtype_flag_necessity(device):
             assert position_error > 0 or observation_error > 0
 
             env.set_state(snapshot)
-            got = env.step(action)
+            got = env.step(action, capture="states")
             compare_state(got, expected)
             return {
                 "seed": 17,
@@ -302,7 +302,7 @@ def run_gate(device="cpu"):
 
                         other.reset(seed=seed + 991)
                         for action in _actions(domain, seed + 991, 9, batch):
-                            other.step(action)
+                            other.step(action, capture="states")
                         resume = env.get_state()
                         history = check_two_histories_same_state(env, other, resume, actions[:8])
 

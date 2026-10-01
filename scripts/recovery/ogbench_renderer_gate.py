@@ -131,7 +131,7 @@ def generate(folder):
                     action = np.zeros(5, dtype=np.float64 if i % 2 else np.float32)
                     action[:3] = np.clip((goal - u.data.site_xpos[u._pinch_site_id]) / 0.05, -1, 1)
                     action[4] = 1 if interaction == "button" or i >= 24 else -1
-                    env.step(action[None])
+                    env.step(action[None], capture="states")
                     for c in u.data.contact:
                         pair = tuple(u.model.body(int(u.model.geom_bodyid[g])).name for g in (c.geom1, c.geom2))
                         if any("ur5e/" in b for b in pair) and any("ur5e/" not in b and b != "world" for b in pair):

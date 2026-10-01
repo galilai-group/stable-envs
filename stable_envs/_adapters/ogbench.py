@@ -160,7 +160,8 @@ class OGBMazeAdapter:
             env.np_random.bit_generator.state = pcg
             self._global_rng[i] = legacy
 
-    def step(self, actions):
+    def step(self, actions, *, active=None):
+        active = None if active is None else np.asarray(active.detach().cpu(), dtype=bool)
         self._check_open()
         if torch.is_tensor(actions):
             actions = actions.detach().cpu().numpy()
@@ -168,9 +169,10 @@ class OGBMazeAdapter:
         if actions.shape != (self.num_envs, 2) or not np.isfinite(actions).all():
             raise ValueError("OGBMaze action must have finite shape (num_envs, 2)")
         outputs = [
-            self._in_legacy_rng(i, env.step, action)
+            self._in_legacy_rng(i, env.step, action) if active is None or active[i] else self._last_outputs[i]
             for i, (env, action) in enumerate(zip(self.envs, actions, strict=True))
         ]
+        self._last_outputs = outputs
         infos = [o[4] for o in outputs]
         return TensorDict(
             {

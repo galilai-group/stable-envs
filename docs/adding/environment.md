@@ -35,8 +35,8 @@ and default configuration should be explicit. Module discovery is automatic;
 
 Ordinary sequential `step()` must not snapshot and restore internally on every
 step. That can discard warmstart/controller history and silently change the
-source trajectory. Functional transition is a separate capability; refuse it
-if the full lifecycle contract is not implemented.
+source trajectory. Implement `_step(actions)` and masked advancement for terminal
+lanes; shared `step` handles action sequences and capture.
 
 ## Complete example: independent restoration using an accepted backend
 

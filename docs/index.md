@@ -26,7 +26,7 @@ Concrete classes are canonical. `snv.make("CartPole", …)` is the string API fo
 - **[Install](install.md)** — extras, pins, nvdiffrast
 - **[Environments](environments.md)** — `list_envs`, `info`, optional extras
 - **[State, Action, Variation, Frame](concepts/state.md)** — the five nouns; compact render state; StepResult
-- **[Stateful vs functional](concepts/dynamics.md)** — `step` writes; `transition` / `unroll` do not
+- **[Stepping and capture](concepts/dynamics.md)** — single actions, sequences, States and frames
 - **[Variations](concepts/variation-spaces.md)** — persistent environment configuration
 - **[Lifecycle](concepts/lifecycle.md)** — `close()`, context manager, short batches
 - **[Sibling projects](concepts/worldmodel.md)** — where this package ends

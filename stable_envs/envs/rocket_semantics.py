@@ -81,9 +81,9 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
         self._check_open("set_state")
         self._simulator.set_state(state)
 
-    def step(self, actions):
+    def _step(self, actions, *, active=None):
         self._check_open("step")
-        return self._simulator.step(actions)
+        return self._simulator.step(actions, active=active)
 
     def _variation_rows(self, attribute):
         rows = [

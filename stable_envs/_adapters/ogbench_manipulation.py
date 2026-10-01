@@ -371,7 +371,8 @@ class OGBManipulationAdapter:
                 node.set_init_value(val)
                 node.set_value(current)
 
-    def step(self, actions):
+    def step(self, actions, *, active=None):
+        active = None if active is None else np.asarray(active.detach().cpu(), dtype=bool)
         self._check_open()
         if torch.is_tensor(actions):
             actions = actions.detach().cpu().numpy()
@@ -382,7 +383,9 @@ class OGBManipulationAdapter:
             or not np.isfinite(actions).all()
         ):
             raise ValueError("Actions must be finite float32/float64 [num_envs, 5]")
-        results = [env.step(action) for env, action in zip(self.envs, actions)]
+        results = [env.step(action) if active is None or active[i] else self._last_outputs[i]
+                   for i, (env, action) in enumerate(zip(self.envs, actions))]
+        self._last_outputs = results
         return TensorDict(
             {
                 "state": self.get_state(),

@@ -1,7 +1,7 @@
 """stable-envs: a batched environment library with explicit state, dynamics, and variation, plus fast state-driven rendering.
 
 Five nouns: **Env**, **State**, **Action**, **Variation**, **Frame**.
-Two usage modes: **stateful** (``reset`` / ``step``) and **functional** (``transition`` / ``unroll`` / ``render``).
+Stateful simulation (``reset`` / ``step``) and explicit-State rendering (``render``).
 ``VariationLike`` is the type of ``render(..., variation=)``: a mapping of overrides, or a flat / batched row.
 
 Public surface::
@@ -12,8 +12,7 @@ Public surface::
     env   = snv.make("PushT")                   # strings are canonical class names
     state = env.reset(seed=0)                   # State: TensorDict, keys grouped by entity
     out   = env.step(actions)                   # stateful; read out["state"]
-    nxt   = env.transition(state, action)       # functional, pure in `state`
-    traj  = env.unroll(state, action_sequence)  # open loop, known actions
+    traj  = env.step(action_sequence, capture="states")  # [B, T, A] known actions
     px    = env.render(state)                   # Frame: (B,H,W,3) uint8 on device
     env.close()
 
@@ -32,7 +31,6 @@ from typing import Any
 from . import registry as _registry
 from .__about__ import __version__  # noqa: F401
 from ._config import get_config, set  # noqa: A004,F401
-from .dynamics import Dynamics  # noqa: F401
 from .env import Env, State, StepResult, VariationLike  # noqa: F401
 from .registry import import_errors, info, list_envs, list_families  # noqa: F401
 from .registry import make as _make
@@ -75,7 +73,6 @@ __all__ = [
     "VariationLike",
     "Spec",
     "CompositeSpec",
-    "Dynamics",
     "make",
     "info",
     "list_envs",

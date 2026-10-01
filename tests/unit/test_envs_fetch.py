@@ -227,7 +227,7 @@ for name in ("FetchReach", "FetchPush"):
         try:
             env.step(None) if what == "step" else env.transition(st, None)
             rec[what] = None
-        except NotImplementedError as e:
+        except (NotImplementedError, AttributeError) as e:
             rec[what] = str(e)
     env.close(); env.close()
     rec["closed"] = bool(env.closed)

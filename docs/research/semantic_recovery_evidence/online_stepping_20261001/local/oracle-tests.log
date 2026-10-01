@@ -1,0 +1,16 @@
+..................................................                       [100%]
+=============================== warnings summary ===============================
+tests/unit/test_dmc_aligned_oracle.py: 2267 warnings
+tests/unit/test_dmc_continuation_oracle.py: 195 warnings
+tests/unit/test_dmc_first_family_oracle.py: 780 warnings
+tests/unit/test_dmc_humanoid_oracle.py: 195 warnings
+tests/unit/test_reacher_oracle.py: 192 warnings
+  /Users/samib/se6-venv/lib/python3.12/site-packages/dm_control/mujoco/index.py:381: DeprecationWarning: Setting the shape on a NumPy array has been deprecated in NumPy 2.5.
+  As an alternative, you can create a new view using np.reshape (with copy=False if needed).
+    key_item.shape = original_shape
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+------------------------------ stable-envs safety ------------------------------
+resources: 0 EGL contexts created, 0 released, 0 live (peak 0); renderers 0 created / 0 closed
+node: cis1b1zs2j3.ad.brown.edu slurm=? reason=none reference-renderer={}
+50 passed, 3629 warnings in 14.61s

@@ -619,7 +619,7 @@ def test_gpu_step_tracks_the_reference_simulator(env):
     # interpreter, which no try/except can catch and which takes the whole suite down with exit 134
     # rather than one failure. So require the class to DECLARE step itself and to be checkable.
     cls = type(env)
-    if "step" not in cls.__dict__ or not getattr(cls, "step_reference_checkable", False):
+    if "_step" not in cls.__dict__ or not getattr(cls, "step_reference_checkable", False):
         pytest.skip(
             f"{cls.__name__}: no batched GPU simulator declared as checkable against a "
             f"reference (set step_reference_checkable = True on the class to opt in)"

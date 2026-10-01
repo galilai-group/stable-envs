@@ -559,26 +559,9 @@ class PushT(Env):
         """The absolute PD target as ``(n, 2)`` float32 on this env's device."""
         return torch.as_tensor(action, device=self.device, dtype=torch.float32).reshape(-1, 2)
 
-    @torch.no_grad()
-    def transition(self, state: TensorDict, action) -> TensorDict:
-        """``(state, action) -> next_state``. FUNCTIONAL: the env's own buffers are not touched.
-
-        Bit-identical to ``step`` on the same device for the same state, because it is the same
-        ``_advance`` over the same float32 inputs — the eager path, since a CUDA graph reads fixed
-        addresses (``self._render_state``, ``self._agent_v``) and this call may not write them. ``step``
-        keeps the captured path; ``tests/unit/test_pusht_api.py`` asserts the two agree to the
-        bit on CPU and the oracle script asserts it again on CUDA.
-        """
-        self._validate_state(state)
-        rows = self._pack_render_state(state)
-        av = torch.as_tensor(state["agent", "velocity"], device=self.device, dtype=torch.float32).reshape(-1, 2)
-        st, av = self._advance(rows, av, self._target(action))
-        out = self._unpack_render_state(st)
-        out["agent", "velocity"] = av
-        return out
 
     @torch.no_grad()
-    def step(self, action) -> TensorDict:
+    def _step(self, action) -> TensorDict:
         """Advance every environment one control step. ``action`` is ``(B,2)``, the absolute PD target.
 
         STATEFUL: it writes ``env.state``. Returns a :data:`~stable_envs.env.StepResult` carrying

@@ -76,19 +76,19 @@ def _omission_experiments(domain, env, reference):
             env.reset(seed=991)
         else:
             for action in -actions[prefix : prefix + 9]:
-                env.step(action)
+                env.step(action, capture="states")
         omitted = saved.clone()
         omitted[omitted_key] = env.get_state()[omitted_key]
         env.set_state(omitted)
         continuation = actions[prefix : prefix + 8]
-        bad = [env.step(action) for action in continuation]
+        bad = [env.step(action, capture="states") for action in continuation]
         expected = [reference.step(action) for action in continuation]
         error_without = max(
             _max_error(actual, wanted, exclude=(("state", *omitted_key),))
             for actual, wanted in zip(bad, expected, strict=True)
         )
         env.set_state(saved)
-        good = [env.step(action) for action in continuation]
+        good = [env.step(action, capture="states") for action in continuation]
         error_with = max(
             _max_error(actual, wanted) for actual, wanted in zip(good, expected, strict=True)
         )
@@ -151,7 +151,7 @@ def _assert_bad_actions(env, action_dim):
         np.full((env.B, action_dim), np.inf),
     ):
         try:
-            env.step(action)
+            env.step(action, capture="states")
         except ValueError:
             pass
         else:
@@ -252,7 +252,7 @@ def run_gate(device="cpu"):
                         snapshot = env.get_state()
                         other.reset(seed=seed + 991)
                         for action in -actions[:9]:
-                            other.step(action)
+                            other.step(action, capture="states")
                         history = check_two_histories_same_state(env, other, snapshot, actions[:8])
                         frame = env.render(snapshot)
                         assert torch.equal(frame, env._render(env._pack_render_state(snapshot)))
@@ -285,13 +285,13 @@ def run_gate(device="cpu"):
                         _assert_bad_actions(env, reference.action_dim)
                         check_reset_matches_reference(env, reference, seed=31)
                         outside = np.full((1, reference.action_dim), 1.1)
-                        compare_state(env.step(outside), reference.step(outside))
+                        compare_state(env.step(outside, capture="states"), reference.step(outside))
                         if domain in ("ball_in_cup", "finger"):
                             check_reset_matches_reference(env, reference, seed=13)
                             positive = _positive_sparse_state(domain, reference)
                             env.set_state(positive)
                             reference.set_state(positive)
-                            got = env.step(np.zeros((1, reference.action_dim)))
+                            got = env.step(np.zeros((1, reference.action_dim)), capture="states")
                             expected = reference.step(np.zeros((1, reference.action_dim)))
                             compare_state(got, expected)
                             assert got["reward"].item() > 0
@@ -327,9 +327,9 @@ def run_gate(device="cpu"):
                 actions = np.random.default_rng(11).uniform(-1, 1, (32, 1, reference.action_dim))
                 divergence = 0.0
                 for action in actions:
-                    varied, expected = env.step(action), reference.step(action)
+                    varied, expected = env.step(action, capture="states"), reference.step(action)
                     compare_state(varied, expected)
-                    default = baseline.step(action)
+                    default = baseline.step(action, capture="states")
                     divergence = max(
                         divergence,
                         _max_error(varied.exclude("state"), default.exclude("state")),

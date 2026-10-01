@@ -40,7 +40,7 @@ from typing import Any
 import numpy as np
 import torch
 
-from ..dynamics import has_dynamics
+from .._dynamics import has_dynamics
 
 
 class BasePolicy:
@@ -161,7 +161,7 @@ def sample(
     for t in range(int(steps)):
         a = policy.get_action(render_rows(), t=t)
         a = torch.as_tensor(a, device=env.device, dtype=torch.float32).reshape(B, -1)
-        env.step(a)
+        env.step(a, capture="states")
         acts.append(a)
         st.append(render_rows().clone())
 

@@ -203,9 +203,13 @@ class FetchSemantics:
         self._check_open("set_state")
         self._simulator.set_state(state)
 
-    def step(self, actions):
+    def _step(self, actions, *, active=None):
         self._check_open("step")
-        return self._simulator.step(actions)
+        return self._simulator.step(actions, active=active)
+
+    def _advance_without_snapshot(self, actions, *, active=None):
+        """Sequence fast path when only a final checkpoint/image is requested."""
+        return self._simulator.advance(actions, active=active)
 
     def set_variation(self, variation=None, **overrides):
         result = super().set_variation(variation, **overrides)

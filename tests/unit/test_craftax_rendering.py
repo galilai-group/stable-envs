@@ -28,7 +28,7 @@ def test_initial_and_trajectory_source_frames(name, seed):
         for action in [None, 1, 4, 5, 0, 2, 0, 6]:
             if action is not None:
                 source.step(action)
-                env.step([action])
+                env.step([action], capture="states")
             saved = env.get_state()
             expected = source.render()
             actual = env.render(saved)[0].cpu().numpy()
@@ -50,7 +50,7 @@ def test_gameplay_source_frames_and_nonmutation(name, case, monkeypatch):
         env.set_state(snapshot)
         if not bool(snapshot["lifecycle", "terminated"][0]):
             source.step(ACTIONS[case])
-            env.step([ACTIONS[case]])
+            env.step([ACTIONS[case]], capture="states")
             expected = source.render()
         else:
             source._last_obs = np.asarray(jax.jit(source._env.get_obs)(source._state))
@@ -137,7 +137,7 @@ def test_source_day_cycle_and_sleep_exact(name, tmp_path):
                 env.set_state(state)
                 restore_oracle(source, env, state)
                 source.step(0)
-                after = env.step([0])["state"]
+                after = env.step([0], capture="states")["state"]
                 expected, actual = source.render(), env.render(after)[0].cpu().numpy()
                 if not np.array_equal(expected, actual):
                     path = tmp_path / (name + "-day-cycle-mismatch.npz")

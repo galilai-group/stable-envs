@@ -276,7 +276,7 @@ def info(name: str) -> dict[str, Any]:
         "fidelity_tier": getattr(cls, "fidelity_tier", "parity"),
         "render_decoder": getattr(cls, "render_decoder", "renderer"),
         "action_dim": getattr(cls, "action_dim", None),
-        "has_dynamics": any(getattr(cls, m, None) is not getattr(Env, m, None) for m in ("step", "transition")),
+        "has_dynamics": getattr(cls, "_step", None) is not Env._step,
         "requires_cuda": bool(getattr(cls, "requires_cuda", False)),
     }
 

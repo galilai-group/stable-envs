@@ -1,0 +1,446 @@
+{
+  "status": "PASS",
+  "device": "cpu",
+  "host": "gpu2105.oscar.ccv.brown.edu",
+  "cpu_affinity": [
+    33,
+    36,
+    37,
+    38,
+    39,
+    42,
+    43,
+    44
+  ],
+  "baseline_sha256": "8947cb8324f68297aaa2fdbfb900503c9e6bbe26a981f805f96dd7d4f1f7af68",
+  "gpu": null,
+  "torch": "2.14.0+cu126",
+  "numpy": "2.5.3",
+  "gates": [
+    {
+      "env": "FetchReach",
+      "state_task_thread_and_endpoint": "PASS"
+    },
+    {
+      "env": "FetchReachDense",
+      "state_task_thread_and_endpoint": "PASS"
+    },
+    {
+      "env": "FetchReachDict",
+      "state_task_thread_and_endpoint": "PASS"
+    },
+    {
+      "env": "FetchPush",
+      "state_task_thread_and_endpoint": "PASS"
+    },
+    {
+      "env": "FetchPushDense",
+      "state_task_thread_and_endpoint": "PASS"
+    },
+    {
+      "env": "FetchPushDict",
+      "state_task_thread_and_endpoint": "PASS"
+    },
+    {
+      "env": "FetchSlide",
+      "state_task_thread_and_endpoint": "PASS"
+    },
+    {
+      "env": "FetchSlideDense",
+      "state_task_thread_and_endpoint": "PASS"
+    },
+    {
+      "env": "FetchSlideDict",
+      "state_task_thread_and_endpoint": "PASS"
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "state_task_thread_and_endpoint": "PASS"
+    },
+    {
+      "env": "FetchPickAndPlaceDense",
+      "state_task_thread_and_endpoint": "PASS"
+    },
+    {
+      "env": "FetchPickAndPlaceDict",
+      "state_task_thread_and_endpoint": "PASS"
+    }
+  ],
+  "timings": [
+    {
+      "batch": 64,
+      "workers": 1,
+      "stage": "baseline_snapshot",
+      "unit": "snapshots/s",
+      "seconds": [
+        0.014204943552613258,
+        0.014200720936059952,
+        0.01418854296207428,
+        0.014251941815018654,
+        0.01388230174779892
+      ],
+      "rate_mean": 4524.754286162351,
+      "rate_sd": 48.36250665692762,
+      "count": 64,
+      "repeats": 5
+    },
+    {
+      "batch": 64,
+      "workers": 1,
+      "stage": "bulk_snapshot",
+      "unit": "snapshots/s",
+      "seconds": [
+        0.0011054854840040207,
+        0.0010941866785287857,
+        0.0010976865887641907,
+        0.0010998882353305817,
+        0.0010935831815004349
+      ],
+      "rate_mean": 58279.886024672465,
+      "rate_sd": 256.1417590716456,
+      "count": 64,
+      "repeats": 5
+    },
+    {
+      "batch": 64,
+      "workers": 1,
+      "stage": "baseline_steps",
+      "unit": "transitions/s",
+      "seconds": [
+        0.797880794852972,
+        0.7969532795250416,
+        0.795882161706686,
+        0.7964438982307911,
+        0.7965110596269369
+      ],
+      "rate_mean": 642.6237676939212,
+      "rate_sd": 0.6009572520037859,
+      "count": 512,
+      "repeats": 5
+    },
+    {
+      "batch": 64,
+      "workers": 1,
+      "stage": "source_task_steps",
+      "unit": "transitions/s",
+      "seconds": [
+        0.6757043059915304,
+        0.677304906770587,
+        0.6764085628092289,
+        0.6817218605428934,
+        0.6808634735643864
+      ],
+      "rate_mean": 754.7259652384997,
+      "rate_sd": 3.019621251582681,
+      "count": 512,
+      "repeats": 5
+    },
+    {
+      "batch": 64,
+      "workers": 1,
+      "stage": "steps_with_states",
+      "unit": "transitions/s",
+      "seconds": [
+        0.692493325099349,
+        0.6926230974495411,
+        0.6936772614717484,
+        0.6946893781423569,
+        0.6954883243888617
+      ],
+      "rate_mean": 737.9729869782872,
+      "rate_sd": 1.3811182507204458,
+      "count": 512,
+      "repeats": 5
+    },
+    {
+      "batch": 64,
+      "workers": 2,
+      "stage": "source_task_steps",
+      "unit": "transitions/s",
+      "seconds": [
+        0.3686554878950119,
+        0.3780811186879873,
+        0.378492746502161,
+        0.3763744719326496,
+        0.3781391866505146
+      ],
+      "rate_mean": 1362.0234717187261,
+      "rate_sd": 15.274323538190815,
+      "count": 512,
+      "repeats": 5
+    },
+    {
+      "batch": 64,
+      "workers": 2,
+      "stage": "steps_with_states",
+      "unit": "transitions/s",
+      "seconds": [
+        0.3943671192973852,
+        0.39327649399638176,
+        0.38913354091346264,
+        0.39147457852959633,
+        0.3968884591013193
+      ],
+      "rate_mean": 1302.7639755779503,
+      "rate_sd": 9.714492109926558,
+      "count": 512,
+      "repeats": 5
+    },
+    {
+      "batch": 64,
+      "workers": 4,
+      "stage": "source_task_steps",
+      "unit": "transitions/s",
+      "seconds": [
+        0.35819776728749275,
+        0.357189292088151,
+        0.3565318565815687,
+        0.3561791256070137,
+        0.3571406528353691
+      ],
+      "rate_mean": 1433.987245391101,
+      "rate_sd": 3.09001425952126,
+      "count": 512,
+      "repeats": 5
+    },
+    {
+      "batch": 64,
+      "workers": 4,
+      "stage": "steps_with_states",
+      "unit": "transitions/s",
+      "seconds": [
+        0.367917038500309,
+        0.36752112954854965,
+        0.3668213915079832,
+        0.36814506724476814,
+        0.36462540924549103
+      ],
+      "rate_mean": 1395.0893628439396,
+      "rate_sd": 5.427715517409907,
+      "count": 512,
+      "repeats": 5
+    },
+    {
+      "batch": 64,
+      "workers": 8,
+      "stage": "source_task_steps",
+      "unit": "transitions/s",
+      "seconds": [
+        0.35260223038494587,
+        0.3529691696166992,
+        0.3508623577654362,
+        0.35335310734808445,
+        0.3542525637894869
+      ],
+      "rate_mean": 1451.2293010248586,
+      "rate_sd": 5.146552291877361,
+      "count": 512,
+      "repeats": 5
+    },
+    {
+      "batch": 64,
+      "workers": 8,
+      "stage": "steps_with_states",
+      "unit": "transitions/s",
+      "seconds": [
+        0.3718636706471443,
+        0.37330708280205727,
+        0.3696130011230707,
+        0.3707576058804989,
+        0.3690951820462942
+      ],
+      "rate_mean": 1380.3477111128936,
+      "rate_sd": 6.343158207888688,
+      "count": 512,
+      "repeats": 5
+    },
+    {
+      "batch": 256,
+      "workers": 1,
+      "stage": "baseline_snapshot",
+      "unit": "snapshots/s",
+      "seconds": [
+        0.05835435166954994,
+        0.057810842990875244,
+        0.05759171210229397,
+        0.05734606273472309,
+        0.05749891139566898
+      ],
+      "rate_mean": 4435.338627071735,
+      "rate_sd": 29.991198822136383,
+      "count": 256,
+      "repeats": 5
+    },
+    {
+      "batch": 256,
+      "workers": 1,
+      "stage": "bulk_snapshot",
+      "unit": "snapshots/s",
+      "seconds": [
+        0.004102401435375214,
+        0.004016611725091934,
+        0.004176374524831772,
+        0.004053110256791115,
+        0.0040840450674295425
+      ],
+      "rate_mean": 62655.85861284522,
+      "rate_sd": 912.6464689236009,
+      "count": 256,
+      "repeats": 5
+    },
+    {
+      "batch": 256,
+      "workers": 1,
+      "stage": "baseline_steps",
+      "unit": "transitions/s",
+      "seconds": [
+        3.4028183314949274,
+        3.2195793762803078,
+        3.246731696650386,
+        3.238103238865733,
+        3.3607251066714525
+      ],
+      "rate_mean": 622.1223003681388,
+      "rate_sd": 15.415943175930652,
+      "count": 2048,
+      "repeats": 5
+    },
+    {
+      "batch": 256,
+      "workers": 1,
+      "stage": "source_task_steps",
+      "unit": "transitions/s",
+      "seconds": [
+        2.776749685406685,
+        2.740192813798785,
+        2.75020101480186,
+        2.769179567694664,
+        2.770991349592805
+      ],
+      "rate_mean": 741.6546759853003,
+      "rate_sd": 4.17751691201183,
+      "count": 2048,
+      "repeats": 5
+    },
+    {
+      "batch": 256,
+      "workers": 1,
+      "stage": "steps_with_states",
+      "unit": "transitions/s",
+      "seconds": [
+        2.8277130145579576,
+        2.8332336340099573,
+        2.809588687494397,
+        2.8378522973507643,
+        2.8179358392953873
+      ],
+      "rate_mean": 724.8974225707327,
+      "rate_sd": 2.94961335187979,
+      "count": 2048,
+      "repeats": 5
+    },
+    {
+      "batch": 256,
+      "workers": 2,
+      "stage": "source_task_steps",
+      "unit": "transitions/s",
+      "seconds": [
+        1.4627153761684895,
+        1.4590149242430925,
+        1.463004456833005,
+        1.4556167982518673,
+        1.4596134815365076
+      ],
+      "rate_mean": 1402.7512823115394,
+      "rate_sd": 2.913574879831017,
+      "count": 2048,
+      "repeats": 5
+    },
+    {
+      "batch": 256,
+      "workers": 2,
+      "stage": "steps_with_states",
+      "unit": "transitions/s",
+      "seconds": [
+        1.5059432182461023,
+        1.5022427719086409,
+        1.4969172161072493,
+        1.5055402126163244,
+        1.5089804157614708
+      ],
+      "rate_mean": 1361.7803992229044,
+      "rate_sd": 4.160699913346655,
+      "count": 2048,
+      "repeats": 5
+    },
+    {
+      "batch": 256,
+      "workers": 4,
+      "stage": "source_task_steps",
+      "unit": "transitions/s",
+      "seconds": [
+        1.380101727321744,
+        1.3802966084331274,
+        1.3808175474405289,
+        1.3836230766028166,
+        1.3887875638902187
+      ],
+      "rate_mean": 1481.141285672748,
+      "rate_sd": 3.925283230244448,
+      "count": 2048,
+      "repeats": 5
+    },
+    {
+      "batch": 256,
+      "workers": 4,
+      "stage": "steps_with_states",
+      "unit": "transitions/s",
+      "seconds": [
+        1.4159250427037477,
+        1.4239934869110584,
+        1.4385484475642443,
+        1.3994173686951399,
+        1.4204598255455494
+      ],
+      "rate_mean": 1442.7046407404328,
+      "rate_sd": 14.392577385498745,
+      "count": 2048,
+      "repeats": 5
+    },
+    {
+      "batch": 256,
+      "workers": 8,
+      "stage": "source_task_steps",
+      "unit": "transitions/s",
+      "seconds": [
+        1.4011758640408516,
+        1.4046343956142664,
+        1.402732826769352,
+        1.4040004387497902,
+        1.402526967227459
+      ],
+      "rate_mean": 1459.7155652896845,
+      "rate_sd": 1.4050770424091348,
+      "count": 2048,
+      "repeats": 5
+    },
+    {
+      "batch": 256,
+      "workers": 8,
+      "stage": "steps_with_states",
+      "unit": "transitions/s",
+      "seconds": [
+        1.4604766387492418,
+        1.4559858236461878,
+        1.4566107224673033,
+        1.4539265129715204,
+        1.452829997986555
+      ],
+      "rate_mean": 1406.6309201253061,
+      "rate_sd": 2.8448739711467743,
+      "count": 2048,
+      "repeats": 5
+    }
+  ],
+  "scope": "Known-action chunks; not closed-loop policy throughput. Frames use existing OpenGL backend."
+}
