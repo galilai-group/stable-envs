@@ -1,0 +1,4 @@
+JobID|JobName|State|ExitCode|Elapsed|AllocCPUS|NodeList|MaxRSS
+6924165|se-hybrid-profile|COMPLETED|0:0|00:01:41|8|node1828|
+6924165.batch|batch|COMPLETED|0:0|00:01:41|8|node1828|7358684K
+6924165.extern|extern|COMPLETED|0:0|00:01:41|8|node1828|
