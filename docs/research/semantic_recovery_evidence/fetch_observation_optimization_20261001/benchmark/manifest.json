@@ -1,0 +1,11 @@
+{
+  "base_head": "30197dc376d9d5fd706d265ab714e6c1c8d0cbf8",
+  "remote": "/oscar/scratch/sboughan/se-semantic-recovery/fetch-observation-opt-20261001-v1",
+  "hashes": {
+    "fetch_observation_bench.py": "1fabfab3ff8b83fb69e2b4ab1d5aa2f23ac96bd0d26e763471fdd9eeab2782fb",
+    "run.sbatch": "c776b2bb45a4fc6db152187713e92a1e48bd3c71bd7f82da35d644365a38c2b6",
+    "fetch_hybrid.py": "40d969a7b2ad0b31a9e245c5ec82fcd0b3ce123257f2b8bff1ffdc53812bdeef",
+    "fetch_observations.py": "0a476d077337ed0536d552a9ace1132747a9725278a89e26775b70136206bd6e",
+    "fetch_scaling.py": "dd9f632aa2eee5e01c2e969a924a7b8a915632a22af214034f03c963f3b3edd9"
+  }
+}

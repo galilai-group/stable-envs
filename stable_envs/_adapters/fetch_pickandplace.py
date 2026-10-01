@@ -50,17 +50,10 @@ class FetchAdapter:
     def __init__(self, num_envs, device="cpu", seed=0, task="PickAndPlace", reward_type="sparse"):
         import gymnasium as gym
         import mujoco
-        from gymnasium_robotics.envs.fetch.pick_and_place import MujocoFetchPickAndPlaceEnv
-        from gymnasium_robotics.envs.fetch.push import MujocoFetchPushEnv
-        from gymnasium_robotics.envs.fetch.reach import MujocoFetchReachEnv
-        from gymnasium_robotics.envs.fetch.slide import MujocoFetchSlideEnv
 
-        cls = {
-            "PickAndPlace": MujocoFetchPickAndPlaceEnv,
-            "Reach": MujocoFetchReachEnv,
-            "Push": MujocoFetchPushEnv,
-            "Slide": MujocoFetchSlideEnv,
-        }[task]
+        from .fetch_observations import TASK_CLASSES
+
+        cls = TASK_CLASSES[task]
 
         self.num_envs, self.device = int(num_envs), torch.device(device)
         self._mujoco = mujoco

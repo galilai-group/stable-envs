@@ -1,0 +1,167 @@
+[
+  {
+    "scope": "source_task_and_transport",
+    "batch": 1,
+    "processes": 1,
+    "threads": 1,
+    "baseline_mean": 645.9880770486328,
+    "baseline_sd": 3.018936261955663,
+    "optimized_mean": 848.9651076820543,
+    "optimized_sd": 4.5480715125136655,
+    "speedup": 1.3142117290473465
+  },
+  {
+    "scope": "source_task_and_transport",
+    "batch": 64,
+    "processes": 4,
+    "threads": 2,
+    "baseline_mean": 3332.9522470224983,
+    "baseline_sd": 255.0119298212215,
+    "optimized_mean": 5208.0887385148235,
+    "optimized_sd": 425.3625352491876,
+    "speedup": 1.562605267797486
+  },
+  {
+    "scope": "source_task_and_transport",
+    "batch": 64,
+    "processes": 8,
+    "threads": 1,
+    "baseline_mean": 4385.490125521682,
+    "baseline_sd": 341.2912592505239,
+    "optimized_mean": 5596.17497753012,
+    "optimized_sd": 413.853398988359,
+    "speedup": 1.2760660307870193
+  },
+  {
+    "scope": "source_task_and_transport",
+    "batch": 128,
+    "processes": 4,
+    "threads": 2,
+    "baseline_mean": 3675.778585598279,
+    "baseline_sd": 376.6781710416342,
+    "optimized_mean": 5264.24324984449,
+    "optimized_sd": 486.6172728839215,
+    "speedup": 1.4321437288061432
+  },
+  {
+    "scope": "source_task_and_transport",
+    "batch": 128,
+    "processes": 8,
+    "threads": 1,
+    "baseline_mean": 4323.81065990963,
+    "baseline_sd": 119.71506893505921,
+    "optimized_mean": 5725.895110435662,
+    "optimized_sd": 244.2599478142994,
+    "speedup": 1.3242705476273877
+  },
+  {
+    "scope": "source_task_and_transport",
+    "batch": 256,
+    "processes": 4,
+    "threads": 2,
+    "baseline_mean": 4299.395104057538,
+    "baseline_sd": 172.19910060984947,
+    "optimized_mean": 5164.930276394954,
+    "optimized_sd": 422.8327716062811,
+    "speedup": 1.2013155691414752
+  },
+  {
+    "scope": "source_task_and_transport",
+    "batch": 256,
+    "processes": 8,
+    "threads": 1,
+    "baseline_mean": 4507.2697457038375,
+    "baseline_sd": 239.7032527695718,
+    "optimized_mean": 5978.426386974131,
+    "optimized_sd": 290.4340966887025,
+    "speedup": 1.3263964049794323
+  },
+  {
+    "scope": "source_task_and_transport",
+    "batch": 512,
+    "processes": 4,
+    "threads": 2,
+    "baseline_mean": 4252.816917013288,
+    "baseline_sd": 217.93722738099342,
+    "optimized_mean": 5220.469488911585,
+    "optimized_sd": 308.83641716947335,
+    "speedup": 1.227532148874603
+  },
+  {
+    "scope": "source_task_and_transport",
+    "batch": 512,
+    "processes": 8,
+    "threads": 1,
+    "baseline_mean": 4715.112068528113,
+    "baseline_sd": 200.17364077191255,
+    "optimized_mean": 6040.881286106486,
+    "optimized_sd": 279.95862054533205,
+    "speedup": 1.2811744871192914
+  },
+  {
+    "scope": "source_task_and_transport",
+    "batch": 1024,
+    "processes": 4,
+    "threads": 2,
+    "baseline_mean": 4219.276836831225,
+    "baseline_sd": 129.899221041285,
+    "optimized_mean": 5734.334100821006,
+    "optimized_sd": 208.34732087817883,
+    "speedup": 1.3590798429637112
+  },
+  {
+    "scope": "source_task_and_transport",
+    "batch": 1024,
+    "processes": 8,
+    "threads": 1,
+    "baseline_mean": 4667.190575333159,
+    "baseline_sd": 168.08502907402152,
+    "optimized_mean": 5952.1625141641625,
+    "optimized_sd": 180.84368258050947,
+    "speedup": 1.2753202206102925
+  },
+  {
+    "scope": "production_adapter_step_including_state",
+    "batch": 1,
+    "processes": 1,
+    "threads": 1,
+    "baseline_mean": 446.6842803194924,
+    "baseline_sd": 13.738424473318183,
+    "optimized_mean": 553.7949053994388,
+    "optimized_sd": 50.852135413811816,
+    "speedup": 1.2397904511063949
+  },
+  {
+    "scope": "production_adapter_step_including_state",
+    "batch": 64,
+    "processes": 1,
+    "threads": 4,
+    "baseline_mean": 1113.895627530886,
+    "baseline_sd": 92.70417852920677,
+    "optimized_mean": 2169.7742686100632,
+    "optimized_sd": 157.57266176717923,
+    "speedup": 1.9479152399760182
+  },
+  {
+    "scope": "production_adapter_step_including_state",
+    "batch": 256,
+    "processes": 1,
+    "threads": 4,
+    "baseline_mean": 973.4415185682041,
+    "baseline_sd": 32.158903166424814,
+    "optimized_mean": 2471.770287279338,
+    "optimized_sd": 102.32486832665604,
+    "speedup": 2.5392077902275685
+  },
+  {
+    "scope": "production_adapter_step_including_state",
+    "batch": 1024,
+    "processes": 1,
+    "threads": 4,
+    "baseline_mean": 1105.7219052588948,
+    "baseline_sd": 29.852007921711746,
+    "optimized_mean": 2267.846329278188,
+    "optimized_sd": 37.91355502061517,
+    "speedup": 2.051009678375859
+  }
+]

@@ -1,0 +1,96 @@
+{
+  "status": "PASS",
+  "device": "cuda",
+  "host": "gpu3101.oscar.ccv.brown.edu",
+  "cpu_affinity": [
+    76,
+    77,
+    78,
+    79
+  ],
+  "baseline_sha256": "796cbd1f291cad9a04291be7db7bcfb890df20c368044179d8152820e66e1eec",
+  "gpu": "NVIDIA L40S",
+  "torch": "2.14.0+cu126",
+  "numpy": "2.5.3",
+  "gates": [
+    {
+      "env": "FetchReach",
+      "batch": 64,
+      "default_workers": 4,
+      "state_task_thread_and_endpoint": "PASS"
+    },
+    {
+      "env": "FetchReachDense",
+      "batch": 64,
+      "default_workers": 4,
+      "state_task_thread_and_endpoint": "PASS"
+    },
+    {
+      "env": "FetchReachDict",
+      "batch": 64,
+      "default_workers": 4,
+      "state_task_thread_and_endpoint": "PASS"
+    },
+    {
+      "env": "FetchPush",
+      "batch": 64,
+      "default_workers": 4,
+      "state_task_thread_and_endpoint": "PASS"
+    },
+    {
+      "env": "FetchPushDense",
+      "batch": 64,
+      "default_workers": 4,
+      "state_task_thread_and_endpoint": "PASS"
+    },
+    {
+      "env": "FetchPushDict",
+      "batch": 64,
+      "default_workers": 4,
+      "state_task_thread_and_endpoint": "PASS"
+    },
+    {
+      "env": "FetchSlide",
+      "batch": 64,
+      "default_workers": 4,
+      "state_task_thread_and_endpoint": "PASS"
+    },
+    {
+      "env": "FetchSlideDense",
+      "batch": 64,
+      "default_workers": 4,
+      "state_task_thread_and_endpoint": "PASS"
+    },
+    {
+      "env": "FetchSlideDict",
+      "batch": 64,
+      "default_workers": 4,
+      "state_task_thread_and_endpoint": "PASS"
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 64,
+      "default_workers": 4,
+      "state_task_thread_and_endpoint": "PASS"
+    },
+    {
+      "env": "FetchPickAndPlaceDense",
+      "batch": 64,
+      "default_workers": 4,
+      "state_task_thread_and_endpoint": "PASS"
+    },
+    {
+      "env": "FetchPickAndPlaceDict",
+      "batch": 64,
+      "default_workers": 4,
+      "state_task_thread_and_endpoint": "PASS"
+    },
+    {
+      "env": "FetchPush",
+      "frame_mse_vs_repeated_step": 0.0,
+      "final_frame_snapshot_exports": 1
+    }
+  ],
+  "timings": [],
+  "scope": "Known-action chunks; not closed-loop policy throughput. Frames use existing OpenGL backend."
+}
