@@ -1,0 +1,4 @@
+JobID|JobName|State|ExitCode|Elapsed|AllocCPUS|NodeList|MaxRSS
+6925154|se-gil-sweep|COMPLETED|0:0|00:12:40|9|node1955|
+6925154.batch|batch|COMPLETED|0:0|00:12:40|9|node1955|27327984K
+6925154.extern|extern|COMPLETED|0:0|00:12:40|9|node1955|
