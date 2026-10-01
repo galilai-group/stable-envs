@@ -1,0 +1,7 @@
+{
+  "baseline_commit": "c8506c2d4a491ea2810d9cf3d258dc5e60752113",
+  "source_sha256": {
+    "fetch_hybrid.py": "ad50a45a4427e776273c132ddd98277757b9071ad76a96aa28323f5ec58f285e",
+    "fetch_scaling.py": "dd9f632aa2eee5e01c2e969a924a7b8a915632a22af214034f03c963f3b3edd9"
+  }
+}

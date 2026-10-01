@@ -1,0 +1,30 @@
+{
+  "status": "PASS",
+  "jobs": {
+    "initial": 6922309,
+    "controlled": 6922504,
+    "confirmation": 6923133
+  },
+  "comparisons": [
+    {
+      "batch": 64,
+      "hybrid_shared_vs_8_process_shared": 0.8109715216992546,
+      "hybrid_pipe_vs_8_process_pipe": 0.9302108778682343,
+      "hybrid_shared_vs_hybrid_pipe": 0.9914918212797749
+    },
+    {
+      "batch": 256,
+      "hybrid_shared_vs_8_process_shared": 0.9222818357596634,
+      "hybrid_pipe_vs_8_process_pipe": 0.92528683670568,
+      "hybrid_shared_vs_hybrid_pipe": 0.9870361986212359
+    },
+    {
+      "batch": 1024,
+      "hybrid_shared_vs_8_process_shared": 0.9507493420776548,
+      "hybrid_pipe_vs_8_process_pipe": 0.903723382740701,
+      "hybrid_shared_vs_hybrid_pipe": 1.1184374037311138
+    }
+  ],
+  "production_changes": false,
+  "scope": "Source FetchPush task + observations/reward/flags/success/qpos/qvel transport. No exhaustive State export, GPU transfers, or rendering."
+}
