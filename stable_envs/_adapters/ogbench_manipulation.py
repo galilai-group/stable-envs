@@ -11,6 +11,7 @@ import torch
 from tensordict import TensorDict
 
 from .ogbench_manipulation_compat import CUBE_SAMPLES, MODEL_VALUES, CompatibleCube, CompatibleScene, nodes
+from .state_columns import owned_columns
 
 PARTS = (
     "TIME",
@@ -135,7 +136,7 @@ class OGBManipulationAdapter:
             env.reset(seed=None if seed is None else int(seed) + lane, options=options)
         return self.get_state()
 
-    def _row(self, env):
+    def _values(self, env):
         values = {("compatibility", "signature"): self.signature}
         for name, flag in FLAGS.items():
             size = mujoco.mj_stateSize(env.model, flag)
@@ -186,15 +187,18 @@ class OGBManipulationAdapter:
                 ("rng", "task", "cached_gaussian"): np.array([cached], np.float64),
             }
         )
+        return values
+
+    def _row(self, env):
         return TensorDict(
-            {k: torch.as_tensor(v.copy(), device=self.device) for k, v in values.items()},
+            {k: torch.as_tensor(v.copy(), device=self.device) for k, v in self._values(env).items()},
             batch_size=[],
             device=self.device,
         )
 
     def get_state(self):
         self._check_open()
-        return torch.stack([self._row(env) for env in self.envs])
+        return owned_columns((self._values(env) for env in self.envs), self.num_envs, self.device)
 
     def validate(self, state):
         if not isinstance(state, TensorDict) or state.batch_size != torch.Size([self.num_envs]):

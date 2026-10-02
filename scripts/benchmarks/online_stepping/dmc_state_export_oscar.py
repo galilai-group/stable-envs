@@ -1,4 +1,4 @@
-"""Run paired DMC checks with isolated CPU/software-GL and GPU/EGL processes."""
+"""Run paired export/process checks with isolated CPU/software-GL and GPU/EGL processes."""
 
 import argparse
 import json
@@ -13,7 +13,7 @@ def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--domain", required=True)
     p.add_argument("--reference-adapters", type=Path)
-    p.add_argument("--benchmark", choices=["dmc_state_export", "dmc_process_probe"], default="dmc_state_export")
+    p.add_argument("--benchmark", choices=["dmc_state_export", "dmc_process_probe", "ogbench_state_export"], default="dmc_state_export")
     p.add_argument("--gates-only", action="store_true")
     p.add_argument("--output", type=Path, required=True)
     args = p.parse_args()
