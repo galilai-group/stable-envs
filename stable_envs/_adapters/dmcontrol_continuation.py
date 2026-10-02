@@ -217,7 +217,7 @@ class DMCContinuationAdapter:
             )
             self._cumulative[i] = row["task", "cumulative_reward"].item()
 
-    def step(self, actions):
+    def step(self, actions, *, capture_state=True):
         self._check_open()
         if torch.is_tensor(actions):
             actions = actions.detach().cpu().numpy()
@@ -246,7 +246,7 @@ class DMCContinuationAdapter:
         )
         return TensorDict(
             {
-                "state": self.get_state(),
+                **({"state": self.get_state()} if capture_state else {}),
                 "reward": torch.tensor(rewards, dtype=torch.float64, device=self.device),
                 "terminated": torch.zeros(self.num_envs, dtype=torch.bool, device=self.device),
                 "truncated": torch.zeros(self.num_envs, dtype=torch.bool, device=self.device),

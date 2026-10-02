@@ -135,3 +135,12 @@ Every registration still needs independent process correctness and public API
 throughput gates, selected-frame pipeline timings, same-device source baselines,
 and batch/horizon sweeps before changing its default execution route. The full
 35-registration goal remains active.
+
+The next [process candidate checkpoint](dmc_process_execution.md) reuses Fetch
+request handling and retains the public API; its full acceptance/default
+selection is tracked separately from this exporter comparison.
+
+Queue update: pending exporter array `6961314` was replaced by `6961949` using
+the same frozen column-export source and a corrected Xvfb coordinator with
+`-noreset`. Outputs go to the new `results-v4` directory. The launcher is preserved
+in the process checkpoint evidence; earlier committed evidence remains intact.

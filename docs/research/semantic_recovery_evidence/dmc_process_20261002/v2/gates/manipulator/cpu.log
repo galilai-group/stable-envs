@@ -1,0 +1,16 @@
+/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/glfw/__init__.py:917: GLFWError: (65550) b'X11: Failed to open display :1'
+  warnings.warn(message, GLFWError)
+/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/glfw/__init__.py:917: GLFWError: (65550) b'X11: Failed to open display :1'
+  warnings.warn(message, GLFWError)
+/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/glfw/__init__.py:917: GLFWError: (65537) b'The GLFW library is not initialized'
+  warnings.warn(message, GLFWError)
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/se-semantic-recovery/dmc-process-v2-20261002/code/scripts/benchmarks/online_stepping/dmc_process_probe.py", line 184, in <module>
+    main()
+  File "/oscar/scratch/sboughan/se-semantic-recovery/dmc-process-v2-20261002/code/scripts/benchmarks/online_stepping/dmc_process_probe.py", line 136, in main
+    with mujoco.Renderer(model, height=32, width=32) as probe:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 92, in __init__
+    self._mjr_context = mujoco.MjrContext(model, font_scale.value)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+mujoco.FatalError: gladLoadGL error

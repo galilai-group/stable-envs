@@ -12,9 +12,13 @@ from pathlib import Path
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--domain", required=True)
-    p.add_argument("--reference-adapters", type=Path, required=True)
+    p.add_argument("--reference-adapters", type=Path)
+    p.add_argument("--benchmark", choices=["dmc_state_export", "dmc_process_probe"], default="dmc_state_export")
+    p.add_argument("--gates-only", action="store_true")
     p.add_argument("--output", type=Path, required=True)
     args = p.parse_args()
+    if args.benchmark == "dmc_state_export" and (args.reference_adapters is None or args.gates_only):
+        p.error("Exporter comparison requires --reference-adapters and does not support --gates-only")
     args.output.mkdir(parents=True, exist_ok=False)
     for device in ("cpu", "cuda"):
         env = dict(os.environ, OMP_NUM_THREADS="1", OPENBLAS_NUM_THREADS="1", MKL_NUM_THREADS="1", LP_NUM_THREADS="1")
@@ -25,7 +29,10 @@ def main():
                 read_fd, write_fd = os.pipe()
                 try:
                     with (args.output / "xvfb.log").open("w") as log:
-                        xvfb = subprocess.Popen(["Xvfb", "-displayfd", str(write_fd), "-screen", "0", "1024x768x24", "-nolisten", "tcp"],
+                        # The GL proof closes its last client before public
+                        # construction. A reset can invalidate the display and
+                        # re-emit its number after the readiness pipe is closed.
+                        xvfb = subprocess.Popen(["Xvfb", "-displayfd", str(write_fd), "-noreset", "-screen", "0", "1024x768x24", "-nolisten", "tcp"],
                                                 pass_fds=(write_fd,), stdout=log, stderr=subprocess.STDOUT)
                     os.close(write_fd)
                     write_fd = None
@@ -43,9 +50,13 @@ def main():
                 env.update(MUJOCO_GL="egl", PYOPENGL_PLATFORM="egl")
                 for name in ("LIBGL_ALWAYS_SOFTWARE", "GALLIUM_DRIVER"):
                     env.pop(name, None)
-            command = [sys.executable, "scripts/benchmarks/online_stepping/dmc_state_export.py",
-                       "--domain", args.domain, "--reference-adapters", str(args.reference_adapters),
+            command = [sys.executable, f"scripts/benchmarks/online_stepping/{args.benchmark}.py",
+                       "--domain", args.domain,
                        "--devices", device, "--verify-gl", "--output", str(args.output / f"{device}.json")]
+            if args.reference_adapters is not None:
+                command += ["--reference-adapters", str(args.reference_adapters)]
+            if args.gates_only:
+                command.append("--gates-only")
             with (args.output / f"{device}.log").open("w") as log:
                 result = subprocess.run(command, env=env, stdout=log, stderr=subprocess.STDOUT)
             if result.returncode:

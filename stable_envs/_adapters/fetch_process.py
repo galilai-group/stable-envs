@@ -12,7 +12,6 @@ from __future__ import annotations
 import ctypes
 import multiprocessing as mp
 import os
-import time
 import traceback
 
 import numpy as np
@@ -20,6 +19,7 @@ import torch
 from tensordict import TensorDict
 
 from .fetch_pickandplace import FetchAdapter
+from .process_requests import ProcessRequests
 
 
 def _arrays(buffers, specs, batch):
@@ -100,12 +100,14 @@ def _worker(conn, start, count, batch, task, reward_type, seed, threads, cpus, b
         conn.close()
 
 
-class FetchProcessAdapter(FetchAdapter):
+class FetchProcessAdapter(ProcessRequests, FetchAdapter):
     """Private process/hybrid strategy with the same State/task interface.
 
     Explicit construction is used for acceptance and strategy selection. The
     default Fetch factory is not switched merely by importing this module.
     """
+
+    _worker_family = "Fetch"
 
     def __init__(
         self,
@@ -198,53 +200,6 @@ class FetchProcessAdapter(FetchAdapter):
             self._abort()
             raise
 
-    def _responses(self, timeout=120):
-        results, errors = [], []
-        deadline = time.monotonic() + timeout
-        for conn, process in zip(self._connections, self._processes):
-            while not conn.poll(0.05):
-                if not process.is_alive() or time.monotonic() >= deadline:
-                    raise RuntimeError(f"Fetch worker {process.pid} exited or timed out")
-            ok, value = conn.recv()
-            results.append(value)
-            if not ok:
-                errors.append(value)
-        if errors:
-            raise RuntimeError("Fetch worker failed:\n" + "\n".join(errors))
-        return results
-
-    def _check_idle(self):
-        self._check_open()
-        if self._pending is not None:
-            raise RuntimeError("Fetch process request already in flight")
-
-    def _submit(self, command, payloads=None):
-        self._check_idle()
-        payloads = [None] * len(self._connections) if payloads is None else payloads
-        try:
-            for conn, payload in zip(self._connections, payloads):
-                conn.send((command, payload))
-            self._pending = command
-        except BaseException:
-            # A partial distributed mutation must never be returned as a State.
-            self._abort()
-            raise
-
-    def _receive(self):
-        self._check_open()
-        if self._pending is None:
-            raise RuntimeError("No Fetch process request in flight")
-        try:
-            result = self._responses()
-            self._pending = None
-            return result
-        except BaseException:
-            self._abort()
-            raise
-
-    def _request(self, command, payloads=None):
-        self._submit(command, payloads)
-        return self._receive()
 
     def _state(self):
         return TensorDict(
@@ -359,27 +314,3 @@ class FetchProcessAdapter(FetchAdapter):
     def abort_step(self):
         """A failed consumer cannot leave a speculative step running."""
         self._abort()
-
-    def _abort(self):
-        for process in self._processes:
-            if process.is_alive():
-                process.terminate()
-        for process in self._processes:
-            process.join(timeout=5)
-            if process.is_alive():
-                process.kill()
-                process.join()
-        for conn in self._connections:
-            conn.close()
-        self._closed = True
-        self._pending = None
-
-    def close(self):
-        if not self._closed:
-            try:
-                if self._pending is None:
-                    self._request("close")
-                    for process in self._processes:
-                        process.join(timeout=5)
-            finally:
-                self._abort()

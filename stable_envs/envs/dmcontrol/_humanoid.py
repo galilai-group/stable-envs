@@ -91,6 +91,10 @@ class DMCHumanoidSemantics:
         self._check_open("set_state")
         self._simulator.set_state(state)
 
+    def _step_pipeline(self):
+        owner = self._simulator
+        return owner if hasattr(owner, "submit_step") else None
+
     def _step(self, actions):
         self._check_open("step")
         return self._simulator.step(actions)

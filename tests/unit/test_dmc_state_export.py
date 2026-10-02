@@ -69,3 +69,5 @@ def test_owned_typed_state_across_steps_reset_and_rng_boundary(factory, args, de
         adapter.close()
     with pytest.raises(RuntimeError, match="closed"):
         adapter.get_state()
+    with pytest.raises(RuntimeError, match="closed"):
+        adapter.step(actions, capture_state=False)

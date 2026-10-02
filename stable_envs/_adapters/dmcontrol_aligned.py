@@ -176,9 +176,9 @@ class DMCAlignedAdapter:
         for env, gravity in zip(self.envs, values, strict=True):
             env.physics.model.opt.gravity[:] = gravity
 
-    def configure_proximal_density(self, values):
+    def configure_proximal_density(self, values, *, force=False):
         values = np.asarray(values, np.float64).reshape(self.num_envs)
-        if np.array_equal(values, self._proximal_density):
+        if not force and np.array_equal(values, self._proximal_density):
             return
         for env in self.envs:
             env.close()
@@ -189,9 +189,9 @@ class DMCAlignedAdapter:
         self._proximal_density = values.copy()
         self.reset(seed=self._seed)
 
-    def configure_upper_arm_density(self, values):
+    def configure_upper_arm_density(self, values, *, force=False):
         values = np.asarray(values, np.float64).reshape(self.num_envs)
-        if np.array_equal(values, self._upper_arm_density):
+        if not force and np.array_equal(values, self._upper_arm_density):
             return
         for env in self.envs:
             env.close()
@@ -254,7 +254,8 @@ class DMCAlignedAdapter:
                 row["rng", "cached_gaussian"].item(),
             ))
 
-    def step(self, actions):
+    def step(self, actions, *, capture_state=True):
+        self._check_open()
         if torch.is_tensor(actions):
             actions = actions.detach().cpu().numpy()
         actions = np.asarray(actions, np.float64)
@@ -279,7 +280,7 @@ class DMCAlignedAdapter:
             [self.num_envs], device=self.device,
         )
         return TensorDict({
-            "state": self.get_state(),
+            **({"state": self.get_state()} if capture_state else {}),
             "reward": torch.tensor(rewards, dtype=torch.float64, device=self.device),
             "terminated": torch.zeros(self.num_envs, dtype=torch.bool, device=self.device),
             "truncated": torch.zeros(self.num_envs, dtype=torch.bool, device=self.device),
