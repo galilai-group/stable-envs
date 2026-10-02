@@ -42,13 +42,44 @@ class Counter(snv.Env):
         return state["position"].to(torch.uint8).reshape(3, 1, 1, 1).expand(3, 2, 2, 3).clone()
 
 
+class PipelinedCounter(Counter):
+    """Complete immediately to stress snapshot ownership under maximum lookahead."""
+
+    pending = None
+    aborted = False
+    overlaps = 0
+
+    def _step_pipeline(self):
+        return self
+
+    def submit_step(self, actions, *, active=None, capture_state=True):
+        assert self.pending is None
+        self.pending = self._step(actions, active=active)
+        if not capture_state:
+            self.pending = self.pending.exclude("state")
+
+    def receive_step(self):
+        result, self.pending = self.pending, None
+        assert result is not None
+        return result
+
+    def abort_step(self):
+        self.aborted = True
+        self.pending = None
+
+    def render(self, state=None):
+        self.overlaps += self.pending is not None
+        return super().render(state)
+
+
+@pytest.mark.parametrize("env_type", [Counter, PipelinedCounter])
 @pytest.mark.parametrize("states", [None, slice(None), slice(-1, None), slice(None, None, -1), slice(9, 12)])
 @pytest.mark.parametrize(
     "frames", [None, slice(None), slice(-1, None), slice(None, None, 2), slice(None, None, -1), slice(9, 12)]
 )
 @pytest.mark.parametrize("sequence", [False, True])
-def test_slice_contract(states, frames, sequence):
-    with Counter() as env:
+def test_slice_contract(states, frames, sequence, env_type):
+    with env_type() as env:
         length = 4 if sequence else 1
         actions = torch.ones((3, length, 1) if sequence else (3, 1), dtype=torch.int64)
         out = env.step(actions, states=states, frames=frames)
@@ -75,6 +106,42 @@ def test_slice_contract(states, frames, sequence):
         held = out.clone()
         env.step(torch.ones(3, 1, dtype=torch.int64), frames=None)
         assert (out == held).all()
+
+
+def test_pipeline_overlaps_only_known_future_actions_and_returns_idle():
+    with PipelinedCounter() as env:
+        env.step(torch.ones(3, 8, 1, dtype=torch.int64), frames=slice(None))
+        assert env.overlaps == 7
+        assert env.pending is None
+        env.overlaps = 0
+        env.step(torch.ones(3, 1, dtype=torch.int64))
+        assert env.overlaps == 0
+        assert env.pending is None
+
+
+def test_pipeline_renderer_exception_aborts_inflight_transition(monkeypatch):
+    with PipelinedCounter() as env:
+
+        def fail(state):
+            assert env.pending is not None
+            raise RuntimeError("renderer failed")
+
+        monkeypatch.setattr(env, "render", fail)
+        with pytest.raises(RuntimeError, match="renderer failed"):
+            env.step(torch.ones(3, 8, 1, dtype=torch.int64), frames=slice(None))
+        assert env.aborted and env.pending is None
+
+
+def test_pipeline_all_lanes_finish_before_first_selected_snapshot():
+    with Counter() as reference, PipelinedCounter() as candidate:
+        reference.limit.fill_(1)
+        candidate.limit.fill_(1)
+        actions = torch.ones(3, 8, 1, dtype=torch.int64)
+        expected = reference.step(actions, states=None, frames=slice(-1, None))
+        actual = candidate.step(actions, states=None, frames=slice(-1, None))
+        assert (expected == actual).all()
+        assert candidate.calls.tolist() == [1, 1, 1]
+        assert candidate.pending is None
 
 
 @pytest.mark.parametrize("shape", [(3, 0, 1), (3, 2), (2, 3, 1), (3, 1, 1, 1)])

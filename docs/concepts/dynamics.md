@@ -74,8 +74,36 @@ There is no `capture`, `transition`, `unroll`, `step_sequence`, or public
 `step`. Contributors implement the private `_step` kernel; terminating families
 also support an active-lane mask, without stepping and restoring inactive lanes.
 
-Large Fetch batches currently use a persistent CPU thread pool: below 64 they
-remain serial; at least 64 use up to four workers, capped by CPU affinity.
-Fetch physics remains on CPU even with CUDA rendering. Other families retain
-their existing execution strategies. Profiling process executors does not by
-itself promote one into production or change simulator acceptance.
+Large Fetch batches on Linux use persistent simulation processes when at least
+four CPU cores are available: batches of at least 64 use up to eight processes,
+with one simulation thread per process, respecting the allocated CPU affinity.
+Small batches, other platforms, and daemon workers retain the local execution
+path. Fetch physics remains on CPU even with CUDA rendering. Other families
+retain their existing execution strategies.
+
+When a Fetch process pool is selected, the dispatcher starts the next known
+action while the parent renders the previous owned snapshot. There is at most
+one transition in flight. The same path accepts a single action or a sequence;
+one action has no later transition to overlap within that call. Selecting only
+the final frame also leaves no intermediate rendering to overlap. Use
+`frames=slice(None)` or a sparse slice when intermediate images are wanted.
+This scheduling changes neither selected outputs nor rendering fidelity.
+
+All submitted transitions are received before `step` returns; no future actions
+are inferred or launched across calls. A policy that needs each next image must
+still supply its actions one call at a time. CPU stepping and rendering can
+compete for host CPU resources, so overlap is measured rather than assumed to
+achieve the maximum of their separate rates.
+
+Scripts using the process path must put environment construction and their main
+loop inside a function guarded by `if __name__ == "__main__":`, as with other
+Python spawn-based process pools. Call `close()` or use an environment context
+manager. If rendering fails with a transition in flight, its simulator owners
+are stopped; construct a fresh environment instead of continuing an ambiguous
+partial sequence.
+
+Contributors can opt a family into the shared scheduler by providing the private
+`_step_pipeline()` hook. Its executor submits one masked transition, returns
+owned task outputs and any requested full State on receive, and aborts pending
+work on failure. The renderer stays on the calling thread. Fetch is the first
+implementation; the hook does not certify concurrency for other families.

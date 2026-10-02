@@ -1,0 +1,2146 @@
+{
+  "status": "PASS",
+  "task": "PickAndPlace",
+  "host": "gpu2503.oscar.ccv.brown.edu",
+  "affinity": [
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21
+  ],
+  "job": "6958875",
+  "partition": "3090-gcondo",
+  "gpu": "NVIDIA RTX A5500",
+  "configuration": {
+    "task": "PickAndPlace",
+    "output": "/oscar/scratch/sboughan/se-semantic-recovery/fetch-pipeline-condo-v2-20261002/results/PickAndPlace.json",
+    "device": "cuda",
+    "batches": [
+      64,
+      256,
+      1024
+    ],
+    "horizons": [
+      1,
+      8
+    ],
+    "repeats": 3,
+    "blocks": 2,
+    "size": 64,
+    "production": true,
+    "gates_only": false,
+    "suffixes": [
+      "plain",
+      "Dense",
+      "Dict"
+    ]
+  },
+  "gates": [
+    {
+      "env": "FetchPickAndPlace",
+      "device": "cpu",
+      "cases": 13,
+      "state_task_replay_ownership": "PASS",
+      "frame_mse_vs_serial": null
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "device": "cuda",
+      "cases": 13,
+      "state_task_replay_ownership": "PASS",
+      "frame_mse_vs_serial": 0.0
+    },
+    {
+      "env": "FetchPickAndPlaceDense",
+      "device": "cpu",
+      "cases": 13,
+      "state_task_replay_ownership": "PASS",
+      "frame_mse_vs_serial": null
+    },
+    {
+      "env": "FetchPickAndPlaceDense",
+      "device": "cuda",
+      "cases": 13,
+      "state_task_replay_ownership": "PASS",
+      "frame_mse_vs_serial": 0.0
+    },
+    {
+      "env": "FetchPickAndPlaceDict",
+      "device": "cpu",
+      "cases": 13,
+      "state_task_replay_ownership": "PASS",
+      "frame_mse_vs_serial": null
+    },
+    {
+      "env": "FetchPickAndPlaceDict",
+      "device": "cuda",
+      "cases": 13,
+      "state_task_replay_ownership": "PASS",
+      "frame_mse_vs_serial": 0.0
+    }
+  ],
+  "timings": [
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 64,
+      "horizon": 1,
+      "frames": "none",
+      "mode": "serial_legacy",
+      "block": 0,
+      "seconds": [
+        0.01638858951628208,
+        0.015460951253771782,
+        0.01554722897708416
+      ],
+      "steps": 64,
+      "images": 0,
+      "steps_s_mean": 4053.7019876133227,
+      "frames_s_mean": 0.0,
+      "exact_parity": "PASS",
+      "frame_mse": null
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 64,
+      "horizon": 1,
+      "frames": "none",
+      "mode": "serial_fused",
+      "block": 0,
+      "seconds": [
+        0.015260221436619759,
+        0.015229001641273499,
+        0.015155093744397163
+      ],
+      "steps": 64,
+      "images": 0,
+      "steps_s_mean": 4206.473603121418,
+      "frames_s_mean": 0.0,
+      "exact_parity": "PASS",
+      "frame_mse": null
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 64,
+      "horizon": 1,
+      "frames": "none",
+      "mode": "pipeline",
+      "block": 0,
+      "seconds": [
+        0.015061331912875175,
+        0.015268601477146149,
+        0.0152283925563097
+      ],
+      "steps": 64,
+      "images": 0,
+      "steps_s_mean": 4214.525569472413,
+      "frames_s_mean": 0.0,
+      "exact_parity": "PASS",
+      "frame_mse": null
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 64,
+      "horizon": 1,
+      "frames": "none",
+      "mode": "pipeline",
+      "block": 1,
+      "seconds": [
+        0.015058692544698715,
+        0.015095483511686325,
+        0.015195351094007492
+      ],
+      "steps": 64,
+      "images": 0,
+      "steps_s_mean": 4233.843389658063,
+      "frames_s_mean": 0.0,
+      "exact_parity": "PASS",
+      "frame_mse": null
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 64,
+      "horizon": 1,
+      "frames": "none",
+      "mode": "serial_fused",
+      "block": 1,
+      "seconds": [
+        0.015486588701605797,
+        0.015146370977163315,
+        0.01488916389644146
+      ],
+      "steps": 64,
+      "images": 0,
+      "steps_s_mean": 4218.823548387177,
+      "frames_s_mean": 0.0,
+      "exact_parity": "PASS",
+      "frame_mse": null
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 64,
+      "horizon": 1,
+      "frames": "none",
+      "mode": "serial_legacy",
+      "block": 1,
+      "seconds": [
+        0.015454670414328575,
+        0.015200251713395119,
+        0.015277279540896416
+      ],
+      "steps": 64,
+      "images": 0,
+      "steps_s_mean": 4180.275701565398,
+      "frames_s_mean": 0.0,
+      "exact_parity": "PASS",
+      "frame_mse": null
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 64,
+      "horizon": 1,
+      "frames": "final",
+      "mode": "serial_legacy",
+      "block": 0,
+      "seconds": [
+        0.04559292457997799,
+        0.04517221637070179,
+        0.04678863473236561
+      ],
+      "steps": 64,
+      "images": 64,
+      "steps_s_mean": 1396.1267368584272,
+      "frames_s_mean": 1396.1267368584272,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 64,
+      "horizon": 1,
+      "frames": "final",
+      "mode": "serial_fused",
+      "block": 0,
+      "seconds": [
+        0.05295991152524948,
+        0.04935859329998493,
+        0.0491681843996048
+      ],
+      "steps": 64,
+      "images": 64,
+      "steps_s_mean": 1268.9164514911477,
+      "frames_s_mean": 1268.9164514911477,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 64,
+      "horizon": 1,
+      "frames": "final",
+      "mode": "pipeline",
+      "block": 0,
+      "seconds": [
+        0.04933477193117142,
+        0.048726947978138924,
+        0.0513180959969759
+      ],
+      "steps": 64,
+      "images": 64,
+      "steps_s_mean": 1285.9414965230233,
+      "frames_s_mean": 1285.9414965230233,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 64,
+      "horizon": 1,
+      "frames": "final",
+      "mode": "pipeline",
+      "block": 1,
+      "seconds": [
+        0.04833999089896679,
+        0.04796699620783329,
+        0.05133705772459507
+      ],
+      "steps": 64,
+      "images": 64,
+      "steps_s_mean": 1301.6230331425397,
+      "frames_s_mean": 1301.6230331425397,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 64,
+      "horizon": 1,
+      "frames": "final",
+      "mode": "serial_fused",
+      "block": 1,
+      "seconds": [
+        0.04462783224880695,
+        0.045030608773231506,
+        0.04513825848698616
+      ],
+      "steps": 64,
+      "images": 64,
+      "steps_s_mean": 1424.4013661230913,
+      "frames_s_mean": 1424.4013661230913,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 64,
+      "horizon": 1,
+      "frames": "final",
+      "mode": "serial_legacy",
+      "block": 1,
+      "seconds": [
+        0.045189760625362396,
+        0.04545248672366142,
+        0.049741439521312714
+      ],
+      "steps": 64,
+      "images": 64,
+      "steps_s_mean": 1370.3224542764867,
+      "frames_s_mean": 1370.3224542764867,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 64,
+      "horizon": 1,
+      "frames": "all",
+      "mode": "serial_legacy",
+      "block": 0,
+      "seconds": [
+        0.045168327167630196,
+        0.045342275872826576,
+        0.045213086530566216
+      ],
+      "steps": 64,
+      "images": 64,
+      "steps_s_mean": 1414.6425756368708,
+      "frames_s_mean": 1414.6425756368708,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 64,
+      "horizon": 1,
+      "frames": "all",
+      "mode": "serial_fused",
+      "block": 0,
+      "seconds": [
+        0.04550740495324135,
+        0.051363175734877586,
+        0.05459664762020111
+      ],
+      "steps": 64,
+      "images": 64,
+      "steps_s_mean": 1274.8755151844896,
+      "frames_s_mean": 1274.8755151844896,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 64,
+      "horizon": 1,
+      "frames": "all",
+      "mode": "pipeline",
+      "block": 0,
+      "seconds": [
+        0.0491607841104269,
+        0.04910148307681084,
+        0.048242781311273575
+      ],
+      "steps": 64,
+      "images": 64,
+      "steps_s_mean": 1310.6323246040058,
+      "frames_s_mean": 1310.6323246040058,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 64,
+      "horizon": 1,
+      "frames": "all",
+      "mode": "pipeline",
+      "block": 1,
+      "seconds": [
+        0.05265750363469124,
+        0.0461270809173584,
+        0.05154934525489807
+      ],
+      "steps": 64,
+      "images": 64,
+      "steps_s_mean": 1281.467157930286,
+      "frames_s_mean": 1281.467157930286,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 64,
+      "horizon": 1,
+      "frames": "all",
+      "mode": "serial_fused",
+      "block": 1,
+      "seconds": [
+        0.048336632549762726,
+        0.05122879520058632,
+        0.051710400730371475
+      ],
+      "steps": 64,
+      "images": 64,
+      "steps_s_mean": 1270.3356594110137,
+      "frames_s_mean": 1270.3356594110137,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 64,
+      "horizon": 1,
+      "frames": "all",
+      "mode": "serial_legacy",
+      "block": 1,
+      "seconds": [
+        0.04940762184560299,
+        0.04532159864902496,
+        0.04861359857022762
+      ],
+      "steps": 64,
+      "images": 64,
+      "steps_s_mean": 1341.3270015176686,
+      "frames_s_mean": 1341.3270015176686,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 64,
+      "horizon": 8,
+      "frames": "none",
+      "mode": "serial_legacy",
+      "block": 0,
+      "seconds": [
+        0.11620842665433884,
+        0.11619755811989307,
+        0.11618905700743198
+      ],
+      "steps": 512,
+      "images": 0,
+      "steps_s_mean": 4406.258905170823,
+      "frames_s_mean": 0.0,
+      "exact_parity": "PASS",
+      "frame_mse": null
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 64,
+      "horizon": 8,
+      "frames": "none",
+      "mode": "serial_fused",
+      "block": 0,
+      "seconds": [
+        0.11445514298975468,
+        0.11393723823130131,
+        0.1135445088148117
+      ],
+      "steps": 512,
+      "images": 0,
+      "steps_s_mean": 4492.105063783374,
+      "frames_s_mean": 0.0,
+      "exact_parity": "PASS",
+      "frame_mse": null
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 64,
+      "horizon": 8,
+      "frames": "none",
+      "mode": "pipeline",
+      "block": 0,
+      "seconds": [
+        0.11032156646251678,
+        0.11425318382680416,
+        0.12429569847881794
+      ],
+      "steps": 512,
+      "images": 0,
+      "steps_s_mean": 4413.821072230984,
+      "frames_s_mean": 0.0,
+      "exact_parity": "PASS",
+      "frame_mse": null
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 64,
+      "horizon": 8,
+      "frames": "none",
+      "mode": "pipeline",
+      "block": 1,
+      "seconds": [
+        0.11054185591638088,
+        0.11014587804675102,
+        0.11026464775204659
+      ],
+      "steps": 512,
+      "images": 0,
+      "steps_s_mean": 4641.161559449768,
+      "frames_s_mean": 0.0,
+      "exact_parity": "PASS",
+      "frame_mse": null
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 64,
+      "horizon": 8,
+      "frames": "none",
+      "mode": "serial_fused",
+      "block": 1,
+      "seconds": [
+        0.11359330080449581,
+        0.11335105262696743,
+        0.1155205424875021
+      ],
+      "steps": 512,
+      "images": 0,
+      "steps_s_mean": 4485.453686038931,
+      "frames_s_mean": 0.0,
+      "exact_parity": "PASS",
+      "frame_mse": null
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 64,
+      "horizon": 8,
+      "frames": "none",
+      "mode": "serial_legacy",
+      "block": 1,
+      "seconds": [
+        0.11414020322263241,
+        0.11530602723360062,
+        0.11338830180466175
+      ],
+      "steps": 512,
+      "images": 0,
+      "steps_s_mean": 4480.508648230322,
+      "frames_s_mean": 0.0,
+      "exact_parity": "PASS",
+      "frame_mse": null
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 64,
+      "horizon": 8,
+      "frames": "final",
+      "mode": "serial_legacy",
+      "block": 0,
+      "seconds": [
+        0.1686068046838045,
+        0.15157769992947578,
+        0.1436758954077959
+      ],
+      "steps": 512,
+      "images": 64,
+      "steps_s_mean": 3326.010878476834,
+      "frames_s_mean": 415.75135980960425,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 64,
+      "horizon": 8,
+      "frames": "final",
+      "mode": "serial_fused",
+      "block": 0,
+      "seconds": [
+        0.14342811703681946,
+        0.15004362910985947,
+        0.1441843006759882
+      ],
+      "steps": 512,
+      "images": 64,
+      "steps_s_mean": 3511.0279934735618,
+      "frames_s_mean": 438.8784991841952,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 64,
+      "horizon": 8,
+      "frames": "final",
+      "mode": "pipeline",
+      "block": 0,
+      "seconds": [
+        0.14078577980399132,
+        0.14065289124846458,
+        0.14534487947821617
+      ],
+      "steps": 512,
+      "images": 64,
+      "steps_s_mean": 3599.8512519892242,
+      "frames_s_mean": 449.98140649865303,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 64,
+      "horizon": 8,
+      "frames": "final",
+      "mode": "pipeline",
+      "block": 1,
+      "seconds": [
+        0.1457087080925703,
+        0.1469211559742689,
+        0.13997739553451538
+      ],
+      "steps": 512,
+      "images": 64,
+      "steps_s_mean": 3552.1519154459716,
+      "frames_s_mean": 444.01898943074644,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 64,
+      "horizon": 8,
+      "frames": "final",
+      "mode": "serial_fused",
+      "block": 1,
+      "seconds": [
+        0.14321941696107388,
+        0.14843998663127422,
+        0.15095855668187141
+      ],
+      "steps": 512,
+      "images": 64,
+      "steps_s_mean": 3471.9329941290594,
+      "frames_s_mean": 433.9916242661324,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 64,
+      "horizon": 8,
+      "frames": "final",
+      "mode": "serial_legacy",
+      "block": 1,
+      "seconds": [
+        0.1465374119579792,
+        0.15674214251339436,
+        0.14589003659784794
+      ],
+      "steps": 512,
+      "images": 64,
+      "steps_s_mean": 3423.33076110353,
+      "frames_s_mean": 427.9163451379413,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 64,
+      "horizon": 8,
+      "frames": "all",
+      "mode": "serial_legacy",
+      "block": 0,
+      "seconds": [
+        0.4100877419114113,
+        0.4033002685755491,
+        0.4062668327242136
+      ],
+      "steps": 512,
+      "images": 512,
+      "steps_s_mean": 1259.4314454086382,
+      "frames_s_mean": 1259.4314454086382,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 64,
+      "horizon": 8,
+      "frames": "all",
+      "mode": "serial_fused",
+      "block": 0,
+      "seconds": [
+        0.37706877663731575,
+        0.3746769279241562,
+        0.38245949894189835
+      ],
+      "steps": 512,
+      "images": 512,
+      "steps_s_mean": 1354.3523100061727,
+      "frames_s_mean": 1354.3523100061727,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 64,
+      "horizon": 8,
+      "frames": "all",
+      "mode": "pipeline",
+      "block": 0,
+      "seconds": [
+        0.3156132847070694,
+        0.31110153160989285,
+        0.3343614172190428
+      ],
+      "steps": 512,
+      "images": 512,
+      "steps_s_mean": 1599.7601828178958,
+      "frames_s_mean": 1599.7601828178958,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 64,
+      "horizon": 8,
+      "frames": "all",
+      "mode": "pipeline",
+      "block": 1,
+      "seconds": [
+        0.32333417423069477,
+        0.31927681155502796,
+        0.3213468249887228
+      ],
+      "steps": 512,
+      "images": 512,
+      "steps_s_mean": 1593.4730893603758,
+      "frames_s_mean": 1593.4730893603758,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 64,
+      "horizon": 8,
+      "frames": "all",
+      "mode": "serial_fused",
+      "block": 1,
+      "seconds": [
+        0.40296222269535065,
+        0.37474011816084385,
+        0.37384999357163906
+      ],
+      "steps": 512,
+      "images": 512,
+      "steps_s_mean": 1335.4680062246107,
+      "frames_s_mean": 1335.4680062246107,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 64,
+      "horizon": 8,
+      "frames": "all",
+      "mode": "serial_legacy",
+      "block": 1,
+      "seconds": [
+        0.40272317454218864,
+        0.3967488445341587,
+        0.39591565169394016
+      ],
+      "steps": 512,
+      "images": 512,
+      "steps_s_mean": 1285.0128209337943,
+      "frames_s_mean": 1285.0128209337943,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 256,
+      "horizon": 1,
+      "frames": "none",
+      "mode": "serial_legacy",
+      "block": 0,
+      "seconds": [
+        0.047896454110741615,
+        0.04727826826274395,
+        0.04762795381247997
+      ],
+      "steps": 256,
+      "images": 0,
+      "steps_s_mean": 5378.202651337746,
+      "frames_s_mean": 0.0,
+      "exact_parity": "PASS",
+      "frame_mse": null
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 256,
+      "horizon": 1,
+      "frames": "none",
+      "mode": "serial_fused",
+      "block": 0,
+      "seconds": [
+        0.047141049057245255,
+        0.04742652736604214,
+        0.04709175042808056
+      ],
+      "steps": 256,
+      "images": 0,
+      "steps_s_mean": 5421.510205222066,
+      "frames_s_mean": 0.0,
+      "exact_parity": "PASS",
+      "frame_mse": null
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 256,
+      "horizon": 1,
+      "frames": "none",
+      "mode": "pipeline",
+      "block": 0,
+      "seconds": [
+        0.048122210428118706,
+        0.047016510739922523,
+        0.047798411920666695
+      ],
+      "steps": 256,
+      "images": 0,
+      "steps_s_mean": 5373.503705542701,
+      "frames_s_mean": 0.0,
+      "exact_parity": "PASS",
+      "frame_mse": null
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 256,
+      "horizon": 1,
+      "frames": "none",
+      "mode": "pipeline",
+      "block": 1,
+      "seconds": [
+        0.04738137684762478,
+        0.047371938824653625,
+        0.04707465134561062
+      ],
+      "steps": 256,
+      "images": 0,
+      "steps_s_mean": 5415.060236738269,
+      "frames_s_mean": 0.0,
+      "exact_parity": "PASS",
+      "frame_mse": null
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 256,
+      "horizon": 1,
+      "frames": "none",
+      "mode": "serial_fused",
+      "block": 1,
+      "seconds": [
+        0.04733287915587425,
+        0.04712834767997265,
+        0.047431329265236855
+      ],
+      "steps": 256,
+      "images": 0,
+      "steps_s_mean": 5412.584663336412,
+      "frames_s_mean": 0.0,
+      "exact_parity": "PASS",
+      "frame_mse": null
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 256,
+      "horizon": 1,
+      "frames": "none",
+      "mode": "serial_legacy",
+      "block": 1,
+      "seconds": [
+        0.04736129567027092,
+        0.052647972479462624,
+        0.05142265185713768
+      ],
+      "steps": 256,
+      "images": 0,
+      "steps_s_mean": 5082.031258588868,
+      "frames_s_mean": 0.0,
+      "exact_parity": "PASS",
+      "frame_mse": null
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 256,
+      "horizon": 1,
+      "frames": "final",
+      "mode": "serial_legacy",
+      "block": 0,
+      "seconds": [
+        0.15763698890805244,
+        0.16094211675226688,
+        0.15768419578671455
+      ],
+      "steps": 256,
+      "images": 256,
+      "steps_s_mean": 1612.7054873347956,
+      "frames_s_mean": 1612.7054873347956,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 256,
+      "horizon": 1,
+      "frames": "final",
+      "mode": "serial_fused",
+      "block": 0,
+      "seconds": [
+        0.15734826773405075,
+        0.1602928750216961,
+        0.15736600011587143
+      ],
+      "steps": 256,
+      "images": 256,
+      "steps_s_mean": 1616.940563108562,
+      "frames_s_mean": 1616.940563108562,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 256,
+      "horizon": 1,
+      "frames": "final",
+      "mode": "pipeline",
+      "block": 0,
+      "seconds": [
+        0.15705108270049095,
+        0.1617134716361761,
+        0.15718847140669823
+      ],
+      "steps": 256,
+      "images": 256,
+      "steps_s_mean": 1613.9026298922995,
+      "frames_s_mean": 1613.9026298922995,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 256,
+      "horizon": 1,
+      "frames": "final",
+      "mode": "pipeline",
+      "block": 1,
+      "seconds": [
+        0.15672454610466957,
+        0.160767313092947,
+        0.1569294836372137
+      ],
+      "steps": 256,
+      "images": 256,
+      "steps_s_mean": 1619.0361764157785,
+      "frames_s_mean": 1619.0361764157785,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 256,
+      "horizon": 1,
+      "frames": "final",
+      "mode": "serial_fused",
+      "block": 1,
+      "seconds": [
+        0.15685678459703922,
+        0.16067367233335972,
+        0.15684672445058823
+      ],
+      "steps": 256,
+      "images": 256,
+      "steps_s_mean": 1619.1734112132694,
+      "frames_s_mean": 1619.1734112132694,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 256,
+      "horizon": 1,
+      "frames": "final",
+      "mode": "serial_legacy",
+      "block": 1,
+      "seconds": [
+        0.15740489959716797,
+        0.1603674329817295,
+        0.15807247161865234
+      ],
+      "steps": 256,
+      "images": 256,
+      "steps_s_mean": 1614.0744223712124,
+      "frames_s_mean": 1614.0744223712124,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 256,
+      "horizon": 1,
+      "frames": "all",
+      "mode": "serial_legacy",
+      "block": 0,
+      "seconds": [
+        0.15986994840204716,
+        0.15842397324740887,
+        0.16019431501626968
+      ],
+      "steps": 256,
+      "images": 256,
+      "steps_s_mean": 1605.0926113197097,
+      "frames_s_mean": 1605.0926113197097,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 256,
+      "horizon": 1,
+      "frames": "all",
+      "mode": "serial_fused",
+      "block": 0,
+      "seconds": [
+        0.15956205315887928,
+        0.1580773051828146,
+        0.1596739310771227
+      ],
+      "steps": 256,
+      "images": 256,
+      "steps_s_mean": 1609.0398807065783,
+      "frames_s_mean": 1609.0398807065783,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 256,
+      "horizon": 1,
+      "frames": "all",
+      "mode": "pipeline",
+      "block": 0,
+      "seconds": [
+        0.16010861657559872,
+        0.15734602138400078,
+        0.15983884036540985
+      ],
+      "steps": 256,
+      "images": 256,
+      "steps_s_mean": 1609.1717430031201,
+      "frames_s_mean": 1609.1717430031201,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 256,
+      "horizon": 1,
+      "frames": "all",
+      "mode": "pipeline",
+      "block": 1,
+      "seconds": [
+        0.15945644304156303,
+        0.15771948732435703,
+        0.1599778663367033
+      ],
+      "steps": 256,
+      "images": 256,
+      "steps_s_mean": 1609.6034461652928,
+      "frames_s_mean": 1609.6034461652928,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 256,
+      "horizon": 1,
+      "frames": "all",
+      "mode": "serial_fused",
+      "block": 1,
+      "seconds": [
+        0.15975617989897728,
+        0.15812460333108902,
+        0.15978906862437725
+      ],
+      "steps": 256,
+      "images": 256,
+      "steps_s_mean": 1607.8434712400992,
+      "frames_s_mean": 1607.8434712400992,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 256,
+      "horizon": 1,
+      "frames": "all",
+      "mode": "serial_legacy",
+      "block": 1,
+      "seconds": [
+        0.16122130677103996,
+        0.15828146040439606,
+        0.16137542389333248
+      ],
+      "steps": 256,
+      "images": 256,
+      "steps_s_mean": 1597.2048089884163,
+      "frames_s_mean": 1597.2048089884163,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 256,
+      "horizon": 8,
+      "frames": "none",
+      "mode": "serial_legacy",
+      "block": 0,
+      "seconds": [
+        0.3825330212712288,
+        0.39299127645790577,
+        0.38209861330688
+      ],
+      "steps": 2048,
+      "images": 0,
+      "steps_s_mean": 5308.323557355682,
+      "frames_s_mean": 0.0,
+      "exact_parity": "PASS",
+      "frame_mse": null
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 256,
+      "horizon": 8,
+      "frames": "none",
+      "mode": "serial_fused",
+      "block": 0,
+      "seconds": [
+        0.3823536615818739,
+        0.42547878436744213,
+        0.3811884094029665
+      ],
+      "steps": 2048,
+      "images": 0,
+      "steps_s_mean": 5180.789938258092,
+      "frames_s_mean": 0.0,
+      "exact_parity": "PASS",
+      "frame_mse": null
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 256,
+      "horizon": 8,
+      "frames": "none",
+      "mode": "pipeline",
+      "block": 0,
+      "seconds": [
+        0.3815905265510082,
+        0.38031748682260513,
+        0.3791629374027252
+      ],
+      "steps": 2048,
+      "images": 0,
+      "steps_s_mean": 5384.4519795216565,
+      "frames_s_mean": 0.0,
+      "exact_parity": "PASS",
+      "frame_mse": null
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 256,
+      "horizon": 8,
+      "frames": "none",
+      "mode": "pipeline",
+      "block": 1,
+      "seconds": [
+        0.38675610162317753,
+        0.37749071419239044,
+        0.37922724708914757
+      ],
+      "steps": 2048,
+      "images": 0,
+      "steps_s_mean": 5373.693927128595,
+      "frames_s_mean": 0.0,
+      "exact_parity": "PASS",
+      "frame_mse": null
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 256,
+      "horizon": 8,
+      "frames": "none",
+      "mode": "serial_fused",
+      "block": 1,
+      "seconds": [
+        0.3796363640576601,
+        0.3813138511031866,
+        0.3805642556399107
+      ],
+      "steps": 2048,
+      "images": 0,
+      "steps_s_mean": 5382.340862877332,
+      "frames_s_mean": 0.0,
+      "exact_parity": "PASS",
+      "frame_mse": null
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 256,
+      "horizon": 8,
+      "frames": "none",
+      "mode": "serial_legacy",
+      "block": 1,
+      "seconds": [
+        0.38321429304778576,
+        0.3826471883803606,
+        0.38398297503590584
+      ],
+      "steps": 2048,
+      "images": 0,
+      "steps_s_mean": 5343.342305389455,
+      "frames_s_mean": 0.0,
+      "exact_parity": "PASS",
+      "frame_mse": null
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 256,
+      "horizon": 8,
+      "frames": "final",
+      "mode": "serial_legacy",
+      "block": 0,
+      "seconds": [
+        0.4951449278742075,
+        0.4963918477296829,
+        0.49251561239361763
+      ],
+      "steps": 2048,
+      "images": 256,
+      "steps_s_mean": 4140.059795676276,
+      "frames_s_mean": 517.5074744595345,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 256,
+      "horizon": 8,
+      "frames": "final",
+      "mode": "serial_fused",
+      "block": 0,
+      "seconds": [
+        0.4907545689493418,
+        0.49406895972788334,
+        0.4953976273536682
+      ],
+      "steps": 2048,
+      "images": 256,
+      "steps_s_mean": 4150.796224976597,
+      "frames_s_mean": 518.8495281220746,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 256,
+      "horizon": 8,
+      "frames": "final",
+      "mode": "pipeline",
+      "block": 0,
+      "seconds": [
+        0.4881496597081423,
+        0.49237746372818947,
+        0.4869938064366579
+      ],
+      "steps": 2048,
+      "images": 256,
+      "steps_s_mean": 4186.745821358863,
+      "frames_s_mean": 523.3432276698579,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 256,
+      "horizon": 8,
+      "frames": "final",
+      "mode": "pipeline",
+      "block": 1,
+      "seconds": [
+        0.48815912939608097,
+        0.4910220541059971,
+        0.4886355549097061
+      ],
+      "steps": 2048,
+      "images": 256,
+      "steps_s_mean": 4185.836036059764,
+      "frames_s_mean": 523.2295045074706,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 256,
+      "horizon": 8,
+      "frames": "final",
+      "mode": "serial_fused",
+      "block": 1,
+      "seconds": [
+        0.489974794909358,
+        0.4958774037659168,
+        0.4895818792283535
+      ],
+      "steps": 2048,
+      "images": 256,
+      "steps_s_mean": 4164.340428248546,
+      "frames_s_mean": 520.5425535310683,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 256,
+      "horizon": 8,
+      "frames": "final",
+      "mode": "serial_legacy",
+      "block": 1,
+      "seconds": [
+        0.4940566588193178,
+        0.49592725560069084,
+        0.4925346225500107
+      ],
+      "steps": 2048,
+      "images": 256,
+      "steps_s_mean": 4144.331597451091,
+      "frames_s_mean": 518.0414496813863,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 256,
+      "horizon": 8,
+      "frames": "all",
+      "mode": "serial_legacy",
+      "block": 0,
+      "seconds": [
+        1.3242491502314806,
+        1.2938432097434998,
+        1.314263666048646
+      ],
+      "steps": 2048,
+      "images": 2048,
+      "steps_s_mean": 1562.5683023497816,
+      "frames_s_mean": 1562.5683023497816,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 256,
+      "horizon": 8,
+      "frames": "all",
+      "mode": "serial_fused",
+      "block": 0,
+      "seconds": [
+        1.304341109469533,
+        1.3471511956304312,
+        1.3217443116009235
+      ],
+      "steps": 2048,
+      "images": 2048,
+      "steps_s_mean": 1546.6180419773575,
+      "frames_s_mean": 1546.6180419773575,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 256,
+      "horizon": 8,
+      "frames": "all",
+      "mode": "pipeline",
+      "block": 0,
+      "seconds": [
+        1.1060607433319092,
+        1.118799664080143,
+        1.111294286325574
+      ],
+      "steps": 2048,
+      "images": 2048,
+      "steps_s_mean": 1841.6818853938007,
+      "frames_s_mean": 1841.6818853938007,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 256,
+      "horizon": 8,
+      "frames": "all",
+      "mode": "pipeline",
+      "block": 1,
+      "seconds": [
+        1.1034447569400072,
+        1.107513701543212,
+        1.106767937541008
+      ],
+      "steps": 2048,
+      "images": 2048,
+      "steps_s_mean": 1851.875350186242,
+      "frames_s_mean": 1851.875350186242,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 256,
+      "horizon": 8,
+      "frames": "all",
+      "mode": "serial_fused",
+      "block": 1,
+      "seconds": [
+        1.3233652953058481,
+        1.3117210157215595,
+        1.3145553302019835
+      ],
+      "steps": 2048,
+      "images": 2048,
+      "steps_s_mean": 1555.6061838247274,
+      "frames_s_mean": 1555.6061838247274,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 256,
+      "horizon": 8,
+      "frames": "all",
+      "mode": "serial_legacy",
+      "block": 1,
+      "seconds": [
+        1.3180625811219215,
+        1.3071790244430304,
+        1.3075958006083965
+      ],
+      "steps": 2048,
+      "images": 2048,
+      "steps_s_mean": 1562.2538542798482,
+      "frames_s_mean": 1562.2538542798482,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 1024,
+      "horizon": 1,
+      "frames": "none",
+      "mode": "serial_legacy",
+      "block": 0,
+      "seconds": [
+        0.1759815588593483,
+        0.17564238049089909,
+        0.17569005861878395
+      ],
+      "steps": 1024,
+      "images": 0,
+      "steps_s_mean": 5825.7551391685665,
+      "frames_s_mean": 0.0,
+      "exact_parity": "PASS",
+      "frame_mse": null
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 1024,
+      "horizon": 1,
+      "frames": "none",
+      "mode": "serial_fused",
+      "block": 0,
+      "seconds": [
+        0.1792509499937296,
+        0.17531650327146053,
+        0.1750862170010805
+      ],
+      "steps": 1024,
+      "images": 0,
+      "steps_s_mean": 5800.691170713241,
+      "frames_s_mean": 0.0,
+      "exact_parity": "PASS",
+      "frame_mse": null
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 1024,
+      "horizon": 1,
+      "frames": "none",
+      "mode": "pipeline",
+      "block": 0,
+      "seconds": [
+        0.1794461365789175,
+        0.17490752041339874,
+        0.1754728127270937
+      ],
+      "steps": 1024,
+      "images": 0,
+      "steps_s_mean": 5798.8773382808995,
+      "frames_s_mean": 0.0,
+      "exact_parity": "PASS",
+      "frame_mse": null
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 1024,
+      "horizon": 1,
+      "frames": "none",
+      "mode": "pipeline",
+      "block": 1,
+      "seconds": [
+        0.17534720338881016,
+        0.17598977871239185,
+        0.1748613566160202
+      ],
+      "steps": 1024,
+      "images": 0,
+      "steps_s_mean": 5838.143324027567,
+      "frames_s_mean": 0.0,
+      "exact_parity": "PASS",
+      "frame_mse": null
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 1024,
+      "horizon": 1,
+      "frames": "none",
+      "mode": "serial_fused",
+      "block": 1,
+      "seconds": [
+        0.175381014123559,
+        0.17589090019464493,
+        0.17558612115681171
+      ],
+      "steps": 1024,
+      "images": 0,
+      "steps_s_mean": 5830.801018143238,
+      "frames_s_mean": 0.0,
+      "exact_parity": "PASS",
+      "frame_mse": null
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 1024,
+      "horizon": 1,
+      "frames": "none",
+      "mode": "serial_legacy",
+      "block": 1,
+      "seconds": [
+        0.17673410288989544,
+        0.17528093233704567,
+        0.1761684436351061
+      ],
+      "steps": 1024,
+      "images": 0,
+      "steps_s_mean": 5816.227893467673,
+      "frames_s_mean": 0.0,
+      "exact_parity": "PASS",
+      "frame_mse": null
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 1024,
+      "horizon": 1,
+      "frames": "final",
+      "mode": "serial_legacy",
+      "block": 0,
+      "seconds": [
+        0.612304674461484,
+        0.6111618541181087,
+        0.6109037641435862
+      ],
+      "steps": 1024,
+      "images": 1024,
+      "steps_s_mean": 1674.6907945487553,
+      "frames_s_mean": 1674.6907945487553,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 1024,
+      "horizon": 1,
+      "frames": "final",
+      "mode": "serial_fused",
+      "block": 0,
+      "seconds": [
+        0.6119245290756226,
+        0.611919067800045,
+        0.6167317163199186
+      ],
+      "steps": 1024,
+      "images": 1024,
+      "steps_s_mean": 1669.066094533054,
+      "frames_s_mean": 1669.066094533054,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 1024,
+      "horizon": 1,
+      "frames": "final",
+      "mode": "pipeline",
+      "block": 0,
+      "seconds": [
+        0.611913288012147,
+        0.6116190925240517,
+        0.6106587499380112
+      ],
+      "steps": 1024,
+      "images": 1024,
+      "steps_s_mean": 1674.854004261069,
+      "frames_s_mean": 1674.854004261069,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 1024,
+      "horizon": 1,
+      "frames": "final",
+      "mode": "pipeline",
+      "block": 1,
+      "seconds": [
+        0.6115550324320793,
+        0.6108271181583405,
+        0.6117486301809549
+      ],
+      "steps": 1024,
+      "images": 1024,
+      "steps_s_mean": 1674.9085322867836,
+      "frames_s_mean": 1674.9085322867836,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 1024,
+      "horizon": 1,
+      "frames": "final",
+      "mode": "serial_fused",
+      "block": 1,
+      "seconds": [
+        0.6110948957502842,
+        0.6114193629473448,
+        0.6138354111462831
+      ],
+      "steps": 1024,
+      "images": 1024,
+      "steps_s_mean": 1672.8906752207504,
+      "frames_s_mean": 1672.8906752207504,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 1024,
+      "horizon": 1,
+      "frames": "final",
+      "mode": "serial_legacy",
+      "block": 1,
+      "seconds": [
+        0.6125876847654581,
+        0.6118795201182365,
+        0.6132694575935602
+      ],
+      "steps": 1024,
+      "images": 1024,
+      "steps_s_mean": 1671.622871245059,
+      "frames_s_mean": 1671.622871245059,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 1024,
+      "horizon": 1,
+      "frames": "all",
+      "mode": "serial_legacy",
+      "block": 0,
+      "seconds": [
+        0.6122553069144487,
+        0.6118016708642244,
+        0.6134969238191843
+      ],
+      "steps": 1024,
+      "images": 1024,
+      "steps_s_mean": 1671.7899808375962,
+      "frames_s_mean": 1671.7899808375962,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 1024,
+      "horizon": 1,
+      "frames": "all",
+      "mode": "serial_fused",
+      "block": 0,
+      "seconds": [
+        0.6108896154910326,
+        0.6113177537918091,
+        0.6120249051600695
+      ],
+      "steps": 1024,
+      "images": 1024,
+      "steps_s_mean": 1674.8161305635247,
+      "frames_s_mean": 1674.8161305635247,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 1024,
+      "horizon": 1,
+      "frames": "all",
+      "mode": "pipeline",
+      "block": 0,
+      "seconds": [
+        0.6110188979655504,
+        0.6104069743305445,
+        0.6116920299828053
+      ],
+      "steps": 1024,
+      "images": 1024,
+      "steps_s_mean": 1675.8345234091896,
+      "frames_s_mean": 1675.8345234091896,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 1024,
+      "horizon": 1,
+      "frames": "all",
+      "mode": "pipeline",
+      "block": 1,
+      "seconds": [
+        0.6106517426669598,
+        0.6108784079551697,
+        0.6105903293937445
+      ],
+      "steps": 1024,
+      "images": 1024,
+      "steps_s_mean": 1676.7456943560867,
+      "frames_s_mean": 1676.7456943560867,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 1024,
+      "horizon": 1,
+      "frames": "all",
+      "mode": "serial_fused",
+      "block": 1,
+      "seconds": [
+        0.6105417590588331,
+        0.6110940258949995,
+        0.6116562318056822
+      ],
+      "steps": 1024,
+      "images": 1024,
+      "steps_s_mean": 1675.6750560440132,
+      "frames_s_mean": 1675.6750560440132,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 1024,
+      "horizon": 1,
+      "frames": "all",
+      "mode": "serial_legacy",
+      "block": 1,
+      "seconds": [
+        0.6116260010749102,
+        0.6116883512586355,
+        0.6126692034304142
+      ],
+      "steps": 1024,
+      "images": 1024,
+      "steps_s_mean": 1673.2186197706467,
+      "frames_s_mean": 1673.2186197706467,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 1024,
+      "horizon": 8,
+      "frames": "none",
+      "mode": "serial_legacy",
+      "block": 0,
+      "seconds": [
+        1.4309912398457527,
+        1.4316807352006435,
+        1.43220360763371
+      ],
+      "steps": 8192,
+      "images": 0,
+      "steps_s_mean": 5722.168776022385,
+      "frames_s_mean": 0.0,
+      "exact_parity": "PASS",
+      "frame_mse": null
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 1024,
+      "horizon": 8,
+      "frames": "none",
+      "mode": "serial_fused",
+      "block": 0,
+      "seconds": [
+        1.4375031925737858,
+        1.4291629455983639,
+        1.431684324517846
+      ],
+      "steps": 8192,
+      "images": 0,
+      "steps_s_mean": 5717.576097844849,
+      "frames_s_mean": 0.0,
+      "exact_parity": "PASS",
+      "frame_mse": null
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 1024,
+      "horizon": 8,
+      "frames": "none",
+      "mode": "pipeline",
+      "block": 0,
+      "seconds": [
+        1.428334193304181,
+        1.4257879666984081,
+        1.4325241427868605
+      ],
+      "steps": 8192,
+      "images": 0,
+      "steps_s_mean": 5733.1748530960385,
+      "frames_s_mean": 0.0,
+      "exact_parity": "PASS",
+      "frame_mse": null
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 1024,
+      "horizon": 8,
+      "frames": "none",
+      "mode": "pipeline",
+      "block": 1,
+      "seconds": [
+        1.4330270122736692,
+        1.4358715657144785,
+        1.430252755060792
+      ],
+      "steps": 8192,
+      "images": 0,
+      "steps_s_mean": 5716.491713588329,
+      "frames_s_mean": 0.0,
+      "exact_parity": "PASS",
+      "frame_mse": null
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 1024,
+      "horizon": 8,
+      "frames": "none",
+      "mode": "serial_fused",
+      "block": 1,
+      "seconds": [
+        1.428003165870905,
+        1.427986254915595,
+        1.4301157966256142
+      ],
+      "steps": 8192,
+      "images": 0,
+      "steps_s_mean": 5733.879777886368,
+      "frames_s_mean": 0.0,
+      "exact_parity": "PASS",
+      "frame_mse": null
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 1024,
+      "horizon": 8,
+      "frames": "none",
+      "mode": "serial_legacy",
+      "block": 1,
+      "seconds": [
+        1.4323408603668213,
+        1.4309397712349892,
+        1.4312971960753202
+      ],
+      "steps": 8192,
+      "images": 0,
+      "steps_s_mean": 5722.565808013124,
+      "frames_s_mean": 0.0,
+      "exact_parity": "PASS",
+      "frame_mse": null
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 1024,
+      "horizon": 8,
+      "frames": "final",
+      "mode": "serial_legacy",
+      "block": 0,
+      "seconds": [
+        1.8693079762160778,
+        1.9102308135479689,
+        1.8747935574501753
+      ],
+      "steps": 8192,
+      "images": 1024,
+      "steps_s_mean": 4346.801730062649,
+      "frames_s_mean": 543.3502162578311,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 1024,
+      "horizon": 8,
+      "frames": "final",
+      "mode": "serial_fused",
+      "block": 0,
+      "seconds": [
+        1.867429580539465,
+        1.8656733836978674,
+        1.865738496184349
+      ],
+      "steps": 8192,
+      "images": 1024,
+      "steps_s_mean": 4389.480365840329,
+      "frames_s_mean": 548.6850457300411,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 1024,
+      "horizon": 8,
+      "frames": "final",
+      "mode": "pipeline",
+      "block": 0,
+      "seconds": [
+        1.8632918652147055,
+        1.8638714514672756,
+        1.8631231188774109
+      ],
+      "steps": 8192,
+      "images": 1024,
+      "steps_s_mean": 4396.197048249408,
+      "frames_s_mean": 549.524631031176,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 1024,
+      "horizon": 8,
+      "frames": "final",
+      "mode": "pipeline",
+      "block": 1,
+      "seconds": [
+        1.8645271640270948,
+        1.8650377206504345,
+        1.8630467485636473
+      ],
+      "steps": 8192,
+      "images": 1024,
+      "steps_s_mean": 4394.370046484914,
+      "frames_s_mean": 549.2962558106143,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 1024,
+      "horizon": 8,
+      "frames": "final",
+      "mode": "serial_fused",
+      "block": 1,
+      "seconds": [
+        1.8995825126767159,
+        1.8661950174719095,
+        1.8669960796833038
+      ],
+      "steps": 8192,
+      "images": 1024,
+      "steps_s_mean": 4363.334737916391,
+      "frames_s_mean": 545.4168422395488,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 1024,
+      "horizon": 8,
+      "frames": "final",
+      "mode": "serial_legacy",
+      "block": 1,
+      "seconds": [
+        1.8683084808290005,
+        1.8695323653519154,
+        1.868399627506733
+      ],
+      "steps": 8192,
+      "images": 1024,
+      "steps_s_mean": 4383.686767617059,
+      "frames_s_mean": 547.9608459521323,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 1024,
+      "horizon": 8,
+      "frames": "all",
+      "mode": "serial_legacy",
+      "block": 0,
+      "seconds": [
+        4.9624838549643755,
+        4.978284277021885,
+        4.980689976364374
+      ],
+      "steps": 8192,
+      "images": 8192,
+      "steps_s_mean": 1647.0283717190298,
+      "frames_s_mean": 1647.0283717190298,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 1024,
+      "horizon": 8,
+      "frames": "all",
+      "mode": "serial_fused",
+      "block": 0,
+      "seconds": [
+        4.939581381157041,
+        4.947126042097807,
+        4.9271406922489405
+      ],
+      "steps": 8192,
+      "images": 8192,
+      "steps_s_mean": 1658.992874704927,
+      "frames_s_mean": 1658.992874704927,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 1024,
+      "horizon": 8,
+      "frames": "all",
+      "mode": "pipeline",
+      "block": 0,
+      "seconds": [
+        4.310001734644175,
+        4.314059088006616,
+        4.305304607376456
+      ],
+      "steps": 8192,
+      "images": 8192,
+      "steps_s_mean": 1900.7906509582392,
+      "frames_s_mean": 1900.7906509582392,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 1024,
+      "horizon": 8,
+      "frames": "all",
+      "mode": "pipeline",
+      "block": 1,
+      "seconds": [
+        4.323726074770093,
+        4.31005528382957,
+        4.322538493201137
+      ],
+      "steps": 8192,
+      "images": 8192,
+      "steps_s_mean": 1896.8388178502973,
+      "frames_s_mean": 1896.8388178502973,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 1024,
+      "horizon": 8,
+      "frames": "all",
+      "mode": "serial_fused",
+      "block": 1,
+      "seconds": [
+        4.930876724421978,
+        4.925328245386481,
+        4.930699484422803
+      ],
+      "steps": 8192,
+      "images": 8192,
+      "steps_s_mean": 1662.0115985051805,
+      "frames_s_mean": 1662.0115985051805,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "batch": 1024,
+      "horizon": 8,
+      "frames": "all",
+      "mode": "serial_legacy",
+      "block": 1,
+      "seconds": [
+        4.97514352761209,
+        4.968800434842706,
+        4.971278142184019
+      ],
+      "steps": 8192,
+      "images": 8192,
+      "steps_s_mean": 1647.7130947332198,
+      "frames_s_mean": 1647.7130947332198,
+      "exact_parity": "PASS",
+      "frame_mse": 0.0
+    }
+  ],
+  "source_sha256": {
+    "/oscar/scratch/sboughan/se-semantic-recovery/fetch-pipeline-production-v2-20261002/code/scripts/benchmarks/online_stepping/fetch_pipeline.py": "4a54688164112ff8620c3ae4e8f637dcc652958982c129cba9b653fee83e73a8",
+    "stable_envs/_stepping.py": "62584b137099e4760633bd840ebb335e1062252ff82968b82d8e69c9c4e45be7",
+    "stable_envs/_adapters/fetch_process.py": "1877321d1e2a3eb19b90b1bf784cf34e12074ab6b7a080e10bf5efd522e12b7f"
+  },
+  "scope": "CPU simulation, eight single-threaded process owners. All States retained. Same allocation and rendering fidelity for every schedule. CUDA synchronized timing; reset, warmup and exact equality outside timing. No policy inference. Render reference is serial executor, not a new upstream parity study."
+}

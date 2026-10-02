@@ -1,0 +1,152 @@
+{
+  "status": "PASS",
+  "task": "Reach",
+  "host": "cis1b1zs2j3.ad.brown.edu",
+  "affinity": null,
+  "job": null,
+  "partition": null,
+  "gpu": null,
+  "configuration": {
+    "task": "Reach",
+    "output": "/private/tmp/fetch-pipeline-3090-20261002/smoke.json",
+    "device": "cpu",
+    "batches": [
+      8
+    ],
+    "horizons": [
+      1,
+      8
+    ],
+    "repeats": 2,
+    "blocks": 1,
+    "size": 64,
+    "suffixes": [
+      "plain"
+    ]
+  },
+  "gates": [
+    {
+      "env": "FetchReach",
+      "device": "cpu",
+      "cases": 13,
+      "state_task_replay_ownership": "PASS",
+      "frame_mse_vs_serial": null
+    }
+  ],
+  "timings": [
+    {
+      "env": "FetchReach",
+      "batch": 8,
+      "horizon": 1,
+      "frames": "none",
+      "mode": "serial_legacy",
+      "block": 0,
+      "seconds": [
+        0.00309195788577199,
+        0.0023649579379707575
+      ],
+      "steps": 8,
+      "images": 0,
+      "steps_s_mean": 2985.0406863267062,
+      "frames_s_mean": 0.0,
+      "exact_parity": "PASS",
+      "frame_mse": null
+    },
+    {
+      "env": "FetchReach",
+      "batch": 8,
+      "horizon": 1,
+      "frames": "none",
+      "mode": "serial_fused",
+      "block": 0,
+      "seconds": [
+        0.002405792009085417,
+        0.0015150420367717743
+      ],
+      "steps": 8,
+      "images": 0,
+      "steps_s_mean": 4302.844890671702,
+      "frames_s_mean": 0.0,
+      "exact_parity": "PASS",
+      "frame_mse": null
+    },
+    {
+      "env": "FetchReach",
+      "batch": 8,
+      "horizon": 1,
+      "frames": "none",
+      "mode": "pipeline",
+      "block": 0,
+      "seconds": [
+        0.0015048340428620577,
+        0.0020032499451190233
+      ],
+      "steps": 8,
+      "images": 0,
+      "steps_s_mean": 4654.855746479901,
+      "frames_s_mean": 0.0,
+      "exact_parity": "PASS",
+      "frame_mse": null
+    },
+    {
+      "env": "FetchReach",
+      "batch": 8,
+      "horizon": 8,
+      "frames": "none",
+      "mode": "serial_legacy",
+      "block": 0,
+      "seconds": [
+        0.035859833005815744,
+        0.018791167065501213
+      ],
+      "steps": 64,
+      "images": 0,
+      "steps_s_mean": 2595.2910881022995,
+      "frames_s_mean": 0.0,
+      "exact_parity": "PASS",
+      "frame_mse": null
+    },
+    {
+      "env": "FetchReach",
+      "batch": 8,
+      "horizon": 8,
+      "frames": "none",
+      "mode": "serial_fused",
+      "block": 0,
+      "seconds": [
+        0.11486937501467764,
+        0.041949667036533356
+      ],
+      "steps": 64,
+      "images": 0,
+      "steps_s_mean": 1041.396224078797,
+      "frames_s_mean": 0.0,
+      "exact_parity": "PASS",
+      "frame_mse": null
+    },
+    {
+      "env": "FetchReach",
+      "batch": 8,
+      "horizon": 8,
+      "frames": "none",
+      "mode": "pipeline",
+      "block": 0,
+      "seconds": [
+        0.023036082973703742,
+        0.02149262512102723
+      ],
+      "steps": 64,
+      "images": 0,
+      "steps_s_mean": 2878.0078598616014,
+      "frames_s_mean": 0.0,
+      "exact_parity": "PASS",
+      "frame_mse": null
+    }
+  ],
+  "source_sha256": {
+    "/private/tmp/fetch-pipeline-3090-20261002/code/scripts/benchmarks/online_stepping/fetch_pipeline.py": "9875710349f157ba1687fe529e8853dca7c52bad9e6230e3f3797378e57a55cb",
+    "stable_envs/_stepping.py": "62584b137099e4760633bd840ebb335e1062252ff82968b82d8e69c9c4e45be7",
+    "stable_envs/_adapters/fetch_process.py": "1877321d1e2a3eb19b90b1bf784cf34e12074ab6b7a080e10bf5efd522e12b7f"
+  },
+  "scope": "CPU simulation, eight single-threaded process owners. All States retained. Same allocation and rendering fidelity for every schedule. CUDA synchronized timing; reset, warmup and exact equality outside timing. No policy inference. Render reference is serial executor, not a new upstream parity study."
+}

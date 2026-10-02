@@ -1,0 +1,93 @@
+{
+  "status": "PASS",
+  "task": "Push",
+  "host": "gpu2501.oscar.ccv.brown.edu",
+  "affinity": [
+    0,
+    1,
+    9,
+    18,
+    19,
+    20,
+    21,
+    22
+  ],
+  "job": "6957849",
+  "partition": "3090-gcondo",
+  "gpu": "NVIDIA RTX A5500",
+  "configuration": {
+    "task": "Push",
+    "output": "/oscar/scratch/sboughan/se-semantic-recovery/fetch-pipeline-production-v2-20261002/results/Push.json",
+    "device": "cuda",
+    "batches": [
+      64,
+      256,
+      1024
+    ],
+    "horizons": [
+      1,
+      8
+    ],
+    "repeats": 3,
+    "blocks": 2,
+    "size": 64,
+    "production": true,
+    "gates_only": true,
+    "suffixes": [
+      "plain",
+      "Dense",
+      "Dict"
+    ]
+  },
+  "gates": [
+    {
+      "env": "FetchPush",
+      "device": "cpu",
+      "cases": 13,
+      "state_task_replay_ownership": "PASS",
+      "frame_mse_vs_serial": null
+    },
+    {
+      "env": "FetchPush",
+      "device": "cuda",
+      "cases": 13,
+      "state_task_replay_ownership": "PASS",
+      "frame_mse_vs_serial": 0.0
+    },
+    {
+      "env": "FetchPushDense",
+      "device": "cpu",
+      "cases": 13,
+      "state_task_replay_ownership": "PASS",
+      "frame_mse_vs_serial": null
+    },
+    {
+      "env": "FetchPushDense",
+      "device": "cuda",
+      "cases": 13,
+      "state_task_replay_ownership": "PASS",
+      "frame_mse_vs_serial": 0.0
+    },
+    {
+      "env": "FetchPushDict",
+      "device": "cpu",
+      "cases": 13,
+      "state_task_replay_ownership": "PASS",
+      "frame_mse_vs_serial": null
+    },
+    {
+      "env": "FetchPushDict",
+      "device": "cuda",
+      "cases": 13,
+      "state_task_replay_ownership": "PASS",
+      "frame_mse_vs_serial": 0.0
+    }
+  ],
+  "timings": [],
+  "source_sha256": {
+    "/oscar/scratch/sboughan/se-semantic-recovery/fetch-pipeline-production-v2-20261002/code/scripts/benchmarks/online_stepping/fetch_pipeline.py": "4a54688164112ff8620c3ae4e8f637dcc652958982c129cba9b653fee83e73a8",
+    "stable_envs/_stepping.py": "62584b137099e4760633bd840ebb335e1062252ff82968b82d8e69c9c4e45be7",
+    "stable_envs/_adapters/fetch_process.py": "1877321d1e2a3eb19b90b1bf784cf34e12074ab6b7a080e10bf5efd522e12b7f"
+  },
+  "scope": "CPU simulation, eight single-threaded process owners. All States retained. Same allocation and rendering fidelity for every schedule. CUDA synchronized timing; reset, warmup and exact equality outside timing. No policy inference. Render reference is serial executor, not a new upstream parity study."
+}

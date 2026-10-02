@@ -1,0 +1,21 @@
+{
+  "status": "PASS",
+  "registrations": 12,
+  "public_constructor_device_gates": 24,
+  "state_task_equality": "EXACT",
+  "frame_mse_vs_serial": 0.0,
+  "reference": "Existing serial library execution and renderer, not a fresh upstream renderer parity survey.",
+  "local_suite": {
+    "passed": 185,
+    "skipped_cuda": 4
+  },
+  "oscar_suite": {
+    "passed": 188,
+    "optional_matplotlib_skipped": 1
+  },
+  "acceptance_array": 6957640,
+  "hardware": "RTX A5000 / RTX A5500; see each raw report and log.",
+  "source_manifest": "production_v2/source_manifest.json",
+  "performance_status": "Still collecting full sweeps; 3090-only comparison remains queued.",
+  "semantic_matrix": "Unchanged"
+}

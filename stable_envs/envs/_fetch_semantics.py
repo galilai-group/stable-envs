@@ -6,7 +6,7 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from .._adapters.fetch_pickandplace import FetchAdapter
+from .._adapters.fetch_execution import make_fetch_adapter as FetchAdapter
 from ..env import Env
 from ..spaces import Box, Dict
 
@@ -183,6 +183,11 @@ class FetchSemantics:
     def _advance_without_snapshot(self, actions, *, active=None):
         """Sequence fast path when only a final checkpoint/image is requested."""
         return self._simulator.advance(actions, active=active)
+
+    def _step_pipeline(self):
+        # Process owners can advance independently of the parent's renderer.
+        # Local/threaded owners retain the synchronous reference path.
+        return self._simulator if hasattr(self._simulator, "submit_step") else None
 
     def set_variation(self, variation=None, **overrides):
         result = super().set_variation(variation, **overrides)

@@ -129,3 +129,86 @@ def test_inactive_lanes_match_local_owner_before_first_step():
     finally:
         local.close()
         remote.close()
+
+
+def test_inflight_exclusion_ownership_and_close():
+    local, remote = FetchAdapter(5, task="Push"), FetchProcessAdapter(5, task="Push", processes=2)
+    try:
+        checkpoint = remote.get_state()
+        actions = np.zeros((5, 4), dtype=np.float64)
+        remote.submit_step(actions)
+        for call in (
+            remote.get_state,
+            lambda: remote.set_state(checkpoint),
+            lambda: remote.submit_step(actions),
+            lambda: remote.reset(42),
+        ):
+            with pytest.raises(RuntimeError, match="in flight"):
+                call()
+        first = remote.receive_step()
+        equal(first, local.step(actions))
+        held = first.clone()
+        remote.submit_step(actions)
+        equal(remote.receive_step(), local.step(actions))
+        equal(first, held)
+        with pytest.raises(RuntimeError, match="No Fetch step"):
+            remote.receive_step()
+        remote.submit_step(actions)
+        remote.close()
+        assert all(not p.is_alive() for p in remote._processes)
+    finally:
+        local.close()
+        remote.close()
+
+
+def test_public_pipeline_renderer_failure_reaps_workers(monkeypatch):
+    monkeypatch.setattr(semantics, "FetchAdapter", partial(FetchProcessAdapter, processes=2))
+    with snv.make("FetchPush", num_envs=5, device="cpu") as env:
+
+        def fail(state):
+            assert env._simulator._pending is not None
+            raise RuntimeError("render failed")
+
+        monkeypatch.setattr(env, "render", fail)
+        with pytest.raises(RuntimeError, match="render failed"):
+            env.step(np.zeros((5, 8, 4)), frames=slice(None))
+        assert env._simulator._closed
+        assert all(not p.is_alive() for p in env._simulator._processes)
+
+
+def test_workers_finish_next_step_while_parent_consumes_owned_frame_state(monkeypatch):
+    monkeypatch.setattr(semantics, "FetchAdapter", partial(FetchProcessAdapter, processes=2))
+    with snv.make("FetchPush", num_envs=5, device="cpu") as env:
+        overlapped = []
+
+        def render(state):
+            elapsed = state["lifecycle", "elapsed_steps"].clone()
+            owner = env._simulator
+            if owner._pending is not None:
+                # Waiting only for readiness does not consume acknowledgments.
+                assert all(conn.poll(10) for conn in owner._connections)
+                shared = owner._views["state", ("lifecycle", "elapsed_steps")]
+                assert np.array_equal(shared, elapsed.numpy() + 1)
+                assert torch.equal(elapsed, state["lifecycle", "elapsed_steps"])
+                overlapped.append(int(elapsed[0, 0]))
+            return elapsed.to(torch.uint8).reshape(5, 1, 1, 1).expand(5, 2, 2, 3).clone()
+
+        monkeypatch.setattr(env, "render", render)
+        out = env.step(np.zeros((5, 8, 4)), frames=slice(None))
+        assert overlapped == list(range(1, 8))
+        assert out["frames"][0, :, 0, 0, 0].tolist() == list(range(1, 9))
+        assert env._simulator._pending is None
+
+
+def test_inflight_worker_death_fails_closed():
+    adapter = FetchProcessAdapter(5, task="Push", processes=2)
+    adapter._processes[0].terminate()
+    adapter._processes[0].join()
+    try:
+        with pytest.raises((RuntimeError, EOFError, BrokenPipeError, ConnectionError)):
+            adapter.submit_step(np.zeros((5, 4)))
+            adapter.receive_step()
+        assert adapter._closed
+        assert all(not p.is_alive() for p in adapter._processes)
+    finally:
+        adapter.close()

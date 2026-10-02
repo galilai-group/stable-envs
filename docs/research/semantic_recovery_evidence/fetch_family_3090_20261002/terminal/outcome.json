@@ -1,0 +1,18 @@
+{
+  "original_array": 6950614,
+  "states": {
+    "Reach": "COMPLETED/PASS",
+    "Push": "TIMEOUT",
+    "Slide": "TIMEOUT",
+    "PickAndPlace": "OUT_OF_MEMORY"
+  },
+  "followup_array": 6957513,
+  "followup_registrations": [
+    "FetchPushDict",
+    "FetchSlideDict",
+    "FetchPickAndPlaceDense",
+    "FetchPickAndPlaceDict"
+  ],
+  "followup_source": "Preserved original archive; no production changes. One registration per process, 96 GiB allocation.",
+  "followup_status": "OSCAR_PENDING"
+}

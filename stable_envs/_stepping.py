@@ -1,6 +1,8 @@
 """Shared public action-shape/capture contract, independent of execution strategy.
 
 The serial sequence executor is the correctness reference for optimized executors.
+An optional process executor overlaps the next transition with rendering owned
+snapshots. Only one transition is in flight; no renderer runs in a worker thread.
 Neither snapshot restoration nor implicit reset is used to advance a sequence.
 """
 
@@ -80,27 +82,57 @@ def step(env, actions, *, states=slice(None), frames=slice(-1, None)):
     advance = getattr(env, "_advance_without_snapshot", env._step)
     active = torch.ones(env.num_envs, dtype=torch.bool, device=env.device)
     result, live_state, live_frame = None, None, None
-    for t in range(length):
-        validity.append(active.clone())
-        if t == 0 or bool(active.all()):
-            result = advance(acts[:, t])
-            live_state, live_frame = result.get("state", None), None
-        elif bool(active.any()):
-            # Family hook actually skips finished lanes, without step/restore.
-            result = advance(acts[:, t], active=active)
-            live_state, live_frame = result.get("state", None), None
-        history.append(_masked_outputs(result, active).exclude("state"))
-        if t in state_times or t in frame_times or t == length - 1:
-            if live_state is None:
+    pipeline = getattr(env, "_step_pipeline", lambda: None)()
+    pending = False
+
+    def submit(t, mask):
+        pipeline.submit_step(
+            acts[:, t],
+            # The initial mask is known to be all true; do not synchronize the
+            # GPU just to read it back before starting CPU simulation.
+            active=None if t == 0 or bool(mask.all()) else mask,
+            capture_state=t in state_times or t in frame_times or t == length - 1,
+        )
+
+    try:
+        if pipeline is not None:
+            submit(0, active)
+            pending = True
+        for t in range(length):
+            validity.append(active.clone())
+            if pipeline is not None:
+                if pending:
+                    result = pipeline.receive_step()
+                    pending = False
+                    live_state, live_frame = result.get("state", None), None
+            elif t == 0 or bool(active.all()):
+                result = advance(acts[:, t])
+                live_state, live_frame = result.get("state", None), None
+            elif bool(active.any()):
+                # Family hook actually skips finished lanes, without step/restore.
+                result = advance(acts[:, t], active=active)
+                live_state, live_frame = result.get("state", None), None
+            needs_state = t in state_times or t in frame_times or t == length - 1
+            if needs_state and live_state is None:
                 live_state = env.get_state()
+            next_active = active & ~_done(result) if t + 1 < length else active
+            if pipeline is not None and t + 1 < length and bool(next_active.any()):
+                # receive_step owns its outputs. Workers may now overwrite their
+                # buffers while the parent renders the previous endpoint.
+                submit(t + 1, next_active)
+                pending = True
+            history.append(_masked_outputs(result, active).exclude("state"))
             if t in state_times:
                 saved_states[t] = live_state
             if t in frame_times:
                 if live_frame is None:
                     live_frame = env.render(live_state)
                 saved_frames[t] = live_frame
-        if t + 1 < length:
-            active = active & ~_done(result)
+            active = next_active
+    except BaseException:
+        if pending:
+            pipeline.abort_step()
+        raise
 
     out = TensorDict({"state": live_state}, [env.num_envs], device=env.device)
     out.update(torch.stack(history, dim=1) if sequence else history[0])

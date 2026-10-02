@@ -1,0 +1,13 @@
+{
+  "pipeline_3090": 6957522,
+  "original_family_followup_3090": 6957513,
+  "final_public_gates": 6957640,
+  "final_public_gate_constraint": "Broadened to geforce3090|l40s|a5000|a5500|a40 before start; all four tasks completed.",
+  "general_reach": 6957641,
+  "general_tasks_1_2_3": "Cancelled while pending because norm-gpu CPU quota allowed only one eight-core job; replaced by condo array.",
+  "condo_push_slide_pickandplace": 6958875,
+  "superseded_pending_arrays_cancelled": [
+    6957557,
+    6957589
+  ]
+}

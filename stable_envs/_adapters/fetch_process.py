@@ -125,6 +125,7 @@ class FetchProcessAdapter(FetchAdapter):
             raise ValueError("threads_per_process must be positive")
         self.num_envs, self.device = int(num_envs), torch.device(device)
         self._closed = False
+        self._pending = None
         self._connections, self._processes = [], []
         # One immutable reference model supports variation/spec construction;
         # all B live simulators are owned by child processes, never duplicated.
@@ -212,17 +213,38 @@ class FetchProcessAdapter(FetchAdapter):
             raise RuntimeError("Fetch worker failed:\n" + "\n".join(errors))
         return results
 
-    def _request(self, command, payloads=None):
+    def _check_idle(self):
         self._check_open()
+        if self._pending is not None:
+            raise RuntimeError("Fetch process request already in flight")
+
+    def _submit(self, command, payloads=None):
+        self._check_idle()
         payloads = [None] * len(self._connections) if payloads is None else payloads
         try:
             for conn, payload in zip(self._connections, payloads):
                 conn.send((command, payload))
-            return self._responses()
+            self._pending = command
         except BaseException:
             # A partial distributed mutation must never be returned as a State.
             self._abort()
             raise
+
+    def _receive(self):
+        self._check_open()
+        if self._pending is None:
+            raise RuntimeError("No Fetch process request in flight")
+        try:
+            result = self._responses()
+            self._pending = None
+            return result
+        except BaseException:
+            self._abort()
+            raise
+
+    def _request(self, command, payloads=None):
+        self._submit(command, payloads)
+        return self._receive()
 
     def _state(self):
         return TensorDict(
@@ -286,6 +308,8 @@ class FetchProcessAdapter(FetchAdapter):
         return self._state()
 
     def set_state(self, state):
+        # Reject before writing shared storage owned by an in-flight step.
+        self._check_idle()
         self._validate_state(state)
         host = state.cpu()
         for key in self.fields:
@@ -316,6 +340,26 @@ class FetchProcessAdapter(FetchAdapter):
         result["state"] = self._state()
         return result
 
+    def submit_step(self, actions, *, active=None, capture_state=True):
+        """Start one transition; the caller must receive before submitting again."""
+        self._submit("step" if capture_state else "advance", self._actions(actions, active))
+
+    def receive_step(self):
+        """Return owned outputs before workers can reuse their shared buffers."""
+        self._check_open()
+        if self._pending not in ("step", "advance"):
+            raise RuntimeError("No Fetch step in flight")
+        capture_state = self._pending == "step"
+        self._receive()
+        result = self._task()
+        if capture_state:
+            result["state"] = self._state()
+        return result
+
+    def abort_step(self):
+        """A failed consumer cannot leave a speculative step running."""
+        self._abort()
+
     def _abort(self):
         for process in self._processes:
             if process.is_alive():
@@ -328,12 +372,14 @@ class FetchProcessAdapter(FetchAdapter):
         for conn in self._connections:
             conn.close()
         self._closed = True
+        self._pending = None
 
     def close(self):
         if not self._closed:
             try:
-                self._request("close")
-                for process in self._processes:
-                    process.join(timeout=5)
+                if self._pending is None:
+                    self._request("close")
+                    for process in self._processes:
+                        process.join(timeout=5)
             finally:
                 self._abort()

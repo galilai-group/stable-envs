@@ -21,6 +21,8 @@ def main():
         report = json.loads(path.read_text())
         assert report["status"] == "PASS", path
         config = report["configuration"]
+        for gate in report["gates"]:
+            assert gate["frame_mse_vs_current"] == (0.0 if gate["device"] == "cuda" else None), gate
         gates = {
             (g["env"], g["device"], g["layout"])
             for g in report["gates"]
@@ -29,6 +31,8 @@ def main():
         groups = defaultdict(list)
         for row in report["timings"]:
             assert row["exact_parity"] == "PASS", row
+            assert row["frame_mse_vs_current"] == (0.0 if row["frames"] else None), row
+            assert all(t > 0 for t in row["seconds"]), row
             key = row["env"], row["device"], row["batch"], row["horizon"], row["stage"], row["layout"]
             groups[key].append(row)
         # Require every requested cell; a PASS marker alone is not sufficient.
