@@ -1,0 +1,844 @@
+{
+  "status": "PASS",
+  "device": "cuda",
+  "host": "gpu2709.oscar.ccv.brown.edu",
+  "affinity": [
+    64,
+    67,
+    69,
+    74,
+    78,
+    79,
+    82,
+    83
+  ],
+  "job": "6947236",
+  "gpu": "NVIDIA L40S",
+  "versions": {
+    "torch": "2.14.0+cu126",
+    "numpy": "2.5.3",
+    "mujoco": "3.11.0",
+    "gymnasium": "1.3.0",
+    "gymnasium-robotics": "1.4.2"
+  },
+  "source_sha256": {
+    "/oscar/scratch/sboughan/se-semantic-recovery/fetch-process-adapter-20261002-r2/code/scripts/benchmarks/online_stepping/fetch_process_adapter.py": "2e5b44152d25f4e5550c2d899fcdbf087be51b1e517b508b814bdd17e248bd22",
+    "/oscar/scratch/sboughan/se-semantic-recovery/fetch-process-adapter-20261002-r2/code/stable_envs/envs/_fetch_semantics.py": "63e1299ec0c66266ed43112fa897279f89ce3e9402a249cc20c8117a4cfec152",
+    "/oscar/scratch/sboughan/se-semantic-recovery/fetch-process-adapter-20261002-r2/code/stable_envs/_adapters/fetch_process.py": "8aff80774364ac4443398434fbe7ceb25bd2cdccedf7f1ca3233b832aaf0c758",
+    "/oscar/scratch/sboughan/se-semantic-recovery/fetch-process-adapter-20261002-r2/code/stable_envs/_adapters/fetch_pickandplace.py": "9e018113ab6f478dcf2a030a93f89ef8d7d587f6aaea1f520151518a388b1f68"
+  },
+  "scope": "FetchPush; full State/task outputs, transport and owned copies; no rendering, startup or restoration. CPU simulation even with CUDA outputs. Known actions, not policy throughput.",
+  "gates": [],
+  "timings": [
+    {
+      "batch": 64,
+      "horizon": 8,
+      "block": 0,
+      "layout": "threads_1x4",
+      "stage": "adapter_full_state",
+      "seconds": [
+        0.10900386795401573,
+        0.10866269562393427,
+        0.11066550668329,
+        0.10877274069935083,
+        0.11042264103889465
+      ],
+      "steps_s_mean": 4675.85122138889,
+      "steps_s_sd": 40.864980928953074,
+      "startup_seconds": 1.165589270181954,
+      "exact_parity": "PASS",
+      "workers": null
+    },
+    {
+      "batch": 64,
+      "horizon": 8,
+      "block": 0,
+      "layout": "threads_1x4",
+      "stage": "public_all_states",
+      "seconds": [
+        0.112491050735116,
+        0.11206219624727964,
+        0.1129993749782443,
+        0.11258731503039598,
+        0.11400623805820942
+      ],
+      "steps_s_mean": 4537.985390431545,
+      "steps_s_sd": 29.526643593125062,
+      "startup_seconds": 1.165589270181954,
+      "exact_parity": "PASS",
+      "workers": null
+    },
+    {
+      "batch": 64,
+      "horizon": 8,
+      "block": 0,
+      "layout": "pure_8x1",
+      "stage": "adapter_full_state",
+      "seconds": [
+        0.051099699921905994,
+        0.05142226442694664,
+        0.05112512782216072,
+        0.051050275564193726,
+        0.05169808026403189
+      ],
+      "steps_s_mean": 9984.806916238083,
+      "steps_s_sd": 53.516847144761954,
+      "startup_seconds": 3.9157157307490706,
+      "exact_parity": "PASS",
+      "workers": [
+        {
+          "pid": 3865823,
+          "affinity": [
+            64
+          ]
+        },
+        {
+          "pid": 3865824,
+          "affinity": [
+            67
+          ]
+        },
+        {
+          "pid": 3865825,
+          "affinity": [
+            69
+          ]
+        },
+        {
+          "pid": 3865826,
+          "affinity": [
+            74
+          ]
+        },
+        {
+          "pid": 3865827,
+          "affinity": [
+            78
+          ]
+        },
+        {
+          "pid": 3865828,
+          "affinity": [
+            79
+          ]
+        },
+        {
+          "pid": 3865829,
+          "affinity": [
+            82
+          ]
+        },
+        {
+          "pid": 3865830,
+          "affinity": [
+            83
+          ]
+        }
+      ]
+    },
+    {
+      "batch": 64,
+      "horizon": 8,
+      "block": 0,
+      "layout": "pure_8x1",
+      "stage": "public_all_states",
+      "seconds": [
+        0.05781981162726879,
+        0.05731262918561697,
+        0.05678557697683573,
+        0.0568687729537487,
+        0.05791023653000593
+      ],
+      "steps_s_mean": 8929.876358646618,
+      "steps_s_sd": 81.1046749604916,
+      "startup_seconds": 3.9157157307490706,
+      "exact_parity": "PASS",
+      "workers": [
+        {
+          "pid": 3865823,
+          "affinity": [
+            64
+          ]
+        },
+        {
+          "pid": 3865824,
+          "affinity": [
+            67
+          ]
+        },
+        {
+          "pid": 3865825,
+          "affinity": [
+            69
+          ]
+        },
+        {
+          "pid": 3865826,
+          "affinity": [
+            74
+          ]
+        },
+        {
+          "pid": 3865827,
+          "affinity": [
+            78
+          ]
+        },
+        {
+          "pid": 3865828,
+          "affinity": [
+            79
+          ]
+        },
+        {
+          "pid": 3865829,
+          "affinity": [
+            82
+          ]
+        },
+        {
+          "pid": 3865830,
+          "affinity": [
+            83
+          ]
+        }
+      ]
+    },
+    {
+      "batch": 64,
+      "horizon": 8,
+      "block": 0,
+      "layout": "hybrid_4x2",
+      "stage": "adapter_full_state",
+      "seconds": [
+        0.07061168923974037,
+        0.06370999570935965,
+        0.067889797501266,
+        0.06986889243125916,
+        0.07626983523368835
+      ],
+      "steps_s_mean": 7373.99844435664,
+      "steps_s_sd": 479.8616561973419,
+      "startup_seconds": 3.838461817242205,
+      "exact_parity": "PASS",
+      "workers": [
+        {
+          "pid": 3867208,
+          "affinity": [
+            64,
+            67
+          ]
+        },
+        {
+          "pid": 3867209,
+          "affinity": [
+            69,
+            74
+          ]
+        },
+        {
+          "pid": 3867210,
+          "affinity": [
+            78,
+            79
+          ]
+        },
+        {
+          "pid": 3867211,
+          "affinity": [
+            82,
+            83
+          ]
+        }
+      ]
+    },
+    {
+      "batch": 64,
+      "horizon": 8,
+      "block": 0,
+      "layout": "hybrid_4x2",
+      "stage": "public_all_states",
+      "seconds": [
+        0.08372852671891451,
+        0.06949417013674974,
+        0.07403848972171545,
+        0.08682676404714584,
+        0.08215473964810371
+      ],
+      "steps_s_mean": 6505.357694885993,
+      "steps_s_sd": 614.1602188298241,
+      "startup_seconds": 3.838461817242205,
+      "exact_parity": "PASS",
+      "workers": [
+        {
+          "pid": 3867208,
+          "affinity": [
+            64,
+            67
+          ]
+        },
+        {
+          "pid": 3867209,
+          "affinity": [
+            69,
+            74
+          ]
+        },
+        {
+          "pid": 3867210,
+          "affinity": [
+            78,
+            79
+          ]
+        },
+        {
+          "pid": 3867211,
+          "affinity": [
+            82,
+            83
+          ]
+        }
+      ]
+    },
+    {
+      "batch": 256,
+      "horizon": 8,
+      "block": 0,
+      "layout": "threads_1x4",
+      "stage": "adapter_full_state",
+      "seconds": [
+        0.4242622861638665,
+        0.4237376283854246,
+        0.4237110884860158,
+        0.42336323484778404,
+        0.4238624656572938
+      ],
+      "steps_s_mean": 4832.614756397237,
+      "steps_s_sd": 3.691708745129621,
+      "startup_seconds": 4.539493233896792,
+      "exact_parity": "PASS",
+      "workers": null
+    },
+    {
+      "batch": 256,
+      "horizon": 8,
+      "block": 0,
+      "layout": "threads_1x4",
+      "stage": "public_all_states",
+      "seconds": [
+        0.42971494141966105,
+        0.43176985066384077,
+        0.4334025653079152,
+        0.4334971169009805,
+        0.4360248167067766
+      ],
+      "steps_s_mean": 4731.193073238005,
+      "steps_s_sd": 25.517222466327603,
+      "startup_seconds": 4.539493233896792,
+      "exact_parity": "PASS",
+      "workers": null
+    },
+    {
+      "batch": 256,
+      "horizon": 8,
+      "block": 0,
+      "layout": "pure_8x1",
+      "stage": "adapter_full_state",
+      "seconds": [
+        0.18406688515096903,
+        0.19011979456990957,
+        0.18728507310152054,
+        0.1896737925708294,
+        0.184704533778131
+      ],
+      "steps_s_mean": 10943.842333205093,
+      "steps_s_sd": 162.07291508613756,
+      "startup_seconds": 5.601386335678399,
+      "exact_parity": "PASS",
+      "workers": [
+        {
+          "pid": 3878891,
+          "affinity": [
+            64
+          ]
+        },
+        {
+          "pid": 3878892,
+          "affinity": [
+            67
+          ]
+        },
+        {
+          "pid": 3878893,
+          "affinity": [
+            69
+          ]
+        },
+        {
+          "pid": 3878894,
+          "affinity": [
+            74
+          ]
+        },
+        {
+          "pid": 3878895,
+          "affinity": [
+            78
+          ]
+        },
+        {
+          "pid": 3878896,
+          "affinity": [
+            79
+          ]
+        },
+        {
+          "pid": 3878897,
+          "affinity": [
+            82
+          ]
+        },
+        {
+          "pid": 3878898,
+          "affinity": [
+            83
+          ]
+        }
+      ]
+    },
+    {
+      "batch": 256,
+      "horizon": 8,
+      "block": 0,
+      "layout": "pure_8x1",
+      "stage": "public_all_states",
+      "seconds": [
+        0.1902056634426117,
+        0.19049339462071657,
+        0.19685355480760336,
+        0.20914338808506727,
+        0.19138055946677923
+      ],
+      "steps_s_mean": 10483.102118700668,
+      "steps_s_sd": 413.39873796677136,
+      "startup_seconds": 5.601386335678399,
+      "exact_parity": "PASS",
+      "workers": [
+        {
+          "pid": 3878891,
+          "affinity": [
+            64
+          ]
+        },
+        {
+          "pid": 3878892,
+          "affinity": [
+            67
+          ]
+        },
+        {
+          "pid": 3878893,
+          "affinity": [
+            69
+          ]
+        },
+        {
+          "pid": 3878894,
+          "affinity": [
+            74
+          ]
+        },
+        {
+          "pid": 3878895,
+          "affinity": [
+            78
+          ]
+        },
+        {
+          "pid": 3878896,
+          "affinity": [
+            79
+          ]
+        },
+        {
+          "pid": 3878897,
+          "affinity": [
+            82
+          ]
+        },
+        {
+          "pid": 3878898,
+          "affinity": [
+            83
+          ]
+        }
+      ]
+    },
+    {
+      "batch": 256,
+      "horizon": 8,
+      "block": 0,
+      "layout": "hybrid_4x2",
+      "stage": "adapter_full_state",
+      "seconds": [
+        0.22941093053668737,
+        0.24034138023853302,
+        0.23693926725536585,
+        0.23518431931734085,
+        0.2384814042598009
+      ],
+      "steps_s_mean": 8677.544993232661,
+      "steps_s_sd": 155.67323646731236,
+      "startup_seconds": 4.803894959390163,
+      "exact_parity": "PASS",
+      "workers": [
+        {
+          "pid": 3884161,
+          "affinity": [
+            64,
+            67
+          ]
+        },
+        {
+          "pid": 3884162,
+          "affinity": [
+            69,
+            74
+          ]
+        },
+        {
+          "pid": 3884163,
+          "affinity": [
+            78,
+            79
+          ]
+        },
+        {
+          "pid": 3884164,
+          "affinity": [
+            82,
+            83
+          ]
+        }
+      ]
+    },
+    {
+      "batch": 256,
+      "horizon": 8,
+      "block": 0,
+      "layout": "hybrid_4x2",
+      "stage": "public_all_states",
+      "seconds": [
+        0.23394126072525978,
+        0.2551420973613858,
+        0.23003153316676617,
+        0.23688575625419617,
+        0.24725160654634237
+      ],
+      "steps_s_mean": 8522.587846707656,
+      "steps_s_sd": 359.4122210322039,
+      "startup_seconds": 4.803894959390163,
+      "exact_parity": "PASS",
+      "workers": [
+        {
+          "pid": 3884161,
+          "affinity": [
+            64,
+            67
+          ]
+        },
+        {
+          "pid": 3884162,
+          "affinity": [
+            69,
+            74
+          ]
+        },
+        {
+          "pid": 3884163,
+          "affinity": [
+            78,
+            79
+          ]
+        },
+        {
+          "pid": 3884164,
+          "affinity": [
+            82,
+            83
+          ]
+        }
+      ]
+    },
+    {
+      "batch": 1024,
+      "horizon": 8,
+      "block": 0,
+      "layout": "threads_1x4",
+      "stage": "adapter_full_state",
+      "seconds": [
+        1.7191858049482107,
+        1.7232856564223766,
+        1.7214834177866578,
+        1.734118528664112,
+        1.7217986518517137
+      ],
+      "steps_s_mean": 4751.854386144515,
+      "steps_s_sd": 16.08395938345612,
+      "startup_seconds": 18.869027300737798,
+      "exact_parity": "PASS",
+      "workers": null
+    },
+    {
+      "batch": 1024,
+      "horizon": 8,
+      "block": 0,
+      "layout": "threads_1x4",
+      "stage": "public_all_states",
+      "seconds": [
+        1.897258042357862,
+        1.7335094343870878,
+        1.6873177662491798,
+        1.6836110539734364,
+        1.6832280289381742
+      ],
+      "steps_s_mean": 4726.219536699968,
+      "steps_s_sd": 235.919232930619,
+      "startup_seconds": 18.869027300737798,
+      "exact_parity": "PASS",
+      "workers": null
+    },
+    {
+      "batch": 1024,
+      "horizon": 8,
+      "block": 0,
+      "layout": "pure_8x1",
+      "stage": "adapter_full_state",
+      "seconds": [
+        0.722393712028861,
+        0.7176481289789081,
+        0.7180722868070006,
+        0.7199217369779944,
+        0.718487661331892
+      ],
+      "steps_s_mean": 11388.841023420835,
+      "steps_s_sd": 30.445781790527906,
+      "startup_seconds": 7.703378412872553,
+      "exact_parity": "PASS",
+      "workers": [
+        {
+          "pid": 3930919,
+          "affinity": [
+            64
+          ]
+        },
+        {
+          "pid": 3930920,
+          "affinity": [
+            67
+          ]
+        },
+        {
+          "pid": 3930921,
+          "affinity": [
+            69
+          ]
+        },
+        {
+          "pid": 3930922,
+          "affinity": [
+            74
+          ]
+        },
+        {
+          "pid": 3930923,
+          "affinity": [
+            78
+          ]
+        },
+        {
+          "pid": 3930924,
+          "affinity": [
+            79
+          ]
+        },
+        {
+          "pid": 3930925,
+          "affinity": [
+            82
+          ]
+        },
+        {
+          "pid": 3930926,
+          "affinity": [
+            83
+          ]
+        }
+      ]
+    },
+    {
+      "batch": 1024,
+      "horizon": 8,
+      "block": 0,
+      "layout": "pure_8x1",
+      "stage": "public_all_states",
+      "seconds": [
+        0.7310213409364223,
+        0.7264923825860023,
+        0.7277725767344236,
+        0.7306787967681885,
+        0.7274069981649518
+      ],
+      "steps_s_mean": 11242.403060289607,
+      "steps_s_sd": 31.510899364773824,
+      "startup_seconds": 7.703378412872553,
+      "exact_parity": "PASS",
+      "workers": [
+        {
+          "pid": 3930919,
+          "affinity": [
+            64
+          ]
+        },
+        {
+          "pid": 3930920,
+          "affinity": [
+            67
+          ]
+        },
+        {
+          "pid": 3930921,
+          "affinity": [
+            69
+          ]
+        },
+        {
+          "pid": 3930922,
+          "affinity": [
+            74
+          ]
+        },
+        {
+          "pid": 3930923,
+          "affinity": [
+            78
+          ]
+        },
+        {
+          "pid": 3930924,
+          "affinity": [
+            79
+          ]
+        },
+        {
+          "pid": 3930925,
+          "affinity": [
+            82
+          ]
+        },
+        {
+          "pid": 3930926,
+          "affinity": [
+            83
+          ]
+        }
+      ]
+    },
+    {
+      "batch": 1024,
+      "horizon": 8,
+      "block": 0,
+      "layout": "hybrid_4x2",
+      "stage": "adapter_full_state",
+      "seconds": [
+        0.7849656799808145,
+        0.772539921104908,
+        0.7775668082758784,
+        0.790354018099606,
+        0.7846401603892446
+      ],
+      "steps_s_mean": 10476.193405670174,
+      "steps_s_sd": 93.66316332696094,
+      "startup_seconds": 8.531545209698379,
+      "exact_parity": "PASS",
+      "workers": [
+        {
+          "pid": 3951626,
+          "affinity": [
+            64,
+            67
+          ]
+        },
+        {
+          "pid": 3951627,
+          "affinity": [
+            69,
+            74
+          ]
+        },
+        {
+          "pid": 3951628,
+          "affinity": [
+            78,
+            79
+          ]
+        },
+        {
+          "pid": 3951629,
+          "affinity": [
+            82,
+            83
+          ]
+        }
+      ]
+    },
+    {
+      "batch": 1024,
+      "horizon": 8,
+      "block": 0,
+      "layout": "hybrid_4x2",
+      "stage": "public_all_states",
+      "seconds": [
+        0.7770429700613022,
+        0.7775031821802258,
+        0.7963098743930459,
+        0.8095414340496063,
+        0.7792007513344288
+      ],
+      "steps_s_mean": 10399.784254178747,
+      "steps_s_sd": 189.20219780848333,
+      "startup_seconds": 8.531545209698379,
+      "exact_parity": "PASS",
+      "workers": [
+        {
+          "pid": 3951626,
+          "affinity": [
+            64,
+            67
+          ]
+        },
+        {
+          "pid": 3951627,
+          "affinity": [
+            69,
+            74
+          ]
+        },
+        {
+          "pid": 3951628,
+          "affinity": [
+            78,
+            79
+          ]
+        },
+        {
+          "pid": 3951629,
+          "affinity": [
+            82,
+            83
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,202 @@
+{
+  "status": "PASS",
+  "device": "cuda",
+  "host": "gpu2709.oscar.ccv.brown.edu",
+  "affinity": [
+    64,
+    67,
+    69,
+    74,
+    78,
+    79,
+    82,
+    83
+  ],
+  "job": "6947236",
+  "gpu": "NVIDIA L40S",
+  "versions": {
+    "torch": "2.14.0+cu126",
+    "numpy": "2.5.3",
+    "mujoco": "3.11.0",
+    "gymnasium": "1.3.0",
+    "gymnasium-robotics": "1.4.2"
+  },
+  "source_sha256": {
+    "/oscar/scratch/sboughan/se-semantic-recovery/fetch-process-adapter-20261002-r2/code/scripts/benchmarks/online_stepping/fetch_process_adapter.py": "2e5b44152d25f4e5550c2d899fcdbf087be51b1e517b508b814bdd17e248bd22",
+    "/oscar/scratch/sboughan/se-semantic-recovery/fetch-process-adapter-20261002-r2/code/stable_envs/envs/_fetch_semantics.py": "63e1299ec0c66266ed43112fa897279f89ce3e9402a249cc20c8117a4cfec152",
+    "/oscar/scratch/sboughan/se-semantic-recovery/fetch-process-adapter-20261002-r2/code/stable_envs/_adapters/fetch_process.py": "8aff80774364ac4443398434fbe7ceb25bd2cdccedf7f1ca3233b832aaf0c758",
+    "/oscar/scratch/sboughan/se-semantic-recovery/fetch-process-adapter-20261002-r2/code/stable_envs/_adapters/fetch_pickandplace.py": "9e018113ab6f478dcf2a030a93f89ef8d7d587f6aaea1f520151518a388b1f68"
+  },
+  "scope": "FetchPush; full State/task outputs, transport and owned copies; no rendering, startup or restoration. CPU simulation even with CUDA outputs. Known actions, not policy throughput.",
+  "gates": [
+    {
+      "env": "FetchReach",
+      "layout": "pure_8x1",
+      "batch": 64,
+      "state_task_replay_endpoint_variation": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchReach",
+      "layout": "hybrid_4x2",
+      "batch": 64,
+      "state_task_replay_endpoint_variation": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchReachDense",
+      "layout": "pure_8x1",
+      "batch": 64,
+      "state_task_replay_endpoint_variation": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchReachDense",
+      "layout": "hybrid_4x2",
+      "batch": 64,
+      "state_task_replay_endpoint_variation": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchReachDict",
+      "layout": "pure_8x1",
+      "batch": 64,
+      "state_task_replay_endpoint_variation": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchReachDict",
+      "layout": "hybrid_4x2",
+      "batch": 64,
+      "state_task_replay_endpoint_variation": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPush",
+      "layout": "pure_8x1",
+      "batch": 64,
+      "state_task_replay_endpoint_variation": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPush",
+      "layout": "hybrid_4x2",
+      "batch": 64,
+      "state_task_replay_endpoint_variation": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPushDense",
+      "layout": "pure_8x1",
+      "batch": 64,
+      "state_task_replay_endpoint_variation": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPushDense",
+      "layout": "hybrid_4x2",
+      "batch": 64,
+      "state_task_replay_endpoint_variation": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPushDict",
+      "layout": "pure_8x1",
+      "batch": 64,
+      "state_task_replay_endpoint_variation": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPushDict",
+      "layout": "hybrid_4x2",
+      "batch": 64,
+      "state_task_replay_endpoint_variation": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchSlide",
+      "layout": "pure_8x1",
+      "batch": 64,
+      "state_task_replay_endpoint_variation": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchSlide",
+      "layout": "hybrid_4x2",
+      "batch": 64,
+      "state_task_replay_endpoint_variation": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchSlideDense",
+      "layout": "pure_8x1",
+      "batch": 64,
+      "state_task_replay_endpoint_variation": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchSlideDense",
+      "layout": "hybrid_4x2",
+      "batch": 64,
+      "state_task_replay_endpoint_variation": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchSlideDict",
+      "layout": "pure_8x1",
+      "batch": 64,
+      "state_task_replay_endpoint_variation": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchSlideDict",
+      "layout": "hybrid_4x2",
+      "batch": 64,
+      "state_task_replay_endpoint_variation": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "layout": "pure_8x1",
+      "batch": 64,
+      "state_task_replay_endpoint_variation": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlace",
+      "layout": "hybrid_4x2",
+      "batch": 64,
+      "state_task_replay_endpoint_variation": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlaceDense",
+      "layout": "pure_8x1",
+      "batch": 64,
+      "state_task_replay_endpoint_variation": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlaceDense",
+      "layout": "hybrid_4x2",
+      "batch": 64,
+      "state_task_replay_endpoint_variation": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlaceDict",
+      "layout": "pure_8x1",
+      "batch": 64,
+      "state_task_replay_endpoint_variation": "PASS",
+      "frame_mse": 0.0
+    },
+    {
+      "env": "FetchPickAndPlaceDict",
+      "layout": "hybrid_4x2",
+      "batch": 64,
+      "state_task_replay_endpoint_variation": "PASS",
+      "frame_mse": 0.0
+    }
+  ],
+  "timings": []
+}
