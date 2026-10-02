@@ -1,0 +1,20 @@
+{
+  "base_commit": "ce3ec1ffd01698409fe14a7c6dc88a78a207e9a0",
+  "matrix_sha256": "629a174b990f4c9059a3c2b1d6db56ecf3167182e7991afc184e51fd0a3ad133",
+  "matrix_status": {
+    "VERIFIED": 39,
+    "INCOMPLETE": 3
+  },
+  "acceptance": "PENDING full registration/device frame gates and cluster measurements",
+  "jobs": {
+    "6960436": "Initial baseline: MuJoCo/dm-control version mismatch; failed tasks preserved, pending tasks canceled.",
+    "6960514": "Corrected baseline profiling array on 3090-gcondo; queued.",
+    "6960516": "Candidate v1 pending array canceled before work: isolate CPU/software GL from GPU/EGL.",
+    "6960524": "Auxiliary smoke canceled before creating results: move output to isolated namespace.",
+    "6960530": "Candidate v1 smoke completed; all 38 adapter tests and Acrobot CPU/CUDA paired gates pass.",
+    "6961263": "Candidate v2 pending array canceled after smoke exposed launcher-only test filename typo.",
+    "6961264": "Candidate v2 smoke failed before tests: test_dmc_state_export_oscar.py does not exist.",
+    "6961313": "COMPLETED/PASS: all 38 adapter tests; exact Acrobot State/task/frame gates and 48 aggregate timing cells; Mesa llvmpipe CPU and NVIDIA A6000 GPU independently verified.",
+    "6961314": "Released after successful smoke; pending on 3090-gcondo. All 12 registration-specific gates/measurements still required."
+  }
+}

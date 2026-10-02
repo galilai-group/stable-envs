@@ -9,6 +9,8 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from .dmcontrol_state import export_state
+
 CONFIG = {
     "ball_in_cup": {"nq": 4, "nv": 4, "nu": 2, "na": 0, "time_limit": 20.0, "dt": 0.02},
     "finger": {"nq": 3, "nv": 3, "nu": 2, "na": 0, "time_limit": 20.0, "dt": 0.02},
@@ -210,41 +212,8 @@ class DMCAlignedAdapter:
         return self.get_state()
 
     def get_state(self):
-        rows = []
-        for i, env in enumerate(self.envs):
-            physics, base = env.physics, env._env
-            rng = env.task.random.get_state()
-            values = {
-                "qpos": physics.data.qpos.copy(),
-                "qvel": physics.data.qvel.copy(),
-                "time": [physics.data.time],
-                "warmstart": physics.data.qacc_warmstart.copy(),
-                ("lifecycle", "step_count"): [base._step_count],
-                ("lifecycle", "reset_next_step"): [base._reset_next_step],
-                ("task", "cumulative_reward"): [self._cumulative[i]],
-                ("rng", "keys"): rng[1].astype(np.int64),
-                ("rng", "position"): [rng[2]],
-                ("rng", "has_gauss"): [rng[3]],
-                ("rng", "cached_gaussian"): [rng[4]],
-            }
-            if self.domain == "finger":
-                values[("model", "target_site_xz")] = physics.named.model.site_pos[
-                    "target", ["x", "z"]
-                ].copy()
-            elif self.domain == "manipulator":
-                values[("model", "target_body_xz")] = physics.named.model.body_pos[
-                    "target_ball", ["x", "z"]
-                ].copy()
-                values[("model", "target_body_qwqy")] = physics.named.model.body_quat[
-                    "target_ball", ["qw", "qy"]
-                ].copy()
-            elif self.domain == "quadruped":
-                values["activation"] = physics.data.act.copy()
-            row = TensorDict({}, batch_size=[], device=self.device)
-            for key, (_, dtype) in self.fields.items():
-                row[key] = torch.as_tensor(values[key], dtype=dtype, device=self.device).clone()
-            rows.append(row)
-        return torch.stack(rows)
+        self._check_open()
+        return export_state(self.envs, self._cumulative, self.fields, self.device)
 
     def set_state(self, state):
         if not isinstance(state, TensorDict) or state.batch_size != torch.Size([self.num_envs]):

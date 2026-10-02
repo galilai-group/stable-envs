@@ -9,6 +9,8 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from .dmcontrol_state import export_state
+
 HUMANOID_CONFIG = {
     "nq": 28,
     "nv": 27,
@@ -128,29 +130,7 @@ class DMCHumanoidAdapter:
 
     def get_state(self):
         self._check_open()
-        rows = []
-        for i, env in enumerate(self.envs):
-            data, base = env.physics.data, env._env
-            algorithm, keys, position, has_gauss, cached = env.task.random.get_state()
-            assert algorithm == "MT19937"
-            values = {
-                "qpos": data.qpos.copy(),
-                "qvel": data.qvel.copy(),
-                "time": [data.time],
-                "warmstart": data.qacc_warmstart.copy(),
-                ("lifecycle", "step_count"): [base._step_count],
-                ("lifecycle", "reset_next_step"): [base._reset_next_step],
-                ("task", "cumulative_reward"): [self._cumulative[i]],
-                ("rng", "keys"): keys.astype(np.int64),
-                ("rng", "position"): [position],
-                ("rng", "has_gauss"): [has_gauss],
-                ("rng", "cached_gaussian"): [cached],
-            }
-            row = TensorDict({}, batch_size=[], device=self.device)
-            for key, (_, dtype) in HUMANOID_FIELDS.items():
-                row[key] = torch.as_tensor(values[key], dtype=dtype, device=self.device).clone()
-            rows.append(row)
-        return torch.stack(rows)
+        return export_state(self.envs, self._cumulative, HUMANOID_FIELDS, self.device)
 
     def set_state(self, state):
         self._check_open()

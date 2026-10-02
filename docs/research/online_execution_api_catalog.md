@@ -1,5 +1,13 @@
 # Online execution API catalogue
 
+Current status, 2026-10-02: all 12 Fetch registrations have completed their
+process/pipeline acceptance; see [the Fetch checkpoint](fetch_pipeline_checkpoint.md).
+The remaining non-Craftax execution work and routing are tracked in
+[the stepping backlog](stepping_benchmark_backlog.csv) and
+[the DMC audit](dmc_online_execution.md). Persistent pure processes are the
+chosen scalar-CPU strategy to evaluate; further hybrid-thread experiments are
+not planned. The historical audit and its older updates below remain frozen.
+
 Update, 2026-10-01: public `step` accepts `[B,A]` or `[B,T,A]` with independent
 `states` and `frames` slices. Fetch State export is column-wise and large batches
 use a bounded persistent thread pool. The new [profiling checkpoint](semantic_recovery_evidence/fetch_scaling_slices_20261001/README.md)

@@ -1,0 +1,453 @@
+{
+  "status": "PASS",
+  "domain": "acrobot",
+  "env": "DMCAcrobotBalance",
+  "host": "gpu1503.oscar.ccv.brown.edu",
+  "job": "6961313",
+  "gpu": null,
+  "versions": {
+    "torch": "2.14.0+cu126",
+    "numpy": "2.5.3",
+    "dm-control": "1.0.45",
+    "mujoco": "3.12.0",
+    "tensordict": "0.14.2"
+  },
+  "reference_hashes": {
+    "/oscar/scratch/sboughan/se-semantic-recovery/dmc-online-baseline-20261002/code/stable_envs/_adapters/dmcontrol.py": "c01d8cfbd09e8fa11309123c17fc765e8715df8bdca3ab577953cb0b6c49fadb",
+    "/oscar/scratch/sboughan/se-semantic-recovery/dmc-online-baseline-20261002/code/stable_envs/_adapters/dmcontrol_aligned.py": "8d694beead5f29124f058efecc5706e97b7b21433f949912694ba0e34e2440c4",
+    "/oscar/scratch/sboughan/se-semantic-recovery/dmc-online-baseline-20261002/code/stable_envs/_adapters/dmcontrol_continuation.py": "177f9e1a25e6fdb8ce99e6f1c5ada7b864f7ab2cf17decad6afad5b5395d30e5",
+    "/oscar/scratch/sboughan/se-semantic-recovery/dmc-online-baseline-20261002/code/stable_envs/_adapters/dmcontrol_humanoid.py": "788664f09e002cdf826cdd6f518b407f9f34dc9421874f18b02c9810d99653b9"
+  },
+  "candidate_hashes": {
+    "stable_envs/_adapters/dmcontrol.py": "7a9394110686115f40ceb92cb9e5fbc4092db074eb79fe672b9ae1e499f4506b",
+    "stable_envs/_adapters/dmcontrol_aligned.py": "dc4f6a6c569b73f446a72cf8e1d3921beec28703ba5b9051bb1ed9159f8178a4",
+    "stable_envs/_adapters/dmcontrol_continuation.py": "a72c36f88f9acaf607a5daee5bf8abff4e4904348103005dd3a2893151ff93d9",
+    "stable_envs/_adapters/dmcontrol_humanoid.py": "01983fd725b00f3303ba9f632fb4cabff1dd82f5a5dd1bb320460eb8ecaddc19",
+    "stable_envs/_adapters/dmcontrol_state.py": "9590509cf0a0544a9e9219723fb11477031d0be4209a9cef33e3387dd1e6712f"
+  },
+  "script_sha256": "42051469f997e296f05d7963cf9a5b2a6b79993315293ef21851ba2fb0e65ad0",
+  "scope": "frozen accepted exporter vs column exporter; public step frames=None; same CPU physics for both output devices",
+  "gates": [
+    {
+      "device": "cpu",
+      "cases": 10,
+      "state_task_rng_lifecycle_ownership": "PASS",
+      "frame_mse_vs_legacy": 0.0
+    }
+  ],
+  "timings": [
+    {
+      "batch": 1,
+      "device": "cpu",
+      "horizon": 1,
+      "operation": "get_state",
+      "mode": "legacy",
+      "seconds": [
+        0.0005352571606636047,
+        0.0005295556038618088,
+        0.000522838905453682,
+        0.0005200263112783432,
+        0.0005218684673309326,
+        0.0005237776786088943
+      ],
+      "rate_mean": 1902.9416585782774,
+      "rate_sd": 20.6165930922358
+    },
+    {
+      "batch": 1,
+      "device": "cpu",
+      "horizon": 1,
+      "operation": "get_state",
+      "mode": "column",
+      "seconds": [
+        0.0002333279699087143,
+        0.00022188015282154083,
+        0.00022094696760177612,
+        0.00022175908088684082,
+        0.00023037008941173553,
+        0.00022011995315551758
+      ],
+      "rate_mean": 4451.990061855829,
+      "rate_sd": 109.57740609290727
+    },
+    {
+      "batch": 1,
+      "device": "cpu",
+      "horizon": 1,
+      "operation": "public_step_states_all",
+      "mode": "legacy",
+      "seconds": [
+        0.0016098320484161377,
+        0.0016380902379751205,
+        0.0016321409493684769,
+        0.0016147717833518982,
+        0.0016067884862422943,
+        0.0016214512288570404
+      ],
+      "rate_mean": 617.1192422205024,
+      "rate_sd": 4.746665163966412
+    },
+    {
+      "batch": 1,
+      "device": "cpu",
+      "horizon": 1,
+      "operation": "public_step_states_all",
+      "mode": "column",
+      "seconds": [
+        0.0014607720077037811,
+        0.0013565905392169952,
+        0.0013593938201665878,
+        0.0013516414910554886,
+        0.0013523008674383163,
+        0.0013496018946170807
+      ],
+      "rate_mean": 729.6024056042897,
+      "rate_sd": 22.146907386369634
+    },
+    {
+      "batch": 1,
+      "device": "cpu",
+      "horizon": 8,
+      "operation": "get_state",
+      "mode": "legacy",
+      "seconds": [
+        0.0005067791789770126,
+        0.0005103666335344315,
+        0.0005467887967824936,
+        0.0004960279911756516,
+        0.0005080495029687881,
+        0.0005073565989732742
+      ],
+      "rate_mean": 1952.8015246356722,
+      "rate_sd": 63.86003691170136
+    },
+    {
+      "batch": 1,
+      "device": "cpu",
+      "horizon": 8,
+      "operation": "get_state",
+      "mode": "column",
+      "seconds": [
+        0.00021828897297382355,
+        0.00021620839834213257,
+        0.0002148505300283432,
+        0.00022851862013339996,
+        0.00021589919924736023,
+        0.00021839886903762817
+      ],
+      "rate_mean": 4574.53828466176,
+      "rate_sd": 101.67864862802583
+    },
+    {
+      "batch": 1,
+      "device": "cpu",
+      "horizon": 8,
+      "operation": "public_step_states_all",
+      "mode": "legacy",
+      "seconds": [
+        0.012821314856410027,
+        0.01119278371334076,
+        0.01112477295100689,
+        0.011089909821748734,
+        0.011082151904702187,
+        0.011073952540755272
+      ],
+      "rate_mean": 703.9161473894123,
+      "rate_sd": 39.27087848566266
+    },
+    {
+      "batch": 1,
+      "device": "cpu",
+      "horizon": 8,
+      "operation": "public_step_states_all",
+      "mode": "column",
+      "seconds": [
+        0.008872821927070618,
+        0.008877143263816833,
+        0.008862053975462914,
+        0.008857203647494316,
+        0.008857343345880508,
+        0.008852612227201462
+      ],
+      "rate_mean": 902.6098064085963,
+      "rate_sd": 0.9875826672076085
+    },
+    {
+      "batch": 64,
+      "device": "cpu",
+      "horizon": 1,
+      "operation": "get_state",
+      "mode": "legacy",
+      "seconds": [
+        0.020622972398996353,
+        0.02030506357550621,
+        0.02042558416724205,
+        0.020332224667072296,
+        0.020294563844799995,
+        0.020375603809952736
+      ],
+      "rate_mean": 3138.476921811436,
+      "rate_sd": 18.768602229636606
+    },
+    {
+      "batch": 64,
+      "device": "cpu",
+      "horizon": 1,
+      "operation": "get_state",
+      "mode": "column",
+      "seconds": [
+        0.004759443923830986,
+        0.004743246361613274,
+        0.004850156605243683,
+        0.004773063585162163,
+        0.004715895280241966,
+        0.004742223769426346
+      ],
+      "rate_mean": 13435.12485117267,
+      "rate_sd": 129.45840025970477
+    },
+    {
+      "batch": 64,
+      "device": "cpu",
+      "horizon": 1,
+      "operation": "public_step_states_all",
+      "mode": "legacy",
+      "seconds": [
+        0.03903186693787575,
+        0.03878404572606087,
+        0.03830233961343765,
+        0.03866279870271683,
+        0.038672106340527534,
+        0.03846144862473011
+      ],
+      "rate_mean": 1655.8411023538806,
+      "rate_sd": 10.846084850522388
+    },
+    {
+      "batch": 64,
+      "device": "cpu",
+      "horizon": 1,
+      "operation": "public_step_states_all",
+      "mode": "column",
+      "seconds": [
+        0.022734519094228745,
+        0.022777851670980453,
+        0.022761689499020576,
+        0.022497938945889473,
+        0.02255881205201149,
+        0.022489819675683975
+      ],
+      "rate_mean": 2827.3428928757307,
+      "rate_sd": 16.948460063774213
+    },
+    {
+      "batch": 64,
+      "device": "cpu",
+      "horizon": 8,
+      "operation": "get_state",
+      "mode": "legacy",
+      "seconds": [
+        0.020449744537472725,
+        0.020381994545459747,
+        0.020322132855653763,
+        0.020329756662249565,
+        0.020353693515062332,
+        0.02047339454293251
+      ],
+      "rate_mean": 3139.5701596153554,
+      "rate_sd": 9.728227549581566
+    },
+    {
+      "batch": 64,
+      "device": "cpu",
+      "horizon": 8,
+      "operation": "get_state",
+      "mode": "column",
+      "seconds": [
+        0.004894683137536049,
+        0.004890443757176399,
+        0.004870254546403885,
+        0.004914743825793266,
+        0.004882875829935074,
+        0.0048813652247190475
+      ],
+      "rate_mean": 13090.55236912993,
+      "rate_sd": 40.43560316901804
+    },
+    {
+      "batch": 64,
+      "device": "cpu",
+      "horizon": 8,
+      "operation": "public_step_states_all",
+      "mode": "legacy",
+      "seconds": [
+        0.30571701005101204,
+        0.30446602404117584,
+        0.30384944938123226,
+        0.30590430833399296,
+        0.30571652948856354,
+        0.3074710797518492
+      ],
+      "rate_mean": 1675.8510694398935,
+      "rate_sd": 6.90488438661066
+    },
+    {
+      "batch": 64,
+      "device": "cpu",
+      "horizon": 8,
+      "operation": "public_step_states_all",
+      "mode": "column",
+      "seconds": [
+        0.17965112067759037,
+        0.18131711147725582,
+        0.1809151954948902,
+        0.17976466938853264,
+        0.17866532318294048,
+        0.1830133106559515
+      ],
+      "rate_mean": 2835.8796024915628,
+      "rate_sd": 24.013041766934826
+    },
+    {
+      "batch": 256,
+      "device": "cpu",
+      "horizon": 1,
+      "operation": "get_state",
+      "mode": "legacy",
+      "seconds": [
+        0.08390617556869984,
+        0.08267991244792938,
+        0.0819227397441864,
+        0.08298921212553978,
+        0.08340344950556755,
+        0.08321570977568626
+      ],
+      "rate_mean": 3083.7830632142127,
+      "rate_sd": 25.226862733466174
+    },
+    {
+      "batch": 256,
+      "device": "cpu",
+      "horizon": 1,
+      "operation": "get_state",
+      "mode": "column",
+      "seconds": [
+        0.01919172890484333,
+        0.019485197961330414,
+        0.01920015551149845,
+        0.01903815008699894,
+        0.01980939321219921,
+        0.019015789031982422
+      ],
+      "rate_mean": 13273.804433772119,
+      "rate_sd": 207.18524694408347
+    },
+    {
+      "batch": 256,
+      "device": "cpu",
+      "horizon": 1,
+      "operation": "public_step_states_all",
+      "mode": "legacy",
+      "seconds": [
+        0.1549202725291252,
+        0.15738864988088608,
+        0.1552603803575039,
+        0.15525132976472378,
+        0.15416079573333263,
+        0.15481689386069775
+      ],
+      "rate_mean": 1648.4936623865256,
+      "rate_sd": 11.576943160619889
+    },
+    {
+      "batch": 256,
+      "device": "cpu",
+      "horizon": 1,
+      "operation": "public_step_states_all",
+      "mode": "column",
+      "seconds": [
+        0.09236951172351837,
+        0.09192193672060966,
+        0.0920026358217001,
+        0.09162459708750248,
+        0.09350106865167618,
+        0.0913864690810442
+      ],
+      "rate_mean": 2778.7023604235424,
+      "rate_sd": 22.416543780892944
+    },
+    {
+      "batch": 256,
+      "device": "cpu",
+      "horizon": 8,
+      "operation": "get_state",
+      "mode": "legacy",
+      "seconds": [
+        0.08451910316944122,
+        0.08259448409080505,
+        0.08221442624926567,
+        0.08275228179991245,
+        0.08303101733326912,
+        0.08260590024292469
+      ],
+      "rate_mean": 3086.3330103314006,
+      "rate_sd": 29.83377802707678
+    },
+    {
+      "batch": 256,
+      "device": "cpu",
+      "horizon": 8,
+      "operation": "get_state",
+      "mode": "column",
+      "seconds": [
+        0.01976209692656994,
+        0.018889080733060837,
+        0.019323797896504402,
+        0.01943453773856163,
+        0.018923329189419746,
+        0.01858886331319809
+      ],
+      "rate_mean": 13371.199132706155,
+      "rate_sd": 298.9089539808662
+    },
+    {
+      "batch": 256,
+      "device": "cpu",
+      "horizon": 8,
+      "operation": "public_step_states_all",
+      "mode": "legacy",
+      "seconds": [
+        1.2430546078830957,
+        1.239346506074071,
+        1.7632815949618816,
+        1.2447851281613111,
+        1.2432842552661896,
+        1.245741244405508
+      ],
+      "rate_mean": 1566.337310196309,
+      "rate_sd": 198.36445377913378
+    },
+    {
+      "batch": 256,
+      "device": "cpu",
+      "horizon": 8,
+      "operation": "public_step_states_all",
+      "mode": "column",
+      "seconds": [
+        0.7229452431201935,
+        0.7271347343921661,
+        0.7221011593937874,
+        0.7220016717910767,
+        0.725793719291687,
+        0.7271139938384295
+      ],
+      "rate_mean": 2826.745019615561,
+      "rate_sd": 9.532948336817793
+    }
+  ],
+  "opengl": {
+    "vendor": "Mesa",
+    "renderer": "llvmpipe (LLVM 19.1.7, 256 bits)",
+    "software": true
+  }
+}

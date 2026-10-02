@@ -9,6 +9,8 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
+from .dmcontrol_state import export_state
+
 # Full resume contract, distinct from the renderer's four float32 columns.
 REACHER_FIELDS = {
     "qpos": (2, torch.float64),
@@ -132,28 +134,7 @@ class FirstFamilyAdapter:
 
     def get_state(self):
         self._check_open()
-        rows = []
-        for i, env in enumerate(self.envs):
-            data, base = env.physics.data, env._env
-            rng = env.task.random.get_state()
-            values = {
-                "qpos": data.qpos.copy(),
-                "qvel": data.qvel.copy(),
-                "time": [data.time],
-                "warmstart": data.qacc_warmstart.copy(),
-                ("lifecycle", "step_count"): [base._step_count],
-                ("lifecycle", "reset_next_step"): [base._reset_next_step],
-                ("task", "cumulative_reward"): [self._cumulative[i]],
-                ("rng", "keys"): rng[1].astype(np.int64),
-                ("rng", "position"): [rng[2]],
-                ("rng", "has_gauss"): [rng[3]],
-                ("rng", "cached_gaussian"): [rng[4]],
-            }
-            td = TensorDict({}, batch_size=[], device=self.device)
-            for key, (_, dtype) in self.fields.items():
-                td[key] = torch.as_tensor(values[key], dtype=dtype, device=self.device).clone()
-            rows.append(td)
-        return torch.stack(rows)
+        return export_state(self.envs, self._cumulative, self.fields, self.device)
 
     def set_state(self, state):
         self._check_open()
@@ -294,29 +275,7 @@ class ReacherAdapter:
 
     def get_state(self):
         self._check_open()
-        rows = []
-        for i, env in enumerate(self.envs):
-            data, base = env.physics.data, env._env
-            rng = env.task.random.get_state()
-            values = {
-                "qpos": data.qpos.copy(),
-                "qvel": data.qvel.copy(),
-                "time": [data.time],
-                "warmstart": data.qacc_warmstart.copy(),
-                ("task", "target_pos"): env.physics.named.model.geom_pos["target"].copy(),
-                ("lifecycle", "step_count"): [base._step_count],
-                ("lifecycle", "reset_next_step"): [base._reset_next_step],
-                ("task", "cumulative_reward"): [self._cumulative[i]],
-                ("rng", "keys"): rng[1].astype(np.int64),
-                ("rng", "position"): [rng[2]],
-                ("rng", "has_gauss"): [rng[3]],
-                ("rng", "cached_gaussian"): [rng[4]],
-            }
-            td = TensorDict({}, batch_size=[], device=self.device)
-            for key, (_, dtype) in REACHER_FIELDS.items():
-                td[key] = torch.as_tensor(values[key], dtype=dtype, device=self.device).clone()
-            rows.append(td)
-        return torch.stack(rows)
+        return export_state(self.envs, self._cumulative, REACHER_FIELDS, self.device)
 
     def set_state(self, state):
         self._check_open()
