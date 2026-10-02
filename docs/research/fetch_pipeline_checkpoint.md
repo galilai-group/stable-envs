@@ -30,7 +30,7 @@ and empty slices, replay, and owned outputs retain their previous semantics.
 
 ## Paired measurement
 
-The [final-source A5500 CSV](semantic_recovery_evidence/fetch_pipeline_20261002/comparison-v3.csv)
+The [final-source RTX 3090 CSV](semantic_recovery_evidence/fetch_pipeline_20261002/comparison-rtx3090.csv)
 contains 216 aggregate cells. Each is six samples across two reversed-order
 blocks, with means and sample standard deviations. B=64/256/1024 and T=1/8;
 all States retained; frames disabled, final-only, or all. Restoration, startup,
@@ -45,18 +45,24 @@ and `pipeline`. Comparing against the fused control isolates overlap from RPC
 savings. FPS counts emitted images; steps/s counts transitions. With T=8 and
 final-only capture these counts differ by eight.
 
-At B=1024, T=8, all frames, 64×64 OpenGL, on RTX A5500 allocations:
+At B=1024, T=8, all frames, 64×64 OpenGL, on RTX 3090 allocations:
 
 | Task | Fused serial FPS ± SD | Pipeline FPS ± SD | Overlap speedup | Host |
 | --- | ---: | ---: | ---: | --- |
-| FetchReach | 2,590 ± 4 | 2,888 ± 54 | 1.115× | gpu2501 |
-| FetchPush | 2,331 ± 6 | 2,602 ± 44 | 1.116× | gpu2501 |
-| FetchSlide | 1,509 ± 1 | 1,784 ± 2 | 1.182× | gpu2503 |
-| FetchPickAndPlace | 2,445 ± 4 | 2,791 ± 10 | 1.141× | gpu2504 |
+| FetchReach | 2,440 ± 20 | 2,769 ± 32 | 1.135× | gpu2109 |
+| FetchPush | 2,389 ± 10 | 2,711 ± 93 | 1.134× | gpu2113 |
+| FetchSlide | 2,279 ± 17 | 2,585 ± 66 | 1.134× | gpu2113 |
+| FetchPickAndPlace | 2,465 ± 24 | 2,833 ± 30 | 1.149× | gpu2109 |
 
 Host CPU performance differs, so do not interpret absolute cross-row differences
-as isolated task effects. The separate final-source RTX 3090 sweep is job array
-6960169; its results are collected separately and never pooled with this CSV.
+as isolated task effects. All four final-source RTX 3090 jobs in array 6960169
+completed and passed. The [A5500 sweep](semantic_recovery_evidence/fetch_pipeline_20261002/comparison-v3.csv)
+is retained separately; its measurements are never pooled with the RTX 3090 CSV.
+Across the twelve task/batch cells at T=8 with all frames, overlap adds 13–42%
+over the fused serial control on the 3090 allocations. At B=1024 it adds 13–15%.
+Single-action and final-frame-only results remain separate in the CSV; no blanket
+speedup is claimed for those modes. The six-sample one-action/all-frame cells
+range from 0.953× to 1.020× the fused control, with the longer B64 follow-up below.
 
 ## Acceptance and the single-action check
 
@@ -84,7 +90,9 @@ measured gain. Both original and follow-up evidence are retained.
 Implementation files are `_stepping.py`, `_adapters/fetch_process.py`,
 `_adapters/fetch_execution.py`, and `envs/_fetch_semantics.py`. The source hashes
 in [the final manifest](semantic_recovery_evidence/fetch_pipeline_20261002/production_v3/source_manifest.json)
-identify the tested code, based on checkout `5c23f8ee` plus the recorded changes.
+identify the tested code. Implementation commit: `080b525c0d2852e0e6d8ff597505ea6dda513e03`; every
+archived production source hash matches that commit. The upload was staged from
+checkout `5c23f8ee` plus those changes before the commit was made.
 `fetch_pipeline.py` runs the public API gates and comparisons;
 `summarize_fetch_pipeline.py` refuses partial reports or missing cells and writes
 the aggregate CSV. `pack_fetch_family.py` makes the reproducible archive and
@@ -93,7 +101,13 @@ raw sample times, logs, hardware, manifests, launchers and the staged iterations
 
 The earlier all-registration four/eight-process family sweep is separate: job
 6950614 completed Reach but hit time/memory limits on three other tasks. The
-four unfinished registrations run individually in 6957513 using the unchanged
-original source, with larger RAM allocations. Historical outputs are preserved;
-`collect_fetch_family.py` can recover only complete per-registration sweeps,
-validates every cell and never joins measurements across hosts for one row.
+four unfinished registrations completed and passed individually in 6957513 using
+the unchanged original source, with larger RAM allocations. The [completed family
+CSV](semantic_recovery_evidence/fetch_family_3090_20261002/completed/comparison.csv)
+contains 1,488 aggregate rows for all 12 registrations, CPU/CUDA output,
+B=1/8/32/64/128/256/512/1024, T=1/8, and four/eight-process versus current-local
+execution. This earlier sweep does not include the new overlap implementation.
+Historical outputs are preserved; `collect_fetch_family.py` recovers only complete
+per-registration sweeps, validates every cell and never joins measurements across
+hosts for one row. Pipeline throughput is measured on the four plain tasks;
+Dense/Dict registrations also pass their own final pipeline correctness gates.

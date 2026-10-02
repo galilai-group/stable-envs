@@ -1,0 +1,32 @@
+{
+  "status": "PASS",
+  "implementation_commit": "080b525c0d2852e0e6d8ff597505ea6dda513e03",
+  "source_hashes_match": true,
+  "registrations_independently_gated": 12,
+  "device_gates_per_complete_sweep": 24,
+  "cuda_unit_suite": {
+    "passed": 188,
+    "skipped_optional_matplotlib": 1
+  },
+  "frame_mse_vs_serial_library_renderer": 0.0,
+  "renderer": "OpenGL 64x64; no new upstream renderer parity claim",
+  "rtx3090": {
+    "array": 6960169,
+    "status": "PASS",
+    "csv": "comparison-rtx3090.csv",
+    "aggregate_rows": 216,
+    "samples_per_cell": 6
+  },
+  "a5500": {
+    "array": 6960146,
+    "status": "PASS",
+    "csv": "comparison-v3.csv"
+  },
+  "single_action_followup": {
+    "job": 6960152,
+    "status": "PASS",
+    "samples_per_cell": 40
+  },
+  "no_pending_required_jobs": true,
+  "semantic_matrix": "Unchanged"
+}

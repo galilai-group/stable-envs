@@ -1,0 +1,12 @@
+{
+  "status": "PASS",
+  "registrations": 12,
+  "aggregate_rows": 1488,
+  "gates": 48,
+  "source": "Original family archive, before pipeline changes.",
+  "original_array": 6950614,
+  "followup_array": 6957513,
+  "followup_terminal_status": "All four COMPLETED, exit 0, explicit FETCH_FAMILY_BENCH_PASS.",
+  "selection": "Eight complete registration sweeps from the original reports plus four complete follow-up sweeps. Strict cell/gate validation; no cross-host row pooling.",
+  "partial_and_failed_evidence_preserved": true
+}
