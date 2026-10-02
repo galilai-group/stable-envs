@@ -97,8 +97,54 @@ class FetchAdapter:
             raise RuntimeError("FetchAdapter is closed")
 
     def configure_object_mass(self, values):
+        self._check_open()
         self._mass = np.asarray(values, np.float64).reshape(self.num_envs).copy()
         # Historical Variation values are applied after the next upstream reset.
+
+    def reference_model(self):
+        self._check_open()
+        return self.envs[0].unwrapped.model
+
+    def _set_episode_limits(self, limits):
+        self._check_open()
+        limits = np.asarray(limits)
+        if limits.shape != (self.num_envs,) or limits.dtype.kind not in "iu" or np.any(limits < 1):
+            raise ValueError("Expected positive integer episode limits, one per lane")
+        for env, limit in zip(self.envs, limits):
+            env._max_episode_steps = int(limit)
+
+    def reset_visual_colors(self, values):
+        """Apply source material unbinding where each simulator is owned."""
+        self._check_open()
+        if not hasattr(self, "_visual_geoms"):
+            self._visual_geoms = []
+            for env in self.envs:
+                model = env.unwrapped.model
+                groups = {}
+                for name, materials in {
+                    "table.color": {"table_mat"},
+                    "floor.color": {"floor_mat"},
+                    "object.color": {"block_mat", "puck_mat"},
+                }.items():
+                    groups[name] = [
+                        g
+                        for g in range(model.ngeom)
+                        if model.geom_matid[g] >= 0 and model.material(int(model.geom_matid[g])).name in materials
+                    ]
+                self._visual_geoms.append(groups)
+        result = []
+        for env, groups, selected in zip(self.envs, self._visual_geoms, values):
+            colors = {}
+            if {"table.color", "object.color"} & selected.keys():
+                model = env.unwrapped.model
+                for name, geoms in groups.items():
+                    if geoms:
+                        model.geom_matid[geoms] = -1
+                        if name in selected:
+                            model.geom_rgba[geoms, :3] = selected[name]
+                        colors[name] = model.geom_rgba[geoms[0], :3].copy()
+            result.append(colors)
+        return result
 
     def reset(self, seed=None, variations=None):
         self._check_open()
@@ -126,6 +172,16 @@ class FetchAdapter:
                 e.unwrapped.model.body_mass[self._object[lane]] = self._mass[lane]
             if changed:
                 self._mujoco.mj_forward(u.model, u.data)
+        self._last_outputs = [
+            (
+                e.unwrapped._get_obs(),
+                np.float32(0) if e.unwrapped.reward_type == "sparse" else np.float64(0),
+                False,
+                False,
+                {"is_success": np.float32(0)},
+            )
+            for e in self.envs
+        ]
         return self.get_state()
 
     def get_state(self):
@@ -166,7 +222,7 @@ class FetchAdapter:
             device=self.device,
         )
 
-    def set_state(self, state):
+    def _validate_state(self, state):
         self._check_open()
         if not isinstance(state, TensorDict) or state.batch_size != torch.Size([self.num_envs]):
             raise TypeError("Fetch requires full TensorDict State with batch [num_envs]")
@@ -184,6 +240,9 @@ class FetchAdapter:
             raise ValueError("Invalid PCG64 has_uint32")
         if (state["lifecycle", "elapsed_steps"] < 0).any():
             raise ValueError("Negative elapsed_steps")
+
+    def set_state(self, state):
+        self._validate_state(state)
         host = state.cpu()
         for lane, (e, i) in enumerate(zip(self.envs, self._gripper)):
             row, u = host[lane], e.unwrapped
@@ -218,8 +277,12 @@ class FetchAdapter:
 
     def advance(self, actions, *, active=None):
         """Advance task/controller/physics without materializing a full snapshot."""
-        active = None if active is None else np.asarray(active.detach().cpu(), dtype=bool)
         self._check_open()
+        if torch.is_tensor(active):
+            active = active.detach().cpu().numpy()
+        active = None if active is None else np.asarray(active, dtype=bool)
+        if active is not None and active.shape != (self.num_envs,):
+            raise ValueError("Fetch active mask must have shape (num_envs,)")
         if torch.is_tensor(actions):
             actions = actions.detach().cpu().numpy()
         actions = np.asarray(actions)

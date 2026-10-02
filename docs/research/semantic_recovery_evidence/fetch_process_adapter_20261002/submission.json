@@ -1,0 +1,27 @@
+{
+  "base_commit": "838d3013c0b505aad8ebf34ae9496f5c71a76d57",
+  "branch": "repair/render-config-fixes",
+  "remote": "/oscar/scratch/sboughan/se-semantic-recovery/fetch-process-adapter-20261002",
+  "jobs": {
+    "cpu": 6946715,
+    "gpu": 6946716,
+    "gpu_general": 6946727
+  },
+  "archives": {
+    "code.tar.gz": "2c0ad8c33f101062856d73962bc69fe0516a37f2cd00a23193035d598795ecd6",
+    "test-support.tar.gz": "abb4b3cd8ffa3e15a5374130da56e0a0e91bd8c348b6a43f1fa262f0e615e52e"
+  },
+  "local_tests": {
+    "fetch_process_adapter": {
+      "passed": 27,
+      "seconds": 55.39
+    },
+    "step_capture": {
+      "passed": 84,
+      "skipped": 4,
+      "seconds": 12.38,
+      "skip_reason": "CUDA unavailable on Mac"
+    }
+  },
+  "status": "OSCAR_PENDING"
+}

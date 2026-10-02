@@ -1,0 +1,221 @@
+{
+  "status": "PASS",
+  "device": "cpu",
+  "host": "cis1b1zs2j3.ad.brown.edu",
+  "affinity": null,
+  "job": null,
+  "gpu": null,
+  "versions": {
+    "torch": "2.14.0",
+    "numpy": "2.5.3",
+    "mujoco": "3.11.0",
+    "gymnasium": "1.3.0",
+    "gymnasium-robotics": "1.4.2"
+  },
+  "source_sha256": {
+    "/Users/samib/stable-envs/.worktrees/render-config-fixes/scripts/benchmarks/online_stepping/fetch_process_adapter.py": "305986c4890846aed1282849ae0c3fedc513afb85255fc8703d77afd94bc19b6",
+    "/Users/samib/stable-envs/.worktrees/render-config-fixes/stable_envs/envs/_fetch_semantics.py": "63e1299ec0c66266ed43112fa897279f89ce3e9402a249cc20c8117a4cfec152",
+    "/Users/samib/stable-envs/.worktrees/render-config-fixes/stable_envs/_adapters/fetch_process.py": "8aff80774364ac4443398434fbe7ceb25bd2cdccedf7f1ca3233b832aaf0c758",
+    "/Users/samib/stable-envs/.worktrees/render-config-fixes/stable_envs/_adapters/fetch_pickandplace.py": "9e018113ab6f478dcf2a030a93f89ef8d7d587f6aaea1f520151518a388b1f68"
+  },
+  "scope": "FetchPush; full State/task outputs, transport and owned copies; no rendering, startup or restoration. CPU simulation even with CUDA outputs. Known actions, not policy throughput.",
+  "gates": [],
+  "timings": [
+    {
+      "batch": 8,
+      "horizon": 2,
+      "block": 0,
+      "layout": "threads_1x4",
+      "stage": "adapter_full_state",
+      "seconds": [
+        0.0031262498814612627,
+        0.003289999905973673
+      ],
+      "steps_s_mean": 4990.587518208822,
+      "steps_s_sd": 180.1220100145299,
+      "startup_seconds": 0.08434579102322459,
+      "exact_parity": "PASS",
+      "workers": null
+    },
+    {
+      "batch": 8,
+      "horizon": 2,
+      "block": 0,
+      "layout": "threads_1x4",
+      "stage": "public_all_states",
+      "seconds": [
+        0.003491082927212119,
+        0.0033374580089002848
+      ],
+      "steps_s_mean": 4688.586458397431,
+      "steps_s_sd": 149.17315475288797,
+      "startup_seconds": 0.08434579102322459,
+      "exact_parity": "PASS",
+      "workers": null
+    },
+    {
+      "batch": 8,
+      "horizon": 2,
+      "block": 0,
+      "layout": "pure_8x1",
+      "stage": "adapter_full_state",
+      "seconds": [
+        0.0030869999900460243,
+        0.002187000121921301
+      ],
+      "steps_s_mean": 6249.491566645946,
+      "steps_s_sd": 1508.210622665721,
+      "startup_seconds": 2.44122187490575,
+      "exact_parity": "PASS",
+      "workers": [
+        {
+          "pid": 52598,
+          "affinity": null
+        },
+        {
+          "pid": 52599,
+          "affinity": null
+        },
+        {
+          "pid": 52600,
+          "affinity": null
+        },
+        {
+          "pid": 52601,
+          "affinity": null
+        },
+        {
+          "pid": 52602,
+          "affinity": null
+        },
+        {
+          "pid": 52603,
+          "affinity": null
+        },
+        {
+          "pid": 52604,
+          "affinity": null
+        },
+        {
+          "pid": 52605,
+          "affinity": null
+        }
+      ]
+    },
+    {
+      "batch": 8,
+      "horizon": 2,
+      "block": 0,
+      "layout": "pure_8x1",
+      "stage": "public_all_states",
+      "seconds": [
+        0.0029387499671429396,
+        0.003258999902755022
+      ],
+      "steps_s_mean": 5176.986674523419,
+      "steps_s_sd": 378.30932911954756,
+      "startup_seconds": 2.44122187490575,
+      "exact_parity": "PASS",
+      "workers": [
+        {
+          "pid": 52598,
+          "affinity": null
+        },
+        {
+          "pid": 52599,
+          "affinity": null
+        },
+        {
+          "pid": 52600,
+          "affinity": null
+        },
+        {
+          "pid": 52601,
+          "affinity": null
+        },
+        {
+          "pid": 52602,
+          "affinity": null
+        },
+        {
+          "pid": 52603,
+          "affinity": null
+        },
+        {
+          "pid": 52604,
+          "affinity": null
+        },
+        {
+          "pid": 52605,
+          "affinity": null
+        }
+      ]
+    },
+    {
+      "batch": 8,
+      "horizon": 2,
+      "block": 0,
+      "layout": "hybrid_4x2",
+      "stage": "adapter_full_state",
+      "seconds": [
+        0.002658125013113022,
+        0.002480041002854705
+      ],
+      "steps_s_mean": 6235.393358008039,
+      "steps_s_sd": 305.62976565268576,
+      "startup_seconds": 1.573553416179493,
+      "exact_parity": "PASS",
+      "workers": [
+        {
+          "pid": 52622,
+          "affinity": null
+        },
+        {
+          "pid": 52623,
+          "affinity": null
+        },
+        {
+          "pid": 52624,
+          "affinity": null
+        },
+        {
+          "pid": 52625,
+          "affinity": null
+        }
+      ]
+    },
+    {
+      "batch": 8,
+      "horizon": 2,
+      "block": 0,
+      "layout": "hybrid_4x2",
+      "stage": "public_all_states",
+      "seconds": [
+        0.0034163331147283316,
+        0.0034018331207334995
+      ],
+      "steps_s_mean": 4693.365286624497,
+      "steps_s_sd": 14.115608071064571,
+      "startup_seconds": 1.573553416179493,
+      "exact_parity": "PASS",
+      "workers": [
+        {
+          "pid": 52622,
+          "affinity": null
+        },
+        {
+          "pid": 52623,
+          "affinity": null
+        },
+        {
+          "pid": 52624,
+          "affinity": null
+        },
+        {
+          "pid": 52625,
+          "affinity": null
+        }
+      ]
+    }
+  ]
+}

@@ -57,7 +57,7 @@ class FetchSemantics:
         # surgical model or allocating a GL/MJWarp context in the CPU profile.
         from .fetch import BLUE, _effective_rgba
 
-        m = self._simulator.envs[0].unwrapped.model
+        m = self._simulator.reference_model()
         floor = _effective_rgba(m, m.geom("floor0").id)[:3]
         table = next(
             _effective_rgba(m, g)[:3]
@@ -157,42 +157,15 @@ class FetchSemantics:
         Keep these appearance-only model changes across resets as SWM does, and
         project their effective colors into the existing separately stored style.
         """
-        from .fetch import _effective_rgba
-
         if not any("table.color" in v or "object.color" in v for v in values):
             return
-        if not hasattr(self, "_visual_geoms"):
-            self._visual_geoms = []
-            for env in self._simulator.envs:
-                m = env.unwrapped.model
-                groups = {}
-                for name, materials in {
-                    "table.color": {"table_mat"},
-                    "floor.color": {"floor_mat"},
-                    "object.color": {"block_mat", "puck_mat"},
-                }.items():
-                    groups[name] = [
-                        g
-                        for g in range(m.ngeom)
-                        if m.geom_matid[g] >= 0 and m.material(int(m.geom_matid[g])).name in materials
-                    ]
-                self._visual_geoms.append(groups)
+        colors = self._simulator.reset_visual_colors(values)
         style = self.get_style().clone()
         layout = {name: (off, width) for name, off, width in self.variation_space.flat_layout()}
-        for lane, (env, groups, selected) in enumerate(zip(self._simulator.envs, self._visual_geoms, values)):
-            if not ({"table.color", "object.color"} & selected.keys()):
-                continue
-            m = env.unwrapped.model
-            for name, geoms in groups.items():
-                if not geoms:
-                    continue
-                m.geom_matid[geoms] = -1
-                if name in selected:
-                    m.geom_rgba[geoms, :3] = selected[name]
+        for lane, selected in enumerate(colors):
+            for name, rgb in selected.items():
                 off, width = layout[name]
-                style[lane, off : off + width] = torch.as_tensor(
-                    _effective_rgba(m, geoms[0])[:3], device=self.device, dtype=style.dtype
-                )
+                style[lane, off : off + width] = torch.as_tensor(rgb, device=self.device, dtype=style.dtype)
         Env.set_variation(self, style)
 
     def get_state(self):
