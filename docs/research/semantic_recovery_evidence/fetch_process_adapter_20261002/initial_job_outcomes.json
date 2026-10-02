@@ -1,0 +1,19 @@
+{
+  "6946715": {
+    "state": "FAILED",
+    "exit_code": "4:0",
+    "elapsed_seconds": 4,
+    "host": "node2308",
+    "reason": "Test harness fixture support_matrix.json omitted from archive; benchmark never started."
+  },
+  "6946727": {
+    "state": "FAILED",
+    "exit_code": "4:0",
+    "elapsed_seconds": 2,
+    "host": "gpu2709",
+    "reason": "Same missing fixture; benchmark never started."
+  },
+  "6946716": {
+    "action": "Cancelled while pending, replaced by 6947237 with corrected archive."
+  }
+}
