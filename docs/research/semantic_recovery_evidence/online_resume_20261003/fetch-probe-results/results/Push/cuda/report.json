@@ -1,0 +1,103 @@
+{
+  "status": "COMPLETE_DIAGNOSTIC_ONLY",
+  "diagnostic_only": true,
+  "registration": "swm/FetchPush-v3",
+  "device": "cuda",
+  "host": "gpu2107.oscar.ccv.brown.edu",
+  "job": "6976236",
+  "source_internal_size": 480,
+  "output_size": 64,
+  "cases": [
+    {
+      "step": 1,
+      "method": "native64",
+      "per_frame_mse": [
+        0.001268287237280533,
+        0.0013604242759195182,
+        0.0012759553116589775,
+        0.0012875819496507752
+      ]
+    },
+    {
+      "step": 1,
+      "method": "ss2",
+      "per_frame_mse": [
+        0.0009441731145072408,
+        0.0009498124719659107,
+        0.0008670055287229271,
+        0.0008730278518678712
+      ]
+    },
+    {
+      "step": 1,
+      "method": "ss4",
+      "per_frame_mse": [
+        0.0009180863930539537,
+        0.0009117662077085736,
+        0.0008317989675445341,
+        0.0008434093357522748
+      ]
+    },
+    {
+      "step": 1,
+      "method": "native480_linear64",
+      "per_frame_mse": [
+        0.00014565086144752016,
+        7.116153242342689e-05,
+        9.380656878764577e-05,
+        0.00011409874407279249
+      ]
+    },
+    {
+      "step": 2,
+      "method": "native64",
+      "per_frame_mse": [
+        0.0012356738293765217,
+        0.0013524420695565807,
+        0.0013444348327566321,
+        0.0012042030609220812
+      ]
+    },
+    {
+      "step": 2,
+      "method": "ss2",
+      "per_frame_mse": [
+        0.0009251262034634116,
+        0.0009421907038959375,
+        0.0009532053477028066,
+        0.0008518158080225553
+      ]
+    },
+    {
+      "step": 2,
+      "method": "ss4",
+      "per_frame_mse": [
+        0.0009075298062443931,
+        0.000902095698369217,
+        0.0008985201004421377,
+        0.0008033543789247726
+      ]
+    },
+    {
+      "step": 2,
+      "method": "native480_linear64",
+      "per_frame_mse": [
+        0.00014565962210047416,
+        8.238017429193898e-05,
+        0.00017661726659618093,
+        9.852981225169806e-05
+      ]
+    }
+  ],
+  "probe_sha256": "87dc43f91086ba8e7d0ce1f0bb05ab1390bc75bf985bbd1ea041dd98a4b0e0a8",
+  "source_gl": [
+    {
+      "vendor": "NVIDIA Corporation",
+      "renderer": "NVIDIA GeForce RTX 3090/PCIe/SSE2",
+      "software": false,
+      "internal_width": 480,
+      "internal_height": 480,
+      "output_size": 64
+    }
+  ]
+}

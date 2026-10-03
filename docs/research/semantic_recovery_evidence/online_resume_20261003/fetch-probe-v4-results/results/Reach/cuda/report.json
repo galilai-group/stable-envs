@@ -1,0 +1,110 @@
+{
+  "status": "COMPLETE_DIAGNOSTIC_ONLY",
+  "diagnostic_only": true,
+  "registration": "swm/FetchReach-v3",
+  "device": "cuda",
+  "host": "gpu2105.oscar.ccv.brown.edu",
+  "job": "6976286",
+  "source_internal_size": 480,
+  "output_size": 64,
+  "cases": [
+    {
+      "step": 1,
+      "method": "native64",
+      "per_frame_mse": [
+        0.0011326848447712418,
+        0.0012473104795431243,
+        0.0011842487965365884,
+        0.001187023420479303
+      ]
+    },
+    {
+      "step": 1,
+      "method": "ss2",
+      "per_frame_mse": [
+        0.0008391867010284507,
+        0.0009217796340349866,
+        0.0008552662537645777,
+        0.0008715397923875432
+      ]
+    },
+    {
+      "step": 1,
+      "method": "ss4",
+      "per_frame_mse": [
+        0.0007942257785467128,
+        0.0008842202117775215,
+        0.0008269718477668846,
+        0.0008200309075836217
+      ]
+    },
+    {
+      "step": 1,
+      "method": "native480_linear64",
+      "per_frame_mse": [
+        6.114435153146225e-05,
+        0.00016870639697872614,
+        9.455623037613738e-05,
+        5.8910385028194274e-05
+      ]
+    },
+    {
+      "step": 2,
+      "method": "native64",
+      "per_frame_mse": [
+        0.001113564093938229,
+        0.0012088036552447778,
+        0.0011655035022587466,
+        0.0011590844466871715
+      ]
+    },
+    {
+      "step": 2,
+      "method": "ss2",
+      "per_frame_mse": [
+        0.0008531611940119187,
+        0.0008689403815039088,
+        0.0008520398304338074,
+        0.0008455219046360375
+      ]
+    },
+    {
+      "step": 2,
+      "method": "ss4",
+      "per_frame_mse": [
+        0.0008054431688933744,
+        0.0008268854927591953,
+        0.0008174702938773549,
+        0.0008129109997757274
+      ]
+    },
+    {
+      "step": 2,
+      "method": "native480_linear64",
+      "per_frame_mse": [
+        6.244968882160706e-05,
+        8.483566016275791e-05,
+        5.577281974881456e-05,
+        6.487388664616174e-05
+      ]
+    }
+  ],
+  "source_files": {
+    "stable_worldmodel/spaces.py": "73079b2a66dace087abc7c417691e3cc339887866915553e21d0936a362229eb",
+    "stable_worldmodel/utils.py": "9979483129df100cf4728dd45d1b6d0bb02d1fadec637d7f7065fe7894a3c276",
+    "stable_worldmodel/envs/__init__.py": "118a262677a647c6d6ef8889443b096abe082db4e365fc0a5b1249715e7e3c1a",
+    "stable_worldmodel/envs/gymnasium_robotics/__init__.py": "c3a36c2ecd3832116795d7a15f4eafa647161f4901dbb955ab6565358b02e14c",
+    "stable_worldmodel/envs/gymnasium_robotics/fetch.py": "fd2b1cd2ce79f83498736ea1f92a33f64795ff8010703a8edf2ee43829355fd5"
+  },
+  "probe_sha256": "e7dfac62ba93bf6b638fcdc2c819aecee2d87536430b4f724d5571155c9b2b45",
+  "source_gl": [
+    {
+      "vendor": "NVIDIA Corporation",
+      "renderer": "NVIDIA GeForce RTX 3090/PCIe/SSE2",
+      "software": false,
+      "internal_width": 480,
+      "internal_height": 480,
+      "output_size": 64
+    }
+  ]
+}

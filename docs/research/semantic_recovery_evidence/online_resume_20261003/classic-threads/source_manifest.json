@@ -1,0 +1,13 @@
+{
+  "commit": "176d54532b3c0a251a4f509b74f2fdacc143a63d",
+  "repository": "https://github.com/galilai-group/stable-worldmodel",
+  "files": {
+    "stable_worldmodel/spaces.py": "73079b2a66dace087abc7c417691e3cc339887866915553e21d0936a362229eb",
+    "stable_worldmodel/utils.py": "9979483129df100cf4728dd45d1b6d0bb02d1fadec637d7f7065fe7894a3c276",
+    "stable_worldmodel/envs/gymnasium_control/base.py": "0354779da90bb8348241e5bd046a97f915cf979d94732931f1a121a933298599",
+    "stable_worldmodel/envs/gymnasium_control/acrobot.py": "00ee7912d10e057ae5f34290fb0b609422101b0d8ee4070ea4bf99d3c6bac1c5",
+    "stable_worldmodel/envs/gymnasium_control/cartpole.py": "3421c8afa2ae1d453c23d8e815b5418adc1f77f46aa758e4fd32cccdb9e45087",
+    "stable_worldmodel/envs/gymnasium_control/pendulum.py": "81140706a0b0c1f52f066ae76a02b906a29d69348c1ef5af4e4831db1461a124",
+    "stable_worldmodel/envs/gymnasium_control/mountain_car.py": "3e7d379f1297dfb5e179f87e8627d6af9a3194b83e0b0a61d5dd27eb737b9ce4"
+  }
+}

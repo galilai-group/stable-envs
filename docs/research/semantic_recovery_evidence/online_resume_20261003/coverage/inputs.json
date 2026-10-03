@@ -1,0 +1,36 @@
+{
+  "input_sha256": {
+    "docs/research/semantic_recovery_matrix.json": "aad6d6e570ed6a8c50ad9f32644d7f171bcec9eede3aac6f0eda6d7fd203e0f1",
+    "docs/research/semantic_recovery_evidence/online_resume_20261003/classic-verified/acrobot.csv": "8e918117518a88abfd77747144e5bc1e2889444aa77cec917ff95fe3d60c1448",
+    "docs/research/semantic_recovery_evidence/online_resume_20261003/classic-verified/cartpole.csv": "2a5e5a89e36358d3dbbc80ff008edfde88a6aae76b21295d50d549d2492338a7",
+    "docs/research/semantic_recovery_evidence/online_resume_20261003/classic-verified/pendulum.csv": "6ec18a04fe9c250b07824b52d319630c3e514032b79796d774cd99ad7fc32d28",
+    "docs/research/semantic_recovery_evidence/online_resume_20261003/classic-verified/mountain_car.csv": "8ccfd83d21162991af494a46e831704754e30eb281452eb9a179d59db5f3dc9a",
+    "docs/research/semantic_recovery_evidence/online_resume_20261003/classic-verified/mountain_car_continuous.csv": "faa4b2e75c74cd20f9bb3f4f3330e9b122c59a0054b71422620bf2763e44c3c3",
+    "docs/research/semantic_recovery_evidence/online_resume_20261003/navigation-verified/two_room.csv": "9f6aba975b42340ee1a851673d316ff367bf321cf77cb4afcd8e6b19da1b6a5c",
+    "docs/research/semantic_recovery_evidence/online_resume_20261003/navigation-verified/piecewise.csv": "761c0977d5c5b0d033c9fbc39a859f75b977ea5bbb5c7514c1424ba3b26aa98c",
+    "docs/research/semantic_recovery_evidence/online_resume_20261003/pick-verified/FetchPickAndPlace-v3/online.csv": "abea789c68550ba6e55414acb7c8645503d504bc2cf1b73dccdd2b255ffd09f1",
+    "docs/research/semantic_recovery_evidence/online_resume_20261003/pick-verified/FetchPickAndPlaceDense-v3/online.csv": "aaad9f10b548ffb1b403fa5bf6b35a3b70f67e8182cca36c302e9efeacb3bc98",
+    "docs/research/semantic_recovery_evidence/online_resume_20261003/pick-verified/FetchPickAndPlaceDict-v3/online.csv": "14a066cc66c6c9cfcc6da83abf599aa9f0d2db789a0f8ed39bc2ad7aaa926952",
+    "docs/research/semantic_recovery_evidence/online_resume_20261003/fetch/results/FetchPush-v3/image-gates/cpu.json": "f2fe4cee5ccfc333a1a692ed88d0e79d909e3566ad5f57fe84971d1821f06e00",
+    "docs/research/semantic_recovery_evidence/online_resume_20261003/fetch/results/FetchPushDense-v3/image-gates/cpu.json": "8fd720408b84dc484728eb98ca85dde5bccadfed856e3365d38256cda972fff2",
+    "docs/research/semantic_recovery_evidence/online_resume_20261003/fetch/results/FetchPushDict-v3/image-gates/cpu.json": "00a5c0aa8716af3f53da72d64e7fdd202fe113ec1ca8be8e3a496b6a74d47ed7",
+    "docs/research/semantic_recovery_evidence/online_resume_20261003/fetch/results/FetchReach-v3/image-gates/cpu.json": "c8ee85c46cae1ba874069c66706dddebe54d1f47eea8754ce3000f10634d5f46",
+    "docs/research/semantic_recovery_evidence/online_resume_20261003/fetch/results/FetchReachDense-v3/image-gates/cpu.json": "1edf5476d53cbdcd21419fe7bc3e0d94ca5fc2c9c6a9dec173953c5cd7f7f251",
+    "docs/research/semantic_recovery_evidence/online_resume_20261003/fetch/results/FetchReachDict-v3/image-gates/cpu.json": "de83809a3f90bb7351f6acbc85bb1147cd104384ae553f14d74262dcd9fbc3ca",
+    "docs/research/semantic_recovery_evidence/online_resume_20261003/fetch/results/FetchSlide-v3/image-gates/cpu.json": "772644b31d5fc752c4b03659201e7334d361d7fb4eea801889c0d60af6f2a475",
+    "docs/research/semantic_recovery_evidence/online_resume_20261003/fetch/results/FetchSlideDense-v3/image-gates/cpu.json": "762b48a6ea4b6f9d95aac8fd2c5d355e5ae0b0bef42c74ebfdb2e585ef07d4bd",
+    "docs/research/semantic_recovery_evidence/online_resume_20261003/fetch/results/FetchSlideDict-v3/image-gates/cpu.json": "b71606ee7e5e199be5692855efb59b6cfd06ea1f2d0547f9e7e76cf19dfe0817"
+  },
+  "counts": {
+    "MEASURED_QUALIFIED": 7,
+    "SOURCE_COMPARISON_RUNNING": 4,
+    "SOURCE_COMPARISON_MISSING": 9,
+    "DEFERRED": 4,
+    "MEASURED_NO_FRAMES_ONLY": 3,
+    "IMAGE_GATE_FAILED": 9,
+    "SOURCE_IMAGE_GATE_RUNNING": 2,
+    "SOURCE_IMAGE_EQUIVALENCE_FAILED": 1,
+    "CORRECTNESS_BLOCKED": 3
+  },
+  "scope": "Fixed online checkpoint; raw evidence validated separately; no offline-render or internal-control speedups"
+}
