@@ -1,0 +1,6 @@
+{
+  "job": "6970476",
+  "status_at_submission": "SUBMITTED",
+  "frozen_source": "classic-snapshot-v1-20261003",
+  "reason": "Investigate slower original render/full-State cells; keep original samples and compare both full sweeps, without selecting the faster run."
+}

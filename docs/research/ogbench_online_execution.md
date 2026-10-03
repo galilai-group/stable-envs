@@ -207,3 +207,29 @@ The paired Scene gate exceeded the first 64-GiB allocation and passed with
 staging make this an acceptance-test footprint, not a production memory bound.
 The failed attempt remains preserved. Large-batch memory and source/pipeline
 throughput are still required; prior process-only 5.27–6.14x gains are not FPS.
+
+## Single-population memory and online diagnostic (October 3)
+
+[Array 6970441](semantic_recovery_evidence/ogbench_online_memory_20261003/tables/)
+independently passes exact replay for Cube and Scene with ordinary production
+B64 constructors, eight owners and CUDA output. Initial coordinator/owner PSS
+is 18–19 GiB and rises to observed 41–43 GiB phase snapshots after repeated
+restores. Complete State batches are only 601,408 and 671,040 bytes. These are
+phase snapshots, not continuous peaks, and do not yet identify the allocation
+or retention mechanism. Parent PSS falls to 1.72–2.18 GiB after closing owners.
+
+At T8 retaining every State, no-frame throughput is 1,570 +/- 65 steps/s for
+Cube and 1,442 +/- 55 for Scene. Rendering every frame reduces online throughput
+to 205 +/- 13 and 192 +/- 10 FPS. No upstream comparison is included. Full-State
+validation currently copies fields to CPU per lane; a bounded component profile
+will distinguish that cost from projection and precomputed-RenderState rendering
+before selecting an optimization or a larger memory-safe batch.
+
+The [completed render-entry profile](semantic_recovery_evidence/ogbench_render_entry_20261003/closure/)
+confirms the target: at B64, compact rendering costs 17–19 ms while full-State
+rendering costs 272–274 ms. Full validation makes 8,448–8,896 Tensor.cpu calls,
+plus per-lane TensorDict iteration and scalar checks. Batched host conversion
+included in rendering reduces the diagnostic means to 145–153 ms with exact
+images. The next bounded candidate should transfer columns once and retain
+every existing structural, finite, range, RNG and profile check. Production
+has not changed from this profile, and independent CPU/CUDA gates remain required.

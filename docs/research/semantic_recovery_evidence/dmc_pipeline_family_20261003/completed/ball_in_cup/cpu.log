@@ -1,0 +1,6 @@
+ball_in_cup cpu 64 1 PASS
+ball_in_cup cpu 64 8 PASS
+ball_in_cup cpu 256 1 PASS
+ball_in_cup cpu 256 8 PASS
+ball_in_cup cpu 1024 1 PASS
+ball_in_cup cpu 1024 8 PASS

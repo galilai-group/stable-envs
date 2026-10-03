@@ -1,0 +1,1424 @@
+{
+  "status": "PASS",
+  "domain": "walker",
+  "name": "DMCWalkerWalk",
+  "host": "gpu2110.oscar.ccv.brown.edu",
+  "job": "6970141",
+  "affinity": [
+    5,
+    12,
+    13,
+    18,
+    19,
+    20,
+    21,
+    29
+  ],
+  "gpu": "NVIDIA GeForce RTX 3090",
+  "versions": {
+    "torch": "2.14.0+cu126",
+    "numpy": "2.5.3",
+    "mujoco": "3.12.0",
+    "dm-control": "1.0.45",
+    "tensordict": "0.14.2"
+  },
+  "renderer_versions": {
+    "mujoco-warp": "3.12.0",
+    "warp-lang": "1.17.0"
+  },
+  "source_sha256": {
+    "stable_envs/_adapters/dmcontrol.py": "6371dff6fbf2541f895db3307e852ff0d25f94eec86994a6c9b31ebb65d601ca",
+    "stable_envs/_adapters/dmcontrol_aligned.py": "ffe8eb3a4facb1c7ed10d0ff2fe288b7ee6611d88cd0d63ae1216e8af90b6a4b",
+    "stable_envs/_adapters/dmcontrol_continuation.py": "eb8dc0ca7a296163e27c3ac1db0823de139855cd7e6602e9ba0b1c25c7a174fd",
+    "stable_envs/_adapters/dmcontrol_execution.py": "4c734e03ce6492990ba4191f7b98622bd478a6502ed9e43484eb10c7e10b4c41",
+    "stable_envs/_adapters/dmcontrol_humanoid.py": "a8c00314d03fea8c14bb41908d3620c2ff21d531bc7f3404406c6d307e76066b",
+    "stable_envs/_adapters/dmcontrol_process.py": "d8e1bc7d3e8166e10fb790463182d78d65798113ff1277e8334c7f27144bf500",
+    "stable_envs/_adapters/dmcontrol_state.py": "9590509cf0a0544a9e9219723fb11477031d0be4209a9cef33e3387dd1e6712f",
+    "stable_envs/envs/dmcontrol/__init__.py": "2607333f544ed5491f8abb54f3410c5633d85c64e3883a7b7d8e99742a474b8b",
+    "stable_envs/envs/dmcontrol/_aligned.py": "3f1c6963ffcfdae24f7b5cf3db8dd1700dba3c8606fdde6024fb00fc3dcd9b27",
+    "stable_envs/envs/dmcontrol/_cells.py": "3998063df28c79cec828f7be8c7071acf4046d8792efc2daa513893bf25b2f21",
+    "stable_envs/envs/dmcontrol/_continuation.py": "33c3786c85ecb6593fd24fb51e8bf8982ba67a13fa30fc65f98e01f6362b7586",
+    "stable_envs/envs/dmcontrol/_first_family.py": "a0af43d79dee647d38dcc46b9b3c34cb1640deb1bd34da70009a6bfdaa398310",
+    "stable_envs/envs/dmcontrol/_humanoid.py": "1f8641322313d1a67ee2e1047c54aa87e55c63f5404a1fbbc233ac54ff9da9e8",
+    "stable_envs/envs/dmcontrol/_model.py": "98a8709106459619ecc5efcb55ca079c360aff14d274451462f0591175bf4eb3",
+    "stable_envs/envs/dmcontrol/_shading.py": "63ce81a0761ad1c7dbc2bff87107921b120c14f53754573d525dddb1140ea39a",
+    "stable_envs/envs/dmcontrol/_tendon.py": "150f5d2b18fb6f0c54288a6e0321f3361ee34d432d81ca650b5d790c2a93fe9b",
+    "stable_envs/envs/dmcontrol/acrobot.py": "f4b7b23d5f431e8c48bc3b4485235c311e9c05baa39432e99ea54040d9cb0243",
+    "stable_envs/envs/dmcontrol/ball_in_cup.py": "2eb5c2ac14f5396a0039157b14aeb87f4096966700f74cc027e384c6e41cf6ad",
+    "stable_envs/envs/dmcontrol/base.py": "8dc8ea0b4c390b2fd88acddb9451628c5da56756348cbc5843648f0e35450bb5",
+    "stable_envs/envs/dmcontrol/cartpole.py": "6e6d351a1b7254852e47fa74f160d68dcb8807bcb048ee54fd9a4f76857b8e16",
+    "stable_envs/envs/dmcontrol/cheetah.py": "54b366a8a1a32903672b4936c27441f96acb0d1f844756a18279ce234f944177",
+    "stable_envs/envs/dmcontrol/finger.py": "04ebcc9a83f13db87d45a5c3ba930bb9eb87d25492e073b325266633f5b07123",
+    "stable_envs/envs/dmcontrol/hopper.py": "fd3b6c02bf848e3f5f7c4de242a23ce4e8bfa88daccfa780422f6d816452ca1c",
+    "stable_envs/envs/dmcontrol/humanoid.py": "e7d836a9057b41d3c14f7bba7ea51e7c75f85a1099dff9bbc10bd639ffbb7704",
+    "stable_envs/envs/dmcontrol/manipulator.py": "e9ab3755721ff9e673014495916af931bb099c7b03689d725c898c70841725cb",
+    "stable_envs/envs/dmcontrol/pendulum.py": "d459557031f62193ebc3049290cc05726d2d13070fe08752f8e90a63c8ee121b",
+    "stable_envs/envs/dmcontrol/point_mass.py": "de288872ce45975d8c95f55edc115b532c6ff48b94daad006c6f48836e87cd89",
+    "stable_envs/envs/dmcontrol/quadruped.py": "0322e2aa0b3b24a17029c0bba0cca68fc4626bcb1940b5e8b5662f3f49e113cc",
+    "stable_envs/envs/dmcontrol/reacher.py": "ccc4a9be5d3f6b01f21e26889662c79f65396367e5fa28f5e52513ad4721a6da",
+    "stable_envs/envs/dmcontrol/suite.py": "c57175a4a80244ad073cf366bfdc03275e58016327fc0517d08b579f908e8986",
+    "stable_envs/envs/dmcontrol/swimmer.py": "6adda465382640363873f44dd118f5818e6f2f18c8609f55ddc9a61bcb1ed003",
+    "stable_envs/envs/dmcontrol/trackcom.py": "70df467b4527bdc1644741578b01bf656dba455563eb54b861437ac2c9ecbe8f",
+    "stable_envs/envs/dmcontrol/trackcom_opengl.py": "d26d1e4dfdb52eb210f7b4c1178a1f37e9f294feda81e71b0f127c8c7363a04f",
+    "stable_envs/envs/dmcontrol/walker.py": "e4a942a8cb7dd842eb18dbf7c0502dda7123f310e0f236f00f632b34d8987650",
+    "stable_envs/_stepping.py": "4b23abcf73767a4a59f0c106e098376ac7b2570608e5d4829a8919dd213f5f99",
+    "stable_envs/_adapters/process_requests.py": "e4b6626543f4ee59a80223f413a2ff2381ba7d6e9dc0e01eafa01b49d6d810d6",
+    "scripts/benchmarks/online_stepping/dmc_pipeline.py": "92f9cf675ccf85cf7b17a3938158d15e1cc47e223f2068d348bfc2146345586c"
+  },
+  "scope": "CPU physics, eight process owners; default 64x64 renderer; all States retained; no policy inference or upstream comparison",
+  "components": [
+    {
+      "device": "cuda",
+      "batch": 64,
+      "horizon": 1,
+      "operation": "task_no_state_with_ipc",
+      "seconds": [
+        0.004162264987826347,
+        0.004228431731462479,
+        0.004173781722784042,
+        0.004198115319013596,
+        0.004396311938762665,
+        0.004162603989243507
+      ],
+      "count_per_sample": 64,
+      "rate_mean": 15170.546429427555,
+      "rate_sd": 314.05486566993596
+    },
+    {
+      "device": "cuda",
+      "batch": 64,
+      "horizon": 1,
+      "operation": "state_export_with_ipc_transfer",
+      "seconds": [
+        0.0014338549226522446,
+        0.001285601407289505,
+        0.0012797880917787552,
+        0.0012713298201560974,
+        0.0012690890580415726,
+        0.0015770867466926575
+      ],
+      "count_per_sample": 64,
+      "rate_mean": 47629.5605125461,
+      "rate_sd": 4102.034494767807
+    },
+    {
+      "device": "cuda",
+      "batch": 64,
+      "horizon": 1,
+      "operation": "render_saved_final",
+      "seconds": [
+        0.0020666923373937607,
+        0.0016202963888645172,
+        0.0015921276062726974,
+        0.0015939678996801376,
+        0.0015933960676193237,
+        0.0015891660004854202
+      ],
+      "count_per_sample": 64,
+      "rate_mean": 38542.323129882425,
+      "rate_sd": 3721.683419893929
+    },
+    {
+      "device": "cuda",
+      "batch": 64,
+      "horizon": 1,
+      "operation": "render_saved_all",
+      "seconds": [
+        0.0015906356275081635,
+        0.0015919767320156097,
+        0.0015741176903247833,
+        0.0015779752284288406,
+        0.0015896838158369064,
+        0.0015842169523239136
+      ],
+      "count_per_sample": 64,
+      "rate_mean": 40385.19453442443,
+      "rate_sd": 187.7781612313766
+    },
+    {
+      "device": "cuda",
+      "batch": 64,
+      "horizon": 8,
+      "operation": "task_no_state_with_ipc",
+      "seconds": [
+        0.035593556240200996,
+        0.035534756258130074,
+        0.0355139784514904,
+        0.03565019555389881,
+        0.0353951845318079,
+        0.03539394028484821
+      ],
+      "count_per_sample": 512,
+      "rate_mean": 14417.113899924274,
+      "rate_sd": 42.13299015121249
+    },
+    {
+      "device": "cuda",
+      "batch": 64,
+      "horizon": 8,
+      "operation": "state_export_with_ipc_transfer",
+      "seconds": [
+        0.001269809901714325,
+        0.001403188332915306,
+        0.0012715477496385574,
+        0.0012497901916503906,
+        0.0012573190033435822,
+        0.0013090167194604874
+      ],
+      "count_per_sample": 64,
+      "rate_mean": 49557.70546713355,
+      "rate_sd": 2091.355288868091
+    },
+    {
+      "device": "cuda",
+      "batch": 64,
+      "horizon": 8,
+      "operation": "render_saved_final",
+      "seconds": [
+        0.0016025770455598831,
+        0.0015908554196357727,
+        0.001592027023434639,
+        0.001597946509718895,
+        0.0016053169965744019,
+        0.0015836264938116074
+      ],
+      "count_per_sample": 64,
+      "rate_mean": 40116.40286948762,
+      "rate_sd": 203.50454288922538
+    },
+    {
+      "device": "cuda",
+      "batch": 64,
+      "horizon": 8,
+      "operation": "render_saved_all",
+      "seconds": [
+        0.012453829869627953,
+        0.012416809797286987,
+        0.012426989153027534,
+        0.012292901054024696,
+        0.012627867981791496,
+        0.01229473203420639
+      ],
+      "count_per_sample": 512,
+      "rate_mean": 41231.01235103937,
+      "rate_sd": 407.7849750754473
+    },
+    {
+      "device": "cuda",
+      "batch": 256,
+      "horizon": 1,
+      "operation": "task_no_state_with_ipc",
+      "seconds": [
+        0.014512963593006134,
+        0.014502204954624176,
+        0.01424066536128521,
+        0.014248674735426903,
+        0.014857487753033638,
+        0.014578279107809067
+      ],
+      "count_per_sample": 256,
+      "rate_mean": 17670.983735829435,
+      "rate_sd": 278.7650839020225
+    },
+    {
+      "device": "cuda",
+      "batch": 256,
+      "horizon": 1,
+      "operation": "state_export_with_ipc_transfer",
+      "seconds": [
+        0.0028447434306144714,
+        0.0029976963996887207,
+        0.00287630595266819,
+        0.0029089320451021194,
+        0.0029515549540519714,
+        0.0029107853770256042
+      ],
+      "count_per_sample": 256,
+      "rate_mean": 87846.66994952112,
+      "rate_sd": 1624.716889523414
+    },
+    {
+      "device": "cuda",
+      "batch": 256,
+      "horizon": 1,
+      "operation": "render_saved_final",
+      "seconds": [
+        0.003412451595067978,
+        0.0033827312290668488,
+        0.003412039950489998,
+        0.0034261811524629593,
+        0.00336545892059803,
+        0.003393920138478279
+      ],
+      "count_per_sample": 256,
+      "rate_mean": 75323.49177808211,
+      "rate_sd": 497.0010647606157
+    },
+    {
+      "device": "cuda",
+      "batch": 256,
+      "horizon": 1,
+      "operation": "render_saved_all",
+      "seconds": [
+        0.0034462399780750275,
+        0.0034353192895650864,
+        0.0034058894962072372,
+        0.0034101400524377823,
+        0.0034216009080410004,
+        0.003415370360016823
+      ],
+      "count_per_sample": 256,
+      "rate_mean": 74802.00910958907,
+      "rate_sd": 339.027866445912
+    },
+    {
+      "device": "cuda",
+      "batch": 256,
+      "horizon": 8,
+      "operation": "task_no_state_with_ipc",
+      "seconds": [
+        0.12325983494520187,
+        0.12405098602175713,
+        0.12350130081176758,
+        0.12421181425452232,
+        0.12341468036174774,
+        0.12390605732798576
+      ],
+      "count_per_sample": 2048,
+      "rate_mean": 16553.090842321348,
+      "rate_sd": 51.41782686809358
+    },
+    {
+      "device": "cuda",
+      "batch": 256,
+      "horizon": 8,
+      "operation": "state_export_with_ipc_transfer",
+      "seconds": [
+        0.002777267247438431,
+        0.002851685509085655,
+        0.0029143337160348892,
+        0.0031890403479337692,
+        0.00273810513317585,
+        0.00313752144575119
+      ],
+      "count_per_sample": 256,
+      "rate_mean": 87525.56943920776,
+      "rate_sd": 5480.573348430193
+    },
+    {
+      "device": "cuda",
+      "batch": 256,
+      "horizon": 8,
+      "operation": "render_saved_final",
+      "seconds": [
+        0.0034859292209148407,
+        0.003478560596704483,
+        0.0034683719277381897,
+        0.003456277772784233,
+        0.0033805910497903824,
+        0.0034030992537736893
+      ],
+      "count_per_sample": 256,
+      "rate_mean": 74310.27826368119,
+      "rate_sd": 940.8979600522883
+    },
+    {
+      "device": "cuda",
+      "batch": 256,
+      "horizon": 8,
+      "operation": "render_saved_all",
+      "seconds": [
+        0.02710168994963169,
+        0.026996951550245285,
+        0.027393648400902748,
+        0.02707768976688385,
+        0.026993371546268463,
+        0.02727968990802765
+      ],
+      "count_per_sample": 2048,
+      "rate_mean": 75461.39724914232,
+      "rate_sd": 448.7628450241818
+    },
+    {
+      "device": "cuda",
+      "batch": 1024,
+      "horizon": 1,
+      "operation": "task_no_state_with_ipc",
+      "seconds": [
+        0.0536603219807148,
+        0.054210128262639046,
+        0.05428139492869377,
+        0.05406147986650467,
+        0.05428031645715237,
+        0.05399777740240097
+      ],
+      "count_per_sample": 1024,
+      "rate_mean": 18934.549081163663,
+      "rate_sd": 83.29158973783868
+    },
+    {
+      "device": "cuda",
+      "batch": 1024,
+      "horizon": 1,
+      "operation": "state_export_with_ipc_transfer",
+      "seconds": [
+        0.009956007823348045,
+        0.009922418743371964,
+        0.009772753342986107,
+        0.00976974330842495,
+        0.009957259520888329,
+        0.009673621505498886
+      ],
+      "count_per_sample": 1024,
+      "rate_mean": 104057.00750851246,
+      "rate_sd": 1264.5380911353584
+    },
+    {
+      "device": "cuda",
+      "batch": 1024,
+      "horizon": 1,
+      "operation": "render_saved_final",
+      "seconds": [
+        0.010626783594489098,
+        0.011008940637111664,
+        0.01097261905670166,
+        0.010724274441599846,
+        0.01056775264441967,
+        0.010580223053693771
+      ],
+      "count_per_sample": 1024,
+      "rate_mean": 95311.00537124704,
+      "rate_sd": 1734.5709447421807
+    },
+    {
+      "device": "cuda",
+      "batch": 1024,
+      "horizon": 1,
+      "operation": "render_saved_all",
+      "seconds": [
+        0.010634783655405045,
+        0.01078081876039505,
+        0.010480964556336403,
+        0.010937388986349106,
+        0.01095069944858551,
+        0.010604823008179665
+      ],
+      "count_per_sample": 1024,
+      "rate_mean": 95444.31717846666,
+      "rate_sd": 1692.118284991694
+    },
+    {
+      "device": "cuda",
+      "batch": 1024,
+      "horizon": 8,
+      "operation": "task_no_state_with_ipc",
+      "seconds": [
+        0.4765933211892843,
+        0.4760516956448555,
+        0.47786938957870007,
+        0.47886452078819275,
+        0.476141145452857,
+        0.47596288472414017
+      ],
+      "count_per_sample": 8192,
+      "rate_mean": 17177.196140343898,
+      "rate_sd": 42.73589164436763
+    },
+    {
+      "device": "cuda",
+      "batch": 1024,
+      "horizon": 8,
+      "operation": "state_export_with_ipc_transfer",
+      "seconds": [
+        0.009680608287453651,
+        0.009936096146702766,
+        0.009934067726135254,
+        0.009657317772507668,
+        0.009823976084589958,
+        0.00965476967394352
+      ],
+      "count_per_sample": 1024,
+      "rate_mean": 104707.7698607296,
+      "rate_sd": 1437.451817773739
+    },
+    {
+      "device": "cuda",
+      "batch": 1024,
+      "horizon": 8,
+      "operation": "render_saved_final",
+      "seconds": [
+        0.010696148499846458,
+        0.010652858763933182,
+        0.010646020993590355,
+        0.010624110698699951,
+        0.010676199570298195,
+        0.010721560567617416
+      ],
+      "count_per_sample": 1024,
+      "rate_mean": 95975.55019610884,
+      "rate_sd": 320.4300571219646
+    },
+    {
+      "device": "cuda",
+      "batch": 1024,
+      "horizon": 8,
+      "operation": "render_saved_all",
+      "seconds": [
+        0.08504847064614296,
+        0.08391168154776096,
+        0.08437707647681236,
+        0.08473402634263039,
+        0.0840159710496664,
+        0.08509082347154617
+      ],
+      "count_per_sample": 8192,
+      "rate_mean": 96915.64012331811,
+      "rate_sd": 583.7450573688965
+    }
+  ],
+  "pipeline": [
+    {
+      "device": "cuda",
+      "batch": 64,
+      "horizon": 1,
+      "selection": "none",
+      "mode": "deferred",
+      "emitted_frames": 0,
+      "steps": 64,
+      "seconds": [
+        0.006199607625603676,
+        0.006060466170310974,
+        0.005992008373141289,
+        0.006077716127038002,
+        0.005933798849582672,
+        0.005973407998681068
+      ],
+      "count_per_sample": 64,
+      "rate_mean": 10599.077406402412,
+      "rate_sd": 165.58071216773104,
+      "fps_mean": null,
+      "fps_sd": null
+    },
+    {
+      "device": "cuda",
+      "batch": 64,
+      "horizon": 1,
+      "selection": "none",
+      "mode": "pipeline",
+      "emitted_frames": 0,
+      "steps": 64,
+      "seconds": [
+        0.006285225972533226,
+        0.006042607128620148,
+        0.006022267043590546,
+        0.0060264356434345245,
+        0.0060586873441934586,
+        0.006006324663758278
+      ],
+      "count_per_sample": 64,
+      "rate_mean": 10539.991029306877,
+      "rate_sd": 177.89583653431077,
+      "fps_mean": null,
+      "fps_sd": null
+    },
+    {
+      "device": "cuda",
+      "batch": 64,
+      "horizon": 1,
+      "selection": "final",
+      "mode": "deferred",
+      "emitted_frames": 64,
+      "steps": 64,
+      "seconds": [
+        0.008621685206890106,
+        0.007818832993507385,
+        0.0074764639139175415,
+        0.007405584678053856,
+        0.007467184215784073,
+        0.0077752843499183655
+      ],
+      "count_per_sample": 64,
+      "rate_mean": 8268.81253841772,
+      "rate_sd": 455.8552562089246,
+      "fps_mean": 8268.81253841772,
+      "fps_sd": 455.8552562089246
+    },
+    {
+      "device": "cuda",
+      "batch": 64,
+      "horizon": 1,
+      "selection": "final",
+      "mode": "pipeline",
+      "emitted_frames": 64,
+      "steps": 64,
+      "seconds": [
+        0.007521145045757294,
+        0.007496843114495277,
+        0.008740752935409546,
+        0.007711280137300491,
+        0.007697058841586113,
+        0.0074970535933971405
+      ],
+      "count_per_sample": 64,
+      "rate_mean": 8253.22903304175,
+      "rate_sd": 468.93774092928567,
+      "fps_mean": 8253.22903304175,
+      "fps_sd": 468.93774092928567
+    },
+    {
+      "device": "cuda",
+      "batch": 64,
+      "horizon": 1,
+      "selection": "all",
+      "mode": "deferred",
+      "emitted_frames": 64,
+      "steps": 64,
+      "seconds": [
+        0.0077582914382219315,
+        0.007447343319654465,
+        0.007436476647853851,
+        0.007414376363158226,
+        0.007443154230713844,
+        0.007598383352160454
+      ],
+      "count_per_sample": 64,
+      "rate_mean": 8517.060365713862,
+      "rate_sd": 151.15614967628198,
+      "fps_mean": 8517.060365713862,
+      "fps_sd": 151.15614967628198
+    },
+    {
+      "device": "cuda",
+      "batch": 64,
+      "horizon": 1,
+      "selection": "all",
+      "mode": "pipeline",
+      "emitted_frames": 64,
+      "steps": 64,
+      "seconds": [
+        0.007638651877641678,
+        0.007733512669801712,
+        0.007574593648314476,
+        0.0074506234377622604,
+        0.007369533181190491,
+        0.00738038495182991
+      ],
+      "count_per_sample": 64,
+      "rate_mean": 8508.222199541411,
+      "rate_sd": 166.61795261619406,
+      "fps_mean": 8508.222199541411,
+      "fps_sd": 166.61795261619406
+    },
+    {
+      "device": "cuda",
+      "batch": 64,
+      "horizon": 8,
+      "selection": "none",
+      "mode": "deferred",
+      "emitted_frames": 0,
+      "steps": 512,
+      "seconds": [
+        0.048809513449668884,
+        0.04953916370868683,
+        0.049049247056245804,
+        0.049601731821894646,
+        0.05003729648888111,
+        0.04947364144027233
+      ],
+      "count_per_sample": 512,
+      "rate_mean": 10361.172792586229,
+      "rate_sd": 91.03979730967922,
+      "fps_mean": null,
+      "fps_sd": null
+    },
+    {
+      "device": "cuda",
+      "batch": 64,
+      "horizon": 8,
+      "selection": "none",
+      "mode": "pipeline",
+      "emitted_frames": 0,
+      "steps": 512,
+      "seconds": [
+        0.048279425129294395,
+        0.049677200615406036,
+        0.04832190275192261,
+        0.04817021265625954,
+        0.048411622643470764,
+        0.048751089721918106
+      ],
+      "count_per_sample": 512,
+      "rate_mean": 10535.726176713675,
+      "rate_sd": 120.27694095713949,
+      "fps_mean": null,
+      "fps_sd": null
+    },
+    {
+      "device": "cuda",
+      "batch": 64,
+      "horizon": 8,
+      "selection": "final",
+      "mode": "deferred",
+      "emitted_frames": 64,
+      "steps": 512,
+      "seconds": [
+        0.051582515239715576,
+        0.05205334909260273,
+        0.05732065439224243,
+        0.05104300007224083,
+        0.050877729430794716,
+        0.05091972090303898
+      ],
+      "count_per_sample": 512,
+      "rate_mean": 9807.209722710822,
+      "rate_sd": 437.61493475231725,
+      "fps_mean": 1225.9012153388528,
+      "fps_sd": 54.70186684403966
+    },
+    {
+      "device": "cuda",
+      "batch": 64,
+      "horizon": 8,
+      "selection": "final",
+      "mode": "pipeline",
+      "emitted_frames": 64,
+      "steps": 512,
+      "seconds": [
+        0.07304406724870205,
+        0.05107458867132664,
+        0.0616801455616951,
+        0.0512655358761549,
+        0.05018475838005543,
+        0.05019191466271877
+      ],
+      "count_per_sample": 512,
+      "rate_mean": 9287.545582083325,
+      "rate_sd": 1331.6718621799714,
+      "fps_mean": 1160.9431977604156,
+      "fps_sd": 166.45898277249643
+    },
+    {
+      "device": "cuda",
+      "batch": 64,
+      "horizon": 8,
+      "selection": "all",
+      "mode": "deferred",
+      "emitted_frames": 512,
+      "steps": 512,
+      "seconds": [
+        0.06881786324083805,
+        0.06288043409585953,
+        0.06306103244423866,
+        0.06161283515393734,
+        0.062003083527088165,
+        0.08120678551495075
+      ],
+      "count_per_sample": 512,
+      "rate_mean": 7762.331210908309,
+      "rate_sd": 780.395938454741,
+      "fps_mean": 7762.331210908309,
+      "fps_sd": 780.395938454741
+    },
+    {
+      "device": "cuda",
+      "batch": 64,
+      "horizon": 8,
+      "selection": "all",
+      "mode": "pipeline",
+      "emitted_frames": 512,
+      "steps": 512,
+      "seconds": [
+        0.0635165385901928,
+        0.06227037124335766,
+        0.06421194411814213,
+        0.06666204333305359,
+        0.0616304837167263,
+        0.060440586879849434
+      ],
+      "count_per_sample": 512,
+      "rate_mean": 8119.322445112951,
+      "rate_sd": 278.20151064670733,
+      "fps_mean": 8119.322445112951,
+      "fps_sd": 278.20151064670733
+    },
+    {
+      "device": "cuda",
+      "batch": 256,
+      "horizon": 1,
+      "selection": "none",
+      "mode": "deferred",
+      "emitted_frames": 0,
+      "steps": 256,
+      "seconds": [
+        0.018007222563028336,
+        0.01806299015879631,
+        0.018198387697339058,
+        0.01815246045589447,
+        0.018256131559610367,
+        0.018308211117982864
+      ],
+      "count_per_sample": 256,
+      "rate_mean": 14094.09637008093,
+      "rate_sd": 88.81508322468949,
+      "fps_mean": null,
+      "fps_sd": null
+    },
+    {
+      "device": "cuda",
+      "batch": 256,
+      "horizon": 1,
+      "selection": "none",
+      "mode": "pipeline",
+      "emitted_frames": 0,
+      "steps": 256,
+      "seconds": [
+        0.018198540434241295,
+        0.01811813935637474,
+        0.018609367311000824,
+        0.017930561676621437,
+        0.01789611205458641,
+        0.01829966902732849
+      ],
+      "count_per_sample": 256,
+      "rate_mean": 14087.411304291327,
+      "rate_sd": 202.29053796153514,
+      "fps_mean": null,
+      "fps_sd": null
+    },
+    {
+      "device": "cuda",
+      "batch": 256,
+      "horizon": 1,
+      "selection": "final",
+      "mode": "deferred",
+      "emitted_frames": 256,
+      "steps": 256,
+      "seconds": [
+        0.022160604596138,
+        0.02175077609717846,
+        0.02195645682513714,
+        0.021844008937478065,
+        0.021998345851898193,
+        0.021908778697252274
+      ],
+      "count_per_sample": 256,
+      "rate_mean": 11670.446619562676,
+      "rate_sd": 74.43800827048806,
+      "fps_mean": 11670.446619562676,
+      "fps_sd": 74.43800827048806
+    },
+    {
+      "device": "cuda",
+      "batch": 256,
+      "horizon": 1,
+      "selection": "final",
+      "mode": "pipeline",
+      "emitted_frames": 256,
+      "steps": 256,
+      "seconds": [
+        0.021656299009919167,
+        0.0219278484582901,
+        0.021794158965349197,
+        0.021664198487997055,
+        0.027192451059818268,
+        0.02157806046307087
+      ],
+      "count_per_sample": 256,
+      "rate_mean": 11389.495017009851,
+      "rate_sd": 969.8983567338427,
+      "fps_mean": 11389.495017009851,
+      "fps_sd": 969.8983567338427
+    },
+    {
+      "device": "cuda",
+      "batch": 256,
+      "horizon": 1,
+      "selection": "all",
+      "mode": "deferred",
+      "emitted_frames": 256,
+      "steps": 256,
+      "seconds": [
+        0.021891646087169647,
+        0.02187361754477024,
+        0.02193995751440525,
+        0.021900247782468796,
+        0.02179216779768467,
+        0.02190265618264675
+      ],
+      "count_per_sample": 256,
+      "rate_mean": 11698.424861054027,
+      "rate_sd": 26.613831366842316,
+      "fps_mean": 11698.424861054027,
+      "fps_sd": 26.613831366842316
+    },
+    {
+      "device": "cuda",
+      "batch": 256,
+      "horizon": 1,
+      "selection": "all",
+      "mode": "pipeline",
+      "emitted_frames": 256,
+      "steps": 256,
+      "seconds": [
+        0.022147035226225853,
+        0.021590808406472206,
+        0.0213868897408247,
+        0.02185712568461895,
+        0.022081302478909492,
+        0.02168891951441765
+      ],
+      "count_per_sample": 256,
+      "rate_mean": 11749.194191855566,
+      "rate_sd": 158.09823090849622,
+      "fps_mean": 11749.194191855566,
+      "fps_sd": 158.09823090849622
+    },
+    {
+      "device": "cuda",
+      "batch": 256,
+      "horizon": 8,
+      "selection": "none",
+      "mode": "deferred",
+      "emitted_frames": 0,
+      "steps": 2048,
+      "seconds": [
+        0.15366359241306782,
+        0.15363910607993603,
+        0.1544767078012228,
+        0.15641112998127937,
+        0.15296291932463646,
+        0.15299353003501892
+      ],
+      "count_per_sample": 2048,
+      "rate_mean": 13297.361216743853,
+      "rate_sd": 110.73111404176272,
+      "fps_mean": null,
+      "fps_sd": null
+    },
+    {
+      "device": "cuda",
+      "batch": 256,
+      "horizon": 8,
+      "selection": "none",
+      "mode": "pipeline",
+      "emitted_frames": 0,
+      "steps": 2048,
+      "seconds": [
+        0.15313837863504887,
+        0.15099875815212727,
+        0.15315881744027138,
+        0.15250686556100845,
+        0.1531074084341526,
+        0.15291744843125343
+      ],
+      "count_per_sample": 2048,
+      "rate_mean": 13417.712149994733,
+      "rate_sd": 74.35863634812284,
+      "fps_mean": null,
+      "fps_sd": null
+    },
+    {
+      "device": "cuda",
+      "batch": 256,
+      "horizon": 8,
+      "selection": "final",
+      "mode": "deferred",
+      "emitted_frames": 256,
+      "steps": 2048,
+      "seconds": [
+        0.15830721333622932,
+        0.15765350125730038,
+        0.15810187347233295,
+        0.15758004039525986,
+        0.15742260217666626,
+        0.1579829752445221
+      ],
+      "count_per_sample": 2048,
+      "rate_mean": 12975.102965460126,
+      "rate_sd": 28.083802843662333,
+      "fps_mean": 1621.8878706825158,
+      "fps_sd": 3.5104753554577917
+    },
+    {
+      "device": "cuda",
+      "batch": 256,
+      "horizon": 8,
+      "selection": "final",
+      "mode": "pipeline",
+      "emitted_frames": 256,
+      "steps": 2048,
+      "seconds": [
+        0.15649257972836494,
+        0.15663061663508415,
+        0.156562777236104,
+        0.1559570860117674,
+        0.15683940798044205,
+        0.15818536467850208
+      ],
+      "count_per_sample": 2048,
+      "rate_mean": 13063.307132353813,
+      "rate_sd": 62.13261500580581,
+      "fps_mean": 1632.9133915442267,
+      "fps_sd": 7.766576875725726
+    },
+    {
+      "device": "cuda",
+      "batch": 256,
+      "horizon": 8,
+      "selection": "all",
+      "mode": "deferred",
+      "emitted_frames": 2048,
+      "steps": 2048,
+      "seconds": [
+        0.18358821235597134,
+        0.1829370353370905,
+        0.18391386792063713,
+        0.18321655318140984,
+        0.18321439437568188,
+        0.18363322131335735
+      ],
+      "count_per_sample": 2048,
+      "rate_mean": 11165.835484897572,
+      "rate_sd": 21.68488791365479,
+      "fps_mean": 11165.835484897572,
+      "fps_sd": 21.68488791365479
+    },
+    {
+      "device": "cuda",
+      "batch": 256,
+      "horizon": 8,
+      "selection": "all",
+      "mode": "pipeline",
+      "emitted_frames": 2048,
+      "steps": 2048,
+      "seconds": [
+        0.18328487128019333,
+        0.18258864805102348,
+        0.18333513475954533,
+        0.18392755649983883,
+        0.18135588988661766,
+        0.18213795125484467
+      ],
+      "count_per_sample": 2048,
+      "rate_mean": 11205.481275437458,
+      "rate_sd": 57.318225392574966,
+      "fps_mean": 11205.481275437458,
+      "fps_sd": 57.318225392574966
+    },
+    {
+      "device": "cuda",
+      "batch": 1024,
+      "horizon": 1,
+      "selection": "none",
+      "mode": "deferred",
+      "emitted_frames": 0,
+      "steps": 1024,
+      "seconds": [
+        0.07023669220507145,
+        0.06512376107275486,
+        0.06426268629729748,
+        0.06407042779028416,
+        0.06954440660774708,
+        0.0689573623239994
+      ],
+      "count_per_sample": 1024,
+      "rate_mean": 15299.058656258798,
+      "rate_sd": 648.3158535069651,
+      "fps_mean": null,
+      "fps_sd": null
+    },
+    {
+      "device": "cuda",
+      "batch": 1024,
+      "horizon": 1,
+      "selection": "none",
+      "mode": "pipeline",
+      "emitted_frames": 0,
+      "steps": 1024,
+      "seconds": [
+        0.06447855196893215,
+        0.06425824761390686,
+        0.06449017114937305,
+        0.06429417431354523,
+        0.0642786268144846,
+        0.0643885750323534
+      ],
+      "count_per_sample": 1024,
+      "rate_mean": 15909.369462778828,
+      "rate_sd": 25.436401836524723,
+      "fps_mean": null,
+      "fps_sd": null
+    },
+    {
+      "device": "cuda",
+      "batch": 1024,
+      "horizon": 1,
+      "selection": "final",
+      "mode": "deferred",
+      "emitted_frames": 1024,
+      "steps": 1024,
+      "seconds": [
+        0.07503821887075901,
+        0.07496180757880211,
+        0.07520401477813721,
+        0.07517221570014954,
+        0.07537217624485493,
+        0.07507659681141376
+      ],
+      "count_per_sample": 1024,
+      "rate_mean": 13628.389386003724,
+      "rate_sd": 26.27945380066104,
+      "fps_mean": 13628.389386003724,
+      "fps_sd": 26.27945380066104
+    },
+    {
+      "device": "cuda",
+      "batch": 1024,
+      "horizon": 1,
+      "selection": "final",
+      "mode": "pipeline",
+      "emitted_frames": 1024,
+      "steps": 1024,
+      "seconds": [
+        0.07561878487467766,
+        0.07548749260604382,
+        0.07523650676012039,
+        0.07556083239614964,
+        0.07526079751551151,
+        0.0753213744610548
+      ],
+      "count_per_sample": 1024,
+      "rate_mean": 13578.379692162862,
+      "rate_sd": 29.298775789626823,
+      "fps_mean": 13578.379692162862,
+      "fps_sd": 29.298775789626823
+    },
+    {
+      "device": "cuda",
+      "batch": 1024,
+      "horizon": 1,
+      "selection": "all",
+      "mode": "deferred",
+      "emitted_frames": 1024,
+      "steps": 1024,
+      "seconds": [
+        0.07568165101110935,
+        0.07513038627803326,
+        0.07523260451853275,
+        0.07569346204400063,
+        0.07518322765827179,
+        0.07597886025905609
+      ],
+      "count_per_sample": 1024,
+      "rate_mean": 13566.143262618041,
+      "rate_sd": 62.52576466204993,
+      "fps_mean": 13566.143262618041,
+      "fps_sd": 62.52576466204993
+    },
+    {
+      "device": "cuda",
+      "batch": 1024,
+      "horizon": 1,
+      "selection": "all",
+      "mode": "pipeline",
+      "emitted_frames": 1024,
+      "steps": 1024,
+      "seconds": [
+        0.07551896385848522,
+        0.07546341419219971,
+        0.07513528876006603,
+        0.07511588931083679,
+        0.07553420215845108,
+        0.0760665200650692
+      ],
+      "count_per_sample": 1024,
+      "rate_mean": 13568.114923017609,
+      "rate_sd": 62.09370912976174,
+      "fps_mean": 13568.114923017609,
+      "fps_sd": 62.09370912976174
+    },
+    {
+      "device": "cuda",
+      "batch": 1024,
+      "horizon": 8,
+      "selection": "none",
+      "mode": "deferred",
+      "emitted_frames": 0,
+      "steps": 8192,
+      "seconds": [
+        0.5686122253537178,
+        0.5576794277876616,
+        0.5578936040401459,
+        0.5566715132445097,
+        0.5578787364065647,
+        0.5590580459684134
+      ],
+      "count_per_sample": 8192,
+      "rate_mean": 14638.950976065807,
+      "rate_sd": 115.37125923353956,
+      "fps_mean": null,
+      "fps_sd": null
+    },
+    {
+      "device": "cuda",
+      "batch": 1024,
+      "horizon": 8,
+      "selection": "none",
+      "mode": "pipeline",
+      "emitted_frames": 0,
+      "steps": 8192,
+      "seconds": [
+        0.5565743241459131,
+        0.5558261796832085,
+        0.5565704759210348,
+        0.5551813077181578,
+        0.5575365889817476,
+        0.5750193111598492
+      ],
+      "count_per_sample": 8192,
+      "rate_mean": 14645.160834240332,
+      "rate_sd": 196.4390712960003,
+      "fps_mean": null,
+      "fps_sd": null
+    },
+    {
+      "device": "cuda",
+      "batch": 1024,
+      "horizon": 8,
+      "selection": "final",
+      "mode": "deferred",
+      "emitted_frames": 1024,
+      "steps": 8192,
+      "seconds": [
+        0.568470535799861,
+        0.5592961311340332,
+        0.5607335697859526,
+        0.5644996166229248,
+        0.5643000714480877,
+        0.5632352400571108
+      ],
+      "count_per_sample": 8192,
+      "rate_mean": 14540.103895478132,
+      "rate_sd": 82.87579519404801,
+      "fps_mean": 1817.5129869347666,
+      "fps_sd": 10.359474399256001
+    },
+    {
+      "device": "cuda",
+      "batch": 1024,
+      "horizon": 8,
+      "selection": "final",
+      "mode": "pipeline",
+      "emitted_frames": 1024,
+      "steps": 8192,
+      "seconds": [
+        0.5632167998701334,
+        0.564469950273633,
+        0.5630913805216551,
+        0.5615638233721256,
+        0.5664273239672184,
+        0.5646534077823162
+      ],
+      "count_per_sample": 8192,
+      "rate_mean": 14527.40654833219,
+      "rate_sd": 42.87349568663041,
+      "fps_mean": 1815.9258185415238,
+      "fps_sd": 5.359186960828802
+    },
+    {
+      "device": "cuda",
+      "batch": 1024,
+      "horizon": 8,
+      "selection": "all",
+      "mode": "deferred",
+      "emitted_frames": 8192,
+      "steps": 8192,
+      "seconds": [
+        0.6536329966038465,
+        0.6395589280873537,
+        0.6386239640414715,
+        0.6465883553028107,
+        0.645200178027153,
+        0.6508384421467781
+      ],
+      "count_per_sample": 8192,
+      "rate_mean": 12687.114296030039,
+      "rate_sd": 117.2556568324619,
+      "fps_mean": 12687.114296030039,
+      "fps_sd": 117.2556568324619
+    },
+    {
+      "device": "cuda",
+      "batch": 1024,
+      "horizon": 8,
+      "selection": "all",
+      "mode": "pipeline",
+      "emitted_frames": 8192,
+      "steps": 8192,
+      "seconds": [
+        0.6343283411115408,
+        0.6336643043905497,
+        0.6306032221764326,
+        0.6325551848858595,
+        0.637057825922966,
+        0.6312288176268339
+      ],
+      "count_per_sample": 8192,
+      "rate_mean": 12936.798250217782,
+      "rate_sd": 47.74776327681511,
+      "fps_mean": 12936.798250217782,
+      "fps_sd": 47.74776327681511
+    }
+  ],
+  "gates": [
+    {
+      "device": "cuda",
+      "batch": 64,
+      "horizon": 1,
+      "selection": "none",
+      "complete_state_task": "PASS",
+      "frame_mse_vs_deferred": null
+    },
+    {
+      "device": "cuda",
+      "batch": 64,
+      "horizon": 1,
+      "selection": "final",
+      "complete_state_task": "PASS",
+      "frame_mse_vs_deferred": 0
+    },
+    {
+      "device": "cuda",
+      "batch": 64,
+      "horizon": 1,
+      "selection": "all",
+      "complete_state_task": "PASS",
+      "frame_mse_vs_deferred": 0
+    },
+    {
+      "device": "cuda",
+      "batch": 64,
+      "horizon": 8,
+      "selection": "none",
+      "complete_state_task": "PASS",
+      "frame_mse_vs_deferred": null
+    },
+    {
+      "device": "cuda",
+      "batch": 64,
+      "horizon": 8,
+      "selection": "final",
+      "complete_state_task": "PASS",
+      "frame_mse_vs_deferred": 0
+    },
+    {
+      "device": "cuda",
+      "batch": 64,
+      "horizon": 8,
+      "selection": "all",
+      "complete_state_task": "PASS",
+      "frame_mse_vs_deferred": 0
+    },
+    {
+      "device": "cuda",
+      "batch": 256,
+      "horizon": 1,
+      "selection": "none",
+      "complete_state_task": "PASS",
+      "frame_mse_vs_deferred": null
+    },
+    {
+      "device": "cuda",
+      "batch": 256,
+      "horizon": 1,
+      "selection": "final",
+      "complete_state_task": "PASS",
+      "frame_mse_vs_deferred": 0
+    },
+    {
+      "device": "cuda",
+      "batch": 256,
+      "horizon": 1,
+      "selection": "all",
+      "complete_state_task": "PASS",
+      "frame_mse_vs_deferred": 0
+    },
+    {
+      "device": "cuda",
+      "batch": 256,
+      "horizon": 8,
+      "selection": "none",
+      "complete_state_task": "PASS",
+      "frame_mse_vs_deferred": null
+    },
+    {
+      "device": "cuda",
+      "batch": 256,
+      "horizon": 8,
+      "selection": "final",
+      "complete_state_task": "PASS",
+      "frame_mse_vs_deferred": 0
+    },
+    {
+      "device": "cuda",
+      "batch": 256,
+      "horizon": 8,
+      "selection": "all",
+      "complete_state_task": "PASS",
+      "frame_mse_vs_deferred": 0
+    },
+    {
+      "device": "cuda",
+      "batch": 1024,
+      "horizon": 1,
+      "selection": "none",
+      "complete_state_task": "PASS",
+      "frame_mse_vs_deferred": null
+    },
+    {
+      "device": "cuda",
+      "batch": 1024,
+      "horizon": 1,
+      "selection": "final",
+      "complete_state_task": "PASS",
+      "frame_mse_vs_deferred": 0
+    },
+    {
+      "device": "cuda",
+      "batch": 1024,
+      "horizon": 1,
+      "selection": "all",
+      "complete_state_task": "PASS",
+      "frame_mse_vs_deferred": 0
+    },
+    {
+      "device": "cuda",
+      "batch": 1024,
+      "horizon": 8,
+      "selection": "none",
+      "complete_state_task": "PASS",
+      "frame_mse_vs_deferred": null
+    },
+    {
+      "device": "cuda",
+      "batch": 1024,
+      "horizon": 8,
+      "selection": "final",
+      "complete_state_task": "PASS",
+      "frame_mse_vs_deferred": 0
+    },
+    {
+      "device": "cuda",
+      "batch": 1024,
+      "horizon": 8,
+      "selection": "all",
+      "complete_state_task": "PASS",
+      "frame_mse_vs_deferred": 0
+    }
+  ],
+  "opengl": {
+    "vendor": "NVIDIA Corporation",
+    "renderer": "NVIDIA GeForce RTX 3090/PCIe/SSE2",
+    "software": false
+  }
+}

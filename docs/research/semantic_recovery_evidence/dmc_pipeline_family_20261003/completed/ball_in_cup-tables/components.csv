@@ -1,0 +1,49 @@
+domain,device,host,gpu,job,batch,horizon,operation,rate_mean,rate_sd
+ball_in_cup,cpu,gpu2108.oscar.ccv.brown.edu,,6970202,64,1,task_no_state_with_ipc,17766.078521872943,709.5328269435487
+ball_in_cup,cpu,gpu2108.oscar.ccv.brown.edu,,6970202,64,1,state_export_with_ipc_transfer,59803.474313747676,3072.886831641562
+ball_in_cup,cpu,gpu2108.oscar.ccv.brown.edu,,6970202,64,1,render_saved_final,184.50345973902583,0.23897444192885192
+ball_in_cup,cpu,gpu2108.oscar.ccv.brown.edu,,6970202,64,1,render_saved_all,184.97468865376467,0.6691616081233734
+ball_in_cup,cpu,gpu2108.oscar.ccv.brown.edu,,6970202,64,8,task_no_state_with_ipc,16117.495103716145,1835.3874962658356
+ball_in_cup,cpu,gpu2108.oscar.ccv.brown.edu,,6970202,64,8,state_export_with_ipc_transfer,59587.19945935717,2910.9207407876916
+ball_in_cup,cpu,gpu2108.oscar.ccv.brown.edu,,6970202,64,8,render_saved_final,173.96051523781233,0.4024117395848966
+ball_in_cup,cpu,gpu2108.oscar.ccv.brown.edu,,6970202,64,8,render_saved_all,180.85613847287803,0.35165293441191975
+ball_in_cup,cpu,gpu2108.oscar.ccv.brown.edu,,6970202,256,1,task_no_state_with_ipc,22886.18098177158,180.40491776317273
+ball_in_cup,cpu,gpu2108.oscar.ccv.brown.edu,,6970202,256,1,state_export_with_ipc_transfer,112934.89859619949,4822.448786987415
+ball_in_cup,cpu,gpu2108.oscar.ccv.brown.edu,,6970202,256,1,render_saved_final,220.9900403021111,0.8134487486920573
+ball_in_cup,cpu,gpu2108.oscar.ccv.brown.edu,,6970202,256,1,render_saved_all,218.9150904378277,3.910299973067255
+ball_in_cup,cpu,gpu2108.oscar.ccv.brown.edu,,6970202,256,8,task_no_state_with_ipc,21664.81299157532,874.6640405371502
+ball_in_cup,cpu,gpu2108.oscar.ccv.brown.edu,,6970202,256,8,state_export_with_ipc_transfer,107332.75292174294,361.2301426733106
+ball_in_cup,cpu,gpu2108.oscar.ccv.brown.edu,,6970202,256,8,render_saved_final,208.59978973857244,1.3781003504794014
+ball_in_cup,cpu,gpu2108.oscar.ccv.brown.edu,,6970202,256,8,render_saved_all,205.3965082854439,0.49417903598552326
+ball_in_cup,cpu,gpu2108.oscar.ccv.brown.edu,,6970202,1024,1,task_no_state_with_ipc,23564.47122764046,110.95276820384979
+ball_in_cup,cpu,gpu2108.oscar.ccv.brown.edu,,6970202,1024,1,state_export_with_ipc_transfer,141796.37517393104,6622.705410900374
+ball_in_cup,cpu,gpu2108.oscar.ccv.brown.edu,,6970202,1024,1,render_saved_final,184.10438292653436,2.4655990427532397
+ball_in_cup,cpu,gpu2108.oscar.ccv.brown.edu,,6970202,1024,1,render_saved_all,190.8396994886748,7.6052562294718165
+ball_in_cup,cpu,gpu2108.oscar.ccv.brown.edu,,6970202,1024,8,task_no_state_with_ipc,22621.855922752624,171.93389573256727
+ball_in_cup,cpu,gpu2108.oscar.ccv.brown.edu,,6970202,1024,8,state_export_with_ipc_transfer,144669.48161453375,2276.5362574553947
+ball_in_cup,cpu,gpu2108.oscar.ccv.brown.edu,,6970202,1024,8,render_saved_final,138.59986110713456,5.627967836425835
+ball_in_cup,cpu,gpu2108.oscar.ccv.brown.edu,,6970202,1024,8,render_saved_all,156.62014634504513,10.095704731781407
+ball_in_cup,cuda,gpu2108.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6970202,64,1,task_no_state_with_ipc,16151.950795945306,1816.3826746847606
+ball_in_cup,cuda,gpu2108.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6970202,64,1,state_export_with_ipc_transfer,49188.09134728538,1310.3530789642891
+ball_in_cup,cuda,gpu2108.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6970202,64,1,render_saved_final,4328.096357157878,415.40380695806084
+ball_in_cup,cuda,gpu2108.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6970202,64,1,render_saved_all,4444.332240873015,49.28643394178359
+ball_in_cup,cuda,gpu2108.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6970202,64,8,task_no_state_with_ipc,17060.681211311257,87.98276524838404
+ball_in_cup,cuda,gpu2108.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6970202,64,8,state_export_with_ipc_transfer,46913.13446763826,905.0066142472288
+ball_in_cup,cuda,gpu2108.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6970202,64,8,render_saved_final,4817.722181654215,153.01883194887213
+ball_in_cup,cuda,gpu2108.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6970202,64,8,render_saved_all,4518.706148614042,53.63583671290154
+ball_in_cup,cuda,gpu2108.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6970202,256,1,task_no_state_with_ipc,22305.981452419703,327.5048436284041
+ball_in_cup,cuda,gpu2108.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6970202,256,1,state_export_with_ipc_transfer,104099.39853208319,1381.6942955834913
+ball_in_cup,cuda,gpu2108.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6970202,256,1,render_saved_final,7414.42004920969,132.19196862675778
+ball_in_cup,cuda,gpu2108.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6970202,256,1,render_saved_all,7569.599610304967,46.30872553635595
+ball_in_cup,cuda,gpu2108.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6970202,256,8,task_no_state_with_ipc,21375.684472881003,733.8976427823519
+ball_in_cup,cuda,gpu2108.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6970202,256,8,state_export_with_ipc_transfer,100528.9866736795,3630.046116756604
+ball_in_cup,cuda,gpu2108.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6970202,256,8,render_saved_final,9330.147942497108,19.24351211103174
+ball_in_cup,cuda,gpu2108.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6970202,256,8,render_saved_all,7853.17482398112,58.761014988379344
+ball_in_cup,cuda,gpu2108.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6970202,1024,1,task_no_state_with_ipc,23475.9609773006,84.1509176564061
+ball_in_cup,cuda,gpu2108.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6970202,1024,1,state_export_with_ipc_transfer,134562.54217170936,1324.7632933826121
+ball_in_cup,cuda,gpu2108.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6970202,1024,1,render_saved_final,9029.518590590253,89.8980206637312
+ball_in_cup,cuda,gpu2108.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6970202,1024,1,render_saved_all,9004.05724690144,75.00936780172962
+ball_in_cup,cuda,gpu2108.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6970202,1024,8,task_no_state_with_ipc,22259.956810327243,807.0772567772467
+ball_in_cup,cuda,gpu2108.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6970202,1024,8,state_export_with_ipc_transfer,132973.34327862714,1566.198724729232
+ball_in_cup,cuda,gpu2108.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6970202,1024,8,render_saved_final,12139.893682119906,35.8373144590522
+ball_in_cup,cuda,gpu2108.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6970202,1024,8,render_saved_all,9549.151717737815,13.80629435055198

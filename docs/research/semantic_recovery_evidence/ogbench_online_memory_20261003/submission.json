@@ -1,0 +1,6 @@
+{
+  "job": "6970441",
+  "remote": "/oscar/scratch/sboughan/se-semantic-recovery/ogbench-online-memory-v1-20261003",
+  "archive_sha256": "c182dd5d8bf590048fb247bf4ac31a511ad573cf8235e551fddab225318b131e",
+  "scope": "one production population per job, Cube/Scene B64, CUDA output, no production change"
+}

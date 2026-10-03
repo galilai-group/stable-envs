@@ -169,3 +169,33 @@ online rates span 10,129–14,111 FPS, CPU online 338–558 FPS, and serial sour
 unavailability. This is a serial-source comparison; Acrobot uses eight candidate
 physics owners, and a parallel-source baseline remains open. No broader goal
 completion or universal stepping speedup follows from these results.
+
+## Snapshot-selection candidate (October 3)
+
+The [five-registration correctness closure](semantic_recovery_evidence/classic_snapshot_20261003/closure/)
+passes 147 CPU/CUDA tests per job without skips, 28 public cases per registration
+and 320 paired rows through B1024. The isolated candidate uses the existing
+advance-without-snapshot hook and avoids worker exports for advance requests.
+Complete owned final State, explicit intermediate selections and exact frames
+are preserved. Production remains unchanged pending performance review.
+
+At B1024/T8 without intermediate States or frames, ratios versus the previous
+adapter are 1.93x CartPole, 1.53–1.55x Pendulum, 1.62–1.63x MountainCar,
+2.55–2.62x continuous MountainCar, and 1.01–1.05x Acrobot. Some Pendulum and
+Acrobot cells regress or have large timing spikes; unchanged-code complete
+repeats investigate those results. Original samples are retained. All-State
+requests often change little, and no upstream or universal speedup is claimed.
+
+Both [complete repeats](semantic_recovery_evidence/classic_snapshot_20261003/repeat-review/)
+have now passed correctness. Pendulum reproduces the same slow fourth/fifth
+CUDA samples, so these cannot be dismissed as generic noise. Acrobot has
+variable slower cells and small gains. The candidate remains isolated while
+GC-event diagnostic 6970565 correlates collection durations with timing windows;
+no collection is disabled or forced, and original measurements remain intact.
+
+The [completed GC trace](semantic_recovery_evidence/classic_snapshot_20261003/gc-diagnostic/completed/)
+records a 155-ms generation-2 pause inside one CPU sample. Instrumentation shifts
+collection placement, and the earlier slow CUDA samples do not recur at the same
+timed locations. This supports investigating allocation/collection costs but
+does not prove the earlier CUDA spikes' cause. Sustained independent-strategy
+measurements must retain naturally occurring GC costs before activation.

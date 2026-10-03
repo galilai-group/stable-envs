@@ -192,3 +192,8 @@ FPS and overlap improves 1.018–1.335x versus deferred identical requests. Ever
 mean/SD is preserved, including smaller gains. State/task/frame checks are exact
 against the library control; these are not upstream fidelity or speedup claims.
 The remaining six tasks and direct-source comparisons remain outstanding.
+
+Hopper, Walker and BallInCup have subsequently passed independently, bringing
+the [completed pipeline cohort to eight registrations](semantic_recovery_evidence/dmc_pipeline_family_20261003/completed/eight-registration-closure/):
+384 component rows and 288 paired online rows. Finger, Manipulator and Humanoid
+are still running; Quadruped remains excluded. No source comparison is implied.

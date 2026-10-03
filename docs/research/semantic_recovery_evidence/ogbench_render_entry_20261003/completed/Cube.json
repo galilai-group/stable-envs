@@ -1,0 +1,181 @@
+{
+  "status": "PASS",
+  "family": "Cube",
+  "batch": 64,
+  "host": "gpu2109.oscar.ccv.brown.edu",
+  "job": "6970534",
+  "gpu": "NVIDIA GeForce RTX 3090",
+  "source_sha256": {
+    "stable_envs/_adapters/ogbench.py": "d83ed078e39423a4a97c163d49ee9d2c4d87fe40d81dc89477a1db6de46895c3",
+    "stable_envs/_adapters/ogbench_execution.py": "5840dfd9245c7f2eb7bd4774d999ff3333213fbc044977f15ddf912c2a11d960",
+    "stable_envs/_adapters/ogbench_manipulation.py": "2ad6a2d1b78bc175bf81d8e943a2e47a8d04a1bd6ad8450b4c69b95712f80208",
+    "stable_envs/_adapters/ogbench_manipulation_compat.py": "861d0683ada72c2266fdec537dbf9604ba3028faa8d3f1adcd7e17b28e0736b5",
+    "stable_envs/_adapters/ogbench_manipulation_process.py": "4f879537b71013f23fc2bfc23660e4b0ce66ff09083c4b4db2333f11a88714f7",
+    "stable_envs/_adapters/ogbench_maze_process.py": "39cb309792358189dfe560412207a51057b84d51137ad5a3cfe78ce51bd84156",
+    "stable_envs/_adapters/ogbench_render_state.py": "813f63264c52e00c11ae40b0fb5170d31ab08addac427e0c65105b0b363a7b5a",
+    "stable_envs/envs/ogbench/__init__.py": "a4c4ff9e667691c8d7f36a51a6758ec3e035fe116815b5f49d4a70a3da8a6003",
+    "stable_envs/envs/ogbench/context_cache.py": "6822a73532945faed22da60a3c19a9a6543656747ec17d50151175eb3f52cfa4",
+    "stable_envs/envs/ogbench/manipulation.py": "1c7c5b4a00581d5d6e412da38ce1d139595bd230050fb43cac7d339ec81e9e0b",
+    "stable_envs/envs/ogbench/manipulation_fidelity.py": "980523951dbb2aefb510f8506e62f14b534bb1a2ebb9dc71051c61cd38f3cdad",
+    "stable_envs/envs/ogbench/manipulation_opengl.py": "4f4ce161af00b4237f3d40e287e6e4007f6eef17639f96204c16facb2764dfa1",
+    "stable_envs/envs/ogbench/manipulation_renderer.py": "e6ce4a8f4e8c54c8ddf602b0dd9fdc291e2cbcd62897f66fded9b35b2e60ac31",
+    "stable_envs/envs/ogbench/manipulation_semantics.py": "828208bc11345a9b7a631cff44e2ae9535b1e3b862ea0c32aad59176fbe68b41",
+    "stable_envs/envs/ogbench/maze.py": "6a11acb4245ced898f7ffae68f660c436cab30326435ecda13d750773dca7076",
+    "stable_envs/_adapters/process_requests.py": "e4b6626543f4ee59a80223f413a2ff2381ba7d6e9dc0e01eafa01b49d6d810d6",
+    "stable_envs/_stepping.py": "4b23abcf73767a4a59f0c106e098376ac7b2570608e5d4829a8919dd213f5f99",
+    "scripts/benchmarks/online_stepping/ogbench_render_entry_profile.py": "0838b70d8215e44944d024ea6195fb25054fba4ac922851873533e694104d20c"
+  },
+  "scope": "same complete State; diagnostic components overlap and must not be summed; no physics or source speedup",
+  "timings": [
+    {
+      "operation": "full_state_to_cpu",
+      "seconds": [
+        0.0022609177976846695,
+        0.0022274199873209,
+        0.0022215675562620163,
+        0.0022071469575166702,
+        0.0022119972854852676,
+        0.002208597958087921
+      ],
+      "seconds_mean": 0.002222941257059574,
+      "seconds_sd": 2.0194674316486858e-05,
+      "lanes_per_s_mean": 28792.644473432094,
+      "lanes_per_s_sd": 258.923384150553,
+      "frame_mse_vs_full_cuda": null
+    },
+    {
+      "operation": "validate_full_cuda",
+      "seconds": [
+        0.24695821478962898,
+        0.24683867394924164,
+        0.2472725324332714,
+        0.24790091812610626,
+        0.2476870510727167,
+        0.24754947051405907
+      ],
+      "seconds_mean": 0.247367810147504,
+      "seconds_sd": 0.0004185572100180994,
+      "lanes_per_s_mean": 258.7246605608535,
+      "lanes_per_s_sd": 0.4378303107594466,
+      "frame_mse_vs_full_cuda": null
+    },
+    {
+      "operation": "validate_full_host",
+      "seconds": [
+        0.1196711827069521,
+        0.11954865418374538,
+        0.12133585661649704,
+        0.11948081478476524,
+        0.12099738419055939,
+        0.12731821089982986
+      ],
+      "seconds_mean": 0.1213920172303915,
+      "seconds_sd": 0.0030096715510281396,
+      "lanes_per_s_mean": 527.47876837487,
+      "lanes_per_s_sd": 12.645175221558718,
+      "frame_mse_vs_full_cuda": null
+    },
+    {
+      "operation": "project_only_cuda",
+      "seconds": [
+        0.0029087718576192856,
+        0.002882864326238632,
+        0.0026701893657445908,
+        0.002709716558456421,
+        0.0026899632066488266,
+        0.0027948562055826187
+      ],
+      "seconds_mean": 0.002776060253381729,
+      "seconds_sd": 0.00010236757285274682,
+      "lanes_per_s_mean": 23080.159545572304,
+      "lanes_per_s_sd": 843.1522271292475,
+      "frame_mse_vs_full_cuda": null
+    },
+    {
+      "operation": "public_to_render_state_cuda",
+      "seconds": [
+        0.25443122535943985,
+        0.2529103923588991,
+        0.25467517226934433,
+        0.260438384488225,
+        0.5322949513792992,
+        0.25252159498631954
+      ],
+      "seconds_mean": 0.3012119534735878,
+      "seconds_sd": 0.11324286837798776,
+      "lanes_per_s_mean": 229.21888038455054,
+      "lanes_per_s_sd": 53.46300903485205,
+      "frame_mse_vs_full_cuda": null
+    },
+    {
+      "operation": "render_compact_cuda",
+      "seconds": [
+        0.017334716394543648,
+        0.017300795763731003,
+        0.017726294696331024,
+        0.01707666739821434,
+        0.016882440075278282,
+        0.017177285626530647
+      ],
+      "seconds_mean": 0.017249699992438156,
+      "seconds_sd": 0.0002853226398502551,
+      "lanes_per_s_mean": 3711.04936215871,
+      "lanes_per_s_sd": 60.94283634563732,
+      "frame_mse_vs_full_cuda": 0
+    },
+    {
+      "operation": "render_full_cuda",
+      "seconds": [
+        0.2718073595315218,
+        0.27026398852467537,
+        0.27183287031948566,
+        0.2705274894833565,
+        0.2774123791605234,
+        0.27151860296726227
+      ],
+      "seconds_mean": 0.27222711499780416,
+      "seconds_sd": 0.002625382627021068,
+      "lanes_per_s_mean": 235.11579666715943,
+      "lanes_per_s_sd": 2.2374332189251613,
+      "frame_mse_vs_full_cuda": 0
+    },
+    {
+      "operation": "render_full_preconverted_host",
+      "seconds": [
+        0.13979880698025227,
+        0.1406826451420784,
+        0.4082779083400965,
+        0.14079471305012703,
+        0.14048266410827637,
+        0.1409317422658205
+      ],
+      "seconds_mean": 0.18516141331444183,
+      "seconds_sd": 0.10930503716493098,
+      "lanes_per_s_mean": 405.62277588596004,
+      "lanes_per_s_sd": 121.92619194172244,
+      "frame_mse_vs_full_cuda": 0
+    },
+    {
+      "operation": "render_full_including_host_conversion",
+      "seconds": [
+        0.1433242280036211,
+        0.14329086057841778,
+        0.14468359388411045,
+        0.1493962462991476,
+        0.14451630227267742,
+        0.1430539432913065
+      ],
+      "seconds_mean": 0.14471086238821348,
+      "seconds_sd": 0.002394826112800919,
+      "lanes_per_s_mean": 442.35996229124925,
+      "lanes_per_s_sd": 7.161611696793522,
+      "frame_mse_vs_full_cuda": 0
+    }
+  ],
+  "profiles": {
+    "validate_full_cuda": "         259196 function calls (250679 primitive calls) in 0.321 seconds\n\n   Ordered by: cumulative time\n   List reduced from 162 to 35 due to restriction <35>\n\n   ncalls  tottime  percall  cumtime  percall filename:lineno(function)\n     8896    0.120    0.000    0.120    0.000 {method 'cpu' of 'torch._C.TensorBase' objects}\n 2340/100    0.002    0.000    0.051    0.001 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/_td.py:3853(items)\n  2304/64    0.022    0.000    0.051    0.001 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/_td.py:3873(fast_iter)\n       65    0.003    0.000    0.033    0.001 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/base.py:625(__iter__)\n     1920    0.002    0.000    0.031    0.000 /oscar/scratch/sboughan/se-semantic-recovery/ogbench-render-entry-v1-20261003/code/stable_envs/spaces.py:87(contains)\n        1    0.000    0.000    0.030    0.030 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/base.py:4266(unbind)\n     36/1    0.001    0.000    0.030    0.030 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/_td.py:1809(_unbind)\n    174/9    0.005    0.000    0.029    0.003 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/_td.py:1841(unbind)\n     1920    0.011    0.000    0.028    0.000 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/gymnasium/spaces/box.py:412(contains)\n     8896    0.021    0.000    0.021    0.000 {method 'numpy' of 'torch._C.TensorBase' objects}\n     4608    0.005    0.000    0.020    0.000 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/numpy/_core/fromnumeric.py:2586(all)\n    11484    0.004    0.000    0.019    0.000 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/base.py:18290(_default_is_leaf)\n     4736    0.008    0.000    0.016    0.000 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/numpy/_core/fromnumeric.py:86(_wrapreduction_any_all)\n    11832    0.007    0.000    0.015    0.000 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/base.py:18253(_is_tensor_collection)\n     2340    0.001    0.000    0.015    0.000 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/_td.py:1839(<genexpr>)\n      256    0.001    0.000    0.014    0.000 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/numpy/_core/numeric.py:2226(allclose)\n     2304    0.002    0.000    0.014    0.000 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/_td.py:1825(empty)\n      256    0.006    0.000    0.012    0.000 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/numpy/_core/numeric.py:2320(isclose)\n     8896    0.012    0.000    0.012    0.000 {method 'detach' of 'torch._C.TensorBase' objects}\n     2304    0.005    0.000    0.011    0.000 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/_td.py:357(_new_unsafe)\n     9024    0.009    0.000    0.009    0.000 {method 'copy' of 'numpy.ndarray' objects}\n    14728    0.006    0.000    0.007    0.000 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/torch/compiler/__init__.py:583(is_compiling)\n     5248    0.006    0.000    0.006    0.000 {method 'reduce' of 'numpy.ufunc' objects}\n      139    0.006    0.000    0.006    0.000 {method 'unbind' of 'torch._C.TensorBase' objects}\n    25344    0.006    0.000    0.006    0.000 {method 'append' of 'list' objects}\n     1280    0.004    0.000    0.005    0.000 /oscar/scratch/sboughan/se-semantic-recovery/ogbench-render-entry-v1-20261003/code/stable_envs/_adapters/ogbench_manipulation.py:46(pcg_decode)\n    22098    0.004    0.000    0.005    0.000 {built-in method builtins.isinstance}\n     2304    0.004    0.000    0.004    0.000 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/base.py:17857(_has_mps)\n       64    0.001    0.000    0.004    0.000 /oscar/scratch/sboughan/se-semantic-recovery/ogbench-render-entry-v1-20261003/code/stable_envs/_adapters/ogbench_manipulation.py:55(rngs)\n    14725    0.004    0.000    0.004    0.000 {method 'get' of 'dict' objects}\n     1920    0.002    0.000    0.004    0.000 /oscar/scratch/sboughan/se-semantic-recovery/ogbench-render-entry-v1-20261003/code/stable_envs/spaces.py:162(_walk)\n      139    0.003    0.000    0.003    0.000 {built-in method torch.isfinite}\n3904/1152    0.002    0.000    0.003    0.000 /oscar/scratch/sboughan/se-semantic-recovery/ogbench-render-entry-v1-20261003/code/stable_envs/_adapters/ogbench_manipulation_compat.py:27(nodes)\n      350    0.000    0.000    0.003    0.000 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/_td.py:5005(__iter__)\n      350    0.000    0.000    0.003    0.000 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/_td.py:5006(_iter)\n\n\n",
+    "validate_full_host": "         259196 function calls (250679 primitive calls) in 0.197 seconds\n\n   Ordered by: cumulative time\n   List reduced from 162 to 35 due to restriction <35>\n\n   ncalls  tottime  percall  cumtime  percall filename:lineno(function)\n 2340/100    0.002    0.000    0.051    0.001 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/_td.py:3853(items)\n  2304/64    0.022    0.000    0.051    0.001 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/_td.py:3873(fast_iter)\n       65    0.003    0.000    0.033    0.001 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/base.py:625(__iter__)\n     1920    0.002    0.000    0.031    0.000 /oscar/scratch/sboughan/se-semantic-recovery/ogbench-render-entry-v1-20261003/code/stable_envs/spaces.py:87(contains)\n        1    0.000    0.000    0.030    0.030 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/base.py:4266(unbind)\n     36/1    0.001    0.000    0.030    0.030 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/_td.py:1809(_unbind)\n    174/9    0.006    0.000    0.029    0.003 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/_td.py:1841(unbind)\n     1920    0.012    0.000    0.028    0.000 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/gymnasium/spaces/box.py:412(contains)\n     4608    0.005    0.000    0.020    0.000 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/numpy/_core/fromnumeric.py:2586(all)\n    11484    0.004    0.000    0.019    0.000 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/base.py:18290(_default_is_leaf)\n     4736    0.008    0.000    0.016    0.000 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/numpy/_core/fromnumeric.py:86(_wrapreduction_any_all)\n    11832    0.007    0.000    0.015    0.000 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/base.py:18253(_is_tensor_collection)\n      256    0.001    0.000    0.014    0.000 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/numpy/_core/numeric.py:2226(allclose)\n     8896    0.014    0.000    0.014    0.000 {method 'numpy' of 'torch._C.TensorBase' objects}\n     2340    0.001    0.000    0.014    0.000 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/_td.py:1839(<genexpr>)\n     2304    0.003    0.000    0.013    0.000 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/_td.py:1825(empty)\n      256    0.006    0.000    0.012    0.000 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/numpy/_core/numeric.py:2320(isclose)\n     8896    0.011    0.000    0.011    0.000 {method 'detach' of 'torch._C.TensorBase' objects}\n     2304    0.005    0.000    0.011    0.000 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/_td.py:357(_new_unsafe)\n     8896    0.009    0.000    0.009    0.000 {method 'cpu' of 'torch._C.TensorBase' objects}\n    14728    0.006    0.000    0.007    0.000 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/torch/compiler/__init__.py:583(is_compiling)\n     9024    0.007    0.000    0.007    0.000 {method 'copy' of 'numpy.ndarray' objects}\n     5248    0.006    0.000    0.006    0.000 {method 'reduce' of 'numpy.ufunc' objects}\n      139    0.006    0.000    0.006    0.000 {method 'unbind' of 'torch._C.TensorBase' objects}\n    25344    0.006    0.000    0.006    0.000 {method 'append' of 'list' objects}\n     1280    0.004    0.000    0.005    0.000 /oscar/scratch/sboughan/se-semantic-recovery/ogbench-render-entry-v1-20261003/code/stable_envs/_adapters/ogbench_manipulation.py:46(pcg_decode)\n    22098    0.004    0.000    0.005    0.000 {built-in method builtins.isinstance}\n       64    0.001    0.000    0.004    0.000 /oscar/scratch/sboughan/se-semantic-recovery/ogbench-render-entry-v1-20261003/code/stable_envs/_adapters/ogbench_manipulation.py:55(rngs)\n    14725    0.004    0.000    0.004    0.000 {method 'get' of 'dict' objects}\n     1920    0.002    0.000    0.004    0.000 /oscar/scratch/sboughan/se-semantic-recovery/ogbench-render-entry-v1-20261003/code/stable_envs/spaces.py:162(_walk)\n     2304    0.003    0.000    0.004    0.000 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/base.py:17857(_has_mps)\n3904/1152    0.002    0.000    0.003    0.000 /oscar/scratch/sboughan/se-semantic-recovery/ogbench-render-entry-v1-20261003/code/stable_envs/_adapters/ogbench_manipulation_compat.py:27(nodes)\n      350    0.000    0.000    0.003    0.000 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/_td.py:5005(__iter__)\n      350    0.000    0.000    0.003    0.000 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/_td.py:5006(_iter)\n      350    0.000    0.000    0.003    0.000 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/_td.py:5017(<genexpr>)\n\n\n",
+    "render_compact_cuda": "         40538 function calls (40179 primitive calls) in 0.034 seconds\n\n   Ordered by: cumulative time\n   List reduced from 515 to 35 due to restriction <35>\n\n   ncalls  tottime  percall  cumtime  percall filename:lineno(function)\n        1    0.000    0.000    0.034    0.034 /oscar/scratch/sboughan/se-semantic-recovery/ogbench-render-entry-v1-20261003/code/scripts/benchmarks/online_stepping/ogbench_render_entry_profile.py:58(<lambda>)\n        1    0.000    0.000    0.034    0.034 /oscar/scratch/sboughan/se-semantic-recovery/ogbench-render-entry-v1-20261003/code/stable_envs/envs/ogbench/manipulation_semantics.py:165(render)\n        1    0.000    0.000    0.034    0.034 /oscar/scratch/sboughan/se-semantic-recovery/ogbench-render-entry-v1-20261003/code/stable_envs/envs/ogbench/manipulation_renderer.py:99(render)\n        4    0.000    0.000    0.017    0.004 /oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/importlib/metadata/__init__.py:882(version)\n        4    0.000    0.000    0.016    0.004 /oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/importlib/metadata/__init__.py:464(version)\n        4    0.000    0.000    0.016    0.004 /oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/importlib/metadata/__init__.py:436(metadata)\n        4    0.000    0.000    0.014    0.003 /oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/email/__init__.py:31(message_from_string)\n        4    0.000    0.000    0.014    0.003 /oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/email/parser.py:56(parsestr)\n        4    0.000    0.000    0.013    0.003 /oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/email/parser.py:41(parse)\n       36    0.000    0.000    0.013    0.000 /oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/email/feedparser.py:171(feed)\n       40    0.000    0.000    0.012    0.000 /oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/email/feedparser.py:176(_call_parse)\n       40    0.003    0.000    0.012    0.000 /oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/email/feedparser.py:216(_parsegen)\n     5435    0.002    0.000    0.006    0.000 /oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/email/feedparser.py:127(__next__)\n       65    0.001    0.000    0.005    0.000 /oscar/scratch/sboughan/se-semantic-recovery/ogbench-render-entry-v1-20261003/code/stable_envs/envs/ogbench/manipulation_renderer.py:23(configuration_key)\n     5435    0.004    0.000    0.005    0.000 /oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/email/feedparser.py:77(readline)\n      297    0.000    0.000    0.004    0.000 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/base.py:657(__getitem__)\n        1    0.000    0.000    0.003    0.003 /oscar/scratch/sboughan/se-semantic-recovery/ogbench-render-entry-v1-20261003/code/stable_envs/envs/ogbench/manipulation_renderer.py:79(draw)\n       65    0.000    0.000    0.003    0.000 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/base.py:625(__iter__)\n        1    0.000    0.000    0.003    0.003 /oscar/scratch/sboughan/se-semantic-recovery/ogbench-render-entry-v1-20261003/code/stable_envs/env.py:177(render)\n        1    0.000    0.000    0.003    0.003 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/torch/utils/_contextlib.py:120(decorate_context)\n        1    0.000    0.000    0.003    0.003 /oscar/scratch/sboughan/se-semantic-recovery/ogbench-render-entry-v1-20261003/code/stable_envs/envs/ogbench/manipulation.py:1117(_render)\n        1    0.000    0.000    0.003    0.003 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/base.py:4266(unbind)\n      4/1    0.000    0.000    0.003    0.003 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/_td.py:1809(_unbind)\n     17/3    0.000    0.000    0.003    0.001 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/_td.py:1841(unbind)\n      295    0.000    0.000    0.002    0.000 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/base.py:8567(_get_tuple_maybe_non_tensor)\n        4    0.000    0.000    0.002    0.000 /oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/importlib/metadata/__init__.py:811(read_text)\n        4    0.000    0.000    0.002    0.000 /oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/pathlib.py:1022(read_text)\n      260    0.000    0.000    0.002    0.000 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/_td.py:1839(<genexpr>)\n      256    0.000    0.000    0.002    0.000 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/_td.py:1825(empty)\n        1    0.001    0.001    0.002    0.002 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/warp/_src/context.py:11891(synchronize)\n        8    0.001    0.000    0.001    0.000 {built-in method _io.open}\n        1    0.000    0.000    0.001    0.001 /oscar/scratch/sboughan/se-semantic-recovery/ogbench-render-entry-v1-20261003/code/stable_envs/_adapters/ogbench_render_state.py:103(validate)\n        4    0.000    0.000    0.001    0.000 /oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/pathlib.py:1005(open)\n     5707    0.001    0.000    0.001    0.000 {method 'append' of 'list' objects}\n      272    0.001    0.000    0.001    0.000 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/_td.py:357(_new_unsafe)\n\n\n",
+    "render_full_cuda": "         301420 function calls (292470 primitive calls) in 0.620 seconds\n\n   Ordered by: cumulative time\n   List reduced from 570 to 35 due to restriction <35>\n\n   ncalls  tottime  percall  cumtime  percall filename:lineno(function)\n      130    0.004    0.000    0.297    0.002 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/base.py:625(__iter__)\n        2    0.000    0.000    0.294    0.147 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/base.py:4266(unbind)\n     40/2    0.001    0.000    0.294    0.147 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/_td.py:1809(_unbind)\n   191/12    0.267    0.001    0.293    0.024 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/_td.py:1841(unbind)\n     9157    0.120    0.000    0.120    0.000 {method 'cpu' of 'torch._C.TensorBase' objects}\n 2364/121    0.003    0.000    0.051    0.000 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/_td.py:3853(items)\n  2308/65    0.021    0.000    0.051    0.001 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/_td.py:3873(fast_iter)\n        1    0.000    0.000    0.034    0.034 /oscar/scratch/sboughan/se-semantic-recovery/ogbench-render-entry-v1-20261003/code/stable_envs/envs/ogbench/manipulation_renderer.py:99(render)\n     1920    0.002    0.000    0.031    0.000 /oscar/scratch/sboughan/se-semantic-recovery/ogbench-render-entry-v1-20261003/code/stable_envs/spaces.py:87(contains)\n     1920    0.012    0.000    0.028    0.000 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/gymnasium/spaces/box.py:412(contains)\n     9157    0.021    0.000    0.021    0.000 {method 'numpy' of 'torch._C.TensorBase' objects}\n     4608    0.005    0.000    0.020    0.000 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/numpy/_core/fromnumeric.py:2586(all)\n    11569    0.004    0.000    0.019    0.000 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/base.py:18290(_default_is_leaf)\n        4    0.000    0.000    0.017    0.004 /oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/importlib/metadata/__init__.py:882(version)\n     4738    0.008    0.000    0.016    0.000 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/numpy/_core/fromnumeric.py:86(_wrapreduction_any_all)\n        4    0.000    0.000    0.016    0.004 /oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/importlib/metadata/__init__.py:464(version)\n        4    0.000    0.000    0.016    0.004 /oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/importlib/metadata/__init__.py:436(metadata)\n     2600    0.001    0.000    0.016    0.000 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/_td.py:1839(<genexpr>)\n    11963    0.007    0.000    0.015    0.000 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/base.py:18253(_is_tensor_collection)\n     2560    0.002    0.000    0.015    0.000 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/_td.py:1825(empty)\n      256    0.001    0.000    0.014    0.000 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/numpy/_core/numeric.py:2226(allclose)\n        4    0.000    0.000    0.013    0.003 /oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/email/__init__.py:31(message_from_string)\n        4    0.000    0.000    0.013    0.003 /oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/email/parser.py:56(parsestr)\n        4    0.000    0.000    0.013    0.003 /oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/email/parser.py:41(parse)\n       36    0.000    0.000    0.012    0.000 /oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/email/feedparser.py:171(feed)\n     9172    0.012    0.000    0.012    0.000 {method 'detach' of 'torch._C.TensorBase' objects}\n     2579    0.006    0.000    0.012    0.000 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/_td.py:357(_new_unsafe)\n      256    0.006    0.000    0.012    0.000 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/numpy/_core/numeric.py:2320(isclose)\n       40    0.000    0.000    0.012    0.000 /oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/email/feedparser.py:176(_call_parse)\n       40    0.003    0.000    0.012    0.000 /oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/email/feedparser.py:216(_parsegen)\n     9028    0.009    0.000    0.009    0.000 {method 'copy' of 'numpy.ndarray' objects}\n    15937    0.006    0.000    0.008    0.000 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/torch/compiler/__init__.py:583(is_compiling)\n    31051    0.007    0.000    0.007    0.000 {method 'append' of 'list' objects}\n      473    0.001    0.000    0.007    0.000 /oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/tensordict/base.py:657(__getitem__)\n      153    0.007    0.000    0.007    0.000 {method 'unbind' of 'torch._C.TensorBase' objects}\n\n\n"
+  }
+}

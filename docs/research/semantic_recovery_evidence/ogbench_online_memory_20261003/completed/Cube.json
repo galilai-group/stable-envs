@@ -1,0 +1,1124 @@
+{
+  "status": "PASS",
+  "family": "Cube",
+  "batch": 64,
+  "host": "gpu2109.oscar.ccv.brown.edu",
+  "job": "6970442",
+  "gpu": "NVIDIA GeForce RTX 3090",
+  "affinity": [
+    36,
+    37,
+    38,
+    43,
+    50,
+    51,
+    52,
+    53
+  ],
+  "samples": [
+    {
+      "phase": "before_construction",
+      "processes": [
+        {
+          "pid": 1741805,
+          "rss_bytes": 894816256,
+          "pss_bytes": 689732608,
+          "private_bytes": 515547136
+        }
+      ],
+      "total_pss_bytes": 689732608,
+      "total_rss_bytes": 894816256,
+      "cuda_torch_allocated": 0,
+      "cuda_torch_reserved": 0,
+      "cuda_torch_peak_allocated": 0
+    },
+    {
+      "phase": "constructed",
+      "processes": [
+        {
+          "pid": 1741805,
+          "rss_bytes": 1376591872,
+          "pss_bytes": 995908608,
+          "private_bytes": 967340032
+        },
+        {
+          "pid": 1742023,
+          "rss_bytes": 2696658944,
+          "pss_bytes": 2328567808,
+          "private_bytes": 2304200704
+        },
+        {
+          "pid": 1742024,
+          "rss_bytes": 2697797632,
+          "pss_bytes": 2327620608,
+          "private_bytes": 2304069632
+        },
+        {
+          "pid": 1742025,
+          "rss_bytes": 2696114176,
+          "pss_bytes": 2326290432,
+          "private_bytes": 2302054400
+        },
+        {
+          "pid": 1742026,
+          "rss_bytes": 2681548800,
+          "pss_bytes": 2315846656,
+          "private_bytes": 2292379648
+        },
+        {
+          "pid": 1742039,
+          "rss_bytes": 2653118464,
+          "pss_bytes": 2283012096,
+          "private_bytes": 2259464192
+        },
+        {
+          "pid": 1742060,
+          "rss_bytes": 2699427840,
+          "pss_bytes": 2333150208,
+          "private_bytes": 2308902912
+        },
+        {
+          "pid": 1742061,
+          "rss_bytes": 2684342272,
+          "pss_bytes": 2314415104,
+          "private_bytes": 2290987008
+        },
+        {
+          "pid": 1742062,
+          "rss_bytes": 2701537280,
+          "pss_bytes": 2333564928,
+          "private_bytes": 2309607424
+        }
+      ],
+      "total_pss_bytes": 19558376448,
+      "total_rss_bytes": 22887137280,
+      "cuda_torch_allocated": 12800,
+      "cuda_torch_reserved": 2097152,
+      "cuda_torch_peak_allocated": 32256
+    },
+    {
+      "phase": "initial_state_owned",
+      "processes": [
+        {
+          "pid": 1741805,
+          "rss_bytes": 1377026048,
+          "pss_bytes": 996342784,
+          "private_bytes": 967774208
+        },
+        {
+          "pid": 1742023,
+          "rss_bytes": 2696658944,
+          "pss_bytes": 2328567808,
+          "private_bytes": 2304200704
+        },
+        {
+          "pid": 1742024,
+          "rss_bytes": 2697797632,
+          "pss_bytes": 2327620608,
+          "private_bytes": 2304069632
+        },
+        {
+          "pid": 1742025,
+          "rss_bytes": 2696114176,
+          "pss_bytes": 2326290432,
+          "private_bytes": 2302054400
+        },
+        {
+          "pid": 1742026,
+          "rss_bytes": 2681548800,
+          "pss_bytes": 2315846656,
+          "private_bytes": 2292379648
+        },
+        {
+          "pid": 1742039,
+          "rss_bytes": 2653118464,
+          "pss_bytes": 2283012096,
+          "private_bytes": 2259464192
+        },
+        {
+          "pid": 1742060,
+          "rss_bytes": 2699427840,
+          "pss_bytes": 2333150208,
+          "private_bytes": 2308902912
+        },
+        {
+          "pid": 1742061,
+          "rss_bytes": 2684342272,
+          "pss_bytes": 2314415104,
+          "private_bytes": 2290987008
+        },
+        {
+          "pid": 1742062,
+          "rss_bytes": 2701537280,
+          "pss_bytes": 2333564928,
+          "private_bytes": 2309607424
+        }
+      ],
+      "total_pss_bytes": 19558810624,
+      "total_rss_bytes": 22887571456,
+      "cuda_torch_allocated": 615424,
+      "cuda_torch_reserved": 2097152,
+      "cuda_torch_peak_allocated": 615424
+    },
+    {
+      "phase": "T1_none_result_owned",
+      "processes": [
+        {
+          "pid": 1741805,
+          "rss_bytes": 1478246400,
+          "pss_bytes": 1092315136,
+          "private_bytes": 1060696064
+        },
+        {
+          "pid": 1742023,
+          "rss_bytes": 3506401280,
+          "pss_bytes": 3135636480,
+          "private_bytes": 3111337984
+        },
+        {
+          "pid": 1742024,
+          "rss_bytes": 3540598784,
+          "pss_bytes": 3167696896,
+          "private_bytes": 3144183808
+        },
+        {
+          "pid": 1742025,
+          "rss_bytes": 3531149312,
+          "pss_bytes": 3158682624,
+          "private_bytes": 3134447616
+        },
+        {
+          "pid": 1742026,
+          "rss_bytes": 3476193280,
+          "pss_bytes": 3107716096,
+          "private_bytes": 3084242944
+        },
+        {
+          "pid": 1742039,
+          "rss_bytes": 3489341440,
+          "pss_bytes": 3116498944,
+          "private_bytes": 3092987904
+        },
+        {
+          "pid": 1742060,
+          "rss_bytes": 3523563520,
+          "pss_bytes": 3154583552,
+          "private_bytes": 3130400768
+        },
+        {
+          "pid": 1742061,
+          "rss_bytes": 3506454528,
+          "pss_bytes": 3133972480,
+          "private_bytes": 3110592512
+        },
+        {
+          "pid": 1742062,
+          "rss_bytes": 3541643264,
+          "pss_bytes": 3170889728,
+          "private_bytes": 3146960896
+        }
+      ],
+      "total_pss_bytes": 26237991936,
+      "total_rss_bytes": 29593591808,
+      "cuda_torch_allocated": 1823744,
+      "cuda_torch_reserved": 2097152,
+      "cuda_torch_peak_allocated": 1827328
+    },
+    {
+      "phase": "T1_none_outputs_released",
+      "processes": [
+        {
+          "pid": 1741805,
+          "rss_bytes": 1503956992,
+          "pss_bytes": 1115822080,
+          "private_bytes": 1082138624
+        },
+        {
+          "pid": 1742023,
+          "rss_bytes": 4878442496,
+          "pss_bytes": 4507670528,
+          "private_bytes": 4483379200
+        },
+        {
+          "pid": 1742024,
+          "rss_bytes": 5016379392,
+          "pss_bytes": 4643471360,
+          "private_bytes": 4619964416
+        },
+        {
+          "pid": 1742025,
+          "rss_bytes": 4945989632,
+          "pss_bytes": 4573516800,
+          "private_bytes": 4549287936
+        },
+        {
+          "pid": 1742026,
+          "rss_bytes": 4863971328,
+          "pss_bytes": 4495490048,
+          "private_bytes": 4472020992
+        },
+        {
+          "pid": 1742039,
+          "rss_bytes": 4935565312,
+          "pss_bytes": 4562716672,
+          "private_bytes": 4539211776
+        },
+        {
+          "pid": 1742060,
+          "rss_bytes": 4937355264,
+          "pss_bytes": 4568368128,
+          "private_bytes": 4544192512
+        },
+        {
+          "pid": 1742061,
+          "rss_bytes": 5006172160,
+          "pss_bytes": 4633687040,
+          "private_bytes": 4610310144
+        },
+        {
+          "pid": 1742062,
+          "rss_bytes": 5039210496,
+          "pss_bytes": 4668449792,
+          "private_bytes": 4644528128
+        }
+      ],
+      "total_pss_bytes": 37769192448,
+      "total_rss_bytes": 41127043072,
+      "cuda_torch_allocated": 615424,
+      "cuda_torch_reserved": 4194304,
+      "cuda_torch_peak_allocated": 3072512
+    },
+    {
+      "phase": "T1_final_result_owned",
+      "processes": [
+        {
+          "pid": 1741805,
+          "rss_bytes": 2237165568,
+          "pss_bytes": 1845096448,
+          "private_bytes": 1810685952
+        },
+        {
+          "pid": 1742023,
+          "rss_bytes": 4910968832,
+          "pss_bytes": 4540179456,
+          "private_bytes": 4515905536
+        },
+        {
+          "pid": 1742024,
+          "rss_bytes": 5094559744,
+          "pss_bytes": 4721640448,
+          "private_bytes": 4698144768
+        },
+        {
+          "pid": 1742025,
+          "rss_bytes": 5081415680,
+          "pss_bytes": 4708926464,
+          "private_bytes": 4684713984
+        },
+        {
+          "pid": 1742026,
+          "rss_bytes": 5106814976,
+          "pss_bytes": 4738316288,
+          "private_bytes": 4714856448
+        },
+        {
+          "pid": 1742039,
+          "rss_bytes": 5101584384,
+          "pss_bytes": 4728724480,
+          "private_bytes": 4705230848
+        },
+        {
+          "pid": 1742060,
+          "rss_bytes": 4871704576,
+          "pss_bytes": 4502701056,
+          "private_bytes": 4478541824
+        },
+        {
+          "pid": 1742061,
+          "rss_bytes": 5126885376,
+          "pss_bytes": 4754385920,
+          "private_bytes": 4731023360
+        },
+        {
+          "pid": 1742062,
+          "rss_bytes": 5160701952,
+          "pss_bytes": 4789911552,
+          "private_bytes": 4765995008
+        }
+      ],
+      "total_pss_bytes": 39329882112,
+      "total_rss_bytes": 42691801088,
+      "cuda_torch_allocated": 2622976,
+      "cuda_torch_reserved": 6291456,
+      "cuda_torch_peak_allocated": 4972544
+    },
+    {
+      "phase": "T1_final_outputs_released",
+      "processes": [
+        {
+          "pid": 1741805,
+          "rss_bytes": 2248638464,
+          "pss_bytes": 1797991424,
+          "private_bytes": 1705205760
+        },
+        {
+          "pid": 1742023,
+          "rss_bytes": 5222322176,
+          "pss_bytes": 4851518464,
+          "private_bytes": 4827258880
+        },
+        {
+          "pid": 1742024,
+          "rss_bytes": 5355741184,
+          "pss_bytes": 4982809600,
+          "private_bytes": 4959326208
+        },
+        {
+          "pid": 1742025,
+          "rss_bytes": 5411491840,
+          "pss_bytes": 5038986240,
+          "private_bytes": 5014790144
+        },
+        {
+          "pid": 1742026,
+          "rss_bytes": 5484224512,
+          "pss_bytes": 5115711488,
+          "private_bytes": 5092265984
+        },
+        {
+          "pid": 1742039,
+          "rss_bytes": 5339201536,
+          "pss_bytes": 4966329344,
+          "private_bytes": 4942848000
+        },
+        {
+          "pid": 1742060,
+          "rss_bytes": 5394763776,
+          "pss_bytes": 5025745920,
+          "private_bytes": 5001601024
+        },
+        {
+          "pid": 1742061,
+          "rss_bytes": 5587824640,
+          "pss_bytes": 5215314944,
+          "private_bytes": 5191962624
+        },
+        {
+          "pid": 1742062,
+          "rss_bytes": 5565812736,
+          "pss_bytes": 5195011072,
+          "private_bytes": 5171105792
+        }
+      ],
+      "total_pss_bytes": 42189418496,
+      "total_rss_bytes": 45610020864,
+      "cuda_torch_allocated": 627712,
+      "cuda_torch_reserved": 8388608,
+      "cuda_torch_peak_allocated": 6967808
+    },
+    {
+      "phase": "T1_all_result_owned",
+      "processes": [
+        {
+          "pid": 1741805,
+          "rss_bytes": 2248876032,
+          "pss_bytes": 1798228992,
+          "private_bytes": 1705443328
+        },
+        {
+          "pid": 1742023,
+          "rss_bytes": 5382000640,
+          "pss_bytes": 5011196928,
+          "private_bytes": 4986937344
+        },
+        {
+          "pid": 1742024,
+          "rss_bytes": 5547622400,
+          "pss_bytes": 5174690816,
+          "private_bytes": 5151207424
+        },
+        {
+          "pid": 1742025,
+          "rss_bytes": 5631090688,
+          "pss_bytes": 5258585088,
+          "private_bytes": 5234388992
+        },
+        {
+          "pid": 1742026,
+          "rss_bytes": 5418041344,
+          "pss_bytes": 5049528320,
+          "private_bytes": 5026082816
+        },
+        {
+          "pid": 1742039,
+          "rss_bytes": 5504622592,
+          "pss_bytes": 5131750400,
+          "private_bytes": 5108269056
+        },
+        {
+          "pid": 1742060,
+          "rss_bytes": 5055913984,
+          "pss_bytes": 4686896128,
+          "private_bytes": 4662751232
+        },
+        {
+          "pid": 1742061,
+          "rss_bytes": 5550190592,
+          "pss_bytes": 5177680896,
+          "private_bytes": 5154328576
+        },
+        {
+          "pid": 1742062,
+          "rss_bytes": 5536444416,
+          "pss_bytes": 5165642752,
+          "private_bytes": 5141737472
+        }
+      ],
+      "total_pss_bytes": 42454200320,
+      "total_rss_bytes": 45874802688,
+      "cuda_torch_allocated": 2622976,
+      "cuda_torch_reserved": 8388608,
+      "cuda_torch_peak_allocated": 6967808
+    },
+    {
+      "phase": "T1_all_outputs_released",
+      "processes": [
+        {
+          "pid": 1741805,
+          "rss_bytes": 2248880128,
+          "pss_bytes": 1798233088,
+          "private_bytes": 1705447424
+        },
+        {
+          "pid": 1742023,
+          "rss_bytes": 5337223168,
+          "pss_bytes": 4966419456,
+          "private_bytes": 4942159872
+        },
+        {
+          "pid": 1742024,
+          "rss_bytes": 5531926528,
+          "pss_bytes": 5158994944,
+          "private_bytes": 5135511552
+        },
+        {
+          "pid": 1742025,
+          "rss_bytes": 5410082816,
+          "pss_bytes": 5037577216,
+          "private_bytes": 5013381120
+        },
+        {
+          "pid": 1742026,
+          "rss_bytes": 5669335040,
+          "pss_bytes": 5300822016,
+          "private_bytes": 5277376512
+        },
+        {
+          "pid": 1742039,
+          "rss_bytes": 5718237184,
+          "pss_bytes": 5345363968,
+          "private_bytes": 5321883648
+        },
+        {
+          "pid": 1742060,
+          "rss_bytes": 5697843200,
+          "pss_bytes": 5328824320,
+          "private_bytes": 5304680448
+        },
+        {
+          "pid": 1742061,
+          "rss_bytes": 5688614912,
+          "pss_bytes": 5316103168,
+          "private_bytes": 5292752896
+        },
+        {
+          "pid": 1742062,
+          "rss_bytes": 5774831616,
+          "pss_bytes": 5404029952,
+          "private_bytes": 5380124672
+        }
+      ],
+      "total_pss_bytes": 43656368128,
+      "total_rss_bytes": 47076974592,
+      "cuda_torch_allocated": 627712,
+      "cuda_torch_reserved": 8388608,
+      "cuda_torch_peak_allocated": 6967808
+    },
+    {
+      "phase": "T8_none_result_owned",
+      "processes": [
+        {
+          "pid": 1741805,
+          "rss_bytes": 2270511104,
+          "pss_bytes": 1819863040,
+          "private_bytes": 1727078400
+        },
+        {
+          "pid": 1742023,
+          "rss_bytes": 5574561792,
+          "pss_bytes": 5203758080,
+          "private_bytes": 5179498496
+        },
+        {
+          "pid": 1742024,
+          "rss_bytes": 5767917568,
+          "pss_bytes": 5394985984,
+          "private_bytes": 5371502592
+        },
+        {
+          "pid": 1742025,
+          "rss_bytes": 5637836800,
+          "pss_bytes": 5265331200,
+          "private_bytes": 5241135104
+        },
+        {
+          "pid": 1742026,
+          "rss_bytes": 5496123392,
+          "pss_bytes": 5127610368,
+          "private_bytes": 5104164864
+        },
+        {
+          "pid": 1742039,
+          "rss_bytes": 5655306240,
+          "pss_bytes": 5282434048,
+          "private_bytes": 5258952704
+        },
+        {
+          "pid": 1742060,
+          "rss_bytes": 5448675328,
+          "pss_bytes": 5079657472,
+          "private_bytes": 5055512576
+        },
+        {
+          "pid": 1742061,
+          "rss_bytes": 5717979136,
+          "pss_bytes": 5345469440,
+          "private_bytes": 5322117120
+        },
+        {
+          "pid": 1742062,
+          "rss_bytes": 5808697344,
+          "pss_bytes": 5437895680,
+          "private_bytes": 5413990400
+        }
+      ],
+      "total_pss_bytes": 43957005312,
+      "total_rss_bytes": 47377608704,
+      "cuda_torch_allocated": 6048256,
+      "cuda_torch_reserved": 29360128,
+      "cuda_torch_peak_allocated": 10290176
+    },
+    {
+      "phase": "T8_none_outputs_released",
+      "processes": [
+        {
+          "pid": 1741805,
+          "rss_bytes": 2275536896,
+          "pss_bytes": 1824888832,
+          "private_bytes": 1732104192
+        },
+        {
+          "pid": 1742023,
+          "rss_bytes": 5347868672,
+          "pss_bytes": 4977064960,
+          "private_bytes": 4952805376
+        },
+        {
+          "pid": 1742024,
+          "rss_bytes": 5698121728,
+          "pss_bytes": 5325190144,
+          "private_bytes": 5301706752
+        },
+        {
+          "pid": 1742025,
+          "rss_bytes": 5566345216,
+          "pss_bytes": 5193839616,
+          "private_bytes": 5169643520
+        },
+        {
+          "pid": 1742026,
+          "rss_bytes": 5754204160,
+          "pss_bytes": 5385691136,
+          "private_bytes": 5362245632
+        },
+        {
+          "pid": 1742039,
+          "rss_bytes": 5720240128,
+          "pss_bytes": 5347367936,
+          "private_bytes": 5323886592
+        },
+        {
+          "pid": 1742060,
+          "rss_bytes": 5609095168,
+          "pss_bytes": 5240077312,
+          "private_bytes": 5215932416
+        },
+        {
+          "pid": 1742061,
+          "rss_bytes": 5800476672,
+          "pss_bytes": 5427965952,
+          "private_bytes": 5404614656
+        },
+        {
+          "pid": 1742062,
+          "rss_bytes": 5868343296,
+          "pss_bytes": 5497541632,
+          "private_bytes": 5473636352
+        }
+      ],
+      "total_pss_bytes": 44219627520,
+      "total_rss_bytes": 47640231936,
+      "cuda_torch_allocated": 627712,
+      "cuda_torch_reserved": 33554432,
+      "cuda_torch_peak_allocated": 15710720
+    },
+    {
+      "phase": "T8_final_result_owned",
+      "processes": [
+        {
+          "pid": 1741805,
+          "rss_bytes": 2278100992,
+          "pss_bytes": 1826547712,
+          "private_bytes": 1732857856
+        },
+        {
+          "pid": 1742023,
+          "rss_bytes": 5671325696,
+          "pss_bytes": 5300521984,
+          "private_bytes": 5276262400
+        },
+        {
+          "pid": 1742024,
+          "rss_bytes": 5732331520,
+          "pss_bytes": 5359399936,
+          "private_bytes": 5335916544
+        },
+        {
+          "pid": 1742025,
+          "rss_bytes": 5669265408,
+          "pss_bytes": 5296759808,
+          "private_bytes": 5272563712
+        },
+        {
+          "pid": 1742026,
+          "rss_bytes": 5570416640,
+          "pss_bytes": 5201903616,
+          "private_bytes": 5178458112
+        },
+        {
+          "pid": 1742039,
+          "rss_bytes": 5794570240,
+          "pss_bytes": 5421698048,
+          "private_bytes": 5398216704
+        },
+        {
+          "pid": 1742060,
+          "rss_bytes": 5714092032,
+          "pss_bytes": 5345074176,
+          "private_bytes": 5320929280
+        },
+        {
+          "pid": 1742061,
+          "rss_bytes": 5548883968,
+          "pss_bytes": 5176374272,
+          "private_bytes": 5153021952
+        },
+        {
+          "pid": 1742062,
+          "rss_bytes": 5752270848,
+          "pss_bytes": 5381469184,
+          "private_bytes": 5357563904
+        }
+      ],
+      "total_pss_bytes": 44309748736,
+      "total_rss_bytes": 47731257344,
+      "cuda_torch_allocated": 6835200,
+      "cuda_torch_reserved": 33554432,
+      "cuda_torch_peak_allocated": 15710720
+    },
+    {
+      "phase": "T8_final_outputs_released",
+      "processes": [
+        {
+          "pid": 1741805,
+          "rss_bytes": 2278690816,
+          "pss_bytes": 1827137536,
+          "private_bytes": 1733447680
+        },
+        {
+          "pid": 1742023,
+          "rss_bytes": 5476913152,
+          "pss_bytes": 5106109440,
+          "private_bytes": 5081849856
+        },
+        {
+          "pid": 1742024,
+          "rss_bytes": 5778931712,
+          "pss_bytes": 5406000128,
+          "private_bytes": 5382516736
+        },
+        {
+          "pid": 1742025,
+          "rss_bytes": 5873684480,
+          "pss_bytes": 5501178880,
+          "private_bytes": 5476982784
+        },
+        {
+          "pid": 1742026,
+          "rss_bytes": 5593133056,
+          "pss_bytes": 5224620032,
+          "private_bytes": 5201174528
+        },
+        {
+          "pid": 1742039,
+          "rss_bytes": 5702148096,
+          "pss_bytes": 5329275904,
+          "private_bytes": 5305794560
+        },
+        {
+          "pid": 1742060,
+          "rss_bytes": 5627936768,
+          "pss_bytes": 5258918912,
+          "private_bytes": 5234774016
+        },
+        {
+          "pid": 1742061,
+          "rss_bytes": 5649440768,
+          "pss_bytes": 5276931072,
+          "private_bytes": 5253578752
+        },
+        {
+          "pid": 1742062,
+          "rss_bytes": 5778608128,
+          "pss_bytes": 5407806464,
+          "private_bytes": 5383901184
+        }
+      ],
+      "total_pss_bytes": 44337978368,
+      "total_rss_bytes": 47759486976,
+      "cuda_torch_allocated": 627712,
+      "cuda_torch_reserved": 35651584,
+      "cuda_torch_peak_allocated": 18071040
+    },
+    {
+      "phase": "T8_all_result_owned",
+      "processes": [
+        {
+          "pid": 1741805,
+          "rss_bytes": 2279145472,
+          "pss_bytes": 1827592192,
+          "private_bytes": 1733902336
+        },
+        {
+          "pid": 1742023,
+          "rss_bytes": 5691187200,
+          "pss_bytes": 5320383488,
+          "private_bytes": 5296123904
+        },
+        {
+          "pid": 1742024,
+          "rss_bytes": 5672615936,
+          "pss_bytes": 5299684352,
+          "private_bytes": 5276200960
+        },
+        {
+          "pid": 1742025,
+          "rss_bytes": 5712236544,
+          "pss_bytes": 5339730944,
+          "private_bytes": 5315534848
+        },
+        {
+          "pid": 1742026,
+          "rss_bytes": 5449183232,
+          "pss_bytes": 5080670208,
+          "private_bytes": 5057224704
+        },
+        {
+          "pid": 1742039,
+          "rss_bytes": 5670645760,
+          "pss_bytes": 5297773568,
+          "private_bytes": 5274292224
+        },
+        {
+          "pid": 1742060,
+          "rss_bytes": 5907206144,
+          "pss_bytes": 5538188288,
+          "private_bytes": 5514043392
+        },
+        {
+          "pid": 1742061,
+          "rss_bytes": 5732585472,
+          "pss_bytes": 5360075776,
+          "private_bytes": 5336723456
+        },
+        {
+          "pid": 1742062,
+          "rss_bytes": 5800906752,
+          "pss_bytes": 5430105088,
+          "private_bytes": 5406199808
+        }
+      ],
+      "total_pss_bytes": 44494203904,
+      "total_rss_bytes": 47915712512,
+      "cuda_torch_allocated": 12340224,
+      "cuda_torch_reserved": 37748736,
+      "cuda_torch_peak_allocated": 22873600
+    },
+    {
+      "phase": "T8_all_outputs_released",
+      "processes": [
+        {
+          "pid": 1741805,
+          "rss_bytes": 2279227392,
+          "pss_bytes": 1827674112,
+          "private_bytes": 1733984256
+        },
+        {
+          "pid": 1742023,
+          "rss_bytes": 5645963264,
+          "pss_bytes": 5275159552,
+          "private_bytes": 5250899968
+        },
+        {
+          "pid": 1742024,
+          "rss_bytes": 5801869312,
+          "pss_bytes": 5428937728,
+          "private_bytes": 5405454336
+        },
+        {
+          "pid": 1742025,
+          "rss_bytes": 5695086592,
+          "pss_bytes": 5322580992,
+          "private_bytes": 5298384896
+        },
+        {
+          "pid": 1742026,
+          "rss_bytes": 5716733952,
+          "pss_bytes": 5348220928,
+          "private_bytes": 5324775424
+        },
+        {
+          "pid": 1742039,
+          "rss_bytes": 5756260352,
+          "pss_bytes": 5383388160,
+          "private_bytes": 5359906816
+        },
+        {
+          "pid": 1742060,
+          "rss_bytes": 5726859264,
+          "pss_bytes": 5357841408,
+          "private_bytes": 5333696512
+        },
+        {
+          "pid": 1742061,
+          "rss_bytes": 5590372352,
+          "pss_bytes": 5217862656,
+          "private_bytes": 5194510336
+        },
+        {
+          "pid": 1742062,
+          "rss_bytes": 5646942208,
+          "pss_bytes": 5276140544,
+          "private_bytes": 5252235264
+        }
+      ],
+      "total_pss_bytes": 44437806080,
+      "total_rss_bytes": 47859314688,
+      "cuda_torch_allocated": 627712,
+      "cuda_torch_reserved": 60817408,
+      "cuda_torch_peak_allocated": 34586112
+    },
+    {
+      "phase": "closed",
+      "processes": [
+        {
+          "pid": 1741805,
+          "rss_bytes": 2279227392,
+          "pss_bytes": 1847042048,
+          "private_bytes": 1735258112
+        }
+      ],
+      "total_pss_bytes": 1847042048,
+      "total_rss_bytes": 2279227392,
+      "cuda_torch_allocated": 25088,
+      "cuda_torch_reserved": 60817408,
+      "cuda_torch_peak_allocated": 34586112
+    }
+  ],
+  "timings": [
+    {
+      "horizon": 1,
+      "frames": "none",
+      "seconds": [
+        0.04581888020038605,
+        0.031775372102856636,
+        0.040310099720954895,
+        0.044410716742277145,
+        0.03232770413160324,
+        0.0544000118970871
+      ],
+      "steps_per_s_mean": 1599.3206799723682,
+      "steps_per_s_sd": 335.1920448252773,
+      "frame_count": 0,
+      "exact_replay": "PASS"
+    },
+    {
+      "horizon": 1,
+      "frames": "final",
+      "seconds": [
+        0.3188729230314493,
+        0.6135979872196913,
+        0.3334636967629194,
+        0.3192167952656746,
+        0.3377182688564062,
+        0.3320577535778284
+      ],
+      "steps_per_s_mean": 179.9450006259189,
+      "steps_per_s_sd": 37.34574712877463,
+      "frame_count": 64,
+      "exact_replay": "PASS"
+    },
+    {
+      "horizon": 1,
+      "frames": "all",
+      "seconds": [
+        0.3368555065244436,
+        0.32041530683636665,
+        0.3502908404916525,
+        0.3285241462290287,
+        0.32560515217483044,
+        0.3332820702344179
+      ],
+      "steps_per_s_mean": 192.63929856759864,
+      "steps_per_s_sd": 5.9423277000861585,
+      "frame_count": 64,
+      "exact_replay": "PASS"
+    },
+    {
+      "horizon": 8,
+      "frames": "none",
+      "seconds": [
+        0.33327073231339455,
+        0.3099997229874134,
+        0.3192501328885555,
+        0.329664109274745,
+        0.34863039292395115,
+        0.3184963148087263
+      ],
+      "steps_per_s_mean": 1570.1524940171716,
+      "steps_per_s_sd": 64.6746154266901,
+      "frame_count": 0,
+      "exact_replay": "PASS"
+    },
+    {
+      "horizon": 8,
+      "frames": "final",
+      "seconds": [
+        0.891973964869976,
+        0.5584546457976103,
+        0.5545056145638227,
+        0.5782594159245491,
+        0.5606139320880175,
+        0.59834866784513
+      ],
+      "steps_per_s_mean": 844.7595236882604,
+      "steps_per_s_sd": 135.01282813521814,
+      "frame_count": 64,
+      "exact_replay": "PASS"
+    },
+    {
+      "horizon": 8,
+      "frames": "all",
+      "seconds": [
+        2.3536129258573055,
+        2.3744431491941214,
+        2.6695465371012688,
+        2.6774831749498844,
+        2.357799857854843,
+        2.5830553490668535
+      ],
+      "steps_per_s_mean": 205.2585170449402,
+      "steps_per_s_sd": 12.866078288411023,
+      "frame_count": 512,
+      "exact_replay": "PASS"
+    }
+  ],
+  "versions": {
+    "torch": "2.14.0+cu126",
+    "numpy": "2.5.2",
+    "mujoco": "3.12.0",
+    "ogbench": "1.2.1"
+  },
+  "source_sha256": {
+    "stable_envs/_adapters/ogbench.py": "d83ed078e39423a4a97c163d49ee9d2c4d87fe40d81dc89477a1db6de46895c3",
+    "stable_envs/_adapters/ogbench_execution.py": "5840dfd9245c7f2eb7bd4774d999ff3333213fbc044977f15ddf912c2a11d960",
+    "stable_envs/_adapters/ogbench_manipulation.py": "2ad6a2d1b78bc175bf81d8e943a2e47a8d04a1bd6ad8450b4c69b95712f80208",
+    "stable_envs/_adapters/ogbench_manipulation_compat.py": "861d0683ada72c2266fdec537dbf9604ba3028faa8d3f1adcd7e17b28e0736b5",
+    "stable_envs/_adapters/ogbench_manipulation_process.py": "4f879537b71013f23fc2bfc23660e4b0ce66ff09083c4b4db2333f11a88714f7",
+    "stable_envs/_adapters/ogbench_maze_process.py": "39cb309792358189dfe560412207a51057b84d51137ad5a3cfe78ce51bd84156",
+    "stable_envs/_adapters/ogbench_render_state.py": "813f63264c52e00c11ae40b0fb5170d31ab08addac427e0c65105b0b363a7b5a",
+    "stable_envs/envs/ogbench/__init__.py": "a4c4ff9e667691c8d7f36a51a6758ec3e035fe116815b5f49d4a70a3da8a6003",
+    "stable_envs/envs/ogbench/context_cache.py": "6822a73532945faed22da60a3c19a9a6543656747ec17d50151175eb3f52cfa4",
+    "stable_envs/envs/ogbench/manipulation.py": "1c7c5b4a00581d5d6e412da38ce1d139595bd230050fb43cac7d339ec81e9e0b",
+    "stable_envs/envs/ogbench/manipulation_fidelity.py": "980523951dbb2aefb510f8506e62f14b534bb1a2ebb9dc71051c61cd38f3cdad",
+    "stable_envs/envs/ogbench/manipulation_opengl.py": "4f4ce161af00b4237f3d40e287e6e4007f6eef17639f96204c16facb2764dfa1",
+    "stable_envs/envs/ogbench/manipulation_renderer.py": "e6ce4a8f4e8c54c8ddf602b0dd9fdc291e2cbcd62897f66fded9b35b2e60ac31",
+    "stable_envs/envs/ogbench/manipulation_semantics.py": "828208bc11345a9b7a631cff44e2ae9535b1e3b862ea0c32aad59176fbe68b41",
+    "stable_envs/envs/ogbench/maze.py": "6a11acb4245ced898f7ffae68f660c436cab30326435ecda13d750773dca7076",
+    "stable_envs/_adapters/process_requests.py": "e4b6626543f4ee59a80223f413a2ff2381ba7d6e9dc0e01eafa01b49d6d810d6",
+    "stable_envs/_stepping.py": "4b23abcf73767a4a59f0c106e098376ac7b2570608e5d4829a8919dd213f5f99",
+    "scripts/benchmarks/online_stepping/ogbench_online_memory.py": "d1758bcb0ec2016a31e6d726b0a478ebd8af219ab9b4bfaaef9d5a38c6d50e12"
+  },
+  "scope": "one public production population; CUDA output; phase memory snapshots; no source or old-adapter comparison",
+  "workers": [
+    {
+      "pid": 1742023,
+      "affinity": [
+        36
+      ]
+    },
+    {
+      "pid": 1742024,
+      "affinity": [
+        37
+      ]
+    },
+    {
+      "pid": 1742025,
+      "affinity": [
+        38
+      ]
+    },
+    {
+      "pid": 1742026,
+      "affinity": [
+        43
+      ]
+    },
+    {
+      "pid": 1742039,
+      "affinity": [
+        50
+      ]
+    },
+    {
+      "pid": 1742060,
+      "affinity": [
+        51
+      ]
+    },
+    {
+      "pid": 1742061,
+      "affinity": [
+        52
+      ]
+    },
+    {
+      "pid": 1742062,
+      "affinity": [
+        53
+      ]
+    }
+  ],
+  "state_bytes": 601408
+}

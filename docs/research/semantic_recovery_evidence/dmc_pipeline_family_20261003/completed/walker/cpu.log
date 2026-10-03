@@ -1,0 +1,6 @@
+walker cpu 64 1 PASS
+walker cpu 64 8 PASS
+walker cpu 256 1 PASS
+walker cpu 256 8 PASS
+walker cpu 1024 1 PASS
+walker cpu 1024 8 PASS
