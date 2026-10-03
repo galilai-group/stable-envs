@@ -22,10 +22,13 @@ class ManipulationSemantics:
     def __init__(
         self, num_envs=1, size=None, supersample=None, device="cpu", backend="auto", seed=0, *, reward_task_id=None
     ):
+        from ..._adapters.ogbench_execution import make_manipulation_adapter
         from ..._adapters.ogbench_manipulation import OGBManipulationAdapter
 
         device = Env.resolve_device(device)
-        self._simulator = OGBManipulationAdapter(self.CELL, num_envs, device, seed, reward_task_id)
+        self._simulator = make_manipulation_adapter(
+            self.CELL, num_envs, device, seed, reward_task_id, OGBManipulationAdapter
+        )
         self._nq = self._simulator.nq
         self.state_dim = self._nq + 3 + (2 if self.CELL == "Scene" else 0)
         self.state_names = (

@@ -191,3 +191,19 @@ application gates remain pending; the integration constructors remain local
 until those pass. The candidate source, exact constructor override, launcher
 and submission are preserved. Larger-batch component, source and combined
 pipeline measurements remain required after default acceptance.
+
+## Cube/Scene process defaults accepted (October 3)
+
+The [four independent default-renderer gates](semantic_recovery_evidence/ogbench_manipulation_default_20261003/closure/)
+now pass: Cube 6967385 and Scene 6968217 each have CPU/CUDA 22-case acceptance
+and 60 routing tests without skips. Complete State/task/RNG/lifecycle, owned
+snapshots, in-flight rendering, variation, rejected restore, and exact frames
+match the local path. The tested constructor is now enabled for Linux B>=64 with
+>=4 affinity CPUs outside daemon processes, using up to eight owners; local
+fallback remains for other cases. The API and accepted renderer are unchanged.
+
+The paired Scene gate exceeded the first 64-GiB allocation and passed with
+128 GiB, peaking at 65.26 GiB. Its local/control/process populations and restore
+staging make this an acceptance-test footprint, not a production memory bound.
+The failed attempt remains preserved. Large-batch memory and source/pipeline
+throughput are still required; prior process-only 5.27–6.14x gains are not FPS.

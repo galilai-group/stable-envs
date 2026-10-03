@@ -1,0 +1,61 @@
+{
+  "status": "PASS",
+  "domain": "Scene",
+  "host": "gpu2111.oscar.ccv.brown.edu",
+  "job": "6968217",
+  "affinity": [
+    38,
+    51,
+    52,
+    53,
+    54,
+    55,
+    56,
+    57
+  ],
+  "gpu": "NVIDIA GeForce RTX 3090",
+  "versions": {
+    "torch": "2.14.0+cu126",
+    "numpy": "2.5.2",
+    "mujoco": "3.12.0",
+    "ogbench": "1.2.1",
+    "tensordict": "0.14.2"
+  },
+  "source_sha256": {
+    "stable_envs/_adapters/ogbench_execution.py": "5840dfd9245c7f2eb7bd4774d999ff3333213fbc044977f15ddf912c2a11d960",
+    "stable_envs/_adapters/ogbench_manipulation.py": "2ad6a2d1b78bc175bf81d8e943a2e47a8d04a1bd6ad8450b4c69b95712f80208",
+    "stable_envs/_adapters/ogbench_manipulation_process.py": "4f879537b71013f23fc2bfc23660e4b0ce66ff09083c4b4db2333f11a88714f7",
+    "stable_envs/_adapters/ogbench_manipulation_compat.py": "861d0683ada72c2266fdec537dbf9604ba3028faa8d3f1adcd7e17b28e0736b5",
+    "stable_envs/_adapters/ogbench_render_state.py": "813f63264c52e00c11ae40b0fb5170d31ab08addac427e0c65105b0b363a7b5a",
+    "stable_envs/_adapters/state_columns.py": "1fad371b5753af62495b553988ea870a97cc1e7bc3206d8bc72d9d5b38465cea",
+    "stable_envs/_adapters/process_requests.py": "e4b6626543f4ee59a80223f413a2ff2381ba7d6e9dc0e01eafa01b49d6d810d6",
+    "stable_envs/_stepping.py": "4b23abcf73767a4a59f0c106e098376ac7b2570608e5d4829a8919dd213f5f99",
+    "stable_envs/envs/ogbench/manipulation_semantics.py": "828208bc11345a9b7a631cff44e2ae9535b1e3b862ea0c32aad59176fbe68b41",
+    "scripts/benchmarks/online_stepping/ogbench_manipulation_process.py": "c7b3ac516d6e389a8ad81765d4a0777313a4610efcb3534e235fc69ec114be3a",
+    "stable_envs/envs/ogbench/manipulation_renderer.py": "e6ce4a8f4e8c54c8ddf602b0dd9fdc291e2cbcd62897f66fded9b35b2e60ac31",
+    "stable_envs/envs/ogbench/manipulation.py": "1c7c5b4a00581d5d6e412da38ce1d139595bd230050fb43cac7d339ec81e9e0b",
+    "stable_envs/envs/ogbench/manipulation_opengl.py": "4f4ce161af00b4237f3d40e287e6e4007f6eef17639f96204c16facb2764dfa1",
+    "stable_envs/envs/ogbench/manipulation_fidelity.py": "980523951dbb2aefb510f8506e62f14b534bb1a2ebb9dc71051c61cd38f3cdad"
+  },
+  "scope": "paired public steps with full State history and no frames; local vs persistent process owners",
+  "gates": [
+    {
+      "device": "cuda",
+      "cases": 22,
+      "overlaps": 20,
+      "batch": 64,
+      "production_default": true,
+      "processes": 8,
+      "backend": "auto",
+      "state_task_rng_lifecycle_ownership": "PASS",
+      "failed_restore_keeps_owners": "PASS",
+      "frame_mse_vs_local": 0
+    }
+  ],
+  "timings": [],
+  "opengl": {
+    "vendor": "NVIDIA Corporation",
+    "renderer": "NVIDIA GeForce RTX 3090/PCIe/SSE2",
+    "software": false
+  }
+}

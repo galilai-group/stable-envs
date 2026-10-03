@@ -12,8 +12,9 @@ Update, 2026-10-03: eleven DMC registrations, OGBMaze, and classic Acrobot
 now also have accepted process defaults. Acrobot's independent CPU/CUDA default
 gate passes 132 tests and 25 public cases per device. Navigation retains native
 Torch batching; the other four classic registrations retain their optimized local
-path. Cube/Scene default integration awaits closure of Scene's gate; Quadruped
-awaits its renderer diagnostic. These route gates do not complete the required
+path. Cube/Scene defaults now also pass all four independent CPU/CUDA gates.
+Quadruped retains local execution while its reproduced renderer-history
+discrepancy is investigated. These route gates do not complete the required
 same-device source/component/pipeline throughput table. See the current backlog
 for registration-specific evidence and remaining work.
 
