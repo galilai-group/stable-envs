@@ -1,0 +1,17 @@
+{
+  "status": "NOT_UPLOADED_NOT_SUBMITTED",
+  "reason": "Oscar SSH keyboard-interactive authentication denied",
+  "remote": "/oscar/scratch/sboughan/se-semantic-recovery/fetch-source-frames-v1-20261003",
+  "tasks": 9,
+  "gpu": "RTX 3090",
+  "partition": "3090-gcondo",
+  "workers": [
+    1,
+    2
+  ],
+  "batch": 4,
+  "timing": false,
+  "source_venv": "se6-verify-fetch311",
+  "requires_runtime_mujoco": "3.11.0",
+  "historical_venv_evidence": "docs/research/semantic_recovery_evidence/fetch_pipeline_20261002/production_v3/single-action-run.sh"
+}

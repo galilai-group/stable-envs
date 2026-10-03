@@ -138,3 +138,16 @@ exit cleanly. This benchmark executor reuses Gym's process/shared-memory transpo
 source State RPCs are untimed and pickled. No rendering, source FPS or CUDA output
 result is claimed. The next rendered source gates must retain the PickAndPlace
 lifecycle and raster-size qualifications above.
+
+The [selected-frame source checkpoint](semantic_recovery_evidence/fetch_source_frames_20261003/)
+adds shared image columns while preserving source raster/resize behavior. Final
+CPU no-frame and empty-frame regressions each pass 96 cases across all 12
+registrations; 36 synthetic checks also pass from the frozen upload bundle.
+The prepared actual-image gate compares independent source P1/P2 owners with the
+public library API for each of the nine Reach/Push/Slide registrations on CPU and
+CUDA. It requires exact source task/State/parallel-image agreement, render
+nonmutation, and per-frame library MSE <= 0.001. It has **not been uploaded or
+submitted** because Oscar SSH authentication remains unavailable. It is a B4
+correctness prerequisite, not throughput or large-batch process acceptance.
+PickAndPlace nonempty source capture is rejected before execution; its no-frame
+path remains valid, and its rendered comparison protocol remains unresolved.

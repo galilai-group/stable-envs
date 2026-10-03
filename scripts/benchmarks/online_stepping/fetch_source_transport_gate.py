@@ -26,6 +26,7 @@ def fixture(task, reward):
     adapter = FetchAdapter(4, seed=17, task=task, reward_type=reward)
     env = SimpleNamespace(num_envs=4, device=torch.device('cpu'), has_dynamics=True,
         execution_mode='DELEGATED_CPU', action_spec=SimpleNamespace(shape=(4,), dtype=torch.float64),
+        frame_spec=SimpleNamespace(shape=(64, 64, 3), dtype=torch.uint8),
         _simulator=adapter, _check_open=lambda _: adapter._check_open(),
         _step=adapter.step, _advance_without_snapshot=adapter.advance,
         get_state=adapter.get_state, set_state=adapter.set_state, close=adapter.close)
@@ -34,7 +35,7 @@ def fixture(task, reward):
 
 
 def tasks(result, horizon):
-    return {key: value.unsqueeze(1) if horizon == 1 and key != 'valid' else value
+    return {key: value.unsqueeze(1) if horizon == 1 and key not in ('valid', 'frames', 'frame_valid') else value
             for key, value in result.exclude('state', 'states', 'state_valid').items()}
 
 
@@ -49,9 +50,13 @@ def main():
     p.add_argument('--source-root', type=Path, required=True)
     p.add_argument('--source-manifest', type=Path, required=True)
     p.add_argument('--output', type=Path, required=True)
+    p.add_argument('--empty-frames', action='store_true', help='Exercise zero-length shared image columns without GL')
     args = p.parse_args()
     if args.output.exists():
         raise FileExistsError(args.output)
+    indices = () if args.empty_frames else None
+    frame_slice = slice(20, 30) if args.empty_frames else None
+    render_size = 64 if args.empty_frames else None
     import_source(args.source_root)
     from scripts.benchmarks.online_stepping.fetch_source_render_lifecycle import IDS, PIN, differences
     from scripts.recovery.fetch_public_gate import equal_state, full_compare
@@ -74,7 +79,7 @@ def main():
         versions={n: importlib.metadata.version(n) for n in
                   ('numpy', 'mujoco', 'gymnasium', 'gymnasium-robotics', 'torch', 'tensordict')},
         scope='CPU B4/P2 actual source shared task arrays; render-free adapter/dispatcher fixture',
-        no_rendering=True, no_timing=True, state_rpc='untimed pickled independent source snapshots',
+        no_rendering=True, no_timing=True, empty_frames=args.empty_frames, state_rpc='untimed pickled independent source snapshots',
         runtime_files={}, cases=[], worker_closures=[])
     args.output.parent.mkdir(parents=True, exist_ok=True)
 
@@ -89,8 +94,9 @@ def main():
                 task = registration.removeprefix('swm/Fetch').removesuffix('-v3').removesuffix('Dense').removesuffix('Dict')
                 reward = 'dense' if 'Dense' in registration else 'sparse'
                 for horizon in (1, 8):
-                    with contextlib.closing(FetchSource(registration, args.source_root, 4)) as serial, \
-                            ParallelFetchSource(registration, args.source_root, 4, 2, horizon) as parallel, \
+                    with contextlib.closing(FetchSource(registration, args.source_root, 4, render_size=render_size)) as serial, \
+                            ParallelFetchSource(registration, args.source_root, 4, 2, horizon,
+                                                frame_indices=indices, render_size=render_size) as parallel, \
                             contextlib.closing(fixture(task, reward)) as env:
                         assert parallel.vector.shared_memory and parallel.vector.copy
                         assert parallel.vector.autoreset_mode.name == 'DISABLED'
@@ -110,9 +116,9 @@ def main():
                                 assert not differences(initial, parallel.snapshot())
                                 full_compare(env.get_state(), serial.envs)
                                 actions = np.random.default_rng(31).uniform(-1, 1, (4, horizon, 4)).astype(dtype)
-                                expected = serial.step(actions)
+                                expected = serial.step(actions, indices)
                                 actual = parallel.step(actions)
-                                result = env.step(actions[:, 0] if horizon == 1 else actions, states=slice(None), frames=None)
+                                result = env.step(actions[:, 0] if horizon == 1 else actions, states=slice(None), frames=frame_slice)
                                 compare(actual, expected)
                                 compare(tasks(result, horizon), expected)
                                 assert not differences(parallel.snapshot(), serial.snapshot())
@@ -125,9 +131,9 @@ def main():
                                 held_tasks = {key: value.clone() for key, value in actual.items()}
                                 held_public = result.clone()
                                 endpoint = copy.deepcopy(serial.snapshot())
-                                for owner in (serial, parallel):
-                                    owner.step(-actions)
-                                continued = env.step(-actions[:, 0] if horizon == 1 else -actions, frames=None, states=None)
+                                serial.step(-actions, indices)
+                                parallel.step(-actions)
+                                continued = env.step(-actions[:, 0] if horizon == 1 else -actions, frames=frame_slice, states=None)
                                 assert not differences(serial.snapshot(), parallel.snapshot())
                                 full_compare(continued['state'], serial.envs)
                                 compare(actual, held_tasks)
@@ -137,7 +143,7 @@ def main():
                                 assert moved
                                 serial.restore(initial)
                                 parallel.restore(initial)
-                                compare(serial.step(actions), held_tasks)
+                                compare(serial.step(actions, indices), held_tasks)
                                 compare(parallel.step(actions), held_tasks)
                                 assert not differences(endpoint, serial.snapshot())
                                 assert not differences(endpoint, parallel.snapshot())
