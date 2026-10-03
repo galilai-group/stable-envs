@@ -116,3 +116,9 @@ State export/IPC/transfer, render-only FPS, selected-frame pipeline throughput
 and same-device upstream baselines. Preserve active-lane stopping and the
 existing slice-only public API. This export checkpoint does not complete the
 three-family scaling work or the broader 35-registration goal.
+
+Cube closure: `6964281_1` independently passed both CPU/software-GL and
+CUDA/EGL gates and all paired timing cells, on an RTX A6000 host. Its
+[terminal evidence](semantic_recovery_evidence/ogbench_export_cube_20261003/)
+validates the frozen exporter source; the newer shared masking change is
+separate. Maze and Cube exporter acceptance are complete; Scene remains live.

@@ -150,3 +150,30 @@ the renderer proof. Retry `6964379` repeats only those tasks on unchanged frozen
 source and writes `benchmark-retry2`. Failed reports, retry launcher and scheduler
 state are preserved in [the closure](semantic_recovery_evidence/dmc_baseline_closure_20261002/).
 The exporter acceptance array `6961949` remains pending. Defaults are unchanged.
+
+## RTX 3090 throughput closure, ten registrations
+
+The [new 240-row CSV](semantic_recovery_evidence/dmc_process_throughput_20261003/comparison.csv)
+independently validates ten registrations on CPU/CUDA, using the frozen
+`f0716916` implementation. Acrobot/Pendulum are excluded pending `6964379`;
+no sibling result fills their rows. At B256/T8, all States and frames disabled:
+
+| Domain | Local CPU-output steps/s | P8 CPU-output steps/s | CPU-output ratio | Local CUDA-output steps/s | P8 CUDA-output steps/s | CUDA-output ratio |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| ball_in_cup | 2,723 | 17,406 | 6.39× | 2,665 | 17,334 | 6.50× |
+| cartpole | 3,505 | 22,364 | 6.38× | 3,492 | 20,345 | 5.83× |
+| cheetah | 4,202 | 25,470 | 6.06× | 4,215 | 23,256 | 5.52× |
+| finger | 2,480 | 16,721 | 6.74× | 2,440 | 15,778 | 6.47× |
+| hopper | 3,221 | 20,564 | 6.39× | 3,182 | 16,618 | 5.22× |
+| humanoid | 1,239 | 8,365 | 6.75× | 1,231 | 8,186 | 6.65× |
+| manipulator | 1,450 | 10,296 | 7.10× | 1,461 | 9,824 | 6.72× |
+| quadruped | 1,632 | 11,176 | 6.85× | 1,612 | 10,729 | 6.65× |
+| reacher | 4,194 | 27,352 | 6.52× | 4,088 | 26,104 | 6.39× |
+| walker | 2,517 | 17,141 | 6.81× | 2,548 | 16,245 | 6.38× |
+
+The CSV retains sample SD and every B64/256, T1/8, local/P4/P8 cell. P8 is
+1.92–7.10× local across these workloads and at least 1.075× P4. Every comparison
+shares its recorded eight-CPU allocation and RTX 3090 host. Physics stays CPU;
+these are adapter improvements, not render FPS or upstream speedups. The
+results support a large-batch process route after remaining exporter, retry
+and unpatched-default gates close; the public default is still local.

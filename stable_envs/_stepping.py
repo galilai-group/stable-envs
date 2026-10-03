@@ -39,15 +39,16 @@ def _done(result):
     return done
 
 
-def _masked_outputs(result, active):
+def _masked_outputs(result, active, *, all_active):
     """Invalid task-output slots are zero; held endpoint States are not padding."""
     out = result.exclude("state").clone()
     if "state" in result.keys():
         out["state"] = result["state"]
-    for key, value in out.items(True, True):
-        path = (key,) if isinstance(key, str) else key
-        if path[0] != "state":
-            value[~active] = 0
+    if not all_active:
+        for key, value in out.items(True, True):
+            path = (key,) if isinstance(key, str) else key
+            if path[0] != "state":
+                value[~active] = 0
     return out
 
 
@@ -81,22 +82,23 @@ def step(env, actions, *, states=slice(None), frames=slice(-1, None)):
     history, saved_states, saved_frames, validity = [], {}, {}, []
     advance = getattr(env, "_advance_without_snapshot", env._step)
     active = torch.ones(env.num_envs, dtype=torch.bool, device=env.device)
+    all_active = True
     result, live_state, live_frame = None, None, None
     pipeline = getattr(env, "_step_pipeline", lambda: None)()
     pending = False
 
-    def submit(t, mask):
+    def submit(t, mask, all_active):
         pipeline.submit_step(
             acts[:, t],
             # The initial mask is known to be all true; do not synchronize the
             # GPU just to read it back before starting CPU simulation.
-            active=None if t == 0 or bool(mask.all()) else mask,
+            active=None if all_active else mask,
             capture_state=t in state_times or t in frame_times or t == length - 1,
         )
 
     try:
         if pipeline is not None:
-            submit(0, active)
+            submit(0, active, all_active)
             pending = True
         for t in range(length):
             validity.append(active.clone())
@@ -105,7 +107,7 @@ def step(env, actions, *, states=slice(None), frames=slice(-1, None)):
                     result = pipeline.receive_step()
                     pending = False
                     live_state, live_frame = result.get("state", None), None
-            elif t == 0 or bool(active.all()):
+            elif all_active:
                 result = advance(acts[:, t])
                 live_state, live_frame = result.get("state", None), None
             elif bool(active.any()):
@@ -116,12 +118,16 @@ def step(env, actions, *, states=slice(None), frames=slice(-1, None)):
             if needs_state and live_state is None:
                 live_state = env.get_state()
             next_active = active & ~_done(result) if t + 1 < length else active
-            if pipeline is not None and t + 1 < length and bool(next_active.any()):
+            # Reuse the execution decision for output padding. In particular,
+            # empty boolean indexing still traverses large info images. This
+            # adds no device-to-host decision beyond the next step's routing.
+            next_all_active = bool(next_active.all()) if t + 1 < length else all_active
+            if pipeline is not None and t + 1 < length and (next_all_active or bool(next_active.any())):
                 # receive_step owns its outputs. Workers may now overwrite their
                 # buffers while the parent renders the previous endpoint.
-                submit(t + 1, next_active)
+                submit(t + 1, next_active, next_all_active)
                 pending = True
-            history.append(_masked_outputs(result, active).exclude("state"))
+            history.append(_masked_outputs(result, active, all_active=all_active).exclude("state"))
             if t in state_times:
                 saved_states[t] = live_state
             if t in frame_times:
@@ -129,6 +135,7 @@ def step(env, actions, *, states=slice(None), frames=slice(-1, None)):
                     live_frame = env.render(live_state)
                 saved_frames[t] = live_frame
             active = next_active
+            all_active = next_all_active
     except BaseException:
         if pending:
             pipeline.abort_step()

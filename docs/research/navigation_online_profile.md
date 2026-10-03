@@ -80,3 +80,8 @@ mixed terminal-lane regression gates; do not remove the source info payload or
 change the user-facing selectors. Use the resulting evidence to decide whether
 further native chunk compilation is worthwhile. Process pools are not the
 appropriate first change for these already-batched dynamics.
+
+The [activity-aware padding candidate](step_masking_checkpoint.md) now has exact
+local gates for all three native registrations and a paired CPU sweep. Its GPU
+and Fetch pipeline regressions are queued separately; the original profile
+reports above remain unchanged.
