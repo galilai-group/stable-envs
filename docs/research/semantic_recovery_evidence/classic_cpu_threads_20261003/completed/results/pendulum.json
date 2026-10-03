@@ -1,0 +1,5676 @@
+{
+  "status": "PASS",
+  "domain": "pendulum",
+  "device": "cpu",
+  "host": "gpu2105.oscar.ccv.brown.edu",
+  "job": "6971128",
+  "affinity": [
+    32,
+    42,
+    43,
+    44,
+    45,
+    46,
+    47,
+    54
+  ],
+  "versions": {
+    "torch": "2.14.0+cu126",
+    "numpy": "2.5.3",
+    "gymnasium": "1.3.0",
+    "tensordict": "0.14.2"
+  },
+  "source_sha256": {
+    "scripts/benchmarks/online_stepping/classic_cpu_threads.py": "e176c847973a6fcf1d52439e6d028f8cb37091d0d7c1e9fd69c18fa73f252b4d",
+    "stable_envs/envs/_classic_semantics.py": "5f9932a9d5aeba21228e3cc1699338d0bab22b6b25e599a4aad19d8b3a157d4a",
+    "stable_envs/envs/classic_control.py": "e158939aa7babb9a2701f8e9b84bb1393c412dd98e7bfe2c8d0cd857369b76b6",
+    "stable_envs/_stepping.py": "4b23abcf73767a4a59f0c106e098376ac7b2570608e5d4829a8919dd213f5f99",
+    "stable_envs/_adapters/classic_execution.py": "e24fce09f8c47f5d1216af93cc350a6cb06343f9b009837a8cbe04e6e91f8fb7",
+    "stable_envs/_adapters/acrobot_process.py": "ca694f3b1990ef912c0c4b215ddfaea0ef5414822246545f64f883b8c009562e",
+    "stable_envs/_adapters/process_requests.py": "e4b6626543f4ee59a80223f413a2ff2381ba7d6e9dc0e01eafa01b49d6d810d6",
+    "stable_envs/render/gfxdraw.py": "59b656b4b72748bd8df9478ec4d61112d8d1bf9cdcd485cd106ccb54ef75f722",
+    "stable_envs/render/gfxdraw_classic.py": "1e39f08560949ad3cb865a5527e5d0c8e05114cf2f3253b5bc165de68674007d",
+    "stable_envs/render/gfxdraw_fused.py": "afb53239d1d1b251a0968ceb3f3e43ce1022349cb72f6f281e1920606c3410b6",
+    "scripts/benchmarks/online_stepping/classic_source_pipeline.py": "cfdcfc7899ec347879d5aab45b56360a43dc6588212ef2e487356afbc8f476c8",
+    "scripts/benchmarks/online_stepping/classic_state_export.py": "c97fd4de7cb96274d57302dc1d4a4a95d09a5ae3f7d00998e2ca4cf535d393a9",
+    "tests/unit/test_classic_state_export.py": "ecacc6ce0bd371419f15e75067451a960d55a1768a20c479dde842d03383650c"
+  },
+  "scope": "parent Torch intra-op threads; same ordinary simulator and CPU renderer; no source speedup",
+  "cpu_counter_scope": "Linux parent plus persistent simulator workers; quantized process CPU seconds",
+  "timings": [
+    {
+      "batch": 64,
+      "operation": "render_saved",
+      "horizon": 0,
+      "selection": null,
+      "threads": 1,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 64,
+      "frame_count": 64,
+      "samples": [
+        {
+          "seconds": 0.11619923822581768,
+          "cpu_seconds": {
+            "235426": 0.1200000000000001
+          },
+          "average_busy_cores": 1.0327090076683305
+        },
+        {
+          "seconds": 0.11590258032083511,
+          "cpu_seconds": {
+            "235426": 0.11000000000000032
+          },
+          "average_busy_cores": 0.9490729170610732
+        },
+        {
+          "seconds": 0.11619713716208935,
+          "cpu_seconds": {
+            "235426": 0.1200000000000001
+          },
+          "average_busy_cores": 1.0327276809979058
+        },
+        {
+          "seconds": 0.1033830251544714,
+          "cpu_seconds": {
+            "235426": 0.09999999999999964
+          },
+          "average_busy_cores": 0.9672767831138918
+        },
+        {
+          "seconds": 0.11382246948778629,
+          "cpu_seconds": {
+            "235426": 0.10999999999999943
+          },
+          "average_busy_cores": 0.9664172680052683
+        },
+        {
+          "seconds": 0.11474697478115559,
+          "cpu_seconds": {
+            "235426": 0.10999999999999943
+          },
+          "average_busy_cores": 0.9586309374150426
+        }
+      ],
+      "rate_mean": 565.4732168259288,
+      "rate_sd": 26.64283145557229
+    },
+    {
+      "batch": 64,
+      "operation": "render_saved",
+      "horizon": 0,
+      "selection": null,
+      "threads": 2,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 64,
+      "frame_count": 64,
+      "samples": [
+        {
+          "seconds": 0.07737105712294579,
+          "cpu_seconds": {
+            "235426": 0.16000000000000014
+          },
+          "average_busy_cores": 2.067956752170952
+        },
+        {
+          "seconds": 0.07500354014337063,
+          "cpu_seconds": {
+            "235426": 0.14000000000000057
+          },
+          "average_busy_cores": 1.8665785605904472
+        },
+        {
+          "seconds": 0.06686657294631004,
+          "cpu_seconds": {
+            "235426": 0.13999999999999968
+          },
+          "average_busy_cores": 2.093721778031177
+        },
+        {
+          "seconds": 0.07432679273188114,
+          "cpu_seconds": {
+            "235426": 0.15000000000000036
+          },
+          "average_busy_cores": 2.0181147939625887
+        },
+        {
+          "seconds": 0.0738858450204134,
+          "cpu_seconds": {
+            "235426": 0.15000000000000036
+          },
+          "average_busy_cores": 2.03015882079386
+        },
+        {
+          "seconds": 0.07395436428487301,
+          "cpu_seconds": {
+            "235426": 0.15000000000000036
+          },
+          "average_busy_cores": 2.0282778636592527
+        }
+      ],
+      "rate_mean": 871.7112794889532,
+      "rate_sd": 44.27637882400514
+    },
+    {
+      "batch": 64,
+      "operation": "render_saved",
+      "horizon": 0,
+      "selection": null,
+      "threads": 4,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 64,
+      "frame_count": 64,
+      "samples": [
+        {
+          "seconds": 0.05170150473713875,
+          "cpu_seconds": {
+            "235426": 0.1999999999999993
+          },
+          "average_busy_cores": 3.8683593643326453
+        },
+        {
+          "seconds": 0.05331645719707012,
+          "cpu_seconds": {
+            "235426": 0.20000000000000018
+          },
+          "average_busy_cores": 3.7511869789238492
+        },
+        {
+          "seconds": 0.051073236390948296,
+          "cpu_seconds": {
+            "235426": 0.1999999999999993
+          },
+          "average_busy_cores": 3.915945299981915
+        },
+        {
+          "seconds": 0.05434422008693218,
+          "cpu_seconds": {
+            "235426": 0.21000000000000085
+          },
+          "average_busy_cores": 3.8642563949592543
+        },
+        {
+          "seconds": 0.052632275968790054,
+          "cpu_seconds": {
+            "235426": 0.21000000000000085
+          },
+          "average_busy_cores": 3.9899471595058302
+        },
+        {
+          "seconds": 0.052467361092567444,
+          "cpu_seconds": {
+            "235426": 0.20999999999999908
+          },
+          "average_busy_cores": 4.002488320872455
+        }
+      ],
+      "rate_mean": 1217.4708876565273,
+      "rate_sd": 26.717671508475412
+    },
+    {
+      "batch": 64,
+      "operation": "render_saved",
+      "horizon": 0,
+      "selection": null,
+      "threads": 8,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 64,
+      "frame_count": 64,
+      "samples": [
+        {
+          "seconds": 0.045546699315309525,
+          "cpu_seconds": {
+            "235426": 0.3600000000000003
+          },
+          "average_busy_cores": 7.903975598929827
+        },
+        {
+          "seconds": 0.0426868312060833,
+          "cpu_seconds": {
+            "235426": 0.33999999999999986
+          },
+          "average_busy_cores": 7.964985696842882
+        },
+        {
+          "seconds": 0.04316031187772751,
+          "cpu_seconds": {
+            "235426": 0.33999999999999986
+          },
+          "average_busy_cores": 7.877607579927007
+        },
+        {
+          "seconds": 0.04438885673880577,
+          "cpu_seconds": {
+            "235426": 0.3500000000000014
+          },
+          "average_busy_cores": 7.88486178095286
+        },
+        {
+          "seconds": 0.04298408143222332,
+          "cpu_seconds": {
+            "235426": 0.33000000000000007
+          },
+          "average_busy_cores": 7.677260720816829
+        },
+        {
+          "seconds": 0.04077946022152901,
+          "cpu_seconds": {
+            "235426": 0.33000000000000007
+          },
+          "average_busy_cores": 8.092309172493183
+        }
+      ],
+      "rate_mean": 1481.238424584756,
+      "rate_sd": 55.69110036752271
+    },
+    {
+      "batch": 64,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "none",
+      "threads": 1,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 64,
+      "frame_count": 0,
+      "samples": [
+        {
+          "seconds": 0.002498127520084381,
+          "cpu_seconds": {
+            "235426": 0.0
+          },
+          "average_busy_cores": 0.0
+        },
+        {
+          "seconds": 0.0025076493620872498,
+          "cpu_seconds": {
+            "235426": 0.0
+          },
+          "average_busy_cores": 0.0
+        },
+        {
+          "seconds": 0.0024782605469226837,
+          "cpu_seconds": {
+            "235426": 0.0
+          },
+          "average_busy_cores": 0.0
+        },
+        {
+          "seconds": 0.0024765189737081528,
+          "cpu_seconds": {
+            "235426": 0.0
+          },
+          "average_busy_cores": 0.0
+        },
+        {
+          "seconds": 0.00250169076025486,
+          "cpu_seconds": {
+            "235426": 0.009999999999999787
+          },
+          "average_busy_cores": 3.9972966119045967
+        },
+        {
+          "seconds": 0.0024585891515016556,
+          "cpu_seconds": {
+            "235426": 0.009999999999999787
+          },
+          "average_busy_cores": 4.067373352677487
+        }
+      ],
+      "rate_mean": 25737.046010216047,
+      "rate_sd": 194.5997793327912
+    },
+    {
+      "batch": 64,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "none",
+      "threads": 2,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 64,
+      "frame_count": 0,
+      "samples": [
+        {
+          "seconds": 0.0025042295455932617,
+          "cpu_seconds": {
+            "235426": 0.0
+          },
+          "average_busy_cores": 0.0
+        },
+        {
+          "seconds": 0.0025003496557474136,
+          "cpu_seconds": {
+            "235426": 0.0
+          },
+          "average_busy_cores": 0.0
+        },
+        {
+          "seconds": 0.0024661701172590256,
+          "cpu_seconds": {
+            "235426": 0.009999999999999787
+          },
+          "average_busy_cores": 4.0548703149132646
+        },
+        {
+          "seconds": 0.002478579059243202,
+          "cpu_seconds": {
+            "235426": 0.0
+          },
+          "average_busy_cores": 0.0
+        },
+        {
+          "seconds": 0.0024846289306879044,
+          "cpu_seconds": {
+            "235426": 0.0
+          },
+          "average_busy_cores": 0.0
+        },
+        {
+          "seconds": 0.002460131421685219,
+          "cpu_seconds": {
+            "235426": 0.0
+          },
+          "average_busy_cores": 0.0
+        }
+      ],
+      "rate_mean": 25783.14044235697,
+      "rate_sd": 184.45030678317738
+    },
+    {
+      "batch": 64,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "none",
+      "threads": 4,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 64,
+      "frame_count": 0,
+      "samples": [
+        {
+          "seconds": 0.0024772286415100098,
+          "cpu_seconds": {
+            "235426": 0.0
+          },
+          "average_busy_cores": 0.0
+        },
+        {
+          "seconds": 0.0024831779301166534,
+          "cpu_seconds": {
+            "235426": 0.0
+          },
+          "average_busy_cores": 0.0
+        },
+        {
+          "seconds": 0.0024778004735708237,
+          "cpu_seconds": {
+            "235426": 0.0
+          },
+          "average_busy_cores": 0.0
+        },
+        {
+          "seconds": 0.002480456605553627,
+          "cpu_seconds": {
+            "235426": 0.0
+          },
+          "average_busy_cores": 0.0
+        },
+        {
+          "seconds": 0.0024790987372398376,
+          "cpu_seconds": {
+            "235426": 0.0
+          },
+          "average_busy_cores": 0.0
+        },
+        {
+          "seconds": 0.0024827606976032257,
+          "cpu_seconds": {
+            "235426": 0.009999999999999787
+          },
+          "average_busy_cores": 4.027774408404907
+        }
+      ],
+      "rate_mean": 25805.566277895363,
+      "rate_sd": 25.993704250177743
+    },
+    {
+      "batch": 64,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "none",
+      "threads": 8,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 64,
+      "frame_count": 0,
+      "samples": [
+        {
+          "seconds": 0.0024795085191726685,
+          "cpu_seconds": {
+            "235426": 0.0
+          },
+          "average_busy_cores": 0.0
+        },
+        {
+          "seconds": 0.002477061003446579,
+          "cpu_seconds": {
+            "235426": 0.0
+          },
+          "average_busy_cores": 0.0
+        },
+        {
+          "seconds": 0.0026895590126514435,
+          "cpu_seconds": {
+            "235426": 0.009999999999999787
+          },
+          "average_busy_cores": 3.7180816457124335
+        },
+        {
+          "seconds": 0.002479271963238716,
+          "cpu_seconds": {
+            "235426": 0.0
+          },
+          "average_busy_cores": 0.0
+        },
+        {
+          "seconds": 0.002479320392012596,
+          "cpu_seconds": {
+            "235426": 0.0
+          },
+          "average_busy_cores": 0.0
+        },
+        {
+          "seconds": 0.0024760086089372635,
+          "cpu_seconds": {
+            "235426": 0.0
+          },
+          "average_busy_cores": 0.0
+        }
+      ],
+      "rate_mean": 25486.661233732524,
+      "rate_sd": 828.52131957816
+    },
+    {
+      "batch": 64,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "final",
+      "threads": 1,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 64,
+      "frame_count": 64,
+      "samples": [
+        {
+          "seconds": 0.1298051904886961,
+          "cpu_seconds": {
+            "235426": 0.14000000000000057
+          },
+          "average_busy_cores": 1.0785393055002086
+        },
+        {
+          "seconds": 0.1221787016838789,
+          "cpu_seconds": {
+            "235426": 0.11999999999999744
+          },
+          "average_busy_cores": 0.9821679093503665
+        },
+        {
+          "seconds": 0.12106121517717838,
+          "cpu_seconds": {
+            "235426": 0.129999999999999
+          },
+          "average_busy_cores": 1.0738368998670493
+        },
+        {
+          "seconds": 0.11827385984361172,
+          "cpu_seconds": {
+            "235426": 0.10999999999999943
+          },
+          "average_busy_cores": 0.9300448987244312
+        },
+        {
+          "seconds": 0.12191680446267128,
+          "cpu_seconds": {
+            "235426": 0.10999999999999943
+          },
+          "average_busy_cores": 0.9022546193267348
+        },
+        {
+          "seconds": 0.12142924405634403,
+          "cpu_seconds": {
+            "235426": 0.129999999999999
+          },
+          "average_busy_cores": 1.0705823050308876
+        }
+      ],
+      "rate_mean": 523.1081114810971,
+      "rate_sd": 15.989397138846943
+    },
+    {
+      "batch": 64,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "final",
+      "threads": 2,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 64,
+      "frame_count": 64,
+      "samples": [
+        {
+          "seconds": 0.08142970502376556,
+          "cpu_seconds": {
+            "235426": 0.16999999999999815
+          },
+          "average_busy_cores": 2.087690234790646
+        },
+        {
+          "seconds": 0.08090703375637531,
+          "cpu_seconds": {
+            "235426": 0.14999999999999858
+          },
+          "average_busy_cores": 1.853979722599568
+        },
+        {
+          "seconds": 0.07767400704324245,
+          "cpu_seconds": {
+            "235426": 0.14999999999999858
+          },
+          "average_busy_cores": 1.9311479568253895
+        },
+        {
+          "seconds": 0.07597687654197216,
+          "cpu_seconds": {
+            "235426": 0.14000000000000057
+          },
+          "average_busy_cores": 1.8426659053647712
+        },
+        {
+          "seconds": 0.07927922904491425,
+          "cpu_seconds": {
+            "235426": 0.14999999999999858
+          },
+          "average_busy_cores": 1.8920466534181195
+        },
+        {
+          "seconds": 0.08034445531666279,
+          "cpu_seconds": {
+            "235426": 0.14999999999999858
+          },
+          "average_busy_cores": 1.8669614400745063
+        }
+      ],
+      "rate_mean": 807.8577984324054,
+      "rate_sd": 21.63485449912585
+    },
+    {
+      "batch": 64,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "final",
+      "threads": 4,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 64,
+      "frame_count": 64,
+      "samples": [
+        {
+          "seconds": 0.05957052856683731,
+          "cpu_seconds": {
+            "235426": 0.23000000000000043
+          },
+          "average_busy_cores": 3.8609696024762243
+        },
+        {
+          "seconds": 0.05684472806751728,
+          "cpu_seconds": {
+            "235426": 0.22000000000000242
+          },
+          "average_busy_cores": 3.87019179225728
+        },
+        {
+          "seconds": 0.057629963383078575,
+          "cpu_seconds": {
+            "235426": 0.21000000000000085
+          },
+          "average_busy_cores": 3.6439377655697327
+        },
+        {
+          "seconds": 0.0556690338999033,
+          "cpu_seconds": {
+            "235426": 0.21999999999999886
+          },
+          "average_busy_cores": 3.9519277520708154
+        },
+        {
+          "seconds": 0.058564962819218636,
+          "cpu_seconds": {
+            "235426": 0.21999999999999886
+          },
+          "average_busy_cores": 3.756512245710909
+        },
+        {
+          "seconds": 0.056581780314445496,
+          "cpu_seconds": {
+            "235426": 0.22000000000000242
+          },
+          "average_busy_cores": 3.88817740936009
+        }
+      ],
+      "rate_mean": 1114.0542627800519,
+      "rate_sd": 27.34056086118047
+    },
+    {
+      "batch": 64,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "final",
+      "threads": 8,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 64,
+      "frame_count": 64,
+      "samples": [
+        {
+          "seconds": 0.05002555996179581,
+          "cpu_seconds": {
+            "235426": 0.36999999999999744
+          },
+          "average_busy_cores": 7.396219058468591
+        },
+        {
+          "seconds": 0.04826686717569828,
+          "cpu_seconds": {
+            "235426": 0.35999999999999943
+          },
+          "average_busy_cores": 7.45853255173053
+        },
+        {
+          "seconds": 0.05451641045510769,
+          "cpu_seconds": {
+            "235426": 0.3999999999999986
+          },
+          "average_busy_cores": 7.33724023024928
+        },
+        {
+          "seconds": 0.049478981643915176,
+          "cpu_seconds": {
+            "235426": 0.35999999999999943
+          },
+          "average_busy_cores": 7.275816680925394
+        },
+        {
+          "seconds": 0.0501104686409235,
+          "cpu_seconds": {
+            "235426": 0.36999999999999744
+          },
+          "average_busy_cores": 7.383686683341675
+        },
+        {
+          "seconds": 0.0475807711482048,
+          "cpu_seconds": {
+            "235426": 0.35999999999999943
+          },
+          "average_busy_cores": 7.566081660985901
+        }
+      ],
+      "rate_mean": 1282.5006201699491,
+      "rate_sd": 59.57408940688251
+    },
+    {
+      "batch": 64,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "all",
+      "threads": 1,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 64,
+      "frame_count": 64,
+      "samples": [
+        {
+          "seconds": 0.1194237470626831,
+          "cpu_seconds": {
+            "235426": 0.11999999999999744
+          },
+          "average_busy_cores": 1.0048252793224774
+        },
+        {
+          "seconds": 0.1214181948453188,
+          "cpu_seconds": {
+            "235426": 0.11999999999999744
+          },
+          "average_busy_cores": 0.9883197502060703
+        },
+        {
+          "seconds": 0.11754739098250866,
+          "cpu_seconds": {
+            "235426": 0.11999999999999744
+          },
+          "average_busy_cores": 1.0208648528647797
+        },
+        {
+          "seconds": 0.1145632155239582,
+          "cpu_seconds": {
+            "235426": 0.10000000000000142
+          },
+          "average_busy_cores": 0.8728805275118066
+        },
+        {
+          "seconds": 0.12081402726471424,
+          "cpu_seconds": {
+            "235426": 0.13000000000000256
+          },
+          "average_busy_cores": 1.0760339916089465
+        },
+        {
+          "seconds": 0.1219202820211649,
+          "cpu_seconds": {
+            "235426": 0.13000000000000256
+          },
+          "average_busy_cores": 1.0662704994189158
+        }
+      ],
+      "rate_mean": 536.7980758470559,
+      "rate_sd": 12.816517945731267
+    },
+    {
+      "batch": 64,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "all",
+      "threads": 2,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 64,
+      "frame_count": 64,
+      "samples": [
+        {
+          "seconds": 0.08048701472580433,
+          "cpu_seconds": {
+            "235426": 0.14999999999999858
+          },
+          "average_busy_cores": 1.863654659214342
+        },
+        {
+          "seconds": 0.07614880613982677,
+          "cpu_seconds": {
+            "235426": 0.14999999999999858
+          },
+          "average_busy_cores": 1.9698273368142367
+        },
+        {
+          "seconds": 0.07710265927016735,
+          "cpu_seconds": {
+            "235426": 0.14999999999999858
+          },
+          "average_busy_cores": 1.9454581906753605
+        },
+        {
+          "seconds": 0.08082774467766285,
+          "cpu_seconds": {
+            "235426": 0.15000000000000568
+          },
+          "average_busy_cores": 1.855798409298669
+        },
+        {
+          "seconds": 0.080656373873353,
+          "cpu_seconds": {
+            "235426": 0.1600000000000037
+          },
+          "average_busy_cores": 1.9837241908647716
+        },
+        {
+          "seconds": 0.07715127244591713,
+          "cpu_seconds": {
+            "235426": 0.14999999999999858
+          },
+          "average_busy_cores": 1.9442323534605115
+        }
+      ],
+      "rate_mean": 813.4195469083593,
+      "rate_sd": 22.20679899990194
+    },
+    {
+      "batch": 64,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "all",
+      "threads": 4,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 64,
+      "frame_count": 64,
+      "samples": [
+        {
+          "seconds": 0.0567853394895792,
+          "cpu_seconds": {
+            "235426": 0.21000000000000085
+          },
+          "average_busy_cores": 3.698137615934099
+        },
+        {
+          "seconds": 0.05675749108195305,
+          "cpu_seconds": {
+            "235426": 0.21000000000000085
+          },
+          "average_busy_cores": 3.6999521296101423
+        },
+        {
+          "seconds": 0.057798346504569054,
+          "cpu_seconds": {
+            "235426": 0.21000000000000085
+          },
+          "average_busy_cores": 3.63332193220095
+        },
+        {
+          "seconds": 0.057755205780267715,
+          "cpu_seconds": {
+            "235426": 0.21999999999999886
+          },
+          "average_busy_cores": 3.8091804371193616
+        },
+        {
+          "seconds": 0.06022942438721657,
+          "cpu_seconds": {
+            "235426": 0.22999999999999687
+          },
+          "average_busy_cores": 3.818731497769608
+        },
+        {
+          "seconds": 0.05657264217734337,
+          "cpu_seconds": {
+            "235426": 0.21999999999999886
+          },
+          "average_busy_cores": 3.8888054637848626
+        }
+      ],
+      "rate_mean": 1110.6619437651434,
+      "rate_sd": 25.723509706441614
+    },
+    {
+      "batch": 64,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "all",
+      "threads": 8,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 64,
+      "frame_count": 64,
+      "samples": [
+        {
+          "seconds": 0.04787435010075569,
+          "cpu_seconds": {
+            "235426": 0.35999999999999943
+          },
+          "average_busy_cores": 7.519684324535966
+        },
+        {
+          "seconds": 0.046547966077923775,
+          "cpu_seconds": {
+            "235426": 0.3500000000000014
+          },
+          "average_busy_cores": 7.519125527720862
+        },
+        {
+          "seconds": 0.04665110632777214,
+          "cpu_seconds": {
+            "235426": 0.3500000000000014
+          },
+          "average_busy_cores": 7.502501602874976
+        },
+        {
+          "seconds": 0.049897121265530586,
+          "cpu_seconds": {
+            "235426": 0.36999999999999744
+          },
+          "average_busy_cores": 7.415257446036211
+        },
+        {
+          "seconds": 0.04579181782901287,
+          "cpu_seconds": {
+            "235426": 0.3500000000000014
+          },
+          "average_busy_cores": 7.643286870744138
+        },
+        {
+          "seconds": 0.045730140060186386,
+          "cpu_seconds": {
+            "235426": 0.3500000000000014
+          },
+          "average_busy_cores": 7.6535956272899925
+        }
+      ],
+      "rate_mean": 1360.5713234975487,
+      "rate_sd": 44.40927073407773
+    },
+    {
+      "batch": 64,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "none",
+      "threads": 1,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 512,
+      "frame_count": 0,
+      "samples": [
+        {
+          "seconds": 0.019583364948630333,
+          "cpu_seconds": {
+            "235426": 0.020000000000003126
+          },
+          "average_busy_cores": 1.021274947000461
+        },
+        {
+          "seconds": 0.01962369494140148,
+          "cpu_seconds": {
+            "235426": 0.020000000000003126
+          },
+          "average_busy_cores": 1.0191760552599973
+        },
+        {
+          "seconds": 0.01964140310883522,
+          "cpu_seconds": {
+            "235426": 0.01999999999999602
+          },
+          "average_busy_cores": 1.0182571931940796
+        },
+        {
+          "seconds": 0.01962263509631157,
+          "cpu_seconds": {
+            "235426": 0.01999999999999602
+          },
+          "average_busy_cores": 1.0192311023383085
+        },
+        {
+          "seconds": 0.019676482304930687,
+          "cpu_seconds": {
+            "235426": 0.020000000000003126
+          },
+          "average_busy_cores": 1.0164418461622773
+        },
+        {
+          "seconds": 0.019708141684532166,
+          "cpu_seconds": {
+            "235426": 0.020000000000003126
+          },
+          "average_busy_cores": 1.014809022592933
+        }
+      ],
+      "rate_mean": 26065.878043937388,
+      "rate_sd": 58.44905821000907
+    },
+    {
+      "batch": 64,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "none",
+      "threads": 2,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 512,
+      "frame_count": 0,
+      "samples": [
+        {
+          "seconds": 0.019621562212705612,
+          "cpu_seconds": {
+            "235426": 0.020000000000003126
+          },
+          "average_busy_cores": 1.019286832679024
+        },
+        {
+          "seconds": 0.019746044650673866,
+          "cpu_seconds": {
+            "235426": 0.01999999999999602
+          },
+          "average_busy_cores": 1.0128610743981827
+        },
+        {
+          "seconds": 0.01990453340113163,
+          "cpu_seconds": {
+            "235426": 0.01999999999999602
+          },
+          "average_busy_cores": 1.0047962239023882
+        },
+        {
+          "seconds": 0.01965399645268917,
+          "cpu_seconds": {
+            "235426": 0.01999999999999602
+          },
+          "average_busy_cores": 1.0176047425336494
+        },
+        {
+          "seconds": 0.019719913601875305,
+          "cpu_seconds": {
+            "235426": 0.020000000000003126
+          },
+          "average_busy_cores": 1.0142032264330603
+        },
+        {
+          "seconds": 0.01974189281463623,
+          "cpu_seconds": {
+            "235426": 0.020000000000003126
+          },
+          "average_busy_cores": 1.013074085032796
+        }
+      ],
+      "rate_mean": 25949.125055911372,
+      "rate_sd": 129.05165690765568
+    },
+    {
+      "batch": 64,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "none",
+      "threads": 4,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 512,
+      "frame_count": 0,
+      "samples": [
+        {
+          "seconds": 0.019645292311906815,
+          "cpu_seconds": {
+            "235426": 0.020000000000003126
+          },
+          "average_busy_cores": 1.018055607545291
+        },
+        {
+          "seconds": 0.019601324573159218,
+          "cpu_seconds": {
+            "235426": 0.01999999999999602
+          },
+          "average_busy_cores": 1.0203392084728153
+        },
+        {
+          "seconds": 0.019611781463027,
+          "cpu_seconds": {
+            "235426": 0.020000000000003126
+          },
+          "average_busy_cores": 1.0197951694346592
+        },
+        {
+          "seconds": 0.019595682621002197,
+          "cpu_seconds": {
+            "235426": 0.01999999999999602
+          },
+          "average_busy_cores": 1.0206329826224316
+        },
+        {
+          "seconds": 0.019658170640468597,
+          "cpu_seconds": {
+            "235426": 0.01999999999999602
+          },
+          "average_busy_cores": 1.0173886658010654
+        },
+        {
+          "seconds": 0.019668804481625557,
+          "cpu_seconds": {
+            "235426": 0.020000000000003126
+          },
+          "average_busy_cores": 1.016838619687687
+        }
+      ],
+      "rate_mean": 26082.347748540076,
+      "rate_sd": 41.44023987460252
+    },
+    {
+      "batch": 64,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "none",
+      "threads": 8,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 512,
+      "frame_count": 0,
+      "samples": [
+        {
+          "seconds": 0.019831230863928795,
+          "cpu_seconds": {
+            "235426": 0.00999999999999801
+          },
+          "average_busy_cores": 0.5042551351760571
+        },
+        {
+          "seconds": 0.019721131771802902,
+          "cpu_seconds": {
+            "235426": 0.01999999999999602
+          },
+          "average_busy_cores": 1.0141405793247547
+        },
+        {
+          "seconds": 0.019619563594460487,
+          "cpu_seconds": {
+            "235426": 0.01999999999999602
+          },
+          "average_busy_cores": 1.0193906660412644
+        },
+        {
+          "seconds": 0.01978403516113758,
+          "cpu_seconds": {
+            "235426": 0.01999999999999602
+          },
+          "average_busy_cores": 1.010916116813352
+        },
+        {
+          "seconds": 0.019636424258351326,
+          "cpu_seconds": {
+            "235426": 0.020000000000003126
+          },
+          "average_busy_cores": 1.0185153741265889
+        },
+        {
+          "seconds": 0.019552595913410187,
+          "cpu_seconds": {
+            "235426": 0.020000000000003126
+          },
+          "average_busy_cores": 1.0228820811606958
+        }
+      ],
+      "rate_mean": 26002.58170802883,
+      "rate_sd": 140.28013851620943
+    },
+    {
+      "batch": 64,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "final",
+      "threads": 1,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 512,
+      "frame_count": 64,
+      "samples": [
+        {
+          "seconds": 0.1448915433138609,
+          "cpu_seconds": {
+            "235426": 0.15000000000000568
+          },
+          "average_busy_cores": 1.0352571072769856
+        },
+        {
+          "seconds": 0.1425485536456108,
+          "cpu_seconds": {
+            "235426": 0.14000000000000057
+          },
+          "average_busy_cores": 0.9821215047053639
+        },
+        {
+          "seconds": 0.14311552047729492,
+          "cpu_seconds": {
+            "235426": 0.13000000000000256
+          },
+          "average_busy_cores": 0.9083571059689985
+        },
+        {
+          "seconds": 0.1402239240705967,
+          "cpu_seconds": {
+            "235426": 0.14000000000000057
+          },
+          "average_busy_cores": 0.9984030965323478
+        },
+        {
+          "seconds": 0.1397098433226347,
+          "cpu_seconds": {
+            "235426": 0.13000000000000256
+          },
+          "average_busy_cores": 0.9304999340654259
+        },
+        {
+          "seconds": 0.14253155328333378,
+          "cpu_seconds": {
+            "235426": 0.14999999999999858
+          },
+          "average_busy_cores": 1.0523985499675186
+        }
+      ],
+      "rate_mean": 3601.865628185219,
+      "rate_sd": 48.651145663827386
+    },
+    {
+      "batch": 64,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "final",
+      "threads": 2,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 512,
+      "frame_count": 64,
+      "samples": [
+        {
+          "seconds": 0.0992842223495245,
+          "cpu_seconds": {
+            "235426": 0.17999999999999972
+          },
+          "average_busy_cores": 1.8129768833392266
+        },
+        {
+          "seconds": 0.09727230109274387,
+          "cpu_seconds": {
+            "235426": 0.1699999999999946
+          },
+          "average_busy_cores": 1.7476712084554142
+        },
+        {
+          "seconds": 0.09519569016993046,
+          "cpu_seconds": {
+            "235426": 0.1600000000000037
+          },
+          "average_busy_cores": 1.680748358611544
+        },
+        {
+          "seconds": 0.09950253926217556,
+          "cpu_seconds": {
+            "235426": 0.1700000000000017
+          },
+          "average_busy_cores": 1.7084991122897375
+        },
+        {
+          "seconds": 0.097459202632308,
+          "cpu_seconds": {
+            "235426": 0.1700000000000017
+          },
+          "average_busy_cores": 1.7443196271713208
+        },
+        {
+          "seconds": 0.09760992787778378,
+          "cpu_seconds": {
+            "235426": 0.1700000000000017
+          },
+          "average_busy_cores": 1.7416261203763685
+        }
+      ],
+      "rate_mean": 5240.554488316741,
+      "rate_sd": 84.53759846651644
+    },
+    {
+      "batch": 64,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "final",
+      "threads": 4,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 512,
+      "frame_count": 64,
+      "samples": [
+        {
+          "seconds": 0.0755695179104805,
+          "cpu_seconds": {
+            "235426": 0.25
+          },
+          "average_busy_cores": 3.3082121854495554
+        },
+        {
+          "seconds": 0.07580718584358692,
+          "cpu_seconds": {
+            "235426": 0.240000000000002
+          },
+          "average_busy_cores": 3.165926782919951
+        },
+        {
+          "seconds": 0.07592660561203957,
+          "cpu_seconds": {
+            "235426": 0.240000000000002
+          },
+          "average_busy_cores": 3.160947313071316
+        },
+        {
+          "seconds": 0.07487552054226398,
+          "cpu_seconds": {
+            "235426": 0.23000000000000398
+          },
+          "average_busy_cores": 3.0717649551455066
+        },
+        {
+          "seconds": 0.07607622630894184,
+          "cpu_seconds": {
+            "235426": 0.23999999999999488
+          },
+          "average_busy_cores": 3.154730612233138
+        },
+        {
+          "seconds": 0.0755602978169918,
+          "cpu_seconds": {
+            "235426": 0.240000000000002
+          },
+          "average_busy_cores": 3.1762712288573245
+        }
+      ],
+      "rate_mean": 6769.450520287483,
+      "rate_sd": 38.072320023132676
+    },
+    {
+      "batch": 64,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "final",
+      "threads": 8,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 512,
+      "frame_count": 64,
+      "samples": [
+        {
+          "seconds": 0.06550765968859196,
+          "cpu_seconds": {
+            "235426": 0.36999999999999744
+          },
+          "average_busy_cores": 5.6481944517464155
+        },
+        {
+          "seconds": 0.06710737571120262,
+          "cpu_seconds": {
+            "235426": 0.39000000000000057
+          },
+          "average_busy_cores": 5.811581750393133
+        },
+        {
+          "seconds": 0.06666278652846813,
+          "cpu_seconds": {
+            "235426": 0.39000000000000057
+          },
+          "average_busy_cores": 5.850340501944849
+        },
+        {
+          "seconds": 0.06729667261242867,
+          "cpu_seconds": {
+            "235426": 0.4000000000000057
+          },
+          "average_busy_cores": 5.943830273803639
+        },
+        {
+          "seconds": 0.06627385877072811,
+          "cpu_seconds": {
+            "235426": 0.39000000000000057
+          },
+          "average_busy_cores": 5.884673191419119
+        },
+        {
+          "seconds": 0.06471837498247623,
+          "cpu_seconds": {
+            "235426": 0.36999999999999744
+          },
+          "average_busy_cores": 5.717078033868776
+        }
+      ],
+      "rate_mean": 7728.4521571790365,
+      "rate_sd": 116.28957754343364
+    },
+    {
+      "batch": 64,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "all",
+      "threads": 1,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 512,
+      "frame_count": 512,
+      "samples": [
+        {
+          "seconds": 0.9476358685642481,
+          "cpu_seconds": {
+            "235426": 0.9399999999999977
+          },
+          "average_busy_cores": 0.9919421912808984
+        },
+        {
+          "seconds": 0.9498746450990438,
+          "cpu_seconds": {
+            "235426": 0.9399999999999977
+          },
+          "average_busy_cores": 0.9896042649943388
+        },
+        {
+          "seconds": 0.9490633495151997,
+          "cpu_seconds": {
+            "235426": 0.9399999999999977
+          },
+          "average_busy_cores": 0.9904502165004774
+        },
+        {
+          "seconds": 0.9510696846991777,
+          "cpu_seconds": {
+            "235426": 0.950000000000017
+          },
+          "average_busy_cores": 0.9988752825199144
+        },
+        {
+          "seconds": 0.9613023530691862,
+          "cpu_seconds": {
+            "235426": 0.9599999999999795
+          },
+          "average_busy_cores": 0.9986452201380257
+        },
+        {
+          "seconds": 0.9495294708758593,
+          "cpu_seconds": {
+            "235426": 0.9499999999999886
+          },
+          "average_busy_cores": 1.0004955392523998
+        }
+      ],
+      "rate_mean": 538.1593506753331,
+      "rate_sd": 2.791451780492549
+    },
+    {
+      "batch": 64,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "all",
+      "threads": 2,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 512,
+      "frame_count": 512,
+      "samples": [
+        {
+          "seconds": 0.6170444823801517,
+          "cpu_seconds": {
+            "235426": 1.230000000000004
+          },
+          "average_busy_cores": 1.9933733063384231
+        },
+        {
+          "seconds": 0.6294204406440258,
+          "cpu_seconds": {
+            "235426": 1.240000000000009
+          },
+          "average_busy_cores": 1.9700663021544638
+        },
+        {
+          "seconds": 0.6176446508616209,
+          "cpu_seconds": {
+            "235426": 1.230000000000004
+          },
+          "average_busy_cores": 1.991436335252221
+        },
+        {
+          "seconds": 0.6169828455895185,
+          "cpu_seconds": {
+            "235426": 1.230000000000004
+          },
+          "average_busy_cores": 1.9935724449919772
+        },
+        {
+          "seconds": 0.6158497612923384,
+          "cpu_seconds": {
+            "235426": 1.2199999999999989
+          },
+          "average_busy_cores": 1.9810026351879606
+        },
+        {
+          "seconds": 0.6231433600187302,
+          "cpu_seconds": {
+            "235426": 1.2299999999999898
+          },
+          "average_busy_cores": 1.973863606543154
+        }
+      ],
+      "rate_mean": 825.8369023665001,
+      "rate_sd": 6.970676959411969
+    },
+    {
+      "batch": 64,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "all",
+      "threads": 4,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 512,
+      "frame_count": 512,
+      "samples": [
+        {
+          "seconds": 0.4590784478932619,
+          "cpu_seconds": {
+            "235426": 1.8200000000000074
+          },
+          "average_busy_cores": 3.964464043895101
+        },
+        {
+          "seconds": 0.4419580940157175,
+          "cpu_seconds": {
+            "235426": 1.75
+          },
+          "average_busy_cores": 3.959651432331872
+        },
+        {
+          "seconds": 0.4314021598547697,
+          "cpu_seconds": {
+            "235426": 1.7000000000000028
+          },
+          "average_busy_cores": 3.940638592473211
+        },
+        {
+          "seconds": 0.4623295422643423,
+          "cpu_seconds": {
+            "235426": 1.8299999999999983
+          },
+          "average_busy_cores": 3.9582155858724564
+        },
+        {
+          "seconds": 0.4615378472954035,
+          "cpu_seconds": {
+            "235426": 1.8299999999999983
+          },
+          "average_busy_cores": 3.965005276866757
+        },
+        {
+          "seconds": 0.46503981202840805,
+          "cpu_seconds": {
+            "235426": 1.8400000000000034
+          },
+          "average_busy_cores": 3.9566504897167873
+        }
+      ],
+      "rate_mean": 1129.7228820262535,
+      "rate_sd": 34.742322195350994
+    },
+    {
+      "batch": 64,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "all",
+      "threads": 8,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 512,
+      "frame_count": 512,
+      "samples": [
+        {
+          "seconds": 0.3767862506210804,
+          "cpu_seconds": {
+            "235426": 2.980000000000004
+          },
+          "average_busy_cores": 7.908993481285167
+        },
+        {
+          "seconds": 0.368440717458725,
+          "cpu_seconds": {
+            "235426": 2.8999999999999915
+          },
+          "average_busy_cores": 7.8710084488011764
+        },
+        {
+          "seconds": 0.3737697768956423,
+          "cpu_seconds": {
+            "235426": 2.950000000000003
+          },
+          "average_busy_cores": 7.892558955679427
+        },
+        {
+          "seconds": 0.3740598727017641,
+          "cpu_seconds": {
+            "235426": 2.9499999999999886
+          },
+          "average_busy_cores": 7.886438015103554
+        },
+        {
+          "seconds": 0.3689945638179779,
+          "cpu_seconds": {
+            "235426": 2.9000000000000057
+          },
+          "average_busy_cores": 7.85919437401401
+        },
+        {
+          "seconds": 0.372016841545701,
+          "cpu_seconds": {
+            "235426": 2.9399999999999977
+          },
+          "average_busy_cores": 7.902868020126526
+        }
+      ],
+      "rate_mean": 1375.1548081097628,
+      "rate_sd": 11.828420735382306
+    },
+    {
+      "batch": 256,
+      "operation": "render_saved",
+      "horizon": 0,
+      "selection": null,
+      "threads": 1,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 256,
+      "frame_count": 256,
+      "samples": [
+        {
+          "seconds": 0.434573907405138,
+          "cpu_seconds": {
+            "235426": 0.4300000000000068
+          },
+          "average_busy_cores": 0.9894749608128978
+        },
+        {
+          "seconds": 0.4343298692256212,
+          "cpu_seconds": {
+            "235426": 0.4199999999999875
+          },
+          "average_busy_cores": 0.9670069450871918
+        },
+        {
+          "seconds": 0.431982709094882,
+          "cpu_seconds": {
+            "235426": 0.4300000000000068
+          },
+          "average_busy_cores": 0.9954102119063296
+        },
+        {
+          "seconds": 0.43404571898281574,
+          "cpu_seconds": {
+            "235426": 0.4300000000000068
+          },
+          "average_busy_cores": 0.9906790487594486
+        },
+        {
+          "seconds": 0.4344813674688339,
+          "cpu_seconds": {
+            "235426": 0.4299999999999784
+          },
+          "average_busy_cores": 0.9896857085150447
+        },
+        {
+          "seconds": 0.4317568279802799,
+          "cpu_seconds": {
+            "235426": 0.4300000000000068
+          },
+          "average_busy_cores": 0.9959309781191154
+        }
+      ],
+      "rate_mean": 590.5078403059173,
+      "rate_sd": 1.7727516035912654
+    },
+    {
+      "batch": 256,
+      "operation": "render_saved",
+      "horizon": 0,
+      "selection": null,
+      "threads": 2,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 256,
+      "frame_count": 256,
+      "samples": [
+        {
+          "seconds": 0.25630946084856987,
+          "cpu_seconds": {
+            "235426": 0.5200000000000102
+          },
+          "average_busy_cores": 2.0287975257660555
+        },
+        {
+          "seconds": 0.25674994848668575,
+          "cpu_seconds": {
+            "235426": 0.5
+          },
+          "average_busy_cores": 1.9474200596613884
+        },
+        {
+          "seconds": 0.2575775608420372,
+          "cpu_seconds": {
+            "235426": 0.5099999999999909
+          },
+          "average_busy_cores": 1.9799861382830435
+        },
+        {
+          "seconds": 0.2602570727467537,
+          "cpu_seconds": {
+            "235426": 0.5200000000000102
+          },
+          "average_busy_cores": 1.9980244706202568
+        },
+        {
+          "seconds": 0.2565220594406128,
+          "cpu_seconds": {
+            "235426": 0.5099999999999909
+          },
+          "average_busy_cores": 1.9881331107045028
+        },
+        {
+          "seconds": 0.25932345539331436,
+          "cpu_seconds": {
+            "235426": 0.5099999999999909
+          },
+          "average_busy_cores": 1.9666558862810033
+        }
+      ],
+      "rate_mean": 993.0898160910738,
+      "rate_sd": 6.27602229277751
+    },
+    {
+      "batch": 256,
+      "operation": "render_saved",
+      "horizon": 0,
+      "selection": null,
+      "threads": 4,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 256,
+      "frame_count": 256,
+      "samples": [
+        {
+          "seconds": 0.16704899445176125,
+          "cpu_seconds": {
+            "235426": 0.6599999999999966
+          },
+          "average_busy_cores": 3.950936682774136
+        },
+        {
+          "seconds": 0.16578497923910618,
+          "cpu_seconds": {
+            "235426": 0.6599999999999966
+          },
+          "average_busy_cores": 3.9810603049152027
+        },
+        {
+          "seconds": 0.16817676089704037,
+          "cpu_seconds": {
+            "235426": 0.6700000000000159
+          },
+          "average_busy_cores": 3.983903581126748
+        },
+        {
+          "seconds": 0.16522129252552986,
+          "cpu_seconds": {
+            "235426": 0.6500000000000057
+          },
+          "average_busy_cores": 3.9341176313553423
+        },
+        {
+          "seconds": 0.1631819475442171,
+          "cpu_seconds": {
+            "235426": 0.6500000000000057
+          },
+          "average_busy_cores": 3.9832837503295293
+        },
+        {
+          "seconds": 0.1644853949546814,
+          "cpu_seconds": {
+            "235426": 0.6500000000000057
+          },
+          "average_busy_cores": 3.951718632399503
+        }
+      ],
+      "rate_mean": 1545.5780966006516,
+      "rate_sd": 16.67473459065728
+    },
+    {
+      "batch": 256,
+      "operation": "render_saved",
+      "horizon": 0,
+      "selection": null,
+      "threads": 8,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 256,
+      "frame_count": 256,
+      "samples": [
+        {
+          "seconds": 0.12518873624503613,
+          "cpu_seconds": {
+            "235426": 0.9899999999999807
+          },
+          "average_busy_cores": 7.908059700053369
+        },
+        {
+          "seconds": 0.2974425908178091,
+          "cpu_seconds": {
+            "235426": 2.180000000000007
+          },
+          "average_busy_cores": 7.329145412585888
+        },
+        {
+          "seconds": 0.12037220783531666,
+          "cpu_seconds": {
+            "235426": 0.9499999999999886
+          },
+          "average_busy_cores": 7.892187217332595
+        },
+        {
+          "seconds": 0.12010505795478821,
+          "cpu_seconds": {
+            "235426": 0.9499999999999886
+          },
+          "average_busy_cores": 7.909741822510108
+        },
+        {
+          "seconds": 0.12145812064409256,
+          "cpu_seconds": {
+            "235426": 0.9699999999999989
+          },
+          "average_busy_cores": 7.986291858099629
+        },
+        {
+          "seconds": 0.11912544071674347,
+          "cpu_seconds": {
+            "235426": 0.9399999999999977
+          },
+          "average_busy_cores": 7.890841740809423
+        }
+      ],
+      "rate_mean": 1903.4173858430352,
+      "rate_sd": 512.1073410306482
+    },
+    {
+      "batch": 256,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "none",
+      "threads": 1,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 256,
+      "frame_count": 0,
+      "samples": [
+        {
+          "seconds": 0.008650464937090874,
+          "cpu_seconds": {
+            "235426": 0.010000000000019327
+          },
+          "average_busy_cores": 1.156007228830211
+        },
+        {
+          "seconds": 0.008549526333808899,
+          "cpu_seconds": {
+            "235426": 0.010000000000019327
+          },
+          "average_busy_cores": 1.1696554416675184
+        },
+        {
+          "seconds": 0.008515145629644394,
+          "cpu_seconds": {
+            "235426": 0.009999999999990905
+          },
+          "average_busy_cores": 1.1743780359054787
+        },
+        {
+          "seconds": 0.008580224588513374,
+          "cpu_seconds": {
+            "235426": 0.0
+          },
+          "average_busy_cores": 0.0
+        },
+        {
+          "seconds": 0.008655393496155739,
+          "cpu_seconds": {
+            "235426": 0.009999999999990905
+          },
+          "average_busy_cores": 1.1553489745362089
+        },
+        {
+          "seconds": 0.008602315559983253,
+          "cpu_seconds": {
+            "235426": 0.009999999999990905
+          },
+          "average_busy_cores": 1.1624776992033958
+        }
+      ],
+      "rate_mean": 29795.57563091418,
+      "rate_sd": 192.53497252079214
+    },
+    {
+      "batch": 256,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "none",
+      "threads": 2,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 256,
+      "frame_count": 0,
+      "samples": [
+        {
+          "seconds": 0.00855739414691925,
+          "cpu_seconds": {
+            "235426": 0.009999999999990905
+          },
+          "average_busy_cores": 1.168580040641345
+        },
+        {
+          "seconds": 0.008532645180821419,
+          "cpu_seconds": {
+            "235426": 0.010000000000019327
+          },
+          "average_busy_cores": 1.1719695109901018
+        },
+        {
+          "seconds": 0.008542386814951897,
+          "cpu_seconds": {
+            "235426": 0.009999999999990905
+          },
+          "average_busy_cores": 1.170633011196323
+        },
+        {
+          "seconds": 0.008697515353560448,
+          "cpu_seconds": {
+            "235426": 0.009999999999990905
+          },
+          "average_busy_cores": 1.1497536472755139
+        },
+        {
+          "seconds": 0.008578933775424957,
+          "cpu_seconds": {
+            "235426": 0.009999999999990905
+          },
+          "average_busy_cores": 1.1656460186971842
+        },
+        {
+          "seconds": 0.008614916354417801,
+          "cpu_seconds": {
+            "235426": 0.009999999999990905
+          },
+          "average_busy_cores": 1.1607773759594104
+        }
+      ],
+      "rate_mean": 29812.734313655048,
+      "rate_sd": 211.92681556427885
+    },
+    {
+      "batch": 256,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "none",
+      "threads": 4,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 256,
+      "frame_count": 0,
+      "samples": [
+        {
+          "seconds": 0.008541597053408623,
+          "cpu_seconds": {
+            "235426": 0.009999999999990905
+          },
+          "average_busy_cores": 1.1707412486755377
+        },
+        {
+          "seconds": 0.008539954200387001,
+          "cpu_seconds": {
+            "235426": 0.009999999999990905
+          },
+          "average_busy_cores": 1.1709664671899225
+        },
+        {
+          "seconds": 0.0085432268679142,
+          "cpu_seconds": {
+            "235426": 0.009999999999990905
+          },
+          "average_busy_cores": 1.1705179031997743
+        },
+        {
+          "seconds": 0.008682982996106148,
+          "cpu_seconds": {
+            "235426": 0.010000000000019327
+          },
+          "average_busy_cores": 1.151677943456044
+        },
+        {
+          "seconds": 0.0086600873619318,
+          "cpu_seconds": {
+            "235426": 0.010000000000019327
+          },
+          "average_busy_cores": 1.154722762264217
+        },
+        {
+          "seconds": 0.008729754015803337,
+          "cpu_seconds": {
+            "235426": 0.009999999999990905
+          },
+          "average_busy_cores": 1.1455076491145182
+        }
+      ],
+      "rate_mean": 29713.638288639115,
+      "rate_sd": 292.0083547415694
+    },
+    {
+      "batch": 256,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "none",
+      "threads": 8,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 256,
+      "frame_count": 0,
+      "samples": [
+        {
+          "seconds": 0.008567625656723976,
+          "cpu_seconds": {
+            "235426": 0.009999999999990905
+          },
+          "average_busy_cores": 1.1671845153671934
+        },
+        {
+          "seconds": 0.00865420326590538,
+          "cpu_seconds": {
+            "235426": 0.009999999999990905
+          },
+          "average_busy_cores": 1.1555078720403422
+        },
+        {
+          "seconds": 0.009002914652228355,
+          "cpu_seconds": {
+            "235426": 0.009999999999990905
+          },
+          "average_busy_cores": 1.1107513939961384
+        },
+        {
+          "seconds": 0.00885048322379589,
+          "cpu_seconds": {
+            "235426": 0.009999999999990905
+          },
+          "average_busy_cores": 1.1298818095157066
+        },
+        {
+          "seconds": 0.008738463744521141,
+          "cpu_seconds": {
+            "235426": 0.010000000000019327
+          },
+          "average_busy_cores": 1.1443659082855548
+        },
+        {
+          "seconds": 0.008707014843821526,
+          "cpu_seconds": {
+            "235426": 0.010000000000019327
+          },
+          "average_busy_cores": 1.148499247950094
+        }
+      ],
+      "rate_mean": 29253.08052119359,
+      "rate_sd": 510.0711217962213
+    },
+    {
+      "batch": 256,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "final",
+      "threads": 1,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 256,
+      "frame_count": 256,
+      "samples": [
+        {
+          "seconds": 0.47120845690369606,
+          "cpu_seconds": {
+            "235426": 0.46999999999999886
+          },
+          "average_busy_cores": 0.9974354091358251
+        },
+        {
+          "seconds": 0.4701615013182163,
+          "cpu_seconds": {
+            "235426": 0.46999999999999886
+          },
+          "average_busy_cores": 0.9996564982080314
+        },
+        {
+          "seconds": 0.4749625828117132,
+          "cpu_seconds": {
+            "235426": 0.46999999999999886
+          },
+          "average_busy_cores": 0.9895516341890838
+        },
+        {
+          "seconds": 0.4696390926837921,
+          "cpu_seconds": {
+            "235426": 0.46000000000000796
+          },
+          "average_busy_cores": 0.9794755316711377
+        },
+        {
+          "seconds": 0.48027133755385876,
+          "cpu_seconds": {
+            "235426": 0.46999999999999886
+          },
+          "average_busy_cores": 0.9786134696145425
+        },
+        {
+          "seconds": 0.4753478728234768,
+          "cpu_seconds": {
+            "235426": 0.47999999999998977
+          },
+          "average_busy_cores": 1.0097867844635136
+        }
+      ],
+      "rate_mean": 540.5753235923065,
+      "rate_sd": 4.618735693053579
+    },
+    {
+      "batch": 256,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "final",
+      "threads": 2,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 256,
+      "frame_count": 256,
+      "samples": [
+        {
+          "seconds": 0.277668509632349,
+          "cpu_seconds": {
+            "235426": 0.5500000000000114
+          },
+          "average_busy_cores": 1.9807791698390529
+        },
+        {
+          "seconds": 0.28622448816895485,
+          "cpu_seconds": {
+            "235426": 0.5599999999999739
+          },
+          "average_busy_cores": 1.9565062499803043
+        },
+        {
+          "seconds": 0.2802760899066925,
+          "cpu_seconds": {
+            "235426": 0.5500000000000114
+          },
+          "average_busy_cores": 1.9623507669994733
+        },
+        {
+          "seconds": 0.2865548152476549,
+          "cpu_seconds": {
+            "235426": 0.5600000000000023
+          },
+          "average_busy_cores": 1.9542508804677472
+        },
+        {
+          "seconds": 0.28421197459101677,
+          "cpu_seconds": {
+            "235426": 0.5600000000000023
+          },
+          "average_busy_cores": 1.9703603298412975
+        },
+        {
+          "seconds": 0.28325479850172997,
+          "cpu_seconds": {
+            "235426": 0.5600000000000023
+          },
+          "average_busy_cores": 1.9770185817225692
+        }
+      ],
+      "rate_mean": 904.6064190803285,
+      "rate_sd": 11.174032939089034
+    },
+    {
+      "batch": 256,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "final",
+      "threads": 4,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 256,
+      "frame_count": 256,
+      "samples": [
+        {
+          "seconds": 0.18726149201393127,
+          "cpu_seconds": {
+            "235426": 0.7099999999999795
+          },
+          "average_busy_cores": 3.7914896029299996
+        },
+        {
+          "seconds": 0.18588315695524216,
+          "cpu_seconds": {
+            "235426": 0.710000000000008
+          },
+          "average_busy_cores": 3.8196037318806955
+        },
+        {
+          "seconds": 0.18485025316476822,
+          "cpu_seconds": {
+            "235426": 0.710000000000008
+          },
+          "average_busy_cores": 3.8409468629028165
+        },
+        {
+          "seconds": 0.18408380635082722,
+          "cpu_seconds": {
+            "235426": 0.6999999999999886
+          },
+          "average_busy_cores": 3.8026158513146315
+        },
+        {
+          "seconds": 0.1832886878401041,
+          "cpu_seconds": {
+            "235426": 0.6999999999999886
+          },
+          "average_busy_cores": 3.8191118516307396
+        },
+        {
+          "seconds": 0.18614287674427032,
+          "cpu_seconds": {
+            "235426": 0.7099999999999795
+          },
+          "average_busy_cores": 3.8142743489207094
+        }
+      ],
+      "rate_mean": 1381.9747800282526,
+      "rate_sd": 10.868880876105909
+    },
+    {
+      "batch": 256,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "final",
+      "threads": 8,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 256,
+      "frame_count": 256,
+      "samples": [
+        {
+          "seconds": 0.14069722406566143,
+          "cpu_seconds": {
+            "235426": 1.0600000000000023
+          },
+          "average_busy_cores": 7.533908412473831
+        },
+        {
+          "seconds": 0.13972030580043793,
+          "cpu_seconds": {
+            "235426": 1.0500000000000114
+          },
+          "average_busy_cores": 7.515013612264227
+        },
+        {
+          "seconds": 0.14105312898755074,
+          "cpu_seconds": {
+            "235426": 1.049999999999983
+          },
+          "average_busy_cores": 7.444003600180009
+        },
+        {
+          "seconds": 0.14110512100160122,
+          "cpu_seconds": {
+            "235426": 1.0600000000000023
+          },
+          "average_busy_cores": 7.51212991049399
+        },
+        {
+          "seconds": 0.14091677032411098,
+          "cpu_seconds": {
+            "235426": 1.039999999999992
+          },
+          "average_busy_cores": 7.380242944881395
+        },
+        {
+          "seconds": 0.1409444324672222,
+          "cpu_seconds": {
+            "235426": 1.0600000000000023
+          },
+          "average_busy_cores": 7.520694371851219
+        }
+      ],
+      "rate_mean": 1818.9841481933868,
+      "rate_sd": 6.740191237993061
+    },
+    {
+      "batch": 256,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "all",
+      "threads": 1,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 256,
+      "frame_count": 256,
+      "samples": [
+        {
+          "seconds": 0.46907023526728153,
+          "cpu_seconds": {
+            "235426": 0.46999999999999886
+          },
+          "average_busy_cores": 1.0019821439580099
+        },
+        {
+          "seconds": 0.474989902228117,
+          "cpu_seconds": {
+            "235426": 0.46000000000000796
+          },
+          "average_busy_cores": 0.9684416402163639
+        },
+        {
+          "seconds": 0.4711303487420082,
+          "cpu_seconds": {
+            "235426": 0.46999999999999886
+          },
+          "average_busy_cores": 0.9976007728115424
+        },
+        {
+          "seconds": 0.4722454324364662,
+          "cpu_seconds": {
+            "235426": 0.46999999999999886
+          },
+          "average_busy_cores": 0.995245200308487
+        },
+        {
+          "seconds": 0.4714804645627737,
+          "cpu_seconds": {
+            "235426": 0.46999999999999886
+          },
+          "average_busy_cores": 0.9968599662678543
+        },
+        {
+          "seconds": 0.47334115765988827,
+          "cpu_seconds": {
+            "235426": 0.46999999999999886
+          },
+          "average_busy_cores": 0.9929413328931558
+        }
+      ],
+      "rate_mean": 542.3318364224042,
+      "rate_sd": 2.3204353897267675
+    },
+    {
+      "batch": 256,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "all",
+      "threads": 2,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 256,
+      "frame_count": 256,
+      "samples": [
+        {
+          "seconds": 0.28069647774100304,
+          "cpu_seconds": {
+            "235426": 0.5500000000000114
+          },
+          "average_busy_cores": 1.9594118331170978
+        },
+        {
+          "seconds": 0.28649488650262356,
+          "cpu_seconds": {
+            "235426": 0.5600000000000023
+          },
+          "average_busy_cores": 1.9546596689252747
+        },
+        {
+          "seconds": 0.27917773462831974,
+          "cpu_seconds": {
+            "235426": 0.5600000000000023
+          },
+          "average_busy_cores": 2.00589062285197
+        },
+        {
+          "seconds": 0.2809537071734667,
+          "cpu_seconds": {
+            "235426": 0.5500000000000114
+          },
+          "average_busy_cores": 1.9576178778108448
+        },
+        {
+          "seconds": 0.28246372379362583,
+          "cpu_seconds": {
+            "235426": 0.5599999999999739
+          },
+          "average_busy_cores": 1.9825554675796957
+        },
+        {
+          "seconds": 0.2818662244826555,
+          "cpu_seconds": {
+            "235426": 0.5400000000000205
+          },
+          "average_busy_cores": 1.9158024378094618
+        }
+      ],
+      "rate_mean": 908.0466495966423,
+      "rate_sd": 7.97900415687617
+    },
+    {
+      "batch": 256,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "all",
+      "threads": 4,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 256,
+      "frame_count": 256,
+      "samples": [
+        {
+          "seconds": 0.18378696404397488,
+          "cpu_seconds": {
+            "235426": 0.6999999999999886
+          },
+          "average_busy_cores": 3.8087576213103937
+        },
+        {
+          "seconds": 0.18620911613106728,
+          "cpu_seconds": {
+            "235426": 0.710000000000008
+          },
+          "average_busy_cores": 3.8129175131267967
+        },
+        {
+          "seconds": 0.18702376075088978,
+          "cpu_seconds": {
+            "235426": 0.7099999999999795
+          },
+          "average_busy_cores": 3.796309074041554
+        },
+        {
+          "seconds": 0.1835087463259697,
+          "cpu_seconds": {
+            "235426": 0.7099999999999795
+          },
+          "average_busy_cores": 3.8690253964178605
+        },
+        {
+          "seconds": 0.18629151582717896,
+          "cpu_seconds": {
+            "235426": 0.7099999999999795
+          },
+          "average_busy_cores": 3.811230999154253
+        },
+        {
+          "seconds": 0.18721836432814598,
+          "cpu_seconds": {
+            "235426": 0.710000000000008
+          },
+          "average_busy_cores": 3.792363011758608
+        }
+      ],
+      "rate_mean": 1378.8553277879498,
+      "rate_sd": 12.08273350712981
+    },
+    {
+      "batch": 256,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "all",
+      "threads": 8,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 256,
+      "frame_count": 256,
+      "samples": [
+        {
+          "seconds": 0.14391421899199486,
+          "cpu_seconds": {
+            "235426": 1.079999999999984
+          },
+          "average_busy_cores": 7.504470423871449
+        },
+        {
+          "seconds": 0.14044555462896824,
+          "cpu_seconds": {
+            "235426": 1.0500000000000114
+          },
+          "average_busy_cores": 7.476206724904334
+        },
+        {
+          "seconds": 0.13877078890800476,
+          "cpu_seconds": {
+            "235426": 1.0300000000000011
+          },
+          "average_busy_cores": 7.422311338756015
+        },
+        {
+          "seconds": 0.14017875492572784,
+          "cpu_seconds": {
+            "235426": 1.0599999999999739
+          },
+          "average_busy_cores": 7.561773540944939
+        },
+        {
+          "seconds": 0.14193511754274368,
+          "cpu_seconds": {
+            "235426": 1.0600000000000023
+          },
+          "average_busy_cores": 7.468201093226868
+        },
+        {
+          "seconds": 0.14069369435310364,
+          "cpu_seconds": {
+            "235426": 1.049999999999983
+          },
+          "average_busy_cores": 7.463021031808029
+        }
+      ],
+      "rate_mean": 1815.9687915062823,
+      "rate_sd": 22.471140529763215
+    },
+    {
+      "batch": 256,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "none",
+      "threads": 1,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 2048,
+      "frame_count": 0,
+      "samples": [
+        {
+          "seconds": 0.06846782006323338,
+          "cpu_seconds": {
+            "235426": 0.06999999999999318
+          },
+          "average_busy_cores": 1.0223781031051487
+        },
+        {
+          "seconds": 0.06786585226655006,
+          "cpu_seconds": {
+            "235426": 0.0700000000000216
+          },
+          "average_busy_cores": 1.0314465620366697
+        },
+        {
+          "seconds": 0.06781676039099693,
+          "cpu_seconds": {
+            "235426": 0.0700000000000216
+          },
+          "average_busy_cores": 1.0321932159017508
+        },
+        {
+          "seconds": 0.06794800981879234,
+          "cpu_seconds": {
+            "235426": 0.06999999999999318
+          },
+          "average_busy_cores": 1.0301994155041951
+        },
+        {
+          "seconds": 0.06774953193962574,
+          "cpu_seconds": {
+            "235426": 0.06999999999999318
+          },
+          "average_busy_cores": 1.0332174702309813
+        },
+        {
+          "seconds": 0.06784002110362053,
+          "cpu_seconds": {
+            "235426": 0.06999999999999318
+          },
+          "average_busy_cores": 1.031839301657549
+        }
+      ],
+      "rate_mean": 30141.06974323107,
+      "rate_sd": 115.92654710627536
+    },
+    {
+      "batch": 256,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "none",
+      "threads": 2,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 2048,
+      "frame_count": 0,
+      "samples": [
+        {
+          "seconds": 0.06770644150674343,
+          "cpu_seconds": {
+            "235426": 0.060000000000002274
+          },
+          "average_busy_cores": 0.8861786067139031
+        },
+        {
+          "seconds": 0.06810290925204754,
+          "cpu_seconds": {
+            "235426": 0.0700000000000216
+          },
+          "average_busy_cores": 1.0278562365221868
+        },
+        {
+          "seconds": 0.06774826534092426,
+          "cpu_seconds": {
+            "235426": 0.06999999999999318
+          },
+          "average_busy_cores": 1.0332367869160588
+        },
+        {
+          "seconds": 0.06763586215674877,
+          "cpu_seconds": {
+            "235426": 0.06999999999999318
+          },
+          "average_busy_cores": 1.0349539100686767
+        },
+        {
+          "seconds": 0.06863484904170036,
+          "cpu_seconds": {
+            "235426": 0.060000000000002274
+          },
+          "average_busy_cores": 0.8741914761631977
+        },
+        {
+          "seconds": 0.06838134117424488,
+          "cpu_seconds": {
+            "235426": 0.06999999999999318
+          },
+          "average_busy_cores": 1.023671059940514
+        }
+      ],
+      "rate_mean": 30103.079449050423,
+      "rate_sd": 180.2666399152834
+    },
+    {
+      "batch": 256,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "none",
+      "threads": 4,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 2048,
+      "frame_count": 0,
+      "samples": [
+        {
+          "seconds": 0.06818535178899765,
+          "cpu_seconds": {
+            "235426": 0.06999999999999318
+          },
+          "average_busy_cores": 1.0266134611523459
+        },
+        {
+          "seconds": 0.06788275204598904,
+          "cpu_seconds": {
+            "235426": 0.06999999999999318
+          },
+          "average_busy_cores": 1.0311897778182262
+        },
+        {
+          "seconds": 0.06752513349056244,
+          "cpu_seconds": {
+            "235426": 0.060000000000002274
+          },
+          "average_busy_cores": 0.8885580360739027
+        },
+        {
+          "seconds": 0.06889566592872143,
+          "cpu_seconds": {
+            "235426": 0.060000000000002274
+          },
+          "average_busy_cores": 0.8708820677062256
+        },
+        {
+          "seconds": 0.06830593757331371,
+          "cpu_seconds": {
+            "235426": 0.0700000000000216
+          },
+          "average_busy_cores": 1.0248011005615671
+        },
+        {
+          "seconds": 0.06770852208137512,
+          "cpu_seconds": {
+            "235426": 0.06999999999999318
+          },
+          "average_busy_cores": 1.033843271839017
+        }
+      ],
+      "rate_mean": 30081.8418953649,
+      "rate_sd": 216.7421082707291
+    },
+    {
+      "batch": 256,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "none",
+      "threads": 8,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 2048,
+      "frame_count": 0,
+      "samples": [
+        {
+          "seconds": 0.06768510490655899,
+          "cpu_seconds": {
+            "235426": 0.06999999999999318
+          },
+          "average_busy_cores": 1.034200953025484
+        },
+        {
+          "seconds": 0.06821975857019424,
+          "cpu_seconds": {
+            "235426": 0.06999999999999318
+          },
+          "average_busy_cores": 1.0260956864566908
+        },
+        {
+          "seconds": 0.0681235808879137,
+          "cpu_seconds": {
+            "235426": 0.06999999999999318
+          },
+          "average_busy_cores": 1.0275443405590616
+        },
+        {
+          "seconds": 0.0676976926624775,
+          "cpu_seconds": {
+            "235426": 0.060000000000002274
+          },
+          "average_busy_cores": 0.8862931311285032
+        },
+        {
+          "seconds": 0.067713912576437,
+          "cpu_seconds": {
+            "235426": 0.0700000000000216
+          },
+          "average_busy_cores": 1.033760970775452
+        },
+        {
+          "seconds": 0.06844576820731163,
+          "cpu_seconds": {
+            "235426": 0.0700000000000216
+          },
+          "average_busy_cores": 1.0227074928577387
+        }
+      ],
+      "rate_mean": 30126.655861795636,
+      "rate_sd": 144.4279843738047
+    },
+    {
+      "batch": 256,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "final",
+      "threads": 1,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 2048,
+      "frame_count": 256,
+      "samples": [
+        {
+          "seconds": 0.5288944598287344,
+          "cpu_seconds": {
+            "235426": 0.5300000000000011
+          },
+          "average_busy_cores": 1.002090285028935
+        },
+        {
+          "seconds": 0.5325588081032038,
+          "cpu_seconds": {
+            "235426": 0.5300000000000011
+          },
+          "average_busy_cores": 0.9951952571917527
+        },
+        {
+          "seconds": 0.5294597279280424,
+          "cpu_seconds": {
+            "235426": 0.5200000000000102
+          },
+          "average_busy_cores": 0.9821332437028755
+        },
+        {
+          "seconds": 0.5345571283251047,
+          "cpu_seconds": {
+            "235426": 0.5400000000000205
+          },
+          "average_busy_cores": 1.0101820205671368
+        },
+        {
+          "seconds": 0.5311085022985935,
+          "cpu_seconds": {
+            "235426": 0.5299999999999727
+          },
+          "average_busy_cores": 0.9979128515287868
+        },
+        {
+          "seconds": 0.5346669368445873,
+          "cpu_seconds": {
+            "235426": 0.5299999999999727
+          },
+          "average_busy_cores": 0.9912713195393057
+        }
+      ],
+      "rate_mean": 3850.6039262944787,
+      "rate_sd": 17.956794074846623
+    },
+    {
+      "batch": 256,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "final",
+      "threads": 2,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 2048,
+      "frame_count": 256,
+      "samples": [
+        {
+          "seconds": 0.3321955967694521,
+          "cpu_seconds": {
+            "235426": 0.5900000000000034
+          },
+          "average_busy_cores": 1.7760620722780707
+        },
+        {
+          "seconds": 0.3317908812314272,
+          "cpu_seconds": {
+            "235426": 0.5800000000000125
+          },
+          "average_busy_cores": 1.7480890307996655
+        },
+        {
+          "seconds": 0.3331402335315943,
+          "cpu_seconds": {
+            "235426": 0.5900000000000034
+          },
+          "average_busy_cores": 1.77102595428195
+        },
+        {
+          "seconds": 0.33293910324573517,
+          "cpu_seconds": {
+            "235426": 0.5800000000000409
+          },
+          "average_busy_cores": 1.7420603177751561
+        },
+        {
+          "seconds": 0.33046487160027027,
+          "cpu_seconds": {
+            "235426": 0.5900000000000318
+          },
+          "average_busy_cores": 1.7853637427269269
+        },
+        {
+          "seconds": 0.33150213956832886,
+          "cpu_seconds": {
+            "235426": 0.5800000000000409
+          },
+          "average_busy_cores": 1.749611633744801
+        }
+      ],
+      "rate_mean": 6168.618497850074,
+      "rate_sd": 18.35097379529838
+    },
+    {
+      "batch": 256,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "final",
+      "threads": 4,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 2048,
+      "frame_count": 256,
+      "samples": [
+        {
+          "seconds": 0.24418575875461102,
+          "cpu_seconds": {
+            "235426": 0.75
+          },
+          "average_busy_cores": 3.071432190907151
+        },
+        {
+          "seconds": 0.2510314602404833,
+          "cpu_seconds": {
+            "235426": 0.7899999999999636
+          },
+          "average_busy_cores": 3.1470159128388087
+        },
+        {
+          "seconds": 0.24552968330681324,
+          "cpu_seconds": {
+            "235426": 0.7599999999999909
+          },
+          "average_busy_cores": 3.0953487568763607
+        },
+        {
+          "seconds": 0.25115341134369373,
+          "cpu_seconds": {
+            "235426": 0.7900000000000205
+          },
+          "average_busy_cores": 3.145487834600566
+        },
+        {
+          "seconds": 0.2539404686540365,
+          "cpu_seconds": {
+            "235426": 0.8100000000000023
+          },
+          "average_busy_cores": 3.189723970713507
+        },
+        {
+          "seconds": 0.25289070419967175,
+          "cpu_seconds": {
+            "235426": 0.8000000000000114
+          },
+          "average_busy_cores": 3.1634219317463144
+        }
+      ],
+      "rate_mean": 8200.69481561605,
+      "rate_sd": 132.14790399753142
+    },
+    {
+      "batch": 256,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "final",
+      "threads": 8,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 2048,
+      "frame_count": 256,
+      "samples": [
+        {
+          "seconds": 0.2034085150808096,
+          "cpu_seconds": {
+            "235426": 1.1499999999999773
+          },
+          "average_busy_cores": 5.653647289756322
+        },
+        {
+          "seconds": 0.20160199142992496,
+          "cpu_seconds": {
+            "235426": 1.1100000000000136
+          },
+          "average_busy_cores": 5.505897993005886
+        },
+        {
+          "seconds": 0.203593285754323,
+          "cpu_seconds": {
+            "235426": 1.1399999999999864
+          },
+          "average_busy_cores": 5.599398800290643
+        },
+        {
+          "seconds": 0.20375214330852032,
+          "cpu_seconds": {
+            "235426": 1.1299999999999955
+          },
+          "average_busy_cores": 5.5459539303542735
+        },
+        {
+          "seconds": 0.20492295734584332,
+          "cpu_seconds": {
+            "235426": 1.1299999999999955
+          },
+          "average_busy_cores": 5.514267481963589
+        },
+        {
+          "seconds": 0.20390653610229492,
+          "cpu_seconds": {
+            "235426": 1.1299999999999955
+          },
+          "average_busy_cores": 5.541754676432256
+        }
+      ],
+      "rate_mean": 10062.59236459813,
+      "rate_sd": 53.75896416690419
+    },
+    {
+      "batch": 256,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "all",
+      "threads": 1,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 2048,
+      "frame_count": 2048,
+      "samples": [
+        {
+          "seconds": 3.8212942853569984,
+          "cpu_seconds": {
+            "235426": 3.8000000000000114
+          },
+          "average_busy_cores": 0.9944274678245574
+        },
+        {
+          "seconds": 3.825918223708868,
+          "cpu_seconds": {
+            "235426": 3.8100000000000023
+          },
+          "average_busy_cores": 0.9958393716807061
+        },
+        {
+          "seconds": 3.820651477202773,
+          "cpu_seconds": {
+            "235426": 3.7999999999999545
+          },
+          "average_busy_cores": 0.9945947759626748
+        },
+        {
+          "seconds": 3.8232507575303316,
+          "cpu_seconds": {
+            "235426": 3.8000000000000114
+          },
+          "average_busy_cores": 0.9939185894400138
+        },
+        {
+          "seconds": 3.823898922652006,
+          "cpu_seconds": {
+            "235426": 3.7899999999999636
+          },
+          "average_busy_cores": 0.9911349846484613
+        },
+        {
+          "seconds": 3.8171815928071737,
+          "cpu_seconds": {
+            "235426": 3.7799999999999727
+          },
+          "average_busy_cores": 0.9902594121072826
+        }
+      ],
+      "rate_mean": 535.8408263596062,
+      "rate_sd": 0.42559411793427887
+    },
+    {
+      "batch": 256,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "all",
+      "threads": 2,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 2048,
+      "frame_count": 2048,
+      "samples": [
+        {
+          "seconds": 2.213543500751257,
+          "cpu_seconds": {
+            "235426": 4.3700000000000045
+          },
+          "average_busy_cores": 1.9742101289253478
+        },
+        {
+          "seconds": 2.2465851437300444,
+          "cpu_seconds": {
+            "235426": 4.430000000000007
+          },
+          "average_busy_cores": 1.971881641060263
+        },
+        {
+          "seconds": 2.2444896046072245,
+          "cpu_seconds": {
+            "235426": 4.430000000000007
+          },
+          "average_busy_cores": 1.9737226632311522
+        },
+        {
+          "seconds": 2.296688375994563,
+          "cpu_seconds": {
+            "235426": 4.53000000000003
+          },
+          "average_busy_cores": 1.97240515837868
+        },
+        {
+          "seconds": 2.307585099712014,
+          "cpu_seconds": {
+            "235426": 4.550000000000011
+          },
+          "average_busy_cores": 1.9717582682293493
+        },
+        {
+          "seconds": 2.2991927564144135,
+          "cpu_seconds": {
+            "235426": 4.53000000000003
+          },
+          "average_busy_cores": 1.9702567291767896
+        }
+      ],
+      "rate_mean": 903.208340073627,
+      "rate_sd": 15.323598055275596
+    },
+    {
+      "batch": 256,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "all",
+      "threads": 4,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 2048,
+      "frame_count": 2048,
+      "samples": [
+        {
+          "seconds": 1.4724716041237116,
+          "cpu_seconds": {
+            "235426": 5.729999999999961
+          },
+          "average_busy_cores": 3.891416298930915
+        },
+        {
+          "seconds": 1.4704489726573229,
+          "cpu_seconds": {
+            "235426": 5.7099999999999795
+          },
+          "average_busy_cores": 3.8831677305205288
+        },
+        {
+          "seconds": 1.454338178038597,
+          "cpu_seconds": {
+            "235426": 5.649999999999977
+          },
+          "average_busy_cores": 3.8849286124221036
+        },
+        {
+          "seconds": 1.480948869138956,
+          "cpu_seconds": {
+            "235426": 5.759999999999991
+          },
+          "average_busy_cores": 3.889398290535806
+        },
+        {
+          "seconds": 1.4771182537078857,
+          "cpu_seconds": {
+            "235426": 5.740000000000009
+          },
+          "average_busy_cores": 3.8859448020436886
+        },
+        {
+          "seconds": 1.4709319397807121,
+          "cpu_seconds": {
+            "235426": 5.720000000000027
+          },
+          "average_busy_cores": 3.888691138797877
+        }
+      ],
+      "rate_mean": 1392.2544178141356,
+      "rate_sd": 8.687515215791526
+    },
+    {
+      "batch": 256,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "all",
+      "threads": 8,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 2048,
+      "frame_count": 2048,
+      "samples": [
+        {
+          "seconds": 1.1319830771535635,
+          "cpu_seconds": {
+            "235426": 8.689999999999998
+          },
+          "average_busy_cores": 7.676793209534106
+        },
+        {
+          "seconds": 1.138425286859274,
+          "cpu_seconds": {
+            "235426": 8.730000000000018
+          },
+          "average_busy_cores": 7.668487428002093
+        },
+        {
+          "seconds": 1.1356382425874472,
+          "cpu_seconds": {
+            "235426": 8.71999999999997
+          },
+          "average_busy_cores": 7.6785015447632805
+        },
+        {
+          "seconds": 1.1370363552123308,
+          "cpu_seconds": {
+            "235426": 8.720000000000027
+          },
+          "average_busy_cores": 7.669059973347686
+        },
+        {
+          "seconds": 1.1425953898578882,
+          "cpu_seconds": {
+            "235426": 8.769999999999982
+          },
+          "average_busy_cores": 7.675507951323663
+        },
+        {
+          "seconds": 1.1371632143855095,
+          "cpu_seconds": {
+            "235426": 8.730000000000018
+          },
+          "average_busy_cores": 7.676998244018526
+        }
+      ],
+      "rate_mean": 1801.0231237882404,
+      "rate_sd": 5.49719053600087
+    },
+    {
+      "batch": 1024,
+      "operation": "render_saved",
+      "horizon": 0,
+      "selection": null,
+      "threads": 1,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 1024,
+      "frame_count": 1024,
+      "samples": [
+        {
+          "seconds": 1.7344756834208965,
+          "cpu_seconds": {
+            "235426": 1.7200000000000273
+          },
+          "average_busy_cores": 0.9916541445007064
+        },
+        {
+          "seconds": 1.7349763941019773,
+          "cpu_seconds": {
+            "235426": 1.7300000000000182
+          },
+          "average_busy_cores": 0.9971317222995792
+        },
+        {
+          "seconds": 1.7352606393396854,
+          "cpu_seconds": {
+            "235426": 1.7299999999999045
+          },
+          "average_busy_cores": 0.9969683866385728
+        },
+        {
+          "seconds": 1.7341010365635157,
+          "cpu_seconds": {
+            "235426": 1.7200000000000273
+          },
+          "average_busy_cores": 0.9918683881353115
+        },
+        {
+          "seconds": 1.733016699552536,
+          "cpu_seconds": {
+            "235426": 1.7199999999999136
+          },
+          "average_busy_cores": 0.9924889935821257
+        },
+        {
+          "seconds": 1.7369506061077118,
+          "cpu_seconds": {
+            "235426": 1.7200000000000273
+          },
+          "average_busy_cores": 0.9902411697557315
+        }
+      ],
+      "rate_mean": 590.2711282790199,
+      "rate_sd": 0.44721179076936424
+    },
+    {
+      "batch": 1024,
+      "operation": "render_saved",
+      "horizon": 0,
+      "selection": null,
+      "threads": 2,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 1024,
+      "frame_count": 1024,
+      "samples": [
+        {
+          "seconds": 0.9761611670255661,
+          "cpu_seconds": {
+            "235426": 1.9399999999999409
+          },
+          "average_busy_cores": 1.9873767422148758
+        },
+        {
+          "seconds": 0.9702456202358007,
+          "cpu_seconds": {
+            "235426": 1.919999999999959
+          },
+          "average_busy_cores": 1.9788803576699863
+        },
+        {
+          "seconds": 0.9756169505417347,
+          "cpu_seconds": {
+            "235426": 1.9400000000000546
+          },
+          "average_busy_cores": 1.988485336302145
+        },
+        {
+          "seconds": 0.937307657673955,
+          "cpu_seconds": {
+            "235426": 1.8599999999999
+          },
+          "average_busy_cores": 1.9844071311822207
+        },
+        {
+          "seconds": 0.9358971621841192,
+          "cpu_seconds": {
+            "235426": 1.8500000000000227
+          },
+          "average_busy_cores": 1.976712906878194
+        },
+        {
+          "seconds": 0.9738035444170237,
+          "cpu_seconds": {
+            "235426": 1.919999999999959
+          },
+          "average_busy_cores": 1.971650248150806
+        }
+      ],
+      "rate_mean": 1065.3628559319175,
+      "rate_sd": 21.77246903565758
+    },
+    {
+      "batch": 1024,
+      "operation": "render_saved",
+      "horizon": 0,
+      "selection": null,
+      "threads": 4,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 1024,
+      "frame_count": 1024,
+      "samples": [
+        {
+          "seconds": 0.5800391621887684,
+          "cpu_seconds": {
+            "235426": 2.2999999999999545
+          },
+          "average_busy_cores": 3.965249503707546
+        },
+        {
+          "seconds": 0.5811079274863005,
+          "cpu_seconds": {
+            "235426": 2.310000000000059
+          },
+          "average_busy_cores": 3.9751651814361404
+        },
+        {
+          "seconds": 0.5793835483491421,
+          "cpu_seconds": {
+            "235426": 2.3099999999999454
+          },
+          "average_busy_cores": 3.9869961903162587
+        },
+        {
+          "seconds": 0.597632322460413,
+          "cpu_seconds": {
+            "235426": 2.3500000000000227
+          },
+          "average_busy_cores": 3.932183571205164
+        },
+        {
+          "seconds": 0.5756805408746004,
+          "cpu_seconds": {
+            "235426": 2.2799999999999727
+          },
+          "average_busy_cores": 3.9605299087165453
+        },
+        {
+          "seconds": 0.5821178238838911,
+          "cpu_seconds": {
+            "235426": 2.310000000000059
+          },
+          "average_busy_cores": 3.9682688026759516
+        }
+      ],
+      "rate_mean": 1757.705222260835,
+      "rate_sd": 22.710046492485244
+    },
+    {
+      "batch": 1024,
+      "operation": "render_saved",
+      "horizon": 0,
+      "selection": null,
+      "threads": 8,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 1024,
+      "frame_count": 1024,
+      "samples": [
+        {
+          "seconds": 0.4133505020290613,
+          "cpu_seconds": {
+            "235426": 3.259999999999991
+          },
+          "average_busy_cores": 7.886769180144339
+        },
+        {
+          "seconds": 0.4124127961695194,
+          "cpu_seconds": {
+            "235426": 3.259999999999991
+          },
+          "average_busy_cores": 7.904701382398403
+        },
+        {
+          "seconds": 0.42005968652665615,
+          "cpu_seconds": {
+            "235426": 3.32000000000005
+          },
+          "average_busy_cores": 7.903638712517512
+        },
+        {
+          "seconds": 0.41162288933992386,
+          "cpu_seconds": {
+            "235426": 3.25
+          },
+          "average_busy_cores": 7.895576471006463
+        },
+        {
+          "seconds": 0.41084196232259274,
+          "cpu_seconds": {
+            "235426": 3.240000000000009
+          },
+          "average_busy_cores": 7.886244096594894
+        },
+        {
+          "seconds": 0.4066001605242491,
+          "cpu_seconds": {
+            "235426": 3.2100000000000364
+          },
+          "average_busy_cores": 7.894733725292261
+        }
+      ],
+      "rate_mean": 2482.769263227346,
+      "rate_sd": 26.25781090276277
+    },
+    {
+      "batch": 1024,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "none",
+      "threads": 1,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 1024,
+      "frame_count": 0,
+      "samples": [
+        {
+          "seconds": 0.03308137506246567,
+          "cpu_seconds": {
+            "235426": 0.04000000000007731
+          },
+          "average_busy_cores": 1.2091395815484574
+        },
+        {
+          "seconds": 0.03256227448582649,
+          "cpu_seconds": {
+            "235426": 0.04000000000007731
+          },
+          "average_busy_cores": 1.228415417279535
+        },
+        {
+          "seconds": 0.03255687654018402,
+          "cpu_seconds": {
+            "235426": 0.030000000000086402
+          },
+          "average_busy_cores": 0.9214643168566328
+        },
+        {
+          "seconds": 0.03284743241965771,
+          "cpu_seconds": {
+            "235426": 0.029999999999972715
+          },
+          "average_busy_cores": 0.9133133943832721
+        },
+        {
+          "seconds": 0.03271740488708019,
+          "cpu_seconds": {
+            "235426": 0.029999999999972715
+          },
+          "average_busy_cores": 0.9169431409218964
+        },
+        {
+          "seconds": 0.03362479992210865,
+          "cpu_seconds": {
+            "235426": 0.029999999999972715
+          },
+          "average_busy_cores": 0.8921986173737024
+        }
+      ],
+      "rate_mean": 31130.08764389141,
+      "rate_sd": 380.40093264606674
+    },
+    {
+      "batch": 1024,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "none",
+      "threads": 2,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 1024,
+      "frame_count": 0,
+      "samples": [
+        {
+          "seconds": 0.03301417455077171,
+          "cpu_seconds": {
+            "235426": 0.030000000000086402
+          },
+          "average_busy_cores": 0.9087005932542738
+        },
+        {
+          "seconds": 0.0326719768345356,
+          "cpu_seconds": {
+            "235426": 0.030000000000086402
+          },
+          "average_busy_cores": 0.9182180849361766
+        },
+        {
+          "seconds": 0.033184271305799484,
+          "cpu_seconds": {
+            "235426": 0.030000000000086402
+          },
+          "average_busy_cores": 0.9040427533764595
+        },
+        {
+          "seconds": 0.032872963696718216,
+          "cpu_seconds": {
+            "235426": 0.029999999999972715
+          },
+          "average_busy_cores": 0.9126040559272021
+        },
+        {
+          "seconds": 0.032481005415320396,
+          "cpu_seconds": {
+            "235426": 0.029999999999972715
+          },
+          "average_busy_cores": 0.9236167297279086
+        },
+        {
+          "seconds": 0.03265077620744705,
+          "cpu_seconds": {
+            "235426": 0.029999999999972715
+          },
+          "average_busy_cores": 0.9188142973804787
+        }
+      ],
+      "rate_mean": 31209.22461637484,
+      "rate_sd": 247.0677985227327
+    },
+    {
+      "batch": 1024,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "none",
+      "threads": 4,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 1024,
+      "frame_count": 0,
+      "samples": [
+        {
+          "seconds": 0.03258034400641918,
+          "cpu_seconds": {
+            "235426": 0.029999999999972715
+          },
+          "average_busy_cores": 0.9208005905051809
+        },
+        {
+          "seconds": 0.032772814854979515,
+          "cpu_seconds": {
+            "235426": 0.029999999999972715
+          },
+          "average_busy_cores": 0.9153928380190541
+        },
+        {
+          "seconds": 0.032568734139204025,
+          "cpu_seconds": {
+            "235426": 0.029999999999972715
+          },
+          "average_busy_cores": 0.9211288308519414
+        },
+        {
+          "seconds": 0.03262224420905113,
+          "cpu_seconds": {
+            "235426": 0.03999999999996362
+          },
+          "average_busy_cores": 1.2261572117366932
+        },
+        {
+          "seconds": 0.032605644315481186,
+          "cpu_seconds": {
+            "235426": 0.03999999999996362
+          },
+          "average_busy_cores": 1.226781461913071
+        },
+        {
+          "seconds": 0.03271745331585407,
+          "cpu_seconds": {
+            "235426": 0.03999999999996362
+          },
+          "average_busy_cores": 1.2225890448686176
+        }
+      ],
+      "rate_mean": 31368.35156349143,
+      "rate_sd": 78.70404410688974
+    },
+    {
+      "batch": 1024,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "none",
+      "threads": 8,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 1024,
+      "frame_count": 0,
+      "samples": [
+        {
+          "seconds": 0.03277849406003952,
+          "cpu_seconds": {
+            "235426": 0.03999999999996362
+          },
+          "average_busy_cores": 1.2203123159562075
+        },
+        {
+          "seconds": 0.03276107460260391,
+          "cpu_seconds": {
+            "235426": 0.03999999999996362
+          },
+          "average_busy_cores": 1.220961170693233
+        },
+        {
+          "seconds": 0.032631173729896545,
+          "cpu_seconds": {
+            "235426": 0.029999999999972715
+          },
+          "average_busy_cores": 0.9193662553574296
+        },
+        {
+          "seconds": 0.03267110325396061,
+          "cpu_seconds": {
+            "235426": 0.029999999999972715
+          },
+          "average_busy_cores": 0.9182426368272677
+        },
+        {
+          "seconds": 0.03259683586657047,
+          "cpu_seconds": {
+            "235426": 0.029999999999972715
+          },
+          "average_busy_cores": 0.9203347258234678
+        },
+        {
+          "seconds": 0.03283839486539364,
+          "cpu_seconds": {
+            "235426": 0.029999999999972715
+          },
+          "average_busy_cores": 0.9135647501330179
+        }
+      ],
+      "rate_mean": 31302.903370713702,
+      "rate_sd": 90.02781428623526
+    },
+    {
+      "batch": 1024,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "final",
+      "threads": 1,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 1024,
+      "frame_count": 1024,
+      "samples": [
+        {
+          "seconds": 1.9003870505839586,
+          "cpu_seconds": {
+            "235426": 1.8900000000001
+          },
+          "average_busy_cores": 0.9945342447052211
+        },
+        {
+          "seconds": 1.8994766753166914,
+          "cpu_seconds": {
+            "235426": 1.8799999999999955
+          },
+          "average_busy_cores": 0.9897462940346721
+        },
+        {
+          "seconds": 1.9044890124350786,
+          "cpu_seconds": {
+            "235426": 1.9099999999999682
+          },
+          "average_busy_cores": 1.002893683045114
+        },
+        {
+          "seconds": 1.9013088680803776,
+          "cpu_seconds": {
+            "235426": 1.8799999999999955
+          },
+          "average_busy_cores": 0.9887925268544631
+        },
+        {
+          "seconds": 1.9014061763882637,
+          "cpu_seconds": {
+            "235426": 1.8899999999999864
+          },
+          "average_busy_cores": 0.9940011889464125
+        },
+        {
+          "seconds": 1.9057710599154234,
+          "cpu_seconds": {
+            "235426": 1.8999999999999773
+          },
+          "average_busy_cores": 0.9969717979054094
+        }
+      ],
+      "rate_mean": 538.3418269240983,
+      "rate_sd": 0.6939511983579072
+    },
+    {
+      "batch": 1024,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "final",
+      "threads": 2,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 1024,
+      "frame_count": 1024,
+      "samples": [
+        {
+          "seconds": 1.0443559233099222,
+          "cpu_seconds": {
+            "235426": 2.0400000000000773
+          },
+          "average_busy_cores": 1.9533570447272588
+        },
+        {
+          "seconds": 1.070546803995967,
+          "cpu_seconds": {
+            "235426": 2.089999999999918
+          },
+          "average_busy_cores": 1.9522733543257507
+        },
+        {
+          "seconds": 1.058440513908863,
+          "cpu_seconds": {
+            "235426": 2.07000000000005
+          },
+          "average_busy_cores": 1.9557074514801567
+        },
+        {
+          "seconds": 1.0575324911624193,
+          "cpu_seconds": {
+            "235426": 2.07000000000005
+          },
+          "average_busy_cores": 1.957386668777189
+        },
+        {
+          "seconds": 1.0494836997240782,
+          "cpu_seconds": {
+            "235426": 2.0499999999999545
+          },
+          "average_busy_cores": 1.9533414387845414
+        },
+        {
+          "seconds": 1.0472912639379501,
+          "cpu_seconds": {
+            "235426": 2.0399999999999636
+          },
+          "average_busy_cores": 1.947882189267292
+        }
+      ],
+      "rate_mean": 971.0433915297568,
+      "rate_sd": 8.807707686571597
+    },
+    {
+      "batch": 1024,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "final",
+      "threads": 4,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 1024,
+      "frame_count": 1024,
+      "samples": [
+        {
+          "seconds": 0.668648099526763,
+          "cpu_seconds": {
+            "235426": 2.5599999999999454
+          },
+          "average_busy_cores": 3.8286207675035504
+        },
+        {
+          "seconds": 0.6597272865474224,
+          "cpu_seconds": {
+            "235426": 2.519999999999982
+          },
+          "average_busy_cores": 3.8197601514831985
+        },
+        {
+          "seconds": 0.661359990015626,
+          "cpu_seconds": {
+            "235426": 2.519999999999982
+          },
+          "average_busy_cores": 3.810330286143318
+        },
+        {
+          "seconds": 0.6518220957368612,
+          "cpu_seconds": {
+            "235426": 2.490000000000009
+          },
+          "average_busy_cores": 3.820060744005854
+        },
+        {
+          "seconds": 0.6524228248745203,
+          "cpu_seconds": {
+            "235426": 2.490000000000009
+          },
+          "average_busy_cores": 3.8165433597129406
+        },
+        {
+          "seconds": 0.6574005745351315,
+          "cpu_seconds": {
+            "235426": 2.519999999999982
+          },
+          "average_busy_cores": 3.8332792784398655
+        }
+      ],
+      "rate_mean": 1555.015765750158,
+      "rate_sd": 14.703607438163349
+    },
+    {
+      "batch": 1024,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "final",
+      "threads": 8,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 1024,
+      "frame_count": 1024,
+      "samples": [
+        {
+          "seconds": 0.4817319381982088,
+          "cpu_seconds": {
+            "235426": 3.5699999999999363
+          },
+          "average_busy_cores": 7.410760460169154
+        },
+        {
+          "seconds": 0.48120531998574734,
+          "cpu_seconds": {
+            "235426": 3.560000000000059
+          },
+          "average_busy_cores": 7.398089447775643
+        },
+        {
+          "seconds": 0.48925803788006306,
+          "cpu_seconds": {
+            "235426": 3.6200000000000045
+          },
+          "average_busy_cores": 7.398958667465803
+        },
+        {
+          "seconds": 0.4872643668204546,
+          "cpu_seconds": {
+            "235426": 3.6000000000000227
+          },
+          "average_busy_cores": 7.388186465370118
+        },
+        {
+          "seconds": 0.4797444064170122,
+          "cpu_seconds": {
+            "235426": 3.5399999999999636
+          },
+          "average_busy_cores": 7.378929181141634
+        },
+        {
+          "seconds": 0.48414315842092037,
+          "cpu_seconds": {
+            "235426": 3.560000000000059
+          },
+          "average_busy_cores": 7.353196958542887
+        }
+      ],
+      "rate_mean": 2116.2822940985075,
+      "rate_sd": 16.23993599810414
+    },
+    {
+      "batch": 1024,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "all",
+      "threads": 1,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 1024,
+      "frame_count": 1024,
+      "samples": [
+        {
+          "seconds": 1.883201364427805,
+          "cpu_seconds": {
+            "235426": 1.8700000000000045
+          },
+          "average_busy_cores": 0.9929899347583515
+        },
+        {
+          "seconds": 1.8749721348285675,
+          "cpu_seconds": {
+            "235426": 1.8600000000000136
+          },
+          "average_busy_cores": 0.9920147427524715
+        },
+        {
+          "seconds": 1.8782708533108234,
+          "cpu_seconds": {
+            "235426": 1.8700000000000045
+          },
+          "average_busy_cores": 0.9955965598378743
+        },
+        {
+          "seconds": 1.8812204487621784,
+          "cpu_seconds": {
+            "235426": 1.8700000000000045
+          },
+          "average_busy_cores": 0.9940355481626001
+        },
+        {
+          "seconds": 1.883421778678894,
+          "cpu_seconds": {
+            "235426": 1.8700000000000045
+          },
+          "average_busy_cores": 0.9928737265169015
+        },
+        {
+          "seconds": 1.877446424216032,
+          "cpu_seconds": {
+            "235426": 1.8600000000000136
+          },
+          "average_busy_cores": 0.990707365072586
+        }
+      ],
+      "rate_mean": 544.753185164037,
+      "rate_sd": 0.9862762744576486
+    },
+    {
+      "batch": 1024,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "all",
+      "threads": 2,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 1024,
+      "frame_count": 1024,
+      "samples": [
+        {
+          "seconds": 1.0372630134224892,
+          "cpu_seconds": {
+            "235426": 2.0400000000000773
+          },
+          "average_busy_cores": 1.966714298689798
+        },
+        {
+          "seconds": 1.035510128363967,
+          "cpu_seconds": {
+            "235426": 2.0299999999999727
+          },
+          "average_busy_cores": 1.9603864263570552
+        },
+        {
+          "seconds": 1.0331982783973217,
+          "cpu_seconds": {
+            "235426": 2.019999999999982
+          },
+          "average_busy_cores": 1.9550942372197608
+        },
+        {
+          "seconds": 1.041685363277793,
+          "cpu_seconds": {
+            "235426": 2.0499999999999545
+          },
+          "average_busy_cores": 1.9679646775004822
+        },
+        {
+          "seconds": 1.0292018838226795,
+          "cpu_seconds": {
+            "235426": 2.009999999999991
+          },
+          "average_busy_cores": 1.9529696083866597
+        },
+        {
+          "seconds": 1.0278491899371147,
+          "cpu_seconds": {
+            "235426": 2.0
+          },
+          "average_busy_cores": 1.9458107469271468
+        }
+      ],
+      "rate_mean": 990.2364132498211,
+      "rate_sd": 4.942702834308992
+    },
+    {
+      "batch": 1024,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "all",
+      "threads": 4,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 1024,
+      "frame_count": 1024,
+      "samples": [
+        {
+          "seconds": 0.6664871983230114,
+          "cpu_seconds": {
+            "235426": 2.5399999999999636
+          },
+          "average_busy_cores": 3.8110259377689633
+        },
+        {
+          "seconds": 0.6639307681471109,
+          "cpu_seconds": {
+            "235426": 2.5399999999999636
+          },
+          "average_busy_cores": 3.8257000908220617
+        },
+        {
+          "seconds": 0.6498835068196058,
+          "cpu_seconds": {
+            "235426": 2.490000000000009
+          },
+          "average_busy_cores": 3.8314559053599453
+        },
+        {
+          "seconds": 0.6582472007721663,
+          "cpu_seconds": {
+            "235426": 2.509999999999991
+          },
+          "average_busy_cores": 3.8131571194766947
+        },
+        {
+          "seconds": 0.6627137120813131,
+          "cpu_seconds": {
+            "235426": 2.5399999999999636
+          },
+          "average_busy_cores": 3.832725887054398
+        },
+        {
+          "seconds": 0.6569842975586653,
+          "cpu_seconds": {
+            "235426": 2.509999999999991
+          },
+          "average_busy_cores": 3.820487048666275
+        }
+      ],
+      "rate_mean": 1552.3092580542848,
+      "rate_sd": 14.14293885867
+    },
+    {
+      "batch": 1024,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "all",
+      "threads": 8,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 1024,
+      "frame_count": 1024,
+      "samples": [
+        {
+          "seconds": 0.4824104253202677,
+          "cpu_seconds": {
+            "235426": 3.550000000000068
+          },
+          "average_busy_cores": 7.358879107231684
+        },
+        {
+          "seconds": 0.48098986223340034,
+          "cpu_seconds": {
+            "235426": 3.5499999999999545
+          },
+          "average_busy_cores": 7.380612937487062
+        },
+        {
+          "seconds": 0.4880288615822792,
+          "cpu_seconds": {
+            "235426": 3.6000000000000227
+          },
+          "average_busy_cores": 7.37661290835989
+        },
+        {
+          "seconds": 0.4778632838279009,
+          "cpu_seconds": {
+            "235426": 3.5300000000000864
+          },
+          "average_busy_cores": 7.3870500611036505
+        },
+        {
+          "seconds": 0.48353932052850723,
+          "cpu_seconds": {
+            "235426": 3.5699999999999363
+          },
+          "average_busy_cores": 7.383060380897122
+        },
+        {
+          "seconds": 0.48132549971342087,
+          "cpu_seconds": {
+            "235426": 3.550000000000068
+          },
+          "average_busy_cores": 7.375466294874722
+        }
+      ],
+      "rate_mean": 2122.9837232646055,
+      "rate_sd": 14.77387107583601
+    },
+    {
+      "batch": 1024,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "none",
+      "threads": 1,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 8192,
+      "frame_count": 0,
+      "samples": [
+        {
+          "seconds": 0.2655759882181883,
+          "cpu_seconds": {
+            "235426": 0.2700000000000955
+          },
+          "average_busy_cores": 1.0166581768615037
+        },
+        {
+          "seconds": 0.2599259093403816,
+          "cpu_seconds": {
+            "235426": 0.2599999999999909
+          },
+          "average_busy_cores": 1.0002850453030916
+        },
+        {
+          "seconds": 0.2608542572706938,
+          "cpu_seconds": {
+            "235426": 0.2599999999999909
+          },
+          "average_busy_cores": 0.9967251549595513
+        },
+        {
+          "seconds": 0.2608371563255787,
+          "cpu_seconds": {
+            "235426": 0.2599999999999909
+          },
+          "average_busy_cores": 0.9967905020228681
+        },
+        {
+          "seconds": 0.2614593058824539,
+          "cpu_seconds": {
+            "235426": 0.2599999999999909
+          },
+          "average_busy_cores": 0.9944186118082977
+        },
+        {
+          "seconds": 0.2610400952398777,
+          "cpu_seconds": {
+            "235426": 0.2599999999999909
+          },
+          "average_busy_cores": 0.9960155728608242
+        }
+      ],
+      "rate_mean": 31314.650228922623,
+      "rate_sd": 237.34781957309224
+    },
+    {
+      "batch": 1024,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "none",
+      "threads": 2,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 8192,
+      "frame_count": 0,
+      "samples": [
+        {
+          "seconds": 0.26170250214636326,
+          "cpu_seconds": {
+            "235426": 0.2599999999999909
+          },
+          "average_busy_cores": 0.9934945133026654
+        },
+        {
+          "seconds": 0.26152113266289234,
+          "cpu_seconds": {
+            "235426": 0.2599999999999909
+          },
+          "average_busy_cores": 0.9941835191389209
+        },
+        {
+          "seconds": 0.26393898390233517,
+          "cpu_seconds": {
+            "235426": 0.2599999999999909
+          },
+          "average_busy_cores": 0.9850761572083577
+        },
+        {
+          "seconds": 0.26071037724614143,
+          "cpu_seconds": {
+            "235426": 0.2599999999999909
+          },
+          "average_busy_cores": 0.9972752245090734
+        },
+        {
+          "seconds": 0.26129428669810295,
+          "cpu_seconds": {
+            "235426": 0.2599999999999909
+          },
+          "average_busy_cores": 0.995046632230396
+        },
+        {
+          "seconds": 0.26141603477299213,
+          "cpu_seconds": {
+            "235426": 0.25
+          },
+          "average_busy_cores": 0.9563300132568167
+        }
+      ],
+      "rate_mean": 31295.85170472265,
+      "rate_sd": 132.891141056398
+    },
+    {
+      "batch": 1024,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "none",
+      "threads": 4,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 8192,
+      "frame_count": 0,
+      "samples": [
+        {
+          "seconds": 0.2602534703910351,
+          "cpu_seconds": {
+            "235426": 0.2599999999999909
+          },
+          "average_busy_cores": 0.9990260633579129
+        },
+        {
+          "seconds": 0.26111454889178276,
+          "cpu_seconds": {
+            "235426": 0.2599999999999909
+          },
+          "average_busy_cores": 0.9957315710805001
+        },
+        {
+          "seconds": 0.2603408396244049,
+          "cpu_seconds": {
+            "235426": 0.25
+          },
+          "average_busy_cores": 0.9602796102243363
+        },
+        {
+          "seconds": 0.26963108964264393,
+          "cpu_seconds": {
+            "235426": 0.2699999999999818
+          },
+          "average_busy_cores": 1.001368204081461
+        },
+        {
+          "seconds": 0.2617836035788059,
+          "cpu_seconds": {
+            "235426": 0.2599999999999909
+          },
+          "average_busy_cores": 0.9931867253929137
+        },
+        {
+          "seconds": 0.26058774814009666,
+          "cpu_seconds": {
+            "235426": 0.2599999999999909
+          },
+          "average_busy_cores": 0.9977445288801922
+        }
+      ],
+      "rate_mean": 31238.09241226748,
+      "rate_sd": 424.8229857667376
+    },
+    {
+      "batch": 1024,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "none",
+      "threads": 8,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 8192,
+      "frame_count": 0,
+      "samples": [
+        {
+          "seconds": 0.26104164496064186,
+          "cpu_seconds": {
+            "235426": 0.2599999999999909
+          },
+          "average_busy_cores": 0.9960096598348972
+        },
+        {
+          "seconds": 0.2616315744817257,
+          "cpu_seconds": {
+            "235426": 0.2599999999999909
+          },
+          "average_busy_cores": 0.9937638471772116
+        },
+        {
+          "seconds": 0.2605295889079571,
+          "cpu_seconds": {
+            "235426": 0.2600000000001046
+          },
+          "average_busy_cores": 0.99796726003341
+        },
+        {
+          "seconds": 0.26270531862974167,
+          "cpu_seconds": {
+            "235426": 0.2599999999999909
+          },
+          "average_busy_cores": 0.989702078953477
+        },
+        {
+          "seconds": 0.261543283239007,
+          "cpu_seconds": {
+            "235426": 0.2599999999999909
+          },
+          "average_busy_cores": 0.994099319929368
+        },
+        {
+          "seconds": 0.26079963706433773,
+          "cpu_seconds": {
+            "235426": 0.25
+          },
+          "average_busy_cores": 0.9585902910529223
+        }
+      ],
+      "rate_mean": 31342.151252667158,
+      "rate_sd": 93.0242718588144
+    },
+    {
+      "batch": 1024,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "final",
+      "threads": 1,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 8192,
+      "frame_count": 1024,
+      "samples": [
+        {
+          "seconds": 2.1049552895128727,
+          "cpu_seconds": {
+            "235426": 2.090000000000032
+          },
+          "average_busy_cores": 0.9928951984931225
+        },
+        {
+          "seconds": 2.0925142001360655,
+          "cpu_seconds": {
+            "235426": 2.090000000000032
+          },
+          "average_busy_cores": 0.9987984788175535
+        },
+        {
+          "seconds": 2.0984872840344906,
+          "cpu_seconds": {
+            "235426": 2.080000000000041
+          },
+          "average_busy_cores": 0.9911901853420305
+        },
+        {
+          "seconds": 2.102372882887721,
+          "cpu_seconds": {
+            "235426": 2.080000000000041
+          },
+          "average_busy_cores": 0.9893582708044875
+        },
+        {
+          "seconds": 2.0978774409741163,
+          "cpu_seconds": {
+            "235426": 2.080000000000041
+          },
+          "average_busy_cores": 0.9914783196458921
+        },
+        {
+          "seconds": 2.0966690350323915,
+          "cpu_seconds": {
+            "235426": 2.090000000000032
+          },
+          "average_busy_cores": 0.996819223768306
+        }
+      ],
+      "rate_mean": 3903.1732985970457,
+      "rate_sd": 8.133479973231205
+    },
+    {
+      "batch": 1024,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "final",
+      "threads": 2,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 8192,
+      "frame_count": 1024,
+      "samples": [
+        {
+          "seconds": 1.2869960367679596,
+          "cpu_seconds": {
+            "235426": 2.2999999999999545
+          },
+          "average_busy_cores": 1.7871072903813732
+        },
+        {
+          "seconds": 1.2817236855626106,
+          "cpu_seconds": {
+            "235426": 2.2900000000000773
+          },
+          "average_busy_cores": 1.7866565358780004
+        },
+        {
+          "seconds": 1.2871948033571243,
+          "cpu_seconds": {
+            "235426": 2.2999999999999545
+          },
+          "average_busy_cores": 1.786831328095281
+        },
+        {
+          "seconds": 1.2889185957610607,
+          "cpu_seconds": {
+            "235426": 2.2899999999999636
+          },
+          "average_busy_cores": 1.776683188163485
+        },
+        {
+          "seconds": 1.2964197266846895,
+          "cpu_seconds": {
+            "235426": 2.32000000000005
+          },
+          "average_busy_cores": 1.78954388941068
+        },
+        {
+          "seconds": 1.2873307205736637,
+          "cpu_seconds": {
+            "235426": 2.2999999999999545
+          },
+          "average_busy_cores": 1.786642673279033
+        }
+      ],
+      "rate_mean": 6359.840345452563,
+      "rate_sd": 23.44018425819278
+    },
+    {
+      "batch": 1024,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "final",
+      "threads": 4,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 8192,
+      "frame_count": 1024,
+      "samples": [
+        {
+          "seconds": 0.8893083613365889,
+          "cpu_seconds": {
+            "235426": 2.7399999999998954
+          },
+          "average_busy_cores": 3.0810460343381947
+        },
+        {
+          "seconds": 0.8831614051014185,
+          "cpu_seconds": {
+            "235426": 2.7200000000000273
+          },
+          "average_busy_cores": 3.0798447308594445
+        },
+        {
+          "seconds": 0.8860349636524916,
+          "cpu_seconds": {
+            "235426": 2.730000000000018
+          },
+          "average_busy_cores": 3.0811425191915354
+        },
+        {
+          "seconds": 0.894468767568469,
+          "cpu_seconds": {
+            "235426": 2.759999999999991
+          },
+          "average_busy_cores": 3.0856303764555095
+        },
+        {
+          "seconds": 0.8896571733057499,
+          "cpu_seconds": {
+            "235426": 2.75
+          },
+          "average_busy_cores": 3.091078319282998
+        },
+        {
+          "seconds": 0.8830526769161224,
+          "cpu_seconds": {
+            "235426": 2.730000000000018
+          },
+          "average_busy_cores": 3.0915482975873814
+        }
+      ],
+      "rate_mean": 9229.427534466678,
+      "rate_sd": 45.75817697153422
+    },
+    {
+      "batch": 1024,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "final",
+      "threads": 8,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 8192,
+      "frame_count": 1024,
+      "samples": [
+        {
+          "seconds": 0.7106934562325478,
+          "cpu_seconds": {
+            "235426": 3.75
+          },
+          "average_busy_cores": 5.276536553296972
+        },
+        {
+          "seconds": 0.7050679288804531,
+          "cpu_seconds": {
+            "235426": 3.7200000000000273
+          },
+          "average_busy_cores": 5.276087377718136
+        },
+        {
+          "seconds": 0.7152068354189396,
+          "cpu_seconds": {
+            "235426": 3.7900000000000773
+          },
+          "average_busy_cores": 5.299166356233224
+        },
+        {
+          "seconds": 0.7086436729878187,
+          "cpu_seconds": {
+            "235426": 3.769999999999982
+          },
+          "average_busy_cores": 5.320022098136741
+        },
+        {
+          "seconds": 0.712056327611208,
+          "cpu_seconds": {
+            "235426": 3.7799999999999727
+          },
+          "average_busy_cores": 5.308568793540589
+        },
+        {
+          "seconds": 0.7130989115685225,
+          "cpu_seconds": {
+            "235426": 3.769999999999982
+          },
+          "average_busy_cores": 5.286784117658436
+        }
+      ],
+      "rate_mean": 11525.374128172236,
+      "rate_sd": 58.048300892249266
+    },
+    {
+      "batch": 1024,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "all",
+      "threads": 1,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 8192,
+      "frame_count": 8192,
+      "samples": [
+        {
+          "seconds": 17.697575144469738,
+          "cpu_seconds": {
+            "235426": 17.600000000000136
+          },
+          "average_busy_cores": 0.9944865246411968
+        },
+        {
+          "seconds": 17.603444900363684,
+          "cpu_seconds": {
+            "235426": 17.5
+          },
+          "average_busy_cores": 0.9941235990484143
+        },
+        {
+          "seconds": 17.66526927612722,
+          "cpu_seconds": {
+            "235426": 17.560000000000173
+          },
+          "average_busy_cores": 0.9940408903775213
+        },
+        {
+          "seconds": 17.640642285346985,
+          "cpu_seconds": {
+            "235426": 17.529999999999973
+          },
+          "average_busy_cores": 0.9937279899701319
+        },
+        {
+          "seconds": 17.76754643768072,
+          "cpu_seconds": {
+            "235426": 17.659999999999854
+          },
+          "average_busy_cores": 0.9939470293178586
+        },
+        {
+          "seconds": 17.580584172159433,
+          "cpu_seconds": {
+            "235426": 17.480000000000018
+          },
+          "average_busy_cores": 0.9942786786164535
+        }
+      ],
+      "rate_mean": 463.9004412945677,
+      "rate_sd": 1.77422669956611
+    },
+    {
+      "batch": 1024,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "all",
+      "threads": 2,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 8192,
+      "frame_count": 8192,
+      "samples": [
+        {
+          "seconds": 10.08296074718237,
+          "cpu_seconds": {
+            "235426": 19.539999999999964
+          },
+          "average_busy_cores": 1.937922847260941
+        },
+        {
+          "seconds": 10.117835888639092,
+          "cpu_seconds": {
+            "235426": 19.6099999999999
+          },
+          "average_busy_cores": 1.9381615017119593
+        },
+        {
+          "seconds": 10.341538850218058,
+          "cpu_seconds": {
+            "235426": 20.050000000000182
+          },
+          "average_busy_cores": 1.938783027399971
+        },
+        {
+          "seconds": 10.08412759937346,
+          "cpu_seconds": {
+            "235426": 19.529999999999973
+          },
+          "average_busy_cores": 1.9367069493659914
+        },
+        {
+          "seconds": 10.081693777814507,
+          "cpu_seconds": {
+            "235426": 19.519999999999982
+          },
+          "average_busy_cores": 1.9361825929443668
+        },
+        {
+          "seconds": 10.060137990862131,
+          "cpu_seconds": {
+            "235426": 19.5
+          },
+          "average_busy_cores": 1.9383431934743167
+        }
+      ],
+      "rate_mean": 808.9158047253845,
+      "rate_sd": 8.349660853889175
+    },
+    {
+      "batch": 1024,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "all",
+      "threads": 4,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 8192,
+      "frame_count": 8192,
+      "samples": [
+        {
+          "seconds": 6.42734170332551,
+          "cpu_seconds": {
+            "235426": 23.99000000000001
+          },
+          "average_busy_cores": 3.732491768344535
+        },
+        {
+          "seconds": 6.436636151745915,
+          "cpu_seconds": {
+            "235426": 24.029999999999973
+          },
+          "average_busy_cores": 3.73331650779762
+        },
+        {
+          "seconds": 6.423184670507908,
+          "cpu_seconds": {
+            "235426": 23.950000000000045
+          },
+          "average_busy_cores": 3.728679966180424
+        },
+        {
+          "seconds": 6.340774983167648,
+          "cpu_seconds": {
+            "235426": 23.7199999999998
+          },
+          "average_busy_cores": 3.7408676483501466
+        },
+        {
+          "seconds": 6.361145980656147,
+          "cpu_seconds": {
+            "235426": 23.809999999999945
+          },
+          "average_busy_cores": 3.7430362504499484
+        },
+        {
+          "seconds": 6.337100870907307,
+          "cpu_seconds": {
+            "235426": 23.720000000000027
+          },
+          "average_busy_cores": 3.7430365214628414
+        }
+      ],
+      "rate_mean": 1282.521299108008,
+      "rate_sd": 9.288745876840066
+    },
+    {
+      "batch": 1024,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "all",
+      "threads": 8,
+      "workers": 0,
+      "pids": [
+        235426
+      ],
+      "count": 8192,
+      "frame_count": 8192,
+      "samples": [
+        {
+          "seconds": 4.513081692159176,
+          "cpu_seconds": {
+            "235426": 32.289999999999964
+          },
+          "average_busy_cores": 7.154756373255807
+        },
+        {
+          "seconds": 4.531927013769746,
+          "cpu_seconds": {
+            "235426": 32.319999999999936
+          },
+          "average_busy_cores": 7.131624119673438
+        },
+        {
+          "seconds": 4.643899668008089,
+          "cpu_seconds": {
+            "235426": 32.3900000000001
+          },
+          "average_busy_cores": 6.974741556785865
+        },
+        {
+          "seconds": 4.761184260249138,
+          "cpu_seconds": {
+            "235426": 33.49000000000001
+          },
+          "average_busy_cores": 7.03396427641042
+        },
+        {
+          "seconds": 4.530111610889435,
+          "cpu_seconds": {
+            "235426": 32.350000000000136
+          },
+          "average_busy_cores": 7.141104409489061
+        },
+        {
+          "seconds": 4.53711768053472,
+          "cpu_seconds": {
+            "235426": 32.450000000000045
+          },
+          "average_busy_cores": 7.152117772747667
+        }
+      ],
+      "rate_mean": 1786.882966635749,
+      "rate_sd": 37.30203084734619
+    }
+  ],
+  "gates": [
+    {
+      "batch": 64,
+      "operation": "render_saved",
+      "horizon": 0,
+      "selection": null,
+      "threads": 1,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 64,
+      "operation": "render_saved",
+      "horizon": 0,
+      "selection": null,
+      "threads": 2,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 64,
+      "operation": "render_saved",
+      "horizon": 0,
+      "selection": null,
+      "threads": 4,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 64,
+      "operation": "render_saved",
+      "horizon": 0,
+      "selection": null,
+      "threads": 8,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 64,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "none",
+      "threads": 1,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 64,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "none",
+      "threads": 2,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 64,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "none",
+      "threads": 4,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 64,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "none",
+      "threads": 8,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 64,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "final",
+      "threads": 1,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 64,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "final",
+      "threads": 2,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 64,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "final",
+      "threads": 4,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 64,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "final",
+      "threads": 8,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 64,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "all",
+      "threads": 1,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 64,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "all",
+      "threads": 2,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 64,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "all",
+      "threads": 4,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 64,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "all",
+      "threads": 8,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 64,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "none",
+      "threads": 1,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 64,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "none",
+      "threads": 2,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 64,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "none",
+      "threads": 4,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 64,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "none",
+      "threads": 8,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 64,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "final",
+      "threads": 1,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 64,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "final",
+      "threads": 2,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 64,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "final",
+      "threads": 4,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 64,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "final",
+      "threads": 8,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 64,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "all",
+      "threads": 1,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 64,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "all",
+      "threads": 2,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 64,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "all",
+      "threads": 4,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 64,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "all",
+      "threads": 8,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 256,
+      "operation": "render_saved",
+      "horizon": 0,
+      "selection": null,
+      "threads": 1,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 256,
+      "operation": "render_saved",
+      "horizon": 0,
+      "selection": null,
+      "threads": 2,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 256,
+      "operation": "render_saved",
+      "horizon": 0,
+      "selection": null,
+      "threads": 4,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 256,
+      "operation": "render_saved",
+      "horizon": 0,
+      "selection": null,
+      "threads": 8,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 256,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "none",
+      "threads": 1,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 256,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "none",
+      "threads": 2,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 256,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "none",
+      "threads": 4,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 256,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "none",
+      "threads": 8,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 256,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "final",
+      "threads": 1,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 256,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "final",
+      "threads": 2,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 256,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "final",
+      "threads": 4,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 256,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "final",
+      "threads": 8,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 256,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "all",
+      "threads": 1,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 256,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "all",
+      "threads": 2,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 256,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "all",
+      "threads": 4,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 256,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "all",
+      "threads": 8,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 256,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "none",
+      "threads": 1,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 256,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "none",
+      "threads": 2,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 256,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "none",
+      "threads": 4,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 256,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "none",
+      "threads": 8,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 256,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "final",
+      "threads": 1,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 256,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "final",
+      "threads": 2,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 256,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "final",
+      "threads": 4,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 256,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "final",
+      "threads": 8,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 256,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "all",
+      "threads": 1,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 256,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "all",
+      "threads": 2,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 256,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "all",
+      "threads": 4,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 256,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "all",
+      "threads": 8,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 1024,
+      "operation": "render_saved",
+      "horizon": 0,
+      "selection": null,
+      "threads": 1,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 1024,
+      "operation": "render_saved",
+      "horizon": 0,
+      "selection": null,
+      "threads": 2,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 1024,
+      "operation": "render_saved",
+      "horizon": 0,
+      "selection": null,
+      "threads": 4,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 1024,
+      "operation": "render_saved",
+      "horizon": 0,
+      "selection": null,
+      "threads": 8,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 1024,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "none",
+      "threads": 1,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 1024,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "none",
+      "threads": 2,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 1024,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "none",
+      "threads": 4,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 1024,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "none",
+      "threads": 8,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 1024,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "final",
+      "threads": 1,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 1024,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "final",
+      "threads": 2,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 1024,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "final",
+      "threads": 4,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 1024,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "final",
+      "threads": 8,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 1024,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "all",
+      "threads": 1,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 1024,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "all",
+      "threads": 2,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 1024,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "all",
+      "threads": 4,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 1024,
+      "operation": "online",
+      "horizon": 1,
+      "selection": "all",
+      "threads": 8,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 1024,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "none",
+      "threads": 1,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 1024,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "none",
+      "threads": 2,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 1024,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "none",
+      "threads": 4,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 1024,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "none",
+      "threads": 8,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 1024,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "final",
+      "threads": 1,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 1024,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "final",
+      "threads": 2,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 1024,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "final",
+      "threads": 4,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 1024,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "final",
+      "threads": 8,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 1024,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "all",
+      "threads": 1,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 1024,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "all",
+      "threads": 2,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 1024,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "all",
+      "threads": 4,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "batch": 1024,
+      "operation": "online",
+      "horizon": 8,
+      "selection": "all",
+      "threads": 8,
+      "exact_state_task_frame": "PASS"
+    }
+  ],
+  "profiles": {
+    "1": "         1894 function calls (1879 primitive calls) in 0.441 seconds\n\n   Ordered by: cumulative time\n   List reduced from 162 to 35 due to restriction <35>\n\n   ncalls  tottime  percall  cumtime  percall filename:lineno(function)\n        1    0.000    0.000    0.441    0.441 /oscar/scratch/sboughan/se-semantic-recovery/classic-cpu-threads-v1-20261003/code/stable_envs/env.py:798(render)\n        1    0.000    0.000    0.440    0.440 /oscar/scratch/sboughan/se-semantic-recovery/classic-cpu-threads-v1-20261003/code/stable_envs/env.py:177(render)\n        1    0.000    0.000    0.440    0.440 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/torch/utils/_contextlib.py:120(decorate_context)\n        1    0.000    0.000    0.439    0.439 /oscar/scratch/sboughan/se-semantic-recovery/classic-cpu-threads-v1-20261003/code/stable_envs/envs/classic_control.py:451(_render)\n        1    0.001    0.001    0.254    0.254 /oscar/scratch/sboughan/se-semantic-recovery/classic-cpu-threads-v1-20261003/code/stable_envs/envs/classic_control.py:892(_draw)\n        1    0.002    0.002    0.153    0.153 /oscar/scratch/sboughan/se-semantic-recovery/classic-cpu-threads-v1-20261003/code/stable_envs/render/gfxdraw.py:931(rgb)\n        1    0.061    0.061    0.133    0.133 /oscar/scratch/sboughan/se-semantic-recovery/classic-cpu-threads-v1-20261003/code/stable_envs/envs/classic_control.py:937(_blit_torque)\n        4    0.133    0.033    0.133    0.033 {method 'copy_' of 'torch._C.TensorBase' objects}\n        1    0.000    0.000    0.108    0.108 /oscar/scratch/sboughan/se-semantic-recovery/classic-cpu-threads-v1-20261003/code/stable_envs/envs/classic_control.py:146(_poly)\n        1    0.000    0.000    0.108    0.108 /oscar/scratch/sboughan/se-semantic-recovery/classic-cpu-threads-v1-20261003/code/stable_envs/render/gfxdraw.py:1161(polygon)\n        1    0.048    0.048    0.048    0.048 /oscar/scratch/sboughan/se-semantic-recovery/classic-cpu-threads-v1-20261003/code/stable_envs/render/gfxdraw.py:723(blit_over)\n        1    0.000    0.000    0.042    0.042 /oscar/scratch/sboughan/se-semantic-recovery/classic-cpu-threads-v1-20261003/code/stable_envs/render/gfxdraw.py:1187(_aa)\n       23    0.007    0.000    0.040    0.002 /oscar/scratch/sboughan/se-semantic-recovery/classic-cpu-threads-v1-20261003/code/stable_envs/render/gfxdraw.py:1037(blend_at)\n        4    0.002    0.000    0.038    0.010 /oscar/scratch/sboughan/se-semantic-recovery/classic-cpu-threads-v1-20261003/code/stable_envs/render/gfxdraw.py:1099(aaline_emit)\n        1    0.024    0.024    0.037    0.037 /oscar/scratch/sboughan/se-semantic-recovery/classic-cpu-threads-v1-20261003/code/stable_envs/render/gfxdraw.py:647(fill_polygon_mask)\n       23    0.021    0.001    0.032    0.001 /oscar/scratch/sboughan/se-semantic-recovery/classic-cpu-threads-v1-20261003/code/stable_envs/render/gfxdraw.py:924(blend_at)\n        1    0.000    0.000    0.032    0.032 /oscar/scratch/sboughan/se-semantic-recovery/classic-cpu-threads-v1-20261003/code/stable_envs/render/gfxdraw.py:979(__init__)\n        3    0.030    0.010    0.030    0.010 {method 'flip' of 'torch._C.TensorBase' objects}\n        1    0.000    0.000    0.029    0.029 /oscar/scratch/sboughan/se-semantic-recovery/classic-cpu-threads-v1-20261003/code/stable_envs/render/gfxdraw.py:996(paint)\n        1    0.020    0.020    0.028    0.028 /oscar/scratch/sboughan/se-semantic-recovery/classic-cpu-threads-v1-20261003/code/stable_envs/render/gfxdraw.py:797(select_)\n        1    0.000    0.000    0.021    0.021 /oscar/scratch/sboughan/se-semantic-recovery/classic-cpu-threads-v1-20261003/code/stable_envs/render/gfxdraw.py:832(__init__)\n        3    0.021    0.007    0.021    0.007 {method 'fill_' of 'torch._C.TensorBase' objects}\n      144    0.020    0.000    0.020    0.000 {method 'to' of 'torch._C.TensorBase' objects}\n        3    0.000    0.000    0.012    0.004 /oscar/scratch/sboughan/se-semantic-recovery/classic-cpu-threads-v1-20261003/code/stable_envs/envs/classic_control.py:150(_circ)\n        3    0.000    0.000    0.012    0.004 /oscar/scratch/sboughan/se-semantic-recovery/classic-cpu-threads-v1-20261003/code/stable_envs/render/gfxdraw.py:1203(circle)\n        1    0.010    0.010    0.010    0.010 {method 'amin' of 'torch._C.TensorBase' objects}\n       23    0.008    0.000    0.009    0.000 /oscar/scratch/sboughan/se-semantic-recovery/classic-cpu-threads-v1-20261003/code/stable_envs/render/gfxdraw.py:708(blend)\n        1    0.008    0.008    0.008    0.008 {method 'bitwise_xor_' of 'torch._C.TensorBase' objects}\n      224    0.007    0.000    0.007    0.000 {built-in method torch.where}\n        3    0.005    0.002    0.007    0.002 /oscar/scratch/sboughan/se-semantic-recovery/classic-cpu-threads-v1-20261003/code/stable_envs/render/gfxdraw.py:1031(paint_disc)\n        1    0.000    0.000    0.003    0.003 /oscar/scratch/sboughan/se-semantic-recovery/classic-cpu-threads-v1-20261003/code/stable_envs/render/gfxdraw.py:1089(edge_setup)\n        1    0.000    0.000    0.003    0.003 /oscar/scratch/sboughan/se-semantic-recovery/classic-cpu-threads-v1-20261003/code/stable_envs/render/gfxdraw.py:1046(edge_geometry)\n        1    0.001    0.001    0.003    0.003 /oscar/scratch/sboughan/se-semantic-recovery/classic-cpu-threads-v1-20261003/code/stable_envs/render/gfxdraw.py:742(clip_line)\n        3    0.002    0.001    0.002    0.001 /oscar/scratch/sboughan/se-semantic-recovery/classic-cpu-threads-v1-20261003/code/stable_envs/render/gfxdraw.py:900(_disc_index)\n        3    0.002    0.001    0.002    0.001 {built-in method torch.div}\n\n\n",
+    "8": "         1894 function calls (1879 primitive calls) in 0.149 seconds\n\n   Ordered by: cumulative time\n   List reduced from 162 to 35 due to restriction <35>\n\n   ncalls  tottime  percall  cumtime  percall filename:lineno(function)\n        1    0.000    0.000    0.149    0.149 /oscar/scratch/sboughan/se-semantic-recovery/classic-cpu-threads-v1-20261003/code/stable_envs/env.py:798(render)\n        1    0.000    0.000    0.149    0.149 /oscar/scratch/sboughan/se-semantic-recovery/classic-cpu-threads-v1-20261003/code/stable_envs/env.py:177(render)\n        1    0.000    0.000    0.148    0.148 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/torch/utils/_contextlib.py:120(decorate_context)\n        1    0.000    0.000    0.148    0.148 /oscar/scratch/sboughan/se-semantic-recovery/classic-cpu-threads-v1-20261003/code/stable_envs/envs/classic_control.py:451(_render)\n        1    0.001    0.001    0.082    0.082 /oscar/scratch/sboughan/se-semantic-recovery/classic-cpu-threads-v1-20261003/code/stable_envs/envs/classic_control.py:892(_draw)\n        1    0.000    0.000    0.048    0.048 /oscar/scratch/sboughan/se-semantic-recovery/classic-cpu-threads-v1-20261003/code/stable_envs/envs/classic_control.py:146(_poly)\n        1    0.000    0.000    0.048    0.048 /oscar/scratch/sboughan/se-semantic-recovery/classic-cpu-threads-v1-20261003/code/stable_envs/render/gfxdraw.py:1161(polygon)\n        1    0.000    0.000    0.037    0.037 /oscar/scratch/sboughan/se-semantic-recovery/classic-cpu-threads-v1-20261003/code/stable_envs/render/gfxdraw.py:979(__init__)\n        1    0.000    0.000    0.031    0.031 /oscar/scratch/sboughan/se-semantic-recovery/classic-cpu-threads-v1-20261003/code/stable_envs/render/gfxdraw.py:832(__init__)\n        3    0.031    0.010    0.031    0.010 {method 'fill_' of 'torch._C.TensorBase' objects}\n        1    0.002    0.002    0.028    0.028 /oscar/scratch/sboughan/se-semantic-recovery/classic-cpu-threads-v1-20261003/code/stable_envs/render/gfxdraw.py:931(rgb)\n        1    0.010    0.010    0.028    0.028 /oscar/scratch/sboughan/se-semantic-recovery/classic-cpu-threads-v1-20261003/code/stable_envs/envs/classic_control.py:937(_blit_torque)\n        1    0.000    0.000    0.025    0.025 /oscar/scratch/sboughan/se-semantic-recovery/classic-cpu-threads-v1-20261003/code/stable_envs/render/gfxdraw.py:1187(_aa)\n        4    0.025    0.006    0.025    0.006 {method 'copy_' of 'torch._C.TensorBase' objects}\n        4    0.002    0.001    0.021    0.005 /oscar/scratch/sboughan/se-semantic-recovery/classic-cpu-threads-v1-20261003/code/stable_envs/render/gfxdraw.py:1099(aaline_emit)\n       23    0.003    0.000    0.020    0.001 /oscar/scratch/sboughan/se-semantic-recovery/classic-cpu-threads-v1-20261003/code/stable_envs/render/gfxdraw.py:1037(blend_at)\n       23    0.007    0.000    0.016    0.001 /oscar/scratch/sboughan/se-semantic-recovery/classic-cpu-threads-v1-20261003/code/stable_envs/render/gfxdraw.py:924(blend_at)\n        1    0.004    0.004    0.015    0.015 /oscar/scratch/sboughan/se-semantic-recovery/classic-cpu-threads-v1-20261003/code/stable_envs/render/gfxdraw.py:647(fill_polygon_mask)\n        1    0.012    0.012    0.012    0.012 /oscar/scratch/sboughan/se-semantic-recovery/classic-cpu-threads-v1-20261003/code/stable_envs/render/gfxdraw.py:723(blit_over)\n        1    0.010    0.010    0.010    0.010 {method 'amin' of 'torch._C.TensorBase' objects}\n        1    0.000    0.000    0.008    0.008 /oscar/scratch/sboughan/se-semantic-recovery/classic-cpu-threads-v1-20261003/code/stable_envs/render/gfxdraw.py:996(paint)\n        1    0.006    0.006    0.008    0.008 /oscar/scratch/sboughan/se-semantic-recovery/classic-cpu-threads-v1-20261003/code/stable_envs/render/gfxdraw.py:797(select_)\n        3    0.008    0.003    0.008    0.003 {method 'flip' of 'torch._C.TensorBase' objects}\n       23    0.006    0.000    0.007    0.000 /oscar/scratch/sboughan/se-semantic-recovery/classic-cpu-threads-v1-20261003/code/stable_envs/render/gfxdraw.py:708(blend)\n      144    0.006    0.000    0.006    0.000 {method 'to' of 'torch._C.TensorBase' objects}\n        3    0.000    0.000    0.005    0.002 /oscar/scratch/sboughan/se-semantic-recovery/classic-cpu-threads-v1-20261003/code/stable_envs/envs/classic_control.py:150(_circ)\n        3    0.000    0.000    0.005    0.002 /oscar/scratch/sboughan/se-semantic-recovery/classic-cpu-threads-v1-20261003/code/stable_envs/render/gfxdraw.py:1203(circle)\n      224    0.004    0.000    0.004    0.000 {built-in method torch.where}\n        1    0.000    0.000    0.004    0.004 /oscar/scratch/sboughan/se-semantic-recovery/classic-cpu-threads-v1-20261003/code/stable_envs/render/gfxdraw.py:1089(edge_setup)\n        1    0.000    0.000    0.004    0.004 /oscar/scratch/sboughan/se-semantic-recovery/classic-cpu-threads-v1-20261003/code/stable_envs/render/gfxdraw.py:1046(edge_geometry)\n        1    0.001    0.001    0.003    0.003 /oscar/scratch/sboughan/se-semantic-recovery/classic-cpu-threads-v1-20261003/code/stable_envs/render/gfxdraw.py:742(clip_line)\n        1    0.002    0.002    0.002    0.002 {method 'bitwise_xor_' of 'torch._C.TensorBase' objects}\n        3    0.001    0.000    0.002    0.001 /oscar/scratch/sboughan/se-semantic-recovery/classic-cpu-threads-v1-20261003/code/stable_envs/render/gfxdraw.py:1031(paint_disc)\n        3    0.001    0.000    0.001    0.000 /oscar/scratch/sboughan/se-semantic-recovery/classic-cpu-threads-v1-20261003/code/stable_envs/render/gfxdraw.py:900(_disc_index)\n       12    0.000    0.000    0.001    0.000 /oscar/scratch/sboughan/se-semantic-recovery/classic-cpu-threads-v1-20261003/code/stable_envs/render/gfxdraw.py:735(_clip_encode)\n\n\n"
+  }
+}

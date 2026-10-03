@@ -15,6 +15,7 @@ def main():
     p.add_argument("report", type=Path)
     p.add_argument("output", type=Path)
     p.add_argument("--source", type=Path, required=True)
+    p.add_argument("--cpu-threads", type=int, default=1)
     args = p.parse_args()
     if args.output.exists():
         raise FileExistsError(args.output)
@@ -25,6 +26,11 @@ def main():
     assert report["source_render_device"] == "cpu" and report["source_state_export_in_timing"] is False
     assert report["ours_mandatory_final_state"] is True and report["ours_state_history"] is False
     assert report["source_pin"] == "176d54532b3c0a251a4f509b74f2fdacc143a63d"
+    # The original frozen driver explicitly set one thread for both devices.
+    # Preserve its CSV schema while requiring metadata for newer configurations.
+    configured = report.get("parent_torch_threads", {"cpu": 1, "cuda": 1})
+    assert configured == {"cpu": args.cpu_threads, "cuda": 1}
+    assert 1 <= args.cpu_threads <= len(report["affinity"])
     assert len(report["source_files"]) == 7 and len(report["source_runtime_files"]) >= 4
     for rel, digest in report["candidate_files"].items():
         assert hashlib.sha256((args.source / rel).read_bytes()).hexdigest() == digest, rel
@@ -60,6 +66,8 @@ def main():
                    host=report["host"], job=report["job"],
                    mse_mean=gate["mse_mean"], mse_sd=gate["mse_sd"], mse_max=gate["mse_max"],
                    frames_checked=gate["frames_checked"])
+        if "parent_torch_threads" in report:
+            row["parent_torch_threads"] = configured[key[0]]
         for mode in ("source_serial", "source_parallel", "ours"):
             cell = cells[(*key, mode)]
             rates = [cell["steps"] / s for s in cell["seconds"]]

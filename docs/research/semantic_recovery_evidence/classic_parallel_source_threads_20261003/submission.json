@@ -1,0 +1,14 @@
+{
+  "array_job_id": "6971892",
+  "base_commit": "061e7a2959fb8315d2c461f1f3b8819c6143835f",
+  "tasks": {
+    "0": "cartpole",
+    "1": "pendulum",
+    "2": "acrobot",
+    "3": "mountain_car",
+    "4": "mountain_car_continuous"
+  },
+  "remote_directory": "/oscar/scratch/sboughan/se-semantic-recovery/classic-parallel-source-threads-v2-20261003",
+  "production_changes": [],
+  "result_status": "Uncollected; SSH authentication unavailable"
+}

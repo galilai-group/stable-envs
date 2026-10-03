@@ -41,6 +41,8 @@ def main():
     p.add_argument("--devices", nargs="+", choices=("cpu", "cuda"), default=["cpu", "cuda"])
     p.add_argument("--batches", nargs="+", type=int, default=[64, 256])
     p.add_argument("--workers", type=int, default=8)
+    p.add_argument("--cpu-threads", type=int, default=1,
+                   help="Parent Torch intra-op threads for CPU output; spawned source/simulator workers remain at one")
     p.add_argument("--gate-only", action="store_true")
     p.add_argument("--output", type=Path, required=True)
     args = p.parse_args()
@@ -48,6 +50,8 @@ def main():
         raise FileExistsError(args.output)
     if args.workers < 1 or any(b < args.workers or b % args.workers for b in args.batches):
         p.error("Batches must be positive multiples of worker count")
+    if args.cpu_threads < 1:
+        p.error("Require a positive parent CPU thread count")
     torch.set_num_threads(1)
     manifest = json.loads(args.source_manifest.read_text())
     assert manifest["commit"] == PIN
@@ -71,6 +75,7 @@ def main():
                   gpu=torch.cuda.get_device_name() if "cuda" in args.devices else None,
                   source_pin=PIN, source_files=manifest["files"], source_gpu_supported=False,
                   source_render_device="cpu", source_workers=args.workers,
+                  parent_torch_threads={"cpu": args.cpu_threads, "cuda": 1},
                   source_executor="Gymnasium AsyncVectorEnv, spawn, shared_memory=True, copy=True, no autoreset",
                   source_state_export_in_timing=False, ours_mandatory_final_state=True, ours_state_history=False,
                   gate_only=args.gate_only,
@@ -90,6 +95,7 @@ def main():
     save()
     try:
         for device in args.devices:
+            torch.set_num_threads(args.cpu_threads if device == "cpu" else 1)
             for batch in args.batches:
                 ref = source(args.domain, batch)
                 try:

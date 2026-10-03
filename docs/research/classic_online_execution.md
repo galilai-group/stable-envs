@@ -226,3 +226,38 @@ CPU gates pass with exact source images. Full B64/256 CPU/CUDA-output sweeps are
 pending. Pygame remains a CPU renderer; CUDA source rows include output delivery,
 not native source-GPU rendering. The table preserves both serial and parallel
 source rates rather than selecting only the slower source implementation.
+
+## Completed parallel-source and CPU-thread findings (October 3)
+
+The [five-registration parallel-source closure](semantic_recovery_evidence/classic_parallel_source_20261003/completed/family-closure/)
+now contains 120 comparison rows from 360 six-sample timings, with exact source
+State/task gates and zero measured source image MSE in every checked case.
+The source uses one or eight persistent Gymnasium shared-memory workers.
+The first campaign fixed our parent Torch renderer to one thread; it must not
+be presented as the best CPU configuration. Pendulum B256/T8/all frames is
+524 ± 1 CPU FPS versus parallel source 1,500 ± 47. Our GPU gives 12,190 ± 20
+versus CPU source plus CUDA delivery 1,402 ± 9; source pygame has no GPU renderer.
+
+The [completed CPU-thread profile](semantic_recovery_evidence/classic_cpu_threads_20261003/)
+identifies that configuration bottleneck. At B1024/T8/all frames, changing
+parent threads from one to eight improves Pendulum 464 ± 2 → 1,787 ± 37 FPS
+and Acrobot 443 ± 17 → 1,601 ± 12, with identical outputs. This is a benchmark
+configuration finding, not a new production optimization or upstream speedup.
+[Array 6971892](semantic_recovery_evidence/classic_parallel_source_threads_20261003/)
+repeats all five source comparisons using eight parent CPU threads in the same
+eight-core allocation; its cluster results remain uncollected.
+
+The [sustained CPU snapshot diagnostic](semantic_recovery_evidence/classic_snapshot_20261003/sustained-cpu-diagnostic/completed/)
+also completes with exact trajectories. No-history/no-frame ratios are 1.554x
+Pendulum and 1.148x Acrobot; other tested ratios are near one. However, the
+[original-workload isolated-cell diagnostic](semantic_recovery_evidence/classic_snapshot_20261003/isolated-cells/)
+still measures a 0.8642 ratio for continuous MountainCar CPU B1024/T8/all States/
+final frame. All seven application summaries pass exact outputs, but terminal
+accounting/log collection remains open. The optimization stays out of production.
+A separate scheduling experiment uses full `_step` when a State is required,
+reserving advance-without-snapshot for unselected intermediate transitions.
+That experiment is [rejected](semantic_recovery_evidence/classic_snapshot_20261003/required-state-rejected/):
+the broader slice test exposes different task schemas between the two hooks.
+The unchanged production scheduler passes 218 tests (77 CUDA skips).
+No shared scheduling change is enabled; the remaining regression needs a
+family-level mechanism profile.

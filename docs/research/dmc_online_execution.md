@@ -209,3 +209,11 @@ Manipulator subsequently passes both device modes, bringing the
 480 component rows and 360 paired online rows. Its raw terminal log retains EGL
 destructor warnings after successful application output. Humanoid remains pending;
 the library-control comparison still does not close direct-source benchmarking.
+
+The [full eleven-registration component/pipeline cohort](semantic_recovery_evidence/dmc_pipeline_family_20261003/completed/family-closure/)
+is now complete: 528 component rows and 396 paired online rows, with independent
+CPU/CUDA gates for every registration. Humanoid's B1024/T8/all GPU rate is
+7,874 ± 47 FPS (1.059x deferred), while Manipulator is 7,380 ± 205 (0.995x).
+Quadruped remains excluded; direct-source and parallel-source comparisons are
+still outstanding. This closes the library scheduling sweep, not the full
+35-registration online performance objective.

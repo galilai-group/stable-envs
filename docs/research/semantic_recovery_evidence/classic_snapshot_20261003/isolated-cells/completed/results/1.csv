@@ -1,0 +1,2 @@
+domain,device,batch,horizon,states,frames,baseline_steps_per_s_mean,baseline_steps_per_s_sd,candidate_steps_per_s_mean,candidate_steps_per_s_sd,host,job,calls_per_strategy,exact_output,speedup_vs_baseline
+mountain_car_continuous,cpu,1024,8,all,final,5739.294345824231,448.9119493061385,4959.7032223338565,1413.340749639421,gpu2114.oscar.ccv.brown.edu,6971658,192,PASS,0.8641660321782266

@@ -1,0 +1,3020 @@
+{
+  "mode": "baseline",
+  "host": "Mac-169.lan",
+  "machine": "arm64",
+  "torch": "2.14.0",
+  "batch": 1024,
+  "horizon": 8,
+  "states": "all",
+  "frames": "final",
+  "scope": "Local CPU cProfile mechanism probe, not Oscar performance acceptance",
+  "source_manifest_sha256": "f6527912d19087104d37d57c02ba609c86c6d13d532c6e1e01880434e379ea49",
+  "driver_sha256": "6941f8a447cb5140aac163545a9c1f798bf37cd0670b1ca53aee8d446f07d569",
+  "seconds": [
+    0.747383665991947,
+    0.742191958008334,
+    0.7429037909023464
+  ],
+  "output_sha256": "ffd1f726cf6f0b97ffb09bb77f4f5fcfb503521a54f288d288518cf0071471c4",
+  "profile_calls": 2,
+  "functions": [
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'disable' of '_lsprof.Profiler' objects>",
+      "primitive_calls": 2,
+      "calls": 2,
+      "self_seconds": 2.6584e-05,
+      "cumulative_seconds": 2.6584e-05
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method math.cos>",
+      "primitive_calls": 16384,
+      "calls": 16384,
+      "self_seconds": 0.0010830520000000001,
+      "cumulative_seconds": 0.0010830520000000001
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method math.pow>",
+      "primitive_calls": 16384,
+      "calls": 16384,
+      "self_seconds": 0.001677312,
+      "cumulative_seconds": 0.001677312
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'append' of 'list' objects>",
+      "primitive_calls": 380,
+      "calls": 380,
+      "self_seconds": 4.3183e-05,
+      "cumulative_seconds": 4.3183e-05
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'insert' of 'list' objects>",
+      "primitive_calls": 14,
+      "calls": 14,
+      "self_seconds": 2.5e-06,
+      "cumulative_seconds": 2.5e-06
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'get' of 'dict' objects>",
+      "primitive_calls": 1028,
+      "calls": 1028,
+      "self_seconds": 0.00010444000000000001,
+      "cumulative_seconds": 0.00010444000000000001
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'pop' of 'dict' objects>",
+      "primitive_calls": 208,
+      "calls": 208,
+      "self_seconds": 2.9460000000000003e-05,
+      "cumulative_seconds": 2.9460000000000003e-05
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'keys' of 'dict' objects>",
+      "primitive_calls": 190,
+      "calls": 190,
+      "self_seconds": 2.4086000000000003e-05,
+      "cumulative_seconds": 2.4086000000000003e-05
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'items' of 'dict' objects>",
+      "primitive_calls": 16516,
+      "calls": 16516,
+      "self_seconds": 0.0014038850000000001,
+      "cumulative_seconds": 0.0014038850000000001
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'values' of 'dict' objects>",
+      "primitive_calls": 66,
+      "calls": 66,
+      "self_seconds": 1.054e-05,
+      "cumulative_seconds": 1.054e-05
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'update' of 'dict' objects>",
+      "primitive_calls": 50,
+      "calls": 50,
+      "self_seconds": 1.3538000000000002e-05,
+      "cumulative_seconds": 1.3538000000000002e-05
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'move_to_end' of 'collections.OrderedDict' objects>",
+      "primitive_calls": 2,
+      "calls": 2,
+      "self_seconds": 1.041e-06,
+      "cumulative_seconds": 1.041e-06
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method __new__ of type object at 0x1012ea0e8>",
+      "primitive_calls": 110,
+      "calls": 110,
+      "self_seconds": 1.6161e-05,
+      "cumulative_seconds": 1.6161e-05
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'replace' of 'str' objects>",
+      "primitive_calls": 2,
+      "calls": 2,
+      "self_seconds": 2.167e-06,
+      "cumulative_seconds": 2.167e-06
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'rpartition' of 'str' objects>",
+      "primitive_calls": 2,
+      "calls": 2,
+      "self_seconds": 1.3750000000000002e-06,
+      "cumulative_seconds": 1.3750000000000002e-06
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method builtins.all>",
+      "primitive_calls": 248,
+      "calls": 248,
+      "self_seconds": 8.318e-05,
+      "cumulative_seconds": 0.000163239
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method builtins.any>",
+      "primitive_calls": 10,
+      "calls": 10,
+      "self_seconds": 1.0336e-05,
+      "cumulative_seconds": 4.9085e-05
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method builtins.getattr>",
+      "primitive_calls": 186,
+      "calls": 186,
+      "self_seconds": 3.0747e-05,
+      "cumulative_seconds": 3.0747e-05
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method builtins.hasattr>",
+      "primitive_calls": 50,
+      "calls": 50,
+      "self_seconds": 9.67e-06,
+      "cumulative_seconds": 9.67e-06
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method builtins.isinstance>",
+      "primitive_calls": 2530,
+      "calls": 2530,
+      "self_seconds": 0.000245317,
+      "cumulative_seconds": 0.000312121
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method builtins.issubclass>",
+      "primitive_calls": 276,
+      "calls": 276,
+      "self_seconds": 4.2332e-05,
+      "cumulative_seconds": 4.9249e-05
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method builtins.len>",
+      "primitive_calls": 1272,
+      "calls": 1272,
+      "self_seconds": 0.00010437,
+      "cumulative_seconds": 0.000165536
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method builtins.max>",
+      "primitive_calls": 16392,
+      "calls": 16392,
+      "self_seconds": 0.002048748,
+      "cumulative_seconds": 0.002048748
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method builtins.min>",
+      "primitive_calls": 16392,
+      "calls": 16392,
+      "self_seconds": 0.0019301300000000002,
+      "cumulative_seconds": 0.0019301300000000002
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method builtins.sorted>",
+      "primitive_calls": 4,
+      "calls": 4,
+      "self_seconds": 2.5410000000000003e-06,
+      "cumulative_seconds": 2.5410000000000003e-06
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method builtins.sum>",
+      "primitive_calls": 12,
+      "calls": 12,
+      "self_seconds": 8.251000000000001e-06,
+      "cumulative_seconds": 3.0293000000000003e-05
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method '__exit__' of '_thread.lock' objects>",
+      "primitive_calls": 2,
+      "calls": 2,
+      "self_seconds": 4.59e-07,
+      "cumulative_seconds": 4.59e-07
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method _abc._abc_instancecheck>",
+      "primitive_calls": 144,
+      "calls": 144,
+      "self_seconds": 3.478e-05,
+      "cumulative_seconds": 3.478e-05
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method _abc._abc_subclasscheck>",
+      "primitive_calls": 14,
+      "calls": 14,
+      "self_seconds": 3.3740000000000002e-06,
+      "cumulative_seconds": 3.3740000000000002e-06
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method _operator.index>",
+      "primitive_calls": 8,
+      "calls": 8,
+      "self_seconds": 1.0840000000000001e-06,
+      "cumulative_seconds": 1.0840000000000001e-06
+    },
+    {
+      "file": "<frozen abc>",
+      "line": 117,
+      "function": "__instancecheck__",
+      "primitive_calls": 144,
+      "calls": 144,
+      "self_seconds": 3.2024000000000004e-05,
+      "cumulative_seconds": 6.6804e-05
+    },
+    {
+      "file": "<frozen abc>",
+      "line": 121,
+      "function": "__subclasscheck__",
+      "primitive_calls": 14,
+      "calls": 14,
+      "self_seconds": 3.5430000000000002e-06,
+      "cumulative_seconds": 6.917e-06
+    },
+    {
+      "file": "<frozen importlib._bootstrap>",
+      "line": 645,
+      "function": "parent",
+      "primitive_calls": 2,
+      "calls": 2,
+      "self_seconds": 2.917e-06,
+      "cumulative_seconds": 4.292000000000001e-06
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/torch/__init__.py",
+      "line": 1526,
+      "function": "is_tensor",
+      "primitive_calls": 26,
+      "calls": 26,
+      "self_seconds": 6.919e-06,
+      "cumulative_seconds": 1.0584e-05
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/torch/_tensor.py",
+      "line": 32,
+      "function": "wrapped",
+      "primitive_calls": 184,
+      "calls": 184,
+      "self_seconds": 0.00011946100000000001,
+      "cumulative_seconds": 0.0006897180000000001
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/numpy/_core/fromnumeric.py",
+      "line": 48,
+      "function": "_wrapfunc",
+      "primitive_calls": 2,
+      "calls": 2,
+      "self_seconds": 1.8730000000000001e-06,
+      "cumulative_seconds": 1.6791000000000002e-05
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/numpy/_core/numeric.py",
+      "line": 1427,
+      "function": "normalize_axis_tuple",
+      "primitive_calls": 8,
+      "calls": 8,
+      "self_seconds": 1.6914e-05,
+      "cumulative_seconds": 2.4167e-05
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/numpy/_core/multiarray.py",
+      "line": 197,
+      "function": "concatenate",
+      "primitive_calls": 16,
+      "calls": 16,
+      "self_seconds": 1.667e-06,
+      "cumulative_seconds": 1.667e-06
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/numpy/_core/shape_base.py",
+      "line": 206,
+      "function": "_arrays_for_stack_dispatcher",
+      "primitive_calls": 16,
+      "calls": 16,
+      "self_seconds": 3.2207000000000005e-05,
+      "cumulative_seconds": 3.6917e-05
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/numpy/_core/fromnumeric.py",
+      "line": 2876,
+      "function": "cumsum",
+      "primitive_calls": 2,
+      "calls": 2,
+      "self_seconds": 2.8340000000000003e-06,
+      "cumulative_seconds": 1.9625000000000003e-05
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/numpy/lib/_arraysetops_impl.py",
+      "line": 131,
+      "function": "_unpack_tuple",
+      "primitive_calls": 2,
+      "calls": 2,
+      "self_seconds": 5.830000000000001e-07,
+      "cumulative_seconds": 7.08e-07
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/numpy/_core/shape_base.py",
+      "line": 368,
+      "function": "_stack_dispatcher",
+      "primitive_calls": 16,
+      "calls": 16,
+      "self_seconds": 5.998e-06,
+      "cumulative_seconds": 4.2915000000000005e-05
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/numpy/lib/_arraysetops_impl.py",
+      "line": 335,
+      "function": "reshape_uniq",
+      "primitive_calls": 2,
+      "calls": 2,
+      "self_seconds": 4.125e-06,
+      "cumulative_seconds": 2.4208000000000003e-05
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/numpy/_core/numeric.py",
+      "line": 1476,
+      "function": "<genexpr>",
+      "primitive_calls": 16,
+      "calls": 16,
+      "self_seconds": 2.6250000000000003e-06,
+      "cumulative_seconds": 3.5440000000000003e-06
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/numpy/_core/numeric.py",
+      "line": 1485,
+      "function": "_moveaxis_dispatcher",
+      "primitive_calls": 4,
+      "calls": 4,
+      "self_seconds": 3.7400000000000004e-07,
+      "cumulative_seconds": 3.7400000000000004e-07
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/numpy/_core/fromnumeric.py",
+      "line": 3325,
+      "function": "prod",
+      "primitive_calls": 2,
+      "calls": 2,
+      "self_seconds": 4.999e-06,
+      "cumulative_seconds": 2.3083000000000002e-05
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/numpy/_core/_internal.py",
+      "line": 498,
+      "function": "_view_is_safe",
+      "primitive_calls": 4,
+      "calls": 4,
+      "self_seconds": 3.916e-06,
+      "cumulative_seconds": 7.958e-06
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/numpy/_core/fromnumeric.py",
+      "line": 2872,
+      "function": "_cumsum_dispatcher",
+      "primitive_calls": 2,
+      "calls": 2,
+      "self_seconds": 3.3300000000000003e-07,
+      "cumulative_seconds": 3.3300000000000003e-07
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/numpy/_core/fromnumeric.py",
+      "line": 3320,
+      "function": "_prod_dispatcher",
+      "primitive_calls": 2,
+      "calls": 2,
+      "self_seconds": 2.91e-07,
+      "cumulative_seconds": 2.91e-07
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/numpy/lib/_arraysetops_impl.py",
+      "line": 139,
+      "function": "_unique_dispatcher",
+      "primitive_calls": 2,
+      "calls": 2,
+      "self_seconds": 2.5000000000000004e-07,
+      "cumulative_seconds": 2.5000000000000004e-07
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/torch/_tensor.py",
+      "line": 1169,
+      "function": "__rlshift__",
+      "primitive_calls": 74,
+      "calls": 74,
+      "self_seconds": 2.3462e-05,
+      "cumulative_seconds": 0.000149628
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/torch/_tensor.py",
+      "line": 1116,
+      "function": "__rsub__",
+      "primitive_calls": 110,
+      "calls": 110,
+      "self_seconds": 3.3043e-05,
+      "cumulative_seconds": 0.00040279400000000005
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'argsort' of 'numpy.ndarray' objects>",
+      "primitive_calls": 2,
+      "calls": 2,
+      "self_seconds": 0.0009358330000000001,
+      "cumulative_seconds": 0.0009358330000000001
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'cumsum' of 'numpy.ndarray' objects>",
+      "primitive_calls": 2,
+      "calls": 2,
+      "self_seconds": 1.4084000000000001e-05,
+      "cumulative_seconds": 1.4084000000000001e-05
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'flatten' of 'numpy.ndarray' objects>",
+      "primitive_calls": 2,
+      "calls": 2,
+      "self_seconds": 9.959e-06,
+      "cumulative_seconds": 9.959e-06
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'reshape' of 'numpy.ndarray' objects>",
+      "primitive_calls": 4,
+      "calls": 4,
+      "self_seconds": 2.6250000000000003e-06,
+      "cumulative_seconds": 2.6250000000000003e-06
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'transpose' of 'numpy.ndarray' objects>",
+      "primitive_calls": 4,
+      "calls": 4,
+      "self_seconds": 1.958e-06,
+      "cumulative_seconds": 1.958e-06
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'view' of 'numpy.ndarray' objects>",
+      "primitive_calls": 4,
+      "calls": 4,
+      "self_seconds": 9.084e-06,
+      "cumulative_seconds": 1.7042e-05
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method numpy.array>",
+      "primitive_calls": 16384,
+      "calls": 16384,
+      "self_seconds": 0.004779275,
+      "cumulative_seconds": 0.004779275
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method numpy.asarray>",
+      "primitive_calls": 65554,
+      "calls": 65554,
+      "self_seconds": 0.010967721000000001,
+      "cumulative_seconds": 0.010967721000000001
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method numpy.asanyarray>",
+      "primitive_calls": 16388,
+      "calls": 16388,
+      "self_seconds": 0.000651341,
+      "cumulative_seconds": 0.000651341
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method numpy.ascontiguousarray>",
+      "primitive_calls": 2,
+      "calls": 2,
+      "self_seconds": 4.5800000000000005e-07,
+      "cumulative_seconds": 4.5800000000000005e-07
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method numpy.empty>",
+      "primitive_calls": 132,
+      "calls": 132,
+      "self_seconds": 3.9872e-05,
+      "cumulative_seconds": 3.9872e-05
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method numpy.promote_types>",
+      "primitive_calls": 12,
+      "calls": 12,
+      "self_seconds": 1.8760000000000001e-06,
+      "cumulative_seconds": 1.8760000000000001e-06
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method numpy.lib.array_utils.normalize_axis_index>",
+      "primitive_calls": 24,
+      "calls": 24,
+      "self_seconds": 3.7520000000000002e-06,
+      "cumulative_seconds": 3.7520000000000002e-06
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method numpy._core._multiarray_umath._is_view_safe_cast>",
+      "primitive_calls": 4,
+      "calls": 4,
+      "self_seconds": 4.0420000000000004e-06,
+      "cumulative_seconds": 4.0420000000000004e-06
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'reduce' of 'numpy.ufunc' objects>",
+      "primitive_calls": 2,
+      "calls": 2,
+      "self_seconds": 1.0125e-05,
+      "cumulative_seconds": 1.0125e-05
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/torch/_jit_internal.py",
+      "line": 104,
+      "function": "is_scripting",
+      "primitive_calls": 1512,
+      "calls": 1512,
+      "self_seconds": 8.475e-05,
+      "cumulative_seconds": 8.475e-05
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/torch/utils/_contextlib.py",
+      "line": 154,
+      "function": "clone",
+      "primitive_calls": 4,
+      "calls": 4,
+      "self_seconds": 5.916000000000001e-06,
+      "cumulative_seconds": 2.5958e-05
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/torch/autograd/grad_mode.py",
+      "line": 185,
+      "function": "__init__",
+      "primitive_calls": 8,
+      "calls": 8,
+      "self_seconds": 1.0249000000000001e-05,
+      "cumulative_seconds": 1.7167e-05
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/torch/autograd/grad_mode.py",
+      "line": 85,
+      "function": "__exit__",
+      "primitive_calls": 4,
+      "calls": 4,
+      "self_seconds": 6.583e-06,
+      "cumulative_seconds": 1.8916e-05
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/torch/utils/_contextlib.py",
+      "line": 120,
+      "function": "decorate_context",
+      "primitive_calls": 2,
+      "calls": 4,
+      "self_seconds": 0.00012921000000000002,
+      "cumulative_seconds": 1.545136083
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/torch/autograd/grad_mode.py",
+      "line": 81,
+      "function": "__enter__",
+      "primitive_calls": 4,
+      "calls": 4,
+      "self_seconds": 5.957000000000001e-06,
+      "cumulative_seconds": 1.1541e-05
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/torch/autograd/grad_mode.py",
+      "line": 76,
+      "function": "__init__",
+      "primitive_calls": 4,
+      "calls": 4,
+      "self_seconds": 7.873e-06,
+      "cumulative_seconds": 8.208e-06
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/torch/utils/_contextlib.py",
+      "line": 167,
+      "function": "__new__",
+      "primitive_calls": 4,
+      "calls": 4,
+      "self_seconds": 1.0794e-05,
+      "cumulative_seconds": 1.1834e-05
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/env.py",
+      "line": 177,
+      "function": "render",
+      "primitive_calls": 2,
+      "calls": 2,
+      "self_seconds": 6.292e-06,
+      "cumulative_seconds": 1.335453167
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_utils_options.py",
+      "line": 127,
+      "function": "lazy_legacy",
+      "primitive_calls": 14,
+      "calls": 14,
+      "self_seconds": 2.082e-06,
+      "cumulative_seconds": 2.082e-06
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/torch/compiler/__init__.py",
+      "line": 583,
+      "function": "is_compiling",
+      "primitive_calls": 1508,
+      "calls": 1508,
+      "self_seconds": 0.00028744800000000004,
+      "cumulative_seconds": 0.000371863
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/_dynamics.py",
+      "line": 4,
+      "function": "has_dynamics",
+      "primitive_calls": 2,
+      "calls": 2,
+      "self_seconds": 1.6250000000000001e-06,
+      "cumulative_seconds": 2.458e-06
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/env.py",
+      "line": 1084,
+      "function": "_check_layout",
+      "primitive_calls": 2,
+      "calls": 2,
+      "self_seconds": 4.291e-06,
+      "cumulative_seconds": 2.3250000000000003e-05
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/env.py",
+      "line": 1328,
+      "function": "_check_open",
+      "primitive_calls": 20,
+      "calls": 20,
+      "self_seconds": 2.375e-06,
+      "cumulative_seconds": 2.375e-06
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/env.py",
+      "line": 290,
+      "function": "_split_appearance",
+      "primitive_calls": 2,
+      "calls": 2,
+      "self_seconds": 2.5000000000000004e-07,
+      "cumulative_seconds": 2.5000000000000004e-07
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/env.py",
+      "line": 259,
+      "function": "render_states_arg",
+      "primitive_calls": 2,
+      "calls": 2,
+      "self_seconds": 1.1205e-05,
+      "cumulative_seconds": 6.820800000000001e-05
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/env.py",
+      "line": 967,
+      "function": "resolve_style",
+      "primitive_calls": 2,
+      "calls": 2,
+      "self_seconds": 5.708e-06,
+      "cumulative_seconds": 8.541e-06
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py",
+      "line": 2661,
+      "function": "_set_tuple",
+      "primitive_calls": 132,
+      "calls": 228,
+      "self_seconds": 0.000155956,
+      "cumulative_seconds": 0.001161958
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py",
+      "line": 5005,
+      "function": "__iter__",
+      "primitive_calls": 438,
+      "calls": 438,
+      "self_seconds": 7.235500000000001e-05,
+      "cumulative_seconds": 0.00026268200000000003
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/env.py",
+      "line": 798,
+      "function": "render",
+      "primitive_calls": 2,
+      "calls": 2,
+      "self_seconds": 1.2789e-05,
+      "cumulative_seconds": 1.3357775820000002
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py",
+      "line": 1485,
+      "function": "make_result",
+      "primitive_calls": 16,
+      "calls": 16,
+      "self_seconds": 1.1332000000000001e-05,
+      "cumulative_seconds": 6.0498e-05
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/base.py",
+      "line": 298,
+      "function": "mark",
+      "primitive_calls": 34,
+      "calls": 34,
+      "self_seconds": 1.9497e-05,
+      "cumulative_seconds": 1.9497e-05
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py",
+      "line": 2970,
+      "function": "_get_tuple",
+      "primitive_calls": 130,
+      "calls": 142,
+      "self_seconds": 7.207700000000001e-05,
+      "cumulative_seconds": 9.967e-05
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py",
+      "line": 3687,
+      "function": "empty",
+      "primitive_calls": 64,
+      "calls": 64,
+      "self_seconds": 4.7621000000000004e-05,
+      "cumulative_seconds": 0.000198127
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/env.py",
+      "line": 1086,
+      "function": "<genexpr>",
+      "primitive_calls": 4,
+      "calls": 4,
+      "self_seconds": 1.1240000000000002e-06,
+      "cumulative_seconds": 1.1240000000000002e-06
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/env.py",
+      "line": 1309,
+      "function": "step",
+      "primitive_calls": 2,
+      "calls": 2,
+      "self_seconds": 9.084e-06,
+      "cumulative_seconds": 1.5451494590000001
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/env.py",
+      "line": 1324,
+      "function": "has_dynamics",
+      "primitive_calls": 2,
+      "calls": 2,
+      "self_seconds": 2.5e-06,
+      "cumulative_seconds": 4.958000000000001e-06
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/env.py",
+      "line": 1044,
+      "function": "num_envs",
+      "primitive_calls": 6,
+      "calls": 6,
+      "self_seconds": 8.33e-07,
+      "cumulative_seconds": 8.33e-07
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py",
+      "line": 2463,
+      "function": "_has_names",
+      "primitive_calls": 178,
+      "calls": 178,
+      "self_seconds": 2.0220000000000003e-05,
+      "cumulative_seconds": 2.0220000000000003e-05
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py",
+      "line": 2466,
+      "function": "_erase_names",
+      "primitive_calls": 34,
+      "calls": 34,
+      "self_seconds": 4.622e-06,
+      "cumulative_seconds": 4.622e-06
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_lazy.py",
+      "line": 728,
+      "function": "_compute_batch_size",
+      "primitive_calls": 10,
+      "calls": 10,
+      "self_seconds": 6.831e-06,
+      "cumulative_seconds": 8.248000000000001e-06
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py",
+      "line": 3853,
+      "function": "items",
+      "primitive_calls": 34,
+      "calls": 34,
+      "self_seconds": 1.7246e-05,
+      "cumulative_seconds": 0.000163413
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/utils.py",
+      "line": 893,
+      "function": "__contains__",
+      "primitive_calls": 58,
+      "calls": 58,
+      "self_seconds": 1.9957000000000002e-05,
+      "cumulative_seconds": 2.4834000000000003e-05
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py",
+      "line": 2453,
+      "function": "batch_dims",
+      "primitive_calls": 266,
+      "calls": 266,
+      "self_seconds": 7.6529e-05,
+      "cumulative_seconds": 0.00011991600000000001
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py",
+      "line": 3835,
+      "function": "_nested_keys",
+      "primitive_calls": 82,
+      "calls": 82,
+      "self_seconds": 3.724e-05,
+      "cumulative_seconds": 4.5955e-05
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/utils.py",
+      "line": 775,
+      "function": "_is_tensorclass",
+      "primitive_calls": 88,
+      "calls": 88,
+      "self_seconds": 1.6663e-05,
+      "cumulative_seconds": 2.4083000000000003e-05
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py",
+      "line": 4989,
+      "function": "__init__",
+      "primitive_calls": 82,
+      "calls": 82,
+      "self_seconds": 8.715e-06,
+      "cumulative_seconds": 8.715e-06
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/utils.py",
+      "line": 766,
+      "function": "is_tensorclass",
+      "primitive_calls": 8,
+      "calls": 8,
+      "self_seconds": 4.08e-06,
+      "cumulative_seconds": 7.416000000000001e-06
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py",
+      "line": 2534,
+      "function": "device",
+      "primitive_calls": 536,
+      "calls": 536,
+      "self_seconds": 5.1782e-05,
+      "cumulative_seconds": 5.1782e-05
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py",
+      "line": 2554,
+      "function": "batch_size",
+      "primitive_calls": 1028,
+      "calls": 1028,
+      "self_seconds": 9.323e-05,
+      "cumulative_seconds": 9.323e-05
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py",
+      "line": 5053,
+      "function": "_combine_keys",
+      "primitive_calls": 22,
+      "calls": 22,
+      "self_seconds": 2.42e-06,
+      "cumulative_seconds": 2.42e-06
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py",
+      "line": 5059,
+      "function": "<genexpr>",
+      "primitive_calls": 42,
+      "calls": 42,
+      "self_seconds": 7.624e-06,
+      "cumulative_seconds": 2.0918000000000002e-05
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/utils.py",
+      "line": 878,
+      "function": "__init__",
+      "primitive_calls": 58,
+      "calls": 58,
+      "self_seconds": 5.795e-06,
+      "cumulative_seconds": 5.795e-06
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py",
+      "line": 3873,
+      "function": "fast_iter",
+      "primitive_calls": 16,
+      "calls": 16,
+      "self_seconds": 4.3379000000000006e-05,
+      "cumulative_seconds": 0.000143794
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/utils.py",
+      "line": 833,
+      "function": "newfun",
+      "primitive_calls": 98,
+      "calls": 98,
+      "self_seconds": 6.4158e-05,
+      "cumulative_seconds": 0.000305787
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py",
+      "line": 2964,
+      "function": "_get_str",
+      "primitive_calls": 504,
+      "calls": 504,
+      "self_seconds": 8.3143e-05,
+      "cumulative_seconds": 8.9974e-05
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/utils.py",
+      "line": 1194,
+      "function": "__init__",
+      "primitive_calls": 6,
+      "calls": 6,
+      "self_seconds": 1.5830000000000001e-06,
+      "cumulative_seconds": 1.5830000000000001e-06
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/utils.py",
+      "line": 2897,
+      "function": "unravel_key_list",
+      "primitive_calls": 32,
+      "calls": 32,
+      "self_seconds": 1.1423e-05,
+      "cumulative_seconds": 3.3047000000000004e-05
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py",
+      "line": 3807,
+      "function": "keys",
+      "primitive_calls": 140,
+      "calls": 140,
+      "self_seconds": 6.6289e-05,
+      "cumulative_seconds": 0.00017754
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/utils.py",
+      "line": 2865,
+      "function": "unravel_key",
+      "primitive_calls": 32,
+      "calls": 32,
+      "self_seconds": 1.096e-05,
+      "cumulative_seconds": 2.4125e-05
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py",
+      "line": 5058,
+      "function": "__len__",
+      "primitive_calls": 10,
+      "calls": 10,
+      "self_seconds": 4.206e-06,
+      "cumulative_seconds": 3.1749000000000004e-05
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/utils.py",
+      "line": 2744,
+      "function": "is_non_tensor",
+      "primitive_calls": 6,
+      "calls": 6,
+      "self_seconds": 2.4160000000000002e-06,
+      "cumulative_seconds": 6.167e-06
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/utils.py",
+      "line": 2749,
+      "function": "_pass_through",
+      "primitive_calls": 130,
+      "calls": 130,
+      "self_seconds": 3.541e-05,
+      "cumulative_seconds": 0.00012033600000000001
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py",
+      "line": 5017,
+      "function": "<genexpr>",
+      "primitive_calls": 18,
+      "calls": 18,
+      "self_seconds": 9.54e-06,
+      "cumulative_seconds": 0.00010099800000000001
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py",
+      "line": 5099,
+      "function": "_keys",
+      "primitive_calls": 100,
+      "calls": 100,
+      "self_seconds": 2.3501e-05,
+      "cumulative_seconds": 3.4673000000000005e-05
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/base.py",
+      "line": 304,
+      "function": "unmark",
+      "primitive_calls": 34,
+      "calls": 34,
+      "self_seconds": 7.041000000000001e-06,
+      "cumulative_seconds": 7.041000000000001e-06
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/utils.py",
+      "line": 1214,
+      "function": "__exit__",
+      "primitive_calls": 6,
+      "calls": 6,
+      "self_seconds": 8.750000000000001e-07,
+      "cumulative_seconds": 8.750000000000001e-07
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/utils.py",
+      "line": 2756,
+      "function": "_is_unbatched",
+      "primitive_calls": 368,
+      "calls": 368,
+      "self_seconds": 0.00014266000000000002,
+      "cumulative_seconds": 0.00026797400000000003
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/utils.py",
+      "line": 2792,
+      "function": "_pass_through_cls",
+      "primitive_calls": 130,
+      "calls": 130,
+      "self_seconds": 4.2368000000000005e-05,
+      "cumulative_seconds": 8.4926e-05
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/utils.py",
+      "line": 934,
+      "function": "new_func",
+      "primitive_calls": 2,
+      "calls": 2,
+      "self_seconds": 9.998e-06,
+      "cumulative_seconds": 0.000107792
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/utils.py",
+      "line": 2777,
+      "function": "_is_non_tensor",
+      "primitive_calls": 6,
+      "calls": 6,
+      "self_seconds": 2.0000000000000003e-06,
+      "cumulative_seconds": 3.751e-06
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/utils.py",
+      "line": 2855,
+      "function": "_unravel_key_to_tuple",
+      "primitive_calls": 262,
+      "calls": 262,
+      "self_seconds": 9.4398e-05,
+      "cumulative_seconds": 0.00022601400000000002
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/utils.py",
+      "line": 1211,
+      "function": "__enter__",
+      "primitive_calls": 6,
+      "calls": 6,
+      "self_seconds": 4.99e-07,
+      "cumulative_seconds": 4.99e-07
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/base.py",
+      "line": 758,
+      "function": "__torch_function__",
+      "primitive_calls": 4,
+      "calls": 4,
+      "self_seconds": 3.0289e-05,
+      "cumulative_seconds": 0.001966541
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/base.py",
+      "line": 8500,
+      "function": "_default_get",
+      "primitive_calls": 58,
+      "calls": 58,
+      "self_seconds": 6.831e-06,
+      "cumulative_seconds": 6.831e-06
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/base.py",
+      "line": 11658,
+      "function": "_fast_apply",
+      "primitive_calls": 16,
+      "calls": 16,
+      "self_seconds": 3.2666e-05,
+      "cumulative_seconds": 0.00046774900000000005
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/base.py",
+      "line": 8567,
+      "function": "_get_tuple_maybe_non_tensor",
+      "primitive_calls": 114,
+      "calls": 114,
+      "self_seconds": 6.244800000000001e-05,
+      "cumulative_seconds": 0.00025578600000000003
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/base.py",
+      "line": 14916,
+      "function": "exclude",
+      "primitive_calls": 32,
+      "calls": 32,
+      "self_seconds": 3.3701e-05,
+      "cumulative_seconds": 0.000305332
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/base.py",
+      "line": 18253,
+      "function": "_is_tensor_collection",
+      "primitive_calls": 322,
+      "calls": 322,
+      "self_seconds": 0.00010549000000000001,
+      "cumulative_seconds": 0.000213298
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/base.py",
+      "line": 15063,
+      "function": "clone",
+      "primitive_calls": 16,
+      "calls": 16,
+      "self_seconds": 1.1585e-05,
+      "cumulative_seconds": 0.001008208
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/base.py",
+      "line": 3629,
+      "function": "shape",
+      "primitive_calls": 126,
+      "calls": 126,
+      "self_seconds": 2.0960000000000003e-05,
+      "cumulative_seconds": 3.3876e-05
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/base.py",
+      "line": 770,
+      "function": "<genexpr>",
+      "primitive_calls": 8,
+      "calls": 8,
+      "self_seconds": 1.998e-06,
+      "cumulative_seconds": 7.332e-06
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/base.py",
+      "line": 6141,
+      "function": "_maybe_names",
+      "primitive_calls": 10,
+      "calls": 10,
+      "self_seconds": 3.501e-06,
+      "cumulative_seconds": 5.0020000000000006e-06
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/base.py",
+      "line": 312,
+      "function": "has_transfer",
+      "primitive_calls": 34,
+      "calls": 34,
+      "self_seconds": 6.6240000000000004e-06,
+      "cumulative_seconds": 6.6240000000000004e-06
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/base.py",
+      "line": 8137,
+      "function": "set",
+      "primitive_calls": 96,
+      "calls": 96,
+      "self_seconds": 4.6120000000000006e-05,
+      "cumulative_seconds": 0.001033084
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/base.py",
+      "line": 9245,
+      "function": "_create_nested_str",
+      "primitive_calls": 48,
+      "calls": 48,
+      "self_seconds": 3.0458000000000002e-05,
+      "cumulative_seconds": 0.000195918
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/base.py",
+      "line": 13144,
+      "function": "<genexpr>",
+      "primitive_calls": 48,
+      "calls": 48,
+      "self_seconds": 1.6915e-05,
+      "cumulative_seconds": 4.9375e-05
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/base.py",
+      "line": 17139,
+      "function": "is_locked",
+      "primitive_calls": 100,
+      "calls": 100,
+      "self_seconds": 1.0215000000000001e-05,
+      "cumulative_seconds": 1.0215000000000001e-05
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/base.py",
+      "line": 18355,
+      "function": "__call__",
+      "primitive_calls": 160,
+      "calls": 160,
+      "self_seconds": 3.2253000000000004e-05,
+      "cumulative_seconds": 0.00017071300000000002
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/base.py",
+      "line": 18290,
+      "function": "_default_is_leaf",
+      "primitive_calls": 182,
+      "calls": 182,
+      "self_seconds": 3.9497000000000005e-05,
+      "cumulative_seconds": 0.00015754200000000002
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/base.py",
+      "line": 14554,
+      "function": "_validate_value",
+      "primitive_calls": 166,
+      "calls": 166,
+      "self_seconds": 0.00010761800000000001,
+      "cumulative_seconds": 0.000204427
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/base.py",
+      "line": 17857,
+      "function": "_has_mps",
+      "primitive_calls": 106,
+      "calls": 106,
+      "self_seconds": 7.1956e-05,
+      "cumulative_seconds": 8.3545e-05
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/base.py",
+      "line": 13154,
+      "function": "pop",
+      "primitive_calls": 80,
+      "calls": 80,
+      "self_seconds": 1.721e-05,
+      "cumulative_seconds": 2.6797e-05
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_torch_func.py",
+      "line": 693,
+      "function": "<genexpr>",
+      "primitive_calls": 90,
+      "calls": 90,
+      "self_seconds": 1.7251e-05,
+      "cumulative_seconds": 3.8749000000000005e-05
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_torch_func.py",
+      "line": 694,
+      "function": "<genexpr>",
+      "primitive_calls": 20,
+      "calls": 20,
+      "self_seconds": 8.498e-06,
+      "cumulative_seconds": 1.8667000000000003e-05
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_torch_func.py",
+      "line": 765,
+      "function": "<genexpr>",
+      "primitive_calls": 20,
+      "calls": 20,
+      "self_seconds": 3.873e-06,
+      "cumulative_seconds": 3.873e-06
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_torch_func.py",
+      "line": 823,
+      "function": "<genexpr>",
+      "primitive_calls": 588,
+      "calls": 588,
+      "self_seconds": 5.7770000000000004e-05,
+      "cumulative_seconds": 5.7770000000000004e-05
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/gymnasium/core.py",
+      "line": 224,
+      "function": "np_random",
+      "primitive_calls": 16384,
+      "calls": 16384,
+      "self_seconds": 0.0019202660000000001,
+      "cumulative_seconds": 0.0019202660000000001
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/_style.py",
+      "line": 127,
+      "function": "__getitem__",
+      "primitive_calls": 16,
+      "calls": 16,
+      "self_seconds": 3.9208e-05,
+      "cumulative_seconds": 4.4584000000000005e-05
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/render/gfxdraw.py",
+      "line": 1290,
+      "function": "disc",
+      "primitive_calls": 4,
+      "calls": 4,
+      "self_seconds": 7.070000000000001e-07,
+      "cumulative_seconds": 7.070000000000001e-07
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/gymnasium/core.py",
+      "line": 323,
+      "function": "step",
+      "primitive_calls": 16384,
+      "calls": 16384,
+      "self_seconds": 0.002335979,
+      "cumulative_seconds": 0.038233142000000005
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/gymnasium/wrappers/common.py",
+      "line": 276,
+      "function": "step",
+      "primitive_calls": 16384,
+      "calls": 16384,
+      "self_seconds": 0.0030826380000000004,
+      "cumulative_seconds": 0.035897163
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/_style.py",
+      "line": 98,
+      "function": "batch",
+      "primitive_calls": 2,
+      "calls": 2,
+      "self_seconds": 1.167e-06,
+      "cumulative_seconds": 1.167e-06
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/gymnasium/wrappers/common.py",
+      "line": 111,
+      "function": "step",
+      "primitive_calls": 16384,
+      "calls": 16384,
+      "self_seconds": 0.003576229,
+      "cumulative_seconds": 0.045648438
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/gymnasium/core.py",
+      "line": 201,
+      "function": "unwrapped",
+      "primitive_calls": 16384,
+      "calls": 16384,
+      "self_seconds": 0.0007591490000000001,
+      "cumulative_seconds": 0.0007591490000000001
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/gymnasium/core.py",
+      "line": 348,
+      "function": "unwrapped",
+      "primitive_calls": 16384,
+      "calls": 49152,
+      "self_seconds": 0.007413505000000001,
+      "cumulative_seconds": 0.008172654
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/specs.py",
+      "line": 49,
+      "function": "<genexpr>",
+      "primitive_calls": 4,
+      "calls": 4,
+      "self_seconds": 1.0000000000000002e-06,
+      "cumulative_seconds": 1.0000000000000002e-06
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/gymnasium/wrappers/common.py",
+      "line": 388,
+      "function": "step",
+      "primitive_calls": 16384,
+      "calls": 16384,
+      "self_seconds": 0.0038390670000000003,
+      "cumulative_seconds": 0.042072209
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/render/gfxdraw.py",
+      "line": 1311,
+      "function": "verts",
+      "primitive_calls": 6,
+      "calls": 6,
+      "self_seconds": 1.7335000000000003e-05,
+      "cumulative_seconds": 1.7335000000000003e-05
+    },
+    {
+      "file": "<string>",
+      "line": 2,
+      "function": "__init__",
+      "primitive_calls": 2,
+      "calls": 2,
+      "self_seconds": 7.083000000000001e-06,
+      "cumulative_seconds": 1.4417000000000001e-05
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/envs/classic_control.py",
+      "line": 161,
+      "function": "_box",
+      "primitive_calls": 4,
+      "calls": 4,
+      "self_seconds": 8.085e-06,
+      "cumulative_seconds": 1.3292e-05
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/render/gfxdraw.py",
+      "line": 797,
+      "function": "select_",
+      "primitive_calls": 4,
+      "calls": 4,
+      "self_seconds": 0.08384216600000001,
+      "cumulative_seconds": 0.134993583
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/render/gfxdraw.py",
+      "line": 1274,
+      "function": "steps",
+      "primitive_calls": 14,
+      "calls": 14,
+      "self_seconds": 7.293e-06,
+      "cumulative_seconds": 7.293e-06
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/render/gfxdraw.py",
+      "line": 1285,
+      "function": "hw",
+      "primitive_calls": 4,
+      "calls": 4,
+      "self_seconds": 1.125e-06,
+      "cumulative_seconds": 1.125e-06
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/render/gfxdraw.py",
+      "line": 850,
+      "function": "solid",
+      "primitive_calls": 14,
+      "calls": 14,
+      "self_seconds": 1.958e-06,
+      "cumulative_seconds": 1.958e-06
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/render/gfxdraw.py",
+      "line": 874,
+      "function": "always",
+      "primitive_calls": 4,
+      "calls": 4,
+      "self_seconds": 5.420000000000001e-07,
+      "cumulative_seconds": 5.420000000000001e-07
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/render/gfxdraw.py",
+      "line": 843,
+      "function": "steps",
+      "primitive_calls": 14,
+      "calls": 14,
+      "self_seconds": 6.584000000000001e-06,
+      "cumulative_seconds": 1.3877000000000001e-05
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/envs/classic_control.py",
+      "line": 150,
+      "function": "_circ",
+      "primitive_calls": 4,
+      "calls": 4,
+      "self_seconds": 1.646e-05,
+      "cumulative_seconds": 0.012717459
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/envs/classic_control.py",
+      "line": 146,
+      "function": "_poly",
+      "primitive_calls": 4,
+      "calls": 4,
+      "self_seconds": 1.8251000000000002e-05,
+      "cumulative_seconds": 0.655338042
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/render/gfxdraw.py",
+      "line": 880,
+      "function": "window",
+      "primitive_calls": 4,
+      "calls": 4,
+      "self_seconds": 1.6749000000000002e-05,
+      "cumulative_seconds": 1.6749000000000002e-05
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/render/gfxdraw.py",
+      "line": 1089,
+      "function": "edge_setup",
+      "primitive_calls": 4,
+      "calls": 4,
+      "self_seconds": 7.0420000000000005e-06,
+      "cumulative_seconds": 0.005727792000000001
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/render/_resources.py",
+      "line": 302,
+      "function": "get",
+      "primitive_calls": 2,
+      "calls": 2,
+      "self_seconds": 7.583e-06,
+      "cumulative_seconds": 9.083000000000001e-06
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/render/gfxdraw.py",
+      "line": 735,
+      "function": "_clip_encode",
+      "primitive_calls": 48,
+      "calls": 48,
+      "self_seconds": 0.0009495780000000001,
+      "cumulative_seconds": 0.001417497
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/render/gfxdraw.py",
+      "line": 1037,
+      "function": "blend_at",
+      "primitive_calls": 74,
+      "calls": 74,
+      "self_seconds": 0.007374251,
+      "cumulative_seconds": 0.062312336
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/envs/_classic_semantics.py",
+      "line": 415,
+      "function": "_sync_authoritative_state",
+      "primitive_calls": 16,
+      "calls": 16,
+      "self_seconds": 4.9709e-05,
+      "cumulative_seconds": 0.00048666700000000003
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/render/gfxdraw.py",
+      "line": 890,
+      "function": "fill_from",
+      "primitive_calls": 2,
+      "calls": 2,
+      "self_seconds": 7.09e-07,
+      "cumulative_seconds": 0.03431275
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/render/gfxdraw.py",
+      "line": 950,
+      "function": "to_u8",
+      "primitive_calls": 12,
+      "calls": 12,
+      "self_seconds": 7.080000000000001e-06,
+      "cumulative_seconds": 8.3372e-05
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/render/gfxdraw.py",
+      "line": 1193,
+      "function": "<genexpr>",
+      "primitive_calls": 210,
+      "calls": 210,
+      "self_seconds": 0.00012028300000000001,
+      "cumulative_seconds": 0.00012028300000000001
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/envs/classic_control.py",
+      "line": 1324,
+      "function": "<genexpr>",
+      "primitive_calls": 8,
+      "calls": 8,
+      "self_seconds": 1.8350000000000002e-06,
+      "cumulative_seconds": 1.8350000000000002e-06
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/envs/_classic_semantics.py",
+      "line": 403,
+      "function": "_validate_state",
+      "primitive_calls": 2,
+      "calls": 2,
+      "self_seconds": 5.334e-06,
+      "cumulative_seconds": 0.000260292
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/envs/_classic_semantics.py",
+      "line": 450,
+      "function": "_step_pipeline",
+      "primitive_calls": 2,
+      "calls": 2,
+      "self_seconds": 1.0840000000000001e-06,
+      "cumulative_seconds": 1.5830000000000001e-06
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/render/gfxdraw.py",
+      "line": 708,
+      "function": "blend",
+      "primitive_calls": 74,
+      "calls": 74,
+      "self_seconds": 0.01704172,
+      "cumulative_seconds": 0.019729086
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/render/gfxdraw.py",
+      "line": 1237,
+      "function": "rotate",
+      "primitive_calls": 4,
+      "calls": 4,
+      "self_seconds": 9.924800000000001e-05,
+      "cumulative_seconds": 0.000210916
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/envs/classic_control.py",
+      "line": 1437,
+      "function": "_step",
+      "primitive_calls": 16,
+      "calls": 16,
+      "self_seconds": 1.0581e-05,
+      "cumulative_seconds": 0.16866012400000002
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/envs/classic_control.py",
+      "line": 1506,
+      "function": "_step",
+      "primitive_calls": 16,
+      "calls": 16,
+      "self_seconds": 1.1168e-05,
+      "cumulative_seconds": 0.168671292
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/render/gfxdraw.py",
+      "line": 1280,
+      "function": "batch_index",
+      "primitive_calls": 2,
+      "calls": 2,
+      "self_seconds": 3.75e-07,
+      "cumulative_seconds": 3.75e-07
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/envs/_classic_semantics.py",
+      "line": 388,
+      "function": "<genexpr>",
+      "primitive_calls": 18,
+      "calls": 18,
+      "self_seconds": 6.584000000000001e-06,
+      "cumulative_seconds": 8.958000000000001e-06
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/render/gfxdraw.py",
+      "line": 642,
+      "function": "_round16",
+      "primitive_calls": 8,
+      "calls": 8,
+      "self_seconds": 0.00148025,
+      "cumulative_seconds": 0.00148025
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/render/gfxdraw.py",
+      "line": 986,
+      "function": "use",
+      "primitive_calls": 8,
+      "calls": 8,
+      "self_seconds": 1.6230000000000002e-06,
+      "cumulative_seconds": 1.6230000000000002e-06
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/render/gfxdraw.py",
+      "line": 931,
+      "function": "rgb",
+      "primitive_calls": 2,
+      "calls": 2,
+      "self_seconds": 6.145800000000001e-05,
+      "cumulative_seconds": 0.584785583
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/render/gfxdraw.py",
+      "line": 884,
+      "function": "rows",
+      "primitive_calls": 4,
+      "calls": 4,
+      "self_seconds": 8.083e-06,
+      "cumulative_seconds": 8.083e-06
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/envs/classic_control.py",
+      "line": 506,
+      "function": "_use_fused",
+      "primitive_calls": 2,
+      "calls": 2,
+      "self_seconds": 1.5e-06,
+      "cumulative_seconds": 1.5e-06
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/envs/_classic_semantics.py",
+      "line": 454,
+      "function": "_step",
+      "primitive_calls": 16,
+      "calls": 16,
+      "self_seconds": 3.5166e-05,
+      "cumulative_seconds": 0.168649543
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/envs/_classic_semantics.py",
+      "line": 386,
+      "function": "_layout",
+      "primitive_calls": 2,
+      "calls": 2,
+      "self_seconds": 6.959000000000001e-06,
+      "cumulative_seconds": 1.6209e-05
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/tests/helpers/reference/classic_before_snapshot.py",
+      "line": 135,
+      "function": "_limbs",
+      "primitive_calls": 32768,
+      "calls": 32768,
+      "self_seconds": 0.017511464,
+      "cumulative_seconds": 0.026559719000000002
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/tests/helpers/reference/classic_before_snapshot.py",
+      "line": 185,
+      "function": "_check_open",
+      "primitive_calls": 32,
+      "calls": 32,
+      "self_seconds": 4.043e-06,
+      "cumulative_seconds": 4.043e-06
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/_stepping.py",
+      "line": 34,
+      "function": "_done",
+      "primitive_calls": 14,
+      "calls": 14,
+      "self_seconds": 0.000134324,
+      "cumulative_seconds": 0.00046691600000000005
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/_stepping.py",
+      "line": 56,
+      "function": "_selection",
+      "primitive_calls": 4,
+      "calls": 4,
+      "self_seconds": 4.834000000000001e-06,
+      "cumulative_seconds": 5.208e-06
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/_stepping.py",
+      "line": 42,
+      "function": "_masked_outputs",
+      "primitive_calls": 16,
+      "calls": 16,
+      "self_seconds": 4.1382000000000005e-05,
+      "cumulative_seconds": 0.0014648740000000001
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/render/gfxdraw.py",
+      "line": 1203,
+      "function": "circle",
+      "primitive_calls": 4,
+      "calls": 4,
+      "self_seconds": 0.000156536,
+      "cumulative_seconds": 0.012696959
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/render/gfxdraw.py",
+      "line": 742,
+      "function": "clip_line",
+      "primitive_calls": 4,
+      "calls": 4,
+      "self_seconds": 0.002204508,
+      "cumulative_seconds": 0.00544225
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/render/gfxdraw.py",
+      "line": 1099,
+      "function": "aaline_emit",
+      "primitive_calls": 14,
+      "calls": 14,
+      "self_seconds": 0.004226819000000001,
+      "cumulative_seconds": 0.06368820800000001
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/envs/classic_control.py",
+      "line": 1345,
+      "function": "_draw",
+      "primitive_calls": 2,
+      "calls": 2,
+      "self_seconds": 0.0019052930000000002,
+      "cumulative_seconds": 0.7064895
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/render/gfxdraw.py",
+      "line": 924,
+      "function": "blend_at",
+      "primitive_calls": 74,
+      "calls": 74,
+      "self_seconds": 0.031094515000000003,
+      "cumulative_seconds": 0.054538083
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/render/gfxdraw.py",
+      "line": 1046,
+      "function": "edge_geometry",
+      "primitive_calls": 4,
+      "calls": 4,
+      "self_seconds": 0.00014529400000000002,
+      "cumulative_seconds": 0.00572075
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/render/gfxdraw.py",
+      "line": 900,
+      "function": "_disc_index",
+      "primitive_calls": 4,
+      "calls": 4,
+      "self_seconds": 0.0029915420000000002,
+      "cumulative_seconds": 0.0037266660000000004
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/envs/classic_control.py",
+      "line": 1302,
+      "function": "_terrain_base",
+      "primitive_calls": 2,
+      "calls": 2,
+      "self_seconds": 3.4457e-05,
+      "cumulative_seconds": 0.001820999
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/_stepping.py",
+      "line": 65,
+      "function": "step",
+      "primitive_calls": 2,
+      "calls": 2,
+      "self_seconds": 0.00028566800000000004,
+      "cumulative_seconds": 1.544990541
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/tests/helpers/reference/classic_before_snapshot.py",
+      "line": 238,
+      "function": "get_state",
+      "primitive_calls": 16,
+      "calls": 16,
+      "self_seconds": 0.03266661,
+      "cumulative_seconds": 0.10801995900000001
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/_stepping.py",
+      "line": 16,
+      "function": "_actions",
+      "primitive_calls": 2,
+      "calls": 2,
+      "self_seconds": 1.2961e-05,
+      "cumulative_seconds": 3.7834000000000004e-05
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/base.py",
+      "line": 8648,
+      "function": "update",
+      "primitive_calls": 2,
+      "calls": 2,
+      "self_seconds": 1.6000000000000003e-05,
+      "cumulative_seconds": 9.7293e-05
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/base.py",
+      "line": 13119,
+      "function": "_clone_recurse",
+      "primitive_calls": 16,
+      "calls": 16,
+      "self_seconds": 0.00012842300000000001,
+      "cumulative_seconds": 0.00098033
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_torch_func.py",
+      "line": 678,
+      "function": "_stack",
+      "primitive_calls": 4,
+      "calls": 10,
+      "self_seconds": 0.00044045600000000004,
+      "cumulative_seconds": 0.001925751
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/specs.py",
+      "line": 48,
+      "function": "__post_init__",
+      "primitive_calls": 2,
+      "calls": 2,
+      "self_seconds": 5.959e-06,
+      "cumulative_seconds": 7.3340000000000004e-06
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method tensordict._C.unravel_key>",
+      "primitive_calls": 32,
+      "calls": 32,
+      "self_seconds": 5.913e-06,
+      "cumulative_seconds": 5.913e-06
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method tensordict._C._unravel_key_to_tuple>",
+      "primitive_calls": 262,
+      "calls": 262,
+      "self_seconds": 6.3617e-05,
+      "cumulative_seconds": 6.3617e-05
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method tensordict._C.unravel_key_list>",
+      "primitive_calls": 32,
+      "calls": 32,
+      "self_seconds": 1.3789000000000001e-05,
+      "cumulative_seconds": 1.3789000000000001e-05
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/env.py",
+      "line": 192,
+      "function": "_as_state_tensor",
+      "primitive_calls": 2,
+      "calls": 2,
+      "self_seconds": 1.04e-06,
+      "cumulative_seconds": 3.2910000000000003e-06
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/env.py",
+      "line": 1096,
+      "function": "_pack_render_state",
+      "primitive_calls": 2,
+      "calls": 2,
+      "self_seconds": 1.321e-05,
+      "cumulative_seconds": 5.1334e-05
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py",
+      "line": 357,
+      "function": "_new_unsafe",
+      "primitive_calls": 106,
+      "calls": 106,
+      "self_seconds": 0.000169487,
+      "cumulative_seconds": 0.00031621000000000004
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py",
+      "line": 2417,
+      "function": "_parse_batch_size",
+      "primitive_calls": 34,
+      "calls": 34,
+      "self_seconds": 2.2872e-05,
+      "cumulative_seconds": 3.9374e-05
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py",
+      "line": 2600,
+      "function": "_set_str",
+      "primitive_calls": 260,
+      "calls": 260,
+      "self_seconds": 0.00010581300000000001,
+      "cumulative_seconds": 0.0007507420000000001
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py",
+      "line": 2509,
+      "function": "_rename_subtds",
+      "primitive_calls": 34,
+      "calls": 34,
+      "self_seconds": 1.5296e-05,
+      "cumulative_seconds": 2.1337000000000003e-05
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py",
+      "line": 3761,
+      "function": "_exclude",
+      "primitive_calls": 32,
+      "calls": 32,
+      "self_seconds": 6.790000000000001e-05,
+      "cumulative_seconds": 0.00023858400000000002
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/numpy/_core/_internal.py",
+      "line": 409,
+      "function": "_promote_fields",
+      "primitive_calls": 2,
+      "calls": 2,
+      "self_seconds": 1.9539e-05,
+      "cumulative_seconds": 2.3834000000000003e-05
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'contiguous' of 'torch._C.TensorBase' objects>",
+      "primitive_calls": 4,
+      "calls": 4,
+      "self_seconds": 2.0000000000000003e-06,
+      "cumulative_seconds": 2.0000000000000003e-06
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'copy_' of 'torch._C.TensorBase' objects>",
+      "primitive_calls": 42,
+      "calls": 42,
+      "self_seconds": 0.593364372,
+      "cumulative_seconds": 0.593364372
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'cpu' of 'torch._C.TensorBase' objects>",
+      "primitive_calls": 2,
+      "calls": 2,
+      "self_seconds": 1.291e-06,
+      "cumulative_seconds": 1.291e-06
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'dim' of 'torch._C.TensorBase' objects>",
+      "primitive_calls": 28,
+      "calls": 28,
+      "self_seconds": 5.372e-06,
+      "cumulative_seconds": 5.372e-06
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'bool' of 'torch._C.TensorBase' objects>",
+      "primitive_calls": 28,
+      "calls": 28,
+      "self_seconds": 1.1334e-05,
+      "cumulative_seconds": 1.1334e-05
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'numel' of 'torch._C.TensorBase' objects>",
+      "primitive_calls": 2,
+      "calls": 2,
+      "self_seconds": 1.209e-06,
+      "cumulative_seconds": 1.209e-06
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'numpy' of 'torch._C.TensorBase' objects>",
+      "primitive_calls": 2,
+      "calls": 2,
+      "self_seconds": 2.584e-06,
+      "cumulative_seconds": 2.584e-06
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'to' of 'torch._C.TensorBase' objects>",
+      "primitive_calls": 668,
+      "calls": 668,
+      "self_seconds": 0.002775369,
+      "cumulative_seconds": 0.002775369
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'abs' of 'torch._C.TensorBase' objects>",
+      "primitive_calls": 4,
+      "calls": 4,
+      "self_seconds": 9.541e-06,
+      "cumulative_seconds": 9.541e-06
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'all' of 'torch._C.TensorBase' objects>",
+      "primitive_calls": 18,
+      "calls": 18,
+      "self_seconds": 2.525e-05,
+      "cumulative_seconds": 2.525e-05
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'amax' of 'torch._C.TensorBase' objects>",
+      "primitive_calls": 4,
+      "calls": 4,
+      "self_seconds": 0.0006533330000000001,
+      "cumulative_seconds": 0.0006533330000000001
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'amin' of 'torch._C.TensorBase' objects>",
+      "primitive_calls": 4,
+      "calls": 4,
+      "self_seconds": 0.056378209000000006,
+      "cumulative_seconds": 0.056378209000000006
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'any' of 'torch._C.TensorBase' objects>",
+      "primitive_calls": 30,
+      "calls": 30,
+      "self_seconds": 5.6500000000000005e-05,
+      "cumulative_seconds": 5.6500000000000005e-05
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'bitwise_xor_' of 'torch._C.TensorBase' objects>",
+      "primitive_calls": 4,
+      "calls": 4,
+      "self_seconds": 0.051138542,
+      "cumulative_seconds": 0.051138542
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'clamp' of 'torch._C.TensorBase' objects>",
+      "primitive_calls": 156,
+      "calls": 156,
+      "self_seconds": 0.001274986,
+      "cumulative_seconds": 0.001274986
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'clamp_max' of 'torch._C.TensorBase' objects>",
+      "primitive_calls": 4,
+      "calls": 4,
+      "self_seconds": 0.00017654200000000002,
+      "cumulative_seconds": 0.00017654200000000002
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'clamp_min' of 'torch._C.TensorBase' objects>",
+      "primitive_calls": 12,
+      "calls": 12,
+      "self_seconds": 0.000179166,
+      "cumulative_seconds": 0.000179166
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'clone' of 'torch._C.TensorBase' objects>",
+      "primitive_calls": 80,
+      "calls": 80,
+      "self_seconds": 8.8245e-05,
+      "cumulative_seconds": 8.8245e-05
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'detach' of 'torch._C.TensorBase' objects>",
+      "primitive_calls": 2,
+      "calls": 2,
+      "self_seconds": 1.9990000000000003e-06,
+      "cumulative_seconds": 1.9990000000000003e-06
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'expand' of 'torch._C.TensorBase' objects>",
+      "primitive_calls": 92,
+      "calls": 92,
+      "self_seconds": 7.9338e-05,
+      "cumulative_seconds": 7.9338e-05
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'expand_as' of 'torch._C.TensorBase' objects>",
+      "primitive_calls": 88,
+      "calls": 88,
+      "self_seconds": 6.8705e-05,
+      "cumulative_seconds": 6.8705e-05
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'fill_' of 'torch._C.TensorBase' objects>",
+      "primitive_calls": 6,
+      "calls": 6,
+      "self_seconds": 0.02198525,
+      "cumulative_seconds": 0.02198525
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'flip' of 'torch._C.TensorBase' objects>",
+      "primitive_calls": 6,
+      "calls": 6,
+      "self_seconds": 0.047623583000000004,
+      "cumulative_seconds": 0.047623583000000004
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'index_select' of 'torch._C.TensorBase' objects>",
+      "primitive_calls": 16,
+      "calls": 16,
+      "self_seconds": 6.0836000000000005e-05,
+      "cumulative_seconds": 6.0836000000000005e-05
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'is_floating_point' of 'torch._C.TensorBase' objects>",
+      "primitive_calls": 16,
+      "calls": 16,
+      "self_seconds": 3.5000000000000004e-06,
+      "cumulative_seconds": 3.5000000000000004e-06
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'max' of 'torch._C.TensorBase' objects>",
+      "primitive_calls": 4,
+      "calls": 4,
+      "self_seconds": 2.6875000000000003e-05,
+      "cumulative_seconds": 2.6875000000000003e-05
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'permute' of 'torch._C.TensorBase' objects>",
+      "primitive_calls": 2,
+      "calls": 2,
+      "self_seconds": 6e-06,
+      "cumulative_seconds": 6e-06
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'reshape' of 'torch._C.TensorBase' objects>",
+      "primitive_calls": 416,
+      "calls": 416,
+      "self_seconds": 0.0008067590000000001,
+      "cumulative_seconds": 0.0008067590000000001
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'roll' of 'torch._C.TensorBase' objects>",
+      "primitive_calls": 16,
+      "calls": 16,
+      "self_seconds": 9.2959e-05,
+      "cumulative_seconds": 9.2959e-05
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'sum' of 'torch._C.TensorBase' objects>",
+      "primitive_calls": 4,
+      "calls": 4,
+      "self_seconds": 0.0011008320000000002,
+      "cumulative_seconds": 0.0011008320000000002
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 't' of 'torch._C.TensorBase' objects>",
+      "primitive_calls": 102,
+      "calls": 102,
+      "self_seconds": 8.400100000000001e-05,
+      "cumulative_seconds": 8.400100000000001e-05
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'unsqueeze' of 'torch._C.TensorBase' objects>",
+      "primitive_calls": 40,
+      "calls": 40,
+      "self_seconds": 4.071e-05,
+      "cumulative_seconds": 4.071e-05
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<method 'view' of 'torch._C.TensorBase' objects>",
+      "primitive_calls": 412,
+      "calls": 412,
+      "self_seconds": 0.000276419,
+      "cumulative_seconds": 0.000276419
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method torch._C._has_torch_function>",
+      "primitive_calls": 184,
+      "calls": 184,
+      "self_seconds": 1.7835e-05,
+      "cumulative_seconds": 1.7835e-05
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method torch._C._has_torch_function_unary>",
+      "primitive_calls": 28,
+      "calls": 28,
+      "self_seconds": 3.9590000000000006e-06,
+      "cumulative_seconds": 3.9590000000000006e-06
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method torch._C._set_grad_enabled>",
+      "primitive_calls": 8,
+      "calls": 8,
+      "self_seconds": 4.959e-06,
+      "cumulative_seconds": 4.959e-06
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method torch.is_grad_enabled>",
+      "primitive_calls": 12,
+      "calls": 12,
+      "self_seconds": 2.7090000000000002e-06,
+      "cumulative_seconds": 2.7090000000000002e-06
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method torch.as_tensor>",
+      "primitive_calls": 54,
+      "calls": 54,
+      "self_seconds": 5.2874e-05,
+      "cumulative_seconds": 5.2874e-05
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method torch.from_numpy>",
+      "primitive_calls": 128,
+      "calls": 128,
+      "self_seconds": 5.991600000000001e-05,
+      "cumulative_seconds": 5.991600000000001e-05
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method torch.tensor>",
+      "primitive_calls": 48,
+      "calls": 48,
+      "self_seconds": 0.002240587,
+      "cumulative_seconds": 0.002240587
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method torch.arange>",
+      "primitive_calls": 4,
+      "calls": 4,
+      "self_seconds": 2.025e-05,
+      "cumulative_seconds": 2.025e-05
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method torch.ones>",
+      "primitive_calls": 2,
+      "calls": 2,
+      "self_seconds": 1.2626e-05,
+      "cumulative_seconds": 1.2626e-05
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method torch.zeros>",
+      "primitive_calls": 16,
+      "calls": 16,
+      "self_seconds": 2.2459000000000003e-05,
+      "cumulative_seconds": 2.2459000000000003e-05
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method torch.zeros_like>",
+      "primitive_calls": 104,
+      "calls": 104,
+      "self_seconds": 0.00010391500000000001,
+      "cumulative_seconds": 0.00010391500000000001
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method torch.div>",
+      "primitive_calls": 8,
+      "calls": 8,
+      "self_seconds": 0.002411874,
+      "cumulative_seconds": 0.002411874
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method torch.ones_like>",
+      "primitive_calls": 48,
+      "calls": 48,
+      "self_seconds": 4.7041000000000006e-05,
+      "cumulative_seconds": 4.7041000000000006e-05
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method torch.stack>",
+      "primitive_calls": 16,
+      "calls": 42,
+      "self_seconds": 0.036777670000000005,
+      "cumulative_seconds": 0.038347207
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method torch.rsub>",
+      "primitive_calls": 110,
+      "calls": 110,
+      "self_seconds": 0.00036975100000000003,
+      "cumulative_seconds": 0.00036975100000000003
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method torch.minimum>",
+      "primitive_calls": 4,
+      "calls": 4,
+      "self_seconds": 1.2249e-05,
+      "cumulative_seconds": 1.2249e-05
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method torch._foreach_add>",
+      "primitive_calls": 16,
+      "calls": 16,
+      "self_seconds": 0.000112788,
+      "cumulative_seconds": 0.000112788
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method torch.cat>",
+      "primitive_calls": 18,
+      "calls": 18,
+      "self_seconds": 0.000113664,
+      "cumulative_seconds": 0.000113664
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method torch.cos>",
+      "primitive_calls": 6,
+      "calls": 6,
+      "self_seconds": 3.8043e-05,
+      "cumulative_seconds": 3.8043e-05
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method torch.empty>",
+      "primitive_calls": 4,
+      "calls": 4,
+      "self_seconds": 2.0459000000000002e-05,
+      "cumulative_seconds": 2.0459000000000002e-05
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method torch.full_like>",
+      "primitive_calls": 52,
+      "calls": 52,
+      "self_seconds": 0.000143292,
+      "cumulative_seconds": 0.000143292
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method torch.sin>",
+      "primitive_calls": 6,
+      "calls": 6,
+      "self_seconds": 2.65e-05,
+      "cumulative_seconds": 2.65e-05
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method torch.trunc>",
+      "primitive_calls": 108,
+      "calls": 108,
+      "self_seconds": 0.000125914,
+      "cumulative_seconds": 0.000125914
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method torch.where>",
+      "primitive_calls": 840,
+      "calls": 840,
+      "self_seconds": 0.009597654,
+      "cumulative_seconds": 0.009597654
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method torch.bitwise_left_shift>",
+      "primitive_calls": 74,
+      "calls": 74,
+      "self_seconds": 0.000126166,
+      "cumulative_seconds": 0.000126166
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method torch.isfinite>",
+      "primitive_calls": 6,
+      "calls": 6,
+      "self_seconds": 3.55e-05,
+      "cumulative_seconds": 3.55e-05
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/numpy/_core/fromnumeric.py",
+      "line": 66,
+      "function": "_wrapreduction",
+      "primitive_calls": 2,
+      "calls": 2,
+      "self_seconds": 6.043e-06,
+      "cumulative_seconds": 1.8084e-05
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/numpy/_core/shape_base.py",
+      "line": 378,
+      "function": "stack",
+      "primitive_calls": 16,
+      "calls": 16,
+      "self_seconds": 0.003716786,
+      "cumulative_seconds": 0.004375332
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/numpy/_core/numeric.py",
+      "line": 1489,
+      "function": "moveaxis",
+      "primitive_calls": 4,
+      "calls": 4,
+      "self_seconds": 1.4710000000000001e-05,
+      "cumulative_seconds": 4.4917000000000004e-05
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/numpy/lib/_arraysetops_impl.py",
+      "line": 350,
+      "function": "_unique1d",
+      "primitive_calls": 2,
+      "calls": 2,
+      "self_seconds": 6.6791e-05,
+      "cumulative_seconds": 0.001058376
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/numpy/lib/_arraysetops_impl.py",
+      "line": 145,
+      "function": "unique",
+      "primitive_calls": 2,
+      "calls": 2,
+      "self_seconds": 2.8834000000000002e-05,
+      "cumulative_seconds": 0.0011812910000000001
+    },
+    {
+      "file": "~",
+      "line": 0,
+      "function": "<built-in method torch._C._get_tracing_state>",
+      "primitive_calls": 28,
+      "calls": 28,
+      "self_seconds": 1.3208000000000001e-05,
+      "cumulative_seconds": 1.3208000000000001e-05
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/torch/_tensor.py",
+      "line": 1189,
+      "function": "__len__",
+      "primitive_calls": 28,
+      "calls": 28,
+      "self_seconds": 3.8627e-05,
+      "cumulative_seconds": 6.1166e-05
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/env.py",
+      "line": 311,
+      "function": "check_states",
+      "primitive_calls": 2,
+      "calls": 2,
+      "self_seconds": 1.842e-05,
+      "cumulative_seconds": 5.4292e-05
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/env.py",
+      "line": 232,
+      "function": "_nonfinite_report",
+      "primitive_calls": 2,
+      "calls": 2,
+      "self_seconds": 5.416e-06,
+      "cumulative_seconds": 2.2499000000000003e-05
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py",
+      "line": 881,
+      "function": "__setitem__",
+      "primitive_calls": 26,
+      "calls": 26,
+      "self_seconds": 2.7243000000000003e-05,
+      "cumulative_seconds": 0.000284916
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py",
+      "line": 259,
+      "function": "__init__",
+      "primitive_calls": 34,
+      "calls": 34,
+      "self_seconds": 0.000294838,
+      "cumulative_seconds": 0.002099627
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/utils.py",
+      "line": 544,
+      "function": "_shape",
+      "primitive_calls": 742,
+      "calls": 742,
+      "self_seconds": 0.000268902,
+      "cumulative_seconds": 0.000415748
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py",
+      "line": 5061,
+      "function": "_items",
+      "primitive_calls": 8,
+      "calls": 8,
+      "self_seconds": 5.253e-06,
+      "cumulative_seconds": 1.4168e-05
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py",
+      "line": 2482,
+      "function": "_set_names",
+      "primitive_calls": 34,
+      "calls": 34,
+      "self_seconds": 1.9834e-05,
+      "cumulative_seconds": 4.5793e-05
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py",
+      "line": 3612,
+      "function": "_clone",
+      "primitive_calls": 16,
+      "calls": 16,
+      "self_seconds": 1.4210000000000001e-05,
+      "cumulative_seconds": 0.000996623
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py",
+      "line": 1439,
+      "function": "_apply_nest",
+      "primitive_calls": 16,
+      "calls": 16,
+      "self_seconds": 0.00013524400000000002,
+      "cumulative_seconds": 0.000435083
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py",
+      "line": 5006,
+      "function": "_iter",
+      "primitive_calls": 438,
+      "calls": 438,
+      "self_seconds": 5.4656000000000007e-05,
+      "cumulative_seconds": 0.000190327
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py",
+      "line": 5034,
+      "function": "_iter_helper",
+      "primitive_calls": 18,
+      "calls": 36,
+      "self_seconds": 3.1119000000000005e-05,
+      "cumulative_seconds": 9.0247e-05
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/utils.py",
+      "line": 1981,
+      "function": "_check_keys",
+      "primitive_calls": 10,
+      "calls": 10,
+      "self_seconds": 9.2236e-05,
+      "cumulative_seconds": 0.000384125
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/base.py",
+      "line": 9560,
+      "function": "_items_list",
+      "primitive_calls": 16,
+      "calls": 16,
+      "self_seconds": 3.0545e-05,
+      "cumulative_seconds": 0.000185668
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/base.py",
+      "line": 657,
+      "function": "__getitem__",
+      "primitive_calls": 114,
+      "calls": 114,
+      "self_seconds": 7.6369e-05,
+      "cumulative_seconds": 0.000437999
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/base.py",
+      "line": 8514,
+      "function": "get",
+      "primitive_calls": 16,
+      "calls": 16,
+      "self_seconds": 1.9833e-05,
+      "cumulative_seconds": 4.5832000000000004e-05
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/base.py",
+      "line": 14570,
+      "function": "_validate_value_generic",
+      "primitive_calls": 262,
+      "calls": 262,
+      "self_seconds": 0.00039910000000000005,
+      "cumulative_seconds": 0.000999335
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_torch_func.py",
+      "line": 849,
+      "function": "stack_fn",
+      "primitive_calls": 20,
+      "calls": 32,
+      "self_seconds": 2.8209e-05,
+      "cumulative_seconds": 0.0010630420000000002
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/_style.py",
+      "line": 146,
+      "function": "for_batch",
+      "primitive_calls": 2,
+      "calls": 2,
+      "self_seconds": 1.416e-06,
+      "cumulative_seconds": 2.583e-06
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/render/gfxdraw.py",
+      "line": 979,
+      "function": "__init__",
+      "primitive_calls": 2,
+      "calls": 2,
+      "self_seconds": 9.002000000000001e-06,
+      "cumulative_seconds": 0.043972209000000005
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/render/gfxdraw.py",
+      "line": 832,
+      "function": "__init__",
+      "primitive_calls": 2,
+      "calls": 2,
+      "self_seconds": 1.7749000000000002e-05,
+      "cumulative_seconds": 0.022014208
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/envs/classic_control.py",
+      "line": 1526,
+      "function": "_bake_terrain",
+      "primitive_calls": 2,
+      "calls": 2,
+      "self_seconds": 2.7500000000000004e-06,
+      "cumulative_seconds": 1.1833e-05
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/envs/classic_control.py",
+      "line": 451,
+      "function": "_render",
+      "primitive_calls": 2,
+      "calls": 2,
+      "self_seconds": 4.8499000000000004e-05,
+      "cumulative_seconds": 1.3353383330000002
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/render/gfxdraw.py",
+      "line": 647,
+      "function": "fill_polygon_mask",
+      "primitive_calls": 4,
+      "calls": 4,
+      "self_seconds": 0.384387542,
+      "cumulative_seconds": 0.45027983200000005
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/render/gfxdraw.py",
+      "line": 1187,
+      "function": "_aa",
+      "primitive_calls": 4,
+      "calls": 4,
+      "self_seconds": 0.000144215,
+      "cumulative_seconds": 0.06980433400000001
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/render/gfxdraw.py",
+      "line": 1296,
+      "function": "stencil",
+      "primitive_calls": 4,
+      "calls": 4,
+      "self_seconds": 1.0420000000000001e-06,
+      "cumulative_seconds": 1.0420000000000001e-06
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/render/gfxdraw.py",
+      "line": 996,
+      "function": "paint",
+      "primitive_calls": 4,
+      "calls": 4,
+      "self_seconds": 2.8919000000000002e-05,
+      "cumulative_seconds": 0.13510525
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/render/gfxdraw.py",
+      "line": 1031,
+      "function": "paint_disc",
+      "primitive_calls": 4,
+      "calls": 4,
+      "self_seconds": 0.0036642520000000002,
+      "cumulative_seconds": 0.007490417
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/render/gfxdraw.py",
+      "line": 1161,
+      "function": "polygon",
+      "primitive_calls": 4,
+      "calls": 4,
+      "self_seconds": 8.1378e-05,
+      "cumulative_seconds": 0.6553193340000001
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/envs/classic_control.py",
+      "line": 265,
+      "function": "set_sim_state",
+      "primitive_calls": 16,
+      "calls": 16,
+      "self_seconds": 4.129e-05,
+      "cumulative_seconds": 0.000188042
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/envs/_classic_semantics.py",
+      "line": 146,
+      "function": "validate_classic_state",
+      "primitive_calls": 2,
+      "calls": 2,
+      "self_seconds": 3.1873000000000005e-05,
+      "cumulative_seconds": 0.000254958
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/stable_envs/envs/_classic_semantics.py",
+      "line": 406,
+      "function": "action_spec",
+      "primitive_calls": 2,
+      "calls": 2,
+      "self_seconds": 7.4990000000000005e-06,
+      "cumulative_seconds": 2.1916e-05
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/tests/helpers/reference/classic_before_snapshot.py",
+      "line": 304,
+      "function": "_actions",
+      "primitive_calls": 16,
+      "calls": 16,
+      "self_seconds": 0.001331584,
+      "cumulative_seconds": 0.0013402090000000002
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/tests/helpers/reference/classic_before_snapshot.py",
+      "line": 207,
+      "function": "_state_values",
+      "primitive_calls": 16384,
+      "calls": 16384,
+      "self_seconds": 0.033766734,
+      "cumulative_seconds": 0.07233613200000001
+    },
+    {
+      "file": "/private/tmp/classic-snapshot-isolated-cells-v1-20261003/code/tests/helpers/reference/classic_before_snapshot.py",
+      "line": 316,
+      "function": "step",
+      "primitive_calls": 16,
+      "calls": 16,
+      "self_seconds": 0.005765811,
+      "cumulative_seconds": 0.168053416
+    },
+    {
+      "file": "/Users/samib/se6-venv/lib/python3.12/site-packages/gymnasium/envs/classic_control/continuous_mountain_car.py",
+      "line": 150,
+      "function": "step",
+      "primitive_calls": 16384,
+      "calls": 16384,
+      "self_seconds": 0.021301215000000002,
+      "cumulative_seconds": 0.032814525000000004
+    }
+  ],
+  "status": "PASS"
+}

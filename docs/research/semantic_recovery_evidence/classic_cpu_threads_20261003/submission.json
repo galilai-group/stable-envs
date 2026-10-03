@@ -1,0 +1,10 @@
+{
+  "array_job_id": "6971126",
+  "tasks": {
+    "0": "pendulum",
+    "1": "acrobot"
+  },
+  "base_commit": "061e7a2959fb8315d2c461f1f3b8819c6143835f",
+  "remote_directory": "/oscar/scratch/sboughan/se-semantic-recovery/classic-cpu-threads-v1-20261003",
+  "production_changes": []
+}
