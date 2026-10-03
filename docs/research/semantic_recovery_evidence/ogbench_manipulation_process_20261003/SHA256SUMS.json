@@ -1,0 +1,11 @@
+{
+  "README.md": "8f8188adba9c89082e040ade8184170313bc2a781ec23d8dd796c06b9b4b15d9",
+  "local/discard-final.xml": "8c65e50a7cfb0f9d8fb10fe5bfbecf2aae3555ef2e99aa18f3db6bbdf333242f",
+  "local/isolated-collection.txt": "2574752749fb5a49a45b8d0132caa0fa620aa15c31a78ce87d36646b8ea92b46",
+  "local/local-regressions.xml": "ccf811eda8991115cd7e9810cb835b72026d986f57ddf7e9faa239d6fe842556",
+  "local/process-tests.xml": "93e2dd71b55c56ea6ee38d5be019fbed80d83a78ce458e38a2402051a7f36647",
+  "oscar/run.sh": "7602ab7b97e05fc8fa4bc4788687d9eaef5a269e5208ac6f11a64a4f179f7b32",
+  "oscar/source_manifest.json": "438a60b0ea973d26327c15812ed44c7a0f01462e49ada94d055d88e093e68c23",
+  "oscar/source_overrides.json": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356",
+  "slurm-snapshot.txt": "007bcad2c4852e788018f5fbba080e01069edcd7fedc27247e1908a4cc8bc60e"
+}

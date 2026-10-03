@@ -26,8 +26,7 @@ class ManipulationSemantics:
 
         device = Env.resolve_device(device)
         self._simulator = OGBManipulationAdapter(self.CELL, num_envs, device, seed, reward_task_id)
-        u = self._simulator.envs[0]
-        self._nq = u.model.nq
+        self._nq = self._simulator.nq
         self.state_dim = self._nq + 3 + (2 if self.CELL == "Scene" else 0)
         self.state_names = (
             tuple(f"qpos_{i}" for i in range(self._nq))
@@ -47,29 +46,11 @@ class ManipulationSemantics:
         self._sync_style()
 
     def make_variation_space(self):
-        from ..._adapters.ogbench_manipulation_compat import CUBE_SAMPLES, variation_tree
-
-        tree = variation_tree(self._simulator.envs[0])
-        if self.CELL == "Scene":
-            for key in CUBE_SAMPLES:
-                del tree["cube"].spaces[key.split(".")[1]]
-        return tree
+        return self._simulator.make_variation_space()
 
     def _sync_style(self):
-        rows = []
-        for env in self._simulator.envs:
-            rows.append(
-                np.concatenate(
-                    [
-                        env.variation_space._walk(name).value.reshape(-1)
-                        for name, _, _ in self.variation_space.flat_layout()
-                    ]
-                )
-            )
-        self._style = StyleTensor(
-            torch.as_tensor(np.stack(rows), dtype=torch.float32, device=self.device),
-            self.variation_space.flat_layout(),
-        )
+        layout = self.variation_space.flat_layout()
+        self._style = StyleTensor(self._simulator.variation_values(layout).to(torch.float32), layout)
 
     def _layout(self):
         offsets = {
@@ -113,6 +94,14 @@ class ManipulationSemantics:
         self._check_open("step")
         return self._simulator.step(actions, active=active)
 
+    def _advance_without_snapshot(self, actions, *, active=None):
+        self._check_open("step")
+        return self._simulator.step(actions, active=active, capture_state=False)
+
+    def _step_pipeline(self):
+        owner = self._simulator
+        return owner if hasattr(owner, "submit_step") else None
+
     def set_variation(self, variation=None, **overrides):
         self._check_open("set_variation")
         if isinstance(variation, dict):
@@ -142,21 +131,7 @@ class ManipulationSemantics:
                 values[i][key] = value[i].copy()
         self._simulator.configure(values)
         # Persistent reset anchors take effect on reset; current model/style remains unchanged.
-        return torch.as_tensor(
-            np.stack(
-                [
-                    np.concatenate(
-                        [
-                            e.variation_space._walk(k).init_value.reshape(-1)
-                            for k, _, _ in self.variation_space.flat_layout()
-                        ]
-                    )
-                    for e in self._simulator.envs
-                ]
-            ),
-            dtype=torch.float64,
-            device=self.device,
-        )
+        return self._simulator.variation_values(self.variation_space.flat_layout(), anchor=True)
 
     def _pack_render_state(self, state):
         columns = [state["physics", "qpos"], state["physics", "mocap_pos"]]

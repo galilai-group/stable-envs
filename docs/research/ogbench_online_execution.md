@@ -136,3 +136,17 @@ RNG continuation, owned shared-column outputs and all-shard restore validation.
 Its default remains local; RTX 3090 job 6964833 must establish public CPU/CUDA
 correctness and local/P4/P8 throughput. Cube/Scene process ownership remains
 unimplemented pending staged-world restore and parent metadata hooks.
+
+## Cube/Scene process candidate (October 3)
+
+The [private manipulation process candidate](semantic_recovery_evidence/ogbench_manipulation_process_20261003/)
+now stages replacement worlds on every worker before distributed restore commits.
+The parent retains one metadata validator; style and variation anchors use
+explicit adapter hooks. Eight new CPU process tests and 44 existing manipulation
+regressions pass. Both families survive a forced late-shard restore failure
+without mutating the live batch. Defaults remain local.
+
+RTX 3090 array 6966296 independently gates Cube and Scene on CPU/software-GL
+and CUDA/EGL, then compares local/P4/P8 at B16/64, T1/8. No process performance
+or GPU acceptance is claimed while pending. Full component, source and combined
+pipeline comparisons remain subsequent work.

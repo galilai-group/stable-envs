@@ -114,6 +114,7 @@ class OGBManipulationAdapter:
             for i in range(num_envs)
         ]
         self._closed = False
+        self._prepared_envs = None
         fingerprint = "|".join(
             ["ogb_registered_state_v1", family]
             + [f"{p}={version(p)}" for p in ("ogbench", "mujoco", "numpy", "gymnasium")]
@@ -200,8 +201,9 @@ class OGBManipulationAdapter:
         self._check_open()
         return owned_columns((self._values(env) for env in self.envs), self.num_envs, self.device)
 
-    def validate(self, state):
-        if not isinstance(state, TensorDict) or state.batch_size != torch.Size([self.num_envs]):
+    def validate(self, state, *, _batch_size=None):
+        batch = self.num_envs if _batch_size is None else _batch_size
+        if not isinstance(state, TensorDict) or state.batch_size != torch.Size([batch]):
             raise TypeError(
                 "Full Cube/Scene TensorDict State with batch [num_envs] required; RenderState cannot restore dynamics"
             )
@@ -209,7 +211,7 @@ class OGBManipulationAdapter:
             raise ValueError("Full State has missing or extra leaves")
         for key, (shape, dtype) in self.fields.items():
             value = state[key]
-            if value.shape != (self.num_envs, *shape) or value.dtype != dtype or not torch.isfinite(value).all():
+            if value.shape != (batch, *shape) or value.dtype != dtype or not torch.isfinite(value).all():
                 raise ValueError(f"Invalid State shape/dtype/finite value: {key}")
         rows = [{k: v.detach().cpu().numpy().copy() for k, v in row.items(True, True)} for row in state]
         for row in rows:
@@ -347,8 +349,10 @@ class OGBManipulationAdapter:
             env.close()
             raise
 
-    def set_state(self, state):
+    def prepare_restore(self, state):
         self._check_open()
+        if self._prepared_envs is not None:
+            raise RuntimeError("A Cube/Scene restore is already prepared")
         rows = self.validate(state)  # All lanes before any simulator mutation/construction.
         candidates = []
         try:
@@ -358,9 +362,44 @@ class OGBManipulationAdapter:
             for env in candidates:
                 env.close()
             raise
-        previous, self.envs = self.envs, candidates
+        self._prepared_envs = candidates
+
+    def discard_restore(self):
+        candidates, self._prepared_envs = self._prepared_envs, None
+        for env in candidates or ():
+            env.close()
+
+    def commit_restore(self):
+        self._check_open()
+        if self._prepared_envs is None:
+            raise RuntimeError("No Cube/Scene restore is prepared")
+        previous, self.envs = self.envs, self._prepared_envs
+        self._prepared_envs = None
         for env in previous:
             env.close()
+
+    def set_state(self, state):
+        self.prepare_restore(state)
+        self.commit_restore()
+
+    @property
+    def nq(self):
+        return self.envs[0].model.nq
+
+    def make_variation_space(self):
+        from .ogbench_manipulation_compat import variation_tree
+
+        tree = variation_tree(self.envs[0])
+        if self.family == "Scene":
+            for key in CUBE_SAMPLES:
+                del tree["cube"].spaces[key.split(".")[1]]
+        return tree
+
+    def variation_values(self, layout, *, anchor=False):
+        rows = [np.concatenate([np.asarray(getattr(env.variation_space._walk(name),
+                               "init_value" if anchor else "value")).reshape(-1)
+                               for name, _, _ in layout]) for env in self.envs]
+        return torch.as_tensor(np.stack(rows), dtype=torch.float64, device=self.device)
 
     def configure(self, values):
         self._check_open()
@@ -375,7 +414,7 @@ class OGBManipulationAdapter:
                 node.set_init_value(val)
                 node.set_value(current)
 
-    def step(self, actions, *, active=None):
+    def step(self, actions, *, active=None, capture_state=True):
         active = None if active is None else np.asarray(active.detach().cpu(), dtype=bool)
         self._check_open()
         if torch.is_tensor(actions):
@@ -392,7 +431,7 @@ class OGBManipulationAdapter:
         self._last_outputs = results
         return TensorDict(
             {
-                "state": self.get_state(),
+                **({"state": self.get_state()} if capture_state else {}),
                 "reward": torch.tensor([r[1] for r in results], dtype=torch.float64, device=self.device),
                 "success": torch.tensor([bool(r[4]["success"]) for r in results], device=self.device),
                 "terminated": torch.tensor([bool(r[2]) for r in results], device=self.device),
@@ -404,6 +443,7 @@ class OGBManipulationAdapter:
 
     def close(self):
         if not self._closed:
+            self.discard_restore()
             for env in self.envs:
                 env.close()
             self._closed = True
