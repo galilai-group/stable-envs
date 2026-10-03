@@ -35,6 +35,13 @@ fall back locally. This is routing coverage, not a count of source speedups.
 | Local execution | 5 | Quadruped and the other four classic tasks |
 | Correctness-blocked | 3 | PushT, discrete PushT, Rocket |
 
+The [online source-performance audit](semantic_recovery_evidence/online_source_audit_20261003/)
+separates routing coverage from measured source comparisons: five classic
+registrations have completed qualified serial/parallel-source measurements;
+30 accepted non-Craftax registrations still need completed online source
+comparisons. Its 42-row coverage CSV leaves missing results blank. Offline
+renderer FPS and library-control pipeline gains do not fill those gaps.
+
 Craftax's four registrations remain explicitly deferred. The
 [current API documentation](../concepts/dynamics.md) explains State/frame slices,
 when overlap is possible and how to distinguish steps/s, emitted online FPS and

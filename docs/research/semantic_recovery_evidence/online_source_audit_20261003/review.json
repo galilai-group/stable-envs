@@ -1,0 +1,10 @@
+{
+  "status": "PASS",
+  "scope": "Evidence reconciliation, not fresh benchmark",
+  "registrations": 42,
+  "measured_registrations": 5,
+  "measured_rows": 120,
+  "no_frame_rates_not_filled": true,
+  "source_gpu_rates_not_fabricated": true,
+  "existing_output_rejected": true
+}
