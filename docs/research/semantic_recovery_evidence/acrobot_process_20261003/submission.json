@@ -1,0 +1,10 @@
+{
+  "job_id": "6967776",
+  "remote_stage": "/oscar/scratch/sboughan/se-semantic-recovery/acrobot-process-v1-20261003",
+  "partition": "gpu",
+  "qos": "norm-gpu",
+  "gpu_constraint": "geforce3090",
+  "cpus": 8,
+  "status_at_submission": "SUBMITTED",
+  "production_default_enabled": false
+}

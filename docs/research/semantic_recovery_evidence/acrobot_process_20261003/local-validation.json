@@ -1,0 +1,17 @@
+{
+  "routing_default_changed": false,
+  "tests": {
+    "passed": 8,
+    "cuda_reserved": 2,
+    "junit": "local-tests.xml"
+  },
+  "benchmark_smoke": {
+    "status": "PASS",
+    "cells": 4,
+    "report": "local-benchmark-smoke.json",
+    "scope": "Mac CPU B8, P0/P2, T1/T8; smoke only, not cluster acceptance"
+  },
+  "ruff": "PASS",
+  "source_hashes_checked": 172,
+  "summarizer_negative_check": "Skipped CUDA gates cause assertion and no CSV output"
+}
