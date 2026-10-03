@@ -1,8 +1,8 @@
 """Benchmark-only persistent OGBench source workers with shared task columns.
 
-No rendering yet. Only nonterminal source trajectories are supported: fail
-explicitly if a lane ends, rather than measuring steps beyond a public chunk's
-active-lane boundary. Snapshot/restore RPCs are for untimed oracle preparation.
+No rendering yet. Within each chunk, finished lanes stop advancing and task
+padding is zero with an explicit validity column. A new call retains ordinary
+source post-terminal behavior. Snapshot/restore RPCs are untimed preparation.
 """
 
 import functools
@@ -68,15 +68,17 @@ class OGBSource:
                 or actions.shape[2] != dim or actions.dtype not in (np.float32, np.float64)
                 or not np.isfinite(actions).all()):
             raise ValueError("Require finite float32/float64 [B,T,A] source actions")
-        columns = []
+        columns, validity = [], []
+        active = np.ones(self.batch, dtype=bool)
+        previous = [None] * self.batch
         for t in range(actions.shape[1]):
+            validity.append(active.copy())
             if self.family == "Maze":
-                rows = [self.reference._in_legacy_rng(i, env.step, actions[i, t])
+                rows = [self.reference._in_legacy_rng(i, env.step, actions[i, t]) if active[i] else previous[i]
                         for i, env in enumerate(self.envs)]
             else:
-                rows = [env.step(actions[i, t]) for i, env in enumerate(self.envs)]
-            if any(row[2] or row[3] for row in rows):
-                raise RuntimeError("Nonterminal source benchmark ended; add independently gated active-lane handling")
+                rows = [env.step(actions[i, t]) if active[i] else previous[i] for i, env in enumerate(self.envs)]
+            previous = rows
             tasks = {"reward": np.asarray([r[1] for r in rows], np.float64),
                      "terminated": np.asarray([r[2] for r in rows], bool),
                      "truncated": np.asarray([r[3] for r in rows], bool),
@@ -86,8 +88,14 @@ class OGBSource:
                 tasks["observation"] = np.stack([r[0] for r in rows])
                 for key in ("xy", "prev_qpos", "prev_qvel", "qpos", "qvel"):
                     tasks["info." + key] = np.stack([r[4][key] for r in rows])
+            done = tasks["terminated"] | tasks["truncated"]
+            for values in tasks.values():
+                values[~active] = 0
             columns.append(tasks)
-        return {key: np.stack([row[key] for row in columns], axis=1) for key in columns[0]}
+            active &= ~done
+        result = {key: np.stack([row[key] for row in columns], axis=1) for key in columns[0]}
+        result["valid"] = np.stack(validity, axis=1)
+        return result
 
     def close(self):
         for env in self.envs:

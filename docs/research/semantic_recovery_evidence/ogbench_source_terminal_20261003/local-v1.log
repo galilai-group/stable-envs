@@ -1,0 +1,32 @@
+Traceback (most recent call last):
+  File "/Users/samib/stable-envs/.worktrees/render-config-fixes/scripts/benchmarks/online_stepping/ogbench_source_terminal_gate.py", line 188, in <module>
+    main()
+  File "/Users/samib/stable-envs/.worktrees/render-config-fixes/scripts/benchmarks/online_stepping/ogbench_source_terminal_gate.py", line 105, in main
+    se.make(NAMES[family], num_envs=2, device="cpu", seed=17) as env, \
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/samib/stable-envs/.worktrees/render-config-fixes/stable_envs/__init__.py", line 47, in make
+    return _make(name, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/samib/stable-envs/.worktrees/render-config-fixes/stable_envs/registry.py", line 249, in make
+    return _resolve(name)(**kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/samib/stable-envs/.worktrees/render-config-fixes/stable_envs/envs/ogbench/maze.py", line 877, in __init__
+    super().__init__(*args, **kwargs)
+  File "/Users/samib/stable-envs/.worktrees/render-config-fixes/stable_envs/envs/ogbench/maze.py", line 402, in __init__
+    sc = self._scene()
+         ^^^^^^^^^^^^^
+  File "/Users/samib/stable-envs/.worktrees/render-config-fixes/stable_envs/envs/ogbench/maze.py", line 522, in _scene
+    return _SCENE_CACHE.put(key, self._bake(size, variation))
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/samib/stable-envs/.worktrees/render-config-fixes/stable_envs/envs/ogbench/maze.py", line 596, in _bake
+    r = pr["renderers"][rkey] = mujoco.Renderer(m, width=size, height=size)
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.11/Frameworks/Python.framework/Versions/3.12/lib/python3.12/unittest/mock.py", line 1139, in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.11/Frameworks/Python.framework/Versions/3.12/lib/python3.12/unittest/mock.py", line 1143, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.11/Frameworks/Python.framework/Versions/3.12/lib/python3.12/unittest/mock.py", line 1198, in _execute_mock_call
+    raise effect
+AssertionError: No rendering in this CPU gate

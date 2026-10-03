@@ -1,0 +1,18 @@
+{
+  "status": "PASS",
+  "base_commit": "d82f679b3c9bb35c517509e17cfadebe916d70a4",
+  "terminal_cases": 24,
+  "nonterminal_regression_cases": 12,
+  "clean_pool_closures": 12,
+  "valid_steps_at_T8": {
+    "one_terminal_lane": 9,
+    "two_terminal_lanes": 2
+  },
+  "source_runtime_candidate_hashes": "PASS",
+  "construction": "ADAPTER_DISPATCH_FIXTURE",
+  "public_constructor": "PENDING_OSCAR",
+  "frames": "NOT_RUN",
+  "cuda": "NOT_RUN",
+  "performance": "NOT_MEASURED",
+  "production_changes": []
+}

@@ -270,3 +270,12 @@ The benchmark reuses Gym's spawn/shared-memory transport with scalar source
 owners and one Torch thread per worker. Source snapshot RPCs are untimed and
 pickled; only task outputs use shared columns. No rendering, GPU, source FPS or
 terminal-lane acceptance is implied. Broader source benchmarking remains open.
+
+The [next source chunk prerequisite](semantic_recovery_evidence/ogbench_source_terminal_20261003/)
+adds active-lane stopping and explicit validity to benchmark source workers.
+All 24 CPU terminal fixtures pass against real adapters and the shared dispatcher,
+alongside all 12 nonterminal transport regressions. These cover held State
+histories, zero task padding, next-call lifecycle and clean worker exits. They
+use a render-free adapter fixture: the real public Maze constructor attempted a
+renderer bake and was stopped by the local guard. Public construction, frame
+parity, CUDA and performance remain pending; production is unchanged.

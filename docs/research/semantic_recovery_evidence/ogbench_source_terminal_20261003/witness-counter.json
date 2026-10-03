@@ -1,0 +1,20 @@
+[
+  {
+    "family": "Cube",
+    "changes": {
+      "/0/ownership/access_count": {
+        "left": 2,
+        "right": 3
+      }
+    }
+  },
+  {
+    "family": "Scene",
+    "changes": {
+      "/0/ownership/access_count": {
+        "left": 2,
+        "right": 3
+      }
+    }
+  }
+]
