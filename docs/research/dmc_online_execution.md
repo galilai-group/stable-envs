@@ -217,3 +217,19 @@ CPU/CUDA gates for every registration. Humanoid's B1024/T8/all GPU rate is
 Quadruped remains excluded; direct-source and parallel-source comparisons are
 still outstanding. This closes the library scheduling sweep, not the full
 35-registration online performance objective.
+
+## Direct-source transport prerequisite (October 3)
+
+The [source audit and worker prerequisite](semantic_recovery_evidence/dmc_source_transport_20261003/)
+now pass all twelve registrations independently: 48 CPU B2/P2 comparisons across
+T1/T8, seeded resets and internal reset boundaries, including cached Gaussian
+RNG state. Complete endpoint State and accepted numeric task outputs agree
+exactly between scalar source, shared-memory source workers and local adapters;
+returned shared-buffer outputs remain owned after another call.
+
+This is a benchmark-infrastructure gate, not public Env, rendering or performance
+acceptance. Public DMC construction opens a renderer, so the local prerequisite
+uses adapters only. Source rendering supports hardware OpenGL: the upcoming
+comparison must include real source-GPU rendering and source-CPU software GL in
+separate verified interpreters, both explicitly at 64x64. Quadruped remains local
+pending its independent renderer-history issue. Production is unchanged.
