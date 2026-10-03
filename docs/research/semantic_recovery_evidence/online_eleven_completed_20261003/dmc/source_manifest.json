@@ -1,0 +1,26 @@
+{
+  "commit": "176d54532b3c0a251a4f509b74f2fdacc143a63d",
+  "repository": "https://github.com/galilai-group/stable-worldmodel",
+  "files": {
+    "stable_worldmodel/spaces.py": "73079b2a66dace087abc7c417691e3cc339887866915553e21d0936a362229eb",
+    "stable_worldmodel/utils.py": "9979483129df100cf4728dd45d1b6d0bb02d1fadec637d7f7065fe7894a3c276",
+    "stable_worldmodel/envs/__init__.py": "118a262677a647c6d6ef8889443b096abe082db4e365fc0a5b1249715e7e3c1a",
+    "stable_worldmodel/envs/dmcontrol/acrobot.py": "f29fcf63bc501fb892c964e50c49bfc4277524af33f4f9f8b4f2e5eabf2fdab9",
+    "stable_worldmodel/envs/dmcontrol/ball_in_cup.py": "da16e73ba3d40b06a18c0880380f35665f9571515edd8a1269d4984341afa6df",
+    "stable_worldmodel/envs/dmcontrol/cartpole.py": "93d7234d33cc7a1bdb5bf30928af5aa48f46c58f3dcafa51abec23367947695b",
+    "stable_worldmodel/envs/dmcontrol/cheetah.py": "a2ed95f35782fe5cd92080bffc11fb770b94fbcd1a897c8ac63cd05da0902cdc",
+    "stable_worldmodel/envs/dmcontrol/custom_tasks/cheetah.py": "da7ddaad68f96afbfe48be3e5871b48663e2078f5cb5850075a06cbd5ffa59c5",
+    "stable_worldmodel/envs/dmcontrol/custom_tasks/hopper.py": "b2cf01138b07a0c94a8ad3f45928e647bb9891d5a115b5b04e9e22ed4589ba30",
+    "stable_worldmodel/envs/dmcontrol/custom_tasks/reacher.py": "e5e2e82c0621efca7b4c3c194f422c946db59edb12db7735fbe8bdcf12e37e7c",
+    "stable_worldmodel/envs/dmcontrol/custom_tasks/walker.py": "7b33d2ac7efabb1e1b897600953d2b2cdf55d39237bd319a5bdbc432d66c4f6e",
+    "stable_worldmodel/envs/dmcontrol/dmcontrol.py": "13d55bf73f9b7f8a9b5a2b380e12750e253a391716e64e65f795b1c9fff8bc08",
+    "stable_worldmodel/envs/dmcontrol/finger.py": "a84a7d5a6ac60a0e49ee088309b4d9b19d5ccb91bdd22befd0573b7c4ca02b5e",
+    "stable_worldmodel/envs/dmcontrol/hopper.py": "d6637058041c1412ba17da3c0762d523e7cae904a0e2f5ed92dc4c34fb5c63d8",
+    "stable_worldmodel/envs/dmcontrol/humanoid.py": "a8d1bd8a5640e7ed40aabac4258a54d1e24e9eea2f6c236a3efa1fc16014c151",
+    "stable_worldmodel/envs/dmcontrol/manipulator.py": "2aa65317fa7296ae5574657a8f5eed5b330a789d6f34a400a6d58bd5db07aafd",
+    "stable_worldmodel/envs/dmcontrol/pendulum.py": "c8a8c4a710b407b54d9edc57c283fbc3a743c4beea31cefe166c1e4e45d4eae9",
+    "stable_worldmodel/envs/dmcontrol/quadruped.py": "78f6e09cafef755e495e48fc1a90456a55eccd295c847f8a6fa88bbe32bac781",
+    "stable_worldmodel/envs/dmcontrol/reacher.py": "7d58845f0a3412a1f8d52c0e2305fd8ca2889745ea38429ff08ccf2a8b561f65",
+    "stable_worldmodel/envs/dmcontrol/walker.py": "2761f5c29cf9653ebf352db346299e2fda7d6b2274a449853e711cfacb5e61eb"
+  }
+}
