@@ -1,0 +1,11 @@
+....................................................................     [100%]
+=============================== warnings summary ===============================
+../../../stable-worldmodel/stable_worldmodel/envs/__init__.py:215
+  /Users/samib/stable-worldmodel/stable_worldmodel/envs/__init__.py:215: UserWarning: ale-py not found; ALE/* envs are unavailable. Install with: pip install 'stable-worldmodel[env]' or pip install ale-py.
+    from stable_worldmodel.envs import ale  # noqa: F401
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+------------------------------ stable-envs safety ------------------------------
+resources: 0 EGL contexts created, 0 released, 0 live (peak 0); renderers 0 created / 0 closed
+node: Mac-169.lan slurm=? reason=none reference-renderer={}
+68 passed, 1 warning in 0.54s

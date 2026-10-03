@@ -1,0 +1,59 @@
+F...................................................................     [100%]
+=================================== FAILURES ===================================
+____ test_source_state_projection_preserves_owned_rng_and_controller_fields ____
+
+    def test_source_state_projection_preserves_owned_rng_and_controller_fields():
+        row = dict(qpos=np.arange(22, dtype=np.float64), qvel=np.arange(21, dtype=np.float64),
+            time=np.asarray(.08), qacc_warmstart=np.arange(21, dtype=np.float64), goal=np.arange(3, dtype=np.float64),
+            initial_gripper_xpos=np.arange(3, dtype=np.float64), controller_position=np.arange(3, dtype=np.float64),
+            controller_quaternion=np.arange(4, dtype=np.float64), elapsed=np.asarray(4, dtype=np.int64),
+            rng={'bit_generator': 'PCG64', 'state': {'state': 2**127 + 2**64 + 7, 'inc': 2**96 + 9},
+                 'has_uint32': 1, 'uinteger': 2**32 - 1})
+        state = source_state([row, copy.deepcopy(row)])
+        assert state.batch_size == (2,)
+        assert state['rng', 'state_words'][0].tolist() == [7, 0, 1, 2**31]
+        assert state['rng', 'increment_words'][0].tolist() == [9, 0, 0, 1]
+        assert state['rng', 'uinteger'][0].item() == 2**32 - 1
+        assert state['lifecycle', 'elapsed_steps'].dtype == torch.int64
+        row['qpos'][:] = 0
+        assert state['qpos'][0, 1].item() == 1
+>       copied = state.to('cpu', copy=True)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_fetch_source_pipeline.py:31: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../../../se8-fetch-venv/lib/python3.12/site-packages/tensordict/utils.py:1013: in func_as_decorator
+    out = func(_self, *args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../../se8-fetch-venv/lib/python3.12/site-packages/tensordict/base.py:17506: in to
+    ) = _parse_to(*args, **kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+args = ('cpu',), kwargs = {'copy': True}
+
+    def _parse_to(*args, **kwargs):
+        batch_size = kwargs.pop("batch_size", None)
+        non_blocking_pin = kwargs.pop("non_blocking_pin", False)
+        num_threads = kwargs.pop("num_threads", None)
+        other = kwargs.pop("other", None)
+        inplace = kwargs.pop("inplace", False)
+        if not is_compiling():
+>           device, dtype, non_blocking, convert_to_format = torch._C._nn._parse_to(
+                *args, **kwargs
+            )
+E           RuntimeError: .to() does not accept copy argument
+
+../../../se8-fetch-venv/lib/python3.12/site-packages/tensordict/utils.py:1143: RuntimeError
+=============================== warnings summary ===============================
+../../../stable-worldmodel/stable_worldmodel/envs/__init__.py:215
+  /Users/samib/stable-worldmodel/stable_worldmodel/envs/__init__.py:215: UserWarning: ale-py not found; ALE/* envs are unavailable. Install with: pip install 'stable-worldmodel[env]' or pip install ale-py.
+    from stable_worldmodel.envs import ale  # noqa: F401
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+------------------------------ stable-envs safety ------------------------------
+resources: 0 EGL contexts created, 0 released, 0 live (peak 0); renderers 0 created / 0 closed
+node: Mac-169.lan slurm=? reason=none reference-renderer={}
+=========================== short test summary info ============================
+FAILED tests/unit/test_fetch_source_pipeline.py::test_source_state_projection_preserves_owned_rng_and_controller_fields
+1 failed, 67 passed, 1 warning in 0.73s

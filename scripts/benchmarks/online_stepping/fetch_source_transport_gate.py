@@ -58,6 +58,7 @@ def main():
     frame_slice = slice(20, 30) if args.empty_frames else None
     render_size = 64 if args.empty_frames else None
     import_source(args.source_root)
+    from scripts.benchmarks.online_stepping.fetch_source_pipeline import source_state
     from scripts.benchmarks.online_stepping.fetch_source_render_lifecycle import IDS, PIN, differences
     from scripts.recovery.fetch_public_gate import equal_state, full_compare
 
@@ -69,6 +70,7 @@ def main():
     torch.set_num_threads(1)
     files = [Path(__file__).relative_to(Path.cwd()),
              Path('scripts/benchmarks/online_stepping/fetch_parallel_source.py'),
+             Path('scripts/benchmarks/online_stepping/fetch_source_pipeline.py'),
              Path('scripts/benchmarks/online_stepping/fetch_source_render_lifecycle.py'),
              Path('scripts/benchmarks/online_stepping/classic_parallel_source.py'),
              Path('scripts/recovery/fetch_public_gate.py'), Path('scripts/recovery/fetch_pickandplace_adapter_probe.py'),
@@ -103,6 +105,7 @@ def main():
                         source_initial, public_initial = serial.snapshot(), env.get_state()
                         report['runtime_files'].update(parallel.runtime_files)
                         full_compare(public_initial, serial.envs)
+                        equal_state(public_initial, source_state(source_initial))
                         for limits in ([50] * 4, [1, 3, 2, 50]):
                             initial = copy.deepcopy(source_initial)
                             for row, maximum in zip(initial, limits, strict=True):
@@ -123,6 +126,7 @@ def main():
                                 compare(tasks(result, horizon), expected)
                                 assert not differences(parallel.snapshot(), serial.snapshot())
                                 full_compare(result['state'], serial.envs)
+                                equal_state(result['state'], source_state(serial.snapshot()))
                                 valid = torch.arange(horizon)[None, :] < torch.tensor(limits)[:, None]
                                 assert torch.equal(actual['valid'], valid) and torch.equal(result['state_valid'], valid)
                                 for lane, maximum in enumerate(limits):
@@ -154,7 +158,9 @@ def main():
                                     owner.restore(initial)
                                     owner.reset_episode()
                                 env.set_state(public_initial)
-                                full_compare(env._simulator.reset(), serial.envs)
+                                reset = env._simulator.reset()
+                                full_compare(reset, serial.envs)
+                                equal_state(reset, source_state(serial.snapshot()))
                                 assert not differences(serial.snapshot(), parallel.snapshot())
                                 inspection = list(parallel.vector.call('inspection'))
                                 assert len({row['pid'] for row in inspection}) == 2
@@ -163,7 +169,7 @@ def main():
                                 report['cases'].append(dict(registration=registration, batch=4, workers=2, horizon=horizon,
                                     action_dtype=np.dtype(dtype).name, limits=limits, valid_steps=int(valid.sum()),
                                     source_tasks_snapshot='PASS', source_adapter_full_state='PASS',
-                                    shared_output_ownership='PASS', restored_replay='PASS', unseeded_reset_rng='PASS',
+                                    shared_output_ownership='PASS', independent_state_projection='PASS', restored_replay='PASS', unseeded_reset_rng='PASS',
                                     termination_padding_and_state_hold='PASS', continuation_without_autoreset='PASS', worker_info=inspection))
                                 save()
                         print(registration, horizon, 'four source transport/dispatcher cases PASS', flush=True)

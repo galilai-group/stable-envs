@@ -1,0 +1,18 @@
+{
+  "README.md": "b81cf08a1284c45d26e6a57d677a41f1f8267929c8bacdbe6e0bd7c4ee07bd35",
+  "bundle-sha256.json": "b1b52d05071a6894e029f62de2c1b5aea68544b336c0283c81133d94bf026310",
+  "candidate_manifest.json": "4997fcf917c3f2917b89b0c01633cc3611408c3cc477420aa7c04e864aedcbf4",
+  "deployment.json": "22b8f8607d7a6bc0d0e09473211e7d89ffe3c5325d91ffe298c09ede72739147",
+  "frozen.log": "f6156054169bf11f44ca675f2d5021daeeb59f557db793041caf66d476e938a4",
+  "frozen.xml": "db72cb6875c6094df4630e061dbac9e72c8195da6ee4997c226a1f4a5cbbfa3a",
+  "prepare.py": "65fc7aa642f22869d0d7d813319fa72e840ecce38642fcad4546415fae36d31d",
+  "review.json": "6037f201ca412bc8074af762ecbf6b55dabcdcb5265c29719678499cda1182ad",
+  "run.sh": "b9d64d28ada191ae30fa1b8fbc70abe31b22f391ebe3aa4ea4d61e4095de3820",
+  "source-state-final-v2.json": "b93172beff54738f746dba70025a2c87cb70e08075533306e7eeaf9609cb6179",
+  "source-state-final-v2.log": "cc057859011d6e3b9d3cbf729973b89d81d7e43c0a493c6024f8c4cbe20836ec",
+  "source_manifest.json": "91ef5dc027498fa18b6b5898b7f0e65162cc50d0da821ef33bea50e82618aabc",
+  "synthetic-final.log": "3c4be601ba6d8ca04db4b6d2d238cdecf6ba4250a65fcc963f53dcb33dfccf1b",
+  "synthetic-final.xml": "66bfd484e43ceaad1bada72aac6971b00342a0e179462aaca6f06e0f63939f70",
+  "synthetic-v4.log": "d48cf65f4364f0795ab6ba90e1b58c7f31f38d6512a66ee2062a6cded5464f6b",
+  "synthetic-v4.xml": "8dcdf51f173fb29d9539efd9972ae03c02706445ecb38bd9e41cfe7218e85e96"
+}

@@ -1,0 +1,4281 @@
+{
+  "status": "PASS",
+  "host": "Mac-169.lan",
+  "parent_pid": 92267,
+  "source_pin": "176d54532b3c0a251a4f509b74f2fdacc143a63d",
+  "source_files": {
+    "stable_worldmodel/spaces.py": "73079b2a66dace087abc7c417691e3cc339887866915553e21d0936a362229eb",
+    "stable_worldmodel/utils.py": "9979483129df100cf4728dd45d1b6d0bb02d1fadec637d7f7065fe7894a3c276",
+    "stable_worldmodel/envs/__init__.py": "118a262677a647c6d6ef8889443b096abe082db4e365fc0a5b1249715e7e3c1a",
+    "stable_worldmodel/envs/gymnasium_robotics/__init__.py": "c3a36c2ecd3832116795d7a15f4eafa647161f4901dbb955ab6565358b02e14c",
+    "stable_worldmodel/envs/gymnasium_robotics/fetch.py": "fd2b1cd2ce79f83498736ea1f92a33f64795ff8010703a8edf2ee43829355fd5"
+  },
+  "candidate_files": {
+    "scripts/benchmarks/online_stepping/fetch_source_transport_gate.py": "a19e009b34ebbd8bee00b522672548e77cc61803243b168b8b4705918bbf7edb",
+    "scripts/benchmarks/online_stepping/fetch_parallel_source.py": "40285bfb696464d80066b517828b5db15f6f595feb82910a5c9f31da705530d4",
+    "scripts/benchmarks/online_stepping/fetch_source_pipeline.py": "fef21caa8e0229a0b379accbea25d89e60999d79a50763e8dcaa9754b26e9b51",
+    "scripts/benchmarks/online_stepping/fetch_source_render_lifecycle.py": "2d9a8250b484f719dc885d24a3a3e48533f5a427f42dde66ae59225c962d3e2d",
+    "scripts/benchmarks/online_stepping/classic_parallel_source.py": "0ae7b69a455f663e4d39ec9b8afc0fc0f60cc1d542868317961e26038eb4efbe",
+    "scripts/recovery/fetch_public_gate.py": "7de91e212f946faa56f83d3a36079358ecb09715ee9c39cc673cec670cbdf384",
+    "scripts/recovery/fetch_pickandplace_adapter_probe.py": "73762dcb7af5afa95d3763a66604d696df16139354caeb665ae11e67adef2e95",
+    "stable_envs/_stepping.py": "4b23abcf73767a4a59f0c106e098376ac7b2570608e5d4829a8919dd213f5f99",
+    "stable_envs/_adapters/fetch_pickandplace.py": "9e018113ab6f478dcf2a030a93f89ef8d7d587f6aaea1f520151518a388b1f68",
+    "stable_envs/_adapters/fetch_observations.py": "0a476d077337ed0536d552a9ace1132747a9725278a89e26775b70136206bd6e"
+  },
+  "versions": {
+    "numpy": "2.5.3",
+    "mujoco": "3.11.0",
+    "gymnasium": "1.3.0",
+    "gymnasium-robotics": "1.4.2",
+    "torch": "2.14.0",
+    "tensordict": "0.14.2"
+  },
+  "scope": "CPU B4/P2 actual source shared task arrays; render-free adapter/dispatcher fixture",
+  "no_rendering": true,
+  "no_timing": true,
+  "empty_frames": false,
+  "state_rpc": "untimed pickled independent source snapshots",
+  "runtime_files": {
+    "/Users/samib/se8-fetch-venv/lib/python3.12/site-packages/gymnasium/vector/async_vector_env.py": "1646a8b5145d080afacc15082ba6798ece0e8127c7e835e11fd1ace6061f74db",
+    "/Users/samib/se8-fetch-venv/lib/python3.12/site-packages/gymnasium/wrappers/common.py": "2a2cd78973296d5871af0ae1334f4c567cacef380bc69b4a759fcc29cbcff51a",
+    "/Users/samib/se8-fetch-venv/lib/python3.12/site-packages/gymnasium/core.py": "245745bf21d7b6f6f6d187260c17fd3c19988806ce12fc9c606b2bbe813d37a8",
+    "/Users/samib/se8-fetch-venv/lib/python3.12/site-packages/gymnasium/utils/record_constructor.py": "6cc738e70aac81fd18d10c16e72e8a91f11177b369c13ba555e5c8ffb3cf04bf",
+    "/Users/samib/stable-worldmodel/stable_worldmodel/envs/gymnasium_robotics/fetch.py": "fd2b1cd2ce79f83498736ea1f92a33f64795ff8010703a8edf2ee43829355fd5",
+    "/Users/samib/se8-fetch-venv/lib/python3.12/site-packages/gymnasium_robotics/envs/fetch/reach.py": "5cdcdc9ad0c6e34a9e9ed33313f0eb98791383f8f31fa1e0a09e161ebceda8c3",
+    "/Users/samib/se8-fetch-venv/lib/python3.12/site-packages/gymnasium_robotics/envs/fetch/fetch_env.py": "de1f51690d0aa754ab99412ba3e23cebdc96351746b4d141e46260bbd21d1844",
+    "/Users/samib/se8-fetch-venv/lib/python3.12/site-packages/gymnasium_robotics/envs/robot_env.py": "bbe6e2de4b325f6c0c090869526c7809bf8c43bc323a79f7f732ceb88d3eaaad",
+    "/Users/samib/se8-fetch-venv/lib/python3.12/site-packages/gymnasium_robotics/core.py": "715a819afc291a2a7def5f92592ac641c3cddc1e9879e1a9f9a52bf57f2f7269",
+    "/Users/samib/se8-fetch-venv/lib/python3.12/site-packages/gymnasium/utils/ezpickle.py": "a2a1f863d1bb180b49c66874cb609fb26974e6cd10a8c138de5da8e9a8b9b4e0",
+    "/Users/samib/se8-fetch-venv/lib/python3.12/site-packages/gymnasium_robotics/envs/fetch/push.py": "be2463d3e96da0f182424e7066e1303507a0c7ceed9808650c02fcf11ca0e90e",
+    "/Users/samib/se8-fetch-venv/lib/python3.12/site-packages/gymnasium_robotics/envs/fetch/slide.py": "c82311fcd25dfce350715635a477e3e5e6ff32304574707b872039f2eb96d869",
+    "/Users/samib/se8-fetch-venv/lib/python3.12/site-packages/gymnasium_robotics/envs/fetch/pick_and_place.py": "2eae143a3b42ae6460b91de4ce063d154e13e29cebffbd120630ea1d88abd748"
+  },
+  "cases": [
+    {
+      "registration": "swm/FetchReach-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 1,
+      "action_dtype": "float32",
+      "limits": [
+        50,
+        50,
+        50,
+        50
+      ],
+      "valid_steps": 4,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92281,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92282,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchReach-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 1,
+      "action_dtype": "float64",
+      "limits": [
+        50,
+        50,
+        50,
+        50
+      ],
+      "valid_steps": 4,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92281,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92282,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchReach-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 1,
+      "action_dtype": "float32",
+      "limits": [
+        1,
+        3,
+        2,
+        50
+      ],
+      "valid_steps": 4,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92281,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92282,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchReach-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 1,
+      "action_dtype": "float64",
+      "limits": [
+        1,
+        3,
+        2,
+        50
+      ],
+      "valid_steps": 4,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92281,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92282,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchReach-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 8,
+      "action_dtype": "float32",
+      "limits": [
+        50,
+        50,
+        50,
+        50
+      ],
+      "valid_steps": 32,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92287,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92288,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchReach-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 8,
+      "action_dtype": "float64",
+      "limits": [
+        50,
+        50,
+        50,
+        50
+      ],
+      "valid_steps": 32,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92287,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92288,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchReach-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 8,
+      "action_dtype": "float32",
+      "limits": [
+        1,
+        3,
+        2,
+        50
+      ],
+      "valid_steps": 14,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92287,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92288,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchReach-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 8,
+      "action_dtype": "float64",
+      "limits": [
+        1,
+        3,
+        2,
+        50
+      ],
+      "valid_steps": 14,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92287,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92288,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchReachDense-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 1,
+      "action_dtype": "float32",
+      "limits": [
+        50,
+        50,
+        50,
+        50
+      ],
+      "valid_steps": 4,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92293,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92294,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchReachDense-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 1,
+      "action_dtype": "float64",
+      "limits": [
+        50,
+        50,
+        50,
+        50
+      ],
+      "valid_steps": 4,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92293,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92294,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchReachDense-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 1,
+      "action_dtype": "float32",
+      "limits": [
+        1,
+        3,
+        2,
+        50
+      ],
+      "valid_steps": 4,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92293,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92294,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchReachDense-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 1,
+      "action_dtype": "float64",
+      "limits": [
+        1,
+        3,
+        2,
+        50
+      ],
+      "valid_steps": 4,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92293,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92294,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchReachDense-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 8,
+      "action_dtype": "float32",
+      "limits": [
+        50,
+        50,
+        50,
+        50
+      ],
+      "valid_steps": 32,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92299,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92300,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchReachDense-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 8,
+      "action_dtype": "float64",
+      "limits": [
+        50,
+        50,
+        50,
+        50
+      ],
+      "valid_steps": 32,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92299,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92300,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchReachDense-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 8,
+      "action_dtype": "float32",
+      "limits": [
+        1,
+        3,
+        2,
+        50
+      ],
+      "valid_steps": 14,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92299,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92300,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchReachDense-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 8,
+      "action_dtype": "float64",
+      "limits": [
+        1,
+        3,
+        2,
+        50
+      ],
+      "valid_steps": 14,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92299,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92300,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchReachDict-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 1,
+      "action_dtype": "float32",
+      "limits": [
+        50,
+        50,
+        50,
+        50
+      ],
+      "valid_steps": 4,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92305,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92306,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchReachDict-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 1,
+      "action_dtype": "float64",
+      "limits": [
+        50,
+        50,
+        50,
+        50
+      ],
+      "valid_steps": 4,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92305,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92306,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchReachDict-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 1,
+      "action_dtype": "float32",
+      "limits": [
+        1,
+        3,
+        2,
+        50
+      ],
+      "valid_steps": 4,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92305,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92306,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchReachDict-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 1,
+      "action_dtype": "float64",
+      "limits": [
+        1,
+        3,
+        2,
+        50
+      ],
+      "valid_steps": 4,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92305,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92306,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchReachDict-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 8,
+      "action_dtype": "float32",
+      "limits": [
+        50,
+        50,
+        50,
+        50
+      ],
+      "valid_steps": 32,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92312,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92313,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchReachDict-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 8,
+      "action_dtype": "float64",
+      "limits": [
+        50,
+        50,
+        50,
+        50
+      ],
+      "valid_steps": 32,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92312,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92313,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchReachDict-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 8,
+      "action_dtype": "float32",
+      "limits": [
+        1,
+        3,
+        2,
+        50
+      ],
+      "valid_steps": 14,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92312,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92313,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchReachDict-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 8,
+      "action_dtype": "float64",
+      "limits": [
+        1,
+        3,
+        2,
+        50
+      ],
+      "valid_steps": 14,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92312,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92313,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchPush-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 1,
+      "action_dtype": "float32",
+      "limits": [
+        50,
+        50,
+        50,
+        50
+      ],
+      "valid_steps": 4,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92320,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92321,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchPush-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 1,
+      "action_dtype": "float64",
+      "limits": [
+        50,
+        50,
+        50,
+        50
+      ],
+      "valid_steps": 4,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92320,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92321,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchPush-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 1,
+      "action_dtype": "float32",
+      "limits": [
+        1,
+        3,
+        2,
+        50
+      ],
+      "valid_steps": 4,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92320,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92321,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchPush-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 1,
+      "action_dtype": "float64",
+      "limits": [
+        1,
+        3,
+        2,
+        50
+      ],
+      "valid_steps": 4,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92320,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92321,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchPush-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 8,
+      "action_dtype": "float32",
+      "limits": [
+        50,
+        50,
+        50,
+        50
+      ],
+      "valid_steps": 32,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92327,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92328,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchPush-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 8,
+      "action_dtype": "float64",
+      "limits": [
+        50,
+        50,
+        50,
+        50
+      ],
+      "valid_steps": 32,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92327,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92328,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchPush-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 8,
+      "action_dtype": "float32",
+      "limits": [
+        1,
+        3,
+        2,
+        50
+      ],
+      "valid_steps": 14,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92327,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92328,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchPush-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 8,
+      "action_dtype": "float64",
+      "limits": [
+        1,
+        3,
+        2,
+        50
+      ],
+      "valid_steps": 14,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92327,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92328,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchPushDense-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 1,
+      "action_dtype": "float32",
+      "limits": [
+        50,
+        50,
+        50,
+        50
+      ],
+      "valid_steps": 4,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92333,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92334,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchPushDense-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 1,
+      "action_dtype": "float64",
+      "limits": [
+        50,
+        50,
+        50,
+        50
+      ],
+      "valid_steps": 4,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92333,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92334,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchPushDense-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 1,
+      "action_dtype": "float32",
+      "limits": [
+        1,
+        3,
+        2,
+        50
+      ],
+      "valid_steps": 4,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92333,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92334,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchPushDense-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 1,
+      "action_dtype": "float64",
+      "limits": [
+        1,
+        3,
+        2,
+        50
+      ],
+      "valid_steps": 4,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92333,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92334,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchPushDense-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 8,
+      "action_dtype": "float32",
+      "limits": [
+        50,
+        50,
+        50,
+        50
+      ],
+      "valid_steps": 32,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92339,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92340,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchPushDense-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 8,
+      "action_dtype": "float64",
+      "limits": [
+        50,
+        50,
+        50,
+        50
+      ],
+      "valid_steps": 32,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92339,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92340,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchPushDense-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 8,
+      "action_dtype": "float32",
+      "limits": [
+        1,
+        3,
+        2,
+        50
+      ],
+      "valid_steps": 14,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92339,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92340,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchPushDense-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 8,
+      "action_dtype": "float64",
+      "limits": [
+        1,
+        3,
+        2,
+        50
+      ],
+      "valid_steps": 14,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92339,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92340,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchPushDict-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 1,
+      "action_dtype": "float32",
+      "limits": [
+        50,
+        50,
+        50,
+        50
+      ],
+      "valid_steps": 4,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92345,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92346,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchPushDict-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 1,
+      "action_dtype": "float64",
+      "limits": [
+        50,
+        50,
+        50,
+        50
+      ],
+      "valid_steps": 4,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92345,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92346,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchPushDict-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 1,
+      "action_dtype": "float32",
+      "limits": [
+        1,
+        3,
+        2,
+        50
+      ],
+      "valid_steps": 4,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92345,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92346,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchPushDict-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 1,
+      "action_dtype": "float64",
+      "limits": [
+        1,
+        3,
+        2,
+        50
+      ],
+      "valid_steps": 4,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92345,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92346,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchPushDict-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 8,
+      "action_dtype": "float32",
+      "limits": [
+        50,
+        50,
+        50,
+        50
+      ],
+      "valid_steps": 32,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92351,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92352,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchPushDict-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 8,
+      "action_dtype": "float64",
+      "limits": [
+        50,
+        50,
+        50,
+        50
+      ],
+      "valid_steps": 32,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92351,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92352,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchPushDict-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 8,
+      "action_dtype": "float32",
+      "limits": [
+        1,
+        3,
+        2,
+        50
+      ],
+      "valid_steps": 14,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92351,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92352,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchPushDict-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 8,
+      "action_dtype": "float64",
+      "limits": [
+        1,
+        3,
+        2,
+        50
+      ],
+      "valid_steps": 14,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92351,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92352,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchSlide-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 1,
+      "action_dtype": "float32",
+      "limits": [
+        50,
+        50,
+        50,
+        50
+      ],
+      "valid_steps": 4,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92357,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92358,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchSlide-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 1,
+      "action_dtype": "float64",
+      "limits": [
+        50,
+        50,
+        50,
+        50
+      ],
+      "valid_steps": 4,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92357,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92358,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchSlide-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 1,
+      "action_dtype": "float32",
+      "limits": [
+        1,
+        3,
+        2,
+        50
+      ],
+      "valid_steps": 4,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92357,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92358,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchSlide-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 1,
+      "action_dtype": "float64",
+      "limits": [
+        1,
+        3,
+        2,
+        50
+      ],
+      "valid_steps": 4,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92357,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92358,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchSlide-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 8,
+      "action_dtype": "float32",
+      "limits": [
+        50,
+        50,
+        50,
+        50
+      ],
+      "valid_steps": 32,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92363,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92364,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchSlide-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 8,
+      "action_dtype": "float64",
+      "limits": [
+        50,
+        50,
+        50,
+        50
+      ],
+      "valid_steps": 32,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92363,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92364,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchSlide-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 8,
+      "action_dtype": "float32",
+      "limits": [
+        1,
+        3,
+        2,
+        50
+      ],
+      "valid_steps": 14,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92363,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92364,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchSlide-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 8,
+      "action_dtype": "float64",
+      "limits": [
+        1,
+        3,
+        2,
+        50
+      ],
+      "valid_steps": 14,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92363,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92364,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchSlideDense-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 1,
+      "action_dtype": "float32",
+      "limits": [
+        50,
+        50,
+        50,
+        50
+      ],
+      "valid_steps": 4,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92369,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92370,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchSlideDense-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 1,
+      "action_dtype": "float64",
+      "limits": [
+        50,
+        50,
+        50,
+        50
+      ],
+      "valid_steps": 4,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92369,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92370,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchSlideDense-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 1,
+      "action_dtype": "float32",
+      "limits": [
+        1,
+        3,
+        2,
+        50
+      ],
+      "valid_steps": 4,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92369,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92370,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchSlideDense-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 1,
+      "action_dtype": "float64",
+      "limits": [
+        1,
+        3,
+        2,
+        50
+      ],
+      "valid_steps": 4,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92369,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92370,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchSlideDense-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 8,
+      "action_dtype": "float32",
+      "limits": [
+        50,
+        50,
+        50,
+        50
+      ],
+      "valid_steps": 32,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92375,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92376,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchSlideDense-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 8,
+      "action_dtype": "float64",
+      "limits": [
+        50,
+        50,
+        50,
+        50
+      ],
+      "valid_steps": 32,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92375,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92376,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchSlideDense-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 8,
+      "action_dtype": "float32",
+      "limits": [
+        1,
+        3,
+        2,
+        50
+      ],
+      "valid_steps": 14,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92375,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92376,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchSlideDense-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 8,
+      "action_dtype": "float64",
+      "limits": [
+        1,
+        3,
+        2,
+        50
+      ],
+      "valid_steps": 14,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92375,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92376,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchSlideDict-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 1,
+      "action_dtype": "float32",
+      "limits": [
+        50,
+        50,
+        50,
+        50
+      ],
+      "valid_steps": 4,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92381,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92382,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchSlideDict-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 1,
+      "action_dtype": "float64",
+      "limits": [
+        50,
+        50,
+        50,
+        50
+      ],
+      "valid_steps": 4,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92381,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92382,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchSlideDict-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 1,
+      "action_dtype": "float32",
+      "limits": [
+        1,
+        3,
+        2,
+        50
+      ],
+      "valid_steps": 4,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92381,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92382,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchSlideDict-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 1,
+      "action_dtype": "float64",
+      "limits": [
+        1,
+        3,
+        2,
+        50
+      ],
+      "valid_steps": 4,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92381,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92382,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchSlideDict-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 8,
+      "action_dtype": "float32",
+      "limits": [
+        50,
+        50,
+        50,
+        50
+      ],
+      "valid_steps": 32,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92387,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92388,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchSlideDict-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 8,
+      "action_dtype": "float64",
+      "limits": [
+        50,
+        50,
+        50,
+        50
+      ],
+      "valid_steps": 32,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92387,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92388,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchSlideDict-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 8,
+      "action_dtype": "float32",
+      "limits": [
+        1,
+        3,
+        2,
+        50
+      ],
+      "valid_steps": 14,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92387,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92388,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchSlideDict-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 8,
+      "action_dtype": "float64",
+      "limits": [
+        1,
+        3,
+        2,
+        50
+      ],
+      "valid_steps": 14,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92387,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92388,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchPickAndPlace-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 1,
+      "action_dtype": "float32",
+      "limits": [
+        50,
+        50,
+        50,
+        50
+      ],
+      "valid_steps": 4,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92405,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92406,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchPickAndPlace-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 1,
+      "action_dtype": "float64",
+      "limits": [
+        50,
+        50,
+        50,
+        50
+      ],
+      "valid_steps": 4,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92405,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92406,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchPickAndPlace-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 1,
+      "action_dtype": "float32",
+      "limits": [
+        1,
+        3,
+        2,
+        50
+      ],
+      "valid_steps": 4,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92405,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92406,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchPickAndPlace-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 1,
+      "action_dtype": "float64",
+      "limits": [
+        1,
+        3,
+        2,
+        50
+      ],
+      "valid_steps": 4,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92405,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92406,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchPickAndPlace-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 8,
+      "action_dtype": "float32",
+      "limits": [
+        50,
+        50,
+        50,
+        50
+      ],
+      "valid_steps": 32,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92412,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92413,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchPickAndPlace-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 8,
+      "action_dtype": "float64",
+      "limits": [
+        50,
+        50,
+        50,
+        50
+      ],
+      "valid_steps": 32,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92412,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92413,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchPickAndPlace-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 8,
+      "action_dtype": "float32",
+      "limits": [
+        1,
+        3,
+        2,
+        50
+      ],
+      "valid_steps": 14,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92412,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92413,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchPickAndPlace-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 8,
+      "action_dtype": "float64",
+      "limits": [
+        1,
+        3,
+        2,
+        50
+      ],
+      "valid_steps": 14,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92412,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92413,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDense-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 1,
+      "action_dtype": "float32",
+      "limits": [
+        50,
+        50,
+        50,
+        50
+      ],
+      "valid_steps": 4,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92418,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92419,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDense-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 1,
+      "action_dtype": "float64",
+      "limits": [
+        50,
+        50,
+        50,
+        50
+      ],
+      "valid_steps": 4,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92418,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92419,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDense-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 1,
+      "action_dtype": "float32",
+      "limits": [
+        1,
+        3,
+        2,
+        50
+      ],
+      "valid_steps": 4,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92418,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92419,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDense-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 1,
+      "action_dtype": "float64",
+      "limits": [
+        1,
+        3,
+        2,
+        50
+      ],
+      "valid_steps": 4,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92418,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92419,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDense-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 8,
+      "action_dtype": "float32",
+      "limits": [
+        50,
+        50,
+        50,
+        50
+      ],
+      "valid_steps": 32,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92426,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92427,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDense-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 8,
+      "action_dtype": "float64",
+      "limits": [
+        50,
+        50,
+        50,
+        50
+      ],
+      "valid_steps": 32,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92426,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92427,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDense-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 8,
+      "action_dtype": "float32",
+      "limits": [
+        1,
+        3,
+        2,
+        50
+      ],
+      "valid_steps": 14,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92426,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92427,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDense-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 8,
+      "action_dtype": "float64",
+      "limits": [
+        1,
+        3,
+        2,
+        50
+      ],
+      "valid_steps": 14,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92426,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92427,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDict-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 1,
+      "action_dtype": "float32",
+      "limits": [
+        50,
+        50,
+        50,
+        50
+      ],
+      "valid_steps": 4,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92432,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92433,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDict-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 1,
+      "action_dtype": "float64",
+      "limits": [
+        50,
+        50,
+        50,
+        50
+      ],
+      "valid_steps": 4,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92432,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92433,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDict-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 1,
+      "action_dtype": "float32",
+      "limits": [
+        1,
+        3,
+        2,
+        50
+      ],
+      "valid_steps": 4,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92432,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92433,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDict-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 1,
+      "action_dtype": "float64",
+      "limits": [
+        1,
+        3,
+        2,
+        50
+      ],
+      "valid_steps": 4,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92432,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92433,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDict-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 8,
+      "action_dtype": "float32",
+      "limits": [
+        50,
+        50,
+        50,
+        50
+      ],
+      "valid_steps": 32,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92438,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92439,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDict-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 8,
+      "action_dtype": "float64",
+      "limits": [
+        50,
+        50,
+        50,
+        50
+      ],
+      "valid_steps": 32,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92438,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92439,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDict-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 8,
+      "action_dtype": "float32",
+      "limits": [
+        1,
+        3,
+        2,
+        50
+      ],
+      "valid_steps": 14,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92438,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92439,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDict-v3",
+      "batch": 4,
+      "workers": 2,
+      "horizon": 8,
+      "action_dtype": "float64",
+      "limits": [
+        1,
+        3,
+        2,
+        50
+      ],
+      "valid_steps": 14,
+      "source_tasks_snapshot": "PASS",
+      "source_adapter_full_state": "PASS",
+      "shared_output_ownership": "PASS",
+      "independent_state_projection": "PASS",
+      "restored_replay": "PASS",
+      "unseeded_reset_rng": "PASS",
+      "termination_padding_and_state_hold": "PASS",
+      "continuation_without_autoreset": "PASS",
+      "worker_info": [
+        {
+          "pid": 92438,
+          "start": 0,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        },
+        {
+          "pid": 92439,
+          "start": 2,
+          "size": 2,
+          "torch_threads": 1,
+          "render_audit_count": 0,
+          "viewers_absent": true
+        }
+      ]
+    }
+  ],
+  "worker_closures": [
+    {
+      "registration": "swm/FetchReach-v3",
+      "horizon": 1,
+      "workers": [
+        {
+          "pid": 92281,
+          "exitcode": 0,
+          "alive": false
+        },
+        {
+          "pid": 92282,
+          "exitcode": 0,
+          "alive": false
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchReach-v3",
+      "horizon": 8,
+      "workers": [
+        {
+          "pid": 92287,
+          "exitcode": 0,
+          "alive": false
+        },
+        {
+          "pid": 92288,
+          "exitcode": 0,
+          "alive": false
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchReachDense-v3",
+      "horizon": 1,
+      "workers": [
+        {
+          "pid": 92293,
+          "exitcode": 0,
+          "alive": false
+        },
+        {
+          "pid": 92294,
+          "exitcode": 0,
+          "alive": false
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchReachDense-v3",
+      "horizon": 8,
+      "workers": [
+        {
+          "pid": 92299,
+          "exitcode": 0,
+          "alive": false
+        },
+        {
+          "pid": 92300,
+          "exitcode": 0,
+          "alive": false
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchReachDict-v3",
+      "horizon": 1,
+      "workers": [
+        {
+          "pid": 92305,
+          "exitcode": 0,
+          "alive": false
+        },
+        {
+          "pid": 92306,
+          "exitcode": 0,
+          "alive": false
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchReachDict-v3",
+      "horizon": 8,
+      "workers": [
+        {
+          "pid": 92312,
+          "exitcode": 0,
+          "alive": false
+        },
+        {
+          "pid": 92313,
+          "exitcode": 0,
+          "alive": false
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchPush-v3",
+      "horizon": 1,
+      "workers": [
+        {
+          "pid": 92320,
+          "exitcode": 0,
+          "alive": false
+        },
+        {
+          "pid": 92321,
+          "exitcode": 0,
+          "alive": false
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchPush-v3",
+      "horizon": 8,
+      "workers": [
+        {
+          "pid": 92327,
+          "exitcode": 0,
+          "alive": false
+        },
+        {
+          "pid": 92328,
+          "exitcode": 0,
+          "alive": false
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchPushDense-v3",
+      "horizon": 1,
+      "workers": [
+        {
+          "pid": 92333,
+          "exitcode": 0,
+          "alive": false
+        },
+        {
+          "pid": 92334,
+          "exitcode": 0,
+          "alive": false
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchPushDense-v3",
+      "horizon": 8,
+      "workers": [
+        {
+          "pid": 92339,
+          "exitcode": 0,
+          "alive": false
+        },
+        {
+          "pid": 92340,
+          "exitcode": 0,
+          "alive": false
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchPushDict-v3",
+      "horizon": 1,
+      "workers": [
+        {
+          "pid": 92345,
+          "exitcode": 0,
+          "alive": false
+        },
+        {
+          "pid": 92346,
+          "exitcode": 0,
+          "alive": false
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchPushDict-v3",
+      "horizon": 8,
+      "workers": [
+        {
+          "pid": 92351,
+          "exitcode": 0,
+          "alive": false
+        },
+        {
+          "pid": 92352,
+          "exitcode": 0,
+          "alive": false
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchSlide-v3",
+      "horizon": 1,
+      "workers": [
+        {
+          "pid": 92357,
+          "exitcode": 0,
+          "alive": false
+        },
+        {
+          "pid": 92358,
+          "exitcode": 0,
+          "alive": false
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchSlide-v3",
+      "horizon": 8,
+      "workers": [
+        {
+          "pid": 92363,
+          "exitcode": 0,
+          "alive": false
+        },
+        {
+          "pid": 92364,
+          "exitcode": 0,
+          "alive": false
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchSlideDense-v3",
+      "horizon": 1,
+      "workers": [
+        {
+          "pid": 92369,
+          "exitcode": 0,
+          "alive": false
+        },
+        {
+          "pid": 92370,
+          "exitcode": 0,
+          "alive": false
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchSlideDense-v3",
+      "horizon": 8,
+      "workers": [
+        {
+          "pid": 92375,
+          "exitcode": 0,
+          "alive": false
+        },
+        {
+          "pid": 92376,
+          "exitcode": 0,
+          "alive": false
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchSlideDict-v3",
+      "horizon": 1,
+      "workers": [
+        {
+          "pid": 92381,
+          "exitcode": 0,
+          "alive": false
+        },
+        {
+          "pid": 92382,
+          "exitcode": 0,
+          "alive": false
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchSlideDict-v3",
+      "horizon": 8,
+      "workers": [
+        {
+          "pid": 92387,
+          "exitcode": 0,
+          "alive": false
+        },
+        {
+          "pid": 92388,
+          "exitcode": 0,
+          "alive": false
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchPickAndPlace-v3",
+      "horizon": 1,
+      "workers": [
+        {
+          "pid": 92405,
+          "exitcode": 0,
+          "alive": false
+        },
+        {
+          "pid": 92406,
+          "exitcode": 0,
+          "alive": false
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchPickAndPlace-v3",
+      "horizon": 8,
+      "workers": [
+        {
+          "pid": 92412,
+          "exitcode": 0,
+          "alive": false
+        },
+        {
+          "pid": 92413,
+          "exitcode": 0,
+          "alive": false
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDense-v3",
+      "horizon": 1,
+      "workers": [
+        {
+          "pid": 92418,
+          "exitcode": 0,
+          "alive": false
+        },
+        {
+          "pid": 92419,
+          "exitcode": 0,
+          "alive": false
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDense-v3",
+      "horizon": 8,
+      "workers": [
+        {
+          "pid": 92426,
+          "exitcode": 0,
+          "alive": false
+        },
+        {
+          "pid": 92427,
+          "exitcode": 0,
+          "alive": false
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDict-v3",
+      "horizon": 1,
+      "workers": [
+        {
+          "pid": 92432,
+          "exitcode": 0,
+          "alive": false
+        },
+        {
+          "pid": 92433,
+          "exitcode": 0,
+          "alive": false
+        }
+      ]
+    },
+    {
+      "registration": "swm/FetchPickAndPlaceDict-v3",
+      "horizon": 8,
+      "workers": [
+        {
+          "pid": 92438,
+          "exitcode": 0,
+          "alive": false
+        },
+        {
+          "pid": 92439,
+          "exitcode": 0,
+          "alive": false
+        }
+      ]
+    }
+  ]
+}

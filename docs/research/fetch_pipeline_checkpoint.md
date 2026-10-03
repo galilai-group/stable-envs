@@ -151,3 +151,14 @@ submitted** because Oscar SSH authentication remains unavailable. It is a B4
 correctness prerequisite, not throughput or large-batch process acceptance.
 PickAndPlace nonempty source capture is rejected before execution; its no-frame
 path remains valid, and its rendered comparison protocol remains unresolved.
+
+The subsequent [source throughput campaign](semantic_recovery_evidence/fetch_source_pipeline_20261003/)
+is prepared for all 12 registrations at B64/T1/T8 on eight-core RTX 3090
+allocations. It runs independent source P1/P8 and public-library strategies in
+fresh interpreters, with six samples and separate stepping/export/copy/render
+components. The nine admissible rendered registrations must pass their own
+CPU/CUDA image gates first; PickAndPlace produces no-frame rows only. A strict
+collector reports mean/SD and speedup against the best same-device source.
+Local source-State projection/transport prerequisites and synthetic collector
+checks pass, but this integrated campaign is not uploaded/submitted and has
+no measured source FPS. Broader batch/memory sweeps remain pending.
