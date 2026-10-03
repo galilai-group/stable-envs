@@ -261,3 +261,12 @@ oracle process before source benchmarking; source `close()` alone is insufficien
 proof that the timed population has exclusive GL resources. Production remains
 unchanged and Oscar validation array 6970790 remains uncollected while SSH
 authentication is unavailable.
+
+The [parallel-source CPU transport prerequisite](semantic_recovery_evidence/ogbench_source_transport_20261003/)
+now also passes all three registrations independently: 12 B2/P2 cases cover
+T1/T8 and float32/float64, exact source snapshots/tasks, restored replay and owned
+shared-buffer outputs. Six pool closures confirm both workers exit cleanly.
+The benchmark reuses Gym's spawn/shared-memory transport with scalar source
+owners and one Torch thread per worker. Source snapshot RPCs are untimed and
+pickled; only task outputs use shared columns. No rendering, GPU, source FPS or
+terminal-lane acceptance is implied. Broader source benchmarking remains open.
