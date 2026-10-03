@@ -1,0 +1,12 @@
+{
+  "README.md": "9479d731e1b213650a4002ec32ea9e76e89f0ef6cee76a9650a14b0563410d68",
+  "candidate_manifest.json": "9e019acdf10ed26473ef4ec29d69938777979993eb9cb4e80e05369750ff4e78",
+  "deployment.json": "a7c331a2689a0e89c3c92e2148c480c3b313c1fe2a453e9199d2b96683589ccb",
+  "local-piecewise-final.json": "6f2c071a11fbdece387fb5bfffe6b199d47a71769b204544de60aa52f59d449d",
+  "local-review.json": "bc970cce000537019c4886e8107b5240992c5f8c9084019392fb8be4086a2390",
+  "local-simple_point_maze-final.json": "c20428cb326bb36d7717ffb47da60052d2a7fa4ee216ddceb351763e6a4def00",
+  "local-two_room-final.json": "9a3ff47f4cf5419686449d52d3571b91c97eea8491b0b3e4dfb2abae81f53680",
+  "run.sh": "3a676fff4e2c7c763eaf8bfb6562df181b1c8ff138c5d20762e8bdf0294a5308",
+  "source_manifest.json": "e738f2534503e9a9937d6f620bf6a9ea003b1eff52ed374c24252436076df239",
+  "submission.json": "fa94243fa8fe99000e7f39183b3a6d330465c8d7fb39a42164cc4093c5c2586f"
+}

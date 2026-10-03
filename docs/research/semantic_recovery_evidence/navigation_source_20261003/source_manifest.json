@@ -1,0 +1,12 @@
+{
+  "commit": "176d54532b3c0a251a4f509b74f2fdacc143a63d",
+  "repository": "https://github.com/galilai-group/stable-worldmodel",
+  "files": {
+    "stable_worldmodel/spaces.py": "73079b2a66dace087abc7c417691e3cc339887866915553e21d0936a362229eb",
+    "stable_worldmodel/utils.py": "9979483129df100cf4728dd45d1b6d0bb02d1fadec637d7f7065fe7894a3c276",
+    "stable_worldmodel/envs/__init__.py": "118a262677a647c6d6ef8889443b096abe082db4e365fc0a5b1249715e7e3c1a",
+    "stable_worldmodel/envs/two_room/env.py": "5e1d392de5b02472062dbe872aded67fd465fcc8f7eaa1c02a753b2fc31c61f0",
+    "stable_worldmodel/envs/piecewise/piecewise_env.py": "e4de33b87adb1ce90f65515d69412c7af3a259e4396ba1470dfb675cee72118b",
+    "stable_worldmodel/envs/simple_point_maze.py": "b69891f8571b032530dcf154d1d80fcbdfe5ae3635d74a10db67cf50811c7a65"
+  }
+}

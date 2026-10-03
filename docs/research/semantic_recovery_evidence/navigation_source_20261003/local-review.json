@@ -1,0 +1,72 @@
+{
+  "status": "LOCAL_CPU_SMOKE_PASS",
+  "cluster_acceptance": "NOT_SUBMITTED",
+  "results": [
+    {
+      "domain": "two_room",
+      "gates": 6,
+      "timing_cells": 18,
+      "components": 3,
+      "source_mse_max": 1.1238155392876103e-09,
+      "valid_steps_per_cell": [
+        2,
+        2,
+        2,
+        9,
+        9,
+        9
+      ],
+      "versions": {
+        "torch": "2.14.0",
+        "numpy": "2.5.3",
+        "gymnasium": "1.3.0",
+        "matplotlib": "3.10.9",
+        "tensordict": "0.14.2"
+      }
+    },
+    {
+      "domain": "piecewise",
+      "gates": 6,
+      "timing_cells": 18,
+      "components": 3,
+      "source_mse_max": 1.1238155392876103e-09,
+      "valid_steps_per_cell": [
+        2,
+        2,
+        2,
+        9,
+        9,
+        9
+      ],
+      "versions": {
+        "torch": "2.14.0",
+        "numpy": "2.5.3",
+        "gymnasium": "1.3.0",
+        "matplotlib": "3.10.9",
+        "tensordict": "0.14.2"
+      }
+    },
+    {
+      "domain": "simple_point_maze",
+      "gates": 6,
+      "timing_cells": 18,
+      "components": 3,
+      "source_mse_max": 1.9093620402409332e-05,
+      "valid_steps_per_cell": [
+        2,
+        2,
+        2,
+        16,
+        16,
+        16
+      ],
+      "versions": {
+        "torch": "2.14.0",
+        "numpy": "2.5.3",
+        "gymnasium": "1.3.0",
+        "matplotlib": "3.10.9",
+        "tensordict": "0.14.2"
+      }
+    }
+  ]
+}

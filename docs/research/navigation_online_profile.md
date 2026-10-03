@@ -98,3 +98,20 @@ The retained-image profile also found expensive mixed-lane padding: one early
 termination still triggered a large boolean-index operation after the original
 all-active optimization. [Sparse inactive-row padding](step_masking_checkpoint.md)
 now has local exact gates and separate cluster acceptance jobs.
+
+## Direct source comparison prepared (October 3)
+
+The [source audit and reproducible harness](semantic_recovery_evidence/navigation_source_20261003/)
+now cover all three pinned registrations. Their source classes are scalar CPU
+implementations with no supported device/batch API; ours retain native Torch
+batching. The comparison includes serial source and eight persistent shared-memory
+source workers within the same eight-core allocation. CUDA-source measurements
+will include CPU rendering plus delivery and will not be labeled native GPU.
+
+All three frozen local B2/P2 CPU runs pass exact State/task/source-worker gates
+and image MSE <=0.001, including early terminal lanes and SimplePointMaze's full
+info.goal payload. Maximum measured MSE is 1.124e-9 for TwoRoom/Piecewise and
+1.9094e-5 for SimplePointMaze. Steps/s counts valid transitions; emitted FPS can
+include held terminal frames. These are local harness checks, not cluster speedups.
+The B16/64, T1/8 CPU/CUDA sweep is prepared but not submitted while Oscar SSH
+authentication is unavailable. No production API or routing change is introduced.

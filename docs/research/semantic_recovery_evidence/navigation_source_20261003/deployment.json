@@ -1,0 +1,7 @@
+{
+  "archive_name": "source.tar.gz",
+  "sha256": "cca7ff62b3e6419ecfaec3f9384e43c0426820d864b76b8ac17992ce53198d96",
+  "bytes": 1338037,
+  "status": "PREPARED_NOT_UPLOADED",
+  "reconstruction": "candidate_manifest.json paths under code/, source_manifest.json paths under source/, manifests and run.sh at root"
+}
