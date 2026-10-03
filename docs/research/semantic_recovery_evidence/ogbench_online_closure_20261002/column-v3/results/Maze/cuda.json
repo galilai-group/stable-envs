@@ -1,0 +1,324 @@
+{
+  "status": "PASS",
+  "domain": "Maze",
+  "env": "PointMazeLargeNavigate",
+  "host": "gpu2109.oscar.ccv.brown.edu",
+  "job": "6964282",
+  "gpu": "NVIDIA GeForce RTX 3090",
+  "versions": {
+    "torch": "2.14.0+cu126",
+    "numpy": "2.5.2",
+    "gymnasium": "1.3.0",
+    "ogbench": "1.2.1",
+    "mujoco": "3.12.0",
+    "tensordict": "0.14.2"
+  },
+  "reference_hashes": {
+    "tests/helpers/reference/ogbench_state_export.py": "5381455843a855ddd8f79616c3b079ecc8413e2ca8108e94f02d16e405b91490"
+  },
+  "candidate_hashes": {
+    "stable_envs/_adapters/ogbench.py": "07fda4984a8df22469c1632809cfc9f1fdceef2955788a30c291266b7fd0dd07",
+    "stable_envs/_adapters/ogbench_manipulation.py": "b41ebbe9cf276c743b1719036d818e6235305190b5886c1d6b0f8c0d56fc8446",
+    "stable_envs/_adapters/ogbench_manipulation_compat.py": "861d0683ada72c2266fdec537dbf9604ba3028faa8d3f1adcd7e17b28e0736b5",
+    "stable_envs/_adapters/ogbench_render_state.py": "813f63264c52e00c11ae40b0fb5170d31ab08addac427e0c65105b0b363a7b5a",
+    "stable_envs/_adapters/state_columns.py": "1fad371b5753af62495b553988ea870a97cc1e7bc3206d8bc72d9d5b38465cea",
+    "stable_envs/_stepping.py": "8176c3c0fe2c17bb91dd126b198296a60d64082a57780c44c1d1e798fcdf33b7",
+    "stable_envs/envs/ogbench/__init__.py": "a4c4ff9e667691c8d7f36a51a6758ec3e035fe116815b5f49d4a70a3da8a6003",
+    "stable_envs/envs/ogbench/context_cache.py": "6822a73532945faed22da60a3c19a9a6543656747ec17d50151175eb3f52cfa4",
+    "stable_envs/envs/ogbench/manipulation.py": "1c7c5b4a00581d5d6e412da38ce1d139595bd230050fb43cac7d339ec81e9e0b",
+    "stable_envs/envs/ogbench/manipulation_fidelity.py": "980523951dbb2aefb510f8506e62f14b534bb1a2ebb9dc71051c61cd38f3cdad",
+    "stable_envs/envs/ogbench/manipulation_opengl.py": "4f4ce161af00b4237f3d40e287e6e4007f6eef17639f96204c16facb2764dfa1",
+    "stable_envs/envs/ogbench/manipulation_renderer.py": "1e3e551936b3c1cf7810ea3092fc66563fcff9ce222e7839fa96292304979ae7",
+    "stable_envs/envs/ogbench/manipulation_semantics.py": "17acc9dd7bcb121871d2312e96e190e468aed4a406b7e5d625e228ae3e67e7ac",
+    "stable_envs/envs/ogbench/maze.py": "017b62fecc47d08ed16bff53c9b1bc3b0526b2e7122a5c5479947833d0177f21"
+  },
+  "script_sha256": "a1436600db5309ee5f1573d36c0efcb08e2e39578ea41b5243ccbfdcda2f0fec",
+  "scope": "frozen accepted exporter vs column exporter; public step frames=None; same CPU physics for both output devices",
+  "gates": [
+    {
+      "device": "cuda",
+      "cases": 10,
+      "state_task_rng_lifecycle_ownership": "PASS",
+      "frame_mse_vs_legacy": 0.0
+    }
+  ],
+  "timings": [
+    {
+      "batch": 1,
+      "device": "cuda",
+      "horizon": 1,
+      "operation": "get_state",
+      "mode": "legacy",
+      "seconds": [
+        0.0011775754392147064,
+        0.001181313768029213,
+        0.0011808127164840698,
+        0.0011800751090049744,
+        0.00118163600564003,
+        0.0011799614876508713
+      ],
+      "rate_mean": 847.2942111437605,
+      "rate_sd": 1.048158617055132
+    },
+    {
+      "batch": 1,
+      "device": "cuda",
+      "horizon": 1,
+      "operation": "get_state",
+      "mode": "column",
+      "seconds": [
+        0.0004566758871078491,
+        0.00046321749687194824,
+        0.0004655085504055023,
+        0.00045537762343883514,
+        0.00047241710126399994,
+        0.00045054592192173004
+      ],
+      "rate_mean": 2171.503483572854,
+      "rate_sd": 37.25066547726228
+    },
+    {
+      "batch": 1,
+      "device": "cuda",
+      "horizon": 1,
+      "operation": "public_step_states_all",
+      "mode": "legacy",
+      "seconds": [
+        0.0032543614506721497,
+        0.003232652321457863,
+        0.003261212259531021,
+        0.003247050568461418,
+        0.0032553523778915405,
+        0.003242010250687599
+      ],
+      "rate_mean": 307.8111152505385,
+      "rate_sd": 0.9838639509581207
+    },
+    {
+      "batch": 1,
+      "device": "cuda",
+      "horizon": 1,
+      "operation": "public_step_states_all",
+      "mode": "column",
+      "seconds": [
+        0.002567507326602936,
+        0.0025826450437307358,
+        0.002575276419520378,
+        0.0025450047105550766,
+        0.002552645280957222,
+        0.0025416184216737747
+      ],
+      "rate_mean": 390.5196229531158,
+      "rate_sd": 2.5645030139682605
+    },
+    {
+      "batch": 1,
+      "device": "cuda",
+      "horizon": 8,
+      "operation": "get_state",
+      "mode": "legacy",
+      "seconds": [
+        0.0011573340743780136,
+        0.00115998275578022,
+        0.0011569838970899582,
+        0.0011543948203325272,
+        0.0011622440069913864,
+        0.0011564437299966812
+      ],
+      "rate_mean": 863.6386746995024,
+      "rate_sd": 2.0750416875506805
+    },
+    {
+      "batch": 1,
+      "device": "cuda",
+      "horizon": 8,
+      "operation": "get_state",
+      "mode": "column",
+      "seconds": [
+        0.00045209750533103943,
+        0.000460747629404068,
+        0.000448497012257576,
+        0.00045811571180820465,
+        0.0004494469612836838,
+        0.0004525277763605118
+      ],
+      "rate_mean": 2204.9312344994078,
+      "rate_sd": 23.521458300367822
+    },
+    {
+      "batch": 1,
+      "device": "cuda",
+      "horizon": 8,
+      "operation": "public_step_states_all",
+      "mode": "legacy",
+      "seconds": [
+        0.02334597520530224,
+        0.02353036217391491,
+        0.023260002955794334,
+        0.023290684446692467,
+        0.023278994485735893,
+        0.023313861340284348
+      ],
+      "rate_mean": 342.81362062280294,
+      "rate_sd": 1.4525873790068013
+    },
+    {
+      "batch": 1,
+      "device": "cuda",
+      "horizon": 8,
+      "operation": "public_step_states_all",
+      "mode": "column",
+      "seconds": [
+        0.0176748838275671,
+        0.017692362889647484,
+        0.01773245260119438,
+        0.017716284841299057,
+        0.017664825543761253,
+        0.017643313854932785
+      ],
+      "rate_mean": 452.301879862266,
+      "rate_sd": 0.8478683119994548
+    },
+    {
+      "batch": 16,
+      "device": "cuda",
+      "horizon": 1,
+      "operation": "get_state",
+      "mode": "legacy",
+      "seconds": [
+        0.012350605800747871,
+        0.012342020869255066,
+        0.012222224846482277,
+        0.012253893539309502,
+        0.012151284143328667,
+        0.012182053178548813
+      ],
+      "rate_mean": 1306.1343290648508,
+      "rate_sd": 8.748431014889755
+    },
+    {
+      "batch": 16,
+      "device": "cuda",
+      "horizon": 1,
+      "operation": "get_state",
+      "mode": "column",
+      "seconds": [
+        0.0011556446552276611,
+        0.0011632833629846573,
+        0.0011598318815231323,
+        0.001160433515906334,
+        0.0011599957942962646,
+        0.001163821667432785
+      ],
+      "rate_mean": 13787.212722515627,
+      "rate_sd": 34.90449357915839
+    },
+    {
+      "batch": 16,
+      "device": "cuda",
+      "horizon": 1,
+      "operation": "public_step_states_all",
+      "mode": "legacy",
+      "seconds": [
+        0.021831052377820015,
+        0.02171575091779232,
+        0.021701272577047348,
+        0.02188728004693985,
+        0.02177768014371395,
+        0.021646732464432716
+      ],
+      "rate_mean": 735.3057136801607,
+      "rate_sd": 3.0124170636297047
+    },
+    {
+      "batch": 16,
+      "device": "cuda",
+      "horizon": 1,
+      "operation": "public_step_states_all",
+      "mode": "column",
+      "seconds": [
+        0.010755980387330055,
+        0.010674355551600456,
+        0.010730892419815063,
+        0.01086375117301941,
+        0.01068929210305214,
+        0.010730482637882233
+      ],
+      "rate_mean": 1489.696408874005,
+      "rate_sd": 9.274541849663706
+    },
+    {
+      "batch": 16,
+      "device": "cuda",
+      "horizon": 8,
+      "operation": "get_state",
+      "mode": "legacy",
+      "seconds": [
+        0.012203503400087357,
+        0.012215664610266685,
+        0.012379663065075874,
+        0.012248624116182327,
+        0.012206744402647018,
+        0.012200763449072838
+      ],
+      "rate_mean": 1306.9580266378516,
+      "rate_sd": 7.354267080074429
+    },
+    {
+      "batch": 16,
+      "device": "cuda",
+      "horizon": 8,
+      "operation": "get_state",
+      "mode": "column",
+      "seconds": [
+        0.0011794939637184143,
+        0.0011737514287233353,
+        0.0011677313596010208,
+        0.001156764104962349,
+        0.0011797621846199036,
+        0.0013210717588663101
+      ],
+      "rate_mean": 13400.59146572124,
+      "rate_sd": 639.546410576951
+    },
+    {
+      "batch": 16,
+      "device": "cuda",
+      "horizon": 8,
+      "operation": "public_step_states_all",
+      "mode": "legacy",
+      "seconds": [
+        0.17227154783904552,
+        0.17197959683835506,
+        0.17247280664741993,
+        0.17172982916235924,
+        0.17176910676062107,
+        0.17171072773635387
+      ],
+      "rate_mean": 744.2360442235573,
+      "rate_sd": 1.376506154348825
+    },
+    {
+      "batch": 16,
+      "device": "cuda",
+      "horizon": 8,
+      "operation": "public_step_states_all",
+      "mode": "column",
+      "seconds": [
+        0.08335611969232559,
+        0.08274426497519016,
+        0.08250674419105053,
+        0.08387057483196259,
+        0.08279921859502792,
+        0.0827654916793108
+      ],
+      "rate_mean": 1542.0851703414335,
+      "rate_sd": 9.385213619646326
+    }
+  ],
+  "opengl": {
+    "vendor": "NVIDIA Corporation",
+    "renderer": "NVIDIA GeForce RTX 3090/PCIe/SSE2",
+    "software": false
+  }
+}

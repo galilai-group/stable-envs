@@ -1,0 +1,222 @@
+{
+  "status": "PASS",
+  "family": "pendulum",
+  "host": "cis1b1zs2j3.ad.brown.edu",
+  "job": null,
+  "affinity": null,
+  "gpu": null,
+  "versions": {
+    "torch": "2.14.0",
+    "numpy": "2.5.3",
+    "gymnasium": "1.3.0",
+    "tensordict": "0.14.2"
+  },
+  "source_sha256": {
+    "stable_envs/envs/_classic_semantics.py": "cff3849b67224f57de4775fb358afca530dde93c38b2107916e1b0642ada4680",
+    "scripts/benchmarks/online_stepping/classic_profile.py": "71c92d5c181cba4f006e0d0230e1a30626134ec404b3383968d154b8c6420e92"
+  },
+  "scope": "adapter component diagnostic, CPU physics for both output devices; no rendering or source speedup",
+  "cells": [
+    {
+      "batch": 1,
+      "device": "cpu",
+      "construction_s": 0.008631000062450767,
+      "state_bytes": 113,
+      "state_leaves": 9,
+      "timings": {
+        "step_with_state": {
+          "seconds": [
+            0.00011508306488394737,
+            0.0001858340110629797,
+            9.625009261071682e-05,
+            0.00010099983774125576,
+            9.05417837202549e-05,
+            8.962512947618961e-05
+          ],
+          "seconds_mean": 0.00011305565324922402,
+          "seconds_sd": 3.683594191923575e-05,
+          "lanes_per_s_mean": 9427.222994636795,
+          "lanes_per_s_sd": 2176.048525305058
+        },
+        "step_without_export_DIAGNOSTIC": {
+          "seconds": [
+            0.00014654221013188362,
+            7.254211232066154e-05,
+            5.9999991208314896e-05,
+            5.479203537106514e-05,
+            5.820789374411106e-05,
+            9.483308531343937e-05
+          ],
+          "seconds_mean": 8.11528880149126e-05,
+          "seconds_sd": 3.5230296792983866e-05,
+          "lanes_per_s_mean": 13875.201505840221,
+          "lanes_per_s_sd": 4442.476985635925
+        },
+        "get_state": {
+          "seconds": [
+            7.562502287328243e-05,
+            6.783404387533665e-05,
+            6.654206663370132e-05,
+            6.5250089392066e-05,
+            6.670807488262653e-05,
+            7.133278995752335e-05
+          ],
+          "seconds_mean": 6.888201460242271e-05,
+          "seconds_sd": 3.897818727497111e-06,
+          "lanes_per_s_mean": 14554.70352261551,
+          "lanes_per_s_sd": 787.8865546966653
+        },
+        "set_state": {
+          "seconds": [
+            5.104183219373226e-05,
+            4.25421167165041e-05,
+            4.1499966755509377e-05,
+            4.095910117030144e-05,
+            4.1125109419226646e-05,
+            4.091602750122547e-05
+          ],
+          "seconds_mean": 4.301402562608322e-05,
+          "seconds_sd": 3.978770303938007e-06,
+          "lanes_per_s_mean": 23394.206496804196,
+          "lanes_per_s_sd": 1894.698021118062
+        }
+      },
+      "step_cprofile": "         1069 function calls (1043 primitive calls) in 0.000 seconds\n\n   Ordered by: cumulative time\n   List reduced from 116 to 40 due to restriction <40>\n\n   ncalls  tottime  percall  cumtime  percall filename:lineno(function)\n        1    0.000    0.000    0.000    0.000 /Users/samib/stable-envs/.worktrees/render-config-fixes/stable_envs/envs/_classic_semantics.py:307(step)\n        1    0.000    0.000    0.000    0.000 /Users/samib/stable-envs/.worktrees/render-config-fixes/stable_envs/envs/_classic_semantics.py:205(get_state)\n     10/1    0.000    0.000    0.000    0.000 {built-in method torch.stack}\n        1    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/base.py:758(__torch_function__)\n      4/1    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_torch_func.py:678(_stack)\n     12/6    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_torch_func.py:849(stack_fn)\n        9    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py:881(__setitem__)\n     15/9    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py:2661(_set_tuple)\n        2    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py:259(__init__)\n        4    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/utils.py:1981(_check_keys)\n       12    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py:2600(_set_str)\n        1    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/gymnasium/wrappers/common.py:111(step)\n        1    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/gymnasium/wrappers/common.py:388(step)\n        1    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/gymnasium/core.py:323(step)\n        1    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/gymnasium/wrappers/common.py:276(step)\n        6    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/base.py:14570(_validate_value_generic)\n        1    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/gymnasium/envs/classic_control/pendulum.py:126(step)\n       82    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/torch/compiler/__init__.py:583(is_compiling)\n        7    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py:357(_new_unsafe)\n       48    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py:5005(__iter__)\n       24    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/utils.py:2756(_is_unbatched)\n        9    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/base.py:14639(_validate_value_batchfree)\n        3    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/base.py:9245(_create_nested_str)\n       90    0.000    0.000    0.000    0.000 {built-in method builtins.isinstance}\n       11    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/base.py:14554(_validate_value)\n        3    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py:3687(empty)\n        4    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py:5058(__len__)\n        1    0.000    0.000    0.000    0.000 {method 'disable' of '_lsprof.Profiler' objects}\n       18    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/utils.py:544(_shape)\n        2    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/numpy/_core/fromnumeric.py:2245(clip)\n       11    0.000    0.000    0.000    0.000 {built-in method torch.as_tensor}\n        9    0.000    0.000    0.000    0.000 {built-in method builtins.all}\n        4    0.000    0.000    0.000    0.000 {built-in method builtins.sum}\n       48    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py:5006(_iter)\n        4    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py:3807(keys)\n       16    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/base.py:18253(_is_tensor_collection)\n        9    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/utils.py:2855(_unravel_key_to_tuple)\n        2    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/numpy/_core/fromnumeric.py:48(_wrapfunc)\n       16    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py:5059(<genexpr>)\n       11    0.000    0.000    0.000    0.000 {method 'clone' of 'torch._C.TensorBase' objects}\n\n\n",
+      "restore_step_replay": "PASS"
+    },
+    {
+      "batch": 64,
+      "device": "cpu",
+      "construction_s": 0.005665832897648215,
+      "state_bytes": 7232,
+      "state_leaves": 9,
+      "timings": {
+        "step_with_state": {
+          "seconds": [
+            0.0028424160555005074,
+            0.002742915879935026,
+            0.002729750005528331,
+            0.002804917050525546,
+            0.0027314999606460333,
+            0.002833415986970067
+          ],
+          "seconds_mean": 0.0027808191565175853,
+          "seconds_sd": 5.218891198990852e-05,
+          "lanes_per_s_mean": 23021.54346169529,
+          "lanes_per_s_sd": 431.1162391504471
+        },
+        "step_without_export_DIAGNOSTIC": {
+          "seconds": [
+            0.0003922500181943178,
+            0.0003570830449461937,
+            0.00033149984665215015,
+            0.0003449998330324888,
+            0.00040512485429644585,
+            0.00036362488754093647
+          ],
+          "seconds_mean": 0.00036576374744375545,
+          "seconds_sd": 2.8056741177875395e-05,
+          "lanes_per_s_mean": 175823.6780649868,
+          "lanes_per_s_sd": 13277.37943664059
+        },
+        "get_state": {
+          "seconds": [
+            0.002477125031873584,
+            0.0024494589306414127,
+            0.0023991249036043882,
+            0.00243537500500679,
+            0.002475291956216097,
+            0.0024432919453829527
+          ],
+          "seconds_mean": 0.002446611295454204,
+          "seconds_sd": 2.8823626270814727e-05,
+          "lanes_per_s_mean": 26161.67331833891,
+          "lanes_per_s_sd": 309.9915665981202
+        },
+        "set_state": {
+          "seconds": [
+            0.0012963749468326569,
+            0.001285540871322155,
+            0.0013070839922875166,
+            0.0013012080453336239,
+            0.0012956249993294477,
+            0.0013294578529894352
+          ],
+          "seconds_mean": 0.0013025484513491392,
+          "seconds_sd": 1.4978570297509447e-05,
+          "lanes_per_s_mean": 49139.81264976796,
+          "lanes_per_s_sd": 559.7822787725585
+        }
+      },
+      "step_cprofile": "         40192 function calls (39662 primitive calls) in 0.007 seconds\n\n   Ordered by: cumulative time\n   List reduced from 117 to 40 due to restriction <40>\n\n   ncalls  tottime  percall  cumtime  percall filename:lineno(function)\n        1    0.000    0.000    0.007    0.007 /Users/samib/stable-envs/.worktrees/render-config-fixes/stable_envs/envs/_classic_semantics.py:307(step)\n        1    0.001    0.001    0.006    0.006 /Users/samib/stable-envs/.worktrees/render-config-fixes/stable_envs/envs/_classic_semantics.py:205(get_state)\n      576    0.000    0.000    0.003    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py:881(__setitem__)\n     10/1    0.000    0.000    0.002    0.002 {built-in method torch.stack}\n        1    0.000    0.000    0.002    0.002 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/base.py:758(__torch_function__)\n      4/1    0.001    0.000    0.002    0.002 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_torch_func.py:678(_stack)\n  960/576    0.000    0.000    0.002    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py:2661(_set_tuple)\n     12/6    0.000    0.000    0.001    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_torch_func.py:849(stack_fn)\n      768    0.000    0.000    0.001    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py:2600(_set_str)\n      576    0.000    0.000    0.001    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/base.py:14639(_validate_value_batchfree)\n        4    0.000    0.000    0.001    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/utils.py:1981(_check_keys)\n       64    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/gymnasium/wrappers/common.py:111(step)\n      641    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/base.py:14554(_validate_value)\n     1530    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/utils.py:544(_shape)\n       64    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/gymnasium/wrappers/common.py:388(step)\n       64    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/gymnasium/core.py:323(step)\n       64    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/gymnasium/wrappers/common.py:276(step)\n       64    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/gymnasium/envs/classic_control/pendulum.py:126(step)\n     4500    0.000    0.000    0.000    0.000 {built-in method builtins.isinstance}\n      192    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/base.py:9245(_create_nested_str)\n       65    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py:259(__init__)\n      578    0.000    0.000    0.000    0.000 {built-in method torch.as_tensor}\n     2350    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/torch/compiler/__init__.py:583(is_compiling)\n      192    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py:3687(empty)\n      576    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/utils.py:2855(_unravel_key_to_tuple)\n      591    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/utils.py:2756(_is_unbatched)\n      578    0.000    0.000    0.000    0.000 {method 'clone' of 'torch._C.TensorBase' objects}\n      196    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py:357(_new_unsafe)\n      576    0.000    0.000    0.000    0.000 {method 'reshape' of 'torch._C.TensorBase' objects}\n      256    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py:3807(keys)\n     1056    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py:5005(__iter__)\n      765    0.000    0.000    0.000    0.000 {built-in method builtins.all}\n      128    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/numpy/_core/fromnumeric.py:2245(clip)\n      256    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/utils.py:833(newfun)\n      128    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/numpy/_core/fromnumeric.py:48(_wrapfunc)\n      641    0.000    0.000    0.000    0.000 <frozen abc>:117(__instancecheck__)\n     1152    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py:2964(_get_str)\n     1056    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py:5006(_iter)\n     2491    0.000    0.000    0.000    0.000 {built-in method builtins.len}\n      128    0.000    0.000    0.000    0.000 /Users/samib/stable-envs/.worktrees/render-config-fixes/stable_envs/envs/_classic_semantics.py:133(_limbs)\n\n\n",
+      "restore_step_replay": "PASS"
+    },
+    {
+      "batch": 256,
+      "device": "cpu",
+      "construction_s": 0.020024999976158142,
+      "state_bytes": 28928,
+      "state_leaves": 9,
+      "timings": {
+        "step_with_state": {
+          "seconds": [
+            0.010744959115982056,
+            0.010662292130291462,
+            0.010687500005587935,
+            0.01085158297792077,
+            0.010716416873037815,
+            0.010657083010300994
+          ],
+          "seconds_mean": 0.010719972352186838,
+          "seconds_sd": 7.251877993649382e-05,
+          "lanes_per_s_mean": 23881.563528898405,
+          "lanes_per_s_sd": 160.52497441330172
+        },
+        "step_without_export_DIAGNOSTIC": {
+          "seconds": [
+            0.00124841695651412,
+            0.0011625410988926888,
+            0.0011615417897701263,
+            0.0011860409285873175,
+            0.0011857498902827501,
+            0.0011865838896483183
+          ],
+          "seconds_mean": 0.0011884790922825534,
+          "seconds_sd": 3.164784452428223e-05,
+          "lanes_per_s_mean": 215525.0590308004,
+          "lanes_per_s_sd": 5576.178171516366
+        },
+        "get_state": {
+          "seconds": [
+            0.009585291147232056,
+            0.009466334013268352,
+            0.009534541051834822,
+            0.009652582928538322,
+            0.009564290987327695,
+            0.009409500053152442
+          ],
+          "seconds_mean": 0.009535423363558948,
+          "seconds_sd": 8.680702289327354e-05,
+          "lanes_per_s_mean": 26849.118385777794,
+          "lanes_per_s_sd": 244.83721481421063
+        },
+        "set_state": {
+          "seconds": [
+            0.004975500050932169,
+            0.0049489999655634165,
+            0.00501550012268126,
+            0.005008082836866379,
+            0.005040792049840093,
+            0.00494145811535418
+          ],
+          "seconds_mean": 0.004988388856872916,
+          "seconds_sd": 3.946914945001206e-05,
+          "lanes_per_s_mean": 51321.85201390414,
+          "lanes_per_s_sd": 406.03516208876044
+        }
+      },
+      "step_cprofile": "         159424 function calls (157358 primitive calls) in 0.026 seconds\n\n   Ordered by: cumulative time\n   List reduced from 117 to 40 due to restriction <40>\n\n   ncalls  tottime  percall  cumtime  percall filename:lineno(function)\n        1    0.000    0.000    0.026    0.026 /Users/samib/stable-envs/.worktrees/render-config-fixes/stable_envs/envs/_classic_semantics.py:307(step)\n        1    0.002    0.002    0.024    0.024 /Users/samib/stable-envs/.worktrees/render-config-fixes/stable_envs/envs/_classic_semantics.py:205(get_state)\n     2304    0.001    0.000    0.010    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py:881(__setitem__)\n3840/2304    0.001    0.000    0.008    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py:2661(_set_tuple)\n     10/1    0.000    0.000    0.007    0.007 {built-in method torch.stack}\n        1    0.000    0.000    0.007    0.007 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/base.py:758(__torch_function__)\n      4/1    0.002    0.001    0.007    0.007 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_torch_func.py:678(_stack)\n     3072    0.001    0.000    0.004    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py:2600(_set_str)\n     12/6    0.000    0.000    0.004    0.001 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_torch_func.py:849(stack_fn)\n     2304    0.001    0.000    0.002    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/base.py:14639(_validate_value_batchfree)\n        4    0.000    0.000    0.002    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/utils.py:1981(_check_keys)\n      256    0.000    0.000    0.002    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/gymnasium/wrappers/common.py:111(step)\n     2561    0.001    0.000    0.002    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/base.py:14554(_validate_value)\n      256    0.000    0.000    0.002    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/gymnasium/wrappers/common.py:388(step)\n     6138    0.001    0.000    0.002    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/utils.py:544(_shape)\n      256    0.000    0.000    0.002    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/gymnasium/core.py:323(step)\n      256    0.000    0.000    0.001    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/gymnasium/wrappers/common.py:276(step)\n      256    0.000    0.000    0.001    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/gymnasium/envs/classic_control/pendulum.py:126(step)\n      768    0.000    0.000    0.001    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/base.py:9245(_create_nested_str)\n    17940    0.001    0.000    0.001    0.000 {built-in method builtins.isinstance}\n     9262    0.001    0.000    0.001    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/torch/compiler/__init__.py:583(is_compiling)\n     2306    0.001    0.000    0.001    0.000 {built-in method torch.as_tensor}\n      257    0.000    0.000    0.001    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py:259(__init__)\n      768    0.000    0.000    0.001    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py:3687(empty)\n     2304    0.000    0.000    0.001    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/utils.py:2855(_unravel_key_to_tuple)\n     2319    0.000    0.000    0.001    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/utils.py:2756(_is_unbatched)\n     2306    0.001    0.000    0.001    0.000 {method 'clone' of 'torch._C.TensorBase' objects}\n      772    0.000    0.000    0.001    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py:357(_new_unsafe)\n     2304    0.001    0.000    0.001    0.000 {method 'reshape' of 'torch._C.TensorBase' objects}\n     1024    0.000    0.000    0.001    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py:3807(keys)\n     4128    0.000    0.000    0.001    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py:5005(__iter__)\n      512    0.000    0.000    0.001    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/numpy/_core/fromnumeric.py:2245(clip)\n     3069    0.000    0.000    0.001    0.000 {built-in method builtins.all}\n     1024    0.000    0.000    0.001    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/utils.py:833(newfun)\n      512    0.000    0.000    0.001    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/numpy/_core/fromnumeric.py:48(_wrapfunc)\n     2561    0.000    0.000    0.000    0.000 <frozen abc>:117(__instancecheck__)\n     4608    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py:2964(_get_str)\n     9979    0.000    0.000    0.000    0.000 {built-in method builtins.len}\n     4128    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py:5006(_iter)\n      512    0.000    0.000    0.000    0.000 /Users/samib/stable-envs/.worktrees/render-config-fixes/stable_envs/envs/_classic_semantics.py:133(_limbs)\n\n\n",
+      "restore_step_replay": "PASS"
+    }
+  ]
+}

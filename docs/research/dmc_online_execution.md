@@ -144,3 +144,9 @@ Queue update: pending exporter array `6961314` was replaced by `6961949` using
 the same frozen column-export source and a corrected Xvfb coordinator with
 `-noreset`. Outputs go to the new `results-v4` directory. The launcher is preserved
 in the process checkpoint evidence; earlier committed evidence remains intact.
+
+Baseline closure: all twelve tasks in `6960514` completed on RTX 3090, with
+verified source hashes, all 72 device/batch cells and six samples per operation.
+The [closure CSV and reports](semantic_recovery_evidence/dmc_baseline_closure_20261002/)
+preserve 216 component measurements. Column-export acceptance `6961949` remains
+pending; baseline completion alone does not establish an optimization speedup.

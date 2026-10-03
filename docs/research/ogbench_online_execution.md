@@ -87,22 +87,19 @@ and GPU EGL run in separate processes. Acceptance requires every registration
 on both devices, exact frames, tested source hashes, and all paired timing cells.
 MSE here compares the old and new export paths, not a new upstream fidelity gate.
 
-Oscar jobs:
+Oscar closure update (preserved in
+[`ogbench_online_closure_20261002`](semantic_recovery_evidence/ogbench_online_closure_20261002/)):
 
-- `6963334`: baseline component profile, B1/16/64, CPU/CUDA outputs. Maze is
-  complete; Cube/Scene remain running. Their measured restore cost may exceed
-  the original 45-minute allocation at the final cell. Extending those running
-  jobs was denied by SLURM; retain completed cells and schedule only missing
-  measurements after terminal status if necessary.
-- `6963434`: canceled while pending. Local smoke caught the incorrect canonical
-  Maze name in the first harness before the array ran.
-- `6963669`: corrected independent acceptance and paired B1/16, T1/8 comparison,
-  queued with a two-hour allocation. Production source is identical to the
-  first candidate stage; only the benchmark's Maze name changed.
-
-Evidence is preserved under
-[`semantic_recovery_evidence/ogbench_online_20261002`](semantic_recovery_evidence/ogbench_online_20261002/).
-No GPU acceptance or OGBench process default is claimed at this checkpoint.
+- Baseline `6963334`: Maze completed. Cube/Scene timed out after four completed
+  B1/16 CPU/CUDA cells each. Array `6964316` measures only their missing B64
+  cells on the same frozen source, one task per registration/device.
+- `6963434` was canceled while pending after correcting the canonical Maze name.
+- `6963669` failed test collection because the source archive omitted the
+  reference-helper support-matrix fixture. Logs are preserved. Repaired bundle
+  V3 adds only that fixture; all six tests collect from the isolated archive.
+- `6964281`: Maze passed independently on CPU/software-GL and CUDA/EGL, including
+  all public State/frame gates and timing cells. Its actual GPU was RTX 3090.
+  Cube/Scene remain running. No sibling acceptance or process default is implied.
 
 ## Next execution stage
 

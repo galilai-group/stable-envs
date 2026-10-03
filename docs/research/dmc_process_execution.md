@@ -142,3 +142,11 @@ Remaining DMC work: collect matched resource throughput, choose measured
 defaults, then measure larger batches, State/IPC/
 transfer components, renderer-only FPS, selected-frame pipeline throughput, and
 same-device source baselines. The full 35-registration goal remains active.
+
+October 2 follow-up: baseline `6960514` is complete. Process throughput array
+`6961930` has completed additional registrations; final report reconciliation
+is pending. Its Acrobot/Pendulum tasks failed opening their X11 display before
+the renderer proof. Retry `6964379` repeats only those tasks on unchanged frozen
+source and writes `benchmark-retry2`. Failed reports, retry launcher and scheduler
+state are preserved in [the closure](semantic_recovery_evidence/dmc_baseline_closure_20261002/).
+The exporter acceptance array `6961949` remains pending. Defaults are unchanged.

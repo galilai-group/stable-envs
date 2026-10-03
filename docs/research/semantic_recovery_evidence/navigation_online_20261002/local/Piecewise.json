@@ -1,0 +1,971 @@
+{
+  "status": "PASS",
+  "env": "Piecewise",
+  "host": "cis1b1zs2j3.ad.brown.edu",
+  "job": null,
+  "gpu": null,
+  "affinity": null,
+  "versions": {
+    "torch": "2.14.0",
+    "numpy": "2.5.3",
+    "gymnasium": "1.3.0",
+    "tensordict": "0.14.2"
+  },
+  "source_sha256": {
+    "stable_envs/envs/navigation.py": "647c994b004e86cd54aeef3420fd45b6df83d1999d9088aa392ccc964e24f63a",
+    "stable_envs/env.py": "9c01328506c022a8e42b2073b20ba2702b2159c38fae1c52424347ca1a9c4ea6",
+    "stable_envs/_stepping.py": "8176c3c0fe2c17bb91dd126b198296a60d64082a57780c44c1d1e798fcdf33b7",
+    "scripts/benchmarks/online_stepping/navigation_profile.py": "dca923889557a7f73dda9066732df2c56657bb815c935a32b0fc492869bfc311"
+  },
+  "scope": "native-batched component/public-flow diagnostic; no source comparison",
+  "cells": [
+    {
+      "device": "cpu",
+      "batch": 1,
+      "horizon": 1,
+      "operation": "raw_step_with_state",
+      "seconds": [
+        0.00012912508100271225,
+        0.00010254210792481899,
+        9.670807048678398e-05,
+        9.612506255507469e-05,
+        9.033293463289738e-05,
+        8.987495675683022e-05
+      ],
+      "valid_transitions_or_items": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "rate_mean": 10072.793755385168,
+      "rate_sd": 1249.8032010540496,
+      "unit": "steps/s",
+      "selected_frames_per_call": 0
+    },
+    {
+      "device": "cpu",
+      "batch": 1,
+      "horizon": 1,
+      "operation": "get_state",
+      "seconds": [
+        3.779097460210323e-05,
+        3.470899537205696e-05,
+        3.404100425541401e-05,
+        3.3665914088487625e-05,
+        3.320816904306412e-05,
+        3.245798870921135e-05
+      ],
+      "valid_transitions_or_items": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "rate_mean": 29212.403202781716,
+      "rate_sd": 1507.1931808352356,
+      "unit": "States/s",
+      "selected_frames_per_call": 0
+    },
+    {
+      "device": "cpu",
+      "batch": 1,
+      "horizon": 1,
+      "operation": "public_states_all",
+      "seconds": [
+        0.00021241698414087296,
+        0.00019966717809438705,
+        0.0001907499972730875,
+        0.00019183289259672165,
+        0.00018879189155995846,
+        0.00018645799718797207
+      ],
+      "valid_transitions_or_items": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "rate_mean": 5138.5610183045565,
+      "rate_sd": 242.64615065516452,
+      "unit": "steps/s",
+      "selected_frames_per_call": 0
+    },
+    {
+      "device": "cpu",
+      "batch": 1,
+      "horizon": 1,
+      "operation": "public_states_none",
+      "seconds": [
+        0.00015704194083809853,
+        0.0001543750986456871,
+        0.0001550000160932541,
+        0.00015474995598196983,
+        0.0001532919704914093,
+        0.00015166704542934895
+      ],
+      "valid_transitions_or_items": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "rate_mean": 6479.332161963961,
+      "rate_sd": 75.47980001407481,
+      "unit": "steps/s",
+      "selected_frames_per_call": 0
+    },
+    {
+      "device": "cpu",
+      "batch": 1,
+      "horizon": 8,
+      "operation": "public_states_all",
+      "seconds": [
+        0.0012944589834660292,
+        0.0013227909803390503,
+        0.001439457992091775,
+        0.001361458096653223,
+        0.0013109168503433466,
+        0.001277791801840067
+      ],
+      "valid_transitions_or_items": [
+        8,
+        8,
+        8,
+        8,
+        8,
+        8
+      ],
+      "rate_mean": 6004.184534104131,
+      "rate_sd": 254.6494153281283,
+      "unit": "steps/s",
+      "selected_frames_per_call": 0
+    },
+    {
+      "device": "cpu",
+      "batch": 1,
+      "horizon": 8,
+      "operation": "public_states_none",
+      "seconds": [
+        0.0012164998333901167,
+        0.0012232910376042128,
+        0.0014352919533848763,
+        0.0012501250021159649,
+        0.0012372077908366919,
+        0.0012344999704509974
+      ],
+      "valid_transitions_or_items": [
+        8,
+        8,
+        8,
+        8,
+        8,
+        8
+      ],
+      "rate_mean": 6339.2747836471835,
+      "rate_sd": 379.9843607552856,
+      "unit": "steps/s",
+      "selected_frames_per_call": 0
+    },
+    {
+      "device": "cpu",
+      "batch": 1,
+      "horizon": 1,
+      "operation": "render_only",
+      "seconds": [
+        0.0001277499832212925,
+        0.00011037499643862247,
+        0.00010379217565059662,
+        0.00010437495075166225,
+        0.00010420894250273705,
+        0.00010420894250273705
+      ],
+      "valid_transitions_or_items": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "rate_mean": 9215.917326915618,
+      "rate_sd": 713.9726530711301,
+      "unit": "frames/s",
+      "selected_frames_per_call": 1
+    },
+    {
+      "device": "cpu",
+      "batch": 1,
+      "horizon": 1,
+      "operation": "pipeline_final_frame",
+      "seconds": [
+        0.0003529998939484358,
+        0.00031833304092288017,
+        0.00031591695733368397,
+        0.0003315419889986515,
+        0.00031299982219934464,
+        0.0003125418443232775
+      ],
+      "valid_transitions_or_items": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "rate_mean": 3091.7142934854005,
+      "rate_sd": 143.4412529791563,
+      "unit": "steps/s",
+      "selected_frames_per_call": 1,
+      "frames_per_s_mean": 3091.7142934854005,
+      "frames_per_s_sd": 143.4412529791563
+    },
+    {
+      "device": "cpu",
+      "batch": 1,
+      "horizon": 8,
+      "operation": "pipeline_final_frame",
+      "seconds": [
+        0.0014874578919261694,
+        0.001447875052690506,
+        0.0014480419922620058,
+        0.0014414580073207617,
+        0.0014292499981820583,
+        0.0014927920419722795
+      ],
+      "valid_transitions_or_items": [
+        8,
+        8,
+        8,
+        8,
+        8,
+        8
+      ],
+      "rate_mean": 5489.117781642157,
+      "rate_sd": 97.13660442052353,
+      "unit": "steps/s",
+      "selected_frames_per_call": 1,
+      "frames_per_s_mean": 686.1397227052696,
+      "frames_per_s_sd": 12.14207555256544
+    },
+    {
+      "device": "cpu",
+      "batch": 64,
+      "horizon": 1,
+      "operation": "raw_step_with_state",
+      "seconds": [
+        0.00017970800399780273,
+        0.0001712499652057886,
+        0.0001662911381572485,
+        0.00016512512229382992,
+        0.00016308389604091644,
+        0.0001629579346626997
+      ],
+      "valid_transitions_or_items": [
+        64,
+        64,
+        64,
+        64,
+        64,
+        64
+      ],
+      "rate_mean": 381247.2444851168,
+      "rate_sd": 14126.984263467744,
+      "unit": "steps/s",
+      "selected_frames_per_call": 0
+    },
+    {
+      "device": "cpu",
+      "batch": 64,
+      "horizon": 1,
+      "operation": "get_state",
+      "seconds": [
+        3.645801916718483e-05,
+        3.3084070309996605e-05,
+        3.287498839199543e-05,
+        3.200001083314419e-05,
+        3.1708041206002235e-05,
+        3.191712312400341e-05
+      ],
+      "valid_transitions_or_items": [
+        64,
+        64,
+        64,
+        64,
+        64,
+        64
+      ],
+      "rate_mean": 1943381.0315508207,
+      "rate_sd": 98048.91142030511,
+      "unit": "States/s",
+      "selected_frames_per_call": 0
+    },
+    {
+      "device": "cpu",
+      "batch": 64,
+      "horizon": 1,
+      "operation": "public_states_all",
+      "seconds": [
+        0.0002725408412516117,
+        0.00026633404195308685,
+        0.0002630001399666071,
+        0.00026104203425347805,
+        0.0002723329234868288,
+        0.00026062503457069397
+      ],
+      "valid_transitions_or_items": [
+        64,
+        64,
+        64,
+        64,
+        64,
+        64
+      ],
+      "rate_mean": 240702.33961648535,
+      "rate_sd": 4852.067444719399,
+      "unit": "steps/s",
+      "selected_frames_per_call": 0,
+      "cprofile": "         2140 function calls (2106 primitive calls) in 0.001 seconds\n\n   Ordered by: cumulative time\n   List reduced from 197 to 30 due to restriction <30>\n\n   ncalls  tottime  percall  cumtime  percall filename:lineno(function)\n        1    0.000    0.000    0.001    0.001 /Users/samib/stable-envs/.worktrees/render-config-fixes/scripts/benchmarks/online_stepping/navigation_profile.py:73(call)\n        1    0.000    0.000    0.001    0.001 /Users/samib/stable-envs/.worktrees/render-config-fixes/stable_envs/env.py:1309(step)\n      2/1    0.000    0.000    0.001    0.001 /Users/samib/se6-venv/lib/python3.12/site-packages/torch/utils/_contextlib.py:120(decorate_context)\n        1    0.000    0.000    0.001    0.001 /Users/samib/stable-envs/.worktrees/render-config-fixes/stable_envs/_stepping.py:63(step)\n        1    0.000    0.000    0.000    0.000 /Users/samib/stable-envs/.worktrees/render-config-fixes/stable_envs/envs/navigation.py:1577(_step)\n        1    0.000    0.000    0.000    0.000 /Users/samib/stable-envs/.worktrees/render-config-fixes/stable_envs/envs/navigation.py:909(_step)\n        1    0.000    0.000    0.000    0.000 /Users/samib/stable-envs/.worktrees/render-config-fixes/stable_envs/envs/navigation.py:879(_outputs)\n        1    0.000    0.000    0.000    0.000 /Users/samib/stable-envs/.worktrees/render-config-fixes/stable_envs/env.py:1146(get_state)\n        1    0.000    0.000    0.000    0.000 /Users/samib/stable-envs/.worktrees/render-config-fixes/stable_envs/_stepping.py:42(_masked_outputs)\n        2    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/base.py:15063(clone)\n        2    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py:3612(_clone)\n        2    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/base.py:13119(_clone_recurse)\n      5/3    0.000    0.000    0.000    0.000 {built-in method torch.stack}\n        1    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/base.py:758(__torch_function__)\n      5/3    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py:259(__init__)\n    23/18    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/base.py:14570(_validate_value_generic)\n      3/1    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_torch_func.py:678(_stack)\n       64    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/torch/functional.py:1734(norm)\n        1    0.000    0.000    0.000    0.000 /Users/samib/stable-envs/.worktrees/render-config-fixes/stable_envs/env.py:1116(_unpack_render_state)\n        2    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/base.py:11658(_fast_apply)\n      5/2    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py:1439(_apply_nest)\n    11/10    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py:2661(_set_tuple)\n        1    0.000    0.000    0.000    0.000 /Users/samib/stable-envs/.worktrees/render-config-fixes/stable_envs/envs/navigation.py:1527(_advance_rows)\n      4/2    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_torch_func.py:849(stack_fn)\n        5    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py:881(__setitem__)\n       24    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py:2600(_set_str)\n     16/9    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py:3853(items)\n       64    0.000    0.000    0.000    0.000 {built-in method torch._C._linalg.linalg_vector_norm}\n     10/3    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py:3873(fast_iter)\n        1    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/utils.py:934(new_func)\n\n\n"
+    },
+    {
+      "device": "cpu",
+      "batch": 64,
+      "horizon": 1,
+      "operation": "public_states_none",
+      "seconds": [
+        0.0002442500554025173,
+        0.00023716595023870468,
+        0.0002335419412702322,
+        0.00023058312945067883,
+        0.00023191608488559723,
+        0.0002302920911461115
+      ],
+      "valid_transitions_or_items": [
+        64,
+        64,
+        64,
+        64,
+        64,
+        64
+      ],
+      "rate_mean": 272891.2489191169,
+      "rate_sd": 6082.0908501738095,
+      "unit": "steps/s",
+      "selected_frames_per_call": 0
+    },
+    {
+      "device": "cpu",
+      "batch": 64,
+      "horizon": 8,
+      "operation": "public_states_all",
+      "seconds": [
+        0.0019573329482227564,
+        0.001955999992787838,
+        0.0019257080275565386,
+        0.0019370419904589653,
+        0.0019304999150335789,
+        0.0019316249527037144
+      ],
+      "valid_transitions_or_items": [
+        512,
+        512,
+        512,
+        512,
+        512,
+        512
+      ],
+      "rate_mean": 263968.9985886404,
+      "rate_sd": 1849.419944655986,
+      "unit": "steps/s",
+      "selected_frames_per_call": 0,
+      "cprofile": "         15094 function calls (14851 primitive calls) in 0.004 seconds\n\n   Ordered by: cumulative time\n   List reduced from 202 to 30 due to restriction <30>\n\n   ncalls  tottime  percall  cumtime  percall filename:lineno(function)\n        1    0.000    0.000    0.004    0.004 /Users/samib/stable-envs/.worktrees/render-config-fixes/scripts/benchmarks/online_stepping/navigation_profile.py:73(call)\n        1    0.000    0.000    0.004    0.004 /Users/samib/stable-envs/.worktrees/render-config-fixes/stable_envs/env.py:1309(step)\n      9/1    0.000    0.000    0.004    0.004 /Users/samib/se6-venv/lib/python3.12/site-packages/torch/utils/_contextlib.py:120(decorate_context)\n        1    0.000    0.000    0.004    0.004 /Users/samib/stable-envs/.worktrees/render-config-fixes/stable_envs/_stepping.py:63(step)\n        8    0.000    0.000    0.002    0.000 /Users/samib/stable-envs/.worktrees/render-config-fixes/stable_envs/envs/navigation.py:1577(_step)\n        8    0.000    0.000    0.002    0.000 /Users/samib/stable-envs/.worktrees/render-config-fixes/stable_envs/envs/navigation.py:909(_step)\n        8    0.000    0.000    0.001    0.000 /Users/samib/stable-envs/.worktrees/render-config-fixes/stable_envs/envs/navigation.py:879(_outputs)\n        8    0.000    0.000    0.001    0.000 /Users/samib/stable-envs/.worktrees/render-config-fixes/stable_envs/_stepping.py:42(_masked_outputs)\n        8    0.000    0.000    0.001    0.000 /Users/samib/stable-envs/.worktrees/render-config-fixes/stable_envs/env.py:1146(get_state)\n       16    0.000    0.000    0.001    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/base.py:15063(clone)\n       16    0.000    0.000    0.001    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py:3612(_clone)\n       16    0.000    0.000    0.001    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/base.py:13119(_clone_recurse)\n      512    0.000    0.000    0.001    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/torch/functional.py:1734(norm)\n    21/11    0.000    0.000    0.000    0.000 {built-in method torch.stack}\n    33/17    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py:259(__init__)\n        2    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/base.py:758(__torch_function__)\n      5/2    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_torch_func.py:678(_stack)\n   121/81    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/base.py:14570(_validate_value_generic)\n       16    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/base.py:11658(_fast_apply)\n    40/16    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py:1439(_apply_nest)\n        8    0.000    0.000    0.000    0.000 /Users/samib/stable-envs/.worktrees/render-config-fixes/stable_envs/envs/navigation.py:1527(_advance_rows)\n        8    0.000    0.000    0.000    0.000 /Users/samib/stable-envs/.worktrees/render-config-fixes/stable_envs/env.py:1116(_unpack_render_state)\n      512    0.000    0.000    0.000    0.000 {built-in method torch._C._linalg.linalg_vector_norm}\n   121/65    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py:3853(items)\n    80/24    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py:3873(fast_iter)\n     13/7    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_torch_func.py:849(stack_fn)\n       56    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/utils.py:833(newfun)\n       16    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py:1689(_convert_to_tensordict)\n      320    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/base.py:18290(_default_is_leaf)\n       16    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/base.py:9560(_items_list)\n\n\n"
+    },
+    {
+      "device": "cpu",
+      "batch": 64,
+      "horizon": 8,
+      "operation": "public_states_none",
+      "seconds": [
+        0.0019102499354630709,
+        0.0018557088915258646,
+        0.0018482089508324862,
+        0.0018467921763658524,
+        0.001856749877333641,
+        0.001955959014594555
+      ],
+      "valid_transitions_or_items": [
+        512,
+        512,
+        512,
+        512,
+        512,
+        512
+      ],
+      "rate_mean": 272618.39354929375,
+      "rate_sd": 6328.614692969334,
+      "unit": "steps/s",
+      "selected_frames_per_call": 0
+    },
+    {
+      "device": "cpu",
+      "batch": 64,
+      "horizon": 1,
+      "operation": "render_only",
+      "seconds": [
+        0.0012902908492833376,
+        0.0010389999952167273,
+        0.001012084074318409,
+        0.000981624936684966,
+        0.0009727501310408115,
+        0.001121666980907321
+      ],
+      "valid_transitions_or_items": [
+        64,
+        64,
+        64,
+        64,
+        64,
+        64
+      ],
+      "rate_mean": 60413.926840953696,
+      "rate_sd": 6154.058684705607,
+      "unit": "frames/s",
+      "selected_frames_per_call": 64
+    },
+    {
+      "device": "cpu",
+      "batch": 64,
+      "horizon": 1,
+      "operation": "pipeline_final_frame",
+      "seconds": [
+        0.002423333004117012,
+        0.00217241607606411,
+        0.002255875151604414,
+        0.0022916661109775305,
+        0.002180167008191347,
+        0.0021347079891711473
+      ],
+      "valid_transitions_or_items": [
+        64,
+        64,
+        64,
+        64,
+        64,
+        64
+      ],
+      "rate_mean": 28584.011378309202,
+      "rate_sd": 1305.1809183173275,
+      "unit": "steps/s",
+      "selected_frames_per_call": 64,
+      "frames_per_s_mean": 28584.011378309202,
+      "frames_per_s_sd": 1305.1809183173275
+    },
+    {
+      "device": "cpu",
+      "batch": 64,
+      "horizon": 8,
+      "operation": "pipeline_final_frame",
+      "seconds": [
+        0.004397708922624588,
+        0.004169333027675748,
+        0.0041304591577500105,
+        0.004185416968539357,
+        0.004178875125944614,
+        0.00412350008264184
+      ],
+      "valid_transitions_or_items": [
+        512,
+        512,
+        512,
+        512,
+        512,
+        512
+      ],
+      "rate_mean": 122033.28614255464,
+      "rate_sd": 2850.5490424389986,
+      "unit": "steps/s",
+      "selected_frames_per_call": 64,
+      "frames_per_s_mean": 15254.16076781933,
+      "frames_per_s_sd": 356.31863030487483
+    },
+    {
+      "device": "cpu",
+      "batch": 256,
+      "horizon": 1,
+      "operation": "raw_step_with_state",
+      "seconds": [
+        0.0003784170839935541,
+        0.0003858748823404312,
+        0.00037179095670580864,
+        0.0003717921208590269,
+        0.0003708330914378166,
+        0.00037066591903567314
+      ],
+      "valid_transitions_or_items": [
+        256,
+        256,
+        256,
+        256,
+        256,
+        256
+      ],
+      "rate_mean": 683005.3170776274,
+      "rate_sd": 10949.242553130534,
+      "unit": "steps/s",
+      "selected_frames_per_call": 0
+    },
+    {
+      "device": "cpu",
+      "batch": 256,
+      "horizon": 1,
+      "operation": "get_state",
+      "seconds": [
+        3.691692836582661e-05,
+        3.4250086173415184e-05,
+        3.400002606213093e-05,
+        3.345799632370472e-05,
+        3.320886753499508e-05,
+        3.4207943826913834e-05
+      ],
+      "valid_transitions_or_items": [
+        256,
+        256,
+        256,
+        256,
+        256,
+        256
+      ],
+      "rate_mean": 7463689.790798956,
+      "rate_sd": 275748.91192344157,
+      "unit": "States/s",
+      "selected_frames_per_call": 0
+    },
+    {
+      "device": "cpu",
+      "batch": 256,
+      "horizon": 1,
+      "operation": "public_states_all",
+      "seconds": [
+        0.0004834590945392847,
+        0.0004800001624971628,
+        0.0004765000194311142,
+        0.00047450000420212746,
+        0.0004882919602096081,
+        0.00047312513925135136
+      ],
+      "valid_transitions_or_items": [
+        256,
+        256,
+        256,
+        256,
+        256,
+        256
+      ],
+      "rate_mean": 534162.6918153034,
+      "rate_sd": 6419.993708527115,
+      "unit": "steps/s",
+      "selected_frames_per_call": 0
+    },
+    {
+      "device": "cpu",
+      "batch": 256,
+      "horizon": 1,
+      "operation": "public_states_none",
+      "seconds": [
+        0.00044845789670944214,
+        0.00044237496331334114,
+        0.00044175004586577415,
+        0.0004727081395685673,
+        0.0004429158288985491,
+        0.00043720798566937447
+      ],
+      "valid_transitions_or_items": [
+        256,
+        256,
+        256,
+        256,
+        256,
+        256
+      ],
+      "rate_mean": 572355.8218977042,
+      "rate_sd": 15795.104019694556,
+      "unit": "steps/s",
+      "selected_frames_per_call": 0
+    },
+    {
+      "device": "cpu",
+      "batch": 256,
+      "horizon": 8,
+      "operation": "public_states_all",
+      "seconds": [
+        0.0035759168677031994,
+        0.0037629581056535244,
+        0.0037208751309663057,
+        0.003793208859860897,
+        0.0036667499225586653,
+        0.0036417499650269747
+      ],
+      "valid_transitions_or_items": [
+        2048,
+        2048,
+        2048,
+        2048,
+        2048,
+        2048
+      ],
+      "rate_mean": 554698.8518657181,
+      "rate_sd": 12202.016707505705,
+      "unit": "steps/s",
+      "selected_frames_per_call": 0
+    },
+    {
+      "device": "cpu",
+      "batch": 256,
+      "horizon": 8,
+      "operation": "public_states_none",
+      "seconds": [
+        0.003611374879255891,
+        0.0035972921177744865,
+        0.00360008399002254,
+        0.0035910841543227434,
+        0.0035752500407397747,
+        0.003650625003501773
+      ],
+      "valid_transitions_or_items": [
+        2048,
+        2048,
+        2048,
+        2048,
+        2048,
+        2048
+      ],
+      "rate_mean": 568236.3310330726,
+      "rate_sd": 4014.49296162485,
+      "unit": "steps/s",
+      "selected_frames_per_call": 0
+    },
+    {
+      "device": "cpu",
+      "batch": 1024,
+      "horizon": 1,
+      "operation": "raw_step_with_state",
+      "seconds": [
+        0.0012432499788701534,
+        0.0012300419621169567,
+        0.001238625030964613,
+        0.0012413340155035257,
+        0.0012304580304771662,
+        0.0011979578994214535
+      ],
+      "valid_transitions_or_items": [
+        1024,
+        1024,
+        1024,
+        1024,
+        1024,
+        1024
+      ],
+      "rate_mean": 832463.3630065433,
+      "rate_sd": 11541.542912395766,
+      "unit": "steps/s",
+      "selected_frames_per_call": 0
+    },
+    {
+      "device": "cpu",
+      "batch": 1024,
+      "horizon": 1,
+      "operation": "get_state",
+      "seconds": [
+        3.833300434052944e-05,
+        3.591692075133324e-05,
+        3.591692075133324e-05,
+        3.6499928683042526e-05,
+        3.491714596748352e-05,
+        3.441586159169674e-05
+      ],
+      "valid_transitions_or_items": [
+        1024,
+        1024,
+        1024,
+        1024,
+        1024,
+        1024
+      ],
+      "rate_mean": 28478148.235479623,
+      "rate_sd": 1062349.3358297315,
+      "unit": "States/s",
+      "selected_frames_per_call": 0
+    },
+    {
+      "device": "cpu",
+      "batch": 1024,
+      "horizon": 1,
+      "operation": "public_states_all",
+      "seconds": [
+        0.001330584054812789,
+        0.001309666084125638,
+        0.001299499999731779,
+        0.0014029999729245901,
+        0.0013745420146733522,
+        0.001366875134408474
+      ],
+      "valid_transitions_or_items": [
+        1024,
+        1024,
+        1024,
+        1024,
+        1024,
+        1024
+      ],
+      "rate_mean": 760575.8242988323,
+      "rate_sd": 22820.400606769053,
+      "unit": "steps/s",
+      "selected_frames_per_call": 0,
+      "cprofile": "         5980 function calls (5946 primitive calls) in 0.002 seconds\n\n   Ordered by: cumulative time\n   List reduced from 197 to 30 due to restriction <30>\n\n   ncalls  tottime  percall  cumtime  percall filename:lineno(function)\n        1    0.000    0.000    0.002    0.002 /Users/samib/stable-envs/.worktrees/render-config-fixes/scripts/benchmarks/online_stepping/navigation_profile.py:73(call)\n        1    0.000    0.000    0.002    0.002 /Users/samib/stable-envs/.worktrees/render-config-fixes/stable_envs/env.py:1309(step)\n      2/1    0.000    0.000    0.002    0.002 /Users/samib/se6-venv/lib/python3.12/site-packages/torch/utils/_contextlib.py:120(decorate_context)\n        1    0.000    0.000    0.002    0.002 /Users/samib/stable-envs/.worktrees/render-config-fixes/stable_envs/_stepping.py:63(step)\n        1    0.000    0.000    0.002    0.002 /Users/samib/stable-envs/.worktrees/render-config-fixes/stable_envs/envs/navigation.py:1577(_step)\n        1    0.000    0.000    0.002    0.002 /Users/samib/stable-envs/.worktrees/render-config-fixes/stable_envs/envs/navigation.py:909(_step)\n        1    0.000    0.000    0.002    0.002 /Users/samib/stable-envs/.worktrees/render-config-fixes/stable_envs/envs/navigation.py:879(_outputs)\n     1024    0.000    0.000    0.001    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/torch/functional.py:1734(norm)\n     1024    0.001    0.000    0.001    0.000 {built-in method torch._C._linalg.linalg_vector_norm}\n        1    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/torch/_tensor.py:1205(__iter__)\n        1    0.000    0.000    0.000    0.000 /Users/samib/stable-envs/.worktrees/render-config-fixes/stable_envs/env.py:1146(get_state)\n        1    0.000    0.000    0.000    0.000 {method 'unbind' of 'torch._C.TensorBase' objects}\n        1    0.000    0.000    0.000    0.000 /Users/samib/stable-envs/.worktrees/render-config-fixes/stable_envs/_stepping.py:42(_masked_outputs)\n        2    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/base.py:15063(clone)\n        2    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py:3612(_clone)\n        2    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/base.py:13119(_clone_recurse)\n      5/3    0.000    0.000    0.000    0.000 {built-in method torch.stack}\n      5/3    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py:259(__init__)\n        1    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/base.py:758(__torch_function__)\n    23/18    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/base.py:14570(_validate_value_generic)\n      3/1    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_torch_func.py:678(_stack)\n        1    0.000    0.000    0.000    0.000 /Users/samib/stable-envs/.worktrees/render-config-fixes/stable_envs/envs/navigation.py:1527(_advance_rows)\n        1    0.000    0.000    0.000    0.000 /Users/samib/stable-envs/.worktrees/render-config-fixes/stable_envs/env.py:1116(_unpack_render_state)\n        2    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/base.py:11658(_fast_apply)\n     1189    0.000    0.000    0.000    0.000 {built-in method builtins.isinstance}\n      5/2    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py:1439(_apply_nest)\n    11/10    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py:2661(_set_tuple)\n     1024    0.000    0.000    0.000    0.000 {built-in method torch._C._has_torch_function_unary}\n      4/2    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_torch_func.py:849(stack_fn)\n        5    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py:881(__setitem__)\n\n\n"
+    },
+    {
+      "device": "cpu",
+      "batch": 1024,
+      "horizon": 1,
+      "operation": "public_states_none",
+      "seconds": [
+        0.0013273749500513077,
+        0.0013725000899285078,
+        0.0013492079451680183,
+        0.0013227500021457672,
+        0.0013184999115765095,
+        0.001332166139036417
+      ],
+      "valid_transitions_or_items": [
+        1024,
+        1024,
+        1024,
+        1024,
+        1024,
+        1024
+      ],
+      "rate_mean": 765992.1369738934,
+      "rate_sd": 11511.16468201039,
+      "unit": "steps/s",
+      "selected_frames_per_call": 0
+    },
+    {
+      "device": "cpu",
+      "batch": 1024,
+      "horizon": 8,
+      "operation": "public_states_all",
+      "seconds": [
+        0.010717625031247735,
+        0.010733291041105986,
+        0.010368458926677704,
+        0.010904374998062849,
+        0.010737833101302385,
+        0.010703291976824403
+      ],
+      "valid_transitions_or_items": [
+        8192,
+        8192,
+        8192,
+        8192,
+        8192,
+        8192
+      ],
+      "rate_mean": 766201.6369862919,
+      "rate_sd": 12787.982020176167,
+      "unit": "steps/s",
+      "selected_frames_per_call": 0,
+      "cprofile": "         45814 function calls (45571 primitive calls) in 0.015 seconds\n\n   Ordered by: cumulative time\n   List reduced from 202 to 30 due to restriction <30>\n\n   ncalls  tottime  percall  cumtime  percall filename:lineno(function)\n        1    0.000    0.000    0.015    0.015 /Users/samib/stable-envs/.worktrees/render-config-fixes/scripts/benchmarks/online_stepping/navigation_profile.py:73(call)\n        1    0.000    0.000    0.015    0.015 /Users/samib/stable-envs/.worktrees/render-config-fixes/stable_envs/env.py:1309(step)\n      9/1    0.000    0.000    0.015    0.015 /Users/samib/se6-venv/lib/python3.12/site-packages/torch/utils/_contextlib.py:120(decorate_context)\n        1    0.000    0.000    0.015    0.015 /Users/samib/stable-envs/.worktrees/render-config-fixes/stable_envs/_stepping.py:63(step)\n        8    0.000    0.000    0.013    0.002 /Users/samib/stable-envs/.worktrees/render-config-fixes/stable_envs/envs/navigation.py:1577(_step)\n        8    0.000    0.000    0.013    0.002 /Users/samib/stable-envs/.worktrees/render-config-fixes/stable_envs/envs/navigation.py:909(_step)\n        8    0.002    0.000    0.012    0.001 /Users/samib/stable-envs/.worktrees/render-config-fixes/stable_envs/envs/navigation.py:879(_outputs)\n     8192    0.003    0.000    0.008    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/torch/functional.py:1734(norm)\n     8192    0.004    0.000    0.004    0.000 {built-in method torch._C._linalg.linalg_vector_norm}\n        8    0.000    0.000    0.001    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/torch/_tensor.py:1205(__iter__)\n        8    0.001    0.000    0.001    0.000 {method 'unbind' of 'torch._C.TensorBase' objects}\n        8    0.000    0.000    0.001    0.000 /Users/samib/stable-envs/.worktrees/render-config-fixes/stable_envs/_stepping.py:42(_masked_outputs)\n        8    0.000    0.000    0.001    0.000 /Users/samib/stable-envs/.worktrees/render-config-fixes/stable_envs/env.py:1146(get_state)\n       16    0.000    0.000    0.001    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/base.py:15063(clone)\n       16    0.000    0.000    0.001    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py:3612(_clone)\n       16    0.000    0.000    0.001    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/base.py:13119(_clone_recurse)\n    21/11    0.000    0.000    0.001    0.000 {built-in method torch.stack}\n        2    0.000    0.000    0.001    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/base.py:758(__torch_function__)\n      5/2    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_torch_func.py:678(_stack)\n        8    0.000    0.000    0.000    0.000 /Users/samib/stable-envs/.worktrees/render-config-fixes/stable_envs/envs/navigation.py:1527(_advance_rows)\n    33/17    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py:259(__init__)\n   121/81    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/base.py:14570(_validate_value_generic)\n       16    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/base.py:11658(_fast_apply)\n     9596    0.000    0.000    0.000    0.000 {built-in method builtins.isinstance}\n    40/16    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py:1439(_apply_nest)\n        8    0.000    0.000    0.000    0.000 /Users/samib/stable-envs/.worktrees/render-config-fixes/stable_envs/env.py:1116(_unpack_render_state)\n     13/7    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_torch_func.py:849(stack_fn)\n   121/65    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py:3853(items)\n    80/24    0.000    0.000    0.000    0.000 /Users/samib/se6-venv/lib/python3.12/site-packages/tensordict/_td.py:3873(fast_iter)\n     8206    0.000    0.000    0.000    0.000 {built-in method torch._C._has_torch_function_unary}\n\n\n"
+    },
+    {
+      "device": "cpu",
+      "batch": 1024,
+      "horizon": 8,
+      "operation": "public_states_none",
+      "seconds": [
+        0.010580334113910794,
+        0.010646082926541567,
+        0.010703665902838111,
+        0.01059041591361165,
+        0.010484624886885285,
+        0.01041316706687212
+      ],
+      "valid_transitions_or_items": [
+        8192,
+        8192,
+        8192,
+        8192,
+        8192,
+        8192
+      ],
+      "rate_mean": 775109.5476991977,
+      "rate_sd": 7787.022304728498,
+      "unit": "steps/s",
+      "selected_frames_per_call": 0
+    },
+    {
+      "device": "cpu",
+      "batch": 4096,
+      "horizon": 1,
+      "operation": "raw_step_with_state",
+      "seconds": [
+        0.004636666039004922,
+        0.004622041946277022,
+        0.0046164169907569885,
+        0.004585667047649622,
+        0.004645125009119511,
+        0.0046117911115288734
+      ],
+      "valid_transitions_or_items": [
+        4096,
+        4096,
+        4096,
+        4096,
+        4096,
+        4096
+      ],
+      "rate_mean": 886668.4568878966,
+      "rate_sd": 4007.058843618393,
+      "unit": "steps/s",
+      "selected_frames_per_call": 0
+    },
+    {
+      "device": "cpu",
+      "batch": 4096,
+      "horizon": 1,
+      "operation": "get_state",
+      "seconds": [
+        4.4667162001132965e-05,
+        4.2084138840436935e-05,
+        4.1999854147434235e-05,
+        4.116678610444069e-05,
+        4.087504930794239e-05,
+        4.0624989196658134e-05
+      ],
+      "valid_transitions_or_items": [
+        4096,
+        4096,
+        4096,
+        4096,
+        4096,
+        4096
+      ],
+      "rate_mean": 97847268.89199398,
+      "rate_sd": 3326173.019359016,
+      "unit": "States/s",
+      "selected_frames_per_call": 0
+    },
+    {
+      "device": "cpu",
+      "batch": 4096,
+      "horizon": 1,
+      "operation": "public_states_all",
+      "seconds": [
+        0.004788874881342053,
+        0.004725124919787049,
+        0.00461933296173811,
+        0.004740500124171376,
+        0.004810959100723267,
+        0.004879666026681662
+      ],
+      "valid_transitions_or_items": [
+        4096,
+        4096,
+        4096,
+        4096,
+        4096,
+        4096
+      ],
+      "rate_mean": 860619.0459643814,
+      "rate_sd": 16091.898034148182,
+      "unit": "steps/s",
+      "selected_frames_per_call": 0
+    },
+    {
+      "device": "cpu",
+      "batch": 4096,
+      "horizon": 1,
+      "operation": "public_states_none",
+      "seconds": [
+        0.004731041844934225,
+        0.004746707854792476,
+        0.004795792046934366,
+        0.0047562080435454845,
+        0.004732375033199787,
+        0.004576166858896613
+      ],
+      "valid_transitions_or_items": [
+        4096,
+        4096,
+        4096,
+        4096,
+        4096,
+        4096
+      ],
+      "rate_mean": 867426.1720416114,
+      "rate_sd": 14198.331317766962,
+      "unit": "steps/s",
+      "selected_frames_per_call": 0
+    },
+    {
+      "device": "cpu",
+      "batch": 4096,
+      "horizon": 8,
+      "operation": "public_states_all",
+      "seconds": [
+        0.03793545882217586,
+        0.03838520799763501,
+        0.0379726670216769,
+        0.03800104185938835,
+        0.03842704091221094,
+        0.0729445000179112
+      ],
+      "valid_transitions_or_items": [
+        32768,
+        32768,
+        32768,
+        32768,
+        32768,
+        32768
+      ],
+      "rate_mean": 790770.7967425525,
+      "rate_sd": 167395.7733070824,
+      "unit": "steps/s",
+      "selected_frames_per_call": 0
+    },
+    {
+      "device": "cpu",
+      "batch": 4096,
+      "horizon": 8,
+      "operation": "public_states_none",
+      "seconds": [
+        0.03814204200170934,
+        0.037681750021874905,
+        0.038243375020101666,
+        0.03783449996262789,
+        0.03803958394564688,
+        0.03817229112610221
+      ],
+      "valid_transitions_or_items": [
+        32768,
+        32768,
+        32768,
+        32768,
+        32768,
+        32768
+      ],
+      "rate_mean": 861910.2224057227,
+      "rate_sd": 4953.017452017143,
+      "unit": "steps/s",
+      "selected_frames_per_call": 0
+    }
+  ]
+}

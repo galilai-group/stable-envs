@@ -1,0 +1,28 @@
+## SLURM PROLOG ###############################################################
+##    Job ID : 6964294
+##  Job Name : nav-matplotlib-deps
+##  Nodelist : node1831
+##      CPUs : 
+##  Mem/Node : 4096 MB
+## Directory : /oscar/scratch/sboughan/se-semantic-recovery/navigation-online-profile-v1-20261002
+##   Job Started : Fri Oct  2 07:43:11 PM EDT 2026
+###############################################################################
+Using CPython 3.12.9 interpreter at: /oscar/scratch/sboughan/venvs/se-step6/bin/python
+Resolved 8 packages in 260ms
+Downloading fonttools (5.1MiB)
+Downloading kiwisolver (1.4MiB)
+Downloading matplotlib (8.4MiB)
+ Downloaded kiwisolver
+ Downloaded fonttools
+ Downloaded matplotlib
+Prepared 8 packages in 3.33s
+Installed 8 packages in 2.61s
+ + contourpy==1.4.0
+ + cycler==0.12.1
+ + fonttools==4.66.1
+ + kiwisolver==1.5.1
+ + matplotlib==3.10.9
+ + pyparsing==3.3.3
+ + python-dateutil==2.9.0.post0
+ + six==1.17.0
+{'matplotlib': '3.10.9', 'numpy': '2.5.3', 'torch': '2.14.0+cu126', 'contourpy': '1.4.0', 'cycler': '0.12.1', 'fonttools': '4.66.1', 'kiwisolver': '1.5.1', 'pyparsing': '3.3.3', 'python-dateutil': '2.9.0.post0', 'six': '1.17.0'}
