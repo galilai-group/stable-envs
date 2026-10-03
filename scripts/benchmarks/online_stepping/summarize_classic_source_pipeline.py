@@ -16,9 +16,12 @@ def main():
     p.add_argument("output", type=Path)
     p.add_argument("--source", type=Path, required=True)
     p.add_argument("--batches", type=int, nargs="+", default=[1, 64, 256])
+    p.add_argument("--components-output", type=Path)
     args = p.parse_args()
     if args.output.exists():
         raise FileExistsError(args.output)
+    if args.components_output is not None and args.components_output.exists():
+        raise FileExistsError(args.components_output)
     report = json.loads(args.report.read_text())
     assert report["status"] == "PASS"
     assert "3090" in report["gpu"] and len(report["affinity"]) == 8
@@ -52,6 +55,7 @@ def main():
                                                     ("ours_state_export", "ours_render_saved", "source_render_saved")))
     for c in components.values():
         assert len(c["seconds"]) == 6 and all(math.isfinite(s) and s > 0 for s in c["seconds"])
+        assert c["count"] == c["batch"]
     rows = []
     for key in sorted(expected):
         device, batch, horizon, selection = key
@@ -77,6 +81,21 @@ def main():
         w.writeheader()
         w.writerows(rows)
     print("Validated both devices; wrote", len(rows), "direct-serial-source comparison rows")
+    if args.components_output is not None:
+        component_rows = []
+        for key, c in sorted(components.items()):
+            device, batch, operation = key
+            rates = [batch / s for s in c["seconds"]]
+            component_rows.append(dict(env=report["name"], output_device=device, batch=batch,
+                operation=operation, unit="states/s" if operation == "ours_state_export" else "frames/s",
+                rate_mean=statistics.mean(rates), rate_sd=statistics.stdev(rates),
+                seconds_mean=statistics.mean(c["seconds"]), seconds_sd=statistics.stdev(c["seconds"]),
+                source_render_device="cpu", host=report["host"], job=report["job"]))
+        args.components_output.parent.mkdir(parents=True, exist_ok=True)
+        with args.components_output.open("w", newline="") as f:
+            w = csv.DictWriter(f, fieldnames=list(component_rows[0]), lineterminator="\n")
+            w.writeheader()
+            w.writerows(component_rows)
 
 
 if __name__ == "__main__":

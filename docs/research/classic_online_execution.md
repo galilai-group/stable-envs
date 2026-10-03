@@ -151,3 +151,12 @@ native source CPU output from delivery to GPU memory and explicitly retain
 source worker count versus our process count. A parallel-source comparison
 remains open, so the resulting ratios must not be labeled universal source
 speedups. The sweep is queued, not yet a completed source/pipeline table.
+
+CartPole and Pendulum have now independently completed the full staged sweep;
+[their two-device CSVs and component tables](semantic_recovery_evidence/classic_source_pipeline_20261003/completed/)
+contain zero source image MSE across all checked frames. At B256/T8/all frames,
+ours CPU is 1.36x and 1.95x the serial source respectively; ours GPU produces
+10,129 and 12,211 FPS. Source GPU rendering is unavailable. Plain stepping is
+still slower than direct source; repeated unrequested State export is a concrete
+next optimization candidate using the existing family hook. No parallel-source
+or universal speedup is claimed, and the other three registrations remain pending.
