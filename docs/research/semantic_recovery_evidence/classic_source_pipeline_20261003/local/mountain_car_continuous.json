@@ -1,0 +1,412 @@
+{
+  "status": "PASS",
+  "domain": "mountain_car_continuous",
+  "name": "MountainCarContinuous",
+  "host": "cis1b1zs2j3.ad.brown.edu",
+  "job": null,
+  "affinity": null,
+  "gpu": null,
+  "source_pin": "176d54532b3c0a251a4f509b74f2fdacc143a63d",
+  "source_files": {
+    "stable_worldmodel/spaces.py": "73079b2a66dace087abc7c417691e3cc339887866915553e21d0936a362229eb",
+    "stable_worldmodel/utils.py": "9979483129df100cf4728dd45d1b6d0bb02d1fadec637d7f7065fe7894a3c276",
+    "stable_worldmodel/envs/gymnasium_control/base.py": "0354779da90bb8348241e5bd046a97f915cf979d94732931f1a121a933298599",
+    "stable_worldmodel/envs/gymnasium_control/acrobot.py": "00ee7912d10e057ae5f34290fb0b609422101b0d8ee4070ea4bf99d3c6bac1c5",
+    "stable_worldmodel/envs/gymnasium_control/cartpole.py": "3421c8afa2ae1d453c23d8e815b5418adc1f77f46aa758e4fd32cccdb9e45087",
+    "stable_worldmodel/envs/gymnasium_control/pendulum.py": "81140706a0b0c1f52f066ae76a02b906a29d69348c1ef5af4e4831db1461a124",
+    "stable_worldmodel/envs/gymnasium_control/mountain_car.py": "3e7d379f1297dfb5e179f87e8627d6af9a3194b83e0b0a61d5dd27eb737b9ce4"
+  },
+  "source_gpu_supported": false,
+  "source_render_device": "cpu",
+  "source_execution": "serial scalar CPU wrappers",
+  "source_active_simulation_workers": 1,
+  "source_state_export_in_timing": false,
+  "candidate_state_history": false,
+  "candidate_mandatory_final_state": true,
+  "scope": "direct serial upstream vs ordinary public adapter; matched output destination; no parallel-source superiority claim",
+  "versions": {
+    "torch": "2.14.0",
+    "numpy": "2.5.3",
+    "gymnasium": "1.3.0",
+    "pygame": "2.6.1",
+    "tensordict": "0.14.2"
+  },
+  "gates": [
+    {
+      "device": "cpu",
+      "batch": 2,
+      "horizon": 1,
+      "selection": "none",
+      "state_task": "PASS",
+      "frames_checked": 0,
+      "mse_mean": null,
+      "mse_sd": null,
+      "mse_max": null,
+      "mse_le_0_001": null
+    },
+    {
+      "device": "cpu",
+      "batch": 2,
+      "horizon": 1,
+      "selection": "final",
+      "state_task": "PASS",
+      "frames_checked": 2,
+      "mse_mean": 0.0,
+      "mse_sd": 0.0,
+      "mse_max": 0.0,
+      "mse_le_0_001": true
+    },
+    {
+      "device": "cpu",
+      "batch": 2,
+      "horizon": 1,
+      "selection": "all",
+      "state_task": "PASS",
+      "frames_checked": 2,
+      "mse_mean": 0.0,
+      "mse_sd": 0.0,
+      "mse_max": 0.0,
+      "mse_le_0_001": true
+    },
+    {
+      "device": "cpu",
+      "batch": 2,
+      "horizon": 8,
+      "selection": "none",
+      "state_task": "PASS",
+      "frames_checked": 0,
+      "mse_mean": null,
+      "mse_sd": null,
+      "mse_max": null,
+      "mse_le_0_001": null
+    },
+    {
+      "device": "cpu",
+      "batch": 2,
+      "horizon": 8,
+      "selection": "final",
+      "state_task": "PASS",
+      "frames_checked": 2,
+      "mse_mean": 0.0,
+      "mse_sd": 0.0,
+      "mse_max": 0.0,
+      "mse_le_0_001": true
+    },
+    {
+      "device": "cpu",
+      "batch": 2,
+      "horizon": 8,
+      "selection": "all",
+      "state_task": "PASS",
+      "frames_checked": 16,
+      "mse_mean": 0.0,
+      "mse_sd": 0.0,
+      "mse_max": 0.0,
+      "mse_le_0_001": true
+    }
+  ],
+  "timings": [
+    {
+      "device": "cpu",
+      "batch": 2,
+      "horizon": 1,
+      "selection": "none",
+      "mode": "source_serial",
+      "seconds": [
+        3.208313137292862e-05,
+        2.887495793402195e-05,
+        3.0291033908724785e-05,
+        2.8833048418164253e-05
+      ],
+      "count": 2,
+      "rate_mean": 66748.30267184865,
+      "rate_sd": 3324.0388476590592,
+      "frames": 0,
+      "fps_mean": null,
+      "fps_sd": null,
+      "candidate_processes": 0
+    },
+    {
+      "device": "cpu",
+      "batch": 2,
+      "horizon": 1,
+      "selection": "none",
+      "mode": "ours",
+      "seconds": [
+        0.00017537479288876057,
+        0.0001674171071499586,
+        0.00016112509183585644,
+        0.00015649991109967232
+      ],
+      "count": 2,
+      "rate_mean": 12135.658472013281,
+      "rate_sd": 595.0823174754341,
+      "frames": 0,
+      "fps_mean": null,
+      "fps_sd": null,
+      "candidate_processes": 0
+    },
+    {
+      "device": "cpu",
+      "batch": 2,
+      "horizon": 1,
+      "selection": "final",
+      "mode": "source_serial",
+      "seconds": [
+        0.0017827500123530626,
+        0.0018020421266555786,
+        0.0017995000816881657,
+        0.0017825830727815628
+      ],
+      "count": 2,
+      "rate_mean": 1116.2753465231033,
+      "rate_sd": 6.5434183410721705,
+      "frames": 2,
+      "fps_mean": 1116.2753465231033,
+      "fps_sd": 6.5434183410721705,
+      "candidate_processes": 0
+    },
+    {
+      "device": "cpu",
+      "batch": 2,
+      "horizon": 1,
+      "selection": "final",
+      "mode": "ours",
+      "seconds": [
+        0.00593270780518651,
+        0.005950707942247391,
+        0.005873667076230049,
+        0.00594041682779789
+      ],
+      "count": 2,
+      "rate_mean": 337.59703835620996,
+      "rate_sd": 1.9816858418183851,
+      "frames": 2,
+      "fps_mean": 337.59703835620996,
+      "fps_sd": 1.9816858418183851,
+      "candidate_processes": 0
+    },
+    {
+      "device": "cpu",
+      "batch": 2,
+      "horizon": 1,
+      "selection": "all",
+      "mode": "source_serial",
+      "seconds": [
+        0.001798749901354313,
+        0.001757750054821372,
+        0.0018123749177902937,
+        0.0017681249883025885
+      ],
+      "count": 2,
+      "rate_mean": 1121.0919240043343,
+      "rate_sd": 16.06427341556528,
+      "frames": 2,
+      "fps_mean": 1121.0919240043343,
+      "fps_sd": 16.06427341556528,
+      "candidate_processes": 0
+    },
+    {
+      "device": "cpu",
+      "batch": 2,
+      "horizon": 1,
+      "selection": "all",
+      "mode": "ours",
+      "seconds": [
+        0.005891458131372929,
+        0.0058614579029381275,
+        0.005948917008936405,
+        0.005818665958940983
+      ],
+      "count": 2,
+      "rate_mean": 340.15090420577775,
+      "rate_sd": 3.1610111981974978,
+      "frames": 2,
+      "fps_mean": 340.15090420577775,
+      "fps_sd": 3.1610111981974978,
+      "candidate_processes": 0
+    },
+    {
+      "device": "cpu",
+      "batch": 2,
+      "horizon": 8,
+      "selection": "none",
+      "mode": "source_serial",
+      "seconds": [
+        0.00011858297511935234,
+        0.00011812499724328518,
+        0.00011641695164144039,
+        0.00011479202657938004
+      ],
+      "count": 16,
+      "rate_mean": 136798.9727176568,
+      "rate_sd": 2033.7062688573133,
+      "frames": 0,
+      "fps_mean": null,
+      "fps_sd": null,
+      "candidate_processes": 0
+    },
+    {
+      "device": "cpu",
+      "batch": 2,
+      "horizon": 8,
+      "selection": "none",
+      "mode": "ours",
+      "seconds": [
+        0.0011700410395860672,
+        0.0011619171127676964,
+        0.0012129591777920723,
+        0.001172333024442196
+      ],
+      "count": 16,
+      "rate_mean": 13570.98983598932,
+      "rate_sd": 258.7912667895091,
+      "frames": 0,
+      "fps_mean": null,
+      "fps_sd": null,
+      "candidate_processes": 0
+    },
+    {
+      "device": "cpu",
+      "batch": 2,
+      "horizon": 8,
+      "selection": "final",
+      "mode": "source_serial",
+      "seconds": [
+        0.0018524578772485256,
+        0.0018494999967515469,
+        0.0018529158551245928,
+        0.0018437919206917286
+      ],
+      "count": 16,
+      "rate_mean": 8650.241914138292,
+      "rate_sd": 19.66560854121286,
+      "frames": 2,
+      "fps_mean": 1081.2802392672866,
+      "fps_sd": 2.4582010676516073,
+      "candidate_processes": 0
+    },
+    {
+      "device": "cpu",
+      "batch": 2,
+      "horizon": 8,
+      "selection": "final",
+      "mode": "ours",
+      "seconds": [
+        0.0069117078091949224,
+        0.006951292045414448,
+        0.006941416999325156,
+        0.0069088328164070845
+      ],
+      "count": 16,
+      "rate_mean": 2309.3809743814872,
+      "rate_sd": 7.082064049140662,
+      "frames": 2,
+      "fps_mean": 288.6726217976859,
+      "fps_sd": 0.8852580061425828,
+      "candidate_processes": 0
+    },
+    {
+      "device": "cpu",
+      "batch": 2,
+      "horizon": 8,
+      "selection": "all",
+      "mode": "source_serial",
+      "seconds": [
+        0.01392012508586049,
+        0.013875834178179502,
+        0.01387020805850625,
+        0.013854499906301498
+      ],
+      "count": 16,
+      "rate_mean": 1152.727444183644,
+      "rate_sd": 2.3326755224631173,
+      "frames": 16,
+      "fps_mean": 1152.727444183644,
+      "fps_sd": 2.3326755224631173,
+      "candidate_processes": 0
+    },
+    {
+      "device": "cpu",
+      "batch": 2,
+      "horizon": 8,
+      "selection": "all",
+      "mode": "ours",
+      "seconds": [
+        0.04692325019277632,
+        0.046837792033329606,
+        0.04677866701968014,
+        0.04673195816576481
+      ],
+      "count": 16,
+      "rate_mean": 341.750302455645,
+      "rate_sd": 0.6019246388277946,
+      "frames": 16,
+      "fps_mean": 341.750302455645,
+      "fps_sd": 0.6019246388277946,
+      "candidate_processes": 0
+    }
+  ],
+  "components": [
+    {
+      "device": "cpu",
+      "batch": 2,
+      "operation": "ours_state_export",
+      "seconds": [
+        4.224991425871849e-05,
+        3.8708094507455826e-05,
+        3.737513907253742e-05,
+        3.63329891115427e-05
+      ],
+      "count": 2,
+      "rate_mean": 51891.013327667206,
+      "rate_sd": 3335.038085254022
+    },
+    {
+      "device": "cpu",
+      "batch": 2,
+      "operation": "ours_render_saved",
+      "seconds": [
+        0.005689291981980205,
+        0.005595583003014326,
+        0.005659209098666906,
+        0.005617541028186679
+      ],
+      "count": 2,
+      "rate_mean": 354.59907578974787,
+      "rate_sd": 2.634445105384136
+    },
+    {
+      "device": "cpu",
+      "batch": 2,
+      "operation": "source_render_saved",
+      "seconds": [
+        0.0016927500255405903,
+        0.0016869581304490566,
+        0.0017105417791754007,
+        0.0017001251690089703
+      ],
+      "count": 2,
+      "rate_mean": 1178.1698529807827,
+      "rate_sd": 7.050749164967159
+    }
+  ],
+  "source_runtime_files": {
+    "/private/tmp/classic-source-pipeline-v1-20261003/source/stable_worldmodel/envs/gymnasium_control/mountain_car.py": "3e7d379f1297dfb5e179f87e8627d6af9a3194b83e0b0a61d5dd27eb737b9ce4",
+    "/private/tmp/classic-source-pipeline-v1-20261003/source/stable_worldmodel/envs/gymnasium_control/base.py": "0354779da90bb8348241e5bd046a97f915cf979d94732931f1a121a933298599",
+    "/Users/samib/se6-venv/lib/python3.12/site-packages/gymnasium/envs/classic_control/continuous_mountain_car.py": "63edd6c0e1876977990953260560ed1457a23444a6febb42d874a28fcab3645e"
+  },
+  "candidate_files": {
+    "scripts/benchmarks/online_stepping/classic_source_pipeline.py": "cfdcfc7899ec347879d5aab45b56360a43dc6588212ef2e487356afbc8f476c8",
+    "stable_envs/envs/_classic_semantics.py": "5f9932a9d5aeba21228e3cc1699338d0bab22b6b25e599a4aad19d8b3a157d4a",
+    "stable_envs/envs/classic_control.py": "e158939aa7babb9a2701f8e9b84bb1393c412dd98e7bfe2c8d0cd857369b76b6",
+    "stable_envs/_stepping.py": "4b23abcf73767a4a59f0c106e098376ac7b2570608e5d4829a8919dd213f5f99",
+    "stable_envs/_adapters/classic_execution.py": "e24fce09f8c47f5d1216af93cc350a6cb06343f9b009837a8cbe04e6e91f8fb7",
+    "stable_envs/_adapters/acrobot_process.py": "ca694f3b1990ef912c0c4b215ddfaea0ef5414822246545f64f883b8c009562e",
+    "stable_envs/_adapters/process_requests.py": "e4b6626543f4ee59a80223f413a2ff2381ba7d6e9dc0e01eafa01b49d6d810d6",
+    "scripts/benchmarks/online_stepping/classic_state_export.py": "c97fd4de7cb96274d57302dc1d4a4a95d09a5ae3f7d00998e2ca4cf535d393a9",
+    "scripts/benchmarks/renderer_table/common.py": "079d45c63b1512b8468931450577be3d393c8132cfa0fa7f85c79bdc9826196c",
+    "tests/helpers/reference/native_classic_semantics.py": "2247c14634c4ae50e8396b1c95af7f917b3f3cc47b1e9c7133229ead4b1e5690",
+    "tests/helpers/reference/native_classic_remaining_semantics.py": "9ebb17ccc2c366345a07eeb7ea0272b79ebb34292ee78ec516fe29916db04a55"
+  }
+}

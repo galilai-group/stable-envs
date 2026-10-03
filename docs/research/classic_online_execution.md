@@ -133,3 +133,21 @@ for Acrobot on Linux at B>=64 with >=4 affinity CPUs outside daemon processes.
 Other classic domains and smaller/resource-limited cases retain the local path.
 The slice-only API and renderer are unchanged. Full pipeline and same-device
 upstream comparisons remain required.
+
+## Direct-source pipeline sweep staged (October 3)
+
+[Array 6968542](semantic_recovery_evidence/classic_source_pipeline_20261003/)
+measures the five registrations against direct pinned upstream calls, with
+source-State validation outside timing. B1/64/256, T1/8, no/final/all frames,
+CPU/CUDA output and six samples cover task stepping, saved-State rendering,
+State export and the online pipeline. This workload disables intermediate
+State retention; the mandatory final State remains on our side. Source does
+not pay an invented per-step full-State export cost.
+
+Local B2 CPU checks pass independently for all five, with exact State/task
+outputs and zero image MSE. No cluster measurement is accepted from those local
+checks. Source is serial CPU; Pygame has no GPU renderer. Reports distinguish
+native source CPU output from delivery to GPU memory and explicitly retain
+source worker count versus our process count. A parallel-source comparison
+remains open, so the resulting ratios must not be labeled universal source
+speedups. The sweep is queued, not yet a completed source/pipeline table.

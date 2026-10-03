@@ -1,0 +1,14 @@
+{
+  "job": "6968542",
+  "tasks": [
+    "cartpole",
+    "pendulum",
+    "acrobot",
+    "mountain_car",
+    "mountain_car_continuous"
+  ],
+  "remote": "/oscar/scratch/sboughan/se-semantic-recovery/classic-source-pipeline-v1-20261003",
+  "partition": "3090-gcondo",
+  "qos": "cs-3090-gcondo",
+  "status_at_submission": "SUBMITTED"
+}
