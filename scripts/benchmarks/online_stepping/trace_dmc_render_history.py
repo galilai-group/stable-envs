@@ -73,8 +73,8 @@ def main():
         common["slots"] = np.array(repr(env._slots()))
         for i, row in enumerate(rows):
             inputs = dict(common, state=row)
-            inputs.update({"style/" + key: value[i].detach().cpu().numpy()
-                           for key, value in style.items()})
+            style_keys = ["light.diffuse_scale", *("material." + name for name in env._used_materials())]
+            inputs.update({"style/" + key: style[key][i].detach().cpu().numpy() for key in style_keys})
             pending.append(dict(input_sha256=digest(inputs), owner=id(env), lane=i))
         try:
             return original_batch(env, states, style, size, out)

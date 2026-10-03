@@ -1,0 +1,9 @@
+{
+  "status": "PASS",
+  "scope": "Instrumented capture with real StyleTensor, CPU MuJoCo scene/data and stub image output; no GL or GPU correctness claim.",
+  "renders": 3,
+  "identical_input_groups": 1,
+  "injected_pixel_mismatch_pairs_detected": 2,
+  "scene_and_kinematic_differences": 0,
+  "independent_snapshot_and_camera_difference_smoke": "PASS"
+}

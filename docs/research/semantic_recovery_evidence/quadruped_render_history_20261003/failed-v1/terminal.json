@@ -1,0 +1,7 @@
+{
+  "job_id": "6967610",
+  "state": "FAILED",
+  "exit_code": "1:0",
+  "host": "gpu2109",
+  "cause": "Diagnostic attempted StyleTensor.items(); zero rendered frames. No production acceptance conclusion."
+}
