@@ -91,3 +91,12 @@ B256/T8 State-retaining public stepping improves 2.80–6.40× for CPU output an
 5.48–13.39× for CUDA output against the old exporter, with CPU physics in both
 cases. These are library-exporter comparisons, not upstream or render speedups.
 Process/default/full pipeline measurements remain outstanding.
+
+## Post-export profiling (October 3)
+
+The [fresh RTX 3090-host component profiles](semantic_recovery_evidence/classic_postexport_profile_20261003/)
+cover all five registrations through B1024 with exact replay, six samples and
+CPU/CUDA output. Acrobot's RK4 dominates task execution; State conversion still
+dominates the cheapest tasks. The next bounded candidates are direct writes into
+owned State columns and a process comparison for Acrobot. Neither is enabled
+from profile evidence alone. These diagnostics do not measure render throughput.

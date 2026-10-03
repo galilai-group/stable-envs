@@ -74,13 +74,15 @@ There is no `capture`, `transition`, `unroll`, `step_sequence`, or public
 `step`. Contributors implement the private `_step` kernel; terminating families
 also support an active-lane mask, without stepping and restoring inactive lanes.
 
-Large Fetch and supported DMC batches on Linux use persistent simulation processes when at least
+Large Fetch, supported DMC and OGBench point/large/navigate batches on Linux use
+persistent simulation processes when at least
 four CPU cores are available: batches of at least 64 use up to eight processes,
 with one simulation thread per process, respecting the allocated CPU affinity.
 Small batches, other platforms, and daemon workers retain the local execution
 path. Physics remains on CPU even with CUDA rendering. The enabled DMC tasks
 are Acrobot, Pendulum, Cartpole, Reacher, Cheetah, Hopper, Walker, Ball-in-Cup,
-Finger, Manipulator and Humanoid. Quadruped and other families retain their
+Finger, Manipulator and Humanoid. The OGBench route covers `swm/OGBMaze-v0`
+(`PointMazeLargeNavigate`). Quadruped and other families retain their
 existing execution strategies.
 
 When one of these process pools is selected, the dispatcher starts the next known
@@ -107,6 +109,7 @@ partial sequence.
 Contributors can opt a family into the shared scheduler by providing the private
 `_step_pipeline()` hook. Its executor submits one masked transition, returns
 owned task outputs and any requested full State on receive, and aborts pending
-work on failure. The renderer stays on the calling thread. Fetch and the eleven
-DMC tasks above have independent default-routing acceptance gates; the hook
+work on failure. The renderer stays on the calling thread. Fetch, the eleven
+DMC tasks above and the specified Maze task have independent default-routing
+acceptance gates; the hook
 alone does not certify concurrency for other families.

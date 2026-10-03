@@ -1,0 +1,11 @@
+{
+  "status": "ACTIVATED_AFTER_TWO_DEVICE_GATES",
+  "job": 6966933,
+  "source_base": "1dff979368afcd8238dce16cd7d0a3a08db7f274",
+  "integrated_files_match": 141,
+  "batch": 64,
+  "processes": 8,
+  "cases_per_device": 22,
+  "cluster_routing_tests": 20,
+  "local_routing_tests": 20
+}

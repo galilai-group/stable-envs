@@ -1,0 +1,566 @@
+{
+  "status": "PASS",
+  "family": "acrobot",
+  "host": "gpu2110.oscar.ccv.brown.edu",
+  "job": "6966955",
+  "affinity": [
+    5,
+    12,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24
+  ],
+  "gpu": "NVIDIA GeForce RTX 3090",
+  "versions": {
+    "torch": "2.14.0+cu126",
+    "numpy": "2.5.3",
+    "gymnasium": "1.3.0",
+    "tensordict": "0.14.2"
+  },
+  "source_sha256": {
+    "stable_envs/envs/_classic_semantics.py": "9e15606b3473a9d5a6d24149085409e7edbd43bdc0b2870cd472562d865aaecf",
+    "scripts/benchmarks/online_stepping/classic_profile.py": "71c92d5c181cba4f006e0d0230e1a30626134ec404b3383968d154b8c6420e92"
+  },
+  "scope": "adapter component diagnostic, CPU physics for both output devices; no rendering or source speedup",
+  "cells": [
+    {
+      "batch": 1,
+      "device": "cpu",
+      "construction_s": 0.018214235082268715,
+      "state_bytes": 120,
+      "state_leaves": 9,
+      "timings": {
+        "step_with_state": {
+          "seconds": [
+            0.00032469816505908966,
+            0.00029054656624794006,
+            0.0002914275974035263,
+            0.0002807583659887314,
+            0.0002858489751815796,
+            0.0002792682498693466
+          ],
+          "seconds_mean": 0.00029209131995836896,
+          "seconds_sd": 1.6720448436428357e-05,
+          "lanes_per_s_mean": 3432.3125856743472,
+          "lanes_per_s_sd": 183.04936571777867
+        },
+        "step_without_export_DIAGNOSTIC": {
+          "seconds": [
+            0.0004275050014257431,
+            0.0003224071115255356,
+            0.0004786364734172821,
+            0.0003064889460802078,
+            0.0003482084721326828,
+            0.00030507706105709076
+          ],
+          "seconds_mean": 0.00036472051093975705,
+          "seconds_sd": 7.201397948762107e-05,
+          "lanes_per_s_mean": 2823.7590543762367,
+          "lanes_per_s_sd": 500.5586379687436
+        },
+        "get_state": {
+          "seconds": [
+            0.00012310966849327087,
+            0.00011551007628440857,
+            0.00015130825340747833,
+            0.00011322833597660065,
+            0.000116029754281044,
+            0.00011398829519748688
+          ],
+          "seconds_mean": 0.00012219573060671488,
+          "seconds_sd": 1.4689231882575837e-05,
+          "lanes_per_s_mean": 8268.68969170305,
+          "lanes_per_s_sd": 850.9107957628842
+        },
+        "set_state": {
+          "seconds": [
+            0.0002225283533334732,
+            0.00022267550230026245,
+            0.0002203080803155899,
+            0.0002615489065647125,
+            0.0002219080924987793,
+            0.0002732258290052414
+          ],
+          "seconds_mean": 0.00023703246066967645,
+          "seconds_sd": 2.381578814499449e-05,
+          "lanes_per_s_mean": 4252.24503700563,
+          "lanes_per_s_sd": 399.21312374036336
+        }
+      },
+      "step_cprofile": "         535 function calls (528 primitive calls) in 0.001 seconds\n\n   Ordered by: cumulative time\n   List reduced from 96 to 40 due to restriction <40>\n\n   ncalls  tottime  percall  cumtime  percall filename:lineno(function)\n        1    0.000    0.000    0.001    0.001 /oscar/scratch/sboughan/se-semantic-recovery/classic-postexport-profile-v1-20261003/code/stable_envs/envs/_classic_semantics.py:308(step)\n        1    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/se-semantic-recovery/classic-postexport-profile-v1-20261003/code/stable_envs/envs/_classic_semantics.py:240(get_state)\n        1    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/se-semantic-recovery/classic-postexport-profile-v1-20261003/code/stable_envs/_adapters/state_columns.py:8(owned_columns)\n        2    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/tensordict/_td.py:259(__init__)\n        1    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/wrappers/common.py:111(step)\n        1    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/wrappers/common.py:388(step)\n        1    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/core.py:323(step)\n        1    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/wrappers/common.py:276(step)\n        1    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/classic_control/acrobot.py:202(step)\n        5    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/tensordict/base.py:8137(set)\n       15    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/tensordict/base.py:14570(_validate_value_generic)\n     10/5    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/tensordict/_td.py:2661(_set_tuple)\n        1    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/classic_control/acrobot.py:416(rk4)\n        1    0.000    0.000    0.000    0.000 {built-in method builtins.next}\n        2    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/se-semantic-recovery/classic-postexport-profile-v1-20261003/code/stable_envs/envs/_classic_semantics.py:242(<genexpr>)\n        1    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/se-semantic-recovery/classic-postexport-profile-v1-20261003/code/stable_envs/envs/_classic_semantics.py:208(_state_values)\n        7    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/tensordict/_td.py:2600(_set_str)\n        4    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/classic_control/acrobot.py:244(_dsdt)\n        2    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/tensordict/base.py:9245(_create_nested_str)\n       15    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/tensordict/utils.py:2756(_is_unbatched)\n        2    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/tensordict/_td.py:3687(empty)\n        3    0.000    0.000    0.000    0.000 {built-in method torch.tensor}\n       15    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/tensordict/utils.py:544(_shape)\n       37    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/torch/compiler/__init__.py:583(is_compiling)\n        7    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/tensordict/base.py:14554(_validate_value)\n        1    0.000    0.000    0.000    0.000 {method 'disable' of '_lsprof.Profiler' objects}\n       49    0.000    0.000    0.000    0.000 {built-in method builtins.isinstance}\n        2    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/tensordict/_td.py:357(_new_unsafe)\n        9    0.000    0.000    0.000    0.000 {built-in method torch.from_numpy}\n        4    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/tensordict/base.py:18253(_is_tensor_collection)\n       21    0.000    0.000    0.000    0.000 {method 'get' of 'dict' objects}\n        1    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/numpy/lib/_function_base_impl.py:5592(append)\n        1    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/se-semantic-recovery/classic-postexport-profile-v1-20261003/code/stable_envs/envs/_classic_semantics.py:296(_actions)\n       17    0.000    0.000    0.000    0.000 {built-in method numpy.asarray}\n       15    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/tensordict/_td.py:2453(batch_dims)\n        9    0.000    0.000    0.000    0.000 {method 'to' of 'torch._C.TensorBase' objects}\n        2    0.000    0.000    0.000    0.000 {method 'clone' of 'torch._C.TensorBase' objects}\n        5    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/tensordict/utils.py:2855(_unravel_key_to_tuple)\n        1    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/numpy/_core/shape_base.py:378(stack)\n        2    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/tensordict/_td.py:2482(_set_names)\n\n\n",
+      "restore_step_replay": "PASS"
+    },
+    {
+      "batch": 1,
+      "device": "cuda",
+      "construction_s": 0.13693762198090553,
+      "state_bytes": 120,
+      "state_leaves": 9,
+      "timings": {
+        "step_with_state": {
+          "seconds": [
+            0.0006903745234012604,
+            0.0005746036767959595,
+            0.0005174074321985245,
+            0.0005214642733335495,
+            0.0005677472800016403,
+            0.0005227550864219666
+          ],
+          "seconds_mean": 0.0005657253786921501,
+          "seconds_sd": 6.597035236763428e-05,
+          "lanes_per_s_mean": 1785.582940076833,
+          "lanes_per_s_sd": 185.24779305558525
+        },
+        "step_without_export_DIAGNOSTIC": {
+          "seconds": [
+            0.0005633048713207245,
+            0.0004513859748840332,
+            0.0004361160099506378,
+            0.00045953504741191864,
+            0.00041750818490982056,
+            0.000425802543759346
+          ],
+          "seconds_mean": 0.00045894210537274677,
+          "seconds_sd": 5.345103281623726e-05,
+          "lanes_per_s_mean": 2200.5643373839625,
+          "lanes_per_s_sd": 223.61329545413997
+        },
+        "get_state": {
+          "seconds": [
+            0.00026833638548851013,
+            0.0002595148980617523,
+            0.0002598688006401062,
+            0.0002563782036304474,
+            0.0002565477043390274,
+            0.0002558380365371704
+          ],
+          "seconds_mean": 0.00025941400478283566,
+          "seconds_sd": 4.691379582756796e-06,
+          "lanes_per_s_mean": 3855.87095108173,
+          "lanes_per_s_sd": 68.28198499394664
+        },
+        "set_state": {
+          "seconds": [
+            0.0007276851683855057,
+            0.0006751753389835358,
+            0.0006789844483137131,
+            0.0007180813699960709,
+            0.0006696917116641998,
+            0.0007093325257301331
+          ],
+          "seconds_mean": 0.0006964917605121931,
+          "seconds_sd": 2.4832090565462744e-05,
+          "lanes_per_s_mean": 1437.2842459998576,
+          "lanes_per_s_sd": 51.068089517064315
+        }
+      },
+      "step_cprofile": "         581 function calls (574 primitive calls) in 0.001 seconds\n\n   Ordered by: cumulative time\n   List reduced from 121 to 40 due to restriction <40>\n\n   ncalls  tottime  percall  cumtime  percall filename:lineno(function)\n        1    0.000    0.000    0.001    0.001 /oscar/scratch/sboughan/se-semantic-recovery/classic-postexport-profile-v1-20261003/code/stable_envs/envs/_classic_semantics.py:308(step)\n        1    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/se-semantic-recovery/classic-postexport-profile-v1-20261003/code/stable_envs/envs/_classic_semantics.py:240(get_state)\n        1    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/se-semantic-recovery/classic-postexport-profile-v1-20261003/code/stable_envs/_adapters/state_columns.py:8(owned_columns)\n        2    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/tensordict/_td.py:259(__init__)\n        9    0.000    0.000    0.000    0.000 {method 'to' of 'torch._C.TensorBase' objects}\n        1    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/wrappers/common.py:111(step)\n        1    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/wrappers/common.py:388(step)\n        1    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/core.py:323(step)\n        1    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/wrappers/common.py:276(step)\n        1    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/classic_control/acrobot.py:202(step)\n        5    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/tensordict/base.py:8137(set)\n       15    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/tensordict/base.py:14570(_validate_value_generic)\n     10/5    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/tensordict/_td.py:2661(_set_tuple)\n        1    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/classic_control/acrobot.py:416(rk4)\n        3    0.000    0.000    0.000    0.000 {built-in method torch.tensor}\n        1    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/se-semantic-recovery/classic-postexport-profile-v1-20261003/code/scripts/benchmarks/online_stepping/classic_profile.py:36(sync)\n        1    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/torch/cuda/__init__.py:1271(synchronize)\n        1    0.000    0.000    0.000    0.000 {built-in method builtins.next}\n        2    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/se-semantic-recovery/classic-postexport-profile-v1-20261003/code/stable_envs/envs/_classic_semantics.py:242(<genexpr>)\n        7    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/tensordict/_td.py:2600(_set_str)\n        1    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/se-semantic-recovery/classic-postexport-profile-v1-20261003/code/stable_envs/envs/_classic_semantics.py:208(_state_values)\n        4    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/classic_control/acrobot.py:244(_dsdt)\n        2    0.000    0.000    0.000    0.000 {built-in method torch.as_tensor}\n        1    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/torch/cuda/__init__.py:712(__init__)\n        1    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/torch/cuda/_utils.py:605(_get_device_index)\n        2    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/tensordict/base.py:9245(_create_nested_str)\n        1    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/torch/_utils.py:878(_get_device_index)\n        2    0.000    0.000    0.000    0.000 {method 'clone' of 'torch._C.TensorBase' objects}\n        1    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/torch/_utils.py:852(_get_current_device_index)\n        1    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/torch/_utils.py:836(_get_device_attr)\n       15    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/tensordict/utils.py:2756(_is_unbatched)\n        1    0.000    0.000    0.000    0.000 {method 'disable' of '_lsprof.Profiler' objects}\n        2    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/tensordict/_td.py:3687(empty)\n       15    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/tensordict/utils.py:544(_shape)\n       37    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/torch/compiler/__init__.py:583(is_compiling)\n       57    0.000    0.000    0.000    0.000 {built-in method builtins.isinstance}\n        1    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/torch/_utils.py:819(_get_available_device_type)\n        7    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/tensordict/base.py:14554(_validate_value)\n        2    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/tensordict/_td.py:357(_new_unsafe)\n        1    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/torch/cuda/__init__.py:209(is_available)\n\n\n",
+      "restore_step_replay": "PASS"
+    },
+    {
+      "batch": 64,
+      "device": "cpu",
+      "construction_s": 0.012191718444228172,
+      "state_bytes": 7680,
+      "state_leaves": 9,
+      "timings": {
+        "step_with_state": {
+          "seconds": [
+            0.005901508033275604,
+            0.005985816940665245,
+            0.0060158949345350266,
+            0.006016066297888756,
+            0.005867915228009224,
+            0.005858074873685837
+          ],
+          "seconds_mean": 0.005940879384676616,
+          "seconds_sd": 7.352584183388647e-05,
+          "lanes_per_s_mean": 10774.191882192332,
+          "lanes_per_s_sd": 133.41497550386157
+        },
+        "step_without_export_DIAGNOSTIC": {
+          "seconds": [
+            0.004486531019210815,
+            0.004411468282341957,
+            0.00438803993165493,
+            0.0044767893850803375,
+            0.004365740343928337,
+            0.0043801795691251755
+          ],
+          "seconds_mean": 0.004418124755223592,
+          "seconds_sd": 5.148655102858222e-05,
+          "lanes_per_s_mean": 14487.415139974297,
+          "lanes_per_s_sd": 167.98760142538072
+        },
+        "get_state": {
+          "seconds": [
+            0.0016960129141807556,
+            0.0016645044088363647,
+            0.0016487855464220047,
+            0.0016988832503557205,
+            0.0016053244471549988,
+            0.0017006751149892807
+          ],
+          "seconds_mean": 0.001669030946989854,
+          "seconds_sd": 3.7707887374210275e-05,
+          "lanes_per_s_mean": 38362.190685081645,
+          "lanes_per_s_sd": 881.1121047865272
+        },
+        "set_state": {
+          "seconds": [
+            0.005973644554615021,
+            0.005916547030210495,
+            0.006028655916452408,
+            0.005978476256132126,
+            0.006018674001097679,
+            0.006031285971403122
+          ],
+          "seconds_mean": 0.005991213954985142,
+          "seconds_sd": 4.4289510197247116e-05,
+          "lanes_per_s_mean": 10682.798098491787,
+          "lanes_per_s_sd": 79.36224939179594
+        }
+      },
+      "step_cprofile": "         5323 function calls (5190 primitive calls) in 0.008 seconds\n\n   Ordered by: cumulative time\n   List reduced from 97 to 40 due to restriction <40>\n\n   ncalls  tottime  percall  cumtime  percall filename:lineno(function)\n        1    0.000    0.000    0.008    0.008 /oscar/scratch/sboughan/se-semantic-recovery/classic-postexport-profile-v1-20261003/code/stable_envs/envs/_classic_semantics.py:308(step)\n       64    0.000    0.000    0.005    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/wrappers/common.py:111(step)\n       64    0.000    0.000    0.005    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/wrappers/common.py:388(step)\n       64    0.000    0.000    0.005    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/core.py:323(step)\n       64    0.000    0.000    0.005    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/wrappers/common.py:276(step)\n       64    0.000    0.000    0.005    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/classic_control/acrobot.py:202(step)\n       64    0.001    0.000    0.004    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/classic_control/acrobot.py:416(rk4)\n        1    0.000    0.000    0.003    0.003 /oscar/scratch/sboughan/se-semantic-recovery/classic-postexport-profile-v1-20261003/code/stable_envs/envs/_classic_semantics.py:240(get_state)\n        1    0.001    0.001    0.003    0.003 /oscar/scratch/sboughan/se-semantic-recovery/classic-postexport-profile-v1-20261003/code/stable_envs/_adapters/state_columns.py:8(owned_columns)\n      256    0.002    0.000    0.002    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/classic_control/acrobot.py:244(_dsdt)\n       65    0.000    0.000    0.002    0.000 /oscar/scratch/sboughan/se-semantic-recovery/classic-postexport-profile-v1-20261003/code/stable_envs/envs/_classic_semantics.py:242(<genexpr>)\n       64    0.001    0.000    0.002    0.000 /oscar/scratch/sboughan/se-semantic-recovery/classic-postexport-profile-v1-20261003/code/stable_envs/envs/_classic_semantics.py:208(_state_values)\n     1025    0.001    0.000    0.001    0.000 {built-in method numpy.asarray}\n       64    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/numpy/lib/_function_base_impl.py:5592(append)\n       64    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/classic_control/acrobot.py:232(_get_ob)\n      576    0.000    0.000    0.000    0.000 {method 'reshape' of 'numpy.ndarray' objects}\n      128    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/se-semantic-recovery/classic-postexport-profile-v1-20261003/code/stable_envs/envs/_classic_semantics.py:136(_limbs)\n        2    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/tensordict/_td.py:259(__init__)\n      128    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/classic_control/acrobot.py:397(bound)\n       64    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/numpy/_core/fromnumeric.py:1917(ravel)\n       64    0.000    0.000    0.000    0.000 {built-in method numpy.array}\n        5    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/tensordict/base.py:8137(set)\n       64    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/classic_control/acrobot.py:239(_terminal)\n       15    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/tensordict/base.py:14570(_validate_value_generic)\n     10/5    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/tensordict/_td.py:2661(_set_tuple)\n        1    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/se-semantic-recovery/classic-postexport-profile-v1-20261003/code/stable_envs/envs/_classic_semantics.py:296(_actions)\n   192/64    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/core.py:348(unwrapped)\n        1    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/numpy/_core/shape_base.py:378(stack)\n       64    0.000    0.000    0.000    0.000 {built-in method numpy.arange}\n      128    0.000    0.000    0.000    0.000 {built-in method builtins.max}\n      192    0.000    0.000    0.000    0.000 {built-in method numpy.asanyarray}\n        1    0.000    0.000    0.000    0.000 {built-in method builtins.next}\n       64    0.000    0.000    0.000    0.000 {method 'item' of 'numpy.generic' objects}\n        7    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/tensordict/_td.py:2600(_set_str)\n       64    0.000    0.000    0.000    0.000 {built-in method numpy.zeros}\n        3    0.000    0.000    0.000    0.000 {built-in method torch.tensor}\n      128    0.000    0.000    0.000    0.000 {built-in method builtins.min}\n       66    0.000    0.000    0.000    0.000 {method 'update' of 'dict' objects}\n       64    0.000    0.000    0.000    0.000 {method 'ravel' of 'numpy.ndarray' objects}\n      112    0.000    0.000    0.000    0.000 {built-in method builtins.isinstance}\n\n\n",
+      "restore_step_replay": "PASS"
+    },
+    {
+      "batch": 64,
+      "device": "cuda",
+      "construction_s": 0.01190113089978695,
+      "state_bytes": 7680,
+      "state_leaves": 9,
+      "timings": {
+        "step_with_state": {
+          "seconds": [
+            0.006050243973731995,
+            0.006102204322814941,
+            0.006090594455599785,
+            0.006036773324012756,
+            0.006089415401220322,
+            0.0061979033052921295
+          ],
+          "seconds_mean": 0.006094522463778655,
+          "seconds_sd": 5.671625606654412e-05,
+          "lanes_per_s_mean": 10501.984579172202,
+          "lanes_per_s_sd": 96.9267004388771
+        },
+        "step_without_export_DIAGNOSTIC": {
+          "seconds": [
+            0.004599038511514664,
+            0.004527198150753975,
+            0.004583727568387985,
+            0.00452662818133831,
+            0.004477709531784058,
+            0.004506338387727737
+          ],
+          "seconds_mean": 0.0045367733885844546,
+          "seconds_sd": 4.6240846448567485e-05,
+          "lanes_per_s_mean": 14108.160913605883,
+          "lanes_per_s_sd": 143.48759778906518
+        },
+        "get_state": {
+          "seconds": [
+            0.001757882535457611,
+            0.0017950236797332764,
+            0.0018070526421070099,
+            0.0017522647976875305,
+            0.001784084364771843,
+            0.0017418134957551956
+          ],
+          "seconds_mean": 0.001773020252585411,
+          "seconds_sd": 2.6071325171516068e-05,
+          "lanes_per_s_mean": 36103.094820937054,
+          "lanes_per_s_sd": 530.1799415348066
+        },
+        "set_state": {
+          "seconds": [
+            0.006245134398341179,
+            0.006269114091992378,
+            0.0062875039875507355,
+            0.006185432896018028,
+            0.006392559036612511,
+            0.006367931142449379
+          ],
+          "seconds_mean": 0.006291279258827369,
+          "seconds_sd": 7.742280363601092e-05,
+          "lanes_per_s_mean": 10174.094654673694,
+          "lanes_per_s_sd": 125.09628136184345
+        }
+      },
+      "step_cprofile": "         5369 function calls (5236 primitive calls) in 0.009 seconds\n\n   Ordered by: cumulative time\n   List reduced from 122 to 40 due to restriction <40>\n\n   ncalls  tottime  percall  cumtime  percall filename:lineno(function)\n        1    0.000    0.000    0.009    0.009 /oscar/scratch/sboughan/se-semantic-recovery/classic-postexport-profile-v1-20261003/code/stable_envs/envs/_classic_semantics.py:308(step)\n       64    0.000    0.000    0.005    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/wrappers/common.py:111(step)\n       64    0.000    0.000    0.005    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/wrappers/common.py:388(step)\n       64    0.000    0.000    0.005    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/core.py:323(step)\n       64    0.000    0.000    0.005    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/wrappers/common.py:276(step)\n       64    0.000    0.000    0.005    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/classic_control/acrobot.py:202(step)\n       64    0.001    0.000    0.004    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/classic_control/acrobot.py:416(rk4)\n        1    0.000    0.000    0.003    0.003 /oscar/scratch/sboughan/se-semantic-recovery/classic-postexport-profile-v1-20261003/code/stable_envs/envs/_classic_semantics.py:240(get_state)\n        1    0.001    0.001    0.003    0.003 /oscar/scratch/sboughan/se-semantic-recovery/classic-postexport-profile-v1-20261003/code/stable_envs/_adapters/state_columns.py:8(owned_columns)\n      256    0.002    0.000    0.002    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/classic_control/acrobot.py:244(_dsdt)\n       65    0.000    0.000    0.002    0.000 /oscar/scratch/sboughan/se-semantic-recovery/classic-postexport-profile-v1-20261003/code/stable_envs/envs/_classic_semantics.py:242(<genexpr>)\n       64    0.001    0.000    0.002    0.000 /oscar/scratch/sboughan/se-semantic-recovery/classic-postexport-profile-v1-20261003/code/stable_envs/envs/_classic_semantics.py:208(_state_values)\n     1025    0.001    0.000    0.001    0.000 {built-in method numpy.asarray}\n       64    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/numpy/lib/_function_base_impl.py:5592(append)\n        2    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/tensordict/_td.py:259(__init__)\n       64    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/classic_control/acrobot.py:232(_get_ob)\n      576    0.000    0.000    0.000    0.000 {method 'reshape' of 'numpy.ndarray' objects}\n      128    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/se-semantic-recovery/classic-postexport-profile-v1-20261003/code/stable_envs/envs/_classic_semantics.py:136(_limbs)\n      128    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/classic_control/acrobot.py:397(bound)\n       64    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/numpy/_core/fromnumeric.py:1917(ravel)\n        5    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/tensordict/base.py:8137(set)\n        9    0.000    0.000    0.000    0.000 {method 'to' of 'torch._C.TensorBase' objects}\n       15    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/tensordict/base.py:14570(_validate_value_generic)\n     10/5    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/tensordict/_td.py:2661(_set_tuple)\n       64    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/classic_control/acrobot.py:239(_terminal)\n       64    0.000    0.000    0.000    0.000 {built-in method numpy.array}\n        3    0.000    0.000    0.000    0.000 {built-in method torch.tensor}\n        1    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/se-semantic-recovery/classic-postexport-profile-v1-20261003/code/stable_envs/envs/_classic_semantics.py:296(_actions)\n   192/64    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/core.py:348(unwrapped)\n        7    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/tensordict/_td.py:2600(_set_str)\n       64    0.000    0.000    0.000    0.000 {built-in method numpy.arange}\n        1    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/numpy/_core/shape_base.py:378(stack)\n      128    0.000    0.000    0.000    0.000 {built-in method builtins.max}\n      192    0.000    0.000    0.000    0.000 {built-in method numpy.asanyarray}\n        1    0.000    0.000    0.000    0.000 {built-in method builtins.next}\n       64    0.000    0.000    0.000    0.000 {method 'item' of 'numpy.generic' objects}\n        1    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/se-semantic-recovery/classic-postexport-profile-v1-20261003/code/scripts/benchmarks/online_stepping/classic_profile.py:36(sync)\n        1    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/torch/cuda/__init__.py:1271(synchronize)\n       64    0.000    0.000    0.000    0.000 {built-in method numpy.zeros}\n      128    0.000    0.000    0.000    0.000 {built-in method builtins.min}\n\n\n",
+      "restore_step_replay": "PASS"
+    },
+    {
+      "batch": 256,
+      "device": "cpu",
+      "construction_s": 0.045950690284371376,
+      "state_bytes": 30720,
+      "state_leaves": 9,
+      "timings": {
+        "step_with_state": {
+          "seconds": [
+            0.023138239979743958,
+            0.02276231162250042,
+            0.022983022034168243,
+            0.022927891463041306,
+            0.022782713174819946,
+            0.02293636091053486
+          ],
+          "seconds_mean": 0.022921756530801456,
+          "seconds_sd": 0.00013829331473035,
+          "lanes_per_s_mean": 11168.766786862032,
+          "lanes_per_s_sd": 67.2757744374667
+        },
+        "step_without_export_DIAGNOSTIC": {
+          "seconds": [
+            0.017049074172973633,
+            0.01667148806154728,
+            0.016899442300200462,
+            0.016776738688349724,
+            0.016849156469106674,
+            0.016924185678362846
+          ],
+          "seconds_mean": 0.016861680895090103,
+          "seconds_sd": 0.00012961046709814995,
+          "lanes_per_s_mean": 15183.101452921554,
+          "lanes_per_s_sd": 116.76903404146712
+        },
+        "get_state": {
+          "seconds": [
+            0.006318293511867523,
+            0.006311273202300072,
+            0.006236834451556206,
+            0.006129564717411995,
+            0.006185051053762436,
+            0.00632239505648613
+          ],
+          "seconds_mean": 0.00625056866556406,
+          "seconds_sd": 8.068936432893867e-05,
+          "lanes_per_s_mean": 40961.9946760625,
+          "lanes_per_s_sd": 531.8395685707133
+        },
+        "set_state": {
+          "seconds": [
+            0.02330641821026802,
+            0.023405298590660095,
+            0.023456204682588577,
+            0.023423844948410988,
+            0.023225659504532814,
+            0.023197907954454422
+          ],
+          "seconds_mean": 0.023335888981819153,
+          "seconds_sd": 0.00010870845566142443,
+          "lanes_per_s_mean": 10970.425595986524,
+          "lanes_per_s_sd": 51.15118587531533
+        }
+      },
+      "step_cprofile": "         19915 function calls (19398 primitive calls) in 0.031 seconds\n\n   Ordered by: cumulative time\n   List reduced from 97 to 40 due to restriction <40>\n\n   ncalls  tottime  percall  cumtime  percall filename:lineno(function)\n        1    0.000    0.000    0.031    0.031 /oscar/scratch/sboughan/se-semantic-recovery/classic-postexport-profile-v1-20261003/code/stable_envs/envs/_classic_semantics.py:308(step)\n      256    0.000    0.000    0.021    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/wrappers/common.py:111(step)\n      256    0.000    0.000    0.021    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/wrappers/common.py:388(step)\n      256    0.000    0.000    0.020    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/core.py:323(step)\n      256    0.000    0.000    0.020    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/wrappers/common.py:276(step)\n      256    0.001    0.000    0.020    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/classic_control/acrobot.py:202(step)\n      256    0.006    0.000    0.015    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/classic_control/acrobot.py:416(rk4)\n        1    0.000    0.000    0.010    0.010 /oscar/scratch/sboughan/se-semantic-recovery/classic-postexport-profile-v1-20261003/code/stable_envs/envs/_classic_semantics.py:240(get_state)\n        1    0.002    0.002    0.009    0.009 /oscar/scratch/sboughan/se-semantic-recovery/classic-postexport-profile-v1-20261003/code/stable_envs/_adapters/state_columns.py:8(owned_columns)\n     1024    0.008    0.000    0.008    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/classic_control/acrobot.py:244(_dsdt)\n      257    0.000    0.000    0.007    0.000 /oscar/scratch/sboughan/se-semantic-recovery/classic-postexport-profile-v1-20261003/code/stable_envs/envs/_classic_semantics.py:242(<genexpr>)\n      256    0.003    0.000    0.007    0.000 /oscar/scratch/sboughan/se-semantic-recovery/classic-postexport-profile-v1-20261003/code/stable_envs/envs/_classic_semantics.py:208(_state_values)\n     4097    0.002    0.000    0.002    0.000 {built-in method numpy.asarray}\n      256    0.001    0.000    0.001    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/numpy/lib/_function_base_impl.py:5592(append)\n     2304    0.001    0.000    0.001    0.000 {method 'reshape' of 'numpy.ndarray' objects}\n      256    0.001    0.000    0.001    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/classic_control/acrobot.py:232(_get_ob)\n      512    0.001    0.000    0.001    0.000 /oscar/scratch/sboughan/se-semantic-recovery/classic-postexport-profile-v1-20261003/code/stable_envs/envs/_classic_semantics.py:136(_limbs)\n      512    0.000    0.000    0.001    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/classic_control/acrobot.py:397(bound)\n      256    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/numpy/_core/fromnumeric.py:1917(ravel)\n      256    0.000    0.000    0.000    0.000 {built-in method numpy.array}\n      256    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/classic_control/acrobot.py:239(_terminal)\n        2    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/tensordict/_td.py:259(__init__)\n        1    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/se-semantic-recovery/classic-postexport-profile-v1-20261003/code/stable_envs/envs/_classic_semantics.py:296(_actions)\n  768/256    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/core.py:348(unwrapped)\n      256    0.000    0.000    0.000    0.000 {built-in method numpy.arange}\n      512    0.000    0.000    0.000    0.000 {built-in method builtins.max}\n      768    0.000    0.000    0.000    0.000 {built-in method numpy.asanyarray}\n      256    0.000    0.000    0.000    0.000 {method 'item' of 'numpy.generic' objects}\n      256    0.000    0.000    0.000    0.000 {built-in method numpy.zeros}\n        1    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/numpy/_core/shape_base.py:378(stack)\n      512    0.000    0.000    0.000    0.000 {built-in method builtins.min}\n        5    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/tensordict/base.py:8137(set)\n      258    0.000    0.000    0.000    0.000 {method 'update' of 'dict' objects}\n      512    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/classic_control/acrobot.py:376(wrap)\n       15    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/tensordict/base.py:14570(_validate_value_generic)\n     10/5    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/tensordict/_td.py:2661(_set_tuple)\n      256    0.000    0.000    0.000    0.000 {method 'ravel' of 'numpy.ndarray' objects}\n      514    0.000    0.000    0.000    0.000 {method 'items' of 'dict' objects}\n      510    0.000    0.000    0.000    0.000 {method 'keys' of 'dict' objects}\n        3    0.000    0.000    0.000    0.000 {built-in method torch.tensor}\n\n\n",
+      "restore_step_replay": "PASS"
+    },
+    {
+      "batch": 256,
+      "device": "cuda",
+      "construction_s": 0.04814800061285496,
+      "state_bytes": 30720,
+      "state_leaves": 9,
+      "timings": {
+        "step_with_state": {
+          "seconds": [
+            0.023338347673416138,
+            0.02305983006954193,
+            0.023235827684402466,
+            0.022965310141444206,
+            0.023411117494106293,
+            0.023238368332386017
+          ],
+          "seconds_mean": 0.023208133565882843,
+          "seconds_sd": 0.00016780729227708823,
+          "lanes_per_s_mean": 11031.097227904967,
+          "lanes_per_s_sd": 79.93463824277151
+        },
+        "step_without_export_DIAGNOSTIC": {
+          "seconds": [
+            0.01707756519317627,
+            0.016670720651745796,
+            0.016626635566353798,
+            0.016833607107400894,
+            0.016823383048176765,
+            0.017030643299221992
+          ],
+          "seconds_mean": 0.01684375914434592,
+          "seconds_sd": 0.00018286288470001542,
+          "lanes_per_s_mean": 15199.998460927949,
+          "lanes_per_s_sd": 164.80383789429652
+        },
+        "get_state": {
+          "seconds": [
+            0.006395380944013596,
+            0.006423549726605415,
+            0.0063734594732522964,
+            0.006419738754630089,
+            0.006352463737130165,
+            0.006417931988835335
+          ],
+          "seconds_mean": 0.006397087437411149,
+          "seconds_sd": 2.8983780574675023e-05,
+          "lanes_per_s_mean": 40018.898002584414,
+          "lanes_per_s_sd": 181.74393209544172
+        },
+        "set_state": {
+          "seconds": [
+            0.02348998934030533,
+            0.023561693727970123,
+            0.023310868069529533,
+            0.023497845977544785,
+            0.0233607180416584,
+            0.02342257834970951
+          ],
+          "seconds_mean": 0.023440615584452946,
+          "seconds_sd": 9.371913284765309e-05,
+          "lanes_per_s_mean": 10921.36046430262,
+          "lanes_per_s_sd": 43.69206758965104
+        }
+      },
+      "step_cprofile": "         19961 function calls (19444 primitive calls) in 0.031 seconds\n\n   Ordered by: cumulative time\n   List reduced from 122 to 40 due to restriction <40>\n\n   ncalls  tottime  percall  cumtime  percall filename:lineno(function)\n        1    0.000    0.000    0.031    0.031 /oscar/scratch/sboughan/se-semantic-recovery/classic-postexport-profile-v1-20261003/code/stable_envs/envs/_classic_semantics.py:308(step)\n      256    0.000    0.000    0.021    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/wrappers/common.py:111(step)\n      256    0.000    0.000    0.021    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/wrappers/common.py:388(step)\n      256    0.000    0.000    0.020    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/core.py:323(step)\n      256    0.000    0.000    0.020    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/wrappers/common.py:276(step)\n      256    0.001    0.000    0.020    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/classic_control/acrobot.py:202(step)\n      256    0.006    0.000    0.015    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/classic_control/acrobot.py:416(rk4)\n        1    0.000    0.000    0.010    0.010 /oscar/scratch/sboughan/se-semantic-recovery/classic-postexport-profile-v1-20261003/code/stable_envs/envs/_classic_semantics.py:240(get_state)\n        1    0.002    0.002    0.010    0.010 /oscar/scratch/sboughan/se-semantic-recovery/classic-postexport-profile-v1-20261003/code/stable_envs/_adapters/state_columns.py:8(owned_columns)\n     1024    0.008    0.000    0.008    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/classic_control/acrobot.py:244(_dsdt)\n      257    0.000    0.000    0.007    0.000 /oscar/scratch/sboughan/se-semantic-recovery/classic-postexport-profile-v1-20261003/code/stable_envs/envs/_classic_semantics.py:242(<genexpr>)\n      256    0.003    0.000    0.006    0.000 /oscar/scratch/sboughan/se-semantic-recovery/classic-postexport-profile-v1-20261003/code/stable_envs/envs/_classic_semantics.py:208(_state_values)\n     4097    0.002    0.000    0.002    0.000 {built-in method numpy.asarray}\n      256    0.001    0.000    0.001    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/numpy/lib/_function_base_impl.py:5592(append)\n     2304    0.001    0.000    0.001    0.000 {method 'reshape' of 'numpy.ndarray' objects}\n      256    0.001    0.000    0.001    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/classic_control/acrobot.py:232(_get_ob)\n      512    0.001    0.000    0.001    0.000 /oscar/scratch/sboughan/se-semantic-recovery/classic-postexport-profile-v1-20261003/code/stable_envs/envs/_classic_semantics.py:136(_limbs)\n      512    0.000    0.000    0.001    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/classic_control/acrobot.py:397(bound)\n      256    0.000    0.000    0.001    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/numpy/_core/fromnumeric.py:1917(ravel)\n      256    0.000    0.000    0.000    0.000 {built-in method numpy.array}\n      256    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/classic_control/acrobot.py:239(_terminal)\n        1    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/se-semantic-recovery/classic-postexport-profile-v1-20261003/code/stable_envs/envs/_classic_semantics.py:296(_actions)\n        2    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/tensordict/_td.py:259(__init__)\n  768/256    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/core.py:348(unwrapped)\n      256    0.000    0.000    0.000    0.000 {built-in method numpy.arange}\n      256    0.000    0.000    0.000    0.000 {method 'item' of 'numpy.generic' objects}\n      512    0.000    0.000    0.000    0.000 {built-in method builtins.max}\n      768    0.000    0.000    0.000    0.000 {built-in method numpy.asanyarray}\n        1    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/numpy/_core/shape_base.py:378(stack)\n      256    0.000    0.000    0.000    0.000 {built-in method numpy.zeros}\n      512    0.000    0.000    0.000    0.000 {built-in method builtins.min}\n        3    0.000    0.000    0.000    0.000 {built-in method torch.tensor}\n        9    0.000    0.000    0.000    0.000 {method 'to' of 'torch._C.TensorBase' objects}\n      512    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/classic_control/acrobot.py:376(wrap)\n      258    0.000    0.000    0.000    0.000 {method 'update' of 'dict' objects}\n       15    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/tensordict/base.py:14570(_validate_value_generic)\n      510    0.000    0.000    0.000    0.000 {method 'keys' of 'dict' objects}\n      514    0.000    0.000    0.000    0.000 {method 'items' of 'dict' objects}\n      794    0.000    0.000    0.000    0.000 {built-in method builtins.len}\n      256    0.000    0.000    0.000    0.000 {method 'ravel' of 'numpy.ndarray' objects}\n\n\n",
+      "restore_step_replay": "PASS"
+    },
+    {
+      "batch": 1024,
+      "device": "cpu",
+      "construction_s": 0.3109790962189436,
+      "state_bytes": 122880,
+      "state_leaves": 9,
+      "timings": {
+        "step_with_state": {
+          "seconds": [
+            0.09048636443912983,
+            0.09037059545516968,
+            0.09057096391916275,
+            0.09097435139119625,
+            0.09050636366009712,
+            0.09055757522583008
+          ],
+          "seconds_mean": 0.09057770234843095,
+          "seconds_sd": 0.00020693286736758341,
+          "lanes_per_s_mean": 11305.259631575973,
+          "lanes_per_s_sd": 25.758432098957254
+        },
+        "step_without_export_DIAGNOSTIC": {
+          "seconds": [
+            0.06618761643767357,
+            0.06651987507939339,
+            0.06686248257756233,
+            0.06633195653557777,
+            0.06673607230186462,
+            0.06657475233078003
+          ],
+          "seconds_mean": 0.06653545921047528,
+          "seconds_sd": 0.00024955345831441654,
+          "lanes_per_s_mean": 15390.470300756058,
+          "lanes_per_s_sd": 57.74626260307124
+        },
+        "get_state": {
+          "seconds": [
+            0.02508484199643135,
+            0.02493712306022644,
+            0.024653274565935135,
+            0.024750785902142525,
+            0.024781063199043274,
+            0.02493196167051792
+          ],
+          "seconds_mean": 0.024856508399049442,
+          "seconds_sd": 0.0001565256317309595,
+          "lanes_per_s_mean": 41197.813961043976,
+          "lanes_per_s_sd": 259.1975034973258
+        },
+        "set_state": {
+          "seconds": [
+            0.09242617711424828,
+            0.0925113894045353,
+            0.09231018088757992,
+            0.09289229288697243,
+            0.09255816601216793,
+            0.09303763136267662
+          ],
+          "seconds_mean": 0.09262263961136341,
+          "seconds_sd": 0.00028202569494934995,
+          "lanes_per_s_mean": 11055.697666673717,
+          "lanes_per_s_sd": 33.61671461961551
+        }
+      },
+      "step_cprofile": "         78283 function calls (76230 primitive calls) in 0.124 seconds\n\n   Ordered by: cumulative time\n   List reduced from 97 to 40 due to restriction <40>\n\n   ncalls  tottime  percall  cumtime  percall filename:lineno(function)\n        1    0.001    0.001    0.124    0.124 /oscar/scratch/sboughan/se-semantic-recovery/classic-postexport-profile-v1-20261003/code/stable_envs/envs/_classic_semantics.py:308(step)\n     1024    0.001    0.000    0.083    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/wrappers/common.py:111(step)\n     1024    0.001    0.000    0.082    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/wrappers/common.py:388(step)\n     1024    0.000    0.000    0.082    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/core.py:323(step)\n     1024    0.001    0.000    0.081    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/wrappers/common.py:276(step)\n     1024    0.006    0.000    0.080    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/classic_control/acrobot.py:202(step)\n     1024    0.023    0.000    0.061    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/classic_control/acrobot.py:416(rk4)\n        1    0.000    0.000    0.038    0.038 /oscar/scratch/sboughan/se-semantic-recovery/classic-postexport-profile-v1-20261003/code/stable_envs/envs/_classic_semantics.py:240(get_state)\n        1    0.010    0.010    0.038    0.038 /oscar/scratch/sboughan/se-semantic-recovery/classic-postexport-profile-v1-20261003/code/stable_envs/_adapters/state_columns.py:8(owned_columns)\n     4096    0.033    0.000    0.033    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/classic_control/acrobot.py:244(_dsdt)\n     1025    0.001    0.000    0.027    0.000 /oscar/scratch/sboughan/se-semantic-recovery/classic-postexport-profile-v1-20261003/code/stable_envs/envs/_classic_semantics.py:242(<genexpr>)\n     1024    0.011    0.000    0.026    0.000 /oscar/scratch/sboughan/se-semantic-recovery/classic-postexport-profile-v1-20261003/code/stable_envs/envs/_classic_semantics.py:208(_state_values)\n    16385    0.010    0.000    0.010    0.000 {built-in method numpy.asarray}\n     1024    0.003    0.000    0.005    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/numpy/lib/_function_base_impl.py:5592(append)\n     9216    0.004    0.000    0.004    0.000 {method 'reshape' of 'numpy.ndarray' objects}\n     1024    0.002    0.000    0.004    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/classic_control/acrobot.py:232(_get_ob)\n     2048    0.002    0.000    0.004    0.000 /oscar/scratch/sboughan/se-semantic-recovery/classic-postexport-profile-v1-20261003/code/stable_envs/envs/_classic_semantics.py:136(_limbs)\n     2048    0.001    0.000    0.002    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/classic_control/acrobot.py:397(bound)\n     1024    0.001    0.000    0.002    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/numpy/_core/fromnumeric.py:1917(ravel)\n     1024    0.002    0.000    0.002    0.000 {built-in method numpy.array}\n     1024    0.002    0.000    0.002    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/classic_control/acrobot.py:239(_terminal)\n        1    0.000    0.000    0.001    0.001 /oscar/scratch/sboughan/se-semantic-recovery/classic-postexport-profile-v1-20261003/code/stable_envs/envs/_classic_semantics.py:296(_actions)\n3072/1024    0.001    0.000    0.001    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/core.py:348(unwrapped)\n     1024    0.001    0.000    0.001    0.000 {built-in method numpy.arange}\n     2048    0.001    0.000    0.001    0.000 {built-in method builtins.max}\n     3072    0.001    0.000    0.001    0.000 {built-in method numpy.asanyarray}\n     1024    0.001    0.000    0.001    0.000 {method 'item' of 'numpy.generic' objects}\n     1024    0.001    0.000    0.001    0.000 {built-in method numpy.zeros}\n        1    0.001    0.001    0.001    0.001 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/numpy/_core/shape_base.py:378(stack)\n     2048    0.001    0.000    0.001    0.000 {built-in method builtins.min}\n     1026    0.001    0.000    0.001    0.000 {method 'update' of 'dict' objects}\n     2048    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/classic_control/acrobot.py:376(wrap)\n     2050    0.000    0.000    0.000    0.000 {method 'items' of 'dict' objects}\n     1024    0.000    0.000    0.000    0.000 {method 'ravel' of 'numpy.ndarray' objects}\n     2046    0.000    0.000    0.000    0.000 {method 'keys' of 'dict' objects}\n     3098    0.000    0.000    0.000    0.000 {built-in method builtins.len}\n        3    0.000    0.000    0.000    0.000 {built-in method torch.tensor}\n     1072    0.000    0.000    0.000    0.000 {built-in method builtins.isinstance}\n        2    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/tensordict/_td.py:259(__init__)\n     1024    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/core.py:224(np_random)\n\n\n",
+      "restore_step_replay": "PASS"
+    },
+    {
+      "batch": 1024,
+      "device": "cuda",
+      "construction_s": 0.1868750900030136,
+      "state_bytes": 122880,
+      "state_leaves": 9,
+      "timings": {
+        "step_with_state": {
+          "seconds": [
+            0.0901015792042017,
+            0.0895999651402235,
+            0.08973399177193642,
+            0.0902494378387928,
+            0.09043454751372337,
+            0.08939952589571476
+          ],
+          "seconds_mean": 0.08991984122743209,
+          "seconds_sd": 0.00040352793094519933,
+          "lanes_per_s_mean": 11388.111590329381,
+          "lanes_per_s_sd": 51.107712321801124
+        },
+        "step_without_export_DIAGNOSTIC": {
+          "seconds": [
+            0.0661346074193716,
+            0.06566675193607807,
+            0.06569144129753113,
+            0.06582997925579548,
+            0.06550121679902077,
+            0.06539217382669449
+          ],
+          "seconds_mean": 0.06570269508908193,
+          "seconds_sd": 0.0002612221407097828,
+          "lanes_per_s_mean": 15585.562525911819,
+          "lanes_per_s_sd": 61.8440388240423
+        },
+        "get_state": {
+          "seconds": [
+            0.0249489713460207,
+            0.02441229671239853,
+            0.02464185655117035,
+            0.02464696392416954,
+            0.024701595306396484,
+            0.02439725771546364
+          ],
+          "seconds_mean": 0.024624823592603207,
+          "seconds_sd": 0.00020430363740844937,
+          "lanes_per_s_mean": 41586.43378540433,
+          "lanes_per_s_sd": 344.17939214785196
+        },
+        "set_state": {
+          "seconds": [
+            0.09102944284677505,
+            0.09052237682044506,
+            0.09147292748093605,
+            0.09136540815234184,
+            0.0914211068302393,
+            0.09110606089234352
+          ],
+          "seconds_mean": 0.09115288717051347,
+          "seconds_sd": 0.00035623229971747,
+          "lanes_per_s_mean": 11234.016916602708,
+          "lanes_per_s_sd": 44.049463191827094
+        }
+      },
+      "step_cprofile": "         78329 function calls (76276 primitive calls) in 0.122 seconds\n\n   Ordered by: cumulative time\n   List reduced from 122 to 40 due to restriction <40>\n\n   ncalls  tottime  percall  cumtime  percall filename:lineno(function)\n        1    0.001    0.001    0.122    0.122 /oscar/scratch/sboughan/se-semantic-recovery/classic-postexport-profile-v1-20261003/code/stable_envs/envs/_classic_semantics.py:308(step)\n     1024    0.001    0.000    0.082    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/wrappers/common.py:111(step)\n     1024    0.001    0.000    0.081    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/wrappers/common.py:388(step)\n     1024    0.000    0.000    0.081    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/core.py:323(step)\n     1024    0.001    0.000    0.080    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/wrappers/common.py:276(step)\n     1024    0.005    0.000    0.080    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/classic_control/acrobot.py:202(step)\n     1024    0.023    0.000    0.060    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/classic_control/acrobot.py:416(rk4)\n        1    0.000    0.000    0.037    0.037 /oscar/scratch/sboughan/se-semantic-recovery/classic-postexport-profile-v1-20261003/code/stable_envs/envs/_classic_semantics.py:240(get_state)\n        1    0.010    0.010    0.037    0.037 /oscar/scratch/sboughan/se-semantic-recovery/classic-postexport-profile-v1-20261003/code/stable_envs/_adapters/state_columns.py:8(owned_columns)\n     4096    0.032    0.000    0.032    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/classic_control/acrobot.py:244(_dsdt)\n     1025    0.001    0.000    0.026    0.000 /oscar/scratch/sboughan/se-semantic-recovery/classic-postexport-profile-v1-20261003/code/stable_envs/envs/_classic_semantics.py:242(<genexpr>)\n     1024    0.011    0.000    0.026    0.000 /oscar/scratch/sboughan/se-semantic-recovery/classic-postexport-profile-v1-20261003/code/stable_envs/envs/_classic_semantics.py:208(_state_values)\n    16385    0.010    0.000    0.010    0.000 {built-in method numpy.asarray}\n     1024    0.003    0.000    0.005    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/numpy/lib/_function_base_impl.py:5592(append)\n     9216    0.004    0.000    0.004    0.000 {method 'reshape' of 'numpy.ndarray' objects}\n     1024    0.002    0.000    0.004    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/classic_control/acrobot.py:232(_get_ob)\n     2048    0.002    0.000    0.004    0.000 /oscar/scratch/sboughan/se-semantic-recovery/classic-postexport-profile-v1-20261003/code/stable_envs/envs/_classic_semantics.py:136(_limbs)\n     2048    0.001    0.000    0.002    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/classic_control/acrobot.py:397(bound)\n     1024    0.001    0.000    0.002    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/numpy/_core/fromnumeric.py:1917(ravel)\n     1024    0.002    0.000    0.002    0.000 {built-in method numpy.array}\n     1024    0.002    0.000    0.002    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/classic_control/acrobot.py:239(_terminal)\n        1    0.000    0.000    0.001    0.001 /oscar/scratch/sboughan/se-semantic-recovery/classic-postexport-profile-v1-20261003/code/stable_envs/envs/_classic_semantics.py:296(_actions)\n3072/1024    0.001    0.000    0.001    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/core.py:348(unwrapped)\n     1024    0.001    0.000    0.001    0.000 {built-in method numpy.arange}\n     2048    0.001    0.000    0.001    0.000 {built-in method builtins.max}\n     1024    0.001    0.000    0.001    0.000 {method 'item' of 'numpy.generic' objects}\n     3072    0.001    0.000    0.001    0.000 {built-in method numpy.asanyarray}\n     1024    0.001    0.000    0.001    0.000 {built-in method numpy.zeros}\n        1    0.001    0.001    0.001    0.001 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/numpy/_core/shape_base.py:378(stack)\n     2048    0.001    0.000    0.001    0.000 {built-in method builtins.min}\n     1026    0.000    0.000    0.000    0.000 {method 'update' of 'dict' objects}\n     2048    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/envs/classic_control/acrobot.py:376(wrap)\n        3    0.000    0.000    0.000    0.000 {built-in method torch.tensor}\n     1024    0.000    0.000    0.000    0.000 {method 'ravel' of 'numpy.ndarray' objects}\n     2050    0.000    0.000    0.000    0.000 {method 'items' of 'dict' objects}\n     2046    0.000    0.000    0.000    0.000 {method 'keys' of 'dict' objects}\n     3098    0.000    0.000    0.000    0.000 {built-in method builtins.len}\n        2    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/tensordict/_td.py:259(__init__)\n     1080    0.000    0.000    0.000    0.000 {built-in method builtins.isinstance}\n     1024    0.000    0.000    0.000    0.000 /oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/gymnasium/core.py:224(np_random)\n\n\n",
+      "restore_step_replay": "PASS"
+    }
+  ]
+}

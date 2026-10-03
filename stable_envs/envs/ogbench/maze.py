@@ -97,6 +97,7 @@ from ..._mujoco_gl import configure_mujoco_gl
 configure_mujoco_gl()
 
 from ..._adapters.ogbench import OGB_MAZE_FIELDS, OGBMazeAdapter
+from ..._adapters.ogbench_execution import make_maze_adapter
 from ...env import Env
 from ...registry import register
 from ...render import _resources as _RES
@@ -874,7 +875,7 @@ class _HistoricalDefaultSemantics:
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._simulator = OGBMazeAdapter(self.B, self.device, self._seed)
+        self._simulator = make_maze_adapter(self.B, self.device, self._seed, OGBMazeAdapter)
 
     def _layout(self):
         return tuple(

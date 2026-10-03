@@ -15,6 +15,7 @@ def main():
     p.add_argument("results", type=Path)
     p.add_argument("output", type=Path)
     p.add_argument("--source", type=Path, required=True)
+    p.add_argument("--production", action="store_true")
     args = p.parse_args()
     if args.output.exists():
         raise FileExistsError(args.output)
@@ -36,6 +37,13 @@ def main():
             for rel, digest in hashes.items():
                 assert hashlib.sha256((args.source / rel).read_bytes()).hexdigest() == digest, rel
         assert report["source_sha256"] == hashes, path
+        if args.production:
+            assert gate["production_default"] and gate["batch"] == 64 and gate["processes"] == 8, path
+            assert report["timings"] == [], path
+            rows.append(dict(env="OGBMaze", device=device, batch=64, processes=8, cases=gate["cases"],
+                             frame_mse_vs_local=0, overlaps=gate["overlaps"],
+                             host=report["host"], gpu=report["gpu"], job=report["job"], report=str(path)))
+            continue
         cells = {}
         for cell in report["timings"]:
             key = tuple(cell[k] for k in ("batch", "horizon", "processes"))
@@ -63,7 +71,7 @@ def main():
         writer = csv.DictWriter(f, fieldnames=list(rows[0]), lineterminator="\n")
         writer.writeheader()
         writer.writerows(rows)
-    print("Validated two independent gates and wrote 16 paired cells")
+    print("Validated two independent gates; wrote", len(rows), "rows")
 
 
 if __name__ == "__main__":
