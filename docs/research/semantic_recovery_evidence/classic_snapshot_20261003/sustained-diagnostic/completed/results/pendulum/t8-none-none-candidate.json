@@ -1,0 +1,172 @@
+{
+  "status": "PASS",
+  "domain": "pendulum",
+  "mode": "candidate",
+  "device": "cuda",
+  "batch": 1024,
+  "horizon": 8,
+  "states": "none",
+  "frames": "none",
+  "transitions_per_lane": 128,
+  "samples": [
+    {
+      "index": 0,
+      "seconds": 2.665732595953159,
+      "reset_seconds": 0.05433015094604343,
+      "valid_steps": 131072,
+      "frames": 0,
+      "calls": 16,
+      "steps_per_s": 49169.222824142234,
+      "fps": null,
+      "final_state_sha256": "b06a25aad034d53245f06589a054c4540e000443d17ace2459d589ef9bcf304d",
+      "gc_collections": [
+        118,
+        10,
+        0
+      ]
+    },
+    {
+      "index": 1,
+      "seconds": 2.6679009669460356,
+      "reset_seconds": 0.055780778056941926,
+      "valid_steps": 131072,
+      "frames": 0,
+      "calls": 16,
+      "steps_per_s": 49129.259902791295,
+      "fps": null,
+      "final_state_sha256": "b06a25aad034d53245f06589a054c4540e000443d17ace2459d589ef9bcf304d",
+      "gc_collections": [
+        117,
+        11,
+        0
+      ]
+    },
+    {
+      "index": 2,
+      "seconds": 2.663835542043671,
+      "reset_seconds": 0.05310083203949034,
+      "valid_steps": 131072,
+      "frames": 0,
+      "calls": 16,
+      "steps_per_s": 49204.23874945475,
+      "fps": null,
+      "final_state_sha256": "b06a25aad034d53245f06589a054c4540e000443d17ace2459d589ef9bcf304d",
+      "gc_collections": [
+        117,
+        11,
+        0
+      ]
+    },
+    {
+      "index": 3,
+      "seconds": 2.823040847084485,
+      "reset_seconds": 0.05395713390316814,
+      "valid_steps": 131072,
+      "frames": 0,
+      "calls": 16,
+      "steps_per_s": 46429.3671610758,
+      "fps": null,
+      "final_state_sha256": "b06a25aad034d53245f06589a054c4540e000443d17ace2459d589ef9bcf304d",
+      "gc_collections": [
+        117,
+        10,
+        1
+      ]
+    },
+    {
+      "index": 4,
+      "seconds": 2.6727457450469956,
+      "reset_seconds": 0.05386934499256313,
+      "valid_steps": 131072,
+      "frames": 0,
+      "calls": 16,
+      "steps_per_s": 49040.205280616894,
+      "fps": null,
+      "final_state_sha256": "b06a25aad034d53245f06589a054c4540e000443d17ace2459d589ef9bcf304d",
+      "gc_collections": [
+        117,
+        11,
+        0
+      ]
+    },
+    {
+      "index": 5,
+      "seconds": 2.678727602935396,
+      "reset_seconds": 0.0532006110297516,
+      "valid_steps": 131072,
+      "frames": 0,
+      "calls": 16,
+      "steps_per_s": 48930.69375787558,
+      "fps": null,
+      "final_state_sha256": "b06a25aad034d53245f06589a054c4540e000443d17ace2459d589ef9bcf304d",
+      "gc_collections": [
+        117,
+        11,
+        0
+      ]
+    }
+  ],
+  "host": "gpu2102.oscar.ccv.brown.edu",
+  "job": "6970937",
+  "pid": 40536,
+  "affinity": [
+    7,
+    8,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16
+  ],
+  "gpu": "NVIDIA GeForce RTX 3090",
+  "gc_enabled": true,
+  "gc_thresholds": [
+    700,
+    10,
+    10
+  ],
+  "scope": "independent-process sustained candidate vs frozen library; no source speedup",
+  "timing": "synchronized window; consecutive calls including result disposal; reset outside",
+  "versions": {
+    "torch": "2.14.0+cu126",
+    "numpy": "2.5.3",
+    "gymnasium": "1.3.0",
+    "tensordict": "0.14.2"
+  },
+  "source_sha256": {
+    "stable_envs/envs/_classic_semantics.py": "0e41633ce31f33d8459ef48a6f6d10a0b4b31116c9847442da7163d12a691c94",
+    "stable_envs/_adapters/acrobot_process.py": "a9b3759b4901fc7d0ff948b026d10a362b027009fbfef0971d8a5d5bb147108f",
+    "stable_envs/_adapters/classic_execution.py": "e24fce09f8c47f5d1216af93cc350a6cb06343f9b009837a8cbe04e6e91f8fb7",
+    "stable_envs/_adapters/process_requests.py": "e4b6626543f4ee59a80223f413a2ff2381ba7d6e9dc0e01eafa01b49d6d810d6",
+    "stable_envs/envs/classic_control.py": "e158939aa7babb9a2701f8e9b84bb1393c412dd98e7bfe2c8d0cd857369b76b6",
+    "stable_envs/_stepping.py": "4b23abcf73767a4a59f0c106e098376ac7b2570608e5d4829a8919dd213f5f99",
+    "tests/helpers/reference/classic_before_snapshot.py": "49f00947fb9c63080b3e9a6102fda8cef3b4ec0dd14ecec5c2d2877b0ecffa11",
+    "tests/helpers/reference/acrobot_before_snapshot.py": "6b899473be8d3c3dfb8fd9f801f99d85afe7b03e10ca25e7203cd26fe95301ef",
+    "tests/helpers/reference/classic_snapshot.py": "34fd53eb2c4e570c38f25672568e4835063ff8c5cef2558c567d9c959202410c",
+    "scripts/benchmarks/online_stepping/classic_snapshot_sustained.py": "7a0aec88a3df74f3963a3472f3a3d686d5aec6739db7a8e27bb42317d737c255"
+  },
+  "workers": 0,
+  "renderer_backend": "auto",
+  "trajectory_sha256": [
+    "aab14f3378f7f61c725d84f1d0436c88ad6bdc9f6f22390c4a8126d1a82d44f6",
+    "87658d4a7498ac5718425b08f3d608262f7a795b0551862338ff21b2047ad7aa",
+    "5d1b011ab1ee618d0c6f305510884fdc8dda600a5cb3be1827d0f99d86ee40af",
+    "0ecf7adc148bab80bc32ccfb03ddb9007f1923a79b3242e34caa30c54f499742",
+    "1b3e7acf70a6d209de770482649f79dffcf4ae8099736800672422bb2bba517b",
+    "b27aab56bfbe682a1b1a26ab531303b2d10dcf9c0d112aa3981fd639809f1182",
+    "7d83e0d86117afbce3abac0dfd29dbb46717e1d1601fa4116703aff684e7b298",
+    "ea9237aab2695a2ed789191d120b4d0830cac80c020e0bd2c5f43ba57feb05ca",
+    "8bf0dc6aa4a73877803a3a1c0e34e85b10e977c1a430499bfee21fff0482848e",
+    "09167b22b3600b780b640de1eda5036504433731d56df82b39ecc7b4d3749aa9",
+    "df4188b3d934fa13b2210f13549ed385c26ba9c4858e6c5261e7f6d44519a7ca",
+    "1c5e0daafa8e9ea0ee79bdc54b066f0736b299abda4303a706579a69590d78be",
+    "0ff225c83e9f4bc367f4318d69012a67254b5a48827fc6af4fa1d429535a7f61",
+    "eafbe921cf741e209790135afe3130441b7e0bf35aaa068e177b2264d3094385",
+    "fe6d06f3e427151194cdafd2d9b9976543f3a25131220141b695f1f71992feec",
+    "80817202986cf5a8b4e95560dffca4823c34e5d70fc0cdade6a4179b8f3e4a0e"
+  ],
+  "gate_final_state_sha256": "b06a25aad034d53245f06589a054c4540e000443d17ace2459d589ef9bcf304d",
+  "steps_per_s_mean": 48650.497945992756,
+  "steps_per_s_sd": 1092.5860013078898
+}

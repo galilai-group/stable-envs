@@ -208,3 +208,21 @@ strategy/cell gets a fresh interpreter; every selected output in an untimed
 trajectory must match exactly. Reset durations remain separate. This follows
 up the retained timing regressions and inconclusive GC diagnostic; production
 remains unchanged and no sustained result is yet claimed.
+
+The [sustained CUDA diagnostic](semantic_recovery_evidence/classic_snapshot_20261003/sustained-diagnostic/completed/)
+passes all eight strategy/cell trajectory comparisons. Pendulum's two earlier
+regressions do not persist in the longer workload; T8 without intermediate States
+improves 1.47x with final frames and 1.57x without frames. Acrobot improves
+1.11–1.14x in those cases but its all-State mean remains 1.3% lower. Original
+paired regressions are preserved, and their mechanism is not conclusively
+attributed. [CPU sustained follow-up 6971014](semantic_recovery_evidence/classic_snapshot_20261003/sustained-cpu-diagnostic/)
+is pending at B256. No candidate is enabled by these diagnostic results alone.
+
+[Parallel direct-source array 6971034](semantic_recovery_evidence/classic_parallel_source_20261003/)
+adds the resource-matched source baseline missing from earlier serial-source
+comparisons. Gymnasium shared-memory vector workers run unchanged pinned wrappers;
+all three strategies receive the same eight-core allocation. Five local independent
+CPU gates pass with exact source images. Full B64/256 CPU/CUDA-output sweeps are
+pending. Pygame remains a CPU renderer; CUDA source rows include output delivery,
+not native source-GPU rendering. The table preserves both serial and parallel
+source rates rather than selecting only the slower source implementation.

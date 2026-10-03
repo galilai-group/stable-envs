@@ -1,0 +1,12 @@
+{
+  "README.md": "7833fa55a1e56d0639690644893d6a142ed5430734f0d4f2ff223f425b9bfd29",
+  "candidate_manifest.json": "0d6aaaba5049e876352bce02f9b096239cceeb6d55b87386d843fc5d9672ddaa",
+  "local/acrobot.json": "f88504487ccef3f9d3933e1648f6872e884c4956f407b8e26b288b0f8092b21f",
+  "local/cartpole.json": "1b8fa82b83e27e9e1df8be765fb527dad32b76f821b2df6935711102d79e1aa8",
+  "local/mountain_car.json": "3f96d1420808b8a7d0e4f45444edf5c3969a23f6fbd95847cfb92c91482dfc26",
+  "local/mountain_car_continuous.json": "02a75528edbc25905b79c42888e8b8b8e4488ed14bd12b00ed4eb2308240b279",
+  "local/pendulum.json": "57accc67c5c6bff107f6607df9e941c63a9a36299532dd8ca5a451a879b0c319",
+  "run.sh": "99b12b4a87d5791b06fbd98aac786fdf2a24b7b090c4f9644604ffa15f6a663a",
+  "source_manifest.json": "132860c57e78121a3a78d609544e4f263d82ac2ca50ab409f1f49c7ec227149e",
+  "submission.json": "a6afa8ec6ae6e7a87b3bf214772b1e20221a514b0700c0a4b0e1f663845a13d6"
+}

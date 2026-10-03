@@ -203,3 +203,9 @@ Finger has now passed its own CPU/CUDA sweep, extending the
 432 component rows and 324 paired pipeline rows. Manipulator and Humanoid
 remain pending. These measurements retain the same library-control scope;
 same-device source and resource-matched parallel-source comparisons remain open.
+
+Manipulator subsequently passes both device modes, bringing the
+[completed cohort to ten registrations](semantic_recovery_evidence/dmc_pipeline_family_20261003/completed/ten-registration-closure/):
+480 component rows and 360 paired online rows. Its raw terminal log retains EGL
+destructor warnings after successful application output. Humanoid remains pending;
+the library-control comparison still does not close direct-source benchmarking.

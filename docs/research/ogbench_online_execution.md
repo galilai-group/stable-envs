@@ -233,3 +233,14 @@ included in rendering reduces the diagnostic means to 145–153 ms with exact
 images. The next bounded candidate should transfer columns once and retain
 every existing structural, finite, range, RNG and profile check. Production
 has not changed from this profile, and independent CPU/CUDA gates remain required.
+
+An [isolated column-validation candidate](semantic_recovery_evidence/ogbench_validation_columns_20261003/)
+is running in array 6970790. It transfers each full State field to an owned host
+column once and retains the exact semantic-check tail, removing per-lane tensor
+transfers and TensorDict traversal. Both tasks pass all 88 CPU/CUDA unit tests.
+Each also passes its independent 12-case public CPU gate with eight process
+owners, exact State/task/RNG/lifecycle/frames, failed render/restore isolation,
+owned results, variations and validation during an in-flight worker request.
+Public CUDA gates and the full B64/128 T1/8 timing sweep remain pending.
+The candidate remains isolated; this is not a production or source-fidelity
+promotion. No State schema, renderer, process route or public API changes.

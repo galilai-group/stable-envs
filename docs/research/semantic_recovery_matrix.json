@@ -4469,7 +4469,7 @@
       ]
     }
   ],
-  "checkpoint": "42-row implementation source map and 21-row closure audit complete. Exactly FetchPickAndPlace representative accepted: 22 VERIFIED / 20 INCOMPLETE. CPU semantics DELEGATED_CPU, CPU full rendering unsupported, Oscar GPU renderer and frozen baseline gates passed. Fetch siblings and other families remain unaccepted; PushT parked.",
+  "checkpoint": "Current registration status: 39 VERIFIED / 3 INCOMPLETE. The 35 verified non-Craftax registrations are in the online stepping/rendering performance program; four verified Craftax registrations are deferred from that optimization scope. PushT, PushT-Discrete and Rocket remain correctness-blocked. VERIFIED records each row's accepted semantic/evidence scope; it does not certify universal rendering fidelity or performance. See stepping_benchmark_backlog.csv for current execution and benchmark coverage.",
   "fetch_family_acceptance": {
     "implementation_commit": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92",
     "report": "docs/research/fetch_family_recovery.md",

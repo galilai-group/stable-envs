@@ -1,0 +1,10 @@
+{
+  "array_job_id": "6971014",
+  "tasks": {
+    "0": "pendulum",
+    "1": "acrobot"
+  },
+  "remote_directory": "/oscar/scratch/sboughan/se-semantic-recovery/classic-snapshot-sustained-cpu-v1-20261003",
+  "source_base_commit": "405216af3548f99c1ad02934cba560ac5e83f822",
+  "production_candidate_enabled": false
+}

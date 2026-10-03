@@ -1,0 +1,172 @@
+{
+  "status": "PASS",
+  "domain": "pendulum",
+  "mode": "candidate",
+  "device": "cuda",
+  "batch": 1024,
+  "horizon": 8,
+  "states": "all",
+  "frames": "final",
+  "transitions_per_lane": 128,
+  "samples": [
+    {
+      "index": 0,
+      "seconds": 4.4224990720395,
+      "reset_seconds": 0.0533351480262354,
+      "valid_steps": 131072,
+      "frames": 16384,
+      "calls": 16,
+      "steps_per_s": 29637.54154945571,
+      "fps": 3704.6926936819636,
+      "final_state_sha256": "b06a25aad034d53245f06589a054c4540e000443d17ace2459d589ef9bcf304d",
+      "gc_collections": [
+        118,
+        10,
+        0
+      ]
+    },
+    {
+      "index": 1,
+      "seconds": 4.42399993899744,
+      "reset_seconds": 0.052739633014425635,
+      "valid_steps": 131072,
+      "frames": 16384,
+      "calls": 16,
+      "steps_per_s": 29627.486846146596,
+      "fps": 3703.4358557683245,
+      "final_state_sha256": "b06a25aad034d53245f06589a054c4540e000443d17ace2459d589ef9bcf304d",
+      "gc_collections": [
+        118,
+        10,
+        0
+      ]
+    },
+    {
+      "index": 2,
+      "seconds": 4.583568757050671,
+      "reset_seconds": 0.05201701889745891,
+      "valid_steps": 131072,
+      "frames": 16384,
+      "calls": 16,
+      "steps_per_s": 28596.058431190457,
+      "fps": 3574.507303898807,
+      "final_state_sha256": "b06a25aad034d53245f06589a054c4540e000443d17ace2459d589ef9bcf304d",
+      "gc_collections": [
+        116,
+        11,
+        1
+      ]
+    },
+    {
+      "index": 3,
+      "seconds": 4.426664815982804,
+      "reset_seconds": 0.05216079798992723,
+      "valid_steps": 131072,
+      "frames": 16384,
+      "calls": 16,
+      "steps_per_s": 29609.65093330644,
+      "fps": 3701.206366663305,
+      "final_state_sha256": "b06a25aad034d53245f06589a054c4540e000443d17ace2459d589ef9bcf304d",
+      "gc_collections": [
+        117,
+        11,
+        0
+      ]
+    },
+    {
+      "index": 4,
+      "seconds": 4.422622540965676,
+      "reset_seconds": 0.05232392705511302,
+      "valid_steps": 131072,
+      "frames": 16384,
+      "calls": 16,
+      "steps_per_s": 29636.71414096771,
+      "fps": 3704.5892676209637,
+      "final_state_sha256": "b06a25aad034d53245f06589a054c4540e000443d17ace2459d589ef9bcf304d",
+      "gc_collections": [
+        118,
+        10,
+        0
+      ]
+    },
+    {
+      "index": 5,
+      "seconds": 4.425947661977261,
+      "reset_seconds": 0.052422235952690244,
+      "valid_steps": 131072,
+      "frames": 16384,
+      "calls": 16,
+      "steps_per_s": 29614.448703499693,
+      "fps": 3701.8060879374616,
+      "final_state_sha256": "b06a25aad034d53245f06589a054c4540e000443d17ace2459d589ef9bcf304d",
+      "gc_collections": [
+        117,
+        11,
+        0
+      ]
+    }
+  ],
+  "host": "gpu2102.oscar.ccv.brown.edu",
+  "job": "6970937",
+  "pid": 40192,
+  "affinity": [
+    7,
+    8,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16
+  ],
+  "gpu": "NVIDIA GeForce RTX 3090",
+  "gc_enabled": true,
+  "gc_thresholds": [
+    700,
+    10,
+    10
+  ],
+  "scope": "independent-process sustained candidate vs frozen library; no source speedup",
+  "timing": "synchronized window; consecutive calls including result disposal; reset outside",
+  "versions": {
+    "torch": "2.14.0+cu126",
+    "numpy": "2.5.3",
+    "gymnasium": "1.3.0",
+    "tensordict": "0.14.2"
+  },
+  "source_sha256": {
+    "stable_envs/envs/_classic_semantics.py": "0e41633ce31f33d8459ef48a6f6d10a0b4b31116c9847442da7163d12a691c94",
+    "stable_envs/_adapters/acrobot_process.py": "a9b3759b4901fc7d0ff948b026d10a362b027009fbfef0971d8a5d5bb147108f",
+    "stable_envs/_adapters/classic_execution.py": "e24fce09f8c47f5d1216af93cc350a6cb06343f9b009837a8cbe04e6e91f8fb7",
+    "stable_envs/_adapters/process_requests.py": "e4b6626543f4ee59a80223f413a2ff2381ba7d6e9dc0e01eafa01b49d6d810d6",
+    "stable_envs/envs/classic_control.py": "e158939aa7babb9a2701f8e9b84bb1393c412dd98e7bfe2c8d0cd857369b76b6",
+    "stable_envs/_stepping.py": "4b23abcf73767a4a59f0c106e098376ac7b2570608e5d4829a8919dd213f5f99",
+    "tests/helpers/reference/classic_before_snapshot.py": "49f00947fb9c63080b3e9a6102fda8cef3b4ec0dd14ecec5c2d2877b0ecffa11",
+    "tests/helpers/reference/acrobot_before_snapshot.py": "6b899473be8d3c3dfb8fd9f801f99d85afe7b03e10ca25e7203cd26fe95301ef",
+    "tests/helpers/reference/classic_snapshot.py": "34fd53eb2c4e570c38f25672568e4835063ff8c5cef2558c567d9c959202410c",
+    "scripts/benchmarks/online_stepping/classic_snapshot_sustained.py": "7a0aec88a3df74f3963a3472f3a3d686d5aec6739db7a8e27bb42317d737c255"
+  },
+  "workers": 0,
+  "renderer_backend": "auto",
+  "trajectory_sha256": [
+    "85dc514793a86f30b641ff11461fb61cefef47a6a12a12b63b72e3b6e975077f",
+    "2cea31f54c4970af2d6fb77de16ac813cb3a8b241db3e9a76b4754e0aafbbaf6",
+    "eba251a9f66646b76786b1f4bda1c4a86ad411ff4309c7b2b2028442fba91f1c",
+    "d64722011e7ca3b0e69cc0fab35daaa4dd5456608f9dbebbe1e1bbb596905e8b",
+    "3e60fc984c03184fe57b6fa0dd34e3e2b564509974eec761ce979ed723dfb616",
+    "bd5e477d2c6f31268ead5e5fd08ca4b885577cdc4056ae346a14240eab5bd97b",
+    "4114c9b743197ef9f335441f39d4ff8d04d65be698bdb13373e0e4db64c4de16",
+    "1f64babbd5228e177b3bb7a3365f74180832ca4095b201a2da30a75dde68ff43",
+    "d2f5d4b7436bdda9f44d260d3ec300aa7ee8fa3f8f6340325dc2adb633c1799a",
+    "bba8f06cb69dea006d097909176b3f4eafa6573cc4d1cb4673f0e5aab5e8308e",
+    "89244f23e49266c37a2034b84efe448a6d45434b3601fdc9903318378f5236b4",
+    "0d50d41fd769dcf9cbd76535a879374fa2d021e38957323dfa50355ee392b0fa",
+    "acb8768d2432c1c1b5013c57ff1f0ed3d55699e4a7e333784b6f5c779adb9289",
+    "a7e419474c5e5619dd41a9affb72cbc8b21102191907231b8ac54b5bdbbaf643",
+    "d78dbaaf3ab68fae29dbce7a401b3ad23b46cd7a97bb1c96a4f8a17510251474",
+    "471d28d1dfad5e057a0f9a780739c10156cb6d8ec33bdbc952ba8041f9713380"
+  ],
+  "gate_final_state_sha256": "b06a25aad034d53245f06589a054c4540e000443d17ace2459d589ef9bcf304d",
+  "steps_per_s_mean": 29453.6501007611,
+  "steps_per_s_sd": 420.28648417013767
+}
