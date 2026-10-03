@@ -34,7 +34,7 @@ def test_named_render_state_boundary(family, cls):
         with pytest.raises(ValueError):
             env.set_state(image_state)
         with pytest.raises(NotImplementedError, match="CPU mesh"):
-            env.render(image_state)
+            env.render(image_state, backend="mjwarp")
         with pytest.raises(ValueError, match="backend"):
             env.render(image_state, backend="osmesa")
         for key in image_state.keys(True, True):
@@ -152,3 +152,22 @@ def test_renderstate_configuration_grouping(family, cls):
             env.render(rs, size=224.5)
         with pytest.raises(TypeError):
             pixels.validate(family, np.zeros(30))
+
+
+@pytest.mark.parametrize("family,cls", [("Cube", OGBCube), ("Scene", OGBScene)])
+def test_cpu_default_render_uses_existing_opengl_backend(family, cls):
+    from stable_envs.envs.ogbench import manipulation_opengl
+
+    with cls(num_envs=2, size=64, seed=17) as env:
+        state = env.get_state()
+        image = torch.zeros((2, 64, 64, 3), dtype=torch.uint8)
+        with patch.object(manipulation_opengl, "render", return_value=image) as draw:
+            assert env.render(state) is image
+            args = draw.call_args.args
+            assert args[0] == family and args[2] == torch.device("cpu")
+            pixels.validate(family, args[1])
+            draw.reset_mock()
+            with pytest.raises(NotImplementedError, match="CPU mesh"):
+                env.render(state, backend="mjwarp")
+            draw.assert_not_called()
+        assert env.cpu_render_support == "SUPPORTED_SOFTWARE_OPENGL"

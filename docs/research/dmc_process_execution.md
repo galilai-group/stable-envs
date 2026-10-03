@@ -1,10 +1,18 @@
-# DMC process execution candidate
+# DMC process execution
 
-This follows the column-export checkpoint `c291296c` on
-`repair/render-config-fixes`. DMC public construction still selects its accepted
-local adapter. The process strategy is explicitly injected only by acceptance
-tests and the benchmark until registration-specific gates and resource-matched
-throughput establish an appropriate default. The semantic matrix is unchanged.
+Eleven registrations now select bounded processes automatically on Linux at
+B>=64 with at least four available CPUs, using at most eight owners. The
+[22 independent default gates](semantic_recovery_evidence/dmc_default_acceptance_20261003/)
+and [complete bounded throughput sweep](semantic_recovery_evidence/dmc_process_complete_20261003/)
+support that choice. Quadruped remains local while its exporter image discrepancy
+is investigated. Other platforms, smaller batches and restricted allocations
+retain local execution. Physics remains CPU-side for both output devices.
+
+The sections below preserve the implementation and evidence history from
+`c291296c` onward. Earlier pending/default statements describe those checkpoints;
+the latest activation is recorded at the end. Larger-batch, component, upstream
+source and combined-pipeline measurements remain required. Semantic coverage
+is unchanged.
 
 ## Implementation
 
@@ -203,3 +211,15 @@ local pending its exporter frame diagnostic. The public API is unchanged.
 
 This enables the measured execution strategy; it does not complete the remaining
 large-batch, component, source or combined pipeline measurements.
+
+## Quadruped exporter diagnostic (October 3)
+
+The [frozen-gate diagnostic](semantic_recovery_evidence/quadruped_export_diagnostic_20261003/)
+reproduces the failure on its original RTX 3090 host. Every captured non-image
+field, including State histories, RNG and task outputs, matches byte-for-byte.
+Two channels of one pixel differ by one uint8 level (B4/T8, lane 2, second
+frame); normalized image MSE is 7.822011566064334e-11. Both reference and
+candidate re-render the saved States identically to the original candidate.
+Their style bytes also match. This narrows the remaining investigation to
+render reproducibility/history, but does not close the exact-frame gate or
+enable Quadruped's automatic process route.

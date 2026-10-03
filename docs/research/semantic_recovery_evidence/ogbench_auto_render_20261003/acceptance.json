@@ -1,0 +1,17 @@
+{
+  "status": "ACCEPTED",
+  "array": 6966805,
+  "source_base": "f2d918743f5bc6727f77fc978b5d78730ea59083",
+  "registrations": [
+    "swm/OGBCube-v0",
+    "swm/OGBScene-v0"
+  ],
+  "device_gates": 4,
+  "cases_per_gate": 28,
+  "local_tests_passed": 13,
+  "integrated_files_match_frozen_manifest": 142,
+  "semantic_matrix": {
+    "VERIFIED": 39,
+    "INCOMPLETE": 3
+  }
+}

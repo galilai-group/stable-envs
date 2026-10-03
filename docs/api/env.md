@@ -17,6 +17,12 @@ simulation without adding a shared Observation class.
 State is a TensorDict checkpoint, potentially privileged, not the learner
 observation. Variation can affect physics, reset, task or appearance.
 
+For Cube and Scene, `backend="auto"` selects the existing software OpenGL
+renderer on CPU and the existing mesh renderer on CUDA. CPU rendering requires
+Mesa software OpenGL configured before importing MuJoCo; a hardware GL context
+is rejected for CPU measurements. An explicit `backend="mjwarp"` still requires
+CUDA. Selecting a backend does not change where physics runs: it remains CPU.
+
 Contributor/internal interfaces include `_pack_render_state`,
 `_unpack_render_state`, `_get_render_state`, `_set_render_state`, `_render`,
 `state_dim`/`state_names`, `scene`, and style helpers. Compact RenderState layouts

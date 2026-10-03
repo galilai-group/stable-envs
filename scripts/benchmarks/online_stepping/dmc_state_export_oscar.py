@@ -13,7 +13,7 @@ def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--domain", required=True)
     p.add_argument("--reference-adapters", type=Path)
-    p.add_argument("--benchmark", choices=["dmc_state_export", "dmc_process_probe", "ogbench_state_export", "ogbench_maze_process", "ogbench_manipulation_process"], default="dmc_state_export")
+    p.add_argument("--benchmark", choices=["dmc_state_export", "dmc_process_probe", "ogbench_state_export", "ogbench_maze_process", "ogbench_manipulation_process", "ogbench_render_defaults"], default="dmc_state_export")
     p.add_argument("--gates-only", action="store_true")
     p.add_argument("--production", action="store_true")
     p.add_argument("--output", type=Path, required=True)
@@ -26,6 +26,7 @@ def main():
     for device in ("cpu", "cuda"):
         env = dict(os.environ, OMP_NUM_THREADS="1", OPENBLAS_NUM_THREADS="1", MKL_NUM_THREADS="1", LP_NUM_THREADS="1")
         xvfb = None
+        read_fd = None
         try:
             if device == "cpu":
                 env.update(MUJOCO_GL="glfw", PYOPENGL_PLATFORM="glx", LIBGL_ALWAYS_SOFTWARE="1", GALLIUM_DRIVER="llvmpipe", CUDA_VISIBLE_DEVICES="")
@@ -46,7 +47,6 @@ def main():
                         raise RuntimeError("Xvfb failed; inspect xvfb.log")
                     env["DISPLAY"] = ":" + display
                 finally:
-                    os.close(read_fd)
                     if write_fd is not None:
                         os.close(write_fd)
             else:
@@ -77,6 +77,10 @@ def main():
                 except subprocess.TimeoutExpired:
                     xvfb.kill()
                     xvfb.wait()
+            # Some X servers announce again during driver initialization even
+            # with -noreset. Keep the pipe alive until the server has stopped.
+            if read_fd is not None:
+                os.close(read_fd)
 
 
 if __name__ == "__main__":

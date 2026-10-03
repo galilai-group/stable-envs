@@ -14,7 +14,7 @@ from ...specs import CompositeSpec, Spec
 class ManipulationSemantics:
     requires_cuda = False
     execution_mode = "DELEGATED_CPU"
-    cpu_render_support = "CPU_BACKEND_MISSING"
+    cpu_render_support = "SUPPORTED_SOFTWARE_OPENGL"
     action_dim = 5
     action_dtype = torch.float32
     action_low, action_high = -1.0, 1.0

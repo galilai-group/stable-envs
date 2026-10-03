@@ -97,7 +97,7 @@ class _ConfiguredRenderer(frozen.OGBManipBase):
 
 
 def render(family, state, device, backend="auto", chunk_size=None):
-    if backend == "opengl":
+    if backend == "opengl" or (backend == "auto" and torch.device(device).type == "cpu"):
         from . import manipulation_opengl
 
         return manipulation_opengl.render(family, state, device, chunk_size)
