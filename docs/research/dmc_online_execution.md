@@ -161,3 +161,25 @@ from the paired CSV. Same-host diagnostic 6964907 records State byte differences
 pixel MSE and repeated rendering; non-reproduction alone will not close the failure.
 The default all-domain summarizer refuses this incomplete cohort. DMC process
 default selection and combined/source benchmarks remain separate.
+
+## Default-renderer pipeline smoke and larger sweep (October 3)
+
+[Humanoid job 6968710](semantic_recovery_evidence/dmc_pipeline_smoke_20261003/completed-v3/)
+passes six independent CPU and CUDA complete-State/task/frame checks at B64,
+T1/8 and no/final/all frames with the actual default renderer. Six timing samples
+produce 16 component rows and 12 pipeline rows. CUDA T8/all achieves
+5,654 +/- 10 FPS, essentially unchanged from deferred 5,637 +/- 43; no material
+overlap speedup is established at this batch. CPU is renderer-bound near 62–64
+FPS. Raw task stepping includes IPC/output transport and is not bare physics.
+
+[Array 6968815](semantic_recovery_evidence/dmc_pipeline_family_20261003/)
+expands the same harness to eleven accepted routes and B64/256/1024 on RTX 3090
+hosts. Each registration/device must pass independently; source comparisons
+remain separate and outstanding. Two setup failures were retained before using
+isolated, hash-verified renderer extras without changing the accepted venv.
+
+Quadruped remains excluded. Its [completed render-history diagnostic](semantic_recovery_evidence/quadruped_render_history_20261003/completed-v2/)
+reproduces the original assertion: two channels differ despite identical
+captured State/style/pristine inputs, scene fields and kinematics. Subsequent
+renders agree. This narrows investigation to context/history or uninstrumented
+GL state; it does not identify a mechanism, relax the gate or enable its default.

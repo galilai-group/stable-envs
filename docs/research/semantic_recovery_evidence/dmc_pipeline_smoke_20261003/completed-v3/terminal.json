@@ -1,0 +1,11 @@
+{
+  "job": "6968710",
+  "state": "COMPLETED",
+  "exit_code": "0:0",
+  "elapsed": "00:05:32",
+  "host": "gpu2102",
+  "cpu": "PASS",
+  "cuda": "PASS",
+  "component_rows": 16,
+  "pipeline_rows": 12
+}

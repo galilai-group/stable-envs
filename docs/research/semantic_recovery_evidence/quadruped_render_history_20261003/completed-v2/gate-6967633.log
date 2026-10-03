@@ -1,0 +1,71 @@
+## SLURM PROLOG ###############################################################
+##    Job ID : 6967633
+##  Job Name : quadruped-render-trace
+##  Nodelist : gpu2109
+##      CPUs : 1
+##  Mem/Node : 24576 MB
+## Directory : /oscar/home/sboughan
+##   Job Started : Sat Oct  3 12:34:13 AM EDT 2026
+###############################################################################
+Sat Oct  3 00:34:14 2026       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 575.57.08              Driver Version: 575.57.08      CUDA Version: 12.9     |
+|-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA GeForce RTX 3090        On  |   00000000:A1:00.0 Off |                  N/A |
+| 33%   33C    P8             36W /  350W |      18MiB /  24576MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+                                                                                         
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|    0   N/A  N/A          157345      G   /usr/libexec/Xorg                         5MiB |
++-----------------------------------------------------------------------------------------+
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/se-semantic-recovery/quadruped-render-history-v2-20261003/trace_dmc_render_history.py", line 146, in <module>
+    main()
+  File "/oscar/scratch/sboughan/se-semantic-recovery/quadruped-render-history-v2-20261003/trace_dmc_render_history.py", line 109, in main
+    diagnostic.main()
+  File "/oscar/scratch/sboughan/se-semantic-recovery/quadruped-render-history-v2-20261003/diagnose_dmc_export_frames.py", line 84, in main
+    gate.main()
+  File "/oscar/scratch/sboughan/se-semantic-recovery/dmc-online-column-v2-20261002/code/scripts/benchmarks/online_stepping/dmc_state_export.py", line 123, in main
+    equal(expected, actual)
+  File "/oscar/scratch/sboughan/se-semantic-recovery/quadruped-render-history-v2-20261003/diagnose_dmc_export_frames.py", line 47, in equal
+    original_equal(expected, actual)
+  File "/oscar/scratch/sboughan/se-semantic-recovery/dmc-online-column-v2-20261002/code/scripts/benchmarks/online_stepping/dmc_state_export.py", line 41, in equal
+    torch.testing.assert_close(x, y, rtol=0, atol=0, equal_nan=True, msg=str(key))
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/torch/testing/_comparison.py", line 1689, in assert_close
+    raise error_metas[0].to_error(msg)
+AssertionError: frames
+Exception ignored in: <function Renderer.__del__ at 0x7fcf409df600>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 343, in __del__
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 329, in close
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+OpenGL.raw.EGL._errors.EGLError: <exception str() failed>
+Exception ignored in: <function GLContext.__del__ at 0x7fcf409defc0>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 138, in __del__
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 133, in free
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+OpenGL.raw.EGL._errors.EGLError: <exception str() failed>
+Exception ignored in: <function Renderer.__del__ at 0x7fcf409df600>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 343, in __del__
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 329, in close
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 131, in free
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+OpenGL.raw.EGL._errors.EGLError: <exception str() failed>
+Exception ignored in: <function GLContext.__del__ at 0x7fcf409defc0>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 138, in __del__
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 131, in free
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+OpenGL.raw.EGL._errors.EGLError: <exception str() failed>

@@ -1,0 +1,9 @@
+{
+  "job": "6967633",
+  "state": "FAILED",
+  "exit_code": "1:0",
+  "elapsed": "00:00:13",
+  "host": "gpu2109",
+  "diagnostic_status": "REPRODUCED",
+  "acceptance": "FAIL; original frames assertion preserved"
+}

@@ -1,0 +1,37 @@
+{
+  "cartpole": {
+    "array_job": "6968542_0",
+    "state": "COMPLETED",
+    "exit_code": "0:0",
+    "elapsed": "00:06:16",
+    "host": "gpu2107"
+  },
+  "pendulum": {
+    "array_job": "6968542_1",
+    "state": "COMPLETED",
+    "exit_code": "0:0",
+    "elapsed": "00:07:05",
+    "host": "gpu2111"
+  },
+  "acrobot": {
+    "array_job": "6968542_2",
+    "state": "COMPLETED",
+    "exit_code": "0:0",
+    "elapsed": "00:09:29",
+    "host": "gpu2107"
+  },
+  "mountain_car": {
+    "array_job": "6968542_3",
+    "state": "COMPLETED",
+    "exit_code": "0:0",
+    "elapsed": "00:05:21",
+    "host": "gpu2111"
+  },
+  "mountain_car_continuous": {
+    "array_job": "6968542_4",
+    "state": "COMPLETED",
+    "exit_code": "0:0",
+    "elapsed": "00:05:27",
+    "host": "gpu2109"
+  }
+}

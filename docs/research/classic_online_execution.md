@@ -160,3 +160,12 @@ ours CPU is 1.36x and 1.95x the serial source respectively; ours GPU produces
 still slower than direct source; repeated unrequested State export is a concrete
 next optimization candidate using the existing family hook. No parallel-source
 or universal speedup is claimed, and the other three registrations remain pending.
+
+The [complete five-registration source checkpoint](semantic_recovery_evidence/classic_source_pipeline_20261003/family-closure/)
+is now closed: 180 pipeline rows, 90 component rows, and zero measured source
+image MSE on both output devices for every registration. At B256/T8/all, GPU
+online rates span 10,129–14,111 FPS, CPU online 338–558 FPS, and serial source CPU
+216–451 FPS. The CSV retains means/SDs, every measured cell and source GPU
+unavailability. This is a serial-source comparison; Acrobot uses eight candidate
+physics owners, and a parallel-source baseline remains open. No broader goal
+completion or universal stepping speedup follows from these results.
