@@ -1,0 +1,19 @@
+{
+  "base_commit": "4dd9af4f6a24eb65c34f7c20b15dc7c8c328f353",
+  "production_changes": [],
+  "files": {
+    "scripts/benchmarks/online_stepping/ogbench_source_prerequisite.py": "cca8a2a03325288fb187123bc4fc6b1bd0b3a6c3462f1e999eefe2cf284b10f9",
+    "scripts/benchmarks/renderer_table/common.py": "079d45c63b1512b8468931450577be3d393c8132cfa0fa7f85c79bdc9826196c",
+    "tests/helpers/reference/ogbench_maze_semantics.py": "64a7b4d1b920f7b0cff8adc9c3194d7abe631533e9ffb08f81d4ea3e0c4a4a22",
+    "tests/unit/test_ogbench_manipulation_cpu.py": "837ed4ca80322ee3e3efd4d0ff1ea6aeccb5815c088163914d6b03d5fcf64f11",
+    "docs/research/semantic_recovery_evidence/ogb_rng_feasibility/ownership.py": "533ef030b2e893a27b96b98ff30a8fc74ef38b84a59a22f15d56c900a2898c79",
+    "docs/research/semantic_recovery_evidence/ogb_manipulation_preflight/probe.py": "b9052f3f12d9d6c6970b21519e98960d299018998929f9f6b49b2e0c865dc617",
+    "stable_envs/_adapters/ogbench_render_state.py": "813f63264c52e00c11ae40b0fb5170d31ab08addac427e0c65105b0b363a7b5a",
+    "stable_envs/_adapters/ogbench_maze_process.py": "39cb309792358189dfe560412207a51057b84d51137ad5a3cfe78ce51bd84156",
+    "stable_envs/_adapters/ogbench.py": "d83ed078e39423a4a97c163d49ee9d2c4d87fe40d81dc89477a1db6de46895c3",
+    "stable_envs/_adapters/ogbench_manipulation_compat.py": "861d0683ada72c2266fdec537dbf9604ba3028faa8d3f1adcd7e17b28e0736b5",
+    "stable_envs/_adapters/ogbench_execution.py": "5840dfd9245c7f2eb7bd4774d999ff3333213fbc044977f15ddf912c2a11d960",
+    "stable_envs/_adapters/ogbench_manipulation.py": "2ad6a2d1b78bc175bf81d8e943a2e47a8d04a1bd6ad8450b4c69b95712f80208",
+    "stable_envs/_adapters/ogbench_manipulation_process.py": "4f879537b71013f23fc2bfc23660e4b0ce66ff09083c4b4db2333f11a88714f7"
+  }
+}

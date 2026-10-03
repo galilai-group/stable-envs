@@ -244,3 +244,20 @@ owned results, variations and validation during an in-flight worker request.
 Public CUDA gates and the full B64/128 T1/8 timing sweep remain pending.
 The candidate remains isolated; this is not a production or source-fidelity
 promotion. No State schema, renderer, process route or public API changes.
+
+## Direct-source prerequisite and resource-lifetime audit (October 3)
+
+The [bounded CPU source audit](semantic_recovery_evidence/ogbench_source_prerequisite_20261003/)
+passes 12 cases across Maze/Cube/Scene, B2, T1/T8 and float32/float64 actions.
+Actual source task outputs, independent engine/RNG witnesses and restore replay
+agree exactly with the accepted adapters. Renderer construction is forbidden in
+this run; it establishes neither rendering nor source performance acceptance.
+
+A sentinel cleanup probe finds that closing the source does not close its stored
+renderer: Cube/Scene inherit Gym's no-op close, and Maze has a separate custom
+renderer outside its inherited cleanup. This is not an explanation of production
+PSS growth. It requires explicit resource-lifetime evidence or a separate exited
+oracle process before source benchmarking; source `close()` alone is insufficient
+proof that the timed population has exclusive GL resources. Production remains
+unchanged and Oscar validation array 6970790 remains uncollected while SSH
+authentication is unavailable.
