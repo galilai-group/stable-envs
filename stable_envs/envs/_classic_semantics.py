@@ -15,7 +15,6 @@ import numpy as np
 import torch
 from tensordict import TensorDict
 
-from .._adapters.state_columns import owned_columns
 from ..spaces import Box, Dict
 from ..specs import Spec
 
@@ -234,12 +233,21 @@ class ClassicControlAdapter:
             if self.domain == "mountain_car_continuous":
                 values[("task", "state_is_float32")] = [np.asarray(base.state).dtype == np.float32]
 
-        return {key: np.asarray(values[key], dtype=_NUMPY_DTYPES[dtype]).reshape(width)
-                for key, (width, dtype) in self.fields.items()}
+        return values
 
     def get_state(self) -> TensorDict:
         self._check_open()
-        return owned_columns((self._state_values(env) for env in self.envs), self.num_envs, self.device)
+        # The pinned field schema supplies shapes/dtypes once for the batch.
+        # Assign source values directly, without a temporary array per lane/field.
+        columns = {key: np.empty((self.num_envs, width), dtype=_NUMPY_DTYPES[dtype])
+                   for key, (width, dtype) in self.fields.items()}
+        for index, env in enumerate(self.envs):
+            values = self._state_values(env)
+            for key, column in columns.items():
+                column[index] = values[key]
+        # Fresh arrays belong to this snapshot alone, including on CPU.
+        return TensorDict({key: torch.from_numpy(value).to(self.device) for key, value in columns.items()},
+                          [self.num_envs], device=self.device)
 
     def set_state(self, state: TensorDict) -> None:
         self._check_open()

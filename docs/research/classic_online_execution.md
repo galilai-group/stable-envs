@@ -100,3 +100,17 @@ CPU/CUDA output. Acrobot's RK4 dominates task execution; State conversion still
 dominates the cheapest tasks. The next bounded candidates are direct writes into
 owned State columns and a process comparison for Acrobot. Neither is enabled
 from profile evidence alone. These diagnostics do not measure render throughput.
+
+## Direct-column export accepted (October 3)
+
+The [next paired checkpoint](semantic_recovery_evidence/classic_direct_columns_20261003/)
+removes the temporary NumPy array and repeated field checks for every lane/field.
+The fixed schema allocates each owned batch column once; source values are copied
+directly into it. RNG, dtype/lifecycle fields and snapshot ownership are unchanged.
+All five registrations independently pass exact CPU/CUDA State/task/frame gates.
+
+Against the preceding accepted column exporter, B1024/T8 public steps retaining
+all States improve 1.15–1.64x. The 160-row sweep preserves every B1/64/256/1024,
+T1/8, export/step and CPU/CUDA-output cell. Three noisy B1/T1 public-step means
+are slightly lower, so this is not a universal speedup claim. Processes remain
+a candidate for Acrobot and must be compared with this updated local baseline.

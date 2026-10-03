@@ -5,6 +5,7 @@ import csv
 import hashlib
 import itertools
 import json
+import math
 import statistics
 from pathlib import Path
 
@@ -15,6 +16,7 @@ def main():
     parser.add_argument("output", type=Path)
     parser.add_argument("--source", type=Path, required=True)
     parser.add_argument("--devices", nargs="+", choices=["cpu", "cuda"], default=["cpu", "cuda"])
+    parser.add_argument("--batches", nargs="+", type=int, default=[1, 64, 256])
     args = parser.parse_args()
     if args.output.exists():
         raise FileExistsError(args.output)
@@ -44,10 +46,10 @@ def main():
                 continue
             key = (cell["batch"], cell["horizon"], cell["operation"], cell["mode"])
             assert key not in cells and cell["device"] == device, path
-            assert len(cell["seconds"]) == 6 and all(t > 0 for t in cell["seconds"]), path
+            assert len(cell["seconds"]) == 6 and all(math.isfinite(t) and t > 0 for t in cell["seconds"]), path
             cells[key] = cell
-        assert set(cells) == set(itertools.product((1, 64, 256), (1, 8), ("get_state", "public_step_states_all"), ("legacy", "column"))), path
-        for batch, horizon, operation in itertools.product((1, 64, 256), (1, 8), ("get_state", "public_step_states_all")):
+        assert set(cells) == set(itertools.product(args.batches, (1, 8), ("get_state", "public_step_states_all"), ("legacy", "column"))), path
+        for batch, horizon, operation in itertools.product(args.batches, (1, 8), ("get_state", "public_step_states_all")):
             count = batch * (horizon if operation == "public_step_states_all" else 1)
             rates = {mode: [count / t for t in cells[batch, horizon, operation, mode]["seconds"]] for mode in ("legacy", "column")}
             rows.append(dict(env=report["env"], device=device, batch=batch, horizon=horizon, operation=operation,

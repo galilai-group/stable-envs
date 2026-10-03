@@ -1,0 +1,12 @@
+{
+  "status": "PROCESS_CANDIDATE_AND_BOUNDED_THROUGHPUT_ACCEPTED",
+  "array": 6966557,
+  "registrations": [
+    "swm/OGBCube-v0",
+    "swm/OGBScene-v0"
+  ],
+  "device_gates": 4,
+  "cases_per_gate": 22,
+  "paired_rows": 32,
+  "default_process_routing": "NOT_ENABLED"
+}

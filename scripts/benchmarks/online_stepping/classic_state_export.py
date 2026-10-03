@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import importlib.metadata
+import importlib.util
 import json
 import os
 import platform
@@ -52,18 +53,26 @@ def main():
     p.add_argument("--devices", nargs="+", choices=["cpu", "cuda"], default=["cpu", "cuda"])
     p.add_argument("--repeats", type=int, default=3)
     p.add_argument("--no-frames", action="store_true", help="CPU-only local smoke; GPU acceptance must include frames")
+    p.add_argument("--reference-classic", type=Path, help="Frozen accepted column-export module for a newer candidate")
     p.add_argument("--output", type=Path, required=True)
     args = p.parse_args()
     if args.output.exists():
         raise FileExistsError(args.output)
     if args.repeats < 2 or min(args.batches) < 1:
         p.error("Require positive batches and at least two repeats")
+    reference_class = None
+    if args.reference_classic is not None:
+        spec = importlib.util.spec_from_file_location("stable_envs.envs._classic_export_reference", args.reference_classic)
+        reference_module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(reference_module)
+        reference_class = reference_module.ClassicControlAdapter
+    reference_files = [args.reference_classic] if reference_class is not None else [Path("tests/helpers/reference/classic_state_export.py")]
     torch.set_num_threads(1)
     report = dict(status="RUNNING", domain=args.domain, env=NAMES[args.domain],
                   host=platform.node(), job=os.environ.get("SLURM_JOB_ID"),
                   gpu=torch.cuda.get_device_name() if "cuda" in args.devices else None,
                   versions={name: importlib.metadata.version(name) for name in ("torch", "numpy", "gymnasium", "tensordict")},
-                  reference_hashes={str(p): hashlib.sha256(p.read_bytes()).hexdigest() for p in [Path("tests/helpers/reference/classic_state_export.py")]},
+                  reference_hashes={str(p): hashlib.sha256(p.read_bytes()).hexdigest() for p in reference_files},
                   candidate_hashes={str(p): hashlib.sha256(p.read_bytes()).hexdigest() for p in [
                       Path("stable_envs/envs/_classic_semantics.py"), Path("stable_envs/envs/classic_control.py"),
                       Path("stable_envs/_adapters/state_columns.py"), Path("stable_envs/_stepping.py")]},
@@ -79,7 +88,11 @@ def main():
         env = se.make(NAMES[args.domain], num_envs=batch, device=device, seed=17, backend="auto")
         if legacy:
             adapter = env._simulator
-            adapter.get_state = types.MethodType(classic_state, adapter)
+            if reference_class is None:
+                adapter.get_state = types.MethodType(classic_state, adapter)
+            else:
+                adapter.get_state = types.MethodType(reference_class.get_state, adapter)
+                adapter._state_values = types.MethodType(reference_class._state_values, adapter)
         return env
 
     save()
@@ -157,6 +170,8 @@ def main():
                                         result = fn()
                                         sync(device)
                                         samples[mode].append(time.perf_counter() - start)
+                                        if operation == "public_step_states_all":
+                                            assert bool(result["valid"].all()), "Padded slots cannot count as steps"
                                         del result
                             for mode, seconds in samples.items():
                                 count = batch * (horizon if operation != "get_state" else 1)

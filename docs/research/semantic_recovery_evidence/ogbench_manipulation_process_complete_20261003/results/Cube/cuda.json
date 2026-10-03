@@ -1,0 +1,341 @@
+{
+  "status": "PASS",
+  "domain": "Cube",
+  "host": "gpu2107.oscar.ccv.brown.edu",
+  "job": "6966561",
+  "affinity": [
+    51,
+    52,
+    55,
+    56,
+    57,
+    58,
+    59,
+    60
+  ],
+  "gpu": "NVIDIA GeForce RTX 3090",
+  "versions": {
+    "torch": "2.14.0+cu126",
+    "numpy": "2.5.2",
+    "mujoco": "3.12.0",
+    "ogbench": "1.2.1",
+    "tensordict": "0.14.2"
+  },
+  "source_sha256": {
+    "stable_envs/_adapters/ogbench_manipulation.py": "2ad6a2d1b78bc175bf81d8e943a2e47a8d04a1bd6ad8450b4c69b95712f80208",
+    "stable_envs/_adapters/ogbench_manipulation_process.py": "4f879537b71013f23fc2bfc23660e4b0ce66ff09083c4b4db2333f11a88714f7",
+    "stable_envs/_adapters/ogbench_manipulation_compat.py": "861d0683ada72c2266fdec537dbf9604ba3028faa8d3f1adcd7e17b28e0736b5",
+    "stable_envs/_adapters/ogbench_render_state.py": "813f63264c52e00c11ae40b0fb5170d31ab08addac427e0c65105b0b363a7b5a",
+    "stable_envs/_adapters/state_columns.py": "1fad371b5753af62495b553988ea870a97cc1e7bc3206d8bc72d9d5b38465cea",
+    "stable_envs/_adapters/process_requests.py": "e4b6626543f4ee59a80223f413a2ff2381ba7d6e9dc0e01eafa01b49d6d810d6",
+    "stable_envs/_stepping.py": "4b23abcf73767a4a59f0c106e098376ac7b2570608e5d4829a8919dd213f5f99",
+    "stable_envs/envs/ogbench/manipulation_semantics.py": "42a39a02c1e6bd262f793bf9e34fb0b4f7253dd7b66bde27c071d826ad51363e",
+    "scripts/benchmarks/online_stepping/ogbench_manipulation_process.py": "832369e79564d8b887841f3cc8f534f7549c5f5cd89fa0be85d6132b49a2f2e0"
+  },
+  "scope": "paired public steps with full State history and no frames; local vs persistent process owners",
+  "gates": [
+    {
+      "device": "cuda",
+      "cases": 22,
+      "overlaps": 20,
+      "state_task_rng_lifecycle_ownership": "PASS",
+      "failed_restore_keeps_owners": "PASS",
+      "frame_mse_vs_local": 0
+    }
+  ],
+  "timings": [
+    {
+      "device": "cuda",
+      "batch": 16,
+      "horizon": 1,
+      "processes": 0,
+      "seconds": [
+        0.05946227163076401,
+        0.0600607804954052,
+        0.05951618030667305,
+        0.05890350416302681,
+        0.05915628746151924,
+        0.05992419272661209
+      ],
+      "valid_transitions": [
+        16,
+        16,
+        16,
+        16,
+        16,
+        16
+      ],
+      "steps_per_s_mean": 268.9023564970288,
+      "steps_per_s_sd": 1.9908953424898057
+    },
+    {
+      "device": "cuda",
+      "batch": 16,
+      "horizon": 8,
+      "processes": 0,
+      "seconds": [
+        0.43339903652668,
+        0.43603941425681114,
+        0.43842581287026405,
+        0.43417905271053314,
+        0.4337303228676319,
+        0.43521835282444954
+      ],
+      "valid_transitions": [
+        128,
+        128,
+        128,
+        128,
+        128,
+        128
+      ],
+      "steps_per_s_mean": 294.1456062250568,
+      "steps_per_s_sd": 1.262091189756165
+    },
+    {
+      "device": "cuda",
+      "batch": 16,
+      "horizon": 1,
+      "processes": 4,
+      "seconds": [
+        0.02810608595609665,
+        0.029698144644498825,
+        0.0281180739402771,
+        0.027658257633447647,
+        0.027891643345355988,
+        0.027662385255098343
+      ],
+      "valid_transitions": [
+        16,
+        16,
+        16,
+        16,
+        16,
+        16
+      ],
+      "steps_per_s_mean": 567.9325498735388,
+      "steps_per_s_sd": 14.886974323239583
+    },
+    {
+      "device": "cuda",
+      "batch": 16,
+      "horizon": 8,
+      "processes": 4,
+      "seconds": [
+        0.18808256462216377,
+        0.20406858623027802,
+        0.1927317939698696,
+        0.18469230085611343,
+        0.18300603330135345,
+        0.1962502971291542
+      ],
+      "valid_transitions": [
+        128,
+        128,
+        128,
+        128,
+        128,
+        128
+      ],
+      "steps_per_s_mean": 669.4385065392207,
+      "steps_per_s_sd": 27.14884915473654
+    },
+    {
+      "device": "cuda",
+      "batch": 16,
+      "horizon": 1,
+      "processes": 8,
+      "seconds": [
+        0.021975848823785782,
+        0.021870344877243042,
+        0.021862760186195374,
+        0.022019721567630768,
+        0.022087618708610535,
+        0.021781865507364273
+      ],
+      "valid_transitions": [
+        16,
+        16,
+        16,
+        16,
+        16,
+        16
+      ],
+      "steps_per_s_mean": 729.5098994789297,
+      "steps_per_s_sd": 3.7903635658197414
+    },
+    {
+      "device": "cuda",
+      "batch": 16,
+      "horizon": 8,
+      "processes": 8,
+      "seconds": [
+        0.14133651182055473,
+        0.14256928488612175,
+        0.14121822267770767,
+        0.14438901096582413,
+        0.15083488449454308,
+        0.15152521431446075
+      ],
+      "valid_transitions": [
+        128,
+        128,
+        128,
+        128,
+        128,
+        128
+      ],
+      "steps_per_s_mean": 881.6159526433855,
+      "steps_per_s_sd": 28.02244248014225
+    },
+    {
+      "device": "cuda",
+      "batch": 64,
+      "horizon": 1,
+      "processes": 0,
+      "seconds": [
+        0.20599059015512466,
+        0.20824332907795906,
+        0.20540044456720352,
+        0.20530059933662415,
+        0.20459183678030968,
+        0.2087094523012638
+      ],
+      "valid_transitions": [
+        64,
+        64,
+        64,
+        64,
+        64,
+        64
+      ],
+      "steps_per_s_mean": 310.1359005966299,
+      "steps_per_s_sd": 2.5381011636631787
+    },
+    {
+      "device": "cuda",
+      "batch": 64,
+      "horizon": 8,
+      "processes": 0,
+      "seconds": [
+        1.6075462810695171,
+        1.6063728220760822,
+        1.608203124254942,
+        1.6085142977535725,
+        1.6184632554650307,
+        1.6129871271550655
+      ],
+      "valid_transitions": [
+        512,
+        512,
+        512,
+        512,
+        512,
+        512
+      ],
+      "steps_per_s_mean": 317.94586346409136,
+      "steps_per_s_sd": 0.8999371575296792
+    },
+    {
+      "device": "cuda",
+      "batch": 64,
+      "horizon": 1,
+      "processes": 4,
+      "seconds": [
+        0.06532876566052437,
+        0.06522165611386299,
+        0.06510714814066887,
+        0.06443028151988983,
+        0.06578853353857994,
+        0.0651111975312233
+      ],
+      "valid_transitions": [
+        64,
+        64,
+        64,
+        64,
+        64,
+        64
+      ],
+      "steps_per_s_mean": 982.1656627764804,
+      "steps_per_s_sd": 6.637349070438146
+    },
+    {
+      "device": "cuda",
+      "batch": 64,
+      "horizon": 8,
+      "processes": 4,
+      "seconds": [
+        0.48803402855992317,
+        0.4821201115846634,
+        0.5021209977567196,
+        0.47676337510347366,
+        0.48653262108564377,
+        0.49250710010528564
+      ],
+      "valid_transitions": [
+        512,
+        512,
+        512,
+        512,
+        512,
+        512
+      ],
+      "steps_per_s_mean": 1049.43155134825,
+      "steps_per_s_sd": 18.695481756430656
+    },
+    {
+      "device": "cuda",
+      "batch": 64,
+      "horizon": 1,
+      "processes": 8,
+      "seconds": [
+        0.041274070739746094,
+        0.041536327451467514,
+        0.044183265417814255,
+        0.04118819162249565,
+        0.042232148349285126,
+        0.04138343408703804
+      ],
+      "valid_transitions": [
+        64,
+        64,
+        64,
+        64,
+        64,
+        64
+      ],
+      "steps_per_s_mean": 1525.9552672495347,
+      "steps_per_s_sd": 40.34183408015128
+    },
+    {
+      "device": "cuda",
+      "batch": 64,
+      "horizon": 8,
+      "processes": 8,
+      "seconds": [
+        0.31303831562399864,
+        0.3059876821935177,
+        0.30748267099261284,
+        0.29551684111356735,
+        0.3062506951391697,
+        0.30547985062003136
+      ],
+      "valid_transitions": [
+        512,
+        512,
+        512,
+        512,
+        512,
+        512
+      ],
+      "steps_per_s_mean": 1675.7382209006225,
+      "steps_per_s_sd": 31.54305590224413
+    }
+  ],
+  "opengl": {
+    "vendor": "NVIDIA Corporation",
+    "renderer": "NVIDIA GeForce RTX 3090/PCIe/SSE2",
+    "software": false
+  }
+}
