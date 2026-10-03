@@ -1,4 +1,4 @@
-"""CPU B2/P2 source transport prerequisite; no timing or rendering acceptance."""
+"""CPU B2/P1-or-P2 source transport prerequisite; no timing or rendering acceptance."""
 
 import argparse
 import contextlib
@@ -41,6 +41,7 @@ def main():
     p.add_argument("--output", type=Path, required=True)
     p.add_argument("--empty-frames", action="store_true",
                    help="Exercise zero-length shared frame columns without initializing GL")
+    p.add_argument("--workers", type=int, choices=(1, 2), default=2)
     p.add_argument("--render-size", type=int, default=None)
     args = p.parse_args()
     if args.output.exists():
@@ -59,12 +60,12 @@ def main():
              Path("docs/research/semantic_recovery_evidence/ogb_rng_feasibility/ownership.py"),
              Path("docs/research/semantic_recovery_evidence/ogb_manipulation_preflight/probe.py")]
     report = dict(status="RUNNING", host=platform.node(), parent_pid=os.getpid(),
-        scope="CPU B2/P2 source-to-source task transport, owned snapshots and nonterminal restore/replay only",
+        scope=f"CPU B2/P{args.workers} source-to-source task transport, owned snapshots and nonterminal restore/replay only",
         source_pin=PIN, source_files=manifest["files"], runtime_files={},
         candidate_files={str(f): hashlib.sha256(f.read_bytes()).hexdigest() for f in files},
         versions={n: importlib.metadata.version(n) for n in
                   ("ogbench", "mujoco", "dm-control", "torch", "numpy", "gymnasium", "tensordict")},
-        no_rendering=True, no_timing=True, empty_frames=args.empty_frames,
+        no_rendering=True, no_timing=True, empty_frames=args.empty_frames, workers=args.workers,
         requested_render_size=args.render_size, state_rpc="untimed pickle, task columns use shared memory",
         cases=[], worker_closures=[])
     args.output.parent.mkdir(parents=True, exist_ok=True)
@@ -78,10 +79,11 @@ def main():
             for family in ("Maze", "Cube", "Scene"):
                 for horizon in (1, 8):
                     with contextlib.closing(OGBSource(family, args.source_root, 2, render_size=args.render_size)) as serial, \
-                            ParallelOGBSource(family, args.source_root, 2, 2, horizon,
+                            ParallelOGBSource(family, args.source_root, 2, args.workers, horizon,
                                               frame_indices=frame_indices, render_size=args.render_size) as workers:
                         assert workers.vector.shared_memory and workers.vector.copy
                         assert workers.vector.autoreset_mode.name == "DISABLED"
+                        workers.enable_render_audit()
                         initial = serial.snapshot()
                         immutable = copy.deepcopy(initial)
                         workers.restore(initial)
@@ -119,11 +121,12 @@ def main():
                             equal(endpoint, workers.snapshot())
                             equal(initial, immutable)
                             inspection = list(workers.vector.call("inspection"))
-                            assert len({row["pid"] for row in inspection}) == 2
+                            assert len({row["pid"] for row in inspection}) == args.workers
                             for lane, row in enumerate(inspection):
                                 assert row["pid"] != os.getpid() and row["torch_threads"] == 1
-                                assert row["start"] == lane and row["size"] == 1 and row["renderers_absent"]
-                            report["cases"].append(dict(family=family, batch=2, workers=2, horizon=horizon,
+                                assert row["start"] == lane * (2 // args.workers) and row["size"] == 2 // args.workers
+                                assert row["renderers_absent"] and row["render_audit_count"] == 0
+                            report["cases"].append(dict(family=family, batch=2, workers=args.workers, horizon=horizon,
                                 action_dtype=np.dtype(dtype).name, render_size=serial.render_size, source_tasks="PASS", source_snapshot="PASS",
                                 restore_replay="PASS", shared_output_ownership="PASS", state_ownership="PASS",
                                 global_rng_preserved="PASS", worker_info=inspection))
@@ -131,7 +134,7 @@ def main():
                             print(family, horizon, np.dtype(dtype).name, "PASS", flush=True)
                     closure = [dict(pid=process.pid, exitcode=process.exitcode, alive=process.is_alive())
                                for process in workers.vector.processes]
-                    assert len(closure) == 2 and all(row["exitcode"] == 0 and not row["alive"] for row in closure)
+                    assert len(closure) == args.workers and all(row["exitcode"] == 0 and not row["alive"] for row in closure)
                     report["worker_closures"].append(dict(family=family, horizon=horizon, workers=closure))
                     save()
         report["status"] = "PASS"

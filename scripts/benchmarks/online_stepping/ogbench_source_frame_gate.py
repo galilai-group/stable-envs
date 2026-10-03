@@ -1,4 +1,4 @@
-"""Oscar-only B2/P2 source/public frame gate; no timing or scaling claims.
+"""Oscar-only B2/P1/P2 source/public frame gate; no timing or scaling claims.
 
 Run each family/device in a fresh interpreter. CPU requires software GL, CUDA
 requires NVIDIA GL. Includes real source goal-reaching transitions, full owned
@@ -91,7 +91,8 @@ def main():
         versions={n: importlib.metadata.version(n) for n in
                   ('ogbench', 'mujoco', 'dm-control', 'torch', 'numpy', 'gymnasium', 'tensordict')},
         candidate_files={str(f): hashlib.sha256(f.read_bytes()).hexdigest() for f in paths},
-        runtime_files={}, construction='PUBLIC', no_timing=True,
+        runtime_files={}, construction='PUBLIC', no_timing=True, source_workers=[1, 2],
+        source_gl_in_workers_only=True, independent_no_render_physics=True,
         scope='B2 source/public selected images and terminal lifecycle; not production P8/scaling acceptance',
         fixture='seed17+lane; move goal to current configuration in zero/one/both lanes, without source patches',
         cases=[], worker_closures=[])
@@ -106,52 +107,64 @@ def main():
             for selection, frame_slice in (('none', None), ('empty', slice(9, 12)),
                     ('final', slice(-1, None)), ('all', slice(None)), ('reverse_sparse', slice(None, None, -2))):
                 indices = None if frame_slice is None else tuple(range(horizon))[frame_slice]
-                with contextlib.closing(OGBSource(family, args.source_root, 2, render_size=64)) as serial, \
+                with contextlib.closing(OGBSource(family, args.source_root, 2, render_size=64)) as physics, \
                         contextlib.closing(se.make(NAMES[family], num_envs=2, device=device, seed=17,
                                                   size=64, backend='auto' if family == 'Maze' else 'opengl')) as env, \
+                        ParallelOGBSource(family, args.source_root, 2, 1, horizon,
+                                          frame_indices=indices, render_size=64) as serial, \
                         ParallelOGBSource(family, args.source_root, 2, 2, horizon,
                                           frame_indices=indices, render_size=64) as workers:
-                    source_gl, worker_gl = serial.renderer_info(), list(workers.renderer_info())
+                    for owner in (serial, workers):
+                        owner.enable_render_audit()
+                    before_gl = [owner.snapshot() for owner in (serial, workers)]
+                    source_gl, worker_gl = serial.renderer_info()[0], list(workers.renderer_info())
+                    for before, owner in zip(before_gl, (serial, workers), strict=True):
+                        equal(before, owner.snapshot())
                     require_gl(source_gl, device)
                     assert len(worker_gl) == 2
                     for identity in worker_gl:
                         require_gl(identity, device)
-                    report['runtime_files'].update(workers.runtime_files)
-                    original_source, original_public = serial.snapshot(), env.get_state()
+                    for owner in (serial, workers):
+                        report['runtime_files'].update(owner.runtime_files)
+                    original_source, original_public = physics.snapshot(), env.get_state()
 
                     def witness():
                         if family == 'Maze':
-                            equal_state(env.get_state().cpu(), serial.reference.get_state())
+                            equal_state(env.get_state().cpu(), physics.reference.get_state())
                         else:
-                            for candidate, raw in zip(env._simulator.envs, serial.envs, strict=True):
-                                assert_oracle(candidate, raw, serial.module)
+                            for candidate, raw in zip(env._simulator.envs, physics.envs, strict=True):
+                                assert_oracle(candidate, raw, physics.module)
 
                     for reached in (0, 1, 2):
-                        serial.restore(original_source)
+                        physics.restore(original_source)
                         env.set_state(original_public)
                         for lane in range(reached):
-                            reached_goal(serial.envs[lane].env if family == 'Maze' else serial.envs[lane], family)
+                            reached_goal(physics.envs[lane].env if family == 'Maze' else physics.envs[lane], family)
                             reached_goal(env._simulator.envs[lane], family)
                         witness()
-                        initial_source, initial_public = serial.snapshot(), env.get_state()
+                        initial_source, initial_public = physics.snapshot(), env.get_state()
                         env.set_state(initial_public)
                         equal_state(initial_public, env.get_state())
-                        workers.restore(initial_source)
-                        equal(initial_source, workers.snapshot())
+                        for owner in (serial, workers):
+                            owner.restore(initial_source)
+                            equal(initial_source, owner.snapshot())
                         # Goal fixtures use neutral controls. The nonterminal
                         # fixture also exercises actual motion and frame changes.
                         actions = (np.zeros((2, horizon, workers.action_dim), np.float64) if reached else
                                    np.random.default_rng(31).uniform(-.5, .5, (2, horizon, workers.action_dim)))
-                        expected = serial.step(actions, indices)
+                        physics_tasks = physics.step(actions)
+                        expected = serial.step(actions)
                         actual = workers.step(actions, device)
                         result = env.step(actions[:, 0] if horizon == 1 else actions,
                                           states=slice(None), frames=frame_slice)
                         compare(actual, expected)
+                        compare({k: v for k, v in expected.items() if k not in ('frames', 'frame_valid')}, physics_tasks)
                         errors = compare(public_tasks(result, horizon), expected, library=True)
                         assert len(errors) == 2 * len(indices or ())
                         if indices is not None:
                             assert result['frames'].device.type == actual['frames'].device.type == device
-                        equal(workers.snapshot(), serial.snapshot())
+                        for owner in (serial, workers):
+                            equal(physics.snapshot(), owner.snapshot())
                         equal_state(result['state'], env.get_state())
                         valid = torch.as_tensor(expected['valid'], device=device)
                         assert torch.equal(result['state_valid'], valid)
@@ -166,21 +179,29 @@ def main():
                         held_tasks = {key: value.clone() for key, value in actual.items()}
                         held_public = result.clone()
                         continuation = np.full_like(actions, .01)
-                        next_expected = serial.step(continuation, indices)
+                        next_physics = physics.step(continuation)
+                        next_expected = serial.step(continuation)
                         next_actual = workers.step(continuation, device)
                         next_public = env.step(continuation[:, 0] if horizon == 1 else continuation,
                                                states=None, frames=frame_slice)
                         compare(next_actual, next_expected)
+                        compare({k: v for k, v in next_expected.items() if k not in ('frames', 'frame_valid')}, next_physics)
                         next_errors = compare(public_tasks(next_public, horizon), next_expected, library=True)
                         compare(actual, held_tasks)
                         # TensorDict leaves include the complete owned State,
                         # state history, frames and validity, not just tasks.
                         equal_state(result, held_public)
-                        equal(workers.snapshot(), serial.snapshot())
+                        for owner in (serial, workers):
+                            equal(physics.snapshot(), owner.snapshot())
                         # This witness reads action_space and increments an
                         # instrumentation counter; keep it after snapshot checks.
                         witness()
                         assert bool(next_actual['valid'][:, 0].all())
+                        inspections = [list(owner.vector.call('inspection')) for owner in (serial, workers)]
+                        assert all(row['render_audit_count'] > 0 for group in inspections for row in group)
+                        for raw in physics.envs:
+                            target = raw.env if family == 'Maze' else raw
+                            assert getattr(target, 'custom_renderer' if family == 'Maze' else '_renderer', None) is None
                         all_errors = errors + next_errors
                         report['cases'].append(dict(horizon=horizon, selection=selection, reached_lanes=reached,
                             source_gl=source_gl, worker_gl=worker_gl, frame_indices=indices,
@@ -189,14 +210,17 @@ def main():
                             mse_sd=statistics.stdev(all_errors) if len(all_errors) > 1 else None,
                             mse_max=max(all_errors) if all_errors else None,
                             source_worker_exact='PASS', source_engine_rng_witness='PASS',
+                            source_render_nonmutation='PASS', source_inspection=inspections,
                             public_state_ownership='PASS', frame_order_validity_and_lifecycle='PASS',
                             initial_state_roundtrip='PASS'))
                         save()
                         print(family, device, horizon, selection, reached, 'PASS', flush=True)
-                closure = [dict(pid=p.pid, exitcode=p.exitcode, alive=p.is_alive()) for p in workers.vector.processes]
-                assert all(row['exitcode'] == 0 and not row['alive'] for row in closure)
-                report['worker_closures'].append(dict(horizon=horizon, selection=selection, workers=closure))
-                save()
+                for owner in (serial, workers):
+                    closure = [dict(pid=p.pid, exitcode=p.exitcode, alive=p.is_alive()) for p in owner.vector.processes]
+                    assert all(row['exitcode'] == 0 and not row['alive'] for row in closure)
+                    report['worker_closures'].append(dict(horizon=horizon, selection=selection, workers=closure))
+                    save()
+        assert len(report['cases']) == 30 and len(report['worker_closures']) == 20
         report['status'] = 'PASS'
     except BaseException as error:
         report.update(status='FAIL', error=repr(error))

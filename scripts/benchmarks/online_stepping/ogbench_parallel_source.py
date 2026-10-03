@@ -35,6 +35,7 @@ class OGBSource:
         else:
             assert list(sys.modules["stable_worldmodel"].__path__) == [str(root / "stable_worldmodel")]
         self.family, self.batch = family, batch
+        self._audit_render, self.render_audit_count = False, 0
         render_kwargs = {} if render_size is None else dict(width=render_size, height=render_size)
         self.module = ownership_module()
         self.reference = None
@@ -69,8 +70,15 @@ class OGBSource:
                 self.module.restore(env, row)
 
     def _render_lane(self, lane):
+        auditing = getattr(self, "_audit_render", False)
+        before = self.snapshot() if auditing else None
         env = self.envs[lane]
         frame = np.asarray(env.render() if self.family == "Maze" else env.render(camera="front_pixels"))
+        if auditing:
+            from scripts.benchmarks.online_stepping.ogbench_source_transport_gate import equal
+
+            equal(before, self.snapshot())
+            self.render_audit_count += 1
         if frame.dtype != np.uint8 or frame.shape != (self.render_size, self.render_size, 3):
             raise ValueError("Source returned an unexpected image shape/dtype")
         return frame
@@ -181,12 +189,15 @@ class OGBSourceShard(SourceShard):
     def snapshot(self):
         return self.ref.snapshot()
 
+    def enable_render_audit(self):
+        self.ref._audit_render = True
+
     def renderer_info(self):
         return self.ref.renderer_info()
 
     def inspection(self):
         return dict(pid=os.getpid(), torch_threads=torch.get_num_threads(),
-                    start=self.start, size=self.shard_size,
+                    start=self.start, size=self.shard_size, render_audit_count=self.ref.render_audit_count,
                     renderers_absent=all((env.env.custom_renderer if self.domain == "Maze" else env._renderer)
                                          is None for env in self.ref.envs))
 
@@ -262,3 +273,6 @@ class ParallelOGBSource(ParallelSource):
 
     def renderer_info(self):
         return self.vector.call("renderer_info")
+
+    def enable_render_audit(self):
+        self.vector.call("enable_render_audit")

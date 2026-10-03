@@ -68,7 +68,9 @@ def gap(row):
     if family == 'classic_control':
         return 'MEASURED_QUALIFIED', 'One parent Torch thread; eight-thread source rerun 6971892 remains uncollected. B64/256, T1/8; not broad-state or sustained acceptance.'
     if family == 'fetch':
-        return 'SOURCE_COMPARISON_MISSING', 'Completed process/pipeline sweeps use library controls; require direct serial and parallel source CPU/GPU comparisons for this registration.'
+        if 'PickAndPlace' in name:
+            return 'SOURCE_CAMPAIGN_PREPARED_NO_FRAMES', 'B64/T1/T8 no-frame P1/P8/public comparison prepared, not submitted. Source rendering changes continuation; rendered comparison remains unresolved.'
+        return 'SOURCE_CAMPAIGN_PREPARED', 'B64/T1/T8 P1/P8/public source comparison prepared, not submitted; registration-specific CPU/CUDA image gates must pass before timing. Existing performance sweeps use library controls.'
     if family == 'dmcontrol':
         if 'Quadruped' in name:
             return 'SOURCE_COMPARISON_MISSING', 'Renderer-history discrepancy unresolved; local route retained. No completed online source comparison.'
@@ -76,7 +78,7 @@ def gap(row):
             return 'SOURCE_CAMPAIGN_PREPARED', 'Bounded B64 source comparison bundle prepared, not submitted; completed pipeline sweep uses a library control.'
         return 'SOURCE_COMPARISON_MISSING', 'CPU source transport prerequisite and library-control pipeline sweep complete; direct source rendering/timing remains open.'
     if family == 'ogbench':
-        return 'SOURCE_IMAGE_GATE_PREPARED', 'Source CPU transport/terminal prerequisites complete; public source-image gate prepared, not submitted. Source timing and resource lifetime remain open.'
+        return 'SOURCE_IMAGE_GATE_PREPARED', 'Source CPU P1/P2 transport/terminal prerequisites complete; isolated source GL image gate prepared, not submitted. Actual GL nonmutation, source timing and resource lifetime remain open.'
     if family == 'navigation':
         return 'SOURCE_CAMPAIGN_PREPARED', 'RTX 3090 source comparison prepared, not submitted; local CPU smoke checks are not cluster performance results.'
     raise ValueError(f'Unclassified family: {family}')
@@ -100,6 +102,26 @@ def main():
     assert len(jobs) == 5
     inputs = {str(path): hashlib.sha256(path.read_bytes()).hexdigest()
               for path in (matrix_path, routes_path, CLASSIC / 'terminal-family.txt')}
+    route_review_path = EVIDENCE / 'online_api_docs_20261003/review.json'
+    route_review = json.loads(route_review_path.read_text())
+    inputs[str(route_review_path)] = hashlib.sha256(route_review_path.read_bytes()).hexdigest()
+    for rel, digest in route_review['files'].items():
+        if rel.startswith('stable_envs/'):
+            assert hashlib.sha256(Path(rel).read_bytes()).hexdigest() == digest, rel
+            inputs[rel] = digest
+    # Prepared evidence is not measured performance. Verify the archived inputs
+    # before assigning a prepared status; never fill numeric cells from them.
+    for directory in ('fetch_source_pipeline_20261003', 'dmc_source_pipeline_20261003',
+                      'navigation_source_20261003', 'ogbench_source_isolation_20261003'):
+        base = EVIDENCE / directory
+        sums_file = base / 'SHA256SUMS.json'
+        inputs[str(sums_file)] = hashlib.sha256(sums_file.read_bytes()).hexdigest()
+        for rel, digest in json.loads(sums_file.read_text()).items():
+            path = base / rel
+            assert hashlib.sha256(path.read_bytes()).hexdigest() == digest, path
+            inputs[str(path)] = digest
+        deployment = json.loads((base / 'deployment.json').read_text())
+        assert deployment['status'] in ('PREPARED_NOT_UPLOADED', 'NOT_UPLOADED_NOT_SUBMITTED')
     sums_path = CLASSIC / 'family-closure/SHA256SUMS.json'
     sums = json.loads(sums_path.read_text())
     for rel, digest in sums.items():

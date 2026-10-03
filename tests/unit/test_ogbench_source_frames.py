@@ -175,3 +175,23 @@ def test_coordinator_rejects_incomplete_or_misapplied_gate_args(monkeypatch, tmp
     with pytest.raises(SystemExit) as error:
         main()
     assert error.value.code == 2 and not output.exists()
+
+
+@pytest.mark.parametrize('family', ['Maze', 'Cube', 'Scene'])
+@pytest.mark.parametrize('mutates', [False, True])
+def test_render_audit_rejects_continuation_mutation(family, mutates):
+    actor = source(family)
+    actor._audit_render, actor.render_audit_count = True, 0
+    actor.snapshot = lambda: [dict(steps=np.asarray(env.steps)) for env in actor.envs]
+    if mutates:
+        original = actor.envs[0].render
+        def render(**kwargs):
+            actor.envs[0].steps += 1
+            return original(**kwargs)
+        actor.envs[0].render = render
+        with pytest.raises(AssertionError):
+            actor.step(actions(family, 1), (0,))
+        assert actor.render_audit_count == 0
+    else:
+        actor.step(actions(family, 1), (0,))
+        assert actor.render_audit_count == 2

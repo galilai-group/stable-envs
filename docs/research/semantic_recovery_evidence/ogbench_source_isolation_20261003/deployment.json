@@ -1,0 +1,21 @@
+{
+  "status": "NOT_UPLOADED_NOT_SUBMITTED",
+  "reason": "Oscar SSH keyboard-interactive authentication denied",
+  "remote": "/oscar/scratch/sboughan/se-semantic-recovery/ogbench-source-isolation-v1-20261003",
+  "tasks": 3,
+  "gpu": "RTX 3090",
+  "partition": "3090-gcondo",
+  "families": [
+    "Maze",
+    "Cube",
+    "Scene"
+  ],
+  "batch": 2,
+  "source_workers": [
+    1,
+    2
+  ],
+  "timing": false,
+  "supersedes_unsubmitted_gate": "ogbench-source-frames-v1-20261003",
+  "source_gl_in_workers_only": true
+}
