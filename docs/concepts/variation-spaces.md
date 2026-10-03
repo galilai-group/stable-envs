@@ -106,15 +106,18 @@ Do not pass both a non-mapping row and the developer `style=` argument.
 
 ## Reproducibility and storage
 
-Variation is data. Store the flat row next to the compact render state:
+Variation is data. Store its row alongside the full State snapshot:
 
 ```python
-render_row = env.pack_render_state(state)     # (n, render_state_dim)
+snapshot = state.clone()                     # complete, owned State
 variation_row = env.get_variation()           # (n, variation_dim)
 # later
-state = env.unpack_render_state(render_row)
-frames = env.render(state, variation=variation_row)
+frames = env.render(snapshot, variation=variation_row)
 ```
+
+Compact RenderState packing is private. To resume simulation, restore the full
+State under compatible persistent configuration; a render-only projection cannot
+restore missing velocities, RNG or lifecycle fields.
 
 `sample_variation(..., rng=)` is deterministic given that generator. `reset(seed=0)`
 reseeds `env.rng`; pass an explicit `rng` when you want Variation draws independent of

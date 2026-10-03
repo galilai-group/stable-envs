@@ -22,7 +22,7 @@ def resolve_device(requested: str) -> str:
 
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description="num_envs, specs, short batches, and the context-manager lifecycle.")
-    p.add_argument("--env", default="PushT")
+    p.add_argument("--env", default="CartPole")
     p.add_argument("--num-envs", type=int, default=8)
     p.add_argument("--short", type=int, default=3, help="n <= num_envs to render as a short batch")
     p.add_argument("--device", default="auto")
@@ -49,7 +49,7 @@ def main(argv: list[str] | None = None) -> int:
     meta = snv.info(args.env)
     print(
         f"info family={meta['family']} domain={meta['domain']} tier={meta['fidelity_tier']} "
-        f"has_dynamics={meta['has_dynamics']} swm_ids={meta['swm_ids']}"
+        f"has_dynamics={meta['has_dynamics']} reference_id={meta['reference_id']}"
     )
 
     try:
@@ -69,13 +69,9 @@ def main(argv: list[str] | None = None) -> int:
             print(f"action_spec: (no dynamics) {e}")
         print(f"variation_spec.shape: {env.variation_spec.shape}")
 
-        packed = env.pack_render_state(state)
-        print(f"pack_render_state(state) -> {tuple(packed.shape)}  names={list(env.render_state_names)}")
-        roundtrip = env.unpack_render_state(packed)
-        print(f"unpack keys {list(roundtrip.keys())}")
-
-        short = env.get_state()[: args.short]
-        frames = env.set_state(short).render()
+        # Rendering a shorter batch does not resize or restore the live simulator.
+        short = state[: args.short]
+        frames = env.render(short)
         print(f"short batch n={args.short} -> frames {tuple(frames.shape)}")
         assert frames.shape[0] == args.short
 

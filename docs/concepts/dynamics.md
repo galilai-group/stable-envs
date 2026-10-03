@@ -59,10 +59,13 @@ resets; each control step retains its established upstream lifecycle behavior.
 Ordinary single actions retain the upstream post-terminal behavior.
 
 Snapshots and frames own their storage and remain unchanged by later calls.
-Only selected frames are rendered. The dispatcher avoids unselected full State
-exports where the family supplies a task-only advance hook (currently Fetch);
-other families may still export State internally. A final State is always
-needed. Retained histories cost memory proportional to the selected output count.
+Only selected frames are rendered. Fetch and OGBench provide task-only advance
+hooks, and DMC process workers can also step without capturing a snapshot.
+Classic paths can still construct snapshots internally, even when the process
+path omits their transport. A final State is always needed. Retained
+histories cost memory proportional to the selected output count. Use the returned
+`result["state"]` when saving the endpoint; calling `get_state()` immediately
+after `step()` would export that endpoint again.
 
 Only submit action chunks whose actions are already known. A policy needing the
 next image must wait for it before supplying the next action. Selecting fewer
@@ -74,16 +77,19 @@ There is no `capture`, `transition`, `unroll`, `step_sequence`, or public
 `step`. Contributors implement the private `_step` kernel; terminating families
 also support an active-lane mask, without stepping and restoring inactive lanes.
 
-Large Fetch, supported DMC and OGBench point/large/navigate batches on Linux use
-persistent simulation processes when at least
+Large Fetch, supported DMC, classic Acrobot and the three accepted OGBench
+registrations on Linux use persistent simulation processes when at least
 four CPU cores are available: batches of at least 64 use up to eight processes,
 with one simulation thread per process, respecting the allocated CPU affinity.
 Small batches, other platforms, and daemon workers retain the local execution
 path. Physics remains on CPU even with CUDA rendering. The enabled DMC tasks
 are Acrobot, Pendulum, Cartpole, Reacher, Cheetah, Hopper, Walker, Ball-in-Cup,
-Finger, Manipulator and Humanoid. The OGBench route covers `swm/OGBMaze-v0`
-(`PointMazeLargeNavigate`). Quadruped and other families retain their
-existing execution strategies.
+Finger, Manipulator and Humanoid. The OGBench routes cover `swm/OGBMaze-v0`
+(`PointMazeLargeNavigate`), `swm/OGBCube-v0` (`OGBCube`) and `swm/OGBScene-v0`
+(`OGBScene`). Classic Acrobot is `swm/AcrobotControl-v1` (`Acrobot`). These are
+27 accepted registrations with process routing. The three navigation tasks keep
+native Torch batching. Quadruped and the other four classic tasks retain local
+execution; process overhead is not assumed worthwhile for every simulator.
 
 When one of these process pools is selected, the dispatcher starts the next known
 action while the parent renders the previous owned snapshot. There is at most
@@ -110,6 +116,35 @@ Contributors can opt a family into the shared scheduler by providing the private
 `_step_pipeline()` hook. Its executor submits one masked transition, returns
 owned task outputs and any requested full State on receive, and aborts pending
 work on failure. The renderer stays on the calling thread. Fetch, the eleven
-DMC tasks above and the specified Maze task have independent default-routing
-acceptance gates; the hook
-alone does not certify concurrency for other families.
+DMC tasks above, the three OGBench tasks and classic Acrobot have independent
+default-routing acceptance gates; the hook alone does not certify concurrency
+for other families. Routing acceptance is also distinct from an upstream speedup.
+
+## Reading online performance results
+
+| Measurement | What is timed | Rate denominator |
+| --- | --- | --- |
+| Task stepping without State capture | Task/physics and the reported IPC/output transfer; no requested rendering | Valid lane transitions |
+| Full State export | `get_state`, including transport to the selected output device | Exported lane States |
+| Render only | Rendering an already prepared State batch, with transfers identified by the benchmark | Rendered images |
+| Online step and render | One complete public `step` call, including required final State, requested histories and frames | Valid transitions for steps/s; emitted images for FPS |
+
+For a nonterminal batch B with T known actions, one call executes B×T
+transitions. Rendering only its final endpoint emits B images; rendering every
+endpoint emits B×T images. Those two FPS numbers use different image counts and
+cannot be compared as if they were the same workload. The `valid`, `state_valid`
+and `frame_valid` masks identify terminal padding. If a benchmark counts emitted
+held terminal images, it must say so; those images are not new transitions.
+
+Separate component rates are diagnostic, not additive timing partitions. Online
+overlap shares CPU, memory and transfer resources, and its speedup must be measured.
+Source comparisons should use the same device, image size, matched States,
+action sequence, output selection and CPU allocation. When source rendering
+supports a GPU, compare against that GPU path. If it has no GPU renderer, label
+the CPU-source comparison explicitly. An improvement against a previous library
+implementation or deferred scheduling is not an upstream speedup.
+
+Timing tables report mean and sample standard deviation across repeated measured
+calls. Image MSE statistics instead summarize the checked matched-state frames,
+with pixel values normalized to [0,1]. The current registration-specific evidence
+and unfinished comparisons are in the [stepping backlog](../research/stepping_benchmark_backlog.csv).

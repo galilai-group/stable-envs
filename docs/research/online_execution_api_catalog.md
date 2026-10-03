@@ -18,6 +18,31 @@ discrepancy is investigated. These route gates do not complete the required
 same-device source/component/pipeline throughput table. See the current backlog
 for registration-specific evidence and remaining work.
 
+The current routing tally is **27 eligible process routes, 3 native Torch
+routes, and 5 local routes** among the 35 accepted non-Craftax registrations.
+The other three non-Craftax registrations remain correctness-blocked. Process
+selection requires Linux, B>=64, at least four affinity CPUs and a non-daemon
+caller; it uses at most eight owners. Smaller or unsupported configurations
+fall back locally. This is routing coverage, not a count of source speedups.
+
+| Current route | Registrations | Scope |
+| --- | ---: | --- |
+| Persistent processes with local fallback | 12 | Fetch |
+| Persistent processes with local fallback | 11 | DMC except Quadruped |
+| Persistent processes with local fallback | 3 | OGBMaze, OGBCube, OGBScene |
+| Persistent processes with local fallback | 1 | Classic Acrobot |
+| Native Torch batching | 3 | TwoRoom, Piecewise, SimplePointMaze |
+| Local execution | 5 | Quadruped and the other four classic tasks |
+| Correctness-blocked | 3 | PushT, discrete PushT, Rocket |
+
+Craftax's four registrations remain explicitly deferred. The
+[current API documentation](../concepts/dynamics.md) explains State/frame slices,
+when overlap is possible and how to distinguish steps/s, emitted online FPS and
+render-only FPS. The [documentation validation checkpoint](semantic_recovery_evidence/online_api_docs_20261003/)
+reconciles all 42 catalogue rows with the semantic matrix and records 251 passing
+CPU-only routing selection checks plus executed public API examples. It provides
+no new GPU, source-performance or semantic promotion.
+
 Update, 2026-10-01: public `step` accepts `[B,A]` or `[B,T,A]` with independent
 `states` and `frames` slices. Fetch State export is column-wise and large batches
 use a bounded persistent thread pool. The new [profiling checkpoint](semantic_recovery_evidence/fetch_scaling_slices_20261001/README.md)

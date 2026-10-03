@@ -1,0 +1,10 @@
+stable-envs 0.1.0  CartPole  num_envs=8  device=cpu
+this interpreter: 97 envs, families=['classic_control', 'craftax', 'crafter', 'dmcontrol', 'fetch', 'highway', 'maze2d', 'minigrid', 'minihack', 'mujoco', 'navigation', 'ogbench', 'pusht']
+Traceback (most recent call last):
+  File "/Users/samib/stable-envs/.worktrees/render-config-fixes/examples/batched_env.py", line 88, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/Users/samib/stable-envs/.worktrees/render-config-fixes/examples/batched_env.py", line 52, in main
+    f"has_dynamics={meta['has_dynamics']} swm_ids={meta['swm_ids']}"
+                                                   ~~~~^^^^^^^^^^^
+KeyError: 'swm_ids'

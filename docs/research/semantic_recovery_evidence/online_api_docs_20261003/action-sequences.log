@@ -1,0 +1,7 @@
+Single action, frames: (8, 1, 400, 600, 3)
+All States: torch.Size([8, 8])
+All frames: (8, 8, 400, 600, 3)
+Valid transitions: 64
+States at indices 0,4: torch.Size([8, 2])
+Frames at indices 3,7: (8, 2, 400, 600, 3)
+Final State without histories: torch.Size([8])

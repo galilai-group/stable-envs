@@ -1,0 +1,15 @@
+stable-envs 0.1.0  CartPole  num_envs=8  device=cpu
+this interpreter: 97 envs, families=['classic_control', 'craftax', 'crafter', 'dmcontrol', 'fetch', 'highway', 'maze2d', 'minigrid', 'minihack', 'mujoco', 'navigation', 'ogbench', 'pusht']
+info family=classic_control domain=classic_control tier=parity has_dynamics=True reference_id=CartPole-v1
+state_spec keys: ['x', 'x_dot', 'theta', 'theta_dot', 'lifecycle', 'task', 'rng']
+frame_spec: Spec(shape=(400, 600, 3), dtype=uint8, bounds=[0, 255])
+action_spec: Spec(shape=(1,), dtype=int64, n=2)
+variation_spec.shape: (22,)
+Traceback (most recent call last):
+  File "/Users/samib/stable-envs/.worktrees/render-config-fixes/examples/batched_env.py", line 88, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/Users/samib/stable-envs/.worktrees/render-config-fixes/examples/batched_env.py", line 72, in main
+    packed = env.pack_render_state(state)
+             ^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'CartPole' object has no attribute 'pack_render_state'. Did you mean: '_pack_render_state'?

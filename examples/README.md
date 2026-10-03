@@ -6,7 +6,7 @@ The getting-started examples use only the public `stable_envs` API:
 |---|---|
 | [`render.py`](render.py) | construct an env, `reset`, and `render(state)` |
 | [`batched_env.py`](batched_env.py) | `num_envs`, specs, short batches, lifecycle |
-| [`action_sequences.py`](action_sequences.py) | single actions, batch-first sequences and capture |
+| [`action_sequences.py`](action_sequences.py) | single actions, known action chunks, independent State/frame slices and endpoint reuse |
 
 ```bash
 python examples/render.py --help
@@ -14,13 +14,16 @@ python examples/batched_env.py --help
 python examples/action_sequences.py
 ```
 
-## Training from compact state
+## Training from stored State
 
 [`train_from_states.py`](train_from_states.py) and
-[`ddp_train_from_states.py`](ddp_train_from_states.py) show the intended training path: store compact
-states in your own dataset/loader and call `env.render(env.unpack_render_state(batch))` after transfer. stable-envs
-does not own dataset storage or policy rollouts; those responsibilities belong to your data stack and
-sibling stable-* projects.
+[`ddp_train_from_states.py`](ddp_train_from_states.py) are legacy experiments using
+compact rows and the former chaining API. They require migration before use with
+the current full-State contract; they are not validated getting-started examples.
+Current applications store complete State snapshots in their own dataset/loader
+and call `env.render(batch)` after transfer. Rendering does not require calling
+`set_state` first. See the [State contract](../docs/concepts/state.md).
+stable-envs does not own dataset storage or policy rollouts.
 
 ## Other current examples
 
