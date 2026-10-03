@@ -1,0 +1,11 @@
+{
+  "integration_base": "81b36915f34b70327ff4a73a3897184bac001052",
+  "frozen_gate_checkout": "/oscar/scratch/sboughan/se-semantic-recovery/dmc-online-column-v2-20261002/code",
+  "original_diagnostic_job": "6964907",
+  "purpose": "Trace repeated identical renderer inputs, scene fields, kinematics, and pixels without modifying the gate or renderer. Not an acceptance retry.",
+  "sha256": {
+    "diagnose_dmc_export_frames.py": "8bf18128d5fca550cd06e7773bf4e7c9571b94a5ce534a291e2cb6676cc15f5a",
+    "trace_dmc_render_history.py": "a575cf6700c4ee61aeb440c644dda87172b7d9cc2394996155a507e372a50ab4",
+    "run.sh": "31aadfbec2833434eedde4cf28f1f592d5354b3ea9d755100df0596e8edd89ce"
+  }
+}

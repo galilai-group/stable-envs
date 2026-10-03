@@ -20,7 +20,7 @@ def main():
     args = p.parse_args()
     if args.benchmark == "dmc_state_export" and (args.reference_adapters is None or args.gates_only):
         p.error("Exporter comparison requires --reference-adapters and does not support --gates-only")
-    if args.production and (args.benchmark not in ("dmc_process_probe", "ogbench_maze_process") or not args.gates_only):
+    if args.production and (args.benchmark not in ("dmc_process_probe", "ogbench_maze_process", "ogbench_manipulation_process") or not args.gates_only):
         p.error("Production route checks require a supported process probe with --gates-only")
     args.output.mkdir(parents=True, exist_ok=False)
     for device in ("cpu", "cuda"):

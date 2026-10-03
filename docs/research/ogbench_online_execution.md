@@ -173,3 +173,21 @@ passed: its CPU frame harness selected the CUDA-only default mesh backend.
 show a one-argument correction to backend="opengl" for both controls. Production
 source is unchanged. Fresh array 6966557 reruns the frame/performance gates in
 new output paths; neither registration is accepted from the failed attempt.
+
+## Cube/Scene process sweep closed; default acceptance pending (October 3)
+
+Array 6966557 subsequently completed all four independent CPU/CUDA process
+gates and the [32-row paired throughput sweep](semantic_recovery_evidence/ogbench_manipulation_process_complete_20261003/).
+At B64/T8, eight owners improve public State-retaining steps/s by 5.27–6.14x
+across Cube/Scene and output devices. These are local-adapter comparisons with
+frames disabled, not upstream speedups or end-to-end rendering measurements.
+The separate [automatic CPU renderer gate](semantic_recovery_evidence/ogbench_auto_render_20261003/)
+also passed for both registrations and is integrated.
+
+[Array 6967384](semantic_recovery_evidence/ogbench_manipulation_default_20261003/)
+now checks ordinary public construction with default renderers and process
+selection at B64. Each task passed 60 routing tests. The independent CPU/CUDA
+application gates remain pending; the integration constructors remain local
+until those pass. The candidate source, exact constructor override, launcher
+and submission are preserved. Larger-batch component, source and combined
+pipeline measurements remain required after default acceptance.

@@ -8,6 +8,7 @@ pytest.importorskip("ogbench")
 from stable_envs._adapters import ogbench_execution as execution
 
 
+@pytest.mark.parametrize("family", ["Maze", "Cube", "Scene"])
 @pytest.mark.parametrize("device", ["cpu", "cuda"])
 @pytest.mark.parametrize("platform,batch,cores,daemon,expected", [
     ("linux", 64, 8, False, 8),
@@ -21,7 +22,7 @@ from stable_envs._adapters import ogbench_execution as execution
     ("win32", 64, None, False, 0),
     ("linux", 64, None, False, 0),
 ])
-def test_maze_routing(monkeypatch, device, platform, batch, cores, daemon, expected):
+def test_ogbench_routing(monkeypatch, family, device, platform, batch, cores, daemon, expected):
     monkeypatch.setattr(execution.sys, "platform", platform)
     if cores is None:
         monkeypatch.delattr(execution.os, "sched_getaffinity", raising=False)
@@ -32,7 +33,16 @@ def test_maze_routing(monkeypatch, device, platform, batch, cores, daemon, expec
     monkeypatch.setattr(execution.mp, "current_process", lambda: SimpleNamespace(daemon=daemon))
     monkeypatch.setattr(execution, "OGBMazeProcessAdapter", lambda *args, **kwargs: ("process", args, kwargs))
     local = lambda *args: ("local", args, {})
-    kind, args, kwargs = execution.make_maze_adapter(batch, device, 17, local)
+    if family == "Maze":
+        kind, args, kwargs = execution.make_maze_adapter(batch, device, 17, local)
+        expected_args = (batch, device, 17)
+    else:
+        from stable_envs._adapters import ogbench_manipulation_process as manipulation
+
+        monkeypatch.setattr(manipulation, "OGBManipulationProcessAdapter",
+                            lambda *args, **kwargs: ("process", args, kwargs))
+        kind, args, kwargs = execution.make_manipulation_adapter(family, batch, device, 17, 1, local)
+        expected_args = (family, batch, device, 17, 1)
     assert kind == ("process" if expected else "local")
-    assert args == (batch, device, 17)
+    assert args == expected_args
     assert kwargs == (dict(processes=expected, cpus=cpus) if expected else {})

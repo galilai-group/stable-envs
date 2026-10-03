@@ -1,0 +1,11 @@
+{
+  "array_job_id": "6967384",
+  "tasks": {
+    "0": "Cube",
+    "1": "Scene"
+  },
+  "base_commit": "81b36915f34b70327ff4a73a3897184bac001052",
+  "remote_stage": "/oscar/scratch/sboughan/se-semantic-recovery/ogbench-manipulation-default-v1-20261003",
+  "status_at_recording": "Both tasks running; acceptance pending",
+  "integration_constructor_activation": false
+}
