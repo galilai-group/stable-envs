@@ -1,0 +1,7 @@
+{
+  "job": "6968710",
+  "remote": "/oscar/scratch/sboughan/se-semantic-recovery/dmc-pipeline-smoke-v3-20261003",
+  "partition": "3090-gcondo",
+  "qos": "cs-3090-gcondo",
+  "status_at_submission": "SUBMITTED"
+}

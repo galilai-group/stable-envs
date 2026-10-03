@@ -1,0 +1,10 @@
+## SLURM PROLOG ###############################################################
+##    Job ID : 6968409
+##  Job Name : dmc-pipeline-smoke
+##  Nodelist : gpu2113
+##      CPUs : 
+##  Mem/Node : 32768 MB
+## Directory : /oscar/scratch/sboughan/se-semantic-recovery/dmc-pipeline-smoke-v2-20261003
+##   Job Started : Sat Oct  3 12:25:03 AM EDT 2026
+###############################################################################
+/oscar/scratch/sboughan/venvs/se-step6/bin/python: No module named pip

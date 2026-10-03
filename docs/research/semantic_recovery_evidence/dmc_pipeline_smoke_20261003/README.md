@@ -50,3 +50,10 @@ versions are retained. The installation's pip report records downloaded hashes.
 Both CPU and CUDA rerun with this one fresh profile; reports are not spliced
 across attempts. `retry-v2` records the launcher, source manifest and reporting
 override. No benchmark success is inferred from submission.
+
+V2 job 6968409 also terminated before measurements (FAILED 1:0 in two seconds):
+the se-step6 interpreter has no pip module. `failed-v2` preserves that terminal
+log. V3 uses the existing uv executable and the same isolated target/pins,
+without changing any of the 170 candidate files. `retry-v3` records the corrected
+launcher and installed-file hashing recipe. No GPU pipeline result is accepted
+from either setup failure.
