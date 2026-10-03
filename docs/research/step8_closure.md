@@ -102,8 +102,9 @@ dashboard `upstream_findings` / `buckets.UPSTREAM_FINDING`.
 
 nvdiff x86 CPU sparse-stage one-ULP batch dependence (host-dependent, no CPU consumer) · Fetch
 `rendering.transparent_arm` (no alpha path in mujoco_warp) · Fetch `background.color` skybox half
-(swm flat-fills a 16-colour gradient skybox: supporting it moves the family's frozen default frame —
-Sami's call, T3 findings §1) · DMC trackcom `floor.color` (no plate) · mujoco ≥ 3.12 re-anchors
+(swm flat-fills a 16-colour gradient skybox: supporting it would move the family's frozen default
+frame; **ruled 2026-09-17: partial support kept permanently for this milestone, no re-freeze**,
+reconsider later if warranted; T3 findings §1) · DMC trackcom `floor.color` (no plate) · mujoco ≥ 3.12 re-anchors
 finite-plane textures (certification interpreter is `mujoco==3.11.0`; not pinned globally) ·
 Antmaze history-dependent bake (oracle hole, not a 42-id row) · Craftax semantic follow-up not
 meaningfully testable downstream · Quadruped CPU tier `UNMEASURED [LOAD_QUARANTINED]` · Fetch has
@@ -138,6 +139,10 @@ removal, packaging/CI).
   ones tested. T3's DMC parity cells: jobs 6459781 / 6460099 / 6460346 / 6460478 (L40S, gpu1504, A40, RTX A6000).
 - No shared renderer/resource ownership changed on the tip (C's change is inside `ogb_manip.py`'s
   private rig), so no fresh-process/resource-lifetime rerun was triggered.
+
+## Acceptance
+
+Accepted by Sami on 2026-09-17 at `21cb30678b7a7d0f3344b59f176f33d3f3b09ffc` = `milestone/step8-functional-completion` = annotated tag `step8-closure`, both on origin. This commit is the immutable Step-9 starting point.
 
 ## After acceptance
 

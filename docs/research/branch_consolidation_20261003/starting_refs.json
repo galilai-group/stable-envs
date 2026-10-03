@@ -1,0 +1,487 @@
+{
+  "base": "be13197ddb7424f2f556bbc17df40ab144d626a1",
+  "refs": [
+    {
+      "ref": "refs/heads/audit/native-envs",
+      "tip": "3bebf6275a506746314d15e3f6fab26e16edbe05",
+      "already_ancestor": true,
+      "cherry_equivalence": []
+    },
+    {
+      "ref": "refs/heads/baseline/renderer-v0",
+      "tip": "6d80b68b8b3ccd07d4207be94cbf4f0760758a06",
+      "already_ancestor": true,
+      "cherry_equivalence": []
+    },
+    {
+      "ref": "refs/heads/main",
+      "tip": "d148f1a582d9ae9062112049a8c20fd00a9bde7b",
+      "already_ancestor": true,
+      "cherry_equivalence": []
+    },
+    {
+      "ref": "refs/heads/milestone/step7-full-renderer-coverage",
+      "tip": "43ac95238f7472137619f3e69e7636e11dd088b1",
+      "already_ancestor": true,
+      "cherry_equivalence": []
+    },
+    {
+      "ref": "refs/heads/milestone/step8-functional-completion",
+      "tip": "21cb30678b7a7d0f3344b59f176f33d3f3b09ffc",
+      "already_ancestor": true,
+      "cherry_equivalence": []
+    },
+    {
+      "ref": "refs/heads/repair/dmcontrol",
+      "tip": "6af63ce57dd82f7531f21f175155375d93804293",
+      "already_ancestor": false,
+      "cherry_equivalence": [
+        "- 6af63ce57dd82f7531f21f175155375d93804293"
+      ]
+    },
+    {
+      "ref": "refs/heads/repair/environment-semantics",
+      "tip": "df80c9c54590afa9fc0482a4dcb241d21f6b63a3",
+      "already_ancestor": true,
+      "cherry_equivalence": []
+    },
+    {
+      "ref": "refs/heads/repair/fetch-pickandplace-proof",
+      "tip": "c4d62d38b4d0e9aad24d5c200440d83d636875f0",
+      "already_ancestor": false,
+      "cherry_equivalence": [
+        "- 0381906f9916cba2fe42001714d37263731d7747",
+        "- 68c59316f1e637b2384bdd612d44243c682815a6",
+        "- c4d62d38b4d0e9aad24d5c200440d83d636875f0"
+      ]
+    },
+    {
+      "ref": "refs/heads/repair/fetch-representative",
+      "tip": "243e7f9dea8f4462690661c77ec00b51fc4adfac",
+      "already_ancestor": false,
+      "cherry_equivalence": [
+        "- cae0ffbe5682fb733ec24c3d4088d3fa5c1ce49a",
+        "- fcffd6e1e63d539f4dd65758e22cc2396306c84c",
+        "- 243e7f9dea8f4462690661c77ec00b51fc4adfac"
+      ]
+    },
+    {
+      "ref": "refs/heads/repair/native-navigation",
+      "tip": "9b6b655b6c39b097d3751aa06bbdabef6a2be74d",
+      "already_ancestor": false,
+      "cherry_equivalence": [
+        "- 9b6b655b6c39b097d3751aa06bbdabef6a2be74d"
+      ]
+    },
+    {
+      "ref": "refs/heads/repair/ogbench",
+      "tip": "7f2f3ae902e05928572f73ece608971c0a8f2595",
+      "already_ancestor": true,
+      "cherry_equivalence": []
+    },
+    {
+      "ref": "refs/heads/repair/render-config-fixes",
+      "tip": "be13197ddb7424f2f556bbc17df40ab144d626a1",
+      "already_ancestor": true,
+      "cherry_equivalence": []
+    },
+    {
+      "ref": "refs/heads/sami/pre-step6-baseline",
+      "tip": "89fa5ca81341dc4df7186ec325cb691431a2ef17",
+      "already_ancestor": true,
+      "cherry_equivalence": []
+    },
+    {
+      "ref": "refs/heads/sami/pre-step7-baseline",
+      "tip": "76dc5116f432e61dd47fba8f9e879cf9212c8e46",
+      "already_ancestor": true,
+      "cherry_equivalence": []
+    },
+    {
+      "ref": "refs/heads/sami/pre-step8-baseline",
+      "tip": "43ac95238f7472137619f3e69e7636e11dd088b1",
+      "already_ancestor": true,
+      "cherry_equivalence": []
+    },
+    {
+      "ref": "refs/heads/sami/pre-step9-baseline",
+      "tip": "21cb30678b7a7d0f3344b59f176f33d3f3b09ffc",
+      "already_ancestor": true,
+      "cherry_equivalence": []
+    },
+    {
+      "ref": "refs/heads/step6/closed",
+      "tip": "76dc5116f432e61dd47fba8f9e879cf9212c8e46",
+      "already_ancestor": true,
+      "cherry_equivalence": []
+    },
+    {
+      "ref": "refs/heads/step6/cpu-3d",
+      "tip": "ff5232c5bcf3b06e16525eda855a26b9835b65d5",
+      "already_ancestor": true,
+      "cherry_equivalence": []
+    },
+    {
+      "ref": "refs/heads/step6/fetch-gpu",
+      "tip": "d1518b683b986834eca650af9ec5cc59d49f5f0a",
+      "already_ancestor": false,
+      "cherry_equivalence": [
+        "+ c568fde9e33d55574e7b32a1ef6143a731d0fe91",
+        "+ a3bdcc14bc3cd7779689655e2c5f79aeae6b69e8",
+        "+ d1518b683b986834eca650af9ec5cc59d49f5f0a"
+      ]
+    },
+    {
+      "ref": "refs/heads/step6/gfxdraw",
+      "tip": "0410fc38d2d8d75d2c3adde4c62918966393b550",
+      "already_ancestor": true,
+      "cherry_equivalence": []
+    },
+    {
+      "ref": "refs/heads/step6/integration",
+      "tip": "b9ac919d50dd7a79db06d70e577c14c824fa7931",
+      "already_ancestor": false,
+      "cherry_equivalence": [
+        "+ b9ac919d50dd7a79db06d70e577c14c824fa7931"
+      ]
+    },
+    {
+      "ref": "refs/heads/step6/integration-verify",
+      "tip": "11dde0b1791f60da351a84aa4e0b95b2ae2d29c6",
+      "already_ancestor": true,
+      "cherry_equivalence": []
+    },
+    {
+      "ref": "refs/heads/step6/lance-baseline",
+      "tip": "eaaae6bddb8ac360ded4d69e064e968d05712bb0",
+      "already_ancestor": true,
+      "cherry_equivalence": []
+    },
+    {
+      "ref": "refs/heads/step6/raster2d",
+      "tip": "e86b40b618b67884591055fe58f109fdaaa86214",
+      "already_ancestor": true,
+      "cherry_equivalence": []
+    },
+    {
+      "ref": "refs/heads/step6/raycast3d",
+      "tip": "170f09f5ea9c14fe6ed7e25bb1497caa0f750fed",
+      "already_ancestor": true,
+      "cherry_equivalence": []
+    },
+    {
+      "ref": "refs/heads/step6/reacher-correctness",
+      "tip": "8ec5bc459aba5ac7b6e51c13c58596146ae2b1be",
+      "already_ancestor": true,
+      "cherry_equivalence": []
+    },
+    {
+      "ref": "refs/heads/step6/report",
+      "tip": "b81f3e82b833fc7a8bdb99d1ce346a129cc3a7dd",
+      "already_ancestor": true,
+      "cherry_equivalence": []
+    },
+    {
+      "ref": "refs/heads/step6/texture-fidelity",
+      "tip": "5a360450577b81b381944ad5c04e653717b7a882",
+      "already_ancestor": true,
+      "cherry_equivalence": []
+    },
+    {
+      "ref": "refs/heads/step6/tilemap",
+      "tip": "55bf7643c6ccf0c74f844677bb3520a4bf10086c",
+      "already_ancestor": true,
+      "cherry_equivalence": []
+    },
+    {
+      "ref": "refs/heads/step7/closure",
+      "tip": "01b5597d6aaedc78da75bb60fe18a0dfc4c6c8dc",
+      "already_ancestor": true,
+      "cherry_equivalence": []
+    },
+    {
+      "ref": "refs/heads/step7/closure2",
+      "tip": "5b0c8b0b51882b2310577fa5f37e12b6e0c17363",
+      "already_ancestor": true,
+      "cherry_equivalence": []
+    },
+    {
+      "ref": "refs/heads/step7/craftax-classic-full",
+      "tip": "f21f60cb1fc6987867145dffffc1dfd90e53a696",
+      "already_ancestor": true,
+      "cherry_equivalence": []
+    },
+    {
+      "ref": "refs/heads/step7/craftax-full",
+      "tip": "707e797e2493e6c45e0996a2efd6e7e4aa774525",
+      "already_ancestor": true,
+      "cherry_equivalence": []
+    },
+    {
+      "ref": "refs/heads/step7/dmc-manipulator",
+      "tip": "3ef730cc39eeadd984ae31b2fbac8164ec042d2e",
+      "already_ancestor": true,
+      "cherry_equivalence": []
+    },
+    {
+      "ref": "refs/heads/step7/dmc-quadruped",
+      "tip": "bb4410db155d9345cb7842b2346b61bc5145d65f",
+      "already_ancestor": true,
+      "cherry_equivalence": []
+    },
+    {
+      "ref": "refs/heads/step7/integration",
+      "tip": "f5542a99b7dbee732a615233f5992eab406b70da",
+      "already_ancestor": false,
+      "cherry_equivalence": [
+        "+ f5542a99b7dbee732a615233f5992eab406b70da"
+      ]
+    },
+    {
+      "ref": "refs/heads/step7/ogb-manipulation",
+      "tip": "179c4b3056fbc0e10d0723bb681daf4053543d1c",
+      "already_ancestor": true,
+      "cherry_equivalence": []
+    },
+    {
+      "ref": "refs/heads/step7/rocket-landing",
+      "tip": "0b4a14b8909e25dcbb62ff636511aad2f3a91862",
+      "already_ancestor": true,
+      "cherry_equivalence": []
+    },
+    {
+      "ref": "refs/heads/step8/integration",
+      "tip": "52d4f90d6b10a0a85fd993cf7aa83e97989da037",
+      "already_ancestor": false,
+      "cherry_equivalence": [
+        "+ 2017c98de6470b385ba7b0de001330ec96792cf5",
+        "+ 52d4f90d6b10a0a85fd993cf7aa83e97989da037"
+      ]
+    },
+    {
+      "ref": "refs/heads/step9/benchmarks",
+      "tip": "0a7820dc0b45a98411c68a147cbbb625f6820176",
+      "already_ancestor": true,
+      "cherry_equivalence": []
+    },
+    {
+      "ref": "refs/heads/step9/benchmarks-pre-attribution-cleanup",
+      "tip": "368054781919636030dca73e3f6dea9c766c26c0",
+      "already_ancestor": false,
+      "cherry_equivalence": [
+        "- 4d2e0da09b1835d0b58a1b89e5954bf8cb8dbe28",
+        "- 368054781919636030dca73e3f6dea9c766c26c0"
+      ]
+    },
+    {
+      "ref": "refs/heads/step9/cleanup",
+      "tip": "86e2a4814afea4e83c12a0d60f48c82fb7be6e31",
+      "already_ancestor": true,
+      "cherry_equivalence": []
+    },
+    {
+      "ref": "refs/heads/step9/docs-examples",
+      "tip": "cb2a59afbad1721a104d67927ad368b6d93c5f48",
+      "already_ancestor": true,
+      "cherry_equivalence": []
+    },
+    {
+      "ref": "refs/heads/step9/envs-classic-nav",
+      "tip": "c688882e555930e85eaf41f2a13f40f26ed1dfe1",
+      "already_ancestor": true,
+      "cherry_equivalence": []
+    },
+    {
+      "ref": "refs/heads/step9/envs-craftax-rocket",
+      "tip": "5547270c6caff598bc44f8b40b666e6bc61d831b",
+      "already_ancestor": true,
+      "cherry_equivalence": []
+    },
+    {
+      "ref": "refs/heads/step9/envs-dmcontrol",
+      "tip": "82ce271b49ce485c91f1aa85777f5ab222f6715f",
+      "already_ancestor": true,
+      "cherry_equivalence": []
+    },
+    {
+      "ref": "refs/heads/step9/envs-fetch",
+      "tip": "86df7ee95380e824e6ac44dde7af8f332ee41384",
+      "already_ancestor": true,
+      "cherry_equivalence": []
+    },
+    {
+      "ref": "refs/heads/step9/envs-mujoco",
+      "tip": "205f36b079e6bdc84fcf7efb015461041e16b096",
+      "already_ancestor": true,
+      "cherry_equivalence": []
+    },
+    {
+      "ref": "refs/heads/step9/envs-mujoco-sandbox",
+      "tip": "88aa37ff96745201d6cd534ed1e7892ea6d7377b",
+      "already_ancestor": true,
+      "cherry_equivalence": []
+    },
+    {
+      "ref": "refs/heads/step9/envs-ogbench",
+      "tip": "e2a6aed5362100a349f8a8833e5b70aa839fbab8",
+      "already_ancestor": true,
+      "cherry_equivalence": []
+    },
+    {
+      "ref": "refs/heads/step9/foundation",
+      "tip": "d3c2d1c14461b9b40ab0604e6326b9457d3af3f8",
+      "already_ancestor": true,
+      "cherry_equivalence": []
+    },
+    {
+      "ref": "refs/heads/step9/integration",
+      "tip": "29249c09e695ab37577686547a60964ca331e2a3",
+      "already_ancestor": true,
+      "cherry_equivalence": []
+    },
+    {
+      "ref": "refs/heads/step9/interop",
+      "tip": "2fa993e36531ed11ae9ed36ba3a24bf0d64733e6",
+      "already_ancestor": true,
+      "cherry_equivalence": []
+    },
+    {
+      "ref": "refs/heads/step9/packaging-ci",
+      "tip": "d93d8a230ca9fd81271dfe2c1b80a6a16eca7630",
+      "already_ancestor": true,
+      "cherry_equivalence": []
+    },
+    {
+      "ref": "refs/heads/step9/render-2d",
+      "tip": "8afa2f49edd3544a24082ba9facefbd7912a23b2",
+      "already_ancestor": true,
+      "cherry_equivalence": []
+    },
+    {
+      "ref": "refs/heads/step9/render-3d",
+      "tip": "121ad1cc9f21ec178da1f59b34d4eb5958e44e1f",
+      "already_ancestor": true,
+      "cherry_equivalence": []
+    },
+    {
+      "ref": "refs/heads/step9/render-mjwarp-nvdiff",
+      "tip": "d6f5ec1bd98581b1195100a2ba1fb12d885f899c",
+      "already_ancestor": true,
+      "cherry_equivalence": []
+    },
+    {
+      "ref": "refs/heads/step9/testing",
+      "tip": "f95a6cffa346c044e128db6d386822d3067e61bf",
+      "already_ancestor": true,
+      "cherry_equivalence": []
+    },
+    {
+      "ref": "refs/heads/v0-draft",
+      "tip": "9471a619e08aedb0b53a90b901c9e26ffff57c11",
+      "already_ancestor": true,
+      "cherry_equivalence": []
+    },
+    {
+      "ref": "refs/heads/v0/api-surface",
+      "tip": "6f24f07ce5b99bacd56975624f4a2c1bc649411a",
+      "already_ancestor": true,
+      "cherry_equivalence": []
+    },
+    {
+      "ref": "refs/heads/v0/archaeology",
+      "tip": "694e7226c62e704ae90cd347b8a06d538523bce9",
+      "already_ancestor": true,
+      "cherry_equivalence": []
+    },
+    {
+      "ref": "refs/heads/v0/ci-packaging",
+      "tip": "b83e624b6a9363a4a6c4b03ee40a2aeac278069a",
+      "already_ancestor": true,
+      "cherry_equivalence": []
+    },
+    {
+      "ref": "refs/heads/v0/docs-product",
+      "tip": "aeb23f910b6e558c580ba3d9ddaf505a60194e41",
+      "already_ancestor": true,
+      "cherry_equivalence": []
+    },
+    {
+      "ref": "refs/heads/v0/format",
+      "tip": "e259cfac74af84a85d8d334a4da66c5447c87d36",
+      "already_ancestor": true,
+      "cherry_equivalence": []
+    },
+    {
+      "ref": "refs/remotes/origin/main",
+      "tip": "d148f1a582d9ae9062112049a8c20fd00a9bde7b",
+      "already_ancestor": true,
+      "cherry_equivalence": []
+    },
+    {
+      "ref": "refs/remotes/origin/milestone/step7-full-renderer-coverage",
+      "tip": "43ac95238f7472137619f3e69e7636e11dd088b1",
+      "already_ancestor": true,
+      "cherry_equivalence": []
+    },
+    {
+      "ref": "refs/remotes/origin/milestone/step8-functional-completion",
+      "tip": "21cb30678b7a7d0f3344b59f176f33d3f3b09ffc",
+      "already_ancestor": true,
+      "cherry_equivalence": []
+    },
+    {
+      "ref": "refs/remotes/origin/repair/environment-semantics",
+      "tip": "df80c9c54590afa9fc0482a4dcb241d21f6b63a3",
+      "already_ancestor": true,
+      "cherry_equivalence": []
+    },
+    {
+      "ref": "refs/remotes/origin/repair/render-config-fixes",
+      "tip": "be13197ddb7424f2f556bbc17df40ab144d626a1",
+      "already_ancestor": true,
+      "cherry_equivalence": []
+    },
+    {
+      "ref": "refs/remotes/origin/step9/integration",
+      "tip": "faead3261ef8fd8fa71d4e319f19efe383473038",
+      "already_ancestor": true,
+      "cherry_equivalence": []
+    },
+    {
+      "ref": "refs/remotes/origin/v0-draft",
+      "tip": "dea6a7ccc656f206bfcec06609231cf06bdab94e",
+      "already_ancestor": true,
+      "cherry_equivalence": []
+    },
+    {
+      "ref": "refs/remotes/origin/v0/api-surface",
+      "tip": "6f24f07ce5b99bacd56975624f4a2c1bc649411a",
+      "already_ancestor": true,
+      "cherry_equivalence": []
+    },
+    {
+      "ref": "refs/remotes/origin/v0/archaeology",
+      "tip": "694e7226c62e704ae90cd347b8a06d538523bce9",
+      "already_ancestor": true,
+      "cherry_equivalence": []
+    },
+    {
+      "ref": "refs/remotes/origin/v0/ci-packaging",
+      "tip": "b83e624b6a9363a4a6c4b03ee40a2aeac278069a",
+      "already_ancestor": true,
+      "cherry_equivalence": []
+    },
+    {
+      "ref": "refs/remotes/origin/v0/docs-product",
+      "tip": "aeb23f910b6e558c580ba3d9ddaf505a60194e41",
+      "already_ancestor": true,
+      "cherry_equivalence": []
+    },
+    {
+      "ref": "refs/remotes/origin/v0/format",
+      "tip": "e259cfac74af84a85d8d334a4da66c5447c87d36",
+      "already_ancestor": true,
+      "cherry_equivalence": []
+    }
+  ]
+}
