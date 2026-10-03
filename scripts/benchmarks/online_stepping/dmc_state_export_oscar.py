@@ -13,7 +13,8 @@ def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--domain", required=True)
     p.add_argument("--reference-adapters", type=Path)
-    p.add_argument("--benchmark", choices=["dmc_state_export", "dmc_process_probe", "ogbench_state_export", "ogbench_maze_process", "ogbench_manipulation_process", "ogbench_render_defaults"], default="dmc_state_export")
+    p.add_argument("--benchmark", choices=["dmc_state_export", "dmc_process_probe", "dmc_pipeline", "ogbench_state_export", "ogbench_maze_process", "ogbench_manipulation_process", "ogbench_render_defaults"], default="dmc_state_export")
+    p.add_argument("--batches", type=int, nargs="+", help="Override the selected benchmark's batch sweep")
     p.add_argument("--gates-only", action="store_true")
     p.add_argument("--production", action="store_true")
     p.add_argument("--output", type=Path, required=True)
@@ -58,6 +59,8 @@ def main():
                        "--devices", device, "--verify-gl", "--output", str(args.output / f"{device}.json")]
             if args.reference_adapters is not None:
                 command += ["--reference-adapters", str(args.reference_adapters)]
+            if args.batches is not None:
+                command += ["--batches", *map(str, args.batches)]
             if args.gates_only:
                 command.append("--gates-only")
             if args.production:

@@ -1,0 +1,8 @@
+{
+  "source_unchanged": true,
+  "source_base": "/oscar/scratch/sboughan/se-semantic-recovery/ogbench-manipulation-default-v1-20261003/code",
+  "memory_gib": 128,
+  "earlier_memory_gib": 64,
+  "reason": "The paired B64 gate retains local plus process-owned source worlds and staged transactional replacement worlds. Source State itself is 671040 bytes. Local B2 restore-only experiments plateau; they do not prove Linux large-batch memory closure. Provision extra gate headroom without changing assertions or production implementation.",
+  "acceptance": "PENDING; no default enabled"
+}

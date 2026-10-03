@@ -1,0 +1,9 @@
+{
+  "job_id": "6968051",
+  "remote_stage": "/oscar/scratch/sboughan/se-semantic-recovery/dmc-pipeline-smoke-v1-20261003",
+  "domain": "humanoid",
+  "batch": 64,
+  "partition": "gpu",
+  "qos": "norm-gpu",
+  "status_at_submission": "SUBMITTED"
+}

@@ -1,4 +1,19 @@
-# Private Acrobot process candidate
+# Private Acrobot process correctness and scaling accepted
+
+Job 6967776 completed on RTX 3090 host gpu2107 with eight physical CPUs. All ten
+tests pass without skips, including independent CPU/CUDA native-frame and public
+API gates. The strict summary validates all 36 timing cells and writes 24 paired
+rows in `comparison.csv`. All 172 frozen file hashes match the integrated source.
+
+With B1024/T8 and all States retained, P8 reaches 61,675 ± 644 steps/s on CPU
+output versus 9,197 steps/s locally (6.71x), and 57,960 ± 1,481 on CUDA output
+versus 9,352 locally (6.20x). P8/local ratios across the complete B64/256/1024,
+T1/8 sweep are 2.25–6.71x. These are same-host adapter improvements with CPU
+physics on both output devices, not renderer FPS or upstream speedups.
+
+The public factory remains local. An isolated ordinary-constructor/pipeline gate
+is still required before selecting this strategy automatically. Larger CPU-budget,
+component, source and full step/render comparisons remain open.
 
 This candidate starts from 5ca37dac and does not change public factories,
 State/RenderState, the step API, shared request handling, or other families.

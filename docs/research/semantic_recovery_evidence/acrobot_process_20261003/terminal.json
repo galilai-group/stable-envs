@@ -1,0 +1,14 @@
+{
+  "job_id": "6967776",
+  "state": "COMPLETED",
+  "exit_code": "0:0",
+  "elapsed": "00:04:38",
+  "max_rss_kib": 4193516,
+  "host": "gpu2107",
+  "application_status": "PASS",
+  "test_count": 10,
+  "test_skips": 0,
+  "paired_rows": 24,
+  "verified_frozen_file_hashes": 172,
+  "default_routing_enabled": false
+}

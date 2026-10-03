@@ -30,3 +30,21 @@ ordinary construction. When all reports are terminal, summarize with
 
 Remote stage: `/oscar/scratch/sboughan/se-semantic-recovery/ogbench-manipulation-default-v1-20261003`.
 Accepted semantic coverage remains 39 VERIFIED / 3 INCOMPLETE.
+
+Scene task 6967384_1 subsequently hit its 64 GiB allocation and ended
+OUT_OF_MEMORY after 24:05 (batch MaxRSS 67,075,976 KiB). Its CPU application report
+was left RUNNING by the external kill; it is not a passing report. Failed reports
+and terminal status are preserved under `failed-scene-v1/`. The earlier profile
+measured only 671,040 bytes for a full B64 Scene State, so State payload size
+alone does not explain the peak. Repeated simulator construction/restore and
+renderer resource ownership require diagnosis before choosing the retry.
+Cube task 6967384_0 remains independently live; no restart is inferred from the
+Scene failure. No Cube/Scene process default is enabled.
+
+Scene retry 6968217 uses the same frozen source and exact assertions, with
+128 GiB and a fresh `ogbench-scene-default-v2-20261003` output directory on
+gpu/norm-gpu. Its launcher and unchanged source manifest are in `scene-retry-v2/`.
+The [small restore-memory diagnostic](../ogbench_restore_memory_20261003/)
+plateaus with a large simulator footprint; it does not prove Linux large-batch
+memory closure. The extra allocation is acceptance-test headroom, not a claim
+that production memory or restoration is optimized.
