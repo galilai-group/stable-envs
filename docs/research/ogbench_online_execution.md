@@ -289,3 +289,14 @@ remain Maze/Cube 224x224 and Scene 200x200; the prepared gate explicitly uses
 gate is prepared but not uploaded/submitted while SSH authentication is unavailable.
 This is not image, resource-lifetime or performance acceptance. The column-validation
 optimization remains isolated and its submitted job remains uncollected.
+
+## Accepted column-wise full-State validation
+
+The [completed acceptance checkpoint](semantic_recovery_evidence/ogbench_validation_columns_accepted_20261003/)
+applies the exact CPU/CUDA-tested column-wise validator to Cube and Scene. All
+semantic checks remain enabled; owned host copies are made per field instead of
+per lane/field. At B64/T8/all States/all frames, GPU online FPS rises from 202 to
+634 for Cube and 199 to 561 for Scene. These are internal before/after controls,
+not upstream speedups. CPU rendering remains approximately 4.2–4.4 FPS. All cells,
+including variable no-frame results, are retained. Source-image/performance gates
+remain separate; no source-comparison or semantic status is promoted here.

@@ -209,11 +209,18 @@ class OGBManipulationAdapter:
             )
         if set(state.keys(True, False)) != set(self.template.keys(True, False)):
             raise ValueError("Full State has missing or extra leaves")
+        # Keep transfers and TensorDict traversal column-wise. The returned
+        # rows view fresh host columns, so neither input nor another lane aliases.
+        columns = {}
         for key, (shape, dtype) in self.fields.items():
             value = state[key]
-            if value.shape != (batch, *shape) or value.dtype != dtype or not torch.isfinite(value).all():
+            if value.shape != (batch, *shape) or value.dtype != dtype:
                 raise ValueError(f"Invalid State shape/dtype/finite value: {key}")
-        rows = [{k: v.detach().cpu().numpy().copy() for k, v in row.items(True, True)} for row in state]
+            host = value.detach().cpu()
+            if not torch.isfinite(host).all():
+                raise ValueError(f"Invalid State shape/dtype/finite value: {key}")
+            columns[key] = host.numpy().copy()
+        rows = [{key: value[i] for key, value in columns.items()} for i in range(batch)]
         for row in rows:
             if not np.array_equal(row["compatibility", "signature"], self.signature):
                 raise ValueError("Incompatible Cube/Scene model/dependency profile")

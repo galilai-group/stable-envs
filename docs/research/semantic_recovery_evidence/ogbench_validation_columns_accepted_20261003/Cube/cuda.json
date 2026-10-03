@@ -1,0 +1,752 @@
+{
+  "status": "PASS",
+  "family": "Cube",
+  "host": "gpu2109.oscar.ccv.brown.edu",
+  "job": "6970792",
+  "affinity": [
+    54,
+    55,
+    56,
+    57,
+    58,
+    59,
+    60,
+    61
+  ],
+  "gpu": "NVIDIA GeForce RTX 3090",
+  "versions": {
+    "torch": "2.14.0+cu126",
+    "numpy": "2.5.2",
+    "mujoco": "3.12.0",
+    "ogbench": "1.2.1"
+  },
+  "source_sha256": {
+    "stable_envs/_adapters/ogbench.py": "d83ed078e39423a4a97c163d49ee9d2c4d87fe40d81dc89477a1db6de46895c3",
+    "stable_envs/_adapters/ogbench_execution.py": "5840dfd9245c7f2eb7bd4774d999ff3333213fbc044977f15ddf912c2a11d960",
+    "stable_envs/_adapters/ogbench_manipulation.py": "e2ad0f70394cc6db8102b21e9d54700bad7e94dee6e9ad37b9e1c01cb4972d35",
+    "stable_envs/_adapters/ogbench_manipulation_compat.py": "861d0683ada72c2266fdec537dbf9604ba3028faa8d3f1adcd7e17b28e0736b5",
+    "stable_envs/_adapters/ogbench_manipulation_process.py": "4f879537b71013f23fc2bfc23660e4b0ce66ff09083c4b4db2333f11a88714f7",
+    "stable_envs/_adapters/ogbench_maze_process.py": "39cb309792358189dfe560412207a51057b84d51137ad5a3cfe78ce51bd84156",
+    "stable_envs/_adapters/ogbench_render_state.py": "813f63264c52e00c11ae40b0fb5170d31ab08addac427e0c65105b0b363a7b5a",
+    "stable_envs/envs/ogbench/__init__.py": "a4c4ff9e667691c8d7f36a51a6758ec3e035fe116815b5f49d4a70a3da8a6003",
+    "stable_envs/envs/ogbench/context_cache.py": "6822a73532945faed22da60a3c19a9a6543656747ec17d50151175eb3f52cfa4",
+    "stable_envs/envs/ogbench/manipulation.py": "1c7c5b4a00581d5d6e412da38ce1d139595bd230050fb43cac7d339ec81e9e0b",
+    "stable_envs/envs/ogbench/manipulation_fidelity.py": "980523951dbb2aefb510f8506e62f14b534bb1a2ebb9dc71051c61cd38f3cdad",
+    "stable_envs/envs/ogbench/manipulation_opengl.py": "4f4ce161af00b4237f3d40e287e6e4007f6eef17639f96204c16facb2764dfa1",
+    "stable_envs/envs/ogbench/manipulation_renderer.py": "e6ce4a8f4e8c54c8ddf602b0dd9fdc291e2cbcd62897f66fded9b35b2e60ac31",
+    "stable_envs/envs/ogbench/manipulation_semantics.py": "828208bc11345a9b7a631cff44e2ae9535b1e3b862ea0c32aad59176fbe68b41",
+    "stable_envs/envs/ogbench/maze.py": "6a11acb4245ced898f7ffae68f660c436cab30326435ecda13d750773dca7076",
+    "stable_envs/_stepping.py": "4b23abcf73767a4a59f0c106e098376ac7b2570608e5d4829a8919dd213f5f99",
+    "stable_envs/_adapters/process_requests.py": "e4b6626543f4ee59a80223f413a2ff2381ba7d6e9dc0e01eafa01b49d6d810d6",
+    "tests/helpers/reference/ogbench_before_validation_columns.py": "5c8c55acfe25735faf2cc6e1bdd1b5a565358ef88abc24649ae4c8248ec08538",
+    "tests/unit/test_ogbench_validation_columns.py": "84f19522415c476de3414bcfd185581af7936f0a867467448dda2037e98d7cfb",
+    "scripts/benchmarks/online_stepping/ogbench_validation_columns.py": "76c94dd6dac533d62b686c01f5f9bf3011c6da1e0be1ea1eddc51da4f8117e3a"
+  },
+  "scope": "same population, frozen parent validator vs candidate; workers unchanged; not upstream speedup",
+  "gates": [
+    {
+      "device": "cuda",
+      "batch": 64,
+      "workers": 8,
+      "cases": 12,
+      "complete_state_task_rng_lifecycle_ownership": "PASS",
+      "frame_mse_vs_baseline": 0,
+      "rejected_render_restore": "PASS",
+      "reset_variation_device_actions": "PASS",
+      "validation_during_inflight": "PASS"
+    }
+  ],
+  "components": [
+    {
+      "device": "cuda",
+      "batch": 64,
+      "operation": "validate_full",
+      "mode": "baseline",
+      "seconds": [
+        0.24364621378481388,
+        0.24353874288499355,
+        0.24270660057663918,
+        0.24307246692478657,
+        0.5360563024878502,
+        0.2452304009348154
+      ],
+      "count": 64,
+      "rate_mean": 238.8043587018981,
+      "rate_sd": 58.508000126045324
+    },
+    {
+      "device": "cuda",
+      "batch": 64,
+      "operation": "validate_full",
+      "mode": "candidate",
+      "seconds": [
+        0.053716253489255905,
+        0.05363173969089985,
+        0.05369621142745018,
+        0.05339461378753185,
+        0.05378909222781658,
+        0.053693098947405815
+      ],
+      "count": 64,
+      "rate_mean": 1192.8456575328707,
+      "rate_sd": 3.0443697741712454
+    },
+    {
+      "device": "cuda",
+      "batch": 64,
+      "operation": "project_full",
+      "mode": "baseline",
+      "seconds": [
+        0.2484786082059145,
+        0.24930928088724613,
+        0.24786281399428844,
+        0.24777507595717907,
+        0.2484133392572403,
+        0.24752212315797806
+      ],
+      "count": 64,
+      "rate_mean": 257.8301156361271,
+      "rate_sd": 0.6726137821359316
+    },
+    {
+      "device": "cuda",
+      "batch": 64,
+      "operation": "project_full",
+      "mode": "candidate",
+      "seconds": [
+        0.056804338470101357,
+        0.05697273649275303,
+        0.05692353844642639,
+        0.056898146867752075,
+        0.056483425199985504,
+        0.05657649226486683
+      ],
+      "count": 64,
+      "rate_mean": 1127.2397706004128,
+      "rate_sd": 3.993834953712516
+    },
+    {
+      "device": "cuda",
+      "batch": 64,
+      "operation": "render_saved_full",
+      "mode": "baseline",
+      "seconds": [
+        0.2665445823222399,
+        0.2672454062849283,
+        0.26667279936373234,
+        0.26705906726419926,
+        0.26648199185729027,
+        0.2733989618718624
+      ],
+      "count": 64,
+      "rate_mean": 238.91474758814377,
+      "rate_sd": 2.378828439383225
+    },
+    {
+      "device": "cuda",
+      "batch": 64,
+      "operation": "render_saved_full",
+      "mode": "candidate",
+      "seconds": [
+        0.0746235828846693,
+        0.0744953341782093,
+        0.07448483444750309,
+        0.08016676642000675,
+        0.07513638958334923,
+        0.07459083385765553
+      ],
+      "count": 64,
+      "rate_mean": 847.3536106241356,
+      "rate_sd": 24.171370929175335
+    },
+    {
+      "device": "cuda",
+      "batch": 128,
+      "operation": "validate_full",
+      "mode": "baseline",
+      "seconds": [
+        0.48164268396794796,
+        0.48180133290588856,
+        0.48148130625486374,
+        0.48167859390378,
+        0.7395744547247887,
+        0.48132073879241943
+      ],
+      "count": 128,
+      "rate_mean": 250.33631601776267,
+      "rate_sd": 37.851497108048925
+    },
+    {
+      "device": "cuda",
+      "batch": 128,
+      "operation": "validate_full",
+      "mode": "candidate",
+      "seconds": [
+        0.10087884403765202,
+        0.10076805390417576,
+        0.10086694546043873,
+        0.10087558440864086,
+        0.10080061480402946,
+        0.10106805339455605
+      ],
+      "count": 128,
+      "rate_mean": 1268.8813045755326,
+      "rate_sd": 1.3096681476655285
+    },
+    {
+      "device": "cuda",
+      "batch": 128,
+      "operation": "project_full",
+      "mode": "baseline",
+      "seconds": [
+        0.4876913819462061,
+        0.489744009450078,
+        0.487918209284544,
+        0.7449762243777514,
+        0.48746361397206783,
+        0.48764707148075104
+      ],
+      "count": 128,
+      "rate_mean": 247.17455492207995,
+      "rate_sd": 36.9199689206371
+    },
+    {
+      "device": "cuda",
+      "batch": 128,
+      "operation": "project_full",
+      "mode": "candidate",
+      "seconds": [
+        0.10441716574132442,
+        0.10434388369321823,
+        0.10426039434969425,
+        0.10459861345589161,
+        0.10411311686038971,
+        0.10476824454963207
+      ],
+      "count": 128,
+      "rate_mean": 1225.8603822487376,
+      "rate_sd": 2.7694997340903127
+    },
+    {
+      "device": "cuda",
+      "batch": 128,
+      "operation": "render_saved_full",
+      "mode": "baseline",
+      "seconds": [
+        0.5146511103957891,
+        0.5130870584398508,
+        0.7827004659920931,
+        0.512744715437293,
+        0.5129355732351542,
+        0.5126131642609835
+      ],
+      "count": 128,
+      "rate_mean": 235.10012723990303,
+      "rate_sd": 35.06077219898282
+    },
+    {
+      "device": "cuda",
+      "batch": 128,
+      "operation": "render_saved_full",
+      "mode": "candidate",
+      "seconds": [
+        0.13168830424547195,
+        0.13229180127382278,
+        0.1317098941653967,
+        0.13182068429887295,
+        0.13185925222933292,
+        0.1302146203815937
+      ],
+      "count": 128,
+      "rate_mean": 972.687281771556,
+      "rate_sd": 5.297855546345788
+    }
+  ],
+  "pipeline": [
+    {
+      "device": "cuda",
+      "batch": 64,
+      "horizon": 1,
+      "selection": "none",
+      "emitted_frames": 0,
+      "exact_state_task_frames": "PASS",
+      "mode": "baseline",
+      "seconds": [
+        0.05355945974588394,
+        0.04805050417780876,
+        0.04832901246845722,
+        0.05891977623105049,
+        0.048324624076485634,
+        0.047992583364248276
+      ],
+      "count": 64,
+      "rate_mean": 1265.8767580695594,
+      "rate_sd": 103.03437574751055
+    },
+    {
+      "device": "cuda",
+      "batch": 64,
+      "horizon": 1,
+      "selection": "none",
+      "emitted_frames": 0,
+      "exact_state_task_frames": "PASS",
+      "mode": "candidate",
+      "seconds": [
+        0.06762701459228992,
+        0.04765409603714943,
+        0.04920828528702259,
+        0.03966238535940647,
+        0.04986396245658398,
+        0.049223463982343674
+      ],
+      "count": 64,
+      "rate_mean": 1297.8795690481606,
+      "rate_sd": 212.3719226169792
+    },
+    {
+      "device": "cuda",
+      "batch": 64,
+      "horizon": 1,
+      "selection": "final",
+      "emitted_frames": 64,
+      "exact_state_task_frames": "PASS",
+      "mode": "baseline",
+      "seconds": [
+        0.3316503316164017,
+        0.34828468412160873,
+        0.31073455698788166,
+        0.3005952462553978,
+        0.3442136626690626,
+        0.3473457768559456
+      ],
+      "count": 64,
+      "rate_mean": 194.29866207041636,
+      "rate_sd": 12.379451635837961
+    },
+    {
+      "device": "cuda",
+      "batch": 64,
+      "horizon": 1,
+      "selection": "final",
+      "emitted_frames": 64,
+      "exact_state_task_frames": "PASS",
+      "mode": "candidate",
+      "seconds": [
+        0.13047121837735176,
+        0.13285595551133156,
+        0.13794159516692162,
+        0.14153346233069897,
+        0.153784591704607,
+        0.15594571083784103
+      ],
+      "count": 64,
+      "rate_mean": 452.4957501784489,
+      "rate_sd": 33.23992997668101
+    },
+    {
+      "device": "cuda",
+      "batch": 64,
+      "horizon": 1,
+      "selection": "all",
+      "emitted_frames": 64,
+      "exact_state_task_frames": "PASS",
+      "mode": "baseline",
+      "seconds": [
+        0.3150652088224888,
+        0.3298476617783308,
+        0.32264309376478195,
+        0.3189493343234062,
+        0.32086342200636864,
+        0.32144263945519924
+      ],
+      "count": 64,
+      "rate_mean": 199.1243590954539,
+      "rate_sd": 3.002646356350689
+    },
+    {
+      "device": "cuda",
+      "batch": 64,
+      "horizon": 1,
+      "selection": "all",
+      "emitted_frames": 64,
+      "exact_state_task_frames": "PASS",
+      "mode": "candidate",
+      "seconds": [
+        0.1355298887938261,
+        0.12818130664527416,
+        0.14880086295306683,
+        0.1391183752566576,
+        0.13221466355025768,
+        0.10862888023257256
+      ],
+      "count": 64,
+      "rate_mean": 489.14690822553064,
+      "rate_sd": 54.31660716867179
+    },
+    {
+      "device": "cuda",
+      "batch": 64,
+      "horizon": 8,
+      "selection": "none",
+      "emitted_frames": 0,
+      "exact_state_task_frames": "PASS",
+      "mode": "baseline",
+      "seconds": [
+        0.28259389847517014,
+        0.3322994876652956,
+        0.30682320334017277,
+        0.261105852201581,
+        0.29498265124857426,
+        0.3066893760114908
+      ],
+      "count": 512,
+      "rate_mean": 1731.2178046430506,
+      "rate_sd": 143.70188767599618
+    },
+    {
+      "device": "cuda",
+      "batch": 64,
+      "horizon": 8,
+      "selection": "none",
+      "emitted_frames": 0,
+      "exact_state_task_frames": "PASS",
+      "mode": "candidate",
+      "seconds": [
+        0.282931437715888,
+        0.27461348474025726,
+        0.28479302674531937,
+        0.27780919522047043,
+        0.2821340039372444,
+        0.33148778788745403
+      ],
+      "count": 512,
+      "rate_mean": 1779.0241423677392,
+      "rate_sd": 117.41325355328493
+    },
+    {
+      "device": "cuda",
+      "batch": 64,
+      "horizon": 8,
+      "selection": "final",
+      "emitted_frames": 64,
+      "exact_state_task_frames": "PASS",
+      "mode": "baseline",
+      "seconds": [
+        0.5531715005636215,
+        0.5725537613034248,
+        0.826244467869401,
+        0.5562143940478563,
+        0.5968957468867302,
+        0.6048719119280577
+      ],
+      "count": 512,
+      "rate_mean": 844.0370313754801,
+      "rate_sd": 114.49936862923913
+    },
+    {
+      "device": "cuda",
+      "batch": 64,
+      "horizon": 8,
+      "selection": "final",
+      "emitted_frames": 64,
+      "exact_state_task_frames": "PASS",
+      "mode": "candidate",
+      "seconds": [
+        0.3996949251741171,
+        0.38056547939777374,
+        0.39424070343375206,
+        0.3578156251460314,
+        0.37915234826505184,
+        0.38241693563759327
+      ],
+      "count": 512,
+      "rate_mean": 1340.86339650838,
+      "rate_sd": 52.12777388373906
+    },
+    {
+      "device": "cuda",
+      "batch": 64,
+      "horizon": 8,
+      "selection": "all",
+      "emitted_frames": 512,
+      "exact_state_task_frames": "PASS",
+      "mode": "baseline",
+      "seconds": [
+        2.3843745458871126,
+        2.608319316059351,
+        2.638971757143736,
+        2.6334032397717237,
+        2.606532718986273,
+        2.373728385195136
+      ],
+      "count": 512,
+      "rate_mean": 201.93174876966324,
+      "rate_sd": 10.337434067026432
+    },
+    {
+      "device": "cuda",
+      "batch": 64,
+      "horizon": 8,
+      "selection": "all",
+      "emitted_frames": 512,
+      "exact_state_task_frames": "PASS",
+      "mode": "candidate",
+      "seconds": [
+        0.8072117734700441,
+        0.8219331335276365,
+        0.7980198729783297,
+        0.7937245760113001,
+        0.837937455624342,
+        0.7864765133708715
+      ],
+      "count": 512,
+      "rate_mean": 634.3134752329993,
+      "rate_sd": 14.961120093402346
+    },
+    {
+      "device": "cuda",
+      "batch": 128,
+      "horizon": 1,
+      "selection": "none",
+      "emitted_frames": 0,
+      "exact_state_task_frames": "PASS",
+      "mode": "baseline",
+      "seconds": [
+        0.06851434335112572,
+        0.07248597033321857,
+        0.09312823973596096,
+        0.07411553710699081,
+        0.0729383435100317,
+        0.08532211743295193
+      ],
+      "count": 128,
+      "rate_mean": 1665.1111790335617,
+      "rate_sd": 187.0737513136545
+    },
+    {
+      "device": "cuda",
+      "batch": 128,
+      "horizon": 1,
+      "selection": "none",
+      "emitted_frames": 0,
+      "exact_state_task_frames": "PASS",
+      "mode": "candidate",
+      "seconds": [
+        0.07721017673611641,
+        0.07467435486614704,
+        0.07874971814453602,
+        0.050602640956640244,
+        0.07198278419673443,
+        0.0903510581701994
+      ],
+      "count": 128,
+      "rate_mean": 1786.955968274232,
+      "rate_sd": 383.8340506289491
+    },
+    {
+      "device": "cuda",
+      "batch": 128,
+      "horizon": 1,
+      "selection": "final",
+      "emitted_frames": 128,
+      "exact_state_task_frames": "PASS",
+      "mode": "baseline",
+      "seconds": [
+        0.5706060752272606,
+        0.5673546828329563,
+        0.5869593936949968,
+        0.600017711520195,
+        0.586958521977067,
+        0.5602907445281744
+      ],
+      "count": 128,
+      "rate_mean": 221.30958459398,
+      "rate_sd": 5.714117627510861
+    },
+    {
+      "device": "cuda",
+      "batch": 128,
+      "horizon": 1,
+      "selection": "final",
+      "emitted_frames": 128,
+      "exact_state_task_frames": "PASS",
+      "mode": "candidate",
+      "seconds": [
+        0.22161311656236649,
+        0.21731919422745705,
+        0.22033159621059895,
+        0.21021157316863537,
+        0.2178488504141569,
+        0.20145543478429317
+      ],
+      "count": 128,
+      "rate_mean": 596.5618350626652,
+      "rate_sd": 21.915390574072465
+    },
+    {
+      "device": "cuda",
+      "batch": 128,
+      "horizon": 1,
+      "selection": "all",
+      "emitted_frames": 128,
+      "exact_state_task_frames": "PASS",
+      "mode": "baseline",
+      "seconds": [
+        0.597810560837388,
+        0.6133190114051104,
+        0.5633959416300058,
+        0.5939518213272095,
+        0.6012339722365141,
+        0.5870233569294214
+      ],
+      "count": 128,
+      "rate_mean": 216.0765484111545,
+      "rate_sd": 6.263896968044387
+    },
+    {
+      "device": "cuda",
+      "batch": 128,
+      "horizon": 1,
+      "selection": "all",
+      "emitted_frames": 128,
+      "exact_state_task_frames": "PASS",
+      "mode": "candidate",
+      "seconds": [
+        0.20952805317938328,
+        0.20571031980216503,
+        0.2156017180532217,
+        0.21634777449071407,
+        0.21233885549008846,
+        0.2057014498859644
+      ],
+      "count": 128,
+      "rate_mean": 607.2548928859378,
+      "rate_sd": 13.494358551408542
+    },
+    {
+      "device": "cuda",
+      "batch": 128,
+      "horizon": 8,
+      "selection": "none",
+      "emitted_frames": 0,
+      "exact_state_task_frames": "PASS",
+      "mode": "baseline",
+      "seconds": [
+        0.4014451801776886,
+        0.4062283206731081,
+        0.38935345597565174,
+        0.40689792111516,
+        0.4188010264188051,
+        0.4138223323971033
+      ],
+      "count": 1024,
+      "rate_mean": 2522.9506450345893,
+      "rate_sd": 64.33115061891493
+    },
+    {
+      "device": "cuda",
+      "batch": 128,
+      "horizon": 8,
+      "selection": "none",
+      "emitted_frames": 0,
+      "exact_state_task_frames": "PASS",
+      "mode": "candidate",
+      "seconds": [
+        0.38579275645315647,
+        0.445003280416131,
+        0.4033110775053501,
+        0.38897847943007946,
+        0.4239250887185335,
+        0.41619872115552425
+      ],
+      "count": 1024,
+      "rate_mean": 2500.4641968378432,
+      "rate_sd": 135.0195063302889
+    },
+    {
+      "device": "cuda",
+      "batch": 128,
+      "horizon": 8,
+      "selection": "final",
+      "emitted_frames": 128,
+      "exact_state_task_frames": "PASS",
+      "mode": "baseline",
+      "seconds": [
+        0.8972815256565809,
+        1.1565894410014153,
+        0.9423832669854164,
+        1.1835191193968058,
+        0.9474251661449671,
+        0.9236890990287066
+      ],
+      "count": 1024,
+      "rate_mean": 1027.9719761671483,
+      "rate_sd": 120.32064697131493
+    },
+    {
+      "device": "cuda",
+      "batch": 128,
+      "horizon": 8,
+      "selection": "final",
+      "emitted_frames": 128,
+      "exact_state_task_frames": "PASS",
+      "mode": "candidate",
+      "seconds": [
+        0.5630015339702368,
+        0.5345132239162922,
+        0.5422835219651461,
+        0.525358684360981,
+        0.5149613097310066,
+        0.5270122550427914
+      ],
+      "count": 1024,
+      "rate_mean": 1917.2613128586818,
+      "rate_sd": 58.7976368244283
+    },
+    {
+      "device": "cuda",
+      "batch": 128,
+      "horizon": 8,
+      "selection": "all",
+      "emitted_frames": 1024,
+      "exact_state_task_frames": "PASS",
+      "mode": "baseline",
+      "seconds": [
+        4.74156815931201,
+        4.943506453186274,
+        4.619217619299889,
+        4.654826393350959,
+        4.668122401461005,
+        4.904752921313047
+      ],
+      "count": 1024,
+      "rate_mean": 215.48487275408783,
+      "rate_sd": 6.140814976043872
+    },
+    {
+      "device": "cuda",
+      "batch": 128,
+      "horizon": 8,
+      "selection": "all",
+      "emitted_frames": 1024,
+      "exact_state_task_frames": "PASS",
+      "mode": "candidate",
+      "seconds": [
+        1.2988986615091562,
+        1.2971140518784523,
+        1.3252785056829453,
+        1.3572163488715887,
+        1.347446981817484,
+        1.326877312734723
+      ],
+      "count": 1024,
+      "rate_mean": 772.7751210429554,
+      "rate_sd": 14.28785086810183
+    }
+  ],
+  "opengl": {
+    "vendor": "NVIDIA Corporation",
+    "renderer": "NVIDIA GeForce RTX 3090/PCIe/SSE2",
+    "software": false
+  }
+}
