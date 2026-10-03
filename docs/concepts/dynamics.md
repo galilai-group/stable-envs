@@ -74,14 +74,16 @@ There is no `capture`, `transition`, `unroll`, `step_sequence`, or public
 `step`. Contributors implement the private `_step` kernel; terminating families
 also support an active-lane mask, without stepping and restoring inactive lanes.
 
-Large Fetch batches on Linux use persistent simulation processes when at least
+Large Fetch and supported DMC batches on Linux use persistent simulation processes when at least
 four CPU cores are available: batches of at least 64 use up to eight processes,
 with one simulation thread per process, respecting the allocated CPU affinity.
 Small batches, other platforms, and daemon workers retain the local execution
-path. Fetch physics remains on CPU even with CUDA rendering. Other families
-retain their existing execution strategies.
+path. Physics remains on CPU even with CUDA rendering. The enabled DMC tasks
+are Acrobot, Pendulum, Cartpole, Reacher, Cheetah, Hopper, Walker, Ball-in-Cup,
+Finger, Manipulator and Humanoid. Quadruped and other families retain their
+existing execution strategies.
 
-When a Fetch process pool is selected, the dispatcher starts the next known
+When one of these process pools is selected, the dispatcher starts the next known
 action while the parent renders the previous owned snapshot. There is at most
 one transition in flight. The same path accepts a single action or a sequence;
 one action has no later transition to overlap within that call. Selecting only
@@ -105,5 +107,6 @@ partial sequence.
 Contributors can opt a family into the shared scheduler by providing the private
 `_step_pipeline()` hook. Its executor submits one masked transition, returns
 owned task outputs and any requested full State on receive, and aborts pending
-work on failure. The renderer stays on the calling thread. Fetch is the first
-implementation; the hook does not certify concurrency for other families.
+work on failure. The renderer stays on the calling thread. Fetch and the eleven
+DMC tasks above have independent default-routing acceptance gates; the hook
+alone does not certify concurrency for other families.

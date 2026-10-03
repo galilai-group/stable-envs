@@ -192,3 +192,14 @@ its exporter frame diagnostic. Public constructors in this checkout remain local
 the candidate activation is preserved as five source overrides, ready to apply
 only after required gates. Larger batches, components, source and full pipeline
 benchmarks remain necessary.
+
+## Default routing accepted (October 3)
+
+All [22 independent default gates](semantic_recovery_evidence/dmc_default_acceptance_20261003/)
+now pass. The tested constructor integrations activate bounded processes for
+eleven DMC registrations at Linux B>=64 with >=4 available CPUs, up to eight
+owners. Small/non-Linux/restricted/daemon contexts remain local. Quadruped stays
+local pending its exporter frame diagnostic. The public API is unchanged.
+
+This enables the measured execution strategy; it does not complete the remaining
+large-batch, component, source or combined pipeline measurements.

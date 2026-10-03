@@ -6,6 +6,7 @@ import torch
 from tensordict import TensorDict
 
 from ..._adapters.dmcontrol_continuation import CONFIG, CONTINUATION_FIELDS, DMCContinuationAdapter
+from ..._adapters.dmcontrol_execution import make_dmc_adapter
 from ...spaces import Box, Dict
 
 
@@ -20,7 +21,7 @@ class DMCContinuationSemantics:
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._simulator = DMCContinuationAdapter(self.DOMAIN, self.B, self.device, self._seed)
+        self._simulator = make_dmc_adapter(self.DOMAIN, self.B, self.device, self._seed, DMCContinuationAdapter)
 
     @property
     def _resume_fields(self):

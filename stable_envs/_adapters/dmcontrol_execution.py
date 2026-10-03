@@ -1,8 +1,8 @@
-"""Measured DMC routing candidate; public activation requires the default gate.
+"""Measured large-batch DMC execution selection with local fallbacks.
 
-The current constructors remain local. The immutable Oscar default-gate bundle
-activates this factory without runtime flags; accepted activation can then use
-those exact constructor changes. Quadruped is excluded pending its frame gate.
+The eleven enabled registrations passed independent unpatched CPU/CUDA default
+routing gates. Quadruped stays local pending its separate exporter frame gate.
+No scheduling controls are exposed in the public environment API.
 """
 
 import multiprocessing as mp

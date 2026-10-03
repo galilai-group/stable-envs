@@ -5,6 +5,7 @@ from __future__ import annotations
 import torch
 from tensordict import TensorDict
 
+from ..._adapters.dmcontrol_execution import make_dmc_adapter
 from ..._adapters.dmcontrol_humanoid import HUMANOID_CONFIG, HUMANOID_FIELDS, DMCHumanoidAdapter
 from ...spaces import Box, Dict
 
@@ -20,7 +21,7 @@ class DMCHumanoidSemantics:
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._simulator = DMCHumanoidAdapter(self.B, self.device, self._seed)
+        self._simulator = make_dmc_adapter("humanoid", self.B, self.device, self._seed, DMCHumanoidAdapter)
 
     @property
     def _resume_fields(self):

@@ -11,6 +11,7 @@ import torch
 from tensordict import TensorDict
 
 from ..._adapters.dmcontrol import REACHER_FIELDS, ReacherAdapter
+from ..._adapters.dmcontrol_execution import make_dmc_adapter
 from ...spaces import Box, Dict
 from ._cells import parity_cell
 
@@ -25,7 +26,7 @@ class _ReacherSemantics:
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._simulator = ReacherAdapter(self.B, self.device, self._seed)
+        self._simulator = make_dmc_adapter("reacher", self.B, self.device, self._seed, ReacherAdapter)
 
     def make_variation_space(self):
         base = super().make_variation_space()
