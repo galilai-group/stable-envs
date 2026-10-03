@@ -1,0 +1,8 @@
+{
+  "status": "PREPARED_NOT_UPLOADED",
+  "archive_name": "bundle.tar.gz",
+  "sha256": "31936ddd580aaffb92203c6d39b1045634854ab570ab44318cf65390bb42d96a",
+  "bytes": 1355574,
+  "local_stage": "/private/tmp/dmc-source-comparison-v1-20261003",
+  "reconstruction": "prepare.py with matching candidate checkout and pinned upstream source"
+}

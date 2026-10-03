@@ -1,0 +1,20 @@
+{
+  "status": "PASS",
+  "scope": "Synthetic verifier/helper tests and frozen-bundle static/import checks only; no MuJoCo rendering, CUDA correctness or performance measured",
+  "tests": 15,
+  "failures": 0,
+  "errors": 0,
+  "candidate_files": 240,
+  "source_files": 20,
+  "manifest_hashes": "PASS",
+  "ruff": "PASS",
+  "bash_syntax": "PASS",
+  "cli_help_imports": [
+    "dmc_source_pipeline",
+    "dmc_source_oscar",
+    "summarize_dmc_source"
+  ],
+  "python": "/Users/samib/se6-venv/bin/python",
+  "gpu_acceptance": "PENDING",
+  "production_changes": []
+}

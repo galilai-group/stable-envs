@@ -233,3 +233,14 @@ uses adapters only. Source rendering supports hardware OpenGL: the upcoming
 comparison must include real source-GPU rendering and source-CPU software GL in
 separate verified interpreters, both explicitly at 64x64. Quadruped remains local
 pending its independent renderer-history issue. Production is unchanged.
+
+The [first bounded full source comparison](semantic_recovery_evidence/dmc_source_pipeline_20261003/)
+is now frozen for Acrobot, Pendulum and Cartpole at B64, T1/T8, no/final/all
+frames. It runs serial source, eight-process shared-memory source, and our public
+API in separate CPU/software-GL and CUDA/NVIDIA-GL interpreters on the same
+eight-core RTX 3090 allocation. Library timing includes required final State;
+source timing includes ordinary image readback and output delivery. Fifteen local
+tests pass for synthetic report validation and helper behavior. The bundle is
+**prepared, not uploaded or submitted** while Oscar authentication is unavailable;
+it establishes no new rendering acceptance or speedup. Source parity and all
+performance claims still require registration-specific cluster evidence.

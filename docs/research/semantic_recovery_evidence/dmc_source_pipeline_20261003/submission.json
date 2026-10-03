@@ -1,0 +1,18 @@
+{
+  "status": "NOT_SUBMITTED",
+  "reason": "Oscar SSH rejects authentication; control socket unavailable",
+  "remote_directory": "/oscar/scratch/sboughan/se-semantic-recovery/dmc-source-comparison-v1-20261003",
+  "tasks": {
+    "0": "acrobot",
+    "1": "pendulum",
+    "2": "cartpole"
+  },
+  "batches": [
+    64
+  ],
+  "horizons": [
+    1,
+    8
+  ],
+  "production_changes": []
+}
