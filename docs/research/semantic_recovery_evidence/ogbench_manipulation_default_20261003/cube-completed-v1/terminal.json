@@ -1,0 +1,12 @@
+{
+  "array_job": "6967384_0",
+  "job": "6967385",
+  "state": "COMPLETED",
+  "exit_code": "0:0",
+  "elapsed": "00:55:31",
+  "host": "gpu2110",
+  "cpu": "PASS",
+  "cuda": "PASS",
+  "source_hashes": "match frozen candidate",
+  "activation": "Not applied; paired Scene gate remains pending"
+}

@@ -1,0 +1,66 @@
+{
+  "status": "PASS",
+  "env": "swm/AcrobotControl-v1",
+  "host": "gpu2110.oscar.ccv.brown.edu",
+  "job": "6968347",
+  "gpu": "NVIDIA GeForce RTX 3090",
+  "affinity": [
+    32,
+    33,
+    36,
+    37,
+    45,
+    46,
+    47,
+    48
+  ],
+  "versions": {
+    "torch": "2.14.0+cu126",
+    "numpy": "2.5.3",
+    "gymnasium": "1.3.0",
+    "tensordict": "0.14.2"
+  },
+  "source_sha256": {
+    "stable_envs/_adapters/classic_execution.py": "e24fce09f8c47f5d1216af93cc350a6cb06343f9b009837a8cbe04e6e91f8fb7",
+    "stable_envs/_adapters/acrobot_process.py": "ca694f3b1990ef912c0c4b215ddfaea0ef5414822246545f64f883b8c009562e",
+    "stable_envs/_adapters/process_requests.py": "e4b6626543f4ee59a80223f413a2ff2381ba7d6e9dc0e01eafa01b49d6d810d6",
+    "stable_envs/envs/_classic_semantics.py": "5f9932a9d5aeba21228e3cc1699338d0bab22b6b25e599a4aad19d8b3a157d4a",
+    "stable_envs/envs/classic_control.py": "e158939aa7babb9a2701f8e9b84bb1393c412dd98e7bfe2c8d0cd857369b76b6",
+    "stable_envs/_stepping.py": "4b23abcf73767a4a59f0c106e098376ac7b2570608e5d4829a8919dd213f5f99",
+    "scripts/benchmarks/online_stepping/acrobot_default.py": "59c4c70742261fafd732b43caa6da28cc85498b7511b17cc668222b2d335ff6c"
+  },
+  "gates": [
+    {
+      "device": "cpu",
+      "cases": 25,
+      "overlaps": 20,
+      "batch": 64,
+      "processes": 8,
+      "native_resolution": [
+        500,
+        500
+      ],
+      "unpatched_constructor": true,
+      "complete_state_task_rng_lifecycle_ownership": "PASS",
+      "frame_mse_vs_local": 0,
+      "variation_and_device_actions": "PASS",
+      "failed_restore_keeps_owners": "PASS"
+    },
+    {
+      "device": "cuda",
+      "cases": 25,
+      "overlaps": 20,
+      "batch": 64,
+      "processes": 8,
+      "native_resolution": [
+        500,
+        500
+      ],
+      "unpatched_constructor": true,
+      "complete_state_task_rng_lifecycle_ownership": "PASS",
+      "frame_mse_vs_local": 0,
+      "variation_and_device_actions": "PASS",
+      "failed_restore_keeps_owners": "PASS"
+    }
+  ]
+}

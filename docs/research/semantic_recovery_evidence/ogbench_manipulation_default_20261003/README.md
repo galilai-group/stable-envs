@@ -48,3 +48,9 @@ The [small restore-memory diagnostic](../ogbench_restore_memory_20261003/)
 plateaus with a large simulator footprint; it does not prove Linux large-batch
 memory closure. The extra allocation is acceptance-test headroom, not a claim
 that production memory or restoration is optimized.
+
+Cube has now completed (6967384_0 / actual job 6967385, exit 0:0, 55:31).
+Its independently passing CPU and CUDA reports and exact candidate hashes are
+preserved in `cube-completed-v1`. Each has 22 cases, 20 overlap checks and frame
+MSE zero against the local path. Scene's retry remains pending acceptance;
+the shared Cube/Scene constructor activation is still not applied.

@@ -79,10 +79,17 @@ def main():
     files += list(Path("stable_envs/envs/dmcontrol").glob("*.py"))
     files += [Path("stable_envs/_stepping.py"), Path("stable_envs/_adapters/process_requests.py"),
               Path(__file__).relative_to(Path.cwd())]
+    renderer_versions = {}
+    for name in ("mujoco-warp", "warp-lang"):
+        try:
+            renderer_versions[name] = importlib.metadata.version(name)
+        except importlib.metadata.PackageNotFoundError:
+            renderer_versions[name] = None
     report = dict(status="RUNNING", domain=args.domain, name=NAMES[args.domain],
                   host=platform.node(), job=os.environ.get("SLURM_JOB_ID"), affinity=cpus,
                   gpu=torch.cuda.get_device_name() if "cuda" in args.devices else None,
                   versions={n: importlib.metadata.version(n) for n in ("torch", "numpy", "mujoco", "dm-control", "tensordict")},
+                  renderer_versions=renderer_versions,
                   source_sha256={str(f): hashlib.sha256(f.read_bytes()).hexdigest() for f in files},
                   scope="CPU physics, eight process owners; default 64x64 renderer; all States retained; no policy inference or upstream comparison",
                   components=[], pipeline=[], gates=[])

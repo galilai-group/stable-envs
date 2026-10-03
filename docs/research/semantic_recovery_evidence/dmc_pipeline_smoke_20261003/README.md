@@ -34,3 +34,19 @@ terminal PASS reports using `summarize_dmc_pipeline.py RESULTS NEW_OUTPUT
 --source FROZEN_SOURCE --batches 64`; it requires all component, pipeline and
 frame-check cells on both devices. Source manifest and the two harness overrides
 are preserved here; no production implementation changes are included.
+
+## V1 failure and isolated V2 retry
+
+Job 6968051 terminated FAILED (1:0), after 4:51. CPU completed all six equality
+gates and twelve pipeline cells. CUDA failed before timing because se-step6
+lacks mujoco_warp. The raw outputs and log remain in `failed-v1`; CPU-only
+success does not establish two-device acceptance.
+
+V2 retains the same frozen production source and benchmark workload. It adds
+explicit renderer package versions to the report and installs exactly
+mujoco-warp 3.12.0 and warp-lang 1.17.0 with --no-deps into a new scratch target.
+The se-step6 environment is not modified, and its MuJoCo/dm-control/Torch/NumPy
+versions are retained. The installation's pip report records downloaded hashes.
+Both CPU and CUDA rerun with this one fresh profile; reports are not spliced
+across attempts. `retry-v2` records the launcher, source manifest and reporting
+override. No benchmark success is inferred from submission.

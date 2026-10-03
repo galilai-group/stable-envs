@@ -22,6 +22,7 @@ import torch
 
 import stable_envs as se
 import stable_envs.envs._classic_semantics as semantics
+from stable_envs._adapters import classic_execution
 from stable_envs._adapters.acrobot_process import AcrobotProcessAdapter
 from tests.unit.test_classic_state_export import equal
 
@@ -29,9 +30,11 @@ from tests.unit.test_classic_state_export import equal
 def make(batch, device, processes, cpus):
     options = dict(num_envs=batch, device=device, seed=17)
     if not processes:
-        return se.make("Acrobot", **options)
-    with patch.object(semantics, "ClassicControlAdapter",
-                      partial(AcrobotProcessAdapter, processes=processes, cpus=cpus)):
+        with patch.object(classic_execution, "process_count", return_value=0):
+            return se.make("Acrobot", **options)
+    with (patch.object(classic_execution, "process_count", return_value=0),
+          patch.object(semantics, "ClassicControlAdapter",
+                       partial(AcrobotProcessAdapter, processes=processes, cpus=cpus))):
         env = se.make("Acrobot", **options)
     env._step_pipeline = lambda: env._simulator
     return env
@@ -60,6 +63,7 @@ def main():
         p.error("Insufficient allocated CPUs")
     files = [Path(name) for name in (
         "stable_envs/_adapters/acrobot_process.py", "stable_envs/_adapters/process_requests.py",
+        "stable_envs/_adapters/classic_execution.py",
         "stable_envs/envs/_classic_semantics.py", "stable_envs/envs/classic_control.py",
         "stable_envs/_stepping.py", "tests/unit/test_acrobot_process.py")]
     files.append(Path(__file__).relative_to(Path.cwd()))

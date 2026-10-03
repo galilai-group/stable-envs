@@ -114,3 +114,22 @@ all States improve 1.15–1.64x. The 160-row sweep preserves every B1/64/256/102
 T1/8, export/step and CPU/CUDA-output cell. Three noisy B1/T1 public-step means
 are slightly lower, so this is not a universal speedup claim. Processes remain
 a candidate for Acrobot and must be compared with this updated local baseline.
+
+## Acrobot process default accepted (October 3)
+
+The [Acrobot process sweep](semantic_recovery_evidence/acrobot_process_20261003/)
+compares local, four and eight persistent owners on the same RTX 3090 host.
+Across B64/256/1024 and T1/8, eight-owner stepping improves 2.25–6.71x over the
+accepted direct-column local baseline. At B1024/T8, CPU output improves
+9,197 +/- 145 to 61,675 +/- 644 steps/s; CUDA output improves 9,352 +/- 30 to
+57,960 +/- 1,481. All States are retained and frames disabled; these are neither
+upstream speedups nor renderer FPS.
+
+The [independent default gate](semantic_recovery_evidence/acrobot_default_20261003/)
+passes 132 tests without skips and 25 public-constructor cases per CPU/CUDA
+mode, including exact frames, State/RNG/lifecycle, ownership, variation and
+failed-restore isolation. The tested constructor now selects up to eight owners
+for Acrobot on Linux at B>=64 with >=4 affinity CPUs outside daemon processes.
+Other classic domains and smaller/resource-limited cases retain the local path.
+The slice-only API and renderer are unchanged. Full pipeline and same-device
+upstream comparisons remain required.

@@ -8,6 +8,15 @@ The remaining non-Craftax execution work and routing are tracked in
 chosen scalar-CPU strategy to evaluate; further hybrid-thread experiments are
 not planned. The historical audit and its older updates below remain frozen.
 
+Update, 2026-10-03: eleven DMC registrations, OGBMaze, and classic Acrobot
+now also have accepted process defaults. Acrobot's independent CPU/CUDA default
+gate passes 132 tests and 25 public cases per device. Navigation retains native
+Torch batching; the other four classic registrations retain their optimized local
+path. Cube/Scene default integration awaits closure of Scene's gate; Quadruped
+awaits its renderer diagnostic. These route gates do not complete the required
+same-device source/component/pipeline throughput table. See the current backlog
+for registration-specific evidence and remaining work.
+
 Update, 2026-10-01: public `step` accepts `[B,A]` or `[B,T,A]` with independent
 `states` and `frames` slices. Fetch State export is column-wise and large batches
 use a bounded persistent thread pool. The new [profiling checkpoint](semantic_recovery_evidence/fetch_scaling_slices_20261001/README.md)

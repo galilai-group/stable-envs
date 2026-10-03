@@ -349,7 +349,11 @@ class ClassicControlSemantics:
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._simulator = ClassicControlAdapter(self.CLASSIC_DOMAIN, self.B, self.device, self._seed)
+        from .._adapters.classic_execution import make_classic_adapter
+
+        self._simulator = make_classic_adapter(
+            self.CLASSIC_DOMAIN, self.B, self.device, self._seed, ClassicControlAdapter
+        )
         self._configure_simulator()
         self.reset(seed=self._seed)
 
@@ -438,6 +442,10 @@ class ClassicControlSemantics:
         self._check_open("set_state")
         self._simulator.set_state(state)
         self._sync_authoritative_state(state)
+
+    def _step_pipeline(self):
+        owner = self._simulator
+        return owner if hasattr(owner, "submit_step") else None
 
     def _step(self, actions, *, active=None):
         self._check_open("step")

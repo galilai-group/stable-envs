@@ -1,0 +1,36 @@
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/se-semantic-recovery/dmc-pipeline-smoke-v1-20261003/code/scripts/benchmarks/online_stepping/dmc_pipeline.py", line 199, in <module>
+    main()
+  File "/oscar/scratch/sboughan/se-semantic-recovery/dmc-pipeline-smoke-v1-20261003/code/scripts/benchmarks/online_stepping/dmc_pipeline.py", line 122, in main
+    with se.make(NAMES[args.domain], num_envs=batch, seed=17, device=device, size=64) as env:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/oscar/scratch/sboughan/se-semantic-recovery/dmc-pipeline-smoke-v1-20261003/code/stable_envs/__init__.py", line 47, in make
+    return _make(name, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/oscar/scratch/sboughan/se-semantic-recovery/dmc-pipeline-smoke-v1-20261003/code/stable_envs/registry.py", line 249, in make
+    return _resolve(name)(**kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/oscar/scratch/sboughan/se-semantic-recovery/dmc-pipeline-smoke-v1-20261003/code/stable_envs/envs/dmcontrol/_humanoid.py", line 23, in __init__
+    super().__init__(*args, **kwargs)
+  File "/oscar/scratch/sboughan/se-semantic-recovery/dmc-pipeline-smoke-v1-20261003/code/stable_envs/envs/dmcontrol/trackcom.py", line 198, in __init__
+    self._context(self.size)  # build and capture up front, not mid-render
+    ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/oscar/scratch/sboughan/se-semantic-recovery/dmc-pipeline-smoke-v1-20261003/code/stable_envs/envs/dmcontrol/trackcom.py", line 215, in _context
+    return _tc_context(type(self), int(size), MJW_CHUNK)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/oscar/scratch/sboughan/se-semantic-recovery/dmc-pipeline-smoke-v1-20261003/code/stable_envs/envs/dmcontrol/trackcom.py", line 51, in _tc_context
+    import mujoco_warp as mjw
+ModuleNotFoundError: No module named 'mujoco_warp'
+Exception ignored in: <function Renderer.__del__ at 0x7fe3a13c8900>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 343, in __del__
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py", line 329, in close
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 131, in free
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+OpenGL.raw.EGL._errors.EGLError: <exception str() failed>
+Exception ignored in: <function GLContext.__del__ at 0x7fe3a13c82c0>
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 138, in __del__
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/mujoco/egl/__init__.py", line 131, in free
+  File "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/OpenGL/error.py", line 230, in glCheckError
+OpenGL.raw.EGL._errors.EGLError: <exception str() failed>

@@ -1,0 +1,10 @@
+{
+  "job_id": "6968051",
+  "state": "FAILED",
+  "exit_code": "1:0",
+  "elapsed": "00:04:51",
+  "host": "gpu2116",
+  "cpu_report": "PASS",
+  "cuda_report": "FAIL before timing: missing mujoco_warp in se-step6",
+  "scope": "CPU measurements retained; no complete two-device pipeline acceptance"
+}
