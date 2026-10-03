@@ -1,0 +1,38 @@
+{
+  "status": "FAIL",
+  "domain": "quadruped",
+  "env": "DMCQuadrupedWalk",
+  "host": "gpu2109.oscar.ccv.brown.edu",
+  "job": "6964907",
+  "gpu": "NVIDIA GeForce RTX 3090",
+  "versions": {
+    "torch": "2.14.0+cu126",
+    "numpy": "2.5.3",
+    "dm-control": "1.0.45",
+    "mujoco": "3.12.0",
+    "tensordict": "0.14.2"
+  },
+  "reference_hashes": {
+    "/oscar/scratch/sboughan/se-semantic-recovery/dmc-online-baseline-20261002/code/stable_envs/_adapters/dmcontrol.py": "c01d8cfbd09e8fa11309123c17fc765e8715df8bdca3ab577953cb0b6c49fadb",
+    "/oscar/scratch/sboughan/se-semantic-recovery/dmc-online-baseline-20261002/code/stable_envs/_adapters/dmcontrol_aligned.py": "8d694beead5f29124f058efecc5706e97b7b21433f949912694ba0e34e2440c4",
+    "/oscar/scratch/sboughan/se-semantic-recovery/dmc-online-baseline-20261002/code/stable_envs/_adapters/dmcontrol_continuation.py": "177f9e1a25e6fdb8ce99e6f1c5ada7b864f7ab2cf17decad6afad5b5395d30e5",
+    "/oscar/scratch/sboughan/se-semantic-recovery/dmc-online-baseline-20261002/code/stable_envs/_adapters/dmcontrol_humanoid.py": "788664f09e002cdf826cdd6f518b407f9f34dc9421874f18b02c9810d99653b9"
+  },
+  "candidate_hashes": {
+    "stable_envs/_adapters/dmcontrol.py": "7a9394110686115f40ceb92cb9e5fbc4092db074eb79fe672b9ae1e499f4506b",
+    "stable_envs/_adapters/dmcontrol_aligned.py": "dc4f6a6c569b73f446a72cf8e1d3921beec28703ba5b9051bb1ed9159f8178a4",
+    "stable_envs/_adapters/dmcontrol_continuation.py": "a72c36f88f9acaf607a5daee5bf8abff4e4904348103005dd3a2893151ff93d9",
+    "stable_envs/_adapters/dmcontrol_humanoid.py": "01983fd725b00f3303ba9f632fb4cabff1dd82f5a5dd1bb320460eb8ecaddc19",
+    "stable_envs/_adapters/dmcontrol_state.py": "9590509cf0a0544a9e9219723fb11477031d0be4209a9cef33e3387dd1e6712f"
+  },
+  "script_sha256": "42051469f997e296f05d7963cf9a5b2a6b79993315293ef21851ba2fb0e65ad0",
+  "scope": "frozen accepted exporter vs column exporter; public step frames=None; same CPU physics for both output devices",
+  "gates": [],
+  "timings": [],
+  "opengl": {
+    "vendor": "NVIDIA Corporation",
+    "renderer": "NVIDIA GeForce RTX 3090/PCIe/SSE2",
+    "software": false
+  },
+  "error": "AssertionError('frames')"
+}
