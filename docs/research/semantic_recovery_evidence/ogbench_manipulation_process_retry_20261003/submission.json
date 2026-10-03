@@ -1,0 +1,13 @@
+{
+  "job": 6966557,
+  "partition": "3090-gcondo",
+  "qos": "cs-3090-gcondo",
+  "gpu": "geforce3090",
+  "cpus_per_task": 8,
+  "mem": "64G",
+  "time": "03:00:00",
+  "array": "0-1%2",
+  "requeue": false,
+  "stage": "/oscar/scratch/sboughan/se-semantic-recovery/ogbench-manipulation-process-v2-20261003",
+  "replaces_terminal_failed_array": 6966296
+}

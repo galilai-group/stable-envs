@@ -177,3 +177,18 @@ shares its recorded eight-CPU allocation and RTX 3090 host. Physics stays CPU;
 these are adapter improvements, not render FPS or upstream speedups. The
 results support a large-batch process route after remaining exporter, retry
 and unpatched-default gates close; the public default is still local.
+
+## Complete bounded process sweep and default candidate (October 3)
+
+Acrobot/Pendulum retries 6964379 now pass independently. The consolidated
+[288-row CSV and terminal evidence](semantic_recovery_evidence/dmc_process_complete_20261003/)
+cover all twelve registrations, both output devices and every B64/256, T1/8,
+local/P4/P8 cell. Source hashes match the original f0716916 implementation.
+
+[Isolated default candidate 6966465](semantic_recovery_evidence/dmc_default_route_20261003/)
+now tests unpatched public construction at B64 for the eleven registrations
+whose separate exporter gates also pass. Quadruped remains excluded pending
+its exporter frame diagnostic. Public constructors in this checkout remain local;
+the candidate activation is preserved as five source overrides, ready to apply
+only after required gates. Larger batches, components, source and full pipeline
+benchmarks remain necessary.

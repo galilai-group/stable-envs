@@ -24,13 +24,15 @@ from dmc_profile import DOMAINS, sync
 from dmc_state_export import NAMES, equal
 
 import stable_envs as se
+from stable_envs._adapters import dmcontrol_execution
 from stable_envs._adapters.dmcontrol_process import DMCProcessAdapter
 
 
 def make(domain, batch, device, processes, cpus):
     name = NAMES[domain]
     if not processes:
-        return se.make(name, num_envs=batch, device=device, seed=17, size=64, backend="opengl")
+        with patch.object(dmcontrol_execution, "process_count", return_value=0):
+            return se.make(name, num_envs=batch, device=device, seed=17, size=64, backend="opengl")
     if domain in ("acrobot", "pendulum", "cartpole"):
         module, attribute, has_domain = "_first_family", "FirstFamilyAdapter", True
     elif domain in ("cheetah", "hopper", "walker"):
@@ -46,69 +48,87 @@ def make(domain, batch, device, processes, cpus):
         return DMCProcessAdapter(domain, *(args[1:] if has_domain else args),
                                  processes=processes, cpus=cpus, **kwargs)
 
-    with patch.object(importlib.import_module("stable_envs.envs.dmcontrol." + module), attribute, factory):
+    with (patch.object(dmcontrol_execution, "process_count", return_value=0),
+          patch.object(importlib.import_module("stable_envs.envs.dmcontrol." + module), attribute, factory)):
         return se.make(name, num_envs=batch, device=device, seed=17, size=64, backend="opengl")
 
 
-def gate(domain, device, cpus, frames=True):
-    with make(domain, 5, device, 0, cpus) as local, make(domain, 5, device, 2, cpus) as remote:
-        initial = local.get_state()
-        equal(initial, remote.get_state())
-        initial["lifecycle", "reset_next_step"][3] = True
-        initial["rng", "has_gauss"][3] = True
-        initial["rng", "cached_gaussian"][3] = 0.125
-        initial["lifecycle", "step_count"][4] = int(local._simulator.envs[0]._env._step_limit) - 1
-        actions = np.random.default_rng(21).uniform(-0.5, 0.5, (5, 8, local.action_dim))
-        cases, overlaps = 0, 0
-        original_render = remote.render
+def gate(domain, device, cpus, frames=True, *, production=False):
+    batch = 64 if production else 5
+    with make(domain, batch, device, 0, cpus) as local:
+        if production:
+            # No patch surrounds this public construction: the frozen candidate
+            # constructors must select their actual default route themselves.
+            remote = se.make(NAMES[domain], num_envs=batch, device=device, seed=17, size=64, backend="opengl")
+        else:
+            remote = make(domain, batch, device, 2, cpus)
+        with remote:
+            return _gate_pair(domain, device, cpus, local, remote, frames, production)
 
-        def checked_render(state):
-            nonlocal overlaps
-            if remote._simulator._pending is not None:
-                # Workers may finish/overwrite transport while the parent holds
-                # the preceding owned State. No reply is consumed here.
-                assert all(conn.poll(30) for conn in remote._simulator._connections)
-                overlaps += 1
-            return original_render(state)
 
-        with patch.object(remote, "render", checked_render):
-            for horizon in (1, 8):
-                for selection in (None, slice(None), slice(-1, None), slice(None, None, -2), slice(9, 12)):
-                    for env in (local, remote):
-                        env.set_state(initial)
-                    action = torch.as_tensor(actions[:, 0] if horizon == 1 else actions, dtype=torch.float32, device=device)
-                    expected = local.step(action, states=selection, frames=selection if frames else None)
-                    actual = remote.step(action, states=selection, frames=selection if frames else None)
-                    equal(expected, actual)
-                    retained = actual.clone()
-                    remote.step(actions[:, 0], frames=None)
-                    remote.reset(seed=41)
-                    equal(retained, actual)
-                    assert remote._simulator._pending is None
-                    cases += 1
-        if frames:
-            assert overlaps > 0
+def _gate_pair(domain, device, cpus, local, remote, frames, production):
+    if production:
+        assert isinstance(remote._simulator, DMCProcessAdapter)
+        assert len(remote._simulator.worker_info) == min(8, len(cpus))
+    batch = local.num_envs
+    initial = local.get_state()
+    equal(initial, remote.get_state())
+    initial["lifecycle", "reset_next_step"][3] = True
+    initial["rng", "has_gauss"][3] = True
+    initial["rng", "cached_gaussian"][3] = 0.125
+    initial["lifecycle", "step_count"][4] = int(local._simulator.envs[0]._env._step_limit) - 1
+    actions = np.random.default_rng(21).uniform(-0.5, 0.5, (batch, 8, local.action_dim))
+    cases, overlaps = 0, 0
+    original_render = remote.render
+
+    def checked_render(state):
+        nonlocal overlaps
+        if remote._simulator._pending is not None:
+            # Workers may finish/overwrite transport while the parent holds
+            # the preceding owned State. No reply is consumed here.
+            assert all(conn.poll(30) for conn in remote._simulator._connections)
+            overlaps += 1
+        return original_render(state)
+
+    with patch.object(remote, "render", checked_render):
+        for horizon in (1, 8):
+            for selection in (None, slice(None), slice(-1, None), slice(None, None, -2), slice(9, 12)):
+                for env in (local, remote):
+                    env.set_state(initial)
+                action = torch.as_tensor(actions[:, 0] if horizon == 1 else actions, dtype=torch.float32, device=device)
+                expected = local.step(action, states=selection, frames=selection if frames else None)
+                actual = remote.step(action, states=selection, frames=selection if frames else None)
+                equal(expected, actual)
+                retained = actual.clone()
+                remote.step(actions[:, 0], frames=None)
+                remote.reset(seed=41)
+                equal(retained, actual)
+                assert remote._simulator._pending is None
+                cases += 1
+    if frames:
+        assert overlaps > 0
+    for env in (local, remote):
+        env.set_state(initial)
+    equal(local.reset(), remote.reset())
+    physics = {
+        "reacher": {"agent.arm_density": [1100.0], "agent.finger_density": [900.0]},
+        "finger": {"agent_physics.proximal_density": [1100.0]},
+        "manipulator": {"agent_physics.upper_arm_density": [1100.0]},
+    }.get(domain, {"gravity.x": [0.25], "gravity.z": [-8.0]})
+    for variation in (physics, {"light.diffuse_scale": [1.1]}):
         for env in (local, remote):
-            env.set_state(initial)
-        equal(local.reset(), remote.reset())
-        physics = {
-            "reacher": {"agent.arm_density": [1100.0], "agent.finger_density": [900.0]},
-            "finger": {"agent_physics.proximal_density": [1100.0]},
-            "manipulator": {"agent_physics.upper_arm_density": [1100.0]},
-        }.get(domain, {"gravity.x": [0.25], "gravity.z": [-8.0]})
-        for variation in (physics, {"light.diffuse_scale": [1.1]}):
-            for env in (local, remote):
-                env.set_variation(variation)
-            equal(local.get_state(), remote.get_state())
-            torch.testing.assert_close(local.get_style(), remote.get_style(), rtol=0, atol=0)
-            equal(local.reset(seed=37), remote.reset(seed=37))
-            expected = local.step(actions, frames=slice(None) if frames else None)
-            actual = remote.step(actions, frames=slice(None) if frames else None)
-            equal(expected, actual)
-            cases += 1
-        return dict(domain=domain, device=device, cases=cases, overlaps=overlaps,
-                    state_task_rng_lifecycle_ownership="PASS", physics_and_visual_variations="PASS",
-                    frame_mse_vs_local=0 if frames else None)
+            env.set_variation(variation)
+        equal(local.get_state(), remote.get_state())
+        torch.testing.assert_close(local.get_style(), remote.get_style(), rtol=0, atol=0)
+        equal(local.reset(seed=37), remote.reset(seed=37))
+        expected = local.step(actions, frames=slice(None) if frames else None)
+        actual = remote.step(actions, frames=slice(None) if frames else None)
+        equal(expected, actual)
+        cases += 1
+    return dict(domain=domain, device=device, cases=cases, overlaps=overlaps,
+                batch=batch, production_default=production, processes=len(remote._simulator.worker_info),
+                state_task_rng_lifecycle_ownership="PASS", physics_and_visual_variations="PASS",
+                frame_mse_vs_local=0 if frames else None)
 
 
 def main():
@@ -119,10 +139,14 @@ def main():
     p.add_argument("--processes", nargs="+", type=int, default=[4, 8])
     p.add_argument("--repeats", type=int, default=3)
     p.add_argument("--gates-only", action="store_true")
+    p.add_argument("--production", action="store_true", help="Require unpatched B64 default routing; gates only")
     p.add_argument("--no-frames", action="store_true")
     p.add_argument("--verify-gl", action="store_true")
     p.add_argument("--output", type=Path, required=True)
     a = p.parse_args()
+    if a.production and (not a.gates_only or not a.verify_gl or a.no_frames
+                         or a.domain not in dmcontrol_execution.PROCESS_DOMAINS):
+        p.error("Production gate requires --gates-only --verify-gl, frames and an eligible domain; Quadruped remains excluded")
     if a.output.exists():
         raise FileExistsError(a.output)
     if a.verify_gl and (len(a.devices) != 1 or a.no_frames):
@@ -136,6 +160,7 @@ def main():
                       *Path("stable_envs/_adapters").glob("dmcontrol*.py"), Path("stable_envs/_adapters/process_requests.py"),
                       Path("stable_envs/_stepping.py"), *Path("stable_envs/envs/dmcontrol").glob("*.py"), Path(__file__).relative_to(Path.cwd())]},
                   scope="public step + full States, frames disabled; local column exporter vs pure-process candidate",
+                  production_default_gate=a.production, gate_batch=64 if a.production else 5,
                   gates=[], timings=[])
     a.output.parent.mkdir(parents=True, exist_ok=True)
 
@@ -156,7 +181,7 @@ def main():
                 assert software if a.devices == ["cpu"] else "nvidia" in vendor.lower() and not software
                 report["opengl"] = dict(vendor=vendor, renderer=renderer, software=software)
         for device in a.devices:
-            report["gates"].append(gate(a.domain, device, cpus, not a.no_frames))
+            report["gates"].append(gate(a.domain, device, cpus, not a.no_frames, production=a.production))
             save()
             if a.gates_only:
                 continue

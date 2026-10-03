@@ -15,10 +15,13 @@ def main():
     p.add_argument("--reference-adapters", type=Path)
     p.add_argument("--benchmark", choices=["dmc_state_export", "dmc_process_probe", "ogbench_state_export", "ogbench_maze_process", "ogbench_manipulation_process"], default="dmc_state_export")
     p.add_argument("--gates-only", action="store_true")
+    p.add_argument("--production", action="store_true")
     p.add_argument("--output", type=Path, required=True)
     args = p.parse_args()
     if args.benchmark == "dmc_state_export" and (args.reference_adapters is None or args.gates_only):
         p.error("Exporter comparison requires --reference-adapters and does not support --gates-only")
+    if args.production and (args.benchmark != "dmc_process_probe" or not args.gates_only):
+        p.error("Production route checks require dmc_process_probe --gates-only")
     args.output.mkdir(parents=True, exist_ok=False)
     for device in ("cpu", "cuda"):
         env = dict(os.environ, OMP_NUM_THREADS="1", OPENBLAS_NUM_THREADS="1", MKL_NUM_THREADS="1", LP_NUM_THREADS="1")
@@ -57,6 +60,8 @@ def main():
                 command += ["--reference-adapters", str(args.reference_adapters)]
             if args.gates_only:
                 command.append("--gates-only")
+            if args.production:
+                command.append("--production")
             with (args.output / f"{device}.log").open("w") as log:
                 result = subprocess.run(command, env=env, stdout=log, stderr=subprocess.STDOUT)
             if result.returncode:

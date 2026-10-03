@@ -33,7 +33,7 @@ def sync(device):
 
 
 def make(family, batch, device, processes, cpus):
-    options = dict(num_envs=batch, device=device, seed=17, size=64)
+    options = dict(num_envs=batch, device=device, seed=17, size=64, backend="opengl")
     if not processes:
         return se.make("OGB" + family, **options)
     with patch.object(manipulation, "OGBManipulationAdapter",

@@ -76,3 +76,18 @@ arrays 6964504/6964505 were canceled before execution; immutable replacement
 arrays 6966161/6966162 validate native CPU/CUDA and all twelve Fetch pipeline
 gates on RTX 3090. [Source manifests, profiles and launchers](semantic_recovery_evidence/step_masking_sparse_20261003/)
 preserve both attempts. No GPU acceptance is claimed yet.
+
+## Oscar sparse-padding closure (October 3)
+
+Arrays 6966161/6966162 passed: all six native CPU/CUDA gates, 302 shared/native
+tests and 38 Fetch adapter tests. All twelve Fetch registrations independently
+pass CPU/CUDA State/task/replay checks and exact CUDA frame checks. CPU Fetch
+frames were not exercised by that harness and remain blank in the gate CSV.
+[The 108-row native comparison and 24 Fetch gates](semantic_recovery_evidence/step_masking_sparse_closure_20261003/)
+preserve raw samples, SDs, source hashes and terminal evidence.
+
+At B64/T8, SimplePointMaze improves 1,164→2,537 valid steps/s on CPU (2.18×),
+and 23,307→24,867 on CUDA (1.07×). GPU benefit is modest compared with the
+Mac CPU result. These are same-host library-dispatcher comparisons, not source
+speedups or fresh upstream image MSE. Further family integration/default gates
+remain independent.

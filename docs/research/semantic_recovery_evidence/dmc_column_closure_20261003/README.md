@@ -20,5 +20,5 @@ to reproduce does not resolve the original failure or qualify as acceptance.
 Reproduce the selected summary with summarize_dmc_state_export.py, passing
 --source for the frozen candidate, --reference-adapters for the frozen baseline,
 and --domains acrobot pendulum cartpole cheetah walker hopper ball_in_cup finger
-reacher swimmer humanoid. Omitting --domains includes Quadruped and must fail.
+reacher manipulator humanoid. Omitting --domains includes Quadruped and must fail.
 Source reconstruction and digest assertions are in source-provenance.json.

@@ -1,0 +1,43 @@
+Sat Oct  3 01:56:10 AM UTC 2026
+               JOBID      STATE                                NAME               NODELIST(REASON)
+             6964907    PENDING         quadruped-export-diagnostic                     (Priority)
+    6966465_[8-10%4]    PENDING                   dmc-default-route            (JobArrayTaskLimit)
+           6966296_1    RUNNING                   ogb-manip-process                        gpu2107
+           6966465_4    RUNNING                   dmc-default-route                        gpu2102
+           6966465_5    RUNNING                   dmc-default-route                        gpu2102
+           6966465_6    RUNNING                   dmc-default-route                        gpu2105
+           6966465_7    RUNNING                   dmc-default-route                        gpu2110
+   6794187_[30-41%2]    PENDING                  se-3090-saturation                  (JobHeldUser)
+JobID|State|Elapsed|ExitCode|NodeList
+6964907|PENDING|00:00:00|0:0|None assigned
+6966296_0|FAILED|00:02:24|1:0|gpu2116
+6966296_0.batch|FAILED|00:02:24|1:0|gpu2116
+6966296_0.extern|COMPLETED|00:02:24|0:0|gpu2116
+6966296_1|RUNNING|00:01:42|0:0|gpu2107
+6966296_1.batch|RUNNING|00:01:42|0:0|gpu2107
+6966296_1.extern|RUNNING|00:01:42|0:0|gpu2107
+6966465_0|COMPLETED|00:01:11|0:0|gpu2110
+6966465_0.batch|COMPLETED|00:01:11|0:0|gpu2110
+6966465_0.extern|COMPLETED|00:01:11|0:0|gpu2110
+6966465_1|COMPLETED|00:01:06|0:0|gpu2110
+6966465_1.batch|COMPLETED|00:01:06|0:0|gpu2110
+6966465_1.extern|COMPLETED|00:01:06|0:0|gpu2110
+6966465_2|COMPLETED|00:01:12|0:0|gpu2111
+6966465_2.batch|COMPLETED|00:01:12|0:0|gpu2111
+6966465_2.extern|COMPLETED|00:01:12|0:0|gpu2111
+6966465_3|COMPLETED|00:01:31|0:0|gpu2114
+6966465_3.batch|COMPLETED|00:01:31|0:0|gpu2114
+6966465_3.extern|COMPLETED|00:01:31|0:0|gpu2114
+6966465_4|RUNNING|00:00:09|0:0|gpu2102
+6966465_4.batch|RUNNING|00:00:09|0:0|gpu2102
+6966465_4.extern|RUNNING|00:00:09|0:0|gpu2102
+6966465_5|RUNNING|00:00:09|0:0|gpu2102
+6966465_5.batch|RUNNING|00:00:09|0:0|gpu2102
+6966465_5.extern|RUNNING|00:00:09|0:0|gpu2102
+6966465_6|RUNNING|00:00:09|0:0|gpu2105
+6966465_6.batch|RUNNING|00:00:09|0:0|gpu2105
+6966465_6.extern|RUNNING|00:00:09|0:0|gpu2105
+6966465_7|RUNNING|00:00:09|0:0|gpu2110
+6966465_7.batch|RUNNING|00:00:09|0:0|gpu2110
+6966465_7.extern|RUNNING|00:00:09|0:0|gpu2110
+6966465_[8-10%4]|PENDING|00:00:00|0:0|None assigned

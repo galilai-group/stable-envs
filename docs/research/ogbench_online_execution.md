@@ -150,3 +150,26 @@ RTX 3090 array 6966296 independently gates Cube and Scene on CPU/software-GL
 and CUDA/EGL, then compares local/P4/P8 at B16/64, T1/8. No process performance
 or GPU acceptance is claimed while pending. Full component, source and combined
 pipeline comparisons remain subsequent work.
+
+## Maze process and component-baseline closure (October 3)
+
+Maze job 6964833 independently passes both device gates and all eleven cluster
+tests. [Its 16 paired rows](semantic_recovery_evidence/ogbench_maze_process_closure_20261003/)
+show P8/local ratios of 4.94–7.10× across B64/256, T1/8. At B256/T8 it reaches
+12,733 ± 118 valid steps/s with CPU outputs and 12,237 ± 61 with CUDA outputs.
+These are full-State stepping rates, not renderer FPS or source speedups. This
+frozen candidate used the previous shared mask; integration/default gates with
+new sparse padding still precede automatic selection.
+
+All four missing B64 baseline jobs 6964316 also completed. The
+[72-row component baseline](semantic_recovery_evidence/ogbench_profile_complete_20261003/)
+reuses complete earlier cells and verifies the same frozen source. Original
+timed-out reports retain their original status and bytes. Cube/Scene process
+array 6966296 remains a separate acceptance/performance stage.
+
+The first Cube/Scene process array 6966296 failed after all eight cluster tests
+passed: its CPU frame harness selected the CUDA-only default mesh backend.
+[Preserved failures and V2 source](semantic_recovery_evidence/ogbench_manipulation_process_retry_20261003/)
+show a one-argument correction to backend="opengl" for both controls. Production
+source is unchanged. Fresh array 6966557 reruns the frame/performance gates in
+new output paths; neither registration is accepted from the failed attempt.

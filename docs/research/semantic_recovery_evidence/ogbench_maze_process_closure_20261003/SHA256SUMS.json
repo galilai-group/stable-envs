@@ -1,0 +1,13 @@
+{
+  "README.md": "60f5aa81310daf10fc4cb3f309ae113ec81e9efaf7cd4e6f4d4bee63d3d86df4",
+  "comparison.csv": "1b2b6af89af0abcfc24269cf5f6e323af073301ab5fa066781fbf5ec4a6c78e9",
+  "gate-6964833.log": "66085daa1fd02cb861d6eec167bbb6bc524cb76dc655583dd4a0f1d3a3b5cb6a",
+  "results/cpu.json": "49996a751562b60ba9da184798272537e223d48e7b8247e950d3a3b60ca388a6",
+  "results/cpu.log": "0ef27a707ea81aeafe0e9e341fa0a04780ab99783940621c41215095b5f4ba84",
+  "results/cuda.json": "ad94753c902ddbc66abb750514bfd21075b3cdb93ff64dde4f518f9f1cad32fa",
+  "results/cuda.log": "734322efe7174930f8a78820bf7716000867267d20d143534cb497ad30b47f2a",
+  "results/xvfb.log": "6c2337e3c0f8f4dda597997479c36097f34c545768f666c7d64ebe21c5bc792d",
+  "slurm-snapshot.txt": "6dd1d54269507eab4b10d2f5642385cbbacf46774bb2994f89a01619f433d432",
+  "source-provenance.json": "8987636ff9dd2bd8717bb36ec39cb04b1eca75048411d950cdf0144a0a7994f9",
+  "tests.xml": "56b7e7e4af7d1f8fb24342037eaf5b9baae6c33dfefdb1d2207e02c9e89cc6f5"
+}

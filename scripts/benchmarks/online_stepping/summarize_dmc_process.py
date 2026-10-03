@@ -9,6 +9,7 @@ import csv
 import hashlib
 import itertools
 import json
+import math
 import statistics
 from pathlib import Path
 
@@ -25,10 +26,13 @@ def main():
     parser.add_argument("--source", type=Path, required=True)
     parser.add_argument("--domains", choices=DOMAINS, nargs="+", default=DOMAINS)
     parser.add_argument("--timings", action="store_true")
+    parser.add_argument("--production", action="store_true", help="Require the isolated unpatched B64 default gate")
     args = parser.parse_args()
     if args.output.exists():
         raise FileExistsError(args.output)
     assert len(set(args.domains)) == len(args.domains)
+    if args.production:
+        assert not args.timings and "quadruped" not in args.domains
     rows, hashes = [], None
     for domain, device in itertools.product(args.domains, ("cpu", "cuda")):
         path = args.results / domain / f"{device}.json"
@@ -36,6 +40,10 @@ def main():
         assert report["status"] == "PASS" and report["domain"] == domain, path
         assert len(report["gates"]) == 1, path
         gate = report["gates"][0]
+        if args.production:
+            assert report["production_default_gate"] is True and report["gate_batch"] == 64, path
+            assert gate["production_default"] is True and gate["batch"] == 64 and gate["processes"] == 8, path
+            assert len(report["affinity"]) >= 8, path
         assert gate["domain"] == domain and gate["device"] == device, path
         assert gate["cases"] == 12 and gate["overlaps"] > 0, path
         assert gate["state_task_rng_lifecycle_ownership"] == "PASS", path
@@ -61,7 +69,7 @@ def main():
         for cell in report["timings"]:
             key = (cell["batch"], cell["horizon"], cell["processes"])
             assert key not in cells and cell["device"] == device, path
-            assert len(cell["seconds"]) == 6 and all(t > 0 for t in cell["seconds"]), path
+            assert len(cell["seconds"]) == 6 and all(math.isfinite(t) and t > 0 for t in cell["seconds"]), path
             cells[key] = [cell["batch"] * cell["horizon"] / t for t in cell["seconds"]]
         assert set(cells) == set(itertools.product((64, 256), (1, 8), (0, 4, 8))), path
         for (batch, horizon, processes), rates in cells.items():
