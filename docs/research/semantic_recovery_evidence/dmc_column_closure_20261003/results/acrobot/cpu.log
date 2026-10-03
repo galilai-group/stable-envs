@@ -1,0 +1,3 @@
+acrobot cpu 1 PASS
+acrobot cpu 64 PASS
+acrobot cpu 256 PASS

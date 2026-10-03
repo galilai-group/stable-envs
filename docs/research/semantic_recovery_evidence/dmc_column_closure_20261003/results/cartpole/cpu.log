@@ -1,0 +1,3 @@
+cartpole cpu 1 PASS
+cartpole cpu 64 PASS
+cartpole cpu 256 PASS

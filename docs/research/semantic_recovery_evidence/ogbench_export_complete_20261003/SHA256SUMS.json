@@ -1,0 +1,23 @@
+{
+  "README.md": "073170df63b5243e9d7b8d4befed6153820fb695c956fddbda9c12acb2ace784",
+  "comparison.csv": "f81cc044210fc61adc69469df70ef9bad5fc8738c7b39211e2b74c5759566a8e",
+  "results/Cube/cpu.json": "5a5ca01a2277e268820fd25e70cf796fd1b2e36a710a3907e450743176223a24",
+  "results/Cube/cpu.log": "c63cb43b5246c85ca33e3383f72b9ba0137404f7fabefeacca671e34f931c1da",
+  "results/Cube/cuda.json": "4e6c5b4c7202e8f51165ba33765e312b466b48d0d40bfbac47be8c1cf1b43c69",
+  "results/Cube/cuda.log": "5a65c49faaf1ae41715ec884797f1b9247786d1cb6d9b7b3d06bdd112abf9ca2",
+  "results/Cube/export-6964281_1.log": "4d98640498950be49439aa056f1dcb010b2ec5d2337e9bd8d2783ac7bf4c2eea",
+  "results/Cube/xvfb.log": "6c2337e3c0f8f4dda597997479c36097f34c545768f666c7d64ebe21c5bc792d",
+  "results/Maze/cpu.json": "aabdec3fa9c633e8d7a19736b3653f8e1116c00cf38923c80fe322264bd5264f",
+  "results/Maze/cpu.log": "e946f81cf0c73816a8ef6e1a35a1bcb02d0bbe402bc178807dd88bc80eb7a1d0",
+  "results/Maze/cuda.json": "1501f38aa04b0c350f3ed6426cebb52c71972de3d10826f126d0455419555fc8",
+  "results/Maze/cuda.log": "cbdefc4f02071d0151ae90f4fbb84c24e19dcc2227c839fdc28415a46fe04130",
+  "results/Maze/xvfb.log": "6c2337e3c0f8f4dda597997479c36097f34c545768f666c7d64ebe21c5bc792d",
+  "results/Scene/cpu.json": "e3537ce293900c03bf4a37228a4326f08c6f1ffaa0cbdc41c238f4c9a272ee68",
+  "results/Scene/cpu.log": "b1814b0b9bdcac89a1b6095de23260ee12b79c5e62930929829f72a692541eb9",
+  "results/Scene/cuda.json": "6d824b4f34cb33178b7e89783382fb47a3361fc45b6e73c2af3a148008fef251",
+  "results/Scene/cuda.log": "7d381091920ab30a798aedd7db2d1989796c9dea2e1498c7bb21641a4daaca0a",
+  "results/Scene/export-6964281_2.log": "0eadbd9917e74b03da47db611a5ce9ddab5e6806620b3c7ce603d845aabcccf9",
+  "results/Scene/xvfb.log": "6c2337e3c0f8f4dda597997479c36097f34c545768f666c7d64ebe21c5bc792d",
+  "slurm-snapshot.txt": "33424b47845695f02630de20e23c242b64cd09d5a2dc23825328a69e3f115b26",
+  "source-provenance.json": "9434d0f31db03d036ed2c8e54ff3e2bde7f51db41a23426e288a5e359738c3f9"
+}

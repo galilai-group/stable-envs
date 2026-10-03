@@ -43,3 +43,36 @@ All scripts, source manifests, JUnit output and job handles are in
 The next native work is to close those gates, profile retained-image history
 cost, and audit exact cached-goal restoration dependencies before changing its
 Matplotlib regeneration. The source info payload must remain intact.
+
+## Sparse inactive-row follow-up (October 3)
+
+Profiling the T8 case corrects the earlier explanation: image copying/stacking
+was not the only remaining cost. With reset seed 17, one of 64 lanes ends after
+its first transition. Boolean padding scans large image outputs for that ended
+lane. The dispatcher now computes inactive row indices once and uses index_fill_.
+Output ownership, padded zeros, State capture and source info payloads are unchanged.
+CUDA nonzero may synchronize on mixed lanes, so GPU benefit requires measurement.
+
+[Fresh sequential CPU pairs](semantic_recovery_evidence/step_masking_sparse_20261003/local/comparison.csv)
+against frozen c39880f9 report, at B64 with all States and frames disabled:
+
+| Environment | Actions | Previous steps/s | Candidate steps/s ± SD | Ratio |
+| --- | ---: | ---: | ---: | ---: |
+| TwoRoom | 1 | 200,409 | 212,559 ± 4,885 | 1.06× |
+| TwoRoom | 8 | 200,595 | 202,903 ± 5,198 | 1.01× |
+| Piecewise | 1 | 243,176 | 264,770 ± 3,929 | 1.09× |
+| Piecewise | 8 | 257,086 | 263,143 ± 6,170 | 1.02× |
+| SimplePointMaze | 1 | 5,522 | 27,831 ± 926 | 5.04× |
+| SimplePointMaze | 8 | 4,126 | 20,226 ± 220 | 4.90× |
+
+The CSV includes control SDs, all 54 workloads, and valid-transition counts.
+SimplePointMaze T8 counts 505 transitions, not 512. Its source goal-image history
+is still 384 MB. Single cProfile calls locate 82 ms of direct masking cost before
+and 2 ms of index_fill_ afterward; those profiles are diagnostics, not paired rates.
+
+All three registrations pass 16 exact CPU State/task/frame cases; 226 shared
+tests pass and 76 CUDA cases are skipped locally. The still-pending original
+arrays 6964504/6964505 were canceled before execution; immutable replacement
+arrays 6966161/6966162 validate native CPU/CUDA and all twelve Fetch pipeline
+gates on RTX 3090. [Source manifests, profiles and launchers](semantic_recovery_evidence/step_masking_sparse_20261003/)
+preserve both attempts. No GPU acceptance is claimed yet.

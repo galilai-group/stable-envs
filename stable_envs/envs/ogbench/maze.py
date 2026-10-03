@@ -914,6 +914,14 @@ class _HistoricalDefaultSemantics:
         self._check_open("step")
         return self._simulator.step(actions, active=active)
 
+    def _advance_without_snapshot(self, actions, *, active=None):
+        self._check_open("step")
+        return self._simulator.step(actions, active=active, capture_state=False)
+
+    def _step_pipeline(self):
+        owner = self._simulator
+        return owner if hasattr(owner, "submit_step") else None
+
     def _close(self):
         if hasattr(self, "_simulator"):
             self._simulator.close()

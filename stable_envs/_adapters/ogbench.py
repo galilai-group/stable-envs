@@ -112,7 +112,7 @@ class OGBMazeAdapter:
         return owned_columns((self._values(i, env) for i, env in enumerate(self.envs)),
                              self.num_envs, self.device)
 
-    def set_state(self, state):
+    def validate(self, state):
         self._check_open()
         if not isinstance(state, TensorDict) or state.batch_size != torch.Size([self.num_envs]):
             raise TypeError("OGBMaze requires full TensorDict State with batch [num_envs]")
@@ -147,6 +147,10 @@ class OGBMazeAdapter:
             )
             np.random.RandomState().set_state(legacy)
             decoded.append((task_id, pcg, legacy))
+        return host, decoded
+
+    def set_state(self, state):
+        host, decoded = self.validate(state)
         import mujoco
 
         for i, (env, row) in enumerate(zip(self.envs, host.unbind(0), strict=True)):
@@ -163,7 +167,7 @@ class OGBMazeAdapter:
             env.np_random.bit_generator.state = pcg
             self._global_rng[i] = legacy
 
-    def step(self, actions, *, active=None):
+    def step(self, actions, *, active=None, capture_state=True):
         active = None if active is None else np.asarray(active.detach().cpu(), dtype=bool)
         self._check_open()
         if torch.is_tensor(actions):
@@ -179,7 +183,7 @@ class OGBMazeAdapter:
         infos = [o[4] for o in outputs]
         return TensorDict(
             {
-                "state": self.get_state(),
+                **({"state": self.get_state()} if capture_state else {}),
                 "reward": torch.tensor([o[1] for o in outputs], dtype=torch.float64, device=self.device),
                 "terminated": torch.tensor([o[2] for o in outputs], dtype=torch.bool, device=self.device),
                 "truncated": torch.tensor([o[3] for o in outputs], dtype=torch.bool, device=self.device),

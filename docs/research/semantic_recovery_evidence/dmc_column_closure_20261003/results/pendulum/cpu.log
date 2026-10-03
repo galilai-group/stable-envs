@@ -1,0 +1,3 @@
+pendulum cpu 1 PASS
+pendulum cpu 64 PASS
+pendulum cpu 256 PASS

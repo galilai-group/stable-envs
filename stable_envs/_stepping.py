@@ -45,10 +45,11 @@ def _masked_outputs(result, active, *, all_active):
     if "state" in result.keys():
         out["state"] = result["state"]
     if not all_active:
+        inactive = (~active).nonzero(as_tuple=True)[0]
         for key, value in out.items(True, True):
             path = (key,) if isinstance(key, str) else key
             if path[0] != "state":
-                value[~active] = 0
+                value.index_fill_(0, inactive, 0)
     return out
 
 

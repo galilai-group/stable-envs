@@ -122,3 +122,17 @@ CUDA/EGL gates and all paired timing cells, on an RTX A6000 host. Its
 [terminal evidence](semantic_recovery_evidence/ogbench_export_cube_20261003/)
 validates the frozen exporter source; the newer shared masking change is
 separate. Maze and Cube exporter acceptance are complete; Scene remains live.
+
+## Complete exporter closure and Maze process candidate (October 3)
+
+All six independent CPU/CUDA exporter gates now pass. The consolidated
+[48-row comparison and terminal evidence](semantic_recovery_evidence/ogbench_export_complete_20261003/)
+preserve actual hardware: Maze RTX 3090, Cube RTX A6000, Scene RTX A5000.
+Exact regression frame MSE is zero. This closes the exporter stage only.
+
+The [Maze process candidate](semantic_recovery_evidence/ogbench_maze_process_20261003/)
+has nine local CPU tests passing, including the independent source oracle,
+RNG continuation, owned shared-column outputs and all-shard restore validation.
+Its default remains local; RTX 3090 job 6964833 must establish public CPU/CUDA
+correctness and local/P4/P8 throughput. Cube/Scene process ownership remains
+unimplemented pending staged-world restore and parent metadata hooks.

@@ -81,3 +81,13 @@ After those gates, compare bounded processes/native opportunities against the
 optimized baseline, particularly Acrobot. Then complete renderer-only and
 combined pipeline timings with same-device source baselines. The broader
 35-registration goal remains active.
+
+## CPU/CUDA closure (October 3)
+
+All five registrations independently pass both device gates in RTX 3090 array
+6964284. [Terminal reports and the 120-row paired CSV](semantic_recovery_evidence/classic_export_closure_20261003/)
+validate source hashes, exact State/task/frame checks and every timing cell.
+B256/T8 State-retaining public stepping improves 2.80–6.40× for CPU output and
+5.48–13.39× for CUDA output against the old exporter, with CPU physics in both
+cases. These are library-exporter comparisons, not upstream or render speedups.
+Process/default/full pipeline measurements remain outstanding.

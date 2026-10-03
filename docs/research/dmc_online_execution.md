@@ -150,3 +150,14 @@ verified source hashes, all 72 device/batch cells and six samples per operation.
 The [closure CSV and reports](semantic_recovery_evidence/dmc_baseline_closure_20261002/)
 preserve 216 component measurements. Column-export acceptance `6961949` remains
 pending; baseline completion alone does not establish an optimization speedup.
+
+## Exporter closure (October 3)
+
+Array 6961949 is terminal: eleven complete CPU/CUDA registration pairs pass.
+[The 264-row paired CSV and all raw reports](semantic_recovery_evidence/dmc_column_closure_20261003/)
+verify source hashes, exact State/task/frame gates and complete timing coverage.
+Quadruped CPU passes, but its CUDA gate fails frame equality. It is excluded
+from the paired CSV. Same-host diagnostic 6964907 records State byte differences,
+pixel MSE and repeated rendering; non-reproduction alone will not close the failure.
+The default all-domain summarizer refuses this incomplete cohort. DMC process
+default selection and combined/source benchmarks remain separate.

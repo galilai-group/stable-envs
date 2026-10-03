@@ -1,0 +1,3 @@
+finger cpu 1 PASS
+finger cpu 64 PASS
+finger cpu 256 PASS

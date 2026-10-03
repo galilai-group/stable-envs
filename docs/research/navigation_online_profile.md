@@ -85,3 +85,16 @@ The [activity-aware padding candidate](step_masking_checkpoint.md) now has exact
 local gates for all three native registrations and a paired CPU sweep. Its GPU
 and Fetch pipeline regressions are queued separately; the original profile
 reports above remain unchanged.
+
+## Bounded baseline complete (October 3)
+
+SimplePointMaze job 6964296 passed all 54 CPU/CUDA component cells at B1/16/64
+on an RTX A6000 host. [Raw evidence and mean/SD table](semantic_recovery_evidence/navigation_bounded_20261003/)
+complete the bounded baseline alongside TwoRoom/Piecewise. This is a baseline
+profile, not an upstream comparison. The subsequent reset-seed-17 masking
+workload differs from this constructor-State profile and has its own paired control.
+
+The retained-image profile also found expensive mixed-lane padding: one early
+termination still triggered a large boolean-index operation after the original
+all-active optimization. [Sparse inactive-row padding](step_masking_checkpoint.md)
+now has local exact gates and separate cluster acceptance jobs.
