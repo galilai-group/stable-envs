@@ -129,3 +129,12 @@ renders at 480x480 before resizing to 224x224; `resolution=64` still renders at
 480x480. Future online source rows must record both dimensions and separately gate
 any alternative internal resolution. Existing pipeline numbers above remain
 library-control comparisons, not upstream speedups.
+
+The [shared-memory source prerequisite](semantic_recovery_evidence/fetch_source_transport_20261003/)
+now passes all 12 registrations independently: 96 CPU B4/P2 cases cover T1/T8,
+float32/64, mixed episode limits, exact source/adapter State and task outputs,
+owned shared results, restored replay and unseeded-reset RNG. All 48 workers
+exit cleanly. This benchmark executor reuses Gym's process/shared-memory transport;
+source State RPCs are untimed and pickled. No rendering, source FPS or CUDA output
+result is claimed. The next rendered source gates must retain the PickAndPlace
+lifecycle and raster-size qualifications above.

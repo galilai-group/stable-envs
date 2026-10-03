@@ -1,0 +1,15 @@
+{
+  "base_commit": "30a590a4343df1d55654ed6498f797640e582fa2",
+  "status": "CPU_TRANSPORT_PREREQUISITE_PASS",
+  "cases": 96,
+  "registrations": 12,
+  "closed_pools": 24,
+  "clean_worker_exits": 48,
+  "production_changes": false,
+  "public_constructor_validated": false,
+  "rendering_validated": false,
+  "performance_measured": false,
+  "source_state_transport": "untimed pickle",
+  "task_transport": "Gym shared-memory arrays",
+  "ruff": "PASS"
+}
