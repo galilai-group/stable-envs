@@ -1,0 +1,15 @@
+/Users/samib/stable-worldmodel/stable_worldmodel/envs/__init__.py:215: UserWarning: ale-py not found; ALE/* envs are unavailable. Install with: pip install 'stable-worldmodel[env]' or pip install ale-py.
+  from stable_worldmodel.envs import ale  # noqa: F401
+AdroitHandRelocateDense-v1, AdroitHandHammerDense-v1, AdroitHandDoorDense-v1 environment's reward functions were updated in v1.2.1 without an environment version update. Therefore, use gymnasium-robotics==1.2.0 for v1 reproducibility or use v2 in gymnasium-robotics>=1.4.3. See https://github.com/Farama-Foundation/Gymnasium-Robotics/pull/220 for more details
+swm/FetchReach-v3 48 callback/continuation cases recorded
+swm/FetchReachDense-v3 48 callback/continuation cases recorded
+swm/FetchReachDict-v3 48 callback/continuation cases recorded
+swm/FetchPush-v3 48 callback/continuation cases recorded
+swm/FetchPushDense-v3 48 callback/continuation cases recorded
+swm/FetchPushDict-v3 48 callback/continuation cases recorded
+swm/FetchSlide-v3 48 callback/continuation cases recorded
+swm/FetchSlideDense-v3 48 callback/continuation cases recorded
+swm/FetchSlideDict-v3 48 callback/continuation cases recorded
+swm/FetchPickAndPlace-v3 48 callback/continuation cases recorded
+swm/FetchPickAndPlaceDense-v3 48 callback/continuation cases recorded
+swm/FetchPickAndPlaceDict-v3 48 callback/continuation cases recorded

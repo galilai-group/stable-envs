@@ -1,0 +1,15 @@
+{
+  "base_commit": "cc255691298dc877dd4d547e1011ab695781dbb0",
+  "status": "CPU_PREREQUISITE_PASS_SOURCE_RENDER_PROTOCOL_SPLIT",
+  "source_adapter_cases": 48,
+  "source_callback_cases": 576,
+  "source_dimension_checks": 36,
+  "callback_uncompressed_sha256": "b67acedffe9cd1cbd041a6f52a2dd90c7e8aa0721d3de2eff0040637f4b79ddd",
+  "source_callback_stable_registrations": 9,
+  "source_callback_continuation_changed_registrations": 3,
+  "production_changes": false,
+  "acceptance_changes": false,
+  "rendering_performed": false,
+  "timing_performed": false,
+  "ruff": "PASS"
+}

@@ -1,0 +1,15 @@
+/Users/samib/stable-worldmodel/stable_worldmodel/envs/__init__.py:215: UserWarning: ale-py not found; ALE/* envs are unavailable. Install with: pip install 'stable-worldmodel[env]' or pip install ale-py.
+  from stable_worldmodel.envs import ale  # noqa: F401
+AdroitHandRelocateDense-v1, AdroitHandHammerDense-v1, AdroitHandDoorDense-v1 environment's reward functions were updated in v1.2.1 without an environment version update. Therefore, use gymnasium-robotics==1.2.0 for v1 reproducibility or use v2 in gymnasium-robotics>=1.4.3. See https://github.com/Farama-Foundation/Gymnasium-Robotics/pull/220 for more details
+swm/FetchReach-v3 four independent B2 source/restore cases PASS
+swm/FetchReachDense-v3 four independent B2 source/restore cases PASS
+swm/FetchReachDict-v3 four independent B2 source/restore cases PASS
+swm/FetchPush-v3 four independent B2 source/restore cases PASS
+swm/FetchPushDense-v3 four independent B2 source/restore cases PASS
+swm/FetchPushDict-v3 four independent B2 source/restore cases PASS
+swm/FetchSlide-v3 four independent B2 source/restore cases PASS
+swm/FetchSlideDense-v3 four independent B2 source/restore cases PASS
+swm/FetchSlideDict-v3 four independent B2 source/restore cases PASS
+swm/FetchPickAndPlace-v3 four independent B2 source/restore cases PASS
+swm/FetchPickAndPlaceDense-v3 four independent B2 source/restore cases PASS
+swm/FetchPickAndPlaceDict-v3 four independent B2 source/restore cases PASS

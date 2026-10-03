@@ -1,0 +1,13 @@
+registration,cases,callback_changed_continuation_state,following_state_changed,following_task_output_changed,callback_fields,source_online_protocol
+swm/FetchReach-v3,48,0,0,0,,ORDINARY_ONLINE_CANDIDATE_REQUIRES_GL_GATE
+swm/FetchReachDense-v3,48,0,0,0,,ORDINARY_ONLINE_CANDIDATE_REQUIRES_GL_GATE
+swm/FetchReachDict-v3,48,0,0,0,,ORDINARY_ONLINE_CANDIDATE_REQUIRES_GL_GATE
+swm/FetchPush-v3,48,0,0,0,,ORDINARY_ONLINE_CANDIDATE_REQUIRES_GL_GATE
+swm/FetchPushDense-v3,48,0,0,0,,ORDINARY_ONLINE_CANDIDATE_REQUIRES_GL_GATE
+swm/FetchPushDict-v3,48,0,0,0,,ORDINARY_ONLINE_CANDIDATE_REQUIRES_GL_GATE
+swm/FetchSlide-v3,48,0,0,0,,ORDINARY_ONLINE_CANDIDATE_REQUIRES_GL_GATE
+swm/FetchSlideDense-v3,48,0,0,0,,ORDINARY_ONLINE_CANDIDATE_REQUIRES_GL_GATE
+swm/FetchSlideDict-v3,48,0,0,0,,ORDINARY_ONLINE_CANDIDATE_REQUIRES_GL_GATE
+swm/FetchPickAndPlace-v3,48,36,36,36,/controller_position;/controller_quaternion,REQUIRES_RENDER_LIFECYCLE_ACCOUNTING
+swm/FetchPickAndPlaceDense-v3,48,36,36,36,/controller_position;/controller_quaternion,REQUIRES_RENDER_LIFECYCLE_ACCOUNTING
+swm/FetchPickAndPlaceDict-v3,48,36,36,36,/controller_position;/controller_quaternion,REQUIRES_RENDER_LIFECYCLE_ACCOUNTING

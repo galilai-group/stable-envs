@@ -111,3 +111,21 @@ Historical outputs are preserved; `collect_fetch_family.py` recovers only comple
 per-registration sweeps, validates every cell and never joins measurements across
 hosts for one row. Pipeline throughput is measured on the four plain tasks;
 Dense/Dict registrations also pass their own final pipeline correctness gates.
+
+## Direct-source online comparison prerequisite (October 3)
+
+The [direct-source CPU audit](semantic_recovery_evidence/fetch_source_prerequisite_20261003/)
+passes 48 independent full-State/task/restore/RNG cases across all 12 registrations.
+It also traces a source-render lifecycle constraint: in 576 callback/continuation
+cases, Reach/Push/Slide remain unchanged, while all three PickAndPlace registrations
+change controller caches and subsequent trajectories in every tested post-step case.
+An ordinary source step/render loop therefore cannot be used as a matched-trajectory
+oracle for PickAndPlace without explicitly accounting for this effect. These are
+CPU callback checks, not GL/MSE or throughput acceptance; no production semantics
+or acceptance status changed.
+
+The same audit records internal versus output dimensions: the default source
+renders at 480x480 before resizing to 224x224; `resolution=64` still renders at
+480x480. Future online source rows must record both dimensions and separately gate
+any alternative internal resolution. Existing pipeline numbers above remain
+library-control comparisons, not upstream speedups.
