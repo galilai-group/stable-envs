@@ -183,3 +183,12 @@ reproduces the original assertion: two channels differ despite identical
 captured State/style/pristine inputs, scene fields and kinematics. Subsequent
 renders agree. This narrows investigation to context/history or uninstrumented
 GL state; it does not identify a mechanism, relax the gate or enable its default.
+
+The [first five pipeline closures](semantic_recovery_evidence/dmc_pipeline_family_20261003/completed/first-five-closure/)
+now validate Acrobot, Pendulum, Cartpole, Reacher and Cheetah independently on
+CPU/CUDA: 240 component rows and 180 paired pipeline rows across B64/256/1024,
+T1/8 and no/final/all frames. At B1024/T8/all, GPU online means span 13,470–22,939
+FPS and overlap improves 1.018–1.335x versus deferred identical requests. Every
+mean/SD is preserved, including smaller gains. State/task/frame checks are exact
+against the library control; these are not upstream fidelity or speedup claims.
+The remaining six tasks and direct-source comparisons remain outstanding.

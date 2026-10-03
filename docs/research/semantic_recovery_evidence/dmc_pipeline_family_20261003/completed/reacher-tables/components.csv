@@ -1,0 +1,49 @@
+domain,device,host,gpu,job,batch,horizon,operation,rate_mean,rate_sd
+reacher,cpu,gpu2110.oscar.ccv.brown.edu,,6968904,64,1,task_no_state_with_ipc,33491.65867979401,415.07763516852197
+reacher,cpu,gpu2110.oscar.ccv.brown.edu,,6968904,64,1,state_export_with_ipc_transfer,59064.24690724666,872.633160630522
+reacher,cpu,gpu2110.oscar.ccv.brown.edu,,6968904,64,1,render_saved_final,339.84711637212695,10.470323647512966
+reacher,cpu,gpu2110.oscar.ccv.brown.edu,,6968904,64,1,render_saved_all,363.16172858127237,2.45098101026586
+reacher,cpu,gpu2110.oscar.ccv.brown.edu,,6968904,64,8,task_no_state_with_ipc,29952.4577727553,5821.319006126272
+reacher,cpu,gpu2110.oscar.ccv.brown.edu,,6968904,64,8,state_export_with_ipc_transfer,51864.298271649015,18366.302439673047
+reacher,cpu,gpu2110.oscar.ccv.brown.edu,,6968904,64,8,render_saved_final,351.0198177538708,11.46242655630563
+reacher,cpu,gpu2110.oscar.ccv.brown.edu,,6968904,64,8,render_saved_all,363.7597154704434,0.5380559397690089
+reacher,cpu,gpu2110.oscar.ccv.brown.edu,,6968904,256,1,task_no_state_with_ipc,43171.834529471496,509.5778777552104
+reacher,cpu,gpu2110.oscar.ccv.brown.edu,,6968904,256,1,state_export_with_ipc_transfer,97314.30510153141,857.6531086115916
+reacher,cpu,gpu2110.oscar.ccv.brown.edu,,6968904,256,1,render_saved_final,318.7475170145401,6.391703635098752
+reacher,cpu,gpu2110.oscar.ccv.brown.edu,,6968904,256,1,render_saved_all,333.5163991907864,4.203040231923727
+reacher,cpu,gpu2110.oscar.ccv.brown.edu,,6968904,256,8,task_no_state_with_ipc,43678.53321171104,400.11951250033206
+reacher,cpu,gpu2110.oscar.ccv.brown.edu,,6968904,256,8,state_export_with_ipc_transfer,94906.06761136292,1720.6956077556965
+reacher,cpu,gpu2110.oscar.ccv.brown.edu,,6968904,256,8,render_saved_final,332.0865397778938,4.807882619411829
+reacher,cpu,gpu2110.oscar.ccv.brown.edu,,6968904,256,8,render_saved_all,330.79933579840497,1.7311066420380965
+reacher,cpu,gpu2110.oscar.ccv.brown.edu,,6968904,1024,1,task_no_state_with_ipc,43467.56621919117,132.58269123333184
+reacher,cpu,gpu2110.oscar.ccv.brown.edu,,6968904,1024,1,state_export_with_ipc_transfer,108093.39590768931,1360.8285478965386
+reacher,cpu,gpu2110.oscar.ccv.brown.edu,,6968904,1024,1,render_saved_final,290.17590690275233,4.022439388475852
+reacher,cpu,gpu2110.oscar.ccv.brown.edu,,6968904,1024,1,render_saved_all,295.6950159136237,4.401529839894645
+reacher,cpu,gpu2110.oscar.ccv.brown.edu,,6968904,1024,8,task_no_state_with_ipc,43489.797199601424,283.9506995422336
+reacher,cpu,gpu2110.oscar.ccv.brown.edu,,6968904,1024,8,state_export_with_ipc_transfer,105844.53487651567,2755.8154968960025
+reacher,cpu,gpu2110.oscar.ccv.brown.edu,,6968904,1024,8,render_saved_final,301.99032938860046,1.6910034307895965
+reacher,cpu,gpu2110.oscar.ccv.brown.edu,,6968904,1024,8,render_saved_all,301.28109267688984,1.0671190228583178
+reacher,cuda,gpu2110.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6968904,64,1,task_no_state_with_ipc,30496.95783088824,1729.0616326786567
+reacher,cuda,gpu2110.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6968904,64,1,state_export_with_ipc_transfer,48993.88928520464,181.5846141307858
+reacher,cuda,gpu2110.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6968904,64,1,render_saved_final,7012.259645496955,168.6245744808693
+reacher,cuda,gpu2110.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6968904,64,1,render_saved_all,7131.177963226374,16.197969997306878
+reacher,cuda,gpu2110.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6968904,64,8,task_no_state_with_ipc,32300.189873848747,78.97185519603583
+reacher,cuda,gpu2110.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6968904,64,8,state_export_with_ipc_transfer,49194.762447913185,243.5833511141707
+reacher,cuda,gpu2110.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6968904,64,8,render_saved_final,7106.976316083248,66.46628131257177
+reacher,cuda,gpu2110.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6968904,64,8,render_saved_all,7209.174192881762,9.571627699673787
+reacher,cuda,gpu2110.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6968904,256,1,task_no_state_with_ipc,40993.285813725706,708.8843804858257
+reacher,cuda,gpu2110.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6968904,256,1,state_export_with_ipc_transfer,85785.32776309393,620.2023015690622
+reacher,cuda,gpu2110.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6968904,256,1,render_saved_final,21938.88219484701,68.22533717621002
+reacher,cuda,gpu2110.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6968904,256,1,render_saved_all,22052.186614496888,45.11308850982069
+reacher,cuda,gpu2110.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6968904,256,8,task_no_state_with_ipc,43050.1976331869,147.2372238150723
+reacher,cuda,gpu2110.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6968904,256,8,state_export_with_ipc_transfer,84709.94940191414,691.1637371874363
+reacher,cuda,gpu2110.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6968904,256,8,render_saved_final,21963.06326992822,90.54059897888818
+reacher,cuda,gpu2110.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6968904,256,8,render_saved_all,22041.233608076192,119.71299239118349
+reacher,cuda,gpu2110.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6968904,1024,1,task_no_state_with_ipc,43191.38519509199,101.73825755281864
+reacher,cuda,gpu2110.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6968904,1024,1,state_export_with_ipc_transfer,99779.08905634018,1261.886139216043
+reacher,cuda,gpu2110.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6968904,1024,1,render_saved_final,35762.8660041688,95.99927291854314
+reacher,cuda,gpu2110.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6968904,1024,1,render_saved_all,35882.362931410964,57.76739890781745
+reacher,cuda,gpu2110.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6968904,1024,8,task_no_state_with_ipc,43444.1263394122,178.11268090948582
+reacher,cuda,gpu2110.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6968904,1024,8,state_export_with_ipc_transfer,99924.01598597312,2680.653089696777
+reacher,cuda,gpu2110.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6968904,1024,8,render_saved_final,35883.416024767546,120.55653449248909
+reacher,cuda,gpu2110.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6968904,1024,8,render_saved_all,35998.85538672656,68.68667176709803

@@ -1,0 +1,7 @@
+{
+  "job": "6970326",
+  "status_at_submission": "SUBMITTED",
+  "remote": "/oscar/scratch/sboughan/se-semantic-recovery/classic-snapshot-v1-20261003",
+  "archive_sha256": "b28054648cdd63479283c5bb4c7c4199c41aa0a3e5bbd413c6bd106216660c28",
+  "production_enabled": false
+}

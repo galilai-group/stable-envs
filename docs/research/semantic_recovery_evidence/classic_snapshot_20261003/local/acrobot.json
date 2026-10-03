@@ -1,0 +1,347 @@
+{
+  "status": "PASS",
+  "domain": "acrobot",
+  "name": "Acrobot",
+  "host": "cis1b1zs2j3.ad.brown.edu",
+  "job": null,
+  "affinity": null,
+  "gpu": null,
+  "versions": {
+    "torch": "2.14.0",
+    "numpy": "2.5.3",
+    "gymnasium": "1.3.0",
+    "tensordict": "0.14.2"
+  },
+  "source_sha256": {
+    "stable_envs/envs/_classic_semantics.py": "0e41633ce31f33d8459ef48a6f6d10a0b4b31116c9847442da7163d12a691c94",
+    "stable_envs/_adapters/acrobot_process.py": "a9b3759b4901fc7d0ff948b026d10a362b027009fbfef0971d8a5d5bb147108f",
+    "stable_envs/_adapters/classic_execution.py": "e24fce09f8c47f5d1216af93cc350a6cb06343f9b009837a8cbe04e6e91f8fb7",
+    "stable_envs/_adapters/process_requests.py": "e4b6626543f4ee59a80223f413a2ff2381ba7d6e9dc0e01eafa01b49d6d810d6",
+    "stable_envs/envs/classic_control.py": "e158939aa7babb9a2701f8e9b84bb1393c412dd98e7bfe2c8d0cd857369b76b6",
+    "stable_envs/_stepping.py": "4b23abcf73767a4a59f0c106e098376ac7b2570608e5d4829a8919dd213f5f99",
+    "tests/helpers/reference/classic_before_snapshot.py": "49f00947fb9c63080b3e9a6102fda8cef3b4ec0dd14ecec5c2d2877b0ecffa11",
+    "tests/helpers/reference/acrobot_before_snapshot.py": "1ff076eac6030e2318d362f8b5caff6e1c7fbd9b3a6c5bc4453cf55af53ce955",
+    "tests/helpers/reference/classic_snapshot.py": "34fd53eb2c4e570c38f25672568e4835063ff8c5cef2558c567d9c959202410c",
+    "tests/unit/test_classic_snapshot.py": "698783057afdfb69fd3101b9a955bd7d4f9986dc8bc84655b70f8f7d039d31d3",
+    "scripts/benchmarks/online_stepping/classic_snapshot.py": "93d3f8fe280bdcbcdc55761a1a19aab4b5d6d9d6a83a478b76bda4ebe3b2aae1"
+  },
+  "scope": "snapshot-aware candidate vs frozen library adapters; same workers and renderer; no upstream speedup",
+  "gates": [
+    {
+      "device": "cpu",
+      "batch": 4,
+      "cases": 14,
+      "workers": 0,
+      "complete_state_task_rng_lifecycle_ownership": "PASS",
+      "frame_mse_vs_baseline": 0,
+      "reset_variation_device_actions": "PASS",
+      "current_render": "PASS"
+    }
+  ],
+  "timings": [
+    {
+      "device": "cpu",
+      "batch": 8,
+      "horizon": 1,
+      "states": "none",
+      "frames": "none",
+      "mode": "baseline",
+      "seconds": [
+        0.0003879580181092024,
+        0.00039466703310608864,
+        0.00038329092785716057,
+        0.0003774580545723438
+      ],
+      "valid_steps": 8,
+      "frame_count": 0,
+      "steps_per_s_mean": 20739.33035785078,
+      "steps_per_s_sd": 391.0459576255601,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "device": "cpu",
+      "batch": 8,
+      "horizon": 1,
+      "states": "none",
+      "frames": "none",
+      "mode": "candidate",
+      "seconds": [
+        0.0003658339846879244,
+        0.0003635419998317957,
+        0.0003612909931689501,
+        0.0003639159258455038
+      ],
+      "valid_steps": 8,
+      "frame_count": 0,
+      "steps_per_s_mean": 21999.867157292545,
+      "steps_per_s_sd": 112.81277078533829,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "device": "cpu",
+      "batch": 8,
+      "horizon": 1,
+      "states": "none",
+      "frames": "final",
+      "mode": "baseline",
+      "seconds": [
+        0.011290583061054349,
+        0.011217332910746336,
+        0.0112251250538975,
+        0.011290542082861066
+      ],
+      "valid_steps": 8,
+      "frame_count": 8,
+      "steps_per_s_mean": 710.7454198274025,
+      "steps_per_s_sd": 2.535767811838948,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "device": "cpu",
+      "batch": 8,
+      "horizon": 1,
+      "states": "none",
+      "frames": "final",
+      "mode": "candidate",
+      "seconds": [
+        0.011298125144094229,
+        0.011226374888792634,
+        0.01117616705596447,
+        0.011184291914105415
+      ],
+      "valid_steps": 8,
+      "frame_count": 8,
+      "steps_per_s_mean": 712.9468761353587,
+      "steps_per_s_sd": 3.5335395807521786,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "device": "cpu",
+      "batch": 8,
+      "horizon": 1,
+      "states": "all",
+      "frames": "none",
+      "mode": "baseline",
+      "seconds": [
+        0.0004957919009029865,
+        0.00044791586697101593,
+        0.000444167060777545,
+        0.0004386249929666519
+      ],
+      "valid_steps": 8,
+      "frame_count": 0,
+      "steps_per_s_mean": 17561.58873402636,
+      "steps_per_s_sd": 963.1607631961087,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "device": "cpu",
+      "batch": 8,
+      "horizon": 1,
+      "states": "all",
+      "frames": "none",
+      "mode": "candidate",
+      "seconds": [
+        0.00042649987153708935,
+        0.0004250409547239542,
+        0.000421999953687191,
+        0.000431333901360631
+      ],
+      "valid_steps": 8,
+      "frame_count": 0,
+      "steps_per_s_mean": 18770.8781704655,
+      "steps_per_s_sd": 170.88822478051625,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "device": "cpu",
+      "batch": 8,
+      "horizon": 1,
+      "states": "all",
+      "frames": "final",
+      "mode": "baseline",
+      "seconds": [
+        0.011311542009934783,
+        0.011319667100906372,
+        0.011315542040392756,
+        0.011341207893565297
+      ],
+      "valid_steps": 8,
+      "frame_count": 8,
+      "steps_per_s_mean": 706.5903042870541,
+      "steps_per_s_sd": 0.8251636344637104,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "device": "cpu",
+      "batch": 8,
+      "horizon": 1,
+      "states": "all",
+      "frames": "final",
+      "mode": "candidate",
+      "seconds": [
+        0.011370375053957105,
+        0.01127183297649026,
+        0.01122195809148252,
+        0.011342624900862575
+      ],
+      "valid_steps": 8,
+      "frame_count": 8,
+      "steps_per_s_mean": 707.8771689881979,
+      "steps_per_s_sd": 4.227621325268443,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "device": "cpu",
+      "batch": 8,
+      "horizon": 8,
+      "states": "none",
+      "frames": "none",
+      "mode": "baseline",
+      "seconds": [
+        0.0029533749911934137,
+        0.0029458750505000353,
+        0.0029265000484883785,
+        0.0029280418530106544
+      ],
+      "valid_steps": 64,
+      "frame_count": 0,
+      "steps_per_s_mean": 21780.538585949245,
+      "steps_per_s_sd": 98.37271556160631,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "device": "cpu",
+      "batch": 8,
+      "horizon": 8,
+      "states": "none",
+      "frames": "none",
+      "mode": "candidate",
+      "seconds": [
+        0.0022130839060992002,
+        0.0022012500558048487,
+        0.002216584049165249,
+        0.0022149160504341125
+      ],
+      "valid_steps": 64,
+      "frame_count": 0,
+      "steps_per_s_mean": 28940.391834961636,
+      "steps_per_s_sd": 91.25731284529977,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "device": "cpu",
+      "batch": 8,
+      "horizon": 8,
+      "states": "none",
+      "frames": "final",
+      "mode": "baseline",
+      "seconds": [
+        0.0137624591588974,
+        0.013810457894578576,
+        0.013910082867369056,
+        0.0138801250141114
+      ],
+      "valid_steps": 64,
+      "frame_count": 8,
+      "steps_per_s_mean": 4624.097383231994,
+      "steps_per_s_sd": 22.34621661943575,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "device": "cpu",
+      "batch": 8,
+      "horizon": 8,
+      "states": "none",
+      "frames": "final",
+      "mode": "candidate",
+      "seconds": [
+        0.013054958079010248,
+        0.013037041062489152,
+        0.013056541793048382,
+        0.013126959092915058
+      ],
+      "valid_steps": 64,
+      "frame_count": 8,
+      "steps_per_s_mean": 4897.165380487428,
+      "steps_per_s_sd": 14.845583498782615,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "device": "cpu",
+      "batch": 8,
+      "horizon": 8,
+      "states": "all",
+      "frames": "none",
+      "mode": "baseline",
+      "seconds": [
+        0.00308170891366899,
+        0.003108625067397952,
+        0.0030748751014471054,
+        0.0031329579651355743
+      ],
+      "valid_steps": 64,
+      "frame_count": 0,
+      "steps_per_s_mean": 20649.352680452117,
+      "steps_per_s_sd": 176.87214368945558,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "device": "cpu",
+      "batch": 8,
+      "horizon": 8,
+      "states": "all",
+      "frames": "none",
+      "mode": "candidate",
+      "seconds": [
+        0.00295075005851686,
+        0.002947125118225813,
+        0.0029819170013070107,
+        0.0029469169676303864
+      ],
+      "valid_steps": 64,
+      "frame_count": 0,
+      "steps_per_s_mean": 21646.44862788527,
+      "steps_per_s_sd": 123.17975600521397,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "device": "cpu",
+      "batch": 8,
+      "horizon": 8,
+      "states": "all",
+      "frames": "final",
+      "mode": "baseline",
+      "seconds": [
+        0.01403016597032547,
+        0.01398958289064467,
+        0.01407799986191094,
+        0.013951624976471066
+      ],
+      "valid_steps": 64,
+      "frame_count": 8,
+      "steps_per_s_mean": 4567.45296421055,
+      "steps_per_s_sd": 17.67990696467077,
+      "exact_state_task_frame": "PASS"
+    },
+    {
+      "device": "cpu",
+      "batch": 8,
+      "horizon": 8,
+      "states": "all",
+      "frames": "final",
+      "mode": "candidate",
+      "seconds": [
+        0.014068208169192076,
+        0.013949333922937512,
+        0.01389449997805059,
+        0.013869334012269974
+      ],
+      "valid_steps": 64,
+      "frame_count": 8,
+      "steps_per_s_mean": 4589.483325010114,
+      "steps_per_s_sd": 28.998604788696547,
+      "exact_state_task_frame": "PASS"
+    }
+  ]
+}

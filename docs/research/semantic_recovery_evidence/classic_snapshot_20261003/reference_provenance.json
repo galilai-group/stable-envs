@@ -1,0 +1,21 @@
+{
+  "tests/helpers/reference/classic_before_snapshot.py": {
+    "origin_commit": "405216af3548f99c1ad02934cba560ac5e83f822",
+    "origin_path": "stable_envs/envs/_classic_semantics.py",
+    "original_sha256": "5f9932a9d5aeba21228e3cc1699338d0bab22b6b25e599a4aad19d8b3a157d4a",
+    "reference_sha256": "49f00947fb9c63080b3e9a6102fda8cef3b4ec0dd14ecec5c2d2877b0ecffa11",
+    "import_rewrites": {
+      "from ..spaces import": "from stable_envs.spaces import",
+      "from ..specs import": "from stable_envs.specs import"
+    }
+  },
+  "tests/helpers/reference/acrobot_before_snapshot.py": {
+    "origin_commit": "405216af3548f99c1ad02934cba560ac5e83f822",
+    "origin_path": "stable_envs/_adapters/acrobot_process.py",
+    "original_sha256": "ca694f3b1990ef912c0c4b215ddfaea0ef5414822246545f64f883b8c009562e",
+    "reference_sha256": "6b899473be8d3c3dfb8fd9f801f99d85afe7b03e10ca25e7203cd26fe95301ef",
+    "import_rewrites": {
+      "from ..envs._classic_semantics import ClassicControlAdapter, _from_limbs, validate_classic_state\nfrom .process_requests import ProcessRequests": "from stable_envs._adapters.process_requests import ProcessRequests\nfrom tests.helpers.reference.classic_before_snapshot import ClassicControlAdapter, _from_limbs, validate_classic_state"
+    }
+  }
+}
