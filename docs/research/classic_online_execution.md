@@ -199,3 +199,12 @@ collection placement, and the earlier slow CUDA samples do not recur at the same
 timed locations. This supports investigating allocation/collection costs but
 does not prove the earlier CUDA spikes' cause. Sustained independent-strategy
 measurements must retain naturally occurring GC costs before activation.
+
+A [sustained independent-process diagnostic](semantic_recovery_evidence/classic_snapshot_20261003/sustained-diagnostic/)
+is submitted as array 6970936 for Pendulum and Acrobot. It compares the unchanged
+candidate against its frozen adapter at B1024 CUDA output, using six windows
+of 128 consecutive transitions per lane and normal garbage collection. Each
+strategy/cell gets a fresh interpreter; every selected output in an untimed
+trajectory must match exactly. Reset durations remain separate. This follows
+up the retained timing regressions and inconclusive GC diagnostic; production
+remains unchanged and no sustained result is yet claimed.

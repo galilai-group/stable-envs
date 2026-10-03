@@ -1,0 +1,99 @@
+{
+  "status": "PASS",
+  "domain": "pendulum",
+  "mode": "candidate",
+  "device": "cpu",
+  "batch": 4,
+  "horizon": 1,
+  "states": "none",
+  "frames": "final",
+  "transitions_per_lane": 16,
+  "samples": [
+    {
+      "index": 0,
+      "seconds": 0.08685000007972121,
+      "reset_seconds": 0.00019333302043378353,
+      "valid_steps": 64,
+      "frames": 64,
+      "calls": 16,
+      "steps_per_s": 736.9027051382063,
+      "fps": 736.9027051382063,
+      "final_state_sha256": "8702b3541b6a6c4eb97f3520a25cae720d36c68c307d2422aded21d12b387084",
+      "gc_collections": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "index": 1,
+      "seconds": 0.08646112494170666,
+      "reset_seconds": 0.00021433294750750065,
+      "valid_steps": 64,
+      "frames": 64,
+      "calls": 16,
+      "steps_per_s": 740.217063369806,
+      "fps": 740.217063369806,
+      "final_state_sha256": "8702b3541b6a6c4eb97f3520a25cae720d36c68c307d2422aded21d12b387084",
+      "gc_collections": [
+        0,
+        0,
+        0
+      ]
+    }
+  ],
+  "host": "cis1b1zs2j3.ad.brown.edu",
+  "job": null,
+  "pid": 80901,
+  "affinity": null,
+  "gpu": null,
+  "gc_enabled": true,
+  "gc_thresholds": [
+    700,
+    10,
+    10
+  ],
+  "scope": "independent-process sustained candidate vs frozen library; no source speedup",
+  "timing": "synchronized window; consecutive calls including result disposal; reset outside",
+  "versions": {
+    "torch": "2.14.0",
+    "numpy": "2.5.3",
+    "gymnasium": "1.3.0",
+    "tensordict": "0.14.2"
+  },
+  "source_sha256": {
+    "stable_envs/envs/_classic_semantics.py": "0e41633ce31f33d8459ef48a6f6d10a0b4b31116c9847442da7163d12a691c94",
+    "stable_envs/_adapters/acrobot_process.py": "a9b3759b4901fc7d0ff948b026d10a362b027009fbfef0971d8a5d5bb147108f",
+    "stable_envs/_adapters/classic_execution.py": "e24fce09f8c47f5d1216af93cc350a6cb06343f9b009837a8cbe04e6e91f8fb7",
+    "stable_envs/_adapters/process_requests.py": "e4b6626543f4ee59a80223f413a2ff2381ba7d6e9dc0e01eafa01b49d6d810d6",
+    "stable_envs/envs/classic_control.py": "e158939aa7babb9a2701f8e9b84bb1393c412dd98e7bfe2c8d0cd857369b76b6",
+    "stable_envs/_stepping.py": "4b23abcf73767a4a59f0c106e098376ac7b2570608e5d4829a8919dd213f5f99",
+    "tests/helpers/reference/classic_before_snapshot.py": "49f00947fb9c63080b3e9a6102fda8cef3b4ec0dd14ecec5c2d2877b0ecffa11",
+    "tests/helpers/reference/acrobot_before_snapshot.py": "6b899473be8d3c3dfb8fd9f801f99d85afe7b03e10ca25e7203cd26fe95301ef",
+    "tests/helpers/reference/classic_snapshot.py": "34fd53eb2c4e570c38f25672568e4835063ff8c5cef2558c567d9c959202410c",
+    "scripts/benchmarks/online_stepping/classic_snapshot_sustained.py": "7a0aec88a3df74f3963a3472f3a3d686d5aec6739db7a8e27bb42317d737c255"
+  },
+  "workers": 0,
+  "renderer_backend": "auto",
+  "trajectory_sha256": [
+    "17ad7d23bb6b6292e9998f18dda0b7931b6047796f78126442193b9b8ba233b2",
+    "053a815342cecd6190704df84ee84c5d0115c4c5c0b3fd7ab5406c82e2c9a80e",
+    "13f842486bfbb11b73121e0b593d4eb07e57d6b797e8326560aa1db9ce04e212",
+    "2068c449260ccc993e52158384ed0d4e98c7190fa0b143481de73fc92b0c28f4",
+    "0d65701fdfa4216d11ae799dc037383301dc393e0ed647684cce4e5a52961f7a",
+    "5b5218f9df398291472dc517b2018c7a4426ea600ce405d6ce1bb3a9a6ec507c",
+    "95d91bad650fb7dd0311e887639d74ee64c6c5b15d1f9009cce0788834db7c2a",
+    "7c7c3683d14208fab55ae49b637304ffe097e05e535fc8afa06d3caae34de63c",
+    "0e35499df5796a562b480a8b17d46c591e809e5fe963cfb87b9ab38667b66b5c",
+    "f4efabc228025023974997a1b45c6280dfdaf4c720443b32cd5e4b2408b3bf0a",
+    "d1c5729ebdd27503015323d7adb541404024d8834dcc0ff1a404316d8b3a203c",
+    "6d9d7174a90542ed02d10dbf6327b5da2cf79a607d671f42c2c8a4ee6dbb75b3",
+    "719d1b169203853297c4c3ce88157b5f15eaaf9eb584212cf0dcc3de3a1b3bd4",
+    "5af3698b166eb46124864eccc859c13f9c27d7eb42f3b9621a018d74e674bab5",
+    "9201261e325c80871d256cbc0557958448904020ce719ad03084d8b16e9535a6",
+    "4c32d58102653244aea476fec95187e3dd1afc8be3c1a303ac8d7ca172a013b2"
+  ],
+  "gate_final_state_sha256": "8702b3541b6a6c4eb97f3520a25cae720d36c68c307d2422aded21d12b387084",
+  "steps_per_s_mean": 738.5598842540062,
+  "steps_per_s_sd": 2.3436051808456204
+}

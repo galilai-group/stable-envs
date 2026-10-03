@@ -197,3 +197,9 @@ Hopper, Walker and BallInCup have subsequently passed independently, bringing
 the [completed pipeline cohort to eight registrations](semantic_recovery_evidence/dmc_pipeline_family_20261003/completed/eight-registration-closure/):
 384 component rows and 288 paired online rows. Finger, Manipulator and Humanoid
 are still running; Quadruped remains excluded. No source comparison is implied.
+
+Finger has now passed its own CPU/CUDA sweep, extending the
+[completed cohort to nine registrations](semantic_recovery_evidence/dmc_pipeline_family_20261003/completed/nine-registration-closure/):
+432 component rows and 324 paired pipeline rows. Manipulator and Humanoid
+remain pending. These measurements retain the same library-control scope;
+same-device source and resource-matched parallel-source comparisons remain open.

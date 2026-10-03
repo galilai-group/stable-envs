@@ -1,0 +1,49 @@
+domain,device,host,gpu,job,batch,horizon,operation,rate_mean,rate_sd
+finger,cpu,gpu2107.oscar.ccv.brown.edu,,6970381,64,1,task_no_state_with_ipc,14340.899129013973,175.60420555587092
+finger,cpu,gpu2107.oscar.ccv.brown.edu,,6970381,64,1,state_export_with_ipc_transfer,39132.95489661899,1646.5323120435582
+finger,cpu,gpu2107.oscar.ccv.brown.edu,,6970381,64,1,render_saved_final,219.52737484355904,0.7795346823260988
+finger,cpu,gpu2107.oscar.ccv.brown.edu,,6970381,64,1,render_saved_all,219.74869154507292,0.2830832490733648
+finger,cpu,gpu2107.oscar.ccv.brown.edu,,6970381,64,8,task_no_state_with_ipc,14390.654395633348,56.238156297511466
+finger,cpu,gpu2107.oscar.ccv.brown.edu,,6970381,64,8,state_export_with_ipc_transfer,38630.7225525901,1399.0604825700752
+finger,cpu,gpu2107.oscar.ccv.brown.edu,,6970381,64,8,render_saved_final,218.4575842702727,0.5288076758834797
+finger,cpu,gpu2107.oscar.ccv.brown.edu,,6970381,64,8,render_saved_all,218.77637238082326,0.37394271318897215
+finger,cpu,gpu2107.oscar.ccv.brown.edu,,6970381,256,1,task_no_state_with_ipc,16998.866334336857,72.3562827075616
+finger,cpu,gpu2107.oscar.ccv.brown.edu,,6970381,256,1,state_export_with_ipc_transfer,61792.17518848743,1043.0732259986123
+finger,cpu,gpu2107.oscar.ccv.brown.edu,,6970381,256,1,render_saved_final,190.9752142780975,4.954422849480591
+finger,cpu,gpu2107.oscar.ccv.brown.edu,,6970381,256,1,render_saved_all,217.09897996424354,0.6547536428948052
+finger,cpu,gpu2107.oscar.ccv.brown.edu,,6970381,256,8,task_no_state_with_ipc,17076.971188301035,59.47407457257752
+finger,cpu,gpu2107.oscar.ccv.brown.edu,,6970381,256,8,state_export_with_ipc_transfer,60238.59230221262,839.2280293770795
+finger,cpu,gpu2107.oscar.ccv.brown.edu,,6970381,256,8,render_saved_final,181.81975136799267,3.161637863726018
+finger,cpu,gpu2107.oscar.ccv.brown.edu,,6970381,256,8,render_saved_all,211.73264255253463,0.7156360167001917
+finger,cpu,gpu2107.oscar.ccv.brown.edu,,6970381,1024,1,task_no_state_with_ipc,17070.695987850537,55.6161530458092
+finger,cpu,gpu2107.oscar.ccv.brown.edu,,6970381,1024,1,state_export_with_ipc_transfer,68774.84392981004,452.65059834948386
+finger,cpu,gpu2107.oscar.ccv.brown.edu,,6970381,1024,1,render_saved_final,153.51118445131203,7.646500210650779
+finger,cpu,gpu2107.oscar.ccv.brown.edu,,6970381,1024,1,render_saved_all,190.14978929564572,3.2668446822476063
+finger,cpu,gpu2107.oscar.ccv.brown.edu,,6970381,1024,8,task_no_state_with_ipc,17002.72785156016,190.4022412795058
+finger,cpu,gpu2107.oscar.ccv.brown.edu,,6970381,1024,8,state_export_with_ipc_transfer,69430.07491132163,525.4207978728057
+finger,cpu,gpu2107.oscar.ccv.brown.edu,,6970381,1024,8,render_saved_final,179.06191205480283,12.519877006252583
+finger,cpu,gpu2107.oscar.ccv.brown.edu,,6970381,1024,8,render_saved_all,191.59242979912352,1.6916169084852386
+finger,cuda,gpu2107.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6970381,64,1,task_no_state_with_ipc,13293.2948813553,136.1246661229591
+finger,cuda,gpu2107.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6970381,64,1,state_export_with_ipc_transfer,32273.276123317795,258.7908342113837
+finger,cuda,gpu2107.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6970381,64,1,render_saved_final,5857.230841070923,234.68082902759835
+finger,cuda,gpu2107.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6970381,64,1,render_saved_all,5985.666784776216,31.882649462600902
+finger,cuda,gpu2107.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6970381,64,8,task_no_state_with_ipc,12544.368292383924,2541.386551764992
+finger,cuda,gpu2107.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6970381,64,8,state_export_with_ipc_transfer,32860.985834869105,1653.14250327317
+finger,cuda,gpu2107.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6970381,64,8,render_saved_final,5972.798444298813,19.5105774573414
+finger,cuda,gpu2107.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6970381,64,8,render_saved_all,5969.185130326818,85.27011685116773
+finger,cuda,gpu2107.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6970381,256,1,task_no_state_with_ipc,16536.6466126674,151.22574954162056
+finger,cuda,gpu2107.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6970381,256,1,state_export_with_ipc_transfer,55021.69411836115,2261.8106166622624
+finger,cuda,gpu2107.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6970381,256,1,render_saved_final,17628.61032508653,65.72393468265712
+finger,cuda,gpu2107.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6970381,256,1,render_saved_all,17686.417270116206,87.12350404817353
+finger,cuda,gpu2107.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6970381,256,8,task_no_state_with_ipc,16252.042055464983,1052.263139645174
+finger,cuda,gpu2107.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6970381,256,8,state_export_with_ipc_transfer,55602.70120872683,1834.3919334155992
+finger,cuda,gpu2107.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6970381,256,8,render_saved_final,17628.78244684748,37.415411458224675
+finger,cuda,gpu2107.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6970381,256,8,render_saved_all,17740.273731153076,48.57433415688571
+finger,cuda,gpu2107.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6970381,1024,1,task_no_state_with_ipc,17266.52884508539,73.26594604928728
+finger,cuda,gpu2107.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6970381,1024,1,state_export_with_ipc_transfer,65658.32130810876,647.3330451007574
+finger,cuda,gpu2107.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6970381,1024,1,render_saved_final,30106.572325868343,152.58756522308155
+finger,cuda,gpu2107.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6970381,1024,1,render_saved_all,30480.501819998135,64.15993743113313
+finger,cuda,gpu2107.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6970381,1024,8,task_no_state_with_ipc,17191.508322353802,98.89140471885922
+finger,cuda,gpu2107.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6970381,1024,8,state_export_with_ipc_transfer,63939.23150225673,470.3874734566841
+finger,cuda,gpu2107.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6970381,1024,8,render_saved_final,30580.475260931893,124.2222272896684
+finger,cuda,gpu2107.oscar.ccv.brown.edu,NVIDIA GeForce RTX 3090,6970381,1024,8,render_saved_all,30706.218130315538,90.97302256844318

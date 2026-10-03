@@ -1,0 +1,16 @@
+{
+  "array_job_id": "6970790",
+  "tasks": {
+    "0": "Cube",
+    "1": "Scene"
+  },
+  "base_commit": "a388ee63fbbbc7039ea014ee91e6b9cec9d84e40",
+  "remote_directory": "/oscar/scratch/sboughan/se-semantic-recovery/ogbench-validation-columns-v1-20261003",
+  "observed_state": "RUNNING",
+  "observed_tests_per_task": {
+    "passed": 88,
+    "failed": 0,
+    "skipped": 0
+  },
+  "production_candidate_enabled": false
+}
