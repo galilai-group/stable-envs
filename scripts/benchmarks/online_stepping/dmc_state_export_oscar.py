@@ -13,7 +13,7 @@ def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--domain", required=True)
     p.add_argument("--reference-adapters", type=Path)
-    p.add_argument("--benchmark", choices=["dmc_state_export", "dmc_process_probe", "dmc_pipeline", "dmc_source_pipeline", "ogbench_state_export", "ogbench_maze_process", "ogbench_manipulation_process", "ogbench_render_defaults"], default="dmc_state_export")
+    p.add_argument("--benchmark", choices=["dmc_state_export", "dmc_process_probe", "dmc_pipeline", "dmc_source_pipeline", "ogbench_state_export", "ogbench_maze_process", "ogbench_manipulation_process", "ogbench_render_defaults", "ogbench_source_frame_gate"], default="dmc_state_export")
     p.add_argument("--source-root", type=Path)
     p.add_argument("--source-manifest", type=Path)
     p.add_argument("--source-mode", choices=["source_serial", "source_parallel", "ours"])
@@ -30,6 +30,11 @@ def main():
     if args.benchmark == "dmc_source_pipeline":
         if any(value is None for value in source_args):
             p.error("DMC source comparison requires --source-root, --source-manifest and --source-mode")
+    elif args.benchmark == "ogbench_source_frame_gate":
+        if args.source_root is None or args.source_manifest is None or args.source_mode is not None:
+            p.error("OGBench frame gate requires source root/manifest without a strategy mode")
+        if args.batches is not None or args.gates_only or args.reference_adapters is not None:
+            p.error("OGBench frame gate is fixed B2/P2 and does not accept benchmark overrides")
     elif any(value is not None for value in source_args):
         p.error("Source options apply only to dmc_source_pipeline")
     args.output.mkdir(parents=True, exist_ok=False)
@@ -69,6 +74,8 @@ def main():
             if args.benchmark == "dmc_source_pipeline":
                 command += ["--source-root", str(args.source_root), "--source-manifest", str(args.source_manifest),
                             "--mode", args.source_mode]
+            if args.benchmark == "ogbench_source_frame_gate":
+                command += ["--source-root", str(args.source_root), "--source-manifest", str(args.source_manifest)]
             if args.reference_adapters is not None:
                 command += ["--reference-adapters", str(args.reference_adapters)]
             if args.batches is not None:

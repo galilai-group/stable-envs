@@ -14,11 +14,11 @@ def _bytes_uint128(value: torch.Tensor) -> int:
 
 
 class OGBMazeReference:
-    def __init__(self, num_envs=1, seed=0):
+    def __init__(self, num_envs=1, seed=0, *, width=224, height=224):
         from stable_worldmodel.envs.ogbench.maze_env import MazeEnv
 
         self.num_envs = int(num_envs)
-        self.envs = [MazeEnv() for _ in range(self.num_envs)]
+        self.envs = [MazeEnv(width=width, height=height) for _ in range(self.num_envs)]
         self._global_rng = [np.random.RandomState(int(seed) + i).get_state() for i in range(self.num_envs)]
 
     def _in_legacy_rng(self, lane, function, *args, **kwargs):

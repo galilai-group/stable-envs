@@ -1,0 +1,15 @@
+{
+  "status": "CPU_PREREQUISITES_PASS_GPU_PENDING",
+  "candidate_files_verified": 249,
+  "source_files_verified": 7,
+  "frozen_synthetic_tests": 67,
+  "real_cpu_cases": 48,
+  "ruff": "PASS",
+  "shell_syntax": "PASS",
+  "production_changes": false,
+  "acceptance_changes": false,
+  "counts": {
+    "VERIFIED": 39,
+    "INCOMPLETE": 3
+  }
+}

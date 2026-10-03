@@ -279,3 +279,13 @@ histories, zero task padding, next-call lifecycle and clean worker exits. They
 use a render-free adapter fixture: the real public Maze constructor attempted a
 renderer bake and was stopped by the local guard. Public construction, frame
 parity, CUDA and performance remain pending; production is unchanged.
+
+The [source-frame transport checkpoint](semantic_recovery_evidence/ogbench_source_frames_20261003/)
+adds benchmark-only selected uint8 frame columns and held terminal images.
+All 12 nonterminal, 12 empty-frame shared-memory, and 24 terminal CPU cases pass;
+67 synthetic helper/report checks pass from the frozen candidate. Source defaults
+remain Maze/Cube 224x224 and Scene 200x200; the prepared gate explicitly uses
+64x64 for both implementations. The three-registration public CPU/CUDA source-image
+gate is prepared but not uploaded/submitted while SSH authentication is unavailable.
+This is not image, resource-lifetime or performance acceptance. The column-validation
+optimization remains isolated and its submitted job remains uncollected.

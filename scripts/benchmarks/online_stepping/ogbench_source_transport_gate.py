@@ -39,6 +39,9 @@ def main():
     p.add_argument("--source-root", type=Path, required=True)
     p.add_argument("--source-manifest", type=Path, required=True)
     p.add_argument("--output", type=Path, required=True)
+    p.add_argument("--empty-frames", action="store_true",
+                   help="Exercise zero-length shared frame columns without initializing GL")
+    p.add_argument("--render-size", type=int, default=None)
     args = p.parse_args()
     if args.output.exists():
         raise FileExistsError(args.output)
@@ -46,6 +49,7 @@ def main():
     assert manifest["commit"] == PIN
     for rel, digest in manifest["files"].items():
         assert hashlib.sha256((args.source_root / rel).read_bytes()).hexdigest() == digest, rel
+    frame_indices = () if args.empty_frames else None
     torch.set_num_threads(1)
     files = [Path(__file__).relative_to(Path.cwd()),
              Path("scripts/benchmarks/online_stepping/ogbench_parallel_source.py"),
@@ -60,7 +64,8 @@ def main():
         candidate_files={str(f): hashlib.sha256(f.read_bytes()).hexdigest() for f in files},
         versions={n: importlib.metadata.version(n) for n in
                   ("ogbench", "mujoco", "dm-control", "torch", "numpy", "gymnasium", "tensordict")},
-        no_rendering=True, no_timing=True, state_rpc="untimed pickle, task columns use shared memory",
+        no_rendering=True, no_timing=True, empty_frames=args.empty_frames,
+        requested_render_size=args.render_size, state_rpc="untimed pickle, task columns use shared memory",
         cases=[], worker_closures=[])
     args.output.parent.mkdir(parents=True, exist_ok=True)
 
@@ -72,8 +77,9 @@ def main():
         with patch("mujoco.Renderer", side_effect=AssertionError("No parent renderer in transport prerequisite")):
             for family in ("Maze", "Cube", "Scene"):
                 for horizon in (1, 8):
-                    with contextlib.closing(OGBSource(family, args.source_root, 2)) as serial, \
-                            ParallelOGBSource(family, args.source_root, 2, 2, horizon) as workers:
+                    with contextlib.closing(OGBSource(family, args.source_root, 2, render_size=args.render_size)) as serial, \
+                            ParallelOGBSource(family, args.source_root, 2, 2, horizon,
+                                              frame_indices=frame_indices, render_size=args.render_size) as workers:
                         assert workers.vector.shared_memory and workers.vector.copy
                         assert workers.vector.autoreset_mode.name == "DISABLED"
                         initial = serial.snapshot()
@@ -87,7 +93,7 @@ def main():
                             actions = np.random.default_rng(31).uniform(-.5, .5,
                                 (2, horizon, workers.action_dim)).astype(dtype)
                             outside = copy.deepcopy(np.random.get_state())
-                            expected = serial.step(actions)
+                            expected = serial.step(actions, frame_indices)
                             actual = workers.step(actions)
                             equal(outside, np.random.get_state())
                             assert set(actual) == set(expected)
@@ -118,7 +124,7 @@ def main():
                                 assert row["pid"] != os.getpid() and row["torch_threads"] == 1
                                 assert row["start"] == lane and row["size"] == 1 and row["renderers_absent"]
                             report["cases"].append(dict(family=family, batch=2, workers=2, horizon=horizon,
-                                action_dtype=np.dtype(dtype).name, source_tasks="PASS", source_snapshot="PASS",
+                                action_dtype=np.dtype(dtype).name, render_size=serial.render_size, source_tasks="PASS", source_snapshot="PASS",
                                 restore_replay="PASS", shared_output_ownership="PASS", state_ownership="PASS",
                                 global_rng_preserved="PASS", worker_info=inspection))
                             save()

@@ -1,8 +1,9 @@
 """Benchmark-only persistent OGBench source workers with shared task columns.
 
-No rendering yet. Within each chunk, finished lanes stop advancing and task
-padding is zero with an explicit validity column. A new call retains ordinary
-source post-terminal behavior. Snapshot/restore RPCs are untimed preparation.
+Within each chunk, finished lanes stop advancing; selected images hold their
+terminal endpoint and task padding is zero. A new call retains ordinary source
+post-terminal behavior. Snapshot/restore RPCs are untimed preparation. Real GL
+rendering and CUDA frame transport require separate Oscar acceptance.
 """
 
 import functools
@@ -23,28 +24,34 @@ from tests.helpers.reference.ogbench_maze_semantics import OGBMazeReference
 
 
 class OGBSource:
-    def __init__(self, family, root, batch, seed=17):
+    def __init__(self, family, root, batch, seed=17, *, render_size=None):
         if family not in ("Maze", "Cube", "Scene") or batch < 1:
             raise ValueError("Expected Maze/Cube/Scene and a positive batch")
+        if render_size is not None and (type(render_size) is not int or render_size < 1):
+            raise ValueError("Positive integer source image size required")
         root = Path(root).resolve()
         if "stable_worldmodel" not in sys.modules:
             import_source(root)
         else:
             assert list(sys.modules["stable_worldmodel"].__path__) == [str(root / "stable_worldmodel")]
         self.family, self.batch = family, batch
+        render_kwargs = {} if render_size is None else dict(width=render_size, height=render_size)
         self.module = ownership_module()
         self.reference = None
         self.envs = []
         try:
             if family == "Maze":
-                self.reference = OGBMazeReference(num_envs=batch, seed=seed)
+                self.reference = OGBMazeReference(num_envs=batch, seed=seed, **render_kwargs)
                 self.envs = self.reference.envs
                 self.reference.reset(seed)
+                self.render_size = 224 if render_size is None else render_size
             else:
                 for i in range(batch):
-                    env = getattr(self.module, "Owned" + family)(entropy_seed=seed + i)
+                    env = getattr(self.module, "Owned" + family)(entropy_seed=seed + i, **render_kwargs)
                     self.envs.append(env)
                     env.reset(seed=seed + i)
+                self.render_size = self.envs[0]._render_width
+                assert self.render_size == self.envs[0]._render_height
         except BaseException:
             self.close()
             raise
@@ -61,13 +68,40 @@ class OGBSource:
             for env, row in zip(self.envs, state, strict=True):
                 self.module.restore(env, row)
 
-    def step(self, actions):
+    def _render_lane(self, lane):
+        env = self.envs[lane]
+        frame = np.asarray(env.render() if self.family == "Maze" else env.render(camera="front_pixels"))
+        if frame.dtype != np.uint8 or frame.shape != (self.render_size, self.render_size, 3):
+            raise ValueError("Source returned an unexpected image shape/dtype")
+        return frame
+
+    def renderer_info(self):
+        """Query the actual source renderer; initializes it outside timing."""
+        from OpenGL import GL
+
+        self._render_lane(0)
+        target = self.envs[0].env if self.family == "Maze" else self.envs[0]
+        renderer = target.custom_renderer if self.family == "Maze" else target._renderer
+        renderer._gl_context.make_current()
+        vendor = GL.glGetString(GL.GL_VENDOR).decode()
+        name = GL.glGetString(GL.GL_RENDERER).decode()
+        return dict(vendor=vendor, renderer=name,
+                    software=any(x in name.lower() for x in ("llvmpipe", "softpipe", "swrast")))
+
+    def step(self, actions, frame_indices=None):
         actions = np.asarray(actions)
         dim = 2 if self.family == "Maze" else 5
         if (actions.ndim != 3 or actions.shape[0] != self.batch or actions.shape[1] < 1
                 or actions.shape[2] != dim or actions.dtype not in (np.float32, np.float64)
                 or not np.isfinite(actions).all()):
             raise ValueError("Require finite float32/float64 [B,T,A] source actions")
+        if frame_indices is not None:
+            frame_indices = tuple(frame_indices)
+            if (any(type(i) is not int or not 0 <= i < actions.shape[1] for i in frame_indices)
+                    or len(set(frame_indices)) != len(frame_indices)):
+                raise ValueError("Frame indices must be unique in-range integers")
+        frame_times = set(frame_indices or ())
+        saved_frames, cached_frames = {}, [None] * self.batch
         columns, validity = [], []
         active = np.ones(self.batch, dtype=bool)
         previous = [None] * self.batch
@@ -79,6 +113,9 @@ class OGBSource:
             else:
                 rows = [env.step(actions[i, t]) if active[i] else previous[i] for i, env in enumerate(self.envs)]
             previous = rows
+            if frame_times:
+                for i in np.flatnonzero(active):
+                    cached_frames[i] = None
             tasks = {"reward": np.asarray([r[1] for r in rows], np.float64),
                      "terminated": np.asarray([r[2] for r in rows], bool),
                      "truncated": np.asarray([r[3] for r in rows], bool),
@@ -92,21 +129,39 @@ class OGBSource:
             for values in tasks.values():
                 values[~active] = 0
             columns.append(tasks)
+            if t in frame_times:
+                for i in range(self.batch):
+                    if cached_frames[i] is None:
+                        cached_frames[i] = self._render_lane(i)
+                saved_frames[t] = np.stack(cached_frames)
             active &= ~done
         result = {key: np.stack([row[key] for row in columns], axis=1) for key in columns[0]}
         result["valid"] = np.stack(validity, axis=1)
+        if frame_indices is not None:
+            result["frames"] = (np.stack([saved_frames[t] for t in frame_indices], axis=1) if frame_indices else
+                                np.empty((self.batch, 0, self.render_size, self.render_size, 3), np.uint8))
+            result["frame_valid"] = result["valid"][:, list(frame_indices)]
         return result
 
     def close(self):
         for env in self.envs:
+            target = env.env if self.family == "Maze" else env
+            field = "custom_renderer" if self.family == "Maze" else "_renderer"
+            renderer = getattr(target, field, None)
+            if renderer is not None:
+                # Upstream close() does not release this dedicated renderer.
+                # This is untimed benchmark teardown, not a source algorithm edit.
+                renderer.close()
+                setattr(target, field, None)
             env.close()
         self.envs = []
         self.reference = None
 
 
 class OGBSourceShard(SourceShard):
-    def __init__(self, *args, action_dim, **kwargs):
+    def __init__(self, *args, action_dim, render_size=None, **kwargs):
         super().__init__(*args, **kwargs)
+        self.render_size = render_size
         self.action_space = gym.spaces.Box(-np.inf, np.inf,
             (self.shard_size, self.horizon, action_dim), np.float64)
 
@@ -115,15 +170,19 @@ class OGBSourceShard(SourceShard):
         torch.set_num_threads(1)
         if self.ref is not None:
             self.ref.close()
-        self.ref = OGBSource(self.domain, self.source_root, self.shard_size, seed=17 + self.start)
+        self.ref = OGBSource(self.domain, self.source_root, self.shard_size,
+                             seed=17 + self.start, render_size=self.render_size)
         return {key: np.zeros(space.shape, dtype=space.dtype)
                 for key, space in self.observation_space.items()}, {}
 
     def step(self, actions):
-        return self.ref.step(actions), 0., False, False, {}
+        return self.ref.step(actions, self.frame_indices), 0., False, False, {}
 
     def snapshot(self):
         return self.ref.snapshot()
+
+    def renderer_info(self):
+        return self.ref.renderer_info()
 
     def inspection(self):
         return dict(pid=os.getpid(), torch_threads=torch.get_num_threads(),
@@ -140,15 +199,25 @@ class OGBSourceShard(SourceShard):
 
 
 class ParallelOGBSource(ParallelSource):
-    def __init__(self, family, root, batch, workers, horizon):
+    def __init__(self, family, root, batch, workers, horizon, *, frame_indices=None, render_size=None):
         if workers < 1 or batch < workers or batch % workers or horizon < 1:
             raise ValueError("Require positive equal source shards and horizon")
         self.family, self.batch, self.workers, self.horizon = family, batch, workers, horizon
         self.action_dim = 2 if family == "Maze" else 5
-        prototype = OGBSource(family, root, 1)
+        prototype = OGBSource(family, root, 1, render_size=render_size)
         try:
+            render_size = prototype.render_size
+            # Infer task layout without opening an otherwise idle renderer in
+            # the parent. Frame layout follows the explicit source dimensions.
             sample = prototype.step(np.zeros((1, horizon, self.action_dim), np.float64))
             layout = {key: (value.shape[1:], value.dtype.str) for key, value in sample.items()}
+            if frame_indices is not None:
+                frame_indices = tuple(frame_indices)
+                if (any(type(i) is not int or not 0 <= i < horizon for i in frame_indices)
+                        or len(set(frame_indices)) != len(frame_indices)):
+                    raise ValueError("Frame indices must be unique in-range integers")
+                layout["frames"] = ((len(frame_indices), render_size, render_size, 3), np.dtype(np.uint8).str)
+                layout["frame_valid"] = ((len(frame_indices),), np.dtype(bool).str)
             classes = [*type(prototype.envs[0]).__mro__, gym.vector.AsyncVectorEnv]
             if family == "Maze":
                 classes += list(type(prototype.envs[0].env).__mro__)
@@ -163,7 +232,8 @@ class ParallelOGBSource(ParallelSource):
             prototype.close()
         size = batch // workers
         factories = [functools.partial(OGBSourceShard, family, str(root), size, i * size,
-                                      horizon, (), layout, action_dim=self.action_dim) for i in range(workers)]
+                                      horizon, frame_indices, layout, action_dim=self.action_dim,
+                                      render_size=render_size) for i in range(workers)]
         self.vector = gym.vector.AsyncVectorEnv(factories, shared_memory=True, copy=True,
                                                context="spawn", autoreset_mode=gym.vector.AutoresetMode.DISABLED)
         try:
@@ -189,3 +259,6 @@ class ParallelOGBSource(ParallelSource):
 
     def restore(self, state):
         self.vector.call("restore", state)
+
+    def renderer_info(self):
+        return self.vector.call("renderer_info")

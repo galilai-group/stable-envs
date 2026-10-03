@@ -1,0 +1,9 @@
+{
+  "status": "NOT_UPLOADED_NOT_SUBMITTED",
+  "reason": "SSH keyboard-interactive authentication denied",
+  "local_bundle": "/private/tmp/ogbench-source-frames-bundle-v1-20261003",
+  "remote": "/oscar/scratch/sboughan/se-semantic-recovery/ogbench-source-frames-v1-20261003",
+  "archive_sha256": "f2055c6fd0d169f7b31d88cf688a38ff11a1700b6a67eed5603dee2c717a7b6e",
+  "candidate_files": 249,
+  "source_files": 7
+}

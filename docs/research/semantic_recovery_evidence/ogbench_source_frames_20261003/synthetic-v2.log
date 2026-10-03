@@ -1,0 +1,29 @@
+...............................................F                         [100%]
+=================================== FAILURES ===================================
+_______ test_gate_rejects_source_transport_drift_and_excess_library_mse ________
+
+    def test_gate_rejects_source_transport_drift_and_excess_library_mse():
+        from scripts.benchmarks.online_stepping.ogbench_source_frame_gate import compare
+    
+        expected = {'frames': np.zeros((2, 1, 2, 2, 3), np.uint8)}
+        small = {'frames': np.ones((2, 1, 2, 2, 3), np.uint8)}
+        large = {'frames': np.full((2, 1, 2, 2, 3), 255, np.uint8)}
+>       assert compare(small, expected, library=True) == [1 / 255 ** 2] * 2
+E       assert [1.5378700499...499807765e-05] == [1.5378700499...499807768e-05]
+E         
+E         At index 0 diff: 1.5378700499807765e-05 != 1.5378700499807768e-05
+E         Use -v to get more diff
+
+tests/unit/test_ogbench_source_frames.py:155: AssertionError
+=============================== warnings summary ===============================
+../../../stable-worldmodel/stable_worldmodel/envs/__init__.py:215
+  /Users/samib/stable-worldmodel/stable_worldmodel/envs/__init__.py:215: UserWarning: ale-py not found; ALE/* envs are unavailable. Install with: pip install 'stable-worldmodel[env]' or pip install ale-py.
+    from stable_worldmodel.envs import ale  # noqa: F401
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+------------------------------ stable-envs safety ------------------------------
+resources: 0 EGL contexts created, 0 released, 0 live (peak 0); renderers 0 created / 0 closed
+node: Mac-169.lan slurm=? reason=none reference-renderer={}
+=========================== short test summary info ============================
+FAILED tests/unit/test_ogbench_source_frames.py::test_gate_rejects_source_transport_drift_and_excess_library_mse
+1 failed, 47 passed, 1 warning in 0.24s
