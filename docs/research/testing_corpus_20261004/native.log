@@ -1,0 +1,22 @@
+.......................................................................  [100%]Required native source profile: PASS, 56/56 passed
+
+=============================== warnings summary ===============================
+tests/contracts/test_online.py::test_selected_states_follow_source[CartPole-seed17-int64]
+  /Users/samib/stable-worldmodel/stable_worldmodel/envs/__init__.py:215: UserWarning: ale-py not found; ALE/* envs are unavailable. Install with: pip install 'stable-worldmodel[env]' or pip install ale-py.
+    from stable_worldmodel.envs import ale  # noqa: F401
+
+tests/contracts/test_saved_native.py::test_frozen_source_state_and_tasks[cartpole-CartPole]
+tests/contracts/test_saved_trajectory.py::test_disk_restore_continuation_and_capture[cpu-CartPole]
+tests/contracts/test_simulation.py::test_independent_source_trajectory[CartPole-seed17-int64]
+tests/contracts/test_simulation.py::test_independent_source_trajectory[CartPole-seed42-int64]
+tests/contracts/test_state.py::test_restore_and_ownership[CartPole-seed42-int64]
+tests/contracts/test_task.py::test_independent_source_task_outputs[CartPole-seed17-int64]
+tests/contracts/test_task.py::test_independent_source_task_outputs[CartPole-seed42-int64]
+  /private/tmp/se-contract-source-deps-20261004/gymnasium/envs/classic_control/cartpole.py:213: UserWarning: [33mWARN: You are calling 'step()' even though this environment has already returned terminated = True. You should always call 'reset()' once you receive 'terminated = True' -- any further steps are undefined behavior.[0m
+    logger.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+------------------------------ stable-envs safety ------------------------------
+resources: 0 EGL contexts created, 0 released, 0 live (peak 0); renderers 0 created / 0 closed
+node: cis1b1zs2j3.ad.brown.edu slurm=? reason=none reference-renderer={}
+71 passed, 5 deselected, 8 warnings in 2.13s

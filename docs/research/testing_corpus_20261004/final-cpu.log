@@ -1,0 +1,20 @@
+........................................................................ [ 63%]
+..........................................                               [100%]
+=============================== warnings summary ===============================
+tests/unit/test_full_state_contract.py::test_full_snapshot_restores_future_and_has_no_aliases[PushT]
+tests/unit/test_full_state_contract.py::test_full_snapshot_restores_future_and_has_no_aliases[PushTDiscrete]
+tests/unit/test_full_state_contract.py::test_lossy_projection_is_rejected_and_full_state_renders[PushT]
+tests/unit/test_full_state_contract.py::test_lossy_projection_is_rejected_and_full_state_renders[PushTDiscrete]
+  /private/tmp/se-completion-312/lib/python3.12/site-packages/gymnasium/spaces/box.py:424: UserWarning: [33mWARN: Casting input x to numpy array.[0m
+    gym.logger.warn("Casting input x to numpy array.")
+
+tests/contracts/test_saved_native.py::test_frozen_source_state_and_tasks[cartpole-CartPole]
+tests/contracts/test_saved_trajectory.py::test_disk_restore_continuation_and_capture[cpu-CartPole]
+  /private/tmp/se-completion-312/lib/python3.12/site-packages/gymnasium/envs/classic_control/cartpole.py:214: UserWarning: [33mWARN: You are calling 'step()' even though this environment has already returned terminated = True. You should always call 'reset()' once you receive 'terminated = True' -- any further steps are undefined behavior.[0m
+    logger.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+------------------------------ stable-envs safety ------------------------------
+resources: 0 EGL contexts created, 0 released, 0 live (peak 0); renderers 0 created / 0 closed
+node: cis1b1zs2j3.ad.brown.edu slurm=? reason=none reference-renderer={}
+114 passed, 5 deselected, 6 warnings in 12.45s
