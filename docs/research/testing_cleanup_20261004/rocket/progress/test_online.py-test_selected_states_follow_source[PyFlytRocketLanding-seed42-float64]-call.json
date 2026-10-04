@@ -1,0 +1,6 @@
+{
+  "detail": null,
+  "node": "tests/contracts/test_online.py::test_selected_states_follow_source[PyFlytRocketLanding-seed42-float64]",
+  "phase": "call",
+  "status": "PASS"
+}

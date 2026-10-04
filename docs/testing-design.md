@@ -3,8 +3,36 @@
 Review date: 2026-10-04. Baseline: `sami-dev` at `c229a921`, plus the
 Rocket device-guard/private-helper candidate under acceptance. This document
 records the testing approach used in recovery and proposes an incremental
-cleanup. The proposed modules and runner below do **not** exist yet. Craftax is
+cleanup. The implementation status below distinguishes migrated pieces from
+remaining work. Craftax is
 outside this work. Existing evidence and acceptance thresholds stay unchanged.
+
+## Implementation checkpoint
+
+The initial cleanup now provides:
+
+- A 38-registration coverage inventory backed by the accepted matrix, with an
+  explicit four-registration Craftax exclusion and separate current-run status.
+- Shared overflow-safe RGB MSE, explicitly labeled SD, typed leaf diagnostics,
+  write-once evidence directories, hash verification and raw failure bundles.
+- Named render-projection round-trip checks; the misleading old spelling is only
+  a compatibility alias. Full State retains its independent semantic checks.
+- Explicit native, FetchReach and Rocket source profiles across State, simulation,
+  task and online State capture, with source pins and complete required-case
+  accounting. Missing dependencies and partial selections cannot pass.
+- Read-only native corpus replay without the full source package, plus a Rocket
+  saved-pixel consumer checked against the preserved historical verifier on valid
+  and invalid evidence. Historical drivers and accepted artifacts are unchanged.
+- Git-index-scoped repository checks and contributor commands in [Testing](testing.md).
+
+This implements the shared foundation and representative migration from steps
+1–3. It does **not** replace all family acceptance drivers: their existing boundary,
+contact, Variation, process and live CPU/CUDA render gates remain required. The
+inventory points to those gates and preserves their exact accepted scopes.
+Remaining work is a general reached-state corpus format/generator, migration of
+the remaining family drivers and benchmark consumers, and removal of duplicate
+legacy orchestration only after equivalent outcomes are demonstrated. These are
+steps 4–5, rather than new simulator or renderer APIs.
 
 ## Recommendation
 

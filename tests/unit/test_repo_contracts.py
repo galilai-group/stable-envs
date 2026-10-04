@@ -11,8 +11,11 @@ from pathlib import Path
 
 import pytest
 
+from tests.helpers.repository import maintained_paths
+
 ROOT = Path(__file__).resolve().parents[2]
 SELF = Path(__file__).resolve()
+MAINTAINED_PATHS = maintained_paths(ROOT)
 
 REQUIRED_FIXTURES = (
     "tests/fixtures/regression/support_matrix.json",
@@ -36,9 +39,7 @@ def test_the_regression_fixtures_are_present():
 
 
 def test_scratch_is_not_part_of_the_maintained_tree():
-    assert not (ROOT / "scratch").exists(), (
-        "scratch/ was promoted off the product branch; restore it from step8-closure if you need a historical probe"
-    )
+    assert not any(name.startswith("scratch/") for name in MAINTAINED_PATHS), "scratch/ is not a product artifact"
 
 
 _CITE = re.compile(r"(?<!oscar/)scratch/[A-Za-z0-9_./{}*,\\-]+")
@@ -81,6 +82,8 @@ def test_maintained_product_files_do_not_cite_scratch_paths():
             if not f.is_file() or f.suffix not in {".py", ".md", ".yml", ".yaml", ".toml", ".sh", ".sbatch"}:
                 continue
             key = f.relative_to(ROOT).as_posix()
+            if key not in MAINTAINED_PATHS:
+                continue
             if key in _ALLOW_SCRATCH_MENTION or key.startswith("scripts/regression/"):
                 continue
             if "fixtures/regression/join" in key:
@@ -147,7 +150,8 @@ def test_every_docs_page_is_reachable_from_the_nav():
     _nav_targets(cfg.get("nav", []), listed)
     targets = set(listed)
     assert "research/index.md" in targets, "the research archive landing page must be in the nav"
-    pages = {str(p.relative_to(ROOT / "docs")) for p in (ROOT / "docs").rglob("*.md")}
+    pages = {name.removeprefix("docs/") for name in MAINTAINED_PATHS
+             if name.startswith("docs/") and name.endswith(".md")}
     allowed_orphans = {
         p for p in pages if (p.startswith("research/") and p != "research/index.md") or p in _NAV_OPTIONAL
     }

@@ -18,6 +18,14 @@ share one definition of "mismatch".
 
 from __future__ import annotations
 
+import importlib.metadata
+import os
+import platform
+import subprocess
+from pathlib import Path
+
+from .evidence import sha256
+
 #: ``reference_packages`` values that mean "installed, version unknown" (``fidelity_step4.provenance``
 #: writes ``"present"`` for a package with no ``__version__``). Unknown cannot confirm a match.
 UNKNOWN = (None, "", "present")
@@ -35,6 +43,59 @@ REFERENCE_JUDGED_CHECKS = (
 def normalize_package(name: str) -> str:
     """``mujoco-warp`` and ``mujoco_warp`` are one package; compare them as one key."""
     return str(name).strip().lower().replace("-", "_")
+
+
+def pinned_source_identity(root, commit, versions) -> dict:
+    """New source profiles require explicit pins and a clean matching checkout.
+
+    Historical undeclared profiles keep their old behavior below. Runtime math
+    identity is recorded for replay diagnostics, not asserted portable by versions.
+    """
+    if not commit or not versions or any(value in UNKNOWN for value in versions.values()):
+        raise ValueError("New source comparisons require a commit and explicit package pins")
+    root = Path(root).resolve(strict=True)
+
+    def git(*args):
+        return subprocess.check_output(["git", "-C", str(root), *args], text=True).strip()
+
+    actual = git("rev-parse", "HEAD")
+    if actual != commit or git("status", "--porcelain", "--untracked-files=no"):
+        raise ValueError("Source checkout must be clean and match the pinned commit")
+    recorded = {}
+    for package in versions:
+        try:
+            recorded[package] = importlib.metadata.version(package)
+        except importlib.metadata.PackageNotFoundError:
+            recorded[package] = None
+    mismatch = reference_version_mismatch(versions, recorded)
+    if mismatch:
+        raise ValueError("Source profile blocked: " + "; ".join(mismatch))
+    names = git("ls-files", "-z", "stable_worldmodel").split("\0")
+    files = {name: sha256(root / name) for name in names if name and (root / name).is_file()}
+    if not files:
+        raise ValueError("Source checkout contains no tracked source files")
+    import numpy as np
+
+    return dict(
+        root=str(root),
+        commit=actual,
+        files=files,
+        versions=recorded,
+        python=platform.python_version(),
+        platform=platform.platform(),
+        machine=platform.machine(),
+        numpy_config=np.show_config(mode="dicts"),
+        math_environment={
+            name: os.environ.get(name)
+            for name in (
+                "OPENBLAS_CORETYPE",
+                "OPENBLAS_NUM_THREADS",
+                "OMP_NUM_THREADS",
+                "MKL_NUM_THREADS",
+                "NPY_DISABLE_CPU_FEATURES",
+            )
+        },
+    )
 
 
 def reference_version_mismatch(declared: dict | None, recorded: dict | None) -> list[str]:

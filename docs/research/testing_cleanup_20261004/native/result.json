@@ -1,0 +1,347 @@
+{
+  "cases": {
+    "tests/contracts/test_online.py::test_selected_states_follow_source[CartPole-seed17-int64]": {
+      "detail": null,
+      "phase": "call",
+      "status": "PASS"
+    },
+    "tests/contracts/test_online.py::test_selected_states_follow_source[CartPole-seed42-int64]": {
+      "detail": null,
+      "phase": "call",
+      "status": "PASS"
+    },
+    "tests/contracts/test_online.py::test_selected_states_follow_source[Pendulum-seed17-float32]": {
+      "detail": null,
+      "phase": "call",
+      "status": "PASS"
+    },
+    "tests/contracts/test_online.py::test_selected_states_follow_source[Pendulum-seed17-float64]": {
+      "detail": null,
+      "phase": "call",
+      "status": "PASS"
+    },
+    "tests/contracts/test_online.py::test_selected_states_follow_source[Pendulum-seed42-float32]": {
+      "detail": null,
+      "phase": "call",
+      "status": "PASS"
+    },
+    "tests/contracts/test_online.py::test_selected_states_follow_source[Pendulum-seed42-float64]": {
+      "detail": null,
+      "phase": "call",
+      "status": "PASS"
+    },
+    "tests/contracts/test_simulation.py::test_independent_source_trajectory[CartPole-seed17-int64]": {
+      "detail": null,
+      "phase": "call",
+      "status": "PASS"
+    },
+    "tests/contracts/test_simulation.py::test_independent_source_trajectory[CartPole-seed42-int64]": {
+      "detail": null,
+      "phase": "call",
+      "status": "PASS"
+    },
+    "tests/contracts/test_simulation.py::test_independent_source_trajectory[Pendulum-seed17-float32]": {
+      "detail": null,
+      "phase": "call",
+      "status": "PASS"
+    },
+    "tests/contracts/test_simulation.py::test_independent_source_trajectory[Pendulum-seed17-float64]": {
+      "detail": null,
+      "phase": "call",
+      "status": "PASS"
+    },
+    "tests/contracts/test_simulation.py::test_independent_source_trajectory[Pendulum-seed42-float32]": {
+      "detail": null,
+      "phase": "call",
+      "status": "PASS"
+    },
+    "tests/contracts/test_simulation.py::test_independent_source_trajectory[Pendulum-seed42-float64]": {
+      "detail": null,
+      "phase": "call",
+      "status": "PASS"
+    },
+    "tests/contracts/test_state.py::test_restore_and_ownership[CartPole-seed17-int64]": {
+      "detail": null,
+      "phase": "call",
+      "status": "PASS"
+    },
+    "tests/contracts/test_state.py::test_restore_and_ownership[CartPole-seed42-int64]": {
+      "detail": null,
+      "phase": "call",
+      "status": "PASS"
+    },
+    "tests/contracts/test_state.py::test_restore_and_ownership[Pendulum-seed17-float32]": {
+      "detail": null,
+      "phase": "call",
+      "status": "PASS"
+    },
+    "tests/contracts/test_state.py::test_restore_and_ownership[Pendulum-seed17-float64]": {
+      "detail": null,
+      "phase": "call",
+      "status": "PASS"
+    },
+    "tests/contracts/test_state.py::test_restore_and_ownership[Pendulum-seed42-float32]": {
+      "detail": null,
+      "phase": "call",
+      "status": "PASS"
+    },
+    "tests/contracts/test_state.py::test_restore_and_ownership[Pendulum-seed42-float64]": {
+      "detail": null,
+      "phase": "call",
+      "status": "PASS"
+    },
+    "tests/contracts/test_task.py::test_independent_source_task_outputs[CartPole-seed17-int64]": {
+      "detail": null,
+      "phase": "call",
+      "status": "PASS"
+    },
+    "tests/contracts/test_task.py::test_independent_source_task_outputs[CartPole-seed42-int64]": {
+      "detail": null,
+      "phase": "call",
+      "status": "PASS"
+    },
+    "tests/contracts/test_task.py::test_independent_source_task_outputs[Pendulum-seed17-float32]": {
+      "detail": null,
+      "phase": "call",
+      "status": "PASS"
+    },
+    "tests/contracts/test_task.py::test_independent_source_task_outputs[Pendulum-seed17-float64]": {
+      "detail": null,
+      "phase": "call",
+      "status": "PASS"
+    },
+    "tests/contracts/test_task.py::test_independent_source_task_outputs[Pendulum-seed42-float32]": {
+      "detail": null,
+      "phase": "call",
+      "status": "PASS"
+    },
+    "tests/contracts/test_task.py::test_independent_source_task_outputs[Pendulum-seed42-float64]": {
+      "detail": null,
+      "phase": "call",
+      "status": "PASS"
+    }
+  },
+  "duplicates": [],
+  "missing": [],
+  "passed": 24,
+  "profile": "native",
+  "required": 24,
+  "scope": "source regression subset; no promotion",
+  "source": {
+    "commit": "176d54532b3c0a251a4f509b74f2fdacc143a63d",
+    "files": {
+      "stable_worldmodel/__init__.py": "098841b3d30e15ebc9ef7d6f4448b971c33369b93d9cd3a4a7b7b94e548f223a",
+      "stable_worldmodel/cli.py": "7503878b685b4398b8f85445340eaedcfbbe51acae4a7c92a0dd60cbdfb7a4a8",
+      "stable_worldmodel/data/__init__.py": "65381049c0ca1ac744149926dbab6ff22480c96cdc6a59ebaa0689742ac43179",
+      "stable_worldmodel/data/buffer.py": "daa0263bb409ce03c67089adcbc915f8649ae8d5f9fd736f1722ebeeb415cd97",
+      "stable_worldmodel/data/dataset.py": "f0b0027cfc9c3341a93b15b957596c2c0bc62fc2b48a609a4814eeaf89a47982",
+      "stable_worldmodel/data/format.py": "cc9561a31b7315b1ea781ab99c8e6878ed2ac8ecd440ae67a50258322d099ff2",
+      "stable_worldmodel/data/formats/__init__.py": "ae9ae535959052b2494ae60cc6c131275cd7a03d34cff0fc439d0ab989fa0637",
+      "stable_worldmodel/data/formats/folder.py": "136282cef79bb2f8bcc11ef929ab32b20f19b29ef6acdea6cd5b380e9612abdc",
+      "stable_worldmodel/data/formats/hdf5.py": "afe836ec706acc6c55450f3c936a5898b57ed65a999695af25b4b59cd14d10f3",
+      "stable_worldmodel/data/formats/lance.py": "5643a80df28fc8b658b7323bbfcc7684c4ce4280f1ecd24a160ef823c280d331",
+      "stable_worldmodel/data/formats/lerobot.py": "165fcd979570c46e2885131a6860123b80a9de6ab56283e82edec727be2e272b",
+      "stable_worldmodel/data/formats/utils.py": "13846e1b8e027c8e108243b346e4cae0afb8ebe4942c64ad76dd7e8bc6a808bf",
+      "stable_worldmodel/data/formats/video.py": "daa7510d3f65d405f11683d9809e2c78fc7821af511c273418a40e42d77f4314",
+      "stable_worldmodel/data/normalization.py": "5de5a217774cf634dee33d8d082b38c1825013e80f3fe2cb1c5faa8cc9958f5e",
+      "stable_worldmodel/data/utils.py": "a132734367c219c0fdf59cd9d3631ed83bfe58bc427aa41e85146e26ac79ab4c",
+      "stable_worldmodel/envs/__init__.py": "118a262677a647c6d6ef8889443b096abe082db4e365fc0a5b1249715e7e3c1a",
+      "stable_worldmodel/envs/ale/__init__.py": "f02b92d4fde0b1b02d02c053a2d80252b9f5886d95a04dd1b6a2d6ab2250dd79",
+      "stable_worldmodel/envs/craftax/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stable_worldmodel/envs/craftax/craftax.py": "9a98a16f166086531be32c593216cd181b988b2d9493803cf9c074e961e9e2d4",
+      "stable_worldmodel/envs/dmcontrol/__init__.py": "a1644dcf113801b8769920f5ed231e29934ab6f453923f4eeb71040fc92799c8",
+      "stable_worldmodel/envs/dmcontrol/acrobot.py": "f29fcf63bc501fb892c964e50c49bfc4277524af33f4f9f8b4f2e5eabf2fdab9",
+      "stable_worldmodel/envs/dmcontrol/ball_in_cup.py": "da16e73ba3d40b06a18c0880380f35665f9571515edd8a1269d4984341afa6df",
+      "stable_worldmodel/envs/dmcontrol/cartpole.py": "93d7234d33cc7a1bdb5bf30928af5aa48f46c58f3dcafa51abec23367947695b",
+      "stable_worldmodel/envs/dmcontrol/cheetah.py": "a2ed95f35782fe5cd92080bffc11fb770b94fbcd1a897c8ac63cd05da0902cdc",
+      "stable_worldmodel/envs/dmcontrol/custom_tasks/cheetah.py": "da7ddaad68f96afbfe48be3e5871b48663e2078f5cb5850075a06cbd5ffa59c5",
+      "stable_worldmodel/envs/dmcontrol/custom_tasks/hopper.py": "b2cf01138b07a0c94a8ad3f45928e647bb9891d5a115b5b04e9e22ed4589ba30",
+      "stable_worldmodel/envs/dmcontrol/custom_tasks/reacher.py": "e5e2e82c0621efca7b4c3c194f422c946db59edb12db7735fbe8bdcf12e37e7c",
+      "stable_worldmodel/envs/dmcontrol/custom_tasks/walker.py": "7b33d2ac7efabb1e1b897600953d2b2cdf55d39237bd319a5bdbc432d66c4f6e",
+      "stable_worldmodel/envs/dmcontrol/dmcontrol.py": "13d55bf73f9b7f8a9b5a2b380e12750e253a391716e64e65f795b1c9fff8bc08",
+      "stable_worldmodel/envs/dmcontrol/expert_policy.py": "1c4cf6833aa817027094be27dfdd7841b0531b9c4c1d5b1480c791056b604251",
+      "stable_worldmodel/envs/dmcontrol/finger.py": "a84a7d5a6ac60a0e49ee088309b4d9b19d5ccb91bdd22befd0573b7c4ca02b5e",
+      "stable_worldmodel/envs/dmcontrol/hopper.py": "d6637058041c1412ba17da3c0762d523e7cae904a0e2f5ed92dc4c34fb5c63d8",
+      "stable_worldmodel/envs/dmcontrol/humanoid.py": "a8d1bd8a5640e7ed40aabac4258a54d1e24e9eea2f6c236a3efa1fc16014c151",
+      "stable_worldmodel/envs/dmcontrol/manipulator.py": "2aa65317fa7296ae5574657a8f5eed5b330a789d6f34a400a6d58bd5db07aafd",
+      "stable_worldmodel/envs/dmcontrol/pendulum.py": "c8a8c4a710b407b54d9edc57c283fbc3a743c4beea31cefe166c1e4e45d4eae9",
+      "stable_worldmodel/envs/dmcontrol/quadruped.py": "78f6e09cafef755e495e48fc1a90456a55eccd295c847f8a6fa88bbe32bac781",
+      "stable_worldmodel/envs/dmcontrol/reacher.py": "7d58845f0a3412a1f8d52c0e2305fd8ca2889745ea38429ff08ccf2a8b561f65",
+      "stable_worldmodel/envs/dmcontrol/walker.py": "2761f5c29cf9653ebf352db346299e2fda7d6b2274a449853e711cfacb5e61eb",
+      "stable_worldmodel/envs/gymnasium_control/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stable_worldmodel/envs/gymnasium_control/acrobot.py": "00ee7912d10e057ae5f34290fb0b609422101b0d8ee4070ea4bf99d3c6bac1c5",
+      "stable_worldmodel/envs/gymnasium_control/base.py": "0354779da90bb8348241e5bd046a97f915cf979d94732931f1a121a933298599",
+      "stable_worldmodel/envs/gymnasium_control/cartpole.py": "3421c8afa2ae1d453c23d8e815b5418adc1f77f46aa758e4fd32cccdb9e45087",
+      "stable_worldmodel/envs/gymnasium_control/mountain_car.py": "3e7d379f1297dfb5e179f87e8627d6af9a3194b83e0b0a61d5dd27eb737b9ce4",
+      "stable_worldmodel/envs/gymnasium_control/pendulum.py": "81140706a0b0c1f52f066ae76a02b906a29d69348c1ef5af4e4831db1461a124",
+      "stable_worldmodel/envs/gymnasium_robotics/__init__.py": "c3a36c2ecd3832116795d7a15f4eafa647161f4901dbb955ab6565358b02e14c",
+      "stable_worldmodel/envs/gymnasium_robotics/fetch.py": "fd2b1cd2ce79f83498736ea1f92a33f64795ff8010703a8edf2ee43829355fd5",
+      "stable_worldmodel/envs/image_positioning.py": "4f32696cd3f5619f0f036c512d6d810956ba3c391d16e899c1dea3f267b58e6a",
+      "stable_worldmodel/envs/ogbench/__init__.py": "987c7016720862580f73b3540b456a8e8ee76b2a345579840a106d5ada4a7aac",
+      "stable_worldmodel/envs/ogbench/cube_env.py": "143e5e81f424ff7a4d7fdde287dee88b722c09082a6fc9e68721839788e94c19",
+      "stable_worldmodel/envs/ogbench/expert_policy.py": "437b131da4065ba0adec6b08947a53d41bcc6dfc87324ad9c088778460cdb51f",
+      "stable_worldmodel/envs/ogbench/maze_env.py": "7457eb82644f537dd763fe2f7ab4d2718b7f72c8439a25312f32596853906bc9",
+      "stable_worldmodel/envs/ogbench/scene_env.py": "d0eebdce0131f86e3247736c601f97c2b11d0dbfad56fca998df3192f08a7b9f",
+      "stable_worldmodel/envs/piecewise/expert_policy.py": "74209996b239c13ae23c876a2c2b94eb4787c8deda0df2575ab47b1e7cda91ff",
+      "stable_worldmodel/envs/piecewise/piecewise_env.py": "e4de33b87adb1ce90f65515d69412c7af3a259e4396ba1470dfb675cee72118b",
+      "stable_worldmodel/envs/pusht/__init__.py": "c768c825b639f73e5b99ba5b3ec46d08b299cb5748b92693ac3fd9205eda48f1",
+      "stable_worldmodel/envs/pusht/env.py": "c6d2104adc368ff1c352edc0e35ac74da9f07fda3a748ddbef0ba6b7a2d1daa2",
+      "stable_worldmodel/envs/pusht/env_discrete.py": "eb4d93c4d6471a33684ff2f98c7c18521894f5c90863125d77ce12908f218586",
+      "stable_worldmodel/envs/pusht/expert_policy.py": "c3e8e99dab72ee0cb981cddda66ff5434a51a7c146d586174fb2b4e9d2082729",
+      "stable_worldmodel/envs/quantizer.py": "7167a833c4a1603e9912533d19a2fa1c8279eb12f235fd8e27cde9ff0a44bec7",
+      "stable_worldmodel/envs/robocasa.py": "065f3ac9194a06da802bff29328839d07dc06aa1e8cdc98807b2ca96e4055065",
+      "stable_worldmodel/envs/rocket_landing/__init__.py": "3ae38e645cb9bb40cdd87377b186d9e548772978572d7a8fc101ac362b8128e7",
+      "stable_worldmodel/envs/rocket_landing/expert_policy.py": "477c6770bf95fbcc6b9154cb9e902f012989172d80ced29ef14f96f12cc4cf90",
+      "stable_worldmodel/envs/rocket_landing/pyflyt_rocketlanding.py": "5ede3640ce1e2add32b6b0a6c36e190bb1130e38bb258ab182af12a6fbedee23",
+      "stable_worldmodel/envs/simple_point_maze.py": "b69891f8571b032530dcf154d1d80fcbdfe5ae3635d74a10db67cf50811c7a65",
+      "stable_worldmodel/envs/two_room/__init__.py": "a2ee00ccaf03e7bd7d10c980b7d9fef55cf7edb43fd9f80b503d3d187d8f0801",
+      "stable_worldmodel/envs/two_room/env.py": "5e1d392de5b02472062dbe872aded67fd465fcc8f7eaa1c02a753b2fc31c61f0",
+      "stable_worldmodel/envs/two_room/expert_policy.py": "5939318d2a671ce00abf46be74ae22cf2452ea48426eb9dc651d04514849e4f4",
+      "stable_worldmodel/envs/two_room/legacy_env.py": "10bfb438a4304308318ad0deb000c1bba12a5b60cf40f78045fbaa712d818ee7",
+      "stable_worldmodel/envs/utils.py": "2e5d98a5c13227cba6f5574bf72b6eab149ee5b3783df0481b8d240f34047f56",
+      "stable_worldmodel/plot/__init__.py": "81baebfe4e1ffd613da881587753d0f4f759e569dee959f7f5202cfdd4286b3c",
+      "stable_worldmodel/plot/video_utils.py": "526df08db479ccc326abc9d2c402c7af7104bc803e2bab2f237001c6aca4a810",
+      "stable_worldmodel/policy.py": "4967e7e3d5b20eb7a1d0b00e5d60fd701cce1c750ae7ec4a9b02529b9366db22",
+      "stable_worldmodel/protocols.py": "35b3e08fa2df0239277d2004356375af58b207edbfa555d46d24baca646fc401",
+      "stable_worldmodel/solver/__init__.py": "0d0b18cd5de509202210620bb7e3b063adab5f6ab1352c4c3fb7c8568abef4b1",
+      "stable_worldmodel/solver/callbacks/__init__.py": "bfbeaab14335013057ce236d359ddb3a1eeb342d25cd3c270365fb241481503b",
+      "stable_worldmodel/solver/callbacks/cem.py": "9631f12f5cc42b7722bd1dab88e5433ae2f13098b63e2a62a17be2d8cbd79c75",
+      "stable_worldmodel/solver/callbacks/common.py": "00f498dbd347ef4233893ee0accdf87e1201f93ccaa2662abe402e66967fa3d1",
+      "stable_worldmodel/solver/callbacks/gd.py": "c614a261164edf027719209cbcd6648efe8930b7760e3f57a0fc525eb1813454",
+      "stable_worldmodel/solver/categorical_cem.py": "4a99bf69c381294a335c0d0ca1e32490a367e6650847d7483191f1c2c53ff047",
+      "stable_worldmodel/solver/cem.py": "a6662e7f1f2c6ecaf0a8527255d531aa05ed583339aabdf2798d0206382ef51b",
+      "stable_worldmodel/solver/gd.py": "823370564886e01ba50520171f6058437f34f204367d94a9db4119d748de6942",
+      "stable_worldmodel/solver/icem.py": "3a03cf9068ad16d58315a38b2c8d083a64b5b367e9c614b5a4a7adef832a69f9",
+      "stable_worldmodel/solver/lagrangian.py": "e348f28bf77c2b70edc5dcca14b6090c6c7a88e3ccad99fceff47ae5801f8b73",
+      "stable_worldmodel/solver/mppi.py": "a1140e28630fa97a8234d9edc6ee85df6154cde6133cd6d5758f5812f582c529",
+      "stable_worldmodel/solver/pgd.py": "6cf5eb2bc4221957d5025339163635b172d222b62294bc2af7f7d5235791a483",
+      "stable_worldmodel/solver/predictive_sampling.py": "e2d5b0cf3f030eb6c17cb436fe835b0c304a27cf5147bed2c4c8576e879d3f3f",
+      "stable_worldmodel/solver/solver.py": "51c023b96c203b982fa0d3aabd35f08f2a66057aa1b19b44fbbbd2b21d5e8ab4",
+      "stable_worldmodel/solver/utils.py": "d30c6225a9c4c83782132180a94c94188b07e0381d2c938c658fe5a49aed48e1",
+      "stable_worldmodel/spaces.py": "73079b2a66dace087abc7c417691e3cc339887866915553e21d0936a362229eb",
+      "stable_worldmodel/utils.py": "9979483129df100cf4728dd45d1b6d0bb02d1fadec637d7f7065fe7894a3c276",
+      "stable_worldmodel/wm/__init__.py": "84cd992dc27ead462e6c94f95168a038692c884ac5a49762678049f85be8b04a",
+      "stable_worldmodel/wm/gcrl/__init__.py": "56309971b949157473156446b3946f2af933537558d557d57f0ec3b1726c03b4",
+      "stable_worldmodel/wm/gcrl/gcrl.py": "db3936de12cbea497a4435f473478bfb6663e33c56a8ef123cee8221f19c9f6d",
+      "stable_worldmodel/wm/gcrl/module.py": "3cab908a9a1d089c2f82572b4bbf565bdcfe30435260ac2c0ba57d16eadbabb4",
+      "stable_worldmodel/wm/genie/__init__.py": "c8764c8eaaf24ca155595ea4ebaec2cd9cb9db7144f223fcf47db5214aebccec",
+      "stable_worldmodel/wm/genie/genie.py": "fe06d6ad24b5096e23a745549918453470b4e91ee251290016e34d4ec2585556",
+      "stable_worldmodel/wm/genie/module.py": "91300d254791a52729586e9c9a79ced3c240d7c171da0243b73f27ecd227a213",
+      "stable_worldmodel/wm/lewm/__init__.py": "b7cb06042d883448c8967ab8e951c6f3c9a1e97867c3a7ce8f8dd713d4f8a798",
+      "stable_worldmodel/wm/lewm/lewm.py": "ccc2ac2880880f85ea71a5baa2152ba97e3f6dc5cb546d27570795aa6020d3d2",
+      "stable_worldmodel/wm/lewm/module.py": "3a6209baf30c11f77a5f6637282a1821fc62cea827438a97b23933caab51d8c7",
+      "stable_worldmodel/wm/loss.py": "88b5096e95cf78cd24e8c073e4566afe900fd06ef1e6c01bff41951108a95c06",
+      "stable_worldmodel/wm/pldm/__init__.py": "5741a80e350cbc56c595c78021f3bcf7719884a2ae4444fb2a6307db10caff8a",
+      "stable_worldmodel/wm/pldm/module.py": "3a6209baf30c11f77a5f6637282a1821fc62cea827438a97b23933caab51d8c7",
+      "stable_worldmodel/wm/pldm/pldm.py": "f49522c113e0d9e6896f33c37622e746db12937a12c0910a29661e13a8380a90",
+      "stable_worldmodel/wm/prejepa/__init__.py": "79889484a3f514964fb2e247c0c63b7ba327a2c5a43d3f61c88497d5d56512cd",
+      "stable_worldmodel/wm/prejepa/module.py": "b541791ce0b4ef974d79da4ddfc06b09d94f3184be7973345afb79066c4d0098",
+      "stable_worldmodel/wm/prejepa/prejepa.py": "b022c734c41c47c788f96ac7374c2289b833fe0bdca146d70836e38bcc0b2a72",
+      "stable_worldmodel/wm/probes.py": "7234ffaac539a4c1f857a8e620f21d29ed23183d48ba36982e629d81d0b94c25",
+      "stable_worldmodel/wm/tdmpc2/__init__.py": "3db111628d662482460f4db767297994c4fc0db8621d73e1d8d8822dbce4f29a",
+      "stable_worldmodel/wm/tdmpc2/module.py": "97230be39aab92f08bb117710f1fa53807173cc682f4e6aaf99296f8c915130e",
+      "stable_worldmodel/wm/tdmpc2/tdmpc2.py": "31229660ff57bda7d55069d7e879ea0a0571f7755ad80736d466f106bfe8ba25",
+      "stable_worldmodel/wm/utils.py": "48b8ea9fad66887d4f4fecc18d7e47b3d6fa9e7c3791c9769137ef20ab128424",
+      "stable_worldmodel/world/__init__.py": "8dd9797a487bba62663d9d4d2b499d4a7323a1f45ae572cacf93239df37e427c",
+      "stable_worldmodel/world/env_pool.py": "b6e73253199e1a39f0fcadfad7dbea09270cbd559e366d1bc9bf09c9e7da0606",
+      "stable_worldmodel/world/world.py": "bd7027f95afe6a9d52c2d8b937222ceabfa81dbf075c794068dd20af900d6265",
+      "stable_worldmodel/wrapper/__init__.py": "9c6404a0180257ff885b560ecbea797d905171316e799967b83f1aad838f6338",
+      "stable_worldmodel/wrapper/default.py": "1099cbbdf9a79d4f409ef99dd95529aa6c9baced16d5102f47999110e35c0a51",
+      "stable_worldmodel/wrapper/visual.py": "5ec85d6acf637a73d10881d3594fa3218a0cb654404acfd36c7b7790eae690c4"
+    },
+    "import_scope": "Unmodified source envs/utils/spaces; learning-stack package initializers omitted",
+    "machine": "arm64",
+    "math_environment": {
+      "MKL_NUM_THREADS": "1",
+      "NPY_DISABLE_CPU_FEATURES": null,
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_CORETYPE": null,
+      "OPENBLAS_NUM_THREADS": "1"
+    },
+    "numpy_config": {
+      "Build Dependencies": {
+        "blas": {
+          "detection method": "system",
+          "found": true,
+          "include directory": "unknown",
+          "lib directory": "unknown",
+          "name": "accelerate",
+          "openblas configuration": "unknown",
+          "pc file directory": "unknown",
+          "version": "unknown"
+        },
+        "lapack": {
+          "detection method": "system",
+          "found": true,
+          "include directory": "unknown",
+          "lib directory": "unknown",
+          "name": "accelerate",
+          "openblas configuration": "unknown",
+          "pc file directory": "unknown",
+          "version": "unknown"
+        }
+      },
+      "Compilers": {
+        "c": {
+          "commands": "cc",
+          "linker": "ld64",
+          "name": "clang",
+          "version": "15.0.0"
+        },
+        "c++": {
+          "commands": "c++",
+          "linker": "ld64",
+          "name": "clang",
+          "version": "15.0.0"
+        },
+        "cython": {
+          "commands": "cython",
+          "linker": "cython",
+          "name": "cython",
+          "version": "3.3.0"
+        }
+      },
+      "Machine Information": {
+        "build": {
+          "cpu": "aarch64",
+          "endian": "little",
+          "family": "aarch64",
+          "system": "darwin"
+        },
+        "host": {
+          "cpu": "aarch64",
+          "endian": "little",
+          "family": "aarch64",
+          "system": "darwin"
+        }
+      },
+      "Python Information": {
+        "path": "/private/var/folders/s6/5hzmn6lx4dz5nxs7k_0slzph0000gn/T/build-env-sd3oh5ko/bin/python",
+        "version": "3.12"
+      },
+      "SIMD Extensions": {
+        "baseline": [
+          "NEON",
+          "NEON_FP16",
+          "NEON_VFPV4",
+          "ASIMD"
+        ],
+        "found": [
+          "ASIMDHP",
+          "ASIMDDP"
+        ],
+        "not found": [
+          "ASIMDFHM"
+        ]
+      }
+    },
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "python": "3.12.11",
+    "root": "/Users/samib/stable-worldmodel",
+    "versions": {
+      "gymnasium": "1.3.0",
+      "numpy": "2.5.3"
+    }
+  },
+  "status": "PASS"
+}

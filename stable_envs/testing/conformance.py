@@ -11,9 +11,10 @@ can be false:
                        are anti-aliasing artifacts of two different rasterizers and neither is ground
                        truth there — folding them together lets a real geometry error hide inside a
                        plausible-looking aggregate.
-  state round-trip     set_state(get_state()) must be the identity, and rendering must depend on every
-                       state dimension. A dimension the render ignores means the state is not minimal or
-                       the renderer is wrong; both are silent.
+  render round-trip    legacy render-row setters/getters must preserve their projection. Visual
+                       dimension checks concern RenderState only. Full simulator State legitimately
+                       includes invisible RNG, task and lifecycle fields; its restoration and future
+                       behavior are checked separately by independent semantic contracts.
   batch invariance     frame i of a batch must equal the frame rendered alone. Batching is the entire
                        performance story, so a batch-dependent render would make every fast number a lie.
   backend agreement    the fused kernel must agree with the readable torch implementation. The kernel is
@@ -331,16 +332,29 @@ def check_visual_fidelity(env, n: int = 64) -> dict:
     return out
 
 
-def check_state_roundtrip(env, n: int = 64) -> dict:
-    """set_state(get_state()) is the identity, to float32."""
+def check_render_state_roundtrip(env, n: int = 64) -> dict:
+    """Measure the legacy private render-row round-trip, not public State restore.
+
+    ``n`` is retained for compatibility; this check uses the environment's batch.
+    """
     st = env.sample_states(env.B)
     env._set_render_state(st)
     back = env._get_render_state().cpu().numpy()
     return {"max_abs_err": float(np.abs(back - st).max())}
 
 
+def check_state_roundtrip(env, n: int = 64) -> dict:
+    """Compatibility spelling for :func:`check_render_state_roundtrip`.
+
+    This historical helper never checked full simulator State.
+    """
+    return check_render_state_roundtrip(env, n=n)
+
+
 def check_state_dims_matter(env, n: int = 8, eps: float = 25.0, donors: int = 4) -> dict:
-    """Every state dimension must change the frame. A dead dimension is a wrong contract.
+    """Probe declared visual dimensions of the legacy RenderState projection.
+
+    This is not a minimality requirement for full simulator State.
 
     Substitution first, additive nudge second, and a dimension is only declared dead if EVERY attempt
     leaves the frame bit-identical. A single fixed nudge is not a sound probe: it was ``+25.0``, and any

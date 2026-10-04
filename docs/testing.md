@@ -7,9 +7,72 @@ exhaustive State: add independent semantic/restoration witnesses for each regist
 A skipped required gate leaves the registration incomplete.
 
 The [testing strategy and infrastructure review](testing-design.md) records the
-current semantic-recovery approach and a proposed cleanup across State,
+current semantic-recovery approach and the incremental cleanup across State,
 simulation, tasks, rendering and online execution. The renderer-focused checks
 below do not replace full-State restoration and independent source gates.
+
+## Shared source contracts
+
+The first shared profiles live in `tests/contracts/`: CartPole/Pendulum (`native`),
+FetchReach (`fetch`), and Rocket (`rocket`). Each uses an independent source bridge
+and separate State, simulation, task and online checks. These are small regression
+profiles; the existing family acceptance gates still cover contact, lifecycle,
+Variation, rendering and process execution. Passing a profile does not promote
+its siblings or replace those gates.
+
+From the repository root, in the matching pinned family interpreter:
+
+```bash
+python -m pytest tests/contracts --contract-profile native \
+  --contract-source /path/to/pinned/stable-worldmodel \
+  --contract-output /path/to/new-run
+```
+
+Use `fetch` or `rocket` for the other profiles. Source pins are explicit in
+`tests/helpers/reference/profiles.py`. The source checkout must be clean at
+`176d54532b3c0a251a4f509b74f2fdacc143a63d`. Source environment code is loaded unchanged;
+unrelated learning-stack package initializers are omitted. Profiles compare CPU
+physics and CPU State delivery. They do not measure GPU rendering or throughput.
+
+Required coverage is computed before execution. Missing dependencies, skipped or
+deselected cases, duplicate results and wrong source versions cannot pass. In a
+required profile, `-k` is useful for development but a partial result exits nonzero.
+Run profiles in one interpreter without xdist. A crashed profile requires a full
+rerun into a new output directory; automatic segment resumption does not satisfy
+its required-case accounting. Existing release gates retain their supervisor.
+`--contract-output` must name a new directory. It contains the plan, candidate
+hashes, per-case progress, source/runtime identity and a final `SHA256SUMS` seal.
+A crash can leave progress without a seal; that is incomplete evidence. Failures
+retain the action plan, current numeric State, assertion and replay command.
+
+Fast checks without the upstream package:
+
+```bash
+python -m pytest tests/unit/test_testing_evidence.py tests/unit/test_contract_inventory.py
+python -m pytest tests/contracts/test_saved_native.py tests/regression/test_testing_migration.py
+python -m scripts.testing.inventory
+```
+
+The inventory covers all **38 non-Craftax registrations** using their accepted
+matrix scopes and existing gate paths. It records `NOT_RUN` for the current
+checkout; inventory presence is not an acceptance result. Craftax is explicitly
+excluded. Repository navigation checks use Git-index membership (or files in an
+exported artifact), so unrelated ignored/untracked work is not a product failure.
+Stage new product files before running those checks.
+
+Saved Rocket frame verification is read-only and does not need CUDA:
+
+```bash
+python -m scripts.testing.verify_saved --input /path/to/public-cpu-or-cuda \
+  --output /path/to/new-verification
+```
+
+It checks the full historical case set, source/candidate identity, every frame's
+normalized MSE and the original visual group criteria. Shared measurements use
+uint8 RGB with widened integer arithmetic; reports label population SD (`ddof=0`)
+and retain the historical sample SD (`ddof=1`) separately. The per-frame 0.001
+limit is unchanged. Saved GPU pixels are historical GPU evidence, not a fresh
+CUDA run. New verification output never overwrites the original corpus.
 
 Markers: `unit`, `integration`, `gpu`, `regression`, `slow`. The extra markers
 `reference`, `smoke` and `selftest` stay. Directory markers are applied automatically, so a
@@ -198,15 +261,20 @@ still produces a perfectly reasonable picture), that a caller's batch size canno
 decision, and that a checkpoint keyed to one cell refuses every other. `tests/unit/test_rendernet_identity.py`
 asserts the refusals on synthetic checkpoints, with no GPU and no cache.
 
-### State round-trip
+### Legacy render-projection round-trip
 
-`set_state(get_state())` must be the identity to float32. Measured for PushT: max absolute error
-**0.0**.
+`check_render_state_roundtrip()` measures the private legacy render-row
+set/get path. The historical `check_state_roundtrip()` name remains a compatibility
+alias; it never proved public simulator-State restoration. Full-State tests above
+check typed leaves, ownership, different histories and future source behavior.
 
 Rules out: a state representation that quietly normalises, clips or reorders, which makes every stored
 state a slightly different state when it comes back.
 
-### Every state dimension reaches the render
+### Every declared visual dimension reaches the render
+
+This check applies to the RenderState projection. Full State may legitimately
+contain invisible RNG, task and lifecycle fields.
 
 Each dimension is overwritten with the value that dimension takes in another sampled state, and the frame
 must change; a dimension is declared dead only if several donors and then a set of additive nudges all
@@ -306,7 +374,7 @@ They are plain functions returning dicts of numbers, so they can drive a report 
 ```python
 from stable_envs.testing import conformance as C
 
-C.check_state_roundtrip(env)        # {'max_abs_err': 0.0}
+C.check_render_state_roundtrip(env) # legacy projection only: {'max_abs_err': 0.0}
 C.check_state_dims_matter(env)      # {'dead_dims': []}
 C.check_backend_agreement(env)      # {'exact_frac': 1.0, 'max_abs': 0, ...}
 C.pixel_agreement(ours, official)   # all-pixel and interior-pixel agreement

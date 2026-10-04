@@ -1,0 +1,41 @@
+........................................................................ [ 22%]
+........................................................................ [ 44%]
+........................................................................ [ 66%]
+..........................sssss..................F.F.................... [ 88%]
+....................................                                     [100%]
+=================================== FAILURES ===================================
+_ test_the_cell_declares_the_reference_it_was_measured_against[DMCHumanoidStand] _
+tests/regression/test_reference_provenance.py:52: in test_the_cell_declares_the_reference_it_was_measured_against
+    assert cls is not None, f"{cell} is not registered in this interpreter"
+E   AssertionError: DMCHumanoidStand is not registered in this interpreter
+E   assert None is not None
+__________________ test_the_reference_arm_record_regenerates ___________________
+tests/regression/test_reference_provenance.py:71: in test_the_reference_arm_record_regenerates
+    assert json.dumps({k: v for k, v in fresh.items() if k != volatile}, sort_keys=True) == json.dumps(
+E   AssertionError: the committed reference_arm.json is not what the generator produces from the committed inputs; regenerate it rather than editing it
+E   assert '{"baseline_s...rd of that."}' == '{"baseline_s...rd of that."}'
+E     
+E     Skipping 36766 identical leading characters in diff, use -v to show
+E     -  "role": "authoritative_certification", "satisfies_declaration": true, "shard_tag": "adhoc", "source": "tests/fixtures/regression/join/step7/closure2/replay/dmcvis.json", "source_sha256": "807fd84c7bb2d55a35276a3ee8aff93cfbcb34a7ee54775fedcabff74a36f262"}, {"arm": "dmc.json", "blocked": ["check_visual_fidelity"], "checks": {"check_backend_agreement": {"group": "family_specific", "raw_status": "not_applicable", "status": "not_applicable", "why": "env renders without a Scene2D (tilemap path)"}, "check_ba...
+E     
+E     ...Full output truncated (4 lines hidden), use '-vv' to show
+=============================== warnings summary ===============================
+tests/unit/test_full_state_contract.py::test_full_snapshot_restores_future_and_has_no_aliases[PushT]
+tests/unit/test_full_state_contract.py::test_full_snapshot_restores_future_and_has_no_aliases[PushTDiscrete]
+tests/unit/test_full_state_contract.py::test_lossy_projection_is_rejected_and_full_state_renders[PushT]
+tests/unit/test_full_state_contract.py::test_lossy_projection_is_rejected_and_full_state_renders[PushTDiscrete]
+  /private/tmp/se-completion-312/lib/python3.12/site-packages/gymnasium/spaces/box.py:424: UserWarning: [33mWARN: Casting input x to numpy array.[0m
+    gym.logger.warn("Casting input x to numpy array.")
+
+tests/contracts/test_saved_native.py::test_frozen_source_state_and_tasks[cartpole-CartPole]
+  /private/tmp/se-completion-312/lib/python3.12/site-packages/gymnasium/envs/classic_control/cartpole.py:214: UserWarning: [33mWARN: You are calling 'step()' even though this environment has already returned terminated = True. You should always call 'reset()' once you receive 'terminated = True' -- any further steps are undefined behavior.[0m
+    logger.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+------------------------------ stable-envs safety ------------------------------
+resources: 0 EGL contexts created, 0 released, 0 live (peak 0); renderers 0 created / 0 closed
+node: cis1b1zs2j3.ad.brown.edu slurm=? reason=none reference-renderer={}
+=========================== short test summary info ============================
+SKIPPED [1] tests/unit/test_step_capture.py:251: could not import 'matplotlib': No module named 'matplotlib'
+SKIPPED [4] tests/unit/test_step_capture.py:265: CUDA validation runs on Oscar
+2 failed, 317 passed, 5 skipped, 1 deselected, 5 warnings in 17.74s

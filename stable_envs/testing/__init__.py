@@ -12,7 +12,7 @@ Two directories in this repository have "test" in the name and they are not dupl
 What is in here splits again, by audience, and the split is worth knowing before you import anything:
 
   **The checks.** ``conformance`` is the surface an env author calls. Every function in it takes an
-  env and returns a dict of measurements — ``check_state_roundtrip``, ``check_batch_invariance``,
+  env and returns a dict of measurements — ``check_render_state_roundtrip``, ``check_batch_invariance``,
   ``check_state_dims_matter``, ``pixel_agreement``, ``check_resolution_consistency`` and the rest —
   and NONE of them asserts anything. That is deliberate: the numbers are the product, the thresholds
   belong to whoever is judging, and ``tests/gpu/test_conformance.py`` is one caller of this API rather

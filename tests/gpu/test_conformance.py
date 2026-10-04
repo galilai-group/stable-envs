@@ -215,8 +215,8 @@ def test_describe_is_complete(env):
     )
 
 
-def test_state_roundtrip(env):
-    r = C.check_state_roundtrip(env)
+def test_render_state_roundtrip(env):
+    r = C.check_render_state_roundtrip(env)
     assert r["max_abs_err"] == 0.0, f"set_state(get_state()) is not the identity: {r}"
 
 

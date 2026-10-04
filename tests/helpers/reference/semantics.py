@@ -9,6 +9,8 @@ from __future__ import annotations
 import torch
 from tensordict import TensorDict
 
+from stable_envs.testing.metrics import leaf_difference
+
 
 def _step_without_pixels(env, action):
     from stable_envs.env import Env
@@ -25,10 +27,14 @@ def compare_state(actual: TensorDict, expected: TensorDict, *, atol=0.0) -> dict
     errors = {}
     for key in sorted(ak, key=str):
         a, e = actual[key].detach().cpu(), expected[key].detach().cpu()
-        assert a.dtype == e.dtype, f"{key}: dtype {a.dtype} != {e.dtype}"
-        torch.testing.assert_close(a, e, atol=atol, rtol=0, equal_nan=True, msg=lambda m: f"{key}: {m}")
-        delta = (a.to(torch.float64) - e.to(torch.float64)).abs()
-        errors[str(key)] = float(delta.nan_to_num().max()) if delta.numel() else 0.0
+        diagnostic = leaf_difference(a, e)
+        assert diagnostic["comparable"], f"{key}: {diagnostic}"
+        # Tolerances belong to continuous values, never counters, masks or RNG.
+        tolerance = atol if a.is_floating_point() else 0
+        torch.testing.assert_close(
+            a, e, atol=tolerance, rtol=0, equal_nan=True, msg=lambda m: f"{key}: {diagnostic}\n{m}"
+        )
+        errors[str(key)] = diagnostic["max_abs_error"]
     return errors
 
 

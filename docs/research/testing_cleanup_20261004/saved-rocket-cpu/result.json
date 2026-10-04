@@ -1,0 +1,40 @@
+{
+  "device": "cpu",
+  "evidence_hashes": {
+    "frames.npz": "1b04cbb361074035b83d36f908fc6f17ff321bb577242cae602b9cec1f3ec689",
+    "result.json": "8edc4c32ddad91e94d5185108c479fc42b8fcace467428d15ac7f53417a9a6a6"
+  },
+  "historical_sample": {
+    "count": 204,
+    "ddof": 1,
+    "maximum": 0.0,
+    "mean": 0.0,
+    "over_threshold": 0,
+    "quantiles": {
+      "0.5": 0.0,
+      "0.95": 0.0,
+      "0.99": 0.0
+    },
+    "sd": 0.0,
+    "threshold": 0.001,
+    "worst_index": 0
+  },
+  "population": {
+    "count": 204,
+    "ddof": 0,
+    "maximum": 0.0,
+    "mean": 0.0,
+    "over_threshold": 0,
+    "quantiles": {
+      "0.5": 0.0,
+      "0.95": 0.0,
+      "0.99": 0.0
+    },
+    "sd": 0.0,
+    "threshold": 0.001,
+    "worst_index": 0
+  },
+  "registration": "swm/PFRocketLanding-v0",
+  "scope": "historical public render witness verification, not fresh acceptance",
+  "status": "PASS"
+}

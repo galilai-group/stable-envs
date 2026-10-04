@@ -1,0 +1,6 @@
+{
+  "detail": null,
+  "node": "tests/contracts/test_task.py::test_independent_source_task_outputs[PyFlytRocketLanding-seed17-float32]",
+  "phase": "call",
+  "status": "PASS"
+}

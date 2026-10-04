@@ -1,0 +1,40 @@
+"""Frozen source trajectory contract; source package is not needed to read it.
+
+This moves the classic corpus replay out of the optional live-source module.
+It is a historical regression, not new source/version acceptance.
+"""
+
+from pathlib import Path
+
+import numpy as np
+import pytest
+import torch
+
+import stable_envs as se
+from tests.helpers.reference.saved import native_corpus
+
+pytestmark = pytest.mark.regression
+
+
+@pytest.mark.parametrize("domain,name", [("cartpole", "CartPole"), ("pendulum", "Pendulum")])
+def test_frozen_source_state_and_tasks(domain, name):
+    root = Path(__file__).resolve().parents[1] / "fixtures/semantics/native_classic"
+    manifest, arrays = native_corpus(root, domain)
+    with se.make(name, num_envs=manifest["batch"], device="cpu") as env:
+        states = [env.reset(seed=manifest["seed"])]
+        outputs = []
+        for action in arrays["actions"]:
+            output = env.step(action, frames=None, states=None)
+            outputs.append(output)
+            states.append(output["state"])
+        keys = {"state/" + (key if isinstance(key, str) else "/".join(key)) for key in states[0].keys(True, True)}
+        assert keys == {key for key in arrays if key.startswith("state/")}
+        for key in states[0].keys(True, True):
+            name = key if isinstance(key, str) else "/".join(key)
+            actual = torch.stack([state[key] for state in states]).cpu().numpy()
+            assert actual.dtype == arrays[f"state/{name}"].dtype
+            np.testing.assert_array_equal(actual, arrays[f"state/{name}"])
+        for key in ("reward", "terminated", "truncated", "observation", "info_state"):
+            actual = torch.stack([output[key] for output in outputs]).cpu().numpy()
+            assert actual.dtype == arrays[key].dtype
+            np.testing.assert_array_equal(actual, arrays[key])
