@@ -1,14 +1,20 @@
 # Rocket replay State candidate
 
-This candidate is blocked by frozen-renderer acceptance in Oscar job 6732132.
-The matrix remains **39 VERIFIED / 3 INCOMPLETE**. See the
-[public renderer blocker checkpoint](rocket_public_renderer_blocker.md).
+Current CPU/CUDA public renderer and semantic gates pass; the matrix remains
+**39 VERIFIED / 3 INCOMPLETE** while the separate online source and descriptive
+replay-cost work closes. See the
+[current recovery evidence](semantic_recovery_evidence/noncraftax_completion_20261003/README.md).
+The earlier [renderer blocker checkpoint](rocket_public_renderer_blocker.md)
+is preserved as historical evidence, not the current renderer status.
 
 The public factory class `PyFlytRocketLanding` delegates CPU dynamics to the
 migrated SWM-local task on official PyFlyt 0.29.0 / PyBullet 3.2.7. Its optional
 `rocket` extra pins the audited NumPy and Gymnasium profile. Production imports
-no stable-worldmodel code. The frozen renderer implementation is unchanged;
-CPU rendering remains unsupported and CUDA rendering retains its visual tier.
+no stable-worldmodel code. CPU rendering uses TinyRenderer with explicit body
+and cached camera poses. CUDA rendering retains its visual tier and frozen
+acceptance limits; the current 204-checkpoint gate has maximum normalized MSE
+0.000428221, while the CPU gate is pixel-exact. These are bounded measured
+claims, not universal fidelity or throughput guarantees.
 
 Each batch lane stores numeric fixed-shape leaves:
 

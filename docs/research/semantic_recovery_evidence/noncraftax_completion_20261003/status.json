@@ -1,5 +1,5 @@
 {
-  "recorded_utc": "2026-10-04T01:31:46.014244+00:00",
+  "recorded_utc": "2026-10-04T01:46:34.703311+00:00",
   "branch": "sami-dev",
   "starting_head": "f88bd4546878797504463dbd32bce736fd2979e4",
   "accepted_matrix": {
@@ -33,8 +33,8 @@
     "replay_cost_status": "RUNNING",
     "online_cpu_job": "6992588",
     "online_cuda_job": "6992589",
-    "online_status": "PENDING_AT_LAST_CHECK",
-    "online_cpu_status": "RUNNING_6992588"
+    "online_status": "CPU_PASS_CUDA_PENDING",
+    "online_cpu_status": "PASS_64_CASES_224_FRAMES_EXACT"
   },
   "ogbench": {
     "cube_cpu_frame_gate": "PASS_B2_30_CASES",

@@ -3677,7 +3677,7 @@
       "remaining_issues": [
         "The historical direct numeric/native snapshot route was nonexact; the implemented official-engine replay route supersedes that investigation.",
         "Current CPU/CUDA public/render, persistent-Variation, independent-source suffix and unit gates passed; seal separate action-chunk/source and descriptive replay-cost closure before promotion.",
-        "Online source comparisons (6992588/6992589) and formal B1/B16 replay/branch costs (6992404) remain pending. Speedups are not inferred from correctness."
+        "CPU online source gate 6992588 passed 64 cases and 224 exact frames. CUDA online gate 6992589 and full B1/B16 replay/branch costs 6992404 remain pending. Speedups are not inferred from correctness."
       ],
       "test": "tests/unit/test_full_state_contract.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",

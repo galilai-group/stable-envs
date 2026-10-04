@@ -153,6 +153,21 @@ selectors at 96 pixels. Source lanes are never restored. These checks are
 required separately from the completed renderer batch/chunk comparison.
 No Rocket promotion is recorded while this closure work is pending.
 
+CPU online job `6992588` completed with exit 0: all 64 cases passed, with
+224 pixel-exact frame pairs, mixed per-lane terminal boundaries, exact
+State/task/lifecycle outputs and owned selected snapshots. The independent
+verifier checks the full case matrix, raw frames, source/production hashes and
+scheduler terminal record; see `rocket/online/cpu-verification.json`.
+CUDA job `6992589` remains a separate required gate. Remaining GPU cost tasks
+wait for the short correctness jobs via scheduler dependencies.
+
+`rocket/performance/partial-cpu-b1.json` is explicitly a **RUNNING, incomplete**
+snapshot, not an accepted performance table. Its six completed scenarios show
+B1 restore increasing from a 163 ms median at reset to 7.61 s at the maximum
+history; get-State medians are about 3.9 ms. A default 480-pixel State occupies
+768,719 bytes, including its 691,200-byte named goal-image cache. Ordinary
+stepping does not replay history. Complete B1/B16 and GPU reports remain pending.
+
 ## OGBench: source worker failure and inspection repair
 
 `ogbench_prior/` preserves terminal evidence from the prior campaign:
