@@ -171,11 +171,13 @@ def rasterize(pos, faces, resolution):
     f = len(faces)
     clipped = torch.empty((b, f * 6, 4), device=pos.device, dtype=pos.dtype)
     clip_faces = torch.arange(f * 6, device=pos.device, dtype=faces.dtype).reshape(f * 2, 3)
-    _clip_triangles[(f, b)](pos, faces, clipped, v, f, enable_fp_fusion=False, num_warps=4)
-    stripes = 4 if b < 4 and r >= 256 else 1
-    for index in (False, True):
-        _triangles[(f * 2, b, stripes)](
-            clipped, clip_faces, depth, ids, f * 6, r, index, 128, stripes, enable_fp_fusion=False
-        )
-    _resolve[(tr.cdiv(r * r, 128), b)](pos, faces, ids, out, v, r, 128, enable_fp_fusion=False)
+    # Triton dispatch uses the current CUDA device, unlike torch tensor ops.
+    with torch.cuda.device(pos.device):
+        _clip_triangles[(f, b)](pos, faces, clipped, v, f, enable_fp_fusion=False, num_warps=4)
+        stripes = 4 if b < 4 and r >= 256 else 1
+        for index in (False, True):
+            _triangles[(f * 2, b, stripes)](
+                clipped, clip_faces, depth, ids, f * 6, r, index, 128, stripes, enable_fp_fusion=False
+            )
+        _resolve[(tr.cdiv(r * r, 128), b)](pos, faces, ids, out, v, r, 128, enable_fp_fusion=False)
     return out

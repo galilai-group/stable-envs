@@ -51,7 +51,7 @@ def main():
         str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest()
         for p in sorted(ROOT.glob("stable_envs/_adapters/rocket*.py"))
         + list(ROOT.glob("stable_envs/envs/rocket*.py"))
-        + [ROOT / "stable_envs/render/nvdiff.py"]
+        + [ROOT / "stable_envs/render/nvdiff.py", ROOT / "stable_envs/envs/_rocket_raster.py"]
     }
     oracle_path = Path(inspect.getfile(Oracle))
     result["oracle_source"] = {

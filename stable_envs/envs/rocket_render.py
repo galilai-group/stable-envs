@@ -65,7 +65,7 @@ class _Scene(ND.Scene):
 
 class _Renderer(ND.BatchRenderer):
     def _rasterize(self, positions, resolution):
-        from .rocket_raster import rasterize
+        from ._rocket_raster import rasterize
 
         raster = rasterize(positions, self.scene.face, resolution)
         # Rocket uses nearest textures without mipmaps. Nvdiffrast's shared

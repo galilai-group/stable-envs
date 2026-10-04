@@ -32,3 +32,22 @@ def test_reached_source_pixels_and_batch_partition(scenario):
         assert torch.equal(ours, env.render(projected, chunk_size=1))
         for lane in range(2):
             assert torch.equal(ours[lane : lane + 1], env.render(projected[lane : lane + 1]))
+
+
+@pytest.mark.skipif(torch.cuda.device_count() < 2, reason="Requires two CUDA devices")
+def test_noncurrent_cuda_device_and_context_restoration():
+    pytest.importorskip("PyFlyt")
+    pytest.importorskip("nvdiffrast.torch")
+    torch.set_num_threads(1)
+    config = dict(render_mode="rgb_array", render_resolution=(96, 96))
+    with torch.cuda.device(0):
+        with make("PyFlytRocketLanding", device="cuda:1", size=96, simulator_config=config) as env:
+            env.reset(seed=17)
+            for _ in range(3):
+                env.step(np.array([[0.15, -0.1, 0.2, 1, 0.5, 0.1, -0.1]], np.float32), states=None, frames=None)
+            source = env._simulator.envs[0].env.render()
+            ours = env.render()
+            assert ours.device == torch.device("cuda:1")
+            assert torch.cuda.current_device() == 0
+            mse = np.mean(((ours[0].cpu().numpy().astype(np.float64) - source) / 255) ** 2)
+            assert mse <= 0.001, mse

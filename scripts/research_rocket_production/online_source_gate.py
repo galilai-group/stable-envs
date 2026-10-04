@@ -180,7 +180,12 @@ def main():
                             Path(oracle.modified_pad_urdf).unlink(missing_ok=True)
     np.savez_compressed(args.output / "frames.npz", ours=frames, source=references)
     files = list(ROOT.glob("stable_envs/_adapters/rocket*.py")) + list(ROOT.glob("stable_envs/envs/rocket*.py"))
-    files += [ROOT / "stable_envs/_stepping.py", ROOT / "stable_envs/env.py", ROOT / "stable_envs/render/nvdiff.py"]
+    files += [
+        ROOT / "stable_envs/_stepping.py",
+        ROOT / "stable_envs/env.py",
+        ROOT / "stable_envs/render/nvdiff.py",
+        ROOT / "stable_envs/envs/_rocket_raster.py",
+    ]
     report = dict(
         status="PASS_BOUNDED_ROCKET_ONLINE_SOURCE",
         device=device,

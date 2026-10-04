@@ -4,7 +4,8 @@
 Both PushT registrations were independently accepted and pushed on `sami-dev`
 in `d543e669`. This checkpoint integrates a Rocket-local GPU raster candidate and preserves the
 investigation evidence. State validation and the acceptance threshold are unchanged.
-Fresh production acceptance is pending Oscar job **6996062**.
+Fresh production acceptance is pending Oscar job **6996439**. Earlier production
+controls were superseded; their outputs remain preserved separately below.
 
 ## The actual failing case
 
@@ -96,7 +97,7 @@ cover batches 1/16/64 at 96px and 480px on an L40S. At 480px, candidate time is
 use saved flight states; they are neither a 1,000-frame representative benchmark
 nor a comparison to source throughput, and are not RTX 3090 numbers.
 
-The integrated kernel is `stable_envs/envs/rocket_raster.py`. Rocket overrides a
+The integrated kernel is `stable_envs/envs/_rocket_raster.py`. Rocket overrides a
 small private coverage-stage method in the existing renderer. All other renderer
 families retain the same nvdiffrast call, offsets, shading and material path.
 The frozen legacy Rocket renderer, physics, State format, exact restore guard,
@@ -116,3 +117,26 @@ tests**, with zero skips. Local Mac checks passed 31 shared-render tests; the tw
 CUDA tests were skipped locally and then actually executed on Oscar. Public
 480px CPU/CUDA gates, current-branch online gates, independent branch suffixes,
 and persistent Variation checks remain pending; the matrix is not promoted.
+
+## Device and optional-dependency closure
+
+The final candidate explicitly selects the input tensor's CUDA device around
+Triton launches and restores the caller's device context. A third CUDA regression
+renders on `cuda:1` while `cuda:0` is current. The helper is named
+`_rocket_raster.py` so environment autodiscovery does not eagerly import optional
+Triton on CPU-only installations. CPU import was checked without loading it.
+
+Job **6996439**, on gpu3004 with two GPUs, executes the complete current source
+bundle with those changes. It passed **67 CPU tests and 3 CUDA tests, zero skips**;
+the full public CPU/CUDA, online, source-suffix and persistent-Variation gates
+remain in progress at this checkpoint. Production files are frozen during the run.
+
+[Closure evidence](semantic_recovery_evidence/final_three_20261004/rocket/closure-v4/)
+preserves the new submission and superseded controls without changing the earlier
+SHA256 seal. Job 6996062 completed both 204-checkpoint public renderer gates before
+cancellation, but did not complete the whole acceptance run. Job 6996377 passed
+67 CPU and 3 CUDA tests before the private-helper rename superseded it. Its 3090
+duplicate 6996378 was cancelled before starting. Cancelled controls do not promote
+the registration. The standalone final verifier requires successful terminal
+evidence, current source hashes, every companion gate, and independent raw-pixel
+verification before acceptance can be recorded.
