@@ -63,8 +63,36 @@ PushT at 10,240 actions, median get/set is 3.46 ms / 821 ms at B1 and
 stepping does not call restoration. Process parallelization and public
 rendered branching still require separate work and measurement.
 
-Remaining before public PushT acceptance: integrate the narrow dynamic-history
-stacking convention with the existing slice-only step API; finish State to
+The instrumented profile in `pusht_replay_profile/` attributes most cumulative
+restore time to the source Python controller/substep path (26.9 of 33.1 seconds
+under cProfile), with validation secondary (4.1 seconds). These instrumented
+times must not replace the uninstrumented timing CSV. No approximate dynamics
+or unchecked restoration shortcut was introduced.
+
+The narrow dynamic-history collation hook is implemented and has passed 25
+local PushT tests using real replay States through the shared step executor.
+Together with fixed-shape capture/masking checks, the run passed 243 tests;
+101 unavailable-device/dependency cases were skipped locally and are not
+counted as CUDA passes. Oscar job `6992506` covers CPU/CUDA State storage and
+the shared fixed-shape CUDA tests. The public PushT registration is unchanged.
+See `pusht_history/local.xml` and its frozen candidate manifest.
+
+`pusht_render_projection_v3/` proves a source-derived immediate render recipe:
+matching reset geometry, current body poses, action marker, and numeric contact
+segments reproduce 3,776 frames exactly across 118 cases, independently for
+continuous/discrete actions and every supported shape pairing. The render-only
+destination never steps or replays after reset. Pymunk's public debug-draw
+callback exposes the segments without private ABI access. Reindexing shapes
+after installing body poses is also required. The stale reset contact cache
+produces different pixels in 66 cases (maximum normalized MSE 0.000164525).
+This is source-only feasibility evidence; the small immediate-output cache and
+production CPU/GPU projection still need implementation and acceptance.
+The first probe's wrong import is preserved; v2 passed, and v3 repeats the
+probe with complete source-file/version provenance. These repeated cohorts
+must not be added as independent coverage.
+
+Remaining before public PushT acceptance: wire the history collation into the
+production source-aligned public class; finish State to
 RenderState projection and CPU/CUDA renderer gates across source Variations;
 exercise public single-action/chunk/terminal/reset paths; measure replay costs
 and online source comparisons. No new public `step_sequence` or `unroll` API
@@ -82,9 +110,9 @@ The uploaded `public_gate.py` is preserved as `rocket/public_gate_frozen.py`.
 The working script was subsequently formatted; its AST was checked identical.
 Do not treat that formatting-only byte difference as a fresh executed gate.
 
-CPU job `6990800` also runs the persistent-Variation, independent-source suffix,
-and Rocket unit gates after its public gate. GPU task `6990749_1` requires its
-own terminal evidence. Array task `6990749_0` was canceled while pending and
+CPU job `6990800` also ran the persistent-Variation, independent-source suffix,
+and Rocket unit gates after its public gate. GPU task `6990749_1` completed
+with exit 0 on gpu2111. Array task `6990749_0` was canceled while pending and
 replaced by the CPU-only job; it is not a failed correctness result. The GPU
 task was moved from `3090-gcondo` to `gpu`/`norm-gpu`, retaining RTX 3090, four
 CPUs and the exact candidate. This avoids duplicating its computation.
@@ -93,6 +121,37 @@ The current CPU public gate passed all 204 checkpoints. Raw frames were fetched
 and independently verified: normalized MSE is exactly zero at every checkpoint,
 and all 41 frozen visual groups pass. See `rocket/cpu-render-verification.json`.
 This does not replace the companion Variation/suffix/unit gates or CUDA gate.
+
+The companion CPU reports also passed: 90 persistent-Variation cases and 108
+independent-source suffix cases. Job `6990800` subsequently exited 4 because
+pytest could not collect without `tests/fixtures/regression/support_matrix.json`,
+which the uploaded bundle had omitted. This failure is preserved in
+`rocket/cpu-6990800/unit.log`. Retry `6992056` extracted the original candidate
+unchanged, supplied that hash-checked fixture and passed all 18 tests with no
+skips, exiting 0. `rocket/cpu-companion-verification.json` records this closure.
+The original failed job is not relabeled as successful.
+
+The GPU raw frames were independently recomputed in
+`rocket/gpu-frame-verification.json`: 204 checkpoints, mean normalized MSE
+0.0001606725 ± 0.0001436219 (one sample SD), maximum 0.0004282208. All 41
+original frozen visual groups pass. CPU MSE remains exactly zero. The verifier
+allows only float64 reduction roundoff when comparing a recomputed metric to
+the producer's metric (the observed maximum difference was 2.71e-19); neither
+the 0.001 per-frame limit nor the frozen renderer policy was changed.
+
+Formal descriptive replay costs are running in array `6992404` (B1/B16,
+CPU/CUDA rendering, RTX 3090 node profile). The previous performance harness
+implicitly rendered during calls labeled unrendered; it now explicitly passes
+`states=None, frames=None` and separately requests each render cadence.
+It reports raw samples, mean/sample SD, median/p95, bytes and construction
+costs. These repeated single-action branch calls are not an action-chunk
+throughput benchmark. The frozen correctness candidate is unchanged.
+
+Separate online source gates `6992588` (CPU) and `6992589` (CUDA) cover B2,
+T1/T8, float32/64, flight/contact/success/horizon cases and four State/frame
+selectors at 96 pixels. Source lanes are never restored. These checks are
+required separately from the completed renderer batch/chunk comparison.
+No Rocket promotion is recorded while this closure work is pending.
 
 ## OGBench: source worker failure and inspection repair
 
@@ -129,6 +188,16 @@ attempt to reduce the pending job's CPU request left inconsistent Slurm TRES
 metadata, so it was replaced rather than used. Source/candidate files and gates
 are unchanged. The new array uses `gpu`/`norm-gpu`, RTX 3090, one concurrent task.
 No GPU source comparison or speedup is accepted from the CPU-only reports.
+
+Cube task `6991787_1` subsequently passed both device gates and exited 0.
+GPU mean normalized MSE is 0.00000951894 ± 0.0000150610, maximum 0.0000953622,
+over 192 compared frames. Source P1/P2 pixels and task/state/ownership/lifecycle
+checks are exact. This uses the explicit OpenGL backend at B2/T1,T8; it does not
+certify production P8 throughput or the default accelerated renderer. See
+`cube-paired-verification.json`. Scene task `6991787_2` also completed with
+exit 0; both CPU and GPU MSE are exactly zero across 192 frame pairs per device.
+`ogbench_gl_identity/paired-verification.json` and `paired-mse.csv` validate
+both families, candidate/source hashes, terminal status and worker closure.
 
 ## Remaining DMC source comparisons
 

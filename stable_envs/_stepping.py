@@ -147,7 +147,9 @@ def step(env, actions, *, states=slice(None), frames=slice(-1, None)):
     out["valid"] = torch.stack(validity, dim=1)
     if state_indices is not None:
         out["states"] = (
-            torch.stack([saved_states[t] for t in state_indices], dim=1)
+            getattr(env, "_stack_states", lambda values: torch.stack(values, dim=1))(
+                [saved_states[t] for t in state_indices]
+            )
             if state_indices
             else live_state.unsqueeze(1)[:, :0].clone()
         )

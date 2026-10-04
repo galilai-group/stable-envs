@@ -1,5 +1,5 @@
 {
-  "recorded_utc": "2026-10-04T00:40:57.636586+00:00",
+  "recorded_utc": "2026-10-04T01:31:46.014244+00:00",
   "branch": "sami-dev",
   "starting_head": "f88bd4546878797504463dbd32bce736fd2979e4",
   "accepted_matrix": {
@@ -16,21 +16,33 @@
     "public_integration": "INCOMPLETE",
     "cuda_renderer": "NOT_ENTERED",
     "verification": "pusht-verification.json",
-    "cost": "pusht_replay_cost/cost.csv"
+    "cost": "pusht_replay_cost/cost.csv",
+    "selected_state_collation": "PASS_25_CPU_TESTS_CUDA_JOB_6992506_PENDING",
+    "render_projection_probe": "PASS_118_SOURCE_ONLY_CASES_3776_EXACT_FRAMES_NOT_PRODUCTION"
   },
   "rocket": {
     "public_cpu_render": "PASS_204_CHECKPOINTS_MSE_ZERO",
     "public_cuda_job": "6990749_1",
-    "cuda_status": "RUNNING_AT_LAST_CHECK",
+    "cuda_status": "PASS_204_CHECKPOINTS_MAX_MSE_0.0004282208",
     "cpu_companion_job": "6990800",
-    "cpu_companion_status": "SOURCE_SUFFIX_RUNNING_AT_LAST_CHECK",
-    "persistent_variation": "THREE_SEEDS_PASS_LOG_MARKERS_REPORT_COLLECTION_PENDING"
+    "cpu_companion_status": "PASS_WITH_UNIT_FIXTURE_RETRY_6992056",
+    "persistent_variation": "PASS_90_CASES",
+    "independent_source_suffix": "PASS_108_CASES",
+    "cpu_unit_tests": 18,
+    "replay_cost_array": "6992404",
+    "replay_cost_status": "RUNNING",
+    "online_cpu_job": "6992588",
+    "online_cuda_job": "6992589",
+    "online_status": "PENDING_AT_LAST_CHECK",
+    "online_cpu_status": "RUNNING_6992588"
   },
   "ogbench": {
     "cube_cpu_frame_gate": "PASS_B2_30_CASES",
     "scene_cpu_frame_gate": "PASS_B2_30_CASES",
     "gpu_array": "6991787",
-    "gpu_status": "CUBE_RUNNING_SCENE_PENDING_AT_LAST_CHECK"
+    "gpu_status": "PASS_BOTH_PAIRED_FRAME_GATES",
+    "cube_paired_gate": "PASS_B2_T1_T8_OPENGL_CPU_AND_GPU_6991787_1",
+    "scene_paired_gate": "PASS_B2_T1_T8_OPENGL_CPU_AND_GPU_6991787_2"
   },
   "dmc": {
     "array": "6990477",
@@ -71,6 +83,13 @@
     {
       "job": "6991787",
       "action": "replacement paired GPU array submitted with --cpus-per-task=4 --mem=32G; unchanged candidate/gate"
+    },
+    {
+      "jobs": [
+        "6992404_2",
+        "6992404_3"
+      ],
+      "action": "afterany dependencies on 6992506 and 6992589 so correctness jobs precede remaining GPU cost measurements; active CPU cost tasks unchanged"
     }
   ]
 }

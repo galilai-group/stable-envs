@@ -35,7 +35,9 @@ def main():
         assert all(record[k] for k in ("exact_source_numeric", "independent_restore_exact", "immediate_pixels_exact"))
         delta = (ours[i].astype(np.float64) - oracle[i]) / 255
         error = float(np.mean(delta**2))
-        assert error == record["metrics"]["normalized_mse"] and error <= 0.001
+        # NPZ reload changes array strides/reduction order, not the pixels.
+        # Permit float64 summation roundoff only; the acceptance limit is exact.
+        assert np.isclose(error, record["metrics"]["normalized_mse"], rtol=1e-12, atol=0) and error <= 0.001
         errors.append(error)
     # Recompute the frozen group pixel criteria. The reported SSIM is also
     # recomputed when pixels differ; equality itself proves SSIM=1 otherwise.

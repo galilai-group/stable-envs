@@ -1,0 +1,9 @@
+{
+  "status": "PASS_RECOMPUTED_RAW_PROJECTION_PAIRS",
+  "cases": 118,
+  "frames": 3776,
+  "mse": 0,
+  "public_acceptance": false,
+  "gpu_acceptance": false,
+  "report_sha256": "4da6958c52cb91072ba1d3c5c2034fc412a5e8d0db556cf768db0ff63f0d441e"
+}

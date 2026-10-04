@@ -1,0 +1,6 @@
+{
+  "path": "scripts/research_rocket_production/replay_performance.py",
+  "sha256": "c41262f75e21f80e37f52c3d76f99938b0419d6c8e66b754f7cbc75ab33477fa",
+  "candidate_base": "rocket-current-gate-v1-20261003",
+  "production_changes": false
+}

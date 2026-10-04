@@ -21,11 +21,13 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--gpu", action="store_true")
+    parser.add_argument("--render-cpu", action="store_true", help="Include CPU TinyRenderer branch/render costs")
     parser.add_argument("--batches", type=int, nargs="+", default=[1, 16])
     args = parser.parse_args()
     torch.set_num_threads(1)
     args.output.mkdir(parents=True, exist_ok=False)
     device = "cuda" if args.gpu else "cpu"
+    render_images = args.gpu or args.render_cpu
     records = []
 
     def sync():
@@ -44,6 +46,8 @@ def main():
         raw = [timed(fn)[0] for _ in range(count)]
         return dict(
             samples_ms=raw,
+            mean_ms=float(np.mean(raw)),
+            sd_ms=float(np.std(raw, ddof=1)),
             median_ms=float(np.median(raw)),
             p95_ms=float(np.percentile(raw, 95)),
             operations_per_second=1000 / float(np.median(raw)),
@@ -69,7 +73,7 @@ def main():
                 e.reset(seed=17, options=options)
                 action = np.zeros((batch, 7), np.float64)
                 for _ in range(horizon):
-                    e.step(action)
+                    e.step(action, states=None, frames=None)
                 state = e.get_state()
                 buffer = io.BytesIO()
                 np.savez(buffer, **{"/".join(k): v.cpu().numpy() for k, v in state.items(True, True)})
@@ -91,18 +95,18 @@ def main():
                     restore_samples=samples,
                     branches=[],
                 )
-                if args.gpu:
+                if render_images:
                     record["cold_render_ms"], pixels = timed(lambda: e.render(state))
                     record["warm_render"] = distribution(lambda: e.render(state), 10)
                     record["frame_sha256"] = hashlib.sha256(pixels.cpu().numpy().tobytes()).hexdigest()
                 for length in [1, 10, 100]:
-                    for cadence in ["none", "every_fourth", "every_step", "final"] if args.gpu else ["none"]:
+                    for cadence in ["none", "every_fourth", "every_step", "final"] if render_images else ["none"]:
 
                         def branch():
                             e.set_state(state)
                             frame = None
                             for i in range(length):
-                                output = e.step(action)
+                                output = e.step(action, states=None, frames=None)
                                 if cadence == "every_step" or cadence == "every_fourth" and (i + 1) % 4 == 0:
                                     frame = e.render(output["state"])
                             if cadence == "final":
@@ -138,7 +142,10 @@ def main():
         dynamics="Official PyFlyt/PyBullet CPU, even for CUDA rendering",
         sampling="One warmup; get_state 20 samples; restore B1 10/B16 3 samples; branches 3 samples. Runtime-bounded descriptive distributions, not precise tail estimates.",
         horizon_note="The registered 1202-row capacity is exercised with source-supported ceiling=500000 and acceleration disabled; ordinary default free fall crashes around step 303.",
-        rendered="GPU only; local Apple CPU measurements must not be interpreted as GPU speedups",
+        rendered=("CUDA" if args.gpu else "CPU TinyRenderer") if render_images else "No frames requested",
+        branch_executor="Repeated public single-action calls, including source post-terminal behavior; not an action-chunk throughput benchmark",
+        construction_note="Cold means the first construction of this scenario within this process; later scenarios can reuse imported modules and global caches.",
+        script_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
     )
     (args.output / "result.json").write_text(json.dumps(result, indent=2) + "\n")
 

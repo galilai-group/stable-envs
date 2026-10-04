@@ -117,3 +117,7 @@ Milestone write-ups and generated tables. They use the project's internal names
 - [Rocket public renderer blocker checkpoint](rocket_public_renderer_blocker.md):
   204 semantic checkpoints completed; five frozen visual groups fail; sequence
   stopped at 39 VERIFIED / 3 INCOMPLETE.
+- [Current non-Craftax completion checkpoint](semantic_recovery_evidence/noncraftax_completion_20261003/README.md):
+  private exact PushT replay and cost evidence; current Rocket CPU render and
+  companion gates; repaired Cube/Scene source GL inspection. Registration
+  acceptance stays 35/38 outside Craftax while public/CUDA gates remain open.

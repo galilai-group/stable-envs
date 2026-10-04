@@ -1,0 +1,35 @@
+{
+  "scope": "Instrumented cProfile diagnostic, not throughput timing",
+  "variant": "continuous",
+  "batch": 16,
+  "resolution": 64,
+  "seed": 17,
+  "lane_history_lengths": [
+    10240,
+    10239,
+    10238,
+    10237,
+    10240,
+    10239,
+    10238,
+    10237,
+    10240,
+    10239,
+    10238,
+    10237,
+    10240,
+    10239,
+    10238,
+    10237
+  ],
+  "action": "np.array([(-1.0)**(t//32),(-1.0)**(t//64)], np.float32)",
+  "profiled_call": "adapter.set_state(adapter_snapshot_taken_after_prefix)",
+  "observed_cumulative_seconds": {
+    "set_state": 33.143,
+    "source_task_step": 26.914,
+    "validate_all_calls": 4.126
+  },
+  "observation": "Source Python control/substep work dominates; validation is secondary. No production optimization was made from this diagnostic. Parallel lane restoration is a future candidate, not an accepted speedup.",
+  "production_commit": "5f9df41bd8db83a32c50dd03631e7787c17d2122",
+  "profile_sha256": "8bf3672ee103979ef9a29482ac1aa5f81cf3a19183d935e6f6fefaf6f0411bce"
+}
