@@ -93,6 +93,14 @@ chunk expectations stop each lane at its first done flag, as the public API requ
 This first format covers State/task trajectories only. Source pixels, camera and
 fidelity metadata, renderer benchmark consumers, and other families remain to be
 migrated. Existing rendering and family acceptance gates remain authoritative.
+Cross-machine frozen trajectories allow absolute error up to `1e-12` only for
+float64 continuations and task values (`rtol=0`). An independent Linux-versus-Mac
+source audit measured at most `8e-15` across these 32-step corpora. Float32,
+integers, RNG and flags remain exact. Immediate get/set restoration and same-runtime
+live source profiles also remain exact. Old/new corpus migration still compares
+array bytes exactly. The tolerance belongs to this frozen regression policy, not
+to the corpus loader or registration acceptance gates.
+
 A valid hash seal proves artifact integrity, not source authority or acceptance;
 retain the seal in trusted version control and use the pinned source generator.
 

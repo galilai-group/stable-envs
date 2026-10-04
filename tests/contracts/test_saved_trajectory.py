@@ -13,7 +13,7 @@ import torch
 import stable_envs as se
 from stable_envs.testing.corpus import load_trajectory
 from tests.helpers.reference.profiles import PROFILES
-from tests.helpers.reference.saved import native_corpus
+from tests.helpers.reference.saved import assert_frozen_equal, assert_frozen_state, native_corpus
 from tests.helpers.reference.semantics import compare_state
 
 ROOT = Path(__file__).resolve().parents[1] / "fixtures/semantics"
@@ -65,10 +65,10 @@ def test_disk_restore_continuation_and_capture(case, device):
             compare_state(env.get_state(), saved.state(start))
             for t in range(start, start + 8):
                 result = env.step(saved.arrays["actions"][t].copy(), states=None, frames=None)
-                compare_state(env.get_state(), saved.state(t + 1))
+                assert_frozen_state(env.get_state(), saved.state(t + 1))
                 for key in ("reward", "terminated", "truncated", "observation", "info_state"):
                     expected = torch.tensor(saved.arrays[key][t])
-                    torch.testing.assert_close(result[key].cpu(), expected, rtol=0, atol=0)
+                    assert_frozen_equal(result[key], expected)
 
         # Same loaded state/action path on CPU and CUDA; this assertion compares
         # chunk capture and direct rendering, not our pixels to the upstream renderer.
@@ -85,17 +85,17 @@ def test_disk_restore_continuation_and_capture(case, device):
                 index = 7 + t
                 endpoint[active] = index + 1
                 expected_state = torch.stack([saved.state(int(k))[lane] for lane, k in enumerate(endpoint)])
-                compare_state(chunk["states"][:, t], expected_state)
+                assert_frozen_state(chunk["states"][:, t], expected_state)
                 torch.testing.assert_close(chunk["valid"][:, t].cpu(), torch.tensor(active))
                 for key in ("reward", "terminated", "truncated", "observation", "info_state"):
                     expected = saved.arrays[key][index].copy()
                     expected[~active] = 0
                     actual = chunk[key] if horizon == 1 else chunk[key][:, t]
-                    torch.testing.assert_close(actual.cpu(), torch.tensor(expected), rtol=0, atol=0)
+                    assert_frozen_equal(actual, expected)
                 frames.append(env.render(expected_state.to(device)))
                 active &= ~(saved.arrays["terminated"][index] | saved.arrays["truncated"][index])
             assert chunk["frames"].device.type == device
             assert torch.equal(chunk["frames"], torch.stack(frames, dim=1))
-            compare_state(env.get_state(), expected_state)
+            assert_frozen_state(env.get_state(), expected_state)
             env.reset(seed=99)
             compare_state(chunk, held)

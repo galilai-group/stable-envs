@@ -101,3 +101,24 @@ def test_loader_rejects_bad_artifacts(tmp_path, defect):
         (path / "trajectory.npz").unlink()
     with pytest.raises((ValueError, FileNotFoundError)):
         load_trajectory(path, registration="fixture/v1")
+
+
+@pytest.mark.parametrize("kind", ["float64", "float32", "int64", "bool"])
+def test_frozen_roundoff_budget_does_not_hide_real_or_discrete_errors(kind):
+    from tests.helpers.reference.saved import assert_frozen_equal
+
+    if kind == "float64":
+        expected = np.array([1.0], dtype=kind)
+        assert_frozen_equal(expected + 8e-15, expected)
+        actual = expected + 2e-12
+    elif kind == "float32":
+        expected = np.array([1.0], dtype=kind)
+        actual = np.nextafter(expected, np.float32(2.0))
+    elif kind == "int64":
+        expected = np.array([2**63 - 1], dtype=kind)
+        actual = expected - 1
+    else:
+        expected = np.array([False])
+        actual = ~expected
+    with pytest.raises(AssertionError):
+        assert_frozen_equal(actual, expected)

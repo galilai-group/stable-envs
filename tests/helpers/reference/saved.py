@@ -10,6 +10,7 @@ import json
 from pathlib import Path
 
 import numpy as np
+import torch
 
 from stable_envs.testing.evidence import sha256
 from stable_envs.testing.metrics import normalized_mse, summarize_errors
@@ -17,6 +18,33 @@ from tests.helpers.reference.cases import CaseKey, coverage
 
 SWM_PIN = "176d54532b3c0a251a4f509b74f2fdacc143a63d"
 ROCKET_SOURCE = "5ede3640ce1e2add32b6b0a6c36e190bb1130e38bb258ab182af12a6fbedee23"
+
+# Cross-machine frozen trajectories only. The independent Linux/Mac source audit
+# measured up to 8e-15 over 32 steps. Live same-runtime source contracts and
+# immediate State restoration retain exact comparisons. This is an absolute
+# roundoff budget, not a source acceptance or pixel threshold.
+FROZEN_FLOAT64_ATOL = 1e-12
+
+
+def assert_frozen_equal(actual, expected):
+    actual = actual.detach().cpu() if torch.is_tensor(actual) else torch.tensor(actual)
+    expected = expected.detach().cpu() if torch.is_tensor(expected) else torch.tensor(expected)
+    torch.testing.assert_close(
+        actual,
+        expected,
+        rtol=0,
+        atol=FROZEN_FLOAT64_ATOL if expected.dtype == torch.float64 else 0,
+    )
+
+
+def assert_frozen_state(actual, expected):
+    assert actual.batch_size == expected.batch_size
+    assert set(actual.keys(True, True)) == set(expected.keys(True, True))
+    for key in expected.keys(True, True):
+        try:
+            assert_frozen_equal(actual[key], expected[key])
+        except AssertionError as error:
+            raise AssertionError(f"Frozen State {key}: {error}") from error
 
 
 def native_corpus(directory, domain):

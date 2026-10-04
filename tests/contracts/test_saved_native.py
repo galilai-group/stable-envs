@@ -6,12 +6,11 @@ It is a historical regression, not new source/version acceptance.
 
 from pathlib import Path
 
-import numpy as np
 import pytest
 import torch
 
 import stable_envs as se
-from tests.helpers.reference.saved import native_corpus
+from tests.helpers.reference.saved import assert_frozen_equal, native_corpus
 
 pytestmark = pytest.mark.regression
 
@@ -43,8 +42,8 @@ def test_frozen_source_state_and_tasks(domain, name):
             name = key if isinstance(key, str) else "/".join(key)
             actual = torch.stack([state[key] for state in states]).cpu().numpy()
             assert actual.dtype == arrays[f"state/{name}"].dtype
-            np.testing.assert_array_equal(actual, arrays[f"state/{name}"])
+            assert_frozen_equal(actual, arrays[f"state/{name}"])
         for key in ("reward", "terminated", "truncated", "observation", "info_state"):
             actual = torch.stack([output[key] for output in outputs]).cpu().numpy()
             assert actual.dtype == arrays[key].dtype
-            np.testing.assert_array_equal(actual, arrays[key])
+            assert_frozen_equal(actual, arrays[key])

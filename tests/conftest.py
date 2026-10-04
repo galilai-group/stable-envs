@@ -44,14 +44,21 @@ CI_PROFILE = os.environ.get("STABLE_ENVS_CI_PROFILE", "")
 
 import pytest
 
-try:
-    import stable_worldmodel  # noqa: F401 — registers swm/* ids for certification oracles
-except ImportError:
-    pass
-
 from tests.helpers.reference.certification import install_on_classes
 
 install_on_classes()
+
+
+def pytest_configure(config):
+    # An explicit source profile verifies and imports its requested checkout in
+    # its fixture. Importing an installed copy first would select another oracle
+    # before the source pin is checked. Legacy certification still registers IDs.
+    if not config.getoption("--contract-profile", default=None):
+        try:
+            import stable_worldmodel  # noqa: F401
+        except ImportError:
+            pass
+
 
 #: GPU files that are also the frozen regression oracle (parity / reproducibility / fast==slow).
 _GPU_REGRESSION = {

@@ -125,3 +125,36 @@ def test_partial_or_blocked_source_profile_cannot_pass(tmp_path, selection):
     verify_seal(run)
     report = json.loads((run / "result.json").read_text())
     assert report["status"] == "BLOCKED" and report["passed"] == 0 and report["required"] == 56
+
+
+def test_required_profile_does_not_import_unverified_installed_source(tmp_path):
+    package = tmp_path / "stable_worldmodel"
+    package.mkdir()
+    marker = tmp_path / "unverified-import"
+    (package / "__init__.py").write_text(
+        "from pathlib import Path\n"
+        f"Path({str(marker)!r}).touch()\n"
+        "raise RuntimeError('Unverified installed source executed')\n"
+    )
+    run = tmp_path / "evidence"
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "pytest",
+            "-q",
+            "tests/contracts/test_state.py",
+            "--contract-profile",
+            "native",
+            "--contract-output",
+            str(run),
+        ],
+        cwd=ROOT,
+        env={**os.environ, "PYTHONPATH": str(tmp_path) + os.pathsep + os.environ.get("PYTHONPATH", "")},
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert not marker.exists(), result.stdout + result.stderr
+    assert result.returncode == 1, result.stdout + result.stderr
+    assert json.loads((run / "result.json").read_text())["status"] == "BLOCKED"
