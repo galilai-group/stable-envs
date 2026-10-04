@@ -14,4 +14,10 @@ The registration remains INCOMPLETE until the final production gate is verified.
   the saved failing flight frame; diagnostic only, not broad acceptance.
 
 Final job 6996439 has passed 67 CPU tests and 3 CUDA tests with zero skips.
-Full source/renderer gates remain pending at this commit. No throughput claim.
+The completed 204-frame CUDA public gate is independently verified under
+`completed-public-cuda/`. Both online reports were observed passing (64 cases /
+224 frames each), but their raw artifacts and the final CPU/scheduler evidence
+still need retrieval after SSH authentication resumes. See
+`online-metadata-observation.json`; it is metadata, not a substitute for raw
+verification. `local-checks/` preserves the 57-test shared CPU closure and its
+earlier missing-dependency retry. No promotion or throughput claim.

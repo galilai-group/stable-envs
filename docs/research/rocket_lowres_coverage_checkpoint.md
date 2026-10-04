@@ -140,3 +140,27 @@ duplicate 6996378 was cancelled before starting. Cancelled controls do not promo
 the registration. The standalone final verifier requires successful terminal
 evidence, current source hashes, every companion gate, and independent raw-pixel
 verification before acceptance can be recorded.
+
+## Completed rendering/online stages; terminal retrieval pending
+
+The final candidate's 480px CUDA public gate completed all **204 checkpoints and
+41 visual groups**. Downloaded raw pixels and current production hashes were
+independently verified in
+[completed-public-cuda](semantic_recovery_evidence/final_three_20261004/rocket/closure-v4/completed-public-cuda/):
+normalized MSE mean **0.0000462286**, sample SD **0.0000223428**, maximum
+**0.0000970718**. No threshold was changed.
+
+Both online result reports were read from Oscar and report **64 cases / 224
+frames each**, CPU maximum MSE **0**, CUDA maximum **0.0003739141**. The GPU lane
+wrote `GPU_LANE_PASS`. Their raw online artifacts have not yet been downloaded
+or independently recomputed. CPU source-suffix checks had started when fresh
+SSH authentication was rejected; no control socket or live tmux SSH session
+remained. Final scheduler/CPU terminal evidence and the suffix/Variation results
+must still be retrieved and verified. **The count remains 37/38.**
+
+Local shared closure checks passed **57 tests**, with the unrelated Craftax
+renderer-only case explicitly deselected. The initial run's two missing-MiniGrid
+dependency failures and the successful retry are preserved separately in
+[local-checks](semantic_recovery_evidence/final_three_20261004/rocket/closure-v4/local-checks/).
+The [testing infrastructure review](../testing-design.md) records the current
+approaches and a staged cleanup plan; it introduces no new public environment API.

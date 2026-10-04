@@ -1,0 +1,14 @@
+.........................................................                [100%]
+=============================== warnings summary ===============================
+tests/unit/test_full_state_contract.py::test_full_snapshot_restores_future_and_has_no_aliases[PushT]
+tests/unit/test_full_state_contract.py::test_full_snapshot_restores_future_and_has_no_aliases[PushTDiscrete]
+tests/unit/test_full_state_contract.py::test_lossy_projection_is_rejected_and_full_state_renders[PushT]
+tests/unit/test_full_state_contract.py::test_lossy_projection_is_rejected_and_full_state_renders[PushTDiscrete]
+  /private/tmp/se-completion-312/lib/python3.12/site-packages/gymnasium/spaces/box.py:424: UserWarning: [33mWARN: Casting input x to numpy array.[0m
+    gym.logger.warn("Casting input x to numpy array.")
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+------------------------------ stable-envs safety ------------------------------
+resources: 0 EGL contexts created, 0 released, 0 live (peak 0); renderers 0 created / 0 closed
+node: cis1b1zs2j3.ad.brown.edu slurm=? reason=none reference-renderer={}
+57 passed, 1 deselected, 4 warnings in 1.99s
