@@ -1,0 +1,573 @@
+{
+  "values": {
+    "agent": {
+      "angle": {
+        "numeric_type": "array",
+        "dtype": "<f8",
+        "shape": [],
+        "values": -6.074531986925319
+      },
+      "color": {
+        "numeric_type": "array",
+        "dtype": "|u1",
+        "shape": [
+          3
+        ],
+        "values": [
+          180,
+          131,
+          241
+        ]
+      },
+      "scale": {
+        "numeric_type": "array",
+        "dtype": "<f4",
+        "shape": [],
+        "values": 26.873435974121094
+      },
+      "shape": {
+        "numeric_type": "scalar",
+        "dtype": "<i8",
+        "shape": [],
+        "values": 2
+      },
+      "start_position": {
+        "numeric_type": "array",
+        "dtype": "<f8",
+        "shape": [
+          2
+        ],
+        "values": [
+          281.8691105304458,
+          104.93927620590564
+        ]
+      },
+      "velocity": {
+        "numeric_type": "array",
+        "dtype": "<f8",
+        "shape": [
+          2
+        ],
+        "values": [
+          351.65908079347025,
+          304.1355580906762
+        ]
+      }
+    },
+    "background": {
+      "color": {
+        "numeric_type": "array",
+        "dtype": "|u1",
+        "shape": [
+          3
+        ],
+        "values": [
+          200,
+          116,
+          94
+        ]
+      }
+    },
+    "block": {
+      "angle": {
+        "numeric_type": "array",
+        "dtype": "<f8",
+        "shape": [],
+        "values": -2.080946990498123
+      },
+      "color": {
+        "numeric_type": "array",
+        "dtype": "|u1",
+        "shape": [
+          3
+        ],
+        "values": [
+          69,
+          182,
+          76
+        ]
+      },
+      "scale": {
+        "numeric_type": "array",
+        "dtype": "<f4",
+        "shape": [],
+        "values": 53.79825973510742
+      },
+      "shape": {
+        "numeric_type": "scalar",
+        "dtype": "<i8",
+        "shape": [],
+        "values": 7
+      },
+      "start_position": {
+        "numeric_type": "array",
+        "dtype": "<f8",
+        "shape": [
+          2
+        ],
+        "values": [
+          268.8801651461212,
+          356.4839889886811
+        ]
+      }
+    },
+    "goal": {
+      "angle": {
+        "numeric_type": "array",
+        "dtype": "<f8",
+        "shape": [],
+        "values": 3.7758048872455707
+      },
+      "color": {
+        "numeric_type": "array",
+        "dtype": "|u1",
+        "shape": [
+          3
+        ],
+        "values": [
+          101,
+          106,
+          52
+        ]
+      },
+      "position": {
+        "numeric_type": "array",
+        "dtype": "<f8",
+        "shape": [
+          2
+        ],
+        "values": [
+          130.5828118529086,
+          432.88453016594684
+        ]
+      },
+      "scale": {
+        "numeric_type": "array",
+        "dtype": "<f4",
+        "shape": [],
+        "values": 53.020450592041016
+      }
+    },
+    "rendering": {
+      "render_goal": {
+        "numeric_type": "scalar",
+        "dtype": "<i8",
+        "shape": [],
+        "values": 0
+      }
+    }
+  },
+  "state": {
+    "numeric_type": "array",
+    "dtype": "<f8",
+    "shape": [
+      7
+    ],
+    "values": [
+      281.8691105304458,
+      104.93927620590564,
+      268.8801651461212,
+      356.4839889886811,
+      -2.080946990498123,
+      351.65908079347025,
+      304.1355580906762
+    ]
+  },
+  "goal": {
+    "numeric_type": "array",
+    "dtype": "<f8",
+    "shape": [
+      7
+    ],
+    "values": [
+      85.92366178186346,
+      218.07637031892156,
+      142.17382500347512,
+      105.6096916500513,
+      -2.484078306839624,
+      351.65908079347025,
+      304.1355580906762
+    ]
+  },
+  "gym_rng": {
+    "bit_generator": "PCG64",
+    "state": {
+      "state": 274674114334540486603088602300644985544,
+      "inc": 332724090758049132448979897138935081983
+    },
+    "has_uint32": 0,
+    "uinteger": 0
+  },
+  "gym_seed": 42,
+  "rng": {
+    "bit_generator": "PCG64",
+    "state": {
+      "state": 274674114334540486603088602300644985544,
+      "inc": 332724090758049132448979897138935081983
+    },
+    "has_uint32": 0,
+    "uinteger": 0
+  },
+  "spaces": {
+    "": {
+      "rng": {
+        "bit_generator": "PCG64",
+        "state": {
+          "state": 302602671330392952913379056849247414473,
+          "inc": 332724090758049132448979897138935081983
+        },
+        "has_uint32": 1,
+        "uinteger": 3687649986
+      },
+      "initial": null
+    },
+    "/agent": {
+      "rng": {
+        "bit_generator": "PCG64",
+        "state": {
+          "state": 82184541913324411610667337762796689623,
+          "inc": 53903337969812501503319485398398273513
+        },
+        "has_uint32": 0,
+        "uinteger": 3796435948
+      },
+      "initial": null
+    },
+    "/agent/angle": {
+      "rng": {
+        "bit_generator": "PCG64",
+        "state": {
+          "state": 149062664806209115432472051432224633059,
+          "inc": 48313725885182695341856295084375507297
+        },
+        "has_uint32": 0,
+        "uinteger": 0
+      },
+      "initial": 0.0
+    },
+    "/agent/color": {
+      "rng": {
+        "bit_generator": "PCG64",
+        "state": {
+          "state": 7397343054462030523590034452137485568,
+          "inc": 92287197690321855236263252323471710185
+        },
+        "has_uint32": 0,
+        "uinteger": 0
+      },
+      "initial": {
+        "numeric_type": "array",
+        "dtype": "|u1",
+        "shape": [
+          3
+        ],
+        "values": [
+          65,
+          105,
+          225
+        ]
+      }
+    },
+    "/agent/scale": {
+      "rng": {
+        "bit_generator": "PCG64",
+        "state": {
+          "state": 54649721187496465136611857931966361837,
+          "inc": 238545330011654537565481235916506691849
+        },
+        "has_uint32": 0,
+        "uinteger": 0
+      },
+      "initial": 40
+    },
+    "/agent/shape": {
+      "rng": {
+        "bit_generator": "PCG64",
+        "state": {
+          "state": 39771283611245582639928899256975096780,
+          "inc": 244937116186762040606590888018776194603
+        },
+        "has_uint32": 1,
+        "uinteger": 376847102
+      },
+      "initial": 0
+    },
+    "/agent/start_position": {
+      "rng": {
+        "bit_generator": "PCG64",
+        "state": {
+          "state": 19025863435076673603937180707383160641,
+          "inc": 147816230100654498056702740076824049987
+        },
+        "has_uint32": 0,
+        "uinteger": 0
+      },
+      "initial": {
+        "numeric_type": "array",
+        "dtype": "<f8",
+        "shape": [
+          2
+        ],
+        "values": [
+          256.0,
+          400.0
+        ]
+      }
+    },
+    "/agent/velocity": {
+      "rng": {
+        "bit_generator": "PCG64",
+        "state": {
+          "state": 115878665439745501386439378853748476051,
+          "inc": 112520354299916104224481978036877559419
+        },
+        "has_uint32": 0,
+        "uinteger": 0
+      },
+      "initial": {
+        "numeric_type": "array",
+        "dtype": "<f8",
+        "shape": [
+          2
+        ],
+        "values": [
+          0.0,
+          0.0
+        ]
+      }
+    },
+    "/background": {
+      "rng": {
+        "bit_generator": "PCG64",
+        "state": {
+          "state": 191262189940271485761268472344729355322,
+          "inc": 211900029297167986458694525911032286801
+        },
+        "has_uint32": 1,
+        "uinteger": 1290299893
+      },
+      "initial": null
+    },
+    "/background/color": {
+      "rng": {
+        "bit_generator": "PCG64",
+        "state": {
+          "state": 254728316957516801821364879925110851660,
+          "inc": 64374276341125822334515541194878547405
+        },
+        "has_uint32": 0,
+        "uinteger": 0
+      },
+      "initial": {
+        "numeric_type": "array",
+        "dtype": "|u1",
+        "shape": [
+          3
+        ],
+        "values": [
+          255,
+          255,
+          255
+        ]
+      }
+    },
+    "/block": {
+      "rng": {
+        "bit_generator": "PCG64",
+        "state": {
+          "state": 197163003247891287936933004130295348328,
+          "inc": 286492528312265033019385342963010832165
+        },
+        "has_uint32": 1,
+        "uinteger": 2652833156
+      },
+      "initial": null
+    },
+    "/block/angle": {
+      "rng": {
+        "bit_generator": "PCG64",
+        "state": {
+          "state": 155354640730045251360277448743402274392,
+          "inc": 54343973205386676841648844035182494523
+        },
+        "has_uint32": 0,
+        "uinteger": 0
+      },
+      "initial": 0.0
+    },
+    "/block/color": {
+      "rng": {
+        "bit_generator": "PCG64",
+        "state": {
+          "state": 55026058589895530067458418529545299479,
+          "inc": 136686229088088084497637028612012608045
+        },
+        "has_uint32": 0,
+        "uinteger": 0
+      },
+      "initial": {
+        "numeric_type": "array",
+        "dtype": "|u1",
+        "shape": [
+          3
+        ],
+        "values": [
+          119,
+          136,
+          153
+        ]
+      }
+    },
+    "/block/scale": {
+      "rng": {
+        "bit_generator": "PCG64",
+        "state": {
+          "state": 337436090787742764077228420269779622727,
+          "inc": 278532582665773960630198733841693340175
+        },
+        "has_uint32": 0,
+        "uinteger": 0
+      },
+      "initial": 40
+    },
+    "/block/shape": {
+      "rng": {
+        "bit_generator": "PCG64",
+        "state": {
+          "state": 100468791710197891658598392229560555141,
+          "inc": 291730312124716622211034997718034753627
+        },
+        "has_uint32": 1,
+        "uinteger": 3879702663
+      },
+      "initial": 2
+    },
+    "/block/start_position": {
+      "rng": {
+        "bit_generator": "PCG64",
+        "state": {
+          "state": 101758510374902272482438342789573603027,
+          "inc": 32182405469387884604026446779061391527
+        },
+        "has_uint32": 0,
+        "uinteger": 0
+      },
+      "initial": {
+        "numeric_type": "array",
+        "dtype": "<f8",
+        "shape": [
+          2
+        ],
+        "values": [
+          400.0,
+          100.0
+        ]
+      }
+    },
+    "/goal": {
+      "rng": {
+        "bit_generator": "PCG64",
+        "state": {
+          "state": 9122167905272306023888619461818026724,
+          "inc": 167593980790334076690172070018267801665
+        },
+        "has_uint32": 0,
+        "uinteger": 911465577
+      },
+      "initial": null
+    },
+    "/goal/angle": {
+      "rng": {
+        "bit_generator": "PCG64",
+        "state": {
+          "state": 330511038147065646477141107302242313875,
+          "inc": 31464984284780832006520144768182268271
+        },
+        "has_uint32": 0,
+        "uinteger": 0
+      },
+      "initial": 0.7853981633974483
+    },
+    "/goal/color": {
+      "rng": {
+        "bit_generator": "PCG64",
+        "state": {
+          "state": 123000061853235286683730557107650506717,
+          "inc": 300401268302120949699051074932091293917
+        },
+        "has_uint32": 0,
+        "uinteger": 0
+      },
+      "initial": {
+        "numeric_type": "array",
+        "dtype": "|u1",
+        "shape": [
+          3
+        ],
+        "values": [
+          144,
+          238,
+          144
+        ]
+      }
+    },
+    "/goal/position": {
+      "rng": {
+        "bit_generator": "PCG64",
+        "state": {
+          "state": 217556200560158643221404136345487570047,
+          "inc": 320792430143684824922672198048815722699
+        },
+        "has_uint32": 0,
+        "uinteger": 0
+      },
+      "initial": {
+        "numeric_type": "array",
+        "dtype": "<f8",
+        "shape": [
+          2
+        ],
+        "values": [
+          256.0,
+          256.0
+        ]
+      }
+    },
+    "/goal/scale": {
+      "rng": {
+        "bit_generator": "PCG64",
+        "state": {
+          "state": 316033260502437571626513432819554532424,
+          "inc": 246847745949039101264827604965586394113
+        },
+        "has_uint32": 0,
+        "uinteger": 0
+      },
+      "initial": 40
+    },
+    "/rendering": {
+      "rng": {
+        "bit_generator": "PCG64",
+        "state": {
+          "state": 183988071150756176870681680324285283076,
+          "inc": 198773676258707495116043831725735290369
+        },
+        "has_uint32": 1,
+        "uinteger": 2159955179
+      },
+      "initial": null
+    },
+    "/rendering/render_goal": {
+      "rng": {
+        "bit_generator": "PCG64",
+        "state": {
+          "state": 321628837537951985417653371047316359521,
+          "inc": 297757806359542728801496980986029139955
+        },
+        "has_uint32": 1,
+        "uinteger": 2905696375
+      },
+      "initial": 1
+    }
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "python": "3.12.11 (main, Jun  3 2025, 15:41:47) [Clang 17.0.0 (clang-1700.0.13.3)]",
+  "executable": "/private/tmp/se-completion-312/bin/python",
+  "hardware": [
+    "Apple M5 Pro",
+    "18",
+    "18"
+  ],
+  "versions": {
+    "numpy": "2.2.6",
+    "torch": "2.14.1",
+    "tensordict": "0.14.2",
+    "pymunk": "7.2.0",
+    "gymnasium": "1.2.3",
+    "pygame": "2.6.1",
+    "opencv-python-headless": "4.11.0.86",
+    "pytest": "9.1.1",
+    "ruff": "0.16.10"
+  }
+}

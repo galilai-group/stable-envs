@@ -3657,36 +3657,37 @@
       ],
       "family": "rocket",
       "owner": "coordinator",
-      "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
+      "state_contract": "Typed bounded replay State through official PyFlyt/PyBullet; current acceptance gates pending",
       "state_status": "INCOMPLETE",
-      "action_parity": "UNTESTED",
-      "reset_parity": "UNTESTED",
-      "step_parity": "UNTESTED",
-      "reward_parity": "UNTESTED",
-      "terminated_truncated_parity": "UNTESTED",
-      "rng_lifecycle": "UNTESTED",
-      "variation_parity": "UNTESTED",
-      "execution_mode": null,
-      "adapter_status": "NOT_IMPLEMENTED",
-      "renderer_regression": "PENDING",
+      "action_parity": "CURRENT_REPLAY_GATE_PENDING",
+      "reset_parity": "CURRENT_REPLAY_GATE_PENDING",
+      "step_parity": "CURRENT_REPLAY_GATE_PENDING",
+      "reward_parity": "CURRENT_REPLAY_GATE_PENDING",
+      "terminated_truncated_parity": "CURRENT_REPLAY_GATE_PENDING",
+      "rng_lifecycle": "CURRENT_REPLAY_GATE_PENDING",
+      "variation_parity": "CURRENT_REPLAY_GATE_PENDING",
+      "execution_mode": "DELEGATED_CPU",
+      "adapter_status": "IMPLEMENTED_BOUNDED_REPLAY_ACCEPTANCE_PENDING",
+      "renderer_regression": "CURRENT_REPLAY_GATE_PENDING",
       "oracle_corpus": null,
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Stage B fails: named numeric restore and official PyBullet 3.2.7 memory/file snapshots change cached link state and exact continuation, including reward and termination near contact.",
-        "Requires engine-supported complete typed numeric export/import of cached link/collider transforms, velocities, dynamic masses/inertias and contact/solver state across independent instances.",
-        "Production, complete reset RNG, atomic validation, renderer/backend, Variation and performance gates not entered; no promotion."
+        "The historical direct numeric/native snapshot route was nonexact; the implemented official-engine replay route supersedes that investigation.",
+        "Current CPU TinyRenderer and CUDA public acceptance gates, persistent Variation, independent source suffixes and terminal evidence must be collected before promotion.",
+        "Current online source comparison and formal replay/step/render performance remain separate acceptance work."
       ],
       "test": "tests/unit/test_full_state_contract.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "execution_candidate": "DELEGATED",
-      "recovery_status": "BLOCKED_EXACT_PYBULLET_STATE",
+      "recovery_status": "CURRENT_CPU_CUDA_ACCEPTANCE_PENDING",
       "audit_report": "docs/research/rocket_recovery_audit.md",
       "feasibility_evidence": "docs/research/semantic_recovery_evidence/rocket_source_audit/feasibility-final/result.json",
       "feasibility_controls": "docs/research/semantic_recovery_evidence/rocket_source_audit/controls-final/result.json",
-      "source_provenance": "docs/research/semantic_recovery_evidence/rocket_source_audit/provenance.json"
+      "source_provenance": "docs/research/semantic_recovery_evidence/rocket_source_audit/provenance.json",
+      "current_recovery_evidence": "docs/research/semantic_recovery_evidence/noncraftax_completion_20261003/README.md"
     },
     {
       "historical_id": "swm/PendulumControl-v1",
@@ -3941,7 +3942,7 @@
       "rng_lifecycle": "UNTESTED",
       "variation_parity": "UNTESTED",
       "execution_mode": "NATIVE",
-      "adapter_status": "NOT_IMPLEMENTED",
+      "adapter_status": "PRIVATE_REPLAY_IMPLEMENTED_PUBLIC_INTEGRATION_PENDING",
       "renderer_regression": "PASS_SCOPED_CPU_CUDA: four frozen rows per selected class; explicit legacy target visibility for Reacher",
       "oracle_corpus": null,
       "reference_cpu_benchmark": "NOT_RUN",
@@ -3949,11 +3950,10 @@
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Stable actions are absolute PD targets in [0,512], not normalized relative commands.",
-        "Native solver is approximate; step omits reward/done.",
-        "get_state loses agent velocity; complete Pymunk state is not established.",
-        "Both SWM variants map to same continuous stable class; discrete decoding absent.",
-        "Parked after C3: simultaneous-contact restoration remains nonexact through the supported Pymunk interface. Private/native engine investigation requires coordinator review; no opaque serialization, approximation, tolerance, or replay-from-reset substitute."
+        "The existing public class retains the absolute-target approximate solver and omits source reward/termination; the private source-aligned replay candidate is not registered.",
+        "Integrate dynamic numeric history with the slice-only public step API, State-to-RenderState projection and independent CPU/CUDA renderer gates.",
+        "Certify continuous and discrete public registrations independently, including exact lifecycle, reset, configuration, rejection and replay behavior.",
+        "Measure replay costs and online source comparisons separately from correctness; no artificial TimeLimit or fixed history bound."
       ],
       "test": "tests/unit/test_full_state_contract.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
@@ -3964,7 +3964,7 @@
       ],
       "blocker": {
         "status": "OPEN",
-        "kind": "SUPPORTED_INTERFACE_STATE_BLOCKER",
+        "kind": "PRIVATE_REPLAY_PUBLIC_INTEGRATION_AND_ACCEPTANCE",
         "scope": "Both historical PushT registrations; independent certification remains required",
         "observed_error_with_exposed_contact_restore": 0.10992291186727243,
         "untested_candidates": [
@@ -3973,10 +3973,11 @@
           "broadphase collision IDs/cache"
         ],
         "permanent_skip": false,
-        "description": "Exact arbitrary restoration requires engine state not exposed by the supported Pymunk interface; no global impossibility claim.",
-        "investigation_status": "PARKED_BY_COORDINATOR",
-        "resume_requires": "Coordinator review before any private ABI/native Chipmunk investigation"
-      }
+        "description": "Supported-interface direct contact restore remains historically nonexact. Authorized official-engine replay now has a private numeric implementation; complete public integration and independent gates remain.",
+        "investigation_status": "ACTIVE_OFFICIAL_ENGINE_REPLAY",
+        "resume_requires": "No private ABI work; complete the authorized replay route and per-registration acceptance."
+      },
+      "current_recovery_evidence": "docs/research/semantic_recovery_evidence/noncraftax_completion_20261003/README.md"
     },
     {
       "historical_id": "swm/PushT-v1",
@@ -3995,7 +3996,7 @@
       "rng_lifecycle": "UNTESTED",
       "variation_parity": "UNTESTED",
       "execution_mode": "NATIVE",
-      "adapter_status": "NOT_IMPLEMENTED",
+      "adapter_status": "PRIVATE_REPLAY_IMPLEMENTED_PUBLIC_INTEGRATION_PENDING",
       "renderer_regression": "PASS_SCOPED_CPU_CUDA: four frozen rows per selected class; explicit legacy target visibility for Reacher",
       "oracle_corpus": null,
       "reference_cpu_benchmark": "NOT_RUN",
@@ -4003,10 +4004,10 @@
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Stable actions are absolute PD targets in [0,512], not normalized relative commands.",
-        "Native solver is approximate; step omits reward/done.",
-        "get_state loses agent velocity; complete Pymunk state is not established.",
-        "Parked after C3: simultaneous-contact restoration remains nonexact through the supported Pymunk interface. Private/native engine investigation requires coordinator review; no opaque serialization, approximation, tolerance, or replay-from-reset substitute."
+        "The existing public class retains the absolute-target approximate solver and omits source reward/termination; the private source-aligned replay candidate is not registered.",
+        "Integrate dynamic numeric history with the slice-only public step API, State-to-RenderState projection and independent CPU/CUDA renderer gates.",
+        "Certify continuous and discrete public registrations independently, including exact lifecycle, reset, configuration, rejection and replay behavior.",
+        "Measure replay costs and online source comparisons separately from correctness; no artificial TimeLimit or fixed history bound."
       ],
       "test": "tests/unit/test_full_state_contract.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
@@ -4017,7 +4018,7 @@
       ],
       "blocker": {
         "status": "OPEN",
-        "kind": "SUPPORTED_INTERFACE_STATE_BLOCKER",
+        "kind": "PRIVATE_REPLAY_PUBLIC_INTEGRATION_AND_ACCEPTANCE",
         "scope": "Both historical PushT registrations; independent certification remains required",
         "observed_error_with_exposed_contact_restore": 0.10992291186727243,
         "untested_candidates": [
@@ -4026,10 +4027,11 @@
           "broadphase collision IDs/cache"
         ],
         "permanent_skip": false,
-        "description": "Exact arbitrary restoration requires engine state not exposed by the supported Pymunk interface; no global impossibility claim.",
-        "investigation_status": "PARKED_BY_COORDINATOR",
-        "resume_requires": "Coordinator review before any private ABI/native Chipmunk investigation"
-      }
+        "description": "Supported-interface direct contact restore remains historically nonexact. Authorized official-engine replay now has a private numeric implementation; complete public integration and independent gates remain.",
+        "investigation_status": "ACTIVE_OFFICIAL_ENGINE_REPLAY",
+        "resume_requires": "No private ABI work; complete the authorized replay route and per-registration acceptance."
+      },
+      "current_recovery_evidence": "docs/research/semantic_recovery_evidence/noncraftax_completion_20261003/README.md"
     },
     {
       "historical_id": "swm/QuadrupedDMControl-v0",

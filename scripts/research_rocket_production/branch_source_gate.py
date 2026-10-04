@@ -49,7 +49,7 @@ def main():
                 try:
                     e.reset(seed=seed, options=options)
                     for action in prefix:
-                        e.step(action[None])
+                        e.step(action[None], states=None, frames=None)
                     state = e.get_state()
                     for branch, length in [("zero", 1), ("mixed", 10), ("alternating", 25)]:
                         oracle = Oracle(**config)
@@ -60,13 +60,13 @@ def main():
                             # Destination has a different trajectory before each restore.
                             e.reset(seed=42, options={"variation": ["all"]})
                             for _ in range(5):
-                                e.step(mixed[None])
+                                e.step(mixed[None], states=None, frames=None)
                             e.set_state(state)
                             assert not differences(capture(oracle), capture(e._simulator.envs[0].env))
                             for i in range(length):
                                 action = zero if branch == "zero" or branch == "alternating" and i % 2 == 0 else mixed
                                 reference = oracle.step(action.copy())
-                                actual = e.step(action[None])
+                                actual = e.step(action[None], states=None, frames=None)
                                 assert actual["reward"][0].item() == reference[1]
                                 assert actual["terminated"][0].item() == bool(reference[2])
                                 assert actual["truncated"][0].item() == bool(reference[3])

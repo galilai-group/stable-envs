@@ -37,18 +37,19 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--gpu", action="store_true")
+    parser.add_argument("--render-cpu", action="store_true", help="Also gate the current public CPU renderer")
     args = parser.parse_args()
     torch.set_num_threads(1)
     args.output.mkdir(parents=True, exist_ok=False)
     records, frames, oracle_frames, projections, timings = [], [], [], [], []
     result = dict(status="RUNNING", records=records, job_id=os.environ.get("SLURM_JOB_ID"))
     device = "cuda" if args.gpu else "cpu"
-    resolution = 480 if args.gpu else 64
+    render_images = args.gpu or args.render_cpu
+    resolution = 480 if render_images else 64
     versions = {k: md.version(k) for k in ["PyFlyt", "pybullet", "numpy", "gymnasium", "torch", "tensordict"]}
     production_hashes = {
         str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest()
-        for p in sorted(ROOT.glob("stable_envs/_adapters/rocket*.py"))
-        + [ROOT / "stable_envs/envs/rocket_semantics.py", ROOT / "stable_envs/envs/rocket_landing.py"]
+        for p in sorted(ROOT.glob("stable_envs/_adapters/rocket*.py")) + list(ROOT.glob("stable_envs/envs/rocket*.py"))
     }
     oracle_path = Path(inspect.getfile(Oracle))
     result["oracle_source"] = {
@@ -72,7 +73,7 @@ def main():
         equal(saved, dest.get_state())
         assert np.array_equal(frame, dest._simulator.envs[0].env.render())
         equal(projected, dest.to_render_state())
-        if args.gpu:
+        if render_images:
             # Dynamics execute on CPU. At every checkpoint, exercise CUDA State
             # restore, full-State render, projected render, and restored rendering.
             # Intermediate source trajectories need not copy every full cache to
@@ -85,6 +86,9 @@ def main():
             equal(saved, e.get_state())
             metrics = pixel_agreement(ours.cpu().numpy(), frame[None])
             metrics["ssim"] = ssim(ours.cpu().numpy(), frame[None])
+            metrics["normalized_mse"] = float(
+                np.mean(((ours.cpu().numpy().astype(np.float64) - frame[None].astype(np.float64)) / 255) ** 2)
+            )
             frames.append(ours.cpu().numpy()[0])
             oracle_frames.append(frame)
             projections.append(projected.cpu())
@@ -113,10 +117,10 @@ def main():
         # Independent future continuation, then both restore their original checkpoint.
         for i in range(3):
             action = np.array([[0.15, -0.1, 0.2, 1, 0.5, 0.1, -0.1]], dtype=dtype)
-            equal(e.step(action), dest.step(action))
+            equal(e.step(action, states=None, frames=None), dest.step(action, states=None, frames=None))
         e.set_state(saved)
-        dest.set_state(cuda_saved if args.gpu else saved)
-        if args.gpu:
+        dest.set_state(cuda_saved if render_images else saved)
+        if render_images:
             assert torch.equal(ours, dest.render())
         equal(saved, e.get_state())
         # Invalid State must not affect the engine, including after partial staging.
@@ -132,13 +136,16 @@ def main():
         bad = np.array([[0, 0, 0, 0, 0, 2, 0]], dtype=dtype)
         for _ in range(3):
             try:
-                dest.step(bad)
+                dest.step(bad, states=None, frames=None)
             except AssertionError:
                 pass
             else:
                 raise AssertionError("Invalid action accepted")
         equal(saved, dest.get_state())
-        equal(e.step(np.zeros((1, 7), dtype=dtype)), dest.step(np.zeros((1, 7), dtype=dtype)))
+        equal(
+            e.step(np.zeros((1, 7), dtype=dtype), states=None, frames=None),
+            dest.step(np.zeros((1, 7), dtype=dtype), states=None, frames=None),
+        )
         e.set_state(saved)
         # Keep destination's differing suffix history until the next independent
         # restore. A redundant second restore here adds no coverage.
@@ -179,7 +186,7 @@ def main():
                                     else np.array([0.15, -0.1, 0.2, 1, 0.5, 0.1, -0.1], dtype=dtype)
                                 )
                                 src = oracle.step(action.copy())
-                                out = e.step(action[None])
+                                out = e.step(action[None], states=None, frames=None)
                                 assert out["reward"][0].item() == src[1]
                                 assert out["terminated"][0].item() == bool(src[2])
                                 assert out["truncated"][0].item() == bool(src[3])
@@ -221,13 +228,13 @@ def main():
                 env.close()
             if oracle.modified_pad_urdf:
                 Path(oracle.modified_pad_urdf).unlink(missing_ok=True)
-        if args.gpu:
+        if render_images:
             batch = torch.cat(projections)
-            e = stable_envs.make("PyFlytRocketLanding", device="cuda", size=resolution)
+            e = stable_envs.make("PyFlytRocketLanding", device=device, size=resolution)
             try:
-                together = e.render(batch.to("cuda")).cpu().numpy()
+                together = e.render(batch.to(device)).cpu().numpy()
                 assert np.array_equal(together, np.stack(frames))
-                assert torch.equal(e.render(batch.to("cuda"), chunk_size=7), torch.from_numpy(together).cuda())
+                assert torch.equal(e.render(batch.to(device), chunk_size=7), torch.from_numpy(together).to(device))
             finally:
                 e.close()
             groups = {}
@@ -246,10 +253,12 @@ def main():
                 )
             np.savez_compressed(args.output / "frames.npz", ours=np.stack(frames), oracle=np.stack(oracle_frames))
             result["groups"] = groups
-            result["gpu"] = torch.cuda.get_device_name(0)
+            result["gpu"] = torch.cuda.get_device_name(0) if args.gpu else None
+            result["device"] = device
+            result["per_frame_mse_pass"] = all(r["metrics"]["normalized_mse"] <= 0.001 for r in records)
             result["status"] = (
-                "PUBLIC_GPU_PASS"
-                if all(g["passed"] for g in groups.values())
+                ("PUBLIC_GPU_PASS" if args.gpu else "PUBLIC_CPU_RENDER_PASS")
+                if all(g["passed"] for g in groups.values()) and result["per_frame_mse_pass"]
                 else "FROZEN_RENDERER_ACCEPTANCE_BLOCKER"
             )
         else:
@@ -266,7 +275,7 @@ def main():
         )
         (args.output / "result.json").write_text(json.dumps(result, indent=2) + "\n")
         print(result["status"], len(records), flush=True)
-    if result["status"] not in {"PUBLIC_GPU_PASS", "PUBLIC_CPU_TRAJECTORIES_PASS"}:
+    if result["status"] not in {"PUBLIC_GPU_PASS", "PUBLIC_CPU_TRAJECTORIES_PASS", "PUBLIC_CPU_RENDER_PASS"}:
         raise SystemExit(2)
 
 

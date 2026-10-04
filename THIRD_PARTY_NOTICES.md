@@ -1,4 +1,4 @@
-# Third-party attribution: Rocket task candidate
+# Third-party attribution: migrated environment tasks
 
 The private Rocket task and Variation helpers in
 `stable_envs/_adapters/rocket_task.py` and `rocket_spaces.py` are adapted from
@@ -17,6 +17,19 @@ The adaptation removes an unused URDF helper and adds reset-anchor hooks,
 local source-compatible Variation helpers and temporary-file cleanup. It does
 not contain the PyFlyt physics engine or PyBullet native implementation. Those
 remain external dependencies under their own licenses (PyFlyt MIT; Bullet zlib).
+
+The private PushT task modules `pusht_task.py`, `pusht_spaces.py`,
+`pusht_draw.py`, and `pusht_quantizer.py` under `stable_envs/_adapters/` are
+adapted from the same pinned project and authors. Their sources are
+`stable_worldmodel/envs/pusht/env.py`, `env_discrete.py`,
+`stable_worldmodel/spaces.py`, `stable_worldmodel/envs/utils.py`, and
+`stable_worldmodel/envs/quantizer.py`. Source hashes are recorded in the module
+headers and `docs/research/semantic_recovery_evidence/noncraftax_completion_20261003/pusht_task_sources.json`.
+The adaptation replaces package imports with private local imports, combines
+the continuous/discrete task definitions, and omits the unused source
+MultiDiscrete Variation class. Pymunk/Munk2D remains an external dependency;
+no native physics implementation is copied here. This private task migration
+does not establish acceptance of the public PushT registrations.
 
 MIT permission notice for the adapted code follows:
 

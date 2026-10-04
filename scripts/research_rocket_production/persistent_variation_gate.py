@@ -75,7 +75,7 @@ def main():
                     if step:
                         action = np.array([0.15, -0.1, 0.2, 1, 0.5, 0.1, -0.1])
                         oracle.step(action.copy())
-                        e.step(action[None])
+                        e.step(action[None], states=None, frames=None)
                     assert not differences(capture(oracle), capture(e._simulator.envs[0].env))
                     assert np.array_equal(oracle.render(), e._simulator.envs[0].env.render())
                 snapshot = e.get_state()
@@ -83,7 +83,7 @@ def main():
                 e.set_state(snapshot)
                 assert all(torch.equal(snapshot[k], e.get_state()[k]) for k in snapshot.keys(True, True))
                 oracle.step(np.zeros(7))
-                e.step(np.zeros((1, 7)))
+                e.step(np.zeros((1, 7)), states=None, frames=None)
                 assert not differences(capture(oracle), capture(e._simulator.envs[0].env))
                 records.append(
                     dict(

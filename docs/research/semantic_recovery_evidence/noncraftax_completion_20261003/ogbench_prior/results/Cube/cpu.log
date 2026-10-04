@@ -1,0 +1,31 @@
+/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/gymnasium/spaces/box.py:415: UserWarning: [33mWARN: Casting input x to numpy array.[0m
+  gym.logger.warn("Casting input x to numpy array.")
+/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/gymnasium/spaces/box.py:231: UserWarning: [33mWARN: Box low's precision lowered by casting to float32, current low.dtype=float64[0m
+  gym.logger.warn(
+/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/gymnasium/spaces/box.py:297: UserWarning: [33mWARN: Box high's precision lowered by casting to float32, current high.dtype=float64[0m
+  gym.logger.warn(
+/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/gymnasium/spaces/box.py:415: UserWarning: [33mWARN: Casting input x to numpy array.[0m
+  gym.logger.warn("Casting input x to numpy array.")
+/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/gymnasium/spaces/box.py:231: UserWarning: [33mWARN: Box low's precision lowered by casting to float32, current low.dtype=float64[0m
+  gym.logger.warn(
+/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/gymnasium/spaces/box.py:297: UserWarning: [33mWARN: Box high's precision lowered by casting to float32, current high.dtype=float64[0m
+  gym.logger.warn(
+/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/gymnasium/spaces/box.py:415: UserWarning: [33mWARN: Casting input x to numpy array.[0m
+  gym.logger.warn("Casting input x to numpy array.")
+/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/gymnasium/spaces/box.py:415: UserWarning: [33mWARN: Casting input x to numpy array.[0m
+  gym.logger.warn("Casting input x to numpy array.")
+/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/gymnasium/spaces/box.py:231: UserWarning: [33mWARN: Box low's precision lowered by casting to float32, current low.dtype=float64[0m
+  gym.logger.warn(
+/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/gymnasium/spaces/box.py:297: UserWarning: [33mWARN: Box high's precision lowered by casting to float32, current high.dtype=float64[0m
+  gym.logger.warn(
+/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/gymnasium/spaces/box.py:231: UserWarning: [33mWARN: Box low's precision lowered by casting to float32, current low.dtype=float64[0m
+  gym.logger.warn(
+/oscar/scratch/sboughan/venvs/se7-ogb/lib/python3.12/site-packages/gymnasium/spaces/box.py:297: UserWarning: [33mWARN: Box high's precision lowered by casting to float32, current high.dtype=float64[0m
+  gym.logger.warn(
+Traceback (most recent call last):
+  File "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/multiprocessing/queues.py", line 264, in _feed
+    obj = _ForkingPickler.dumps(obj)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/oscar/rt/9.6/25/spack/x86_64_v3/python-3.12.8-zr3cgwozgzwagwpporyra63545lhiglo/lib/python3.12/multiprocessing/reduction.py", line 51, in dumps
+    cls(buf, protocol).dump(obj)
+ValueError: ctypes objects containing pointers cannot be pickled

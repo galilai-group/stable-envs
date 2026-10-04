@@ -8,6 +8,57 @@ import pytest
 from scripts.benchmarks.online_stepping.ogbench_parallel_source import OGBSource
 
 
+@pytest.mark.parametrize('family', ['Cube', 'Scene'])
+def test_known_source_spotlight_error_is_recorded_before_identity(family):
+    from scripts.benchmarks.online_stepping.ogbench_parallel_source import source_gl_identity
+
+    errors, calls = iter([1281, 0, 0]), []
+    def get_error():
+        error = next(errors)
+        calls.append(('error', error))
+        return error
+    gl = SimpleNamespace(GL_NO_ERROR=0, GL_INVALID_VALUE=1281, GL_VENDOR=1, GL_RENDERER=2,
+                         glGetError=get_error,
+                         glGetString=lambda name: calls.append(('identity', name)) or b'Mesa llvmpipe')
+    cutoffs = np.array([45., 100.])
+    result = source_gl_identity(gl, family, cutoffs)
+    assert result['source_render_gl_errors'] == [1281]
+    assert result['source_light_cutoffs'] == [45., 100.] and result['software']
+    assert calls[:2] == [('error', 1281), ('error', 0)]
+    np.testing.assert_array_equal(cutoffs, [45., 100.])
+
+
+@pytest.mark.parametrize('family,cutoffs,error', [('Maze', [100.], 1281), ('Cube', [45.], 1281),
+                                                ('Scene', [100.], 1280)])
+def test_unexpected_source_gl_error_is_not_suppressed(family, cutoffs, error):
+    from scripts.benchmarks.online_stepping.ogbench_parallel_source import source_gl_identity
+
+    errors = iter([error, 0])
+    gl = SimpleNamespace(GL_NO_ERROR=0, GL_INVALID_VALUE=1281, glGetError=lambda: next(errors))
+    with pytest.raises(RuntimeError, match='Unexpected source rendering GL errors'):
+        source_gl_identity(gl, family, cutoffs)
+
+
+def test_renderer_inspection_error_can_cross_worker_queue():
+    import ctypes
+    import pickle
+
+    from scripts.benchmarks.online_stepping.ogbench_parallel_source import OGBSourceShard
+
+    native_pointer = ctypes.pointer(ctypes.c_int(7))
+
+    def broken_renderer():
+        raise ValueError("GL context failed", native_pointer)
+
+    actor = OGBSourceShard.__new__(OGBSourceShard)
+    actor.ref = SimpleNamespace(renderer_info=broken_renderer)
+    with pytest.raises(RuntimeError, match="Source renderer inspection failed") as caught:
+        actor.renderer_info()
+    transported = pickle.loads(pickle.dumps(caught.value))
+    assert "ValueError" in str(transported) and "GL context failed" in str(transported)
+    assert "broken_renderer" in str(transported)
+
+
 class FakeWorld:
     def __init__(self, lane, done_at, truncated=False):
         self.lane, self.done_at, self.truncated = lane, done_at, truncated

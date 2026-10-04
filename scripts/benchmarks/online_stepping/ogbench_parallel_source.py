@@ -11,6 +11,7 @@ import hashlib
 import inspect
 import os
 import sys
+import traceback
 from pathlib import Path
 
 import gymnasium as gym
@@ -21,6 +22,36 @@ from tensordict import TensorDict
 from scripts.benchmarks.online_stepping.classic_parallel_source import ParallelSource, SourceShard
 from scripts.benchmarks.online_stepping.ogbench_source_prerequisite import import_source, ownership_module
 from tests.helpers.reference.ogbench_maze_semantics import OGBMazeReference
+
+
+def source_gl_identity(gl, family, cutoffs):
+    """Inspect identity without attributing the source's stale GL error to it.
+
+The pinned Cube/Scene XML sets GL_SPOT_CUTOFF=100. MuJoCo submits
+that value unchanged; Mesa reports GL_INVALID_VALUE in glLight. The
+renderer still draws using GL's retained cutoff, as in the frozen visual
+oracle. Record that error before querying identity; never rewrite its light
+or disable PyOpenGL checking. Unexpected errors remain gate failures.
+    """
+    prior = []
+    for _ in range(16):
+        error = int(gl.glGetError())
+        if error == int(gl.GL_NO_ERROR):
+            break
+        prior.append(error)
+    else:
+        raise RuntimeError("Source GL error queue did not clear")
+    illegal = [float(v) for v in cutoffs if not (0 <= v <= 90 or v == 180)]
+    if prior and not (family in ("Cube", "Scene") and illegal == [100.0]
+                      and set(prior) == {int(gl.GL_INVALID_VALUE)}):
+        raise RuntimeError(f"Unexpected source rendering GL errors: {prior}; light cutoffs={list(cutoffs)}")
+    vendor = gl.glGetString(gl.GL_VENDOR).decode()
+    name = gl.glGetString(gl.GL_RENDERER).decode()
+    if int(gl.glGetError()) != int(gl.GL_NO_ERROR):
+        raise RuntimeError("Source GL identity query generated an error")
+    return dict(vendor=vendor, renderer=name,
+                software=any(x in name.lower() for x in ("llvmpipe", "softpipe", "swrast")),
+                source_render_gl_errors=prior, source_light_cutoffs=[float(v) for v in cutoffs])
 
 
 class OGBSource:
@@ -91,10 +122,7 @@ class OGBSource:
         target = self.envs[0].env if self.family == "Maze" else self.envs[0]
         renderer = target.custom_renderer if self.family == "Maze" else target._renderer
         renderer._gl_context.make_current()
-        vendor = GL.glGetString(GL.GL_VENDOR).decode()
-        name = GL.glGetString(GL.GL_RENDERER).decode()
-        return dict(vendor=vendor, renderer=name,
-                    software=any(x in name.lower() for x in ("llvmpipe", "softpipe", "swrast")))
+        return source_gl_identity(GL, self.family, target.model.light_cutoff)
 
     def step(self, actions, frame_indices=None):
         actions = np.asarray(actions)
@@ -193,7 +221,14 @@ class OGBSourceShard(SourceShard):
         self.ref._audit_render = True
 
     def renderer_info(self):
-        return self.ref.renderer_info()
+        try:
+            return self.ref.renderer_info()
+        except Exception:
+            # GL exceptions can retain ctypes pointers. Gym sends exceptions
+            # through a multiprocessing Queue; an unpicklable error is lost in
+            # its feeder thread and leaves the parent waiting indefinitely.
+            # Preserve the full diagnostic as text, without native objects.
+            raise RuntimeError("Source renderer inspection failed:\n" + traceback.format_exc()) from None
 
     def inspection(self):
         return dict(pid=os.getpid(), torch_threads=torch.get_num_threads(),
