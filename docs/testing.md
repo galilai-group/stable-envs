@@ -6,6 +6,11 @@ from final acceptance. Registry-wide renderer tests do not prove a new task or
 exhaustive State: add independent semantic/restoration witnesses for each registration.
 A skipped required gate leaves the registration incomplete.
 
+The [testing strategy and infrastructure review](testing-design.md) records the
+current semantic-recovery approach and a proposed cleanup across State,
+simulation, tasks, rendering and online execution. The renderer-focused checks
+below do not replace full-State restoration and independent source gates.
+
 Markers: `unit`, `integration`, `gpu`, `regression`, `slow`. The extra markers
 `reference`, `smoke` and `selftest` stay. Directory markers are applied automatically, so a
 file that forgot `pytestmark` is still selected by its folder.

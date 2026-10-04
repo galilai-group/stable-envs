@@ -116,6 +116,7 @@ nav:
       - Renderer: adding/renderer.md
       - Previous contributor URL: adding-an-env.md
       - Testing: testing.md
+      - Testing infrastructure plan: testing-design.md
       - Fidelity methodology: concepts/fidelity-methodology.md
       - Fidelity tiers: concepts/fidelity-tiers.md
       - The Scene2D IR: concepts/scene-ir.md
