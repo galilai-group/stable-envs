@@ -9,7 +9,7 @@ from pathlib import Path
 import numpy as np
 import stable_worldmodel
 
-from tests.helpers.reference.reacher_semantics import ReacherReference
+from tests.helpers.reference.dmc_semantics import ReacherReference
 
 root = Path("tests/fixtures/semantics/reacher")
 root.mkdir(parents=True, exist_ok=True)

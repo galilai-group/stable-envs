@@ -56,18 +56,7 @@ class Bridge:
         elif name in NAV:
             module, cls, args = "native_navigation_semantics", "NativeNavigationReference", [NAV[name]]
         elif name in DMC:
-            domain = DMC[name]
-            args = [domain]
-            if domain in {"acrobot", "cartpole", "pendulum"}:
-                module, cls = "dmc_first_family_semantics", "DMCFirstFamilyReference"
-            elif domain in {"walker", "hopper", "cheetah"}:
-                module, cls = "dmc_continuation_semantics", "DMCContinuationReference"
-            elif domain in {"finger", "ball_in_cup", "manipulator", "quadruped"}:
-                module, cls = "dmc_aligned_semantics", "DMCAlignedReference"
-            elif domain == "reacher":
-                module, cls, args = "reacher_semantics", "ReacherReference", []
-            else:
-                module, cls, args = "dmc_humanoid_semantics", "DMCHumanoidReference", []
+            module, cls, args = "dmc_semantics", "DMCReference", [DMC[name]]
         elif name == "PointMazeLargeNavigate":
             module, cls, args = "ogbench_maze_semantics", "OGBMazeReference", []
         else:

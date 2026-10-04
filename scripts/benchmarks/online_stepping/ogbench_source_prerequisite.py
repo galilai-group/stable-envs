@@ -26,8 +26,8 @@ import torch
 from scripts.benchmarks.renderer_table.common import PIN, equal_state
 from stable_envs._adapters.ogbench import OGBMazeAdapter
 from stable_envs._adapters.ogbench_manipulation import OGBManipulationAdapter
+from tests.helpers.reference.ogbench_manipulation_semantics import assert_oracle, load_oracle
 from tests.helpers.reference.ogbench_maze_semantics import OGBMazeReference
-from tests.unit.test_ogbench_manipulation_cpu import assert_oracle
 
 
 def import_source(root):
@@ -43,11 +43,7 @@ def import_source(root):
 
 
 def ownership_module():
-    path = Path("docs/research/semantic_recovery_evidence/ogb_rng_feasibility/ownership.py")
-    spec = importlib.util.spec_from_file_location("ogbench_online_source_ownership", path)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
+    return load_oracle()
 
 
 def source_tasks(rows, family):

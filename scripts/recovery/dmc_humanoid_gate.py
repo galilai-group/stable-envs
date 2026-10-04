@@ -13,7 +13,7 @@ import numpy as np
 import torch
 
 import stable_envs as se
-from tests.helpers.reference.dmc_humanoid_semantics import DMCHumanoidReference
+from tests.helpers.reference.dmc_semantics import DMCHumanoidReference
 from tests.helpers.reference.semantics import (
     check_reset_matches_reference,
     check_state_roundtrip,

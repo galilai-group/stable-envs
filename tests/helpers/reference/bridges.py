@@ -13,6 +13,7 @@ from pathlib import Path
 
 import numpy as np
 import torch
+from tensordict import TensorDict
 
 from tests.helpers.reference.semantics import compare_state
 
@@ -33,13 +34,20 @@ def load_source(root, family):
         raise ValueError("Another stable-worldmodel checkout is already imported")
     for name in ("utils", "spaces", "envs"):
         setattr(module, name, importlib.import_module("stable_worldmodel." + name))
-    if family == "rocket":
-        # The Rocket package __init__ imports its optional learned/expert policy.
-        # The registered environment entry point is the unchanged file below it.
-        name = "stable_worldmodel.envs.rocket_landing"
+    # Package initializers import optional expert policies; environment modules
+    # themselves are loaded unchanged from the verified checkout.
+    packages = {
+        "rocket": ("rocket_landing",),
+        "ogbench": ("ogbench",),
+        "pusht": ("pusht",),
+        "dmc": ("dmcontrol",),
+        "navigation": ("two_room",),
+    }
+    for sub in packages.get(family, ()):
+        name = "stable_worldmodel.envs." + sub
         if name not in sys.modules:
             namespace = types.ModuleType(name)
-            namespace.__path__ = [str(package / "envs/rocket_landing")]
+            namespace.__path__ = [str(package / "envs" / sub)]
             sys.modules[name] = namespace
 
 
@@ -64,6 +72,97 @@ class NativeBridge:
 
     def close(self):
         self.source.close()
+
+
+class DMCBridge(NativeBridge):
+    def __init__(self, case, batch):
+        from tests.helpers.reference.dmc_semantics import DMCReference
+
+        self.source = DMCReference(case.domain, batch)
+
+
+class NavigationBridge(NativeBridge):
+    def __init__(self, case, batch):
+        from tests.helpers.reference.native_navigation_semantics import NativeNavigationReference
+
+        self.source = NativeNavigationReference(case.domain, batch)
+
+    def step(self, actions, active=None):
+        return self.source.step(actions, active=active)
+
+
+class OGBBridge:
+    def __init__(self, case, batch):
+        self.domain = case.domain
+        self.source = None
+        self.envs = []
+        if case.domain == "Maze":
+            from tests.helpers.reference.ogbench_maze_semantics import OGBMazeReference
+
+            self.source = OGBMazeReference(batch, width=64, height=64)
+        else:
+            from tests.helpers.reference.ogbench_manipulation_semantics import load_oracle
+
+            self.oracle = load_oracle()
+            try:
+                for lane in range(batch):
+                    self.envs.append(getattr(self.oracle, "Owned" + case.domain)(entropy_seed=lane))
+            except BaseException:
+                self.close()
+                raise
+
+    def reset(self, seed):
+        if self.source:
+            self.source.reset(seed)
+        else:
+            for lane, source in enumerate(self.envs):
+                source.reset(seed=seed + lane)
+
+    def compare(self, candidate):
+        if self.source:
+            compare_state(candidate.get_state(), self.source.get_state())
+        else:
+            from tests.helpers.reference.ogbench_manipulation_semantics import assert_oracle
+
+            for source, actual in zip(self.envs, candidate._simulator.envs, strict=True):
+                assert_oracle(actual, source, self.oracle)
+
+    def step(self, actions):
+        if self.source:
+            return self.source.step(actions)
+        rows = [env.step(action.copy()) for env, action in zip(self.envs, actions, strict=True)]
+        return {**task_columns(rows), "success": torch.tensor([bool(row[4]["success"]) for row in rows])}
+
+    def close(self):
+        if self.source:
+            self.source.close()
+        for env in self.envs:
+            env.close()
+
+
+class PushTBridge:
+    def __init__(self, case, batch):
+        module = "env_discrete" if case.domain == "discrete" else "env"
+        cls = getattr(importlib.import_module("stable_worldmodel.envs.pusht." + module), case.name)
+        self.envs = [cls(resolution=64) for _ in range(batch)]
+
+    def reset(self, seed):
+        for lane, source in enumerate(self.envs):
+            source.reset(seed=seed + lane)
+
+    def compare(self, candidate):
+        from scripts.research_replay.pusht_replay_gate import diagnostics, equal
+
+        for source, replay in zip(self.envs, candidate._simulator.envs, strict=True):
+            equal(diagnostics(source), diagnostics(replay.env))
+
+    def step(self, actions):
+        rows = [source.step(action.copy()) for source, action in zip(self.envs, actions, strict=True)]
+        return {**task_columns(rows), "success": torch.tensor([bool(row[2]) for row in rows])}
+
+    def close(self):
+        for source in self.envs:
+            source.close()
 
 
 class FetchBridge:
@@ -139,11 +238,20 @@ def task_columns(outputs):
 
 
 def assert_tasks(actual, expected):
-    for key in ("reward", "terminated", "truncated"):
-        assert key in actual and key in expected, f"Missing {key}"
-        torch.testing.assert_close(actual[key].cpu(), expected[key].cpu(), rtol=0, atol=0)
-    if "success" in expected:
-        torch.testing.assert_close(actual["success"].cpu(), expected["success"].cpu(), rtol=0, atol=0)
+    assert all(key in actual and key in expected for key in ("reward", "terminated", "truncated"))
+    keys = [key for key in expected.keys() if key != "state"]
+    batch = [len(expected["reward"])]
+    compare_state(
+        TensorDict({key: actual[key] for key in keys}, batch), TensorDict({key: expected[key] for key in keys}, batch)
+    )
 
 
-BRIDGES = {"native": NativeBridge, "fetch": FetchBridge, "rocket": RocketBridge}
+BRIDGES = {
+    "native": NativeBridge,
+    "fetch": FetchBridge,
+    "rocket": RocketBridge,
+    "dmc": DMCBridge,
+    "navigation": NavigationBridge,
+    "ogbench": OGBBridge,
+    "pusht": PushTBridge,
+}

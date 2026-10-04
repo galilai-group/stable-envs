@@ -9,7 +9,7 @@ from pathlib import Path
 import numpy as np
 import stable_worldmodel
 
-from tests.helpers.reference.dmc_continuation_semantics import DMCContinuationReference
+from tests.helpers.reference.dmc_semantics import DMCReference as DMCContinuationReference
 
 PIN = "176d54532b3c0a251a4f509b74f2fdacc143a63d"
 DOMAINS = ("cheetah", "hopper", "walker")

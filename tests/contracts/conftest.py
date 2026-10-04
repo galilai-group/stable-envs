@@ -16,6 +16,8 @@ from tests.helpers.reference.saved import SWM_PIN
 
 def pytest_addoption(parser):
     parser.addoption("--contract-profile", choices=tuple(PROFILES), default=None)
+    parser.addoption("--contract-device", choices=("cpu", "cuda"), default="cpu")
+    parser.addoption("--contract-candidate-manifest", default=None, help="Verified file manifest for exported code")
     parser.addoption("--contract-source", default=None, help="Clean pinned stable-worldmodel checkout")
     parser.addoption("--contract-output", default=None, help="New directory for sealed results")
 
@@ -29,9 +31,11 @@ def label(value):
     return f"{case.name}-seed{seed}-{dtype}"
 
 
-def case_map(profile):
+def case_map(profile, device="cpu"):
     return {
-        f"tests/contracts/{node}[{label(value)}]": CaseKey(value[0].registration, axis, f"seed{value[1]}/{value[2]}")
+        f"tests/contracts/{node}[{label(value)}]": CaseKey(
+            value[0].registration, axis, f"seed{value[1]}/{value[2]}", device
+        )
         for node, axis in CONTRACTS.items()
         for value in parameters(profile)
     }
@@ -54,7 +58,7 @@ def pytest_configure(config):
                 dict(
                     profile=profile,
                     scope="source regression subset; no promotion",
-                    required=[asdict(k) for k in case_map(profile).values()],
+                    required=[asdict(k) for k in case_map(profile, config.getoption("--contract-device")).values()],
                 ),
             )
             root = Path(__file__).resolve().parents[2]
@@ -68,14 +72,28 @@ def pytest_configure(config):
                 root / name
                 for name in (
                     "scripts/recovery/rocket_feasibility.py",
+                    "scripts/research_replay/pusht_replay_gate.py",
+                    "docs/research/semantic_recovery_evidence/ogb_rng_feasibility/ownership.py",
+                    "docs/research/semantic_recovery_evidence/ogb_manipulation_preflight/probe.py",
                     "scripts/benchmarks/online_stepping/fetch_source_pipeline.py",
                     "scripts/benchmarks/online_stepping/fetch_source_render_lifecycle.py",
                 )
             ]
-            commit = subprocess.check_output(["git", "-C", str(root), "rev-parse", "HEAD"], text=True).strip()
-            dirty = subprocess.check_output(
-                ["git", "-C", str(root), "status", "--porcelain", "--untracked-files=no"], text=True
-            )
+            manifest_path = config.getoption("--contract-candidate-manifest")
+            if manifest_path:
+                import json
+
+                manifest = json.loads(Path(manifest_path).read_text())
+                commit, dirty = manifest["commit"], manifest.get("tracked_dirty", False)
+                for path in paths:
+                    name = str(path.relative_to(root))
+                    if manifest["files"].get(name) != sha256(path):
+                        raise pytest.UsageError(f"Candidate manifest mismatch: {name}")
+            else:
+                commit = subprocess.check_output(["git", "-C", str(root), "rev-parse", "HEAD"], text=True).strip()
+                dirty = subprocess.check_output(
+                    ["git", "-C", str(root), "status", "--porcelain", "--untracked-files=no"], text=True
+                )
             config._contract_run.json(
                 "candidate.json",
                 dict(
@@ -103,10 +121,17 @@ def source_identity(request):
     try:
         if not root:
             raise ValueError("--contract-source is required")
+        import torch
+
+        device = request.config.getoption("--contract-device")
+        if device == "cuda" and not torch.cuda.is_available():
+            raise ValueError("Required CUDA output device unavailable")
         identity = pinned_source_identity(root, SWM_PIN, PINS[profile])
         from tests.helpers.reference.bridges import load_source
 
         load_source(root, profile)
+        identity["candidate_state_device"] = device
+        identity["gpu"] = torch.cuda.get_device_name() if device == "cuda" else None
         identity["import_scope"] = "Unmodified source envs/utils/spaces; learning-stack package initializers omitted"
         # Import required source modules now: transitive dependency failures are
         # BLOCKED prerequisites, not simulator discrepancies repeated per case.
@@ -116,6 +141,10 @@ def source_identity(request):
             "native": "stable_worldmodel.envs.gymnasium_control.cartpole",
             "fetch": "stable_worldmodel.envs.gymnasium_robotics",
             "rocket": "stable_worldmodel.envs.rocket_landing.pyflyt_rocketlanding",
+            "dmc": "stable_worldmodel.envs.dmcontrol.reacher",
+            "navigation": "stable_worldmodel.envs.two_room.env",
+            "ogbench": "stable_worldmodel.envs.ogbench.maze_env",
+            "pusht": "stable_worldmodel.envs.pusht.env",
         }
         importlib.import_module(modules[profile])
     except (ValueError, OSError, ImportError) as error:
@@ -126,12 +155,12 @@ def source_identity(request):
 
 
 @pytest.fixture
-def worlds(source_case, source_identity):
+def worlds(source_case, source_identity, request):
     import stable_envs as se
     from tests.helpers.reference.bridges import BRIDGES
 
     case, seed, dtype = source_case
-    kwargs = dict(num_envs=2, device="cpu", size=64)
+    kwargs = dict(num_envs=2, device=request.config.getoption("--contract-device"), size=64)
     if case.family == "rocket":
         kwargs["simulator_config"] = dict(render_mode="rgb_array", render_resolution=(64, 64))
     with se.make(case.name, **kwargs) as first, se.make(case.name, **kwargs) as second:
@@ -143,10 +172,14 @@ def worlds(source_case, source_identity):
             rng = np.random.default_rng(seed + 1000)
             shape = (24, 2, case.width)
             actions = (
-                rng.integers(0, 2 if case.domain == "cartpole" else 3, shape, dtype=np.int64)
+                rng.integers(
+                    0, 16 if case.family == "pusht" else 2 if case.domain == "cartpole" else 3, shape, dtype=np.int64
+                )
                 if dtype == "int64"
                 else rng.uniform(-0.2, 0.2, shape).astype(dtype)
             )
+            if case.family == "navigation":
+                actions *= 0.05
             if case.family == "rocket":
                 actions[..., 3:5] = 0
             yield first, second, reference, actions
@@ -223,7 +256,7 @@ def pytest_sessionfinish(session, exitstatus):
     profile = config.getoption("--contract-profile")
     if not profile or config.option.collectonly:
         return
-    mapping = case_map(profile)
+    mapping = case_map(profile, config.getoption("--contract-device"))
     results = config._contract_results
     observed = [(mapping[node], row["status"]) for node, row in results.items()]
     observed += [(mapping[node], results[node]["status"]) for node in config._contract_duplicates]

@@ -104,7 +104,7 @@ def main():
              *Path("stable_envs/envs/dmcontrol").glob("*.py"),
              *Path("stable_envs/_adapters").glob("dmcontrol*.py"),
              *Path("tests/helpers/reference").glob("dmc*semantics.py"),
-             Path("tests/helpers/reference/reacher_semantics.py"),
+             Path("tests/helpers/reference/dmc_semantics.py"),
              Path("scripts/benchmarks/online_stepping/dmc_parallel_source.py"),
              Path("scripts/benchmarks/online_stepping/classic_parallel_source.py"),
              Path("scripts/benchmarks/online_stepping/classic_source_pipeline.py"),

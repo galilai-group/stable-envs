@@ -17,3 +17,18 @@ def test_each_noncraftax_registration_keeps_its_own_required_gates():
         assert row["current_run_status"] == "NOT_RUN"
         for paths in row["required_gates"].values():
             assert paths and all((root / path).is_file() for path in paths)
+
+
+def test_shared_profiles_cover_each_registration_once():
+    from tests.contracts.conftest import case_map
+    from tests.helpers.reference.profiles import PROFILES
+
+    registrations = [case.registration for cases in PROFILES.values() for case in cases]
+    assert len(registrations) == len(set(registrations)) == 38
+    assert set(registrations) == SWM_IDS.keys() - EXCLUDED
+    expected_counts = dict(native=56, fetch=192, dmc=192, navigation=48, ogbench=48, pusht=24, rocket=16)
+    for device in ("cpu", "cuda"):
+        for profile, expected in expected_counts.items():
+            cases = list(case_map(profile, device).values())
+            assert len(cases) == len(set(cases)) == expected
+            assert {case.device for case in cases} == {device}

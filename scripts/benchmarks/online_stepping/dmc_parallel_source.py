@@ -18,11 +18,7 @@ import numpy as np
 import torch
 
 from scripts.benchmarks.online_stepping.classic_parallel_source import ParallelSource, SourceShard
-from tests.helpers.reference.dmc_aligned_semantics import DMCAlignedReference
-from tests.helpers.reference.dmc_continuation_semantics import DMCContinuationReference
-from tests.helpers.reference.dmc_first_family_semantics import DMCFirstFamilyReference
-from tests.helpers.reference.dmc_humanoid_semantics import DMCHumanoidReference
-from tests.helpers.reference.reacher_semantics import ReacherReference
+from tests.helpers.reference.dmc_semantics import DMCReference
 
 NAMES = dict(zip(
     ("acrobot", "pendulum", "cartpole", "reacher", "cheetah", "hopper", "walker",
@@ -45,15 +41,7 @@ def import_source(root):
 
 
 def source(domain, batch):
-    if domain == "reacher":
-        ref = ReacherReference(num_envs=batch)
-    elif domain == "humanoid":
-        ref = DMCHumanoidReference(num_envs=batch)
-    else:
-        cls = (DMCFirstFamilyReference if domain in ("acrobot", "pendulum", "cartpole") else
-               DMCContinuationReference if domain in ("cheetah", "hopper", "walker") else DMCAlignedReference)
-        ref = cls(domain, num_envs=batch)
-    ref.domain = domain
+    ref = DMCReference(domain, num_envs=batch)
     ref.reset(17)
     return ref
 

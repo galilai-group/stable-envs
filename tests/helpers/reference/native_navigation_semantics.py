@@ -119,8 +119,12 @@ class NativeNavigationReference:
         assert actions.shape == (self.num_envs, 2)
         return [actions[lane] for lane in range(self.num_envs)]
 
-    def step(self, actions):
-        outputs = [env.step(action) for env, action in zip(self.envs, self._actions(actions), strict=True)]
+    def step(self, actions, active=None):
+        outputs = [
+            env.step(action) if active is None or active[lane] else self._last_outputs[lane]
+            for lane, (env, action) in enumerate(zip(self.envs, self._actions(actions), strict=True))
+        ]
+        self._last_outputs = outputs
         observation = torch.as_tensor(np.stack([out[0] for out in outputs])).clone()
         common = {
             "state": self.get_state(),

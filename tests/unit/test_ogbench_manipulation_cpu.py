@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import copy
-import importlib.util
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from threading import Barrier
@@ -21,6 +20,7 @@ from ogbench.manipspace.envs.manipspace_env import ManipSpaceEnv
 from stable_envs._adapters.ogbench_manipulation import OGBManipulationAdapter
 from stable_envs._adapters.ogbench_manipulation_compat import CompatibleCube, CompatibleScene
 from stable_envs.envs.ogbench import OGBCube, OGBScene
+from tests.helpers.reference.ogbench_manipulation_semantics import assert_oracle, load_oracle, numpy_equal
 
 ROOT = Path(__file__).resolve().parents[2]
 CLASSES = {"Cube": OGBCube, "Scene": OGBScene}
@@ -33,32 +33,10 @@ def equal(left, right):
         assert torch.equal(left[key], right[key]), key
 
 
-def numpy_equal(a, b):
-    assert a[0] == b[0] and np.array_equal(a[1], b[1]) and a[2:] == b[2:]
-
-
 @pytest.fixture(scope="module")
 def oracle():
     pytest.importorskip("stable_worldmodel")
-    path = ROOT / "docs/research/semantic_recovery_evidence/ogb_rng_feasibility/ownership.py"
-    spec = importlib.util.spec_from_file_location("ogb_rng_design_oracle", path)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
-
-
-def assert_oracle(env, raw, oracle):
-    diff = oracle.previous.differences(oracle.previous.engine(env), oracle.previous.engine(raw))
-    assert not diff, diff
-    for method in ("compute_observation", "get_reset_info", "get_step_info"):
-        diff = oracle.previous.differences(getattr(env, method)(), getattr(raw, method)())
-        assert not diff, (method, diff)
-    for field in ("dof_damping", "site_pos", "geom_rgba", "mat_rgba", "geom_size", "body_mass", "body_inertia"):
-        assert np.array_equal(getattr(env.model, field), getattr(raw.model, field)), field
-    assert env.np_random.bit_generator.state == raw.np_random.bit_generator.state
-    numpy_equal(env.task_rng.get_state(), raw.task_rng.get_state())
-    assert env.action_space.np_random.bit_generator.state == raw.action_space.np_random.bit_generator.state
-    assert env.variation_parent.bit_generator.state == raw.variation_parent.bit_generator.state
+    return load_oracle()
 
 
 @pytest.mark.parametrize("family", CLASSES)

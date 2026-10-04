@@ -13,8 +13,9 @@ below do not replace full-State restoration and independent source gates.
 
 ## Shared source contracts
 
-The first shared profiles live in `tests/contracts/`: all five classic-control defaults (`native`),
-FetchReach (`fetch`), and Rocket (`rocket`). Each uses an independent source bridge
+Shared profiles in `tests/contracts/` cover all 38 non-Craftax registrations:
+`native` (5), `fetch` (12), `dmc` (12), `navigation` (3), `ogbench` (3),
+`pusht` (2), and `rocket` (1). Each uses an independent source bridge
 and separate State, simulation, task and online checks. These are small regression
 profiles; the existing family acceptance gates still cover contact, lifecycle,
 Variation, rendering and process execution. Passing a profile does not promote
@@ -28,16 +29,24 @@ python -m pytest tests/contracts --contract-profile native \
   --contract-output /path/to/new-run
 ```
 
-Use `fetch` or `rocket` for the other profiles. Source pins are explicit in
+Choose the family profile and optionally `--contract-device cuda` on a CUDA host.
+Source pins are explicit in
 `tests/helpers/reference/profiles.py`. The source checkout must be clean at
 `176d54532b3c0a251a4f509b74f2fdacc143a63d`. Source environment code is loaded unchanged;
 unrelated learning-stack package initializers are omitted. Profiles compare CPU
-physics and CPU State delivery. They do not measure GPU rendering or throughput.
+physics with CPU or CUDA State/output delivery. They do not measure GPU rendering
+or throughput. DMC and Maze constructors require a working GL context even when
+frames are omitted; use Oscar EGL when local GL is unavailable. Cube/Scene retain
+the accepted controlled-entropy source scope. PushT and Rocket compare independent
+native-engine fields in addition to public replay-State restoration.
 
 Required coverage is computed before execution. Missing dependencies, skipped or
 deselected cases, duplicate results and wrong source versions cannot pass. In a
 required profile, `-k` is useful for development but a partial result exits nonzero.
-Run profiles in one interpreter without xdist. A crashed profile requires a full
+Run profiles in one interpreter without xdist. An exported checkout can provide `--contract-candidate-manifest`: its `commit`,
+`tracked_dirty`, and `files` (path to SHA256) identify the candidate; every required
+candidate/oracle file must match before execution.
+A crashed profile requires a full
 rerun into a new output directory; automatic segment resumption does not satisfy
 its required-case accounting. Existing release gates retain their supervisor.
 `--contract-output` must name a new directory. It contains the plan, candidate

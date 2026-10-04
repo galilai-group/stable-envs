@@ -1,11 +1,13 @@
 """Forward-only source control for the public single/chunk State capture path.
 
-Terminal/frame/process combinations retain their existing family acceptance gates;
+Frame/process combinations retain their existing family acceptance gates;
 this small profile does not imply rendered online or multiprocessing acceptance.
 """
 
+import numpy as np
 import pytest
 import torch
+from tensordict import TensorDict
 
 from tests.helpers.reference.bridges import assert_tasks
 from tests.helpers.reference.semantics import compare_state
@@ -24,16 +26,16 @@ def test_selected_states_follow_source(worlds, source_case):
             result = candidate.step(chunk[:, 0] if horizon == 1 else chunk, states=selection, frames=None)
             frozen = result.clone()
             indices = [] if selection is None else list(range(horizon))[selection]
+            active = np.ones(2, dtype=bool)
             for t in range(horizon):
-                expected = source.step(actions[t])
-                actual = {
-                    key: result[key] if horizon == 1 else result[key][:, t]
-                    for key in ("reward", "terminated", "truncated", "success")
-                    if key in result
-                }
+                expected = source.step(actions[t]) if active.all() else source.step(actions[t], active=active)
+                expected = TensorDict({key: value for key, value in expected.items() if key != "state"}, [2]).clone()
+                done = (expected["terminated"] | expected["truncated"]).cpu().numpy().copy()
+                expected[~torch.tensor(active)] = 0
+                actual = {key: result[key] if horizon == 1 else result[key][:, t] for key in expected.keys()}
                 assert_tasks(actual, expected)
-                # These deliberately short trajectories must be valid throughout.
-                assert bool(result["valid"][:, t].all())
+                torch.testing.assert_close(result["valid"][:, t].cpu(), torch.tensor(active))
+                active &= ~done
                 if t in indices:
                     selected = result["states"][:, indices.index(t)]
                     destination.set_state(selected)

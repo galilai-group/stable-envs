@@ -13,7 +13,7 @@ import numpy as np
 import torch
 
 import stable_envs as se
-from tests.helpers.reference.dmc_continuation_semantics import DMCContinuationReference
+from tests.helpers.reference.dmc_semantics import DMCReference as DMCContinuationReference
 from tests.helpers.reference.semantics import (
     check_reset_matches_reference,
     check_state_roundtrip,
