@@ -22,8 +22,6 @@ from .variation import VARIATION_MAPS
 NATIVE_SWM_IDS = frozenset(
     {
         "swm/Piecewise-v0",
-        "swm/PushT-Discrete-v1",
-        "swm/PushT-v1",
         "swm/SimplePointMaze-v0",
         "swm/TwoRoom-v1",
     }
@@ -34,6 +32,8 @@ NATIVE_SWM_IDS = frozenset(
 # exact accepted scopes and evidence live in semantic_recovery_matrix.json.
 DELEGATED_CPU_SWM_IDS = frozenset(
     {
+        "swm/PushT-Discrete-v1",
+        "swm/PushT-v1",
         "swm/BallInCupDMControl-v0",
         "swm/FingerDMControl-v0",
         "swm/ManipulatorDMControl-v0",

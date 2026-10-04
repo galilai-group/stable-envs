@@ -1455,6 +1455,12 @@
         }
       },
       "implementation_commit": "bf9101cbcddbb88566879ae40ce4e1cda0e65550"
+    },
+    "swm:stable_worldmodel/envs/pusht/env_discrete.py": {
+      "path": "stable_worldmodel/envs/pusht/env_discrete.py",
+      "sha256": "eb4d93c4d6471a33684ff2f98c7c18521894f5c90863125d77ce12908f218586",
+      "methods": {},
+      "source": "from gymnasium import spaces\n\nfrom ..quantizer import PolarQuantizer\nfrom .env import PushT\n\n\nDEFAULT_VARIATIONS = (\n    'agent.start_position',\n    'block.start_position',\n    'block.angle',\n)\n\n\nclass PushTDiscrete(PushT):\n    metadata = {\n        'render_modes': ['human', 'rgb_array'],\n        'video.frames_per_second': 10,\n        'render_fps': 10,\n    }\n    reward_range = (0.0, 1.0)\n\n    def __init__(\n        self,\n        quantizer=None,\n        block_cog=None,\n        damping=None,\n        render_action=False,\n        resolution=224,\n        with_target=True,\n        render_mode='rgb_array',\n        relative=True,\n        init_value=None,\n    ):\n        super().__init__(\n            block_cog=block_cog,\n            damping=damping,\n            render_action=render_action,\n            resolution=resolution,\n            with_target=with_target,\n            render_mode=render_mode,\n            relative=relative,\n            init_value=init_value,\n        )\n\n        # override action space to be discrete\n        # rem: new actions are discrete bin\n        self.quantizer = quantizer or PolarQuantizer(\n            16, 16, max_action_distance=1.0\n        )\n        self.action_space = spaces.MultiDiscrete(self.quantizer.action_shape)\n\n    def step(self, quantized_action):\n        action = self.quantizer.dequantize(quantized_action)\n        return super().step(action)\n"
     }
   },
   "rows": [
@@ -13080,102 +13086,152 @@
     },
     {
       "historical_id": "swm/PushT-Discrete-v1",
-      "current_status": "INCOMPLETE",
+      "current_status": "VERIFIED",
       "family": "pusht",
       "pinned_swm_commit": "176d54532b3c0a251a4f509b74f2fdacc143a63d",
       "swm_implementation": {
-        "path": "stable_worldmodel/envs/pusht/__init__.py",
-        "url": "https://github.com/galilai-group/stable-worldmodel/blob/176d54532b3c0a251a4f509b74f2fdacc143a63d/stable_worldmodel/envs/pusht/__init__.py",
+        "path": "stable_worldmodel/envs/pusht/env_discrete.py",
+        "url": "https://github.com/galilai-group/stable-worldmodel/blob/176d54532b3c0a251a4f509b74f2fdacc143a63d/stable_worldmodel/envs/pusht/env_discrete.py",
         "class": "PushTDiscrete",
         "source_catalog": [
-          "swm:stable_worldmodel/envs/pusht/__init__.py"
+          "swm:stable_worldmodel/envs/pusht/env_discrete.py"
         ]
       },
       "upstream": {
         "repository": "https://github.com/viblo/pymunk",
         "package": "pymunk",
         "pinned_lock_version": "7.2.0",
-        "tested_profile_versions": {},
+        "tested_profile_versions": {
+          "cpu": {
+            "pymunk": "7.2.0",
+            "pygame": "2.6.1",
+            "numpy": "2.2.6",
+            "torch": "2.14.1",
+            "tensordict": "0.14.2",
+            "opencv-python-headless": "4.11.0.86"
+          },
+          "cuda_storage": {
+            "pymunk": "7.2.0",
+            "pygame": "2.6.1",
+            "numpy": "2.5.3",
+            "torch": "2.14.0+cu126",
+            "tensordict": "0.14.2",
+            "opencv-python-headless": "5.0.0.93"
+          }
+        },
         "version_scope": "Lock version is historical provenance, not a claim of candidate certification; tested CPU/GPU versions remain in evidence."
       },
       "stable_envs_classes": [
-        "PushT"
+        "PushTDiscrete"
       ],
-      "accepted_classes": [],
+      "accepted_classes": [
+        "PushTDiscrete"
+      ],
       "historical_task_default_kwargs": {
         "registration_kwargs": {},
         "constructor_signature": null,
-        "accepted_task": null,
+        "accepted_task": "Pinned registered relative-action task; public valid-domain actions; source-only constructor damping/block_cog/relative=False not exposed.",
         "source_constructor": "swm:stable_worldmodel/envs/pusht/__init__.py:PushTDiscrete.__init__"
       },
       "state_schema": {
-        "status": "UNPROVED",
-        "corpus_fields": {},
-        "candidate_source_catalog": [],
-        "note": "Full TensorDict simulator snapshot; restore under the same persistent Variation"
+        "status": "VERIFIED_NUMERIC_REPLAY_V2",
+        "fields": [
+          "recipe/version and config",
+          "anchor/start and typed goal/latest_action",
+          "anchor/reset RNG and Variation",
+          "history/actions,dtypes,lengths,valid",
+          "current/bodies,task,observation,contacts,render segments,goal image",
+          "owned/gym/action/variation RNG and initial/current values"
+        ],
+        "note": "Finite history has no imposed storage horizon; export/restore costs grow with history."
       },
       "restoration_order": [
-        "UNPROVED: no accepted full public State restoration; inspect pinned methods before implementation"
+        "Validate whole batch and numeric schema without mutating live engines",
+        "Construct separate official Pymunk engines from exact typed reset recipe",
+        "Replay the finite typed action prefix",
+        "Install owned RNG/Variation metadata and verify all current diagnostics",
+        "Atomically replace live engines after all lanes pass"
       ],
       "action_scaling_clipping_repeat": {
-        "summary": "UNACCEPTED: pinned wrapper step implementation indexed below; no candidate parity claim.",
-        "parity": "UNTESTED",
+        "summary": "Two polar indices dequantized through all 256 source bin centers; shared relative PD task.",
+        "parity": "PASS_EXACT_SCOPED",
         "source_catalog": [
-          "swm:stable_worldmodel/envs/pusht/__init__.py"
+          "swm:stable_worldmodel/envs/pusht/env_discrete.py"
         ]
       },
       "reset_rng_semantics": {
-        "reset_parity": "UNTESTED",
-        "rng_lifecycle": "UNTESTED",
+        "reset_parity": "PASS_SEEDS_0_17_42_EXPLICIT_OPTIONS_AND_RESET_ANCHOR",
+        "rng_lifecycle": "PASS_OWNED_TYPED_RNG_REPLAY",
         "source_catalog": [
-          "swm:stable_worldmodel/envs/pusht/__init__.py"
-        ],
-        "rng_structure_policy": "Complete documented named RNG state is atomic; individual-word minimality is not required."
-      },
-      "reward_success_terminated_truncated": {
-        "reward": "UNTESTED",
-        "lifecycle": "UNTESTED",
-        "source_catalog": [
-          "swm:stable_worldmodel/envs/pusht/__init__.py"
+          "swm:stable_worldmodel/envs/pusht/env_discrete.py"
         ]
       },
-      "accepted_variation_scope": "UNTESTED",
-      "execution_mode": "NATIVE",
+      "reward_success_terminated_truncated": {
+        "reward": "PASS_NEGATIVE_STATE_DISTANCE_WITH_VELOCITY",
+        "lifecycle": "PASS_STRICT_POSITION_20_ANGLE_PI_OVER_9_ULP_BOUNDARIES_AND_MIXED_TERMINAL_CHUNKS; raw source truncated=False; World horizon external",
+        "source_catalog": [
+          "swm:stable_worldmodel/envs/pusht/env_discrete.py"
+        ]
+      },
+      "accepted_variation_scope": "17 exposed persistent leaves, all56 geometry pairs, seeded explicit reset options and four rendering flag configurations.",
+      "execution_mode": "DELEGATED_CPU",
       "evidence_manifest": {
-        "oracle": null,
+        "oracle": "176d54532b3c0a251a4f509b74f2fdacc143a63d",
         "artifacts": [
           {
-            "path": "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/PROFILE.md",
-            "sha256": "8626a42f4911058fee170a8f0062ca9d2119ec3d13356f0ef018f2aa9e1ac90f"
+            "path": "docs/research/semantic_recovery_evidence/final_three_20261004/pusht/acceptance.json",
+            "sha256": "92ec01be0b2f4e1def7d736d5ab48c1ae7abec8700d1d09da3639a9b46369b91"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/final_three_20261004/pusht/edges/result.json",
+            "sha256": "097a3e0aa5f98d4e1d2ad53873a48e522385abc39f6b7c06e00f8fd611674b21"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/final_three_20261004/pusht/edges/witnesses.npz",
+            "sha256": "d29cf7a882dd6408265a4acf00aabfde7297a56dbe2731c35031b1edf4b3db01"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/pusht_public_cuda_20261004/verification.json",
+            "sha256": "869a980f309ca85423c13ccf51b9fb05d6d7fa87aa1d26b6b7ce1ec3ccdc1602"
           }
         ]
       },
-      "cpu_semantic_result": "NOT_ACCEPTED",
+      "cpu_semantic_result": "PASS_PUBLIC_SOURCE_AND_EDGES",
       "gpu_semantic_result": {
-        "status": "NOT_ACCEPTED",
-        "job": null,
-        "note": "CUDA State placement is not GPU physics for DELEGATED_CPU."
+        "status": "PASS_CUDA_STATE_OUTPUT_STORAGE",
+        "job": 6993756,
+        "note": "Physics and Pygame rasterization remain CPU; CUDA tensors do not imply GPU rendering."
       },
-      "frozen_renderer_result": "PASS_SCOPED_CPU_CUDA: four frozen rows per selected class; explicit legacy target visibility for Reacher",
+      "frozen_renderer_result": "New source-aligned public Pygame frames exact for both storage profiles; legacy approximate renderer/fixtures unchanged and retained separately.",
       "known_limitations": [
-        "Stable actions are absolute PD targets in [0,512], not normalized relative commands.",
-        "Native solver is approximate; step omits reward/done.",
-        "get_state loses agent velocity; complete Pymunk state is not established.",
-        "Both SWM variants map to same continuous stable class; discrete decoding absent.",
-        "Parked after C3: simultaneous-contact restoration remains nonexact through the supported Pymunk interface. Private/native engine investigation requires coordinator review; no opaque serialization, approximation, tolerance, or replay-from-reset substitute."
+        "Public actions validate the declared action domain; out-of-domain source behavior is not claimed.",
+        "Nondefault source-only constructor damping/block_cog/relative=False are not exposed.",
+        "No accelerated GPU rendering claim.",
+        "Replay checkpoint storage and restoration grow with history.",
+        "No throughput acceptance or fresh all-family rendering run is claimed."
       ],
-      "remaining_gates": [
-        "Stable actions are absolute PD targets in [0,512], not normalized relative commands.",
-        "Native solver is approximate; step omits reward/done.",
-        "get_state loses agent velocity; complete Pymunk state is not established.",
-        "Both SWM variants map to same continuous stable class; discrete decoding absent.",
-        "Parked after C3: simultaneous-contact restoration remains nonexact through the supported Pymunk interface. Private/native engine investigation requires coordinator review; no opaque serialization, approximation, tolerance, or replay-from-reset substitute."
-      ],
-      "closure_code_check": null
+      "remaining_gates": [],
+      "closure_code_check": {
+        "production_hashes": {
+          "stable_envs/_adapters/pusht_contacts.py": "bf691461110ca2f23f092bd1ab1e0b717bc15f2ac65a41305560679dde5ef5e6",
+          "stable_envs/_adapters/pusht_draw.py": "a3c5f075a0f223cdfc2aa4d8eeb2f98b29fc2e4d72b94d7236a3cdd14b608d97",
+          "stable_envs/_adapters/pusht_history.py": "97464ae19e170e76e2abe2fc64b6113d0299ddf15588af4dd31f06f51d57f08b",
+          "stable_envs/_adapters/pusht_numeric.py": "7d7ecd365920f473434e4517f9f9eb844b17337f41a41ba7cffcabc5ce4a2709",
+          "stable_envs/_adapters/pusht_projection.py": "9ce84c770023b01f28152a830e9965996b49b02d6149c5086d920a6374f001ec",
+          "stable_envs/_adapters/pusht_quantizer.py": "c509a52479c00dba9d34a35049b08643d11886f8b5b8939d6e7373845baaa820",
+          "stable_envs/_adapters/pusht_replay.py": "181d0e6948f4fed1e9558457700f56920d0708e68c0617b48d341532726935a6",
+          "stable_envs/_adapters/pusht_replay_batch.py": "525e9600ffa88b04108c473d6554c4cf782c7fd19b6e8a4a622026f8cdf0a373",
+          "stable_envs/_adapters/pusht_spaces.py": "8a4630928612425206fd3ba9f916cff8c3ae2025831cbca245ce652dd9842ac0",
+          "stable_envs/_adapters/pusht_task.py": "1f94cd249b2f440e58094f59d86a5ad18e11f72571554464ad118c49736561ab",
+          "stable_envs/envs/pusht_semantics.py": "44245e6b5862771d0ada836314df41b9e3e23401e9c0b2433a8e8645a8a518d7",
+          "stable_envs/_stepping.py": "80df65b7abd5aeff8a818b5c41377efe3cf49effe2ab2fec57458d4d83ccb67f"
+        },
+        "manifest": "docs/research/semantic_recovery_evidence/final_three_20261004/pusht/acceptance.json"
+      }
     },
     {
       "historical_id": "swm/PushT-v1",
-      "current_status": "INCOMPLETE",
+      "current_status": "VERIFIED",
       "family": "pusht",
       "pinned_swm_commit": "176d54532b3c0a251a4f509b74f2fdacc143a63d",
       "swm_implementation": {
@@ -13190,81 +13246,133 @@
         "repository": "https://github.com/viblo/pymunk",
         "package": "pymunk",
         "pinned_lock_version": "7.2.0",
-        "tested_profile_versions": {},
+        "tested_profile_versions": {
+          "cpu": {
+            "pymunk": "7.2.0",
+            "pygame": "2.6.1",
+            "numpy": "2.2.6",
+            "torch": "2.14.1",
+            "tensordict": "0.14.2",
+            "opencv-python-headless": "4.11.0.86"
+          },
+          "cuda_storage": {
+            "pymunk": "7.2.0",
+            "pygame": "2.6.1",
+            "numpy": "2.5.3",
+            "torch": "2.14.0+cu126",
+            "tensordict": "0.14.2",
+            "opencv-python-headless": "5.0.0.93"
+          }
+        },
         "version_scope": "Lock version is historical provenance, not a claim of candidate certification; tested CPU/GPU versions remain in evidence."
       },
       "stable_envs_classes": [
         "PushT"
       ],
-      "accepted_classes": [],
+      "accepted_classes": [
+        "PushT"
+      ],
       "historical_task_default_kwargs": {
         "registration_kwargs": {},
         "constructor_signature": "self, block_cog=None, damping=None, render_action=False, resolution=224, with_target=True, render_mode='rgb_array', relative=True, init_value=None",
-        "accepted_task": null,
+        "accepted_task": "Pinned registered relative-action task; public valid-domain actions; source-only constructor damping/block_cog/relative=False not exposed.",
         "source_constructor": "swm:stable_worldmodel/envs/pusht/env.py:PushT.__init__"
       },
       "state_schema": {
-        "status": "UNPROVED",
-        "corpus_fields": {},
-        "candidate_source_catalog": [],
-        "note": "Full TensorDict simulator snapshot; restore under the same persistent Variation"
+        "status": "VERIFIED_NUMERIC_REPLAY_V2",
+        "fields": [
+          "recipe/version and config",
+          "anchor/start and typed goal/latest_action",
+          "anchor/reset RNG and Variation",
+          "history/actions,dtypes,lengths,valid",
+          "current/bodies,task,observation,contacts,render segments,goal image",
+          "owned/gym/action/variation RNG and initial/current values"
+        ],
+        "note": "Finite history has no imposed storage horizon; export/restore costs grow with history."
       },
       "restoration_order": [
-        "UNPROVED: no accepted full public State restoration; inspect pinned methods before implementation"
+        "Validate whole batch and numeric schema without mutating live engines",
+        "Construct separate official Pymunk engines from exact typed reset recipe",
+        "Replay the finite typed action prefix",
+        "Install owned RNG/Variation metadata and verify all current diagnostics",
+        "Atomically replace live engines after all lanes pass"
       ],
       "action_scaling_clipping_repeat": {
-        "summary": "UNACCEPTED: pinned wrapper step implementation indexed below; no candidate parity claim.",
-        "parity": "UNTESTED",
+        "summary": "Float32/64 relative [-1,1]^2 controls; target = agent.position + action*100; kp100,kv20,dt0.01,10 substeps. Invalid public-domain inputs rejected atomically; source out-of-domain behavior not claimed.",
+        "parity": "PASS_EXACT_SCOPED",
         "source_catalog": [
           "swm:stable_worldmodel/envs/pusht/env.py"
         ]
       },
       "reset_rng_semantics": {
-        "reset_parity": "UNTESTED",
-        "rng_lifecycle": "UNTESTED",
-        "source_catalog": [
-          "swm:stable_worldmodel/envs/pusht/env.py"
-        ],
-        "rng_structure_policy": "Complete documented named RNG state is atomic; individual-word minimality is not required."
-      },
-      "reward_success_terminated_truncated": {
-        "reward": "UNTESTED",
-        "lifecycle": "UNTESTED",
+        "reset_parity": "PASS_SEEDS_0_17_42_EXPLICIT_OPTIONS_AND_RESET_ANCHOR",
+        "rng_lifecycle": "PASS_OWNED_TYPED_RNG_REPLAY",
         "source_catalog": [
           "swm:stable_worldmodel/envs/pusht/env.py"
         ]
       },
-      "accepted_variation_scope": "UNTESTED",
-      "execution_mode": "NATIVE",
+      "reward_success_terminated_truncated": {
+        "reward": "PASS_NEGATIVE_STATE_DISTANCE_WITH_VELOCITY",
+        "lifecycle": "PASS_STRICT_POSITION_20_ANGLE_PI_OVER_9_ULP_BOUNDARIES_AND_MIXED_TERMINAL_CHUNKS; raw source truncated=False; World horizon external",
+        "source_catalog": [
+          "swm:stable_worldmodel/envs/pusht/env.py"
+        ]
+      },
+      "accepted_variation_scope": "17 exposed persistent leaves, all56 geometry pairs, seeded explicit reset options and four rendering flag configurations.",
+      "execution_mode": "DELEGATED_CPU",
       "evidence_manifest": {
-        "oracle": null,
+        "oracle": "176d54532b3c0a251a4f509b74f2fdacc143a63d",
         "artifacts": [
           {
-            "path": "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/PROFILE.md",
-            "sha256": "8626a42f4911058fee170a8f0062ca9d2119ec3d13356f0ef018f2aa9e1ac90f"
+            "path": "docs/research/semantic_recovery_evidence/final_three_20261004/pusht/acceptance.json",
+            "sha256": "92ec01be0b2f4e1def7d736d5ab48c1ae7abec8700d1d09da3639a9b46369b91"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/final_three_20261004/pusht/edges/result.json",
+            "sha256": "097a3e0aa5f98d4e1d2ad53873a48e522385abc39f6b7c06e00f8fd611674b21"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/final_three_20261004/pusht/edges/witnesses.npz",
+            "sha256": "d29cf7a882dd6408265a4acf00aabfde7297a56dbe2731c35031b1edf4b3db01"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/pusht_public_cuda_20261004/verification.json",
+            "sha256": "869a980f309ca85423c13ccf51b9fb05d6d7fa87aa1d26b6b7ce1ec3ccdc1602"
           }
         ]
       },
-      "cpu_semantic_result": "NOT_ACCEPTED",
+      "cpu_semantic_result": "PASS_PUBLIC_SOURCE_AND_EDGES",
       "gpu_semantic_result": {
-        "status": "NOT_ACCEPTED",
-        "job": null,
-        "note": "CUDA State placement is not GPU physics for DELEGATED_CPU."
+        "status": "PASS_CUDA_STATE_OUTPUT_STORAGE",
+        "job": 6993756,
+        "note": "Physics and Pygame rasterization remain CPU; CUDA tensors do not imply GPU rendering."
       },
-      "frozen_renderer_result": "PASS_SCOPED_CPU_CUDA: four frozen rows per selected class; explicit legacy target visibility for Reacher",
+      "frozen_renderer_result": "New source-aligned public Pygame frames exact for both storage profiles; legacy approximate renderer/fixtures unchanged and retained separately.",
       "known_limitations": [
-        "Stable actions are absolute PD targets in [0,512], not normalized relative commands.",
-        "Native solver is approximate; step omits reward/done.",
-        "get_state loses agent velocity; complete Pymunk state is not established.",
-        "Parked after C3: simultaneous-contact restoration remains nonexact through the supported Pymunk interface. Private/native engine investigation requires coordinator review; no opaque serialization, approximation, tolerance, or replay-from-reset substitute."
+        "Public actions validate the declared action domain; out-of-domain source behavior is not claimed.",
+        "Nondefault source-only constructor damping/block_cog/relative=False are not exposed.",
+        "No accelerated GPU rendering claim.",
+        "Replay checkpoint storage and restoration grow with history.",
+        "No throughput acceptance or fresh all-family rendering run is claimed."
       ],
-      "remaining_gates": [
-        "Stable actions are absolute PD targets in [0,512], not normalized relative commands.",
-        "Native solver is approximate; step omits reward/done.",
-        "get_state loses agent velocity; complete Pymunk state is not established.",
-        "Parked after C3: simultaneous-contact restoration remains nonexact through the supported Pymunk interface. Private/native engine investigation requires coordinator review; no opaque serialization, approximation, tolerance, or replay-from-reset substitute."
-      ],
-      "closure_code_check": null
+      "remaining_gates": [],
+      "closure_code_check": {
+        "production_hashes": {
+          "stable_envs/_adapters/pusht_contacts.py": "bf691461110ca2f23f092bd1ab1e0b717bc15f2ac65a41305560679dde5ef5e6",
+          "stable_envs/_adapters/pusht_draw.py": "a3c5f075a0f223cdfc2aa4d8eeb2f98b29fc2e4d72b94d7236a3cdd14b608d97",
+          "stable_envs/_adapters/pusht_history.py": "97464ae19e170e76e2abe2fc64b6113d0299ddf15588af4dd31f06f51d57f08b",
+          "stable_envs/_adapters/pusht_numeric.py": "7d7ecd365920f473434e4517f9f9eb844b17337f41a41ba7cffcabc5ce4a2709",
+          "stable_envs/_adapters/pusht_projection.py": "9ce84c770023b01f28152a830e9965996b49b02d6149c5086d920a6374f001ec",
+          "stable_envs/_adapters/pusht_quantizer.py": "c509a52479c00dba9d34a35049b08643d11886f8b5b8939d6e7373845baaa820",
+          "stable_envs/_adapters/pusht_replay.py": "181d0e6948f4fed1e9558457700f56920d0708e68c0617b48d341532726935a6",
+          "stable_envs/_adapters/pusht_replay_batch.py": "525e9600ffa88b04108c473d6554c4cf782c7fd19b6e8a4a622026f8cdf0a373",
+          "stable_envs/_adapters/pusht_spaces.py": "8a4630928612425206fd3ba9f916cff8c3ae2025831cbca245ce652dd9842ac0",
+          "stable_envs/_adapters/pusht_task.py": "1f94cd249b2f440e58094f59d86a5ad18e11f72571554464ad118c49736561ab",
+          "stable_envs/envs/pusht_semantics.py": "44245e6b5862771d0ada836314df41b9e3e23401e9c0b2433a8e8645a8a518d7",
+          "stable_envs/_stepping.py": "80df65b7abd5aeff8a818b5c41377efe3cf49effe2ab2fec57458d4d83ccb67f"
+        },
+        "manifest": "docs/research/semantic_recovery_evidence/final_three_20261004/pusht/acceptance.json"
+      }
     },
     {
       "historical_id": "swm/QuadrupedDMControl-v0",
@@ -14794,8 +14902,8 @@
     }
   ],
   "current_counts": {
-    "VERIFIED": 39,
-    "INCOMPLETE": 3
+    "VERIFIED": 41,
+    "INCOMPLETE": 1
   },
   "updates": [
     {
@@ -14856,6 +14964,19 @@
       "counts": {
         "VERIFIED": 39,
         "INCOMPLETE": 3
+      }
+    },
+    {
+      "checkpoint": "Independent public PushT replay acceptance",
+      "job": 6993756,
+      "report": "docs/research/semantic_recovery_evidence/final_three_20261004/pusht/README.md",
+      "newly_verified": [
+        "swm/PushT-Discrete-v1",
+        "swm/PushT-v1"
+      ],
+      "counts": {
+        "VERIFIED": 41,
+        "INCOMPLETE": 1
       }
     }
   ]

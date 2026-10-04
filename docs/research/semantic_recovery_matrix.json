@@ -3932,17 +3932,17 @@
       ],
       "family": "pusht",
       "owner": "coordinator",
-      "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
-      "state_status": "INCOMPLETE",
+      "state_contract": "Owned numeric TensorDict reset recipe, complete RNG/configuration, finite typed action history and current diagnostics; restore replays official Pymunk exactly under the recorded configuration.",
+      "state_status": "VERIFIED",
       "action_parity": "PASS_SCOPED_PUBLIC_CPU_AND_CUDA_STORAGE_SEE_EVIDENCE",
       "reset_parity": "PASS_SCOPED_PUBLIC_CPU_AND_CUDA_STORAGE_SEE_EVIDENCE",
       "step_parity": "PASS_SCOPED_PUBLIC_CPU_AND_CUDA_STORAGE_SEE_EVIDENCE",
-      "reward_parity": "PASS_SCOPED_PUBLIC_CPU_AND_CUDA_STORAGE_SEE_EVIDENCE",
+      "reward_parity": "PASS_EXACT_SOURCE_CONTINUATION_AND_48_TASK_BOUNDARY_CASES",
       "terminated_truncated_parity": "PASS_PUBLIC_CPU_MIXED_TERMINAL_SOURCE_GATE_12_CASES_PER_REGISTRATION",
       "rng_lifecycle": "PASS_SCOPED_PUBLIC_CPU_AND_CUDA_STORAGE_SEE_EVIDENCE",
-      "variation_parity": "PASS_SCOPED_PUBLIC_CPU_AND_CUDA_STORAGE_SEE_EVIDENCE",
+      "variation_parity": "PASS_17_PUBLIC_PERSISTENT_LEAVES_AND_ALL_56_SUPPORTED_SHAPE_COMBINATIONS",
       "execution_mode": "DELEGATED_CPU",
-      "adapter_status": "PUBLIC_REPLAY_IMPLEMENTED_CPU_AND_CUDA_OUTPUT_SOURCE_GATES_PASS",
+      "adapter_status": "PUBLIC_NUMERIC_REPLAY_ACCEPTED",
       "renderer_regression": "PASS_PUBLIC_CPU_PYGAME_EXACT_2424_FRAMES_PER_DEVICE_PROFILE; CUDA output is CPU rendering plus transfer, not GPU rasterization; old compact-renderer evidence remains historical",
       "oracle_corpus": null,
       "reference_cpu_benchmark": "NOT_RUN",
@@ -3950,35 +3950,84 @@
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Public CPU and CUDA-storage source gates pass independently: 74 cases and 2424 exact frame pairs per registration per profile. Final registration acceptance audit remains; no promotion in this evidence checkpoint.",
-        "Public CPU mixed-terminal gates pass (12 cases per registration). Retain explicit source-config/lifecycle and boundary coverage in the final acceptance audit; CPU terminal evidence is not a CUDA terminal-gate pass.",
-        "The source-aligned public renderer currently executes on CPU; preserve a separate gate for any accelerated GPU renderer. No existing GPU speedup transfers to this new implementation.",
-        "Measure replay costs and online throughput for the new public path. get/set State costs grow with finite history; no new episode horizon is imposed."
+        "Public actions validate the declared action domain; out-of-domain source behavior is not claimed.",
+        "Nondefault source-only constructor damping/block_cog/relative=False are not exposed.",
+        "No accelerated GPU rendering claim.",
+        "Replay checkpoint storage and restoration grow with history.",
+        "No throughput acceptance or fresh all-family rendering run is claimed."
       ],
       "test": "tests/unit/test_pusht_public_semantics.py; scripts/research_replay/pusht_public_gate.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
-      "audit_status": "SOURCE_AUDITED_NOT_VERIFIED",
-      "audit_report": "docs/research/native_verification.md",
+      "audit_status": "SOURCE_AUDITED_VERIFIED_SCOPED",
+      "audit_report": "docs/research/semantic_recovery_evidence/final_three_20261004/pusht/README.md",
       "evidence": [
-        "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/PROFILE.md"
+        "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/PROFILE.md",
+        "docs/research/semantic_recovery_evidence/final_three_20261004/pusht/acceptance.json",
+        "docs/research/semantic_recovery_evidence/pusht_public_cuda_20261004/verification.json"
       ],
       "blocker": {
-        "status": "OPEN",
-        "kind": "FINAL_ACCEPTANCE_AUDIT_AND_ACCELERATED_RENDERER_PENDING",
-        "scope": "Both historical PushT registrations; independent certification remains required",
-        "observed_error_with_exposed_contact_restore": 0.10992291186727243,
-        "untested_candidates": [
-          "body v_bias/w_bias",
-          "active solver bookkeeping",
-          "broadphase collision IDs/cache"
-        ],
-        "permanent_skip": false,
-        "description": "Public replay State and source-aligned CPU rendering pass CPU and CUDA-storage source gates. Final registration acceptance audit and separate accelerated-rendering/performance closure remain.",
-        "investigation_status": "PUBLIC_CPU_AND_CUDA_STORAGE_SOURCE_PASS",
-        "resume_requires": "No private ABI work; complete the authorized replay route and per-registration acceptance."
+        "status": "CLOSED_FOR_ACCEPTED_SCOPE",
+        "kind": "REPLAY_RECONSTRUCTS_HIDDEN_PYMUNK_STATE",
+        "description": "Public CPU and CUDA-storage source gates pass independently. Accelerated GPU rendering and throughput remain separate capabilities."
       },
-      "current_recovery_evidence": "docs/research/semantic_recovery_evidence/pusht_public_cuda_20261004/README.md",
-      "recovery_status": "PUBLIC_STATE_CPU_AND_CUDA_STORAGE_PASS_NOT_PROMOTED"
+      "current_recovery_evidence": "docs/research/semantic_recovery_evidence/final_three_20261004/pusht/README.md",
+      "recovery_status": "ACCEPTED_SCOPED_PUBLIC_CPU_AND_CUDA_STORAGE",
+      "acceptance_manifest": "docs/research/semantic_recovery_evidence/final_three_20261004/pusht/acceptance.json",
+      "oscar_job": 6993756,
+      "oscar_result": "PASS_473_TESTS_AND_148_SOURCE_CASES",
+      "verification_scope": {
+        "status": "ACCEPTED_SCOPED_PUBLIC_CPU_AND_CUDA_STORAGE",
+        "source_cases_per_device": 74,
+        "frame_pairs_per_device": 2424,
+        "normalized_mse": 0.0,
+        "mixed_terminal_cpu_cases": 12,
+        "edge_gates": [
+          {
+            "registration": "swm/PushT-Discrete-v1",
+            "gate": "task_boundaries",
+            "cases": 48
+          },
+          {
+            "registration": "swm/PushT-Discrete-v1",
+            "gate": "action_boundaries",
+            "cases": 8
+          },
+          {
+            "registration": "swm/PushT-Discrete-v1",
+            "gate": "persistent_variation",
+            "paths": [
+              "agent.angle",
+              "agent.color",
+              "agent.scale",
+              "agent.shape",
+              "agent.start_position",
+              "agent.velocity",
+              "background.color",
+              "block.angle",
+              "block.color",
+              "block.scale",
+              "block.shape",
+              "block.start_position",
+              "goal.angle",
+              "goal.color",
+              "goal.position",
+              "goal.scale",
+              "rendering.render_goal"
+            ],
+            "cases": 17
+          },
+          {
+            "registration": "swm/PushT-Discrete-v1",
+            "gate": "render_configuration",
+            "cases": 4
+          },
+          {
+            "registration": "swm/PushT-Discrete-v1",
+            "gate": "all_polar_bins_and_continuous_equivalence",
+            "cases": 256
+          }
+        ]
+      }
     },
     {
       "historical_id": "swm/PushT-v1",
@@ -3987,17 +4036,17 @@
       ],
       "family": "pusht",
       "owner": "coordinator",
-      "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
-      "state_status": "INCOMPLETE",
+      "state_contract": "Owned numeric TensorDict reset recipe, complete RNG/configuration, finite typed action history and current diagnostics; restore replays official Pymunk exactly under the recorded configuration.",
+      "state_status": "VERIFIED",
       "action_parity": "PASS_SCOPED_PUBLIC_CPU_AND_CUDA_STORAGE_SEE_EVIDENCE",
       "reset_parity": "PASS_SCOPED_PUBLIC_CPU_AND_CUDA_STORAGE_SEE_EVIDENCE",
       "step_parity": "PASS_SCOPED_PUBLIC_CPU_AND_CUDA_STORAGE_SEE_EVIDENCE",
-      "reward_parity": "PASS_SCOPED_PUBLIC_CPU_AND_CUDA_STORAGE_SEE_EVIDENCE",
+      "reward_parity": "PASS_EXACT_SOURCE_CONTINUATION_AND_48_TASK_BOUNDARY_CASES",
       "terminated_truncated_parity": "PASS_PUBLIC_CPU_MIXED_TERMINAL_SOURCE_GATE_12_CASES_PER_REGISTRATION",
       "rng_lifecycle": "PASS_SCOPED_PUBLIC_CPU_AND_CUDA_STORAGE_SEE_EVIDENCE",
-      "variation_parity": "PASS_SCOPED_PUBLIC_CPU_AND_CUDA_STORAGE_SEE_EVIDENCE",
+      "variation_parity": "PASS_17_PUBLIC_PERSISTENT_LEAVES_AND_ALL_56_SUPPORTED_SHAPE_COMBINATIONS",
       "execution_mode": "DELEGATED_CPU",
-      "adapter_status": "PUBLIC_REPLAY_IMPLEMENTED_CPU_AND_CUDA_OUTPUT_SOURCE_GATES_PASS",
+      "adapter_status": "PUBLIC_NUMERIC_REPLAY_ACCEPTED",
       "renderer_regression": "PASS_PUBLIC_CPU_PYGAME_EXACT_2424_FRAMES_PER_DEVICE_PROFILE; CUDA output is CPU rendering plus transfer, not GPU rasterization; old compact-renderer evidence remains historical",
       "oracle_corpus": null,
       "reference_cpu_benchmark": "NOT_RUN",
@@ -4005,35 +4054,79 @@
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "Public CPU and CUDA-storage source gates pass independently: 74 cases and 2424 exact frame pairs per registration per profile. Final registration acceptance audit remains; no promotion in this evidence checkpoint.",
-        "Public CPU mixed-terminal gates pass (12 cases per registration). Retain explicit source-config/lifecycle and boundary coverage in the final acceptance audit; CPU terminal evidence is not a CUDA terminal-gate pass.",
-        "The source-aligned public renderer currently executes on CPU; preserve a separate gate for any accelerated GPU renderer. No existing GPU speedup transfers to this new implementation.",
-        "Measure replay costs and online throughput for the new public path. get/set State costs grow with finite history; no new episode horizon is imposed."
+        "Public actions validate the declared action domain; out-of-domain source behavior is not claimed.",
+        "Nondefault source-only constructor damping/block_cog/relative=False are not exposed.",
+        "No accelerated GPU rendering claim.",
+        "Replay checkpoint storage and restoration grow with history.",
+        "No throughput acceptance or fresh all-family rendering run is claimed."
       ],
       "test": "tests/unit/test_pusht_public_semantics.py; scripts/research_replay/pusht_public_gate.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
-      "audit_status": "SOURCE_AUDITED_NOT_VERIFIED",
-      "audit_report": "docs/research/native_verification.md",
+      "audit_status": "SOURCE_AUDITED_VERIFIED_SCOPED",
+      "audit_report": "docs/research/semantic_recovery_evidence/final_three_20261004/pusht/README.md",
       "evidence": [
-        "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/PROFILE.md"
+        "docs/research/semantic_recovery_evidence/checkpoint_c/pusht/PROFILE.md",
+        "docs/research/semantic_recovery_evidence/final_three_20261004/pusht/acceptance.json",
+        "docs/research/semantic_recovery_evidence/pusht_public_cuda_20261004/verification.json"
       ],
       "blocker": {
-        "status": "OPEN",
-        "kind": "FINAL_ACCEPTANCE_AUDIT_AND_ACCELERATED_RENDERER_PENDING",
-        "scope": "Both historical PushT registrations; independent certification remains required",
-        "observed_error_with_exposed_contact_restore": 0.10992291186727243,
-        "untested_candidates": [
-          "body v_bias/w_bias",
-          "active solver bookkeeping",
-          "broadphase collision IDs/cache"
-        ],
-        "permanent_skip": false,
-        "description": "Public replay State and source-aligned CPU rendering pass CPU and CUDA-storage source gates. Final registration acceptance audit and separate accelerated-rendering/performance closure remain.",
-        "investigation_status": "PUBLIC_CPU_AND_CUDA_STORAGE_SOURCE_PASS",
-        "resume_requires": "No private ABI work; complete the authorized replay route and per-registration acceptance."
+        "status": "CLOSED_FOR_ACCEPTED_SCOPE",
+        "kind": "REPLAY_RECONSTRUCTS_HIDDEN_PYMUNK_STATE",
+        "description": "Public CPU and CUDA-storage source gates pass independently. Accelerated GPU rendering and throughput remain separate capabilities."
       },
-      "current_recovery_evidence": "docs/research/semantic_recovery_evidence/pusht_public_cuda_20261004/README.md",
-      "recovery_status": "PUBLIC_STATE_CPU_AND_CUDA_STORAGE_PASS_NOT_PROMOTED"
+      "current_recovery_evidence": "docs/research/semantic_recovery_evidence/final_three_20261004/pusht/README.md",
+      "recovery_status": "ACCEPTED_SCOPED_PUBLIC_CPU_AND_CUDA_STORAGE",
+      "acceptance_manifest": "docs/research/semantic_recovery_evidence/final_three_20261004/pusht/acceptance.json",
+      "oscar_job": 6993756,
+      "oscar_result": "PASS_473_TESTS_AND_148_SOURCE_CASES",
+      "verification_scope": {
+        "status": "ACCEPTED_SCOPED_PUBLIC_CPU_AND_CUDA_STORAGE",
+        "source_cases_per_device": 74,
+        "frame_pairs_per_device": 2424,
+        "normalized_mse": 0.0,
+        "mixed_terminal_cpu_cases": 12,
+        "edge_gates": [
+          {
+            "registration": "swm/PushT-v1",
+            "gate": "task_boundaries",
+            "cases": 48
+          },
+          {
+            "registration": "swm/PushT-v1",
+            "gate": "action_boundaries",
+            "cases": 18
+          },
+          {
+            "registration": "swm/PushT-v1",
+            "gate": "persistent_variation",
+            "paths": [
+              "agent.angle",
+              "agent.color",
+              "agent.scale",
+              "agent.shape",
+              "agent.start_position",
+              "agent.velocity",
+              "background.color",
+              "block.angle",
+              "block.color",
+              "block.scale",
+              "block.shape",
+              "block.start_position",
+              "goal.angle",
+              "goal.color",
+              "goal.position",
+              "goal.scale",
+              "rendering.render_goal"
+            ],
+            "cases": 17
+          },
+          {
+            "registration": "swm/PushT-v1",
+            "gate": "render_configuration",
+            "cases": 4
+          }
+        ]
+      }
     },
     {
       "historical_id": "swm/QuadrupedDMControl-v0",
@@ -4473,7 +4566,7 @@
       ]
     }
   ],
-  "checkpoint": "Current registration status: 39 VERIFIED / 3 INCOMPLETE. The 35 verified non-Craftax registrations are in the online stepping/rendering performance program; four verified Craftax registrations are deferred from that optimization scope. PushT, PushT-Discrete and Rocket remain incomplete pending recovery/closure gates. VERIFIED records each row's accepted semantic/evidence scope; it does not certify universal rendering fidelity or performance. See stepping_benchmark_backlog.csv for current execution and benchmark coverage.",
+  "checkpoint": "Current registration status: 41 VERIFIED / 1 INCOMPLETE; 37/38 excluding deferred Craftax. PushT and PushT-Discrete independently accepted for public numeric replay State, source CPU physics/rendering and CUDA State/output storage. Rocket remains incomplete. VERIFIED certifies each row's stated semantic evidence scope, not universal rendering fidelity, accelerated GPU rendering or online speedup.",
   "fetch_family_acceptance": {
     "implementation_commit": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92",
     "report": "docs/research/fetch_family_recovery.md",
@@ -4524,5 +4617,14 @@
       "INCOMPLETE": 3
     },
     "independent_registration_gates": true
+  },
+  "pusht_public_acceptance": {
+    "manifest": "docs/research/semantic_recovery_evidence/final_three_20261004/pusht/acceptance.json",
+    "job": 6993756,
+    "independent_registration_gates": true,
+    "counts": {
+      "VERIFIED": 41,
+      "INCOMPLETE": 1
+    }
   }
 }

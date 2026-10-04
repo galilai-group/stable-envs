@@ -115,8 +115,8 @@ exact default task being `VERIFIED`. Full Variation surfaces remain uncertified.
 | `swm/PendulumControl-v1` | `Pendulum` | DELEGATED_CPU | PARTIAL | Gymnasium Pendulum-v1; full Variation surface remains uncertified |
 | `swm/PendulumDMControl-v0` | `DMCPendulumSwingup` | DELEGATED_CPU | PARTIAL | SwingUp; complete historical Variation surface remains uncertified |
 | `swm/Piecewise-v0` | `Piecewise`, `PiecewiseZones` | NATIVE | PARTIAL | Exact CPU default with native Torch dynamics; sibling variants and full Variation surface uncertified |
-| `swm/PushT-Discrete-v1` | `PushT` | NATIVE | PARTIAL | `agent.shape` / `block.shape` / `agent.velocity`; start poses as Variation |
-| `swm/PushT-v1` | `PushT` | NATIVE | PARTIAL | same; downstream task evidence exists |
+| `swm/PushT-Discrete-v1` | `PushTDiscrete` | DELEGATED_CPU | PARTIAL | Legacy VariationMap classification; current public replay acceptance is in the semantic matrix |
+| `swm/PushT-v1` | `PushT` | DELEGATED_CPU | PARTIAL | Legacy VariationMap classification; current public replay acceptance is in the semantic matrix |
 | `swm/QuadrupedDMControl-v0` | `DMCQuadrupedWalk` | DELEGATED_CPU | PARTIAL | Exact CPU historical default; complete Variation surface and sibling tasks uncertified |
 | `swm/ReacherDMControl-v0` | `DMCReacherHard` | DELEGATED_CPU | PARTIAL | hard/default only; easy/qpos_match and complete Variation surface |
 | `swm/SimplePointMaze-v0` | `SimplePointMaze` | NATIVE | PARTIAL | Exact CPU default with native Torch dynamics; sibling variants and full Variation surface uncertified |

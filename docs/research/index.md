@@ -121,3 +121,6 @@ Milestone write-ups and generated tables. They use the project's internal names
   private exact PushT replay and cost evidence; current Rocket CPU render and
   companion gates; repaired Cube/Scene source GL inspection. Registration
   acceptance stays 35/38 outside Craftax while public/CUDA gates remain open.
+- [PushT public acceptance, October 4](semantic_recovery_evidence/final_three_20261004/pusht/README.md):
+  independent continuous/discrete CPU and CUDA-storage gates, boundary/Variation
+  closure, **37/38 accepted excluding Craftax**. Rocket remains incomplete.

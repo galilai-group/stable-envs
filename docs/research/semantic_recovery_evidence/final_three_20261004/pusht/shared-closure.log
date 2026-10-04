@@ -1,0 +1,595 @@
+.............sssssssssssssssssssssssssssssssssssssssssssssssssssssssssss [ 23%]
+sssssssssssssssssssssssssssssssssssss.ssssssssssssss.....FF..sssssssssss [ 47%]
+sssssss.FFFFFFFF.........Fssssssssssssssssssssssssssssssssssssssssssssss [ 70%]
+sss..............................................sssss.................. [ 94%]
+..........F......                                                        [100%]
+=================================== FAILURES ===================================
+______________________ test_enum_alternatives_round_trip _______________________
+
+    @needs_dmc
+    def test_enum_alternatives_round_trip():
+        """The one ``enum`` leaf in this family: swm's Discrete(2) into our Discrete(3), both ways."""
+>       env = make("DMCManipulatorBringBall", num_envs=1, device="cpu")
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_variation_maps_dmc_control.py:466: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+stable_envs/registry.py:249: in make
+    return _resolve(name)(**kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+stable_envs/envs/dmcontrol/_aligned.py:23: in __init__
+    super().__init__(*args, **kwargs)
+stable_envs/envs/dmcontrol/suite.py:103: in __init__
+    super().__init__(*a, **kw)
+stable_envs/envs/dmcontrol/base.py:116: in __init__
+    m = self._model()
+        ^^^^^^^^^^^^^
+stable_envs/envs/dmcontrol/base.py:321: in _model
+    return cls._bundle(cls.default_size)[1]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+stable_envs/envs/dmcontrol/base.py:220: in _bundle
+    r = mujoco.Renderer(m, height=int(size), width=int(size))
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+stable_envs/testing/resource_guard.py:141: in wrapper
+    out = __fn(self, *a, **k)
+          ^^^^^^^^^^^^^^^^^^^
+/private/tmp/se-completion-312/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py:89: in __init__
+    self._gl_context = gl_context.GLContext(width, height)  # type: ignore
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+stable_envs/testing/resource_guard.py:141: in wrapper
+    out = __fn(self, *a, **k)
+          ^^^^^^^^^^^^^^^^^^^
+/private/tmp/se-completion-312/lib/python3.12/site-packages/mujoco/cgl/__init__.py:47: in __init__
+    cgl.CGLChoosePixelFormat(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+args = (<mujoco.cgl.c_int_Array_17 object at 0x1202a5c50>, <cparam 'P' (0x1202a5598)>, <cparam 'P' (0x1202a5718)>)
+
+    def checked_func(*args):
+      err = func(*args)
+      if err:
+>       raise CGLError(_CGLErrorString(err).decode())
+E       mujoco.cgl.cgl.CGLError: invalid CoreGraphics connection
+
+/private/tmp/se-completion-312/lib/python3.12/site-packages/mujoco/cgl/cgl.py:132: CGLError
+__________________ test_an_unreachable_enum_index_is_refused ___________________
+
+    @needs_dmc
+    def test_an_unreachable_enum_index_is_refused():
+        """A swm index the table does not cover must raise rather than silently pick something."""
+>       env = make("DMCManipulatorBringBall", num_envs=1, device="cpu")
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_variation_maps_dmc_control.py:479: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+stable_envs/registry.py:249: in make
+    return _resolve(name)(**kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+stable_envs/envs/dmcontrol/_aligned.py:23: in __init__
+    super().__init__(*args, **kwargs)
+stable_envs/envs/dmcontrol/suite.py:103: in __init__
+    super().__init__(*a, **kw)
+stable_envs/envs/dmcontrol/base.py:116: in __init__
+    m = self._model()
+        ^^^^^^^^^^^^^
+stable_envs/envs/dmcontrol/base.py:321: in _model
+    return cls._bundle(cls.default_size)[1]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+stable_envs/envs/dmcontrol/base.py:220: in _bundle
+    r = mujoco.Renderer(m, height=int(size), width=int(size))
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+stable_envs/testing/resource_guard.py:141: in wrapper
+    out = __fn(self, *a, **k)
+          ^^^^^^^^^^^^^^^^^^^
+/private/tmp/se-completion-312/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py:89: in __init__
+    self._gl_context = gl_context.GLContext(width, height)  # type: ignore
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+stable_envs/testing/resource_guard.py:141: in wrapper
+    out = __fn(self, *a, **k)
+          ^^^^^^^^^^^^^^^^^^^
+/private/tmp/se-completion-312/lib/python3.12/site-packages/mujoco/cgl/__init__.py:47: in __init__
+    cgl.CGLChoosePixelFormat(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+args = (<mujoco.cgl.c_int_Array_17 object at 0x12116fd50>, <cparam 'P' (0x12116d918)>, <cparam 'P' (0x12116d798)>)
+
+    def checked_func(*args):
+      err = func(*args)
+      if err:
+>       raise CGLError(_CGLErrorString(err).decode())
+E       mujoco.cgl.cgl.CGLError: invalid CoreGraphics connection
+
+/private/tmp/se-completion-312/lib/python3.12/site-packages/mujoco/cgl/cgl.py:132: CGLError
+_ test_floor_color_is_a_leaf_and_the_default_is_the_identity[DMCAcrobotBalance] _
+
+cell = 'DMCAcrobotBalance'
+
+    @needs_dmc
+    @pytest.mark.parametrize(
+        "cell", sorted(c for c in MAPS if c in REGISTRY and MAPS[c].classification().get("floor.color") == "mapped")
+    )
+    def test_floor_color_is_a_leaf_and_the_default_is_the_identity(cell):
+        """The two halves of "mapped": the leaf exists with swm's shape and default, and it moves pixels.
+    
+        The default half is the one that matters for certification and is the one a classification table
+        cannot check for itself: swm's ``init_value`` for this leaf is dm_control's own
+        ``common/materials.xml`` grid texture, so a correct implementation renders the registered default
+        BYTE-IDENTICALLY to the pre-patch frame -- the leaf must add reach without moving the picture.
+        """
+>       env = make(cell, num_envs=2, size=84, device="cpu")
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_variation_maps_dmc_control.py:566: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+stable_envs/registry.py:249: in make
+    return _resolve(name)(**kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+stable_envs/envs/dmcontrol/_first_family.py:22: in __init__
+    super().__init__(*args, **kwargs)
+stable_envs/envs/dmcontrol/suite.py:103: in __init__
+    super().__init__(*a, **kw)
+stable_envs/envs/dmcontrol/base.py:116: in __init__
+    m = self._model()
+        ^^^^^^^^^^^^^
+stable_envs/envs/dmcontrol/base.py:321: in _model
+    return cls._bundle(cls.default_size)[1]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+stable_envs/envs/dmcontrol/base.py:220: in _bundle
+    r = mujoco.Renderer(m, height=int(size), width=int(size))
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+stable_envs/testing/resource_guard.py:141: in wrapper
+    out = __fn(self, *a, **k)
+          ^^^^^^^^^^^^^^^^^^^
+/private/tmp/se-completion-312/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py:89: in __init__
+    self._gl_context = gl_context.GLContext(width, height)  # type: ignore
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+stable_envs/testing/resource_guard.py:141: in wrapper
+    out = __fn(self, *a, **k)
+          ^^^^^^^^^^^^^^^^^^^
+/private/tmp/se-completion-312/lib/python3.12/site-packages/mujoco/cgl/__init__.py:47: in __init__
+    cgl.CGLChoosePixelFormat(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+args = (<mujoco.cgl.c_int_Array_17 object at 0x120d2b6d0>, <cparam 'P' (0x120d28518)>, <cparam 'P' (0x120d28998)>)
+
+    def checked_func(*args):
+      err = func(*args)
+      if err:
+>       raise CGLError(_CGLErrorString(err).decode())
+E       mujoco.cgl.cgl.CGLError: invalid CoreGraphics connection
+
+/private/tmp/se-completion-312/lib/python3.12/site-packages/mujoco/cgl/cgl.py:132: CGLError
+_ test_floor_color_is_a_leaf_and_the_default_is_the_identity[DMCBallInCupCatch] _
+
+cell = 'DMCBallInCupCatch'
+
+    @needs_dmc
+    @pytest.mark.parametrize(
+        "cell", sorted(c for c in MAPS if c in REGISTRY and MAPS[c].classification().get("floor.color") == "mapped")
+    )
+    def test_floor_color_is_a_leaf_and_the_default_is_the_identity(cell):
+        """The two halves of "mapped": the leaf exists with swm's shape and default, and it moves pixels.
+    
+        The default half is the one that matters for certification and is the one a classification table
+        cannot check for itself: swm's ``init_value`` for this leaf is dm_control's own
+        ``common/materials.xml`` grid texture, so a correct implementation renders the registered default
+        BYTE-IDENTICALLY to the pre-patch frame -- the leaf must add reach without moving the picture.
+        """
+>       env = make(cell, num_envs=2, size=84, device="cpu")
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_variation_maps_dmc_control.py:566: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+stable_envs/registry.py:249: in make
+    return _resolve(name)(**kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+stable_envs/envs/dmcontrol/_aligned.py:23: in __init__
+    super().__init__(*args, **kwargs)
+stable_envs/envs/dmcontrol/suite.py:103: in __init__
+    super().__init__(*a, **kw)
+stable_envs/envs/dmcontrol/base.py:116: in __init__
+    m = self._model()
+        ^^^^^^^^^^^^^
+stable_envs/envs/dmcontrol/base.py:321: in _model
+    return cls._bundle(cls.default_size)[1]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+stable_envs/envs/dmcontrol/base.py:220: in _bundle
+    r = mujoco.Renderer(m, height=int(size), width=int(size))
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+stable_envs/testing/resource_guard.py:141: in wrapper
+    out = __fn(self, *a, **k)
+          ^^^^^^^^^^^^^^^^^^^
+/private/tmp/se-completion-312/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py:89: in __init__
+    self._gl_context = gl_context.GLContext(width, height)  # type: ignore
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+stable_envs/testing/resource_guard.py:141: in wrapper
+    out = __fn(self, *a, **k)
+          ^^^^^^^^^^^^^^^^^^^
+/private/tmp/se-completion-312/lib/python3.12/site-packages/mujoco/cgl/__init__.py:47: in __init__
+    cgl.CGLChoosePixelFormat(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+args = (<mujoco.cgl.c_int_Array_17 object at 0x120c835d0>, <cparam 'P' (0x120c83118)>, <cparam 'P' (0x120c81c18)>)
+
+    def checked_func(*args):
+      err = func(*args)
+      if err:
+>       raise CGLError(_CGLErrorString(err).decode())
+E       mujoco.cgl.cgl.CGLError: invalid CoreGraphics connection
+
+/private/tmp/se-completion-312/lib/python3.12/site-packages/mujoco/cgl/cgl.py:132: CGLError
+_ test_floor_color_is_a_leaf_and_the_default_is_the_identity[DMCCartpoleBalance] _
+RESOURCE GUARD [EGL_CONTEXT_RELEASED, MUJOCO_RENDERER_CLOSED]
+
+EGL_CONTEXT_RELEASED: this test RELEASED 1 EGL context(s). Releasing one corrupts rendering in every other live context in the process, silently, and the damage surfaces later as pixel differences in an unrelated env — which is how a reference-env pool, a two-envs-per-test parity check and a per-plate mujoco.Renderer each cost this repo a day. Cache the object and keep it for the life of the process; do not close it.
+  released at:
+    context.freed
+      /private/tmp/se-completion-312/lib/python3.12/site-packages/dm_control/mujoco/engine.py:429 _reload_from_data
+      /private/tmp/se-completion-312/lib/python3.12/site-packages/dm_control/mujoco/index.py:656 struct_indexer
+      /private/tmp/se-completion-312/lib/python3.12/site-packages/mujoco/cgl/__init__.py:74 __del__
+      /Users/samib/stable-envs/stable_envs/testing/resource_guard.py:143 wrapper
+
+MUJOCO_RENDERER_CLOSED: this test closed 1 mujoco.Renderer(s). A Renderer owns an EGL context, so closing one is the same defect as EGL_CONTEXT_RELEASED — it is reported separately because the shape it took here before was a renderer constructed and closed per baked plate, ~175 releases across 25 envs.
+  closed at:
+    renderer.closed
+      /private/tmp/se-completion-312/lib/python3.12/site-packages/dm_control/mujoco/engine.py:429 _reload_from_data
+      /private/tmp/se-completion-312/lib/python3.12/site-packages/dm_control/mujoco/index.py:656 struct_indexer
+      /private/tmp/se-completion-312/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py:343 __del__
+      /Users/samib/stable-envs/stable_envs/testing/resource_guard.py:143 wrapper
+
+counted during this test: created 0 EGL context(s), released 1; renderers created 0, closed 1; -2 live now.
+The rule (stable_envs/testing/conformance.py): in this process an EGL context is created and NEVER released, and nothing may create them in proportion to the batch.
+_ test_floor_color_is_a_leaf_and_the_default_is_the_identity[DMCCartpoleSwingup] _
+RESOURCE GUARD [EGL_CONTEXT_RELEASED, MUJOCO_RENDERER_CLOSED]
+
+EGL_CONTEXT_RELEASED: this test RELEASED 1 EGL context(s). Releasing one corrupts rendering in every other live context in the process, silently, and the damage surfaces later as pixel differences in an unrelated env — which is how a reference-env pool, a two-envs-per-test parity check and a per-plate mujoco.Renderer each cost this repo a day. Cache the object and keep it for the life of the process; do not close it.
+  released at:
+    context.freed
+      /private/tmp/se-completion-312/lib/python3.12/site-packages/_pytest/_code/source.py:193 getstatementrange_ast
+      /opt/homebrew/Cellar/python@3.12/3.12.11/Frameworks/Python.framework/Versions/3.12/lib/python3.12/ast.py:52 parse
+      /private/tmp/se-completion-312/lib/python3.12/site-packages/mujoco/cgl/__init__.py:74 __del__
+      /Users/samib/stable-envs/stable_envs/testing/resource_guard.py:143 wrapper
+
+MUJOCO_RENDERER_CLOSED: this test closed 1 mujoco.Renderer(s). A Renderer owns an EGL context, so closing one is the same defect as EGL_CONTEXT_RELEASED — it is reported separately because the shape it took here before was a renderer constructed and closed per baked plate, ~175 releases across 25 envs.
+  closed at:
+    renderer.closed
+      /private/tmp/se-completion-312/lib/python3.12/site-packages/_pytest/_code/source.py:193 getstatementrange_ast
+      /opt/homebrew/Cellar/python@3.12/3.12.11/Frameworks/Python.framework/Versions/3.12/lib/python3.12/ast.py:52 parse
+      /private/tmp/se-completion-312/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py:343 __del__
+      /Users/samib/stable-envs/stable_envs/testing/resource_guard.py:143 wrapper
+
+counted during this test: created 0 EGL context(s), released 1; renderers created 0, closed 1; -3 live now.
+The rule (stable_envs/testing/conformance.py): in this process an EGL context is created and NEVER released, and nothing may create them in proportion to the batch.
+_ test_floor_color_is_a_leaf_and_the_default_is_the_identity[DMCFingerTurnHard] _
+
+cell = 'DMCFingerTurnHard'
+
+    @needs_dmc
+    @pytest.mark.parametrize(
+        "cell", sorted(c for c in MAPS if c in REGISTRY and MAPS[c].classification().get("floor.color") == "mapped")
+    )
+    def test_floor_color_is_a_leaf_and_the_default_is_the_identity(cell):
+        """The two halves of "mapped": the leaf exists with swm's shape and default, and it moves pixels.
+    
+        The default half is the one that matters for certification and is the one a classification table
+        cannot check for itself: swm's ``init_value`` for this leaf is dm_control's own
+        ``common/materials.xml`` grid texture, so a correct implementation renders the registered default
+        BYTE-IDENTICALLY to the pre-patch frame -- the leaf must add reach without moving the picture.
+        """
+>       env = make(cell, num_envs=2, size=84, device="cpu")
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_variation_maps_dmc_control.py:566: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+stable_envs/registry.py:249: in make
+    return _resolve(name)(**kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+stable_envs/envs/dmcontrol/_aligned.py:23: in __init__
+    super().__init__(*args, **kwargs)
+stable_envs/envs/dmcontrol/suite.py:103: in __init__
+    super().__init__(*a, **kw)
+stable_envs/envs/dmcontrol/base.py:116: in __init__
+    m = self._model()
+        ^^^^^^^^^^^^^
+stable_envs/envs/dmcontrol/base.py:321: in _model
+    return cls._bundle(cls.default_size)[1]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+stable_envs/envs/dmcontrol/base.py:220: in _bundle
+    r = mujoco.Renderer(m, height=int(size), width=int(size))
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+stable_envs/testing/resource_guard.py:141: in wrapper
+    out = __fn(self, *a, **k)
+          ^^^^^^^^^^^^^^^^^^^
+/private/tmp/se-completion-312/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py:89: in __init__
+    self._gl_context = gl_context.GLContext(width, height)  # type: ignore
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+stable_envs/testing/resource_guard.py:141: in wrapper
+    out = __fn(self, *a, **k)
+          ^^^^^^^^^^^^^^^^^^^
+/private/tmp/se-completion-312/lib/python3.12/site-packages/mujoco/cgl/__init__.py:47: in __init__
+    cgl.CGLChoosePixelFormat(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+args = (<mujoco.cgl.c_int_Array_17 object at 0x12227a4d0>, <cparam 'P' (0x12227a598)>, <cparam 'P' (0x122279f18)>)
+
+    def checked_func(*args):
+      err = func(*args)
+      if err:
+>       raise CGLError(_CGLErrorString(err).decode())
+E       mujoco.cgl.cgl.CGLError: invalid CoreGraphics connection
+
+/private/tmp/se-completion-312/lib/python3.12/site-packages/mujoco/cgl/cgl.py:132: CGLError
+_ test_floor_color_is_a_leaf_and_the_default_is_the_identity[DMCManipulatorBringBall] _
+
+cell = 'DMCManipulatorBringBall'
+
+    @needs_dmc
+    @pytest.mark.parametrize(
+        "cell", sorted(c for c in MAPS if c in REGISTRY and MAPS[c].classification().get("floor.color") == "mapped")
+    )
+    def test_floor_color_is_a_leaf_and_the_default_is_the_identity(cell):
+        """The two halves of "mapped": the leaf exists with swm's shape and default, and it moves pixels.
+    
+        The default half is the one that matters for certification and is the one a classification table
+        cannot check for itself: swm's ``init_value`` for this leaf is dm_control's own
+        ``common/materials.xml`` grid texture, so a correct implementation renders the registered default
+        BYTE-IDENTICALLY to the pre-patch frame -- the leaf must add reach without moving the picture.
+        """
+>       env = make(cell, num_envs=2, size=84, device="cpu")
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_variation_maps_dmc_control.py:566: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+stable_envs/registry.py:249: in make
+    return _resolve(name)(**kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+stable_envs/envs/dmcontrol/_aligned.py:23: in __init__
+    super().__init__(*args, **kwargs)
+stable_envs/envs/dmcontrol/suite.py:103: in __init__
+    super().__init__(*a, **kw)
+stable_envs/envs/dmcontrol/base.py:116: in __init__
+    m = self._model()
+        ^^^^^^^^^^^^^
+stable_envs/envs/dmcontrol/base.py:321: in _model
+    return cls._bundle(cls.default_size)[1]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+stable_envs/envs/dmcontrol/base.py:220: in _bundle
+    r = mujoco.Renderer(m, height=int(size), width=int(size))
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+stable_envs/testing/resource_guard.py:141: in wrapper
+    out = __fn(self, *a, **k)
+          ^^^^^^^^^^^^^^^^^^^
+/private/tmp/se-completion-312/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py:89: in __init__
+    self._gl_context = gl_context.GLContext(width, height)  # type: ignore
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+stable_envs/testing/resource_guard.py:141: in wrapper
+    out = __fn(self, *a, **k)
+          ^^^^^^^^^^^^^^^^^^^
+/private/tmp/se-completion-312/lib/python3.12/site-packages/mujoco/cgl/__init__.py:47: in __init__
+    cgl.CGLChoosePixelFormat(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+args = (<mujoco.cgl.c_int_Array_17 object at 0x1216accd0>, <cparam 'P' (0x1216acf18)>, <cparam 'P' (0x1216acc98)>)
+
+    def checked_func(*args):
+      err = func(*args)
+      if err:
+>       raise CGLError(_CGLErrorString(err).decode())
+E       mujoco.cgl.cgl.CGLError: invalid CoreGraphics connection
+
+/private/tmp/se-completion-312/lib/python3.12/site-packages/mujoco/cgl/cgl.py:132: CGLError
+_ test_floor_color_is_a_leaf_and_the_default_is_the_identity[DMCPendulumSwingup] _
+
+cell = 'DMCPendulumSwingup'
+
+    @needs_dmc
+    @pytest.mark.parametrize(
+        "cell", sorted(c for c in MAPS if c in REGISTRY and MAPS[c].classification().get("floor.color") == "mapped")
+    )
+    def test_floor_color_is_a_leaf_and_the_default_is_the_identity(cell):
+        """The two halves of "mapped": the leaf exists with swm's shape and default, and it moves pixels.
+    
+        The default half is the one that matters for certification and is the one a classification table
+        cannot check for itself: swm's ``init_value`` for this leaf is dm_control's own
+        ``common/materials.xml`` grid texture, so a correct implementation renders the registered default
+        BYTE-IDENTICALLY to the pre-patch frame -- the leaf must add reach without moving the picture.
+        """
+>       env = make(cell, num_envs=2, size=84, device="cpu")
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_variation_maps_dmc_control.py:566: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+stable_envs/registry.py:249: in make
+    return _resolve(name)(**kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+stable_envs/envs/dmcontrol/_first_family.py:22: in __init__
+    super().__init__(*args, **kwargs)
+stable_envs/envs/dmcontrol/suite.py:103: in __init__
+    super().__init__(*a, **kw)
+stable_envs/envs/dmcontrol/base.py:116: in __init__
+    m = self._model()
+        ^^^^^^^^^^^^^
+stable_envs/envs/dmcontrol/base.py:321: in _model
+    return cls._bundle(cls.default_size)[1]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+stable_envs/envs/dmcontrol/base.py:220: in _bundle
+    r = mujoco.Renderer(m, height=int(size), width=int(size))
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+stable_envs/testing/resource_guard.py:141: in wrapper
+    out = __fn(self, *a, **k)
+          ^^^^^^^^^^^^^^^^^^^
+/private/tmp/se-completion-312/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py:89: in __init__
+    self._gl_context = gl_context.GLContext(width, height)  # type: ignore
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+stable_envs/testing/resource_guard.py:141: in wrapper
+    out = __fn(self, *a, **k)
+          ^^^^^^^^^^^^^^^^^^^
+/private/tmp/se-completion-312/lib/python3.12/site-packages/mujoco/cgl/__init__.py:47: in __init__
+    cgl.CGLChoosePixelFormat(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+args = (<mujoco.cgl.c_int_Array_17 object at 0x1225b74d0>, <cparam 'P' (0x1225b7598)>, <cparam 'P' (0x1225b6418)>)
+
+    def checked_func(*args):
+      err = func(*args)
+      if err:
+>       raise CGLError(_CGLErrorString(err).decode())
+E       mujoco.cgl.cgl.CGLError: invalid CoreGraphics connection
+
+/private/tmp/se-completion-312/lib/python3.12/site-packages/mujoco/cgl/cgl.py:132: CGLError
+__ test_floor_color_is_a_leaf_and_the_default_is_the_identity[DMCReacherHard] __
+
+cell = 'DMCReacherHard'
+
+    @needs_dmc
+    @pytest.mark.parametrize(
+        "cell", sorted(c for c in MAPS if c in REGISTRY and MAPS[c].classification().get("floor.color") == "mapped")
+    )
+    def test_floor_color_is_a_leaf_and_the_default_is_the_identity(cell):
+        """The two halves of "mapped": the leaf exists with swm's shape and default, and it moves pixels.
+    
+        The default half is the one that matters for certification and is the one a classification table
+        cannot check for itself: swm's ``init_value`` for this leaf is dm_control's own
+        ``common/materials.xml`` grid texture, so a correct implementation renders the registered default
+        BYTE-IDENTICALLY to the pre-patch frame -- the leaf must add reach without moving the picture.
+        """
+>       env = make(cell, num_envs=2, size=84, device="cpu")
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_variation_maps_dmc_control.py:566: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+stable_envs/registry.py:249: in make
+    return _resolve(name)(**kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+stable_envs/envs/dmcontrol/reacher.py:28: in __init__
+    super().__init__(*args, **kwargs)
+stable_envs/envs/dmcontrol/suite.py:103: in __init__
+    super().__init__(*a, **kw)
+stable_envs/envs/dmcontrol/base.py:116: in __init__
+    m = self._model()
+        ^^^^^^^^^^^^^
+stable_envs/envs/dmcontrol/base.py:321: in _model
+    return cls._bundle(cls.default_size)[1]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+stable_envs/envs/dmcontrol/base.py:220: in _bundle
+    r = mujoco.Renderer(m, height=int(size), width=int(size))
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+stable_envs/testing/resource_guard.py:141: in wrapper
+    out = __fn(self, *a, **k)
+          ^^^^^^^^^^^^^^^^^^^
+/private/tmp/se-completion-312/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py:89: in __init__
+    self._gl_context = gl_context.GLContext(width, height)  # type: ignore
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+stable_envs/testing/resource_guard.py:141: in wrapper
+    out = __fn(self, *a, **k)
+          ^^^^^^^^^^^^^^^^^^^
+/private/tmp/se-completion-312/lib/python3.12/site-packages/mujoco/cgl/__init__.py:47: in __init__
+    cgl.CGLChoosePixelFormat(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+args = (<mujoco.cgl.c_int_Array_17 object at 0x120e6b5d0>, <cparam 'P' (0x120e68718)>, <cparam 'P' (0x120e68998)>)
+
+    def checked_func(*args):
+      err = func(*args)
+      if err:
+>       raise CGLError(_CGLErrorString(err).decode())
+E       mujoco.cgl.cgl.CGLError: invalid CoreGraphics connection
+
+/private/tmp/se-completion-312/lib/python3.12/site-packages/mujoco/cgl/cgl.py:132: CGLError
+_______ test_the_committed_classification_artifact_agrees_with_the_maps ________
+RESOURCE GUARD [EGL_CONTEXT_RELEASED, MUJOCO_RENDERER_CLOSED]
+
+EGL_CONTEXT_RELEASED: this test RELEASED 1 EGL context(s). Releasing one corrupts rendering in every other live context in the process, silently, and the damage surfaces later as pixel differences in an unrelated env — which is how a reference-env pool, a two-envs-per-test parity check and a per-plate mujoco.Renderer each cost this repo a day. Cache the object and keep it for the life of the process; do not close it.
+  released at:
+    context.freed
+      /opt/homebrew/Cellar/python@3.12/3.12.11/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/decoder.py:338 decode
+      /opt/homebrew/Cellar/python@3.12/3.12.11/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/decoder.py:354 raw_decode
+      /private/tmp/se-completion-312/lib/python3.12/site-packages/mujoco/cgl/__init__.py:74 __del__
+      /Users/samib/stable-envs/stable_envs/testing/resource_guard.py:143 wrapper
+
+MUJOCO_RENDERER_CLOSED: this test closed 1 mujoco.Renderer(s). A Renderer owns an EGL context, so closing one is the same defect as EGL_CONTEXT_RELEASED — it is reported separately because the shape it took here before was a renderer constructed and closed per baked plate, ~175 releases across 25 envs.
+  closed at:
+    renderer.closed
+      /opt/homebrew/Cellar/python@3.12/3.12.11/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/decoder.py:338 decode
+      /opt/homebrew/Cellar/python@3.12/3.12.11/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/decoder.py:354 raw_decode
+      /private/tmp/se-completion-312/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py:343 __del__
+      /Users/samib/stable-envs/stable_envs/testing/resource_guard.py:143 wrapper
+
+counted during this test: created 0 EGL context(s), released 1; renderers created 0, closed 1; -4 live now.
+The rule (stable_envs/testing/conformance.py): in this process an EGL context is created and NEVER released, and nothing may create them in proportion to the batch.
+_ test_frozen_cube_colour_leaf_is_flat_three_and_floor_colour_is_two_by_three[Cube] _
+RESOURCE GUARD [EGL_CONTEXT_RELEASED, MUJOCO_RENDERER_CLOSED]
+
+EGL_CONTEXT_RELEASED: this test RELEASED 6 EGL context(s). Releasing one corrupts rendering in every other live context in the process, silently, and the damage surfaces later as pixel differences in an unrelated env — which is how a reference-env pool, a two-envs-per-test parity check and a per-plate mujoco.Renderer each cost this repo a day. Cache the object and keep it for the life of the process; do not close it.
+  released at:
+    context.freed
+      /private/tmp/se-completion-312/lib/python3.12/site-packages/dm_control/mjcf/element.py:205 __init__
+      /private/tmp/se-completion-312/lib/python3.12/site-packages/dm_control/mjcf/attribute.py:294 __init__
+      /private/tmp/se-completion-312/lib/python3.12/site-packages/mujoco/cgl/__init__.py:74 __del__
+      /Users/samib/stable-envs/stable_envs/testing/resource_guard.py:143 wrapper
+    context.freed
+      /private/tmp/se-completion-312/lib/python3.12/site-packages/dm_control/mjcf/element.py:205 __init__
+      /private/tmp/se-completion-312/lib/python3.12/site-packages/dm_control/mjcf/attribute.py:294 __init__
+      /private/tmp/se-completion-312/lib/python3.12/site-packages/mujoco/cgl/__init__.py:74 __del__
+      /Users/samib/stable-envs/stable_envs/testing/resource_guard.py:143 wrapper
+    context.freed
+      /private/tmp/se-completion-312/lib/python3.12/site-packages/dm_control/mjcf/element.py:205 __init__
+      /private/tmp/se-completion-312/lib/python3.12/site-packages/dm_control/mjcf/attribute.py:294 __init__
+      /private/tmp/se-completion-312/lib/python3.12/site-packages/mujoco/cgl/__init__.py:74 __del__
+      /Users/samib/stable-envs/stable_envs/testing/resource_guard.py:143 wrapper
+    ... and 3 more
+
+MUJOCO_RENDERER_CLOSED: this test closed 6 mujoco.Renderer(s). A Renderer owns an EGL context, so closing one is the same defect as EGL_CONTEXT_RELEASED — it is reported separately because the shape it took here before was a renderer constructed and closed per baked plate, ~175 releases across 25 envs.
+  closed at:
+    renderer.closed
+      /private/tmp/se-completion-312/lib/python3.12/site-packages/dm_control/mjcf/element.py:205 __init__
+      /private/tmp/se-completion-312/lib/python3.12/site-packages/dm_control/mjcf/attribute.py:294 __init__
+      /private/tmp/se-completion-312/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py:343 __del__
+      /Users/samib/stable-envs/stable_envs/testing/resource_guard.py:143 wrapper
+    renderer.closed
+      /private/tmp/se-completion-312/lib/python3.12/site-packages/dm_control/mjcf/element.py:205 __init__
+      /private/tmp/se-completion-312/lib/python3.12/site-packages/dm_control/mjcf/attribute.py:294 __init__
+      /private/tmp/se-completion-312/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py:343 __del__
+      /Users/samib/stable-envs/stable_envs/testing/resource_guard.py:143 wrapper
+    renderer.closed
+      /private/tmp/se-completion-312/lib/python3.12/site-packages/dm_control/mjcf/element.py:205 __init__
+      /private/tmp/se-completion-312/lib/python3.12/site-packages/dm_control/mjcf/attribute.py:294 __init__
+      /private/tmp/se-completion-312/lib/python3.12/site-packages/mujoco/rendering/classic/renderer.py:343 __del__
+      /Users/samib/stable-envs/stable_envs/testing/resource_guard.py:143 wrapper
+    ... and 3 more
+
+counted during this test: created 0 EGL context(s), released 6; renderers created 0, closed 6; -10 live now.
+The rule (stable_envs/testing/conformance.py): in this process an EGL context is created and NEVER released, and nothing may create them in proportion to the batch.
+=============================== warnings summary ===============================
+tests/unit/test_variation_maps_newcells.py::test_frozen_cube_colour_leaf_is_flat_three_and_floor_colour_is_two_by_three[Cube]
+tests/unit/test_variation_maps_newcells.py::test_frozen_cube_colour_leaf_is_flat_three_and_floor_colour_is_two_by_three[Scene]
+tests/unit/test_variation_maps_newcells.py::test_a_swm_shaped_cube_colour_survives_the_round_trip_through_our_style_row[Cube-swm/OGBCube-v0]
+tests/unit/test_variation_maps_newcells.py::test_a_swm_shaped_cube_colour_survives_the_round_trip_through_our_style_row[Scene-swm/OGBScene-v0]
+  /private/tmp/se-completion-312/lib/python3.12/site-packages/gymnasium/spaces/box.py:236: UserWarning: [33mWARN: Box low's precision lowered by casting to float32, current low.dtype=float64[0m
+    gym.logger.warn(
+
+tests/unit/test_variation_maps_newcells.py::test_frozen_cube_colour_leaf_is_flat_three_and_floor_colour_is_two_by_three[Cube]
+tests/unit/test_variation_maps_newcells.py::test_frozen_cube_colour_leaf_is_flat_three_and_floor_colour_is_two_by_three[Scene]
+tests/unit/test_variation_maps_newcells.py::test_a_swm_shaped_cube_colour_survives_the_round_trip_through_our_style_row[Cube-swm/OGBCube-v0]
+tests/unit/test_variation_maps_newcells.py::test_a_swm_shaped_cube_colour_survives_the_round_trip_through_our_style_row[Scene-swm/OGBScene-v0]
+  /private/tmp/se-completion-312/lib/python3.12/site-packages/gymnasium/spaces/box.py:306: UserWarning: [33mWARN: Box high's precision lowered by casting to float32, current high.dtype=float64[0m
+    gym.logger.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+------------------------------ stable-envs safety ------------------------------
+resources: 0 EGL contexts created, 10 released, -10 live (peak 0); renderers 0 created / 10 closed
+node: cis1b1zs2j3.ad.brown.edu slurm=? reason=none reference-renderer={}
+=========================== short test summary info ============================
+FAILED tests/unit/test_variation_maps_dmc_control.py::test_enum_alternatives_round_trip
+FAILED tests/unit/test_variation_maps_dmc_control.py::test_an_unreachable_enum_index_is_refused
+FAILED tests/unit/test_variation_maps_dmc_control.py::test_floor_color_is_a_leaf_and_the_default_is_the_identity[DMCAcrobotBalance]
+FAILED tests/unit/test_variation_maps_dmc_control.py::test_floor_color_is_a_leaf_and_the_default_is_the_identity[DMCBallInCupCatch]
+FAILED tests/unit/test_variation_maps_dmc_control.py::test_floor_color_is_a_leaf_and_the_default_is_the_identity[DMCCartpoleBalance]
+FAILED tests/unit/test_variation_maps_dmc_control.py::test_floor_color_is_a_leaf_and_the_default_is_the_identity[DMCCartpoleSwingup]
+FAILED tests/unit/test_variation_maps_dmc_control.py::test_floor_color_is_a_leaf_and_the_default_is_the_identity[DMCFingerTurnHard]
+FAILED tests/unit/test_variation_maps_dmc_control.py::test_floor_color_is_a_leaf_and_the_default_is_the_identity[DMCManipulatorBringBall]
+FAILED tests/unit/test_variation_maps_dmc_control.py::test_floor_color_is_a_leaf_and_the_default_is_the_identity[DMCPendulumSwingup]
+FAILED tests/unit/test_variation_maps_dmc_control.py::test_floor_color_is_a_leaf_and_the_default_is_the_identity[DMCReacherHard]
+FAILED tests/unit/test_variation_maps_fetch.py::test_the_committed_classification_artifact_agrees_with_the_maps
+FAILED tests/unit/test_variation_maps_newcells.py::test_frozen_cube_colour_leaf_is_flat_three_and_floor_colour_is_two_by_three[Cube]
+12 failed, 111 passed, 182 skipped, 8 warnings in 3.18s
