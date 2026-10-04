@@ -43,8 +43,8 @@ def main():
     assert oracle_hash == "5ede3640ce1e2add32b6b0a6c36e190bb1130e38bb258ab182af12a6fbedee23"
     cases = []
     report = dict(status="RUNNING", cases=cases, job_id=os.environ.get("SLURM_JOB_ID"), oracle_sha256=oracle_hash)
-    for size in (64, 96, 128, 224, 480):
-        for seed in (0, 17, 42):
+    for size in (96, 64, 128, 224, 480):
+        for seed in (17, 0, 42):
             config = dict(render_mode="rgb_array", render_resolution=(size, size))
             source = Oracle(**config)
             cpu = stable_envs.make("PyFlytRocketLanding", device="cpu", size=size, simulator_config=config)
@@ -75,10 +75,12 @@ def main():
                     projectionMatrix=projection,
                     renderer=bullet.ER_TINY_RENDERER,
                     physicsClientId=client,
-                    flags=bullet.ER_SEGMENTATION_MASK_OBJECT_AND_LINKINDEX,
                 )
-                assert np.array_equal(np.asarray(raw[2])[..., :3], reference)
-                segments = np.asarray(raw[4], np.int32)
+                # PyBullet builds may return flat buffers. Production reshapes
+                # these explicitly; the diagnostic must do the same.
+                segmentation_rgb = np.asarray(raw[2], np.uint8).reshape(size, size, 4)[..., :3]
+                segmentation_rgb_exact = np.array_equal(segmentation_rgb, reference)
+                segments = np.asarray(raw[4], np.int32).reshape(size, size)
                 objects = segments & ((1 << 24) - 1)
                 regions = {}
                 for name, mask in [
@@ -98,6 +100,7 @@ def main():
                     ours=ours,
                     cpu=cpu_frame,
                     source_segments=segments,
+                    segmentation_rgb=segmentation_rgb,
                     **{"state/" + "/".join(k): v.cpu().numpy() for k, v in state.items(True, True)},
                 )
                 trials = []
@@ -131,6 +134,8 @@ def main():
                         seed=seed,
                         baseline=baseline,
                         regions=regions,
+                        segmentation_rgb_exact=bool(segmentation_rgb_exact),
+                        regions_authoritative=bool(segmentation_rgb_exact),
                         trials=trials,
                         source_cpu_exact=True,
                         state_source_exact=True,

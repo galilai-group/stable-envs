@@ -1,0 +1,81 @@
+{
+  "job": "6995887",
+  "profile": {
+    "OPENBLAS_CORETYPE": null,
+    "NPY_DISABLE_CPU_FEATURES": null
+  },
+  "cases": [
+    {
+      "t": 0,
+      "status": "REJECTED",
+      "error": "Rocket replay mismatch: current/wrapper/state, current/wrapper/ang_vel, current/wrapper/lin_vel, current/wrapper/ground_lin_vel, current/wrapper/previous_ang_vel, current/drone/state, current/bodies/local_body_velocities"
+    },
+    {
+      "t": 1,
+      "status": "REJECTED",
+      "error": "Rocket replay mismatch: current/wrapper/state, current/wrapper/ang_vel, current/wrapper/lin_vel, current/wrapper/ground_lin_vel, current/wrapper/previous_ang_vel, current/wrapper/previous_lin_vel, current/drone/state, current/bodies/local_body_velocities"
+    },
+    {
+      "t": 2,
+      "status": "REJECTED",
+      "error": "Rocket replay mismatch: current/wrapper/previous_ang_vel, current/wrapper/previous_lin_vel, current/wrapper/previous_ground_lin_vel, current/bodies/local_body_velocities"
+    },
+    {
+      "t": 3,
+      "status": "REJECTED",
+      "error": "Rocket replay mismatch: current/wrapper/state, current/wrapper/lin_vel, current/wrapper/ground_lin_vel, current/wrapper/previous_ang_vel, current/drone/state, current/bodies/local_body_velocities"
+    },
+    {
+      "t": 4,
+      "status": "REJECTED",
+      "error": "Rocket replay mismatch: current/wrapper/state, current/wrapper/ang_vel, current/wrapper/previous_ang_vel, current/wrapper/previous_lin_vel, current/wrapper/previous_ground_lin_vel, current/drone/state"
+    },
+    {
+      "t": 5,
+      "status": "REJECTED",
+      "error": "Rocket replay mismatch: current/wrapper/state, current/wrapper/ang_vel, current/wrapper/previous_ang_vel, current/wrapper/previous_lin_vel, current/wrapper/previous_ground_lin_vel, current/drone/state, current/bodies/local_body_velocities"
+    },
+    {
+      "t": 6,
+      "status": "REJECTED",
+      "error": "Rocket replay mismatch: current/wrapper/state, current/wrapper/ang_vel, current/wrapper/lin_vel, current/wrapper/ground_lin_vel, current/wrapper/previous_ang_vel, current/wrapper/previous_lin_vel, current/drone/state, current/bodies/local_body_velocities"
+    },
+    {
+      "t": 7,
+      "status": "REJECTED",
+      "error": "Rocket replay mismatch: current/wrapper/state, current/wrapper/ang_vel, current/wrapper/lin_vel, current/wrapper/ground_lin_vel, current/wrapper/previous_ang_vel, current/wrapper/previous_lin_vel, current/drone/state, current/bodies/local_body_velocities"
+    }
+  ],
+  "threadpools": [
+    {
+      "user_api": "blas",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libscipy_openblas",
+      "filepath": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages/numpy.libs/libscipy_openblas64_-f48b354e.so",
+      "version": "0.3.34.106.0",
+      "threading_layer": "pthreads",
+      "architecture": "SkylakeX"
+    },
+    {
+      "user_api": "openmp",
+      "internal_api": "openmp",
+      "num_threads": 1,
+      "prefix": "libgomp",
+      "filepath": "/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages/torch/lib/libgomp.so.1",
+      "version": null
+    },
+    {
+      "user_api": "blas",
+      "internal_api": "openblas",
+      "num_threads": 1,
+      "prefix": "libopenblas",
+      "filepath": "/oscar/scratch/sboughan/venvs/se-step6/lib/python3.12/site-packages/opencv_python.libs/libopenblasp-r0-59ffcd50.3.15.so",
+      "version": "0.3.15",
+      "threading_layer": "pthreads",
+      "architecture": "Zen"
+    }
+  ],
+  "input_sha256": "f8b377ac64399b7d4ecad8bd0825f90f79e8c96e4d350d087757da0481b41209",
+  "script_sha256": "e9def0e040dddf7e7234295cc8142ff1729a1144802d8865bb2bb3e8ce8c1af1"
+}

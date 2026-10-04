@@ -124,3 +124,7 @@ Milestone write-ups and generated tables. They use the project's internal names
 - [PushT public acceptance, October 4](semantic_recovery_evidence/final_three_20261004/pusht/README.md):
   independent continuous/discrete CPU and CUDA-storage gates, boundary/Variation
   closure, **37/38 accepted excluding Craftax**. Rocket remains incomplete.
+
+- [Rocket low-resolution GPU coverage investigation](rocket_lowres_coverage_checkpoint.md):
+  thin-triangle coverage fix candidate, measured render overhead, explicit BLAS-profile
+  replay limits, and fresh production gates pending; **37/38 remains accepted**.

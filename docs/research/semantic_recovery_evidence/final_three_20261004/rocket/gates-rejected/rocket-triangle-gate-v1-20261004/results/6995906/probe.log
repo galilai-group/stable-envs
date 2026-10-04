@@ -1,0 +1,27 @@
+pybullet build time: Sep 14 2026 23:35:15
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+Users of this version of Gym should be able to simply replace 'import gym' with 'import gymnasium as gym' in the vast majority of cases.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+[A                             [A
+[A                             [A
+argv[0]=
+argv[0]=
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/se-semantic-recovery/rocket-triangle-gate-v1-20261004/results/6995906/code/scripts/research_rocket_production/triangle_gate.py", line 49, in <module>
+    with se.make('PyFlytRocketLanding',num_envs=2,device='cuda',size=size,simulator_config=dict(render_mode='rgb_array',render_resolution=(size,size))) as env:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/oscar/scratch/sboughan/se-semantic-recovery/rocket-triangle-gate-v1-20261004/results/6995906/code/stable_envs/__init__.py", line 47, in make
+    return _make(name, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/oscar/scratch/sboughan/se-semantic-recovery/rocket-triangle-gate-v1-20261004/results/6995906/code/stable_envs/registry.py", line 249, in make
+    return _resolve(name)(**kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/oscar/scratch/sboughan/se-semantic-recovery/rocket-triangle-gate-v1-20261004/results/6995906/code/stable_envs/envs/rocket_semantics.py", line 40, in __init__
+    Env.__init__(
+  File "/oscar/scratch/sboughan/se-semantic-recovery/rocket-triangle-gate-v1-20261004/results/6995906/code/stable_envs/env.py", line 669, in __init__
+    self._render_state = torch.zeros(self.B, self.state_dim, device=self.device, dtype=torch.float32)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+torch.AcceleratorError: CUDA error: uncorrectable ECC error encountered
+Search for `cudaErrorECCUncorrectable' in https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html for more information.
+

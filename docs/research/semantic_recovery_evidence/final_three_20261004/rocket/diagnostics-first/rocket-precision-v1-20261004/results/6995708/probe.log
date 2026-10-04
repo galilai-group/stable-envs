@@ -1,0 +1,32 @@
+pybullet build time: Sep 14 2026 23:35:15
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+Users of this version of Gym should be able to simply replace 'import gym' with 'import gymnasium as gym' in the vast majority of cases.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+/oscar/scratch/sboughan/se-semantic-recovery/rocket-precision-v1-20261004/results/6995708/code/stable_envs/render/nvdiff.py:909: UserWarning: Sparse invariant checks are implicitly disabled. Memory errors (e.g. SEGFAULT) will occur when operating on a sparse tensor which violates the invariants, but checks incur performance overhead. To silence this warning, explicitly opt in or out. See `torch.sparse.check_sparse_tensor_invariants.__doc__` for guidance.  (Triggered internally at /__w/pytorch/pytorch/aten/src/ATen/Context.cpp:848.)
+  torch.sparse_coo_tensor(torch.stack([rows, cols]), v4.reshape(-1), (self.V, 4 * self.G))
+/oscar/scratch/sboughan/se-semantic-recovery/rocket-precision-v1-20261004/results/6995708/code/stable_envs/render/nvdiff.py:911: UserWarning: Sparse CSR tensor support is in beta state. If you miss a functionality in the sparse tensor support, please submit a feature request to https://github.com/pytorch/pytorch/issues. (Triggered internally at /__w/pytorch/pytorch/aten/src/ATen/SparseCsrTensorImpl.cpp:49.)
+  .to_sparse_csr()
+/oscar/scratch/sboughan/se-semantic-recovery/rocket-precision-v1-20261004/results/6995708/code/scripts/research_rocket_production/raster_precision_probe.py:50: DeprecationWarning: RasterizeGLContext has been deprecated and uses RasterizeCudaContext internally
+  contexts.append(("gl", dr.RasterizeGLContext(device="cuda")))
+/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages/gymnasium/spaces/box.py:415: UserWarning: [33mWARN: Casting input x to numpy array.[0m
+  gym.logger.warn("Casting input x to numpy array.")
+[A                             [A
+[A                             [A
+[A                             [A
+argv[0]=
+argv[0]=
+argv[0]=
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/se-semantic-recovery/rocket-precision-v1-20261004/results/6995708/code/scripts/research_rocket_production/raster_precision_probe.py", line 126, in <module>
+    main()
+  File "/oscar/scratch/sboughan/se-semantic-recovery/rocket-precision-v1-20261004/results/6995708/code/scripts/research_rocket_production/raster_precision_probe.py", line 66, in main
+    env.set_state(state)
+  File "/oscar/scratch/sboughan/se-semantic-recovery/rocket-precision-v1-20261004/results/6995708/code/stable_envs/envs/rocket_semantics.py", line 82, in set_state
+    self._simulator.set_state(state)
+  File "/oscar/scratch/sboughan/se-semantic-recovery/rocket-precision-v1-20261004/results/6995708/code/stable_envs/_adapters/rocket.py", line 66, in set_state
+    staged.append(env.reconstruct(row))
+                  ^^^^^^^^^^^^^^^^^^^^
+  File "/oscar/scratch/sboughan/se-semantic-recovery/rocket-precision-v1-20261004/results/6995708/code/stable_envs/_adapters/rocket_replay.py", line 322, in reconstruct
+    raise ValueError("Rocket replay mismatch: " + ", ".join(mismatch))
+ValueError: Rocket replay mismatch: current/wrapper/state, current/wrapper/ang_vel, current/wrapper/lin_vel, current/wrapper/ground_lin_vel, current/wrapper/previous_ang_vel, current/drone/state, current/bodies/local_body_velocities

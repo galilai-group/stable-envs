@@ -1,0 +1,15 @@
+...............................ss                                        [100%]
+=============================== warnings summary ===============================
+tests/unit/test_nvdiff_triangles.py::test_from_triangles_builds_the_same_members_as_the_model_path
+  /Users/samib/stable-envs/stable_envs/render/nvdiff.py:909: UserWarning: Sparse invariant checks are implicitly disabled. Memory errors (e.g. SEGFAULT) will occur when operating on a sparse tensor which violates the invariants, but checks incur performance overhead. To silence this warning, explicitly opt in or out. See `torch.sparse.check_sparse_tensor_invariants.__doc__` for guidance.  (Triggered internally at /Users/runner/work/pytorch/pytorch/aten/src/ATen/Context.cpp:855.)
+    torch.sparse_coo_tensor(torch.stack([rows, cols]), v4.reshape(-1), (self.V, 4 * self.G))
+
+tests/unit/test_nvdiff_triangles.py::test_from_triangles_builds_the_same_members_as_the_model_path
+  /Users/samib/stable-envs/stable_envs/render/nvdiff.py:911: UserWarning: Sparse CSR tensor support is in beta state. If you miss a functionality in the sparse tensor support, please submit a feature request to https://github.com/pytorch/pytorch/issues. (Triggered internally at /Users/runner/work/pytorch/pytorch/aten/src/ATen/SparseCsrTensorImpl.cpp:51.)
+    .to_sparse_csr()
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+------------------------------ stable-envs safety ------------------------------
+resources: 0 EGL contexts created, 0 released, 0 live (peak 0); renderers 0 created / 0 closed
+node: cis1b1zs2j3.ad.brown.edu slurm=? reason=none reference-renderer={}
+31 passed, 2 skipped, 2 warnings in 0.21s

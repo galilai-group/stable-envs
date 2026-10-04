@@ -1,0 +1,102 @@
+{
+  "gpu": "NVIDIA L40S",
+  "job": "6995930",
+  "timings": [
+    {
+      "size": 96,
+      "batch": 1,
+      "kind": "baseline",
+      "seconds_mean": 0.002837467286735773,
+      "seconds_sd": 0.000901220727594274,
+      "frames_per_second": 352.42697058558923
+    },
+    {
+      "size": 96,
+      "batch": 1,
+      "kind": "triangle",
+      "seconds_mean": 0.002543379180133343,
+      "seconds_sd": 4.8575920852658864e-05,
+      "frames_per_second": 393.17770932904017
+    },
+    {
+      "size": 96,
+      "batch": 16,
+      "kind": "baseline",
+      "seconds_mean": 0.0030948681756854056,
+      "seconds_sd": 9.419831334319165e-06,
+      "frames_per_second": 5169.848630614632
+    },
+    {
+      "size": 96,
+      "batch": 16,
+      "kind": "triangle",
+      "seconds_mean": 0.003410662617534399,
+      "seconds_sd": 2.4314438497638825e-05,
+      "frames_per_second": 4691.170541977135
+    },
+    {
+      "size": 96,
+      "batch": 64,
+      "kind": "baseline",
+      "seconds_mean": 0.0047560218721628186,
+      "seconds_sd": 2.999699847890553e-05,
+      "frames_per_second": 13456.624405912533
+    },
+    {
+      "size": 96,
+      "batch": 64,
+      "kind": "triangle",
+      "seconds_mean": 0.006330789998173714,
+      "seconds_sd": 3.121455731615684e-05,
+      "frames_per_second": 10109.3228520394
+    },
+    {
+      "size": 480,
+      "batch": 1,
+      "kind": "baseline",
+      "seconds_mean": 0.0024966800585389136,
+      "seconds_sd": 7.897175917525243e-06,
+      "frames_per_second": 400.53189698050926
+    },
+    {
+      "size": 480,
+      "batch": 1,
+      "kind": "triangle",
+      "seconds_mean": 0.0028765990398824217,
+      "seconds_sd": 3.9437683955878365e-05,
+      "frames_per_second": 347.632737873984
+    },
+    {
+      "size": 480,
+      "batch": 16,
+      "kind": "baseline",
+      "seconds_mean": 0.005888441391289234,
+      "seconds_sd": 2.5974380434632546e-05,
+      "frames_per_second": 2717.187611592566
+    },
+    {
+      "size": 480,
+      "batch": 16,
+      "kind": "triangle",
+      "seconds_mean": 0.008317554555833339,
+      "seconds_sd": 2.250280040672852e-05,
+      "frames_per_second": 1923.6423269119098
+    },
+    {
+      "size": 480,
+      "batch": 64,
+      "kind": "baseline",
+      "seconds_mean": 0.024713821429759263,
+      "seconds_sd": 6.0326183294188914e-05,
+      "frames_per_second": 2589.6440249800503
+    },
+    {
+      "size": 480,
+      "batch": 64,
+      "kind": "triangle",
+      "seconds_mean": 0.03380111176520586,
+      "seconds_sd": 7.286895738239418e-05,
+      "frames_per_second": 1893.4288447245758
+    }
+  ]
+}

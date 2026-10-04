@@ -1,0 +1,6 @@
+{
+  "base_commit": "8451e7accc2925456d5573c3d8fabd8d1c361b85",
+  "files": {
+    "scripts/research_rocket_production/lowres_render_probe.py": "5bb7c084cafed6df4e3766617700cb47baf11c35aa044fdd676162cb485ed204"
+  }
+}

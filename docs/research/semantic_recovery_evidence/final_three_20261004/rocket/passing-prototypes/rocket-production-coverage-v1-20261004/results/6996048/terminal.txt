@@ -1,0 +1,2 @@
+GPU_EXIT=4
+CPU_EXIT=4

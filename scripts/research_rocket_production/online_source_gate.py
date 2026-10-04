@@ -122,6 +122,31 @@ def main():
                                 ours = result["frames"][:, j].cpu().numpy()
                                 oracle = source_frames[t]
                                 error = np.mean(((ours.astype(np.float64) - oracle) / 255) ** 2, axis=(1, 2, 3))
+                                if not np.all(error <= 0.001):
+                                    witness = {"source": oracle, "ours": ours}
+                                    witness.update(
+                                        {
+                                            "state/" + "/".join(k): v.cpu().numpy()
+                                            for k, v in states[t].items(True, True)
+                                        }
+                                    )
+                                    np.savez_compressed(args.output / "failure.npz", **witness)
+                                    (args.output / "failure.json").write_text(
+                                        json.dumps(
+                                            dict(
+                                                scenario=name,
+                                                dtype=np.dtype(dtype).name,
+                                                length=length,
+                                                selection=label,
+                                                time_index=t,
+                                                mse=error.tolist(),
+                                                status="REJECTED_RENDER_MSE",
+                                                threshold=0.001,
+                                            ),
+                                            indent=2,
+                                        )
+                                        + "\n"
+                                    )
                                 assert np.all(error <= 0.001), error
                                 errors.extend(error.tolist())
                                 frames.extend(ours)
@@ -155,7 +180,7 @@ def main():
                             Path(oracle.modified_pad_urdf).unlink(missing_ok=True)
     np.savez_compressed(args.output / "frames.npz", ours=frames, source=references)
     files = list(ROOT.glob("stable_envs/_adapters/rocket*.py")) + list(ROOT.glob("stable_envs/envs/rocket*.py"))
-    files += [ROOT / "stable_envs/_stepping.py", ROOT / "stable_envs/env.py"]
+    files += [ROOT / "stable_envs/_stepping.py", ROOT / "stable_envs/env.py", ROOT / "stable_envs/render/nvdiff.py"]
     report = dict(
         status="PASS_BOUNDED_ROCKET_ONLINE_SOURCE",
         device=device,

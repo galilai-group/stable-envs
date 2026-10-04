@@ -1,0 +1,35 @@
+pybullet build time: Sep 14 2026 23:35:15
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+Users of this version of Gym should be able to simply replace 'import gym' with 'import gymnasium as gym' in the vast majority of cases.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+/oscar/scratch/sboughan/se-semantic-recovery/rocket-triangle-gate-v3-20261004/results/6995924/code/stable_envs/render/nvdiff.py:909: UserWarning: Sparse invariant checks are implicitly disabled. Memory errors (e.g. SEGFAULT) will occur when operating on a sparse tensor which violates the invariants, but checks incur performance overhead. To silence this warning, explicitly opt in or out. See `torch.sparse.check_sparse_tensor_invariants.__doc__` for guidance.  (Triggered internally at /__w/pytorch/pytorch/aten/src/ATen/Context.cpp:848.)
+  torch.sparse_coo_tensor(torch.stack([rows, cols]), v4.reshape(-1), (self.V, 4 * self.G))
+/oscar/scratch/sboughan/se-semantic-recovery/rocket-triangle-gate-v3-20261004/results/6995924/code/stable_envs/render/nvdiff.py:911: UserWarning: Sparse CSR tensor support is in beta state. If you miss a functionality in the sparse tensor support, please submit a feature request to https://github.com/pytorch/pytorch/issues. (Triggered internally at /__w/pytorch/pytorch/aten/src/ATen/SparseCsrTensorImpl.cpp:49.)
+  .to_sparse_csr()
+[A                             [A
+[A                             [A
+{'size': 96, 'batch': 1, 'kind': 'baseline', 'seconds_mean': 0.002959374338388443, 'seconds_sd': 1.9809516555433406e-05, 'frames_per_second': np.float64(337.90926245057597)}
+{'size': 96, 'batch': 1, 'kind': 'triangle', 'seconds_mean': 0.0030259586870670318, 'seconds_sd': 2.3948788388024395e-05, 'frames_per_second': np.float64(330.47377820259305)}
+{'size': 96, 'batch': 16, 'kind': 'baseline', 'seconds_mean': 0.003660278394818306, 'seconds_sd': 8.37792067655869e-06, 'frames_per_second': np.float64(4371.252203835231)}
+{'size': 96, 'batch': 16, 'kind': 'triangle', 'seconds_mean': 0.003694697096943855, 'seconds_sd': 3.140940671290385e-05, 'frames_per_second': np.float64(4330.53091503353)}
+{'size': 96, 'batch': 64, 'kind': 'baseline', 'seconds_mean': 0.005497849360108375, 'seconds_sd': 2.216529477030787e-05, 'frames_per_second': np.float64(11640.915530420865)}
+{'size': 96, 'batch': 64, 'kind': 'triangle', 'seconds_mean': 0.005975761264562607, 'seconds_sd': 1.112020404890573e-05, 'frames_per_second': np.float64(10709.93253688565)}
+[A                             [A
+[A                             [A
+{'size': 480, 'batch': 1, 'kind': 'baseline', 'seconds_mean': 0.0029787667095661162, 'seconds_sd': 1.2028683198692587e-05, 'frames_per_second': np.float64(335.7094050999579)}
+{'size': 480, 'batch': 1, 'kind': 'triangle', 'seconds_mean': 0.0043235249817371365, 'seconds_sd': 1.760937514642411e-05, 'frames_per_second': np.float64(231.2927539968123)}
+{'size': 480, 'batch': 16, 'kind': 'baseline', 'seconds_mean': 0.006316781416535378, 'seconds_sd': 1.0851979019646e-05, 'frames_per_second': np.float64(2532.9355165143047)}
+{'size': 480, 'batch': 16, 'kind': 'triangle', 'seconds_mean': 0.009164965152740479, 'seconds_sd': 0.00010523066864092111, 'frames_per_second': np.float64(1745.7785963556807)}
+{'size': 480, 'batch': 64, 'kind': 'baseline', 'seconds_mean': 0.02528570033609867, 'seconds_sd': 2.881389198964559e-05, 'frames_per_second': np.float64(2531.074842670328)}
+{'size': 480, 'batch': 64, 'kind': 'triangle', 'seconds_mean': 0.03378939516842365, 'seconds_sd': 0.00016294113321309542, 'frames_per_second': np.float64(1894.0853981253947)}
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+Traceback (most recent call last):
+  File "/oscar/scratch/sboughan/se-semantic-recovery/rocket-triangle-gate-v3-20261004/results/6995924/code/scripts/research_rocket_production/triangle_gate.py", line 98, in <module>
+    runpy.run_path(str(Path(__file__).with_name("online_source_gate.py")), run_name="__main__")
+  File "<frozen runpy>", line 286, in run_path
+  File "<frozen runpy>", line 254, in _get_code_from_file
+FileNotFoundError: [Errno 2] No such file or directory: '/oscar/scratch/sboughan/se-semantic-recovery/rocket-triangle-gate-v3-20261004/results/6995924/code/scripts/research_rocket_production/online_source_gate.py'

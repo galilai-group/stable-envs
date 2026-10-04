@@ -63,6 +63,16 @@ class _Scene(ND.Scene):
         return positions.reshape(self.V, batch, 4).permute(1, 0, 2).contiguous(), normals, world
 
 
+class _Renderer(ND.BatchRenderer):
+    def _rasterize(self, positions, resolution):
+        from .rocket_raster import rasterize
+
+        raster = rasterize(positions, self.scene.face, resolution)
+        # Rocket uses nearest textures without mipmaps. Nvdiffrast's shared
+        # interpolation API still requires the four-channel derivative buffer.
+        return raster, torch.zeros_like(raster)
+
+
 def _gpu_context(env, size, ss):
     cache = env.__dict__.setdefault("_rocket_pixel_gpu", {})
     key = (size, ss)
@@ -84,7 +94,7 @@ def _gpu_context(env, size, ss):
             device=str(env.device),
             tex_policy="none",
         )
-        renderer = ND.BatchRenderer(
+        renderer = _Renderer(
             None,
             res=size,
             device=str(env.device),

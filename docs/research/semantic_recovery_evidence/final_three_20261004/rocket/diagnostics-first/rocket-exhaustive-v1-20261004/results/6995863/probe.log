@@ -1,0 +1,72 @@
+pybullet build time: Sep 14 2026 23:35:15
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+Users of this version of Gym should be able to simply replace 'import gym' with 'import gymnasium as gym' in the vast majority of cases.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+/oscar/scratch/sboughan/se-semantic-recovery/rocket-exhaustive-v1-20261004/results/6995863/code/stable_envs/render/nvdiff.py:909: UserWarning: Sparse invariant checks are implicitly disabled. Memory errors (e.g. SEGFAULT) will occur when operating on a sparse tensor which violates the invariants, but checks incur performance overhead. To silence this warning, explicitly opt in or out. See `torch.sparse.check_sparse_tensor_invariants.__doc__` for guidance.  (Triggered internally at /__w/pytorch/pytorch/aten/src/ATen/Context.cpp:848.)
+  torch.sparse_coo_tensor(torch.stack([rows, cols]), v4.reshape(-1), (self.V, 4 * self.G))
+/oscar/scratch/sboughan/se-semantic-recovery/rocket-exhaustive-v1-20261004/results/6995863/code/stable_envs/render/nvdiff.py:911: UserWarning: Sparse CSR tensor support is in beta state. If you miss a functionality in the sparse tensor support, please submit a feature request to https://github.com/pytorch/pytorch/issues. (Triggered internally at /__w/pytorch/pytorch/aten/src/ATen/SparseCsrTensorImpl.cpp:49.)
+  .to_sparse_csr()
+[A                             [A
+[A                             [A
+{
+  "job": "6995863",
+  "trials": [
+    {
+      "kind": "baseline",
+      "mse": [
+        [
+          9.132494001594827e-05,
+          8.416567879875262e-05,
+          0.0018895599270935684,
+          4.686587779628918e-05,
+          4.566330435587452e-05,
+          0.00015703595572215816,
+          4.5664416819741695e-05,
+          0.00016398829866005952
+        ],
+        [
+          0.00022908523431158957,
+          9.132327132014751e-05,
+          8.416512256681903e-05,
+          0.0018895571459339,
+          8.164483567573725e-05,
+          4.566497305167528e-05,
+          0.00015708156674071224,
+          4.8066226308969486e-05
+        ]
+      ]
+    },
+    {
+      "kind": "exhaustive_coverage",
+      "mse": [
+        [
+          2.2249277343471883e-09,
+          1.1124638671735941e-09,
+          2.2249277343471883e-09,
+          1.668695800760391e-09,
+          1.1124638671735941e-09,
+          3.893623535107579e-09,
+          2.7811596679339852e-09,
+          5.562319335867971e-10
+        ],
+        [
+          5.562319335867971e-10,
+          5.562319335867971e-10,
+          0.0,
+          0.0,
+          1.1124638671735941e-09,
+          3.337391601520782e-09,
+          1.1124638671735941e-09,
+          5.562319335867971e-10
+        ]
+      ]
+    }
+  ],
+  "status": "DIAGNOSTIC_COMPLETE",
+  "script_sha256": "d5087d6fc165bd7d2c49a730e739e0296980aee66d83ccf4fc66dcee03b45e81",
+  "input_sha256": "f8b377ac64399b7d4ecad8bd0825f90f79e8c96e4d350d087757da0481b41209",
+  "gpu": "NVIDIA L40S"
+}
+argv[0]=
+argv[0]=

@@ -1,0 +1,565 @@
+pybullet build time: Sep 14 2026 23:35:15
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+Users of this version of Gym should be able to simply replace 'import gym' with 'import gymnasium as gym' in the vast majority of cases.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+/oscar/scratch/sboughan/se-semantic-recovery/rocket-triangle-gate-v5-20261004/results/6995956/code/stable_envs/render/nvdiff.py:909: UserWarning: Sparse invariant checks are implicitly disabled. Memory errors (e.g. SEGFAULT) will occur when operating on a sparse tensor which violates the invariants, but checks incur performance overhead. To silence this warning, explicitly opt in or out. See `torch.sparse.check_sparse_tensor_invariants.__doc__` for guidance.  (Triggered internally at /__w/pytorch/pytorch/aten/src/ATen/Context.cpp:848.)
+  torch.sparse_coo_tensor(torch.stack([rows, cols]), v4.reshape(-1), (self.V, 4 * self.G))
+/oscar/scratch/sboughan/se-semantic-recovery/rocket-triangle-gate-v5-20261004/results/6995956/code/stable_envs/render/nvdiff.py:911: UserWarning: Sparse CSR tensor support is in beta state. If you miss a functionality in the sparse tensor support, please submit a feature request to https://github.com/pytorch/pytorch/issues. (Triggered internally at /__w/pytorch/pytorch/aten/src/ATen/SparseCsrTensorImpl.cpp:49.)
+  .to_sparse_csr()
+[A                             [A
+[A                             [A
+{'size': 96, 'batch': 1, 'kind': 'baseline', 'seconds_mean': 0.0025180830620229245, 'seconds_sd': 1.7237176976877402e-05, 'frames_per_second': np.float64(397.1274876042576)}
+{'size': 96, 'batch': 1, 'kind': 'triangle', 'seconds_mean': 0.0025941357016563416, 'seconds_sd': 3.1624402248499484e-05, 'frames_per_second': np.float64(385.48484543869677)}
+{'size': 96, 'batch': 16, 'kind': 'baseline', 'seconds_mean': 0.003122832626104355, 'seconds_sd': 1.1293753356292222e-05, 'frames_per_second': np.float64(5123.553489947857)}
+{'size': 96, 'batch': 16, 'kind': 'triangle', 'seconds_mean': 0.003161804284900427, 'seconds_sd': 1.3450623581968189e-05, 'frames_per_second': np.float64(5060.401770093711)}
+{'size': 96, 'batch': 64, 'kind': 'baseline', 'seconds_mean': 0.004759666509926319, 'seconds_sd': 1.43303823072127e-05, 'frames_per_second': np.float64(13446.320213092144)}
+{'size': 96, 'batch': 64, 'kind': 'triangle', 'seconds_mean': 0.005148977693170309, 'seconds_sd': 1.4990160933584358e-05, 'frames_per_second': np.float64(12429.651828729162)}
+[A                             [A
+[A                             [A
+{'size': 480, 'batch': 1, 'kind': 'baseline', 'seconds_mean': 0.0025375161319971086, 'seconds_sd': 6.127875421437441e-06, 'frames_per_second': np.float64(394.08616457266305)}
+{'size': 480, 'batch': 1, 'kind': 'triangle', 'seconds_mean': 0.0027223494835197926, 'seconds_sd': 2.3928621256296548e-05, 'frames_per_second': np.float64(367.32976645859424)}
+{'size': 480, 'batch': 16, 'kind': 'baseline', 'seconds_mean': 0.005898101441562176, 'seconds_sd': 1.156869429719354e-05, 'frames_per_second': np.float64(2712.7373373493942)}
+{'size': 480, 'batch': 16, 'kind': 'triangle', 'seconds_mean': 0.008232624921947717, 'seconds_sd': 0.0006081525306101763, 'frames_per_second': np.float64(1943.4870593150547)}
+{'size': 480, 'batch': 64, 'kind': 'baseline', 'seconds_mean': 0.024788849614560605, 'seconds_sd': 2.4424194553823334e-05, 'frames_per_second': np.float64(2581.8059730536)}
+{'size': 480, 'batch': 64, 'kind': 'triangle', 'seconds_mean': 0.031350719090551135, 'seconds_sd': 0.00010336594987751861, 'frames_per_second': np.float64(2041.4204795477597)}
+/oscar/scratch/sboughan/venvs/se-step4-swm/lib/python3.12/site-packages/stable_worldmodel/envs/__init__.py:215: UserWarning: ale-py not found; ALE/* envs are unavailable. Install with: pip install 'stable-worldmodel[env]' or pip install ale-py.
+  from stable_worldmodel.envs import ale  # noqa: F401
+/oscar/scratch/sboughan/venvs/se-vis311/lib/python3.12/site-packages/gymnasium/spaces/box.py:415: UserWarning: [33mWARN: Casting input x to numpy array.[0m
+  gym.logger.warn("Casting input x to numpy array.")
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+flight float32 1 PASS
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+flight float32 8 PASS
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+flight float64 1 PASS
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+flight float64 8 PASS
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+contact float32 1 PASS
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+contact float32 8 PASS
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+contact float64 1 PASS
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+contact float64 8 PASS
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+success float32 1 PASS
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+success float32 8 PASS
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+success float64 1 PASS
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+success float64 8 PASS
+/oscar/scratch/sboughan/venvs/se-step4-swm/lib/python3.12/site-packages/stable_worldmodel/envs/rocket_landing/pyflyt_rocketlanding.py:614: RuntimeWarning: overflow encountered in exp
+  / np.exp(self.lin_pos[-1])
+/oscar/scratch/sboughan/se-semantic-recovery/rocket-triangle-gate-v5-20261004/results/6995956/code/stable_envs/_adapters/rocket_task.py:529: RuntimeWarning: overflow encountered in exp
+  / np.exp(self.lin_pos[-1])
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+horizon float32 1 PASS
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+horizon float32 8 PASS
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+horizon float64 1 PASS
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+[A                             [A
+horizon float64 8 PASS
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=
+argv[0]=

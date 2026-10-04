@@ -1,0 +1,20 @@
+[
+  {
+    "job": "6995956",
+    "scope": "PROTOTYPE_NOT_PRODUCTION_ACCEPTANCE",
+    "cases": 64,
+    "frames": 224,
+    "mse_mean": 2.085085066615608e-05,
+    "mse_max": 0.00020939239893488258,
+    "mse_sd": 4.262675345654822e-05
+  },
+  {
+    "job": "6995996",
+    "scope": "PROTOTYPE_NOT_PRODUCTION_ACCEPTANCE",
+    "cases": 64,
+    "frames": 224,
+    "mse_mean": 6.458992031135257e-05,
+    "mse_max": 0.00037391412401925183,
+    "mse_sd": 7.875935605284882e-05
+  }
+]

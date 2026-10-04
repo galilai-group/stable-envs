@@ -1254,6 +1254,19 @@ class BatchRenderer(_resources.Closeable):
         self.set_skybox(m)
         return Camera.from_glcam(m, scn), scn
 
+    def _rasterize(self, positions, resolution):
+        """Coverage stage; family renderers may supply another GPU rasterizer."""
+        import nvdiffrast.torch as dr
+
+        positions = offset_clip(positions, resolution, self.sample_offset)
+        return dr.rasterize(
+            self.ctx,
+            positions,
+            self.scene.face,
+            resolution=[resolution, resolution],
+            grad_db=self.mipmap,
+        )
+
     # -- the frame ---------------------------------------------------------
 
     def render(self, xpos, xmat, cam: Camera, out=None, mat_rgb=None):
@@ -1281,8 +1294,7 @@ class BatchRenderer(_resources.Closeable):
         )
 
         pos, nrm, wpos = S.clip(xpos, xmat, view, proj)
-        pos = offset_clip(pos, R, self.sample_offset)  # identity at (0, 0)
-        rast, db = dr.rasterize(self.ctx, pos, S.face, resolution=[R, R], grad_db=self.mipmap)
+        rast, db = self._rasterize(pos, R)
 
         attr = torch.cat([nrm, wpos], -1)  # (B,V,6)
         interp, _ = dr.interpolate(attr, rast, S.face)

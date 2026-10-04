@@ -1,0 +1,14 @@
+{
+  "diagnostic_job": 6995506,
+  "original_partition": "gpu",
+  "qos": "norm-gpu",
+  "original_constraint": "geforce3090",
+  "updated_constraint": "geforce3090|a5000|l40s",
+  "updated_time_limit": "00:15:00",
+  "reason": "Condo group quota blocked, 3090 general-access physical resources pending. Small correctness diagnostic may run on available GPU; no throughput comparison across devices.",
+  "cancelled_lower_priority_job": "6992404_3",
+  "saved_partial": "gpu-b16-preserved-partial.json",
+  "partial_report_status": "RUNNING; not a completed benchmark",
+  "completed_scenarios": 3,
+  "remote_root": "/oscar/scratch/sboughan/se-semantic-recovery/rocket-lowres-v2-20261004"
+}
