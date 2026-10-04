@@ -1,0 +1,1052 @@
+{
+  "status": "PASS_BOUNDED_ROCKET_ONLINE_SOURCE",
+  "device": "cpu",
+  "cases": [
+    {
+      "scenario": "flight",
+      "dtype": "float32",
+      "length": 1,
+      "selection": "none",
+      "source_never_restored": true,
+      "exact_state_task_lifecycle": true,
+      "owned_snapshots": true,
+      "valid_counts": [
+        1,
+        1
+      ],
+      "frames": 0,
+      "mse_mean": null,
+      "mse_max": null
+    },
+    {
+      "scenario": "flight",
+      "dtype": "float32",
+      "length": 1,
+      "selection": "empty",
+      "source_never_restored": true,
+      "exact_state_task_lifecycle": true,
+      "owned_snapshots": true,
+      "valid_counts": [
+        1,
+        1
+      ],
+      "frames": 0,
+      "mse_mean": null,
+      "mse_max": null
+    },
+    {
+      "scenario": "flight",
+      "dtype": "float32",
+      "length": 1,
+      "selection": "all",
+      "source_never_restored": true,
+      "exact_state_task_lifecycle": true,
+      "owned_snapshots": true,
+      "valid_counts": [
+        1,
+        1
+      ],
+      "frames": 2,
+      "mse_mean": 0.0,
+      "mse_max": 0.0
+    },
+    {
+      "scenario": "flight",
+      "dtype": "float32",
+      "length": 1,
+      "selection": "reverse_sparse",
+      "source_never_restored": true,
+      "exact_state_task_lifecycle": true,
+      "owned_snapshots": true,
+      "valid_counts": [
+        1,
+        1
+      ],
+      "frames": 2,
+      "mse_mean": 0.0,
+      "mse_max": 0.0
+    },
+    {
+      "scenario": "flight",
+      "dtype": "float32",
+      "length": 8,
+      "selection": "none",
+      "source_never_restored": true,
+      "exact_state_task_lifecycle": true,
+      "owned_snapshots": true,
+      "valid_counts": [
+        8,
+        8
+      ],
+      "frames": 0,
+      "mse_mean": null,
+      "mse_max": null
+    },
+    {
+      "scenario": "flight",
+      "dtype": "float32",
+      "length": 8,
+      "selection": "empty",
+      "source_never_restored": true,
+      "exact_state_task_lifecycle": true,
+      "owned_snapshots": true,
+      "valid_counts": [
+        8,
+        8
+      ],
+      "frames": 0,
+      "mse_mean": null,
+      "mse_max": null
+    },
+    {
+      "scenario": "flight",
+      "dtype": "float32",
+      "length": 8,
+      "selection": "all",
+      "source_never_restored": true,
+      "exact_state_task_lifecycle": true,
+      "owned_snapshots": true,
+      "valid_counts": [
+        8,
+        8
+      ],
+      "frames": 16,
+      "mse_mean": 0.0,
+      "mse_max": 0.0
+    },
+    {
+      "scenario": "flight",
+      "dtype": "float32",
+      "length": 8,
+      "selection": "reverse_sparse",
+      "source_never_restored": true,
+      "exact_state_task_lifecycle": true,
+      "owned_snapshots": true,
+      "valid_counts": [
+        8,
+        8
+      ],
+      "frames": 8,
+      "mse_mean": 0.0,
+      "mse_max": 0.0
+    },
+    {
+      "scenario": "flight",
+      "dtype": "float64",
+      "length": 1,
+      "selection": "none",
+      "source_never_restored": true,
+      "exact_state_task_lifecycle": true,
+      "owned_snapshots": true,
+      "valid_counts": [
+        1,
+        1
+      ],
+      "frames": 0,
+      "mse_mean": null,
+      "mse_max": null
+    },
+    {
+      "scenario": "flight",
+      "dtype": "float64",
+      "length": 1,
+      "selection": "empty",
+      "source_never_restored": true,
+      "exact_state_task_lifecycle": true,
+      "owned_snapshots": true,
+      "valid_counts": [
+        1,
+        1
+      ],
+      "frames": 0,
+      "mse_mean": null,
+      "mse_max": null
+    },
+    {
+      "scenario": "flight",
+      "dtype": "float64",
+      "length": 1,
+      "selection": "all",
+      "source_never_restored": true,
+      "exact_state_task_lifecycle": true,
+      "owned_snapshots": true,
+      "valid_counts": [
+        1,
+        1
+      ],
+      "frames": 2,
+      "mse_mean": 0.0,
+      "mse_max": 0.0
+    },
+    {
+      "scenario": "flight",
+      "dtype": "float64",
+      "length": 1,
+      "selection": "reverse_sparse",
+      "source_never_restored": true,
+      "exact_state_task_lifecycle": true,
+      "owned_snapshots": true,
+      "valid_counts": [
+        1,
+        1
+      ],
+      "frames": 2,
+      "mse_mean": 0.0,
+      "mse_max": 0.0
+    },
+    {
+      "scenario": "flight",
+      "dtype": "float64",
+      "length": 8,
+      "selection": "none",
+      "source_never_restored": true,
+      "exact_state_task_lifecycle": true,
+      "owned_snapshots": true,
+      "valid_counts": [
+        8,
+        8
+      ],
+      "frames": 0,
+      "mse_mean": null,
+      "mse_max": null
+    },
+    {
+      "scenario": "flight",
+      "dtype": "float64",
+      "length": 8,
+      "selection": "empty",
+      "source_never_restored": true,
+      "exact_state_task_lifecycle": true,
+      "owned_snapshots": true,
+      "valid_counts": [
+        8,
+        8
+      ],
+      "frames": 0,
+      "mse_mean": null,
+      "mse_max": null
+    },
+    {
+      "scenario": "flight",
+      "dtype": "float64",
+      "length": 8,
+      "selection": "all",
+      "source_never_restored": true,
+      "exact_state_task_lifecycle": true,
+      "owned_snapshots": true,
+      "valid_counts": [
+        8,
+        8
+      ],
+      "frames": 16,
+      "mse_mean": 0.0,
+      "mse_max": 0.0
+    },
+    {
+      "scenario": "flight",
+      "dtype": "float64",
+      "length": 8,
+      "selection": "reverse_sparse",
+      "source_never_restored": true,
+      "exact_state_task_lifecycle": true,
+      "owned_snapshots": true,
+      "valid_counts": [
+        8,
+        8
+      ],
+      "frames": 8,
+      "mse_mean": 0.0,
+      "mse_max": 0.0
+    },
+    {
+      "scenario": "contact",
+      "dtype": "float32",
+      "length": 1,
+      "selection": "none",
+      "source_never_restored": true,
+      "exact_state_task_lifecycle": true,
+      "owned_snapshots": true,
+      "valid_counts": [
+        1,
+        1
+      ],
+      "frames": 0,
+      "mse_mean": null,
+      "mse_max": null
+    },
+    {
+      "scenario": "contact",
+      "dtype": "float32",
+      "length": 1,
+      "selection": "empty",
+      "source_never_restored": true,
+      "exact_state_task_lifecycle": true,
+      "owned_snapshots": true,
+      "valid_counts": [
+        1,
+        1
+      ],
+      "frames": 0,
+      "mse_mean": null,
+      "mse_max": null
+    },
+    {
+      "scenario": "contact",
+      "dtype": "float32",
+      "length": 1,
+      "selection": "all",
+      "source_never_restored": true,
+      "exact_state_task_lifecycle": true,
+      "owned_snapshots": true,
+      "valid_counts": [
+        1,
+        1
+      ],
+      "frames": 2,
+      "mse_mean": 0.0,
+      "mse_max": 0.0
+    },
+    {
+      "scenario": "contact",
+      "dtype": "float32",
+      "length": 1,
+      "selection": "reverse_sparse",
+      "source_never_restored": true,
+      "exact_state_task_lifecycle": true,
+      "owned_snapshots": true,
+      "valid_counts": [
+        1,
+        1
+      ],
+      "frames": 2,
+      "mse_mean": 0.0,
+      "mse_max": 0.0
+    },
+    {
+      "scenario": "contact",
+      "dtype": "float32",
+      "length": 8,
+      "selection": "none",
+      "source_never_restored": true,
+      "exact_state_task_lifecycle": true,
+      "owned_snapshots": true,
+      "valid_counts": [
+        2,
+        1
+      ],
+      "frames": 0,
+      "mse_mean": null,
+      "mse_max": null
+    },
+    {
+      "scenario": "contact",
+      "dtype": "float32",
+      "length": 8,
+      "selection": "empty",
+      "source_never_restored": true,
+      "exact_state_task_lifecycle": true,
+      "owned_snapshots": true,
+      "valid_counts": [
+        2,
+        1
+      ],
+      "frames": 0,
+      "mse_mean": null,
+      "mse_max": null
+    },
+    {
+      "scenario": "contact",
+      "dtype": "float32",
+      "length": 8,
+      "selection": "all",
+      "source_never_restored": true,
+      "exact_state_task_lifecycle": true,
+      "owned_snapshots": true,
+      "valid_counts": [
+        2,
+        1
+      ],
+      "frames": 16,
+      "mse_mean": 0.0,
+      "mse_max": 0.0
+    },
+    {
+      "scenario": "contact",
+      "dtype": "float32",
+      "length": 8,
+      "selection": "reverse_sparse",
+      "source_never_restored": true,
+      "exact_state_task_lifecycle": true,
+      "owned_snapshots": true,
+      "valid_counts": [
+        2,
+        1
+      ],
+      "frames": 8,
+      "mse_mean": 0.0,
+      "mse_max": 0.0
+    },
+    {
+      "scenario": "contact",
+      "dtype": "float64",
+      "length": 1,
+      "selection": "none",
+      "source_never_restored": true,
+      "exact_state_task_lifecycle": true,
+      "owned_snapshots": true,
+      "valid_counts": [
+        1,
+        1
+      ],
+      "frames": 0,
+      "mse_mean": null,
+      "mse_max": null
+    },
+    {
+      "scenario": "contact",
+      "dtype": "float64",
+      "length": 1,
+      "selection": "empty",
+      "source_never_restored": true,
+      "exact_state_task_lifecycle": true,
+      "owned_snapshots": true,
+      "valid_counts": [
+        1,
+        1
+      ],
+      "frames": 0,
+      "mse_mean": null,
+      "mse_max": null
+    },
+    {
+      "scenario": "contact",
+      "dtype": "float64",
+      "length": 1,
+      "selection": "all",
+      "source_never_restored": true,
+      "exact_state_task_lifecycle": true,
+      "owned_snapshots": true,
+      "valid_counts": [
+        1,
+        1
+      ],
+      "frames": 2,
+      "mse_mean": 0.0,
+      "mse_max": 0.0
+    },
+    {
+      "scenario": "contact",
+      "dtype": "float64",
+      "length": 1,
+      "selection": "reverse_sparse",
+      "source_never_restored": true,
+      "exact_state_task_lifecycle": true,
+      "owned_snapshots": true,
+      "valid_counts": [
+        1,
+        1
+      ],
+      "frames": 2,
+      "mse_mean": 0.0,
+      "mse_max": 0.0
+    },
+    {
+      "scenario": "contact",
+      "dtype": "float64",
+      "length": 8,
+      "selection": "none",
+      "source_never_restored": true,
+      "exact_state_task_lifecycle": true,
+      "owned_snapshots": true,
+      "valid_counts": [
+        2,
+        1
+      ],
+      "frames": 0,
+      "mse_mean": null,
+      "mse_max": null
+    },
+    {
+      "scenario": "contact",
+      "dtype": "float64",
+      "length": 8,
+      "selection": "empty",
+      "source_never_restored": true,
+      "exact_state_task_lifecycle": true,
+      "owned_snapshots": true,
+      "valid_counts": [
+        2,
+        1
+      ],
+      "frames": 0,
+      "mse_mean": null,
+      "mse_max": null
+    },
+    {
+      "scenario": "contact",
+      "dtype": "float64",
+      "length": 8,
+      "selection": "all",
+      "source_never_restored": true,
+      "exact_state_task_lifecycle": true,
+      "owned_snapshots": true,
+      "valid_counts": [
+        2,
+        1
+      ],
+      "frames": 16,
+      "mse_mean": 0.0,
+      "mse_max": 0.0
+    },
+    {
+      "scenario": "contact",
+      "dtype": "float64",
+      "length": 8,
+      "selection": "reverse_sparse",
+      "source_never_restored": true,
+      "exact_state_task_lifecycle": true,
+      "owned_snapshots": true,
+      "valid_counts": [
+        2,
+        1
+      ],
+      "frames": 8,
+      "mse_mean": 0.0,
+      "mse_max": 0.0
+    },
+    {
+      "scenario": "success",
+      "dtype": "float32",
+      "length": 1,
+      "selection": "none",
+      "source_never_restored": true,
+      "exact_state_task_lifecycle": true,
+      "owned_snapshots": true,
+      "valid_counts": [
+        1,
+        1
+      ],
+      "frames": 0,
+      "mse_mean": null,
+      "mse_max": null
+    },
+    {
+      "scenario": "success",
+      "dtype": "float32",
+      "length": 1,
+      "selection": "empty",
+      "source_never_restored": true,
+      "exact_state_task_lifecycle": true,
+      "owned_snapshots": true,
+      "valid_counts": [
+        1,
+        1
+      ],
+      "frames": 0,
+      "mse_mean": null,
+      "mse_max": null
+    },
+    {
+      "scenario": "success",
+      "dtype": "float32",
+      "length": 1,
+      "selection": "all",
+      "source_never_restored": true,
+      "exact_state_task_lifecycle": true,
+      "owned_snapshots": true,
+      "valid_counts": [
+        1,
+        1
+      ],
+      "frames": 2,
+      "mse_mean": 0.0,
+      "mse_max": 0.0
+    },
+    {
+      "scenario": "success",
+      "dtype": "float32",
+      "length": 1,
+      "selection": "reverse_sparse",
+      "source_never_restored": true,
+      "exact_state_task_lifecycle": true,
+      "owned_snapshots": true,
+      "valid_counts": [
+        1,
+        1
+      ],
+      "frames": 2,
+      "mse_mean": 0.0,
+      "mse_max": 0.0
+    },
+    {
+      "scenario": "success",
+      "dtype": "float32",
+      "length": 8,
+      "selection": "none",
+      "source_never_restored": true,
+      "exact_state_task_lifecycle": true,
+      "owned_snapshots": true,
+      "valid_counts": [
+        7,
+        1
+      ],
+      "frames": 0,
+      "mse_mean": null,
+      "mse_max": null
+    },
+    {
+      "scenario": "success",
+      "dtype": "float32",
+      "length": 8,
+      "selection": "empty",
+      "source_never_restored": true,
+      "exact_state_task_lifecycle": true,
+      "owned_snapshots": true,
+      "valid_counts": [
+        7,
+        1
+      ],
+      "frames": 0,
+      "mse_mean": null,
+      "mse_max": null
+    },
+    {
+      "scenario": "success",
+      "dtype": "float32",
+      "length": 8,
+      "selection": "all",
+      "source_never_restored": true,
+      "exact_state_task_lifecycle": true,
+      "owned_snapshots": true,
+      "valid_counts": [
+        7,
+        1
+      ],
+      "frames": 16,
+      "mse_mean": 0.0,
+      "mse_max": 0.0
+    },
+    {
+      "scenario": "success",
+      "dtype": "float32",
+      "length": 8,
+      "selection": "reverse_sparse",
+      "source_never_restored": true,
+      "exact_state_task_lifecycle": true,
+      "owned_snapshots": true,
+      "valid_counts": [
+        7,
+        1
+      ],
+      "frames": 8,
+      "mse_mean": 0.0,
+      "mse_max": 0.0
+    },
+    {
+      "scenario": "success",
+      "dtype": "float64",
+      "length": 1,
+      "selection": "none",
+      "source_never_restored": true,
+      "exact_state_task_lifecycle": true,
+      "owned_snapshots": true,
+      "valid_counts": [
+        1,
+        1
+      ],
+      "frames": 0,
+      "mse_mean": null,
+      "mse_max": null
+    },
+    {
+      "scenario": "success",
+      "dtype": "float64",
+      "length": 1,
+      "selection": "empty",
+      "source_never_restored": true,
+      "exact_state_task_lifecycle": true,
+      "owned_snapshots": true,
+      "valid_counts": [
+        1,
+        1
+      ],
+      "frames": 0,
+      "mse_mean": null,
+      "mse_max": null
+    },
+    {
+      "scenario": "success",
+      "dtype": "float64",
+      "length": 1,
+      "selection": "all",
+      "source_never_restored": true,
+      "exact_state_task_lifecycle": true,
+      "owned_snapshots": true,
+      "valid_counts": [
+        1,
+        1
+      ],
+      "frames": 2,
+      "mse_mean": 0.0,
+      "mse_max": 0.0
+    },
+    {
+      "scenario": "success",
+      "dtype": "float64",
+      "length": 1,
+      "selection": "reverse_sparse",
+      "source_never_restored": true,
+      "exact_state_task_lifecycle": true,
+      "owned_snapshots": true,
+      "valid_counts": [
+        1,
+        1
+      ],
+      "frames": 2,
+      "mse_mean": 0.0,
+      "mse_max": 0.0
+    },
+    {
+      "scenario": "success",
+      "dtype": "float64",
+      "length": 8,
+      "selection": "none",
+      "source_never_restored": true,
+      "exact_state_task_lifecycle": true,
+      "owned_snapshots": true,
+      "valid_counts": [
+        7,
+        1
+      ],
+      "frames": 0,
+      "mse_mean": null,
+      "mse_max": null
+    },
+    {
+      "scenario": "success",
+      "dtype": "float64",
+      "length": 8,
+      "selection": "empty",
+      "source_never_restored": true,
+      "exact_state_task_lifecycle": true,
+      "owned_snapshots": true,
+      "valid_counts": [
+        7,
+        1
+      ],
+      "frames": 0,
+      "mse_mean": null,
+      "mse_max": null
+    },
+    {
+      "scenario": "success",
+      "dtype": "float64",
+      "length": 8,
+      "selection": "all",
+      "source_never_restored": true,
+      "exact_state_task_lifecycle": true,
+      "owned_snapshots": true,
+      "valid_counts": [
+        7,
+        1
+      ],
+      "frames": 16,
+      "mse_mean": 0.0,
+      "mse_max": 0.0
+    },
+    {
+      "scenario": "success",
+      "dtype": "float64",
+      "length": 8,
+      "selection": "reverse_sparse",
+      "source_never_restored": true,
+      "exact_state_task_lifecycle": true,
+      "owned_snapshots": true,
+      "valid_counts": [
+        7,
+        1
+      ],
+      "frames": 8,
+      "mse_mean": 0.0,
+      "mse_max": 0.0
+    },
+    {
+      "scenario": "horizon",
+      "dtype": "float32",
+      "length": 1,
+      "selection": "none",
+      "source_never_restored": true,
+      "exact_state_task_lifecycle": true,
+      "owned_snapshots": true,
+      "valid_counts": [
+        1,
+        1
+      ],
+      "frames": 0,
+      "mse_mean": null,
+      "mse_max": null
+    },
+    {
+      "scenario": "horizon",
+      "dtype": "float32",
+      "length": 1,
+      "selection": "empty",
+      "source_never_restored": true,
+      "exact_state_task_lifecycle": true,
+      "owned_snapshots": true,
+      "valid_counts": [
+        1,
+        1
+      ],
+      "frames": 0,
+      "mse_mean": null,
+      "mse_max": null
+    },
+    {
+      "scenario": "horizon",
+      "dtype": "float32",
+      "length": 1,
+      "selection": "all",
+      "source_never_restored": true,
+      "exact_state_task_lifecycle": true,
+      "owned_snapshots": true,
+      "valid_counts": [
+        1,
+        1
+      ],
+      "frames": 2,
+      "mse_mean": 0.0,
+      "mse_max": 0.0
+    },
+    {
+      "scenario": "horizon",
+      "dtype": "float32",
+      "length": 1,
+      "selection": "reverse_sparse",
+      "source_never_restored": true,
+      "exact_state_task_lifecycle": true,
+      "owned_snapshots": true,
+      "valid_counts": [
+        1,
+        1
+      ],
+      "frames": 2,
+      "mse_mean": 0.0,
+      "mse_max": 0.0
+    },
+    {
+      "scenario": "horizon",
+      "dtype": "float32",
+      "length": 8,
+      "selection": "none",
+      "source_never_restored": true,
+      "exact_state_task_lifecycle": true,
+      "owned_snapshots": true,
+      "valid_counts": [
+        4,
+        1
+      ],
+      "frames": 0,
+      "mse_mean": null,
+      "mse_max": null
+    },
+    {
+      "scenario": "horizon",
+      "dtype": "float32",
+      "length": 8,
+      "selection": "empty",
+      "source_never_restored": true,
+      "exact_state_task_lifecycle": true,
+      "owned_snapshots": true,
+      "valid_counts": [
+        4,
+        1
+      ],
+      "frames": 0,
+      "mse_mean": null,
+      "mse_max": null
+    },
+    {
+      "scenario": "horizon",
+      "dtype": "float32",
+      "length": 8,
+      "selection": "all",
+      "source_never_restored": true,
+      "exact_state_task_lifecycle": true,
+      "owned_snapshots": true,
+      "valid_counts": [
+        4,
+        1
+      ],
+      "frames": 16,
+      "mse_mean": 0.0,
+      "mse_max": 0.0
+    },
+    {
+      "scenario": "horizon",
+      "dtype": "float32",
+      "length": 8,
+      "selection": "reverse_sparse",
+      "source_never_restored": true,
+      "exact_state_task_lifecycle": true,
+      "owned_snapshots": true,
+      "valid_counts": [
+        4,
+        1
+      ],
+      "frames": 8,
+      "mse_mean": 0.0,
+      "mse_max": 0.0
+    },
+    {
+      "scenario": "horizon",
+      "dtype": "float64",
+      "length": 1,
+      "selection": "none",
+      "source_never_restored": true,
+      "exact_state_task_lifecycle": true,
+      "owned_snapshots": true,
+      "valid_counts": [
+        1,
+        1
+      ],
+      "frames": 0,
+      "mse_mean": null,
+      "mse_max": null
+    },
+    {
+      "scenario": "horizon",
+      "dtype": "float64",
+      "length": 1,
+      "selection": "empty",
+      "source_never_restored": true,
+      "exact_state_task_lifecycle": true,
+      "owned_snapshots": true,
+      "valid_counts": [
+        1,
+        1
+      ],
+      "frames": 0,
+      "mse_mean": null,
+      "mse_max": null
+    },
+    {
+      "scenario": "horizon",
+      "dtype": "float64",
+      "length": 1,
+      "selection": "all",
+      "source_never_restored": true,
+      "exact_state_task_lifecycle": true,
+      "owned_snapshots": true,
+      "valid_counts": [
+        1,
+        1
+      ],
+      "frames": 2,
+      "mse_mean": 0.0,
+      "mse_max": 0.0
+    },
+    {
+      "scenario": "horizon",
+      "dtype": "float64",
+      "length": 1,
+      "selection": "reverse_sparse",
+      "source_never_restored": true,
+      "exact_state_task_lifecycle": true,
+      "owned_snapshots": true,
+      "valid_counts": [
+        1,
+        1
+      ],
+      "frames": 2,
+      "mse_mean": 0.0,
+      "mse_max": 0.0
+    },
+    {
+      "scenario": "horizon",
+      "dtype": "float64",
+      "length": 8,
+      "selection": "none",
+      "source_never_restored": true,
+      "exact_state_task_lifecycle": true,
+      "owned_snapshots": true,
+      "valid_counts": [
+        4,
+        1
+      ],
+      "frames": 0,
+      "mse_mean": null,
+      "mse_max": null
+    },
+    {
+      "scenario": "horizon",
+      "dtype": "float64",
+      "length": 8,
+      "selection": "empty",
+      "source_never_restored": true,
+      "exact_state_task_lifecycle": true,
+      "owned_snapshots": true,
+      "valid_counts": [
+        4,
+        1
+      ],
+      "frames": 0,
+      "mse_mean": null,
+      "mse_max": null
+    },
+    {
+      "scenario": "horizon",
+      "dtype": "float64",
+      "length": 8,
+      "selection": "all",
+      "source_never_restored": true,
+      "exact_state_task_lifecycle": true,
+      "owned_snapshots": true,
+      "valid_counts": [
+        4,
+        1
+      ],
+      "frames": 16,
+      "mse_mean": 0.0,
+      "mse_max": 0.0
+    },
+    {
+      "scenario": "horizon",
+      "dtype": "float64",
+      "length": 8,
+      "selection": "reverse_sparse",
+      "source_never_restored": true,
+      "exact_state_task_lifecycle": true,
+      "owned_snapshots": true,
+      "valid_counts": [
+        4,
+        1
+      ],
+      "frames": 8,
+      "mse_mean": 0.0,
+      "mse_max": 0.0
+    }
+  ],
+  "source_sha256": "5ede3640ce1e2add32b6b0a6c36e190bb1130e38bb258ab182af12a6fbedee23",
+  "job_id": "6996439",
+  "frames": 224,
+  "size": 96,
+  "batch": 2,
+  "production_hashes": {
+    "stable_envs/_adapters/rocket.py": "5839c86cb903e1f206254b7e52f590912ed2c45dbc5ae6189f8a77f46db15996",
+    "stable_envs/_adapters/rocket_actions.py": "60a9916dce5a974b20d4c745e1740a9377f73449909035678d9c842b71105273",
+    "stable_envs/_adapters/rocket_numeric.py": "cbab5bd70d7f755b206c8bbc47943418541b34649d718d83ff96ee37ba1c0b61",
+    "stable_envs/_adapters/rocket_replay.py": "0b49681d18af6b58dbb2ffb2db9ec67ec2c070582e4719ed88efa8609dd7dcec",
+    "stable_envs/_adapters/rocket_spaces.py": "f4f9d630413af8823e8b3a499e25a5ccbf764af25cb4ac555d58fb80a18cfe78",
+    "stable_envs/_adapters/rocket_task.py": "0b6f54d75c48f2c8aa9daf8444303e1f2e2b2d0867796829c1b3dec972753bb3",
+    "stable_envs/envs/rocket_landing.py": "c2434034aeb2964acaf91aecc65498b3115dd0d03d8f67e9ea1f5d1a4979fb63",
+    "stable_envs/envs/rocket_render.py": "1a6b101d366df2ee88fb6e721881db0f4bae2c91145d177fe7bcf86c10e8e45f",
+    "stable_envs/envs/rocket_semantics.py": "e3361d33ccf08a4218d59ccaa7baf23629ed8dc5e2a87f013e05ec9280b05a30",
+    "stable_envs/_stepping.py": "80df65b7abd5aeff8a818b5c41377efe3cf49effe2ab2fec57458d4d83ccb67f",
+    "stable_envs/env.py": "9c01328506c022a8e42b2073b20ba2702b2159c38fae1c52424347ca1a9c4ea6",
+    "stable_envs/render/nvdiff.py": "d61fcba82726e8083bffcac805cafdf410521f1aa8deb0304934f5a6d04c9f02",
+    "stable_envs/envs/_rocket_raster.py": "c97155de3030509dd5964f24eab237d2f68d5c12ae9f1f31c2f90cf3d039b801"
+  },
+  "script_sha256": "55f3360c73e5d2e826b7f3c6252c3c7198ea3e56e864f564d9039bef0c83f135",
+  "scope": "B2, T1/T8, float32/64, four scenarios and four selectors; not a performance measurement"
+}

@@ -1,7 +1,12 @@
 # Rocket final candidate closure evidence
 
+**Final status: VERIFIED.** Job 6996439 completed 0:0; `final/`,
+`final-terminal.txt`, `verification/`, and `acceptance.json` close the pending
+observations below. Both devices' raw frame pairs were independently recomputed.
+The non-Craftax acceptance count is 38/38. Performance remains separately scoped.
+
 This directory is separate from the earlier sealed Rocket investigation.
-The registration remains INCOMPLETE until the final production gate is verified.
+The earlier pending observations below are retained as submission/retrieval history.
 
 - `submission/`: immutable source manifest and launcher for final job 6996439.
 - `superseded/6996062/`: pre-device-guard control, cancelled after both public

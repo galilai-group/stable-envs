@@ -12218,7 +12218,7 @@
     },
     {
       "historical_id": "swm/PFRocketLanding-v0",
-      "current_status": "INCOMPLETE",
+      "current_status": "VERIFIED",
       "family": "rocket",
       "pinned_swm_commit": "176d54532b3c0a251a4f509b74f2fdacc143a63d",
       "swm_implementation": {
@@ -12242,71 +12242,224 @@
       "stable_envs_classes": [
         "PyFlytRocketLanding"
       ],
-      "accepted_classes": [],
+      "accepted_classes": [
+        "PyFlytRocketLanding"
+      ],
       "historical_task_default_kwargs": {
         "registration_kwargs": {},
         "constructor_signature": "self, sparse_reward: bool=False, ceiling: float=500.0, max_displacement: float=200.0, max_duration_seconds: float=30.0, angle_representation: Literal['euler', 'quaternion']='quaternion', agent_hz: int=40, render_mode: None | Literal['human', 'rgb_array']=None, render_resolution: tuple[int, int]=(480, 480)",
-        "accepted_task": null,
+        "accepted_task": "Pinned default Rocket landing task; source-supported success/horizon configuration witnesses are recorded in the gates.",
         "source_constructor": "swm:stable_worldmodel/envs/rocket_landing/pyflyt_rocketlanding.py:RocketLandingEnv.__init__"
       },
       "state_schema": {
-        "status": "BLOCKED_EXACT_ENGINE_RESTORE",
-        "corpus_fields": {},
-        "candidate_source_catalog": [],
-        "note": "91 private numeric probe leaves; incomplete engine and reset RNG coverage; not an accepted public TensorDict State.",
-        "candidate_schema": "docs/research/semantic_recovery_evidence/rocket_source_audit/feasibility-final/candidate-schema.json",
-        "classification": "docs/research/semantic_recovery_evidence/rocket_source_audit/state-inventory.json"
+        "status": "VERIFIED_NUMERIC_BOUNDED_REPLAY_V1",
+        "fields": [
+          "recipe/version, config, seed, reset flags, Variation selection and main RNG anchor",
+          "anchor/variation RNG and representation-preserving episode initial values",
+          "history/actions, original dtypes, length and canonical valid mask",
+          "lifecycle/post-terminal step count and final action dtype",
+          "current/physics, actuator, task, reward, lifecycle, RNG and goal-image diagnostics",
+          "variation/current and persistent values, representation codes and owned RNGs",
+          "render/rgba; rng/action_space"
+        ],
+        "note": "No native handles or pickle blobs. Hidden engine caches are reconstructed by official-engine replay and validated through exact numeric diagnostics and future continuation."
       },
       "restoration_order": [
-        "UNACCEPTED private probe: official or numeric engine restore; explicitly restore mass/inertia; Python task/actuator/cache fields; info; PCG64 last. Missing exact engine cache/contact restoration blocks production."
+        "Validate all batch lanes, typed schema, constructor compatibility, action history, RNG and bounded values without mutating live engines",
+        "Construct independent temporary official engines and install reset anchors and episode Variation",
+        "Reset and replay valid physical actions preserving their original dtype",
+        "Restore post-terminal effects, persistent Variation and owned future RNG streams",
+        "Require exact equality of every supplied numeric diagnostic, then atomically swap all lanes; close staged engines on failure"
       ],
       "action_scaling_clipping_repeat": {
-        "summary": "UNACCEPTED: pinned wrapper step implementation indexed below; no candidate parity claim.",
-        "parity": "UNTESTED",
+        "summary": "Source-aligned seven-dimensional action/controller semantics; preserve float32/float64 arithmetic and reject invalid whole-batch actions before engine mutation.",
+        "parity": "PASS_PUBLIC_SOURCE_GATES",
         "source_catalog": [
           "swm:stable_worldmodel/envs/rocket_landing/pyflyt_rocketlanding.py"
         ]
       },
       "reset_rng_semantics": {
-        "reset_parity": "UNTESTED",
-        "rng_lifecycle": "UNTESTED",
+        "reset_parity": "PASS_SEEDED_SOURCE_AND_REPLAY_ANCHORS",
+        "rng_lifecycle": "PASS_OWNED_PCG64_AND_RESET_LIFECYCLE",
         "source_catalog": [
           "swm:stable_worldmodel/envs/rocket_landing/pyflyt_rocketlanding.py"
         ],
-        "rng_structure_policy": "Complete documented named RNG state is atomic; individual-word minimality is not required."
+        "rng_structure_policy": "Complete documented named RNG state is atomic; individual-word minimality is not required.",
+        "unseeded_scope": "Source fresh entropy in reset(None) is preserved; captured resulting episodes are replayable under the certified math profile."
       },
       "reward_success_terminated_truncated": {
-        "reward": "UNTESTED",
-        "lifecycle": "UNTESTED",
+        "reward": "PASS_EXACT_SOURCE_TASK",
+        "lifecycle": "PASS_TERMINATION_TRUNCATION_SUCCESS_HORIZON_POST_TERMINAL_AND_CHUNK_MASKS",
         "source_catalog": [
           "swm:stable_worldmodel/envs/rocket_landing/pyflyt_rocketlanding.py"
         ]
       },
-      "accepted_variation_scope": "UNTESTED",
-      "execution_mode": null,
+      "accepted_variation_scope": "90 persistent leaf/representation cases plus 204 public checkpoints per output device including leaf/parent/overlap reset selections.",
+      "execution_mode": "DELEGATED_CPU",
       "evidence_manifest": {
-        "oracle": null,
-        "artifacts": []
+        "oracle": "176d54532b3c0a251a4f509b74f2fdacc143a63d",
+        "artifacts": [
+          {
+            "path": "docs/research/semantic_recovery_evidence/final_three_20261004/rocket/closure-v4/acceptance.json",
+            "sha256": "d3055b6b0bd04041e2ecfa3cf61e9b8f6f798267119451291cb184ed7c51853f"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/final_three_20261004/rocket/closure-v4/final/branch-source/result.json",
+            "sha256": "eb0f543a9b67c3db27287e2c196cb77dc7576c13c313cbc4ad13fc545f32e00c"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/final_three_20261004/rocket/closure-v4/final/online-cpu/frames.npz",
+            "sha256": "5a8f5ea45017e8dcab082a828bc2a5602833efddefcfd24642bea97342375fc2"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/final_three_20261004/rocket/closure-v4/final/online-cpu/result.json",
+            "sha256": "df0811e90e72165aded654c0a696d88a6967cabc908ec8db2b0267699a5d5ba7"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/final_three_20261004/rocket/closure-v4/final/online-cuda/frames.npz",
+            "sha256": "64156335d69c42024542e64e3490147ef305d5e2304cbf60c5c1e8891094617b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/final_three_20261004/rocket/closure-v4/final/online-cuda/result.json",
+            "sha256": "a7589650efc424be70e803df665192f54299908dd733f3a8259b5b0dd6a05495"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/final_three_20261004/rocket/closure-v4/final/persistent-variation/result.json",
+            "sha256": "a3887d0a501d8e8ffb7951882a28b8b6c80bbdfbe0c09f24514cd62953d052fa"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/final_three_20261004/rocket/closure-v4/final/public-cpu/frames.npz",
+            "sha256": "1b04cbb361074035b83d36f908fc6f17ff321bb577242cae602b9cec1f3ec689"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/final_three_20261004/rocket/closure-v4/final/public-cpu/result.json",
+            "sha256": "8edc4c32ddad91e94d5185108c479fc42b8fcace467428d15ac7f53417a9a6a6"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/final_three_20261004/rocket/closure-v4/final/public-cuda/frames.npz",
+            "sha256": "87d250937f13ab8ed276ef0920c5de014c22625801f3b118149231fd5e5e1393"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/final_three_20261004/rocket/closure-v4/final/public-cuda/result.json",
+            "sha256": "c72e48182cdcb1c6c480d4b094345fabd1d30b6fcb8da1fc90f375bc9fc4ea17"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/final_three_20261004/rocket/closure-v4/final-terminal.txt",
+            "sha256": "71643fc3f8d87da5c46786c8b4f989a2a08372e87e2ab28781c07f2d75e3b04b"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/final_three_20261004/rocket/closure-v4/submission/patch_manifest.json",
+            "sha256": "87b484dc37ac5f65770fea8d4dce351f91c4040d1a9ec8b75a3b0c9fd2b9b16d"
+          },
+          {
+            "path": "docs/research/semantic_recovery_evidence/final_three_20261004/rocket/closure-v4/verification/result.json",
+            "sha256": "2d46287ed0a6064cd117ed9d926ea5c6fed1edd432fe76e496c04ffb8d793ebd"
+          }
+        ]
       },
-      "cpu_semantic_result": "NOT_ACCEPTED",
+      "cpu_semantic_result": "PASS_204_PUBLIC_CHECKPOINTS_64_ONLINE_CASES_108_SUFFIX_CASES_90_PERSISTENT_CASES_67_UNIT_TESTS",
       "gpu_semantic_result": {
-        "status": "NOT_ACCEPTED",
-        "job": null,
-        "note": "CUDA State placement is not GPU physics for DELEGATED_CPU."
+        "status": "PASS_CUDA_STATE_STORAGE_AND_PUBLIC_ONLINE_SOURCE",
+        "job": 6996439,
+        "note": "CPU physics; actual GPU rasterization separately validated. Three CUDA coverage/device regression tests passed."
       },
-      "frozen_renderer_result": "PENDING",
+      "frozen_renderer_result": {
+        "status": "PASS_UNCHANGED_VISUAL_AND_PER_FRAME_MSE_LIMITS",
+        "metrics": {
+          "render-cpu.json": {
+            "status": "PASS_RECOMPUTED_PUBLIC_RENDER_WITNESSES",
+            "device": "cpu",
+            "job": "6996439",
+            "checkpoints": 204,
+            "mse_mean": 0.0,
+            "mse_sd": 0.0,
+            "mse_max": 0.0,
+            "groups": 41,
+            "production_files": 11,
+            "public_semantic_promotion": false,
+            "scope": "Current public render/restore gate only; companion Variation/suffix/unit and other-device gates remain separate.",
+            "evidence_hashes": {
+              "result.json": "8edc4c32ddad91e94d5185108c479fc42b8fcace467428d15ac7f53417a9a6a6",
+              "frames.npz": "1b04cbb361074035b83d36f908fc6f17ff321bb577242cae602b9cec1f3ec689"
+            },
+            "verifier_sha256": "069146492e686d47b6b809caf05497505a1f318943c8027c75361f2559638b6d"
+          },
+          "render-cuda.json": {
+            "status": "PASS_RECOMPUTED_PUBLIC_RENDER_WITNESSES",
+            "device": "cuda",
+            "job": "6996439",
+            "checkpoints": 204,
+            "mse_mean": 4.622858302013332e-05,
+            "mse_sd": 2.2342846585154604e-05,
+            "mse_max": 9.707183935665775e-05,
+            "groups": 41,
+            "production_files": 11,
+            "public_semantic_promotion": false,
+            "scope": "Current public render/restore gate only; companion Variation/suffix/unit and other-device gates remain separate.",
+            "evidence_hashes": {
+              "result.json": "c72e48182cdcb1c6c480d4b094345fabd1d30b6fcb8da1fc90f375bc9fc4ea17",
+              "frames.npz": "87d250937f13ab8ed276ef0920c5de014c22625801f3b118149231fd5e5e1393"
+            },
+            "verifier_sha256": "069146492e686d47b6b809caf05497505a1f318943c8027c75361f2559638b6d"
+          },
+          "online-cpu.json": {
+            "status": "PASS_RECOMPUTED_BOUNDED_ONLINE_SOURCE",
+            "device": "cpu",
+            "job": "6996439",
+            "cases": 64,
+            "frames": 224,
+            "mse_mean": 0.0,
+            "mse_sd": 0.0,
+            "mse_max": 0.0,
+            "scope": "B2, T1/T8, float32/64, four scenarios and four selectors; not a performance measurement",
+            "performance_claim": false,
+            "report_sha256": "df0811e90e72165aded654c0a696d88a6967cabc908ec8db2b0267699a5d5ba7",
+            "frames_sha256": "5a8f5ea45017e8dcab082a828bc2a5602833efddefcfd24642bea97342375fc2",
+            "verifier_sha256": "d5973cbfdaa8f893b6bf4041ff81a0096ced1c851086c997a4fae4101d5b9940"
+          },
+          "online-cuda.json": {
+            "status": "PASS_RECOMPUTED_BOUNDED_ONLINE_SOURCE",
+            "device": "cuda",
+            "job": "6996439",
+            "cases": 64,
+            "frames": 224,
+            "mse_mean": 6.458992031135259e-05,
+            "mse_sd": 7.875935605284882e-05,
+            "mse_max": 0.0003739141240192519,
+            "scope": "B2, T1/T8, float32/64, four scenarios and four selectors; not a performance measurement",
+            "performance_claim": false,
+            "report_sha256": "a7589650efc424be70e803df665192f54299908dd733f3a8259b5b0dd6a05495",
+            "frames_sha256": "64156335d69c42024542e64e3490147ef305d5e2304cbf60c5c1e8891094617b",
+            "verifier_sha256": "d5973cbfdaa8f893b6bf4041ff81a0096ced1c851086c997a4fae4101d5b9940"
+          }
+        }
+      },
       "known_limitations": [
-        "Stage B fails: named numeric restore and official PyBullet 3.2.7 memory/file snapshots change cached link state and exact continuation, including reward and termination near contact.",
-        "Requires engine-supported complete typed numeric export/import of cached link/collider transforms, velocities, dynamic masses/inertias and contact/solver state across independent instances.",
-        "Production, complete reset RNG, atomic validation, renderer/backend, Variation and performance gates not entered; no promotion."
+        "Exact replay requires the certified source/runtime math profile; cross-BLAS-profile bitwise portability is not established.",
+        "Physical history capacity follows the source max_steps + 2 (1,202 actions at the registered 30-second/40-Hz defaults); ordinary stepping does not replay history.",
+        "Restoration reconstructs authoritative CPU engines and costs O(history); numeric State includes the source goal-image cache.",
+        "Dynamics remain DELEGATED_CPU. CUDA State storage and GPU rendering do not imply GPU physics.",
+        "Rendering is accepted only for the recorded reached-state/configuration corpus, with unchanged frozen visual criteria and per-frame normalized MSE <= 0.001.",
+        "No universal online speedup or complete source-paired throughput table is claimed. B16/full GPU replay-cost tables remain unfinished; available B1 and prototype timing scopes are recorded separately."
       ],
-      "remaining_gates": [
-        "Stage B fails: named numeric restore and official PyBullet 3.2.7 memory/file snapshots change cached link state and exact continuation, including reward and termination near contact.",
-        "Requires engine-supported complete typed numeric export/import of cached link/collider transforms, velocities, dynamic masses/inertias and contact/solver state across independent instances.",
-        "Production, complete reset RNG, atomic validation, renderer/backend, Variation and performance gates not entered; no promotion."
-      ],
-      "closure_code_check": null,
-      "recovery_status": "BLOCKED_EXACT_PYBULLET_STATE",
+      "remaining_gates": [],
+      "closure_code_check": {
+        "production_hashes": {
+          "stable_envs/_adapters/rocket.py": "5839c86cb903e1f206254b7e52f590912ed2c45dbc5ae6189f8a77f46db15996",
+          "stable_envs/_adapters/rocket_actions.py": "60a9916dce5a974b20d4c745e1740a9377f73449909035678d9c842b71105273",
+          "stable_envs/_adapters/rocket_numeric.py": "cbab5bd70d7f755b206c8bbc47943418541b34649d718d83ff96ee37ba1c0b61",
+          "stable_envs/_adapters/rocket_replay.py": "0b49681d18af6b58dbb2ffb2db9ec67ec2c070582e4719ed88efa8609dd7dcec",
+          "stable_envs/_adapters/rocket_spaces.py": "f4f9d630413af8823e8b3a499e25a5ccbf764af25cb4ac555d58fb80a18cfe78",
+          "stable_envs/_adapters/rocket_task.py": "0b6f54d75c48f2c8aa9daf8444303e1f2e2b2d0867796829c1b3dec972753bb3",
+          "stable_envs/envs/rocket_landing.py": "c2434034aeb2964acaf91aecc65498b3115dd0d03d8f67e9ea1f5d1a4979fb63",
+          "stable_envs/envs/rocket_render.py": "1a6b101d366df2ee88fb6e721881db0f4bae2c91145d177fe7bcf86c10e8e45f",
+          "stable_envs/envs/rocket_semantics.py": "e3361d33ccf08a4218d59ccaa7baf23629ed8dc5e2a87f013e05ec9280b05a30",
+          "stable_envs/render/nvdiff.py": "d61fcba82726e8083bffcac805cafdf410521f1aa8deb0304934f5a6d04c9f02",
+          "stable_envs/envs/_rocket_raster.py": "c97155de3030509dd5964f24eab237d2f68d5c12ae9f1f31c2f90cf3d039b801"
+        },
+        "manifest": "docs/research/semantic_recovery_evidence/final_three_20261004/rocket/closure-v4/acceptance.json"
+      },
+      "recovery_status": "VERIFIED_PUBLIC_BOUNDED_REPLAY",
       "audit_report": "docs/research/rocket_recovery_audit.md",
       "feasibility_evidence": "docs/research/semantic_recovery_evidence/rocket_source_audit/feasibility-final/result.json",
       "feasibility_controls": "docs/research/semantic_recovery_evidence/rocket_source_audit/controls-final/result.json",
@@ -14902,8 +15055,8 @@
     }
   ],
   "current_counts": {
-    "VERIFIED": 41,
-    "INCOMPLETE": 1
+    "VERIFIED": 42,
+    "INCOMPLETE": 0
   },
   "updates": [
     {
@@ -14977,6 +15130,18 @@
       "counts": {
         "VERIFIED": 41,
         "INCOMPLETE": 1
+      }
+    },
+    {
+      "checkpoint": "Independent public Rocket bounded-replay acceptance",
+      "job": 6996439,
+      "report": "docs/research/rocket_acceptance.md",
+      "newly_verified": [
+        "swm/PFRocketLanding-v0"
+      ],
+      "counts": {
+        "VERIFIED": 42,
+        "INCOMPLETE": 0
       }
     }
   ]

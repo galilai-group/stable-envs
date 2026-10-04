@@ -1,0 +1,120 @@
+{
+  "status": "PASS_CURRENT_PRODUCTION_ROCKET_GATES",
+  "job": "6996439",
+  "public_checkpoints_per_device": 204,
+  "online_cases_per_device": 64,
+  "online_frames_per_device": 224,
+  "cpu_tests": 67,
+  "cuda_tests": 3,
+  "companions": [
+    {
+      "gate": "branch-source",
+      "cases": 108
+    },
+    {
+      "gate": "persistent-variation",
+      "cases": 90
+    }
+  ],
+  "raw_pixel_verifications": {
+    "render-cpu.json": {
+      "status": "PASS_RECOMPUTED_PUBLIC_RENDER_WITNESSES",
+      "device": "cpu",
+      "job": "6996439",
+      "checkpoints": 204,
+      "mse_mean": 0.0,
+      "mse_sd": 0.0,
+      "mse_max": 0.0,
+      "groups": 41,
+      "production_files": 11,
+      "public_semantic_promotion": false,
+      "scope": "Current public render/restore gate only; companion Variation/suffix/unit and other-device gates remain separate.",
+      "evidence_hashes": {
+        "result.json": "8edc4c32ddad91e94d5185108c479fc42b8fcace467428d15ac7f53417a9a6a6",
+        "frames.npz": "1b04cbb361074035b83d36f908fc6f17ff321bb577242cae602b9cec1f3ec689"
+      },
+      "verifier_sha256": "069146492e686d47b6b809caf05497505a1f318943c8027c75361f2559638b6d"
+    },
+    "render-cuda.json": {
+      "status": "PASS_RECOMPUTED_PUBLIC_RENDER_WITNESSES",
+      "device": "cuda",
+      "job": "6996439",
+      "checkpoints": 204,
+      "mse_mean": 4.622858302013332e-05,
+      "mse_sd": 2.2342846585154604e-05,
+      "mse_max": 9.707183935665775e-05,
+      "groups": 41,
+      "production_files": 11,
+      "public_semantic_promotion": false,
+      "scope": "Current public render/restore gate only; companion Variation/suffix/unit and other-device gates remain separate.",
+      "evidence_hashes": {
+        "result.json": "c72e48182cdcb1c6c480d4b094345fabd1d30b6fcb8da1fc90f375bc9fc4ea17",
+        "frames.npz": "87d250937f13ab8ed276ef0920c5de014c22625801f3b118149231fd5e5e1393"
+      },
+      "verifier_sha256": "069146492e686d47b6b809caf05497505a1f318943c8027c75361f2559638b6d"
+    },
+    "online-cpu.json": {
+      "status": "PASS_RECOMPUTED_BOUNDED_ONLINE_SOURCE",
+      "device": "cpu",
+      "job": "6996439",
+      "cases": 64,
+      "frames": 224,
+      "mse_mean": 0.0,
+      "mse_sd": 0.0,
+      "mse_max": 0.0,
+      "scope": "B2, T1/T8, float32/64, four scenarios and four selectors; not a performance measurement",
+      "performance_claim": false,
+      "report_sha256": "df0811e90e72165aded654c0a696d88a6967cabc908ec8db2b0267699a5d5ba7",
+      "frames_sha256": "5a8f5ea45017e8dcab082a828bc2a5602833efddefcfd24642bea97342375fc2",
+      "verifier_sha256": "d5973cbfdaa8f893b6bf4041ff81a0096ced1c851086c997a4fae4101d5b9940"
+    },
+    "online-cuda.json": {
+      "status": "PASS_RECOMPUTED_BOUNDED_ONLINE_SOURCE",
+      "device": "cuda",
+      "job": "6996439",
+      "cases": 64,
+      "frames": 224,
+      "mse_mean": 6.458992031135259e-05,
+      "mse_sd": 7.875935605284882e-05,
+      "mse_max": 0.0003739141240192519,
+      "scope": "B2, T1/T8, float32/64, four scenarios and four selectors; not a performance measurement",
+      "performance_claim": false,
+      "report_sha256": "a7589650efc424be70e803df665192f54299908dd733f3a8259b5b0dd6a05495",
+      "frames_sha256": "64156335d69c42024542e64e3490147ef305d5e2304cbf60c5c1e8891094617b",
+      "verifier_sha256": "d5973cbfdaa8f893b6bf4041ff81a0096ced1c851086c997a4fae4101d5b9940"
+    }
+  },
+  "limitations": [
+    "Acceptance requires matching source/runtime math profiles; cross-BLAS-profile exact replay is not promised.",
+    "Bounded official-engine replay is O(history), through the registered task's 1,202-action horizon.",
+    "No online speedup or all-family throughput acceptance is inferred from correctness."
+  ],
+  "verifier_sha256": "1a436d6dd34f52ed38f46fe6d1848a2570a4dcbd23c237c110cd2b4ba55f11e2",
+  "evidence_hashes": {
+    "branch-source/result.json": "eb0f543a9b67c3db27287e2c196cb77dc7576c13c313cbc4ad13fc545f32e00c",
+    "branch-source.log": "4a8c552f053966ea76555541259177a3f721e7fed52f1474f3c0f46e4cd83f94",
+    "cpu-terminal.txt": "fd8ee23e83568e7a8076bd5aed266fc188135d007614289cd0e5e26e7437d1a3",
+    "cpu-unit.log": "cb910ddac5b39cd3c8333c7f33884f33b1b36780cda93888d04110b94a8762b7",
+    "cuda-unit.log": "5f2c2c3af93778135031b6095c2ac8c49a93c9053804c4222fcdf169cebe71a1",
+    "gpu-terminal.txt": "84e47d218a438b1cdc4e0b412cb308de1b2d69b91392e6e5c14ae009b9dca67e",
+    "lscpu.txt": "ea7cfc0abfa81b5caf3874b871d7e20697365cf7bfc2f5e7cf507c5291d102b5",
+    "nvidia-smi.txt": "8d5b5f9ec21d39f211545b76da38af565060b0c08c853f43276a271ea961bf3e",
+    "online-cpu/frames.npz": "5a8f5ea45017e8dcab082a828bc2a5602833efddefcfd24642bea97342375fc2",
+    "online-cpu/result.json": "df0811e90e72165aded654c0a696d88a6967cabc908ec8db2b0267699a5d5ba7",
+    "online-cpu.log": "00957733fad884df5e689582d6f6770f1c72ea691f4f87afae506088fe8a08b8",
+    "online-cuda/frames.npz": "64156335d69c42024542e64e3490147ef305d5e2304cbf60c5c1e8891094617b",
+    "online-cuda/result.json": "a7589650efc424be70e803df665192f54299908dd733f3a8259b5b0dd6a05495",
+    "online-cuda.log": "7ea6823886782719b5e0823828adc601333ae22762543dd6cad5d095bdda87d0",
+    "persistent-variation/result.json": "a3887d0a501d8e8ffb7951882a28b8b6c80bbdfbe0c09f24514cd62953d052fa",
+    "persistent-variation.log": "7d6bc8c0969d0461d42c7f66c8e75462e876e2d19cacc0caae10ed080a803656",
+    "public-cpu/frames.npz": "1b04cbb361074035b83d36f908fc6f17ff321bb577242cae602b9cec1f3ec689",
+    "public-cpu/result.json": "8edc4c32ddad91e94d5185108c479fc42b8fcace467428d15ac7f53417a9a6a6",
+    "public-cpu.log": "41de6444f0c08e1f6ec0815cd79c0b40df5e0d81c970f4cd65ec24956b2fea12",
+    "public-cuda/frames.npz": "87d250937f13ab8ed276ef0920c5de014c22625801f3b118149231fd5e5e1393",
+    "public-cuda/result.json": "c72e48182cdcb1c6c480d4b094345fabd1d30b6fcb8da1fc90f375bc9fc4ea17",
+    "public-cuda.log": "11426a82f52d6c656568942ba6e7f8767fc210fb134ab41d30c077a15e507c20",
+    "terminal.txt": "36bebc6579923254ff00f5a89c431380898e14acfdeed9b0e5653c305ea98e1e"
+  },
+  "terminal_sha256": "71643fc3f8d87da5c46786c8b4f989a2a08372e87e2ab28781c07f2d75e3b04b",
+  "promotion": false
+}

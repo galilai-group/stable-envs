@@ -1,0 +1,986 @@
+{
+  "status": "INDEPENDENT_SOURCE_SUFFIXES_PASS",
+  "records": [
+    {
+      "seed": 0,
+      "dtype": "float32",
+      "checkpoint": "reset",
+      "horizon": 0,
+      "branch": "zero",
+      "suffix_steps": 1,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 0,
+      "dtype": "float32",
+      "checkpoint": "reset",
+      "horizon": 0,
+      "branch": "mixed",
+      "suffix_steps": 10,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 0,
+      "dtype": "float32",
+      "checkpoint": "reset",
+      "horizon": 0,
+      "branch": "alternating",
+      "suffix_steps": 25,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 0,
+      "dtype": "float32",
+      "checkpoint": "mixed_prefix",
+      "horizon": 12,
+      "branch": "zero",
+      "suffix_steps": 1,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 0,
+      "dtype": "float32",
+      "checkpoint": "mixed_prefix",
+      "horizon": 12,
+      "branch": "mixed",
+      "suffix_steps": 10,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 0,
+      "dtype": "float32",
+      "checkpoint": "mixed_prefix",
+      "horizon": 12,
+      "branch": "alternating",
+      "suffix_steps": 25,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 0,
+      "dtype": "float32",
+      "checkpoint": "near_contact",
+      "horizon": 301,
+      "branch": "zero",
+      "suffix_steps": 1,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 0,
+      "dtype": "float32",
+      "checkpoint": "near_contact",
+      "horizon": 301,
+      "branch": "mixed",
+      "suffix_steps": 10,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 0,
+      "dtype": "float32",
+      "checkpoint": "near_contact",
+      "horizon": 301,
+      "branch": "alternating",
+      "suffix_steps": 25,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 0,
+      "dtype": "float32",
+      "checkpoint": "crash",
+      "horizon": 303,
+      "branch": "zero",
+      "suffix_steps": 1,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 0,
+      "dtype": "float32",
+      "checkpoint": "crash",
+      "horizon": 303,
+      "branch": "mixed",
+      "suffix_steps": 10,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 0,
+      "dtype": "float32",
+      "checkpoint": "crash",
+      "horizon": 303,
+      "branch": "alternating",
+      "suffix_steps": 25,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 0,
+      "dtype": "float32",
+      "checkpoint": "success",
+      "horizon": 7,
+      "branch": "zero",
+      "suffix_steps": 1,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 0,
+      "dtype": "float32",
+      "checkpoint": "success",
+      "horizon": 7,
+      "branch": "mixed",
+      "suffix_steps": 10,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 0,
+      "dtype": "float32",
+      "checkpoint": "success",
+      "horizon": 7,
+      "branch": "alternating",
+      "suffix_steps": 25,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 0,
+      "dtype": "float32",
+      "checkpoint": "horizon",
+      "horizon": 1201,
+      "branch": "zero",
+      "suffix_steps": 1,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 0,
+      "dtype": "float32",
+      "checkpoint": "horizon",
+      "horizon": 1201,
+      "branch": "mixed",
+      "suffix_steps": 10,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 0,
+      "dtype": "float32",
+      "checkpoint": "horizon",
+      "horizon": 1201,
+      "branch": "alternating",
+      "suffix_steps": 25,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 0,
+      "dtype": "float64",
+      "checkpoint": "reset",
+      "horizon": 0,
+      "branch": "zero",
+      "suffix_steps": 1,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 0,
+      "dtype": "float64",
+      "checkpoint": "reset",
+      "horizon": 0,
+      "branch": "mixed",
+      "suffix_steps": 10,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 0,
+      "dtype": "float64",
+      "checkpoint": "reset",
+      "horizon": 0,
+      "branch": "alternating",
+      "suffix_steps": 25,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 0,
+      "dtype": "float64",
+      "checkpoint": "mixed_prefix",
+      "horizon": 12,
+      "branch": "zero",
+      "suffix_steps": 1,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 0,
+      "dtype": "float64",
+      "checkpoint": "mixed_prefix",
+      "horizon": 12,
+      "branch": "mixed",
+      "suffix_steps": 10,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 0,
+      "dtype": "float64",
+      "checkpoint": "mixed_prefix",
+      "horizon": 12,
+      "branch": "alternating",
+      "suffix_steps": 25,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 0,
+      "dtype": "float64",
+      "checkpoint": "near_contact",
+      "horizon": 301,
+      "branch": "zero",
+      "suffix_steps": 1,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 0,
+      "dtype": "float64",
+      "checkpoint": "near_contact",
+      "horizon": 301,
+      "branch": "mixed",
+      "suffix_steps": 10,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 0,
+      "dtype": "float64",
+      "checkpoint": "near_contact",
+      "horizon": 301,
+      "branch": "alternating",
+      "suffix_steps": 25,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 0,
+      "dtype": "float64",
+      "checkpoint": "crash",
+      "horizon": 303,
+      "branch": "zero",
+      "suffix_steps": 1,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 0,
+      "dtype": "float64",
+      "checkpoint": "crash",
+      "horizon": 303,
+      "branch": "mixed",
+      "suffix_steps": 10,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 0,
+      "dtype": "float64",
+      "checkpoint": "crash",
+      "horizon": 303,
+      "branch": "alternating",
+      "suffix_steps": 25,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 0,
+      "dtype": "float64",
+      "checkpoint": "success",
+      "horizon": 7,
+      "branch": "zero",
+      "suffix_steps": 1,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 0,
+      "dtype": "float64",
+      "checkpoint": "success",
+      "horizon": 7,
+      "branch": "mixed",
+      "suffix_steps": 10,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 0,
+      "dtype": "float64",
+      "checkpoint": "success",
+      "horizon": 7,
+      "branch": "alternating",
+      "suffix_steps": 25,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 0,
+      "dtype": "float64",
+      "checkpoint": "horizon",
+      "horizon": 1201,
+      "branch": "zero",
+      "suffix_steps": 1,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 0,
+      "dtype": "float64",
+      "checkpoint": "horizon",
+      "horizon": 1201,
+      "branch": "mixed",
+      "suffix_steps": 10,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 0,
+      "dtype": "float64",
+      "checkpoint": "horizon",
+      "horizon": 1201,
+      "branch": "alternating",
+      "suffix_steps": 25,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 17,
+      "dtype": "float32",
+      "checkpoint": "reset",
+      "horizon": 0,
+      "branch": "zero",
+      "suffix_steps": 1,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 17,
+      "dtype": "float32",
+      "checkpoint": "reset",
+      "horizon": 0,
+      "branch": "mixed",
+      "suffix_steps": 10,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 17,
+      "dtype": "float32",
+      "checkpoint": "reset",
+      "horizon": 0,
+      "branch": "alternating",
+      "suffix_steps": 25,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 17,
+      "dtype": "float32",
+      "checkpoint": "mixed_prefix",
+      "horizon": 12,
+      "branch": "zero",
+      "suffix_steps": 1,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 17,
+      "dtype": "float32",
+      "checkpoint": "mixed_prefix",
+      "horizon": 12,
+      "branch": "mixed",
+      "suffix_steps": 10,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 17,
+      "dtype": "float32",
+      "checkpoint": "mixed_prefix",
+      "horizon": 12,
+      "branch": "alternating",
+      "suffix_steps": 25,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 17,
+      "dtype": "float32",
+      "checkpoint": "near_contact",
+      "horizon": 301,
+      "branch": "zero",
+      "suffix_steps": 1,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 17,
+      "dtype": "float32",
+      "checkpoint": "near_contact",
+      "horizon": 301,
+      "branch": "mixed",
+      "suffix_steps": 10,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 17,
+      "dtype": "float32",
+      "checkpoint": "near_contact",
+      "horizon": 301,
+      "branch": "alternating",
+      "suffix_steps": 25,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 17,
+      "dtype": "float32",
+      "checkpoint": "crash",
+      "horizon": 303,
+      "branch": "zero",
+      "suffix_steps": 1,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 17,
+      "dtype": "float32",
+      "checkpoint": "crash",
+      "horizon": 303,
+      "branch": "mixed",
+      "suffix_steps": 10,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 17,
+      "dtype": "float32",
+      "checkpoint": "crash",
+      "horizon": 303,
+      "branch": "alternating",
+      "suffix_steps": 25,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 17,
+      "dtype": "float32",
+      "checkpoint": "success",
+      "horizon": 7,
+      "branch": "zero",
+      "suffix_steps": 1,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 17,
+      "dtype": "float32",
+      "checkpoint": "success",
+      "horizon": 7,
+      "branch": "mixed",
+      "suffix_steps": 10,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 17,
+      "dtype": "float32",
+      "checkpoint": "success",
+      "horizon": 7,
+      "branch": "alternating",
+      "suffix_steps": 25,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 17,
+      "dtype": "float32",
+      "checkpoint": "horizon",
+      "horizon": 1201,
+      "branch": "zero",
+      "suffix_steps": 1,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 17,
+      "dtype": "float32",
+      "checkpoint": "horizon",
+      "horizon": 1201,
+      "branch": "mixed",
+      "suffix_steps": 10,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 17,
+      "dtype": "float32",
+      "checkpoint": "horizon",
+      "horizon": 1201,
+      "branch": "alternating",
+      "suffix_steps": 25,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 17,
+      "dtype": "float64",
+      "checkpoint": "reset",
+      "horizon": 0,
+      "branch": "zero",
+      "suffix_steps": 1,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 17,
+      "dtype": "float64",
+      "checkpoint": "reset",
+      "horizon": 0,
+      "branch": "mixed",
+      "suffix_steps": 10,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 17,
+      "dtype": "float64",
+      "checkpoint": "reset",
+      "horizon": 0,
+      "branch": "alternating",
+      "suffix_steps": 25,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 17,
+      "dtype": "float64",
+      "checkpoint": "mixed_prefix",
+      "horizon": 12,
+      "branch": "zero",
+      "suffix_steps": 1,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 17,
+      "dtype": "float64",
+      "checkpoint": "mixed_prefix",
+      "horizon": 12,
+      "branch": "mixed",
+      "suffix_steps": 10,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 17,
+      "dtype": "float64",
+      "checkpoint": "mixed_prefix",
+      "horizon": 12,
+      "branch": "alternating",
+      "suffix_steps": 25,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 17,
+      "dtype": "float64",
+      "checkpoint": "near_contact",
+      "horizon": 301,
+      "branch": "zero",
+      "suffix_steps": 1,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 17,
+      "dtype": "float64",
+      "checkpoint": "near_contact",
+      "horizon": 301,
+      "branch": "mixed",
+      "suffix_steps": 10,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 17,
+      "dtype": "float64",
+      "checkpoint": "near_contact",
+      "horizon": 301,
+      "branch": "alternating",
+      "suffix_steps": 25,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 17,
+      "dtype": "float64",
+      "checkpoint": "crash",
+      "horizon": 303,
+      "branch": "zero",
+      "suffix_steps": 1,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 17,
+      "dtype": "float64",
+      "checkpoint": "crash",
+      "horizon": 303,
+      "branch": "mixed",
+      "suffix_steps": 10,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 17,
+      "dtype": "float64",
+      "checkpoint": "crash",
+      "horizon": 303,
+      "branch": "alternating",
+      "suffix_steps": 25,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 17,
+      "dtype": "float64",
+      "checkpoint": "success",
+      "horizon": 7,
+      "branch": "zero",
+      "suffix_steps": 1,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 17,
+      "dtype": "float64",
+      "checkpoint": "success",
+      "horizon": 7,
+      "branch": "mixed",
+      "suffix_steps": 10,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 17,
+      "dtype": "float64",
+      "checkpoint": "success",
+      "horizon": 7,
+      "branch": "alternating",
+      "suffix_steps": 25,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 17,
+      "dtype": "float64",
+      "checkpoint": "horizon",
+      "horizon": 1201,
+      "branch": "zero",
+      "suffix_steps": 1,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 17,
+      "dtype": "float64",
+      "checkpoint": "horizon",
+      "horizon": 1201,
+      "branch": "mixed",
+      "suffix_steps": 10,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 17,
+      "dtype": "float64",
+      "checkpoint": "horizon",
+      "horizon": 1201,
+      "branch": "alternating",
+      "suffix_steps": 25,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 42,
+      "dtype": "float32",
+      "checkpoint": "reset",
+      "horizon": 0,
+      "branch": "zero",
+      "suffix_steps": 1,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 42,
+      "dtype": "float32",
+      "checkpoint": "reset",
+      "horizon": 0,
+      "branch": "mixed",
+      "suffix_steps": 10,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 42,
+      "dtype": "float32",
+      "checkpoint": "reset",
+      "horizon": 0,
+      "branch": "alternating",
+      "suffix_steps": 25,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 42,
+      "dtype": "float32",
+      "checkpoint": "mixed_prefix",
+      "horizon": 12,
+      "branch": "zero",
+      "suffix_steps": 1,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 42,
+      "dtype": "float32",
+      "checkpoint": "mixed_prefix",
+      "horizon": 12,
+      "branch": "mixed",
+      "suffix_steps": 10,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 42,
+      "dtype": "float32",
+      "checkpoint": "mixed_prefix",
+      "horizon": 12,
+      "branch": "alternating",
+      "suffix_steps": 25,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 42,
+      "dtype": "float32",
+      "checkpoint": "near_contact",
+      "horizon": 301,
+      "branch": "zero",
+      "suffix_steps": 1,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 42,
+      "dtype": "float32",
+      "checkpoint": "near_contact",
+      "horizon": 301,
+      "branch": "mixed",
+      "suffix_steps": 10,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 42,
+      "dtype": "float32",
+      "checkpoint": "near_contact",
+      "horizon": 301,
+      "branch": "alternating",
+      "suffix_steps": 25,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 42,
+      "dtype": "float32",
+      "checkpoint": "crash",
+      "horizon": 303,
+      "branch": "zero",
+      "suffix_steps": 1,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 42,
+      "dtype": "float32",
+      "checkpoint": "crash",
+      "horizon": 303,
+      "branch": "mixed",
+      "suffix_steps": 10,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 42,
+      "dtype": "float32",
+      "checkpoint": "crash",
+      "horizon": 303,
+      "branch": "alternating",
+      "suffix_steps": 25,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 42,
+      "dtype": "float32",
+      "checkpoint": "success",
+      "horizon": 7,
+      "branch": "zero",
+      "suffix_steps": 1,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 42,
+      "dtype": "float32",
+      "checkpoint": "success",
+      "horizon": 7,
+      "branch": "mixed",
+      "suffix_steps": 10,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 42,
+      "dtype": "float32",
+      "checkpoint": "success",
+      "horizon": 7,
+      "branch": "alternating",
+      "suffix_steps": 25,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 42,
+      "dtype": "float32",
+      "checkpoint": "horizon",
+      "horizon": 1201,
+      "branch": "zero",
+      "suffix_steps": 1,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 42,
+      "dtype": "float32",
+      "checkpoint": "horizon",
+      "horizon": 1201,
+      "branch": "mixed",
+      "suffix_steps": 10,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 42,
+      "dtype": "float32",
+      "checkpoint": "horizon",
+      "horizon": 1201,
+      "branch": "alternating",
+      "suffix_steps": 25,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 42,
+      "dtype": "float64",
+      "checkpoint": "reset",
+      "horizon": 0,
+      "branch": "zero",
+      "suffix_steps": 1,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 42,
+      "dtype": "float64",
+      "checkpoint": "reset",
+      "horizon": 0,
+      "branch": "mixed",
+      "suffix_steps": 10,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 42,
+      "dtype": "float64",
+      "checkpoint": "reset",
+      "horizon": 0,
+      "branch": "alternating",
+      "suffix_steps": 25,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 42,
+      "dtype": "float64",
+      "checkpoint": "mixed_prefix",
+      "horizon": 12,
+      "branch": "zero",
+      "suffix_steps": 1,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 42,
+      "dtype": "float64",
+      "checkpoint": "mixed_prefix",
+      "horizon": 12,
+      "branch": "mixed",
+      "suffix_steps": 10,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 42,
+      "dtype": "float64",
+      "checkpoint": "mixed_prefix",
+      "horizon": 12,
+      "branch": "alternating",
+      "suffix_steps": 25,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 42,
+      "dtype": "float64",
+      "checkpoint": "near_contact",
+      "horizon": 301,
+      "branch": "zero",
+      "suffix_steps": 1,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 42,
+      "dtype": "float64",
+      "checkpoint": "near_contact",
+      "horizon": 301,
+      "branch": "mixed",
+      "suffix_steps": 10,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 42,
+      "dtype": "float64",
+      "checkpoint": "near_contact",
+      "horizon": 301,
+      "branch": "alternating",
+      "suffix_steps": 25,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 42,
+      "dtype": "float64",
+      "checkpoint": "crash",
+      "horizon": 303,
+      "branch": "zero",
+      "suffix_steps": 1,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 42,
+      "dtype": "float64",
+      "checkpoint": "crash",
+      "horizon": 303,
+      "branch": "mixed",
+      "suffix_steps": 10,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 42,
+      "dtype": "float64",
+      "checkpoint": "crash",
+      "horizon": 303,
+      "branch": "alternating",
+      "suffix_steps": 25,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 42,
+      "dtype": "float64",
+      "checkpoint": "success",
+      "horizon": 7,
+      "branch": "zero",
+      "suffix_steps": 1,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 42,
+      "dtype": "float64",
+      "checkpoint": "success",
+      "horizon": 7,
+      "branch": "mixed",
+      "suffix_steps": 10,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 42,
+      "dtype": "float64",
+      "checkpoint": "success",
+      "horizon": 7,
+      "branch": "alternating",
+      "suffix_steps": 25,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 42,
+      "dtype": "float64",
+      "checkpoint": "horizon",
+      "horizon": 1201,
+      "branch": "zero",
+      "suffix_steps": 1,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 42,
+      "dtype": "float64",
+      "checkpoint": "horizon",
+      "horizon": 1201,
+      "branch": "mixed",
+      "suffix_steps": 10,
+      "source_numeric_and_future_pixels_exact": true
+    },
+    {
+      "seed": 42,
+      "dtype": "float64",
+      "checkpoint": "horizon",
+      "horizon": 1201,
+      "branch": "alternating",
+      "suffix_steps": 25,
+      "source_numeric_and_future_pixels_exact": true
+    }
+  ],
+  "production_hashes": {
+    "stable_envs/_adapters/rocket.py": "5839c86cb903e1f206254b7e52f590912ed2c45dbc5ae6189f8a77f46db15996",
+    "stable_envs/_adapters/rocket_actions.py": "60a9916dce5a974b20d4c745e1740a9377f73449909035678d9c842b71105273",
+    "stable_envs/_adapters/rocket_numeric.py": "cbab5bd70d7f755b206c8bbc47943418541b34649d718d83ff96ee37ba1c0b61",
+    "stable_envs/_adapters/rocket_replay.py": "0b49681d18af6b58dbb2ffb2db9ec67ec2c070582e4719ed88efa8609dd7dcec",
+    "stable_envs/_adapters/rocket_spaces.py": "f4f9d630413af8823e8b3a499e25a5ccbf764af25cb4ac555d58fb80a18cfe78",
+    "stable_envs/_adapters/rocket_task.py": "0b6f54d75c48f2c8aa9daf8444303e1f2e2b2d0867796829c1b3dec972753bb3",
+    "stable_envs/envs/rocket_semantics.py": "e3361d33ccf08a4218d59ccaa7baf23629ed8dc5e2a87f013e05ec9280b05a30"
+  }
+}

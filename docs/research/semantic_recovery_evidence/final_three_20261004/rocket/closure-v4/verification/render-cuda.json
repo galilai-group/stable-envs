@@ -1,0 +1,18 @@
+{
+  "status": "PASS_RECOMPUTED_PUBLIC_RENDER_WITNESSES",
+  "device": "cuda",
+  "job": "6996439",
+  "checkpoints": 204,
+  "mse_mean": 4.622858302013332e-05,
+  "mse_sd": 2.2342846585154604e-05,
+  "mse_max": 9.707183935665775e-05,
+  "groups": 41,
+  "production_files": 11,
+  "public_semantic_promotion": false,
+  "scope": "Current public render/restore gate only; companion Variation/suffix/unit and other-device gates remain separate.",
+  "evidence_hashes": {
+    "result.json": "c72e48182cdcb1c6c480d4b094345fabd1d30b6fcb8da1fc90f375bc9fc4ea17",
+    "frames.npz": "87d250937f13ab8ed276ef0920c5de014c22625801f3b118149231fd5e5e1393"
+  },
+  "verifier_sha256": "069146492e686d47b6b809caf05497505a1f318943c8027c75361f2559638b6d"
+}

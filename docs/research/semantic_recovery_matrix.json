@@ -3657,8 +3657,8 @@
       ],
       "family": "rocket",
       "owner": "coordinator",
-      "state_contract": "Typed bounded replay State through official PyFlyt/PyBullet; current CPU/CUDA gates pass, online and replay-cost closure pending",
-      "state_status": "INCOMPLETE",
+      "state_contract": "Typed bounded numeric replay State through official PyFlyt/PyBullet; independent CPU/CUDA-output restoration and future continuation accepted",
+      "state_status": "VERIFIED",
       "action_parity": "PASS_CURRENT_BOUNDED_CPU_CUDA_PUBLIC_GATES",
       "reset_parity": "PASS_CURRENT_BOUNDED_CPU_CUDA_PUBLIC_GATES",
       "step_parity": "PASS_CURRENT_BOUNDED_CPU_CUDA_PUBLIC_GATES",
@@ -3667,27 +3667,103 @@
       "rng_lifecycle": "PASS_CURRENT_BOUNDED_CPU_CUDA_PUBLIC_GATES",
       "variation_parity": "PASS_90_PERSISTENT_VARIATION_CASES_AND_PUBLIC_CPU_CUDA_RENDER_MATRIX",
       "execution_mode": "DELEGATED_CPU",
-      "adapter_status": "IMPLEMENTED_BOUNDED_REPLAY_ACCEPTANCE_PENDING",
-      "renderer_regression": "PASS_480_CPU_CUDA_204_CHECKPOINTS_EACH; FAIL_96_CUDA_ONLINE_MSE_0.00188955993_OVER_0.001",
+      "adapter_status": "VERIFIED_BOUNDED_REPLAY",
+      "renderer_regression": "PASS_CURRENT_480_CPU_CUDA_204_CHECKPOINTS_EACH_AND_96_ONLINE_224_FRAMES_EACH",
       "oracle_corpus": null,
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
       "stable_gpu_benchmark": "NOT_RUN",
-      "similarity_metrics": null,
+      "similarity_metrics": {
+        "render-cpu.json": {
+          "status": "PASS_RECOMPUTED_PUBLIC_RENDER_WITNESSES",
+          "device": "cpu",
+          "job": "6996439",
+          "checkpoints": 204,
+          "mse_mean": 0.0,
+          "mse_sd": 0.0,
+          "mse_max": 0.0,
+          "groups": 41,
+          "production_files": 11,
+          "public_semantic_promotion": false,
+          "scope": "Current public render/restore gate only; companion Variation/suffix/unit and other-device gates remain separate.",
+          "evidence_hashes": {
+            "result.json": "8edc4c32ddad91e94d5185108c479fc42b8fcace467428d15ac7f53417a9a6a6",
+            "frames.npz": "1b04cbb361074035b83d36f908fc6f17ff321bb577242cae602b9cec1f3ec689"
+          },
+          "verifier_sha256": "069146492e686d47b6b809caf05497505a1f318943c8027c75361f2559638b6d"
+        },
+        "render-cuda.json": {
+          "status": "PASS_RECOMPUTED_PUBLIC_RENDER_WITNESSES",
+          "device": "cuda",
+          "job": "6996439",
+          "checkpoints": 204,
+          "mse_mean": 4.622858302013332e-05,
+          "mse_sd": 2.2342846585154604e-05,
+          "mse_max": 9.707183935665775e-05,
+          "groups": 41,
+          "production_files": 11,
+          "public_semantic_promotion": false,
+          "scope": "Current public render/restore gate only; companion Variation/suffix/unit and other-device gates remain separate.",
+          "evidence_hashes": {
+            "result.json": "c72e48182cdcb1c6c480d4b094345fabd1d30b6fcb8da1fc90f375bc9fc4ea17",
+            "frames.npz": "87d250937f13ab8ed276ef0920c5de014c22625801f3b118149231fd5e5e1393"
+          },
+          "verifier_sha256": "069146492e686d47b6b809caf05497505a1f318943c8027c75361f2559638b6d"
+        },
+        "online-cpu.json": {
+          "status": "PASS_RECOMPUTED_BOUNDED_ONLINE_SOURCE",
+          "device": "cpu",
+          "job": "6996439",
+          "cases": 64,
+          "frames": 224,
+          "mse_mean": 0.0,
+          "mse_sd": 0.0,
+          "mse_max": 0.0,
+          "scope": "B2, T1/T8, float32/64, four scenarios and four selectors; not a performance measurement",
+          "performance_claim": false,
+          "report_sha256": "df0811e90e72165aded654c0a696d88a6967cabc908ec8db2b0267699a5d5ba7",
+          "frames_sha256": "5a8f5ea45017e8dcab082a828bc2a5602833efddefcfd24642bea97342375fc2",
+          "verifier_sha256": "d5973cbfdaa8f893b6bf4041ff81a0096ced1c851086c997a4fae4101d5b9940"
+        },
+        "online-cuda.json": {
+          "status": "PASS_RECOMPUTED_BOUNDED_ONLINE_SOURCE",
+          "device": "cuda",
+          "job": "6996439",
+          "cases": 64,
+          "frames": 224,
+          "mse_mean": 6.458992031135259e-05,
+          "mse_sd": 7.875935605284882e-05,
+          "mse_max": 0.0003739141240192519,
+          "scope": "B2, T1/T8, float32/64, four scenarios and four selectors; not a performance measurement",
+          "performance_claim": false,
+          "report_sha256": "a7589650efc424be70e803df665192f54299908dd733f3a8259b5b0dd6a05495",
+          "frames_sha256": "64156335d69c42024542e64e3490147ef305d5e2304cbf60c5c1e8891094617b",
+          "verifier_sha256": "d5973cbfdaa8f893b6bf4041ff81a0096ced1c851086c997a4fae4101d5b9940"
+        }
+      },
       "remaining_issues": [
-        "The historical direct numeric/native snapshot route was nonexact; the implemented official-engine replay route supersedes that investigation.",
-        "Current 480-pixel CPU/CUDA public/render, persistent-Variation, independent-source suffix and unit gates passed. CPU online source gate passed 64 cases/224 exact frames; CUDA online gate 6992589 failed its first 96-pixel render comparison at MSE 0.00188955993, after matching State/task outputs.",
-        "Resolve low-resolution rendering using diagnostic 6993083 without weakening thresholds. B1 CPU replay costs completed in 6992404_0; B16 and GPU measurements remain pending. Speedups are not inferred from correctness."
+        "Exact replay requires the certified source/runtime math profile; cross-BLAS-profile bitwise portability is not established.",
+        "Physical history capacity follows the source max_steps + 2 (1,202 actions at the registered 30-second/40-Hz defaults); ordinary stepping does not replay history.",
+        "Restoration reconstructs authoritative CPU engines and costs O(history); numeric State includes the source goal-image cache.",
+        "Dynamics remain DELEGATED_CPU. CUDA State storage and GPU rendering do not imply GPU physics.",
+        "Rendering is accepted only for the recorded reached-state/configuration corpus, with unchanged frozen visual criteria and per-frame normalized MSE <= 0.001.",
+        "No universal online speedup or complete source-paired throughput table is claimed. B16/full GPU replay-cost tables remain unfinished; available B1 and prototype timing scopes are recorded separately."
       ],
-      "test": "tests/unit/test_full_state_contract.py",
+      "test": "tests/unit/test_rocket_replay_semantics.py; tests/unit/test_rocket_cuda_coverage.py; scripts/research_rocket_production/verify_final_acceptance.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "execution_candidate": "DELEGATED",
-      "recovery_status": "PASS_480_PUBLIC_GATES_CPU_ONLINE_PASS_CUDA_96_RENDER_BLOCKER",
+      "recovery_status": "VERIFIED_PUBLIC_REPLAY_CPU_CUDA_RENDER_ONLINE",
       "audit_report": "docs/research/rocket_recovery_audit.md",
       "feasibility_evidence": "docs/research/semantic_recovery_evidence/rocket_source_audit/feasibility-final/result.json",
       "feasibility_controls": "docs/research/semantic_recovery_evidence/rocket_source_audit/controls-final/result.json",
       "source_provenance": "docs/research/semantic_recovery_evidence/rocket_source_audit/provenance.json",
-      "current_recovery_evidence": "docs/research/semantic_recovery_evidence/noncraftax_completion_20261003/README.md"
+      "current_recovery_evidence": "docs/research/semantic_recovery_evidence/final_three_20261004/rocket/closure-v4/acceptance.json",
+      "verified_classes": [
+        "PyFlytRocketLanding"
+      ],
+      "implementation_commit": "2d1875e1",
+      "oscar_job": 6996439,
+      "verification_scope": "Bounded independent public source State/task/restore and CPU/GPU pixel gates. See accepted limitations; not a full performance certification."
     },
     {
       "historical_id": "swm/PendulumControl-v1",
@@ -4566,7 +4642,7 @@
       ]
     }
   ],
-  "checkpoint": "Current registration status: 41 VERIFIED / 1 INCOMPLETE; 37/38 excluding deferred Craftax. PushT and PushT-Discrete independently accepted for public numeric replay State, source CPU physics/rendering and CUDA State/output storage. Rocket remains incomplete. VERIFIED certifies each row's stated semantic evidence scope, not universal rendering fidelity, accelerated GPU rendering or online speedup.",
+  "checkpoint": "42 VERIFIED / 0 INCOMPLETE historically; 38/38 non-Craftax registrations accepted for their recorded semantic scopes. Craftax remains excluded from this campaign and was not retested. Rendering and online performance claims remain separately scoped.",
   "fetch_family_acceptance": {
     "implementation_commit": "0dd0271f47d5b01dde1630a8cdbb1ea0072a5f92",
     "report": "docs/research/fetch_family_recovery.md",
@@ -4625,6 +4701,17 @@
     "counts": {
       "VERIFIED": 41,
       "INCOMPLETE": 1
+    }
+  },
+  "rocket_public_acceptance": {
+    "manifest": "docs/research/semantic_recovery_evidence/final_three_20261004/rocket/closure-v4/acceptance.json",
+    "job": 6996439,
+    "newly_verified": [
+      "swm/PFRocketLanding-v0"
+    ],
+    "counts": {
+      "VERIFIED": 42,
+      "INCOMPLETE": 0
     }
   }
 }

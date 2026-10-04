@@ -32,6 +32,7 @@ NATIVE_SWM_IDS = frozenset(
 # exact accepted scopes and evidence live in semantic_recovery_matrix.json.
 DELEGATED_CPU_SWM_IDS = frozenset(
     {
+        "swm/PFRocketLanding-v0",
         "swm/PushT-Discrete-v1",
         "swm/PushT-v1",
         "swm/BallInCupDMControl-v0",

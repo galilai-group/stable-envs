@@ -1,6 +1,8 @@
 # Rocket low-resolution GPU coverage investigation (2026-10-04)
 
-**37/38 non-Craftax registrations are accepted. Rocket remains INCOMPLETE.**
+**Closed: 38/38 non-Craftax registrations are accepted.** See the
+[final Rocket acceptance](rocket_acceptance.md) for verified results and scope.
+The dated investigation and pending-job observations below are retained as history.
 Both PushT registrations were independently accepted and pushed on `sami-dev`
 in `d543e669`. This checkpoint integrates a Rocket-local GPU raster candidate and preserves the
 investigation evidence. State validation and the acceptance threshold are unchanged.

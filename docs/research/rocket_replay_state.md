@@ -1,11 +1,10 @@
 # Rocket replay State candidate
 
-Current 480×480 CPU/CUDA public renderer and semantic gates pass. The newer
-96×96 CUDA online gate has a rendering blocker: one frame measures normalized
-MSE 0.00188956 against the unchanged 0.001 limit. CPU online source comparison
-passed all 64 cases. The matrix remains **39 VERIFIED / 3 INCOMPLETE** while
-this blocker and the remaining replay-cost work close. See the
-[current recovery evidence](semantic_recovery_evidence/noncraftax_completion_20261003/README.md).
+The current 480×480 CPU/CUDA public gates and 96×96 online source gates pass.
+The low-resolution coverage blocker was fixed without changing the 0.001 limit.
+Rocket is accepted, bringing non-Craftax State/simulation acceptance to **38/38**.
+See the [final acceptance and limits](rocket_acceptance.md). Broad performance
+certification remains separate.
 The earlier [renderer blocker checkpoint](rocket_public_renderer_blocker.md)
 is preserved as historical evidence, not the current renderer status.
 
@@ -14,8 +13,8 @@ migrated SWM-local task on official PyFlyt 0.29.0 / PyBullet 3.2.7. Its optional
 `rocket` extra pins the audited NumPy and Gymnasium profile. Production imports
 no stable-worldmodel code. CPU rendering uses TinyRenderer with explicit body
 and cached camera poses. CUDA rendering retains its visual tier and frozen
-acceptance limits; the current 204-checkpoint gate has maximum normalized MSE
-0.000428221, while the CPU gate is pixel-exact. These are bounded measured
+acceptance limits; the final 204-checkpoint gate has maximum normalized MSE
+0.0000970718, while the CPU gate is pixel-exact. These are bounded measured
 claims, not universal fidelity or throughput guarantees.
 
 Each batch lane stores numeric fixed-shape leaves:
@@ -55,5 +54,6 @@ of Variation seeding; snapshots of the resulting episodes are replayable.
 
 Restore costs O(H) for the recorded physical prefix, with H at most 1,202 for
 the registered configuration; ordinary stepping does not replay history.
-The remaining acceptance and descriptive performance measurements are tracked
-in the fresh checkpoint evidence, without replacing prior sealed evidence.
+Accepted replay requires a matching source/runtime math profile; cross-BLAS-profile
+bitwise portability is not established. Remaining descriptive performance work is
+tracked separately, without replacing prior sealed evidence.

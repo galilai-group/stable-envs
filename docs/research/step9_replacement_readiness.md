@@ -5,7 +5,7 @@ is tracked separately in [the recovery matrix](semantic_recovery_matrix.json);
 these architecture statuses do not certify task parity. Status is **derived** from
 `tests/helpers/reference/readiness.py`, not from prose beside the table.
 
-<!-- readiness-counts READY=1 PARTIAL=23 INCOMPLETE=16 SYMBOLIC=2 -->
+<!-- readiness-counts READY=1 PARTIAL=24 INCOMPLETE=15 SYMBOLIC=2 -->
 
 `READY` means:
 
@@ -66,11 +66,11 @@ renderer sharing the same historical registration can remain incomplete.
 | status | count |
 |---|---|
 | READY | 1 |
-| PARTIAL | 23 |
-| INCOMPLETE | 16 |
+| PARTIAL | 24 |
+| INCOMPLETE | 15 |
 | SYMBOLIC | 2 |
 
-Execution: NATIVE 5 · DELEGATED_CPU 19 · INCOMPLETE 16 · SYMBOLIC 2.
+Execution: NATIVE 3 · DELEGATED_CPU 22 · INCOMPLETE 15 · SYMBOLIC 2.
 
 ## Per historical cell
 
@@ -111,7 +111,7 @@ exact default task being `VERIFIED`. Full Variation surfaces remain uncertified.
 | `swm/OGBCube-v0` | `OGBCube` | DELEGATED_CPU | READY | All 11 public configuration leaves mapped; exact accepted scope in Cube/Scene recovery report |
 | `swm/OGBMaze-v0` | `PointMazeLargeNavigate` (default only) | DELEGATED_CPU | PARTIAL | other maze configurations/tasks and complete appearance surface |
 | `swm/OGBScene-v0` | `OGBScene` | DELEGATED_CPU | PARTIAL | Eight public leaves mapped; four historical Cube start/goal controls explicitly refused; registered Scene task default accepted |
-| `swm/PFRocketLanding-v0` | `PyFlytRocketLanding` | INCOMPLETE | INCOMPLETE | no SE step; start height/offset/tilt |
+| `swm/PFRocketLanding-v0` | `PyFlytRocketLanding` | DELEGATED_CPU | PARTIAL | Public replay State/source stepping accepted; legacy VariationMap still lists start height/offset/tilt gaps. See the semantic acceptance scope. |
 | `swm/PendulumControl-v1` | `Pendulum` | DELEGATED_CPU | PARTIAL | Gymnasium Pendulum-v1; full Variation surface remains uncertified |
 | `swm/PendulumDMControl-v0` | `DMCPendulumSwingup` | DELEGATED_CPU | PARTIAL | SwingUp; complete historical Variation surface remains uncertified |
 | `swm/Piecewise-v0` | `Piecewise`, `PiecewiseZones` | NATIVE | PARTIAL | Exact CPU default with native Torch dynamics; sibling variants and full Variation surface uncertified |
