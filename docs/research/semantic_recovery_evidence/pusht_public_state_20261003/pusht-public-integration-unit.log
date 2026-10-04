@@ -1,0 +1,82 @@
+............................................s........F.....F
+=================================== FAILURES ===================================
+_____ test_full_snapshot_restores_future_and_has_no_aliases[MiniGridEmpty] _____
+
+name = 'MiniGridEmpty'
+
+    @pytest.mark.parametrize(
+        "name", ["CartPole", "Pendulum", "Acrobot", "PushT", "PushTDiscrete", "MiniGridEmpty", "TwoRoom"]
+    )
+    def test_full_snapshot_restores_future_and_has_no_aliases(name):
+>       with se.make(name, num_envs=2, device="cpu") as env:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_full_state_contract.py:15: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+stable_envs/__init__.py:47: in make
+    return _make(name, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+stable_envs/registry.py:249: in make
+    return _resolve(name)(**kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+stable_envs/envs/minigrid.py:517: in __init__
+    super().__init__(*a, **kw)
+stable_envs/envs/minigrid.py:186: in __init__
+    super().__init__(*a, **kw)
+stable_envs/env.py:668: in __init__
+    self.variation_space: VariationDict = self.make_variation_space()
+                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+stable_envs/envs/minigrid.py:245: in make_variation_space
+    "palette": Box(low=0, high=255, shape=(tm.N_COLOR, 3), dtype=np.uint8, init_value=tm.official_colors()),
+                                                                                      ^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def official_colors() -> np.ndarray:
+        """``COLORS`` as a (6,3) uint8 array in ``COLOR_TO_IDX`` order, read from the package."""
+>       from minigrid.core.constants import COLOR_TO_IDX, COLORS
+E       ModuleNotFoundError: No module named 'minigrid'
+
+stable_envs/render/tilemap.py:88: ModuleNotFoundError
+___ test_lossy_projection_is_rejected_and_full_state_renders[MiniGridEmpty] ____
+
+name = 'MiniGridEmpty'
+
+    @pytest.mark.parametrize("name", ["CartPole", "Pendulum", "PushT", "PushTDiscrete", "MiniGridEmpty"])
+    def test_lossy_projection_is_rejected_and_full_state_renders(name):
+>       with se.make(name, num_envs=2, device="cpu") as env:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/test_full_state_contract.py:38: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+stable_envs/__init__.py:47: in make
+    return _make(name, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+stable_envs/registry.py:249: in make
+    return _resolve(name)(**kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+stable_envs/envs/minigrid.py:517: in __init__
+    super().__init__(*a, **kw)
+stable_envs/envs/minigrid.py:186: in __init__
+    super().__init__(*a, **kw)
+stable_envs/env.py:668: in __init__
+    self.variation_space: VariationDict = self.make_variation_space()
+                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+stable_envs/envs/minigrid.py:245: in make_variation_space
+    "palette": Box(low=0, high=255, shape=(tm.N_COLOR, 3), dtype=np.uint8, init_value=tm.official_colors()),
+                                                                                      ^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def official_colors() -> np.ndarray:
+        """``COLORS`` as a (6,3) uint8 array in ``COLOR_TO_IDX`` order, read from the package."""
+>       from minigrid.core.constants import COLOR_TO_IDX, COLORS
+E       ModuleNotFoundError: No module named 'minigrid'
+
+stable_envs/render/tilemap.py:88: ModuleNotFoundError
+------------------------------ stable-envs safety ------------------------------
+resources: 0 EGL contexts created, 0 released, 0 live (peak 0); renderers 0 created / 0 closed
+node: cis1b1zs2j3.ad.brown.edu slurm=? reason=none reference-renderer={}
+=========================== short test summary info ============================
+FAILED tests/unit/test_full_state_contract.py::test_full_snapshot_restores_future_and_has_no_aliases[MiniGridEmpty]
+FAILED tests/unit/test_full_state_contract.py::test_lossy_projection_is_rejected_and_full_state_renders[MiniGridEmpty]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 2 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+2 failed, 57 passed, 1 skipped, 4 warnings in 2.46s

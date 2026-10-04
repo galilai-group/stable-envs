@@ -1,0 +1,5 @@
+Using Python 3.12.11 environment at: /private/tmp/se-completion-312
+Resolved 28 packages in 239ms
+Would download 1 package
+Would install 1 package
+ + stable-envs @ file:///private/tmp/stable-envs-v0-runtime-wheel/stable_envs-0.1.0-py3-none-any.whl
