@@ -40,6 +40,9 @@ corpora and require byte-identical arrays. The native live profile now has 56
 required cases, covering all five registrations. Together with FetchReach and
 Rocket, **7/38 registrations** have shared live-source regression profiles.
 This is migration coverage, not a change to the 38 accepted registration scopes.
+The [corpus cohort report](research/testing_corpus_20261004/README.md) records
+local and Oscar validation, preserved failed controls and the measured float64
+roundoff policy for cross-machine frozen trajectories.
 
 Remaining step-4/5 work includes source pixels and render configuration in saved
 corpora, other family profiles, benchmark consumers, and removal of duplicate

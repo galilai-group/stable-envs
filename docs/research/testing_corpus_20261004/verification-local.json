@@ -1,0 +1,22 @@
+{
+  "candidate_commit": "cc81789cb468ef2c5caffda000a27de44bf7a681",
+  "verified_candidate_files": 200,
+  "verified_seals": {
+    "tests/fixtures/semantics/shared_native": 17,
+    "docs/research/testing_cleanup_20261004": 81,
+    "docs/research/testing_cleanup_cuda_20261004": 16,
+    "docs/research/semantic_recovery_evidence/final_three_20261004/rocket/closure-v4": 76,
+    "docs/research/testing_corpus_20261004/native": 59
+  },
+  "local_runtime": {
+    "python": "3.12.11",
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "versions": {
+      "numpy": "2.2.6",
+      "gymnasium": "1.2.3",
+      "torch": "2.14.1",
+      "tensordict": "0.14.2",
+      "pygame": "2.6.1"
+    }
+  }
+}

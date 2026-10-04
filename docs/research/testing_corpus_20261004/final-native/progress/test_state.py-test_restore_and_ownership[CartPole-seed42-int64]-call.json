@@ -1,0 +1,6 @@
+{
+  "detail": null,
+  "node": "tests/contracts/test_state.py::test_restore_and_ownership[CartPole-seed42-int64]",
+  "phase": "call",
+  "status": "PASS"
+}

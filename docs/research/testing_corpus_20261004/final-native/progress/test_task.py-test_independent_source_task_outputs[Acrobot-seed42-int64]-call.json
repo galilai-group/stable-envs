@@ -1,0 +1,6 @@
+{
+  "detail": null,
+  "node": "tests/contracts/test_task.py::test_independent_source_task_outputs[Acrobot-seed42-int64]",
+  "phase": "call",
+  "status": "PASS"
+}

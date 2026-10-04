@@ -1,0 +1,6 @@
+{
+  "detail": null,
+  "node": "tests/contracts/test_state.py::test_restore_and_ownership[MountainCarContinuous-seed42-float64]",
+  "phase": "call",
+  "status": "PASS"
+}

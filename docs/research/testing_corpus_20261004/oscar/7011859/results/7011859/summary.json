@@ -1,0 +1,236 @@
+{
+  "counts": {
+    "error": 0,
+    "failed": 0,
+    "crashed": 0,
+    "xpassed": 0,
+    "xfailed": 0,
+    "skipped": 0,
+    "passed": 76
+  },
+  "segments": 1,
+  "wall_s": 25.22545623779297,
+  "crashed": [],
+  "resources": {
+    "context_created": 0,
+    "context_freed": 0,
+    "renderer_created": 0,
+    "renderer_closed": 0,
+    "context_peak_live": 0
+  },
+  "node": {
+    "kind": "node_gate",
+    "host": "gpu1505",
+    "ok": true,
+    "why": "",
+    "scheduler": {
+      "state": "alloc",
+      "reason": "none",
+      "source": "sinfo"
+    },
+    "renderer": {},
+    "t": 1791156402.704
+  },
+  "slowest": [
+    {
+      "dur": 2.882,
+      "nodeid": "tests/contracts/test_saved_trajectory.py::test_disk_restore_continuation_and_capture[cuda-CartPole]"
+    },
+    {
+      "dur": 0.851,
+      "nodeid": "tests/contracts/test_saved_trajectory.py::test_disk_restore_continuation_and_capture[cpu-Pendulum]"
+    },
+    {
+      "dur": 0.765,
+      "nodeid": "tests/contracts/test_state.py::test_restore_and_ownership[CartPole-seed17-int64]"
+    },
+    {
+      "dur": 0.669,
+      "nodeid": "tests/contracts/test_saved_trajectory.py::test_disk_restore_continuation_and_capture[cpu-CartPole]"
+    },
+    {
+      "dur": 0.614,
+      "nodeid": "tests/contracts/test_saved_trajectory.py::test_disk_restore_continuation_and_capture[cpu-Acrobot]"
+    },
+    {
+      "dur": 0.574,
+      "nodeid": "tests/contracts/test_saved_trajectory.py::test_disk_restore_continuation_and_capture[cpu-MountainCarContinuous]"
+    },
+    {
+      "dur": 0.565,
+      "nodeid": "tests/contracts/test_saved_trajectory.py::test_disk_restore_continuation_and_capture[cpu-MountainCar]"
+    },
+    {
+      "dur": 0.527,
+      "nodeid": "tests/contracts/test_saved_trajectory.py::test_disk_restore_continuation_and_capture[cuda-Pendulum]"
+    },
+    {
+      "dur": 0.494,
+      "nodeid": "tests/contracts/test_saved_trajectory.py::test_disk_restore_continuation_and_capture[cuda-Acrobot]"
+    },
+    {
+      "dur": 0.475,
+      "nodeid": "tests/contracts/test_saved_trajectory.py::test_disk_restore_continuation_and_capture[cuda-MountainCar]"
+    },
+    {
+      "dur": 0.451,
+      "nodeid": "tests/contracts/test_saved_trajectory.py::test_disk_restore_continuation_and_capture[cuda-MountainCarContinuous]"
+    },
+    {
+      "dur": 0.234,
+      "nodeid": "tests/contracts/test_online.py::test_selected_states_follow_source[CartPole-seed42-int64]"
+    },
+    {
+      "dur": 0.234,
+      "nodeid": "tests/contracts/test_online.py::test_selected_states_follow_source[CartPole-seed17-int64]"
+    },
+    {
+      "dur": 0.226,
+      "nodeid": "tests/contracts/test_online.py::test_selected_states_follow_source[Acrobot-seed42-int64]"
+    },
+    {
+      "dur": 0.225,
+      "nodeid": "tests/contracts/test_online.py::test_selected_states_follow_source[Acrobot-seed17-int64]"
+    },
+    {
+      "dur": 0.222,
+      "nodeid": "tests/contracts/test_online.py::test_selected_states_follow_source[Pendulum-seed17-float64]"
+    },
+    {
+      "dur": 0.221,
+      "nodeid": "tests/contracts/test_online.py::test_selected_states_follow_source[Pendulum-seed42-float32]"
+    },
+    {
+      "dur": 0.22,
+      "nodeid": "tests/contracts/test_online.py::test_selected_states_follow_source[Pendulum-seed17-float32]"
+    },
+    {
+      "dur": 0.219,
+      "nodeid": "tests/contracts/test_online.py::test_selected_states_follow_source[Pendulum-seed42-float64]"
+    },
+    {
+      "dur": 0.197,
+      "nodeid": "tests/contracts/test_online.py::test_selected_states_follow_source[MountainCarContinuous-seed42-float64]"
+    },
+    {
+      "dur": 0.197,
+      "nodeid": "tests/contracts/test_online.py::test_selected_states_follow_source[MountainCarContinuous-seed42-float32]"
+    },
+    {
+      "dur": 0.197,
+      "nodeid": "tests/contracts/test_online.py::test_selected_states_follow_source[MountainCarContinuous-seed17-float64]"
+    },
+    {
+      "dur": 0.197,
+      "nodeid": "tests/contracts/test_online.py::test_selected_states_follow_source[MountainCarContinuous-seed17-float32]"
+    },
+    {
+      "dur": 0.19,
+      "nodeid": "tests/contracts/test_online.py::test_selected_states_follow_source[MountainCar-seed17-int64]"
+    },
+    {
+      "dur": 0.188,
+      "nodeid": "tests/contracts/test_online.py::test_selected_states_follow_source[MountainCar-seed42-int64]"
+    },
+    {
+      "dur": 0.113,
+      "nodeid": "tests/contracts/test_simulation.py::test_independent_source_trajectory[Acrobot-seed42-int64]"
+    },
+    {
+      "dur": 0.109,
+      "nodeid": "tests/contracts/test_simulation.py::test_independent_source_trajectory[CartPole-seed17-int64]"
+    },
+    {
+      "dur": 0.108,
+      "nodeid": "tests/contracts/test_simulation.py::test_independent_source_trajectory[CartPole-seed42-int64]"
+    },
+    {
+      "dur": 0.103,
+      "nodeid": "tests/contracts/test_simulation.py::test_independent_source_trajectory[Acrobot-seed17-int64]"
+    },
+    {
+      "dur": 0.101,
+      "nodeid": "tests/contracts/test_simulation.py::test_independent_source_trajectory[Pendulum-seed42-float32]"
+    },
+    {
+      "dur": 0.099,
+      "nodeid": "tests/contracts/test_simulation.py::test_independent_source_trajectory[Pendulum-seed42-float64]"
+    },
+    {
+      "dur": 0.098,
+      "nodeid": "tests/contracts/test_simulation.py::test_independent_source_trajectory[Pendulum-seed17-float64]"
+    },
+    {
+      "dur": 0.098,
+      "nodeid": "tests/contracts/test_simulation.py::test_independent_source_trajectory[Pendulum-seed17-float32]"
+    },
+    {
+      "dur": 0.092,
+      "nodeid": "tests/contracts/test_simulation.py::test_independent_source_trajectory[MountainCarContinuous-seed17-float64]"
+    },
+    {
+      "dur": 0.09,
+      "nodeid": "tests/contracts/test_simulation.py::test_independent_source_trajectory[MountainCarContinuous-seed17-float32]"
+    },
+    {
+      "dur": 0.089,
+      "nodeid": "tests/contracts/test_simulation.py::test_independent_source_trajectory[MountainCarContinuous-seed42-float64]"
+    },
+    {
+      "dur": 0.088,
+      "nodeid": "tests/contracts/test_simulation.py::test_independent_source_trajectory[MountainCarContinuous-seed42-float32]"
+    },
+    {
+      "dur": 0.085,
+      "nodeid": "tests/contracts/test_simulation.py::test_independent_source_trajectory[MountainCar-seed42-int64]"
+    },
+    {
+      "dur": 0.085,
+      "nodeid": "tests/contracts/test_simulation.py::test_independent_source_trajectory[MountainCar-seed17-int64]"
+    },
+    {
+      "dur": 0.079,
+      "nodeid": "tests/contracts/test_state.py::test_restore_and_ownership[Acrobot-seed17-int64]"
+    },
+    {
+      "dur": 0.077,
+      "nodeid": "tests/contracts/test_state.py::test_restore_and_ownership[Pendulum-seed17-float32]"
+    },
+    {
+      "dur": 0.077,
+      "nodeid": "tests/contracts/test_state.py::test_restore_and_ownership[CartPole-seed42-int64]"
+    },
+    {
+      "dur": 0.074,
+      "nodeid": "tests/contracts/test_state.py::test_restore_and_ownership[Pendulum-seed42-float32]"
+    },
+    {
+      "dur": 0.073,
+      "nodeid": "tests/contracts/test_state.py::test_restore_and_ownership[Acrobot-seed42-int64]"
+    },
+    {
+      "dur": 0.072,
+      "nodeid": "tests/contracts/test_state.py::test_restore_and_ownership[Pendulum-seed42-float64]"
+    },
+    {
+      "dur": 0.072,
+      "nodeid": "tests/contracts/test_state.py::test_restore_and_ownership[Pendulum-seed17-float64]"
+    },
+    {
+      "dur": 0.066,
+      "nodeid": "tests/contracts/test_state.py::test_restore_and_ownership[MountainCarContinuous-seed42-float32]"
+    },
+    {
+      "dur": 0.066,
+      "nodeid": "tests/contracts/test_state.py::test_restore_and_ownership[MountainCar-seed17-int64]"
+    },
+    {
+      "dur": 0.065,
+      "nodeid": "tests/contracts/test_state.py::test_restore_and_ownership[MountainCarContinuous-seed42-float64]"
+    },
+    {
+      "dur": 0.065,
+      "nodeid": "tests/contracts/test_state.py::test_restore_and_ownership[MountainCarContinuous-seed17-float32]"
+    }
+  ]
+}
