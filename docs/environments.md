@@ -41,7 +41,7 @@ Per-id certification measurements live in the [research archive](research/index.
 
 | family | examples |
 |---|---|
-| `pusht` | `PushT` |
+| `pusht` | `PushT`, `PushTDiscrete` |
 | `classic_control` | `CartPole`, `Pendulum` |
 | `dmcontrol` | `DMCReacherHard`, `DMCCheetahRun` (`domain="reacher"`, `"cheetah"`, …) |
 | `ogbench` | `PointMazeLargeNavigate`, `OGBCube` (`domain="pointmaze"`, `"cube"`, …) |

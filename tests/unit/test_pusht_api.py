@@ -1,3 +1,5 @@
+# Frozen compact-renderer/approximate-solver regressions. Public source-aligned
+# PushT checkpoint semantics are covered by test_pusht_public_semantics.py.
 """Snapshot branching and state ownership for the existing PushT implementation.
 
 These checks do not establish upstream contact-history equivalence or promote PushT.
@@ -13,13 +15,14 @@ torch = pytest.importorskip("torch")
 pytest.importorskip("tensordict")
 
 import stable_envs as snv
+from stable_envs.envs.pusht import PushT as LegacyPushT
 
 pytestmark = pytest.mark.unit
 
 
 @pytest.fixture()
 def env():
-    e = snv.PushT(num_envs=6, device="cpu")
+    e = LegacyPushT(num_envs=6, device="cpu")
     yield e
     e.close()
 
@@ -93,7 +96,7 @@ def test_branch_reference_refuses_actions_without_a_time_axis(env):
 def test_a_cell_without_dynamics_says_so_precisely():
     """Renderer-only cells are the majority and the refusal is a design statement, not a gap."""
 
-    class Renderless(snv.PushT):
+    class Renderless(LegacyPushT):
         _step = snv.Env._step
 
     e = Renderless(num_envs=2, device="cpu")
@@ -129,7 +132,7 @@ def test_a_cell_with_hidden_state_and_no_hook_fails_loudly_instead_of_reporting_
     ``transition(env.state, a)`` quietly stopped matching ``step(a)``.
     """
 
-    class Forgetful(snv.PushT):
+    class Forgetful(LegacyPushT):
         _hidden_state = snv.Env._hidden_state
 
     e = Forgetful(num_envs=2, device="cpu")

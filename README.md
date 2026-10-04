@@ -16,7 +16,7 @@ Authors: **Randall Balestriero**, **Sami BuGhanem**.
 
 ```bash
 pip install stable-envs
-pip install "stable-envs[pusht]"              # gym_pusht + pymunk + pygame — parity tests only
+pip install "stable-envs[pusht]"              # source-aligned PushT simulation and CPU rendering
 pip install "stable-envs[dmcontrol,ogbench]"  # add family extras as needed
 ```
 

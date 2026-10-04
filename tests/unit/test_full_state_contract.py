@@ -8,13 +8,13 @@ import stable_envs as se
 from tests.helpers.stepping import branch_step
 
 
-@pytest.mark.parametrize("name", ["CartPole", "Pendulum", "Acrobot", "PushT", "MiniGridEmpty", "TwoRoom"])
+@pytest.mark.parametrize(
+    "name", ["CartPole", "Pendulum", "Acrobot", "PushT", "PushTDiscrete", "MiniGridEmpty", "TwoRoom"]
+)
 def test_full_snapshot_restores_future_and_has_no_aliases(name):
     with se.make(name, num_envs=2, device="cpu") as env:
         env.reset(seed=12)
         action = torch.ones(2, env.action_dim, dtype=env.action_spec.dtype)
-        if name == "PushT":
-            action *= 250
         env.step(action, frames=None)
         saved = env.get_state()
         assert isinstance(saved, TensorDict)
@@ -33,13 +33,18 @@ def test_full_snapshot_restores_future_and_has_no_aliases(name):
         assert (env.get_state() == expected["state"]).all()
 
 
-@pytest.mark.parametrize("name", ["CartPole", "Pendulum", "PushT", "MiniGridEmpty"])
+@pytest.mark.parametrize("name", ["CartPole", "Pendulum", "PushT", "PushTDiscrete", "MiniGridEmpty"])
 def test_lossy_projection_is_rejected_and_full_state_renders(name):
     with se.make(name, num_envs=2, device="cpu") as env:
         state = env.reset(seed=4)
-        rows = env._pack_render_state(state)
-        assert torch.equal(env.render(state), env._render(rows))
-        incomplete = env._unpack_render_state(rows)
+        if name in ("PushT", "PushTDiscrete"):
+            rows = env.to_render_state(state)
+            assert torch.equal(env.render(state), env.render(rows))
+            incomplete = rows.clone()
+        else:
+            rows = env._pack_render_state(state)
+            assert torch.equal(env.render(state), env._render(rows))
+            incomplete = env._unpack_render_state(rows)
         for wrong in (rows, incomplete):
             with pytest.raises((TypeError, ValueError)):
                 env.set_state(wrong)

@@ -156,7 +156,7 @@ class PushTReplay:
 
     def get_state(self):
         result = {
-            "recipe/version": np.array(1, np.int64),
+            "recipe/version": np.array(2, np.int64),
             "recipe/config": np.array(
                 [self.discrete, self.config["resolution"], self.config["render_action"], self.config["with_target"]],
                 np.int64,

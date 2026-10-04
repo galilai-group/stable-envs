@@ -2,7 +2,7 @@
 
 ```bash
 pip install stable-envs
-pip install "stable-envs[pusht]"              # gym_pusht + pymunk + pygame — parity tests only
+pip install "stable-envs[pusht]"              # source-aligned PushT simulation and CPU rendering
 pip install "stable-envs[dmcontrol,ogbench]"  # add family extras as needed
 ```
 
@@ -33,8 +33,9 @@ Two kinds, and they are easy to mix up.
 
 | extra | needed to render in stable-envs? | what the extra actually adds |
 |---|---|---|
-| *(none)* | PushT, classic control, navigation | core install is enough |
-| `pusht` | no | official `gym-pusht` / pygame / pymunk — **parity tests only** |
+| *(none)* | classic control, navigation | core install is enough |
+| `pusht` | PushT / PushTDiscrete | Pymunk 7.2.0, pygame, OpenCV and Shapely |
+| `pusht-reference` | no | historical gym-pusht corpus checks, in a separate reference environment |
 | `box2d` | LunarLander / CarRacing reference path | Gymnasium Box2D |
 | `minigrid` | MiniGrid / BabyAI | MiniGrid |
 | `ogbench` | OGBench mazes (and manip, with CUDA) | `ogbench` + MuJoCo |
@@ -50,7 +51,10 @@ Two kinds, and they are easy to mix up.
 | `highway` / `minihack` / `sokoban` / `griddly` / `jumanji` / `pgx` / `procgen` | those families | those packages |
 | `docs` / `dev` / `examples` / `hf` | no | documentation, tests, gallery helpers, HuggingFace |
 
-`pip install "stable-envs[pusht]"` is **not** required to call `snv.PushT()` and `env.render()`. It is required to compare against the official pygame renderer.
+`pip install "stable-envs[pusht]"` is required to construct public `PushT` and
+`PushTDiscrete`. Both now use the source-aligned task and complete replay State.
+Their current public renderer is CPU Pygame. CUDA selects output storage;
+it does not turn that renderer into a GPU renderer.
 
 ## Extra incompatibilities
 

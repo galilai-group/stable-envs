@@ -1,0 +1,149 @@
+"""Public checkpoint/branch contract, independently for both PushT action spaces."""
+
+import numpy as np
+import pytest
+import torch
+from tensordict import TensorDict
+
+import stable_envs as se
+
+
+@pytest.fixture(params=["PushT", "PushTDiscrete"])
+def name(request):
+    return request.param
+
+
+@pytest.fixture(params=["cpu", "cuda"])
+def device(request):
+    if request.param == "cuda" and not torch.cuda.is_available():
+        pytest.skip("CUDA output storage is validated on Oscar")
+    return request.param
+
+
+def actions(name, batch, length=1):
+    rng = np.random.default_rng(54)
+    return (
+        rng.integers(0, 16, (batch, length, 2), dtype=np.int64)
+        if name == "PushTDiscrete"
+        else rng.uniform(-1, 1, (batch, length, 2)).astype(np.float32)
+    )
+
+
+def same(a, b):
+    assert a.batch_size == b.batch_size
+    assert set(a.keys(True, True)) == set(b.keys(True, True))
+    for key, value in a.items(True, True):
+        assert torch.equal(value, b[key]), key
+
+
+def test_disk_checkpoint_cross_instance_continuation(name, device, tmp_path):
+    with (
+        se.make(name, num_envs=2, size=64, device=device) as original,
+        se.make(name, num_envs=2, size=64, device=device, seed=999) as restored,
+    ):
+        original.step(actions(name, 2, 8), frames=None)
+        state = original.get_state()
+        path = tmp_path / "state.npz"
+        np.savez_compressed(path, **{"/".join(k): v.cpu().numpy() for k, v in state.items(True, True)})
+        with np.load(path, allow_pickle=False) as data:
+            loaded = TensorDict(
+                {tuple(k.split("/")): torch.tensor(data[k], device=device) for k in data}, [2], device=device
+            )
+        restored.set_state(loaded)
+        same(state, restored.get_state())
+        assert restored.state_spec.contains(restored.get_state())
+        assert torch.equal(original.render(state), restored.render())
+        future = actions(name, 2, 8)
+        same(original.step(future, frames=slice(None)), restored.step(future, frames=slice(None)))
+        same(state, loaded)
+
+
+@pytest.mark.parametrize(
+    "selection", [None, slice(None), slice(-1, None), slice(None, None, -1), slice(None, None, 2), slice(20, 30)]
+)
+def test_public_chunk_slices_restore_and_hold_owned_snapshots(name, device, selection):
+    with se.make(name, num_envs=2, size=32, device=device) as env:
+        start = env.get_state()
+        a = actions(name, 2, 4)
+        expected = env.step(a, frames=None)["state"]
+        env.set_state(start)
+        out = env.step(a, states=selection, frames=selection)
+        same(expected, out["state"])
+        saved = out.clone()
+        if selection is not None:
+            for index in range(out["states"].batch_size[1]):
+                selected = out["states"][:, index]
+                env.set_state(selected)
+                assert torch.equal(env.render(), out["frames"][:, index])
+        env.step(a[:, 0], frames=None)
+        same(out, saved)
+
+
+def test_failed_restore_and_bad_actions_do_not_partially_mutate_batch(name, device):
+    with se.make(name, num_envs=2, size=32, device=device) as env:
+        before = env.step(actions(name, 2, 3), frames=None)["state"]
+        bad = before.clone()
+        bad["current", "body", "block", "position"][1, 0] += 1
+        with pytest.raises(ValueError, match="replay disagrees"):
+            env.set_state(bad)
+        same(before, env.get_state())
+        a = actions(name, 2)[:, 0]
+        a[1, 0] = 1000
+        with pytest.raises(ValueError):
+            env.step(a, frames=None)
+        same(before, env.get_state())
+
+
+def test_render_projection_has_no_history_and_does_not_step(name, monkeypatch):
+    with se.make(name, size=96, device="cpu", render_action=True) as env:
+        state = env.step(actions(name, 1, 8), frames=None)["state"]
+        first = env.render(state)
+        projected = env.to_render_state(state)
+        assert "history" not in projected.keys()
+        assert ("current", "goal_image") not in projected.keys(True, True)
+
+        def forbidden(*args, **kwargs):
+            raise AssertionError("Rendering must not step or replay physics")
+
+        for replay in env._simulator.envs:
+            monkeypatch.setattr(replay.env, "step", forbidden)
+        for cached in env._projection.scenes:
+            monkeypatch.setattr(cached[1], "step", forbidden)
+        assert torch.equal(first, env.render(projected))
+        same(state, env.get_state())
+
+
+def test_persistent_variation_and_reset_checkpoint(name):
+    with se.make(name, size=32, device="cpu") as env:
+        env.set_variation({"agent.shape": 3, "block.shape": 7, "agent.scale": 25.0})
+        state = env.get_state()
+        expected = env.reset(seed=53, options={"variation": []})
+        env.set_state(state)
+        same(expected, env.reset(seed=53, options={"variation": []}))
+        before = env.get_state()
+        with pytest.raises(ValueError):
+            env.set_variation({"agent.shape": 4, "block.shape": 999})
+        same(before, env.get_state())
+
+
+def test_public_device_and_backend_are_explicit(name):
+    with se.make(name, device="cpu", size=32) as env:
+        assert env.backend == "pygame"
+        assert env.action_spec.shape == (2,)
+        assert env.action_spec.discrete_n == (16 if name == "PushTDiscrete" else None)
+        assert env.action_spec.contains(torch.tensor(actions(name, 1)[:, 0]))
+        state = env.get_state()
+    for call in (env.get_state, lambda: env.set_state(state), env.render, env.reset):
+        with pytest.raises(RuntimeError, match="closed"):
+            call()
+    with pytest.raises(ValueError, match="pygame"):
+        se.make(name, backend="cuda")
+
+
+def test_flat_sampled_variation_is_valid_and_restorable(name):
+    with se.make(name, num_envs=2, size=32, device="cpu") as env:
+        env.set_variation(env.sample_variation())
+        state = env.reset(seed=27, options={"variation": []})
+        env.step(actions(name, 2)[:, 0], frames=None)
+        env.set_state(state)
+        same(state, env.get_state())

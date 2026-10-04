@@ -124,6 +124,8 @@ def decode_seed(row):
 
 
 def capture(env):
+    from .pusht_contacts import capture_contacts
+
     result = {}
     for name in ("agent", "block"):
         body = getattr(env, name)
@@ -149,6 +151,7 @@ def capture(env):
             result[f"body/{name}/{key}"] = value.copy()
     result["observation"] = env._get_obs().copy()
     result["contacts"] = np.array(env.n_contact_points, np.int64)
+    result["render_segments"], result["render_segment_count"] = capture_contacts(env.space)
     result["goal_image"] = env._goal.copy()
     result["latest_present"] = np.array(env.latest_action is not None, np.bool_)
     put_value(result, "latest", np.zeros(2, np.float64) if env.latest_action is None else env.latest_action)

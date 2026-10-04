@@ -89,7 +89,7 @@ def test_every_canonical_class_name_resolves_to_the_same_class_as_at_the_baselin
         )
     now = {r["class_name"]: r for r in R.registry_table()}
     then = {canonical_from_frozen(r["name"]): r for r in base["registry_table"]}
-    assert sorted(now) == sorted(then), "the set of registered class names changed"
+    assert sorted(set(now) - {"PushTDiscrete"}) == sorted(then), "unexpected registered class change"
     skip_keys = {
         "module",
         "name",
@@ -115,9 +115,10 @@ def test_every_canonical_class_name_resolves_to_the_same_class_as_at_the_baselin
 def test_list_envs_and_info_answer_without_constructing_anything():
     names = R.list_envs()
     assert names == sorted(R.REGISTRY) and "PushT" in names
-    assert R.list_envs(family="pusht") == ["PushT"]
+    assert R.list_envs(family="pusht") == ["PushT", "PushTDiscrete"]
     s = R.info("PushT")
-    assert s["render_state_dim"] == 5 and s["family"] == "pusht" and s["fidelity_tier"] == "parity"
+    assert s["render_state_dim"] in (0, None) and s["family"] == "pusht" and s["fidelity_tier"] == "parity"
+    assert s["reference_id"] == "swm/PushT-v1"
     assert s["class_name"] == "PushT" and s["id"] == "push-t"
     assert "swm_ids" not in s
     assert "pusht" in R.list_families()

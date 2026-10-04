@@ -32,6 +32,36 @@ restores a validated full State and returns `None`. State keys/dtypes are
 family-specific and described by `state_spec`; persistent configuration must be
 compatible between the saved and receiving instances.
 
+## PushT checkpoints
+
+`PushT` and `PushTDiscrete` use complete numeric replay States. Save all fields,
+including the reset recipe, RNGs and action history. Restoring positions alone
+cannot reconstruct the physics engine's contact history. `set_state()` rebuilds
+that history, so its cost grows with the episode prefix. Ordinary `step()` does
+not restore or replay earlier steps. The history axis grows; `state_spec`
+describes the current checkpoint's shape rather than imposing an episode limit.
+
+```python
+with snv.PushT(num_envs=2, device="cpu", size=96) as env:
+    checkpoint = env.reset(seed=17)
+    actions = np.zeros((2, 8, 2), dtype=np.float32)
+    first = env.step(actions, frames=None)
+    env.set_state(checkpoint)
+    repeated = env.step(actions, frames=None)
+    assert (first["state"] == repeated["state"]).all()
+```
+
+Continuous actions are relative controls in `[-1, 1]`. Discrete actions have
+shape `[B,2]` or `[B,T,2]`, with each polar-action index in `[0,16)`. This replaces
+the earlier approximate public PushT solver's absolute pixel-target actions.
+Old five-coordinate renderer datasets are not complete simulator checkpoints.
+
+Rendering a saved State uses a separate scene and its numeric contact cache;
+it neither restores nor advances live physics. The current public PushT
+renderer executes on CPU, including when tensors are stored on CUDA.
+`render_action=True` requires a resolution of at least 96, matching the source
+renderer's supported marker thickness.
+
 ## Compact RenderState is private
 
 Renderer implementations use `_pack_render_state`, `_unpack_render_state`,

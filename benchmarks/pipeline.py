@@ -14,6 +14,7 @@ from typing import Any
 
 import numpy as np
 import torch
+from tensordict import TensorDict
 
 import stable_envs as snv
 
@@ -68,9 +69,11 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def _load_states(env: snv.Env, args: argparse.Namespace) -> tuple[np.ndarray, str]:
+def _load_states(env: snv.Env, args: argparse.Namespace) -> tuple[np.ndarray | TensorDict, str]:
     if args.state_file is None:
         state = env.reset(seed=args.seed)
+        if env.state_dim == 0 and hasattr(env, "to_render_state"):
+            return env.to_render_state(state).cpu(), "env.reset(seed) -> structured RenderState"
         rows = env._pack_render_state(state).detach().cpu().numpy().copy()
         return rows, "env.reset(seed) -> env._pack_render_state(public State)"
 
@@ -80,6 +83,17 @@ def _load_states(env: snv.Env, args: argparse.Namespace) -> tuple[np.ndarray, st
     loaded = np.load(path, allow_pickle=False)
     if isinstance(loaded, np.lib.npyio.NpzFile):
         try:
+            if env.state_dim == 0 and hasattr(env, "to_render_state"):
+                if "recipe/version" not in loaded.files:
+                    raise ValueError("This environment requires a full numeric State NPZ, not packed rows")
+                if len(loaded["recipe/version"]) < args.batch:
+                    raise ValueError("State NPZ has fewer lanes than --batch")
+                state = TensorDict(
+                    {tuple(k.split("/")): torch.tensor(loaded[k][: args.batch]) for k in loaded.files},
+                    [args.batch],
+                    device="cpu",
+                )
+                return env.to_render_state(state).cpu(), "state-file -> structured RenderState"
             if args.state_key not in loaded.files:
                 raise KeyError(f"{path} has keys {loaded.files}, not --state-key={args.state_key!r}")
             rows = np.asarray(loaded[args.state_key])
@@ -162,13 +176,17 @@ def _environment(name: str, args: argparse.Namespace, device: torch.device) -> t
             )
 
         host_rows, source = _load_states(env, args)
-        setup_rows = torch.as_tensor(host_rows, dtype=torch.float32).to(device)
-        first = env._render(setup_rows)
+        structured = isinstance(host_rows, TensorDict)
+        draw = env.render if structured else env._render
+
+        def ingest():
+            return host_rows.to(device) if structured else torch.as_tensor(host_rows, dtype=torch.float32).to(device)
+
+        first = draw(ingest())
         out = torch.empty_like(first)
 
         def ingest_and_render() -> None:
-            rows = torch.as_tensor(host_rows, dtype=torch.float32).to(device)
-            env._render(rows, out=out)
+            draw(ingest(), out=out)
 
         timing = measure(ingest_and_render, device=device, warmup=args.warmup, repeats=args.repeats)
         median_ms = timing["median_ms"]
@@ -176,8 +194,15 @@ def _environment(name: str, args: argparse.Namespace, device: torch.device) -> t
             "status": "ok",
             "batch": args.batch,
             "state_source": source,
-            "packed_state_shape": list(host_rows.shape),
-            "packed_state_bytes_per_frame": int(host_rows[0].nbytes),
+            "state_format": "structured_render_state" if structured else "packed_rows",
+            "renderer_backend": env.backend,
+            "packed_state_shape": None if structured else list(host_rows.shape),
+            "packed_state_bytes_per_frame": None if structured else int(host_rows[0].nbytes),
+            "state_bytes_per_frame": (
+                sum(v[0].numel() * v.element_size() for v in host_rows.values(True, True))
+                if structured
+                else int(host_rows[0].nbytes)
+            ),
             "frame_shape": list(out.shape[1:]),
             "frame_bytes_per_frame": int(out[0].numel() * out.element_size()),
             "resolved_size": int(env.size),
@@ -216,7 +241,8 @@ def run(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     record["resolved_device"] = str(device)
     record["methodology"] = {
         "timed_operation": (
-            "torch.as_tensor(host packed rows).to(device) -> env._render(rows, out=reused_uint8_buffer)"
+            "host numeric RenderState.to(device) -> renderer(out=reused_uint8_buffer); "
+            "structured projections use env.render, historical packed rows use env._render"
         ),
         "setup_excluded": [
             "environment construction",

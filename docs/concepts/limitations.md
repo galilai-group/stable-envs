@@ -23,7 +23,8 @@ same frame".
 
 | cells | CPU | GPU |
 |---|---|---|
-| PushT, classic control, navigation, OGBench mazes, most 2-D | yes | yes |
+| PushT / PushTDiscrete | source physics and Pygame rendering | tensor/output storage only; no GPU renderer on this public path |
+| classic control, navigation, OGBench mazes, most 2-D | yes | yes |
 | Fetch (12 ids) | **no backend** | yes |
 | OGBCube, OGBScene, PyFlytRocketLanding | **refuse** (`device="cpu"` / CPU-only `auto` raises; no silent CUDA fallback) | required |
 | DM Control trackcom / visual-tier body-tracking | CPU3D path where declared | MJWarp |

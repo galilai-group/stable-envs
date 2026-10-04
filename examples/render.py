@@ -1,7 +1,7 @@
 """Render a public ``State`` through a concrete environment class.
 
 Uses the public ``snv`` surface: construct by class (or ``snv.make``), ``reset``, ``render``,
-``close``. Optional extras are not required for PushT.
+``close``. PushT requires the ``pusht`` runtime extra.
 
     python examples/render.py
     python examples/render.py --env PushT --num-envs 8 --device cpu

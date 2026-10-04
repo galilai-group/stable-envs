@@ -1,3 +1,5 @@
+# Frozen compact-renderer/approximate-solver regressions. Public source-aligned
+# PushT checkpoint semantics are covered by test_pusht_public_semantics.py.
 """The State: what ``pack``/``unpack`` promise, what ``reset`` promises, and what the specs report.
 
 The load-bearing claim of the public State is that NOTHING MOVED. The entity-grouped TensorDict is
@@ -17,6 +19,7 @@ torch = pytest.importorskip("torch")
 pytest.importorskip("tensordict")
 
 import stable_envs as snv
+from stable_envs.envs.pusht import PushT as LegacyPushT
 from stable_envs.specs import CompositeSpec, Spec
 
 pytestmark = pytest.mark.unit
@@ -24,7 +27,7 @@ pytestmark = pytest.mark.unit
 
 @pytest.fixture(scope="module")
 def env():
-    e = snv.PushT(num_envs=8, device="cpu")
+    e = LegacyPushT(num_envs=8, device="cpu")
     yield e
     e.close()
 
@@ -78,7 +81,7 @@ def test_render_accepts_a_state_and_packed_rows_and_draws_the_same_pixels(env):
 
 
 def test_a_layout_that_does_not_cover_the_packed_row_is_refused():
-    class Broken(snv.PushT):
+    class Broken(LegacyPushT):
         state_layout = ((("agent", "position"), 2, 0),)
 
     e = Broken(num_envs=2, device="cpu")
@@ -163,7 +166,7 @@ def test_unpack_and_state_never_alias_the_env_buffer():
     """A StepResult or ``env.state`` must not change under the caller's feet at the next step."""
     import torch
 
-    from stable_envs import PushT
+    from stable_envs.envs.pusht import PushT
 
     env = PushT(num_envs=4, device="cpu")
     env.reset(seed=0)

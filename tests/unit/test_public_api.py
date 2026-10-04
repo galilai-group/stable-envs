@@ -201,8 +201,8 @@ def test_close_is_idempotent_and_a_closed_env_refuses_to_render():
     env.close()
     assert env.closed
     for call, what in (
-        (lambda: env._render(st), "render"),
-        (lambda: env._render(), "render"),
+        (lambda: env.render(st), "render"),
+        (lambda: env.render(), "render"),
         (lambda: env.reset(seed=0), "reset"),
         (lambda: env.step(torch.zeros(2, 2), frames=None), "step"),
     ):
@@ -214,7 +214,7 @@ def test_close_is_idempotent_and_a_closed_env_refuses_to_render():
 
 def test_the_context_manager_closes_and_does_not_swallow_exceptions():
     with snv.PushT(num_envs=2, device="cpu") as env:
-        assert env._render(env.reset(seed=0)).shape[0] == 2
+        assert env.render(env.reset(seed=0)).shape[0] == 2
     assert env.closed
 
     with pytest.raises(ZeroDivisionError):

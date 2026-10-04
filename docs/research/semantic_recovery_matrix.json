@@ -3928,34 +3928,34 @@
     {
       "historical_id": "swm/PushT-Discrete-v1",
       "stable_envs_classes": [
-        "PushT"
+        "PushTDiscrete"
       ],
       "family": "pusht",
       "owner": "coordinator",
       "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
       "state_status": "INCOMPLETE",
-      "action_parity": "UNTESTED",
-      "reset_parity": "UNTESTED",
-      "step_parity": "UNTESTED",
-      "reward_parity": "UNTESTED",
-      "terminated_truncated_parity": "UNTESTED",
-      "rng_lifecycle": "UNTESTED",
-      "variation_parity": "UNTESTED",
-      "execution_mode": "NATIVE",
-      "adapter_status": "PRIVATE_REPLAY_IMPLEMENTED_PUBLIC_INTEGRATION_PENDING",
-      "renderer_regression": "PASS_SCOPED_CPU_CUDA: four frozen rows per selected class; explicit legacy target visibility for Reacher",
+      "action_parity": "PASS_SCOPED_PUBLIC_CPU_SEE_EVIDENCE",
+      "reset_parity": "PASS_SCOPED_PUBLIC_CPU_SEE_EVIDENCE",
+      "step_parity": "PASS_SCOPED_PUBLIC_CPU_SEE_EVIDENCE",
+      "reward_parity": "PASS_SCOPED_PUBLIC_CPU_SEE_EVIDENCE",
+      "terminated_truncated_parity": "PASS_PUBLIC_CPU_MIXED_TERMINAL_SOURCE_GATE_12_CASES_PER_REGISTRATION",
+      "rng_lifecycle": "PASS_SCOPED_PUBLIC_CPU_SEE_EVIDENCE",
+      "variation_parity": "PASS_SCOPED_PUBLIC_CPU_SEE_EVIDENCE",
+      "execution_mode": "DELEGATED_CPU",
+      "adapter_status": "PUBLIC_REPLAY_IMPLEMENTED_CPU_SOURCE_GATE_PASS_CUDA_OUTPUT_PENDING",
+      "renderer_regression": "PASS_PUBLIC_CPU_PYGAME_EXACT_2424_FRAMES; CUDA output is CPU rendering plus transfer, not GPU rasterization; old compact-renderer evidence remains historical",
       "oracle_corpus": null,
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "The existing public class retains the absolute-target approximate solver and omits source reward/termination; the private source-aligned replay candidate is not registered.",
-        "Integrate dynamic numeric history with the slice-only public step API, State-to-RenderState projection and independent CPU/CUDA renderer gates.",
-        "Certify continuous and discrete public registrations independently, including exact lifecycle, reset, configuration, rejection and replay behavior.",
-        "Measure replay costs and online source comparisons separately from correctness; no artificial TimeLimit or fixed history bound."
+        "Public CPU state/source/render gates pass independently (74 cases and 2424 frames per registration). CUDA State/output acceptance is queued as 6993756; no full registration promotion.",
+        "Public CPU mixed-terminal gates also pass (12 cases per registration); complete the pending CUDA storage/output gate and retain explicit source-config/lifecycle coverage.",
+        "The source-aligned public renderer currently executes on CPU; preserve a separate gate for any accelerated GPU renderer. No existing GPU speedup transfers to this new implementation.",
+        "Measure replay costs and online throughput for the new public path. get/set State costs grow with finite history; no new episode horizon is imposed."
       ],
-      "test": "tests/unit/test_full_state_contract.py",
+      "test": "tests/unit/test_pusht_public_semantics.py; scripts/research_replay/pusht_public_gate.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "audit_status": "SOURCE_AUDITED_NOT_VERIFIED",
       "audit_report": "docs/research/native_verification.md",
@@ -3964,7 +3964,7 @@
       ],
       "blocker": {
         "status": "OPEN",
-        "kind": "PRIVATE_REPLAY_PUBLIC_INTEGRATION_AND_ACCEPTANCE",
+        "kind": "PUBLIC_ACCEPTANCE_AND_ACCELERATED_RENDERER_PENDING",
         "scope": "Both historical PushT registrations; independent certification remains required",
         "observed_error_with_exposed_contact_restore": 0.10992291186727243,
         "untested_candidates": [
@@ -3973,11 +3973,12 @@
           "broadphase collision IDs/cache"
         ],
         "permanent_skip": false,
-        "description": "Supported-interface direct contact restore remains historically nonexact. Authorized official-engine replay now has a private numeric implementation; complete public integration and independent gates remain.",
-        "investigation_status": "ACTIVE_OFFICIAL_ENGINE_REPLAY",
+        "description": "Public replay State and source-aligned CPU rendering are implemented and independently checked. CUDA output-storage gate, lifecycle edge cases, accelerated rendering and performance closure remain.",
+        "investigation_status": "PUBLIC_CPU_STATE_PASS",
         "resume_requires": "No private ABI work; complete the authorized replay route and per-registration acceptance."
       },
-      "current_recovery_evidence": "docs/research/semantic_recovery_evidence/noncraftax_completion_20261003/README.md"
+      "current_recovery_evidence": "docs/research/semantic_recovery_evidence/pusht_public_state_20261003/README.md",
+      "recovery_status": "PUBLIC_STATE_CPU_PASS_NOT_PROMOTED"
     },
     {
       "historical_id": "swm/PushT-v1",
@@ -3988,28 +3989,28 @@
       "owner": "coordinator",
       "state_contract": "Full TensorDict simulator snapshot; restore under the same persistent Variation",
       "state_status": "INCOMPLETE",
-      "action_parity": "UNTESTED",
-      "reset_parity": "UNTESTED",
-      "step_parity": "UNTESTED",
-      "reward_parity": "UNTESTED",
-      "terminated_truncated_parity": "UNTESTED",
-      "rng_lifecycle": "UNTESTED",
-      "variation_parity": "UNTESTED",
-      "execution_mode": "NATIVE",
-      "adapter_status": "PRIVATE_REPLAY_IMPLEMENTED_PUBLIC_INTEGRATION_PENDING",
-      "renderer_regression": "PASS_SCOPED_CPU_CUDA: four frozen rows per selected class; explicit legacy target visibility for Reacher",
+      "action_parity": "PASS_SCOPED_PUBLIC_CPU_SEE_EVIDENCE",
+      "reset_parity": "PASS_SCOPED_PUBLIC_CPU_SEE_EVIDENCE",
+      "step_parity": "PASS_SCOPED_PUBLIC_CPU_SEE_EVIDENCE",
+      "reward_parity": "PASS_SCOPED_PUBLIC_CPU_SEE_EVIDENCE",
+      "terminated_truncated_parity": "PASS_PUBLIC_CPU_MIXED_TERMINAL_SOURCE_GATE_12_CASES_PER_REGISTRATION",
+      "rng_lifecycle": "PASS_SCOPED_PUBLIC_CPU_SEE_EVIDENCE",
+      "variation_parity": "PASS_SCOPED_PUBLIC_CPU_SEE_EVIDENCE",
+      "execution_mode": "DELEGATED_CPU",
+      "adapter_status": "PUBLIC_REPLAY_IMPLEMENTED_CPU_SOURCE_GATE_PASS_CUDA_OUTPUT_PENDING",
+      "renderer_regression": "PASS_PUBLIC_CPU_PYGAME_EXACT_2424_FRAMES; CUDA output is CPU rendering plus transfer, not GPU rasterization; old compact-renderer evidence remains historical",
       "oracle_corpus": null,
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
       "stable_gpu_benchmark": "NOT_RUN",
       "similarity_metrics": null,
       "remaining_issues": [
-        "The existing public class retains the absolute-target approximate solver and omits source reward/termination; the private source-aligned replay candidate is not registered.",
-        "Integrate dynamic numeric history with the slice-only public step API, State-to-RenderState projection and independent CPU/CUDA renderer gates.",
-        "Certify continuous and discrete public registrations independently, including exact lifecycle, reset, configuration, rejection and replay behavior.",
-        "Measure replay costs and online source comparisons separately from correctness; no artificial TimeLimit or fixed history bound."
+        "Public CPU state/source/render gates pass independently (74 cases and 2424 frames per registration). CUDA State/output acceptance is queued as 6993756; no full registration promotion.",
+        "Public CPU mixed-terminal gates also pass (12 cases per registration); complete the pending CUDA storage/output gate and retain explicit source-config/lifecycle coverage.",
+        "The source-aligned public renderer currently executes on CPU; preserve a separate gate for any accelerated GPU renderer. No existing GPU speedup transfers to this new implementation.",
+        "Measure replay costs and online throughput for the new public path. get/set State costs grow with finite history; no new episode horizon is imposed."
       ],
-      "test": "tests/unit/test_full_state_contract.py",
+      "test": "tests/unit/test_pusht_public_semantics.py; scripts/research_replay/pusht_public_gate.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "audit_status": "SOURCE_AUDITED_NOT_VERIFIED",
       "audit_report": "docs/research/native_verification.md",
@@ -4018,7 +4019,7 @@
       ],
       "blocker": {
         "status": "OPEN",
-        "kind": "PRIVATE_REPLAY_PUBLIC_INTEGRATION_AND_ACCEPTANCE",
+        "kind": "PUBLIC_ACCEPTANCE_AND_ACCELERATED_RENDERER_PENDING",
         "scope": "Both historical PushT registrations; independent certification remains required",
         "observed_error_with_exposed_contact_restore": 0.10992291186727243,
         "untested_candidates": [
@@ -4027,11 +4028,12 @@
           "broadphase collision IDs/cache"
         ],
         "permanent_skip": false,
-        "description": "Supported-interface direct contact restore remains historically nonexact. Authorized official-engine replay now has a private numeric implementation; complete public integration and independent gates remain.",
-        "investigation_status": "ACTIVE_OFFICIAL_ENGINE_REPLAY",
+        "description": "Public replay State and source-aligned CPU rendering are implemented and independently checked. CUDA output-storage gate, lifecycle edge cases, accelerated rendering and performance closure remain.",
+        "investigation_status": "PUBLIC_CPU_STATE_PASS",
         "resume_requires": "No private ABI work; complete the authorized replay route and per-registration acceptance."
       },
-      "current_recovery_evidence": "docs/research/semantic_recovery_evidence/noncraftax_completion_20261003/README.md"
+      "current_recovery_evidence": "docs/research/semantic_recovery_evidence/pusht_public_state_20261003/README.md",
+      "recovery_status": "PUBLIC_STATE_CPU_PASS_NOT_PROMOTED"
     },
     {
       "historical_id": "swm/QuadrupedDMControl-v0",
