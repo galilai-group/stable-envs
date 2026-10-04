@@ -1,0 +1,34 @@
+## SLURM PROLOG ###############################################################
+##    Job ID : 7004892
+##  Job Name : se-testing-cleanup
+##  Nodelist : gpu2110
+##      CPUs : 
+##  Mem/Node : 16384 MB
+## Directory : /oscar/home/sboughan
+##   Job Started : Sun Oct  4 04:05:18 PM EDT 2026
+###############################################################################
+pybullet build time: Sep 14 2026 23:35:15
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+Users of this version of Gym should be able to simply replace 'import gym' with 'import gymnasium as gym' in the vast majority of cases.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+
+=== segment 1: /oscar/scratch/sboughan/venvs/se6-verify-vis311/bin/python -u -m pytest -q -rs --junitxml=/oscar/scratch/sboughan/se-semantic-recovery/testing-cleanup-73b58b13-v1/results/7004892/tests.xml tests/unit/test_step_capture.py::test_gpu_sequence_frames_equal_repeated_steps[CartPole] tests/unit/test_step_capture.py::test_gpu_sequence_frames_equal_repeated_steps[Pendulum] tests/unit/test_step_capture.py::test_gpu_sequence_frames_equal_repeated_steps[TwoRoom] tests/unit/test_step_capture.py::test_gpu_sequence_frames_equal_repeated_steps[Piecewise] tests/unit/test_step_capture.py::test_navigation_sequence_matches_scalar_calls[SimplePointMaze] tests/gpu/test_conformance.py::test_render_state_roundtrip[CartPole] tests/gpu/test_conformance.py::test_render_state_roundtrip[Pendulum] tests/gpu/test_conformance.py::test_render_state_roundtrip[TwoRoom] tests/gpu/test_conformance.py::test_render_state_roundtrip[Piecewise]
+.........                                                                [100%]
+=============================== warnings summary ===============================
+../../../../../venvs/se-step4-swm/lib/python3.12/site-packages/stable_worldmodel/envs/__init__.py:215
+  /oscar/scratch/sboughan/venvs/se-step4-swm/lib/python3.12/site-packages/stable_worldmodel/envs/__init__.py:215: UserWarning: ale-py not found; ALE/* envs are unavailable. Install with: pip install 'stable-worldmodel[env]' or pip install ale-py.
+    from stable_worldmodel.envs import ale  # noqa: F401
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+------------------------------ stable-envs safety ------------------------------
+resources: 0 EGL contexts created, 0 released, 0 live (peak 0); renderers 0 created / 0 closed
+node: gpu2110 slurm=mix reason=none reference-renderer={'skipped': 'no EGL-backed reference env in this selection'}
+9 passed, 1 warning in 3.94s
+
+====================================================================================================
+SUMMARY: 9 passed | 1 segment(s) | 0.2 min | EGL contexts 0 created / 0 released, peak live 0 | node gpu2110 mix
+slowest: 2s test_navigation_sequence_matches_scalar_calls[SimplePointMaze], 1s test_gpu_sequence_frames_equal_repeated_steps[CartPole], 0s test_gpu_sequence_frames_equal_repeated_steps[Pendulum], 0s test_gpu_sequence_frames_equal_repeated_steps[TwoRoom], 0s test_gpu_sequence_frames_equal_repeated_steps[Piecewise]
+artifacts: /oscar/scratch/sboughan/se-semantic-recovery/testing-cleanup-73b58b13-v1/results/7004892/supervisor
+====================================================================================================
+TESTING_CLEANUP_CUDA_PASS

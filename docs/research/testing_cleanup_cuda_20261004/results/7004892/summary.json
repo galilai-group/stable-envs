@@ -1,0 +1,74 @@
+{
+  "counts": {
+    "error": 0,
+    "failed": 0,
+    "crashed": 0,
+    "xpassed": 0,
+    "xfailed": 0,
+    "skipped": 0,
+    "passed": 9
+  },
+  "segments": 1,
+  "wall_s": 14.878597736358643,
+  "crashed": [],
+  "resources": {
+    "context_created": 0,
+    "context_freed": 0,
+    "renderer_created": 0,
+    "renderer_closed": 0,
+    "context_peak_live": 0
+  },
+  "node": {
+    "kind": "node_gate",
+    "host": "gpu2110",
+    "ok": true,
+    "why": "",
+    "scheduler": {
+      "state": "mix",
+      "reason": "none",
+      "source": "sinfo"
+    },
+    "renderer": {
+      "skipped": "no EGL-backed reference env in this selection"
+    },
+    "t": 1791144353.994
+  },
+  "slowest": [
+    {
+      "dur": 1.742,
+      "nodeid": "tests/unit/test_step_capture.py::test_navigation_sequence_matches_scalar_calls[SimplePointMaze]"
+    },
+    {
+      "dur": 1.272,
+      "nodeid": "tests/unit/test_step_capture.py::test_gpu_sequence_frames_equal_repeated_steps[CartPole]"
+    },
+    {
+      "dur": 0.383,
+      "nodeid": "tests/unit/test_step_capture.py::test_gpu_sequence_frames_equal_repeated_steps[Pendulum]"
+    },
+    {
+      "dur": 0.157,
+      "nodeid": "tests/unit/test_step_capture.py::test_gpu_sequence_frames_equal_repeated_steps[TwoRoom]"
+    },
+    {
+      "dur": 0.056,
+      "nodeid": "tests/unit/test_step_capture.py::test_gpu_sequence_frames_equal_repeated_steps[Piecewise]"
+    },
+    {
+      "dur": 0.01,
+      "nodeid": "tests/gpu/test_conformance.py::test_render_state_roundtrip[Pendulum]"
+    },
+    {
+      "dur": 0.01,
+      "nodeid": "tests/gpu/test_conformance.py::test_render_state_roundtrip[CartPole]"
+    },
+    {
+      "dur": 0.004,
+      "nodeid": "tests/gpu/test_conformance.py::test_render_state_roundtrip[TwoRoom]"
+    },
+    {
+      "dur": 0.004,
+      "nodeid": "tests/gpu/test_conformance.py::test_render_state_roundtrip[Piecewise]"
+    }
+  ]
+}

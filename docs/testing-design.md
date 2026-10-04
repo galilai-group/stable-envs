@@ -9,6 +9,10 @@ outside this work. Existing evidence and acceptance thresholds stay unchanged.
 
 ## Implementation checkpoint
 
+Validation follow-up: the [fresh RTX 3090 gate](research/testing_cleanup_cuda_20261004/README.md)
+passed all nine required cases without skips, closing the four CUDA and one
+Matplotlib-dependent skips from the local cleanup run.
+
 The initial cleanup now provides:
 
 - A 38-registration coverage inventory backed by the accepted matrix, with an
