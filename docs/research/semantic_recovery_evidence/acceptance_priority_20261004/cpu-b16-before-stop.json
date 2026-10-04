@@ -1,0 +1,910 @@
+{
+  "status": "RUNNING",
+  "records": [
+    {
+      "label": "reset",
+      "batch": 16,
+      "config": {
+        "render_mode": "rgb_array"
+      },
+      "options": {},
+      "horizon": 0,
+      "physical_replay_steps": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "state_bytes": 12299504,
+      "serialized_npz_bytes": 12355968,
+      "cold_construction_ms": 6675.097119,
+      "get_state": {
+        "samples_ms": [
+          47.288585,
+          47.532533,
+          46.891968,
+          47.073016,
+          48.440157,
+          46.861637,
+          47.855262,
+          46.314735,
+          47.830734,
+          47.442537,
+          47.723495,
+          45.502699,
+          47.120809,
+          46.99337,
+          47.174319,
+          48.405991,
+          46.571932,
+          47.758456,
+          47.082349,
+          47.810175
+        ],
+        "mean_ms": 47.28373795,
+        "sd_ms": 0.6944441409250303,
+        "median_ms": 47.231452,
+        "p95_ms": 48.4076993,
+        "operations_per_second": 21.17233236869364
+      },
+      "set_state": {
+        "samples_ms": [
+          2969.868423,
+          2989.544781,
+          2967.532997
+        ],
+        "mean_ms": 2975.648733666667,
+        "sd_ms": 12.090849939853378,
+        "median_ms": 2969.868423,
+        "p95_ms": 2987.5771452,
+        "operations_per_second": 0.33671525386631584
+      },
+      "restore_samples": 3,
+      "branches": [
+        {
+          "length": 1,
+          "cadence": "none",
+          "includes_restore": true,
+          "timing": {
+            "samples_ms": [
+              3131.071008,
+              3123.983392,
+              3178.587543
+            ],
+            "mean_ms": 3144.5473143333334,
+            "sd_ms": 29.69194252486831,
+            "median_ms": 3131.071008,
+            "p95_ms": 3173.8358895,
+            "operations_per_second": 0.31937953417375836
+          }
+        },
+        {
+          "length": 1,
+          "cadence": "every_fourth",
+          "includes_restore": true,
+          "timing": {
+            "samples_ms": [
+              3158.417089,
+              3152.806803,
+              3173.703624
+            ],
+            "mean_ms": 3161.6425053333332,
+            "sd_ms": 10.815348578248107,
+            "median_ms": 3158.417089,
+            "p95_ms": 3172.1749705,
+            "operations_per_second": 0.31661429501592975
+          }
+        },
+        {
+          "length": 1,
+          "cadence": "every_step",
+          "includes_restore": true,
+          "timing": {
+            "samples_ms": [
+              4253.092189,
+              4180.768426,
+              4185.229345
+            ],
+            "mean_ms": 4206.3633199999995,
+            "sd_ms": 40.52980814284129,
+            "median_ms": 4185.229345,
+            "p95_ms": 4246.3059046,
+            "operations_per_second": 0.2389355319785946
+          }
+        },
+        {
+          "length": 1,
+          "cadence": "final",
+          "includes_restore": true,
+          "timing": {
+            "samples_ms": [
+              4225.076569,
+              4249.744226,
+              4239.363026
+            ],
+            "mean_ms": 4238.061273666666,
+            "sd_ms": 12.385243026296095,
+            "median_ms": 4239.363026,
+            "p95_ms": 4248.706106,
+            "operations_per_second": 0.235884493464467
+          }
+        },
+        {
+          "length": 10,
+          "cadence": "none",
+          "includes_restore": true,
+          "timing": {
+            "samples_ms": [
+              4750.709957,
+              4749.749332,
+              4750.605376
+            ],
+            "mean_ms": 4750.354888333334,
+            "sd_ms": 0.5270276567887664,
+            "median_ms": 4750.605376,
+            "p95_ms": 4750.6994989,
+            "operations_per_second": 0.21049948813934063
+          }
+        },
+        {
+          "length": 10,
+          "cadence": "every_fourth",
+          "includes_restore": true,
+          "timing": {
+            "samples_ms": [
+              6782.309937,
+              6811.419407,
+              6793.603054
+            ],
+            "mean_ms": 6795.777466,
+            "sd_ms": 14.676047205550198,
+            "median_ms": 6793.603054,
+            "p95_ms": 6809.6377717000005,
+            "operations_per_second": 0.14719729605208695
+          }
+        },
+        {
+          "length": 10,
+          "cadence": "every_step",
+          "includes_restore": true,
+          "timing": {
+            "samples_ms": [
+              14930.784817,
+              14907.839319,
+              14964.93931
+            ],
+            "mean_ms": 14934.521148666667,
+            "sd_ms": 28.732775253923858,
+            "median_ms": 14930.784817,
+            "p95_ms": 14961.5238607,
+            "operations_per_second": 0.0669757157615327
+          }
+        },
+        {
+          "length": 10,
+          "cadence": "final",
+          "includes_restore": true,
+          "timing": {
+            "samples_ms": [
+              5769.735936,
+              5881.143378,
+              5784.297577
+            ],
+            "mean_ms": 5811.725630333333,
+            "sd_ms": 60.556817250314175,
+            "median_ms": 5784.297577,
+            "p95_ms": 5871.4587979,
+            "operations_per_second": 0.172881838579032
+          }
+        },
+        {
+          "length": 100,
+          "cadence": "none",
+          "includes_restore": true,
+          "timing": {
+            "samples_ms": [
+              20355.047837,
+              20307.834916,
+              20369.535931
+            ],
+            "mean_ms": 20344.139561333333,
+            "sd_ms": 32.26448002870186,
+            "median_ms": 20355.047837,
+            "p95_ms": 20368.087121599998,
+            "operations_per_second": 0.04912786292657437
+          }
+        },
+        {
+          "length": 100,
+          "cadence": "every_fourth",
+          "includes_restore": true,
+          "timing": {
+            "samples_ms": [
+              46459.148926,
+              46515.268254,
+              46447.033947
+            ],
+            "mean_ms": 46473.817042333336,
+            "sd_ms": 36.40529344090898,
+            "median_ms": 46459.148926,
+            "p95_ms": 46509.656321200004,
+            "operations_per_second": 0.021524285810590228
+          }
+        },
+        {
+          "length": 100,
+          "cadence": "every_step",
+          "includes_restore": true,
+          "timing": {
+            "samples_ms": [
+              124502.254509,
+              123955.38242,
+              124093.314631
+            ],
+            "mean_ms": 124183.65052000001,
+            "sd_ms": 284.407630106638,
+            "median_ms": 124093.314631,
+            "p95_ms": 124461.36052120001,
+            "operations_per_second": 0.00805845184306317
+          }
+        },
+        {
+          "length": 100,
+          "cadence": "final",
+          "includes_restore": true,
+          "timing": {
+            "samples_ms": [
+              21433.487333,
+              21471.09228,
+              21462.66433
+            ],
+            "mean_ms": 21455.747981,
+            "sd_ms": 19.733472130761502,
+            "median_ms": 21462.66433,
+            "p95_ms": 21470.249485,
+            "operations_per_second": 0.04659253784266774
+          }
+        }
+      ],
+      "cold_render_ms": 1038.210509,
+      "warm_render": {
+        "samples_ms": [
+          1022.277068,
+          1022.239478,
+          1017.296219,
+          1024.164036,
+          1024.277015,
+          1021.597623,
+          1021.766962,
+          1028.852297,
+          1018.72959,
+          1021.771031
+        ],
+        "mean_ms": 1022.2971319000001,
+        "sd_ms": 3.147535968401934,
+        "median_ms": 1022.0052545,
+        "p95_ms": 1026.7934200999998,
+        "operations_per_second": 0.9784685505254416
+      },
+      "frame_sha256": "2a0c722fdd1107a05cf347e6fc64a92a76acea3240f66fc6c4b45674aa0beeac",
+      "warm_construction_ms": 2741.01024
+    },
+    {
+      "label": "25_percent",
+      "batch": 16,
+      "config": {
+        "ceiling": 500000.0,
+        "render_mode": "rgb_array"
+      },
+      "options": {
+        "accelerate_drop": false
+      },
+      "horizon": 300,
+      "physical_replay_steps": [
+        300,
+        300,
+        300,
+        300,
+        300,
+        300,
+        300,
+        300,
+        300,
+        300,
+        300,
+        300,
+        300,
+        300,
+        300,
+        300
+      ],
+      "state_bytes": 12299504,
+      "serialized_npz_bytes": 12355968,
+      "cold_construction_ms": 2736.56044,
+      "get_state": {
+        "samples_ms": [
+          46.508351,
+          48.08565,
+          48.346408,
+          48.12616,
+          47.910681,
+          47.771373,
+          48.000301,
+          47.99593,
+          46.953527,
+          48.02371,
+          49.295362,
+          48.636486,
+          46.511011,
+          48.271819,
+          47.960291,
+          47.817142,
+          47.693943,
+          48.743645,
+          47.98973,
+          46.77377
+        ],
+        "mean_ms": 47.8707645,
+        "sd_ms": 0.7163376530666977,
+        "median_ms": 47.99283,
+        "p95_ms": 48.77123085,
+        "operations_per_second": 20.836445777421336
+      },
+      "set_state": {
+        "samples_ms": [
+          39337.207857,
+          39378.376822,
+          39352.985139
+        ],
+        "mean_ms": 39356.18993933333,
+        "sd_ms": 20.77074814914371,
+        "median_ms": 39352.985139,
+        "p95_ms": 39375.8376537,
+        "operations_per_second": 0.02541103289795848
+      },
+      "restore_samples": 3,
+      "branches": [
+        {
+          "length": 1,
+          "cadence": "none",
+          "includes_restore": true,
+          "timing": {
+            "samples_ms": [
+              39493.069463,
+              39751.75053,
+              39591.583931
+            ],
+            "mean_ms": 39612.13464133333,
+            "sd_ms": 130.5592676812631,
+            "median_ms": 39591.583931,
+            "p95_ms": 39735.7338701,
+            "operations_per_second": 0.025257893236673597
+          }
+        },
+        {
+          "length": 1,
+          "cadence": "every_fourth",
+          "includes_restore": true,
+          "timing": {
+            "samples_ms": [
+              39651.989308,
+              39692.797489,
+              39794.082246
+            ],
+            "mean_ms": 39712.95634766666,
+            "sd_ms": 73.15999893674865,
+            "median_ms": 39692.797489,
+            "p95_ms": 39783.953770299995,
+            "operations_per_second": 0.02519348756602828
+          }
+        },
+        {
+          "length": 1,
+          "cadence": "every_step",
+          "includes_restore": true,
+          "timing": {
+            "samples_ms": [
+              40881.418244,
+              40881.67197,
+              40890.422432
+            ],
+            "mean_ms": 40884.50421533333,
+            "sd_ms": 5.126895806037391,
+            "median_ms": 40881.67197,
+            "p95_ms": 40889.5473858,
+            "operations_per_second": 0.024460839095177545
+          }
+        },
+        {
+          "length": 1,
+          "cadence": "final",
+          "includes_restore": true,
+          "timing": {
+            "samples_ms": [
+              40888.194356,
+              40876.408402,
+              41022.259156
+            ],
+            "mean_ms": 40928.95397133333,
+            "sd_ms": 81.01925877335009,
+            "median_ms": 40888.194356,
+            "p95_ms": 41008.852676,
+            "operations_per_second": 0.024456937161209183
+          }
+        },
+        {
+          "length": 10,
+          "cadence": "none",
+          "includes_restore": true,
+          "timing": {
+            "samples_ms": [
+              41435.439225,
+              41561.804079,
+              41361.128303
+            ],
+            "mean_ms": 41452.79053566667,
+            "sd_ms": 101.45685168922431,
+            "median_ms": 41435.439225,
+            "p95_ms": 41549.1675936,
+            "operations_per_second": 0.02413393024675968
+          }
+        },
+        {
+          "length": 10,
+          "cadence": "every_fourth",
+          "includes_restore": true,
+          "timing": {
+            "samples_ms": [
+              43564.175087,
+              43532.995771,
+              43390.951411
+            ],
+            "mean_ms": 43496.040756333336,
+            "sd_ms": 92.33561237950663,
+            "median_ms": 43532.995771,
+            "p95_ms": 43561.057155400005,
+            "operations_per_second": 0.02297108164254024
+          }
+        },
+        {
+          "length": 10,
+          "cadence": "every_step",
+          "includes_restore": true,
+          "timing": {
+            "samples_ms": [
+              52502.825412,
+              52542.281789,
+              52349.368582
+            ],
+            "mean_ms": 52464.825261,
+            "sd_ms": 101.91606824133754,
+            "median_ms": 52502.825412,
+            "p95_ms": 52538.3361513,
+            "operations_per_second": 0.019046594009994762
+          }
+        },
+        {
+          "length": 10,
+          "cadence": "final",
+          "includes_restore": true,
+          "timing": {
+            "samples_ms": [
+              42331.428747,
+              42453.908742,
+              42418.3313
+            ],
+            "mean_ms": 42401.22292966666,
+            "sd_ms": 63.006821419564915,
+            "median_ms": 42418.3313,
+            "p95_ms": 42450.3509978,
+            "operations_per_second": 0.023574713322115054
+          }
+        },
+        {
+          "length": 100,
+          "cadence": "none",
+          "includes_restore": true,
+          "timing": {
+            "samples_ms": [
+              56546.940384,
+              56653.559718,
+              56517.441244
+            ],
+            "mean_ms": 56572.64711533333,
+            "sd_ms": 71.60786805864933,
+            "median_ms": 56546.940384,
+            "p95_ms": 56642.8977846,
+            "operations_per_second": 0.0176844227682202
+          }
+        },
+        {
+          "length": 100,
+          "cadence": "every_fourth",
+          "includes_restore": true,
+          "timing": {
+            "samples_ms": [
+              85074.11701,
+              84900.759409,
+              85228.846586
+            ],
+            "mean_ms": 85067.90766833334,
+            "sd_ms": 164.1317028209553,
+            "median_ms": 85074.11701,
+            "p95_ms": 85213.3736284,
+            "operations_per_second": 0.011754456409843848
+          }
+        },
+        {
+          "length": 100,
+          "cadence": "every_step",
+          "includes_restore": true,
+          "timing": {
+            "samples_ms": [
+              169781.694015,
+              170431.852649,
+              170009.646325
+            ],
+            "mean_ms": 170074.397663,
+            "sd_ms": 329.8804543630697,
+            "median_ms": 170009.646325,
+            "p95_ms": 170389.6320166,
+            "operations_per_second": 0.005882019177243294
+          }
+        },
+        {
+          "length": 100,
+          "cadence": "final",
+          "includes_restore": true,
+          "timing": {
+            "samples_ms": [
+              57785.698488,
+              57881.864649,
+              58095.767067
+            ],
+            "mean_ms": 57921.110068,
+            "sd_ms": 158.71604551882504,
+            "median_ms": 57881.864649,
+            "p95_ms": 58074.3768252,
+            "operations_per_second": 0.017276568508358802
+          }
+        }
+      ],
+      "cold_render_ms": 1128.895554,
+      "warm_render": {
+        "samples_ms": [
+          1119.386417,
+          1119.169609,
+          1283.023227,
+          1116.484727,
+          1113.786214,
+          1119.455087,
+          1114.811057,
+          1116.639265,
+          1125.65767,
+          1116.803458
+        ],
+        "mean_ms": 1134.5216731,
+        "sd_ms": 52.28188625056341,
+        "median_ms": 1117.9865335,
+        "p95_ms": 1212.2087263499998,
+        "operations_per_second": 0.8944651568113008
+      },
+      "frame_sha256": "c1fa165bb473bd28a635bd68fc94511ce43a369ad9455d484e3ad865f99a7c2c",
+      "warm_construction_ms": 2736.267475
+    },
+    {
+      "label": "50_percent",
+      "batch": 16,
+      "config": {
+        "ceiling": 500000.0,
+        "render_mode": "rgb_array"
+      },
+      "options": {
+        "accelerate_drop": false
+      },
+      "horizon": 600,
+      "physical_replay_steps": [
+        600,
+        600,
+        600,
+        600,
+        600,
+        600,
+        600,
+        600,
+        600,
+        600,
+        600,
+        600,
+        600,
+        600,
+        600,
+        600
+      ],
+      "state_bytes": 12299504,
+      "serialized_npz_bytes": 12355968,
+      "cold_construction_ms": 2772.272649,
+      "get_state": {
+        "samples_ms": [
+          47.171405,
+          47.548413,
+          47.075656,
+          48.843115,
+          46.962997,
+          48.467967,
+          48.390838,
+          47.881931,
+          48.018111,
+          48.892055,
+          46.762888,
+          47.368724,
+          48.867935,
+          47.897311,
+          47.679073,
+          47.685672,
+          48.288669,
+          46.928487,
+          47.475103,
+          48.614087
+        ],
+        "mean_ms": 47.841021850000004,
+        "sd_ms": 0.6877164654259991,
+        "median_ms": 47.783801499999996,
+        "p95_ms": 48.869141000000006,
+        "operations_per_second": 20.927594050883542
+      },
+      "set_state": {
+        "samples_ms": [
+          75046.322329,
+          74939.770545,
+          75085.815576
+        ],
+        "mean_ms": 75023.96948333333,
+        "sd_ms": 75.54485456995201,
+        "median_ms": 75046.322329,
+        "p95_ms": 75081.86625129999,
+        "operations_per_second": 0.013325103335724314
+      },
+      "restore_samples": 3,
+      "branches": [
+        {
+          "length": 1,
+          "cadence": "none",
+          "includes_restore": true,
+          "timing": {
+            "samples_ms": [
+              75402.301742,
+              75511.797846,
+              75305.112295
+            ],
+            "mean_ms": 75406.40396099999,
+            "sd_ms": 103.40382197281987,
+            "median_ms": 75402.301742,
+            "p95_ms": 75500.8482356,
+            "operations_per_second": 0.013262194613390534
+          }
+        },
+        {
+          "length": 1,
+          "cadence": "every_fourth",
+          "includes_restore": true,
+          "timing": {
+            "samples_ms": [
+              75649.414315,
+              75480.792237,
+              75421.635791
+            ],
+            "mean_ms": 75517.280781,
+            "sd_ms": 118.19189642837371,
+            "median_ms": 75480.792237,
+            "p95_ms": 75632.5521072,
+            "operations_per_second": 0.013248403605252689
+          }
+        },
+        {
+          "length": 1,
+          "cadence": "every_step",
+          "includes_restore": true,
+          "timing": {
+            "samples_ms": [
+              76666.351568,
+              76595.447941,
+              76672.809905
+            ],
+            "mean_ms": 76644.86980466667,
+            "sd_ms": 42.92223183172165,
+            "median_ms": 76666.351568,
+            "p95_ms": 76672.1640713,
+            "operations_per_second": 0.013043531869558705
+          }
+        },
+        {
+          "length": 1,
+          "cadence": "final",
+          "includes_restore": true,
+          "timing": {
+            "samples_ms": [
+              76837.494716,
+              76841.226337,
+              76672.391767
+            ],
+            "mean_ms": 76783.70427333334,
+            "sd_ms": 96.41751292415165,
+            "median_ms": 76837.494716,
+            "p95_ms": 76840.8531749,
+            "operations_per_second": 0.013014479502437087
+          }
+        },
+        {
+          "length": 10,
+          "cadence": "none",
+          "includes_restore": true,
+          "timing": {
+            "samples_ms": [
+              77015.048349,
+              77098.668777,
+              77211.440879
+            ],
+            "mean_ms": 77108.38600166667,
+            "sd_ms": 98.5562012324281,
+            "median_ms": 77098.668777,
+            "p95_ms": 77200.1636688,
+            "operations_per_second": 0.01297039256141241
+          }
+        },
+        {
+          "length": 10,
+          "cadence": "every_fourth",
+          "includes_restore": true,
+          "timing": {
+            "samples_ms": [
+              79013.606186,
+              79343.436458,
+              79182.582518
+            ],
+            "mean_ms": 79179.875054,
+            "sd_ms": 164.9318036428409,
+            "median_ms": 79182.582518,
+            "p95_ms": 79327.351064,
+            "operations_per_second": 0.012629039975712807
+          }
+        },
+        {
+          "length": 10,
+          "cadence": "every_step",
+          "includes_restore": true,
+          "timing": {
+            "samples_ms": [
+              89101.193595,
+              89027.792667,
+              89107.351608
+            ],
+            "mean_ms": 89078.77928999999,
+            "sd_ms": 44.26293115842056,
+            "median_ms": 89101.193595,
+            "p95_ms": 89106.7358067,
+            "operations_per_second": 0.011223194209332297
+          }
+        },
+        {
+          "length": 10,
+          "cadence": "final",
+          "includes_restore": true,
+          "timing": {
+            "samples_ms": [
+              77858.971722,
+              77691.515423,
+              77681.331602
+            ],
+            "mean_ms": 77743.93958233333,
+            "sd_ms": 99.75080159957758,
+            "median_ms": 77691.515423,
+            "p95_ms": 77842.2260921,
+            "operations_per_second": 0.012871418385333198
+          }
+        },
+        {
+          "length": 100,
+          "cadence": "none",
+          "includes_restore": true,
+          "timing": {
+            "samples_ms": [
+              91754.938476,
+              91615.489266,
+              91699.684607
+            ],
+            "mean_ms": 91690.03744966666,
+            "sd_ms": 70.22336702171174,
+            "median_ms": 91699.684607,
+            "p95_ms": 91749.4130891,
+            "operations_per_second": 0.010905162916161915
+          }
+        },
+        {
+          "length": 100,
+          "cadence": "every_fourth",
+          "includes_restore": true,
+          "timing": {
+            "samples_ms": [
+              122421.289979,
+              122653.500625,
+              122902.990495
+            ],
+            "mean_ms": 122659.26036633334,
+            "sd_ms": 240.90190481571446,
+            "median_ms": 122653.500625,
+            "p95_ms": 122878.04150800001,
+            "operations_per_second": 0.0081530489949683
+          }
+        },
+        {
+          "length": 100,
+          "cadence": "every_step",
+          "includes_restore": true,
+          "timing": {
+            "samples_ms": [
+              216729.971966,
+              216592.897766,
+              216934.730822
+            ],
+            "mean_ms": 216752.53351800004,
+            "sd_ms": 172.0297278526645,
+            "median_ms": 216729.971966,
+            "p95_ms": 216914.25493640002,
+            "operations_per_second": 0.004614036494024357
+          }
+        },
+        {
+          "length": 100,
+          "cadence": "final",
+          "includes_restore": true,
+          "timing": {
+            "samples_ms": [
+              93602.735322,
+              93569.43832,
+              93530.442931
+            ],
+            "mean_ms": 93567.53885766666,
+            "sd_ms": 36.18360702018082,
+            "median_ms": 93569.43832,
+            "p95_ms": 93599.40562179999,
+            "operations_per_second": 0.010687250217107
+          }
+        }
+      ],
+      "cold_render_ms": 1230.477292,
+      "warm_render": {
+        "samples_ms": [
+          1230.983449,
+          1221.693776,
+          1224.26062,
+          1228.776092,
+          1222.67328,
+          1226.372027,
+          1218.008959,
+          1228.082317,
+          1225.83346,
+          1229.492608
+        ],
+        "mean_ms": 1225.6176588,
+        "sd_ms": 4.003788585425207,
+        "median_ms": 1226.1027435,
+        "p95_ms": 1230.3125705500001,
+        "operations_per_second": 0.8155923353906107
+      },
+      "frame_sha256": "4db8ed6ddec1221819efde476502c7460e495ed7be6918559c9d4fdd6c1dd52c"
+    }
+  ]
+}
