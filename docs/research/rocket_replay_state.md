@@ -1,8 +1,10 @@
 # Rocket replay State candidate
 
-Current CPU/CUDA public renderer and semantic gates pass; the matrix remains
-**39 VERIFIED / 3 INCOMPLETE** while the separate online source and descriptive
-replay-cost work closes. See the
+Current 480×480 CPU/CUDA public renderer and semantic gates pass. The newer
+96×96 CUDA online gate has a rendering blocker: one frame measures normalized
+MSE 0.00188956 against the unchanged 0.001 limit. CPU online source comparison
+passed all 64 cases. The matrix remains **39 VERIFIED / 3 INCOMPLETE** while
+this blocker and the remaining replay-cost work close. See the
 [current recovery evidence](semantic_recovery_evidence/noncraftax_completion_20261003/README.md).
 The earlier [renderer blocker checkpoint](rocket_public_renderer_blocker.md)
 is preserved as historical evidence, not the current renderer status.

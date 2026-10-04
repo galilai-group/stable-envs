@@ -166,7 +166,26 @@ snapshot, not an accepted performance table. Its six completed scenarios show
 B1 restore increasing from a 163 ms median at reset to 7.61 s at the maximum
 history; get-State medians are about 3.9 ms. A default 480-pixel State occupies
 768,719 bytes, including its 691,200-byte named goal-image cache. Ordinary
-stepping does not replay history. Complete B1/B16 and GPU reports remain pending.
+stepping does not replay history. The B1 CPU job subsequently completed all eight
+scenarios with exit 0. Its final report and recomputed descriptive operation
+table are in `rocket/performance/cpu-b1-6992404_0/`. B16 and GPU reports remain
+pending; this is not a source speedup comparison.
+
+### Latest CUDA online blocker and setup retry
+
+Rocket online job `6992589` failed its first 96×96 selected-frame comparison:
+normalized MSE `[0.00188955993, 0.0000841651226]` for the two lanes, against the
+unchanged 0.001 limit. State/task comparisons before that assertion passed;
+the remaining online CUDA cases did not run. This does not invalidate the
+completed 480×480 gate, but prevents claiming the full requested online path
+is accepted. The failure log is preserved under `rocket/online/`.
+Diagnostic `6993083` captures raw same-state images, source object masks and
+resolution/sampling trials. It does not change production or any threshold.
+
+PushT CUDA job `6992506` failed before tests because the interpreter lacks the
+`pip` module. The retry `6993082` uses the installed `uv` executable to place
+official Pymunk 7.2.0 in an isolated scratch dependency directory; the candidate
+and tests are unchanged. No CUDA test pass is claimed from either submission.
 
 ## OGBench: source worker failure and inspection repair
 

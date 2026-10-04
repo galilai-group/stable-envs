@@ -3668,7 +3668,7 @@
       "variation_parity": "PASS_90_PERSISTENT_VARIATION_CASES_AND_PUBLIC_CPU_CUDA_RENDER_MATRIX",
       "execution_mode": "DELEGATED_CPU",
       "adapter_status": "IMPLEMENTED_BOUNDED_REPLAY_ACCEPTANCE_PENDING",
-      "renderer_regression": "PASS_CURRENT_CPU_CUDA_204_CHECKPOINTS_EACH; CPU exact, CUDA maximum normalized MSE 0.0004282208",
+      "renderer_regression": "PASS_480_CPU_CUDA_204_CHECKPOINTS_EACH; FAIL_96_CUDA_ONLINE_MSE_0.00188955993_OVER_0.001",
       "oracle_corpus": null,
       "reference_cpu_benchmark": "NOT_RUN",
       "stable_cpu_benchmark": "NOT_RUN",
@@ -3676,13 +3676,13 @@
       "similarity_metrics": null,
       "remaining_issues": [
         "The historical direct numeric/native snapshot route was nonexact; the implemented official-engine replay route supersedes that investigation.",
-        "Current CPU/CUDA public/render, persistent-Variation, independent-source suffix and unit gates passed; seal separate action-chunk/source and descriptive replay-cost closure before promotion.",
-        "CPU online source gate 6992588 passed 64 cases and 224 exact frames. CUDA online gate 6992589 and full B1/B16 replay/branch costs 6992404 remain pending. Speedups are not inferred from correctness."
+        "Current 480-pixel CPU/CUDA public/render, persistent-Variation, independent-source suffix and unit gates passed. CPU online source gate passed 64 cases/224 exact frames; CUDA online gate 6992589 failed its first 96-pixel render comparison at MSE 0.00188955993, after matching State/task outputs.",
+        "Resolve low-resolution rendering using diagnostic 6993083 without weakening thresholds. B1 CPU replay costs completed in 6992404_0; B16 and GPU measurements remain pending. Speedups are not inferred from correctness."
       ],
       "test": "tests/unit/test_full_state_contract.py",
       "shared_contract_status": "PASS_INTERFACE: full State or explicit refusal; render projection private",
       "execution_candidate": "DELEGATED",
-      "recovery_status": "CURRENT_CPU_CUDA_GATES_PASS_ONLINE_AND_COST_CLOSURE_PENDING",
+      "recovery_status": "PASS_480_PUBLIC_GATES_CPU_ONLINE_PASS_CUDA_96_RENDER_BLOCKER",
       "audit_report": "docs/research/rocket_recovery_audit.md",
       "feasibility_evidence": "docs/research/semantic_recovery_evidence/rocket_source_audit/feasibility-final/result.json",
       "feasibility_controls": "docs/research/semantic_recovery_evidence/rocket_source_audit/controls-final/result.json",

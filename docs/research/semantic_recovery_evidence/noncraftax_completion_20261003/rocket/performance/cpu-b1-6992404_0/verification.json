@@ -1,0 +1,7 @@
+{
+  "status": "PASS_DESCRIPTIVE_CPU_B1_COST_REPORT",
+  "cases": 8,
+  "report_sha256": "7d878cff1d3182e2aa1cfb9b5ccb16d76622e3bea7ce1896515bd7f4da26a75e",
+  "other_batches_devices_complete": false,
+  "source_speedup_claim": false
+}

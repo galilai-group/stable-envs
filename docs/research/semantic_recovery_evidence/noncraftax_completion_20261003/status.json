@@ -1,5 +1,5 @@
 {
-  "recorded_utc": "2026-10-04T01:46:34.703311+00:00",
+  "recorded_utc": "2026-10-04T01:59:35.216195+00:00",
   "branch": "sami-dev",
   "starting_head": "f88bd4546878797504463dbd32bce736fd2979e4",
   "accepted_matrix": {
@@ -17,7 +17,7 @@
     "cuda_renderer": "NOT_ENTERED",
     "verification": "pusht-verification.json",
     "cost": "pusht_replay_cost/cost.csv",
-    "selected_state_collation": "PASS_25_CPU_TESTS_CUDA_JOB_6992506_PENDING",
+    "selected_state_collation": "CPU_PASS_CUDA_6992506_SETUP_FAILURE_NO_PIP_RETRY_6993082",
     "render_projection_probe": "PASS_118_SOURCE_ONLY_CASES_3776_EXACT_FRAMES_NOT_PRODUCTION"
   },
   "rocket": {
@@ -30,11 +30,13 @@
     "independent_source_suffix": "PASS_108_CASES",
     "cpu_unit_tests": 18,
     "replay_cost_array": "6992404",
-    "replay_cost_status": "RUNNING",
+    "replay_cost_status": "CPU_B1_COMPLETE_OTHER_TASKS_RUNNING_OR_PENDING",
     "online_cpu_job": "6992588",
     "online_cuda_job": "6992589",
-    "online_status": "CPU_PASS_CUDA_PENDING",
-    "online_cpu_status": "PASS_64_CASES_224_FRAMES_EXACT"
+    "online_status": "CPU_PASS_CUDA_96_PIXEL_MSE_BLOCKER",
+    "online_cpu_status": "PASS_64_CASES_224_FRAMES_EXACT",
+    "online_cuda_status": "FAILED_6992589_MSE_0.00188955993_LIMIT_0.001",
+    "low_resolution_diagnostic_job": "6993083"
   },
   "ogbench": {
     "cube_cpu_frame_gate": "PASS_B2_30_CASES",
@@ -90,6 +92,10 @@
         "6992404_3"
       ],
       "action": "afterany dependencies on 6992506 and 6992589 so correctness jobs precede remaining GPU cost measurements; active CPU cost tasks unchanged"
+    },
+    {
+      "job": "6992404_3",
+      "action": "Updated afterany dependencies to new setup retry 6993082 and low-resolution diagnostic 6993083; running measurements unchanged"
     }
   ]
 }
