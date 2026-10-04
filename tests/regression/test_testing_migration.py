@@ -124,4 +124,4 @@ def test_partial_or_blocked_source_profile_cannot_pass(tmp_path, selection):
     assert result.returncode == 1, result.stdout + result.stderr
     verify_seal(run)
     report = json.loads((run / "result.json").read_text())
-    assert report["status"] == "BLOCKED" and report["passed"] == 0 and report["required"] == 24
+    assert report["status"] == "BLOCKED" and report["passed"] == 0 and report["required"] == 56

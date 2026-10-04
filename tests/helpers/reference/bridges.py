@@ -45,9 +45,13 @@ def load_source(root, family):
 
 class NativeBridge:
     def __init__(self, case, batch):
+        from tests.helpers.reference.native_classic_remaining_semantics import NativeClassicRemainingReference
         from tests.helpers.reference.native_classic_semantics import NativeClassicReference
 
-        self.source = NativeClassicReference(case.domain, batch)
+        reference = (
+            NativeClassicReference if case.domain in {"cartpole", "pendulum"} else NativeClassicRemainingReference
+        )
+        self.source = reference(case.domain, batch)
 
     def reset(self, seed):
         self.source.reset(seed=seed)

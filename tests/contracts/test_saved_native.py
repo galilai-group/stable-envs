@@ -16,9 +16,19 @@ from tests.helpers.reference.saved import native_corpus
 pytestmark = pytest.mark.regression
 
 
-@pytest.mark.parametrize("domain,name", [("cartpole", "CartPole"), ("pendulum", "Pendulum")])
+@pytest.mark.parametrize(
+    "domain,name",
+    [
+        ("cartpole", "CartPole"),
+        ("pendulum", "Pendulum"),
+        ("acrobot", "Acrobot"),
+        ("mountain_car", "MountainCar"),
+        ("mountain_car_continuous", "MountainCarContinuous"),
+    ],
+)
 def test_frozen_source_state_and_tasks(domain, name):
-    root = Path(__file__).resolve().parents[1] / "fixtures/semantics/native_classic"
+    family = "native_classic" if domain in {"cartpole", "pendulum"} else "native_classic_remaining"
+    root = Path(__file__).resolve().parents[1] / "fixtures/semantics" / family
     manifest, arrays = native_corpus(root, domain)
     with se.make(name, num_envs=manifest["batch"], device="cpu") as env:
         states = [env.reset(seed=manifest["seed"])]

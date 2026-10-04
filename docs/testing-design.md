@@ -33,10 +33,18 @@ This implements the shared foundation and representative migration from steps
 1–3. It does **not** replace all family acceptance drivers: their existing boundary,
 contact, Variation, process and live CPU/CUDA render gates remain required. The
 inventory points to those gates and preserves their exact accepted scopes.
-Remaining work is a general reached-state corpus format/generator, migration of
-the remaining family drivers and benchmark consumers, and removal of duplicate
-legacy orchestration only after equivalent outcomes are demonstrated. These are
-steps 4–5, rather than new simulator or renderer APIs.
+The first step-4 cohort adds a sealed numeric State/task trajectory format and a
+source-only generator for all five classic-control defaults. Disk replay checks
+restore reached states and compare future outputs; migration checks retain the old
+corpora and require byte-identical arrays. The native live profile now has 56
+required cases, covering all five registrations. Together with FetchReach and
+Rocket, **7/38 registrations** have shared live-source regression profiles.
+This is migration coverage, not a change to the 38 accepted registration scopes.
+
+Remaining step-4/5 work includes source pixels and render configuration in saved
+corpora, other family profiles, benchmark consumers, and removal of duplicate
+legacy orchestration only after equivalent outcomes are demonstrated. No simulator
+or renderer API changes are part of this cohort.
 
 ## Recommendation
 

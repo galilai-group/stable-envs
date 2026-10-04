@@ -13,7 +13,7 @@ below do not replace full-State restoration and independent source gates.
 
 ## Shared source contracts
 
-The first shared profiles live in `tests/contracts/`: CartPole/Pendulum (`native`),
+The first shared profiles live in `tests/contracts/`: all five classic-control defaults (`native`),
 FetchReach (`fetch`), and Rocket (`rocket`). Each uses an independent source bridge
 and separate State, simulation, task and online checks. These are small regression
 profiles; the existing family acceptance gates still cover contact, lifecycle,
@@ -48,8 +48,9 @@ retain the action plan, current numeric State, assertion and replay command.
 Fast checks without the upstream package:
 
 ```bash
-python -m pytest tests/unit/test_testing_evidence.py tests/unit/test_contract_inventory.py
-python -m pytest tests/contracts/test_saved_native.py tests/regression/test_testing_migration.py
+python -m pytest tests/unit/test_testing_evidence.py tests/unit/test_testing_corpus.py tests/unit/test_contract_inventory.py
+python -m pytest tests/contracts/test_saved_native.py tests/contracts/test_saved_trajectory.py -m "not gpu"
+python -m pytest tests/regression/test_testing_migration.py
 python -m scripts.testing.inventory
 ```
 
@@ -59,6 +60,43 @@ checkout; inventory presence is not an acceptance result. Craftax is explicitly
 excluded. Repository navigation checks use Git-index membership (or files in an
 exported artifact), so unrelated ignored/untracked work is not a product failure.
 Stage new product files before running those checks.
+
+## Sealed State/task trajectories
+
+`stable_envs.testing.corpus` supplies a numeric disk format and read-only loader.
+Each directory contains a manifest, an NPZ and a hash seal for one registration.
+The manifest records source and generator identity, seed, batch, action plan and
+all array shapes/dtypes. States include reset and every reached endpoint; integer
+RNG fields are never converted to floats. The loader rejects missing, corrupted,
+wrong-registration and structurally invalid inputs before constructing an owned
+TensorDict. No pickle, simulator handles or live source package is required.
+
+Generate the five classic-control trajectories with the pinned native runtime:
+
+```bash
+python -m scripts.testing.freeze_native --source /path/to/pinned/stable-worldmodel \
+  --output /path/to/new-corpus
+```
+
+Generation only calls the independent source bridges. It refuses to overwrite an
+existing directory. The checked-in `tests/fixtures/semantics/shared_native` corpus
+uses the historical action plans (seed 17, batch 3, 32 steps); migration tests
+require byte-for-byte equality with the preserved old arrays. Further tests
+restore checkpoints into different histories and compare eight-step continuations
+against disk, including every State leaf and task output. Chunk tests cover T=1
+and T=8, terminal lane freezing, padded task outputs, validity and frame capture.
+CPU and CUDA cases use the same corpus; CUDA checks run on Oscar. Frame comparisons
+here are chunk-versus-direct rendering of source-derived states, **not source
+pixel parity**. The historical scalar corpus includes post-terminal calls;
+chunk expectations stop each lane at its first done flag, as the public API requires.
+
+This first format covers State/task trajectories only. Source pixels, camera and
+fidelity metadata, renderer benchmark consumers, and other families remain to be
+migrated. Existing rendering and family acceptance gates remain authoritative.
+A valid hash seal proves artifact integrity, not source authority or acceptance;
+retain the seal in trusted version control and use the pinned source generator.
+
+## Saved rendering evidence
 
 Saved Rocket frame verification is read-only and does not need CUDA:
 

@@ -21,6 +21,16 @@ PROFILES = {
     "native": (
         Registration("swm/CartPoleControl-v1", "CartPole", "native", "cartpole", 1, ("int64",)),
         Registration("swm/PendulumControl-v1", "Pendulum", "native", "pendulum", 1, ("float32", "float64")),
+        Registration("swm/AcrobotControl-v1", "Acrobot", "native", "acrobot", 1, ("int64",)),
+        Registration("swm/MountainCarControl-v0", "MountainCar", "native", "mountain_car", 1, ("int64",)),
+        Registration(
+            "swm/MountainCarContinuousControl-v0",
+            "MountainCarContinuous",
+            "native",
+            "mountain_car_continuous",
+            1,
+            ("float32", "float64"),
+        ),
     ),
     "fetch": (Registration("swm/FetchReach-v3", "FetchReach", "fetch", "Reach", 4, ("float32", "float64")),),
     "rocket": (

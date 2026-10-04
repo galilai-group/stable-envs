@@ -35,7 +35,7 @@ jobs:
       - name: Run unit tests
         run: |
           python -m pytest tests/unit -m unit -q
-          python -m pytest tests/contracts/test_saved_native.py tests/regression/test_testing_migration.py -q
+          python -m pytest tests/contracts/test_saved_native.py tests/contracts/test_saved_trajectory.py tests/regression/test_testing_migration.py -m "not gpu" -q
           python -m pytest tests/packaging/test_distribution.py -q
 
   # Intentional dependency-interaction check: unit + integration under the

@@ -143,7 +143,7 @@ def worlds(source_case, source_identity):
             rng = np.random.default_rng(seed + 1000)
             shape = (24, 2, case.width)
             actions = (
-                rng.integers(0, 2, shape, dtype=np.int64)
+                rng.integers(0, 2 if case.domain == "cartpole" else 3, shape, dtype=np.int64)
                 if dtype == "int64"
                 else rng.uniform(-0.2, 0.2, shape).astype(dtype)
             )
