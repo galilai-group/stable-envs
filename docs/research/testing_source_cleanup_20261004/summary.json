@@ -1,0 +1,88 @@
+{
+  "candidate": "d13741c4b2963a2f585d73701d4306d760efefdb",
+  "baseline": "f49a6816e9488e0c94e5d083ea28532842efff02",
+  "status": "CPU_VALIDATED_CUDA_PENDING",
+  "profiles": [
+    {
+      "profile": "native",
+      "registrations": 5,
+      "required_per_device": 72,
+      "cpu_passed": 72,
+      "cpu_status": "PASS",
+      "cuda_status": "BLOCKED_SSH_AUTHENTICATION"
+    },
+    {
+      "profile": "fetch",
+      "registrations": 12,
+      "required_per_device": 192,
+      "cpu_passed": 192,
+      "cpu_status": "PASS",
+      "cuda_status": "BLOCKED_SSH_AUTHENTICATION"
+    },
+    {
+      "profile": "dmc",
+      "registrations": 12,
+      "required_per_device": 192,
+      "cpu_passed": 0,
+      "cpu_status": "NOT_RUN",
+      "cuda_status": "BLOCKED_SSH_AUTHENTICATION"
+    },
+    {
+      "profile": "navigation",
+      "registrations": 3,
+      "required_per_device": 48,
+      "cpu_passed": 0,
+      "cpu_status": "NOT_RUN",
+      "cuda_status": "BLOCKED_SSH_AUTHENTICATION"
+    },
+    {
+      "profile": "ogbench",
+      "registrations": 3,
+      "required_per_device": 48,
+      "cpu_passed": 0,
+      "cpu_status": "NOT_RUN",
+      "cuda_status": "BLOCKED_SSH_AUTHENTICATION"
+    },
+    {
+      "profile": "pusht",
+      "registrations": 2,
+      "required_per_device": 24,
+      "cpu_passed": 24,
+      "cpu_status": "PASS",
+      "cuda_status": "BLOCKED_SSH_AUTHENTICATION"
+    },
+    {
+      "profile": "rocket",
+      "registrations": 1,
+      "required_per_device": 16,
+      "cpu_passed": 16,
+      "cpu_status": "PASS",
+      "cuda_status": "BLOCKED_SSH_AUTHENTICATION"
+    }
+  ],
+  "required_cpu_passes": 304,
+  "required_gpu_plan": 1184,
+  "additional_gpu_plan": 10,
+  "additional_cpu_tests": {
+    "cube_scene": 48,
+    "infra_controls": 62,
+    "consumers": 149,
+    "frozen_native": 5
+  },
+  "local_cuda_skips": 5,
+  "equivalence": {
+    "identical_ast": 28,
+    "native_oracle_scenarios": 15,
+    "native_acceptance_records": 40,
+    "native_variations": 5,
+    "cube_scene_scenarios": 42
+  },
+  "production_files_unchanged": 154,
+  "python_lines_added": 1144,
+  "python_lines_removed": 1191,
+  "python_net": -47,
+  "archive_sha256": "f9b4c4a7cc8c884377210c9a8019682f7aa8f41d6b0a07cd592037bffc7fbc2c",
+  "oscar_jobs": [],
+  "oscar_blocker": "Permission denied (keyboard-interactive)",
+  "source_pin": "176d54532b3c0a251a4f509b74f2fdacc143a63d"
+}

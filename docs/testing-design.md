@@ -67,6 +67,26 @@ The remaining cleanup is to move the specialized cases into shared consumers,
 not to remove their stronger assertions merely because every registration now
 has the common regression checks.
 
+## Source helper and native acceptance cleanup
+
+The next bounded cohort moves the independent Fetch, PushT, Rocket and Cube/Scene
+witnesses into `tests/helpers/reference/`. Shared profiles no longer import
+research drivers or execute archived Python. Benchmark consumers use the same
+helpers and include their hashes in new reports. Historical outputs are preserved.
+
+The two native source serializers are one five-domain oracle. The two native
+acceptance drivers now delegate to shared case bodies; the native profile accounts
+for 16 additional specialized cases (72 total). Duplicate live integration wrappers
+are removed, while their frozen-corpus assertions remain. This includes the original
+seeds, batches, horizons, terminal rewards, invalid actions, precision controls,
+Variation, snapshot ownership and different-history replay obligations.
+
+The [cohort report](research/testing_source_cleanup_20261004/README.md) records
+old/new equivalence, CPU results and the pending CUDA gate. Other families' specialized
+acceptance orchestration, process-adapter duplication, certification patching and
+installation/CI alignment remain follow-up work. No production API or runtime changes
+are part of this cohort.
+
 ## Recommendation
 
 Keep the public environment API. Consolidate test orchestration around separate

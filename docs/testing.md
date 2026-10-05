@@ -17,9 +17,14 @@ Shared profiles in `tests/contracts/` cover all 38 non-Craftax registrations:
 `native` (5), `fetch` (12), `dmc` (12), `navigation` (3), `ogbench` (3),
 `pusht` (2), and `rocket` (1). Each uses an independent source bridge
 and separate State, simulation, task and online checks. These are small regression
-profiles; the existing family acceptance gates still cover contact, lifecycle,
-Variation, rendering and process execution. Passing a profile does not promote
-its siblings or replace those gates.
+profiles; the native profile also includes its specialized lifecycle, terminal,
+action-boundary, physical Variation and rejected dtype-control witnesses (72
+required cases). Other family acceptance gates still cover their stronger contact,
+Variation, rendering and process obligations. Passing a profile does not promote
+its siblings or replace those gates. Source helpers live in
+`tests/helpers/reference/`; benchmark drivers import them, never the reverse.
+Archived Python under `docs/research/` is retained evidence, not a live dependency
+of these 38 profiles.
 
 From the repository root, in the matching pinned family interpreter:
 
