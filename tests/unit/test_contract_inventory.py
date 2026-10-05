@@ -26,9 +26,31 @@ def test_shared_profiles_cover_each_registration_once():
     registrations = [case.registration for cases in PROFILES.values() for case in cases]
     assert len(registrations) == len(set(registrations)) == 38
     assert set(registrations) == SWM_IDS.keys() - EXCLUDED
-    expected_counts = dict(native=56, fetch=192, dmc=192, navigation=48, ogbench=48, pusht=24, rocket=16)
+    expected_counts = dict(native=72, fetch=192, dmc=192, navigation=48, ogbench=48, pusht=24, rocket=16)
     for device in ("cpu", "cuda"):
         for profile, expected in expected_counts.items():
             cases = list(case_map(profile, device).values())
             assert len(cases) == len(set(cases)) == expected
             assert {case.device for case in cases} == {device}
+
+
+def test_source_helpers_do_not_depend_on_research_drivers():
+    """Oracles may read evidence, but active helpers must not execute archives."""
+    import ast
+
+    root = Path(__file__).resolve().parents[1] / "helpers" / "reference"
+    for path in root.rglob("*.py"):
+        if path.name == "craftax_source.py":  # Explicitly outside the 38-profile cleanup.
+            continue
+        for node in ast.walk(ast.parse(path.read_text())):
+            modules = (
+                [node.module or ""]
+                if isinstance(node, ast.ImportFrom)
+                else [alias.name for alias in node.names]
+                if isinstance(node, ast.Import)
+                else []
+            )
+            assert not any(m == "scripts" or m.startswith(("scripts.", "tests.unit.")) for m in modules), path
+            if isinstance(node, ast.Call):
+                name = node.func.attr if isinstance(node.func, ast.Attribute) else getattr(node.func, "id", "")
+                assert name not in {"spec_from_file_location", "exec_module", "run_path", "exec", "eval"}, path

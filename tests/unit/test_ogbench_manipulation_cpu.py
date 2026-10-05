@@ -78,7 +78,7 @@ def test_controlled_oracle_reset_and_action_parity(family, seed, task, oracle):
         for i, action in enumerate(actions):
             action = action.astype(np.float32 if i % 2 else np.float64)
             a, b = env.step(action), raw.step(action)
-            assert not oracle.previous.differences(a, b)
+            assert not oracle.differences(a, b)
             assert_oracle(env, raw, oracle)
     finally:
         env.close()

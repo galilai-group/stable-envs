@@ -26,7 +26,7 @@ from scripts.benchmarks.online_stepping.ogbench_parallel_source import OGBSource
 from scripts.benchmarks.online_stepping.ogbench_source_terminal_gate import NAMES, reached_goal
 from scripts.benchmarks.online_stepping.ogbench_source_transport_gate import equal
 from scripts.benchmarks.renderer_table.common import PIN, equal_state
-from tests.unit.test_ogbench_manipulation_cpu import assert_oracle
+from tests.helpers.reference.ogbench_manipulation_semantics import assert_oracle
 
 
 def public_tasks(result, horizon):
@@ -80,9 +80,8 @@ def main():
              Path('scripts/benchmarks/online_stepping/dmc_source_pipeline.py'),
              Path('scripts/benchmarks/renderer_table/common.py'),
              Path('tests/helpers/reference/ogbench_maze_semantics.py'),
-             Path('tests/unit/test_ogbench_manipulation_cpu.py'),
-             Path('docs/research/semantic_recovery_evidence/ogb_rng_feasibility/ownership.py'),
-             Path('docs/research/semantic_recovery_evidence/ogb_manipulation_preflight/probe.py'),
+             Path('tests/helpers/reference/ogbench_manipulation_semantics.py'),
+             Path('tests/helpers/reference/ogbench_manipulation_source.py'),
              *Path('stable_envs').rglob('*.py')]
     report = dict(status='RUNNING', family=family, device=device, size=64, batch=2, workers=2,
         host=platform.node(), job=os.environ['SLURM_JOB_ID'], pid=os.getpid(),

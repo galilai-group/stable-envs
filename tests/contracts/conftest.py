@@ -32,13 +32,29 @@ def label(value):
 
 
 def case_map(profile, device="cpu"):
-    return {
+    mapping = {
         f"tests/contracts/{node}[{label(value)}]": CaseKey(
             value[0].registration, axis, f"seed{value[1]}/{value[2]}", device
         )
         for node, axis in CONTRACTS.items()
         for value in parameters(profile)
     }
+
+    if profile == "native":
+        prefix = "tests/contracts/test_native_acceptance.py::"
+        for case in PROFILES["native"]:
+            for batch in (1, 3):
+                mapping[f"{prefix}test_native_boundaries[{case.domain}-B{batch}]"] = CaseKey(
+                    case.registration, "specialized", f"boundaries/B{batch}", device
+                )
+            mapping[f"{prefix}test_native_physics_variation[{case.domain}]"] = CaseKey(
+                case.registration, "specialized", "physics-variation", device
+            )
+        case = next(c for c in PROFILES["native"] if c.domain == "mountain_car_continuous")
+        mapping[prefix + "test_native_dtype_control"] = CaseKey(
+            case.registration, "specialized", "rejected-dtype-control", device
+        )
+    return mapping
 
 
 def pytest_configure(config):
@@ -68,17 +84,6 @@ def pytest_configure(config):
                 for path in (root / directory).rglob("*.py")
             ]
             paths += [root / "tests/conftest.py", root / "pyproject.toml"]
-            paths += [
-                root / name
-                for name in (
-                    "scripts/recovery/rocket_feasibility.py",
-                    "scripts/research_replay/pusht_replay_gate.py",
-                    "docs/research/semantic_recovery_evidence/ogb_rng_feasibility/ownership.py",
-                    "docs/research/semantic_recovery_evidence/ogb_manipulation_preflight/probe.py",
-                    "scripts/benchmarks/online_stepping/fetch_source_pipeline.py",
-                    "scripts/benchmarks/online_stepping/fetch_source_render_lifecycle.py",
-                )
-            ]
             manifest_path = config.getoption("--contract-candidate-manifest")
             if manifest_path:
                 import json

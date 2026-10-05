@@ -126,6 +126,7 @@ def main():
         source_pin=PIN,
         script_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
         versions={name: md.version(name) for name in ("numpy", "pymunk", "gymnasium", "pygame")},
+        source_helper_sha256=hashlib.sha256((Path(__file__).resolve().parents[2] / "tests/helpers/reference/pusht_semantics.py").read_bytes()).hexdigest(),
         helper_sha256=hashlib.sha256(Path(__file__).with_name("pusht_replay_gate.py").read_bytes()).hexdigest(),
     )
 

@@ -9,7 +9,7 @@ from pathlib import Path
 import numpy as np
 import stable_worldmodel
 
-from tests.helpers.reference.native_classic_remaining_semantics import NativeClassicRemainingReference
+from tests.helpers.reference.native_classic_semantics import NativeClassicReference
 
 PIN = "176d54532b3c0a251a4f509b74f2fdacc143a63d"
 DOMAINS = ("acrobot", "mountain_car", "mountain_car_continuous")
@@ -44,7 +44,7 @@ manifest = {
     "domains": {},
 }
 for domain in DOMAINS:
-    ref = NativeClassicRemainingReference(domain, 3)
+    ref = NativeClassicReference(domain, 3)
     try:
         initial = ref.reset(seed=17)
         rng = np.random.default_rng(217)

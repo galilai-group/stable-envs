@@ -11,34 +11,30 @@ from tensordict import TensorDict
 WRAPPERS = {
     "cartpole": ("cartpole", "CartPoleWrapper"),
     "pendulum": ("pendulum", "PendulumWrapper"),
+    "acrobot": ("acrobot", "AcrobotWrapper"),
+    "mountain_car": ("mountain_car", "MountainCarWrapper"),
+    "mountain_car_continuous": ("mountain_car", "MountainCarContinuousWrapper"),
 }
-
-FIELDS = {
-    "cartpole": {
-        "x": (1, torch.float64),
-        "x_dot": (1, torch.float64),
-        "theta": (1, torch.float64),
-        "theta_dot": (1, torch.float64),
-        ("lifecycle", "elapsed_steps"): (1, torch.int64),
-        ("task", "steps_beyond_terminated"): (1, torch.int64),
-        ("task", "has_steps_beyond_terminated"): (1, torch.bool),
-        ("rng", "state"): (4, torch.int64),
-        ("rng", "increment"): (4, torch.int64),
-        ("rng", "has_uint32"): (1, torch.int64),
-        ("rng", "uinteger"): (1, torch.int64),
-    },
-    "pendulum": {
-        "theta": (1, torch.float64),
-        "theta_dot": (1, torch.float64),
-        "torque": (1, torch.float64),
-        ("task", "has_last_u"): (1, torch.bool),
-        ("lifecycle", "elapsed_steps"): (1, torch.int64),
-        ("rng", "state"): (4, torch.int64),
-        ("rng", "increment"): (4, torch.int64),
-        ("rng", "has_uint32"): (1, torch.int64),
-        ("rng", "uinteger"): (1, torch.int64),
-    },
+PHYSICAL = {
+    "cartpole": ("x", "x_dot", "theta", "theta_dot"),
+    "pendulum": ("theta", "theta_dot"),
+    "acrobot": ("theta1", "theta2", "dtheta1", "dtheta2"),
+    "mountain_car": ("position", "velocity"),
+    "mountain_car_continuous": ("position", "velocity"),
 }
+COMMON = {
+    ("lifecycle", "elapsed_steps"): (1, torch.int64),
+    ("rng", "state"): (4, torch.int64),
+    ("rng", "increment"): (4, torch.int64),
+    ("rng", "has_uint32"): (1, torch.int64),
+    ("rng", "uinteger"): (1, torch.int64),
+}
+FIELDS = {domain: {**{key: (1, torch.float64) for key in fields}, **COMMON} for domain, fields in PHYSICAL.items()}
+FIELDS["cartpole"].update(
+    {("task", "steps_beyond_terminated"): (1, torch.int64), ("task", "has_steps_beyond_terminated"): (1, torch.bool)}
+)
+FIELDS["pendulum"].update({"torque": (1, torch.float64), ("task", "has_last_u"): (1, torch.bool)})
+FIELDS["mountain_car_continuous"][("task", "state_is_float32")] = (1, torch.bool)
 
 
 def _limbs(value):
@@ -79,16 +75,18 @@ class NativeClassicReference:
                 ("rng", "has_uint32"): [rng["has_uint32"]],
                 ("rng", "uinteger"): [rng["uinteger"]],
             }
+            physical = np.asarray(base.state)
+            values.update(dict(zip(PHYSICAL[self.domain], physical, strict=True)))
             if self.domain == "cartpole":
-                values.update(dict(zip(("x", "x_dot", "theta", "theta_dot"), np.asarray(base.state))))
                 beyond = base.steps_beyond_terminated
                 values[("task", "steps_beyond_terminated")] = [0 if beyond is None else beyond]
                 values[("task", "has_steps_beyond_terminated")] = [beyond is not None]
-            else:
-                values["theta"], values["theta_dot"] = np.asarray(base.state)
+            elif self.domain == "pendulum":
                 last_u = getattr(base, "last_u", None)
                 values["torque"] = [0.0 if last_u is None else last_u]
                 values[("task", "has_last_u")] = [last_u is not None]
+            elif self.domain == "mountain_car_continuous":
+                values[("task", "state_is_float32")] = [physical.dtype == np.float32]
             row = TensorDict({}, batch_size=[])
             for key, (width, dtype) in FIELDS[self.domain].items():
                 row[key] = torch.as_tensor(values[key], dtype=dtype).reshape(width).clone()
@@ -99,17 +97,19 @@ class NativeClassicReference:
         host = state.cpu()
         for i, wrapper in enumerate(self.envs):
             row, env, base = host[i], wrapper.env, wrapper.env.unwrapped
+            dtype = (
+                np.float32
+                if self.domain == "mountain_car_continuous" and row["task", "state_is_float32"].item()
+                else np.float64
+            )
+            base.state = np.asarray([row[name].item() for name in PHYSICAL[self.domain]], dtype=dtype)
             if self.domain == "cartpole":
-                base.state = np.asarray(
-                    [row[name].item() for name in ("x", "x_dot", "theta", "theta_dot")], np.float64
-                )
                 base.steps_beyond_terminated = (
                     row["task", "steps_beyond_terminated"].item()
                     if row["task", "has_steps_beyond_terminated"].item()
                     else None
                 )
-            else:
-                base.state = np.asarray([row["theta"].item(), row["theta_dot"].item()], np.float64)
+            elif self.domain == "pendulum":
                 base.last_u = np.float64(row["torque"].item()) if row["task", "has_last_u"].item() else None
             env._elapsed_steps = row["lifecycle", "elapsed_steps"].item()
             env.env._has_reset = True
@@ -128,7 +128,7 @@ class NativeClassicReference:
             actions = actions.detach().cpu().numpy()
         actions = np.asarray(actions)
         assert actions.shape == (self.num_envs, 1)
-        if self.domain == "cartpole":
+        if self.domain in {"cartpole", "acrobot", "mountain_car"}:
             return [actions[i, 0].item() for i in range(self.num_envs)]
         return [actions[i] for i in range(self.num_envs)]
 

@@ -1,12 +1,11 @@
 """Accepted oracle witnesses for explicit-JAX and controlled-entropy families."""
 
 import hashlib
-import importlib.util
 import pickle
 
 import numpy as np
 
-from .common import ROOT, state_hash
+from .common import state_hash
 
 
 class CraftaxBridge:
@@ -60,13 +59,12 @@ class ManipulationBridge:
     def __init__(self, row, seed, options):
         self.name = row["name"]
         self.options = {k: v for k, v in options.items() if not k.startswith("_")}
-        path = ROOT / "docs/research/semantic_recovery_evidence/ogb_rng_feasibility/ownership.py"
-        spec = importlib.util.spec_from_file_location("randall_ogb_oracle", path)
-        self.module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(self.module)
+        from tests.helpers.reference.ogbench_manipulation_semantics import load_oracle
+
+        self.module = load_oracle()
         self.source = getattr(self.module, "Owned" + self.name[3:])(entropy_seed=seed)
         self.camera = "front_pixels"
-        self.helper = "tests/unit/test_ogbench_manipulation_cpu.py:assert_oracle"
+        self.helper = "tests/helpers/reference/ogbench_manipulation_semantics.py:assert_oracle"
 
     def reset(self, seed):
         return self.source.reset(seed=seed, options=self.options)
@@ -75,7 +73,7 @@ class ManipulationBridge:
         return self.source.step(action[0])
 
     def proof(self, env):
-        from tests.unit.test_ogbench_manipulation_cpu import assert_oracle
+        from tests.helpers.reference.ogbench_manipulation_semantics import assert_oracle
 
         assert_oracle(env._simulator.envs[0], self.source, self.module)
         return dict(
@@ -99,13 +97,13 @@ class ManipulationBridge:
 
 class RocketBridge:
     def __init__(self, row, seed, options):
-        from scripts.recovery.rocket_feasibility import RocketLandingEnv
+        from tests.helpers.reference.rocket_semantics import RocketLandingEnv
 
         self.name = row["name"]
         self.options = {k: v for k, v in options.items() if not k.startswith("_")}
         self.source = RocketLandingEnv(**options["_config"])
         self.camera = "registered PyFlyt fixed camera at 480x480"
-        self.helper = "scripts/recovery/rocket_feasibility.py:capture/differences"
+        self.helper = "tests/helpers/reference/rocket_semantics.py:capture/differences"
 
     def reset(self, seed):
         return self.source.reset(seed=seed, options=self.options)
@@ -114,7 +112,7 @@ class RocketBridge:
         return self.source.step(action[0])
 
     def proof(self, env):
-        from scripts.recovery.rocket_feasibility import capture, differences
+        from tests.helpers.reference.rocket_semantics import capture, differences
 
         candidate = capture(env._simulator.envs[0].env)
         source = capture(self.source)
@@ -129,7 +127,7 @@ class RocketBridge:
         )
 
     def snapshot(self):
-        from scripts.recovery.rocket_feasibility import capture
+        from tests.helpers.reference.rocket_semantics import capture
 
         return state_hash(capture(self.source))
 
@@ -145,8 +143,8 @@ class RocketBridge:
 
 
 def rocket_plans(row):
-    from scripts.recovery.rocket_feasibility import RocketLandingEnv
     from stable_envs._adapters.rocket_spaces import nodes
+    from tests.helpers.reference.rocket_semantics import RocketLandingEnv
 
     config = {"render_mode": "rgb_array", "render_resolution": (480, 480)}
     source = RocketLandingEnv(**config)

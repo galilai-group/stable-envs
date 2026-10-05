@@ -53,13 +53,9 @@ def load_source(root, family):
 
 class NativeBridge:
     def __init__(self, case, batch):
-        from tests.helpers.reference.native_classic_remaining_semantics import NativeClassicRemainingReference
         from tests.helpers.reference.native_classic_semantics import NativeClassicReference
 
-        reference = (
-            NativeClassicReference if case.domain in {"cartpole", "pendulum"} else NativeClassicRemainingReference
-        )
-        self.source = reference(case.domain, batch)
+        self.source = NativeClassicReference(case.domain, batch)
 
     def reset(self, seed):
         self.source.reset(seed=seed)
@@ -151,7 +147,7 @@ class PushTBridge:
             source.reset(seed=seed + lane)
 
     def compare(self, candidate):
-        from scripts.research_replay.pusht_replay_gate import diagnostics, equal
+        from tests.helpers.reference.pusht_semantics import diagnostics, equal
 
         for source, replay in zip(self.envs, candidate._simulator.envs, strict=True):
             equal(diagnostics(source), diagnostics(replay.env))
@@ -182,8 +178,7 @@ class FetchBridge:
             source.reset(seed=seed + lane, options={"variation": []})
 
     def compare(self, candidate):
-        from scripts.benchmarks.online_stepping.fetch_source_pipeline import source_state
-        from scripts.benchmarks.online_stepping.fetch_source_render_lifecycle import snapshot
+        from tests.helpers.reference.fetch_semantics import snapshot, source_state
 
         compare_state(candidate.get_state(), source_state([snapshot(source) for source in self.envs]))
 
@@ -201,7 +196,7 @@ class FetchBridge:
 
 class RocketBridge:
     def __init__(self, case, batch):
-        from scripts.recovery.rocket_feasibility import RocketLandingEnv
+        from tests.helpers.reference.rocket_semantics import RocketLandingEnv
 
         self.envs = []
         try:
@@ -216,7 +211,7 @@ class RocketBridge:
             source.reset(seed=seed + lane)
 
     def compare(self, candidate):
-        from scripts.recovery.rocket_feasibility import capture, differences
+        from tests.helpers.reference.rocket_semantics import capture, differences
 
         for source, replay in zip(self.envs, candidate._simulator.envs, strict=True):
             delta = differences(capture(source), capture(replay.env))

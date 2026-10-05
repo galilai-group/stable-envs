@@ -11,7 +11,6 @@ import copy
 import hashlib
 import importlib
 import importlib.metadata
-import importlib.util
 import inspect
 import json
 import platform
@@ -77,9 +76,8 @@ def main():
     paths = [Path(__file__).relative_to(Path.cwd()),
              Path("scripts/benchmarks/renderer_table/common.py"),
              Path("tests/helpers/reference/ogbench_maze_semantics.py"),
-             Path("tests/unit/test_ogbench_manipulation_cpu.py"),
-             Path("docs/research/semantic_recovery_evidence/ogb_rng_feasibility/ownership.py"),
-             Path("docs/research/semantic_recovery_evidence/ogb_manipulation_preflight/probe.py"),
+             Path("tests/helpers/reference/ogbench_manipulation_semantics.py"),
+             Path("tests/helpers/reference/ogbench_manipulation_source.py"),
              *Path("stable_envs/_adapters").glob("ogbench*.py")]
     report = dict(status="RUNNING", host=platform.node(), source_pin=PIN,
         scope="CPU B2 direct-source/restore prerequisite only; no rendering, parallel transport, timing or CUDA",
@@ -160,14 +158,14 @@ def main():
                                     if family == "Maze":
                                         equal_state(capture(), source_initial)
                                     else:
-                                        assert not module.previous.differences(source_initial, capture())
+                                        assert not module.differences(source_initial, capture())
                                     verify()
                                 for t in range(horizon):
                                     outside = copy.deepcopy(np.random.get_state())
                                     tasks = source_tasks(source_step(actions[:, t]), family)
                                     assert not bool(tasks["terminated"].any() or tasks["truncated"].any()), \
                                         "This bounded source workload must remain nonterminal"
-                                    assert not module.previous.differences(outside, np.random.get_state())
+                                    assert not module.differences(outside, np.random.get_state())
                                     result = adapter.step(actions[:, t], capture_state=False)
                                     assert set(result.keys(True, True)) == set(tasks)
                                     for key, value in tasks.items():

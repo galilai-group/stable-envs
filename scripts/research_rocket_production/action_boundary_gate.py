@@ -14,9 +14,9 @@ from pathlib import Path
 import numpy as np
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / "scripts/recovery"))
-from rocket_feasibility import RocketLandingEnv as Oracle
-from rocket_feasibility import capture, differences
+sys.path.insert(0, str(ROOT))
+from tests.helpers.reference.rocket_semantics import RocketLandingEnv as Oracle
+from tests.helpers.reference.rocket_semantics import capture, differences
 
 from stable_envs._adapters.rocket_spaces import nodes
 from stable_envs._adapters.rocket_task import RocketLandingEnv as Candidate
@@ -135,6 +135,7 @@ def main():
     paths = [
         ROOT / p
         for p in [
+            "tests/helpers/reference/rocket_semantics.py",
             "stable_envs/_adapters/rocket_actions.py",
             "stable_envs/_adapters/rocket_task.py",
             "stable_envs/_adapters/rocket_spaces.py",

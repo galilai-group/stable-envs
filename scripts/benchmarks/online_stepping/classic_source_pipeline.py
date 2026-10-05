@@ -27,7 +27,6 @@ import torch
 import stable_envs as se
 from scripts.benchmarks.online_stepping.classic_state_export import NAMES, actions_for
 from scripts.benchmarks.renderer_table.common import PIN, equal_state
-from tests.helpers.reference.native_classic_remaining_semantics import NativeClassicRemainingReference
 from tests.helpers.reference.native_classic_semantics import NativeClassicReference
 
 
@@ -42,8 +41,7 @@ def import_source(root):
 
 
 def source(domain, batch):
-    cls = NativeClassicReference if domain in ("cartpole", "pendulum") else NativeClassicRemainingReference
-    ref = cls(domain, num_envs=batch)
+    ref = NativeClassicReference(domain, num_envs=batch)
     for i, env in enumerate(ref.envs):
         ref.envs[i] = type(env)(render_mode="rgb_array")
         env.close()
@@ -122,8 +120,7 @@ def main():
              Path("stable_envs/_adapters/acrobot_process.py"), Path("stable_envs/_adapters/process_requests.py"),
              Path("scripts/benchmarks/online_stepping/classic_state_export.py"),
              Path("scripts/benchmarks/renderer_table/common.py"),
-             Path("tests/helpers/reference/native_classic_semantics.py"),
-             Path("tests/helpers/reference/native_classic_remaining_semantics.py")]
+             Path("tests/helpers/reference/native_classic_semantics.py")]
     report["candidate_files"] = {str(f): hashlib.sha256(f.read_bytes()).hexdigest() for f in paths}
     args.output.parent.mkdir(parents=True, exist_ok=True)
 

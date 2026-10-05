@@ -7,7 +7,6 @@ isolates its dynamics effect; actual CPU/GPU rendering remains a separate gate.
 """
 
 import argparse
-import copy
 import hashlib
 import importlib.metadata
 import inspect
@@ -24,46 +23,11 @@ import numpy as np
 import stable_worldmodel
 import stable_worldmodel.envs  # noqa: F401
 from gymnasium.envs.mujoco.mujoco_rendering import MujocoRenderer
+from tests.helpers.reference.fetch_semantics import snapshot, differences
 
 PIN = '176d54532b3c0a251a4f509b74f2fdacc143a63d'
 IDS = [f'swm/Fetch{task}{suffix}-v3' for task in ('Reach', 'Push', 'Slide', 'PickAndPlace')
        for suffix in ('', 'Dense', 'Dict')]
-
-
-def snapshot(env):
-    """Read the independent source's continuation fields, without a library adapter."""
-    raw = env.unwrapped
-    limit = env
-    while not isinstance(limit, gym.wrappers.TimeLimit):
-        limit = limit.env
-    gripper = raw.model.body('robot0:gripper_link').id
-    return dict({name: getattr(raw.data, name).copy() for name in
-                 ('qpos', 'qvel', 'qacc_warmstart', 'mocap_pos', 'mocap_quat', 'ctrl', 'qfrc_applied', 'xfrc_applied')},
-                time=np.asarray(raw.data.time), goal=raw.goal.copy(), initial_gripper_xpos=raw.initial_gripper_xpos.copy(),
-                elapsed=np.asarray(limit._elapsed_steps), max_episode_steps=np.asarray(limit._max_episode_steps),
-                rng=copy.deepcopy(raw.np_random.bit_generator.state),
-                controller_position=raw.data.xpos[gripper].copy(), controller_quaternion=raw.data.xquat[gripper].copy())
-
-
-def differences(a, b, prefix=''):
-    if isinstance(a, dict):
-        assert isinstance(b, dict) and a.keys() == b.keys()
-        result = {}
-        for key in a:
-            result.update(differences(a[key], b[key], prefix + '/' + str(key)))
-        return result
-    if isinstance(a, (list, tuple)):
-        assert type(a) is type(b) and len(a) == len(b)
-        result = {}
-        for i, (x, y) in enumerate(zip(a, b, strict=True)):
-            result.update(differences(x, y, prefix + '/' + str(i)))
-        return result
-    a, b = np.asarray(a), np.asarray(b)
-    assert a.shape == b.shape and a.dtype == b.dtype, (prefix, a.shape, b.shape, a.dtype, b.dtype)
-    if np.array_equal(a, b):
-        return {}
-    delta = float(np.max(np.abs(a.astype(np.float64) - b.astype(np.float64)))) if a.dtype.kind in 'bifu' else None
-    return {prefix: dict(max_abs=delta, shape=list(a.shape), dtype=str(a.dtype))}
 
 
 def main():
@@ -81,6 +45,7 @@ def main():
         host=platform.node(), scope='Actual source CPU callback and following transitions only; no render() or GL invoked',
         no_rendering=True, no_timing=True, no_candidate_changes=True,
         source_files={}, runtime_files={}, call_paths={},
+        helper_sha256=hashlib.sha256(Path('tests/helpers/reference/fetch_semantics.py').read_bytes()).hexdigest(),
         generator_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
         versions={n: importlib.metadata.version(n) for n in ('numpy', 'mujoco', 'gymnasium', 'gymnasium-robotics')},
         cases=[])

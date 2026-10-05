@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import argparse
 import hashlib
-import importlib.util
 import json
 import traceback
 from importlib.metadata import version
@@ -145,11 +144,9 @@ def generate(folder):
 
 
 def owned_oracle():
-    path = ROOT / "docs/research/semantic_recovery_evidence/ogb_rng_feasibility/ownership.py"
-    spec = importlib.util.spec_from_file_location("gpu_ogb_owned_oracle", path)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
+    from tests.helpers.reference.ogbench_manipulation_semantics import load_oracle
+
+    return load_oracle()
 
 
 def baseline_frame(family, rs, serial, out):

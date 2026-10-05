@@ -17,9 +17,9 @@ from pathlib import Path
 import numpy as np
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / "scripts/recovery"))
-from rocket_feasibility import RocketLandingEnv as Oracle
-from rocket_feasibility import capture, differences
+sys.path.insert(0, str(ROOT))
+from tests.helpers.reference.rocket_semantics import RocketLandingEnv as Oracle
+from tests.helpers.reference.rocket_semantics import capture, differences
 
 from stable_envs._adapters.rocket_task import RocketLandingEnv as Candidate
 
@@ -131,6 +131,7 @@ def main():
         e.close()
     np.savez_compressed(a.output / "equal-count-witness.npz", **witness)
     paths = [
+        ROOT / "tests/helpers/reference/rocket_semantics.py",
         Path(inspect.getfile(Oracle)),
         Path(inspect.getfile(Candidate)),
         ROOT / "stable_envs/_adapters/rocket_spaces.py",

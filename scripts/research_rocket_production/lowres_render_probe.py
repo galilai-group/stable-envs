@@ -18,9 +18,9 @@ import numpy as np
 import torch
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / "scripts/recovery"))
-from rocket_feasibility import RocketLandingEnv as Oracle
-from rocket_feasibility import capture, differences
+sys.path.insert(0, str(ROOT))
+from tests.helpers.reference.rocket_semantics import RocketLandingEnv as Oracle
+from tests.helpers.reference.rocket_semantics import capture, differences
 
 import stable_envs
 from stable_envs.envs import rocket_render

@@ -22,6 +22,7 @@ from pathlib import Path
 import numpy as np
 import torch
 from tensordict import TensorDict
+from tests.helpers.reference.fetch_semantics import source_state
 
 import stable_envs as se
 from scripts.benchmarks.online_stepping.dmc_source_pipeline import require_gl, task_hash
@@ -33,25 +34,6 @@ from scripts.benchmarks.renderer_table.common import equal_state, state_hash
 MODES = ('source_serial', 'source_parallel', 'ours')
 REGISTRATIONS = [f'swm/Fetch{task}{suffix}-v3' for task in ('Reach', 'Push', 'Slide', 'PickAndPlace')
                  for suffix in ('', 'Dense', 'Dict')]
-
-
-def source_state(rows):
-    """Independent extraction from source snapshots, never an adapter export."""
-    columns = {}
-    for key, source in [('qpos', 'qpos'), ('qvel', 'qvel'), ('time', 'time'), ('warmstart', 'qacc_warmstart'),
-                        ('goal', 'goal'), (('task', 'initial_gripper_xpos'), 'initial_gripper_xpos'),
-                        (('controller', 'position'), 'controller_position'),
-                        (('controller', 'quaternion'), 'controller_quaternion'),
-                        (('lifecycle', 'elapsed_steps'), 'elapsed')]:
-        columns[key] = torch.from_numpy(np.stack([np.atleast_1d(row[source]) for row in rows]))
-    for key, field in [('state_words', 'state'), ('increment_words', 'inc')]:
-        words = [np.frombuffer(int(row['rng']['state'][field]).to_bytes(16, 'little'), dtype='<u4').astype(np.int64)
-                 for row in rows]
-        columns['rng', key] = torch.from_numpy(np.stack(words))
-    for field in ('has_uint32', 'uinteger'):
-        columns['rng', field] = torch.tensor([[row['rng'][field]] for row in rows], dtype=torch.int64)
-    assert all(row['rng']['bit_generator'] == 'PCG64' for row in rows)
-    return TensorDict(columns, batch_size=[len(rows)], device='cpu')
 
 
 def copy_state_to_device(state, device):
@@ -153,7 +135,7 @@ def main():
              Path('scripts/benchmarks/online_stepping/classic_source_pipeline.py'),
              Path('scripts/benchmarks/online_stepping/dmc_source_pipeline.py'),
              Path('scripts/benchmarks/renderer_table/common.py'),
-             Path('scripts/recovery/fetch_public_gate.py'), Path('scripts/recovery/fetch_pickandplace_adapter_probe.py'),
+             Path('tests/helpers/reference/fetch_semantics.py'), Path('scripts/recovery/fetch_public_gate.py'), Path('scripts/recovery/fetch_pickandplace_adapter_probe.py'),
              *Path('stable_envs').rglob('*.py')]
     report = dict(status='RUNNING', registration=args.registration, mode=args.mode, device=device,
         host=platform.node(), job=os.environ['SLURM_JOB_ID'], pid=os.getpid(), affinity=affinity,

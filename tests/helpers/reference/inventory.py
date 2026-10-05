@@ -33,6 +33,8 @@ def inventory():
         if registration in EXCLUDED:
             continue
         gates = [value.strip() for value in row["test"].split(";")]
+        if profiles.get(registration) == "native":
+            gates.append("tests/contracts/test_native_acceptance.py")
         rows.append(
             dict(
                 registration=registration,
@@ -51,7 +53,9 @@ def inventory():
                 execution_mode=row["execution_mode"],
                 remaining_limits=row["remaining_issues"],
                 source_regression_profile=profiles.get(registration),
-                migration="shared regression subset" if registration in profiles else "existing family drivers retained",
+                migration="shared regression subset"
+                if registration in profiles
+                else "existing family drivers retained",
                 current_run_status="NOT_RUN",
             )
         )

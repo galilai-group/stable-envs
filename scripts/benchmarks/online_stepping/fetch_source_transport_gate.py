@@ -73,7 +73,7 @@ def main():
              Path('scripts/benchmarks/online_stepping/fetch_source_pipeline.py'),
              Path('scripts/benchmarks/online_stepping/fetch_source_render_lifecycle.py'),
              Path('scripts/benchmarks/online_stepping/classic_parallel_source.py'),
-             Path('scripts/recovery/fetch_public_gate.py'), Path('scripts/recovery/fetch_pickandplace_adapter_probe.py'),
+             Path('tests/helpers/reference/fetch_semantics.py'), Path('scripts/recovery/fetch_public_gate.py'), Path('scripts/recovery/fetch_pickandplace_adapter_probe.py'),
              Path('stable_envs/_stepping.py'), Path('stable_envs/_adapters/fetch_pickandplace.py'),
              Path('stable_envs/_adapters/fetch_observations.py')]
     report = dict(status='RUNNING', host=platform.node(), parent_pid=os.getpid(), source_pin=PIN,

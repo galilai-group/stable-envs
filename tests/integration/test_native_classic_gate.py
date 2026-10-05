@@ -1,8 +1,7 @@
-"""Pinned-SWM gate and frozen real-reference corpus for classic-control defaults."""
+"""Frozen real-reference corpus for classic-control defaults."""
 
 import hashlib
 import json
-import os
 from pathlib import Path
 
 import numpy as np
@@ -10,17 +9,7 @@ import pytest
 import torch
 
 import stable_envs as se
-
-pytest.importorskip("stable_worldmodel")
-
-from scripts.recovery.native_classic_gate import CASES, run_gate
-
-
-def test_native_classic_gate():
-    result = run_gate(os.environ.get("SE_NATIVE_CLASSIC_DEVICE", "cpu"))
-    assert result["execution_mode"] == "DELEGATED_CPU"
-    assert all(case.get("max_error", 0) == 0 for case in result["cases"])
-    assert all(case["max_error"] == 0 for case in result["physical_variation"].values())
+from tests.helpers.reference.native_acceptance import CASES
 
 
 @pytest.mark.parametrize("domain", ["cartpole", "pendulum"])

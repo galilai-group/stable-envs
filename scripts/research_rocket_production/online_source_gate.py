@@ -20,9 +20,9 @@ import numpy as np
 import torch
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / "scripts/recovery"))
-from rocket_feasibility import RocketLandingEnv as Oracle
-from rocket_feasibility import capture, differences
+sys.path.insert(0, str(ROOT))
+from tests.helpers.reference.rocket_semantics import RocketLandingEnv as Oracle
+from tests.helpers.reference.rocket_semantics import capture, differences
 
 import stable_envs
 
@@ -179,7 +179,7 @@ def main():
                         if oracle.modified_pad_urdf:
                             Path(oracle.modified_pad_urdf).unlink(missing_ok=True)
     np.savez_compressed(args.output / "frames.npz", ours=frames, source=references)
-    files = list(ROOT.glob("stable_envs/_adapters/rocket*.py")) + list(ROOT.glob("stable_envs/envs/rocket*.py"))
+    files = [ROOT / "tests/helpers/reference/rocket_semantics.py"] + list(ROOT.glob("stable_envs/_adapters/rocket*.py")) + list(ROOT.glob("stable_envs/envs/rocket*.py"))
     files += [
         ROOT / "stable_envs/_stepping.py",
         ROOT / "stable_envs/env.py",

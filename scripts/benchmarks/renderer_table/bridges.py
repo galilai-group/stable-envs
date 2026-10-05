@@ -46,13 +46,7 @@ class Bridge:
             self.helper = "scripts/recovery/fetch_public_gate.py:full_compare"
             return
         if name in CLASSIC:
-            early = name in {"CartPole", "Pendulum"}
-            module, cls = (
-                ("native_classic_semantics", "NativeClassicReference")
-                if early
-                else ("native_classic_remaining_semantics", "NativeClassicRemainingReference")
-            )
-            args = [CLASSIC[name]]
+            module, cls, args = "native_classic_semantics", "NativeClassicReference", [CLASSIC[name]]
         elif name in NAV:
             module, cls, args = "native_navigation_semantics", "NativeNavigationReference", [NAV[name]]
         elif name in DMC:

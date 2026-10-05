@@ -74,7 +74,7 @@ def main():
              Path('scripts/benchmarks/online_stepping/classic_parallel_source.py'),
              Path('scripts/benchmarks/online_stepping/classic_source_pipeline.py'),
              Path('scripts/benchmarks/online_stepping/dmc_source_pipeline.py'),
-             Path('scripts/recovery/fetch_public_gate.py'), Path('scripts/recovery/fetch_pickandplace_adapter_probe.py'),
+             Path('tests/helpers/reference/fetch_semantics.py'), Path('scripts/recovery/fetch_public_gate.py'), Path('scripts/recovery/fetch_pickandplace_adapter_probe.py'),
              *Path('stable_envs').rglob('*.py')]
     report = dict(status='RUNNING', registration=registration, device=device, batch=4, source_workers=[1, 2],
         host=platform.node(), job=os.environ['SLURM_JOB_ID'], pid=os.getpid(), affinity=sorted(os.sched_getaffinity(0)),

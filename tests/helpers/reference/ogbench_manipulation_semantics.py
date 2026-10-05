@@ -1,11 +1,6 @@
 """Controlled independent Cube/Scene oracle shared by active acceptance tests."""
 
-import importlib.util
-from pathlib import Path
-
 import numpy as np
-
-ROOT = Path(__file__).resolve().parents[3]
 
 
 def numpy_equal(a, b):
@@ -13,18 +8,16 @@ def numpy_equal(a, b):
 
 
 def load_oracle():
-    path = ROOT / "docs/research/semantic_recovery_evidence/ogb_rng_feasibility/ownership.py"
-    spec = importlib.util.spec_from_file_location("ogb_rng_design_oracle", path)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
+    from tests.helpers.reference import ogbench_manipulation_source
+
+    return ogbench_manipulation_source
 
 
 def assert_oracle(env, raw, oracle):
-    diff = oracle.previous.differences(oracle.previous.engine(env), oracle.previous.engine(raw))
+    diff = oracle.differences(oracle.engine(env), oracle.engine(raw))
     assert not diff, diff
     for method in ("compute_observation", "get_reset_info", "get_step_info"):
-        diff = oracle.previous.differences(getattr(env, method)(), getattr(raw, method)())
+        diff = oracle.differences(getattr(env, method)(), getattr(raw, method)())
         assert not diff, (method, diff)
     for field in ("dof_damping", "site_pos", "geom_rgba", "mat_rgba", "geom_size", "body_mass", "body_inertia"):
         assert np.array_equal(getattr(env.model, field), getattr(raw.model, field)), field

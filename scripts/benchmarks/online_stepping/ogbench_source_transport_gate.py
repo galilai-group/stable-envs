@@ -57,8 +57,8 @@ def main():
              Path("scripts/benchmarks/online_stepping/ogbench_source_prerequisite.py"),
              Path("scripts/benchmarks/online_stepping/classic_parallel_source.py"),
              Path("tests/helpers/reference/ogbench_maze_semantics.py"),
-             Path("docs/research/semantic_recovery_evidence/ogb_rng_feasibility/ownership.py"),
-             Path("docs/research/semantic_recovery_evidence/ogb_manipulation_preflight/probe.py")]
+             Path("tests/helpers/reference/ogbench_manipulation_source.py"),
+             Path("tests/helpers/reference/ogbench_manipulation_semantics.py")]
     report = dict(status="RUNNING", host=platform.node(), parent_pid=os.getpid(),
         scope=f"CPU B2/P{args.workers} source-to-source task transport, owned snapshots and nonterminal restore/replay only",
         source_pin=PIN, source_files=manifest["files"], runtime_files={},
