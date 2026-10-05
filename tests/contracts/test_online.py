@@ -24,6 +24,7 @@ def test_selected_states_follow_source(worlds, source_case):
             source.reset(seed)
             chunk = actions[:horizon].transpose(1, 0, 2).copy()
             result = candidate.step(chunk[:, 0] if horizon == 1 else chunk, states=selection, frames=None)
+            assert all(value.device.type == candidate.device.type for value in result.values(True, True))
             frozen = result.clone()
             indices = [] if selection is None else list(range(horizon))[selection]
             active = np.ones(2, dtype=bool)
@@ -33,7 +34,7 @@ def test_selected_states_follow_source(worlds, source_case):
                 done = (expected["terminated"] | expected["truncated"]).cpu().numpy().copy()
                 expected[~torch.tensor(active)] = 0
                 actual = {key: result[key] if horizon == 1 else result[key][:, t] for key in expected.keys()}
-                assert_tasks(actual, expected)
+                assert_tasks(actual, expected, candidate.device)
                 torch.testing.assert_close(result["valid"][:, t].cpu(), torch.tensor(active))
                 active &= ~done
                 if t in indices:

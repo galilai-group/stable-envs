@@ -237,13 +237,13 @@ def task_columns(outputs):
     }
 
 
-def assert_tasks(actual, expected):
+def assert_tasks(actual, expected, device):
     assert all(key in actual and key in expected for key in ("reward", "terminated", "truncated"))
     keys = [key for key in expected.keys() if key != "state"]
     batch = [len(expected["reward"])]
-    compare_state(
-        TensorDict({key: actual[key] for key in keys}, batch), TensorDict({key: expected[key] for key in keys}, batch)
-    )
+    actual = TensorDict({key: actual[key] for key in keys}, batch)
+    assert all(value.device.type == device.type for value in actual.values(True, True))
+    compare_state(actual, TensorDict({key: expected[key] for key in keys}, batch))
 
 
 BRIDGES = {

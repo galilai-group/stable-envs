@@ -12,4 +12,4 @@ def test_independent_source_task_outputs(worlds):
     for action in actions:
         expected = source.step(action)
         actual = candidate.step(action, states=None, frames=None)
-        assert_tasks(actual, expected)
+        assert_tasks(actual, expected, candidate.device)

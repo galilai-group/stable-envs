@@ -51,7 +51,7 @@ def inventory():
                 execution_mode=row["execution_mode"],
                 remaining_limits=row["remaining_issues"],
                 source_regression_profile=profiles.get(registration),
-                migration="representative subset" if registration in profiles else "existing family drivers retained",
+                migration="shared regression subset" if registration in profiles else "existing family drivers retained",
                 current_run_status="NOT_RUN",
             )
         )

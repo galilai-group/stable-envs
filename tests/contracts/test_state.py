@@ -12,6 +12,7 @@ def test_restore_and_ownership(worlds):
     first, second, source, actions = worlds
     source.compare(first)
     initial = first.get_state()
+    assert all(value.device.type == first.device.type for value in initial.values(True, True))
     held_initial = initial.clone()
     for action in actions[:8]:
         first.step(action, states=None, frames=None)
@@ -37,5 +38,5 @@ def test_restore_and_ownership(worlds):
         expected = source.step(action)
         actual = second.step(action, states=None, frames=None)
         source.compare(second)
-        assert_tasks(actual, expected)
+        assert_tasks(actual, expected, second.device)
     compare_state(initial, held_initial)
