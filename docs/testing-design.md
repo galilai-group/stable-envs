@@ -49,6 +49,24 @@ corpora, other family profiles, benchmark consumers, and removal of duplicate
 legacy orchestration only after equivalent outcomes are demonstrated. No simulator
 or renderer API changes are part of this cohort.
 
+## Shared-profile expansion
+
+The [38-registration migration](research/testing_shared38_20261004/README.md)
+expands the four shared State, simulation, task and online-State contracts to
+all non-Craftax defaults. Registration and action-domain data live in one table;
+family bridges retain independent source capture. CPU and CUDA runs explicitly
+check tensor placement, required-case coverage and exact live source equality.
+The five DMC reference implementations are consolidated into one, with old/new
+source-oracle equivalence evidence across all twelve defaults. Existing boundary,
+contact, Variation, rendering and process acceptance drivers remain in place.
+
+Prefer adding registration data and cases to these contracts. Introduce another
+bridge only for a source API that needs it. Remove duplicate helpers after proving
+that their old obligations are preserved; a smaller file count alone is not proof.
+The remaining cleanup is to move the specialized cases into shared consumers,
+not to remove their stronger assertions merely because every registration now
+has the common regression checks.
+
 ## Recommendation
 
 Keep the public environment API. Consolidate test orchestration around separate
