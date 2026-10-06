@@ -6,14 +6,22 @@ large world coordinates an equivalent double-precision expression draws a
 different image. These are family-local rendering details, not simulator State.
 """
 
+import math
 import threading
 
 import numpy as np
 import torch
 
-from . import rocket_landing as frozen
+from . import rocket_landing as geometry
 
-ND = frozen.ND
+ND = geometry.ND
+BODY_COLOR, FIN_COLOR, LEG_COLOR, BOOSTER_COLOR, PAD_COLOR, FLAME_COLOR = range(6)
+GROUND_GEOM, BODY_GEOM, BOOSTER_GEOM, FLAME_GEOM, PAD_GEOM = (
+    geometry.GEOM_NAMES.index(name) for name in ("ground", "body", "booster", "flame", "pad")
+)
+FIN_GEOMS = slice(geometry.GEOM_NAMES.index("fin_pos_x"), geometry.GEOM_NAMES.index("leg_1"))
+LEG_GEOMS = slice(geometry.GEOM_NAMES.index("leg_1"), FLAME_GEOM)
+LINK_COLORS = (("fin", FIN_COLOR), ("leg", LEG_COLOR), ("booster", BOOSTER_COLOR), ("flame", FLAME_COLOR))
 FIELDS = {"source_pose": (3, 7), "camera_pose": (7,), "rgba": (6, 4)}
 
 
@@ -41,11 +49,13 @@ def project(state):
 
 def camera_matrices(link, bullet):
     rotation = np.array(bullet.getMatrixFromQuaternion(link[3:7])).reshape(3, 3)
-    eye = link[:3] + rotation @ frozen.CAM_OFFSET
+    eye = link[:3] + rotation @ geometry.CAM_OFFSET
     angles = np.array(bullet.getEulerFromQuaternion(link[3:7]))
-    angles[1] += np.pi / 6
+    angles[1] += math.radians(geometry.CAM_PITCH_DEG)
     up = np.array(bullet.getMatrixFromQuaternion(bullet.getQuaternionFromEuler(angles))).reshape(3, 3)[:, 2]
-    return bullet.computeViewMatrix(eye, link[:3], up), bullet.computeProjectionMatrixFOV(90.0, 1.0, 0.1, 255.0)
+    return bullet.computeViewMatrix(eye, link[:3], up), bullet.computeProjectionMatrixFOV(
+        geometry.CAM_FOV, 1.0, geometry.CAM_NEAR, geometry.CAM_FAR
+    )
 
 
 def _mm(a, b):
@@ -77,11 +87,11 @@ def _gpu_context(env, size, ss):
     cache = env.__dict__.setdefault("_rocket_pixel_gpu", {})
     key = (size, ss)
     if key not in cache:
-        vertices, normals, faces, geom, uv = frozen.build_scene_arrays()
-        rgba = np.ones((frozen.N_GEOMS, 4))
-        rgba[11] = frozen.FLAME_RGBA
-        texture = np.full(frozen.N_GEOMS, -1, np.int64)
-        texture[0] = 0
+        vertices, normals, faces, geom, uv = geometry.build_scene_arrays()
+        rgba = np.ones((geometry.N_GEOMS, 4))
+        rgba[FLAME_GEOM] = geometry.FLAME_RGBA
+        texture = np.full(geometry.N_GEOMS, -1, np.int64)
+        texture[GROUND_GEOM] = 0
         scene = _Scene.from_triangles(
             vertices,
             normals,
@@ -89,7 +99,7 @@ def _gpu_context(env, size, ss):
             geom,
             rgba,
             uv=uv,
-            textures={0: frozen.checker_texture()},
+            textures={0: geometry.checker_texture()},
             tex_of_geom=texture,
             device=str(env.device),
             tex_policy="none",
@@ -110,8 +120,8 @@ def _gpu_context(env, size, ss):
         )
         renderer.owns_scene = True
         renderer.background = np.ones(3)
-        per_world = frozen.NVD_BYTES_PER_PIXEL * (size * ss) ** 2 + frozen.NVD_BYTES_PER_VERTEX * scene.V
-        cache[key] = renderer, max(1, int(frozen.NVD_BUDGET_BYTES // per_world))
+        per_world = geometry.NVD_BYTES_PER_PIXEL * (size * ss) ** 2 + geometry.NVD_BYTES_PER_VERTEX * scene.V
+        cache[key] = renderer, max(1, int(geometry.NVD_BUDGET_BYTES // per_world))
     return cache[key]
 
 
@@ -147,6 +157,8 @@ def _cpu_context(env):
 
 
 def render(env, state, size, ss, chunk_size=None):
+    if chunk_size is not None and (isinstance(chunk_size, bool) or not isinstance(chunk_size, int) or chunk_size <= 0):
+        raise ValueError("chunk_size must be a positive integer")
     import pybullet as bullet
 
     env._check_open("render")
@@ -160,20 +172,10 @@ def render(env, state, size, ss, chunk_size=None):
             for i in range(len(state)):
                 for j, uid in enumerate(bodies):
                     bullet.resetBasePositionAndOrientation(uid, body[i, j, :3], body[i, j, 3:], physicsClientId=client)
-                bullet.changeVisualShape(bodies[1], -1, rgbaColor=colors[i, 0], physicsClientId=client)
-                bullet.changeVisualShape(bodies[2], -1, rgbaColor=colors[i, 4], physicsClientId=client)
+                bullet.changeVisualShape(bodies[1], -1, rgbaColor=colors[i, BODY_COLOR], physicsClientId=client)
+                bullet.changeVisualShape(bodies[2], -1, rgbaColor=colors[i, PAD_COLOR], physicsClientId=client)
                 for name, index in names.items():
-                    color = (
-                        1
-                        if "fin" in name
-                        else 2
-                        if "leg" in name
-                        else 3
-                        if "booster" in name
-                        else 5
-                        if "flame" in name
-                        else None
-                    )
+                    color = next((slot for part, slot in LINK_COLORS if part in name), None)
                     if color is not None:
                         bullet.changeVisualShape(bodies[1], index, rgbaColor=colors[i, color], physicsClientId=client)
                 view, projection = camera_matrices(links[i], bullet)
@@ -193,19 +195,19 @@ def render(env, state, size, ss, chunk_size=None):
         if env.device.type != "cuda":
             raise ValueError("Rocket rendering supports CPU TinyRenderer or CUDA nvdiffrast")
         renderer, limit = _gpu_context(env, size, ss)
-        limit = min(limit, chunk_size or limit)
-        positions = np.zeros((len(state), 13, 3), np.float64)
-        quaternions = np.zeros((len(state), 13, 4), np.float64)
+        limit = min(limit, chunk_size) if chunk_size is not None else limit
+        positions = np.zeros((len(state), geometry.N_GEOMS, 3), np.float64)
+        quaternions = np.zeros((len(state), geometry.N_GEOMS, 4), np.float64)
         quaternions[..., 3] = 1
-        for geom, source in [(0, 0), (1, 1), (12, 2)]:
+        for source, geom in enumerate((GROUND_GEOM, BODY_GEOM, PAD_GEOM)):
             positions[:, geom], quaternions[:, geom] = body[:, source, :3], body[:, source, 3:]
-        local_pos, local_quat = frozen.link_local_frames()
-        rotation = frozen.quat_to_mat(quaternions[:, 1])
+        local_pos, local_quat = geometry.link_local_frames()
+        rotation = geometry.quat_to_mat(quaternions[:, BODY_GEOM])
         for j in range(1, len(local_pos)):
-            positions[:, 1 + j] = positions[:, 1] + np.einsum("bij,j->bi", rotation, local_pos[j])
-            quaternions[:, 1 + j] = frozen.quat_mul(quaternions[:, 1], local_quat[j : j + 1])
-        rotations = frozen.quat_to_mat(quaternions)
-        model = np.zeros((len(state), 13, 4, 4), np.float32)
+            positions[:, BODY_GEOM + j] = positions[:, BODY_GEOM] + np.einsum("bij,j->bi", rotation, local_pos[j])
+            quaternions[:, BODY_GEOM + j] = geometry.quat_mul(quaternions[:, BODY_GEOM], local_quat[j : j + 1])
+        rotations = geometry.quat_to_mat(quaternions)
+        model = np.zeros((len(state), geometry.N_GEOMS, 4, 4), np.float32)
         model[..., :3, :3], model[..., :3, 3], model[..., 3, 3] = rotations, positions, 1
         views, projections = [], []
         for link in links:
@@ -213,18 +215,16 @@ def render(env, state, size, ss, chunk_size=None):
             views.append(np.asarray(view, np.float32).reshape(4, 4).T)
             projections.append(np.asarray(projection, np.float32).reshape(4, 4).T)
         mvp = _mm(np.stack(projections)[:, None], _mm(np.stack(views)[:, None], model))
-        origin = positions[:, 1].copy()
+        origin = positions[:, BODY_GEOM].copy()
         positions -= origin[:, None]
-        eye, camera = frozen.camera_pose(links[:, :3] - origin, links[:, 3:])
-        # rgba is authoritative in the complete projection on both devices.
-        # The old style/pose fields remain for legacy compact consumers only.
-        material = np.ones((len(state), frozen.N_GEOMS, 3), np.float64)
-        material[:, 1] = colors[:, 0, :3]
-        material[:, 3] = colors[:, 3, :3]
-        material[:, 4:8] = colors[:, 1:2, :3]
-        material[:, 8:11] = colors[:, 2:3, :3]
-        material[:, 11] = colors[:, 5, :3]
-        material[:, 12] = colors[:, 4, :3]
+        eye, camera = geometry.camera_pose(links[:, :3] - origin, links[:, 3:])
+        material = np.ones((len(state), geometry.N_GEOMS, 3), np.float64)
+        material[:, BODY_GEOM] = colors[:, BODY_COLOR, :3]
+        material[:, BOOSTER_GEOM] = colors[:, BOOSTER_COLOR, :3]
+        material[:, FIN_GEOMS] = colors[:, FIN_COLOR : FIN_COLOR + 1, :3]
+        material[:, LEG_GEOMS] = colors[:, LEG_COLOR : LEG_COLOR + 1, :3]
+        material[:, FLAME_GEOM] = colors[:, FLAME_COLOR, :3]
+        material[:, PAD_GEOM] = colors[:, PAD_COLOR, :3]
         output = []
         for start in range(0, len(state), limit):
             stop = start + limit
@@ -232,7 +232,7 @@ def render(env, state, size, ss, chunk_size=None):
             image = renderer.render(
                 torch.as_tensor(positions[start:stop], dtype=torch.float32, device=env.device),
                 torch.as_tensor(rotations[start:stop], dtype=torch.float32, device=env.device),
-                ND.Camera(eye[start:stop], camera[start:stop], frozen.CAM_FOV, frozen.CAM_NEAR, frozen.CAM_FAR),
+                ND.Camera(eye[start:stop], camera[start:stop], geometry.CAM_FOV, geometry.CAM_NEAR, geometry.CAM_FAR),
                 mat_rgb=torch.as_tensor(material[start:stop], dtype=torch.float32, device=env.device),
             )
             output.append(image)

@@ -265,31 +265,25 @@ def test_registered_iff_every_backend_dependency_is_present():
         assert "rocket_landing" not in se.import_errors()  # absent cleanly, not broken
 
 
-def test_reference_render_can_return_its_unreachable_flags_without_breaking_the_shared_checks():
-    """Review item: prefer returning the per-row exclusion flags over reading mutable class state.
-
-    ``reference_render`` gained ``return_flags``. Three things have to stay true for that to be an
-    improvement rather than a second way to be wrong, and none of them needs a GPU or PyBullet:
-
-    * the DEFAULT return is still the bare frame stack, because ``check_visual_fidelity`` and
-      ``check_visual_fidelity_under_variation`` in the shared ``conformance.py`` consume it directly
-      and that file is not this workstream's to change;
-    * ``conformance.reference_accepts_style`` inspects this signature for a ``style`` parameter to
-      decide whether the env can be measured under its own variation -- adding a parameter must not
-      disturb that;
-    * the class attribute is still written, because the variation check has no way to ask for the
-      flags, and its hazard (last-call-wins, shared by every instance) is written down where someone
-      reaching for it will read it.
-    """
-    import inspect
-
+def test_reference_render_returns_owned_flags_and_preserves_default_frames(monkeypatch):
     from stable_envs.testing.conformance import reference_accepts_style
 
-    sig = inspect.signature(RL.PyFlytRocketLanding.reference_render)
-    assert "style" in sig.parameters and reference_accepts_style(RL.PyFlytRocketLanding)
-    assert sig.parameters["return_flags"].default is False
-    assert sig.parameters["style"].default is None
-    src = inspect.getsource(RL)
-    assert "HAZARD" in src and "return_flags=True" in src, (
-        "the mutable-class-state hazard must be documented beside the attribute that carries it"
+    cls = RL.PyFlytRocketLanding
+    assert reference_accepts_style(cls)
+    monkeypatch.setattr(cls, "last_reference_unreachable", np.zeros(0, bool))
+    monkeypatch.setattr(
+        RL,
+        "_reference_frame_flagged",
+        lambda env, state, style: (np.full((2, 2, 3), int(state[0]), np.uint8), bool(state[1])),
     )
+    states = np.zeros((2, 13))
+    states[:, :2] = [[11, 0], [22, 1]]
+    default = cls.reference_render(None, states)
+    frames, flags = cls.reference_render(None, states, return_flags=True)
+    np.testing.assert_array_equal(default, frames)
+    np.testing.assert_array_equal(frames[:, 0, 0, 0], [11, 22])
+    np.testing.assert_array_equal(flags, [False, True])
+    np.testing.assert_array_equal(cls.last_reference_unreachable, flags)
+    cls.reference_render(None, np.zeros((1, 13)))
+    np.testing.assert_array_equal(flags, [False, True])
+    np.testing.assert_array_equal(cls.last_reference_unreachable, [False])

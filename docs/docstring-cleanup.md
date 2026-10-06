@@ -95,10 +95,8 @@ comparisons and batch/chunk invariance. See
 
 Remaining work from the supplied renderer audit:
 
-1. Rocket constants.
-2. Remaining per-file prose rewrites and the other three backend guides, followed
-   by the repository-wide forbidden-prose scan.
-3. Archive planning and link/test migration before removing research evidence.
+1. Remaining per-file prose rewrites and the repository-wide forbidden-prose scan.
+2. Archive planning and link/test migration before removing research evidence.
    The tracked research tree currently contains 11,628 files / 390.4 MiB; scripts
    contain 270 files. No evidence relocation or history rewrite has happened.
 
@@ -111,6 +109,16 @@ CPU-only imports remain supported. Patches still require exclusive construction;
 this change does not make them thread-safe. All 59 selected checks passed on an
 A40 with MJWarp 3.12, including graph-render pixel equality against stock MJWarp.
 [Validation record](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/fixtures/renderer_cleanup/mjwarp-validation.json).
+
+Rocket shares camera constants and names geometry/color slots. Invalid chunk
+sizes are rejected before backend construction. All seven CUDA selection cases
+passed, including thin-fin and near-contact source MSE and batch/chunk checks.
+Before/after renders were byte-identical for 16 CPU and 16 CUDA frames at two
+supersampling settings. The geometry module's prose was rewritten without any
+executable AST change. A brittle comment-word assertion now checks actual
+reference-frame and exclusion-flag behavior. Local checks: 22 passed, one skipped
+because PyBullet is unavailable. See
+[the Rocket record](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/fixtures/renderer_cleanup/rocket-validation.json).
 
 ## Rules for each file
 

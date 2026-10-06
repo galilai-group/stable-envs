@@ -1,67 +1,3 @@
-"""PyFlyt rocket landing, rendered by nvdiffrast. VISUAL TIER.
-
-Rendering and Variation handling are provided by stable-envs. Dynamics stay in PyFlyt; this cell
-currently renders stored states (``has_dynamics`` is False).
-
-THESE ARE NOT THE OFFICIAL PIXELS. The official frame is PyBullet's TinyRenderer at 480x480 through
-PyFlyt's rocket-mounted camera; this cell draws the same scene -- the same 13 primitives, the same
-camera, the same one-light fixed-function law, the same checker ground -- through a different
-rasterizer, and declares what that costs in ``visual_fidelity``. The gate that admitted it is
-``tests/fixtures/regression/join/step7/rocket-landing/findings.md`` and every number below is from
-the probes it cites.
-
-What the scene is (the frozen measurement record, census of ``getVisualShapeData``
-over six resets: geometry identical, only ``rgba`` changes):
-
-* the rocket: a body cylinder (l 4.77, r 0.185), a fuel-tank cylinder (l 1, r 0.1; PyBullet
-  synthesises it from the collision shape, it sits inside the body and draws 0 px), a booster cylinder
-  (l 0.5, r 0.25, at z -2), four fin boxes, three leg boxes and a "flame" cylinder (l 2, r 0.15, at
-  z -3.4) whose rgba alpha is 0.1 -- and TinyRenderer has NO transparency: alpha 0 is not drawn and
-  anything else is drawn opaque (``tiny_law.json: alpha``);
-* the pad: one cylinder (l 0.1, r 2) fixed at (0, 0, 0.1);
-* the ground: pybullet_data's ``plane100.obj``, a 200 m quad of two triangles under a 512x512 checker
-  tiled 100x (2 m tiles), sampled NEAREST with v flipped and the mtl's ``Kd`` ignored
-  (``tiny_law.json: texture``, 100 % of pixels reproduced in ``tiny_law3.json``).
-
-How TinyRenderer draws it (``tiny_law_probe.py``, ``tiny_law_probe2.py``, ``tiny_law4_backface.json``;
-every rule below was measured on synthetic scenes before it was written down):
-
-* one WORLD-fixed directional light, direction ``(-50, 30, 100)`` normalised, ambient 0.6, diffuse
-  0.35, specular 0.05 with exponent 2 on the world z of the reflection built from the UNCLAMPED
-  ``n.l`` (a face turned away from the light reads 162, not the ambient-only 153); output truncated
-  to uint8; no shadows, no gamma; ``nvdiff.TinyShading`` at its defaults;
-* cylinders are the CONVEX HULL of 2 x 32 ring points as ``btShapeHull`` tessellates it: the support
-  points of the hull in Bullet's 42 fixed unit-sphere directions, pushed out by the shape's 1 mm
-  margin, with the vertex normal being the NORMALISED POSITION (``TinyRendererVisualShapeConverter.cpp``
-  lines 211-290 and 655-705). That is why the body's brightest pixel reaches 0.991 of its colour on a
-  vertical tube: its rim normals lean toward the light. ``tiny_cylinder`` reproduces the vertex set;
-  the triangulation of coplanar caps is scipy's rather than Bullet's HullLibrary's, a declared residual;
-* boxes are flat-shaded cubes; pixels are tested at INTEGER coordinates from the bottom-left, not at
-  centres (25/25 columns, 13/13 rows), which ``sample_offset=(0.5, 0.5)`` reproduces.
-
-What the state is, and why it carries velocities: the frame
-after ``env.step`` draws the base cylinder at pose *t* but the ten links AND the camera
-link one 1/240 s substep behind, and that lagged pose is exactly ``(pos - v dt, exp(-w dt) q)`` in
-world velocities (position error 0.0, quaternion 1e-16 over 40 steps; 1.8e-15 / 5.6e-16 over the
-200-state corpus). So the state is the first 13 entries of the env's own observation --
-``ang_vel`` (body frame), quaternion ``xyzw``, ``lin_vel`` (body frame), ``lin_pos`` -- and nothing
-else: ``state = obs[:13]``. The five RGB colours and the flame's ignition bit are Variation
-(compiled internally to a render-style row): they are per-episode configuration, sampled per reset,
-and PyFlyt recolours the flame on the first ignition transition and never restores it.
-
-Reference bridge: for an arbitrary state the official picture cannot be produced by a teleport (a
-teleport syncs the links to the base), so ``reference_render`` teleports the base to the PREVIOUS
-substep, sets velocities and runs one raw ``stepSimulation`` with gravity off, iterating the set
-velocity until the post-step velocity equals the recorded one (Bullet's substep is semi-implicit and a
-spinning composite multibody changes its own velocity by gyroscopic terms). Validated against the
-corpus: 199/200 frames byte-identical, the last off by 1 px, base landing error 7e-13 m
-(``tests/fixtures/regression/join/step7/rocket-landing/reference/reference_trick_validation.json``).
-
-CPU: ``device="cpu"`` raises. No CPU-native backend in this repo rasterises an arbitrary textured
-triangle soup, and the policy is that a CPU request is never served by CUDA; the feasibility of a CPU
-triangle rasteriser for this ~600-triangle scene is a measured, separate question.
-"""
-
 from __future__ import annotations
 
 import math
@@ -85,12 +21,9 @@ except Exception as _e:  # pragma: no cover
 from ..render import _resources as _RES
 from ..render import nvdiff as ND  # noqa: E402
 
-#: PyBullet's physics substep in PyFlyt's Aviary (``physics_hz = 240``); the lag is exactly one of them.
+# PyFlyt advances physics at 240 Hz; the camera lags by one substep.
 DT = 1.0 / 240.0
-#: The rocket's visual primitives in DRAW ORDER, after the ground (0) and before the pad (12). Each link's
-#: frame is its URDF joint origin relative to the base (``PyFlyt/models/vehicles/rocket/rocket.urdf``); the
-#: visuals themselves sit at the link origin (``getVisualShapeData`` local pose is identity on all 14).
-#: ``kind``: ("cyl", length, radius) or ("box", full size). ``rpy`` is URDF roll-pitch-yaw.
+# Visual primitives in draw order, with URDF joint frames and full box dimensions.
 ROCKET_LINKS = (
     ("body", ("cyl", 4.77, 0.185), (0.0, 0.0, 0.0), (0.0, 0.0, 0.0)),
     ("fueltank", ("cyl", 1.0, 0.1), (0.0, 0.0, 0.0), (0.0, 0.0, 0.0)),
@@ -109,18 +42,15 @@ N_GEOMS = len(GEOM_NAMES)
 PAD_POS = np.array([0.0, 0.0, 0.1])
 PAD_LEN, PAD_RADIUS = 0.1, 2.0
 GROUND_HALF = 100.0
-#: The flame's two colours: its URDF material, and what ``RocketBaseEnv.step`` writes on the first
-#: ignition transition (``self.ignition_color``) and never resets.
+# The ignition transition changes the flame color and leaves it changed.
 FLAME_RGBA = (1.0, 0.8, 0.0, 0.1)
 IGNITION_RGBA = (1.0, 0.3, 0.3, 0.8)
 FUELTANK_RGBA = (1.0, 1.0, 1.0, 1.0)  # PyBullet's default for a link with no <visual>
-#: PyFlyt's rocket camera (``Rocket.__init__``): link 0, offset in the link frame, +30 deg of pitch, a
-#: tracking target at the link origin, 90 deg fov, near 0.1, far 255.
+# Camera offset is link-local; pitch changes the up vector while the target stays on the link.
 CAM_OFFSET = np.array([-1.0, 0.0, 3.0])
 CAM_PITCH_DEG = 30.0
 CAM_FOV, CAM_NEAR, CAM_FAR = 90.0, 0.1, 255.0
-#: Bullet's ``btShapeHull`` support directions (``src/BulletCollision/CollisionShapes/btShapeHull.cpp``,
-#: ``sUnitSpherePoints``, the 42 used at ``highres=0``), verbatim.
+# Bullet btShapeHull support directions at highres=0, in source order.
 UNIT_SPHERE_42 = np.array(
     [
         [0.000000, -0.000000, -1.000000],
@@ -170,11 +100,8 @@ UNIT_SPHERE_42 = np.array(
 )
 HULL_MARGIN = 0.001  # ``cylZShape->setMargin(0.001)``
 CYL_STEPS = 32
-#: Device memory per world, the fit ``mujoco_locomotion.py`` carries from ``docs/research/nvdiffrast.md``.
+# Per-world memory estimates bound renderer chunk allocation.
 NVD_BYTES_PER_PIXEL, NVD_BYTES_PER_VERTEX, NVD_BUDGET_BYTES = 239, 69, 6 << 30
-
-
-# --------------------------------------------------------------------------- pure math (CPU-tested)
 
 
 def quat_to_mat(q: np.ndarray) -> np.ndarray:
@@ -245,14 +172,12 @@ def euler_from_quat(q: np.ndarray) -> np.ndarray:
 
 
 def lagged_pose(state: np.ndarray):
-    """``(B,13)`` obs-layout state -> ``(pos_t, q_t, pos_prev, q_prev, v_world, w_world)``, all float64.
+    """Convert (B, 13) observation rows to current and previous poses and world velocities.
 
-    The previous-substep pose is what TinyRenderer draws the links at and where the camera link is:
-    ``pos - v dt`` and ``exp(-w dt) q`` with world velocities, measured exact to 1e-15 / 1e-16.
-    """
+    The camera and links lag the body by one physics substep. Return float64
+    (pos_t, q_t, pos_prev, q_prev, v_world, w_world)."""
     s = np.asarray(state, np.float64).reshape(-1, 13)
-    # RENORMALISE in float64 first. A float32 state carries |q| = 1 +- 3e-8, Bullet renormalises what it is
-    # handed, and the two must describe the same rotation to the last bit before either side draws it.
+    # Normalize in float64 to match Bullet before computing either current or lagged rotations.
     q = s[:, 3:7]
     q = q / np.linalg.norm(q, axis=-1, keepdims=True)
     R = quat_to_mat(q)
@@ -265,13 +190,10 @@ def lagged_pose(state: np.ndarray):
 
 
 def camera_pose(pos_prev: np.ndarray, q_prev: np.ndarray):
-    """PyFlyt's rocket camera from the LAGGED link-0 pose: ``(eye (B,3), mat (B,3,3))`` in ``nvdiff.Camera`` terms.
+    """Return camera eye (B, 3) and right/up/back axes (B, 3, 3) from the lagged link pose.
 
-    ``Camera.view_mat``: position = link + R_link @ offset; rotation = the link's Euler angles with 30
-    degrees added to the pitch (not gimballed); up = that rotation's z; target = the link origin
-    (``is_tracking_camera``); then ``computeViewMatrix(eye, target, up)`` = gluLookAt. ``mat`` columns
-    are right / up / BACK, so ``nvdiff.Camera.matrices`` rebuilds the same view matrix.
-    """
+    The camera offset rotates with the link. Its up vector uses the link Euler
+    angles with CAM_PITCH_DEG added to pitch; the target is the link origin."""
     R = quat_to_mat(q_prev)
     eye = pos_prev + np.einsum("bij,j->bi", R, CAM_OFFSET)
     rpy = euler_from_quat(q_prev)
@@ -287,12 +209,10 @@ def camera_pose(pos_prev: np.ndarray, q_prev: np.ndarray):
 
 
 def tiny_cylinder(length: float, radius: float, steps: int = CYL_STEPS, margin: float = HULL_MARGIN):
-    """TinyRenderer's cylinder: ``btShapeHull`` of the 2 x ``steps`` ring, normals = normalised positions.
+    """Build Bullet cylinder hull vertices, unit normals, and outward-wound triangles.
 
-    Returns ``(vert (V,3), norm (V,3), face (F,3))`` with the faces wound outward. The vertex SET is
-    Bullet's exactly (the support point of the ring in each of the 42 directions, first-maximum on
-    ties, plus ``margin`` along the direction); the triangulation of each planar cap is scipy's.
-    """
+    Support-point ties follow Bullet ring order. Normals are normalized vertex
+    positions; SciPy may triangulate planar caps differently from Bullet."""
     from scipy.spatial import ConvexHull
 
     i = np.arange(steps)
@@ -303,8 +223,7 @@ def tiny_cylinder(length: float, radius: float, steps: int = CYL_STEPS, margin: 
             np.concatenate([ring, np.full((steps, 1), -length / 2.0)], -1),
         ]
     )
-    # btConvexHullShape stores the two rings interleaved (top_i, bottom_i); ties resolve to the FIRST
-    # maximum, so keep Bullet's order.
+    # Interleaved top/bottom ring order preserves Bullet's first-maximum support-point ties.
     pts = pts.reshape(2, steps, 3).transpose(1, 0, 2).reshape(-1, 3)
     sup = []
     for d in UNIT_SPHERE_42:
@@ -381,10 +300,7 @@ def geom_poses(state: np.ndarray):
     return xpos, quat_to_mat(xq)
 
 
-#: Column order of the CORPUS style rows (``reference/states.npz: style``, written before the space
-#: existed): body, fin, leg, booster, pad RGBs then the flame bit. The ENV's style layout is the
-#: variation space's ``flat_layout``, which ``gymnasium.spaces.Dict`` sorts alphabetically; nothing
-#: below assumes either order -- leaves are addressed by path.
+# Saved corpus colors use a fixed order; environment style rows use variation-space path order.
 CORPUS_STYLE_PATHS = (
     "rocket.body_color",
     "rocket.fin_color",
@@ -435,13 +351,10 @@ def corpus_style_to_env(rows: np.ndarray) -> np.ndarray:
 
 
 def material_table(style: np.ndarray) -> np.ndarray:
-    """``(B, style_dim)`` env-layout style -> ``(B,13,3)`` material colours, the way the reference applies them.
+    """Map (B, style_dim) appearance rows to (B, 13, 3) material colors.
 
-    Rocket links take ``value / 255`` (``changeVisualShape``); the pad takes the 3-decimal rounding the
-    URDF rewrite applies (``f"{v:.3f}"``); the fuel tank is white; the ground's material is white (the
-    checker is the texture); the flame is its URDF colour or the ignition colour by the style bit.
-    Verified against ``getVisualShapeData`` over the corpus to 3e-8 (``reference/meta.json``).
-    """
+    Rocket colors use value/255; pad colors use the URDF three-decimal rounding.
+    The flame ignition bit selects its material, and the textured ground stays white."""
     lay = style_layout()
     st = np.asarray(style, np.float64).reshape(-1, style_dim())
     B = len(st)
@@ -461,11 +374,9 @@ def material_table(style: np.ndarray) -> np.ndarray:
 
 
 def checker_texture() -> np.ndarray:
-    """pybullet_data's ``checker_blue.png`` as an (H,W,3) uint8 array FLIPPED vertically.
+    """Load the checker texture as vertically flipped (H, W, 3) uint8.
 
-    TinyRenderer indexes v from the bottom row of the image (``tiny_law.json``: ``vflip``); nvdiffrast
-    indexes from row 0, so the flip is done once here and the UVs stay the OBJ's.
-    """
+    TinyRenderer indexes v from the bottom; nvdiffrast indexes from row zero."""
     import pybullet_data
     from PIL import Image
 
@@ -475,9 +386,7 @@ def checker_texture() -> np.ndarray:
 
 
 def _optional_import_errors() -> dict:
-    """The optional dependencies a RENDER needs beyond nvdiffrast, probed by ``find_spec`` -- CHEAP, because
-    this runs at import on every machine (the import-time probe cost 0.87 s in review), and the
-    registration gate is the same either way: a package that is present is one this module can use."""
+    """Find missing optional render packages without importing CUDA backends."""
     import importlib.util
 
     out = {}
@@ -494,12 +403,9 @@ def _optional_import_errors() -> dict:
 
 
 def missing_backend() -> str | None:
-    """Why ``PyFlytRocketLanding`` is absent or cannot render on this machine, or ``None``.
+    """Return the missing render dependency explanation, or None.
 
-    nvdiffrast (the rasterizer), scipy (the hull tessellation), pybullet_data (the checker texture --
-    its provenance rests on the pybullet 3.2.7 declaration, the package that ships ``checker_blue.png``)
-    and Pillow (reading it). Same reporter as the locomotion tier's ``missing_visual_backend``.
-    """
+    Rendering requires nvdiffrast, SciPy, pybullet_data, and Pillow."""
     parts = []
     if NVDIFF_IMPORT_ERROR is not None:
         parts.append(f"nvdiffrast: {NVDIFF_IMPORT_ERROR}")
@@ -507,17 +413,11 @@ def missing_backend() -> str | None:
     return "; ".join(parts) if parts else None
 
 
-# --------------------------------------------------------------------------- the reference bridge
-
 _REF_CACHE: dict = {}
 
 
 def _reference_make(size: int):
-    """PyFlyt rocket-landing env at ``size``.
-
-    Production has no gymnasium id for this cell. Tests install a certification factory on
-    ``_reference_make`` (see ``tests.helpers.reference.certification``).
-    """
+    """Construct the reference Rocket task; tests supply the certification factory."""
     hit = _REF_CACHE.get(size)
     if hit is not None:
         return hit
@@ -539,31 +439,8 @@ def _reference_apply_style(p, c, rid, pad, style_row: np.ndarray) -> None:
     p.changeVisualShape(pad, -1, rgbaColor=[*mat[12], 1.0], physicsClientId=c)
 
 
-#: DOCUMENTED_LIMITATION. The shared ``nvdiff`` transform is bitwise independent of
-#: the batch width on cuda -- the device every nvdiff cell renders on, and the one the mandatory
-#: ``check_batch_size_invariance`` is measured on (0 at 1, 7, 64 and 4096 for this cell) -- and on
-#: arm64 CPU. On x86-64 CPU the clip outputs differ from their full-batch values by ONE float32 ulp at
-#: some narrow widths: POSITIONS at widths 1-6 (3.05e-05 at a 300 m coordinate scale) and NORMALS at
-#: widths 4 and 8 (5.96e-08 near 1.0); world positions never. Bitwise from width 7 up for positions and
-#: at every other width for normals. The width sweep is
-#: ``closure1/probe_clip_cpu_batch_x86_widthsweep.json``; two earlier samples skipped widths 4-6 and so
-#: reported a narrower limitation than this.
-#:
-#: It reaches no frame this cell produces: ``PyFlytRocketLanding`` raises on ``device="cpu"`` by design, so
-#: its CPU transform path exists only so the geometry can be unit-tested without a GPU. The cause is
-#: measured and is not this repo's arithmetic -- ``nvdiff.mvp_rows`` is bit-identical at every width on
-#: every machine measured, and so are the normals and world positions; the residual is
-#: ``torch.sparse.mm``'s freedom to reorder a four-term sum for a narrow batch
-#: (``tests/fixtures/regression/join/step7/rocket-landing/closure1/probe_clip_cpu_batch_x86_threads1.json``, with
-#: ``_threads2`` and ``_threads4``, and ``tests/fixtures/regression/join/step7/closure/nvdiff_cpu_batch/``).
-#:
-#: The fix is written, measured and NOT applied:
-#: the frozen measurement record writes the sum out and removes the
-#: kernel's freedom, but on cuda it moves four of the six re-frozen locomotion cells by 2.7e-07 of
-#: mean_abs and 1e-09 of SSIM (``closure1/digest_vs_refreeze.json``), and a re-freeze requires a
-#: certification failure with a causal reason rather than an implementation that merely differs. It is
-#: the nvdiff candidate, under its own clean re-verification pass. It addresses the POSITIONS only; the
-#: normals share the same sparse stage and would need the same treatment.
+# Sparse matrix multiplication on CPU can change rounding with batch width.
+# This CUDA-only base does not provide CPU pixel invariance.
 DOCUMENTED_LIMITATIONS = (
     "nvdiff's CPU transform is batch-size invariant to within one float32 ulp at every width, and "
     "bitwise at every width on arm64; on x86-64 the clip positions move by one ulp at widths 1-6 and "
@@ -573,14 +450,8 @@ DOCUMENTED_LIMITATIONS = (
 )
 
 
-#: The contact band the reference bridge cannot cross. The rocket's collision extent reaches 3.40 m
-#: below the base origin (link AABBs, upright, measured in the reference env) and the pad's top face is
-#: at z = 0.152; a state whose links sit within CONTACT_BAND_MARGIN of the pad top / ground puts a
-#: ground contact into the recipe's one substep, which Bullet resolves with a split-impulse position
-#: correction the velocity fixed point cannot absorb. Measured share of such states in the cell's own
-#: ``sample_states`` distribution: REFERENCE_UNREACHABLE_SHARE (1 of 960 over 15 seeds x 64 states,
-#: ``tests/fixtures/regression/join/step7/rocket-landing/tier/reference_rejections_local.json``; the rejected state:
-#: height 2.07 m, tilt 3.4 deg). The sampled distribution is NOT narrowed for it.
+# Contact correction can prevent the reference velocity fixed point from reaching a pose.
+# Flag those rows for exclusion instead of silently comparing synchronized frames.
 PAD_TOP_Z = float(PAD_POS[2] + PAD_LEN / 2.0)
 CONTACT_BAND_MARGIN = 0.05
 REFERENCE_UNREACHABLE_SHARE = 1.0 / 960.0
@@ -593,20 +464,16 @@ def _lowest_link_z(p, c, rid) -> float:
 
 
 def _reference_frame(env, state: np.ndarray, style_row: np.ndarray) -> np.ndarray:
-    """One official frame at an arbitrary state: the previous-substep teleport with a velocity fixed point.
-    Raises when the recipe does not reach the requested pose (the strict form the validators use)."""
+    """Render the lagged reference image, raising if the pose cannot be reached."""
     frame, unreachable = _reference_frame_flagged(env, state, style_row, contact_fallback=False)
     return frame
 
 
 def _reference_frame_flagged(env, state: np.ndarray, style_row: np.ndarray, contact_fallback: bool = True):
-    """``(frame, unreachable)``. The LAGGED official picture (links and camera one substep behind the
-    base) via the previous-substep teleport and the velocity fixed point. When the recipe does not reach
-    the requested pose AND the pose is in the contact band (``PAD_TOP_Z`` + ``CONTACT_BAND_MARGIN``, any
-    link AABB), the lagged picture is unreachable by this bridge: with ``contact_fallback`` the frame
-    returned is the SYNCED picture of the requested pose (teleport, no substep -- the convention the
-    reference goal image is rendered under) and ``unreachable`` is True, so a caller can record and exclude the
-    row; without it, or when the failure is outside the band (a genuine bridge failure), it raises."""
+    """Return (frame, unreachable) using the previous-substep velocity fixed point.
+
+    When contact prevents reconstruction, contact_fallback returns a synchronized
+    frame flagged for exclusion. Other reconstruction failures raise."""
     import pybullet as p
 
     u = env.unwrapped
@@ -625,8 +492,7 @@ def _reference_frame_flagged(env, state: np.ndarray, style_row: np.ndarray, cont
         v_set, w_set = v_set + (v - v1), w_set + (w - w1)
     p.setGravity(0, 0, -9.81, physicsClientId=c)
     got_pos, got_q = (np.array(a) for a in p.getBasePositionAndOrientation(rid, physicsClientId=c))
-    # ``q`` is unit (lagged_pose renormalised it); Bullet's is too. Compare ROTATIONS, sign-free:
-    # 1 - |q . q_got| is 0 for the same rotation and ~theta^2/8 for a small angle theta.
+    # Compare quaternion rotations without depending on their sign.
     pos_err = float(np.abs(got_pos - pos).max())
     rot_err = float(1.0 - abs(np.dot(got_q / np.linalg.norm(got_q), q)))
     if pos_err > 1e-6 or rot_err > 1e-9:
@@ -644,9 +510,6 @@ def _reference_frame_flagged(env, state: np.ndarray, style_row: np.ndarray, cont
     return np.asarray(u.render(), np.uint8)[..., :3].copy(), False
 
 
-# --------------------------------------------------------------------------- the env
-
-
 class _Nvd:
     __slots__ = ("br", "size", "ss", "chunk")
 
@@ -655,19 +518,11 @@ _NVD_CACHE = _RES.BoundedCache(8, name="rocket.nvd", on_evict=ND.close_cached_re
 
 
 class PyFlytRocketLanding(Env):
-    """PyFlyt rocket landing, rendered by nvdiffrast. State is obs[:13].
+    """Rocket geometry renderer over observation rows obs[:13], VISUAL TIER.
 
-    VISUAL TIER — these are NOT the official pixels. Dynamics stay in PyFlyt; this cell currently
-    renders stored states. The frame is a different rasterization of the same
-    scene from the same state: the same 13 primitives, the same rocket-mounted camera one substep behind
-    the body, the same one-light TinyRenderer law, the same nearest-sampled checker ground. The
-    residual is silhouettes, checker edges and the far ground where tiles are sub-pixel, and the
-    triangulation of the cylinders' caps. See ``visual_fidelity`` (measured, job 6410105) and
-    the module docstring for what was measured.
-
-    Suitable for generating training frames live. NOT a substitute for a stored dataset when a policy
-    will be evaluated on official PyFlyt pixels. See visual_note.
-    """
+    This base renders stored poses with CUDA. The registered semantic subclass
+    adds simulation and CPU rendering. Silhouettes, checker filtering, and cylinder
+    cap triangulation can differ from official TinyRenderer pixels; see visual_fidelity."""
 
     family = "pyflyt"
     domain = "rocket_landing"
@@ -675,7 +530,7 @@ class PyFlytRocketLanding(Env):
 
     name = "pf-rocket-landing"
     reference_id = None
-    #: Registered default: 480 x 480 x 3 = 691,200 B, the observation PyFlyt actually returns.
+    # Default reference resolution is 480 × 480 RGB.
     default_size = 480
     default_supersample = 1  # TinyRenderer has no anti-aliasing
     state_dim = 13
@@ -697,34 +552,7 @@ class PyFlytRocketLanding(Env):
     fidelity_tier = "visual"
     parity_interior_min = None
     parity_note = ""
-    #: MEASURED on an RTX 3090, worst of four independent 64-state draws, and copied here BY HAND from
-    #: ``tests/fixtures/regression/join/step7/rocket-landing/tier/job6410105/gpu2106.json``: a threshold a script
-    #: writes into the file it then tests is not a threshold.
-    #:
-    #: The three headline numbers are the worst draw's. The three thresholds are the DMC family's
-    #: margin convention applied to that worst draw -- ceiling ~1.3x, floors ~0.93-0.95x, rounded to
-    #: round numbers -- and not values chosen to clear it; the frozen measurement record
-    #: computes them from the JSON and prints exactly 10.0 / 0.91 / 0.80
-    #: (``tier/job6410105/declaration_block.json``). The same numbers came out of two jobs on two
-    #: different 3090s (6408817/gpu2109 and 6410105/gpu2106) to every digit printed here.
-    #:
-    #: ``ssim_min`` 0.80 is 0.9368x the measurement, and that is the DMC convention rather than a
-    #: looser one: the five DMC entries realise 0.9322-0.9533 (Walker 0.9322, Cheetah 0.9380, Hopper
-    #: 0.9357, Humanoid 0.9447, Swimmer 0.9533), and this sits inside that range. The six nvdiff
-    #: locomotion cells realise 0.9668-0.9786, but a floor is only fragile or generous relative to how
-    #: reproducible the measurement is, and those cells' SSIM varies by 0.0011-0.0024 across draws
-    #: while this one varies by 0.0139 -- an order of magnitude more, because a rocket at 500 m and a
-    #: rocket at 2 m are different pictures. Measured in units of its own draw-to-draw spread, this
-    #: floor is the TIGHTEST in the repo: margin/spread 3.86 here, against 4.12-22.8 across the DMC
-    #: five and 11.1-28.7 across the nvdiff six. A 0.97x floor would be 0.829, i.e. 1.84 spreads below
-    #: the worst draw, which is the fragility the convention exists to avoid.
-    #:
-    #: ``reference_unreachable_share`` is the honest part of the measurement: ``reference_render``
-    #: cannot produce the LAGGED official picture for a state in the contact band (see
-    #: ``_reference_frame_flagged`` and ``REFERENCE_UNREACHABLE_SHARE``), so those rows are flagged and
-    #: excluded, and the share they were measured at is declared beside the numbers rather than left
-    #: for a reader to discover. It is 1 state in 960 of this env's own ``sample_states`` distribution,
-    #: and none of the four certification draws drew one.
+    # Fixed visual-fidelity thresholds; do not derive tolerances from the run being tested.
     visual_fidelity = {
         "mean_abs": 7.71,
         "within8_frac": 0.961,
@@ -749,29 +577,8 @@ class PyFlytRocketLanding(Env):
         "reference_versions": {"PyFlyt": "0.29.0", "pybullet": "3.2.7"},
         "measured_with": {"nvdiffrast": "0.4.0", "torch": "2.14.0+cu126"},
     }
-    #: The ONE cell in the repo where ``check_colors_apply_exactly``'s literal-RGB bound is declared
-    #: inapplicable, and the declaration is narrow on purpose: these five leaves, named one by one,
-    #: and nothing else. Sami's ruling of 2026-09-16, on the packet at
-    #: ``tests/fixtures/regression/join/step8/certification/colour_check_decision.md``.
-    #:
-    #: The mechanism is the reference's own shading law, not ours. bullet3's TinyRenderer computes
-    #: ``out_i = int(255 * c_i * (A + D*max(0, n.l) + S*max(0, r_z)**spec) * L_i)``, truncated, with
-    #: ``A=0.6, D=0.35, S=0.05, spec=2`` -- and the specular MULTIPLIES the material colour rather
-    #: than adding white the way MuJoCo's does, so the bracket never reaches 1. Maximised over a
-    #: 2001x4001 grid of unit normals it peaks at 0.993567, which puts the check's own probe targets
-    #: out of reach at their brightest: 200 -> 198, 33 -> 32, 17 -> 16. The exact triple therefore
-    #: cannot appear in the frame for ANY correct implementation of this reference, and it does not
-    #: appear in the OFFICIAL PyFlyt frames either (brightest body pixel 0.991*int(255*c)).
-    #:
-    #: What still carries the wiring claim -- which is what the check exists to establish -- is
-    #: unaffected: ``check_variations_do_something``, the under-variation fidelity numbers, and the
-    #: colour table's agreement with ``getVisualShapeData`` to 1.19e-08 on every geom. And the probe
-    #: still runs: ``check_colors_apply_exactly`` records ``best_abs_diff`` per leaf, so a knob that
-    #: comes off its primitive still moves a number even while the literal bound is not asserted.
-    #:
-    #: NOT a tolerance and NOT a threshold: the bound is unchanged everywhere it is asserted. A
-    #: law-aware successor (compare our response to the knob against the OFFICIAL renderer's response
-    #: to the same knob) is a PROPOSAL only -- see docs/research/step8_certification.md.
+    # TinyRenderer's lighting multiplies material color, so literal RGB probes can be unreachable.
+    # The exception is restricted to the declared lit leaves; other color checks still apply.
     color_exactness_applicability = {
         "leaves": ("pad.color", "rocket.body_color", "rocket.booster_color", "rocket.fin_color", "rocket.leg_color"),
         "status": "not_applicable: literal RGB equality is unreachable under the reference's own law",
@@ -807,18 +614,7 @@ class PyFlytRocketLanding(Env):
         + DOCUMENTED_LIMITATIONS
     )
 
-    # ------------------------------------------------------------------ state
-    #
-    # The public :data:`State` is the 13-number observation grouped by what it describes: one rigid
-    # body, its attitude, and the two velocities the camera lag reads. The offsets are the
-    # packed columns unchanged, in ``state_names`` order, so ``pack`` writes the frozen row and the
-    # corpus round-trips exactly. The quaternion is ONE field of width 4 rather than four scalars,
-    # because it is one quantity with a norm constraint and splitting it invites a caller to write
-    # three of its components.
-    #
-    # No field has offset ``None``: this cell ships a renderer and no simulator (PyFlyt's dynamics
-    # stay in PyFlyt), so the packed row IS the whole state and ``step``/``transition`` raise the
-    # contract's refusal from the base class.
+    # The base packs observation geometry only; the semantic subclass owns complete simulator State.
     state_layout = (
         (("rocket", "angular_velocity"), 3, 0),
         (("rocket", "orientation"), 4, 3),
@@ -835,12 +631,7 @@ class PyFlytRocketLanding(Env):
         backend: str = "auto",
         seed: int = 0,
     ):
-        """``num_envs`` rockets on ``device``.
-
-        The CPU refusal below is BY DESIGN and is checked before anything is built: a ``device="cpu"``
-        request is never quietly served by CUDA (plan §2's device-honesty rule), and this cell has no
-        CPU textured-triangle rasteriser to serve it with.
-        """
+        """Construct the CUDA geometry renderer; reject CPU before allocating a context."""
         if missing_backend() is not None:  # pragma: no cover
             raise ImportError(f"PyFlytRocketLanding cannot render in this interpreter: {missing_backend()}")
         device = Env.resolve_device(device)
@@ -861,18 +652,8 @@ class PyFlytRocketLanding(Env):
         self._nvd()
 
     def _close(self) -> None:
-        """Drop this env's reference to the shared nvdiffrast renderer.
-
-        ``_NVD_CACHE`` is keyed by ``(size, supersample, device)`` and deliberately SHARED between
-        envs — building a ``BatchRenderer`` allocates a CUDA context and the scene's vertex buffers,
-        and two envs at the same resolution should not pay for it twice. So ``close`` does not tear
-        the cache down: another live env may be rendering through the same entry, and freeing it here
-        would be a use-after-free in that env rather than a leak in this one. What ``close`` does own
-        is this env's refusal to render afterwards, which ``Env.close`` installs.
-        """
+        """Retain shared renderer contexts for other environments using the same cache key."""
         return None
-
-    # ---- renderer -----------------------------------------------------------
 
     def _nvd(self, size: int | None = None, ss: int | None = None) -> _Nvd:
         size = int(self.size if size is None else size)
@@ -921,24 +702,17 @@ class PyFlytRocketLanding(Env):
         _NVD_CACHE.put(key, c)
         return c
 
-    # ---- variation ----------------------------------------------------------
-
     def make_variation_space(self) -> Dict:
-        """The five colours sampled per reset, plus the flame's ignition bit. Defaults = the official
-        appearance of a reset WITHOUT a variation request: URDF yellow / grey / black, a white pad (no
-        material), the flame unignited. ``environment.sky_color`` is deliberately absent: it is sampled and
-        nothing reads it. ``start_*`` are dynamics, not appearance, and live in ``sample_states``.
-        The flat layout is alphabetical (``gymnasium.spaces.Dict`` sorts); see ``style_layout``."""
+        """Return body, fin, leg, booster, pad colors and the flame ignition bit.
+
+        Defaults match reset appearance. Dynamics parameters are not render variation."""
         return _make_variation_space()
 
-    # ---- states ---------------------------------------------------------------
-
     def sample_states(self, batch: int, rng: np.random.Generator | None = None) -> np.ndarray:
-        """``(batch, 13)`` in the obs layout, covering the env's OWN visited distribution under a random
-        policy as the 200-state corpus measured it (``reference/meta.json``): heights 1.9-489 m (median 311),
-        lateral drift to 190 m, v_z from -74 to +62 m/s, |w| to 4.9 rad/s, attitudes tumbling (tilt up to
-        174 deg) with a near-upright minority. Half the draws are the high-altitude "rocket on white" regime
-        the far plane makes, half the log-uniform descent to the pad."""
+        """Sample (batch, 13) observation rows with body-frame velocities.
+
+        Half the samples cover high-altitude flight; half cover log-uniform descent.
+        These are geometry samples, not complete simulator snapshots."""
         rng = rng or self.rng
         B = int(batch)
         h = np.where(
@@ -961,8 +735,6 @@ class PyFlytRocketLanding(Env):
         w_body = np.einsum("bij,bj->bi", Rt_, w_world)
         return np.concatenate([w_body, q, v_body, pos], -1).astype(np.float32)
 
-    # ---- render ---------------------------------------------------------------
-
     @torch.no_grad()
     def _render(
         self,
@@ -973,10 +745,9 @@ class PyFlytRocketLanding(Env):
         style=None,
         out=None,
     ) -> torch.Tensor:
-        """``(...,13)`` -> ``(...,H,W,3)`` uint8 on device. Style may differ per environment.
+        """Render (..., 13) pose rows and per-row appearance to uint8 RGB.
 
-        THESE ARE NOT THE OFFICIAL PIXELS. See ``visual_fidelity`` for what they are instead.
-        """
+        This visual-tier path can differ from the source renderer."""
         s = self._render_state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
         lead = tuple(s.shape[:-1])
         s = s.reshape(-1, self.state_dim)
@@ -988,8 +759,7 @@ class PyFlytRocketLanding(Env):
         if out is None:
             out = torch.empty((B, size, size, 3), dtype=torch.uint8, device=self.device)
         buf = out.view(B, size, size, 3)
-        # ONE device-to-host read each for the state and the style; the kinematics, the camera and the
-        # colour table are a few thousand float64 ops on the host per row, as in mujoco_locomotion.py.
+        # Read pose and appearance once per batch for float64 host geometry preparation.
         st = s.detach().cpu().numpy().astype(np.float64)
         mat = torch.as_tensor(
             material_table(sty.values.detach().cpu().numpy()), dtype=torch.float32, device=self.device
@@ -1006,46 +776,21 @@ class PyFlytRocketLanding(Env):
             buf[lo:hi] = c.br.render(xp_t[lo:hi], xm_t[lo:hi], cam, mat_rgb=mat[lo:hi])
         return buf.view(*lead, size, size, 3) if lead else buf
 
-    # ---- reference bridge -------------------------------------------------------
-
     @classmethod
     def reference_env(cls, size: int = 480):
-        """The PyFlyt rocket-landing env at ``size`` (its own ``render_resolution``), reset once and never closed."""
+        """Construct and reset a reference environment; the caller owns its lifetime."""
         return _reference_make(int(size))
 
-    #: Per-row flags of the LAST ``reference_render`` call: True where the bridge could not produce the
-    #: lagged picture (contact band, see ``_reference_frame_flagged``) and returned the synced picture
-    #: instead.
-    #:
-    #: **HAZARD, and why it exists anyway.** This is mutable class state, and mutable class state set
-    #: by one call and read by the next is exactly the pattern this repo distrusts: it is last-call-wins,
-    #: it is shared by every instance, and two threads or two interleaved harnesses would read each
-    #: other's flags. Prefer ``reference_render(..., return_flags=True)``, which returns
-    #: ``(frames, flags)`` and has none of those properties -- that is the supported path and it is what
-    #: the measurement harness uses.
-    #:
-    #: The attribute survives because ``check_visual_fidelity_under_variation`` in
-    #: ``stable_envs/testing/conformance.py`` calls ``cls.reference_render(ref, states, style=style)``
-    #: with no way to ask for the flags, and ``conformance.py`` is shared and not this workstream's to
-    #: change. So the variation path reads the attribute immediately after the call and nothing else
-    #: does. Carryover: give the shared checks a way to receive per-row exclusions, and delete
-    #: this attribute.
+    # Last-call flags are shared across instances. Use return_flags=True for concurrent reference calls.
     last_reference_unreachable: np.ndarray = np.zeros(0, bool)
 
     @classmethod
     def reference_render(cls, env, states, style=None, return_flags: bool = False):
-        """Official frames for ``(state, style)`` rows -- the LAGGED picture after ``step``.
+        """Render lagged official frames; optionally return per-row exclusion flags.
 
-        Rows the bridge cannot reach (the contact band, ``REFERENCE_UNREACHABLE_SHARE`` of the sampled
-        distribution) get the SYNCED picture instead and are flagged. With ``return_flags`` the
-        return is ``(frames, flags)``; without it the return is the frame stack alone -- the shape the
-        shared conformance checks expect -- and the flags are also left in
-        ``last_reference_unreachable``, whose hazard is documented above.
-
-        ``return_flags`` is keyword-only in practice and defaulted off, so
-        ``conformance.reference_accepts_style`` (which inspects this signature for a ``style``
-        parameter) and every existing caller are unaffected.
-        """
+        Contact-band reconstruction failures return synchronized frames with True
+        flags. The same flags are stored in last_reference_unreachable, which is
+        shared mutable class state; prefer return_flags=True for concurrent callers."""
         st = np.asarray(states, np.float64).reshape(-1, 13)
         if style is None:
             sty = np.tile(_default_style_row(), (len(st), 1))
@@ -1059,7 +804,7 @@ class PyFlytRocketLanding(Env):
 
 
 def _default_style_row() -> np.ndarray:
-    """The official appearance as a style row IN THE ENV LAYOUT, without constructing an env."""
+    """Return the default appearance in environment style order without constructing an env."""
     return np.asarray(_make_variation_space().pack(), np.float64)
 
 
