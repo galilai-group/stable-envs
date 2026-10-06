@@ -1,54 +1,3 @@
-"""A CPU-native 3-D backend for MuJoCo scenes that MJWarp draws on the GPU: same renderer semantics,
-different implementation.
-
-MJWarp (``stable_envs/render/mjwarp.py``) draws the DM Control body-tracking cells — camera and
-spotlight ride the torso, so no static plate exists in world space — with one megakernel per pixel:
-a ray through the pixel centre, the nearest primitive by BVH, one bilinear texture tap on a plane,
-a cube-mapped skybox on a miss, and MuJoCo's fixed-function composition (headlight at the camera,
-per-light diffuse/specular with a spot cone, a 0.3 shadow factor from an any-hit ray). It runs on
-the GPU only, and ``device="cpu"`` on those cells used to be answered by the GPU behind the caller's
-back (labelled ``DEVICE_NOT_HONOURED``).
-
-This module is the CPU answer, and it is the SAME picture computed a different way (backend
-implementation may differ by device, renderer semantics may not). Every law below
-is MJWarp's, transcribed from ``mujoco_warp/_src/render.py`` 3.11/3.12 — ``compute_ray``,
-``sample_skybox``, ``sample_texture`` (PLANE branch), ``ray_plane``, the megakernel's shading order,
-``pack_rgba_to_uint32`` under ``gl_rounding`` — and not MuJoCo's, because the contract these cells
-are certified under is the visual-tier declaration measured on MJWarp's frames; matching MuJoCo's
-mipmapped floor would be a *different* picture from the one the declaration describes.
-
-What makes it a CPU design rather than a port (measured in
-``tests/fixtures/regression/join/step6/cpu-3d/design.md``):
-
-* **The camera translates and never rotates** (``mode="trackcom"``), so the ray-direction grid is a
-  constant per (orientation, resolution) and the SKYBOX is a constant image in camera space —
-  99.4–99.7 % of skybox pixels are bit-identical across the frozen corpus in MJWarp's own frames. It
-  is baked once through MJWarp's own sampler and copied per frame.
-* **The floor is one plane with one texture tap**, computed analytically per pixel; no BVH.
-* **The movers are 6–19 capsules and spheres covering 2.5–7 % of the pixels**, cast only inside
-  their projected window through ``raycast3d.cast_nearest`` (the shared intersectors, bit-identical
-  to the fused CUDA kernel), never over the full frame.
-* **Shadow rays run only where a shadow can land**: on mover hits, and on floor hits inside the
-  movers' light-space footprint. Two PRECONDITIONS make that bound exact, and both are checked
-  rather than assumed: the shadow casters are point/spot lights (a directional caster is refused at
-  construction), and the light sits strictly above the plane in every frame (checked per chunk;
-  then no upward shadow ray can hit the plane's front face, so the plane occludes nothing outside
-  the tested set -- inside it the plane IS tested, as the megakernel tests its whole BVH). A third
-  precondition, the camera outside every mover's bounding sphere (checked per chunk), makes the
-  megakernel's primary-ray backface cull a no-op, and it is applied anyway.
-
-Everything is elementwise per ray or per (ray, primitive), and the per-ray reductions are written
-unrolled for the reason ``raycast3d._mv`` gives, so the frame is batch-size, order and chunk
-invariant by construction. Bit-exactness against MJWarp is NOT claimed and is not achievable by a
-different renderer (CUDA's 9-bit texture-filter weights, ``fast_math``, ``powf``); what is claimed is
-the same picture to within a level on the overwhelming majority of pixels, and it is measured on the
-frozen states rather than assumed (``tests/fixtures/regression/join/step6/cpu-3d/``).
-
-The module knows nothing about environments: it takes a compiled ``MjModel`` plus a camera id to build
-a ``Scene``, and per-frame poses (from MuJoCo's own ``mj_kinematics``/``mj_comPos``/``mj_camlight``)
-to render. It imports neither ``warp`` nor CUDA anything.
-"""
-
 from __future__ import annotations
 
 import math
@@ -58,31 +7,19 @@ import numpy as np
 import torch
 
 from . import raycast3d as R3
-from .primitives import (  # noqa: F401
-    BOX,
-    CAPSULE,
-    CYLINDER,
-    ELLIPSOID,
+from .primitives import (
     GEOM_NAMES,
     INF,
     PLANE,
     PRIMITIVE_KINDS,
-    SPHERE,
     bound_radius,
 )
 from .primitives import dot3 as _dot
 
-#: mjtGeom codes this backend draws as movers: every analytic primitive ``raycast3d`` intersects
-#: except the plane, which this module draws itself as the one static floor. Derived from
-#: ``PRIMITIVE_KINDS`` rather than listed again, so a kind added to the intersectors is a mover here
-#: without a second edit. ELLIPSOID is included (``raycast3d._ellipsoid``, for DM Control's
-#: quadruped torso); nothing else here is kind-specific -- the window and the shadow footprint read
-#: the shared ``bound_radius``.
+# Movers share raycast3d primitive support; the floor is intersected separately.
 MOVER_KINDS = tuple(k for k in PRIMITIVE_KINDS if k != PLANE)
-#: mjtLightType: 0 SPOT, 1 DIRECTIONAL, 2 POINT, 3 IMAGE. The megakernel treats every non-directional
-#: light as positional and applies the spot cone when the model has any spot light; this backend
-#: implements SPOT and DIRECTIONAL and refuses POINT/IMAGE at ``Scene`` construction.
-LIGHT_SPOT, LIGHT_DIRECTIONAL, LIGHT_POINT, LIGHT_IMAGE = 0, 1, 2, 3
+# Supported MuJoCo light types; point and image lights are rejected.
+LIGHT_SPOT, LIGHT_DIRECTIONAL = 0, 1
 #: MuJoCo's material defaults, which the megakernel uses for a geom without a material.
 DEFAULT_MAT_SPECULAR, DEFAULT_MAT_SHININESS, MAX_SHININESS = 0.5, 0.5, 128.0
 #: ``NO_LIGHT_AMBIENT_FALLBACK``: what MJWarp multiplies a shadowed light's contribution by. Not 0.
@@ -91,34 +28,20 @@ SHADOW_VISIBLE = 0.3
 SHADOW_ORIGIN_EPS, SHADOW_MAX_T_EPS = 1.0e-4, 1.0e-3
 #: ``MJ_MINVAL``, the front-face threshold of ``ray_plane``.
 MJ_MINVAL = 1e-15
-#: HOW A FLOAT BECOMES A BYTE. ``mujoco_warp``'s ``pack_rgba_to_uint32`` TRUNCATES (C ``int()``) and
-#: ``stable_envs.render.mjwarp.gl_rounding`` patches it to round -- but only for kernels generated
-#: inside its block. ``DMControlTrackCom``'s context (``dmcontrol._tc_context``) captures its CUDA
-#: graph OUTSIDE that block, so the frames the four trackcom cells are certified on -- the frozen
-#: digests and the declared visual-tier numbers -- are the truncating kernel's. The CPU
-#: backend follows the frames as certified: ``"trunc"`` by default, ``"round"`` available. Measured
-#: on the frozen states (tests/fixtures/regression/join/step6/cpu-3d/m1_local*): rounding leaves 83-91 % of floor
-#: and body pixels exactly one level ABOVE MJWarp's; truncating removes that offset.
+SKY_FALLBACK = (0.1, 0.1, 0.2)
+FOOTPRINT_MARGIN = 0.05  # World-space padding for the projected shadow bound.
+WINDOW_NEAR = 1e-3  # Use the full frame when a mover approaches the camera plane.
+# MJWarp packs floats by truncation; rounding is an explicit alternate convention.
 QUANT = "trunc"
 
-#: TEST SWITCHES. ``FORCE_FULL_FRAME`` casts the movers over every ray instead of their projected
-#: window; ``SHADOW_TEST_ALL_HITS`` sends a shadow ray from every lit hit instead of only those inside
-#: the movers' light-space footprint. Both must give the identical frame -- the window and the
-#: footprint are conservative bounds, not approximations -- and ``tests/unit/test_cpu3d.py`` asserts
-#: it byte for byte. Module-level for the reason ``raycast3d.FORCE_BACKEND`` is.
+# Oracle switches bypass spatial bounds without changing the expected pixels.
 FORCE_FULL_FRAME: bool = False
 SHADOW_TEST_ALL_HITS: bool = False
 
-#: Frames per compacted pass. Sixteen 84 px frames keep every (B,N) intermediate inside L2 on the
-#: certification core, where an elementwise op costs 0.9 ns/element; at 64 frames it is 2.2 ns.
+# Limit intermediate ray buffers to a small working set.
 CPU_CHUNK = 16
-#: CUDA's texture unit computes bilinear weights in 9-bit fixed point (8 fractional bits). MJWarp
-#: samples through that unit; emulating the quantisation is the difference between "within a level"
-#: and "mostly exact" on the floor and skybox, and it is measured rather than assumed (M1a). 0 = float.
+# CUDA texture weights use eight fractional bits; zero selects floating-point weights.
 TEX_FRAC_BITS = 8
-
-
-# --------------------------------------------------------------------------- textures
 
 
 def texture_array(m, tex: int) -> np.ndarray:
@@ -134,15 +57,12 @@ def texture_array(m, tex: int) -> np.ndarray:
 
 
 def bilinear(tex: torch.Tensor, u: torch.Tensor, v: torch.Tensor, frac_bits: int | None = None) -> torch.Tensor:
-    """Sample ``tex (h,w,3)`` float32 at normalised ``(u, v)`` the way a CUDA texture unit does.
+    """Sample float32 RGB texels at normalized UV coordinates, clamping at borders.
 
-    Texel centres sit at ``(i + 0.5) / w``; the weights are the fractional parts of ``u*w - 0.5``,
-    truncated to ``frac_bits`` bits (CUDA: 9-bit fixed point, 8 fractional). Coordinates are
-    clamped at the border, which is the unit's default address mode; the callers below wrap ``u``
-    and ``v`` into [0, 1) themselves, as MJWarp does, so clamping only decides the half-texel at
-    the seam.
+    Centers lie at (i + 0.5) / width. Weights truncate to eight fractional bits
+    by default, matching CUDA texture filtering. Callers handle UV wrapping.
     """
-    if frac_bits is None:  # bound at CALL time, so the module switch reaches here
+    if frac_bits is None:
         frac_bits = TEX_FRAC_BITS
     h, w = int(tex.shape[0]), int(tex.shape[1])
     x = u * w - 0.5
@@ -183,11 +103,6 @@ def sample_skybox(sky: torch.Tensor, face_w: int, d: torch.Tensor) -> torch.Tens
     """
     rx, ry, rz = d[..., 0], d[..., 2], -d[..., 1]
     arx, ary, arz = rx.abs(), ry.abs(), rz.abs()
-    zero = torch.zeros_like(rx)
-    face = torch.zeros_like(rx, dtype=torch.int64)
-    sc = zero.clone()
-    tc = zero.clone()
-    ma = torch.ones_like(rx)
     # the same three-way branch, in the same order, as the kernel
     mx = (arx >= ary) & (arx >= arz)
     my = ~mx & (ary >= arz)
@@ -197,8 +112,7 @@ def sample_skybox(sky: torch.Tensor, face_w: int, d: torch.Tensor) -> torch.Tens
     pz, nz = mz & (rz > 0), mz & ~(rz > 0)
     ma = torch.where(mx, arx, torch.where(my, ary, arz))
     face = (
-        torch.where(px, 0, 0)
-        + torch.where(nx, 1, 0)
+        torch.where(nx, 1, 0)
         + torch.where(py, 2, 0)
         + torch.where(ny, 3, 0)
         + torch.where(pz, 4, 0)
@@ -215,9 +129,6 @@ def sample_skybox(sky: torch.Tensor, face_w: int, d: torch.Tensor) -> torch.Tens
     return bilinear(sky, s, v)
 
 
-# --------------------------------------------------------------------------- the scene
-
-
 @dataclass
 class Light:
     kind: int  # LIGHT_SPOT or LIGHT_DIRECTIONAL
@@ -232,12 +143,11 @@ class Light:
 
 
 class Scene:
-    """Everything a frame needs that the state cannot change: rays, skybox plate, plane, movers.
+    """Static data for a MuJoCo camera, floor, and analytic moving primitives.
 
-    Built from a compiled ``MjModel`` for one camera at one resolution. The camera's ORIENTATION is
-    read from ``cam_xmat`` at the model's initial pose and assumed constant, which is what a
-    ``fixed`` or ``trackcom`` camera guarantees; the builder asserts the mode. Materials are
-    resolved per env at render time (``mat_rgb``), so an appearance knob costs nothing here.
+    Accepts fixed/trackcom perspective cameras. Shadow-casting spotlights require
+    a horizontal upward-facing floor and must remain above it in every frame.
+    Render poses come from MuJoCo kinematics; materials may vary per frame.
     """
 
     def __init__(
@@ -255,7 +165,6 @@ class Scene:
 
         self.device = torch.device(device)
         self.res = int(res)
-        self.camera = int(camera)
         self.enable_specular = bool(enable_specular)
         self.use_shadows = bool(use_shadows)
         d = mujoco.MjData(m)
@@ -293,7 +202,6 @@ class Scene:
         self.plane_mat = np.asarray(d.geom_xmat[g], np.float64).reshape(3, 3).copy()
         self.plane_size = np.asarray(m.geom_size[g], np.float64).copy()
         self.plane_matid = int(m.geom_matid[g])
-        self.plane_geom = g
         self.plane_tex = None
         self.plane_texrepeat = np.ones(2)
         if self.plane_matid >= 0:
@@ -304,7 +212,6 @@ class Scene:
                 self.plane_texrepeat = np.asarray(m.mat_texrepeat[self.plane_matid], np.float64)
 
         # the skybox plate, through MJWarp's own sampler, once
-        self.sky = None
         skybox = [t for t in range(m.ntex) if int(m.tex_type[t]) == int(mujoco.mjtTexture.mjTEXTURE_SKYBOX)]
         if skybox:
             tex = torch.as_tensor(texture_array(m, skybox[0]).astype(np.float32) / 255.0, device=self.device)
@@ -312,7 +219,7 @@ class Scene:
                 tex, int(m.tex_width[skybox[0]]), torch.as_tensor(self.dirs, device=self.device)
             )  # (N,3) [0,1]
         else:
-            self.sky = torch.tensor([0.1, 0.1, 0.2], device=self.device).expand(self.dirs.shape[0], 3)
+            self.sky = torch.tensor(SKY_FALLBACK, device=self.device).expand(self.dirs.shape[0], 3)
 
         # movers: the geoms whose pose the state decides
         self.movers = [int(g) for g in movers]
@@ -330,9 +237,7 @@ class Scene:
         ).reshape(-1, 3)
         self.mover_matid = np.asarray([int(m.geom_matid[g]) for g in self.movers], np.int64)
         self.mover_rgba = np.asarray([m.geom_rgba[g] for g in self.movers], np.float64).reshape(-1, 4)
-        # the shared law, rather than a throwaway ``Primitives`` with zeroed colours built only to
-        # call the method on it: this radius bounds the mover window and the shadow footprint below,
-        # and both are claims that nothing outside it can be hit
+        # The same conservative radius bounds mover pixels and possible shadows.
         self.radii = torch.as_tensor(
             bound_radius(kinds, self.sizes.cpu().numpy()), dtype=torch.float32, device=self.device
         )
@@ -346,9 +251,7 @@ class Scene:
             spec[i] = float(m.mat_specular[i])
             shin[i] = float(m.mat_shininess[i]) * MAX_SHININESS
             emis[i] = float(m.mat_emission[i])
-        # a textured NON-plane geom: ``sample_texture`` derives no UV for it and samples (0, 0), i.e.
-        # the corner texel of its material's RGB texture modulates the base colour. Reproduced per
-        # material as a constant colour (ones when untextured).
+        # MJWarp samples texel (0, 0) on non-plane primitives without generated UVs.
         tex00 = np.ones((nmat + 1, 3))
         for i in range(nmat):
             t = m.mat_texid[i]
@@ -398,7 +301,7 @@ class Scene:
                 raise ValueError(
                     "cpu3d: a shadow-casting DIRECTIONAL light is not implemented (the "
                     "megakernel casts its shadow rays with max_t = 1e8; the footprint "
-                    "bound here is written for a point light)"
+                    "bound here requires a positional spotlight)"
                 )
             if not L.attenuation_default:
                 raise ValueError(
@@ -413,14 +316,21 @@ class Scene:
             np.asarray(hl.diffuse, np.float64),
             np.asarray(hl.specular, np.float64),
         )
-        self.plane_z_up = float(self.plane_mat[2, 2]) > 0.999
+        self.plane_z_up = bool(np.allclose(self.plane_mat[:, 2], [0, 0, 1], rtol=0, atol=1e-12))
+        if (
+            self.use_shadows
+            and any(light.active and light.castshadow for light in self.lights)
+            and not self.plane_z_up
+        ):
+            raise ValueError(
+                "cpu3d: shadow bounds require a horizontal upward-facing plane; use_shadows=False disables them"
+            )
 
     @staticmethod
     def _rays(xmat: np.ndarray, fovy: float, res: int) -> np.ndarray:
-        """``compute_ray`` of ``mujoco_warp`` for every pixel, then rotated into the world.
+        """Construct float32 pixel-center rays in MJWarp's arithmetic order.
 
-        Float32 throughout, in the kernel's own order: a normalised camera-frame direction, then
-        ``cam_xmat @ dir``. ``znear`` cancels in the direction and is left at 1.
+        Normalize in camera space before rotating; the near distance cancels.
         """
         W = H = int(res)
         f = np.float32(math.tan(0.5 * math.radians(fovy)))
@@ -444,16 +354,12 @@ class Scene:
         return d.astype(np.float32)
 
     def mat_table(self, mat_rgb: torch.Tensor) -> torch.Tensor:
-        """``(B, nmat, 3)`` per-env material colours -> ``(B, nmat + 1 + P, 3)`` primitive base
-        colours: material rows, then the defaults slot (unused for a geom with a material), then one
-        row per primitive carrying its own rgba, which is what a material-less geom is coloured by."""
+        """Extend (B,nmat,3) colours with a defaults slot and each primitive's own RGB."""
         B = mat_rgb.shape[0]
         own = self.prim_own_rgb.unsqueeze(0).expand(B, -1, -1)
         pad = torch.zeros((B, 1, 3), dtype=mat_rgb.dtype, device=mat_rgb.device)
         return torch.cat([mat_rgb, pad, own], 1)
 
-
-# --------------------------------------------------------------------------- helpers
 
 # ``_dot`` is ``primitives.dot3``, imported at the top: the same unrolled expression the
 # intersectors use, for the same reproducibility reason, from one definition instead of two.
@@ -465,23 +371,15 @@ def _normalize(v: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
     return v / torch.where(n > 0, n, torch.ones_like(n)).unsqueeze(-1), n
 
 
-#: What ``_mover_window`` returns when the movers project to nothing on screen: there is no window to
-#: cast, and no mover can contribute a pixel. A named sentinel rather than a bare ``"empty"`` at two
-#: call sites, because it is a third outcome next to "a window" and ``None`` ("the whole frame").
+# Distinguish no visible movers from None, which requests the full frame.
 WINDOW_EMPTY = "empty"
 
 
 def _mover_window(scene: Scene, xpos_rel: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, int, int] | str | None:
-    """Per-env pixel rectangle enclosing every mover's bounding sphere, and its common size.
+    """Bound camera-relative (B,K,3) movers with per-row pixel windows.
 
-    Three outcomes: ``(x0, y0, w, h)`` for a window, ``None`` for "cast the whole frame" (a mover
-    reaches the camera plane, or the window is not smaller than the frame), and ``WINDOW_EMPTY``
-    for "nothing on screen".
-
-    ``xpos_rel`` is ``(B,K,3)`` mover positions RELATIVE TO THE CAMERA. Projected through the
-    same frustum the rays use, padded by one pixel; a sphere that reaches the camera plane makes
-    the window the whole frame. Returns ``(x0 (B,), y0 (B,), w, h)`` with ``w, h`` the batch-wide
-    maximum so one gather serves the chunk, or ``None`` for the full frame.
+    Return (x0, y0, common_width, common_height), None for the full frame, or
+    WINDOW_EMPTY when every mover is offscreen. Pad each bound by one pixel.
     """
     B, K = xpos_rel.shape[:2]
     W = H = scene.res
@@ -492,7 +390,7 @@ def _mover_window(scene: Scene, xpos_rel: torch.Tensor) -> tuple[torch.Tensor, t
     r = scene.radii.view(1, K)
     f = math.tan(0.5 * math.radians(scene.fovy))
     near = depth - r
-    if bool((near <= 1e-3).any()):
+    if bool((near <= WINDOW_NEAR).any()):
         return None
     inv = 1.0 / near
     px = (loc[..., 0] * inv / f + 1.0) * 0.5 * W - 0.5
@@ -525,11 +423,10 @@ def _window_index(x0: torch.Tensor, y0: torch.Tensor, w: int, h: int, W: int, de
 
 
 def _light_footprint(scene: Scene, xpos_rel: torch.Tensor, light_rel: torch.Tensor, cam: torch.Tensor):
-    """World-xy AABB, per env, of where the movers can shadow the plane from a point light.
+    """Return (xy_min, xy_max, unbounded) shadow bounds for a spotlight.
 
-    Every mover's bounding-sphere box is projected from the light onto the plane; a corner above
-    the light makes the footprint unbounded (``None`` for that env means test every floor pixel).
-    Conservative by construction, so restricting shadow rays to it cannot change a pixel.
+    Project bounding-box corners onto the horizontal floor. A corner at or above
+    the light sets that row's boolean unbounded mask: test every floor pixel.
     """
     B, K = xpos_rel.shape[:2]
     r = scene.radii.view(1, K, 1)
@@ -548,12 +445,9 @@ def _light_footprint(scene: Scene, xpos_rel: torch.Tensor, light_rel: torch.Tens
     hit = L + s.unsqueeze(-1) * (q - L)
     xy = hit[..., :2].reshape(B, -1, 2)
     unbounded = ~below.reshape(B, -1).all(1)
-    lo = xy.amin(1) - 0.05
-    hi = xy.amax(1) + 0.05
+    lo = xy.amin(1) - FOOTPRINT_MARGIN
+    hi = xy.amax(1) + FOOTPRINT_MARGIN
     return lo, hi, unbounded
-
-
-# --------------------------------------------------------------------------- the frame
 
 
 @torch.no_grad()
@@ -619,7 +513,6 @@ def _render_chunk(
     # ---- everything relative to the camera: the origin is 0 for every env
     xpos_rel = xpos - cam.view(B, 1, 3)
     lrel = light_pos - cam.view(B, 1, 3)  # (B,L,3)
-    # PRECONDITIONS (see the module docstring), checked on every chunk rather than assumed:
     if K:
         inside = (torch.sqrt(_dot(xpos_rel, xpos_rel)) <= scene.radii.view(1, K)).any()
         if bool(inside):
@@ -638,7 +531,7 @@ def _render_chunk(
                     "cpu3d: a shadow-casting light is on or below the plane in this batch; "
                     "the footprint bound on shadow rays assumes the light above the plane"
                 )
-    ppos = torch.as_tensor(scene.plane_pos, dtype=torch.float32, device=dev).view(1, 3) - cam  # (B,3)
+    ppos = ppos_w.view(1, 3) - cam  # (B,3)
     pm = torch.as_tensor(scene.plane_mat, dtype=torch.float32, device=dev)
 
     # ---- the plane, exactly ``ray_plane``: local frame, front-face only, bounded when size > 0
@@ -675,9 +568,7 @@ def _render_chunk(
             dd = d[idx]  # (B, Nw, 3)
             oo = torch.zeros(dd.shape, device=dev)
         tm, nm, im = R3.cast_nearest(scene.kinds, scene.sizes.unsqueeze(0).expand(B, K, 3), xpos_rel, xmat, oo, dd)
-        # the megakernel's backface cull on primary rays (``enable_backface_culling``): a hit whose
-        # normal faces away from the ray is dropped. With the camera outside every mover (checked
-        # above) no nearest hit is back-facing, so this is exact rather than an approximation.
+        # Match primary-ray backface culling. Cameras inside mover bounds are refused.
         tm = torch.where(_dot(nm, dd) > 0, torch.full_like(tm, INF), tm)
         if idx is None:
             upd = tm < t_best
@@ -718,7 +609,7 @@ def _render_chunk(
             if bool(on_plane.any()):
                 j = torch.nonzero(on_plane, as_tuple=False).reshape(-1)
                 pw = p[j] + cam[env[j]]  # world hit point
-                rel = pw - torch.as_tensor(scene.plane_pos, dtype=torch.float32, device=dev)
+                rel = pw - ppos_w
                 lx = _dot(rel, pm[:, 0])
                 ly = _dot(rel, pm[:, 1])
                 rep = scene.plane_texrepeat
@@ -771,7 +662,6 @@ def _render_chunk(
                 cone = torch.ones_like(t, dtype=torch.bool)
             else:
                 Ldir, dist = _normalize(lrel[env, li] - p)
-                att = torch.ones_like(t)
                 ldir_n, _ = _normalize(light_dir[env, li])
                 cos_theta = _dot(-Ldir, ldir_n)
                 cos_cut = math.cos(math.radians(L.cutoff_deg))
@@ -808,10 +698,7 @@ def _render_chunk(
             dif = light_diffuse[env, li] * (ndotl * wgt).unsqueeze(-1)
             result = result + base * dif
             if scene.enable_specular:
-                Hh, _ = _normalize(Ldir + view)
-                ndoth = _dot(n, Hh).clamp_min(0.0)
-                sp = mspec * torch.pow(ndoth, mshin) * wgt
-                sp = torch.where((mspec > 0) & (mshin > 0), sp, torch.zeros_like(sp))
+                sp = _specular(n, Ldir, view, mspec, mshin, wgt)
                 result = result + torch.as_tensor(L.specular, dtype=torch.float32, device=dev) * sp.unsqueeze(-1)
         if scene.headlight_active:
             R = torch.as_tensor(scene.xmat, dtype=torch.float32, device=dev)
@@ -821,10 +708,7 @@ def _render_chunk(
             wgt = live.to(t.dtype)
             result = result + base * (hl_dif * (ndotl * wgt).unsqueeze(-1))
             if scene.enable_specular:
-                Hh, _ = _normalize(Ldir + view)
-                ndoth = _dot(n, Hh).clamp_min(0.0)
-                sp = mspec * torch.pow(ndoth, mshin) * wgt
-                sp = torch.where((mspec > 0) & (mshin > 0), sp, torch.zeros_like(sp))
+                sp = _specular(n, Ldir, view, mspec, mshin, wgt)
                 result = result + hl_spec * sp.unsqueeze(-1)
         rgb.view(-1, 3)[flat] = result.clamp(0.0, 1.0)
     # ``pack_rgba_to_uint32``: C ``int()`` truncates; under ``gl_rounding`` it is int(x*255 + 0.5)
@@ -832,6 +716,13 @@ def _render_chunk(
     if QUANT == "round":
         q = q + 0.5
     return torch.floor(q).clamp_(0, 255).to(torch.uint8)
+
+
+def _specular(n, light, view, specular, shininess, weight):
+    half, _ = _normalize(light + view)
+    ndoth = _dot(n, half).clamp_min(0.0)
+    value = specular * torch.pow(ndoth, shininess) * weight
+    return torch.where((specular > 0) & (shininess > 0), value, torch.zeros_like(value))
 
 
 def _any_blocking_flat(
@@ -843,11 +734,9 @@ def _any_blocking_flat(
     d: torch.Tensor,
     lim: torch.Tensor,
 ) -> torch.Tensor:
-    """Shadow rays for a compacted set of hit points: ``(Q,)`` bool via ``raycast3d.any_blocking``.
+    """Test compacted shadow rays, returning (Q,) boolean occlusion.
 
-    The shared intersectors take ``(B, N, ...)`` bundles; the candidates are regrouped per env by
-    sorting, cast as one ragged-padded bundle, and scattered back. Padding rays get ``lim = 0`` so
-    they can never register a hit.
+    Group by environment, pad with zero-length rays, then restore input order.
     """
     B, K = xpos_rel.shape[:2]
     Q = env.numel()
