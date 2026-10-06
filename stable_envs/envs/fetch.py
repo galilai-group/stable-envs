@@ -1,109 +1,3 @@
-"""Fetch (gymnasium-robotics) — 12 registered ids over 4 scenes, one state vector each: ``qpos + goal``.
-
-Rendering and Variation handling are provided by stable-envs. Dynamics stay in Gymnasium Robotics /
-MuJoCo; this family currently renders stored states (``has_dynamics`` is False).
-
-Reference: ``gymnasium.make("Fetch{Reach,Push,Slide,PickAndPlace}[Dense]-v4", render_mode="rgb_array")``
-at its native 480x480, i.e. MuJoCo's EGL raster of a lit 3-D scene under the FREE camera
-``MujocoFetchEnv`` configures (distance 2.5, azimuth 132, elevation -14, lookat (1.3, 0.75, 0.55)).
-The same four scenes are offered as twelve classes: ``Dense`` and ``Dict`` suffixes change the reward
-and the observation container and not a pixel; one class per official id, as the OGBench family
-already does for its 25 dataset cells.
-
-WHY THIS FAMILY NEEDS A MESH RAY-CASTER, AND WHERE ONE WAS FOUND
----------------------------------------------------------------
-
-The Fetch scene is a floor, a table, a block, a goal marker — and a 7-DoF robot drawn from **18
-triangle meshes** whose every joint is in ``qpos``. There is no version of the plate-bake that makes
-the robot static, and ``stable_envs.render.raycast3d`` ships analytic primitives only. So the mover
-pass is ``mujoco_warp``'s batch raytracer, which is a first-party DeepMind component with mesh BVHs,
-and the static pass is the OGBench plate. Both halves are measured separately below.
-
-THE STATIC HALF IS PROVABLY STATIC HERE, WHICH IS NOT TRUE OF DM CONTROL
-------------------------------------------------------------------------
-
-Every material in every Fetch scene has ``reflectance=0`` and the model's one light is
-``castshadow="false"``, so a mover casts no shadow and appears in no mirror, and the floor/table/skybox
-pixels are a function of the appearance alone. Asserted rather than assumed: with the movers hidden,
-8 states 25 random actions apart give **0/255 max difference**, and the env refuses to build if that
-ever stops being true. Baking that plate through MuJoCo makes 91% of the frame exact BY CONSTRUCTION;
-MJWarp's segmentation buffer says which pixels are movers, so occlusion of the robot by the table is
-resolved by the ray-caster rather than by a depth heuristic.
-
-FIVE CONSTANTS THAT WERE MEASURED, EACH OF WHICH READS PLAUSIBLY AND IS WRONG
------------------------------------------------------------------------------
-
-*The renderer's camera is not a model camera, and MJWarp only has model cameras.* The pose is
-recovered from MuJoCo's own ``mjvScene`` as the AVERAGE of the two ``mjvGLCamera`` eyes — they are
-``vis.global_.ipd`` = 0.068 apart, and taking eye 0 is a 34 mm lateral error that looks like nothing.
-The recovered pose is then proved rather than trusted: our model rendered through MuJoCo at ``se:cam``
-agrees with the official free-camera frame on **99.99% of interior pixels**.
-
-*MJWarp resolves a geom's colour from its MATERIAL whenever it has one; MuJoCo prefers the geom's own
-``rgba`` unless that is the compiler default.* Fetch trips this on 11 of 24 geoms — one material,
-``robot0:arm_mat``, is white and is worn by both the white and the blue arm links — so the whole arm
-comes out white. Fixed by cloning one material per geom carrying the RESOLVED colour and the original
-specular/shininess, which leaves the shading path untouched.
-
-*MuJoCo draws SITES and MJWarp draws none.* ``target0`` — the red goal sphere, the one thing the goal
-reaches — is a site, so it is re-expressed as a geom. Leaving the site in place is worse than
-inconsequential: the env moves the goal by writing ``model.site_pos``, so a site left at its model
-position draws a SECOND red sphere, and ``object0``'s site (a red sphere that lives INSIDE the block
-and is invisible in the official frame) becomes visible the moment the block is hidden for the plate
-bake — it made the "static" plate depend on ``qpos[15:17]`` over 1123 pixels.
-
-*MJWarp truncates float->uint8 where OpenGL rounds.* On flat interior pixels the signed difference is
-``{0: 86.8%, -1: 13.1%}`` and nothing else above 0.01%, which is the signature of one float quantised
-two ways and is not predicted by any shading hypothesis. Correcting the rule
-(``stable_envs.render.mjwarp.gl_rounding``) moves interior agreement from **0.791 to 0.9988** and
-whole-frame exactness from 0.718 to 0.910. It is the largest single fidelity term in this family, and
-it was invisible until the difference was looked at SIGNED.
-
-*Reset states do not exercise this env.* ``_reset_sim`` restores ``initial_state`` and randomises only
-the object, so every reset frame has the identical arm pose and a parity number computed from them
-says nothing about the 11 joints that are most of the picture. ``sample_states`` therefore draws from
-a pool built by resetting and then applying 0-25 random actions, which is what a dataset holds.
-
-WHAT IS NOT DRAWN, AND WHY THE STATE IS ``qpos + goal``
--------------------------------------------------------
-
-``robot0:mocap`` carries four TRANSLUCENT marker geoms — a 1 cm cube at alpha 0.7 and three 2 m
-crosshair bars at alpha 0.1. MJWarp never reads alpha, so it would paint them opaque saturated green;
-they are hidden instead. Measured against a reference with them hidden: **1.2-1.5% of all pixels, mean
-0.32/255, and 0.000002 of INTERIOR pixels** — a translucent bar over a flat surface has no flat 3x3
-neighbourhood, so none of it reaches the interior metric.
-
-It is also why ``mocap_pos``/``mocap_quat`` are not in the state. They reach no other pixel, so
-carrying them would declare seven dimensions the renderer provably ignores and
-``check_state_dims_matter`` would correctly fail. ``reference_render`` closes the loop by putting the
-reference's mocap where the env's own ``reset_mocap2body_xpos`` puts it — at the welded gripper body —
-so the official frame is a function of ``(qpos, goal)`` and ``test_state_is_sufficient`` is a real
-check rather than a vacuous one. The "40-53 floats including mocap" figure was measuring
-the reference; the render-relevant state is **18 floats (Reach) or 25**, and the seven that dropped
-out buy 1.4% of pixels that no alpha-blind renderer can draw.
-
-MEASURED (480 px, 64 states per scene from the env's own pool, H200; the frozen measurement record)
-----------------------------------------------------------------------------------------------------
-
-===============  ==============  =========  ==========  =========  ========  ===========
-scene            interior exact   all exact   mean/255   within 8   f/s@256   official
-===============  ==============  =========  ==========  =========  ========  ===========
-Reach                  0.992240     0.90921     0.8376    0.97456     5,923    993.6/147.9
-Push                   0.991894     0.90832     0.8707    0.97420     5,920    923.3/125.5
-Slide                  0.994751     0.92804     0.7919    0.97784     6,027    935.0/118.1
-PickAndPlace           0.992075     0.90847     0.8561    0.97445     5,885    954.4/124.6
-===============  ==============  =========  ==========  =========  ========  ===========
-
-The two official numbers are the same renderer measured two ways and both are worth having: warm
-render-only, and the operation a dataset consumer actually performs, which is restoring a stored state
-FIRST -- three ``mj_forward`` calls, whose constraint solver on a settled scene costs more than the
-raster. So 6.2x on the renderer alone and ~45x end to end. The ray-cast pass on its own runs at
-11,051-11,835 f/s; the plate composite, the channel swap and the stream synchronisation halve that,
-and the table reports what a caller gets. Supersampling was measured and is NOT the default: 2x costs
-2.9x the time and moves whole-frame exactness by +0.0016 (0.92313 -> 0.92472 on Reach), because the
-residual is shading rather than coverage.
-"""
-
 from __future__ import annotations
 
 import os
@@ -115,16 +9,18 @@ from .._mujoco_gl import configure_mujoco_gl
 
 configure_mujoco_gl()
 
+
 def _require_gpu_renderer():
-    """Simulation may use MuJoCo 3.8.1; mesh rendering has a separate profile."""
     import importlib.util
 
     import mujoco
 
     missing = [name for name in ("warp", "mujoco_warp") if importlib.util.find_spec(name) is None]
     if missing or tuple(int(x) for x in mujoco.__version__.split(".")[:2]) < (3, 11):
-        raise ImportError("Fetch GPU rendering requires MuJoCo >=3.11, warp and mujoco_warp; "
-                          "CPU simulation is supported independently. Missing: " + ", ".join(missing))
+        raise ImportError(
+            "Fetch GPU rendering requires MuJoCo >=3.11, warp and mujoco_warp; "
+            "CPU simulation is supported independently. Missing: " + ", ".join(missing)
+        )
 
 
 from ..env import Env
@@ -133,12 +29,9 @@ from ..render import _resources as _RES
 from ..render import mjwarp as MW
 from ..spaces import Box, Dict
 
-#: The four distinct scenes, and the MJCF each is compiled from.
 SCENE_XML = {"Reach": "reach.xml", "Push": "push.xml", "Slide": "slide.xml", "PickAndPlace": "pick_and_place.xml"}
 
-#: ``qpos`` layout, from the body tree in ``fetch/robot.xml``. Asserted against the compiled model at
-#: construction — a mislabelled state vector is worse than an unlabelled one, because everything
-#: downstream silently indexes the wrong number.
+# Joint order must match the compiled qpos layout; _build_bundle checks it.
 ROBOT_JOINTS = (
     "slide0",
     "slide1",
@@ -159,55 +52,37 @@ ROBOT_JOINTS = (
 OBJECT_JOINT = ("object_x", "object_y", "object_z", "object_quat_w", "object_quat_x", "object_quat_y", "object_quat_z")
 GOAL_NAMES = ("goal_x", "goal_y", "goal_z")
 
-#: The blue the MJCF's ``robot0:blue`` default class paints five links, used to identify the geoms the
-#: ``arm.color`` knob owns. Read off the compiled model, not off the XML text.
+# Compiled robot0:blue color identifies the geoms controlled by arm.color.
 BLUE = (0.086, 0.506, 0.767)
-#: MuJoCo's defaults for an element with no material (``mjv_initGeom``).
+# MuJoCo defaults for geoms without a material (mjv_initGeom).
 DEFAULT_SPECULAR, DEFAULT_SHININESS, DEFAULT_EMISSION = 0.5, 0.5, 0.0
-#: A group nothing in a Fetch model uses. Both renderers are shown groups 0-2.
 HIDDEN_GROUP = MW.HIDDEN_GROUP
 VISIBLE_GROUPS = MW.DEFAULT_GROUPS
-#: Worlds per MJWarp render context. The RAY-CAST saturates by 64 (11,573 f/s at 64 against 11,835 at
-#: 256 on Reach at 480 px) and that is still true; what this constant actually decides is how many
-#: CHUNKS a batch is cut into, and each chunk pays two device synchronisations and a pass of Python
-#: issuing the per-world writes. Measured end to end at 256 px / batch 1024: **64 -> 18,323 f/s,
-#: 128 -> 19,851, 256 -> 20,540, 512 -> 20,936**. 256 rather than 512 because the last step is 2% and
-#: a context owns ``nworld * H * W * 12`` bytes, which is what bounds memory at ``supersample=2``.
-#: The frame is bit-identical at every one of those sizes (the frozen measurement record:
-#: 512 states, max 0/255 on 0 pixels), so this is a free knob and not a change of contract.
+# Worlds per render context; larger chunks reduce launches but increase framebuffer memory.
 MJW_CHUNK = 256
 
 
 class _Cache(dict):
-    """An unbounded dict with ``get_or_build``. Used only for values that are never released.
-
-    Compiled models, EGL renderers and state pools live for the process: an EGL context must not be
-    closed, and a compiled model is cheap enough that a cap would only cost recompiles. Bounded
-    working sets (plates, free-camera poses, MJWarp contexts) are ``BoundedCache`` instead.
-    """
+    """Process-lifetime cache for shared models, reference renderers and state pools."""
 
     def __init__(self, name: str):
         super().__init__()
         self.name = name
 
     def get_or_build(self, key, build):
-        """``self[key]``, building it with ``build()`` on a miss. The only way anything is stored."""
         hit = self.get(key)
         if hit is None:
             hit = self[key] = build()
         return hit
 
 
-#: Contexts are cached per (scene, resolution, worlds). Overflow LRU-evicts and drops tex_lod
-#: keepalives; EGL contexts are separate and never released.
+# MJWarp contexts may be evicted; shared EGL renderers remain alive for the process.
 _CTX_CACHE = _RES.BoundedCache(6, name="fetch.ctx", on_evict=MW.release_cached_ctx)
 _PLATE_CACHE = _RES.BoundedCache(32, name="fetch.plate")
 _MODEL_CACHE = _Cache("compiled model")
 _RENDERER_CACHE = _Cache("MuJoCo renderer")
 _POOL_CACHE = _Cache("state pool")
-#: (model, lookat, distance, azimuth, elevation) -> the world pose MuJoCo gives that free camera.
-#: Cached because ``render`` asks for it once per distinct camera appearance per chunk, and the answer
-#: costs an ``MjvScene`` allocation and an ``mjv_updateScene``.
+# Cache free-camera poses to avoid repeated MjvScene allocation and scene updates.
 _CAM_CACHE = _RES.BoundedCache(256, name="fetch.cam")
 
 
@@ -218,7 +93,7 @@ def _asset_dir() -> str:
 
 
 def _effective_rgba(m, g) -> np.ndarray:
-    """MuJoCo's own resolution order: the geom's rgba wins unless it is the compiler default."""
+    """Resolve MuJoCo color: use the material only when geom RGBA has the default value."""
     rgba = np.asarray(m.geom_rgba[g], np.float64)
     mid = int(m.geom_matid[g])
     if mid >= 0 and np.allclose(rgba, [0.5, 0.5, 0.5, 1.0]):
@@ -227,15 +102,7 @@ def _effective_rgba(m, g) -> np.ndarray:
 
 
 def _restore(m, pr) -> None:
-    """Put the five mutable appearance arrays back to the pristine snapshot.
-
-    ``_bake_plate`` writes them on the way in (so that baking appearance B after A gives the same
-    model as baking B first — ``cam.distance`` is a MULTIPLIER and would otherwise compound) and
-    again on the way out (so that no other reader of the shared model sees a bake's leftovers). The
-    two lists had already drifted apart: the entry copy omitted ``cam_pos``/``cam_quat``, which was
-    harmless only because the bake overwrites the one camera it uses a few lines later. One list is
-    one place for the next array to be added, instead of two places for it to be added to one.
-    """
+    """Restore shared model colors, lighting and camera poses before and after baking."""
     m.mat_rgba[:] = pr["mat_rgba"]
     m.geom_rgba[:] = pr["geom_rgba"]
     m.light_diffuse[:] = pr["light_diffuse"]
@@ -244,17 +111,10 @@ def _restore(m, pr) -> None:
 
 
 def _style_groups(sty, paths, B: int):
-    """``(uniq, inv, offs)``: the DISTINCT appearances a batch asks for, over ``paths``.
+    """Group appearance rows after rounding to six decimal places.
 
-    Both things a render does per batch — bake one plate per distinct static appearance, and place
-    one camera per distinct camera appearance — are this question asked of a different tuple of
-    leaves, and both were written out longhand. ``uniq`` is ``(G, sum(widths))`` of the distinct
-    rows, ``inv`` maps each of the ``B`` environments to its group, and ``offs`` is ``(start, width)``
-    per path so a caller can cut a row back into leaves without re-deriving the widths.
-
-    Rounded to 6 decimals before ``np.unique``, which is what makes the grouping a property of the
-    APPEARANCE rather than of float noise: two environments asked for the same colour must share one
-    bake, or a batch of 1024 identical appearances bakes 1024 plates.
+    Return unique rows ``(G, sum(widths))``, a group index per environment,
+    and ``(offset, width)`` pairs for splitting each row into the requested paths.
     """
     offs, o = [], 0
     cols = []
@@ -269,11 +129,9 @@ def _style_groups(sty, paths, B: int):
 
 
 def _free_cam_pose(m, d, lookat, distance, azimuth, elevation):
-    """World (pos, quat) of a FREE ``mjvCamera``, measured off MuJoCo's own scene.
+    """Return the world position and quaternion of a MuJoCo free camera.
 
-    Mono rendering uses the AVERAGE of the two ``mjvGLCamera`` eyes, which sit ``vis.global_.ipd``
-    apart. Deriving the pose from (azimuth, elevation, distance) by hand would also be one sign
-    convention away from a picture that looks right and is not the reference's.
+    Average the two stereo eye positions to match mono rendering.
     """
     import mujoco
 
@@ -308,7 +166,7 @@ def _free_cam_pose(m, d, lookat, distance, azimuth, elevation):
 
 
 class _Bundle:
-    """Everything a Fetch scene needs that does not depend on the state, resolution or appearance."""
+    """Compiled Fetch model, geometry indices and unmodified appearance values."""
 
     __slots__ = (
         "model",
@@ -325,7 +183,7 @@ class _Bundle:
 
 
 def _build_bundle(scene: str) -> _Bundle:
-    """Compile the surgical model for ``scene``: a model camera, a goal geom, one material per geom."""
+    """Compile a render model with a fixed camera, movable goal geom and per-geom materials."""
     import mujoco
 
     hit = _MODEL_CACHE.get(scene)
@@ -337,8 +195,6 @@ def _build_bundle(scene: str) -> _Bundle:
     base = spec.compile()
     d0 = mujoco.MjData(base)
     mujoco.mj_forward(base, d0)
-    # The official env's camera, from ``MujocoFetchEnv.DEFAULT_CAMERA_CONFIG``, read off the reference
-    # class rather than transcribed.
     from gymnasium_robotics.envs.fetch.fetch_env import DEFAULT_CAMERA_CONFIG as CC
 
     cam_defaults = dict(
@@ -357,13 +213,7 @@ def _build_bundle(scene: str) -> _Bundle:
     cam = spec.worldbody.add_camera()
     cam.name, cam.pos, cam.quat = "se:cam", pos, quat
     cam.fovy = cam_defaults["fovy"]
-    # The goal sphere lives on a MOCAP body, and that is not a stylistic choice. Attached to the
-    # worldbody its pose would be ``geom_pos``, and MJWarp's ``kinematics`` does not recompute
-    # ``geom_xpos`` for world-body geometry — it has no reason to, world geoms being static — so the
-    # sphere stayed frozen at the origin, out of frame. It presented as three dead state dimensions
-    # (goal_x/y/z) AND an inert ``goal.color`` at the same time, which is what "the primitive is not
-    # in the picture at all" looks like from two different checks. A mocap body's pose is
-    # ``data.mocap_pos``, which is per-world by construction and which kinematics does apply.
+    # Put the goal on a mocap body: MJWarp kinematics does not update world-body geom positions.
     gb = spec.worldbody.add_body()
     gb.name = "se:goalbody"
     gb.mocap = True
@@ -379,9 +229,8 @@ def _build_bundle(scene: str) -> _Bundle:
 
     gname = lambda i: mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_GEOM, i) or ""
     bname = lambda i: mujoco.mj_id2name(base, mujoco.mjtObj.mjOBJ_GEOM, i) or ""
-    # Map every geom back to the base model. Names are unique where they exist; the unnamed ones (the
-    # four mocap markers, the table box) are matched by their order inside their body, which the
-    # compiler preserves, and the mapping asserts the names agree wherever both have one.
+    # Match geoms by their order within each body, including unnamed geoms.
+    # Compilation must preserve that order; names and counts are checked below.
     b_by_body: dict[int, list[int]] = {}
     for g in range(base.ngeom):
         b_by_body.setdefault(int(base.geom_bodyid[g]), []).append(g)
@@ -441,15 +290,11 @@ def _build_bundle(scene: str) -> _Bundle:
     assert floor >= 0 and table >= 0, f"{scene}: floor/table geom not found"
     assert arm, f"{scene}: no geom carries the robot0:blue colour"
 
-    # Every site is hidden. MuJoCo draws sites in groups 0-2 and MJWarp draws none, so any site left
-    # visible would be in the plate and in nothing else; ``target0`` is reproduced as ``se:target``
-    # above and the other two are measured at zero pixels in the official frame.
+    # MJWarp cannot draw sites. Hide them from the plate and render the goal as a moving geom.
     m.site_group[:] = HIDDEN_GROUP
-    # The four translucent mocap markers: MJWarp has no alpha, so they are excluded on BOTH sides and
-    # the cost is declared in ``parity_note`` rather than silently absorbed.
+    # Exclude translucent markers from this render model; this MJWarp path does not blend alpha.
     m.geom_group[translucent] = HIDDEN_GROUP
-    # Rendering-only model: collision margin is a contact parameter that reaches no pixel, and MJWarp's
-    # ``put_model`` refuses a non-zero margin under MULTICCD.
+    # This model is only for rendering; MJWarp MULTICCD rejects nonzero collision margins.
     m.geom_margin[:] = 0.0
     m.geom_contype[:] = 0
     m.geom_conaffinity[:] = 0
@@ -482,8 +327,7 @@ def _build_bundle(scene: str) -> _Bundle:
         cam_pos=np.array(m.cam_pos, copy=True),
         cam_quat=np.array(m.cam_quat, copy=True),
     )
-    # A geom is static iff its body is welded to the world and is not a mocap body. The goal sphere
-    # lives on the worldbody but MOVES (its ``geom_pos`` is the goal), so it is named out explicitly.
+    # Only geometry welded to the world can be baked; the goal must stay in the moving pass.
     b.static = [
         g
         for g in range(m.ngeom)
@@ -508,11 +352,10 @@ def _build_bundle(scene: str) -> _Bundle:
 
 
 def _renderer(scene: str, res: int):
-    """One ``mujoco.Renderer`` per (scene, resolution), built once and NEVER closed.
+    """Return the shared reference renderer for a scene and resolution.
 
-    Releasing an EGL context corrupts rendering in every other live context in the process, silently.
-    Reproduced while writing this env: rebinding one ``Renderer`` per scene in a probe loop turned
-    every LATER official render into a single flat colour.
+    Keep its EGL context alive for the process; releasing it can invalidate
+    other live renderers on supported drivers.
     """
     import mujoco
 
@@ -522,8 +365,6 @@ def _renderer(scene: str, res: int):
 
 
 class _Ctx:
-    """An MJWarp render context plus the device views a render writes through."""
-
     __slots__ = ("wm", "wd", "rc", "bgra", "seg", "graph", "nworld", "res", "wp", "mjw")
 
 
@@ -545,11 +386,7 @@ def _context(scene: str, res: int, nworld: int) -> _Ctx:
     batched = {k: int(nworld) for k in ("mat_rgba", "light_diffuse", "cam_pos", "cam_quat")}
     c.wm = mjw.put_model(m, batch_sizes=batched)
     c.wd = mjw.put_data(m, d0, nworld=int(nworld))
-    # THE CAPTURE IS INSIDE THE PATCH. ``mujoco_warp.render`` defines its megakernel inside itself, so
-    # the source is regenerated per call from whatever ``pack_rgba_to_uint32`` is bound then; captured
-    # outside, the graph every later render replays is the TRUNCATING kernel and this block reaches
-    # only the warm-up frame. Measured at 15.8% of this family's channels one level low
-    # , against the 0.791 -> 0.9988 interior parity the rule is worth.
+    # Capture inside gl_rounding so graph replay uses the rounding kernel, not truncation.
     with MW.gl_rounding():
         c.rc = MW.create_render_context(
             m,
@@ -566,9 +403,7 @@ def _context(scene: str, res: int, nworld: int) -> _Ctx:
         )
         _frame(c)
         wp.synchronize()
-        # A VIEW of the warp buffer, and the channel swap is applied per render rather than here.
-        # Doing ``[..., [2,1,0]]`` at construction is advanced indexing, which COPIES: the object would
-        # hold one frozen frame while every later render wrote into the buffer behind it.
+        # Keep a view of the live Warp buffer. Channel-swapping here would copy and freeze the frame.
         c.bgra = wp.to_torch(c.rc.rgb_data).view(torch.uint8).reshape(int(nworld), int(res), int(res), 4)
         c.seg = wp.to_torch(c.rc.seg_data).reshape(int(nworld), int(res), int(res), 2)[..., 0]
         with c.wp.ScopedCapture() as cap:
@@ -586,28 +421,11 @@ def _frame(c: _Ctx) -> None:
 
 
 class FetchBase(Env):
-    """The whole family. ``SCENE`` and ``REF_ID`` are the only things the 12 cells disagree about.
+    """Fetch renderer shared by Reach, Push, Slide and PickAndPlace.
 
-    ONE CLASS, TWELVE DECLARATIONS. Four scenes x three observation/reward suffixes, and the suffixes change the
-    REWARD and the OBSERVATION CONTAINER — neither of which reaches a pixel — so three ids share
-    each scene's compiled model, plate and ray-cast. There is nothing per-cell to write except the
-    scene and the official id it is validated against, which is why ``CELLS`` is a table and not
-    twelve class bodies: a per-cell body is twelve places for the next fidelity number to drift.
-
-    The Public State additions are three, and they are all this family needed:
-
-      * ``num_envs=`` (contract §2);
-        "goal": (3,)}`` — whose ``state_layout`` is assigned PER INSTANCE, because a Fetch cell's
-        ``state_dim`` is a property of the COMPILED MODEL (``nq`` differs between Reach and the
-        three scenes that carry a block) and is not known until one is built;
-      * ``close()`` refusing to render afterwards, without releasing the shared MuJoCo renderer or
-        the MJWarp contexts, which this family must never release.
-
-    NO DYNAMICS, declared rather than omitted. These cells ship a renderer over gymnasium-robotics'
-    own MuJoCo physics and there is no batched simulator in this package for any of them, so
-    ``step``/``transition`` raise ``Env``'s precise refusal and ``has_dynamics`` is False.
-    ``reset`` and ``render`` work as usual; to produce trajectories, roll out the official CPU env
-    and render the states it gives you.
+    Rendering uses a private ``qpos + goal`` projection. Registered classes
+    combine this renderer with ``FetchSemantics`` for simulation and full-State
+    restoration. Reward and observation variants share the scene renderer.
     """
 
     family = "fetch"
@@ -616,9 +434,7 @@ class FetchBase(Env):
     REF_ID: str = ""
     default_size = 480  # gymnasium-robotics' own DEFAULT_SIZE
     default_supersample = 1
-    #: Style leaves that change the STATIC scene and therefore the baked plate. Everything else is a
-    #: property of a mover and is applied per environment inside the ray-cast, so the common case —
-    #: randomise the goal or the arm colour, keep the room — never re-bakes anything.
+    # Changing these leaves requires a new static plate; mover colors are uploaded per world.
     PLATE_PATHS = (
         "floor.color",
         "table.color",
@@ -627,24 +443,6 @@ class FetchBase(Env):
         "camera.azimuth_delta",
         "camera.elevation_delta",
     )
-    #: MEASURED, not chosen, and RE-MEASURED 2026-08-11 after the ``gl_rounding`` capture fix below.
-    #: Over 64 states per scene from the env's own pool, interior agreement is 0.998814 (Push),
-    #: 0.998800 (PickAndPlace), 0.998782 (Reach); the floor sits below the worst of those so a state
-    #: draw cannot flake the gate.
-    #:
-    #: The pre-fix values this comment used to carry — 0.991894 / 0.992075 / 0.992240 / 0.994751 —
-    #: described a renderer that no longer exists: the CUDA graph was captured OUTSIDE the
-    #: ``with MW.gl_rounding()`` block, so every shipped render replayed a truncating kernel and the
-    #: patch reached only the warm-up frame (15.8% of this family's channels differed). They are kept
-    #: here as the before half of that measurement and are NOT the current fidelity. A stale measured
-    #: value is worse than none, because it reads as current evidence.
-    #:
-    #: The floor stays at 0.99 rather than tracking the new numbers up. It is a contract about what
-    #: this class guarantees, not a running best, and raising it to just under a freshly measured value
-    #: converts a comfortable margin into a tripwire for the next backend change. What it is NOT is
-    #: also measured: re-scoring against a reference with the four translucent markers hidden moves
-    #: interior agreement by 0.0007 (0.991894 -> 0.991557 on Push, i.e. the wrong way), so the interior
-    #: residual is the robot's shading and not the markers. See ``parity_note``.
     parity_interior_min = 0.99
     parity_note = (
         "TWO declared residuals, measured separately, both structural to the backend rather than to "
@@ -677,23 +475,12 @@ class FetchBase(Env):
         backend: str = "auto",
         seed: int = 0,
     ):
-        """``num_envs`` environments on ``device`` (contract §2).
-
-        ``state_dim``, ``state_names`` and ``state_layout`` are read off the COMPILED MODEL here and
-        not declared on the class, because they are properties of the model: Reach has no block and
-        therefore no free joint, so its ``nq`` is 15 where the other three scenes carry 22. The
-        packed row is ``qpos`` then the 3-D goal, exactly the packed float32 layout every frozen corpus and
-        certification check speaks.
-        """
+        """Initialize the compact renderer layout from the compiled scene model."""
         _require_gpu_renderer()
         b = _build_bundle(self.SCENE)
         self.state_dim = len(b.state_names)
         self.state_names = b.state_names
-        # Set PER INSTANCE, which is the whole of this family's State layout since the
-        # foundation made ``Env._layout`` an instance method (the
-        # request R1). The two keys are what the halves ARE: ``qpos`` is the simulator's
-        # configuration, and ``goal`` is the task target the env writes to a MOCAP body rather than
-        # to the simulator — a different kind of quantity, and the one the goal sphere is drawn from.
+        # Reach omits the object joint, so the compact projection width depends on the scene.
         self.state_layout = ((("qpos",), int(b.nq), 0), (("goal",), 3, int(b.nq)))
         super().__init__(
             num_envs=num_envs,
@@ -707,41 +494,12 @@ class FetchBase(Env):
         assert b.nq + 3 == self.state_dim, f"{type(self).__name__}: model nq={b.nq} but state_dim={self.state_dim}"
         self._check_plate_is_constant()
 
-    # ---- state -----------------------------------------------------
-    #
-    # NOTHING IS HIDDEN. Every column of the packed row is carried by one of the two keys, so no
-    # field has offset ``None``, ``_hidden_state`` is never consulted, and ``pack``/``unpack`` round
-    # trip the frozen corpus bit for bit. There is no ``_live_state`` either: the packed float32 row
-    # IS this family's live state — ``set_state`` writes it and ``render`` reads it — so there is no
-    # more precise buffer to answer from, unlike classic control's float64 simulator. The ``state``
-    # property is not overridden, and neither is ``_layout``.
-    #
-    # ``mocap_pos``/``mocap_quat`` are still NOT state, for the reason the module docstring gives:
-    # the only pixels they reach are the four translucent markers this backend cannot draw, so
-    # carrying them would declare seven dimensions the renderer provably ignores.
-
     def _close(self) -> None:
-        """Release what this INSTANCE owns: the device index tensors and the per-env style buffer.
-
-        The ``mujoco.Renderer`` in ``_RENDERER_CACHE``, the MJWarp contexts in ``_CTX_CACHE`` and the
-        compiled models in ``_MODEL_CACHE`` are NOT released, and that is the family's policy rather
-        than an oversight — they are shared by every instance at the same (scene, resolution, worlds),
-        and releasing an EGL context corrupts every other live one in the process (see ``_renderer``,
-        where that was reproduced). What ``close()`` buys here is the contract's other half: a closed
-        env REFUSES to render rather than handing back frames drawn through something a caller
-        believes is gone.
-        """
+        """Drop instance tensors while retaining caches shared with other environments."""
         self.__dict__.pop("_idx_cache", None)
 
-    # ---- the assumption the whole design rests on, checked rather than assumed -------------
-
     def _check_plate_is_constant(self) -> None:
-        """With every mover hidden, the frame must not depend on the state. Asserted, once per class.
-
-        Every Fetch material has ``reflectance=0`` and the one model light has ``castshadow="false"``,
-        so this SHOULD hold — but "should" is how the object0 site got into the plate and made it
-        depend on qpos[15:17] over 1123 pixels. Two states, 128 px, one MuJoCo render each.
-        """
+        """Check that hiding all moving geometry makes the baked frame independent of pose."""
         st = self.sample_states(2, rng=np.random.default_rng(0))
         a = self._bake_plate(128, None, states=st[0])
         c = self._bake_plate(128, None, states=st[1])
@@ -752,40 +510,11 @@ class FetchBase(Env):
             f"and the plate design is unsound for this scene"
         )
 
-    # ---- variation ------------------------------------------------------------------------
-
     def make_variation_space(self) -> Dict:
-        """Appearance knobs whose DEFAULTS are the official picture.
+        """Define colors, lighting and camera settings from the compiled model defaults.
 
-        Colours are float Boxes in [0,1] rather than ``RGBBox`` for the same reason the OGBench port
-        gives: MuJoCo's material colours are floats (0.93, 0.93, 0.93) and a uint8 channel cannot hold
-        one, so a uint8 default would shift the table by a level and make "our defaults reproduce the
-        reference" false.
-
-        Two things that are deliberately NOT knobs. The **headlight** is baked into the megakernel as a
-        compile-time static, because ``mujoco_warp`` resolves it when the render context is built and a
-        per-value headlight would mean a render context per distinct value — which is exactly the "do
-        not scale context creation" rule this repo enforces.
-
-        The **skybox** is 72% of the frame and would be the most useful of all. It used to be refused
-        for the headlight's reason, and THAT REASON WAS WRONG: it is true of the ``mujoco_warp`` pass
-        and the delivered skybox does not come from that pass. The floor, the table and the skybox are
-        the MuJoCo-baked plate (``_bake_plate``), and the composite takes ``mujoco_warp``'s output only
-        where the mover mask is set (``torch.where(mv.unsqueeze(-1), rgb, pl)``), so a per-value skybox
-        is a texel substitution on the plate rig — ``stable_envs.envs._plate_texels`` — with one more
-        entry in ``PLATE_PATHS``, and no second context anywhere. Measured, four scenes at 480 px:
-        substituting moves 143,275-171,620 of 230,400 px, and it is the same operation
-        a flat skybox write performs (``background.color`` writes
-        ``(bg * 255).astype(uint8)`` flat over the skybox texels and calls ``mjr_uploadTexture``; it
-        does not recompile either). See ``tests/fixtures/regression/join/step8/capability/fetch_skybox_probe.json``.
-
-        WHAT ACTUALLY BLOCKS THE LEAF IS THE DEFAULT. A flat-fill skybox is one colour, and this
-        family's skybox is a 16-colour GRADIENT (rgb1 ``.44 .85 .56`` to rgb2 ``.46 .87 .58`` over
-        6,144 texels): no value of a flat-fill leaf reproduces the compiled appearance, and no
-        two-colour masked substitution — the shape that works for DM Control's checker — reproduces
-        a flat sky. So the leaf cannot be added without moving this family's DEFAULT frame, which
-        is a frozen pixel oracle on the certified corpora. That is a re-freeze decision, not an
-        implementation decision, and it is escalated rather than taken.
+        Colors remain floating point to preserve MuJoCo material values.
+        Headlight settings and gradient skybox colors are not exposed by this renderer.
         """
         b = _build_bundle(self.SCENE)
         _, info = b.model, b.info
@@ -858,8 +587,6 @@ class FetchBase(Env):
             c["elevation"] + float(self._var(variation, "camera.elevation_delta")[0]),
         )
 
-    # ---- the plate ------------------------------------------------------------------------
-
     def _plate_key(self, res, variation):
         return (
             self.SCENE,
@@ -876,23 +603,14 @@ class FetchBase(Env):
         return _PLATE_CACHE.put(key, self._bake_plate(res, variation))
 
     def _bake_plate(self, res, variation, states=None) -> torch.Tensor:
-        """MuJoCo's own raster of the static scene: floor, table, skybox. Exact by construction.
-
-        Every mutation is an absolute assignment from the pristine snapshot rather than an increment,
-        so baking appearance B after A gives the same model as baking B first — ``cam.distance`` is a
-        MULTIPLIER and would otherwise compound.
-        """
+        """Bake the static scene with MuJoCo, restoring shared model appearance afterward."""
         import mujoco
 
         b = _build_bundle(self.SCENE)
         m, d, info = b.model, b.data, b.info
         pr = b.pristine
         _restore(m, pr)
-        # BOTH arrays, because the two renderers read different ones and this env deliberately keeps
-        # them consistent: MuJoCo prefers a geom's own ``rgba`` once it is not the compiler default
-        # (which ``_build_bundle`` makes it, by resolving the colour into it), and MJWarp reads the
-        # material whenever the geom has one. Writing only ``mat_rgba`` left floor.color and
-        # table.color INERT in the baked plate while working perfectly in the ray-cast.
+        # Write geom and material colors together: MuJoCo and MJWarp resolve them differently.
         for path, g in (("floor.color", info["floor"]), ("table.color", info["table"])):
             col = self._var(variation, path)
             m.mat_rgba[info["mat0"] + g, :3] = col
@@ -915,8 +633,6 @@ class FetchBase(Env):
         _restore(m, pr)
         return torch.as_tensor(img, device=self.device)
 
-    # ---- render ---------------------------------------------------------------------------
-
     @torch.no_grad()
     def _render(
         self,
@@ -927,11 +643,10 @@ class FetchBase(Env):
         style=None,
         out=None,
     ) -> torch.Tensor:
-        """``(...,state_dim)`` -> ``(...,H,W,3)`` uint8 on device. Style may differ per environment.
+        """Render packed states ``(..., state_dim)`` to uint8 RGB ``(..., H, W, 3)``.
 
-        The MJWarp pass is ONE call for the whole batch — colours, light and camera are per-world model
-        fields, so nothing about a per-environment appearance splits it. Only the baked plate is shared
-        per appearance, and it is gathered per row afterwards.
+        Ray-cast the moving geometry in batches and composite it over static plates
+        shared by appearance. Output stays on the environment device.
         """
         s = self._render_state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
         lead = tuple(s.shape[:-1])
@@ -955,10 +670,7 @@ class FetchBase(Env):
         plates_t = torch.stack(plates)  # (G, res, res, 3)
         plates1_t = plates_t if ss == 1 else torch.stack(plates1)
         grp = torch.as_tensor(inv, device=self.device, dtype=torch.long)
-        # HOISTED OUT OF THE CHUNK LOOP. Both are functions of the batch and the style, not of the
-        # render context, and computing them per chunk cost a device synchronisation and a host sort
-        # apiece for numbers that do not change between chunks — sixteen of each per render when the
-        # batch was still cut into sixteen pieces.
+        # Camera grouping is batch-wide; repeating it per chunk adds host transfers and synchronization.
         campos, camquat = self._camera_batch(sty, B)
         lut = self._mover_lut()
         for lo in range(0, B, MJW_CHUNK):
@@ -967,16 +679,12 @@ class FetchBase(Env):
             nw = 1 if n <= 1 else min(MJW_CHUNK, 1 << (n - 1).bit_length())
             c = _context(self.SCENE, res, nw)
             self._upload(c, s[lo:hi], sty, lo, hi, nw, campos, camquat)
-            # torch wrote the per-world arrays on its stream; warp replays the graph on its own. The
-            # two syncs bracket the launch so a frame can never be rendered from half-written state,
-            # which at 11k f/s costs microseconds and is the difference between deterministic and
-            # nearly deterministic.
+            # Torch writes and Warp replay use different streams; synchronize before and after replay.
             torch.cuda.synchronize()
             c.wp.capture_launch(c.graph)
             c.wp.synchronize()
             rgb, seg = c.bgra[:n][..., [2, 1, 0]], c.seg[:n]
-            # ``index_select`` on the int32 segmentation rather than ``lut[seg.long() + 1]``: the
-            # latter materialises a 64-bit copy of the whole frame stack to index with.
+            # Index with int32 segmentation IDs to avoid a full-frame int64 temporary.
             mv = lut.index_select(0, (seg + 1).reshape(-1)).view(seg.shape)
             g = grp[lo:hi]
             pl = plates_t[0] if len(uniq) == 1 else plates_t[g]
@@ -998,14 +706,7 @@ class FetchBase(Env):
         return buf.view(*lead, size, size, 3) if lead else buf
 
     def _camera_batch(self, sty, B: int):
-        """``(B,3)``/``(B,4)`` camera pose for the WHOLE batch, on device, in ONE host round trip.
-
-        This used to live in ``_upload`` and therefore ran once per chunk: sixteen ``.cpu()`` copies
-        (each a full device synchronisation), sixteen ``np.unique`` sorts and sixteen host-to-device
-        uploads to place a pose that, under the default style, is the same three numbers every time.
-        The camera is a per-world model field and the chunk boundary is a property of the render
-        context, not of the appearance, so the whole batch's poses are a function of ``sty`` alone.
-        """
+        """Return device camera positions ``(B, 3)`` and quaternions ``(B, 4)`` for a batch."""
         keys = ("camera.distance_scale", "camera.azimuth_delta", "camera.elevation_delta")
         uniq, inv, offs = _style_groups(sty, keys, B)
         poses = [self._camera({k: r[a : a + w] for k, (a, w) in zip(keys, offs)}) for r in uniq]
@@ -1016,7 +717,7 @@ class FetchBase(Env):
     def _upload(
         self, c: _Ctx, s: torch.Tensor, sty, lo: int, hi: int, nw: int, campos: torch.Tensor, camquat: torch.Tensor
     ) -> None:
-        """Write the batch's state and appearance into the context's per-world model/data arrays."""
+        """Copy state, appearance and camera poses into per-world MJWarp arrays."""
         b = self._b
         info = b.info
         n = hi - lo
@@ -1029,8 +730,6 @@ class FetchBase(Env):
         mat[:n, m0 + info["floor"], :3] = sty["floor.color"][lo:hi]
         mat[:n, m0 + info["table"], :3] = sty["table.color"][lo:hi]
         mat[:n, m0 + info["target"], :3] = sty["goal.color"][lo:hi]
-        # ONE indexed write for the arm's materials rather than one per material: the loop issued a
-        # kernel per arm geom (11 on the Fetch scenes) to broadcast the same colour into each.
         mat[:n, self._idx("arm.mats", m0 + np.asarray(info["arm"], np.int64)), :3] = sty["arm.color"][lo:hi].unsqueeze(
             1
         )
@@ -1044,12 +743,6 @@ class FetchBase(Env):
         wp.to_torch(c.wm.cam_quat)[:n, cam] = camquat[lo:hi]
 
     def _cached(self, key: str, build) -> torch.Tensor:
-        """A device tensor built once per env and kept. Dropped by ``close()``.
-
-        Everything this holds is a constant of the (model, device) pair that a render would otherwise
-        rebuild per chunk, and a rebuild is a host-to-device copy each. Three of these were written
-        out longhand with the same four lines; they are one thing.
-        """
         cache = self.__dict__.setdefault("_idx_cache", {})
         hit = cache.get(key)
         if hit is None:
@@ -1057,24 +750,16 @@ class FetchBase(Env):
         return hit
 
     def _idx(self, key: str, values) -> torch.Tensor:
-        """A device index tensor, built once per env. ``as_tensor`` per chunk is a host copy each."""
         return self._cached(key, lambda: torch.as_tensor(np.asarray(values, np.int64), device=self.device))
 
     def _light0(self) -> torch.Tensor:
-        """The model's pristine ``light_diffuse``, on device: what ``light.diffuse`` scales."""
         return self._cached(
             "light0",
             lambda: torch.as_tensor(self._b.pristine["light_diffuse"], device=self.device, dtype=torch.float32),
         )
 
     def _mover_lut(self) -> torch.Tensor:
-        """``(ngeom+1,)`` bool: is this segmentation id a mover? Indexed, not searched.
-
-        ``torch.isin(seg, movers)`` on a (64, 256, 256) segmentation broadcasts against the mover list
-        and reduces, i.e. it touches the frame once per mover; a table lookup touches it once. Measured
-        at 1.07 ms per chunk before and 0.05 ms after, which on a batch of 1024 is 16 ms of a 73 ms
-        render. The table is one bool per geom, built once per env.
-        """
+        """Return a boolean lookup table indexed by segmentation ID plus one."""
 
         def build():
             lut = torch.zeros(int(self._b.model.ngeom) + 1, dtype=torch.bool, device=self.device)
@@ -1083,26 +768,19 @@ class FetchBase(Env):
 
         return self._cached("mover_lut", build)
 
-    # ---- states ---------------------------------------------------------------------------
-
     def sample_states(self, batch: int, rng: np.random.Generator | None = None) -> np.ndarray:
-        """Draws from a pool the OFFICIAL env produced: reset, then 0-25 random actions.
+        """Sample compact render states from a cached pool of source rollouts.
 
-        Reset alone would be the wrong distribution and that is measured, not stylistic:
-        ``_reset_sim`` restores ``initial_state`` and randomises only the object, so every reset state
-        carries the identical arm pose and a parity number computed from them says nothing about the 11
-        joints that are most of the picture. The pool is built once per scene per process (512 states,
-        a few seconds of CPU MuJoCo) and shared by the three ids that render the same scene.
+        The pool includes 0–25 actions after reset to vary the arm pose; reset
+        alone leaves the arm unchanged. It is shared by variants of each scene.
         """
         rng = rng or self.rng
         pool = _state_pool(self.SCENE, self.REF_ID, self.state_dim, self._b.nq)
         return pool[rng.integers(0, len(pool), int(batch))].copy()
 
-    # ---- reference bridge -----------------------------------------------------------------
-
     @classmethod
     def reference_env(cls, size: int = 480):
-        """A FRESH official env at the requested resolution. Never closed — see ``_renderer``."""
+        """Construct a Gymnasium Robotics reference at the requested render resolution."""
         import gymnasium
         import gymnasium_robotics  # noqa: F401
 
@@ -1111,14 +789,10 @@ class FetchBase(Env):
 
     @classmethod
     def reference_render(cls, env, states) -> np.ndarray:
-        """Official frames for ``(qpos, goal)``, with the mocap canonicalised and the state asserted.
+        """Render compact states through the reference after restoring joints and goal.
 
-        ``MujocoFetchEnv`` drives the gripper through a mocap body whose pose is not in ``qpos``, and
-        the only pixels it reaches are the four translucent markers. Putting it where the env's own
-        ``reset_mocap2body_xpos`` puts it — at the welded gripper body — makes the official frame a
-        function of ``(qpos, goal)``, which is what ``test_state_is_sufficient`` needs to be a real
-        check. Without it the markers would sit wherever the previous call left them and the same state
-        would render two ways.
+        Align mocap markers to the gripper before drawing so their positions do
+        not depend on previous renders.
         """
         import mujoco
         from gymnasium_robotics.utils import mujoco_utils
@@ -1136,9 +810,7 @@ class FetchBase(Env):
             mujoco_utils.reset_mocap2body_xpos(m, d)
             mujoco.mj_forward(m, d)
             got = np.concatenate([d.qpos[:nq], np.asarray(u.goal, np.float64)])
-            # 1e-5 rather than exact: ``mj_kinematics`` renormalises a free joint's quaternion in
-            # place, and a state stored as float32 carries a norm that is 1 to about 1e-7. Everything
-            # else must land where it was asked to.
+            # mj_forward renormalizes free-joint quaternions, so float32 snapshots need a small tolerance.
             err = float(np.abs(got - st).max())
             if err > 1e-5:
                 raise AssertionError(
@@ -1154,16 +826,7 @@ class FetchBase(Env):
 
     @classmethod
     def _check_camera(cls, u) -> None:
-        """The reference's camera must be the one ``se:cam`` was built from. Asserted, not assumed.
-
-        Gymnasium's ``MujocoRenderer`` freezes its free camera at the first render and, left to its
-        own defaults, points it at ``median(geom_xpos)`` — a function of whatever state the viewer
-        happened to be constructed in rather than of the model. ``MujocoFetchEnv`` overrides all four
-        parameters from ``DEFAULT_CAMERA_CONFIG``, so here it IS a constant of the family: measured
-        identical over three reset-step-render cycles and identical again in a clean process. This check is what keeps that true — an upstream
-        change to the config would otherwise present as a diffuse parity regression rather than as a
-        moved camera.
-        """
+        """Verify that the reference camera matches the camera used to compile the render model."""
         c = u.mujoco_renderer.viewer.cam
         want = _build_bundle(cls.SCENE).cam_defaults
         got = (float(c.distance), float(c.azimuth), float(c.elevation))
@@ -1185,10 +848,7 @@ class FetchBase(Env):
 
 
 def _state_pool(scene: str, ref_id: str, state_dim: int, nq: int, n: int = 512) -> np.ndarray:
-    """``(n, state_dim)`` from the official env: reset, 0-25 random actions, read ``qpos`` and ``goal``.
-
-    Built with ``render_mode=None``, so no viewer and no EGL context is created for it.
-    """
+    """Build compact states from seeded source rollouts without creating a renderer."""
     hit = _POOL_CACHE.get(scene)
     if hit is not None:
         return hit
@@ -1198,10 +858,7 @@ def _state_pool(scene: str, ref_id: str, state_dim: int, nq: int, n: int = 512) 
     gymnasium.register_envs(gymnasium_robotics)
     env = gymnasium.make(ref_id)
     u = env.unwrapped
-    # SEEDED, and the action space explicitly: ``action_space.sample()`` draws from the SPACE's own
-    # generator, which ``reset(seed=)`` does not touch. Without this line the pool differs between
-    # processes and ``sample_states(rng=default_rng(k))`` is reproducible only within one — the exact
-    # failure ``test_seeded_sampling_reproduces_in_a_fresh_process`` exists to catch.
+    # reset(seed=...) does not seed action_space; seed it separately for reproducible pools.
     env.action_space.seed(0)
     rng = np.random.default_rng(0)
     out = np.empty((n, state_dim), np.float32)
@@ -1211,13 +868,7 @@ def _state_pool(scene: str, ref_id: str, state_dim: int, nq: int, n: int = 512) 
             env.step(env.action_space.sample())
         q = np.array(u.data.qpos, np.float64)
         if len(q) > len(ROBOT_JOINTS):
-            # The block's YAW is randomised, and this is the identity-quaternion trap the OGBench port
-            # records rather than a widening of the distribution. ``_reset_sim`` sets only the block's
-            # x and y, so its quaternion is (1,0,0,0) in every reset state and a random-action rollout
-            # rarely turns it; ``check_state_dims_matter`` then perturbs ``object_quat_w`` by +25, -25,
-            # 1.0 and 0.5, EVERY one of which normalises straight back to the identity, and a live
-            # dimension reads as dead. A block resting at an arbitrary yaw is a state this env reaches
-            # the moment the gripper touches it, and it is what an offline dataset contains.
+            # Vary object yaw so quaternion perturbations do not all normalize to the same identity pose.
             yaw = float(rng.uniform(-np.pi, np.pi))
             adr = len(ROBOT_JOINTS)
             q[adr + 3 : adr + 7] = [np.cos(yaw / 2), 0.0, 0.0, np.sin(yaw / 2)]
@@ -1228,9 +879,6 @@ def _state_pool(scene: str, ref_id: str, state_dim: int, nq: int, n: int = 512) 
     return out
 
 
-#: (class name, scene, official gymnasium-robotics id). Dense selects a reward and Dict selects an
-#: observation container, and neither reaches a
-#: pixel — so three classes share each scene's renderer, exactly as OGBench's dataset suffixes do.
 CELLS = (
     [(f"Fetch{t}", t, f"Fetch{t}-v4") for t in SCENE_XML]
     + [(f"Fetch{t}Dense", t, f"Fetch{t}Dense-v4") for t in SCENE_XML]
@@ -1242,19 +890,6 @@ from ._fetch_semantics import FetchSemantics as _FetchSemantics
 
 
 def _make_classes() -> dict[str, type]:
-    """The twelve cells, from ``CELLS``. DATA, not twelve class bodies (see ``FetchBase``).
-
-    Each carries exactly what distinguishes it — the scene, the official id it is validated against,
-    its registered ``name``, and a docstring naming the gymnasium-robotics id — and inherits everything else. The
-    alternative, one written-out class per id, is twelve copies of a body whose only content is two
-    strings, and twelve places for the next fidelity declaration to be applied to eleven of them.
-
-    ``__module__`` is pinned to this module rather than left to ``type()``'s default so the
-    class stays reachable at ``stable_envs.envs.fetch``. Family is the explicit ``family``
-    class attribute (``info(name)["family"]`` / ``list_envs(family=...)``); ``type()`` happens
-    to get the module right from the calling frame, and this family is not registered on a
-    coincidence.
-    """
     made = {}
     for cname, scene, ref in CELLS:
         suffix = cname[len(f"Fetch{scene}") :]
@@ -1269,10 +904,7 @@ def _make_classes() -> dict[str, type]:
                     domain=scene.lower(),
                     reference_id=ref,
                     __module__=__name__,
-                    __doc__=(
-                        f"gymnasium-robotics {ref}. Full restorable State; private qpos/goal rendering. "
-                        f"SWM observation integration DEFERRED. Shares the {scene} renderer."
-                    ),
+                    __doc__=(f"{ref}: CPU simulation with restorable State and batched Fetch {scene} rendering."),
                 ),
             )
         )
@@ -1281,5 +913,4 @@ def _make_classes() -> dict[str, type]:
 
 globals().update(_make_classes())
 
-#: The names this module offers: the twelve cells and the base they are all declared from.
 __all__ = ["FetchBase", *(c for c, _, _ in CELLS)]

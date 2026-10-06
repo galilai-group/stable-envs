@@ -85,10 +85,12 @@ def test_state_layout_is_assigned_per_instance_and_nothing_else_is_overridden():
         assert forbidden not in METHODS, f"FetchBase must not override {forbidden}"
 
 
-def test_the_family_ships_no_simulator_and_says_so_by_not_defining_one():
-    """Renderer-only: ``Env.step``/``Env.transition`` raise the contract's precise refusal."""
-    assert "step" not in METHODS and "transition" not in METHODS
-    assert "NO DYNAMICS" in (ast.get_docstring(FETCH_BASE) or "")
+def test_registered_fetch_combines_simulation_with_the_renderer_base():
+    assert not {"step", "_step", "transition"} & METHODS.keys()
+    factory = next(n for n in TREE.body if isinstance(n, ast.FunctionDef) and n.name == "_make_classes")
+    classes = [n for n in ast.walk(factory) if isinstance(n, ast.Call) and ast.unparse(n.func) == "type"]
+    assert len(classes) == 1
+    assert ast.unparse(classes[0].args[1]) == "(_FetchSemantics, FetchBase)"
 
 
 def test_close_releases_only_what_the_instance_owns():

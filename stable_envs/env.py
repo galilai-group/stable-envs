@@ -1,63 +1,19 @@
-"""The contract every stable-envs environment implements.
+"""Batched environments with explicit simulator State and state-driven rendering.
 
-Five nouns: **Env**, **State**, **Action**, **Variation**, **Frame**.
-Stateful simulation (``reset`` / ``step``) and explicit-State rendering (``render``).
+``reset`` and ``get_state`` return an owned TensorDict snapshot. ``set_state``
+restores that snapshot under the environment's current Variation. State includes
+hidden simulator fields and preserves their declared precision.
 
-    State
-        instantaneous dynamic world state
-    Action
-        intervention at a timestep
-    Variation
-        persistent / episode-level environment configuration,
-        including appearance, geometry, morphology, physics,
-        reset distributions and appropriate task configuration
-    Frame
-        rendered observation
-    Env
-        owns the relationship among them
+``render(state)`` draws a snapshot without advancing simulation. Renderers use a
+private float32 projection that may omit dynamics fields; compact renderer rows
+cannot replace a full State checkpoint.
 
-The invariant is ``frame = f(state, variation)``. Where native dynamics exist,
-``next_state = g(state, action, variation)``. Variation may live on the env rather than on every
-method signature; ``render(..., variation=)`` and ``set_variation`` are the public knobs.
+``step`` accepts one action or a sequence per environment. Independent slices
+select which post-action States and frames to return. The final State is always
+returned, and validity masks distinguish executed transitions from held endpoints.
 
-A frame must be a deterministic function of explicit render state + variation, regardless of
-backend representation. Some families rasterize a ``Scene2D``; others gather from a tile atlas
-or ray-cast analytic primitives. Those are implementation choices. Given the compact render row
-and the Variation, the pixels are determined — no env instance, no simulator handle, no hidden
-buffer.
-
-Variation is not appearance-only. A leaf may be render-only, dynamics-only, reset/task, or
-render+dynamics (appearance, geometry, morphology, physics, reset distributions, task
-configuration). Do not invent knobs; declare the ones the environment actually has.
-
-Two state shapes, and they are not the same thing:
-
-  * **public State** — the ``TensorDict`` dynamics uses (``reset`` / ``step``).
-    Keys are grouped by entity. It may carry dynamics-only fields the renderer never sees.
-  * **compact render state** — the float32 row that regenerates frames. Reached through
-    ``_pack_render_state`` / ``_unpack_render_state``. It is not always a lossless serialization
-    of public State.
-
-    render_state_dim / render_state_names   the compact row used to regenerate pixels
-    get_state / set_state                  full simulator snapshots and restoration
-    variation_space                         persistent configuration knobs
-    render(state, variation=…)              (B,H,W,3) uint8 on device, batched
-
-Render fidelity and physics *fidelity* remain separate, even though Variation may include physics
-*configuration*. Keeping those claims apart is what makes the repo useful:
-
-  * the common case is re-rendering a stored dataset of states — no simulator runs at all;
-  * where a batched GPU simulator exists it is offered as ``step``, but the reference CPU simulator
-    stays the definition of the dynamics;
-  * a GPU physics port and a GPU renderer have completely different fidelity stories. A renderer can be
-    bit-exact against the reference. A contact solver cannot: contact is chaotic, so any reimplementation
-    diverges, and conflating the two lets a "our env matches" claim rest on the half that does not.
-  * gravity, mass, damping, and similar leaves are still Variation when an env exposes them. That does
-    not make the contact solver bit-exact.
-
-The conformance suite in ``tests/gpu`` is parameterised over the registry, so an env added tomorrow is
-covered without editing a test: render parity against the official renderer, get/set round-trip,
-batch-invariance, variation coverage, and backend agreement.
+Variation configures persistent appearance and environment parameters. The output
+device does not determine where physics runs; execution depends on the family.
 """
 
 from __future__ import annotations
@@ -76,57 +32,32 @@ from ._style import StyleTensor
 from .spaces import Dict as VariationDict
 from .specs import CompositeSpec, Spec
 
-#: ``State`` is a plain ``tensordict.TensorDict`` with batch size ``[num_envs]`` — an alias, not a
-#: subclass, so anything that consumes a TensorDict consumes a stable-envs state and there is no
-#: private type to learn. The keys are grouped by ENTITY (``state["agent", "position"]``), which is
-#: what the environment is; the flat packed row every renderer and every frozen corpus uses is the
-#: internal layout and is reached through ``env._pack_render_state`` / ``env._unpack_render_state``.
+#: Full simulator State is a TensorDict with entity-grouped keys and batch size [num_envs].
 State = TensorDict
 
-#: What ``step`` returns: a ``TensorDict`` carrying ``"state"`` always. ``"reward"`` / ``"terminated"``
-#: / ``"truncated"`` (or a combined ``"done"``) exist only where that environment defines those
-#: semantics — they are not fabricated for renderer-only cells. Read ``out["state"]``.
+#: Step results always contain final State; task outputs exist only where the family defines them.
 StepResult = TensorDict
 
-#: What ``render(..., variation=)`` and ``set_variation`` accept: leaf overrides, or a compiled
-#: flat / batched Variation row. ``None`` means "the env's current (or default) configuration".
+#: Variation accepts leaf overrides or a flat/batched compiled configuration row.
 VariationLike = Mapping[str, Any] | torch.Tensor | np.ndarray
 
-#: How many offending rows/columns a diagnostic lists before it says "and N more". Long enough to see
-#: a pattern (one bad row, or a whole column), short enough not to bury the sentence explaining it.
 _MAX_LISTED = 8
 
 
 def require_contiguous_out(owner: str, out) -> None:
-    """``render(out=)`` must be handed a destination the renderer can actually write.
+    """Require a contiguous uint8 output buffer.
 
-    Every backend in this repo — the fused rasterizer, the tile blitter, the ray-caster, and the
-    per-env overrides that copy into ``out.view(...)`` — reaches its destination through a flat view
-    and writes ``B*H*W*3`` bytes linearly from that view's own offset. ``Tensor.view`` does NOT check
-    contiguity when the requested shape is the one the tensor already has: it hands the strided tensor
-    straight back. So a strided destination did not raise and did not produce the frames either — it
-    scattered them across the caller's buffer, measured at 255/255 on ``buf[:, 1]`` of a
-    ``(B, T, H, W, 3)`` rollout buffer, which is the ordinary shape for the idiom the README
-    recommends.
-
-    Refusing is chosen over quietly renting a temporary and copying. ``out=`` exists for exactly one
-    reason — the caller owns the allocation — so servicing it with a hidden allocation would make the
-    argument a different lie. The caller can always assign instead (``frames[:, t] = env.render(...)``),
-    which is one copy, visible, and correct; the message says so.
+    Render backends write through flat views. A strided destination may silently
+    write the wrong locations; callers must copy into such a view themselves.
     """
     if out is None:
         return
     if torch.is_tensor(out):
         ok = out.is_contiguous()
-    else:  # numpy: reshape() of a strided array COPIES
+    else:  # NumPy reshape may copy a strided destination.
         flags = getattr(out, "flags", None)
         ok = flags is None or bool(flags["C_CONTIGUOUS"])
-    # Frames are uint8. A float destination is not refused by any backend's ``view``/``reshape`` — the
-    # shape is right and the write succeeds — so the caller gets a buffer of 0..255 floats where they
-    # asked for pixels, or a silently converted copy, depending on the path. Checked here so that the
-    # per-env overrides that reach ``out`` through their own ``view`` (the tile families, the
-    # ray-caster) get the same contract as the two rasterizer backends, which check it in
-    # ``raster2d._destination``.
+    # Check dtype before any backend can silently convert the destination.
     dtype = getattr(out, "dtype", None)
     if dtype is not None and dtype not in (torch.uint8, np.dtype(np.uint8)):
         raise ValueError(
@@ -149,30 +80,7 @@ def require_contiguous_out(owner: str, out) -> None:
 
 
 def _guard_render_out(fn):
-    """Wrap a ``render`` implementation so the two rules every env shares hold before it runs.
-
-    Installed by ``Env.__init_subclass__`` on every subclass that defines ``render``, which is
-    the only chokepoint every env genuinely shares: most envs override ``render`` outright (the tile
-    families and the ray-caster never build a Scene2D), so a check placed in the base implementation,
-    or in one backend, covers a minority of them. MiniGrid used to be the only family that checked,
-    which is precisely the shape of a rule that is enforced per-env.
-
-    Three rules, all for that reason:
-
-      * ``out=`` must be contiguous (``require_contiguous_out``);
-      * the states must BE states (``check_states``). All 26 overrides open with
-        ``torch.as_tensor(states, ...)`` followed by ``reshape(-1, self.state_dim)``, which is the
-        silent-garbage path: a frame stack whose size happens to divide by ``state_dim`` reshapes
-        without complaint and renders a picture built from pixel bytes read as coordinates. Checking
-        here closes it for every env at once, including the ones added tomorrow;
-      * ``render()`` with no states draws the states ``set_state`` actually wrote, which after a SHORT
-        batch is fewer than ``B``. Those same overrides open with ``s = self._state if states is
-        None``, and ``_state`` is the full ``(B, state_dim)`` buffer whose tail is stale — so a short
-        batch would render ``B`` frames, the last few of the previous batch. Substituting
-        ``get_state()`` here fixes every env at once and keeps ``_state`` at a fixed address, which the
-        CUDA-graph capture in ``envs/_stepgraph.py`` requires: rebinding it would leave a replayed
-        graph pointing at dead memory. Editing 26 files instead would also leave env 27 wrong.
-    """
+    """Validate output buffers and compact input rows before a subclass renders."""
 
     @functools.wraps(fn)
     def render(self, *args, **kw):
@@ -190,16 +98,7 @@ def _guard_render_out(fn):
 
 
 def _as_state_tensor(owner: str, states) -> torch.Tensor:
-    """Anything array-like -> a tensor, WITHOUT casting, so the dtype is still evidence.
-
-    The cast to float32 has to happen after the checks rather than inside the conversion: ``uint8`` is
-    the single loudest signal that what arrived is a batch of frames, and converting first erases it.
-
-    A list or tuple of tensors is stacked rather than refused, which is what makes the most common
-    mistake in the recommended idiom a non-event: a ``DataLoader`` over ``TensorDataset(states)`` yields
-    ``[states]`` — a one-element list — and ``torch.as_tensor`` on it dies with "only one element
-    tensors can be converted to Python scalars", which names neither the caller nor the fix.
-    """
+    """Convert array-like input without casting away dtype information used by validation."""
     if isinstance(states, Mapping):
         raise TypeError(
             f"{owner}: got a {type(states).__name__}, not an array of states. A TrajectoryDataset "
@@ -214,10 +113,8 @@ def _as_state_tensor(owner: str, states) -> torch.Tensor:
         and all(torch.is_tensor(x) or isinstance(x, np.ndarray) for x in states)
     ):
         parts = [torch.as_tensor(x if torch.is_tensor(x) else np.asarray(x)) for x in states]
-        # A ONE-element sequence is unwrapped rather than stacked, because that is what it is: a
-        # DataLoader over TensorDataset(states) yields ``[batch]``, and stacking would add a leading
-        # axis and then trip the "states are 2-D" rule on the package's own recommended idiom. A
-        # longer sequence is a list of samples and stacking is what it means.
+        # TensorDataset loaders wrap a batch in a singleton sequence; stacking it would add an axis.
+        # Longer sequences represent separate samples and are stacked.
         return parts[0] if len(parts) == 1 else torch.stack(parts)
     try:
         return torch.as_tensor(states)
@@ -230,13 +127,7 @@ def _as_state_tensor(owner: str, states) -> torch.Tensor:
 
 
 def _nonfinite_report(s: torch.Tensor, names: tuple[str, ...]) -> str | None:
-    """Which rows and which named columns hold a NaN or an inf, or None if all are finite.
-
-    Run on the tensor the CALLER handed over, before it is copied to the device. That is not an
-    optimisation detail so much as the reason the check can be unconditional: in the idiom this repo
-    recommends the states arrive from a ``DataLoader`` on the host, so the scan is a CPU reduction over
-    a few kilobytes and costs no device synchronisation at all.
-    """
+    """Describe nonfinite rows and named columns, or return None when all values are finite."""
     bad = ~torch.isfinite(s)
     if not bool(bad.any()):
         return None
@@ -257,43 +148,22 @@ def _nonfinite_report(s: torch.Tensor, names: tuple[str, ...]) -> str | None:
 
 
 def render_states_arg(env, states) -> torch.Tensor:
-    """What ``render`` should actually draw: the live state, or the caller's array once it is checked.
+    """Resolve private renderer input to live rows or a validated compact projection.
 
-    Split out so the base ``render`` and the wrapper installed on every override run the identical
-    rule. Two decisions live here.
-
-    ``states is None`` means "what the env holds", and that is ``get_state()`` rather than ``_state``,
-    because after a short ``set_state`` the tail of the buffer is the previous batch.
-
-    The NaN/inf scan is skipped for a tensor that is ALREADY ON THE DEVICE, and that is a measured
-    trade rather than an oversight. The scan needs one device-to-host read, and ``render`` is the
-    streaming path — ``render_states`` calls it once per chunk, a training loop once per step — so an
-    unconditional scan would put a synchronisation in the one place this repo works to keep free of
-    them. Every entry point where user data ENTERS from the host still scans unconditionally:
-    ``set_state`` (the training-step surface), ``render_states``, and both dataset constructors. A
-    device tensor handed straight to ``render`` was produced by the caller's own kernels, one step
-    after whichever entry point did check it.
+    CUDA tensors skip the nonfinite scan to avoid a host synchronization. Array
+    inputs are scanned before transfer; full State inputs use the layout projection.
     """
     env._check_open("render")
     if states is None:
         return env._get_render_state()
     if isinstance(states, TensorDict):
-        # A public State is accepted wherever packed rows are (contract §5).
-        # ``pack_render_state`` is the bridge; an env whose State carries a field the compact row
-        # does not (PushT's agent velocity) drops exactly that field here and the renderer sees the
-        # identical packed row.
         return env._pack_render_state(states)
     scan = not (torch.is_tensor(states) and states.device.type == "cuda")
     return check_states(env, states, f"{type(env).__name__}.render", leading=True, scan=scan)
 
 
 def _split_appearance(variation: VariationLike | None, style):
-    """Public ``variation=`` may be a mapping of overrides *or* a flat/batched row.
-
-    A Mapping is treated as leaf overrides. Anything else is the compiled Variation row the
-    renderer already speaks. ``style=`` is the developer/testing name for that row; passing
-    both a non-mapping ``variation`` and ``style`` is an error rather than a silent pick.
-    """
+    """Separate mapping overrides from compiled appearance rows; reject conflicting rows."""
     if variation is not None and not isinstance(variation, Mapping):
         if style is not None:
             raise TypeError("pass appearance as variation= (dict or row), not both a row and style=")
@@ -311,39 +181,14 @@ def _names_phrase(names: tuple[str, ...], limit: int = 8) -> str:
 def check_states(
     env, states, owner: str | None = None, leading: bool = False, scan: bool = True, move: bool = True
 ) -> torch.Tensor:
-    """``states`` -> the same numbers as float32 on ``env.device``, SHAPE UNCHANGED, or a real message.
+    """Validate compact renderer rows and convert them to float32.
 
-    THE SILENT-GARBAGE PATH THIS CLOSES. Every entry point that turns numbers into pixels used to go
-    through ``torch.as_tensor(states, ...).reshape(-1, state_dim)``, and that reshape is the most
-    dangerous line in the package, because two of its three failure modes produce a *valid* array:
+    Accept ``(B, state_dim)`` or flat input containing a whole number of rows;
+    ``leading=True`` also permits extra leading axes. Reject image-shaped input
+    before casting and, when ``scan=True``, nonfinite values. Preserve input shape.
 
-      * **frames handed in where states were meant.** A PushT frame is 96*96*3 = 27,648 numbers and
-        ``state_dim`` is 5; 27,648 is divisible by 5 only for some shapes, but whether it divides is
-        arithmetic, not intent, and sooner or later it divides. When it does, the reshape succeeds and
-        the env renders a plausible-looking picture built out of pixel bytes reinterpreted as
-        coordinates. No exception, no warning, a frame that looks like a frame.
-      * **the wrong state width.** A ``(B, 7)`` array for a 5-wide env reshapes into 1.4 B states that
-        each straddle two of the caller's rows, and the frames are again plausible.
-      * **NaN or inf.** The rasterizer clamps and draws somewhere, or draws nothing; either way the
-        frame is a frame and the loss curve is a loss curve. Same defect wearing different clothes.
-
-    So the rule is now shape-based rather than size-based, which is what makes it impossible rather
-    than unlikely: **a state array is 2-D and its last axis is exactly ``state_dim``.** Divisibility is
-    never consulted for a multi-axis input, so ``(B, H, W, 3)`` is refused whether or not it happens to
-    divide. ``leading=True`` relaxes only the rank, for the two entry points whose documented contract
-    is "arbitrary leading dims" (``Env.render``, ``render_states``) — the last axis is still
-    required to be exactly ``state_dim`` there, which is the half that was load-bearing.
-
-    ``scan`` controls the NaN/inf scan. It runs on the tensor the caller handed over, before the copy
-    to the device, so for host-side input — the recommended idiom, where states come off a
-    ``DataLoader`` — it is a CPU reduction over a few kilobytes and costs no device synchronisation.
-    ``Env.render`` turns it off for a tensor already on the device, and says why.
-
-    ``move=False`` converts the dtype but leaves the tensor where it is, for ``render_states``, whose
-    whole contract is that a corpus larger than device memory passes through a chunk at a time.
-
-    The batch is deliberately NOT checked here: ``render`` takes any batch, and ``set_state`` has its
-    own rule (shorter than the env is fine, longer is not). The caller decides.
+    ``move=False`` preserves the input device for callers that stream chunks.
+    This helper does not impose an environment batch-size limit.
     """
     owner = owner or f"{type(env).__name__}.set_state"
     D = int(env.state_dim)
@@ -358,10 +203,7 @@ def check_states(
             f"{_names_phrase(names)}, and a batch of them is (batch, {D})."
         )
 
-    # A frame stack, named as one. Checked before the rank rule so the message is about what arrived
-    # rather than about how many axes it has. Two independent signals, because neither alone covers
-    # it: a channel-shaped last axis that is NOT the state width, and uint8 at rank 3 or more (states
-    # are float, and for a 3-wide env a (H, W, 3) frame is indistinguishable from a corpus by shape).
+    # Identify images before rank validation, including uint8 images whose width matches state_dim.
     if raw.ndim >= 3 and (raw.dtype == torch.uint8 or (shape[-1] in (1, 3, 4) and shape[-1] != D)):
         cast = (
             " If these really are states stored as uint8, say so: states.astype('float32')."
@@ -426,54 +268,14 @@ def check_states(
     return raw.to(device=env.device, dtype=torch.float32) if move else raw.to(dtype=torch.float32)
 
 
-#: The fidelity tiers an env may declare. THE TIER IS PART OF THE CONTRACT, not a caveat in a README.
-#:
-#: ``"parity"``  the frame is the OFFICIAL frame. Every interior pixel is bit-identical to the
-#:               reference renderer (or as close as ``parity_interior_min`` declares, with a stated
-#:               mechanism). A dataset regenerated from states is interchangeable with a stored one:
-#:               a policy trained on regenerated pixels can be evaluated on official pixels, because
-#:               they are the same pixels.
-#:
-#: ``"visual"``  the frame is a DIFFERENT RENDER of the same scene: same geometry, same camera, same
-#:               materials, drawn by a different rasterizer that is much faster and does not agree
-#:               pixel for pixel. Suitable for generating training data live. NOT a substitute for a
-#:               stored dataset when a policy will be evaluated on official pixels — the train/eval
-#:               pixel distributions differ, by an amount the env declares in ``visual_fidelity``, and
-#:               nothing in this repo measures how much that costs a policy.
-#:
-#: The two tiers exist because the second use is real and the first bar is the wrong one for it. They
-#: are kept apart mechanically rather than by convention: a visual-tier env sets
-#: ``parity_interior_min = None``, so the parity assertion cannot be applied to it, cannot be silently
-#: relaxed for it, and cannot be passed by it. See ``tests/gpu/test_conformance.py``.
+#: Fidelity declarations select exact-pixel or measured visual-agreement checks.
+#: A declared tier alone is not evidence that those checks passed.
 FIDELITY_TIERS = ("parity", "visual")
 
-#: WHAT DRAWS THE FRAME. A second axis, orthogonal to the tier, and it exists because the tier alone
-#: stopped being able to answer the question a consumer actually asks.
-#:
-#: ``"renderer"``  a rasterizer or ray-caster whose OUTPUT IS THE FRAME. Every env in this repo was
-#:                 this until 2026-08-11, which is why it was never worth naming.
-#:
-#: ``"learned"``   the renderer's output was then passed through a FIXED NEURAL CHECKPOINT trained to
-#:                 predict the official frame. The frame is still a pure deterministic function of
-#:                 ``(state, style)`` — the checkpoint is fixed, the render feeding it is already such
-#:                 a function, and ``render`` is still ``f(get_state())``, still batch-invariant,
-#:                 still bit-reproducible by anyone holding the weights. THE CONTRACT IS UNCHANGED;
-#:                 WHAT CHANGED IS THE DECODER. The tier is still ``"visual"`` and the declared error
-#:                 is still measured against the official renderer, but the residual is no longer "a
-#:                 different rasterizer disagrees with this one": part of the picture is SYNTHESISED,
-#:                 with the right statistics and the wrong pixels, and a frozen pretrained encoder can
-#:                 tell the difference even where the pixel metrics improve.
-#:
-#: The reason this is a declared field and not a footnote: someone who intends to evaluate a policy on
-#: official pixels needs to know which of the two produced their training frames, and THE ANSWER IS
-#: NOT VISIBLE IN THE PICTURE. It is visible here, in ``describe()``, in ``format_registry()`` and in
-#: the class docstring, which ``check_fidelity_declaration`` requires.
+#: Distinguish a renderer from a fixed learned approximation of its output.
 RENDER_DECODERS = ("renderer", "learned")
 
-#: What a ``"visual"`` env must put in ``visual_fidelity``. Three MEASURED numbers, three THRESHOLDS
-#: the conformance suite asserts, and the conditions the measurement was taken under. The thresholds
-#: are separate from the measurements on purpose: a threshold equal to the measurement flakes on the
-#: next state draw, and a measurement inferred from a threshold is not a measurement.
+#: Visual declarations report both measured metrics and the acceptance limits to assert.
 REQUIRED_VISUAL_FIDELITY = (
     "mean_abs",
     "within8_frac",
@@ -484,38 +286,16 @@ REQUIRED_VISUAL_FIDELITY = (
     "measured_at",
 )
 
-#: The reference package versions a declaration's numbers were measured AGAINST, as a field rather
-#: than as prose inside ``measured_at``. Optional, because most declarations predate it; validated
-#: whenever present; and read by the certifier, which compares it with the versions the measuring
-#: interpreter recorded and marks a mismatch ``blocked_environment`` rather than ``fail`` -- the
-#: same rule that already applies to a missing reference package. It exists because of a measured
-#: case: DM Control's trackcom cells were declared under mujoco 3.11.0 and judged under 3.12.0, and
-#: 3.12.0 re-anchors finite-plane textures (changelog 3.12.0, commit cc7fb98c), so the floor checker
-#: the reference drew had moved while ours had not. Judged as a FAIL, that read as a renderer defect;
-#: it was a version drift, and a field the certifier can compare is what tells the two apart.
-#:
-#: Keys follow the frozen fidelity harness's ``reference_packages`` record -- ``"mujoco"``,
-#: ``"dm_control"``, ``"gymnasium"`` ... -- so the comparison is a dictionary lookup and not a parse.
-#: Values are the exact version strings. A visual env carries it inside ``visual_fidelity`` (next to
-#: ``measured_at``, whose text it must agree with); a parity env carries it as the class attribute
-#: ``reference_versions``. ``check_fidelity_declaration`` validates the shape; ``reference_versions_of``
-#: reads it for either tier, ``visual_fidelity`` taking precedence over the class attribute.
-#:
-#: REFERENCE-SIDE PACKAGES ONLY. The field gates on a mismatch, so it must name what the OFFICIAL frame
-#: depends on and nothing that OUR frame depends on: with ``mujoco_warp`` in it, bumping our own
-#: renderer would turn a real regression of ours into ``blocked_environment``. The packages our side
-#: was drawn with go in ``MEASURED_WITH_KEY``, which is recorded and never compared.
+#: Source dependency versions bind reference evidence; mismatches block its acceptance.
+#: Candidate implementation versions belong in measured_with instead.
 REFERENCE_VERSIONS_KEY = "reference_versions"
 
-#: The versions OUR renderer's dependencies had when the declaration was measured (``mujoco_warp``,
-#: ``warp``, ``nvdiffrast`` ...). Provenance, not a gate: the certifier records it and never blocks on
-#: it, because a change on our side is exactly what a fidelity check exists to catch. Same shape as
-#: ``REFERENCE_VERSIONS_KEY``; lives in ``visual_fidelity`` beside it.
+#: Candidate package versions record measurement provenance without pinning acceptance to them.
 MEASURED_WITH_KEY = "measured_with"
 
 
 def reference_versions_of(cls) -> dict[str, str]:
-    """The declared reference versions for ``cls``, whichever tier carries them. ``{}`` if none."""
+    """Return source-version declarations from either fidelity tier, or an empty dict."""
     out = dict(getattr(cls, REFERENCE_VERSIONS_KEY, {}) or {})
     out.update((getattr(cls, "visual_fidelity", {}) or {}).get(REFERENCE_VERSIONS_KEY) or {})
     return out
@@ -540,107 +320,40 @@ def _check_reference_versions_shape(cls, where: str, rv) -> None:
 
 
 class Env:
-    """Base class: a batched environment with explicit State, Action, Variation, and state-driven rendering.
+    """Base class for batched simulation, restorable State, and rendering."""
 
-    Five nouns: **Env**, **State**, **Action**, **Variation**, **Frame**.
-    Two usage modes: **stateful** (``reset`` / ``step``) and **functional**
-    (``render``).
-
-    ``frame = f(state, variation)``. Where native dynamics exist,
-    ``next_state = g(state, action, variation)``. Variation may be stored on the env rather than
-    threaded through every signature.
-
-    The compact float32 row every renderer and frozen corpus speaks is *render state*. It is not
-    always a lossless dump of public ``State`` — dynamics-only fields can be omitted. The private
-    projection is ``_pack_render_state`` / ``_unpack_render_state``.
-    """
-
-    #: dataset slug, hyphenated-lowercase. Not the class name; see ``class_name`` / ``id``.
     name: str = ""
-    #: Stable family id (``"dmcontrol"``, ``"pusht"``). Declared on the class, never inferred from the file path.
     family: str = ""
-    #: Domain inside the family (``"reacher"``, ``"pointmaze"``). Empty only until registration fills a default.
     domain: str = ""
-    #: width of the compact *render* row (not always the full public State)
+    #: Width and labels of the private compact renderer projection.
     state_dim: int = 0
-    #: one label per render-state column — printed in errors and used by the round-trip test
     state_names: tuple[str, ...] = ()
-    #: When True, ``device="cpu"`` and ``device="auto"`` on a CPU-only machine raise instead of falling back.
     requires_cuda: bool = False
-    #: native output resolution of the reference renderer, for parity tests
     default_size: int = 96
-    #: gymnasium / official id this is validated against; None means no production gym id
     reference_id: str | None = None
-    #: Variation leaves that configure dynamics / reset / task and are not required to change a frame.
-    #: ``check_variations_do_something`` skips them. Empty by default.
+    #: Variation leaves that change dynamics and must be excluded from appearance-only checks.
     dynamics_variation_leaves: frozenset[str] = frozenset()
-    #: Required fraction of INTERIOR pixels that must be bit-identical to the official renderer.
-    #: 1.0 (exact) is the default and the expectation: an interior disagreement is a real geometry or
-    #: colour error. An env may relax it ONLY with ``parity_note`` explaining the mechanism, which the
-    #: test prints. This exists so a genuine, understood limitation is declared in the env and visible
-    #: in the report, instead of being hidden by loosening the shared threshold for everyone — the
-    #: motivating case is MuJoCo's Gouraud shading of tessellated spheres and capsules, which no
-    #: per-pixel analytic shader reproduces exactly.
+    #: Minimum exact interior-pixel fraction; lowering it requires a mechanism in parity_note.
     parity_interior_min: float | None = 1.0
-    #: Required fraction of ALL pixels that must be bit-identical, when the shared bar in
-    #: ``tests/gpu/test_conformance.py`` (0.90) is the wrong one for this env. ``None`` means "use the
-    #: shared bar", which is what every env should do unless it can say why it cannot.
-    #:
-    #: It exists because all-pixel exactness is not a property of a renderer alone — it is that
-    #: property WEIGHTED BY HOW MUCH OF THE FRAME MOVES. Two ports can share a backend, a shading rule
-    #: and a residual per mover pixel and still land on different all-pixel numbers because one scene's
-    #: movers cover 9% of the frame and another's cover 13%. The interior floor is the number that
-    #: describes the RENDERER (interior pixels are where a disagreement is a real geometry or colour
-    #: error) and it is not relaxed by this; this only stops a scene being failed for the size of its
-    #: robot. Relaxing it requires ``parity_note``, exactly as ``parity_interior_min`` does.
+    #: Override the shared all-pixel exactness threshold, or use its default with None.
     parity_all_exact_min: float | None = None
-    #: Why ``parity_interior_min`` or ``parity_all_exact_min`` is below its bar, and what would close
-    #: it. Required if either is.
+    #: Explain any relaxed exact-pixel threshold and the remaining mismatch.
     parity_note: str = ""
-    #: ``"parity"`` or ``"visual"`` — see ``FIDELITY_TIERS``. Defaults to the strong claim, so a tier
-    #: is something an env OPTS OUT of explicitly and visibly, never something it drifts into.
+    #: Select the parity or visual acceptance checks.
     fidelity_tier: str = "parity"
-    #: MEASURED visual agreement with the official renderer, plus the thresholds the suite asserts.
-    #: Required, and required to be non-empty, exactly when ``fidelity_tier == "visual"``; forbidden
-    #: otherwise, so the two tiers cannot be blurred by an env that declares both.
+    #: Measured agreement and acceptance thresholds; required only for the visual tier.
     visual_fidelity: dict[str, Any] = {}
-    #: What the residual IS, where it comes from, and what the tier does and does not license.
+    #: Explain residual visual differences and limits on using the frames.
     visual_note: str = ""
-    #: ``"renderer"`` or ``"learned"`` — see ``RENDER_DECODERS``. Defaults to the plain answer, so a
-    #: learned decoder is something an env OPTS INTO explicitly and visibly, never something a change
-    #: of render path slides it into.
+    #: Declare whether frames come from a renderer or a learned approximation.
     render_decoder: str = "renderer"
-    #: ``visual_fidelity``, measured again with a per-state appearance DRAWN FROM ``variation_space``
-    #: instead of at the default. Optional for a renderer and REQUIRED for a learned decoder.
-    #:
-    #: The asymmetry is measured, not stylistic. A rasterizer that agrees with the official one at one
-    #: camera agrees at another, because it is the same arithmetic pointed somewhere else — so one
-    #: declaration at the default appearance describes the whole space. A learned decoder does not
-    #: generalise that way and the size of the gap is the whole story: a corrector fitted at one camera
-    #: pose scores 3.25/255 there and 9.06 under the same env's declared ±8° of pan, which is worse
-    #: than not correcting at all (8.91) and worse than the render it replaces (7.93). A
-    #: default-appearance declaration would have said 3.25, and every consumer using the variation
-    #: knobs — which is what this family exists for — would have got the worst of the three.
+    #: Agreement under sampled Variation; required for learned decoders.
     variation_fidelity: dict[str, Any] = {}
-    #: For a PARITY env: the reference package versions its parity numbers were measured against
-    #: (a visual env puts the same dict inside ``visual_fidelity``). See ``REFERENCE_VERSIONS_KEY``.
+    #: Source package versions for parity evidence; visual evidence stores these in visual_fidelity.
     reference_versions: dict[str, str] = {}
 
-    #: How the packed float32 row maps onto the public, entity-grouped :data:`State`:
-    #: ``((key path, width, offset in the packed row or None), ...)``.
-    #:
-    #: ``None`` for an offset means the field is REAL DYNAMICAL STATE THAT THE PACKED ROW DOES NOT
-    #: CARRY — PushT's agent velocity is the motivating case. Such a field is part of the public state
-    #: (so a checkpoint can reproduce continuation), is filled with zeros by ``unpack`` (which is exactly the
-    #: condition ``set_state`` puts the env in, and the reference's condition after ``reset``), and is
-    #: dropped by ``pack``, so the packed row, its digests and every frozen corpus are untouched.
-    #:
-    #: An entry may carry a FOURTH element, the public dtype of that field (``torch.float64`` for a
-    #: cell whose claim is near-bit-exactness against a float64 reference); ``unpack`` and ``state``
-    #: honour it and ``pack`` still writes the float32 row, so digests and corpora are untouched.
-    #:
-    #: Left empty, an env gets the trivial layout ``{"state": (state_dim,)}``: no ceremony for a cell
-    #: whose state is one vector (contract §3).
+    #: Entries are (key_path, width, render_offset[, public_dtype]); None offsets denote hidden fields.
+    #: Hidden fields must be supplied by the simulator, not reconstructed from compact rows.
     state_layout: tuple[tuple, ...] = ()
 
     def __init__(
@@ -652,7 +365,7 @@ class Env:
         backend: str = "auto",
         seed: int = 0,
     ):
-        """``num_envs`` environments on ``device`` (``"auto"`` → CUDA if available, else CPU)."""
+        """Create ``num_envs`` lanes; ``device="auto"`` selects CUDA when available, otherwise CPU."""
         device = self.resolve_device(device)
         if self.requires_cuda and not str(device).startswith("cuda"):
             raise ValueError(
@@ -667,23 +380,15 @@ class Env:
         self.rng = np.random.default_rng(seed)
         self.variation_space: VariationDict = self.make_variation_space()
         self._render_state = torch.zeros(self.B, self.state_dim, device=self.device, dtype=torch.float32)
-        #: How many rows of ``_render_state`` the last ``set_state`` actually wrote. Equal to ``B`` except
-        #: after a SHORT batch, which is the ordinary last batch of any ``DataLoader`` built with
-        #: ``drop_last=False``; see ``set_state``.
+        # Track valid rows separately while keeping renderer buffer addresses stable.
         self._live_rows = self.B
-        # Style is state. A dataset that stores only the dynamic half can regenerate a frame only under
-        # whatever appearance happens to be set at render time, which is a coincidence rather than
-        # reproduction — so the appearance gets its own flat, per-environment, storable tensor.
         self._style = StyleTensor.from_space(self.variation_space, self.B, device=self.device)
-        #: Resources are released explicitly (``close``/``with``), never in ``__del__`` — plan §2. A
-        #: closed env refuses to render rather than handing back frames drawn through a backend whose
-        #: context may already be gone.
+        # Explicit close controls resource lifetime; no finalizer is required.
         self._closed = False
         self._seed = int(seed)
 
     @staticmethod
     def resolve_device(device: str | None) -> str:
-        """``None`` / ``"auto"`` → ``cuda`` if a GPU is visible, otherwise ``cpu``."""
         if device is None:
             device = _get_config()["default_device"] or "auto"
         device = str(device)
@@ -697,12 +402,12 @@ class Env:
 
     @property
     def id(self) -> str:
-        """Stable slug. Distinct from :attr:`class_name`."""
+        """Stable environment slug, distinct from its Python class name."""
         return self.name or type(self).__name__
 
     @property
     def render_state_dim(self) -> int:
-        """Width of the compact row ``render`` consumes. Not always a lossless dump of public State."""
+        """Width of the private float32 renderer projection, which may omit simulator fields."""
         return int(self.state_dim)
 
     @property
@@ -710,54 +415,27 @@ class Env:
         return tuple(self.state_names)
 
     def __init_subclass__(cls, **kw):
-        """Give every env the shared ``out=`` contract, whether or not its author remembered it.
-
-        A subclass that overrides ``_render`` gets its override wrapped once, at class-creation time;
-        a subclass that inherits one inherits the already-wrapped function and is not double-wrapped.
-        The alternative — asking each env to call a helper — is what produced the defect this exists
-        to close, so it is not offered.
-        """
+        """Wrap each new ``_render`` override with shared input and output-buffer validation."""
         super().__init_subclass__(**kw)
         fn = cls.__dict__.get("_render")
         if fn is not None and not getattr(fn, "_se_out_guarded", False):
             cls._render = _guard_render_out(fn)
 
-    # to implement
-
     def make_variation_space(self) -> VariationDict:
-        """Persistent configuration knobs this env exposes.
-
-        Appearance, geometry, morphology, physics, reset/task. Override; may be an empty Dict.
-        """
+        """Declare persistent configuration leaves; an empty space exposes no variation."""
         raise NotImplementedError
 
     def scene(self, states: torch.Tensor, variation: VariationLike | None = None, style=None) -> Scene2D:
-        """``(B, render_state_dim)`` -> ``Scene2D``. One backend for vector-primitive families.
+        """Build a Scene2D from ``(B, render_state_dim)`` compact rows.
 
-        Optional. A tile-based env (MiniGrid and its relatives) gathers from a precomputed atlas
-        instead, which is exact by construction rather than by matching a rasterizer. Such an env
-        overrides ``render`` and leaves this unimplemented; the conformance suite skips the checks
-        that need a Scene2D and applies the rest. The frame invariant does not require a Scene2D.
-
-        An env whose world rectangle is measured in OUTPUT PIXELS rather than in world units — the
-        highway family, whose ``scaling`` is fixed so a bigger frame shows more road — declares an
-        extra ``size`` keyword here, meaning "the output size this scene will be rasterized at". That
-        is how a caller can ask whether ``size`` is a resolution or a field of view without rendering
-        anything and without the env remembering the question: build the scene at S and at 2S and
-        compare ``world``. Envs that ignore resolution do not declare the keyword, and its absence is
-        itself the answer.
+        Primitive renderers implement this hook; other backends override ``_render``.
+        Families whose field of view depends on output resolution also accept ``size``.
         """
         raise NotImplementedError(f"{type(self).__name__} does not build a Scene2D; it must override render() instead")
 
     def sample_states(self, batch: int, rng: np.random.Generator | None = None) -> np.ndarray:
-        """``(batch, state_dim)`` states from the env's own reset distribution.
-
-        Used by the conformance tests to exercise the renderer over the region of state space the env
-        actually visits — a parity test on states the env never reaches proves very little.
-        """
+        """Sample ``(batch, state_dim)`` compact renderer rows using the family sampler."""
         raise NotImplementedError
-
-    # provided
 
     def _require_state(self, operation: str) -> None:
         self._check_open(operation)
@@ -779,7 +457,7 @@ class Env:
                 raise ValueError(f"State field {'.'.join(key)} contains non-finite values")
 
     def set_state(self, state: State) -> None:
-        """Restore full simulator State under the environment's persistent Variation."""
+        """Restore a full State with exactly ``num_envs`` lanes under the current Variation."""
         self._require_state("set_state")
         self._validate_state(state, batch=self.B)
         self._restore_state(state)
@@ -792,21 +470,25 @@ class Env:
 
     @property
     def state(self) -> State:
-        """Alias for a detached full simulator snapshot from :meth:`get_state`."""
+        """Return an independent full snapshot, as with :meth:`get_state`."""
         return self.get_state()
 
     def render(self, state: State | None = None, **kwargs) -> torch.Tensor:
-        """Render full State through the private compact projection."""
+        """Render full State, or the live snapshot when omitted, without advancing simulation.
+
+        Return uint8 RGB frames on ``device``. Renderer options are forwarded to
+        ``_render``; the supplied State may have a different batch size from this env.
+        """
         state = self.get_state() if state is None else state
         self._validate_state(state)
         return self._render(self._pack_render_state(state), **kwargs)
 
     def _get_render_state(self) -> torch.Tensor:
-        """Private view of the live compact renderer rows. This is not simulator State."""
+        """Return a view of live compact rows, excluding unused buffer capacity."""
         return self._render_state if self._live_rows == self.B else self._render_state[: self._live_rows]
 
     def _set_render_state(self, states, variation: VariationLike | None = None, style=None) -> Env:
-        """Load compact rows for renderer regressions. Native hidden fields use corpus defaults."""
+        """Load compact rows for renderer tests; this does not restore full simulator State."""
         s = check_states(self, states, f"{type(self).__name__}.set_state").reshape(-1, self.state_dim)
         n = int(s.shape[0])
         if n > self.B:
@@ -838,26 +520,19 @@ class Env:
         style=None,
         out=None,
     ) -> torch.Tensor:
-        """``(..., render_state_dim)`` -> ``(...,H,W,3)`` uint8 on device. Arbitrary leading dims.
+        """Render ``(..., render_state_dim)`` rows to ``(..., H, W, 3)`` uint8 frames.
 
-        ``variation`` is :data:`VariationLike`: a mapping of leaf overrides, or a flat / batched
-        Variation row (``(variation_dim,)`` or ``(B, variation_dim)``). ``style`` is the
-        internal render-style row compiled from Variation; ordinary callers use
-        ``variation=``.
+        ``variation`` accepts leaf overrides or a flat/batched compiled row. ``style``
+        is the internal name for the compiled appearance; public callers use Variation.
         """
         require_contiguous_out(f"{type(self).__name__}.render", out)
-        # The base implementation is NOT wrapped by __init_subclass__ (that hook only sees subclass
-        # definitions), so the shared rule is applied here explicitly and by the same function.
+        # The base implementation validates directly; subclass overrides use the wrapper.
         s = render_states_arg(self, states)
         lead = tuple(s.shape[:-1])
         s = s.reshape(-1, self.state_dim)
         variation, style = _split_appearance(variation, style)
         sc = self.scene(s, variation, style)
-        # Imported HERE rather than at module scope, and that is a dependency rule rather than a
-        # style choice (contract §8): the core modules — env, dynamics, specs, registry, _config —
-        # import nothing from ``render/`` or ``envs/``, so the arrow between the vocabulary
-        # of the package and its backends points one way and cannot become a cycle. ``render`` is the
-        # one core method that genuinely needs a backend, and it needs it at call time.
+        # Load the optional backend only when primitive rendering is requested.
         from .render.raster2d import render as render_scene
 
         img = render_scene(
@@ -865,11 +540,9 @@ class Env:
         )
         return img.view(*lead, *img.shape[1:]) if lead else img
 
-    # Variation (public configuration) / StyleTensor (internal render-style compiled from Variation)
-
     @property
     def variation_dim(self) -> int:
-        """Width of the flat Variation row."""
+        """Number of columns in a compiled Variation row."""
         return self.variation_space.flat_dim
 
     @property
@@ -877,18 +550,17 @@ class Env:
         return [p for p, _, _ in self.variation_space.flat_layout()]
 
     def default_variation(self) -> np.ndarray:
-        """``(variation_dim,)`` — the official appearance. Rendering with it reproduces the reference."""
+        """Return the declared default configuration as a ``(variation_dim,)`` NumPy row."""
         return self.variation_space.pack()
 
     def get_variation(self) -> torch.Tensor:
         return self._style.values
 
     def set_variation(self, variation: VariationLike | None = None, **overrides) -> torch.Tensor:
-        """Install a Variation row, or ``path=value`` overrides, or a mapping of overrides.
+        """Install a configuration row or mapping of overrides and return the compiled tensor.
 
-        Built for ``self._live_rows`` rows rather than for ``B`` so that
-        ``set_state(short, variation=short)`` pairs row for row. With the ordinary full batch the
-        two are the same number.
+        Keyword overrides take precedence over mapping entries. Per-lane configuration
+        is built for the number of live renderer rows.
         """
         if isinstance(variation, dict):
             overrides = {**variation, **overrides}
@@ -901,15 +573,10 @@ class Env:
     def sample_variation(
         self, batch: int | None = None, paths=None, rng: np.random.Generator | None = None
     ) -> np.ndarray:
-        """``(batch, variation_dim)`` independent configurations — batched domain randomisation.
+        """Sample ``(batch, variation_dim)`` independent configurations as float32 NumPy rows.
 
-        ``paths`` restricts randomisation to named leaves; everything else stays at the official
-        default, which is what makes a study of "vary only the background" expressible.
-
-        A path that is not a leaf of this env's variation space is an ERROR, not a no-op. The loop
-        below is a filter, so an unknown or misspelled path used to match nothing and return the
-        default appearance for every environment — a domain-randomisation study that silently
-        randomised nothing, which looks exactly like a study whose randomisation did not matter.
+        ``paths`` restricts sampling to named leaves; other leaves retain their defaults.
+        Unknown paths raise KeyError. The default batch size is ``num_envs``.
         """
         rng = rng or self.rng
         B = int(batch or self.B)
@@ -940,48 +607,41 @@ class Env:
 
     @property
     def style_dim(self) -> int:
-        """Internal StyleTensor width. Prefer :attr:`variation_dim`."""
+        """Internal appearance width; public callers use :attr:`variation_dim`."""
         return self.variation_dim
 
     @property
     def style_names(self) -> list[str]:
-        """Internal StyleTensor column paths. Prefer :attr:`variation_names`."""
+        """Internal appearance paths; public callers use :attr:`variation_names`."""
         return self.variation_names
 
     def default_style(self) -> np.ndarray:
-        """Internal StyleTensor helper. Prefer :meth:`default_variation`."""
+        """Internal alias for default appearance; prefer :meth:`default_variation`."""
         return self.default_variation()
 
     def get_style(self) -> torch.Tensor:
-        """Internal StyleTensor helper. Prefer :meth:`get_variation`."""
+        """Internal appearance tensor; prefer :meth:`get_variation`."""
         return self.get_variation()
 
     def set_style(self, style=None, **overrides) -> torch.Tensor:
-        """Internal StyleTensor helper. Prefer :meth:`set_variation`."""
+        """Internal appearance setter; prefer :meth:`set_variation`."""
         return self.set_variation(style, **overrides)
 
     def sample_style(self, batch: int | None = None, paths=None, rng: np.random.Generator | None = None) -> np.ndarray:
-        """Internal StyleTensor helper. Prefer :meth:`sample_variation`."""
+        """Internal appearance sampler; prefer :meth:`sample_variation`."""
         return self.sample_variation(batch=batch, paths=paths, rng=rng)
 
     def resolve_style(
         self, style=None, variation: VariationLike | None = None, batch: int | None = None
     ) -> StyleTensor:
-        """Developer/internal: compile appearance for ``scene``. Prefer ``variation=`` on ``render``.
+        """Compile appearance for a renderer batch.
 
-        Every env in the registry funnels through this, and it is the one place that decides how a
-        stored per-environment appearance meets a render of a different size. It decides by asking
-        ``StyleTensor.for_batch``, which broadcasts a shared appearance and REFUSES a per-environment
-        one — see ``core/style.py`` for why that rule exists and what the three shipped collapses had
-        in common. There is deliberately no ``[:1]`` here any more; taking row 0 was the bug, in both
-        branches (the ``variation=`` branch collapsed even when the batch matched, so
-        ``set_state(st, style=per_env)`` followed by ``render(variation={...})`` drew eight copies of
-        environment 0).
+        Shared appearance broadcasts; per-lane appearance must match the batch size.
+        Mapping overrides apply to the stored appearance without collapsing its rows.
         """
         B = int(self.B if batch is None else batch)
         variation, style = _split_appearance(variation, style)
         if style is None:
-            # only now is the env's own style load-bearing, so only now can its batch be wrong
             current = self._style.for_batch(B, owner=f"{type(self).__name__}.render")
             if not variation:
                 return current
@@ -992,14 +652,7 @@ class Env:
         return self.variation_space.value
 
     def describe(self) -> dict[str, Any]:
-        """Everything a consumer needs to decide whether this env's frames are usable for their job.
-
-        ``fidelity_tier`` is in here, first-class and unconditional, because the answer to "can I train
-        on these frames and evaluate on the official ones" is different for the two tiers and there is
-        no way to read it off the other fields. A ``"visual"`` env additionally reports its measured
-        agreement and the sentence that says what the tier does not license, so a caller who prints
-        ``describe()`` and reads nothing else still cannot mistake it for a parity env.
-        """
+        """Return environment specs, renderer fidelity declarations, and their stated limitations."""
         d = {
             "class_name": type(self).__name__,
             "id": self.id,
@@ -1028,8 +681,6 @@ class Env:
         if rv:
             d[REFERENCE_VERSIONS_KEY] = rv
         if self.render_decoder == "learned" and "not_for" in d:
-            # Said separately from ``visual_note`` and in the caller's own words, because this is the
-            # one thing about these frames that no amount of looking at them can reveal.
             d["not_for"] += (
                 ", and here that different render is a LEARNED approximation: a fixed "
                 "neural checkpoint drew part of it, so detail on textured surfaces is "
@@ -1039,11 +690,9 @@ class Env:
             d["parity_interior_min"] = self.parity_interior_min
         return d
 
-    # ------------------------------------------------------------------ batch / device vocabulary
-
     @property
     def num_envs(self) -> int:
-        """How many environments this object holds. ``B`` is the packed-row alias and still works."""
+        """Number of simulation lanes owned by this environment."""
         return self.B
 
     def __len__(self) -> int:
@@ -1053,13 +702,11 @@ class Env:
     def closed(self) -> bool:
         return self._closed
 
-    # ------------------------------------------------------------------ state: packed row <-> State
-
     def _layout(self) -> tuple[tuple[tuple[str, ...], int, int | None], ...]:
-        """This env's ``state_layout``, or the trivial one-key layout when it declares none.
+        """Resolve ``(key_path, width, render_offset)`` entries for this instance.
 
-        An instance method, not a classmethod: a family whose state width comes from a compiled
-        model (DM Control, Fetch, RoboCasa) only knows ``state_dim`` once it is built.
+        An empty declaration uses a single State field spanning the compact row.
+        An offset of None denotes a simulator field absent from the renderer projection.
         """
         if self.state_layout:
             return tuple(
@@ -1073,7 +720,7 @@ class Env:
         return ((("state",), int(self.state_dim), 0),)
 
     def _layout_dtypes(self) -> dict[tuple[str, ...], torch.dtype]:
-        """``{key path: public dtype}`` for the fields whose ``state_layout`` entry names one."""
+        """Return explicitly declared public dtypes by State key path."""
         out = {}
         for e in self.state_layout or ():
             if len(e) >= 4 and e[3] is not None:
@@ -1094,7 +741,7 @@ class Env:
         return lay
 
     def _pack_render_state(self, state: TensorDict) -> torch.Tensor:
-        """Project State to the frozen float32 renderer layout; dynamics-only fields are omitted."""
+        """Project State to float32 renderer rows, omitting fields without render offsets."""
         if not isinstance(state, TensorDict):
             return check_states(self, state, f"{type(self).__name__}.pack", leading=True)
         lay = self._check_layout()
@@ -1114,9 +761,10 @@ class Env:
         return out
 
     def _unpack_render_state(self, rows) -> TensorDict:
-        """Decode only fields present in compact rows. Missing simulator fields stay absent.
+        """Copy fields represented in compact rows into a TensorDict.
 
-        This is a private renderer projection, never a reconstruction of full State."""
+        Hidden simulator fields remain absent; this cannot reconstruct full State.
+        """
         lay = self._check_layout()
         dtypes = self._layout_dtypes()
         r = check_states(self, rows, f"{type(self).__name__}.unpack").reshape(-1, int(self.state_dim))
@@ -1126,8 +774,7 @@ class Env:
             if off is None:
                 continue
             dt = dtypes.get(key, torch.float32)
-            # ``copy=True``: ``.to`` on a same-dtype tensor returns the SAME storage, and a State that
-            # aliases the env's packed buffer changes under the caller's feet at the next step.
+            # Force a copy even at the same dtype so later buffer writes cannot mutate the snapshot.
             v = r[:, off : off + w].to(dt, copy=True)
             node = out
             for part in key[:-1]:
@@ -1136,15 +783,15 @@ class Env:
         return TensorDict(out, batch_size=[n], device=self.device)
 
     def _hidden_state(self) -> dict[tuple[str, ...], torch.Tensor]:
-        """Live simulator fields absent from compact rows. A declared hidden field must be supplied."""
+        """Supply live simulator fields whose layout entries have no render offset."""
         return {}
 
     def _live_state(self) -> dict[tuple[str, ...], torch.Tensor]:
-        """Live drawn fields at simulator precision, before the lossy float32 render projection."""
+        """Supply drawn fields at simulator precision before the float32 projection."""
         return {}
 
     def get_state(self) -> State:
-        """Return an independent full native simulator snapshot, including hidden and precise fields."""
+        """Return an independent full simulator snapshot, including hidden fields and native precision."""
         self._require_state("get_state")
         td = self._unpack_render_state(self._get_render_state())
         hidden = {
@@ -1182,14 +829,7 @@ class Env:
         return td.clone()
 
     def _step_result(self, state: TensorDict, **extras) -> TensorDict:
-        """Build the :data:`StepResult` ``step`` returns: ``{"state": ..., **extras}``.
-
-        Every cell builds it the same way through here rather than writing the ``TensorDict(...)``
-        call itself, so the batch size and device cannot drift between cells. ``extras`` are
-        ``reward``/``done`` for the cells that HAVE them; a cell with no reward or termination
-        semantics passes none, and the keys are absent rather than zero — a fabricated zero reward
-        reads as a measured one (contract §5).
-        """
+        """Build a result with State and only the task outputs supplied by the family."""
         td = {"state": state}
         for k, v in extras.items():
             if v is None:
@@ -1198,7 +838,7 @@ class Env:
         return StepResult(td, batch_size=[int(state.batch_size[0])], device=self.device)
 
     def state_names_of(self, key) -> list[str]:
-        """Which packed columns a State key occupies. Used by the tests and by ``describe``."""
+        """Return renderer column names for a State field; hidden fields have no columns."""
         key = tuple(key) if isinstance(key, (tuple, list)) else (key,)
         for k, w, off in self._layout():
             if k == key:
@@ -1212,11 +852,9 @@ class Env:
                 )
         raise KeyError(f"{type(self).__name__}: no state key {'.'.join(key)}")
 
-    # ------------------------------------------------------------------ specs
-
     @property
     def state_spec(self) -> CompositeSpec:
-        """The public state's shape, per entity. Bounds are declared by the env that knows them."""
+        """Describe public State fields per lane, including declared dtypes and bounds."""
         bounds = dict(getattr(self, "state_bounds", {}) or {})
         out: dict = {}
         for key, w, _ in self._layout():
@@ -1238,7 +876,7 @@ class Env:
 
     @property
     def action_spec(self) -> Spec:
-        """What ``step`` takes. Envs with no simulator declare no ``action_dim``."""
+        """Describe one lane's action; raise NotImplementedError when no action is declared."""
         dim = getattr(self, "action_dim", None)
         if dim is None:
             _dynamics.no_dynamics(self, "action_spec")
@@ -1252,27 +890,16 @@ class Env:
 
     @property
     def frame_spec(self) -> Spec:
-        """The frames ``render`` produces: ``(H, W, 3)`` uint8. Square unless the env says otherwise.
-
-        ``step`` captures selected frames through ``render``; ``reset`` returns State.
-        """
+        """Describe one uint8 RGB frame, with shape ``(H, W, 3)``."""
         h, w = getattr(self, "frame_shape", (self.size, self.size))
         return Spec(shape=(int(h), int(w), 3), dtype=torch.uint8, low=0, high=255, device=self.device)
 
     @property
     def variation_spec(self) -> Spec:
-        """The flat Variation row — ``variation_dim`` columns named by path.
-
-        FLAT, and a single ``Spec`` rather than a composite, because that is what a Variation tensor
-        is: one ``(B, variation_dim)`` row whose columns are addressed by path. ``variation_space``
-        remains the gymnasium-style object used to sample and validate leaves; this is the same
-        layout as a Spec.
-        """
+        """Describe compiled Variation columns, expanding vector leaves into individual names."""
         lo, hi, names = [], [], []
         for path, off, w in self.variation_space.flat_layout():
-            # ONE NAME PER COLUMN, which ``variation_names`` is not: a leaf of width 3 (an RGB colour)
-            # occupies three columns under one path, and a spec whose names do not line up with its
-            # columns is a labelling that would be wrong exactly where it is consulted.
+            # Vector leaves need one label per compiled column.
             names.extend([path] if w == 1 else [f"{path}[{i}]" for i in range(w)])
             node = self.variation_space
             for part in path.split("."):
@@ -1294,10 +921,8 @@ class Env:
             names=tuple(names),
         )
 
-    # ------------------------------------------------------------------ lifecycle
-
     def reset(self, seed: int | None = None) -> TensorDict:
-        """Reset the native implementation. Historical reference reset parity is tracked separately."""
+        """Reset the environment and return full State; an explicit seed restarts its sampler."""
         self._require_state("reset")
         self._check_open("reset")
         if seed is not None:
@@ -1307,18 +932,22 @@ class Env:
         return self.state
 
     def step(self, actions, *, states=slice(None), frames=slice(-1, None)) -> TensorDict:
-        """Advance [B,A] or [B,T,A] actions; select post-action States and frames.
+        """Advance ``[B, A]`` or ``[B, T, A]`` actions and select post-action outputs.
 
-        Selectors are Python slices or None. Defaults retain every State and
-        render only the final endpoint. Selected outputs always keep a time axis.
-        The final State is always returned. valid marks executed transitions.
+        ``states`` and ``frames`` accept slices or None. Defaults retain every State and
+        render the final endpoint. Selected outputs keep a time axis, even for one action.
+        The final State is always returned under ``state``.
+
+        Within a sequence, finished lanes hold their endpoint without resetting.
+        ``valid``, ``state_valid``, and ``frame_valid`` mark executed transitions;
+        task outputs at unexecuted slots are zero.
         """
         from ._stepping import step
 
         return step(self, actions, states=states, frames=frames)
 
     def _step(self, actions) -> TensorDict:
-        """Family single-transition kernel; no rendering or sequence dispatch."""
+        """Advance one transition per lane without rendering or sequence dispatch."""
         _dynamics.no_dynamics(self, "step")
 
     @property
@@ -1336,7 +965,7 @@ class Env:
             )
 
     def close(self) -> None:
-        """Release this env's resources. IDEMPOTENT, and correctness never depends on ``__del__``."""
+        """Release instance-owned resources; repeated calls have no effect."""
         if self._closed:
             return
         self._closed = True
@@ -1352,7 +981,5 @@ class Env:
         return False
 
 
-#: ``_dynamics.has_dynamics`` asks whether a class overrides ``_step``, and it needs the
-#: class they are inherited from to compare against. Set here rather than inside ``dynamics`` because
-#: ``env`` imports ``dynamics`` and not the other way round: the arrow stays one-way.
+# Supply the base step method for override detection without introducing a reverse import.
 Env._se_dynamics_base = Env
