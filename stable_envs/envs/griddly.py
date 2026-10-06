@@ -117,6 +117,7 @@ from ..env import Env
 from ..registry import register
 from ..render import _resources as _RES
 from ..render import tilemap as tm
+from ..render._cache import cache_path
 from ..spaces import Box, Dict
 
 #: bit k of the neighbour mask is ``OFFSETS[k]``. The four orthogonal offsets come first so a WALL_16
@@ -282,8 +283,7 @@ def level_string(grid: dict, W: int, H: int, chars: dict) -> str:
 
 
 def _cache_path(name: str, tile: int) -> str:
-    root = os.environ.get("STABLE_ENVS_CACHE") or os.path.expanduser("~/.cache/stable-envs")
-    return os.path.join(root, "tilemap", f"griddly_{name}_t{tile}.npz")
+    return str(cache_path("tilemap", f"griddly_{name}_t{tile}.npz"))
 
 
 class GriddlyDecoder:

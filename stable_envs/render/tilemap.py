@@ -1,54 +1,18 @@
-"""Tile-atlas rendering: frames as a pure gather, for environments drawn as a grid of tiles.
-
-A MiniGrid frame is a grid of tiles, and ``minigrid.core.grid.Grid.render_tile`` caches its output
-under the key ``obj.encode() + (agent_dir, highlight, tile_size)`` — upstream therefore already
-asserts that a tile image is a function of nothing else. That makes the appearance set finite: 11
-object types x 6 colours x 3 states x 5 agent-direction slots x 2 highlight states = 1980 entries, of
-which 492 are distinct images and 580 are reachable from a real ``encode()``. Precompute them once and
-rendering is a gather with no rasterisation at all, so it is exact by construction rather than by
-matching a rasterizer pixel for pixel.
-
-Measured on this path (see ``docs/research/minigrid.md``): **21,216 frames across all 172 instantiable
-MiniGrid/BabyAI ids at two tile sizes, every one bit-identical to the official renderer, max absolute
-pixel difference 0**, and **6.55M agent-POV frames/s** at 224x224 on one H200 against 2,378 f/s for
-the official CPU renderer, sustaining 987 GB/s — memory-bandwidth-bound, not compute-bound. The blit
-in isolation reaches 1.1 TB/s, so the gather is already at the roofline and the only way to go faster
-is to emit fewer bytes.
-
-Two things here are deliberately not what they first look like.
-
-**The atlas is built by calling the official renderer, never by reimplementing it.** The tiles come
-back from ``Grid.render_tile`` and are cast to uint8 exactly the way ``Grid.render`` casts when it
-assigns a float tile into a uint8 buffer. Exactness is then structural. In particular the atlas must
-*not* be built through ``WorldObj.decode``: decode throws colour away for ``Goal`` and ``Lava`` — it
-always returns a green goal — while ``Goal.render`` reads ``self.color``. An atlas built that way
-renders a purple goal green and nothing anywhere would flag it, because the encoding round-trips and
-the picture looks entirely plausible.
-
-**Variations recolour through a label map, not through pixel edits.** Alongside the RGB atlas we build,
-at MiniGrid's own 3x supersampled resolution, a map saying *which* of 22 semantic slots painted each
-subpixel (background, grid line, agent, lava, and the 6 palette colours in their full, half and 0.45
-shades — ``Floor`` paints ``COLORS[c]/2`` and a locked ``Door``'s inner panel ``0.45*COLORS[c]``).
-Every subpixel has exactly one writer, so an atlas for any palette is ``palette[label]`` reduced by the
-same two-stage box filter ``minigrid.utils.rendering.downsample`` applies. This matters because a
-naive recolour is wrong in two ways that are invisible by eye: grey walls and the grid lines are both
-literally ``(100,100,100)``, so colour matching cannot separate them; and ``highlight_img`` truncates
-to uint8 *before* the downsample, so a highlighted tile is not the alpha blend of the downsampled tile.
-The label decomposition handles both — highlight becomes an effective palette
-``floor(p + alpha*(hc - p))`` applied per label, which is exact because the blend is per subpixel and
-each subpixel has a single label. ``build()`` asserts the reconstruction reproduces the official atlas
-byte for byte at the default palette, so a wrong constant cannot survive the build.
-"""
-
 from __future__ import annotations
 
 import math
 import os
+import tempfile
+import threading
+import warnings
+from importlib.metadata import version
+from zipfile import BadZipFile
 
 import numpy as np
 import torch
 
 from . import _resources as _RES
+from ._cache import cache_path
 
 try:  # triton is optional; the torch path is the readable one
     import triton
@@ -58,13 +22,12 @@ try:  # triton is optional; the torch path is the readable one
 except ImportError:
     HAVE_TRITON = False
 
-# ---------------------------------------------------------------- MiniGrid's alphabet
-
 N_TYPE, N_COLOR, N_STATE, N_DIR, N_HL = 11, 6, 3, 5, 2
 NO_AGENT = 4  #: agent_dir slot meaning "no agent stands on this tile"
 N_GEOM = N_DIR * N_TYPE * N_COLOR * N_STATE  # 990 distinct tile geometries
 N_SLOT = N_HL * N_GEOM  # 1980 atlas entries
 SUBDIVS = 3  #: Grid.render_tile's supersampling factor
+CACHE_FORMAT = 1
 
 T_UNSEEN, T_EMPTY, T_WALL, T_FLOOR, T_DOOR = 0, 1, 2, 3, 4
 T_KEY, T_BALL, T_BOX, T_GOAL, T_LAVA, T_AGENT = 5, 6, 7, 8, 9, 10
@@ -94,11 +57,7 @@ def official_colors() -> np.ndarray:
 
 
 def reachable_codes() -> list[tuple[int, int, int]]:
-    """Every ``(type, colour, state)`` an ``encode()`` can produce. 58 of the 198 combinations.
-
-    ``unseen``/``empty``/``agent`` all mean "no object" and get one slot each; ``door`` is the only
-    type whose state channel is used; ``Lava.__init__`` hardcodes red so lava has a single encoding.
-    """
+    """Return the type, colour, and state codes reachable through MiniGrid encoding."""
     out = []
     for t in range(N_TYPE):
         if t in (T_UNSEEN, T_EMPTY, T_AGENT):
@@ -122,7 +81,7 @@ def atlas_flat_index(hl, d, t, c, s):
 
 
 def make_obj(t: int, c: int, s: int):
-    """The object with encoding ``(t, c, s)``, built faithfully rather than through ``decode``."""
+    """Build by constructor: ``decode`` discards non-default Goal colours."""
     from minigrid.core.constants import IDX_TO_COLOR
     from minigrid.core.world_object import Ball, Box, Door, Floor, Goal, Key, Lava, Wall
 
@@ -139,9 +98,6 @@ def make_obj(t: int, c: int, s: int):
         T_GOAL: lambda: Goal(col),
         T_LAVA: Lava,
     }[t]()
-
-
-# ---------------------------------------------------------------- building the atlas
 
 
 def _official_atlas(tile_size: int) -> np.ndarray:
@@ -166,11 +122,7 @@ def _official_atlas(tile_size: int) -> np.ndarray:
 
 
 def _label_for(color, color_idx: int) -> int:
-    """Which semantic slot a colour passed to ``fill_coords`` belongs to.
-
-    Dispatch is on the value *before* it is truncated into the uint8 image, because ``Floor`` passes
-    ``COLORS[c]/2`` and a locked ``Door`` passes ``0.45*COLORS[c]`` — both non-integral.
-    """
+    """Identify a fill before uint8 conversion, preserving fractional Floor/Door shades."""
     v = np.asarray(color, np.float64).ravel()
     if np.allclose(v, 0.0):
         return LBL_BG
@@ -191,13 +143,11 @@ def _label_for(color, color_idx: int) -> int:
 
 
 def _label_maps(tile_size: int) -> np.ndarray:
-    """(990, 3T, 3T) uint8: which label painted each supersampled subpixel.
+    """(990, 3T, 3T) uint8 labels painted by MiniGrid predicates.
 
-    Mirrors ``Grid.render_tile``'s call sequence, but every pixel is still set by the official
-    ``fill_coords`` and the official predicates — objects draw through a recording shim installed over
-    ``minigrid.core.world_object.fill_coords``, which is the only way a ``WorldObj`` can paint. The two
-    grid-line rectangles and the agent triangle are the sole constants restated here, and ``build()``
-    catches any divergence by diffing the reconstruction against the official atlas.
+    Temporarily replaces the upstream fill function to record semantic labels;
+    unrelated upstream rendering must not run concurrently. Reconstruction is
+    checked against official tiles before the atlas is cached.
     """
     import minigrid.core.world_object as wo
     from minigrid.utils.rendering import fill_coords, point_in_rect, point_in_triangle, rotate_fn
@@ -217,6 +167,7 @@ def _label_maps(tile_size: int) -> np.ndarray:
                         fill_coords(lab, point_in_rect(0, 0.031, 0, 1), (LBL_GRID,) * 3)
                         fill_coords(lab, point_in_rect(0, 1, 0, 0.031), (LBL_GRID,) * 3)
                         if obj is not None:
+                            # This global patch is not safe alongside unrelated upstream rendering.
                             orig = wo.fill_coords
                             wo.fill_coords = lambda img, fn, color, _l=lab, _c=c, _o=orig: _o(
                                 _l, fn, (_label_for(color, _c),) * 3
@@ -257,13 +208,10 @@ def label_palette(values: dict) -> np.ndarray:
 
 
 def highlight_palette(p: np.ndarray, color, alpha: float) -> np.ndarray:
-    """``highlight_img`` applied per label.
+    """Apply MiniGrid highlighting per label before downsampling.
 
-    Reproduces the reference arithmetic including its uint8 subtraction: ``highlight_img`` computes
-    ``img + alpha*(np.array(color, uint8) - img)``, so the difference wraps mod 256 when the highlight
-    colour is darker than the pixel. At MiniGrid's own ``(255,255,255)`` nothing wraps and this is a
-    plain blend; the wrap is reproduced anyway so that a user-chosen dark highlight matches what the
-    reference would have done rather than what it arguably meant.
+    Subtraction wraps modulo 256, matching upstream uint8 arithmetic even when
+    the highlight is darker than the pixel. Truncate before the box filter.
     """
     diff = (np.asarray(color, np.int64) - p.astype(np.int64)) % 256
     return np.floor(np.clip(p + float(alpha) * diff, 0, 255))
@@ -288,17 +236,12 @@ def recolour(labels: torch.Tensor, pal_lo, pal_hi, tile_size: int, chunk: int = 
     return out
 
 
-def _cache_path(tile_size: int) -> str:
-    root = os.environ.get("STABLE_ENVS_CACHE") or os.path.expanduser("~/.cache/stable-envs")
-    return os.path.join(root, "tilemap", f"minigrid_t{tile_size}.npz")
+def _cache_path(tile_size: int):
+    return cache_path("tilemap", f"minigrid_t{tile_size}.npz")
 
 
 def _resolve(device) -> torch.device:
-    """``"cuda"`` -> the CURRENT cuda device, with its index filled in.
-
-    Any cache keyed by the string a caller passed cannot tell ``"cuda"`` on one GPU from ``"cuda"`` on
-    another, because the string is identical and the device is not.
-    """
+    """Resolve an unspecified CUDA index so cache keys distinguish physical devices."""
     d = torch.device(device)
     if d.type == "cuda" and d.index is None:
         d = torch.device("cuda", torch.cuda.current_device())
@@ -306,42 +249,55 @@ def _resolve(device) -> torch.device:
 
 
 class MiniGridAtlas:
-    """The tile atlas for one tile size, plus recoloured variants cached by variation values.
+    """Official MiniGrid tiles and recolouring labels, cached by tile size and device.
 
-    Building costs ~75 s of pure-Python scanline fills, so the result is memoised in-process and on
-    disk. The disk write is atomic because a test session may build several envs at once.
+    Atlas construction is serialized within this class. It temporarily patches
+    MiniGrid's object renderer, so do not render upstream objects during a build.
     """
 
     _mem: dict[tuple[int, str], MiniGridAtlas] = {}
+    _lock = threading.RLock()
 
     def __init__(self, tile_size: int, device="cuda", verify: bool = True):
         self.T = int(tile_size)
         self.device = torch.device(device)
-        atlas, labels = self._load_or_build(self.T, verify)
+        with self._lock:
+            atlas, labels = self._load_or_build(self.T, verify)
         self.official = torch.from_numpy(atlas).to(self.device)
         self.labels = torch.from_numpy(labels).to(self.device)
         self._rgb_cache = _RES.BoundedCache(8, name="tilemap.rgb")
 
     @classmethod
     def get(cls, tile_size: int, device="cuda") -> MiniGridAtlas:
-        # RESOLVE the device before keying on it. ``str("cuda")`` is the same key on every GPU, while
-        # ``torch.device("cuda")`` means whichever one is current -- so a process that renders on
-        # cuda:0 and then on cuda:1 was handed cuda:0's atlas the second time and Triton refused the
-        # launch. ``_resolve`` turns both "cuda" and "cuda:1" into a device carrying an explicit index.
-        key = (int(tile_size), str(_resolve(device)))
-        if key not in cls._mem:
-            cls._mem[key] = cls(tile_size, _resolve(device))
-        return cls._mem[key]
+        device = _resolve(device)
+        key = (int(tile_size), str(device))
+        with cls._lock:
+            if key not in cls._mem:
+                cls._mem[key] = cls(tile_size, device)
+            return cls._mem[key]
 
     @staticmethod
     def _load_or_build(T: int, verify: bool):
         path = _cache_path(T)
-        if os.path.exists(path):
-            try:
-                z = np.load(path)
-                return z["atlas"], z["labels"]
-            except Exception:  # noqa: BLE001  corrupt/partial cache
-                pass
+        source_version = version("minigrid")
+        try:
+            with np.load(path, allow_pickle=False) as z:
+                if z["format"].item() != CACHE_FORMAT or z["minigrid_version"].item() != source_version:
+                    raise ValueError("atlas format or MiniGrid version mismatch")
+                atlas, labels = z["atlas"], z["labels"]
+                if (
+                    atlas.shape != (N_SLOT, T, T, 3)
+                    or labels.shape != (N_GEOM, T * SUBDIVS, T * SUBDIVS)
+                    or atlas.dtype != np.uint8
+                    or labels.dtype != np.uint8
+                    or labels.max() >= N_LABEL
+                ):
+                    raise ValueError("invalid atlas or label array")
+                return atlas, labels
+        except FileNotFoundError:
+            pass
+        except (OSError, ValueError, KeyError, EOFError, BadZipFile) as exc:
+            warnings.warn(f"Rebuilding MiniGrid cache {path}: {exc}", RuntimeWarning, stacklevel=2)
         atlas, labels = _official_atlas(T), _label_maps(T)
         if verify:
             pal = {"palette": official_colors()}
@@ -356,11 +312,27 @@ class MiniGridAtlas:
                     f"tiles at the default palette — the decomposition is wrong, so every recoloured "
                     f"frame would be wrong in a way no parity test would catch"
                 )
-        os.makedirs(os.path.dirname(path), exist_ok=True)
-        tmp = f"{path}.{os.getpid()}.tmp"
-        with open(tmp, "wb") as fh:  # a handle, not a name: savez appends .npz to names
-            np.savez_compressed(fh, atlas=atlas, labels=labels)
-        os.replace(tmp, path)
+        tmp = None
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            with tempfile.NamedTemporaryFile(
+                dir=path.parent, prefix=path.name + ".", suffix=".tmp", delete=False
+            ) as fh:
+                tmp = fh.name
+                np.savez_compressed(
+                    fh, atlas=atlas, labels=labels, format=CACHE_FORMAT, minigrid_version=source_version
+                )
+            os.replace(tmp, path)
+        except OSError as exc:
+            warnings.warn(f"MiniGrid cache is memory-only; cannot write {path}: {exc}", RuntimeWarning, stacklevel=2)
+        finally:
+            if tmp is not None:
+                try:
+                    os.unlink(tmp)
+                except FileNotFoundError:
+                    pass
+                except OSError as exc:
+                    warnings.warn(f"Cannot remove temporary MiniGrid cache {tmp}: {exc}", RuntimeWarning, stacklevel=2)
         return atlas, labels
 
     def rgb(self, values: dict) -> torch.Tensor:
@@ -398,16 +370,8 @@ class MiniGridAtlas:
         )
 
 
-# ---------------------------------------------------------------- the gather itself
-
-
 def word_size(tile_size: int) -> int:
-    """Widest word (bytes) that evenly divides a tile row of ``T*3`` bytes.
-
-    4 for the usual T=32; rjepa renders MiniGrid at T=14 where ``T*3 = 42`` and the widest safe word
-    is 2. Every offset the kernel forms is a whole number of tile rows on both sides — the atlas
-    strides by ``T*T*3`` and the output by ``W*T*3`` — so alignment follows.
-    """
+    """Return the widest aligned copy width for a tile row of T * 3 bytes."""
     row = tile_size * 3
     return 4 if row % 4 == 0 else (2 if row % 2 == 0 else 1)
 
@@ -441,11 +405,10 @@ if HAVE_TRITON:
 
 
 def blit(atlas_rgb: torch.Tensor, idx: torch.Tensor, tile_size: int, out: torch.Tensor | None = None) -> torch.Tensor:
-    """``idx`` (B,H,W) int32 of atlas slots -> ``(B, H*T, W*T, 3)`` uint8, in one pass.
+    """Gather (B,H,W) tile indices into (B,H*T,W*T,3) uint8 frames.
 
-    One program per (batch, output row, column block); each lane resolves its own tile and copies a
-    word. Writing the final layout directly matters: the obvious ``atlas[idx].permute(...).reshape(...)``
-    materialises a full-size tiled buffer and then transposes it, and measures 2.5-3.5x slower.
+    CUDA writes the final layout directly, avoiding an intermediate tiled image.
+    CPU or installations without Triton use the torch implementation.
     """
     B, H, W = idx.shape
     if not HAVE_TRITON or idx.device.type != "cuda":
@@ -457,8 +420,7 @@ def blit(atlas_rgb: torch.Tensor, idx: torch.Tensor, tile_size: int, out: torch.
         out = torch.empty(B, H * T, W * T, 3, dtype=torch.uint8, device=idx.device)
     atlas_w = atlas_rgb.reshape(-1).view(_WORD_DTYPE[w]).view(atlas_rgb.shape[0], T * T * 3 // w)
     BLOCK = 256 if wpr >= 256 else triton.next_power_of_2(wpr)
-    # Launch on the tensors' device rather than the process's current one -- see the same guard in
-    # ``render/raster2d.py:render_triton`` for the failure it prevents.
+    # The tensor's device can differ from the process's current CUDA device.
     with torch.cuda.device(idx.device):
         _blit_kernel[(B * H * T, triton.cdiv(wpr, BLOCK))](
             atlas_w,
@@ -487,8 +449,6 @@ def blit_torch(atlas_rgb: torch.Tensor, idx: torch.Tensor, out: torch.Tensor | N
     return img
 
 
-# ---------------------------------------------------------------- the visibility scan
-
 if HAVE_TRITON:
 
     @triton.jit
@@ -516,13 +476,10 @@ if HAVE_TRITON:
 
 
 def visibility_scan(transparent: torch.Tensor, view_size: int) -> torch.Tensor:
-    """``Grid.process_vis``, batched. ``transparent`` (B,V,V) bool indexed [b,i,j] -> visible mask.
+    """Return the (B,V,V) visibility mask for a boolean transparency grid.
 
-    The sweep is genuinely sequential — the left-to-right pass reads cells it just wrote, and the
-    right-to-left pass reads what the left-to-right pass wrote — so it cannot be reordered or merged.
-    Transcribed elementwise it costs ~670 tiny kernel launches for V=7 and dominated everything else in
-    the pipeline (0.71M f/s). Packing the whole V*V mask into one int64, bit ``k = i*V + j``, folds all
-    ``2*V*(V-1)`` steps into a single launch and measured 9.24M f/s — a 13x index-path speedup.
+    Each left-to-right sweep reads its own writes; the reverse sweep reads those
+    results. Preserve that order. CUDA packs grids up to 63 cells into int64.
     """
     B = transparent.shape[0]
     V = view_size
@@ -560,12 +517,9 @@ def visibility_scan_torch(transparent: torch.Tensor, view_size: int) -> torch.Te
 
 
 def view_offsets(view_size: int, device) -> torch.Tensor:
-    """``offs[d, vj, vi] = (dx, dy)`` of the world cell shown at agent-view cell ``(vi, vj)``.
+    """Return world-cell offsets indexed by (direction, view_row, view_column).
 
-    This is ``Grid.slice`` composed with ``rotate_left**(d+1)``, in closed form. The form is the one
-    ``MiniGridEnv.get_full_render`` uses for its highlight mask; it was validated against a
-    tagged-object trace of the real ``slice``/``rotate_left`` for every view size MiniGrid permits
-    (V in 3,5,7,9,11), and found translation-invariant, so it is a gather rather than a copy.
+    Composes Grid.slice with rotate_left**(direction+1) without copying grids.
     """
     dirs = torch.tensor([[1, 0], [0, 1], [-1, 0], [0, -1]], device=device)
     V = view_size

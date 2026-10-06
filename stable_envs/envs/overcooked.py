@@ -114,6 +114,7 @@ from ..env import Env
 from ..registry import register
 from ..render import _resources as _RES
 from ..render import tilemap as tm
+from ..render._cache import cache_path
 from ..spaces import Dict, RGBBox
 
 #: ``OvercookedVisualizer.TILE_PIXELS``; also the size the atlas is measured at
@@ -343,8 +344,7 @@ def _recolour_np(labels: np.ndarray, pal: np.ndarray, T: int) -> np.ndarray:
 
 
 def _cache_path(tile_size: int) -> str:
-    root = os.environ.get("STABLE_ENVS_CACHE") or os.path.expanduser("~/.cache/stable-envs")
-    return os.path.join(root, "tilemap", f"overcooked_jaxmarl_t{tile_size}.npz")
+    return str(cache_path("tilemap", f"overcooked_jaxmarl_t{tile_size}.npz"))
 
 
 class OvercookedAtlas:

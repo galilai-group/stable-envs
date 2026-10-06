@@ -26,14 +26,23 @@ The broader registry/declaration selection still has seven pre-existing failures
 97 pass and two skip, identically in an isolated pre-refactor checkout. Do not
 report this checkpoint as a green full-repository suite.
 
+MiniGrid caches now validate their format, source version, array shapes, and dtypes.
+Construction is serialized, writes use unique atomic temporary files, and unwritable
+storage falls back to the in-memory atlas with a warning. MiniGrid, Overcooked, and
+Griddly share cache-location resolution, including `XDG_CACHE_HOME`. Tilemap's prose
+now documents the numeric and concurrency constraints beside the relevant code.
+The 11 local cache tests and 13 combined CPU/CUDA tests on Oscar pass without skips;
+this includes exact fresh/reloaded pixel comparisons and recolouring. Atlas and
+render-kernel arithmetic remain unchanged. Overcooked and Griddly's cache formats
+and write policies are unchanged; only their location helper was shared.
+
 Remaining work from the supplied renderer audit:
 
-1. Tile-cache versioning, locking, portable cache locations, and write failures.
-2. CPU3D plane/shadow preconditions; raycast switches/reference separation;
+1. CPU3D plane/shadow preconditions; raycast switches/reference separation;
    gfxdraw deduplication; raster/nav indexing; MJWarp/rendernet cleanup; Rocket constants.
-3. Remaining per-file prose rewrites and curated backend documentation, followed
+2. Remaining per-file prose rewrites and curated backend documentation, followed
    by the repository-wide forbidden-prose scan.
-4. Archive planning and link/test migration before removing research evidence.
+3. Archive planning and link/test migration before removing research evidence.
    The tracked research tree currently contains 11,628 files / 390.4 MiB; scripts
    contain 270 files. No evidence relocation or history rewrite has happened.
 
