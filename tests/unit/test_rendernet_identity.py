@@ -202,3 +202,19 @@ def test_the_network_starts_exactly_at_the_bilinear_baseline():
 def test_an_unknown_architecture_is_refused_by_name():
     with pytest.raises(KeyError, match="unknown corrector architecture"):
         RN.build("espcn_made_up")
+
+
+@pytest.mark.parametrize("model", [RN.ESPCN, RN.UNetTiny])
+@pytest.mark.parametrize("input_size,output_size", [(0, 16), (8, 0), (-8, 16), (8, 17)])
+def test_correctors_reject_invalid_resolution_ratios(model, input_size, output_size):
+    with pytest.raises(ValueError, match="positive multiple"):
+        model(in_size=input_size, out_size=output_size)
+
+
+@pytest.mark.parametrize("content", ["broken json", "[]", '{"cell": []}'])
+def test_listing_warns_on_unreadable_sidecars(tmp_path, monkeypatch, content):
+    monkeypatch.setattr(RN, "CACHE_ROOT", str(tmp_path))
+    (tmp_path / "broken.pt").touch()
+    (tmp_path / "broken.json").write_text(content)
+    with pytest.warns(RuntimeWarning, match="broken.json"):
+        assert RN.available() == {}
