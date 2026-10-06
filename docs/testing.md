@@ -132,14 +132,70 @@ to the corpus loader or registration acceptance gates.
 A valid hash seal proves artifact integrity, not source authority or acceptance;
 retain the seal in trusted version control and use the pinned source generator.
 
+## Online source pixels
+
+`tests/helpers/reference/pixels.py` checks a `PixelTrace`: initial State,
+reached States, task outputs, raw source frames, active-lane masks and actions.
+An adapter owns source construction and family-specific witnesses; the shared
+checker owns restore, capture order, independent State/frame slices, device
+placement, snapshot ownership and per-frame MSE. No production API is added.
+
+The first adapter, `rocket_pixels.py`, preserves the research gate's flight,
+contact, success and horizon cases, float32/64 actions, horizons 1/8 and all four
+capture selectors. It also checks frames without State capture. Its source lanes
+only advance forward. Candidate-shaped State comes from a separate reference
+instance whose native-engine diagnostics are checked against those source lanes;
+pixels always come directly from the source renderer.
+
+In the pinned Rocket interpreter (see `tests/helpers/reference/profiles.py`):
+
+```bash
+python -m pytest tests/integration/test_rocket_source_pixels.py -m "not gpu"
+# On a CUDA host, run the complete CPU/CUDA selection:
+python -m pytest tests/integration/test_rocket_source_pixels.py
+```
+
+The complete selection requires 32 passing parameter cases with no skips. Each
+case runs five capture selections. Both candidate devices compare to source CPU
+TinyRenderer; this does not claim a source GPU renderer exists. Per-frame
+normalized MSE must be at most 0.001, including held terminal frames. Failures save
+sealed raw source/candidate frames, actions, expected States and selection details
+under the failing test's pytest temporary directory. A partial run or missing
+source dependency is not acceptance. Existing family promotion gates remain.
+
+To add another family, supply a source adapter returning `PixelTrace` and a small
+parameterized test supplying its candidate constructor and explicit threshold.
+Use source-owned State where available; otherwise add independent native-engine
+diagnostics as Rocket does. Do not fabricate expected pixels from the candidate,
+silently rescale source images, or relax tolerances to make a new adapter pass.
+Keep family contact/Variation/lifecycle cases in the adapter's test parameters.
+
+The initial migration passed all 32 CPU/CUDA cases on Oscar: 256 frame comparisons
+per device, CPU MSE zero, CUDA maximum normalized MSE 0.000373915. The scenario
+configurations and parameter set match the historical gate. The
+[validation record](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/fixtures/testing/source-pixels-validation.json)
+records job outcomes, hardware, versions and tested code hashes. Other families
+retain their existing pixel gates; this is the first adapter, not a 38-family
+source-pixel migration or a throughput benchmark.
+
 ## Saved rendering evidence
 
 Saved Rocket frame verification is read-only and does not need CUDA:
 
 ```bash
 python -m scripts.testing.verify_saved --input /path/to/public-cpu-or-cuda \
+  --revision ebf82e6eeed8b2b9c7560e4dff6f9a6b5c95e95b \
   --output /path/to/new-verification
 ```
+
+Choose `--revision COMMIT` for the historical code snapshot, or `--current` to
+require the recorded file hashes to match today's worktree. One is mandatory.
+Historical mode reads Git objects without checkout or executing old code. A
+missing revision/file or hash mismatch fails; there is no fallback to current
+files. The result records the resolved commit and verified hashes. Neither mode
+is fresh acceptance: that requires rerunning the live gates against current code.
+The saved Rocket report uses its frozen visual criteria, independently of changes
+to current class declarations. Original reports and hashes are never rewritten.
 
 It checks the full historical case set, source/candidate identity, every frame's
 normalized MSE and the original visual group criteria. Shared measurements use

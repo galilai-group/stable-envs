@@ -15,12 +15,25 @@ from tests.helpers.reference.saved import native_corpus, verify_rocket_render
 
 ROOT = Path(__file__).resolve().parents[2]
 ROCKET = ROOT / "docs/research/semantic_recovery_evidence/final_three_20261004/rocket/closure-v4/final/public-cpu"
+ROCKET_REVISION = "ebf82e6eeed8b2b9c7560e4dff6f9a6b5c95e95b"
+
+
+@pytest.fixture(scope="module")
+def recorded_tree(tmp_path_factory):
+    """Give the unchanged legacy verifier the code hashes its report actually recorded."""
+    root = tmp_path_factory.mktemp("recorded-rocket")
+    report = json.loads((ROCKET / "result.json").read_text())
+    for name in [*report["production_hashes"], "scripts/research_rocket_production/verify_current_render.py"]:
+        path = root / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(subprocess.check_output(["git", "show", f"{ROCKET_REVISION}:{name}"], cwd=ROOT))
+    return root
 
 
 @pytest.mark.parametrize(
     "defect", [None, "missing_frames", "false_witness", "wrong_metric", "missing_case", "bad_frame"]
 )
-def test_rocket_old_and_new_verifiers_agree(tmp_path, defect):
+def test_rocket_old_and_new_verifiers_agree(tmp_path, defect, recorded_tree):
     report = json.loads((ROCKET / "result.json").read_text())
     if defect == "false_witness":
         report["records"][0]["independent_restore_exact"] = False
@@ -44,7 +57,7 @@ def test_rocket_old_and_new_verifiers_agree(tmp_path, defect):
     output = subprocess.run(
         [
             sys.executable,
-            str(ROOT / "scripts/research_rocket_production/verify_current_render.py"),
+            str(recorded_tree / "scripts/research_rocket_production/verify_current_render.py"),
             "--input",
             str(tmp_path),
             "--output",
@@ -58,7 +71,7 @@ def test_rocket_old_and_new_verifiers_agree(tmp_path, defect):
     )
     legacy_pass = output.returncode == 0
     try:
-        result = verify_rocket_render(tmp_path, ROOT)
+        result = verify_rocket_render(tmp_path, ROOT, revision=ROCKET_REVISION)
     except (AssertionError, FileNotFoundError):
         new_pass = False
     else:
@@ -78,7 +91,17 @@ def test_new_rocket_coverage_rejects_duplicate_or_missing_groups_before_pixels(t
     (tmp_path / "result.json").write_text(json.dumps(report))
     (tmp_path / "frames.npz").symlink_to(ROCKET / "frames.npz")
     with pytest.raises(AssertionError):
-        verify_rocket_render(tmp_path, ROOT)
+        verify_rocket_render(tmp_path, ROOT, revision=ROCKET_REVISION)
+
+
+def test_historical_report_does_not_certify_changed_code(recorded_tree, tmp_path):
+    candidate = tmp_path / "candidate"
+    shutil.copytree(recorded_tree, candidate)
+    report = json.loads((ROCKET / "result.json").read_text())
+    changed = candidate / next(iter(report["production_hashes"]))
+    changed.write_bytes(changed.read_bytes() + b"\n# Deliberate mismatch\n")
+    with pytest.raises(ValueError, match="code hash mismatch"):
+        verify_rocket_render(ROCKET, candidate)
 
 
 @pytest.mark.parametrize("defect", ["missing", "hash", "schema"])

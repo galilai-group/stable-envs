@@ -14,6 +14,7 @@ import torch
 
 from stable_envs.testing.evidence import sha256
 from stable_envs.testing.metrics import normalized_mse, summarize_errors
+from stable_envs.testing.provenance import verify_recorded_code
 from tests.helpers.reference.cases import CaseKey, coverage
 
 SWM_PIN = "176d54532b3c0a251a4f509b74f2fdacc143a63d"
@@ -98,7 +99,7 @@ def rocket_cases():
     return base + [("variation_" + label, seed, "float64") for label in variations for seed in (0, 17, 42)]
 
 
-def verify_rocket_render(directory, candidate_root):
+def verify_rocket_render(directory, candidate_root, *, revision=None):
     """Preserve the 204-case public gate, including all visual group criteria."""
     root = Path(directory)
     report = json.loads((root / "result.json").read_text())
@@ -106,11 +107,7 @@ def verify_rocket_render(directory, candidate_root):
     assert report["per_frame_mse_pass"] is True
     assert report["oracle_source"]["sha256"] == ROCKET_SOURCE
     assert report["versions"]["PyFlyt"] == "0.29.0" and report["versions"]["pybullet"] == "3.2.7"
-    assert report["production_hashes"], "Missing candidate identity"
-    for name, digest in report["production_hashes"].items():
-        path = Path(candidate_root) / name
-        assert path.resolve().is_relative_to(Path(candidate_root).resolve())
-        assert sha256(path) == digest, name
+    identity = verify_recorded_code(report["production_hashes"], candidate_root, revision=revision)
 
     def key(label, seed, dtype):
         return CaseKey("swm/PFRocketLanding-v0", "render", f"{label}/{seed}/{dtype}", report["device"])
@@ -119,6 +116,7 @@ def verify_rocket_render(directory, candidate_root):
     observed = [(key(row["label"], row["seed"], row["dtype"]), "PASS") for row in report["records"]]
     accounting = coverage(required, observed)
     assert accounting["status"] == "PASS", accounting
+    assert set(report["groups"]) == {label for label, _, _ in rocket_cases()}
     with np.load(root / "frames.npz", allow_pickle=False) as archive:
         ours, source = archive["ours"], archive["oracle"]
     assert ours.shape == source.shape == (204, 480, 480, 3)
@@ -129,11 +127,10 @@ def verify_rocket_render(directory, candidate_root):
         )
         assert np.isclose(error, row["metrics"]["normalized_mse"], rtol=1e-12, atol=0)
         assert error <= 0.001
-    from stable_envs.envs.rocket_landing import PyFlytRocketLanding
     from stable_envs.testing.conformance import ssim
 
-    limits = PyFlytRocketLanding.visual_fidelity
-    assert set(report["groups"]) == {label for label, _, _ in rocket_cases()}
+    # Frozen policy for this 204-case report format, independent of current declarations.
+    limits = dict(mean_abs_max=10.0, within8_min=0.91, ssim_min=0.80)
     for label, group in report["groups"].items():
         indices = [i for i, row in enumerate(report["records"]) if row["label"] == label]
         assert len(indices) == group["count"] and group["passed"] is True
@@ -147,7 +144,9 @@ def verify_rocket_render(directory, candidate_root):
         assert score >= limits["ssim_min"]
     return dict(
         status="PASS",
-        scope="historical public render witness verification, not fresh acceptance",
+        scope="saved public render witness verification, not fresh acceptance",
+        code_identity=identity,
+        fresh_acceptance=False,
         registration="swm/PFRocketLanding-v0",
         device=report["device"],
         population=summarize_errors(errors, threshold=0.001),

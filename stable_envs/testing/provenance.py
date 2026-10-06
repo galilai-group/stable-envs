@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import importlib.metadata
 import os
 import platform
@@ -7,6 +8,39 @@ import subprocess
 from pathlib import Path
 
 from .evidence import sha256
+
+
+def verify_recorded_code(files, root, *, revision=None):
+    """Verify recorded file hashes against a worktree or an explicit Git commit.
+
+    Historical verification reads Git objects without checking out or executing
+    old code. A hash match alone never establishes fresh acceptance.
+    """
+    root = Path(root).resolve(strict=True)
+    if not files:
+        raise ValueError("Missing recorded code identity")
+    commit = None
+    if revision is not None:
+        commit = subprocess.check_output(
+            ["git", "-C", str(root), "rev-parse", "--verify", "--end-of-options", f"{revision}^{{commit}}"],
+            text=True,
+        ).strip()
+    for name, expected in files.items():
+        path = Path(name)
+        if path.is_absolute() or ".." in path.parts or path.as_posix() != name or not name:
+            raise ValueError(f"Invalid recorded code path: {name!r}")
+        if commit:
+            content = subprocess.check_output(["git", "-C", str(root), "show", f"{commit}:{name}"])
+            actual = hashlib.sha256(content).hexdigest()
+        else:
+            target = (root / path).resolve(strict=True)
+            if not target.is_relative_to(root):
+                raise ValueError(f"Recorded code escapes root: {name}")
+            actual = sha256(target)
+        if actual != expected:
+            raise ValueError(f"Recorded code hash mismatch: {name}")
+    return dict(mode="historical" if commit else "worktree", commit=commit, files=dict(files))
+
 
 # Unknown recorded versions cannot establish a declared match.
 UNKNOWN = (None, "", "present")

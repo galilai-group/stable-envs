@@ -117,7 +117,7 @@ The October 6 review identifies these reusable methods and their current homes:
 | --- | --- | --- |
 | Reached-State replay: DMC `freeze_*_oracle.py` generators and recovery gates | Five DMC oracle modules use `tests/helpers/reference/oracle.py`. All 12 domains restore disk checkpoints at steps 0, 7 and 24, compare immediate full State, then every remaining transition and declared output. | Keep independent source generation, manifest hashes, registration identities and family lifecycle/Variation witnesses. Frozen replay does not replace live-source tests. |
 | Different-history restore and owned snapshots: `replay_feasibility.py` | Shared `test_state.py`, saved trajectories, and PushT/Rocket public semantics tests | Preserve contact and controller witnesses; equal qpos or immediate pixels cannot establish continuation. Old feasibility reports describe their historical prototype, not current acceptance. |
-| Forward-only source rollout into pixels: Rocket `online_source_gate.py` | Shared `test_online.py` covers State/task capture only. The Rocket gate remains active in the coverage inventory. | Migrate all flight/contact/success/horizon cases, float32/64 actions, T=1/8, selectors, held terminal lanes and per-frame source MSE. The source must never be restored from candidate State. |
+| Forward-only source rollout into pixels: Rocket `online_source_gate.py` | `rocket_pixels.py` supplies independently witnessed traces to the shared `pixels.py` checker. `test_rocket_source_pixels.py` preserves all four scenarios, dtypes, horizons and selectors, and adds independent State/frame selection. | Other families still need source adapters and validated edge cases. Keep the historical Rocket driver for its recorded evidence; never restore source lanes from candidate State. |
 | Hidden mutation after rejection: Rocket `rejected_controls_gate.py` | `test_rocket_replay_semantics.py` checks bad actions/State against an untouched destination and its next transition; PushT has corresponding atomicity checks. | Retain the deliberately failing source witness: immediate numeric equality can hide forces that change the next reward. A successful counterexample script is not acceptance. |
 | Clone/handle ownership: `clone_ownership.py` | Disk State ownership and cross-instance continuation are covered by saved/public tests. | Native clone close-order and fresh-process deserialization remain research diagnostics. Keep them until an independent native clone API is actually supported and tested. Pickle success alone proves nothing. |
 | Process transport: DMC/Fetch `*_source_transport_gate.py` | Shared slice/masking tests cover dispatch; family process tests and source transport gates cover real engines. | Preserve mixed terminal lanes, RNG Gaussian caches, reset-next-step behavior and all output leaves. Serial agreement does not certify process/pipeline routes. |
@@ -132,9 +132,13 @@ with helper checks and the extra restore positions, the selection passes 29 case
 on macOS with MuJoCo 3.12.0. This adds State/simulation regression coverage, not a
 new pixel-parity, CUDA or registration-acceptance claim.
 
-No research driver or evidence file was removed in this cohort. The next render
-migration should preserve Rocket's complete online case set and verify its pass
-and deliberately corrupted evidence through both readers before retiring either.
+No research driver or evidence file was removed. Saved Rocket verification now
+distinguishes a specified historical Git revision from current worktree hashes.
+It reads recorded code without checking it out or executing it, retains the
+report format's original thresholds, and never marks a saved report as fresh
+acceptance. The historical 204-frame report and corrupted controls agree with the
+unchanged legacy verifier running against its recorded code snapshot. See
+[the contributor commands and adapter contract](testing.md#online-source-pixels).
 
 ### Acceptance axes
 

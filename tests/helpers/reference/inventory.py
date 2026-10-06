@@ -35,6 +35,9 @@ def inventory():
         gates = [value.strip() for value in row["test"].split(";")]
         if profiles.get(registration) == "native":
             gates.append("tests/contracts/test_native_acceptance.py")
+        online = [ONLINE[row["family"]]]
+        if row["family"] == "rocket":
+            online.append("tests/integration/test_rocket_source_pixels.py")
         rows.append(
             dict(
                 registration=registration,
@@ -47,7 +50,7 @@ def inventory():
                     "simulation": gates,
                     "task": gates,
                     "render": ["tests/gpu/test_conformance.py"],
-                    "online": [ONLINE[row["family"]]],
+                    "online": online,
                 },
                 render_scope=row["renderer_regression"],
                 execution_mode=row["execution_mode"],

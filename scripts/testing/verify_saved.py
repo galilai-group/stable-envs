@@ -13,10 +13,13 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--input", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    identity = parser.add_mutually_exclusive_group(required=True)
+    identity.add_argument("--revision", help="Historical Git commit whose code produced the report")
+    identity.add_argument("--current", action="store_true", help="Require hashes to match the current worktree")
     args = parser.parse_args()
     run = EvidenceRun(args.output)
     try:
-        result = verify_rocket_render(args.input, Path(__file__).resolve().parents[2])
+        result = verify_rocket_render(args.input, Path(__file__).resolve().parents[2], revision=args.revision)
     except Exception as error:
         run.json("result.json", dict(status="FAIL", error=f"{type(error).__name__}: {error}"))
         try:
