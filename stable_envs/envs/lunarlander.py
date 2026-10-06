@@ -1,76 +1,3 @@
-"""LunarLander-v3: the env that was excluded because ``render()`` mutates what it draws.
-
-``docs/research/classic_control.md`` left this one out with a specific reason -- ``render()`` runs
-``for obj in self.particles: obj.ttl -= 0.15`` and then ``self._clean_particles(False)``, so rendering
-twice gives two different images and the frame is not a function of the observation. That is an
-argument for WIDENING the state, not for excluding the env, and the three questions that decide which
-have now been asked:
-
-  **A. Is the mutation deterministic?** Yes. Restoring the env to a recorded state and rendering it
-  twice gives **max absolute pixel difference 0**; rendering twice WITHOUT restoring gives 63/255,
-  which is the mutation and is exactly why the particles have to be in the state.
-
-  **B. Is the particle list bounded?** Yes, in the only regime that produces frames. A discrete
-  LunarLander creates at most one particle per ``step``, and only when ``render_mode`` is set; the
-  discrete env fixes ``m_power = s_power = 1.0``, so every particle starts at ``ttl = 1.0`` and loses
-  0.15 per render, and the seventh decrement takes it below zero. Measured over full episodes under
-  three policies (main engine every step, main and side alternating, uniform random): **peak 6 drawn**
-  -- and 118, 126 and 77 alive when ``render()`` is never called, because nothing else prunes the
-  list. The bound is a property of "render as often as you step", which is the only way frames exist
-  at all, and ``reference_get_state`` raises rather than truncating if it is ever exceeded.
-
-  **C. Does a fixed-width state determine the frame?** Yes, and this is the measurement that decides
-  the verdict. A DIFFERENT env instance, with a different terrain and twenty steps of a different
-  history behind it, driven to the same numbers, renders **max absolute pixel difference 0** against
-  the original. The frame is a pure function of (terrain, lander, legs, particles) and of nothing else.
-
-The state stores each particle's ``ttl`` **as it is drawn**, not as the simulator holds it, and that is
-what makes it minimal rather than merely sufficient. ``render`` decrements every ``ttl`` and drops the
-dead prefix BEFORE it draws anything, so the env's list is one particle longer than the frame's -- and
-always by the same slot, the oldest. A state that copied the list verbatim would carry an x and a y
-that provably cannot move a pixel, which the conformance suite reports as a dead dimension and did.
-
-So the verdict is GO, on a wider contract than "render the observation": this is "replay the
-simulator's render state", the same contract MiniGrid's top-down classes and PushT already use. The
-observation is a lossy function of it -- it carries neither the terrain nor the leg joint angles nor
-the exhaust.
-
-Three things about this renderer that are not visible in the source
---------------------------------------------------------------------
-
-**The landing flags are drawn once per FIXTURE, so the number of live particles changes their colour.**
-The ``for x in [helipad_x1, helipad_x2]`` loop is nested INSIDE ``for f in obj.fixtures``, so the flags
-are painted ``len(particles) + 3`` times per frame. The opaque parts of a flag are idempotent; its
-``gfxdraw.aapolygon`` fringe is not, because a Wu blend at alpha ``(255*w)>>8`` never reaches the
-source colour and converges toward it with repetition. Measured on the flag alone: 2 repetitions move
-40 pixels by up to 62/255, 3 by 98/255, 7 by 152/255. The draw order is reproduced exactly for that
-reason -- particle, flag, flag, particle, flag, flag, ..., lander, flag, flag, leg, flag, flag.
-
-**Three different rasterizers appear in one frame**, and only one of them is the integer SDL_gfx path
-``render/gfxdraw.py`` reproduces exactly:
-
-    pygame.draw.polygon  +  gfxdraw.aapolygon  +  pygame.draw.aalines     (lander, legs)
-    pygame.draw.polygon  +  gfxdraw.aapolygon                             (terrain, flags)
-    pygame.draw.circle   x2                                               (particles)
-
-``pygame.draw.polygon`` is NOT ``gfxdraw.filled_polygon``: measured over 300 random convex polygons
-they differ on **3.63% of lit pixels**, all of them at the ends of scanlines, and the difference is not
-the vertex handling (both truncate -- a quad shifted by 0.9 px moves nothing and by 1.0 px moves one
-column). ``pygame.draw.aalines`` is a sub-pixel anti-aliasing path unrelated to gfxdraw's Wu line and
-is not reimplemented. What that costs is measured and reported below rather than hidden: it is the
-whole of the all-pixel residual, and none of it is an interior pixel, because every one of those
-disagreements is within a pixel or two of a shape boundary.
-
-**``pygame.draw.circle`` is a 12-pixel stencil here, not a circle.** Every particle has
-``radius = 2/SCALE``, and ``radius * SCALE`` is 2.0000001 which truncates to 2; the centre truncates
-too (60.0, 60.4, 60.5 and 60.9 all give the same columns). So the shape is a constant, read off pygame
-once, and it is not symmetric: it spans dy and dx from -2 to +1.
-
-Physics is not ported. Box2D's contact solver is chaotic in exactly the way
-``env.py`` describes, the legs are two revolute joints with motors and limits, and a
-reimplementation would diverge; the renderer stands on its own, and states come from the official env.
-"""
-
 from __future__ import annotations
 
 import numpy as np
@@ -90,10 +17,7 @@ CHUNK_X = tuple(WORLD_W / (CHUNKS - 1) * i for i in range(CHUNKS))
 HELIPAD_X = (CHUNK_X[CHUNKS // 2 - 1], CHUNK_X[CHUNKS // 2 + 1])
 HELIPAD_Y = WORLD_H / 4
 
-#: Fixture vertices, in PIXELS, read off the live bodies. ``render`` draws ``trans * v * SCALE`` where
-#: ``v`` is the shape's vertex in world units, so a vertex in pixels is ``R(angle) @ v_px + pos*SCALE``.
-#: Box2D reorders ``LANDER_POLY`` into its own counter-clockwise winding, which is the order the edges
-#: are anti-aliased in, so it is taken from the object rather than from the source constant.
+# Pixel-space fixture vertices follow Box2D winding, which controls antialias edge order.
 LANDER_VERTS = ((17.0, -10.0), (17.0, 0.0), (14.0, 17.0), (-14.0, 17.0), (-17.0, 0.0), (-17.0, -10.0))
 LEG_VERTS = ((-2.0, -8.0), (2.0, -8.0), (2.0, 8.0), (-2.0, 8.0))
 
@@ -115,11 +39,8 @@ PARTICLE_STENCIL = (
 )
 #: ``render()``'s own decrement, applied to every particle before anything is drawn
 TTL_DECAY = 0.15
-#: The most particles that can be DRAWN in one frame, measured over full episodes under three
-#: policies; ``reference_get_state`` raises rather than truncating if a state ever needs more, so the
-#: bound is checked on every state read rather than assumed. Six, and not by luck: the discrete env
-#: sets ``m_power = s_power = 1.0``, so every particle starts at ``ttl = 1.0`` and loses 0.15 a frame,
-#: and the seventh decrement takes it below zero before it is ever drawn again.
+# Six slots suffice when rendering at least once per step: the seventh lifetime decay removes a particle.
+# State extraction rejects longer lists rather than truncating them.
 N_PARTICLES = 6
 
 LANDER_COLOR = (128, 102, 230)
@@ -136,20 +57,7 @@ STATE_DIM = PART_OFF + 3 * N_PARTICLES
 
 
 def _check_lunar_lander_works() -> None:
-    """Probe the whole runtime AT IMPORT, so a machine without it loses this env cleanly.
-
-    ``import X`` succeeding is not the same as X working, and this module imports nothing at the top
-    that could fail: ``render`` is pure torch. What cannot be done without Box2D and pygame is produce
-    a STATE -- ``sample_states`` rolls the official env out, because the terrain, the leg joint angles
-    and the exhaust have no closed form -- and compare against the reference. An env that renders but
-    cannot say what to render is not usable, so the dependency is a hard one and is declared as one:
-    ``ImportError`` here means ``stable_envs/envs/__init__.py`` records it in ``import_errors()`` and
-    the env is cleanly ABSENT, rather than present and failing inside every fixture.
-
-    The probe is the failing path itself -- reset and render one frame, which is milliseconds -- and
-    not merely ``import Box2D``: gymnasium raises ``DependencyNotInstalled`` from inside
-    ``envs/box2d/lunar_lander.py``, and pygame is a separate requirement that only ``render`` reaches.
-    """
+    """Check reset and rendering at import so unusable optional dependencies prevent registration."""
     import gymnasium
 
     try:
@@ -169,14 +77,7 @@ _check_lunar_lander_works()
 
 
 class _AARecorder(G.Canvas):
-    """A canvas that records what ``aaline`` WOULD write instead of writing it.
-
-    Used once, at construction, on the flag triangle -- whose vertices are compile-time constants -- so
-    that its Wu fringe becomes a list of ``(row, column, weight)`` in the reference's own order and the
-    per-frame cost drops from a clip plus a Wu walk to a scatter. Empty writes are dropped, which is
-    most of them: ``aaline`` issues five scatters covering the vertical, horizontal and general cases
-    and any one edge uses two or three.
-    """
+    """Record ordered Wu fringe writes for static flag geometry."""
 
     def __init__(self, gfx: G.Gfx):
         super().__init__(1, gfx.H, gfx.W, gfx.device, gfx.sh, gfx.ys, gfx.xs)
@@ -185,15 +86,12 @@ class _AARecorder(G.Canvas):
     def blend_at(self, b, y, x, color_t, w, valid) -> None:
         ok = valid & (y >= 0) & (y < self.H) & (x >= 0) & (x < self.W)
         if bool(ok.any()):
-            # ``expand`` before indexing: the weight a primitive hands over may be one element that
-            # every write shares (``Canvas.solid``), and a boolean index wants it at full length.
-            # Belt and braces -- ``aaline_emit`` expands it too -- because this override is what a
-            # weight-shape change breaks first, and it breaks inside ``LunarLander.__init__``.
+            # Expand scalar weights before applying the per-write boolean mask.
             self.writes.append((y[ok].clone(), x[ok].clone(), w.expand(ok.shape)[ok].clone()))
 
 
 def _record_aa(gfx: G.Gfx, vi: torch.Tensor) -> list[tuple]:
-    """``gfxdraw.aapolygon`` on a CONSTANT polygon ``(1, V, 2)`` -> its ordered write list."""
+    """Return the ordered fringe writes for a constant (1, V, 2) polygon."""
     rec = _AARecorder(gfx)
     n = vi.shape[1]
     bidx = torch.zeros(1, dtype=torch.long, device=gfx.device)
@@ -204,10 +102,10 @@ def _record_aa(gfx: G.Gfx, vi: torch.Tensor) -> list[tuple]:
 
 @register
 class LunarLander(Env):
-    """LunarLander-v3, from a 38-number render state: terrain, lander, legs and the exhaust.
+    """Render LunarLander-v3 terrain, three body poses, and six exhaust particles.
 
-    11 smoothed terrain heights, 3 poses of 3 numbers, and 6 particle slots of ``(x, y, ttl)``. A
-    400x600x3 frame is 720,000 bytes against 38 float32, a **4,737x** shrink.
+    The 38-value render state stores particle lifetimes after the source renderer
+    would decrement them. It is not a complete Box2D simulator snapshot.
     """
 
     family = "lunarlander"
@@ -223,12 +121,7 @@ class LunarLander(Env):
         + tuple(f"{b}_{f}" for b in ("lander", "leg0", "leg1") for f in ("x", "y", "angle"))
         + tuple(f"p{k}_{f}" for k in range(N_PARTICLES) for f in ("x", "y", "ttl"))
     )
-    #: Public state. The row is already four runs and the layout names them: the
-    #: smoothed terrain profile, the three rigid bodies as ``(x, y, angle)`` each, and the exhaust
-    #: particle slots as ``(x, y, ttl)`` each. Column order is unchanged, every column is covered,
-    #: nothing is hidden. The lander's VELOCITY is deliberately absent: Box2D integrates it, this
-    #: package renders from a pose, and a column the frame never reads would be a dead dimension --
-    #: which is also why ``step``/``transition`` refuse rather than pretending to simulate.
+    # Render geometry only; velocities and Box2D simulation state are not represented.
     state_layout = (
         (("terrain",), N_TERRAIN, 0),
         (("lander", "pose"), 3, BODY_OFF),
@@ -237,33 +130,16 @@ class LunarLander(Env):
         (("particles",), 3 * N_PARTICLES, PART_OFF),
     )
 
-    #: Interior pixels are exact; the residual is the two ``pygame.draw`` rasterizers this module does
-    #: not reimplement, and it lives entirely on shape boundaries. Kept as a declared floor of 1.0
-    #: because that is what is measured -- see ``docs/research/lunarlander.md`` for the all-pixel
-    #: number and its decomposition.
+    # The declared interior threshold excludes the unimplemented pygame outline edge behavior.
     parity_interior_min = 1.0
 
     @property
     def frame_shape(self) -> tuple[int, int]:
-        """``(H, W)`` of a frame: always ``native``, i.e. 400x600.
-
-        ``Env.frame_spec`` assumes a SQUARE frame unless the env says otherwise, and this one is
-        not: ``size`` is the reference viewport's HEIGHT, so an unqualified spec described a 400x400
-        buffer and the frame is 400x600. There is no size at which it is square -- ``render`` raises
-        for any ``size != 400`` because every primitive is hardcoded in pixels -- so this is a
-        constant, not an aspect ratio. Same declaration, for the same reason, as
-        ``classic_control.ClassicControlEnv.frame_shape`` (three of those five are also 400x600) and
-        ``highway``/``minihack``.
-        """
+        """Return the fixed 400 × 600 frame shape."""
         return self.native
 
     def _close(self) -> None:
-        """Drop the sampled state pool. ``Env.close`` calls this once and is idempotent.
-
-        This env owns no external handle: the Box2D world it samples from is built per call and
-        discarded, and everything else it holds is a constant device tensor baked from the module's
-        own geometry. The pool is the one growable thing, and a closed env has no use for it.
-        """
+        """Release the cached sample pool."""
         self._pool = None
 
     def __init__(self, *a, **kw):
@@ -276,10 +152,7 @@ class LunarLander(Env):
         self._leg_v = torch.tensor(LEG_VERTS, **d)
         self._stencil = torch.tensor(PARTICLE_STENCIL, dtype=torch.long, device=self.device)
         self._pool: np.ndarray | None = None
-        # The flags are at CONSTANT coordinates -- the helipad sits at fixed chunk boundaries and
-        # helipad_y is VIEWPORT_H/SCALE/4 -- so their whole rasterisation is a compile-time constant
-        # and each draw is a scatter of ~180 pixels rather than a pass over the frame. They are drawn
-        # once per fixture, i.e. up to ten times a frame, which is what makes that worth doing.
+        # Flag coordinates are static, so cache their pixel locations and fringe weights.
         y1, y2 = int(HELIPAD_Y * SCALE), int(HELIPAD_Y * SCALE) + 50
         xa, xb = int(HELIPAD_X[0] * SCALE), int(HELIPAD_X[1] * SCALE)
         dx = xb - xa
@@ -290,28 +163,16 @@ class LunarLander(Env):
         m = G.fill_polygon_mask(vi[..., 0], vi[..., 1], self.gfx.ys, self.gfx.xs, W)[0]
         px = m.reshape(-1).nonzero().reshape(-1)
         self._tri_px = torch.cat([px, px + dx])
-        # The anti-aliased fringe is a constant too, so it is recorded ONCE here rather than
-        # re-derived per frame. That is the difference between a usable renderer and an unusable one:
-        # a Wu edge costs a six-iteration Cohen-Sutherland clip, and the flags are drawn up to ten
-        # times a frame, which measured at 513 ms of the 979 ms a batch of 256 took.
+        # Cache ordered fringe blends; flags are drawn repeatedly within a frame.
         self._tri_aa = [
             (torch.cat([y, y]), torch.cat([x, x + dx]), torch.cat([w, w])) for y, x, w in _record_aa(self.gfx, vi)
         ]
 
-    # --- variation --------------------------------------------------------------------------------
-
     def make_variation_space(self) -> Dict:
-        """Colours that are literally painted, and the anti-aliasing switch. Nothing else.
+        """Return painted colors and the antialiasing switch.
 
-        No knob for the exhaust: a particle's colour is
-        ``int(max(0.2, 0.15 + ttl) * 255)`` on red and ``int(max(0.2, 0.5 * ttl) * 255)`` on green and
-        blue, i.e. a function of a STATE dimension rather than an appearance constant. A knob that
-        multiplied it would not put its own colour in the frame, and the conformance suite checks
-        exactly that for an RGB leaf.
-
-        No knob for the lander's outline colour either, for a different reason: the outline is drawn by
-        ``pygame.draw.aalines``, which this module does not reimplement, so declaring the knob would
-        advertise something that cannot move a pixel.
+        Exhaust color depends on particle lifetime. The unimplemented source outline
+        rasterizer has no exposed color control.
         """
         return Dict(
             {
@@ -323,8 +184,6 @@ class LunarLander(Env):
             }
         )
 
-    # --- rendering --------------------------------------------------------------------------------
-
     @torch.no_grad()
     def _render(
         self,
@@ -335,7 +194,7 @@ class LunarLander(Env):
         style=None,
         out=None,
     ) -> torch.Tensor:
-        """``(...,38)`` -> ``(...,400,600,3)`` uint8 on device, for arbitrary leading dims."""
+        """Render (..., 38) rows to (..., 400, 600, 3) uint8 on the selected device."""
         H, W = self.native
         want = int(self.size if size is None else size)
         if want != H:
@@ -365,17 +224,13 @@ class LunarLander(Env):
         return img.view(*lead, H, W, 3) if lead else img
 
     def _draw(self, cv, s, sty) -> None:
-        """``render()``'s own sequence, in its own order, on a pre-flip (y down) canvas."""
+        """Draw terrain, particles, bodies, and repeated flags in source order before flipping."""
         B = s.shape[0]
         bidx = self.gfx.batch_index(B)
         terrain = sty["terrain.color"]
         lander_c = sty["lander.color"]
 
-        # 1. the exhaust. ``ttl`` is stored AS DRAWN (see the class docstring), so nothing is
-        #    decremented here; what does have to be reproduced is ``_clean_particles(False)``, which
-        #    pops from the FRONT while the front particle is dead. A dead slot in the MIDDLE of the
-        #    list is not removed and would be drawn, so the survivors are the slots at or after the
-        #    first live one -- a running maximum rather than a filter.
+        # Only the dead prefix is removed. A dead slot following a live particle is still drawn.
         ttl = s[:, PART_OFF + 2 :: 3]  # (B, N)
         alive = torch.cummax((ttl >= 0).to(torch.uint8), dim=1).values.bool()
         red = torch.clamp(torch.trunc(torch.clamp(0.15 + ttl, min=0.2) * 255), 0, 255)
@@ -405,8 +260,7 @@ class LunarLander(Env):
         )  # (B, 10, 4, 2)
         qi = torch.trunc(quads).to(torch.int64)
         for i in range(CHUNKS - 1):
-            # each quad's left and right edges are VERTICAL and at known columns, so its fill is
-            # confined to a 61 px band and pays for that band rather than for the whole frame
+            # Vertical terrain boundaries confine each fill to its own screen band.
             x0 = int(CHUNK_X[i] * SCALE)
             x1 = min(int(CHUNK_X[i + 1] * SCALE) + 1, VIEWPORT_W)
             cv.paint(
@@ -429,7 +283,7 @@ class LunarLander(Env):
             self._flags(cv, sty, bidx)
 
     def _particle(self, cv, x, y, color) -> None:
-        """``pygame.draw.circle`` twice in the same colour: one 12-pixel stencil at a truncated centre."""
+        """Paint the radius-two pygame circle stencil at a truncated pixel center."""
         cx = torch.trunc(x * SCALE).to(torch.long)
         cy = torch.trunc(y * SCALE).to(torch.long)
         H, W = self.native
@@ -442,26 +296,14 @@ class LunarLander(Env):
         b = torch.arange(B, device=x.device).view(-1, 1).expand_as(ys)
         flat = torch.where(ok, (b * H + ys.clamp(0, H - 1)) * W + xs.clamp(0, W - 1), torch.full_like(ys, cv.trash))
         n = ys.shape[1]
-        # ``Canvas`` is planar ``(3, B*H*W+1)``, so the channel axis is the one NOT being indexed and
-        # the scatter is still one operation. See ``render/gfxdraw.Canvas`` for why it is planar.
+        # The planar canvas keeps all color channels in one scatter.
         cv.flat[:, flat.reshape(-1)] = G.to_u8(color).t().reshape(3, B, 1).expand(3, B, n).reshape(3, -1)
 
     def _aa_poly(self, cv, vi, bidx, kmax) -> None:
-        """``gfxdraw.aapolygon`` for ``(N, V, 2)`` integer polygons, as ONE Wu pass over N*V edges.
+        """Blend all edges of (N, V, 2) integer polygons in one Wu pass.
 
-        Every edge of every polygon is issued in a single call rather than one call per edge, and that
-        is a throughput decision with a stated cost. A Wu edge carries a six-iteration Cohen-Sutherland
-        clip -- about 150 tiny kernel launches whatever its length -- so the price of this pass is the
-        NUMBER of calls, not the number of pixels: 8.6 ms a call, measured, at any batch size. Issuing
-        the terrain's 40 edges together instead of four at a time takes the render from 262 to 3,300
-        frames/s at batch 256.
-
-        What it gives up is the ordering of writes where two edges land on the same pixel, i.e. at the
-        shared vertices, because a batched scatter reads every destination before any of them is
-        written. Measured against the official renderer over 32 states: **identical**, 2,376 differing
-        pixels either way. That is not luck -- ``aapolygon`` draws every edge in ONE colour, and the
-        fill underneath it is that same colour, so the two candidate values at a shared vertex are a
-        blend of a colour over itself.
+        Shared vertices lie over the same fill color, so concurrent same-color edge
+        writes do not change the intended blend there.
         """
         N, V, _ = vi.shape
         a = vi.reshape(-1, 2)
@@ -469,10 +311,9 @@ class LunarLander(Env):
         G.aaline(cv, a[:, 0], a[:, 1], b[:, 0], b[:, 1], None, kmax, bidx.view(-1, 1).expand(N, V).reshape(-1))
 
     def _body(self, cv, verts, x, y, angle, color, bidx) -> None:
-        """One rigid body: ``pygame.draw.polygon`` then ``gfxdraw.aapolygon``, on the SAME vertices.
+        """Fill and antialias one transformed rigid-body polygon.
 
-        ``pygame.draw.aalines`` paints the outline on top of both and is not reimplemented; see the
-        module docstring for what that costs and why it is all boundary.
+        The additional pygame aalines outline is not reproduced; boundary pixels can differ.
         """
         c, sn = torch.cos(angle), torch.sin(angle)
         vx, vy = verts[:, 0].view(1, -1), verts[:, 1].view(1, -1)
@@ -483,13 +324,7 @@ class LunarLander(Env):
         self._aa_poly(cv, vi, bidx, 64)
 
     def _flags(self, cv, sty, bidx) -> None:
-        """The two landing flags, drawn once per FIXTURE by the reference and so once per call here.
-
-        Every coordinate is a constant: the helipad is at fixed chunk boundaries and ``helipad_y`` is
-        ``VIEWPORT_H / SCALE / 4``, so the poles are columns 240 and 360, rows 100 to 150 inclusive
-        (``pygame.draw.line`` at width 1 truncates its endpoints and lights both of them), and each
-        triangle is 25 px wide.
-        """
+        """Draw both static flags once per source fixture, preserving repeated fringe blends."""
         cv.use(sty["flag.pole_color"]).paint_at(self._pole_px)
         cv.use(sty["flag.color"]).paint_at(self._tri_px)
         B = cv.B
@@ -506,16 +341,10 @@ class LunarLander(Env):
                 one.expand(B * n),
             )
 
-    # --- states -----------------------------------------------------------------------------------
-
     def sample_states(self, batch: int, rng: np.random.Generator | None = None) -> np.ndarray:
-        """States from real rollouts of the official env, captured after ``step`` and before ``render``.
+        """Sample cached source rollouts captured after step and before render.
 
-        The policy fires the main engine most of the time, and that is not a detail: an episode that
-        never fires an engine never creates a particle, so all 21 exhaust dimensions would be dead and
-        the flags -- whose anti-aliased fringe is blended once per live particle -- would never be
-        drawn more than three times. A distribution that never exercises the thing the env is being
-        widened FOR proves nothing about it.
+        The sampling policy frequently fires the main engine to exercise exhaust geometry.
         """
         rng = rng or self.rng
         if self._pool is None:
@@ -524,8 +353,7 @@ class LunarLander(Env):
         return self._pool[idx].astype(np.float32)
 
     def _build_pool(self, n: int) -> None:
-        """Rollouts of the official env, with ``render`` called every step -- which is what bounds the
-        particle list, and the only regime in which frames exist at all."""
+        """Collect source rollout frames with one render per step to bound the particle list."""
         env = self.reference_env()
         u = env.unwrapped
         rng = np.random.default_rng(0)
@@ -535,17 +363,13 @@ class LunarLander(Env):
             for _ in range(400):
                 a = 2 if rng.random() < 0.7 else int(rng.integers(0, 4))
                 _, _, te, tr, _ = env.step(a)
-                # captured BEFORE the render: reference_get_state applies render()'s own decrement and
-                # prune, so this is the frame that is about to be drawn. It also raises if the list is
-                # longer than N_PARTICLES, which is where that bound is checked rather than assumed.
+                # Capture post-decay particle geometry before the source renderer mutates the list.
                 out.append(self.reference_get_state(u))
                 u.render()  # what prunes the list; without it nothing does
                 if te or tr or len(out) >= n:
                     break
             ep += 1
         self._pool = np.stack(out).astype(np.float32)
-
-    # --- reference bridge ---------------------------------------------------------------------------
 
     @classmethod
     def reference_env(cls, size: int | None = None):
@@ -559,21 +383,11 @@ class LunarLander(Env):
 
     @staticmethod
     def reference_get_state(u) -> np.ndarray:
-        """The render state of a live env: terrain, lander, legs, and the exhaust AS IT WILL BE DRAWN.
+        """Read terrain, body poses, and particles as the next source frame will draw them.
 
-        The terrain is read from ``sky_polys`` rather than from the ``height`` array ``reset`` sampled,
-        because ``sky_polys`` is what is DRAWN -- it holds the smoothed heights, and the smoothing
-        reads ``height[i-1]`` at ``i = 0``, which numpy resolves as ``height[11]``. Reading the drawn
-        quantity means that quirk cannot be transcribed wrongly.
-
-        The particles get the same treatment, and it is what makes the state MINIMAL. ``render``
-        decrements every ``ttl`` and then drops the dead prefix before it draws anything, so the list
-        the env is holding is one particle longer than the list the next frame shows -- and the extra
-        one is always the same slot, the oldest. Storing the env's list verbatim therefore leaves the
-        oldest slot's x and y unable to change any pixel, which is a dead state dimension and was
-        caught as one. So the decrement and the prune are applied HERE, and the state describes the
-        frame rather than the simulator: ``reference_set_state`` adds the decrement back so that the
-        reference's own ``render`` lands on exactly these values.
+        Use smoothed sky polygons and apply lifetime decay and dead-prefix pruning.
+        Raise if more than six particles remain; this bound requires rendering at
+        least as often as stepping. Restoration adds the decay back before drawing.
         """
         sy = [float(u.sky_polys[i][0][1]) for i in range(CHUNKS - 1)]
         sy.append(float(u.sky_polys[CHUNKS - 2][1][1]))
@@ -597,7 +411,7 @@ class LunarLander(Env):
 
     @classmethod
     def reference_set_state(cls, u, st) -> None:
-        """Drive the reference to ``st``: rebuild the terrain, the two rigid bodies and the exhaust."""
+        """Restore drawn terrain, three body poses, and particle lifetimes in the reference."""
         from Box2D.b2 import circleShape, fixtureDef
 
         v = np.asarray(st, np.float64)
@@ -630,11 +444,9 @@ class LunarLander(Env):
 
     @classmethod
     def reference_render(cls, env, states) -> np.ndarray:
-        """Official frames, with the round-trip asserted before each one.
+        """Restore each render state, check its round trip, and draw the official frame.
 
-        ``render()`` MUTATES the particles it draws, so the state is re-established for every frame
-        rather than once for the batch -- which is the whole reason the particles are in the state and
-        is also why the assertion below is on the state as it is BEFORE the render.
+        The source renderer mutates particles, so restoration is required before every frame.
         """
         u = env.unwrapped
         out = []

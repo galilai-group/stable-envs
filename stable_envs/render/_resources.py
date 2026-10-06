@@ -145,9 +145,8 @@ class Closeable:
     def _check_open(self, what: str) -> None:
         if self._se_closed:
             raise UseAfterCloseError(
-                f"{type(self).__name__}.{what}: this renderer is closed. close() released its device "
-                f"buffers, so what came back would be drawn through memory that no longer belongs to "
-                f"it — or, worse, would look like a frame. Build a new one."
+                f"{type(self).__name__}.{what}: this renderer is closed. "
+                "Create a new renderer before using its released buffers."
             )
 
     def _release(self) -> None:

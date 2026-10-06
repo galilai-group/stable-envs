@@ -78,13 +78,9 @@ class StyleTensor:
             return self
         if not self.shared:
             raise ValueError(
-                f"{owner}: the env carries a PER-ENVIRONMENT style of {self.batch} rows and this call "
-                f"asks for {b} environment(s). A style with one row (or with every row equal) "
-                f"broadcasts to any batch; {self.batch} different appearances cannot be spread over "
-                f"{b} environments, because nothing in the states says which of the {self.batch} rows "
-                f"they are. This used to substitute row 0's appearance for every row and say nothing. "
-                f"Index the style the same way as the states, e.g. "
-                f"env.render(states[i:j], style=env.get_style()[i:j])."
+                f"{owner}: PER-ENVIRONMENT style has {self.batch} rows; render requests {b} environment(s). "
+                "Only one shared appearance can broadcast to another batch size. "
+                "Slice the style with the states: env.render(states[i:j], style=env.get_style()[i:j])."
             )
         return StyleTensor(
             self.values[:1].expand(b, self.values.shape[1]).contiguous(), self._layout_list(), shared=True
@@ -115,11 +111,8 @@ class StyleTensor:
             # Check the last axis before reshaping; a transpose can have the right element count.
             if v.ndim >= 2 and v.shape[-1] != dim:
                 raise ValueError(
-                    f"style rows are {dim} number(s) wide and the last axis of this one is "
-                    f"{v.shape[-1]} (shape {tuple(v.shape)}). A style is (batch, style_dim) or one "
-                    f"shared (style_dim,) row; anything else used to be flattened and regrouped, "
-                    f"which for a transposed array succeeds and gives every environment a mixture of "
-                    f"other environments' knobs. env.style_names lists the {dim} columns in order."
+                    f"style rows are {dim} number(s) wide, got shape {tuple(v.shape)}. "
+                    f"Use (batch, {dim}) or one shared ({dim},) row in env.style_names order."
                 )
             if v.ndim <= 1 and v.numel() % dim:
                 raise ValueError(
@@ -163,10 +156,8 @@ class StyleTensor:
                     t = t.reshape(1, w).expand(b, w)  # one value shared by the batch
                 else:
                     raise ValueError(
-                        f"variation {path!r}: expected {w} numbers (shared by the batch) or "
-                        f"{b * w} ({b} environments x {w}), got {n} with shape "
-                        f"{tuple(t.shape)}. A count that is neither used to be taken as 'the first "
-                        f"{w} numbers, broadcast', i.e. environment 0's value for everybody."
+                        f"variation {path!r}: expected {w} numbers shared by the batch or "
+                        f"{b * w} ({b} environments × {w}); got {n} with shape {tuple(t.shape)}."
                     )
                 vals = vals.clone()
                 vals[:, o : o + w] = t

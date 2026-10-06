@@ -211,34 +211,23 @@ def check_states(
             else ""
         )
         raise ValueError(
-            f"{owner}: expected states shaped (batch, {D}) and got {shape} {dt}. That is a batch of "
-            f"FRAMES, not states"
-            + (", and uint8 says so — states are float" if raw.dtype == torch.uint8 else "")
-            + f". set_state/render run in the other direction: they take the {D} number(s) a frame is "
-            f"drawn FROM{_names_phrase(names, 6)} and produce the pixels — "
-            f"`frames = env.set_state(states).render()`. This used to be reshaped to (-1, {D}) and "
-            f"rendered whenever the size happened to divide, which is a plausible-looking picture "
-            f"built from pixel bytes read as coordinates.{cast}"
+            f"{owner}: expected states shaped (batch, {D}); got apparent FRAMES "
+            f"with shape {shape} and dtype {dt}. Supply state coordinates"
+            f"{_names_phrase(names, 6)}, not image pixels.{cast}"
         )
 
     if raw.ndim > 2 and not leading:
         raise ValueError(
-            f"{owner}: states are 2-D — (batch, {D}) — and this input has {raw.ndim} axes: {shape}. "
-            f"A rank higher than 2 is refused outright rather than flattened, because flattening is "
-            f"exactly how a frame stack used to become a batch of states whenever its size happened "
-            f"to divide by {D}. If this is a corpus with a time or trajectory axis, say so: "
-            f"`states.reshape(-1, {D})` (and build the env at that batch). If it is frames, you want "
-            f"env.render, not env.set_state."
+            f"{owner}: states are 2-D (batch, {D}); got {raw.ndim} axes: {shape}. "
+            f"For a state corpus with time or trajectory axes, explicitly reshape to (-1, {D}) "
+            "and construct an environment with that batch size. Image pixels are not State."
         )
 
     if raw.ndim >= 2 and shape[-1] != D:
         raise ValueError(
             f"{owner}: {type(env).__name__} expects state_dim {D}, got {shape[-1]} "
-            f"(input shape {shape}, dtype {dt}). A state is {D} number(s) wide"
-            f"{_names_phrase(names, 12)}. This used to be reshaped to (-1, {D}), which regroups the "
-            f"input into {raw.numel() // D if raw.numel() % D == 0 else 'a different number of'} "
-            f"states that each straddle two of your rows, and renders without complaint. Check the "
-            f"state layout with env.state_names / env.describe()."
+            f"(shape {shape}, dtype {dt}). Each state has {D} coordinates"
+            f"{_names_phrase(names, 12)}. Check env.state_names / env.describe()."
         )
 
     if raw.ndim == 1 and raw.numel() % D:
@@ -585,10 +574,8 @@ class Env:
             unknown = [p for p in paths if p not in known]
             if unknown:
                 raise KeyError(
-                    f"{type(self).__name__}.sample_variation: unknown variation path(s) {unknown}. This "
-                    f"used to match nothing and hand back the DEFAULT appearance for every "
-                    f"environment, which is indistinguishable from a randomisation that had no "
-                    f"effect. Known paths: {known}"
+                    f"{type(self).__name__}.sample_variation: unknown variation path(s) {unknown}. "
+                    f"Known paths: {known}"
                 )
         out = np.tile(self.default_variation(), (B, 1))
         for path, off, w in self.variation_space.flat_layout():
@@ -957,11 +944,8 @@ class Env:
     def _check_open(self, what: str) -> None:
         if self._closed:
             raise RuntimeError(
-                f"{type(self).__name__}.{what}: this environment is closed. close() releases the "
-                f"renderer's resources (contexts, atlases, device buffers), so what came back would "
-                f"be drawn through something that no longer exists — or, worse, would look like a "
-                f"frame. Build a new env: {type(self).__name__}(num_envs={self.B}, "
-                f"device='{self.device.type}')."
+                f"{type(self).__name__}.{what}: this environment is closed. "
+                "Create a new environment before using its released resources."
             )
 
     def close(self) -> None:

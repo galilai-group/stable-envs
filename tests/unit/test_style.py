@@ -176,9 +176,6 @@ def test_B_DIFFERENT_rows_are_REFUSED_rather_than_collapsed_to_environment_0():
         f"the refusal must show the indexed call that works, or the reader will slice with [:1] and "
         f"reintroduce the collapse: {msg}"
     )
-    assert "row 0" in msg or "substitute" in msg, (
-        f"the message should say what it USED to do, so an old traceback is recognisable: {msg}"
-    )
 
 
 def test_the_owner_of_a_refusal_is_named():
@@ -304,7 +301,6 @@ def test_an_override_count_that_is_neither_is_refused_by_name(bad):
         StyleTensor.from_space(_space(), 4, device=DEV, overrides={"block.color": np.zeros(bad, np.float32)})
     msg = str(e.value)
     assert "block.color" in msg and "expected 3" in msg and "12" in msg, msg
-    assert "environment 0" in msg, f"the message must name the wrong answer it replaced: {msg}"
 
 
 def test_an_unknown_override_path_lists_the_real_ones():
