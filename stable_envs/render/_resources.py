@@ -52,7 +52,7 @@ def counts() -> dict[str, Any]:
 
 
 def live(kind: str) -> int:
-    """Return created minus successfully closed objects of the given kind."""
+    """Return the number of open objects; release failures are counted separately."""
     with _LOCK:
         return _CREATED.get(kind, 0) - _CLOSED.get(kind, 0)
 
@@ -87,7 +87,7 @@ def retain_process_lifetime(obj: Any, why: str, *, overflow: str = "raise") -> A
     """Keep an object alive until interpreter exit and return it.
 
     Record ``why`` for diagnostics. At MAX_RETAINED, the default raises
-    ResourceWarning; ``overflow="retain"`` logs and retains anyway for foreign
+    RuntimeError; ``overflow="retain"`` logs and retains anyway for foreign
     views whose backing storage cannot safely be freed.
     """
     if overflow not in ("raise", "retain"):
@@ -102,7 +102,7 @@ def retain_process_lifetime(obj: Any, why: str, *, overflow: str = "raise") -> A
                 f"{sorted({w for w, _ in _RETAINED})}"
             )
             if overflow == "raise":
-                raise ResourceWarning(message)
+                raise RuntimeError(message)
             _LOG.warning("%s Keeping it because this caller cannot transfer ownership.", message)
         _RETAINED.append((why, obj))
     return obj
@@ -167,8 +167,9 @@ class Closeable:
             except Exception as exc:
                 _record_release_failure(self.resource_kind, exc)
                 raise
-            if self._se_counted:
-                _bump(_CLOSED, self.resource_kind)
+            finally:
+                if self._se_counted:
+                    _bump(_CLOSED, self.resource_kind)
 
     def __enter__(self):
         return self

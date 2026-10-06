@@ -141,7 +141,7 @@ def test_concurrent_close_releases_once():
 
 
 @pytest.mark.unit
-def test_a_failed_release_is_observable_and_not_counted_as_closed():
+def test_a_failed_release_is_observable_and_closes_the_object_once():
     class Boom(RES.Closeable):
         resource_kind = "test.Boom"
 
@@ -159,11 +159,11 @@ def test_a_failed_release_is_observable_and_not_counted_as_closed():
     with pytest.raises(RuntimeError, match="the free failed"):
         b.close()
     assert b.closed and b.calls == 1
-    assert RES.live("test.Boom") == live0 + 1
+    assert RES.live("test.Boom") == live0
     change = RES.delta(before)
     assert change["created"]["test.Boom"] == 1
     assert change["release_failed"]["test.Boom"] == 1
-    assert "test.Boom" not in change["closed"]
+    assert change["closed"]["test.Boom"] == 1
     assert RES.release_failures()[-1] == {"kind": "test.Boom", "error": "RuntimeError", "message": "the free failed"}
     b.close()
     assert b.calls == 1
@@ -284,7 +284,7 @@ def test_process_lifetime_retention_records_its_reason_and_is_capped():
 @pytest.mark.unit
 def test_retention_past_the_cap_raises_rather_than_growing_without_limit(monkeypatch):
     monkeypatch.setattr(RES, "MAX_RETAINED", len(RES.retained_reasons()))
-    with pytest.raises(ResourceWarning):
+    with pytest.raises(RuntimeError, match="refusing to retain"):
         RES.retain_process_lifetime(object(), "one too many")
 
 
