@@ -2,10 +2,14 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 import numpy as np
 
 from . import _resources
+
+if TYPE_CHECKING:
+    import torch
 
 #: mjtGeom codes, so a scene can be built from an MjModel with no translation table.
 PLANE, HFIELD, SPHERE, CAPSULE, ELLIPSOID, CYLINDER, BOX, MESH = 0, 1, 2, 3, 4, 5, 6, 7
@@ -377,18 +381,6 @@ class Camera:
     zfar: float
 
     @staticmethod
-    def from_model(m, d, cam: int) -> Camera:
-        znear = float(m.vis.map.znear) * float(m.stat.extent)
-        zfar = float(m.vis.map.zfar) * float(m.stat.extent)
-        return Camera(
-            np.asarray(d.cam_xpos[cam], np.float64).reshape(3),
-            np.asarray(d.cam_xmat[cam], np.float64).reshape(3, 3),
-            float(m.cam_fovy[cam]),
-            znear,
-            zfar,
-        )
-
-    @staticmethod
     def from_glcam(m, scn) -> Camera:
         """Build a mono camera by averaging the two resolved eyes, canceling their IPD offsets."""
         a, b = scn.camera[0], scn.camera[1]
@@ -494,6 +486,8 @@ class Scene(_resources.Closeable):
             nv += len(v)
             self.geoms.append(g)
 
+        if not self.geoms:
+            raise ValueError("nvdiff.Scene has no visible geometry after applying filters")
         dev = torch.device(device)
         self._assemble(
             np.concatenate(V),
@@ -612,8 +606,6 @@ class Scene(_resources.Closeable):
         )
         texid = np.full(G, -1, np.int64) if tex_of_geom is None else np.asarray(tex_of_geom, np.int64)
         self.texid = torch.as_tensor(texid, device=dev)
-        self.texid_np = texid
-        self.texcube_np = np.zeros(G, bool)
         self.textures = {}
         for t in sorted({int(x) for x in texid if x >= 0}):
             if textures is None or t not in textures:
@@ -726,8 +718,6 @@ class Scene(_resources.Closeable):
         self.shininess = torch.as_tensor(shin, dtype=torch.float32, device=dev)
         self.emission = torch.as_tensor(emis, dtype=torch.float32, device=dev)
         self.texid = torch.as_tensor(texid, device=dev)
-        self.texcube_np = texcube
-        self.texid_np = texid
 
         self.textures: dict[int, dict] = {}
         for t in sorted({int(x) for x in texid if x >= 0}):
@@ -1011,39 +1001,6 @@ class BatchRenderer(_resources.Closeable):
             return out
         return img
 
-    def render_qpos(self, qpos, cam: Camera | None = None, camera_id: int = -1, out=None):
-        """Render (B, nq) joint positions using CPU MuJoCo kinematics."""
-        self._check_open("render_qpos")
-        import mujoco
-        import torch
-
-        q = np.asarray(qpos.cpu() if hasattr(qpos, "cpu") else qpos, np.float64)
-        d = mujoco.MjData(self.m)
-        xp, xm = [], []
-        cp, cm = [], []
-        for row in q:
-            d.qpos[:] = row
-            mujoco.mj_forward(self.m, d)
-            xp.append(np.asarray(d.geom_xpos, np.float64)[self.scene.geoms])
-            xm.append(np.asarray(d.geom_xmat, np.float64).reshape(-1, 3, 3)[self.scene.geoms])
-            if camera_id >= 0:
-                # Copy camera arrays: MjData views are overwritten by the next state's kinematics.
-                cp.append(np.array(d.cam_xpos[camera_id], np.float64, copy=True))
-                cm.append(np.array(d.cam_xmat[camera_id], np.float64, copy=True).reshape(3, 3))
-        xpos = torch.as_tensor(np.stack(xp), dtype=torch.float32, device=self.device)
-        xmat = torch.as_tensor(np.stack(xm), dtype=torch.float32, device=self.device)
-        if camera_id >= 0:
-            cam = Camera(
-                np.stack(cp),
-                np.stack(cm),
-                float(self.m.cam_fovy[camera_id]),
-                float(self.m.vis.map.znear) * float(self.m.stat.extent),
-                float(self.m.vis.map.zfar) * float(self.m.stat.extent),
-            )
-        if cam is None:
-            raise ValueError("render_qpos needs either a Camera or a camera_id >= 0")
-        return self.render(xpos, xmat, cam, out=out)
-
     def _shade(self, n, p, base, spec, shin, emis, campos, camfwd):
         """Return unclamped material lighting with additive white specular.
 
@@ -1052,12 +1009,12 @@ class BatchRenderer(_resources.Closeable):
         import torch
 
         L = self.lights
+        if L is None:
+            return base
         v = campos.view(-1, 1, 1, 3) - p
         v = v / v.norm(dim=-1, keepdim=True).clamp_min(1e-9)
         prim = torch.zeros_like(base)
         high = torch.zeros(base.shape[:-1] + (3,), device=base.device, dtype=base.dtype)
-        if L is None:
-            return base
         t = lambda x: torch.as_tensor(np.asarray(x, np.float32), device=base.device)  # noqa: E731
         exp = (128.0 * shin).unsqueeze(-1)
         for i in range(len(L.pos)):
@@ -1136,8 +1093,8 @@ class BatchRenderer(_resources.Closeable):
         n = int(self.aniso)
         if n <= 1:
             return dr.texture(tex[None], uv, uv_da, filter_mode="linear-mipmap-linear", boundary_mode="wrap")
-        ax = uv_da[..., 0:2]  # d(u,v)/dx
-        ay = uv_da[..., 2:4]  # d(u,v)/dy
+        ax = uv_da[..., [0, 2]]  # (du/dX, dv/dX)
+        ay = uv_da[..., [1, 3]]  # (du/dY, dv/dY)
         lx = ax.norm(dim=-1, keepdim=True)
         ly = ay.norm(dim=-1, keepdim=True)
         major = torch.where(lx >= ly, ax, ay)

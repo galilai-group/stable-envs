@@ -65,17 +65,20 @@ class Scene2D:
         )
 
     def validate(self) -> Scene2D:
-        """Assert compatible shapes, int32 kinds, and positive world extents; return self."""
+        """Validate shapes, int32 kinds, and positive world extents; return self."""
+        if self.kind.ndim != 2 or self.kind.dtype != torch.int32:
+            raise ValueError("kind must have shape (B, N) and dtype int32")
         B, N = self.kind.shape
-        assert self.geom.shape[:2] == (B, N), f"geom {tuple(self.geom.shape)} vs kind {(B, N)}"
-        assert self.geom.shape[2] % 2 == 0, "geom width must be even (x,y pairs)"
-        assert self.fill.shape == (B, N, 3), f"fill {tuple(self.fill.shape)}"
-        assert self.line.shape == (B, N, 3), f"line {tuple(self.line.shape)}"
-        assert self.line_w.shape == (B, N), f"line_w {tuple(self.line_w.shape)}"
-        assert self.background.shape == (B, 3), f"background {tuple(self.background.shape)}"
-        assert self.kind.dtype == torch.int32, f"kind dtype {self.kind.dtype}, expected int32"
+        if self.geom.ndim != 3 or self.geom.shape[:2] != (B, N) or self.geom.shape[2] % 2:
+            raise ValueError("geom must have shape (B, N, 2 * vertices)")
+        for name, shape in (("fill", (B, N, 3)), ("line", (B, N, 3)), ("line_w", (B, N)), ("background", (B, 3))):
+            if getattr(self, name).shape != shape:
+                raise ValueError(f"{name} must have shape {shape}")
+        if len(self.world) != 4:
+            raise ValueError("world must contain (x0, y0, x1, y1)")
         x0, y0, x1, y1 = self.world
-        assert x1 > x0 and y1 > y0, f"degenerate world extent {self.world}"
+        if not (x1 > x0 and y1 > y0):
+            raise ValueError(f"degenerate world extent {self.world}")
         return self
 
 
@@ -83,13 +86,15 @@ class SceneBuilder:
     """Append primitives in draw order and build a batched Scene2D.
 
     Arguments accept shared values or values per environment. Plural add methods
-    also accept a primitive axis, reducing dispatch for scenes with many objects.
+    also accept a primitive axis. A width-sized vector is shared; use (B, 1) for
+    per-row scalar values. In plural methods, (B, width) is per environment;
+    use (1, n, width) for per-primitive values shared across environments.
     """
 
     def __init__(
         self,
         batch: int,
-        device: Any = "cuda",
+        device: Any = "cpu",
         vertices: int = 4,
         dtype: torch.dtype = torch.float32,
         style: Any = None,
@@ -138,6 +143,8 @@ class SceneBuilder:
             )
         elif t.ndim == 2:
             t = t.reshape(self.B, 1, width).expand(self.B, n, width)
+        elif t.ndim == 3:
+            t = t.expand(self.B, n, width)
         return t.reshape(self.B, n, width).contiguous()
 
     def _enabled_n(self, enabled: Batched | None, n: int) -> torch.Tensor:
@@ -172,7 +179,8 @@ class SceneBuilder:
         pad = 2 * self.V - geom.shape[-1]
         if pad > 0:
             geom = torch.cat([geom, torch.zeros(*sh, pad, device=self.device, dtype=self.dtype)], -1)
-        geom = geom[..., : 2 * self.V]
+        elif pad < 0:
+            raise ValueError(f"geometry exceeds vertex capacity {self.V}")
         if n == 1:
             fill_t = self._b(fill, 3)
             line_t = self._b(line if line is not None else fill, 3)
@@ -217,18 +225,17 @@ class SceneBuilder:
     ) -> None:
         """Add a convex CCW polygon from (V, 2) or (B, V, 2) vertices.
 
-        Repeat the last vertex when padding; vertices beyond the configured capacity
-        are truncated.
+        Repeat the last vertex when padding; exceeding vertex capacity raises ValueError.
         """
         t = torch.as_tensor(verts, device=self.device, dtype=self.dtype)
         if t.ndim == 2:
             t = t.unsqueeze(0).expand(self.B, -1, -1)
         v = t.shape[1]
+        if not 3 <= v <= self.V:
+            raise ValueError(f"polygon requires 3..{self.V} vertices, got {v}")
         if v < self.V:  # repeat the last vertex; the kernel drops degenerate edges
             t = torch.cat([t, t[:, -1:].expand(-1, self.V - v, -1)], dim=1)
-        self._push(
-            KIND_POLY, t[:, : self.V].reshape(self.B, -1).contiguous(), color, outline_color, outline_w, enabled
-        )
+        self._push(KIND_POLY, t.reshape(self.B, -1).contiguous(), color, outline_color, outline_w, enabled)
 
     def add_segment(
         self, a: Batched, b: Batched, half_w: Batched, color: Batched, enabled: Batched | None = None
@@ -236,6 +243,18 @@ class SceneBuilder:
         """Add a capsule from endpoints and a half-width in world units."""
         geom = torch.cat([self._b(a, 2), self._b(b, 2), self._b(half_w, 1)], dim=1)
         self._push(KIND_SEGMENT, geom, color, color, 0.0, enabled)
+
+    @staticmethod
+    def _corners(s):
+        return torch.stack(
+            [
+                torch.stack([-s[:, 0], -s[:, 1]], -1),
+                torch.stack([s[:, 0], -s[:, 1]], -1),
+                torch.stack([s[:, 0], s[:, 1]], -1),
+                torch.stack([-s[:, 0], s[:, 1]], -1),
+            ],
+            dim=1,
+        )  # (B,4,2) CCW
 
     def add_rect(
         self,
@@ -250,15 +269,7 @@ class SceneBuilder:
         """Add a rectangle with full width/height and optional rotation in radians."""
         c = self._b(center, 2)
         s = self._b(size, 2) * 0.5
-        base = torch.stack(
-            [
-                torch.stack([-s[:, 0], -s[:, 1]], -1),
-                torch.stack([s[:, 0], -s[:, 1]], -1),
-                torch.stack([s[:, 0], s[:, 1]], -1),
-                torch.stack([-s[:, 0], s[:, 1]], -1),
-            ],
-            dim=1,
-        )  # (B,4,2) CCW
+        base = self._corners(s)
         if angle is not None:
             th = self._b(angle, 1).squeeze(1)
             ct, st = torch.cos(th), torch.sin(th)
@@ -289,14 +300,16 @@ class SceneBuilder:
         outline_w: Batched = 0.0,
         enabled: Batched | None = None,
     ) -> None:
-        """Add convex CCW polygons (B, n, V, 2), padding or truncating to vertex capacity."""
+        """Add convex CCW polygons (B, n, V, 2), rejecting excess vertices."""
         n, v = int(verts.shape[1]), int(verts.shape[2])
+        if not 3 <= v <= self.V:
+            raise ValueError(f"polygon requires 3..{self.V} vertices, got {v}")
         t = verts.to(device=self.device, dtype=self.dtype)
         if v < self.V:
             t = torch.cat([t, t[:, :, -1:].expand(-1, -1, self.V - v, -1)], dim=2)
         self._push(
             KIND_POLY,
-            t[:, :, : self.V].reshape(self.B, n, -1).contiguous(),
+            t.reshape(self.B, n, -1).contiguous(),
             color,
             outline_color,
             outline_w,
@@ -319,15 +332,7 @@ class SceneBuilder:
         M = self.B * n
         c = center.to(device=self.device, dtype=self.dtype).reshape(M, 2)
         s = size.to(device=self.device, dtype=self.dtype).reshape(M, 2) * 0.5
-        base = torch.stack(
-            [
-                torch.stack([-s[:, 0], -s[:, 1]], -1),
-                torch.stack([s[:, 0], -s[:, 1]], -1),
-                torch.stack([s[:, 0], s[:, 1]], -1),
-                torch.stack([-s[:, 0], s[:, 1]], -1),
-            ],
-            dim=1,
-        )  # (M,4,2) CCW
+        base = self._corners(s)
         if angle is not None:
             th = torch.as_tensor(angle, device=self.device, dtype=self.dtype).reshape(M)
             ct, st = torch.cos(th), torch.sin(th)
@@ -353,7 +358,8 @@ class SceneBuilder:
 
     def build(self, background: Batched, world: Sequence[float], flip_y: bool = False) -> Scene2D:
         """Build a validated nonempty scene; world is (x0, y0, x1, y1) in native units."""
-        assert self._kind, "scene has no primitives"
+        if not self._kind:
+            raise ValueError("scene has no primitives")
         cat = lambda xs: (xs[0] if len(xs) == 1 else torch.cat(xs, dim=1)).contiguous()  # noqa: E731
         return Scene2D(
             kind=cat(self._kind),

@@ -16,55 +16,15 @@
 # (mujoco-warp 3.11.0). Shadow traversals for lights that cannot cast shadows
 # are removed at compile time, retaining upstream light order and arithmetic.
 
-"""``mujoco_warp.render`` with the shadow traversals that never execute removed at COMPILE time.
+"""Optional shadow-loop specialization for MuJoCo Warp 3.11.0.
 
-WHAT THIS IS FOR, IN ONE MEASUREMENT. ``mujoco_warp``'s megakernel inlines ``compute_lighting`` once
-per light plus once for the headlight, and every copy carries a full any-hit BVH traversal, because
-``use_shadows`` is a runtime kernel argument and ``lightcastshadow`` is read from a per-world array.
-Meta-World has three lights and a headlight, of which exactly ONE ever casts
-(``light_castshadow = [false, true, false]``, and the headlight is called with a literal ``False``),
-so four traversals are compiled and one runs. Measured at 256 px / 64 worlds on ``MetaWorldReach``:
+Lights that cannot cast shadows omit the BVH traversal at compile time. Light
+order and arithmetic are retained, but fast-math compilation can change pixels
+near quantization boundaries; callers requiring stock pixels should disable it.
+Other upstream versions and per-world shadow settings use the stock renderer.
 
-    baseline                              7.636 ms
-    rc.use_shadows = False (rays gone)    4.930 ms   x1.55
-    traversal deleted from the SOURCE     4.390 ms   x1.74
-
-so **1.12x of the frame is register pressure from code that never runs**, and it is available without
-changing a pixel. That is what this module takes.
-
-HOW, AND WHY IT IS BIT-IDENTICAL. Two things in Warp make this a specialisation rather than a
-rewrite, both checked in ``warp/_src/codegen.py`` rather than assumed:
-
-* ``emit_If`` (line 3212) evaluates a CONSTANT condition at codegen time and lowers only the taken
-  branch, so ``if wp.static(can_shadow):`` deletes the traversal from the generated C++ instead of
-  guarding it with ``if (false)``;
-* ``evaluate_static_expression`` (line 6025) hands every constant in ``adj.symbols`` to the static
-  evaluator, and the loop unroller binds the loop variable as exactly such a constant (line 3822),
-  so ``wp.static(LIGHT_CASTS[light_index])`` inside ``for light_index in range(wp.static(M_NLIGHT))``
-  resolves per iteration.
-
-The light loop keeps upstream's ORDER and upstream's arithmetic; only the callee changes, and the
-callee it changes to computes ``visible = 1.0`` for a light that could not have shadowed anything
-anyway. Nothing else in the megakernel is touched.
-
-WHAT IT IS NOT SAFE FOR, GUARDED IN ``applies_to``. The decision is compile-time, so a model whose
-``light_castshadow`` is BATCHED PER WORLD cannot use it -- a world could turn a caster on after the
-kernel was built. ``applies_to`` refuses in that case and the caller falls back to stock
-``mujoco_warp``, which is also what ``STABLE_ENVS_LIGHTSPEC=0`` does.
-
-``pack_rgba_to_uint32`` IS RE-READ FROM UPSTREAM AT CALL TIME, and that is load-bearing:
-``render/mjwarp.py``'s ``gl_rounding()`` patches the name inside ``mujoco_warp._src.render``, and a
-vendored module that had bound it at import would silently render with the TRUNCATING quantiser --
-worth interior 0.9988 -> 0.791 on Fetch, i.e. the single largest fidelity term on this backend. The
-same applies to ``sample_texture``, ``sample_skybox`` and ``_make_cast_ray``: all four are looked up
-on the upstream module inside ``render`` so every patch a caller applies to upstream still reaches
-this kernel.
-
-GENERATED, DO NOT EDIT BY HAND. the frozen measurement record produces this file by transforming
-the installed ``mujoco_warp._src.render`` source in three places; ``--check`` re-generates and diffs,
-which is the test to run after a mujoco_warp bump.
-
-Pinned against **mujoco-warp 3.11.0**.
+``specialised_lights`` temporarily patches process-global upstream functions.
+Do not overlap it with rendering or context construction in another thread.
 """
 
 from __future__ import annotations
@@ -74,18 +34,16 @@ import dataclasses
 import os
 from typing import Tuple
 
-import numpy as np
+import mujoco_warp as mjw
 import warp as wp
 from mujoco_warp._src import math  # noqa: F401  (referenced by the vendored function bodies)
-from mujoco_warp._src.types import MJ_MAXVAL, Data, GeomType, Model, ObjType, RenderContext
-from mujoco_warp._src.warp_util import event_scope
+from mujoco_warp._src import render as _upstream
+from mujoco_warp._src.types import MJ_MAXVAL, Data, Model, ObjType, RenderContext
 
 from . import _resources
 
 wp.set_module_options({"enable_backward": False})
 
-#: The mujoco_warp release this file was generated from. A bump is not automatically wrong, it is
-#: unverified: re-run the frozen measurement record.
 UPSTREAM_VERSION = "3.11.0"
 
 MAX_SHININESS = 128.0
@@ -96,41 +54,15 @@ NO_LIGHT_AMBIENT_FALLBACK = 0.3
 
 
 def applies_to(m: Model, rc: RenderContext) -> bool:
-    """Is a COMPILE-TIME light specialisation sound for this model and this context?
-
-    Only when ``light_castshadow`` is a constant of the model rather than a per-world field: the
-    whole point is that the decision is baked into the kernel, so a caller that randomises which
-    lights cast per world must get stock ``mujoco_warp``. Returns False rather than raising, because
-    the fallback is correct and merely slower.
-
-    This is the MODEL guard only. Whether a family opts in at all is decided by its ``_context``
-    through ``specialised_lights(enabled=...)``, because the answer differs per family -- see that
-    function.
-    """
+    """Whether shadow-casting flags are shared by all worlds."""
     cs = getattr(m, "light_castshadow", None)
     return cs is not None and len(cs.shape) == 2 and cs.shape[0] == 1
 
 
-#: Entries kept by ``_CASTS_CACHE``. One per (model, shadow setting) that has ever been rendered, and
-#: each entry is a tuple of bools plus a reference to a warp array the model already owns, so the
-#: memory is negligible and the bound exists only so that a long-lived process cannot accumulate one
-#: entry per model built. 64 is far above any measured working set — the largest family in the
-#: repository holds four contexts.
 CASTS_CACHE_MAX = 64
 
-#: Memo for ``light_casts``, and it is a correctness requirement rather than a saving. ``render`` is
-#: called once to warm up and then AGAIN INSIDE ``wp.ScopedCapture``; reading ``light_castshadow``
-#: with ``.numpy()`` is a device-to-host copy, which CUDA refuses during a capture with
-#: "operation would make the legacy stream depend on a capturing blocking stream". The warm-up call
-#: fills this, so the capturing call never copies. The value keeps a reference to the array so the
-#: pointer it is keyed on cannot be freed and reissued to a different model.
-#:
-#: BOUNDED, AND THE POLICY IS LOAD-BEARING. It was an unbounded dict, which is a leak; it must not
-#: become the ``clear()``-on-full idiom the rest of the repository grew, because clearing wholesale
-#: can throw away the entry the WARM-UP call just wrote and leave the CAPTURING call to do the
-#: device-to-host copy CUDA forbids — i.e. a cache eviction policy that turns into a capture failure.
-#: LRU cannot do that: the warm-up call makes its key the most recently used, so it is the last thing
-#: an insertion by anything else would evict, and no insertion happens between the two calls anyway.
+# Warm-up caches the host flags so CUDA graph capture never performs a device-to-host copy.
+# Retaining the array prevents its pointer from being reused for another model.
 _CASTS_CACHE = _resources.BoundedCache(CASTS_CACHE_MAX, name="mjwarp_lightspec.casts")
 
 
@@ -147,58 +79,34 @@ def light_casts(m: Model, rc: RenderContext) -> tuple:
     return hit[0]
 
 
-#: The stock ``mujoco_warp`` render, stashed by ``specialised_lights`` so the vendored one can hand a
-#: model it must not specialise straight back to it. Without this the fallback would re-enter the
-#: patched name and recurse.
-_STOCK_RENDER = None
+_STOCK_RENDER = _upstream.render
+_PATCH_ACTIVE = False
 
 
 @contextlib.contextmanager
 def specialised_lights(enabled: bool = True):
-    """Point ``mujoco_warp.render`` at this module's ``render`` for the duration of the block.
+    """Patch upstream during context construction; return whether specialization is active.
 
-    A context manager for the same reason ``gl_rounding`` is one: the window is short, it covers the
-    context build and the graph capture (which is when the megakernel source is generated and
-    compiled, so it is the only window that matters), and nothing else in the process ever sees it.
-
-    ``enabled`` IS THE CALLER'S CALL AND DEFAULTS TO OFF FOR A PARITY FAMILY, because the elision is
-    bit-identical on most scenes and not on all of them. Measured with the frozen measurement record,
-    comparing the raw megakernel output over 64 states at 256 px:
-
-        RoboCasa (2 cells), HumanoidBench (2 cells), Meta-World reach / sweep-into   0 / 4,194,304 px
-        Meta-World window-open, window-close                    max 1/255 on 2 / 4,194,304 px
-
-    The segmentation buffer is identical everywhere, so nothing about WHAT is hit changes; what
-    changes is that ``compute_lighting_flat`` is a different inlining context for the arithmetic that
-    survives, and ``mujoco_warp`` compiles its megakernel with ``fast_math`` enabled, which licenses
-    the reassociation that moves a handful of values across a quantisation boundary. It reproduces
-    exactly across runs (2 px at 64 states, 21 at 256, on three independent jobs), so it is a
-    deterministic difference and not a flake -- the stock-vs-stock control is 0 px.
-
-    Two pixels in four million cannot move Meta-World's declared parity floors, and that is beside
-    the point: the family claims bit-identity, so it gets stock ``mujoco_warp`` unless a caller asks
-    otherwise. ``STABLE_ENVS_LIGHTSPEC=1`` overrides for anyone who wants the 1.04-1.09x, and
-    ``=0`` forces it off everywhere.
+    ``STABLE_ENVS_LIGHTSPEC=0/1`` overrides ``enabled``. Version checks always apply.
+    Nested contexts are rejected; restoration also runs if context construction fails.
     """
-    import mujoco_warp as mjw
-    from mujoco_warp._src import render as R
-
+    global _PATCH_ACTIVE
+    if _PATCH_ACTIVE:
+        raise RuntimeError("specialised_lights contexts must not overlap")
     override = os.environ.get("STABLE_ENVS_LIGHTSPEC")
     if override is not None:
         enabled = override == "1"
-    if not enabled:
+    if not enabled or mjw.__version__ != UPSTREAM_VERSION:
         yield False
         return
-    global _STOCK_RENDER
-    orig_mod, orig_pkg = R.render, mjw.render
-    _STOCK_RENDER = orig_mod
-    R.render = render
-    mjw.render = render
+    orig_mod, orig_pkg = _upstream.render, mjw.render
+    _PATCH_ACTIVE = True
+    _upstream.render = mjw.render = render
     try:
         yield True
     finally:
-        R.render = orig_mod
-        mjw.render = orig_pkg
+        _upstream.render, mjw.render = orig_mod, orig_pkg
+        _PATCH_ACTIVE = False
 
 
 def _make_compute_lighting(cast_ray_first_hit, can_shadow: bool) -> wp.Function:
@@ -349,6 +257,9 @@ def render(m: Model, d: Data, rc: RenderContext):
       d: The data on device.
       rc: The render context on device.
     """
+    if mjw.__version__ != UPSTREAM_VERSION or not applies_to(m, rc):
+        return _STOCK_RENDER(m, d, rc)
+
     rc.seg_data.fill_(wp.vec2i(-1, -1))
 
     # Specialize the ray-cast helpers to the geom types present in the scene so the
@@ -358,20 +269,11 @@ def render(m: Model, d: Data, rc: RenderContext):
 
     cast_ray = _make_cast_ray(geom_ray_types, first_hit=False)
     cast_ray_first_hit = _make_cast_ray(geom_ray_types, first_hit=True)
-    # THE SPECIALISATION. Two variants of the same function; which one a light gets is decided
-    # below, per light, at codegen. ``compute_lighting_flat`` carries no traversal at all.
     compute_lighting = _make_compute_lighting(cast_ray_first_hit, True)
     compute_lighting_flat = _make_compute_lighting(cast_ray_first_hit, False)
-    if not applies_to(m, rc):
-        # A per-world ``light_castshadow`` (or the opt-out) means the decision cannot be
-        # baked; hand the frame to stock mujoco_warp, which is correct and merely slower.
-        return _STOCK_RENDER(m, d, rc)
     LIGHT_CASTS = light_casts(m, rc)
 
-    # Static parameters extracted for JAX FFI closure.
-    # RE-READ FROM UPSTREAM, NOT IMPORTED AT MODULE LOAD: ``gl_rounding()`` patches the name
-    # inside ``mujoco_warp._src.render``, and a copy bound at import would keep the truncating
-    # quantiser for every frame this kernel ever draws. Same for the three helpers.
+    # Read patched helpers at call time, including the quantizer installed by gl_rounding().
     from mujoco_warp._src import render as _up
 
     pack_rgba_to_uint32 = _up.pack_rgba_to_uint32

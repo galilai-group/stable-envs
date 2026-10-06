@@ -55,7 +55,7 @@ try:  # triton is optional; the torch path is the readable one
     import triton.language as tl
 
     HAVE_TRITON = True
-except Exception:  # noqa: BLE001
+except ImportError:
     HAVE_TRITON = False
 
 # ---------------------------------------------------------------- MiniGrid's alphabet
@@ -448,7 +448,7 @@ def blit(atlas_rgb: torch.Tensor, idx: torch.Tensor, tile_size: int, out: torch.
     materialises a full-size tiled buffer and then transposes it, and measures 2.5-3.5x slower.
     """
     B, H, W = idx.shape
-    if not HAVE_TRITON:
+    if not HAVE_TRITON or idx.device.type != "cuda":
         return blit_torch(atlas_rgb, idx, out=out)
     T = tile_size
     w = word_size(T)
@@ -526,7 +526,7 @@ def visibility_scan(transparent: torch.Tensor, view_size: int) -> torch.Tensor:
     """
     B = transparent.shape[0]
     V = view_size
-    if not HAVE_TRITON or V * V > 63:
+    if not HAVE_TRITON or transparent.device.type != "cuda" or V * V > 63:
         return visibility_scan_torch(transparent, V)
     p2 = torch.ones(V * V, dtype=torch.int64, device=transparent.device) << torch.arange(
         V * V, device=transparent.device

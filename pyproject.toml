@@ -132,12 +132,11 @@ ignore = ["E402", "E731", "E741"]
 # Re-exports and registration side-effect imports.
 "**/__init__.py" = ["F401"]
 # Generated MJWarp kernels: unused typing imports and `int()` casts are load-bearing for Warp.
-"stable_envs/render/mjwarp_lightspec.py" = ["F401", "UP006", "UP018", "UP035"]
+"stable_envs/render/mjwarp_lightspec.py" = ["UP006", "UP018", "UP035"]
 "stable_envs/render/mjwarp.py" = ["UP018"]
 # Forward references kept unimported to avoid cycles; annotations are not evaluated.
 "stable_envs/env.py" = ["F821"]
 "stable_envs/envs/dmcontrol/suite.py" = ["F821"]
-"stable_envs/render/nvdiff.py" = ["F821"]
 # Public `Union[...]` alias; `|` would change the runtime type object.
 "stable_envs/render/scene.py" = ["UP007"]
 # Measured `"%04i" % reward` atlas keys / pygame font contract.
