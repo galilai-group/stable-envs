@@ -1,5 +1,3 @@
-"""Numeric pixel inputs for the registered Cube/Scene renderer boundary."""
-
 from __future__ import annotations
 
 import hashlib
@@ -17,13 +15,10 @@ STATIC = ("cube.size", "agent.color", "camera.angle_delta", "light.intensity")
 
 
 class _RenderScene(CompatibleScene):
-    """Resolve independent button geom colors into render-only materials.
+    """Give each button its own render material while preserving source material parameters.
 
-    MuJoCo honors each button's geom RGB override; MJWarp takes material RGB.
-    The original shared btn_red material therefore makes both buttons red even
-    when one or both state bits select white. Separate otherwise identical
-    materials preserve the source specular/shininess/texture parameters.
-    """
+    MuJoCo honours geom RGB overrides; MJWarp reads material RGB. Independent
+    materials let the two button-state bits select different colours."""
 
     def modify_mjcf_model(self, model):
         model = super().modify_mjcf_model(model)
@@ -156,7 +151,7 @@ def validate(family, state):
 
 
 def build_model(family, row):
-    """Compile render-only assets/configuration. Never reset or step physics."""
+    """Compile renderer assets and configuration without resetting or stepping physics."""
     cls = CompatibleCube if family == "Cube" else _RenderScene
     env = cls(seed=0)
     try:
@@ -164,7 +159,7 @@ def build_model(family, row):
             env.variation_space._walk(name)._value = row["appearance", name].detach().cpu().numpy().copy()
         if family == "Scene":
             env.variation_space._walk("lock_color").set_value(row["appearance", "lock_color"].cpu().numpy().copy())
-        # Floor/cube RGB use the frozen renderer's existing per-world color paths.
+        # Floor/cube RGB use the renderer’s per-world colour paths.
         env._mjcf_model = env.modify_mjcf_model(env.build_mjcf_model())
         env.compile_model_and_data()
         env._cube_colors_from_variation()

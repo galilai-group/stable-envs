@@ -1,5 +1,3 @@
-"""Exact delegated semantics for the historical SWM Humanoid Walk default."""
-
 from __future__ import annotations
 
 import os
@@ -36,7 +34,7 @@ HUMANOID_FIELDS = {
 
 
 def _apply_registered_defaults(model):
-    """Apply the pinned SWM wrapper's first-reset MJCF writes exactly."""
+    """Apply registered reset values before compiling the model."""
     grid = model.find("texture", "grid")
     grid.rgb1 = [0.1, 0.2, 0.3]
     grid.rgb2 = [0.2, 0.3, 0.4]
@@ -57,7 +55,7 @@ def _apply_registered_defaults(model):
 
 
 def _make_env(seed):
-    """Build the historical Walk task without importing stable-worldmodel."""
+    """Construct Humanoid Walk with registered defaults and normalized actions."""
     from dm_control import mjcf
     from dm_control.rl import control
     from dm_control.suite import humanoid
@@ -98,7 +96,10 @@ def _numeric_info(env, cumulative):
 
 
 class DMCHumanoidAdapter:
-    """B independent CPU simulators for the historical Humanoid Walk default."""
+    """Independent CPU Humanoid Walk simulators.
+
+    Each action advances the source twice; ``device`` selects output placement.
+    State includes lifecycle, warmstart and task RNG for continuation."""
 
     def __init__(self, num_envs, device="cpu", seed=0):
         self.num_envs = int(num_envs)

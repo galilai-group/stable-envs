@@ -1,5 +1,3 @@
-"""Public parameterized Fetch semantics; renderer dependencies stay optional."""
-
 from __future__ import annotations
 
 import numpy as np
@@ -12,6 +10,11 @@ from ..spaces import Box, Dict
 
 
 class FetchSemantics:
+    """Compose Fetch CPU simulation with lazily constructed render backends.
+
+    Public State includes controller, lifecycle and RNG fields; the qpos/goal
+    projection is for rendering only and cannot restore the simulator."""
+
     execution_mode = "DELEGATED_CPU"
     action_dim = 4
     action_dtype = torch.float32
@@ -38,7 +41,7 @@ class FetchSemantics:
             self._reset_keys -= {"block.mass", "block.angle", "block.start_position", "object.color"}
         self._reset_keys.add("table.color")
         self._configured_mass = self._simulator._mass.copy()
-        self.state_dim = self._nq + 3  # Private frozen renderer width only.
+        self.state_dim = self._nq + 3  # Private renderer width, not full State width.
         from .fetch import GOAL_NAMES, OBJECT_JOINT, ROBOT_JOINTS
 
         self.state_names = (*ROBOT_JOINTS, *(OBJECT_JOINT if self._has_object else ()), *GOAL_NAMES)
@@ -53,8 +56,7 @@ class FetchSemantics:
         )
 
     def make_variation_space(self):
-        # Derive precisely the existing renderer defaults without compiling its
-        # surgical model or allocating a GL/MJWarp context in the CPU profile.
+        # Read defaults from the owned simulator without allocating a render context.
         from .fetch import BLUE, _effective_rgba
 
         m = self._simulator.reference_model()
@@ -149,14 +151,10 @@ class FetchSemantics:
         return state
 
     def _reset_visual_colors(self, values):
-        """Match pinned SWM's material unbinding before applying reset colors.
+        """Persist source material detachment and copy effective colors into style.
 
-        The first active visual reset detaches table, floor and object materials,
-        even when only one color was requested. Their geom colors then become
-        visible; notably floor grey changes from material 0.2 to geom 0.5.
-        Keep these appearance-only model changes across resets as SWM does, and
-        project their effective colors into the existing separately stored style.
-        """
+        Selecting table or object color also detaches the floor material, revealing
+        its geom color (grey 0.5 instead of material grey 0.2)."""
         if not any("table.color" in v or "object.color" in v for v in values):
             return
         colors = self._simulator.reset_visual_colors(values)
@@ -181,7 +179,7 @@ class FetchSemantics:
         return self._simulator.step(actions, active=active)
 
     def _advance_without_snapshot(self, actions, *, active=None):
-        """Sequence fast path when only a final checkpoint/image is requested."""
+        """Advance without State capture for sequences needing only a final checkpoint."""
         return self._simulator.advance(actions, active=active)
 
     def _step_pipeline(self):
@@ -221,7 +219,7 @@ class FetchSemantics:
 
 
 def _historical_sampling_tree(has_object=True):
-    """Upstream Gymnasium seeding tree; only bounded leaves are exposed here."""
+    """Build the source Gymnasium seeding tree, including unexposed leaves."""
     import gymnasium as gym
 
     def box(lo, hi, shape):

@@ -1,5 +1,3 @@
-"""Batched Rocket simulator adapter with atomic whole-batch restoration."""
-
 from __future__ import annotations
 
 import copy
@@ -13,6 +11,11 @@ from .rocket_replay import RocketReplay, generator_state, install_generator
 
 
 class RocketAdapter:
+    """Batch CPU Rocket owners with CPU/CUDA State storage.
+
+    Validate every action before stepping any lane. Stage reset and restoration
+    for the whole batch before replacing its current engines."""
+
     def __init__(self, batch, device, seed, config=None):
         if type(batch) is not int or batch < 1:
             raise ValueError("num_envs must be a positive integer")

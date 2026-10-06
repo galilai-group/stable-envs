@@ -1,5 +1,3 @@
-"""Authoritative recovered dm_control stepping; no renderer or SWM imports."""
-
 from __future__ import annotations
 
 import os
@@ -11,7 +9,7 @@ from tensordict import TensorDict
 
 from .dmcontrol_state import export_state
 
-# Full resume contract, distinct from the renderer's four float32 columns.
+# These fields restore simulation; compact renderer columns cannot.
 REACHER_FIELDS = {
     "qpos": (2, torch.float64),
     "qvel": (2, torch.float64),
@@ -29,7 +27,7 @@ REACHER_FIELDS = {
 
 
 def _resume_fields(nq, nv):
-    """Full fields experimentally required by the bounded stateless-task cohort."""
+    """Continuation fields shared by Acrobot, Pendulum and Cartpole."""
     return {
         "qpos": (nq, torch.float64),
         "qvel": (nv, torch.float64),
@@ -53,7 +51,7 @@ FIRST_FAMILY_FIELDS = {
 
 
 def _make_first_family(domain, seed):
-    """Compile one of the three pinned historical default tasks."""
+    """Construct the registered sparse Acrobot/Cartpole or dense Pendulum task."""
     from dm_control import mjcf
     from dm_control.rl import control
     from dm_control.suite.wrappers import action_scale
@@ -73,7 +71,7 @@ def _make_first_family(domain, seed):
 
         task = module.Balance(swing_up=True, sparse=True, random=seed)
         time_limit = 10
-    else:  # This helper is intentionally bounded; it is not a DMC factory.
+    else:
         raise ValueError(f"Unsupported recovered DMC domain {domain!r}")
 
     xml, assets = module.get_model_and_assets()
@@ -96,7 +94,10 @@ def _make_first_family(domain, seed):
 
 
 class FirstFamilyAdapter:
-    """B independent simulators for the three pinned historical default tasks."""
+    """Independent CPU simulators with two source steps per action.
+
+    ``device`` controls returned tensor placement. State includes lifecycle and
+    task RNG fields; it is separate from the renderer’s compact pose columns."""
 
     def __init__(self, domain, num_envs, device="cpu", seed=0):
         if domain not in FIRST_FAMILY_FIELDS:
@@ -204,7 +205,7 @@ class FirstFamilyAdapter:
 
 
 def _make_reacher(seed, arm_density=1000.0, finger_density=1000.0):
-    """Compile the same MJCF route and hard task as the pinned historical wrapper."""
+    """Construct Reacher’s hard task with the registered model and action scaling."""
     from dm_control import mjcf
     from dm_control.rl import control
     from dm_control.suite import reacher
@@ -220,7 +221,7 @@ def _make_reacher(seed, arm_density=1000.0, finger_density=1000.0):
     model.find("geom", "finger").density = finger_density
     model.find("geom", "target").type = "sphere"
     model.find("geom", "target").size = np.array([0.015], np.float32)
-    # Historical reset defaults; visual changes do not change this task's dynamics.
+    # Apply registered appearance defaults before compiling the model.
     model.find("texture", "grid").rgb1 = [0.1, 0.2, 0.3]
     model.find("texture", "grid").rgb2 = [0.2, 0.3, 0.4]
     model.find("material", "self").rgba = np.array([0.7, 0.5, 0.3, 1], np.float32)
@@ -234,7 +235,9 @@ def _make_reacher(seed, arm_density=1000.0, finger_density=1000.0):
 
 
 class ReacherAdapter:
-    """B independent CPU simulators; device controls only State/StepResult placement."""
+    """Independent CPU Reacher simulators; ``device`` selects output placement.
+
+    Each action advances the source twice. State includes target, lifecycle and RNG."""
 
     def __init__(self, num_envs, device="cpu", seed=0):
         self.num_envs = int(num_envs)
@@ -250,7 +253,7 @@ class ReacherAdapter:
             raise RuntimeError("ReacherAdapter is closed")
 
     def configure_density(self, values):
-        """Recompile changed physical Variation, retaining the current full snapshot."""
+        """Recompile changed arm/finger densities and restore the current State."""
         values = np.asarray(values, np.float64).reshape(self.num_envs, 2)
         if np.array_equal(values, self._density):
             return

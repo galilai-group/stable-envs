@@ -1,11 +1,3 @@
-"""Source Pygame rendering from numeric State, without replaying its history.
-
-Each lane retains one render-only scene. Geometry changes rebuild that scene;
-ordinary frames install poses and numeric debug-draw contacts only. Physics
-and rendering never share engines. This is a CPU renderer, including when
-its output is explicitly copied to CUDA State storage.
-"""
-
 import numpy as np
 from pymunk.space_debug_draw_options import SpaceDebugColor
 
@@ -27,6 +19,11 @@ def variation_values(row, prefix):
 
 
 class PushTProjection:
+    """Render numeric State through a separate CPU Pygame scene per lane.
+
+    Geometry changes rebuild the scene; other frames install poses, colours and
+    captured contact segments. Rendering never steps the physics owner or replays
+    action history. CUDA output placement does not make this a GPU renderer."""
     def __init__(self):
         self.scenes = []
 

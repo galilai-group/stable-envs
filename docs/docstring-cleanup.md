@@ -95,8 +95,9 @@ comparisons and batch/chunk invariance. See
 
 Remaining work from the supplied renderer audit:
 
-1. Continue the per-file prose review. The current non-Craftax library census is
-   72 headers in 150 files (48%); the roughly 20% target is not complete.
+1. Review remaining test/reference helpers and maintained tools. Library headers
+   now occupy 35 of 150 non-Craftax files (23%); seven are attribution notices.
+   Excluding those notices, 28 files (19%) retain module introductions.
 2. Migrate test and documentation dependencies before moving the remaining
    research tree and historical drivers. A verified remote archive now exists;
    accepted evidence still consumed by tests remains in place.
@@ -104,6 +105,22 @@ Remaining work from the supplied renderer audit:
    gates pass; this is not a claim that every existing repository test passes.
 
 The supplied audit's human upstream-outreach section remains out of scope.
+
+The family prose pass reviewed 39 production files individually and removed a net
+3,093 lines. Executable ASTs are unchanged from `608df81b`. Standalone comment
+blocks in those files are at most two lines; the longest remaining library header
+is 37 lines. The rewrites distinguish render projections from resumable State and
+preserve rounding, RNG, device, and resource-ownership constraints. Craftax,
+diagnostic strings, generated class metadata, and accepted evidence are unchanged.
+
+Local checks passed 52 cases (two skipped), plus 91 adapter cases (37 skipped for
+unavailable dependencies/CUDA). Oscar's paired DMC selection had identical outcomes
+before and after: 154 passed, five failed, three skipped on an RTX A5000. The five
+failures called the removed `transition` API. The test now checks that `set_state`
+refuses renderer-only cells; all five repaired cases passed on an RTX 3090. The
+three Swimmer skips reflect its declared CPU-render limitation. This is scoped
+validation, not a full-suite or new performance/parity claim. See the
+[family prose validation record](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/fixtures/renderer_cleanup/family-prose-validation.json).
 
 MJWarp shares its texture safety checks and removed-texture records, releases an
 unused model reference, and documents the existing cache-path import default.

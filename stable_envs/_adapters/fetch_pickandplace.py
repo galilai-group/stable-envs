@@ -1,9 +1,3 @@
-"""Private parameterized Fetch semantics; observation packaging belongs to SWM.
-
-The source-proof report establishes warmstart and the gripper controller cache.
-No SWM code or opaque MuJoCo state serialization is used at runtime.
-"""
-
 from __future__ import annotations
 
 import os
@@ -45,6 +39,11 @@ def state_fields(nq, nv):
 
 
 class FetchAdapter:
+    """CPU Fetch simulators with a 50-step time limit and optional lane threads.
+
+    ``device`` selects returned tensor placement. State preserves controller caches
+    and warmstart in addition to poses, goals, lifecycle and RNG."""
+
     execution_mode = "DELEGATED_CPU"
 
     def __init__(self, num_envs, device="cpu", seed=0, task="PickAndPlace", reward_type="sparse"):
@@ -72,15 +71,13 @@ class FetchAdapter:
         self._executor = None
         self._workers = 1
         self.reset(seed=seed)
-        # The bounded 64/256-lane sweep found four workers useful and little
-        # benefit from eight. Respect scheduler affinity; leave cheap batches
-        # serial. Strategy remains private rather than another user API knob.
+        # Bound threads by scheduler affinity and keep small batches serial.
         available = len(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else (os.cpu_count() or 1)
         if self.num_envs >= 64 and available > 1:
             self._set_workers(min(4, available))
 
     def _set_workers(self, workers):
-        """Private measured executor choice; each task owns disjoint simulator lanes."""
+        """Assign disjoint simulator lanes to each thread; wait for existing work first."""
         self._check_open()
         if type(workers) is not int or not 1 <= workers <= self.num_envs:
             raise ValueError("workers must be an integer between 1 and num_envs")
@@ -99,7 +96,7 @@ class FetchAdapter:
     def configure_object_mass(self, values):
         self._check_open()
         self._mass = np.asarray(values, np.float64).reshape(self.num_envs).copy()
-        # Historical Variation values are applied after the next upstream reset.
+        # Apply mass only after the next source reset.
 
     def reference_model(self):
         self._check_open()
@@ -114,7 +111,7 @@ class FetchAdapter:
             env._max_episode_steps = int(limit)
 
     def reset_visual_colors(self, values):
-        """Apply source material unbinding where each simulator is owned."""
+        """Detach table, floor and object materials when table/object color is selected."""
         self._check_open()
         if not hasattr(self, "_visual_geoms"):
             self._visual_geoms = []
@@ -167,7 +164,7 @@ class FetchAdapter:
                 changed = True
             if "block.mass" in values:
                 self._mass[lane] = float(np.asarray(values["block.mass"]).reshape(-1)[0])
-            # Historical SWM applies the current mass after upstream reset.
+            # Reset must run with the previous mass before installing the new value.
             if self.has_object:
                 e.unwrapped.model.body_mass[self._object[lane]] = self._mass[lane]
             if changed:
@@ -276,7 +273,7 @@ class FetchAdapter:
         return out
 
     def advance(self, actions, *, active=None):
-        """Advance task/controller/physics without materializing a full snapshot."""
+        """Advance active lanes without capturing State; retain inactive lane outputs."""
         self._check_open()
         if torch.is_tensor(active):
             active = active.detach().cpu().numpy()
@@ -333,5 +330,5 @@ class FetchAdapter:
             self._closed = True
 
 
-# Compatibility name for the accepted representative private probe.
+# Retained for external replay and acceptance scripts.
 FetchPickAndPlaceAdapter = FetchAdapter

@@ -1,14 +1,11 @@
-"""Atomic public action boundary for the official Rocket engine.
-
-PyFlyt applies forces before checking booster/gimbal bounds. Validate without
-touching the engine; rejected calls must never become replay transitions.
-"""
-
 import numpy as np
 
 
 def validate_action(action: np.ndarray) -> None:
-    """Accept the declared finite float32/float64 domain without conversion."""
+    """Validate finite float32/float64 commands before touching the engine.
+
+    PyFlyt can apply forces before rejecting booster or gimbal bounds. This check
+    must precede stepping so rejected calls cannot alter replay history."""
     if not isinstance(action, np.ndarray) or action.dtype not in (np.dtype("float32"), np.dtype("float64")):
         raise TypeError("Rocket action must be a float32 or float64 numpy array")
     if action.shape != (7,):

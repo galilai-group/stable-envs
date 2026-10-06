@@ -1,9 +1,3 @@
-"""Numeric bounded replay State using only official PyFlyt/PyBullet public steps.
-
-Native contact caches are reconstructed by replay, never approximated by a
-teleport. State contains no native handles or serialized Python objects.
-"""
-
 from __future__ import annotations
 
 import copy
@@ -84,7 +78,11 @@ def decode_value(value, code):
 
 
 class RocketReplay:
-    """One independently owned engine; staged reconstruction is atomically swapped."""
+    """Own one CPU engine with a numeric, bounded replay recipe.
+
+    Restoration rebuilds native contact caches through source steps, then verifies
+    the resulting fields before swapping engines. State contains no native handles;
+    restore cost grows with the recorded physical action count."""
 
     def __init__(self, config=None, seed=0, options=None, *, initialize=True):
         for name, required in [("PyFlyt", "0.29.0"), ("pybullet", "3.2.7")]:
@@ -266,7 +264,7 @@ class RocketReplay:
         return n, post
 
     def reconstruct(self, state):
-        """Validate and return a new engine; this instance remains untouched."""
+        """Validate the recipe and return a matching new engine, leaving this owner untouched."""
         n, post = self.validate(state)
         staged = RocketReplay(self.config, initialize=False)
         try:

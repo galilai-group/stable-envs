@@ -1,9 +1,3 @@
-"""Private batched PushT replay candidate with atomic State/reset installation.
-
-The batch history axis is the longest finite prefix among its lanes. Padding
-is zero and invalid; no episode horizon is introduced by storage capacity.
-"""
-
 from __future__ import annotations
 
 import numpy as np
@@ -14,6 +8,12 @@ from .pusht_replay import HISTORY_KEYS, PushTReplay, validate_seed
 
 
 class PushTReplayAdapter:
+    """Batch CPU PushT owners with CPU/CUDA State storage.
+
+    Stage every lane before installing a reset or restored State. Export pads
+    histories to the longest lane with zero, invalid entries; padding adds no
+    episode time limit."""
+
     def __init__(self, batch, device="cpu", seed=0, *, discrete=False, config=None):
         if type(batch) is not int or batch < 1:
             raise ValueError("PushT batch must be a positive integer")

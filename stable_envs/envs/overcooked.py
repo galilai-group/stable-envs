@@ -1,108 +1,3 @@
-"""Overcooked — JaxMARL's renderer, which is a per-cell gather, and NOT the ``overcooked_ai_py`` one.
-
-.. warning::
-
-   **THIS FAMILY NEEDS ITS OWN INTERPRETER, and it is the only one that does.** Every other env in
-   this library — all 191 of them — installs into a single environment on current torch/jax. These
-   five cannot join it, and the reason is a hard resolver conflict rather than a missing package:
-
-       jaxmarl 0.1.0 requires ``scipy<=1.12``   |   jax 0.10.2 requires ``scipy>=1.14``
-
-   Nothing satisfies both. Installing jaxmarl with ``--no-deps`` to step over the pin does not end
-   there: it walks into ``brax``, then ``jaxopt``, then the rest of the 2023 JAX ecosystem, and lands
-   in an interpreter where nothing has verified that Overcooked still renders correctly on modern jax.
-   The atlas here IS jaxmarl's own ``_render_tile`` output and there is no degraded mode, so a
-   silently-wrong tile would be a silently-wrong frame.
-
-   Install these five on their own, into a CLEAN venv (``python -m venv --system-site-packages``
-   breaks jax's CUDA plugin discovery)::
-
-       python -m venv ~/venvs/se-oc
-       ~/venvs/se-oc/bin/pip install -e ".[overcooked]"
-
-   Measured against jaxmarl 0.1.0 / jax 0.4.38 in ``~/venvs/se-oc``. The parity numbers below were
-   taken there and are unaffected by this note — the env is fully supported, it simply does not share
-   an interpreter.
-
-   **Consequently this family is excluded from the release gate**, declared in
-   ``stable_envs/testing/gate.py::EXCLUDED`` with the same reason, so its absence from a normal run is
-   a stated carve-out rather than one more skip nobody reads. The permanent fix is to embed the atlas
-   the way ``craftax``/``crafter``/``minihack`` embed theirs, which would make jaxmarl build-time-only
-   and fold these five back in; ``_build_atlas`` below is what would be baked.
-
-Reference: ``jaxmarl`` 0.1.0, ``jaxmarl.viz.overcooked_visualizer.OvercookedVisualizer._render_grid``,
-driven the way ``OvercookedVisualizer.animate`` drives it — the whole ``maze_map`` window with
-``highlight_mask=None``. ``reference_id`` is ``jaxmarl/Overcooked-V1`` and that is a load-bearing
-declaration rather than a formality:
-
-    THIS IS A DIFFERENT PICTURE FROM ``overcooked_ai_py``. Same board, different render. JaxMARL draws
-    ``cramped_room`` at 450x525 with ``tile_size=75`` where ``StateVisualizer`` draws 300x375 (JaxMARL
-    renders one extra ring of wall cells), it uses 48 distinct colours against 33, and it has ZERO
-    sprite assets — every tile is MiniGrid's ``point_in_rect`` / ``point_in_circle`` /
-    ``point_in_triangle`` primitive set at 3x supersampling, where ``overcooked_ai_py`` blits 93 named
-    15x15 sprite frames. Nothing here reproduces the original Overcooked-AI picture, no pixel
-    comparison between the two is meaningful, and this module does not claim otherwise.
-
-Why the JAX one is the one that could be built at all is a single measured fact. ``overcooked_ai_py``
-draws the pot's cooking timer as **font-rendered Roboto text at a fixed 20 px, applied AFTER the x5
-tile scale**, so its pot tiles are ``tile_size``-specific and cannot be composed from the 15x15 source
-art (see ``docs/research/overcooked.md``). JaxMARL draws the same information as a bar in NORMALISED
-tile coordinates — ``point_in_rect(0.1, 0.9-(0.9-0.1)/20*pot_status, 0.83, 0.88)`` filled green — so
-the tile composes at any size. Rendered at six tile sizes, **24/24 pot statuses stay distinct with zero
-duplicates at T in {8, 12, 20, 32, 64, 75}**, and a token scan of all four jaxmarl viz modules for
-``freetype|font|SysFont|Roboto|pygame|ImageFont|putText|cv2`` comes back empty. MEAL (arXiv 2506.14990)
-does NOT restore the option: it replaces JaxMARL's renderer with a *pygame* reimplementation of the
-``overcooked_ai_py`` look, Roboto digit timer included.
-
-The frame is then a pure per-cell gather, which is the same shape as MiniGrid and is why
-``tilemap.blit`` runs unmodified. Measured through these classes on one H200: **interior 100 %, all
-pixels 100 %, max abs diff 0** against ``_render_grid`` on all five layouts, at **3.56-7.90 M frames/s
-at batch 8,192** against 1,078-1,888 f/s for jaxmarl's own renderer with a warm tile cache — i.e.
-**(x3,303-x5,713 at batch 8,192), ahead from batch 1** (7,192-7,496 f/s), replacing **1,351-1,997 CPU
-cores** of JPEG decode of the same frames.
-
-What the state IS
------------------
-
-One index per cell of the rendered grid, into a **64-entry alphabet** that is enumerated from jaxmarl's
-own constants rather than harvested:
-
-    1  empty  +  7 objects (wall, onion, onion_pile, plate, plate_pile, goal, dish)
-    24 pot statuses  +  32 agents (2 hat colours x 4 facings x 4 held items)
-
-The grid is ``maze_map[3:-3, 3:-3]`` — the layout plus the one-cell wall ring jaxmarl adds — so a
-``cramped_room`` state is 42 numbers against a 192x224x3 = 129,024-byte frame at the default tile size.
-
-Two facts make the per-cell key exactly right, and both are properties of the reference rather than
-simplifications:
-
-  * **the held item is a property of the CELL, not of the frame.** ``_render_tile`` resolves the
-    agent's inventory as ``agent_inv[COLOR_TO_AGENT_INDEX[obj[1]]]`` — it looks the item up by the hat
-    colour standing in that cell — so the tile is a function of (colour, facing, held item) alone;
-  * **``agent_dir_idx`` is not read for a two-agent layout.** ``_render_tile`` overwrites the facing
-    with ``agent_dir_idx[0]`` only ``if len(agent_dir_idx) == 1``, which is the single-agent minimax
-    path. Every shipped Overcooked layout has two agents, so the facing that reaches the frame is the
-    one in ``maze_map``, which is per cell.
-
-No ``step``. The transition is discrete, but jaxmarl's own ``Overcooked.step`` is already a jitted,
-``vmap``-able JAX function on the same GPU — there is no CPU simulator to replace, and a torch port
-would be a second implementation of something that is not the bottleneck. What jaxmarl does NOT have on
-the GPU is the renderer: ``_render_grid`` is a Python double loop over cells that reaches 1,078-1,888
-f/s with a warm tile cache. That is the gap this module closes, and it is the only claim it makes.
-
-Variations recolour through a label map, exactly as ``tilemap.py`` does for MiniGrid: alongside the RGB
-atlas we record, at jaxmarl's own 3x supersampled resolution, which of ten semantic slots painted each
-subpixel. That is not a convenience — the grid lines are literally ``(100, 100, 100)`` and so is
-``COLORS['grey']``, so no colour-matching recolour can separate the wall from the line it is drawn
-over, and ``downsample`` averages 3x3 subpixels so a recolour applied to the FINISHED tile is not the
-recolour of the tile. The build asserts that ``palette[label]``, downsampled, reproduces jaxmarl's own
-atlas byte for byte at the default palette, so a wrong constant cannot survive it.
-
-``purple`` is deliberately absent from the palette knobs: it is the one entry of jaxmarl's ``COLORS``
-that no Overcooked tile paints, and a knob that cannot move the picture is what
-``check_variations_do_something`` exists to reject.
-"""
-
 from __future__ import annotations
 
 import os
@@ -140,17 +35,10 @@ DEFAULT_BG = (0, 0, 0)
 
 
 def _require_jaxmarl():
-    """Probe the PATH THAT WOULD FAIL, not just the top-level import.
+    """Probe visualizer imports, tile rendering and layouts before registration.
 
-    ``import jaxmarl`` is not the thing this module needs. It needs (a) the visualiser module, which
-    imports ``jaxmarl.viz.window`` and that module calls ``sys.exit(-1)`` when matplotlib is missing —
-    an ImportError is not even raised, the interpreter is killed; (b) ``_render_tile`` actually
-    producing a tile, which is what the atlas is built from and has no fallback; and (c) the layout
-    table. Each fails differently and none of them is checked by importing the package.
-
-    Raising ``ImportError`` is what makes the env cleanly ABSENT rather than present and broken:
-    ``stable_envs/envs/__init__.py`` records it and ``import_errors()`` names it.
-    """
+    Check matplotlib first: JaxMARL’s window module can call sys.exit when it is
+    unavailable. Convert that failure to ImportError for registry discovery."""
     try:
         import jaxmarl  # noqa: F401
     except Exception as e:  # noqa: BLE001
@@ -206,7 +94,7 @@ def _constants():
 
 
 def official_colors() -> np.ndarray:
-    """``COLORS`` as a (9,3) uint8 array in ``COLOR_TO_INDEX`` order, read from the package."""
+    """Read source colours as ``(9, 3)`` uint8 in COLOR_TO_INDEX order."""
     C2I, COLORS, _, _ = _constants()
     out = np.zeros((N_COLOR, 3), np.uint8)
     for name, i in C2I.items():
@@ -215,13 +103,10 @@ def official_colors() -> np.ndarray:
 
 
 def cell_alphabet() -> list[tuple[int, int, int, int]]:
-    """Every ``(obj_type, colour, extra, held)`` a rendered Overcooked cell can hold. 64 of them.
+    """Enumerate all 64 renderable object/colour/status/inventory combinations.
 
-    Enumerated from jaxmarl's own ``OBJECT_INDEX_TO_VEC`` rather than from what a rollout happens to
-    reach: a random policy almost never fills a pot, so 20 of the 24 pot tiles would be missing and the
-    atlas would be a lower bound. ``unseen`` is excluded because ``_render_grid`` folds it into
-    ``empty``; ``empty`` is the ``obj is None`` tile.
-    """
+    Include every pot status and held item even if random play rarely reaches it.
+    The source renderer maps unseen cells to empty."""
     C2I, _, O, vec = _constants()
     held = (O["empty"], O["onion"], O["plate"], O["dish"])  # what ``_render_inv`` can draw
     out = [(O["empty"], 0, 0, O["empty"])]
@@ -251,16 +136,11 @@ def _label_of(color, painted: dict) -> int:
 
 
 def _build_atlas(tile_size: int):
-    """``(64,T,T,3)`` uint8 official tiles and ``(64,3T,3T)`` uint8 label maps.
+    """Build source RGB tiles and labels at the source’s 3× supersampling resolution.
 
-    The RGB tiles come back from ``_render_tile`` and are truncated to uint8 exactly the way
-    ``_render_grid`` truncates when it assigns a float64 tile into its uint8 frame, so exactness is
-    structural. The label maps are produced by the SAME call with ``grid_rendering.fill_coords``
-    shimmed to write a label id instead of a colour — every pixel is still placed by jaxmarl's own
-    predicates, so nothing about the geometry is restated here. The two grid-line rectangles are the
-    first two fills ``_render_tile`` issues, unconditionally, which is how they are told apart from
-    ``COLORS['grey']``: the two are the same RGB value and no colour match can separate them.
-    """
+    Label the first two fills as grid lines to distinguish them from identically
+    coloured walls. Verify that palette lookup and downsampling reproduce RGB.
+    Construction temporarily patches source fill_coords and must be serialized."""
     import jaxmarl.viz.grid_rendering as gr
     from jaxmarl.environments.overcooked.common import OBJECT_TO_INDEX
     from jaxmarl.viz.overcooked_visualizer import OvercookedVisualizer as V
@@ -336,7 +216,7 @@ def _label_palette(values: dict) -> np.ndarray:
 
 
 def _recolour_np(labels: np.ndarray, pal: np.ndarray, T: int) -> np.ndarray:
-    """``downsample`` applied to ``palette[label]``, in jaxmarl's own axis order and dtype."""
+    """Downsample palette labels with source axis order, float64 means and uint8 truncation."""
     f = SUBDIVS
     x = pal[labels.astype(np.int64)]  # (N, fT, fT, 3) float64
     x = x.reshape(labels.shape[0], T, f, T, f, 3).mean(axis=4).mean(axis=2)
@@ -348,12 +228,10 @@ def _cache_path(tile_size: int) -> str:
 
 
 class OvercookedAtlas:
-    """The 64-tile atlas for one tile size, plus its label decomposition. Cached in process and on disk.
+    """Cache source RGB and label atlases per tile size, with device-specific tensors.
 
-    Building costs a few seconds of pure-Python scanline fills per tile size (``fill_coords`` is a
-    double loop over ``3T x 3T`` subpixels), and the conformance suite builds several sizes, so the
-    result is memoised. The disk write is atomic because a test session may build several envs at once.
-    """
+    Disk writes replace the final file atomically. In-process construction is not
+    synchronized; the source renderer’s global patch requires exclusive access."""
 
     _mem: dict[tuple[int, str], OvercookedAtlas] = {}
 
@@ -406,7 +284,11 @@ class OvercookedAtlas:
 
 
 class _OvercookedLayout(Env):
-    """One JaxMARL Overcooked layout, rendered as a gather from the 64-tile atlas."""
+    """Render a two-agent JaxMARL Overcooked layout from compact cell codes.
+
+    The padded grid includes the layout’s outer wall ring. Codes determine pixels
+    but do not restore full simulator State, and this adapter does not implement step.
+    Use a separate environment for the pinned JaxMARL dependency profile."""
 
     family = "overcooked"
 
@@ -419,14 +301,7 @@ class _OvercookedLayout(Env):
 
     @property
     def frame_shape(self) -> tuple[int, int]:
-        """``(H, W)`` of a frame: ``(grid_h * T, grid_w * T)``, which is what ``render`` reshapes to.
-
-        ``Env.frame_spec`` assumes a SQUARE frame unless the env says otherwise, and no shipped
-        Overcooked layout is square -- ``size`` divides the grid HEIGHT into tiles (``_tile``) and the
-        width follows the layout's own column count -- so an unqualified spec described a
-        ``(size, size)`` buffer for every cell in this family. Read off the same two class attributes
-        ``render`` uses, so the spec cannot drift from the frame.
-        """
+        """Return grid dimensions multiplied by the tile edge derived from ``size``."""
         t = self._tile(int(self.size))
         return self.grid_h * t, self.grid_w * t
 
@@ -438,18 +313,10 @@ class _OvercookedLayout(Env):
         self._default_t: torch.Tensor | None = None
 
     def _close(self) -> None:
-        """Drop what this INSTANCE holds. ``Env.close`` calls this once and is idempotent.
-
-        The tile atlas is keyed on (tile size, device) and SHARED by every instance of every layout,
-        so it is not released here: releasing a cache another live env is drawing through is the same
-        class of error as releasing a shared EGL context. An instance owns its sampled state pool,
-        the labels beside it and its default-style tensor, all rebuildable.
-        """
+        """Drop instance state/style caches; shared atlases remain available to other instances."""
         self._pool = None
         self._pool_labels = None
         self._default_t = None
-
-    # geometry
 
     def _tile(self, size: int) -> int:
         t, r = divmod(int(size), self.grid_h)
@@ -460,20 +327,11 @@ class _OvercookedLayout(Env):
             )
         return t
 
-    # variation
-
     def make_variation_space(self) -> Dict:
-        """One RGB knob per colour Overcooked actually paints, plus the two chrome slots.
+        """Expose painted source colours, background and grid-line colours.
 
-        Per-colour leaves rather than one packed palette, and that is a claim about this renderer:
-        every subpixel has exactly one writer and ``downsample`` averages 3x3 of them, so a region
-        whose subpixels share a label lands on the requested colour EXACTLY — which is what
-        ``check_colors_apply_exactly`` measures and what a blended renderer (MiniGrid's POV view) could
-        not offer.
-
-        ``purple`` is absent because no Overcooked tile paints it; ``_build_atlas`` asserts that,
-        against jaxmarl, every build.
-        """
+        Purple is excluded because no atlas tile paints it. Recolour before
+        downsampling so antialiased boundaries retain their semantic labels."""
         pal = official_colors()
         C2I, _, _, _ = _constants()
         space = {"background": RGBBox(init_value=DEFAULT_BG), "grid_line": RGBBox(init_value=DEFAULT_GRIDLINE)}
@@ -496,7 +354,7 @@ class _OvercookedLayout(Env):
         }
 
     def _label_palettes(self, sty) -> torch.Tensor:
-        """``(B, N_LABEL, 3)`` float64 — the colour each label paints, per environment."""
+        """Return per-row ``(B, N_LABEL, 3)`` float64 palettes."""
         B, dev = sty.batch, self.device
         C2I, _, _, _ = _constants()
         p = torch.zeros(B, N_LABEL, 3, dtype=torch.float64, device=dev)
@@ -514,8 +372,6 @@ class _OvercookedLayout(Env):
             self._default_t = torch.as_tensor(self.default_style(), device=self.device, dtype=torch.float32)
         return bool((sty.values[0] == self._default_t).all())
 
-    # rendering
-
     @torch.no_grad()
     def _render(
         self,
@@ -526,7 +382,7 @@ class _OvercookedLayout(Env):
         style=None,
         out=None,
     ) -> torch.Tensor:
-        """``(...,state_dim)`` -> ``(...,grid_h*T,grid_w*T,3)`` uint8 on device."""
+        """Gather compact cell rows into uint8 frames with the layout’s rectangular shape."""
         if supersample not in (None, 1):
             raise ValueError(
                 f"{type(self).__name__}: supersample={supersample} is not available. jaxmarl's own 3x "
@@ -555,12 +411,9 @@ class _OvercookedLayout(Env):
         return img.reshape(*lead, *img.shape[1:]) if lead else img
 
     def _blit_styled(self, atlas, idx: torch.Tensor, sty, tile: int, out) -> torch.Tensor:
-        """Per-environment palettes: gather LABELS, colour them per environment, then downsample.
+        """Gather labels and apply per-row palettes before downsampling.
 
-        Arithmetically identical to recolouring the atlas and gathering — every subpixel has exactly
-        one label, the lookup is per subpixel either way, and the box filter is the same two-stage
-        ``mean`` in the same order and dtype — but it does not need B atlases for B appearances.
-        """
+        Preserve float64 and the two means’ axis order to match shared-atlas recolouring."""
         B, H, W = idx.shape
         dev, f, px = self.device, SUBDIVS, SUBDIVS * tile
         pal = self._label_palettes(sty)
@@ -578,25 +431,11 @@ class _OvercookedLayout(Env):
                 out[b0:b1, j * tile : (j + 1) * tile] = col.to(torch.uint8)
         return out
 
-    # states
-
     def sample_states(self, batch: int, rng: np.random.Generator | None = None) -> np.ndarray:
-        """Rollout states, DIALLED so that every tile the atlas holds actually occurs, and stratified.
+        """Sample source rollout grids augmented with pot, placed-item and inventory variants.
 
-        Uniform random joint actions never cook. Measured on ``cramped_room``, 2,000 random states
-        reach **4 of the 24 pot codes and no dish at all**, so 20 of the atlas's 64 tiles — including
-        every cooking-timer tile, which is the entire reason this family is buildable — would never
-        appear in a parity comparison, and the ``orange`` knob would be reported inert because no state
-        in the batch paints it.
-
-        The fix is not a synthetic prior. Each dialled row is a real row with the substitutions
-        ``make_overcooked_map`` ITSELF performs: a pot cell moved to another ``pot_status``, a counter
-        cell holding a placed ``onion``/``plate``/``dish``, and an agent cell holding another item.
-        Those are the map writes the env makes when a chef cooks, puts something down, or picks
-        something up. The batch is then stratified over the atlas's LABELS — the semantic colour slots
-        — so every declared colour knob provably has something to paint, which is what
-        ``check_colors_apply_exactly`` measures and what a lucky draw would otherwise decide.
-        """
+        Augmented grids exercise renderer codes but are not unchanged rollout states.
+        For sufficiently large batches, try to cover every painted palette label."""
         rng = rng or self.rng
         if self._pool is None:
             self._pool, self._pool_labels = self._build_pool(max(256, batch))
@@ -613,7 +452,7 @@ class _OvercookedLayout(Env):
         return pool[idx].astype(np.float32)
 
     def _code_labels(self) -> np.ndarray:
-        """``(N_CODE, N_LABEL)`` bool: which semantic slots each tile of the atlas paints."""
+        """Return a boolean table of palette labels painted by each cell code."""
         lab = self.atlas.labels.reshape(N_CODE, -1)
         out = np.zeros((N_CODE, N_LABEL), bool)
         for l in range(N_LABEL):
@@ -647,8 +486,7 @@ class _OvercookedLayout(Env):
         held = (O["empty"], O["onion"], O["plate"], O["dish"])
         agent_of = {c: i for i, c in enumerate(ALPHABET) if c[0] == O["agent"]}
 
-        # the dial. Deterministic and coprime-ish in its periods (24 statuses, 3 placeable items, 4
-        # held items) so a short run of rows covers every one of them rather than a lucky subset.
+        # Cycle through pot statuses, placed items and held items for deterministic coverage.
         out = list(base)
         for j in range(max(n - len(base), 3 * N_POT_STATUS)):
             row = base[j % len(base)].copy()
@@ -669,7 +507,7 @@ class _OvercookedLayout(Env):
 
     @classmethod
     def encode_state(cls, st) -> np.ndarray:
-        """A jaxmarl ``State`` -> this class's compact state, through the bytes the renderer reads."""
+        """Extract compact render codes from the source map crop and agent inventory."""
         _, _, O, _ = _constants()
         grid = np.asarray(st.maze_map[PAD:-PAD, PAD:-PAD, :], np.int64)
         inv = np.asarray(st.agent_inv, np.int64).reshape(-1)
@@ -699,28 +537,19 @@ class _OvercookedLayout(Env):
                 out[y * W + x] = CODE_OF[key]
         return out
 
-    # reference bridge
-
     @classmethod
     def reference_env(cls, size: int | None = None):
-        """jaxmarl's visualiser plus the tile size to drive it at.
-
-        Returned as a tuple rather than a gym env because ``_render_grid`` is a classmethod on the
-        visualiser and needs no instance — and constructing an ``OvercookedVisualizer`` would build a
-        matplotlib ``Window``, which is the interactive path and has nothing to do with the frame.
-        """
+        """Return the source visualizer class and tile size without opening an interactive window."""
         from jaxmarl.viz.overcooked_visualizer import OvercookedVisualizer
 
         return (OvercookedVisualizer, int(size or cls.default_size) // cls.grid_h)
 
     @classmethod
     def reference_render(cls, env, states) -> np.ndarray:
-        """Official frames through the real ``_render_grid``, with the state round-trip asserted.
+        """Restore render inputs, verify their round trip, and call the source grid renderer.
 
-        ``agent_dir_idx`` is passed with length 2 deliberately: at length 1 ``_render_tile`` overwrites
-        every agent's facing with ``agent_dir_idx[0]``, which is jaxmarl's single-agent minimax path
-        and not what a two-agent layout draws.
-        """
+        Pass two agent directions: a one-element array makes the source overwrite all
+        facings. Agents with the same colour must share the same held item."""
         from jaxmarl.environments.overcooked.common import OBJECT_TO_INDEX
 
         viz, tile = env
@@ -764,13 +593,7 @@ def _cell_names(h: int, w: int) -> tuple[str, ...]:
 
 
 def layout(class_name: str, key: str, doc: str = "", tile: int = TILE_PIXELS) -> type:
-    """Build and register a class for one jaxmarl layout.
-
-    A class per layout rather than one parameterised env: the registry is the conformance suite's
-    parameter list, so a layout reachable only through a constructor argument is a layout nothing
-    tests. The padded grid size is read from jaxmarl's own layout table at import, so it cannot drift
-    from the reference the way a hardcoded one would.
-    """
+    """Register a layout with padded dimensions read from the source layout table."""
     from jaxmarl.environments.overcooked.layouts import overcooked_layouts
 
     if key not in overcooked_layouts:

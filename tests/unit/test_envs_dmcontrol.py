@@ -6,7 +6,7 @@ things that oracle cannot:
 
   * the claims that are new on the public API and have no baseline to compare against — the ``num_envs=``
     constructor, full State for recovered cells and private projections round-tripping frozen rows,
-    the lifecycle, and the fact that a renderer-only cell REFUSES ``step``/``transition`` with the
+    the lifecycle, and the fact that a renderer-only cell REFUSES ``step``/``set_state`` with the
     contract's precise error instead of inventing a simulator;
   * the SHAPE of the migration itself — that the package is what ``stable_envs.envs.dmcontrol`` now
     means, that every cell reports that path as its module (so the family, the registry row and
@@ -379,7 +379,7 @@ def test_a_renderer_only_cell_refuses_public_simulator_operations(name):
             ("get_state", ()),
             ("reset", ()),
             ("step", (action,)),
-            ("transition", (projection, action)),
+            ("set_state", (projection,)),
         ):
             with pytest.raises(NotImplementedError, match="full simulator semantics"):
                 getattr(env, call)(*args)

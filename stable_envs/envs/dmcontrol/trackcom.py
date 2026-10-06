@@ -1,15 +1,3 @@
-"""The VISUAL tier: a ``mode="trackcom"`` camera, so the whole scene goes to a 3-D backend every frame.
-
-With the camera riding the body there is no static half to bake -- hide every mover and the remaining
-frame still moves by 51-220/255 -- so the plate-and-cast design of ``suite`` has nothing to stand on
-and the frame is MJWarp's raytrace (CUDA) or ``cpu3d``'s (CPU) of dm_control's own scene. These are
-NOT the official pixels; every cell here declares what the difference measures
-(``visual_fidelity``) and names the two mechanisms that carry it (``VISUAL_NOTE``).
-
-One module because it is ONE renderer, exactly as ``suite`` is one module. The six cells differ only
-in their declarations, which live in their own domain modules beside this one.
-"""
-
 from __future__ import annotations
 
 import numpy as np
@@ -23,30 +11,17 @@ from .base import _DMCModel
 
 
 class _TCtx:
-    """One CUDA-graph-captured MJWarp render context, plus the device views a render writes."""
+    """Hold a captured MJWarp render graph and the per-world arrays it reads and writes."""
 
     __slots__ = ("wm", "wd", "rc", "bgra", "graph", "nworld", "res", "wp", "mjw")
 
 
 def _tc_context(cls, res: int, nworld: int) -> _TCtx:
-    """One captured MJWarp context per (domain, task, resolution, worlds).
+    """Cache a captured MJWarp context by domain, task, size, world count and flags.
 
-    Two things here are not optional and both are silent when omitted.
-
-    **``com_pos`` between ``kinematics`` and ``camlight``.** These domains' camera is
-    ``mjCAMLIGHT_TRACKCOM`` — it rides the body's centre of mass, which is the whole reason the plate
-    design cannot serve them — and ``mujoco_warp.kinematics`` writes ``xpos``/``xquat``/``xmat``/
-    ``xipos`` and NOT ``subtree_com``. Without the extra launch the camera never leaves the pose
-    ``put_data`` uploaded and every state is drawn from it, with no error and a plausible-looking
-    picture. ``MW.needs_com_pos`` answers the question from the model and is asserted below rather
-    than assumed, because the failure has no other symptom.
-    ``docs/research/mujoco_locomotion.md`` S6.2 measures the two frame loops: camera spread 0.0
-    (frozen) against MuJoCo's own, and 0.0 distance FROM MuJoCo's once ``com_pos`` runs.
-
-    **Graph capture.** Un-captured these five kernels run at roughly 1.4x the official renderer rather
-    than 30x, because at this scene size the frame is launch-bound. A throughput number near 1.4x
-    means the capture did not happen, not that the GPU is slow.
-    """
+    Run com_pos between kinematics and camlight: tracking cameras read subtree_com,
+    which kinematics does not update. Capture the complete frame sequence to avoid
+    repeated host launches."""
     import mujoco
     import mujoco_warp as mjw
     import warp as wp
@@ -69,10 +44,8 @@ def _tc_context(cls, res: int, nworld: int) -> _TCtx:
     m.vis.global_.offwidth = max(int(m.vis.global_.offwidth), int(res))
     m.vis.global_.offheight = max(int(m.vis.global_.offheight), int(res))
 
-    # The zero-alpha pre-pass. MJWarp's shader never reads alpha, so ``swimmer``'s six ``inertial``
-    # geoms and six sites and ``fish``'s target and torso site would be painted OPAQUE over geometry
-    # the reference does not draw at all. Left applied for the life of the context: MJWarp reads the
-    # geometry once, at create_render_context, so restoring would not un-draw anything.
+    # Hide zero-alpha elements before context creation; the MJWarp shader does not
+    # read alpha and caches the selected geometry for the context lifetime.
     MW.prepare_model(m, VISIBLE_GROUPS)
 
     c = _TCtx()
@@ -83,10 +56,8 @@ def _tc_context(cls, res: int, nworld: int) -> _TCtx:
     batched = sorted({"mat_rgba", "light_diffuse"} | {a for a, _ in slots})
     c.wm = mjw.put_model(m, batch_sizes={k: int(nworld) for k in batched})
     c.wd = mjw.put_data(m, d0, nworld=int(nworld))
-    # The rounding patch has to be visible while the megakernel's source is GENERATED (context
-    # creation) and while it is COMPILED (first launch), which is why the warm-up frame is inside the
-    # block. MJWarp packs float->uint8 with C's ``int()``, which truncates, and a GL pipeline rounds;
-    # on Fetch that one rule was worth interior parity 0.791 -> 0.9988.
+    # Keep GL-style rounding active during source generation and first compilation,
+    # including the warm-up render.
     with MW.gl_rounding():
         c.rc = MW.create_render_context(
             m,
@@ -121,77 +92,29 @@ def _tc_frame(c: _TCtx) -> None:
 
 
 class DMControlTrackCom(_DMCModel):
-    """DM Control's body-tracking domains, drawn by MJWarp. VISUAL TIER — not the official pixels.
+    """Render body-tracking cameras with MJWarp on CUDA or cpu3d on CPU.
 
-    These six domains put camera 0 in ``mode="trackcom"``: it rides the body's centre of mass, so the
-    "static" half of the scene moves with the state and there is no plate to bake — hide every mover
-    and the remaining frame still changes by 51-220/255 between states. ``DMControlSuite``'s design
-    is therefore structurally unavailable here, and the alternative is a backend that draws the whole
-    scene every frame. MJWarp is that backend, and its ``mjCAMLIGHT_TRACKCOM`` camera lands on
-    MuJoCo's ``cam_xpos`` to 1e-8 metres, so the camera is not what the residual is.
-
-    WHAT THE RESIDUAL IS
-    --------------------
-
-    Two named mechanisms, measured per surface off MuJoCo's own segmentation buffer (84 px, 32 states
-    per domain, the frozen measurement record):
-
-      * **the speckled gradient skybox**, which is 48-89% of the frame on cheetah, hopper and walker.
-        DM Control's ``skybox`` is an 800x4800 ``builtin="gradient"`` texture with ``mark="random"``,
-        i.e. white specks scattered by MuJoCo's own RNG, and MJWarp samples it with a single
-        unfiltered tap. Mean 4.1-4.7/255 with 89-92% of those pixels within 8, and it is what holds
-        SSIM down — a speck one pixel out of place costs structure twice.
-      * **the minified checker floor**, the same mechanism that decides
-        ``docs/research/mujoco_locomotion.md``: in the far band MuJoCo's mipmap has averaged the
-        checker into one grey (luminance spread 0.1 on humanoid) and MJWarp point-samples it at full
-        contrast (9.7). Floor mean 4.3-8.2/255.
-
-    Neither is closable here. The floor needs level-of-detail selection in ``mujoco_warp``'s render
-    kernel, which needs ray differentials the kernel does not compute; nvdiffrast's mipmapped sampler
-    closes it to 0.66-0.81 of far-band pixels (``docs/research/nvdiffrast.md``) and is not exactness
-    either, is 3-5x slower, and cannot carry these scenes' MOVING lights, which are ``trackcom`` too.
-
-    Supersampling is deliberately not offered. It was measured on the same mechanism for Gymnasium
-    locomotion (``mujoco_locomotion.md`` S6.5): 16 samples per pixel take the far field's mean error
-    from 100 to 8-14/255 and reach 0.6-1.4% exact, while whole-frame exactness FALLS on every domain,
-    because a box average over 16 samples is not GL's mipmap pyramid and everything the renderer had
-    right gets blurred.
-    """
+    The moving view requires a full scene render. Texture filtering and shading
+    differ from source OpenGL; an explicit opengl backend uses its separate context.
+    This path supports one sample per pixel and refuses uncertified CPU cells."""
 
     fidelity_tier = "visual"
     parity_interior_min = None
     default_supersample = 1
-    #: No camera knob. ``cam_fovy`` is not among the model arrays ``mujoco_warp.put_model`` will carry
-    #: per world, so a per-environment field of view would need one render context per distinct value
-    #: — and a variation that silently costs a context rebuild is worse than one that is not offered.
+    # Field of view cannot vary per world in this MJWarp model upload.
     CAMERA_KNOB = False
-    #: No visibility knob either, and for the same shape of reason — a fact about MJWarp, not about
-    #: these domains. ``mujoco_warp``'s shader never reads alpha: ``_tc_context`` hides zero-alpha
-    #: elements through ``MW.prepare_model``, which moves them out of the ENABLED GEOM GROUPS, and
-    #: ``create_render_context`` reads the geometry once per (domain, resolution, worlds) and then the
-    #: five kernels are CUDA-graph captured. So visibility is fixed for the life of a context and a
-    #: per-world value would need either one captured context per distinct combination — the same
-    #: trade ``CAMERA_KNOB`` refuses — or an alpha-aware shader upstream in ``mujoco_warp``. Only
-    #: ``DMCSwimmerSwimmer6`` draws a hideable element per episode in this tier, and it is a VISUAL
-    #: cell; the parity cells that need the knob are all in ``DMControlSuite``. Recorded here rather
-    #: than fixed because the fix is in a renderer this file does not own.
+    # Visibility is fixed during context creation; a per-row toggle would need
+    # an alpha-aware shader or a separate context for each configuration.
     VISIBILITY_KNOB = False
 
-    #: Per-domain overrides for ``create_render_context``, folded into the cache key so two domains
-    #: that disagree cannot share a context. Empty for every domain but swimmer; see
-    #: ``SPECULAR_NOTE`` for what swimmer sets and why it is not set family-wide.
+    # Render-context flags participate in the cache key; defaults may differ by domain.
     RENDER_FLAGS: dict = {}
 
     CPU_RENDER_CHUNK = C3.CPU_CHUNK
 
     def __init__(self, *a, **kw):
         super().__init__(*a, **kw)
-        # DEVICE SELECTION IS HONEST. ``cuda`` gets MJWarp; ``cpu`` gets the CPU-native backend in
-        # ``stable_envs/render/cpu3d.py`` -- the same scene, camera, materials and lighting law drawn
-        # by an analytic caster over a baked skybox plate; anything else raises here rather than
-        # rendering somewhere the caller did not ask for. Earlier ``device="cpu"`` rows for these cells were
-        # MJWarp on the GPU behind a ``device="cpu"`` request (``DEVICE_NOT_HONOURED``); that path no
-        # longer exists.
+
         if self.backend == "opengl":
             return  # The explicit fidelity backend owns a separate model/context.
         if self.device.type == "cuda":
@@ -216,12 +139,7 @@ class DMControlTrackCom(_DMCModel):
 
     @classmethod
     def _used_materials(cls) -> list[str]:
-        """``_DMCModel._used_materials`` restricted to GEOM wearers: neither MJWarp nor cpu3d draws
-        a site, so a material worn only by sites cannot move a pixel on this tier and must not be a
-        declared knob (``check_variations_do_something`` moves every leaf and fails when the frame
-        does not follow). Reachable on exactly one cell: quadruped's ``eye`` material is worn by the
-        two pupil sites alone. The other cells' sites are hidden (group 3/4 or alpha 0) and their
-        lists are unchanged (asserted in tests/unit/test_cpu3d.py)."""
+        """Expose materials on visible geoms only; these backends do not render sites."""
         import mujoco
 
         m, pr = cls._model(), cls._pristine()
@@ -235,10 +153,9 @@ class DMControlTrackCom(_DMCModel):
                 used.append(mid)
         return [mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_MATERIAL, i) or f"mat{i}" for i in used]
 
-    # ---- the CPU backend ---------------------------------------------------
 
     def _cpu_scene(self, size: int) -> C3.Scene:
-        """One ``cpu3d.Scene`` per resolution: rays, the baked skybox, the plane, the movers."""
+        """Cache a CPU scene per resolution from canonical geometry and render flags."""
         cache = self.__dict__.setdefault("_cpu_scenes", _RES.BoundedCache(4, name="dmcontrol.trackcom.cpu"))
         hit = cache.get(int(size))
         if hit is not None:
@@ -249,9 +166,8 @@ class DMControlTrackCom(_DMCModel):
         m.mat_rgba[:] = pr["mat_rgba"]
         m.light_diffuse[:] = pr["light_diffuse"]
         m.geom_group[:] = pr["geom_group"]
-        # the geoms MJWarp draws: visible groups, resolved alpha > 0 (its zero-alpha pre-pass), no
-        # sites (it draws none); every non-plane geom is a "mover" whose world pose FK supplies,
-        # static ones included -- their pose is simply the same every frame
+        # Match MJWarp’s visible geom set, excluding sites. Static non-plane geoms
+        # also receive per-row poses; their transforms simply repeat.
         alpha = _effective_alpha(m, "geom", rgba=pr["geom_rgba"], mat_rgba=pr["mat_rgba"])
         movers = [
             g
@@ -271,12 +187,7 @@ class DMControlTrackCom(_DMCModel):
                 device=self.device,
             )
         except ValueError as e:
-            # A cell the CPU backend cannot draw refuses HERE, at construction, naming itself. It
-            # used to render on the GPU behind the caller's back; the policy is an honest raise.
-            # No shipped trackcom cell reaches this branch by geom type (raycast3d covers the
-            # ellipsoid too); swimmer is refused earlier, by name, through CPU_UNCERTIFIED (no CPU
-            # certification). This stays for the next unsupported kind,
-            # light type or camera mode Scene.__init__ refuses.
+            # Report unsupported CPU geometry or lighting at construction.
             raise ValueError(
                 f"{type(self).__name__} ({self.DOMAIN}-{self.TASK}) has no CPU 3-D backend: {e}. "
                 f"device='cuda' draws it through MJWarp; device='cpu' is refused rather than "
@@ -285,12 +196,10 @@ class DMControlTrackCom(_DMCModel):
         return cache.put(int(size), sc)
 
     def _cpu_poses(self, s: torch.Tensor, sc: C3.Scene):
-        """``(B, state_dim)`` -> camera, mover, light poses through MuJoCo's own FK.
+        """Compute camera, mover and light poses on CPU from compact render rows.
 
-        ``mj_kinematics`` then ``mj_comPos`` then ``mj_camlight``: the trackcom camera and light read
-        ``subtree_com``, which kinematics alone never writes -- the same trap ``_tc_context`` records
-        for MJWarp's ``com_pos``. 3-10 us per state on the certification core.
-        """
+        Preserve kinematics → comPos → camlight order so tracking uses current
+        subtree centres of mass. Restore episode model entries after the batch."""
         import mujoco
 
         m, d = self._model(), self._bundle(self.default_size)[2]
@@ -343,7 +252,6 @@ class DMControlTrackCom(_DMCModel):
         ldif = torch.clamp(base.unsqueeze(0) * sty["light.diffuse_scale"][:B].reshape(B, 1, 1), 0, 1)
         C3.render(sc, cam, xp, xm, lp, ld, mat, ldif, out=buf, chunk_size=self.CPU_RENDER_CHUNK)
 
-    # ---- render -----------------------------------------------------------
 
     @torch.no_grad()
     def _render(
@@ -356,7 +264,7 @@ class DMControlTrackCom(_DMCModel):
         out=None,
         backend=None,
     ) -> torch.Tensor:
-        """``(...,state_dim)`` -> ``(...,H,W,3)`` uint8. Style may differ per environment."""
+        """Render compact rows to uint8 frames using the selected backend and per-row styles."""
         s = self._render_state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
         lead = tuple(s.shape[:-1])
         s = s.reshape(-1, self.state_dim).to(torch.float32)
@@ -390,25 +298,16 @@ class DMControlTrackCom(_DMCModel):
             torch.cuda.synchronize()
             c.wp.capture_launch(c.graph)
             c.wp.synchronize()
-            # the BGRA -> RGB swap, ~3% of frame time and never optional: a byte view of MJWarp's
-            # rgb_data is B,G,R,A, and reading it as RGB scores 0.0% exact on every domain
+            # MJWarp’s packed byte view is BGRA; select RGB channels explicitly.
             buf[lo:hi] = c.bgra[: hi - lo][..., [2, 1, 0]]
         return buf.view(*lead, size, size, 3) if lead else buf
 
     @classmethod
     def _static_slot_rows(cls) -> dict:
-        """``(kind, element id) -> (base row, [(state index, component), ...])`` for slot elements
-        whose world transform ``mujoco_warp.kinematics`` never recomputes.
+        """Map world-body position slots to derived data rows requiring direct uploads.
 
-        This is the one place the per-world model upload is not enough, and it is silent when missed.
-        ``mujoco_warp``'s ``_geom_local_to_global`` EARLY-OUTS on geoms and sites that hang off the
-        world body -- their world pose cannot change under kinematics, so it is not recomputed -- and
-        ``swimmer``'s per-episode ``target`` geom is exactly such an element. Writing the drawn
-        ``geom_pos`` per world therefore reached nothing: measured, moving ``target_pos_x`` by 1.5 m
-        changed the official frame by 216/255 and ours by **0**, while the per-episode LIGHT in the
-        same state vector moved ours by 102. So the derived ``data`` row has to be written as well,
-        which is free here because the world body's frame is the identity.
-        """
+        MJWarp kinematics skips world-body geoms/sites. Updating only their model
+        positions leaves stale world poses; the identity parent frame permits direct copies."""
         hit = cls.__dict__.get("_slot_rows_cache")
         if hit is not None:
             return hit
@@ -428,7 +327,7 @@ class DMControlTrackCom(_DMCModel):
         return rows
 
     def _upload(self, c: _TCtx, s: torch.Tensor, sty, lo: int, hi: int) -> None:
-        """Write this chunk's state and appearance into the context's PER-WORLD arrays."""
+        """Write compact rows and styles into the context’s per-world buffers."""
         import mujoco
 
         n = hi - lo

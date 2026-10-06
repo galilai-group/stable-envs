@@ -1,11 +1,13 @@
-"""Export owned NumPy rows with one tensor construction/transfer per field."""
-
 import numpy as np
 import torch
 from tensordict import TensorDict
 
 
 def owned_columns(rows, batch, device):
+    """Collate nonempty NumPy rows into owned tensor columns on the requested device.
+
+    Rows must agree in keys, shapes and dtypes. Copies isolate returned State
+    from reused simulator buffers; each column transfers once."""
     rows = iter(rows)
     first = next(rows)
     columns = {key: np.empty((batch, *value.shape), dtype=value.dtype) for key, value in first.items()}

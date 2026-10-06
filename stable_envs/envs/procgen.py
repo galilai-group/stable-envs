@@ -1,118 +1,3 @@
-"""Procgen — `maze`, `heist`, `miner`, `chaser`, bit-exact against the shipped Qt renderer.
-
-The prior verdict on this family (``docs/research/pixel_native.md``, before this module) was
-"conditional": the state decomposition held, but the renderer was Qt5 ``QPainter`` behind 10.5 kLOC of
-per-game C++ and an "opaque" state blob, and the cost was judged prohibitive. **Both halves of that
-were wrong, and the way they were wrong is the interesting part.**
-
-**The blob is not opaque.** ``get_state()`` is ``Game::serialize`` — a flat little-endian stream of
-4-byte ints, 4-byte floats and length-prefixed strings, in a fixed order. Transcribing that order gives
-the parser at the bottom of this module, which re-serialises byte for byte on 24/24 states in **all 16
-games** (the per-game tail is transcribed for these three and kept verbatim for the rest); 54-90% of
-what it holds is three ``std::mt19937`` states written as decimal TEXT that never reaches
-``game_draw``. Once parsed, procgen becomes a *programmable* probe rather than a black
-box: any state can be written back with ``set_state``, which is how the measurements below were taken
-and how ``reference_render`` places the official env.
-
-**Qt's raster engine did not have to be re-derived; it had to be READ OFF.** ``resource_root`` is a
-procgen option, so the shipped binary can be pointed at an asset tree in which every sprite pixel
-encodes its own ``(x, y)`` and an id. Rendering then reports, for all 4096 output pixels, WHICH sprite
-painted each one and WHICH source pixel it sampled. Three rules fell out, none of them guessed:
-
-| rule | what it is | how it was measured |
-|---|---|---|
-| axis-aligned blit | ``qt_scale_image``'s 16.16 walk: ``tr = QRectF::toRect() ∩ device``, ``ix = int(65536·sw/dstw)``, ``basex = uint32(ceil((x0+0.5-dstx)·sx·65536) - 1)``, ``sample = (basex + i·ix) >> 16`` | 4096/4096 px on 7 coded scenes across the 3 games, incl. reflected sprites and both background sets |
-| rotated blit — coverage | a device pixel is written iff its **centre** lies inside the rotated quad | 539/539 measured pixels, **0** false positives, over 40 rotations |
-| rotated blit — sampling | ``fetchTransformed``'s per-pixel fixed point, **with no half-point bias**: ``px = int((m21(y+.5) + m11(x+.5) + dx)·65536) >> 16`` on the inverted matrix | 539/539; the plausible ``- (1<<15)`` variant scores **28.9%** |
-
-Geometry is **float32 all the way to the ``QRectF`` constructor**, because procgen computes every rect
-in C ``float``. This is not a detail: heist's ``view_dim`` is 12.999999, not 13, and its ``x_off`` is
-2.3475061e-06 rather than 0 — both readable in the state blob, and both worth a whole pixel row if the
-arithmetic is done in float64.
-
-Parity, measured against the shipped renderer over 20 levels x 12 steps per game with backgrounds on:
-
-| game | frames | pixels exact | max abs diff |
-|---|---|---|---|
-| maze | 240 | **100.0000%** | 0 |
-| heist | 240 | **100.0000%** | 0 |
-| miner | 240 | **100.0000%** | 0 |
-| chaser | 240 | **100.0000%** | 0 |
-
-``parity_interior_min`` stays at 1.0 and needs no ``parity_note``. Note that maze reports
-``interior_exact_frac = None`` rather than 1.0: at 2.56 output pixels per cell a 25x25 maze has no
-flat 3x3 neighbourhood anywhere, so the interior statistic is undefined and the suite falls back to
-all-pixel agreement, which is 1.0. Craftax's pixel art does the same thing for the same reason.
-
-Four more facts the renderer's SHAPE depends on, each measured rather than assumed:
-
-  * a device column or row is covered by **at most 2** grid cells (``RENDER_EPS = 0.02`` overlaps
-    neighbours by 0.04 of a cell), at every size from 64 to 512 in all three games — so the grid is
-    exactly 4 composited layers, not a loop over 625 cells;
-  * heist's z=0 entities (keys, locks, exit) **never** share a device pixel — rendering them in
-    reversed order changed 0 of 300 frames — so a fixed slot order is safe even though the reference's
-    order is a maze-scan artefact;
-  * every entity radius is a constant of its type (agent 0.5 / 0.375, key 0.375 x 0.232, lock 0.5,
-    exit 0.375 x 0.257, ring key 0.03 x 0.0186), so only positions are state;
-  * all 9 topdown backgrounds are SQUARE, so ``offset_x = bg_pct_x * (bg_ar - world_ar)`` is
-    identically 0 for maze and heist and ``bg_pct_x`` is genuinely not part of their render state.
-    52 of miner's 62 platform/space backgrounds are not square, so it is part of miner's.
-
-**Scope, stated plainly.** ``distribution_mode="hard"`` and the default options. All four games hold
-``options.center_agent`` false in hard mode — maze/heist/miner through
-``(distribution_mode == MemoryMode)``, chaser by setting it outright — so the camera here is a fixed
-full-world view and the scrolling-camera path is not implemented. Memory mode and the other 12 games
-are out of scope, and the reason is NOT that the raster rules are missing (both belong to
-``BasicAbstractGame`` and are shared by all 16). Two things decide a game: its own draw overrides,
-and whether its entity cast is a constant of the game. chaser's is (3 orbs, 3 eggs, 3 enemies);
-bigfish's is a Bernoulli(1/10) spawner reaching 24 fish at once, and a fixed-width slot state for
-that is either lossy or full of dead dimensions. That renderer is written and bit-exact and lives in
-the frozen measurement record rather than here; ``docs/research/pixel_native.md`` 2.9 has the
-numbers and the same argument applied to bossfight, dodgeball, plunder and starpilot.
-
-**Assets are loaded from the installed ``procgen`` wheel, not embedded.** MiniHack and Craftax embed
-theirs because they are 68 kB and 8.7 kB; procgen's are 25 MB of PNGs and miner alone reaches 62
-distinct backgrounds totalling 176 MB decoded, so embedding is not a trade anyone would want. The
-sprite atlas and the row-resampled background atlas are packed once and cached under
-``~/.cache/stable-envs/procgen``. This follows MiniGrid, which likewise builds its atlas from the
-installed upstream package.
-
-**Throughput, with its crossover, because the peak ratio alone would flatter it.** procgen's own
-renderer is C++ drawing 12.3 kB frames and it is fast; this one wins only once the batch pays for a
-chain of serial composites. Both sides swept on one H200 with 8 threads for the reference:
-
-| batch | maze | heist | miner | chaser |
-|---|---|---|---|---|
-| 1 | 482 (0.01x) | 91 (0.00x) | 312 (0.00x) | 92 (0.00x) |
-| 128 | 60,619 (**1.00x**) | 11,491 (0.11x) | 40,757 (0.60x) | 11,515 (0.08x) |
-| 256 | 120,608 (2.00x) | 23,026 (0.22x) | 81,119 (**1.19x**) | 23,022 (0.17x) |
-| 1024 | 476,390 (7.89x) | 91,305 (0.88x) | 330,954 (4.86x) | 91,487 (0.67x) |
-| 2048 | 928,461 (15.38x) | 175,736 (**1.70x**) | 647,174 (9.51x) | 182,264 (**1.33x**) |
-| 4096 | **1,688,605 (27.97x)** | **317,259 (3.06x)** | **1,213,165 (17.83x)** | **359,105 (2.63x)** |
-
-Ratios are against each game's official PEAK over ``num`` (maze 60,374 at num=64; heist 103,661 at
-num=256; miner 68,056 at num=256) — not against ``num=64``, which understates heist's reference by
-10%. **The crossover is batch 128 for maze, 256 for miner, 2048 for heist and 2048 for chaser**, and below it this
-renderer is slower than the thing it reproduces, by two orders of magnitude at batch 1. Anyone
-rendering a handful of frames at a time should call procgen.
-
-heist is the outlier for a structural reason: 12 entity slots and a rotated-blit path, so its serial
-chain is roughly three times maze's over the same 4096 pixels, and the per-call floor (~11 ms) is
-what the batch has to amortise.
-
-Two things bought the rest, and both are worth knowing before touching this file: the torch
-expression of one SourceOver blend is nine full-frame kernels and ran at 0.73 GB/s, about 100x off
-the roofline for a 12.3 kB frame; and ``draw_background`` used to loop in Python over the distinct
-background indices in the batch, which cost ~10 ms per call **regardless of batch size**. The
-official figure is step+render because procgen exposes no render-only entry point —
-``Game::observe`` is called from ``Game::step``, and ``gym3``'s ``observe()`` only copies buffers.
-
-**What the state does and does not carry.** miner's grid distinguishes ``MOVING_BOULDER`` /
-``MOVING_DIAMOND`` from their stationary forms, and ``image_for_type`` maps both pairs to the same
-sprite — so the render state folds them together. The frame is unaffected by construction; the
-*dynamics* are not, and this module claims only the frame.
-"""
-
 from __future__ import annotations
 
 import importlib.util
@@ -150,27 +35,22 @@ RENDER_EPS = 0.02  # basic-abstract-game.cpp
 P_SPACE, P_WALL = 100, 51  # object-ids.h
 
 
-# ===================================================================== Qt, in closed form
-
-
 def _qround(v):
-    """``qRound(qreal)``: ``int(v + 0.5)`` for v >= 0, ``int(v - 0.5)`` below."""
+    """Round halves away from zero, matching Qt qRound."""
     v = np.asarray(v, np.float64)
     return np.where(v >= 0, np.floor(v + 0.5), np.ceil(v - 0.5)).astype(np.int64)
 
 
 def _to_rect(x, y, w, h):
-    """``QRectF::toRect()`` -> ``(left, top, width, height)``."""
+    """Convert floating edges to integer (left, top, width, height) as QRectF::toRect does."""
     l, t = _qround(x), _qround(y)
     return l, t, _qround(x + w) - l, _qround(y + h) - t
 
 
 def _prepare(mw, mh, rect_h):
-    """``BasicAbstractGame::prepare_for_drawing`` with ``center_agent`` false, in float32.
+    """Compute the fixed full-world camera in source float32 operation order.
 
-    Reproduced operand by operand because the C++ is ``float`` and the float64 answer differs: heist
-    gets ``view_dim = 12.999999`` and ``x_off = 2.3475061e-06`` here, and both are in the blob.
-    """
+    Widening intermediate arithmetic changes rectangle edges before Qt samples them."""
     cx, cy = F(mw) * F(0.5), F(mh) * F(0.5)
     vis = F(max(mw, mh))
     raw_unit = F(F(64) / vis)
@@ -182,7 +62,7 @@ def _prepare(mw, mh, rect_h):
 
 
 def _screen_rect(x, y, dx, dy, g, eps=0.0):
-    """``get_screen_rect``. ``g`` is ``(unit, view_dim, x_off, y_off)``; every operand is float32."""
+    """Map world rectangles through (unit, view_dim, x_off, y_off) in float32."""
     unit, view_dim, x_off, y_off = g
     e = F(eps)
     return (
@@ -194,7 +74,7 @@ def _screen_rect(x, y, dx, dy, g, eps=0.0):
 
 
 def _premultiply(rgba: np.ndarray) -> np.ndarray:
-    """``qPremultiply``, the integer form ``convertToFormat(ARGB32_Premultiplied)`` uses."""
+    """Convert RGBA to Qt’s integer premultiplied representation."""
     a = rgba[..., 3].astype(np.uint32)
     out = rgba.copy()
     for c in range(3):
@@ -204,29 +84,19 @@ def _premultiply(rgba: np.ndarray) -> np.ndarray:
 
 
 def _over(dst: torch.Tensor, src: torch.Tensor, a: torch.Tensor) -> torch.Tensor:
-    """Qt's ``PRIM_SOURCE_OVER`` on premultiplied ARGB: ``d = s + BYTE_MUL(d, 255 - sa)``.
+    """Qt SourceOver on premultiplied integer RGB.
 
-    ``BYTE_MUL(x, a) = ((x*a + ((x*a) >> 8) + 0x80) >> 8) & 0xff`` — the rounding-by-reciprocal form,
-    NOT ``x*a//255``, which disagrees on a large fraction of blended pixels.
-
-    ``BYTE_MUL(d, 255) == d`` exactly for every d in 0..255, which is what makes the coverage mask
-    free: a pixel outside a primitive is fed ``src = 0, a = 0`` and comes back untouched, so nothing
-    in the render path needs a ``torch.where`` over the frame.
-    """
+    Keep the reciprocal-rounding BYTE_MUL expression; integer division by 255
+    changes pixels. Zero source and alpha preserve the destination exactly."""
     t = dst * (255 - a)
     return (src + (((t + (t >> 8) + 0x80) >> 8) & 0xFF)).clamp_(0, 255)
 
 
 def _qt_sincos(deg: np.ndarray):
-    """``QTransform::rotate``'s trig, branch for branch, evaluated on the HOST in float64.
+    """Evaluate Qt’s exact quadrant branches and remaining trig on the host in float64.
 
-    Two reasons it is not ``torch.sin`` on the device. The quadrant short circuits are exact
-    assignments in Qt (``a == 90.`` gives ``sina = 1``, and note that ``-180`` is NOT short-circuited
-    while ``180`` is), and reproducing them from a transcendental would be luck. And the remaining
-    values go through glibc's ``sin``/``cos``; CUDA's are correctly rounded but not bit-identical, and
-    a fixed-point truncation is a discontinuous function of its argument. heist's agent only ever
-    takes 8 rotations (``face_direction`` of an 8-way action), so this costs one small transfer.
-    """
+    Keep the asymmetric ±180° cases. Device trig can round differently before
+    fixed-point truncation, changing the sampled texel."""
     deg = np.asarray(deg, np.float64)
     rad = deg * DEG2RAD
     sina = np.where(
@@ -246,11 +116,8 @@ def _qt_sincos(deg: np.ndarray):
     return sina, cosa
 
 
-# ===================================================================== per-game description
-
-
 class _EntSlot:
-    """One entity the frame can contain. Everything except position is a measured constant."""
+    """Entity sprite geometry; position, visibility and optional sprite choice come from rows."""
 
     def __init__(
         self, key, sprite, rx, ry, z, rotated=False, reflect=False, abs_coords=False, fixed_xy=None, rotation=None
@@ -262,15 +129,10 @@ class _EntSlot:
 
 
 class _Spec:
-    """Everything about one game the renderer needs, and nothing about its dynamics.
+    """Per-game render description, independent of simulation.
 
-    ``fills`` is the second kind of grid primitive. maze/heist/miner draw every non-SPACE cell as a
-    sprite blit, but ``draw_grid_obj`` is a virtual whose default is ``fillRect(rect,
-    color_for_type(...))`` and which games override: chaser paints its ORB as a solid
-    ``QColor(0, 255, 0)`` over the CENTRED ``ORB_DIM = 0.3`` sub-rect of the cell. An entry is
-    ``(class_index, (r, g, b), fraction)`` and it is composited from a coverage table rather than a
-    gather, because there is no source image to sample.
-    """
+    ``fills`` entries are (class_index, RGB, cell_fraction), for solid grid
+    sub-rectangles such as Chaser orbs rather than sprite gathers."""
 
     def __init__(self, name, dim, classes, sprites, backgrounds, ent_slots, grid_slot, fills=()):
         self.name, self.dim, self.classes = name, dim, classes
@@ -280,19 +142,13 @@ class _Spec:
 
 
 def _aspect_ry(rx, w, h):
-    """``match_aspect_ratio``: ``ry = rx / (width*1.0/height)``, with both steps in float32."""
+    """Match sprite aspect ratio with both division steps rounded to float32."""
     return float(F(F(rx) / F(w * 1.0 / h)))
 
 
-#: `topdown_simple_backgrounds` in `resources.cpp` -- ONE entry, which is why chaser's background
-#: index is not a state dimension: it is 0 in every state a rollout reaches, and declaring it would
-#: be a dead dimension rather than a knob.
+# Chaser has one background, so its index is constant and omitted from render rows.
 TOPDOWN_SIMPLE_BG = ["topdown_backgrounds/floortiles.png"]
-#: `water_backgrounds`. NONE of the seven is square (342x192 x4, 980x581, 2100x1500, 2048x1536), so
-#: `offset_x = bg_pct_x * (bg_ar - world_ar)` is not identically 0 and `bg_pct_x` would be render
-#: state for any game that uses them — the same call miner's non-square platform backgrounds force.
-#: Kept here rather than next to a family-specific consumer because it is
-#: a transcription of `resources.cpp`, not a property of that experiment.
+# Non-square source backgrounds require a horizontal crop percentage.
 WATER_BG = [
     f"water_backgrounds/{n}"
     for n in [
@@ -451,9 +307,7 @@ SPECS = {
         [_EntSlot("exit", 3, 0.5, 0.5, z=-1), _EntSlot("agent", 0, 0.5, 0.5, z=1, reflect=True)],
         [-1, 1, 2, 4],
     ),
-    #: chaser: 13x13 maze (`maze_dim = 13` in HardMode), 3 enemies, 3 large orbs (one per quadrant
-    #: with one quadrant losing one, `extra_orb_sign = -1`). The ORB grid value is a fillRect, not a
-    #: sprite, so it is a `fills` entry and its class maps to slot -1 in the gather.
+    # Hard-mode Chaser has three slots per entity type; grid orbs use solid fills.
     "chaser": _Spec(
         "chaser",
         13,
@@ -477,10 +331,7 @@ SPECS = {
         fills=[(2, (0, 255, 0), 0.3)],
     ),
 }
-#: `image_for_type(ENEMY)` in chaser, as a table over the one shared state dimension it collapses to.
-#: `can_eat_enemies()` gives ENEMY_WEAK; otherwise `rem = (cur_time / 2) % 4` with `3 -> 1`, so the
-#: reachable image ids are {3, 6, 7, 8} and nothing else -- enumerated over 32 (cur_time, eat_time)
-#: pairs, 0 unmatched.
+# Chaser’s weak/time-dependent enemy images map to four shared sprite choices.
 _CHASER_ENEMY_SPRITE = (2, 5, 6, 7)  # atlas slots for image ids 3, 6, 7, 8
 #: procgen grid object id -> render class. miner folds MOVING_BOULDER/MOVING_DIAMOND into their
 #: stationary forms because `image_for_type` gives them the same sprite.
@@ -488,9 +339,7 @@ _CLASS_OF = {
     "maze": {P_SPACE: 0, P_WALL: 1, 2: 2},
     "heist": {P_SPACE: 0, P_WALL: 1},
     "miner": {P_SPACE: 0, 1: 1, 3: 1, 2: 2, 4: 2, 9: 3},
-    # chaser's MAZE_WALL is 5 and its ORB is 1002; MARKER (1001) is a level-generation
-    # scratch value that `game_reset` clears before the first frame, and 5,376 harvested
-    # states hold only {5, 100, 1002}.
+    # MARKER (1001) is generation scratch cleared before source frames are observed.
     "chaser": {P_SPACE: 0, 5: 1, 1002: 2},
 }
 _PROCGEN_ID = {
@@ -501,9 +350,6 @@ _PROCGEN_ID = {
 }
 
 
-# ===================================================================== assets
-
-
 def _cache_dir() -> str:
     root = os.environ.get("STABLE_ENVS_CACHE") or os.path.expanduser("~/.cache/stable-envs")
     d = os.path.join(root, "procgen")
@@ -512,7 +358,7 @@ def _cache_dir() -> str:
 
 
 class _Assets:
-    """Sprite atlas per game (packed, cached on disk) and backgrounds (decoded lazily, per index)."""
+    """Cache premultiplied sprites and row-resampled background atlases per game/device."""
 
     _atlas: dict = {}
     _bgatlas: dict = {}
@@ -555,13 +401,9 @@ class _Assets:
 
     @classmethod
     def bg_atlas(cls, game: str, size: int, g, d: int, device):
-        """Every background of ``game``, already resampled to ``size`` ROWS and width-padded.
+        """Pack all backgrounds at the requested row resolution, padded to the widest image.
 
-        The row map is a function of the background's height alone (``main_rect`` is the whole
-        frame), so baking it turns the background into one gather per frame instead of a Python
-        loop over the distinct indices in the batch. miner's table is 62 x 64 x 2000 x 3 = 23.8 MB;
-        maze's and heist's are 0.9 MB.
-        """
+        This leaves one per-row column map and gather when drawing mixed backgrounds."""
         key = (game, int(size), str(device))
         if key in cls._bgatlas:
             return cls._bgatlas[key]
@@ -602,15 +444,10 @@ class _Assets:
         return out
 
 
-# ===================================================================== precomputed geometry
-
-
 def _blit_axis(pos, extent, src_extent, size):
-    """One axis of ``qt_scale_image``: device index -> source index, as a length-``size`` array.
+    """Map one device axis to source indices with Qt’s 16.16 walk.
 
-    Entries outside the rect are meaningless and masked by the caller; they are clamped rather than
-    left wild so a gather cannot fault.
-    """
+    Clamp unused entries for safe gathers; callers mask pixels outside [lo, hi)."""
     l = int(_qround(pos))
     w = int(_qround(pos + extent)) - l
     out = np.zeros(size, np.int64)
@@ -626,7 +463,7 @@ def _blit_axis(pos, extent, src_extent, size):
 
 
 def _rot_matrix(rect, deg, sw, sh):
-    """``copy`` from ``QRasterPaintEngine::drawImage``: source pixel coords -> device coords."""
+    """Build Qt’s source-to-device transform for a rotated image rectangle."""
     rx, ry, rw, rh = rect
     sina, cosa = (float(np.asarray(v).reshape(-1)[0]) for v in _qt_sincos(np.float64(deg)))
     dx = rx + rw / 2.0 - rw / 2.0 * cosa + rh / 2.0 * sina
@@ -636,7 +473,7 @@ def _rot_matrix(rect, deg, sw, sh):
 
 
 def _rot_index_np(rect, deg, sw, sh, size):
-    """Coverage + source index for one rotated blit whose rect is a constant, on the host."""
+    """Precompute pixel-centre coverage and texel indices for a fixed rotated blit."""
     M, T = _rot_matrix(rect, deg, sw, sh)
     corners = np.array([[0, 0], [sw, 0], [sw, sh], [0, sh]], np.float64) @ M + T
     ys, xs = np.mgrid[0:size, 0:size]
@@ -655,13 +492,10 @@ def _rot_index_np(rect, deg, sw, sh, size):
 
 
 class _Geom:
-    """Everything about (game, size) that does not depend on the state. Built once, cached.
+    """Cache geometry maps for one game, size and device.
 
-    The grid is NOT a loop over cells. ``RENDER_EPS`` widens each cell by 0.04 of a cell, so a device
-    column is covered by at most two cells (measured, at 64/128/256/512 px, all three games) and the
-    whole grid is four composited layers indexed by two column tables and two row tables. Cells enter
-    each table in ascending index, which IS the reference's draw order (``for x: for y:``).
-    """
+    Two cell overlaps per axis produce four ordered grid layers. Assert the overlap
+    bound while building tables so another game cannot silently lose coverage."""
 
     _cache: dict = {}
     K = 2
@@ -713,9 +547,7 @@ class _Geom:
                 for s in range(S):
                     syi[s, r, k] = ya[s][0][r]
                 nrow[r] += 1
-        # One flat table per (kx, ky) layer, so a layer costs three index_selects rather than a
-        # chain of broadcast advanced indexes. `idx[s, r, c]` is the atlas offset a pixel would read
-        # if sprite `s` were the one drawn there, which depends on nothing but (sprite, row, col).
+        # Cache flat atlas offsets per layer to avoid repeated broadcast indexing.
         _, Hs, Ws, _ = _Assets.atlas(game, device)[0].shape  # noqa: E501
         self.layers = []
         for kx in range(K):
@@ -734,11 +566,7 @@ class _Geom:
                         torch.from_numpy(idx.reshape(-1)).to(device),
                     )
                 )
-        # `draw_grid_obj` overrides: a solid colour over a centred sub-rect of the cell. There is no
-        # source image, so this is a coverage table rather than a gather: `cellof[p]` is the cell
-        # whose sub-rect covers device pixel `p`, or -1. One table is enough because a sub-rect at
-        # `frac <= 0.5` cannot reach a neighbour's -- measured for chaser at 1 cell per pixel over
-        # all 169 (`probe14_chaser.py`), and asserted here so a new game cannot inherit it silently.
+        # Solid sub-rectangles use one coverage table; assert they never overlap.
         self.fills = []
         for cls_idx, rgb, frac in spec.fills:
             cellof = np.full(size * size, -1, np.int64)
@@ -765,9 +593,7 @@ class _Geom:
                 )
             )
         self.slot_lut = torch.from_numpy(spec.grid_slot.astype(np.int32)).to(device)
-        #: the (n_sprite, 2) size table on the device, for the slots whose sprite is state and whose
-        #: source extent is therefore per environment. Hoisted out of `_draw_entities` because a
-        #: host->device copy per slot per call is a transfer on the critical path.
+        # Keep sprite dimensions on device for per-row sprite choices.
         self.wh_dev = torch.from_numpy(np.ascontiguousarray(wh)).to(device)
         self.cols = torch.arange(size, device=device)
         self.rc = torch.arange(size * size, dtype=torch.int32, device=device)
@@ -796,13 +622,13 @@ class _Geom:
 
     @property
     def bg(self):
-        """``(flat (N,3) uint8, Wmax, widths (n_bg,), heights (n_bg,))``. Built on first use."""
+        """Lazily return the flat uint8 background atlas, padded width and source dimensions."""
         if self._bg is None:
             self._bg = _Assets.bg_atlas(self.spec.name, self.size, self.g, self.spec.dim, self.device)
         return self._bg
 
     def _abs_rect(self, sl):
-        """``get_abs_rect(view_dim*(x-rx), view_dim*(y+ry), 2*view_dim*rx, 2*view_dim*ry)``."""
+        """Compute a fixed screen-relative entity rectangle in source float32 order."""
         unit, view_dim = self.g[0], self.g[1]
         x, y = sl.fixed_xy
         vals = (
@@ -814,22 +640,14 @@ class _Geom:
         return tuple(float(F(v * unit)) for v in vals)
 
 
-# ===================================================================== batched blit maps
-
-
 def _t_qround(v):
     return torch.where(v >= 0, torch.floor(v + 0.5), torch.ceil(v - 0.5))
 
 
 def _axis_map(pos, extent, src_extent, S: int, cols):
-    """``qt_scale_image`` on one axis for a batch. ``pos``/``extent`` are (B,) float64.
+    """Return (coverage, texel index) arrays of shape (B, S) for one blit axis.
 
-    ``src_extent`` is an int, or a (B,) tensor when the batch mixes source images of different sizes
-    — which is exactly miner's case, where 62 backgrounds range from 144x144 to 2000x2000.
-
-    Returns ``(ok, idx)``, both ``(B, S)``. This is the whole axis-aligned rule: everything else in
-    the renderer is which rects to feed it and in what order.
-    """
+    Position and extent are float64; source extent may be scalar or per row."""
     B = pos.shape[0]
     l = _t_qround(pos).long()
     w = _t_qround(pos + extent).long() - l
@@ -851,7 +669,7 @@ def _axis_map(pos, extent, src_extent, S: int, cols):
 
 
 def _rot_maps(rx, ry, rw, rh, rot, sw, sh, S):
-    """The rotated path for a batch: pixel-centre coverage + ``fetchTransformed``'s fixed point."""
+    """Compute batched pixel-centre coverage and fixed-point texels for rotated blits."""
     dev = rx.device
     B = rx.shape[0]
     deg = (rot.to(torch.float32) * F(180) / PI_F).double()
@@ -885,13 +703,7 @@ def _rot_maps(rx, ry, rw, rh, rot, sw, sh, S):
     return ok, fx.clamp_(0, sw - 1).int(), fy.clamp_(0, sh - 1).int()
 
 
-# ===================================================================== the fused compositor
-#
-# The torch expression of one SourceOver blend is nine elementwise kernels over a (B,S,S,3) int32
-# canvas plus a four-channel gather, and measured 0.73 GB/s of frame output at B=4096 -- two orders
-# of magnitude off the roofline for a 12.3 kB frame. The arithmetic is not the problem; the number
-# of full-frame passes is. Both kernels below do the whole blend in registers, so a composite reads
-# the canvas once and writes it once.
+# Fuse each blend into one canvas read/write, preserving integer SourceOver order.
 
 if HAVE_TRITON:
 
@@ -899,7 +711,7 @@ if HAVE_TRITON:
     def _blend_kernel(
         canvas, atlas, idx, mask, gain, n, SS: tl.constexpr, HAS_GAIN: tl.constexpr, BLOCK: tl.constexpr
     ):
-        """One primitive's blend, from a per-pixel atlas offset and coverage mask."""
+        """Blend one primitive from per-pixel atlas indices and coverage."""
         off = tl.program_id(0) * BLOCK + tl.arange(0, BLOCK)
         ok = off < n
         m = tl.load(mask + off, mask=ok, other=0).to(tl.int32)
@@ -932,7 +744,7 @@ if HAVE_TRITON:
         HAS_GAIN: tl.constexpr,
         BLOCK: tl.constexpr,
     ):
-        """One of the four grid layers, index computation and blend fused."""
+        """Gather and blend one of the four ordered grid layers."""
         off = tl.program_id(0) * BLOCK + tl.arange(0, BLOCK)
         ok = off < n
         b = off // SS
@@ -961,11 +773,7 @@ if HAVE_TRITON:
     def _fill_kernel(
         canvas, grid, cell_tab, colour, cls, n, NCELL: tl.constexpr, SS: tl.constexpr, BLOCK: tl.constexpr
     ):
-        """A `draw_grid_obj` solid fill: write ``colour`` where this pixel's cell holds ``cls``.
-
-        No blend, and that is exact rather than a shortcut: ``fillRect`` with an opaque ``QColor``
-        composites as ``d = s + BYTE_MUL(d, 255 - 255) = s``.
-        """
+        """Write opaque grid fill colours where the selected class covers the pixel."""
         off = tl.program_id(0) * BLOCK + tl.arange(0, BLOCK)
         ok = off < n
         b = off // SS
@@ -981,14 +789,7 @@ if HAVE_TRITON:
 
 
 def _blend_torch(canvas, atlas, idx, mask, gain):
-    """The readable definition the kernels are checked against. Same arithmetic, more passes.
-
-    "Checked against" is a measurement, not an intention: triton imports on the machines this repo
-    runs on, so every parity number comes from the fused path and this one is dead code there unless
-    somebody forces it. the frozen measurement record does — it flips
-    ``HAVE_TRITON`` off and re-renders — and gets **max abs diff 0 on 64 states against both the
-    Triton path and the official renderer**, for all three kernels including chaser's fill layer.
-    """
+    """Torch reference for fused premultiplied blending; mutates the uint8 canvas."""
     B, S = canvas.shape[0], canvas.shape[1]
     src = atlas.index_select(0, idx.reshape(-1)).view(B, S, S, 4).to(torch.int32)
     mm = mask.unsqueeze(-1).to(torch.int32)
@@ -998,38 +799,29 @@ def _blend_torch(canvas, atlas, idx, mask, gain):
     canvas.copy_(_over(canvas.to(torch.int32), rgb, src[..., 3:4] * mm).to(torch.uint8))
 
 
-# ===================================================================== the env
-
-
 class _ProcgenEnv(Env):
-    """Shared renderer. Subclasses declare only which game they are and how the state is laid out."""
+    """Render Maze, Heist, Miner and Chaser in hard mode with a fixed full-world camera.
+
+    Rows encode grid classes and visible entity fields, not resumable game State.
+    Miner folds moving/stationary objects that share sprites. Assets come from the
+    installed Procgen wheel; local caches hold packed atlases and sampled rows.
+    Scrolling cameras, nondefault source assets and other games are unsupported."""
 
     family = "procgen"
 
     game: str = ""
     default_size = 64
     parity_interior_min = 1.0
-    #: how many state dimensions the background costs. 1 everywhere except chaser, whose
-    #: `topdown_simple_backgrounds` holds a single image: a dimension that can only ever be 0 is a
-    #: dead dimension, and the suite is right to say so.
+    # Chaser’s single background omits this index; other games store it.
     n_bg_state = 1
-    #: steps discarded before a state is harvested into the pool. 48 is enough for maze/heist/miner
-    #: (dug cells, collected keys); chaser needs more, because its ENEMY entities do not exist until
-    #: the eggs hatch at `egg_timeout = 50` and a pool without them leaves three slots and the
-    #: enemy-sprite dimension dead.
+    # Warmup must reach dug cells, collected keys and Chaser’s hatched enemies.
     pool_warmup = 48
 
     def __init__(self, num_envs: int = 1, size=None, supersample=1, device="cuda", backend="auto", seed=0):
         super().__init__(
             num_envs=num_envs, size=size, supersample=supersample, device=device, backend=backend, seed=seed
         )
-        # Public state: the tile grid and the entity slots, which is the division this
-        # class is already built around (``n_cells``, ``has_grid``, ``_unpack``) rather than a new
-        # one. Per instance because ``n_cells`` is a per-game property, and the ``grid`` key is
-        # absent on a game that has none. Every column is covered by one of the two, so nothing is
-        # hidden and the packed row -- whose per-game column order the frozen digests speak -- does
-        # not move. ``entities`` stays one key: its columns differ per game and are named by
-        # ``state_names``, and inventing a per-game nest would be four vocabularies for one row.
+        # Separate grid and entity render columns; neither contains full simulation state.
         n = int(self.n_cells)
         self.state_layout = (((("grid",), n, 0),) if n else ()) + (
             ((("entities",), int(self.state_dim) - n, n),) if int(self.state_dim) > n else ()
@@ -1037,23 +829,14 @@ class _ProcgenEnv(Env):
         self._pool = None
 
     def _close(self) -> None:
-        """Drop the per-instance draws. ``Env.close`` calls this once and is idempotent.
-
-        The assets and the baked geometry (``_Assets``, ``_Geom``) are keyed on (game, size, device)
-        and SHARED by every instance, so they are not released here -- releasing a cache another live
-        env is drawing through is the same class of error as releasing a shared EGL context. What an
-        instance owns is the sampled state pool, which is rebuildable from the official env.
-        """
+        """Release the instance’s sampled rows; shared assets and geometry remain cached."""
         self._pool = None
 
     @property
     def spec(self) -> _Spec:
         return SPECS[self.game]
 
-    #: whether the grid reaches a pixel at all. True for every SHIPPED game; the hook exists because
-    #: several procgen games never write their grid — `game_reset` leaves it `fill_elem(..., SPACE)`
-    #: and `draw_grid_obj` returns immediately on SPACE — so declaring those cells would be hundreds
-    #: of dead state dimensions. Bigfish is the worked case.
+    # Disable grid columns only for games whose grid never reaches a pixel.
     has_grid = True
 
     @property
@@ -1061,16 +844,10 @@ class _ProcgenEnv(Env):
         return self.spec.dim**2 if self.has_grid else 0
 
     def make_variation_space(self) -> Dict:
-        """Knobs that are EXACTLY the identity at their defaults.
+        """Expose background visibility and per-channel sprite/background gains.
 
-        ``use_backgrounds`` is procgen's own option, bit for bit: at 0, ``draw_background`` stops
-        after its black ``fillRect``. The two gains multiply the already-premultiplied atlas and the
-        background; 1.0 is the identity rather than approximately so, because the product is truncated
-        and an integer times 1.0 is that integer. They are deliberately GAINS and not RGB leaves: a
-        tint cannot put a requested colour literally into the frame, so an RGB leaf here would fail
-        ``check_colors_apply_exactly`` for the right reason, and declaring a knob that cannot honour
-        its own contract is worse than not declaring it.
-        """
+        Gains multiply premultiplied colours before truncation; one is the identity.
+        They do not promise a literal output RGB colour."""
         return Dict(
             {
                 "rendering": Dict({"use_backgrounds": Discrete(2, init_value=1)}),
@@ -1079,7 +856,6 @@ class _ProcgenEnv(Env):
             }
         )
 
-    # ---------------------------------------------------------------- render
 
     def _unpack(self, s: torch.Tensor) -> dict:
         d = self.spec.dim
@@ -1097,28 +873,18 @@ class _ProcgenEnv(Env):
         return {"grid": grid, "bg_index": bg}
 
     def _slot_fields(self, f, sl, B):
-        """``(on|None, x, y, rotation|None, reflected|None)`` for one entity slot."""
+        """Return (present, x, y, rotation, reflected), with None for unused optional fields."""
         raise NotImplementedError
 
     def _slot_sprite(self, f, sl, B):
-        """Per-environment atlas slot for one entity slot, or ``None`` when it is a constant.
+        """Return a per-row sprite index, or None for the slot’s fixed sprite.
 
-        ``draw_image`` takes ``image_for_type(ent->image_type)``, and that is a virtual: chaser's
-        returns a different sprite depending on ``cur_time`` and ``eat_time``, so its three ENEMY
-        slots draw one of four images and WHICH one is state. Returning a tensor here also makes the
-        source extent per environment — the four candidate sprites are 48x48 and 64x64 — which
-        ``_axis_map`` already handles because miner's backgrounds needed it.
-        """
+        Sprite choices may have different source dimensions, as in Chaser enemies."""
         return None
 
     @torch.no_grad()
     def _render(self, states=None, size=None, supersample=None, variation=None, style=None, out=None) -> torch.Tensor:
-        """``(...,state_dim)`` -> ``(...,S,S,3)`` uint8, in ``game_draw``'s order.
-
-        There is no ``scene()``. The frame is a sequence of nearest-neighbour blits from a sprite
-        atlas composited with Qt's integer SourceOver, which is exact by construction; pushing that
-        through a polygon IR would trade an exact answer for an approximate one.
-        """
+        """Composite nearest-neighbour sprite blits in source draw order into uint8 frames."""
         s = self._render_state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
         lead = tuple(s.shape[:-1])
         s = s.reshape(-1, self.state_dim)
@@ -1139,11 +905,8 @@ class _ProcgenEnv(Env):
         # no zero_(): `_draw_background` writes every pixel (the black `fillRect` is `use_bg == 0`)
         canvas = out.view(B, S, S, 3) if direct else torch.empty(B, S, S, 3, dtype=torch.uint8, device=self.device)
         use_bg = sty["rendering.use_backgrounds"].reshape(B) > 0.5
-        # .contiguous() is load-bearing, not hygiene. `StyleTensor.__getitem__` returns a COLUMN
-        # SLICE of the (B, style_dim) buffer, so its row stride is style_dim rather than 3, and the
-        # kernels address the gain as `gain + b*3 + c`. Without this the per-environment style read
-        # environment 0's row (and past the end of the buffer) while the shared-style default, whose
-        # gain is 1 and therefore never loaded, looked perfectly fine: 254/255 on a permuted batch.
+        # Kernels address gain as b*3+c; style column slices have wider row strides
+        # and must be copied to contiguous storage first.
         bgain = sty["background_gain"].reshape(B, 3).to(torch.float32).contiguous()
         sgain = sty["sprite_gain"].reshape(B, 3).to(torch.float32).contiguous()
         if bool((sgain == 1).all()):
@@ -1160,14 +923,7 @@ class _ProcgenEnv(Env):
         return canvas.view(*lead, S, S, 3) if lead else canvas
 
     def _draw_background(self, canvas, f, gm, use_bg, gain):
-        """``draw_background``: black ``fillRect``, then one scaled blit of the level's background.
-
-        The ROW map depends on nothing but the background's height, so it is baked into the atlas
-        (``_Geom.bg``): each background is stored already resampled to S rows and padded to the
-        widest source width. What is left per environment is one column map and one gather, which
-        is what removed the per-background-index Python loop — 9 groups for maze, 62 for miner, and
-        about 10 ms of pure launch overhead that did not shrink with the batch.
-        """
+        """Draw the level background through a per-row column map; hidden backgrounds are black."""
         B, S = canvas.shape[0], canvas.shape[1]
         d = self.spec.dim
         mr = _screen_rect(0, d, d, d, gm.g)
@@ -1217,9 +973,7 @@ class _ProcgenEnv(Env):
             lin = idx.index_select(0, (slot.clamp_min(0) * gm.SS + gm.rc.view(1, -1)).reshape(-1))
             _blend_torch(canvas, flat, lin, m.view(B, S, S), gain)
         for cls_idx, cellof, colour in gm.fills:
-            # The fill sub-rect sits inside its own cell's non-eps rect, so it cannot touch a
-            # neighbour's sprite pixels and the layer order against the four gathers above is
-            # unobservable -- measured for chaser at 0 interactions (`probe14_chaser.py`).
+            # Fill sub-rectangles stay inside their cells and cannot touch neighbouring sprites.
             if HAVE_TRITON:
                 _fill_kernel[(triton.cdiv(n, 512),)](
                     canvas, grid, cellof, colour, cls_idx, n, NCELL=grid.shape[1], SS=gm.SS, BLOCK=512, num_warps=4
@@ -1259,7 +1013,7 @@ class _ProcgenEnv(Env):
             self._composite(canvas, flat, lin, m.contiguous(), gain, gm)
 
     def _composite(self, canvas, flat, lin, m, gain, gm):
-        """Blend one primitive into the canvas from a per-pixel atlas offset and coverage mask."""
+        """Blend one primitive in place from atlas indices and coverage."""
         n = canvas.shape[0] * canvas.shape[1] * canvas.shape[2]
         if HAVE_TRITON:
             _blend_kernel[(triton.cdiv(n, 512),)](
@@ -1278,21 +1032,11 @@ class _ProcgenEnv(Env):
             _blend_torch(canvas, flat, lin, m, gain)
 
     def _slot_radii(self, f, sl, B):
-        """``(rx, ry)`` for one entity slot when they are state, or ``None`` when constants.
-
-        Constant for every entity in every SHIPPED game, which is why the base returns ``None``.
-        The hook exists for the games where it is not: bigfish's fish are sampled a radius at spawn
-        (``FISH_MIN_R`` to ``FISH_MAX_R``) and its agent grows one ``r_inc`` per fish eaten. See
-        the frozen measurement record and ``docs/research/pixel_native.md`` 2.9.
-        """
+        """Optional per-row radii; supported games use constant slot geometry."""
         return None
 
     def _ent_rect(self, sl, x, y, gm, radii=None):
-        """``get_object_rect`` -> ``get_screen_rect``, in float32, widened only at the end.
-
-        Every operand stays float32 whether the radius is a python constant or a tensor: the C++ is
-        ``float`` and the float64 answer puts a rect edge a whole pixel out.
-        """
+        """Compute entity rectangles in float32, widening only after world-to-screen arithmetic."""
         unit, view_dim, x_off, y_off = (float(v) for v in gm.g)
         x32, y32 = x.to(torch.float32), y.to(torch.float32)
         if radii is None:
@@ -1310,11 +1054,7 @@ class _ProcgenEnv(Env):
         return rx, ry, rw, rh
 
     def _blit_maps(self, rect, rot, sw, sh, S, gm):
-        """Coverage + source index, choosing the axis-aligned or rotated rule PER ENVIRONMENT.
-
-        ``draw_image`` branches on ``rotation == 0``, so a batch holding both is not hypothetical:
-        heist's agent has rotation 0 until it first moves.
-        """
+        """Choose axis-aligned or rotated sampling per row; zero rotation uses the axis path."""
         rx, ry, rw, rh = rect
         B = rx.shape[0]
         okx, sx = _axis_map(rx, rw, sw, S, gm.cols)
@@ -1333,16 +1073,9 @@ class _ProcgenEnv(Env):
             syg = torch.where(t, fy, syg)
         return m, sxg, syg
 
-    # ---------------------------------------------------------------- states
 
     def sample_states(self, batch: int, rng: np.random.Generator | None = None) -> np.ndarray:
-        """States from real procgen rollouts, not from a synthetic prior.
-
-        The layouts come out of ``MazeGen``/``simple_choose`` with strong invariants (a wall ring, one
-        goal, an exit reachable from above), so uniform noise over the class alphabet would exercise a
-        region no episode visits and prove nothing about the frames anyone would store. Same choice as
-        MiniGrid and for the same reason.
-        """
+        """Sample compact render rows from cached source rollouts."""
         rng = rng or self.rng
         if self._pool is None:
             self._pool = self._load_pool()
@@ -1365,13 +1098,10 @@ class _ProcgenEnv(Env):
         return pool
 
     def _build_pool(self, n: int) -> np.ndarray:
-        """Roll the official env and harvest states, after a warm-up.
+        """Harvest source rollout rows after warmup.
 
-        The warm-up is load-bearing rather than decorative. The background is only visible through
-        SPACE cells, and a pool of pristine resets would leave miner's grid almost entirely DIRT and
-        heist's keys all uncollected — so ``bg_index``, ``bg_pct_x`` and ``has_key*`` would present as
-        dead state dimensions, which is a property of the pool and not of the renderer.
-        """
+        Warmup exposes dug background cells, collected keys and hatched enemies so
+        the sample pool exercises those render inputs."""
         from procgen import ProcgenGym3Env
 
         num = 16
@@ -1396,7 +1126,6 @@ class _ProcgenEnv(Env):
                 break
         return np.stack(rows[:n]).astype(np.float32)
 
-    # ---------------------------------------------------------------- reference bridge
 
     @classmethod
     def reference_env(cls, size: int = 64):
@@ -1418,12 +1147,7 @@ class _ProcgenEnv(Env):
 
     @classmethod
     def reference_render(cls, ref, states) -> np.ndarray:
-        """Drive the official env to each state and read ITS own observation.
-
-        The round-trip is asserted, not assumed. ``set_state`` runs procgen's ``deserialize`` and then
-        ``observe()``, so a blob that does not describe the requested state would make every parity
-        number compare two different scenes and would present as a rendering discrepancy.
-        """
+        """Restore each render row into a source blob and verify it before reading pixels."""
         out = []
         for st in np.asarray(states, np.float32):
             ref.env.set_state([_dump(cls.blob_from_state(ref.template, st))])
@@ -1449,16 +1173,14 @@ class _ProcgenEnv(Env):
 
 
 class _Reference:
-    """The official env plus the template blob every crafted state is written on top of."""
+    """Own the source environment and a template blob for restoring render inputs."""
 
     def __init__(self, env, template):
         self.env, self.template = env, template
 
 
-# ===================================================================== blob <-> dict
-#
-# `Game::serialize` / `BasicAbstractGame::serialize` / `Entity::serialize` / `Grid::serialize` /
-# `RandGen::serialize`, in order. Verified by re-serialising: 24/24 states per game, byte for byte.
+# Field order follows source Game/BasicAbstractGame/Entity/Grid/RandGen serialization.
+# Keep integer and float widths and length-prefixed byte strings unchanged.
 
 _HEAD = [
     ("serialize_version", "i"),
@@ -1569,9 +1291,7 @@ _TAIL = {
     "maze": [("maze_dim", "i"), ("world_dim", "i")],
     "heist": [("num_keys", "i"), ("world_dim", "i"), ("has_keys", "vb")],
     "miner": [("diamonds_remaining", "i")],
-    # chaser's tail carries two derived vectors before its scalars. Neither reaches a pixel
-    # (`free_cells` and `is_space_vec` are pathfinding caches), but both have to be READ to find
-    # `eat_time`, which does: it is half of `image_for_type(ENEMY)`.
+    # Read pathfinding vectors to reach eat_time at the correct serialized offset.
     "chaser": [
         ("free_cells", "vi"),
         ("is_space_vec", "vb"),
@@ -1711,16 +1431,11 @@ def _classes_to_grid(game, cls, dim):
     return ids[np.clip(np.rint(cls).astype(np.int64), 0, len(ids) - 1)].reshape(dim, dim)
 
 
-# ===================================================================== the four games
-
-
 @register
 class ProcgenMaze(_ProcgenEnv):
-    """25x25 topdown maze: sand walls, one cheese, a mouse that mirrors with its heading.
+    """Render the 25×25 maze with sand walls, cheese and a reflected mouse sprite.
 
-    ``bg_pct_x`` is deliberately NOT in the state: every topdown background is square, so
-    ``offset_x = bg_pct_x * (bg_ar - world_ar)`` is identically zero and the dimension would be dead.
-    """
+    Square backgrounds make horizontal crop percentage irrelevant to pixels."""
 
     game = "maze"
     name = "procgen-maze"
@@ -1770,13 +1485,9 @@ class ProcgenMaze(_ProcgenEnv):
 
 @register
 class ProcgenHeist(_ProcgenEnv):
-    """13x13 maze with coloured locks, keys and a key ring.
+    """Render the 13×13 maze with locks, keys and a screen-relative key ring.
 
-    The only place in the four games where Qt's TRANSFORMED texture path runs: the agent calls
-    ``Entity::face_direction``, so its sprite is drawn through ``translate/rotate/drawImage`` rather
-    than the axis-aligned fast path, and the three ring keys are drawn rotated by pi/2 in absolute
-    screen coordinates.
-    """
+    Agent rotation and fixed quarter-turned ring keys use Qt’s transformed blit path."""
 
     game = "heist"
     name = "procgen-heist"
@@ -1865,32 +1576,11 @@ class ProcgenHeist(_ProcgenEnv):
 
 @register
 class ProcgenChaser(_ProcgenEnv):
-    """13x13 pac-man: stone maze, green orbs painted as fillRects, 3 eggs that hatch into chasers.
+    """Render a 13×13 maze with orb fills and three slots each for orbs, eggs and enemies.
 
-    Three things here are new relative to maze/heist/miner, and each was measured before it was
-    written:
-
-      * **a grid value that is not a sprite.** ``ChaserGame::draw_grid_obj`` paints ORB as a solid
-        ``QColor(0, 255, 0)`` over the centred 30% sub-rect of the cell, so the grid is four gathers
-        PLUS a coverage table. Qt's aliased ``fillRect`` rounding had never been pinned in this repo
-        and the two readings disagree by a whole pixel: ``QRectF::toRect()`` scores **169/169** cells
-        and ``toNormalizedFillRect``'s ``qRound(edge + 0.5 - 1/64)`` — which is what Qt's source has
-        for ``fillRect(QRectF)`` and is therefore the tempting one — scores **1/169**. The fill is
-        1, 2 or 4 device pixels per cell at 64 px, exactly ``(0, 255, 0)``, and **no two cells' fills
-        share a pixel**, which is what makes one table enough.
-      * **a sprite that is state rather than a constant of the slot.** ``image_for_type(ENEMY)``
-        returns ENEMY_WEAK while ``cur_time - eat_time < eat_timeout``, else ``ENEMY + rem`` with
-        ``rem = (cur_time / 2) % 4`` folded so ``3 -> 1``. All three enemies share it, so it
-        collapses to ONE state dimension over four images — enumerated over 32 ``(cur_time,
-        eat_time)`` pairs, 0 unmatched. The four are not the same size (48x48 for the weak one,
-        64x64 for the other three), so the blit's source extent is per environment.
-      * **no background dimension.** ``load_background_images`` points at
-        ``topdown_simple_backgrounds``, which holds one image, and every harvested state has index 0.
-
-    The z=0 slot order is fixed (orbs, eggs, enemies) and that is safe for heist's reason, re-measured
-    here: reversing the z=0 entity list changed **0 of 360** real frames, and **0 of 360** had two
-    z=0 entities overlapping even in world space.
-    """
+    All enemies share one four-way sprite selector. Grid orbs use rounded centred
+    sub-rectangles, not sprites; the single background needs no row field.
+    Fixed z=0 slot order assumes source layouts where those entities do not overlap."""
 
     game = "chaser"
     name = "procgen-chaser"
@@ -1949,7 +1639,7 @@ class ProcgenChaser(_ProcgenEnv):
 
     @staticmethod
     def _enemy_sprite(b) -> int:
-        """``image_for_type(ENEMY)`` as an index into ``_CHASER_ENEMY_SPRITE``."""
+        """Map source time/eat-time fields to the four-way enemy sprite index."""
         if b["cur_time"] - b["eat_time"] < b["eat_timeout"]:
             return 0
         rem = (int(b["cur_time"]) // 2) % 4
@@ -1984,13 +1674,10 @@ class ProcgenChaser(_ProcgenEnv):
 
 @register
 class ProcgenMiner(_ProcgenEnv):
-    """20x20 boulder-dash: dirt, boulders, diamonds, a digging robot and an exit window.
+    """Render the 20×20 digging grid with robot and exit sprites.
 
-    The grid folds ``MOVING_BOULDER``/``MOVING_DIAMOND`` into their stationary forms, because
-    ``image_for_type`` gives both pairs the same sprite. The frame is unaffected; the dynamics are,
-    and this module claims only the frame. ``bg_pct_x`` IS state here: 52 of the 62 platform/space
-    backgrounds are non-square, so the horizontal offset is real.
-    """
+    Moving and stationary boulders/diamonds share render classes, so these rows
+    cannot resume dynamics. Non-square backgrounds require horizontal crop state."""
 
     game = "miner"
     name = "procgen-miner"

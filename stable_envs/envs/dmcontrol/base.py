@@ -1,29 +1,3 @@
-"""``_DMCModel`` — everything a DM Control cell is before a renderer touches it, and how a cell is declared.
-
-ONE SMALL BASE. The model plumbing, the widened state, the appearance knobs, the visited-state
-distribution and the bridge to ``dm_control``'s own renderer are properties of the DOMAIN and are
-written once here. Which rasterizer draws the frame is NOT a property of the domain, and the two
-tiers disagree about it completely, so they are two modules beside this one (``suite``, ``trackcom``)
-rather than two more rungs of a hierarchy. Below those there is exactly one class per registered
-cell, and those classes are DECLARATIONS — ``DOMAIN``/``TASK``/``CAMERA`` and the measured numbers —
-produced by ``parity_cell``/``trackcom_cell`` from the data in the eighteen domain modules.
-
-The Public State additions live here too, and there are only three:
-
-  * ``num_envs=`` (contract §2);
-  * a two-key public ``State`` (contract §3) — ``{"qpos": (nq,), "episode": (k,)}`` — whose
-    ``state_layout`` is assigned PER INSTANCE, because a DM Control cell's ``state_dim`` is a
-    property of the compiled model and is not known until one is constructed;
-  * ``close()`` refusing to render afterwards, without releasing the shared EGL context, which this
-    family must never release.
-
-NO DYNAMICS, and that is a declaration rather than an omission: these cells ship a renderer over
-``dm_control``'s own physics and there is no batched simulator in this package for any of them, so
-``step``/``transition`` raise ``Env``'s precise refusal and ``has_dynamics`` is False. ``reset`` and
-``render`` work as usual; to produce trajectories, roll out the official CPU env and render the
-states it gives you.
-"""
-
 from __future__ import annotations
 
 import numpy as np
@@ -43,14 +17,11 @@ from ._model import (  # noqa: F401
 
 
 class _DMCModel(Env):
-    """What every DM Control cell shares, whichever renderer draws it.
+    """Share compiled models, appearance defaults and source rendering for DM Control.
 
-    The model plumbing, the widened state, the appearance knobs, the visited-state distribution and
-    the bridge to ``dm_control``'s own renderer are properties of the DOMAIN. Which rasterizer draws
-    the frame is not, and the two tiers below disagree about it entirely: ``DMControlSuite`` bakes a
-    plate and ray-casts the movers (parity), ``DMControlTrackCom`` hands the whole scene to MJWarp
-    every frame (visual). Everything that would otherwise be written twice, and drift, lives here.
-    """
+    Compact render rows contain qpos and episode-specific model entries. They are
+    not restorable simulator State; registered recovered environments compose a
+    separate simulation adapter that defines the full State schema."""
 
     family = "dmcontrol"
 
@@ -59,41 +30,15 @@ class _DMCModel(Env):
     CAMERA: int = 0
     default_size = 84
     default_supersample = 1
-    #: Whether the appearance space offers a field-of-view knob. It is a class flag rather than an
-    #: always-on knob because whether it can be honoured is a property of the RENDERER: the ray-caster
-    #: re-bakes per appearance and gets it for free, while MJWarp would need ``cam_fovy`` per world and
-    #: ``put_model`` does not carry that array per world.
+    # Renderer capability: MJWarp does not batch cam_fovy per world.
     CAMERA_KNOB = True
-    #: Whether the appearance space offers a per-element VISIBILITY knob. A class flag for exactly the
-    #: reason ``CAMERA_KNOB`` is one — whether it can be honoured is a property of the RENDERER, not of
-    #: the domain. The ray-caster re-bakes per appearance and gets it for free because MuJoCo's own
-    #: alpha filter is already what ``_visible`` reads; MJWarp's shader never reads alpha and hides
-    #: zero-alpha elements by moving them out of the enabled geom groups at CONTEXT-CREATION time
-    #: (``MW.prepare_model`` in ``_tc_context``), which is once per (domain, res, worlds) and not per
-    #: world. See ``DMControlTrackCom``.
+    # Renderer capability: cached MJWarp contexts fix visibility at construction.
     VISIBILITY_KNOB = True
-    #: Discrete SHAPE alternatives for a drawn geom: ``{geom name: ((mjtGeom, (sx, sy, sz)), ...)}``,
-    #: declared per cell and empty on all but ``DMCManipulatorBringBall``. The leaf is
-    #: ``<geom name>.shape`` and it is a PLATE path like every other leaf, so a group of environments
-    #: that share it share one bake; ``_prims`` reads ``geom_type`` and ``geom_size`` off the model AT
-    #: BAKE TIME, so the alternative reaches the mover set with no per-row machinery. That is the whole
-    #: reason it can exist while a per-EPISODE size still cannot (``_episode_slots``): a style is
-    #: constant over a bake group and an episode draw is not.
-    #:
-    #: EXACTLY ONE alternative must match the compiled model, and that index becomes the leaf's
-    #: ``init_value``. What that buys, stated precisely because it is easy to overclaim: the DEFAULT
-    #: STYLE renders the compiled model rather than a transcribed constant, so the appearance the parity
-    #: numbers are measured under is the one ``suite.load`` compiles, and a model whose target changes
-    #: shape upstream fails LOUDLY here instead of silently redefining what "default" means.
-    #: ``check_default_style_is_official`` does NOT establish that: it compares ``render(states)``
-    #: against ``render(states, style=default_style())`` and never touches the official renderer, so a
-    #: default that had drifted off the compiled model would pass it. This assertion is the cover.
+    # Per-geom alternatives: ((mjtGeom, (sx, sy, sz)), ...). Exactly one must
+    # match the compiled model; shape changes are shared within an appearance group.
     SHAPE_KNOBS: dict[str, tuple[tuple[int, tuple[float, float, float]], ...]] = {}
 
-    #: The reason ``device="cpu"`` is refused for this cell, or ``""`` when it is not. A DECLARATION
-    #: on the cell rather than a name in a table beside it: the fact is "this cell has no CPU
-    #: certification", and the cell is where a reader looks for what a cell claims. The package
-    #: re-exports the collected mapping as ``CPU_UNCERTIFIED`` for the scripts that read it.
+    # Empty when CPU rendering is supported; otherwise names the certification gap.
     CPU_UNCERTIFIED_REASON: str = ""
 
     def __init__(
@@ -105,22 +50,12 @@ class _DMCModel(Env):
         backend: str = "auto",
         seed: int = 0,
     ):
-        """``num_envs`` environments on ``device`` (contract §2).
-
-        ``state_dim`` and ``state_names`` are read off the COMPILED MODEL here and not declared on the
-        class, because they are: ``nq`` plus however many model entries this task draws per episode,
-        and both are discovered (``_episode_slots``) rather than transcribed. ``state_layout`` is
-        likewise built here rather than declared on the class, for the same reason: the public
-        State's shape is not known until a model has been compiled.
-        """
+        """Derive compact-row names and widths from the compiled model."""
         m = self._model()
         self.nq = int(m.nq)
         self.state_dim = self.nq + len(self._slots())
         self.state_names = self._qpos_names(m) + self._slot_names(m)
-        # ``state_layout`` is set PER INSTANCE, which is the whole of this family's public State
-        # machinery since the foundation made ``Env._layout`` an instance method (integration
-        # f24d94c, this workstream's request R1). The two keys are what the halves ARE, and the
-        # ``episode`` key is absent on the eleven cells that draw nothing per episode.
+        # The compiled model determines both widths; omit an empty episode field.
         k = self.state_dim - self.nq
         self.state_layout = ((("qpos",), self.nq, 0),) + (((("episode",), k, self.nq),) if k else ())
         super().__init__(
@@ -133,55 +68,25 @@ class _DMCModel(Env):
         )
         assert len(self.state_names) == self.state_dim
 
-    # The four/variable-width compact rows above remain the frozen renderer layout.
-    # They are not full simulator State. Recovered cells compose a simulator adapter
-    # and declare their own full-State schema; unrecovered cells refuse restoration.
 
     def _close(self) -> None:
-        """Release what this INSTANCE owns, which is the per-instance CPU scene cache and nothing else.
-
-        The ``mujoco.Renderer`` in ``_ENV_CACHE`` and the captured MJWarp context in ``_TC_CACHE`` are
-        NOT released, and that is the family's policy rather than an oversight: they are shared by
-        every instance of the class and by every class at the same (domain, size), and releasing an
-        EGL context corrupts every other live one in the process -- the rule
-        ``stable_envs/testing/conformance.py`` carries and the reason ``reference_env`` says "never
-        closed". What ``close()`` buys here is the contract's other half: a closed env REFUSES to
-        render rather than handing back frames drawn through something a caller believes is gone.
-        """
+        """Drop instance CPU scenes; shared GL and MJWarp contexts remain cached."""
         self.__dict__.pop("_cpu_scenes", None)
 
-    # ---- model / reference plumbing --------------------------------------
 
     @classmethod
     def _load_env(cls, seed: int):
-        """The dm_control env this cell is built from: ``suite.load`` by default.
+        """Load the common source used for models, sampling and reference frames.
 
-        THE ONE PLACE A CELL'S MODEL COMES FROM. ``_bundle`` (the canonical model), ``sample_states``
-        (the visited distribution) and ``reference_env`` (the official frames) all load through
-        it, so a cell whose model is not ``suite.load``'s -- ``DMCQuadrupedWalk`` draws the env
-        the registered default uses, built through ``dm_control.mjcf`` with that default
-        appearance -- overrides this and nothing else (integration finding INTEG-1: a copied
-        ``_bundle`` drifted the moment the base one changed).
-        """
+        Override here when a registration requires a model other than suite.load’s."""
         return _suite().load(cls.DOMAIN, cls.TASK, task_kwargs={"random": seed})
 
     @classmethod
     def _bundle(cls, size: int):
-        """``(dm_control env, MjModel, MjData, pristine, Renderer, slots)``, one per (domain, size).
+        """Cache ``(env, model, data, pristine, renderer, slots)`` by domain, task and size.
 
-        The model is put through ``N_DRAWS`` real episodes before anything is read off it, and that is
-        load-bearing twice over. ``initialize_episode`` is where a DM Control task edits its model, and
-        a model straight out of ``suite.load`` has had none of those edits applied — ``finger-spin``
-        hides its ``target`` and ``tip`` sites by setting their alpha to zero there, so a renderer
-        reading the freshly loaded model paints two markers the reference does not draw. Running the
-        episodes also SEPARATES the constant edits from the per-episode draw, which is the distinction
-        ``_episode_slots`` needs and which one reset cannot make.
-
-        The draws are deterministic: ``task_kwargs={"random": 0}`` seeds the task's own
-        ``RandomState`` and the count is fixed, so a fresh interpreter reaches the same canonical
-        model. That matters for the same reason ``_pristine`` does — the cross-process bit-identity
-        test is the only thing that can see a model that differs between two processes.
-        """
+        Episode probing applies task model edits and separates constant appearance
+        from sampled fields. Its fixed seed makes the snapshot reproducible."""
         key = (cls.DOMAIN, cls.TASK, int(size))
         hit = _ENV_CACHE.get(key)
         if hit is not None:
@@ -205,25 +110,20 @@ class _DMCModel(Env):
             light_specular=np.array(m.light_specular, copy=True),
             mat_reflectance=np.array(m.mat_reflectance, copy=True),
             cam_fovy=np.array(m.cam_fovy, copy=True),
-            # geom_type/geom_size are here for ``SHAPE_KNOBS``, and unconditionally, so
-            # that ``_apply_variation``'s restore is one shape for every cell. They are two
-            # small arrays and the alternative is a branch in the hottest correctness path
-            # in this file.
+            # Restore shape arrays for every appearance, including domains without shape knobs.
             geom_type=np.array(m.geom_type, copy=True),
             geom_size=np.array(m.geom_size, copy=True),
         )
         for arr in {a for a, _ in slots}:
             pristine[arr] = np.array(getattr(m, arr), copy=True)
-        # ONE Renderer, kept for the life of the process. Material colours, light colours and the
-        # camera are read per frame, so no variation here needs a second GL context — only a TEXTURE
-        # edit would, and none is offered. Closing it would corrupt every other live context.
+        # Reuse this GL context for the process lifetime; teardown can corrupt other contexts.
         r = mujoco.Renderer(m, height=int(size), width=int(size))
         _ENV_CACHE[key] = (env, m, d, pristine, r, slots)
         return _ENV_CACHE[key]
 
     @classmethod
     def _slots(cls) -> tuple[tuple[str, int], ...]:
-        """``((model array, flat index), ...)`` the episode draws — the widening of the state."""
+        """Return ``(model-array name, flat index)`` pairs carried in compact render rows."""
         return cls._bundle(cls.default_size)[5]
 
     @classmethod
@@ -232,35 +132,10 @@ class _DMCModel(Env):
 
     @classmethod
     def _hideable(cls) -> tuple[tuple[str, str, tuple[int, ...]], ...]:
-        """``((kind, name, (id, ...)), ...)`` the visibility knob covers: what the EPISODE DRAWS.
+        """Resolve episode landmarks to ``(kind, name, element IDs)`` visibility leaves.
 
-        DERIVED, never a name list. ``_episode_slots`` already measured which model entries the task
-        writes per episode, by diffing real episodes rather than transcribing a task's source, and
-        those entries ARE the scene's task-relevant landmarks: they are the reason the state is widened
-        (``_DMCModel.__init__``) and the reason ``_movers`` has to treat a world-body geom as a mover
-        at all. Measured over all seventeen shipped cells: the two reachers draw a ``target`` GEOM, the
-        two finger-turn cells a ``target`` SITE, swimmer a ``target`` geom and a ``target_light``,
-        ``manipulator`` a ``target_ball`` BODY, and the other eleven draw nothing — so eleven cells gain
-        no leaf and their ``describe()`` does not move.
-
-        A BODY SLOT IS AN INDIRECTION, and it is the reason the third field is a tuple rather than an
-        id. ``reacher`` and ``finger-turn`` draw the element that is drawn; ``manipulator``'s
-        ``initialize_episode`` writes ``body_pos``/``body_quat`` of ``target_ball``, which is a FRAME
-        and has no rgba of its own — what MuJoCo draws is the geoms hanging off it. So a body slot
-        resolves to every DRAWN geom on that body, named by the BODY, and hiding the leaf zeroes each
-        of their alphas. That is the faithful reading of the registered
-        ``render_target = 0``, which sets the ``target`` MATERIAL's alpha to zero and hides exactly the
-        ``target_ball`` geom.
-
-        The census is taken against the PRISTINE snapshot, for the reason ``_used_materials`` records:
-        the shared ``MjModel`` carries the last bake's appearance, so reading the live one would make
-        the DECLARED space depend on what the previous env most recently drew.
-
-        Lights are excluded because visibility is not what an rgba alpha means for one: MuJoCo draws no
-        geometry for a light, it only lights the scene, and "hide the light" is ``light_diffuse``,
-        which the appearance space already carries. Order follows ``_slots()`` so the declared space is
-        a function of the model and not of a set's iteration order.
-        """
+        A body slot covers its visible geoms; mixed geom/site bodies are rejected.
+        Use pristine alpha and groups so previous renders cannot change declarations."""
         import mujoco
 
         m, pr = cls._model(), cls._pristine()
@@ -271,10 +146,7 @@ class _DMCModel(Env):
         for arr, k in cls._slots():
             kind, eid = _slot_element(m, arr, k)
             if kind == "body":
-                # The drawn geoms on the body, from the pristine groups and alphas. A body that also
-                # carried a drawn SITE would need two leaves or one ambiguous ``kind``; nothing in the
-                # shipped set does (manipulator's ``target_ball`` site is in group 3), so it raises
-                # rather than silently hiding half the marker.
+                # A single leaf cannot represent both geom and site IDs; refuse ambiguous bodies.
                 ids = tuple(
                     i
                     for i in range(m.ngeom)
@@ -293,8 +165,7 @@ class _DMCModel(Env):
                         f"name both kinds"
                     )
                 if not ids:
-                    # A drawn body with nothing drawn on it is not hideable, and advertising a leaf for
-                    # it would fail check_variations_do_something on a knob that was never real.
+
                     continue
                 kind, name = "geom", (mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_BODY, eid) or f"body{eid}")
             elif kind in ("geom", "site"):
@@ -304,8 +175,7 @@ class _DMCModel(Env):
             else:
                 continue
             if name in seen and seen[name] != (kind, ids):
-                # Two different elements would claim one variation path, and the second would silently
-                # win. A domain that does this needs a naming rule chosen deliberately, not here.
+                # Duplicate names would otherwise silently overwrite a visibility leaf.
                 raise RuntimeError(
                     f"{cls.__name__}: the episode draws two different elements both named {name!r} "
                     f"({seen[name]} and {(kind, ids)}); visibility.{name} would be ambiguous"
@@ -322,25 +192,15 @@ class _DMCModel(Env):
 
     @classmethod
     def _pristine(cls) -> dict:
-        """The model AS COMPILED, which is the only thing an appearance default may be read from.
+        """Return the canonical snapshot from before appearance changes.
 
-        The ``MjModel`` in ``_bundle`` is shared by every instance of this class and is mutated by every
-        bake, and ``_apply_variation`` restores it from this snapshot at the START of a bake rather than
-        at the end — so between bakes it carries the LAST appearance rendered, not the official one.
-        Reading ``make_variation_space``'s ``init_value`` off the live model therefore made a new env's
-        default appearance depend on what the previous env had most recently drawn.
-
-        Measured, because it is invisible from inside one env: the default plate's sha256 changed after
-        ``check_variations_do_something`` ran, and the only test that could see it was the cross-process
-        one — a fresh interpreter has no previous bake, so the subprocess and the parent disagreed on
-        what "default" meant while every same-process check passed.
-        """
+        The shared model retains the last rendered style. Read defaults from this
+        snapshot to keep new instances independent of previous rendering."""
         return cls._bundle(cls.default_size)[3]
 
     @staticmethod
     def _qpos_names(m) -> tuple[str, ...]:
-        """One label per ``qpos`` entry, read off the model's joint layout rather than transcribed —
-        a state vector whose fields are mislabelled is worse than one with no labels."""
+        """Name scalar positions and quaternion components from the model’s joint layout."""
         import mujoco
 
         free = ("_x", "_y", "_z", "_qw", "_qx", "_qy", "_qz")
@@ -357,23 +217,10 @@ class _DMCModel(Env):
                 out.append(nm)
         return tuple(out)
 
-    # ---- variation --------------------------------------------------------
 
     @classmethod
     def _used_materials(cls) -> list[str]:
-        """Materials carried by a VISIBLE geom or site, in model order.
-
-        Declared from the model rather than from a fixed list because
-        ``check_variations_do_something`` moves every declared leaf and fails if the frame does not
-        change: cartpole has no ``effector`` and acrobot no ``target``, so a shared knob set would
-        advertise support that does not exist in three of the five domains.
-
-        Every array is read from the PRISTINE snapshot, alpha included. The groups always were; alpha
-        was not, and it had to become so the moment a bake could legitimately leave an element hidden
-        (``visibility.*``) — otherwise this census, and therefore the DECLARED variation space of the
-        next env built from this class, would depend on what the previous env last drew. The same
-        failure ``_pristine`` documents, one array further along.
-        """
+        """List materials on visible geoms/sites using pristine groups and resolved alpha."""
         import mujoco
 
         m, pr = cls._model(), cls._pristine()
@@ -384,10 +231,7 @@ class _DMCModel(Env):
         ):
             alpha = _effective_alpha(m, kind, rgba=pr[f"{kind}_rgba"], mat_rgba=pr["mat_rgba"])
             for i in range(n):
-                # alpha as well as group: ``finger-spin`` hides its ``target`` and ``tip`` sites by
-                # setting their alpha to zero, and they are the ONLY wearers of the ``target``
-                # material — so a group-only census declares a knob that cannot change any pixel and
-                # ``check_variations_do_something`` fails on a knob that was never real.
+                # Group membership alone includes transparent markers with no visible pixels.
                 if int(grp[i]) not in VISIBLE_GROUPS or alpha[i] <= 0:
                     continue
                 mid = int(arr[i])
@@ -396,30 +240,18 @@ class _DMCModel(Env):
         return [mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_MATERIAL, i) or f"mat{i}" for i in used]
 
     def make_variation_space(self) -> Dict:
-        """Appearance knobs whose DEFAULTS are read off the compiled model, so "the default style is
-        the official appearance" is true by construction rather than by a transcribed constant.
+        """Derive supported appearance leaves and defaults from the pristine model.
 
-        The colours are float ``Box`` in [0,1] rather than ``RGBBox`` for the reason the OGBench
-        mazes are: MuJoCo's material colours are floats (0.7, 0.5, 0.3) that a uint8 channel cannot
-        hold, and in a lit 3-D scene no material colour appears verbatim in any pixel anyway, because
-        a pixel is the material colour times the lighting.
-
-        VISIBILITY is a ``Discrete(2)`` and deliberately not an alpha ``Box``. The registered
-        reacher hides its target with a material alpha of zero (``render_target = 0``) and MuJoCo then
-        declines to draw the geom; the thing that has to be representable is therefore exactly "drawn
-        or not". MuJoCo BLENDS an alpha strictly between 0 and 1 and the analytic ray-caster is
-        opaque-only, so a continuous knob would advertise a range two thirds of which this renderer
-        cannot honour, and no conformance check in the suite could catch it. A binary knob says what
-        is true. Its default is read off the pristine model's own resolved alpha, so the default
-        appearance is still the compiled model's by construction.
-        """
+        Materials use float colours in [0, 1]. Visibility is binary because the
+        analytic renderer does not blend partial alpha. Shape choices must contain
+        exactly one match for the compiled geometry, which becomes the default."""
         import mujoco
 
         m, pr = self._model(), self._pristine()
         mats = {}
         for name in self._used_materials():
             i = mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_MATERIAL, name)
-            # from the PRISTINE snapshot, never the live model — see _pristine for what that cost
+
             mats[name] = Box(low=0.0, high=1.0, shape=(3,), init_value=[float(x) for x in pr["mat_rgba"][i][:3]])
         space = {
             "material": Dict(mats),
@@ -431,10 +263,7 @@ class _DMCModel(Env):
         if self.VISIBILITY_KNOB:
             for kind, name, eids in self._hideable():
                 a = _effective_alpha(m, kind, rgba=pr[f"{kind}_rgba"], mat_rgba=pr["mat_rgba"])
-                # ANY of the leaf's elements drawn means the leaf's default is "drawn". A body leaf
-                # covers every drawn geom on the body, and ``_hideable`` has already dropped the ones
-                # the pristine model does not draw, so this is 1 for a body and is still read from the
-                # PRISTINE alphas rather than from whatever the last bake left on the model.
+                # A body landmark is visible if any of its pristine geoms are visible.
                 vis[name] = Discrete(2, init_value=int(any(float(a[i]) > 0 for i in eids)))
         if vis:
             space["visibility"] = Dict(vis)
@@ -460,10 +289,7 @@ class _DMCModel(Env):
                     f"against itself, never against the official renderer)"
                 )
             if gname in space:
-                # The leaf lives at ``<geom name>.shape``, so a geom named after one of the groups
-                # above would REPLACE that group and silently delete every leaf in it. Nothing in the
-                # suite is named ``material``/``light``/``camera``/``visibility``, and a domain that
-                # is must choose a naming rule deliberately rather than lose its colour knobs here.
+                # A geom name must not overwrite an existing variation group.
                 raise RuntimeError(
                     f"{type(self).__name__}: geom {gname!r} would put its shape leaf at "
                     f"{gname}.shape and overwrite the existing {gname!r} variation group "
@@ -480,20 +306,11 @@ class _DMCModel(Env):
             node = node[part]
         return np.asarray(node.value, np.float64).reshape(-1)
 
-    # ---- states -----------------------------------------------------------
 
     def sample_states(self, batch: int, rng: np.random.Generator | None = None) -> np.ndarray:
-        """The domain's OWN visited distribution: its ``initialize_episode`` plus random actions.
+        """Sample compact render rows from source resets followed by random actions.
 
-        Not a convenient box, and not the reset distribution alone: cartpole-balance starts near
-        upright and would never show the renderer a hanging pole, so a parity number measured there
-        would be a statement about one pose. Every conformance number in the suite is measured on
-        these states, and a parity test on states the env never reaches proves very little.
-
-        The episode half of the state is read out of the model the episode wrote it into, so a
-        sampled state is a pairing the domain genuinely produced rather than a ``qpos`` glued to a
-        target drawn somewhere else.
-        """
+        Read qpos and episode-specific model entries from the same trajectory."""
         rng = rng or self.rng
         seed = int(rng.integers(0, 2**31 - 1))
         env = self._load_env(seed)
@@ -512,16 +329,13 @@ class _DMCModel(Env):
                 out[i, self.nq + j] = np.asarray(getattr(m, arr)).reshape(-1)[k]
         return out.astype(np.float32)
 
-    # ---- reference bridge -------------------------------------------------
 
     @classmethod
     def reference_env(cls, size: int | None = None):
-        """A FRESH official env, carrying the size it must render at (``default_size`` if none).
+        """Construct a fresh source with its render resolution attached.
 
-        Never closed. ``test_state_is_sufficient`` drives one through two histories, and a
-        dm_control ``Physics`` holds the EGL context its renderer created — releasing it corrupts
-        rendering in every other live context in the process.
-        """
+        Keep its GL context alive for the process lifetime to avoid cross-context
+        renderer corruption on teardown."""
         env = cls._load_env(0)
         env.reset()
         env._se_size = int(size or cls.default_size)
@@ -529,13 +343,9 @@ class _DMCModel(Env):
 
     @classmethod
     def reference_render(cls, env, states) -> np.ndarray:
-        """Official frames for the given state, with the round-trip ASSERTED.
+        """Restore compact rows in the source, verify them, and render the requested camera.
 
-        ``qvel`` is set to zero and is provably irrelevant: scaling it by 100 changes zero pixels on
-        every domain measured. The assertion is not decoration — without it, a state the reference did
-        not actually reach produces a plausible parity number instead of a failure, and the mistake
-        reads as a rendering discrepancy.
-        """
+        Velocity is set to zero because these compact rows describe geometry only."""
         p = env.physics
         m = p.model.ptr if hasattr(p.model, "ptr") else p.model
         size = int(getattr(env, "_se_size", 0) or cls.default_size)
@@ -543,11 +353,8 @@ class _DMCModel(Env):
         nq = int(m.nq)
         out = []
         for st in np.asarray(states, np.float64):
-            # The episode half of the state goes into the reference's MODEL, which is where
-            # ``initialize_episode`` put it. Written BEFORE the reset context so the ``mj_forward``
-            # that closes the context sees it -- ``docs/research/metaworld.md`` S1.1 is the recorded
-            # form of the opposite mistake, where a model edit after the last forward leaves
-            # ``site_xpos`` holding the previous draw and no stored state can reproduce the frame.
+            # Write model entries before reset_context runs forward kinematics, so derived
+            # world poses use this row rather than the previous render’s episode fields.
             for (arr, k), v in zip(slots, st[nq:]):
                 getattr(m, arr).reshape(-1)[k] = v
             with p.reset_context():

@@ -1,5 +1,3 @@
-"""Public Rocket replay semantics over the unchanged frozen VISUAL tier renderer."""
-
 from __future__ import annotations
 
 import copy
@@ -17,11 +15,10 @@ from . import rocket_landing as frozen
 
 
 class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
-    """Official Rocket dynamics with bounded replay State; frozen renderer, VISUAL TIER.
+    """Rocket CPU dynamics with replay-backed State and CPU/CUDA rendering; VISUAL TIER.
 
-    CPU dynamics use PyFlyt 0.29.0/PyBullet 3.2.7. Explicit body and camera
-    poses drive CPU TinyRenderer or the family-local CUDA rendering path.
-    """
+    PyFlyt 0.29.0/PyBullet 3.2.7 run physics on CPU. Explicit body and cached camera
+    poses drive TinyRenderer on CPU or the nvdiffrast path on CUDA."""
 
     requires_cuda = False
     execution_mode = "DELEGATED_CPU"
@@ -102,12 +99,10 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
         return self._variation_rows("value")
 
     def sample_variation(self, batch=None, paths=None, rng=None):
-        """Draw external configurations with valid integer RGB leaves.
+        """Sample configurations with integer RGB leaves using the supplied or metadata RNG.
 
-        Like the shared helper, this uses the caller's configuration generator
-        (or Env's metadata generator), not the simulator's reset RNG streams.
-        Authoritative episode randomization remains reset(options={"variation": ...}).
-        """
+        This does not consume simulator reset RNGs. Use reset options to randomize
+        the next episode through those streams."""
         self._check_open("sample_variation")
         batch = self.B if batch is None else batch
         if type(batch) is not int or batch < 1:
@@ -151,9 +146,8 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
                 raise ValueError(f"Invalid Rocket Variation shape/value: {key}")
             for i in range(self.B):
                 if node.shape == ():
-                    # The source stores scalar initial values verbatim. In
-                    # particular, Python/NumPy float64 height must not round
-                    # through the declared float32 sampling distribution.
+                    # Scalar initial values retain their precision; float64 height
+                    # must not round through the float32 sampling distribution.
                     converted = raw if type(raw) is float else value[i].copy()
                     if not node.contains(converted):
                         raise ValueError(f"Invalid Rocket Variation range: {key}")
@@ -177,7 +171,7 @@ class PyFlytRocketLanding(frozen.PyFlytRocketLanding):
         self._simulator.validate(state)
         rgba = state["render", "rgba"]
         style = torch.zeros((self.B, 16), dtype=torch.float32, device=rgba.device)
-        # The frozen renderer's layout is alphabetical, not source/corpus order.
+        # Renderer style is alphabetical, not source/corpus order.
         layout = frozen.style_layout()
         for index, name in enumerate(frozen.CORPUS_STYLE_PATHS[:5]):
             offset, width = layout[name]

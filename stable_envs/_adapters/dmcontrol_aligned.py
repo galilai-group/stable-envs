@@ -1,5 +1,3 @@
-"""Delegated semantics for four source-aligned historical DMC defaults."""
-
 from __future__ import annotations
 
 import os
@@ -156,6 +154,11 @@ def _numeric_info(domain, env, cumulative):
 
 
 class DMCAlignedAdapter:
+    """CPU adapters for BallInCup, Finger, Manipulator and Quadruped.
+
+    Each action advances its source twice; ``device`` selects output placement.
+    Density reconfiguration rebuilds and resets every lane."""
+
     def __init__(self, domain, num_envs, device="cpu", seed=0):
         self.domain, self.num_envs, self.device = domain, int(num_envs), torch.device(device)
         self.fields = ALIGNED_FIELDS[domain]

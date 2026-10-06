@@ -1,5 +1,3 @@
-"""Read-only exhaustive named Rocket diagnostics, used to validate replay recipes."""
-
 import numpy as np
 
 ENV_FIELDS = "start_pos start_orn step_count termination truncation state action reward throttle_state ignition_state previous_throttle_state previous_ignition_state previous_render_ignition_state ignition_color landing_pad_contact ang_vel ang_pos lin_vel lin_pos ground_lin_vel previous_ang_vel previous_lin_vel previous_lin_pos previous_ground_lin_vel current_goal".split()
@@ -23,6 +21,7 @@ def objects(env):
 
 
 def capture(env):
+    """Copy named engine, task, contact and RNG fields for replay verification."""
     result = {}
     for prefix, (obj, names) in objects(env).items():
         for name in names:

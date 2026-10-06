@@ -1,5 +1,3 @@
-"""Authoritative OGBench point-maze stepping; no SWM runtime imports."""
-
 from __future__ import annotations
 
 import numpy as np
@@ -37,7 +35,6 @@ def _bytes_uint128(value: torch.Tensor) -> int:
 
 
 def _make_point_large_maze():
-    """Construct the upstream environment selected by the historical empty kwargs."""
     from ogbench.locomaze.maze import make_maze_env
 
     return make_maze_env(
@@ -51,7 +48,10 @@ def _make_point_large_maze():
 
 
 class OGBMazeAdapter:
-    """B independent upstream CPU simulators for the historical point/large default."""
+    """Independent CPU point/large-maze simulators with owned State snapshots.
+
+    ``device`` selects output placement. Each lane owns both its environment PCG64
+    and the legacy NumPy RNG used by upstream; calls must be serialized."""
 
     def __init__(self, num_envs, device="cpu", seed=0):
         self.num_envs = int(num_envs)
@@ -74,7 +74,7 @@ class OGBMazeAdapter:
         return self.get_state()
 
     def _in_legacy_rng(self, lane, function, *args, **kwargs):
-        """Give one lane OGBench's process-global RNG without leaking it across lanes/callers."""
+        """Install a lane’s legacy RNG for one call, restoring the caller’s RNG on exit."""
         outside = np.random.get_state()
         np.random.set_state(self._global_rng[lane])
         try:

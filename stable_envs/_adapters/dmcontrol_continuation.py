@@ -1,5 +1,3 @@
-"""Delegated semantics for the bounded Cheetah/Hopper/Walker continuation."""
-
 from __future__ import annotations
 
 import os
@@ -40,7 +38,7 @@ CONTINUATION_FIELDS = {domain: _fields(domain) for domain in CONFIG}
 
 
 def _apply_registered_defaults(domain, model):
-    """Apply exactly the model writes made by the pinned wrapper's first reset."""
+    """Apply registered reset values before compiling the model."""
     model.find("texture", "grid").rgb1 = [0.1, 0.2, 0.3]
     model.find("texture", "grid").rgb2 = [0.2, 0.3, 0.4]
     color = [0.6, 0.3, 0.3, 1.0] if domain == "cheetah" else [0.7, 0.5, 0.3, 1.0]
@@ -71,7 +69,7 @@ def _apply_registered_defaults(domain, model):
 
 
 def _make_env(domain, seed):
-    """Build one exact historical default without importing stable-worldmodel."""
+    """Construct Cheetah Run, Hopper Hop or Walker Walk with registered defaults."""
     from dm_control import mjcf
     from dm_control.rl import control
     from dm_control.suite.wrappers import action_scale
@@ -146,7 +144,10 @@ def _numeric_info(domain, env, cumulative):
 
 
 class DMCContinuationAdapter:
-    """B independent CPU simulators for three exact historical defaults."""
+    """Independent CPU Cheetah, Hopper or Walker simulators.
+
+    Each action advances the source twice; ``device`` selects output placement.
+    State includes lifecycle, warmstart and task RNG for continuation."""
 
     def __init__(self, domain, num_envs, device="cpu", seed=0):
         if domain not in CONFIG:

@@ -1,8 +1,7 @@
-"""Typed numeric recipe primitives for private PushT replay State.
+"""Numeric replay values preserve Python/NumPy representation and dtype tags.
 
-No engine handles, pickles, JSON payloads, or interpreter object identities are
-stored. Representation tags preserve upstream scalar/array arithmetic.
-"""
+Scalar-versus-array distinctions affect source arithmetic. PCG64 words and
+seed metadata remain integers; replay recipes contain no engine handles."""
 
 from __future__ import annotations
 
@@ -142,9 +141,7 @@ def capture(env):
         ):
             value = np.asarray(getattr(body, key), np.float64)
             if key in ("mass", "moment"):
-                # Kinematic bodies have infinite mass/inertia in Pymunk. Keep
-                # concrete public State finite: retain that fact as a bool and
-                # use zero padding for the otherwise infinite diagnostic.
+                # Encode infinite kinematic mass/inertia as a flag plus finite zero padding.
                 infinite = np.isposinf(value)
                 result[f"body/{name}/{key}_infinite"] = np.asarray(infinite, np.bool_)
                 value = np.where(infinite, 0.0, value)

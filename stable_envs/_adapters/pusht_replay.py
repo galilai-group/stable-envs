@@ -1,9 +1,3 @@
-"""Private source-aligned PushT replay candidate; not yet a public registration.
-
-History has no artificial horizon. Stepping appends an owned two-number action;
-State export copies the finite prefix, and restoration replays it in O(T).
-"""
-
 from __future__ import annotations
 
 import copy
@@ -37,6 +31,12 @@ def validate_seed(seed):
 
 
 class PushTReplay:
+    """Restore one CPU PushT engine from a numeric reset anchor and action history.
+
+    Each step stores an owned action with its original dtype. Export copies the
+    finite prefix without imposing a horizon; restoration replays it in O(T) and
+    checks all exported fields before returning the new engine."""
+
     def __init__(self, *, discrete=False, config=None, seed=0, options=None, initialize=True):
         if version("pymunk") != "7.2.0":
             raise RuntimeError("PushT replay requires official pymunk==7.2.0")

@@ -1,86 +1,3 @@
-"""highway-env: autonomous-driving scenarios as a batched GPU renderer.
-
-Reference: the ``highway-env`` package (Leurent, 2018), rendered with pygame vector art. A frame is
-the grey road plane, the white lane markings of a fixed road network, and a handful of vehicles drawn
-as rotated rectangles. That is a pure function of ``(x, y, heading, crashed)`` per vehicle: the camera
-follows the ego, so the ego's own coordinates fix the window, and the lane markings follow from the
-static network plus that window.
-
-Every constant below was recovered by instrumenting the reference,
-because reading the source is not enough — five things read plausibly and are wrong:
-
-  * **highway-env draws nothing at all under ``SDL_VIDEODRIVER=dummy``.** ``EnvViewer.__init__`` sets
-    ``self.enabled = False`` when it sees that driver and ``display()`` returns immediately, so
-    ``render()`` hands back the never-touched surface. Measured: 1 unique colour, mean 0.0, against
-    7 unique colours and mean 103.8 with ``SDL_VIDEODRIVER=offscreen``. The usual headless recipe
-    therefore silently turns every parity number into a comparison against a black image.
-  * **The vehicle is not a rotated rectangle** in the reference. It is an axis-aligned rectangle
-    rasterized into a 38x38 sprite, passed through ``pygame.transform.rotate`` (nearest neighbour,
-    fixed point) and blitted at an origin that ``Rect`` truncates to a whole pixel. It is still
-    *exactly* expressible as a polygon: the rotation reads ``src[floor(A·d + t)]``, and ``floor(u) == n``
-    is a half-open box test in the rotated frame, so the set of pixels showing a given sprite rectangle
-    is a rotated rectangle. Verified on 97 headings: an analytic rectangle reproduces **100% of pixels**
-    once the pivot below is applied.
-  * **The pivot is not the vehicle's screen position.** With ``Wr = int(S*(|cos a| + |sin a|))`` the
-    rotated surface width and ``S`` the sprite width, the rectangle centre sits at
-    ``pos + (-0.5, -0.5)`` when ``Wr`` is odd, ``pos + (-1.0, -0.5)`` when it is even, and
-    ``pos - 0.5*(S mod 2)`` in both axes when the angle is an exact multiple of 90 degrees. Assuming
-    ``pos`` puts the car up to one pixel out. See ``_pivot`` for the measurement.
-  * **The ego's screen x is 179, not 180.** ``origin = ego - centering*size/scaling`` and then
-    ``int((ego - origin) * scaling)`` reconstructs ``0.3*600`` through two subtractions, and float64
-    lands at 179.99999999999997. The quantisation is done here in float64 for that reason; float32
-    rounds the other way and shifts the whole frame by a pixel.
-  * **The black outline is drawn after the headlights**, so a headlight that reaches the body's front
-    edge is painted over. Drawing the outline as a filled rectangle *under* an inset body reproduces
-    that only if the headlight rectangles are clipped to the inset body first; without the clip the
-    headlights bleed 6 px over the outline per vehicle.
-
-Draw order is the reference's ``EnvViewer.display``: grey fill, lane markings, road objects, then
-vehicles in ``road.vehicles`` order (ego first).
-
-Registered: ``Highway`` (highway-v0), ``Merge`` (merge-v0), ``Roundabout`` (roundabout-v0),
-``Intersection`` (intersection-v0), ``Racetrack`` (racetrack-v0) and ``Parking`` (parking-v0).
-
-The last two are the ones whose ego is a plain ``Vehicle``, and that costs two extra things.
-``VehicleGraphics`` draws tyres only for ``Vehicle``/``BicycleVehicle`` -- an exact ``type()`` check, so
-an ``IDMVehicle`` never gets them -- as four small sprites, each its own rotate-and-blit INSIDE the
-vehicle sprite, which is then rotated again. **The pivot rule below therefore applies twice**, once
-about the tyre sprite's own centre at the steering angle and once about the vehicle sprite's centre at
-the heading, and ``steering`` joins the state because the two front tyres turn with it. See
-``_add_tires``; measured in the frozen measurement record.
-
-Also not ported: ``show_trajectories`` (the ghost history of past poses) and the lidar observation
-overlay, neither of which is on by default. ``ObservationGraphics.display`` draws only for
-``LidarObservation``, and no registered env here uses one.
-
-NO ``step``, and the reason is specific rather than a shrug
------------------------------------------------------------
-
-The classic-control and MiniGrid families in this package ship a batched GPU ``step`` because their
-dynamics can be transcribed AND CHECKED — a published closed form or a finite decision table, against a
-reference that is installed and can be driven state for state. Neither holds here yet:
-
-  * **The hidden dynamical state is larger than the visible one.** The render state is four numbers per
-    vehicle, ``(x, y, heading, crashed)``, because that is all the picture needs. The kinematic bicycle
-    model needs ``speed`` on top of it, and the traffic policy needs more per vehicle again:
-    ``target_lane_index``, ``target_speed``, the lane-change ``timer``, and the planned route. That is
-    fine in itself — classic control hides velocities the same way — but several of those are
-    RANDOMISED per vehicle at ``reset`` (``IDMVehicle.randomize_behavior``), so a comparison would have
-    to read each vehicle's sampled parameters out of the reference before it could mean anything.
-  * **The traffic policy is the real work, not the integrator.** IDM gives an acceleration from the
-    vehicle in front; MOBIL decides lane changes from the vehicles behind in two adjacent lanes. Both
-    need ``road.network.get_closest_lane_index`` and ``side_lanes`` over a graph of heterogeneous lanes
-    (``Straight``, ``Sine``, ``Circular``), batched — and the roundabout adds route following on top.
-    A port of the bicycle model alone would run and would not be highway-env.
-  * **``highway_env`` is not installed in this environment**, so there is nothing to check a port
-    against here. Given how this package works — every constant above was recovered by instrumenting
-    the reference, not by reading it — writing the solver first and validating it later is exactly the
-    order that produces a plausible env nobody can trust.
-
-The renderer stands on its own and is unaffected: supply states from the official CPU env, or from any
-other source, and ``render`` draws them.
-"""
-
 from __future__ import annotations
 
 import math
@@ -95,7 +12,6 @@ from ..render.raster2d import render as render_scene
 from ..render.scene import Scene2D, SceneBuilder
 from ..spaces import Box, Dict, Discrete, RGBBox
 
-# --- palette, straight from highway_env.vehicle.graphics / road.graphics -------------------------
 GREY = (100, 100, 100)  # WorldSurface.GREY, the road plane and the whole background
 WHITE = (255, 255, 255)  # lane markings
 BLACK = (60, 60, 60)  # VehicleGraphics.BLACK, the 1 px vehicle outline
@@ -106,11 +22,10 @@ RED = (255, 100, 100)  # crashed
 
 
 def lighten(c, ratio: float = 0.68):
-    """``VehicleGraphics.lighten``: the headlight colour. Integer truncation, then a clamp at 255."""
+    """Compute source headlight colour by integer truncation and saturation."""
     return tuple(min(int(v / ratio), 255) for v in c)
 
 
-# --- lane geometry, transcribed from highway_env.road.lane ---------------------------------------
 STRIPE_SPACING = 4.33
 STRIPE_LENGTH = 3.0
 STRIPE_WIDTH = 0.3
@@ -118,7 +33,6 @@ NONE, STRIPED, CONTINUOUS, CONTINUOUS_LINE = 0, 1, 2, 3
 
 
 class _Lane:
-    """Common part: line types, width, and the arc-length window a marking is clipped to."""
 
     def __init__(self, width, line_types):
         self.width = float(width)
@@ -150,7 +64,7 @@ class Straight(_Lane):
 
 
 class Sine(Straight):
-    """``SineLane``: a straight lane whose lateral offset oscillates. Used by the merge ramp."""
+    """Straight lane with a sinusoidal lateral offset."""
 
     def __init__(self, start, end, amplitude, pulsation, phase, width=4.0, line_types=(STRIPED, STRIPED)):
         super().__init__(start, end, width, line_types)
@@ -189,7 +103,7 @@ class Circular(_Lane):
 
 
 def straight_road_network(lanes: int, length: float = 10000.0, width: float = 4.0):
-    """``RoadNetwork.straight_road_network``: the highway-v0 layout, N parallel lanes."""
+    """Build parallel lanes with the source highway boundary markings."""
     out = []
     for i in range(lanes):
         origin = (0.0, i * width)
@@ -200,13 +114,10 @@ def straight_road_network(lanes: int, length: float = 10000.0, width: float = 4.
 
 
 def _py_floordiv(a: torch.Tensor, b: float) -> torch.Tensor:
-    """CPython's ``float.__floordiv__``, which is not ``floor(a/b)``.
+    """Match CPython float floor division when locating dashed stripes.
 
-    ``LaneGraphics.display`` computes ``int(s_origin) // STRIPE_SPACING`` and that value picks which
-    stripes exist, so an off-by-one here shifts every dashed marking by 4.33 m. CPython computes
-    ``mod = fmod(a, b)``, ``div = (a - mod)/b`` and then rounds ``div`` to the nearest integer when it
-    is within half a unit, which differs from ``floor(a/b)`` when ``a/b`` lands just below an integer.
-    """
+    The fmod-based correction differs from floor(a / b) near integer quotients;
+    a one-unit error selects another stripe."""
     mod = torch.fmod(a, b)
     div = (a - mod) / b
     adj = (mod != 0) & ((b < 0) != (mod < 0))
@@ -218,17 +129,7 @@ def _py_floordiv(a: torch.Tensor, b: float) -> torch.Tensor:
 
 @dataclass(frozen=True)
 class _Screen:
-    """Everything about a highway frame that depends on the OUTPUT SIZE, as one immutable value.
-
-    This used to be five attributes on the env, rebound by ``render(size=)`` through a ``_set_screen``
-    method — and that made ``size`` a mode rather than an argument: one preview frame at a different
-    resolution silently rewrote the resolution of every frame afterwards, while ``env.size`` still
-    reported the original. Measured: ``render(st).shape`` (4,150,600,3), then ``render(st, size=300)``,
-    then ``render(st).shape`` (4,300,1200,3) with ``env.size == 150``. It cascaded — four unrelated
-    dataset round-trip failures whose actual cause was a size leaked three tests earlier.
-
-    A frozen value derived inside the call cannot leak. There is nowhere left to store it.
-    """
+    """Immutable geometry for one render size; previews must not mutate env defaults."""
 
     H: int
     W: int
@@ -238,13 +139,11 @@ class _Screen:
 
 
 class HighwayEnvBase(Env):
-    """Shared renderer for the highway-env family; subclasses supply the road and the cast.
+    """Render fixed highway-env road networks and a declared vehicle count.
 
-    ``state`` is 4 numbers per vehicle — ``x``, ``y``, ``heading``, ``crashed`` — with the ego first.
-    ``crashed`` is in the state because it is visible: ``VehicleGraphics.get_color`` paints a crashed
-    vehicle red, so a state without it does not determine the frame in the one situation the env exists
-    to study.
-    """
+    Rows contain vehicle poses, visible crash flags and optional steering/object
+    poses. They omit traffic policy and simulator state; stepping is unsupported.
+    Rendering follows source painter order: road, objects, then vehicles."""
 
     family = "highway"
 
@@ -256,34 +155,20 @@ class HighwayEnvBase(Env):
     LANES: tuple = ()
     #: number of vehicles, in the reference's draw order (``road.vehicles``)
     N_VEHICLES = 12
-    #: which of them is the ego. It is drawn green and the camera is locked to it; highway-env appends
-    #: it first in most envs and last in the intersection family, and the index matters only where two
-    #: vehicles overlap, which is exactly the situation these envs are about.
+    # Ego index determines camera tracking and overlap order; intersection draws it last.
     EGO_INDEX = 0
     #: static road furniture: ``(kind, x, y, heading, length, width)``, kind 'obstacle' or 'landmark'
     OBJECTS: tuple = ()
-    #: road furniture whose POSE is part of the state: ``(kind, length, width)``. Drawn BEFORE
-    #: ``OBJECTS``, because ``road.objects`` is walked in insertion order and parking-v0 appends its
-    #: goal landmark before the four walls. The state carries ``(x, y, heading)`` for each, after the
-    #: vehicles and after ``ego_steering``.
+    # State-driven (kind, length, width) objects precede static OBJECTS.
+    # Their (x, y, heading) rows follow vehicles and optional ego steering.
     STATE_OBJECTS: tuple = ()
     VEHICLE_LENGTH, VEHICLE_WIDTH = 5.0, 2.0
     TIRE_LENGTH, TIRE_WIDTH = 1.0, 0.3
-    #: True where the ego is a plain ``Vehicle`` rather than an ``MDPVehicle``/``IDMVehicle``, which is
-    #: the only thing that decides whether ``VehicleGraphics`` draws tyres, and hence whether the
-    #: steering angle is visible at all.
+    # Only plain Vehicle/BicycleVehicle types draw tyres and expose visible steering.
     EGO_HAS_TIRES = False
-    #: What ``VehicleGraphics.get_color`` returns for THIS env's ego, which is not one colour for the
-    #: family and is not the class's own business either. The chain is
-    #: ``vehicle.color`` (if set) -> crashed -> LinearVehicle -> IDMVehicle -> MDPVehicle -> DEFAULT,
-    #: so an env whose action type produces a plain ``Vehicle`` and does not pin ``color`` falls all
-    #: the way through to ``DEFAULT_COLOR``, which is YELLOW -- the obstacle colour. racetrack-v0 is
-    #: exactly that case; parking-v0 pins ``vehicle.color = EGO_COLOR`` and is green.
+    # Plain unpinned vehicles use yellow; Parking explicitly pins its ego green.
     EGO_COLOR_DEFAULT = GREEN
-    #: False where the reference PINS ``vehicle.color`` on the ego. ``get_color`` reads that attribute
-    #: BEFORE it looks at ``crashed``, so on such an env a crash changes no pixel and ``crashed`` is
-    #: neither a state dimension nor a variation -- carrying it would be a dead dimension and an inert
-    #: knob, which is what the conformance suite exists to reject.
+    # A pinned vehicle colour overrides crashed, making the crash flag invisible.
     CRASHED_VISIBLE = True
     #: ``ContinuousAction``'s ``steering_range``, for ``sample_states``
     STEERING_RANGE = math.pi / 4
@@ -304,51 +189,28 @@ class HighwayEnvBase(Env):
         for k, (kind, _, _) in enumerate(self.STATE_OBJECTS):
             names += [f"{kind}{k}_x", f"{kind}{k}_y", f"{kind}{k}_heading"]
         self.state_names = tuple(names)
-        # Public state. The packed row is unchanged -- vehicles, then the ego's
-        # steering angle if it has tires, then the static objects, exactly the order the offsets
-        # above have always fixed -- and the layout names the three runs it already consists of.
-        # Assigned per instance because all three widths are functions of the class's own
-        # ``N_VEHICLES`` / ``CRASHED_VISIBLE`` / ``EGO_HAS_TIRES`` / ``STATE_OBJECTS`` declarations,
-        # which is exactly what ``state_dim`` is computed from two lines up.
-        #
-        # ``vehicles`` is ONE key of ``N_VEHICLES * veh_dim`` columns rather than a key per vehicle:
-        # the vehicles are a homogeneous array whose rows differ only by index, and a state with
-        # ``v0``..``v14`` as separate keys would be fifteen names for one fact. Nothing is hidden --
-        # every column is covered, so ``pack``/``unpack`` round-trip the frozen layout bit for bit.
+        # Group vehicle poses, optional steering and object poses in their packed-row order.
         self.state_layout = (
             ((("vehicles",), self.veh_dim * self.N_VEHICLES, 0),)
             + (((("ego", "steering"), 1, self.steer_off),) if self.EGO_HAS_TIRES else ())
             + (((("objects",), 3 * n_obj, self.obj_off),) if n_obj else ())
         )
-        #: per output size, the lane-marking tables ``_plan`` builds. Keyed on the frame geometry
-        #: because ``stripes_count`` and ``_slots_for`` are functions of it, and NOT stored as
-        #: attributes for the reason ``_Screen`` exists: a preview at another size must not change
-        #: what the next render draws.
+        # Lane-plan slot counts depend on output geometry; cache separately per size.
         self._plan_cache: dict = {}
         self._obj_runs = None
         super().__init__(num_envs=num_envs, size=size, **kw)
 
     def _close(self) -> None:
-        """Drop the two per-instance tables. ``Env.close`` calls this once and is idempotent.
-
-        Neither is an external handle -- this family owns no GL context, no simulator and no atlas,
-        because it draws every frame itself. What it does own is the lane-marking plan per output
-        size and the object run-lengths, both device tensors that can be large for a 600 px
-        racetrack, and both rebuildable from the class alone. Releasing them is what a closed env of
-        this family has to release; refusing to render afterwards is the rest of the contract.
-        """
+        """Release instance lane plans and object tables."""
         self._plan_cache = {}
         self._obj_runs = None
 
-    # --- geometry that depends on the output size -------------------------------------------------
 
     def screen(self, size: int | None = None) -> _Screen:
-        """The frame geometry for one output size. A pure function of ``size`` and the class.
+        """Derive output geometry without changing instance defaults.
 
-        Called per render and never stored, which is what makes ``size`` an argument again. The
-        arithmetic is unchanged and evaluated in the reference's order, so the float64 results stay
-        bit-identical; see the module docstring on the ego landing at x=179 rather than 180.
-        """
+        Preserve float64 camera arithmetic order: source pixel conversion truncates
+        values near integer boundaries."""
         H = int(self.size if size is None else size)
         W = int(round(H * self.SCREEN_W / self.SCREEN_H))
         sc = self.SCALING
@@ -362,33 +224,25 @@ class HighwayEnvBase(Env):
 
     @property
     def frame_shape(self) -> tuple[int, int]:
-        """``(H, W)`` of a frame at the env's own size. ``Env.frame_spec`` reads this.
-
-        Declared because the base class's default is SQUARE and a highway frame is not: ``size`` is
-        the height and the width follows the road's aspect ratio, so a Parking frame is 300x600 and
-        an unqualified ``frame_spec`` would have told a consumer to allocate 300x300. Found by
-        ``tests/unit/test_envs_mujoco.py``, which compares the spec against a real render; fixed in
-        the family that knows the aspect ratio rather than in the base class, which does not.
-        """
+        """Return (height, width), using the family’s fixed aspect ratio."""
         sc = self.screen()
         return int(sc.H), int(sc.W)
 
     @property
     def H(self) -> int:
-        """Frame height at the env's OWN size. Read-only: a render cannot move it any more."""
+        """Frame height at the configured default size."""
         return self.screen().H
 
     @property
     def W(self) -> int:
-        """Frame width at the env's own size, from the class's fixed aspect ratio."""
+        """Frame width at the configured default size."""
         return self.screen().W
 
     def _pix(self, v: float) -> int:
-        """``WorldSurface.pix``: ``int(length * scaling)``."""
         return int(v * self.SCALING)
 
     def _sprite(self, length: float, width: float, with_tires_pad: bool):
-        """Sprite-pixel rectangles for one vehicle or road object, exactly as the reference builds them."""
+        """Build source pixel rectangles for a vehicle or road-object sprite."""
         sc = self.SCALING
         pix = lambda v: int(v * sc)  # WorldSurface.pix
         if with_tires_pad:
@@ -402,22 +256,9 @@ class HighwayEnvBase(Env):
         S = pix(length)
         return S, (0, pix(length / 2 - width / 2), pix(length), pix(width)), None, None
 
-    # --- variation --------------------------------------------------------------------------------
 
     def make_variation_space(self) -> Dict:
-        """Only the knobs that can move a pixel in THIS env, in a fixed order.
-
-        Three of the six leaves are conditional, and each condition is a measurement rather than a
-        preference: ``object`` needs road furniture; ``landmark`` needs a ``Landmark`` among it (an
-        Obstacle is yellow and a Landmark is BLUE, so one 'object' colour cannot serve both);
-        ``traffic`` needs a second vehicle (parking-v0 has one); and ``crashed`` needs a crash to be
-        able to reach a pixel, which it cannot where the reference pins ``vehicle.color``. A knob that
-        cannot move the picture is what ``check_variations_do_something`` exists to reject.
-
-        Built as an ordered list rather than by merging dicts so that adding a conditional leaf cannot
-        renumber the flat style layout of the envs that do not have it -- a stored ``(state, style)``
-        pair is only reproducible while the offsets hold still.
-        """
+        """Expose only appearance leaves used by the declared vehicles and road objects."""
         space: dict = {}
         if self.OBJECTS:
             space["object"] = Dict({"color": RGBBox(init_value=YELLOW)})
@@ -450,22 +291,16 @@ class HighwayEnvBase(Env):
         )
         return Dict(space)
 
-    # --- the scene ---------------------------------------------------------------------------------
 
     def scene(self, states, variation: dict | None = None, style=None, size: int | None = None) -> Scene2D:
-        """``size`` is declared here, and its presence is a statement about this family.
+        """Build screen-pixel geometry; ``size`` changes field of view at fixed scale.
 
-        The world rectangle below is ``(0, 0, W, H)`` in SCREEN PIXELS at a fixed ``scaling``, so a
-        bigger frame shows more road rather than the same road more finely — ``size`` is a field of
-        view here, not a resolution. Callers that need to know which of the two they are dealing with
-        (the downsample-consistency check is one) build the scene at two sizes and compare ``world``,
-        which is why the argument exists and why envs whose world is in world units do not declare it.
-        """
+        A larger frame reveals more road rather than resampling the same scene."""
         n = int(states.shape[0]) if hasattr(states, "shape") else len(states)
         return self._scene(states, self.resolve_style(style, variation, batch=n), self.screen(size))
 
     def _scene(self, states, sty, scr: _Screen) -> Scene2D:
-        """Build the scene from the compact state, a resolved per-env style, and one output geometry."""
+        """Build from compact render rows, per-row style and immutable screen geometry."""
         s = torch.as_tensor(states, device=self.device, dtype=torch.float32).reshape(-1, self.state_dim)
         B = s.shape[0]
         sb = SceneBuilder(B, device=self.device, vertices=4)
@@ -496,13 +331,8 @@ class HighwayEnvBase(Env):
                 scr,
                 cull=False,
             )
-        # Static furniture, in class order, batched over the runs that share a sprite. float64, and
-        # NOT because more precision is nicer: ``_pivot``'s first question is whether the angle is an
-        # exact multiple of 90 degrees, and parking-v0's walls are built at exactly ``np.pi/2``.
-        # Narrowed to float32 that becomes 90.0000025 degrees, the exact-multiple branch is missed,
-        # and the four walls land a pixel out -- 1,140 px a frame, measured, all of it on their 1 px
-        # outline. A heading that comes from the STATE is float32 in both renderers and agrees; one
-        # that is a class constant must not be narrowed.
+        # Keep static headings in float64: quarter-turn classification affects the sprite pivot.
+        # Render rows retain float32, matching the source restoration path.
         for (length, width), poses in self._object_runs():
             p = torch.tensor(poses, device=self.device, dtype=torch.float64).unsqueeze(0)
             p = p.expand(B, len(poses), 3)
@@ -526,16 +356,11 @@ class HighwayEnvBase(Env):
         return sb.build(background=sty["background.color"], world=(0.0, 0.0, float(scr.W), float(scr.H)), flip_y=False)
 
     def _pos2pix(self, origin: torch.Tensor, p: torch.Tensor) -> torch.Tensor:
-        """``WorldSurface.pos2pix``: ``int((p - origin) * scaling)``, truncating toward zero."""
+        """Truncate world-to-screen coordinates toward zero in source arithmetic order."""
         return torch.trunc((p - origin) * self.SCALING)
 
     def _object_runs(self):
-        """``OBJECTS`` split into CONSECUTIVE runs that share a sprite: ``((length, width), poses)``.
-
-        Consecutive, not grouped by size: ``road.objects`` is walked in insertion order and that
-        order is the z-buffer, so two walls of one length either side of a wall of another must stay
-        three draws. parking-v0's four walls happen to be written as two runs of two.
-        """
+        """Group consecutive equal-sized objects without changing painter order."""
         if self._obj_runs is None:
             runs: list = []
             for _, x, y, heading, length, width in self.OBJECTS:
@@ -546,25 +371,10 @@ class HighwayEnvBase(Env):
         return self._obj_runs
 
     def _plan(self, scr: _Screen) -> dict:
-        """Every lane marking this env can draw at this frame size, as flat per-stripe tables.
+        """Cache per-stripe lane parameters and clipping slots for one output size.
 
-        The loop this replaces issued one ``add_segment`` per stripe and roundabout-v0 has 1,248 of
-        them: 53,481 torch calls and 315 ms to build 436 primitives, the SAME 315 ms at batch 16 as
-        at batch 1024. That is not arithmetic, it is dispatch, and the fix is to do the arithmetic
-        once on ``(B, S)`` rather than S times on ``(B,)``.
-
-        What the plan holds is exactly what the loop's control flow decided and nothing that depends
-        on the state: which lane a stripe belongs to, its lateral offset, its span, its slot index
-        within its own (lane, side) window, and whether it is the single long stripe a continuous
-        line draws. Stripes are laid out in the reference's draw order, so no reordering happens
-        afterwards — order is the z-buffer here (``render/scene.py``), and a marking that painted in
-        a different order would be a different picture wherever two markings overlap.
-
-        The two lane parametrisations are both EVALUATED for every stripe and selected between,
-        rather than gathered into groups and stitched back together. A circular lane is ~10 flops
-        that a straight lane throws away, against an index_select and a scatter per group; and a
-        select cannot get the order wrong.
-        """
+        Tables preserve source draw order. Evaluate lane formulas in batches and select
+        by lane type instead of regrouping primitives."""
         key = (scr.H, scr.W)
         hit = self._plan_cache.get(key)
         if hit is not None:
@@ -574,8 +384,7 @@ class HighwayEnvBase(Env):
         sine = [isinstance(l, Sine) for l in lanes]
 
         def straight_of(l):
-            """``(start, direction, lateral, amplitude, pulsation, phase)`` — a circular lane
-            supplies harmless stand-ins, because its rows are selected away."""
+            """Use finite placeholders for circular lanes, whose straight results are discarded."""
             if isinstance(l, Circular):
                 return (0.0, 0.0), (1.0, 0.0), (0.0, 1.0), 0.0, 0.0, 0.0
             return (
@@ -588,8 +397,7 @@ class HighwayEnvBase(Env):
             )
 
         def circular_of(l):
-            """``(centre, radius, start_phase, dir)``; radius 1 for a straight lane so the division
-            in the unused branch is finite rather than an inf that ``where`` merely discards."""
+            """Use radius one for straight lanes so the unused circular division stays finite."""
             if isinstance(l, Circular):
                 return tuple(l.center), l.radius, l.start_phase, l.dir
             return (0.0, 0.0), 1.0, 0.0, 1.0
@@ -660,7 +468,7 @@ class HighwayEnvBase(Env):
         return plan
 
     def _local_s(self, P: dict, p: torch.Tensor) -> torch.Tensor:
-        """``AbstractLane.local_coordinates`` for every lane at once: ``(B,2)`` -> ``(B,L)``."""
+        """Map ``(B, 2)`` points to longitudinal coordinates on every lane: ``(B, L)``."""
         d = p.unsqueeze(1) - P["l_start"]
         s_str = d[..., 0] * P["l_dir"][..., 0] + d[..., 1] * P["l_dir"][..., 1]
         dc = p.unsqueeze(1) - P["l_c"]
@@ -670,7 +478,7 @@ class HighwayEnvBase(Env):
         return torch.where(P["l_circ"], P["l_cdir"] * (phi - P["l_sph"]) * P["l_rad"], s_str)
 
     def _stripe_pos(self, P: dict, s: torch.Tensor) -> torch.Tensor:
-        """``lane.position(s, lat)`` for every stripe at once: ``(B,S)`` -> ``(B,S,2)``."""
+        """Evaluate each stripe’s lane position: ``(B, S)`` → ``(B, S, 2)``."""
         lat = P["lat"]
         lat_e = torch.where(P["p_sine"], lat + P["p_amp"] * torch.sin(P["p_puls"] * s + P["p_phase"]), lat)
         p_str = P["p_start"] + s.unsqueeze(-1) * P["p_dir"] + lat_e.unsqueeze(-1) * P["p_lateral"]
@@ -712,15 +520,10 @@ class HighwayEnvBase(Env):
         sb.add_segments(a.reshape(B, S, 2), b.reshape(B, S, 2), hw.reshape(B, S), col, enabled=ok)
 
     def _slot_window_all(self, P: dict, s0, s_ctr) -> torch.Tensor:
-        """First stripe index of the window each (lane, side) group gets: ``(B,L)`` -> ``(B,G)``.
+        """Choose the first stripe slot for each lane-side group.
 
-        Following the camera alone is wrong for short lanes. A circular lane's ``local_coordinates``
-        projects the camera onto the whole circle, so for an arc of 14.66 m the projection is routinely
-        tens of metres outside ``[0, length]``, the whole window then clips to a degenerate segment and
-        the arc disappears. Measured before this fix: **66% of the roundabout's white pixels missing**.
-        The window is therefore clamped to cover the lane whenever it is short enough to fit, and only
-        follows the camera when it is not.
-        """
+        Clamp short lanes into the window; projecting the camera onto a whole circle
+        can otherwise put a visible short arc outside every selected slot."""
         s0g = s0.index_select(1, P["g_lane"])
         sctrg = s_ctr.index_select(1, P["g_lane"])
         k_first = torch.ceil(-s0g / STRIPE_SPACING) - 1
@@ -732,13 +535,7 @@ class HighwayEnvBase(Env):
         return torch.maximum(torch.minimum(k_cam, hi), lo)
 
     def _slots_for(self, lane, scr: _Screen) -> int:
-        """How many dashed-stripe slots a lane needs to cover everything that can reach the screen.
-
-        The reference emits ``stripes_count`` stripes per marking regardless of the lane — measured on
-        highway-v0, from x = -749 px to x = +743 px for a 600 px window. A stripe further along the lane
-        than the screen's extent in that direction cannot paint a pixel, so only that many slots are
-        built; the rest are still evaluated against the reference's window so nothing extra is drawn.
-        """
+        """Bound stripe slots by the visible screen span and the source marking window."""
         sc = self.SCALING
         if isinstance(lane, Straight):
             span = (scr.W * abs(lane.direction[0]) + scr.H * abs(lane.direction[1])) / sc
@@ -750,26 +547,10 @@ class HighwayEnvBase(Env):
         return max(2, min(n, int(lane.length / STRIPE_SPACING) + 3, scr.stripes_count))
 
     def _line_geom(self, a: torch.Tensor, b: torch.Tensor, scr: _Screen):
-        """Capsule that reproduces ``pygame.draw.line`` of width ``scr.line_w``.
+        """Approximate pygame line coverage with scaled capsule widths.
 
-        pygame lights ``w`` consecutive pixels per column of the segment's MAJOR axis, i.e. it
-        thresholds the distance measured along the MINOR axis at ``w/2``. A capsule thresholds the
-        PERPENDICULAR distance, and the two coincide only for axis-aligned lines; scaling the
-        half-width by ``|major| / length`` converts one threshold into the other.
-
-        For EVEN ``w`` the run is also shifted one pixel toward +minor, because an even number of
-        pixels cannot straddle a pixel centre symmetrically. Measured directly: a width-2 horizontal
-        line at y=30 lights rows [30, 31], width 3 lights [29, 30, 31], width 4 lights [29..32], and
-        reversing the endpoints does not move any of them, so the shift is absolute rather than
-        direction-dependent.
-
-        Measured agreement, 300 random segments each: at width 1, 12.48% of lit pixels wrong with a
-        flat 0.5 half-width against **1.79%** with this rule. At width 2 every symmetric candidate —
-        capsule, scaled capsule, or square-capped quad — is ~50% wrong, which is what an unshifted band
-        looks like when the truth is shifted by one pixel; this rule gives **0.25%** on axis-aligned
-        segments and 1.35% on arbitrary ones. Width 2 is what intersection-v0 needs, since its
-        ``scaling`` of 7.15 makes ``pix(0.3) = 2``.
-        """
+        Scale by major-axis extent / segment length to match minor-axis thickness.
+        Even widths shift +0.5 along the minor axis regardless of endpoint order."""
         e = b - a
         L = e.norm(dim=-1).clamp_min(1e-9)
         hw = (scr.line_w / 2.0) * e.abs().amax(dim=-1) / L
@@ -804,9 +585,7 @@ class HighwayEnvBase(Env):
                 sb, origin, x, y, hd, self.VEHICLE_LENGTH, self.VEHICLE_WIDTH, True, body, head, sty, B, scr
             )
             return
-        # ``road.vehicles`` order with the ego's four tyres in the middle of it: everything up to
-        # and including the ego, then its tyres, then the rest. Draw order is the z-buffer, so the
-        # tyres cannot be moved to the end of the cast even though only the ego has any.
+        # Draw the ego’s tyres immediately after its body and before later vehicles.
         e = self.EGO_INDEX
         sl = lambda t, a, b: t[:, a:b]  # noqa: E731
         self._add_boxes(
@@ -862,18 +641,10 @@ class HighwayEnvBase(Env):
         tire_slot: int = 0,
         cull: bool = True,
     ) -> None:
-        """``n`` rotated sprites of ONE size: black footprint, inset body, two clipped headlights.
+        """Draw equal-sized sprites with outline, inset body and clipped headlights.
 
-        ``x``/``y``/``heading`` are ``(B,n)`` and every box in the call shares the sprite, so its
-        pixel rectangles and its pivot rule are computed once. Boxes of different sizes are separate
-        calls -- ``_sprite`` truncates to whole pixels, so two lengths are two different sprites and
-        not one sprite scaled.
-
-        ``cull`` is False for road furniture and True for vehicles, and that asymmetry is the
-        reference's: ``VehicleGraphics.display`` returns early on ``surface.is_visible(position)``
-        while ``RoadObjectGraphics.display`` has no such test. Measured on parking-v0, the env with the
-        largest road objects in the family, it is worth 7 px a frame.
-        """
+        Positions/headings have shape (B, N). Road objects bypass vehicle visibility
+        culling. Clip headlights to the inset because source outlines are painted last."""
         n = int(x.shape[1])
         M = B * n
         S, body, hl, hr = self._sprite(length, width, is_vehicle)
@@ -885,16 +656,13 @@ class HighwayEnvBase(Env):
             if cull
             else torch.ones_like(px, dtype=torch.bool)
         )
-        # VehicleGraphics.display: headings under 2 degrees are snapped to zero. The snap and the pivot
-        # are evaluated in the heading's OWN dtype so a float64 class constant stays float64; the
-        # geometry handed to the builder is float32 like every other primitive.
+        # Snap headings under two degrees in their original dtype before computing pivots.
         h = torch.where(heading.abs() > 2 * math.pi / 180, heading, torch.zeros_like(heading))
         cx, cy = self._pivot(S, h)
         centre = torch.stack([px.float() + cx, py.float() + cy], -1).reshape(M, 2)
         h = h.float()
 
-        # One value PER ENVIRONMENT, not a shared scalar: a batch is allowed to carry 4096 different
-        # vehicle sizes, and collapsing to row 0 is the failure the per-env conformance check exists for.
+        # Preserve per-row vehicle scales.
         scale = sty["vehicle.scale"].reshape(B, 1).expand(B, n).reshape(M, 1)
         inset = (body[0] + 1, body[1] + 1, body[2] - 2, body[3] - 2)
         rects = [(body, sty["vehicle.outline_color"]), (inset, body_col)]
@@ -941,30 +709,11 @@ class HighwayEnvBase(Env):
             )
 
     def _add_tires(self, sb, centre, rot, h, steering, S, length, width, scale, sty, vis) -> None:
-        """Four tyres, which is THE PIVOT RULE APPLIED TWICE.
+        """Apply rotate/blit pivots first within the vehicle sprite, then on screen.
 
-        ``VehicleGraphics.display`` rasterises each tyre into its own ``pix(1) x pix(1)`` surface,
-        ``blit_rotate``\\ s it into the VEHICLE surface at the steering angle, and only then rotates the
-        vehicle surface by the heading and blits that onto the screen. Both blits truncate their origin
-        to a whole pixel, so ``_pivot`` -- the sub-pixel offset measured for the outer blit -- applies
-        to the inner one as well, with ``S`` the tyre sprite's own size:
-
-            local centre = tire_position + pivot(S_tire, steering) + R(steering) @ tyre-rect offset
-            screen centre = vehicle centre + R(heading) @ (local centre - S_vehicle/2)
-            screen angle  = heading + steering
-
-        The rear pair is blitted at angle 0, which takes ``pygame.transform.rotate``'s identity path and
-        ``_pivot``'s exact-multiple-of-90 branch; only the FRONT pair turns (``tire_angles`` is
-        ``[0, 0, steering, steering]``). The heading is snapped to zero below 2 degrees and the steering
-        angle is NOT -- the snap happens once, on ``v.heading``, after the tyres are already drawn.
-
-        What this cannot be is exact by construction. The outer rotation resamples the vehicle surface
-        with ``src[floor(A.d + t)]``, so a rectangle of vehicle-surface PIXELS maps to a rotated
-        rectangle tested at the floored coordinate rather than at the pixel itself; on a body 27 px long
-        that is invisible, and on a tyre ``pix(0.3) = 1`` px thick it is up to a pixel of the tyre. The
-        residual is bounded by the tyres' own area, 4 x pix(1) x pix(0.3) px per ego, and it is reported
-        with the rest of the boundary disagreement in ``docs/research/highway.md``.
-        """
+        Only front tyres steer; rear tyres use the identity pivot. Steering does not
+        use the heading’s two-degree snap. Polygon coverage approximates the source’s
+        nested nearest-neighbour sampling, so thin tyres can differ at their edges."""
         pix = self._pix
         span = length + 2 * self.TIRE_LENGTH
         St = pix(self.TIRE_LENGTH)
@@ -1008,32 +757,10 @@ class HighwayEnvBase(Env):
         )
 
     def _pivot(self, S: int, h: torch.Tensor):
-        """Sub-pixel pivot of pygame's rotate + truncated blit.
+        """Return pygame rotate/blit subpixel offsets for sprite width S.
 
-        Measured by searching, for 181 headings and sprite sizes S in {11, 14, 21, 38}, every offset
-        that makes an analytic rectangle reproduce 100% of the pixels:
-
-          * a rotation by a multiple of 90 degrees takes pygame's axis-aligned fast path, where the
-            only sub-pixel effect is the blit truncating ``pos - S/2``: offset ``-0.5*(S mod 2)``;
-          * otherwise the offset is ``(-0.5, -0.5)`` when the rotated surface width
-            ``Wr = int(S*(|cos a| + |sin a|))`` is odd and ``(-1.0, -0.5)`` when it is even.
-
-        The parity that matters is ``Wr``'s, not ``S``'s and not ``Wr - S``'s: S=11 with Wr=13 gives
-        -0.5 while S=38 with Wr=46 gives -1.0, and both have an even ``Wr - S``. The x and y rules
-        differ because ``blit_rotate`` builds the two coordinates from ``min_box`` and ``max_box``
-        respectively, which are not symmetric.
-
-        **"A multiple of 90 degrees" is not an exact test, and taking it as one costs a pixel.**
-        ``pygame.transform.rotate`` takes its fast path on a band around each quarter turn, and the
-        band is exactly half a FLOAT32 ulp wide: bisected on 490x490, 294x294 and 38x38 sprites, a
-        rotation stops being bit-identical to the quarter turn at ``3.815e-06`` degrees from 90,
-        ``7.629e-06`` from 180 and ``1.526e-05`` from 270 -- which is ``2**-18``, ``2**-17``, ``2**-16``,
-        i.e. half an ulp of 90, 180 and 270 in float32. So the angle is rounded to float32 and then
-        tested. That is not academic here: a heading of ``pi/2`` carried through a float32 STATE comes
-        back as 90.0000025 degrees, inside the band, and an exact-equality test sends it down the
-        ``Wr`` branch instead -- worth 23 px a frame on parking-v0's 14x14 goal landmark alone.
-        Measured in the frozen measurement record.
-        """
+        Quarter-turn detection uses float32 degrees, matching pygame’s tolerance band.
+        Otherwise x offset follows rotated-width parity; y offset remains -0.5."""
         a = -h.double()  # VehicleGraphics passes rad2deg(-heading)
         deg = a * (180.0 / math.pi)
         axis = torch.remainder(deg.float().double(), 90.0) == 0
@@ -1045,7 +772,6 @@ class HighwayEnvBase(Env):
         cy = torch.where(axis, flat, torch.full_like(wr, -0.5))
         return cx.float(), cy.float()
 
-    # --- rendering ---------------------------------------------------------------------------------
 
     @torch.no_grad()
     def _render(
@@ -1057,16 +783,9 @@ class HighwayEnvBase(Env):
         style=None,
         out=None,
     ) -> torch.Tensor:
-        """``size`` is the frame HEIGHT; the width follows the env's own aspect ratio.
+        """Render with ``size`` as height and the class’s aspect ratio as width.
 
-        highway-v0 is 600x150 and the intersection envs are square. Forcing a square frame would either
-        crop the road or change ``scaling``, and ``scaling`` is inside every ``int()`` in the reference,
-        so changing it changes the picture rather than its resolution.
-
-        The geometry for the requested size is derived here and thrown away here. Nothing about the
-        call survives it: ``render`` is a read, and a preview frame at another resolution must not
-        change what the next ``render()`` returns.
-        """
+        Derive call-local geometry so preview sizes do not change later renders."""
         scr = self.screen(size)
         s = self._render_state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
         lead = tuple(s.shape[:-1])
@@ -1081,7 +800,6 @@ class HighwayEnvBase(Env):
         )
         return img.view(*lead, *img.shape[1:]) if lead else img
 
-    # --- states ------------------------------------------------------------------------------------
 
     def sample_states(self, batch: int, rng: np.random.Generator | None = None) -> np.ndarray:
         rng = rng or self.rng
@@ -1094,9 +812,7 @@ class HighwayEnvBase(Env):
             if i == self.EGO_INDEX:
                 continue
             out[:, v * i : v * i + 3] = self.traffic_spawn(batch, rng, ego)
-        # Half the batch carries a crashed vehicle next to the ego, so the red-vehicle path is
-        # exercised; without it the 'crashed.color' knob would look inert and the crashed state dims
-        # would look dead, and both would be a test passing for the wrong reason.
+        # Include nearby crashes so sampled batches exercise visible crash colours.
         if self.CRASHED_VISIBLE:
             if self.N_VEHICLES > 1:
                 j = v * (1 if self.EGO_INDEX != 1 else 0)
@@ -1119,23 +835,19 @@ class HighwayEnvBase(Env):
         raise NotImplementedError
 
     def ego_steering_spawn(self, batch, rng) -> np.ndarray:
-        """``ContinuousAction`` clips the steering to ``+-steering_range``; measured on 240 real steps
-        of racetrack-v0 and parking-v0, it reaches +-0.785 rad and averages 0.41 in magnitude."""
+        """Sample steering uniformly within the source action range."""
         return rng.uniform(-self.STEERING_RANGE, self.STEERING_RANGE, batch).astype(np.float32)
 
     def object_spawn(self, k: int, batch, rng) -> np.ndarray:
         raise NotImplementedError
 
-    # --- reference bridge ---------------------------------------------------------------------------
 
     @classmethod
     def reference_env(cls, size: int | None = None):
-        """The official env, sized and populated to match this class.
+        """Construct and validate the source scene with an enabled offscreen viewer.
 
-        ``SDL_VIDEODRIVER`` is forced to ``offscreen``: under ``dummy`` highway-env disables its viewer
-        and returns an untouched surface, so a parity test would compare against a black image and pass
-        or fail for reasons that have nothing to do with rendering.
-        """
+        Force the offscreen SDL driver during viewer creation: dummy disables drawing
+        in highway-env and would return a blank reference image."""
         import os
 
         import gymnasium
@@ -1174,7 +886,7 @@ class HighwayEnvBase(Env):
 
     @staticmethod
     def _lane_signature(l) -> tuple:
-        """Everything about a lane that reaches a pixel, rounded to 1e-9, as one comparable tuple."""
+        """Encode lane geometry and markings as a tuple rounded to nine decimal places."""
         r = lambda v: round(float(v), 9)
         head = (
             type(l).__name__.replace("Lane", "") or type(l).__name__,
@@ -1201,21 +913,10 @@ class HighwayEnvBase(Env):
 
     @classmethod
     def _check_lanes(cls, u) -> None:
-        """``LANES`` must still be the road the package builds. Re-derived, never trusted.
+        """Compare source and declared lane multisets.
 
-        The four envs ported first have small hand-written networks; racetrack-v0 has 18 lanes with
-        radii and phases in degrees and parking-v0 has 28 generated from a loop, and a transcription
-        that size has a defect rate. A wrong radius is not a crash -- it is a lane marking a few pixels
-        off, which looks exactly like a rasterizer bug -- so the transcription is checked against the
-        official network every time a reference env is built.
-
-        Compared as a MULTISET rather than in order, and that is a statement about the renderer rather
-        than a convenience. ``RoadNetwork.graph`` is a dict of dicts, so it groups every ``a->b`` lane
-        before every ``b->c`` one while ``MergeEnv._make_road`` writes them section by section; the two
-        orders differ for three of the six envs here. Order would matter if lanes painted over each
-        other in different colours, and they do not -- every marking is ``road.line_color`` -- so what
-        has to agree is which lanes exist, not the sequence they are walked in.
-        """
+        Order is irrelevant here because all lane markings share one colour;
+        vehicle and road-object painter order must still be preserved."""
         got = [l for f in u.road.network.graph for t in u.road.network.graph[f] for l in u.road.network.graph[f][t]]
         mine = sorted(cls._lane_signature(l) for l in cls.LANES)
         theirs = sorted(cls._lane_signature(l) for l in got)
@@ -1233,16 +934,10 @@ class HighwayEnvBase(Env):
 
     @classmethod
     def reference_set_state(cls, u, st) -> None:
-        """Drive the reference to ``st`` by rebuilding ``road.vehicles`` outright.
+        """Rebuild the source vehicle list from render rows, retaining the ego object.
 
-        Rebuilding rather than repositioning what happens to be there: several of these envs decide
-        their cast at random (``IntersectionEnv._spawn_vehicle`` draws against a probability and
-        ``_clear_vehicles`` deletes vehicles that leave), so the number of vehicles after ``reset`` is
-        not a property of the env id. The state is the definition of the scene, and the reference is
-        made to hold exactly that scene. The ego object is kept, because it must stay the class the
-        env's action type produced or it renders in the wrong colour and ``env.vehicle`` — which fixes
-        the camera — stops pointing at it.
-        """
+        Reset may produce a variable vehicle count. Keeping the ego preserves its
+        source class, pinned colour and camera binding. Landmarks are restored unhit."""
         from highway_env.vehicle.behavior import IDMVehicle
         from highway_env.vehicle.kinematics import Vehicle
 
@@ -1268,9 +963,7 @@ class HighwayEnvBase(Env):
                 f"WOULD be visible and the state is missing a dimension."
             )
         if cls.EGO_HAS_TIRES:
-            # ``VehicleGraphics`` draws tyres for ``type(v) in [Vehicle, BicycleVehicle]`` -- an exact
-            # type check -- so a reference whose ego has drifted to another class would silently draw
-            # no tyres and the parity number would describe a different picture.
+            # Validate the exact source type; subclasses may suppress tyre rendering.
             if type(ego) is not Vehicle:
                 raise AssertionError(
                     f"{cls.__name__}: the reference's ego is a {type(ego).__name__}, but this class "
@@ -1290,8 +983,7 @@ class HighwayEnvBase(Env):
                 o = objs[k]
                 o.position = np.array([float(st[off + 3 * k]), float(st[off + 3 * k + 1])], np.float64)
                 o.heading = float(st[off + 3 * k + 2])
-                # a Landmark turns GREEN once hit, which is a flag the state does not carry because
-                # nothing in the picture distinguishes 'reached' from 'about to be reached'
+                # This render schema has no hit flag; restore landmarks in their unhit colour.
                 o.hit = False
 
     @classmethod
@@ -1326,13 +1018,7 @@ class HighwayEnvBase(Env):
 
 
 def lane_frames(lane, n: int, rng, jitter: float = 1.0) -> np.ndarray:
-    """``(n, 3)`` of ``(x, y, heading)`` at random points along ``lane``, with a lateral jitter.
-
-    The reference spawns every vehicle with ``make_on_lane`` and then drives it, so a spawn
-    distribution that is not on the road exercises a picture the env never shows -- and on a racetrack
-    where the whole frame is lane markings that is most of the frame. ``heading_at`` is transcribed
-    per lane class, which is the same arithmetic ``AbstractLane.heading_at`` does.
-    """
+    """Sample (x, y, heading) along straight or circular lanes with lateral jitter."""
     s = rng.uniform(0.0, lane.length, n)
     lat = rng.uniform(-jitter, jitter, n)
     if isinstance(lane, Circular):
@@ -1355,7 +1041,7 @@ def lane_frames(lane, n: int, rng, jitter: float = 1.0) -> np.ndarray:
 
 
 def _on_track(lanes, batch, rng, jitter: float = 1.0, heading_jitter: float = 0.0) -> np.ndarray:
-    """``(batch, 3)`` poses spread over a whole lane network, one lane drawn per environment."""
+    """Sample one lane per row, then add optional heading noise."""
     pick = rng.integers(0, len(lanes), batch)
     out = np.zeros((batch, 3))
     for i, lane in enumerate(lanes):
@@ -1368,13 +1054,7 @@ def _on_track(lanes, batch, rng, jitter: float = 1.0, heading_jitter: float = 0.
 
 
 def _racetrack_lanes():
-    """``RacetrackEnv._make_road``: nine sections of two 5 m lanes, read off the official network.
-
-    Emitted by the frozen measurement record from ``road.network`` rather than transcribed
-    from ``_make_road`` by eye, and re-checked against the package by ``_check_lanes`` every time a
-    reference env is built. Phases are written in degrees because that is the unit the source uses and
-    the unit a typo is visible in.
-    """
+    """Declare the source racetrack’s nine two-lane sections; phases are in degrees."""
     d = np.deg2rad
     c, s, n = CONTINUOUS, STRIPED, NONE
     return (
@@ -1401,12 +1081,9 @@ def _racetrack_lanes():
 
 @register
 class Racetrack(HighwayEnvBase):
-    """racetrack-v0: a closed circuit of straights and arcs, ego plus one IDM vehicle.
+    """Render racetrack-v0 with one ego and one IDM vehicle.
 
-    The first of the two envs whose ego is a plain ``Vehicle``, so its four tyres are drawn and
-    ``ego_steering`` is a state dimension. See ``_add_tires`` for the nested pivot; nothing else here
-    differs from the rest of the family.
-    """
+    The ego’s visible front tyres make steering part of the render row."""
 
     name = "racetrack"
     default_size = 600
@@ -1415,10 +1092,7 @@ class Racetrack(HighwayEnvBase):
     LANES = _racetrack_lanes()
     N_VEHICLES = 2  # RacetrackEnv._make_vehicles: ego + one front vehicle
     EGO_HAS_TIRES = True
-    #: measured, not assumed: racetrack-v0 does not pin ``vehicle.color`` and its ego is a plain
-    #: ``Vehicle``, so ``get_color`` falls past LinearVehicle/IDMVehicle/MDPVehicle to DEFAULT_COLOR.
-    #: The ego is YELLOW here, the same colour an obstacle is elsewhere in the family; assuming the
-    #: family's green cost 1,717 interior pixels a frame before the diff named it.
+    # Racetrack’s plain, unpinned Vehicle uses the source yellow default.
     EGO_COLOR_DEFAULT = YELLOW
     reference_id = "racetrack-v0"
     reference_config = {"controlled_vehicles": 1, "other_vehicles": 1}
@@ -1431,12 +1105,7 @@ class Racetrack(HighwayEnvBase):
 
 
 def _parking_lanes(spots: int = 14, width: float = 4.0, y_offset: float = 10.0, length: float = 8.0):
-    """``ParkingEnv._create_road``: two rows of ``spots`` bays, all four sides continuous.
-
-    Built by the same loop the reference uses, and in the same ORDER -- ``RoadNetwork.graph`` groups
-    every ``a->b`` lane before every ``b->c`` one, so the upper row comes first, not the two rows
-    interleaved as the loop is written.
-    """
+    """Build both rows of parking bays, upper row first as in source graph iteration."""
     xs = [(k + 1 - spots // 2) * width - width / 2 for k in range(spots)]
     lt = (CONTINUOUS, CONTINUOUS)
     return tuple(
@@ -1447,33 +1116,10 @@ def _parking_lanes(spots: int = 14, width: float = 4.0, y_offset: float = 10.0, 
 
 @register
 class Parking(HighwayEnvBase):
-    """parking-v0: a 14-bay lot, one ego, a goal landmark and four walls.
+    """Render parking-v0 with one ego, a goal landmark and four walls.
 
-    Three things are specific to this env and each is measured rather than assumed:
-
-      * its ``scaling`` is 7, so ``pix(STRIPE_WIDTH) = 2`` and the markings take the even-width branch
-        of ``_line_geom`` -- the same branch intersection-v0 needed;
-      * the GOAL is a ``Landmark`` whose bay is drawn at random each episode, so its pose is part of
-        the state rather than a class constant, and it is drawn BLUE (``RoadObjectGraphics.get_color``)
-        rather than the obstacles' yellow. The 28 poses it takes are the bay centres, which is what
-        ``object_spawn`` draws from;
-      * the four walls are ``Obstacle``\\ s 70 m and 42 m long -- 490 px and 294 px at this scaling --
-        and ``RoadObjectGraphics.display``, unlike ``VehicleGraphics.display``, does NOT test
-        ``is_visible``. ``_add_box(cull=False)`` is that difference. Measured on 64 states with the ego
-        driven to the edges of the lot, culling road objects the way vehicles are culled costs 7 px a
-        frame -- small, because a wall leaves the frame along its 7 px THICKNESS and the visibility
-        margin is 50 px, so it is already invisible by the time its centre is culled. It is followed
-        because it is the reference's rule, not because the difference is large.
-
-    **``crashed`` is not in this env's state, and that is a measurement rather than an omission.**
-    ``ParkingEnv._create_vehicles`` sets ``vehicle.color = VehicleGraphics.EGO_COLOR``, and
-    ``get_color`` returns ``vehicle.color`` BEFORE it ever tests ``crashed`` -- so the ego is green
-    whether or not it has crashed, there is no second vehicle to paint red, and both the state
-    dimension and the ``crashed.color`` knob would be dead weight. ``reference_set_state`` asserts the
-    pinned colour is still there, so a package that stopped pinning it fails loudly instead of
-    rendering a green car where the reference draws a red one. The same reasoning removes ``traffic``:
-    ``vehicles_count`` is 0, so there is no traffic to colour.
-    """
+    Goal pose and steering are render inputs. The source pins the ego green,
+    so crashes do not change its colour and crash flags are omitted."""
 
     name = "parking"
     default_size = 300
@@ -1523,7 +1169,7 @@ def _clip_rect(r, box):
 
 @register
 class Highway(HighwayEnvBase):
-    """highway-v0: four straight lanes, ego plus traffic, camera locked to the ego."""
+    """Render highway-v0’s four straight lanes with an ego-following camera."""
 
     name = "highway"
     default_size = 150
@@ -1553,7 +1199,7 @@ class Highway(HighwayEnvBase):
 
 
 def _merge_lanes():
-    """``MergeEnv._make_road``: two highway lanes in three sections plus a sinusoidal on-ramp."""
+    """Build two highway lanes and the source sinusoidal on-ramp."""
     c, s, n = CONTINUOUS_LINE, STRIPED, NONE
     ends = [150, 80, 80, 150]
     y = [0.0, 4.0]
@@ -1581,7 +1227,7 @@ def _merge_lanes():
 
 @register
 class Merge(HighwayEnvBase):
-    """merge-v0: a two-lane highway with a sinusoidal on-ramp and a yellow obstacle at its end."""
+    """Render merge-v0 with a sinusoidal on-ramp and an obstacle at its end."""
 
     name = "merge"
     default_size = 150
@@ -1594,10 +1240,7 @@ class Merge(HighwayEnvBase):
 
     def ego_spawn(self, batch, rng):
         x = rng.uniform(20, 430, batch)
-        # Every third environment is parked next to the obstacle at x=310. The camera window is 109 m
-        # wide, so a uniform spawn puts the obstacle on screen only ~27% of the time and the
-        # 'object.color' knob would then be checked against batches that sometimes do not contain it —
-        # a test whose verdict depends on the draw is not a test.
+        # Place every third sample near the obstacle to exercise its visible colour.
         x[::3] = rng.uniform(255, 330, len(x[::3]))
         return np.stack(
             [x, rng.integers(0, 2, batch) * 4.0 + rng.uniform(-1.2, 1.2, batch), rng.uniform(-0.3, 0.3, batch)], 1
@@ -1612,7 +1255,7 @@ class Merge(HighwayEnvBase):
 
 
 def _roundabout_lanes():
-    """``RoundaboutEnv._make_road``: two concentric rings of eight arcs, plus four access branches."""
+    """Build two rings of eight arcs and four access branches."""
     radius, alpha, center = 20.0, 24.0, (0.0, 0.0)
     n, c, s = NONE, CONTINUOUS, STRIPED
     radii = [radius, radius + 4]
@@ -1660,19 +1303,10 @@ def _roundabout_lanes():
 
 @register
 class Roundabout(HighwayEnvBase):
-    """roundabout-v0: a two-ring roundabout with four access branches, ego plus four vehicles.
+    """Render roundabout-v0 with two rings, four access branches and five vehicles.
 
-    At 604 primitives this is the largest scene in the repo, and it was unrenderable until the
-    rasterizer stopped unrolling its primitive list: ``_scene_kernel`` used ``tl.static_range``, which
-    made the primitive count a compile-time constant, and ptxas aborted the process above ~340. The
-    unroll is gone (``raster2d: runtime primitive loop``) and this env is the reason it went; the
-    measured ceiling is kept in ``docs/research/highway.md`` because it will come back if anyone
-    reintroduces unrolling.
-
-    Its markings are the one place a capsule and a Bresenham line genuinely differ: the arcs are drawn
-    by the reference as chains of short 1 px lines at arbitrary angles, and those account for the
-    remaining ~0.06% of pixels. All of them are 1 px wide, so none is an interior pixel.
-    """
+    Its large primitive list requires a runtime kernel loop; fully unrolling it
+    can exhaust the CUDA compiler. Thin curved markings retain coverage differences."""
 
     name = "roundabout"
     default_size = 600
@@ -1697,7 +1331,7 @@ class Roundabout(HighwayEnvBase):
 
 
 def _intersection_lanes():
-    """``IntersectionEnv._make_road``: four corners, each an approach, two turns, a through and an exit."""
+    """Build each corner’s approach, turns, through lane and exit."""
     lw = 4.0  # AbstractLane.DEFAULT_WIDTH
     r_turn = lw + 5.0  # 9
     l_turn = r_turn + lw  # 13
@@ -1740,20 +1374,10 @@ def _intersection_lanes():
 
 @register
 class Intersection(HighwayEnvBase):
-    """intersection-v0: a four-way junction, ego approaching from the south, traffic crossing.
+    """Render intersection-v0 with the ego last in vehicle painter order.
 
-    Two things make this one different from the rest of the family. Its ``scaling`` is ``5.5 * 1.3``,
-    so ``pix(STRIPE_WIDTH) = 2`` and the markings leave pygame's Bresenham path — see ``_line_geom``
-    for the width-2 rule and what it cost to get wrong. And the ego is appended to ``road.vehicles``
-    LAST rather than first, so it paints on top of the traffic; ``EGO_INDEX`` says so, because at a
-    junction vehicles overlap by design and the order is the difference between the ego being visible
-    and being buried.
-
-    The reference decides its cast at random — ``_spawn_vehicle`` draws against a probability and
-    ``_clear_vehicles`` deletes vehicles that leave — so the number of vehicles after ``reset`` is not
-    a property of the env id. ``reference_set_state`` rebuilds ``road.vehicles`` outright, which is
-    what makes a fixed-width state well defined here at all.
-    """
+    The reference bridge fixes vehicle count explicitly because source reset
+    samples traffic probabilistically."""
 
     name = "intersection"
     default_size = 600

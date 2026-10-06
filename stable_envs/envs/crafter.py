@@ -1,107 +1,3 @@
-"""Crafter — the whole 64x64 observation, inventory strip included, from 80 numbers.
-
-Reference: ``crafter`` 1.8.3 (``CrafterReward-v1``, Hafner 2021). One frame is
-``crafter.env.Env.render``: a 9x7 window of the world map at 7 px per tile, each cell drawn as a
-material texture with at most one object alpha-blended over it, then a daylight post-process, then a
-2x9 inventory strip concatenated underneath, then the whole thing pasted into a 64x64 canvas. Every
-one of those steps is a lookup into a fixed set of 56 16x16 PNGs plus per-pixel arithmetic, which is
-why the family belongs here.
-
-**The state Crafter hands you is bigger than the frame, and the render window is not.** Measured: the world's two arrays alone — ``_mat_map`` (64x64 uint8) and
-``_obj_map`` (64x64 uint32) — are 20,480 bytes against a 12,288-byte frame, **1.67x worse**, before
-counting the object list, the player's counters or the RNG. That is the same shape of result the
-Craftax note records for a JAX reimplementation of this game (6.37x), and it has the same cause and
-the same fix: the simulator's state carries a 64x64 world and the frame shows a 9x7 window of it.
-What this env carries is the **render window**: 63 cell codes, 16 inventory counts and the daylight
-level, **80 float32 = 320 bytes against 12,288 (38.4x)**, or 80 bytes packed to the one byte per
-field the alphabet needs (**153.6x**).
-
-Parity against the official renderer, measured twice and in both directions:
-
-  * **599 of 599 frames bit-identical** along a live 690-step uniform-random rollout, at every daylight
-    level in [0.5, 1] and including 84 frames with the player asleep;
-  * **512 of 512 frames bit-identical** over the whole embedded state pool this env samples from,
-    driven through ``reference_render`` — i.e. the world rebuilt from the state and drawn by
-    ``crafter.Env.render`` — including 223 windows that leave the world (the frozen measurement record:
-    ``exact_frac 1.0, mean |diff| 0.000, max |diff| 0``).
-
-The atlas is exact by construction rather than by fitting — every tile is composed with crafter's own
-``_draw`` / ``_draw_alpha`` / ``ItemView``, checked at every tile size from 3 to 40 px
-(the frozen measurement record: max abs diff 0) — so ``parity_interior_min`` stays at 1.0 with
-nothing relaxed.
-
-Throughput on one H200: **701,594 frames/s at batch 16,384** (8.6 GB/s of frame output; 244,566 f/s at
-batch 256) against **1,375 f/s** for ``crafter.Env.render`` on a live CPU env — **510x**.
-
-One cell code, not a (material, object) pair
---------------------------------------------
-
-Each of the 63 cells is ONE index into ``material x object-texture``, 13 x 16 = 208 combinations, plus
-one code for a cell outside the world. Splitting it into two dimensions would be the same mistake
-MiniGrid's docstring names: an opaque object hides its material, so on such a cell the material
-dimension provably cannot change the picture, and a state with dimensions that cannot reach the frame
-is either not minimal or not fully rendered. One code per cell makes every dimension load-bearing, and
-it is also what makes the frame a single gather.
-
-The player's facing is not a dimension either, and neither is "is the player asleep": both are already
-in the centre cell's code (``player-left`` / ``player-up`` / ... / ``player-sleep``), because
-``Player.texture`` is exactly that function. ``player-sleep`` in the centre is what switches the
-sleeping post-process on — a biconditional in the reference, so carrying a separate flag could only
-introduce a state that contradicts itself.
-
-What is excluded, and why
--------------------------
-
-  * **Night below half daylight.** ``LocalView._light`` mixes in a vignette of noise drawn from
-    ``self._world.random`` when ``daylight < 0.5``, so those frames are not a function of any state —
-    they are a function of the world's RNG cursor, and rendering the same state twice gives two
-    pictures. This is a G1 failure in the reference, not a limitation here, and the honest response is
-    to carry the half of the cycle that is pure: ``daylight >= 0.5`` is **49% of steps** and every
-    state this env samples or renders against a reference is in it. Above the threshold the noise
-    branch is dead and the rest of the post-process is exact arithmetic, reproduced here bit for bit.
-  * **The world outside the window, and therefore ``step``.** This state is an OBSERVATION. The next
-    observation depends on cells the window does not contain, on objects outside it, on the player's
-    hidden hunger/thirst/fatigue counters and on the world RNG, so there is nothing to step and no
-    batched simulator is offered. That is the same split MiniGrid draws between its top-down classes
-    (which do ship a ``step``) and its POV class (which cannot).
-
-Constants that were measured rather than read off the source
-------------------------------------------------------------
-
-  * **``PIL.Image.resize(..., NEAREST)`` is not ``floor((i+0.5)*src/dst)``.** That rule — the one
-    Craftax's atlas uses and the one any reading of Pillow's affine transform suggests — disagrees with
-    Pillow 12.1.1 on **34 of the first 64 output sizes**, always at an output pixel whose exact
-    coordinate is an integer: at ``src=16, dst=6`` the rule says source row 12 and Pillow takes 11,
-    because Pillow divides before it multiplies and 2.6666666666666665 x 4.5 is 11.999999999999998.
-    Crafter resizes every texture through that call, so the atlas would have been wrong by a whole
-    source row on 8 of the 14 tile sizes an ordinary render asks for. The index map is therefore
-    **measured off Pillow and embedded** (``_NEAREST_B64``), not derived.
-  * **The alpha blend is float32 and truncating.** ``engine._draw_alpha`` divides by 255, blends in
-    float32 and multiplies back with ``.astype(np.uint8)``, which truncates. Composing in float64, or
-    rounding, moves interior pixels of every sprite by one level.
-  * **``_draw`` does not blend.** A material texture with an alpha channel is written with its alpha
-    DISCARDED (``texture[..., :3]``), so a transparent material texel paints its RGB rather than the
-    canvas's 127. Three of the twelve materials ship an alpha channel.
-  * **The daylight blend is a truncation, not a rounding.** ``_light`` returns float64 and
-    ``Env.render`` assigns it into a uint8 canvas, which is a C cast. Rounding instead costs about a
-    third of all pixels one level.
-  * **The inventory strip is never lit.** ``render`` concatenates the item view AFTER ``_light`` has
-    run on the world view, so the strip is the same picture at midnight and at noon.
-
-The atlas
----------
-
-The decoder is 56 PNGs — **9,452 bytes of base64** at their native 16x16 — from which the 370-tile
-atlas (208 material/object composites, one out-of-world tile, 160 inventory tiles, one blank) is
-composed on device per tile size. It is a constant of the family: two envs built from different seeds
-and reset independently produce byte-identical atlases, so the G3 gate is clean.
-
-The atlas is composed rather than embedded pre-rendered, because crafter resamples its 16x16 source
-art at whatever tile size is asked for. An atlas embedded at 7 px and resampled again for a 14 px
-render would be a picture of a picture, and only the one embedded size would be comparable to a
-reference.
-"""
-
 from __future__ import annotations
 
 import base64
@@ -115,7 +11,7 @@ from ..registry import register
 from ..render import tilemap as tm
 from ..spaces import Box, Dict, Discrete
 
-VIEW = 9  #: ``Env(view=(9, 9))`` — the default, and what every paper uses
+VIEW = 9  #: Source default view width.
 GRID_W = VIEW  #: world columns
 N_ITEM = 16  #: ``len(constants.items)``
 ITEM_ROWS = -(-N_ITEM // VIEW)  #: ``ceil(len(items) / view[0])`` — 2
@@ -182,22 +78,13 @@ DEFAULT_OUTSIDE = (127, 127, 127)
 #: ``Env.render`` pastes the view into a ``np.zeros`` canvas, so any border left over when the frame
 #: size is not a multiple of the view width is black.
 DEFAULT_PAD = (0, 0, 0)
-#: ``_light``'s two blend factors: ``ImageEnhance.Color(...).enhance(0.4)`` then
-#: ``_tint(..., (0, 16, 64), 0.5)``. They are NOT style values, and that is the reason PushT's
-#: docstring gives for making ``scale`` a multiplier: a style tensor is float32, ``float32(0.4)``
-#: widens to 0.4000000059604645, and the reference's blend is ``a + alpha * (b - a)`` in C double —
-#: so wherever ``b - a`` is negative and divisible by 5 the product crosses an integer from the other
-#: side and the pixel comes out one level low. Measured before this change: an off-by-one on ~10% of
-#: channels of every lit frame. Keeping the constants in float64 here and exposing SCALES that
-#: default to exactly 1.0 makes "matches the official renderer" an identity rather than a rounding.
+# Keep source blend constants in double precision. A float32 style value for 0.4
+# changes uint8 truncation; styles therefore scale these constants from exactly 1.
 NIGHT_SATURATION, NIGHT_AMOUNT = 0.4, 0.5
 DEFAULT_NIGHT = (0.0, 16.0, 64.0, 1.0, 1.0)
-#: ``_sleep``: ``enhance(0.0)`` then ``_tint(..., (0, 0, 16), 0.5)``. Not a variation knob — a batch
-#: cannot be relied on to contain a sleeping player, and a knob that is inert on most batches is what
-#: ``check_variations_do_something`` exists to reject.
+# Sleep desaturates, then applies this tint independently of the night style.
 SLEEP_TINT, SLEEP_AMOUNT = (0.0, 0.0, 16.0), 0.5
-#: below this the reference mixes in noise from the world RNG and the frame stops being a function of
-#: any state; see the module docstring
+# Below this threshold, source rendering consumes world RNG state absent from our rows.
 DAYLIGHT_MIN = 0.5
 #: PIL's ITU-R 601-2 luma, in the fixed point ``convert("L")`` actually uses
 LUMA = (19595, 38470, 7471)
@@ -409,6 +296,8 @@ _TEX_B64 = (
     "56/Of138NbVien83yy2HhvrzfKcW61e1VYlf0Hd4swKUpCv+/wGaJkm2"
 )
 
+# Pillow’s float rounding at integer boundaries differs from a direct centre formula.
+# Preserve the measured lookup rather than recomputing nearest-neighbour indices.
 _NEAREST_SHAPE = (64, 64)
 _NEAREST_B64 = (
     "eNqlktmWhCAMBSe40bbK///tNDthMwTfq07doPyb+9ZrjhfynuP385nhYZXfZ4rfPzMCWLbjvJ4p/vO9Ff+A6y5nBGLdDnnyBWLZfgHnxRWIxQZcj2Ie"
@@ -454,13 +343,13 @@ def _unpack(b64: str, shape, dtype=np.uint8) -> np.ndarray:
 
 
 def _resize(tex: np.ndarray, nearest: np.ndarray, d: int) -> np.ndarray:
-    """One 16x16 RGBA asset at ``d`` x ``d``, through PIL's MEASURED nearest-neighbour index map."""
+    """Resize source art using the embedded Pillow nearest-neighbour index table."""
     ix = nearest[d - 1, :d].astype(np.int64)
     return tex[ix][:, ix]
 
 
 def _draw_alpha(canvas: np.ndarray, off, t: np.ndarray, has_alpha: bool) -> None:
-    """``crafter.engine._draw_alpha``, including its float32 arithmetic and its truncation."""
+    """Match source alpha blending in float32 with truncation to uint8."""
     x, y = off
     w, h = t.shape[:2]
     if not has_alpha:
@@ -473,14 +362,11 @@ def _draw_alpha(canvas: np.ndarray, off, t: np.ndarray, has_alpha: bool) -> None
 
 
 class _Atlas:
-    """``(N_TILE, unit, unit, 3)`` uint8, composed once per (device, tile size) and kept.
+    """Compose and cache source art per device and tile size.
 
-    Slots: ``m * N_OBJ + o`` for a material/object cell, ``OUTSIDE`` for a cell off the world,
-    ``ITEM_BASE + i * 10 + amount`` for an inventory slot, ``BLACK_TILE`` for the two unused strip
-    cells. Composing here rather than embedding a pre-rendered atlas is what makes every tile size
-    exact: the source art is 16x16 and crafter resamples it per size, so an atlas embedded at one
-    size and resampled again would be a picture of a picture.
-    """
+    Slots encode material/object pairs, outside-world cells, inventory amounts
+    and strip padding. Resize original art before composition; resizing a finished
+    atlas changes the source pixels."""
 
     _cache: dict = {}
     _tex: np.ndarray | None = None
@@ -502,16 +388,7 @@ class _Atlas:
 
     @classmethod
     def _build(cls, unit: int) -> np.ndarray:
-        """Compose every tile in crafter's own ``(x, y)`` order, then store it transposed.
-
-        The transpose is not bookkeeping. Crafter loads each PNG with ``image.transpose((1, 0) + ...)``
-        and draws into a ``(x, y, 3)`` canvas, then ``Env.render`` returns ``canvas.transpose((1, 0,
-        2))``. So the reference's final frame is the transpose of the composition, tile CONTENT
-        included — and a renderer that lays the tiles out in row-major order without transposing each
-        one produces a frame that is right everywhere the art is symmetric and wrong everywhere it is
-        not. Measured before the swap: 1,980 of 4,096 pixels differed on frame 0 with interior
-        agreement still reporting 1.000, because every tile was its own transpose.
-        """
+        """Compose in source ``(x, y)`` order, then transpose each tile to image order."""
         tex, nearest = cls._art()
         idx = {n: i for i, n in enumerate(TEX_NAMES)}
         out = np.zeros((N_TILE, unit, unit, 3), np.uint8)
@@ -539,17 +416,17 @@ class _Atlas:
 
 
 def _luma(x: torch.Tensor) -> torch.Tensor:
-    """``(...,3)`` -> ``(...,1)``: PIL's ``convert("L")``, in the fixed point it really uses.
-
-    ``>> 16`` of a non-negative integer is ``floor(/65536)``, and the largest value reachable is
-    255*65536 + 32768, so float64 carries it exactly.
-    """
+    """Compute Pillow’s fixed-point luma; float64 exactly carries the integer sum."""
     return torch.floor((x[..., 0:1] * LUMA[0] + x[..., 1:2] * LUMA[1] + x[..., 2:3] * LUMA[2] + 32768.0) / 65536.0)
 
 
 @register
 class Crafter(Env):
-    """Crafter's 64x64 observation: a 9x7 lit world window plus the 2x9 inventory strip."""
+    """Render a 9×7 world window and 16 inventory counts with daylight ≥ 0.5.
+
+    These 80 values describe an observation, not the full simulator State.
+    Stepping and stochastic night rendering require world data and RNG state
+    that this representation omits. Source comparison rejects darker states."""
 
     family = "crafter"
     domain = "crafter"
@@ -561,20 +438,12 @@ class Crafter(Env):
         + tuple(f"inv_{n}" for n in ITEMS)
         + ("daylight",)
     )
-    #: Public state. Three keys because the row is genuinely three things -- the lit
-    #: world window, the inventory strip below it, and the scalar that decides how the world half is
-    #: tinted -- drawn by three different parts of the renderer. The packed row and its column order
-    #: are unchanged, every column is covered, so nothing is hidden and the frozen layout does not
-    #: move. ``cells`` stays ONE key of ``N_CELL`` columns rather than a 9x7 nest: the public State
-    #: describes the environment, and a per-cell key would be 63 names for one grid.
     state_layout = ((("cells",), N_CELL, 0), (("inventory",), N_ITEM, N_CELL), (("daylight",), 1, N_CELL + N_ITEM))
     default_size = 64
     reference_id = "CrafterReward-v1"
 
-    # ---- geometry --------------------------------------------------------
-
     def _unit(self, size: int) -> int:
-        """``Env.render``'s ``unit = size // view``. Not a divisor: crafter centres the leftover."""
+        """Use floor(size / view); unused border pixels remain centred padding."""
         u = int(size) // VIEW
         if not MIN_UNIT <= u <= MAX_UNIT:
             raise ValueError(
@@ -584,26 +453,10 @@ class Crafter(Env):
             )
         return u
 
-    # ---- variation -------------------------------------------------------
-
     def make_variation_space(self) -> Dict:
-        """Knobs that are the identity at their defaults and genuinely move pixels off them.
+        """Configure padding, night tint, channel gain and layer visibility.
 
-        There is deliberately **no RGB leaf**, and that is a claim about Crafter rather than
-        packaging. Every world pixel leaves the renderer through ``daylight * c + (1 - daylight) *
-        night(c)``, and ``daylight == 1`` happens at one step in 300, so a colour written into the
-        world layer is essentially never painted literally — declaring one as an ``RGBBox`` would
-        advertise "this colour appears in the frame", which ``check_colors_apply_exactly`` checks and
-        which is not true here. ``chrome`` therefore carries the out-of-world fill and the canvas pad
-        as one 2x3 leaf, exactly as MiniGrid's ``chrome`` carries its three palette entries.
-
-        ``night`` is one 5-vector for the same reason: the tint colour, the saturation factor and the
-        tint amount only mean anything together, and none of them is a colour that reaches a pixel.
-
-        There is no knob for the sleeping post-process. A 16-state batch cannot be relied on to
-        contain a sleeping player (measured: 14% of steps under a uniform policy), and a knob that is
-        inert on most batches is what ``check_variations_do_something`` exists to reject.
-        """
+        Tint parameters affect post-processing rather than specifying final pixel colours."""
         return Dict(
             {
                 #: rows: the fill LocalView leaves where the window is off the world, and the canvas
@@ -629,8 +482,6 @@ class Crafter(Env):
             }
         )
 
-    # ---- rendering -------------------------------------------------------
-
     @torch.no_grad()
     def _render(
         self,
@@ -641,11 +492,7 @@ class Crafter(Env):
         style=None,
         out=None,
     ) -> torch.Tensor:
-        """``(...,80)`` -> ``(...,size,size,3)`` uint8 on device, in the reference's own order.
-
-        There is no ``scene()``: the frame is a gather from a texture atlas followed by two per-pixel
-        post-processes, not a rasterisation of vector primitives.
-        """
+        """Render compact rows to ``(..., size, size, 3)`` uint8 frames on device."""
         if supersample not in (None, 1):
             raise ValueError(
                 f"Crafter.render: supersample={supersample} is meaningless here — the frame is a "
@@ -691,13 +538,10 @@ class Crafter(Env):
     def _post(
         self, tiles: torch.Tensor, world: torch.Tensor, day: torch.Tensor, sty, unit: int, budget: int = 256 << 20
     ) -> torch.Tensor:
-        """``_light``, then ``_sleep``, then the channel gain, then the truncation ``render`` does.
+        """Apply light, sleep tint and channel gain with source-order truncation.
 
-        Chunked over the batch because the arithmetic is float64 and must be: the reference's last
-        step is a C cast of a float64 to uint8, so a value that lands 1e-6 below an integer must land
-        below it here too, and float32 does not carry that. A 16,384-frame batch at the default size
-        is 1.6 GB of float64, which is why this loops rather than materialising it.
-        """
+        Float64 preserves which side of an integer the final uint8 cast sees.
+        Chunk the batch to bound the intermediate allocations; leave inventory unlit."""
         n = tiles.shape[0]
         H = GRID_H * unit
         chrome = torch.trunc(sty["chrome"].view(n, 2, 3).double())
@@ -735,34 +579,20 @@ class Crafter(Env):
             frame[b0:b1] = torch.trunc(v).clamp_(0, 255).to(torch.uint8)
         return frame
 
-    # ---- states ----------------------------------------------------------
-
     def sample_states(self, batch: int, rng: np.random.Generator | None = None) -> np.ndarray:
-        """Real states, harvested from ``crafter.Env`` rollouts and embedded, not synthesised.
+        """Sample the embedded pool of 512 source windows with daylight ≥ 0.5.
 
-        The pool is 512 windows taken from uniform-random rollouts across eight seeds, keeping only
-        the ``daylight >= 0.5`` half of the cycle the reference renders purely (see the module
-        docstring). It is EMBEDDED rather than generated on demand for the same reason the atlas is:
-        ``crafter`` is an optional dependency, and an env whose states cannot be drawn without it
-        would report every conformance check as an error rather than losing only its parity check.
-
-        A quarter of the pool sits against the world edge, where ``LocalView`` leaves the window's
-        outer rows or columns at its flat grey fill. Those are reached by walking the player to a
-        border cell with the world's own ``move`` — which is what walking there does — rather than by
-        stamping the code in, so the window contents on the inside of the border are a real
-        neighbourhood and not an invention.
-        """
+        The pool includes sleeping players and world-edge windows; no source package
+        is needed to sample it."""
         rng = rng or self.rng
         pool = _pool()
         if batch <= len(pool):
             return pool[rng.choice(len(pool), batch, replace=False)].copy()
         return pool[rng.integers(0, len(pool), batch)].copy()
 
-    # ---- reference bridge -------------------------------------------------
-
     @classmethod
     def reference_env(cls, size: int | None = None):
-        """The official ``crafter.Env`` at the requested frame size. Needs ``crafter`` installed."""
+        """Construct the source at the requested frame size and verify its window shape."""
         import crafter
 
         n = int(size or cls.default_size)
@@ -774,14 +604,10 @@ class Crafter(Env):
 
     @classmethod
     def reference_render(cls, env, states) -> np.ndarray:
-        """Official frames, by rebuilding the world the state describes and calling ``Env.render``.
+        """Rebuild the visible source world and run its complete rendering path.
 
-        The whole official path runs — ``LocalView`` over ``world.objects``, ``_light``, ``_sleep``,
-        ``ItemView`` and the paste into the canvas — so nothing about the comparison is arranged in
-        our favour. The player's world position is recovered from the OUT-OF-WORLD border the code map
-        carries: a window whose outer ``k`` columns are outside is the window of a player standing at
-        ``x = 4 - k``, and there is exactly one such position.
-        """
+        Outside-world borders constrain player placement. World data beyond the
+        visible window is not restored."""
         from crafter import objects
 
         names = (None,) + MATERIALS
@@ -851,12 +677,10 @@ class Crafter(Env):
 
     @staticmethod
     def _player_pos(codes: np.ndarray) -> tuple[int, int]:
-        """The unique world position whose 9x7 window is off the world exactly where ``codes`` says.
+        """Find a player position compatible with the outside-world border.
 
-        Refuses rather than approximates. Any out-of-world pattern that is not "the first ``k`` or
-        last ``k`` columns, unioned with the first or last few rows" is unreachable, and rendering a
-        near-miss would produce a plausible parity number for a state the reference cannot hold.
-        """
+        Reject holes and noncontiguous borders. Fully interior windows use the world
+        centre; their absolute position cannot be recovered from visible cells."""
         m = codes == OUTSIDE
         cols = m.all(1)
         rows = m.all(0)
@@ -890,7 +714,7 @@ _POOL: np.ndarray | None = None
 
 
 def _pool() -> np.ndarray:
-    """``(512, 80)`` float32 — the embedded state pool, decoded once."""
+    """Decode and cache the embedded ``(512, 80)`` float32 window pool."""
     global _POOL
     if _POOL is None:
         codes = _unpack(_POOL_B64, _POOL_SHAPE).astype(np.float32)

@@ -1,11 +1,10 @@
-"""Private simulator delegation boundary. Rendering remains owned by Env."""
-
 from typing import Protocol
 
 from tensordict import TensorDict
 
 
 class SimulatorAdapter(Protocol):
+    """Own simulator lifecycle and State; rendering is handled by Env."""
     num_envs: int
 
     def reset(self, seed: int | None = None) -> TensorDict: ...

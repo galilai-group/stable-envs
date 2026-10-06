@@ -1,71 +1,3 @@
-"""CarRacing-v3 — the env where two different pygame rasterizers meet in one frame.
-
-Reference: ``gymnasium.envs.box2d.car_racing``. Measured against the official renderer on the states
-this env reaches: **100.0000% of pixels exact, max deviation 0** at the reference's own 96x96, which
-includes the anti-aliased rims, the car, the indicator bars and the score text. See
-``docs/research/carracing.md`` for how each of those was recovered.
-
-The reason this file is long is that a CarRacing frame is assembled by FOUR different pieces of
-pygame, and three of them had to be recovered by measurement rather than read off the source:
-
-  ``gfxdraw.aapolygon`` + ``filled_polygon``   background, 400 grass and N road quads
-  ``pygame.draw.polygon``                      the car and the indicator bars — a DIFFERENT rule
-  ``pygame.font`` glyphs                       the score
-  ``pygame.transform.smoothscale``             1000x800 -> 96x96, on every frame
-
-MEASURED CONSTANTS, each with how it was found:
-
-| what | the plausible reading | what is actually true | how it was found |
-|---|---|---|---|
-| ``smoothscale`` | a 16.16 fixed-point box filter | the unit is **2^14**: ``space=(0x4000*n)//m``, ``recip=(1<<30)//space``, taps ``(v*w)>>14``, emit ``(acc*recip)>>16`` | 2^16 reproduces 90.30% of samples, 2^14 reproduces **100.0000%**, max deviation 0, over 6 size pairs x 4 image families and 16 real 1000x800 CarRacing surfaces |
-| its pass order | one 2-D filter | X then Y through an **8-bit** intermediate | two chained calls are bit-identical to one, on every trial |
-| ``pygame.draw.polygon`` | the same scanline fill as gfxdraw | a different rasterizer entirely | they agree on **14 of 404** polygons, 17,167 differing pixels |
-| its crossing rule | floor, or ceil, or round, of the exact crossing | ``floor`` on EVEN crossings and ``ceil`` on ODD ones, counting edges in vertex order per row | floor/ceil/round/trunc all top out at 476/800 polygons; the parity rule gives **800/800** and **225/225** on real car geometry |
-| its vertices | rounded | truncated toward zero | apex x=100.99 renders identically to 100.00 |
-| the score text | a per-digit glyph atlas | kerning makes the WIDTH depend on the digits (78..102 px), so the atlas is keyed by the whole string | ``render("1234")`` is 94 px where the four advances sum to 92 |
-| ``hull.color`` | ``(0.8,0,0)*255 = 204`` | 204, but only because 0.8 rounds UP in float64 | read off the live body rather than transcribed |
-| fixture vertices | ``HULL_POLY1..4`` as written | Box2D's ``b2PolygonShape::Set`` recomputes the hull and may rotate the order, and vertex order decides the parity rule | baked from a live body |
-| Box2D's state | float64 | **float32** — every pose round-trips through float32 | a float64 round-trip assert fails by 2e-6 |
-
-STATE IS THE RENDER STATE. 28 floats: the hull pose and its velocities, four wheel poses, four wheel
-phases (the white stripe), four wheel angular velocities (the ABS bars), the accumulated reward (the
-score text) and ``t`` (the zoom ramps for the first 50 steps). The steering bar is NOT a state
-dimension: a Box2D revolute joint's angle is ``bodyB.angle - bodyA.angle``, so it is already
-determined by wheel 0 and the hull — carrying it would be a dimension ``reference_set_state`` could
-not honour, and the round-trip assert in ``reference_render`` checks that identity holds.
-
-THE VISITED-TILE MASK IS NOT APPEARANCE, and it is the one place this env's contract is unusual.
-``FrictionDetector._contact`` runs ``tile.color[:] = self.env.road_color`` — an in-place write to the
-array ``road_poly`` holds — so driving over a tile permanently repaints it from ``road_color + c`` to
-``road_color``. Measured: 12 of 394 quads after 120 steps, and restoring the complete geometric state
-and re-rendering still leaves 1,056 pixels different at max |d| exactly 5/255. So the frame is NOT a
-function of the car's pose and the score, and a port that claimed otherwise would be wrong. The mask
-lives in the style tensor because it is per-episode-SHAPED, but unlike every other style in this repo
-it changes DURING an episode; a dataset has to record it, which is exactly what "style is state"
-already requires.
-
-Per-episode geometry (the track) is a baked table, not state: 394 road quads and their colours, from
-one fixed reset. That is the same shape as a maze layout.
-
-THROUGHPUT AND ITS CEILING. The frame is assembled by ``render/gfxdraw_fused.py`` -- one kernel that
-walks the polygon list per PIXEL -- rather than by one batched torch op per primitive, which is worth
-203 -> 21,820 frames/s at batch 1024 with the parity above unchanged. It stops there, and the reason
-is this env's contract rather than the rasterizer: ``smoothscale`` reads every one of the 1000x800
-surface's pixels exactly once, so 98.8% of what is rasterized is thrown away, and writing that
-surface and resampling it while drawing NOTHING already costs 11.1 ms per 1,024 frames. After binning
-a pixel walks a mean of 4.10 primitives, which is about as few as a playfield quad plus a grass quad
-plus a road quad can be, and the kernel evaluates them at 168.5 G primitive-pixel evaluations/s. The
-remaining host-side dispatch is worth ~14 ms and would take it to ~31,000 f/s; nothing takes it to
-the 75,146 f/s at which eight cores decode the 3.4 kB JPEG this all produces. See
-``docs/research/carracing.md``.
-
-NO COLOUR VARIATIONS, deliberately, and the reason is the resample. ``check_colors_apply_exactly``
-asks whether a requested colour is literally present in the frame, and after a 10.4x box downscale it
-never is: a flat region of value v comes out at v-2 (102 -> 101 -> 100 through the two passes, which
-is exactly what the official frames show). Declaring RGB knobs here would advertise something the
-output cannot express.
-"""
-
 from __future__ import annotations
 
 import math
@@ -81,23 +13,9 @@ from ..spaces import Box, Dict, Discrete
 
 
 def _check_car_racing_works() -> None:
-    """Fail at IMPORT if the reference env cannot be built, not at construction.
+    """Require a working Box2D reset and pygame render before registration.
 
-    ``render`` is pure torch, but a STATE cannot be produced without Box2D and pygame: ``sample_states``
-    rolls the official env out, because the track geometry and the car's fixture poses have no closed
-    form. An env that renders but cannot say what to render is not usable, so the dependency is hard and
-    is declared as one -- ``ImportError`` here means ``stable_envs/envs/__init__.py`` records it in
-    ``import_errors()`` and the env is cleanly ABSENT.
-
-    Registering anyway is not a harmless extra: this file did exactly that and produced 34 errors in the
-    smoke subset alone, failing inside every fixture at construction time with ``DependencyNotInstalled``
-    rather than being reported once as a missing dependency.
-
-    The probe is the FAILING PATH -- make, reset, render one frame -- not ``import Box2D``. gymnasium
-    raises ``DependencyNotInstalled`` from inside ``envs/box2d/car_racing.py``, and pygame is a separate
-    requirement that only ``render`` reaches, so a top-level import check passes and the fixture still
-    dies. ``lunarlander.py`` carries the same guard for the same reason.
-    """
+    Import checks alone miss dependencies used only during reset or rendering."""
     import gymnasium
 
     try:
@@ -125,20 +43,18 @@ TRACK_WIDTH = 40 / SCALE
 TRACK_DETAIL_STEP = 21 / SCALE
 MAX_SHAPE_DIM = max(GRASS_DIM, TRACK_WIDTH, TRACK_DETAIL_STEP) * math.sqrt(2) * ZOOM * SCALE
 TWO_PI = 2.0 * math.pi
-#: static bound on the Wu walk. Every edge is clipped to the surface first, so no walk exceeds the
-#: longer side; a per-edge bound would need a host sync (``render/gfxdraw`` rule 6).
+# Clipping bounds each Wu walk by the surface’s longer side; avoid per-edge host sync.
 KMAX = 1024
 BAKE_SEED = 0
 TEXT_LO, TEXT_HI = -100, 1000
 
 
-# =============================================================================== bakes
 _BAKE: dict = {}
 _TEXT: dict = {}
 
 
 def _bake_track(seed: int) -> dict:
-    """One reset of the official env, reduced to tables. Everything here is a per-episode constant."""
+    """Cache source track geometry, colours and Box2D fixture vertex order for one seed."""
     key = int(seed)
     if key in _BAKE:
         return _BAKE[key]
@@ -199,7 +115,9 @@ def _bake_track(seed: int) -> dict:
 
 
 def _bake_text() -> tuple:
-    """Every string ``"%04i" % reward`` can produce, as a padded grey atlas plus its widths."""
+    """Cache whole score strings in a padded grey atlas over TEXT_LO..TEXT_HI.
+
+    Kerning changes string width, so a per-digit atlas would place text differently."""
     if "a" in _TEXT:
         return _TEXT["a"], _TEXT["w"], _TEXT["h"]
     import os
@@ -225,14 +143,8 @@ def _bake_text() -> tuple:
     return atlas, _TEXT["w"], th
 
 
-# =============================================================================== smoothscale
 def _shrink_plan(n: int, m: int):
-    """``(idx, weight, recip)`` for one axis of ``pygame.transform.smoothscale``'s shrink.
-
-    The unit is 2^14, which is the whole difference between exact and 90% (see the module docstring).
-    Every output sample is a fixed set of at most 12 input samples with fixed weights, so on the GPU
-    this is a gather, not a filter.
-    """
+    """Return gather indices, 2¹⁴ fixed-point weights and reciprocal for one shrink axis."""
     U = 1 << 14
     space = (U * n) // m
     recip = (1 << 30) // space
@@ -259,14 +171,10 @@ def _shrink_plan(n: int, m: int):
 
 
 class _Shrink:
-    """One axis of the resample. ``(v*w)>>14`` for a partial tap and ``v`` for a whole one — the two
-    are not the same number, which is why the weight 2^14 is kept and branched on.
+    """Source-compatible shrink arithmetic and kernel tables for one axis.
 
-    ``__call__`` is the readable torch form and is what ``render/gfxdraw_fused.shrink`` is diffed
-    against; the env uses the kernel. Not because the torch form is slow in itself -- it is two
-    gathers -- but because it widens the surface to int64 to do them, and 1000x800x3 int64 per
-    environment is 19 GB at batch 1024 for an output of 27 KB.
-    """
+    The Torch form is a readable differential reference; rendering uses the fused
+    kernel to avoid widening the full surface to int64."""
 
     def __init__(self, n, m, device):
         idx, wgt, recip = _shrink_plan(n, m)
@@ -286,36 +194,28 @@ class _Shrink:
         return (((acc & 0xFFFF) * self.recip) >> 16).clamp(0, 255).to(torch.uint8).movedim(0, axis)
 
 
-# =============================================================================== geometry
 def _rotate_rad(v, cos, sin):
-    """``pygame.math.Vector2.rotate_rad``. cos/sin come from the CALLER because the reference
-    normalises the angle into [0, 2pi) with ``fmod`` first, and sin/cos of the normalised angle is
-    not the same double as sin/cos of the raw one."""
+    """Rotate using caller-supplied sin/cos of the angle normalized by fmod to [0, 2π)."""
     return torch.stack([v[..., 0] * cos - v[..., 1] * sin, v[..., 0] * sin + v[..., 1] * cos], -1)
 
 
 def _to_screen(verts, cos, sin, zoom, trans):
-    """``(B,n,2)`` world -> screen. cos/sin are viewed ``(B,1)`` and NOT ``(B,1,1)``: ``_rotate_rad``
-    indexes ``v[..., 0]``, which has dropped the coordinate axis, so a ``(B,1,1)`` factor broadcasts
-    to ``(B,B,n)`` and silently draws B copies of the wrong geometry."""
+    """Transform ``(B, N, 2)`` vertices using ``(B, 1)`` trigonometric factors.
+
+    An extra factor dimension would broadcast across environments."""
     r = _rotate_rad(verts, cos.view(-1, 1), sin.view(-1, 1))
     return r * zoom.view(-1, 1, 1) + trans.view(-1, 1, 2)
 
 
 def _body_to_world(local, px, py, ang):
-    """``f.body.transform * v``. Box2D's transform is about the body ORIGIN, not its centre of mass."""
+    """Transform fixture vertices about the Box2D body origin, not its centre of mass."""
     c, s = torch.cos(ang).view(-1, 1), torch.sin(ang).view(-1, 1)
     x, y = local[..., 0], local[..., 1]
     return torch.stack([px.view(-1, 1) + x * c - y * s, py.view(-1, 1) + x * s + y * c], -1)
 
 
 def _pad_verts(v: torch.Tensor, vmax: int) -> torch.Tensor:
-    """``(B,n,2)`` or ``(B,P,n,2)`` padded to ``vmax`` vertices by repeating the last one.
-
-    The padding is never READ -- every rule below loops the primitive's own ``nv`` -- so what it
-    contains does not matter; repeating the last vertex only keeps the array in range for the
-    bounding-box reduction, which masks it anyway.
-    """
+    """Repeat the last vertex to pad the array; rasterization uses each polygon’s true count."""
     n = v.shape[-2]
     if n >= vmax:
         return v
@@ -323,7 +223,7 @@ def _pad_verts(v: torch.Tensor, vmax: int) -> torch.Tensor:
 
 
 def _visible(scr):
-    """The reference's own cull: any vertex inside the window grown by ``MAX_SHAPE_DIM``."""
+    """Apply the source vertex-in-window cull, expanded by MAX_SHAPE_DIM."""
     x, y = scr[..., 0], scr[..., 1]
     return ((-MAX_SHAPE_DIM <= x) & (x <= W + MAX_SHAPE_DIM) & (-MAX_SHAPE_DIM <= y) & (y <= H + MAX_SHAPE_DIM)).any(
         -1
@@ -331,15 +231,10 @@ def _visible(scr):
 
 
 def _draw_poly_mask(scr, ys, xs):
-    """``pygame.draw.polygon``'s ``draw_fillpoly`` -> ``(B,H,W)`` bool.
+    """Return pygame.draw polygon coverage as a Boolean ``(B, H, W)`` mask.
 
-    The load-bearing line is the parity of the per-ROW crossing counter, which walks edges in VERTEX
-    order: even crossings are floored and odd ones ceiled. A given geometric edge therefore changes
-    rounding when the number of lower-indexed ACTIVE edges changes — i.e. mid-edge, as ``y`` passes
-    some other vertex — which is why no rule written per edge or per side reproduces it, and why a
-    sweep over floor/ceil/round/truncate tops out at 476/800 polygons where this gives 800/800.
-    The division is float32, as the reference's ``(float)`` cast.
-    """
+    Count active crossings in vertex order per scanline: floor even crossings
+    and ceil odd ones, using float32 division. Sorting edges first changes coverage."""
     v = torch.trunc(scr)
     vx = v[..., 0].to(torch.int64)
     vy = v[..., 1].to(torch.int64)
@@ -394,10 +289,15 @@ def _draw_poly_mask(scr, ys, xs):
     return mask
 
 
-# =============================================================================== the env
 @register
 class CarRacing(Env):
-    """CarRacing-v3 at its native 96x96. 100.0000% of pixels exact against the official renderer."""
+    """Render a fixed CarRacing track at native 96×96 resolution.
+
+    The 28-column render pose includes hull/wheel motion, score and zoom time;
+    it is not a full Box2D checkpoint. Record ``track.visited`` alongside it:
+    the source repaints tiles during driving, so pose alone does not fix pixels.
+    Rendering preserves separate gfxdraw/draw polygon rules, then shrinks the
+    1000×800 surface horizontally and vertically through a uint8 intermediate."""
 
     family = "carracing"
     domain = "carracing"
@@ -434,12 +334,7 @@ class CarRacing(Env):
         "reward",
         "t",
     )
-    #: Public state. Five keys over the unchanged 28 columns, grouped by what draws
-    #: them: the hull's pose and twist, the four wheels' poses, their rolling phases (the tread
-    #: pattern) and their spin rates (the skid marks), and the two scalars the HUD prints. Every
-    #: column is covered and none moved, so the frozen layout and its digests are untouched.
-    #: ``reward`` and ``time`` are STATE here and not a step result -- they are two numbers this
-    #: renderer paints onto the score bar, which is why they are in the row at all.
+    # Render fields include HUD inputs; they do not imply simulated rewards or episode time.
     state_layout = (
         (("hull",), 6, 0),
         (("wheels", "pose"), 12, 6),
@@ -479,15 +374,12 @@ class CarRacing(Env):
         self.sx = _Shrink(W, 96, dev)
         self.sy = _Shrink(H, 96, dev)
 
-    # --- contract -----------------------------------------------------------------------
-    def make_variation_space(self) -> Dict:
-        """Two knobs, and neither is a colour — see the module docstring for why the resample makes
-        an exact-colour knob unverifiable here.
 
-        ``track.visited`` is the per-tile repaint the FrictionDetector performs in place. It is
-        declared as a variation because it is per-episode-SHAPED and a dataset must record it, not
-        because it is appearance.
-        """
+    def make_variation_space(self) -> Dict:
+        """Expose visited-tile repainting and antialiasing.
+
+        The visited mask is stored in style because its width depends on track geometry,
+        but it changes during an episode and must be saved with render poses."""
         return Dict(
             {
                 "track": Dict(
@@ -502,20 +394,10 @@ class CarRacing(Env):
         )
 
     def sample_states(self, batch: int, rng: np.random.Generator | None = None) -> np.ndarray:
-        """The car on a track tile, driving, spread around the whole loop.
+        """Sample synthetic car poses across the fixed track, not source rollouts.
 
-        Spreading matters for more than realism: ``check_state_dims_matter`` calls a dimension alive
-        if ANY frame in the batch moves, and the visited-tile bits are only visible through the tiles
-        a given camera can see, so a pool taken from one stretch of track would report most of the
-        mask dead — a property of the pool, not of the renderer. Each pose sees 29-81 road quads.
-
-        ``t`` is sampled from 0.85 upward rather than from 0, and that is a COST bound, not a
-        correctness one: the renderer is exact for any ``t``, but ``zoom`` collapses towards
-        0.6 px/m as t -> 0, the reference's cull then admits all 794 primitives instead of ~100, and
-        because the draw is serial one such state in a batch multiplies every render in the suite by
-        7. The range still straddles 1.0, so ``zoom`` genuinely varies and ``t`` is not a dead
-        dimension.
-        """
+        Times start at 0.85 to avoid the wide initial camera admitting every polygon;
+        the range still spans the zoom ramp. Track coverage exercises visited-tile bits."""
         rng = rng or self.rng
         tr = self.bk["track"]
         out = np.zeros((batch, self.state_dim), np.float64)
@@ -537,7 +419,7 @@ class CarRacing(Env):
         out[:, 27] = rng.uniform(0.85, 3.0, batch)
         return out.astype(np.float32)
 
-    # --- render -------------------------------------------------------------------------
+
     @torch.no_grad()
     def _render(
         self,
@@ -572,15 +454,10 @@ class CarRacing(Env):
         return img.view(*lead, 96, 96, 3) if lead else img
 
     def _draw(self, s, sty, B):
-        """The whole frame, as ONE list of polygons handed to one kernel, then the resample.
+        """Assemble ordered polygon groups, rasterize once, draw text, then shrink.
 
-        The reference draws strictly in order and each ``aapolygon`` blends against whatever is
-        already on the canvas, so this cannot batch ACROSS polygons -- and for a year that read as
-        "so it must be one python step per polygon", which cost 3,575 ms a frame at batch 64 and the
-        same 3,575 ms at batch 256. The order is a property of the composite, not of the dispatch:
-        every rule here is a closed form in the pixel, so a pixel can walk the list itself.
-        ``render/gfxdraw_fused.py`` is that walk; everything below only assembles the list.
-        """
+        Antialiased edges blend against earlier polygons, so painter order must
+        survive culling and batching."""
         dev = self.device
         on = torch.ones(B, dtype=torch.bool, device=dev)
         gfx_v, gfx_c, gfx_on = [], [], []  # gfxdraw quads, pre-flip
@@ -605,10 +482,7 @@ class CarRacing(Env):
         gfx_c.append(const(self.bk["bg_color"]).unsqueeze(1))
         gfx_on.append(on.unsqueeze(1))
 
-        # 2 grass and 3 road. Both are culled by the reference per POLYGON and per ENVIRONMENT, so
-        # the batch cannot share a python `if`; instead the visible ones are gathered into K slots in
-        # index order (a stable argsort on the negated predicate), which keeps the draw order and
-        # turns 794 primitives into the ~100 the cull actually leaves.
+        # Cull per polygon and row, using stable ordering so antialiased painter order survives.
         def culled(all_verts, n_all):
             scr = _to_screen(all_verts.reshape(1, -1, 2).expand(B, n_all * 4, 2), cos, sin, zoom, trans).reshape(
                 B, n_all, 4, 2
@@ -652,9 +526,7 @@ class CarRacing(Env):
             pre_c.append(hc)
             pre_on.append(on)
 
-        # 5 indicators, which the reference draws AFTER ``transform.flip`` and therefore in flipped
-        # coordinates. The kernel is told which frame a primitive is in rather than the surface being
-        # moved between the two.
+        # Indicators use post-flip coordinates; pass the coordinate frame to the kernel.
         speed = torch.sqrt(s[:, 3] ** 2 + s[:, 4] ** 2)
         steer = s[:, 8] - s[:, 2]  # revolute joint angle, not a state dimension
         for verts, col, gate in self._indicators(speed, s[:, 22:26], steer, s[:, 5], B):
@@ -672,12 +544,9 @@ class CarRacing(Env):
         return F.shrink(x.reshape(B, H, 96 * 3), self.sy).view(B, 96, 96, 3)
 
     def _raster(self, B, gfx_v, gfx_c, gfx_on, pre_v, pre_c, pre_on, post_v, post_c, post_on, aa):
-        """Pack the three polygon groups into the kernel's flat tables and rasterize.
+        """Pack polygon groups into kernel tables with output-frame bounding boxes.
 
-        A primitive's bounding box is stored in the OUTPUT (flipped) frame whatever frame it was
-        built in, so binning and the per-tile reject are one comparison rather than two cases. The
-        box is grown by a pixel because an ``aapolygon``'s fringe steps one off its own edge.
-        """
+        Grow bounds by one pixel to include the antialiased fringe."""
         dev = self.device
         VMAX = max([v.shape[1] for v in pre_v] + [4])
         Pg = sum(v.shape[1] for v in gfx_v)
@@ -736,9 +605,7 @@ class CarRacing(Env):
         )
 
     def _stripe(self, px, py, ang, phase, B):
-        """The wheel's white stripe: a quad whose two heights are ``cos(phase)`` and
-        ``cos(phase+1.2)``, each replaced by its SIGN when the matching sine is positive, and the
-        whole quad skipped when both sines are."""
+        """Build the wheel stripe quad and its source phase-dependent visibility mask."""
         a1, a2 = phase, phase + 1.2
         s1, s2 = torch.sin(a1), torch.sin(a2)
         c1 = torch.where(s1 > 0, torch.sign(torch.cos(a1)), torch.cos(a1))
@@ -757,7 +624,7 @@ class CarRacing(Env):
         return _body_to_world(loc, px, py, ang), ~((s1 > 0) & (s2 > 0))
 
     def _indicators(self, speed, omegas, steer, gyro, B):
-        """``_render_indicators``, in POST-flip coordinates, with its ``render_if_min`` gate."""
+        """Build indicator polygons in post-flip coordinates with source visibility thresholds."""
         dev = self.device
         sx, hh = W / 40.0, H / 40.0
         one = torch.ones(B, dtype=torch.bool, device=dev)
@@ -801,8 +668,7 @@ class CarRacing(Env):
         return out
 
     def _blit_text(self, buf, reward):
-        """The score, blitted opaquely. ``"%04i"`` truncates a float toward zero, and the blit x
-        follows from ``text_rect.center = (60, 750)``, so it moves with the string's width."""
+        """Draw score text centered at (60, 750), truncating and clamping to the atlas range."""
         dev = self.device
         idx = (torch.trunc(reward).to(torch.int64) - TEXT_LO).clamp(0, self.atlas.shape[0] - 1)
         w = self.widths[idx]
@@ -822,11 +688,10 @@ class CarRacing(Env):
         dst = buf[:, y0 : y0 + th, win_lo : win_lo + win_w, :]
         dst.copy_(torch.where(ok.view(-1, 1, win_w, 1), g.unsqueeze(-1).expand(-1, -1, -1, 3), dst))
 
-    # --- reference bridge ---------------------------------------------------------------
+
     @staticmethod
     def reference_env(size: int | None = None):
-        """The official env, reset to the SAME track this class baked. ``size`` is ignored: the
-        observation is a fixed 96x96 and the surface behind it a fixed 1000x800."""
+        """Reset the source to the baked track seed; its 96×96 observation ignores ``size``."""
         import os
 
         os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
@@ -838,8 +703,9 @@ class CarRacing(Env):
 
     @staticmethod
     def reference_set_state(env, st) -> None:
-        """Place the official env at ``st``. Nothing here steps the world, which matters: a step
-        would run the contact listener, and the contact listener repaints tiles in place."""
+        """Install float32 body/wheel poses and HUD values without stepping.
+
+        Stepping would trigger contacts that repaint road tiles."""
         st = np.asarray(st, np.float32)
         env.car.hull.position = (float(st[0]), float(st[1]))
         env.car.hull.angle = float(st[2])
@@ -858,9 +724,7 @@ class CarRacing(Env):
         out = []
         for st in np.asarray(states, np.float32):
             cls.reference_set_state(env, st)
-            # Box2D stores every pose as float32, so this round-trips exactly only for a float32
-            # state -- which is the repo's own dtype. Asserting at float64 tolerance fails by ~2e-6
-            # and reads as a renderer bug.
+            # Box2D stores poses in float32; compare against the float32 input after restoration.
             got = np.array(
                 [
                     *env.car.hull.position,

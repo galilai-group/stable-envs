@@ -1,10 +1,3 @@
-"""Fetch observation reads with cached topology and lane-owned scratch arrays.
-
-The upstream task still owns action handling, physics, reward, reset and output
-packaging. Only redundant joint reads/site lookups and Jacobian allocations are
-removed. No scratch array escapes through the upstream observation dictionary.
-"""
-
 import numpy as np
 from gymnasium_robotics.envs.fetch.pick_and_place import MujocoFetchPickAndPlaceEnv
 from gymnasium_robotics.envs.fetch.push import MujocoFetchPushEnv
@@ -14,6 +7,10 @@ from gymnasium_robotics.utils import rotations
 
 
 class _CachedObservations:
+    """Cache topology and Jacobian workspace per simulator instance.
+
+    Read positions, velocities and timestep afresh. Replacing the model invalidates
+    topology; the upstream observation builder assembles the returned fields."""
     def generate_mujoco_observations(self):
         model, data = self.model, self.data
         if getattr(self, "_observation_model", None) is not model:

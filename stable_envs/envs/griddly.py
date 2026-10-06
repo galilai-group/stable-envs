@@ -1,108 +1,7 @@
-"""Griddly — the family with the largest headroom in this repo, because its own renderer is the slow half.
+"""Griddly wrappers must remain in the module cache until process exit.
 
-Reference: ``griddly`` 1.6.7 (PyPI, 2023-03-15; upstream's last commit is 2024-04-07 and there is no
-successor and no deprecation notice, so the version is PINNED rather than floated). Frames come from
-the ``SPRITE_2D`` global observer, which is a grid of ``TileSize`` blocks with no sub-tile offsets.
-
-Every other family here is compared against a reference renderer that is already faster than reading
-the dataset it would replace. Griddly's is **slower**: measured through these classes on one H200, the
-official Vulkan renderer does 499-1,352 f/s on a pinned core against 873-5,636 f/s/core of JPEG decode
-of the *same* frames — i.e. **0.24-0.65 cores** — and the render is **98.1-99.5 %** of an env step. So
-the crossover is not at some large batch, it is at **batch 1** (3,186-5,736 f/s against 499-1,352), and
-the headline is not a ratio but a core count: **(x3,687-x8,015 at batch 8,192)** and **1,628-3,450 CPU
-cores of decode replaced**, at 2.29-9.18 M frames/s. See ``docs/research/griddly.md``.
-
-The decoder, and why it is a table rather than a harvest
--------------------------------------------------------
-
-**A griddly tile is NOT a function of what stands in its cell.** 23 of the 32 shipped games declare
-``TilingMode: WALL_16`` on their walls, which picks the wall image from neighbour occupancy and leaves
-``RenderTileId`` at 0; over 609,103 cells across 8 games a per-cell key collides 676-59,773 times while
-a cell + 8-neighbour key collides 0 times. That is a genuinely different shape from MiniGrid, MiniHack,
-Craftax and Crafter, all of which are per-cell gathers — and it is still a gather, one extra table
-lookup before the blit.
-
-A 3x3 stencil of cell codes cannot be *stored* as a table (``n_codes ** 9`` entries), and one harvested
-from rollouts would not be COMPLETE — the conformance suite proves a state dimension is live by
-substituting a donor code into a real state, which manufactures neighbourhoods no rollout produces, and
-a harvested table would fall off its own end there. So the stencil is FACTORED, by measurement:
-
-    tile = table[cell code, sum over the live neighbour offsets of class(neighbour code) * m**bit]
-
-``class`` and the live offsets are not read off the yaml, they are asked of griddly. Every (centre,
-neighbour) pair is rendered on a lattice of 3x3 probe blocks; codes that no centre can tell apart share
-a class, and an offset that changes no tile is dropped. Measured on the seven registered games: **m = 2
-(wall / not-wall) and the 4 orthogonal offsets** for the six WALL_16 games, and **m = 1 with no live
-offset at all** for ``cookmepasta``, which declares no tiling and really is a per-cell gather. The whole
-table is then 5-10 codes x 16 masks, the atlas is 9-25 composed tiles (15.5-43.2 kB), and building it
-costs **3-5 renders and about a second**.
-
-The build is not trusted, it is CHECKED: 200 frames of real rollouts are reconstructed from the table
-and the build raises unless **max abs pixel difference is 0 on every one**. That check is also what
-decides which games are registered, rather than a hand-maintained opinion — see "what is refused".
-
-Nothing is placed through ``load_state``
-----------------------------------------
-
-Two griddly facts shaped this, both measured:
-
-  * ``GymWrapper.load_state`` **returns a new wrapper** and leaves the receiver untouched, and each
-    wrapper owns a Vulkan device. Holding them dies at ~260 with
-    ``vkGetDeviceQueue: Invalid device``; dropping them is safe (600 created and dropped, zero pixel
-    difference) but then every reference frame costs a device create/destroy.
-  * ``load_state`` also **loses information**: restoring an avatar with ``Orientation: RIGHT`` reads
-    back ``LEFT`` and vice versa (UP/DOWN unchanged), which is griddly issue #301 — approved fix PR
-    #300, unmerged since 2024-03-27. The frame agrees with what the env reports, so this is a state
-    bug and not a renderer bug, but it makes ``load_state`` unusable as a way to put a chosen scene on
-    the board.
-
-``reset(level_string=...)`` has neither problem: it mutates the wrapper in place, accepts any grid
-size, and its grammar has a ``/`` separator for a cell holding more than one object (``A/h`` reads back
-as ``('avatar', 'hole')``). So one env builds the atlas AND serves as the parity reference, and this
-module creates exactly one griddly wrapper per (game, tile size).
-
-What is refused, and why that is a measurement
----------------------------------------------
-
-A level string cannot set an object's ``Orientation``, its ``RenderTileId`` or its ``PlayerId``, so the
-cell code cannot carry them either. Games whose picture depends on them are REFUSED by the
-reconstruction check rather than by a list here. Measured over the 15 candidate games:
-
-    registered   sokoban, sokoban2, labyrinth, butterflies, bait, clusters, cookmepasta
-    refused      zelda, spider-nest, minigrid-drunkdwarf/doggo/eyeball/spiders — an oriented avatar
-                 or monster, so the frame depends on a field the cell code does not carry
-                 foragers — four harvesters that differ only by PlayerId, which collapse to one code
-                 zenpuzzle — an object in the alphabet (``walked``) has no MapCharacter at all
-
-The interpreter-exit segfault
------------------------------
-
-Griddly segfaults at interpreter exit on **6/6** runs, after all output is flushed. That is the one
-crash shape crash isolation cannot resume past: pytest has already written its report, so no test is in
-flight and ``stable_envs.testing.supervisor`` would have to report a green run as a session-level
-failure.
-
-Containment takes TWO things and it is measured which, because the obvious single fix does not work
-(the frozen measurement record, four modes x 6 runs, exit codes only):
-
-    stock       GymWrapper bound to a script-level name                  -11 -11 -11 -11 -11 -11
-    noreload    __del__ overridden to do nothing, script-level name      -11 -11 -11 -11 -11 -11
-    stockcache  stock GymWrapper parked in an imported module's dict     -11 -11 -11 -11 -11 -11
-    cached      no-release subclass, reached ONLY through _open()'s cache  0   0   0   0   0   0
-
-So it is not enough to stop ``GymWrapper.__del__`` calling ``game.release()`` — the pybind11 object's
-own destructor is fatal too — and it is not enough to keep the wrapper alive in a module: a
-script-level name is finalised early in teardown and an imported module's dict is not, but the stock
-finaliser still runs. Both together are clean, 6/6. This module therefore builds every wrapper as a
-``_NoReleaseGymWrapper`` AND hands it out only from ``_WRAPPERS``, so nothing user-facing ever holds
-the only reference.
-
-That is the same create-and-never-free rule ``testing/conformance.py`` states for EGL contexts, for the
-same reason — the release is what corrupts — and it costs a few megabytes held for the life of the
-process. It is not a substitute for the supervisor, which is still how the suite is run; it is what
-stops the supervisor being asked to tell a real crash apart from an exit-time one. End to end:
-``supervisor -- tests/ -k Griddly`` returns **238 passed, 35 skipped, 1 segment, rc 0**.
-"""
+Both the no-release subclass and cache ownership are required to avoid native
+finalizer crashes. Do not release wrappers when an individual environment closes."""
 
 from __future__ import annotations
 
@@ -131,14 +30,7 @@ DEFAULT_TILE = 24
 
 
 def _require_griddly():
-    """Probe the PATH THAT WOULD FAIL, not just ``import griddly``.
-
-    Importing the package proves nothing useful: it succeeds on a machine with no Vulkan device, where
-    every render then aborts, and it says nothing about the shipped game resources — which ARE this
-    env, since the atlas is composed of tiles griddly draws and nothing here re-derives them. So a
-    wrapper is built and a frame is taken, and ``ImportError`` is raised if any of it fails, which is
-    what makes the family cleanly ABSENT rather than present and failing inside a fixture.
-    """
+    """Probe source construction and rendering before registering the family."""
     try:
         import griddly  # noqa: F401
         from griddly import GymWrapper, gd  # noqa: F401
@@ -180,12 +72,7 @@ def _read_yaml(rel: str):
 
 
 def _yaml_at(rel: str, tile_size: int) -> str:
-    """The game's yaml with ``Observers.Sprite2D.TileSize`` set to ``tile_size``.
-
-    Tile size is a property of the OBSERVER, not of a render call, so it is patched into the yaml the
-    wrapper is built from. Frame shape was verified to be exactly ``grid_w*T x grid_h*T`` at
-    T in {4, 8, 12, 16, 24, 32, 48, 64}.
-    """
+    """Set tile size on the Sprite2D observer before constructing its wrapper."""
     import yaml as pyyaml
 
     src, g = _read_yaml(rel)
@@ -205,11 +92,7 @@ _NO_RELEASE: list = []
 
 
 def _no_release_wrapper():
-    """``GymWrapper`` with its finaliser removed, built once.
-
-    Griddly's ``__del__`` calls ``self.game.release()``; see ``_open``. Defined lazily because the
-    import guard below is what decides whether griddly can be imported at all.
-    """
+    """Create the lazy wrapper subclass used by the process-lifetime cache."""
     if not _NO_RELEASE:
         from griddly import GymWrapper
 
@@ -222,13 +105,10 @@ def _no_release_wrapper():
 
 
 def _open(rel: str, tile_size: int):
-    """One griddly wrapper per (game, tile size), built once and NEVER released.
+    """Return the shared wrapper for a game and tile size.
 
-    ``GymWrapper.__del__`` runs ``game.release()``, which segfaults at interpreter exit on 6/6 runs —
-    after pytest has written its report, so no crash-isolating runner can attribute it to a test. The
-    subclass below removes the finaliser and the cache keeps the wrapper alive, which is the same
-    create-and-never-free rule ``testing/conformance.py`` states for EGL contexts.
-    """
+    Keep both the no-release finalizer and module-cache reference: either alone
+    is insufficient to prevent Griddly’s interpreter-exit crash."""
     key = (rel, int(tile_size))
     if key not in _WRAPPERS:
         from griddly import gd
@@ -246,18 +126,15 @@ _require_griddly()
 
 
 def _frame(env) -> np.ndarray:
-    """``(H, W, 3)`` uint8. griddly hands back ``(3, W, H)``; the swap is griddly's own convention."""
+    """Copy source ``(3, W, H)`` pixels into ``(H, W, 3)`` order."""
     return np.array(env.game.observe(), copy=True).swapaxes(0, 2)
 
 
 def cell_codes(state) -> dict:
-    """``(x, y) -> the sorted tuple of object names standing there``, ``_``-prefixed ones dropped.
+    """Map positions to sorted object-name tuples, excluding internal objects.
 
-    ``_empty`` and ``_boundary`` are griddly's own bookkeeping objects; they appear in ``get_state()``
-    and paint nothing. Orientation, PlayerId and RenderTileId are deliberately NOT in the key: a level
-    string cannot set them, so a state that carried them could not be written back into griddly, and a
-    game whose picture depends on them is refused by the reconstruction check rather than approximated.
-    """
+    Orientation, PlayerId and RenderTileId cannot be restored by level strings.
+    Decoder construction rejects games whose frames require those fields."""
     m = collections.defaultdict(list)
     for o in state["Objects"]:
         if o["Name"].startswith("_"):
@@ -276,7 +153,7 @@ def _sample_action(env, rng):
 
 
 def level_string(grid: dict, W: int, H: int, chars: dict) -> str:
-    """``{(x, y): code}`` -> a griddly level string; space separated, ``/`` inside a cell."""
+    """Encode cells as space-separated tokens, joining stacked objects with ``/``."""
     return "\n".join(
         " ".join("/".join(chars[n] for n in grid.get((x, y), ())) or EMPTY_CHAR for x in range(W)) for y in range(H)
     )
@@ -287,12 +164,10 @@ def _cache_path(name: str, tile: int) -> str:
 
 
 class GriddlyDecoder:
-    """The complete tile table for one (game, tile size), enumerated by asking griddly.
+    """Cache a game’s atlas and table indexed by cell code and neighbour classes.
 
-    Held per process and cached on disk. Everything a frame needs is in here: the cell alphabet, the
-    neighbour class of each code, which offsets are live, the ``(n_codes, m**live)`` table, the atlas
-    of composed tiles, and which class an out-of-grid neighbour counts as.
-    """
+    Live neighbour offsets determine a base-m mask. Out-of-grid neighbours use
+    the class selected by exact reconstruction of source rollout frames."""
 
     _mem: dict[tuple[str, int, str], GriddlyDecoder] = {}
 
@@ -335,11 +210,7 @@ class GriddlyDecoder:
         return d
 
     def rgb(self, gain: np.ndarray) -> torch.Tensor:
-        """The atlas under a channel gain. ``gain == 1`` returns the official tiles untouched.
-
-        Recolouring the 9-25 tile ATLAS rather than the frame is exactly the same arithmetic — a
-        per-pixel scale commutes with a gather — and it is two orders of magnitude less work.
-        """
+        """Apply channel gains to atlas pixels before gathering; unity reuses source tiles."""
         g = np.asarray(gain, np.float64).reshape(3)
         if np.array_equal(g, np.ones(3)):
             return self.official
@@ -352,11 +223,7 @@ class GriddlyDecoder:
 
 
 class _Canvas:
-    """Renders many (centre, neighbourhood) configurations per griddly frame, through one wrapper.
-
-    Configurations sit on a lattice of 3x3 blocks so each centre's whole 8-neighbourhood is inside its
-    own block and no two configurations can see one another.
-    """
+    """Probe independent neighbourhoods in disjoint 3×3 blocks of one source frame."""
 
     def __init__(self, env, T: int, chars: dict, avatar, k: int = 10):
         self.env, self.T, self.chars, self.avatar, self.k = env, T, chars, avatar, k
@@ -389,7 +256,7 @@ class _Canvas:
 
 
 def build_decoder(name: str, rel: str, tile: int, level: int = 0) -> dict:
-    """Ask griddly for the whole decoder, then refuse it unless it reproduces real frames exactly."""
+    """Enumerate tiles and reject a decoder that fails exact source-frame reconstruction."""
     _src, g = _read_yaml(rel)
     chars = {o["Name"]: str(o["MapCharacter"]) for o in g.get("Objects", []) if o.get("MapCharacter") is not None}
     avatar = (g["Environment"].get("Player") or {}).get("AvatarObject")
@@ -399,7 +266,7 @@ def build_decoder(name: str, rel: str, tile: int, level: int = 0) -> dict:
     fr0 = _frame(env)
     GW, GH = fr0.shape[1] // tile, fr0.shape[0] // tile
 
-    # --- harvest level 0: the multi-object cell codes, and the frames the table is CHECKED against
+    # Collect stacked-object codes and independent frames for reconstruction checks.
     recs, ep = [], 0
     while len(recs) < BUILD_FRAMES and ep < 200:
         env.seed(ep)
@@ -427,7 +294,7 @@ def build_decoder(name: str, rel: str, tile: int, level: int = 0) -> dict:
     n = len(alphabet)
     canvas = _Canvas(env, tile, chars, avatar)
 
-    # --- every code must survive a level-string round trip, or the reference bridge is a fiction
+    # The source must restore every code before we use it as a renderer reference.
     grid = {(3 * (i % canvas.k) + 1, 3 * (i // canvas.k) + 1): c for i, c in enumerate(alphabet) if c}
     env.reset(level_string=level_string(grid, canvas.W, canvas.H, chars))
     back = cell_codes(env.get_state())
@@ -440,7 +307,7 @@ def build_decoder(name: str, rel: str, tile: int, level: int = 0) -> dict:
             f"back into griddly, so no parity number could be measured"
         )
 
-    # --- which codes are distinguishable AS a neighbour, and which offsets matter at all
+    # Group indistinguishable neighbours and retain offsets that affect a tile.
     base = dict(zip(alphabet, canvas.render([(c, {}) for c in alphabet])))
     sig_tiles = canvas.render([(c, {k: d for k in range(8)}) for d in alphabet for c in alphabet])
     sig = collections.defaultdict(list)
@@ -459,7 +326,7 @@ def build_decoder(name: str, rel: str, tile: int, level: int = 0) -> dict:
     live = sorted({k for (k, c), t in zip(pos_key, pos_tiles) if t != base[c]})
     K = len(live)
 
-    # --- enumerate (code, mask) -> tile
+    # Enumerate all code/mask combinations, including unseen rollout neighbourhoods.
     cfgs, keys = [], []
     for c in alphabet:
         for mask in range(m**K):
@@ -478,7 +345,7 @@ def build_decoder(name: str, rel: str, tile: int, level: int = 0) -> dict:
     atlas = np.stack([np.frombuffer(t, np.uint8).reshape(tile, tile, 3) for t in uniq])
     cls = np.array([cls_of[c] for c in alphabet], np.int32)
 
-    # --- THE CHECK. Rebuild every harvested frame from the table; anything but 0 is a refusal.
+    # Select an out-of-grid class only if every captured frame reconstructs exactly.
     grids = np.full((len(recs), GH, GW), -1, np.int32)
     for i, (cm, _f) in enumerate(recs):
         for y in range(GH):
@@ -531,7 +398,7 @@ def _mask_index_np(grids: np.ndarray, cls: np.ndarray, live, m: int, oob: int) -
 
 
 class _GriddlyGame(Env):
-    """One griddly game at one level, rendered as a gather from an enumerated tile table."""
+    """Render one fixed Griddly level from cell codes and their neighbours."""
 
     family = "griddly"
 
@@ -544,14 +411,7 @@ class _GriddlyGame(Env):
 
     @property
     def frame_shape(self) -> tuple[int, int]:
-        """``(H, W)`` of a frame: ``(grid_h * T, grid_w * T)``, which is what ``render`` reshapes to.
-
-        ``Env.frame_spec`` assumes a SQUARE frame unless the env says otherwise, and griddly's
-        levels are not: the module header records the frames as ``grid_w*T x grid_h*T`` and the games
-        this family pins are wider than they are tall, so an unqualified spec described a
-        ``(size, size)`` buffer. ``size`` divides the grid HEIGHT into tiles (``_tile``); read off the
-        same two class attributes ``render`` uses, so the spec cannot drift from the frame.
-        """
+        """Return grid dimensions multiplied by the tile edge derived from ``size``."""
         t = self._tile(int(self.size))
         return self.grid_h * t, self.grid_w * t
 
@@ -564,14 +424,7 @@ class _GriddlyGame(Env):
         self._pool: np.ndarray | None = None
 
     def _close(self) -> None:
-        """Drop the sampled state pool. ``Env.close`` calls this once and is idempotent.
-
-        The griddly wrapper and the decoder are NOT released, and that is this module's standing
-        policy rather than an oversight: ``GymWrapper.__del__`` runs ``game.release()``, which
-        segfaults at interpreter exit (see ``_open``), so the wrapper cache exists precisely to keep
-        every one of them alive. What an instance owns is the pool of states sampled off the
-        reference, which is rebuildable.
-        """
+        """Drop the instance’s rollout pool; shared wrappers remain alive until exit."""
         self._pool = None
 
     def _check_grid(self, dec) -> None:
@@ -591,21 +444,9 @@ class _GriddlyGame(Env):
             )
         return t
 
-    # variation
-
     def make_variation_space(self) -> Dict:
-        """A global channel gain, and deliberately nothing else.
-
-        There is no per-object colour knob and there cannot be an honest one: griddly composites 207
-        sprite PNGs, so a "wall colour" would have to invent a recolouring rule the reference does not
-        have — the same reason ``craftax.py`` offers only ``channel_gain``. The gain is exactly the
-        identity at 1.0, so the default reproduces the official frame by construction rather than by
-        agreement, and it is applied to the 9-25 tile ATLAS rather than to the frame, which is the same
-        arithmetic for a fraction of the work.
-        """
+        """Expose a global RGB gain applied to the source sprite colours."""
         return Dict({"channel_gain": Box(low=0.0, high=2.0, shape=(3,), dtype=np.float32, init_value=[1.0, 1.0, 1.0])})
-
-    # rendering
 
     @torch.no_grad()
     def _render(
@@ -617,7 +458,7 @@ class _GriddlyGame(Env):
         style=None,
         out=None,
     ) -> torch.Tensor:
-        """``(...,grid_w*grid_h)`` -> ``(...,grid_h*T,grid_w*T,3)`` uint8 on device."""
+        """Gather cell rows into ``(..., grid_h*T, grid_w*T, 3)`` uint8 frames."""
         if supersample not in (None, 1):
             raise ValueError(
                 f"{type(self).__name__}: supersample={supersample} is not available. The frame is a "
@@ -642,9 +483,7 @@ class _GriddlyGame(Env):
         if sty.shared:
             img = tm.blit(dec.rgb(gain[0].detach().cpu().numpy()), idx, tile, out=flat)
         else:
-            # one appearance per environment: gather the official tiles once and scale the frame.
-            # trunc(atlas*g) then gather and gather then trunc(*g) are the same numbers — a per-pixel
-            # scale commutes with a gather — so the two paths cannot disagree.
+            # Per-pixel scaling commutes with gathering, including uint8 truncation.
             img = tm.blit(dec.official, idx, tile)
             img = (img.float() * gain.view(-1, 1, 1, 3)).clamp_(0, 255).to(torch.uint8)
             if flat is not None:
@@ -653,12 +492,7 @@ class _GriddlyGame(Env):
         return img.reshape(*lead, *img.shape[1:]) if lead else img
 
     def _tile_indices(self, s: torch.Tensor, dec) -> torch.Tensor:
-        """``(B, n_cells)`` float codes -> ``(B, grid_h, grid_w)`` int32 atlas slots.
-
-        Wrapping rather than clamping, for the reason MiniGrid wraps: the conformance suite proves a
-        dimension reaches the render by moving it, and a clamp would pin an already-large code in place
-        and report a live dimension as dead.
-        """
+        """Round and wrap cell codes, then resolve their neighbour-dependent atlas slots."""
         B, H, W = s.shape[0], self.grid_h, self.grid_w
         codes = torch.round(s).long().remainder(dec.n_codes).reshape(B, H, W)
         if not dec.live:
@@ -671,15 +505,8 @@ class _GriddlyGame(Env):
             mask += pad[:, 1 + dy : 1 + dy + H, 1 + dx : 1 + dx + W] * (dec.m**bit)
         return dec.table[codes, mask].to(torch.int32)
 
-    # states
-
     def sample_states(self, batch: int, rng: np.random.Generator | None = None) -> np.ndarray:
-        """States from real rollouts of the official env at the pinned level.
-
-        Griddly's levels are hand-authored maps with strong invariants (a wall ring, one avatar), so
-        uniform noise over the code alphabet would exercise a region of state space no episode visits
-        and prove nothing about the frames anyone would store.
-        """
+        """Sample source rollouts at the registered level, preserving valid map structure."""
         rng = rng or self.rng
         if self._pool is None:
             self._pool = self._build_pool(max(256, batch))
@@ -722,8 +549,6 @@ class _GriddlyGame(Env):
                 out[y * self.grid_w + x] = dec.code_of[c]
         return out
 
-    # reference bridge
-
     @classmethod
     def reference_env(cls, size: int | None = None):
         tile = int(size or cls.default_size) // cls.grid_h
@@ -734,14 +559,10 @@ class _GriddlyGame(Env):
 
     @classmethod
     def reference_render(cls, env, states) -> np.ndarray:
-        """Official frames, by writing each state back as a griddly level string.
+        """Restore cells through source level strings and verify the cell-code round trip.
 
-        The round trip is asserted rather than assumed: if the reference did not end up at the
-        requested scene, every parity number computed from it compares two different pictures, and the
-        failure presents as a bug in this renderer. That assertion is also what refuses a game whose
-        picture depends on an Orientation or a PlayerId — the level string cannot carry them, so the
-        read-back differs and the comparison stops instead of quietly measuring something else.
-        """
+        The check covers object names and positions; decoder construction separately
+        checks that this representation reproduces source pixels."""
         dec = env._se_decoder
         out = []
         for st in np.asarray(states):
@@ -770,13 +591,7 @@ def _cell_names(w: int, h: int) -> tuple[str, ...]:
 
 
 def game(class_name: str, rel: str, w: int, h: int, doc: str = "", level: int = 0) -> type:
-    """Build and register a class for one griddly game at one level.
-
-    A class per game rather than one parameterised env: the registry is the conformance suite's
-    parameter list, so a game reachable only through a constructor argument is a game nothing tests.
-    The declared grid size is re-checked against griddly every time an env is built (``_check_grid``),
-    because a hardcoded one can drift when the package changes a level and a wrong one is silent.
-    """
+    """Register a fixed game/level with declared grid dimensions checked at construction."""
     tile = native_tile_size(rel)
     cls = type(
         class_name,

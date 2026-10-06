@@ -1,5 +1,3 @@
-"""Numeric immediate-output cache for Pymunk's visible contact segments."""
-
 import numpy as np
 import pymunk
 
@@ -17,6 +15,7 @@ class ContactSegments(pymunk.SpaceDebugDrawOptions):
 def capture_contacts(space):
     # A supported scene has at most ten shapes; Munk2D has at most two
     # contacts per shape pair. Fail explicitly if that bound ever changes.
+    """Return padded contact segments and their count for immediate source rendering."""
     collector = ContactSegments()
     space.debug_draw(collector)
     count = len(collector.segments)

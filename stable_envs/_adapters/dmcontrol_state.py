@@ -1,10 +1,3 @@
-"""Owned, column-wise export of the accepted DMC resume fields.
-
-Each call allocates fresh host columns, fills them from the lane owners, then
-transfers each complete column once. No per-lane TensorDicts or CUDA transfers.
-The field declarations and simulator restore paths remain authoritative.
-"""
-
 import numpy as np
 import torch
 from tensordict import TensorDict
@@ -13,6 +6,10 @@ _DTYPES = {torch.float64: np.float64, torch.int64: np.int64, torch.bool: np.bool
 
 
 def export_state(envs, cumulative, fields, device):
+    """Export fresh State columns with one device transfer per field.
+
+    Read live lane owners into owned host arrays. CPU tensors retain those arrays;
+    later simulation and exports cannot overwrite the snapshot."""
     batch = len(envs)
     columns = {key: np.empty((batch, width), dtype=_DTYPES[dtype]) for key, (width, dtype) in fields.items()}
     for i, env in enumerate(envs):

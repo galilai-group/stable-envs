@@ -1,5 +1,3 @@
-"""Exhaustive CPU State for the two registered upstream-based manipulation tasks."""
-
 from __future__ import annotations
 
 import hashlib
@@ -102,6 +100,13 @@ def task_payload(env, values):
 
 
 class OGBManipulationAdapter:
+    """CPU Cube/Scene simulators with versioned, fully restorable checkpoints.
+
+    State includes integration fields, controller caches, task data and RNG trees.
+    Only initialized checkpoints from the same dependency profile are accepted.
+    Restore builds and verifies all replacement simulators before installing them;
+    ``device`` selects returned tensor placement."""
+
     execution_mode = "DELEGATED_CPU"
 
     def __init__(self, family, num_envs=1, device="cpu", seed=0, reward_task_id=None):

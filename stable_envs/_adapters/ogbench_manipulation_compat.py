@@ -1,9 +1,3 @@
-"""Registered SWM deltas over unmodified OGBench 1.2.1 concrete classes.
-
-Only initialize_arm adapts a reset algorithm (audited SWM body, shared by both
-families). Tasks, episode construction, stepping, controller and IK stay upstream.
-"""
-
 from __future__ import annotations
 
 import copy
@@ -32,7 +26,7 @@ def nodes(tree, prefix="variation"):
 
 
 def variation_tree(env):
-    """Stable-envs value ownership; Gym supplies the original sorted seed tree."""
+    """Build owned Variation values; Gym determines the sorted child-seeding order."""
 
     def box(low, high, shape, initial):
         return Box(low, high, shape=shape, dtype=np.float64, init_value=initial)
@@ -79,6 +73,12 @@ def variation_tree(env):
 
 
 class Compatibility:
+    """Registered reset, Variation and output rules over OGBench 1.2.1.
+
+    Physics, task construction, controller and IK remain upstream. Arm reset uses
+    a configured position instead of sampling three coordinates, so RNG draw order
+    must be preserved when changing initialization."""
+
     def __init__(self, *, seed=0, reward_task_id=None):
         if version("ogbench") != "1.2.1":
             raise RuntimeError("Cube/Scene CPU semantics require unmodified ogbench==1.2.1")
@@ -200,7 +200,7 @@ class Compatibility:
         return super().reset(seed=seed, options=options)
 
     def initialize_arm(self):
-        """Audited SWM delta: position is a value, with no three uniform draws."""
+        """Initialize at the configured position, consuming only the source yaw draw."""
         eff_pos = self.variation_space["agent"]["ee_start_position"].value
         cur_ori = self._effector_down_rotation
         yaw = self.np_random.uniform(-np.pi, np.pi)

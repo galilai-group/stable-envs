@@ -1,98 +1,3 @@
-"""MiniGrid and BabyAI — the family where the state-to-frame claim is exactly true, not approximately.
-
-Reference: the ``minigrid`` package (3.1.0), covering **178 registered ids: 76 MiniGrid + 96 BabyAI +
-6 WFC**. Every one of the 172 that instantiates is a stock ``MiniGridEnv`` holding a stock ``Grid``,
-with ``get_full_render`` / ``get_pov_render`` / ``get_frame`` all the unoverridden base-class methods.
-There is no per-env render code anywhere in the package and no ``WorldObj`` subclass outside
-``core/world_object.py``, so nothing in the family breaks the tile model — no continuous positions, no
-per-env art. (The 6 ``MiniGrid-WFC-*`` ids fail to construct, but for a packaging reason: the wheel
-ships ``wfc/patterns.py`` without the ``patterns/*.png`` it loads. Their ``_gen_grid`` emits an
-ordinary ``Wall``/``Goal`` grid.)
-
-Because the frame is a gather from a precomputed atlas rather than a rasterisation, parity is not a
-tuning exercise. Measured offline across the whole family: **21,216 frames — all 172 instantiable ids
-x 3 render modes x 2 tile sizes, plus a stress pass over the full encode alphabet — every one
-bit-identical to the official renderer, max absolute pixel difference 0.** The conformance suite
-reproduces that on the classes below: every one reports ``exact_frac 1.0, max_abs 0``, so they hold
-the default ``parity_interior_min = 1.0`` with nothing relaxed.
-
-Throughput on one H200, through this class rather than a prototype: **6.55M agent-POV frames/s** at
-224x224 (987 GB/s) against 2,378 f/s for the official CPU renderer, and 1.30M 256x256 top-down
-frames/s. The top-down path is the slower one and not because of the blit: it must also compute the
-field-of-view highlight, whose ~25 small kernels dominate at these frame sizes. Capturing the whole
-call as a CUDA graph — which the index path is written to allow, see the scratch-slot scatter below —
-measured 2-4x on top at small batch.
-
-Compression, at the float32 the contract stores states in: a 8x8 top-down state is 268 bytes against
-a 196,608-byte frame (**734x**), and the 7x7 POV state is 196 bytes against 150,528 (**768x**). Packed
-to the one byte per cell the alphabet actually needs, the same states are 70 and 49 bytes — 2,809x and
-3,072x — which is what a stored corpus would use.
-
-What the state is, and what it is not:
-
-  * **The full top-down frame does not depend on ``carrying``.** A picked-up object leaves the grid,
-    and ``get_full_render`` touches ``carrying`` only through ``gen_obs_grid``, which writes it into
-    the sliced view *after* ``process_vis`` — so it changes neither the visibility mask nor the world
-    grid. The top-down classes therefore carry no such dimension, and that is checked, not asserted.
-  * **``Box.contains`` is invisible.** ``Box.render`` ignores it and ``Box.encode`` drops it; verified
-    at pixel level against a box with and without contents.
-  * **This is the state sufficient to render, and — for the top-down classes — very nearly the state
-    sufficient to simulate.** Those classes do also ship a ``step`` (see Physics below). It needs one
-    thing this state does not carry, the object in the agent's hands, which the frame provably never
-    shows; and it cannot express one transition, ``Box.toggle`` on a box with CONTENTS, which the
-    reference bridge refuses rather than approximates. The mission string, ``step_count`` and the RNG
-    govern the reward and the episode boundary, not the transition.
-
-Cells are stored as one index into the 58 reachable ``(type, colour, state)`` encodings rather than as
-the raw 3-channel encoding. That is not only 3x smaller — it is the only layout that can satisfy the
-contract. In the raw encoding the state channel of a non-door cell provably cannot change the picture
-(only ``Door`` reads it), so those dimensions would be dead, and a state with dead dimensions is either
-not minimal or not fully rendered. One code per cell makes every dimension load-bearing.
-
-Physics
--------
-
-The top-down classes also ship ``step`` — a batched GPU port of ``MiniGridEnv.step`` — so
-``env.step`` / ``env.unroll`` run on device. **This is the one family in the repo where the
-simulator's claim is as strong as the renderer's**, and that is structural rather than a matter of
-effort: the transition is a finite decision table over a finite alphabet (turn, move onto a cell that
-can be overlapped, pick up, drop, toggle a door or a box), so a port either agrees on every
-(state, action) pair or has a bug. There is no chaos to hide behind and no tolerance to negotiate.
-
-Measured two ways, because a random rollout is a weak test of a decision table:
-
-  * 16 episodes x 100 steps of uniform random actions per env, all six registered classes:
-    **exact_frac 1.0, max deviation 0** on every cell, the agent, its direction and the carried object.
-  * the whole cross product — **all 7 actions from each of 256 states, 1,792 transitions per env,
-    10,752 in total, 0 mismatched**. Half the states are given a randomly chosen carried object,
-    because a rollout that starts empty-handed never once exercises ``drop`` or a locked door, and
-    those are exactly the transitions a decision table gets wrong.
-
-Throughput on one H200, batched GPU step against one official CPU env (env-steps/s):
-
-    env                       B=256      B=4,096     B=16,384    official CPU    step ms 256->16k
-    8x8 (Empty/DoorKey/...)   1.69 M      23.3 M      80.0 M      8,100-10,700   0.152 -> 0.205
-    19x19 (FourRooms)         1.67 M      19.4 M      48.4 M          8,700      0.153 -> 0.338
-
-i.e. **158x the official env at B=256 and 7,500x at B=16,384** on the 8x8 grids. The step is
-launch-bound at small batch — 0.152 ms whether it is 256 environments or 4,096 — which is why it is
-captured into a CUDA graph (3.2-4.8x, measured; see ``_stepgraph``). The 19x19 grid is the one that
-stops being launch-bound: 361 cells x 16,384 environments is real gather traffic and the step time
-doubles.
-
-The POV classes do NOT ship a step, and cannot: their state is an OBSERVATION — the 7x7 window after
-occlusion — which does not determine the world it was cut out of, so there is nothing to step. That is
-the same distinction the repo draws everywhere else, in its sharpest form: the state is sufficient to
-RENDER and it is not sufficient to SIMULATE.
-
-Two classes of environment are exposed, because they answer different questions:
-
-  * ``MiniGrid*`` — the full top-down view, state ``[cell codes..., agent_x, agent_y, agent_dir]``.
-  * ``MiniGridPOV*`` — the agent-centric 7x7 view, whose state is exactly MiniGrid's own observation
-    (``gen_obs()["image"]``), 49 numbers. The carried object needs no dimension of its own: ``gen_obs``
-    already writes it into the view's centre-bottom cell before encoding.
-"""
-
 from __future__ import annotations
 
 import math
@@ -110,9 +15,7 @@ from . import _stepgraph
 VIEW_SIZE = 7  #: agent_view_size; 7 for every registered MiniGrid/BabyAI env
 WALL_CODE = (tm.T_WALL, tm.C_GREY, 0)  #: Grid.slice pads out-of-bounds with a grey Wall()
 
-#: ``Grid.encode`` writes this triple for a cell holding ``None``, so it doubles as "the agent is
-#: carrying nothing": one alphabet for cells and for the carried object, and ``drop`` needs no special
-#: case for the value it writes back.
+# Empty cells and empty hands share a code, so dropping needs no extra encoding.
 EMPTY_CODE = tm.REACHABLE.index((tm.T_EMPTY, 0, 0))
 CARRY_NONE = EMPTY_CODE
 WALL_CODE_IDX = tm.REACHABLE.index(WALL_CODE)
@@ -121,14 +24,7 @@ _RULES: dict[str, dict] = {}
 
 
 def _transition_tables(device) -> dict:
-    """Per-code lookup tables for MiniGrid's transition rules, ASKED of the official classes.
-
-    ``can_overlap`` and ``can_pickup`` are read off the objects ``make_obj`` builds, and the action ids
-    off the ``Actions`` enum, rather than being re-derived from a list of type names here. The rules are
-    one-line methods that would be trivial to copy, and copying them is exactly how a step drifts from
-    its reference in a way no test names: upstream changes ``Door.can_overlap`` and a hardcoded table
-    keeps saying what it said. This way the tables change with the package or fail loudly.
-    """
+    """Cache per-code transition rules read from source objects and the Actions enum."""
     key = str(device)
     if key not in _RULES:
         from minigrid.core.actions import Actions
@@ -141,8 +37,7 @@ def _transition_tables(device) -> dict:
             "type": L([c[0] for c in tm.REACHABLE]),
             "color": L([c[1] for c in tm.REACHABLE]),
             "state": L([c[2] for c in tm.REACHABLE]),
-            # ``if fwd_cell is None or fwd_cell.can_overlap()`` — the three "no object" codes decode
-            # to None, so they fold into the same table rather than needing a second test
+            # All codes decoding to None count as empty for movement.
             "overlap": B(lambda o: o is None or o.can_overlap()),
             "pickup": B(lambda o: o is not None and o.can_pickup()),
             "none": B(lambda o: o is None),
@@ -157,12 +52,12 @@ def _transition_tables(device) -> dict:
 
 
 def _code_table(device) -> torch.Tensor:
-    """(58,3) int64: code index -> (type, colour, state)."""
+    """Return the int64 code-to-(type, colour, state) table on ``device``."""
     return torch.tensor(tm.REACHABLE, dtype=torch.long, device=device)
 
 
 def _code_lookup(device) -> torch.Tensor:
-    """(11,6,3) int64: (type, colour, state) -> code index. Unreachable triples map to 'empty'."""
+    """Map (type, colour, state) to code; normalize irrelevant channels by object type."""
     out = torch.full((tm.N_TYPE, tm.N_COLOR, tm.N_STATE), 0, dtype=torch.long, device=device)
     for i, (t, c, s) in enumerate(tm.REACHABLE):
         out[t, c, s] = i
@@ -172,7 +67,7 @@ def _code_lookup(device) -> torch.Tensor:
 
 
 class _TileEnv(Env):
-    """Shared machinery: variation space, atlas plumbing, and the blit. Not registered itself."""
+    """Share MiniGrid tile atlases, palette handling and batched rendering."""
 
     family = "minigrid"
 
@@ -191,19 +86,10 @@ class _TileEnv(Env):
         self._default_t: torch.Tensor | None = None
 
     def _close(self) -> None:
-        """Drop what this INSTANCE holds. ``Env.close`` calls this once and is idempotent.
-
-        The tile atlas and the two code tables are keyed on (tile size, device) and SHARED by every
-        instance of every class in this family, so they are not released here: releasing a cache
-        another live env is drawing through is the same class of error as releasing a shared EGL
-        context. An instance owns its sampled state pool and its default-style tensor, both
-        rebuildable, and a subclass that owns more (``MiniGridTopDown``'s captured step graph)
-        extends this.
-        """
+        """Drop instance sampling/style caches; the shared atlas remains available."""
         self._pool = None
         self._default_t = None
 
-    # geometry
 
     def _tile(self, size: int) -> int:
         t, r = divmod(int(size), self.grid_h)
@@ -214,33 +100,13 @@ class _TileEnv(Env):
             )
         return t
 
-    # variation
 
     def make_variation_space(self) -> Dict:
-        """Appearance knobs, all defaulting to MiniGrid's own constants.
+        """Expose source palette entries, chrome, visibility highlighting and optional lava.
 
-        ``tile_size`` is deliberately absent: it changes the output resolution rather than the
-        appearance, and the contract already carries it as ``render(size=...)``. Declaring it twice
-        would let the two disagree.
-
-        ``lava_color`` appears only on envs that actually contain lava. MiniGrid hardcodes
-        ``(255,128,0)`` in ``Lava.render`` instead of going through ``COLORS``, so it needs its own
-        knob — but on a lava-free env it could not change any pixel, and a knob that cannot move the
-        picture is exactly what the conformance suite exists to reject.
-
-        **``chrome`` is one leaf and not three named RGB knobs, and that is a claim about MiniGrid
-        rather than a packaging preference.** A MiniGrid frame is a palette applied to a label map and
-        then composited with the field-of-view overlay, and ``get_full_render`` highlights the agent's
-        own cell unconditionally (``process_vis`` seeds its mask there), while ``get_pov_render`` runs
-        with an all-true visibility mask and therefore highlights **every** tile. So the agent colour
-        is never painted anywhere, and on the POV view no colour is: what reaches the frame is
-        ``floor(c + alpha*((highlight - c) mod 256))``. Declaring them as RGB knobs would advertise
-        "this colour appears in the frame", which the conformance suite checks and which is not true
-        here. They are palette entries, exactly like ``palette``'s six, and are declared as such.
-
-        ``highlight_overlay`` is RGBA in one leaf for the same reason: the overlay colour is blended,
-        never painted, so its colour and its opacity only mean anything together.
-        """
+        Chrome rows are background, grid line and agent. Highlighting blends these
+        entries, so they need not appear literally in the image. Tile size belongs
+        to output resolution, not Variation."""
         space = {
             "palette": Box(low=0, high=255, shape=(tm.N_COLOR, 3), dtype=np.uint8, init_value=tm.official_colors()),
             #: rows: background, grid line, agent
@@ -264,15 +130,9 @@ class _TileEnv(Env):
             space["lava_color"] = RGBBox(init_value=tm.DEFAULT_LAVA)
         return Dict(space)
 
-    # style
 
     def _values(self, row: np.ndarray) -> dict:
-        """One flat style row -> the ``{name: value}`` dict ``tilemap`` recolours an atlas from.
-
-        Colours are truncated to integers here because that is what every other write of a style value
-        into a frame does in this repo, and because ``label_palette`` then needs no second rounding
-        rule for the half and 0.45 shades.
-        """
+        """Unpack one style row, truncating colours before atlas recolouring."""
         d = self.variation_space.unpack(row)
         chrome = np.trunc(np.asarray(d["chrome"], np.float64)).reshape(3, 3)
         ov = np.asarray(d["highlight_overlay"], np.float64).reshape(4)
@@ -289,12 +149,7 @@ class _TileEnv(Env):
         return out
 
     def _shared_style(self, sty) -> bool:
-        """True when every environment asked for the same appearance, so one atlas serves the batch.
-
-        Answered on the device and read back as a single value: the alternative, copying the whole
-        ``(B, style_dim)`` tensor to the host to compare it there, is half a megabyte of traffic per
-        call at B=4096 for a question with a one-bit answer.
-        """
+        """Check shared appearance on device, transferring only the Boolean result."""
         v = sty.values
         return v.shape[0] == 1 or bool((v == v[:1]).all())
 
@@ -304,13 +159,9 @@ class _TileEnv(Env):
         return bool((sty.values[0] == self._default_t).all())
 
     def _label_palettes(self, sty) -> torch.Tensor:
-        """``(B, 2*N_LABEL, 3)`` float64: ``label_palette`` and ``highlight_palette``, per environment.
+        """Build per-row normal/highlight palettes as float64 ``(B, 2*N_LABEL, 3)``.
 
-        The same arithmetic as ``tilemap.label_palette`` / ``highlight_palette``, kept on the device
-        and batched, so a 4096-environment batch of different palettes is one tensor rather than 4096
-        recoloured atlases — an atlas is 1980 tiles and a frame uses at most H*W of them, so
-        recolouring per environment would do far more work than drawing.
-        """
+        Preserve truncation and uint8-style wraparound before applying the overlay."""
         B, dev = sty.batch, self.device
         pal = torch.trunc(sty["palette"].reshape(B, tm.N_COLOR, 3).double())
         chrome = torch.trunc(sty["chrome"].reshape(B, 3, 3).double())
@@ -327,13 +178,11 @@ class _TileEnv(Env):
         p[:, tm.LBL_PAL_HALF : tm.LBL_PAL_HALF + tm.N_COLOR] = torch.trunc(pal / 2)
         p[:, tm.LBL_PAL_45 : tm.LBL_PAL_45 + tm.N_COLOR] = torch.trunc(0.45 * pal)
         ov = sty["highlight_overlay"].double()
-        # the reference's uint8 subtraction, so a highlight darker than the pixel wraps exactly as
-        # ``highlight_img`` makes it wrap rather than as it arguably meant to
+        # Match source uint8 subtraction: darker highlight colours wrap modulo 256.
         diff = torch.remainder(torch.trunc(ov[:, :3]).unsqueeze(1) - p, 256.0)
         ph = torch.floor(torch.clamp(p + ov[:, 3].view(B, 1, 1) * diff, 0, 255))
         return torch.cat([p, ph], 1)
 
-    # rendering
 
     @torch.no_grad()
     def _render(
@@ -345,7 +194,7 @@ class _TileEnv(Env):
         style=None,
         out=None,
     ) -> torch.Tensor:
-        """``(...,state_dim)`` -> ``(...,H,W,3)`` uint8 on device, for arbitrary leading dims."""
+        """Gather compact render rows into uint8 frames, preserving leading batch dimensions."""
         if supersample not in (None, 1):
             raise ValueError(
                 f"{type(self).__name__}: supersample={supersample} is not available. MiniGrid's own "
@@ -367,13 +216,10 @@ class _TileEnv(Env):
                     f"{type(self).__name__}.render: `out` must be contiguous — the "
                     f"kernel writes through a flat view of it"
                 )
-            # flatten the leading dims rather than dropping `out`; a reshape of a contiguous tensor
-            # is a view, so the kernel still writes into the caller's buffer
+            # Contiguity makes this reshape a view into the caller’s output buffer.
             flat_out = out.reshape(-1, self.grid_h * tile, self.grid_w * tile, 3)
         if self._shared_style(sty):
-            # One appearance for the whole batch: recolour the 1980-tile atlas once and blit. This is
-            # the fast path the throughput numbers were measured on, and the default style hits the
-            # official atlas outright rather than reconstructing it.
+            # A shared style needs only one recoloured atlas; defaults use source RGB directly.
             rgb = (
                 atlas.official
                 if self._is_default_style(sty)
@@ -385,14 +231,10 @@ class _TileEnv(Env):
         return img.reshape(*lead, *img.shape[1:]) if lead else img
 
     def _blit_styled(self, atlas, idx: torch.Tensor, sty, tile: int, out) -> torch.Tensor:
-        """Per-environment palettes: gather LABELS, colour them per environment, then downsample.
+        """Recolour gathered 3× subpixels, then downsample in source float64 order.
 
-        The shared-atlas path cannot express this — an atlas is keyed on a palette, so B palettes mean
-        B atlases (97 MB at B=16, 25 GB at B=4096). Colouring at blit time instead costs one pass over
-        the 3x supersampled frame and is arithmetically identical to ``tilemap.recolour`` followed by
-        the gather: every subpixel has exactly one label, the palette lookup is per subpixel either
-        way, and the box filter is the same two-stage ``mean`` in the same order and dtype.
-        """
+        Per-row palettes avoid allocating an atlas per environment. The two mean
+        operations must keep their axis order before uint8 conversion."""
         B, H, W = idx.shape
         dev = self.device
         f = tm.SUBDIVS
@@ -402,8 +244,7 @@ class _TileEnv(Env):
         hl = idx.long() // tm.N_GEOM
         if out is None:
             out = torch.empty(B, H * tile, W * tile, 3, dtype=torch.uint8, device=dev)
-        # chunk the batch so the float64 working set stays bounded; a 19x19 grid at 32 px is a
-        # 1824x1824 subpixel frame, which is 80 MB of float64 per environment
+        # Bound the float64 subpixel working set per row of tiles.
         step = max(1, int((256 << 20) // (px * W * px * 3 * 8)))
         for b0 in range(0, B, step):
             b1 = min(B, b0 + step)
@@ -421,23 +262,12 @@ class _TileEnv(Env):
         raise NotImplementedError
 
     def _decode_cells(self, codes: torch.Tensor) -> torch.Tensor:
-        """Float cell codes -> (…,3) int64 (type, colour, state).
-
-        Wrapping rather than clamping: the conformance suite proves each dimension reaches the render
-        by adding a constant to it, and a clamp would silently pin an already-large code in place and
-        report a live dimension as dead.
-        """
+        """Round and wrap cell codes into the render alphabet, returning integer triples."""
         return self.code_table[torch.round(codes).long() % tm.N_CODE]
 
-    # states
 
     def sample_states(self, batch: int, rng: np.random.Generator | None = None) -> np.ndarray:
-        """States drawn from real rollouts of the official env, not from a synthetic prior.
-
-        Layouts here are generated by procedural code with strong invariants (a wall ring, doors in
-        walls, one goal), so uniform noise over the code alphabet would exercise a region of state
-        space no episode ever visits and prove nothing about the frames anyone would actually store.
-        """
+        """Sample compact render rows from a cached pool of source rollouts."""
         rng = rng or self.rng
         if self._pool is None:
             self._pool = self._build_pool(max(256, batch))
@@ -460,13 +290,7 @@ class _TileEnv(Env):
 
     @classmethod
     def _check_source(cls, u) -> None:
-        """Re-derive from the official env what this class declared, rather than trusting the table.
-
-        Grid sizes and ``see_through_walls`` are hardcoded per id so that ``state_dim`` exists before
-        an env is ever built, which the base class needs. Hardcoded means it can drift when the
-        upstream package changes a level generator, and a wrong value here is silent: the frame comes
-        out the wrong shape, or the highlight is computed from the wrong visibility rule.
-        """
+        """Verify the declared visibility rule against the installed source."""
         if bool(u.see_through_walls) != cls.see_through_walls:
             raise AssertionError(
                 f"{cls.__name__} declares see_through_walls={cls.see_through_walls} but "
@@ -475,33 +299,16 @@ class _TileEnv(Env):
             )
 
 
-# ---------------------------------------------------------------- full top-down view
-
-
 class MiniGridTopDown(_TileEnv):
-    """``get_full_render``: the whole layout, with the agent's field of view highlighted."""
+    """Render the full grid with highlighted field of view and advance grid dynamics.
 
-    # ------------------------------------------------------------------ physics
-    #
-    # The transition is EXACT, not approximate, and that is a structural difference from every
-    # continuous env in this repo rather than a matter of effort. MiniGrid's step is a finite decision
-    # table over a finite alphabet — turn, step onto a cell if it can be overlapped, take an object,
-    # put it down, toggle a door or a box — so a batched GPU port either agrees with the reference on
-    # every (state, action) pair or has a bug. Measured against the official ``MiniGridEnv.step``:
-    # exact_frac 1.0 over 16 x 100 random steps AND over all 7 actions from each of 256 states, on all
-    # six registered classes (see the module docstring). ``exact_frac`` is the only fidelity statistic
-    # worth quoting here — a "median error" for a grid would be a category mistake.
-    #
-    # ``carrying`` is the one piece of dynamical state the compact state does not carry, for the reason
-    # the module docstring gives: ``get_full_render`` provably never reads it, so it is not part of the
-    # RENDER state, and putting it there would add a dimension the conformance suite would rightly
-    # report as dead. It therefore lives beside the state the way PushT keeps its agent's velocity, and
-    # ``set_state`` empties the agent's hands — the condition the reference is in after ``reset``.
+    Public State includes the carried object, which the compact render row omits.
+    Box contents, rewards and episode counters are not modelled; simulation
+    comparisons require empty boxes. Cells beyond the grid act as walls."""
 
-    #: MiniGrid's action alphabet, in ``Actions`` order: 0 turn left, 1 turn right, 2 forward,
-    #: 3 pick up, 4 drop, 5 toggle, 6 done. A policy emits ONE float per environment and ``step``
-    #: floors it, so ``RandomPolicy`` over the half-open ``[0, 7)`` bounds below is uniform over the
-    #: seven actions and an integer-valued tensor works unchanged.
+
+    # Actions: left, right, forward, pickup, drop, toggle, done.
+    # Flooring a sample from [0, 7) selects one of these seven actions.
     N_ACTIONS = 7
     action_dim = 1
     action_low = 0.0
@@ -509,8 +316,7 @@ class MiniGridTopDown(_TileEnv):
     use_step_graph = True
     step_reference_checkable = True
     step_reference_exact = True
-    #: 1, not the PushT default: a turn held for eight steps just spins the agent twice, and what this
-    #: alphabet needs is coverage of the transitions, not sustained pressure on a solver.
+
     step_reference_hold = 1
 
     def __init__(self, *a, **kw):
@@ -525,37 +331,27 @@ class MiniGridTopDown(_TileEnv):
         self._step_graph_error = ""
 
     def _close(self) -> None:
-        """As ``_TileEnv``, and drop the captured step graph."""
         super()._close()
         self._step_graph = None
 
     def _set_render_state(self, states, variation=None, style=None) -> MiniGridTopDown:
-        """As the base class, and empty the agent's hands — the compact state does not carry them."""
+        """Install a compact render row and empty the hands; full State restores carrying separately."""
         super()._set_render_state(states, variation=variation, style=style)
         self._carry.fill_(CARRY_NONE)
         return self
 
-    # ------------------------------------------------------------------ state / dynamics
 
     def _restore_state(self, state: TensorDict) -> None:
         self._set_render_state(self._pack_render_state(state))
         self._carry.copy_(state["agent", "carrying"].reshape(-1).long())
 
     def _hidden_state(self) -> dict[tuple[str, ...], torch.Tensor]:
-        """Where the one field the packed row does not carry lives: the object in the agent's hands.
-
-        ``unpack`` fills it with ``CARRY_NONE``'s zero-based code by filling it with ZEROS, which is
-        right for a state loaded from a corpus (``set_state`` empties the hands, and so does the
-        reference after ``reset``) and wrong for the env's own live state after a step. Without this
-        hook ``env.state`` would report empty hands after a pickup and ``transition(env.state, a)``
-        would stop matching ``step(a)`` — a wrong number rather than a failure. ``Env.state`` does
-        the splicing; this is the whole of what the cell has to say.
-        """
+        """Include the live carried object when exporting full State."""
         return {("agent", "carrying"): self._carry[: self._live_rows].reshape(-1, 1).to(torch.float32)}
 
 
     def sim_state(self) -> torch.Tensor:
-        """``(B, state_dim + 1)`` — the compact state with ``carrying`` appended."""
+        """Return float64 ``(B, state_dim + 1)`` rows with carrying appended for comparison."""
         return torch.cat([self._render_state.to(torch.float64), self._carry.to(torch.float64).unsqueeze(1)], 1)
 
     def set_sim_state(self, v) -> MiniGridTopDown:
@@ -565,11 +361,11 @@ class MiniGridTopDown(_TileEnv):
         return self
 
     def _advance(self) -> None:
-        """The env's OWN buffers advanced one step, at the fixed addresses a CUDA graph requires."""
+        """Advance owned buffers at fixed addresses for CUDA graph replay."""
         self._advance_into(self._render_state, self._carry, self._act)
 
     def _step_state(self) -> TensorDict:
-        """Snapshot the live state with one packed-row copy for the hot ``step`` return path."""
+        """Snapshot live grid, pose and carrying without aliasing simulator buffers."""
         n = self._live_rows
         N = self.grid_w * self.grid_h
         rows = self._render_state[:n].clone()
@@ -587,22 +383,10 @@ class MiniGridTopDown(_TileEnv):
         )
 
     def _advance_into(self, s, carry, act) -> None:
-        """``MiniGridEnv.step`` for the whole batch, as one straight-line sequence of masked writes.
+        """Apply masked grid transitions in place to ``s`` and ``carry``; actions are read-only.
 
-        Writes IN PLACE into the three buffers it is given — the compact state, the carried-object
-        codes and the actions — rather than into ``self``, which is what lets ``transition`` be pure
-        while ``step`` keeps the captured graph: one body, two callers, no second implementation of
-        the decision table to drift from this one.
-
-        Every branch of the reference's if/elif chain is evaluated for every environment and selected
-        by a mask, because a batch holds all seven actions at once; the chain is mutually exclusive on
-        ``action``, so the masks cannot overlap and the order of the writes below does not matter.
-
-        Out-of-bounds is the one place this must decide something the reference never does: ``Grid.get``
-        asserts, and cannot be called off the grid because every MiniGrid layout has a wall ring, so no
-        agent can face outward from a legal state. A state assembled by hand can, and the conservative
-        reading is taken — the cell beyond the edge behaves as a wall, and nothing is written there.
-        """
+        Actions are floored and clamped to 0..6. Off-grid cells act as walls and
+        remain unwritten. Box toggles empty the cell; contents are not represented."""
         R, A = self._rules, self._A
         W, H, N = self.grid_w, self.grid_h, self.grid_w * self.grid_h
         a = act[:, 0].floor().clamp(0, self.N_ACTIONS - 1).long()
@@ -626,8 +410,7 @@ class MiniGridTopDown(_TileEnv):
         pick = (a == A["pickup"]) & R["pickup"][cell] & (carry == CARRY_NONE)
         drop = (a == A["drop"]) & R["none"][cell] & (carry != CARRY_NONE) & inb
         tog = a == A["toggle"]
-        # Door.toggle: a locked door opens only for a key of ITS OWN colour, and an unlocked one just
-        # flips. A locked door that is toggled without the key is left exactly as it was.
+        # A locked door opens only with a matching key; unlocked doors toggle.
         keyed = (R["type"][carry] == tm.T_KEY) & (R["color"][carry] == ccol)
         unlock = tog & (ctype == tm.T_DOOR) & (cstate == 2) & keyed
         flip = tog & (ctype == tm.T_DOOR) & (cstate != 2)
@@ -648,20 +431,10 @@ class MiniGridTopDown(_TileEnv):
 
     @torch.no_grad()
     def _step(self, action) -> TensorDict:
-        """Advance every environment one step. ``action`` is ``(B, 1)``, floored to ``[0, 7)``.
+        """Advance from ``(B, 1)`` actions and return State, including carrying.
 
-        STATEFUL: it writes ``env.state``. Returns a :data:`~stable_envs.env.StepResult` carrying
-        ``"state"`` AND NOTHING ELSE. MiniGrid's reference does compute a reward and a termination
-        flag, and they are deliberately omitted rather than fabricated (contract §5): both are
-        functions of the episode's step COUNT as well as its state — the reward is
-        ``1 - 0.9 * step_count / max_steps`` — and this env holds no step counter, so a number
-        reported under either name would be a different quantity wearing the same one. Termination is not applied here and the reward
-        is not computed: the reference reports both as flags beside a state it integrates regardless,
-        so an env that froze or reset itself would be simulating something else. ``carrying`` is not in
-        the returned state — see ``sim_state()`` — which means a stored trajectory does not determine
-        its own continuation, exactly as it does not for PushT's agent velocity. It does determine every
-        FRAME, which is the claim this repo makes.
-        """
+        Reward, termination and truncation are not computed. The transition continues
+        without automatic reset, including when a source episode would have ended."""
         self._act.copy_(
             torch.as_tensor(action, device=self.device, dtype=torch.float32).reshape(self.B, self.action_dim)
         )
@@ -680,7 +453,7 @@ class MiniGridTopDown(_TileEnv):
 
     @classmethod
     def reference_sim_state(cls, ref) -> np.ndarray:
-        """The reference's grid, agent and carried object in this class's own alphabet."""
+        """Encode source grid, agent pose and carrying for transition comparisons."""
         u = ref.unwrapped
         lut = _code_lookup(torch.device("cpu")).numpy()
         enc = u.grid.encode()
@@ -693,21 +466,12 @@ class MiniGridTopDown(_TileEnv):
 
     @classmethod
     def reference_step(cls, ref, a) -> None:
-        """Drive the UNWRAPPED env, so ``TimeLimit`` cannot end an episode part-way through a
-        comparison. Truncation is bookkeeping and the transition keeps being defined after it."""
+        """Step the unwrapped source, bypassing TimeLimit bookkeeping."""
         ref.unwrapped.step(int(min(max(math.floor(float(a[0])), 0), cls.N_ACTIONS - 1)))
 
     @classmethod
     def step_reference_reset(cls, ref, seed: int) -> np.ndarray:
-        """Reset, and refuse to compare a layout this state cannot represent.
-
-        ``Box.toggle`` replaces the box with its CONTENTS, and the contents are not in the state:
-        ``Box.render`` ignores them and ``Box.encode`` drops them, which is exactly why the state does
-        not carry them and why the render claim is unaffected. Every registered env here builds its
-        boxes empty (BabyAI's distractors are ``Box(color)``), so toggling one empties the cell and the
-        step stays exact — but a level that put something inside a box would step to a cell this
-        alphabet cannot name, and saying so is better than quietly reporting a mismatch as drift.
-        """
+        """Reset the source and reject boxes whose contents this State cannot encode."""
         ref.reset(seed=seed)
         u = ref.unwrapped
         if any(o is not None and o.type == "box" and o.contains is not None for o in u.grid.grid):
@@ -741,15 +505,13 @@ class MiniGridTopDown(_TileEnv):
         wy = ay.view(B, 1, 1) + offs[..., 1]
         keep = (wx >= 0) & (wx < W) & (wy >= 0) & (wy < H) & vis.permute(0, 2, 1)
         flat = torch.arange(B, device=dev).view(B, 1, 1) * (H * W) + wy.clamp(0, H - 1) * W + wx.clamp(0, W - 1)
-        # Off-grid and occluded view cells are routed to a scratch slot instead of being
-        # compacted, so the scatter needs no device-to-host sync and the pipeline stays
-        # CUDA-graph capturable.
+        # Send masked view cells to a scratch slot: no compaction or host sync,
+        # so the scatter remains CUDA-graph capturable.
         scratch = B * H * W
         flat = torch.where(keep, flat, torch.full_like(flat, scratch))
         acc = torch.zeros(scratch + 1, dtype=torch.long, device=dev)
         acc.scatter_(0, flat.reshape(-1), torch.ones_like(flat.reshape(-1)))
-        # the highlight toggle is a per-environment mask rather than a python branch: a batch may
-        # legitimately hold both settings, and masking is what makes that one launch
+        # Mask highlighting per row; a batch may contain both settings.
         hl = acc[:scratch].reshape(B, H, W) * (sty["highlight"] > 0.5).long().view(B, 1, 1)
 
         img = tcs.permute(0, 2, 1, 3)  # [b, j, i, 3]
@@ -758,7 +520,7 @@ class MiniGridTopDown(_TileEnv):
         return tm.atlas_flat_index(hl, d, img[..., 0], img[..., 1], img[..., 2]).to(torch.int32)
 
     def _visibility(self, tcs, ax, ay, ad):
-        """The agent's view, sliced/rotated by gather, then swept by ``Grid.process_vis``."""
+        """Gather the rotated agent view and apply the source visibility scan."""
         B, W, H, V = tcs.shape[0], self.grid_w, self.grid_h, VIEW_SIZE
         dev = self.device
         offs = tm.view_offsets(V, dev)[ad]
@@ -796,7 +558,6 @@ class MiniGridTopDown(_TileEnv):
         env.close()
         return np.stack(out).astype(np.float32)
 
-    # reference bridge
 
     @classmethod
     def reference_env(cls, size: int | None = None):
@@ -806,11 +567,7 @@ class MiniGridTopDown(_TileEnv):
 
     @classmethod
     def reference_render(cls, env, states) -> np.ndarray:
-        """Official frames, by writing each state into the reference env's own ``Grid``.
-
-        This drives the real ``get_full_render``, so the whole official path runs: ``gen_obs_grid``,
-        ``Grid.slice``, ``rotate_left``, ``process_vis``, the highlight scatter, and ``render_tile``.
-        """
+        """Restore grid and agent pose, then call the source full-view renderer."""
         from minigrid.core.grid import Grid
 
         u = env.unwrapped
@@ -828,30 +585,13 @@ class MiniGridTopDown(_TileEnv):
         return np.stack(out)
 
 
-# ---------------------------------------------------------------- agent-centric view
-
-
 class MiniGridPOVBase(_TileEnv):
-    """``get_pov_render``: the agent's 7x7 window, state = MiniGrid's own observation.
+    """Render a 7×7 observation window after occlusion.
 
-    The highlight is not a separate input. ``gen_obs_grid`` blanks occluded cells and ``grid.encode``
-    writes type ``unseen`` exactly there, while ``get_pov_render`` highlights exactly the visible
-    cells — so ``highlight == (type != unseen)`` identically, and the visibility sweep has already
-    happened by the time this state exists.
-
-    A consequence worth stating, because it is what shaped the variation space: the source env must
-    have ``see_through_walls=True`` (see ``pov``), so its visibility mask is all-true, so **every tile
-    of a POV frame is highlighted** and every pixel is a blend of a palette colour with the overlay.
-    No declared colour is ever painted literally here, which is why the label colours are one
-    ``chrome`` leaf rather than named RGB knobs.
-
-    No ``step``, and there cannot be one. This state is an OBSERVATION — the 7x7 window, after
-    occlusion — and a window does not determine the world it was cut out of: the next observation
-    depends on cells outside it, and on which of the objects inside it the agent may pick up next.
-    ``MiniGridTopDown`` steps exactly the same dynamics because it holds the whole grid. The split is
-    the repo's own distinction at its sharpest: this state is sufficient to RENDER, and it is not
-    sufficient to SIMULATE.
-    """
+    The unseen code determines highlighting; carrying occupies the centre-bottom
+    cell. This window cannot determine the next observation, so stepping is absent.
+    The reference bridge requires a source with ``see_through_walls=True`` to avoid
+    recomputing occlusion over an already masked view."""
 
     grid_w = grid_h = VIEW_SIZE
     see_through_walls = True
@@ -893,17 +633,10 @@ class MiniGridPOVBase(_TileEnv):
 
     @classmethod
     def reference_render(cls, env, states) -> np.ndarray:
-        """Official frames through the real ``get_pov_render``.
+        """Render a restored observation through the source POV path.
 
-        The observation is written back as the env's whole grid with the agent at the view's
-        centre-bottom facing up, which is a fixed point of the view transform: ``get_view_exts`` then
-        returns ``(0,0)``, so ``Grid.slice`` is the identity and ``rotate_left`` runs four times on a
-        square grid, also the identity. The env's source is chosen with ``see_through_walls=True`` so
-        that ``gen_obs_grid`` does not re-run ``process_vis`` over an already-processed view — an
-        occluded cell decodes to ``None``, which is transparent, so a second sweep would mark it
-        visible and highlight a cell the reference leaves dark. The carried object is restored from
-        the view's centre cell because ``gen_obs_grid`` overwrites that cell with ``self.carrying``.
-        """
+        Put the agent at centre-bottom facing up so the view transform is identity.
+        Restore carrying there because gen_obs_grid overwrites that cell."""
         from minigrid.core.grid import Grid
 
         u = env.unwrapped
@@ -921,9 +654,6 @@ class MiniGridPOVBase(_TileEnv):
         return np.stack(out)
 
 
-# ---------------------------------------------------------------- concrete registrations
-
-
 def _cell_names(w: int, h: int) -> tuple[str, ...]:
     return tuple(f"cell[{i},{j}]" for i in range(w) for j in range(h))
 
@@ -931,13 +661,7 @@ def _cell_names(w: int, h: int) -> tuple[str, ...]:
 def topdown(
     class_name: str, env_id: str, w: int, h: int, stw: bool, lava: bool = False, tile: int = 32, doc: str = ""
 ) -> type:
-    """Build and register a top-down class for one official env id.
-
-    A class per id rather than one parameterised env: the registry is the conformance suite's
-    parameter list, so an id that is only reachable through a constructor argument is an id nothing
-    tests. Declared grid size and ``see_through_walls`` are re-checked against the official env every
-    time one is built.
-    """
+    """Register a full-grid class with carrying in State but outside the render projection."""
     n = w * h
     cls = type(
         class_name,
@@ -953,11 +677,7 @@ def topdown(
             "has_lava": lava,
             "state_dim": n + 3,
             "state_names": _cell_names(w, h) + ("agent_x", "agent_y", "agent_dir"),
-            # Public state. The packed row is unchanged — the grid, then the agent's cell
-            # and heading — and ``("agent", "carrying")`` carries offset ``None``: it is real dynamical
-            # state that the row has never carried, because ``get_full_render`` provably never reads it,
-            # which is what makes ``transition`` pure without moving one column of the frozen layout.
-            # ``sim_state_names`` above is the same fact in the reference bridge's vocabulary.
+            # Carrying belongs to State but is invisible in the full-grid render projection.
             "state_layout": (
                 (("grid",), n, 0),
                 (("agent", "position"), 2, n),
@@ -965,22 +685,16 @@ def topdown(
                 (("agent", "carrying"), 1, None),
             ),
             "default_size": h * tile,
-            # the dynamical state is the render state plus the carried object; see MiniGridTopDown
+
             "sim_state_names": _cell_names(w, h) + ("agent_x", "agent_y", "agent_dir", "carrying"),
-            # Reported as four groups rather than as w*h+4 one-dimensional ones: "which cell disagrees"
-            # is not a useful readout for a 361-cell grid, "does any cell disagree" is. The agent's
-            # position is euclidean so that a diagonal disagreement counts once.
+            # Compare grid, position, direction and carrying separately; use Euclidean position error.
             "step_reference_groups": (
                 ("cells", tuple(range(n)), "abs"),
                 ("agent", (n, n + 1), "euclidean"),
                 ("dir", (n + 2,), "abs"),
                 ("carrying", (n + 3,), "abs"),
             ),
-            # The conformance suite requires the class that CLAIMS a batched simulator to DECLARE one,
-            # rather than to reach an unrelated ``step`` through a base class — that guard is what stops a
-            # checker driving an env it knows nothing about. These classes are built by a factory, so the
-            # declaration is made here explicitly; the seven actions are identical across every grid, so
-            # there is nothing per-class to say about them beyond ``MiniGridTopDown.step``'s docstring.
+            # Declare step on each generated class for simulator capability discovery.
             "step": MiniGridTopDown.step,
         },
     )
@@ -988,13 +702,7 @@ def topdown(
 
 
 def pov(class_name: str, env_id: str, tile: int = 32, doc: str = "") -> type:
-    """Build and register an agent-POV class. The source env must have ``see_through_walls=True``.
-
-    Not a restriction on what the renderer handles — the offline validation covers occluded views on
-    all 172 ids — but on what can be *checked against the official renderer from a state alone*: with
-    occlusion on, an observation cannot be written back into a live env without ``gen_obs_grid``
-    recomputing visibility over it and disagreeing.
-    """
+    """Register a POV class whose reference source has ``see_through_walls=True``."""
     cls = type(
         class_name,
         (MiniGridPOVBase,),
@@ -1068,22 +776,11 @@ MiniGridPOVFetch = pov(
 
 
 def register_all(ids=None, tile: int = 32) -> list[str]:
-    """Register a top-down class for every instantiable MiniGrid/BabyAI id (or a given subset).
+    """Register instantiable MiniGrid/BabyAI IDs, or a supplied subset, as top-down classes.
 
-    Not called at import. All 172 pass the same checks offline, but registering them here would put
-    172 envs into a conformance run whose reference leg renders on the CPU, and a suite that takes ten
-    minutes stops being run. The curated classes above cover the distinct cases: empty rooms, doors in
-    every state, lava, large grids, BabyAI, and the partial view.
-
-    One known false positive if you do register everything and run the suite. Agent coordinates are
-    integers wrapped modulo the grid width, and ``check_state_dims_matter`` probes a dimension by
-    adding a fixed ``eps=25.0``; on a 25-wide grid that is congruent to zero, so the probe cannot move
-    the agent and reports ``agent_x``/``agent_y`` as dead. Measured: MultiRoom-N4-S5 (25x25) reports
-    both dead, BossLevel (22x22) and every curated class report none. The dimensions are live — the
-    probe is blind at that one period. Fixing it belongs in the suite (vary eps per dimension, or take
-    it from the env) rather than in a wrap that is otherwise correct, so the curated set simply avoids
-    grid widths dividing 25.
-    """
+    Called explicitly; missing assets and construction failures are skipped.
+    A fixed state-dimension probe can miss wrapped coordinates when its offset
+    is a multiple of the grid size."""
     import gymnasium as gym
     import minigrid  # noqa: F401
     from minigrid.minigrid_env import MiniGridEnv as _MGE
