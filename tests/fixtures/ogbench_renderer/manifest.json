@@ -1,0 +1,19 @@
+{
+  "versions": {
+    "mujoco": "3.12.0",
+    "ogbench": "1.2.1",
+    "mujoco-warp": "3.12.0",
+    "warp-lang": "1.17.0"
+  },
+  "gpu": "NVIDIA A40",
+  "torch": "2.14.0+cu126",
+  "source_commit": "28f7c8049b93b96d40e5c752922f1527b6eebb40",
+  "size": 64,
+  "batch": 257,
+  "seed": 17,
+  "files": {
+    "Cube-mjwarp.npz": "b3a88e11ab09277b7d589a0fa810c35c086fcbf505e10dea2d49e0374e92342f",
+    "Cube-mjwarp_fidelity.npz": "210df0a7f69fa4cd1f6c8efec297c8b53cc103a1bd0fe9382661fa194adfcba0",
+    "Scene-mjwarp.npz": "98f34fa5e7ea0277f892ba6b9fcb0b3f12d7b698f5cc9f96f59ea6eff7931296"
+  }
+}
