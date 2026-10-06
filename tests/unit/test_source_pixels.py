@@ -72,6 +72,26 @@ class CapturedCandidate:
         return result
 
 
+@pytest.mark.parametrize("nan_reward,allowed,passes", [(False, True, True), (False, False, False), (True, True, False)])
+def test_nan_policy_is_explicit_and_scoped_to_declared_task(trace, tmp_path, nan_reward, allowed, passes):
+    trace.tasks[("info", "sentinel")] = torch.full((2, 3), float("nan"))
+    if allowed:
+        trace.nan_tasks = frozenset({("info", "sentinel")})
+    if nan_reward:
+        trace.tasks["reward"][0, 0] = float("nan")
+
+    def check():
+        return check_online_pixels(
+            CapturedCandidate(trace, None), trace, states=None, frames=None, mse_max=0, failure_dir=tmp_path / "failure"
+        )
+
+    if passes:
+        check()
+    else:
+        with pytest.raises(AssertionError):
+            check()
+
+
 @pytest.mark.parametrize(
     "states,frames",
     [

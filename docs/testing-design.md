@@ -151,6 +151,16 @@ large-batch, process, performance or Variation coverage. Shared source-pixel
 migration now covers six registrations, while full-State/simulation regression
 profiles continue to cover all 38 non-Craftax registrations.
 
+The parallel extension implements Navigation, DMC and nine non-PickAndPlace Fetch
+source-pixel adapters. Navigation's 96-case CPU profile passes. Their GPU gates
+and DMC/Fetch software-GL gates remain pending Oscar authentication; implemented
+coverage must not be reported as validated migration. The shared checker now
+accepts nested task keys and explicit per-output NaN sentinels for DMC. Tests
+reject undeclared NaNs, including NaNs in reward when another output permits them.
+This cohort would bring shared source-pixel migration to 30/38 registrations once
+its required gates pass. PickAndPlace's render mutation, OGBench's source/device
+scope, and PushT remain separate follow-ups.
+
 ### Acceptance axes
 
 1. **Establish authority.** Trace the pinned registration, factory, wrappers,

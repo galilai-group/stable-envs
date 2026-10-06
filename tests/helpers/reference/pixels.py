@@ -30,10 +30,11 @@ class PixelEnv(Protocol):
 class PixelTrace:
     initial: TensorDict
     states: list[TensorDict]
-    tasks: dict[str, torch.Tensor]  # [B,T,...], including the one-action case.
+    tasks: dict[str | tuple[str, ...], torch.Tensor]  # [B,T,...], including the one-action case.
     frames: NDArray[np.uint8]  # [B,T,H,W,3], including held terminal lanes.
     valid: torch.Tensor
     actions: NDArray  # [B,T,A]; the family chooses the action dtype.
+    nan_tasks: frozenset[str | tuple[str, ...]] = frozenset()
 
 
 def check_online_pixels(
@@ -50,6 +51,7 @@ def check_online_pixels(
     assert horizon > 0 and len(trace.states) == horizon
     assert trace.valid.shape == (batch, horizon) and trace.valid.dtype == torch.bool
     assert trace.frames.shape[:2] == (batch, horizon) and trace.frames.dtype == np.uint8
+    assert trace.nan_tasks <= trace.tasks.keys(), "NaN policy names an absent task output"
     if not np.isfinite(mse_max) or mse_max < 0:
         raise ValueError("A finite nonnegative source-pixel threshold is required")
     result = None
@@ -68,6 +70,7 @@ def check_online_pixels(
                 expected[:, 0] if horizon == 1 else expected,
                 atol=0,
                 rtol=0,
+                equal_nan=key in trace.nan_tasks,
             )
         for name, selection in (("states", states), ("frames", frames)):
             mask = "state_valid" if name == "states" else "frame_valid"
@@ -102,6 +105,15 @@ def check_online_pixels(
         if result is not None and "frames" in result:
             arrays["ours"] = result["frames"].cpu().numpy()
         run.arrays("failure.npz", **arrays)
-        run.json("failure.json", dict(error=str(error), states=repr(states), frames=repr(frames), mse_max=mse_max))
+        run.json(
+            "failure.json",
+            dict(
+                error=str(error),
+                states=repr(states),
+                frames=repr(frames),
+                mse_max=mse_max,
+                nan_tasks=sorted(map(repr, trace.nan_tasks)),
+            ),
+        )
         run.seal()
         raise

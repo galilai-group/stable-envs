@@ -39,8 +39,8 @@ Source pins are explicit in
 `tests/helpers/reference/profiles.py`. The source checkout must be clean at
 `176d54532b3c0a251a4f509b74f2fdacc143a63d`. Source environment code is loaded unchanged;
 unrelated learning-stack package initializers are omitted. Profiles compare CPU
-physics with CPU or CUDA State/output delivery. The native profile additionally
-checks CPU/CUDA rendering against source pixels. Profiles do not measure
+physics with CPU or CUDA State/output delivery. Native, Navigation, DMC and nine
+Fetch registrations additionally check rendering against source pixels. Profiles do not measure
 throughput. DMC and Maze constructors require a working GL context even when
 frames are omitted; use Oscar EGL when local GL is unavailable. Cube/Scene retain
 the accepted controlled-entropy source scope. PushT and Rocket compare independent
@@ -209,6 +209,35 @@ job 7072387 (RTX A5500). All 896 source-frame comparisons per device have MSE ze
 Its hashed evidence archive preserves sealed reports, case identities, source/code
 hashes, runtime versions, logs and terminal scheduler status. These measurements
 apply to the tested cases and configurations.
+
+The next adapter cohort adds Navigation (three registrations), DMC (twelve), and
+Fetch Reach/Push/Slide (nine). These are implemented tests, not completed GPU
+acceptance. Navigation's full CPU profile passes; Oscar validation for the new
+cohort is pending SSH reconnection. The
+[cohort record](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/fixtures/testing/parallel-source-pixels-validation.json)
+separates completed local checks from unexecuted cluster gates.
+
+| Profile | Required cases/device | Source-pixel cases/device | Source renderer |
+| --- | ---: | ---: | --- |
+| Native | 128 | 56 | CPU pygame |
+| Navigation | 96 | 48 | CPU Torch/Matplotlib |
+| DMC | 288 | 96 | Software GL for CPU; NVIDIA EGL for CUDA |
+| Fetch | 336 | 144 | Software GL for CPU; NVIDIA EGL for CUDA |
+
+DMC and Fetch tests verify the actual GL vendor/renderer. On Oscar, CPU checks use
+Xvfb/GLFW with `LIBGL_ALWAYS_SOFTWARE=1`, `GALLIUM_DRIVER=llvmpipe`, and
+`PYOPENGL_PLATFORM=glx`; CUDA checks use `MUJOCO_GL=egl` and
+`PYOPENGL_PLATFORM=egl` in a separate process. Source physics remains CPU. The
+Fetch cohort tests the explicit `opengl` candidate backend and preserves upstream
+480-to-64 rendering; it does not certify other backends. PickAndPlace is excluded
+because its source rendering changes controller caches and future transitions.
+Its State-only regression cases remain required in the Fetch profile.
+
+Navigation includes reached and mixed-terminal scenarios. DMC uses ordinary
+reached states; existing lifecycle/process/Variation gates remain required. DMC's
+documented `success=NaN` sentinel is allowed only on that declared output in the
+seven affected domains. Other task fields retain exact comparison and reject NaNs.
+The original family gates and accepted evidence remain untouched.
 
 ## Saved rendering evidence
 

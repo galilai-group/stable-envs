@@ -80,7 +80,7 @@ PROFILES = {
 }
 PINS = {
     "dmc": {"numpy": "2.5.3", "gymnasium": "1.3.0", "dm-control": "1.0.45", "mujoco": "3.12.0"},
-    "navigation": {"numpy": "2.5.3", "gymnasium": "1.3.0"},
+    "navigation": {"numpy": "2.5.3", "gymnasium": "1.3.0", "matplotlib": "3.10.9"},
     "ogbench": {
         "numpy": "2.2.6",
         "gymnasium": "1.2.3",
