@@ -5,6 +5,10 @@ preserves 11,959 tracked research, script, and fixture-note files from the
 October 6 checkpoint. Its manifest records original paths, byte sizes, and
 SHA-256 hashes. The downloaded archive has been verified member by member.
 This is historical evidence, not a fresh acceptance or performance run.
+Fifty unconsumed step 6–8 fixture notes now live only in that archive and Git history.
+Runtime-read fixtures, accepted manifests, terminal logs, and Craftax notes remain
+in the checkout. Historical manifests retain their original paths and hashes;
+use the archive to resolve files removed from the current tree.
 Earlier raw arrays remain in the
 [September 30 backup](https://github.com/galilai-group/stable-envs/releases/tag/renderer-recovery-backup-20260930).
 
