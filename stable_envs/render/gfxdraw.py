@@ -1,76 +1,12 @@
-"""Exact batched reimplementation of the SDL_gfx primitives that ``pygame.gfxdraw`` exposes.
+"""Batched SDL_gfx-style integer rasterization with Torch.
 
-Why this exists next to ``raster2d.py``. The SDF rasterizer there is the right tool when the reference
-draws anti-aliased vector art with sub-pixel geometry: it approximates coverage by supersampling, and
-the honest claim it can make is "interior pixels bit-identical, edges within tolerance", because two
-independent rasterizers are entitled to disagree about a pixel an edge only partly covers.
+Compute transformed geometry in float64 before truncating to integer vertices;
+float32 rounding near integer boundaries can move an entire pixel row. Scanline
+fills, circle spans, clipping, and packed-channel blending follow distinct SDL
+rules and must retain their integer operation order.
 
-``pygame.gfxdraw`` is not that reference. Its primitives take **Sint16** vertices, so every float
-coordinate is truncated to an integer before SDL_gfx sees it, and everything downstream -- scanline
-fill, disc spans, even the anti-aliased edges -- is integer arithmetic on integer geometry. There is no
-sub-pixel coverage to approximate and therefore no tolerance to hide behind. Redoing the same integer
-arithmetic on the GPU is not a better approximation, it is the same computation, and the result is
-**0 differing pixels** rather than a high percentage. Measured on gymnasium's classic-control family:
-250.9 M pixels, 1024/1024 frames bit-identical (``docs/research/classic_control.md``).
-
-Exactness here is therefore structural, not tuned. Nothing below has a fudge factor, and no constant
-was fitted to make a number look good -- each rule was recovered by pixel-diffing pygame and then
-checked to reproduce it everywhere, not on average.
-
-Any env whose reference renders through ``pygame.gfxdraw`` should use this rather than ``raster2d``.
-That is gymnasium classic control today; ``car_racing`` and ``bipedal_walker`` reuse
-``aapolygon``/``filled_polygon`` too.
-
-THE SIX RULES, all measured:
-
-1. **float64 geometry, never float32.** The output depends on ``trunc()`` of the vertex coordinates, so
-   a float32 pipeline lands on the wrong integer whenever a vertex falls within ~1e-5 of one and the
-   frame is off by a whole row. States may arrive as float32; the arithmetic may not be.
-
-2. **``filled_polygon`` is a 16.16 fixed-point scanline fill**, not a coverage test::
-
-       active edge iff (y1 <= y < y2) or (y == maxy and y1 < y <= y2)
-       X = (65536*(y-y1)) // (y2-y1) * (x2-x1) + 65536*x1
-       span = [round16(Xlo + 1), round16(Xhi - 1)],  round16(v) = (v>>16) + ((v & 0x8000)>>15)
-
-   Verified 0/600 mismatching pixels on random quads and triangles. ``miny``/``maxy`` are NOT clamped
-   to the surface (also measured), so a polygon hanging off an edge keeps the same spans. For convex
-   polygons there are exactly two crossings, so the sort collapses to min/max -- which makes this
-   cheaper than the per-edge signed-distance test an SDF rasterizer does, as well as exact.
-
-3. **``filled_circle`` spans come from a midpoint walk with the ``ocx``/``ocy`` paint-once guards.**
-   ``floor(sqrt(r^2 - dy^2))`` disagrees for **every** radius >= 2, and dropping the guards (taking the
-   max over iterations) widens the last row from 0 to 1 and paints a 5-pixel spur across the top and
-   bottom of every disc -- invisible by eye, 64 px/frame in a diff.
-
-4. **``aapolygon`` is a Wu line per edge, and four things about it matter.**
-   * It has a **closed form**, so it parallelises: with ``E = (minor<<16)//major``,
-     ``wraps = (k*E)>>16`` and ``weight = ((k*E) & 0xFFFF)>>8``. Within an edge the major axis advances
-     every step, so no two writes collide and the scatter needs no ordering.
-   * The blend runs on SDL's **packed channel word**,
-     ``R = (dR + (((sR - dR) * alpha) >> 8)) & Rmask`` in unsigned 32-bit, so the truncating ``>>8``
-     lands at a different bit position per channel and the unsigned wrap turns it into a *ceiling* when
-     the source is darker than the destination. A plain ``(s*a + d*(255-a))//255`` gets 63% of pixels.
-   * ``alpha = (255*w) >> 8`` **never reaches 255**, so a weight-255 AA pixel still blends (at 254).
-     Only the line's initial pixel goes through ``pixelColor`` and writes the colour outright.
-   * ``aalineColorInt`` **clips its endpoints first** (``clipLine``, Cohen-Sutherland on Sint16 with a
-     float32 slope, including an endpoint swap). An edge leaving the surface restarts its accumulator
-     from the clipped endpoint and lays down a completely different fringe; skipping this costs
-     ~150 px/frame wherever a shape touches an edge.
-   Axis-aligned edges get **no anti-aliasing at all** -- SDL_gfx short-circuits them to a solid
-   ``hline``/``vline``.
-
-5. **``pygame.draw.*`` is a different renderer.** ``pygame.draw.line`` with float endpoints
-   **truncates** the coordinate (363.6364 -> row 363); rounding puts a horizontal rule one row off,
-   1000 px/frame. ``pygame.draw.aalines`` is a sub-pixel AA path unrelated to gfxdraw's and is not
-   reimplemented here -- where it draws something state-independent, bake it once instead.
-
-6. **No host->device copies inside the render.** Every constant belongs in ``__init__``. A single
-   ``torch.tensor([...], device="cuda")`` in the hot path is not merely slow: it makes the whole render
-   **un-capturable** as a CUDA graph (``Cannot copy between CPU and CUDA tensors during CUDA graph
-   capture``), and capture is worth 5.4x at small batch on the anti-aliased path. ``Gfx`` exists to
-   make that easy to get right: it owns the caches, and nothing in the drawing functions allocates from
-   the host.
+Draw into a planar, y-down canvas, then flip and interleave once for RGB output.
+Populate Gfx caches before CUDA graph capture to avoid host-to-device copies.
 """
 
 from __future__ import annotations
@@ -84,16 +20,8 @@ SOLID = 256
 #: a plain ``pygame.Surface`` is 32-bit with masks (0xFF0000, 0xFF00, 0xFF), so R/G/B sit at 16/8/0
 SHIFT = (16, 8, 0)
 
-#: ``gfxdraw.aacircle``'s fringe: radius -> ((dy, dx, weight, pass), ...).
-#: ``weight`` 256 means ``pixelColor`` (solid); anything else goes through ``pixelColorWeight`` at
-#: alpha ``(255*w) >> 8``. ``pass`` is 1 for the second of the two writes ``aaellipseColor`` makes to a
-#: few pixels, which must land in order.
-#: Generated by the frozen measurement record, fitted jointly over 7 colours x 6
-#: backgrounds so the weights are the walk's own and carry no colour assumption. Embedded rather than
-#: baked at construction so this module stays pure torch: no pygame import, nothing to warm up.
-#: ``aaellipseColor`` is not transcribed because its write set is a constant of the radius (checked:
-#: the solid pixels are identical with and without it), so a table is both cheaper and safer than
-#: re-deriving an ellipse walker.
+#: Circle fringe entries are (dy, dx, weight, pass); weight 256 is opaque.
+#: Preserve pass order where the same pixel receives more than one blend.
 AACIRCLE_FRINGE: dict[int, tuple[tuple[int, int, int, int], ...]] = {
     1: (
         (-1, -1, 2, 1),
@@ -605,12 +533,11 @@ AACIRCLE_FRINGE: dict[int, tuple[tuple[int, int, int, int], ...]] = {
 }
 
 
-# --------------------------------------------------------------------------- span rules
 def circle_hw(r: int) -> list[int]:
-    """Row half-widths of ``gfxdraw.filled_circle``, indexed by ``|dy|``. Rule 3.
+    """Return filled-circle row half-widths indexed by absolute vertical offset.
 
-    ``filledCircleColor`` walks the midpoint circle but paints each span only the FIRST time its octant
-    coordinate changes (the ``ocx``/``ocy`` guards). Verified exact against pygame for r = 0..40.
+    The midpoint walk emits spans only when an octant coordinate changes. Preserve
+    those guards; taking the widest span from every iteration changes the end rows.
     """
     hw = [-1] * (r + 1)
 
@@ -640,16 +567,16 @@ def circle_hw(r: int) -> list[int]:
 
 
 def _round16(v: torch.Tensor) -> torch.Tensor:
-    """SDL_gfx's 16.16 fixed-point round-to-nearest: ``(v >> 16) + ((v & 0x8000) >> 15)``."""
+    """Round a signed 16.16 fixed-point coordinate using SDL_gfx's half-bit rule."""
     return (v >> 16) + ((v & 32768) >> 15)
 
 
 def fill_polygon_mask(vx: torch.Tensor, vy: torch.Tensor, ys: torch.Tensor, xs: torch.Tensor, W: int) -> torch.Tensor:
-    """``gfxdraw.filled_polygon`` for a batch of CONVEX polygons -> ``(B,H,W)`` bool. Rule 2.
+    """Return a (B, H, W) scanline mask for convex integer polygons.
 
-    ``vx``/``vy`` are ``(B,n)`` int64 vertices, ALREADY truncated. ``ys``/``xs`` are the row and column
-    index vectors. Convexity gives exactly two crossings per scanline, so the sort in the C routine
-    collapses to a min and a max.
+    ``vx`` and ``vy`` are already-truncated (B, n) int64 vertices. ``ys`` and ``xs``
+    select rows and columns. Convexity permits min/max crossings instead of sorting;
+    keep unclamped vertex extrema when deciding the final scanline.
     """
     ay, by = vy.roll(1, 1), vy
     ax, bx = vx.roll(1, 1), vx
@@ -668,23 +595,14 @@ def fill_polygon_mask(vx: torch.Tensor, vy: torch.Tensor, ys: torch.Tensor, xs: 
     BIG = 1 << 40
     xa = _round16(torch.where(act, X, BIG).amin(1) + 1).clamp_min(0)  # (B,H)
     xb = _round16(torch.where(act, X, -BIG).amax(1) - 1).clamp_max(W - 1)
-    # A row with fewer than two crossings draws nothing. Folded into the span rather than kept as a
-    # third term, because ``ok`` is (B,H) and the term it would join is (B,H,W): an empty span
-    # already selects no column, so the row test costs H elements instead of H*W.
+    # Fewer than two crossings means an empty span; test per row rather than per pixel.
     xa = torch.where(act.sum(1) >= 2, xa, torch.full_like(xa, W))
     x = xs.view(1, 1, -1)
     return (x >= xa.unsqueeze(-1)) & (x <= xb.unsqueeze(-1))
 
 
 def disc_offsets(r: int) -> list[tuple[int, int]]:
-    """``gfxdraw.filled_circle``'s painted pixels as ``(dy, dx)`` offsets from the centre. Rule 3.
-
-    The same spans as ``fill_circle_mask``, enumerated instead of tested. A disc's write set is a
-    constant of its RADIUS, so a filled circle is a scatter of a few hundred pixels rather than a
-    predicate over a window -- and that matters because a disc's window is not small: MountainCar's
-    wheels ride a sine, so their rows span 341 of 400 even though each wheel is 17 px across, and the
-    window form evaluated 205,000 pixels per wheel to paint 200.
-    """
+    """Enumerate filled-circle (dy, dx) pixels from the midpoint span table."""
     hw = circle_hw(int(r))
     out = []
     for dy in range(-int(r), int(r) + 1):
@@ -697,21 +615,18 @@ def disc_offsets(r: int) -> list[tuple[int, int]]:
 def fill_circle_mask(
     cx: torch.Tensor, cy: torch.Tensor, r: int, ys: torch.Tensor, xs: torch.Tensor, hw_t: torch.Tensor
 ) -> torch.Tensor:
-    """``gfxdraw.filled_circle`` -> ``(B,H,W)`` bool. ``cx``/``cy`` are ``(B,)`` int64. Rule 3."""
+    """Return a (B, H, W) circle mask for integer (B,) centers and a cached span table."""
     dy = (ys.view(1, -1) - cy.view(-1, 1)).abs()  # (B,H)
     h = torch.where(dy <= r, hw_t[dy.clamp(0, r)], torch.full_like(dy, -1))
     dx = (xs.view(1, 1, -1) - cx.view(-1, 1, 1)).abs()  # (B,1,W)
     return dx <= h.unsqueeze(-1)
 
 
-# --------------------------------------------------------------------------- blends
 def blend(src: torch.Tensor, dst: torch.Tensor, w: torch.Tensor, sh: torch.Tensor) -> torch.Tensor:
-    """``_putPixelAlpha`` on SDL's masked channel word. ``src``/``dst`` (...,3) int64, ``w`` (...,1).
+    """Apply SDL_gfx packed-channel alpha blending with unsigned 32-bit wrapping.
 
-    Rule 4: the blend runs on the channel in its packed bit position, so the truncating ``>>8`` lands
-    below the channel for green and blue, and the unsigned wrap makes it a ceiling when the source is
-    darker than the destination. ``alpha = (255*w) >> 8`` maxes out at 254, so only ``SOLID`` writes the
-    colour outright.
+    Broadcast source, destination, weights, and channel shifts. Weight 256 means an
+    opaque write; weight 255 still blends because effective alpha is (255*w)>>8.
     """
     a = (255 * w) >> 8
     S = src << sh
@@ -721,19 +636,15 @@ def blend(src: torch.Tensor, dst: torch.Tensor, w: torch.Tensor, sh: torch.Tenso
 
 
 def blit_over(dst: torch.Tensor, src_rgb: torch.Tensor, alpha: torch.Tensor) -> torch.Tensor:
-    """SDL's blit of a per-pixel-alpha surface onto an opaque one: ``d + ((s - d) * a) >> 8``.
+    """Blend a per-pixel-alpha surface onto opaque RGB using SDL_BlitSurface arithmetic.
 
-    A *different* rule from ``blend`` above -- this is ``SDL_BlitSurface``, not SDL_gfx's pixel writer,
-    and it takes the alpha straight rather than through ``(255*w)>>8``. Recovered by diffing a scaled
-    sprite over four backgrounds: exact on 100% of pixels, where the plausible ``//255`` forms reach
-    96.2%. Used for Pendulum's torque arrow, which is a blitted PNG rather than vector art.
+    This uses alpha directly; SDL_gfx's packed-channel pixel blend uses another rule.
     """
     return dst + (((src_rgb - dst) * alpha) >> 8)
 
 
-# --------------------------------------------------------------------------- clipping
 def _clip_encode(x: torch.Tensor, y: torch.Tensor, W: int, H: int) -> torch.Tensor:
-    """Cohen-Sutherland's four-bit outcode: left 1, right 2, bottom 4, top 8."""
+    """Return Cohen-Sutherland outcodes: left=1, right=2, bottom=4, top=8."""
     z = torch.zeros_like(x)
     c = torch.where(x < 0, z + 1, torch.where(x > W - 1, z + 2, z))
     return c | torch.where(y < 0, z + 8, torch.where(y > H - 1, z + 4, z))
@@ -742,12 +653,10 @@ def _clip_encode(x: torch.Tensor, y: torch.Tensor, W: int, H: int) -> torch.Tens
 def clip_line(
     x1: torch.Tensor, y1: torch.Tensor, x2: torch.Tensor, y2: torch.Tensor, W: int, H: int, iters: int = 6
 ) -> tuple[torch.Tensor, ...]:
-    """SDL_gfx ``clipLine``: Cohen-Sutherland on Sint16 with a float32 slope, batched. Rule 4.
+    """Clip batched Sint16 endpoints with a float32 slope, as SDL_gfx does.
 
-    Returns ``(draw, x1, y1, x2, y2)``. The endpoint SWAP is load-bearing: when the first point is
-    already inside, the two are exchanged and the exchange survives into the Wu walk, where it decides
-    which end gets the solid initial pixel. Cohen-Sutherland converges in at most four clips, so the
-    loop runs to a fixed bound -- a data-dependent ``while`` would need a host sync and break rule 6.
+    Return (draw, x1, y1, x2, y2). Preserve endpoint swaps: the Wu walk paints its
+    first endpoint solid. A fixed iteration bound avoids host synchronization.
     """
     draw = torch.zeros_like(x1, dtype=torch.bool)
     done = torch.zeros_like(draw)
@@ -793,17 +702,8 @@ def clip_line(
     return draw, x1, y1, x2, y2
 
 
-# --------------------------------------------------------------------------- canvas
 def select_(dst: torch.Tensor, mask: torch.Tensor, src: torch.Tensor) -> None:
-    """``dst = mask ? src : dst``, in place, over whatever shapes broadcast. Integer, exact.
-
-    The obvious spelling is ``torch.where(mask, src, dst, out=dst)`` and it is what CUDA gets, but on
-    the CPU it runs at ~340 Mpx/s on an interleaved ``(B,H,W,3)`` surface and ~2.6 Gpx/s on a plane,
-    because ``where`` over a broadcast bool takes a scalar path. The bitwise identity
-    ``d ^= (d ^ s) * m`` is three vectorised uint8 passes and measures 4.8 Gpx/s on the same plane --
-    3.7x -- at the cost of one temporary. Both compute the same integers; this is a codegen
-    difference, not a numerical one, and the choice is by device rather than by taste.
-    """
+    """Select broadcast source values into an integer destination in place."""
     if dst.device.type == "cuda":
         torch.where(mask, src, dst, out=dst)
     else:
@@ -811,22 +711,10 @@ def select_(dst: torch.Tensor, mask: torch.Tensor, src: torch.Tensor) -> None:
 
 
 class Canvas:
-    """A batch of RGB surfaces, in the reference's PRE-FLIP orientation (y down).
+    """Planar (3, B, H, W) RGB canvas in y-down orientation.
 
-    One trailing trash pixel absorbs every out-of-bounds anti-aliasing write, so clipping costs an
-    index clamp instead of the boolean-mask host sync that ``buf[mask]`` would force (rule 6).
-
-    PLANAR, ``(3, B, H, W)``, not interleaved ``(B, H, W, 3)``, and that is a throughput decision
-    with one number behind it. Every opaque primitive writes ``mask ? colour : surface``, where the
-    mask is per PIXEL and the colour is per channel; interleaved, the mask has to broadcast across a
-    trailing axis of 3 and the write runs at 340 Mpx/s, while planar it broadcasts across the outer
-    axis over a contiguous ``B*H*W`` block and runs at 4.8 Gpx/s. Measured at batch 64 on a 400x600
-    surface: 45.4 ms per primitive against 3.2. The cost is paid once at the end, where the three
-    planes are interleaved into the ``(B,H,W,3)`` the caller asked for (18.4 ms at that size), rather
-    than once per primitive.
-
-    ``flat`` is correspondingly ``(3, B*H*W+1)``: a scatter still touches all three channels in one
-    indexing operation, because the channel axis is the one NOT being indexed.
+    A trailing, unread trash pixel absorbs invalid scatter writes without changing
+    tensor shapes. Convert to flipped, interleaved output with ``rgb``.
     """
 
     def __init__(self, B, H, W, device, sh, ys, xs, bg=(255, 255, 255), gfx=None):
@@ -841,64 +729,51 @@ class Canvas:
         self.gfx = gfx
 
     def steps(self, kmax: int) -> torch.Tensor:
-        """``arange(kmax+1)`` as a row. Cached: it is a constant of the primitive, and rule 6 says a
-        draw call may not build a tensor from the host."""
+        """Return cached arange(kmax+1) as a row, or allocate for an uncached canvas."""
         if self.gfx is not None:
             return self.gfx.steps(kmax)
         return torch.arange(kmax + 1, device=self.device).view(1, -1)
 
     def solid(self) -> torch.Tensor:
-        """The ``pixelColor`` weight, cached as ONE element. Callers ``expand`` it to their write count.
-
-        An edge used to allocate and fill a ``B*(kmax+1)`` vector of a constant before every scatter
-        -- three allocations per edge that the profile counted and the picture never used. A
-        stride-0 ``expand`` of this removes the allocation while keeping ``len(w) == len(valid)``,
-        which ``blend_at`` overrides are entitled to rely on.
-        """
+        """Return one opaque-write weight; expand it to match each scatter's write count."""
         if self.gfx is not None:
             return self.gfx.solid
         return torch.tensor([SOLID], dtype=torch.int64, device=self.device)
 
     def color_u8(self, color) -> torch.Tensor:
-        """A python colour literal as a cached ``(3,)`` uint8 tensor.
-
-        ``torch.tensor([...], device=...)`` in a draw call is a host-to-device copy in the hot path,
-        which is rule 6 -- and under CUDA-graph capture it is not merely slow, it makes the render
-        uncapturable. Cached on the ``Gfx`` where every other constant lives; the fallback allocates
-        only for a bare ``Canvas`` built without one.
-        """
+        """Return a cached (3,) uint8 color literal; a bare canvas allocates it on demand."""
         if self.gfx is not None:
             return self.gfx.color_u8(color)
         return torch.tensor([int(v) for v in color], dtype=torch.uint8, device=self.device)
 
     def always(self) -> torch.Tensor:
-        """An all-true ``valid``, cached as one element; callers ``expand`` it to their write count."""
+        """Return one true validity value for expansion to a scatter's write count."""
         if self.gfx is not None:
             return self.gfx.always
         return torch.ones(1, dtype=torch.bool, device=self.device)
 
     def window(self, win):
-        """``self.buf`` restricted to ``(y0, y1, x0, x1)``; the whole surface when ``win`` is None."""
+        """Return the (y0, y1, x0, x1) canvas view, or the full canvas for None."""
         return self.buf if win is None else self.buf[:, :, win[0] : win[1], win[2] : win[3]]
 
     def rows(self, win):
-        """The row and column index vectors a primitive with window ``win`` evaluates over."""
+        """Return row and column coordinates restricted to an optional pixel window."""
         if win is None:
             return self.ys, self.xs
         return self.ys[win[0] : win[1]], self.xs[win[2] : win[3]]
 
     def fill_from(self, base: torch.Tensor) -> None:
-        """Start from a prebaked ``(3,1,H,W)`` or ``(3,B,H,W)`` layer instead of a flat colour."""
+        """Copy a planar (3, 1, H, W) or (3, B, H, W) background layer."""
         self.buf.copy_(base)
 
     def paint(self, mask, color, window=None) -> None:
-        """Opaque fill: three scalar ``masked_fill_``, so no allocation and no host copy."""
+        """Fill masked pixels with an opaque color inside an optional window."""
         buf = self.window(window)
         for c in range(3):
             buf[c].masked_fill_(mask, int(color[c]))
 
     def _disc_index(self, cy, cx, off, gate=None):
-        """Flat indices of a disc stencil placed at per-environment centres; out of range -> trash."""
+        """Place disc stencil offsets in each frame, redirecting invalid indices to trash."""
         B = cy.shape[0]
         y = cy.view(-1, 1) + off[:, 0].view(1, -1)
         x = cx.view(-1, 1) + off[:, 1].view(1, -1)
@@ -911,34 +786,26 @@ class Canvas:
         ).reshape(-1)
 
     def paint_disc(self, cy, cx, off, color) -> None:
-        """``filled_circle`` as a scatter of its own pixels. Same write set as the window form.
+        """Scatter the filled disc's distinct pixels at each environment's center.
 
-        Offsets within one disc are distinct and discs of different environments land in different
-        frames, so no two writes of this scatter share a destination and there is no ordering to
-        lose -- the out-of-range ones all go to the trash pixel, whose value nothing reads.
+        Only discarded writes may collide at the trash pixel.
         """
         idx = self._disc_index(cy, cx, off)
         n = off.shape[0] * cy.shape[0]
         self.flat[:, idx] = self.color_u8(color).view(3, 1).expand(3, n)
 
     def blend_at(self, b, y, x, color_t, w, valid) -> None:
-        """Blend ``color_t`` ``(3,1)`` int64 at flat-indexed pixels; ``valid`` False goes to the trash."""
+        """Blend color and weights at indexed pixels, discarding invalid or out-of-bounds writes."""
         ok = valid & (y >= 0) & (y < self.H) & (x >= 0) & (x < self.W)
         flat = torch.where(ok, (b * self.H + y.clamp(0, self.H - 1)) * self.W + x.clamp(0, self.W - 1), self.trash)
         dst = self.flat[:, flat].to(torch.int64)
         self.flat[:, flat] = blend(color_t, dst, w.reshape(1, -1), self.sh.view(3, 1)).to(torch.uint8)
 
     def rgb(self, out=None) -> torch.Tensor:
-        """The finished frame, with the reference's final ``transform.flip(surf, False, True)``.
+        """Return (B, H, W, 3) uint8 frames with the reference's final vertical flip.
 
-        The flip is a row reversal of the planes and the interleave is the transpose back to the
-        caller's ``(B,H,W,3)``; this is the one pass over the surface the planar canvas costs per
-        FRAME, against the one per PRIMITIVE it removes.
-
-        One plane at a time, although ``stack`` over the three flipped planes measures the same
-        18.5 ms at batch 64: the whole-surface form needs a second copy of the surface alive while
-        it builds the third, and at batch 4096 on a 500x500 frame that is 3.1 GB of peak rather than
-        1.0. Same instruction count, a third of the transient.
+        Convert one plane at a time to limit temporary memory. Write into ``out`` when
+        provided, otherwise allocate the output.
         """
         if out is None:
             out = torch.empty((self.B, self.H, self.W, 3), dtype=torch.uint8, device=self.device)
@@ -948,32 +815,16 @@ class Canvas:
 
 
 def to_u8(color: torch.Tensor) -> torch.Tensor:
-    """``(B,3)`` float style values -> uint8, truncating, which is what ``int(c)`` did."""
+    """Truncate style colors to uint8 using the reference's integer conversion rule."""
     return color.to(torch.uint8)
 
 
 class StyleCanvas(Canvas):
-    """A canvas whose current colour is one row PER ENVIRONMENT, with two per-environment gates.
+    """Canvas with per-environment color, antialiasing, and visibility gates.
 
-    The primitives above take a colour as a python tuple (for the opaque ``masked_fill_``) plus a
-    ``(1,3)`` tensor (for the Wu blend), both shared by the whole batch. That is the right shape for a
-    single appearance and cannot express 4096 different ones, and widening every primitive signature
-    would touch every call site. The colour is instead carried on the canvas: ``use`` sets a ``(B,3)``
-    tensor and both write paths -- the opaque fill and the anti-aliased blend -- read it from there, so
-    ``polygon`` and ``circle`` are called unchanged and every environment gets its own colour out of
-    one launch.
-
-    ``aa`` is a per-environment gate rather than a python ``bool`` for the same reason: anti-aliasing
-    is a declared variation, so a batch may hold both settings. The Wu pass then always runs and the
-    disabled environments' writes are routed to the canvas's trash pixel, which is what ``blend_at``
-    already does for out-of-bounds writes.
-
-    ``gate`` is the same mechanism for a primitive that EXISTS in some environments and not in others.
-    A batch is one static sequence of draw calls, so an env with four exhaust particles and one with
-    six cannot issue different numbers of them; the six slots are always drawn and the missing two are
-    gated off. That is not only about the particles themselves -- LunarLander draws its landing flags
-    once per FIXTURE, so the number of particles alive decides how many times the flags' anti-aliased
-    fringe is blended, and getting the count wrong is worth up to 152/255 on those pixels.
+    ``use`` selects (B, 3) colors; ``gated`` restricts subsequent primitives.
+    Antialiasing and visibility masks redirect disabled writes to the trash pixel,
+    so all environments retain the same draw sequence.
     """
 
     def __init__(self, gfx: Gfx, B: int, bg):
@@ -984,42 +835,24 @@ class StyleCanvas(Canvas):
         self.gate = None
 
     def use(self, color) -> StyleCanvas:
-        """Set the colour subsequent primitives paint with. ``color`` is ``(B,3)``."""
+        """Set (B, 3) colors for subsequent primitives and return this canvas."""
         self.col = color
         return self
 
     def gated(self, gate) -> StyleCanvas:
-        """Restrict subsequent primitives to the environments where ``gate`` (``(B,)`` bool) is True."""
+        """Set a (B,) boolean visibility gate for subsequent primitives and return this canvas."""
         self.gate = gate
         return self
 
     def paint(self, mask, color=None, window=None) -> None:
-        """Opaque fill. ``window`` is ``(y0, y1, x0, x1)`` and makes ``mask`` cover that box only.
-
-        The window is what ``polygon``/``circle`` build their mask over as well (``Canvas.rows``), so
-        a primitive with a known bounding box neither evaluates its span rule nor writes its colour
-        outside that box.
-
-        The window is a throughput argument, not a correctness one, and it is the difference between
-        a usable renderer and an unusable one when a scene has many small primitives: without it every
-        primitive reads and rewrites the whole ``(B, H, W, 3)`` buffer, so LunarLander's 31 polygons
-        moved 9 GB per batch of 256 and rendered at 266 frames/s -- SLOWER than the official pygame
-        renderer it is supposed to replace. A primitive whose columns are known (its vertices are
-        constants, or its x-extent is) pays for its own box instead.
-        """
+        """Fill a window-sized mask using per-environment colors and the current visibility gate."""
         if self.gate is not None:
             mask = mask & self.gate.view(-1, 1, 1)
         c = to_u8(self.col if color is None else color).t().reshape(3, self.B, 1, 1)
         select_(self.window(window), mask.contiguous().unsqueeze(0), c)
 
     def paint_at(self, offsets, color=None, gate=None) -> None:
-        """Write a colour at a CONSTANT set of frame-relative flat pixel offsets, per environment.
-
-        For a primitive whose pixel set does not depend on the state -- LunarLander's flagpoles and
-        flag triangles are at fixed coordinates -- the whole rasterisation is a compile-time constant
-        and the draw is a scatter of a few hundred pixels. Gated environments are routed to the
-        canvas's trash pixel, the same way an out-of-bounds anti-aliased write is.
-        """
+        """Scatter colors at fixed frame-relative offsets, honoring a per-environment gate."""
         g = self.gate if gate is None else gate
         n = int(offsets.numel())
         idx = torch.arange(self.B, device=self.device).view(-1, 1) * (self.H * self.W) + offsets.view(1, -1)
@@ -1042,31 +875,15 @@ class StyleCanvas(Canvas):
         super().blend_at(b, y, x, self.col.to(torch.int64).t()[:, b], w, valid)
 
 
-# --------------------------------------------------------------------------- primitives
 def edge_geometry(
     x1: torch.Tensor, y1: torch.Tensor, x2: torch.Tensor, y2: torch.Tensor, W: int, H: int
 ) -> tuple[torch.Tensor, ...]:
-    """``clip_line`` plus every constant ``aalineColor``'s Wu walk needs, for a FLAT batch of edges.
+    """Clip a flat batch of edges and compute constants for their Wu walks.
 
-    **The one place this arithmetic is written down.** All three anti-aliased paths in this package
-    need exactly it -- the per-primitive path (:func:`edge_setup` -> :func:`aaline_emit`), the fused
-    CarRacing kernel's pre-pass (``gfxdraw_fused.edge_table``) and, through that table, the fused
-    classic-control kernel. It used to be transcribed twice, character for character, in two modules
-    that are certified against each other pixel for pixel; a single edited line in one copy would
-    have moved a fringe in one path and not the other, and the diff test would have found it only on
-    the polygons it happened to cover.
-
-    Rule 4, and the reason the setup is split from the writes: six Cohen-Sutherland iterations are
-    ~180 tiny operator calls whatever the edge's length, so at batch 1 they are the renderer (3.1 ms
-    of an 8.1 ms CartPole frame, 38%, in eight calls). Doing them for every edge at once makes that
-    one call. The WRITES stay per edge and in order -- two edges of a polygon can land on the same
-    pixel at a shared vertex, and a batched scatter would read every destination before writing any
-    of them, so merging those would change the picture at corners.
-
-    Returns ``(draw, x1, y1, x2, y2, xx0, yy0, dx, dy, xdir, vert, horiz, ymaj, major, E, lo)``,
-    where ``x1, y1, x2, y2`` are the CLIPPED endpoints (the clip's endpoint swap included, because
-    it decides which end gets the solid initial pixel) and ``xx0, yy0`` is the walk's origin after
-    the walk's own top-to-bottom flip.
+    Return (draw, x1, y1, x2, y2, xx0, yy0, dx, dy, xdir, vert, horiz, ymaj,
+    major, E, lo). Endpoints include clipping swaps; xx0/yy0 include walk reversal.
+    Batch the setup, but apply edge writes in order: shared vertices can receive
+    multiple blends whose order changes the result.
     """
     draw, x1, y1, x2, y2 = clip_line(x1, y1, x2, y2, W, H)
     flip = y1 > y2
@@ -1089,7 +906,7 @@ def edge_geometry(
 def edge_setup(
     x1: torch.Tensor, y1: torch.Tensor, x2: torch.Tensor, y2: torch.Tensor, W: int, H: int
 ) -> tuple[torch.Tensor, ...]:
-    """:func:`edge_geometry` in the order :func:`aaline_emit` unpacks it (no clipped far endpoint)."""
+    """Reorder edge_geometry outputs for aaline_emit, dropping the clipped far endpoint."""
     draw, sx, sy, _x2, _y2, xx0, yy0, dx, dy, xdir, vert, horiz, ymaj, major, E, lo = edge_geometry(
         x1, y1, x2, y2, W, H
     )
@@ -1097,19 +914,15 @@ def edge_setup(
 
 
 def aaline_emit(cv: Canvas, p, color_t, kmax, bidx) -> None:
-    """The five scatters of ``_aalineColor(..., draw_endpoint=0)``, for one already-clipped edge.
+    """Emit the ordered scatters for one clipped antialiased edge.
 
-    ``kmax`` is a STATIC bound on the step count, supplied by the caller from the primitive's own
-    geometry. Deriving it from the data would need ``.max().item()`` and a host sync per edge.
+    ``kmax`` is a caller-supplied static step bound; deriving it from device values
+    would require a host synchronization.
     """
     draw, sx, sy, xx0, yy0, dx, dy, xdir, vert, horiz, ymaj, major, E, lo = p
     B = xx0.shape[0]
-    # ONE weight per write, as a stride-0 view of a cached scalar. ``blend`` would broadcast a
-    # 1-element weight, but ``blend_at`` is an overridable seam and a subclass is entitled to index
-    # the weight by its own mask -- LunarLander's _AARecorder does exactly that to bake the flag
-    # fringe, and a (1,) weight against a (B*(kmax+1),) mask is an IndexError inside its __init__.
-    # ``expand`` keeps what the cache was for (no allocation, no host copy, rule 6) and keeps the
-    # contract the baseline had: len(w) == len(valid).
+    # Keep one weight per write: blend_at overrides may index weights with the validity mask.
+    # Expanding a cached scalar preserves that shape without allocating another buffer.
     solid = cv.solid()
     cv.blend_at(bidx, sy, sx, color_t, solid.expand(B), draw)
 
@@ -1154,30 +967,19 @@ def aaline_emit(cv: Canvas, p, color_t, kmax, bidx) -> None:
 
 
 def aaline(cv: Canvas, x1, y1, x2, y2, color_t, kmax, bidx) -> None:
-    """``_aalineColor(..., draw_endpoint=0)``: clip, solid initial pixel, then the Wu pairs. Rule 4."""
+    """Clip and draw an antialiased edge with a solid initial pixel and no final endpoint."""
     aaline_emit(cv, edge_setup(x1, y1, x2, y2, cv.W, cv.H), color_t, kmax, bidx)
 
 
 def polygon(
     cv: Canvas, verts, color, color_t, bidx, kmax, aa: bool = True, fill_first: bool = False, window=None
 ) -> None:
-    """The gymnasium idiom: ``aapolygon`` then ``filled_polygon``, on the same float64 vertices.
+    """Draw a convex polygon with an antialiased fringe and integer scanline fill.
 
-    The AA fringe is blended against the canvas at draw time and the hard fill then overwrites the
-    interior, so what survives is a one-pixel blended rim strictly outside the fill.
-
-    ``fill_first`` reverses the two, which is the order LunarLander uses (``pygame.draw.polygon`` and
-    THEN ``gfxdraw.aapolygon``). It is a different picture, not a reordering of the same one: with the
-    fill last the rim survives only outside it, and with the fill first the rim is blended over the
-    fill's own edge pixels as well.
-
-    ``kmax`` may be one bound for every edge or one PER edge. A rotated rectangle's edges alternate
-    between the long and the short side, and the Wu pass costs ``kmax`` steps whether or not the edge
-    is that long, so a single bound makes every short edge pay the long edge's price.
-
-    ``window`` is ``(y0, y1, x0, x1)``, a STATIC superset of the polygon's footprint supplied by the
-    caller from its own geometry. It bounds the scanline fill only -- the fringe is a scatter and
-    clips itself -- and it is why a primitive no longer reads and rewrites the whole surface.
+    ``verts`` should be float64 before truncation. By default the fill follows AA;
+    ``fill_first=True`` reverses them and changes edge blending. ``kmax`` bounds
+    steps per edge, either shared or supplied individually. ``window`` restricts
+    fill evaluation and must contain the polygon footprint; AA clips itself.
     """
     vi = torch.trunc(verts).to(torch.int64)
     vx, vy = vi[..., 0], vi[..., 1]
@@ -1185,7 +987,7 @@ def polygon(
     km = [kmax] * n if isinstance(kmax, int) else list(kmax)
 
     def _aa():
-        # one clip for every edge of the polygon, then the writes edge by edge and in order
+        # Clip all edges together, then blend them in order to preserve shared-vertex writes.
         nx, ny = vx.roll(-1, 1), vy.roll(-1, 1)
         pars = edge_setup(vx.t().reshape(-1), vy.t().reshape(-1), nx.t().reshape(-1), ny.t().reshape(-1), cv.W, cv.H)
         B = vx.shape[0]
@@ -1203,14 +1005,10 @@ def polygon(
 def circle(
     cv: Canvas, cx, cy, r, color, color_t, bidx, hw_t, stencil, aa: bool = True, window=None, disc=None
 ) -> None:
-    """``aacircle`` (fringe stencil) then ``filled_circle``.
+    """Draw ordered antialiased fringe passes, then the filled circle.
 
-    ``stencil`` is a per-pass list of ``(dy, dx, w)`` tensors: ``aaellipseColor`` writes a few pixels
-    twice and the two writes must land in order, so they cannot share a scatter.
-
-    ``disc`` is the filled disc's own ``(S,2)`` offset stencil (``Gfx.disc``). When it is given the
-    fill is a scatter of exactly the pixels it paints; ``hw_t``/``window`` are then unused and the
-    predicate form is kept only as the readable definition the scatter is checked against.
+    Keep repeated fringe writes in separate passes. When ``disc`` is supplied,
+    scatter that filled-disc stencil; otherwise use ``hw_t`` and ``window``.
     """
     if aa and stencil is not None:
         B = cx.shape[0]
@@ -1235,22 +1033,16 @@ def circle(
 
 
 def rotate(v: torch.Tensor, a: torch.Tensor) -> torch.Tensor:
-    """``pygame.math.Vector2.rotate_rad``: ``[[cos,-sin],[sin,cos]]`` in a y-DOWN raster.
-
-    Measured, not assumed: ``(1,0).rotate_rad(pi/2)`` is ``(0,1)``, so the matrix is the ordinary CCW
-    one applied before the surface is flipped.
-    """
+    """Apply Vector2.rotate_rad arithmetic before the canvas's final vertical flip."""
     c, s = torch.cos(a), torch.sin(a)
     return torch.stack([v[..., 0] * c - v[..., 1] * s, v[..., 0] * s + v[..., 1] * c], -1)
 
 
 class Gfx:
-    """Per-(canvas size, device) constant cache and canvas factory.
+    """Cache drawing constants for one canvas size and device.
 
-    Exists to make rule 6 the path of least resistance: every tensor a draw call needs -- row/column
-    indices, channel shifts, batch indices, circle span tables, AA stencils, vertex literals -- is
-    materialised here, once, so the render path allocates nothing from the host and the whole call is
-    CUDA-graph capturable.
+    Populate lazy entries during warmup, before CUDA graph capture. Creating a
+    new host-backed vertex, color, or stencil tensor during capture is invalid.
     """
 
     def __init__(self, H: int, W: int, device):
@@ -1288,7 +1080,7 @@ class Gfx:
         return self._hw[r]
 
     def disc(self, r: int) -> torch.Tensor:
-        """``(S,2)`` int64 offsets of the filled disc of radius ``r``, cached (rule 6)."""
+        """Return cached (S, 2) int64 filled-disc offsets for radius r."""
         if r not in self._disc:
             self._disc[r] = torch.tensor(disc_offsets(int(r)), dtype=torch.int64, device=self.device).view(-1, 2)
         return self._disc[r]
@@ -1309,14 +1101,14 @@ class Gfx:
         return self._st[r]
 
     def verts(self, vals) -> torch.Tensor:
-        """A float64 vertex literal, cached. float64 is rule 1 and is not negotiable."""
+        """Cache float64 vertices so coordinate truncation retains reference precision."""
         key = ("v", tuple(map(tuple, vals)))
         if key not in self._k:
             self._k[key] = torch.tensor(vals, dtype=torch.float64, device=self.device)
         return self._k[key]
 
     def color_u8(self, c) -> torch.Tensor:
-        """A ``(3,)`` uint8 colour literal, cached. The opaque-fill twin of :meth:`color`."""
+        """Return a cached (3,) uint8 color for opaque fills."""
         key = ("u8", tuple(int(v) for v in c))
         if key not in self._k:
             self._k[key] = torch.tensor(key[1], dtype=torch.uint8, device=self.device)

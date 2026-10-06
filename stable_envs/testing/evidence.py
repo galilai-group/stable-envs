@@ -1,9 +1,3 @@
-"""Create new evidence directories and verify their sealed numeric artifacts.
-
-Verification is read-only. This is integrity checking, not semantic acceptance or
-authentication: the seal must itself be retained in trusted version control.
-"""
-
 from __future__ import annotations
 
 import hashlib
@@ -38,7 +32,11 @@ def _artifact(root, name):
 
 
 class EvidenceRun:
-    """Write-once run. A crash leaves partial artifacts and no completed seal."""
+    """Write artifacts once into a new directory, then seal their hashes.
+
+    A crash can leave an incomplete directory. Integrity checking requires the
+    seal itself to be trusted; it does not authenticate source or prove acceptance.
+    """
 
     def __init__(self, directory):
         self.root = Path(directory).resolve()
@@ -66,11 +64,7 @@ class EvidenceRun:
             np.savez_compressed(stream, **arrays)
 
     def frame_diagnostic(self, prefix, ours, source, *, metadata):
-        """Retain the worst raw frame pair/difference and its original batch index.
-
-        This is diagnostic evidence, not an explanation of a semantic failure.
-        No image resampling or color transformation is applied.
-        """
+        """Save the worst raw RGB pair, signed difference, batch index, and error summary."""
         from .metrics import normalized_mse, summarize_errors
 
         a, b = np.asarray(ours), np.asarray(source)
@@ -102,7 +96,7 @@ class EvidenceRun:
 
 
 def verify_seal(directory) -> dict[str, str]:
-    """Reject missing, changed, duplicate, unsealed or escaping artifacts."""
+    """Verify complete file coverage and hashes, rejecting duplicates and unsafe paths."""
     root = Path(directory).resolve()
     entries = {}
     for line in _artifact(root, "SHA256SUMS").read_text().splitlines():

@@ -1,24 +1,35 @@
-"""Measured large-batch DMC execution selection with local fallbacks.
-
-The eleven enabled registrations passed independent unpatched CPU/CUDA default
-routing gates. Quadruped stays local pending its separate exporter frame gate.
-No scheduling controls are exposed in the public environment API.
-"""
-
 import multiprocessing as mp
 import os
 import sys
 
 from .dmcontrol_process import DMCProcessAdapter
 
-PROCESS_DOMAINS = frozenset(("acrobot", "pendulum", "cartpole", "reacher", "cheetah", "hopper",
-                             "walker", "ball_in_cup", "finger", "manipulator", "humanoid"))
+PROCESS_DOMAINS = frozenset(
+    (
+        "acrobot",
+        "pendulum",
+        "cartpole",
+        "reacher",
+        "cheetah",
+        "hopper",
+        "walker",
+        "ball_in_cup",
+        "finger",
+        "manipulator",
+        "humanoid",
+    )
+)
 
 
 def process_count(domain, num_envs, cpus):
     available = len(cpus) if cpus is not None else 1
-    if (domain in PROCESS_DOMAINS and sys.platform == "linux" and num_envs >= 64
-            and available >= 4 and not mp.current_process().daemon):
+    if (
+        domain in PROCESS_DOMAINS
+        and sys.platform == "linux"
+        and num_envs >= 64
+        and available >= 4
+        and not mp.current_process().daemon
+    ):
         return min(8, available)
     return 0
 

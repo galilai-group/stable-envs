@@ -1,10 +1,3 @@
-"""Private Cube/Scene process owners with staged authoritative-world restore.
-
-The parent retains one metadata/validation instance, independent of batch size.
-It never advances that instance. Workers own the actual worlds; typed shared
-columns transport State/task results, and each received output owns its storage.
-"""
-
 from __future__ import annotations
 
 import ctypes
@@ -21,8 +14,9 @@ from .process_requests import ProcessRequests
 
 
 def _views(buffers, specs, batch):
-    return {key: np.frombuffer(buffers[key], dtype=dtype).reshape(batch, *shape)
-            for key, (shape, dtype) in specs.items()}
+    return {
+        key: np.frombuffer(buffers[key], dtype=dtype).reshape(batch, *shape) for key, (shape, dtype) in specs.items()
+    }
 
 
 def _worker(conn, family, start, count, batch, seed, reward_task_id, cpus, buffers, specs):
@@ -31,8 +25,9 @@ def _worker(conn, family, start, count, batch, seed, reward_task_id, cpus, buffe
         if cpus is not None and hasattr(os, "sched_setaffinity"):
             os.sched_setaffinity(0, cpus)
         torch.set_num_threads(1)
-        adapter = OGBManipulationAdapter(family, count, seed=None if seed is None else seed + start,
-                                         reward_task_id=reward_task_id)
+        adapter = OGBManipulationAdapter(
+            family, count, seed=None if seed is None else seed + start, reward_task_id=reward_task_id
+        )
         views, rows = _views(buffers, specs, batch), slice(start, start + count)
 
         def write(group, value):
@@ -41,8 +36,15 @@ def _worker(conn, family, start, count, batch, seed, reward_task_id, cpus, buffe
                 views[(group, *key)][rows] = tensor.numpy()
 
         write("state", adapter.get_state())
-        conn.send((True, dict(pid=os.getpid(), affinity=sorted(os.sched_getaffinity(0))
-                             if hasattr(os, "sched_getaffinity") else None)))
+        conn.send(
+            (
+                True,
+                dict(
+                    pid=os.getpid(),
+                    affinity=sorted(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else None,
+                ),
+            )
+        )
         while True:
             command, payload = conn.recv()
             reply = None
@@ -51,21 +53,29 @@ def _worker(conn, family, start, count, batch, seed, reward_task_id, cpus, buffe
                 break
             if command in ("step", "advance"):
                 actions, active = payload
-                result = adapter.step(actions, active=None if active is None else torch.from_numpy(active),
-                                      capture_state=command == "step")
+                result = adapter.step(
+                    actions,
+                    active=None if active is None else torch.from_numpy(active),
+                    capture_state=command == "step",
+                )
                 write("task", result.exclude("state"))
                 if command == "step":
                     write("state", result["state"])
             elif command == "get_state":
                 write("state", adapter.get_state())
             elif command == "prepare_restore":
-                state = TensorDict({key[1:]: torch.from_numpy(value[rows].copy())
-                                    for key, value in views.items() if key[0] == "state"}, [count])
+                state = TensorDict(
+                    {
+                        key[1:]: torch.from_numpy(value[rows].copy())
+                        for key, value in views.items()
+                        if key[0] == "state"
+                    },
+                    [count],
+                )
                 try:
                     adapter.prepare_restore(state)
                 except Exception as exc:
-                    # Construction/compilation failures leave the live worlds
-                    # untouched. All other owners will discard their candidates.
+                    # Preparation failure leaves live worlds untouched; discard staged replacements on every owner.
                     adapter.discard_restore()
                     reply = dict(prepared=False, kind=type(exc).__name__, error=str(exc))
                 else:
@@ -96,7 +106,13 @@ def _worker(conn, family, start, count, batch, seed, reward_task_id, cpus, buffe
 
 
 class OGBManipulationProcessAdapter(ProcessRequests):
-    """Explicit private candidate. Public factory defaults remain local."""
+    """Run Cube/Scene worlds in spawned processes with staged checkpoint restore.
+
+    The parent retains one metadata instance for validation and configuration.
+    Workers prepare all replacement worlds before committing any restore; expected
+    preparation failures discard staged worlds without changing live simulation.
+    Received State and task outputs are copied from typed shared buffers.
+    """
 
     _worker_family = "OGBench manipulation"
     execution_mode = "DELEGATED_CPU"
@@ -116,21 +132,48 @@ class OGBManipulationProcessAdapter(ProcessRequests):
             self._metadata = OGBManipulationAdapter(family, 1, seed=seed, reward_task_id=reward_task_id)
             self.fields, self.nq = self._metadata.fields, self._metadata.nq
             state = self._metadata.get_state()
-            self._specs = {("state", *key): (tuple(value.shape[1:]), value.numpy().dtype)
-                           for key, value in state.items(True, True)}
-            self._specs.update({("task", name): ((), np.dtype(dtype)) for name, dtype in
-                                (("reward", np.float64), ("success", bool), ("terminated", bool), ("truncated", bool))})
-            self._slices = [slice(int(lanes[0]), int(lanes[-1]) + 1)
-                            for lanes in np.array_split(np.arange(num_envs), processes)]
+            self._specs = {
+                ("state", *key): (tuple(value.shape[1:]), value.numpy().dtype)
+                for key, value in state.items(True, True)
+            }
+            self._specs.update(
+                {
+                    ("task", name): ((), np.dtype(dtype))
+                    for name, dtype in (
+                        ("reward", np.float64),
+                        ("success", bool),
+                        ("terminated", bool),
+                        ("truncated", bool),
+                    )
+                }
+            )
+            self._slices = [
+                slice(int(lanes[0]), int(lanes[-1]) + 1) for lanes in np.array_split(np.arange(num_envs), processes)
+            ]
             context = mp.get_context("spawn")
-            self._buffers = {key: context.RawArray(ctypes.c_ubyte, int(num_envs * np.prod(shape) * dtype.itemsize))
-                             for key, (shape, dtype) in self._specs.items()}
+            self._buffers = {
+                key: context.RawArray(ctypes.c_ubyte, int(num_envs * np.prod(shape) * dtype.itemsize))
+                for key, (shape, dtype) in self._specs.items()
+            }
             self._views = _views(self._buffers, self._specs, num_envs)
             groups = [None] * processes if cpus is None else [g.tolist() for g in np.array_split(cpus, processes)]
             for rows, group in zip(self._slices, groups, strict=True):
                 parent, child = context.Pipe()
-                process = context.Process(target=_worker, args=(child, family, rows.start, rows.stop - rows.start,
-                                          num_envs, seed, reward_task_id, group, self._buffers, self._specs))
+                process = context.Process(
+                    target=_worker,
+                    args=(
+                        child,
+                        family,
+                        rows.start,
+                        rows.stop - rows.start,
+                        num_envs,
+                        seed,
+                        reward_task_id,
+                        group,
+                        self._buffers,
+                        self._specs,
+                    ),
+                )
                 try:
                     process.start()
                 except BaseException:
@@ -157,9 +200,15 @@ class OGBManipulationProcessAdapter(ProcessRequests):
                 self._metadata.close()
 
     def _owned(self, group):
-        return TensorDict({key[1:]: torch.from_numpy(value.copy()).to(self.device)
-                           for key, value in self._views.items() if key[0] == group},
-                          [self.num_envs], device=self.device)
+        return TensorDict(
+            {
+                key[1:]: torch.from_numpy(value.copy()).to(self.device)
+                for key, value in self._views.items()
+                if key[0] == group
+            },
+            [self.num_envs],
+            device=self.device,
+        )
 
     def get_state(self):
         self._request("get_state")
@@ -167,8 +216,7 @@ class OGBManipulationProcessAdapter(ProcessRequests):
 
     def validate(self, state):
         self._check_open()
-        # Pure source validation remains usable while workers advance the next
-        # transition and the parent renders a previously owned checkpoint.
+        # Metadata validation is independent of workers advancing the next transition.
         return self._metadata.validate(state, _batch_size=self.num_envs)
 
     def set_state(self, state):
@@ -210,22 +258,29 @@ class OGBManipulationProcessAdapter(ProcessRequests):
     def variation_values(self, layout, *, anchor=False):
         self._check_idle()
         namespace = "anchor" if anchor else "current"
-        values = np.concatenate([self._views["state", "variation", namespace, name].reshape(self.num_envs, -1)
-                                 for name, _, _ in layout], axis=1)
+        values = np.concatenate(
+            [self._views["state", "variation", namespace, name].reshape(self.num_envs, -1) for name, _, _ in layout],
+            axis=1,
+        )
         return torch.from_numpy(values).to(self.device)
 
     def submit_step(self, actions, *, active=None, capture_state=True):
         self._check_idle()
         actions = actions.detach().cpu().numpy() if torch.is_tensor(actions) else np.asarray(actions)
-        if (actions.shape != (self.num_envs, 5) or actions.dtype not in (np.float32, np.float64)
-                or not np.isfinite(actions).all()):
+        if (
+            actions.shape != (self.num_envs, 5)
+            or actions.dtype not in (np.float32, np.float64)
+            or not np.isfinite(actions).all()
+        ):
             raise ValueError("Actions must be finite float32/float64 [num_envs, 5]")
         if active is not None:
             active = active.detach().cpu().numpy() if torch.is_tensor(active) else np.asarray(active)
             if active.shape != (self.num_envs,) or active.dtype != np.bool_:
                 raise ValueError("active must be a bool vector with shape [num_envs]")
-        self._submit("step" if capture_state else "advance",
-                     [(actions[rows], None if active is None else active[rows]) for rows in self._slices])
+        self._submit(
+            "step" if capture_state else "advance",
+            [(actions[rows], None if active is None else active[rows]) for rows in self._slices],
+        )
 
     def receive_step(self):
         self._check_open()

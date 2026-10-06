@@ -1,13 +1,3 @@
-"""DM Control ``cheetah`` — the visual tier.
-
-The skybox is 83% of this frame and MJWarp samples it with one unfiltered tap, which is what
-holds SSIM down here more than anywhere else in the tier. ``enable_specular=False`` is a wash on
-this domain (5.016 -> 5.008) and is NOT set; see ``swimmer``.
-
-These are NOT the official pixels. What the difference measures is declared below and the two
-mechanisms that carry it are named in ``VISUAL_NOTE``.
-"""
-
 from __future__ import annotations
 
 from ._cells import _AT, _AT_MEASURED_WITH, _AT_VERSIONS, trackcom_cell  # noqa: F401

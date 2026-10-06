@@ -215,12 +215,22 @@ def test_unpublished_step8_shims_are_gone():
     assert missing == [], missing
 
 
-def test_discover_loads_underscore_craftax_full_and_separates_missing_extras():
-    src = (PKG / "registry.py").read_text()
-    assert '"_craftax_full"' in src and '"craftax_full"' in src
-    assert "except (ImportError, ModuleNotFoundError)" in src
-    assert "not an optional-dependency miss" in src
-    assert "never raised to the caller" in src or "must not fail the package import" in src
+@pytest.mark.parametrize("error", [ImportError("missing extra"), RuntimeError("broken family")])
+def test_discover_records_private_module_failures_without_raising(monkeypatch, error):
+    import stable_envs.registry as registry
+
+    assert ("_craftax_full", "craftax_full") in registry._EXPLICIT_ENV_MODULES
+    monkeypatch.setattr(registry, "_IMPORT_ERRORS", {})
+
+    def fail_import(name):
+        assert name == "stable_envs.envs._craftax_full"
+        raise error
+
+    monkeypatch.setattr(registry.importlib, "import_module", fail_import)
+    registry._import_env_module("_craftax_full", "craftax_full")
+    message = registry.import_errors()["craftax_full"]
+    assert f"{type(error).__name__}: {error}" in message
+    assert ("unexpected" in message) == isinstance(error, RuntimeError)
 
 
 def _is_banned(mod: str) -> bool:

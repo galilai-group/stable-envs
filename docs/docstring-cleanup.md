@@ -45,7 +45,68 @@ One Fetch test asserted the obsolete docstring phrase “NO DYNAMICS.” It now 
 that registered classes combine `FetchSemantics` with the renderer base instead.
 No production execution, signatures, thresholds, or error messages changed.
 
-## Remaining order
+## Follow-up checkpoint
+
+The next pass starts from `df2d46728e5162571e89963627fad98233372e07` on `sami-dev`.
+It rewrites **74 additional library files** plus **11 shared contract/helper files**.
+Of those 74 library files, **14 retain headers (19%)**, with a maximum of nine
+lines. Every standalone comment block in the reviewed library files is at most
+two lines. Runtime code, diagnostic strings, generated class metadata, source
+pins, fidelity thresholds, and committed evidence remain unchanged.
+
+The review also corrected inaccurate documentation: discovery records import
+failures; composite validation does not retain leaf conversions; render projections
+cannot restore simulator State; and a skipped node-health probe is not a successful
+renderer check. Numerical and ownership requirements stay beside the relevant code.
+
+| Plan area | Completed in this pass | Still to review |
+| --- | --- | --- |
+| Renderers | The five priority files, plus `scene`, `primitives`, `navdot`, and `_plate_texels` | CPU3D, raycast, fused/classic gfxdraw, light-spec, tilemap, RenderNet |
+| Stepping | Shared stepping, process request ownership, five process executors, four execution selectors, step graphs | Family simulation adapters |
+| Core | Specs, spaces, registry, dynamics, configuration, style, GL setup, package exports | None of the listed core files; `core/` is no longer a tracked package |
+| Environments | Six priority modules; DMC domain declarations, semantic wrappers, model/shading/tendon helpers, exports, OpenGL path | DMC base/suite/trackcom; other environment families and their adapters |
+| Data/testing | `_data.py` and every module under `stable_envs/testing/` | No remaining files in this area |
+| Tests | All eight contract files and three top-level helpers; classic State consolidation; discovery behavior checks; visibility-collapse negative control repaired | Reference helpers and remaining test modules; other redundancy recommendations |
+| Tools | CLI descriptions retained and smoke-checked for supervisor/render worker | Maintained scripts, examples, benchmarks, root configuration |
+
+This is a substantial checkpoint, **not completion of the whole-tree header target**:
+83/148 non-Craftax library files still have headers (56%). The six large priority
+environment modules are complete, but the remaining families still need individual
+implementation review. Craftax and immutable research drivers remain outside scope.
+
+Validation for this checkpoint:
+
+- Executable ASTs match the starting commit for all 74 production files and all
+  11 documentation-only test/helper edits. The three intentional test changes have
+  separate behavioral checks; no production implementation changed.
+- Renderer checks: 180 passed, 1 skipped. API/process/core checks: 609 passed,
+  95 skipped. Constructor/declaration subset: 24 passed. Some later targeted runs
+  overlap these suites, so these are suite results, not a unique-test census.
+- Consolidated classic tests: the same 12 cases pass before and after. Shared
+  contracts, semantic harness, classic tests, and discovery checks: 31 passed,
+  77 skipped. Live-source profiles were not requested; CUDA cases require Oscar.
+- Additional CPU helper checks passed 128 cases; the visibility-collapse case
+  exposed a stale fixture method reference, now repaired. All seven visibility
+  cases pass, including the injected per-row collapse.
+- Utility/provenance checks: 117 passed with three failures reproduced at the
+  starting commit: an archived driver import path, a removed HumanoidStand identity,
+  and a reference-arm record that no longer regenerates identically. Evidence was
+  not regenerated or overwritten.
+- Safety harness: 11 passed; its timeout test fails identically at the starting
+  commit in this environment. Other broad static checks expose stale module paths,
+  existing source-identity symbols, and local cache directories; these are not
+  reasons to erase tests or local work.
+- Broader graphics checks cannot run here: GLFW initialization aborted one run,
+  and 13 DMC scene checks failed at macOS CGL initialization with an invalid
+  CoreGraphics connection. No GPU parity or performance result is claimed from
+  this documentation-only pass.
+- Ruff, compilation, whitespace checks, and CLI help checks pass. MkDocs builds
+  with the same four pre-existing research-link warnings.
+
+The [redundancy audit](testing-redundancy-audit.md) records the completed classic
+consolidation and the remaining precision-sensitive replay work.
+
+## Review order
 
 Each row is a review batch, but edits still proceed one file at a time. Header
 decisions below are starting positions to confirm against each implementation.
@@ -61,7 +122,7 @@ decisions below are starting positions to confirm against each implementation.
 | 7 | Maintained `scripts/`, `examples/`, `benchmarks/`, root configuration | Remove prose introductions by default, but preserve usable `--help` where it consumes `__doc__`. Check commands and examples against the current API. Leave immutable research drivers/evidence untouched. |
 
 Paths in the table are relative to `stable_envs/` except the test/tool directories.
-After the first batch, 143/148 non-Craftax library files still have headers. About
+After the first batch, 143/148 non-Craftax library files had headers. About
 30 retained headers would meet the target for that scope. Track tests and tools
 separately so many tiny test files cannot disguise verbose library documentation.
 

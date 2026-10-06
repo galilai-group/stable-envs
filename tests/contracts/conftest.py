@@ -1,4 +1,9 @@
-"""Required source profiles with explicit coverage and immutable run artifacts."""
+"""Required live-source profiles with explicit coverage accounting.
+
+Opt in with --contract-profile and a clean pinned --contract-source. Missing,
+skipped, or duplicate required cases prevent a passing profile. Optional
+--contract-output writes immutable artifacts; these profiles do not promote registrations.
+"""
 
 import subprocess
 from dataclasses import asdict

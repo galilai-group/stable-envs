@@ -1,12 +1,3 @@
-"""DM Control ``hopper`` — the visual tier.
-
-Skybox-dominated (89%). ``enable_specular=False`` makes this domain measurably WORSE on all three
-metrics, which is why the flag is swimmer's and not the family's; the table is in ``swimmer``.
-
-These are NOT the official pixels. What the difference measures is declared below and the two
-mechanisms that carry it are named in ``VISUAL_NOTE``.
-"""
-
 from __future__ import annotations
 
 from ._cells import _AT, _AT_MEASURED_WITH, _AT_VERSIONS, trackcom_cell  # noqa: F401

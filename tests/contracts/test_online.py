@@ -1,9 +1,3 @@
-"""Forward-only source control for the public single/chunk State capture path.
-
-Frame/process combinations retain their existing family acceptance gates;
-this small profile does not imply rendered online or multiprocessing acceptance.
-"""
-
 import numpy as np
 import pytest
 import torch
@@ -16,6 +10,7 @@ pytestmark = [pytest.mark.integration, pytest.mark.reference]
 
 
 def test_selected_states_follow_source(worlds, source_case):
+    """Check State capture against source; rendered/process pipelines have separate family gates."""
     candidate, destination, source, actions = worlds
     _, seed, _ = source_case
     for horizon in (1, 8):

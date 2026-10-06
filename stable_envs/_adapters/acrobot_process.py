@@ -1,9 +1,3 @@
-"""Private Acrobot candidate: persistent CPU owners and typed shared outputs.
-
-The public factory remains unchanged until independent correctness and speed
-gates pass. Gymnasium owns the physics; ProcessRequests owns request lifetime.
-"""
-
 from __future__ import annotations
 
 import ctypes
@@ -24,8 +18,9 @@ def _path(key):
 
 
 def _views(buffers, specs, batch):
-    return {key: np.frombuffer(buffers[key], dtype=dtype).reshape(batch, *shape)
-            for key, (shape, dtype) in specs.items()}
+    return {
+        key: np.frombuffer(buffers[key], dtype=dtype).reshape(batch, *shape) for key, (shape, dtype) in specs.items()
+    }
 
 
 def _worker(conn, start, count, batch, seed, cpus, buffers, specs):
@@ -43,8 +38,15 @@ def _worker(conn, start, count, batch, seed, cpus, buffers, specs):
                 views[(group, *_path(key))][rows] = tensor.numpy()
 
         write("state", adapter.reset(seed + start))
-        conn.send((True, dict(pid=os.getpid(), affinity=sorted(os.sched_getaffinity(0))
-                             if hasattr(os, "sched_getaffinity") else None)))
+        conn.send(
+            (
+                True,
+                dict(
+                    pid=os.getpid(),
+                    affinity=sorted(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else None,
+                ),
+            )
+        )
         while True:
             command, payload = conn.recv()
             if command == "close":
@@ -60,8 +62,16 @@ def _worker(conn, start, count, batch, seed, cpus, buffers, specs):
                 write("state", adapter.get_state())
             elif command == "set_state":
                 # Parent validates every lane's schema and PCG64 before dispatch.
-                adapter.set_state(TensorDict({key[1:]: torch.from_numpy(value[rows].copy())
-                                             for key, value in views.items() if key[0] == "state"}, [count]))
+                adapter.set_state(
+                    TensorDict(
+                        {
+                            key[1:]: torch.from_numpy(value[rows].copy())
+                            for key, value in views.items()
+                            if key[0] == "state"
+                        },
+                        [count],
+                    )
+                )
             elif command == "reset":
                 seed, options = payload
                 write("state", adapter.reset(seed, options))
@@ -84,7 +94,11 @@ def _worker(conn, start, count, batch, seed, cpus, buffers, specs):
 
 
 class AcrobotProcessAdapter(ProcessRequests):
-    """Candidate with the existing classic adapter signature, only for Acrobot."""
+    """Run Acrobot CPU simulators in spawned processes with shared State/task columns.
+
+    The parent validates all lanes before dispatch and returns owned output copies.
+    ProcessRequests manages the single pending request and worker cleanup.
+    """
 
     _worker_family = "Acrobot"
 
@@ -107,24 +121,44 @@ class AcrobotProcessAdapter(ProcessRequests):
             state = prototype.reset(seed)
             self.fields = prototype.fields
             result = prototype.step(np.ones((1, 1), np.int64))
-            self._specs = {("task", *_path(key)): (tuple(value.shape[1:]), value.numpy().dtype)
-                           for key, value in result.exclude("state").items(True, True)}
-            self._specs.update({("state", *_path(key)): (tuple(value.shape[1:]), value.numpy().dtype)
-                                for key, value in state.items(True, True)})
+            self._specs = {
+                ("task", *_path(key)): (tuple(value.shape[1:]), value.numpy().dtype)
+                for key, value in result.exclude("state").items(True, True)
+            }
+            self._specs.update(
+                {
+                    ("state", *_path(key)): (tuple(value.shape[1:]), value.numpy().dtype)
+                    for key, value in state.items(True, True)
+                }
+            )
         finally:
             prototype.close()
-        self._slices = [slice(int(lanes[0]), int(lanes[-1]) + 1)
-                        for lanes in np.array_split(np.arange(num_envs), processes)]
+        self._slices = [
+            slice(int(lanes[0]), int(lanes[-1]) + 1) for lanes in np.array_split(np.arange(num_envs), processes)
+        ]
         context = mp.get_context("spawn")
-        self._buffers = {key: context.RawArray(ctypes.c_ubyte, int(num_envs * np.prod(shape) * dtype.itemsize))
-                         for key, (shape, dtype) in self._specs.items()}
+        self._buffers = {
+            key: context.RawArray(ctypes.c_ubyte, int(num_envs * np.prod(shape) * dtype.itemsize))
+            for key, (shape, dtype) in self._specs.items()
+        }
         self._views = _views(self._buffers, self._specs, num_envs)
         groups = [None] * processes if cpus is None else [group.tolist() for group in np.array_split(cpus, processes)]
         try:
             for rows, group in zip(self._slices, groups, strict=True):
                 parent, child = context.Pipe()
-                process = context.Process(target=_worker, args=(child, rows.start, rows.stop - rows.start,
-                                          num_envs, seed, group, self._buffers, self._specs))
+                process = context.Process(
+                    target=_worker,
+                    args=(
+                        child,
+                        rows.start,
+                        rows.stop - rows.start,
+                        num_envs,
+                        seed,
+                        group,
+                        self._buffers,
+                        self._specs,
+                    ),
+                )
                 try:
                     process.start()
                 except BaseException:
@@ -144,9 +178,15 @@ class AcrobotProcessAdapter(ProcessRequests):
             raise RuntimeError("AcrobotProcessAdapter is closed")
 
     def _owned(self, group):
-        return TensorDict({key[1:]: torch.from_numpy(value.copy()).to(self.device)
-                           for key, value in self._views.items() if key[0] == group},
-                          [self.num_envs], device=self.device)
+        return TensorDict(
+            {
+                key[1:]: torch.from_numpy(value.copy()).to(self.device)
+                for key, value in self._views.items()
+                if key[0] == group
+            },
+            [self.num_envs],
+            device=self.device,
+        )
 
     def get_state(self):
         self._request("get_state")
@@ -156,15 +196,17 @@ class AcrobotProcessAdapter(ProcessRequests):
         self._check_idle()
         validate_classic_state(self.domain, state, batch=self.num_envs)
         host = state.cpu()
-        # Validate the only fallible source assignment for ALL lanes before any
-        # owner mutates. No temporary environment, physics step or live RNG draw.
+        # Validate every lane's RNG assignment before dispatch so malformed State cannot partially restore owners.
         probe = np.random.PCG64(0)
         for row in host:
-            probe.state = dict(bit_generator="PCG64",
-                               state=dict(state=_from_limbs(row["rng", "state"].numpy()),
-                                          inc=_from_limbs(row["rng", "increment"].numpy())),
-                               has_uint32=row["rng", "has_uint32"].item(),
-                               uinteger=row["rng", "uinteger"].item())
+            probe.state = dict(
+                bit_generator="PCG64",
+                state=dict(
+                    state=_from_limbs(row["rng", "state"].numpy()), inc=_from_limbs(row["rng", "increment"].numpy())
+                ),
+                has_uint32=row["rng", "has_uint32"].item(),
+                uinteger=row["rng", "uinteger"].item(),
+            )
         for key in self.fields:
             self._views[("state", *_path(key))][:] = host[key].numpy()
         self._request("set_state")
@@ -187,9 +229,7 @@ class AcrobotProcessAdapter(ProcessRequests):
     def submit_step(self, actions, *, active=None, capture_state=True):
         self._check_idle()
         actions = actions.detach().cpu().numpy() if torch.is_tensor(actions) else np.asarray(actions)
-        # Reuse the accepted shape and scalar-dtype conversion, including its
-        # integer-versus-float distinction. Python list indexing is upstream's
-        # Acrobot action rule (including valid negative indices).
+        # Preserve source scalar types and Python-list action indexing, including valid negative indices.
         converted = ClassicControlAdapter._actions(self, actions)
         if active is not None:
             active = active.detach().cpu().numpy() if torch.is_tensor(active) else np.asarray(active)
@@ -197,9 +237,11 @@ class AcrobotProcessAdapter(ProcessRequests):
                 raise ValueError("active must be a bool vector with shape [num_envs]")
         for i, action in enumerate(converted):
             if active is None or active[i]:
-                [-1., 0., 1.][action]
-        self._submit("step" if capture_state else "advance",
-                     [(actions[rows], None if active is None else active[rows]) for rows in self._slices])
+                [-1.0, 0.0, 1.0][action]
+        self._submit(
+            "step" if capture_state else "advance",
+            [(actions[rows], None if active is None else active[rows]) for rows in self._slices],
+        )
 
     def receive_step(self):
         self._check_open()

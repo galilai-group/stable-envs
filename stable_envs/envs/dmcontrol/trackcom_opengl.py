@@ -1,5 +1,3 @@
-"""Explicit OpenGL rendering of the trackcom model, including floor reflections."""
-
 import copy
 import threading
 

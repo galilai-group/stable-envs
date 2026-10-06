@@ -1,14 +1,3 @@
-"""Reading a DM Control model: the constants, the caches, and the census of what an episode draws.
-
-Everything here answers a question about a COMPILED ``MjModel`` and nothing here draws a pixel, which
-is why it is one module and not part of either renderer: ``suite`` (the parity tier) and ``trackcom``
-(the visual tier) disagree about how a frame is made and agree completely about what the model says.
-
-The caches are module-level and deliberately so. One ``mujoco.Renderer`` per (domain, size) is a
-POLICY, not an optimisation — releasing an EGL context corrupts every other live one — and a cache
-that lived on a class or an instance would give a second env a second context. See ``_ENV_CACHE``.
-"""
-
 from __future__ import annotations
 
 import numpy as np
@@ -21,46 +10,18 @@ from ...render import _resources as _RES
 from ...render import mjwarp as MW
 from .._plate_texels import quantise as _quantise
 
-#: ``mjvLight.type``: 1 is directional, 0 is a positional spot/point light. Every domain here has both
-#: — the headlight, which is directional, sits at the camera and never casts a shadow, and the model
-#: light, which is a 45-degree spotlight with exponent 10 that does.
+# mjvLight type code for directional lights.
 LIGHT_DIRECTIONAL = 1
 
-#: Effective specular weight, MEASURED by inverting the reference's own quantised colours rather than
-#: taken from the material. It is the same kind of constant the OGBench study reports (there the
-#: specular weight measured 0.25-0.26 against a nominal 0.30) and it is found the same way.
-#:
-#: Cartpole's cart is a BOX, so its front face has one normal and per-vertex and per-pixel shading
-#: coincide on it by construction — which makes it the one surface in this family where a shading
-#: constant can be read off directly. MuJoCo paints that face (227, 166, 104) in every one of 64
-#: states. With the material colour (0.7, 0.5, 0.3) and ambient+diffuse 1.2 (headlight 0.4 + 0.8, the
-#: spotlight contributing nothing at ``n.l = 0``), each channel constrains the additive white specular
-#: term ``s`` to the interval that rounds to the observed level:
-#:
-#:     R  214.2 + 255 s -> 227   =>  s in [0.04824, 0.05216)
-#:     G  153.0 + 255 s -> 166   =>  s in [0.04902, 0.05294)
-#:     B   91.8 + 255 s -> 104   =>  s in [0.04588, 0.04980)
-#:
-#: whose intersection is ``s in [0.04902, 0.04980)`` — and the nominal value, material specular 0.5
-#: times the headlight's 0.1 at ``n.h = 1``, is 0.05000, just OUTSIDE it. The midpoint gives the scale
-#: below. Whether the missing 1.2% is the weight or a half-vector a hair under 1 is not separable from
-#: one face at normal incidence, and it is applied as a weight.
-#:
-#: Worth 0.42-0.60 -> 1.00 of the interior-pixel metric on the two cartpole cells, and nothing
-#: anywhere else: the term is only ever evaluated on mover pixels, and no other domain here has a
-#: mover pixel that survives the interior mask.
+# Effective specular scale fitted to the reference cartpole face; see docs/research/dmcontrol.md.
 SPECULAR_SCALE = 0.988
 
-#: Geom/site groups ``mujoco.Renderer`` shows at its default ``MjvOption`` — measured [1,1,1,0,0,0]
-#: for BOTH. A site in group 3 (acrobot's ``target``, finger's ellipsoids) is not drawn, and a
-#: renderer that drew it would be adding geometry the reference does not have.
+# Default MuJoCo geom/site visibility groups.
 VISIBLE_GROUPS = (0, 1, 2)
-#: A group nothing is in, used to hide the movers while the plate is baked.
+# Hide movers from plate bakes by assigning them to this disabled group.
 HIDDEN_GROUP = 5
 
-#: Model arrays a DM Control ``initialize_episode`` may DRAW per episode, and that the renderer reads.
-#: The list is deliberately wider than what any task's source shows, because the point of the census in
-#: ``_episode_slots`` is to catch a draw nobody transcribed rather than to confirm one that was.
+# Model arrays inspected for per-episode renderer changes.
 EPISODE_ARRAYS = (
     "geom_pos",
     "geom_quat",
@@ -73,48 +34,27 @@ EPISODE_ARRAYS = (
     "light_pos",
     "light_dir",
 )
-#: Resets used to discover the draw. Six is what separates a per-episode draw from a task CONSTANT on
-#: every domain here: ``finger-spin`` writes ``site_rgba`` and ``dof_damping`` at every
-#: ``initialize_episode`` and writes the same values every time, so one reset cannot tell the two
-#: apart and six can. More only costs reset time, and the count is fixed so the discovery is
-#: reproducible across processes.
+# A fixed reset count makes the sampled census reproducible.
 N_DRAWS = 6
-#: Component labels, so a widened state dimension is named ``target_pos_x`` and not ``slot 3``.
 _COMPONENT = {3: ("x", "y", "z"), 4: ("qw", "qx", "qy", "qz")}
 _SCENE_CACHE_MAX = 96
 _SCENE_CACHE = _RES.BoundedCache(_SCENE_CACHE_MAX, name="dmcontrol.scene")
-#: ``(width, height, nchannel) -> (rgb1 mask, rgb2 mask)`` over the suite's builtin ``grid`` checker,
-#: and ``{}`` until the first parity cell asks. See ``_grid_masks``.
+# (width, height, channels) -> checker fill masks, excluding marks.
 _GRID_MASKS: dict = {}
-#: ``(domain, task, size) -> texel slots for that cell's grid texture``, or ``None`` for a cell that
-#: has no grid texture. Keyed per cell because the slots carry that model's ``tex_adr``.
+# (domain, task, size) -> grid slots with model-specific texture addresses.
 _GRID_SLOTS: dict = {}
-#: (domain, task, size) -> (dm_control env, MjModel, MjData, pristine snapshot, mujoco.Renderer,
-#: episode slots). One Renderer per (domain, size), built once and NEVER closed.
+# (domain, task, size) -> env, model, data, pristine arrays, renderer, episode slots.
+# These reference renderers stay alive for the process lifetime.
 _ENV_CACHE: dict = {}
-#: (domain, task, res, worlds) -> a captured MJWarp context. Small, because a context owns
-#: ``nworld * res^2 * 12`` bytes of device memory and holding several domains' at once buys nothing.
+# Captured GPU contexts are bounded and released on eviction.
 _TC_CACHE = _RES.BoundedCache(3, name="dmcontrol.tc", on_evict=MW.release_cached_ctx)
 _TC_CACHE_MAX = 3
-#: Worlds per MJWarp context, as in Meta-World and Fetch. Throughput saturates well below this (S7 of
-#: the research note), so a bigger context only costs memory.
+# Maximum worlds per captured context; smaller calls reuse padded contexts.
 MJW_CHUNK = 64
 
 
 def _check_dm_control_works() -> None:
-    """Fail the MODULE import if dm_control cannot compile a model, not the first env construction.
-
-    ``import dm_control`` succeeds under a version skew that makes every domain in the suite raise:
-    ``dm_control`` builds its named-index layer from a generated table of every ``MjModel`` array
-    field, ``mujoco`` 3.9.0 removed ``flex_bandwidth``, and 1.0.41's table still lists it — so
-    ``Physics.__init__`` raises ``AttributeError`` for every model, including an empty one. That is a
-    machine-level fact, so it belongs where a missing optional dependency belongs: at import, where
-    ``stable_envs.envs.import_errors()`` reports it by name and the package loses these five envs
-    rather than raising inside a test fixture thirty times.
-
-    The probe is the smallest thing that exercises the failing path: compile a model with no bodies
-    and build its index. Milliseconds, and no GL context.
-    """
+    """Compile an empty model at import to report incompatible dependency pairs before registration."""
     from dm_control import mujoco as dm_mujoco
 
     try:
@@ -140,12 +80,8 @@ def _suite():
     return suite
 
 
-# --------------------------------------------------------------------------- model reading
-
-
 def _mat_rgb(m, matid: int, rgba) -> np.ndarray:
-    """Base colour of a geom or site: its own rgba unless that is the compiler default and a material
-    supplies one, which is the rule MuJoCo itself follows."""
+    """Resolve material RGB when element RGBA matches the compiler default; otherwise use its RGB."""
     rgba = np.asarray(rgba, np.float64)
     if matid >= 0 and np.allclose(rgba, [0.5, 0.5, 0.5, 1.0]):
         return np.asarray(m.mat_rgba[matid], np.float64)[:3]
@@ -159,21 +95,7 @@ def _mat_spec_shin(m, matid: int) -> tuple[float, float]:
 
 
 def _grid_defaults() -> np.ndarray:
-    """``[rgb1, rgb2, markrgb]`` -- the suite's own ``grid`` texture, READ from ``dm_control``'s
-    ``common/materials.xml`` rather than transcribed here.
-
-    ``markrgb`` is carried alongside the leaf's two colours because it is what makes the edge marks
-    separable at all: the suite ships ``markrgb=".2 .3 .4"``, EQUAL to ``rgb2``, so in the shipped
-    texture the marks are invisible to an equality mask -- but a recompile at a different ``rgb2``
-    separates them, and ``_grid_masks`` uses exactly that to check its masks against whatever
-    texture it is handed.
-
-    It is read because it is simultaneously three things that must not be allowed to drift apart: the
-    compiled texture's colours, this family's declared ``floor.color`` default, and
-    the registered ``init_value`` for the leaf (``[[0.1,0.2,0.3],[0.2,0.3,0.4]]``, in
-    every one of the twelve DM Control wrappers). A constant here would make "our default IS the
-    registered default" a coincidence that a ``dm_control`` release could quietly end.
-    """
+    """Read rgb1, rgb2, and markrgb from the installed suite materials XML."""
     import re
 
     from dm_control.suite import common
@@ -190,22 +112,10 @@ def _grid_defaults() -> np.ndarray:
 
 
 def _grid_masks(m, texid: int) -> tuple[np.ndarray, np.ndarray]:
-    """Which texels of the compiled ``grid`` texture are rgb1 and which are rgb2.
+    """Return fill-color masks for the suite checker, excluding edge marks of the same color.
 
-    NOT DERIVED BY EQUALITY, and that is the whole point of this function. The suite declares
-    ``markrgb=".2 .3 .4"``, which is EXACTLY its ``rgb2``, so in the compiled texture the 1,196
-    edge-mark texels and the 44,402 rgb2 texels are byte-identical. The registered default honours
-    ``floor.color`` by writing ``rgb1``/``rgb2`` and RECOMPILING: the recompile moves the rgb2 texels
-    and leaves ``markrgb`` at its literal ``.2 .3 .4``. A mask taken by equality would move both, and
-    the 1,196 marks are the frame's grid lines -- the most visible feature on the floor.
-
-    So the masks are taken from a PROBE TEXTURE: the same builtin, the same size, the same ``mark``,
-    compiled once with three mutually distinct colours, which separates the three sets positionally.
-    The probe is a four-line MJCF and no part of any cell; the assertion below is what ties it to the
-    real texture, by reconstructing that texture from the masks and the declared defaults and
-    requiring the result to be byte-identical to what MuJoCo compiled.
-
-    Cached on the texture's shape, because all twelve parity cells share one 300x300 checker.
+    Compile distinct probe colors and require the masks to reconstruct the real
+    default texture. Cache by texture dimensions/channel count for the shared builtin.
     """
     import mujoco
 
@@ -235,8 +145,7 @@ def _grid_masks(m, texid: int) -> tuple[np.ndarray, np.ndarray]:
         "the probe checker compiled to a colour that is none of its three declared ones, so the "
         "masks do not describe MuJoCo's builtin and must not be used"
     )
-    # The tie to the REAL texture: rebuild it from the masks plus the suite's declared colours
-    # (markrgb == rgb2, so the marks take rgb2's default) and require MuJoCo's own bytes.
+    # Require the probe masks and declared colors to reproduce the compiled default texture.
     d = _grid_defaults()
     adr = int(m.tex_adr[texid])
     n = w * h * nch
@@ -255,8 +164,10 @@ def _grid_masks(m, texid: int) -> tuple[np.ndarray, np.ndarray]:
 
 
 def _tex_rgb(m, matid: int) -> np.ndarray:
-    """Flat texture colour, or ones. The movers in these domains are untextured; this is a guard
-    rather than a texture sampler, and a textured mover would need a real one."""
+    """Return a flat texture color, average of nonuniform texels, or ones when untextured.
+
+    This is not spatial texture sampling.
+    """
     if matid < 0:
         return np.ones(3)
     tid = m.mat_texid[matid]
@@ -272,25 +183,10 @@ def _tex_rgb(m, matid: int) -> np.ndarray:
 
 
 def _effective_alpha(m, kind: str, rgba=None, mat_rgba=None) -> np.ndarray:
-    """The alpha MuJoCo actually draws a geom or site with, resolved through its material.
+    """Resolve geom/site alpha through the material when element RGBA is the default.
 
-    ``mujoco.Renderer`` selects geometry by GROUP, which is what ``VISIBLE_GROUPS`` covers, and then
-    MuJoCo skips anything whose resolved alpha is zero. Both filters have to be applied or the
-    difference is silent: ``finger``'s ``target`` and ``tip`` sites and ``fish``'s ``target`` geom are
-    hidden that way rather than by group, so a renderer that reads groups alone paints markers the
-    reference does not have — and paints them in the ray-cast pass, where they land on the metric.
-
-    Same resolution ``stable_envs.render.mjwarp.effective_alpha`` performs, and the same rule
-    ``_mat_rgb`` uses for colour: the element's own rgba unless that is the compiler default and a
-    material supplies one.
-
-    ``rgba``/``mat_rgba`` ask the question against a SNAPSHOT of those arrays instead of against the
-    live model, and that is a correctness argument rather than a convenience. The ``MjModel`` in
-    ``_bundle`` is shared by every instance of a class and is mutated by every bake; since
-    ``visibility.*`` exists a bake can legitimately leave an element at alpha 0, so a caller deciding
-    what this class DECLARES (rather than what this bake happens to draw) must ask the pristine
-    snapshot or the declaration depends on what the previous env most recently rendered. ``_pristine``
-    records what that mistake cost the last time it was made.
+    Supply pristine rgba and mat_rgba snapshots when inspecting class defaults;
+    shared live models may retain a previous bake's visibility overrides.
     """
     rgba = np.asarray(getattr(m, f"{kind}_rgba") if rgba is None else rgba, np.float64)
     mat = np.asarray(m.mat_rgba if mat_rgba is None else mat_rgba, np.float64)
@@ -308,7 +204,7 @@ def _row_width(m, arr: str) -> int:
 
 
 def _slot_element(m, arr: str, i: int) -> tuple[str, int]:
-    """``(element kind, id)`` the flat index ``i`` of model array ``arr`` belongs to."""
+    """Return the element kind and ID owning a flat model-array component."""
     return arr.split("_")[0], int(i // _row_width(m, arr))
 
 
@@ -329,42 +225,12 @@ def _slot_name(m, arr: str, i: int) -> str:
 
 
 def _episode_slots(env, m) -> tuple[tuple[str, int], ...]:
-    """Which model entries the task DRAWS per episode, measured over ``N_DRAWS`` real episodes.
+    """Find model-array components that differ across a fixed number of resets.
 
-    ``docs/research/dmcontrol.md`` S8 recorded "reacher / finger / fish / swimmer move a target geom
-    or site per EPISODE" as one fact, and read off the source it is four different ones. ``reacher``
-    draws two floats (``geom_pos['target']`` x and y); ``finger-turn`` draws two (``site_pos``
-    x and z) while ``finger-SPIN`` draws NONE — its ``initialize_episode`` writes ``site_rgba`` and
-    ``dof_damping`` to the same constants every time; ``fish-upright`` likewise only hides its target.
-    So the census is taken rather than transcribed, and it is taken by DIFFING episodes, because an
-    edit that is applied at every reset and is the same every time is a property of the model, not of
-    the episode, and putting it in the state would add a dimension nothing moves.
-
-    The model is left on the LAST draw, which is deterministic (the task's ``RandomState`` is seeded by
-    ``task_kwargs={"random": 0}`` and the count is fixed), so this doubles as "apply the task's
-    constant model edits" — ``finger-spin``'s two zero-alpha sites reach the model only this way.
-
-    WHAT THE GUARD BELOW REFUSES, AND WHY IT USED TO REFUSE MORE. A per-episode SIZE really is a
-    different renderer: ``_prims`` reads each mover's ``geom_size`` ONCE at bake time, the whole batch
-    shares it, and ``screen_span`` derives its conservative bound from ``sc.prims.size`` — so a size in
-    the state would have to become a per-row tensor through every intersection routine and through the
-    window projection. A per-episode light ``_dir`` is refused for the matching reason: ``_Lights`` is
-    captured once per bake and ``_shade`` reads one direction for the whole batch.
-
-    ORIENTATION IS NOT IN THAT CLASS, and the guard used to say it was. ``_fk`` writes the drawn slot
-    into the model, runs ``mj_kinematics``, and reads ``d.geom_xmat``/``d.site_xmat`` into ``xm``, which
-    is ``(B, P, 3, 3)`` — a PER-ROW rotation. ``_cast`` -> ``R3.cast_nearest(kind, sizes, xpos, xmat,
-    ...)``, ``_occluded`` -> ``R3.any_blocking(..., xmat, ...)`` and ``_reflect`` all consume it per row,
-    and ``screen_span`` never reads it at all (its bound is the bounding SPHERE, which no rotation
-    moves). So a per-episode ``*_quat`` needs nothing from the renderer that a per-episode ``*_pos``
-    does not already need.
-
-    Measured rather than reasoned: ``manipulator-bring_ball`` draws ``body_quat['target_ball']`` qw and
-    qy every episode, and with only the ``_quat`` term removed from the guard the shipped bake and
-    mover pass render it at interior-pixel agreement 1.000000 — 0 bad of 4,154,763 over 3 draws of 64
-    states at 224 px (``tests/fixtures/regression/join/step7/dmc-manipulator/``). The per-row claim is asserted directly
-    in ``tests/unit/test_dmcontrol_episode_quat.py``, so a future change that makes ``xmat`` batch-shared
-    fails there rather than silently drawing every environment at one draw's orientation.
+    Leave the environment at the final draw, including constant reset-time edits.
+    Reject varying sizes and light directions because those are shared per bake.
+    Position and quaternion components flow through per-row forward kinematics.
+    This sampled census is limited to EPISODE_ARRAYS.
     """
     have = [k for k in EPISODE_ARRAYS if hasattr(m, k)]
     draws = []
@@ -378,9 +244,7 @@ def _episode_slots(env, m) -> tuple[tuple[str, int], ...]:
             slots.append((k, int(i)))
     bad = [s for s in slots if s[0].endswith(("_size", "_dir"))]
     if bad:
-        # Not "unsupported for now": see the docstring. A size is shared by the batch at bake time and
-        # a light direction is captured once per bake, so either in the state would render every
-        # environment at one draw's value. A domain that starts to draw one must fail loudly.
+        # Per-row size or light-direction changes would invalidate shared bake data; reject them.
         raise RuntimeError(
             f"{env.__class__.__name__}: the episode draws {[_slot_name(m, a, i) for a, i in bad]}, "
             f"which change a primitive's SIZE or a light's DIRECTION rather than a pose. The mover "

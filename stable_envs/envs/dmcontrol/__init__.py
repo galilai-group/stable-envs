@@ -1,23 +1,14 @@
-"""DM Control renderers and independently recovered historical task semantics.
+"""DM Control classes combining renderers with optional CPU simulation adapters.
 
-Each domain module declares its public class identity. Verified implementations
-compose the preserved renderer with independent authoritative CPU simulators;
-CUDA selects full-State and frame placement, not GPU physics. See the semantic
-recovery matrix for exact task scopes. Unrecovered cells refuse public simulator
-State/reset/step rather than returning compact renderer projections.
-
-Full State includes each task's experimentally established continuation fields.
-The private renderer representation remains qpos plus any episode model draw;
-it is never sufficient evidence for simulator restoration. Renderer provenance
-and historical measurements remain in the domain modules and research reports.
+CUDA selects State and frame placement, not GPU physics. Public simulator
+State includes continuation fields; qpos and episode-model render projections
+cannot restore it. Domain imports register classes and supply fidelity metadata.
 """
 
 from __future__ import annotations
 
-# The renderer modules and the base, re-exported under the names the package had.
-# The domain modules. Importing them is what REGISTERS the eighteen cells, so the list is the
-# registry: a domain not named here does not exist as far as ``stable_envs`` is concerned.
-from . import (  # noqa: F401  # noqa: F401
+# Import domain declarations to register their classes, then expose them at the package path.
+from . import (  # noqa: F401
     _cells,
     _model,
     _shading,
@@ -133,33 +124,26 @@ from .swimmer import (  # noqa: F401
 from .trackcom import DMControlTrackCom, _tc_context, _tc_frame, _TCtx  # noqa: F401
 from .walker import DMCWalkerWalk  # noqa: F401
 
-#: Cells whose certified default is rendered at something other than the family's 84 px, so the
-#: size the conformance suite builds them at is the size they are certified at. COLLECTED from the
-#: cells rather than declared beside them: the fact is "this cell is certified at 224 px", and the
-#: cell is where a reader looks for what a cell claims.
+# Nonstandard declared output sizes, collected from the parity classes.
 DEFAULT_SIZES: dict[str, int] = {
     n: int(c.default_size)
     for n, c in sorted((n, globals()[n]) for n in DOMAINS)
     if int(c.default_size) != _DMCModel.default_size
 }
 
-#: Cells refused on ``device="cpu"``, with the reason. Collected from ``CPU_UNCERTIFIED_REASON`` for
-#: the same reason ``DEFAULT_SIZES`` is collected; ``DMControlTrackCom`` reads the cell's own
-#: attribute and never this mapping, so the two cannot drift.
+# Explicit CPU refusals, collected from each class rather than maintained separately.
 CPU_UNCERTIFIED: dict[str, str] = {
     n: c.CPU_UNCERTIFIED_REASON
     for n, c in sorted((n, globals()[n]) for n in (*DOMAINS, *TRACKCOM_DOMAINS))
     if getattr(c, "CPU_UNCERTIFIED_REASON", "")
 }
 
-#: Extra bases per trackcom cell, for the one whose model is not ``suite.load``'s. Collected, so it
-#: cannot disagree with the class it describes.
+# Additional mixins composed before the shared trackcom renderer.
 TRACKCOM_BASES: dict[str, tuple[type, ...]] = {
     n: tuple(b for b in globals()[n].__bases__ if b is not DMControlTrackCom)
     for n in TRACKCOM_DOMAINS
     if len(globals()[n].__bases__) > 1
 }
 
-#: Every trackcom cell's measured numbers, in one table, for the certifier and the declaration tests.
-#: The entries live in the domain modules; this is a view of them, keyed as the original table was.
+# Combined fidelity declarations for measurement tools and declaration checks.
 VISUAL_FIDELITY: dict[str, dict] = {n: globals()[n].visual_fidelity for n in TRACKCOM_DOMAINS}

@@ -1,5 +1,3 @@
-"""Independent source fields along a reached trajectory, including reset."""
-
 import pytest
 
 pytestmark = [pytest.mark.integration, pytest.mark.reference]

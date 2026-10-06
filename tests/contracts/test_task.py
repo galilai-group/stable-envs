@@ -1,5 +1,3 @@
-"""Exact source task outputs; family boundary witnesses remain separate gates."""
-
 import pytest
 
 from tests.helpers.reference.bridges import assert_tasks

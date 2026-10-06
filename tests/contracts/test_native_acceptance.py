@@ -1,5 +1,3 @@
-"""Historical native boundary/Variation witnesses under shared source accounting."""
-
 import pytest
 
 from tests.helpers.reference.native_acceptance import (

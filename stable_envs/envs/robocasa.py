@@ -1,148 +1,11 @@
-"""RoboCasa kitchens — the repo's first **VISUAL TIER** family. These are not the official pixels.
+"""Render cached RoboCasa kitchens without importing RoboCasa in the render process.
 
-WHAT THIS IS
-------------
+Build the kitchen XML and trajectory with RoboCasa's own dependencies using
+``examples/robocasa_visual/dump_trajectory.py``. Point
+``STABLE_ENVS_ROBOCASA_CACHE`` at that cache. Rendering uses a separate MuJoCo/
+MJWarp installation; only cached, declared kitchen/camera pairs register.
 
-A RoboCasa kitchen (robocasa 1.0.1 / robosuite 1.5.2) pinned to one compiled scene, re-rendered from
-``qpos`` by ``mujoco_warp``'s batch raytracer at thousands of frames a second, with per-environment
-camera and lighting so a batch is a batch of *different* pictures. One class is one
-``(task, layout, style, camera)``; the drawn kitchen is a constant of ``(layout, style)``
-(``docs/research/robocasa.md`` Section 8: 357 visible geoms identical across 64 episodes), so pinning
-the scene loses the object resample and nothing else about the room.
-
-WHY IT IS THE VISUAL TIER AND NOT THE PARITY TIER
--------------------------------------------------
-
-Every other env in this registry claims that its frame IS the official frame — 100 % of interior
-pixels bit-identical. RoboCasa cannot make that claim through this renderer and the reason is
-structural, not a tuning problem. ``mujoco_warp``'s ``sample_texture`` derives UVs for ``PLANE`` and
-``MESH`` only, so a textured ``BOX`` or ``CYLINDER`` samples texel (0, 0) and the whole surface comes
-out one flat colour. A RoboCasa kitchen has **178-401 such geoms** — counters, backsplashes, cabinet
-fronts — between a third and a half of everything drawn. MuJoCo paints a marble counter; MJWarp paints
-one grey. That is the artefact, it is visible, and ``examples/robocasa_visual/`` shows it side by side
-rather than describing it.
-
-Two prior investigations concluded RoboCasa is a NO-GO for the parity tier and **both verdicts stand**:
-the only renderer that reproduces the official frame exactly is MuJoCo's own, at 1,925 f/s across 16
-processes against 5,137 f/s for one CPU core of JPEG decode — 0.37 cores, i.e. regenerating the frame
-exactly costs 2.7x more than reading it. Nothing here contradicts that. This env exists for the other
-use, the one bit-exactness is the wrong bar for: **generating training frames live**, where what
-matters is that the picture is right and self-consistent.
-
-WHAT THE TIER LICENSES, AND WHAT IT DOES NOT
----------------------------------------------
-
-  YES   train on frames generated live from stored states, at ~5.6 k f/s per GPU at 256 px against
-        ~800 f/s for the official rasterizer, with camera and lighting randomised per environment in
-        the same launch.
-  NO    train here and evaluate on official RoboCasa pixels. The train and eval pixel distributions
-        differ by the amount in ``visual_fidelity``, and NOTHING in this repo measures what that costs
-        a policy. If a stored dataset exists and the evaluation runs on official frames, use the
-        stored dataset.
-  NO    treat any number here as parity. ``parity_interior_min`` is ``None`` on purpose.
-
-TWO MEASUREMENT TRAPS, BOTH FOUND HERE AND BOTH SILENT
--------------------------------------------------------
-
-*The official frame is rendered from STALE kinematics.* ``mj_step`` evaluates the forward dynamics at
-the old ``qpos`` and then integrates, so when it returns ``data.qpos`` is the new state and
-``data.xpos`` — what ``mjv_updateScene`` reads — still describes the old one. Recording ``qpos`` and
-the frame at that moment gives a pair that no renderer can reproduce: re-rendering the recorded
-``qpos`` through ``mj_forward`` on the SAME live model disagrees on 7.7 % of pixels (39.0 % on the
-wrist camera). ``examples/robocasa_visual/dump_trajectory.py`` calls ``sim.forward()`` first and then
-ASSERTS the round trip is bit-exact before writing anything.
-
-*A bare ``mujoco.Renderer`` is the official renderer, but only at geom group 1.* It defaults to groups
-0-2 and paints robosuite's ~730 collision primitives over the visual meshes. Restricted to group 1 it
-reproduces ``env.sim.render`` with max abs diff **0** on the live model
-(the frozen measurement record, case A) — which is what lets this env carry a
-reference renderer at all, because ``robocasa/__init__.py`` asserts ``mujoco.__version__ == "3.3.1"``
-while ``mujoco_warp`` requires >= 3.11, so **no interpreter can hold both robocasa and MJWarp**.
-
-THE SCENE CACHE, AND WHY THIS ENV NEEDS ONE
---------------------------------------------
-
-Because of that version pin, the compiled kitchen is produced in a separate interpreter and cached:
-
-    conda run -n robocasa python examples/robocasa_visual/dump_trajectory.py \\
-        --kitchen L52S03 --steps 200 --res 256 --out ~/.cache/stable-envs/robocasa
-
-writes ``scene.xml`` (the expanded MJCF, absolute asset paths into the 24 GB library), ``qpos.npy``
-(the state pool) and ``meta.json``. Override the location with ``STABLE_ENVS_ROBOCASA_CACHE``. With no
-cache the module raises at import and ``stable_envs.envs.import_errors()`` says so, exactly as
-``dmcontrol.py`` and ``fetch.py`` do for their optional dependencies.
-
-THE STATE IS THE qpos THIS CAMERA CAN SEE, MEASURED
------------------------------------------------------
-
-A pinned kitchen has ``nq`` 91-133, and most of it is fixture hinges that are behind the camera or
-inside a closed cabinet. Declaring all of it would declare dimensions the renderer provably ignores
-and ``check_state_dims_matter`` would correctly fail. So the live set is MEASURED once per
-``(kitchen, camera)`` — every index is perturbed, by donor substitution from the pool and then by the
-same nudges the conformance check uses, and kept only if it moves the frame for EVERY probe state —
-and cached beside the scene. The rest are constants of the compiled model and are pinned at the
-pool's first row. The rule is deliberately stricter than the conformance check's (all probe states,
-not any), so that everything declared is something that check will also find live.
-
-WHY THERE IS NO STATIC PLATE HERE, MEASURED
---------------------------------------------
-
-``fetch.py`` and ``metaworld.py`` both bake the static scene through MuJoCo once and composite MJWarp's
-movers over it, which is where their 9-21x comes from, and a kitchen looks like the ideal case for it:
-**273 of the 344 visible geoms cannot be moved by any state this env accepts**, because ``_live_dims``
-pins the rest of the fixture hinges. It does not work, and the reason is the camera. All four
-registered cameras are model cameras attached to a body that MOVES — ``robot0_agentview_left`` and
-``_right`` to ``mobilebase0_support``, ``robot0_eye_in_hand`` to ``robot0_right_hand`` — so
-``cam_xpos`` is a function of ``qpos``, and over this env's own state pool it moves **2.2-3.4 cm** on
-the room cameras and **59 cm** on the wrist. There is no static view of the room to bake: a plate keyed
-on the appearance is a picture from the wrong place, and a plate keyed on the camera pose is one bake
-per state.
-
-Built, measured and reverted rather than argued. The split renders **1.26x / 1.26x / 1.97x / 1.45x**
-faster and disagrees with the fused frame on **19 % / 19 % / 76 % / 18 %** of pixels at up to 228/255 —
-and the disagreement is the camera, not the compositing rule: the structural mover set and the one
-measured over the pool agree exactly (nothing missing on any of the four cells). The two halves cost
-5.08 ms (static) and 7.06 ms (dynamic) against 10.86 for the fused frame at 64 worlds and 256 px, so
-paying both is **1.11x SLOWER** and the whole design rests on a cache that can never hit.
-the frozen measurement record and the frozen measurement record.
-
-Two further routes measured at the same time and closed by the same fact. A screen window around the
-movers DOES scale here — 0.562 of the rays for 1.56x, 0.25 for 3.01x, bit-identical to the full frame's
-crop — but it needs a plate for the pixels outside it. And nvdiffrast
-reaches **1,520 f/s at batch 64** on this kitchen at 256 px and dies at 256 with an illegal memory
-access, i.e. 0.27x of MJWarp and 0.10x of the 15,937 f/s that 8 CPU
-workers reach reading these frames off disk.
-
-So the ray-cast ceiling for the room cameras is **5,700-5,900 f/s**, this env is at 97-100 % of it, and
-the wrist camera's 2.3x lead over its siblings is the same fact from the other side: it sees a fifth of
-the kitchen. What would move this family is a rasterizer — 442 k triangles re-projected per world is
-cheap and does not care that the camera moved.
-
-MEASURED (256 px, 64 states x 4 draws from ``sample_states``, one H200)
------------------------------------------------------------------------
-
-============================  =========  =========  ======  =============  ==============
-class                          mean/255   within 8   SSIM    interior mean  interior exact
-============================  =========  =========  ======  =============  ==============
-RoboCasaCounterToSink              6.41     0.833    0.907           1.27           0.408
-RoboCasaCounterToSinkRight         5.52     0.846    0.921           0.63           0.672
-RoboCasaCounterToSinkWrist         9.69     0.826    0.857           4.02           0.433
-RoboCasaCounterToSinkL45S33       32.01     0.364    0.822          45.53           0.153
-============================  =========  =========  ======  =============  ==============
-
-The interior-exact column was 0.129 / 0.079 / 0.158 / 0.048 until 2026-08-11 and the change is a fix
-rather than a drift: those numbers were measured with the CUDA graph captured OUTSIDE
-``MW.gl_rounding``, i.e. replaying the truncating kernel. See the note above ``FIDELITY``.
-
-Throughput at the env's own surface (states in, uint8 frames out): 1.1-1.6 k f/s at batch 1, 4.1-7.7 k
-at 16, 4.9-10.6 k at 64, against ~812 f/s for the official rasterizer at 256 px. Setup is 3.0-3.5 s per
-compiled kitchen, warm, so a kitchen pays for its own setup after ~1,700 frames against that
-rasterizer. Full tables, the side-by-side video and the reproduction commands are in
-``examples/robocasa_visual/``; the investigation is ``docs/research/robocasa.md``.
-
-The spread between kitchens is the headline caveat and it is a factor of five, because L45 S33's
-counters and cabinet fronts are textured boxes MJWarp flattens. Both ends are registered; shipping only
-the good kitchen would make every number above a selection effect.
+Plain and learned-corrector classes are separate visual-tier registrations.
 """
 
 from __future__ import annotations
@@ -158,10 +21,7 @@ from .._mujoco_gl import configure_mujoco_gl
 
 configure_mujoco_gl()
 
-# THE DEPENDENCY CHECK, at module scope for the reason ``fetch.py`` gives: a lazy import inside
-# ``render`` turns one missing wheel into a failure per test rather than one missing env. Two things
-# are needed and neither can be worked around from inside this file — the batch raytracer, and a
-# compiled kitchen produced by an interpreter this one cannot be.
+# Require the raytracer and a separately compiled kitchen before registration.
 import importlib.util as _ilu
 
 import mujoco as _mj
@@ -193,8 +53,7 @@ from ..render import mjwarp as MW
 from ..render import rendernet as RN
 from ..spaces import Box, Dict
 
-#: ``(class name, cache key, camera, official task/layout/style)``. A class is one compiled kitchen
-#: seen through one camera, because both change the state and the fidelity.
+# Each registration selects one cached kitchen and camera.
 CELLS = (
     ("RoboCasaCounterToSink", "L52S03", "robot0_agentview_left"),
     ("RoboCasaCounterToSinkRight", "L52S03", "robot0_agentview_right"),
@@ -202,16 +61,9 @@ CELLS = (
     ("RoboCasaCounterToSinkL45S33", "L45S33", "robot0_agentview_left"),
 )
 
-#: Only geom group 1 is drawn, on BOTH sides. This is robosuite's own convention
-#: (``vopt.geomgroup[0] = render_collision_mesh``, default False; ``[1] = render_visual_mesh``, True)
-#: and getting it wrong paints ~730 collision primitives over the scene on one side only.
+# Match robosuite visual geometry on both sides; group 0 contains collision geometry.
 VISIBLE_GROUPS = (1,)
-#: Worlds per MJWarp render context. The ray-cast saturates by 64 at 256 px (5,462 f/s at 32, 5,599 at
-#: 64, 5,710 at 256) and this family is bound by it, so the constant buys only the per-chunk
-#: overheads: measured end to end at 256 px / batch 1024, **64 -> 5,504 f/s, 128 -> 5,628,
-#: 256 -> 5,689**. Bit-identical at all of them. A context owns
-#: ``nworld * H * W * 4`` bytes of output buffer plus this family's ~356 MB of textures, and four are
-#: cached, which is why this stops at 256.
+# Limit per-context image buffers and amortize per-chunk overhead.
 MJW_CHUNK = 256
 _CTX_CACHE = _RES.BoundedCache(4, name="robocasa.ctx", on_evict=MW.release_cached_ctx)
 _CTX_CACHE_MAX = 4
@@ -223,7 +75,7 @@ _STYLE_PROBE: dict = {}
 
 
 def available_kitchens() -> list[str]:
-    """Cache keys with a usable compiled kitchen on this machine."""
+    """List cache directories containing scene.xml and qpos.npy."""
     if not os.path.isdir(CACHE_ROOT):
         return []
     return sorted(
@@ -245,7 +97,6 @@ if not available_kitchens():  # pragma: no cover
 
 
 def _joint_qpos_names(m) -> list[str]:
-    """One label per ``qpos`` entry, from the compiled model's own joint table."""
     import mujoco
 
     suffix = {
@@ -266,19 +117,14 @@ def _joint_qpos_names(m) -> list[str]:
 
 
 class _Scene:
-    """One compiled kitchen, prepared for MJWarp, plus everything that does not depend on the state."""
-
     __slots__ = ("model", "kitchen", "xml", "sha", "qpos_names", "pool", "pinned", "prepared", "gaps", "meta")
 
 
 def _scene(kitchen: str) -> _Scene:
-    """Compile ``kitchen`` and apply the zero-alpha pre-pass, once per process.
+    """Compile and permanently prepare the cached render model.
 
-    The model is prepared and LEFT prepared, as ``mjwarp.BatchRenderer`` documents: MJWarp reads the
-    geometry once, at ``create_render_context``, so restoring the groups afterwards would not un-draw
-    anything and would only make the object's behaviour depend on when it was inspected. The reference
-    renderer gets its own pristine compilation rather than sharing this one — two compilations of one
-    MJCF are bit-identical (``probe_visual_reference.py``, case C), so the isolation is free.
+    Reference rendering compiles its own pristine model, so temporary visibility
+    changes here cannot affect source frames.
     """
     import mujoco
 
@@ -308,35 +154,23 @@ def _scene(kitchen: str) -> _Scene:
             f"{s.model.nq}; the cache and the MJCF are from different builds"
         )
     s.pool = pool
-    # Everything the camera cannot see is a constant of the compiled model, pinned HERE, at the
-    # pool's first row, so a fresh env in another process pins the same numbers.
+    # Pin invisible coordinates to the same recorded row in every process.
     s.pinned = pool[0].copy()
     _SCENE_CACHE[kitchen] = s
     return s
 
 
 class _Ctx:
-    """An MJWarp render context plus the device views a render writes through."""
-
     __slots__ = ("wm", "wd", "rc", "bgra", "graph", "nworld", "res", "wp", "mjw", "cam")
 
 
 def _context(
     kitchen: str, camera: str, res: int, nworld: int, tex_lod: int = 1, backface_cull: bool | None = None
 ) -> _Ctx:
-    """One MJWarp render context per ``(kitchen, camera, resolution, worlds, RENDER PROFILE)``.
+    """Cache a graph by kitchen, camera, resolution, world count, and render profile.
 
-    ``tex_lod`` and ``backface_cull`` are the profile, and they are part of the cache key rather than
-    a global switch because two profiles of one cell coexist in one process: the shipped class renders
-    at 256 px with full-resolution textures, and its learned-corrector sibling renders at 112 px with
-    textures at LOD 2 (``render/rendernet.py``). Keying on them is what stops the second one silently
-    handing the first a context built under the wrong configuration -- which is not a crash, it is a
-    different picture.
-
-    ``backface_cull=None`` means "do not pass the flag", i.e. exactly what every render in this repo
-    did before the profile existed. ``False`` turns culling off, which is measured at **0 pixels
-    changed** on all four cells and is worth a few per cent of the render rate; it is only taken on the corrector path, because a byte-identical
-    speed-up still changes a context's identity and the declared numbers were measured without it.
+    Texture LOD and culling belong in the key: plain and corrected classes can
+    coexist. None leaves culling at the backend default.
     """
     import mujoco
     import mujoco_warp as mjw
@@ -356,31 +190,11 @@ def _context(
     mujoco.mj_forward(m, d0)
     c = _Ctx()
     c.wp, c.mjw, c.nworld, c.res, c.cam = wp, mjw, int(nworld), int(res), cid
-    # Per-world model fields. This is what makes domain randomisation ONE launch rather than N: the
-    # camera pose and the lights vary per world inside a single graph replay.
     c.wm = mjw.put_model(m, batch_sizes={k: int(nworld) for k in ("cam_pos", "cam_quat", "light_diffuse")})
-    # THE RENDER BLOCK IS A LAUNCH GEOMETRY, NOT ARITHMETIC: the megakernel is a plain
-    # ``wp.launch(dim=(nworld, rays))``, one ray per thread, so the block size changes how the threads
-    # are packed onto SMs and changes no float. Asserted rather than argued -- 32, 64 and 128 render
-    # this kitchen to max 0/255 on 0 pixels. Swept in
-    # the frozen measurement record at 256 px / 64 worlds: 32 -> 10.85 ms, 64 (mujoco_warp's default) ->
-    # 11.43, 128 -> 11.11, 256 -> 16.42, and 512 fails to launch, over the register budget. A kitchen
-    # is the one family where it pays -- 5.4% -- and the other three are flat or worse at 32, which is
-    # why this is set here and not in ``render/mjwarp.py``.
+    # Use a 32-thread render block for this mesh-heavy scene.
     c.wm.block_dim.render = 32
     c.wd = mjw.put_data(m, d0, nworld=int(nworld))
-    # THE CAPTURE IS INSIDE THE PATCH. ``mujoco_warp.render`` defines its megakernel inside itself, so
-    # the source is regenerated per call from whatever ``pack_rgba_to_uint32`` is bound then; captured
-    # outside, the graph every later render replays is the TRUNCATING kernel and this block reaches
-    # only the warm-up frame.
-    #
-    # ``specialised_lights`` is in the same window and is ON here. A kitchen's one light declares
-    # ``castshadow=0``, so stock ``mujoco_warp`` compiles two any-hit BVH traversals -- one for the
-    # light, one for the headlight -- and executes NEITHER; this deletes both. Measured at 256 px /
-    # batch 1024 against stock in the same process: 5,699 -> 5,771 f/s and 13,159 -> 13,215, with the
-    # frames byte-identical over 64 states. 1.0-1.3% is small
-    # because this family is bound by 442 k triangles rather than by registers -- it is taken because
-    # it is free and exact, not because it is large.
+    # Capture inside both patches; replay otherwise retains the stock generated kernel.
     from ..render import mjwarp_lightspec as LS
 
     profile = {} if backface_cull is None else {"enable_backface_culling": bool(backface_cull)}
@@ -400,9 +214,7 @@ def _context(
         )
         _frame(c)
         wp.synchronize()
-        # A VIEW of the warp buffer. The channel swap is applied per render rather than here:
-        # ``[..., [2,1,0]]`` at construction is advanced indexing, which COPIES, and the object would
-        # hold one frozen frame while every later render wrote into the buffer behind it.
+        # Keep a live buffer view; swapping channels here would cache a frozen copy.
         c.bgra = wp.to_torch(c.rc.rgb_data).view(torch.uint8).reshape(int(nworld), int(res), int(res), 4)
         with wp.ScopedCapture() as cap:
             _frame(c)
@@ -419,12 +231,7 @@ def _frame(c: _Ctx) -> None:
 
 
 def _reference(kitchen: str, size: int):
-    """A pristine compilation plus a ``mujoco.Renderer`` restricted to geom group 1 — the OFFICIAL
-    renderer, without robosuite in the process.
-
-    Built once per ``(kitchen, size)`` and NEVER closed: releasing an EGL context corrupts rendering in
-    every other live context in the process, silently. See ``testing/conformance.py``.
-    """
+    """Cache a pristine source model and process-lifetime renderer showing geom group 1."""
     import mujoco
 
     key = (kitchen, int(size))
@@ -439,9 +246,11 @@ def _reference(kitchen: str, size: int):
 
 
 class RoboCasaBase(Env):
-    """Base for the RoboCasa cells. VISUAL TIER — see the module docstring.
+    """VISUAL TIER: MJWarp rendering for one cached kitchen and camera.
 
-    ``KITCHEN`` and ``CAMERA`` are set by the generated subclasses.
+    State stores the camera-visible qpos subset; remaining coordinates are
+    pinned to the recorded pool's first row. It is a render pose, not a complete
+    simulator snapshot. Textured primitives and edge filtering can differ from source.
     """
 
     family = "robocasa"
@@ -451,9 +260,7 @@ class RoboCasaBase(Env):
     default_size = 256
     fidelity_tier = "visual"
     parity_interior_min = None
-    #: The MJWarp render profile. ``(1, None)`` is the shipped configuration and is what every number
-    #: in ``FIDELITY`` was measured through; the learned-corrector subclasses below move it, and
-    #: nothing else may. See ``_context``.
+    # Plain profile; corrected subclasses take their profile from the checkpoint.
     TEX_LOD: int = 1
     BACKFACE_CULL: bool | None = None
 
@@ -471,11 +278,7 @@ class RoboCasaBase(Env):
         self._live_idx = live
         self.state_dim = len(live)
         self.state_names = tuple(s.qpos_names[i] for i in live)
-        # Public state: one key over the packed row, assigned per instance because the
-        # LIVE dims are a property of the compiled kitchen and the camera (``_live_dims``) and are
-        # not known until one is chosen. ``qpos`` is the honest name -- these columns are a SUBSET of
-        # the model's qpos, the rest of which is pinned (``_full_qpos``) and is not state. Every
-        # column is covered, so nothing is hidden and the corpus layout is untouched.
+        # Public qpos contains only visible indices; _full_qpos restores pinned coordinates.
         self.state_layout = ((("qpos",), self.state_dim, 0),)
         super().__init__(
             num_envs=num_envs, size=size, supersample=supersample, device=device, backend=backend, seed=seed
@@ -484,52 +287,28 @@ class RoboCasaBase(Env):
         self._live_t = torch.as_tensor(live, device=self.device, dtype=torch.long)
         self._pinned_t = torch.as_tensor(s.pinned, device=self.device, dtype=torch.float32)
 
-    # ---- state ----------------------------------------------------------------------------
-
     def _full_qpos(self, states: torch.Tensor) -> torch.Tensor:
-        """``(B, state_dim)`` -> ``(B, nq)``: the declared dims, on top of the pinned constants."""
         q = self._pinned_t.unsqueeze(0).repeat(states.shape[0], 1)
         q[:, self._live_t] = states
         return q
 
     def sample_states(self, batch: int, rng: np.random.Generator | None = None) -> np.ndarray:
-        """Draws from the recorded trajectory pool, with every free joint's YAW randomised.
-
-        The pool is 200 states the official simulator visited under a random arm policy, which is the
-        right distribution for the arm and the wrong one for the objects: they are barely disturbed, so
-        their quaternions are near-constant and ``check_state_dims_matter`` would substitute a donor
-        equal to the original, fall back to an additive nudge, and watch every nudge normalise straight
-        back to the same rotation — a live dimension reading as dead. This is the identity-quaternion
-        trap the OGBench and Fetch ports both record. A resting object at an arbitrary yaw is a state
-        this env reaches the moment the gripper touches one.
-        """
+        """Sample recorded poses with seeded random yaw on free-joint objects."""
         rng = rng or self.rng
         pool = _yawed_pool(self.KITCHEN)
         idx = rng.integers(0, len(pool), int(batch))
         return pool[idx][:, self._live_idx].astype(np.float32)
 
-    # ---- variation ------------------------------------------------------------------------
-
     def make_variation_space(self) -> Dict:
-        """Appearance knobs whose DEFAULTS are the official picture, and which vary PER WORLD.
+        """Expose per-world camera offsets and diffuse-light tint/intensity.
 
-        Every leaf here lands in a per-world MJWarp model field — ``cam_pos``, ``cam_quat`` or
-        ``light_diffuse`` — so a batch of 64 appearances is one graph replay rather than 64 renders.
-        That is the capability this family is for, and it is what ``media/dr_one_batch.png`` shows: 12
-        cameras and 12 lightings in 3.1 ms. What is deliberately NOT a knob: anything that would need a
-        different
-        TEXTURE. ``mujoco_warp`` uploads textures when the render context is built, so a per-value
-        texture means a render context per value, which is the one thing this repo's EGL/context rule
-        forbids. Material colours are not exposed either, for the reason ``mjwarp.py`` records: MJWarp
-        reads a geom's colour from its material and one RoboCasa material is worn by geoms of several
-        colours, so a colour knob here would be applied to the wrong surfaces.
+        Textures and material colors stay fixed in the shared render context.
         """
         return Dict(
             {
                 "camera": Dict(
                     {
-                        # In the camera's own frame, which for a robot-mounted camera is the frame the mount
-                        # tolerance lives in.
+                        # Translation is expressed in the camera mount's local frame.
                         "offset": Box(low=-0.06, high=0.06, shape=(3,), init_value=[0.0, 0.0, 0.0]),
                         "pan": Box(low=-8.0, high=8.0, shape=(1,), init_value=[0.0]),
                         "tilt": Box(low=-8.0, high=8.0, shape=(1,), init_value=[0.0]),
@@ -545,11 +324,9 @@ class RoboCasaBase(Env):
         )
 
     def _camera_pose(self, offset: np.ndarray, pan: np.ndarray, tilt: np.ndarray):
-        """``(B,3) (B,1) (B,1)`` -> ``(B,3), (B,4)`` camera pose, in the model's own convention.
+        """Apply camera-local translation and right-multiplied pan/tilt quaternions.
 
-        MuJoCo's camera looks down its local -z with +y up, so a pan is a rotation about local y and a
-        tilt about local x, and both are applied on the RIGHT of the model quaternion so that they act
-        in the camera's frame rather than the world's.
+        Pan rotates about local y, tilt about local x; the camera looks along -z.
         """
         import mujoco
 
@@ -562,14 +339,9 @@ class RoboCasaBase(Env):
         n = len(offset)
         pos = base_p[None] + offset @ R.T
         quat = np.empty((n, 4))
-        # ``.reshape(-1)`` and not ``float(pan[i])``: pan arrives as (B, 1), and NumPy 2 refuses to
-        # convert a 1-element ARRAY to a scalar rather than doing it silently as NumPy 1 did.
+        # Flatten (B, 1) angles before scalar iteration.
         pan, tilt = np.asarray(pan).reshape(-1), np.asarray(tilt).reshape(-1)
-        # ONE quaternion product per DISTINCT (pan, tilt), not per row. The loop below is two
-        # ``mju_mulQuat`` calls into MuJoCo per row through the Python/ctypes boundary, which on a
-        # batch of 1024 was 9.2 ms of a 201 ms render -- for a knob whose default gives every row the
-        # same pair. Exact float equality is the right key here because the inputs are copied, not
-        # computed: identical bits in, identical bits out, so this is a dedup and not a tolerance.
+        # Deduplicate exactly equal angle pairs without quantizing their values.
         uniq, inv = np.unique(np.stack([pan, tilt], 1), axis=0, return_inverse=True)
         tmp, out = np.empty(4), np.empty(4)
         rows = np.empty((len(uniq), 4))
@@ -588,8 +360,6 @@ class RoboCasaBase(Env):
 
         return mujoco.mj_name2id(self._s.model, mujoco.mjtObj.mjOBJ_CAMERA, self.CAMERA)
 
-    # ---- render ---------------------------------------------------------------------------
-
     @torch.no_grad()
     def _render(
         self,
@@ -600,7 +370,6 @@ class RoboCasaBase(Env):
         style=None,
         out=None,
     ) -> torch.Tensor:
-        """``(...,state_dim)`` -> ``(...,H,W,3)`` uint8 on device. Style may differ per environment."""
         s = self._render_state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
         lead = tuple(s.shape[:-1])
         s = s.reshape(-1, self.state_dim).to(torch.float32)
@@ -636,8 +405,7 @@ class RoboCasaBase(Env):
             wp.to_torch(c.wm.cam_pos)[:n, c.cam] = cpos[lo:hi]
             wp.to_torch(c.wm.cam_quat)[:n, c.cam] = cquat[lo:hi]
             wp.to_torch(c.wm.light_diffuse)[:n] = light[lo:hi]
-            # torch wrote the per-world arrays on its stream; warp replays the graph on its own. The
-            # two syncs bracket the launch so a frame can never be rendered from half-written state.
+            # Order Torch writes, Warp replay, and buffer reads across their streams.
             torch.cuda.synchronize()
             wp.capture_launch(c.graph)
             wp.synchronize()
@@ -655,35 +423,17 @@ class RoboCasaBase(Env):
                 )
         return buf.view(*lead, size, size, 3) if lead else buf
 
-    # ---- reference bridge -----------------------------------------------------------------
-
     @classmethod
     def reference_env(cls, size: int = 256):
-        """MuJoCo's own rasterizer over the same compiled kitchen, at geom group 1.
-
-        This IS the official renderer: restricted to group 1 it reproduces robosuite's
-        ``env.sim.render`` with max abs diff 0 on the live model. It is reconstructed here rather than
-        driven through robosuite because ``robocasa/__init__.py`` asserts ``mujoco.__version__ ==
-        "3.3.1"`` and ``mujoco_warp`` needs >= 3.11, so the two cannot share an interpreter.
-        """
+        """Return a cached MuJoCo reference showing robosuite's visual geom group 1."""
         return _reference(cls.KITCHEN, int(size))
 
     @classmethod
     def reference_render(cls, ref, states, style=None) -> np.ndarray:
-        """Official frames for these states, optionally at a per-state APPEARANCE.
+        """Render source frames with optional packed ``(B, style_dim)`` appearance.
 
-        ``style`` is a ``(B, style_dim)`` packed appearance in this env's own variation space, and it
-        is written into the reference MODEL — ``cam_pos``, ``cam_quat``, ``light_diffuse`` — because
-        ``mujoco.Renderer`` takes no appearance argument. It exists so that a claim measured under the
-        env's declared variation compares two renders of the SAME scene: rendering our side with a
-        drawn camera and the official side at the default camera reports mean 41.6 and SSIM 0.22,
-        which is a number about the harness rather than about the renderer, and it looks like a
-        catastrophic regression.
-
-        The pose arithmetic is ``_camera_pose``, CALLED rather than reimplemented, so the two
-        renderers are handed the same camera by construction instead of by two implementations
-        agreeing. The model is restored afterwards; the reference is a process-wide cached object and
-        leaving a drawn camera in it would move every later measurement.
+        Use the same camera transform as the fast renderer and restore camera/light
+        model fields in finally; the reference model is shared across calls.
         """
         import mujoco
 
@@ -698,9 +448,6 @@ class RoboCasaBase(Env):
         base_quat = np.asarray(m.cam_quat[cid], np.float64).copy()
         base_light = np.asarray(m.light_diffuse, np.float64).copy()
         if style is not None:
-            # One probe per (class, size), kept: it exists only to lend its ``_camera_pose`` and its
-            # variation layout, and rebuilding it per chunk of a 16 k-frame generation is a
-            # measurable share of the run for an object with no per-call state.
             probe = _STYLE_PROBE.get((cls, int(r.height)))
             if probe is None:
                 probe = _STYLE_PROBE[(cls, int(r.height))] = cls(num_envs=1, size=int(r.height), device="cpu")
@@ -728,14 +475,7 @@ class RoboCasaBase(Env):
 
     @classmethod
     def corrector_cell_key(cls) -> dict:
-        """The identity a learned render corrector is keyed to. See ``render/rendernet.py``.
-
-        Four fields, and every one of them changes the picture: the class (so a checkpoint cannot be
-        moved between siblings), the compiled kitchen, the camera on it, and the SHA of the expanded
-        MJCF. The last is what stops a corrector fitted before a kitchen was rebuilt from being applied
-        after — the live-qpos cache is keyed on the same hash for the same reason, and a rebuilt
-        kitchen is a scene whose geometry the weights have never seen.
-        """
+        """Identify corrector weights by class, family, kitchen, camera, and XML hash."""
         return {
             "env_class": cls.__name__,
             "family": "robocasa",
@@ -746,7 +486,6 @@ class RoboCasaBase(Env):
 
 
 def _yawed_pool(kitchen: str) -> np.ndarray:
-    """The recorded pool with every free joint's yaw randomised. Built once per process, seeded."""
     hit = _POOL_CACHE.get(kitchen)
     if hit is not None:
         return hit
@@ -769,17 +508,10 @@ def _yawed_pool(kitchen: str) -> np.ndarray:
 
 
 def _live_dims(kitchen: str, camera: str, size: int) -> np.ndarray:
-    """Which ``qpos`` indices this camera can see, MEASURED once and cached beside the scene.
+    """Probe qpos visibility using source rendering and cache indices by XML hash.
 
-    A pinned kitchen carries 91-133 joints and most of them are fixture hinges behind the camera or
-    inside a closed cabinet. The rule matches ``check_state_dims_matter`` — substitute a donor value
-    from the pool, then try the additive nudges — with one deliberate difference: a dimension is kept
-    only if it moves the frame for EVERY probe state, where the conformance check accepts any. Strictly
-    stronger, so nothing declared here can fail that check, and a dimension dropped for being invisible
-    from this camera is pinned in the model rather than advertised and ignored.
-
-    Cached as JSON keyed by the MJCF's own hash, so a rebuilt kitchen re-measures instead of silently
-    reusing indices into a different model.
+    Keep a dimension only when donor values or nudges move pixels for every
+    probe state. Pin omitted coordinates when reconstructing full qpos.
     """
     s = _scene(kitchen)
     path = os.path.join(CACHE_ROOT, kitchen, f"live_qpos_{camera}_{int(size)}.json")
@@ -805,10 +537,7 @@ def _live_dims(kitchen: str, camera: str, size: int) -> np.ndarray:
         r.update_scene(d2, camera=cid, scene_option=vopt)
         return r.render().copy()
 
-    # Measured through MuJoCo rather than through MJWarp on purpose. The state contract is a claim
-    # about the SCENE -- "this number reaches the picture" -- and settling it with the approximate
-    # renderer would let a dimension be declared dead because the fast path happens to flatten the
-    # surface it moves.
+    # Probe visibility with the source renderer so approximations cannot hide live dimensions.
     probes = 4
     base_states = pool[rng.integers(0, len(pool), probes)]
     donors = pool[rng.integers(0, len(pool), 4)]
@@ -849,28 +578,7 @@ def _live_dims(kitchen: str, camera: str, size: int) -> np.ndarray:
     return live
 
 
-#: MEASURED, not chosen: 64 states from each env's own ``sample_states`` at its default 256 px on one
-#: H200, against MuJoCo's raster of the same compiled kitchen
-#: (``examples/robocasa_visual/calibrate_tier.py``; the 200-state trajectory version of the same table
-#: is in ``examples/robocasa_visual/media/manifest.json`` and agrees to ~0.1/255). ``*_max`` / ``*_min``
-#: are the thresholds the conformance suite asserts and sit clear of the measurements so a state draw
-#: cannot flake the gate; both are here so the margin is visible rather than implied.
-#:
-#: L45S33 is in this table for the same reason a negative result is in a paper. It is the worst of the
-#: four kitchens measured in ``docs/research/robocasa.md`` Section 11 and it is five times worse than
-#: L52S03 on every column, because its counters and cabinet fronts are textured boxes that MJWarp
-#: draws flat. Registering only the good kitchen would make the tier's numbers a selection effect.
-#: RE-MEASURED 2026-08-11, AND ``interior_exact_frac`` MOVED BY 3x ON EVERY CELL. The previous table
-#: was taken before ``_context`` moved the CUDA-graph capture INSIDE ``MW.gl_rounding`` (see the
-#: comment there): captured outside, the graph every render replayed was the TRUNCATING kernel and the
-#: patch reached only the warm-up frame. Putting the graph back outside reproduces the OLD numbers to
-#: three decimals -- 0.1299 / 0.0498 against the 0.129 / 0.048 that were declared, and mean 6.55
-#: against the declared 6.54-6.58 -- which is what says the
-#: capture fix is the cause and not a harness difference. Rounding instead of truncating is worth
-#: interior-exact **0.129 -> 0.413, 0.079 -> 0.683, 0.158 -> 0.451, 0.048 -> 0.153** and only 0.1-0.4
-#: of a level on ``mean_abs``, which is exactly why the other three columns looked like they still
-#: reproduced and this one did not. The thresholds are UNCHANGED: every one of them still passes, now
-#: with more margin, and a threshold moved to fit a measurement is not a threshold.
+# Recorded source comparisons and fixed visual acceptance thresholds.
 _AT = (
     "256 px, 64 states x 4 independent draws from sample_states (fresh env per draw, seeds 0-3), "
     "H200, mujoco 3.11.0 / mujoco-warp 3.11.0 / warp 1.16.0, graph captured inside gl_rounding; "
@@ -912,10 +620,6 @@ FIDELITY = {
         "measured_at": _AT,
     },
     ("L52S03", "robot0_eye_in_hand"): {
-        # The widest spread in the family, and it is the state distribution rather than the renderer:
-        # a wrist camera 10 cm from an object is mostly showing that object, so randomising its yaw
-        # (see ``sample_states``) moves the frame far more than it does on a room-scale view. The
-        # thresholds are set from the worst draw, not the first.
         "mean_abs": 9.69,
         "within8_frac": 0.826,
         "ssim": 0.857,
@@ -1014,32 +718,24 @@ VISUAL_NOTE = (
 )
 
 
-#: ``env class -> LoadedCorrector``. Bounded: a corrector owns a captured CUDA graph and two static
-#: uint8 buffers of ``net_batch × out_size²×3``.
+# Each cached corrector owns a CUDA graph and fixed input/output buffers.
 _CORRECTOR_CACHE = _RES.BoundedCache(4, name="robocasa.correctors", on_evict=lambda c: c.close())
 
 
 class RoboCasaCorrectedBase(RoboCasaBase):
-    """A RoboCasa cell whose frame is drawn by MJWarp at 112 px and then by a LEARNED corrector.
+    """VISUAL TIER, LEARNED decoder for a specific kitchen and camera.
 
-    VISUAL TIER, LEARNED decoder. See ``stable_envs/render/rendernet.py`` for what that is and
-    ``docs/concepts/fidelity-tiers.md`` for what it does and does not license.
-
-    Everything about the state, the variation space and the reference bridge is inherited unchanged
-    from the plain class: the same qpos reaches the same MJWarp scene through the same camera. The two
-    differences are the RENDER PROFILE (112 px, textures at LOD 2, backface culling off — all three
-    read from the checkpoint, never chosen here) and the network applied to its output.
+    A checkpoint supplies the low-resolution MJWarp profile and the network
+    that maps it to the output resolution. State and appearance use the plain
+    class's contracts; synthesized detail is not source renderer output.
     """
 
     render_decoder = "learned"
-    #: An UNSEALED corrector, for the one caller that cannot use a sealed one: the training script,
-    #: which must run this render path in order to measure the declaration a sealed checkpoint is
-    #: required to carry. Never set by anything a user reaches, and a class with one set cannot be
-    #: registered, because registration reads the declaration out of the sealed file.
+    # Training may supply an unsealed corrector to measure its eventual declaration.
     _corrector_override = None
 
     def corrector(self):
-        """The verified corrector for this cell. Built once per process, on first use."""
+        """Return the cached verified corrector, or the explicit training override."""
         if self._corrector_override is not None:
             return self._corrector_override
         cls = type(self)
@@ -1058,13 +754,9 @@ class RoboCasaCorrectedBase(RoboCasaBase):
         style=None,
         out=None,
     ) -> torch.Tensor:
-        """``(...,state_dim)`` -> ``(...,256,256,3)`` uint8 on device, through the corrector.
+        """Apply the corrector at its checkpoint output size and supersample 1.
 
-        ``size`` and ``supersample`` are REFUSED rather than serviced when they are not the pair the
-        checkpoint was fitted on. A corrector is a fixed map from one resolution to another; asked for
-        a 128 px frame it could only be given a resized 256 px one, which is a different picture from
-        the one every declared number here describes, produced silently. The plain sibling class
-        renders at any size and is the right answer to that request.
+        Reject other sizes rather than silently resampling the network output.
         """
         corr = self.corrector()
         size = int(size or self.size)
@@ -1117,18 +809,10 @@ def _corrected_note(base_note: str, hdr: dict) -> str:
 
 
 def _make_corrected_classes() -> dict:
-    """One class per cell with a sealed corrector on this machine. NO CHECKPOINT, NO CLASS.
+    """Register separate corrected classes only for available sealed checkpoints.
 
-    This is the whole opt-in mechanism and it is deliberately not a flag. A corrector exists for a
-    cell or it does not; when it does, it is a DIFFERENT env with a different name, a different
-    declared fidelity and a different answer to "what drew this", so it is a different registry entry.
-    When it does not, nothing appears and the plain cell is untouched — the absence of weights removes
-    an env, it never changes one.
-
-    Everything a class needs comes out of the checkpoint header: the architecture, the render profile,
-    and the MEASURED declaration, which is a property of the (renderer, checkpoint) pair rather than
-    of the class. So a new sealed checkpoint dropped into the cache directory registers a new class
-    with its own numbers and no code change here.
+    Read rendering profiles and fidelity declarations from checkpoint headers;
+    missing weights leave the plain classes unchanged.
     """
     made = {}
     have = set(available_kitchens())
@@ -1185,7 +869,7 @@ def _make_corrected_classes() -> dict:
 
 
 def missing_kitchens() -> dict[str, str]:
-    """Declared cells with no compiled kitchen on this machine, and the command that builds each."""
+    """Map missing declared kitchens to commands that build their local caches."""
     have = set(available_kitchens())
     return {k: _BUILD_CMD.format(kitchen=k) for _, k, _ in CELLS if k not in have}
 

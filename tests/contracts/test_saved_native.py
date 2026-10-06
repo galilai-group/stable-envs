@@ -1,9 +1,3 @@
-"""Frozen source trajectory contract; source package is not needed to read it.
-
-This moves the classic corpus replay out of the optional live-source module.
-It is a historical regression, not new source/version acceptance.
-"""
-
 from pathlib import Path
 
 import pytest
@@ -26,6 +20,7 @@ pytestmark = pytest.mark.regression
     ],
 )
 def test_frozen_source_state_and_tasks(domain, name):
+    """Replay pinned historical evidence without importing the source package."""
     family = "native_classic" if domain in {"cartpole", "pendulum"} else "native_classic_remaining"
     root = Path(__file__).resolve().parents[1] / "fixtures/semantics" / family
     manifest, arrays = native_corpus(root, domain)

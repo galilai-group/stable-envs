@@ -1,5 +1,3 @@
-"""Historical run/hop/walk semantics over the existing locomotion renderers."""
-
 from __future__ import annotations
 
 import torch
@@ -62,9 +60,7 @@ class DMCContinuationSemantics:
         )
 
     def _layout_dtypes(self):
-        return {
-            key if isinstance(key, tuple) else (key,): dtype for key, (_, dtype) in self._resume_fields.items()
-        }
+        return {key if isinstance(key, tuple) else (key,): dtype for key, (_, dtype) in self._resume_fields.items()}
 
     def _pack_render_state(self, state):
         if not isinstance(state, TensorDict):
@@ -100,4 +96,3 @@ class DMCContinuationSemantics:
         if hasattr(self, "_simulator"):
             self._simulator.close()
         super()._close()
-

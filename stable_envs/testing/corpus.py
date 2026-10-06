@@ -1,9 +1,8 @@
-"""Sealed numeric trajectories for source-independent replay.
+"""Sealed numeric trajectories for one registration.
 
-Version 1 stores one registration's complete batched State at reset and after
-all actions, plus source task outputs. It deliberately makes no pixel, camera,
-performance or acceptance claim. Producers supply independent source identity;
-consumers still need registration-specific comparisons and acceptance criteria.
+State arrays have shape [T+1, B, ...]; actions and task outputs use [T, B, ...].
+The manifest records source and producer identities. Loading verifies hashes
+and schema; registration acceptance requires separate comparisons and gates.
 """
 
 from __future__ import annotations
@@ -77,7 +76,7 @@ class Trajectory:
     arrays: dict[str, np.ndarray]
 
     def state(self, index, *, device="cpu"):
-        """Materialize an owned State; no live simulator, opaque handle or pickle."""
+        """Copy one time index into an owned batched State on the requested device."""
         if type(index) is not int or not 0 <= index <= self.metadata["steps"]:
             raise IndexError(index)
         result = TensorDict({}, batch_size=[self.metadata["batch"]], device=device)
@@ -88,7 +87,7 @@ class Trajectory:
 
 
 def write_trajectory(directory, *, registration, seed, source, producer, arrays):
-    """Validate then create a fresh directory. Existing evidence is never replaced."""
+    """Validate arrays and write a sealed corpus in a new directory; never replace evidence."""
     arrays = {key: np.asarray(value) for key, value in arrays.items()}
     actions = arrays.get("actions")
     if actions is None or actions.ndim != 3:
@@ -112,7 +111,7 @@ def write_trajectory(directory, *, registration, seed, source, producer, arrays)
 
 
 def load_trajectory(directory, *, registration):
-    """Verify all bytes and schema before exposing a trajectory for one registration."""
+    """Verify hashes, registration, and schema; return read-only arrays without pickle."""
     root = Path(directory)
     entries = verify_seal(root)
     if set(entries) != {"manifest.json", "trajectory.npz"}:

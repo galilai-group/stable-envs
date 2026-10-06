@@ -1,18 +1,3 @@
-"""Variation spaces: persistent environment configuration declared as a space you can sample.
-
-A leaf may be render-only, dynamics-only, reset/task, or render+dynamics. Leaves expose
-``init_value`` / ``value`` / ``reset`` / ``sample`` / ``set_value`` / ``check``.
-``reset_variation_space`` resets a whole tree. ``batch_sample`` draws B independent values for a
-subtree and returns them stacked, which is the form the scene builder consumes.
-
-This module owns the Variation-space API. Environments written against it do not need
-another package's space types.
-
-Values flow into a ``Scene2D`` as per-environment tensors, so a batch of 4096 environments can
-each carry a different block colour, agent radius or background, and still render in a single
-kernel launch. Domain randomisation becomes a tensor, not a loop over envs.
-"""
-
 from __future__ import annotations
 
 from collections.abc import Callable, Iterable, Sequence
@@ -23,7 +8,7 @@ from gymnasium import spaces as gspaces
 
 
 class _Valued:
-    """Shared value/constraint machinery for the leaf spaces."""
+    """Store default/current leaf values and an optional additional constraint."""
 
     def __init__(self, init_value=None, constrain_fn: Callable[[Any], bool] | None = None):
         self._init_value = init_value
@@ -103,11 +88,9 @@ class Box(_Valued, gspaces.Box):
         raise RuntimeError("Box: no sample satisfied constrain_fn")
 
     def batch_sample(self, batch: int, rng: np.random.Generator | None = None) -> np.ndarray:
-        """``(batch, *shape)`` independent draws — the form the GPU scene builder wants.
+        """Draw (batch, *shape) uniform values within bounds using a NumPy generator.
 
-        Uses a plain uniform over [low, high] rather than B calls to ``sample``: for 4096 environments
-        the per-call overhead of gymnasium's sampler dominates, and a per-env appearance draw is exactly
-        the thing this repo is trying to make free.
+        This vectorized path does not apply constrain_fn or update the stored value.
         """
         rng = rng or np.random.default_rng()
         lo = np.broadcast_to(self.low, self.shape).astype(np.float64)
@@ -116,7 +99,7 @@ class Box(_Valued, gspaces.Box):
 
 
 class RGBBox(Box):
-    """A colour, as 3 channels in 0-255. Separate from ``Box`` so a renderer can recognise it."""
+    """Three uint8 color channels in [0, 255], distinguishable from other Box leaves."""
 
     def __init__(self, init_value=(0, 0, 0), low=0, high=255, **kw):
         super().__init__(
@@ -125,7 +108,7 @@ class RGBBox(Box):
 
 
 class Dict(gspaces.Dict):
-    """A tree of variation spaces, addressed by ``space['block']['color']``."""
+    """Nested variation spaces with current values and dotted leaf paths."""
 
     def __init__(self, spaces_dict: dict, **kw):
         super().__init__(spaces_dict, **kw)
@@ -152,7 +135,7 @@ class Dict(gspaces.Dict):
         return ok
 
     def names(self, prefix: str = "") -> list[str]:
-        """Every leaf path, e.g. ``block.color``. This is the env's advertised knob list."""
+        """Return all dotted leaf paths, optionally prefixed."""
         out = []
         for k, v in self.spaces.items():
             p = f"{prefix}{k}"
@@ -166,7 +149,7 @@ class Dict(gspaces.Dict):
         return node
 
     def update(self, keys: Iterable[str]) -> None:
-        """Resample exactly the named leaves (dotted paths), leaving everything else alone."""
+        """Resample named leaves or all leaves of named subtrees, leaving other values unchanged."""
         for k in keys:
             node = self._walk(k)
             if isinstance(node, Dict):
@@ -184,13 +167,9 @@ class Dict(gspaces.Dict):
             self._walk(k).set_init_value(v)
 
     def flat_layout(self) -> list[tuple[str, int, int]]:
-        """``[(path, offset, width), ...]`` — the flat vector layout of every leaf, in name order.
+        """Return (path, offset, width) entries sorted by leaf path.
 
-        This is what makes style storable. A variation tree is convenient to author and impossible to
-        put in a dataset column; the flat layout gives it a fixed width and a stable order so a row of
-        floats round-trips back to the same appearance. Sorted by path so the layout depends only on
-        the space's structure, never on dict insertion order — a layout that shifts between runs would
-        silently reinterpret every stored style.
+        Sorting keeps stored configuration columns independent of dictionary insertion order.
         """
         out, off = [], 0
         for path in sorted(self.names()):
@@ -206,7 +185,7 @@ class Dict(gspaces.Dict):
         return (lay[-1][1] + lay[-1][2]) if lay else 0
 
     def pack(self, values: dict | None = None) -> np.ndarray:
-        """Current (or supplied) leaf values -> a flat float32 vector of width ``flat_dim``."""
+        """Pack current values into a float32 row, optionally overriding supplied dotted paths."""
         vec = np.zeros(self.flat_dim, np.float32)
         for path, off, w in self.flat_layout():
             v = values[path] if values is not None and path in values else self._walk(path).value
@@ -214,7 +193,7 @@ class Dict(gspaces.Dict):
         return vec
 
     def unpack(self, vec) -> dict:
-        """Flat vector -> ``{path: value}``. Inverse of ``pack``."""
+        """Split a flat float32 row into dotted-path values; vector values may share its storage."""
         vec = np.asarray(vec, np.float32).reshape(-1)
         return {p: (vec[o] if w == 1 else vec[o : o + w]) for p, o, w in self.flat_layout()}
 
@@ -236,7 +215,7 @@ def reset_variation_space(
     options: dict | None = None,
     default_variations: Sequence[str] | None = None,
 ) -> None:
-    """Reset, then resample the requested leaves, then apply explicit overrides."""
+    """Seed and reset defaults, resample selected leaves, then apply and validate explicit overrides."""
     variation_space.seed(seed)
     variation_space.reset()
     options = options or {}

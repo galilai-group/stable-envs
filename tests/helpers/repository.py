@@ -1,14 +1,9 @@
-"""Paths in the Git index, or an exported artifact when .git is absent.
-
-Repository tests inspect working contents for these paths. Untracked local work
-is not a shipped file and must not be deleted to make package/nav checks pass.
-"""
-
 import subprocess
 from pathlib import Path
 
 
 def maintained_paths(root):
+    """List indexed paths in a checkout, or all files in an exported tree without its own Git root."""
     root = Path(root).resolve()
     try:
         top = subprocess.check_output(

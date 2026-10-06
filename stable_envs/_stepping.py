@@ -1,9 +1,7 @@
-"""Shared public action-shape/capture contract, independent of execution strategy.
+"""Dispatch public action batches and sequences with independent capture slices.
 
-The serial sequence executor is the correctness reference for optimized executors.
-An optional process executor overlaps the next transition with rendering owned
-snapshots. Only one transition is in flight; no renderer runs in a worker thread.
-Neither snapshot restoration nor implicit reset is used to advance a sequence.
+Finished lanes hold their endpoints without implicit reset. The process path
+keeps at most one transition in flight and renders owned snapshots in the parent.
 """
 
 from __future__ import annotations
@@ -18,7 +16,7 @@ def _actions(env, actions):
     a = actions if torch.is_tensor(actions) else np.asarray(actions)
     shape = tuple(env.action_spec.shape)
     b = env.num_envs
-    # Preserve the existing discrete scalar spelling without making [B,T] ambiguous.
+    # Accept discrete [B] actions without treating an ambiguous [B,T] array as a sequence.
     if shape == (1,) and a.shape == (b,) and not env.action_spec.dtype.is_floating_point:
         a = a.reshape(b, 1)
     if tuple(a.shape) == (b, *shape):
@@ -40,7 +38,7 @@ def _done(result):
 
 
 def _masked_outputs(result, active, *, all_active):
-    """Invalid task-output slots are zero; held endpoint States are not padding."""
+    """Zero invalid task outputs while retaining held endpoint States."""
     out = result.exclude("state").clone()
     if "state" in result.keys():
         out["state"] = result["state"]
@@ -91,8 +89,7 @@ def step(env, actions, *, states=slice(None), frames=slice(-1, None)):
     def submit(t, mask, all_active):
         pipeline.submit_step(
             acts[:, t],
-            # The initial mask is known to be all true; do not synchronize the
-            # GPU just to read it back before starting CPU simulation.
+            # The initial mask is already known to be all true; avoid a GPU readback.
             active=None if all_active else mask,
             capture_state=t in state_times or t in frame_times or t == length - 1,
         )
@@ -112,20 +109,17 @@ def step(env, actions, *, states=slice(None), frames=slice(-1, None)):
                 result = advance(acts[:, t])
                 live_state, live_frame = result.get("state", None), None
             elif bool(active.any()):
-                # Family hook actually skips finished lanes, without step/restore.
+                # Skip finished lanes through the family hook, without stepping and restoring them.
                 result = advance(acts[:, t], active=active)
                 live_state, live_frame = result.get("state", None), None
             needs_state = t in state_times or t in frame_times or t == length - 1
             if needs_state and live_state is None:
                 live_state = env.get_state()
             next_active = active & ~_done(result) if t + 1 < length else active
-            # Reuse the execution decision for output padding. In particular,
-            # empty boolean indexing still traverses large info images. This
-            # adds no device-to-host decision beyond the next step's routing.
+            # Reuse the routing decision for padding to avoid another readback or empty indexing of large images.
             next_all_active = bool(next_active.all()) if t + 1 < length else all_active
             if pipeline is not None and t + 1 < length and (next_all_active or bool(next_active.any())):
-                # receive_step owns its outputs. Workers may now overwrite their
-                # buffers while the parent renders the previous endpoint.
+                # Received outputs own their storage, so workers can reuse buffers while the parent renders.
                 submit(t + 1, next_active, next_all_active)
                 pending = True
             history.append(_masked_outputs(result, active, all_active=all_active).exclude("state"))

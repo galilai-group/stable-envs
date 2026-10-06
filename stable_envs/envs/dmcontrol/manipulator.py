@@ -1,42 +1,17 @@
-"""DM Control ``manipulator`` — the parity tier, and the three declarations only this cell carries.
-
-``bring_ball`` is the one fixed-camera domain with a per-episode ORIENTATION and a per-episode BODY,
-and it turned out to need nothing from the renderer that a per-episode position does not already need
-(``_episode_slots``); a per-episode body resolves to the geoms hanging off it (``_hideable``). Its
-camera is ``fovy = 4``, nearly orthographic from 16 m, and its one model light is DIRECTIONAL with
-``castshadow = 1`` — both of which the existing bake and cast handled unchanged.
-
-Three things are declared here and nowhere else in the family, and all three are preserved
-facts rather than choices this migration made: the registered default size (224 px), the one ``SHAPE_KNOBS``
-entry, and the task-specific state exclusions ``check_state_dims_matter`` is OFFERED.
-"""
-
 from __future__ import annotations
 
 from ...render import raycast3d as R3
 from ._aligned import DMCAlignedSemantics
 from ._cells import parity_cell
 
-#: Cells whose registered default is rendered at something other than the family's 84 px, so the
-#: size the conformance suite builds them at is the size they are certified at. ``manipulator`` is
-#: 224 px.
 DEFAULT_SIZE = 224
 
 
-#: Manipulator target size at the registered default: the edge/radius its ``target.shape`` knob
-#: writes for both of its alternatives.
+# Size of the registered wrapper target alternatives.
 _REGISTERED_SMALL_TARGET = 0.015
 
-#: Per-cell ``SHAPE_KNOBS``. ONE cell, because one cell's registered wrapper offers a shape knob.
-#: The registered ``target.shape`` is ``Discrete(2)`` over a 0.015 box and a 0.015 sphere, and
-#: neither is the compiled model's own target (``sphere size=.02``, from ``manipulator.xml``'s ``ghost``
-#: class) — so the leaf carries THREE alternatives and its default is index 2, the model's own. That is
-#: what keeps the DEFAULT STYLE a render of the compiled model, which is the appearance every parity
-#: number here is measured under, while still making the registered default reachable, which is the
-#: Gate-F obligation. Note what that is NOT: ``check_default_style_is_official`` compares
-#: ``render(states)`` against ``render(states, style=default_style())`` and never touches the official
-#: renderer, so it cannot see a default that drifted off the compiled model. The ``len(cur) != 1``
-#: assertion in ``make_variation_space`` is what covers that, and it is why the assertion exists.
+# Keep the compiled model target as a third choice and the default.
+# Wrapper box/sphere choices use a smaller size and must not replace the source default.
 SHAPE_KNOB_SPECS: dict[str, dict] = {
     "DMCManipulatorBringBall": {
         "target_ball": (
@@ -47,10 +22,7 @@ SHAPE_KNOB_SPECS: dict[str, dict] = {
     },
 }
 
-#: somewhere a reviewer can approve or refuse it.
-#: Candidate render-invariant dimensions per cell, OFFERED to ``check_state_dims_matter``. A name here
-#: excludes nothing: the check validates each one against the compiled model and refuses any whose
-#: perturbation moves anything but the orientation of SPHERE geoms. See ``STATE_DIMS_NOTE``.
+# Candidates only: the conformance check must verify sphere-only rotation before excluding them.
 RENDER_INVARIANT_DIMS: dict[str, tuple[str, ...]] = {
     "DMCManipulatorBringBall": ("ball_y", "target_ball_quat_qw", "target_ball_quat_qy"),
 }

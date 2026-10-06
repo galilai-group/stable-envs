@@ -1,10 +1,3 @@
-"""Private DMC process strategy; default selection requires independent gates.
-
-Workers retain the accepted scalar task implementations. Only commands/actions
-use pipes; exhaustive State and nested task outputs use fixed typed columns.
-The parent owns rendering and receives independent snapshots before lookahead.
-"""
-
 from __future__ import annotations
 
 import ctypes
@@ -44,8 +37,9 @@ def _path(key):
 
 
 def _views(buffers, specs, batch):
-    return {key: np.frombuffer(buffers[key], dtype=dtype).reshape(batch, *shape)
-            for key, (shape, dtype) in specs.items()}
+    return {
+        key: np.frombuffer(buffers[key], dtype=dtype).reshape(batch, *shape) for key, (shape, dtype) in specs.items()
+    }
 
 
 def _worker(conn, domain, start, count, batch, seed, cpus, buffers, specs):
@@ -67,8 +61,15 @@ def _worker(conn, domain, start, count, batch, seed, cpus, buffers, specs):
                 views[("task", *_path(key))][rows] = value.numpy()
 
         write_state(adapter.get_state())
-        conn.send((True, dict(pid=os.getpid(), affinity=sorted(os.sched_getaffinity(0))
-                             if hasattr(os, "sched_getaffinity") else None)))
+        conn.send(
+            (
+                True,
+                dict(
+                    pid=os.getpid(),
+                    affinity=sorted(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else None,
+                ),
+            )
+        )
         while True:
             command, payload = conn.recv()
             if command == "close":
@@ -82,8 +83,10 @@ def _worker(conn, domain, start, count, batch, seed, cpus, buffers, specs):
             elif command == "get_state":
                 write_state(adapter.get_state())
             elif command == "set_state":
-                state = TensorDict({key[1:]: torch.from_numpy(value[rows])
-                                    for key, value in views.items() if key[0] == "state"}, [count])
+                state = TensorDict(
+                    {key[1:]: torch.from_numpy(value[rows]) for key, value in views.items() if key[0] == "state"},
+                    [count],
+                )
                 adapter.set_state(state)
             elif command == "reset":
                 write_state(adapter.reset(payload))
@@ -108,7 +111,11 @@ def _worker(conn, domain, start, count, batch, seed, cpus, buffers, specs):
 
 
 class DMCProcessAdapter(ProcessRequests):
-    """Bounded pure-process owners, privately constructed for acceptance first."""
+    """Run DMC adapters in persistent spawned processes with typed shared outputs.
+
+    Copy State and task tensors into parent-owned storage after each completed
+    request. Physics stays on CPU even when outputs are delivered on CUDA.
+    """
 
     _worker_family = "DMC"
 
@@ -131,29 +138,58 @@ class DMCProcessAdapter(ProcessRequests):
             initial = prototype.get_state()
             self.fields = {key: (value.shape[1], value.dtype) for key, value in initial.items(True, True)}
             result = prototype.step(np.zeros((1, self.action_dim)))
-            self._specs = {("task", *_path(key)): (tuple(value.shape[1:]), value.numpy().dtype)
-                           for key, value in result.exclude("state").items(True, True)}
-            self._specs.update({("state", *_path(key)): (tuple(value.shape[1:]), value.numpy().dtype)
-                                for key, value in initial.items(True, True)})
-            self._configuration_methods = {name for name in (
-                "configure_gravity", "configure_density", "configure_proximal_density", "configure_upper_arm_density"
-            ) if hasattr(prototype, name)}
+            self._specs = {
+                ("task", *_path(key)): (tuple(value.shape[1:]), value.numpy().dtype)
+                for key, value in result.exclude("state").items(True, True)
+            }
+            self._specs.update(
+                {
+                    ("state", *_path(key)): (tuple(value.shape[1:]), value.numpy().dtype)
+                    for key, value in initial.items(True, True)
+                }
+            )
+            self._configuration_methods = {
+                name
+                for name in (
+                    "configure_gravity",
+                    "configure_density",
+                    "configure_proximal_density",
+                    "configure_upper_arm_density",
+                )
+                if hasattr(prototype, name)
+            }
             for name in ("proximal_density", "upper_arm_density"):
                 if hasattr(prototype, "_" + name):
                     self._config[name] = np.repeat(getattr(prototype, "_" + name), num_envs)
         finally:
             prototype.close()
-        self._slices = [slice(int(lanes[0]), int(lanes[-1]) + 1) for lanes in np.array_split(np.arange(num_envs), processes)]
+        self._slices = [
+            slice(int(lanes[0]), int(lanes[-1]) + 1) for lanes in np.array_split(np.arange(num_envs), processes)
+        ]
         context = mp.get_context("spawn")
-        self._buffers = {key: context.RawArray(ctypes.c_ubyte, int(num_envs * np.prod(shape) * dtype.itemsize))
-                         for key, (shape, dtype) in self._specs.items()}
+        self._buffers = {
+            key: context.RawArray(ctypes.c_ubyte, int(num_envs * np.prod(shape) * dtype.itemsize))
+            for key, (shape, dtype) in self._specs.items()
+        }
         self._views = _views(self._buffers, self._specs, num_envs)
         groups = [None] * processes if cpus is None else [group.tolist() for group in np.array_split(cpus, processes)]
         try:
             for rows, group in zip(self._slices, groups, strict=True):
                 parent, child = context.Pipe()
-                process = context.Process(target=_worker, args=(child, domain, rows.start, rows.stop - rows.start,
-                                          num_envs, int(seed), group, self._buffers, self._specs))
+                process = context.Process(
+                    target=_worker,
+                    args=(
+                        child,
+                        domain,
+                        rows.start,
+                        rows.stop - rows.start,
+                        num_envs,
+                        int(seed),
+                        group,
+                        self._buffers,
+                        self._specs,
+                    ),
+                )
                 try:
                     process.start()
                 except BaseException:
@@ -173,9 +209,15 @@ class DMCProcessAdapter(ProcessRequests):
             raise RuntimeError("DMCProcessAdapter is closed")
 
     def _owned(self, group):
-        return TensorDict({key[1:]: torch.from_numpy(value.copy()).to(self.device)
-                           for key, value in self._views.items() if key[0] == group},
-                          [self.num_envs], device=self.device)
+        return TensorDict(
+            {
+                key[1:]: torch.from_numpy(value.copy()).to(self.device)
+                for key, value in self._views.items()
+                if key[0] == group
+            },
+            [self.num_envs],
+            device=self.device,
+        )
 
     def get_state(self):
         self._request("get_state")
@@ -210,7 +252,9 @@ class DMCProcessAdapter(ProcessRequests):
         if active is not None:
             active = active.detach().cpu().numpy() if torch.is_tensor(active) else np.asarray(active)
             if active.shape != (self.num_envs,) or not active.all():
-                raise ValueError("Accepted DMC wrappers do not expose terminal lanes; partial active masks are unsupported")
+                raise ValueError(
+                    "Accepted DMC wrappers do not expose terminal lanes; partial active masks are unsupported"
+                )
         self._submit("step" if capture_state else "advance", [actions[rows] for rows in self._slices])
 
     def receive_step(self):
@@ -243,8 +287,7 @@ class DMCProcessAdapter(ProcessRequests):
         force = name in self._config
         if force and np.array_equal(values, self._config[name]):
             return
-        # Aligned density changes rebuild/reset the whole source batch. Force
-        # all shards through that path, even if a shard's own values stayed equal.
+        # Density changes reset the source batch; force every shard to reset even if its values are unchanged.
         self._request("configure", [(method, values[rows], force) for rows in self._slices])
         if force:
             self._config[name] = values

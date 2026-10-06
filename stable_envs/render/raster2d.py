@@ -1,81 +1,3 @@
-"""One fused kernel that rasterizes any ``Scene2D``. This is the engine the whole repo stands on.
-
-Design, and why it is a single kernel rather than a library of them. Every colour in a flat 2-D scene is
-a closed-form function of a handful of numbers per primitive, so an entire supersample block for one
-output pixel can be evaluated in registers and reduced before anything is written. The alternative —
-compositing with tensor ops — allocates a ``(B,3,R,R)`` float canvas and touches it once per primitive;
-measured on the PushT prototype that was ~2 Gpixel/s on a card with far more bandwidth than that, and
-the fused kernel reaches 3.2 M frames/s end-to-end at 96px and 5.6 M for the rasterizer alone
-(155 GB/s). The gap between the two is ``scene()``: Python-issued small torch ops, flat regardless of
-batch, i.e. 41% of wall time at B=16384 and the next thing worth attacking.
-
-**That cost was recorded here as "~2.0 ms" and the number was PushT's.** It is ~2.0 ms for a scene of
-nine primitives and 100-315 ms for one of 157 to 436 — still flat in the batch (roundabout-v0 measured
-312 ms at B=16 and 312 ms at B=1024, 53,481 torch calls for 436 primitives), so still pure dispatch,
-but two orders of magnitude larger and the dominant cost of four of the six highway-env envs rather
-than a footnote. ``SceneBuilder`` now takes a batched push so an env issues one call per GROUP of
-primitives; roundabout-v0's ``scene()`` is 3.5 ms.
-
-This is the same failure the ``tl.static_range`` note below records, on the same kernel, for the
-second time: a micro-benchmark on the smallest instance of a workload recommending the opposite of
-what the workload wants. Both numbers on this page now name the scene they were measured on, because
-that is the only thing that would have caught either.
-
-Memory traffic is the output plus a small per-primitive parameter read. No canvas, no intermediate.
-
-The primitive loop is a RUNTIME loop, not ``tl.static_range``. Unrolling it looked like a small win and
-was in fact a large loss, which is worth recording because the measurement that justified it was taken
-on the wrong scene. On PushT's 9 primitives the unroll was 7.6% faster (2.96 M vs 2.77 M frames/s at
-96px). On a typical scene it was 4x SLOWER: highway-env measured 5,347 f/s unrolled against 21,342 with
-the runtime loop at 134 primitives, and Merge 7,182 against 27,618 at 130. Past a few dozen primitives
-the unrolled kernel collapses, long before ptxas refuses to compile it at all — which it does above
-roughly 340 primitives (340 alone takes 35.6 s; 350 aborts with SIGABRT), so highway-env's 604-primitive
-roundabout could not be rendered at any speed.
-
-The lesson generalises past this kernel: a micro-benchmark on the smallest instance of a workload can
-recommend the opposite of what the workload wants.
-
-Past a few dozen primitives the loop is also mostly WASTED, and that is what ``_bbox_kernel`` is for.
-Every primitive is tested against every pixel, so the cost is ``pixels x primitives`` even though a
-highway-env vehicle covers ~200 of a frame's 262,144 pixels. A pre-pass computes each primitive's
-world-space bounding box, the pixel block becomes a 2-D TILE rather than a strip of consecutive
-addresses, and the loop skips any primitive whose box misses the tile. The skip is a scalar branch, so
-what it saves is the whole per-pixel body — and what it costs is four broadcast loads and four
-comparisons, which is why it is only switched on above ``_CULL_MIN_PRIMS``. Measured at 256px,
-batch 1024, kernel only: highway-v0 189.5 -> 14.5 ms and roundabout-v0 65.2 -> 7.6 ms, i.e. 13.1x
-and 8.6x.
-
-The box is a BOUND, not an approximation, so the picture cannot change — with two cases that need
-saying out loud.
-
-A polygon whose vertices are collinear has no interior, and the kernel's inside test (``max`` over the
-outward edge planes ``<= 0``) then describes a line or a halfplane rather than a polygon: unbounded,
-hence not inside any box. Those are marked uncullable by their zero shoelace area and drawn the old
-way. ``tests/gpu/test_fast_paths.py`` asserts the two paths agree byte for byte over every
-registered env rather than leaving that as an argument.
-
-The second case is not about culling at all and is recorded here because it looks exactly like it.
-Two compilations of this kernel can round the polygon SDF differently — ptxas is free to contract
-``a*b + c*d`` into an FMA or not, and the choice depends on the surrounding code, which the tile shape
-changes. On a pixel whose centre lies within ~3e-5 world units of an edge that decides ``sdf <= 0``.
-Measured over intersection-v0 and racetrack-v0 at 600px, batch 1024 (368 M pixels): the culled path
-at two different tile shapes agrees EXACTLY, and the unculled path disagrees with ITSELF at two
-different block sizes on the same 3 and 1 pixels. So it is one expression compiled twice, not a
-bound that is too small — and the production path, which is the culled one above
-``_CULL_MIN_PRIMS``, is the stable one.
-
-Anti-aliasing is supersampling: evaluate ``ss x ss`` subpixels per output pixel and box-average. ``ss=1``
-is the default because it is what the evidence supports — against gym_pusht, ss=1 gives mean |diff|
-2.35/255 with **100% of interior pixels bit-identical**, and it is 1.58x faster than ss=2. Supersampling
-buys edge treatment only, and the reference renderers are themselves aliased, so neither is ground truth
-at an edge.
-
-The torch path is kept, not deleted. It is the executable specification: it is short enough to read as a
-definition of what the picture should be, it runs where Triton does not, and ``tests/gpu`` diffs the two
-against each other. A fast kernel with no independent implementation to check it against is a kernel
-nobody can trust.
-"""
-
 from __future__ import annotations
 
 import torch
@@ -88,17 +10,12 @@ try:
     import triton.language as tl
 
     HAVE_TRITON = True
-except ImportError:  # reported by the renderer, never silent
+except ImportError:
     HAVE_TRITON = False
 
 
 def _pixel_grid(scene: Scene2D, H: int, W: int, device, dtype) -> tuple[torch.Tensor, torch.Tensor]:
-    """Subpixel centres in WORLD coordinates, shape (H,W) each.
-
-    Pixel centres, not corners: a pixel covers ``[i, i+1)`` and samples at ``i+0.5``. Sampling at the
-    corner shifts the whole image half a pixel, which is invisible next to a reference render and shows
-    up immediately in a pixel diff.
-    """
+    """Return (H, W) world-coordinate grids sampled at pixel centers, respecting flip_y."""
     x0, y0, x1, y1 = scene.world
     sx = (x1 - x0) / W
     sy = (y1 - y0) / H
@@ -110,53 +27,11 @@ def _pixel_grid(scene: Scene2D, H: int, W: int, device, dtype) -> tuple[torch.Te
 
 
 def _prim_plan(scene: Scene2D, Rh: int, Rw: int) -> list[tuple]:
-    """Per primitive: what it actually is, and where on the frame it can possibly paint.
+    """Plan active primitive families, polygon edges, and bounded pixel windows.
 
-    ``render_torch`` used to evaluate all three primitive families over the whole frame for every
-    slot — a disc paid for four polygon edges and a capsule, and a wall covering 2% of the picture
-    paid for the other 98%. Neither is arithmetic that reaches a pixel; both are B x Rh x Rw
-    temporaries. This is the pre-pass that lets the loop skip them, and it is the CPU counterpart of
-    what ``_bbox_kernel`` does per tile on the GPU.
-
-    Returned per primitive, all of it decided on the HOST from one transfer:
-
-      ``(disc, ring, poly, outline, seg, edges, r0, r1, c0, c1)``
-
-      * ``disc``/``poly``/``seg`` — this family appears in this slot for at least one environment.
-        ``kind`` is per environment, so a slot that is a polygon in every row costs nothing for the
-        two families it is not; a slot that is disabled (``kind == 0``) in every row costs nothing
-        at all. Skipping a family no row has changes no pixel, because the family's paint is masked
-        by ``kind ==`` that family and the mask is empty.
-      * ``ring`` / ``outline`` — the inner disc and the polygon outline exist only where
-        ``inner_r > 0`` and ``line_w > 0``. Where no row has one, its ``where`` is a no-op over the
-        whole frame, and the outline is the expensive half of a polygon: the inside test is one dot
-        product per edge and the outline is a projection, a clamp, a rejection vector and a squared
-        length.
-      * ``edges`` — ``(e, mixed)`` for each edge some environment actually has. Polygons are padded
-        to ``V`` by repeating the last vertex, so a triangle in a ``V=8`` builder carries five
-        zero-length edges whose contribution the loop computes and then throws away with
-        ``torch.where(degen, ...)``; an edge degenerate in EVERY row is dropped outright. ``mixed``
-        says some rows are degenerate there and some are not, which is the only case that needs the
-        ``where`` at all — and it is rare, because degeneracy comes from padding, which is a
-        property of the vertex count rather than of the environment. Where no row is degenerate,
-        ``torch.where(False, ..., d)`` is ``d``, and dropping it drops a full window-sized select
-        and the ``full_like`` sentinel feeding it, per edge, per polygon.
-      * ``r0:r1, c0:c1`` — the pixel window of the primitive's world-space bound, unioned over the
-        batch. The BOUND is the encoding ``_bbox_kernel`` uses, deliberately including its two
-        special cases: an empty box for ``kind == 0`` and an INFINITE one for a polygon whose twice
-        signed area is exactly zero, which has no interior and whose halfplane intersection is
-        unbounded. Using the same encoding on both devices means there is one culling rule in the
-        repo rather than a second one that nothing tests; ``tests/gpu/test_fast_paths.py`` already
-        holds it against every registered env.
-
-    The window is a union over the batch because one torch op covers the whole batch: a primitive
-    that is static across environments (a wall, a goal marker, PushT's four table edges) keeps a
-    tight window at any batch size, and one that moves per environment widens to what the batch
-    spans. That is a throughput property only — a window that is too large evaluates pixels whose
-    mask then rejects them, and every pixel inside it is computed from exactly the values it was
-    computed from before, so the picture is bit-identical either way. It is also why the plan is
-    NOT cached: it is a pure function of the scene handed in, recomputed per call, with no state
-    that depends on what was rendered before.
+    Each entry contains family/ring/outline flags, (edge, mixed-degeneracy) pairs,
+    and row-group windows. Bounds are conservative across the batch; degenerate
+    polygons remain unbounded. Plans are recomputed from the supplied scene.
     """
     B, N, V = scene.batch, scene.n_prims, scene.vertices
     k, _ = scene.kind, scene.geom.dtype
@@ -164,7 +39,6 @@ def _prim_plan(scene: Scene2D, Rh: int, Rw: int) -> list[tuple]:
     G = int(g.shape[2])
     is_disc, is_poly, is_seg = k == KIND_DISC, k == KIND_POLY, k == KIND_SEGMENT
 
-    # --- what each slot is, and which of its optional parts exist (all (N,) bool) -----------
     rows = [
         is_disc.any(0),
         is_poly.any(0),
@@ -172,9 +46,7 @@ def _prim_plan(scene: Scene2D, Rh: int, Rw: int) -> list[tuple]:
         (is_disc & (g[:, :, 3] > 0)).any(0) if G > 3 else is_disc.new_zeros(N),
         (is_poly & (scene.line_w > 0)).any(0),
     ]
-    # An edge is skippable only if it is degenerate for every environment, and "degenerate" has to
-    # be decided by the expression the loop uses, in the loop's dtype, or the plan and the loop
-    # could disagree about one edge of one polygon.
+    # Skip an edge only if all rows are degenerate under the same dtype and expression used when drawing.
     for e in range(V):
         j = (e + 1) % V
         ex = g[:, :, 2 * j] - g[:, :, 2 * e]
@@ -187,14 +59,11 @@ def _prim_plan(scene: Scene2D, Rh: int, Rw: int) -> list[tuple]:
         ey = g[:, :, 2 * j + 1] - g[:, :, 2 * e + 1]
         rows.append(((ex * ex + ey * ey) < 1e-12).any(0))  # ... and some row does not
 
-    # --- the world-space bound, exactly as _bbox_kernel encodes it ---------------------------
     f64 = torch.float64
     gg = g.to(f64)
     lw = scene.line_w.abs().to(f64)
     vx, vy = gg[:, :, 0 : 2 * V : 2], gg[:, :, 1 : 2 * V : 2]
-    # float64, and then the geom dtype as well: the kernel's ``flat`` is a float32 shoelace
-    # tested against exactly zero, and a polygon it calls unbounded must be unbounded here too
-    # or the two backends would cull by different rules.
+    # Treat zero shoelace area in either float64 or the geometry dtype as unbounded to match the kernel.
     area2 = (vx * torch.roll(vy, -1, -1) - torch.roll(vx, -1, -1) * vy).sum(-1)
     v32x, v32y = g[:, :, 0 : 2 * V : 2], g[:, :, 1 : 2 * V : 2]
     a32 = (v32x * torch.roll(v32y, -1, -1) - torch.roll(v32x, -1, -1) * v32y).sum(-1)
@@ -213,8 +82,7 @@ def _prim_plan(scene: Scene2D, Rh: int, Rw: int) -> list[tuple]:
     bx1 = torch.where(is_disc, gg[:, :, 0] + r, torch.where(is_poly, poly1x, torch.maximum(gg[:, :, 0], sx1) + hw))
     by1 = torch.where(is_disc, gg[:, :, 1] + r, torch.where(is_poly, poly1y, torch.maximum(gg[:, :, 1], sy1) + hw))
     off = k == 0
-    # NaN geometry is not a bound, so it draws over the whole frame, which is what the unbounded
-    # loop did with it. Silently shrinking a window around a NaN is how a bound stops being one.
+    # NaN geometry cannot supply a safe culling bound; evaluate it across the frame.
     bx0 = torch.where(off, inf, bx0).nan_to_num(nan=float("-inf"))
     by0 = torch.where(off, inf, by0).nan_to_num(nan=float("-inf"))
     bx1 = torch.where(off, -inf, bx1).nan_to_num(nan=float("inf"))
@@ -223,9 +91,7 @@ def _prim_plan(scene: Scene2D, Rh: int, Rw: int) -> list[tuple]:
     x0, y0, x1, y1 = scene.world
     sx, sy = (x1 - x0) / Rw, (y1 - y0) / Rh
 
-    # Pixel r samples at its CENTRE, y0 + (r+0.5)*sy, or y1 - (r+0.5)*sy under flip_y. One pixel of
-    # slack on every side so that no rounding of this conversion can cost a pixel the loop would
-    # have painted; one pixel too many costs throughput and nothing else.
+    # Convert pixel centers to windows with one pixel of slack against rounding at the boundary.
     def _window(lx0, ly0, lx1, ly1):
         cc0 = torch.floor((lx0 - x0) / sx - 0.5) - 1
         cc1 = torch.ceil((lx1 - x0) / sx - 0.5) + 2
@@ -237,25 +103,17 @@ def _prim_plan(scene: Scene2D, Rh: int, Rw: int) -> list[tuple]:
             rr1 = torch.ceil((ly1 - y0) / sy - 0.5) + 2
         return (rr0.clamp(0, Rh), rr1.clamp(0, Rh), cc0.clamp(0, Rw), cc1.clamp(0, Rw))
 
-    # The batch UNION window, which is what one torch op over the whole batch can cover.
     ux0, uy0 = bx0.min(0).values, by0.min(0).values
     ux1, uy1 = bx1.max(0).values, by1.max(0).values
     uwin = torch.stack(_window(ux0, uy0, ux1, uy1), dim=1)  # (N,4)
 
-    # Whether the union is worth replacing, decided in WORLD units before any pixel window is built.
-    # This test is three ``(B,N)`` reductions; building the per-row pixel windows for every primitive
-    # and deciding afterwards was measured at 0.57 ms per PushT render at batch 1, against 0.88 ms
-    # for the whole raster -- the scan for an optimisation costing more than the optimisation saves,
-    # on the scenes that do not want it. So the per-row boxes are built only for the primitives whose
-    # union is at least ``_GROUP_MIN_SPREAD`` times the largest single row's box, which is the
-    # necessary condition for grouping to buy anything at all.
+    # Build per-row windows only when the batch union is much larger than any individual bound.
     area = (bx1 - bx0).clamp_min(0) * (by1 - by0).clamp_min(0)  # (B,N)
     spread = (ux1 - ux0).clamp_min(0) * (uy1 - uy0).clamp_min(0) > _GROUP_MIN_SPREAD * area.nan_to_num(0.0).amax(
         0
     )  # (N,)
 
-    # ONE host transfer for the whole plan. Eleven small ``.cpu()`` calls is how a decision that
-    # costs nothing on paper becomes a dozen synchronisations per frame.
+    # Transfer the complete plan once to avoid a synchronization per decision.
     flags = torch.stack(rows + [spread], dim=1).to(f64)
     plan = torch.cat([flags, uwin], dim=1).cpu().tolist()
     wide = [i for i, row in enumerate(plan) if row[5 + 2 * V] and B > 1]
@@ -279,74 +137,20 @@ def _prim_plan(scene: Scene2D, Rh: int, Rw: int) -> list[tuple]:
     return out
 
 
-#: How much bigger the batch-union window must be than the largest single row's box before the rows
-#: are grouped instead. A primitive that is the same in every environment has a ratio of exactly 1
-#: and must not pay for a grouping that would buy it nothing; a primitive whose position is part of
-#: the state has a ratio of hundreds. 4 is where the two populations separate with room to spare --
-#: measured over the frozen corpora, every static primitive is 1.0 and the smallest moving one is 12.
+#: Required ratio of batch-union area to the largest individual box before considering row grouping.
 _GROUP_MIN_SPREAD = 4.0
 
-#: Pixels one group costs in dispatch, and the margin the model must clear before grouping is
-#: accepted. Both are MEASURED, because the first guess at the first was wrong by 5x and silently
-#: refused the grouping on every scene that wanted it.
-#:
-#: One group is ~20 torch ops on small tensors. Timed directly on a scene built so the grouped pixel
-#: work is fixed and only the group count varies (B discs in B distinct cells at 64 px, one group per
-#: row) by the frozen measurement record, whose committed output is
-#: ``tests/fixtures/regression/join/step6/raster2d/experiments/window_pergroup.txt``:
-#:
-#:     B                  8      32     128     512
-#:     us per group    72.0    57.1    56.3    60.1      -- flat, as dispatch should be
-#:
-#: and from the same file, the pixel side: at B=512 grouping turns 15.494 ms into 7.003 ms while
-#: removing ~1.4 M window pixels, i.e. ~6 ns a pixel. One group therefore buys itself at
-#: 60 us / 6 ns = 10,000 window pixels. The cheapest per-pixel figure is the one taken, because it is
-#: the one that makes a group hardest to justify.
-#:
-#: BOTH NUMBERS ARE THE CPU'S. On a device where the plan's ``.cpu()`` is a synchronisation rather
-#: than a copy, this model accepts groupings that lose -- measured, and the reason
-#: ``envs/navigation.py`` calls this only on the CPU path. A caller on another device needs constants
-#: measured on it.
-#:
-#: The margin is 1.25 rather than 2: with the constant measured rather than assumed, a larger margin
-#: only refuses grouping that wins. Scanned against wall time over the frozen corpora at B = 1, 16,
-#: 64, 256 and a synthetic worst case (many groups, almost no pixel work), 10,000 x 1.25 is never
-#: slower than not grouping and captures 2.1x / 3.0x on PushT and 2.5x on SimplePointMaze, while
-#: correctly refusing to group the synthetic case at B = 32 and 128 and accepting it at 512.
+#: CPU dispatch cost in equivalent window pixels, with a margin before accepting grouping.
 _GROUP_DISPATCH_PIXELS = 10_000
 _ACCEPT_MARGIN = 1.25
 
 
 def row_groups(box, r0: int, r1: int, c0: int, c1: int) -> list[tuple]:
-    """Windows for one primitive: either ``[(None, r0, r1, c0, c1)]`` or one window per row group.
+    """Partition (B, 4) pixel boxes into row groups with smaller union windows.
 
-    The batch-union window is what one torch op over the whole batch can cover, and for a primitive
-    that is the same in every environment it is already tight. For one whose position is part of the
-    state it is the whole frame: PushT's block quads and SimplePointMaze's agent disc reach every
-    corner across a corpus of reachable states, and the measured consequence was 104 ms of PushT's
-    143 ms and 301 ms of SimplePointMaze's 518 ms at batch 64.
-
-    The fix is the one the fused kernel already uses, in the shape torch ops allow. The per-row boxes
-    of such a primitive are all the same SIZE and differ only in ORIGIN, so quantising the origin
-    onto a grid of that size puts every row into a cell, and the rows of one cell share a window at
-    most two cells across. Each cell is then one torch op over the rows that landed in it. The number
-    of cells is bounded by the FRAME -- ``ceil(Rh/th) * ceil(Rw/tw)`` -- so the loop stops growing
-    with the batch: measured on the frozen corpora, SimplePointMaze's disc has 64 groups at batch 64
-    and the same 64 at batch 1024, while the union window it replaces costs 64 and 1024 frames.
-
-    It is a regrouping of the same evaluations, not a different evaluation. Every row is covered by a
-    window containing its own bound, every pixel in that window is computed from exactly the values
-    it was computed from before, and rows outside cannot paint. A row's cell is a function of its own
-    geometry, and a group's window is the union of its members' boxes, so a permutation of the batch
-    produces the same partition and the same windows -- order invariance, and batch-size invariance,
-    hold by construction rather than by test.
-
-    ``box`` is ``(B,4)`` int64 pixel boxes, ``r0..c1`` the union window already computed from them.
-
-    Public because it has a second caller outside this module: ``envs/navigation.py`` groups the
-    navigation-family dot windows by exactly this partition, so that the fused kernel and the torch path agree
-    about which rows share a window. It was reaching in for ``_row_groups``; the name it reaches for
-    is now part of this module's surface rather than a private one two modules deep.
+    Return (row_indices, r0, r1, c0, c1) tuples. ``row_indices=None`` uses the whole
+    batch when estimated savings do not cover grouping overhead. The dispatch cost
+    model is calibrated for CPU operations.
     """
     import numpy as np
 
@@ -361,7 +165,7 @@ def row_groups(box, r0: int, r1: int, c0: int, c1: int) -> list[tuple]:
     th, tw = max(int(h[live].max()), 1), max(int(w[live].max()), 1)
     union = (r1 - r0) * (c1 - c0)
 
-    # cell index from the box origin; dead rows go to their own cell and are dropped below
+    # Drop empty rows after assigning their boxes to spatial cells.
     cell = (br0 // th) * (int(c1) // tw + 2) + (bc0 // tw)
     cell = np.where(live, cell, -1)
     keys, inv = np.unique(cell, return_inverse=True)
@@ -380,45 +184,22 @@ def row_groups(box, r0: int, r1: int, c0: int, c1: int) -> list[tuple]:
         groups.append((idx, g0, g1, f0, f1))
     if not groups:
         return [(None, r0, r1, c0, c1)]
-    # The cost model, applied rather than assumed: grouping has to win once its own dispatch is
-    # charged for, or the single window stays. Both constants are measured; see their definitions.
+    # Charge dispatch overhead before accepting smaller grouped windows.
     if B * union < _ACCEPT_MARGIN * (work + len(groups) * _GROUP_DISPATCH_PIXELS):
         return [(None, r0, r1, c0, c1)]
     return groups
 
 
-#: packed-row alias. ``envs/navigation.py`` imports it under this name ; this file is not rewritten here
-#: that file; the alias keeps the call site working, and there is exactly one function.
 _row_groups = row_groups
 
 
 @torch.no_grad()
 def render_torch(scene: Scene2D, out_size: int | tuple[int, int], supersample: int = 1) -> torch.Tensor:
-    """Reference implementation: ``Scene2D`` -> ``(B,H,W,3)`` uint8. Readable, not fast.
+    """Rasterize Scene2D into (B, H, W, 3) uint8 frames on the scene's device.
 
-    Still the executable specification — every per-pixel expression below is the one it always was,
-    character for character, and it is still what ``tests/gpu`` diffs the fused kernel against. What
-    changed is not the arithmetic but WHERE it is evaluated, and that is decided entirely
-    by ``_prim_plan``:
-
-      * a slot is evaluated only for the primitive families some environment actually has there;
-      * a polygon's outline and a disc's inner ring are evaluated only where they exist;
-      * padded, zero-length polygon edges are skipped;
-      * every family is evaluated only inside the pixel window of its own world-space bound.
-
-    All four are bounds and masks that were already being computed and thrown away, so the picture
-    is bit-identical; the frozen measurement record and the frozen corpus replay hold
-    that rather than leaving it as an argument. Measured on Oscar's batch partition at one thread,
-    the whole-frame version cost 324 ms for one 500 px SimplePointMaze frame, of which 13 of the 13
-    primitives paid for a capsule test the scene contains none of.
-
-    The uint8 canvas is the second half. With ``supersample == 1`` nothing between a primitive's
-    colour and the output is an average, so ``round -> clamp -> uint8`` can be applied to the
-    (B,3) colours once instead of to a B x 3 x Rh x Rw float canvas at the end, and the canvas can
-    be the output's own (B,Rh,Rw,3) layout. That removes the float canvas (four bytes a channel
-    instead of one), the round, the clamp, the cast and the final permute+copy: five passes over
-    the frame stack. Supersampling genuinely averages, so ``ss > 1`` keeps the float canvas and the
-    conversion it always had.
+    Evaluate only active primitive families inside conservative windows. A uint8
+    canvas suffices without supersampling; supersampling uses a float canvas and
+    averages before rounding and clamping.
     """
     H = W = int(out_size) if isinstance(out_size, int) else out_size[0]
     if not isinstance(out_size, int):
@@ -445,9 +226,7 @@ def render_torch(scene: Scene2D, out_size: int | tuple[int, int], supersample: i
         for rows, r0, r1, c0, c1 in windows:
             if r1 <= r0 or c1 <= c0:
                 continue  # this window's bound misses the frame
-            # ``rows is None`` is the whole batch through a view; otherwise this window belongs to a
-            # group of rows and every per-environment quantity is gathered for them. The gather is
-            # what buys the tight window -- see ``_row_groups``.
+            # Gather all per-environment quantities for the selected rows; None retains a whole-batch view.
             sel = (lambda t: t) if rows is None else (lambda t, _r=rows: t[_r])
             n = B if rows is None else len(rows)
             kind = sel(scene.kind[:, i])  # (n,)
@@ -460,24 +239,7 @@ def render_torch(scene: Scene2D, out_size: int | tuple[int, int], supersample: i
             mdim = -1 if flat_out else 1
 
             def paint(hit, colour, _r=rows, _m=mdim, _w=(r0, r1, c0, c1)):
-                """``canvas = torch.where(hit, colour, canvas)``, restricted to this window.
-
-                In place through the window rather than by rebinding a whole new canvas: the old
-                loop allocated and wrote a full B x 3 x Rh x Rw tensor for EVERY ``where``, which at
-                batch 64 and 500 px is 192 MB per primitive per paint, and then threw the old one
-                away.
-
-                Through a temporary and a ``copy_`` rather than ``out=`` the view it also reads. An
-                aliased ``out=`` measured the same to within the noise of the machine it was tried
-                on (46 ms against 58 on an isolated paint, indistinguishable in the renderer), and
-                this is the file the fused kernel is checked against -- a destination that is also
-                an input is a subtle thing to put in an executable specification for no measured
-                gain.
-
-                A grouped window cannot be a view: a row index is advanced indexing, so reading it
-                copies and the result has to be assigned back. Assignment, not ``copy_``, is
-                therefore the write for that case, and it is the same ``where`` either way.
-                """
+                """Paint the selected window, writing indexed row copies back to the canvas."""
                 a, b, cc, d = _w
                 if _r is None:
                     w_ = canvas[:, a:b, cc:d, :] if flat_out else canvas[:, :, a:b, cc:d]
@@ -489,7 +251,6 @@ def render_torch(scene: Scene2D, out_size: int | tuple[int, int], supersample: i
                     w_ = canvas[_r, :, a:b, cc:d]
                     canvas[_r, :, a:b, cc:d] = torch.where(hit.unsqueeze(_m), colour, w_)
 
-            # disc (with optional inner disc)
             if has_disc:
                 d2 = (p - g[:, 0].view(n, 1, 1)) ** 2 + (q - g[:, 1].view(n, 1, 1)) ** 2
                 is_disc = (kind == KIND_DISC).view(n, 1, 1)
@@ -497,7 +258,7 @@ def render_torch(scene: Scene2D, out_size: int | tuple[int, int], supersample: i
                 if has_ring:
                     paint(is_disc & (d2 <= g[:, 3].view(n, 1, 1) ** 2) & (g[:, 3].view(n, 1, 1) > 0), line)
 
-            # convex polygon: inside = max over outward edge planes <= 0; outline = edge capsules
+            # Polygon outlines are unions of edge capsules, giving round corners.
             if has_poly:
                 h, w = r1 - r0, c1 - c0
                 sdf = torch.full((n, h, w), -1e30, device=dev, dtype=dt)
@@ -524,7 +285,6 @@ def render_torch(scene: Scene2D, out_size: int | tuple[int, int], supersample: i
                 if has_outline:
                     paint(is_poly & (lw > 0) & (edge_d2 <= lw * lw), line)
 
-            # segment: capsule, distance to segment <= half width
             if has_seg:
                 ax, ay = g[:, 0].view(n, 1, 1), g[:, 1].view(n, 1, 1)
                 ex, ey = g[:, 2].view(n, 1, 1) - ax, g[:, 3].view(n, 1, 1) - ay
@@ -543,21 +303,10 @@ if HAVE_TRITON:
 
     @triton.jit
     def _bbox_kernel(kind_ptr, geom_ptr, lw_ptr, box_ptr, M, V: tl.constexpr, BLOCK: tl.constexpr):
-        """``(B*N,4)`` world-space bounds, one row per primitive: ``x0, y0, x1, y1``.
+        """Write (B*N, 4) conservative world bounds: x0, y0, x1, y1.
 
-        Three encodings, and only the third is a special case:
-
-          * a real bound for a disc (centre +- the larger of the two radii), a capsule (the endpoints
-            grown by the half-width) and a convex polygon (the vertex hull grown by the outline
-            half-width, since the outline is a union of capsules ALONG the edges);
-          * an EMPTY box for ``kind == 0``, so a disabled primitive is skipped by the same test that
-            skips a distant one rather than by a second branch;
-          * an INFINITE box where the box would not be a bound. That is the collinear polygon: with
-            every vertex on one line, the halfplane intersection the kernel tests is that whole line
-            (or, for two live edges pointing the same way, a halfplane), and it paints pixels
-            arbitrarily far from the vertices. Twice the signed area is exactly zero there and exactly
-            zero is what is tested — a proper polygon whose area merely UNDERFLOWS to zero also lands
-            in this branch and is drawn the slow way, which costs throughput and not a pixel.
+        Disabled primitives have empty bounds. Zero-area polygons have infinite bounds
+        because their halfplane intersection can extend beyond the vertex hull.
         """
         offs = tl.program_id(0) * BLOCK + tl.arange(0, BLOCK)
         m = offs < M
@@ -568,16 +317,14 @@ if HAVE_TRITON:
         g1 = tl.load(gb + 1, mask=m, other=0.0)
         g2 = tl.load(gb + 2, mask=m, other=0.0)
         g3 = tl.load(gb + 3, mask=m, other=0.0)
-        if 2 * V > 4:  # a capsule's half-width; V is 3 or more in every env
+        if 2 * V > 4:  # Capsule half-width.
             g4 = tl.load(gb + 4, mask=m, other=0.0)
         else:
             g4 = tl.zeros([BLOCK], dtype=tl.float32)
 
-        # disc: the fill is |r| and the ring is drawn only where the inner radius is positive
+        # Include a positive inner radius in the bound even when it exceeds the outer radius.
         r = tl.maximum(tl.abs(g2), tl.maximum(g3, 0.0))
-        # segment: distance to the segment <= half width
         hw = tl.abs(g4)
-        # polygon: running hull over the padded vertex list, plus the shoelace
         px0 = g0
         py0 = g1
         px1 = g0
@@ -640,17 +387,13 @@ if HAVE_TRITON:
         tid = tl.program_id(1)
         npix = H * W
         if CULL:
-            # A 2-D tile, not a run of consecutive pixel addresses. Both cover the same number of
-            # pixels, and only the 2-D one has a compact footprint in the plane -- which is the whole
-            # point when the loop below is skipping primitives that miss it. A 1x1024 strip of a
-            # 1024-wide frame is missed by nothing.
+            # Compact 2-D tiles allow bounds to reject primitives before evaluating their pixels.
             tiy = tid // NTX
             tix = tid % NTX
             oy = tiy * BH + tl.arange(0, BH)[:, None]
             ox = tix * BW + tl.arange(0, BW)[None, :]
             m = (oy < H) & (ox < W)
-            # The tile in world coordinates, as four scalars, taken to whole PIXEL boundaries so that
-            # every subsample this program evaluates lies inside it whatever SS is.
+            # Use whole-pixel boundaries so the tile includes every supersample.
             bx_lo = wx0 + (tix * BW * SS) * sx
             bx_hi = wx0 + ((tix + 1) * BW * SS) * sx
             by_lo = wy0 + (tiy * BH * SS) * sy
@@ -658,24 +401,14 @@ if HAVE_TRITON:
             if FLIP:
                 by_lo, by_hi = y_hi - by_hi, y_hi - by_lo
         else:
-            # One run of consecutive pixel ADDRESSES, which is what this kernel had before tiling
-            # existed and is what it goes back to when there is no primitive list to skip. A run may
-            # straddle the end of a row, so no lane is ever masked for the sake of a rectangle, and
-            # BW consecutive pixels are BW*3 consecutive output bytes. Tiling a frame whose width is
-            # not a multiple of BW instead costs either masked lanes or a narrower store: at PushT's
-            # 96 px the best rectangle is 4x32, and 96 contiguous bytes per row rather than 384 is
-            # worth 7% of the whole render.
+            # Without culling, linear runs avoid masked row ends and keep output stores contiguous.
             pos = tid * BW + tl.arange(0, BW)[None, :] + tl.zeros([BH, 1], dtype=tl.int32)
             m = pos < npix
             oy = pos // W
             ox = pos % W
             bx_lo, bx_hi, by_lo, by_hi = wx0, wx0, wy0, wy0  # never read; CULL is False
         offs = oy * W + ox
-        # 64-bit output offset. The frame base is b * H * W * 3, which overflows int32 well inside the
-        # batch sizes this repo exists to serve: at 224px, b = 16383 gives 16383*50176*3 = 2.47e9 against
-        # an int32 ceiling of 2.15e9. It surfaced as `CUDA error: an illegal memory access`, i.e. a
-        # crash rather than silent corruption, but only because the wrapped address happened to land
-        # outside the allocation — a smaller overflow would have quietly written into another tensor.
+        # Frame offsets must be int64: large batches exceed the int32 byte-address range.
         obase = b.to(tl.int64) * (npix * 3) + offs.to(tl.int64) * 3
 
         acc_r = tl.zeros([BH, BW], dtype=tl.float32)
@@ -695,14 +428,10 @@ if HAVE_TRITON:
                 if FLIP:
                     py = y_hi - py
 
-                # Broadcast to the tile width immediately. The background loads as a scalar, but every
-                # primitive branch assigns a tile-wide vector, and Triton requires a variable's type to
-                # be invariant across a conditional — a scalar initialiser makes the first `elif` fail
-                # to compile with "initial value is fp32[] but the then block redefines it as fp32[128]".
+                # Initialize tile-wide values so Triton branch assignments retain the same tensor type.
                 zero = tl.zeros([BH, BW], dtype=tl.float32)
                 if HAS_BASE:
-                    # The static prefix was rasterized once at full supersample resolution, so this is
-                    # an exact substitute for re-evaluating those primitives, not an approximation.
+                    # The baked prefix already has full supersample resolution.
                     bo = (iy.to(tl.int64) * (W * SS) + ix.to(tl.int64)) * 3
                     cr = zero + tl.load(base_ptr + bo + 0, mask=m, other=0).to(tl.float32)
                     cg = zero + tl.load(base_ptr + bo + 1, mask=m, other=0).to(tl.float32)
@@ -714,10 +443,7 @@ if HAVE_TRITON:
 
                 for i in range(PSTART, N):
                     pid = b.to(tl.int64) * N + i
-                    # One scalar branch decides whether this program evaluates the primitive at all.
-                    # ``_bbox_kernel`` gives a disabled primitive an EMPTY box, so the culled path
-                    # needs no separate ``kind == 0`` test and does not read ``kind`` for a primitive
-                    # it is about to skip.
+                    # Empty bounds also reject disabled primitives before their geometry is loaded.
                     if CULL:
                         bb = box_ptr + pid * 4
                         live = (
@@ -771,16 +497,10 @@ if HAVE_TRITON:
                                 L2 = ex * ex + ey * ey
                                 inv = 1.0 / tl.sqrt(L2 + 1e-20)
                                 d = (px - ax) * (ey * inv) + (py - ay) * (-ex * inv)
-                                # a padded (repeated) vertex makes a zero-length edge whose normal is
-                                # undefined; including it would pin the sdf at 0 and paint everything
+                                # Ignore padded zero-length edges; their undefined normals would otherwise pin the SDF at zero.
                                 degen = L2 < 1e-12
                                 sdf = tl.maximum(sdf, tl.where(degen, -1e30, d))
-                                # Outline = union of CAPSULES along the edges, i.e. distance to the
-                                # SEGMENT, not the |sdf| band. The band mitres the corners; pygame's
-                                # draw_fat_segment explicitly paints a disc of the stroke radius at each
-                                # endpoint, so the reference has ROUND corners. Measured: the band costs
-                                # 2.2% of interior pixels on PushT (97.8% vs 100% exact), all of it at
-                                # the eight corners of the T's two quads.
+                                # Edge capsules preserve round outline corners; an absolute-SDF band would produce miters.
                                 wxx = px - ax
                                 wyy = py - ay
                                 t = (wxx * ex + wyy * ey) / (L2 + 1e-20)
@@ -823,60 +543,25 @@ if HAVE_TRITON:
         tl.store(o + 2, (acc_b * inv_n + 0.5).to(tl.uint8), mask=m)
 
 
-#: Cache of baked static-prefix images, keyed by (resolution, the static primitives' exact bytes).
-#: Keyed on VALUES, not on the env object: a variation that recolours the goal must invalidate the bake,
-#: and an identity keyed on the env would silently keep serving the old background.
+#: Key static images by values so geometry or appearance changes invalidate the cache.
 _BASE_CACHE_MAX = 32
 _BASE_CACHE = _RES.BoundedCache(_BASE_CACHE_MAX, name="raster2d.base")
 
-#: Subpixel-primitive evaluations the bake must save before it is worth asking whether it may run.
-#: Deciding costs one device-to-host synchronisation per call (0.08-0.29 ms, flat in batch); the bake
-#: saves roughly ``K/N`` of the rasterizer's work, i.e. ``K/N * B * Rh * Rw`` subpixel evaluations. The
-#: two cross somewhere, and where they cross was measured on three cells that differ by 27x in pixels
-#: and by 1.4x in the fraction of the scene that is static:
-#:
-#:     PushT 96px  (K/N = 6/9)   end-to-end 0.94x at B=256, 1.01x at B=1024, 1.23x at B=4096
-#:     PushT 224px (K/N = 6/9)   0.94x at B=64, 1.04x at B=256, 1.77x at B=4096
-#:     SimplePointMaze 500px (K/N = 6/13)   1.02x at B=64, 1.30x at B=256, 1.69x at B=1024
-#:
-#: All three break even at ``K/N * B * Rh * Rw`` between 6e6 and 9e6, which is what makes this a
-#: measured constant rather than a tuned one: the same number predicts the crossover for a 9,216-pixel
-#: frame and a 250,000-pixel one. Below it the request is dropped WITHOUT synchronising, so a small
-#: batch pays nothing at all for a prefix it cannot use — and the batch-1 case, which is a loop of
-#: single renders and the worst case for any per-call overhead, is the furthest below it.
+#: Minimum estimated saved subpixel work before paying the host synchronization for a bake.
 _BAKE_MIN_WORK = 8e6
 
 
 def _row_bytes(t: torch.Tensor, B: int) -> torch.Tensor:
-    """``(B, ...)`` of any dtype as ``(B, nbytes)`` uint8, so unlike arrays compare in one kernel."""
+    """View batched values as (B, nbytes) uint8 for dtype-independent byte comparison."""
     return t.contiguous().reshape(B, -1).view(torch.uint8)
 
 
 def _static_base(scene: Scene2D, Rh: int, Rw: int, block: int) -> torch.Tensor | None:
-    """Bake the leading primitives once, or decline; returns an ``(Rh,Rw,3)`` uint8 image or ``None``.
+    """Return a cached static-prefix image, or None when baking is unsuitable.
 
-    Two reasons to decline, and neither is a failure mode — the caller draws every primitive instead
-    and gets the same picture, byte for byte:
-
-      * **the prefix is not shared.** Painting the whole batch with row 0 of it is the second of the
-        three places this repo has collapsed a per-environment quantity to environment 0 (see
-        ``core/style.py``), so sharedness is MEASURED — on ``K`` primitives, not on pixels — and a
-        prefix that differs across the batch is not baked. That is exactly what a batch of 4,096
-        different backgrounds must do.
-      * **the bake cannot earn its own decision cost.** See ``_BAKE_MIN_WORK``: below it the request is
-        dropped before anything synchronises, so a small batch pays nothing for a prefix it cannot use.
-
-    Measuring costs nothing extra because the cache key needs the same bytes on the host anyway. The
-    six arrays are reinterpreted as raw bytes and concatenated into one ``(B, M)`` block, so the whole
-    question — "do the rows agree, and what is row 0" — is one comparison, one reduction and ONE
-    device-to-host transfer. It used to be eleven ``.cpu()`` calls and six ``bool(...)`` reductions,
-    i.e. twelve synchronisations, a flat 0.177 ms per render against the 0.047 ms it costs to
-    rasterize all nine of PushT's primitives at batch 1. "The bake is a 4x loss at batch 1" was that
-    transfer, not the bake.
-
-    Bytes rather than values is deliberate on both counts: it is what makes one comparison serve five
-    dtypes, and byte-equality is the right notion here anyway, since the cache is keyed on the same
-    bytes and two values that are equal but differently encoded are two different cache entries.
+    Require byte-identical prefixes across the batch and enough estimated work to
+    justify one host synchronization. Bake at full supersample resolution; the key
+    includes geometry, appearance, dimensions, and device.
     """
     K = int(scene.static_prefix)
     if K <= 0:
@@ -907,10 +592,7 @@ def _static_base(scene: Scene2D, Rh: int, Rw: int, block: int) -> torch.Tensor |
         blob, uniform = blob[:-1], blob[-1]
         if not uniform:
             return None  # per-environment prefix: draw it per frame
-    # The device is part of the key. Without it, a process that renders the same scene on two GPUs --
-    # DataParallel, or any manual multi-device script -- gets back a plate that lives on the other one,
-    # and Triton refuses the launch with "Pointer argument (at 0) cannot be accessed". DDP never sees
-    # this, because one process per rank means one cache per rank; that is why it went unnoticed.
+    # Include the device so a shared process cannot reuse another GPU's cached image.
     key = (Rh, Rw, scene.world, scene.flip_y, scene.vertices, K, str(scene.kind.device), blob)
     hit = _BASE_CACHE.get(key)
     if hit is None:
@@ -930,15 +612,7 @@ def _static_base(scene: Scene2D, Rh: int, Rw: int, block: int) -> torch.Tensor |
 
 
 def _destination(out, B: int, H: int, W: int) -> torch.Tensor | None:
-    """The ``(B,H,W,3)`` uint8 buffer the kernel writes, checked rather than assumed.
-
-    ``out.view(B,H,W,3)`` is not a check. When the requested shape is the shape the tensor already
-    has, ``view`` returns the tensor with its strides intact, so a strided destination came back
-    looking exactly like a contiguous one and the kernel then wrote ``B*H*W*3`` bytes linearly from
-    its offset — the frames scattered across the caller's buffer, 255/255 wrong, no error. Both halves
-    of the destination contract are asserted here, at the one place every 2-D render reaches, so a
-    caller cannot land in the silent case from any entry point.
-    """
+    """Validate a contiguous uint8 output tensor and view it as (B, H, W, 3), or return None."""
     if out is None:
         return None
     if not torch.is_tensor(out):
@@ -961,57 +635,21 @@ def _destination(out, B: int, H: int, W: int) -> torch.Tensor | None:
     return out.view(B, H, W, 3)
 
 
-#: Primitives above which a scene is binned against screen tiles before it is drawn.
-#: The trade is per BLOCK, not per frame: culling turns ``N`` full evaluations into ``N`` box tests
-#: plus ``k`` full evaluations, where ``k`` is how many primitives reach one tile. A box test is ~13
-#: instructions against ~110 for a quad, so it pays from about ``N > 8k`` — and ``k`` does not fall
-#: below 1 (there is always a background-sized primitive somewhere). 24 is where the measured curves
-#: cross for PushT-sized scenes; below it the pre-pass launch alone (~15 us, flat) is most of a
-#: batch-1 render.
+#: Primitive-count threshold for paying the culling prepass cost.
 _CULL_MIN_PRIMS = 24
 
-#: ``(BH, BW, num_warps)`` for the culled path: a WIDE tile of 1,024 pixels.
-#:
-#: Two forces pull against each other and the measurement settles which one wins. A tile's primitive
-#: list grows with its perimeter while its work grows with its area, which argues for a square; but
-#: the output is ``(B,H,W,3)`` uint8 and the three stores are strided by 3, so a narrow tile scatters
-#: its writes. Measured over the highway family at 256px, batch 1024 (kernel only, ms, best of 11,
-#: roundabout-v0 / highway-v0):
-#:
-#:     1x128   42.9 / 74.1        16x16   21.3 / 38.2        32x32   9.0 / 19.9
-#:     32x16   12.8 / 26.3        16x32   11.9 / 22.3        16x64   8.0 / 15.8
-#:     8x128    7.6 / 14.5
-#:
-#: i.e. wide wins at equal area, and 8x128 is 8.6x the unbinned kernel on roundabout-v0 and 13.1x on
-#: highway-v0. num_warps 4 rather than 8 throughout: 8 was 1.5-1.6x SLOWER at every shape tried,
-#: which is what a kernel with this much per-primitive scalar work looks like when the scalars stop
-#: being amortised over enough lanes per warp.
+#: Wide tiles balance local culling with contiguous RGB writes; values are (height, width, warps).
 _CULL_TILE = (8, 128, 4)
 
-#: Fraction of a tile's lanes that may be masked off before a narrower tile is preferred. A tile that
-#: hangs off the right edge still runs the whole primitive loop for the lanes it masks, so at 96 px a
-#: flat 128-wide tile would pay for 33% more pixels than the frame has; at 600 px it pays for 6.7%,
-#: which is cheaper than the scattered stores of a tile narrow enough to divide 600.
+#: Maximum masked-lane fraction before selecting a narrower tile.
 TILE_WASTE_MAX = 0.125
 
 
 def tile_shape(H: int, W: int, lanes: int, max_width: int) -> tuple[int, int]:
-    """``(BH, BW)``: the tile a 2-D fused kernel walks one frame in, for ``lanes`` lanes per program.
+    """Choose a (height, width) tile within the lane and width budgets.
 
-    ONE definition, because both 2-D fused kernels in this package pick their tile by the same law
-    and for the same two reasons, and a second copy of it is a second thing to keep in step:
-
-      * ``raster2d.render_triton``'s culled path, at ``lanes = 1024`` and ``max_width = 128``;
-      * ``navdot.blend_dots``' two passes, at ``lanes = 1024`` and ``max_width = 1024``.
-
-    The law: take the widest power of two at most ``max_width`` (and at most the frame's own width
-    rounded up to a power of two), halve it while more than ``TILE_WASTE_MAX`` of a row of tiles
-    would be masked-off lanes, then give the tile whatever height the remaining lanes allow.
-
-    Why a rectangle and why a WIDE one is measured in each caller's own tile constant: both kernels
-    skip work a tile's bounds miss, which wants a compact footprint in the plane, and both store
-    ``(B,H,W,3)`` uint8 with a stride of 3, which punishes a narrow tile. ``max_width`` is where the
-    two callers differ, so it is the argument; the rest is identical arithmetic and is not.
+    Favor wide power-of-two tiles for contiguous RGB stores, shrinking width when
+    masked lanes exceed TILE_WASTE_MAX.
     """
     bw = min(max_width, 1 << max(0, (W - 1).bit_length()))
     while bw > 1 and (bw * -(-W // bw) - W) > TILE_WASTE_MAX * W:
@@ -1021,14 +659,7 @@ def tile_shape(H: int, W: int, lanes: int, max_width: int) -> tuple[int, int]:
 
 
 def _tiles(H: int, W: int, block: int, cull: bool) -> tuple[int, int, int, int, int]:
-    """``(BH, BW, n_tiles, n_tiles_x, num_warps)`` for one frame geometry.
-
-    Only the culled path is TILED. Without a primitive list to skip there is nothing for a compact
-    footprint to buy, and a rectangle then costs something instead -- masked lanes where its width
-    does not divide the frame's, and a shorter contiguous store where it does. So the unculled path
-    keeps ``BH = 1`` and a linear run, which the kernel reads as consecutive addresses rather than as
-    a row of a rectangle.
-    """
+    """Return tile dimensions, counts, and warps; unculled work uses linear pixel runs."""
     if not cull:
         return 1, block, triton.cdiv(H * W, block), 1, 4
     warps = _CULL_TILE[2]
@@ -1046,11 +677,10 @@ def render_triton(
     block: int = 128,
     cull: bool | None = None,
 ) -> torch.Tensor:
-    """Fused path: ``Scene2D`` -> ``(B,H,W,3)`` uint8, one launch, nothing materialized but the output.
+    """Rasterize a CUDA Scene2D into (B, H, W, 3) uint8 frames.
 
-    ``cull`` forces the tile-binning pre-pass on or off; ``None`` decides from the primitive count.
-    It is an argument so that ``tests/gpu/test_fast_paths.py`` can render the same scene both ways
-    and diff them, which is the only thing that makes the fast path safe to enable by default.
+    ``cull`` forces bounding-box culling on or off; None selects by primitive count.
+    ``out`` must be contiguous uint8 storage with exactly B*H*W*3 elements.
     """
     if not HAVE_TRITON:
         raise ImportError("triton unavailable; use render_torch")
@@ -1064,12 +694,7 @@ def render_triton(
     if buf is None:
         buf = torch.empty((B, H, W, 3), dtype=torch.uint8, device=scene.kind.device)
     do_cull = (N >= _CULL_MIN_PRIMS) if cull is None else bool(cull)
-    # Launch on the device the SCENE lives on, not on whatever the process last called
-    # ``set_device`` with. Triton takes its stream and context from the current device, so a scene on
-    # cuda:1 rendered from a process whose current device is cuda:0 dies with "Pointer argument (at 0)
-    # cannot be accessed from Triton (cpu tensor?)" -- a message that names neither the device nor the
-    # real cause. One process per rank hides this completely, which is why DDP passes and a
-    # single-process multi-GPU script does not.
+    # Triton takes its stream from the current CUDA device; select the scene's device explicitly.
     with torch.cuda.device(scene.kind.device):
         base = _static_base(scene, H * ss, W * ss, block)
         dummy = buf  # unused pointer when a flag is False; Triton needs an argument
@@ -1119,21 +744,11 @@ def render(
     backend: str = "auto",
     out: torch.Tensor | None = None,
 ) -> torch.Tensor:
-    """``auto`` prefers Triton and falls back to torch. Both produce the same picture by construction.
+    """Render uint8 RGB frames using Torch or Triton on the scene's device.
 
-    ``auto`` is a question about THIS SCENE, not about this host. It used to be answered by
-    ``HAVE_TRITON`` alone, which is a property of the interpreter: on a machine where ``import
-    triton`` succeeds, a ``device="cpu"`` scene was routed into ``render_triton``, whose first act is
-    ``with torch.cuda.device(scene.kind.device)`` — so every CPU render of a Scene2D env died with
-    ``ValueError: Expected a cuda device, but got: cpu``. The laptop that measured the CPU throughput
-    rows had no Triton and never saw it; the certification cluster has Triton in every venv and could not
-    render PushT or SimplePointMaze on CPU at all. Triton compiles for CUDA here, so the predicate is
-    "Triton is importable AND the scene lives on a CUDA device", and ``device="cpu"`` is honoured on
-    every host.
-
-    An explicit ``backend="triton"`` still raises on a CPU scene, and should: the caller named a
-    backend that cannot draw the scene it was handed, and silently drawing it somewhere else is how a
-    ``device="cpu"`` run ends up on a GPU.
+    ``auto`` selects Triton only when available and the scene is on CUDA. Explicit
+    Triton rendering rejects CPU scenes. Both paths require contiguous uint8 ``out``
+    storage; ``out_size`` is an integer or (height, width).
     """
     if backend == "triton" and scene.kind.device.type != "cuda":
         raise ValueError(
@@ -1144,10 +759,7 @@ def render(
         H = W = int(out_size) if isinstance(out_size, int) else out_size[0]
         if not isinstance(out_size, int):
             H, W = out_size
-        # The same destination contract as the fused path, deliberately. ``copy_`` would happily fill a
-        # strided buffer, so the torch backend could accept destinations the Triton one refuses — and
-        # then a caller's code would work under one backend and silently corrupt under the other,
-        # which is worse than either behaviour on its own.
+        # Enforce the same output-buffer contract as Triton, even though Torch can copy into strided views.
         buf = _destination(out, scene.batch, H, W)
         r = render_torch(scene, out_size, supersample)
         if buf is not None:

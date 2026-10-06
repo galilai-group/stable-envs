@@ -1,5 +1,3 @@
-"""Bounded historical semantics for Acrobot, Pendulum and Cartpole defaults."""
-
 from __future__ import annotations
 
 import torch
@@ -11,7 +9,7 @@ from ...spaces import Box, Dict
 
 
 class FirstFamilySemantics:
-    """Compose the three matching renderer cells with authoritative CPU physics."""
+    """Delegate Acrobot, Pendulum, and Cartpole simulation to CPU adapters."""
 
     action_dim = 1
     action_dtype = torch.float64
@@ -47,8 +45,7 @@ class FirstFamilySemantics:
             layout = {name: (off, width) for name, off, width in self.variation_space.flat_layout()}
             cols = [layout[f"gravity.{axis}"][0] for axis in "xyz"]
             gravity = self.get_style()[:, cols].to(torch.float64)
-            # Style rows are float32. Preserve the wrapper's exact float64 nominal
-            # gravity when an unrelated visual override reconstructs the default row.
+            # Preserve nominal gravity in float64 when a float32 style row encodes its default.
             encoded_default = torch.tensor([0.0, 0.0, -9.81], dtype=torch.float32, device=self.device)
             exact_default = torch.tensor([0.0, 0.0, -9.81], dtype=torch.float64, device=self.device)
             gravity = torch.where(self.get_style()[:, cols] == encoded_default, exact_default, gravity)

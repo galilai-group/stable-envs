@@ -1,5 +1,3 @@
-"""Owned snapshots, different-history restore, continuation and atomic rejection."""
-
 import pytest
 
 from tests.helpers.reference.bridges import assert_tasks

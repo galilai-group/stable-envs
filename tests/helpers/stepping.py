@@ -1,6 +1,3 @@
-"""Test-only branching through the public snapshot/step API."""
-
-
 def branch_step(env, state, actions):
     held = env.get_state()
     try:
@@ -11,7 +8,7 @@ def branch_step(env, state, actions):
 
 
 def branch_steps(env, state, actions):
-    # Older trajectory fixtures are time-first. The public API is batch-first.
+    # Reference action arrays use [T, B, A]; the public chunk API uses [B, T, A].
     held = env.get_state()
     try:
         env.set_state(state)

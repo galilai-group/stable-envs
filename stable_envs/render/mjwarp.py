@@ -1,87 +1,3 @@
-"""MJWarp's batch raytracer behind a ``render(qpos) -> (B,H,W,3) uint8`` surface, plus the model
-pre-pass without which it silently draws a different scene.
-
-``docs/research/backend3d.md`` measures MJWarp at 53k fps against MuJoCo EGL's 185, and at 98.9% of
-interior pixels bit-identical on flat-material scenes. Getting there needs six things right, and
-five of them are silent when wrong — a wrong answer with no error, no warning and a plausible-looking
-number. They are all handled here so that no caller has to remember them:
-
-1. **The buffer is BGRA.** ``pack_rgba_to_uint32`` writes ``(a<<24)|(r<<16)|(g<<8)|b``, so a
-   little-endian byte view of ``rc.rgb_data`` is B, G, R, A. Reading it as RGB leaves geometry,
-   camera, pose and shadows pixel-aligned while making every colour wrong, which reads exactly like
-   "the renderer is ignoring materials". Measured cost: 4-6x in mean error, up to 40x in exact-pixel
-   agreement — and it is INVISIBLE on grey scenes, where ``r == g == b`` makes the swap a no-op.
-2. **MuJoCo renders shadows by default**, so ``use_shadows=False`` is a mismatch rather than a saving
-   (antmaze 27.8 -> 30.4 dB with them on). The default here is on.
-3. **Geom groups.** ``mujoco.Renderer`` shows groups 0-2; MJWarp shows what it is told. A model whose
-   collision geoms sit in a visible group gets them painted over the visual mesh on one side only.
-4. **MJWarp never reads alpha.** Its shader takes ``base_color = vec3(color[0], color[1], color[2])``
-   and packs a constant 255, so a geom with ``rgba="0 1 0 0"`` — an invisible placement marker, a
-   gripper axis, an inertia box — renders as opaque saturated colour. This is not a corner case: it
-   is what made a RoboCasa kitchen score 7.6% exact and read as a texture-path failure, and 154 of
-   that scene's 517 group-1 geoms were invisible markers covering ~40% of the frame. Moving them to a
-   disabled group first took the mean error from 79.34 to 7.47 and within-8 agreement from 42.0% to
-   82.8%. ``prepare_model`` does that, for geoms AND sites, from the EFFECTIVE alpha (a geom's own
-   rgba, or its material's when the geom carries the compiler default).
-
-5. **MJWarp TRUNCATES where OpenGL ROUNDS.** ``pack_rgba_to_uint32`` is
-   ``int(a)<<24 | int(r)<<16 | int(g)<<8 | int(b)`` on values already scaled to [0,255], and C's
-   ``int`` truncates; the GL pipeline MuJoCo renders through converts float to uint8 by rounding to
-   nearest. So MJWarp is never ABOVE MuJoCo and is exactly one level below wherever the product's
-   fractional part reaches 0.5. Measured on Fetch (flat materials, no shadows, no reflections, so
-   nothing else is in play): the signed difference on flat interior pixels is ``{0: 86.8%, -1: 13.1%}``
-   and **nothing else above 0.01%**, and correcting the rule takes interior agreement from **0.791 to
-   0.9988** and whole-frame exactness from 0.718 to 0.910 — by far the largest single fidelity win
-   available on this backend. ``gl_rounding()`` applies it; see that function for the caveat.
-
-6. **``kinematics`` does not compute ``subtree_com``, so a com-tracking camera does not move.** The
-   four-call frame loop (``kinematics``, ``camlight``, ``refit_bvh``, ``render``) is the one
-   ``backend3d.md`` proposes and it is right for a fixed or body-mounted camera. A camera or light
-   whose ``mode`` is ``TRACKCOM`` or ``TARGETBODYCOM`` reads ``d.subtree_com``, which ``kinematics``
-   never writes — ``com_pos`` does. Left out, the camera stays wherever ``put_data``'s initial
-   ``mj_forward`` put it, for every state, forever. Measured on Gymnasium's ``HalfCheetah-v5`` and
-   ``Ant-v5``, whose ``track`` camera is ``TRACKCOM``: without ``com_pos`` the camera's spread over 8
-   states is **0.0** against the reference's 0.930 and 1.420 m and it lands up to 1.75 m from where
-   MuJoCo puts it; with it, ``cam_xpos`` agrees to **0.0**. ``BatchRenderer`` inserts the call when
-   the model needs it and skips it otherwise, so the cost is paid only by scenes that have such a
-   camera.
-
-The one gap this module cannot close, recorded so it is not rediscovered: MJWarp's ``sample_texture``
-derives UVs for ``PLANE`` and ``MESH`` only, so a textured BOX, CYLINDER, SPHERE or CAPSULE samples
-texel (0,0) — MuJoCo paints 167 colours on a checkered box where MJWarp paints 2. ``texture_gaps``
-returns the offending geoms so a caller can decide (re-express as a mesh with cube texcoords, which
-recovers most of it: mean 50.30 -> 6.43) instead of shipping a scene that is quietly flat.
-
-The second gap is **minification**. ``create_warp_texture`` builds a ``wp.Texture2D`` at
-``num_mip_levels=1`` and the render kernel calls ``wp.texture_sample`` with no level of detail, so a
-texel is chosen by bilinear filtering of the base level however many texels fall inside the pixel.
-MuJoCo renders through GL, which mipmaps. On a texture seen at grazing incidence the two do not
-approximate each other, they disagree completely: on Gymnasium's locomotion floor — a 100x100 checker
-at ``texrepeat="60 60"`` on a 40 m plane — the far tenth of the reference has a luminance spread of
-1.5-3.4 about one grey while MJWarp's has a spread of 92, and **0.0017-0.0069% of those pixels are
-bit-exact** (``docs/research/mujoco_locomotion.md`` Section 6). Warp itself has the machinery
-(``num_mip_levels``, ``mip_filter_mode``), but selecting a level needs ray differentials the render
-kernel does not compute, so this is not a flag a caller can set. Supersampling does not substitute
-for it: at 4x4 samples per pixel the far-field mean error falls from 100 to 8-14/255 and exactness
-reaches only 0.6-1.4%, while the *near* field it blurs gets worse.
-
-The third is a colour-resolution rule rather than a gap: **MJWarp reads a geom's colour from its
-material whenever the geom has one, and MuJoCo prefers the geom's own ``rgba`` unless that is the
-compiler default** ``(0.5, 0.5, 0.5, 1)``. ``effective_alpha`` already follows MuJoCo's rule for
-alpha; the colour has no in-place fix, because one material is generally worn by geoms of several
-colours. ``fetch.py`` and the frozen measurement record both recompile with one
-material per geom carrying the resolved colour. It is not cosmetic: uncorrected it moved the
-locomotion floor's mean luminance by 13-19/255 and it was worth interior 0.016 -> 0.939 on a
-flat-material control.
-
-All of these are present in ``mujoco-warp`` 3.11.0, the latest release, and on ``main``.
-
-This module is deliberately independent of any env: ``prepare_model`` and ``texture_gaps`` are model
-surgery that any MuJoCo scene needs, and ``BatchRenderer`` is the integration surface from
-the frozen measurement record. It is imported lazily; ``mujoco_warp`` is not a dependency of
-``stable_envs``.
-"""
-
 from __future__ import annotations
 
 import contextlib
@@ -94,36 +10,25 @@ from . import _resources
 
 os.environ.setdefault("WARP_CACHE_PATH", os.path.expanduser("~/.cache/warp"))
 
-#: Groups ``mujoco.Renderer`` shows at its default ``MjvOption``. Matching them on both sides is the
-#: difference between comparing two renders of one scene and comparing two different scenes.
+#: Default visible groups in MuJoCo MjvOption.
 DEFAULT_GROUPS = (0, 1, 2)
 #: Where ``prepare_model`` parks geometry MJWarp would otherwise draw opaque.
 HIDDEN_GROUP = 5
 #: mjtGeom codes whose UVs MJWarp can derive. Everything else samples texel (0,0) when textured.
 TEXTURED_OK = (0, 7)  # PLANE, MESH
-#: mjtTexture codes MJWarp's ``sample_texture`` can address. It builds ``wp.Texture2D`` and samples
-#: with 2-D coordinates, so a CUBE (1) or SKYBOX (2) map worn by a geom is not a texture it draws
-#: badly -- it is a texture it indexes out of bounds. Measured on OGBScene, whose
-#: ``btn_metal`` material wears one 512x512 cube map on two button MESH geoms: the render dies with
-#: ``Warp CUDA error 700: an illegal memory access`` inside the warm-up frame, and detaching that
-#: ONE texture -- leaving every 2-D texture and the skybox in place -- makes the scene render
-#: (``tests/fixtures/regression/join/step7/ogb-manipulation/oscar/mjwarp/mjwarp_bisect_OGBScene.json``).
+#: The MJWarp sampler accepts 2-D maps; cube and skybox maps require a different path.
 TEXTURE_SAMPLER_OK = (0,)  # mjTEXTURE_2D
-#: OpenGL's ``GL_SPOT_CUTOFF`` accepts ``[0, 90]`` or the sentinel ``180``; anything else is
-#: ``GL_INVALID_VALUE`` and the parameter is left at its default 180, i.e. NOT a spotlight. MuJoCo's
-#: renderer follows that, and ``mujoco_warp`` does not -- see ``neutralise_illegal_spots``.
+#: OpenGL accepts spot cutoffs in [0, 90], plus the non-spot sentinel 180.
 GL_SPOT_CUTOFF_MAX = 90.0
-#: The sentinel OpenGL leaves an illegal ``GL_SPOT_CUTOFF`` at, i.e. "not a spotlight".
-#: ``cos(180 deg) = -1``, so ``mujoco_warp``'s ``cos_theta < cos(cutoff)`` cone test can never fire.
+#: cos(180 degrees) = -1 disables the shader's hard cone test.
 GL_SPOT_CUTOFF_OFF = 180.0
 
 
 def effective_alpha(m, kind: str = "geom") -> np.ndarray:
-    """``(n,)`` alpha actually used for each geom or site, following MuJoCo's own resolution order.
+    """Resolve geom or site alpha using MuJoCo's material precedence.
 
-    An element's own ``rgba`` wins unless it is the compiler default ``(0.5, 0.5, 0.5, 1)``, in which
-    case its material supplies the colour. Reading only ``geom_rgba`` would miss a material with
-    ``rgba="... 0"``, and reading only the material would miss the far more common per-geom marker.
+    The element's RGBA wins unless it matches the compiler default; then its
+    material supplies the alpha. Return one value per element.
     """
     rgba = np.asarray(m.geom_rgba if kind == "geom" else m.site_rgba, np.float64)
     matid = np.asarray(m.geom_matid if kind == "geom" else m.site_matid, np.int64)
@@ -138,13 +43,12 @@ def effective_alpha(m, kind: str = "geom") -> np.ndarray:
 
 @dataclass
 class Prepared:
-    """What ``prepare_model`` changed, so a caller can report it instead of trusting it."""
+    """Model edits and saved arrays needed to undo them."""
 
     hidden_geoms: list[int]
     hidden_sites: list[int]
     groups: tuple[int, ...]
     restore: dict
-    #: Lights whose out-of-range spot cutoff was neutralised; see ``neutralise_illegal_spots``.
     neutralised_spots: list[int] = field(default_factory=list)
 
     def summary(self) -> str:
@@ -161,60 +65,12 @@ class Prepared:
 
 
 def neutralise_illegal_spots(m) -> tuple[list[int], dict]:
-    """Make MJWarp treat an out-of-range spot cutoff the way MuJoCo does. IN PLACE.
+    """Disable angular attenuation for invalid spot cutoffs, in place.
 
-    ``mujoco_warp``'s shader attenuates a spot light as::
-
-        cos_theta  = dot(-L, lightdir)
-        if cos_theta < cos(cutoff_rad): return          # hard cone
-        attenuation *= pow(max(cos_theta, 0), exponent)
-
-    MuJoCo does neither when the cutoff is out of range, because OpenGL's ``GL_SPOT_CUTOFF`` accepts
-    ``[0, 90]`` or the sentinel ``180`` and rejects everything else with ``GL_INVALID_VALUE``,
-    leaving the default **180 = not a spotlight**. Measured on OGBCube, whose one spot is
-    ``cutoff = 100°, exponent = 10`` (``tests/fixtures/regression/join/step7/ogb-manipulation/m1/``):
-
-    ========================================  ============  ==================
-    MuJoCo-side change                         frame mean    vs shipped
-    ========================================  ============  ==================
-    shipped (SPOT, cutoff 100, exponent 10)        57.339    --
-    **exponent 10 -> 0**, cutoff still 100         57.339    **0 pixels, max 0**
-    cutoff -> 90                                   49.943    94.60 %, max 68
-    light disabled                                 47.851    94.68 %, max 73
-    ========================================  ============  ==================
-
-    At an illegal cutoff the angular term is **bit-inert** in MuJoCo and the frame sits at its
-    brightest: MuJoCo is lighting the scene with that light unattenuated by angle. MJWarp meanwhile
-    applies ``cos^10`` and extinguishes it off-axis, which is why it comes out uniformly 3-8 levels
-    darker. Neutralising the angular term on the MJWarp model moves OGBCube from
-    **0.0091 to 0.3507** interior-exact and mean |diff| from 8.90 to 2.79, and moves the signed
-    interior difference from a systematic -3..-8 to centred on zero with +/-1 tails.
-
-    **DO NOT "FIX" THIS BY RE-TYPING THE LIGHT TO POINT.** It is the obvious reading of "GL disables
-    the spot" and it is measurably wrong on the REFERENCE side: in MuJoCo's CLASSIC GL renderer at
-    mujoco 3.12.0 -- the pin everything here is measured on -- a POINT light in this scene renders
-    **identically to the light being switched off**, 9.8 levels of mean darker than shipped. That is
-    a property of that renderer at that version, stated as such rather than as a law.
-    The two renderers are asymmetric here, which is why the correction touches only what MJWarp
-    reads. (On the MJWarp side POINT, ``exponent = 0`` and ``cutoff = 180`` all land within 0.001 of
-    each other, so the minimal form is the one used here.)
-
-    **BOTH halves of the attenuation are cleared**, and the first version of this function got that
-    wrong. ``light_exponent = 0`` makes ``pow(cos_theta, 0) == 1``, but ``mujoco_warp`` also runs a
-    hard cone test -- ``if cos_theta < cos(cutoff_rad): return`` -- and leaving ``light_cutoff``
-    alone leaves that test in place. For ``cutoff = 100`` the cone still discards everything beyond
-    100 degrees, which MuJoCo does not; and for a NEGATIVE illegal cutoff it is far worse, because
-    ``cos(-5 deg) = 0.996`` is a **5 degree cone** that extinguishes almost the whole scene. MuJoCo
-    discards the cutoff entirely -- a cutoff-100 spot aimed straight up renders as 180 does, and so
-    does -5 -- so ``light_cutoff`` is set to the sentinel **180**, where ``cos(180) = -1`` and
-    ``cos_theta < -1`` is never true. Upstream reads ``light_cutoff`` only in that cone test, so
-    writing it changes nothing else. Measured on OGBCube, whose cutoff is 100 and where
-    the cone is therefore nearly inert either way: ``exponent = 0`` alone scored 0.3506 and
-    ``exponent = 0`` + ``cutoff = 180`` scored 0.3507 -- indistinguishable on THIS scene, which is
-    exactly why the rule has to be right in general rather than right here.
-
-    A spot with a LEGAL cutoff is left untouched: MuJoCo honours those, so MJWarp agreeing with the
-    model is agreeing with MuJoCo.
+    OpenGL rejects cutoffs outside [0, 90] except the non-spot sentinel 180.
+    Set both exponent=0 and cutoff=180: changing only the exponent leaves a hard
+    cone in MJWarp. Keep the light type unchanged; MuJoCo's classic renderer
+    handles point lights differently. Return affected light IDs and original arrays.
     """
     hit, restore = (
         [],
@@ -236,13 +92,11 @@ def neutralise_illegal_spots(m) -> tuple[list[int], dict]:
 
 
 def prepare_model(m, groups=DEFAULT_GROUPS, alpha_eps: float = 0.0, spot_semantics: bool = True) -> Prepared:
-    """Move zero-alpha geometry out of the visible groups, IN PLACE. Returns what to restore.
+    """Prepare a model for MJWarp, in place, and return restoration data.
 
-    MJWarp draws every geom in an enabled group at full opacity because its shader never reads the
-    alpha channel, so anything MuJoCo treats as invisible has to be removed from the model before it
-    ever reaches ``create_render_context``. Doing it by group rather than by editing colours keeps the
-    change reversible and keeps the two renderers describable by one sentence: "both were shown groups
-    0-2, minus the geometry MuJoCo would have drawn with zero alpha".
+    Hide geoms and sites whose effective alpha is at most ``alpha_eps`` by moving
+    them from enabled groups to HIDDEN_GROUP. Optionally normalize spot cutoffs.
+    The caller must exclude HIDDEN_GROUP from rendering.
     """
     ga = effective_alpha(m, "geom")
     sa = effective_alpha(m, "site")
@@ -270,44 +124,12 @@ def restore_model(m, p: Prepared) -> None:
 
 
 def texture_gaps(m, groups=DEFAULT_GROUPS) -> list[tuple[int, str, int]]:
-    """``[(geom id, name, mjtGeom), ...]`` for TEXTURED geoms MJWarp's sampler cannot address.
+    """List visible textured geoms with unsupported UVs or texture kinds.
 
-    Empty is the answer a caller wants. A non-empty list is not a warning to be logged and forgotten:
-    depending on which of the two conditions below fired, those surfaces either render as one texel
-    or do not render at all.
-
-    **Two conditions, and both must be checked.**
-
-    1. *The geom's UVs.* ``sample_texture`` derives UVs for ``PLANE`` and ``MESH`` only, so a textured
-       ``BOX``/``CYLINDER``/``SPHERE``/``CAPSULE`` samples texel (0,0) and comes out one flat colour.
-       That is a FIDELITY gap: the frame is wrong and the renderer survives.
-    2. *The texture's kind.* MJWarp builds ``wp.Texture2D`` and samples with 2-D coordinates, so a
-       ``CUBE`` or ``SKYBOX`` map worn by a geom is not a 2-D texture and is not sampled as one.
-    3. *The mesh's UVs exist at all.* In ``mujoco_warp <= 3.12.0`` ``sample_texture``'s MESH branch
-       reads ``mesh_texcoord[mesh_texcoord_offsets[mesh_id] + mesh_facetexcoord[face_adr][i]]``
-       **unconditionally** (upstream guards it from 3.13.0, commit 58d8c77 / PR #1608, 2026-08-26;
-       the pin this was measured on, 3.12.0, predates it). A mesh whose material is textured but which carries NO texture
-       coordinates (``mesh_texcoordadr == -1``, ``mesh_texcoordnum == 0``) indexes that array from a
-       negative offset. On such a pin that is a CRASH, not a fidelity gap — ``Warp CUDA error 700: an illegal
-       memory access``, raised from inside the warm-up frame with no mention of textures anywhere in
-       the traceback.
-
-    Conditions 2 and 3 are checked regardless of geom type, which is the whole point of adding them:
-    the case that found them is a textured **MESH**, the geom type condition 1 declares safe.
-    ``OGBScene`` returned an EMPTY gap list from this function and then killed the renderer.
-    An empty result here must mean "safe", so a check that classifies by geom type alone is a false
-    all-clear.
-
-    **Condition 3 is the one that actually predicts the crash**, and condition 2 catches the same
-    case for a related reason: a cube-mapped mesh normally carries no UVs at all, because MuJoCo
-    generates cube texgen from position and normal and never needs them. Measured on
-    ``OGBScene``: its two button geoms wear mesh ``stopbuttonrim`` with a CUBE texture and
-    ``texcoordadr = -1, texcoordnum = 0``. Both conditions are kept because they are independent —
-    a 2-D texture on a UV-less mesh crashes with no cube map in sight, and a cube map on a mesh that
-    does have UVs is sampled as if its six stacked faces were one 2-D image.
-
-    Every texture role a material carries is examined, not just the highest id, because a material can
-    wear a 2-D albedo and a cube environment map at once and only the second is fatal.
+    Return (geom ID, name, geom type) tuples. Check all material texture roles,
+    primitive UV support, non-2-D maps, and meshes without UV coordinates.
+    Missing mesh UVs can cause invalid reads on MJWarp versions without UV guards;
+    unsupported primitive UVs instead produce a flat texel.
     """
     import mujoco
 
@@ -335,7 +157,7 @@ def texture_gaps(m, groups=DEFAULT_GROUPS) -> list[tuple[int, str, int]]:
 
 
 def texture_mean_rgb(m, tex: int) -> np.ndarray:
-    """``(3,)`` in [0,1]: the mean colour of texture ``tex``, which is what a flat bake should use."""
+    """Return the mean RGB of a texture as a three-element array in [0, 1]."""
     w, h = int(m.tex_width[tex]), int(m.tex_height[tex])
     nc = int(m.tex_nchannel[tex]) if hasattr(m, "tex_nchannel") else 3
     adr = int(m.tex_adr[tex])
@@ -344,18 +166,9 @@ def texture_mean_rgb(m, tex: int) -> np.ndarray:
 
 
 def unsamplable_texture_materials(m, groups=DEFAULT_GROUPS) -> dict[int, list[int]]:
-    """``{material id: [geom ids]}`` for materials MJWarp cannot sample AT ALL on their wearers.
+    """Map material IDs to visible geoms with non-2-D textures or missing mesh UVs.
 
-    This is the *crash* half of ``texture_gaps``, grouped by material so a bake can act on it. A geom
-    qualifies when its material carries a texture and either
-
-    * the texture is not 2-D (``wp.Texture2D`` cannot address a cube or skybox map), or
-    * the geom is a MESH with no texture coordinates (``sample_texture`` indexes ``mesh_texcoord``
-      unconditionally, so a UV-less mesh reads off the allocation).
-
-    Distinct from the UV half of ``texture_gaps``: a textured BOX renders one flat texel, which is
-    wrong but survives. These kill the renderer. ``OGBScene`` is the worked example — one
-    512x512 cube map on two UV-less button meshes.
+    This excludes primitives that can be sampled but use incorrect UVs.
     """
     out: dict[int, list[int]] = {}
     for g in range(m.ngeom):
@@ -378,47 +191,14 @@ def unsamplable_texture_materials(m, groups=DEFAULT_GROUPS) -> dict[int, list[in
 
 
 def bake_unsamplable_textures(m, groups=DEFAULT_GROUPS) -> dict:
-    """Replace a texture MJWarp cannot sample with its MEAN colour, IN PLACE. A DECLARED residual.
+    """Replace unsupported texture materials with a mean RGB color, in place.
 
-    THIS CHANGES THE PICTURE AND MUST BE DECLARED WHEREVER IT IS USED. It exists because the
-    alternative is not a worse picture but no picture: the materials it targets are the ones that
-    make ``mujoco_warp`` die with ``Warp CUDA error 700: an illegal memory access`` (see
-    ``unsamplable_texture_materials``), so the choice is a flat mean colour or a scene that does not
-    render.
+    Prefer the RGB texture role for the mean; otherwise use the first texture.
+    Remove every texture role on each selected material, including roles that are
+    individually supported. Return restoration arrays and records of all removals.
 
-    Deliberately generic, and separate from ``bake_primitive_textures``. That function answers "the
-    UVs are wrong here, is a flat colour closer?" -- a fidelity trade it measurably LOSES on
-    RoboCasa. This one answers "this texture cannot be read at all", where a mean colour is the only
-    thing on offer. Mixing them would let a per-scene crash workaround silently change scenes that
-    render perfectly well.
-
-    **Measured cost on the case that motivated it**, OGBScene's ``btn_metal`` cube map on
-    two button meshes, MuJoCo against MuJoCo over 8 states at 200 px
-    (``tests/fixtures/regression/join/step7/ogb-manipulation/m5/q11_button_bake.json``):
-
-    ====================================  =========
-    quantity                                  value
-    ====================================  =========
-    the two button geoms                   36 px/frame = 0.090 % of frame
-    pixels changed by the bake             55.5 px/frame = **0.139 %**
-    max abs / mean abs on those geoms      37/255 · 21.6/255
-    mean abs over the whole frame          0.023/255
-    **interior_exact vs official**         **1.00000**
-    ====================================  =========
-
-    Every changed pixel fails the 3x3-flat test, so the residual is invisible to the interior metric.
-    For scale, the alpha ``parity_note`` already accepted for Fetch is 1.2-1.5 % of pixels.
-
-    The zero-pixel alternative is **already fixed upstream**: ``mujoco_warp`` guards the MESH branch
-    from 3.13.0 (commit 58d8c77 / PR #1608, 2026-08-26), so on a newer pin this helper is not needed
-    for that case at all. It is therefore a venv bump rather than a patch — cheaper than this helper,
-    and TO BE MEASURED before it is believed, since 3.13.0 moves more than one thing. Documented in
-    ``tests/fixtures/regression/join/step7/ogb-manipulation/m5/q11_for_sami.md``; this helper is the one that lands
-    without a third-party patch.
-
-    Returns the per-GEOM record a declaration needs — which geoms, which texture, what mean colour,
-    and EVERY texture removed with it — rather than only a count, because a caller has to be able to
-    state the residual, not just apply it.
+    This changes the image. Callers must declare and measure the approximation;
+    it is not an exact texture conversion.
     """
     import mujoco
 
@@ -433,10 +213,7 @@ def bake_unsamplable_textures(m, groups=DEFAULT_GROUPS) -> dict:
         if tex < 0:
             continue
         mean = texture_mean_rgb(m, tex)
-        # EVERY texture this material carries is removed, so every one is recorded. A material can
-        # wear a 2-D albedo in the RGB role and a CUBE environment map in another; clearing all roles
-        # while naming only the RGB one produced a record that said ``tex_type = 0`` for a removal
-        # whose whole reason was a cube map, which is a declaration that describes the wrong object.
+        # Record every removed texture role, not just the one supplying the mean color.
         removed = []
         if np.ndim(t):
             for role in range(int(np.asarray(t).shape[0])):
@@ -471,7 +248,6 @@ def bake_unsamplable_textures(m, groups=DEFAULT_GROUPS) -> dict:
             {
                 "material": mid,
                 "material_name": mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_MATERIAL, mid),
-                # the texture the mean colour came from, and then EVERY texture removed with it
                 "texture": tex,
                 "texture_name": mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_TEXTURE, tex),
                 "tex_type": int(m.tex_type[tex]),
@@ -491,35 +267,11 @@ def bake_unsamplable_textures(m, groups=DEFAULT_GROUPS) -> dict:
 
 
 def bake_primitive_textures(m, groups=DEFAULT_GROUPS) -> dict:
-    """Replace the texture on geoms MJWarp cannot UV with that texture's MEAN colour, IN PLACE.
+    """Replace primitive-only 2-D texture materials with their mean color, in place.
 
-    THIS IS A VISUAL-TIER TOOL AND MUST NOT BE USED ON A PARITY PATH. It changes the model so that a
-    surface MuJoCo draws textured is drawn one flat colour, which is a deliberate approximation.
-
-    The gap it closes is ``texture_gaps``: ``sample_texture`` derives UVs for ``PLANE`` and ``MESH``
-    only, so a textured ``BOX``, ``CYLINDER``, ``SPHERE`` or ``CAPSULE`` samples texel **(0, 0)** and
-    the whole surface comes out that one corner texel's colour. On a RoboCasa kitchen 178-401 of the
-    ~350 visible geoms are in that class, and the corner texel is an arbitrary pixel of a photograph:
-    a dark granite sink whose texture starts on a light grout seam renders as a light grey box, which
-    is the single most visible artefact on this scene.
-
-    The mean ought to be a much better flat colour than an arbitrary corner texel --
-    ``docs/research/robocasa.md`` Section 7 bakes every textured material to its mean and finds
-    MuJoCo's own frame moves by mean 7.99/255 with 94.0 % of pixels within 32, so the mean colour
-    carries a surface's identity and the texture carries its detail.
-
-    **ON ROBOCASA IT DOES NOT PAY, and that is measured rather than expected.** Mean |diff| against the
-    official frame moves 6.60 -> 6.68 on kitchen L52 S03 and 32.50 -> 31.83 on L45 S33, with SSIM down
-    on both (``docs/research/robocasa.md`` Section 17.6). Two reasons, both checkable from the return
-    value: RoboCasa's box materials are often near-uniform (``textures/flat/light_gray.png`` and
-    friends), so the corner texel is already about right; and only 38 of ~137 textured materials are
-    worn EXCLUSIVELY by primitives, the other 99 being shared with meshes.
-
-    A material worn by BOTH a primitive and a mesh is left alone and counted in ``mixed``. Flattening
-    it would fix the box and break the mesh, which MJWarp textures correctly; fixing those needs a
-    per-geom material clone, which needs a recompile, and is deliberately not done here. Returns the
-    counts and the arrays to restore, so a caller can see how much of its scene the bake could reach
-    before believing anything about the result.
+    Skip materials also worn by planes or meshes so their valid texturing remains
+    intact. Return baked, mixed, and skipped material IDs plus restoration arrays.
+    Use only for a declared visual approximation, not an exact-parity path.
     """
     import mujoco
 
@@ -556,15 +308,7 @@ def restore_primitive_textures(m, b: dict) -> None:
 
 
 def needs_com_pos(m) -> bool:
-    """Does this model have a camera or light whose pose is derived from ``subtree_com``?
-
-    ``mjCAMLIGHT_TRACKCOM`` positions the element at ``subtree_com[body] + poscom0`` and
-    ``mjCAMLIGHT_TARGETBODYCOM`` aims it at one, and ``mujoco_warp.kinematics`` writes neither. A
-    caller that answers yes must run ``com_pos`` between ``kinematics`` and ``camlight``; a caller
-    that answers no must not, because the launch buys nothing. Gymnasium's six locomotion domains all
-    answer yes -- their ``track`` camera is ``TRACKCOM`` -- and every MuJoCo scene shipped in this
-    repo answers no.
-    """
+    """Return whether any camera or light tracks or targets a subtree center of mass."""
     import mujoco
 
     com = (int(mujoco.mjtCamLight.mjCAMLIGHT_TRACKCOM), int(mujoco.mjtCamLight.mjCAMLIGHT_TARGETBODYCOM))
@@ -573,31 +317,15 @@ def needs_com_pos(m) -> bool:
     )
 
 
-#: Why the fallback below retains for the life of the process, in ``_resources`` terms.
-#: ``wp.from_torch`` does NOT take ownership, so a torch tensor that goes out of scope after being
-#: handed to a live ``wp.Texture2D`` is freed under it and sampled as whatever the allocator put there
-#: next. The tensors are normally attached to the context they belong to, so they are freed with it
-#: (see ``release_render_context``); this is the fallback for a ``mujoco_warp`` build whose context
-#: object refuses an attribute, and it leaks BY DESIGN rather than by accident — a RoboCasa kitchen at
-#: LOD 2 is ~119 MB per context. It goes through ``_resources.retain_process_lifetime`` so that the
-#: deliberate leak is counted and capped in the same place as the EGL contexts, instead of being an
-#: anonymous module-level list.
+# Warp texture views do not own their Torch storage; retain it if the context cannot hold a reference.
 TEX_KEEP_REASON = "mjwarp tex_lod texture handed to wp.from_torch (no ownership transfer)"
 
 
 def release_render_context(rc) -> None:
-    """Drop what a render context exclusively owns, without freeing anything shared.
+    """Drop texture tensor keepalives attached to an MJWarp render context.
 
-    A ``mujoco_warp`` render context owns device arrays (``rgb_data``, the per-world geom buffers, the
-    texture objects) and they are freed when the last reference to ``rc`` goes — warp arrays are
-    refcounted, there is no ``rc.free()`` to call. What this function exists for is the ONE thing a
-    dropped reference does not cover: the ``tex_lod`` torch tensors that ``create_render_context``
-    attached to the context so they would die with it. Clearing the attribute here makes the release
-    an explicit statement at a chosen point rather than a property of when the collector runs.
-
-    It deliberately does not touch an EGL context (a render context does not own one) and it is safe
-    to call twice, because the caller that owns ``rc`` may be a ``BatchRenderer.close()`` on one path
-    and a cache eviction on another.
+    The caller must also drop the context to release its device arrays. No EGL
+    context is owned here, and repeated calls are safe.
     """
     try:
         rc._se_tex_lod_keep = None
@@ -606,56 +334,21 @@ def release_render_context(rc) -> None:
 
 
 def release_cached_ctx(c) -> None:
-    """``BoundedCache.on_evict`` for a family ``_Ctx`` that holds an MJWarp render context.
-
-    Drops the tex_lod keepalives attached to ``c.rc``. Does not free an EGL context — the object
-    does not own one, and the repository-wide rule is that an EGL context is never released.
-    """
+    """Drop texture keepalives from a cached family context before eviction."""
     rc = getattr(c, "rc", None)
     if rc is not None:
         release_render_context(rc)
 
 
 def create_render_context(m, tex_lod: int = 1, **kw):
-    """``mjw.create_render_context`` without its per-texture re-upload of the whole texture blob.
+    """Create an MJWarp context with one upload of the model's texture blob.
 
-    ``tex_lod`` box-filters every texture by that integer factor before it reaches the GPU, which is
-    the mip level a GL pipeline would have picked at that minification anyway. It exists for the
-    LEARNED-CORRECTOR path (``render/rendernet.py``) and is 1 — untouched — everywhere else. A
-    RoboCasa kitchen ships 356 MB of texture data that ``mujoco_warp`` uploads at full resolution into
-    float32 ``(h, w, 4)`` arrays, i.e. ~475 MB resident, sampled by a megakernel whose rays reach it
-    in BVH order; the texture ABLATION says sampling is only 5.4 % of the frame, but that removes the
-    arithmetic and leaves the working set, and this removes the working set. Measured on
-    ``RoboCasaCounterToSink`` at 112 px: 2 is worth ~7 % of the render rate, and the pixels it costs
-    are pixels the corrector is fitting anyway. IT IS NOT FREE AND MUST NOT BE TURNED ON FOR A PLAIN
-    VISUAL-TIER RENDER — every declared number in ``envs/robocasa.py`` was measured at ``tex_lod=1``.
+    ``tex_lod > 1`` area-downsamples textures before upload to the sampler. This is
+    a visual approximation, not automatic mip selection; it needs its own fidelity
+    measurement. Downsampled tensor storage stays alive with the context.
 
-    ``mujoco_warp._src.render_util.create_warp_texture`` builds ONE texture and does
-    ``wp.array(mjm.tex_data, dtype=wp.uint8)`` inside itself, but ``mjm.tex_data`` is MuJoCo's single
-    concatenated blob for every texture in the model — so a context copies ``ntex`` times the whole
-    blob to use one slice of it each time. It is quadratic in the wrong variable and invisible on
-    small scenes.
-
-    On a RoboCasa kitchen (109 textures, 356 MB of texture data) that is 109 x 356 MB = 38.8 GB of
-    host-to-device traffic, and it is where the per-scene setup cost lives:
-
-    ==============================  ===========  ==========
-    stage                            upstream     hoisted
-    ==============================  ===========  ==========
-    texture upload                     7.600 s     0.106 s
-    mesh BVH build                     1.231 s     1.138 s
-    everything else                    0.149 s     0.092 s
-    **create_render_context**        **8.980 s**  **1.336 s**
-    transient device memory            2,338 MB      168 MB
-    ==============================  ===========  ==========
-
-    The frames are bit-identical (max abs diff 0 over the whole batch), which is the only reason this
-    is a wrapper rather than a fork: nothing about the render changes, one array stops being rebuilt.
-    Measured in the frozen measurement record; the same win applies to every textured
-    MuJoCo scene, DM Control's plate bake included.
-
-    Reported upstream-worthy as a one-line change; until it lands, this monkeypatches for the
-    duration of the call and restores afterwards, so no other caller of ``mujoco_warp`` is affected.
+    Temporarily patches a process-global MJWarp helper. Do not overlap this call
+    with other threads constructing contexts; the original helper is restored on exit.
     """
     import mujoco_warp as mjw
     import warp as wp
@@ -696,58 +389,24 @@ def create_render_context(m, tex_lod: int = 1, **kw):
     finally:
         ru.create_warp_texture = original
     if keep:
-        # Tie the downsampled textures to the CONTEXT rather than to the module, so dropping a context
-        # drops its 119 MB with it. A context cache that evicts (``envs/robocasa._CTX_CACHE``) would
-        # otherwise free the context and keep the textures forever.
+        # Keep downsampled tensor storage alive for exactly as long as its context when supported.
         try:
             rc._se_tex_lod_keep = keep
         except AttributeError:  # pragma: no cover
             for t in keep:
-                # This is the compatibility path for context types that cannot carry an ownership
-                # attribute. The old _TEX_KEEP list was unbounded and never refused construction;
-                # retain (with an observable warning) past the global tripwire rather than freeing a
-                # tensor still referenced by wp.Texture2D or introducing a new hard failure.
+                # Context types without ownership attributes require process-lifetime storage retention.
+                # Retain even past the warning threshold to avoid freeing memory still used by a texture.
                 _resources.retain_process_lifetime(t, TEX_KEEP_REASON, overflow="retain")
     return rc
 
 
 @contextlib.contextmanager
 def gl_rounding():
-    """Make MJWarp quantise float->uint8 the way OpenGL does, for the duration of the block.
+    """Temporarily round RGB channels before MJWarp packs them to uint8.
 
-    ``pack_rgba_to_uint32`` receives colours already scaled to [0,255] and packs them with C's
-    ``int()``, which truncates. MuJoCo's frames come out of a GL pipeline, which rounds to nearest.
-    The two rules differ by one level on every pixel whose value has a fractional part >= 0.5, and
-    that is not a rounding-error footnote — it is the dominant term:
-
-    ======================================  ===========  ==========
-    Fetch (480 px, 16 states, 4 scenes)      truncating    rounding
-    ======================================  ===========  ==========
-    interior pixels bit-exact                    0.791       0.9988
-    all pixels bit-exact                         0.718       0.910
-    mean |diff|                                   1.24         1.05
-    ======================================  ===========  ==========
-
-    and the signed difference on flat interior pixels is ``{0: 86.8%, -1: 13.1%}`` with every other
-    value below 0.01%, which is what "the same float, quantised two ways" looks like and what no
-    shading hypothesis predicts.
-
-    Two things a caller must know:
-
-    * **WRAP THE GRAPH CAPTURE, NOT ONLY THE CONTEXT AND THE WARM-UP FRAME.** ``mujoco_warp.render``
-      does not compile a kernel that ``create_render_context`` generated: it DEFINES the megakernel
-      inside itself, as ``@wp.kernel(module="unique")`` over a closure, so the source is generated
-      afresh on every call from whatever ``pack_rgba_to_uint32`` is bound at that moment. A context
-      built as ``with gl_rounding(): create_render_context(); frame()`` and then captured OUTSIDE the
-      block generates a second, truncating kernel, and the graph every later render replays is that
-      one — the patch reaches the warm-up frame and nothing else. Measured with
-      the frozen measurement record: the captured graph agreed with a TRUNCATING direct render on
-      100.0% of channels and differed from a rounded one by exactly ``{0, -1}`` on 15.8% (Fetch),
-      21.2% (Meta-World) and 63.8% (HumanoidBench) of them. Capturing inside the block costs nothing —
-      the warm-up frame has already compiled and loaded that module, so the capture reuses it.
-    * It patches ``mujoco_warp._src.render``, which is private. It is written as a context manager
-      precisely so the window is short and so nothing else in the process ever sees it. Present in
-      ``mujoco-warp`` 3.11.0, the latest release, and on ``main`` as of 2026-08-10.
+    Enclose graph capture as well as warmup: each render call generates a kernel
+    using the current packer, so a capture outside this block retains truncation.
+    This patches process-global MJWarp internals; concurrent rendering must be excluded.
     """
     import warp as wp
     from mujoco_warp._src import render as R
@@ -765,33 +424,14 @@ def gl_rounding():
 
 
 class BatchRenderer(_resources.Closeable):
-    """``qpos (B,nq)`` -> ``(B,H,W,3)`` uint8 on device, with the pre-pass applied and channels fixed.
+    """Render ``(B, nq)`` joint positions to ``(B, H, W, 3)`` uint8 RGB on CUDA.
 
-    The model is prepared and left prepared for the life of the renderer: MJWarp reads the geometry
-    once, at ``create_render_context``, so restoring the groups afterwards would not un-draw anything
-    and would only make the object's behaviour depend on when the caller looked at the model. Call
-    ``restore_model`` explicitly if the same ``MjModel`` is shared with a MuJoCo renderer.
+    Owns batch-sized MJWarp model/data, render buffers, and an optional captured
+    graph. Close explicitly or use a context manager to release those resources.
 
-    **What it owns, and therefore what ``close()`` frees.** Everything it builds in ``__init__`` is
-    exclusive to it and sized for this batch width: the MJWarp ``Model`` and ``Data`` (``put_model``/
-    ``put_data(nworld=batch)``), the render context and its ``rgb_data``, the torch view of that
-    buffer, and the captured warp graph. None of it is shared with another renderer and none of it is
-    keyed in a cache, so ``close()`` drops all of it and a closed renderer refuses to ``render``::
-
-        with BatchRenderer(m, batch=64) as br:
-            frames = br.render(qpos)
-        # br.closed is True here; br.render(qpos) now raises UseAfterCloseError
-
-    **What it does NOT free, and this is the part to read before extending it.** The ``MjModel`` it
-    was handed belongs to the caller, so it is neither restored nor released (see the paragraph
-    above). No EGL or GL context is touched: MJWarp does not use one, and the repository-wide rule —
-    measured, and enforced at zero tolerance by ``testing/resource_guard.py`` — is that an EGL
-    context is never released inside a run, because freeing one silently corrupts rendering in every
-    other live context in the process. ``_resources`` states that rule in full.
-
-    There is no ``__del__``: a renderer that is never closed holds its buffers until the process ends
-    and is countable with ``_resources.live("mjwarp.BatchRenderer")``, which is a better failure than
-    one that depends on when the collector runs.
+    With ``prepare=True``, the caller's MuJoCo model is modified and left modified.
+    Use ``restore_model`` with ``prepared`` when that model must be reused elsewhere.
+    Texture gaps are reported on the instance; they are not automatically baked.
     """
 
     resource_kind = "mjwarp.BatchRenderer"
@@ -843,13 +483,7 @@ class BatchRenderer(_resources.Closeable):
             self._capture()
 
     def _release(self) -> None:
-        """Drop the graph, the context, the batch-sized Data and the Model view. Idempotent.
-
-        Order matters in one place only: the captured graph replays reads and writes inside ``rc`` and
-        ``d``, so the graph reference goes first. Everything here is a warp object whose device memory
-        is refcounted, so dropping the last reference IS the free; naming each one is what makes the
-        release happen at a point the caller chose.
-        """
+        """Drop the graph before its referenced context and simulation buffers."""
         self.graph = None
         self._bgra = None
         rc, self.rc = getattr(self, "rc", None), None
@@ -861,10 +495,7 @@ class BatchRenderer(_resources.Closeable):
     def _frame(self):
         self._mjw.kinematics(self.m, self.d)
         if self.needs_com:
-            # A TRACKCOM / TARGETBODYCOM camera or light reads ``d.subtree_com``, which
-            # ``kinematics`` does not write. Omitted, the camera never leaves its ``put_data`` pose
-            # and every frame is rendered from the wrong place with no error. Conditional because the
-            # launch is pure cost on the scenes that do not need it.
+            # Kinematics does not update subtree_com, which these cameras and lights read.
             self._mjw.com_pos(self.m, self.d)
         self._mjw.camlight(self.m, self.d)
         self._mjw.refit_bvh(self.m, self.d, self.rc)
@@ -878,11 +509,11 @@ class BatchRenderer(_resources.Closeable):
         self.graph = cap.graph
 
     def render(self, qpos):
-        """``(B,nq)`` float32 on device -> ``(B,H,W,3)`` uint8 on device, RGB (channels swapped)."""
+        """Render device-resident ``(B, nq)`` positions and return uint8 RGB frames."""
         self._check_open("render")
         self._wp.to_torch(self.d.qpos).copy_(qpos)
         if self.graph is not None:
             self._wp.capture_launch(self.graph)
         else:
             self._frame()
-        return self._bgra[..., [2, 1, 0]]  # the swap; ~3% of frame time, never optional
+        return self._bgra[..., [2, 1, 0]]  # MJWarp packs bytes as BGRA.

@@ -1,5 +1,3 @@
-"""Local contract checks for the two recovered classic-control defaults."""
-
 import numpy as np
 import pytest
 import torch
@@ -9,8 +7,17 @@ from stable_envs.envs._classic_semantics import CLASSIC_FIELDS
 from tests.helpers.stepping import branch_step
 
 
-@pytest.mark.parametrize("domain,name", [("cartpole", "CartPole"), ("pendulum", "Pendulum")])
-def test_recovered_classic_state_is_complete_independent_and_renderable(domain, name):
+@pytest.mark.parametrize(
+    "domain,name,owned_field",
+    [
+        ("cartpole", "CartPole", "x"),
+        ("pendulum", "Pendulum", "theta"),
+        ("acrobot", "Acrobot", "theta1"),
+        ("mountain_car", "MountainCar", "position"),
+        ("mountain_car_continuous", "MountainCarContinuous", "position"),
+    ],
+)
+def test_classic_state_is_complete_independent_and_renderable(domain, name, owned_field):
     with se.make(name, num_envs=2, device="cpu") as env:
         state = env.reset(seed=17)
         assert env.execution_mode == "DELEGATED_CPU"
@@ -21,7 +28,7 @@ def test_recovered_classic_state_is_complete_independent_and_renderable(domain, 
             assert env.state_spec[key].dtype == dtype
 
         held = state.clone()
-        state[next(iter(CLASSIC_FIELDS[domain]))].add_(1)
+        state[owned_field].add_(1)
         assert (env.get_state() == held).all()
         assert torch.equal(env.render(held), env._render(env._pack_render_state(held)))
 
@@ -87,3 +94,55 @@ def test_swm_float32_physics_defaults_are_applied_exactly():
     with se.make("Pendulum", num_envs=1, device="cpu") as pendulum:
         base = pendulum._simulator.envs[0].unwrapped
         assert base.dt == float(np.float32(0.05))
+
+
+@pytest.mark.parametrize("name", ["Acrobot", "MountainCar"])
+def test_remaining_discrete_action_contract(name):
+    with se.make(name, num_envs=1, device="cpu") as env:
+        assert env.action_spec.dtype == torch.int64
+        assert env.action_spec.discrete_n == 3
+        out = env.step(np.ones((1, 1), np.int64), frames=None)
+        assert set(out.keys()) == {
+            "state",
+            "reward",
+            "terminated",
+            "truncated",
+            "observation",
+            "info_state",
+            "states",
+            "valid",
+            "state_valid",
+        }
+        with pytest.raises((AssertionError, TypeError)):
+            env.step(np.ones((1, 1), np.float32), frames=None)
+
+
+def test_continuous_mountain_car_dtype_transition_and_unclipped_action_cost():
+    with se.make("MountainCarContinuous", num_envs=1, device="cpu") as env:
+        reset = env.reset(seed=17)
+        assert not reset["task", "state_is_float32"].item()
+        precise = np.asarray([[0.1234567890123]], np.float64)
+        out = env.step(precise, frames=None)
+        assert out["state", "task", "state_is_float32"].item()
+        saved = out["state"]
+        expected = env.step(np.zeros((1, 1), np.float32), frames=None)
+        env.set_state(saved)
+        actual = env.step(np.zeros((1, 1), np.float32), frames=None)
+        assert (actual == expected).all()
+
+        env.reset(seed=17)
+        clipped = env.step(np.asarray([[2.0]], np.float64), frames=None)
+        assert clipped["reward"].item() == -0.4
+
+
+def test_remaining_swm_float32_physics_defaults_are_applied_exactly():
+    cases = {
+        "Acrobot": {"LINK_LENGTH_1": 1.0, "LINK_COM_POS_1": 0.5, "LINK_MOI": 1.0},
+        "MountainCar": {"gravity": 0.0025, "force": 0.001, "max_speed": 0.07},
+        "MountainCarContinuous": {"power": 0.0015, "max_speed": 0.07},
+    }
+    for name, expected in cases.items():
+        with se.make(name, num_envs=1, device="cpu") as env:
+            base = env._simulator.envs[0].unwrapped
+            for attribute, value in expected.items():
+                assert getattr(base, attribute) == float(np.float32(value))

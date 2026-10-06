@@ -1,38 +1,3 @@
-"""Private seeded rollout helper for certification tests.
-
-Policy-driven rollouts belong outside this package. stable-envs exposes stateful ``step`` plus
-pure open-loop ``transition`` / ``unroll``. This module exists so reproducibility and GPU
-regression tests can generate a deterministic action sequence around environments that ship
-dynamics; it is not a user API.
-
-The policy interface is ``get_action(obs, **kwargs)`` plus ``set_env(env)``, so a policy written
-for that shape works here. The one deliberate addition is that
-``get_action`` receives a BATCH: ``obs`` carries B environments and the return is ``(B, action_dim)``.
-A per-environment policy call would put a Python loop inside the hot path and give back the launch
-overhead the rest of the repo spends its effort removing; a policy that genuinely cannot batch can
-still loop internally, and that cost is then visibly its own rather than the framework's.
-
-Rollout requires ``env.step`` — a batched GPU simulator — which many envs in this repo do NOT have, by
-design. Rendering and simulation are separable, so an env is free to ship a renderer alone; ``sample``
-says so precisely rather than failing somewhere deep, and points at the alternative (bring your own
-states).
-
-What an env must declare to be rolled out is ``step(actions)`` plus ``action_dim``, ``action_low`` and
-``action_high``, so ``RandomPolicy`` works with no arguments. Discrete-action envs (MiniGrid's seven,
-CartPole's two, MountainCar's and Acrobot's three) declare HALF-OPEN bounds ``[0, n)`` and floor, so a
-uniform float is a uniform action and an integer tensor works unchanged.
-
-A simulator's fidelity claim is NOT a renderer's, and the three regimes among the envs that ship one
-must not borrow each other's language:
-
-  * MiniGrid's transition is a finite decision table and the port is EXACT — 0 mismatches over all
-    seven actions from each of 256 sampled states, on all six registered grids.
-  * classic control is a published closed form; the ports agree with the float64 reference to ~1e-13
-    over 100 steps, and the residue is a 1-ulp difference between CUDA's and glibc's ``sin``/``cos``.
-  * PushT's contact solver tracks pymunk to a median 0.68 px over 100 steps and is explicitly not
-    bit-exact, because contact is chaotic and no reimplementation of it can be.
-"""
-
 from __future__ import annotations
 
 from typing import Any
@@ -44,7 +9,7 @@ from .._dynamics import has_dynamics
 
 
 class BasePolicy:
-    """``get_action(obs) -> (B, action_dim)``."""
+    """Test-policy interface: get_action receives batched render rows and returns batched actions."""
 
     def __init__(self, **kwargs: Any) -> None:
         self.env = None
@@ -53,14 +18,14 @@ class BasePolicy:
         self.env = env
 
     def reset(self, batch: int) -> None:
-        """Called once at the start of a rollout. Stateful policies clear their buffers here."""
+        """Clear policy state at the start of a rollout; the base implementation does nothing."""
 
     def get_action(self, obs: Any, **kwargs: Any) -> torch.Tensor:
         raise NotImplementedError
 
 
 class RandomPolicy(BasePolicy):
-    """Uniform over the env's action bounds. The default, and the honest baseline for any comparison."""
+    """Draw seeded uniform actions within configured or environment bounds."""
 
     def __init__(self, low=None, high=None, seed: int = 0, **kw):
         super().__init__(**kw)
@@ -88,7 +53,7 @@ class RandomPolicy(BasePolicy):
 
 
 class ScriptedPolicy(BasePolicy):
-    """Wraps a plain callable ``fn(state, t) -> (B, action_dim)``. For fixed or hand-written controllers."""
+    """Adapt a callable fn(render_rows, t) to the test-policy interface."""
 
     def __init__(self, fn, **kw):
         super().__init__(**kw)
@@ -109,21 +74,12 @@ def sample(
     seed: int | None = None,
     init_states=None,
 ) -> dict:
-    """Legacy renderer-corpus sampler; returned rows are projections, not resumable State.
+    """Collect a seeded test rollout as render projections and actions.
 
-    Simulation may be delegated to CPU even when the output tensors live on CUDA.
-
-    Returns a dict of stacked tensors with time on axis 1 — ``states (B, steps+1, state_dim)``,
-    ``actions (B, steps, action_dim)``, ``style (B, style_dim)``, and ``frames (B, steps+1, H, W, 3)``
-    only when ``render=True``.
-
-    Frames are OFF by default and that is the point of the repo: a rollout of 256x100 at 96px is 707 MB
-    of pixels against 512 kB of states, and the states can be re-rendered at any resolution, in any
-    style, at millions of frames per second whenever they are actually needed. Materialising frames
-    during collection re-creates the problem the repo exists to remove.
-
-    ``style`` is carried in the return value because it is part of the state: without it the stored
-    trajectory does not determine its own frames.
+    Return states [B, T+1, D], actions [B, T, A] (None when T=0), and style.
+    With render=True, also return uint8 frames [B, T+1, H, W, 3]. These stored
+    projections cannot resume simulation. Delegated CPU environments require
+    full State for init_states, even when outputs live on CUDA.
     """
     if not has_dynamics(env):
         raise NotImplementedError(
@@ -171,19 +127,7 @@ def sample(
         "style": env.get_style().clone(),
     }
     if render:
-        # Assign rather than render into ``out=``. ``frames[:, t]`` is a strided view of this buffer
-        # and ``render(out=)`` refuses a non-contiguous destination — deliberately, and now
-        # explicitly: it used to accept one and scatter the frames across the caller's buffer, because
-        # ``Tensor.view`` returns a strided tensor unchanged when the shape it is given is the shape it
-        # already has. (This comment used to claim the strided view "raises". It did not. That is the
-        # defect ``core/env.require_contiguous_out`` closes, and the claim is now true.)
-        #
-        # The alternative layout — ``(steps+1, B, H, W, 3)``, whose ``frames[t]`` IS contiguous — would
-        # let the renderer write in place, but it hands back a permuted view under the documented
-        # ``(B, steps+1, ...)`` shape, and a caller who then calls ``.view()`` on it gets an error
-        # instead of a dataset. The copy is the frame bytes once more per timestep (7 MB at B=256,
-        # 96px) against a step dominated by the simulator, so it is not the thing to optimise here.
-        # The shape is measured, not assumed square: highway-env draws 150x600, Craftax 112x144.
+        # frames[:, t] is strided; assign the result rather than passing it as out=.
         first = env._render(out["states"][:, 0], style=out["style"])
         frames = torch.empty((B, int(steps) + 1, *first.shape[1:]), dtype=torch.uint8, device=env.device)
         frames[:, 0] = first

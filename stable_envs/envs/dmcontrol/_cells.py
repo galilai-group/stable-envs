@@ -1,35 +1,15 @@
-"""How a DM Control cell is DECLARED, and the provenance strings several of them share.
-
-A registered cell is a leaf class carrying ``DOMAIN``/``TASK``/``CAMERA`` and its measured numbers.
-There are eighteen of them and they differ ONLY in those declarations, so they are built from data by
-the two functions below rather than written out eighteen times — and the data lives in one module per
-domain, which is where a reader looking for "what does cartpole claim" would look. The two functions
-are the whole of the machinery: no cell overrides a renderer method, and a cell that needed to would
-be saying its domain is not in the tier it declared.
-
-``DOMAINS`` and ``TRACKCOM_DOMAINS`` are FILLED BY the declarations rather than driving them, so the
-two cannot disagree; they are re-exported from the package so measurement scripts can enumerate
-the family.
-"""
-
 from __future__ import annotations
 
 from ...registry import register
 from .suite import DMControlSuite
 from .trackcom import DMControlTrackCom
 
-#: Every cell's ``__module__``, which is the PACKAGE and not the domain module it is written in.
-#: Family is the explicit ``family`` class attribute (``info(name)["family"]`` /
-#: ``list_envs(family=...)``). ``__module__`` is still pinned to the package so the class stays
-#: reachable at ``stable_envs.envs.dmcontrol`` — leaving ``type()``'s default would name fourteen
-#: domain modules instead. The class IS reachable at this path -- the package re-exports all
-#: eighteen -- so the attribute is accurate as well as unchanged.
+# Generated classes are re-exported from this package, so their module path remains importable.
 _MODULE = __name__.rsplit(".", 1)[0]
 
-#: class name -> (domain, task, camera) for the PARITY cells, filled by ``parity_cell``. The
-#: table, reconstructed from the declarations instead of standing beside them.
+# Class name to (domain, task, camera), populated by registration below.
 DOMAINS: dict[str, tuple[str, str, int]] = {}
-#: The same, for the VISUAL (``mode="trackcom"`` camera) cells; filled by ``trackcom_cell``.
+# The corresponding table for trackcom renderers.
 TRACKCOM_DOMAINS: dict[str, tuple[str, str, int]] = {}
 
 _AT = (
@@ -38,20 +18,7 @@ _AT = (
     "mujoco 3.11.0 + mujoco-warp 3.11.0, against dm_control's physics.render at camera 0"
 )
 
-#: The versions ``_AT`` / ``_SWIMMER_AT`` name, as fields (``stable_envs.env.REFERENCE_VERSIONS_KEY``
-#: / ``MEASURED_WITH_KEY``). Exactly what the text says and nothing more.
-#:
-#: ``reference_versions`` holds the REFERENCE side only -- mujoco, which is what dm_control's
-#: ``physics.render`` draws with -- because the certifier blocks a measurement whose reference is not
-#: this version: the frozen numbers were judged under mujoco 3.12.0, whose finite-plane texture
-#: re-anchoring (changelog item 15, commit cc7fb98c) had phase-shifted the reference's floor checker
-#: while ours had not (tests/fixtures/regression/join/step6/texture-fidelity/findings.md), and recorded three
-#: renderer FAILs for a version drift. dm_control is deliberately absent: neither string names a
-#: dm_control version, and a version nobody measured under is not provenance.
-#:
-#: ``measured_with`` holds OUR side -- mujoco_warp (warp for swimmer) -- and is recorded, never
-#: compared: a bump of our own renderer that moves these numbers is a regression to be seen, not a
-#: reason to block the check.
+# Reference pins gate source comparisons; candidate backend versions record measurement provenance.
 _AT_VERSIONS = {"mujoco": "3.11.0"}
 _AT_MEASURED_WITH = {"mujoco_warp": "3.11.0"}
 
@@ -92,12 +59,10 @@ PARITY_NOTE = (
 
 
 def parity_cell(cname: str, domain: str, task: str, camera: int = 0, *, bases: tuple[type, ...] = (), **extra) -> type:
-    """Declare and register one PARITY cell: a ``DMControlSuite`` leaf carrying its domain's facts.
+    """Register a fixed-camera renderer class and add its domain tuple to DOMAINS.
 
-    ``extra`` is whatever that cell declares beyond the domain triple — ``default_size``,
-    ``SHAPE_KNOBS``, ``parity_all_exact_min``/``parity_note``, the state-dimension note. Nothing here
-    is a hook: a cell that needed to override a renderer method would be saying its domain does not
-    belong in this tier.
+    Prepend optional semantic/model mixins; extra attributes carry per-cell
+    configuration and declarations.
     """
     cls = register(
         type(
@@ -133,10 +98,10 @@ def trackcom_cell(
     bases: tuple[type, ...] = (),
     **extra,
 ) -> type:
-    """Declare and register one VISUAL cell: a ``DMControlTrackCom`` leaf, with its measured numbers.
+    """Register a trackcom renderer class with fidelity metadata and optional mixins.
 
-    ``note_suffix`` is appended to the shared ``VISUAL_NOTE`` — swimmer's specular note, quadruped's
-    reflection/site note. ``bases`` is for the one cell whose MODEL is not ``suite.load``'s.
+    Append note_suffix to the shared residual description; record the domain
+    tuple in TRACKCOM_DOMAINS.
     """
     vf = visual_fidelity
     flags = dict(render_flags or {})

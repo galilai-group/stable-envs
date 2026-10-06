@@ -1,8 +1,9 @@
 # Test redundancy audit
 
 Reviewed against `d424517f7766a16bcb3554469b0f42704c7d0fc5` on 2026-10-06.
-This audit recommends consolidation; it does not remove tests or change acceptance
-criteria. Craftax and archived evidence are excluded from recommendations.
+The initial audit recommended consolidation without changing tests. The follow-up
+below records completed consolidation separately. Craftax and archived evidence
+are excluded from recommendations.
 
 ## Method and limits
 
@@ -47,18 +48,20 @@ remove two files and five repeated replay cases; it must not weaken a gate silen
 Local verification: both old modules and both shared saved-corpus modules pass on
 this Mac. Five CUDA cases were skipped; this audit did not run a new GPU gate.
 
-### 2. Classic State tests duplicate implementation, not family coverage
+### 2. Classic State tests duplicate implementation, not family coverage — consolidated
 
-The first tests in [classic semantics](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/unit/test_native_classic_semantics.py)
-and [remaining classic semantics](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/unit/test_native_classic_remaining_semantics.py)
+At the audit checkpoint, the first tests in [classic semantics](https://github.com/galilai-group/stable-envs/blob/d424517f7766a16bcb3554469b0f42704c7d0fc5/tests/unit/test_native_classic_semantics.py)
+and [remaining classic semantics](https://github.com/galilai-group/stable-envs/blob/d424517f7766a16bcb3554469b0f42704c7d0fc5/tests/unit/test_native_classic_remaining_semantics.py)
 perform almost the same schema, dtype, ownership, rendering, and projection-rejection
 checks. Their environment parameter lists are disjoint. One selects the first State
 key; the other explicitly selects a string key.
 
-**Recommendation:** one parameterized test for all five environments, retaining
-explicit selection of the mutated field. Keep separate tests for action clipping,
-discrete-action rejection, rewards, physics defaults, and MountainCarContinuous's
-State dtype transition. This saves test code without dropping environments.
+**Completed:** one parameterized test now covers all five environments in
+`tests/unit/test_native_classic_semantics.py`, with the mutated field named in each
+case. Distinct action, reward, physics-default, and dtype-transition tests moved
+unchanged into that module. The second file was removed. Collection remains
+**12 cases**, and all 12 pass both before and after consolidation. No tolerance or
+assertion was removed; this does not retire the separate frozen replay tests.
 
 ### 3. DMC oracle replay can share a small reader/assertion helper
 
@@ -95,7 +98,23 @@ replace a direct adapter boundary test.
 phrase “NO DYNAMICS.” That no longer describes registered Fetch classes. The cleanup
 replaces this one assertion with an AST check of `_FetchSemantics`/`FetchBase`
 composition and retains the check that `FetchBase` supplies no stepping method.
-No redundant-test deletion was bundled with the documentation edits.
+The first documentation batch did not remove redundant tests.
+
+### 6. Discovery tested docstring wording instead of failure behavior — replaced
+
+`test_import_contracts.py` required one of two phrases in the discovery docstring.
+It now checks the explicit private-module mapping and injects both missing-dependency
+and unexpected import errors. Both must be recorded without escaping; their
+diagnostics must remain distinguishable. No Craftax environment is constructed.
+
+### 7. Visibility-collapse negative control patched a nonexistent method — repaired
+
+`test_task_object_visibility.py` tried to read `FakeEnv.render` before injecting
+the faulty renderer, but the fixture and conformance checker use `_render`. The
+test now patches that hook. It first verifies zero per-row error for the clean
+fixture, then requires positive error after row 0's appearance is broadcast to
+every row. All seven visibility checks pass; their assertions and thresholds stay
+unchanged. The file's documentation was also rewritten without historical narratives.
 
 ## Similar-looking tests to keep
 
@@ -138,7 +157,7 @@ guard; three fail while extracting DMC declarations because
 these separately; failing does not make a test redundant.
 
 Next cleanup order: resolve the old classic replay precision policy, consolidate its
-duplicate modules, combine classic State checks, then share the DMC replay helper.
+duplicate modules, then share the DMC replay helper. Classic State checks are combined.
 For each change, compare collected parameter cases and assertion coverage, run both
 old/new checks before deleting code, and preserve source pins and negative controls.
 Do not reduce the Cartesian slice cases merely because their bodies are shared.

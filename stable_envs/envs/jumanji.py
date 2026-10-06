@@ -1,264 +1,14 @@
-"""Jumanji (InstaDeep) — a matplotlib reference turned into an exact per-pixel lookup.
-
-Reference: ``jumanji`` 1.1.2, whose 26 registered JAX environments are drawn by matplotlib viewers.
-**Eight ids are ported here across six renderers**, every one bit-identical to the official renderer on
-all pixels (see the table below). Two more were measured and REFUSED, each on a named mechanism rather
-than on a tolerance, and the remaining sixteen were not attempted for reasons
-``docs/research/jumanji.md`` records id by id.
-
-Eight over six because ``RubiksCube-partly-scrambled-v0`` and ``Sudoku-very-easy-v0`` differ from their
-siblings only in the RESET DISTRIBUTION — same viewer, same alphabet, same atlas — so they share the
-parent's atlas and differ only in ``sample_states``. That is the move the Fetch port makes for its
-``Dense``/``Dict`` suffixes, and it matters here for a second reason: two viewers of one class produce
-the same matplotlib figure NAME, so a variant with its own viewer would fight the parent for one figure.
-
-WHAT THE OFFICIAL RENDERER ACTUALLY IS, WHICH IS NOT WHAT ``env.render`` SUGGESTS
---------------------------------------------------------------------------------
-
-``env.render(state)`` returns **None** for all 26 ids, and that is not a missing feature: every viewer
-is built with ``render_mode="human"``, whose ``_display`` draws to a window and returns nothing.
-``MatplotlibViewer`` picks the branch by binding ``self._display`` at construction, so the rgb_array
-path is reached by constructing the viewer with ``render_mode="rgb_array"``. Two ids need more than
-that — ``Snake.render`` and ``Sokoban.render`` call the viewer and then **discard its return value** —
-so the official renderer for this family is the VIEWER's ``render``, not the env's, and everything here
-goes through it.
-
-The frame is 10x10 inches of matplotlib at whatever dpi the figure carries, i.e. **1000x1000 by
-default**. ``size`` here is honoured by pinning the figure's dpi to ``size/10``, which is the official
-renderer at a different resolution rather than a resampling of it; parity is measured at each size
-separately and the atlas is cached per size.
-
-THE CONSTRUCTION: A FRAME IS A PER-PIXEL LOOKUP INDEXED BY ONE CELL'S SYMBOL
----------------------------------------------------------------------------
-
-MiniGrid's atlas is built by CALLING ``Grid.render_tile``, which makes its parity structural rather
-than a rasterizer-matching exercise. The same move works here, and it has to be generalised in one
-respect: a matplotlib cell is not pixel-aligned, not rectangular in general, and is anti-aliased, so
-there is no tile to cut out. What survives is the weaker and sufficient statement — **each output
-pixel is a function of exactly one cell's symbol** — and that is enough for an exact gather:
-
-  1. ``P*V`` official renders, one per (cell ``p``, symbol ``v``) against a fixed base grid;
-  2. ``owner[y,x]`` = the single cell whose symbol moves this pixel. **A pixel moved by two cells is a
-     model failure and is counted, not tolerated** — it is what refused Cleaner and SlidingTilePuzzle;
-  3. ``LUT[k,v]`` = owned pixel ``k``'s colour when its owner holds ``v``, taken from those renders;
-  4. everything unowned is the static plate.
-
-Rendering is then ``plate`` with one gather scattered into it. Every colour in the frame came out of
-the official renderer, so exactness is by construction — anti-aliased glyph fringes, alpha-blended
-paths and shared cell borders included, none of which is modelled or reimplemented.
-
-Steps 1-4 only prove each cell is separable ON ITS OWN. The check that decides it is step 5: compose
-random grids with EVERY cell different at once and diff against the official frame. That is what these
-ids report, at 200 px, 12 uniform-random plus 12 reset-distribution grids each:
-
-======================  ====  ====  ======  =========  ==========  ==============  =============
-id                         P     V  owned%  conflicts  LUT (MB)    verify uniform  verify real
-======================  ====  ====  ======  =========  ==========  ==============  =============
-Maze-v0                  100     4   56.3%          0        0.27          0/255          0/255
-RubiksCube-v0             54     6   45.1%          0        0.32          0/255          0/255
-Sudoku-v0                 81    10    2.4%          0        0.03          0/255          0/255
-Connector-v3             100    31   67.2%          0        2.50          0/255          0/255
-Sokoban-v0               100     5   81.0%          0        0.49          0/255          0/255
-Minesweeper-v0           100    10    4.8%          0        0.06          0/255          0/255
-======================  ====  ====  ======  =========  ==========  ==============  =============
-
-Sudoku's 2.4% is the whole thesis in one number: the only pixels that depend on the board are the digit
-glyphs, so 977 pixels of a 40,000-pixel frame carry all of it and the other 97.6% is a constant.
-
-And the number the whole port exists to produce — this renderer against the official viewer, on 64
-states drawn from each env's own reset distribution, at 200 px:
-
-======================================  ==============  ==============  ==========  ==========
-class                                    all px exact   interior exact    mean/255    max/255
-======================================  ==============  ==============  ==========  ==========
-JumanjiMaze                                   1.000000         1.000000      0.0000           0
-JumanjiRubiksCube                             1.000000         1.000000      0.0000           0
-JumanjiRubiksCubePartlyScrambled              1.000000         1.000000      0.0000           0
-JumanjiSudoku                                 1.000000         1.000000      0.0000           0
-JumanjiSudokuVeryEasy                         1.000000         1.000000      0.0000           0
-JumanjiConnector                              1.000000         1.000000      0.0000           0
-JumanjiSokoban                                1.000000         1.000000      0.0000           0
-JumanjiMinesweeper                            1.000000         1.000000      0.0000           0
-======================================  ==============  ==============  ==========  ==========
-
-ALL pixels, not merely interior ones, and that is the point of building the atlas out of official frames
-rather than matching a rasterizer: there is no anti-aliasing residual to negotiate, because the
-anti-aliased pixels were copied rather than recomputed.
-
-THE ATLAS IS VERIFIED PER SIZE, AND ONE ID IS 200 px ONLY
-----------------------------------------------------------
-
-``verified_sizes`` is measured, not declared for caution. At 400 px five of the six renderers still
-separate exactly, and **Connector does not**: its cells carry a ``linewidth=1`` black edge, a linewidth
-is in POINTS, and one point is 0.28 px at dpi 20 but 0.55 px at dpi 40 — so the shared border stops
-being fully black and becomes a genuine blend of the two cells it divides. **5,841 pixels are moved by
-more than one cell** there, the per-cell model is simply false, and ``_build_atlas`` refuses rather than
-producing an atlas that is wrong on exactly the states that matter. ``JumanjiConnector`` therefore
-raises ``ValueError`` for any size but 200, which is the path the conformance suite already understands
-("an env that renders at one size only says so") and which it skips on.
-
-G1, asked separately from the LUT check because they are different claims. The verification above shows
-the frame is a function of the grid *given everything else held where the adapter puts it*; it does not
-show that no OTHER leaf reaches a pixel. So every non-grid leaf of a real reset ``State`` was
-substituted from a different episode's and the official env-level frame re-rendered: **0/255 for all
-six**. Minesweeper's ``flat_mine_locations`` and Sokoban's ``agent_location`` are therefore genuinely
-not in the state, rather than assumed out of it. Connector is stronger still and by construction:
-``ConnectorViewer.render`` is handed ``state.grid`` itself, so no other leaf is in scope.
-
-NO ``step``, AND THAT IS A DECISION RATHER THAN AN OMISSION
------------------------------------------------------------
-
-MiniGrid ships a batched GPU ``step`` because its reference is a CPU simulator running at 8,100-10,700
-env-steps/s, so a GPU port is worth 158x at B=256 and 7,500x at B=16,384 — the port buys a capability
-that did not exist. Jumanji's envs are already JAX: ``env.step`` is ``jax.jit``-compilable and
-``jax.vmap``-able onto the same GPU this renderer runs on, at whatever batch the caller wants.
-Reimplementing those transitions here would add a second solver to keep in sync with upstream and buy
-no capability at all. ``step_reference_checkable`` is therefore deliberately unset on every class, and
-the conformance suite's simulator check skips them by design. What this family contributes is the half
-Jumanji does NOT already do on the GPU: the frame.
-
-WHAT THE COLOUR KNOBS DO, AND WHAT THEY ARE NOT
-------------------------------------------------
-
-The atlas is NOT rebuilt per palette — a rebuild is ``P*V`` matplotlib renders, which is seconds to
-minutes, so it cannot be on a render path. A palette entry instead rewrites exactly the LUT entries
-whose colour is that symbol's MODAL colour, and leaves every other entry at the official value.
-
-The consequence is worth stating plainly, because MiniGrid needed a per-subpixel label decomposition to
-avoid it: for a symbol that paints a single flat colour, recolouring is total and the result is the
-frame the reference would draw at that palette. For a symbol whose pixels are already a BLEND — a
-Sokoban sprite, a Sudoku or Minesweeper digit and its anti-aliased fringe, a Connector path at alpha
-0.25 — only the dominant colour moves, and the fringe keeps a blend toward the OLD colour. Such a frame
-is therefore not one the official renderer would produce at that palette. Measured, as
-``colors_per_symbol``: Maze is ``[1,1,1,1]`` (total), Sokoban ``[1,14,22,28,53]``, RubiksCube ``[9]*6``,
-Connector 6-11, Sudoku ``[1,203,224,...]``, Minesweeper ``[3,246,221,...]``. Only the DEFAULT appearance
-is claimed to reproduce the reference, and that is measured at 0/255; a randomised palette is a domain
-randomisation, not a reference frame.
-
-Connector is the entry that was expected to break and did not. Its cells are drawn as
-``plt.Rectangle`` patches with ``edgecolor="black", linewidth=1`` — adjacent cells share those edges —
-and its paths are painted at **alpha 0.25 against a live Agg canvas**, which is the serial-blend shape
-that makes a renderer order-dependent. It separates anyway: a shared border is black whichever
-neighbour drew it, so it never MOVES with a cell's symbol and lands in the plate rather than in a
-conflict.
-
-WHAT THE STATE IS
------------------
-
-One integer per cell, and the alphabet is the one the VIEWER consumes rather than the one the env
-stores. For Maze that is decisive: ``MazeEnvViewer.render(state)`` is exactly
-``MazeViewer.render(_overlay_agent_and_target(state))``, so the render state is the OVERLAID grid —
-walls with the agent and the target written into it — and ``agent_position``/``target_position`` are
-not separate dimensions. Carrying them would declare dimensions the renderer provably cannot read
-twice over, and ``check_state_dims_matter`` would be right to fail it.
-
-Compression, at the float32 this repo stores states in, against the 200 px frame (120,000 bytes):
-
-======================  =============  ==============  ===============
-id                       state (B)      vs frame        packed 1B/cell
-======================  =============  ==============  ===============
-Maze-v0                          400           300x             1,200x
-Sudoku-v0                        324           370x             1,481x
-Connector-v3                     400           300x             1,200x
-Sokoban-v0                       400           300x             1,200x
-Minesweeper-v0                   400           300x             1,200x
-RubiksCube-v0                    216           555x             2,222x
-======================  =============  ==============  ===============
-
-MEASURED, and what is NOT claimed
----------------------------------
-
-The reference is matplotlib, which is one of the most global-state-heavy libraries in Python, and the
-conformance suite keeps one live reference env per (class, size) for a whole run — so several viewers
-coexist. Asked rather than assumed: render Maze at a fixed grid, construct and drive a second env's
-viewer, re-render Maze at the UNCHANGED grid. **0/255.** Jumanji's viewers key their figures by name
-through ``plt.fignum_exists``, and the names differ per env, so they do not share a canvas.
-
-WITHIN this family the same hazard is real, and the FIRST fix for it was itself a bug worth recording.
-Two viewers of one id at two SIZES do share a figure name, and the suite renders at ``2 * env.size`` in
-``check_resolution_consistency``, so building the 400 px atlas would re-dpi the figure the cached 200 px
-REFERENCE viewer is holding. The obvious repair — give each (id, size) a unique viewer NAME — is wrong,
-because **some viewers draw their name**: ``RubiksCubeViewer`` and ``MinesweeperViewer`` both call
-``fig.suptitle(self._name)``. Measured after renaming: RubiksCube disagreed with the official renderer
-on exactly **100 pixels of every frame**, all in rows 4-7 (the suptitle band) and all UNOWNED, i.e.
-baked into the plate. Minesweeper was worse, because it looked perfect — its atlas and its reference
-carried the same invented title, so it scored 1.000000 against a picture the official env never draws.
-
-So the name is left exactly as the official env sets it, ``_VIEWERS`` keeps ONE viewer per id and never
-closes it, and ``_official_frame`` sets the figure's dpi per render instead — changing size without
-changing a pixel of what the reference draws. The lesson generalises past this family: when isolating
-two configurations of a reference renderer, isolate on something the renderer does not READ.
-
-Two ids were measured and refused, and both failures are informative rather than incidental:
-
-  * **Cleaner-v0** — 225 conflict pixels (exactly one cell) and 255/255 on verification. Its agent
-    overlay is not a per-cell symbol: ``_set_agents_colors`` paints the cells in
-    ``state.agents_locations``, and the env has exactly three agents, so "no agent anywhere" is
-    unrepresentable. A 4-symbol grid therefore cannot vary its cells independently — the corner where
-    the last agent symbol is removed has to put the agents SOMEWHERE, and that somewhere turns red.
-    The coupling is real, not an artifact of the encoding.
-  * **SlidingTilePuzzle-v0** — 28,235 conflict pixels, 255/255, **of which 25,671 were the probe and
-    not the renderer.** ``ax.imshow(state.puzzle, cmap=...)`` passes no ``vmin``/``vmax``, so the
-    colormap normalises to the board's own min and max — but the board is a PERMUTATION of 0..24 in
-    576/576 reachable states, so on the reachable set that normalisation is a constant. What moved
-    was ``base()``: the solved board holds one 0 and one 24, and overwriting either extreme
-    renormalises all 25 tiles. Anchoring the base (two 0s, two 24s) takes it to **2,564**, all of
-    them **within 1 px of a cell edge** — Connector's shared-border blend, firing at 200 px instead
-    of 400. Still refused, but the next step is a size sweep rather than a wall; see
-    ``docs/research/jumanji.md`` and the frozen measurement record.
-
-THROUGHPUT, and the batch it is quoted at
-------------------------------------------
-
-One H200 at 200 px, through ``env.render`` as a caller gets it. The denominator is the FASTEST honest
-form of the official viewer — matplotlib reusing one figure, not allocating a new one per frame, which
-is up to 5.3x faster on Maze and would have flattered every ratio below if it had been skipped.
-
-======================  ==============  ==========  ==========  ============  ==========
-id                       official f/s     B=1         B=256       B=4096       crossover
-======================  ==============  ==========  ==========  ============  ==========
-Maze-v0                          91.16     3,346       362,022       482,575        none
-Sudoku-v0                        19.08     3,390       671,266     1,209,900        none
-Minesweeper-v0                   17.10     3,164       638,327     1,107,219        none
-RubiksCube-v0                     8.79     3,362       420,845       580,691        none
-Sokoban-v0                        7.83     3,353       281,220       355,190        none
-Connector-v3                      7.16     3,252       310,639       402,232        none
-======================  ==============  ==========  ==========  ============  ==========
-
-**There is no crossover on any id: this renderer is faster at every batch measured, including B=1**,
-where the tightest case (Maze, against the fastest reference) is still 36.7x and the widest
-(Connector at B=4096) is 56,207x. That is the expected shape rather than a surprise — matplotlib
-composites artists serially against a live Agg canvas, so its cost is per frame with no batch term,
-while this is one copy plus one gather. Stating it as a property matters because "no crossover" is a
-result, not a missing measurement.
-
-See ``docs/research/jumanji.md`` for the full five-batch table, the per-id atlas build times, and the
-id-by-id account of the twenty ids not ported.
-"""
-
 from __future__ import annotations
 
 import importlib.metadata as _md
 import importlib.util as _ilu
 import os
 
-# Matplotlib must be on a headless backend before pyplot is imported anywhere, and jax must not
-# preallocate the GPU: the renderer here is torch, the reference is CPU matplotlib, and jax's default
-# 75% preallocation would starve the very device the frames are being written on. Both are
-# ``setdefault``, so an explicit setting always wins.
+# Select headless plotting and avoid JAX reserving memory needed by Torch.
 os.environ.setdefault("MPLBACKEND", "Agg")
 os.environ.setdefault("XLA_PYTHON_CLIENT_PREALLOCATE", "false")
 
-# THE DEPENDENCY CHECK, at module scope and by ``find_spec`` rather than by import.
-#
-# Unlike the tile families, this one cannot render without its reference package: the atlas IS a stack
-# of official frames, so a machine without ``jumanji`` has no way to build one. A lazy import inside
-# ``render`` would let all six classes register and then fail at the first frame — which is 300-odd
-# test failures for one missing wheel, and it has happened twice in this repo. Raising here removes
-# exactly these envs and puts the reason in ``stable_envs.envs.import_errors()``.
-#
-# ``find_spec`` and a metadata version read, not an import: importing ``jax`` costs ~2 s and importing
-# ``matplotlib.pyplot`` mutates global state, neither of which belongs in ``import stable_envs``.
+# Detect optional packages without importing JAX or changing plotting state.
 _VENV = "/mnt/vast/home/randall.balestriero/venvs/se-jumanji"
 _missing = [m for m in ("jumanji", "jax", "matplotlib") if _ilu.find_spec(m) is None]
 if _missing:  # pragma: no cover
@@ -280,27 +30,17 @@ from ..env import Env
 from ..registry import register
 from ..spaces import Box, Dict, RGBBox
 
-#: Where built atlases are memoised. Building one costs P*V official matplotlib renders — 6.0 s for
-#: Maze at 200 px, 340.7 s for Connector — so it is done once per (id, size) per machine and then
-#: loaded. ``docs/research/jumanji.md`` carries the full per-id, per-size table and the warm-up script.
+# Built atlases persist under this root, keyed by source ID and image size.
 _CACHE_ROOT = os.environ.get("STABLE_ENVS_CACHE") or os.path.expanduser("~/.cache/stable-envs")
 #: In-process atlas cache, keyed (id, size, device).
 _ATLAS: dict = {}
-#: ONE official viewer per (id, size), built once and never closed.
-#:
-#: Not a speed optimisation. A viewer owns a matplotlib figure identified by NAME, and
-#: ``_get_fig_ax`` resolves that name globally — so a second viewer for the same (id, size) closes and
-#: re-creates the figure the first one is still holding, and the first one's next frame comes back at
-#: matplotlib's default dpi instead of the pinned one. Caching by content is the same rule the MuJoCo
-#: families follow for EGL contexts, for the same reason: the resource is process-global whether or not
-#: the object holding it is.
+# Viewers with the same name share a global figure; cache one per atlas ID.
 _VIEWERS: dict = {}
 #: Reset-distribution state pools, keyed by id. Built once per process from the official env.
 _POOL: dict = {}
 #: Sentinel label meaning "this pixel's colour is not a flat palette colour; keep the official one".
 RAW = 255
-#: Bytes of gather scratch ``render`` will hold at once, which sets the batch chunk. 256 MB is well
-#: above the width at which the gather saturates bandwidth, so this bounds memory and not throughput.
+# Bound gather scratch memory when rendering large batches.
 _SCRATCH_BUDGET = 256 << 20
 
 
@@ -310,25 +50,10 @@ def _rgb(a) -> np.ndarray:
 
 
 def _official_frame(spec: _Spec, size: int, grid) -> np.ndarray:
-    """THE one path to an official frame: the viewer for ``spec``, drawn at ``size`` px.
+    """Draw through the shared official viewer at the requested pixel size.
 
-    Two things are load-bearing here and one of them was learned the expensive way.
-
-    **The viewer's NAME is never touched.** ``MatplotlibViewer._get_fig_ax`` resolves a figure by
-    ``self._name``, so making the name unique per size is the obvious way to stop two sizes of one id
-    sharing a canvas — and it is wrong, because **some viewers DRAW their name**:
-    ``RubiksCubeViewer`` and ``MinesweeperViewer`` both call ``fig.suptitle(self._name)``. Renaming
-    therefore changes the picture. Measured: with a renamed viewer, RubiksCube disagreed with the
-    official renderer on exactly 100 pixels of every frame, all of them in rows 4-7 (the suptitle band)
-    and all of them UNOWNED, i.e. baked into the plate. Worse, it is the kind of error that hides:
-    Minesweeper's atlas and its reference were renamed identically, so it scored a perfect 1.000000
-    against a title this port had invented.
-
-    **The dpi is set per render instead.** ``figure_size`` is 10x10 inches, so dpi = size/10. One
-    viewer and one figure per id; when a render is asked for at a different size than the figure
-    currently carries, the dpi is changed and the figure redrawn once to let the constrained-layout
-    engine settle before the frame that is kept. That makes two sizes of one id safe without altering
-    a single pixel of what the reference draws.
+    Keep the viewer name unchanged: some viewers draw it in the image. Change
+    figure DPI and settle the layout before reading a frame at a new size.
     """
     import matplotlib.pyplot as plt
 
@@ -349,12 +74,6 @@ def _official_frame(spec: _Spec, size: int, grid) -> np.ndarray:
     return out
 
 
-# ===================================================================== per-id adapters
-#
-# A spec says three things: what the grid IS, how to render one through the OFFICIAL viewer, and how a
-# real jumanji ``State`` reduces to one. Everything else in this module is shared.
-
-
 class _Spec:
     env_id: str = ""
     cls_name: str = ""
@@ -365,16 +84,10 @@ class _Spec:
     value_names: tuple = ()
     doc: str = ""
 
-    #: Output sizes at which the per-cell model was MEASURED to hold (0 conflicting pixels and 0/255 on
-    #: the many-cells-changed verification). Rendering at any other size raises, because there is no
-    #: honest atlas for it — see ``JumanjiGrid._check_size``.
+    # Resolutions with validated per-cell separability.
     verified_sizes: tuple = (200, 400)
 
-    #: The id whose atlas and viewer this spec SHARES. Defaults to its own. A variant id that differs
-    #: only in its reset distribution — ``RubiksCube-partly-scrambled-v0``, ``Sudoku-very-easy-v0`` —
-    #: draws through the identical viewer, so giving it its own atlas would rebuild an identical one,
-    #: and giving it its own viewer would be worse than wasteful: viewers of the same class produce the
-    #: same matplotlib figure NAME, so two of them would fight over one figure.
+    # Reset-only variants must share the viewer to avoid competing for its named figure.
     atlas_id: str = ""
 
     @property
@@ -517,14 +230,7 @@ class _Connector(_Spec):
         "shared black borders drawn against a live canvas, and at 200 px they separate exactly "
         "anyway — but only at 200 px."
     )
-    #: 200 ONLY, and this is measured rather than cautious. ``_draw_grid_cell`` gives every cell a
-    #: ``linewidth=1`` black edge, and a linewidth is in POINTS: at dpi 20 (200 px) one point is 0.28
-    #: px and the shared border quantises to fully-black pixels that no neighbour's colour reaches, so
-    #: the cells separate. At dpi 40 (400 px) it is 0.55 px, the border becomes a genuine blend of the
-    #: two cells it divides, and **5,841 pixels are moved by more than one cell** — the per-cell model
-    #: is simply false there, and ``_build_atlas`` refuses rather than producing an atlas that is wrong
-    #: on exactly the states that matter. This is the only id in the family whose separability depends
-    #: on the resolution, and it is a property of drawing edges in points against a pixel grid.
+    # At higher DPI, antialiased borders blend neighboring cells and break separability.
     verified_sizes = (200,)
 
     def viewer(self):
@@ -578,8 +284,7 @@ class _Sokoban(_Spec):
 
 
 class _CombinedGrid:
-    """Stands in for a Sokoban ``State``: ``BoxViewer._add_grid_image`` only calls ``grid_combine``,
-    and ``grid_combine(g, g)`` is the identity on an already-combined grid."""
+    """Supply an already combined Sokoban grid; grid_combine(g, g) preserves it."""
 
     def __init__(self, g):
         self.variable_grid = g
@@ -622,13 +327,7 @@ class _Minesweeper(_Spec):
 
 
 class _RubiksCubePartlyScrambled(_RubiksCube):
-    """Same cube, same viewer, same atlas — a different RESET DISTRIBUTION.
-
-    ``RubiksCube-partly-scrambled-v0`` applies a short scramble instead of a long one, so it visits a
-    different region of the 54-sticker space and nothing else changes. Registering it separately is the
-    same move the Fetch port makes for its ``Dense``/``Dict`` suffixes: the id that a dataset was
-    collected under is worth naming, and ``sample_states`` is where the difference lives.
-    """
+    """Use the short-scramble reset distribution with the standard cube atlas."""
 
     env_id = "RubiksCube-partly-scrambled-v0"
     cls_name = "JumanjiRubiksCubePartlyScrambled"
@@ -637,7 +336,7 @@ class _RubiksCubePartlyScrambled(_RubiksCube):
 
 
 class _SudokuVeryEasy(_Sudoku):
-    """``Sudoku-very-easy-v0``: the same 81 ``Text`` artists, from an easier puzzle generator."""
+    """Use the easier puzzle generator with the standard Sudoku atlas."""
 
     env_id = "Sudoku-very-easy-v0"
     cls_name = "JumanjiSudokuVeryEasy"
@@ -657,15 +356,8 @@ SPECS = [
 ]
 
 
-# ===================================================================== the atlas
-
-
 def _viewer(spec: _Spec):
-    """The one official viewer for ``spec``. See ``_VIEWERS`` for why there is exactly one.
-
-    Keyed by id and NOT by size: the size is a per-render property of the figure's dpi (see
-    ``_official_frame``), and a second viewer for the same id would contend for the same named figure.
-    """
+    """Cache one viewer per atlas ID; sizes share its named Matplotlib figure."""
     key = spec.key_id
     hit = _VIEWERS.get(key)
     if hit is None:
@@ -678,11 +370,10 @@ def _atlas_path(env_id: str, size: int) -> str:
 
 
 def _build_atlas(spec: _Spec, size: int) -> dict:
-    """``P*V`` official renders -> plate, per-pixel owner, and the colour lookup. See the module doc.
+    """Build a background plate and cell/symbol lookup from official frames.
 
-    Raises rather than returns a degraded atlas: a conflicting pixel means the frame is NOT a function
-    of one cell at a time, and an atlas built anyway would be silently wrong on exactly the states that
-    matter.
+    Reject pixels changed by multiple cells: a per-cell lookup cannot represent
+    their interactions.
     """
     base = spec.base()
     f0 = _official_frame(spec, size, base)
@@ -710,19 +401,13 @@ def _build_atlas(spec: _Spec, size: int) -> dict:
     ys, xs = np.nonzero(owner >= 0)
     lut = frames[owner[ys, xs], :, ys, xs]  # (K, V, 3) uint8
 
-    # Which of a symbol's colours is its FLAT one, so a palette knob can be exact where one exists.
-    # ``colors_per_symbol == 1`` (Maze) means the symbol paints a single colour and recolouring is
-    # total; where it is larger (a Sokoban sprite, a Sudoku glyph and its anti-aliased fringe) only the
-    # modal colour is a palette entry and the rest keeps the official value. That is stated in
-    # ``make_variation_space`` rather than hidden.
+    # Recolor only each symbol's modal color; preserve blended fringes from the source.
     palette = np.zeros((V, 3), np.uint8)
     label = np.full(lut.shape[:2], RAW, np.uint8)
     for val in range(V):
         cols, counts = np.unique(lut[:, val], axis=0, return_counts=True)
         palette[val] = cols[counts.argmax()]
         label[:, val] = np.where((lut[:, val] == palette[val]).all(-1), val, RAW)
-    # ``bg`` is NOT stored: it is derived in ``_load_atlas`` from the plate and the owned set, so there
-    # is one definition rather than two that can drift.
     return {
         "plate": f0,
         "ys": ys.astype(np.int32),
@@ -736,14 +421,7 @@ def _build_atlas(spec: _Spec, size: int) -> dict:
 
 
 def _background(plate: np.ndarray, ys: np.ndarray, xs: np.ndarray) -> tuple:
-    """The plate's dominant colour, over the UNOWNED pixels only, and the mask it paints.
-
-    Restricting to unowned pixels is the whole content of this function. Taken over the whole frame it
-    is the modal colour of the BASE render, and for an id whose cells cover most of the picture that
-    colour lives inside cells that the gather overwrites a moment later — measured on Sokoban, whose
-    cells own 81% of the frame: ``background`` moved zero pixels and the conformance suite correctly
-    reported the knob as inert. The plate is exactly the unowned region, so that is where its colour is.
-    """
+    """Find the dominant color and matching mask among pixels not owned by cells."""
     H, W, _ = plate.shape
     owned = np.zeros(H * W, bool)
     owned[ys.astype(np.int64) * W + xs.astype(np.int64)] = True
@@ -788,27 +466,24 @@ def _load_atlas(spec: _Spec, size: int, device) -> dict:
         "K": K,
         "V": int(data["meta"][1]),
     }
-    # ``k * V`` for every owned pixel, precomputed: the render adds the symbol to it and indexes the
-    # flat LUT once. Built here so the hot path allocates nothing per call.
+    # Precompute pixel offsets into the flattened symbol lookup.
     out["kbase"] = torch.arange(K, device=dev, dtype=torch.long) * out["V"]
     out["bg_mask"] = t(bg_mask)  # (H,W) bool
     _ATLAS[key] = out
     return out
 
 
-# ===================================================================== the env
-
-
 class JumanjiGrid(Env):
-    """A Jumanji id whose frame is a per-pixel lookup indexed by one cell's symbol."""
+    """Render cell grids using an atlas sampled from the official Jumanji viewer.
+
+    Atlas construction requires Jumanji and Matplotlib; rendering gathers cached
+    colors on the chosen Torch device. Each pixel must depend on at most one
+    cell, so supported resolutions are restricted per task.
+    """
 
     family = "jumanji"
 
     SPEC: _Spec = None
-    #: 200 px, i.e. matplotlib at dpi 20. Not the viewer's 1000x1000 default, and the reason is cost
-    #: rather than fidelity: the model holds at 200, 500 and 1000 alike on Maze, while the atlas is P*V
-    #: official renders and Connector's is already 340.7 s at 200 px. Note this is the DEFAULT, not the
-    #: only size — see ``verified_sizes``, which is measured per id and is ``(200,)`` for Connector.
     default_size = 200
     parity_interior_min = 1.0
 
@@ -831,14 +506,6 @@ class JumanjiGrid(Env):
         self._a = _load_atlas(spec, self.size, self.device)
 
     def _check_size(self, size: int) -> None:
-        """Refuse a size the per-cell model was not MEASURED to hold at.
-
-        ``ValueError`` and not something quieter, because the conformance suite's
-        ``test_resolution_downsample_agrees_within_the_measured_bound`` catches exactly this and skips
-        with the reason — "an env that renders at one size only says so" — which is the honest
-        behaviour for an env that genuinely has no exact atlas at 2x. Connector is the one id where
-        that bites; see ``_Connector.verified_sizes`` for the 5,841-pixel measurement behind it.
-        """
         if int(size) not in self.SPEC.verified_sizes:
             raise ValueError(
                 f"{type(self).__name__} renders at {self.SPEC.verified_sizes} px, not {int(size)}. The "
@@ -847,28 +514,15 @@ class JumanjiGrid(Env):
                 f"is right, only one that would be silently wrong. See docs/research/jumanji.md"
             )
 
-    # ---- variation ------------------------------------------------------------------
-
     def make_variation_space(self) -> Dict:
-        """Two knobs, and the defaults are the official colours read OFF the built atlas.
+        """Expose the background color and one ``(V, 3)`` palette leaf.
 
-        ``palette`` is one ``(V,3)`` leaf rather than V separate ones on purpose. A per-symbol leaf
-        would be reported INERT by ``check_variations_do_something`` for any symbol the sampled states
-        never contain — Sudoku's digit 9 is not in every board — which is a property of the sample, not
-        of the wiring.
-
-        What a palette entry recolours is exactly the pixels the official renderer painted in that
-        symbol's MODAL colour. For a flat-colour family (Maze: one colour per symbol) that is the whole
-        symbol. For a Sokoban sprite or a Sudoku glyph it is the sprite's dominant colour and not its
-        anti-aliased fringe, which keeps the official value — so a recoloured frame is exact where the
-        colour is flat and unretouched where it is a blend, rather than approximated everywhere.
+        Palette changes affect each symbol's modal color. Other colors, including
+        antialiasing fringes, retain their source values.
         """
         spec = self.SPEC
         a = _load_atlas(spec, self.size, self.device)
-        # ``Box`` and not ``RGBBox`` for the palette: RGBBox fixes shape=(3,), and this leaf is (V,3).
-        # It is deliberately ONE leaf and not V of them (see the docstring above), which also means
-        # check_colors_apply_exactly skips it -- ``background`` is the (3,)-wide leaf that check bites
-        # on, and it is the one whose colour must land in the frame literally.
+        # RGBBox fixes shape=(3,); the palette needs (V, 3).
         return Dict(
             {
                 "palette": Box(
@@ -877,8 +531,6 @@ class JumanjiGrid(Env):
                 "background": RGBBox(init_value=a["bg"].astype(np.uint8)),
             }
         )
-
-    # ---- render ---------------------------------------------------------------------
 
     @torch.no_grad()
     def _render(
@@ -890,7 +542,6 @@ class JumanjiGrid(Env):
         style=None,
         out=None,
     ) -> torch.Tensor:
-        """``(...,P)`` -> ``(...,H,W,3)`` uint8 on device: the plate, with one gather scattered in."""
         s = self._render_state if states is None else torch.as_tensor(states, device=self.device, dtype=torch.float32)
         lead = tuple(s.shape[:-1])
         s = s.reshape(-1, self.state_dim)
@@ -907,25 +558,12 @@ class JumanjiGrid(Env):
             out = torch.empty((B, size, size, 3), dtype=torch.uint8, device=self.device)
         buf = out.view(B, size, size, 3)
 
-        # Background first: the plate, with the pixels the official renderer painted in its dominant
-        # colour replaced per environment.
         pal = sty["palette"].reshape(B, a["V"], 3).round().clamp(0, 255).to(torch.uint8)
         bg = sty["background"].reshape(B, 1, 3).round().clamp(0, 255).to(torch.uint8)
         buf.copy_(a["plate"].unsqueeze(0).expand(B, size, size, 3))
         buf[:, a["bg_mask"]] = bg  # (B,1,3) broadcasts over the masked pixels
 
-        # ...then the owned pixels. ``sym`` is the symbol of each owned pixel's owning cell; the LUT is
-        # flat so one gather serves the whole batch.
-        #
-        # Out-of-range symbols WRAP rather than clamp, and ``reference_render`` wraps identically. Real
-        # states are always in range, so the rule never fires in practice; it exists because a clamping
-        # decoder makes a cell that already holds the last symbol insensitive to the conformance
-        # suite's additive probe, which would be reported as a dead state dimension when it is an
-        # artifact of the probe. Craftax's port records the same choice for the same reason.
-        # Chunked over the batch. The gather's temporaries are (rows, K) int64 and (rows, K, 3) uint8,
-        # so an unchunked B=4096 render of Sokoban (K=32,400) would allocate ~3.2 GB of scratch to
-        # produce a 0.49 GB frame stack. The chunk is sized from K rather than fixed, and it is large
-        # enough that throughput is unaffected — the kernel is bandwidth-bound well below this width.
+        # Wrap symbols consistently with reference_render and chunk the gather to bound scratch memory.
         flatbuf = buf.view(B, -1, 3)
         rows = max(1, int(_SCRATCH_BUDGET // max(1, a["K"] * 8)))
         codes = s.round().long() % a["V"]  # (B, P)
@@ -935,45 +573,26 @@ class JumanjiGrid(Env):
             flat = a["kbase"].unsqueeze(0) + sym
             col = a["lut"][flat]  # (n, K, 3)
             lab = a["label"][flat]  # (n, K) uint8
-            # ``gather`` demands an int64 index, and ``label`` is uint8 to keep the atlas small; the
-            # clamp only matters for the RAW sentinel, whose column ``keep`` discards anyway.
+            # Clamp the RAW sentinel to a valid gather index; its gathered color is discarded.
             idx = lab.long().clamp_(max=a["V"] - 1).unsqueeze(-1).expand(-1, -1, 3)
             recol = torch.gather(pal[lo:hi], 1, idx)
             flatbuf[lo:hi, a["pix"]] = torch.where((lab == RAW).unsqueeze(-1), col, recol)
         return buf.view(*lead, size, size, 3) if lead else buf
 
-    # ---- states ---------------------------------------------------------------------
-
     def sample_states(self, batch: int, rng: np.random.Generator | None = None) -> np.ndarray:
-        """From the env's OWN reset distribution, through the official JAX env.
-
-        Seeded explicitly and cached per id: ``jax.random.PRNGKey(i)`` for i in range(n), so
-        ``sample_states(rng=default_rng(k))`` reproduces in a fresh process.
-        """
+        """Sample render grids from a cached, deterministically seeded source rollout pool."""
         rng = rng or self.rng
         pool = _state_pool(self.SPEC)
         return pool[rng.integers(0, len(pool), int(batch))].astype(np.float32)
 
-    # ---- reference bridge -----------------------------------------------------------
-
     @classmethod
     def reference_env(cls, size: int = 200):
-        """The official VIEWER, in rgb_array mode, pinned to ``size``. Never closed.
-
-        The viewer rather than the env, because ``Sokoban.render`` and ``Snake.render`` call their
-        viewer and discard its return value, so ``env.render`` is None for them however the display
-        branch is bound.
-        """
+        """Return a source spec/size handle; official viewers are shared and remain open."""
         return (cls.SPEC, int(size))
 
     @classmethod
     def reference_render(cls, ref, states) -> np.ndarray:
-        """Official frames for these grids, with the round-trip asserted.
-
-        The assertion is what stops a parity number comparing two different scenes: every spec builds a
-        real jumanji ``State`` (or hands the viewer the grid it takes directly), and reading the grid
-        back out of it must give what was asked for.
-        """
+        """Draw source frames for rounded grid symbols, wrapping values modulo the alphabet."""
         spec, size = ref
         out = []
         for row in np.asarray(states, np.float32):
@@ -983,12 +602,7 @@ class JumanjiGrid(Env):
 
 
 def _state_pool(spec: _Spec, n: int = 256) -> np.ndarray:
-    """``(n, P)`` grids from the official env's ``reset``, plus a short random rollout.
-
-    Reset alone is the wrong distribution for the same reason it was for Fetch: a Sokoban reset always
-    has the agent on its start square and no box moved, so a parity number computed from reset states
-    says nothing about the cells that carry the game.
-    """
+    """Cache ``(n, P)`` grids from seeded source resets and short random rollouts."""
     hit = _POOL.get(spec.env_id)
     if hit is not None:
         return hit
@@ -996,8 +610,6 @@ def _state_pool(spec: _Spec, n: int = 256) -> np.ndarray:
     import jumanji
 
     env = jumanji.make(spec.env_id)
-    # jitted, because these run eagerly otherwise: 256 resets plus up to 12 steps each is ~3,300
-    # op-by-op JAX dispatches per id, which dominated the first test that touched an env.
     reset = jax.jit(env.reset)
     step = jax.jit(env.step)
     rng = np.random.default_rng(0)

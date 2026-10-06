@@ -1,7 +1,7 @@
-"""Disk-only replay of independently generated native State/task trajectories.
+"""Disk replay of independent source trajectories.
 
-CUDA cases test device delivery and chunk/direct frame consistency. They do not
-claim source pixel parity. The old frozen corpora remain independent controls.
+CPU/CUDA cases test State delivery, continuation, and capture consistency.
+Frame comparisons use the candidate renderer and do not establish source pixel parity.
 """
 
 from pathlib import Path

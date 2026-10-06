@@ -1,19 +1,3 @@
-"""What a tensor in this package IS: shape, dtype, bounds, device, and the names of its columns.
-
-ONE spec type, not a hierarchy. A state spec, an action spec, an observation spec and a variation spec
-differ in what they describe, never in what they can do, so the rule (no abstraction
-without demand) says they are the same class used four times. ``CompositeSpec`` is the nested-dict form
-that mirrors a ``TensorDict``'s keys and nothing more.
-
-No torchrl. ``torchrl.data.TensorSpec`` would give all of this and a dependency on a package that
-carries a whole RL framework behind it; what this repo needs from a spec is four questions — what
-shape, what dtype, what bounds, what are the columns called — and the answers fit in a dataclass.
-
-Sampling takes a ``numpy.random.Generator`` rather than a torch generator on purpose: the env's own
-reset distributions (``sample_states``) are numpy and seeded from ``env.rng``, so a spec that sampled
-from torch would make "the same seed" mean two different things in one env.
-"""
-
 from __future__ import annotations
 
 from collections.abc import Iterator
@@ -33,16 +17,20 @@ def _as_np(v, shape: tuple[int, ...]) -> np.ndarray | None:
 
 @dataclass(frozen=True)
 class Spec:
-    """One tensor's description. ``shape`` is the PER-ENVIRONMENT shape, without the batch axis."""
+    """Describe one lane's tensor shape, dtype, optional bounds, and column names.
+
+    The batch axis is excluded from shape. Sampling uses a NumPy generator and
+    returns a tensor on the configured device.
+    """
 
     shape: tuple[int, ...]
     dtype: torch.dtype = torch.float32
     low: Any = None
     high: Any = None
     device: torch.device | None = None
-    #: one label per element of a 1-D spec (``state_names``, ``style_names``); ``()`` when unnamed
+    #: Optional labels, one per element of a one-dimensional spec.
     names: tuple[str, ...] = ()
-    #: number of discrete values, for an integer-valued spec; ``None`` for a continuous one
+    #: Integer cardinality; None uses continuous bounds when supplied.
     discrete_n: int | None = None
 
     def __post_init__(self):
@@ -55,8 +43,6 @@ class Spec:
                 f"Spec(shape={self.shape}, names={self.names}): names label the elements of a 1-D "
                 f"spec, one each, so there must be exactly {self.shape} of them."
             )
-
-    # ---------------------------------------------------------------- introspection
 
     @property
     def numel(self) -> int:
@@ -72,8 +58,6 @@ class Spec:
     def batch_shape(self, num_envs: int) -> tuple[int, ...]:
         return (int(num_envs), *self.shape)
 
-    # ---------------------------------------------------------------- construction
-
     def to(self, device) -> Spec:
         return replace(self, device=torch.device(device))
 
@@ -83,12 +67,10 @@ class Spec:
         )
 
     def sample(self, num_envs: int, rng: np.random.Generator | None = None, device=None) -> torch.Tensor:
-        """``(num_envs, *shape)`` drawn uniformly inside the bounds.
+        """Sample (num_envs, *shape) values with the supplied NumPy generator.
 
-        An UNBOUNDED continuous spec refuses rather than inventing a distribution: a state spec with no
-        declared bounds is a statement that the env's reachable set is not a box, and the env knows it
-        (``sample_states``) where this class does not. Guessing would hand back states the env never
-        visits, which is the one thing a sampled corpus must not do.
+        Discrete values use [0, discrete_n); bounded values use a uniform draw followed
+        by conversion to the declared dtype. Unbounded specs cannot be sampled.
         """
         rng = rng if rng is not None else np.random.default_rng()
         dev = device if device is not None else self.device
@@ -106,12 +88,11 @@ class Spec:
             )
         return torch.as_tensor(np.asarray(v), dtype=self.dtype, device=dev)
 
-    # ---------------------------------------------------------------- checking
-
     def validate(self, x, owner: str = "value") -> torch.Tensor:
-        """``x`` -> a tensor of this spec's dtype, or a message naming what is wrong with it.
+        """Check trailing shape, cast to the declared dtype, and validate bounds/finiteness.
 
-        The batch axis is NOT constrained (an env renders any batch); everything after it is.
+        Return the converted tensor on its original device. Batch size is unrestricted;
+        dtype conversion occurs before value checks.
         """
         t = x if torch.is_tensor(x) else torch.as_tensor(np.asarray(x))
         if tuple(t.shape[1:]) != self.shape:
@@ -160,7 +141,7 @@ class Spec:
 
 @dataclass
 class CompositeSpec:
-    """A nested dict of ``Spec``s mirroring a ``TensorDict``'s keys. ``spec["agent", "position"]``."""
+    """Nested tensor specs addressed by entity paths, such as spec["agent", "position"]."""
 
     specs: dict[str, Spec | CompositeSpec] = field(default_factory=dict)
     device: torch.device | None = None
@@ -170,8 +151,6 @@ class CompositeSpec:
         merged.update(kw)
         self.specs = {k: (v if isinstance(v, (Spec, CompositeSpec)) else CompositeSpec(v)) for k, v in merged.items()}
         self.device = torch.device(device) if device is not None else None
-
-    # ---------------------------------------------------------------- mapping protocol
 
     def __getitem__(self, key) -> Spec | CompositeSpec:
         if isinstance(key, tuple):
@@ -212,8 +191,6 @@ class CompositeSpec:
                 out.append(((k,), v))
         return out
 
-    # ---------------------------------------------------------------- construction
-
     def to(self, device) -> CompositeSpec:
         return CompositeSpec({k: v.to(device) for k, v in self.specs.items()}, device=device)
 
@@ -233,7 +210,10 @@ class CompositeSpec:
         )
 
     def validate(self, x, owner: str = "value") -> TensorDict:
-        """Every key present, every leaf valid, no extra keys. Returns the validated TensorDict."""
+        """Validate exact nested keys and each leaf, then return the original input.
+
+        Leaf conversion is used for checking only; this does not replace input values.
+        """
         if not hasattr(x, "keys"):
             raise TypeError(
                 f"{owner}: expected a TensorDict/mapping with keys {sorted(self.specs)}, got {type(x).__name__}."

@@ -1,13 +1,14 @@
-"""Bounded request lifecycle shared by persistent simulation process owners.
-
-Family adapters own construction, command payloads and typed buffers. This
-mixin only handles one in-flight request, failure propagation and cleanup.
-"""
-
 import time
 
 
 class ProcessRequests:
+    """Manage one pending request across persistent simulator workers.
+
+    Families supply connections, processes, payloads, and shared buffers. Partial
+    dispatch or response failure terminates all owners; a mixed result is never
+    returned. Receive and copy shared outputs before starting the next request.
+    """
+
     _worker_family = "Simulation"
 
     def _responses(self, timeout=120):
@@ -25,12 +26,10 @@ class ProcessRequests:
             raise RuntimeError(f"{self._worker_family} worker failed:\n" + "\n".join(errors))
         return results
 
-
     def _check_idle(self):
         self._check_open()
         if self._pending is not None:
             raise RuntimeError(f"{self._worker_family} process request already in flight")
-
 
     def _submit(self, command, payloads=None):
         self._check_idle()
@@ -40,10 +39,9 @@ class ProcessRequests:
                 conn.send((command, payload))
             self._pending = command
         except BaseException:
-            # A partial distributed mutation must never be returned as a State.
+            # Abort all owners after partial dispatch; their states may already have diverged.
             self._abort()
             raise
-
 
     def _receive(self):
         self._check_open()
@@ -57,11 +55,9 @@ class ProcessRequests:
             self._abort()
             raise
 
-
     def _request(self, command, payloads=None):
         self._submit(command, payloads)
         return self._receive()
-
 
     def _abort(self):
         for process in self._processes:
@@ -77,7 +73,6 @@ class ProcessRequests:
         self._closed = True
         self._pending = None
 
-
     def close(self):
         if not self._closed:
             try:
@@ -87,4 +82,3 @@ class ProcessRequests:
                         process.join(timeout=5)
             finally:
                 self._abort()
-

@@ -1,29 +1,9 @@
-"""Pick a MuJoCo GL backend that will not hang this process.
+"""Configure GL before importing MuJoCo or dm_control.
 
-``MUJOCO_GL`` is read when a renderer is first imported, and the wrong value is not a skip — it is
-either an abort or a hang:
-
-* **Linux, unset.** MuJoCo defaults to GLFW, which needs ``DISPLAY``. On a headless GPU node that
-  surfaces as ``glfw.GLFWError: X11: The DISPLAY environment variable is missing`` raised out of
-  every fixture, then SIGABRT, so pytest never prints a summary. EGL is the offscreen default there.
-* **macOS, ``egl``.** Not a mujoco backend (3.12 raises ``invalid value for environment variable
-  MUJOCO_GL: egl``). dm_control still tries ``dlopen(EGL)`` and loses the family.
-* **macOS, ``glfw`` / unset.** ``import mujoco`` and ``mujoco.Renderer`` return. ``from dm_control
-  import mujoco`` does not: ``dm_control._render`` initialises GLFW and blocks in NSApp. That is the
-  hang ``import stable_envs`` used to be, because discovery imports the DM Control family at
-  package import.
-
-Darwin therefore loads mujoco first with its native offscreen backend (``cgl``), then imports
-dm_control under ``disable`` — a value it accepts without opening a window — so discovery cannot take
-the GLFW path. mujoco's renderer stays the one that was already imported. After that bind,
-``MUJOCO_GL`` is restored to ``glfw`` because gymnasium's ``OffScreenViewer`` only accepts
-``glfw`` / ``egl`` / ``osmesa``. dm_control is already imported, so the restore does not re-enter
-GLFW init in this process. An explicit ``MUJOCO_GL`` that is valid for mujoco on this host (``cgl``,
-``glfw``) is honoured for that first import; ``egl`` / ``osmesa`` are not valid here and are treated
-as unset.
-
-Call this before importing mujoco or dm_control. ``discover()`` does; env modules that can be
-imported directly do too. An explicit setting on Linux always wins.
+On macOS, bind MuJoCo to its native backend before importing dm_control with
+rendering disabled. This avoids GLFW initialization during discovery. Restore
+``glfw`` afterward for Gymnasium, which rejects ``cgl``. On other platforms,
+default to offscreen EGL and preserve explicit settings.
 """
 
 from __future__ import annotations
@@ -37,7 +17,7 @@ _DARWIN_MUJOCO = frozenset({"cgl", "glfw"})
 
 
 def configure_mujoco_gl() -> str:
-    """Set ``MUJOCO_GL`` if needed and return the value later importers will see."""
+    """Configure import-time GL selection and return the resulting environment value."""
     if sys.platform == "darwin":
         if "mujoco" not in sys.modules:
             backend = os.environ.get("MUJOCO_GL")

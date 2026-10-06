@@ -1,47 +1,8 @@
-"""Run the test suite so that a test which kills the interpreter costs ONE test, not the run.
+"""Run pytest in restartable subprocesses and aggregate failures across crashes.
 
-THE PROBLEM. This suite has aborted itself four times in a week while being green. A segfault or a
-``SIGABRT`` out of MuJoCo, EGL or a CUDA driver is not an exception: no ``try``/``except`` sees it, the
-process is gone, pytest writes no report for the test that was running, and every test that had not
-run yet is simply never run. The information the run produces about the failure is a shell exit code.
-That is the defect this module fixes, and it is a defect independently of whether the suite is passing
-today.
-
-WHY NOT ``pytest-forked``/``--forked``. It is the obvious answer and it does not work here, measured
-rather than assumed. On this node (H200, torch 2.11+cu130), a forked child cannot use CUDA at all::
-
-    torch.cuda.is_available()      -> True     (NVML path; does not initialise a context)
-    torch.cuda.is_initialized()    -> False
-    pid = os.fork()
-    # in the child:
-    torch.zeros(4, device="cuda")
-    RuntimeError: Cannot re-initialize CUDA in forked subprocess. To use CUDA with multiprocessing,
-                  you must use the 'spawn' start method
-
-That is with CUDA *never touched* in the parent — torch installs a fork handler when ``torch.cuda`` is
-imported and refuses in the child regardless. Since every test in ``tests/gpu`` renders on CUDA,
-``--forked`` would turn 1221 passes into 1221 errors. It is also the wrong shape twice over: it would
-re-run every module-scoped fixture per test (an OGBench plate bake apiece), and the EGL contexts a
-child creates die with the child, which is precisely the release pattern this repo forbids.
-
-WHAT THIS DOES INSTEAD. pytest runs in one subprocess, at full speed, with no per-test cost. The
-plugin writes one line per test into an events file *before* the test starts and *after* it ends, and
-flushes. If the interpreter dies, the supervisor reads the last start with no matching end — that is
-the test that killed it, by name — records it as CRASHED with the signal, adds it and everything
-already finished to a deselect file, and launches the next segment. The run continues from where it
-died. A run with no crashes pays exactly one extra process and nothing else.
-
-A stall is handled the same way. ``pytest-timeout`` interrupts a test that is hung in Python, but
-nothing in-process can interrupt a thread blocked inside a C call in the driver — which is what a hung
-EGL or CUDA call is. So the supervisor watches the events file: if no test has started or finished for
-``--stall-timeout`` seconds, it kills the process group and treats the in-flight test as a crash. The
-per-test timeout is the fast path; this is the one that cannot be defeated.
-
-Exit codes: 0 all good, 1 tests failed or crashed, 78 NODE FAULT (see ``node_health.py``), 2 the
-supervisor itself could not proceed.
-
-    python -m stable_envs.testing.supervisor -- tests/ -v -rs
-    python -m stable_envs.testing.supervisor --smoke
+Use python -m stable_envs.testing.supervisor -- [pytest arguments]. Finished
+and crashed tests are deselected on restart; crashes remain failures in the
+combined report. A bounded restart count prevents an endless crash loop.
 """
 
 from __future__ import annotations
@@ -55,13 +16,10 @@ import sys
 import time
 from pathlib import Path
 
-#: Exit code the plugin uses for ``pytest.exit`` when the node itself is unfit. Distinct from "tests
-#: failed" on purpose: those two demand completely different reactions and conflating them is how a
-#: condemned node once got diagnosed as a repo bug.
+# Distinguish a host-precondition failure from a failing test suite.
 NODE_FAULT_RC = 78
 
-#: A crash loop has to end somewhere. Twelve is far more than any real run needs and small enough that
-#: a systematically-crashing suite reports rather than spins.
+# Bound restart attempts when successive tests crash.
 MAX_SEGMENTS = 12
 
 _OUTCOME_ORDER = ("error", "failed", "crashed", "xpassed", "xfailed", "skipped", "passed")
@@ -84,7 +42,7 @@ def _read_events(path: Path) -> list[dict]:
 
 
 def _in_flight(events: list[dict]) -> str | None:
-    """The nodeid that was running when the process died: the last start with no matching end."""
+    """Return the last started test without a matching completion event."""
     open_ids = []
     for e in events:
         if e.get("kind") == "start":
@@ -109,7 +67,7 @@ def _signal_name(rc: int) -> str:
 
 
 def _run_segment(cmd: list[str], env: dict, events: Path, stall: float, max_wall: float) -> tuple[int, str]:
-    """Launch one pytest process, watching the events file for a stall. Returns (rc, note)."""
+    """Run one pytest subprocess with a stall watchdog; return its exit code and diagnostic."""
     started = time.time()
     p = subprocess.Popen(cmd, env=env, start_new_session=True)
     last_size, last_change = -1, time.time()
@@ -139,9 +97,7 @@ def _run_segment(cmd: list[str], env: dict, events: Path, stall: float, max_wall
 
 
 def _kill_tree(p: subprocess.Popen) -> None:
-    """SIGTERM the whole process group, then SIGKILL. The group matters: pytest spawns the
-    cross-process render worker, and a supervisor that killed only pytest would leave a GPU-holding
-    orphan behind for the next segment to collide with."""
+    """Terminate the process group, then kill survivors, including render-worker children."""
     for sig in (signal.SIGTERM, signal.SIGKILL):
         try:
             os.killpg(os.getpgid(p.pid), sig)
@@ -171,10 +127,7 @@ def main(argv=None) -> int:
     a = ap.parse_args(argv)
 
     args = [x for x in a.pytest_args if x != "--"]
-    # Default to tests/ when the caller named no target. Detected by shape rather than by "the first
-    # token that is not a flag": `-k PushT` and `-m smoke` both have a bare word in them, and treating
-    # that word as a path would leave pytest collecting from the repo root.
-    # and examples/, hundreds of probe scripts that were never meant to be collected.
+    # Recognize path-shaped targets so values after -k or -m do not suppress the tests/ default.
     if not any(x.endswith(".py") or "/" in x or x == "tests" for x in args):
         args = args + ["tests/"]
     if a.smoke and "-m" not in args:
@@ -192,9 +145,7 @@ def main(argv=None) -> int:
     base_env["SE_TEST_DESELECT"] = str(deselect)
     base_env.setdefault("SDL_VIDEODRIVER", "dummy")
 
-    # No core dumps. A crash-isolating runner exists to make crashes cheap, and a Python process with
-    # torch and CUDA mapped in writes a multi-gigabyte core — per crash, on shared storage, in a job
-    # that is already having a bad day. Children inherit the limit.
+    # Children inherit this limit; native crashes must not fill shared storage with core dumps.
     try:
         import resource as _rlimit
 
@@ -206,12 +157,7 @@ def main(argv=None) -> int:
     t0 = time.time()
     rc = 0
     for seg in range(1, a.max_segments + 1):
-        # ONE EVENT FILE PER SEGMENT, and the reason is a bug this cost: with a single cumulative file,
-        # the start record of the test that crashed in segment 1 stays unmatched forever — it is
-        # deselected, so it never runs again and never gets an end — and every later segment therefore
-        # looks like it died in that same test. Observed as a run that "crashed" twelve times in a row
-        # on one hung test and then gave up. In-flight is a question about ONE process, so it has to be
-        # asked of one process's records.
+        # Each process needs its own event file; an earlier crash leaves an unmatched start forever.
         events = rundir / f"events.{seg}.jsonl"
         events.write_text("")
         base_env["SE_TEST_EVENTS"] = str(events)
@@ -221,14 +167,9 @@ def main(argv=None) -> int:
         ev = _read_events(events)
         if rc == NODE_FAULT_RC:
             break
-        # A test left in flight is the definition of a crash, and it is checked BEFORE the exit code
-        # rather than after. An exit code alone is not sufficient evidence: MuJoCo's own fatal path
-        # (``mju_error`` -> ``mjERROR`` -> ``exit(1)``) ends the process with status 1, which is
-        # indistinguishable from "some tests failed" if all you look at is the number. The breadcrumb
-        # is not ambiguous — pytest always closes out every test it started.
+        # Check unfinished tests before exit status: MuJoCo fatal errors can exit 1, like pytest failures.
         who = _in_flight(ev)
         if who is None:
-            # 0 passed, 1 tests failed, 2 interrupted, 3 internal error, 4 usage error, 5 no tests
             if 0 <= rc <= 5:
                 break
             print(
@@ -252,7 +193,7 @@ def main(argv=None) -> int:
 
 
 def _all_events(rundir: Path) -> list[dict]:
-    """Every segment's records, in segment order. Numeric sort: ``events.10`` follows ``events.9``."""
+    """Read segment events in numeric segment order."""
     files = sorted(
         rundir.glob("events.*.jsonl"), key=lambda p: int(p.name.split(".")[1]) if p.name.split(".")[1].isdigit() else 0
     )
@@ -271,9 +212,7 @@ def _summarise(rundir: Path, crashed, wall: float, rc: int, json_out: str) -> in
             slowest.append((e["dur"], e["nodeid"]))
     counts["crashed"] = len(crashed)
     res = {k: counts.get(k, 0) for k in _OUTCOME_ORDER}
-    # Summed over segments, not read off the last one: a run that crashed twice has three session_end
-    # records and the interesting number is what the whole run did. Peak live is a max for the same
-    # reason -- each segment starts from zero live contexts, so the peak is per-segment by construction.
+    # Sum counts across restarted processes, but take the maximum live-resource peak.
     ends = [e for e in ev if e.get("kind") == "session_end"]
     totals = {
         k: sum(int(e.get(k, 0) or 0) for e in ends)
@@ -322,9 +261,7 @@ def _summarise(rundir: Path, crashed, wall: float, rc: int, json_out: str) -> in
                 indent=2,
             )
         )
-    # xpassed is NOT counted as bad here: every xfail in this repo is strict, and a strict XPASS is
-    # already reported by pytest as a failure. Adding it again would make the supervisor's verdict
-    # differ from pytest's on a non-strict xpass for no reason a reader could predict.
+    # Strict XPASS already counts as failed; do not additionally reject non-strict XPASS.
     bad = res["failed"] + res["error"] + res["crashed"]
     return 1 if (bad or rc not in (0, 5)) else 0
 

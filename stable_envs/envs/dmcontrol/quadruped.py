@@ -1,14 +1,3 @@
-"""DM Control ``quadruped`` — the visual tier, at camera 2, on the transcribed MJCF (not ``suite.load``).
-
-The one cell in the family whose MODEL is not ``suite.load``'s and whose camera is not 0.
-Both are preserved: ``DMCQuadrupedWalk`` uses quadruped-walk at camera 2 (``y``, on the torso,
-trackcom) with the registered default appearance, and that is the certified configuration, so
-this is the model the cell draws and the reference renders. The suite's own appearance is one
-``material.self`` knob away.
-
-The torso is an ELLIPSOID, drawn by ``raycast3d._ellipsoid`` on CPU.
-"""
-
 from __future__ import annotations
 
 import numpy as np
@@ -16,12 +5,6 @@ import numpy as np
 from ._aligned import DMCAlignedSemantics
 from ._cells import _AT_VERSIONS, trackcom_cell
 
-#: Quadruped: the family's convention -- three independent MJWarp draws through the shipped
-#: env -- at the certified default (camera 2, 224 px), under the
-#: declared 3.11.0 pair, on a 3090 (job 6394987, gpu2107; the draws of job 6394721 on gpu2104 were
-#: overwritten by it and are not what the numbers rest on). The CPU backend
-#: measured the same picture locally first (3.42 / 0.902 / 0.957 on one draw, Apple M5) and is
-#: certified against this entry, not its own.
 _QUADRUPED_AT = (
     "224 px, camera 2 ('y', trackcom), 64 states x 3 independent draws from sample_states "
     "(certified model and default appearance: material self rgba .6 .3 .3, foot_back_left "
@@ -30,25 +13,12 @@ _QUADRUPED_AT = (
 )
 _QUADRUPED_AT_MEASURED_WITH = {"mujoco_warp": "3.11.0"}
 
-#: MEASURED per domain, then the thresholds the conformance suite asserts. The thresholds are set from
-#: the SPREAD over independent state draws rather than from one, which is why they are not the
-#: measurements: the frozen measurement record re-draws three times and the ceiling sits clear
-
 
 def _transcribed_quadruped_env(seed: int):
-    """Build the registered-default quadruped (not vanilla ``suite.load``).
+    """Build the registered quadruped model and walk task with scaled actions.
 
-    ``quadruped.make_model(floor_size=20 * 0.5)`` (the suite's ``walk`` model) is round-tripped
-    through ``dm_control.mjcf`` with the registered default material/density/light values, then
-    driven by ``quadruped.Move(desired_speed=0.5)`` under ``action_scale.Wrapper``. Measured against
-    ``suite.load("quadruped", "walk")`` (frozen roundtrip fixture):
-    geometry, cameras, lights, texture bytes and ``qpos0`` identical, the material/texture tables
-    permuted, and two defaults that differ from the suite — material ``self`` is rgba
-    (0.6, 0.3, 0.3, 1) where the suite has (0.7, 0.5, 0.3, 1) (mean 1.34/255 on the same qpos), and
-    ``foot_back_left`` has density 1000 where the suite's ``body`` class gives 500 (a mass, so the
-    visited distribution). The certified configuration is that registered default, so this is the
-    model the cell draws and the reference renders; the suite's own appearance is one
-    ``material.self`` knob away.
+    Apply registered material, density, friction, and lighting values before
+    compilation; vanilla suite.load does not supply this configuration.
     """
     import os
     import tempfile
@@ -78,10 +48,7 @@ def _transcribed_quadruped_env(seed: int):
     model.find("geom", "torso").density = 1000.0
     model.find("geom", "foot_back_left").density = 1000.0
     model.find("light", "light").diffuse = 0.7 * np.ones(3, np.float32)
-    # The export exists only to be compiled: ``Physics.from_xml_path`` reads the XML and its assets
-    # into the MjModel at once, so the directory is scoped to the call and removed on exit.
-    # A ``mkdtemp`` that outlived the call leaked one directory per ``sample_states`` /
-    # ``reference_env``.
+    # Compilation consumes the XML and assets before the temporary directory is removed.
     with tempfile.TemporaryDirectory(prefix="se_quadruped_mjcf_") as td:
         mjcf.export_with_assets(model, td, out_file_name="quadruped.xml")
         physics = quadruped.Physics.from_xml_path(os.path.join(td, "quadruped.xml"))
@@ -91,12 +58,7 @@ def _transcribed_quadruped_env(seed: int):
 
 
 class _TranscribedQuadrupedModel:
-    """The non-suite.load quadruped MJCF (``default_size=224``).
-
-    Mixin for the one trackcom cell whose model is not ``suite.load``'s: the transcribed MJCF through
-    the ``_DMCModel._load_env`` hook. Nothing else is overridden (asserted by
-    ``tests/unit/test_cpu3d.py``), so ``_bundle``/``sample_states``/``reference_env`` stay the base
-    class's and cannot drift from it."""
+    """Supply the registered model through _load_env, retaining shared rendering and sampling."""
 
     default_size = 224
 
@@ -105,10 +67,6 @@ class _TranscribedQuadrupedModel:
         return _transcribed_quadruped_env(seed)
 
 
-#: The quadruped's third residual, named as the other trackcom cells name theirs. Not an
-#: approximation this cell introduced: no backend here draws reflections, and that is a statement of
-#: the renderer's semantics on every trackcom cell (the others' floors reflect too; the quadruped's
-#: camera is 4.5 m from a body over an 80 % floor, so it shows).
 QUADRUPED_NOTE = (
     "(3) the floor material has reflectance 0.2, so dm_control draws the body's MIRROR IMAGE in the "
     "floor beside its shadow; MJWarp and cpu3d draw no reflection (the shadow is a 0.3 any-hit factor "
@@ -124,11 +82,6 @@ QUADRUPED_NOTE = (
 
 
 VISUAL_FIDELITY: dict[str, dict] = {
-    # quadruped at the registered default (camera 2, 224 px). Three residuals, per surface off the
-    # segmentation buffer (tests/fixtures/regression/join/step7/dmc-quadruped/findings.md S5): the floor near the
-    # body -- the body's REFLECTION in the reflectance-0.2 floor and its shadow -- carries ~half of
-    # it; the far checker and the one-tap skybox the rest; the ellipsoid itself is 1.2 % of the frame
-    # at mean ~4/255. Thresholds by the family's margin convention (ceiling ~1.3x, floors ~0.93x).
     "DMCQuadrupedWalk": {
         "mean_abs": 3.52,
         "within8_frac": 0.897,

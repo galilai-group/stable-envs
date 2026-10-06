@@ -1,20 +1,3 @@
-"""``make`` / ``info`` / ``list_envs``, plus the registration decorator and its declaration checks.
-
-THE CLASSES ARE CANONICAL AND THIS MODULE HOLDS NO SEMANTICS. ``snv.PushT`` is the environment;
-``snv.make("PushT")`` is a string that finds that class. The registry knows the class a name
-refers to, and whether a class declared its fidelity tier completely before it was allowed in.
-It does not know sibling-library identifiers.
-
-Family metadata is declared on the class (``family``, ``domain``), never inferred from the file path.
-
-Auto-discovery of ``stable_envs/envs/*`` is kept (``discover()``), and so is the rule that a missing
-optional dependency costs exactly the family that needs it: the failure is recorded in
-``import_errors()``, never silent. Discovery is performed by ``importlib`` at CALL time rather than by
-an import statement at module scope, deliberately — contract §8 requires the core modules to import
-nothing from ``envs/``, and a static import here would both invert that arrow and make importing the
-registry pay for every optional dependency in the repository.
-"""
-
 from __future__ import annotations
 
 import importlib
@@ -32,28 +15,21 @@ from .env import (
     _check_reference_versions_shape,
 )
 
-#: class name -> class, populated by ``register``. One place, no parallel tables.
+#: Canonical Python class names are registry keys.
 REGISTRY: dict[str, type[Env]] = {}
 
 
 def check_fidelity_declaration(cls: type[Env]) -> None:
-    """A class must declare exactly one tier, completely. Enforced at registration, not by review.
+    """Validate the declared fidelity tier and its required metadata.
 
-    The failure this exists to prevent is an env quietly adopting the weaker claim: setting
-    ``fidelity_tier = "visual"`` is a way to make the parity assertion stop applying, so the cost of
-    doing it has to be paid at the same moment — measured numbers, thresholds, a stated mechanism, and
-    the words in the class docstring that a reader will actually see.
-
-    The docstring check is mechanical on purpose. ``describe()`` and the registry listing mark the
-    tier, but the thing a person reads first is ``help(cls)``, and a marker that depends on remembering
-    to write it is the kind of rule this repo has learned to make impossible instead.
+    Visual classes must include VISUAL TIER in their class docstring. This checks
+    declaration completeness, not whether the measured acceptance gates pass.
     """
     tier = getattr(cls, "fidelity_tier", "parity")
     if tier not in FIDELITY_TIERS:
         raise ValueError(f"{cls.__name__}: fidelity_tier must be one of {FIDELITY_TIERS}, got {tier!r}")
     vf = dict(getattr(cls, "visual_fidelity", {}) or {})
-    # The reference-version field is optional on both tiers and malformed on neither: a version the
-    # certifier cannot compare is worse than none, because it looks like provenance.
+    # Version metadata is optional, but malformed declarations cannot identify a reference.
     if REFERENCE_VERSIONS_KEY in cls.__dict__ or getattr(cls, REFERENCE_VERSIONS_KEY, None):
         _check_reference_versions_shape(cls, REFERENCE_VERSIONS_KEY, getattr(cls, REFERENCE_VERSIONS_KEY))
     if REFERENCE_VERSIONS_KEY in vf:
@@ -98,12 +74,9 @@ def check_fidelity_declaration(cls: type[Env]) -> None:
 
 
 def check_decoder_declaration(cls: type[Env]) -> None:
-    """A ``"learned"`` decoder is declared completely, or the class does not register.
+    """Require learned decoders to declare visual fidelity, checkpoint identity, and variation metrics.
 
-    Same shape as the tier check and for the same reason: a learned decoder is a way to make the
-    frames better on every declared number at once, so the cost of adopting it has to be paid at the
-    same moment — the tier it is allowed in, the words a reader will actually see, and a named
-    checkpoint in ``visual_fidelity`` so the declaration cannot be read as describing the renderer.
+    Their class docstring must contain LEARNED.
     """
     dec = getattr(cls, "render_decoder", "renderer")
     if dec not in RENDER_DECODERS:
@@ -149,7 +122,7 @@ def check_decoder_declaration(cls: type[Env]) -> None:
 
 
 def register(cls: type[Env]) -> type[Env]:
-    """Decorator. Duplicate names are an error, not a silent overwrite; so is a half-declared tier."""
+    """Register by canonical class name after metadata validation; reject name collisions."""
     key = cls.__name__
     if key in REGISTRY and REGISTRY[key] is not cls:
         raise ValueError(
@@ -174,15 +147,8 @@ def register(cls: type[Env]) -> type[Env]:
 
 
 def registry_table() -> list[dict[str, Any]]:
-    """One row per registered env, with its FIDELITY TIER. The listing, in a form that can be printed.
-
-    ``sorted(REGISTRY)`` is a list of names and says nothing about what the frames are worth. Anything
-    that shows a user the registry should show this instead, so that the one env in the package whose
-    frames are not the official frames cannot be picked by name alone.
-    """
-    # ``state_dim`` is CLASS-level here and is None for the envs that compute it at construction
-    # (Fetch from its MJCF, RoboCasa from its measured live-qpos set). Reporting the class default of
-    # 0 for those would be a number that is wrong rather than absent, so it is not reported.
+    """Return sorted environment metadata rows, including fidelity tier and decoder type."""
+    # Instance-dependent widths are unavailable here; report None instead of a misleading zero.
     return [
         {
             "class_name": n,
@@ -200,7 +166,7 @@ def registry_table() -> list[dict[str, Any]]:
 
 
 def format_registry(width: int = 34) -> str:
-    """The registry as text, with visual-tier envs marked. ``print(stable_envs.format_registry())``."""
+    """Format the registry with visual-tier and learned-decoder labels."""
     rows = registry_table()
     n_visual = sum(r["tier"] == "visual" for r in rows)
     n_learned = sum(r["decoder"] == "learned" for r in rows)
@@ -245,19 +211,15 @@ def _resolve(name: str) -> type[Env]:
 
 
 def make(name: str, **kwargs) -> Env:
-    """``make("PushT", num_envs=64)``. Canonical stable-envs class names only."""
+    """Construct an environment by canonical class name, forwarding constructor keywords."""
     return _resolve(name)(**kwargs)
 
 
 def info(name: str) -> dict[str, Any]:
-    """Everything about an env that can be known WITHOUT constructing one.
+    """Return class metadata without constructing an environment.
 
-    Construction needs a device, and for several families a GPU, an EGL context or a compiled scene —
-    so a lookup that instantiated would be unanswerable on the machine where the question is usually
-    asked (a laptop choosing what to run). Every field here is a class attribute or a registry fact.
-
-    This is environment metadata, not a :class:`~stable_envs.specs.Spec`. Tensor contracts live on
-    ``env.state_spec`` / ``env.frame_spec`` / ``env.variation_spec`` after construction.
+    Instance-dependent dimensions may be None. Full tensor specs are available
+    from the constructed environment.
     """
     cls = _resolve(name)
     dim = getattr(cls, "state_dim", None)
@@ -282,7 +244,7 @@ def info(name: str) -> dict[str, Any]:
 
 
 def list_envs(family: str | None = None, domain: str | None = None) -> list[str]:
-    """Registered canonical class names, sorted. Filters use explicit class metadata."""
+    """Return sorted canonical class names, optionally filtered by family or domain."""
     names = sorted(REGISTRY)
     if family is not None:
         names = [n for n in names if REGISTRY[n].family == family]
@@ -292,28 +254,21 @@ def list_envs(family: str | None = None, domain: str | None = None) -> list[str]
 
 
 def list_families() -> list[str]:
-    """Stable family ids that have at least one registered class. Not module path fragments."""
+    """Return sorted family IDs with at least one registered class."""
     return sorted({c.family for c in REGISTRY.values() if c.family})
 
-
-# ------------------------------------------------------------------ auto-discovery
 
 #: module name -> the exception that stopped it importing
 _IMPORT_ERRORS: dict[str, str] = {}
 _DISCOVERED = False
 
 
-#: Private modules that still register a public class. ``pkgutil`` skips ``_``-prefixed names, so
-#: these would otherwise never load. The error key is the historical module name a missing extra was
-#: recorded under (``craftax_full``), not the private filename.
+#: Explicit private-module imports and their public diagnostic keys.
 _EXPLICIT_ENV_MODULES: tuple[tuple[str, str], ...] = (("_craftax_full", "craftax_full"),)
 
 
 def _import_env_module(mod_name: str, error_key: str) -> None:
-    """Import one env module. A missing extra costs that family; anything else is recorded as unexpected.
-
-    Never raised to the caller: discovery must not fail the package import.
-    """
+    """Import a family and record failure, distinguishing missing dependencies from other exceptions."""
     try:
         importlib.import_module(f"stable_envs.envs.{mod_name}")
     except (ImportError, ModuleNotFoundError) as e:
@@ -329,13 +284,10 @@ def _import_env_module(mod_name: str, error_key: str) -> None:
 
 
 def discover(force: bool = False) -> dict[str, str]:
-    """Import every module under ``stable_envs/envs`` so its registered classes exist.
+    """Import environment modules to populate the registry and return recorded failures.
 
-    Failures are RECORDED, never silent: most env modules need an optional dependency (``pymunk`` for
-    PushT, ``minigrid`` for the grid family, ``mujoco``/``ogbench`` for the mazes), and a machine
-    without one should lose exactly that family rather than the package. ``ImportError`` /
-    ``ModuleNotFoundError`` are missing extras; any other exception is still recorded, with a message
-    that says it is not an optional-dependency miss.
+    Skip private names except explicit entries. Failed imports leave other families
+    available; force repeats discovery without clearing registered classes.
     """
     global _DISCOVERED
     if _DISCOVERED and not force:
@@ -355,7 +307,7 @@ def discover(force: bool = False) -> dict[str, str]:
 
 
 def import_errors() -> dict[str, str]:
-    """``module -> error`` for env modules that could not be imported."""
+    """Return a copy of module-name to import-error diagnostics."""
     return dict(_IMPORT_ERRORS)
 
 

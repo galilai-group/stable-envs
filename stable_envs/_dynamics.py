@@ -1,6 +1,3 @@
-"""Private simulator capability checks."""
-
-
 def has_dynamics(env):
     base = getattr(env, "_se_dynamics_base", None)
     if base is None:

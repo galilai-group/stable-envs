@@ -1,18 +1,10 @@
-"""Global configuration and logging — deliberately two keys and one logger.
-
-``snv.set(verbose="INFO", default_device="auto")`` / ``snv.get_config()`` are the whole
-configuration. Anything env-specific (size, supersample, backend) belongs on the constructor.
-"""
-
 from __future__ import annotations
 
 from typing import Any
 
 from loguru import logger as _loguru_logger
 
-#: Every record from this package carries ``extra["package"] == "stable_envs"``, so an application can
-#: route or silence stable-envs alone: ``logger.add(sink, filter=lambda r: r["extra"].get("package")
-#: == "stable_envs")``.
+# Records carry extra["package"] == "stable_envs" for application-side filtering.
 logger = _loguru_logger.bind(package="stable_envs")
 
 _LEVELS = {
@@ -31,7 +23,11 @@ _CONFIG: dict[str, Any] = dict(_DEFAULTS)
 
 
 def set(**kwargs: Any) -> dict[str, Any]:  # noqa: A001 - the public spelling is ``snv.set``
-    """``snv.set(verbose="INFO")``. Unknown keys are an error, not a silently stored typo."""
+    """Update global verbosity or default device and return a configuration copy.
+
+    Unknown keys and unrecognized verbosity levels raise an error. Environment
+    options such as image size belong on the environment constructor.
+    """
     unknown = [k for k in kwargs if k not in _DEFAULTS]
     if unknown:
         raise KeyError(
@@ -51,18 +47,17 @@ def set(**kwargs: Any) -> dict[str, Any]:  # noqa: A001 - the public spelling is
 
 
 def get_config() -> dict[str, Any]:
-    """The current configuration, as a copy — mutating the return value configures nothing."""
+    """Return a copy of the current global settings."""
     return dict(_CONFIG)
 
 
 def reset_config() -> dict[str, Any]:
-    """Back to the defaults. Used by the tests."""
+    """Restore and return the default global settings."""
     _CONFIG.clear()
     _CONFIG.update(_DEFAULTS)
     return dict(_CONFIG)
 
 
 def log(level: str, message: str) -> None:
-    """Emit one record at ``level`` if ``verbose`` allows it. The only logging entry point."""
     if _LEVELS[level.upper()] >= _LEVELS[_CONFIG["verbose"]]:
         logger.opt(depth=1).log(level.upper(), message)

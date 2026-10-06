@@ -1,12 +1,3 @@
-"""DM Control ``walker`` — the visual tier.
-
-The most balanced of the tier — skybox 48%, floor 45% — so both named residual mechanisms carry
-roughly half each.
-
-These are NOT the official pixels. What the difference measures is declared below and the two
-mechanisms that carry it are named in ``VISUAL_NOTE``.
-"""
-
 from __future__ import annotations
 
 from ._cells import _AT, _AT_MEASURED_WITH, _AT_VERSIONS, trackcom_cell  # noqa: F401

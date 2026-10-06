@@ -1,11 +1,3 @@
-"""Private persistent owners for the accepted OGBench point/large registration.
-
-Each process owns complete source simulators and their isolated legacy RNGs.
-Typed shared columns carry State/task outputs; pipes carry commands/actions.
-Restore validates all shards before any owner applies the checkpoint. Expected
-validation failures discard preparation and leave the owners available.
-"""
-
 from __future__ import annotations
 
 import ctypes
@@ -26,8 +18,9 @@ def _path(key):
 
 
 def _views(buffers, specs, batch):
-    return {key: np.frombuffer(buffers[key], dtype=dtype).reshape(batch, *shape)
-            for key, (shape, dtype) in specs.items()}
+    return {
+        key: np.frombuffer(buffers[key], dtype=dtype).reshape(batch, *shape) for key, (shape, dtype) in specs.items()
+    }
 
 
 def _worker(conn, start, count, batch, seed, cpus, buffers, specs):
@@ -45,8 +38,15 @@ def _worker(conn, start, count, batch, seed, cpus, buffers, specs):
                 views[(group, *_path(key))][rows] = tensor.numpy()
 
         write("state", adapter.get_state())
-        conn.send((True, dict(pid=os.getpid(), affinity=sorted(os.sched_getaffinity(0))
-                             if hasattr(os, "sched_getaffinity") else None)))
+        conn.send(
+            (
+                True,
+                dict(
+                    pid=os.getpid(),
+                    affinity=sorted(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else None,
+                ),
+            )
+        )
         while True:
             command, payload = conn.recv()
             reply = None
@@ -64,8 +64,14 @@ def _worker(conn, start, count, batch, seed, cpus, buffers, specs):
                 write("state", adapter.get_state())
             elif command == "prepare_restore":
                 prepared = None
-                state = TensorDict({key[1:]: torch.from_numpy(value[rows].copy())
-                                    for key, value in views.items() if key[0] == "state"}, [count])
+                state = TensorDict(
+                    {
+                        key[1:]: torch.from_numpy(value[rows].copy())
+                        for key, value in views.items()
+                        if key[0] == "state"
+                    },
+                    [count],
+                )
                 try:
                     adapter.validate(state)
                 except (ValueError, TypeError) as exc:
@@ -99,7 +105,12 @@ def _worker(conn, start, count, batch, seed, cpus, buffers, specs):
 
 
 class OGBMazeProcessAdapter(ProcessRequests):
-    """Explicit private candidate; the public factory remains local until gated."""
+    """Run OGBench Maze simulators and isolated RNGs in spawned processes.
+
+    State and task outputs use typed shared buffers and are copied on receipt.
+    Validate every shard before committing a checkpoint; validation failure leaves
+    live simulators available, while worker failure closes the whole adapter.
+    """
 
     _worker_family = "OGBench Maze"
 
@@ -118,24 +129,44 @@ class OGBMazeProcessAdapter(ProcessRequests):
             state = prototype.get_state()
             self.fields = {key: (tuple(value.shape[1:]), value.dtype) for key, value in state.items(True, True)}
             result = prototype.step(np.zeros((1, 2)))
-            self._specs = {("task", *_path(key)): (tuple(value.shape[1:]), value.numpy().dtype)
-                           for key, value in result.exclude("state").items(True, True)}
-            self._specs.update({("state", *_path(key)): (tuple(value.shape[1:]), value.numpy().dtype)
-                                for key, value in state.items(True, True)})
+            self._specs = {
+                ("task", *_path(key)): (tuple(value.shape[1:]), value.numpy().dtype)
+                for key, value in result.exclude("state").items(True, True)
+            }
+            self._specs.update(
+                {
+                    ("state", *_path(key)): (tuple(value.shape[1:]), value.numpy().dtype)
+                    for key, value in state.items(True, True)
+                }
+            )
         finally:
             prototype.close()
-        self._slices = [slice(int(lanes[0]), int(lanes[-1]) + 1)
-                        for lanes in np.array_split(np.arange(num_envs), processes)]
+        self._slices = [
+            slice(int(lanes[0]), int(lanes[-1]) + 1) for lanes in np.array_split(np.arange(num_envs), processes)
+        ]
         context = mp.get_context("spawn")
-        self._buffers = {key: context.RawArray(ctypes.c_ubyte, int(num_envs * np.prod(shape) * dtype.itemsize))
-                         for key, (shape, dtype) in self._specs.items()}
+        self._buffers = {
+            key: context.RawArray(ctypes.c_ubyte, int(num_envs * np.prod(shape) * dtype.itemsize))
+            for key, (shape, dtype) in self._specs.items()
+        }
         self._views = _views(self._buffers, self._specs, num_envs)
         groups = [None] * processes if cpus is None else [group.tolist() for group in np.array_split(cpus, processes)]
         try:
             for rows, group in zip(self._slices, groups, strict=True):
                 parent, child = context.Pipe()
-                process = context.Process(target=_worker, args=(child, rows.start, rows.stop - rows.start,
-                                          num_envs, int(seed), group, self._buffers, self._specs))
+                process = context.Process(
+                    target=_worker,
+                    args=(
+                        child,
+                        rows.start,
+                        rows.stop - rows.start,
+                        num_envs,
+                        int(seed),
+                        group,
+                        self._buffers,
+                        self._specs,
+                    ),
+                )
                 try:
                     process.start()
                 except BaseException:
@@ -155,9 +186,15 @@ class OGBMazeProcessAdapter(ProcessRequests):
             raise RuntimeError("OGBMazeProcessAdapter is closed")
 
     def _owned(self, group):
-        return TensorDict({key[1:]: torch.from_numpy(value.copy()).to(self.device)
-                           for key, value in self._views.items() if key[0] == group},
-                          [self.num_envs], device=self.device)
+        return TensorDict(
+            {
+                key[1:]: torch.from_numpy(value.copy()).to(self.device)
+                for key, value in self._views.items()
+                if key[0] == group
+            },
+            [self.num_envs],
+            device=self.device,
+        )
 
     def get_state(self):
         self._request("get_state")
@@ -182,8 +219,7 @@ class OGBMazeProcessAdapter(ProcessRequests):
             self._request("discard_restore")
             error = errors[0]
             raise {"TypeError": TypeError, "ValueError": ValueError}[error["kind"]](error["error"])
-        # Validation has succeeded on every owner. A worker failure during the
-        # commit is unexpected and ProcessRequests closes the entire adapter.
+        # Commit only after all shards validate; a failure during commit aborts every owner.
         self._request("commit_restore")
 
     def reset(self, seed=None):

@@ -1,5 +1,3 @@
-"""Historical Humanoid Walk semantics over the preserved humanoid renderer."""
-
 from __future__ import annotations
 
 import torch
@@ -49,12 +47,8 @@ class DMCHumanoidSemantics:
             columns = [layout[f"gravity.{axis}"][0] for axis in "xyz"]
             encoded = self.get_style()[:, columns]
             gravity = encoded.to(torch.float64)
-            encoded_default = torch.tensor(
-                [0.0, 0.0, -9.81], dtype=torch.float32, device=self.device
-            )
-            exact_default = torch.tensor(
-                [0.0, 0.0, -9.81], dtype=torch.float64, device=self.device
-            )
+            encoded_default = torch.tensor([0.0, 0.0, -9.81], dtype=torch.float32, device=self.device)
+            exact_default = torch.tensor([0.0, 0.0, -9.81], dtype=torch.float64, device=self.device)
             gravity = torch.where(encoded == encoded_default, exact_default, gravity)
             self._simulator.configure_gravity(gravity.cpu().numpy())
         return result
@@ -66,10 +60,7 @@ class DMCHumanoidSemantics:
         )
 
     def _layout_dtypes(self):
-        return {
-            key if isinstance(key, tuple) else (key,): dtype
-            for key, (_, dtype) in HUMANOID_FIELDS.items()
-        }
+        return {key if isinstance(key, tuple) else (key,): dtype for key, (_, dtype) in HUMANOID_FIELDS.items()}
 
     def _pack_render_state(self, state):
         if not isinstance(state, TensorDict):

@@ -1,27 +1,6 @@
-"""Which envs the release gate is required to cover, and the ones deliberately left out of it.
-
-The gate is ``scripts/run_gpu_tests.sbatch``, and its contract is that a run FAILS if an env it was
-launched to cover is not reachable — otherwise a lost dependency skips a whole family with a
-per-env reason that is individually honest and collectively means nothing was tested. See
-``tests/gpu/test_conformance.py::test_required_envs_are_all_reachable``.
-
-That contract needs a list of what "covered" means, and it needs the exceptions to be DECLARED rather
-than inferred from whatever happened to import. An env that is absent because nobody installed its
-package and an env that is absent because it CANNOT be installed alongside the others are different
-facts, and only the second one is allowed to be quiet.
-
-``EXCLUDED`` is that second list. It is deliberately hard to add to: an entry needs a reason naming
-the mechanism, and ``tests/regression/test_declarations.py`` asserts every entry has one. Being on it does
-NOT remove an env from the library — the module, its parity numbers and its docs all stay, and the env
-registers normally in an interpreter that can install it.
-"""
-
 from __future__ import annotations
 
-#: ``env-name prefix -> why it cannot be in the same interpreter as the rest``.
-#:
-#: One entry. Resist adding a second without the same standard of evidence: "it did not import on my
-#: machine" is a missing package, not an exclusion.
+# Gate exclusions require an incompatible-dependency reason, not merely a missing installation.
 EXCLUDED: dict[str, str] = {
     "Overcooked": (
         "jaxmarl 0.1.0 requires scipy<=1.12 and jax 0.10.2 requires scipy>=1.14, which no resolution "
@@ -38,7 +17,7 @@ EXCLUDED: dict[str, str] = {
 
 
 def is_excluded(name: str) -> str | None:
-    """The reason ``name`` is outside the gate, or ``None`` if it is inside it."""
+    """Return the declared exclusion reason for a name prefix, or None."""
     for prefix, why in EXCLUDED.items():
         if name.startswith(prefix):
             return why
@@ -46,7 +25,7 @@ def is_excluded(name: str) -> str | None:
 
 
 def gate_envs(names) -> list[str]:
-    """``names`` minus the declared exclusions, sorted. What one interpreter must be able to reach."""
+    """Return sorted names after removing explicitly declared gate exclusions."""
     return sorted(n for n in names if not is_excluded(n))
 
 

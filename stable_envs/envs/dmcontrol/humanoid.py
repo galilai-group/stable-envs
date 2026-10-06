@@ -1,12 +1,3 @@
-"""DM Control ``humanoid`` — the visual tier.
-
-Floor-dominated (96%), so the minified-checker mechanism carries almost all of the residual: where
-MuJoCo's mipmap shows one grey (far-band luminance spread 0.1) MJWarp paints full contrast (9.7).
-
-These are NOT the official pixels. What the difference measures is declared below and the two
-mechanisms that carry it are named in ``VISUAL_NOTE``.
-"""
-
 from __future__ import annotations
 
 from ._cells import _AT, _AT_MEASURED_WITH, _AT_VERSIONS, trackcom_cell  # noqa: F401
@@ -32,9 +23,7 @@ _FROZEN_STAND_VISUAL_FIDELITY: dict[str, dict] = {
     },
 }
 
-VISUAL_FIDELITY: dict[str, dict] = {
-    "DMCHumanoidWalk": _FROZEN_STAND_VISUAL_FIDELITY["DMCHumanoidStand"]
-}
+VISUAL_FIDELITY: dict[str, dict] = {"DMCHumanoidWalk": _FROZEN_STAND_VISUAL_FIDELITY["DMCHumanoidStand"]}
 
 DMCHumanoidWalk = trackcom_cell(
     "DMCHumanoidWalk",
@@ -43,9 +32,7 @@ DMCHumanoidWalk = trackcom_cell(
     0,
     VISUAL_FIDELITY["DMCHumanoidWalk"],
     bases=(DMCHumanoidSemantics,),
-    # CPU bounds/intersections operate on many temporary ray arrays. Four worlds
-    # keep their working set smaller: 1.44x in the B64 Oscar chunk sweep with
-    # byte-identical output. Other trackcom cells retain their measured default.
+    # Bound temporary CPU ray arrays by rendering four worlds per chunk.
     CPU_RENDER_CHUNK=4,
 )
 DMCHumanoidWalk.name = "dmc-humanoid-walk"

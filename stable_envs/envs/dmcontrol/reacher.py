@@ -1,10 +1,3 @@
-"""Reacher hard-task simulator delegation with the preserved four-column renderer.
-
-Hard exposes full simulator State. Easy remains a renderer pending semantic
-recovery. Both private renderers consume qpos plus target xy; that row cannot
-resume either upstream simulator.
-"""
-
 from __future__ import annotations
 
 import torch
@@ -17,7 +10,10 @@ from ._cells import parity_cell
 
 
 class _ReacherSemantics:
-    """Historical hard-task semantics composed with the existing renderer."""
+    """Delegate hard-task simulation to CPU while exposing full State on the requested device.
+
+    The four-column renderer projection cannot resume physics or implicit resets.
+    """
 
     action_dim = 2
     action_dtype = torch.float64
@@ -67,7 +63,7 @@ class _ReacherSemantics:
 
     def _unpack_render_state(self, rows):
         rows = torch.as_tensor(rows, device=self.device).reshape(-1, 4)
-        # A partial projection, deliberately missing qvel/RNG/lifecycle and target z.
+        # This projection omits velocity, RNG, lifecycle, and target z; it is not restorable State.
         return TensorDict(
             {"qpos": rows[:, :2].clone(), "target_xy": rows[:, 2:].clone()}, [len(rows)], device=self.device
         )

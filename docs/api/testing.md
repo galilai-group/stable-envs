@@ -7,11 +7,10 @@ benchmark and not only from pytest.
 
 ## Running the suite safely
 
-The suite is a GPU program, and GPU programs die in ways Python cannot catch: a segfault or a
-`SIGABRT` out of MuJoCo, EGL or the CUDA driver ends the interpreter, reports nothing about the test
-that caused it, and silently costs every test that had not run yet. The four modules below exist so
-that such a failure costs **one test**, is **named**, and is **attributed** — and so that a broken
-machine is diagnosed as a broken machine rather than as a renderer bug.
+Use the supervisor for suites that initialize native renderers. It records the active test,
+restarts after a crash, and includes crashed tests in the combined failure report. CPU-only unit
+tests can run directly through pytest. See [the testing guide](../testing.md) for source profiles
+and acceptance requirements.
 
 ```
 python -m stable_envs.testing.supervisor -- tests/ -v      # full suite, crash-isolated
@@ -29,8 +28,7 @@ sbatch scripts/run_smoke_tests.sbatch
 
 ::: stable_envs.testing.render_worker
 
-The pytest side of this — the per-test resource accounting, the crash breadcrumbs, the node gate and
-the smoke selection — lives in `stable_envs/testing/safety_plugin.py`, loaded from the root
-`conftest.py`. It is not rendered here because it imports `pytest` at module scope and the docs build
-should not need the test dependencies to describe the library; read the module docstring, which states
-which of the four incidents each mechanism answers.
+`stable_envs/testing/safety_plugin.py` supplies the pytest hooks for resource accounting, flushed
+progress events, node checks, and smoke selection. The supervisor consumes those events; node checks
+can be unavailable or skipped, so inspect their details rather than treating `ok` alone as proof
+that the host is healthy.

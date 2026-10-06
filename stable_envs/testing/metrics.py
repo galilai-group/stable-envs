@@ -1,19 +1,13 @@
-"""Measurements shared by semantic and renderer gates; no acceptance policy.
-
-Pixel inputs are unmodified uint8 RGB stacks. Integer State differences are
-computed as integers, including RNG words that cannot be represented in float64.
-"""
-
 from __future__ import annotations
 
 import numpy as np
 
 
 def normalized_mse(ours, source) -> np.ndarray:
-    """One normalized RGB MSE per leading index, with bounded temporary memory.
+    """Return RGB MSE divided by 255 squared for each leading frame index.
 
-    Accept HWC or (..., H, W, 3). Empty selections have an empty result; callers
-    must explicitly decide whether zero frames are allowed for their case.
+    Inputs must be equal-shaped uint8 HWC or (..., H, W, 3) arrays. Work one frame
+    at a time to bound temporary memory. Empty leading selections return no errors.
     """
     a, b = np.asarray(ours), np.asarray(source)
     if a.dtype != np.uint8 or b.dtype != np.uint8:
@@ -30,10 +24,9 @@ def normalized_mse(ours, source) -> np.ndarray:
 
 
 def summarize_errors(errors, *, ddof=0, threshold=None) -> dict:
-    """Summarize frame errors, explicitly naming the SD convention.
+    """Summarize finite nonnegative errors with population (ddof=0) or sample SD (ddof=1).
 
-    No empty corpus can accidentally become a perfect mean of zero. ddof=1 is
-    available for replaying historical reports without changing their statistics.
+    Require more observations than ddof. Optional threshold counts use strict >.
     """
     values = np.asarray(errors, dtype=np.float64).reshape(-1)
     if ddof not in (0, 1) or values.size <= ddof:
@@ -57,10 +50,10 @@ def summarize_errors(errors, *, ddof=0, threshold=None) -> dict:
 
 
 def leaf_difference(actual, expected) -> dict:
-    """Structural and exact-value diagnostics for a tensor/array leaf.
+    """Compare leaf shape, dtype, and values, reporting the first mismatch and maximum error.
 
-    NaN pairs compare equal, matching the existing semantic helper. Unequal
-    nonfinite values have infinite error, rather than disappearing via nan_to_num.
+    Integer differences use Python integers to preserve wide RNG words. NaN
+    pairs compare equal; unequal nonfinite values have infinite error.
     """
 
     def host(value):

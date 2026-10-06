@@ -1,12 +1,3 @@
-"""Persistent process owners for the complete Fetch adapter contract.
-
-Each owner is an ordinary FetchAdapter, optionally with a bounded thread pool.
-Only commands/actions travel through pipes. Full typed State and task columns
-use fixed shared buffers; returned tensors always own their storage. CUDA is
-used only by the parent after workers acknowledge completion. No fork or opaque
-simulator serialization is used.
-"""
-
 from __future__ import annotations
 
 import ctypes
@@ -101,10 +92,11 @@ def _worker(conn, start, count, batch, task, reward_type, seed, threads, cpus, b
 
 
 class FetchProcessAdapter(ProcessRequests, FetchAdapter):
-    """Private process/hybrid strategy with the same State/task interface.
+    """Fetch simulators distributed across persistent spawned CPU processes.
 
-    Explicit construction is used for acceptance and strategy selection. The
-    default Fetch factory is not switched merely by importing this module.
+    Typed shared buffers carry State and task outputs; parent-side copies own their
+    storage before workers advance again. Optional threads run within each worker;
+    rendering and output-device transfer remain in the parent.
     """
 
     _worker_family = "Fetch"
@@ -129,8 +121,7 @@ class FetchProcessAdapter(ProcessRequests, FetchAdapter):
         self._closed = False
         self._pending = None
         self._connections, self._processes = [], []
-        # One immutable reference model supports variation/spec construction;
-        # all B live simulators are owned by child processes, never duplicated.
+        # Keep one model for specs and variation; child processes own the live simulator batch.
         prototype = FetchAdapter(1, "cpu", 0, task, reward_type)
         try:
             self.fields, self.has_object = prototype.fields, prototype.has_object
@@ -199,7 +190,6 @@ class FetchProcessAdapter(ProcessRequests, FetchAdapter):
         except BaseException:
             self._abort()
             raise
-
 
     def _state(self):
         return TensorDict(
@@ -296,11 +286,11 @@ class FetchProcessAdapter(ProcessRequests, FetchAdapter):
         return result
 
     def submit_step(self, actions, *, active=None, capture_state=True):
-        """Start one transition; the caller must receive before submitting again."""
+        """Submit one transition; receive its result before submitting another."""
         self._submit("step" if capture_state else "advance", self._actions(actions, active))
 
     def receive_step(self):
-        """Return owned outputs before workers can reuse their shared buffers."""
+        """Wait for completion and copy outputs before workers can reuse shared storage."""
         self._check_open()
         if self._pending not in ("step", "advance"):
             raise RuntimeError("No Fetch step in flight")
@@ -312,5 +302,5 @@ class FetchProcessAdapter(ProcessRequests, FetchAdapter):
         return result
 
     def abort_step(self):
-        """A failed consumer cannot leave a speculative step running."""
+        """Terminate workers and close the adapter after a failed consumer."""
         self._abort()

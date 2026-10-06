@@ -1,5 +1,3 @@
-"""Historical semantics for four source-aligned DMC renderer cells."""
-
 from __future__ import annotations
 
 import torch
@@ -54,8 +52,7 @@ class DMCAlignedSemantics:
         entries = super()._hideable()
         if cls.DOMAIN != "finger":
             return entries
-        # SWM changes the target MATERIAL's alpha. Both the target marker and
-        # the moving tip site wear it; hiding just the target leaves a red dot.
+        # The target material is shared by the marker and tip sites; hide every site using it.
         model = cls._model()
         material = model.material("target").id
         sites = tuple(i for i in range(model.nsite) if model.site_matid[i] == material)
