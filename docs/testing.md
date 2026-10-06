@@ -68,6 +68,20 @@ python -m pytest tests/regression/test_testing_migration.py
 python -m scripts.testing.inventory
 ```
 
+With MuJoCo 3.12.0 and the DMC dependencies, the read-only frozen-oracle selection
+checks all 12 DMC domains without importing stable-worldmodel:
+
+```bash
+python -m pytest tests/unit/test_dmc_*oracle.py tests/unit/test_reacher_oracle.py tests/unit/test_reference_oracle.py
+```
+
+It restores reached source States at steps 0, 7 and 24 and checks immediate State
+and exact continuation. It does not render or replace live-source acceptance.
+The [research migration map](testing-design.md#research-to-test-migration-rule)
+identifies additional pixel, contact, rejection and process witnesses that must
+survive cleanup. In particular, saved-trajectory capture equality uses our own
+renderer; source pixel parity still requires the independent family render gates.
+
 The inventory covers all **38 non-Craftax registrations** using their accepted
 matrix scopes and existing gate paths. It records `NOT_RUN` for the current
 checkout; inventory presence is not an acceptance result. Craftax is explicitly

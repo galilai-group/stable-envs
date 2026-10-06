@@ -102,6 +102,42 @@ to evidence. Their names and reports do not always describe the same claim.
 
 ## What we currently do, and should preserve
 
+### Research-to-test migration rule
+
+Review research by the failure it can detect, not its directory name or age.
+Before archiving an active gate, identify its maintained replacement and compare
+their case sets, assertions, source independence, tolerances, and rejected controls.
+Keep source-only corpus generators and physical edge cases when generic contracts
+do not cover them. Preserve original reports and executed code in the archive;
+do not rewrite historical hashes to match a refactor.
+
+The October 6 review identifies these reusable methods and their current homes:
+
+| Method and research example | Maintained coverage | Still required before retiring the research gate |
+| --- | --- | --- |
+| Reached-State replay: DMC `freeze_*_oracle.py` generators and recovery gates | Five DMC oracle modules use `tests/helpers/reference/oracle.py`. All 12 domains restore disk checkpoints at steps 0, 7 and 24, compare immediate full State, then every remaining transition and declared output. | Keep independent source generation, manifest hashes, registration identities and family lifecycle/Variation witnesses. Frozen replay does not replace live-source tests. |
+| Different-history restore and owned snapshots: `replay_feasibility.py` | Shared `test_state.py`, saved trajectories, and PushT/Rocket public semantics tests | Preserve contact and controller witnesses; equal qpos or immediate pixels cannot establish continuation. Old feasibility reports describe their historical prototype, not current acceptance. |
+| Forward-only source rollout into pixels: Rocket `online_source_gate.py` | Shared `test_online.py` covers State/task capture only. The Rocket gate remains active in the coverage inventory. | Migrate all flight/contact/success/horizon cases, float32/64 actions, T=1/8, selectors, held terminal lanes and per-frame source MSE. The source must never be restored from candidate State. |
+| Hidden mutation after rejection: Rocket `rejected_controls_gate.py` | `test_rocket_replay_semantics.py` checks bad actions/State against an untouched destination and its next transition; PushT has corresponding atomicity checks. | Retain the deliberately failing source witness: immediate numeric equality can hide forces that change the next reward. A successful counterexample script is not acceptance. |
+| Clone/handle ownership: `clone_ownership.py` | Disk State ownership and cross-instance continuation are covered by saved/public tests. | Native clone close-order and fresh-process deserialization remain research diagnostics. Keep them until an independent native clone API is actually supported and tested. Pickle success alone proves nothing. |
+| Process transport: DMC/Fetch `*_source_transport_gate.py` | Shared slice/masking tests cover dispatch; family process tests and source transport gates cover real engines. | Preserve mixed terminal lanes, RNG Gaussian caches, reset-next-step behavior and all output leaves. Serial agreement does not certify process/pipeline routes. |
+| Thin geometry and state-dependent pixels: Rocket coverage probes and Cube/Scene renderer gates | Renderer component tests, frozen golden frames and family source-render gates | Preserve source comparisons at reached/contact states and appearance extremes. Candidate golden equality checks refactor stability, not agreement with ground truth. |
+
+The DMC consolidation preserves zero numeric tolerances and each corpus's NaN
+policy. Full-output corpora now require equal output-key sets, so an omitted output
+cannot disappear from the comparison. Eleven helper checks cover omission, extra
+fields, dtype/shape/value changes, empty output corpora, NaN policy, and owned
+64-bit RNG storage. The original 18 cases pass before and after consolidation;
+with helper checks and the extra restore positions, the selection passes 29 cases
+on macOS with MuJoCo 3.12.0. This adds State/simulation regression coverage, not a
+new pixel-parity, CUDA or registration-acceptance claim.
+
+No research driver or evidence file was removed in this cohort. The next render
+migration should preserve Rocket's complete online case set and verify its pass
+and deliberately corrupted evidence through both readers before retiring either.
+
+### Acceptance axes
+
 1. **Establish authority.** Trace the pinned registration, factory, wrappers,
    simulator/controller, task rules, RNG, lifecycle, and renderer. Record actual
    installed versions and source/asset hashes. Read source before choosing State

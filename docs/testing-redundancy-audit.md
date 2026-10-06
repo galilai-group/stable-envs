@@ -63,7 +63,7 @@ unchanged into that module. The second file was removed. Collection remains
 **12 cases**, and all 12 pass both before and after consolidation. No tolerance or
 assertion was removed; this does not retire the separate frozen replay tests.
 
-### 3. DMC oracle replay can share a small reader/assertion helper
+### 3. DMC oracle replay shares a small reader/assertion helper — completed
 
 [Continuation](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/unit/test_dmc_continuation_oracle.py) and
 [Humanoid](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/unit/test_dmc_humanoid_oracle.py) reconstruct State from `state/`
@@ -72,10 +72,18 @@ arrays and compare all non-State output leaves in nearly identical loops.
 [Reacher](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/unit/test_reacher_oracle.py) use a similar loop with an explicit
 task-key list. Aligned DMC has another version.
 
-**Recommendation:** consolidate only State extraction and output comparison, using
-existing saved-corpus infrastructure where it fits. Preserve per-family adapter
-construction, action dimensions, source/version pins, fixture hashes, output-key
-sets, and NaN policies. Do not create a configurable test framework for a short loop.
+**Completed at the October 6 follow-up:** `tests/helpers/reference/oracle.py`
+shares only State extraction and exact output comparison. All five modules retain
+adapter construction, action dimensions, source/version pins, hashes, output-key
+sets and NaN policies. NPZ handles close on failures as well as success.
+
+All 18 original cases pass before and after extraction. The final tests also
+restore reached source checkpoints at steps 7 and 24 into a different candidate
+history, compare the immediate State, and replay every remaining transition.
+Full-output corpora check both key sets; the old actual-output-only loop could
+miss a field that the candidate omitted. Eleven helper checks reject missing/extra
+outputs, dtype/shape/value corruption and inappropriate NaN handling, and preserve
+owned 64-bit RNG values. The final 29-case CPU selection passes without skips.
 
 The two mechanically identical hash-test pairs are aligned/continuation DMC and
 OGBMaze/Reacher. Each uses a different module-level `ROOT`, so neither pair is
@@ -156,8 +164,8 @@ guard; three fail while extracting DMC declarations because
 `_FROZEN_STAND_VISUAL_FIDELITY` is absent from the extractor's namespace. Diagnose
 these separately; failing does not make a test redundant.
 
-Next cleanup order: resolve the old classic replay precision policy, consolidate its
-duplicate modules, then share the DMC replay helper. Classic State checks are combined.
+Next cleanup order: resolve the old classic replay precision policy and consolidate
+its duplicate modules. Classic State and DMC replay helpers are combined.
 For each change, compare collected parameter cases and assertion coverage, run both
 old/new checks before deleting code, and preserve source pins and negative controls.
 Do not reduce the Cartesian slice cases merely because their bodies are shared.
