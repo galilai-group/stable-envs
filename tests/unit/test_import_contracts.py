@@ -1,19 +1,3 @@
-"""The dependency direction, asserted by PARSING the imports rather than by reviewing them.
-
-Contract §8, and the reason it is a test: circular imports and backwards arrows are not discovered by
-reading, they are discovered when an unrelated module is imported in an unusual order six months
-later. The rules:
-
-  * the core modules — ``env``, ``dynamics``, ``specs``, ``registry``, ``_config``, ``_style`` — import
-    nothing from ``render/`` or ``envs/`` AT MODULE SCOPE. ``Env.render`` does import a
-    rasterizer, inside the method, which is the whole point of the distinction: the arrow exists at
-    call time, where it cannot make a cycle, and not at import time, where it would.
-  * ``render/*`` imports nothing from ``envs/`` and nothing from ``stable_worldmodel``, at any depth.
-    A renderer that knew an env class or an SWM id would be a backend with a policy about what it is
-    drawing.
-  * nothing in the installed package imports ``stable_worldmodel``.
-"""
-
 from __future__ import annotations
 
 import ast
@@ -25,7 +9,7 @@ pytestmark = pytest.mark.unit
 
 ROOT = Path(__file__).resolve().parents[2]
 PKG = ROOT / "stable_envs"
-CORE = ["env.py", "dynamics.py", "specs.py", "registry.py", "_config.py", "_style.py", "_mujoco_gl.py"]
+CORE = ["env.py", "_dynamics.py", "specs.py", "registry.py", "_config.py", "_style.py", "_mujoco_gl.py"]
 
 
 def _imports(path: Path, top_level_only: bool) -> list[str]:
@@ -100,23 +84,33 @@ def test_the_installed_package_never_imports_stable_worldmodel():
     assert offenders == {}, f"{offenders} import stable_worldmodel; the installed package must not"
 
 
-def test_the_installed_package_has_no_swm_runtime_symbols():
-    """Production identity: no SWM types, ids, or adapter names in shipped runtime code."""
-    needles = ("stable_worldmodel", "stable-worldmodel", "swm/", "_SWM", "SWM_", "swm_ref")
+def test_runtime_identifiers_do_not_embed_source_adapter_names():
+    # Attribution and reference IDs are data; copied source adapter types are executable names.
     offenders = []
     for path in PKG.rglob("*.py"):
-        for i, line in enumerate(path.read_text().splitlines(), 1):
-            if any(n in line for n in needles):
-                offenders.append(f"{path.relative_to(ROOT)}:{i}:{line.strip()}")
-    assert offenders == [], "shipped stable_envs still names SWM identity:\n" + "\n".join(offenders)
+        for node in ast.walk(ast.parse(path.read_text())):
+            name = (
+                node.id
+                if isinstance(node, ast.Name)
+                else node.attr
+                if isinstance(node, ast.Attribute)
+                else node.arg
+                if isinstance(node, ast.arg)
+                else node.name
+                if isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef))
+                else ""
+            )
+            if any(token in name for token in ("_SWM", "SWM_", "swm_ref", "stable_worldmodel")):
+                offenders.append(f"{path.relative_to(ROOT)}:{node.lineno}:{name}")
+    assert offenders == [], offenders
 
 
 def test_the_core_modules_have_no_cycle_among_themselves():
-    """``env`` may import ``dynamics``; ``dynamics`` may not import ``env``."""
+    """``env`` may import ``_dynamics``; ``_dynamics`` may not import ``env``."""
     edges = {
         name: {m for m in _imports(PKG / name, top_level_only=True) if m.startswith("stable_envs.")} for name in CORE
     }
-    assert "stable_envs.env" not in edges["dynamics.py"], (
+    assert "stable_envs.env" not in edges["_dynamics.py"], (
         "dynamics must not import env: env imports dynamics, and the reverse arrow is how the pair "
         "becomes unimportable in the wrong order. Env sets `_se_dynamics_base` on itself instead."
     )
@@ -211,8 +205,16 @@ BANNED_IMPORTS = (
 
 
 def test_unpublished_step8_shims_are_gone():
-    missing = [rel for rel in GONE_SHIMS if (ROOT / rel).exists()]
-    assert missing == [], missing
+    remaining = []
+    for rel in GONE_SHIMS:
+        path = ROOT / rel
+        files = path.rglob("*") if path.is_dir() else [path]
+        if any(
+            file.is_file() and file.suffix in {".py", ".pyc", ".so", ".pyd"} and "__pycache__" not in file.parts
+            for file in files
+        ):
+            remaining.append(rel)
+    assert remaining == [], remaining
 
 
 @pytest.mark.parametrize("error", [ImportError("missing extra"), RuntimeError("broken family")])

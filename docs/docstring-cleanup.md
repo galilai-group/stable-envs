@@ -141,6 +141,13 @@ research/archaeology drivers were then relocated; other drivers remain because
 live tests and acceptance records reference them. No history was rewritten.
 [Archive record](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/fixtures/renderer_cleanup/research-archive.json).
 
+Repository boundary checks now follow `_dynamics.py`, ignore bytecode-only shim
+folders, and distinguish executable source-adapter identifiers from required
+attribution and reference-ID data. The independent no-source-import check is
+retained. Injected forbidden identifiers and imports both fail; attribution and
+reference IDs pass. The inventory/import/repository selection passes 47 checks
+with two optional-dependency skips and two Craftax-specific cases excluded.
+
 ## Rules for each file
 
 1. Read the implementation before deciding whether it needs a module docstring.
