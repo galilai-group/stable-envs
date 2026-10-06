@@ -139,6 +139,9 @@ reached States, task outputs, raw source frames, active-lane masks and actions.
 An adapter owns source construction and family-specific witnesses; the shared
 checker owns restore, capture order, independent State/frame slices, device
 placement, snapshot ownership and per-frame MSE. No production API is added.
+The test-only `PixelEnv` protocol names the three methods and device attribute
+the checker needs; adapters do not inherit from it. Array hints specify uint8
+source pixels and float64 MSE, while action dtypes remain family-specific.
 
 The first adapter, `rocket_pixels.py`, preserves the research gate's flight,
 contact, success and horizon cases, float32/64 actions, horizons 1/8 and all four

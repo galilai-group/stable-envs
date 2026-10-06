@@ -5,12 +5,22 @@ import importlib.metadata
 import os
 import platform
 import subprocess
+from collections.abc import Mapping
 from pathlib import Path
+from typing import Literal, TypedDict
 
 from .evidence import sha256
 
 
-def verify_recorded_code(files, root, *, revision=None):
+class CodeIdentity(TypedDict):
+    mode: Literal["historical", "worktree"]
+    commit: str | None
+    files: dict[str, str]
+
+
+def verify_recorded_code(
+    files: Mapping[str, str], root: str | Path, *, revision: str | None = None
+) -> CodeIdentity:
     """Verify recorded file hashes against a worktree or an explicit Git commit.
 
     Historical verification reads Git objects without checking out or executing

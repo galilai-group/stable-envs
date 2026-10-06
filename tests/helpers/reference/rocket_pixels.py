@@ -1,7 +1,11 @@
+from __future__ import annotations
+
 import importlib.metadata
 import inspect
+from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import torch
@@ -21,7 +25,9 @@ SCENARIOS = {
 
 
 @contextmanager
-def rocket_trace(scenario, dtype, horizon):
+def rocket_trace(
+    scenario: str, dtype: type[np.float32] | type[np.float64], horizon: int
+) -> Iterator[tuple[dict[str, Any], PixelTrace]]:
     """Witness candidate checkpoints against independent, never-restored source lanes."""
     from tests.helpers.reference.rocket_semantics import RocketLandingEnv as Oracle
     from tests.helpers.reference.rocket_semantics import capture, differences

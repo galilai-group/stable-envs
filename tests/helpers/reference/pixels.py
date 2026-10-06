@@ -5,9 +5,12 @@ render or a source restored using candidate serialization.
 """
 
 from dataclasses import dataclass
+from pathlib import Path
+from typing import Protocol
 
 import numpy as np
 import torch
+from numpy.typing import NDArray
 from tensordict import TensorDict
 
 from stable_envs.testing.evidence import EvidenceRun
@@ -15,17 +18,33 @@ from stable_envs.testing.metrics import normalized_mse
 from tests.helpers.reference.semantics import compare_state
 
 
+class PixelEnv(Protocol):
+    device: torch.device
+
+    def set_state(self, state: TensorDict) -> object: ...
+    def get_state(self) -> TensorDict: ...
+    def step(self, actions: NDArray, *, states: slice | None, frames: slice | None) -> TensorDict: ...
+
+
 @dataclass
 class PixelTrace:
     initial: TensorDict
     states: list[TensorDict]
     tasks: dict[str, torch.Tensor]  # [B,T,...], including the one-action case.
-    frames: np.ndarray  # uint8 [B,T,H,W,3], including held terminal lanes.
+    frames: NDArray[np.uint8]  # [B,T,H,W,3], including held terminal lanes.
     valid: torch.Tensor
-    actions: np.ndarray  # [B,T,A]
+    actions: NDArray  # [B,T,A]; the family chooses the action dtype.
 
 
-def check_online_pixels(env, trace, *, states, frames, mse_max, failure_dir):
+def check_online_pixels(
+    env: PixelEnv,
+    trace: PixelTrace,
+    *,
+    states: slice | None,
+    frames: slice | None,
+    mse_max: float,
+    failure_dir: str | Path,
+) -> NDArray[np.float64]:
     """Check one capture selection against an independently witnessed rollout."""
     batch, horizon = trace.actions.shape[:2]
     assert horizon > 0 and len(trace.states) == horizon

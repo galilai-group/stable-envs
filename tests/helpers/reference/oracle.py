@@ -1,8 +1,11 @@
+from collections.abc import Mapping, Sequence
+
 import torch
+from numpy.typing import NDArray
 from tensordict import TensorDict
 
 
-def state_at(arrays, index, *, batch):
+def state_at(arrays: Mapping[str, NDArray], index: int, *, batch: int) -> TensorDict:
     """Copy a full State from the legacy reference-only NPZ layout."""
     state = TensorDict({}, [batch])
     for key in arrays:
@@ -12,7 +15,14 @@ def state_at(arrays, index, *, batch):
     return state
 
 
-def assert_outputs(actual, arrays, index, *, keys=None, equal_nan):
+def assert_outputs(
+    actual: TensorDict,
+    arrays: Mapping[str, NDArray],
+    index: int,
+    *,
+    keys: Sequence[str] | None = None,
+    equal_nan: bool,
+) -> None:
     """Compare exact outputs; explicit keys select older unprefixed corpora."""
     if keys is None:
         expected = {key[7:]: arrays[key][index] for key in arrays if key.startswith("output/")}
