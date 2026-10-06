@@ -1,3 +1,9 @@
+"""MJWarp model preparation, texture uploads, and batched CUDA rendering.
+
+Import sets WARP_CACHE_PATH to ~/.cache/warp only when the caller has not set it.
+Optional CUDA dependencies are loaded when a render context is requested.
+"""
+
 from __future__ import annotations
 
 import contextlib
@@ -123,37 +129,35 @@ def restore_model(m, p: Prepared) -> None:
         m.light_cutoff[:] = p.restore["light_cutoff"]
 
 
+def _textured_geoms(m, groups):
+    for g in range(m.ngeom):
+        mid = int(m.geom_matid[g])
+        if int(m.geom_group[g]) not in groups or mid < 0:
+            continue
+        ids = [int(x) for x in np.atleast_1d(m.mat_texid[mid]) if int(x) >= 0]
+        if not ids:
+            continue
+        bad_kind = any(int(m.tex_type[t]) not in TEXTURE_SAMPLER_OK for t in ids)
+        missing_uv = False
+        if int(m.geom_type[g]) == 7 and hasattr(m, "mesh_texcoordnum"):
+            mi = int(m.geom_dataid[g])
+            missing_uv = mi >= 0 and int(m.mesh_texcoordnum[mi]) == 0
+        yield g, mid, bad_kind or missing_uv
+
+
 def texture_gaps(m, groups=DEFAULT_GROUPS) -> list[tuple[int, str, int]]:
     """List visible textured geoms with unsupported UVs or texture kinds.
 
-    Return (geom ID, name, geom type) tuples. Check all material texture roles,
-    primitive UV support, non-2-D maps, and meshes without UV coordinates.
-    Missing mesh UVs can cause invalid reads on MJWarp versions without UV guards;
-    unsupported primitive UVs instead produce a flat texel.
+    Return (geom ID, name, geom type) tuples. Missing mesh UVs or non-2-D maps
+    cannot be sampled safely; unsupported primitive UVs instead produce a flat texel.
     """
     import mujoco
 
-    out = []
-    for g in range(m.ngeom):
-        if int(m.geom_group[g]) not in groups:
-            continue
-        mid = int(m.geom_matid[g])
-        if mid < 0:
-            continue
-        t = m.mat_texid[mid]
-        tex_ids = [int(x) for x in np.atleast_1d(t) if int(x) >= 0]
-        if not tex_ids:
-            continue
-        bad_uv = int(m.geom_type[g]) not in TEXTURED_OK
-        bad_kind = any(int(m.tex_type[t_]) not in TEXTURE_SAMPLER_OK for t_ in tex_ids)
-        bad_texcoord = False
-        if int(m.geom_type[g]) == 7 and hasattr(m, "mesh_texcoordnum"):
-            mi = int(m.geom_dataid[g])
-            if mi >= 0:
-                bad_texcoord = int(m.mesh_texcoordnum[mi]) == 0
-        if bad_uv or bad_kind or bad_texcoord:
-            out.append((g, mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_GEOM, g) or f"geom{g}", int(m.geom_type[g])))
-    return out
+    return [
+        (g, mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_GEOM, g) or f"geom{g}", int(m.geom_type[g]))
+        for g, _, unsafe in _textured_geoms(m, groups)
+        if unsafe or int(m.geom_type[g]) not in TEXTURED_OK
+    ]
 
 
 def texture_mean_rgb(m, tex: int) -> np.ndarray:
@@ -171,21 +175,8 @@ def unsamplable_texture_materials(m, groups=DEFAULT_GROUPS) -> dict[int, list[in
     This excludes primitives that can be sampled but use incorrect UVs.
     """
     out: dict[int, list[int]] = {}
-    for g in range(m.ngeom):
-        if int(m.geom_group[g]) not in groups:
-            continue
-        mid = int(m.geom_matid[g])
-        if mid < 0:
-            continue
-        tex_ids = [int(x) for x in np.atleast_1d(m.mat_texid[mid]) if int(x) >= 0]
-        if not tex_ids:
-            continue
-        bad_kind = any(int(m.tex_type[t]) not in TEXTURE_SAMPLER_OK for t in tex_ids)
-        bad_uv = False
-        if int(m.geom_type[g]) == 7 and hasattr(m, "mesh_texcoordnum"):
-            mi = int(m.geom_dataid[g])
-            bad_uv = mi >= 0 and int(m.mesh_texcoordnum[mi]) == 0
-        if bad_kind or bad_uv:
+    for g, mid, unsafe in _textured_geoms(m, groups):
+        if unsafe:
             out.setdefault(mid, []).append(g)
     return out
 
@@ -214,31 +205,18 @@ def bake_unsamplable_textures(m, groups=DEFAULT_GROUPS) -> dict:
             continue
         mean = texture_mean_rgb(m, tex)
         # Record every removed texture role, not just the one supplying the mean color.
-        removed = []
-        if np.ndim(t):
-            for role in range(int(np.asarray(t).shape[0])):
-                tid = int(t[role])
-                if tid >= 0:
-                    removed.append(
-                        {
-                            "texture": tid,
-                            "role": role,
-                            "name": mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_TEXTURE, tid),
-                            "tex_type": int(m.tex_type[tid]),
-                            "unsamplable": bool(int(m.tex_type[tid]) not in TEXTURE_SAMPLER_OK),
-                        }
-                    )
-        elif int(t) >= 0:
-            tid = int(t)
-            removed.append(
-                {
-                    "texture": tid,
-                    "role": None,
-                    "name": mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_TEXTURE, tid),
-                    "tex_type": int(m.tex_type[tid]),
-                    "unsamplable": bool(int(m.tex_type[tid]) not in TEXTURE_SAMPLER_OK),
-                }
-            )
+        roles = enumerate(t) if np.ndim(t) else [(None, t)]
+        removed = [
+            {
+                "texture": int(tid),
+                "role": role,
+                "name": mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_TEXTURE, int(tid)),
+                "tex_type": int(m.tex_type[int(tid)]),
+                "unsamplable": bool(int(m.tex_type[int(tid)]) not in TEXTURE_SAMPLER_OK),
+            }
+            for role, tid in roles
+            if int(tid) >= 0
+        ]
         m.mat_rgba[mid, :3] = mean
         if np.ndim(t):
             m.mat_texid[mid, :] = -1
@@ -340,6 +318,13 @@ def release_cached_ctx(c) -> None:
         release_render_context(rc)
 
 
+def _patch_target(module, name):
+    target = getattr(module, name, None)
+    if not callable(target):
+        raise RuntimeError(f"incompatible MJWarp: {module.__name__}.{name} must be callable")
+    return target
+
+
 def create_render_context(m, tex_lod: int = 1, **kw):
     """Create an MJWarp context with one upload of the model's texture blob.
 
@@ -354,7 +339,8 @@ def create_render_context(m, tex_lod: int = 1, **kw):
     import warp as wp
     from mujoco_warp._src import render_util as ru
 
-    original = ru.create_warp_texture
+    original = _patch_target(ru, "create_warp_texture")
+    _patch_target(ru, "_convert_texture_data")
     blob: dict = {}
     lod = int(tex_lod)
     keep: list = []
@@ -411,11 +397,12 @@ def gl_rounding():
     import warp as wp
     from mujoco_warp._src import render as R
 
+    original = _patch_target(R, "pack_rgba_to_uint32")
+
     @wp.func
     def pack_rgba_round(r: float, g: float, b: float, a: float) -> wp.uint32:
         return wp.uint32((int(a) << int(24)) | (int(r + 0.5) << int(16)) | (int(g + 0.5) << int(8)) | int(b + 0.5))
 
-    original = R.pack_rgba_to_uint32
     R.pack_rgba_to_uint32 = pack_rgba_round
     try:
         yield
@@ -456,7 +443,7 @@ class BatchRenderer(_resources.Closeable):
         self.prepared = prepare_model(m, groups) if prepare else None
         self.texture_gaps = texture_gaps(m, groups)
         self.needs_com = needs_com_pos(m)
-        self.m_mj, self.batch, self.res = m, int(batch), int(res)
+        self.batch, self.res = int(batch), int(res)
 
         d0 = mujoco.MjData(m)
         mujoco.mj_forward(m, d0)

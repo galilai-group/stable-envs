@@ -95,7 +95,7 @@ comparisons and batch/chunk invariance. See
 
 Remaining work from the supplied renderer audit:
 
-1. MJWarp cleanup; Rocket constants.
+1. Rocket constants.
 2. Remaining per-file prose rewrites and the other three backend guides, followed
    by the repository-wide forbidden-prose scan.
 3. Archive planning and link/test migration before removing research evidence.
@@ -103,6 +103,14 @@ Remaining work from the supplied renderer audit:
    contain 270 files. No evidence relocation or history rewrite has happened.
 
 The supplied audit's human upstream-outreach section remains out of scope.
+
+MJWarp shares its texture safety checks and removed-texture records, releases an
+unused model reference, and documents the existing cache-path import default.
+Patch targets are checked when their optional backend modules are imported, so
+CPU-only imports remain supported. Patches still require exclusive construction;
+this change does not make them thread-safe. All 59 selected checks passed on an
+A40 with MJWarp 3.12, including graph-render pixel equality against stock MJWarp.
+[Validation record](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/fixtures/renderer_cleanup/mjwarp-validation.json).
 
 ## Rules for each file
 
