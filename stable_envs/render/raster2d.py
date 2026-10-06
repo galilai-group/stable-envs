@@ -34,7 +34,7 @@ def _prim_plan(scene: Scene2D, Rh: int, Rw: int) -> list[tuple]:
     polygons remain unbounded. Plans are recomputed from the supplied scene.
     """
     B, N, V = scene.batch, scene.n_prims, scene.vertices
-    k, _ = scene.kind, scene.geom.dtype
+    k = scene.kind
     g = scene.geom
     G = int(g.shape[2])
     is_disc, is_poly, is_seg = k == KIND_DISC, k == KIND_POLY, k == KIND_SEGMENT
@@ -193,6 +193,10 @@ def row_groups(box, r0: int, r1: int, c0: int, c1: int) -> list[tuple]:
 _row_groups = row_groups
 
 
+def _output_shape(size: int | tuple[int, int]) -> tuple[int, int]:
+    return (int(size), int(size)) if isinstance(size, int) else size
+
+
 @torch.no_grad()
 def render_torch(scene: Scene2D, out_size: int | tuple[int, int], supersample: int = 1) -> torch.Tensor:
     """Rasterize Scene2D into (B, H, W, 3) uint8 frames on the scene's device.
@@ -201,9 +205,7 @@ def render_torch(scene: Scene2D, out_size: int | tuple[int, int], supersample: i
     canvas suffices without supersampling; supersampling uses a float canvas and
     averages before rounding and clamping.
     """
-    H = W = int(out_size) if isinstance(out_size, int) else out_size[0]
-    if not isinstance(out_size, int):
-        H, W = out_size
+    H, W = _output_shape(out_size)
     ss = int(supersample)
     Rh, Rw = H * ss, W * ss
     dev, dt = scene.kind.device, scene.geom.dtype
@@ -684,9 +686,7 @@ def render_triton(
     """
     if not HAVE_TRITON:
         raise ImportError("triton unavailable; use render_torch")
-    H = W = int(out_size) if isinstance(out_size, int) else out_size[0]
-    if not isinstance(out_size, int):
-        H, W = out_size
+    H, W = _output_shape(out_size)
     ss = int(supersample)
     B, N, V = scene.batch, scene.n_prims, scene.vertices
     x0, y0, x1, y1 = scene.world
@@ -756,9 +756,7 @@ def render(
             f"kernel is CUDA-only; use backend='torch', or build the scene on a cuda device."
         )
     if backend == "torch" or (backend == "auto" and not (HAVE_TRITON and scene.kind.device.type == "cuda")):
-        H = W = int(out_size) if isinstance(out_size, int) else out_size[0]
-        if not isinstance(out_size, int):
-            H, W = out_size
+        H, W = _output_shape(out_size)
         # Enforce the same output-buffer contract as Triton, even though Torch can copy into strided views.
         buf = _destination(out, scene.batch, H, W)
         r = render_torch(scene, out_size, supersample)

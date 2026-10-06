@@ -129,14 +129,44 @@ def test_render_is_the_fused_path_and_is_still_invariant(cfg):
     """``render`` takes the kernel here, and the contracts hold across it."""
     env = se.make(cfg, num_envs=8, device="cuda")
     assert navdot.available(env.device), "this test is not exercising the fused path"
-    env.rng = np.random.default_rng(1)
-    st = np.asarray(env.sample_states(8), np.float32)
-    first = env._render(st).clone()
-    assert torch.equal(env._render(st), first), f"{cfg}: render is not pure"
+    st = env.reset(seed=1)
+    first = env.render(st).clone()
+    assert torch.equal(env.render(st), first), f"{cfg}: render is not pure"
     perm = np.array([3, 1, 7, 0, 5, 2, 6, 4])
-    assert torch.equal(env._render(np.ascontiguousarray(st[perm]))[np.argsort(perm)], first), (
+    assert torch.equal(env.render(st[perm])[np.argsort(perm)], first), (
         f"{cfg}: render is not order invariant"
     )
     solo = se.make(cfg, num_envs=1, device="cuda")
     for i in (0, 3, 7):
         assert torch.equal(solo.render(st[i : i + 1])[0], first[i]), f"{cfg}: batch-1 row {i}"
+
+
+def test_blend_addresses_frames_beyond_two_gib():
+    # Launch only the first 8x8 tile of each frame; the last row starts beyond int32.
+    batch, height, width = 684, 1024, 1024
+    if torch.cuda.mem_get_info()[0] < 5 * 1024**3:
+        pytest.skip("64-bit address regression needs 5 GiB of free GPU memory")
+    base = torch.empty((batch, height, width, 3), dtype=torch.uint8, device="cuda")
+    out = torch.empty_like(base)
+    colours = (torch.arange(batch, device="cuda") % 251).to(torch.uint8)
+    base[:, :8, :8] = colours[:, None, None, None]
+    dummy = torch.empty(1, device="cuda")
+    navdot._blend_kernel[(batch, 1)](
+        base,
+        dummy,
+        dummy,
+        dummy,
+        dummy,
+        dummy,
+        out,
+        H=height,
+        W=width,
+        ND=0,
+        NTX=width // 8,
+        BH=8,
+        BW=8,
+        num_warps=4,
+        enable_fp_fusion=False,
+    )
+    assert (batch - 1) * height * width * 3 > 2**31
+    assert torch.equal(out[:, :8, :8], base[:, :8, :8])

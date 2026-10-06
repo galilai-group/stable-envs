@@ -57,7 +57,7 @@ if HAVE_TRITON:
         BW: tl.constexpr,
     ):
         """Write per-tile raw Gaussian maxima; window culling must retain the frame maximum."""
-        b = tl.program_id(0)
+        b = tl.program_id(0).to(tl.int64)
         d = tl.program_id(1)
         t = tl.program_id(2)
         r0 = (t // NTX) * BH
@@ -99,14 +99,14 @@ if HAVE_TRITON:
 
         Tiles outside a dot window skip its exponential but still write the base image.
         """
-        b = tl.program_id(0)
+        b = tl.program_id(0).to(tl.int64)
         t = tl.program_id(1)
         r0 = (t // NTX) * BH
         c0 = (t % NTX) * BW
         rr = r0 + tl.arange(0, BH)[:, None]
         cc = c0 + tl.arange(0, BW)[None, :]
         m = (rr < H) & (cc < W)
-        o = rr * W + cc
+        o = rr.to(tl.int64) * W + cc
         base = base_ptr + b * H * W * 3 + o * 3
         r = tl.load(base + 0, mask=m, other=0).to(tl.float32)
         g = tl.load(base + 1, mask=m, other=0).to(tl.float32)

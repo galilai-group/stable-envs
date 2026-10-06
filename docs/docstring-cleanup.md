@@ -36,10 +36,39 @@ this includes exact fresh/reloaded pixel comparisons and recolouring. Atlas and
 render-kernel arithmetic remain unchanged. Overcooked and Griddly's cache formats
 and write policies are unchanged; only their location helper was shared.
 
+The next cleanup pass completes the CPU3D, raster/NavDot, and RenderNet items:
+
+- CPU3D refuses tilted shadow-receiving floors, removes unused fields/allocations,
+  and shares specular shading without changing operation order. All 152 captured
+  pre-cleanup frames match exactly across two resolutions and shadow/specular modes.
+  Seven direct CPU checks pass, including bounds and chunk invariance. A one-thread
+  Mac spot check (19 frames, 84px, 40 interleaved repetitions) measured median batch
+  times of 28.44 ms before and 28.32 ms after; this is not a general speedup claim.
+- Raster2D shares output-size parsing; Navigation uses the public row-group helper.
+  NavDot computes GPU buffer offsets in int64. The regression crosses the 2 GiB
+  address boundary with real input/output allocations on an RTX 3090.
+- RenderNet validates resolution ratios, warns on unreadable sidecars, and lets
+  lazy compilation failures propagate without switching execution modes. Its 26
+  CPU tests and four eager/compiled CUDA replay cases pass. CPU3D has no module
+  header, RenderNet retains five lines, and both have comment blocks of at most
+  two lines. Numerical code is unchanged by the prose rewrites.
+
+The combined Oscar selection initially passed 77/81 cases on an RTX 3090. Four
+Navigation cases still called public `render()` with compact rows. They now use
+full State throughout their public API invariance checks; all four pass on an
+L40S, without skips. This is 81 distinct checks passing across the two runs, not
+one all-green 81-case run. The same four public State checks also pass locally.
+Nineteen local raster tests match the frozen reference on random and named scenes.
+
+The older CPU3D family fixture still skips when its retired `DMCHumanoidStand`
+registration is absent. The new direct scene checks do not depend on registry
+availability. Strict MkDocs still reports the four existing research-link warnings;
+no historical evidence was rewritten to hide them.
+
 Remaining work from the supplied renderer audit:
 
-1. CPU3D plane/shadow preconditions; raycast switches/reference separation;
-   gfxdraw deduplication; raster/nav indexing; MJWarp/rendernet cleanup; Rocket constants.
+1. Raycast switches/reference separation; gfxdraw deduplication; MJWarp cleanup;
+   Rocket constants.
 2. Remaining per-file prose rewrites and curated backend documentation, followed
    by the repository-wide forbidden-prose scan.
 3. Archive planning and link/test migration before removing research evidence.

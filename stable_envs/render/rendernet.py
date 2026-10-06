@@ -54,7 +54,7 @@ class Corrector(nn.Module):
     pre_size: int = 0
 
     def forward_float(self, x: torch.Tensor) -> torch.Tensor:
-        """Return differentiable float NCHW predictions in [0,1] before clamping."""
+        """Return differentiable float NCHW predictions without output clamping."""
         base = F.interpolate(x, size=(self.out_size, self.out_size), mode="bilinear", align_corners=False)
         if self.pre_size and x.shape[-1] != self.in_size:
             x = F.interpolate(x, size=(self.in_size, self.in_size), mode="bilinear", align_corners=False)
@@ -192,7 +192,7 @@ HEADER_KEYS = ("format", "cell", "render", "net", "visual_fidelity", "variation_
 
 
 def slug(cell: dict) -> str:
-    """Return the environment class name used to locate its checkpoint."""
+    """Return the environment class name identifying its checkpoint."""
     return str(cell["env_class"])
 
 

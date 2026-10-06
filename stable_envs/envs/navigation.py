@@ -660,13 +660,13 @@ class _TorchNavBase(_GymReferencePort):
         Each window must contain the nearest in-frame pixel to the center. That
         keeps the normalization maximum equal to the full-frame maximum.
         """
-        from ..render.raster2d import _row_groups
+        from ..render.raster2d import row_groups
 
         k = int(pos.shape[0])
         if self.device.type == "cuda":
             return _alpha_blend(img, _gaussian_dot(self._gy, self._gx, pos, sigma), colour)
         win = _dot_window(pos, sigma)
-        wins = _row_groups(
+        wins = row_groups(
             win.cpu().numpy(), *(int(v) for v in (win[:, 0].min(), win[:, 1].max(), win[:, 2].min(), win[:, 3].max()))
         )
         if len(wins) == 1 and wins[0][0] is None:
