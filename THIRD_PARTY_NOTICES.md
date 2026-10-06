@@ -1,4 +1,17 @@
-# Third-party attribution: migrated environment tasks
+# Third-party notices
+
+## MuJoCo Warp renderer specialization
+
+`stable_envs/render/mjwarp_lightspec.py` contains modified code from
+[MuJoCo Warp](https://github.com/google-deepmind/mujoco_warp), version 3.11.0,
+source path `mujoco_warp/_src/render.py`.
+
+Copyright 2026 The Newton Developers. Licensed under the Apache License, Version
+2.0; the full text is included in [LICENSES/Apache-2.0.txt](LICENSES/Apache-2.0.txt).
+The modification removes shadow traversals at compile time for lights that cannot
+cast shadows, retaining upstream light evaluation order and arithmetic.
+
+## Migrated environment tasks
 
 The private Rocket task and Variation helpers in
 `stable_envs/_adapters/rocket_task.py` and `rocket_spaces.py` are adapted from

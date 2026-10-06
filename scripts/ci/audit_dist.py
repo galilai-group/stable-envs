@@ -19,6 +19,7 @@ REQUIRED_EXTRAS = {
     "rocket",
 }
 EXPECTED_AUTHORS = ("Randall Balestriero", "Sami BuGhanem")
+REQUIRED_LICENSES = {"LICENSE", "THIRD_PARTY_NOTICES.md", "LICENSES/Apache-2.0.txt"}
 
 
 def _package_sources(root: Path) -> set[str]:
@@ -33,8 +34,9 @@ def _audit_metadata(text: str) -> None:
     metadata = email.message_from_string(text)
     assert metadata["Name"] == "stable-envs"
     assert metadata["Version"]
-    assert metadata["Requires-Python"] == ">=3.10,<3.13"
-    assert metadata["License-Expression"] == "MIT"
+    assert {part.strip() for part in metadata["Requires-Python"].split(",")} == {">=3.10", "<3.13"}
+    assert metadata["License-Expression"] == "MIT AND Apache-2.0"
+    assert set(metadata.get_all("License-File", [])) == REQUIRED_LICENSES
 
     requirements = metadata.get_all("Requires-Dist", [])
     assert not any(" @ " in requirement for requirement in requirements), (
@@ -67,6 +69,9 @@ def audit_wheel(path: Path, expected_sources: set[str]) -> None:
         metadata_files = [name for name in names if name.endswith(".dist-info/METADATA")]
         assert len(metadata_files) == 1, metadata_files
         _audit_metadata(archive.read(metadata_files[0]).decode())
+        license_root = metadata_files[0].removesuffix("METADATA") + "licenses/"
+        required = {license_root + name for name in REQUIRED_LICENSES}
+        assert required <= names, sorted(required - names)
         assert expected_sources <= names, sorted(expected_sources - names)
         unexpected = [name for name in names if not (name.startswith("stable_envs/") or ".dist-info/" in name)]
         assert unexpected == [], unexpected
@@ -79,7 +84,7 @@ def audit_sdist(path: Path, expected_sources: set[str]) -> None:
         assert len(roots) == 1, roots
         root = roots.pop()
         names = {name.removeprefix(f"{root}/") for name in raw_names if name != root}
-        required = {"LICENSE", "README.md", "pyproject.toml", *expected_sources}
+        required = {"README.md", "pyproject.toml", *REQUIRED_LICENSES, *expected_sources}
         assert required <= names, sorted(required - names)
         pkg_info = archive.extractfile(f"{root}/PKG-INFO")
         assert pkg_info is not None
