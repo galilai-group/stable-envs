@@ -1,0 +1,84 @@
+{
+  "baseline_commit": "7df41e8644e290cf2d3f0d1f718029ba07312b0c",
+  "scope": "Raycast component cleanup; not a new registration acceptance or source benchmark",
+  "source_sha256": {
+    "stable_envs/render/raycast3d.py": "a183395591898b97a65ee0f3fc42227a20dbf6558cbdd4c94899a13e235abab8",
+    "stable_envs/render/_raycast_reference.py": "5ce64de9b069a1e048e3aadafc48795e1704c2cac561e6b41f8b70c88a313e91",
+    "tests/gpu/test_raycast_dispatch.py": "86793a7e20ae00f35d0145620dc03dca7d7cd4f31b58a48be7ac344aa3186041",
+    "tests/gpu/test_fast_paths.py": "6a7fa5dad561d9cee10a8833f2cb9910fc635f1b442d043fc2adcbc3d853bc3a",
+    "tests/unit/test_raycast3d_primitive_bounds.py": "8efab4c05c23f2558a53bc9e8681dfb6c64a32933ed04876af5c45960ca04f30",
+    "tests/unit/test_raycast3d_composite_compact.py": "c5fb0efd19e46f629e32f3f4e3153589ff479038577dd0528352ade93d916532",
+    "tests/unit/test_raycast3d_ellipsoid.py": "5453b07ac5a44ce5ba343ee3900e438140b4f1c03ab3ed8c4947eb71986912b7",
+    "tests/unit/test_raycast3d_cpu_components.py": "8c435bf21736eacdb254ed0040d80ef24f98f366ca0f5977b874156127a8516d",
+    "tests/unit/test_render_primitives.py": "68583f35a9e74bc8bc96f9f164f4c59d960c8d54372296bfead5f4fa3c9ad739"
+  },
+  "arithmetic_ast": {
+    "unchanged_functions": 37,
+    "normalizations": [
+      "docstrings",
+      "imported helper names",
+      "explicit bounds/reference arguments",
+      "named Triton geometry constants",
+      "removal of reference dispatch from production composite"
+    ],
+    "changed_functions": [
+      "_use_triton",
+      "cast_nearest",
+      "any_blocking"
+    ]
+  },
+  "cpu": {
+    "passed": 190,
+    "failed": 0,
+    "skipped": 0,
+    "platform": "Apple M5, macOS",
+    "selection": [
+      "tests/unit/test_raycast3d_primitive_bounds.py",
+      "tests/unit/test_raycast3d_composite_compact.py",
+      "tests/unit/test_raycast3d_cpu_components.py",
+      "tests/unit/test_raycast3d_ellipsoid.py",
+      "tests/unit/test_render_primitives.py",
+      "tests/unit/test_cpu3d_scene.py"
+    ]
+  },
+  "cuda": {
+    "passed": 204,
+    "failed": 0,
+    "skipped": 0,
+    "gpu": "NVIDIA A40",
+    "torch": "2.14.0+cu126",
+    "job": "7056432",
+    "partition": "gpu",
+    "qos": "norm-gpu",
+    "selection": [
+      "tests/unit/test_raycast3d_primitive_bounds.py",
+      "tests/unit/test_raycast3d_composite_compact.py",
+      "tests/unit/test_raycast3d_cpu_components.py",
+      "tests/unit/test_raycast3d_ellipsoid.py",
+      "tests/unit/test_render_primitives.py",
+      "tests/gpu/test_raycast_dispatch.py",
+      "tests/gpu/test_fast_paths.py::test_an_unknown_geom_code_is_refused_by_both_cast_backends",
+      "tests/gpu/test_fast_paths.py::test_the_ellipsoid_twins_are_bit_identical_on_both_casts",
+      "tests/gpu/test_fast_paths.py::test_every_declared_fast_path_is_actually_reachable",
+      "tests/gpu/test_fast_paths.py::test_raycast_overrides_route_to_distinct_paths"
+    ],
+    "junit_sha256": "b6f7f8d1bfe96d435ae3786f03b554e523c0f1e801943f908a54349caa97e410",
+    "payload_sha256": "0a71efdb2352d867261ac05ed08119f80d5fc96fada35d54bea4067810c59962",
+    "tested_sha256": {
+      "stable_envs/render/raycast3d.py": "116f5b9d003b299ef146acb4c65e73e2ea8a374bef653772f1c542008fbea38f",
+      "stable_envs/render/_raycast_reference.py": "5ce64de9b069a1e048e3aadafc48795e1704c2cac561e6b41f8b70c88a313e91",
+      "tests/gpu/test_raycast_dispatch.py": "86793a7e20ae00f35d0145620dc03dca7d7cd4f31b58a48be7ac344aa3186041",
+      "tests/gpu/test_fast_paths.py": "6a7fa5dad561d9cee10a8833f2cb9910fc635f1b442d043fc2adcbc3d853bc3a",
+      "tests/unit/test_raycast3d_primitive_bounds.py": "8efab4c05c23f2558a53bc9e8681dfb6c64a32933ed04876af5c45960ca04f30",
+      "tests/unit/test_raycast3d_composite_compact.py": "c5fb0efd19e46f629e32f3f4e3153589ff479038577dd0528352ade93d916532",
+      "tests/unit/test_raycast3d_ellipsoid.py": "5453b07ac5a44ce5ba343ee3900e438140b4f1c03ab3ed8c4947eb71986912b7",
+      "tests/unit/test_raycast3d_cpu_components.py": "8c435bf21736eacdb254ed0040d80ef24f98f366ca0f5977b874156127a8516d",
+      "tests/unit/test_render_primitives.py": "68583f35a9e74bc8bc96f9f164f4c59d960c8d54372296bfead5f4fa3c9ad739"
+    },
+    "post_run_change": "Only any_blocking_torch docstring wording changed after payload capture; executable AST unchanged."
+  },
+  "documentation": {
+    "strict_build": "4 pre-existing research-link warnings; no new warnings"
+  },
+  "full_repository_suite": "not rerun; pre-existing registry/declaration failures remain documented"
+}

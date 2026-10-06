@@ -1,27 +1,4 @@
-"""``composite``'s compact tail must be the IDENTITY of the window it replaces, byte for byte.
-
-``raycast3d.composite`` used to cast, box-average, gather, blend and scatter the whole ``tile x tile``
-window the caller asked for, shading the UNION over the batch of the covered samples. With
-``COMPOSITE_COMPACT_MERGE`` it sizes the window from the bound instead of from the caller's ceiling,
-shades the covered ``(row, sample)`` pairs rather than their union, and gathers/blends/scatters only
-the output pixels some row covers. Each of those rests on an argument about VALUES rather than about
-approximation:
-
-* a ray outside the projected bound cannot reach a mover, so ``t`` is ``INF``, ``cov`` is False, and
-  the composite writes back the plate byte the broadcast already wrote;
-* ``shade`` is elementwise in every argument, so shading a subset returns what the superset held;
-* at an output pixel with ``covf == 0`` the blend is ``patch * 1.0 + 0.0`` on a float that came out
-  of a uint8, which ``round`` returns and ``clamp(0,255)`` cannot move.
-
-If any of those is wrong the symptom is a handful of pixels on the agent's silhouette -- which no
-mean-absolute-difference catches -- so the threshold here is zero and the comparison is on the bytes.
-
-``tests/gpu/test_fast_paths.py`` carries the same claim on the environments themselves. This file is
-the differential fuzz on the scenes the environments do not reach: empty cover rows, fully covered
-rows, ``ss = 1`` and ``ss = 2`` at ODD frame sizes, a window that does not fit and falls back to the
-full frame, a caller-supplied ``out`` and a fresh one, per-environment colour and scale, and
-primitives placed so the span lands on and over the tile boundary.
-"""
+"""Byte-exact comparisons of compact compositing against the independent full-window oracle."""
 
 from __future__ import annotations
 
@@ -30,19 +7,7 @@ import pytest
 
 torch = pytest.importorskip("torch")
 R3 = pytest.importorskip("stable_envs.render.raycast3d")
-
-
-@pytest.fixture(autouse=True)
-def _switch_is_on():
-    """Refuse to run against a switch an earlier test leaked, which would compare a path with itself."""
-    assert R3.COMPOSITE_COMPACT_MERGE is True, (
-        "raycast3d.COMPOSITE_COMPACT_MERGE was already off when this test started, so every "
-        "comparison below would be the window path against itself"
-    )
-    assert R3.COVER_COMPACTION is True
-    yield
-    R3.COMPOSITE_COMPACT_MERGE = True
-    R3.COVER_COMPACTION = True
+from stable_envs.render._raycast_reference import composite_window
 
 
 def _camera():
@@ -174,18 +139,12 @@ def _split(sc):
     return sc, sc.pop("_scales", None)
 
 
-def _both(sc, **kw):
-    """``composite`` with the compact tail, then with the window it replaces. Same inputs."""
+def _both(sc, *, cover_compaction=True, **kw):
     sc, scales = _split(sc)
     if scales is not None:
         kw.setdefault("size_scale", scales)
-    R3.COMPOSITE_COMPACT_MERGE = True
     a = R3.composite(**sc, **kw).clone()
-    R3.COMPOSITE_COMPACT_MERGE = False
-    try:
-        b = R3.composite(**sc, **kw).clone()
-    finally:
-        R3.COMPOSITE_COMPACT_MERGE = True
+    b = composite_window(**sc, **kw, cover_compaction=cover_compaction).clone()
     return a, b
 
 
@@ -393,7 +352,6 @@ def test_a_caller_supplied_buffer_and_a_fresh_one_agree():
     """``maze2d`` reads ``with_t != plate`` to find the target, so every pixel of ``out`` is load-bearing."""
     sc, _ = _split(_scene(seed=51, B=6, K=1, kinds=(R3.SPHERE,)))
     buf = torch.full((6, sc["H"], sc["W"], 3), 7, dtype=torch.uint8)
-    R3.COMPOSITE_COMPACT_MERGE = True
     given = R3.composite(**sc, tile=16, out=buf).clone()
     fresh = R3.composite(**sc, tile=16).clone()
     _assert_identical(given, fresh, "caller buffer vs fresh")
@@ -446,15 +404,10 @@ def test_a_span_wider_than_the_ceiling_still_falls_back_to_the_full_frame():
     _assert_identical(a, b, "fallback to the full frame")
 
 
-def test_the_compact_tail_does_not_depend_on_cover_compaction_being_on():
-    """The two switches are independent claims; the off-path of one must not silently disable the other."""
+def test_compact_tail_matches_full_window_without_cover_compaction():
     sc = _scene(seed=81, B=5, K=1, kinds=(R3.SPHERE,))
-    try:
-        R3.COVER_COMPACTION = False
-        a, b = _both(sc, tile=16)
-    finally:
-        R3.COVER_COMPACTION = True
-    _assert_identical(a, b, "compact tail with COVER_COMPACTION off")
+    a, b = _both(sc, tile=16, cover_compaction=False)
+    _assert_identical(a, b, "compact tail vs uncompact window")
 
 
 @pytest.mark.parametrize("seed", range(8))
@@ -468,15 +421,8 @@ def test_a_row_renders_the_same_alone_as_it_does_in_a_batch(seed):
     identity -- and it earned its own test for the same reason.
     """
     sc, _ = _split(_scene(seed=4000 + seed, B=8, K=2, spread=0.2 + 0.1 * seed))
-    R3.COMPOSITE_COMPACT_MERGE = True
     together = R3.composite(**sc, tile=16).clone()
     for i in range(sc["xpos"].shape[0]):
         one = dict(sc, xpos=sc["xpos"][i : i + 1].contiguous(), xmat=sc["xmat"][i : i + 1].contiguous())
         alone = R3.composite(**one, tile=16).clone()
         _assert_identical(alone, together[i : i + 1], f"row {i} alone vs in a batch of 8")
-
-
-def test_the_switch_exists_and_defaults_on():
-    """A renamed switch would leave every case above comparing the shipped path with itself."""
-    assert isinstance(R3.COMPOSITE_COMPACT_MERGE, bool) and R3.COMPOSITE_COMPACT_MERGE
-    assert callable(R3._composite_window) and callable(R3._fit_tile)

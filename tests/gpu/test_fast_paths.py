@@ -33,6 +33,8 @@ from __future__ import annotations
 import contextlib
 from collections.abc import Callable
 from dataclasses import dataclass, field
+from functools import partial
+from unittest.mock import patch
 
 import pytest
 
@@ -45,6 +47,7 @@ if not torch.cuda.is_available():
 from _shared import assert_frames_identical, family_params, make_or_skip, resolve_family, sampled_states
 
 import stable_envs as se
+from stable_envs.render import _raycast_reference as reference
 from stable_envs.render import raster2d as R2
 from stable_envs.render import raycast3d as R3
 
@@ -56,21 +59,11 @@ MOVER_MODULES = ("dmcontrol", "mujoco_locomotion")
 
 @contextlib.contextmanager
 def _forced_backend(backend: str | None):
-    """Pin ``raycast3d``'s dispatch for the duration, and put it back whatever happens.
-
-    The pre-condition matters as much as the restore: ``FORCE_BACKEND`` is a module global, so a test
-    that left it set would make every later comparison in the process compare a backend against
-    itself and pass for the wrong reason.
-    """
-    assert R3.FORCE_BACKEND is None, (
-        "raycast3d.FORCE_BACKEND was already pinned when this test started, so an earlier test leaked "
-        "it — every backend comparison after that point compares one backend against itself"
-    )
-    try:
-        R3.FORCE_BACKEND = backend
+    with (
+        patch.object(R3, "cast_nearest", partial(R3.cast_nearest, backend=backend or "auto")),
+        patch.object(R3, "any_blocking", partial(R3.any_blocking, backend=backend or "auto")),
+    ):
         yield
-    finally:
-        R3.FORCE_BACKEND = None
 
 
 @contextlib.contextmanager
@@ -164,51 +157,15 @@ def _mover_frames(env, states, fast: bool):
         return env._render(states).clone()
 
 
-@contextlib.contextmanager
-def _composite_compact_merge(on: bool):
-    """Pin ``raycast3d.COMPOSITE_COMPACT_MERGE`` for the duration, and put it back whatever happens."""
-    assert R3.COMPOSITE_COMPACT_MERGE is True, (
-        "raycast3d.COMPOSITE_COMPACT_MERGE was already off when this test started, so an earlier "
-        "test leaked it and every comparison after that point has been the window path against "
-        "itself"
-    )
-    try:
-        R3.COMPOSITE_COMPACT_MERGE = on
-        yield
-    finally:
-        R3.COMPOSITE_COMPACT_MERGE = True
-
-
 def _compact_merge_frames(env, states, fast: bool):
-    with _composite_compact_merge(fast):
+    if fast:
+        return env._render(states).clone()
+    with patch.object(R3, "composite", reference.composite_window):
         return env._render(states).clone()
 
 
-@contextlib.contextmanager
-def _composite_compaction(on: bool):
-    """Pin ``raycast3d.COVER_COMPACTION`` for the duration, and put it back whatever happens."""
-    assert R3.COVER_COMPACTION is True, (
-        "raycast3d.COVER_COMPACTION was already off when this test started, so an earlier test leaked "
-        "it and every comparison after that point has been the slow path against itself"
-    )
-    try:
-        R3.COVER_COMPACTION = on
-        yield
-    finally:
-        R3.COVER_COMPACTION = True
-
-
 def _composite_frames(env, states, fast: bool):
-    """RAYCAST-2b's claim, exercised on the path where the switch is still live.
-
-    ``COMPOSITE_COMPACT_MERGE`` is pinned OFF here on purpose. RAYCAST-6's composite compacts per
-    ROW rather than over the union, so it never reads ``COVER_COMPACTION`` at all -- and with the
-    default left on, this case would flip a flag the running code ignores and compare the compact
-    path with itself. A green light for that reason is worse than no case: the union compaction is
-    still what ``_composite_window`` does, ``_composite_window`` is still what
-    ``COMPOSITE_COMPACT_MERGE=False`` selects, and that is where the claim has to keep holding.
-    """
-    with _composite_compact_merge(False), _composite_compaction(fast):
+    with patch.object(R3, "composite", partial(reference.composite_window, cover_compaction=fast)):
         return env._render(states).clone()
 
 
@@ -268,19 +225,11 @@ def _classic_prepare(seed: int, extreme: bool):
 
 @contextlib.contextmanager
 def _primitive_bounds(on: bool):
-    """Pin ``raycast3d.PRIMITIVE_BOUNDS`` for the duration, and put back whatever it was.
-
-    Both legs are pinned explicitly, so the comparison is real whatever the module default is -- and
-    the default MOVES: RAYCAST-4 shipped it on, RAYCAST-5 turned it off while the maze regression was
-    open. Restoring a hard ``True`` here (as this did) would have quietly turned the bound back on for
-    every later test in the process the moment the default changed.
-    """
-    was = R3.PRIMITIVE_BOUNDS
-    try:
-        R3.PRIMITIVE_BOUNDS = on
+    with (
+        patch.object(R3, "cast_nearest_torch", partial(R3.cast_nearest_torch, bounds=on)),
+        patch.object(R3, "any_blocking_torch", partial(R3.any_blocking_torch, bounds=on)),
+    ):
         yield
-    finally:
-        R3.PRIMITIVE_BOUNDS = was
 
 
 def _bounds_frames(env, states, fast: bool):
@@ -706,56 +655,16 @@ def test_a_flat_polygon_is_not_culled():
 
 
 def test_every_declared_fast_path_is_actually_reachable():
-    """Each case above must name at least one thing this build can switch off. No dead cases.
-
-    A case whose switch was renamed still collects, still runs, and still passes — it just compares the
-    fast path against itself. That is the failure mode this whole file is written against, one level
-    up, so it is asserted rather than assumed: the ray-cast case needs ``FORCE_BACKEND``, the window
-    case needs at least one env carrying ``MOVER_TILES``, and both culling cases need
-    ``render_triton`` to take a ``cull`` argument.
-    """
+    """Reject test setups with missing backend controls or empty environment families."""
     import inspect
 
-    assert hasattr(R3, "FORCE_BACKEND"), (
-        "raycast3d.FORCE_BACKEND is gone, so the fused-vs-torch case cannot pin either backend and has "
-        "been comparing the default against itself"
-    )
-    # NOT "is True": the default is a release decision that moves, and pinning it here would make
-    # this assertion fail for a reason that has nothing to do with reachability. What the case needs
-    # is that the switch EXISTS and that turning it on actually reaches the bound -- i.e. that at
-    # least one kind is bounded. A `_BOUNDED_KINDS` emptied by a future measurement would make the
-    # case compare the unbounded path against itself, and that is the failure worth catching.
-    assert isinstance(getattr(R3, "PRIMITIVE_BOUNDS", None), bool), (
-        "raycast3d.PRIMITIVE_BOUNDS is gone, so the per-primitive-bound case cannot switch the bound "
-        "off and has been comparing the bounded path against itself"
-    )
-    assert getattr(R3, "_BOUNDED_KINDS", frozenset()), (
-        "raycast3d._BOUNDED_KINDS is empty, so PRIMITIVE_BOUNDS=True bounds NOTHING and the "
-        "per-primitive-bound case compares the unbounded path against itself"
-    )
-    assert getattr(R3, "COVER_COMPACTION", None) is True, (
-        "raycast3d.COVER_COMPACTION is gone or already off, so the composite case cannot switch the "
-        "compaction off and has been comparing the compacted path against itself"
-    )
-    # COVER_COMPACTION now governs ONLY ``_composite_window``: RAYCAST-6's composite compacts per
-    # row and never reads it. So the cover-compaction case must run with COMPOSITE_COMPACT_MERGE
-    # pinned off, and a future edit that drops that pin would make it green for the wrong reason.
-    assert "_composite_compact_merge(False)" in inspect.getsource(_composite_frames), (
-        "the composite-cover-compaction case no longer pins COMPOSITE_COMPACT_MERGE off, so it "
-        "flips a switch the running composite ignores and compares the compact path with itself"
-    )
-    assert "COVER_COMPACTION" in inspect.getsource(R3._composite_window), (
-        "raycast3d._composite_window no longer branches on COVER_COMPACTION, so pinning that switch "
-        "changes nothing on either path and the case is vacuous"
-    )
-    assert getattr(R3, "COMPOSITE_COMPACT_MERGE", None) is True, (
-        "raycast3d.COMPOSITE_COMPACT_MERGE is gone or already off, so the compact-merge case cannot "
-        "switch the compaction off and has been comparing the compacted path against itself"
-    )
-    assert callable(getattr(R3, "_composite_window", None)), (
-        "raycast3d._composite_window is gone, so COMPOSITE_COMPACT_MERGE=False has no verbatim body "
-        "to fall back to and the compact-merge case compares the new path against itself"
-    )
+    assert R3._BOUNDED_KINDS
+    for fn in (R3.cast_nearest, R3.any_blocking):
+        assert "backend" in inspect.signature(fn).parameters
+    for fn in (R3.cast_nearest_torch, R3.any_blocking_torch):
+        assert "bounds" in inspect.signature(fn).parameters
+    assert R3.composite is not reference.composite_window
+    assert "cover_compaction" in inspect.signature(reference.composite_window).parameters
     assert "cull" in inspect.signature(R2.render_triton).parameters, (
         "raster2d.render_triton no longer takes cull=, so both culling cases are drawing the same picture twice"
     )
@@ -772,3 +681,46 @@ def test_every_declared_fast_path_is_actually_reachable():
             "_unbounded() switches nothing off and the window case compares the windowed path against "
             "itself for every env in it"
         )
+
+
+def test_raycast_overrides_route_to_distinct_paths(monkeypatch):
+    from types import SimpleNamespace
+
+    calls = []
+
+    def record(*args, **kwargs):
+        calls.append(kwargs)
+        return torch.zeros(1)
+
+    monkeypatch.setattr(R3, "cast_nearest", record)
+    monkeypatch.setattr(R3, "any_blocking", record)
+    for backend in ("triton", "torch"):
+        with _forced_backend(backend):
+            R3.cast_nearest()
+            R3.any_blocking()
+        assert calls[-2:] == [{"backend": backend}] * 2
+    assert R3.cast_nearest is record and R3.any_blocking is record
+    monkeypatch.setattr(R3, "cast_nearest_torch", record)
+    monkeypatch.setattr(R3, "any_blocking_torch", record)
+    for on in (True, False):
+        with _primitive_bounds(on):
+            R3.cast_nearest_torch()
+            R3.any_blocking_torch()
+        assert calls[-2:] == [{"bounds": on}] * 2
+    assert R3.cast_nearest_torch is record and R3.any_blocking_torch is record
+    production = lambda **kwargs: record(path="compact", **kwargs)
+    oracle = lambda **kwargs: record(path="window", **kwargs)
+    monkeypatch.setattr(R3, "composite", production)
+    monkeypatch.setattr(reference, "composite_window", oracle)
+    env = SimpleNamespace(_render=lambda states: R3.composite())
+    _compact_merge_frames(env, None, True)
+    _compact_merge_frames(env, None, False)
+    _composite_frames(env, None, True)
+    _composite_frames(env, None, False)
+    assert calls[-4:] == [
+        {"path": "compact"},
+        {"path": "window"},
+        {"path": "window", "cover_compaction": True},
+        {"path": "window", "cover_compaction": False},
+    ]
+    assert R3.composite is production

@@ -65,11 +65,29 @@ registration is absent. The new direct scene checks do not depend on registry
 availability. Strict MkDocs still reports the four existing research-link warnings;
 no historical evidence was rewritten to hide them.
 
+Raycast cleanup removes the four process-wide test switches. Backend selection
+now rejects unknown names and unsupported explicit Triton requests; Torch exposes
+`bounds=False` directly. The independent full-window compositor lives in
+`_raycast_reference.py`, and environment-level tests use scoped overrides.
+Primitive arithmetic imports come directly from `primitives.py`; the Triton kernel
+uses its named geometry codes through compile-time arguments. Unbounded Torch
+loops remain separate: they are both runtime fallbacks and readable differential
+oracles, so merging them would weaken the tests without a measured benefit.
+
+The local selection passes 190 cases. The Oscar selection passes 204 CPU/CUDA
+cases without skips on an A40, including all six primitive kinds, both cast
+operations, backend validation, reference compositing, and override routing.
+The arithmetic AST of 37 function bodies is unchanged after accounting for names,
+explicit switches, and the moved reference. These are component regressions, not
+a new all-registration source-parity benchmark. The backend guide now separates
+internal bit equality from source-image fidelity and labels throughput as archived
+measurements. Strict MkDocs still reports exactly the four existing research links.
+See the [raycast validation record](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/fixtures/renderer_cleanup/raycast-validation.json).
+
 Remaining work from the supplied renderer audit:
 
-1. Raycast switches/reference separation; gfxdraw deduplication; MJWarp cleanup;
-   Rocket constants.
-2. Remaining per-file prose rewrites and curated backend documentation, followed
+1. Gfxdraw deduplication; MJWarp cleanup; Rocket constants.
+2. Remaining per-file prose rewrites and the other three backend guides, followed
    by the repository-wide forbidden-prose scan.
 3. Archive planning and link/test migration before removing research evidence.
    The tracked research tree currently contains 11,628 files / 390.4 MiB; scripts

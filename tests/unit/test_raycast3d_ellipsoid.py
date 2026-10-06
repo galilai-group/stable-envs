@@ -16,6 +16,8 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
+from stable_envs.render.primitives import bound_radius_tensor
+
 torch = pytest.importorskip("torch")
 R3 = pytest.importorskip("stable_envs.render.raycast3d")
 
@@ -200,7 +202,7 @@ def test_a_zero_semi_axis_is_a_miss_and_never_a_nan():
 def test_the_dispatch_and_the_bounds_know_the_kind():
     assert R3.ELLIPSOID == 4
     size = torch.tensor([[[0.3, 0.27, 0.2]]])
-    assert float(R3._bound_radius(R3.ELLIPSOID, size)) == pytest.approx(0.3)
+    assert float(bound_radius_tensor(R3.ELLIPSOID, size)) == pytest.approx(0.3)
     prims = R3.Primitives(
         kind=np.array([R3.ELLIPSOID, R3.SPHERE]),
         size=np.array([[0.3, 0.27, 0.2], [0.1, 0, 0]]),

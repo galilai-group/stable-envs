@@ -28,7 +28,7 @@ def test_the_kind_codes_are_mjtGeoms_own_numbers():
 @pytest.mark.unit
 def test_both_backends_read_the_kind_codes_from_one_place():
     for name in ("PLANE", "SPHERE", "CAPSULE", "ELLIPSOID", "CYLINDER", "BOX"):
-        assert getattr(R3, name) == getattr(P, name) == getattr(C3, name), name
+        assert getattr(R3, name) == getattr(P, name), name
     # cpu3d's movers are the intersectable kinds minus the plane, derived rather than re-listed
     assert C3.MOVER_KINDS == tuple(k for k in P.PRIMITIVE_KINDS if k != P.PLANE)
     assert P.ELLIPSOID in C3.MOVER_KINDS, "the Step-7 quadruped torso is a mover"
@@ -38,10 +38,10 @@ def test_both_backends_read_the_kind_codes_from_one_place():
 def test_the_unrolled_vector_helpers_are_shared_objects_not_copies():
     # identity, not equality: a second copy of the expression is exactly the failure mode the
     # extraction removed, and it would still pass a value comparison
-    assert R3._dot is P.dot3
-    assert R3._mv is P.mv3
-    assert R3._mtv is P.mtv3
-    assert R3._bound_radius is P.bound_radius_tensor
+    assert R3.dot3 is P.dot3
+    assert R3.mv3 is P.mv3
+    assert R3.mtv3 is P.mtv3
+    assert R3.bound_radius_tensor is P.bound_radius_tensor
     assert R3.Primitives is P.Primitives
     assert R3.INF is P.INF
 

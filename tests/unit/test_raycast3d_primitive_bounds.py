@@ -18,6 +18,8 @@ from __future__ import annotations
 
 import pytest
 
+from stable_envs.render.primitives import dot3
+
 torch = pytest.importorskip("torch")
 R3 = pytest.importorskip("stable_envs.render.raycast3d")
 
@@ -87,7 +89,7 @@ def _rand_scene(rng, B, K, N, *, degenerate=False, nonunit_d=False, tangent=Fals
         for f in (0.9, 0.7, 0.5, 0.3):
             m = torch.tensor((1.0 + dd_at_tol * f * R3._UNIT_D_TOL) ** 0.5, dtype=torch.float32)
             cand = (d * m).contiguous()
-            dd = R3._dot(cand, cand)
+            dd = dot3(cand, cand)
             if bool(torch.all((dd - 1.0).abs() <= R3._UNIT_D_TOL)):
                 break
         else:
@@ -101,23 +103,7 @@ def _rand_scene(rng, B, K, N, *, degenerate=False, nonunit_d=False, tangent=Fals
 
 
 def _both(fn, *a, **kw):
-    """Run ``fn`` with the bound on and with it off, restoring whatever the default was.
-
-    The default is NOT assumed here. RAYCAST-4 shipped with ``PRIMITIVE_BOUNDS`` on; RAYCAST-5 turned
-    it off while the maze regression is open and will turn it back on when the sweep says it may.
-    A differential test that asserts the default is testing the release decision rather than the
-    identity, and would have to be edited every time that decision moves -- which is exactly when it
-    most needs to keep working.
-    """
-    was = R3.PRIMITIVE_BOUNDS
-    try:
-        R3.PRIMITIVE_BOUNDS = True
-        fast = fn(*a, **kw)
-        R3.PRIMITIVE_BOUNDS = False
-        slow = fn(*a, **kw)
-    finally:
-        R3.PRIMITIVE_BOUNDS = was
-    return fast, slow
+    return fn(*a, **kw, bounds=True), fn(*a, **kw, bounds=False)
 
 
 def _same(a, b, what):
@@ -253,12 +239,6 @@ def test_a_ray_aimed_straight_at_a_primitive_is_never_pruned():
     assert idx.tolist() == [[0, 1]], f"wrong primitive won: {idx.tolist()}"
 
 
-def test_the_switch_exists_and_both_paths_are_reachable():
-    assert isinstance(R3.PRIMITIVE_BOUNDS, bool)
-    assert callable(R3._cast_nearest_torch_unbounded)
-    assert callable(R3._any_blocking_torch_unbounded)
-
-
 def test_the_bounded_kinds_are_the_ones_the_committed_MEASUREMENT_chose():
     """``_BOUNDED_KINDS`` must equal the table in the experiment file, not a hand-edited guess.
 
@@ -338,10 +318,8 @@ def test_an_unbounded_kind_never_reaches_the_gather():
         return real(*a, **kw)
 
     kinds, sizes, pos, R, o, d = _rand_scene(rng=31, B=2, K=3, N=257, kinds=(R3.SPHERE,) * 3)
-    was = R3.PRIMITIVE_BOUNDS
     torch.nonzero = spy
     try:
-        R3.PRIMITIVE_BOUNDS = True
         R3.cast_nearest_torch(kinds, sizes, pos, R, o, d)
         assert not seen or R3.SPHERE in R3._BOUNDED_KINDS, (
             "an unbounded kind still went through the bound's nonzero/gather"
@@ -354,7 +332,6 @@ def test_an_unbounded_kind_never_reaches_the_gather():
         )
     finally:
         torch.nonzero = real
-        R3.PRIMITIVE_BOUNDS = was
 
 
 @pytest.mark.parametrize("rng", [21, 22, 23])
@@ -392,3 +369,42 @@ def test_a_row_is_unchanged_by_the_rows_it_is_batched_WITH(rng):
     b1 = R3.any_blocking_torch(kinds, s1, p1, R1, o1, d1, lim1)
     b8 = R3.any_blocking_torch(kinds, s8, p8, R8, o8, d8, lim8)
     _same(b1[0], b8[0], "blocked, row 0 alone vs row 0 in a batch of 8")
+
+
+@pytest.mark.parametrize("blocking", [False, True])
+@pytest.mark.parametrize(
+    "backend,installed,reason",
+    [
+        ("typo", False, "unknown raycast backend"),
+        ("triton", False, "Triton is not installed"),
+        ("triton", True, "rays must be on CUDA"),
+    ],
+)
+def test_backend_errors_are_explicit(monkeypatch, blocking, backend, installed, reason):
+    args = _rand_scene(rng=1, B=2, K=3, N=17)
+    fn = R3.any_blocking if blocking else R3.cast_nearest
+    if blocking:
+        args += (torch.full((2, 17), 3.0),)
+    monkeypatch.setattr(R3, "HAVE_TRITON", installed)
+    with pytest.raises(ValueError, match=reason):
+        fn(*args, backend=backend)
+
+
+@pytest.mark.parametrize("blocking", [False, True])
+def test_auto_stays_on_torch_for_cpu_even_with_triton_importable(monkeypatch, blocking):
+    args = _rand_scene(rng=2, B=2, K=3, N=17)
+    fn = R3.any_blocking if blocking else R3.cast_nearest
+    if blocking:
+        args += (torch.full((2, 17), 3.0),)
+    monkeypatch.setattr(R3, "HAVE_TRITON", True)
+
+    def forbidden(*args):
+        raise AssertionError("CPU inputs reached the CUDA launch")
+
+    monkeypatch.setattr(R3, "_launch", forbidden)
+    actual, expected = fn(*args), fn(*args, backend="torch")
+    if blocking:
+        assert torch.equal(actual, expected)
+    else:
+        for a, b in zip(actual, expected):
+            assert torch.equal(a, b)
