@@ -1,5 +1,10 @@
 # PushT native restoration feasibility
 
+The scripts in this historical report are preserved in the
+[October 6 research archive](https://github.com/galilai-group/stable-envs/releases/tag/renderer-cleanup-archive-20261006).
+Restore the listed paths from that archive before using the recorded commands.
+The results below have not been rerun or changed.
+
 **Outcome: EXACT_RESTORE_NOT_YET_FEASIBLE.** Continuous and discrete PushT remain
 INCOMPLETE. The physical restoration prerequisite failed, so separate discrete
 acceptance and production implementation did not begin. This extends the

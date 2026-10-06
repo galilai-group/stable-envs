@@ -1,0 +1,26 @@
+{
+  "schema": "stable-envs-research-archive/v1",
+  "source_commit": "cb000ff100fa6ae90e4ff1da7de87f6489a507ab",
+  "scope": "Tracked research, scripts, and step 6\u20138 Markdown notes before release cleanup; original bytes and paths. No local untracked work or Git history is removed.",
+  "archive": {
+    "name": "renderer-cleanup-research-20261006.tar.gz",
+    "bytes": 125560200,
+    "sha256": "b1ec4ced36abe800e83258f0d46c6ce6767f79de02575d1a84b0a8654396a6f4"
+  },
+  "files_count": 11959,
+  "manifest_sha256": "60c3cf55c6541b7cce9f11accd1d052ff05706448f1298844cba7a29c4e5aae0",
+  "release": "https://github.com/galilai-group/stable-envs/releases/tag/renderer-cleanup-archive-20261006",
+  "verification": "Downloaded release archive and manifest; verified archive hash, exact member set, sizes, and each SHA-256.",
+  "relocated_files": [
+    "scripts/archaeology_sizes.py",
+    "scripts/research_native/native_cost.py",
+    "scripts/research_native/prepare_rocket_build.py",
+    "scripts/research_native/pusht_fields.c",
+    "scripts/research_native/pusht_native_probe.py",
+    "scripts/research_native/rocket_cache_hook.hpp",
+    "scripts/research_native/rocket_fresh_links.py",
+    "scripts/research_native/rocket_native_probe.py",
+    "scripts/research_native/verify_native_evidence.py"
+  ],
+  "retained_scope": "Other research files and drivers remain until their test, documentation, and accepted-evidence dependencies are migrated."
+}

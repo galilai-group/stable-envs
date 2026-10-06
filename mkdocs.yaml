@@ -47,10 +47,8 @@ not_in_nav: |
   research/**
   api/style.md
   api/scene.md
-  api/raster2d.md
   api/gfxdraw.md
   api/tilemap.md
-  api/mjwarp.md
   api/rendernet.md
   api/spaces.md
 
@@ -120,7 +118,10 @@ nav:
       - Fidelity tiers: concepts/fidelity-tiers.md
       - The Scene2D IR: concepts/scene-ir.md
       - The fused rasterizer: concepts/rasterizer.md
+      - 2D raster backends: api/raster2d.md
       - Analytic raycast and CPU3D: api/raycast3d.md
+      - Triangle rendering: api/nvdiff.md
+      - MJWarp rendering: api/mjwarp.md
       - Writing a bit-exact Triton kernel: concepts/bit-exact-triton.md
       - Why physics is separate: concepts/physics.md
       - Env: api/env.md

@@ -104,7 +104,7 @@ frames.
 ## Reproduction
 
 The runnable benchmark is
-[`scripts/benchmarks/online_stepping/fetch_hybrid.py`](../../../../scripts/benchmarks/online_stepping/fetch_hybrid.py).
+[`scripts/benchmarks/online_stepping/fetch_hybrid.py`](https://github.com/galilai-group/stable-envs/blob/cb000ff100fa6ae90e4ff1da7de87f6489a507ab/scripts/benchmarks/online_stepping/fetch_hybrid.py).
 Its companion `fetch_scaling.py` defines the benchmark-only shard/task payload.
 Run it on a Linux CPU node, for example:
 

@@ -8,7 +8,7 @@ and the final-frame pipeline. Rates count actual valid transitions; pipeline
 reports both steps/s and selected frames/s, so T8 is not mislabeled as rendering
 eight frames per lane.
 
-The [profiling script](../../scripts/benchmarks/online_stepping/navigation_profile.py)
+The [profiling script](https://github.com/galilai-group/stable-envs/blob/cb000ff100fa6ae90e4ff1da7de87f6489a507ab/scripts/benchmarks/online_stepping/navigation_profile.py)
 keeps restore/warmup outside timing, synchronizes CUDA, records raw samples and
 separate cProfile diagnostics, and refuses to overwrite reports. It is not a
 source comparison or fresh image-fidelity gate. Local evidence and frozen

@@ -1,5 +1,13 @@
 # Research archive
 
+The [renderer cleanup archive](https://github.com/galilai-group/stable-envs/releases/tag/renderer-cleanup-archive-20261006)
+preserves 11,959 tracked research, script, and fixture-note files from the
+October 6 checkpoint. Its manifest records original paths, byte sizes, and
+SHA-256 hashes. The downloaded archive has been verified member by member.
+This is historical evidence, not a fresh acceptance or performance run.
+Earlier raw arrays remain in the
+[September 30 backup](https://github.com/galilai-group/stable-envs/releases/tag/renderer-recovery-backup-20260930).
+
 These notes are the investigations behind the shipped environments — including families we
 measured and did not ship. They are evidence, not the getting-started path. Start with the
 [user guide](../index.md) unless you are looking for a measurement or a no-go.

@@ -95,10 +95,13 @@ comparisons and batch/chunk invariance. See
 
 Remaining work from the supplied renderer audit:
 
-1. Remaining per-file prose rewrites and the repository-wide forbidden-prose scan.
-2. Archive planning and link/test migration before removing research evidence.
-   The tracked research tree currently contains 11,628 files / 390.4 MiB; scripts
-   contain 270 files. No evidence relocation or history rewrite has happened.
+1. Continue the per-file prose review. The current non-Craftax library census is
+   72 headers in 150 files (48%); the roughly 20% target is not complete.
+2. Migrate test and documentation dependencies before moving the remaining
+   research tree and historical drivers. A verified remote archive now exists;
+   accepted evidence still consumed by tests remains in place.
+3. Complete the final whole-repository suite after relocation. Focused component
+   gates pass; this is not a claim that every existing repository test passes.
 
 The supplied audit's human upstream-outreach section remains out of scope.
 
@@ -119,6 +122,24 @@ executable AST change. A brittle comment-word assertion now checks actual
 reference-frame and exclusion-flag behavior. Local checks: 22 passed, one skipped
 because PyBullet is unavailable. See
 [the Rocket record](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/fixtures/renderer_cleanup/rocket-validation.json).
+
+The four backend guides now distinguish internal exactness from source MSE and
+label archived performance with its hardware, batch, output destination, and
+excluded work. `mkdocs build --strict` passes after repairing four broken links.
+Original report bytes remain in the archive. Classic-control, LunarLander, and
+OGBench package prose was rewritten with unchanged executable ASTs. State/style
+errors describe the invalid input and fix without implementation history; two
+style assertions that demanded historical wording were removed, while rejection,
+shape details, and the correct slicing example remain checked. CPU checks:
+230 passed / 5 skipped for classic/navigation and 73 passed / 2 skipped for
+style, State, and resources, with the unrelated Craftax case excluded.
+
+The [research archive](https://github.com/galilai-group/stable-envs/releases/tag/renderer-cleanup-archive-20261006)
+contains 11,959 tracked files (125,560,200 compressed bytes). The downloaded copy
+was checked against the full path/size/SHA-256 manifest. Nine unused native
+research/archaeology drivers were then relocated; other drivers remain because
+live tests and acceptance records reference them. No history was rewritten.
+[Archive record](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/fixtures/renderer_cleanup/research-archive.json).
 
 ## Rules for each file
 

@@ -1,5 +1,10 @@
 # v0.1 weight classification (workstream E)
 
+The scripts in this historical report are preserved in the
+[October 6 research archive](https://github.com/galilai-group/stable-envs/releases/tag/renderer-cleanup-archive-20261006).
+Restore the listed paths from that archive before using the recorded commands.
+The results below have not been rerun or changed.
+
 Inventory of the four trees that dominate the `v0-draft` checkout. This wave
 **classifies**; it does not delete, `git rm`, retag, or push `main`. Provenance
 stays on the immutable Step-8 tag and on the `v0-draft` commit.

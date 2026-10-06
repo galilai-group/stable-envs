@@ -14,7 +14,7 @@ checks at B=1,8,64,256. Production code was unchanged.
 - [Validation](validation.json), [terminal job evidence](slurm-terminal.txt),
   [case plan and production hashes](plan.json).
 - [Raw measurements, cProfile files and logs](delivery-6760082.tar.gz),
-  [291 Chrome-format Torch traces](delivery-6760082-traces.tar.gz).
+  [291 Chrome-format Torch traces, inside the checksummed evidence archive](https://github.com/galilai-group/stable-envs/releases/tag/renderer-recovery-backup-20260930).
   Per-case JSON is also directly available under `raw/results/`.
 
 ## Where performance is weakest

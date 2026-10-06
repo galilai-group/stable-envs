@@ -33,7 +33,7 @@ MSE is mean squared RGB error after division by 255. MSE SD describes variation 
 
 ## Evidence and reproduction
 
-- [Benchmark script](../../scripts/benchmarks/renderer_table/pusht_saved.py)
+- [Benchmark script](https://github.com/galilai-group/stable-envs/blob/cb000ff100fa6ae90e4ff1da7de87f6489a507ab/scripts/benchmarks/renderer_table/pusht_saved.py)
 - [Submission script](semantic_recovery_evidence/pusht_saved_rendering_20260930/run-v2.sbatch)
 - [Collection and validation script](semantic_recovery_evidence/pusht_saved_rendering_20260930/collect.py)
 - [Worst-frame image gallery](semantic_recovery_evidence/pusht_saved_rendering_20260930/images.html)
