@@ -3,6 +3,42 @@
 Review checkpoint: `d424517f7766a16bcb3554469b0f42704c7d0fc5`, branch `sami-dev`.
 Craftax and archived research/evidence are outside this cleanup.
 
+## Renderer release-cleanup checkpoint
+
+The Apache attribution and distribution notices were pushed before implementation
+cleanup. The renderer guards now fall back to stock MJWarp on an unsupported
+version, reject overlapping specialization contexts, keep CPU tile calls off
+Triton, reject oversized polygons, and correct the optional anisotropic sampler's
+screen-axis derivatives. Dead nvdiff entry points and fields were removed.
+Both MuJoCo Warp 3.11 and 3.12 profiles passed 89 CPU/GPU checks with no skips.
+
+Cube/Scene golden frames were captured before changing any manipulation renderer
+file, then committed in `bfd283ed`. All three GPU cases matched exactly after the
+bundle/constructor/mocap refactor. The refactor checks static-background invariance
+once per bundle and shares the public render-column names. Documentation cleanup
+removed roughly 600 lines of commentary, with executable AST equality checked
+against that GPU-tested version. The final ten CPU boundary/State cases pass.
+One of the five manipulation modules retains a header; backend-specific contracts
+sit on their render functions. See
+[the recorded validation](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/fixtures/ogbench_renderer/cleanup-validation.json).
+
+The broader registry/declaration selection still has seven pre-existing failures:
+97 pass and two skip, identically in an isolated pre-refactor checkout. Do not
+report this checkpoint as a green full-repository suite.
+
+Remaining work from the supplied renderer audit:
+
+1. Tile-cache versioning, locking, portable cache locations, and write failures.
+2. CPU3D plane/shadow preconditions; raycast switches/reference separation;
+   gfxdraw deduplication; raster/nav indexing; MJWarp/rendernet cleanup; Rocket constants.
+3. Remaining per-file prose rewrites and curated backend documentation, followed
+   by the repository-wide forbidden-prose scan.
+4. Archive planning and link/test migration before removing research evidence.
+   The tracked research tree currently contains 11,628 files / 390.4 MiB; scripts
+   contain 270 files. No evidence relocation or history rewrite has happened.
+
+The supplied audit's human upstream-outreach section remains out of scope.
+
 ## Rules for each file
 
 1. Read the implementation before deciding whether it needs a module docstring.

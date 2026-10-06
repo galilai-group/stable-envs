@@ -1,9 +1,3 @@
-"""Supply configured models and named pixel inputs to the unchanged frozen renderer.
-
-The frozen module owns rasterization, MJWarp, corrections and context policy.
-Its caches are namespaced by immutable compiled configuration at this boundary.
-"""
-
 from __future__ import annotations
 
 import hashlib
@@ -13,11 +7,9 @@ from importlib.metadata import version
 import torch
 
 from ..._adapters import ogbench_render_state as pixels
-from ...env import Env
-from . import manipulation as frozen
+from . import manipulation as core
 
 _LOCK = threading.RLock()
-FROZEN_SHA256 = "1c7c5b4a00581d5d6e412da38ce1d139595bd230050fb43cac7d339ec81e9e0b"
 
 
 def configuration_key(family, row):
@@ -28,72 +20,48 @@ def configuration_key(family, row):
 
 
 def configured_bundle(family, row):
-    """Populate the frozen model-provider cache without its obsolete constructors."""
-    import mujoco
-
+    """Cache the compiled render model under its immutable configuration key."""
     token = configuration_key(family, row)
     with _LOCK:
-        if token in frozen._BUNDLE_CACHE:
-            return token, frozen._BUNDLE_CACHE[token]
-        env = pixels.build_model(family, row)
-        model = env.model
-        b = frozen._Bundle()
-        b.unwrapped = env
-        b.size = frozen.SPEC[family]["size"]
-        b.cam = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_CAMERA, "front_pixels")
-        assert b.cam >= 0 and int(model.joint("object_joint_0").qposadr[0]) == 14
-        b.movers = frozen._movers(model)
-        b.nq, b.nv, b.nmocap = model.nq, model.nv, model.nmocap
-        b.nbuttons = 2 if family == "Scene" else 0
-        b.state_names = (
-            tuple(f"qpos_{i}" for i in range(b.nq))
-            + ("goal_x", "goal_y", "goal_z")
-            + tuple(f"button_{i}" for i in range(b.nbuttons))
-        )
-        b.pristine = {name: getattr(model, name).copy() for name in ["geom_group", "geom_rgba", "mat_rgba"]}
-        b.button_tables = frozen._button_tables(env, model, b.nbuttons)
-        b.var_defaults = frozen._variation_defaults(env)
-        b.cube_geoms = frozen._cube_geoms(env, model)
-        b.grid_tex = frozen._grid_texture(model, b.var_defaults["floor.color"])
-        frozen._BUNDLE_CACHE[token] = b
-        return token, b
+        bundle = core.get_bundle(token)
+        if bundle is None:
+            env = pixels.build_model(family, row)
+            if int(env.model.joint("object_joint_0").qposadr[0]) != pixels.OBJECT_QPOS_ADR:
+                raise ValueError(f"{family}: object_joint_0 has an unexpected qpos address")
+            bundle = core.build_bundle(
+                env, camera="front_pixels", size=core.SPEC[family]["size"], nbuttons=2 if family == "Scene" else 0
+            )
+            core.register_bundle(token, bundle)
+        return token, bundle
 
 
-class _ConfiguredRenderer(frozen.OGBManipBase):
+class _ConfiguredRenderer(core.OGBManipBase):
     """Only model/input wiring differs; the render and plate algorithms are inherited."""
 
     def __init__(self, token, bundle, device, size, supersample):
-        self.CELL, self._b = token, bundle
-        self.state_dim = bundle.nq + 3 + bundle.nbuttons
-        self.state_names = bundle.state_names
-        Env.__init__(self, num_envs=1, size=size, supersample=supersample, device=device, backend="mjwarp")
-        self._mocap_input = None
-        self._mocap_offset = 0
-
-    def _identity_quat(self, nmoc, n):
-        # The inherited uploader's hook now receives the explicit named mocap input.
-        start = self._mocap_offset
-        self._mocap_offset += n
-        return self._mocap_input[start : start + n].reshape(n, nmoc, 4)
+        super().__init__(
+            num_envs=1,
+            size=size,
+            supersample=supersample,
+            device=device,
+            backend="mjwarp",
+            bundle=bundle,
+            cache_key=token,
+        )
 
     def draw(self, state):
         columns = [state["pose", "qpos"], state["pose", "mocap_pos"]]
         if self._b.nbuttons:
             columns.append(state["pose", "buttons"])
         rows = torch.cat(columns, dim=-1).to(self.device, torch.float32)
-        self._mocap_input = state["pose", "mocap_quat"].to(self.device, torch.float32)
-        self._mocap_offset = 0
-        try:
-            return super()._render(
-                rows,
-                variation={
-                    "cube.color": state["appearance", "cube.color"].reshape(len(state), 3),
-                    "floor.color": state["appearance", "floor.color"].reshape(len(state), 6),
-                },
-            )
-        finally:
-            self._mocap_input = None
-            self._mocap_offset = 0
+        return super()._render(
+            rows,
+            mocap_quat=state["pose", "mocap_quat"].reshape(len(state), self._b.nmocap, 4),
+            variation={
+                "cube.color": state["appearance", "cube.color"].reshape(len(state), 3),
+                "floor.color": state["appearance", "floor.color"].reshape(len(state), 6),
+            },
+        )
 
 
 def render(family, state, device, backend="auto", chunk_size=None):
@@ -133,13 +101,13 @@ def render(family, state, device, backend="auto", chunk_size=None):
             limit = chunk_size or len(indices)
             for start in range(0, len(indices), limit):
                 count = min(limit, len(indices) - start)
-                for offset in range(0, count, frozen.MJW_CHUNK):
-                    n = min(frozen.MJW_CHUNK, count - offset)
+                for offset in range(0, count, core.MJW_CHUNK):
+                    n = min(core.MJW_CHUNK, count - offset)
                     nw = 1 << (n - 1).bit_length()
                     active.add((device_index, token, size * ss, nw))
                     if backend == "mjwarp_fidelity":
                         active.add((device_index, token + "/fidelity/opaque", size * ss, nw))
-        with frozen._CTX_CACHE.working_set(active):
+        with core._CTX_CACHE.working_set(active):
             for token, bundle, indices in prepared:
                 if backend == "mjwarp_fidelity":
                     from . import manipulation_fidelity

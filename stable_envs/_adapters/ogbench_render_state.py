@@ -10,6 +10,9 @@ from tensordict import TensorDict
 
 from .ogbench_manipulation_compat import CompatibleCube, CompatibleScene
 
+OBJECT_QPOS_ADR = 14
+TARGET_ALPHA = 0.2
+
 STATIC = ("cube.size", "agent.color", "camera.angle_delta", "light.intensity")
 
 
@@ -85,7 +88,7 @@ def project(family, state, size, supersample):
         ("renderer", "size"): torch.full((b, 1), size, dtype=torch.int64, device=device),
         ("renderer", "supersample"): torch.full((b, 1), supersample, dtype=torch.int64, device=device),
         ("renderer", "camera"): torch.zeros((b, 1), dtype=torch.int64, device=device),
-        ("appearance", "target_alpha"): torch.full((b, 1), 0.2, dtype=torch.float32, device=device),
+        ("appearance", "target_alpha"): torch.full((b, 1), TARGET_ALPHA, dtype=torch.float32, device=device),
     }
     for name in ("qpos", "mocap_pos", "mocap_quat"):
         values["pose", name] = state["physics", name].clone()
@@ -120,9 +123,9 @@ def validate(family, state):
             raise ValueError("RenderState requires one valid square resolution/supersampling per batch")
     if torch.any(state["renderer", "camera"] != 0):
         raise ValueError("Only registered front_pixels camera is supported")
-    if not torch.all(state["appearance", "target_alpha"] == 0.2):
+    if not torch.all(state["appearance", "target_alpha"] == TARGET_ALPHA):
         raise ValueError("Only registered visible target alpha 0.2 is supported")
-    qadr = 14
+    qadr = OBJECT_QPOS_ADR
     for q in (state["pose", "qpos"][:, qadr + 3 : qadr + 7], state["pose", "mocap_quat"]):
         if not torch.allclose(
             torch.linalg.vector_norm(q, dim=-1),
@@ -166,7 +169,7 @@ def build_model(family, row):
         env.compile_model_and_data()
         env._cube_colors_from_variation()
         for ids in env._cube_target_geom_ids_list:
-            env.model.geom_rgba[ids, 3] = 0.2
+            env.model.geom_rgba[ids, 3] = TARGET_ALPHA
         if family == "Scene":
             env._cur_button_states = np.zeros(2, np.int64)
             env._apply_button_states()

@@ -1,7 +1,5 @@
-"""CPU validation of the named renderer inputs and frozen model-provider boundary."""
+"""CPU validation of the named renderer inputs and configured model-provider boundary."""
 
-import hashlib
-from pathlib import Path
 from unittest.mock import patch
 
 import numpy as np
@@ -12,7 +10,7 @@ from tensordict import TensorDict
 pytest.importorskip("ogbench")
 from stable_envs._adapters import ogbench_render_state as pixels
 from stable_envs.envs.ogbench import OGBCube, OGBScene
-from stable_envs.envs.ogbench import manipulation as frozen
+from stable_envs.envs.ogbench import manipulation as core
 from stable_envs.envs.ogbench import manipulation_renderer as renderer
 
 
@@ -107,7 +105,7 @@ def test_render_model_configuration_no_steps_or_rng_mutation(family, cls):
                 b.model.material("ur5e/robotiq/" + name).rgba,
             )
         assert b.cam >= 0 and b.nbuttons == (2 if family == "Scene" else 0)
-        # Exercise the actual frozen style API without claiming a GPU render.
+        # Exercise the inherited style API without claiming a GPU render.
         obj = object.__new__(renderer._ConfiguredRenderer)
         obj.requires_cuda = False
         renderer._ConfiguredRenderer.__init__(obj, token, b, "cpu", 224, 1)
@@ -125,10 +123,9 @@ def test_render_model_configuration_no_steps_or_rng_mutation(family, cls):
         env.reset(17, {"variation": [], "variation_values": {"agent.color": np.array([0.8, 0.2, 0.1])}})
         current = env.to_render_state()
         assert torch.equal(current["appearance", "agent.color"], env.get_state()["model", "compiled", "agent.color"])
-        assert renderer._ConfiguredRenderer._render is frozen.OGBManipBase._render
-        assert renderer._ConfiguredRenderer._bake_plate is frozen.OGBManipBase._bake_plate
-        assert renderer._ConfiguredRenderer._upload_cube_colours is frozen.OGBManipBase._upload_cube_colours
-        assert hashlib.sha256(Path(frozen.__file__).read_bytes()).hexdigest() == renderer.FROZEN_SHA256
+        assert renderer._ConfiguredRenderer._render is core.OGBManipBase._render
+        assert renderer._ConfiguredRenderer._bake_plate is core.OGBManipBase._bake_plate
+        assert renderer._ConfiguredRenderer._upload_cube_colours is core.OGBManipBase._upload_cube_colours
     after = np.random.get_state()
     assert before[0] == after[0] and np.array_equal(before[1], after[1]) and before[2:] == after[2:]
 

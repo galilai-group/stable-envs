@@ -1,5 +1,3 @@
-"""CPU public semantics; frozen manipulation renderer stays in manipulation.py."""
-
 from __future__ import annotations
 
 import numpy as np
@@ -31,11 +29,9 @@ class ManipulationSemantics:
         )
         self._nq = self._simulator.nq
         self.state_dim = self._nq + 3 + (2 if self.CELL == "Scene" else 0)
-        self.state_names = (
-            tuple(f"qpos_{i}" for i in range(self._nq))
-            + ("goal_x", "goal_y", "goal_z")
-            + (("button_0", "button_1") if self.CELL == "Scene" else ())
-        )
+        from .manipulation import render_state_names
+
+        self.state_names = render_state_names(self._nq, 1, 2 if self.CELL == "Scene" else 0)
         # Env uses its seed only for metadata/render-state sampling; physical RNGs are adapter-owned.
         Env.__init__(
             self,
@@ -205,22 +201,22 @@ class ManipulationSemantics:
         super()._close()
 
 
-from .manipulation import OGBCube as _FrozenCube
-from .manipulation import OGBScene as _FrozenScene
+from .manipulation import OGBCube as _CubeRenderer
+from .manipulation import OGBScene as _SceneRenderer
 
 
-class OGBCube(ManipulationSemantics, _FrozenCube):
-    __doc__ = (
-        "CPU simulator semantics; renderer acceptance pending. Historical VISUAL TIER renderer description follows:\n\n"
-        + _FrozenCube.__doc__
-    )
+class OGBCube(ManipulationSemantics, _CubeRenderer):
+    """Cube simulation with restorable State and CPU OpenGL or GPU MJWarp rendering.
+
+    GPU rendering is visual tier: lighting and transparency can differ from MuJoCo.
+    """
 
 
-class OGBScene(ManipulationSemantics, _FrozenScene):
-    __doc__ = (
-        "CPU simulator semantics; renderer acceptance pending. Historical VISUAL TIER renderer description follows:\n\n"
-        + _FrozenScene.__doc__
-    )
+class OGBScene(ManipulationSemantics, _SceneRenderer):
+    """Scene simulation with restorable State and CPU OpenGL or GPU MJWarp rendering.
+
+    GPU rendering is visual tier: lighting, transparency, and button textures can differ from MuJoCo.
+    """
 
 
 CELL_CLASSES = {"OGBCube": OGBCube, "OGBScene": OGBScene}

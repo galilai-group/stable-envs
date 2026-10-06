@@ -1,11 +1,3 @@
-"""Explicit fidelity renderer over candidate assets and named RenderState.
-
-No simulator reset, step, replay, or source-environment renderer is involved.
-CPU means verified software OpenGL; CUDA means verified NVIDIA OpenGL followed
-by a host readback and upload to the requested tensor device. This backend is
-serial across worlds, so its latency must not be presented as MJWarp throughput.
-"""
-
 from __future__ import annotations
 
 import hashlib
@@ -110,6 +102,10 @@ def _apply_render_button_colors(env, lock_colors):
 
 
 def render(family, state, device, chunk_size=None):
+    """Render named states serially through OpenGL using candidate assets.
+
+    CPU output requires software OpenGL. CUDA output uses NVIDIA OpenGL plus
+    host readback and upload; its throughput is separate from batched MJWarp."""
     import mujoco
 
     # OpenGL consumes host model inputs anyway. Validate that same detached copy

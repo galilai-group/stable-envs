@@ -173,8 +173,6 @@ def test_state_roundtrip_reset_replay_and_atomic_validation(family):
             a.set_state(a._unpack_render_state(packed))
         assert torch.equal(packed, a._pack_render_state(a._unpack_render_state(packed)))
         assert a.state_spec[("physics", "qpos")].shape == tuple(anchor["physics", "qpos"].shape[1:])
-        with pytest.raises(NotImplementedError, match="renderer/GPU"):
-            a.render()
         numpy_equal(outside, np.random.get_state())
 
 
