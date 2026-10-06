@@ -1,0 +1,799 @@
+{
+  "baseline_commit": "00c48ca12224c1022a6862bebc2f2c5808a82042",
+  "scope": "Five native classic-control source-pixel regression profiles; no registration promotion or performance certification",
+  "batch": 2,
+  "source_renderer": "CPU pygame at native resolution",
+  "per_frame_normalized_mse_limit": 0.001,
+  "job_id": "7072387",
+  "hardware": {
+    "host": "gpu2504.oscar.ccv.brown.edu",
+    "gpu": "NVIDIA RTX A5500",
+    "versions": {
+      "torch": "2.14.0+cu126",
+      "numpy": "2.5.3",
+      "gymnasium": "1.3.0",
+      "pygame": "2.6.1",
+      "triton": "3.8.0"
+    }
+  },
+  "profiles": {
+    "cpu": {
+      "required": 128,
+      "passed": 128,
+      "failed": 0,
+      "skipped": 0,
+      "source_commit": "176d54532b3c0a251a4f509b74f2fdacc143a63d",
+      "source_versions": {
+        "gymnasium": "1.3.0",
+        "numpy": "2.5.3",
+        "pygame": "2.6.1"
+      },
+      "pixels": {
+        "CartPole": {
+          "cases": 8,
+          "frames": 128,
+          "mse_max": 0.0
+        },
+        "Pendulum": {
+          "cases": 16,
+          "frames": 256,
+          "mse_max": 0.0
+        },
+        "Acrobot": {
+          "cases": 8,
+          "frames": 128,
+          "mse_max": 0.0
+        },
+        "MountainCar": {
+          "cases": 8,
+          "frames": 128,
+          "mse_max": 0.0
+        },
+        "MountainCarContinuous": {
+          "cases": 16,
+          "frames": 256,
+          "mse_max": 0.0
+        }
+      }
+    },
+    "cuda": {
+      "required": 128,
+      "passed": 128,
+      "failed": 0,
+      "skipped": 0,
+      "source_commit": "176d54532b3c0a251a4f509b74f2fdacc143a63d",
+      "source_versions": {
+        "gymnasium": "1.3.0",
+        "numpy": "2.5.3",
+        "pygame": "2.6.1"
+      },
+      "pixels": {
+        "CartPole": {
+          "cases": 8,
+          "frames": 128,
+          "mse_max": 0.0
+        },
+        "Pendulum": {
+          "cases": 16,
+          "frames": 256,
+          "mse_max": 0.0
+        },
+        "Acrobot": {
+          "cases": 8,
+          "frames": 128,
+          "mse_max": 0.0
+        },
+        "MountainCar": {
+          "cases": 8,
+          "frames": 128,
+          "mse_max": 0.0
+        },
+        "MountainCarContinuous": {
+          "cases": 16,
+          "frames": 256,
+          "mse_max": 0.0
+        }
+      }
+    }
+  },
+  "pixel_cases": {
+    "cpu/test_source_rollout_pixels[CartPole-seed17-int64-1-reached]": {
+      "frames": 6,
+      "mse_max": 0.0
+    },
+    "cpu/test_source_rollout_pixels[CartPole-seed17-int64-1-horizon]": {
+      "frames": 6,
+      "mse_max": 0.0
+    },
+    "cpu/test_source_rollout_pixels[CartPole-seed17-int64-8-reached]": {
+      "frames": 26,
+      "mse_max": 0.0
+    },
+    "cpu/test_source_rollout_pixels[CartPole-seed17-int64-8-horizon]": {
+      "frames": 26,
+      "mse_max": 0.0
+    },
+    "cpu/test_source_rollout_pixels[CartPole-seed42-int64-1-reached]": {
+      "frames": 6,
+      "mse_max": 0.0
+    },
+    "cpu/test_source_rollout_pixels[CartPole-seed42-int64-1-horizon]": {
+      "frames": 6,
+      "mse_max": 0.0
+    },
+    "cpu/test_source_rollout_pixels[CartPole-seed42-int64-8-reached]": {
+      "frames": 26,
+      "mse_max": 0.0
+    },
+    "cpu/test_source_rollout_pixels[CartPole-seed42-int64-8-horizon]": {
+      "frames": 26,
+      "mse_max": 0.0
+    },
+    "cpu/test_source_rollout_pixels[Pendulum-seed17-float32-1-reached]": {
+      "frames": 6,
+      "mse_max": 0.0
+    },
+    "cpu/test_source_rollout_pixels[Pendulum-seed17-float32-1-horizon]": {
+      "frames": 6,
+      "mse_max": 0.0
+    },
+    "cpu/test_source_rollout_pixels[Pendulum-seed17-float32-8-reached]": {
+      "frames": 26,
+      "mse_max": 0.0
+    },
+    "cpu/test_source_rollout_pixels[Pendulum-seed17-float32-8-horizon]": {
+      "frames": 26,
+      "mse_max": 0.0
+    },
+    "cpu/test_source_rollout_pixels[Pendulum-seed17-float64-1-reached]": {
+      "frames": 6,
+      "mse_max": 0.0
+    },
+    "cpu/test_source_rollout_pixels[Pendulum-seed17-float64-1-horizon]": {
+      "frames": 6,
+      "mse_max": 0.0
+    },
+    "cpu/test_source_rollout_pixels[Pendulum-seed17-float64-8-reached]": {
+      "frames": 26,
+      "mse_max": 0.0
+    },
+    "cpu/test_source_rollout_pixels[Pendulum-seed17-float64-8-horizon]": {
+      "frames": 26,
+      "mse_max": 0.0
+    },
+    "cpu/test_source_rollout_pixels[Pendulum-seed42-float32-1-reached]": {
+      "frames": 6,
+      "mse_max": 0.0
+    },
+    "cpu/test_source_rollout_pixels[Pendulum-seed42-float32-1-horizon]": {
+      "frames": 6,
+      "mse_max": 0.0
+    },
+    "cpu/test_source_rollout_pixels[Pendulum-seed42-float32-8-reached]": {
+      "frames": 26,
+      "mse_max": 0.0
+    },
+    "cpu/test_source_rollout_pixels[Pendulum-seed42-float32-8-horizon]": {
+      "frames": 26,
+      "mse_max": 0.0
+    },
+    "cpu/test_source_rollout_pixels[Pendulum-seed42-float64-1-reached]": {
+      "frames": 6,
+      "mse_max": 0.0
+    },
+    "cpu/test_source_rollout_pixels[Pendulum-seed42-float64-1-horizon]": {
+      "frames": 6,
+      "mse_max": 0.0
+    },
+    "cpu/test_source_rollout_pixels[Pendulum-seed42-float64-8-reached]": {
+      "frames": 26,
+      "mse_max": 0.0
+    },
+    "cpu/test_source_rollout_pixels[Pendulum-seed42-float64-8-horizon]": {
+      "frames": 26,
+      "mse_max": 0.0
+    },
+    "cpu/test_source_rollout_pixels[Acrobot-seed17-int64-1-reached]": {
+      "frames": 6,
+      "mse_max": 0.0
+    },
+    "cpu/test_source_rollout_pixels[Acrobot-seed17-int64-1-horizon]": {
+      "frames": 6,
+      "mse_max": 0.0
+    },
+    "cpu/test_source_rollout_pixels[Acrobot-seed17-int64-8-reached]": {
+      "frames": 26,
+      "mse_max": 0.0
+    },
+    "cpu/test_source_rollout_pixels[Acrobot-seed17-int64-8-horizon]": {
+      "frames": 26,
+      "mse_max": 0.0
+    },
+    "cpu/test_source_rollout_pixels[Acrobot-seed42-int64-1-reached]": {
+      "frames": 6,
+      "mse_max": 0.0
+    },
+    "cpu/test_source_rollout_pixels[Acrobot-seed42-int64-1-horizon]": {
+      "frames": 6,
+      "mse_max": 0.0
+    },
+    "cpu/test_source_rollout_pixels[Acrobot-seed42-int64-8-reached]": {
+      "frames": 26,
+      "mse_max": 0.0
+    },
+    "cpu/test_source_rollout_pixels[Acrobot-seed42-int64-8-horizon]": {
+      "frames": 26,
+      "mse_max": 0.0
+    },
+    "cpu/test_source_rollout_pixels[MountainCar-seed17-int64-1-reached]": {
+      "frames": 6,
+      "mse_max": 0.0
+    },
+    "cpu/test_source_rollout_pixels[MountainCar-seed17-int64-1-horizon]": {
+      "frames": 6,
+      "mse_max": 0.0
+    },
+    "cpu/test_source_rollout_pixels[MountainCar-seed17-int64-8-reached]": {
+      "frames": 26,
+      "mse_max": 0.0
+    },
+    "cpu/test_source_rollout_pixels[MountainCar-seed17-int64-8-horizon]": {
+      "frames": 26,
+      "mse_max": 0.0
+    },
+    "cpu/test_source_rollout_pixels[MountainCar-seed42-int64-1-reached]": {
+      "frames": 6,
+      "mse_max": 0.0
+    },
+    "cpu/test_source_rollout_pixels[MountainCar-seed42-int64-1-horizon]": {
+      "frames": 6,
+      "mse_max": 0.0
+    },
+    "cpu/test_source_rollout_pixels[MountainCar-seed42-int64-8-reached]": {
+      "frames": 26,
+      "mse_max": 0.0
+    },
+    "cpu/test_source_rollout_pixels[MountainCar-seed42-int64-8-horizon]": {
+      "frames": 26,
+      "mse_max": 0.0
+    },
+    "cpu/test_source_rollout_pixels[MountainCarContinuous-seed17-float32-1-reached]": {
+      "frames": 6,
+      "mse_max": 0.0
+    },
+    "cpu/test_source_rollout_pixels[MountainCarContinuous-seed17-float32-1-horizon]": {
+      "frames": 6,
+      "mse_max": 0.0
+    },
+    "cpu/test_source_rollout_pixels[MountainCarContinuous-seed17-float32-8-reached]": {
+      "frames": 26,
+      "mse_max": 0.0
+    },
+    "cpu/test_source_rollout_pixels[MountainCarContinuous-seed17-float32-8-horizon]": {
+      "frames": 26,
+      "mse_max": 0.0
+    },
+    "cpu/test_source_rollout_pixels[MountainCarContinuous-seed17-float64-1-reached]": {
+      "frames": 6,
+      "mse_max": 0.0
+    },
+    "cpu/test_source_rollout_pixels[MountainCarContinuous-seed17-float64-1-horizon]": {
+      "frames": 6,
+      "mse_max": 0.0
+    },
+    "cpu/test_source_rollout_pixels[MountainCarContinuous-seed17-float64-8-reached]": {
+      "frames": 26,
+      "mse_max": 0.0
+    },
+    "cpu/test_source_rollout_pixels[MountainCarContinuous-seed17-float64-8-horizon]": {
+      "frames": 26,
+      "mse_max": 0.0
+    },
+    "cpu/test_source_rollout_pixels[MountainCarContinuous-seed42-float32-1-reached]": {
+      "frames": 6,
+      "mse_max": 0.0
+    },
+    "cpu/test_source_rollout_pixels[MountainCarContinuous-seed42-float32-1-horizon]": {
+      "frames": 6,
+      "mse_max": 0.0
+    },
+    "cpu/test_source_rollout_pixels[MountainCarContinuous-seed42-float32-8-reached]": {
+      "frames": 26,
+      "mse_max": 0.0
+    },
+    "cpu/test_source_rollout_pixels[MountainCarContinuous-seed42-float32-8-horizon]": {
+      "frames": 26,
+      "mse_max": 0.0
+    },
+    "cpu/test_source_rollout_pixels[MountainCarContinuous-seed42-float64-1-reached]": {
+      "frames": 6,
+      "mse_max": 0.0
+    },
+    "cpu/test_source_rollout_pixels[MountainCarContinuous-seed42-float64-1-horizon]": {
+      "frames": 6,
+      "mse_max": 0.0
+    },
+    "cpu/test_source_rollout_pixels[MountainCarContinuous-seed42-float64-8-reached]": {
+      "frames": 26,
+      "mse_max": 0.0
+    },
+    "cpu/test_source_rollout_pixels[MountainCarContinuous-seed42-float64-8-horizon]": {
+      "frames": 26,
+      "mse_max": 0.0
+    },
+    "cuda/test_source_rollout_pixels[CartPole-seed17-int64-1-reached]": {
+      "frames": 6,
+      "mse_max": 0.0
+    },
+    "cuda/test_source_rollout_pixels[CartPole-seed17-int64-1-horizon]": {
+      "frames": 6,
+      "mse_max": 0.0
+    },
+    "cuda/test_source_rollout_pixels[CartPole-seed17-int64-8-reached]": {
+      "frames": 26,
+      "mse_max": 0.0
+    },
+    "cuda/test_source_rollout_pixels[CartPole-seed17-int64-8-horizon]": {
+      "frames": 26,
+      "mse_max": 0.0
+    },
+    "cuda/test_source_rollout_pixels[CartPole-seed42-int64-1-reached]": {
+      "frames": 6,
+      "mse_max": 0.0
+    },
+    "cuda/test_source_rollout_pixels[CartPole-seed42-int64-1-horizon]": {
+      "frames": 6,
+      "mse_max": 0.0
+    },
+    "cuda/test_source_rollout_pixels[CartPole-seed42-int64-8-reached]": {
+      "frames": 26,
+      "mse_max": 0.0
+    },
+    "cuda/test_source_rollout_pixels[CartPole-seed42-int64-8-horizon]": {
+      "frames": 26,
+      "mse_max": 0.0
+    },
+    "cuda/test_source_rollout_pixels[Pendulum-seed17-float32-1-reached]": {
+      "frames": 6,
+      "mse_max": 0.0
+    },
+    "cuda/test_source_rollout_pixels[Pendulum-seed17-float32-1-horizon]": {
+      "frames": 6,
+      "mse_max": 0.0
+    },
+    "cuda/test_source_rollout_pixels[Pendulum-seed17-float32-8-reached]": {
+      "frames": 26,
+      "mse_max": 0.0
+    },
+    "cuda/test_source_rollout_pixels[Pendulum-seed17-float32-8-horizon]": {
+      "frames": 26,
+      "mse_max": 0.0
+    },
+    "cuda/test_source_rollout_pixels[Pendulum-seed17-float64-1-reached]": {
+      "frames": 6,
+      "mse_max": 0.0
+    },
+    "cuda/test_source_rollout_pixels[Pendulum-seed17-float64-1-horizon]": {
+      "frames": 6,
+      "mse_max": 0.0
+    },
+    "cuda/test_source_rollout_pixels[Pendulum-seed17-float64-8-reached]": {
+      "frames": 26,
+      "mse_max": 0.0
+    },
+    "cuda/test_source_rollout_pixels[Pendulum-seed17-float64-8-horizon]": {
+      "frames": 26,
+      "mse_max": 0.0
+    },
+    "cuda/test_source_rollout_pixels[Pendulum-seed42-float32-1-reached]": {
+      "frames": 6,
+      "mse_max": 0.0
+    },
+    "cuda/test_source_rollout_pixels[Pendulum-seed42-float32-1-horizon]": {
+      "frames": 6,
+      "mse_max": 0.0
+    },
+    "cuda/test_source_rollout_pixels[Pendulum-seed42-float32-8-reached]": {
+      "frames": 26,
+      "mse_max": 0.0
+    },
+    "cuda/test_source_rollout_pixels[Pendulum-seed42-float32-8-horizon]": {
+      "frames": 26,
+      "mse_max": 0.0
+    },
+    "cuda/test_source_rollout_pixels[Pendulum-seed42-float64-1-reached]": {
+      "frames": 6,
+      "mse_max": 0.0
+    },
+    "cuda/test_source_rollout_pixels[Pendulum-seed42-float64-1-horizon]": {
+      "frames": 6,
+      "mse_max": 0.0
+    },
+    "cuda/test_source_rollout_pixels[Pendulum-seed42-float64-8-reached]": {
+      "frames": 26,
+      "mse_max": 0.0
+    },
+    "cuda/test_source_rollout_pixels[Pendulum-seed42-float64-8-horizon]": {
+      "frames": 26,
+      "mse_max": 0.0
+    },
+    "cuda/test_source_rollout_pixels[Acrobot-seed17-int64-1-reached]": {
+      "frames": 6,
+      "mse_max": 0.0
+    },
+    "cuda/test_source_rollout_pixels[Acrobot-seed17-int64-1-horizon]": {
+      "frames": 6,
+      "mse_max": 0.0
+    },
+    "cuda/test_source_rollout_pixels[Acrobot-seed17-int64-8-reached]": {
+      "frames": 26,
+      "mse_max": 0.0
+    },
+    "cuda/test_source_rollout_pixels[Acrobot-seed17-int64-8-horizon]": {
+      "frames": 26,
+      "mse_max": 0.0
+    },
+    "cuda/test_source_rollout_pixels[Acrobot-seed42-int64-1-reached]": {
+      "frames": 6,
+      "mse_max": 0.0
+    },
+    "cuda/test_source_rollout_pixels[Acrobot-seed42-int64-1-horizon]": {
+      "frames": 6,
+      "mse_max": 0.0
+    },
+    "cuda/test_source_rollout_pixels[Acrobot-seed42-int64-8-reached]": {
+      "frames": 26,
+      "mse_max": 0.0
+    },
+    "cuda/test_source_rollout_pixels[Acrobot-seed42-int64-8-horizon]": {
+      "frames": 26,
+      "mse_max": 0.0
+    },
+    "cuda/test_source_rollout_pixels[MountainCar-seed17-int64-1-reached]": {
+      "frames": 6,
+      "mse_max": 0.0
+    },
+    "cuda/test_source_rollout_pixels[MountainCar-seed17-int64-1-horizon]": {
+      "frames": 6,
+      "mse_max": 0.0
+    },
+    "cuda/test_source_rollout_pixels[MountainCar-seed17-int64-8-reached]": {
+      "frames": 26,
+      "mse_max": 0.0
+    },
+    "cuda/test_source_rollout_pixels[MountainCar-seed17-int64-8-horizon]": {
+      "frames": 26,
+      "mse_max": 0.0
+    },
+    "cuda/test_source_rollout_pixels[MountainCar-seed42-int64-1-reached]": {
+      "frames": 6,
+      "mse_max": 0.0
+    },
+    "cuda/test_source_rollout_pixels[MountainCar-seed42-int64-1-horizon]": {
+      "frames": 6,
+      "mse_max": 0.0
+    },
+    "cuda/test_source_rollout_pixels[MountainCar-seed42-int64-8-reached]": {
+      "frames": 26,
+      "mse_max": 0.0
+    },
+    "cuda/test_source_rollout_pixels[MountainCar-seed42-int64-8-horizon]": {
+      "frames": 26,
+      "mse_max": 0.0
+    },
+    "cuda/test_source_rollout_pixels[MountainCarContinuous-seed17-float32-1-reached]": {
+      "frames": 6,
+      "mse_max": 0.0
+    },
+    "cuda/test_source_rollout_pixels[MountainCarContinuous-seed17-float32-1-horizon]": {
+      "frames": 6,
+      "mse_max": 0.0
+    },
+    "cuda/test_source_rollout_pixels[MountainCarContinuous-seed17-float32-8-reached]": {
+      "frames": 26,
+      "mse_max": 0.0
+    },
+    "cuda/test_source_rollout_pixels[MountainCarContinuous-seed17-float32-8-horizon]": {
+      "frames": 26,
+      "mse_max": 0.0
+    },
+    "cuda/test_source_rollout_pixels[MountainCarContinuous-seed17-float64-1-reached]": {
+      "frames": 6,
+      "mse_max": 0.0
+    },
+    "cuda/test_source_rollout_pixels[MountainCarContinuous-seed17-float64-1-horizon]": {
+      "frames": 6,
+      "mse_max": 0.0
+    },
+    "cuda/test_source_rollout_pixels[MountainCarContinuous-seed17-float64-8-reached]": {
+      "frames": 26,
+      "mse_max": 0.0
+    },
+    "cuda/test_source_rollout_pixels[MountainCarContinuous-seed17-float64-8-horizon]": {
+      "frames": 26,
+      "mse_max": 0.0
+    },
+    "cuda/test_source_rollout_pixels[MountainCarContinuous-seed42-float32-1-reached]": {
+      "frames": 6,
+      "mse_max": 0.0
+    },
+    "cuda/test_source_rollout_pixels[MountainCarContinuous-seed42-float32-1-horizon]": {
+      "frames": 6,
+      "mse_max": 0.0
+    },
+    "cuda/test_source_rollout_pixels[MountainCarContinuous-seed42-float32-8-reached]": {
+      "frames": 26,
+      "mse_max": 0.0
+    },
+    "cuda/test_source_rollout_pixels[MountainCarContinuous-seed42-float32-8-horizon]": {
+      "frames": 26,
+      "mse_max": 0.0
+    },
+    "cuda/test_source_rollout_pixels[MountainCarContinuous-seed42-float64-1-reached]": {
+      "frames": 6,
+      "mse_max": 0.0
+    },
+    "cuda/test_source_rollout_pixels[MountainCarContinuous-seed42-float64-1-horizon]": {
+      "frames": 6,
+      "mse_max": 0.0
+    },
+    "cuda/test_source_rollout_pixels[MountainCarContinuous-seed42-float64-8-reached]": {
+      "frames": 26,
+      "mse_max": 0.0
+    },
+    "cuda/test_source_rollout_pixels[MountainCarContinuous-seed42-float64-8-horizon]": {
+      "frames": 26,
+      "mse_max": 0.0
+    }
+  },
+  "tested_files": {
+    "pyproject.toml": "a15b57964e51ef2bece0dc245aef114ae50edc4f625a868d6e14a5f6cf2600a2",
+    "scripts/testing/capture_ogbench_golden.py": "759131c2194c4abe296e1b99d8c52f5f5599c5f8163ad8aa88d0515642765991",
+    "scripts/testing/freeze_native.py": "ab7f1e127e48b750a5c9361a54d3ca5d784133f85a6e992042472c2241da494a",
+    "scripts/testing/inventory.py": "0a8497134c4aaabd75b8f8462766d19509b0756c885f868e2da1fc079291e1ca",
+    "scripts/testing/verify_saved.py": "8ead1a0515cd70b2e60f594cbc47d6d46e7e9429cfaf06cda7513c637540cc35",
+    "stable_envs/__about__.py": "b05a238997922d6ad305eb48226dbe06f98c6ebecbb67209eee03ca365f9c73a",
+    "stable_envs/__init__.py": "20af3b62a9b31a2614cecc035a0ad24d9615f8e2351da092afa185870dc7eafe",
+    "stable_envs/_adapters/__init__.py": "f11cbf7f91c4ad1cbb8341bf021ac2dc3ce189e6cf602416bd912fcbcbbea983",
+    "stable_envs/_adapters/acrobot_process.py": "aedcc09648791f9dd90568f7067560952d99dfdacf000b8e141478760bb48ce6",
+    "stable_envs/_adapters/classic_execution.py": "88b5bb0484318c6560ae4fd4f1f10ce7fb97163641ddc5d729ad0213c7d43409",
+    "stable_envs/_adapters/craftax.py": "dbda91fa263bb16802be4c8456eef0071237eb41e750936fabc444b2abaccf6b",
+    "stable_envs/_adapters/craftax_render.py": "f6ee1d9bd4433952528cceb1baa993bd9b5f17c4193d45493ac12c1a12594f65",
+    "stable_envs/_adapters/dmcontrol.py": "c5077116eff086973b70cbe2b59e2d892a70d2fa6390a0b743c83a3955bf515b",
+    "stable_envs/_adapters/dmcontrol_aligned.py": "08f7d894333d727f40f8c2460ea4dfd4e23bed76c2412157811cd1b2b23f34c8",
+    "stable_envs/_adapters/dmcontrol_continuation.py": "c851baeed52ea4bf6858c9a7e5727b5b718497097d5310a034c1a74ffc71eb9b",
+    "stable_envs/_adapters/dmcontrol_execution.py": "2a8ca167845025e65f8981b537bef87ef3b10d231bb2be298b34e7e1c7cf151a",
+    "stable_envs/_adapters/dmcontrol_humanoid.py": "ad3f779006a84fda34a604ed893917c482025159c42946771bdd9f5732008754",
+    "stable_envs/_adapters/dmcontrol_process.py": "63db19d6cfe8e55adac44b4ace1f172fb1689ecfc8e0ab2367ae466407644d1e",
+    "stable_envs/_adapters/dmcontrol_state.py": "155bff8ec992f49076daf2afb78b68083de0efe72696d4b32520255d3d8d7b53",
+    "stable_envs/_adapters/fetch_execution.py": "219e543e24e7281773c9f9d5a07aa0c52707351bd72c1b8f4c1d991ec19c9403",
+    "stable_envs/_adapters/fetch_observations.py": "bf01feb7a4c413651ab8057b444c893f53a4f9e79bf0a37af13971b954d25424",
+    "stable_envs/_adapters/fetch_pickandplace.py": "52f4ca284513e3683a67f60dd29c7b8428f791cb30a62512ce01692278d00a11",
+    "stable_envs/_adapters/fetch_process.py": "f3021319f114d5926774851d2f0719f8b822cb655a29a238d3a0f819b66a5980",
+    "stable_envs/_adapters/ogbench.py": "bba731571ea3364e190e6ed2acb361ed3ed02f4db72ae0e6051b6d964335c6e1",
+    "stable_envs/_adapters/ogbench_execution.py": "9d94e977f5647e82c628a669695e737a7948888cbdbd083a2134934db4fa23fc",
+    "stable_envs/_adapters/ogbench_manipulation.py": "17d9899dfe2884d0ea3f9bd4b91d7ceb496bc2bfd1bdd6c84acb8d0645df778b",
+    "stable_envs/_adapters/ogbench_manipulation_compat.py": "88da1011687b3234b185e5a09ba70ae6bd8e6b69ff0ee3fb4ef75cc321f9593b",
+    "stable_envs/_adapters/ogbench_manipulation_process.py": "09e6b75d79fbe4db1664f8b27e98aeb22e67f5bd285c30b85948e67c6216e003",
+    "stable_envs/_adapters/ogbench_maze_process.py": "62c1d49d7e398b8b96dde11a2e744a53cc80a90affc963e1793c073795a38825",
+    "stable_envs/_adapters/ogbench_render_state.py": "156b4161dad269c0f958556f67a4e0bbeaa77bef1fa4d9c6ffda95619fbf3200",
+    "stable_envs/_adapters/process_requests.py": "f89321aad18ce5f003d400937281a40d22bbf439102ef4ebace8ebe8955781e6",
+    "stable_envs/_adapters/pusht_contacts.py": "13ab6281b865b25f85da8343f000e5dc2d154bfb24eb503fe3dec98ba2ce11f6",
+    "stable_envs/_adapters/pusht_draw.py": "a3c5f075a0f223cdfc2aa4d8eeb2f98b29fc2e4d72b94d7236a3cdd14b608d97",
+    "stable_envs/_adapters/pusht_history.py": "412713cc4b9e5b42a03cec34ee66ea035c6fbdb67f64aa38da8f1f577373513d",
+    "stable_envs/_adapters/pusht_numeric.py": "72f6e08485e01b6fad4ef397b259308ebe1d91a48be33487e6d4bfe10085dea9",
+    "stable_envs/_adapters/pusht_projection.py": "87d588bb8d3679f8a5fe779143a38586d97104dc6b841bd3a3d7547c317dc59a",
+    "stable_envs/_adapters/pusht_quantizer.py": "c509a52479c00dba9d34a35049b08643d11886f8b5b8939d6e7373845baaa820",
+    "stable_envs/_adapters/pusht_replay.py": "5b734f63f5f98048bccfba6c3603850acd7e6ad976655e81af4d239c3e8d97ee",
+    "stable_envs/_adapters/pusht_replay_batch.py": "f21a68909b58217a92cc4d8ce627bee0ce45e12b2e707a354d3f4df7de5b94af",
+    "stable_envs/_adapters/pusht_spaces.py": "8a4630928612425206fd3ba9f916cff8c3ae2025831cbca245ce652dd9842ac0",
+    "stable_envs/_adapters/pusht_task.py": "1f94cd249b2f440e58094f59d86a5ad18e11f72571554464ad118c49736561ab",
+    "stable_envs/_adapters/rocket.py": "62e7380990680820493305ba79b0c8f6c648a0ffdaa570ee3c76e71da81f77d7",
+    "stable_envs/_adapters/rocket_actions.py": "8dd34c067dd35bd116888165789fd49c71f9ff04acec61b0ad4d7e575633bb52",
+    "stable_envs/_adapters/rocket_numeric.py": "c26808546ffef24abe34aac94b94f2879c7fe5595d9c729f6e44cb8fae111d01",
+    "stable_envs/_adapters/rocket_replay.py": "ed414015ea0368b8db32d8900e1fc86aca9ef77d70e1a042cd3820dec7e335ff",
+    "stable_envs/_adapters/rocket_spaces.py": "f4f9d630413af8823e8b3a499e25a5ccbf764af25cb4ac555d58fb80a18cfe78",
+    "stable_envs/_adapters/rocket_task.py": "0b6f54d75c48f2c8aa9daf8444303e1f2e2b2d0867796829c1b3dec972753bb3",
+    "stable_envs/_adapters/state_columns.py": "4788872aeeff704543fbc55d4e6a59fb0826f86709ef60e17c9dbf7f95bfd572",
+    "stable_envs/_config.py": "4c6a3912b68398ec257a52ebd9c07516702e84dab7d9e4ef390f428ab5e3e32c",
+    "stable_envs/_data.py": "e9d9ec16706a260a278f9a03e99a3a8463b5dda31d8c35af3463b2ebc593f404",
+    "stable_envs/_dynamics.py": "caea13a72e1b9959672739f5e7bd86ede79e05839df930eff8b456c1f7471bca",
+    "stable_envs/_mujoco_gl.py": "0e42d5252558b04abc541f19e8a1c6c25ec67317941acdfd5c6adf0ec19a020d",
+    "stable_envs/_stepping.py": "3724c7991e6e14a8786324b6716ef368f79a7cd5ef5096e52bcc43ef0ac7528d",
+    "stable_envs/_style.py": "453239cbb25faa94ed182b2ae86146f69e849983a45446528cb67d4349fe69c9",
+    "stable_envs/env.py": "5a24d94e093ec3debca70f89340bdac5bada7c7f263f3eb9ac26b43da1fbde1f",
+    "stable_envs/envs/__init__.py": "2b79660c96fa9160497a37ced3d52cce9554ecfeb290c56d29138a928028059c",
+    "stable_envs/envs/_classic_semantics.py": "5f9932a9d5aeba21228e3cc1699338d0bab22b6b25e599a4aad19d8b3a157d4a",
+    "stable_envs/envs/_craftax_full.py": "4ee5d54529a905c5eb4b9dcfec8a0b2fc0f4f8949a129195e2658f708ca09919",
+    "stable_envs/envs/_craftax_full_tex.py": "cfc12377aaddae330ea4ebd1ff1c9ee64616d6ff8f60987ceb62a60f13dabe0a",
+    "stable_envs/envs/_fetch_semantics.py": "58ec06162bbd4eabea5c96b56ae65322a330dc55a83ed5cf83779fbcba8c7ea2",
+    "stable_envs/envs/_plate_texels.py": "67a6d2392a2356481c346bd30c86aded1e37317994edb26417bfd47471798a02",
+    "stable_envs/envs/_rocket_raster.py": "c97155de3030509dd5964f24eab237d2f68d5c12ae9f1f31c2f90cf3d039b801",
+    "stable_envs/envs/_stepgraph.py": "a432d45093102def7d7fb57ffe1fedf6a941ab5512d5a240588338b59a4f3b27",
+    "stable_envs/envs/carracing.py": "2dca33c9919be29a18ef940e8b7951e7efaf909668f3db2c54d10d30799f8653",
+    "stable_envs/envs/classic_control.py": "4f8536ede377c3eef7960650e0d999ab2feaae2eade0a22c213a5fc853b25403",
+    "stable_envs/envs/craftax.py": "485d1b9ca0f2f53069714941e9b5757d0521c0402faf9591adfddc563ad78ce7",
+    "stable_envs/envs/craftax_semantics.py": "df204cc930ad3e2c2774f10adb71fcbe5f61055b25b0118a44f6cb52ed728afd",
+    "stable_envs/envs/crafter.py": "8dd84748604604f3e2fbfe30545c34008983e2db42c0d89dec6d4ade59e5e2db",
+    "stable_envs/envs/dmcontrol/__init__.py": "804016dc3156b23eb34ce040d50b110de2ba75c48b640b76d95b03db986263ce",
+    "stable_envs/envs/dmcontrol/_aligned.py": "c68d81d7db00b1d973656cecf8f51713f2627fd2afde18f01205180b8ee31662",
+    "stable_envs/envs/dmcontrol/_cells.py": "75d38f6b4e625bafe6e04f2712ae844ec235e37f22207ba7b5e0b501b87f4340",
+    "stable_envs/envs/dmcontrol/_continuation.py": "0497c8ab0373b59e56916886b16a7ea0dd604eff1497fdb3cf7b6dce849408fe",
+    "stable_envs/envs/dmcontrol/_first_family.py": "649d31c245ed9ff24a3d5b2933e90a3f0a06d2b97878b25fe7df127c531847b2",
+    "stable_envs/envs/dmcontrol/_humanoid.py": "05d9eba2226d4e351e9e3fb708d1293b3173479bb85be50b3e35b66db8cc632d",
+    "stable_envs/envs/dmcontrol/_model.py": "c43f00268ad8cdb019789df0b270cf71ea689f1983022bcfe95a82edd55d759a",
+    "stable_envs/envs/dmcontrol/_shading.py": "8cc5f396cfbd4c924869ddbf3230844959d420cb33485c7f1f323ddfd9560c74",
+    "stable_envs/envs/dmcontrol/_tendon.py": "9e4f4045b879413d7ab80cb59b1163dec8c82dbdc68d3941ce5e101d8322f6e4",
+    "stable_envs/envs/dmcontrol/acrobot.py": "ac7018e071e7ff4602ed3139761c5ac5573bb0d3707311fa5e1bc79c41686006",
+    "stable_envs/envs/dmcontrol/ball_in_cup.py": "a0b747b1256e7c6fd89f10384adbcb1bf29e156703f9ca0095ada13de464ca59",
+    "stable_envs/envs/dmcontrol/base.py": "d0b7634d3fc60f7c9ce33077ee9600837eeab982d1f1aa103b93dc52c60def80",
+    "stable_envs/envs/dmcontrol/cartpole.py": "1a226d035b006b0225a7046eff47b869c36a67ee9b7ef736e407dcb5042cec29",
+    "stable_envs/envs/dmcontrol/cheetah.py": "881105b9254955cd18d1db6b57b867400fd24ef350a04e250f4f791525482fb0",
+    "stable_envs/envs/dmcontrol/finger.py": "a4fc65a12bffd8c725e4a8f867f04628d436d3652793aee304486681bc768c71",
+    "stable_envs/envs/dmcontrol/hopper.py": "ad6486bda8f001e5438289607b737542072b7b2b110518f7b566191993a572ef",
+    "stable_envs/envs/dmcontrol/humanoid.py": "02c145326848f6293267cc45e04e19eb3b8057ee1f9ef013420d09adc6def1f5",
+    "stable_envs/envs/dmcontrol/manipulator.py": "cf15160d32b346387fcde532651cf61584f8ad5d3a6bc8f671bbc496e09d323a",
+    "stable_envs/envs/dmcontrol/pendulum.py": "bc2adf926e06017216abd60343f1f2d5fcd2e4fedafb2726969b98443854691a",
+    "stable_envs/envs/dmcontrol/point_mass.py": "593114ac1e870d3592963e8400d140b34487639857bc6957767c0a9e7e5ae751",
+    "stable_envs/envs/dmcontrol/quadruped.py": "aeb3db913dd191682a3a78f10c5725a0648309b9347a138f559907e634880a26",
+    "stable_envs/envs/dmcontrol/reacher.py": "505b1628ee24b30cdc1099955f7cc5e002c645803adf300d51cf76368b420719",
+    "stable_envs/envs/dmcontrol/suite.py": "4c9a65ebc97cc562e1dcc0f2b501a88a5d53ddb587639960039d1d671b7194c5",
+    "stable_envs/envs/dmcontrol/swimmer.py": "0cfcb3ddc8b476be53102748f74184a7024197059b39fb12e0deb52c8741073d",
+    "stable_envs/envs/dmcontrol/trackcom.py": "57e571a6aafa467e495d58bfcef69371b7242e780763706f7b25330c4d2f7c0f",
+    "stable_envs/envs/dmcontrol/trackcom_opengl.py": "8a68d9ebf3bbc7dcf39a051a634800bc60565a5cec5dbcbf69113159921a6f55",
+    "stable_envs/envs/dmcontrol/walker.py": "89a398866a3da961a2e969523ccbdebf07f86aaaa14e788dce1679efa42142c4",
+    "stable_envs/envs/fetch.py": "8e5f5cc8df5b58d1635e9698e024907d4b863b6b570198ffcffa34e64d100abb",
+    "stable_envs/envs/fetch_opengl.py": "fbc2b96c701cc6f664986200dc6a2663e19285d6dbd9b85ab3e3d7528cf81261",
+    "stable_envs/envs/griddly.py": "92f9ab291ac3ac2cceef98058792de2c5b4bb6425d441b90b0221b2b6149cded",
+    "stable_envs/envs/highway.py": "1e08102286355878e1ae6012f3c067c7a7ebfbd0bbe9b1cd70e40a675227bffa",
+    "stable_envs/envs/humanoidbench.py": "eff4826637aa03cc26ad29f149f0668ce77e1afcd8798616a55ada5758c4019d",
+    "stable_envs/envs/jumanji.py": "eab0b8b107101d3675390a0c37a1a8a0dc87a4033c44cce9e0562f8430daeba2",
+    "stable_envs/envs/lunarlander.py": "89ab33d3d36e009c9b933e02f7fae703b4e9aefd0e34f9c8d31043c02945c1ac",
+    "stable_envs/envs/maze2d.py": "a97a4efdf45f696b6e9a7076d29101b357293b0ca78d6ba2cd499a644cc2d5c7",
+    "stable_envs/envs/metaworld.py": "f525e455d0c1b2d2112c71254aa4748a63f0ac0bd4b2bd0cd527700827de1d4b",
+    "stable_envs/envs/minigrid.py": "ff6689f1f5ee30a83ed4a30d629d87ac57231313f492b09c39418ce024331e85",
+    "stable_envs/envs/minihack.py": "aaa945d4a47b78b6f986aed6e1b664fa59d0999f0142bfbb400f153dfadfbed5",
+    "stable_envs/envs/mujoco_locomotion.py": "db3939d22f22a3e395530d2cc2ef5890e57e1ec892b5daac3d27d4c90779870b",
+    "stable_envs/envs/navigation.py": "c7d3577b05b2e5ef14eddb24634fcfa9f5905ce2fb61680f68bb11c49fe38989",
+    "stable_envs/envs/ogbench/__init__.py": "91211818a1e581124db500f81727ea815f5bc2681873b11588f13913cfc68e83",
+    "stable_envs/envs/ogbench/context_cache.py": "6822a73532945faed22da60a3c19a9a6543656747ec17d50151175eb3f52cfa4",
+    "stable_envs/envs/ogbench/manipulation.py": "b38630957d421503daa5b36ac9c41a1e40c3a012b9ac7fa26fb186a77155939b",
+    "stable_envs/envs/ogbench/manipulation_fidelity.py": "11a194048e4eb05f60ce74816dc4b3f8f6a58c7092127339529e7e6903933074",
+    "stable_envs/envs/ogbench/manipulation_opengl.py": "a039d99b797d8ad85a7e1c9573a9e2674c8e7ae748d2e002abca1fd43c568adb",
+    "stable_envs/envs/ogbench/manipulation_renderer.py": "3cb85452be021943f37f562467db200c38697b984ae41cb50d4356a5f6ee5c24",
+    "stable_envs/envs/ogbench/manipulation_semantics.py": "ef5f94c61c64a30fefb17224bc0e2185accaf7277e578f5216e534f8f60f062c",
+    "stable_envs/envs/ogbench/maze.py": "95dd283e09e48bc7600de455085eaf2bdca137d2808bd34b1c0d699efc723436",
+    "stable_envs/envs/overcooked.py": "7c77eb9d4f489addaea4cd7c29a00e6b2e77d199dd00feb4979025677e7d6b06",
+    "stable_envs/envs/pgx.py": "9398ddfcf4eeab1b107d09db9e67016c3f4bc0c3d8afac047805e490fb790eee",
+    "stable_envs/envs/procgen.py": "b7379f9ceeade239aac3dc89f1b6fba058132247c0303e91226a6d63febf9bcd",
+    "stable_envs/envs/pusht.py": "e37313176237d120f2442277e3eaa510eba0cd2d57d5a2882d79d29e0297682d",
+    "stable_envs/envs/pusht_semantics.py": "44245e6b5862771d0ada836314df41b9e3e23401e9c0b2433a8e8645a8a518d7",
+    "stable_envs/envs/robocasa.py": "39e447e94e97c507fb9afae3d2b23bd1e7bb46adc6a8cbd483d20a12df7ed8da",
+    "stable_envs/envs/rocket_landing.py": "f5d193dd24a52361067734dc3d234ccefd2e0fbd0f2b796a4dd9a7095ad490a9",
+    "stable_envs/envs/rocket_render.py": "3225c27b9b3acfde0337be5483166a3d86371c2275595de074b8ab3be6d60be4",
+    "stable_envs/envs/rocket_semantics.py": "afe2cb94313a24af86119d8cff5014e49dcece5ccc9b21b550a1f4e5beb4d351",
+    "stable_envs/envs/sokoban.py": "76cdbd2c33220483321fa20b9b3950e71ba53119ec0dab31fb965153c2daae59",
+    "stable_envs/registry.py": "dd365d6a35d2d3befd9938bd7ac3b6e2ba1c79d0b620f7065b4b83b70b4533bf",
+    "stable_envs/render/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stable_envs/render/_cache.py": "a2a2917584789aeef7eca925568e96538ba102aa950e502a055c82460afa6aa0",
+    "stable_envs/render/_raycast_reference.py": "5ce64de9b069a1e048e3aadafc48795e1704c2cac561e6b41f8b70c88a313e91",
+    "stable_envs/render/_resources.py": "c4377dcd17db820f7db3d35dd6eac2cea2526eecd93851e739cc401d84caeb0a",
+    "stable_envs/render/cpu3d.py": "bc4bb803c62fc6d4dbab8449f177563171dce81af6e6dff53430e5ab606e9f5c",
+    "stable_envs/render/gfxdraw.py": "46f8f22f5b97cdb39ec47b3f2b39d164f89250ba9e0bfc71291615cec2d0c629",
+    "stable_envs/render/gfxdraw_classic.py": "4715268782c0d433386278f58c5c95ccad3040cfc5250de77a4012b74c5a244d",
+    "stable_envs/render/gfxdraw_fused.py": "8c640552afec49750da70a68b670c8f84587e1286941a686dcbc7c0d68359a5d",
+    "stable_envs/render/mjwarp.py": "a34d101b2735f9d42c4996b421c2b8fb5ffccece23a170f530d64c4d24280266",
+    "stable_envs/render/mjwarp_lightspec.py": "461968a24ca5f1a611b645bb3a977abea7e9ec1d61d89f2cf7ae124485d903e2",
+    "stable_envs/render/navdot.py": "86c9257b827551479a7c26c045e1fe0d3b32dc705f0fa8e7d34b3cc5ef425def",
+    "stable_envs/render/nvdiff.py": "25b63522ad1c144a8f539cc22b099c36fbb291a9d0e6305a310d0a2d8dadb0a4",
+    "stable_envs/render/primitives.py": "498f5c10cca23252af78c73a39a7556f9a7158968e0bfd1a794f6ec3138f7691",
+    "stable_envs/render/prng.py": "6fab9786a0a99a1882c9165b3fc409744a4183c5dc91c791500a4e78feb024a4",
+    "stable_envs/render/raster2d.py": "a8af2fce9e2147b6c88057c73f8c1d2c3bd3455e415036316b7ea7a76238801d",
+    "stable_envs/render/raycast3d.py": "a183395591898b97a65ee0f3fc42227a20dbf6558cbdd4c94899a13e235abab8",
+    "stable_envs/render/rendernet.py": "b01e2a937055c5337dbd81bb71de20d230ad5b22d6d06dfb3794c73772bb681c",
+    "stable_envs/render/scene.py": "fa9da2cf2c08d5019990a022152e6981846b575d6b4b60aaab6a01bcb98b59a6",
+    "stable_envs/render/tilemap.py": "9348d29a02c35ebc99b1d2799158e0f8223cb6d7e25f032675170e019fbf6f1f",
+    "stable_envs/spaces.py": "d42972ee00c22ed0a2b8e4d9d30ddd437fa1dee33ae2bd0a59d24507203874eb",
+    "stable_envs/specs.py": "b81e87048a78457ab712ed19336833c26731f4da4334fa1ffc0c5292e1e9a4b3",
+    "stable_envs/testing/__init__.py": "604e70c019214646c07f572858eead8b272043f9e04411cf2470d50b735baa86",
+    "stable_envs/testing/_rollout.py": "7a27225ec5c31b820f8d773eb8ed3b2e6626a6f30e70155e3679834e42cc6e29",
+    "stable_envs/testing/conformance.py": "f69279d885fd0bc36cbca4f9073bfbd426c02fab4bcbf928e943fd617f1987ce",
+    "stable_envs/testing/corpus.py": "aa91f2363236b7c3647e617e1bc22c44cd0945340433461d4309d111ad6088b9",
+    "stable_envs/testing/evidence.py": "d4575208193a6023a6a76c1a3dc8f8add91807aabdcb7a9173d654988f9e30fc",
+    "stable_envs/testing/gate.py": "64a934f6b2af2a964b10cb587fbb753450e3449b0ed04b4760b2f18a25006225",
+    "stable_envs/testing/metrics.py": "ec0af4f39a11416a838fadaa6046cba707c4155de91d8afe20791b5148c299de",
+    "stable_envs/testing/node_health.py": "fb1d10d18bb540b2fd15d461bca41e070d7791b0ef351701ed6e89a26ee8f7f2",
+    "stable_envs/testing/provenance.py": "29441b3559fc48796ec463262f49cff1b20b8029d3b0619acfef0290cc00fe2a",
+    "stable_envs/testing/render_worker.py": "381b1bf1e2ed283ff233f61d91248d2d0355bbc55aca2e3140de5f08cebf9132",
+    "stable_envs/testing/resource_guard.py": "b0edc6810abd45863b17e0f752020cf44aaa6e5b76a2f84299dcb488320a817c",
+    "stable_envs/testing/safety_plugin.py": "1259ccfd1919bc299f623de463d70055bab7cb9367c87845f07d2c282fee0f4c",
+    "stable_envs/testing/supervisor.py": "e3e845e0ff48d7283dd0101d296226d2dabebd1acc456845a49dd0f0409ab9d0",
+    "tests/conftest.py": "038d887dd87c5b7e6ac262d69a0469daf57c2a71e98bc88f14f106645a09f9e9",
+    "tests/contracts/conftest.py": "124f1f26dbba6f009d8faa7393e72ff3da0a3552171e98cf75ab620b9e9a250a",
+    "tests/contracts/test_native_acceptance.py": "073acc7551aa12f255496cc9c724f725a857c932c74f336316bfc2938f0f6f80",
+    "tests/contracts/test_native_source_pixels.py": "78433d4895a53cdfe0c1a79fbe0b0b35a8b3231f83ca87d8810309d1081cb605",
+    "tests/contracts/test_online.py": "420ee7fde7e761497e27e1ad9c88728473d903c95da4096320cc7a9477d4178a",
+    "tests/contracts/test_saved_native.py": "9c99bdc0945b014bcc73f1a692e9a0c06099a61d672741643af35863dfaf467b",
+    "tests/contracts/test_saved_trajectory.py": "a2023271f3edff15e2d2f52980d52775ef7c1c4278c223bb14358098f7096f36",
+    "tests/contracts/test_simulation.py": "008d5868dc01ea87111c48f282b046cef1a1b3f56e6a85edfc378985bab3d556",
+    "tests/contracts/test_state.py": "7f269d927e130095a81e26a12e586f2ec5444a938b3003c3aa81225251c3ab7a",
+    "tests/contracts/test_task.py": "05702bfb31dd506afeca0f508a4684ee27a3736dc9dac6edf050ade1a030e86c",
+    "tests/fixtures/regression/support_matrix.json": "ea36716b9ad3168f67a8348f27f3578aa9ac7669ab40ad1186485187a31a50dc",
+    "tests/helpers/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "tests/helpers/gfxdraw_reference.py": "fae4968a2917b12f15136705ae304e46428eea6027ae2caea6f77eb1e1e38474",
+    "tests/helpers/ogbench_golden.py": "fbb25e0badc7ced58a960fac47d5bad642e168846961d718a21dd0c5ad481642",
+    "tests/helpers/reference/__init__.py": "978fc29f567bd6ea9f457451ee075b696a8c286ef8b90cc54513c8388596996d",
+    "tests/helpers/reference/bridges.py": "344457c6b8a7baf4d8c12f590c6a4f9590c6b3c2ee998b96100f6a8180c314af",
+    "tests/helpers/reference/cases.py": "ab97f27d7eda44a6b612f8e403594872b9d6f27bef946c0ef86d7298e34a7ad3",
+    "tests/helpers/reference/certification.py": "200ee05dcf197cc4a243b5dfa6b7c180e00029869e203e6ef98a85e25e0b5f54",
+    "tests/helpers/reference/classic_state_export.py": "e18a928d5aa19c001dc9e17f7bb12cc65770e9712967c145e6744692b529f2c1",
+    "tests/helpers/reference/craftax_jit.py": "3f7081451d63eee797b1c2f617e4569f7cc1e4e23fe9d60a6045012630a42fe8",
+    "tests/helpers/reference/craftax_source.py": "782b4b743df6b6bc2b6ec6a5c7c5f433b6717624a0b593f28537664e16e1b19e",
+    "tests/helpers/reference/crosswalk.py": "d0474e913a85c4547fcdfa5f1ed571a878ea1435d87b7d413cb807276bf80ea5",
+    "tests/helpers/reference/dmc_semantics.py": "a80de6d868e32b3e34557ac40b5c73c0db55f4f1efb194568b92e8ca019c420b",
+    "tests/helpers/reference/fetch_semantics.py": "167558b2edc1aef3d33823285de0385ebdd42e272a3df4af70d93f25d847b983",
+    "tests/helpers/reference/inventory.py": "3793439d847738d5e61624ee0c4f9dd7252cf380d57b26eafe6c8f493eb80b84",
+    "tests/helpers/reference/native_acceptance.py": "5d98544be217af8e6992dc02a54211e66a6d32196d7ef666542427f2a0e6a5ac",
+    "tests/helpers/reference/native_classic_semantics.py": "20f47c67b6df8c14ed5b8d40027dd8ca960a3509cdcab259e76b58ea1d380224",
+    "tests/helpers/reference/native_navigation_semantics.py": "d8f1aeeebd53c1d24e4b19c186fac27264e9434af0c5a46a21eec33af7dbdb59",
+    "tests/helpers/reference/native_pixels.py": "7a122f793036f9efdf579a2638ae4a87bc24c48e4669aa57235b82edfa9b24e7",
+    "tests/helpers/reference/ogbench_before_validation_columns.py": "5c8c55acfe25735faf2cc6e1bdd1b5a565358ef88abc24649ae4c8248ec08538",
+    "tests/helpers/reference/ogbench_manipulation_semantics.py": "4fa2adf3ae7317c327ca3d6ab233fdcef1579f6e1d1cf9de6dd17e1da9cb3ceb",
+    "tests/helpers/reference/ogbench_manipulation_source.py": "f2f2125f6c7589ca124305f640e2beedff91dc602e858c77c70d11dacd5fac5c",
+    "tests/helpers/reference/ogbench_maze_semantics.py": "2d1d0fb472105353fd610f065b1cbd715b0efad3ec73ef6c9fd204f19627ea03",
+    "tests/helpers/reference/ogbench_state_export.py": "5381455843a855ddd8f79616c3b079ecc8413e2ca8108e94f02d16e405b91490",
+    "tests/helpers/reference/oracle.py": "cea447a7b85c5d5069676c875d73e476350cdb4c28af851879cbfe580f6b4db8",
+    "tests/helpers/reference/pixels.py": "319230581df11b033d52714739602927cba27f19de729ea111e62fde0a58d7e7",
+    "tests/helpers/reference/profiles.py": "5ad31c03731c37b5b12291520317fc29a19956c7f9da50d0135f6de9615cc96f",
+    "tests/helpers/reference/pusht_semantics.py": "dec2de2d6ad4382da4a5460e5696a46d9267486351f2453865b4ab2d5c6c2bb6",
+    "tests/helpers/reference/readiness.py": "e9589c8cbd831783e5a274a5517466a5fc476b026e67e2795adaaa718885163b",
+    "tests/helpers/reference/rocket_pixels.py": "5ce29d1e9ed902b179ad689900b19c1e3108e3d89e217c6ec198c15e2d81a30d",
+    "tests/helpers/reference/rocket_semantics.py": "fbcae5522cddc4e98ca2a1dda43a175e1dfcf77ba2356b57b35c83dda4afb0ed",
+    "tests/helpers/reference/saved.py": "64036f237c2e3433f48da1240f382b6dea3e042bdb002677aab38b825895bd15",
+    "tests/helpers/reference/semantics.py": "abec2cb4a1752633a911b425e1816a38cb97e9fed0f711d17c40abfe3c8b51aa",
+    "tests/helpers/reference/step_capture.py": "8176c3c0fe2c17bb91dd126b198296a60d64082a57780c44c1d1e798fcdf33b7",
+    "tests/helpers/reference/swap_renderer.py": "085cd0b50234cf9b713f3886ae14f3a88f5a8bf937dbceaa42714b4e5e5c6f92",
+    "tests/helpers/reference/variation.py": "2dae48384032f9bfb66c6a445e4a0fae325e028a14c2ce7ca1d8091494a974a4",
+    "tests/helpers/reference/variation_maps/__init__.py": "91dc113ce39dff6963fadfd59dac64794d4736bf4c9c713237fceee77657cfc8",
+    "tests/helpers/reference/variation_maps/dmc_control.py": "c388bf1d4dc6dd35045ec866860546c364060916a519f1d00b6398eaeb20904c",
+    "tests/helpers/reference/variation_maps/fetch.py": "48519cbae07dfc60ed8d7f53f0d9ea14eff30cd9983a459f4d0bb61478ddb309",
+    "tests/helpers/reference/variation_maps/newcells.py": "250ee06db84866887f9c1d221cd213e5e04c21688b5a3588d725ad6db45ea450",
+    "tests/helpers/repository.py": "a47aa27c6608faab2ee6f427eb78ebb382ce47771c70ba0f40378a2caae2d245",
+    "tests/helpers/stepping.py": "abb4f2998a6a68ab4bff677cb287997d6d778f6ee0c294319043da081c7ecb3d",
+    "tests/integration/test_rocket_source_pixels.py": "54731f8cc41c2865e00be7337676bf7eda32f3f91dbdb958ab9526efed298bbe"
+  },
+  "artifacts": {
+    "cpu/result.json": "870c50d2ebee7c5c214c81216213eb704a2390eec0b343d54232dfa3dd23627f",
+    "cuda/result.json": "93351eab1dc188b4c25a64e537bab19afba38c186777546f5f047e09a1c40f2d",
+    "cpu.xml": "ec4e26cfa411e6a6bb0198dea2cae2bb7c85946afde0ef1dc49124ab0dcadfcf",
+    "cuda.xml": "ca36077076aa24b3ecac0ff06084d0fd7e7a08e7168b8c5e815b19a8fd8f7d2e",
+    "hardware.json": "82f86e8a8ce700c771fa68b5306941607c499ceb0dd54fe0787d043e75120741"
+  },
+  "terminal_evidence": [
+    "JobID|State|ExitCode|Elapsed|NodeList",
+    "7072317|CANCELLED by 140199055|0:0|00:00:00|None assigned",
+    "7072387|COMPLETED|0:0|00:03:07|gpu2504",
+    "7072387.extern|COMPLETED|0:0|00:03:07|gpu2504",
+    "7072387.0|COMPLETED|0:0|00:03:06|gpu2504"
+  ],
+  "source_pixel_registrations_after_cohort": 6,
+  "source_pixel_registrations_in_scope": 38,
+  "local": {
+    "required": 128,
+    "passed": 128,
+    "pixel_cases": 56,
+    "frame_comparisons": 896,
+    "mse_max": 0.0,
+    "helper_checks_passed": 29
+  },
+  "evidence_archive": {
+    "path": "native-source-pixels-evidence.tar.gz",
+    "sha256": "c80f174f7442795ce2cd89862ab594beeadcd42c323259de0631040c52777b4c"
+  },
+  "limits": [
+    "B2 source-pixel correctness; not throughput, large-batch/process, or appearance-Variation acceptance",
+    "Source renderer is CPU pygame for both candidate devices",
+    "Historical benchmark drivers and all previously accepted evidence remain unchanged",
+    "Condo job 7072317 was canceled without running; no acceptance credit"
+  ]
+}

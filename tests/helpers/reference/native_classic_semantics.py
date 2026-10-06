@@ -48,14 +48,14 @@ def _from_limbs(value):
 
 
 class NativeClassicReference:
-    def __init__(self, domain, num_envs=1, options=None):
+    def __init__(self, domain, num_envs=1, options=None, *, render_mode=None):
         module_name, class_name = WRAPPERS[domain]
         module = importlib.import_module(f"stable_worldmodel.envs.gymnasium_control.{module_name}")
         wrapper = getattr(module, class_name)
         self.domain = domain
         self.num_envs = int(num_envs)
         self.options = options
-        self.envs = [wrapper() for _ in range(self.num_envs)]
+        self.envs = [wrapper(render_mode=render_mode) for _ in range(self.num_envs)]
 
     def reset(self, seed=None):
         for i, wrapper in enumerate(self.envs):

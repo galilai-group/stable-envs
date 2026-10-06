@@ -140,6 +140,17 @@ acceptance. The historical 204-frame report and corrupted controls agree with th
 unchanged legacy verifier running against its recorded code snapshot. See
 [the contributor commands and adapter contract](testing.md#online-source-pixels).
 
+The next source-pixel cohort covers all five classic-control registrations with
+the same checker. The native profile grows from 72 to 128 required cases: 56 new
+pixel cases span two seeds, native action dtypes, horizons 1/8, reached checkpoints
+and mixed time-limit lanes. The adapter uses source-owned full-State serialization
+and forward-only source rollouts, and checks rendering for State mutation.
+Required-case accounting includes these tests and the pinned pygame version.
+No benchmark driver is retired: this B2 correctness cohort does not replace its
+large-batch, process, performance or Variation coverage. Shared source-pixel
+migration now covers six registrations, while full-State/simulation regression
+profiles continue to cover all 38 non-Craftax registrations.
+
 ### Acceptance axes
 
 1. **Establish authority.** Trace the pinned registration, factory, wrappers,

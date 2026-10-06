@@ -89,7 +89,7 @@ PINS = {
         "dm-control": "1.0.45",
     },
     "pusht": {"numpy": "2.2.6", "gymnasium": "1.2.3", "pymunk": "7.2.0", "pygame": "2.6.1"},
-    "native": {"numpy": "2.5.3", "gymnasium": "1.3.0"},
+    "native": {"numpy": "2.5.3", "gymnasium": "1.3.0", "pygame": "2.6.1"},
     "fetch": {"numpy": "2.5.3", "gymnasium": "1.3.0", "gymnasium-robotics": "1.4.2", "mujoco": "3.11.0"},
     "rocket": {"numpy": "2.5.3", "gymnasium": "1.3.0", "PyFlyt": "0.29.0", "pybullet": "3.2.7"},
 }

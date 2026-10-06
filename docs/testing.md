@@ -18,8 +18,8 @@ Shared profiles in `tests/contracts/` cover all 38 non-Craftax registrations:
 `pusht` (2), and `rocket` (1). Each uses an independent source bridge
 and separate State, simulation, task and online checks. These are small regression
 profiles; the native profile also includes its specialized lifecycle, terminal,
-action-boundary, physical Variation and rejected dtype-control witnesses (72
-required cases). Other family acceptance gates still cover their stronger contact,
+action-boundary, physical Variation, rejected dtype-control and source-pixel witnesses
+(128 required cases). Other family acceptance gates still cover their stronger contact,
 Variation, rendering and process obligations. Passing a profile does not promote
 its siblings or replace those gates. Source helpers live in
 `tests/helpers/reference/`; benchmark drivers import them, never the reverse.
@@ -39,8 +39,9 @@ Source pins are explicit in
 `tests/helpers/reference/profiles.py`. The source checkout must be clean at
 `176d54532b3c0a251a4f509b74f2fdacc143a63d`. Source environment code is loaded unchanged;
 unrelated learning-stack package initializers are omitted. Profiles compare CPU
-physics with CPU or CUDA State/output delivery. They do not measure GPU rendering
-or throughput. DMC and Maze constructors require a working GL context even when
+physics with CPU or CUDA State/output delivery. The native profile additionally
+checks CPU/CUDA rendering against source pixels. Profiles do not measure
+throughput. DMC and Maze constructors require a working GL context even when
 frames are omitted; use Oscar EGL when local GL is unavailable. Cube/Scene retain
 the accepted controlled-entropy source scope. PushT and Rocket compare independent
 native-engine fields in addition to public replay-State restoration.
@@ -180,6 +181,34 @@ configurations and parameter set match the historical gate. The
 records job outcomes, hardware, versions and tested code hashes. Other families
 retain their existing pixel gates; this is the first adapter, not a 38-family
 source-pixel migration or a throughput benchmark.
+
+The native profile also uses this checker for all five classic-control
+registrations. Run `tests/contracts --contract-profile=native` with the pinned
+`--contract-source` checkout and `--contract-device=cpu` or `cuda`, as described
+above. This profile now requires **128 passing cases**, including **56 source-pixel
+cases**; pygame 2.6.1 is part of its source pins. Selecting only the pixel test is
+useful for diagnosis but cannot pass the complete profile.
+
+`native_pixels.py` supplies full States directly from the independent source
+serializer, without constructing a candidate. Source lanes advance from reset to
+ordinary reached states or different remaining time limits. Tests cover seeds 17
+and 42, each registration's action dtypes, one/eight-action chunks, omitted/empty/
+final/all/reversed frame selections, independent State selection, and held
+terminal lanes. Source rendering must leave State unchanged. CPU and CUDA
+candidate images both compare against native-resolution CPU pygame images with
+the same per-frame 0.001 limit; pygame has no source GPU renderer.
+
+This extends the maintained shared source-pixel checks to **6/38 registrations**,
+including Rocket. It does not replace the classic-control performance benchmarks,
+large-batch/process gates, or appearance-Variation tests. Those retain their
+separate obligations and historical evidence.
+
+The [native validation record](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/fixtures/testing/native-source-pixels-validation.json)
+records 128/128 passing required cases on each device, with no skips, on Oscar
+job 7072387 (RTX A5500). All 896 source-frame comparisons per device have MSE zero.
+Its hashed evidence archive preserves sealed reports, case identities, source/code
+hashes, runtime versions, logs and terminal scheduler status. These measurements
+apply to the tested cases and configurations.
 
 ## Saved rendering evidence
 

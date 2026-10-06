@@ -38,6 +38,8 @@ def inventory():
         online = [ONLINE[row["family"]]]
         if row["family"] == "rocket":
             online.append("tests/integration/test_rocket_source_pixels.py")
+        if profiles.get(registration) == "native":
+            online.append("tests/contracts/test_native_source_pixels.py")
         rows.append(
             dict(
                 registration=registration,
