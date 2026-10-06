@@ -31,6 +31,7 @@ torch = pytest.importorskip("torch")
 import stable_envs as se
 from stable_envs.render import gfxdraw_classic as FC
 from tests.gpu._shared import assert_frames_identical, make_or_skip
+from tests.helpers.gfxdraw_reference import render_classic_torch
 
 CLASSIC = ("Acrobot", "CartPole", "MountainCar", "MountainCarContinuous", "Pendulum")
 
@@ -105,7 +106,7 @@ def _described(env, states, style=None):
     s = torch.as_tensor(np.asarray(states, np.float32), device=env.device)
     s = s.reshape(-1, env.state_dim).to(torch.float64)
     sty = env.resolve_style(style, None, batch=s.shape[0])
-    return FC.render_classic_torch(env._ops(s, sty).finish())
+    return render_classic_torch(env._ops(s, sty).finish())
 
 
 def _per_primitive(env, states, style=None):
@@ -211,7 +212,7 @@ def test_the_kernel_is_the_description(name, kind, style_kind):
 
     assert_frames_identical(
         FC.render_classic(ops),
-        FC.render_classic_torch(ops),
+        render_classic_torch(ops),
         what=f"{name} [{kind}, {style_kind}] kernel vs description",
         why="the two evaluate the same per-pixel expression; a difference is a Triton coding fault "
         "(a shape, an integer width, a branch), not a rule",
@@ -268,9 +269,11 @@ def test_the_kernel_is_batch_and_chunk_invariant(name):
         pytest.skip(f"{name} has no fused description")
     states = _states(env, "corpus", 12, seed=0)
     whole = env._render(states).clone()
-    chunks = torch.cat(
-        [se.make(name, num_envs=k, device="cuda").render(states[i : i + k]) for i, k in ((0, 4), (4, 8))]
-    )
+    pieces = []
+    for i, k in ((0, 4), (4, 8)):
+        with se.make(name, num_envs=k, device="cuda") as chunk:
+            pieces.append(chunk._render(states[i : i + k]).clone())
+    chunks = torch.cat(pieces)
     assert_frames_identical(
         chunks, whole, what=f"{name} chunked vs whole (fused)", why="the fused kernel must be batch-size invariant"
     )

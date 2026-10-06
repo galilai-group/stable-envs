@@ -1,0 +1,38 @@
+{
+  "baseline_commit": "c02355b7dc2b5fc6b306bdc719bf827c5fbe009f",
+  "scope": "Gfxdraw cleanup; existing pixel and batch invariance checks, not a new source benchmark",
+  "source_sha256": {
+    "stable_envs/render/gfxdraw.py": "46f8f22f5b97cdb39ec47b3f2b39d164f89250ba9e0bfc71291615cec2d0c629",
+    "stable_envs/render/gfxdraw_classic.py": "4715268782c0d433386278f58c5c95ccad3040cfc5250de77a4012b74c5a244d",
+    "stable_envs/render/gfxdraw_fused.py": "8c640552afec49750da70a68b670c8f84587e1286941a686dcbc7c0d68359a5d",
+    "tests/helpers/gfxdraw_reference.py": "fae4968a2917b12f15136705ae304e46428eea6027ae2caea6f77eb1e1e38474",
+    "tests/gpu/test_gfxdraw_classic.py": "734bf4676d2f4a4cea2514f6c8d12535391f98c4b6138db08dd5923c5eb1609d",
+    "tests/unit/test_gfxdraw_validation.py": "ffd3741f8c284dc66548577579a77ccb162ccc0d544fafdde2833fb0ae4ba519"
+  },
+  "cpu": {
+    "passed": 35,
+    "skipped": 0,
+    "platform": "Apple M5, macOS",
+    "additional_classic_description_checks": 25
+  },
+  "cuda": {
+    "passed": 119,
+    "failed": 0,
+    "skipped": 0,
+    "gpu": "NVIDIA RTX A5000",
+    "torch": "2.14.0+cu126",
+    "job": "7056634",
+    "partition": "gpu",
+    "qos": "norm-gpu",
+    "selection": [
+      "tests/unit/test_gfxdraw_validation.py",
+      "tests/unit/test_gfxdraw_blend_at_contract.py",
+      "tests/unit/test_gfxdraw_bounds.py",
+      "tests/unit/test_gfxdraw_select.py",
+      "tests/gpu/test_gfxdraw_classic.py",
+      "tests/gpu/test_gfxdraw_fused.py"
+    ],
+    "junit_sha256": "e6365f2aa80ac8d6b5c9dc7ed2a0bad109d9f35fac9afc66056928a235b35d09",
+    "payload_sha256": "ba6933c21bb5f953f234ea89c12230cd68c61735e5f1ce644b2d1354f838c4d0"
+  }
+}

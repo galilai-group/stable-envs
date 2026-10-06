@@ -84,9 +84,18 @@ internal bit equality from source-image fidelity and labels throughput as archiv
 measurements. Strict MkDocs still reports exactly the four existing research links.
 See the [raycast validation record](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/fixtures/renderer_cleanup/raycast-validation.json).
 
+Gfxdraw now shares the Wu edge and convex polygon fill kernels. Its slow Torch
+reference lives in `tests/helpers/`, unused builder methods are removed, explicit
+blend colors are honored, and unsupported polygon sizes and CPU backend calls
+raise clear errors. Painter order and integer rounding are unchanged. Validation:
+35 local helper checks, 25 local description checks, and all 119 selected checks
+on an RTX A5000 passed without skips. The GPU selection includes reference pixel
+comparisons and batch/chunk invariance. See
+[the gfxdraw record](https://github.com/galilai-group/stable-envs/blob/sami-dev/tests/fixtures/renderer_cleanup/gfxdraw-validation.json).
+
 Remaining work from the supplied renderer audit:
 
-1. Gfxdraw deduplication; MJWarp cleanup; Rocket constants.
+1. MJWarp cleanup; Rocket constants.
 2. Remaining per-file prose rewrites and the other three backend guides, followed
    by the repository-wide forbidden-prose scan.
 3. Archive planning and link/test migration before removing research evidence.

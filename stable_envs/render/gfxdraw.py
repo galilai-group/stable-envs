@@ -872,7 +872,8 @@ class StyleCanvas(Canvas):
             valid = valid & self.aa[b]
         if self.gate is not None:
             valid = valid & self.gate[b]
-        super().blend_at(b, y, x, self.col.to(torch.int64).t()[:, b], w, valid)
+        color = self.col.to(torch.int64).t()[:, b] if color_t is None else color_t
+        super().blend_at(b, y, x, color, w, valid)
 
 
 def edge_geometry(
@@ -1060,9 +1061,6 @@ class Gfx:
         self.solid = torch.tensor([SOLID], dtype=torch.int64, device=self.device)
         self.always = torch.ones(1, dtype=torch.bool, device=self.device)
 
-    def canvas(self, B: int, bg=(255, 255, 255)) -> Canvas:
-        return Canvas(B, self.H, self.W, self.device, self.sh, self.ys, self.xs, bg, gfx=self)
-
     def steps(self, kmax: int) -> torch.Tensor:
         k = int(kmax)
         if k not in self._steps:
@@ -1112,10 +1110,4 @@ class Gfx:
         key = ("u8", tuple(int(v) for v in c))
         if key not in self._k:
             self._k[key] = torch.tensor(key[1], dtype=torch.uint8, device=self.device)
-        return self._k[key]
-
-    def color(self, c) -> torch.Tensor:
-        key = ("c", tuple(int(v) for v in c))
-        if key not in self._k:
-            self._k[key] = torch.tensor(key[1], dtype=torch.int64, device=self.device).view(3, 1)
         return self._k[key]
